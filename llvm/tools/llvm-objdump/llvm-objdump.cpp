@@ -946,7 +946,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
             if (MIA->evaluateBranch(Inst, SectionAddr + Index, Size, Target)) {
               auto TargetSym = std::upper_bound(
                   AllSymbols.begin(), AllSymbols.end(), Target,
-                  [](uint64_t LHS, std::pair<uint64_t, StringRef> &RHS) {
+                  [](uint64_t LHS, const std::pair<uint64_t, StringRef> &RHS) {
                     return LHS < RHS.first;
                   });
               if (TargetSym != AllSymbols.begin())
