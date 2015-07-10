@@ -616,6 +616,26 @@ void WinEHPrepare::demoteValuesLiveAcrossHandlers(
   // identifyEHBlocks() should have been called before this function.
   assert(!NormalBlocks.empty());
 
+  // Try to avoid demoting EH pointer and selector values. They get in the way
+  // of our pattern matching.
+  SmallPtrSet<Instruction *, 10> EHVals;
+  for (BasicBlock &BB : F) {
+    LandingPadInst *LP = BB.getLandingPadInst();
+    if (!LP)
+      continue;
+    EHVals.insert(LP);
+    for (User *U : LP->users()) {
+      auto *EI = dyn_cast<ExtractValueInst>(U);
+      if (!EI)
+        continue;
+      EHVals.insert(EI);
+      for (User *U2 : EI->users()) {
+        if (auto *PN = dyn_cast<PHINode>(U2))
+          EHVals.insert(PN);
+      }
+    }
+  }
+
   SetVector<Argument *> ArgsToDemote;
   SetVector<Instruction *> InstrsToDemote;
   for (BasicBlock &BB : F) {
@@ -641,7 +661,11 @@ void WinEHPrepare::demoteValuesLiveAcrossHandlers(
           continue;
         }
 
+        // Don't demote EH values.
         auto *OpI = cast<Instruction>(Op);
+        if (EHVals.count(OpI))
+          continue;
+
         BasicBlock *OpBB = OpI->getParent();
         // If a value is produced and consumed in the same BB, we don't need to
         // demote it.
@@ -822,7 +846,8 @@ bool WinEHPrepare::prepareExceptionHandlers(
     LPad->replaceAllUsesWith(UndefValue::get(LPad->getType()));
 
     // Rewrite uses of the exception pointer to loads of an alloca.
-    for (Instruction *E : SEHCodeUses) {
+    while (!SEHCodeUses.empty()) {
+      Instruction *E = SEHCodeUses.pop_back_val();
       SmallVector<Use *, 4> Uses;
       for (Use &U : E->uses())
         Uses.push_back(&U);
@@ -830,13 +855,10 @@ bool WinEHPrepare::prepareExceptionHandlers(
         auto *I = cast<Instruction>(U->getUser());
         if (isa<ResumeInst>(I))
           continue;
-        LoadInst *LI;
         if (auto *Phi = dyn_cast<PHINode>(I))
-          LI = new LoadInst(SEHExceptionCodeSlot, "sehcode", false,
-                            Phi->getIncomingBlock(*U)->getTerminator());
+          SEHCodeUses.push_back(Phi);
         else
-          LI = new LoadInst(SEHExceptionCodeSlot, "sehcode", false, I);
-        U->set(LI);
+          U->set(new LoadInst(SEHExceptionCodeSlot, "sehcode", false, I));
       }
       E->replaceAllUsesWith(UndefValue::get(E->getType()));
       E->eraseFromParent();
