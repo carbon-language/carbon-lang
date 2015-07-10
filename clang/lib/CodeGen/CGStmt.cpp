@@ -1852,6 +1852,14 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   std::vector<llvm::Value*> InOutArgs;
   std::vector<llvm::Type*> InOutArgTypes;
 
+  // An inline asm can be marked readonly if it meets the following conditions:
+  //  - it doesn't have any sideeffects
+  //  - it doesn't clobber memory
+  //  - it doesn't return a value by-reference
+  // It can be marked readnone if it doesn't have any input memory constraints
+  // in addition to meeting the conditions listed above.
+  bool ReadOnly = true, ReadNone = true;
+
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {
     TargetInfo::ConstraintInfo &Info = OutputConstraintInfos[i];
 
@@ -1915,6 +1923,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       Args.push_back(Dest.getAddress());
       Constraints += "=*";
       Constraints += OutputConstraint;
+      ReadOnly = ReadNone = false;
     }
 
     if (Info.isReadWrite()) {
@@ -1958,6 +1967,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     const Expr *InputExpr = S.getInputExpr(i);
 
     TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];
+
+    if (Info.allowsMemory())
+      ReadNone = false;
 
     if (!Constraints.empty())
       Constraints += ',';
@@ -2023,7 +2035,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   for (unsigned i = 0, e = S.getNumClobbers(); i != e; i++) {
     StringRef Clobber = S.getClobber(i);
 
-    if (Clobber != "memory" && Clobber != "cc")
+    if (Clobber == "memory")
+      ReadOnly = ReadNone = false;
+    else if (Clobber != "cc")
       Clobber = getTarget().getNormalizedGCCRegisterName(Clobber);
 
     if (!Constraints.empty())
@@ -2062,6 +2076,16 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(llvm::AttributeSet::FunctionIndex,
                        llvm::Attribute::NoUnwind);
+
+  // Attach readnone and readonly attributes.
+  if (!HasSideEffect) {
+    if (ReadNone)
+      Result->addAttribute(llvm::AttributeSet::FunctionIndex,
+                           llvm::Attribute::ReadNone);
+    else if (ReadOnly)
+      Result->addAttribute(llvm::AttributeSet::FunctionIndex,
+                           llvm::Attribute::ReadOnly);
+  }
 
   // Slap the source location of the inline asm into a !srcloc metadata on the
   // call.
