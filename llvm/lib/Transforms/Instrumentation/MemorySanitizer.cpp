@@ -2654,23 +2654,27 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void visitCleanupBlockInst(CleanupBlockInst &I) {
-    setShadow(&I, getCleanShadow(&I));
-    setOrigin(&I, getCleanOrigin());
+    if (!I.getType()->isVoidTy()) {
+      setShadow(&I, getCleanShadow(&I));
+      setOrigin(&I, getCleanOrigin());
+    }
   }
 
   void visitCatchBlock(CatchBlockInst &I) {
-    setShadow(&I, getCleanShadow(&I));
-    setOrigin(&I, getCleanOrigin());
+    if (!I.getType()->isVoidTy()) {
+      setShadow(&I, getCleanShadow(&I));
+      setOrigin(&I, getCleanOrigin());
+    }
   }
 
   void visitTerminateBlock(TerminateBlockInst &I) {
-    setShadow(&I, getCleanShadow(&I));
-    setOrigin(&I, getCleanOrigin());
+    DEBUG(dbgs() << "TerminateBlock: " << I << "\n");
+    // Nothing to do here.
   }
 
   void visitCatchEndBlockInst(CatchEndBlockInst &I) {
-    setShadow(&I, getCleanShadow(&I));
-    setOrigin(&I, getCleanOrigin());
+    DEBUG(dbgs() << "CatchEndBlock: " << I << "\n");
+    // Nothing to do here.
   }
 
   void visitGetElementPtrInst(GetElementPtrInst &I) {

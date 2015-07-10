@@ -2408,8 +2408,8 @@ void Verifier::visitCallInst(CallInst &CI) {
 void Verifier::visitInvokeInst(InvokeInst &II) {
   VerifyCallSite(&II);
 
-  // Verify that there is an exception block instruction is the first non-PHI
-  // instruction of the 'unwind' destination.
+  // Verify that the first non-PHI instruction of the unwind destination is an
+  // exception handling instruction.
   Assert(
       II.getUnwindDest()->isEHBlock(),
       "The unwind destination does not have an exception handling instruction!",

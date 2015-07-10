@@ -5183,15 +5183,15 @@ none of the ``catchblock`` instructions are suitable for catching the
 in-flight exception.
 
 If a ``nextaction`` label is not present, the instruction unwinds out of
-the function it is located in.  The
-:ref:`personality function <personalityfn>` will look for an appropriate
-catch block in the caller.
+its parent function.  The
+:ref:`personality function <personalityfn>` will continue processing
+exception handling actions in the caller.
 
 Arguments:
 """"""""""
 
 The instruction optionally takes a label, ``nextaction``, indicating
-where control should transfer to if none of the constituent
+where control should transfer to if none of the preceding
 ``catchblock`` instructions are suitable for the in-flight exception.
 
 Semantics:
@@ -5212,6 +5212,7 @@ The ``catchendblock`` instruction has several restrictions:
    catch block.
 -  A basic block that is not a catch-end block may not include a
    '``catchendblock``' instruction.
+-  Exactly one catch block may unwind to a ``catchendblock``.
 
 Example:
 """"""""
@@ -5251,7 +5252,7 @@ Semantics:
 
 The '``catchret``' instruction ends the existing (in-flight) exception
 whose unwinding was interrupted with a
-:ref:`catchblock <i_catchblock>` instruction and transfer control to
+:ref:`catchblock <i_catchblock>` instruction and transfers control to
 ``normal``.
 
 Example:
@@ -5301,6 +5302,7 @@ Example:
 
 .. code-block:: llvm
 
+      cleanupret void unwind to caller
       cleanupret { i8*, i32 } %exn unwind label %continue
 
 .. _i_terminateblock:
@@ -5314,21 +5316,20 @@ Syntax:
 ::
 
       terminateblock [<args>*] unwind label <exception label>
+      terminateblock [<args>*] unwind to caller
 
 Overview:
 """""""""
 
 The '``terminateblock``' instruction is used by `LLVM's exception handling
 system <ExceptionHandling.html#overview>`_ to specify that a basic block
-is a terminate block --- one where a personality routine attempts to transfer
-control to terminate the program.
+is a terminate block --- one where a personality routine may decide to
+terminate the program.
 The ``args`` correspond to whatever information the personality
 routine requires to know if this is an appropriate place to terminate the
 program.  Control is tranfered to the ``exception`` label if the
-``terminateblock`` is an appropriate handler for the in-flight exception.
-If the ``terminateblock`` is not an appropriate handler, execution of
-the program is terminated via
-:ref:`personality function <personalityfn>` specific means.
+personality routine decides not to terminate the program for the
+in-flight exception.
 
 Arguments:
 """"""""""
@@ -5336,7 +5337,7 @@ Arguments:
 The instruction takes a list of arbitrary values which are interpreted
 by the :ref:`personality function <personalityfn>`.
 
-The ``terminateblock`` must be provided an ``exception`` label to
+The ``terminateblock`` may be given an ``exception`` label to
 transfer control to if the in-flight exception matches the ``args``.
 
 Semantics:
