@@ -349,6 +349,30 @@ int main(int argc, char **argv) {
                              /*IncludeNonInstalled=*/IsInDevelopmentTree);
 
     if (PrintLibs || PrintLibNames || PrintLibFiles) {
+      // If LLVM was built as a shared library, there will be only one thing
+      // that users should link against.
+      const bool IsSharedLib = (std::strcmp(BUILD_SHARED_LIBS, "ON") == 0);
+      const bool WasBuiltWithCMake = (std::strcmp(WAS_BUILT_WITH_CMAKE, "ON") == 0);
+      // CMake correctly builds components as separate shared libraries, however
+      // autoconfig/make builds components a static libraries and then links
+      // them all together to form a single shared library. Thus, only when
+      // `WAS_BUILT_WITH_CMAKE` is `OFF` and `BUILD_SHARED_LIBS` is `ON` do we
+      // override `RequiredLibs` with the single library name.
+      if (IsSharedLib && !WasBuiltWithCMake) {
+        RequiredLibs.clear();
+        std::string Name = "libLLVM-" PACKAGE_VERSION;
+        const Triple HostTriple(LLVM_DEFAULT_TARGET_TRIPLE);
+        if (HostTriple.isOSWindows()) {
+          Name += ".dll";
+        } else if (HostTriple.isOSDarwin()) {
+          Name += ".dylib";
+        } else {
+          // default to linux' ext:
+          Name += ".so";
+        }
+        RequiredLibs.push_back(Name);
+      }
+
       for (unsigned i = 0, e = RequiredLibs.size(); i != e; ++i) {
         StringRef Lib = RequiredLibs[i];
         if (i)
@@ -360,8 +384,23 @@ int main(int argc, char **argv) {
           OS << ActiveLibDir << '/' << Lib;
         } else if (PrintLibs) {
           // If this is a typical library name, include it using -l.
-          if (Lib.startswith("lib") && Lib.endswith(".a")) {
-            OS << "-l" << Lib.slice(3, Lib.size()-2);
+          if (Lib.startswith("lib")) {
+            size_t FromEnd = 0;
+            if (Lib.endswith(".a")) {
+              FromEnd = 2;
+            } else if (Lib.endswith(".so")) {
+              FromEnd = 3;
+            } else if (Lib.endswith(".dylib")) {
+              FromEnd = 6;
+            } else {
+              FromEnd = 0;
+            }
+
+            if (FromEnd != 0) {
+              OS << "-l" << Lib.slice(3, Lib.size() - FromEnd);
+            } else {
+              OS << "-l:" << Lib;
+            }
             continue;
           }
 
