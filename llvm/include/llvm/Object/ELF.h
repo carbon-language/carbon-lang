@@ -752,7 +752,7 @@ void ELFFile<ELFT>::scanDynamicTable() {
     auto I = LoadMap.find(VAddr);
     if (I == LoadMap.end())
       return nullptr;
-    return base() + I.value() + (VAddr - I.start());
+    return this->base() + I.value() + (VAddr - I.start());
   };
 
   for (Elf_Dyn_Iter DynI = dynamic_table_begin(), DynE = dynamic_table_end();
