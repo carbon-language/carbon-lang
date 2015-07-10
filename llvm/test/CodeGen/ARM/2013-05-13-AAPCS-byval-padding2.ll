@@ -9,8 +9,8 @@ define void @foo(%struct4bytes* byval %p0, ; --> R0
 ) {
 ;CHECK:  sub  sp, sp, #16
 ;CHECK:  push  {r11, lr}
-;CHECK:  add  r11, sp, #8
-;CHECK:  stm  r11, {r0, r1, r2, r3}
+;CHECK:  add  r12, sp, #8
+;CHECK:  stm  r12, {r0, r1, r2, r3}
 ;CHECK:  add  r0, sp, #12
 ;CHECK:  bl  useInt
 ;CHECK:  pop  {r11, lr}
