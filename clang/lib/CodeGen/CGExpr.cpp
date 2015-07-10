@@ -1356,14 +1356,15 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, SourceLocation Loc) {
 
 RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
   const CGBitFieldInfo &Info = LV.getBitFieldInfo();
+  CharUnits Align = LV.getAlignment().alignmentAtOffset(Info.StorageOffset);
 
   // Get the output type.
   llvm::Type *ResLTy = ConvertType(LV.getType());
 
   llvm::Value *Ptr = LV.getBitFieldAddr();
-  llvm::Value *Val = Builder.CreateLoad(Ptr, LV.isVolatileQualified(),
-                                        "bf.load");
-  cast<llvm::LoadInst>(Val)->setAlignment(Info.StorageAlignment);
+  llvm::Value *Val = Builder.CreateAlignedLoad(Ptr, Align.getQuantity(),
+                                               LV.isVolatileQualified(),
+                                               "bf.load");
 
   if (Info.IsSigned) {
     assert(static_cast<unsigned>(Info.Offset + Info.Size) <= Info.StorageSize);
@@ -1559,6 +1560,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
                                                      llvm::Value **Result) {
   const CGBitFieldInfo &Info = Dst.getBitFieldInfo();
+  CharUnits Align = Dst.getAlignment().alignmentAtOffset(Info.StorageOffset);
   llvm::Type *ResLTy = ConvertTypeForMem(Dst.getType());
   llvm::Value *Ptr = Dst.getBitFieldAddr();
 
@@ -1575,9 +1577,9 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   // and mask together with source before storing.
   if (Info.StorageSize != Info.Size) {
     assert(Info.StorageSize > Info.Size && "Invalid bitfield size.");
-    llvm::Value *Val = Builder.CreateLoad(Ptr, Dst.isVolatileQualified(),
-                                          "bf.load");
-    cast<llvm::LoadInst>(Val)->setAlignment(Info.StorageAlignment);
+    llvm::Value *Val = Builder.CreateAlignedLoad(Ptr, Align.getQuantity(),
+                                                 Dst.isVolatileQualified(),
+                                                 "bf.load");
 
     // Mask the source value as needed.
     if (!hasBooleanRepresentation(Dst.getType()))
@@ -1603,9 +1605,8 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   }
 
   // Write the new value back out.
-  llvm::StoreInst *Store = Builder.CreateStore(SrcVal, Ptr,
-                                               Dst.isVolatileQualified());
-  Store->setAlignment(Info.StorageAlignment);
+  Builder.CreateAlignedStore(SrcVal, Ptr, Align.getQuantity(),
+                             Dst.isVolatileQualified());
 
   // Return the new value of the bit-field, if requested.
   if (Result) {

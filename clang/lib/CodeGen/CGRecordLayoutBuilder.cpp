@@ -228,11 +228,7 @@ void CGRecordLowering::setBitFieldInfo(
   Info.Offset = (unsigned)(getFieldBitOffset(FD) - Context.toBits(StartOffset));
   Info.Size = FD->getBitWidthValue(Context);
   Info.StorageSize = (unsigned)DataLayout.getTypeAllocSizeInBits(StorageType);
-  // Here we calculate the actual storage alignment of the bits.  E.g if we've
-  // got an alignment >= 2 and the bitfield starts at offset 6 we've got an
-  // alignment of 2.
-  Info.StorageAlignment =
-      Layout.getAlignment().alignmentAtOffset(StartOffset).getQuantity();
+  Info.StorageOffset = StartOffset;
   if (Info.Size > Info.StorageSize)
     Info.Size = Info.StorageSize;
   // Reverse the bit offsets for big endian machines. Because we represent
@@ -651,7 +647,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
                                         const FieldDecl *FD,
                                         uint64_t Offset, uint64_t Size,
                                         uint64_t StorageSize,
-                                        uint64_t StorageAlignment) {
+                                        CharUnits StorageOffset) {
   // This function is vestigial from CGRecordLayoutBuilder days but is still 
   // used in GCObjCRuntime.cpp.  That usage has a "fixme" attached to it that
   // when addressed will allow for the removal of this function.
@@ -683,7 +679,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     Offset = StorageSize - (Offset + Size);
   }
 
-  return CGBitFieldInfo(Offset, Size, IsSigned, StorageSize, StorageAlignment);
+  return CGBitFieldInfo(Offset, Size, IsSigned, StorageSize, StorageOffset);
 }
 
 CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
@@ -856,7 +852,7 @@ void CGBitFieldInfo::print(raw_ostream &OS) const {
      << " Size:" << Size
      << " IsSigned:" << IsSigned
      << " StorageSize:" << StorageSize
-     << " StorageAlignment:" << StorageAlignment << ">";
+     << " StorageOffset:" << StorageOffset.getQuantity() << ">";
 }
 
 void CGBitFieldInfo::dump() const {

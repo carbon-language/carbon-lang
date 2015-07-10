@@ -78,16 +78,16 @@ struct CGBitFieldInfo {
   /// bitfield.
   unsigned StorageSize;
 
-  /// The alignment which should be used when accessing the bitfield.
-  unsigned StorageAlignment;
+  /// The offset of the bitfield storage from the start of the struct.
+  CharUnits StorageOffset;
 
   CGBitFieldInfo()
-      : Offset(), Size(), IsSigned(), StorageSize(), StorageAlignment() {}
+      : Offset(), Size(), IsSigned(), StorageSize(), StorageOffset() {}
 
   CGBitFieldInfo(unsigned Offset, unsigned Size, bool IsSigned,
-                 unsigned StorageSize, unsigned StorageAlignment)
+                 unsigned StorageSize, CharUnits StorageOffset)
       : Offset(Offset), Size(Size), IsSigned(IsSigned),
-        StorageSize(StorageSize), StorageAlignment(StorageAlignment) {}
+        StorageSize(StorageSize), StorageOffset(StorageOffset) {}
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -99,7 +99,7 @@ struct CGBitFieldInfo {
                                  const FieldDecl *FD,
                                  uint64_t Offset, uint64_t Size,
                                  uint64_t StorageSize,
-                                 uint64_t StorageAlignment);
+                                 CharUnits StorageOffset);
 };
 
 /// CGRecordLayout - This class handles struct and union layout info while

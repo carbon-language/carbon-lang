@@ -911,31 +911,21 @@ namespace {
         return;
       }
 
-      CharUnits Alignment;
-
       uint64_t FirstByteOffset;
       if (FirstField->isBitField()) {
         const CGRecordLayout &RL =
           CGF.getTypes().getCGRecordLayout(FirstField->getParent());
         const CGBitFieldInfo &BFInfo = RL.getBitFieldInfo(FirstField);
-        Alignment = CharUnits::fromQuantity(BFInfo.StorageAlignment);
         // FirstFieldOffset is not appropriate for bitfields,
         // it won't tell us what the storage offset should be and thus might not
         // be properly aligned.
         //
         // Instead calculate the storage offset using the offset of the field in
         // the struct type.
-        const llvm::DataLayout &DL = CGF.CGM.getDataLayout();
-        FirstByteOffset =
-            DL.getStructLayout(RL.getLLVMType())
-                ->getElementOffsetInBits(RL.getLLVMFieldNo(FirstField));
+        FirstByteOffset = CGF.getContext().toBits(BFInfo.StorageOffset);
       } else {
-        Alignment = CGF.getContext().getDeclAlign(FirstField);
         FirstByteOffset = FirstFieldOffset;
       }
-
-      assert((CGF.getContext().toCharUnitsFromBits(FirstByteOffset) %
-              Alignment) == 0 && "Bad field alignment.");
 
       CharUnits MemcpySize = getMemcpySize(FirstByteOffset);
       QualType RecordTy = CGF.getContext().getTypeDeclType(ClassDecl);
@@ -945,6 +935,9 @@ namespace {
       llvm::Value *SrcPtr = CGF.Builder.CreateLoad(CGF.GetAddrOfLocalVar(SrcRec));
       LValue SrcLV = CGF.MakeNaturalAlignAddrLValue(SrcPtr, RecordTy);
       LValue Src = CGF.EmitLValueForFieldInitialization(SrcLV, FirstField);
+
+      CharUnits Offset = CGF.getContext().toCharUnitsFromBits(FirstByteOffset);
+      CharUnits Alignment = DestLV.getAlignment().alignmentAtOffset(Offset);
 
       emitMemcpyIR(Dest.isBitField() ? Dest.getBitFieldAddr() : Dest.getAddress(),
                    Src.isBitField() ? Src.getBitFieldAddr() : Src.getAddress(),
