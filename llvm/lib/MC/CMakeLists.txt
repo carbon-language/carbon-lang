@@ -28,6 +28,7 @@ add_llvm_library(LLVMMC
   MCObjectStreamer.cpp
   MCObjectWriter.cpp
   MCRegisterInfo.cpp
+  MCSchedule.cpp
   MCSection.cpp
   MCSectionCOFF.cpp
   MCSectionELF.cpp

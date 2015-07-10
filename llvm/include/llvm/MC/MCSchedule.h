@@ -224,25 +224,9 @@ struct MCSchedModel {
     return &SchedClassTable[SchedClassIdx];
   }
 
-  // /\brief Returns a default initialized model. Used for unknown processors.
-  static MCSchedModel GetDefaultSchedModel() {
-    MCSchedModel Ret = { DefaultIssueWidth,
-                         DefaultMicroOpBufferSize,
-                         DefaultLoopMicroOpBufferSize,
-                         DefaultLoadLatency,
-                         DefaultHighLatency,
-                         DefaultMispredictPenalty,
-                         false,
-                         true,
-                         0,
-                         nullptr,
-                         nullptr,
-                         0,
-                         0,
-                         nullptr
-                       };
-    return Ret;
-  }
+  /// Returns the default initialized model.
+  static const MCSchedModel &GetDefaultSchedModel() { return Default; }
+  static const MCSchedModel Default;
 };
 
 } // End llvm namespace

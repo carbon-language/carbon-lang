@@ -37,7 +37,7 @@ class MCSubtargetInfo {
   const MCWriteProcResEntry *WriteProcResTable;
   const MCWriteLatencyEntry *WriteLatencyTable;
   const MCReadAdvanceEntry *ReadAdvanceTable;
-  MCSchedModel CPUSchedModel;
+  const MCSchedModel *CPUSchedModel;
 
   const InstrStage *Stages;            // Instruction itinerary stages
   const unsigned *OperandCycles;       // Itinerary operand cycles
@@ -99,11 +99,10 @@ public:
 
   /// getSchedModelForCPU - Get the machine model of a CPU.
   ///
-  MCSchedModel getSchedModelForCPU(StringRef CPU) const;
+  const MCSchedModel &getSchedModelForCPU(StringRef CPU) const;
 
-  /// getSchedModel - Get the machine model for this subtarget's CPU.
-  ///
-  const MCSchedModel &getSchedModel() const { return CPUSchedModel; }
+  /// Get the machine model for this subtarget's CPU.
+  const MCSchedModel &getSchedModel() const { return *CPUSchedModel; }
 
   /// Return an iterator at the first process resource consumed by the given
   /// scheduling class.
