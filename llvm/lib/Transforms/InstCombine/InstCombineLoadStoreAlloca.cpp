@@ -762,8 +762,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         LLVMContext::MD_nonnull,
       };
       combineMetadata(NLI, &LI, KnownIDs);
-      if (AATags)
-        NLI->setAAMetadata(AATags);
     };
 
     return ReplaceInstUsesWith(
