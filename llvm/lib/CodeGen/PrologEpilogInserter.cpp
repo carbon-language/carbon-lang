@@ -92,7 +92,7 @@ private:
   void insertPrologEpilogCode(MachineFunction &Fn);
 
   // Convenience for recognizing return blocks.
-  bool isReturnBlock(MachineBasicBlock *MBB);
+  bool isReturnBlock(const MachineBasicBlock *MBB) const;
 };
 } // namespace
 
@@ -127,7 +127,7 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool PEI::isReturnBlock(MachineBasicBlock* MBB) {
+bool PEI::isReturnBlock(const MachineBasicBlock* MBB) const {
   return (MBB && !MBB->empty() && MBB->back().isReturn());
 }
 
@@ -143,7 +143,12 @@ void PEI::calculateSets(MachineFunction &Fn) {
   if (MFI->getSavePoint()) {
     SaveBlock = MFI->getSavePoint();
     assert(MFI->getRestorePoint() && "Both restore and save must be set");
-    RestoreBlocks.push_back(MFI->getRestorePoint());
+    MachineBasicBlock *RestoreBlock = MFI->getRestorePoint();
+    // If RestoreBlock does not have any successor and is not a return block
+    // then the end point is unreachable and we do not need to insert any
+    // epilogue.
+    if (!RestoreBlock->succ_empty() || isReturnBlock(RestoreBlock))
+      RestoreBlocks.push_back(RestoreBlock);
     return;
   }
 

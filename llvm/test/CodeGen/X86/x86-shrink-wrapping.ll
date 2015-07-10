@@ -598,3 +598,42 @@ if.then.60:                                       ; preds = %if.end.55
 cleanup:                                          ; preds = %if.then.60, %if.end.55, %lor.lhs.false, %lor.lhs.false, %lor.lhs.false, %lor.lhs.false, %lor.lhs.false, %lor.lhs.false, %lor.lhs.false, %lor.lhs.false, %if.end, %entry
   ret void
 }
+
+; Make sure we do not insert unreachable code after noreturn function.
+; Although this is not incorrect to insert such code, it is useless
+; and it hurts the binary size.
+;
+; CHECK-LABEL: noreturn:
+; DISABLE: pushq
+;
+; CHECK: testb   %dil, %dil
+; CHECK-NEXT: jne      [[ABORT:LBB[0-9_]+]]
+;
+; CHECK: movl $42, %eax
+;
+; DISABLE-NEXT: popq
+;
+; CHECK-NEXT: retq
+;
+; CHECK: [[ABORT]]: ## %if.abort
+;
+; ENABLE: pushq
+;
+; CHECK: callq _abort
+; ENABLE-NOT: popq
+define i32 @noreturn(i8 signext %bad_thing) {
+entry:
+  %tobool = icmp eq i8 %bad_thing, 0
+  br i1 %tobool, label %if.end, label %if.abort
+
+if.abort:
+  tail call void @abort() #0
+  unreachable
+
+if.end:
+  ret i32 42
+}
+
+declare void @abort() #0
+
+attributes #0 = { noreturn nounwind }

@@ -500,3 +500,42 @@ if.end:                                           ; preds = %if.else, %if.then
 }
 
 declare i32 @someVariadicFunc(i32, ...)
+
+; Make sure we do not insert unreachable code after noreturn function.
+; Although this is not incorrect to insert such code, it is useless
+; and it hurts the binary size.
+;
+; CHECK-LABEL: noreturn:
+; DISABLE: stp
+;
+; CHECK: and [[TEST:w[0-9]+]], w0, #0xff
+; CHECK-NEXT: cbnz [[TEST]], [[ABORT:LBB[0-9_]+]]
+;
+; CHECK: movz w0, #0x2a
+;
+; DISABLE-NEXT: ldp
+;
+; CHECK-NEXT: ret
+;
+; CHECK: [[ABORT]]: ; %if.abort
+;
+; ENABLE: stp
+;
+; CHECK: bl _abort
+; ENABLE-NOT: ldp
+define i32 @noreturn(i8 signext %bad_thing) {
+entry:
+  %tobool = icmp eq i8 %bad_thing, 0
+  br i1 %tobool, label %if.end, label %if.abort
+
+if.abort:
+  tail call void @abort() #0
+  unreachable
+
+if.end:
+  ret i32 42
+}
+
+declare void @abort() #0
+
+attributes #0 = { noreturn nounwind }
