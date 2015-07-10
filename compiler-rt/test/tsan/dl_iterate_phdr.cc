@@ -18,6 +18,8 @@ int exported_var = 0;
 #include <string>
 
 static int callback(struct dl_phdr_info *info, size_t size, void *data) {
+  if (info->dlpi_name[0] == '\0')
+    info->dlpi_name = "/proc/self/exe";
   return !strcmp(info->dlpi_name, "non existent module");
 }
 

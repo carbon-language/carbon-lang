@@ -2153,6 +2153,10 @@ struct dl_iterate_phdr_data {
   void *data;
 };
 
+static bool IsAppNotRodata(uptr addr) {
+  return IsAppMem(addr) && *(u64*)MemToShadow(addr) != kShadowRodata;
+}
+
 static int dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
                               void *data) {
   dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
@@ -2161,13 +2165,13 @@ static int dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
   // inside of dynamic linker, so we "unpoison" it here in order to not
   // produce false reports. Ignoring malloc/free in dlopen/dlclose is not enough
   // because some libc functions call __libc_dlopen.
-  bool reset = info && IsAppMem((uptr)info->dlpi_name) &&
-      *(u64*)MemToShadow((uptr)info->dlpi_name) != kShadowRodata;
-  if (reset)
+  if (info && IsAppNotRodata((uptr)info->dlpi_name))
     MemoryResetRange(cbdata->thr, cbdata->pc, (uptr)info->dlpi_name,
                      internal_strlen(info->dlpi_name));
   int res = cbdata->cb(info, size, cbdata->data);
-  if (reset)
+  // Perform the check one more time in case info->dlpi_name was overwritten
+  // by user callback.
+  if (info && IsAppNotRodata((uptr)info->dlpi_name))
     MemoryResetRange(cbdata->thr, cbdata->pc, (uptr)info->dlpi_name,
                      internal_strlen(info->dlpi_name));
   return res;
