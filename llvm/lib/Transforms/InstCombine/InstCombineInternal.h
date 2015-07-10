@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEINTERNAL_H
 #define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEINTERNAL_H
 
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetFolder.h"
@@ -177,6 +178,8 @@ private:
   // Mode in which we are running the combiner.
   const bool MinimizeSize;
 
+  AliasAnalysis *AA;
+
   // Required analyses.
   // FIXME: These can never be null and should be references.
   AssumptionCache *AC;
@@ -192,10 +195,11 @@ private:
 
 public:
   InstCombiner(InstCombineWorklist &Worklist, BuilderTy *Builder,
-               bool MinimizeSize, AssumptionCache *AC, TargetLibraryInfo *TLI,
+               bool MinimizeSize, AliasAnalysis *AA,
+               AssumptionCache *AC, TargetLibraryInfo *TLI,
                DominatorTree *DT, const DataLayout &DL, LoopInfo *LI)
       : Worklist(Worklist), Builder(Builder), MinimizeSize(MinimizeSize),
-        AC(AC), TLI(TLI), DT(DT), DL(DL), LI(LI), MadeIRChange(false) {}
+        AA(AA), AC(AC), TLI(TLI), DT(DT), DL(DL), LI(LI), MadeIRChange(false) {}
 
   /// \brief Run the combiner over the entire worklist until it is empty.
   ///
