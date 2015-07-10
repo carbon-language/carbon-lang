@@ -595,7 +595,7 @@ DILocalVariable *DIBuilder::createLocalVariable(
     DIType *Ty, bool AlwaysPreserve, unsigned Flags, unsigned ArgNo) {
   // FIXME: Why getNonCompileUnitScope()?
   // FIXME: Why is "!Context" okay here?
-  // FIXME: WHy doesn't this check for a subprogram or lexical block (AFAICT
+  // FIXME: Why doesn't this check for a subprogram or lexical block (AFAICT
   // the only valid scopes)?
   DIScope *Context = getNonCompileUnitScope(Scope);
 
@@ -603,7 +603,7 @@ DILocalVariable *DIBuilder::createLocalVariable(
       VMContext, Tag, cast_or_null<DILocalScope>(Context), Name, File, LineNo,
       DITypeRef::get(Ty), ArgNo, Flags);
   if (AlwaysPreserve) {
-    // The optimizer may remove local variable. If there is an interest
+    // The optimizer may remove local variables. If there is an interest
     // to preserve variable info in such situation then stash it in a
     // named mdnode.
     DISubprogram *Fn = getDISubprogram(Scope);
@@ -867,7 +867,7 @@ void DIBuilder::replaceArrays(DICompositeType *&T, DINodeArray Elements,
   if (!T->isResolved())
     return;
 
-  // If "T" is resolved, it may be due to a self-reference cycle.  Track the
+  // If T is resolved, it may be due to a self-reference cycle.  Track the
   // arrays explicitly if they're unresolved, or else the cycles will be
   // orphaned.
   if (Elements)
