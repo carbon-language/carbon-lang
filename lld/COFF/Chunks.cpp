@@ -263,7 +263,7 @@ void ImportThunkChunk::writeTo(uint8_t *Buf) {
 
 void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res,
                                    Defined *ImageBase) {
-  Res->push_back(getRVA() + Config->ImageBase);
+  Res->push_back(getRVA());
 }
 
 size_t LocalImportChunk::getSize() const {

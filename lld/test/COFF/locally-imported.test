@@ -1,12 +1,23 @@
 # RUN: yaml2obj < %s > %t.obj
 # RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
+# RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck -check-prefix=BASEREL %s
 
 # CHECK:      Contents of section .text:
 # CHECK-NEXT: 1000 00200000
-
 # CHECK:      Contents of section .rdata:
 # CHECK-NEXT: 2000 04100040 01000000
+
+# BASEREL:      BaseReloc [
+# BASEREL-NEXT:   Entry {
+# BASEREL-NEXT:     Type: DIR64
+# BASEREL-NEXT:     Address: 0x2000
+# BASEREL-NEXT:   }
+# BASEREL-NEXT:   Entry {
+# BASEREL-NEXT:     Type: ABSOLUTE
+# BASEREL-NEXT:     Address: 0x2000
+# BASEREL-NEXT:   }
+# BASEREL-NEXT: ]
 
 ---
 header:
