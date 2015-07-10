@@ -212,7 +212,7 @@ namespace llvm {
   /// SimplifyFCmpInst - Given operands for an FCmpInst, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                          const DataLayout &DL,
+                          FastMathFlags FMF, const DataLayout &DL,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
                           AssumptionCache *AC = nullptr,

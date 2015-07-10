@@ -3046,7 +3046,8 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 /// SimplifyFCmpInst - Given operands for an FCmpInst, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                               const Query &Q, unsigned MaxRecurse) {
+                               FastMathFlags FMF, const Query &Q,
+                               unsigned MaxRecurse) {
   CmpInst::Predicate Pred = (CmpInst::Predicate)Predicate;
   assert(CmpInst::isFPPredicate(Pred) && "Not an FP compare!");
 
@@ -3064,6 +3065,14 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     return ConstantInt::get(GetCompareTy(LHS), 0);
   if (Pred == FCmpInst::FCMP_TRUE)
     return ConstantInt::get(GetCompareTy(LHS), 1);
+
+  // UNO/ORD predicates can be trivially folded if NaNs are ignored.
+  if (FMF.noNaNs()) {
+    if (Pred == FCmpInst::FCMP_UNO)
+      return ConstantInt::get(GetCompareTy(LHS), 0);
+    if (Pred == FCmpInst::FCMP_ORD)
+      return ConstantInt::get(GetCompareTy(LHS), 1);
+  }
 
   // fcmp pred x, undef  and  fcmp pred undef, x
   // fold to true if unordered, false if ordered
@@ -3151,12 +3160,12 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
-                              const DataLayout &DL,
+                              FastMathFlags FMF, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFCmpInst(Predicate, LHS, RHS, Query(DL, TLI, DT, AC, CxtI),
-                            RecursionLimit);
+  return ::SimplifyFCmpInst(Predicate, LHS, RHS, FMF,
+                            Query(DL, TLI, DT, AC, CxtI), RecursionLimit);
 }
 
 /// SimplifyWithOpReplaced - See if V simplifies when its operand Op is
@@ -3670,7 +3679,7 @@ static Value *SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                               const Query &Q, unsigned MaxRecurse) {
   if (CmpInst::isIntPredicate((CmpInst::Predicate)Predicate))
     return SimplifyICmpInst(Predicate, LHS, RHS, Q, MaxRecurse);
-  return SimplifyFCmpInst(Predicate, LHS, RHS, Q, MaxRecurse);
+  return SimplifyFCmpInst(Predicate, LHS, RHS, FastMathFlags(), Q, MaxRecurse);
 }
 
 Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
@@ -3900,9 +3909,9 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout &DL,
                          I->getOperand(1), DL, TLI, DT, AC, I);
     break;
   case Instruction::FCmp:
-    Result =
-        SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(), I->getOperand(0),
-                         I->getOperand(1), DL, TLI, DT, AC, I);
+    Result = SimplifyFCmpInst(cast<FCmpInst>(I)->getPredicate(),
+                              I->getOperand(0), I->getOperand(1),
+                              I->getFastMathFlags(), DL, TLI, DT, AC, I);
     break;
   case Instruction::Select:
     Result = SimplifySelectInst(I->getOperand(0), I->getOperand(1),

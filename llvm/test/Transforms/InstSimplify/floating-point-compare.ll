@@ -58,3 +58,18 @@ define i1 @orderedLessZeroPowi(double,double) {
   ret i1 %olt
 }
 
+define i1 @nonans1(double %in1, double %in2) {
+  %cmp = fcmp nnan uno double %in1, %in2
+  ret i1 %cmp
+
+; CHECK-LABEL: @nonans1
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @nonans2(double %in1, double %in2) {
+  %cmp = fcmp nnan ord double %in1, %in2
+  ret i1 %cmp
+
+; CHECK-LABEL: @nonans2
+; CHECK-NEXT: ret i1 true
+}
