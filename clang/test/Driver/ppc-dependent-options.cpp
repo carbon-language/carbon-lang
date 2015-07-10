@@ -1,44 +1,45 @@
 // REQUIRES: powerpc-registered-target
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 %s 2>&1 | \
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 %s 2>&1 | FileCheck %s \
+// RUN: -check-prefix=CHECK-DEFAULT
+
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mno-vsx -mpower8-vector %s 2>&1 | \
+// RUN: FileCheck %s -check-prefix=CHECK-NVSX-P8V
+
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mno-vsx -mdirect-move %s 2>&1 | FileCheck %s \
+// RUN: -check-prefix=CHECK-NVSX-DMV
+
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mno-vsx -mpower8-vector -mvsx %s 2>&1 | \
 // RUN: FileCheck %s -check-prefix=CHECK-DEFAULT
 
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mno-vsx -mpower8-vector %s 2>&1 | FileCheck %s \
-// RUN: -check-prefix=CHECK-NVSX-P8V
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mno-vsx -mdirect-move -mvsx %s 2>&1 | \
+// RUN: FileCheck %s -check-prefix=CHECK-DEFAULT
 
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mno-vsx -mdirect-move %s 2>&1 | FileCheck %s \
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mpower8-vector -mno-vsx %s 2>&1 | \
+// RUN: FileCheck %s -check-prefix=CHECK-NVSX-P8V
+
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mdirect-move -mno-vsx %s 2>&1 | FileCheck %s \
 // RUN: -check-prefix=CHECK-NVSX-DMV
 
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mno-vsx -mpower8-vector -mvsx %s 2>&1 | FileCheck %s \
-// RUN: -check-prefix=CHECK-DEFAULT
-
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mno-vsx -mdirect-move -mvsx %s 2>&1 | FileCheck %s \
-// RUN: -check-prefix=CHECK-DEFAULT
-
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mpower8-vector -mno-vsx %s 2>&1 | FileCheck %s \
-// RUN: -check-prefix=CHECK-NVSX-P8V
-
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mdirect-move -mno-vsx %s 2>&1 | FileCheck %s \
-// RUN: -check-prefix=CHECK-NVSX-DMV
-
-// RUN: not %clang -fsyntax-only -mcpu=power8 -std=c++11 \
-// RUN: -mno-vsx %s 2>&1 | FileCheck %s \
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power8 -std=c++11 -mno-vsx %s 2>&1 | FileCheck %s \
 // RUN: -check-prefix=CHECK-NVSX
 
-// RUN: not %clang -fsyntax-only -mcpu=power6 -std=c++11 %s 2>&1 | \
-// RUN: FileCheck %s -check-prefix=CHECK-NVSX
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power6 -std=c++11 %s 2>&1 | FileCheck %s -check-prefix=CHECK-NVSX
 
-// RUN: not %clang -fsyntax-only -mcpu=power6 -std=c++11 \
-// RUN: -mpower8-vector %s 2>&1 | FileCheck %s \
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power6 -std=c++11 -mpower8-vector %s 2>&1 | FileCheck %s \
 // RUN: -check-prefix=CHECK-DEFAULT
 
-// RUN: not %clang -fsyntax-only -mcpu=power6 -std=c++11 \
-// RUN: -mdirect-move %s 2>&1 | FileCheck %s \
+// RUN: not %clang -target powerpc64le-unknown-unknown -fsyntax-only \
+// RUN: -mcpu=power6 -std=c++11 -mdirect-move %s 2>&1 | FileCheck %s \
 // RUN: -check-prefix=CHECK-VSX
 
 #ifdef __VSX__
