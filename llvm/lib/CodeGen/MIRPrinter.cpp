@@ -47,6 +47,8 @@ public:
   void convert(yaml::MachineFrameInfo &YamlMFI, const MachineFrameInfo &MFI);
   void convert(ModuleSlotTracker &MST, yaml::MachineBasicBlock &YamlMBB,
                const MachineBasicBlock &MBB);
+  void convertStackObjects(yaml::MachineFunction &MF,
+                           const MachineFrameInfo &MFI);
 
 private:
   void initRegisterMaskIds(const MachineFunction &MF);
@@ -98,6 +100,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.HasInlineAsm = MF.hasInlineAsm();
   convert(YamlMF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo());
   convert(YamlMF.FrameInfo, *MF.getFrameInfo());
+  convertStackObjects(YamlMF, *MF.getFrameInfo());
 
   int I = 0;
   ModuleSlotTracker MST(MF.getFunction()->getParent());
@@ -150,6 +153,28 @@ void MIRPrinter::convert(yaml::MachineFrameInfo &YamlMFI,
   YamlMFI.HasOpaqueSPAdjustment = MFI.hasOpaqueSPAdjustment();
   YamlMFI.HasVAStart = MFI.hasVAStart();
   YamlMFI.HasMustTailInVarArgFunc = MFI.hasMustTailInVarArgFunc();
+}
+
+void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
+                                     const MachineFrameInfo &MFI) {
+  unsigned ID = 0;
+  for (int I = 0, E = MFI.getObjectIndexEnd(); I < E; ++I) {
+    if (MFI.isDeadObjectIndex(I))
+      continue;
+
+    yaml::MachineStackObject YamlObject;
+    YamlObject.ID = ID++;
+    YamlObject.Type = MFI.isSpillSlotObjectIndex(I)
+                          ? yaml::MachineStackObject::SpillSlot
+                          : yaml::MachineStackObject::DefaultType;
+    YamlObject.Offset = MFI.getObjectOffset(I);
+    YamlObject.Size = MFI.getObjectSize(I);
+    YamlObject.Alignment = MFI.getObjectAlignment(I);
+
+    MF.StackObjects.push_back(YamlObject);
+    // TODO: Store the mapping between object IDs and object indices to print
+    // the stack object references correctly.
+  }
 }
 
 void MIRPrinter::convert(ModuleSlotTracker &MST,

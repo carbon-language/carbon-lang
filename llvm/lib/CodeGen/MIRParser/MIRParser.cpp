@@ -107,7 +107,7 @@ public:
                               const yaml::MachineFunction &YamlMF);
 
   bool initializeFrameInfo(MachineFrameInfo &MFI,
-                           const yaml::MachineFrameInfo &YamlMFI);
+                           const yaml::MachineFunction &YamlMF);
 
 private:
   /// Return a MIR diagnostic converted from an MI string diagnostic.
@@ -260,7 +260,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
   if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF))
     return true;
-  if (initializeFrameInfo(*MF.getFrameInfo(), YamlMF.FrameInfo))
+  if (initializeFrameInfo(*MF.getFrameInfo(), YamlMF))
     return true;
 
   PerFunctionMIParsingState PFS;
@@ -354,7 +354,8 @@ bool MIRParserImpl::initializeRegisterInfo(
 }
 
 bool MIRParserImpl::initializeFrameInfo(MachineFrameInfo &MFI,
-                                        const yaml::MachineFrameInfo &YamlMFI) {
+                                        const yaml::MachineFunction &YamlMF) {
+  const yaml::MachineFrameInfo &YamlMFI = YamlMF.FrameInfo;
   MFI.setFrameAddressIsTaken(YamlMFI.IsFrameAddressTaken);
   MFI.setReturnAddressIsTaken(YamlMFI.IsReturnAddressTaken);
   MFI.setHasStackMap(YamlMFI.HasStackMap);
@@ -369,6 +370,16 @@ bool MIRParserImpl::initializeFrameInfo(MachineFrameInfo &MFI,
   MFI.setHasOpaqueSPAdjustment(YamlMFI.HasOpaqueSPAdjustment);
   MFI.setHasVAStart(YamlMFI.HasVAStart);
   MFI.setHasMustTailInVarArgFunc(YamlMFI.HasMustTailInVarArgFunc);
+
+  // Initialize the frame objects.
+  for (const auto &Object : YamlMF.StackObjects) {
+    int ObjectIdx = MFI.CreateStackObject(
+        Object.Size, Object.Alignment,
+        Object.Type == yaml::MachineStackObject::SpillSlot);
+    MFI.setObjectOffset(ObjectIdx, Object.Offset);
+    // TODO: Store the mapping between object IDs and object indices to parse
+    // stack object references correctly.
+  }
   return false;
 }
 

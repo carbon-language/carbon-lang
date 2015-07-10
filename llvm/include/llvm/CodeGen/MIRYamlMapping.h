@@ -121,11 +121,52 @@ template <> struct MappingTraits<MachineBasicBlock> {
   }
 };
 
+/// Serializable representation of stack object from the MachineFrameInfo class.
+///
+/// The flags 'isImmutable' and 'isAliased' aren't serialized, as they are
+/// determined by the object's type and frame information flags.
+/// Dead stack objects aren't serialized.
+///
+/// TODO: Determine isPreallocated flag by mapping between objects and local
+/// objects (Serialize local objects).
+/// TODO: Serialize variable sized and fixed stack objects.
+struct MachineStackObject {
+  enum ObjectType { DefaultType, SpillSlot };
+  // TODO: Serialize LLVM alloca reference.
+  unsigned ID;
+  ObjectType Type = DefaultType;
+  int64_t Offset = 0;
+  uint64_t Size = 0;
+  unsigned Alignment = 0;
+};
+
+template <> struct ScalarEnumerationTraits<MachineStackObject::ObjectType> {
+  static void enumeration(yaml::IO &IO, MachineStackObject::ObjectType &Type) {
+    IO.enumCase(Type, "default", MachineStackObject::DefaultType);
+    IO.enumCase(Type, "spill-slot", MachineStackObject::SpillSlot);
+  }
+};
+
+template <> struct MappingTraits<MachineStackObject> {
+  static void mapping(yaml::IO &YamlIO, MachineStackObject &Object) {
+    YamlIO.mapRequired("id", Object.ID);
+    YamlIO.mapOptional(
+        "type", Object.Type,
+        MachineStackObject::DefaultType); // Don't print the default type.
+    YamlIO.mapOptional("offset", Object.Offset);
+    YamlIO.mapRequired("size", Object.Size);
+    YamlIO.mapOptional("alignment", Object.Alignment);
+  }
+
+  static const bool flow = true;
+};
+
 } // end namespace yaml
 } // end namespace llvm
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::VirtualRegisterDefinition)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineBasicBlock)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineStackObject)
 
 namespace llvm {
 namespace yaml {
@@ -138,7 +179,6 @@ namespace yaml {
 /// It also doesn't serialize attributes like 'NumFixedObject' and
 /// 'HasVarSizedObjects' as they are determined by the frame objects themselves.
 struct MachineFrameInfo {
-  // TODO: Serialize stack objects.
   bool IsFrameAddressTaken = false;
   bool IsReturnAddressTaken = false;
   bool HasStackMap = false;
@@ -190,6 +230,7 @@ struct MachineFunction {
   // TODO: Serialize live in registers.
   // Frame information
   MachineFrameInfo FrameInfo;
+  std::vector<MachineStackObject> StackObjects;
 
   std::vector<MachineBasicBlock> BasicBlocks;
 };
@@ -205,6 +246,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("tracksSubRegLiveness", MF.TracksSubRegLiveness);
     YamlIO.mapOptional("registers", MF.VirtualRegisters);
     YamlIO.mapOptional("frameInfo", MF.FrameInfo);
+    YamlIO.mapOptional("stack", MF.StackObjects);
     YamlIO.mapOptional("body", MF.BasicBlocks);
   }
 };
