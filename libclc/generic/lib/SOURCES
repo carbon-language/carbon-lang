@@ -102,6 +102,8 @@ math/sin.cl
 math/sincos.cl
 math/sincos_helpers.cl
 math/sinpi.cl
+math/clc_sqrt.cl
+math/sqrt.cl
 math/tan.cl
 relational/all.cl
 relational/any.cl
