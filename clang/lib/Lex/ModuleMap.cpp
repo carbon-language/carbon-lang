@@ -347,7 +347,7 @@ ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
     // Iterate over all modules that 'File' is part of to find the best fit.
     for (KnownHeader &H : Known->second) {
       // Prefer a header from the current module over all others.
-      if (H.getModule() == CompilingModule)
+      if (H.getModule()->getTopLevelModule() == CompilingModule)
         return MakeResult(H);
       // Cannot use a module if it is unavailable.
       if (!H.getModule()->isAvailable())
