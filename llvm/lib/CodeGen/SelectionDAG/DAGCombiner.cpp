@@ -13844,6 +13844,15 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   // If they are both volatile then they cannot be reordered.
   if (Op0->isVolatile() && Op1->isVolatile()) return true;
 
+  // If one operation reads from invariant memory, and the other may store, they
+  // cannot alias. These should really be checking the equivalent of mayWrite,
+  // but it only matters for memory nodes other than load /store.
+  if (Op0->isInvariant() && Op1->writeMem())
+    return false;
+
+  if (Op1->isInvariant() && Op0->writeMem())
+    return false;
+
   // Gather base node and offset information.
   SDValue Base1, Base2;
   int64_t Offset1, Offset2;
