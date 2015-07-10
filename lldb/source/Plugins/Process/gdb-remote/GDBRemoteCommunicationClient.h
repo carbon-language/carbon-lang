@@ -550,6 +550,9 @@ public:
     GetThreadExtendedInfoSupported();
 
     bool
+    GetLoadedDynamicLibrariesInfosSupported();
+
+    bool
     GetModuleInfo (const FileSpec& module_file_spec,
                    const ArchSpec& arch_spec,
                    ModuleSpec &module_spec);
@@ -614,6 +617,7 @@ protected:
     LazyBool m_supports_qXfer_features_read;
     LazyBool m_supports_augmented_libraries_svr4_read;
     LazyBool m_supports_jThreadExtendedInfo;
+    LazyBool m_supports_jLoadedDynamicLibrariesInfos;
 
     bool
         m_supports_qProcessInfoPID:1,

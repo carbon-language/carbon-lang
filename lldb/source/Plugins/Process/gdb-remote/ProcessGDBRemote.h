@@ -247,6 +247,9 @@ public:
     void
     ModulesDidLoad (ModuleList &module_list) override;
 
+    StructuredData::ObjectSP
+    GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_address, lldb::addr_t image_count) override;
+
 protected:
     friend class ThreadGDBRemote;
     friend class GDBRemoteCommunicationClient;

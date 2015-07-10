@@ -35,6 +35,7 @@
 #include "RNBSocket.h"
 #include "lldb/Utility/StringExtractor.h"
 #include "MacOSX/Genealogy.h"
+#include "JSONGenerator.h"
 
 #if defined (HAVE_LIBCOMPRESSION)
 #include <compression.h>
@@ -263,6 +264,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_process_info,            &RNBRemote::HandlePacket_qProcessInfo           , NULL, "qProcessInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
     t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_qSymbol                , NULL, "qSymbol:", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (json_query_thread_extended_info,&RNBRemote::HandlePacket_jThreadExtendedInfo   , NULL, "jThreadExtendedInfo", "Replies with JSON data of thread extended information."));
+    t.push_back (Packet (json_query_get_loaded_dynamic_libraries_infos,          &RNBRemote::HandlePacket_jGetLoadedDynamicLibrariesInfos,     NULL, "jGetLoadedDynamicLibrariesInfos", "Replies with JSON data of all the shared libraries loaded in this process."));
     //t.push_back (Packet (json_query_threads_info,       &RNBRemote::HandlePacket_jThreadsInfo           , NULL, "jThreadsInfo", "Replies with JSON data with information about all threads."));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
     t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specific packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
@@ -5345,6 +5347,50 @@ RNBRemote::HandlePacket_jThreadExtendedInfo (const char *p)
     return SendPacket ("OK");
 }
 
+rnb_err_t
+RNBRemote::HandlePacket_jGetLoadedDynamicLibrariesInfos (const char *p)
+{
+    nub_process_t pid;
+    // If we haven't run the process yet, return an error.
+    if (!m_ctx.HasValidProcessID())
+    {
+        return SendPacket ("E83");
+    }
+
+    pid = m_ctx.ProcessID();
+
+    const char get_loaded_dynamic_libraries_infos_str[] = { "jGetLoadedDynamicLibrariesInfos:{" };
+    if (strncmp (p, get_loaded_dynamic_libraries_infos_str, sizeof (get_loaded_dynamic_libraries_infos_str) - 1) == 0)
+    {
+        p += strlen (get_loaded_dynamic_libraries_infos_str);
+
+        nub_addr_t image_list_address = get_integer_value_for_key_name_from_json ("image_list_address", p);
+        nub_addr_t image_count = get_integer_value_for_key_name_from_json ("image_count", p);
+
+        if (image_list_address != INVALID_NUB_ADDRESS && image_count != INVALID_NUB_ADDRESS)
+        {
+            JSONGenerator::ObjectSP json_sp;
+
+            json_sp = DNBGetLoadedDynamicLibrariesInfos (pid, image_list_address, image_count);
+
+            if (json_sp.get())
+            {
+                std::ostringstream json_str;
+                json_sp->Dump (json_str);
+                if (json_str.str().size() > 0)
+                {
+                    std::string json_str_quoted = binary_encode_string (json_str.str());
+                    return SendPacket (json_str_quoted.c_str());
+                }
+                else
+                {
+                    SendPacket ("E84");
+                }
+            }
+        }
+    }
+    return SendPacket ("OK");
+}
 
 rnb_err_t
 RNBRemote::HandlePacket_qSymbol (const char *command)

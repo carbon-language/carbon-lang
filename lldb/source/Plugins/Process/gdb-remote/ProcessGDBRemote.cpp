@@ -3985,6 +3985,44 @@ ProcessGDBRemote::GetExtendedInfoForThread (lldb::tid_t tid)
             {
                 if (!response.Empty())
                 {
+                    object_sp = StructuredData::ParseJSON (response.GetStringRef());
+                }
+            }
+        }
+    }
+    return object_sp;
+}
+
+StructuredData::ObjectSP
+ProcessGDBRemote::GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_address, lldb::addr_t image_count)
+{
+    StructuredData::ObjectSP object_sp;
+
+    if (m_gdb_comm.GetLoadedDynamicLibrariesInfosSupported())
+    {
+        StructuredData::ObjectSP args_dict(new StructuredData::Dictionary());
+        args_dict->GetAsDictionary()->AddIntegerItem ("image_list_address", image_list_address);
+        args_dict->GetAsDictionary()->AddIntegerItem ("image_count", image_count);
+
+        StreamString packet;
+        packet << "jGetLoadedDynamicLibrariesInfos:";
+        args_dict->Dump (packet);
+
+        // FIXME the final character of a JSON dictionary, '}', is the escape
+        // character in gdb-remote binary mode.  lldb currently doesn't escape
+        // these characters in its packet output -- so we add the quoted version
+        // of the } character here manually in case we talk to a debugserver which
+        // un-escapes the characters at packet read time.
+        packet << (char) (0x7d ^ 0x20);
+
+        StringExtractorGDBRemote response;
+        if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, false) == GDBRemoteCommunication::PacketResult::Success)
+        {
+            StringExtractorGDBRemote::ResponseType response_type = response.GetResponseType();
+            if (response_type == StringExtractorGDBRemote::eResponse)
+            {
+                if (!response.Empty())
+                {
                     // The packet has already had the 0x7d xor quoting stripped out at the
                     // GDBRemoteCommunication packet receive level.
                     object_sp = StructuredData::ParseJSON (response.GetStringRef());
@@ -3994,6 +4032,7 @@ ProcessGDBRemote::GetExtendedInfoForThread (lldb::tid_t tid)
     }
     return object_sp;
 }
+
 
 // Establish the largest memory read/write payloads we should use.
 // If the remote stub has a max packet size, stay under that size.

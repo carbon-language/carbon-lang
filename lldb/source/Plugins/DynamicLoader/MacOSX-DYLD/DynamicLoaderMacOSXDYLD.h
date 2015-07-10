@@ -18,6 +18,7 @@
 
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
@@ -343,6 +344,9 @@ protected:
     bool
     ReadAllImageInfosStructure ();
     
+    bool
+    AddModulesUsingInfosFromDebugserver (lldb_private::StructuredData::ObjectSP image_details, DYLDImageInfo::collection &image_infos);
+
     bool
     AddModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count);
     

@@ -1066,6 +1066,18 @@ DNBGetTSDAddressForThread (nub_process_t pid, nub_thread_t tid, uint64_t plo_pth
     return INVALID_NUB_ADDRESS;
 }
 
+JSONGenerator::ObjectSP 
+DNBGetLoadedDynamicLibrariesInfos (nub_process_t pid, nub_addr_t image_list_address, nub_addr_t image_count)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        return procSP->GetLoadedDynamicLibrariesInfos (pid, image_list_address, image_count);
+    }
+    return JSONGenerator::ObjectSP();
+}
+
+
 
 const char *
 DNBProcessGetExecutablePath (nub_process_t pid)

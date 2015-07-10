@@ -27,6 +27,7 @@
 #include "PThreadMutex.h"
 #include "Genealogy.h"
 #include "ThreadInfo.h"
+#include "JSONGenerator.h"
 
 #include <mach/mach.h>
 #include <sys/signal.h>
@@ -185,6 +186,7 @@ public:
     nub_addr_t              GetPThreadT (nub_thread_t tid);
     nub_addr_t              GetDispatchQueueT (nub_thread_t tid);
     nub_addr_t              GetTSDAddressForThread (nub_thread_t tid, uint64_t plo_pthread_tsd_base_address_offset, uint64_t plo_pthread_tsd_base_offset, uint64_t plo_pthread_tsd_entry_size);
+    JSONGenerator::ObjectSP GetLoadedDynamicLibrariesInfos (nub_process_t pid, nub_addr_t image_list_address, nub_addr_t image_count);
 
     nub_size_t              GetNumThreads () const;
     nub_thread_t            GetThreadAtIndex (nub_size_t thread_idx) const;

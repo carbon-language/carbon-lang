@@ -87,6 +87,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     m_supports_qXfer_features_read (eLazyBoolCalculate),
     m_supports_augmented_libraries_svr4_read (eLazyBoolCalculate),
     m_supports_jThreadExtendedInfo (eLazyBoolCalculate),
+    m_supports_jLoadedDynamicLibrariesInfos (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -651,6 +652,24 @@ GDBRemoteCommunicationClient::GetThreadExtendedInfoSupported ()
         }
     }
     return m_supports_jThreadExtendedInfo;
+}
+
+bool
+GDBRemoteCommunicationClient::GetLoadedDynamicLibrariesInfosSupported ()
+{
+    if (m_supports_jLoadedDynamicLibrariesInfos == eLazyBoolCalculate)
+    {
+        StringExtractorGDBRemote response;
+        m_supports_jLoadedDynamicLibrariesInfos = eLazyBoolNo;
+        if (SendPacketAndWaitForResponse("jGetLoadedDynamicLibrariesInfos:", response, false) == PacketResult::Success)
+        {
+            if (response.IsOKResponse())
+            {
+                m_supports_jLoadedDynamicLibrariesInfos = eLazyBoolYes;
+            }
+        }
+    }
+    return m_supports_jLoadedDynamicLibrariesInfos;
 }
 
 bool

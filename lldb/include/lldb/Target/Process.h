@@ -30,6 +30,7 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
 #include "lldb/Host/HostThread.h"
@@ -1886,6 +1887,37 @@ public:
     //------------------------------------------------------------------
     virtual void
     ModulesDidLoad (ModuleList &module_list);
+
+
+    //------------------------------------------------------------------
+    /// Retrieve the list of shared libraries that are loaded for this process
+    /// 
+    /// For certain platforms, the time it takes for the DynamicLoader plugin to
+    /// read all of the shared libraries out of memory over a slow communication
+    /// channel may be too long.  In that instance, the gdb-remote stub may be
+    /// able to retrieve the necessary information about the solibs out of memory
+    /// and return a concise summary sufficient for the DynamicLoader plugin.
+    ///
+    /// @param [in] image_list_address
+    ///     The address where the table of shared libraries is stored in memory,
+    ///     if that is appropriate for this platform.  Else this may be 
+    ///     passed as LLDB_INVALID_ADDRESS.
+    ///
+    /// @param [in] image_count
+    ///     The number of shared libraries that are present in this process, if
+    ///     that is appropriate for this platofrm  Else this may be passed as
+    ///     LLDB_INVALID_ADDRESS.
+    ///
+    /// @return
+    ///     A StructureDataSP object which, if non-empty, will contain the 
+    ///     information the DynamicLoader needs to get the initial scan of
+    ///     solibs resolved.
+    //------------------------------------------------------------------
+    virtual lldb_private::StructuredData::ObjectSP
+    GetLoadedDynamicLibrariesInfos (lldb::addr_t image_list_address, lldb::addr_t image_count)
+    {
+        return StructuredData::ObjectSP();
+    }
 
 protected:
     

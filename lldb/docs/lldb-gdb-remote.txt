@@ -1447,3 +1447,86 @@ for this region.
 //       libcompression implements "LZMA level 6", the default compression for the
 //       open source LZMA implementation.
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "jGetLoadedDynamicLibrariesInfos"
+//
+// BRIEF
+//  This packet asks the remote debug stub to send the details about libraries
+//  being added/removed from the process as a performance optimization.
+//
+//  LLDB SENDS: jGetLoadedDynamicLibrariesInfos:{"image_count":1,"image_list_address":140734800075128}
+//  STUB REPLIES: ${"images":[{"load_address":4294967296,"mod_date":0,"pathname":"/tmp/a.out","uuid":"02CF262C-ED6F-3965-9E14-63538B465CFF","mach_header":{"magic":4277009103,"cputype":16777223,"cpusubtype":18446744071562067971,"filetype":2},"segments":{"name":"__PAGEZERO","vmaddr":0,"vmsize":4294967296,"fileoff":0,"filesize":0,"maxprot":0},{"name":"__TEXT","vmaddr":4294967296,"vmsize":4096,"fileoff":0,"filesize":4096,"maxprot":7},{"name":"__LINKEDIT","vmaddr":4294971392,"vmsize":4096,"fileoff":4096,"filesize":152,"maxprot":7}}]}#00
+//
+//  Or pretty-printed,
+//
+//  STUB REPLIES: ${"images":
+//                  [
+//                      {"load_address":4294967296,
+//                       "mod_date":0,
+//                       "pathname":"/tmp/a.out",
+//                       "uuid":"02CF262C-ED6F-3965-9E14-63538B465CFF",
+//                       "mach_header":
+//                          {"magic":4277009103,
+//                           "cputype":16777223,
+//                           "cpusubtype":18446744071562067971,
+//                           "filetype":2
+//                           },
+//                       "segments":
+//                        [
+//                          {"name":"__PAGEZERO",
+//                           "vmaddr":0,
+//                           "vmsize":4294967296,
+//                           "fileoff":0,
+//                           "filesize":0,
+//                           "maxprot":0
+//                          },
+//                          {"name":"__TEXT",
+//                           "vmaddr":4294967296,
+//                           "vmsize":4096,
+//                           "fileoff":0,
+//                           "filesize":4096,
+//                           "maxprot":7
+//                          },
+//                          {"name":"__LINKEDIT",
+//                           "vmaddr":4294971392,
+//                           "vmsize":4096,
+//                           "fileoff":4096,
+//                           "filesize":152,
+//                           "maxprot":7
+//                          }
+//                        ]
+//                      }
+//                  ]
+//              }
+//
+//
+// This is similar to the qXfer:libraries:read packet, and it could
+// be argued that it should be merged into that packet.  A separate
+// packet was created primarily because lldb needs to specify the
+// number of images to be read and the address from which the initial
+// information is read.  Also the XML DTD would need to be extended
+// quite a bit to provide all the information that the DynamicLoaderMacOSX
+// would need to work correctly on this platform.
+//
+// On Mac OS X / iOS, when libraries are added or removed, a stub
+// function is called which lldb puts a breakpoint on.  The arguments
+// to the stub function include the number of libraries being added
+// or removed and the address where the list of libraries can be
+// found.  The information at this address is the load address of the
+// library, the filename, and the mod date of the library if available.
+// DynamicLoaderMacOSX then parses the load commands in the Mach-O header
+// at the load address before it can decide what action to take.
+//
+// The purpose of this packet is to eliminate all of the memory reads needed
+// to read the Mach-O header and load commands for these libraries.
+// On a typical GUI app, there can be a couple hundred shared libraries 
+// which results in megabytes of read packets.  That same information can
+// be returned in a couple hundred kilobytes in JSON format from the remote
+// debugserver.
+//
+//
+// PRIORITY TO IMPLEMENT
+//  Low.  If this packet is absent, lldb will read the Mach-O headers/load
+//  commands out of memory.
+//----------------------------------------------------------------------

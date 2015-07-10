@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <uuid/uuid.h>
 
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/DataBuffer.h"
@@ -793,6 +794,172 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
 }
 
 
+// This method is an amalgamation of code from 
+//   ReadMachHeader()
+//   ParseLoadCommands()
+//   UpdateImageInfosHeaderAndLoadCommands()
+// but written to extract everything from the JSON packet from debugserver, instead of using memory reads.
+
+bool
+DynamicLoaderMacOSXDYLD::AddModulesUsingInfosFromDebugserver (StructuredData::ObjectSP image_details, DYLDImageInfo::collection &image_infos)
+{
+    StructuredData::ObjectSP images_sp = image_details->GetAsDictionary()->GetValueForKey("images");
+    if (images_sp.get() == nullptr)
+        return false;
+
+    image_infos.resize (images_sp->GetAsArray()->GetSize());
+
+    uint32_t exe_idx = UINT32_MAX;
+
+    for (size_t i = 0; i < image_infos.size(); i++)
+    {
+        StructuredData::ObjectSP image_sp = images_sp->GetAsArray()->GetItemAtIndex(i);
+        if (image_sp.get() == nullptr || image_sp->GetAsDictionary() == nullptr)
+            return false;
+        StructuredData::Dictionary *image = image_sp->GetAsDictionary();
+        if (image->HasKey("load_address") == false 
+            || image->HasKey("pathname") == false 
+            || image->HasKey("mod_date") == false
+            || image->HasKey("mach_header") == false 
+            || image->GetValueForKey("mach_header")->GetAsDictionary() == nullptr
+            || image->HasKey("segments") == false 
+            || image->GetValueForKey("segments")->GetAsArray() == nullptr
+            || image->HasKey("uuid") == false )
+        {
+            return false;
+        }
+        image_infos[i].address = image->GetValueForKey("load_address")->GetAsInteger()->GetValue();
+        image_infos[i].mod_date = image->GetValueForKey("mod_date")->GetAsInteger()->GetValue();
+        image_infos[i].file_spec.SetFile(image->GetValueForKey("pathname")->GetAsString()->GetValue().c_str(), false);
+
+        StructuredData::Dictionary *mh = image->GetValueForKey("mach_header")->GetAsDictionary();
+        image_infos[i].header.magic = mh->GetValueForKey("magic")->GetAsInteger()->GetValue();
+        image_infos[i].header.cputype = mh->GetValueForKey("cputype")->GetAsInteger()->GetValue();
+        image_infos[i].header.cpusubtype = mh->GetValueForKey("cpusubtype")->GetAsInteger()->GetValue();
+        image_infos[i].header.filetype = mh->GetValueForKey("filetype")->GetAsInteger()->GetValue();
+
+        // Fields that aren't used by DynamicLoaderMacOSXDYLD so debugserver doesn't currently send them
+        // in the reply.
+
+        if (mh->HasKey("flags"))
+            image_infos[i].header.flags = mh->GetValueForKey("flags")->GetAsInteger()->GetValue();
+        else
+            image_infos[i].header.flags = 0;
+
+        if (mh->HasKey("ncmds"))
+            image_infos[i].header.ncmds = mh->GetValueForKey("ncmds")->GetAsInteger()->GetValue();
+        else
+            image_infos[i].header.ncmds = 0;
+
+        if (mh->HasKey("sizeofcmds"))
+            image_infos[i].header.sizeofcmds = mh->GetValueForKey("sizeofcmds")->GetAsInteger()->GetValue();
+        else
+            image_infos[i].header.sizeofcmds = 0;
+
+        if (image_infos[i].header.filetype == llvm::MachO::MH_EXECUTE)
+            exe_idx = i;
+
+        StructuredData::Array *segments = image->GetValueForKey("segments")->GetAsArray();
+        uint32_t segcount = segments->GetSize();
+        for (size_t j = 0; j < segcount; j++)
+        {
+            Segment segment;
+            StructuredData::Dictionary *seg = segments->GetItemAtIndex(j)->GetAsDictionary();
+            segment.name = ConstString(seg->GetValueForKey("name")->GetAsString()->GetValue().c_str());
+            segment.vmaddr = seg->GetValueForKey("vmaddr")->GetAsInteger()->GetValue();
+            segment.vmsize = seg->GetValueForKey("vmsize")->GetAsInteger()->GetValue();
+            segment.fileoff = seg->GetValueForKey("fileoff")->GetAsInteger()->GetValue();
+            segment.filesize = seg->GetValueForKey("filesize")->GetAsInteger()->GetValue();
+            segment.maxprot = seg->GetValueForKey("maxprot")->GetAsInteger()->GetValue();
+
+            // Fields that aren't used by DynamicLoaderMacOSXDYLD so debugserver doesn't currently send them
+            // in the reply.
+
+            if (seg->HasKey("initprot"))
+                segment.initprot = seg->GetValueForKey("initprot")->GetAsInteger()->GetValue();
+            else
+                segment.initprot = 0;
+
+            if (seg->HasKey("flags"))
+                segment.flags = seg->GetValueForKey("flags")->GetAsInteger()->GetValue();
+            else
+                segment.flags = 0;
+
+            if (seg->HasKey("nsects"))
+                segment.nsects = seg->GetValueForKey("nsects")->GetAsInteger()->GetValue();
+            else
+                segment.nsects = 0;
+
+            image_infos[i].segments.push_back (segment);
+        }
+
+        image_infos[i].uuid.SetFromCString (image->GetValueForKey("uuid")->GetAsString()->GetValue().c_str());
+
+        // All sections listed in the dyld image info structure will all
+        // either be fixed up already, or they will all be off by a single
+        // slide amount that is determined by finding the first segment
+        // that is at file offset zero which also has bytes (a file size
+        // that is greater than zero) in the object file.
+    
+        // Determine the slide amount (if any)
+        const size_t num_sections = image_infos[i].segments.size();
+        for (size_t k = 0; k < num_sections; ++k)
+        {
+            // Iterate through the object file sections to find the
+            // first section that starts of file offset zero and that
+            // has bytes in the file...
+            if ((image_infos[i].segments[k].fileoff == 0 && image_infos[i].segments[k].filesize > 0) 
+                || (image_infos[i].segments[k].name == ConstString("__TEXT")))
+            {
+                image_infos[i].slide = image_infos[i].address - image_infos[i].segments[k].vmaddr;
+                // We have found the slide amount, so we can exit
+                // this for loop.
+                break;
+            }
+        }
+    }
+
+    Target &target = m_process->GetTarget();
+
+    if (exe_idx < image_infos.size())
+    {
+        const bool can_create = true;
+        ModuleSP exe_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[exe_idx], can_create, NULL));
+
+        if (exe_module_sp)
+        {
+            UpdateImageLoadAddress (exe_module_sp.get(), image_infos[exe_idx]);
+
+            if (exe_module_sp.get() != target.GetExecutableModulePointer())
+            {
+                // Don't load dependent images since we are in dyld where we will know
+                // and find out about all images that are loaded. Also when setting the
+                // executable module, it will clear the targets module list, and if we
+                // have an in memory dyld module, it will get removed from the list
+                // so we will need to add it back after setting the executable module,
+                // so we first try and see if we already have a weak pointer to the
+                // dyld module, make it into a shared pointer, then add the executable,
+                // then re-add it back to make sure it is always in the list.
+                ModuleSP dyld_module_sp(m_dyld_module_wp.lock());
+                
+                const bool get_dependent_images = false;
+                m_process->GetTarget().SetExecutableModule (exe_module_sp, 
+                                                            get_dependent_images);
+
+                if (dyld_module_sp)
+                {
+                   if(target.GetImages().AppendIfNeeded (dyld_module_sp))
+                   {
+                        // Also add it to the section list.
+                        UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
+                   }
+                }
+            }
+        }
+    }
+ return true;
+}
+
 bool
 DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count)
 {
@@ -804,6 +971,22 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfosAddress (lldb::addr_t image_in
     Mutex::Locker locker(m_mutex);
     if (m_process->GetStopID() == m_dyld_image_infos_stop_id)
         return true;
+
+    StructuredData::ObjectSP image_infos_json_sp = m_process->GetLoadedDynamicLibrariesInfos (image_infos_addr, image_infos_count);
+    if (image_infos_json_sp.get() 
+        && image_infos_json_sp->GetAsDictionary() 
+        && image_infos_json_sp->GetAsDictionary()->HasKey("images")
+        && image_infos_json_sp->GetAsDictionary()->GetValueForKey("images")->GetAsArray()
+        && image_infos_json_sp->GetAsDictionary()->GetValueForKey("images")->GetAsArray()->GetSize() == image_infos_count)
+    {
+        bool return_value = false;
+        if (AddModulesUsingInfosFromDebugserver (image_infos_json_sp, image_infos))
+        {
+            return_value = AddModulesUsingImageInfos (image_infos);
+        }
+        m_dyld_image_infos_stop_id = m_process->GetStopID();
+        return return_value;
+    }
 
     if (!ReadImageInfos (image_infos_addr, image_infos_count, image_infos))
         return false;
