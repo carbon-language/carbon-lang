@@ -9,23 +9,41 @@
 
 vector signed char vsc = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
 vector unsigned char vuc = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
-vector int vi = { -1, 2, -3, 4 };
+vector bool char vbc = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1 };
+
+vector signed short vss = { 0, 1, 2, 3, 4, 5, 6, 7 };
+vector unsigned short vus = { 0, 1, 2, 3, 4, 5, 6, 7 };
+vector bool short vbs = { 1, 1, 0, 0, 0, 0, 1, 1 };
+
+vector signed int vsi = { -1, 2, -3, 4 };
 vector unsigned int vui = { 1, 2, 3, 4 };
 vector bool int vbi = {0, -1, -1, 0};
-vector bool long long vbll = { 1, 0 };
+
 vector signed long long vsll = { 1, 2 };
 vector unsigned long long vull = { 1, 2 };
+vector bool long long vbll = { 1, 0 };
+
+vector float vfa = { 1.e-4f, -132.23f, -22.1, 32.00f };
 vector double vda = { 1.e-11, -132.23e10 };
 
 int res_i;
 vector signed char res_vsc;
 vector unsigned char res_vuc;
-vector int res_vi;
+vector bool char res_vbc;
+
+vector signed short res_vss;
+vector unsigned short res_vus;
+vector bool short res_vbs;
+
+vector int res_vsi;
 vector unsigned int res_vui;
 vector bool int res_vbi;
-vector bool long long res_vbll;
+
 vector signed long long res_vsll;
 vector unsigned long long res_vull;
+vector bool long long res_vbll;
+
+vector double res_vf;
 vector double res_vd;
 
 // CHECK-LABEL: define void @test1
@@ -60,7 +78,7 @@ void test1() {
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
   
-  res_vi = vec_mergee(vi, vi);
+  res_vsi = vec_mergee(vsi, vsi);
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
 
@@ -74,7 +92,7 @@ void test1() {
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
 
-  res_vi = vec_mergeo(vi, vi);
+  res_vsi = vec_mergeo(vsi, vsi);
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
 
@@ -137,6 +155,292 @@ void test1() {
 // CHECK: call <2 x i64> @llvm.ppc.altivec.vcmpgtud(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
 // CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vcmpgtud(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
 // CHECK-PPC: error: call to 'vec_cmplt' is ambiguous
+
+  /* vec_eqv */
+  res_vsc =  vec_eqv(vsc, vsc);
+// CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-PPC: error: assigning to
+
+  res_vsc =  vec_eqv(vbc, vsc);
+// CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-PPC: error: assigning to
+
+  res_vsc =  vec_eqv(vsc, vbc);
+// CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-PPC: error: assigning to
+
+  res_vuc =  vec_eqv(vuc, vuc);
+// CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-PPC: error: assigning to
+
+  res_vuc =  vec_eqv(vbc, vuc);
+// CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-PPC: error: assigning to
+
+  res_vuc =  vec_eqv(vuc, vbc);
+// CHECK: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <16 x i8> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <16 x i8>
+// CHECK-PPC: error: assigning to
+
+  res_vss =  vec_eqv(vss, vss);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-PPC: error: assigning to
+
+  res_vss =  vec_eqv(vbs, vss);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-PPC: error: assigning to
+
+  res_vss =  vec_eqv(vss, vbs);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-PPC: error: assigning to
+
+  res_vus =  vec_eqv(vus, vus);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-PPC: error: assigning to
+
+  res_vus =  vec_eqv(vbs, vus);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-PPC: error: assigning to
+
+  res_vus =  vec_eqv(vus, vbs);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <8 x i16>
+// CHECK-PPC: error: assigning to
+
+  res_vsi =  vec_eqv(vsi, vsi);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-PPC: error: assigning to
+
+  res_vsi =  vec_eqv(vbi, vsi);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-PPC: error: assigning to
+
+  res_vsi =  vec_eqv(vsi, vbi);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-PPC: error: assigning to
+
+  res_vui =  vec_eqv(vui, vui);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-PPC: error: assigning to
+
+  res_vui =  vec_eqv(vbi, vui);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-PPC: error: assigning to
+
+  res_vui =  vec_eqv(vui, vbi);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.*}}, <4 x i32> {{.+}})
+// CHECK-PPC: error: assigning to
+
+  res_vsll =  vec_eqv(vsll, vsll);
+// CHECK: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-PPC: error: assigning to
+
+  res_vsll =  vec_eqv(vbll, vsll);
+// CHECK: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-PPC: error: assigning to
+
+  res_vsll =  vec_eqv(vsll, vbll);
+// CHECK: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-PPC: error: assigning to
+
+  res_vull =  vec_eqv(vull, vull);
+// CHECK: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-PPC: error: assigning to
+
+  res_vull =  vec_eqv(vbll, vull);
+// CHECK: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-PPC: error: assigning to
+
+  res_vull =  vec_eqv(vull, vbll);
+// CHECK: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x i64>
+// CHECK-PPC: error: assigning to
+
+  res_vf = vec_eqv(vfa, vfa);
+// CHECK: [[T1:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <4 x float>
+// CHECK-LE: [[T1:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <4 x float>
+// CHECK-PPC: error: assigning to
+
+  res_vf = vec_eqv(vbi, vfa);
+// CHECK: [[T2:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.+}}, <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <4 x float>
+// CHECK-LE: [[T2:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.+}}, <4 x i32> [[T2]])
+// CHECK-PPC: error: assigning to
+
+  res_vf = vec_eqv(vfa, vbi);
+// CHECK: [[T1:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32>
+// CHECK: bitcast <4 x i32> [[T3]] to <4 x float>
+// CHECK-LE: [[T1:%.+]] = bitcast <4 x float> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32>
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <4 x float>
+// CHECK-PPC: error: assigning to
+
+  res_vd = vec_eqv(vda, vda);
+// CHECK: [[T1:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x double>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x double>
+// CHECK-PPC: error: assigning to
+
+  res_vd = vec_eqv(vbll, vda);
+// CHECK: [[T2:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.+}}, <4 x i32> [[T2]])
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x double>
+// CHECK-LE: [[T2:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> {{.+}}, <4 x i32> [[T2]])
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x double>
+// CHECK-PPC: error: assigning to
+
+  res_vd = vec_eqv(vda, vbll);
+// CHECK: [[T1:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32>
+// CHECK: bitcast <4 x i32> [[T3]] to <2 x double>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x double> {{.+}} to <4 x i32>
+// CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32>
+// CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x double>
+// CHECK-PPC: error: assigning to
 
   /* ----------------------- predicates --------------------------- */
   /* vec_all_eq */
@@ -634,7 +938,7 @@ void test1() {
 // CHECK-PPC: error: call to 'vec_min' is ambiguous
 
   /* vec_mule */
-  res_vsll = vec_mule(vi, vi);
+  res_vsll = vec_mule(vsi, vsi);
 // CHECK: @llvm.ppc.altivec.vmulesw
 // CHECK-LE: @llvm.ppc.altivec.vmulosw
 // CHECK-PPC: error: call to 'vec_mule' is ambiguous
@@ -645,7 +949,7 @@ void test1() {
 // CHECK-PPC: error: call to 'vec_mule' is ambiguous
 
   /* vec_mulo */
-  res_vsll = vec_mulo(vi, vi);
+  res_vsll = vec_mulo(vsi, vsi);
 // CHECK: @llvm.ppc.altivec.vmulosw
 // CHECK-LE: @llvm.ppc.altivec.vmulesw
 // CHECK-PPC: error: call to 'vec_mulo' is ambiguous
@@ -656,7 +960,7 @@ void test1() {
 // CHECK-PPC: error: call to 'vec_mulo' is ambiguous
 
   /* vec_packs */
-  res_vi = vec_packs(vsll, vsll);
+  res_vsi = vec_packs(vsll, vsll);
 // CHECK: @llvm.ppc.altivec.vpksdss
 // CHECK-LE: @llvm.ppc.altivec.vpksdss
 // CHECK-PPC: error: call to 'vec_packs' is ambiguous
@@ -701,8 +1005,8 @@ void test1() {
 
   /* vec_sr */
   res_vsll = vec_sr(vsll, vull);
-// CHECK: ashr <2 x i64>
-// CHECK-LE: ashr <2 x i64>
+// CHECK: lshr <2 x i64>
+// CHECK-LE: lshr <2 x i64>
 // CHECK-PPC: error: call to 'vec_sr' is ambiguous
 
   res_vull = vec_sr(vull, vull);
@@ -722,7 +1026,7 @@ void test1() {
 // CHECK-PPC: error: call to 'vec_sra' is ambiguous
 
   /* vec_unpackh */
-  res_vsll = vec_unpackh(vi);
+  res_vsll = vec_unpackh(vsi);
 // CHECK: llvm.ppc.altivec.vupkhsw
 // CHECK-LE: llvm.ppc.altivec.vupklsw
 // CHECK-PPC: error: call to 'vec_unpackh' is ambiguous
@@ -733,7 +1037,7 @@ void test1() {
 // CHECK-PPC: error: call to 'vec_unpackh' is ambiguous
 
   /* vec_unpackl */
-  res_vsll = vec_unpackl(vi);
+  res_vsll = vec_unpackl(vsi);
 // CHECK: llvm.ppc.altivec.vupklsw
 // CHECK-LE: llvm.ppc.altivec.vupkhsw
 // CHECK-PPC: error: call to 'vec_unpackl' is ambiguous
@@ -744,7 +1048,7 @@ void test1() {
 // CHECK-PPC: error: call to 'vec_unpackl' is ambiguous
 
   /* vec_vpksdss */
-  res_vi = vec_vpksdss(vsll, vsll);
+  res_vsi = vec_vpksdss(vsll, vsll);
 // CHECK: llvm.ppc.altivec.vpksdss
 // CHECK-LE: llvm.ppc.altivec.vpksdss
 // CHECK-PPC: warning: implicit declaration of function 'vec_vpksdss'
@@ -756,7 +1060,7 @@ void test1() {
 // CHECK-PPC: warning: implicit declaration of function 'vec_vpksdus'
 
   /* vec_vpkudum */
-  res_vi = vec_vpkudum(vsll, vsll);
+  res_vsi = vec_vpkudum(vsll, vsll);
 // CHECK: vperm
 // CHECK-LE: vperm
 // CHECK-PPC: warning: implicit declaration of function 'vec_vpkudum'
@@ -771,7 +1075,7 @@ void test1() {
 // CHECK-PPC: warning: implicit declaration of function 'vec_vpkudus'
 
   /* vec_vupkhsw */
-  res_vsll = vec_vupkhsw(vi);
+  res_vsll = vec_vupkhsw(vsi);
 // CHECK: llvm.ppc.altivec.vupkhsw
 // CHECK-LE: llvm.ppc.altivec.vupklsw
 // CHECK-PPC: warning: implicit declaration of function 'vec_vupkhsw'
@@ -781,7 +1085,7 @@ void test1() {
 // CHECK-LE: llvm.ppc.altivec.vupklsw
 
   /* vec_vupklsw */
-  res_vsll = vec_vupklsw(vi);
+  res_vsll = vec_vupklsw(vsi);
 // CHECK: llvm.ppc.altivec.vupklsw
 // CHECK-LE: llvm.ppc.altivec.vupkhsw
 // CHECK-PPC: warning: implicit declaration of function 'vec_vupklsw'

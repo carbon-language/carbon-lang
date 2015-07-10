@@ -863,6 +863,8 @@ public:
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
   bool hasFeature(StringRef Feature) const override;
+  void setFeatureEnabled(llvm::StringMap<bool> &Features, StringRef Name,
+                         bool Enabled) const override;
 
   void getGCCRegNames(const char * const *&Names,
                       unsigned &NumNames) const override;
@@ -1036,7 +1038,6 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "power8-vector") {
       HasP8Vector = true;
-      HasVSX = true;
       continue;
     }
 
@@ -1047,7 +1048,6 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "direct-move") {
       HasDirectMove = true;
-      HasVSX = true;
       continue;
     }
 
@@ -1063,6 +1063,15 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     // TODO: Finish this list and add an assert that we've handled them
     // all.
+  }
+  if (!HasVSX && (HasP8Vector || HasDirectMove)) {
+    if (HasP8Vector)
+      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mpower8-vector" <<
+                                                        "-mno-vsx";
+    else if (HasDirectMove)
+      Diags.Report(diag::err_opt_not_valid_with_opt) << "-mdirect-move" <<
+                                                        "-mno-vsx";
+    return false;
   }
 
   return true;
@@ -1285,6 +1294,11 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Case("ppc64le", true)
     .Case("pwr8", true)
     .Default(false);
+  Features["vsx"] = llvm::StringSwitch<bool>(CPU)
+    .Case("ppc64le", true)
+    .Case("pwr8", true)
+    .Case("pwr7", true)
+    .Default(false);
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
@@ -1299,6 +1313,39 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
     .Case("bpermd", HasBPERMD)
     .Case("extdiv", HasExtDiv)
     .Default(false);
+}
+
+/*  There is no clear way for the target to know which of the features in the
+    final feature vector came from defaults and which are actually specified by
+    the user. To that end, we use the fact that this function is not called on
+    default features - only user specified ones. By the first time this
+    function is called, the default features are populated.
+    We then keep track of the features that the user specified so that we
+    can ensure we do not override a user's request (only defaults).
+    For example:
+    -mcpu=pwr8 -mno-vsx (should disable vsx and everything that depends on it)
+    -mcpu=pwr8 -mdirect-move -mno-vsx (should actually be diagnosed)
+
+NOTE: Do not call this from PPCTargetInfo::getDefaultFeatures
+*/
+void PPCTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                      StringRef Name, bool Enabled) const {
+  static llvm::StringMap<bool> ExplicitFeatures;
+  ExplicitFeatures[Name] = Enabled;
+
+  // At this point, -mno-vsx turns off the dependent features but we respect
+  // the user's requests.
+  if (!Enabled && Name == "vsx") {
+    Features["direct-move"] = ExplicitFeatures["direct-move"];
+    Features["power8-vector"] = ExplicitFeatures["power8-vector"];
+  }
+  if ((Enabled && Name == "power8-vector") ||
+      (Enabled && Name == "direct-move")) {
+    if (ExplicitFeatures.find("vsx") == ExplicitFeatures.end()) {
+      Features["vsx"] = true;
+    }
+  }
+  Features[Name] = Enabled;
 }
 
 const char * const PPCTargetInfo::GCCRegNames[] = {

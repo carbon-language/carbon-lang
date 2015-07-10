@@ -3272,6 +3272,15 @@ void test6() {
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
 
+  res_vbs = vec_sld(vbs, vbs, 0);
+// CHECK: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK: call <4 x i32> @llvm.ppc.altivec.vperm(<4 x i32> [[T1]], <4 x i32> [[T2]], <16 x i8>
+// CHECK-LE: xor <16 x i8>
+// CHECK-LE: [[T1:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: [[T2:%.+]] = bitcast <8 x i16> {{.+}} to <4 x i32>
+// CHECK-LE: call <4 x i32> @llvm.ppc.altivec.vperm(<4 x i32> [[T1]], <4 x i32> [[T2]], <16 x i8>
+
   res_vp  = vec_sld(vp, vp, 0);
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
@@ -3283,6 +3292,11 @@ void test6() {
   res_vui = vec_sld(vui, vui, 0);
 // CHECK: @llvm.ppc.altivec.vperm
 // CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vbi = vec_sld(vbi, vbi, 0);
+// CHECK: call <4 x i32> @llvm.ppc.altivec.vperm(<4 x i32> {{.+}}, <4 x i32> {{.+}}, <16 x i8>
+// CHECK-LE: xor <16 x i8>
+// CHECK-LE: call <4 x i32> @llvm.ppc.altivec.vperm(<4 x i32> {{.+}}, <4 x i32> {{.+}}, <16 x i8>
 
   res_vf  = vec_sld(vf, vf, 0);
 // CHECK: @llvm.ppc.altivec.vperm
@@ -3802,28 +3816,28 @@ void test6() {
 
   /* vec_sr */
   res_vsc = vec_sr(vsc, vuc);
-// CHECK: shr <16 x i8>
-// CHECK-LE: shr <16 x i8>
+// CHECK: lshr <16 x i8>
+// CHECK-LE: lshr <16 x i8>
 
   res_vuc = vec_sr(vuc, vuc);
-// CHECK: shr <16 x i8>
-// CHECK-LE: shr <16 x i8>
+// CHECK: lshr <16 x i8>
+// CHECK-LE: lshr <16 x i8>
 
   res_vs  = vec_sr(vs, vus);
-// CHECK: shr <8 x i16>
-// CHECK-LE: shr <8 x i16>
+// CHECK: lshr <8 x i16>
+// CHECK-LE: lshr <8 x i16>
 
   res_vus = vec_sr(vus, vus);
-// CHECK: shr <8 x i16>
-// CHECK-LE: shr <8 x i16>
+// CHECK: lshr <8 x i16>
+// CHECK-LE: lshr <8 x i16>
 
   res_vi  = vec_sr(vi, vui);
-// CHECK: shr <4 x i32>
-// CHECK-LE: shr <4 x i32>
+// CHECK: lshr <4 x i32>
+// CHECK-LE: lshr <4 x i32>
 
   res_vui = vec_sr(vui, vui);
-// CHECK: shr <4 x i32>
-// CHECK-LE: shr <4 x i32>
+// CHECK: lshr <4 x i32>
+// CHECK-LE: lshr <4 x i32>
 
   res_vsc = vec_vsrb(vsc, vuc);
 // CHECK: shr <16 x i8>
