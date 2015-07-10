@@ -288,6 +288,17 @@ bool MIParser::parseRegister(unsigned &Reg) {
       return error(Twine("unknown register name '") + Name + "'");
     break;
   }
+  case MIToken::VirtualRegister: {
+    unsigned ID;
+    if (getUnsigned(ID))
+      return true;
+    const auto RegInfo = PFS.VirtualRegisterSlots.find(ID);
+    if (RegInfo == PFS.VirtualRegisterSlots.end())
+      return error(Twine("use of undefined virtual register '%") + Twine(ID) +
+                   "'");
+    Reg = RegInfo->second;
+    break;
+  }
   // TODO: Parse other register kinds.
   default:
     llvm_unreachable("The current token should be a register");
@@ -425,6 +436,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::kw_undef:
   case MIToken::underscore:
   case MIToken::NamedRegister:
+  case MIToken::VirtualRegister:
     return parseRegisterOperand(Dest);
   case MIToken::IntegerLiteral:
     return parseImmediateOperand(Dest);

@@ -28,6 +28,7 @@ class SourceMgr;
 
 struct PerFunctionMIParsingState {
   DenseMap<unsigned, MachineBasicBlock *> MBBSlots;
+  DenseMap<unsigned, unsigned> VirtualRegisterSlots;
 };
 
 bool parseMachineInstr(MachineInstr *&MI, SourceMgr &SM, MachineFunction &MF,

@@ -51,7 +51,8 @@ struct MIToken {
     GlobalValue,
 
     // Other tokens
-    IntegerLiteral
+    IntegerLiteral,
+    VirtualRegister
   };
 
 private:
@@ -73,7 +74,8 @@ public:
   bool isError() const { return Kind == Error; }
 
   bool isRegister() const {
-    return Kind == NamedRegister || Kind == underscore;
+    return Kind == NamedRegister || Kind == underscore ||
+           Kind == VirtualRegister;
   }
 
   bool isRegisterFlag() const {
@@ -93,7 +95,7 @@ public:
 
   bool hasIntegerValue() const {
     return Kind == IntegerLiteral || Kind == MachineBasicBlock ||
-           Kind == GlobalValue;
+           Kind == GlobalValue || Kind == VirtualRegister;
   }
 };
 

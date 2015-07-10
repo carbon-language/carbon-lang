@@ -102,9 +102,11 @@ public:
                                    const yaml::MachineBasicBlock &YamlMBB,
                                    const PerFunctionMIParsingState &PFS);
 
-  bool initializeRegisterInfo(const MachineFunction &MF,
-                              MachineRegisterInfo &RegInfo,
-                              const yaml::MachineFunction &YamlMF);
+  bool
+  initializeRegisterInfo(const MachineFunction &MF,
+                         MachineRegisterInfo &RegInfo,
+                         const yaml::MachineFunction &YamlMF,
+                         DenseMap<unsigned, unsigned> &VirtualRegisterSlots);
 
   bool initializeFrameInfo(MachineFrameInfo &MFI,
                            const yaml::MachineFunction &YamlMF);
@@ -258,12 +260,13 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     MF.setAlignment(YamlMF.Alignment);
   MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
-  if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF))
+  PerFunctionMIParsingState PFS;
+  if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF,
+                             PFS.VirtualRegisterSlots))
     return true;
   if (initializeFrameInfo(*MF.getFrameInfo(), YamlMF))
     return true;
 
-  PerFunctionMIParsingState PFS;
   const auto &F = *MF.getFunction();
   for (const auto &YamlMBB : YamlMF.BasicBlocks) {
     const BasicBlock *BB = nullptr;
@@ -330,7 +333,8 @@ bool MIRParserImpl::initializeMachineBasicBlock(
 
 bool MIRParserImpl::initializeRegisterInfo(
     const MachineFunction &MF, MachineRegisterInfo &RegInfo,
-    const yaml::MachineFunction &YamlMF) {
+    const yaml::MachineFunction &YamlMF,
+    DenseMap<unsigned, unsigned> &VirtualRegisterSlots) {
   assert(RegInfo.isSSA());
   if (!YamlMF.IsSSA)
     RegInfo.leaveSSA();
@@ -346,9 +350,10 @@ bool MIRParserImpl::initializeRegisterInfo(
       return error(VReg.Class.SourceRange.Start,
                    Twine("use of undefined register class '") +
                        VReg.Class.Value + "'");
-    // TODO: create the mapping from IDs to registers so that the virtual
-    // register references can be parsed correctly.
-    RegInfo.createVirtualRegister(RC);
+    unsigned Reg = RegInfo.createVirtualRegister(RC);
+    // TODO: Report an error when the same virtual register with the same ID is
+    // redefined.
+    VirtualRegisterSlots.insert(std::make_pair(VReg.ID, Reg));
   }
   return false;
 }

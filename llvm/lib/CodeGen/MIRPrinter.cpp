@@ -250,9 +250,10 @@ void MIPrinter::print(const MachineInstr &MI) {
 static void printReg(unsigned Reg, raw_ostream &OS,
                      const TargetRegisterInfo *TRI) {
   // TODO: Print Stack Slots.
-  // TODO: Print virtual registers.
   if (!Reg)
     OS << '_';
+  else if (TargetRegisterInfo::isVirtualRegister(Reg))
+    OS << '%' << TargetRegisterInfo::virtReg2Index(Reg);
   else if (Reg < TRI->getNumRegs())
     OS << '%' << StringRef(TRI->getName(Reg)).lower();
   else

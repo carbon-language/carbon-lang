@@ -1,0 +1,28 @@
+# RUN: not llc -march=x86-64 -start-after machine-sink -stop-after machine-sink -o /dev/null %s 2>&1 | FileCheck %s
+# This test ensures that the MIR parser reports an error when parsing a
+# reference to an undefined virtual register.
+
+--- |
+
+  define i32 @test(i32 %a) {
+  entry:
+    ret i32 %a
+  }
+
+...
+---
+name:            test
+isSSA:           true
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: gr32 }
+body:
+  - id:          0
+    name:        entry
+    instructions:
+      - '%0 = COPY %edi'
+      # CHECK: [[@LINE+1]]:22: use of undefined virtual register '%10'
+      - '%eax = COPY %10'
+      - 'RETQ %eax'
+...
+

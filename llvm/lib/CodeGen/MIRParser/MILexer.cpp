@@ -115,9 +115,22 @@ static Cursor maybeLexMachineBasicBlock(
   return C;
 }
 
+static Cursor lexVirtualRegister(Cursor C, MIToken &Token) {
+  auto Range = C;
+  C.advance(); // Skip '%'
+  auto NumberRange = C;
+  while (isdigit(C.peek()))
+    C.advance();
+  Token = MIToken(MIToken::VirtualRegister, Range.upto(C),
+                  APSInt(NumberRange.upto(C)));
+  return C;
+}
+
 static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
   if (C.peek() != '%')
     return None;
+  if (isdigit(C.peek(1)))
+    return lexVirtualRegister(C, Token);
   auto Range = C;
   C.advance(); // Skip '%'
   while (isIdentifierChar(C.peek()))
