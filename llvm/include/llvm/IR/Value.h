@@ -104,8 +104,8 @@ protected:
   ///
   /// Note, this should *NOT* be used directly by any class other than User.
   /// User uses this value to find the Use list.
-  static const unsigned NumUserOperandsBits = 29;
-  unsigned NumUserOperands : 29;
+  enum : unsigned { NumUserOperandsBits = 29 };
+  unsigned NumUserOperands : NumUserOperandsBits;
 
   bool IsUsedByMD : 1;
   bool HasName : 1;

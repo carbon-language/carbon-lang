@@ -39,8 +39,6 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 //                                Value Class
 //===----------------------------------------------------------------------===//
-const unsigned Value::NumUserOperandsBits;
-
 static inline Type *checkType(Type *Ty) {
   assert(Ty && "Value defined with a null type: Error!");
   return Ty;
