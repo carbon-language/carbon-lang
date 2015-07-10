@@ -58,18 +58,18 @@ bb:
 
 define i8 @catchblock() personality i32 (...)* @__gxx_personality_v0 {
 entry:
-  %cbv = catchblock i8 [i7 4] to label %bb unwind label %bb2
+  br label %bb2
 bb:
   ret i8 %cbv
 bb2:
-  ret i8 42
+  %cbv = catchblock i8 [i7 4] to label %bb unwind label %bb2
 }
 
 define void @terminateblock0() personality i32 (...)* @__gxx_personality_v0 {
 entry:
-  terminateblock [i7 4] unwind label %bb
+  br label %bb
 bb:
-  ret void
+  terminateblock [i7 4] unwind label %bb
 }
 
 define void @terminateblock1() personality i32 (...)* @__gxx_personality_v0 {
@@ -85,9 +85,9 @@ entry:
 
 define void @catchendblock0() personality i32 (...)* @__gxx_personality_v0 {
 entry:
-  catchendblock unwind label %bb
+  br label %bb
 bb:
-  ret void
+  catchendblock unwind label %bb
 }
 
 define void @catchendblock1() personality i32 (...)* @__gxx_personality_v0 {

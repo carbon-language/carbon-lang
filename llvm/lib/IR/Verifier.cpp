@@ -2861,9 +2861,10 @@ void Verifier::visitCatchBlockInst(CatchBlockInst &CBI) {
 
   BasicBlock *UnwindDest = CBI.getUnwindDest();
   Instruction *I = UnwindDest->getFirstNonPHI();
-  Assert(I->isEHBlock() && !isa<LandingPadInst>(I),
-         "CatchBlockInst must unwind to an EH block which is not a landingpad.",
-         &CBI);
+  Assert(
+      isa<CatchBlockInst>(I) || isa<CatchEndBlockInst>(I),
+      "CatchBlockInst must unwind to a CatchBlockInst or a CatchEndBlockInst.",
+      &CBI);
 
   visitTerminatorInst(CBI);
 }
