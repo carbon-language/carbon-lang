@@ -176,7 +176,6 @@ private:
   StringRef DotShstrtab;                    // Section header string table.
   StringRef DotStrtab;                      // Symbol header string table.
   const Elf_Shdr *dot_symtab_sec = nullptr; // Symbol table section.
-  StringRef DynSymStrTab;                   // Dynnamic symbol string table.
   const Elf_Shdr *DotDynSymSec = nullptr;   // Dynamic symbol table section.
   const Elf_Hash *HashTable = nullptr;
 
@@ -200,6 +199,7 @@ private:
 
   DynRegionInfo DynamicRegion;
   DynRegionInfo DynHashRegion;
+  DynRegionInfo DynStrRegion;
   DynRegionInfo DynRelaRegion;
 
   // Pointer to SONAME entry in dynamic string table
@@ -655,7 +655,9 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
       ErrorOr<StringRef> SymtabOrErr = getStringTable(*SectionOrErr);
       if ((EC = SymtabOrErr.getError()))
         return;
-      DynSymStrTab = *SymtabOrErr;
+      DynStrRegion.Addr = SymtabOrErr->data();
+      DynStrRegion.Size = SymtabOrErr->size();
+      DynStrRegion.EntSize = 1;
       break;
     }
     case ELF::SHT_DYNAMIC:
@@ -763,6 +765,14 @@ void ELFFile<ELFT>::scanDynamicTable() {
         continue;
       HashTable =
           reinterpret_cast<const Elf_Hash *>(toMappedAddr(DynI->getPtr()));
+      break;
+    case ELF::DT_STRTAB:
+      if (!DynStrRegion.Addr)
+        DynStrRegion.Addr = toMappedAddr(DynI->getPtr());
+      break;
+    case ELF::DT_STRSZ:
+      if (!DynStrRegion.Size)
+        DynStrRegion.Size = DynI->getVal();
       break;
     case ELF::DT_RELA:
       if (!DynRelaRegion.Addr)
@@ -897,9 +907,9 @@ ELFFile<ELFT>::getStringTable(const Elf_Shdr *Section) const {
 
 template <class ELFT>
 const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
-  if (!DotDynSymSec || Offset >= DynSymStrTab.size())
+  if (Offset >= DynStrRegion.Size)
     return nullptr;
-  return (const char *)DynSymStrTab.begin() + Offset;
+  return (const char *)DynStrRegion.Addr + Offset;
 }
 
 template <class ELFT>
@@ -1012,7 +1022,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
     IsDefault = false;
   }
 
-  if (name_offset >= DynSymStrTab.size())
+  if (name_offset >= DynStrRegion.Size)
     return object_error::parse_failed;
   return StringRef(getDynamicString(name_offset));
 }
