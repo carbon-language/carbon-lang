@@ -469,6 +469,8 @@ bool Instruction::mayThrow() const {
     return CRI->unwindsToCaller();
   if (const auto *CEBI = dyn_cast<CatchEndBlockInst>(this))
     return CEBI->unwindsToCaller();
+  if (const auto *TBI = dyn_cast<TerminateBlockInst>(this))
+    return TBI->unwindsToCaller();
   return isa<ResumeInst>(this);
 }
 

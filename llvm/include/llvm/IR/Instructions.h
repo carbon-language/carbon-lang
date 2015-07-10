@@ -3805,12 +3805,12 @@ public:
   void setUnwindDest(BasicBlock *B) { Op<-1>() = reinterpret_cast<Value *>(B); }
 
   BasicBlock *getSuccessor(unsigned i) const {
-    assert(i < 2 && "Successor # out of range for invoke!");
+    assert(i < 2 && "Successor # out of range for catchblock!");
     return i == 0 ? getNormalDest() : getUnwindDest();
   }
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
-    assert(idx < 2 && "Successor # out of range for invoke!");
+    assert(idx < 2 && "Successor # out of range for catchblock!");
     *(&Op<-2>() + idx) = reinterpret_cast<Value *>(NewSucc);
   }
 

@@ -4730,6 +4730,7 @@ The terminator instructions are: ':ref:`ret <i_ret>`',
 ':ref:`resume <i_resume>`', ':ref:`catchblock <i_catchblock>`',
 ':ref:`catchendblock <i_catchendblock>`',
 ':ref:`catchret <i_catchret>`',
+':ref:`cleanupret <i_cleanupret>`',
 ':ref:`terminateblock <i_terminateblock>`',
 and ':ref:`unreachable <i_unreachable>`'.
 
@@ -5143,6 +5144,8 @@ The ``catchblock`` instruction has several restrictions:
    an exceptional instruction.
 -  A catch block must have a '``catchblock``' instruction as its
    first non-PHI instruction.
+-  A catch block's ``exception`` edge must refer to a catch block or a
+   catch-end block.
 -  There can be only one '``catchblock``' instruction within the
    catch block.
 -  A basic block that is not a catch block may not include a
@@ -5252,15 +5255,17 @@ Semantics:
 
 The '``catchret``' instruction ends the existing (in-flight) exception
 whose unwinding was interrupted with a
-:ref:`catchblock <i_catchblock>` instruction and transfers control to
-``normal``.
+:ref:`catchblock <i_catchblock>` instruction.
+The :ref:`personality function <personalityfn>` gets a chance to execute
+arbitrary code to, for example, run a C++ destructor.
+Control then transfers to ``normal``.
 
 Example:
 """"""""
 
 .. code-block:: llvm
 
-      catchret unwind label %continue
+      catchret label %continue
 
 .. _i_cleanupret:
 
@@ -5293,8 +5298,8 @@ Semantics:
 """"""""""
 
 The '``cleanupret``' instruction indicates to the
-:ref:`personality function <personalityfn>` that the
-:ref:`cleanupblock <i_cleanupblock>` it transfered control to has ended.
+:ref:`personality function <personalityfn>` that one
+:ref:`cleanupblock <i_cleanupblock>` it transferred control to has ended.
 It transfers control to ``continue`` or unwinds out of the function.
 
 Example:
@@ -5327,7 +5332,7 @@ is a terminate block --- one where a personality routine may decide to
 terminate the program.
 The ``args`` correspond to whatever information the personality
 routine requires to know if this is an appropriate place to terminate the
-program.  Control is tranfered to the ``exception`` label if the
+program.  Control is transferred to the ``exception`` label if the
 personality routine decides not to terminate the program for the
 in-flight exception.
 
@@ -8339,8 +8344,7 @@ transfer control to run cleanup actions.
 The ``args`` correspond to whatever additional
 information the :ref:`personality function <personalityfn>` requires to
 execute the cleanup.
-:ref:`personality function <personalityfn>` upon re-entry to the
-function. The ``resultval`` has the type ``resultty``.
+The ``resultval`` has the type ``resultty``.
 
 Arguments:
 """"""""""

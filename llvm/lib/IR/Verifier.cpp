@@ -184,6 +184,9 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// \brief Track unresolved string-based type references.
   SmallDenseMap<const MDString *, const MDNode *, 32> UnresolvedTypeRefs;
 
+  /// \brief The result value from the personality function.
+  Type *PersonalityFnResultTy;
+
   /// \brief Whether we've seen a call to @llvm.localescape in this function
   /// already.
   bool SawFrameEscape;
@@ -194,7 +197,8 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
 
 public:
   explicit Verifier(raw_ostream &OS)
-      : VerifierSupport(OS), Context(nullptr), SawFrameEscape(false) {}
+      : VerifierSupport(OS), Context(nullptr), PersonalityFnResultTy(nullptr),
+        SawFrameEscape(false) {}
 
   bool verify(const Function &F) {
     M = F.getParent();
@@ -228,6 +232,7 @@ public:
     // FIXME: We strip const here because the inst visitor strips const.
     visit(const_cast<Function &>(F));
     InstsInThisBlock.clear();
+    PersonalityFnResultTy = nullptr;
     SawFrameEscape = false;
 
     return !Broken;
@@ -383,6 +388,7 @@ private:
   void visitCatchBlockInst(CatchBlockInst &CBI);
   void visitCatchEndBlockInst(CatchEndBlockInst &CEBI);
   void visitCleanupBlockInst(CleanupBlockInst &CBI);
+  void visitCleanupReturnInst(CleanupReturnInst &CRI);
   void visitTerminateBlockInst(TerminateBlockInst &TBI);
 
   void VerifyCallSite(CallSite CS);
@@ -2799,6 +2805,14 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
            &LPI);
   }
 
+  if (!PersonalityFnResultTy)
+    PersonalityFnResultTy = LPI.getType();
+  else
+    Assert(PersonalityFnResultTy == LPI.getType(),
+           "The personality routine should have a consistent result type "
+           "inside a function.",
+           &LPI);
+
   Function *F = LPI.getParent()->getParent();
   Assert(F->hasPersonalityFn(),
          "LandingPadInst needs to be in a function with a personality.", &LPI);
@@ -2827,6 +2841,14 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
 void Verifier::visitCatchBlockInst(CatchBlockInst &CBI) {
   BasicBlock *BB = CBI.getParent();
 
+  if (!PersonalityFnResultTy)
+    PersonalityFnResultTy = CBI.getType();
+  else
+    Assert(PersonalityFnResultTy == CBI.getType(),
+           "The personality routine should have a consistent result type "
+           "inside a function.",
+           &CBI);
+
   Function *F = BB->getParent();
   Assert(F->hasPersonalityFn(),
          "CatchBlockInst needs to be in a function with a personality.", &CBI);
@@ -2835,6 +2857,12 @@ void Verifier::visitCatchBlockInst(CatchBlockInst &CBI) {
   // block.
   Assert(BB->getFirstNonPHI() == &CBI,
          "CatchBlockInst not the first non-PHI instruction in the block.",
+         &CBI);
+
+  BasicBlock *UnwindDest = CBI.getUnwindDest();
+  Instruction *I = UnwindDest->getFirstNonPHI();
+  Assert(I->isEHBlock() && !isa<LandingPadInst>(I),
+         "CatchBlockInst must unwind to an EH block which is not a landingpad.",
          &CBI);
 
   visitTerminatorInst(CBI);
@@ -2854,11 +2882,36 @@ void Verifier::visitCatchEndBlockInst(CatchEndBlockInst &CEBI) {
          "CatchEndBlockInst not the first non-PHI instruction in the block.",
          &CEBI);
 
+  unsigned CatchBlocksSeen = 0;
+  for (BasicBlock *PredBB : predecessors(BB))
+    if (isa<CatchBlockInst>(PredBB->getTerminator()))
+      ++CatchBlocksSeen;
+
+  Assert(CatchBlocksSeen <= 1, "CatchEndBlockInst must have no more than one "
+                               "CatchBlockInst predecessor.",
+         &CEBI);
+
+  if (BasicBlock *UnwindDest = CEBI.getUnwindDest()) {
+    Instruction *I = UnwindDest->getFirstNonPHI();
+    Assert(
+        I->isEHBlock() && !isa<LandingPadInst>(I),
+        "CatchEndBlock must unwind to an EH block which is not a landingpad.",
+        &CEBI);
+  }
+
   visitTerminatorInst(CEBI);
 }
 
 void Verifier::visitCleanupBlockInst(CleanupBlockInst &CBI) {
   BasicBlock *BB = CBI.getParent();
+
+  if (!PersonalityFnResultTy)
+    PersonalityFnResultTy = CBI.getType();
+  else
+    Assert(PersonalityFnResultTy == CBI.getType(),
+           "The personality routine should have a consistent result type "
+           "inside a function.",
+           &CBI);
 
   Function *F = BB->getParent();
   Assert(F->hasPersonalityFn(),
@@ -2871,6 +2924,18 @@ void Verifier::visitCleanupBlockInst(CleanupBlockInst &CBI) {
          &CBI);
 
   visitInstruction(CBI);
+}
+
+void Verifier::visitCleanupReturnInst(CleanupReturnInst &CRI) {
+  if (BasicBlock *UnwindDest = CRI.getUnwindDest()) {
+    Instruction *I = UnwindDest->getFirstNonPHI();
+    Assert(I->isEHBlock() && !isa<LandingPadInst>(I),
+           "CleanupReturnInst must unwind to an EH block which is not a "
+           "landingpad.",
+           &CRI);
+  }
+
+  visitTerminatorInst(CRI);
 }
 
 void Verifier::visitTerminateBlockInst(TerminateBlockInst &TBI) {
@@ -2886,6 +2951,14 @@ void Verifier::visitTerminateBlockInst(TerminateBlockInst &TBI) {
   Assert(BB->getFirstNonPHI() == &TBI,
          "TerminateBlockInst not the first non-PHI instruction in the block.",
          &TBI);
+
+  if (BasicBlock *UnwindDest = TBI.getUnwindDest()) {
+    Instruction *I = UnwindDest->getFirstNonPHI();
+    Assert(I->isEHBlock() && !isa<LandingPadInst>(I),
+           "TerminateBlockInst must unwind to an EH block which is not a "
+           "landingpad.",
+           &TBI);
+  }
 
   visitTerminatorInst(TBI);
 }

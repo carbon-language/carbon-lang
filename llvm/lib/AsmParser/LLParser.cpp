@@ -4994,7 +4994,7 @@ bool LLParser::ParseTerminateBlock(Instruction *&Inst, PerFunctionState &PFS) {
   BasicBlock *UnwindBB = nullptr;
   if (Lex.getKind() == lltok::kw_to) {
     Lex.Lex();
-    if (ParseToken(lltok::kw_caller, "expected 'caller' in cleanupret"))
+    if (ParseToken(lltok::kw_caller, "expected 'caller' in terminateblock"))
       return true;
   } else {
     if (ParseTypeAndBasicBlock(UnwindBB, PFS)) {
@@ -5022,7 +5022,7 @@ bool LLParser::ParseCleanupBlock(Instruction *&Inst, PerFunctionState &PFS) {
 /// ParseCatchEndBlock
 ///   ::= 'catchendblock' unwind ('to' 'caller' | TypeAndValue)
 bool LLParser::ParseCatchEndBlock(Instruction *&Inst, PerFunctionState &PFS) {
-  if (ParseToken(lltok::kw_unwind, "expected 'unwind' in cleanupret"))
+  if (ParseToken(lltok::kw_unwind, "expected 'unwind' in catchendblock"))
     return true;
 
   BasicBlock *UnwindBB = nullptr;
