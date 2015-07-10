@@ -57,7 +57,6 @@ char NVPTXLowerAggrCopies::ID = 0;
 // Lower MemTransferInst or load-store pair to loop
 static void convertTransferToLoop(
     Instruction *splitAt, Value *srcAddr, Value *dstAddr, Value *len,
-    //unsigned numLoads,
     bool srcVolatile, bool dstVolatile, LLVMContext &Context, Function &F) {
   Type *indType = len->getType();
 
@@ -84,6 +83,8 @@ static void convertTransferToLoop(
   ind->addIncoming(ConstantInt::get(indType, 0), origBB);
 
   // load from srcAddr+ind
+  // TODO: we can leverage the align parameter of llvm.memcpy for more efficient
+  // word-sized loads and stores.
   Value *val = loop.CreateLoad(loop.CreateGEP(loop.getInt8Ty(), srcAddr, ind),
                                srcVolatile);
   // store at dstAddr+ind
@@ -200,13 +201,14 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   }
 
   for (MemTransferInst *cpy : aggrMemcpys) {
-    Value *len = cpy->getLength();
-    // llvm 2.7 version of memcpy does not have volatile
-    // operand yet. So always making it non-volatile
-    // optimistically, so that we don't see unnecessary
-    // st.volatile in ptx
-    convertTransferToLoop(cpy, cpy->getSource(), cpy->getDest(), len, false,
-                          false, Context, F);
+    convertTransferToLoop(/* splitAt */ cpy,
+                          /* srcAddr */ cpy->getSource(),
+                          /* dstAddr */ cpy->getDest(),
+                          /* len */ cpy->getLength(),
+                          /* srcVolatile */ cpy->isVolatile(),
+                          /* dstVolatile */ cpy->isVolatile(),
+                          /* Context */ Context,
+                          /* Function F */ F);
     cpy->eraseFromParent();
   }
 

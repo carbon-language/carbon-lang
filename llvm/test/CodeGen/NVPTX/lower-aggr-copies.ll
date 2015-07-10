@@ -19,6 +19,19 @@ entry:
 ; CHECK-NEXT: @%p[[PRED]] bra LBB[[LABEL]]
 }
 
+define i8* @memcpy_volatile_caller(i8* %dst, i8* %src, i64 %n) #0 {
+entry:
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %src, i64 %n, i32 1, i1 true)
+  ret i8* %dst
+; CHECK-LABEL: .visible .func (.param .b32 func_retval0) memcpy_volatile_caller
+; CHECK: LBB[[LABEL:[_0-9]+]]:
+; CHECK:      ld.volatile.u8 %rs[[REG:[0-9]+]]
+; CHECK:      st.volatile.u8 [%r{{[0-9]+}}], %rs[[REG]]
+; CHECK:      add.s64 %rd[[COUNTER:[0-9]+]], %rd[[COUNTER]], 1
+; CHECK-NEXT: setp.lt.u64 %p[[PRED:[0-9]+]], %rd[[COUNTER]], %rd
+; CHECK-NEXT: @%p[[PRED]] bra LBB[[LABEL]]
+}
+
 define i8* @memset_caller(i8* %dst, i32 %c, i64 %n) #0 {
 entry:
   %0 = trunc i32 %c to i8
