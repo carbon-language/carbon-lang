@@ -146,7 +146,7 @@ namespace llvm {
   }
 
   const std::error_category &BitcodeErrorCategory();
-  enum class BitcodeError { InvalidBitcodeSignature, CorruptedBitcode };
+  enum class BitcodeError { InvalidBitcodeSignature = 1, CorruptedBitcode };
   inline std::error_code make_error_code(BitcodeError E) {
     return std::error_code(static_cast<int>(E), BitcodeErrorCategory());
   }
