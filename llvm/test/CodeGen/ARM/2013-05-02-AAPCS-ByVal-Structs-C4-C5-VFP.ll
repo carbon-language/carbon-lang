@@ -25,8 +25,7 @@ entry:
   ;CHECK: push {r7, lr}
   ;CHECK: sub sp, #4
   ;CHECK: add r0, sp, #12
-  ;CHECK: str r2, [sp, #16]
-  ;CHECK: str r1, [sp, #12]
+  ;CHECK: strd r1, r2, [sp, #12]
   ;CHECK: bl  fooUseStruct
   call void @fooUseStruct(%st_t* %p1)
   ret void

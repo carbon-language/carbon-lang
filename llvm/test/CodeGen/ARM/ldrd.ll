@@ -3,6 +3,7 @@
 ; rdar://6949835
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 -regalloc=basic | FileCheck %s -check-prefix=BASIC -check-prefix=CHECK
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 -regalloc=greedy | FileCheck %s -check-prefix=GREEDY -check-prefix=CHECK
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=swift | FileCheck %s -check-prefix=SWIFT -check-prefix=CHECK
 
 ; Magic ARM pair hints works best with linearscan / fast.
 
@@ -107,6 +108,26 @@ entry:
   %v1 = load i32, i32* %addr1
   ; try to force %v0/%v1 into non-adjacent registers
   call void @extfunc(i32 %v0, i32 0, i32 0, i32 %v1)
+  ret void
+}
+
+; CHECK-LABEL: strd_spill_ldrd_reload:
+; A8: strd r1, r0, [sp]
+; M3: strd r1, r0, [sp]
+; BASIC: strd r1, r0, [sp]
+; GREEDY: strd r0, r1, [sp]
+; CHECK: @ InlineAsm Start
+; CHECK: @ InlineAsm End
+; A8: ldrd r2, r1, [sp]
+; M3: ldrd r2, r1, [sp]
+; BASIC: ldrd r2, r1, [sp]
+; GREEDY: ldrd r1, r2, [sp]
+; CHECK: bl{{x?}} _extfunc
+define void @strd_spill_ldrd_reload(i32 %v0, i32 %v1) {
+  ; force %v0 and %v1 to be spilled
+  call void asm sideeffect "", "~{r0},~{r1},~{r2},~{r3},~{r4},~{r5},~{r6},~{r7},~{r8},~{r9},~{r10},~{r11},~{r12},~{lr}"()
+  ; force the reloaded %v0, %v1 into different registers
+  call void @extfunc(i32 0, i32 %v0, i32 %v1, i32 7)
   ret void
 }
 

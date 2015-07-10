@@ -4,8 +4,7 @@ define void @t1(i8* nocapture %c) nounwind optsize {
 entry:
 ; CHECK-LABEL: t1:
 ; CHECK: movs r1, #0
-; CHECK: str r1, [r0]
-; CHECK: str r1, [r0, #4]
+; CHECK: strd r1, r1, [r0]
 ; CHECK: str r1, [r0, #8]
   call void @llvm.memset.p0i8.i64(i8* %c, i8 0, i64 12, i32 8, i1 false)
   ret void

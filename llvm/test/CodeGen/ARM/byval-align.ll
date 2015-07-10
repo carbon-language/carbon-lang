@@ -28,8 +28,7 @@ define i32 @test_align8(i8*, [4 x i32]* byval align 8 %b) {
 ; CHECK: push {r4, r7, lr}
 ; CHECK: add r7, sp, #4
 
-; CHECK-DAG: str r2, [r7, #8]
-; CHECK-DAG: str r3, [r7, #12]
+; CHECK: strd r2, r3, [r7, #8]
 
 ; CHECK: ldr r0, [r7, #8]
 
