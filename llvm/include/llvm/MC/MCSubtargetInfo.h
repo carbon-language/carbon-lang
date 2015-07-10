@@ -45,8 +45,11 @@ class MCSubtargetInfo {
   FeatureBitset FeatureBits;           // Feature bits for current CPU + FS
 
   MCSubtargetInfo() = delete;
+  MCSubtargetInfo &operator=(MCSubtargetInfo &&) = delete;
+  MCSubtargetInfo &operator=(const MCSubtargetInfo &) = delete;
 
 public:
+  MCSubtargetInfo(const MCSubtargetInfo &) = default;
   MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
                   ArrayRef<SubtargetFeatureKV> PF,
                   ArrayRef<SubtargetFeatureKV> PD,
@@ -75,9 +78,16 @@ public:
     FeatureBits = FeatureBits_;
   }
 
-  /// InitMCProcessorInfo - Set or change the CPU (optionally supplemented with
-  /// feature string). Recompute feature bits and scheduling model.
+protected:
+  /// Initialize the scheduling model and feature bits.
+  ///
+  /// FIXME: Find a way to stick this in the constructor, since it should only
+  /// be called during initialization.
   void InitMCProcessorInfo(StringRef CPU, StringRef FS);
+
+public:
+  /// Set the features to the default for the given CPU.
+  void setDefaultFeatures(StringRef CPU);
 
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
   /// bits. This version does not change the implied bits.

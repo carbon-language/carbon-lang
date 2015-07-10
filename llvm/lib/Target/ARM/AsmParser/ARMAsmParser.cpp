@@ -9212,7 +9212,7 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
     return false;
   }
 
-  STI.InitMCProcessorInfo(CPU, "");
+  STI.setDefaultFeatures(CPU);
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   return false;

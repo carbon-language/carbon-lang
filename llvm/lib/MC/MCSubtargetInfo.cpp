@@ -17,16 +17,23 @@
 
 using namespace llvm;
 
-/// InitMCProcessorInfo - Set or change the CPU (optionally supplemented
-/// with feature string). Recompute feature bits and scheduling model.
-void
-MCSubtargetInfo::InitMCProcessorInfo(StringRef CPU, StringRef FS) {
+static FeatureBitset getFeatures(StringRef CPU, StringRef FS,
+                                 ArrayRef<SubtargetFeatureKV> ProcDesc,
+                                 ArrayRef<SubtargetFeatureKV> ProcFeatures) {
   SubtargetFeatures Features(FS);
-  FeatureBits = Features.getFeatureBits(CPU, ProcDesc, ProcFeatures);
+  return Features.getFeatureBits(CPU, ProcDesc, ProcFeatures);
+}
+
+void MCSubtargetInfo::InitMCProcessorInfo(StringRef CPU, StringRef FS) {
+  FeatureBits = getFeatures(CPU, FS, ProcDesc, ProcFeatures);
   if (!CPU.empty())
     CPUSchedModel = &getSchedModelForCPU(CPU);
   else
     CPUSchedModel = &MCSchedModel::GetDefaultSchedModel();
+}
+
+void MCSubtargetInfo::setDefaultFeatures(StringRef CPU) {
+  FeatureBits = getFeatures(CPU, "", ProcDesc, ProcFeatures);
 }
 
 MCSubtargetInfo::MCSubtargetInfo(
