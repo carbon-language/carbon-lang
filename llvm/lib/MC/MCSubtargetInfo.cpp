@@ -29,25 +29,15 @@ MCSubtargetInfo::InitMCProcessorInfo(StringRef CPU, StringRef FS) {
     CPUSchedModel = &MCSchedModel::GetDefaultSchedModel();
 }
 
-void MCSubtargetInfo::InitMCSubtargetInfo(
+MCSubtargetInfo::MCSubtargetInfo(
     const Triple &TT, StringRef C, StringRef FS,
     ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetFeatureKV> PD,
     const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
     const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,
-    const InstrStage *IS, const unsigned *OC, const unsigned *FP) {
-  TargetTriple = TT;
-  CPU = C;
-  ProcFeatures = PF;
-  ProcDesc = PD;
-  ProcSchedModels = ProcSched;
-  WriteProcResTable = WPR;
-  WriteLatencyTable = WL;
-  ReadAdvanceTable = RA;
-
-  Stages = IS;
-  OperandCycles = OC;
-  ForwardingPaths = FP;
-
+    const InstrStage *IS, const unsigned *OC, const unsigned *FP)
+    : TargetTriple(TT), CPU(C), ProcFeatures(PF), ProcDesc(PD),
+      ProcSchedModels(ProcSched), WriteProcResTable(WPR), WriteLatencyTable(WL),
+      ReadAdvanceTable(RA), Stages(IS), OperandCycles(OC), ForwardingPaths(FP) {
   InitMCProcessorInfo(CPU, FS);
 }
 

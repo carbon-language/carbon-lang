@@ -45,9 +45,7 @@ static MCRegisterInfo *createMSP430MCRegisterInfo(const Triple &TT) {
 
 static MCSubtargetInfo *
 createMSP430MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMSP430MCSubtargetInfo(X, TT, CPU, FS);
-  return X;
+  return createMSP430MCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCCodeGenInfo *createMSP430MCCodeGenInfo(const Triple &TT,

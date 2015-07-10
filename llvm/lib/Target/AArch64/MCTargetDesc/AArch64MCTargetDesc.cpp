@@ -42,13 +42,10 @@ static MCInstrInfo *createAArch64MCInstrInfo() {
 
 static MCSubtargetInfo *
 createAArch64MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-
   if (CPU.empty())
     CPU = "generic";
 
-  InitAArch64MCSubtargetInfo(X, TT, CPU, FS);
-  return X;
+  return createAArch64MCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCRegisterInfo *createAArch64MCRegisterInfo(const Triple &Triple) {

@@ -257,9 +257,7 @@ MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(const Triple &TT,
       ArchFS = FS;
   }
 
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitARMMCSubtargetInfo(X, TT, CPU, ArchFS);
-  return X;
+  return createARMMCSubtargetInfoImpl(TT, CPU, ArchFS);
 }
 
 static MCInstrInfo *createARMMCInstrInfo() {

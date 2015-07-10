@@ -44,15 +44,16 @@ class MCSubtargetInfo {
   const unsigned *ForwardingPaths;     // Forwarding paths
   FeatureBitset FeatureBits;           // Feature bits for current CPU + FS
 
+  MCSubtargetInfo() = delete;
+
 public:
-  void InitMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
-                           ArrayRef<SubtargetFeatureKV> PF,
-                           ArrayRef<SubtargetFeatureKV> PD,
-                           const SubtargetInfoKV *ProcSched,
-                           const MCWriteProcResEntry *WPR,
-                           const MCWriteLatencyEntry *WL,
-                           const MCReadAdvanceEntry *RA, const InstrStage *IS,
-                           const unsigned *OC, const unsigned *FP);
+  MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
+                  ArrayRef<SubtargetFeatureKV> PF,
+                  ArrayRef<SubtargetFeatureKV> PD,
+                  const SubtargetInfoKV *ProcSched,
+                  const MCWriteProcResEntry *WPR, const MCWriteLatencyEntry *WL,
+                  const MCReadAdvanceEntry *RA, const InstrStage *IS,
+                  const unsigned *OC, const unsigned *FP);
 
   /// getTargetTriple - Return the target triple string.
   const Triple &getTargetTriple() const { return TargetTriple; }

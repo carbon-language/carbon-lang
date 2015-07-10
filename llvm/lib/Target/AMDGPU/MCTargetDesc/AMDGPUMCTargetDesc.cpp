@@ -52,9 +52,7 @@ static MCRegisterInfo *createAMDGPUMCRegisterInfo(const Triple &TT) {
 
 static MCSubtargetInfo *
 createAMDGPUMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
-  MCSubtargetInfo * X = new MCSubtargetInfo();
-  InitAMDGPUMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
+  return createAMDGPUMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCCodeGenInfo *createAMDGPUMCCodeGenInfo(const Triple &TT,

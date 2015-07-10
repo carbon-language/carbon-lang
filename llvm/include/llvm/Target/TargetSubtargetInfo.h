@@ -44,9 +44,17 @@ template <typename T> class SmallVectorImpl;
 class TargetSubtargetInfo : public MCSubtargetInfo {
   TargetSubtargetInfo(const TargetSubtargetInfo &) = delete;
   void operator=(const TargetSubtargetInfo &) = delete;
+  TargetSubtargetInfo() = delete;
 
 protected: // Can only create subclasses...
-  TargetSubtargetInfo();
+  TargetSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
+                      ArrayRef<SubtargetFeatureKV> PF,
+                      ArrayRef<SubtargetFeatureKV> PD,
+                      const SubtargetInfoKV *ProcSched,
+                      const MCWriteProcResEntry *WPR,
+                      const MCWriteLatencyEntry *WL,
+                      const MCReadAdvanceEntry *RA, const InstrStage *IS,
+                      const unsigned *OC, const unsigned *FP);
 
 public:
   // AntiDepBreakMode - Type of anti-dependence breaking that should

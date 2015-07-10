@@ -65,11 +65,9 @@ static MCRegisterInfo *createSparcMCRegisterInfo(const Triple &TT) {
 
 static MCSubtargetInfo *
 createSparcMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
   if (CPU.empty())
     CPU = (TT.getArch() == Triple::sparcv9) ? "v9" : "v8";
-  InitSparcMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
+  return createSparcMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 // Code models. Some only make sense for 64-bit code.

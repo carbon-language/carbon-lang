@@ -48,9 +48,7 @@ static MCRegisterInfo *createBPFMCRegisterInfo(const Triple &TT) {
 
 static MCSubtargetInfo *createBPFMCSubtargetInfo(const Triple &TT,
                                                  StringRef CPU, StringRef FS) {
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitBPFMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
+  return createBPFMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCCodeGenInfo *createBPFMCCodeGenInfo(const Triple &TT, Reloc::Model RM,

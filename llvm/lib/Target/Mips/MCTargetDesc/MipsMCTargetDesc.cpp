@@ -68,9 +68,7 @@ static MCRegisterInfo *createMipsMCRegisterInfo(const Triple &TT) {
 static MCSubtargetInfo *createMipsMCSubtargetInfo(const Triple &TT,
                                                   StringRef CPU, StringRef FS) {
   CPU = MIPS_MC::selectMipsCPU(TT, CPU);
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMipsMCSubtargetInfo(X, TT, CPU, FS);
-  return X;
+  return createMipsMCSubtargetInfoImpl(TT, CPU, FS);
 }
 
 static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,

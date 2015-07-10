@@ -1435,10 +1435,10 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 #endif
 
   // MCInstrInfo initialization routine.
-  OS << "static inline void Init" << Target
-     << "MCSubtargetInfo(MCSubtargetInfo *II, "
+  OS << "static inline MCSubtargetInfo *create" << Target
+     << "MCSubtargetInfoImpl("
      << "const Triple &TT, StringRef CPU, StringRef FS) {\n";
-  OS << "  II->InitMCSubtargetInfo(TT, CPU, FS, ";
+  OS << "  return new MCSubtargetInfo(TT, CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else
@@ -1518,8 +1518,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   OS << ClassName << "::" << ClassName << "(const Triple &TT, StringRef CPU, "
      << "StringRef FS)\n"
-     << "  : TargetSubtargetInfo() {\n"
-     << "  InitMCSubtargetInfo(TT, CPU, FS, ";
+     << "  : TargetSubtargetInfo(TT, CPU, FS, ";
   if (NumFeatures)
     OS << "makeArrayRef(" << Target << "FeatureKV, " << NumFeatures << "), ";
   else
@@ -1528,19 +1527,19 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << "makeArrayRef(" << Target << "SubTypeKV, " << NumProcs << "), ";
   else
     OS << "None, ";
-  OS << '\n'; OS.indent(22);
+  OS << '\n'; OS.indent(24);
   OS << Target << "ProcSchedKV, "
      << Target << "WriteProcResTable, "
      << Target << "WriteLatencyTable, "
      << Target << "ReadAdvanceTable, ";
-  OS << '\n'; OS.indent(22);
+  OS << '\n'; OS.indent(24);
   if (SchedModels.hasItineraries()) {
     OS << Target << "Stages, "
        << Target << "OperandCycles, "
        << Target << "ForwardingPaths";
   } else
     OS << "0, 0, 0";
-  OS << ");\n}\n\n";
+  OS << ") {}\n\n";
 
   EmitSchedModelHelpers(ClassName, OS);
 

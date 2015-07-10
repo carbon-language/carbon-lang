@@ -88,9 +88,7 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(const Triple &TT,
   if (CPUName.empty())
     CPUName = "generic";
 
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitX86MCSubtargetInfo(X, TT, CPUName, ArchFS);
-  return X;
+  return createX86MCSubtargetInfoImpl(TT, CPUName, ArchFS);
 }
 
 static MCInstrInfo *createX86MCInstrInfo() {
