@@ -995,7 +995,8 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   return HFI;
 }
 
-bool HeaderSearch::tryGetFileInfo(const FileEntry *FE, HeaderFileInfo &Result) const {
+bool HeaderSearch::tryGetFileInfo(const FileEntry *FE,
+                                  HeaderFileInfo &Result) const {
   if (FE->getUID() >= FileInfo.size())
     return false;
   const HeaderFileInfo &HFI = FileInfo[FE->getUID()];
@@ -1028,7 +1029,7 @@ void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
 
   HeaderFileInfo &HFI = FileInfo[FE->getUID()];
   HFI.isModuleHeader = true;
-  HFI.isCompilingModuleHeader = isCompilingModuleHeader;
+  HFI.isCompilingModuleHeader |= isCompilingModuleHeader;
   HFI.setHeaderRole(Role);
 }
 
@@ -1058,15 +1059,16 @@ bool HeaderSearch::ShouldEnterIncludeFile(Preprocessor &PP,
   // Next, check to see if the file is wrapped with #ifndef guards.  If so, and
   // if the macro that guards it is defined, we know the #include has no effect.
   if (const IdentifierInfo *ControllingMacro
-      = FileInfo.getControllingMacro(ExternalLookup))
-    // If the include file is part of a module, and we already know what its
-    // controlling macro is, then we've already parsed it and can safely just
-    // make it visible. This saves us needing to switch into the visibility
-    // state of the module just to check whether the macro is defined within it.
-    if (M || PP.isMacroDefined(ControllingMacro)) {
+      = FileInfo.getControllingMacro(ExternalLookup)) {
+    // If the header corresponds to a module, check whether the macro is already
+    // defined in that module rather than checking in the current set of visible
+    // modules.
+    if (M ? PP.isMacroDefinedInLocalModule(ControllingMacro, M)
+          : PP.isMacroDefined(ControllingMacro)) {
       ++NumMultiIncludeFileOptzn;
       return false;
     }
+  }
 
   // Increment the number of times this file has been included.
   ++FileInfo.NumIncludes;
