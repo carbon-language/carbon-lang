@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
       if (std::error_code ec = ModuleOrErr.getError())
         ErrorMessage = ec.message();
 #if LLVM_360
-      M = ModuleOrErr.get().get();
+      M = ModuleOrErr.get();
 #else
       M = ModuleOrErr.get().release();
 #endif
