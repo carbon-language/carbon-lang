@@ -116,7 +116,7 @@ namespace {
       /// Whether the instructions can be merged into a ldrd/strd instruction.
       bool CanMergeToLSDouble;
     };
-    BumpPtrAllocator Allocator;
+    SpecificBumpPtrAllocator<MergeCandidate> Allocator;
     SmallVector<const MergeCandidate*,4> Candidates;
     SmallVector<MachineInstr*,4> MergeBaseCandidates;
 
@@ -996,7 +996,7 @@ void ARMLoadStoreOpt::FormCandidates(const MemOpQueue &MemOps) {
     }
 
     // Form a candidate from the Ops collected so far.
-    MergeCandidate *Candidate = new(Allocator) MergeCandidate;
+    MergeCandidate *Candidate = new(Allocator.Allocate()) MergeCandidate;
     for (unsigned C = SIndex, CE = SIndex + Count; C < CE; ++C)
       Candidate->Instrs.push_back(MemOps[C].MI);
     Candidate->LatestMIIdx = Latest - SIndex;
@@ -1849,7 +1849,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
       Modified |= MergeReturnIntoLDM(MBB);
   }
 
-  Allocator.Reset();
+  Allocator.DestroyAll();
   return Modified;
 }
 
