@@ -21,8 +21,6 @@ class SBDirCheckerCase(TestBase):
         self.exe_name = 'a.out'
 
     @skipIfNoSBHeaders
-    @skipIfDarwin # test passes but teardown command 'settings remove target.env-vars DYLD_LIBRARY_PATH' fails
-    # (expectedFailureDarwin doesn't work for teardown failures)
     def test_sb_api_directory(self):
         """Test the SB API directory and make sure there's no unwanted stuff."""
 
@@ -75,7 +73,7 @@ class SBDirCheckerCase(TestBase):
         if self.TraceOn():
             print "Set environment to: ", env_cmd
         self.runCmd(env_cmd)
-        self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars %s" % self.dylibPath))
+        self.addTearDownHook(lambda: self.dbg.HandleCommand("settings remove target.env-vars %s" % self.dylibPath))
 
         lldbutil.run_break_set_by_file_and_line (self, self.source, self.line_to_break, num_expected_locations = -1)
 
