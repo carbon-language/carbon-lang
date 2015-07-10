@@ -3552,6 +3552,526 @@ struct OperandTraits<ResumeInst> :
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
 
 //===----------------------------------------------------------------------===//
+//                               CleanupReturnInst Class
+//===----------------------------------------------------------------------===//
+
+class CleanupReturnInst : public TerminatorInst {
+  CleanupReturnInst(const CleanupReturnInst &RI);
+
+private:
+  void init(Value *RetVal, BasicBlock *UnwindBB);
+  CleanupReturnInst(LLVMContext &C, Value *RetVal, BasicBlock *UnwindBB,
+                    unsigned Values, Instruction *InsertBefore = nullptr);
+  CleanupReturnInst(LLVMContext &C, Value *RetVal, BasicBlock *UnwindBB,
+                    unsigned Values, BasicBlock *InsertAtEnd);
+
+  int getUnwindLabelOpIdx() const {
+    assert(hasUnwindDest());
+    return 0;
+  }
+
+  int getRetValOpIdx() const {
+    assert(hasReturnValue());
+    if (hasUnwindDest())
+      return 1;
+    return 0;
+  }
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CleanupReturnInst *cloneImpl() const;
+
+public:
+  static CleanupReturnInst *Create(LLVMContext &C,
+                                   Value *RetVal = nullptr,
+                                   BasicBlock *UnwindBB = nullptr,
+                                   Instruction *InsertBefore = nullptr) {
+    unsigned Values = 0;
+    if (RetVal)
+      ++Values;
+    if (UnwindBB)
+      ++Values;
+    return new (Values)
+        CleanupReturnInst(C, RetVal, UnwindBB, Values, InsertBefore);
+  }
+  static CleanupReturnInst *Create(LLVMContext &C, Value *RetVal,
+                                   BasicBlock *UnwindBB,
+                                   BasicBlock *InsertAtEnd) {
+    unsigned Values = 0;
+    if (RetVal)
+      ++Values;
+    if (UnwindBB)
+      ++Values;
+    return new (Values)
+        CleanupReturnInst(C, RetVal, UnwindBB, Values, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  bool hasUnwindDest() const { return getSubclassDataFromInstruction() & 1; }
+  bool unwindsToCaller() const { return !hasUnwindDest(); }
+  bool hasReturnValue() const { return getSubclassDataFromInstruction() & 2; }
+
+  /// Convenience accessor. Returns null if there is no return value.
+  Value *getReturnValue() const {
+    if (!hasReturnValue())
+      return nullptr;
+    return getOperand(getRetValOpIdx());
+  }
+  void setReturnValue(Value *RetVal) {
+    assert(hasReturnValue());
+    setOperand(getRetValOpIdx(), RetVal);
+  }
+
+  unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
+
+  BasicBlock *getUnwindDest() const;
+  void setUnwindDest(BasicBlock *NewDest);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::CleanupRet);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned Idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned Idx, BasicBlock *B) override;
+
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<CleanupReturnInst>
+    : public VariadicOperandTraits<CleanupReturnInst> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupReturnInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                               CatchEndBlockInst Class
+//===----------------------------------------------------------------------===//
+
+class CatchEndBlockInst : public TerminatorInst {
+  CatchEndBlockInst(const CatchEndBlockInst &RI);
+
+private:
+  void init(BasicBlock *UnwindBB);
+  CatchEndBlockInst(LLVMContext &C, BasicBlock *UnwindBB, unsigned Values,
+                    Instruction *InsertBefore = nullptr);
+  CatchEndBlockInst(LLVMContext &C, BasicBlock *UnwindBB, unsigned Values,
+                    BasicBlock *InsertAtEnd);
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CatchEndBlockInst *cloneImpl() const;
+
+public:
+  static CatchEndBlockInst *Create(LLVMContext &C,
+                                   BasicBlock *UnwindBB = nullptr,
+                                   Instruction *InsertBefore = nullptr) {
+    unsigned Values = UnwindBB ? 1 : 0;
+    return new (Values) CatchEndBlockInst(C, UnwindBB, Values, InsertBefore);
+  }
+  static CatchEndBlockInst *Create(LLVMContext &C, BasicBlock *UnwindBB,
+                                   BasicBlock *InsertAtEnd) {
+    unsigned Values = UnwindBB ? 1 : 0;
+    return new (Values) CatchEndBlockInst(C, UnwindBB, Values, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  bool hasUnwindDest() const { return getSubclassDataFromInstruction() & 1; }
+  bool unwindsToCaller() const { return !hasUnwindDest(); }
+
+  /// Convenience accessor. Returns null if there is no return value.
+  unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
+
+  BasicBlock *getUnwindDest() const { return cast<BasicBlock>(Op<-1>()); }
+  void setUnwindDest(BasicBlock *NewDest) {
+    assert(NewDest);
+    Op<-1>() = NewDest;
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::CatchEndBlock);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned Idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned Idx, BasicBlock *B) override;
+
+private:
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<CatchEndBlockInst>
+    : public VariadicOperandTraits<CatchEndBlockInst> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchEndBlockInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                           CatchBlockInst Class
+//===----------------------------------------------------------------------===//
+
+class CatchBlockInst : public TerminatorInst {
+private:
+  void init(BasicBlock *IfNormal, BasicBlock *IfException,
+            ArrayRef<Value *> Args, const Twine &NameStr);
+
+  CatchBlockInst(const CatchBlockInst &CBI);
+
+  explicit CatchBlockInst(Type *RetTy, BasicBlock *IfNormal,
+                          BasicBlock *IfException, ArrayRef<Value *> Args,
+                          unsigned Values, const Twine &NameStr,
+                          Instruction *InsertBefore);
+  explicit CatchBlockInst(Type *RetTy, BasicBlock *IfNormal,
+                          BasicBlock *IfException, ArrayRef<Value *> Args,
+                          unsigned Values, const Twine &NameStr,
+                          BasicBlock *InsertAtEnd);
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CatchBlockInst *cloneImpl() const;
+
+public:
+  static CatchBlockInst *Create(Type *RetTy, BasicBlock *IfNormal,
+                                BasicBlock *IfException, ArrayRef<Value *> Args,
+                                const Twine &NameStr = "",
+                                Instruction *InsertBefore = nullptr) {
+    unsigned Values = unsigned(Args.size()) + 2;
+    return new (Values) CatchBlockInst(RetTy, IfNormal, IfException, Args,
+                                       Values, NameStr, InsertBefore);
+  }
+  static CatchBlockInst *Create(Type *RetTy, BasicBlock *IfNormal,
+                                BasicBlock *IfException, ArrayRef<Value *> Args,
+                                const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    unsigned Values = unsigned(Args.size()) + 2;
+    return new (Values) CatchBlockInst(RetTy, IfNormal, IfException, Args,
+                                       Values, NameStr, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// getNumArgOperands - Return the number of catchblock arguments.
+  ///
+  unsigned getNumArgOperands() const { return getNumOperands() - 2; }
+
+  /// getArgOperand/setArgOperand - Return/set the i-th catchblock argument.
+  ///
+  Value *getArgOperand(unsigned i) const { return getOperand(i); }
+  void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<op_iterator> arg_operands() {
+    return iterator_range<op_iterator>(op_begin(), op_end() - 2);
+  }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<const_op_iterator> arg_operands() const {
+    return iterator_range<const_op_iterator>(op_begin(), op_end() - 2);
+  }
+
+  /// \brief Wrappers for getting the \c Use of a catchblock argument.
+  const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
+  Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
+
+  // get*Dest - Return the destination basic blocks...
+  BasicBlock *getNormalDest() const { return cast<BasicBlock>(Op<-2>()); }
+  BasicBlock *getUnwindDest() const { return cast<BasicBlock>(Op<-1>()); }
+  void setNormalDest(BasicBlock *B) { Op<-2>() = reinterpret_cast<Value *>(B); }
+  void setUnwindDest(BasicBlock *B) { Op<-1>() = reinterpret_cast<Value *>(B); }
+
+  BasicBlock *getSuccessor(unsigned i) const {
+    assert(i < 2 && "Successor # out of range for invoke!");
+    return i == 0 ? getNormalDest() : getUnwindDest();
+  }
+
+  void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
+    assert(idx < 2 && "Successor # out of range for invoke!");
+    *(&Op<-2>() + idx) = reinterpret_cast<Value *>(NewSucc);
+  }
+
+  unsigned getNumSuccessors() const { return 2; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::CatchBlock;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned idx, BasicBlock *B) override;
+};
+
+template <>
+struct OperandTraits<CatchBlockInst>
+    : public VariadicOperandTraits<CatchBlockInst, /*MINARITY=*/2> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchBlockInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                           TerminateBlockInst Class
+//===----------------------------------------------------------------------===//
+
+class TerminateBlockInst : public TerminatorInst {
+private:
+  void init(BasicBlock *BB, ArrayRef<Value *> Args, const Twine &NameStr);
+
+  TerminateBlockInst(const TerminateBlockInst &TBI);
+
+  explicit TerminateBlockInst(LLVMContext &C, BasicBlock *BB,
+                              ArrayRef<Value *> Args, unsigned Values,
+                              const Twine &NameStr, Instruction *InsertBefore);
+  explicit TerminateBlockInst(LLVMContext &C, BasicBlock *BB,
+                              ArrayRef<Value *> Args, unsigned Values,
+                              const Twine &NameStr, BasicBlock *InsertAtEnd);
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  TerminateBlockInst *cloneImpl() const;
+
+public:
+  static TerminateBlockInst *Create(LLVMContext &C, BasicBlock *BB = nullptr,
+                                    ArrayRef<Value *> Args = {},
+                                    const Twine &NameStr = "",
+                                    Instruction *InsertBefore = nullptr) {
+    unsigned Values = unsigned(Args.size());
+    if (BB)
+      ++Values;
+    return new (Values)
+        TerminateBlockInst(C, BB, Args, Values, NameStr, InsertBefore);
+  }
+  static TerminateBlockInst *Create(LLVMContext &C, BasicBlock *BB,
+                                    ArrayRef<Value *> Args,
+                                    const Twine &NameStr,
+                                    BasicBlock *InsertAtEnd) {
+    unsigned Values = unsigned(Args.size());
+    if (BB)
+      ++Values;
+    return new (Values)
+        TerminateBlockInst(C, BB, Args, Values, NameStr, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  bool hasUnwindDest() const { return getSubclassDataFromInstruction() & 1; }
+  bool unwindsToCaller() const { return !hasUnwindDest(); }
+
+  /// getNumArgOperands - Return the number of terminateblock arguments.
+  ///
+  unsigned getNumArgOperands() const {
+    unsigned NumOperands = getNumOperands();
+    if (hasUnwindDest())
+      return NumOperands - 1;
+    return NumOperands;
+  }
+
+  /// getArgOperand/setArgOperand - Return/set the i-th terminateblock argument.
+  ///
+  Value *getArgOperand(unsigned i) const { return getOperand(i); }
+  void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
+
+  const_op_iterator arg_end() const {
+    if (hasUnwindDest())
+      return op_end() - 1;
+    return op_end();
+  }
+
+  op_iterator arg_end() {
+    if (hasUnwindDest())
+      return op_end() - 1;
+    return op_end();
+  }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<op_iterator> arg_operands() {
+    return iterator_range<op_iterator>(op_begin(), arg_end());
+  }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<const_op_iterator> arg_operands() const {
+    return iterator_range<const_op_iterator>(op_begin(), arg_end());
+  }
+
+  /// \brief Wrappers for getting the \c Use of a terminateblock argument.
+  const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
+  Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
+
+  // get*Dest - Return the destination basic blocks...
+  BasicBlock *getUnwindDest() const {
+    if (!hasUnwindDest())
+      return nullptr;
+    return cast<BasicBlock>(Op<-1>());
+  }
+  void setUnwindDest(BasicBlock *B) {
+    assert(B && hasUnwindDest());
+    Op<-1>() = reinterpret_cast<Value *>(B);
+  }
+
+  unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::TerminateBlock;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned idx, BasicBlock *B) override;
+
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<TerminateBlockInst>
+    : public VariadicOperandTraits<TerminateBlockInst, /*MINARITY=*/1> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(TerminateBlockInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                           CleanupBlockInst Class
+//===----------------------------------------------------------------------===//
+
+class CleanupBlockInst : public Instruction {
+private:
+  void init(ArrayRef<Value *> Args, const Twine &NameStr);
+
+  CleanupBlockInst(const CleanupBlockInst &TBI);
+
+  explicit CleanupBlockInst(Type *RetTy, ArrayRef<Value *> Args,
+                            const Twine &NameStr, Instruction *InsertBefore);
+  explicit CleanupBlockInst(Type *RetTy, ArrayRef<Value *> Args,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd);
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CleanupBlockInst *cloneImpl() const;
+
+public:
+  static CleanupBlockInst *Create(Type *RetTy, ArrayRef<Value *> Args,
+                                  const Twine &NameStr = "",
+                                  Instruction *InsertBefore = nullptr) {
+    return new (Args.size())
+        CleanupBlockInst(RetTy, Args, NameStr, InsertBefore);
+  }
+  static CleanupBlockInst *Create(Type *RetTy, ArrayRef<Value *> Args,
+                                  const Twine &NameStr,
+                                  BasicBlock *InsertAtEnd) {
+    return new (Args.size())
+        CleanupBlockInst(RetTy, Args, NameStr, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::CleanupBlock;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+template <>
+struct OperandTraits<CleanupBlockInst>
+    : public VariadicOperandTraits<CleanupBlockInst, /*MINARITY=*/0> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupBlockInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                               CatchReturnInst Class
+//===----------------------------------------------------------------------===//
+
+class CatchReturnInst : public TerminatorInst {
+  CatchReturnInst(const CatchReturnInst &RI);
+
+private:
+  void init(Value *RetVal, BasicBlock *UnwindBB);
+  CatchReturnInst(BasicBlock *BB, Instruction *InsertBefore = nullptr);
+  CatchReturnInst(BasicBlock *BB, BasicBlock *InsertAtEnd);
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CatchReturnInst *cloneImpl() const;
+
+public:
+  static CatchReturnInst *Create(BasicBlock *BB,
+                                 Instruction *InsertBefore = nullptr) {
+    return new (1) CatchReturnInst(BB, InsertBefore);
+  }
+  static CatchReturnInst *Create(BasicBlock *BB, BasicBlock *InsertAtEnd) {
+    return new (1) CatchReturnInst(BB, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// Convenience accessors.
+  BasicBlock *getSuccessor() const { return cast<BasicBlock>(Op<0>()); }
+  void setSuccessor(BasicBlock *NewSucc) { Op<0>() = (Value *)NewSucc; }
+  unsigned getNumSuccessors() const { return 1; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::CatchRet);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned Idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned Idx, BasicBlock *B) override;
+};
+
+template <>
+struct OperandTraits<CatchReturnInst>
+    : public FixedNumOperandTraits<CatchReturnInst, /*ARITY=*/1> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchReturnInst, Value)
+
+//===----------------------------------------------------------------------===//
 //                           UnreachableInst Class
 //===----------------------------------------------------------------------===//
 

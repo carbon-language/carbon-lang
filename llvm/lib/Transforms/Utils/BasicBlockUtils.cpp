@@ -119,8 +119,9 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, DominatorTree *DT,
 
   // Don't break self-loops.
   if (PredBB == BB) return false;
-  // Don't break invokes.
-  if (isa<InvokeInst>(PredBB->getTerminator())) return false;
+  // Don't break unwinding instructions.
+  if (PredBB->getTerminator()->isExceptional())
+    return false;
 
   succ_iterator SI(succ_begin(PredBB)), SE(succ_end(PredBB));
   BasicBlock *OnlySucc = BB;

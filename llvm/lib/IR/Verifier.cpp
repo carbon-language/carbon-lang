@@ -380,6 +380,10 @@ private:
   void visitExtractValueInst(ExtractValueInst &EVI);
   void visitInsertValueInst(InsertValueInst &IVI);
   void visitLandingPadInst(LandingPadInst &LPI);
+  void visitCatchBlockInst(CatchBlockInst &CBI);
+  void visitCatchEndBlockInst(CatchEndBlockInst &CEBI);
+  void visitCleanupBlockInst(CleanupBlockInst &CBI);
+  void visitTerminateBlockInst(TerminateBlockInst &TBI);
 
   void VerifyCallSite(CallSite CS);
   void verifyMustTailCall(CallInst &CI);
@@ -2404,10 +2408,12 @@ void Verifier::visitCallInst(CallInst &CI) {
 void Verifier::visitInvokeInst(InvokeInst &II) {
   VerifyCallSite(&II);
 
-  // Verify that there is a landingpad instruction as the first non-PHI
+  // Verify that there is an exception block instruction is the first non-PHI
   // instruction of the 'unwind' destination.
-  Assert(II.getUnwindDest()->isLandingPad(),
-         "The unwind destination does not have a landingpad instruction!", &II);
+  Assert(
+      II.getUnwindDest()->isEHBlock(),
+      "The unwind destination does not have an exception handling instruction!",
+      &II);
 
   visitTerminatorInst(II);
 }
@@ -2816,6 +2822,72 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
   }
 
   visitInstruction(LPI);
+}
+
+void Verifier::visitCatchBlockInst(CatchBlockInst &CBI) {
+  BasicBlock *BB = CBI.getParent();
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "CatchBlockInst needs to be in a function with a personality.", &CBI);
+
+  // The catchblock instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &CBI,
+         "CatchBlockInst not the first non-PHI instruction in the block.",
+         &CBI);
+
+  visitTerminatorInst(CBI);
+}
+
+void Verifier::visitCatchEndBlockInst(CatchEndBlockInst &CEBI) {
+  BasicBlock *BB = CEBI.getParent();
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "CatchEndBlockInst needs to be in a function with a personality.",
+         &CEBI);
+
+  // The catchendblock instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &CEBI,
+         "CatchEndBlockInst not the first non-PHI instruction in the block.",
+         &CEBI);
+
+  visitTerminatorInst(CEBI);
+}
+
+void Verifier::visitCleanupBlockInst(CleanupBlockInst &CBI) {
+  BasicBlock *BB = CBI.getParent();
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "CleanupBlockInst needs to be in a function with a personality.", &CBI);
+
+  // The cleanupblock instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &CBI,
+         "CleanupBlockInst not the first non-PHI instruction in the block.",
+         &CBI);
+
+  visitInstruction(CBI);
+}
+
+void Verifier::visitTerminateBlockInst(TerminateBlockInst &TBI) {
+  BasicBlock *BB = TBI.getParent();
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "TerminateBlockInst needs to be in a function with a personality.",
+         &TBI);
+
+  // The terminateblock instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &TBI,
+         "TerminateBlockInst not the first non-PHI instruction in the block.",
+         &TBI);
+
+  visitTerminatorInst(TBI);
 }
 
 void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {

@@ -2848,8 +2848,66 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
       writeOperand(LPI->getClause(i), true);
     }
+  } else if (const auto *CBI = dyn_cast<CatchBlockInst>(&I)) {
+    Out << ' ';
+    TypePrinter.print(I.getType(), Out);
+
+    Out << " [";
+    for (unsigned Op = 0, NumOps = CBI->getNumArgOperands(); Op < NumOps;
+         ++Op) {
+      if (Op > 0)
+        Out << ", ";
+      writeOperand(CBI->getArgOperand(Op), /*PrintType=*/true);
+    }
+    Out << "] to ";
+    writeOperand(CBI->getNormalDest(), /*PrintType=*/true);
+    Out << " unwind ";
+    writeOperand(CBI->getUnwindDest(), /*PrintType=*/true);
+  } else if (const auto *TBI = dyn_cast<TerminateBlockInst>(&I)) {
+    Out << " [";
+    for (unsigned Op = 0, NumOps = TBI->getNumArgOperands(); Op < NumOps;
+         ++Op) {
+      if (Op > 0)
+        Out << ", ";
+      writeOperand(TBI->getArgOperand(Op), /*PrintType=*/true);
+    }
+    Out << "] unwind ";
+    if (TBI->hasUnwindDest())
+      writeOperand(TBI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
+  } else if (const auto *CBI = dyn_cast<CleanupBlockInst>(&I)) {
+    Out << ' ';
+    TypePrinter.print(I.getType(), Out);
+
+    Out << " [";
+    for (unsigned Op = 0, NumOps = CBI->getNumOperands(); Op < NumOps; ++Op) {
+      if (Op > 0)
+        Out << ", ";
+      writeOperand(CBI->getOperand(Op), /*PrintType=*/true);
+    }
+    Out << "]";
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
+  } else if (const auto *CRI = dyn_cast<CleanupReturnInst>(&I)) {
+    if (CRI->hasReturnValue()) {
+      Out << ' ';
+      writeOperand(CRI->getReturnValue(), /*PrintType=*/true);
+    } else {
+      Out << " void";
+    }
+
+    Out << " unwind ";
+    if (CRI->hasUnwindDest())
+      writeOperand(CRI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
+  } else if (const auto *CEBI = dyn_cast<CatchEndBlockInst>(&I)) {
+    Out << " unwind ";
+    if (CEBI->hasUnwindDest())
+      writeOperand(CEBI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Print the calling convention being used.
     if (CI->getCallingConv() != CallingConv::C) {

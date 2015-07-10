@@ -1845,6 +1845,64 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Code = bitc::FUNC_CODE_INST_RESUME;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     break;
+  case Instruction::CleanupRet: {
+    Code = bitc::FUNC_CODE_INST_CLEANUPRET;
+    const auto &CRI = cast<CleanupReturnInst>(I);
+    Vals.push_back(CRI.hasReturnValue());
+    Vals.push_back(CRI.hasUnwindDest());
+    if (CRI.hasReturnValue())
+      PushValueAndType(CRI.getReturnValue(), InstID, Vals, VE);
+    if (CRI.hasUnwindDest())
+      Vals.push_back(VE.getValueID(CRI.getUnwindDest()));
+    break;
+  }
+  case Instruction::CatchRet: {
+    Code = bitc::FUNC_CODE_INST_CATCHRET;
+    const auto &CRI = cast<CatchReturnInst>(I);
+    Vals.push_back(VE.getValueID(CRI.getSuccessor()));
+    break;
+  }
+  case Instruction::CatchBlock: {
+    Code = bitc::FUNC_CODE_INST_CATCHBLOCK;
+    const auto &CBI = cast<CatchBlockInst>(I);
+    Vals.push_back(VE.getTypeID(CBI.getType()));
+    Vals.push_back(VE.getValueID(CBI.getNormalDest()));
+    Vals.push_back(VE.getValueID(CBI.getUnwindDest()));
+    unsigned NumArgOperands = CBI.getNumArgOperands();
+    Vals.push_back(NumArgOperands);
+    for (unsigned Op = 0; Op != NumArgOperands; ++Op)
+      PushValueAndType(CBI.getArgOperand(Op), InstID, Vals, VE);
+    break;
+  }
+  case Instruction::TerminateBlock: {
+    Code = bitc::FUNC_CODE_INST_TERMINATEBLOCK;
+    const auto &TBI = cast<TerminateBlockInst>(I);
+    Vals.push_back(TBI.hasUnwindDest());
+    if (TBI.hasUnwindDest())
+      Vals.push_back(VE.getValueID(TBI.getUnwindDest()));
+    unsigned NumArgOperands = TBI.getNumArgOperands();
+    Vals.push_back(NumArgOperands);
+    for (unsigned Op = 0; Op != NumArgOperands; ++Op)
+      PushValueAndType(TBI.getArgOperand(Op), InstID, Vals, VE);
+    break;
+  }
+  case Instruction::CleanupBlock: {
+    Code = bitc::FUNC_CODE_INST_CLEANUPBLOCK;
+    const auto &CBI = cast<CleanupBlockInst>(I);
+    Vals.push_back(VE.getTypeID(CBI.getType()));
+    unsigned NumOperands = CBI.getNumOperands();
+    Vals.push_back(NumOperands);
+    for (unsigned Op = 0; Op != NumOperands; ++Op)
+      PushValueAndType(CBI.getOperand(Op), InstID, Vals, VE);
+    break;
+  }
+  case Instruction::CatchEndBlock: {
+    Code = bitc::FUNC_CODE_INST_CATCHENDBLOCK;
+    const auto &CEBI = cast<CatchEndBlockInst>(I);
+    if (CEBI.hasUnwindDest())
+      Vals.push_back(VE.getValueID(CEBI.getUnwindDest()));
+    break;
+  }
   case Instruction::Unreachable:
     Code = bitc::FUNC_CODE_INST_UNREACHABLE;
     AbbrevToUse = FUNCTION_INST_UNREACHABLE_ABBREV;

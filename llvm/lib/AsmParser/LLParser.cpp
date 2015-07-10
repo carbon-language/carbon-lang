@@ -4489,6 +4489,12 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_indirectbr:  return ParseIndirectBr(Inst, PFS);
   case lltok::kw_invoke:      return ParseInvoke(Inst, PFS);
   case lltok::kw_resume:      return ParseResume(Inst, PFS);
+  case lltok::kw_cleanupret:  return ParseCleanupRet(Inst, PFS);
+  case lltok::kw_catchret:    return ParseCatchRet(Inst, PFS);
+  case lltok::kw_catchblock:  return ParseCatchBlock(Inst, PFS);
+  case lltok::kw_terminateblock: return ParseTerminateBlock(Inst, PFS);
+  case lltok::kw_cleanupblock: return ParseCleanupBlock(Inst, PFS);
+  case lltok::kw_catchendblock: return ParseCatchEndBlock(Inst, PFS);
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
@@ -4879,6 +4885,161 @@ bool LLParser::ParseResume(Instruction *&Inst, PerFunctionState &PFS) {
 
   ResumeInst *RI = ResumeInst::Create(Exn);
   Inst = RI;
+  return false;
+}
+
+bool LLParser::ParseExceptionArgs(SmallVectorImpl<Value *> &Args,
+                                  PerFunctionState &PFS) {
+  if (ParseToken(lltok::lsquare, "expected '[' in cleanupblock"))
+    return true;
+
+  while (Lex.getKind() != lltok::rsquare) {
+    // If this isn't the first argument, we need a comma.
+    if (!Args.empty() &&
+        ParseToken(lltok::comma, "expected ',' in argument list"))
+      return true;
+
+    // Parse the argument.
+    LocTy ArgLoc;
+    Type *ArgTy = nullptr;
+    if (ParseType(ArgTy, ArgLoc))
+      return true;
+
+    Value *V;
+    if (ArgTy->isMetadataTy()) {
+      if (ParseMetadataAsValue(V, PFS))
+        return true;
+    } else {
+      if (ParseValue(ArgTy, V, PFS))
+        return true;
+    }
+    Args.push_back(V);
+  }
+
+  Lex.Lex();  // Lex the ']'.
+  return false;
+}
+
+/// ParseCleanupRet
+///   ::= 'cleanupret' ('void' | TypeAndValue) unwind ('to' 'caller' | TypeAndValue)
+bool LLParser::ParseCleanupRet(Instruction *&Inst, PerFunctionState &PFS) {
+  Type *RetTy = nullptr;
+  Value *RetVal = nullptr;
+  if (ParseType(RetTy, /*AllowVoid=*/true))
+    return true;
+
+  if (!RetTy->isVoidTy())
+    if (ParseValue(RetTy, RetVal, PFS))
+      return true;
+
+  if (ParseToken(lltok::kw_unwind, "expected 'unwind' in cleanupret"))
+    return true;
+
+  BasicBlock *UnwindBB = nullptr;
+  if (Lex.getKind() == lltok::kw_to) {
+    Lex.Lex();
+    if (ParseToken(lltok::kw_caller, "expected 'caller' in cleanupret"))
+      return true;
+  } else {
+    if (ParseTypeAndBasicBlock(UnwindBB, PFS)) {
+      return true;
+    }
+  }
+
+  Inst = CleanupReturnInst::Create(Context, RetVal, UnwindBB);
+  return false;
+}
+
+/// ParseCatchRet
+///   ::= 'catchret' TypeAndValue
+bool LLParser::ParseCatchRet(Instruction *&Inst, PerFunctionState &PFS) {
+  BasicBlock *BB;
+  if (ParseTypeAndBasicBlock(BB, PFS))
+      return true;
+
+  Inst = CatchReturnInst::Create(BB);
+  return false;
+}
+
+/// ParseCatchBlock
+///   ::= 'catchblock' Type ParamList 'to' TypeAndValue 'unwind' TypeAndValue
+bool LLParser::ParseCatchBlock(Instruction *&Inst, PerFunctionState &PFS) {
+  Type *RetType = nullptr;
+
+  SmallVector<Value *, 8> Args;
+  if (ParseType(RetType, /*AllowVoid=*/true) || ParseExceptionArgs(Args, PFS))
+    return true;
+
+  BasicBlock *NormalBB, *UnwindBB;
+  if (ParseToken(lltok::kw_to, "expected 'to' in catchblock") ||
+      ParseTypeAndBasicBlock(NormalBB, PFS) ||
+      ParseToken(lltok::kw_unwind, "expected 'unwind' in catchblock") ||
+      ParseTypeAndBasicBlock(UnwindBB, PFS))
+    return true;
+
+  Inst = CatchBlockInst::Create(RetType, NormalBB, UnwindBB, Args);
+  return false;
+}
+
+/// ParseTerminateBlock
+///   ::= 'terminateblock' ParamList 'to' TypeAndValue
+bool LLParser::ParseTerminateBlock(Instruction *&Inst, PerFunctionState &PFS) {
+  SmallVector<Value *, 8> Args;
+  if (ParseExceptionArgs(Args, PFS))
+    return true;
+
+  if (ParseToken(lltok::kw_unwind, "expected 'unwind' in terminateblock"))
+    return true;
+
+  BasicBlock *UnwindBB = nullptr;
+  if (Lex.getKind() == lltok::kw_to) {
+    Lex.Lex();
+    if (ParseToken(lltok::kw_caller, "expected 'caller' in cleanupret"))
+      return true;
+  } else {
+    if (ParseTypeAndBasicBlock(UnwindBB, PFS)) {
+      return true;
+    }
+  }
+
+  Inst = TerminateBlockInst::Create(Context, UnwindBB, Args);
+  return false;
+}
+
+/// ParseCleanupBlock
+///   ::= 'cleanupblock' ParamList
+bool LLParser::ParseCleanupBlock(Instruction *&Inst, PerFunctionState &PFS) {
+  Type *RetType = nullptr;
+
+  SmallVector<Value *, 8> Args;
+  if (ParseType(RetType, /*AllowVoid=*/true) || ParseExceptionArgs(Args, PFS))
+    return true;
+
+  Inst = CleanupBlockInst::Create(RetType, Args);
+  return false;
+}
+
+/// ParseCatchEndBlock
+///   ::= 'catchendblock' unwind ('to' 'caller' | TypeAndValue)
+bool LLParser::ParseCatchEndBlock(Instruction *&Inst, PerFunctionState &PFS) {
+  if (ParseToken(lltok::kw_unwind, "expected 'unwind' in cleanupret"))
+    return true;
+
+  BasicBlock *UnwindBB = nullptr;
+  if (Lex.getKind() == lltok::kw_to) {
+    Lex.Lex();
+    if (Lex.getKind() == lltok::kw_caller) {
+      Lex.Lex();
+    } else {
+      return true;
+    }
+  } else {
+    if (ParseTypeAndBasicBlock(UnwindBB, PFS)) {
+      return true;
+    }
+  }
+
+  Inst = CatchEndBlockInst::Create(Context, UnwindBB);
   return false;
 }
 
