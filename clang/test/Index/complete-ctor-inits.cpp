@@ -51,6 +51,6 @@ struct PR23948 {
 // CHECK-CC3-NOT: NotImplemented:{TypedText Virt}{LeftParen (}{Placeholder args}{RightParen )}
 // CHECK-CC3: NotImplemented:{TypedText Y}{LeftParen (}{Placeholder args}{RightParen )} (35)
 
-// RUN: c-index-test -code-completion-at=%s:22:10 -fno-delayed-template-parsing %s | FileCheck -check-prefix=CHECK-CC4 %s
+// RUN: c-index-test -code-completion-at=%s:22:10 -target i386-apple-darwin %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: MemberRef:{TypedText a}{LeftParen (}{Placeholder args}{RightParen )} (7)
 // RUN: c-index-test -code-completion-at=%s:26:10 %s
