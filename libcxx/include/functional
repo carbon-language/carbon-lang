@@ -2186,12 +2186,13 @@ public:
         typename enable_if
         <
             is_convertible<typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type,
-                           result_type>::value,
+                           result_type>::value || is_void<_Rp>::value,
             result_type
         >::type
         operator()(_Args&& ...__args)
         {
-            return base::operator()(_VSTD::forward<_Args>(__args)...);
+            typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+            return _Invoker::__call(static_cast<base&>(*this), _VSTD::forward<_Args>(__args)...);
         }
 
     template <class ..._Args>
@@ -2199,12 +2200,13 @@ public:
         typename enable_if
         <
             is_convertible<typename __bind_return<const _Fd, const _Td, tuple<_Args&&...> >::type,
-                           result_type>::value,
+                           result_type>::value || is_void<_Rp>::value,
             result_type
         >::type
         operator()(_Args&& ...__args) const
         {
-            return base::operator()(_VSTD::forward<_Args>(__args)...);
+            typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+            return _Invoker::__call(static_cast<base const&>(*this), _VSTD::forward<_Args>(__args)...);
         }
 };
 

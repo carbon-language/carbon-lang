@@ -39,21 +39,34 @@ test_const(const F& f)
 
 void f() {++count;}
 
-struct A_int_0
+int g() {++count; return 0;}
+
+struct A_void_0
 {
     void operator()() {++count;}
     void operator()() const {count += 2;}
+};
+
+struct A_int_0
+{
+    int operator()() {++count; return 4;}
+    int operator()() const {count += 2; return 5;}
 };
 
 int main()
 {
     test(std::bind(f));
     test(std::bind(&f));
-    test(std::bind(A_int_0()));
-    test_const(std::bind(A_int_0()));
+    test(std::bind(A_void_0()));
+    test_const(std::bind(A_void_0()));
 
     test(std::bind<void>(f));
     test(std::bind<void>(&f));
+    test(std::bind<void>(A_void_0()));
+    test_const(std::bind<void>(A_void_0()));
+
+    test(std::bind<void>(g));
+    test(std::bind<void>(&g));
     test(std::bind<void>(A_int_0()));
     test_const(std::bind<void>(A_int_0()));
 }
