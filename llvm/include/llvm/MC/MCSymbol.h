@@ -114,12 +114,12 @@ protected:
   /// The alignment is stored as log2(align) + 1.  This allows all values from
   /// 0 to 2^31 to be stored which is every power of 2 representable by an
   /// unsigned.
-  static const unsigned NumCommonAlignmentBits = 5;
+  enum : unsigned { NumCommonAlignmentBits = 5 };
   unsigned CommonAlignLog2 : NumCommonAlignmentBits;
 
   /// The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
-  static const unsigned NumFlagsBits = 16;
+  enum : unsigned { NumFlagsBits = 16 };
   mutable uint32_t Flags : NumFlagsBits;
 
   /// Index field, for use by the object file implementation.
