@@ -1628,6 +1628,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
     if (Right.is(Keywords.kw_function) && Left.isNot(tok::comma))
       return 100;
+    if (Left.is(TT_JsTypeColon))
+      return 100;
   }
 
   if (Left.is(tok::comma) || (Right.is(tok::identifier) && Right.Next &&
