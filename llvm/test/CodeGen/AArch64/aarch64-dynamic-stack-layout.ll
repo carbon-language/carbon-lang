@@ -482,6 +482,56 @@ entry:
 ; CHECK: ldp	x20, x19, [sp], #32
 ; CHECK: ret
 
+
+define void @realign_conditional(i1 %b) {
+entry:
+  br i1 %b, label %bb0, label %bb1
+
+bb0:
+  %MyAlloca = alloca i8, i64 64, align 32
+  br label %bb1
+
+bb1:
+  ret void
+}
+
+; CHECK-LABEL: realign_conditional
+; No realignment in the prologue.
+; CHECK-NOT:  and
+; CHECK-NOT:  0xffffffffffffffe0
+; CHECK:  tbz  {{.*}} .[[LABEL:.*]]
+; Stack is realigned in a non-entry BB.
+; CHECK:  sub  [[REG:x[01-9]+]], sp, #64
+; CHECK:  and  sp, [[REG]], #0xffffffffffffffe0
+; CHECK:  .[[LABEL]]:
+; CHECK:  ret
+
+
+define void @realign_conditional2(i1 %b) {
+entry:
+  %tmp = alloca i8, i32 4
+  br i1 %b, label %bb0, label %bb1
+
+bb0:
+  %MyAlloca = alloca i8, i64 64, align 32
+  br label %bb1
+
+bb1:
+  ret void
+}
+
+; CHECK-LABEL: realign_conditional2
+; Extra realignment in the prologue (performance issue).
+; CHECK:  sub  x9, sp, #32            // =32
+; CHECK:  and  sp, x9, #0xffffffffffffffe0
+; CHECK:  mov   x19, sp
+; CHECK:  tbz  {{.*}} .[[LABEL:.*]]
+; Stack is realigned in a non-entry BB.
+; CHECK:  sub  [[REG:x[01-9]+]], sp, #64
+; CHECK:  and  sp, [[REG]], #0xffffffffffffffe0
+; CHECK:  .[[LABEL]]:
+; CHECK:  ret
+
 attributes #0 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 

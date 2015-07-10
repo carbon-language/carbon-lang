@@ -349,13 +349,12 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   // Allocate space for the rest of the frame.
 
   const unsigned Alignment = MFI->getMaxAlignment();
-  const bool NeedsRealignment = (Alignment > 16);
+  const bool NeedsRealignment = RegInfo->needsStackRealignment(MF);
   unsigned scratchSPReg = AArch64::SP;
-  if (NeedsRealignment) {
-    // Use the first callee-saved register as a scratch register
-    assert(MF.getRegInfo().isPhysRegUsed(AArch64::X9) &&
-           "No scratch register to align SP!");
+  if (NumBytes && NeedsRealignment) {
+    // Use the first callee-saved register as a scratch register.
     scratchSPReg = AArch64::X9;
+    MF.getRegInfo().setPhysRegUsed(scratchSPReg);
   }
 
   // If we're a leaf function, try using the red zone.
@@ -365,9 +364,6 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     // which shouldn't be counted here.
     emitFrameOffset(MBB, MBBI, DL, scratchSPReg, AArch64::SP, -NumBytes, TII,
                     MachineInstr::FrameSetup);
-
-  assert(!(NeedsRealignment && NumBytes==0) &&
-         "NumBytes should never be 0 when realignment is needed");
 
   if (NumBytes && NeedsRealignment) {
     const unsigned NrBitsToZero = countTrailingZeros(Alignment);
