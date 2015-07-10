@@ -719,6 +719,9 @@ def int_ppc_vsx_xvcmpgtdp :
 def int_ppc_vsx_xvcmpgtsp :
       PowerPC_VSX_Intrinsic<"xvcmpgtsp", [llvm_v4i32_ty],
                             [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xxleqv :
+      PowerPC_VSX_Intrinsic<"xxleqv", [llvm_v4i32_ty],
+                            [llvm_v4i32_ty, llvm_v4i32_ty], [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//
