@@ -405,12 +405,12 @@ public:
   bool IsUsingLTO(const llvm::opt::ArgList &Args) const;
 
 private:
-  /// \brief Retrieves a ToolChain for a particular target triple.
+  /// \brief Retrieves a ToolChain for a particular \p Target triple.
   ///
   /// Will cache ToolChains for the life of the driver object, and create them
   /// on-demand.
   const ToolChain &getToolChain(const llvm::opt::ArgList &Args,
-                                StringRef DarwinArchName = "") const;
+                                const llvm::Triple &Target) const;
 
   /// @}
 
