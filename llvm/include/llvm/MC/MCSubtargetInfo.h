@@ -78,9 +78,6 @@ public:
   /// feature string). Recompute feature bits and scheduling model.
   void InitMCProcessorInfo(StringRef CPU, StringRef FS);
 
-  /// InitCPUSchedModel - Recompute scheduling model based on CPU.
-  void InitCPUSchedModel(StringRef CPU);
-
   /// ToggleFeature - Toggle a feature and returns the re-computed feature
   /// bits. This version does not change the implied bits.
   FeatureBitset ToggleFeature(uint64_t FB);

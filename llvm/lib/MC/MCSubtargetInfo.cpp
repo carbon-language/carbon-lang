@@ -23,11 +23,6 @@ void
 MCSubtargetInfo::InitMCProcessorInfo(StringRef CPU, StringRef FS) {
   SubtargetFeatures Features(FS);
   FeatureBits = Features.getFeatureBits(CPU, ProcDesc, ProcFeatures);
-  InitCPUSchedModel(CPU);
-}
-
-void
-MCSubtargetInfo::InitCPUSchedModel(StringRef CPU) {
   if (!CPU.empty())
     CPUSchedModel = &getSchedModelForCPU(CPU);
   else

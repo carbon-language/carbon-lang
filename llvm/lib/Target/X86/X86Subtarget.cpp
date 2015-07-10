@@ -192,11 +192,8 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       FullFS = "+64bit,+sse2";
   }
 
-  // If feature string is not empty, parse features string.
+  // Parse features string and set the CPU.
   ParseSubtargetFeatures(CPUName, FullFS);
-
-  // Make sure the right MCSchedModel is used.
-  InitCPUSchedModel(CPUName);
 
   InstrItins = getInstrItineraryForCPU(CPUName);
 
