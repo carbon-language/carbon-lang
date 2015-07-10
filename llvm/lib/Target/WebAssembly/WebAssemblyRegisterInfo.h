@@ -16,6 +16,9 @@
 #ifndef LLVM_LIB_TARGET_WEBASSEMBLY_WEBASSEMBLYREGISTERINFO_H
 #define LLVM_LIB_TARGET_WEBASSEMBLY_WEBASSEMBLYREGISTERINFO_H
 
+#define GET_REGINFO_HEADER
+#include "WebAssemblyGenRegisterInfo.inc"
+
 namespace llvm {
 
 class MachineFunction;
@@ -23,11 +26,25 @@ class RegScavenger;
 class TargetRegisterClass;
 class Triple;
 
-class WebAssemblyRegisterInfo final {
+class WebAssemblyRegisterInfo final : public WebAssemblyGenRegisterInfo {
   const Triple &TT;
 
 public:
   explicit WebAssemblyRegisterInfo(const Triple &TT);
+
+  // Code Generation virtual methods.
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
+  void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+                           unsigned FIOperandNum,
+                           RegScavenger *RS = nullptr) const override;
+
+  // Debug information queries.
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
+
+  // Base pointer (stack realignment) support.
+  bool canRealignStack(const MachineFunction &MF) const;
+  bool needsStackRealignment(const MachineFunction &MF) const override;
 };
 
 } // end namespace llvm

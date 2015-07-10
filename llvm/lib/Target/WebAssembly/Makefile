@@ -12,7 +12,8 @@ LIBRARYNAME = LLVMWebAssemblyCodeGen
 TARGET = WebAssembly
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = WebAssemblyGenSubtargetInfo.inc WebAssemblyGenMCCodeEmitter.inc
+BUILT_SOURCES = WebAssemblyGenRegisterInfo.inc WebAssemblyGenSubtargetInfo.inc \
+		WebAssemblyGenMCCodeEmitter.inc
 
 DIRS = InstPrinter TargetInfo MCTargetDesc
 

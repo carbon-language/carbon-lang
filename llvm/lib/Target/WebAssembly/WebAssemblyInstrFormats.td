@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// WebAssembly instruction format definitions.
-//
+///
+/// \file
+/// \brief WebAssembly instruction format definitions.
+///
 //===----------------------------------------------------------------------===//
 
 // WebAssembly Instruction Format

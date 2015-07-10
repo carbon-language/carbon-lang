@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// WebAssembly Instruction definitions.
-//
+///
+/// \file
+/// \brief WebAssembly Instruction definitions.
+///
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -32,6 +33,13 @@ def HasSIMD128 : Predicate<"Subtarget->hasSIMD128()">,
 // WebAssembly-specific Operands.
 //===----------------------------------------------------------------------===//
 
+/*
+ * TODO(jfb): Add the following.
+ *
+ * get_local: read the current value of a local variable
+ * set_local: set the current value of a local variable
+*/
+
 //===----------------------------------------------------------------------===//
 // WebAssembly Instruction Format Definitions.
 //===----------------------------------------------------------------------===//
@@ -42,5 +50,10 @@ include "WebAssemblyInstrFormats.td"
 // Additional sets of instructions.
 //===----------------------------------------------------------------------===//
 
+include "WebAssemblyInstrMemory.td"
+include "WebAssemblyInstrCall.td"
+include "WebAssemblyInstrInteger.td"
+include "WebAssemblyInstrFloat.td"
+include "WebAssemblyInstrConv.td"
 include "WebAssemblyInstrAtomics.td"
 include "WebAssemblyInstrSIMD.td"

@@ -1,6 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS WebAssembly.td)
 
 tablegen(LLVM WebAssemblyGenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM WebAssemblyGenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM WebAssemblyGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(WebAssemblyCommonTableGen)
 

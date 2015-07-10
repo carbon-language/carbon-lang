@@ -29,6 +29,9 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_MC_DESC
 #include "WebAssemblyGenSubtargetInfo.inc"
 
+#define GET_REGINFO_MC_DESC
+#include "WebAssemblyGenRegisterInfo.inc"
+
 static MCAsmInfo *createWebAssemblyMCAsmInfo(const MCRegisterInfo &MRI,
                                              const Triple &TT) {
   MCAsmInfo *MAI = new WebAssemblyMCAsmInfo(TT);

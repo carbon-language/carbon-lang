@@ -1,4 +1,4 @@
-// WebAssemblyInstrSIMD.td - WebAssembly SIMD codegen support -*- tablegen -*-//
+//===- WebAssemblyInstrCall.td-WebAssembly Call codegen support -*- tablegen -*-
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,9 +8,14 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief WebAssembly SIMD operand code-gen constructs.
+/// \brief WebAssembly Call operand code-gen constructs.
 ///
 //===----------------------------------------------------------------------===//
 
-// TODO: Implement SIMD instructions.
-// Note: use Requires<[HasSIMD128]>.
+/*
+ * TODO(jfb): Add the following.
+ *
+ * call_direct: call function directly
+ * call_indirect: call function indirectly
+ * addressof: obtain a function pointer value for a given function
+ */
