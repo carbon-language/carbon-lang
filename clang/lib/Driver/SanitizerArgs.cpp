@@ -176,6 +176,7 @@ void SanitizerArgs::clear() {
   BlacklistFiles.clear();
   CoverageFeatures = 0;
   MsanTrackOrigins = 0;
+  MsanUseAfterDtor = false;
   AsanFieldPadding = 0;
   AsanZeroBaseShadow = false;
   AsanSharedRuntime = false;
@@ -417,6 +418,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
         }
       }
     }
+    MsanUseAfterDtor = 
+      Args.hasArg(options::OPT_fsanitize_memory_use_after_dtor);
   }
 
   // Parse -f(no-)?sanitize-coverage flags if coverage is supported by the
@@ -562,6 +565,10 @@ void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
   if (MsanTrackOrigins)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins=" +
                                          llvm::utostr(MsanTrackOrigins)));
+
+  if (MsanUseAfterDtor)
+    CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-use-after-dtor"));
+
   if (AsanFieldPadding)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-address-field-padding=" +
                                          llvm::utostr(AsanFieldPadding)));

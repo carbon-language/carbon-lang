@@ -559,6 +559,9 @@ def fsanitize_memory_track_origins : Flag<["-"], "fsanitize-memory-track-origins
 def fno_sanitize_memory_track_origins : Flag<["-"], "fno-sanitize-memory-track-origins">,
                                         Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Disable origins tracking in MemorySanitizer">;
+def fsanitize_memory_use_after_dtor : Flag<["-"], "fsanitize-memory-use-after-dtor">,
+                                     Group<f_clang_Group>, Flags<[CC1Option]>,
+                                     HelpText<"Enable use-after-destroy detection in MemorySanitizer">;
 def fsanitize_address_field_padding : Joined<["-"], "fsanitize-address-field-padding=">,
                                         Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Level of field padding for AddressSanitizer">;

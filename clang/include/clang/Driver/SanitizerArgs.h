@@ -29,6 +29,7 @@ class SanitizerArgs {
   std::vector<std::string> BlacklistFiles;
   int CoverageFeatures;
   int MsanTrackOrigins;
+  bool MsanUseAfterDtor;
   int AsanFieldPadding;
   bool AsanZeroBaseShadow;
   bool AsanSharedRuntime;
