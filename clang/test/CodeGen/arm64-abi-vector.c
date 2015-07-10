@@ -309,7 +309,7 @@ __attribute__((noinline)) double args_vec_5c(int fixed, __char5 c5) {
 // CHECK: args_vec_5c
 // CHECK: [[C5:%.*]] = alloca <5 x i8>, align 8
 // CHECK: [[TMP:%.*]] = bitcast <5 x i8>* [[C5]] to <2 x i32>*
-// CHECK: store <2 x i32> {{%.*}}, <2 x i32>* [[TMP]], align 1
+// CHECK: store <2 x i32> {{%.*}}, <2 x i32>* [[TMP]], align 8
   double sum = fixed;
   sum = sum + c5.x + c5.y;
   return sum;
@@ -325,7 +325,7 @@ __attribute__((noinline)) double args_vec_9c(int fixed, __char9 c9) {
 // CHECK: args_vec_9c
 // CHECK: [[C9:%.*]] = alloca <9 x i8>, align 16
 // CHECK: [[TMP:%.*]] = bitcast <9 x i8>* [[C9]] to <4 x i32>*
-// CHECK: store <4 x i32> {{%.*}}, <4 x i32>* [[TMP]], align 1
+// CHECK: store <4 x i32> {{%.*}}, <4 x i32>* [[TMP]], align 16
   double sum = fixed;
   sum = sum + c9.x + c9.y;
   return sum;
@@ -355,7 +355,7 @@ __attribute__((noinline)) double args_vec_3s(int fixed, __short3 c3) {
 // CHECK: args_vec_3s
 // CHECK: [[C3:%.*]] = alloca <3 x i16>, align 8
 // CHECK: [[TMP:%.*]] = bitcast <3 x i16>* [[C3]] to <2 x i32>*
-// CHECK: store <2 x i32> {{%.*}}, <2 x i32>* [[TMP]], align 1
+// CHECK: store <2 x i32> {{%.*}}, <2 x i32>* [[TMP]], align 8
   double sum = fixed;
   sum = sum + c3.x + c3.y;
   return sum;
@@ -371,7 +371,7 @@ __attribute__((noinline)) double args_vec_5s(int fixed, __short5 c5) {
 // CHECK: args_vec_5s
 // CHECK: [[C5:%.*]] = alloca <5 x i16>, align 16
 // CHECK: [[TMP:%.*]] = bitcast <5 x i16>* [[C5]] to <4 x i32>*
-// CHECK: store <4 x i32> {{%.*}}, <4 x i32>* [[TMP]], align 1
+// CHECK: store <4 x i32> {{%.*}}, <4 x i32>* [[TMP]], align 16
   double sum = fixed;
   sum = sum + c5.x + c5.y;
   return sum;
@@ -387,7 +387,7 @@ __attribute__((noinline)) double args_vec_3i(int fixed, __int3 c3) {
 // CHECK: args_vec_3i
 // CHECK: [[C3:%.*]] = alloca <3 x i32>, align 16
 // CHECK: [[TMP:%.*]] = bitcast <3 x i32>* [[C3]] to <4 x i32>*
-// CHECK: store <4 x i32> {{%.*}}, <4 x i32>* [[TMP]], align 1
+// CHECK: store <4 x i32> {{%.*}}, <4 x i32>* [[TMP]], align 16
   double sum = fixed;
   sum = sum + c3.x + c3.y;
   return sum;

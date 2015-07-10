@@ -912,20 +912,21 @@ static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
 
 
 /// CreateCoercedLoad - Create a load from \arg SrcPtr interpreted as
-/// a pointer to an object of type \arg Ty.
+/// a pointer to an object of type \arg Ty, known to be aligned to
+/// \arg SrcAlign bytes.
 ///
 /// This safely handles the case when the src type is smaller than the
 /// destination type; in this situation the values of bits which not
 /// present in the src are undefined.
 static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
-                                      llvm::Type *Ty,
+                                      llvm::Type *Ty, CharUnits SrcAlign,
                                       CodeGenFunction &CGF) {
   llvm::Type *SrcTy =
     cast<llvm::PointerType>(SrcPtr->getType())->getElementType();
 
   // If SrcTy and Ty are the same, just do a load.
   if (SrcTy == Ty)
-    return CGF.Builder.CreateLoad(SrcPtr);
+    return CGF.Builder.CreateAlignedLoad(SrcPtr, SrcAlign.getQuantity());
 
   uint64_t DstSize = CGF.CGM.getDataLayout().getTypeAllocSize(Ty);
 
@@ -940,7 +941,8 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   // extension or truncation to the desired type.
   if ((isa<llvm::IntegerType>(Ty) || isa<llvm::PointerType>(Ty)) &&
       (isa<llvm::IntegerType>(SrcTy) || isa<llvm::PointerType>(SrcTy))) {
-    llvm::LoadInst *Load = CGF.Builder.CreateLoad(SrcPtr);
+    llvm::LoadInst *Load =
+      CGF.Builder.CreateAlignedLoad(SrcPtr, SrcAlign.getQuantity());
     return CoerceIntOrPtrToIntOrPtr(Load, Ty, CGF);
   }
 
@@ -954,23 +956,20 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
     // to that information.
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(SrcPtr, llvm::PointerType::getUnqual(Ty));
-    llvm::LoadInst *Load = CGF.Builder.CreateLoad(Casted);
-    // FIXME: Use better alignment / avoid requiring aligned load.
-    Load->setAlignment(1);
-    return Load;
+    return CGF.Builder.CreateAlignedLoad(Casted, SrcAlign.getQuantity());
   }
 
   // Otherwise do coercion through memory. This is stupid, but
   // simple.
-  llvm::Value *Tmp = CGF.CreateTempAlloca(Ty);
+  llvm::AllocaInst *Tmp = CGF.CreateTempAlloca(Ty);
+  Tmp->setAlignment(SrcAlign.getQuantity());
   llvm::Type *I8PtrTy = CGF.Builder.getInt8PtrTy();
   llvm::Value *Casted = CGF.Builder.CreateBitCast(Tmp, I8PtrTy);
   llvm::Value *SrcCasted = CGF.Builder.CreateBitCast(SrcPtr, I8PtrTy);
-  // FIXME: Use better alignment.
   CGF.Builder.CreateMemCpy(Casted, SrcCasted,
       llvm::ConstantInt::get(CGF.IntPtrTy, SrcSize),
-      1, false);
-  return CGF.Builder.CreateLoad(Tmp);
+      SrcAlign.getQuantity(), false);
+  return CGF.Builder.CreateAlignedLoad(Tmp, SrcAlign.getQuantity());
 }
 
 // Function to store a first-class aggregate into memory.  We prefer to
@@ -979,39 +978,45 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
 // FIXME: Do we need to recurse here?
 static void BuildAggStore(CodeGenFunction &CGF, llvm::Value *Val,
                           llvm::Value *DestPtr, bool DestIsVolatile,
-                          bool LowAlignment) {
+                          CharUnits DestAlign) {
   // Prefer scalar stores to first-class aggregate stores.
   if (llvm::StructType *STy =
         dyn_cast<llvm::StructType>(Val->getType())) {
+    const llvm::StructLayout *Layout =
+      CGF.CGM.getDataLayout().getStructLayout(STy);
+
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       llvm::Value *EltPtr = CGF.Builder.CreateConstGEP2_32(STy, DestPtr, 0, i);
       llvm::Value *Elt = CGF.Builder.CreateExtractValue(Val, i);
-      llvm::StoreInst *SI = CGF.Builder.CreateStore(Elt, EltPtr,
-                                                    DestIsVolatile);
-      if (LowAlignment)
-        SI->setAlignment(1);
+      uint64_t EltOffset = Layout->getElementOffset(i);
+      CharUnits EltAlign =
+        DestAlign.alignmentAtOffset(CharUnits::fromQuantity(EltOffset));
+      CGF.Builder.CreateAlignedStore(Elt, EltPtr, EltAlign.getQuantity(),
+                                     DestIsVolatile);
     }
   } else {
-    llvm::StoreInst *SI = CGF.Builder.CreateStore(Val, DestPtr, DestIsVolatile);
-    if (LowAlignment)
-      SI->setAlignment(1);
+    CGF.Builder.CreateAlignedStore(Val, DestPtr, DestAlign.getQuantity(),
+                                   DestIsVolatile);
   }
 }
 
 /// CreateCoercedStore - Create a store to \arg DstPtr from \arg Src,
-/// where the source and destination may have different types.
+/// where the source and destination may have different types.  The
+/// destination is known to be aligned to \arg DstAlign bytes.
 ///
 /// This safely handles the case when the src type is larger than the
 /// destination type; the upper bits of the src will be lost.
 static void CreateCoercedStore(llvm::Value *Src,
                                llvm::Value *DstPtr,
                                bool DstIsVolatile,
+                               CharUnits DstAlign,
                                CodeGenFunction &CGF) {
   llvm::Type *SrcTy = Src->getType();
   llvm::Type *DstTy =
     cast<llvm::PointerType>(DstPtr->getType())->getElementType();
   if (SrcTy == DstTy) {
-    CGF.Builder.CreateStore(Src, DstPtr, DstIsVolatile);
+    CGF.Builder.CreateAlignedStore(Src, DstPtr, DstAlign.getQuantity(),
+                                   DstIsVolatile);
     return;
   }
 
@@ -1027,7 +1032,8 @@ static void CreateCoercedStore(llvm::Value *Src,
   if ((isa<llvm::IntegerType>(SrcTy) || isa<llvm::PointerType>(SrcTy)) &&
       (isa<llvm::IntegerType>(DstTy) || isa<llvm::PointerType>(DstTy))) {
     Src = CoerceIntOrPtrToIntOrPtr(Src, DstTy, CGF);
-    CGF.Builder.CreateStore(Src, DstPtr, DstIsVolatile);
+    CGF.Builder.CreateAlignedStore(Src, DstPtr, DstAlign.getQuantity(),
+                                   DstIsVolatile);
     return;
   }
 
@@ -1037,8 +1043,7 @@ static void CreateCoercedStore(llvm::Value *Src,
   if (SrcSize <= DstSize) {
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
-    // FIXME: Use better alignment / avoid requiring aligned store.
-    BuildAggStore(CGF, Src, Casted, DstIsVolatile, true);
+    BuildAggStore(CGF, Src, Casted, DstIsVolatile, DstAlign);
   } else {
     // Otherwise do coercion through memory. This is stupid, but
     // simple.
@@ -1049,15 +1054,15 @@ static void CreateCoercedStore(llvm::Value *Src,
     //
     // FIXME: Assert that we aren't truncating non-padding bits when have access
     // to that information.
-    llvm::Value *Tmp = CGF.CreateTempAlloca(SrcTy);
-    CGF.Builder.CreateStore(Src, Tmp);
+    llvm::AllocaInst *Tmp = CGF.CreateTempAlloca(SrcTy);
+    Tmp->setAlignment(DstAlign.getQuantity());
+    CGF.Builder.CreateAlignedStore(Src, Tmp, DstAlign.getQuantity());
     llvm::Type *I8PtrTy = CGF.Builder.getInt8PtrTy();
     llvm::Value *Casted = CGF.Builder.CreateBitCast(Tmp, I8PtrTy);
     llvm::Value *DstCasted = CGF.Builder.CreateBitCast(DstPtr, I8PtrTy);
-    // FIXME: Use better alignment.
     CGF.Builder.CreateMemCpy(DstCasted, Casted,
         llvm::ConstantInt::get(CGF.IntPtrTy, DstSize),
-        1, false);
+        DstAlign.getQuantity(), false);
   }
 }
 
@@ -1996,6 +2001,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       Alloca->setAlignment(AlignmentToUse);
       llvm::Value *V = Alloca;
       llvm::Value *Ptr = V;    // Pointer to store into.
+      CharUnits PtrAlign = CharUnits::fromQuantity(AlignmentToUse);
 
       // If the value is offset in memory, apply the offset now.
       if (unsigned Offs = ArgI.getDirectOffset()) {
@@ -2003,6 +2009,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         Ptr = Builder.CreateConstGEP1_32(Builder.getInt8Ty(), Ptr, Offs);
         Ptr = Builder.CreateBitCast(Ptr,
                           llvm::PointerType::getUnqual(ArgI.getCoerceToType()));
+        PtrAlign = PtrAlign.alignmentAtOffset(CharUnits::fromQuantity(Offs));
       }
 
       // Fast-isel and the optimizer generally like scalar values better than
@@ -2047,7 +2054,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         assert(NumIRArgs == 1);
         auto AI = FnArgs[FirstIRArg];
         AI->setName(Arg->getName() + ".coerce");
-        CreateCoercedStore(AI, Ptr, /*DestIsVolatile=*/false, *this);
+        CreateCoercedStore(AI, Ptr, /*DestIsVolatile=*/false, PtrAlign, *this);
       }
 
 
@@ -2415,15 +2422,17 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       }
     } else {
       llvm::Value *V = ReturnValue;
+      CharUnits Align = getContext().getTypeAlignInChars(RetTy);
       // If the value is offset in memory, apply the offset now.
       if (unsigned Offs = RetAI.getDirectOffset()) {
         V = Builder.CreateBitCast(V, Builder.getInt8PtrTy());
         V = Builder.CreateConstGEP1_32(Builder.getInt8Ty(), V, Offs);
         V = Builder.CreateBitCast(V,
                          llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
+        Align = Align.alignmentAtOffset(CharUnits::fromQuantity(Offs));
       }
 
-      RV = CreateCoercedLoad(V, RetAI.getCoerceToType(), *this);
+      RV = CreateCoercedLoad(V, RetAI.getCoerceToType(), Align, *this);
     }
 
     // In ARC, end functions that return a retainable type with a call
@@ -3286,12 +3295,17 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
       // FIXME: Avoid the conversion through memory if possible.
       llvm::Value *SrcPtr;
+      CharUnits SrcAlign;
       if (RV.isScalar() || RV.isComplex()) {
         SrcPtr = CreateMemTemp(I->Ty, "coerce");
+        SrcAlign = TypeAlign;
         LValue SrcLV = MakeAddrLValue(SrcPtr, I->Ty, TypeAlign);
         EmitInitStoreOfNonAggregate(*this, RV, SrcLV);
-      } else
+      } else {
         SrcPtr = RV.getAggregateAddr();
+        // This alignment is guaranteed by EmitCallArg.
+        SrcAlign = TypeAlign;
+      }
 
       // If the value is offset in memory, apply the offset now.
       if (unsigned Offs = ArgInfo.getDirectOffset()) {
@@ -3299,7 +3313,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         SrcPtr = Builder.CreateConstGEP1_32(Builder.getInt8Ty(), SrcPtr, Offs);
         SrcPtr = Builder.CreateBitCast(SrcPtr,
                        llvm::PointerType::getUnqual(ArgInfo.getCoerceToType()));
-
+        SrcAlign = SrcAlign.alignmentAtOffset(CharUnits::fromQuantity(Offs));
       }
 
       // Fast-isel and the optimizer generally like scalar values better than
@@ -3338,7 +3352,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         // In the simple case, just pass the coerced loaded value.
         assert(NumIRArgs == 1);
         IRCallArgs[FirstIRArg] =
-            CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(), *this);
+            CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(),
+                              SrcAlign, *this);
       }
 
       break;
@@ -3535,12 +3550,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         case TEK_Aggregate: {
           llvm::Value *DestPtr = ReturnValue.getValue();
           bool DestIsVolatile = ReturnValue.isVolatile();
+          CharUnits DestAlign = getContext().getTypeAlignInChars(RetTy);
 
           if (!DestPtr) {
             DestPtr = CreateMemTemp(RetTy, "agg.tmp");
             DestIsVolatile = false;
           }
-          BuildAggStore(*this, CI, DestPtr, DestIsVolatile, false);
+          BuildAggStore(*this, CI, DestPtr, DestIsVolatile, DestAlign);
           return RValue::getAggregate(DestPtr);
         }
         case TEK_Scalar: {
@@ -3557,6 +3573,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
       llvm::Value *DestPtr = ReturnValue.getValue();
       bool DestIsVolatile = ReturnValue.isVolatile();
+      CharUnits DestAlign = getContext().getTypeAlignInChars(RetTy);
 
       if (!DestPtr) {
         DestPtr = CreateMemTemp(RetTy, "coerce");
@@ -3565,14 +3582,17 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
       // If the value is offset in memory, apply the offset now.
       llvm::Value *StorePtr = DestPtr;
+      CharUnits StoreAlign = DestAlign;
       if (unsigned Offs = RetAI.getDirectOffset()) {
         StorePtr = Builder.CreateBitCast(StorePtr, Builder.getInt8PtrTy());
         StorePtr =
             Builder.CreateConstGEP1_32(Builder.getInt8Ty(), StorePtr, Offs);
         StorePtr = Builder.CreateBitCast(StorePtr,
                            llvm::PointerType::getUnqual(RetAI.getCoerceToType()));
+        StoreAlign =
+          StoreAlign.alignmentAtOffset(CharUnits::fromQuantity(Offs));
       }
-      CreateCoercedStore(CI, StorePtr, DestIsVolatile, *this);
+      CreateCoercedStore(CI, StorePtr, DestIsVolatile, StoreAlign, *this);
 
       return convertTempToRValue(DestPtr, RetTy, SourceLocation());
     }

@@ -25,3 +25,19 @@ void func (void)
   s = es;
 }
 
+
+// Alignment should be respected for coerced argument loads
+
+struct arg { long y __attribute__((packed, aligned(4))); };
+
+extern struct arg x;
+void f(struct arg);
+
+void test (void)
+{
+  f(x);
+}
+
+// CHECK-LABEL: @test
+// CHECK: load i64, i64* getelementptr inbounds (%struct.arg, %struct.arg* @x, i32 0, i32 0), align 4
+

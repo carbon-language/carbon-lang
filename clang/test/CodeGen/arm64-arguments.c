@@ -219,8 +219,8 @@ int32x4_t f36(int i, s36_with_align s1, s36_with_align s2) {
 // CHECK: define <4 x i32> @f36(i32 %i, i128 %s1.coerce, i128 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s36, align 16
 // CHECK: %s2 = alloca %struct.s36, align 16
-// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
-// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
+// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 16
+// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 16
 // CHECK: %[[a:.*]] = bitcast %struct.s36* %s1 to <4 x i32>*
 // CHECK: load <4 x i32>, <4 x i32>* %[[a]], align 16
 // CHECK: %[[b:.*]] = bitcast %struct.s36* %s2 to <4 x i32>*
@@ -275,8 +275,8 @@ int f38(int i, s38_no_align s1, s38_no_align s2) {
 // CHECK: define i32 @f38(i32 %i, i64 %s1.coerce, i64 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s38, align 8
 // CHECK: %s2 = alloca %struct.s38, align 8
-// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 1
-// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 1
+// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 8
+// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 8
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 1
@@ -287,8 +287,8 @@ s38_no_align g38;
 s38_no_align g38_2;
 int caller38() {
 // CHECK: define i32 @caller38()
-// CHECK: %[[a:.*]] = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 1
-// CHECK: %[[b:.*]] = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 1
+// CHECK: %[[a:.*]] = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 4
+// CHECK: %[[b:.*]] = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 4
 // CHECK: call i32 @f38(i32 3, i64 %[[a]], i64 %[[b]])
   return f38(3, g38, g38_2);
 }
@@ -299,8 +299,8 @@ int f38_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: define i32 @f38_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, i64 %s1.coerce, i64 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s38, align 8
 // CHECK: %s2 = alloca %struct.s38, align 8
-// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 1
-// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 1
+// CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 8
+// CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 8
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 1
@@ -309,8 +309,8 @@ int f38_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller38_stack() {
 // CHECK: define i32 @caller38_stack()
-// CHECK: %[[a:.*]] = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 1
-// CHECK: %[[b:.*]] = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 1
+// CHECK: %[[a:.*]] = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 4
+// CHECK: %[[b:.*]] = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 4
 // CHECK: call i32 @f38_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i64 %[[a]], i64 %[[b]])
   return f38_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g38, g38_2);
 }
@@ -328,8 +328,8 @@ int f39(int i, s39_with_align s1, s39_with_align s2) {
 // CHECK: define i32 @f39(i32 %i, i128 %s1.coerce, i128 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s39, align 16
 // CHECK: %s2 = alloca %struct.s39, align 16
-// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
-// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
+// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 16
+// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 16
 // CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 1
@@ -340,8 +340,8 @@ s39_with_align g39;
 s39_with_align g39_2;
 int caller39() {
 // CHECK: define i32 @caller39()
-// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 16
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 16
 // CHECK: call i32 @f39(i32 3, i128 %[[a]], i128 %[[b]])
   return f39(3, g39, g39_2);
 }
@@ -352,8 +352,8 @@ int f39_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: define i32 @f39_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, i128 %s1.coerce, i128 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s39, align 16
 // CHECK: %s2 = alloca %struct.s39, align 16
-// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
-// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
+// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 16
+// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 16
 // CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 1
@@ -362,8 +362,8 @@ int f39_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller39_stack() {
 // CHECK: define i32 @caller39_stack()
-// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 16
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 16
 // CHECK: call i32 @f39_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i128 %[[a]], i128 %[[b]])
   return f39_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g39, g39_2);
 }
@@ -383,8 +383,8 @@ int f40(int i, s40_no_align s1, s40_no_align s2) {
 // CHECK: define i32 @f40(i32 %i, [2 x i64] %s1.coerce, [2 x i64] %s2.coerce)
 // CHECK: %s1 = alloca %struct.s40, align 8
 // CHECK: %s2 = alloca %struct.s40, align 8
-// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 1
-// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 1
+// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 8
+// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 8
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 1
@@ -395,8 +395,8 @@ s40_no_align g40;
 s40_no_align g40_2;
 int caller40() {
 // CHECK: define i32 @caller40()
-// CHECK: %[[a:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 1
-// CHECK: %[[b:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 1
+// CHECK: %[[a:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 4
+// CHECK: %[[b:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 4
 // CHECK: call i32 @f40(i32 3, [2 x i64] %[[a]], [2 x i64] %[[b]])
   return f40(3, g40, g40_2);
 }
@@ -407,8 +407,8 @@ int f40_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: define i32 @f40_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, [2 x i64] %s1.coerce, [2 x i64] %s2.coerce)
 // CHECK: %s1 = alloca %struct.s40, align 8
 // CHECK: %s2 = alloca %struct.s40, align 8
-// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 1
-// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 1
+// CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 8
+// CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 8
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 1
@@ -417,8 +417,8 @@ int f40_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller40_stack() {
 // CHECK: define i32 @caller40_stack()
-// CHECK: %[[a:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 1
-// CHECK: %[[b:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 1
+// CHECK: %[[a:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 4
+// CHECK: %[[b:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 4
 // CHECK: call i32 @f40_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, [2 x i64] %[[a]], [2 x i64] %[[b]])
   return f40_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g40, g40_2);
 }
@@ -438,8 +438,8 @@ int f41(int i, s41_with_align s1, s41_with_align s2) {
 // CHECK: define i32 @f41(i32 %i, i128 %s1.coerce, i128 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s41, align 16
 // CHECK: %s2 = alloca %struct.s41, align 16
-// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
-// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
+// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 16
+// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 16
 // CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 1
@@ -450,8 +450,8 @@ s41_with_align g41;
 s41_with_align g41_2;
 int caller41() {
 // CHECK: define i32 @caller41()
-// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 16
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 16
 // CHECK: call i32 @f41(i32 3, i128 %[[a]], i128 %[[b]])
   return f41(3, g41, g41_2);
 }
@@ -462,8 +462,8 @@ int f41_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: define i32 @f41_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, i128 %s1.coerce, i128 %s2.coerce)
 // CHECK: %s1 = alloca %struct.s41, align 16
 // CHECK: %s2 = alloca %struct.s41, align 16
-// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
-// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
+// CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 16
+// CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 16
 // CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s2, i32 0, i32 0
 // CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 1
@@ -472,8 +472,8 @@ int f41_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller41_stack() {
 // CHECK: define i32 @caller41_stack()
-// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 16
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 16
 // CHECK: call i32 @f41_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i128 %[[a]], i128 %[[b]])
   return f41_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g41, g41_2);
 }
