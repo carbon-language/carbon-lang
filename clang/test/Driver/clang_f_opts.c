@@ -87,7 +87,7 @@
 // RUN: %clang -### -S -fprofile-generate=dir -fprofile-instr-use %s 2>&1 | FileCheck -check-prefix=CHECK-NO-MIX-GEN-USE %s
 // RUN: %clang -### -S -fprofile-generate=dir -fprofile-instr-use=file %s 2>&1 | FileCheck -check-prefix=CHECK-NO-MIX-GEN-USE %s
 // CHECK-PROFILE-GENERATE: "-fprofile-instr-generate"
-// CHECK-PROFILE-GENERATE-DIR: "-fprofile-instr-generate=/some/dir/default.profraw"
+// CHECK-PROFILE-GENERATE-DIR: "-fprofile-instr-generate=/some/dir{{/|\\\\}}default.profraw"
 // CHECK-PROFILE-GENERATE-FILE: "-fprofile-instr-generate=/tmp/somefile.profraw"
 // CHECK-NO-MIX-GEN-USE: '{{[a-z=-]*}}' not allowed with '{{[a-z=-]*}}'
 
@@ -97,7 +97,7 @@
 // RUN: %clang -### -S -fprofile-use=%t.d/some/dir %s 2>&1 | FileCheck -check-prefix=CHECK-PROFILE-USE-DIR %s
 // RUN: %clang -### -S -fprofile-instr-use=/tmp/somefile.prof %s 2>&1 | FileCheck -check-prefix=CHECK-PROFILE-USE-FILE %s
 // CHECK-PROFILE-USE: "-fprofile-instr-use=default.profdata"
-// CHECK-PROFILE-USE-DIR: "-fprofile-instr-use={{.*}}.d/some/dir/default.profdata"
+// CHECK-PROFILE-USE-DIR: "-fprofile-instr-use={{.*}}.d/some/dir{{/|\\\\}}default.profdata"
 // CHECK-PROFILE-USE-FILE: "-fprofile-instr-use=/tmp/somefile.prof"
 
 // RUN: %clang -### -S -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
