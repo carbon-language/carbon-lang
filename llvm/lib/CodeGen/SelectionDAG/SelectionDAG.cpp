@@ -2356,15 +2356,24 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
     // low 3 bits clear.
+    // Output known-0 bits are also known if the top bits of each input are
+    // known to be clear. For example, if one input has the top 10 bits clear
+    // and the other has the top 8 bits clear, we know the top 7 bits of the
+    // output must be clear.
     computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, Depth+1);
-    unsigned KnownZeroOut = KnownZero2.countTrailingOnes();
+    unsigned KnownZeroHigh = KnownZero2.countLeadingOnes();
+    unsigned KnownZeroLow = KnownZero2.countTrailingOnes();
 
     computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, Depth+1);
-    KnownZeroOut = std::min(KnownZeroOut,
+    KnownZeroHigh = std::min(KnownZeroHigh,
+                             KnownZero2.countLeadingOnes());
+    KnownZeroLow = std::min(KnownZeroLow,
                             KnownZero2.countTrailingOnes());
 
     if (Op.getOpcode() == ISD::ADD) {
-      KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroOut);
+      KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroLow);
+      if (KnownZeroHigh > 1)
+        KnownZero |= APInt::getHighBitsSet(BitWidth, KnownZeroHigh - 1);
       break;
     }
 
@@ -2372,8 +2381,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     // information if we know (at least) that the low two bits are clear.  We
     // then return to the caller that the low bit is unknown but that other bits
     // are known zero.
-    if (KnownZeroOut >= 2) // ADDE
-      KnownZero |= APInt::getBitsSet(BitWidth, 1, KnownZeroOut);
+    if (KnownZeroLow >= 2) // ADDE
+      KnownZero |= APInt::getBitsSet(BitWidth, 1, KnownZeroLow);
     break;
   }
   case ISD::SREM:

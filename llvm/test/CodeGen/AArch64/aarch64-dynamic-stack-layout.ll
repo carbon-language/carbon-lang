@@ -255,7 +255,7 @@ entry:
 ; CHECK: ubfx	x9, x0, #0, #32
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
-; CHECK: and	x9, x9, #0xfffffffffffffff0
+; CHECK: and	x9, x9, #0x7fffffff0
 ; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
@@ -302,7 +302,7 @@ entry:
 ; CHECK: ubfx	x9, x0, #0, #32
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
-; CHECK: and	x9, x9, #0xfffffffffffffff0
+; CHECK: and	x9, x9, #0x7fffffff0
 ; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
@@ -364,7 +364,7 @@ entry:
 ; CHECK: ubfx	x9, x0, #0, #32
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
-; CHECK: and	x9, x9, #0xfffffffffffffff0
+; CHECK: and	x9, x9, #0x7fffffff0
 ; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
@@ -417,7 +417,7 @@ entry:
 ; CHECK: ubfx	x9, x0, #0, #32
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
-; CHECK: and	x9, x9, #0xfffffffffffffff0
+; CHECK: and	x9, x9, #0x7fffffff0
 ; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
@@ -468,7 +468,7 @@ entry:
 ; CHECK: ubfx	x9, x0, #0, #32
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
-; CHECK: and	x9, x9, #0xfffffffffffffff0
+; CHECK: and	x9, x9, #0x7fffffff0
 ; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
