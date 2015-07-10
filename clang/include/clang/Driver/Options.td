@@ -533,7 +533,8 @@ def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
                    Flags<[CC1Option, CoreOption]>, MetaVarName<"<check>">,
                    HelpText<"Turn on runtime checks for various forms of undefined "
                             "or suspicious behavior. See user manual for available checks ">;
-def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>;
+def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>,
+                      Flags<[CoreOption]>;
 def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
                           Group<f_clang_Group>, Flags<[CC1Option, CoreOption]>,
                           HelpText<"Path to blacklist file for sanitizers">;
@@ -561,21 +562,23 @@ def fno_sanitize_memory_track_origins : Flag<["-"], "fno-sanitize-memory-track-o
 def fsanitize_address_field_padding : Joined<["-"], "fsanitize-address-field-padding=">,
                                         Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Level of field padding for AddressSanitizer">;
-def fsanitize_recover : Flag<["-"], "fsanitize-recover">, Group<f_clang_Group>;
+def fsanitize_recover : Flag<["-"], "fsanitize-recover">, Group<f_clang_Group>,
+                        Flags<[CoreOption]>;
 def fno_sanitize_recover : Flag<["-"], "fno-sanitize-recover">,
-                           Group<f_clang_Group>;
+                           Group<f_clang_Group>, Flags<[CoreOption]>;
 def fsanitize_recover_EQ : CommaJoined<["-"], "fsanitize-recover=">,
                            Group<f_clang_Group>,
-                           Flags<[CC1Option]>,
+                           Flags<[CC1Option, CoreOption]>,
                            HelpText<"Enable recovery for specified sanitizers">;
 def fno_sanitize_recover_EQ
     : CommaJoined<["-"], "fno-sanitize-recover=">,
-      Group<f_clang_Group>,
+      Group<f_clang_Group>, Flags<[CoreOption]>,
       HelpText<"Disable recovery for specified sanitizers">;
 def fsanitize_trap_EQ : CommaJoined<["-"], "fsanitize-trap=">, Group<f_clang_Group>,
                         Flags<[CC1Option, CoreOption]>,
                         HelpText<"Enable trapping for specified sanitizers">;
 def fno_sanitize_trap_EQ : CommaJoined<["-"], "fno-sanitize-trap=">, Group<f_clang_Group>,
+                           Flags<[CoreOption]>,
                            HelpText<"Disable trapping for specified sanitizers">;
 def fsanitize_undefined_trap_on_error : Flag<["-"], "fsanitize-undefined-trap-on-error">,
                                         Group<f_clang_Group>;
