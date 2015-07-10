@@ -697,6 +697,21 @@ static Comdat::SelectionKind getDecodedComdatSelectionKind(unsigned Val) {
   }
 }
 
+static FastMathFlags getDecodedFastMathFlags(unsigned Val) {
+  FastMathFlags FMF;
+  if (0 != (Val & FastMathFlags::UnsafeAlgebra))
+    FMF.setUnsafeAlgebra();
+  if (0 != (Val & FastMathFlags::NoNaNs))
+    FMF.setNoNaNs();
+  if (0 != (Val & FastMathFlags::NoInfs))
+    FMF.setNoInfs();
+  if (0 != (Val & FastMathFlags::NoSignedZeros))
+    FMF.setNoSignedZeros();
+  if (0 != (Val & FastMathFlags::AllowReciprocal))
+    FMF.setAllowReciprocal();
+  return FMF;
+}
+
 static void upgradeDLLImportExportLinkage(llvm::GlobalValue *GV, unsigned Val) {
   switch (Val) {
   case 5: GV->setDLLStorageClass(GlobalValue::DLLImportStorageClass); break;
@@ -3472,17 +3487,7 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
           if (Record[OpNum] & (1 << bitc::PEO_EXACT))
             cast<BinaryOperator>(I)->setIsExact(true);
         } else if (isa<FPMathOperator>(I)) {
-          FastMathFlags FMF;
-          if (0 != (Record[OpNum] & FastMathFlags::UnsafeAlgebra))
-            FMF.setUnsafeAlgebra();
-          if (0 != (Record[OpNum] & FastMathFlags::NoNaNs))
-            FMF.setNoNaNs();
-          if (0 != (Record[OpNum] & FastMathFlags::NoInfs))
-            FMF.setNoInfs();
-          if (0 != (Record[OpNum] & FastMathFlags::NoSignedZeros))
-            FMF.setNoSignedZeros();
-          if (0 != (Record[OpNum] & FastMathFlags::AllowReciprocal))
-            FMF.setAllowReciprocal();
+          FastMathFlags FMF = getDecodedFastMathFlags(Record[OpNum]);
           if (FMF.any())
             I->setFastMathFlags(FMF);
         }
@@ -3739,14 +3744,25 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *LHS, *RHS;
       if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
-          popValue(Record, OpNum, NextValueNo, LHS->getType(), RHS) ||
-          OpNum+1 != Record.size())
+          popValue(Record, OpNum, NextValueNo, LHS->getType(), RHS))
+        return error("Invalid record");
+
+      unsigned PredVal = Record[OpNum];
+      bool IsFP = LHS->getType()->isFPOrFPVectorTy();
+      FastMathFlags FMF;
+      if (IsFP && Record.size() > OpNum+1)
+        FMF = getDecodedFastMathFlags(Record[++OpNum]);
+
+      if (OpNum+1 != Record.size())
         return error("Invalid record");
 
       if (LHS->getType()->isFPOrFPVectorTy())
-        I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
+        I = new FCmpInst((FCmpInst::Predicate)PredVal, LHS, RHS);
       else
-        I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
+        I = new ICmpInst((ICmpInst::Predicate)PredVal, LHS, RHS);
+
+      if (FMF.any())
+        I->setFastMathFlags(FMF);
       InstructionList.push_back(I);
       break;
     }

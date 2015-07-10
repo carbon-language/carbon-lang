@@ -1837,8 +1837,8 @@ Fast-Math Flags
 
 LLVM IR floating-point binary ops (:ref:`fadd <i_fadd>`,
 :ref:`fsub <i_fsub>`, :ref:`fmul <i_fmul>`, :ref:`fdiv <i_fdiv>`,
-:ref:`frem <i_frem>`) have the following flags that can be set to enable
-otherwise unsafe floating point operations
+:ref:`frem <i_frem>`, :ref:`fcmp <i_fcmp>`) have the following flags that can
+be set to enable otherwise unsafe floating point operations
 
 ``nnan``
    No NaNs - Allow optimizations to assume the arguments and result are not
@@ -7573,7 +7573,7 @@ Syntax:
 
 ::
 
-      <result> = fcmp <cond> <ty> <op1>, <op2>     ; yields i1 or <N x i1>:result
+      <result> = fcmp [fast-math flags]* <cond> <ty> <op1>, <op2>     ; yields i1 or <N x i1>:result
 
 Overview:
 """""""""
@@ -7655,6 +7655,15 @@ always yields an :ref:`i1 <t_integer>` result, as follows:
    not equal to ``op2``.
 #. ``uno``: yields ``true`` if either operand is a QNAN.
 #. ``true``: always yields ``true``, regardless of operands.
+
+The ``fcmp`` instruction can also optionally take any number of
+:ref:`fast-math flags <fastmath>`, which are optimization hints to enable
+otherwise unsafe floating point optimizations.
+
+Any set of fast-math flags are legal on an ``fcmp`` instruction, but the
+only flags that have any effect on its semantics are those that allow
+assumptions to be made about the values of input arguments; namely
+``nnan``, ``ninf``, and ``nsz``. See :ref:`fastmath` for more information.
 
 Example:
 """"""""

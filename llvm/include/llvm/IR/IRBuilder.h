@@ -1382,47 +1382,61 @@ public:
     return CreateICmp(ICmpInst::ICMP_SLE, LHS, RHS, Name);
   }
 
-  Value *CreateFCmpOEQ(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_OEQ, LHS, RHS, Name);
+  Value *CreateFCmpOEQ(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_OEQ, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpOGT(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_OGT, LHS, RHS, Name);
+  Value *CreateFCmpOGT(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_OGT, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpOGE(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_OGE, LHS, RHS, Name);
+  Value *CreateFCmpOGE(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_OGE, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpOLT(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_OLT, LHS, RHS, Name);
+  Value *CreateFCmpOLT(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_OLT, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpOLE(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_OLE, LHS, RHS, Name);
+  Value *CreateFCmpOLE(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_OLE, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpONE(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_ONE, LHS, RHS, Name);
+  Value *CreateFCmpONE(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_ONE, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpORD(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_ORD, LHS, RHS, Name);
+  Value *CreateFCmpORD(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_ORD, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpUNO(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_UNO, LHS, RHS, Name);
+  Value *CreateFCmpUNO(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_UNO, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpUEQ(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_UEQ, LHS, RHS, Name);
+  Value *CreateFCmpUEQ(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_UEQ, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpUGT(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_UGT, LHS, RHS, Name);
+  Value *CreateFCmpUGT(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_UGT, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpUGE(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_UGE, LHS, RHS, Name);
+  Value *CreateFCmpUGE(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_UGE, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpULT(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_ULT, LHS, RHS, Name);
+  Value *CreateFCmpULT(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_ULT, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpULE(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_ULE, LHS, RHS, Name);
+  Value *CreateFCmpULE(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_ULE, LHS, RHS, Name, FPMathTag);
   }
-  Value *CreateFCmpUNE(Value *LHS, Value *RHS, const Twine &Name = "") {
-    return CreateFCmp(FCmpInst::FCMP_UNE, LHS, RHS, Name);
+  Value *CreateFCmpUNE(Value *LHS, Value *RHS, const Twine &Name = "",
+                       MDNode *FPMathTag = nullptr) {
+    return CreateFCmp(FCmpInst::FCMP_UNE, LHS, RHS, Name, FPMathTag);
   }
 
   Value *CreateICmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
@@ -1433,11 +1447,12 @@ public:
     return Insert(new ICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
-                    const Twine &Name = "") {
+                    const Twine &Name = "", MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFCmp(P, LC, RC), Name);
-    return Insert(new FCmpInst(P, LHS, RHS), Name);
+    return Insert(AddFPMathAttributes(new FCmpInst(P, LHS, RHS),
+                                      FPMathTag, FMF), Name);
   }
 
   //===--------------------------------------------------------------------===//

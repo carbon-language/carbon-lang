@@ -130,8 +130,8 @@ TEST_F(IRBuilderTest, GetIntTy) {
 
 TEST_F(IRBuilderTest, FastMathFlags) {
   IRBuilder<> Builder(BB);
-  Value *F;
-  Instruction *FDiv, *FAdd;
+  Value *F, *FC;
+  Instruction *FDiv, *FAdd, *FCmp;
 
   F = Builder.CreateLoad(GV);
   F = Builder.CreateFAdd(F, F);
@@ -187,6 +187,24 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   ASSERT_TRUE(isa<Instruction>(F));
   FDiv = cast<Instruction>(F);
   EXPECT_TRUE(FDiv->hasAllowReciprocal());
+
+  Builder.clearFastMathFlags();
+
+  FC = Builder.CreateFCmpOEQ(F, F);
+  ASSERT_TRUE(isa<Instruction>(FC));
+  FCmp = cast<Instruction>(FC);
+  EXPECT_FALSE(FCmp->hasAllowReciprocal());
+
+  FMF.clear();
+  FMF.setAllowReciprocal();
+  Builder.SetFastMathFlags(FMF);
+
+  FC = Builder.CreateFCmpOEQ(F, F);
+  EXPECT_TRUE(Builder.getFastMathFlags().any());
+  EXPECT_TRUE(Builder.getFastMathFlags().AllowReciprocal);
+  ASSERT_TRUE(isa<Instruction>(FC));
+  FCmp = cast<Instruction>(FC);
+  EXPECT_TRUE(FCmp->hasAllowReciprocal());
 
   Builder.clearFastMathFlags();
 
