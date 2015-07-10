@@ -17,6 +17,18 @@ struct Z : public X<int>, public Y {
 
 Z::Z() : ::X<int>(0), Virt(), b(), c() { }
 
+struct PR23948 {
+  template<class size> PR23948()
+        :
+  {}
+
+  template<class size> void invalid()
+        :
+  {}
+
+  int a;
+};
+
 // RUN: c-index-test -code-completion-at=%s:18:10 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: MemberRef:{TypedText a}{LeftParen (}{Placeholder args}{RightParen )} (35)
 // CHECK-CC1: MemberRef:{TypedText b}{LeftParen (}{Placeholder args}{RightParen )} (35)
@@ -38,3 +50,7 @@ Z::Z() : ::X<int>(0), Virt(), b(), c() { }
 // CHECK-CC3: MemberRef:{TypedText c}{LeftParen (}{Placeholder args}{RightParen )} (7)
 // CHECK-CC3-NOT: NotImplemented:{TypedText Virt}{LeftParen (}{Placeholder args}{RightParen )}
 // CHECK-CC3: NotImplemented:{TypedText Y}{LeftParen (}{Placeholder args}{RightParen )} (35)
+
+// RUN: c-index-test -code-completion-at=%s:22:10 -fno-delayed-template-parsing %s | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: MemberRef:{TypedText a}{LeftParen (}{Placeholder args}{RightParen )} (7)
+// RUN: c-index-test -code-completion-at=%s:26:10 %s
