@@ -121,6 +121,7 @@ try.cont8:                                        ; preds = %lpad2, %try.cont
 ; CHECK-NOT: jmpq *
 ; CHECK:             .seh_handlerdata
 ; CHECK-NEXT:        .long   ("$cppxdata$?f@@YAXXZ")@IMGREL
+; CHECK-NEXT: .align 4
 ; CHECK-NEXT:"$cppxdata$?f@@YAXXZ":
 ; CHECK-NEXT:        .long   429065506
 ; CHECK-NEXT:        .long   4

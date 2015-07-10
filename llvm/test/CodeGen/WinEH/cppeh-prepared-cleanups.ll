@@ -30,6 +30,7 @@ $_TI1H = comdat any
 ; CHECK-LABEL: "?test1@@YAXXZ":
 ; CHECK:             .seh_handlerdata
 ; CHECK-NEXT:        .long   ("$cppxdata$?test1@@YAXXZ")@IMGREL
+; CHECK-NEXT: .align 4
 ; CHECK-NEXT:"$cppxdata$?test1@@YAXXZ":
 ; CHECK-NEXT:        .long   429065506
 ; CHECK-NEXT:        .long   1
@@ -92,6 +93,7 @@ entry:
 ; CHECK-LABEL: "?test2@@YAX_N@Z":
 ; CHECK:             .seh_handlerdata
 ; CHECK-NEXT:        .long   ("$cppxdata$?test2@@YAX_N@Z")@IMGREL
+; CHECK-NEXT: .align 4
 ; CHECK-NEXT:"$cppxdata$?test2@@YAX_N@Z":
 ; CHECK-NEXT:        .long   429065506
 ; CHECK-NEXT:        .long   2

@@ -114,6 +114,7 @@ stub:                                             ; preds = %entry
 ; CHECK:        .seh_handlerdata
 ; CHECK:        .long   ($cppxdata$main)@IMGREL
 
+; CHECK: .align 4
 ; CHECK-NEXT: $cppxdata$main:
 ; CHECK-NEXT:         .long   429065506
 ; CHECK-NEXT:         .long   2

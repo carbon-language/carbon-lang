@@ -440,8 +440,10 @@ int WinEHStatePass::escapeRegNode(Function &F) {
 
   // Replace the call (if it exists) with new one. Otherwise, insert at the end
   // of the entry block.
-  IRBuilder<> Builder(&F.getEntryBlock(),
-                      EscapeCall ? EscapeCall : F.getEntryBlock().end());
+  Instruction *InsertPt = EscapeCall;
+  if (!EscapeCall)
+    InsertPt = F.getEntryBlock().getTerminator();
+  IRBuilder<> Builder(&F.getEntryBlock(), InsertPt);
   Builder.CreateCall(FrameEscape, Args);
   if (EscapeCall)
     EscapeCall->eraseFromParent();

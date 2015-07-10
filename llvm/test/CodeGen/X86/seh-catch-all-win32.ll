@@ -90,6 +90,7 @@ entry:
 
 ; CHECK: .section .xdata,"dr"
 ; CHECK: Lmain$parent_frame_offset = Lmain$frame_escape_1
+; CHECK: .align 4
 ; CHECK: L__ehtable$main
 ; CHECK-NEXT: .long -1
 ; CHECK-NEXT: .long _filt$main
