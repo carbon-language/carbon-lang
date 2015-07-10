@@ -1272,9 +1272,7 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   // Select the ABI to use.
   const char *ABIName = nullptr;
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
-    ABIName = A->getValue();
-  } else if (getToolChain().getTriple().isOSLinux())
+  if (getToolChain().getTriple().isOSLinux())
     switch (getToolChain().getArch()) {
     case llvm::Triple::ppc64: {
       // When targeting a processor that supports QPX, or if QPX is
@@ -1298,6 +1296,13 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
     default:
       break;
     }
+
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
+    // The ppc64 linux abis are all "altivec" abis by default. Accept and ignore
+    // the option if given as we don't have backend support for any targets
+    // that don't use the altivec abi.
+    if (StringRef(A->getValue()) != "altivec")
+      ABIName = A->getValue();
 
   if (ABIName) {
     CmdArgs.push_back("-target-abi");
