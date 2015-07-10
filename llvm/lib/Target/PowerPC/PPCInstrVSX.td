@@ -1018,6 +1018,7 @@ let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
                           [(set v4i32:$XT, (vnot_ppc (and v4i32:$XA,
                                                     v4i32:$XB)))]>;
   } // isCommutable
+
   def : Pat<(int_ppc_vsx_xxleqv v4i32:$A, v4i32:$B),
             (XXLEQV $A, $B)>;
 
