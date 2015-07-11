@@ -206,7 +206,7 @@ TEST_F(MCJITTest, lazy_function_creator_pointer) {
   
   Function *Foo = insertExternalReferenceToFunction<int32_t(void)>(M.get(),
                                                                    "\1Foo");
-  Function *Parent = startFunction<int32_t(void)>(M.get(), "Parent");
+  startFunction<int32_t(void)>(M.get(), "Parent");
   CallInst *Call = Builder.CreateCall(Foo, {});
   Builder.CreateRet(Call);
   
@@ -236,7 +236,7 @@ TEST_F(MCJITTest, lazy_function_creator_lambda) {
                                                                    "\1Foo1");
   Function *Foo2 = insertExternalReferenceToFunction<int32_t(void)>(M.get(),
                                                                    "\1Foo2");
-  Function *Parent = startFunction<int32_t(void)>(M.get(), "Parent");
+  startFunction<int32_t(void)>(M.get(), "Parent");
   CallInst *Call1 = Builder.CreateCall(Foo1, {});
   CallInst *Call2 = Builder.CreateCall(Foo2, {});
   Value *Result = Builder.CreateAdd(Call1, Call2);
@@ -248,7 +248,6 @@ TEST_F(MCJITTest, lazy_function_creator_lambda) {
   // external functions in the module.
   std::vector<std::string> UnresolvedExternals;
   auto UnresolvedHandler = [&UnresolvedExternals] (const std::string &str) {
-    llvm:dbgs() << "str is '" << str << "'\n";
     UnresolvedExternals.push_back(str);
     return (void *)(uintptr_t)-1;
   };
