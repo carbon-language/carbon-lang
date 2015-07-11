@@ -258,7 +258,7 @@ TEST_F(MCJITTest, lazy_function_creator_lambda) {
   
   // Verify that our handler was called for each unresolved function.
   auto I = UnresolvedExternals.begin(), E = UnresolvedExternals.end();
-  EXPECT_EQ(UnresolvedExternals.size(), 2);
+  EXPECT_EQ(UnresolvedExternals.size(), static_cast<size_t>(2));
   EXPECT_FALSE(std::find(I, E, "Foo1") == E);
   EXPECT_FALSE(std::find(I, E, "Foo2") == E);
 }
