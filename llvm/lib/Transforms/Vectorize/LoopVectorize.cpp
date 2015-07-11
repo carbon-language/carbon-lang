@@ -148,8 +148,9 @@ static cl::opt<unsigned> MaxInterleaveGroupFactor(
     cl::desc("Maximum factor for an interleaved access group (default = 8)"),
     cl::init(8));
 
-/// We don't unroll loops with a known constant trip count below this number.
-static const unsigned TinyTripCountUnrollThreshold = 128;
+/// We don't interleave loops with a known constant trip count below this
+/// number.
+static const unsigned TinyTripCountInterleaveThreshold = 128;
 
 static cl::opt<unsigned> ForceTargetNumScalarRegs(
     "force-target-num-scalar-regs", cl::init(0), cl::Hidden,
@@ -180,7 +181,8 @@ static cl::opt<unsigned> ForceTargetInstructionCost(
 
 static cl::opt<unsigned> SmallLoopCost(
     "small-loop-cost", cl::init(20), cl::Hidden,
-    cl::desc("The cost of a loop that is considered 'small' by the unroller."));
+    cl::desc(
+        "The cost of a loop that is considered 'small' by the interleaver."));
 
 static cl::opt<bool> LoopVectorizeWithBlockFrequency(
     "loop-vectorize-with-block-frequency", cl::init(false), cl::Hidden,
@@ -188,10 +190,11 @@ static cl::opt<bool> LoopVectorizeWithBlockFrequency(
              "heuristics minimizing code growth in cold regions and being more "
              "aggressive in hot regions."));
 
-// Runtime unroll loops for load/store throughput.
-static cl::opt<bool> EnableLoadStoreRuntimeUnroll(
-    "enable-loadstore-runtime-unroll", cl::init(true), cl::Hidden,
-    cl::desc("Enable runtime unrolling until load/store ports are saturated"));
+// Runtime interleave loops for load/store throughput.
+static cl::opt<bool> EnableLoadStoreRuntimeInterleave(
+    "enable-loadstore-runtime-interleave", cl::init(true), cl::Hidden,
+    cl::desc(
+        "Enable runtime interleaving until load/store ports are saturated"));
 
 /// The number of stores in a loop that are allowed to need predication.
 static cl::opt<unsigned> NumberOfStoresToPredicate(
@@ -200,15 +203,15 @@ static cl::opt<unsigned> NumberOfStoresToPredicate(
 
 static cl::opt<bool> EnableIndVarRegisterHeur(
     "enable-ind-var-reg-heur", cl::init(true), cl::Hidden,
-    cl::desc("Count the induction variable only once when unrolling"));
+    cl::desc("Count the induction variable only once when interleaving"));
 
 static cl::opt<bool> EnableCondStoresVectorization(
     "enable-cond-stores-vec", cl::init(false), cl::Hidden,
     cl::desc("Enable if predication of stores during vectorization."));
 
-static cl::opt<unsigned> MaxNestedScalarReductionUF(
-    "max-nested-scalar-reduction-unroll", cl::init(2), cl::Hidden,
-    cl::desc("The maximum unroll factor to use when unrolling a scalar "
+static cl::opt<unsigned> MaxNestedScalarReductionIC(
+    "max-nested-scalar-reduction-interleave", cl::init(2), cl::Hidden,
+    cl::desc("The maximum interleave count to use when interleaving a scalar "
              "reduction in a nested loop."));
 
 namespace {
@@ -1105,12 +1108,19 @@ public:
   /// 64 bit loop indices.
   unsigned getWidestType();
 
+  /// \return The desired interleave count.
+  /// If interleave count has been specified by metadata it will be returned.
+  /// Otherwise, the interleave count is computed and returned. VF and LoopCost
+  /// are the selected vectorization factor and the cost of the selected VF.
+  unsigned selectInterleaveCount(bool OptForSize, unsigned VF,
+                                 unsigned LoopCost);
+
   /// \return The most profitable unroll factor.
-  /// If UserUF is non-zero then this method finds the best unroll-factor
-  /// based on register pressure and other parameters.
-  /// VF and LoopCost are the selected vectorization factor and the cost of the
-  /// selected VF.
-  unsigned selectUnrollFactor(bool OptForSize, unsigned VF, unsigned LoopCost);
+  /// This method finds the best unroll-factor based on register pressure and
+  /// other parameters. VF and LoopCost are the selected vectorization factor
+  /// and the cost of the selected VF.
+  unsigned computeInterleaveCount(bool OptForSize, unsigned VF,
+                                  unsigned LoopCost);
 
   /// \brief A struct that represents some properties of the register usage
   /// of a loop.
@@ -1638,18 +1648,17 @@ struct LoopVectorize : public FunctionPass {
     const LoopVectorizationCostModel::VectorizationFactor VF =
         CM.selectVectorizationFactor(OptForSize);
 
-    // Select the unroll factor.
-    const unsigned UF =
-        CM.selectUnrollFactor(OptForSize, VF.Width, VF.Cost);
+    // Select the interleave count.
+    unsigned IC = CM.selectInterleaveCount(OptForSize, VF.Width, VF.Cost);
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
                  << DebugLocStr << '\n');
-    DEBUG(dbgs() << "LV: Unroll Factor is " << UF << '\n');
+    DEBUG(dbgs() << "LV: Interleave Count is " << IC << '\n');
 
     if (VF.Width == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial\n");
 
-      if (UF == 1) {
+      if (IC == 1) {
         emitOptimizationRemarkAnalysis(
             F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
             "not beneficial to vectorize and user disabled interleaving");
@@ -1659,17 +1668,14 @@ struct LoopVectorize : public FunctionPass {
 
       // Report the unrolling decision.
       emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-                             Twine("unrolled with interleaving factor " +
-                                   Twine(UF) +
+                             Twine("interleaved by " + Twine(IC) +
                                    " (vectorization not beneficial)"));
 
-      // We decided not to vectorize, but we may want to unroll.
-
-      InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, TTI, UF);
+      InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, TTI, IC);
       Unroller.vectorize(&LVL);
     } else {
       // If we decided that it is *legal* to vectorize the loop then do it.
-      InnerLoopVectorizer LB(L, SE, LI, DT, TLI, TTI, VF.Width, UF);
+      InnerLoopVectorizer LB(L, SE, LI, DT, TLI, TTI, VF.Width, IC);
       LB.vectorize(&LVL);
       ++LoopsVectorized;
 
@@ -1680,10 +1686,10 @@ struct LoopVectorize : public FunctionPass {
         AddRuntimeUnrollDisableMetaData(L);
 
       // Report the vectorization decision.
-      emitOptimizationRemark(
-          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-          Twine("vectorized loop (vectorization factor: ") + Twine(VF.Width) +
-              ", unrolling interleave factor: " + Twine(UF) + ")");
+      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+                             Twine("vectorized loop (vectorization width: ") +
+                                 Twine(VF.Width) + ", interleaved count: " +
+                                 Twine(IC) + ")");
     }
 
     // Mark the loop as already vectorized to avoid vectorizing again.
@@ -4740,41 +4746,40 @@ unsigned LoopVectorizationCostModel::getWidestType() {
   return MaxWidth;
 }
 
-unsigned
-LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
-                                               unsigned VF,
-                                               unsigned LoopCost) {
+unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
+                                                           unsigned VF,
+                                                           unsigned LoopCost) {
 
-  // -- The unroll heuristics --
-  // We unroll the loop in order to expose ILP and reduce the loop overhead.
+  // -- The interleave heuristics --
+  // We interleave the loop in order to expose ILP and reduce the loop overhead.
   // There are many micro-architectural considerations that we can't predict
   // at this level. For example, frontend pressure (on decode or fetch) due to
   // code size, or the number and capabilities of the execution ports.
   //
-  // We use the following heuristics to select the unroll factor:
-  // 1. If the code has reductions, then we unroll in order to break the cross
+  // We use the following heuristics to select the interleave count:
+  // 1. If the code has reductions, then we interleave to break the cross
   // iteration dependency.
-  // 2. If the loop is really small, then we unroll in order to reduce the loop
+  // 2. If the loop is really small, then we interleave to reduce the loop
   // overhead.
-  // 3. We don't unroll if we think that we will spill registers to memory due
-  // to the increased register pressure.
+  // 3. We don't interleave if we think that we will spill registers to memory
+  // due to the increased register pressure.
 
   // Use the user preference, unless 'auto' is selected.
   int UserUF = Hints->getInterleave();
   if (UserUF != 0)
     return UserUF;
 
-  // When we optimize for size, we don't unroll.
+  // When we optimize for size, we don't interleave.
   if (OptForSize)
     return 1;
 
-  // We used the distance for the unroll factor.
+  // We used the distance for the interleave count.
   if (Legal->getMaxSafeDepDistBytes() != -1U)
     return 1;
 
-  // Do not unroll loops with a relatively small trip count.
+  // Do not interleave loops with a relatively small trip count.
   unsigned TC = SE->getSmallConstantTripCount(TheLoop);
-  if (TC > 1 && TC < TinyTripCountUnrollThreshold)
+  if (TC > 1 && TC < TinyTripCountInterleaveThreshold)
     return 1;
 
   unsigned TargetNumRegisters = TTI.getNumberOfRegisters(VF > 1);
@@ -4795,32 +4800,32 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   R.MaxLocalUsers = std::max(R.MaxLocalUsers, 1U);
   R.NumInstructions = std::max(R.NumInstructions, 1U);
 
-  // We calculate the unroll factor using the following formula.
+  // We calculate the interleave count using the following formula.
   // Subtract the number of loop invariants from the number of available
-  // registers. These registers are used by all of the unrolled instances.
+  // registers. These registers are used by all of the interleaved instances.
   // Next, divide the remaining registers by the number of registers that is
   // required by the loop, in order to estimate how many parallel instances
   // fit without causing spills. All of this is rounded down if necessary to be
-  // a power of two. We want power of two unroll factors to simplify any
+  // a power of two. We want power of two interleave count to simplify any
   // addressing operations or alignment considerations.
-  unsigned UF = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs) /
+  unsigned IC = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs) /
                               R.MaxLocalUsers);
 
-  // Don't count the induction variable as unrolled.
+  // Don't count the induction variable as interleaved.
   if (EnableIndVarRegisterHeur)
-    UF = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs - 1) /
+    IC = PowerOf2Floor((TargetNumRegisters - R.LoopInvariantRegs - 1) /
                        std::max(1U, (R.MaxLocalUsers - 1)));
 
-  // Clamp the unroll factor ranges to reasonable factors.
-  unsigned MaxInterleaveSize = TTI.getMaxInterleaveFactor(VF);
+  // Clamp the interleave ranges to reasonable counts.
+  unsigned MaxInterleaveCount = TTI.getMaxInterleaveFactor(VF);
 
-  // Check if the user has overridden the unroll max.
+  // Check if the user has overridden the max.
   if (VF == 1) {
     if (ForceTargetMaxScalarInterleaveFactor.getNumOccurrences() > 0)
-      MaxInterleaveSize = ForceTargetMaxScalarInterleaveFactor;
+      MaxInterleaveCount = ForceTargetMaxScalarInterleaveFactor;
   } else {
     if (ForceTargetMaxVectorInterleaveFactor.getNumOccurrences() > 0)
-      MaxInterleaveSize = ForceTargetMaxVectorInterleaveFactor;
+      MaxInterleaveCount = ForceTargetMaxVectorInterleaveFactor;
   }
 
   // If we did not calculate the cost for VF (because the user selected the VF)
@@ -4828,72 +4833,74 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   if (LoopCost == 0)
     LoopCost = expectedCost(VF);
 
-  // Clamp the calculated UF to be between the 1 and the max unroll factor
+  // Clamp the calculated IC to be between the 1 and the max interleave count
   // that the target allows.
-  if (UF > MaxInterleaveSize)
-    UF = MaxInterleaveSize;
-  else if (UF < 1)
-    UF = 1;
+  if (IC > MaxInterleaveCount)
+    IC = MaxInterleaveCount;
+  else if (IC < 1)
+    IC = 1;
 
-  // Unroll if we vectorized this loop and there is a reduction that could
-  // benefit from unrolling.
+  // Interleave if we vectorized this loop and there is a reduction that could
+  // benefit from interleaving.
   if (VF > 1 && Legal->getReductionVars()->size()) {
-    DEBUG(dbgs() << "LV: Unrolling because of reductions.\n");
-    return UF;
+    DEBUG(dbgs() << "LV: Interleaving because of reductions.\n");
+    return IC;
   }
 
   // Note that if we've already vectorized the loop we will have done the
-  // runtime check and so unrolling won't require further checks.
-  bool UnrollingRequiresRuntimePointerCheck =
+  // runtime check and so interleaving won't require further checks.
+  bool InterleavingRequiresRuntimePointerCheck =
       (VF == 1 && Legal->getRuntimePointerCheck()->Need);
 
-  // We want to unroll small loops in order to reduce the loop overhead and
+  // We want to interleave small loops in order to reduce the loop overhead and
   // potentially expose ILP opportunities.
   DEBUG(dbgs() << "LV: Loop cost is " << LoopCost << '\n');
-  if (!UnrollingRequiresRuntimePointerCheck &&
-      LoopCost < SmallLoopCost) {
+  if (!InterleavingRequiresRuntimePointerCheck && LoopCost < SmallLoopCost) {
     // We assume that the cost overhead is 1 and we use the cost model
-    // to estimate the cost of the loop and unroll until the cost of the
+    // to estimate the cost of the loop and interleave until the cost of the
     // loop overhead is about 5% of the cost of the loop.
-    unsigned SmallUF = std::min(UF, (unsigned)PowerOf2Floor(SmallLoopCost / LoopCost));
+    unsigned SmallIC =
+        std::min(IC, (unsigned)PowerOf2Floor(SmallLoopCost / LoopCost));
 
-    // Unroll until store/load ports (estimated by max unroll factor) are
+    // Interleave until store/load ports (estimated by max interleave count) are
     // saturated.
     unsigned NumStores = Legal->getNumStores();
     unsigned NumLoads = Legal->getNumLoads();
-    unsigned StoresUF = UF / (NumStores ? NumStores : 1);
-    unsigned LoadsUF = UF /  (NumLoads ? NumLoads : 1);
+    unsigned StoresIC = IC / (NumStores ? NumStores : 1);
+    unsigned LoadsIC = IC / (NumLoads ? NumLoads : 1);
 
     // If we have a scalar reduction (vector reductions are already dealt with
     // by this point), we can increase the critical path length if the loop
-    // we're unrolling is inside another loop. Limit, by default to 2, so the
+    // we're interleaving is inside another loop. Limit, by default to 2, so the
     // critical path only gets increased by one reduction operation.
     if (Legal->getReductionVars()->size() &&
         TheLoop->getLoopDepth() > 1) {
-      unsigned F = static_cast<unsigned>(MaxNestedScalarReductionUF);
-      SmallUF = std::min(SmallUF, F);
-      StoresUF = std::min(StoresUF, F);
-      LoadsUF = std::min(LoadsUF, F);
+      unsigned F = static_cast<unsigned>(MaxNestedScalarReductionIC);
+      SmallIC = std::min(SmallIC, F);
+      StoresIC = std::min(StoresIC, F);
+      LoadsIC = std::min(LoadsIC, F);
     }
 
-    if (EnableLoadStoreRuntimeUnroll && std::max(StoresUF, LoadsUF) > SmallUF) {
-      DEBUG(dbgs() << "LV: Unrolling to saturate store or load ports.\n");
-      return std::max(StoresUF, LoadsUF);
+    if (EnableLoadStoreRuntimeInterleave &&
+        std::max(StoresIC, LoadsIC) > SmallIC) {
+      DEBUG(dbgs() << "LV: Interleaving to saturate store or load ports.\n");
+      return std::max(StoresIC, LoadsIC);
     }
 
-    DEBUG(dbgs() << "LV: Unrolling to reduce branch cost.\n");
-    return SmallUF;
+    DEBUG(dbgs() << "LV: Interleaving to reduce branch cost.\n");
+    return SmallIC;
   }
 
-  // Unroll if this is a large loop (small loops are already dealt with by this
-  // point) that could benefit from interleaved unrolling.
+  // Interleave if this is a large loop (small loops are already dealt with by
+  // this
+  // point) that could benefit from interleaving.
   bool HasReductions = (Legal->getReductionVars()->size() > 0);
   if (TTI.enableAggressiveInterleaving(HasReductions)) {
-    DEBUG(dbgs() << "LV: Unrolling to expose ILP.\n");
-    return UF;
+    DEBUG(dbgs() << "LV: Interleaving to expose ILP.\n");
+    return IC;
   }
 
-  DEBUG(dbgs() << "LV: Not Unrolling.\n");
+  DEBUG(dbgs() << "LV: Not Interleaving.\n");
   return 1;
 }
 

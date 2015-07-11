@@ -9,9 +9,9 @@
 ; DEBUG-OUTPUT-NOT: .loc
 ; DEBUG-OUTPUT-NOT: {{.*}}.debug_info
 
-; VECTORIZED: remark: vectorization-remarks.c:17:8: vectorized loop (vectorization factor: 4, unrolling interleave factor: 1)
-; UNROLLED: remark: vectorization-remarks.c:17:8: unrolled with interleaving factor 4 (vectorization not beneficial)
 ; NONE: remark: vectorization-remarks.c:17:8: loop not vectorized: vector width and interleave count are explicitly set to 1
+; VECTORIZED: remark: vectorization-remarks.c:17:8: vectorized loop (vectorization width: 4, interleaved count: 1)
+; UNROLLED: remark: vectorization-remarks.c:17:8: interleaved by 4 (vectorization not beneficial)
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
