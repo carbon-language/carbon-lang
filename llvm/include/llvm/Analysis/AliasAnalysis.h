@@ -518,14 +518,6 @@ public:
   ///
   virtual void deleteValue(Value *V);
 
-  /// copyValue - This method should be used whenever a preexisting value in the
-  /// program is copied or cloned, introducing a new value.  Note that analysis
-  /// implementations should tolerate clients that use this method to introduce
-  /// the same value multiple times: if the analysis already knows about a
-  /// value, it should ignore the request.
-  ///
-  virtual void copyValue(Value *From, Value *To);
-
   /// addEscapingUse - This method should be used whenever an escaping use is
   /// added to a pointer value.  Analysis implementations may either return
   /// conservative responses for that value in the future, or may recompute
@@ -541,7 +533,6 @@ public:
   /// above, and it provided as a helper to simplify client code.
   ///
   void replaceWithNewValue(Value *Old, Value *New) {
-    copyValue(Old, New);
     deleteValue(Old);
   }
 };

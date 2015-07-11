@@ -403,7 +403,6 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
     PHINode *PN = cast<PHINode>(I);
     PHINode *NewPN = PHINode::Create(PN->getType(), BackedgeBlocks.size(),
                                      PN->getName()+".be", BETerminator);
-    if (AA) AA->copyValue(PN, NewPN);
 
     // Loop over the PHI node, moving all entries except the one for the
     // preheader over to the new PHI node.

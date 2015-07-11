@@ -301,10 +301,6 @@ void MergedLoadStoreMotion::hoistInstruction(BasicBlock *BB,
   // Merged instruction
   Instruction *HoistedInst = HoistCand->clone();
 
-  // Notify AA of the new value.
-  if (isa<LoadInst>(HoistCand))
-    AA->copyValue(HoistCand, HoistedInst);
-
   // Hoist instruction.
   HoistedInst->insertBefore(HoistPt);
 
@@ -451,9 +447,6 @@ PHINode *MergedLoadStoreMotion::getPHIOperand(BasicBlock *BB, StoreInst *S0,
     NewPN->addIncoming(Opd1, S0->getParent());
     NewPN->addIncoming(Opd2, S1->getParent());
     if (NewPN->getType()->getScalarType()->isPointerTy()) {
-      // Notify AA of the new value.
-      AA->copyValue(Opd1, NewPN);
-      AA->copyValue(Opd2, NewPN);
       // AA needs to be informed when a PHI-use of the pointer value is added
       for (unsigned I = 0, E = NewPN->getNumIncomingValues(); I != E; ++I) {
         unsigned J = PHINode::getOperandNumForIncomingValue(I);
@@ -491,7 +484,6 @@ bool MergedLoadStoreMotion::sinkStore(BasicBlock *BB, StoreInst *S0,
     // Create the new store to be inserted at the join point.
     StoreInst *SNew = (StoreInst *)(S0->clone());
     Instruction *ANew = A0->clone();
-    AA->copyValue(S0, SNew);
     SNew->insertBefore(InsertPt);
     ANew->insertBefore(SNew);
 

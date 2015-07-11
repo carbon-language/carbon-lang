@@ -1304,11 +1304,7 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
   if (V->getType()->getScalarType()->isPointerTy()) {
     AliasAnalysis *AA = gvn.getAliasAnalysis();
 
-    for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
-      AA->copyValue(LI, NewPHIs[i]);
-
-    // Now that we've copied information to the new PHIs, scan through
-    // them again and inform alias analysis that we've added potentially
+    // Scan the new PHIs and inform alias analysis that we've added potentially
     // escaping uses to any values that are operands to these PHIs.
     for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i) {
       PHINode *P = NewPHIs[i];

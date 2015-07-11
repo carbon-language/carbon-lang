@@ -158,7 +158,6 @@ namespace {
     }
 
     void deleteValue(Value *V) override;
-    void copyValue(Value *From, Value *To) override;
     void addEscapingUse(Use &U) override;
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
@@ -583,10 +582,6 @@ void GlobalsModRef::deleteValue(Value *V) {
   AllocsForIndirectGlobals.erase(V);
 
   AliasAnalysis::deleteValue(V);
-}
-
-void GlobalsModRef::copyValue(Value *From, Value *To) {
-  AliasAnalysis::copyValue(From, To);
 }
 
 void GlobalsModRef::addEscapingUse(Use &U) {

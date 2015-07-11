@@ -72,7 +72,6 @@ namespace {
     }
 
     void deleteValue(Value *V) override {}
-    void copyValue(Value *From, Value *To) override {}
     void addEscapingUse(Use &U) override {}
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements

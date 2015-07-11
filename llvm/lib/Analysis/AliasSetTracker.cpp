@@ -544,9 +544,6 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
 // the tracker already knows about a value, it will ignore the request.
 //
 void AliasSetTracker::copyValue(Value *From, Value *To) {
-  // Notify the alias analysis implementation that this value is copied.
-  AA.copyValue(From, To);
-
   // First, look up the PointerRec for this pointer.
   PointerMapType::iterator I = PointerMap.find_as(From);
   if (I == PointerMap.end())

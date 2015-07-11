@@ -71,11 +71,6 @@ void AliasAnalysis::deleteValue(Value *V) {
   AA->deleteValue(V);
 }
 
-void AliasAnalysis::copyValue(Value *From, Value *To) {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  AA->copyValue(From, To);
-}
-
 void AliasAnalysis::addEscapingUse(Use &U) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
   AA->addEscapingUse(U);

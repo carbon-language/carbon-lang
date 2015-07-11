@@ -124,10 +124,6 @@ namespace {
       assert(Vals.find(V) != Vals.end() && "Never seen value in AA before");
       AliasAnalysis::deleteValue(V);
     }
-    void copyValue(Value *From, Value *To) override {
-      Vals.insert(To);
-      AliasAnalysis::copyValue(From, To);
-    }
 
   };
 }
