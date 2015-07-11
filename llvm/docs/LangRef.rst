@@ -10199,6 +10199,75 @@ Examples:
 Specialised Arithmetic Intrinsics
 ---------------------------------
 
+'``llvm.canonicalize.*``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare float @llvm.canonicalize.f32(float %a)
+      declare double @llvm.canonicalize.f64(double %b)
+
+Overview:
+"""""""""
+
+The '``llvm.canonicalize.*``' intrinsic returns the platform specific canonical
+encoding of a floating point number.  This canonicalization is useful for
+implementing certain numeric primitives such as frexp. The canonical encoding is
+defined by IEEE-754-2008 to be:
+
+::
+
+      2.1.8 canonical encoding: The preferred encoding of a floating-point
+      representation in a format.  Applied to declets, significands of finite
+      numbers, infinities, and NaNs, especially in decimal formats.
+
+This operation can also be considered equivalent to the IEEE-754-2008
+conversion of a floating-point value to the same format.  NaNs are handled
+according to section 6.2.
+
+Examples of non-canonical encodings:
+
+- x87 pseudo denormals, pseudo NaNs, pseudo Infinity, Unnormals.  These are
+  converted to a canonical representation per hardware-specific protocol.
+- Many normal decimal floating point numbers have non-canonical alternative
+  encodings.
+- Some machines, like GPUs or ARMv7 NEON, do not support subnormal values.
+  These are treated as non-canonical encodings of zero and with be flushed to
+  a zero of the same sign by this operation.
+
+Note that per IEEE-754-2008 6.2, systems that support signaling NaNs with
+default exception handling must signal an invalid exception, and produce a
+quiet NaN result.
+
+This function should always be implementable as multiplication by 1.0, provided
+that the compiler does not constant fold the operation.  Likewise, division by
+1.0 and ``llvm.minnum(x, x)`` are possible implementations.  Addition with
+-0.0 is also sufficient provided that the rounding mode is not -Infinity.
+
+``@llvm.canonicalize`` must preserve the equality relation.  That is:
+
+- ``(@llvm.canonicalize(x) == x)`` is equivalent to ``(x == x)``
+- ``(@llvm.canonicalize(x) == @llvm.canonicalize(y))`` is equivalent to
+  to ``(x == y)``
+
+Additionally, the sign of zero must be conserved:
+``@llvm.canonicalize(-0.0) = -0.0`` and ``@llvm.canonicalize(+0.0) = +0.0``
+
+The payload bits of a NaN must be conserved, with two exceptions.
+First, environments which use only a single canonical representation of NaN
+must perform said canonicalization.  Second, SNaNs must be quieted per the
+usual methods.
+
+The canonicalization operation may be optimized away if:
+
+- The input is known to be canonical.  For example, it was produced by a
+  floating-point operation that is required by the standard to be canonical.
+- The result is consumed only by (or fused with) other floating-point
+  operations.  That is, the bits of the floating point value are not examined.
+
 '``llvm.fmuladd.*``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
