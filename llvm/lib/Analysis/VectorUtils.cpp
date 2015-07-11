@@ -11,7 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/VectorUtils.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
+#include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/Value.h"
 
 /// \brief Identify if the intrinsic is trivially vectorizable.
 /// This method returns true if the intrinsic's argument types are all
@@ -210,4 +216,144 @@ llvm::Intrinsic::ID llvm::getIntrinsicIDForCall(CallInst *CI,
   }
 
   return Intrinsic::not_intrinsic;
+}
+
+/// \brief Find the operand of the GEP that should be checked for consecutive
+/// stores. This ignores trailing indices that have no effect on the final
+/// pointer.
+unsigned llvm::getGEPInductionOperand(const GetElementPtrInst *Gep) {
+  const DataLayout &DL = Gep->getModule()->getDataLayout();
+  unsigned LastOperand = Gep->getNumOperands() - 1;
+  unsigned GEPAllocSize = DL.getTypeAllocSize(
+      cast<PointerType>(Gep->getType()->getScalarType())->getElementType());
+
+  // Walk backwards and try to peel off zeros.
+  while (LastOperand > 1 &&
+         match(Gep->getOperand(LastOperand), llvm::PatternMatch::m_Zero())) {
+    // Find the type we're currently indexing into.
+    gep_type_iterator GEPTI = gep_type_begin(Gep);
+    std::advance(GEPTI, LastOperand - 1);
+
+    // If it's a type with the same allocation size as the result of the GEP we
+    // can peel off the zero index.
+    if (DL.getTypeAllocSize(*GEPTI) != GEPAllocSize)
+      break;
+    --LastOperand;
+  }
+
+  return LastOperand;
+}
+
+/// \brief If the argument is a GEP, then returns the operand identified by
+/// getGEPInductionOperand. However, if there is some other non-loop-invariant
+/// operand, it returns that instead.
+llvm::Value *llvm::stripGetElementPtr(llvm::Value *Ptr, ScalarEvolution *SE,
+                                      Loop *Lp) {
+  GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr);
+  if (!GEP)
+    return Ptr;
+
+  unsigned InductionOperand = getGEPInductionOperand(GEP);
+
+  // Check that all of the gep indices are uniform except for our induction
+  // operand.
+  for (unsigned i = 0, e = GEP->getNumOperands(); i != e; ++i)
+    if (i != InductionOperand &&
+        !SE->isLoopInvariant(SE->getSCEV(GEP->getOperand(i)), Lp))
+      return Ptr;
+  return GEP->getOperand(InductionOperand);
+}
+
+/// \brief If a value has only one user that is a CastInst, return it.
+llvm::Value *llvm::getUniqueCastUse(llvm::Value *Ptr, Loop *Lp, Type *Ty) {
+  llvm::Value *UniqueCast = nullptr;
+  for (User *U : Ptr->users()) {
+    CastInst *CI = dyn_cast<CastInst>(U);
+    if (CI && CI->getType() == Ty) {
+      if (!UniqueCast)
+        UniqueCast = CI;
+      else
+        return nullptr;
+    }
+  }
+  return UniqueCast;
+}
+
+/// \brief Get the stride of a pointer access in a loop. Looks for symbolic
+/// strides "a[i*stride]". Returns the symbolic stride, or null otherwise.
+llvm::Value *llvm::getStrideFromPointer(llvm::Value *Ptr, ScalarEvolution *SE,
+                                        Loop *Lp) {
+  const PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
+  if (!PtrTy || PtrTy->isAggregateType())
+    return nullptr;
+
+  // Try to remove a gep instruction to make the pointer (actually index at this
+  // point) easier analyzable. If OrigPtr is equal to Ptr we are analzying the
+  // pointer, otherwise, we are analyzing the index.
+  llvm::Value *OrigPtr = Ptr;
+
+  // The size of the pointer access.
+  int64_t PtrAccessSize = 1;
+
+  Ptr = stripGetElementPtr(Ptr, SE, Lp);
+  const SCEV *V = SE->getSCEV(Ptr);
+
+  if (Ptr != OrigPtr)
+    // Strip off casts.
+    while (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(V))
+      V = C->getOperand();
+
+  const SCEVAddRecExpr *S = dyn_cast<SCEVAddRecExpr>(V);
+  if (!S)
+    return nullptr;
+
+  V = S->getStepRecurrence(*SE);
+  if (!V)
+    return nullptr;
+
+  // Strip off the size of access multiplication if we are still analyzing the
+  // pointer.
+  if (OrigPtr == Ptr) {
+    const DataLayout &DL = Lp->getHeader()->getModule()->getDataLayout();
+    DL.getTypeAllocSize(PtrTy->getElementType());
+    if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(V)) {
+      if (M->getOperand(0)->getSCEVType() != scConstant)
+        return nullptr;
+
+      const APInt &APStepVal =
+          cast<SCEVConstant>(M->getOperand(0))->getValue()->getValue();
+
+      // Huge step value - give up.
+      if (APStepVal.getBitWidth() > 64)
+        return nullptr;
+
+      int64_t StepVal = APStepVal.getSExtValue();
+      if (PtrAccessSize != StepVal)
+        return nullptr;
+      V = M->getOperand(1);
+    }
+  }
+
+  // Strip off casts.
+  Type *StripedOffRecurrenceCast = nullptr;
+  if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(V)) {
+    StripedOffRecurrenceCast = C->getType();
+    V = C->getOperand();
+  }
+
+  // Look for the loop invariant symbolic value.
+  const SCEVUnknown *U = dyn_cast<SCEVUnknown>(V);
+  if (!U)
+    return nullptr;
+
+  llvm::Value *Stride = U->getValue();
+  if (!Lp->isLoopInvariant(Stride))
+    return nullptr;
+
+  // If we have stripped off the recurrence cast we have to make sure that we
+  // return the value that is used in this loop so that we can replace it later.
+  if (StripedOffRecurrenceCast)
+    Stride = getUniqueCastUse(Stride, Lp, StripedOffRecurrenceCast);
+
+  return Stride;
 }

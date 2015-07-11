@@ -20,6 +20,12 @@
 
 namespace llvm {
 
+class GetElementPtrInst;
+class Loop;
+class ScalarEvolution;
+class Type;
+class Value;
+
 /// \brief Identify if the intrinsic is trivially vectorizable.
 /// This method returns true if the intrinsic's argument types are all
 /// scalars for the scalar form of the intrinsic and all vectors for
@@ -50,6 +56,23 @@ Intrinsic::ID checkBinaryFloatSignature(const CallInst &I,
 /// For the input call instruction it finds mapping intrinsic and returns
 /// its intrinsic ID, in case it does not found it return not_intrinsic.
 Intrinsic::ID getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI);
+
+/// \brief Find the operand of the GEP that should be checked for consecutive
+/// stores. This ignores trailing indices that have no effect on the final
+/// pointer.
+unsigned getGEPInductionOperand(const GetElementPtrInst *Gep);
+
+/// \brief If the argument is a GEP, then returns the operand identified by 
+/// getGEPInductionOperand. However, if there is some other non-loop-invariant 
+/// operand, it returns that instead.
+Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE, Loop *Lp);
+
+/// \brief If a value has only one user that is a CastInst, return it.
+Value *getUniqueCastUse(Value *Ptr, Loop *Lp, Type *Ty);
+
+/// \brief Get the stride of a pointer access in a loop. Looks for symbolic
+/// strides "a[i*stride]". Returns the symbolic stride, or null otherwise.
+Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE, Loop *Lp);
 
 } // llvm namespace
 
