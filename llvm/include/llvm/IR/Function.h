@@ -293,6 +293,16 @@ public:
     addFnAttr(Attribute::ReadOnly);
   }
 
+  /// @brief Determine if the call can access memmory only using pointers based
+  /// on its arguments.
+  bool onlyAccessesArgMemory() const {
+    return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::ArgMemOnly);
+  }
+  void setOnlyAccessesArgMemory() {
+    addFnAttr(Attribute::ArgMemOnly);
+  }
+  
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex,

@@ -1273,7 +1273,8 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::Cold ||
         I->getKindAsEnum() == Attribute::OptimizeNone ||
         I->getKindAsEnum() == Attribute::JumpTable ||
-        I->getKindAsEnum() == Attribute::Convergent) {
+        I->getKindAsEnum() == Attribute::Convergent ||
+        I->getKindAsEnum() == Attribute::ArgMemOnly) {
       if (!isFunction) {
         CheckFailed("Attribute '" + I->getAsString() +
                     "' only applies to functions!", V);
@@ -1531,8 +1532,9 @@ void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
 
   const Instruction &CI = *CS.getInstruction();
 
-  Assert(!CS.doesNotAccessMemory() && !CS.onlyReadsMemory(),
-         "gc.statepoint must read and write memory to preserve "
+  Assert(!CS.doesNotAccessMemory() && !CS.onlyReadsMemory() &&
+         !CS.onlyAccessesArgMemory(),
+         "gc.statepoint must read and write all memory to preserve "
          "reordering restrictions required by safepoint semantics",
          &CI);
 

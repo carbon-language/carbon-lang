@@ -1090,6 +1090,8 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::Alignment;
   case bitc::ATTR_KIND_ALWAYS_INLINE:
     return Attribute::AlwaysInline;
+  case bitc::ATTR_KIND_ARGMEMONLY:
+    return Attribute::ArgMemOnly;
   case bitc::ATTR_KIND_BUILTIN:
     return Attribute::Builtin;
   case bitc::ATTR_KIND_BY_VAL:

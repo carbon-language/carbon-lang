@@ -100,6 +100,7 @@ namespace lltok {
     // Attributes:
     kw_attributes,
     kw_alwaysinline,
+    kw_argmemonly,
     kw_sanitize_address,
     kw_builtin,
     kw_byval,

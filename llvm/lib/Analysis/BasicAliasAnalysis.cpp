@@ -685,6 +685,9 @@ BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   if (CS.onlyReadsMemory())
     Min = OnlyReadsMemory;
 
+  if (CS.onlyAccessesArgMemory())
+    Min = ModRefBehavior(Min & OnlyAccessesArgumentPointees);
+
   // The AliasAnalysis base class has some smarts, lets use them.
   return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
 }
@@ -709,6 +712,9 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   // If the function declares it only reads memory, go with that.
   if (F->onlyReadsMemory())
     Min = OnlyReadsMemory;
+
+  if (F->onlyAccessesArgMemory())
+    Min = ModRefBehavior(Min & OnlyAccessesArgumentPointees);
 
   const TargetLibraryInfo &TLI =
       getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();

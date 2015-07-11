@@ -407,6 +407,7 @@ namespace bitc {
     ATTR_KIND_DEREFERENCEABLE_OR_NULL = 42,
     ATTR_KIND_CONVERGENT = 43,
     ATTR_KIND_SAFESTACK = 44,
+    ATTR_KIND_ARGMEMONLY = 45
   };
 
   enum ComdatSelectionKindCodes {

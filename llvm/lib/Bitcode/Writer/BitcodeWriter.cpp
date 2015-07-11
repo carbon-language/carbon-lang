@@ -162,6 +162,8 @@ static uint64_t getAttrKindEncoding(Attribute::AttrKind Kind) {
     return bitc::ATTR_KIND_ALIGNMENT;
   case Attribute::AlwaysInline:
     return bitc::ATTR_KIND_ALWAYS_INLINE;
+  case Attribute::ArgMemOnly:
+    return bitc::ATTR_KIND_ARGMEMONLY;
   case Attribute::Builtin:
     return bitc::ATTR_KIND_BUILTIN;
   case Attribute::ByVal:

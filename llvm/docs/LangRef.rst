@@ -1326,6 +1326,14 @@ example:
     On an argument, this attribute indicates that the function does not write
     through this pointer argument, even though it may write to the memory that
     the pointer points to.
+``argmemonly``
+    This attribute indicates that the only memory accesses inside function are
+    loads and stores from objects pointed to by its pointer-typed arguments,
+    with arbitrary offsets. Or in other words, all memory operations in the
+    function can refer to memory only using pointers based on its function
+    arguments.
+    Note that ``argmemonly`` can be used together with ``readonly`` attribute
+    in order to specify that function reads only from its arguments.
 ``returns_twice``
     This attribute indicates that this function can return twice. The C
     ``setjmp`` is an example of such a function. The compiler disables

@@ -211,6 +211,8 @@ public:
     /// (if it has any) are non-volatile loads from objects pointed to by its
     /// pointer-typed arguments, with arbitrary offsets.
     ///
+    /// This property corresponds to the LLVM IR 'argmemonly' attribute combined
+    /// with 'readonly' attribute.
     /// This property corresponds to the IntrReadArgMem LLVM intrinsic flag.
     OnlyReadsArgumentPointees = ArgumentPointees | Ref,
 
@@ -218,6 +220,7 @@ public:
     /// function (if it has any) are non-volatile loads and stores from objects
     /// pointed to by its pointer-typed arguments, with arbitrary offsets.
     ///
+    /// This property corresponds to the LLVM IR 'argmemonly' attribute.
     /// This property corresponds to the IntrReadWriteArgMem LLVM intrinsic flag.
     OnlyAccessesArgumentPointees = ArgumentPointees | ModRef,
 

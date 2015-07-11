@@ -145,6 +145,51 @@ entry:
 ; CHECK: load i32, i32*
 }
 
+;; Check that aa correctly handles functions marked with argmemonly
+;; attribute.
+declare i32 @func_argmemonly(i32 * %P) argmemonly
+
+;; Can not remove redundant load, function may write to it.
+; CHECK-LABEL: @test8(
+define i32 @test8(i32 *%P) {
+  %V1 = load i32, i32* %P
+  call i32 @func_argmemonly(i32* %P)
+  %V2 = load i32, i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: load
+  ; CHECK: load
+  ; CHECK: sub
+  ; CHECK: ret i32 %Diff
+}
+
+;; In this case load can be removed, function clobbers only %P2.
+; CHECK-LABEL: @test9(
+define i32 @test9(i32* %P, i32* noalias %P2) {
+  %V1 = load i32, i32* %P
+  call i32 @func_argmemonly(i32* %P2)
+  %V2 = load i32, i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK-NOT: load
+  ; CHECK: ret i32 0
+}
+
+;; In this case load can *not* be removed. Function clobers only %P2 but it may
+;; alias with %P.
+; CHECK-LABEL: @test10(
+define i32 @test10(i32* %P, i32* %P2) {
+  %V1 = load i32, i32* %P
+  call i32 @func_argmemonly(i32* %P2)
+  %V2 = load i32, i32* %P
+  %Diff = sub i32 %V1, %V2
+  ret i32 %Diff
+  ; CHECK: load
+  ; CHECK: load
+  ; CHECK: sub
+  ; CHECK: ret i32 %Diff
+}
+
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i8(i8* nocapture, i8, i8, i32, i1) nounwind
 declare void @llvm.memcpy.p0i8.p0i8.i8(i8* nocapture, i8* nocapture, i8, i32, i1) nounwind

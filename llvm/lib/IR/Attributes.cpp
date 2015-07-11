@@ -190,6 +190,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "sanitize_address";
   if (hasAttribute(Attribute::AlwaysInline))
     return "alwaysinline";
+  if (hasAttribute(Attribute::ArgMemOnly))
+    return "argmemonly";
   if (hasAttribute(Attribute::Builtin))
     return "builtin";
   if (hasAttribute(Attribute::ByVal))
@@ -446,6 +448,9 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::DereferenceableOrNull:
     llvm_unreachable("dereferenceable_or_null attribute not supported in raw "
                      "format");
+    break;
+  case Attribute::ArgMemOnly:
+    llvm_unreachable("argmemonly attribute not supported in raw format");
     break;
   }
   llvm_unreachable("Unsupported attribute type");
@@ -1356,7 +1361,8 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
     if (I == Attribute::Dereferenceable ||
-        I == Attribute::DereferenceableOrNull)
+        I == Attribute::DereferenceableOrNull ||
+        I == Attribute::ArgMemOnly)
       continue;
     if (uint64_t A = (Val & AttributeImpl::getAttrMask(I))) {
       Attrs[I] = true;

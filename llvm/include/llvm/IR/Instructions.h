@@ -1595,6 +1595,15 @@ public:
     addAttribute(AttributeSet::FunctionIndex, Attribute::ReadOnly);
   }
 
+  /// @brief Determine if the call can access memmory only using pointers based
+  /// on its arguments.
+  bool onlyAccessesArgMemory() const {
+    return hasFnAttr(Attribute::ArgMemOnly);
+  }
+  void setOnlyAccessesArgMemory() {
+    addAttribute(AttributeSet::FunctionIndex, Attribute::ArgMemOnly);
+  }
+
   /// \brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attribute::NoReturn); }
   void setDoesNotReturn() {
@@ -3362,6 +3371,15 @@ public:
   }
   void setOnlyReadsMemory() {
     addAttribute(AttributeSet::FunctionIndex, Attribute::ReadOnly);
+  }
+
+  /// @brief Determine if the call access memmory only using it's pointer
+  /// arguments.
+  bool onlyAccessesArgMemory() const {
+    return hasFnAttr(Attribute::ArgMemOnly);
+  }
+  void setOnlyAccessesArgMemory() {
+    addAttribute(AttributeSet::FunctionIndex, Attribute::ArgMemOnly);
   }
 
   /// \brief Determine if the call cannot return.

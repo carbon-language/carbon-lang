@@ -290,6 +290,15 @@ public:
     CALLSITE_DELEGATE_SETTER(setOnlyReadsMemory());
   }
 
+  /// @brief Determine if the call can access memmory only using pointers based
+  /// on its arguments.
+  bool onlyAccessesArgMemory() const {
+    CALLSITE_DELEGATE_GETTER(onlyAccessesArgMemory());
+  }
+  void setOnlyAccessesArgMemory() {
+    CALLSITE_DELEGATE_SETTER(setOnlyAccessesArgMemory());
+  }
+
   /// @brief Determine if the call cannot return.
   bool doesNotReturn() const {
     CALLSITE_DELEGATE_GETTER(doesNotReturn());
