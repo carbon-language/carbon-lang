@@ -4551,7 +4551,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     if (Mask.empty()) return false;
     // Mask only contains negative index if an element is zero.
-    if (std::any_of(Mask.begin(), Mask.end(), 
+    if (std::any_of(Mask.begin(), Mask.end(),
                     [](int M){ return M == SM_SentinelZero; }))
       return false;
     break;
@@ -15412,7 +15412,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue Rnd;
       if (Op.getNumOperands() == 6)
         Rnd = Op.getOperand(5);
-      else 
+      else
         Rnd = DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
                                               Src1, Src2, Rnd),
@@ -15442,7 +15442,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
-    case VPERM_3OP_MASKZ: 
+    case VPERM_3OP_MASKZ:
     case VPERM_3OP_MASK:
     case FMA_OP_MASK3:
     case FMA_OP_MASKZ:
