@@ -3465,19 +3465,8 @@ namespace {
                            M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, 
                            Compare);
       if (Result == M.RedeclarationsMap + M.LocalNumRedeclarationsInMap ||
-          Result->FirstID != ID) {
-        // If we have a previously-canonical singleton declaration that was 
-        // merged into another redeclaration chain, create a trivial chain
-        // for this single declaration so that it will get wired into the 
-        // complete redeclaration chain.
-        if (GlobalID != CanonID && 
-            GlobalID - NUM_PREDEF_DECL_IDS >= M.BaseDeclID && 
-            GlobalID - NUM_PREDEF_DECL_IDS < M.BaseDeclID + M.LocalNumDecls) {
-          addToChain(Reader.GetDecl(GlobalID));
-        }
-        
+          Result->FirstID != ID)
         return;
-      }
 
       // Dig out all of the redeclarations.
       unsigned Offset = Result->Offset;
@@ -3519,8 +3508,6 @@ namespace {
       // Visit each of the declarations.
       for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I)
         searchForID(M, SearchDecls[I]);
-      // FIXME: If none of the SearchDecls had local IDs in this module, can
-      // we avoid searching any ancestor module files?
       return false;
     }
     

@@ -5995,9 +5995,8 @@ bool ASTReader::isDeclIDFromModule(serialization::GlobalDeclID ID,
   if (ID < NUM_PREDEF_DECL_IDS)
     return false;
 
-  GlobalDeclMapType::const_iterator I = GlobalDeclMap.find(ID);
-  assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
-  return &M == I->second;
+  return ID - NUM_PREDEF_DECL_IDS >= M.BaseDeclID && 
+         ID - NUM_PREDEF_DECL_IDS < M.BaseDeclID + M.LocalNumDecls;
 }
 
 ModuleFile *ASTReader::getOwningModuleFile(const Decl *D) {
