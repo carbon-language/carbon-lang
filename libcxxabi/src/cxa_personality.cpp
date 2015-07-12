@@ -23,10 +23,6 @@
 #include "private_typeinfo.h"
 #include "unwind.h"
 
-#if LIBCXXABI_ARM_EHABI
-#include "libunwind_ext.h"
-#endif
-
 /*
     Exception Header Layout:
 
