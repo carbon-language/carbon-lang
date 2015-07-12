@@ -3058,12 +3058,16 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   unsigned NumBytes = LinkageSize;
   unsigned AvailableFPRs = Num_FPR_Regs;
   unsigned AvailableVRs = Num_VR_Regs;
-  for (unsigned i = 0, e = Ins.size(); i != e; ++i)
+  for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
+    if (Ins[i].Flags.isNest())
+      continue;
+
     if (CalculateStackSlotUsed(Ins[i].VT, Ins[i].ArgVT, Ins[i].Flags,
                                PtrByteSize, LinkageSize, ParamAreaSize,
                                NumBytes, AvailableFPRs, AvailableVRs,
                                Subtarget.hasQPX()))
       HasParameterArea = true;
+  }
 
   // Add DAG nodes to load the arguments or copy them out of registers.  On
   // entry to a function on PPC, the arguments start after the linkage area,
@@ -3215,6 +3219,17 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::i1:
     case MVT::i32:
     case MVT::i64:
+      if (Flags.isNest()) {
+        // The 'nest' parameter, if any, is passed in R11.
+        unsigned VReg = MF.addLiveIn(PPC::X11, &PPC::G8RCRegClass);
+        ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
+
+        if (ObjectVT == MVT::i32 || ObjectVT == MVT::i1)
+          ArgVal = extendArgForPPC64(Flags, ObjectVT, DAG, ArgVal, dl);
+
+        break;
+      }
+
       // These can be scalar arguments or elements of an integer array type
       // passed directly.  Clang may use those instead of "byval" aggregate
       // types to avoid forcing arguments to memory unnecessarily.
@@ -4053,7 +4068,7 @@ static bool isFunctionGlobalAddress(SDValue Callee) {
 static
 unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
                      SDValue &Chain, SDValue CallSeqStart, SDLoc dl, int SPDiff,
-                     bool isTailCall, bool IsPatchPoint,
+                     bool isTailCall, bool IsPatchPoint, bool hasNest,
                      SmallVectorImpl<std::pair<unsigned, SDValue> > &RegsToPass,
                      SmallVectorImpl<SDValue> &Ops, std::vector<EVT> &NodeTys,
                      ImmutableCallSite *CS, const PPCSubtarget &Subtarget) {
@@ -4195,11 +4210,15 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       Chain = TOCVal.getValue(0);
       InFlag = TOCVal.getValue(1);
 
-      SDValue EnvVal = DAG.getCopyToReg(Chain, dl, PPC::X11, LoadEnvPtr,
-                                        InFlag);
+      // If the function call has an explicit 'nest' parameter, it takes the
+      // place of the environment pointer.
+      if (!hasNest) {
+        SDValue EnvVal = DAG.getCopyToReg(Chain, dl, PPC::X11, LoadEnvPtr,
+                                          InFlag);
 
-      Chain = EnvVal.getValue(0);
-      InFlag = EnvVal.getValue(1);
+        Chain = EnvVal.getValue(0);
+        InFlag = EnvVal.getValue(1);
+      }
 
       MTCTROps[0] = Chain;
       MTCTROps[1] = LoadFuncPtr;
@@ -4217,7 +4236,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     CallOpc = PPCISD::BCTRL;
     Callee.setNode(nullptr);
     // Add use of X11 (holding environment pointer)
-    if (isSVR4ABI && isPPC64 && !isELFv2ABI)
+    if (isSVR4ABI && isPPC64 && !isELFv2ABI && !hasNest)
       Ops.push_back(DAG.getRegister(PPC::X11, PtrVT));
     // Add CTR register as callee so a bctr can be emitted later.
     if (isTailCall)
@@ -4306,7 +4325,7 @@ PPCTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 SDValue
 PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
                               bool isTailCall, bool isVarArg, bool IsPatchPoint,
-                              SelectionDAG &DAG,
+                              bool hasNest, SelectionDAG &DAG,
                               SmallVector<std::pair<unsigned, SDValue>, 8>
                                 &RegsToPass,
                               SDValue InFlag, SDValue Chain,
@@ -4319,8 +4338,8 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
   std::vector<EVT> NodeTys;
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = PrepareCall(DAG, Callee, InFlag, Chain, CallSeqStart, dl,
-                                 SPDiff, isTailCall, IsPatchPoint, RegsToPass,
-                                 Ops, NodeTys, CS, Subtarget);
+                                 SPDiff, isTailCall, IsPatchPoint, hasNest,
+                                 RegsToPass, Ops, NodeTys, CS, Subtarget);
 
   // Add implicit use of CR bit 6 for 32-bit SVR4 vararg calls
   if (isVarArg && Subtarget.isSVR4ABI() && !Subtarget.isPPC64())
@@ -4664,7 +4683,8 @@ PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
     PrepareTailCall(DAG, InFlag, Chain, dl, false, SPDiff, NumBytes, LROp, FPOp,
                     false, TailCallArguments);
 
-  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, DAG,
+  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
+                    /* unused except on PPC64 ELFv1 */ false, DAG,
                     RegsToPass, InFlag, Chain, CallSeqStart, Callee, SPDiff,
                     NumBytes, Ins, InVals, CS);
 }
@@ -4703,6 +4723,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   bool isELFv2ABI = Subtarget.isELFv2ABI();
   bool isLittleEndian = Subtarget.isLittleEndian();
   unsigned NumOps = Outs.size();
+  bool hasNest = false;
 
   EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy(DAG.getDataLayout());
   unsigned PtrByteSize = 8;
@@ -4757,6 +4778,9 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
     EVT ArgVT = Outs[i].VT;
     EVT OrigVT = Outs[i].ArgVT;
+
+    if (Flags.isNest())
+      continue;
 
     if (CallConv == CallingConv::Fast) {
       if (Flags.isByVal())
@@ -5021,6 +5045,13 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     case MVT::i1:
     case MVT::i32:
     case MVT::i64:
+      if (Flags.isNest()) {
+        // The 'nest' parameter, if any, is passed in R11.
+        RegsToPass.push_back(std::make_pair(PPC::X11, Arg));
+        hasNest = true;
+        break;
+      }
+
       // These can be scalar arguments or elements of an integer array type
       // passed directly.  Clang may use those instead of "byval" aggregate
       // types to avoid forcing arguments to memory unnecessarily.
@@ -5302,9 +5333,9 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     PrepareTailCall(DAG, InFlag, Chain, dl, true, SPDiff, NumBytes, LROp,
                     FPOp, true, TailCallArguments);
 
-  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, DAG,
-                    RegsToPass, InFlag, Chain, CallSeqStart, Callee, SPDiff,
-                    NumBytes, Ins, InVals, CS);
+  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
+		    hasNest, DAG, RegsToPass, InFlag, Chain, CallSeqStart,
+                    Callee, SPDiff, NumBytes, Ins, InVals, CS);
 }
 
 SDValue
@@ -5693,7 +5724,8 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     PrepareTailCall(DAG, InFlag, Chain, dl, isPPC64, SPDiff, NumBytes, LROp,
                     FPOp, true, TailCallArguments);
 
-  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, DAG,
+  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint,
+                    /* unused except on PPC64 ELFv1 */ false, DAG,
                     RegsToPass, InFlag, Chain, CallSeqStart, Callee, SPDiff,
                     NumBytes, Ins, InVals, CS);
 }

@@ -748,7 +748,7 @@ namespace llvm {
                             SDLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals) const;
     SDValue FinishCall(CallingConv::ID CallConv, SDLoc dl, bool isTailCall,
-                       bool isVarArg, bool IsPatchPoint,
+                       bool isVarArg, bool IsPatchPoint, bool hasNest,
                        SelectionDAG &DAG,
                        SmallVector<std::pair<unsigned, SDValue>, 8>
                          &RegsToPass,

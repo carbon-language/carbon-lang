@@ -133,6 +133,9 @@ def CC_PPC32_SVR4_Common : CallingConv<[
   // register having an odd register number.
   CCIfType<[i32], CCIfSplit<CCCustom<"CC_PPC32_SVR4_Custom_AlignArgRegs">>>,
 
+  // The 'nest' parameter, if any, is passed in R11.
+  CCIfNest<CCAssignToReg<[R11]>>,
+
   // The first 8 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>,
 
