@@ -9067,6 +9067,19 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Target Optimization Hooks
 //===----------------------------------------------------------------------===//
 
+static std::string getRecipOp(const char *Base, EVT VT) {
+  std::string RecipOp(Base);
+  if (VT.getScalarType() == MVT::f64)
+    RecipOp += "d";
+  else
+    RecipOp += "f";
+
+  if (VT.isVector())
+    RecipOp = "vec-" + RecipOp;
+
+  return RecipOp;
+}
+
 SDValue PPCTargetLowering::getRsqrtEstimate(SDValue Operand,
                                             DAGCombinerInfo &DCI,
                                             unsigned &RefinementSteps,
@@ -9078,13 +9091,12 @@ SDValue PPCTargetLowering::getRsqrtEstimate(SDValue Operand,
       (VT == MVT::v2f64 && Subtarget.hasVSX()) ||
       (VT == MVT::v4f32 && Subtarget.hasQPX()) ||
       (VT == MVT::v4f64 && Subtarget.hasQPX())) {
-    // Convergence is quadratic, so we essentially double the number of digits
-    // correct after every iteration. For both FRE and FRSQRTE, the minimum
-    // architected relative accuracy is 2^-5. When hasRecipPrec(), this is
-    // 2^-14. IEEE float has 23 digits and double has 52 digits.
-    RefinementSteps = Subtarget.hasRecipPrec() ? 1 : 3;
-    if (VT.getScalarType() == MVT::f64)
-      ++RefinementSteps;
+    TargetRecip Recips = DCI.DAG.getTarget().Options.Reciprocals;
+    std::string RecipOp = getRecipOp("sqrt", VT);
+    if (!Recips.isEnabled(RecipOp))
+      return SDValue();
+
+    RefinementSteps = Recips.getRefinementSteps(RecipOp);
     UseOneConstNR = true;
     return DCI.DAG.getNode(PPCISD::FRSQRTE, SDLoc(Operand), VT, Operand);
   }
@@ -9101,13 +9113,12 @@ SDValue PPCTargetLowering::getRecipEstimate(SDValue Operand,
       (VT == MVT::v2f64 && Subtarget.hasVSX()) ||
       (VT == MVT::v4f32 && Subtarget.hasQPX()) ||
       (VT == MVT::v4f64 && Subtarget.hasQPX())) {
-    // Convergence is quadratic, so we essentially double the number of digits
-    // correct after every iteration. For both FRE and FRSQRTE, the minimum
-    // architected relative accuracy is 2^-5. When hasRecipPrec(), this is
-    // 2^-14. IEEE float has 23 digits and double has 52 digits.
-    RefinementSteps = Subtarget.hasRecipPrec() ? 1 : 3;
-    if (VT.getScalarType() == MVT::f64)
-      ++RefinementSteps;
+    TargetRecip Recips = DCI.DAG.getTarget().Options.Reciprocals;
+    std::string RecipOp = getRecipOp("div", VT);
+    if (!Recips.isEnabled(RecipOp))
+      return SDValue();
+
+    RefinementSteps = Recips.getRefinementSteps(RecipOp);
     return DCI.DAG.getNode(PPCISD::FRE, SDLoc(Operand), VT, Operand);
   }
   return SDValue();
