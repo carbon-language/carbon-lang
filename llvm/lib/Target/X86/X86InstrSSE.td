@@ -6834,7 +6834,6 @@ multiclass SS48I_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 
 let Predicates = [HasAVX, NoVLX] in {
-  let isCommutable = 0 in
   defm VPMINSB   : SS48I_binop_rm<0x38, "vpminsb", smin, v16i8, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
@@ -6865,7 +6864,6 @@ let Predicates = [HasAVX, NoVLX] in {
 }
 
 let Predicates = [HasAVX2, NoVLX] in {
-  let isCommutable = 0 in
   defm VPMINSBY  : SS48I_binop_rm<0x38, "vpminsb", smin, v32i8, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
@@ -6896,7 +6894,6 @@ let Predicates = [HasAVX2, NoVLX] in {
 }
 
 let Constraints = "$src1 = $dst" in {
-  let isCommutable = 0 in
   defm PMINSB   : SS48I_binop_rm<0x38, "pminsb", smin, v16i8, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
   defm PMINSD   : SS48I_binop_rm<0x39, "pminsd", smin, v4i32, VR128,
