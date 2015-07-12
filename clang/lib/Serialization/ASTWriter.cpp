@@ -3634,6 +3634,55 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *ConstDC,
 /// bitstream, or 0 if no block was written.
 uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
                                                  DeclContext *DC) {
+  // If we imported a key declaration of this namespace, write the visible
+  // lookup results as an update record for it rather than including them
+  // on this declaration. We will only look at key declarations on reload.
+  if (isa<NamespaceDecl>(DC) && Chain &&
+      Chain->getKeyDeclaration(cast<Decl>(DC))->isFromASTFile()) {
+    // Only do this once, for the first local declaration of the namespace.
+    for (NamespaceDecl *Prev = cast<NamespaceDecl>(DC)->getPreviousDecl(); Prev;
+         Prev = Prev->getPreviousDecl())
+      if (!Prev->isFromASTFile())
+        return 0;
+
+    // Note that we need to emit an update record for the primary context.
+    UpdatedDeclContexts.insert(DC->getPrimaryContext());
+
+    // Make sure all visible decls are written. They will be recorded later. We
+    // do this using a side data structure so we can sort the names into
+    // a deterministic order.
+    StoredDeclsMap *Map = DC->getPrimaryContext()->buildLookup();
+    SmallVector<std::pair<DeclarationName, DeclContext::lookup_result>, 16>
+        LookupResults;
+    if (Map) {
+      LookupResults.reserve(Map->size());
+      for (auto &Entry : *Map)
+        LookupResults.push_back(
+            std::make_pair(Entry.first, Entry.second.getLookupResult()));
+    }
+
+    std::sort(LookupResults.begin(), LookupResults.end(), llvm::less_first());
+    for (auto &NameAndResult : LookupResults) {
+      DeclarationName Name = NameAndResult.first;
+      DeclContext::lookup_result Result = NameAndResult.second;
+      if (Name.getNameKind() == DeclarationName::CXXConstructorName ||
+          Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
+        // We have to work around a name lookup bug here where negative lookup
+        // results for these names get cached in namespace lookup tables (these
+        // names should never be looked up in a namespace).
+        assert(Result.empty() && "Cannot have a constructor or conversion "
+                                 "function name in a namespace!");
+        continue;
+      }
+
+      for (NamedDecl *ND : Result)
+        if (!ND->isFromASTFile())
+          GetDeclRef(ND);
+    }
+
+    return 0;
+  }
+
   if (DC->getPrimaryContext() != DC)
     return 0;
 
@@ -3685,6 +3734,11 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   SmallString<4096> LookupTable;
   uint32_t BucketOffset = GenerateNameLookupTable(DC, LookupTable);
 
+  // If we're updating a namespace, select a key declaration as the key for the
+  // update record; those are the only ones that will be checked on reload.
+  if (isa<NamespaceDecl>(DC))
+    DC = cast<DeclContext>(Chain->getKeyDeclaration(cast<Decl>(DC)));
+
   // Write the lookup table
   RecordData Record;
   Record.push_back(UPDATE_VISIBLE);
@@ -3717,11 +3771,17 @@ void ASTWriter::WriteRedeclarations() {
   SmallVector<serialization::LocalRedeclarationsInfo, 2> LocalRedeclsMap;
 
   for (unsigned I = 0, N = Redeclarations.size(); I != N; ++I) {
-    Decl *First = Redeclarations[I];
-    assert(First->isFirstDecl() && "Not the first declaration?");
-    
-    Decl *MostRecent = First->getMostRecentDecl();
-    
+    const Decl *Key = Redeclarations[I];
+    assert((Chain ? Chain->getKeyDeclaration(Key) == Key
+                  : Key->isFirstDecl()) &&
+           "not the key declaration");
+
+    const Decl *First = Key->getCanonicalDecl();
+    const Decl *MostRecent = First->getMostRecentDecl();
+
+    assert((getDeclID(First) >= NUM_PREDEF_DECL_IDS || First == Key) &&
+           "should not have imported key decls for predefined decl");
+
     // If we only have a single declaration, there is no point in storing
     // a redeclaration chain.
     if (First == MostRecent)
@@ -3730,34 +3790,34 @@ void ASTWriter::WriteRedeclarations() {
     unsigned Offset = LocalRedeclChains.size();
     unsigned Size = 0;
     LocalRedeclChains.push_back(0); // Placeholder for the size.
-    
+
     // Collect the set of local redeclarations of this declaration.
-    for (Decl *Prev = MostRecent; Prev != First;
+    for (const Decl *Prev = MostRecent; Prev;
          Prev = Prev->getPreviousDecl()) { 
-      if (!Prev->isFromASTFile()) {
+      if (!Prev->isFromASTFile() && Prev != Key) {
         AddDeclRef(Prev, LocalRedeclChains);
         ++Size;
       }
     }
 
     LocalRedeclChains[Offset] = Size;
-    
+
     // Reverse the set of local redeclarations, so that we store them in
     // order (since we found them in reverse order).
     std::reverse(LocalRedeclChains.end() - Size, LocalRedeclChains.end());
-    
+
     // Add the mapping from the first ID from the AST to the set of local
     // declarations.
-    LocalRedeclarationsInfo Info = { getDeclID(First), Offset };
+    LocalRedeclarationsInfo Info = { getDeclID(Key), Offset };
     LocalRedeclsMap.push_back(Info);
-    
+
     assert(N == Redeclarations.size() && 
            "Deserialized a declaration we shouldn't have");
   }
-  
+
   if (LocalRedeclChains.empty())
     return;
-  
+
   // Sort the local redeclarations map by the first declaration ID,
   // since the reader will be performing binary searches on this information.
   llvm::array_pod_sort(LocalRedeclsMap.begin(), LocalRedeclsMap.end());
@@ -4053,25 +4113,27 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   Preprocessor &PP = SemaRef.PP;
 
   // Set up predefined declaration IDs.
-  DeclIDs[Context.getTranslationUnitDecl()] = PREDEF_DECL_TRANSLATION_UNIT_ID;
-  if (Context.ObjCIdDecl)
-    DeclIDs[Context.ObjCIdDecl] = PREDEF_DECL_OBJC_ID_ID;
-  if (Context.ObjCSelDecl)
-    DeclIDs[Context.ObjCSelDecl] = PREDEF_DECL_OBJC_SEL_ID;
-  if (Context.ObjCClassDecl)
-    DeclIDs[Context.ObjCClassDecl] = PREDEF_DECL_OBJC_CLASS_ID;
-  if (Context.ObjCProtocolClassDecl)
-    DeclIDs[Context.ObjCProtocolClassDecl] = PREDEF_DECL_OBJC_PROTOCOL_ID;
-  if (Context.Int128Decl)
-    DeclIDs[Context.Int128Decl] = PREDEF_DECL_INT_128_ID;
-  if (Context.UInt128Decl)
-    DeclIDs[Context.UInt128Decl] = PREDEF_DECL_UNSIGNED_INT_128_ID;
-  if (Context.ObjCInstanceTypeDecl)
-    DeclIDs[Context.ObjCInstanceTypeDecl] = PREDEF_DECL_OBJC_INSTANCETYPE_ID;
-  if (Context.BuiltinVaListDecl)
-    DeclIDs[Context.getBuiltinVaListDecl()] = PREDEF_DECL_BUILTIN_VA_LIST_ID;
-  if (Context.ExternCContext)
-    DeclIDs[Context.ExternCContext] = PREDEF_DECL_EXTERN_C_CONTEXT_ID;
+  auto RegisterPredefDecl = [&] (Decl *D, PredefinedDeclIDs ID) {
+    if (D) {
+      assert(D->isCanonicalDecl() && "predefined decl is not canonical");
+      DeclIDs[D] = ID;
+      if (D->getMostRecentDecl() != D)
+        Redeclarations.push_back(D);
+    }
+  };
+  RegisterPredefDecl(Context.getTranslationUnitDecl(),
+                     PREDEF_DECL_TRANSLATION_UNIT_ID);
+  RegisterPredefDecl(Context.ObjCIdDecl, PREDEF_DECL_OBJC_ID_ID);
+  RegisterPredefDecl(Context.ObjCSelDecl, PREDEF_DECL_OBJC_SEL_ID);
+  RegisterPredefDecl(Context.ObjCClassDecl, PREDEF_DECL_OBJC_CLASS_ID);
+  RegisterPredefDecl(Context.ObjCProtocolClassDecl,
+                     PREDEF_DECL_OBJC_PROTOCOL_ID);
+  RegisterPredefDecl(Context.Int128Decl, PREDEF_DECL_INT_128_ID);
+  RegisterPredefDecl(Context.UInt128Decl, PREDEF_DECL_UNSIGNED_INT_128_ID);
+  RegisterPredefDecl(Context.ObjCInstanceTypeDecl,
+                     PREDEF_DECL_OBJC_INSTANCETYPE_ID);
+  RegisterPredefDecl(Context.BuiltinVaListDecl, PREDEF_DECL_BUILTIN_VA_LIST_ID);
+  RegisterPredefDecl(Context.ExternCContext, PREDEF_DECL_EXTERN_C_CONTEXT_ID);
 
   // Build a record containing all of the tentative definitions in this file, in
   // TentativeDefinitions order.  Generally, this record will be empty for
@@ -5675,7 +5737,7 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
 void ASTWriter::ResolvedExceptionSpec(const FunctionDecl *FD) {
   assert(!DoneWritingDeclsAndTypes && "Already done writing updates!");
   if (!Chain) return;
-  Chain->forEachFormerlyCanonicalImportedDecl(FD, [&](const Decl *D) {
+  Chain->forEachImportedKeyDecl(FD, [&](const Decl *D) {
     // If we don't already know the exception specification for this redecl
     // chain, add an update record for it.
     if (isUnresolvedExceptionSpec(cast<FunctionDecl>(D)
@@ -5689,7 +5751,7 @@ void ASTWriter::ResolvedExceptionSpec(const FunctionDecl *FD) {
 void ASTWriter::DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) {
   assert(!WritingAST && "Already writing the AST!");
   if (!Chain) return;
-  Chain->forEachFormerlyCanonicalImportedDecl(FD, [&](const Decl *D) {
+  Chain->forEachImportedKeyDecl(FD, [&](const Decl *D) {
     DeclUpdates[D].push_back(
         DeclUpdate(UPD_CXX_DEDUCED_RETURN_TYPE, ReturnType));
   });
@@ -5700,7 +5762,7 @@ void ASTWriter::ResolvedOperatorDelete(const CXXDestructorDecl *DD,
   assert(!WritingAST && "Already writing the AST!");
   assert(Delete && "Not given an operator delete");
   if (!Chain) return;
-  Chain->forEachFormerlyCanonicalImportedDecl(DD, [&](const Decl *D) {
+  Chain->forEachImportedKeyDecl(DD, [&](const Decl *D) {
     DeclUpdates[D].push_back(DeclUpdate(UPD_CXX_RESOLVED_DTOR_DELETE, Delete));
   });
 }

@@ -6071,7 +6071,7 @@ Decl *ASTReader::GetExistingDecl(DeclID ID) {
     if (D) {
       // Track that we have merged the declaration with ID \p ID into the
       // pre-existing predefined declaration \p D.
-      auto &Merged = MergedDecls[D->getCanonicalDecl()];
+      auto &Merged = KeyDecls[D->getCanonicalDecl()];
       if (Merged.empty())
         Merged.push_back(ID);
     }
@@ -6413,10 +6413,10 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   Contexts.push_back(DC);
 
   if (DC->isNamespace()) {
-    auto Merged = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
-    if (Merged != MergedDecls.end()) {
-      for (unsigned I = 0, N = Merged->second.size(); I != N; ++I)
-        Contexts.push_back(cast<DeclContext>(GetDecl(Merged->second[I])));
+    auto Key = KeyDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
+    if (Key != KeyDecls.end()) {
+      for (unsigned I = 0, N = Key->second.size(); I != N; ++I)
+        Contexts.push_back(cast<DeclContext>(GetDecl(Key->second[I])));
     }
   }
 
@@ -6533,11 +6533,11 @@ void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   Contexts.push_back(DC);
 
   if (DC->isNamespace()) {
-    MergedDeclsMap::iterator Merged
-      = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
-    if (Merged != MergedDecls.end()) {
-      for (unsigned I = 0, N = Merged->second.size(); I != N; ++I)
-        Contexts.push_back(cast<DeclContext>(GetDecl(Merged->second[I])));
+    KeyDeclsMap::iterator Key =
+        KeyDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
+    if (Key != KeyDecls.end()) {
+      for (unsigned I = 0, N = Key->second.size(); I != N; ++I)
+        Contexts.push_back(cast<DeclContext>(GetDecl(Key->second[I])));
     }
   }
 

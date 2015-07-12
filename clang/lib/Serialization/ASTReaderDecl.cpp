@@ -128,20 +128,22 @@ namespace clang {
       GlobalDeclID FirstID;
       Decl *MergeWith;
       mutable bool Owning;
+      bool IsKeyDecl;
       Decl::Kind DeclKind;
 
       void operator=(RedeclarableResult &) = delete;
 
     public:
       RedeclarableResult(ASTReader &Reader, GlobalDeclID FirstID,
-                         Decl *MergeWith, Decl::Kind DeclKind)
+                         Decl *MergeWith, Decl::Kind DeclKind,
+                         bool IsKeyDecl)
         : Reader(Reader), FirstID(FirstID), MergeWith(MergeWith),
-          Owning(true), DeclKind(DeclKind) {}
+          Owning(true), IsKeyDecl(IsKeyDecl), DeclKind(DeclKind) {}
 
       RedeclarableResult(RedeclarableResult &&Other)
         : Reader(Other.Reader), FirstID(Other.FirstID),
           MergeWith(Other.MergeWith), Owning(Other.Owning),
-          DeclKind(Other.DeclKind) {
+          IsKeyDecl(Other.IsKeyDecl), DeclKind(Other.DeclKind) {
         Other.Owning = false;
       }
 
@@ -155,6 +157,9 @@ namespace clang {
 
       /// \brief Retrieve the first ID.
       GlobalDeclID getFirstID() const { return FirstID; }
+
+      /// \brief Is this declaration the key declaration?
+      bool isKeyDecl() const { return IsKeyDecl; }
 
       /// \brief Get a known declaration that this should be merged with, if
       /// any.
@@ -348,7 +353,7 @@ namespace clang {
 
     void mergeTemplatePattern(RedeclarableTemplateDecl *D,
                               RedeclarableTemplateDecl *Existing,
-                              DeclID DsID);
+                              DeclID DsID, bool IsKeyDecl);
 
     ObjCTypeParamList *ReadObjCTypeParamList();
 
@@ -2173,12 +2178,16 @@ ASTDeclReader::RedeclarableResult
 ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   DeclID FirstDeclID = ReadDeclID(Record, Idx);
   Decl *MergeWith = nullptr;
+  bool IsKeyDecl = ThisDeclID == FirstDeclID;
 
   // 0 indicates that this declaration was the only declaration of its entity,
   // and is used for space optimization.
-  if (FirstDeclID == 0)
+  if (FirstDeclID == 0) {
     FirstDeclID = ThisDeclID;
-  else if (unsigned N = Record[Idx++]) {
+    IsKeyDecl = true;
+  } else if (unsigned N = Record[Idx++]) {
+    IsKeyDecl = false;
+
     // We have some declarations that must be before us in our redeclaration
     // chain. Read them now, and remember that we ought to merge with one of
     // them.
@@ -2204,7 +2213,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   // The result structure takes care to note that we need to load the 
   // other declaration chains for this ID.
   return RedeclarableResult(Reader, FirstDeclID, MergeWith,
-                            static_cast<T *>(D)->getKind());
+                            static_cast<T *>(D)->getKind(), IsKeyDecl);
 }
 
 /// \brief Attempts to merge the given declaration (D) with another declaration
@@ -2243,11 +2252,12 @@ template<typename T> static T assert_cast(...) {
 /// declarations.
 void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
                                          RedeclarableTemplateDecl *Existing,
-                                         DeclID DsID) {
+                                         DeclID DsID, bool IsKeyDecl) {
   auto *DPattern = D->getTemplatedDecl();
   auto *ExistingPattern = Existing->getTemplatedDecl();
   RedeclarableResult Result(Reader, DPattern->getCanonicalDecl()->getGlobalID(),
-                            /*MergeWith*/ExistingPattern, DPattern->getKind());
+                            /*MergeWith*/ExistingPattern, DPattern->getKind(),
+                            IsKeyDecl);
 
   if (auto *DClass = dyn_cast<CXXRecordDecl>(DPattern)) {
     // Merge with any existing definition.
@@ -2310,11 +2320,11 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase, T *Existing,
     if (auto *DTemplate = dyn_cast<RedeclarableTemplateDecl>(D))
       mergeTemplatePattern(
           DTemplate, assert_cast<RedeclarableTemplateDecl*>(ExistingCanon),
-          TemplatePatternID);
+          TemplatePatternID, Redecl.isKeyDecl());
 
-    // If this declaration was the canonical declaration, make a note of that.
-    if (DCanon == D) {
-      Reader.MergedDecls[ExistingCanon].push_back(Redecl.getFirstID());
+    // If this declaration is a key declaration, make a note of that.
+    if (Redecl.isKeyDecl()) {
+      Reader.KeyDecls[ExistingCanon].push_back(Redecl.getFirstID());
       if (Reader.PendingDeclChainsKnown.insert(ExistingCanon).second)
         Reader.PendingDeclChains.push_back(ExistingCanon);
     }
@@ -3468,7 +3478,7 @@ namespace {
         
         return;
       }
-      
+
       // Dig out all of the redeclarations.
       unsigned Offset = Result->Offset;
       unsigned N = M.RedeclarationChains[Offset];
@@ -3531,9 +3541,9 @@ void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
   GlobalDeclID CanonID = CanonDecl->getGlobalID();
   if (CanonID)
     SearchDecls.push_back(CanonDecl->getGlobalID()); // Always first.
-  MergedDeclsMap::iterator MergedPos = MergedDecls.find(CanonDecl);
-  if (MergedPos != MergedDecls.end())
-    SearchDecls.append(MergedPos->second.begin(), MergedPos->second.end());
+  KeyDeclsMap::iterator KeyPos = KeyDecls.find(CanonDecl);
+  if (KeyPos != KeyDecls.end())
+    SearchDecls.append(KeyPos->second.begin(), KeyPos->second.end());
 
   // Build up the list of redeclarations.
   RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized, CanonID);

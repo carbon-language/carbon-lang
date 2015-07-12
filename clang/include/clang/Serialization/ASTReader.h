@@ -976,12 +976,14 @@ private:
       MergedLookups;
 
   typedef llvm::DenseMap<Decl *, SmallVector<serialization::DeclID, 2> >
-    MergedDeclsMap;
+    KeyDeclsMap;
     
-  /// \brief A mapping from canonical declarations to the set of additional
-  /// (global, previously-canonical) declaration IDs that have been merged with
-  /// that canonical declaration.
-  MergedDeclsMap MergedDecls;
+  /// \brief A mapping from canonical declarations to the set of global
+  /// declaration IDs for key declaration that have been merged with that
+  /// canonical declaration. A key declaration is a formerly-canonical
+  /// declaration whose module did not import any other key declaration for that
+  /// entity. These are the IDs that we use as keys when finding redecl chains.
+  KeyDeclsMap KeyDecls;
   
   /// \brief A mapping from DeclContexts to the semantic DeclContext that we
   /// are treating as the definition of the entity. This is used, for instance,
@@ -1054,6 +1056,36 @@ public:
   void ResolveImportedPath(ModuleFile &M, std::string &Filename);
   static void ResolveImportedPath(std::string &Filename, StringRef Prefix);
 
+  /// \brief Returns the first key declaration for the given declaration. This
+  /// is one that is formerly-canonical (or still canonical) and whose module
+  /// did not import any other key declaration of the entity.
+  Decl *getKeyDeclaration(Decl *D) {
+    D = D->getCanonicalDecl();
+    if (D->isFromASTFile())
+      return D;
+
+    auto I = KeyDecls.find(D);
+    if (I == KeyDecls.end() || I->second.empty())
+      return D;
+    return GetExistingDecl(I->second[0]);
+  }
+  const Decl *getKeyDeclaration(const Decl *D) {
+    return getKeyDeclaration(const_cast<Decl*>(D));
+  }
+
+  /// \brief Run a callback on each imported key declaration of \p D.
+  template <typename Fn>
+  void forEachImportedKeyDecl(const Decl *D, Fn Visit) {
+    D = D->getCanonicalDecl();
+    if (D->isFromASTFile())
+      Visit(D);
+
+    auto It = KeyDecls.find(const_cast<Decl*>(D));
+    if (It != KeyDecls.end())
+      for (auto ID : It->second)
+        Visit(GetExistingDecl(ID));
+  }
+
 private:
   struct ImportedModule {
     ModuleFile *Mod;
@@ -1123,18 +1155,6 @@ private:
   /// of a redeclarable kind) that is either local or has already been loaded
   /// merged into its redecl chain.
   Decl *getMostRecentExistingDecl(Decl *D);
-
-  template <typename Fn>
-  void forEachFormerlyCanonicalImportedDecl(const Decl *D, Fn Visit) {
-    D = D->getCanonicalDecl();
-    if (D->isFromASTFile())
-      Visit(D);
-
-    auto It = MergedDecls.find(const_cast<Decl*>(D));
-    if (It != MergedDecls.end())
-      for (auto ID : It->second)
-        Visit(GetExistingDecl(ID));
-  }
 
   RecordLocation DeclCursorForID(serialization::DeclID ID,
                                  unsigned &RawLocation);

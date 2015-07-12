@@ -254,6 +254,8 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   //
   // This happens when we instantiate a class with a friend declaration or a
   // function with a local extern declaration, for instance.
+  //
+  // FIXME: Can we handle this in AddedVisibleDecl instead?
   if (D->isOutOfLine()) {
     auto *DC = D->getDeclContext();
     while (auto *NS = dyn_cast<NamespaceDecl>(DC->getRedeclContext())) {
@@ -1005,42 +1007,6 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     Writer.AddDeclRef(D->getAnonymousNamespace(), Record);
   Code = serialization::DECL_NAMESPACE;
 
-  if (Writer.hasChain() && !D->isOriginalNamespace() &&
-      D->getOriginalNamespace()->isFromASTFile()) {
-    NamespaceDecl *NS = D->getOriginalNamespace();
-    Writer.UpdatedDeclContexts.insert(NS);
-
-    // Make sure all visible decls are written. They will be recorded later. We
-    // do this using a side data structure so we can sort the names into
-    // a deterministic order.
-    StoredDeclsMap *Map = NS->buildLookup();
-    SmallVector<std::pair<DeclarationName, DeclContext::lookup_result>, 16>
-        LookupResults;
-    if (Map) {
-      LookupResults.reserve(Map->size());
-      for (auto &Entry : *Map)
-        LookupResults.push_back(
-            std::make_pair(Entry.first, Entry.second.getLookupResult()));
-    }
-
-    std::sort(LookupResults.begin(), LookupResults.end(), llvm::less_first());
-    for (auto &NameAndResult : LookupResults) {
-      DeclarationName Name = NameAndResult.first;
-      DeclContext::lookup_result Result = NameAndResult.second;
-      if (Name.getNameKind() == DeclarationName::CXXConstructorName ||
-          Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
-        // We have to work around a name lookup bug here where negative lookup
-        // results for these names get cached in namespace lookup tables.
-        assert(Result.empty() && "Cannot have a constructor or conversion "
-                                 "function name in a namespace!");
-        continue;
-      }
-
-      for (NamedDecl *ND : Result)
-        Writer.GetDeclRef(ND);
-    }
-  }
-
   if (Writer.hasChain() && D->isAnonymousNamespace() && 
       D == D->getMostRecentDecl()) {
     // This is a most recent reopening of the anonymous namespace. If its parent
@@ -1512,6 +1478,17 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
   Record.push_back(VisibleOffset);
 }
 
+/// Determine whether D is the first declaration in its redeclaration chain that
+/// is not from an AST file.
+template <typename T>
+static bool isFirstLocalDecl(Redeclarable<T> *D) {
+  assert(D && !static_cast<T*>(D)->isFromASTFile());
+  do
+    D = D->getPreviousDecl();
+  while (D && static_cast<T*>(D)->isFromASTFile());
+  return !D;
+}
+
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   T *First = D->getFirstDecl();
@@ -1520,41 +1497,30 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
     assert(isRedeclarableDeclKind(static_cast<T *>(D)->getKind()) &&
            "Not considered redeclarable?");
 
-    // There is more than one declaration of this entity, so we will need to
-    // write a redeclaration chain.
     Writer.AddDeclRef(First, Record);
-    Writer.Redeclarations.insert(First);
 
-    auto *Previous = D->getPreviousDecl();
-
-    // In a modules build, we can have imported declarations after a local
-    // canonical declaration. If this is the first local declaration, emit
-    // a list of all such imported declarations so that we can ensure they
-    // are loaded before we are. This allows us to rebuild the redecl chain
-    // in the right order on reload (all declarations imported by a module
-    // should be before all declarations provided by that module).
-    bool EmitImportedMergedCanonicalDecls = false;
+    // In a modules build, emit a list of all imported key declarations
+    // (excluding First, if it was imported), so that we can be sure that all
+    // redeclarations visible to this module are before D in the redecl chain.
+    unsigned I = Record.size();
+    Record.push_back(0);
     if (Context.getLangOpts().Modules && Writer.Chain) {
-      auto *PreviousLocal = Previous;
-      while (PreviousLocal && PreviousLocal->isFromASTFile())
-        PreviousLocal = PreviousLocal->getPreviousDecl();
-      if (!PreviousLocal)
-        EmitImportedMergedCanonicalDecls = true;
+      if (isFirstLocalDecl(D)) {
+        Writer.Chain->forEachImportedKeyDecl(First, [&](const Decl *D) {
+          if (D != First)
+            Writer.AddDeclRef(D, Record);
+        });
+        Record[I] = Record.size() - I - 1;
+
+        // Write a redeclaration chain, attached to the first key decl.
+        Writer.Redeclarations.push_back(Writer.Chain->getKeyDeclaration(First));
+      }
+    } else if (D == First || D->getPreviousDecl()->isFromASTFile()) {
+      assert(isFirstLocalDecl(D) && "imported decl after local decl");
+
+      // Write a redeclaration chain attached to the first decl.
+      Writer.Redeclarations.push_back(First);
     }
-    if (EmitImportedMergedCanonicalDecls) {
-      llvm::SmallMapVector<ModuleFile*, Decl*, 16> FirstInModule;
-      for (auto *Redecl = MostRecent; Redecl;
-           Redecl = Redecl->getPreviousDecl())
-        if (Redecl->isFromASTFile())
-          FirstInModule[Writer.Chain->getOwningModuleFile(Redecl)] = Redecl;
-      // FIXME: If FirstInModule has entries for modules A and B, and B imports
-      // A (directly or indirectly), we don't need to write the entry for A.
-      Record.push_back(FirstInModule.size());
-      for (auto I = FirstInModule.rbegin(), E = FirstInModule.rend();
-           I != E; ++I)
-        Writer.AddDeclRef(I->second, Record);
-    } else
-      Record.push_back(0);
 
     // Make sure that we serialize both the previous and the most-recent 
     // declarations, which (transitively) ensures that all declarations in the
@@ -1562,7 +1528,7 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
     //
     // FIXME: This is not correct; when we reach an imported declaration we
     // won't emit its previous declaration.
-    (void)Writer.GetDeclRef(Previous);
+    (void)Writer.GetDeclRef(D->getPreviousDecl());
     (void)Writer.GetDeclRef(MostRecent);
   } else {
     // We use the sentinel value 0 to indicate an only declaration.

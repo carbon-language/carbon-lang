@@ -398,7 +398,7 @@ private:
                  
   /// \brief The set of declarations that may have redeclaration chains that
   /// need to be serialized.
-  llvm::SmallSetVector<Decl *, 4> Redeclarations;
+  llvm::SmallVector<const Decl *, 16> Redeclarations;
                                       
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
