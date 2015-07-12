@@ -975,7 +975,7 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
   if (tcr != TC_NotApplicable)
     return tcr;
 
-  // C++0x [expr.static.cast]p3: 
+  // C++11 [expr.static.cast]p3: 
   //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to cv2
   //   T2" if "cv2 T2" is reference-compatible with "cv1 T1".
   tcr = TryLValueToRValueCast(Self, SrcExpr.get(), DestType, CStyle, Kind, 
@@ -1133,7 +1133,7 @@ TryCastResult
 TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                       bool CStyle, CastKind &Kind, CXXCastPath &BasePath, 
                       unsigned &msg) {
-  // C++0x [expr.static.cast]p3:
+  // C++11 [expr.static.cast]p3:
   //   A glvalue of type "cv1 T1" can be cast to type "rvalue reference to 
   //   cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
   const RValueReferenceType *R = DestType->getAs<RValueReferenceType>();
@@ -1161,6 +1161,8 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                         DerivedToBase, ObjCConversion,
                                         ObjCLifetimeConversion) 
         < Sema::Ref_Compatible_With_Added_Qualification) {
+    if (CStyle)
+      return TC_NotApplicable;
     msg = diag::err_bad_lvalue_to_rvalue_cast;
     return TC_Failed;
   }
