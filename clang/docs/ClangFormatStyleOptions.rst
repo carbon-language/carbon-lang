@@ -275,6 +275,9 @@ the configuration (without a prefix: ``Auto``).
   * ``BS_Linux`` (in configuration: ``Linux``)
     Like ``Attach``, but break before braces on function, namespace and
     class definitions.
+  * ``BS_Mozilla`` (in configuration: ``Mozilla``)
+    Like ``Attach``, but break before braces on enum, function, and record
+    definitions.
   * ``BS_Stroustrup`` (in configuration: ``Stroustrup``)
     Like ``Attach``, but break before function definitions, and 'else'.
   * ``BS_Allman`` (in configuration: ``Allman``)

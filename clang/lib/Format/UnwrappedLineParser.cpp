@@ -457,6 +457,8 @@ static bool ShouldBreakBeforeBrace(const FormatStyle &Style,
   switch (Style.BreakBeforeBraces) {
   case FormatStyle::BS_Linux:
     return InitialToken.isOneOf(tok::kw_namespace, tok::kw_class);
+  case FormatStyle::BS_Mozilla:
+    return InitialToken.isOneOf(tok::kw_class, tok::kw_struct, tok::kw_union);
   case FormatStyle::BS_Allman:
   case FormatStyle::BS_GNU:
     return true;

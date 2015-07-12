@@ -8579,6 +8579,50 @@ TEST_F(FormatTest, LinuxBraceBreaking) {
                LinuxBraceStyle);
 }
 
+TEST_F(FormatTest, MozillaBraceBreaking) {
+  FormatStyle MozillaBraceStyle = getLLVMStyle();
+  MozillaBraceStyle.BreakBeforeBraces = FormatStyle::BS_Mozilla;
+  verifyFormat("namespace a {\n"
+               "class A\n"
+               "{\n"
+               "  void f()\n"
+               "  {\n"
+               "    if (true) {\n"
+               "      a();\n"
+               "      b();\n"
+               "    }\n"
+               "  }\n"
+               "  void g() { return; }\n"
+               "};\n"
+               "enum E\n"
+               "{\n"
+               "  A,\n"
+               "  // foo\n"
+               "  B,\n"
+               "  C\n"
+               "};\n"
+               "struct B\n"
+               "{\n"
+               "  int x;\n"
+               "};\n"
+               "}\n",
+               MozillaBraceStyle);
+  verifyFormat("struct S\n"
+               "{\n"
+               "  int Type;\n"
+               "  union\n"
+               "  {\n"
+               "    int x;\n"
+               "    double y;\n"
+               "  } Value;\n"
+               "  class C\n"
+               "  {\n"
+               "    MyFavoriteType Value;\n"
+               "  } Class;\n"
+               "}\n",
+               MozillaBraceStyle);
+}
+
 TEST_F(FormatTest, StroustrupBraceBreaking) {
   FormatStyle StroustrupBraceStyle = getLLVMStyle();
   StroustrupBraceStyle.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
@@ -9219,6 +9263,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::BS_Attach);
   CHECK_PARSE("BreakBeforeBraces: Linux", BreakBeforeBraces,
               FormatStyle::BS_Linux);
+  CHECK_PARSE("BreakBeforeBraces: Mozilla", BreakBeforeBraces,
+              FormatStyle::BS_Mozilla);
   CHECK_PARSE("BreakBeforeBraces: Stroustrup", BreakBeforeBraces,
               FormatStyle::BS_Stroustrup);
   CHECK_PARSE("BreakBeforeBraces: Allman", BreakBeforeBraces,

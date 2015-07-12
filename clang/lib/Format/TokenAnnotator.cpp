@@ -2108,7 +2108,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     return Right.HasUnescapedNewline;
   if (isAllmanBrace(Left) || isAllmanBrace(Right))
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
-           Style.BreakBeforeBraces == FormatStyle::BS_GNU;
+           Style.BreakBeforeBraces == FormatStyle::BS_GNU ||
+           (Style.BreakBeforeBraces == FormatStyle::BS_Mozilla &&
+            Line.startsWith(tok::kw_enum));
   if (Style.Language == FormatStyle::LK_Proto && Left.isNot(tok::l_brace) &&
       Right.is(TT_SelectorName))
     return true;
