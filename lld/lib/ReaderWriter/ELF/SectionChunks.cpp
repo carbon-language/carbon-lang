@@ -118,26 +118,22 @@ AtomSection<ELFT>::findAtomLayoutByName(StringRef name) const {
 }
 
 template <class ELFT>
-void AtomSection<ELFT>::printError(const std::string &errorStr,
-                                   const AtomLayout &atom,
-                                   const Reference &ref) const {
+std::string AtomSection<ELFT>::formatError(const std::string &errorStr,
+                                           const AtomLayout &atom,
+                                           const Reference &ref) const {
   StringRef kindValStr;
   if (!this->_ctx.registry().referenceKindToString(
           ref.kindNamespace(), ref.kindArch(), ref.kindValue(), kindValStr)) {
     kindValStr = "unknown";
   }
 
-  std::string errStr =
+  return
       (Twine(errorStr) + " in file " + atom._atom->file().path() +
        ": reference from " + atom._atom->name() + "+" +
        Twine(ref.offsetInAtom()) + " to " + ref.target()->name() + "+" +
        Twine(ref.addend()) + " of type " + Twine(ref.kindValue()) + " (" +
        kindValStr + ")\n")
           .str();
-
-  // Take the lock to prevent output getting interleaved between threads
-  std::lock_guard<std::mutex> lock(_outputMutex);
-  llvm::errs() << errStr;
 }
 
 /// Align the offset to the required modulus defined by the atom alignment
@@ -249,6 +245,11 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
   bool success = true;
+
+  // parallel_for_each() doesn't have deterministic order.  To guarantee
+  // deterministic error output, collect errors in this vector and sort it
+  // by atom file offset before printing all errors.
+  std::vector<std::pair<size_t, std::string>> errors;
   parallel_for_each(_atoms.begin(), _atoms.end(), [&](AtomLayout *ai) {
     DEBUG_WITH_TYPE("Section", llvm::dbgs()
                                    << "Writing atom: " << ai->_atom->name()
@@ -268,13 +269,19 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
     for (const auto ref : *definedAtom) {
       if (std::error_code ec =
               relHandler.applyRelocation(*writer, buffer, *ai, *ref)) {
-        printError(ec.message(), *ai, *ref);
+        std::lock_guard<std::mutex> lock(_outputMutex);
+        errors.push_back(std::make_pair(ai->_fileOffset,
+                                        formatError(ec.message(), *ai, *ref)));
         success = false;
       }
     }
   });
-  if (!success)
+  if (!success) {
+    std::sort(errors.begin(), errors.end());
+    for (auto &&error : errors)
+      llvm::errs() << error.second;
     llvm::report_fatal_error("relocating output");
+  }
 }
 
 template <class ELFT>

@@ -195,8 +195,8 @@ protected:
   std::vector<AtomLayout *> _atoms;
   mutable std::mutex _outputMutex;
 
-  void printError(const std::string &errorStr, const AtomLayout &atom,
-                  const Reference &ref) const;
+  std::string formatError(const std::string &errorStr, const AtomLayout &atom,
+                          const Reference &ref) const;
 };
 
 /// \brief A OutputSection represents a set of sections grouped by the same
