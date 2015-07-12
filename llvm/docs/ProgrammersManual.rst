@@ -1868,7 +1868,7 @@ Iterating over predecessors & successors of blocks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Iterating over the predecessors and successors of a block is quite easy with the
-routines defined in ``"llvm/Support/CFG.h"``.  Just use code like this to
+routines defined in ``"llvm/IR/CFG.h"``.  Just use code like this to
 iterate over all predecessors of BB:
 
 .. code-block:: c++
