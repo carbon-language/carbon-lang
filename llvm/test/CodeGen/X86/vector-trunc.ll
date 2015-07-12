@@ -223,15 +223,15 @@ entry:
 }
 
 define <16 x i8> @trunc16i64_const() {
-; SSE-LABEL:  trunc16i64_const
-; SSE:        # BB#0: # %entry
-; SSE-NEXT:   xorps %xmm0, %xmm0
-; SSE-NEXT:   retq
+; SSE-LABEL: trunc16i64_const:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    xorps %xmm0, %xmm0
+; SSE-NEXT:    retq
 ;
-; AVX-LABEL:  trunc16i64_const
-; AVX:        # BB#0: # %entry
-; AVX-NEXT:   vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:   retq
+; AVX-LABEL: trunc16i64_const:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    retq
 
 entry:
   %0 = trunc <16 x i64> zeroinitializer to <16 x i8>
