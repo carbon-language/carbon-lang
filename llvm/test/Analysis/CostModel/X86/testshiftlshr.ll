@@ -17,9 +17,9 @@ entry:
 define %shifttype4i16 @shift4i16(%shifttype4i16 %a, %shifttype4i16 %b) {
 entry:
   ; SSE2: shift4i16
-  ; SSE2: cost of 40 {{.*}} lshr
+  ; SSE2: cost of 16 {{.*}} lshr
   ; SSE2-CODEGEN: shift4i16
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrld
 
   %0 = lshr %shifttype4i16 %a , %b
   ret %shifttype4i16 %0
@@ -77,9 +77,9 @@ entry:
 define %shifttype4i32 @shift4i32(%shifttype4i32 %a, %shifttype4i32 %b) {
 entry:
   ; SSE2: shift4i32
-  ; SSE2: cost of 40 {{.*}} lshr
+  ; SSE2: cost of 16 {{.*}} lshr
   ; SSE2-CODEGEN: shift4i32
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrld
 
   %0 = lshr %shifttype4i32 %a , %b
   ret %shifttype4i32 %0
@@ -89,9 +89,9 @@ entry:
 define %shifttype8i32 @shift8i32(%shifttype8i32 %a, %shifttype8i32 %b) {
 entry:
   ; SSE2: shift8i32
-  ; SSE2: cost of 80 {{.*}} lshr
+  ; SSE2: cost of 32 {{.*}} lshr
   ; SSE2-CODEGEN: shift8i32
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrld
 
   %0 = lshr %shifttype8i32 %a , %b
   ret %shifttype8i32 %0
@@ -101,9 +101,9 @@ entry:
 define %shifttype16i32 @shift16i32(%shifttype16i32 %a, %shifttype16i32 %b) {
 entry:
   ; SSE2: shift16i32
-  ; SSE2: cost of 160 {{.*}} lshr
+  ; SSE2: cost of 64 {{.*}} lshr
   ; SSE2-CODEGEN: shift16i32
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrld
 
   %0 = lshr %shifttype16i32 %a , %b
   ret %shifttype16i32 %0
@@ -113,9 +113,9 @@ entry:
 define %shifttype32i32 @shift32i32(%shifttype32i32 %a, %shifttype32i32 %b) {
 entry:
   ; SSE2: shift32i32
-  ; SSE2: cost of 320 {{.*}} lshr
+  ; SSE2: cost of 128 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i32
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrld
 
   %0 = lshr %shifttype32i32 %a , %b
   ret %shifttype32i32 %0
@@ -197,9 +197,9 @@ entry:
 define %shifttype4i8 @shift4i8(%shifttype4i8 %a, %shifttype4i8 %b) {
 entry:
   ; SSE2: shift4i8
-  ; SSE2: cost of 40 {{.*}} lshr
+  ; SSE2: cost of 16 {{.*}} lshr
   ; SSE2-CODEGEN: shift4i8
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrld
 
   %0 = lshr %shifttype4i8 %a , %b
   ret %shifttype4i8 %0

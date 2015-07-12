@@ -194,17 +194,9 @@ define void @rot(%i8vec3pack* nocapture sret %result, %i8vec3pack* %X, %i8vec3pa
 ; CHECK-NEXT:    movl    (%[[PTR0]]), [[TMP1:%e[abcd]+x]]
 ; CHECK-NEXT:    movl    [[TMP1]], [[TMP2:.*]]
 ; CHECK-NEXT:    pmovzxbd [[TMP2]], %[[X0:xmm[0-9]+]]
-; CHECK-NEXT:    pextrd  $1, %[[X0]], %e[[R0:[abcd]]]x
-; CHECK-NEXT:    shrl    %e[[R0]]x
-; CHECK-NEXT:    movd    %[[X0]], %e[[R1:[abcd]]]x
-; CHECK-NEXT:    shrl    %e[[R1]]x
-; CHECK-NEXT:    movd    %e[[R1]]x, %[[X1:xmm[0-9]+]]
-; CHECK-NEXT:    pinsrd  $1, %e[[R0]]x, %[[X1]]
-; CHECK-NEXT:    pextrd  $2, %[[X0]], %e[[R0:[abcd]]]x
-; CHECK-NEXT:    shrl    %e[[R0]]x
-; CHECK-NEXT:    pinsrd  $2, %e[[R0]]x, %[[X1]]
-; CHECK-NEXT:    pextrd  $3, %[[X0]], %e[[R0:[abcd]]]x
-; CHECK-NEXT:    pinsrd  $3, %e[[R0]]x, %[[X1]]
+; CHECK-NEXT:    movdqa  %[[X0]], %[[X1:xmm[0-9]+]]
+; CHECK-NEXT:    psrld   $1, %[[X1]]
+; CHECK-NEXT:    pblendw $192, %[[X0]], %[[X1]]
 ; CHECK-NEXT:    pextrb  $8, %[[X1]], 2(%{{.*}})
 ; CHECK-NEXT:    pshufb  %[[SHUFFLE_MASK]], %[[X1]]
 ; CHECK-NEXT:    pmovzxwq %[[X1]], %[[X3:xmm[0-9]+]]

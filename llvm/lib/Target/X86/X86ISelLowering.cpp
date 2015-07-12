@@ -17417,6 +17417,53 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     }
   }
 
+  // v4i32 Non Uniform Shifts.
+  // If the shift amount is constant we can shift each lane using the SSE2
+  // immediate shifts, else we need to zero-extend each lane to the lower i64
+  // and shift using the SSE2 variable shifts.
+  // The separate results can then be blended together.
+  if (VT == MVT::v4i32) {
+    unsigned Opc = Op.getOpcode();
+    SDValue Amt0, Amt1, Amt2, Amt3;
+    if (ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
+      Amt0 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {0, 0, 0, 0});
+      Amt1 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {1, 1, 1, 1});
+      Amt2 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {2, 2, 2, 2});
+      Amt3 = DAG.getVectorShuffle(VT, dl, Amt, DAG.getUNDEF(VT), {3, 3, 3, 3});
+    } else {
+      // ISD::SHL is handled above but we include it here for completeness.
+      switch (Opc) {
+      default:
+        llvm_unreachable("Unknown target vector shift node");
+      case ISD::SHL:
+        Opc = X86ISD::VSHL;
+        break;
+      case ISD::SRL:
+        Opc = X86ISD::VSRL;
+        break;
+      case ISD::SRA:
+        Opc = X86ISD::VSRA;
+        break;
+      }
+      // The SSE2 shifts use the lower i64 as the same shift amount for
+      // all lanes and the upper i64 is ignored. These shuffle masks
+      // optimally zero-extend each lanes on SSE2/SSE41/AVX targets.
+      SDValue Z = getZeroVector(VT, Subtarget, DAG, dl);
+      Amt0 = DAG.getVectorShuffle(VT, dl, Amt, Z, {0, 4, -1, -1});
+      Amt1 = DAG.getVectorShuffle(VT, dl, Amt, Z, {1, 5, -1, -1});
+      Amt2 = DAG.getVectorShuffle(VT, dl, Amt, Z, {2, 6, -1, -1});
+      Amt3 = DAG.getVectorShuffle(VT, dl, Amt, Z, {3, 7, -1, -1});
+    }
+
+    SDValue R0 = DAG.getNode(Opc, dl, VT, R, Amt0);
+    SDValue R1 = DAG.getNode(Opc, dl, VT, R, Amt1);
+    SDValue R2 = DAG.getNode(Opc, dl, VT, R, Amt2);
+    SDValue R3 = DAG.getNode(Opc, dl, VT, R, Amt3);
+    SDValue R02 = DAG.getVectorShuffle(VT, dl, R0, R2, {0, -1, 6, -1});
+    SDValue R13 = DAG.getVectorShuffle(VT, dl, R1, R3, {-1, 1, -1, 7});
+    return DAG.getVectorShuffle(VT, dl, R02, R13, {0, 5, 2, 7});
+  }
+
   if (VT == MVT::v16i8 || (VT == MVT::v32i8 && Subtarget->hasInt256())) {
     MVT ExtVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements() / 2);
     unsigned ShiftOpcode = Op->getOpcode();

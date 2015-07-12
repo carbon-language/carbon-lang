@@ -264,12 +264,12 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
 
     { ISD::SRL,  MVT::v16i8,    26 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v8i16,    32 }, // cmpgtb sequence.
-    { ISD::SRL,  MVT::v4i32,  4*10 }, // Scalarized.
+    { ISD::SRL,  MVT::v4i32,    16 }, // Shift each lane + blend.
     { ISD::SRL,  MVT::v2i64,  2*10 }, // Scalarized.
 
     { ISD::SRA,  MVT::v16i8,    54 }, // unpacked cmpgtb sequence.
     { ISD::SRA,  MVT::v8i16,    32 }, // cmpgtb sequence.
-    { ISD::SRA,  MVT::v4i32,  4*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v4i32,    16 }, // Shift each lane + blend.
     { ISD::SRA,  MVT::v2i64,  2*10 }, // Scalarized.
 
     // It is not a good idea to vectorize division. We have to scalarize it and
