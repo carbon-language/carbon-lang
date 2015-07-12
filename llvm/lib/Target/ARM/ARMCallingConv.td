@@ -142,6 +142,9 @@ def CC_ARM_AAPCS : CallingConv<[
   // Handles byval parameters.
   CCIfByVal<CCPassByVal<4, 4>>,
 
+  // The 'nest' parameter, if any, is passed in R12.
+  CCIfNest<CCAssignToReg<[R12]>>,
+
   // Handle all vector types as either f64 or v2f64.
   CCIfType<[v1i64, v2i32, v4i16, v8i8, v2f32], CCBitConvertToType<f64>>,
   CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
