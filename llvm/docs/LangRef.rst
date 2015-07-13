@@ -3200,7 +3200,8 @@ MIPS:
   ``sc`` instruction on the given subtarget (details vary).
 - ``r``, ``d``,  ``y``: A 32 or 64-bit GPR register.
 - ``f``: A 32 or 64-bit FPU register (``F0-F31``), or a 128-bit MSA register
-  (``W0-W31``).
+  (``W0-W31``). In the case of MSA registers, it is recommended to use the ``w``
+  argument modifier for compatibility with GCC.
 - ``c``: A 32-bit or 64-bit GPR register suitable for indirect jump (always
   ``25``).
 - ``l``: The ``lo`` register, 32 or 64-bit.
@@ -3409,7 +3410,9 @@ MIPS:
   second word of a double-word memory operand. (On a big-endian system, ``D`` is
   equivalent to ``L``, and on little-endian system, ``D`` is equivalent to
   ``M``.)
-- ``w``: No effect.
+- ``w``: No effect. Provided for compatibility with GCC which requires this
+  modifier in order to print MSA registers (``W0-W31``) with the ``f``
+  constraint.
 
 NVPTX:
 
