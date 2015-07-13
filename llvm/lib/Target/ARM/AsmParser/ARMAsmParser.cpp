@@ -5486,13 +5486,22 @@ void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
   auto Op4Reg = Op4.getReg();
 
   // For most Thumb2 cases we just generate the 3 operand form and reduce
-  // it in processInstruction(), but for ADD involving PC the the 3 operand
-  // form won't accept PC so we do the transformation here.
+  // it in processInstruction(), but the 3 operand form of ADD (t2ADDrr)
+  // won't accept SP or PC so we do the transformation here taking care
+  // with immediate range in the 'add sp, sp #imm' case.
   auto &Op5 = static_cast<ARMOperand &>(*Operands[5]);
   if (isThumbTwo()) {
-    if (Mnemonic != "add" ||
-        !(Op3Reg == ARM::PC || Op4Reg == ARM::PC ||
-          (Op5.isReg() && Op5.getReg() == ARM::PC)))
+    if (Mnemonic != "add")
+      return;
+    bool TryTransform = Op3Reg == ARM::PC || Op4Reg == ARM::PC ||
+                        (Op5.isReg() && Op5.getReg() == ARM::PC);
+    if (!TryTransform) {
+      TryTransform = (Op3Reg == ARM::SP || Op4Reg == ARM::SP ||
+                      (Op5.isReg() && Op5.getReg() == ARM::SP)) &&
+                     !(Op3Reg == ARM::SP && Op4Reg == ARM::SP &&
+                       Op5.isImm() && !Op5.isImm0_508s4());
+    }
+    if (!TryTransform)
       return;
   } else if (!isThumbOne())
     return;

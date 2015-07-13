@@ -73,17 +73,32 @@
 // CHECK: add  pc, r2               @ encoding: [0x97,0x44]
     ADD      pc, r2, pc          // T2
 // CHECK: add  pc, r2               @ encoding: [0x97,0x44]
+    ADD      pc, pc, sp          // T2
+// CHECK: add   pc, sp              @ encoding: [0xef,0x44]
+    ADD      pc, sp, pc          // T2
+// CHECK: add   pc, sp, pc          @ encoding: [0xef,0x44]
 
 // ADD (SP plus immediate) A8.8.9
     ADD      sp, sp, #20         // T2
 // FIXME: ARMARM says 'add   sp, sp, #20'
-// CHECK: add   sp, #20         @ encoding: [0x05,0xb0]
+// CHECK: add   sp, #20             @ encoding: [0x05,0xb0]
+    ADD      sp, sp, #508        // T2
+// CHECK: add   sp, #508            @ encoding: [0x7f,0xb0]
+    ADD      sp, sp, #512        // T3
+// CHECK: add.w sp, sp, #512        @ encoding: [0x0d,0xf5,0x00,0x7d]
 
 // ADD (SP plus register) A8.8.10 (commutative)
     ADD      r9, sp, r9          // T1
 // CHECK: add   r9, sp, r9          @ encoding: [0xe9,0x44]
+    ADD      r9, r9, sp          // T1
+// FIXME: ARMARM says 'add   r9, sp, r9'
+// CHECK: add   r9, sp              @ encoding: [0xe9,0x44]
     ADD      sp, sp, r10         // T2
 // CHECK: add   sp, r10             @ encoding: [0xd5,0x44]
+    ADD      sp, r10, sp         // T2
+// CHECK: add   sp, r10             @ encoding: [0xd5,0x44]
+    ADD      sp, sp, pc          // T2
+// CHECK: add   sp, pc              @ encoding: [0xfd,0x44]
 
 // AND (commutative)
     ANDS     r0, r2, r1          // Must be wide - 3 distinct registers
