@@ -188,7 +188,7 @@ def _SLASH_EP : CLFlag<"EP">,
 def _SLASH_FA : CLFlag<"FA">,
   HelpText<"Output assembly code file during compilation">;
 def _SLASH_Fa : CLJoined<"Fa">,
-  HelpText<"Output assembly code to this file during compilation">,
+  HelpText<"Output assembly code to this file during compilation (with /FA)">,
   MetaVarName<"<file or directory>">;
 def _SLASH_fallback : CLCompileFlag<"fallback">,
   HelpText<"Fall back to cl.exe if clang-cl fails to compile">;
@@ -198,10 +198,10 @@ def _SLASH_Fe : CLJoined<"Fe">,
   HelpText<"Set output executable file or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
 def _SLASH_Fi : CLCompileJoined<"Fi">,
-  HelpText<"Set preprocess output file name">,
+  HelpText<"Set preprocess output file name (with /P)">,
   MetaVarName<"<file>">;
 def _SLASH_Fo : CLCompileJoined<"Fo">,
-  HelpText<"Set output object file, or directory (ends in / or \\)">,
+  HelpText<"Set output object file, or directory (ends in / or \\) (with /c)">,
   MetaVarName<"<file or directory>">;
 def _SLASH_LD : CLFlag<"LD">, HelpText<"Create DLL">;
 def _SLASH_LDd : CLFlag<"LDd">, HelpText<"Create debug DLL">;
