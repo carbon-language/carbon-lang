@@ -11,6 +11,7 @@
 #define lldb_Host_MainLoop_h_
 
 #ifdef _WIN32
+#include "lldb/Host/MainLoopBase.h"
 namespace lldb_private
 {
 typedef MainLoopBase MainLoop;
