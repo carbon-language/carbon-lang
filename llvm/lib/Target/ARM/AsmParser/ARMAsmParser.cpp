@@ -8215,8 +8215,16 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     // If the destination and first source operand are the same, and
     // there's no setting of the flags, use encoding T2 instead of T3.
     // Note that this is only for ADD, not SUB. This mirrors the system
-    // 'as' behaviour. Make sure the wide encoding wasn't explicit.
-    if (Inst.getOperand(0).getReg() != Inst.getOperand(1).getReg() ||
+    // 'as' behaviour.  Also take advantage of ADD being commutative.
+    // Make sure the wide encoding wasn't explicit.
+    bool Swap = false;
+    auto DestReg = Inst.getOperand(0).getReg();
+    bool Transform = DestReg == Inst.getOperand(1).getReg();
+    if (!Transform && DestReg == Inst.getOperand(2).getReg()) {
+      Transform = true;
+      Swap = true;
+    }
+    if (!Transform ||
         Inst.getOperand(5).getReg() != 0 ||
         (static_cast<ARMOperand &>(*Operands[3]).isToken() &&
          static_cast<ARMOperand &>(*Operands[3]).getToken() == ".w"))
@@ -8225,7 +8233,7 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     TmpInst.setOpcode(ARM::tADDhirr);
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(0));
-    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(Swap ? 1 : 2));
     TmpInst.addOperand(Inst.getOperand(3));
     TmpInst.addOperand(Inst.getOperand(4));
     Inst = TmpInst;

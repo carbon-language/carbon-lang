@@ -1,4 +1,5 @@
 @ RUN: llvm-mc -triple thumbv6m -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple thumbv7m -show-encoding < %s | FileCheck %s
 
     adds    r1, r1, #3
 @ CHECK: adds   r1, r1, #3          @ encoding: [0xc9,0x1c]

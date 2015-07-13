@@ -44,6 +44,8 @@
 // CHECK: adds  r0, r2, r1          @ encoding: [0x50,0x18]
     ADDS     r2, r2, r1          // ADDS has T1 narrow 3 operand
 // CHECK: adds  r2, r2, r1          @ encoding: [0x52,0x18]
+    ADD      r3, r1, r3          // T2
+// CHECK: add  r3, r1               @ encoding: [0x0b,0x44]
 
     IT EQ
 // CHECK: it eq                     @ encoding: [0x08,0xbf]
