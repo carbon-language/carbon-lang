@@ -418,12 +418,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  // Handle /delayload
-  for (auto *Arg : Args.filtered(OPT_delayload)) {
-    Config->DelayLoads.insert(StringRef(Arg->getValue()).lower());
-    addUndefined("__delayLoadHelper2");
-  }
-
   // Handle /failifmismatch
   for (auto *Arg : Args.filtered(OPT_failifmismatch))
     if (checkFailIfMismatch(Arg->getValue()))
@@ -596,6 +590,16 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     // parseModuleDefs mutates Config object.
     if (parseModuleDefs(MBOrErr.get(), &Alloc))
       return false;
+  }
+
+  // Handle /delayload
+  for (auto *Arg : Args.filtered(OPT_delayload)) {
+    Config->DelayLoads.insert(StringRef(Arg->getValue()).lower());
+    if (Config->is64()) {
+      Config->DelayLoadHelper = addUndefined("__delayLoadHelper2");
+    } else {
+      Config->DelayLoadHelper = addUndefined("___delayLoadHelper2@8");
+    }
   }
 
   Symtab.addAbsolute(mangle("__ImageBase"), Config->ImageBase);

@@ -70,6 +70,7 @@ struct Configuration {
   StringRef Implib;
   std::vector<Export> Exports;
   std::set<std::string> DelayLoads;
+  Undefined *DelayLoadHelper = nullptr;
 
   // Used for /opt:icf
   bool ICF = false;

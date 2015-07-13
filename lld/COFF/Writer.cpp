@@ -248,8 +248,7 @@ void Writer::createImportTables() {
       Sec->addChunk(C);
   }
   if (!DelayIdata.empty()) {
-    Symbol *Sym = Symtab->find("__delayLoadHelper2");
-    Defined *Helper = cast<Defined>(Sym->Body);
+    Defined *Helper = cast<Defined>(Config->DelayLoadHelper->repl());
     DelayIdata.create(Helper);
     OutputSection *Sec = createSection(".didat");
     for (Chunk *C : DelayIdata.getChunks())
