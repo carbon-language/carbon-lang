@@ -503,7 +503,8 @@ void MCAsmStreamer::EndCOFFSymbolDef() {
 }
 
 void MCAsmStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
-  OS << "\t.safeseh\t" << *Symbol;
+  OS << "\t.safeseh\t";
+  Symbol->print(OS, MAI);
   EmitEOL();
 }
 
