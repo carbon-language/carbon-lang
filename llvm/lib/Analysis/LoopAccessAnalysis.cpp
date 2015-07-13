@@ -240,19 +240,14 @@ void LoopAccessInfo::RuntimePointerCheck::groupChecks(
     SmallVector<CheckingPtrGroup, 2> Groups;
     auto LeaderI = DepCands.findValue(DepCands.getLeaderValue(Access));
 
-    SmallVector<unsigned, 2> MemberIndices;
-
-    // Get all indeces of the members of this equivalence class and sort them.
-    // This will allow us to process all accesses in the order in which they
-    // were added to the RuntimePointerCheck.
+    // Because DepCands is constructed by visiting accesses in the order in
+    // which they appear in alias sets (which is deterministic) and the
+    // iteration order within an equivalence class member is only dependent on
+    // the order in which unions and insertions are performed on the
+    // equivalence class, the iteration order is deterministic.
     for (auto MI = DepCands.member_begin(LeaderI), ME = DepCands.member_end();
          MI != ME; ++MI) {
       unsigned Pointer = PositionMap[MI->getPointer()];
-      MemberIndices.push_back(Pointer);
-    }
-    std::sort(MemberIndices.begin(), MemberIndices.end());
-
-    for (unsigned Pointer : MemberIndices) {
       bool Merged = false;
       // Mark this pointer as seen.
       Seen.insert(Pointer);
