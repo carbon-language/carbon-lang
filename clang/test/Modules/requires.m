@@ -6,3 +6,7 @@
 @import DependsOnModule.NotObjC; // expected-error{{module 'DependsOnModule.NotObjC' is incompatible with feature 'objc'}}
 @import DependsOnModule.CustomReq1; // OK
 @import DependsOnModule.CustomReq2; // expected-error{{module 'DependsOnModule.CustomReq2' requires feature 'custom_req2'}}
+
+@import RequiresWithMissingHeader; // OK
+@import RequiresWithMissingHeader.HeaderBefore; // expected-error{{module 'RequiresWithMissingHeader.HeaderBefore' requires feature 'missing'}}
+@import RequiresWithMissingHeader.HeaderAfter; // expected-error{{module 'RequiresWithMissingHeader.HeaderAfter' requires feature 'missing'}}
