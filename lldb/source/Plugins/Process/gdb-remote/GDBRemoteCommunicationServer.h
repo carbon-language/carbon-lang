@@ -54,7 +54,7 @@ public:
     // After connecting, do a little handshake with the client to make sure
     // we are at least communicating
     bool
-    HandshakeWithClient (Error *error_ptr);
+    HandshakeWithClient ();
 
 protected:
     std::map<StringExtractorGDBRemote::ServerPacketType, PacketHandler> m_packet_handlers;

@@ -109,15 +109,20 @@ signal_handler(int signo)
     case SIGPIPE:
         g_sigpipe_received = 1;
         break;
-    case SIGHUP:
-        ++g_sighup_received_count;
-
-        // For now, swallow SIGHUP.
-        if (log)
-            log->Printf ("lldb-server:%s swallowing SIGHUP (receive count=%d)", __FUNCTION__, g_sighup_received_count);
-        signal (SIGHUP, signal_handler);
-        break;
     }
+}
+
+static void
+sighup_handler(MainLoopBase &mainloop)
+{
+    ++g_sighup_received_count;
+
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
+    if (log)
+        log->Printf ("lldb-server:%s swallowing SIGHUP (receive count=%d)", __FUNCTION__, g_sighup_received_count);
+
+    if (g_sighup_received_count >= 2)
+        mainloop.RequestTermination();
 }
 #endif // #ifndef _WIN32
 
@@ -338,7 +343,7 @@ writePortToPipe(int unnamed_pipe_fd, const uint16_t port)
 }
 
 void
-ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
+ConnectToRemote(MainLoop &mainloop, GDBRemoteCommunicationServerLLGS &gdb_server,
         bool reverse_connect, const char *const host_and_port,
         const char *const progname, const char *const subcommand,
         const char *const named_pipe_path, int unnamed_pipe_fd)
@@ -372,6 +377,8 @@ ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
             exit (1);
         }
 
+        std::unique_ptr<ConnectionFileDescriptor> connection_up;
+
         if (reverse_connect)
         {
             // llgs will connect to the gdb-remote client.
@@ -388,8 +395,7 @@ ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
             snprintf(connection_url, sizeof(connection_url), "connect://%s", final_host_and_port.c_str ());
 
             // Create the connection.
-            std::unique_ptr<ConnectionFileDescriptor> connection_up (new ConnectionFileDescriptor ());
-            connection_up.reset (new ConnectionFileDescriptor ());
+            connection_up.reset(new ConnectionFileDescriptor);
             auto connection_result = connection_up->Connect (connection_url, &error);
             if (connection_result != eConnectionStatusSuccess)
             {
@@ -401,10 +407,6 @@ ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
                 fprintf (stderr, "error: failed to connect to client at '%s': %s", connection_url, error.AsCString ());
                 exit (-1);
             }
-
-            // We're connected.
-            printf ("Connection established.\n");
-            gdb_server.SetConnection (connection_up.release());
         }
         else
         {
@@ -461,10 +463,7 @@ ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
 
             // Ensure we connected.
             if (s_listen_connection_up)
-            {
-                printf ("Connection established '%s'\n", s_listen_connection_up->GetURI().c_str());
-                gdb_server.SetConnection (s_listen_connection_up.release());
-            }
+                connection_up = std::move(s_listen_connection_up);
             else
             {
                 fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
@@ -472,46 +471,13 @@ ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
                 exit (1);
             }
         }
-    }
-
-    if (gdb_server.IsConnected())
-    {
-        // After we connected, we need to get an initial ack from...
-        if (gdb_server.HandshakeWithClient(&error))
+        error = gdb_server.InitializeConnection (std::move(connection_up));
+        if (error.Fail())
         {
-            // We'll use a half a second timeout interval so that an exit conditions can
-            // be checked that often.
-            const uint32_t TIMEOUT_USEC = 500000;
-
-            bool interrupt = false;
-            bool done = false;
-            while (!interrupt && !done && (g_sighup_received_count < 2))
-            {
-                const GDBRemoteCommunication::PacketResult result = gdb_server.GetPacketAndSendResponse (TIMEOUT_USEC, error, interrupt, done);
-                if ((result != GDBRemoteCommunication::PacketResult::Success) &&
-                    (result != GDBRemoteCommunication::PacketResult::ErrorReplyTimeout))
-                {
-                    // We're bailing out - we only support successful handling and timeouts.
-                    fprintf(stderr, "leaving packet loop due to PacketResult %d\n", result);
-                    break;
-                }
-            }
-
-            if (error.Fail())
-            {
-                fprintf(stderr, "error: %s\n", error.AsCString());
-            }
+            fprintf(stderr, "Failed to initialize connection: %s\n", error.AsCString());
+            exit(-1);
         }
-        else
-        {
-            fprintf(stderr, "error: handshake with client failed\n");
-        }
-    }
-    else
-    {
-        fprintf (stderr, "no connection information provided, unable to run\n");
-        display_usage (progname, subcommand);
-        exit (1);
+        printf ("Connection established.\n");
     }
 }
 
@@ -521,10 +487,12 @@ ConnectToRemote(GDBRemoteCommunicationServerLLGS &gdb_server,
 int
 main_gdbserver (int argc, char *argv[])
 {
+    Error error;
+    MainLoop mainloop;
 #ifndef _WIN32
     // Setup signal handlers first thing.
     signal (SIGPIPE, signal_handler);
-    signal (SIGHUP, signal_handler);
+    MainLoop::SignalHandleUP sighup_handle = mainloop.RegisterSignal(SIGHUP, sighup_handler, error);
 #endif
 #ifdef __linux__
     // Block delivery of SIGCHLD on linux. NativeProcessLinux will read it using signalfd.
@@ -539,7 +507,6 @@ main_gdbserver (int argc, char *argv[])
     argc--;
     argv++;
     int long_option_index = 0;
-    Error error;
     int ch;
     std::string platform_name;
     std::string attach_target;
@@ -670,7 +637,7 @@ main_gdbserver (int argc, char *argv[])
     // Setup the platform that GDBRemoteCommunicationServerLLGS will use.
     lldb::PlatformSP platform_sp = setup_platform (platform_name);
 
-    GDBRemoteCommunicationServerLLGS gdb_server (platform_sp);
+    GDBRemoteCommunicationServerLLGS gdb_server (platform_sp, mainloop);
 
     const char *const host_and_port = argv[0];
     argc -= 1;
@@ -688,10 +655,19 @@ main_gdbserver (int argc, char *argv[])
     // Print version info.
     printf("%s-%s", LLGS_PROGRAM_NAME, LLGS_VERSION_STR);
 
-    ConnectToRemote(gdb_server, reverse_connect,
+    ConnectToRemote(mainloop, gdb_server, reverse_connect,
                     host_and_port, progname, subcommand,
                     named_pipe_path.c_str(), unnamed_pipe_fd);
 
+
+    if (! gdb_server.IsConnected())
+    {
+        fprintf (stderr, "no connection information provided, unable to run\n");
+        display_usage (progname, subcommand);
+        return 1;
+    }
+
+    mainloop.Run();
     fprintf(stderr, "lldb-server exiting...\n");
 
     return 0;

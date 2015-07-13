@@ -75,10 +75,11 @@ namespace
 // GDBRemoteCommunicationServerLLGS constructor
 //----------------------------------------------------------------------
 GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
-        const lldb::PlatformSP& platform_sp) :
+        const lldb::PlatformSP& platform_sp,
+        MainLoop &mainloop) :
     GDBRemoteCommunicationServerCommon ("gdb-remote.server", "gdb-remote.server.rx_packet"),
     m_platform_sp (platform_sp),
-    m_async_thread (LLDB_INVALID_HOST_THREAD),
+    m_mainloop (mainloop),
     m_current_tid (LLDB_INVALID_THREAD_ID),
     m_continue_tid (LLDB_INVALID_THREAD_ID),
     m_debugged_process_mutex (Mutex::eMutexTypeRecursive),
@@ -88,7 +89,8 @@ GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
     m_active_auxv_buffer_sp (),
     m_saved_registers_mutex (),
     m_saved_registers_map (),
-    m_next_saved_registers_id (1)
+    m_next_saved_registers_id (1),
+    m_handshake_completed (false)
 {
     assert(platform_sp);
     RegisterPacketHandlers();
@@ -780,6 +782,58 @@ void
 GDBRemoteCommunicationServerLLGS::DidExec (NativeProcessProtocol *process)
 {
     ClearProcessSpecificData ();
+}
+
+void
+GDBRemoteCommunicationServerLLGS::DataAvailableCallback ()
+{
+    Log *log (GetLogIfAnyCategoriesSet(GDBR_LOG_COMM));
+
+    if (! m_handshake_completed)
+    {
+        if (! HandshakeWithClient())
+        {
+            if(log)
+                log->Printf("GDBRemoteCommunicationServerLLGS::%s handshake with client failed, exiting",
+                        __FUNCTION__);
+            m_read_handle_up.reset();
+            m_mainloop.RequestTermination();
+            return;
+        }
+        m_handshake_completed = true;
+    }
+
+    bool interrupt = false;
+    bool done = false;
+    Error error;
+    while (true)
+    {
+        const PacketResult result = GetPacketAndSendResponse (0, error, interrupt, done);
+        if (result == PacketResult::ErrorReplyTimeout)
+            break; // No more packets in the queue
+
+        if ((result != PacketResult::Success))
+        {
+            if(log)
+                log->Printf("GDBRemoteCommunicationServerLLGS::%s processing a packet failed: %s",
+                        __FUNCTION__, error.AsCString());
+            m_read_handle_up.reset();
+            m_mainloop.RequestTermination();
+            break;
+        }
+    }
+}
+
+Error
+GDBRemoteCommunicationServerLLGS::InitializeConnection (std::unique_ptr<Connection> &&connection)
+{
+    IOObjectSP read_object_sp = connection->GetReadObject();
+    GDBRemoteCommunicationServer::SetConnection(connection.release());
+
+    Error error;
+    m_read_handle_up = m_mainloop.RegisterReadObject(read_object_sp,
+            [this] (MainLoopBase &) { DataAvailableCallback(); }, error);
+    return error;
 }
 
 GDBRemoteCommunication::PacketResult

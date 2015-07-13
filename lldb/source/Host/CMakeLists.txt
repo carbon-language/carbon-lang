@@ -76,6 +76,7 @@ else()
     posix/HostProcessPosix.cpp
     posix/HostThreadPosix.cpp
     posix/LockFilePosix.cpp
+    posix/MainLoopPosix.cpp
     posix/PipePosix.cpp
     )
 

@@ -187,6 +187,20 @@ public:
     virtual bool
     InterruptRead() = 0;
 
+    //------------------------------------------------------------------
+    /// Returns the underlying IOObject used by the Connection.
+    ///
+    /// The IOObject can be used to wait for data to become available
+    /// on the connection. If the Connection does not use IOObjects (and
+    /// hence does not support waiting) this function should return a
+    /// null pointer.
+    ///
+    /// @return
+    ///     The underlying IOObject used for reading.
+    //------------------------------------------------------------------
+    virtual lldb::IOObjectSP
+    GetReadObject() { return lldb::IOObjectSP(); }
+
 private:
     //------------------------------------------------------------------
     // For Connection only

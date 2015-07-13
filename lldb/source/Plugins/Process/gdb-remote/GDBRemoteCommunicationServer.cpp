@@ -132,7 +132,7 @@ GDBRemoteCommunicationServer::SendOKResponse ()
 }
 
 bool
-GDBRemoteCommunicationServer::HandshakeWithClient(Error *error_ptr)
+GDBRemoteCommunicationServer::HandshakeWithClient()
 {
     return GetAck() == PacketResult::Success;
 }

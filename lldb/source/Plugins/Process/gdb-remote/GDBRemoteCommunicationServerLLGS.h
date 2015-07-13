@@ -19,6 +19,7 @@
 #include "lldb/Core/Communication.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/MainLoop.h"
 
 // Project includes
 #include "GDBRemoteCommunicationServerCommon.h"
@@ -26,6 +27,7 @@
 class StringExtractorGDBRemote;
 
 namespace lldb_private {
+
 namespace process_gdb_remote {
 
 class ProcessGDBRemote;
@@ -38,7 +40,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    GDBRemoteCommunicationServerLLGS(const lldb::PlatformSP& platform_sp);
+    GDBRemoteCommunicationServerLLGS(const lldb::PlatformSP& platform_sp, MainLoop &mainloop);
 
     virtual
     ~GDBRemoteCommunicationServerLLGS();
@@ -111,9 +113,13 @@ public:
     void
     DidExec (NativeProcessProtocol *process) override;
 
+    Error
+    InitializeConnection (std::unique_ptr<Connection> &&connection);
+
 protected:
     lldb::PlatformSP m_platform_sp;
-    lldb::thread_t m_async_thread;
+    MainLoop &m_mainloop;
+    MainLoop::ReadHandleUP m_read_handle_up;
     lldb::tid_t m_current_tid;
     lldb::tid_t m_continue_tid;
     Mutex m_debugged_process_mutex;
@@ -124,6 +130,7 @@ protected:
     Mutex m_saved_registers_mutex;
     std::unordered_map<uint32_t, lldb::DataBufferSP> m_saved_registers_map;
     uint32_t m_next_saved_registers_id;
+    bool m_handshake_completed : 1;
 
     PacketResult
     SendONotification (const char *buffer, uint32_t len);
@@ -294,6 +301,9 @@ private:
 
     void
     RegisterPacketHandlers ();
+
+    void
+    DataAvailableCallback ();
 
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationServerLLGS only

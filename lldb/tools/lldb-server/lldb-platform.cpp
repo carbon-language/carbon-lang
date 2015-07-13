@@ -362,7 +362,7 @@ main_platform (int argc, char *argv[])
         if (platform.IsConnected())
         {
             // After we connected, we need to get an initial ack from...
-            if (platform.HandshakeWithClient(&error))
+            if (platform.HandshakeWithClient())
             {
                 bool interrupt = false;
                 bool done = false;
