@@ -9,9 +9,6 @@ target triple = "arm64-apple-ios8.0.0"
 
 ; CHECK: %tobool.5 = icmp ne i32 %num, 0
 ; CHECK: store i1 %tobool.5, i1* %ptr
-; CHECK: %0 = call i32 @llvm.ctpop.i32(i32 %num)
-; CHECK: %1 = icmp ne i32 %0, 0
-; CHECK: br i1 %1, label %for.body.lr.ph, label %for.end
 
 define internal fastcc i32 @num_bits_set(i32 %num, i1* %ptr) #1 {
 entry:
