@@ -14,6 +14,8 @@
 
 #include "InstCombineInternal.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
@@ -58,56 +60,6 @@ static bool CheapToScalarize(Value *V, bool isConstant) {
       return true;
 
   return false;
-}
-
-/// FindScalarElement - Given a vector and an element number, see if the scalar
-/// value is already around as a register, for example if it were inserted then
-/// extracted from the vector.
-static Value *FindScalarElement(Value *V, unsigned EltNo) {
-  assert(V->getType()->isVectorTy() && "Not looking at a vector?");
-  VectorType *VTy = cast<VectorType>(V->getType());
-  unsigned Width = VTy->getNumElements();
-  if (EltNo >= Width)  // Out of range access.
-    return UndefValue::get(VTy->getElementType());
-
-  if (Constant *C = dyn_cast<Constant>(V))
-    return C->getAggregateElement(EltNo);
-
-  if (InsertElementInst *III = dyn_cast<InsertElementInst>(V)) {
-    // If this is an insert to a variable element, we don't know what it is.
-    if (!isa<ConstantInt>(III->getOperand(2)))
-      return nullptr;
-    unsigned IIElt = cast<ConstantInt>(III->getOperand(2))->getZExtValue();
-
-    // If this is an insert to the element we are looking for, return the
-    // inserted value.
-    if (EltNo == IIElt)
-      return III->getOperand(1);
-
-    // Otherwise, the insertelement doesn't modify the value, recurse on its
-    // vector input.
-    return FindScalarElement(III->getOperand(0), EltNo);
-  }
-
-  if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(V)) {
-    unsigned LHSWidth = SVI->getOperand(0)->getType()->getVectorNumElements();
-    int InEl = SVI->getMaskValue(EltNo);
-    if (InEl < 0)
-      return UndefValue::get(VTy->getElementType());
-    if (InEl < (int)LHSWidth)
-      return FindScalarElement(SVI->getOperand(0), InEl);
-    return FindScalarElement(SVI->getOperand(1), InEl - LHSWidth);
-  }
-
-  // Extract a value from a vector add operation with a constant zero.
-  Value *Val = nullptr; Constant *Con = nullptr;
-  if (match(V, m_Add(m_Value(Val), m_Constant(Con)))) {
-    if (Con->getAggregateElement(EltNo)->isNullValue())
-      return FindScalarElement(Val, EltNo);
-  }
-
-  // Otherwise, we don't know.
-  return nullptr;
 }
 
 // If we have a PHI node with a vector type that has only 2 uses: feed
@@ -178,6 +130,10 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
 }
 
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
+  if (Value *V = SimplifyExtractElementInst(
+          EI.getVectorOperand(), EI.getIndexOperand(), DL, TLI, DT, AC))
+    return ReplaceInstUsesWith(EI, V);
+
   // If vector val is constant with all elements the same, replace EI with
   // that element.  We handle a known element # below.
   if (Constant *C = dyn_cast<Constant>(EI.getOperand(0)))
@@ -190,10 +146,8 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     unsigned IndexVal = IdxC->getZExtValue();
     unsigned VectorWidth = EI.getVectorOperandType()->getNumElements();
 
-    // If this is extracting an invalid index, turn this into undef, to avoid
-    // crashing the code below.
-    if (IndexVal >= VectorWidth)
-      return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
+    // InstSimplify handles cases where the index is invalid.
+    assert(IndexVal < VectorWidth);
 
     // This instruction only demands the single element from the input vector.
     // If the input vector has a single use, simplify it based on this use
@@ -209,16 +163,13 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
       }
     }
 
-    if (Value *Elt = FindScalarElement(EI.getOperand(0), IndexVal))
-      return ReplaceInstUsesWith(EI, Elt);
-
     // If the this extractelement is directly using a bitcast from a vector of
     // the same number of elements, see if we can find the source element from
     // it.  In this case, we will end up needing to bitcast the scalars.
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(EI.getOperand(0))) {
       if (VectorType *VT = dyn_cast<VectorType>(BCI->getOperand(0)->getType()))
         if (VT->getNumElements() == VectorWidth)
-          if (Value *Elt = FindScalarElement(BCI->getOperand(0), IndexVal))
+          if (Value *Elt = findScalarElement(BCI->getOperand(0), IndexVal))
             return new BitCastInst(Elt, EI.getType());
     }
 

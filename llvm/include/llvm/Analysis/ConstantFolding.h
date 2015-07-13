@@ -78,6 +78,11 @@ Constant *ConstantFoldInsertValueInstruction(Constant *Agg, Constant *Val,
 Constant *ConstantFoldExtractValueInstruction(Constant *Agg,
                                               ArrayRef<unsigned> Idxs);
 
+/// \brief Attempt to constant fold an extractelement instruction with the
+/// specified operands and indices.  The constant result is returned if
+/// successful; if not, null is returned.
+Constant *ConstantFoldExtractElementInstruction(Constant *Val, Constant *Idx);
+
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.

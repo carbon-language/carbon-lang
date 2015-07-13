@@ -24,6 +24,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
@@ -3555,6 +3556,47 @@ Value *llvm::SimplifyExtractValueInst(Value *Agg, ArrayRef<unsigned> Idxs,
                                     RecursionLimit);
 }
 
+/// SimplifyExtractElementInst - Given operands for an ExtractElementInst, see if we
+/// can fold the result.  If not, this returns null.
+static Value *SimplifyExtractElementInst(Value *Vec, Value *Idx, const Query &,
+                                         unsigned) {
+  if (auto *CVec = dyn_cast<Constant>(Vec)) {
+    if (auto *CIdx = dyn_cast<Constant>(Idx))
+      return ConstantFoldExtractElementInstruction(CVec, CIdx);
+
+    // The index is not relevant if our vector is a splat.
+    if (auto *Splat = CVec->getSplatValue())
+      return Splat;
+
+    if (isa<UndefValue>(Vec))
+      return UndefValue::get(Vec->getType()->getVectorElementType());
+  }
+
+  // If extracting a specified index from the vector, see if we can recursively
+  // find a previously computed scalar that was inserted into the vector.
+  if (auto *IdxC = dyn_cast<ConstantInt>(Idx)) {
+    unsigned IndexVal = IdxC->getZExtValue();
+    unsigned VectorWidth = Vec->getType()->getVectorNumElements();
+
+    // If this is extracting an invalid index, turn this into undef, to avoid
+    // crashing the code below.
+    if (IndexVal >= VectorWidth)
+      return UndefValue::get(Vec->getType()->getVectorElementType());
+
+    if (Value *Elt = findScalarElement(Vec, IndexVal))
+      return Elt;
+  }
+
+  return nullptr;
+}
+
+Value *llvm::SimplifyExtractElementInst(
+    Value *Vec, Value *Idx, const DataLayout &DL, const TargetLibraryInfo *TLI,
+    const DominatorTree *DT, AssumptionCache *AC, const Instruction *CxtI) {
+  return ::SimplifyExtractElementInst(Vec, Idx, Query(DL, TLI, DT, AC, CxtI),
+                                      RecursionLimit);
+}
+
 /// SimplifyPHINode - See if we can fold the given phi.  If not, returns null.
 static Value *SimplifyPHINode(PHINode *PN, const Query &Q) {
   // If all of the PHI's incoming values are the same then replace the PHI node
@@ -3968,6 +4010,12 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout &DL,
     auto *EVI = cast<ExtractValueInst>(I);
     Result = SimplifyExtractValueInst(EVI->getAggregateOperand(),
                                       EVI->getIndices(), DL, TLI, DT, AC, I);
+    break;
+  }
+  case Instruction::ExtractElement: {
+    auto *EEI = cast<ExtractElementInst>(I);
+    Result = SimplifyExtractElementInst(
+        EEI->getVectorOperand(), EEI->getIndexOperand(), DL, TLI, DT, AC, I);
     break;
   }
   case Instruction::PHI:

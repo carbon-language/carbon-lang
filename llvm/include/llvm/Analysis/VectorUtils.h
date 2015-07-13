@@ -74,6 +74,11 @@ Value *getUniqueCastUse(Value *Ptr, Loop *Lp, Type *Ty);
 /// strides "a[i*stride]". Returns the symbolic stride, or null otherwise.
 Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE, Loop *Lp);
 
+/// \brief Given a vector and an element number, see if the scalar value is
+/// already around as a register, for example if it were inserted then extracted
+/// from the vector.
+Value *findScalarElement(Value *V, unsigned EltNo);
+
 } // llvm namespace
 
 #endif
