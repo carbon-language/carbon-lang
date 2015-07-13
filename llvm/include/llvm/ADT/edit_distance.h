@@ -50,50 +50,51 @@ unsigned ComputeEditDistance(ArrayRef<T> FromArray, ArrayRef<T> ToArray,
   //   http://en.wikipedia.org/wiki/Levenshtein_distance
   //
   // Although the algorithm is typically described using an m x n
-  // array, only two rows are used at a time, so this implementation
-  // just keeps two separate vectors for those two rows.
+  // array, only one row plus one element are used at a time, so this
+  // implementation just keeps one vector for the row.  To update one entry,
+  // only the entries to the left, top, and top-left are needed.  The left
+  // entry is in Row[x-1], the top entry is what's in Row[x] from the last
+  // iteration, and the top-left entry is stored in Previous.
   typename ArrayRef<T>::size_type m = FromArray.size();
   typename ArrayRef<T>::size_type n = ToArray.size();
 
   const unsigned SmallBufferSize = 64;
   unsigned SmallBuffer[SmallBufferSize];
   std::unique_ptr<unsigned[]> Allocated;
-  unsigned *Previous = SmallBuffer;
-  if (2*(n + 1) > SmallBufferSize) {
-    Previous = new unsigned [2*(n+1)];
-    Allocated.reset(Previous);
+  unsigned *Row = SmallBuffer;
+  if (n + 1 > SmallBufferSize) {
+    Row = new unsigned[n + 1];
+    Allocated.reset(Row);
   }
-  unsigned *Current = Previous + (n + 1);
 
-  for (unsigned i = 0; i <= n; ++i)
-    Previous[i] = i;
+  for (unsigned i = 1; i <= n; ++i)
+    Row[i] = i;
 
   for (typename ArrayRef<T>::size_type y = 1; y <= m; ++y) {
-    Current[0] = y;
-    unsigned BestThisRow = Current[0];
+    Row[0] = y;
+    unsigned BestThisRow = Row[0];
 
+    unsigned Previous = y - 1;
     for (typename ArrayRef<T>::size_type x = 1; x <= n; ++x) {
+      int OldRow = Row[x];
       if (AllowReplacements) {
-        Current[x] = std::min(
-            Previous[x-1] + (FromArray[y-1] == ToArray[x-1] ? 0u : 1u),
-            std::min(Current[x-1], Previous[x])+1);
+        Row[x] = std::min(
+            Previous + (FromArray[y-1] == ToArray[x-1] ? 0u : 1u),
+            std::min(Row[x-1], Row[x])+1);
       }
       else {
-        if (FromArray[y-1] == ToArray[x-1]) Current[x] = Previous[x-1];
-        else Current[x] = std::min(Current[x-1], Previous[x]) + 1;
+        if (FromArray[y-1] == ToArray[x-1]) Row[x] = Previous;
+        else Row[x] = std::min(Row[x-1], Row[x]) + 1;
       }
-      BestThisRow = std::min(BestThisRow, Current[x]);
+      Previous = OldRow;
+      BestThisRow = std::min(BestThisRow, Row[x]);
     }
 
     if (MaxEditDistance && BestThisRow > MaxEditDistance)
       return MaxEditDistance + 1;
-
-    unsigned *tmp = Current;
-    Current = Previous;
-    Previous = tmp;
   }
 
-  unsigned Result = Previous[n];
+  unsigned Result = Row[n];
   return Result;
 }
 
