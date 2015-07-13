@@ -1294,8 +1294,8 @@ public:
   void EmitMustTailThunk(const CXXMethodDecl *MD, llvm::Value *AdjustedThisPtr,
                          llvm::Value *Callee);
 
-  /// GenerateThunk - Generate a thunk for the given method.
-  void GenerateThunk(llvm::Function *Fn, const CGFunctionInfo &FnInfo,
+  /// Generate a thunk for the given method.
+  void generateThunk(llvm::Function *Fn, const CGFunctionInfo &FnInfo,
                      GlobalDecl GD, const ThunkInfo &Thunk);
 
   llvm::Function *GenerateVarArgsThunk(llvm::Function *Fn,
