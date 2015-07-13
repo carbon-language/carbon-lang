@@ -161,30 +161,6 @@ std::string SymbolBody::getDebugName() {
   return N;
 }
 
-uint64_t Defined::getRVA() {
-  switch (kind()) {
-  case DefinedAbsoluteKind:
-    return cast<DefinedAbsolute>(this)->getRVA();
-  case DefinedImportDataKind:
-    return cast<DefinedImportData>(this)->getRVA();
-  case DefinedImportThunkKind:
-    return cast<DefinedImportThunk>(this)->getRVA();
-  case DefinedLocalImportKind:
-    return cast<DefinedLocalImport>(this)->getRVA();
-  case DefinedCommonKind:
-    return cast<DefinedCommon>(this)->getRVA();
-  case DefinedRegularKind:
-    return cast<DefinedRegular>(this)->getRVA();
-
-  case DefinedBitcodeKind:
-    llvm_unreachable("There is no address for a bitcode symbol.");
-  case LazyKind:
-  case UndefinedKind:
-    llvm_unreachable("Cannot get the address for an undefined symbol.");
-  }
-  llvm_unreachable("unknown symbol kind");
-}
-
 uint64_t Defined::getFileOff() {
   switch (kind()) {
   case DefinedImportDataKind:
