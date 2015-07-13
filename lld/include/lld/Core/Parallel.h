@@ -104,6 +104,9 @@ private:
   std::condition_variable _cond;
 };
 
+// Classes in this namespace are implementation details of this header.
+namespace internal {
+
 /// \brief An abstract class that takes closures and runs them asynchronously.
 class Executor {
 public:
@@ -111,6 +114,45 @@ public:
   virtual void add(std::function<void()> func) = 0;
 };
 
+#if !defined(LLVM_ENABLE_THREADS) || LLVM_ENABLE_THREADS == 0
+class SyncExecutor : public Executor {
+public:
+  virtual void add(std::function<void()> func) {
+    func();
+  }
+};
+
+inline Executor *getDefaultExecutor() {
+  static SyncExecutor exec;
+  return &exec;
+}
+#elif defined(_MSC_VER)
+/// \brief An Executor that runs tasks via ConcRT.
+class ConcRTExecutor : public Executor {
+  struct Taskish {
+    Taskish(std::function<void()> task) : _task(task) {}
+
+    std::function<void()> _task;
+
+    static void run(void *p) {
+      Taskish *self = static_cast<Taskish *>(p);
+      self->_task();
+      concurrency::Free(self);
+    }
+  };
+
+public:
+  virtual void add(std::function<void()> func) {
+    Concurrency::CurrentScheduler::ScheduleTask(Taskish::run,
+        new (concurrency::Alloc(sizeof(Taskish))) Taskish(func));
+  }
+};
+
+inline Executor *getDefaultExecutor() {
+  static ConcRTExecutor exec;
+  return &exec;
+}
+#else
 /// \brief An implementation of an Executor that runs closures on a thread pool
 ///   in filo order.
 class ThreadPoolExecutor : public Executor {
@@ -169,38 +211,13 @@ private:
   Latch _done;
 };
 
-#ifdef _MSC_VER
-/// \brief An Executor that runs tasks via ConcRT.
-class ConcRTExecutor : public Executor {
-  struct Taskish {
-    Taskish(std::function<void()> task) : _task(task) {}
-
-    std::function<void()> _task;
-
-    static void run(void *p) {
-      Taskish *self = static_cast<Taskish *>(p);
-      self->_task();
-      concurrency::Free(self);
-    }
-  };
-
-public:
-  virtual void add(std::function<void()> func) {
-    Concurrency::CurrentScheduler::ScheduleTask(Taskish::run,
-        new (concurrency::Alloc(sizeof(Taskish))) Taskish(func));
-  }
-};
-
-inline Executor *getDefaultExecutor() {
-  static ConcRTExecutor exec;
-  return &exec;
-}
-#else
 inline Executor *getDefaultExecutor() {
   static ThreadPoolExecutor exec;
   return &exec;
 }
 #endif
+
+}  // namespace internal
 
 /// \brief Allows launching a number of tasks and waiting for them to finish
 ///   either explicitly via sync() or implicitly on destruction.
@@ -210,7 +227,7 @@ class TaskGroup {
 public:
   void spawn(std::function<void()> f) {
     _latch.inc();
-    getDefaultExecutor()->add([&, f] {
+    internal::getDefaultExecutor()->add([&, f] {
       f();
       _latch.dec();
     });
@@ -219,7 +236,15 @@ public:
   void sync() const { _latch.sync(); }
 };
 
-#ifdef _MSC_VER
+#if !defined(LLVM_ENABLE_THREADS) || LLVM_ENABLE_THREADS == 0
+template <class RandomAccessIterator, class Comp>
+void parallel_sort(
+    RandomAccessIterator start, RandomAccessIterator end,
+    const Comp &comp = std::less<
+        typename std::iterator_traits<RandomAccessIterator>::value_type>()) {
+  std::sort(start, end, comp);
+}
+#elif defined(_MSC_VER)
 // Use ppl parallel_sort on Windows.
 template <class RandomAccessIterator, class Comp>
 void parallel_sort(
@@ -286,7 +311,12 @@ template <class T> void parallel_sort(T *start, T *end) {
   parallel_sort(start, end, std::less<T>());
 }
 
-#ifdef _MSC_VER
+#if !defined(LLVM_ENABLE_THREADS) || LLVM_ENABLE_THREADS == 0
+template <class Iterator, class Func>
+void parallel_for_each(Iterator begin, Iterator end, Func func) {
+  std::for_each(begin, end, func);
+}
+#elif defined(_MSC_VER)
 // Use ppl parallel_for_each on Windows.
 template <class Iterator, class Func>
 void parallel_for_each(Iterator begin, Iterator end, Func func) {
