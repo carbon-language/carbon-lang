@@ -513,34 +513,34 @@ _BitScanReverse(unsigned long *_Index, unsigned long _Mask) {
   return 1;
 }
 static __inline__ unsigned short __DEFAULT_FN_ATTRS
-__popcnt16(unsigned short value) {
-  return __builtin_popcount((int)value);
+__popcnt16(unsigned short _Value) {
+  return __builtin_popcount((int)_Value);
 }
 static __inline__ unsigned int __DEFAULT_FN_ATTRS
-__popcnt(unsigned int value) {
-  return __builtin_popcount(value);
+__popcnt(unsigned int _Value) {
+  return __builtin_popcount(_Value);
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittest(long const *a, long b) {
-  return (*a >> b) & 1;
+_bittest(long const *__BitBase, long __BitPos) {
+  return (*__BitBase >> __BitPos) & 1;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandcomplement(long *a, long b) {
-  unsigned char x = (*a >> b) & 1;
-  *a = *a ^ (1 << b);
-  return x;
+_bittestandcomplement(long *__BitBase, long __BitPos) {
+  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
+  *__BitBase = *__BitBase ^ (1 << __BitPos);
+  return __Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandreset(long *a, long b) {
-  unsigned char x = (*a >> b) & 1;
-  *a = *a & ~(1 << b);
-  return x;
+_bittestandreset(long *__BitBase, long __BitPos) {
+  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
+  *__BitBase = *__BitBase & ~(1 << __BitPos);
+  return __Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandset(long *a, long b) {
-  unsigned char x = (*a >> b) & 1;
-  *a = *a | (1 << b);
-  return x;
+_bittestandset(long *__BitBase, long __BitPos) {
+  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
+  *__BitBase = *__BitBase | (1 << __BitPos);
+  return __Res;
 }
 #if defined(__i386__) || defined(__x86_64__)
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
@@ -565,30 +565,30 @@ _BitScanReverse64(unsigned long *_Index, unsigned __int64 _Mask) {
 }
 static __inline__
 unsigned __int64 __DEFAULT_FN_ATTRS
- __popcnt64(unsigned __int64 value) {
-  return __builtin_popcountll(value);
+__popcnt64(unsigned __int64 _Value) {
+  return __builtin_popcountll(_Value);
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittest64(__int64 const *a, __int64 b) {
-  return (*a >> b) & 1;
+_bittest64(__int64 const *__BitBase, __int64 __BitPos) {
+  return (*__BitBase >> __BitPos) & 1;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandcomplement64(__int64 *a, __int64 b) {
-  unsigned char x = (*a >> b) & 1;
-  *a = *a ^ (1ll << b);
-  return x;
+_bittestandcomplement64(__int64 *__BitBase, __int64 __BitPos) {
+  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
+  *__BitBase = *__BitBase ^ (1ll << __BitPos);
+  return __Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandreset64(__int64 *a, __int64 b) {
-  unsigned char x = (*a >> b) & 1;
-  *a = *a & ~(1ll << b);
-  return x;
+_bittestandreset64(__int64 *__BitBase, __int64 __BitPos) {
+  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
+  *__BitBase = *__BitBase & ~(1ll << __BitPos);
+  return __Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandset64(__int64 *a, __int64 b) {
-  unsigned char x = (*a >> b) & 1;
-  *a = *a | (1ll << b);
-  return x;
+_bittestandset64(__int64 *__BitBase, __int64 __BitPos) {
+  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
+  *__BitBase = *__BitBase | (1ll << __BitPos);
+  return __Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
 _interlockedbittestandset64(__int64 volatile *__BitBase, __int64 __BitPos) {
