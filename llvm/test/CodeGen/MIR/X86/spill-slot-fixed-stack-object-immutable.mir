@@ -1,0 +1,32 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @test(i32 %a) #0 {
+  entry:
+    %b = alloca i32
+    store i32 %a, i32* %b
+    %c = load i32, i32* %b
+    ret i32 %c
+  }
+
+  attributes #0 = { "no-frame-pointer-elim"="false" }
+
+...
+---
+name:            test
+frameInfo:
+  maxAlignment:    4
+fixedStack:
+  # CHECK: [[@LINE+1]]:65: unknown key 'isImmutable'
+  - { id: 0, type: spill-slot, offset: 0, size: 4, isImmutable: true }
+stack:
+  - { id: 0, offset: -12, size: 4, alignment: 4 }
+body:
+  - id:          0
+    name:        entry
+    instructions:
+      - 'MOV32mr %rsp, 1, _, -4, _, %edi'
+      - '%eax = COPY %edi'
+      - 'RETQ %eax'
+...
