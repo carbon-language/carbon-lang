@@ -1181,11 +1181,46 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
         }
         break;
 
+    case ArchSpec::eCore_mips32:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32_first && core2 <= ArchSpec::kCore_mips32_last)
+                return true;
+            try_inverse = false;
+        }
+        break;
+
+    case ArchSpec::eCore_mips32el:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32el_first && core2 <= ArchSpec::kCore_mips32el_last)
+                return true;
+            try_inverse = false;
+        }
+
     case ArchSpec::eCore_mips64:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32_first && core2 <= ArchSpec::kCore_mips32_last)
+                return true;
+            if (core2 >= ArchSpec::kCore_mips64_first && core2 <= ArchSpec::kCore_mips64_last)
+                return true;
+            try_inverse = false;
+        }
+
+    case ArchSpec::eCore_mips64el:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32el_first && core2 <= ArchSpec::kCore_mips32el_last)
+                return true;
+            if (core2 >= ArchSpec::kCore_mips64el_first && core2 <= ArchSpec::kCore_mips64el_last)
+                return true;
+            try_inverse = false;
+        }
+
     case ArchSpec::eCore_mips64r2:
     case ArchSpec::eCore_mips64r3:
     case ArchSpec::eCore_mips64r5:
-    case ArchSpec::eCore_mips64r6:
         if (!enforce_exact_match)
         {
             if (core2 >= ArchSpec::kCore_mips32_first && core2 <= (core1 - 10))
@@ -1196,11 +1231,9 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
         }
         break;
 
-    case ArchSpec::eCore_mips64el:
     case ArchSpec::eCore_mips64r2el:
     case ArchSpec::eCore_mips64r3el:
     case ArchSpec::eCore_mips64r5el:
-    case ArchSpec::eCore_mips64r6el:
         if (!enforce_exact_match)
         {
             if (core2 >= ArchSpec::kCore_mips32el_first && core2 <= (core1 - 10))
@@ -1208,6 +1241,63 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
             if (core2 >= ArchSpec::kCore_mips64el_first && core2 <= (core1 - 1))
                 return true;
             try_inverse = false;
+        }
+        break;
+
+    case ArchSpec::eCore_mips32r2:
+    case ArchSpec::eCore_mips32r3:
+    case ArchSpec::eCore_mips32r5:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32_first && core2 <= core1)
+                return true;
+        }
+        break;
+
+    case ArchSpec::eCore_mips32r2el:
+    case ArchSpec::eCore_mips32r3el:
+    case ArchSpec::eCore_mips32r5el:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32el_first && core2 <= core1)
+                return true;
+        }
+        break;
+
+    case ArchSpec::eCore_mips32r6:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_mips32 || core2 == ArchSpec::eCore_mips32r6)
+                return true;
+        }
+        break;
+
+    case ArchSpec::eCore_mips32r6el:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_mips32el || core2 == ArchSpec::eCore_mips32r6el)
+                return true;
+                return true;
+        }
+        break;
+
+    case ArchSpec::eCore_mips64r6:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_mips32 || core2 == ArchSpec::eCore_mips32r6)
+                return true;
+            if (core2 == ArchSpec::eCore_mips64 || core2 == ArchSpec::eCore_mips64r6)
+                return true;
+        }
+        break;
+
+    case ArchSpec::eCore_mips64r6el:
+        if (!enforce_exact_match)
+        {
+            if (core2 == ArchSpec::eCore_mips32el || core2 == ArchSpec::eCore_mips32r6el)
+                return true;
+            if (core2 == ArchSpec::eCore_mips64el || core2 == ArchSpec::eCore_mips64r6el)
+                return true;
         }
         break;
 
