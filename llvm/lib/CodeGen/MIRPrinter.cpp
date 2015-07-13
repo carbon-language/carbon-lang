@@ -303,7 +303,9 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     if (Op.isUndef())
       OS << "undef ";
     printReg(Op.getReg(), OS, TRI);
-    // TODO: Print sub register.
+    // Print the sub register.
+    if (Op.getSubReg() != 0)
+      OS << ':' << TRI->getSubRegIndexName(Op.getSubReg());
     break;
   case MachineOperand::MO_Immediate:
     OS << Op.getImm();

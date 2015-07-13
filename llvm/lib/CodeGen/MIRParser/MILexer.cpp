@@ -179,6 +179,8 @@ static MIToken::TokenKind symbolToken(char C) {
     return MIToken::comma;
   case '=':
     return MIToken::equal;
+  case ':':
+    return MIToken::colon;
   default:
     return MIToken::Error;
   }
