@@ -67,7 +67,6 @@ bool EliminateAvailableExternally::runOnModule(Module &M) {
     }
     I->removeDeadConstantUsers();
     I->setLinkage(GlobalValue::ExternalLinkage);
-    I->setVisibility(GlobalValue::DefaultVisibility);
     NumVariables++;
   }
 
@@ -78,7 +77,6 @@ bool EliminateAvailableExternally::runOnModule(Module &M) {
     if (!I->isDeclaration())
       // This will set the linkage to external
       I->deleteBody();
-    I->setVisibility(GlobalValue::DefaultVisibility);
     I->removeDeadConstantUsers();
     NumFunctions++;
   }
@@ -91,7 +89,6 @@ bool EliminateAvailableExternally::runOnModule(Module &M) {
     I->setAliasee(nullptr);
     I->removeDeadConstantUsers();
     I->setLinkage(GlobalValue::ExternalLinkage);
-    I->setVisibility(GlobalValue::DefaultVisibility);
     NumAliases++;
   }
 
