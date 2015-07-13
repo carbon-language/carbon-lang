@@ -29,8 +29,8 @@ inline void DominatorTreeBase<MachineBasicBlock>::addRoot(MachineBasicBlock* MBB
   this->Roots.push_back(MBB);
 }
 
-EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<MachineBasicBlock>);
-EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<MachineBasicBlock>);
+extern template class DomTreeNodeBase<MachineBasicBlock>;
+extern template class DominatorTreeBase<MachineBasicBlock>;
 
 typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 

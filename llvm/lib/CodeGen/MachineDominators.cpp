@@ -19,8 +19,8 @@
 using namespace llvm;
 
 namespace llvm {
-TEMPLATE_INSTANTIATION(class DomTreeNodeBase<MachineBasicBlock>);
-TEMPLATE_INSTANTIATION(class DominatorTreeBase<MachineBasicBlock>);
+template class DomTreeNodeBase<MachineBasicBlock>;
+template class DominatorTreeBase<MachineBasicBlock>;
 }
 
 char MachineDominatorTree::ID = 0;

@@ -902,9 +902,9 @@ inline raw_ostream &operator<<(raw_ostream &OS,
     return OS << Node.template getNodeAs<BlockT>()->getName();
 }
 
-EXTERN_TEMPLATE_INSTANTIATION(class RegionBase<RegionTraits<Function>>);
-EXTERN_TEMPLATE_INSTANTIATION(class RegionNodeBase<RegionTraits<Function>>);
-EXTERN_TEMPLATE_INSTANTIATION(class RegionInfoBase<RegionTraits<Function>>);
+extern template class RegionBase<RegionTraits<Function>>;
+extern template class RegionNodeBase<RegionTraits<Function>>;
+extern template class RegionInfoBase<RegionTraits<Function>>;
 
 } // End llvm namespace
 #endif

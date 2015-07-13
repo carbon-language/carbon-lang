@@ -202,8 +202,8 @@ public:
   void dump() const;
 };
 
-EXTERN_TEMPLATE_INSTANTIATION(class DominanceFrontierBase<BasicBlock>);
-EXTERN_TEMPLATE_INSTANTIATION(class ForwardDominanceFrontierBase<BasicBlock>);
+extern template class DominanceFrontierBase<BasicBlock>;
+extern template class ForwardDominanceFrontierBase<BasicBlock>;
 
 } // End llvm namespace
 
