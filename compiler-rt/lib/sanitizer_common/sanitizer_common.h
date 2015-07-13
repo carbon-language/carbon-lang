@@ -355,7 +355,11 @@ INLINE uptr MostSignificantSetBitIndex(uptr x) {
   CHECK_NE(x, 0U);
   unsigned long up;  // NOLINT
 #if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
+# ifdef _WIN64
+  up = SANITIZER_WORDSIZE - 1 - __builtin_clzll(x);
+# else
   up = SANITIZER_WORDSIZE - 1 - __builtin_clzl(x);
+# endif
 #elif defined(_WIN64)
   _BitScanReverse64(&up, x);
 #else
@@ -368,7 +372,11 @@ INLINE uptr LeastSignificantSetBitIndex(uptr x) {
   CHECK_NE(x, 0U);
   unsigned long up;  // NOLINT
 #if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
+# ifdef _WIN64
+  up = __builtin_ctzll(x);
+# else
   up = __builtin_ctzl(x);
+# endif
 #elif defined(_WIN64)
   _BitScanForward64(&up, x);
 #else
@@ -406,17 +414,7 @@ INLINE bool IsAligned(uptr a, uptr alignment) {
 
 INLINE uptr Log2(uptr x) {
   CHECK(IsPowerOfTwo(x));
-#if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
-  return __builtin_ctzl(x);
-#elif defined(_WIN64)
-  unsigned long ret;  // NOLINT
-  _BitScanForward64(&ret, x);
-  return ret;
-#else
-  unsigned long ret;  // NOLINT
-  _BitScanForward(&ret, x);
-  return ret;
-#endif
+  return LeastSignificantSetBitIndex(x);
 }
 
 // Don't use std::min, std::max or std::swap, to minimize dependency
