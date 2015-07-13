@@ -15,6 +15,8 @@ if(NOT DEFINED LLVM_DYLIB_COMPONENTS)
     BitWriter
     CodeGen
     Core
+    DebugInfoDWARF
+    DebugInfoPDB
     ExecutionEngine
     IPA
     IPO
