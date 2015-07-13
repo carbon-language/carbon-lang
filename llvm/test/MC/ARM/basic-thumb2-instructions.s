@@ -49,7 +49,6 @@ _func:
         adcs	r0, r1, r3, lsl #7
         adc.w	r0, r1, r3, lsr #31
         adcs.w	r0, r1, r3, asr #32
-        add r2, sp, ip
 
 @ CHECK: adc.w	r4, r5, r6              @ encoding: [0x45,0xeb,0x06,0x04]
 @ CHECK: adcs.w	r4, r5, r6              @ encoding: [0x55,0xeb,0x06,0x04]
@@ -59,7 +58,6 @@ _func:
 @ CHECK: adcs.w	r0, r1, r3, lsl #7      @ encoding: [0x51,0xeb,0xc3,0x10]
 @ CHECK: adc.w	r0, r1, r3, lsr #31     @ encoding: [0x41,0xeb,0xd3,0x70]
 @ CHECK: adcs.w	r0, r1, r3, asr #32     @ encoding: [0x51,0xeb,0x23,0x00]
-@ CHECK: add.w	r2, sp, r12             @ encoding: [0x0d,0xeb,0x0c,0x02]
 
 
 @------------------------------------------------------------------------------
@@ -115,23 +113,99 @@ _func:
 
 
 @------------------------------------------------------------------------------
-@ ADD (register)
+@ ADD (register, not SP) A8.8.6
 @------------------------------------------------------------------------------
         add r1, r2, r8
         add r5, r9, r2, asr #32
         adds r7, r3, r1, lsl #31
         adds.w r0, r3, r6, lsr #25
         add.w r4, r8, r1, ror #12
+        adds r1, r1, r7              // T1
+        it eq
+        addeq r1, r3, r5             // T1
+        it eq
+        addeq r1, r1, r5             // T1
+        it eq
+        addseq r1, r3, r5            // T3
+        it eq
+        addseq r1, r1, r5            // T3
         add r10, r8
         add r10, r10, r8
+        it eq
+        addeq r1, r10                // T2
+        it eq
+        addseq r1, r10               // T3
 
 @ CHECK: add.w	r1, r2, r8              @ encoding: [0x02,0xeb,0x08,0x01]
 @ CHECK: add.w	r5, r9, r2, asr #32     @ encoding: [0x09,0xeb,0x22,0x05]
 @ CHECK: adds.w	r7, r3, r1, lsl #31     @ encoding: [0x13,0xeb,0xc1,0x77]
 @ CHECK: adds.w	r0, r3, r6, lsr #25     @ encoding: [0x13,0xeb,0x56,0x60]
 @ CHECK: add.w	r4, r8, r1, ror #12     @ encoding: [0x08,0xeb,0x31,0x34]
+@ CHECK: adds r1, r1, r7                @ encoding: [0xc9,0x19]
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+@ CHECK: addeq r1, r3, r5               @ encoding: [0x59,0x19]
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+@ CHECK: addeq r1, r1, r5               @ encoding: [0x49,0x19]
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+@ CHECK: addseq.w r1, r3, r5            @ encoding: [0x13,0xeb,0x05,0x01]
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+@ CHECK: addseq.w r1, r1, r5            @ encoding: [0x11,0xeb,0x05,0x01]
 @ CHECK: add	r10, r8                 @ encoding: [0xc2,0x44]
 @ CHECK: add	r10, r8                 @ encoding: [0xc2,0x44]
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+@ CHECK: addeq r1, r10                  @ encoding: [0x51,0x44]
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+@ CHECK: addseq.w r1, r1, r10           @ encoding: [0x11,0xeb,0x0a,0x01]
+
+@------------------------------------------------------------------------------
+@ ADD (SP plus immediate) A8.8.9
+@------------------------------------------------------------------------------
+        it eq
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+        addeq r7, sp, #1020          // T1
+@ CHECK: addeq	r7, sp, #1020           @ encoding: [0xff,0xaf]
+
+        it eq
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+        addeq sp, sp, #508           // T2
+@ FIXME: ARMARM says 'addeq sp, sp, #508'
+@ CHECK: addeq	sp, #508                @ encoding: [0x7f,0xb0]
+
+        add r7, sp, #15              // T3
+@ CHECK: add.w	r7, sp, #15             @ encoding: [0x0d,0xf1,0x0f,0x07]
+        adds r7, sp, #16             // T3
+@ CHECK: adds.w	r7, sp, #16             @ encoding: [0x1d,0xf1,0x10,0x07]
+        add r8, sp, #16              // T3
+@ CHECK: add.w	r8, sp, #16             @ encoding: [0x0d,0xf1,0x10,0x08]
+
+        addw r6, sp, #1020           // T4
+@ CHECK: addw	r6, sp, #1020           @ encoding: [0x0d,0xf2,0xfc,0x36]
+        add r6, sp, #1019            // T4
+@ CHECK: addw	r6, sp, #1019           @ encoding: [0x0d,0xf2,0xfb,0x36]
+
+@------------------------------------------------------------------------------
+@ ADD (SP plus register) A8.8.10
+@------------------------------------------------------------------------------
+        it eq
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+        addeq r8, sp, r8             // T1
+@ CHECK: addeq	r8, sp, r8              @ encoding: [0xe8,0x44]
+        it eq
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+        addeq r8, sp                 // T1
+@ CHECK: addeq	r8, sp                  @ encoding: [0xe8,0x44]
+
+        it eq
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+        addeq sp, r9                 // T2
+@ CHECK: addeq	sp, r9                  @ encoding: [0xcd,0x44]
+
+        add r2, sp, ip               // T3
+@ CHECK: add.w r2, sp, r12              @ encoding: [0x0d,0xeb,0x0c,0x02]
+        it eq
+@ CHECK: it eq                          @ encoding: [0x08,0xbf]
+        addeq r2, sp, ip             // T3
+@ CHECK: addeq.w r2, sp, r12            @ encoding: [0x0d,0xeb,0x0c,0x02]
 
 
 @------------------------------------------------------------------------------

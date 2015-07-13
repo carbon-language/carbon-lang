@@ -5477,18 +5477,21 @@ void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
   if (Operands.size() != 6)
     return;
 
-  ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
-  ARMOperand &Op4 = static_cast<ARMOperand &>(*Operands[4]);
+  const auto &Op3 = static_cast<ARMOperand &>(*Operands[3]);
+        auto &Op4 = static_cast<ARMOperand &>(*Operands[4]);
   if (!Op3.isReg() || !Op4.isReg())
     return;
+
+  auto Op3Reg = Op3.getReg();
+  auto Op4Reg = Op4.getReg();
 
   // For most Thumb2 cases we just generate the 3 operand form and reduce
   // it in processInstruction(), but for ADD involving PC the the 3 operand
   // form won't accept PC so we do the transformation here.
-  ARMOperand &Op5 = static_cast<ARMOperand &>(*Operands[5]);
+  auto &Op5 = static_cast<ARMOperand &>(*Operands[5]);
   if (isThumbTwo()) {
     if (Mnemonic != "add" ||
-        !(Op3.getReg() == ARM::PC || Op4.getReg() == ARM::PC ||
+        !(Op3Reg == ARM::PC || Op4Reg == ARM::PC ||
           (Op5.isReg() && Op5.getReg() == ARM::PC)))
       return;
   } else if (!isThumbOne())
@@ -5503,15 +5506,15 @@ void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
   // If first 2 operands of a 3 operand instruction are the same
   // then transform to 2 operand version of the same instruction
   // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
-  bool Transform = Op3.getReg() == Op4.getReg();
+  bool Transform = Op3Reg == Op4Reg;
 
   // For communtative operations, we might be able to transform if we swap
   // Op4 and Op5.  The 'ADD Rdm, SP, Rdm' form is already handled specially
   // as tADDrsp.
   const ARMOperand *LastOp = &Op5;
   bool Swap = false;
-  if (!Transform && Op5.isReg() && Op3.getReg() == Op5.getReg() &&
-      ((Mnemonic == "add" && Op4.getReg() != ARM::SP) ||
+  if (!Transform && Op5.isReg() && Op3Reg == Op5.getReg() &&
+      ((Mnemonic == "add" && Op4Reg != ARM::SP) ||
        Mnemonic == "and" || Mnemonic == "eor" ||
        Mnemonic == "adc" || Mnemonic == "orr")) {
     Swap = true;
