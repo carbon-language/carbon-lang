@@ -113,7 +113,7 @@ protected:
   DwarfUnit(unsigned UID, dwarf::Tag, const DICompileUnit *CU, AsmPrinter *A,
             DwarfDebug *DW, DwarfFile *DWU);
 
-  /// \brief Add a string attribute data and value.
+  /// Add a string attribute data and value.
   ///
   /// This is guaranteed to be in the local string pool instead of indirected.
   void addLocalString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
@@ -142,10 +142,10 @@ public:
   unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
   void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
 
-  /// \brief Return true if this compile unit has something to write out.
+  /// Return true if this compile unit has something to write out.
   bool hasContent() const { return UnitDie.hasChildren(); }
 
-  /// \brief Get string containing language specific context for a global name.
+  /// Get string containing language specific context for a global name.
   ///
   /// Walks the metadata parent chain in a language specific manner (using the
   /// compile unit language) and returns it as a string. This is done at the
@@ -162,42 +162,42 @@ public:
   virtual void addGlobalType(const DIType *Ty, const DIE &Die,
                              const DIScope *Context) {}
 
-  /// \brief Add a new name to the namespace accelerator table.
+  /// Add a new name to the namespace accelerator table.
   void addAccelNamespace(StringRef Name, const DIE &Die);
 
-  /// \brief Returns the DIE map slot for the specified debug variable.
+  /// Returns the DIE map slot for the specified debug variable.
   ///
   /// We delegate the request to DwarfDebug when the MDNode can be part of the
   /// type system, since DIEs for the type system can be shared across CUs and
   /// the mappings are kept in DwarfDebug.
   DIE *getDIE(const DINode *D) const;
 
-  /// \brief Returns a fresh newly allocated DIELoc.
+  /// Returns a fresh newly allocated DIELoc.
   DIELoc *getDIELoc() { return new (DIEValueAllocator) DIELoc; }
 
-  /// \brief Insert DIE into the map.
+  /// Insert DIE into the map.
   ///
   /// We delegate the request to DwarfDebug when the MDNode can be part of the
   /// type system, since DIEs for the type system can be shared across CUs and
   /// the mappings are kept in DwarfDebug.
   void insertDIE(const DINode *Desc, DIE *D);
 
-  /// \brief Add a flag that is true to the DIE.
+  /// Add a flag that is true to the DIE.
   void addFlag(DIE &Die, dwarf::Attribute Attribute);
 
-  /// \brief Add an unsigned integer attribute data and value.
+  /// Add an unsigned integer attribute data and value.
   void addUInt(DIE &Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
                uint64_t Integer);
 
   void addUInt(DIE &Block, dwarf::Form Form, uint64_t Integer);
 
-  /// \brief Add an signed integer attribute data and value.
+  /// Add an signed integer attribute data and value.
   void addSInt(DIE &Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
                int64_t Integer);
 
   void addSInt(DIELoc &Die, Optional<dwarf::Form> Form, int64_t Integer);
 
-  /// \brief Add a string attribute data and value.
+  /// Add a string attribute data and value.
   ///
   /// We always emit a reference to the string pool instead of immediate
   /// strings so that DIEs have more predictable sizes. In the case of split
@@ -205,38 +205,38 @@ public:
   /// into the string table.
   void addString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
 
-  /// \brief Add a Dwarf label attribute data and value.
+  /// Add a Dwarf label attribute data and value.
   DIE::value_iterator addLabel(DIE &Die, dwarf::Attribute Attribute,
                                dwarf::Form Form, const MCSymbol *Label);
 
   void addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label);
 
-  /// \brief Add an offset into a section attribute data and value.
+  /// Add an offset into a section attribute data and value.
   void addSectionOffset(DIE &Die, dwarf::Attribute Attribute, uint64_t Integer);
 
-  /// \brief Add a dwarf op address data and value using the form given and an
+  /// Add a dwarf op address data and value using the form given and an
   /// op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addOpAddress(DIELoc &Die, const MCSymbol *Label);
 
-  /// \brief Add a label delta attribute data and value.
+  /// Add a label delta attribute data and value.
   void addLabelDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
                      const MCSymbol *Lo);
 
-  /// \brief Add a DIE attribute data and value.
+  /// Add a DIE attribute data and value.
   void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE &Entry);
 
-  /// \brief Add a DIE attribute data and value.
+  /// Add a DIE attribute data and value.
   void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIEEntry Entry);
 
   void addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type);
 
-  /// \brief Add block data.
+  /// Add block data.
   void addBlock(DIE &Die, dwarf::Attribute Attribute, DIELoc *Block);
 
-  /// \brief Add block data.
+  /// Add block data.
   void addBlock(DIE &Die, dwarf::Attribute Attribute, DIEBlock *Block);
 
-  /// \brief Add location information to specified debug information entry.
+  /// Add location information to specified debug information entry.
   void addSourceLine(DIE &Die, unsigned Line, StringRef File,
                      StringRef Directory);
   void addSourceLine(DIE &Die, const DILocalVariable *V);
@@ -246,30 +246,30 @@ public:
   void addSourceLine(DIE &Die, const DINamespace *NS);
   void addSourceLine(DIE &Die, const DIObjCProperty *Ty);
 
-  /// \brief Add constant value entry in variable DIE.
+  /// Add constant value entry in variable DIE.
   void addConstantValue(DIE &Die, const MachineOperand &MO, const DIType *Ty);
   void addConstantValue(DIE &Die, const ConstantInt *CI, const DIType *Ty);
   void addConstantValue(DIE &Die, const APInt &Val, const DIType *Ty);
   void addConstantValue(DIE &Die, const APInt &Val, bool Unsigned);
   void addConstantValue(DIE &Die, bool Unsigned, uint64_t Val);
 
-  /// \brief Add constant value entry in variable DIE.
+  /// Add constant value entry in variable DIE.
   void addConstantFPValue(DIE &Die, const MachineOperand &MO);
   void addConstantFPValue(DIE &Die, const ConstantFP *CFP);
 
-  /// \brief Add a linkage name, if it isn't empty.
+  /// Add a linkage name, if it isn't empty.
   void addLinkageName(DIE &Die, StringRef LinkageName);
 
-  /// \brief Add template parameters in buffer.
+  /// Add template parameters in buffer.
   void addTemplateParams(DIE &Buffer, DINodeArray TParams);
 
-  /// \brief Add register operand.
+  /// Add register operand.
   /// \returns false if the register does not exist, e.g., because it was never
   /// materialized.
   bool addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
                           unsigned SizeInBits = 0, unsigned OffsetInBits = 0);
 
-  /// \brief Add register offset.
+  /// Add register offset.
   /// \returns false if the register does not exist, e.g., because it was never
   /// materialized.
   bool addRegisterOffset(DIELoc &TheDie, unsigned Reg, int64_t Offset);
@@ -283,7 +283,7 @@ public:
                             dwarf::Attribute Attribute,
                             const MachineLocation &Location);
 
-  /// \brief Add a new type attribute to the specified entity.
+  /// Add a new type attribute to the specified entity.
   ///
   /// This takes and attribute parameter because DW_AT_friend attributes are
   /// also type references.
@@ -297,19 +297,19 @@ public:
   void applySubprogramAttributes(const DISubprogram *SP, DIE &SPDie,
                                  bool Minimal = false);
 
-  /// \brief Find existing DIE or create new DIE for the given type.
+  /// Find existing DIE or create new DIE for the given type.
   DIE *getOrCreateTypeDIE(const MDNode *N);
 
-  /// \brief Get context owner's DIE.
+  /// Get context owner's DIE.
   DIE *createTypeDIE(const DICompositeType *Ty);
 
-  /// \brief Get context owner's DIE.
+  /// Get context owner's DIE.
   DIE *getOrCreateContextDIE(const DIScope *Context);
 
-  /// \brief Construct DIEs for types that contain vtables.
+  /// Construct DIEs for types that contain vtables.
   void constructContainingTypeDIEs();
 
-  /// \brief Construct function argument DIEs.
+  /// Construct function argument DIEs.
   void constructSubprogramArguments(DIE &Buffer, DITypeRefArray Args);
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
@@ -332,14 +332,14 @@ public:
   void constructTypeDIE(DIE &Buffer, const DICompositeType *CTy);
 
 protected:
-  /// \brief Create new static data member DIE.
+  /// Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(const DIDerivedType *DT);
 
   /// Look up the source ID with the given directory and source file names. If
   /// none currently exists, create a new ID and insert it in the line table.
   virtual unsigned getOrCreateSourceID(StringRef File, StringRef Directory) = 0;
 
-  /// \brief Look in the DwarfDebug map for the MDNode that corresponds to the
+  /// Look in the DwarfDebug map for the MDNode that corresponds to the
   /// reference.
   template <typename T> T *resolve(TypedDINodeRef<T> Ref) const {
     return DD->resolve(Ref);
@@ -358,15 +358,15 @@ private:
   void constructTemplateValueParameterDIE(DIE &Buffer,
                                           const DITemplateValueParameter *TVP);
 
-  /// \brief Return the default lower bound for an array.
+  /// Return the default lower bound for an array.
   ///
   /// If the DWARF version doesn't handle the language, return -1.
   int64_t getDefaultLowerBound() const;
 
-  /// \brief Get an anonymous type for index type.
+  /// Get an anonymous type for index type.
   DIE *getIndexTyDie();
 
-  /// \brief Set D as anonymous type for index which can be reused later.
+  /// Set D as anonymous type for index which can be reused later.
   void setIndexTyDie(DIE *D) { IndexTyDie = D; }
 
   /// If this is a named finished type then include it in the list of types for
