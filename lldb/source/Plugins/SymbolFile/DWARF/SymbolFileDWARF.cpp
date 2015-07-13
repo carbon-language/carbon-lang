@@ -2210,7 +2210,7 @@ SymbolFileDWARF::ParseChildMembers
                             }
                         }
                         
-                        if (prop_name != NULL)
+                        if (prop_name != NULL && member_type)
                         {
                             clang::ObjCIvarDecl *ivar_decl = NULL;
                             
