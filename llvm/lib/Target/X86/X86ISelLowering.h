@@ -292,8 +292,8 @@ namespace llvm {
       // Vector FP round.
       VFPROUND,
 
-      // Vector signed integer to double.
-      CVTDQ2PD,
+      // Vector signed/unsigned integer to double.
+      CVTDQ2PD, CVTUDQ2PD,
 
       // 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
@@ -428,6 +428,9 @@ namespace llvm {
       //with rounding mode
       SINT_TO_FP_RND,
       UINT_TO_FP_RND,
+
+      // Vector float/double to signed/unsigned integer.
+      FP_TO_SINT_RND, FP_TO_UINT_RND,
       // Save xmm argument registers to the stack, according to %al. An operator
       // is needed so that this can be expanded with control flow.
       VASTART_SAVE_XMM_REGS,

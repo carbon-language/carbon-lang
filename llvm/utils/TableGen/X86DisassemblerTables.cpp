@@ -243,6 +243,9 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_OPSIZE_KZ_B:
     return false;
   case IC_EVEX_W_K:
+  case IC_EVEX_W_B:
+  case IC_EVEX_W_K_B:
+  case IC_EVEX_W_KZ_B:
   case IC_EVEX_W_XS_K:
   case IC_EVEX_W_XD_K:
   case IC_EVEX_W_OPSIZE_K:
@@ -252,6 +255,8 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L_K:
   case IC_EVEX_L_XS_K:
   case IC_EVEX_L_XD_K:
+  case IC_EVEX_L_XD_B:
+  case IC_EVEX_L_XD_K_B:
   case IC_EVEX_L_OPSIZE_K:
   case IC_EVEX_L_OPSIZE_B:
   case IC_EVEX_L_OPSIZE_K_B:
@@ -272,21 +277,30 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L_XS_KZ:
   case IC_EVEX_L_XS_B:
   case IC_EVEX_L_XS_K_B:
+  case IC_EVEX_L_XS_KZ_B:
   case IC_EVEX_L_XD_KZ:
+  case IC_EVEX_L_XD_KZ_B:
   case IC_EVEX_L_OPSIZE_KZ:
   case IC_EVEX_L_OPSIZE_KZ_B:
     return false;
   case IC_EVEX_L_W_K:
+  case IC_EVEX_L_W_B:
+  case IC_EVEX_L_W_K_B:    
   case IC_EVEX_L_W_XS_K:
   case IC_EVEX_L_W_XS_B:
   case IC_EVEX_L_W_XS_K_B:
-  case IC_EVEX_L_W_XD_K:
+  case IC_EVEX_L_W_XS_KZ:
+  case IC_EVEX_L_W_XS_KZ_B:
   case IC_EVEX_L_W_OPSIZE_K:
   case IC_EVEX_L_W_OPSIZE_B:
   case IC_EVEX_L_W_OPSIZE_K_B:
   case IC_EVEX_L_W_KZ:
-  case IC_EVEX_L_W_XS_KZ:
+  case IC_EVEX_L_W_KZ_B:
+  case IC_EVEX_L_W_XD_K:
+  case IC_EVEX_L_W_XD_B:
+  case IC_EVEX_L_W_XD_K_B:
   case IC_EVEX_L_W_XD_KZ:
+  case IC_EVEX_L_W_XD_KZ_B:
   case IC_EVEX_L_W_OPSIZE_KZ:
   case IC_EVEX_L_W_OPSIZE_KZ_B:
     return false;
@@ -299,17 +313,22 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L2_XS_B:
   case IC_EVEX_L2_XD_B:
   case IC_EVEX_L2_XD_K:
+  case IC_EVEX_L2_XD_K_B:
   case IC_EVEX_L2_OPSIZE_K:
   case IC_EVEX_L2_OPSIZE_B:
   case IC_EVEX_L2_OPSIZE_K_B:
   case IC_EVEX_L2_KZ:
   case IC_EVEX_L2_XS_KZ:
+  case IC_EVEX_L2_XS_KZ_B:
   case IC_EVEX_L2_XD_KZ:
+  case IC_EVEX_L2_XD_KZ_B:
   case IC_EVEX_L2_OPSIZE_KZ:
   case IC_EVEX_L2_OPSIZE_KZ_B:
     return false;
   case IC_EVEX_L2_W_K:
   case IC_EVEX_L2_W_B:
+  case IC_EVEX_L2_W_K_B:
+  case IC_EVEX_L2_W_KZ_B:
   case IC_EVEX_L2_W_XS_K:
   case IC_EVEX_L2_W_XS_B:
   case IC_EVEX_L2_W_XS_K_B:
@@ -320,7 +339,10 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_EVEX_L2_W_OPSIZE_K_B:
   case IC_EVEX_L2_W_KZ:
   case IC_EVEX_L2_W_XS_KZ:
+  case IC_EVEX_L2_W_XS_KZ_B:
   case IC_EVEX_L2_W_XD_KZ:
+  case IC_EVEX_L2_W_XD_K_B:
+  case IC_EVEX_L2_W_XD_KZ_B:
   case IC_EVEX_L2_W_OPSIZE_KZ:
   case IC_EVEX_L2_W_OPSIZE_KZ_B:
     return false;
