@@ -3102,12 +3102,6 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
       /*AllowPCHWithCompilerErrors=*/true, SkipFunctionBodies,
       /*UserFilesAreVolatile=*/true, ForSerialization, &ErrUnit));
 
-  // Early failures in LoadFromCommandLine may return with ErrUnit unset.
-  if (!Unit && !ErrUnit) {
-    PTUI->result = CXError_ASTReadError;
-    return;
-  }
-
   if (NumErrors != Diags->getClient()->getNumErrors()) {
     // Make sure to check that 'Unit' is non-NULL.
     if (CXXIdx->getDisplayDiagnostics())

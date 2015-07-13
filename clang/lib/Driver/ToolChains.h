@@ -699,18 +699,6 @@ private:
   std::string computeSysRoot() const;
 };
 
-class LLVM_LIBRARY_VISIBILITY CudaToolChain : public Linux {
-public:
-  CudaToolChain(const Driver &D, const llvm::Triple &Triple,
-                const llvm::opt::ArgList &Args);
-
-  llvm::opt::DerivedArgList *
-  TranslateArgs(const llvm::opt::DerivedArgList &Args,
-                const char *BoundArch) const override;
-  void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
-                             llvm::opt::ArgStringList &CC1Args) const override;
-};
-
 class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public Linux {
 protected:
   GCCVersion GCCLibAndIncVersion;

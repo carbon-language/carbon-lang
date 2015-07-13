@@ -86,7 +86,6 @@ bool types::isAcceptedByClang(ID Id) {
   case TY_C: case TY_PP_C:
   case TY_CL:
   case TY_CUDA: case TY_PP_CUDA:
-  case TY_CUDA_DEVICE:
   case TY_ObjC: case TY_PP_ObjC: case TY_PP_ObjC_Alias:
   case TY_CXX: case TY_PP_CXX:
   case TY_ObjCXX: case TY_PP_ObjCXX: case TY_PP_ObjCXX_Alias:
@@ -123,19 +122,7 @@ bool types::isCXX(ID Id) {
   case TY_ObjCXX: case TY_PP_ObjCXX: case TY_PP_ObjCXX_Alias:
   case TY_CXXHeader: case TY_PP_CXXHeader:
   case TY_ObjCXXHeader: case TY_PP_ObjCXXHeader:
-  case TY_CUDA: case TY_PP_CUDA: case TY_CUDA_DEVICE:
-    return true;
-  }
-}
-
-bool types::isCuda(ID Id) {
-  switch (Id) {
-  default:
-    return false;
-
-  case TY_CUDA:
-  case TY_PP_CUDA:
-  case TY_CUDA_DEVICE:
+  case TY_CUDA: case TY_PP_CUDA:
     return true;
   }
 }
@@ -219,12 +206,10 @@ void types::getCompilationPhases(ID Id, llvm::SmallVectorImpl<phases::ID> &P) {
         P.push_back(phases::Compile);
         P.push_back(phases::Backend);
       }
-      if (Id != TY_CUDA_DEVICE)
-        P.push_back(phases::Assemble);
+      P.push_back(phases::Assemble);
     }
   }
-
-  if (!onlyPrecompileType(Id) && Id != TY_CUDA_DEVICE) {
+  if (!onlyPrecompileType(Id)) {
     P.push_back(phases::Link);
   }
   assert(0 < P.size() && "Not enough phases in list");
