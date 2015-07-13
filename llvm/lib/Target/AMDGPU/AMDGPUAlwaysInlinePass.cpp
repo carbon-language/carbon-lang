@@ -22,7 +22,6 @@ using namespace llvm;
 namespace {
 
 class AMDGPUAlwaysInline : public ModulePass {
-
   static char ID;
 
 public:
@@ -36,10 +35,9 @@ public:
 char AMDGPUAlwaysInline::ID = 0;
 
 bool AMDGPUAlwaysInline::runOnModule(Module &M) {
+  std::vector<Function *> FuncsToClone;
 
-  std::vector<Function*> FuncsToClone;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    Function &F = *I;
+  for (Function &F : M) {
     if (!F.hasLocalLinkage() && !F.isDeclaration() && !F.use_empty() &&
         !F.hasFnAttribute(Attribute::NoInline))
       FuncsToClone.push_back(&F);
@@ -49,12 +47,11 @@ bool AMDGPUAlwaysInline::runOnModule(Module &M) {
     ValueToValueMapTy VMap;
     Function *NewFunc = CloneFunction(F, VMap, false);
     NewFunc->setLinkage(GlobalValue::InternalLinkage);
-    F->getParent()->getFunctionList().push_back(NewFunc);
+    M.getFunctionList().push_back(NewFunc);
     F->replaceAllUsesWith(NewFunc);
   }
 
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    Function &F = *I;
+  for (Function &F : M) {
     if (F.hasLocalLinkage() && !F.hasFnAttribute(Attribute::NoInline)) {
       F.addFnAttr(Attribute::AlwaysInline);
     }
