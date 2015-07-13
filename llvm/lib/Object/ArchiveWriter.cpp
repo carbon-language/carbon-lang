@@ -178,12 +178,20 @@ static void writeStringTable(raw_fd_ostream &Out,
   Out.seek(Pos);
 }
 
+static sys::TimeValue now(bool Deterministic) {
+  if (!Deterministic)
+    return sys::TimeValue::now();
+  sys::TimeValue TV;
+  TV.fromEpochTime(0);
+  return TV;
+}
+
 // Returns the offset of the first reference to a member offset.
 static ErrorOr<unsigned>
 writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
                  ArrayRef<NewArchiveIterator> Members,
                  ArrayRef<MemoryBufferRef> Buffers,
-                 std::vector<unsigned> &MemberOffsetRefs) {
+                 std::vector<unsigned> &MemberOffsetRefs, bool Deterministic) {
   unsigned HeaderStartOffset = 0;
   unsigned BodyStartOffset = 0;
   SmallString<128> NameBuf;
@@ -201,10 +209,9 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
     if (!HeaderStartOffset) {
       HeaderStartOffset = Out.tell();
       if (Kind == object::Archive::K_GNU)
-        printGNUSmallMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
+        printGNUSmallMemberHeader(Out, "", now(Deterministic), 0, 0, 0, 0);
       else
-        printBSDMemberHeader(Out, "__.SYMDEF", sys::TimeValue::now(), 0, 0, 0,
-                             0);
+        printBSDMemberHeader(Out, "__.SYMDEF", now(Deterministic), 0, 0, 0, 0);
       BodyStartOffset = Out.tell();
       print32(Out, Kind, 0); // number of entries or bytes
     }
@@ -261,10 +268,9 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   return BodyStartOffset + 4;
 }
 
-std::pair<StringRef, std::error_code>
-llvm::writeArchive(StringRef ArcName,
-                   std::vector<NewArchiveIterator> &NewMembers,
-                   bool WriteSymtab, object::Archive::Kind Kind) {
+std::pair<StringRef, std::error_code> llvm::writeArchive(
+    StringRef ArcName, std::vector<NewArchiveIterator> &NewMembers,
+    bool WriteSymtab, object::Archive::Kind Kind, bool Deterministic) {
   SmallString<128> TmpArchive;
   int TmpArchiveFD;
   if (auto EC = sys::fs::createUniqueFile(ArcName + ".temp-archive-%%%%%%%.a",
@@ -315,8 +321,8 @@ llvm::writeArchive(StringRef ArcName,
 
   unsigned MemberReferenceOffset = 0;
   if (WriteSymtab) {
-    ErrorOr<unsigned> MemberReferenceOffsetOrErr =
-        writeSymbolTable(Out, Kind, NewMembers, Members, MemberOffsetRefs);
+    ErrorOr<unsigned> MemberReferenceOffsetOrErr = writeSymbolTable(
+        Out, Kind, NewMembers, Members, MemberOffsetRefs, Deterministic);
     if (auto EC = MemberReferenceOffsetOrErr.getError())
       return std::make_pair(ArcName, EC);
     MemberReferenceOffset = MemberReferenceOffsetOrErr.get();
@@ -336,19 +342,39 @@ llvm::writeArchive(StringRef ArcName,
     unsigned Pos = Out.tell();
     MemberOffset.push_back(Pos);
 
+    sys::TimeValue ModTime;
+    unsigned UID;
+    unsigned GID;
+    unsigned Perms;
+    if (Deterministic) {
+      ModTime.fromEpochTime(0);
+      UID = 0;
+      GID = 0;
+      Perms = 0644;
+    } else if (I.isNewMember()) {
+      const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum];
+      ModTime = Status.getLastModificationTime();
+      UID = Status.getUser();
+      GID = Status.getGroup();
+      Perms = Status.permissions();
+    } else {
+      object::Archive::child_iterator OldMember = I.getOld();
+      ModTime = OldMember->getLastModified();
+      UID = OldMember->getUID();
+      GID = OldMember->getGID();
+      Perms = OldMember->getAccessMode();
+    }
+
     if (I.isNewMember()) {
       StringRef FileName = I.getNew();
       const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum++];
       printMemberHeader(Out, Kind, sys::path::filename(FileName),
-                        StringMapIndexIter, Status.getLastModificationTime(),
-                        Status.getUser(), Status.getGroup(),
-                        Status.permissions(), Status.getSize());
+                        StringMapIndexIter, ModTime, UID, GID, Perms,
+                        Status.getSize());
     } else {
       object::Archive::child_iterator OldMember = I.getOld();
-      printMemberHeader(Out, Kind, I.getName(), StringMapIndexIter,
-                        OldMember->getLastModified(), OldMember->getUID(),
-                        OldMember->getGID(), OldMember->getAccessMode(),
-                        OldMember->getSize());
+      printMemberHeader(Out, Kind, I.getName(), StringMapIndexIter, ModTime,
+                        UID, GID, Perms, OldMember->getSize());
     }
 
     Out << File.getBuffer();

@@ -7,23 +7,23 @@ RUN: cd %t
 RUN: echo -n bar. > 0123456789abcde
 RUN: echo -n zed. > 0123456789abcdef
 
-RUN: rm -f test.a
-RUN: llvm-ar --format=gnu rc test.a 0123456789abcde 0123456789abcdef
-RUN: cat test.a | FileCheck -strict-whitespace %s
+RUN: rm -f %t.a
+RUN: llvm-ar --format=gnu rc %t.a 0123456789abcde 0123456789abcdef
+RUN: cat %t.a | FileCheck -strict-whitespace %s
 
 CHECK:      !<arch>
 CHECK-NEXT: //                                              18        `
 CHECK-NEXT: 0123456789abcdef/
-CHECK-NEXT: 0123456789abcde/{{................................}}4         `
-CHECK-NEXT: bar./0              {{................................}}4         `
+CHECK-NEXT: 0123456789abcde/0           0     0     644     4         `
+CHECK-NEXT: bar./0              0           0     0     644     4         `
 CHECK-NEXT: zed.
 
-RUN: rm -f test-bsd.a
-RUN: llvm-ar --format=bsd rc test-bsd.a 0123456789abcde 0123456789abcdef
-RUN: cat test-bsd.a | FileCheck -strict-whitespace --check-prefix=BSD %s
+RUN: rm -f %t.a
+RUN: llvm-ar --format=bsd rc %t.a 0123456789abcde 0123456789abcdef
+RUN: cat %t.a | FileCheck -strict-whitespace --check-prefix=BSD %s
 
 BSD:      !<arch>
-BSD-NEXT: #1/20           {{..............................}}  24        `
+BSD-NEXT: #1/20           0           0     0     644     24        `
 BSD-NEXT: 0123456789abcde{{.....}}bar.
-BSD-SAME: #1/16           {{..............................}}  20        `
+BSD-SAME: #1/16           0           0     0     644     20        `
 BSD-NEXT: 0123456789abcdefzed.

@@ -16,19 +16,19 @@ RUN: echo newer > %t.newer/evenlen
 RUN: touch %t.newer/evenlen
 
 Create an achive with the newest file
-RUN: llvm-ar r %t.a %t.newer/evenlen
+RUN: llvm-ar rU %t.a %t.newer/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 Check that without the 'u' option the member is replaced with an older file.
-RUN: llvm-ar r %t.a %t.older/evenlen
+RUN: llvm-ar rU %t.a %t.older/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=OLDER %s
 
 Check that with the 'u' option the member is replaced with a newer file.
-RUN: llvm-ar ru %t.a %t.newer/evenlen
+RUN: llvm-ar ruU %t.a %t.newer/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 Check that with the 'u' option the member is not replaced with an older file.
-RUN: llvm-ar ru %t.a %t.older/evenlen
+RUN: llvm-ar ruU %t.a %t.older/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 NEWER: newer

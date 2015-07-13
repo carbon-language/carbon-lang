@@ -39,7 +39,7 @@
 ; RUN: rm -f very_long_bytecode_file_name.bc
 ; RUN: llvm-ar xo %p/Inputs/GNU.a very_long_bytecode_file_name.bc
 ; RUN: rm -f %t.a
-; RUN: llvm-ar rc %t.a very_long_bytecode_file_name.bc
+; RUN: llvm-ar rcU %t.a very_long_bytecode_file_name.bc
 ; RUN: env TZ=GMT llvm-ar tv %t.a | FileCheck %s
 
 CHECK: 1465 2004-11-19 03:01:31.000000000 very_long_bytecode_file_name.bc

@@ -43,7 +43,7 @@ public:
 
 std::pair<StringRef, std::error_code>
 writeArchive(StringRef ArcName, std::vector<NewArchiveIterator> &NewMembers,
-             bool WriteSymtab, object::Archive::Kind Kind);
+             bool WriteSymtab, object::Archive::Kind Kind, bool Deterministic);
 }
 
 #endif

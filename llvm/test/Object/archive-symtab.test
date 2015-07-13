@@ -1,5 +1,5 @@
 RUN: rm -f %t.a
-RUN: llvm-ar rcs %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
+RUN: llvm-ar rcsU %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
 RUN: llvm-nm -M %t.a | FileCheck %s
 
 CHECK: Archive map
@@ -19,7 +19,7 @@ CHECK-NEXT: 0000000000000006 T foo
 CHECK-NEXT: 0000000000000016 T main
 
 RUN: rm -f %t.a
-RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
+RUN: llvm-ar rcSU %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
 RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=NOMAP
 
 NOMAP-NOT: Archive map
@@ -54,7 +54,7 @@ RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=CORRUPT
 repeate the test with llvm-ranlib
 
 RUN: rm -f %t.a
-RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
+RUN: llvm-ar rcSU %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
 RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=NOMAP
 
 RUN: llvm-ranlib %t.a
@@ -68,7 +68,7 @@ BSD-MachO: _bar in bar.o
 BSD-MachO: _foo in foo.o
 
 RUN: rm -f %t.a
-RUN: llvm-ar --format=bsd rcs %t.a %p/Inputs/trivial-object-test.macho-x86-64 %p/Inputs/trivial-object-test2.macho-x86-64
+RUN: llvm-ar --format=bsd rcsU %t.a %p/Inputs/trivial-object-test.macho-x86-64 %p/Inputs/trivial-object-test2.macho-x86-64
 RUN: llvm-nm -M %t.a | FileCheck --check-prefix=MACHO %s
 
 MACHO: Archive map
@@ -91,7 +91,7 @@ MACHO-NEXT: 0000000000000002 T _main
 Test that we pad the symbol table so that it ends in a multiple of 4 bytes:
 8 + 60 + 36 == 104
 RUN: rm -f %t.a
-RUN: llvm-ar --format=bsd rcs %t.a %p/Inputs/trivial-object-test.macho-x86-64
+RUN: llvm-ar --format=bsd rcsU %t.a %p/Inputs/trivial-object-test.macho-x86-64
 RUN: FileCheck --check-prefix=MACHO-SYMTAB-ALIGN %s < %t.a
 MACHO-SYMTAB-ALIGN: !<arch>
 MACHO-SYMTAB-ALIGN-NEXT: #1/12           {{..........}}  0     0     0       36        `
