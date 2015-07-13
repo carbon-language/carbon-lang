@@ -21,6 +21,7 @@
 
 namespace llvm {
 
+class AssumptionCache;
 class DominatorTree;
 class Instruction;
 class Value;
@@ -119,14 +120,18 @@ private:
 class IVUsers : public LoopPass {
   friend class IVStrideUse;
   Loop *L;
+  AssumptionCache *AC;
   LoopInfo *LI;
   DominatorTree *DT;
   ScalarEvolution *SE;
-  SmallPtrSet<Instruction*,16> Processed;
+  SmallPtrSet<Instruction*, 16> Processed;
 
   /// IVUses - A list of all tracked IV uses of induction variable expressions
   /// we are interested in.
   ilist<IVStrideUse> IVUses;
+
+  // Ephemeral values used by @llvm.assume in this function.
+  SmallPtrSet<const Value *, 32> EphValues;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 

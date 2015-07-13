@@ -12,8 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/IVUsers.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -34,6 +36,7 @@ using namespace llvm;
 char IVUsers::ID = 0;
 INITIALIZE_PASS_BEGIN(IVUsers, "iv-users",
                       "Induction Variable Users", false, true)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
@@ -135,6 +138,11 @@ bool IVUsers::AddUsersImpl(Instruction *I,
   // 64-bit IV in 32-bit code just because the loop has one 64-bit cast.
   uint64_t Width = SE->getTypeSizeInBits(I->getType());
   if (Width > 64 || !DL.isLegalInteger(Width))
+    return false;
+
+  // Don't attempt to promote ephemeral values to indvars. They will be removed
+  // later anyway.
+  if (EphValues.count(I))
     return false;
 
   // Get the symbolic expression for this instruction.
@@ -244,6 +252,7 @@ IVUsers::IVUsers()
 }
 
 void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<AssumptionCacheTracker>();
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolution>();
@@ -253,9 +262,15 @@ void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {
 bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
 
   L = l;
+  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(
+      *L->getHeader()->getParent());
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
+
+  // Collect ephemeral values so that AddUsersIfInteresting skips them.
+  EphValues.clear();
+  CodeMetrics::collectEphemeralValues(L, AC, EphValues);
 
   // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
