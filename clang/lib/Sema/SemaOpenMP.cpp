@@ -21,6 +21,7 @@
 #include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/OpenMPKinds.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
@@ -472,7 +473,10 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
   // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
   // in a Construct, C/C++, predetermined, p.1]
   //  Variables appearing in threadprivate directives are threadprivate.
-  if (D->getTLSKind() != VarDecl::TLS_None ||
+  if ((D->getTLSKind() != VarDecl::TLS_None &&
+       !(D->hasAttr<OMPThreadPrivateDeclAttr>() &&
+         SemaRef.getLangOpts().OpenMPUseTLS &&
+         SemaRef.getASTContext().getTargetInfo().isTLSSupported())) ||
       (D->getStorageClass() == SC_Register && D->hasAttr<AsmLabelAttr>() &&
        !D->isLocalVarDecl())) {
     addDSA(D, buildDeclRefExpr(SemaRef, D, D->getType().getNonReferenceType(),
@@ -959,8 +963,12 @@ Sema::CheckOMPThreadPrivateDecl(SourceLocation Loc, ArrayRef<Expr *> VarList) {
       continue;
     }
 
-    // Check if this is a TLS variable.
-    if (VD->getTLSKind() != VarDecl::TLS_None ||
+    // Check if this is a TLS variable. If TLS is not being supported, produce
+    // the corresponding diagnostic.
+    if ((VD->getTLSKind() != VarDecl::TLS_None &&
+         !(VD->hasAttr<OMPThreadPrivateDeclAttr>() &&
+           getLangOpts().OpenMPUseTLS &&
+           getASTContext().getTargetInfo().isTLSSupported())) ||
         (VD->getStorageClass() == SC_Register && VD->hasAttr<AsmLabelAttr>() &&
          !VD->isLocalVarDecl())) {
       Diag(ILoc, diag::err_omp_var_thread_local)

@@ -932,6 +932,8 @@ llvm::Constant *CGOpenMPRuntime::createDispatchNextFunction(unsigned IVSize,
 
 llvm::Constant *
 CGOpenMPRuntime::getOrCreateThreadPrivateCache(const VarDecl *VD) {
+  assert(!CGM.getLangOpts().OpenMPUseTLS ||
+         !CGM.getContext().getTargetInfo().isTLSSupported());
   // Lookup the entry, lazily creating it if necessary.
   return getOrCreateInternalVariable(CGM.Int8PtrPtrTy,
                                      Twine(CGM.getMangledName(VD)) + ".cache.");
@@ -941,6 +943,10 @@ llvm::Value *CGOpenMPRuntime::getAddrOfThreadPrivate(CodeGenFunction &CGF,
                                                      const VarDecl *VD,
                                                      llvm::Value *VDAddr,
                                                      SourceLocation Loc) {
+  if (CGM.getLangOpts().OpenMPUseTLS &&
+      CGM.getContext().getTargetInfo().isTLSSupported())
+    return VDAddr;
+
   auto VarTy = VDAddr->getType()->getPointerElementType();
   llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
                          CGF.Builder.CreatePointerCast(VDAddr, CGM.Int8PtrTy),
@@ -970,6 +976,10 @@ void CGOpenMPRuntime::emitThreadPrivateVarInit(
 llvm::Function *CGOpenMPRuntime::emitThreadPrivateVarDefinition(
     const VarDecl *VD, llvm::Value *VDAddr, SourceLocation Loc,
     bool PerformInit, CodeGenFunction *CGF) {
+  if (CGM.getLangOpts().OpenMPUseTLS &&
+      CGM.getContext().getTargetInfo().isTLSSupported())
+    return nullptr;
+
   VD = VD->getDefinition(CGM.getContext());
   if (VD && ThreadPrivateWithDefinition.count(VD) == 0) {
     ThreadPrivateWithDefinition.insert(VD);

@@ -1262,6 +1262,11 @@ bool CodeGenModule::MayBeEmittedEagerly(const ValueDecl *Global) {
       // Implicit template instantiations may change linkage if they are later
       // explicitly instantiated, so they should not be emitted eagerly.
       return false;
+  // If OpenMP is enabled and threadprivates must be generated like TLS, delay
+  // codegen for global variables, because they may be marked as threadprivate.
+  if (LangOpts.OpenMP && LangOpts.OpenMPUseTLS &&
+      getContext().getTargetInfo().isTLSSupported() && isa<VarDecl>(Global))
+    return false;
 
   return true;
 }
