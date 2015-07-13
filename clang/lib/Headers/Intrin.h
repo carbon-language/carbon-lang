@@ -521,33 +521,31 @@ __popcnt(unsigned int _Value) {
   return __builtin_popcount(_Value);
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittest(long const *__BitBase, long __BitPos) {
-  return (*__BitBase >> __BitPos) & 1;
+_bittest(long const *_BitBase, long _BitPos) {
+  return (*_BitBase >> _BitPos) & 1;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandcomplement(long *__BitBase, long __BitPos) {
-  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
-  *__BitBase = *__BitBase ^ (1 << __BitPos);
-  return __Res;
+_bittestandcomplement(long *_BitBase, long _BitPos) {
+  unsigned char _Res = (*_BitBase >> _BitPos) & 1;
+  *_BitBase = *_BitBase ^ (1 << _BitPos);
+  return _Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandreset(long *__BitBase, long __BitPos) {
-  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
-  *__BitBase = *__BitBase & ~(1 << __BitPos);
-  return __Res;
+_bittestandreset(long *_BitBase, long _BitPos) {
+  unsigned char _Res = (*_BitBase >> _BitPos) & 1;
+  *_BitBase = *_BitBase & ~(1 << _BitPos);
+  return _Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandset(long *__BitBase, long __BitPos) {
-  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
-  *__BitBase = *__BitBase | (1 << __BitPos);
-  return __Res;
+_bittestandset(long *_BitBase, long _BitPos) {
+  unsigned char _Res = (*_BitBase >> _BitPos) & 1;
+  *_BitBase = *_BitBase | (1 << _BitPos);
+  return _Res;
 }
-#if defined(__i386__) || defined(__x86_64__)
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_interlockedbittestandset(long volatile *__BitBase, long __BitPos) {
-  return (__atomic_fetch_or(__BitBase, 1l << __BitPos, 5) >> __BitPos) & 1;
+_interlockedbittestandset(long volatile *_BitBase, long _BitPos) {
+  return (__atomic_fetch_or(_BitBase, 1l << _BitPos, 5) >> _BitPos) & 1;
 }
-#endif
 #ifdef __x86_64__
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
 _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask) {
@@ -569,30 +567,30 @@ __popcnt64(unsigned __int64 _Value) {
   return __builtin_popcountll(_Value);
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittest64(__int64 const *__BitBase, __int64 __BitPos) {
-  return (*__BitBase >> __BitPos) & 1;
+_bittest64(__int64 const *_BitBase, __int64 _BitPos) {
+  return (*_BitBase >> _BitPos) & 1;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandcomplement64(__int64 *__BitBase, __int64 __BitPos) {
-  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
-  *__BitBase = *__BitBase ^ (1ll << __BitPos);
-  return __Res;
+_bittestandcomplement64(__int64 *_BitBase, __int64 _BitPos) {
+  unsigned char _Res = (*_BitBase >> _BitPos) & 1;
+  *_BitBase = *_BitBase ^ (1ll << _BitPos);
+  return _Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandreset64(__int64 *__BitBase, __int64 __BitPos) {
-  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
-  *__BitBase = *__BitBase & ~(1ll << __BitPos);
-  return __Res;
+_bittestandreset64(__int64 *_BitBase, __int64 _BitPos) {
+  unsigned char _Res = (*_BitBase >> _BitPos) & 1;
+  *_BitBase = *_BitBase & ~(1ll << _BitPos);
+  return _Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_bittestandset64(__int64 *__BitBase, __int64 __BitPos) {
-  unsigned char __Res = (*__BitBase >> __BitPos) & 1;
-  *__BitBase = *__BitBase | (1ll << __BitPos);
-  return __Res;
+_bittestandset64(__int64 *_BitBase, __int64 _BitPos) {
+  unsigned char _Res = (*_BitBase >> _BitPos) & 1;
+  *_BitBase = *_BitBase | (1ll << _BitPos);
+  return _Res;
 }
 static __inline__ unsigned char __DEFAULT_FN_ATTRS
-_interlockedbittestandset64(__int64 volatile *__BitBase, __int64 __BitPos) {
-  return (__atomic_fetch_or(__BitBase, 1ll << __BitPos, 5) >> __BitPos) & 1;
+_interlockedbittestandset64(__int64 volatile *_BitBase, __int64 _BitPos) {
+  return (__atomic_fetch_or(_BitBase, 1ll << _BitPos, 5) >> _BitPos) & 1;
 }
 #endif
 /*----------------------------------------------------------------------------*\
