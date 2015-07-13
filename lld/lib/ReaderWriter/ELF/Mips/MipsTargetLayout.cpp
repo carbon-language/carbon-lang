@@ -102,7 +102,9 @@ template <class ELFT> void MipsTargetLayout<ELFT>::sortSegments() {
   this->_segments.insert(outIt, abiSeg);
 }
 
+template class MipsTargetLayout<ELF32BE>;
 template class MipsTargetLayout<ELF32LE>;
+template class MipsTargetLayout<ELF64BE>;
 template class MipsTargetLayout<ELF64LE>;
 
 } // end namespace elf

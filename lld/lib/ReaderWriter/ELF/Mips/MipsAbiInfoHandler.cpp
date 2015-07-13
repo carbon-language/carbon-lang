@@ -643,7 +643,9 @@ MipsAbiInfoHandler<ELFT>::createAbiFromSection(const Elf_Mips_ABIFlags &sec) {
   return abi;
 }
 
+template class MipsAbiInfoHandler<ELF32BE>;
 template class MipsAbiInfoHandler<ELF32LE>;
+template class MipsAbiInfoHandler<ELF64BE>;
 template class MipsAbiInfoHandler<ELF64LE>;
 
 }

@@ -22,6 +22,7 @@ std::unique_ptr<TargetRelocationHandler>
 createMipsRelocationHandler(MipsLinkingContext &ctx,
                             MipsTargetLayout<ELFT> &layout);
 
+template <class ELFT>
 Reference::Addend readMipsRelocAddend(Reference::KindValue kind,
                                       const uint8_t *content);
 } // elf

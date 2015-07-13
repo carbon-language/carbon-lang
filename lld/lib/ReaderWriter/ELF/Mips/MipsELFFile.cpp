@@ -50,7 +50,9 @@ template <class ELFT> bool MipsELFDefinedAtom<ELFT>::isPIC() const {
          codeModel() == DefinedAtom::codeMipsPIC;
 }
 
+template class MipsELFDefinedAtom<ELF32BE>;
 template class MipsELFDefinedAtom<ELF32LE>;
+template class MipsELFDefinedAtom<ELF64BE>;
 template class MipsELFDefinedAtom<ELF64LE>;
 
 template <class ELFT> static bool isMips64EL() {
@@ -78,7 +80,9 @@ MipsELFReference<ELFT>::MipsELFReference(uint64_t symValue, const Elf_Rel &rel)
                          rel.getSymbol(isMips64EL<ELFT>())),
       _tag(extractTag(rel)) {}
 
+template class MipsELFReference<ELF32BE>;
 template class MipsELFReference<ELF32LE>;
+template class MipsELFReference<ELF64BE>;
 template class MipsELFReference<ELF64LE>;
 
 template <class ELFT>
@@ -270,7 +274,8 @@ template <class ELFT>
 Reference::Addend
 MipsELFFile<ELFT>::readAddend(const Elf_Rel &ri,
                               const ArrayRef<uint8_t> content) const {
-  return readMipsRelocAddend(getPrimaryType(ri), content.data() + ri.r_offset);
+  return readMipsRelocAddend<ELFT>(getPrimaryType(ri),
+                                   content.data() + ri.r_offset);
 }
 
 template <class ELFT>
@@ -315,7 +320,9 @@ bool MipsELFFile<ELFT>::isLocalBinding(const Elf_Rel &rel) const {
              ->getBinding() == llvm::ELF::STB_LOCAL;
 }
 
+template class MipsELFFile<ELF32BE>;
 template class MipsELFFile<ELF32LE>;
+template class MipsELFFile<ELF64BE>;
 template class MipsELFFile<ELF64LE>;
 
 } // elf

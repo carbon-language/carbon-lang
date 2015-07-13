@@ -159,7 +159,9 @@ MipsDynamicLibraryWriter<ELFT>::createDynamicSymbolTable() {
       this->_alloc) MipsDynamicSymbolTable<ELFT>(this->_ctx, _targetLayout));
 }
 
+template class MipsDynamicLibraryWriter<ELF32BE>;
 template class MipsDynamicLibraryWriter<ELF32LE>;
+template class MipsDynamicLibraryWriter<ELF64BE>;
 template class MipsDynamicLibraryWriter<ELF64LE>;
 
 template <class ELFT>
@@ -275,7 +277,9 @@ MipsExecutableWriter<ELFT>::createDynamicSymbolTable() {
       this->_alloc) MipsDynamicSymbolTable<ELFT>(this->_ctx, _targetLayout));
 }
 
+template class MipsExecutableWriter<ELF32BE>;
 template class MipsExecutableWriter<ELF32LE>;
+template class MipsExecutableWriter<ELF64BE>;
 template class MipsExecutableWriter<ELF64LE>;
 
 } // elf

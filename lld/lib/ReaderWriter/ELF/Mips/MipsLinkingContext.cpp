@@ -18,7 +18,9 @@ using namespace lld::elf;
 
 std::unique_ptr<ELFLinkingContext>
 elf::createMipsLinkingContext(llvm::Triple triple) {
-  if (triple.getArch() == llvm::Triple::mipsel ||
+  if (triple.getArch() == llvm::Triple::mips ||
+      triple.getArch() == llvm::Triple::mipsel ||
+      triple.getArch() == llvm::Triple::mips64 ||
       triple.getArch() == llvm::Triple::mips64el)
     return llvm::make_unique<MipsLinkingContext>(triple);
   return nullptr;
@@ -27,8 +29,12 @@ elf::createMipsLinkingContext(llvm::Triple triple) {
 static std::unique_ptr<TargetHandler> createTarget(llvm::Triple triple,
                                                    MipsLinkingContext &ctx) {
   switch (triple.getArch()) {
+  case llvm::Triple::mips:
+    return llvm::make_unique<MipsTargetHandler<ELF32BE>>(ctx);
   case llvm::Triple::mipsel:
     return llvm::make_unique<MipsTargetHandler<ELF32LE>>(ctx);
+  case llvm::Triple::mips64:
+    return llvm::make_unique<MipsTargetHandler<ELF64BE>>(ctx);
   case llvm::Triple::mips64el:
     return llvm::make_unique<MipsTargetHandler<ELF64LE>>(ctx);
   default:

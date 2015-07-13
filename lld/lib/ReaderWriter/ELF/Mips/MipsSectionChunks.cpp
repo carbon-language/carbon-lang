@@ -44,7 +44,9 @@ template <class ELFT> void MipsReginfoSection<ELFT>::finalize() {
     this->_outputSection->setType(this->_type);
 }
 
+template class MipsReginfoSection<ELF32BE>;
 template class MipsReginfoSection<ELF32LE>;
+template class MipsReginfoSection<ELF64BE>;
 template class MipsReginfoSection<ELF64LE>;
 
 template <class ELFT>
@@ -85,7 +87,9 @@ template <class ELFT> void MipsOptionsSection<ELFT>::finalize() {
     this->_outputSection->setType(this->_type);
 }
 
+template class MipsOptionsSection<ELF32BE>;
 template class MipsOptionsSection<ELF32LE>;
+template class MipsOptionsSection<ELF64BE>;
 template class MipsOptionsSection<ELF64LE>;
 
 template <class ELFT>
@@ -116,7 +120,9 @@ template <class ELFT> void MipsAbiFlagsSection<ELFT>::finalize() {
     this->_outputSection->setType(this->_type);
 }
 
+template class MipsAbiFlagsSection<ELF32BE>;
 template class MipsAbiFlagsSection<ELF32LE>;
+template class MipsAbiFlagsSection<ELF64BE>;
 template class MipsAbiFlagsSection<ELF64LE>;
 
 template <class ELFT>
@@ -175,7 +181,9 @@ const AtomLayout *MipsGOTSection<ELFT>::appendAtom(const Atom *atom) {
   return AtomSection<ELFT>::appendAtom(atom);
 }
 
+template class MipsGOTSection<ELF32BE>;
 template class MipsGOTSection<ELF32LE>;
+template class MipsGOTSection<ELF64BE>;
 template class MipsGOTSection<ELF64LE>;
 
 template <class ELFT>
@@ -208,7 +216,9 @@ const AtomLayout *MipsPLTSection<ELFT>::appendAtom(const Atom *atom) {
   return layout;
 }
 
+template class MipsPLTSection<ELF32BE>;
 template class MipsPLTSection<ELF32LE>;
+template class MipsPLTSection<ELF64BE>;
 template class MipsPLTSection<ELF64LE>;
 
 template <class ELFT> static bool isMips64EL() {
@@ -245,7 +255,9 @@ void MipsRelocationTable<ELFT>::writeRel(ELFWriter *writer, Elf_Rel &r,
   r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
 }
 
+template class MipsRelocationTable<ELF32BE>;
 template class MipsRelocationTable<ELF32LE>;
+template class MipsRelocationTable<ELF64BE>;
 template class MipsRelocationTable<ELF64LE>;
 
 } // elf

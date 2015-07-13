@@ -356,11 +356,6 @@ static CrossJumpMode getCrossJumpMode(const Reference &ref) {
   }
 }
 
-static uint64_t microShuffle(uint64_t ins) {
-  return (ins & 0xffffffff00000000ull) | ((ins & 0xffff) << 16) |
-         ((ins & 0xffff0000) >> 16);
-}
-
 static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
                                             Reference::Addend addend,
                                             uint64_t tgtAddr, uint64_t relAddr,
@@ -502,29 +497,32 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   }
 }
 
+template <class ELFT>
 static uint64_t relocRead(const MipsRelocationParams &params,
                           const uint8_t *loc) {
+  assert((params._size == 4 || params._size == 8) && "Unexpected size");
   uint64_t data;
+  memcpy(&data, loc, params._size);
+  if (params._shuffle) {
+    using namespace endian;
+    auto p = reinterpret_cast<const uint8_t *>(&data);
+    uint32_t a = readNext<uint16_t, ELFT::TargetEndianness, unaligned>(p);
+    uint32_t b = read<uint16_t, ELFT::TargetEndianness, unaligned>(p);
+    write<uint32_t, ELFT::TargetEndianness, unaligned>(&data, a << 16 | b);
+  }
   switch (params._size) {
   case 4:
-    data = endian::read32le(loc);
-    break;
+    return endian::read<uint32_t, ELFT::TargetEndianness, unaligned>(&data);
   case 8:
-    data = endian::read64le(loc);
-    break;
+    return endian::read<uint64_t, ELFT::TargetEndianness, unaligned>(&data);
   default:
     llvm_unreachable("Unexpected size");
   }
-  if (params._shuffle)
-    data = microShuffle(data);
-  return data;
 }
 
 template <class ELFT>
 static void relocWrite(uint64_t data, const MipsRelocationParams &params,
                        uint8_t *loc) {
-  if (params._shuffle)
-    data = microShuffle(data);
   switch (params._size) {
   case 4:
     endian::write<uint32_t, ELFT::TargetEndianness, unaligned>(loc, data);
@@ -534,6 +532,13 @@ static void relocWrite(uint64_t data, const MipsRelocationParams &params,
     break;
   default:
     llvm_unreachable("Unexpected size");
+  }
+  if (params._shuffle) {
+    uint32_t v = endian::read<uint32_t, ELFT::TargetEndianness, unaligned>(loc);
+    uint16_t a = v >> 16;
+    uint16_t b = v & 0xffff;
+    endian::write<uint16_t, ELFT::TargetEndianness, unaligned>(loc, a);
+    endian::write<uint16_t, ELFT::TargetEndianness, unaligned>(loc + 2, b);
   }
 }
 
@@ -604,7 +609,7 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
   }
 
   auto params = getRelocationParams(lastRel);
-  uint64_t ins = relocRead(params, location);
+  uint64_t ins = relocRead<ELFT>(params, location);
   if (auto ec = adjustJumpOpCode(ins, tgtAddr, jumpMode))
     return ec;
 
@@ -619,9 +624,23 @@ namespace elf {
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
+createMipsRelocationHandler<ELF32BE>(MipsLinkingContext &ctx,
+                                     MipsTargetLayout<ELF32BE> &layout) {
+  return llvm::make_unique<RelocationHandler<ELF32BE>>(ctx, layout);
+}
+
+template <>
+std::unique_ptr<TargetRelocationHandler>
 createMipsRelocationHandler<ELF32LE>(MipsLinkingContext &ctx,
                                      MipsTargetLayout<ELF32LE> &layout) {
   return llvm::make_unique<RelocationHandler<ELF32LE>>(ctx, layout);
+}
+
+template <>
+std::unique_ptr<TargetRelocationHandler>
+createMipsRelocationHandler<ELF64BE>(MipsLinkingContext &ctx,
+                                     MipsTargetLayout<ELF64BE> &layout) {
+  return llvm::make_unique<RelocationHandler<ELF64BE>>(ctx, layout);
 }
 
 template <>
@@ -631,10 +650,11 @@ createMipsRelocationHandler<ELF64LE>(MipsLinkingContext &ctx,
   return llvm::make_unique<RelocationHandler<ELF64LE>>(ctx, layout);
 }
 
+template <class ELFT>
 Reference::Addend readMipsRelocAddend(Reference::KindValue kind,
                                       const uint8_t *content) {
   auto params = getRelocationParams(kind);
-  uint64_t ins = relocRead(params, content);
+  uint64_t ins = relocRead<ELFT>(params, content);
   int64_t res = (ins & params._mask) << params._shift;
   switch (kind) {
   case R_MIPS_GPREL16:
@@ -659,6 +679,19 @@ Reference::Addend readMipsRelocAddend(Reference::KindValue kind,
   }
   return res;
 }
+
+template
+Reference::Addend readMipsRelocAddend<ELF32BE>(Reference::KindValue kind,
+                                               const uint8_t *content);
+template
+Reference::Addend readMipsRelocAddend<ELF32LE>(Reference::KindValue kind,
+                                               const uint8_t *content);
+template
+Reference::Addend readMipsRelocAddend<ELF64BE>(Reference::KindValue kind,
+                                               const uint8_t *content);
+template
+Reference::Addend readMipsRelocAddend<ELF64LE>(Reference::KindValue kind,
+                                               const uint8_t *content);
 
 } // elf
 } // lld
