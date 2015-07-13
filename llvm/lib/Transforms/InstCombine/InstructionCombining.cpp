@@ -2174,16 +2174,9 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   if (!EV.hasIndices())
     return ReplaceInstUsesWith(EV, Agg);
 
-  if (Constant *C = dyn_cast<Constant>(Agg)) {
-    if (Constant *C2 = C->getAggregateElement(*EV.idx_begin())) {
-      if (EV.getNumIndices() == 0)
-        return ReplaceInstUsesWith(EV, C2);
-      // Extract the remaining indices out of the constant indexed by the
-      // first index
-      return ExtractValueInst::Create(C2, EV.getIndices().slice(1));
-    }
-    return nullptr; // Can't handle other constants
-  }
+  if (Value *V =
+          SimplifyExtractValueInst(Agg, EV.getIndices(), DL, TLI, DT, AC))
+    return ReplaceInstUsesWith(EV, V);
 
   if (InsertValueInst *IV = dyn_cast<InsertValueInst>(Agg)) {
     // We're extracting from an insertvalue instruction, compare the indices

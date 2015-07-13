@@ -27,3 +27,12 @@ define { i8, i32 } @test2({ i8*, i32 } %x) {
   ret { i8, i32 } %ins
 ; CHECK-LABEL: @test2(
 }
+
+define i32 @test3(i32 %a, float %b) {
+  %agg1 = insertvalue {i32, float} undef, i32 %a, 0
+  %agg2 = insertvalue {i32, float} %agg1, float %b, 1
+  %ev = extractvalue {i32, float} %agg2, 0
+  ret i32 %ev
+; CHECK-LABEL: @test3(
+; CHECK: ret i32 %a
+}

@@ -244,6 +244,15 @@ namespace llvm {
                                  AssumptionCache *AC = nullptr,
                                  const Instruction *CxtI = nullptr);
 
+  /// \brief Given operands for an ExtractValueInst, see if we can fold the
+  /// result.  If not, this returns null.
+  Value *SimplifyExtractValueInst(Value *Agg, ArrayRef<unsigned> Idxs,
+                                  const DataLayout &DL,
+                                  const TargetLibraryInfo *TLI = nullptr,
+                                  const DominatorTree *DT = nullptr,
+                                  AssumptionCache *AC = nullptr,
+                                  const Instruction *CxtI = nullptr);
+
   /// SimplifyTruncInst - Given operands for an TruncInst, see if we can fold
   /// the result.  If not, this returns null.
   Value *SimplifyTruncInst(Value *Op, Type *Ty, const DataLayout &DL,

@@ -72,6 +72,12 @@ namespace llvm {
 Constant *ConstantFoldInsertValueInstruction(Constant *Agg, Constant *Val,
                                              ArrayRef<unsigned> Idxs);
 
+/// \brief Attempt to constant fold an extractvalue instruction with the
+/// specified operands and indices.  The constant result is returned if
+/// successful; if not, null is returned.
+Constant *ConstantFoldExtractValueInstruction(Constant *Agg,
+                                              ArrayRef<unsigned> Idxs);
+
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.
