@@ -508,7 +508,7 @@ void NclPopcountRecognize::transform(Instruction *CntInst,
 
     ICmpInst *NewPreCond =
       cast<ICmpInst>(Builder.CreateICmp(PreCond->getPredicate(), Opnd0, Opnd1));
-    PreCond->replaceAllUsesWith(NewPreCond);
+    PreCondBr->setCondition(NewPreCond);
 
     RecursivelyDeleteTriviallyDeadInstructions(PreCond, TLI);
   }
