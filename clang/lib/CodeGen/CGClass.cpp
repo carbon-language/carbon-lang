@@ -917,11 +917,7 @@ namespace {
           CGF.getTypes().getCGRecordLayout(FirstField->getParent());
         const CGBitFieldInfo &BFInfo = RL.getBitFieldInfo(FirstField);
         // FirstFieldOffset is not appropriate for bitfields,
-        // it won't tell us what the storage offset should be and thus might not
-        // be properly aligned.
-        //
-        // Instead calculate the storage offset using the offset of the field in
-        // the struct type.
+        // we need to use the storage offset instead.
         FirstByteOffset = CGF.getContext().toBits(BFInfo.StorageOffset);
       } else {
         FirstByteOffset = FirstFieldOffset;
