@@ -401,6 +401,12 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Key& __x) const
         {return static_cast<const _Hash&>(*this)(__x);}
+    void swap(__unordered_map_hasher&__y)
+        _NOEXCEPT_(__is_nothrow_swappable<_Hash>::value)
+    {
+        using _VSTD::swap;
+        swap(static_cast<const _Hash&>(*this), static_cast<const _Hash&>(__y));
+    }
 };
 
 template <class _Key, class _Cp, class _Hash>
@@ -425,7 +431,23 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Key& __x) const
         {return __hash_(__x);}
+    void swap(__unordered_map_hasher&__y)
+        _NOEXCEPT_(__is_nothrow_swappable<_Hash>::value)
+    {
+        using _VSTD::swap;
+        swap(__hash_, __y.__hash_);
+    }
 };
+
+template <class _Key, class _Cp, class _Hash, bool __b>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(__unordered_map_hasher<_Key, _Cp, _Hash, __b>& __x,
+     __unordered_map_hasher<_Key, _Cp, _Hash, __b>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
+{
+    __x.swap(__y);
+}
 
 template <class _Key, class _Cp, class _Pred,
           bool = is_empty<_Pred>::value && !__libcpp_is_final<_Pred>::value
@@ -453,6 +475,12 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
         {return static_cast<const _Pred&>(*this)(__x, __y.__cc.first);}
+    void swap(__unordered_map_equal&__y)
+        _NOEXCEPT_(__is_nothrow_swappable<_Pred>::value)
+    {
+        using _VSTD::swap;
+        swap(static_cast<const _Pred&>(*this), static_cast<const _Pred&>(__y));
+    }
 };
 
 template <class _Key, class _Cp, class _Pred>
@@ -480,7 +508,23 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
         {return __pred_(__x, __y.__cc.first);}
+    void swap(__unordered_map_equal&__y)
+        _NOEXCEPT_(__is_nothrow_swappable<_Pred>::value)
+    {
+        using _VSTD::swap;
+        swap(__pred_, __y.__pred_);
+    }
 };
+
+template <class _Key, class _Cp, class _Pred, bool __b>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(__unordered_map_equal<_Key, _Cp, _Pred, __b>& __x,
+     __unordered_map_equal<_Key, _Cp, _Pred, __b>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
+{
+    __x.swap(__y);
+}
 
 template <class _Alloc>
 class __hash_map_node_destructor

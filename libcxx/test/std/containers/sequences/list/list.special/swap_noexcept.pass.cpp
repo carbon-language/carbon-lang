@@ -12,6 +12,9 @@
 // void swap(list& c)
 //     noexcept(!allocator_type::propagate_on_container_swap::value ||
 //              __is_nothrow_swappable<allocator_type>::value);
+//
+//  In C++17, the standard says that swap shall have:
+//     noexcept(allocator_traits<Allocator>::is_always_equal::value);
 
 // This tests a conforming extension
 
@@ -31,6 +34,19 @@ struct some_alloc
     void deallocate(void*, unsigned) {}
 
     typedef std::true_type propagate_on_container_swap;
+};
+
+template <class T>
+struct some_alloc2
+{
+    typedef T value_type;
+    
+    some_alloc2() {}
+    some_alloc2(const some_alloc2&);
+    void deallocate(void*, unsigned) {}
+
+    typedef std::false_type propagate_on_container_swap;
+    typedef std::true_type is_always_equal;
 };
 
 int main()
@@ -54,7 +70,21 @@ int main()
     {
         typedef std::list<MoveOnly, some_alloc<MoveOnly>> C;
         C c1, c2;
+#if TEST_STD_VER >= 14
+    //  In c++14, if POCS is set, swapping the allocator is required not to throw
+        static_assert( noexcept(swap(c1, c2)), "");
+#else
         static_assert(!noexcept(swap(c1, c2)), "");
+#endif
     }
+#if TEST_STD_VER >= 14
+    {
+        typedef std::list<MoveOnly, some_alloc2<MoveOnly>> C;
+        C c1, c2;
+    //  if the allocators are always equal, then the swap can be noexcept
+        static_assert( noexcept(swap(c1, c2)), "");
+    }
+#endif
+
 #endif
 }

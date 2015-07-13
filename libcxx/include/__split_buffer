@@ -156,25 +156,6 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__split_buffer&, false_type) _NOEXCEPT
         {}
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__alloc_rr& __x, __alloc_rr& __y)
-        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value||
-                   __is_nothrow_swappable<__alloc_rr>::value)
-        {__swap_alloc(__x, __y, integral_constant<bool,
-                      __alloc_traits::propagate_on_container_swap::value>());}
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__alloc_rr& __x, __alloc_rr& __y, true_type)
-        _NOEXCEPT_(__is_nothrow_swappable<__alloc_rr>::value)
-        {
-            using _VSTD::swap;
-            swap(__x, __y);
-        }
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__alloc_rr&, __alloc_rr&, false_type) _NOEXCEPT
-        {}
 };
 
 template <class _Tp, class _Allocator>
@@ -431,7 +412,7 @@ __split_buffer<_Tp, _Allocator>::swap(__split_buffer& __x)
     _VSTD::swap(__begin_, __x.__begin_);
     _VSTD::swap(__end_, __x.__end_);
     _VSTD::swap(__end_cap(), __x.__end_cap());
-    __swap_alloc(__alloc(), __x.__alloc());
+    __swap_allocator(__alloc(), __x.__alloc());
 }
 
 template <class _Tp, class _Allocator>

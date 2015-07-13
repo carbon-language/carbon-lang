@@ -119,8 +119,8 @@ public:
     void resize(size_type sz, const value_type& c);
 
     void swap(vector&)
-        noexcept(!allocator_type::propagate_on_container_swap::value ||
-                 __is_nothrow_swappable<allocator_type>::value);
+        noexcept(allocator_traits<allocator_type>::propagate_on_container_swap::value ||
+                 allocator_traits<allocator_type>::is_always_equal::value);  // C++17
 
     bool __invariants() const;
 };
@@ -237,8 +237,8 @@ public:
     void resize(size_type sz, value_type x);
 
     void swap(vector&)
-        noexcept(!allocator_type::propagate_on_container_swap::value ||
-                 __is_nothrow_swappable<allocator_type>::value);
+        noexcept(allocator_traits<allocator_type>::propagate_on_container_swap::value ||
+                 allocator_traits<allocator_type>::is_always_equal::value);  // C++17
     void flip() noexcept;
 
     bool __invariants() const;
@@ -385,14 +385,6 @@ protected:
             is_nothrow_move_assignable<allocator_type>::value)
         {__move_assign_alloc(__c, integral_constant<bool,
                       __alloc_traits::propagate_on_container_move_assignment::value>());}
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type& __x, allocator_type& __y)
-        _NOEXCEPT_(
-            !__alloc_traits::propagate_on_container_swap::value ||
-            __is_nothrow_swappable<allocator_type>::value)
-        {__swap_alloc(__x, __y, integral_constant<bool,
-                      __alloc_traits::propagate_on_container_swap::value>());}
 private:
     _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __vector_base& __c, true_type)
@@ -419,18 +411,6 @@ private:
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__vector_base&, false_type)
-        _NOEXCEPT
-        {}
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type& __x, allocator_type& __y, true_type)
-        _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
-        {
-            using _VSTD::swap;
-            swap(__x, __y);
-        }
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type&, allocator_type&, false_type)
         _NOEXCEPT
         {}
 };
@@ -760,8 +740,12 @@ public:
     void resize(size_type __sz, const_reference __x);
 
     void swap(vector&)
-        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
-                   __is_nothrow_swappable<allocator_type>::value);
+#if _LIBCPP_STD_VER >= 14
+        _NOEXCEPT;
+#else
+        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value || 
+                    __is_nothrow_swappable<allocator_type>::value);
+#endif
 
     bool __invariants() const;
 
@@ -2016,8 +2000,12 @@ vector<_Tp, _Allocator>::resize(size_type __sz, const_reference __x)
 template <class _Tp, class _Allocator>
 void
 vector<_Tp, _Allocator>::swap(vector& __x)
-        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
-                   __is_nothrow_swappable<allocator_type>::value)
+#if _LIBCPP_STD_VER >= 14
+    _NOEXCEPT
+#else
+    _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value || 
+                __is_nothrow_swappable<allocator_type>::value)
+#endif
 {
     _LIBCPP_ASSERT(__alloc_traits::propagate_on_container_swap::value ||
                    this->__alloc() == __x.__alloc(),
@@ -2026,7 +2014,8 @@ vector<_Tp, _Allocator>::swap(vector& __x)
     _VSTD::swap(this->__begin_, __x.__begin_);
     _VSTD::swap(this->__end_, __x.__end_);
     _VSTD::swap(this->__end_cap(), __x.__end_cap());
-    __base::__swap_alloc(this->__alloc(), __x.__alloc());
+    __swap_allocator(this->__alloc(), __x.__alloc(), 
+        integral_constant<bool,__alloc_traits::propagate_on_container_swap::value>());
 #if _LIBCPP_DEBUG_LEVEL >= 2
     __get_db()->swap(this, &__x);
 #endif  // _LIBCPP_DEBUG_LEVEL >= 2
@@ -2354,8 +2343,12 @@ public:
     void clear() _NOEXCEPT {__size_ = 0;}
 
     void swap(vector&)
-        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
-                   __is_nothrow_swappable<allocator_type>::value);
+#if _LIBCPP_STD_VER >= 14
+        _NOEXCEPT;
+#else
+        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value || 
+                    __is_nothrow_swappable<allocator_type>::value);
+#endif
 
     void resize(size_type __sz, value_type __x = false);
     void flip() _NOEXCEPT;
@@ -2430,26 +2423,6 @@ private:
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(vector&, false_type)
-        _NOEXCEPT
-        {}
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__storage_allocator& __x, __storage_allocator& __y)
-        _NOEXCEPT_(
-            !__storage_traits::propagate_on_container_swap::value ||
-            __is_nothrow_swappable<allocator_type>::value)
-        {__swap_alloc(__x, __y, integral_constant<bool,
-                      __storage_traits::propagate_on_container_swap::value>());}
-
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__storage_allocator& __x, __storage_allocator& __y, true_type)
-        _NOEXCEPT_(__is_nothrow_swappable<allocator_type>::value)
-        {
-            using _VSTD::swap;
-            swap(__x, __y);
-        }
-    _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__storage_allocator&, __storage_allocator&, false_type)
         _NOEXCEPT
         {}
 
@@ -3155,13 +3128,18 @@ vector<bool, _Allocator>::erase(const_iterator __first, const_iterator __last)
 template <class _Allocator>
 void
 vector<bool, _Allocator>::swap(vector& __x)
-        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
-                   __is_nothrow_swappable<allocator_type>::value)
+#if _LIBCPP_STD_VER >= 14
+    _NOEXCEPT
+#else
+    _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value || 
+                __is_nothrow_swappable<allocator_type>::value)
+#endif
 {
     _VSTD::swap(this->__begin_, __x.__begin_);
     _VSTD::swap(this->__size_, __x.__size_);
     _VSTD::swap(this->__cap(), __x.__cap());
-    __swap_alloc(this->__alloc(), __x.__alloc());
+    __swap_allocator(this->__alloc(), __x.__alloc(), 
+        integral_constant<bool, __alloc_traits::propagate_on_container_swap::value>());
 }
 
 template <class _Allocator>

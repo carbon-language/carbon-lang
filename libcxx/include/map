@@ -159,10 +159,8 @@ public:
     void clear() noexcept;
 
     void swap(map& m)
-        noexcept(
-            __is_nothrow_swappable<key_compare>::value &&
-            (!allocator_type::propagate_on_container_swap::value ||
-             __is_nothrow_swappable<allocator_type>::value));
+        noexcept(allocator_traits<allocator_type>::is_always_equal::value &&
+            __is_nothrow_swappable<key_compare>::value); // C++17
 
     // observers:
     allocator_type get_allocator() const noexcept;
@@ -354,10 +352,8 @@ public:
     void clear() noexcept;
 
     void swap(multimap& m)
-        noexcept(
-            __is_nothrow_swappable<key_compare>::value &&
-            (!allocator_type::propagate_on_container_swap::value ||
-             __is_nothrow_swappable<allocator_type>::value));
+        noexcept(allocator_traits<allocator_type>::is_always_equal::value &&
+            __is_nothrow_swappable<key_compare>::value); // C++17
 
     // observers:
     allocator_type get_allocator() const noexcept;
@@ -479,6 +475,12 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _CP& __y) const
         {return static_cast<const _Compare&>(*this)(__x, __y.__cc.first);}
+    void swap(__map_value_compare&__y)
+        _NOEXCEPT_(__is_nothrow_swappable<_Compare>::value)
+    {
+        using _VSTD::swap;
+        swap(static_cast<const _Compare&>(*this), static_cast<const _Compare&>(__y));
+    }
 
 #if _LIBCPP_STD_VER > 11
     template <typename _K2>
@@ -521,7 +523,13 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _CP& __y) const
         {return comp(__x, __y.__cc.first);}
-
+    void swap(__map_value_compare&__y)
+        _NOEXCEPT_(__is_nothrow_swappable<_Compare>::value)
+    {
+        using _VSTD::swap;
+        swap(comp, __y.comp);
+    }
+    
 #if _LIBCPP_STD_VER > 11
     template <typename _K2>
     _LIBCPP_INLINE_VISIBILITY
@@ -536,6 +544,16 @@ public:
         {return comp (__x.__cc.first, __y);}
 #endif
 };
+
+template <class _Key, class _CP, class _Compare, bool __b>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(__map_value_compare<_Key, _CP, _Compare, __b>& __x,
+     __map_value_compare<_Key, _CP, _Compare, __b>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
+{
+    __x.swap(__y);
+}
 
 template <class _Allocator>
 class __map_node_destructor
