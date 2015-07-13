@@ -1,4 +1,5 @@
 // Tests CUDA compilation pipeline construction in Driver.
+// REQUIRES: clang-driver
 
 // Simple compilation case:
 // RUN: %clang -### -c %s 2>&1 \
