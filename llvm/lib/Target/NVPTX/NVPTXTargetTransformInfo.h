@@ -58,6 +58,8 @@ public:
       TTI::OperandValueKind Opd2Info = TTI::OK_AnyValue,
       TTI::OperandValueProperties Opd1PropInfo = TTI::OP_None,
       TTI::OperandValueProperties Opd2PropInfo = TTI::OP_None);
+
+  void getUnrollingPreferences(Loop *L, TTI::UnrollingPreferences &UP);
 };
 
 } // end namespace llvm

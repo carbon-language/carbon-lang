@@ -117,3 +117,15 @@ unsigned NVPTXTTIImpl::getArithmeticInstrCost(
                                          Opd1PropInfo, Opd2PropInfo);
   }
 }
+
+void NVPTXTTIImpl::getUnrollingPreferences(Loop *L,
+                                           TTI::UnrollingPreferences &UP) {
+  BaseT::getUnrollingPreferences(L, UP);
+
+  // Enable partial unrolling and runtime unrolling, but reduce the
+  // threshold.  This partially unrolls small loops which are often
+  // unrolled by the PTX to SASS compiler and unrolling earlier can be
+  // beneficial.
+  UP.Partial = UP.Runtime = true;
+  UP.PartialThreshold = UP.Threshold / 4;
+}
