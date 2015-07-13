@@ -70,7 +70,9 @@ void WinException::beginFunction(const MachineFunction *MF) {
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
-  const Function *Per = MMI->getPersonality();
+  const Function *Per = nullptr;
+  if (F->hasPersonalityFn())
+    Per = dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
 
   shouldEmitPersonality = hasLandingPads &&
     PerEncoding != dwarf::DW_EH_PE_omit && Per;
@@ -79,10 +81,12 @@ void WinException::beginFunction(const MachineFunction *MF) {
   shouldEmitLSDA = shouldEmitPersonality &&
     LSDAEncoding != dwarf::DW_EH_PE_omit;
 
-  // If we're not using CFI, we don't want the CFI or the personality. Emit the
-  // LSDA if this is the parent function.
+  // If we're not using CFI, we don't want the CFI or the personality. If
+  // WinEHPrepare outlined something, we should emit the LSDA.
   if (!Asm->MAI->usesWindowsCFI()) {
-    shouldEmitLSDA = (hasLandingPads && F == ParentF);
+    bool HasOutlinedChildren =
+        F->hasFnAttribute("wineh-parent") && F == ParentF;
+    shouldEmitLSDA = HasOutlinedChildren;
     shouldEmitPersonality = false;
     return;
   }
@@ -121,7 +125,10 @@ void WinException::endFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality && !shouldEmitMoves && !shouldEmitLSDA)
     return;
 
-  EHPersonality Per = MMI->getPersonalityType();
+  const Function *F = MF->getFunction();
+  EHPersonality Per = EHPersonality::Unknown;
+  if (F->hasPersonalityFn())
+    Per = classifyEHPersonality(F->getPersonalityFn());
 
   // Get rid of any dead landing pads if we're not using a Windows EH scheme. In
   // Windows EH schemes, the landing pad is not actually reachable. It only
@@ -582,7 +589,8 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
   OS.EmitValueToAlignment(4);
   OS.EmitLabel(LSDALabel);
 
-  const Function *Per = MMI->getPersonality();
+  const Function *Per =
+      dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
   StringRef PerName = Per->getName();
   int BaseState = -1;
   if (PerName == "_except_handler4") {
