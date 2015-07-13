@@ -2218,8 +2218,8 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         Ops.push_back(DAG.getTargetGlobalAddress(GA->getGlobal(),
                                                  C ? SDLoc(C) : SDLoc(),
                                                  Op.getValueType(), Offs));
-        return;
       }
+      return;
     }
     if (C) {   // just C, no GV.
       // Simple constants are not allowed for 's'.
@@ -2229,8 +2229,8 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         // ScheduleDAGSDNodes::EmitNode, which is very generic.
         Ops.push_back(DAG.getTargetConstant(C->getAPIntValue().getSExtValue(),
                                             SDLoc(C), MVT::i64));
-        return;
       }
+      return;
     }
     break;
   }
