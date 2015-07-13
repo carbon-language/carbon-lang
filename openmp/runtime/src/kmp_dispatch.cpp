@@ -1389,7 +1389,7 @@ __kmp_dispatch_next(
     kmp_info_t                          * th   = __kmp_threads[ gtid ];
     kmp_team_t                          * team = th -> th.th_team;
 
-    KMP_DEBUG_ASSERT( p_last && p_lb && p_ub && p_st ); // AC: these cannot be NULL
+    KMP_DEBUG_ASSERT( p_lb && p_ub && p_st ); // AC: these cannot be NULL
     #ifdef KMP_DEBUG
     {
         const char * buff;
