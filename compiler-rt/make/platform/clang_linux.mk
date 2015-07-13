@@ -78,7 +78,7 @@ FUNCTIONS.builtins-i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.builtins-x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
 FUNCTIONS.profile-i386 := GCDAProfiling InstrProfiling InstrProfilingBuffer \
                           InstrProfilingFile InstrProfilingPlatformOther \
-                          InstrProfilingRuntime
+                          InstrProfilingRuntime InstrProfilingUtil
 FUNCTIONS.profile-x86_64 := $(FUNCTIONS.profile-i386)
 
 # Always use optimized variants.
