@@ -362,7 +362,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
 
   // Set the segment memory size and the virtual address.
   this->setMemSize(curSliceAddress - startAddr + curSliceSize);
-  this->setVirtualAddr(curSliceAddress);
+  this->setVirtualAddr(startAddr);
   std::stable_sort(_segmentSlices.begin(), _segmentSlices.end(),
                    SegmentSlice<ELFT>::compare_slices);
 }
