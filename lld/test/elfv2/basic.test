@@ -1,0 +1,62 @@
+# RUN: yaml2obj -format elf %s -o %t
+# RUN: lld -flavor gnu2 %t -e _start -o %t2
+# RUN: llvm-readobj -file-headers -program-headers %t2 | FileCheck %s
+
+FileHeader:
+  Class:           ELFCLASS64
+  Data:            ELFDATA2LSB
+  OSABI:           ELFOSABI_GNU
+  Type:            ET_REL
+  Machine:         EM_X86_64
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x0000000000000004
+    Content:         5548C7C03C00000048C7C7010000000F05
+Symbols:
+  Global:
+    - Name:            _start
+      Type:            STT_FUNC
+      Section:         .text
+
+# CHECK: ElfHeader {
+# CHECK:   Ident {
+# CHECK:     Magic: (7F 45 4C 46)
+# CHECK:     Class: 64-bit (0x2)
+# CHECK:     DataEncoding: LittleEndian (0x1)
+# CHECK:     FileVersion: 1
+# CHECK:     OS/ABI: GNU/Linux (0x3)
+# CHECK:     ABIVersion: 0
+# CHECK:     Unused: (00 00 00 00 00 00 00)
+# CHECK:   }
+# CHECK:   Type: Executable (0x2)
+# CHECK:   Machine: EM_X86_64 (0x3E)
+# CHECK:   Version: 1
+#  Entry: 0x401000
+# CHECK:   ProgramHeaderOffset: 0x40
+#  SectionHeaderOffset: 0x0
+# CHECK:   Flags [ (0x0)
+# CHECK:   ]
+# CHECK:   HeaderSize: 64
+# CHECK:   ProgramHeaderEntrySize: 56
+#  ProgramHeaderCount: 1
+# CHECK:   SectionHeaderEntrySize: 64
+#  SectionHeaderCount: 0
+#  StringTableSectionIndex: 0
+# CHECK: }
+# CHECK: ProgramHeaders [
+# CHECK:   ProgramHeader {
+# CHECK:     Type: PT_LOAD (0x1)
+#    Offset: 0x0
+#    VirtualAddress: 0x400000
+#    PhysicalAddress: 0x400000
+#    FileSize: 4128
+#    MemSize: 4128
+# CHECK:     Flags [ (0x5)
+# CHECK:       PF_R (0x4)
+# CHECK:       PF_X (0x1)
+# CHECK:     ]
+#    Alignment: 16384
+# CHECK:   }
+# CHECK: ]

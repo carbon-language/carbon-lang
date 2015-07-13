@@ -146,6 +146,10 @@ namespace coff {
 bool link(llvm::ArrayRef<const char *> args);
 }
 
+namespace elfv2 {
+bool link(llvm::ArrayRef<const char *> args);
+}
+
 /// Driver for lld unit tests
 class CoreDriver : public Driver {
 public:
