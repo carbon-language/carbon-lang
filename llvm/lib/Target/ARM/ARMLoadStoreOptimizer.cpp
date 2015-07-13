@@ -906,25 +906,6 @@ void ARMLoadStoreOpt::FormCandidates(const MemOpQueue &MemOps) {
   unsigned Opcode = FirstMI->getOpcode();
   bool isNotVFP = isi32Load(Opcode) || isi32Store(Opcode);
   unsigned Size = getLSMultipleTransferSize(FirstMI);
-  // vldm / vstm limit are 32 for S variants, 16 for D variants.
-  unsigned Limit;
-  switch (Opcode) {
-  default:
-    Limit = UINT_MAX;
-    break;
-  case ARM::VSTRS:
-    Limit = 32;
-    break;
-  case ARM::VSTRD:
-    Limit = 16;
-    break;
-  case ARM::VLDRD:
-    Limit = 16;
-    break;
-  case ARM::VLDRS:
-    Limit = 32;
-    break;
-  }
 
   unsigned SIndex = 0;
   unsigned EIndex = MemOps.size();
@@ -1634,9 +1615,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   MemOpQueue MemOps;
   unsigned CurrBase = 0;
   unsigned CurrOpc = ~0u;
-  unsigned CurrSize = 0;
   ARMCC::CondCodes CurrPred = ARMCC::AL;
-  unsigned CurrPredReg = 0;
   unsigned Position = 0;
   assert(Candidates.size() == 0);
   assert(MergeBaseCandidates.size() == 0);
@@ -1652,7 +1631,6 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 
     if (isMemoryOp(MBBI)) {
       unsigned Opcode = MBBI->getOpcode();
-      unsigned Size = getLSMultipleTransferSize(MBBI);
       const MachineOperand &MO = MBBI->getOperand(0);
       unsigned Reg = MO.getReg();
       unsigned Base = getLoadStoreBaseOp(*MBBI).getReg();
@@ -1663,9 +1641,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // Start of a new chain.
         CurrBase = Base;
         CurrOpc  = Opcode;
-        CurrSize = Size;
         CurrPred = Pred;
-        CurrPredReg = PredReg;
         MemOps.push_back(MemOpQueueEntry(MBBI, Offset, Position));
         continue;
       }
@@ -1737,9 +1713,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       // Reset for the next chain.
       CurrBase = 0;
       CurrOpc = ~0u;
-      CurrSize = 0;
       CurrPred = ARMCC::AL;
-      CurrPredReg = 0;
       MemOps.clear();
     }
   }
