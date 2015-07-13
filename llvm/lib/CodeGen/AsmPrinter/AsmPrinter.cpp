@@ -1023,7 +1023,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
   // Emit visibility info for declarations
   for (const Function &F : M) {
-    if (!F.isDeclaration())
+    if (!F.isDeclarationForLinker())
       continue;
     GlobalValue::VisibilityTypes V = F.getVisibility();
     if (V == GlobalValue::DefaultVisibility)
