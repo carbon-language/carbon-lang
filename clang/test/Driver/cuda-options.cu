@@ -67,14 +67,14 @@
 // RUN:   -check-prefix CUDA-NL %s
 
 // Match device-side compilation
-// CUDA-D1: "-cc1" "-triple" "nvptx{{64?}}-nvidia-cuda"
+// CUDA-D1: "-cc1" "-triple" "nvptx{{(64)?}}-nvidia-cuda"
 // CUDA-D1-SAME: "-fcuda-is-device"
 // CUDA-D1-SM35-SAME: "-target-cpu" "sm_35"
 // CUDA-D1-SAME: "-o" "[[GPUBINARY1:[^"]*]]"
 // CUDA-D1-SAME: "-x" "cuda"
 
 // Match anothe device-side compilation
-// CUDA-D2: "-cc1" "-triple" "nvptx{{64?}}-nvidia-cuda"
+// CUDA-D2: "-cc1" "-triple" "nvptx{{(64)?}}-nvidia-cuda"
 // CUDA-D2-SAME: "-fcuda-is-device"
 // CUDA-D2-SM30-SAME: "-target-cpu" "sm_30"
 // CUDA-D2-SAME: "-o" "[[GPUBINARY2:[^"]*]]"
