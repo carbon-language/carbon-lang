@@ -164,6 +164,7 @@ testing::AssertionResult matchesConditionallyWithCuda(
   std::vector<std::string> Args;
   Args.push_back("-xcuda");
   Args.push_back("-fno-ms-extensions");
+  Args.push_back("--cuda-host-only");
   Args.push_back(CompileArg);
   if (!runToolOnCodeWithArgs(Factory->create(),
                              CudaHeader + Code, Args)) {

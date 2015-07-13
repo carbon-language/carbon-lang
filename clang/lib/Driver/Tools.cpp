@@ -1488,6 +1488,12 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
     return CPUName;
   }
 
+  case llvm::Triple::nvptx:
+  case llvm::Triple::nvptx64:
+    if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
+      return A->getValue();
+    return "";
+
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
   case llvm::Triple::ppc64le: {
@@ -2826,8 +2832,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       getToolChain().getTriple().isWindowsCygwinEnvironment();
   bool IsWindowsMSVC = getToolChain().getTriple().isWindowsMSVCEnvironment();
 
-  assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
+  // Check number of inputs for sanity. We need at least one input.
+  assert(Inputs.size() >= 1 && "Must have at least one input.");
   const InputInfo &Input = Inputs[0];
+  // CUDA compilation may have multiple inputs (source file + results of
+  // device-side compilations). All other jobs are expected to have exactly one
+  // input.
+  bool IsCuda = types::isCuda(Input.getType());
+  assert((IsCuda || Inputs.size() == 1) && "Unable to handle multiple inputs.");
 
   // Invoke ourselves in -cc1 mode.
   //
@@ -4812,14 +4824,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     assert(Output.isNothing() && "Invalid output.");
   }
 
-  for (const auto &II : Inputs) {
-    addDashXForInput(Args, II, CmdArgs);
+  addDashXForInput(Args, Input, CmdArgs);
 
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      II.getInputArg().renderAsInput(Args, CmdArgs);
-  }
+  if (Input.isFilename())
+    CmdArgs.push_back(Input.getFilename());
+  else
+    Input.getInputArg().renderAsInput(Args, CmdArgs);
 
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
 
@@ -4856,6 +4866,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     SplitDwarfOut = SplitDebugName(Args, Input);
     CmdArgs.push_back(SplitDwarfOut);
   }
+
+  // Host-side cuda compilation receives device-side outputs as Inputs[1...].
+  // Include them with -fcuda-include-gpubinary.
+  if (IsCuda && Inputs.size() > 1)
+    for (InputInfoList::const_iterator it = std::next(Inputs.begin()),
+                                       ie = Inputs.end();
+         it != ie; ++it) {
+      CmdArgs.push_back("-fcuda-include-gpubinary");
+      CmdArgs.push_back(it->getFilename());
+    }
 
   // Finally add the compile command to the compilation.
   if (Args.hasArg(options::OPT__SLASH_fallback) &&

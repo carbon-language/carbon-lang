@@ -41,6 +41,8 @@ public:
   enum ActionClass {
     InputClass = 0,
     BindArchClass,
+    CudaDeviceClass,
+    CudaHostClass,
     PreprocessJobClass,
     PrecompileJobClass,
     AnalyzeJobClass,
@@ -131,6 +133,41 @@ public:
   static bool classof(const Action *A) {
     return A->getKind() == BindArchClass;
   }
+};
+
+class CudaDeviceAction : public Action {
+  virtual void anchor();
+  /// GPU architecture to bind -- e.g 'sm_35'.
+  const char *GpuArchName;
+  /// True when action results are not consumed by the host action (e.g when
+  /// -fsyntax-only or --cuda-device-only options are used).
+  bool AtTopLevel;
+
+public:
+  CudaDeviceAction(std::unique_ptr<Action> Input, const char *ArchName,
+                   bool AtTopLevel);
+
+  const char *getGpuArchName() const { return GpuArchName; }
+  bool isAtTopLevel() const { return AtTopLevel; }
+
+  static bool classof(const Action *A) {
+    return A->getKind() == CudaDeviceClass;
+  }
+};
+
+class CudaHostAction : public Action {
+  virtual void anchor();
+  ActionList DeviceActions;
+
+public:
+  CudaHostAction(std::unique_ptr<Action> Input,
+                 const ActionList &DeviceActions);
+  ~CudaHostAction() override;
+
+  ActionList &getDeviceActions() { return DeviceActions; }
+  const ActionList &getDeviceActions() const { return DeviceActions; }
+
+  static bool classof(const Action *A) { return A->getKind() == CudaHostClass; }
 };
 
 class JobAction : public Action {
