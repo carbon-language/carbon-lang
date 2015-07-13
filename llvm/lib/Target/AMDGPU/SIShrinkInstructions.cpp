@@ -94,8 +94,15 @@ static bool canShrink(MachineInstr &MI, const SIInstrInfo *TII,
   // is vcc.  We should handle this the same way we handle vopc, by addding
   // a register allocation hint pre-regalloc and then do the shrining
   // post-regalloc.
-  if (Src2)
-    return false;
+  if (Src2) {
+    if (MI.getOpcode() != AMDGPU::V_MAC_F32_e64)
+      return false;
+
+    const MachineOperand *Src2Mod =
+        TII->getNamedOperand(MI, AMDGPU::OpName::src2_modifiers);
+    if (!isVGPR(Src2, TRI, MRI) || (Src2Mod && Src2Mod->getImm() != 0))
+      return false;
+  }
 
   const MachineOperand *Src1 = TII->getNamedOperand(MI, AMDGPU::OpName::src1);
   const MachineOperand *Src1Mod =
@@ -258,6 +265,11 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
           TII->getNamedOperand(MI, AMDGPU::OpName::src1);
       if (Src1)
         Inst32.addOperand(*Src1);
+
+      const MachineOperand *Src2 =
+          TII->getNamedOperand(MI, AMDGPU::OpName::src2);
+      if (Src2)
+        Inst32.addOperand(*Src2);
 
       ++NumInstructionsShrunk;
       MI.eraseFromParent();

@@ -6,7 +6,7 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 declare float @llvm.fabs.f32(float) nounwind readnone
 
 ; CHECK-LABEL: {{^}}fmuladd_f32:
-; CHECK: v_mad_f32 {{v[0-9]+, v[0-9]+, v[0-9]+, v[0-9]+}}
+; CHECK: v_mac_f32_e32 {{v[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @fmuladd_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                          float addrspace(1)* %in2, float addrspace(1)* %in3) {
@@ -34,8 +34,8 @@ define void @fmuladd_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 ; CHECK-LABEL: {{^}}fmuladd_2.0_a_b_f32
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], 2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fmuladd_2.0_a_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
@@ -53,8 +53,8 @@ define void @fmuladd_2.0_a_b_f32(float addrspace(1)* %out, float addrspace(1)* %
 ; CHECK-LABEL: {{^}}fmuladd_a_2.0_b_f32
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], 2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fmuladd_a_2.0_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
@@ -72,8 +72,8 @@ define void @fmuladd_a_2.0_b_f32(float addrspace(1)* %out, float addrspace(1)* %
 ; CHECK-LABEL: {{^}}fadd_a_a_b_f32:
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], 2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fadd_a_a_b_f32(float addrspace(1)* %out,
                             float addrspace(1)* %in1,
                             float addrspace(1)* %in2) {
@@ -94,8 +94,8 @@ define void @fadd_a_a_b_f32(float addrspace(1)* %out,
 ; CHECK-LABEL: {{^}}fadd_b_a_a_f32:
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], 2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fadd_b_a_a_f32(float addrspace(1)* %out,
                             float addrspace(1)* %in1,
                             float addrspace(1)* %in2) {
@@ -116,8 +116,8 @@ define void @fadd_b_a_a_f32(float addrspace(1)* %out,
 ; CHECK-LABEL: {{^}}fmuladd_neg_2.0_a_b_f32
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], -2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], -2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fmuladd_neg_2.0_a_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
@@ -136,8 +136,8 @@ define void @fmuladd_neg_2.0_a_b_f32(float addrspace(1)* %out, float addrspace(1
 ; CHECK-LABEL: {{^}}fmuladd_neg_2.0_neg_a_b_f32
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], 2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fmuladd_neg_2.0_neg_a_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
@@ -158,8 +158,8 @@ define void @fmuladd_neg_2.0_neg_a_b_f32(float addrspace(1)* %out, float addrspa
 ; CHECK-LABEL: {{^}}fmuladd_2.0_neg_a_b_f32
 ; CHECK-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; CHECK-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; CHECK: v_mad_f32 [[RESULT:v[0-9]+]], -2.0, [[R1]], [[R2]]
-; CHECK: buffer_store_dword [[RESULT]]
+; CHECK: v_mac_f32_e32 [[R2]], -2.0, [[R1]]
+; CHECK: buffer_store_dword [[R2]]
 define void @fmuladd_2.0_neg_a_b_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid

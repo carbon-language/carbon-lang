@@ -123,7 +123,7 @@ define void @mad_sub_fabs_inv_f32(float addrspace(1)* noalias nocapture %out, fl
 }
 
 ; FUNC-LABEL: {{^}}neg_neg_mad_f32:
-; SI: v_mad_f32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
+; SI: v_mac_f32_e32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
 define void @neg_neg_mad_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
@@ -172,8 +172,8 @@ define void @mad_fabs_sub_f32(float addrspace(1)* noalias nocapture %out, float 
 ; FUNC-LABEL: {{^}}fsub_c_fadd_a_a:
 ; SI-DAG: buffer_load_dword [[R1:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; SI-DAG: buffer_load_dword [[R2:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; SI: v_mad_f32 [[RESULT:v[0-9]+]], -2.0, [[R1]], [[R2]]
-; SI: buffer_store_dword [[RESULT]]
+; SI: v_mac_f32_e32 [[R2]], -2.0, [[R1]]
+; SI: buffer_store_dword [[R2]]
 define void @fsub_c_fadd_a_a(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid

@@ -28,8 +28,8 @@ define void @madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noa
 ; GCN-DAG: buffer_load_dword [[VB:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
 ; GCN-DAG: buffer_load_dword [[VC:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:8
 ; GCN-DAG: v_mov_b32_e32 [[VK:v[0-9]+]], 0x41200000
-; GCN-DAG: v_mad_f32 {{v[0-9]+}}, [[VA]], [[VK]], [[VB]]
-; GCN-DAG: v_mad_f32 {{v[0-9]+}}, [[VA]], [[VK]], [[VC]]
+; GCN-DAG: v_mac_f32_e32 [[VB]], [[VK]], [[VA]]
+; GCN-DAG: v_mac_f32_e32 [[VC]], [[VK]], [[VA]]
 ; GCN: s_endpgm
 define void @madmk_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
@@ -59,7 +59,7 @@ define void @madmk_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1
 ; GCN-LABEL: {{^}}madmk_inline_imm_f32:
 ; GCN-DAG: buffer_load_dword [[VA:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
 ; GCN-DAG: buffer_load_dword [[VB:v[0-9]+]], {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
-; GCN: v_mad_f32 {{v[0-9]+}}, 4.0, [[VA]], [[VB]]
+; GCN: v_mac_f32_e32 [[VB]], 4.0, [[VA]]
 define void @madmk_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
@@ -77,7 +77,7 @@ define void @madmk_inline_imm_f32(float addrspace(1)* noalias %out, float addrsp
 
 ; GCN-LABEL: {{^}}s_s_madmk_f32:
 ; GCN-NOT: v_madmk_f32
-; GCN: v_mad_f32
+; GCN: v_mac_f32_e32
 ; GCN: s_endpgm
 define void @s_s_madmk_f32(float addrspace(1)* noalias %out, float %a, float %b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
@@ -107,7 +107,7 @@ define void @v_s_madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)*
 
 ; GCN-LABEL: {{^}}scalar_vector_madmk_f32:
 ; GCN-NOT: v_madmk_f32
-; GCN: v_mad_f32
+; GCN: v_mac_f32_e32
 ; GCN: s_endpgm
 define void @scalar_vector_madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in, float %a) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone

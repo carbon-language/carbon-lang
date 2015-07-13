@@ -110,8 +110,11 @@ private:
                          SDValue &Offset, SDValue &GLC) const;
   SDNode *SelectAddrSpaceCast(SDNode *N);
   bool SelectVOP3Mods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
+  bool SelectVOP3NoMods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3Mods0(SDValue In, SDValue &Src, SDValue &SrcMods,
                        SDValue &Clamp, SDValue &Omod) const;
+  bool SelectVOP3NoMods0(SDValue In, SDValue &Src, SDValue &SrcMods,
+                         SDValue &Clamp, SDValue &Omod) const;
 
   bool SelectVOP3Mods0Clamp(SDValue In, SDValue &Src, SDValue &SrcMods,
                             SDValue &Omod) const;
@@ -1317,6 +1320,12 @@ bool AMDGPUDAGToDAGISel::SelectVOP3Mods(SDValue In, SDValue &Src,
   return true;
 }
 
+bool AMDGPUDAGToDAGISel::SelectVOP3NoMods(SDValue In, SDValue &Src,
+                                         SDValue &SrcMods) const {
+  bool Res = SelectVOP3Mods(In, Src, SrcMods);
+  return Res && cast<ConstantSDNode>(SrcMods)->isNullValue();
+}
+
 bool AMDGPUDAGToDAGISel::SelectVOP3Mods0(SDValue In, SDValue &Src,
                                          SDValue &SrcMods, SDValue &Clamp,
                                          SDValue &Omod) const {
@@ -1326,6 +1335,16 @@ bool AMDGPUDAGToDAGISel::SelectVOP3Mods0(SDValue In, SDValue &Src,
   Omod = CurDAG->getTargetConstant(0, DL, MVT::i32);
 
   return SelectVOP3Mods(In, Src, SrcMods);
+}
+
+bool AMDGPUDAGToDAGISel::SelectVOP3NoMods0(SDValue In, SDValue &Src,
+                                           SDValue &SrcMods, SDValue &Clamp,
+                                           SDValue &Omod) const {
+  bool Res = SelectVOP3Mods0(In, Src, SrcMods, Clamp, Omod);
+
+  return Res && cast<ConstantSDNode>(SrcMods)->isNullValue() &&
+                cast<ConstantSDNode>(Clamp)->isNullValue() &&
+                cast<ConstantSDNode>(Omod)->isNullValue();
 }
 
 bool AMDGPUDAGToDAGISel::SelectVOP3Mods0Clamp(SDValue In, SDValue &Src,

@@ -924,7 +924,7 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
     return false;
 
   unsigned Opc = UseMI->getOpcode();
-  if (Opc == AMDGPU::V_MAD_F32) {
+  if (Opc == AMDGPU::V_MAD_F32 || Opc == AMDGPU::V_MAC_F32_e64) {
     // Don't fold if we are using source modifiers. The new VOP2 instructions
     // don't have them.
     if (hasModifiersSet(*UseMI, AMDGPU::OpName::src0_modifiers) ||
@@ -963,9 +963,9 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
       // instead of having to modify in place.
 
       // Remove these first since they are at the end.
-      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc,
                                                       AMDGPU::OpName::omod));
-      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc,
                                                       AMDGPU::OpName::clamp));
 
       unsigned Src1Reg = Src1->getReg();
@@ -980,6 +980,14 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
       Src1->setSubReg(Src2SubReg);
       Src1->setIsKill(Src2->isKill());
 
+      if (Opc == AMDGPU::V_MAC_F32_e64) {
+        UseMI->untieRegOperand(
+          AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2));
+      }
+
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc,
+                                                      AMDGPU::OpName::src2));
+      // ChangingToImmediate adds Src2 back to the instruction.
       Src2->ChangeToImmediate(Imm);
 
       removeModOperands(*UseMI);
@@ -1010,11 +1018,17 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
       // instead of having to modify in place.
 
       // Remove these first since they are at the end.
-      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc,
                                                       AMDGPU::OpName::omod));
-      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc,
                                                       AMDGPU::OpName::clamp));
 
+      if (Opc == AMDGPU::V_MAC_F32_e64) {
+        UseMI->untieRegOperand(
+          AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2));
+      }
+
+      // ChangingToImmediate adds Src2 back to the instruction.
       Src2->ChangeToImmediate(Imm);
 
       // These come before src2.
@@ -1124,6 +1138,38 @@ bool SIInstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
   }
 
   return false;
+}
+
+MachineInstr *SIInstrInfo::convertToThreeAddress(MachineFunction::iterator &MBB,
+                                                MachineBasicBlock::iterator &MI,
+                                                LiveVariables *LV) const {
+
+  switch (MI->getOpcode()) {
+    default: return nullptr;
+    case AMDGPU::V_MAC_F32_e64: break;
+    case AMDGPU::V_MAC_F32_e32: {
+      const MachineOperand *Src0 = getNamedOperand(*MI, AMDGPU::OpName::src0);
+      if (Src0->isImm() && !isInlineConstant(*Src0, 4))
+        return nullptr;
+      break;
+    }
+  }
+
+  const MachineOperand *Dst = getNamedOperand(*MI, AMDGPU::OpName::dst);
+  const MachineOperand *Src0 = getNamedOperand(*MI, AMDGPU::OpName::src0);
+  const MachineOperand *Src1 = getNamedOperand(*MI, AMDGPU::OpName::src1);
+  const MachineOperand *Src2 = getNamedOperand(*MI, AMDGPU::OpName::src2);
+
+  return BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::V_MAD_F32))
+                 .addOperand(*Dst)
+                 .addImm(0) // Src0 mods
+                 .addOperand(*Src0)
+                 .addImm(0) // Src1 mods
+                 .addOperand(*Src1)
+                 .addImm(0) // Src mods
+                 .addOperand(*Src2)
+                 .addImm(0)  // clamp
+                 .addImm(0); // omod
 }
 
 bool SIInstrInfo::isInlineConstant(const APInt &Imm) const {

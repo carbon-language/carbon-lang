@@ -144,6 +144,10 @@ public:
 
   unsigned getMachineCSELookAheadLimit() const override { return 500; }
 
+  MachineInstr *convertToThreeAddress(MachineFunction::iterator &MBB,
+                                      MachineBasicBlock::iterator &MI,
+                                      LiveVariables *LV) const override;
+
   bool isSALU(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SALU;
   }

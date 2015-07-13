@@ -126,11 +126,42 @@ static bool updateOperand(FoldCandidate &Fold,
   return false;
 }
 
+static bool isUseMIInFoldList(const std::vector<FoldCandidate> &FoldList,
+                              const MachineInstr *MI) {
+  for (auto Candidate : FoldList) {
+    if (Candidate.UseMI == MI)
+      return true;
+  }
+  return false;
+}
+
 static bool tryAddToFoldList(std::vector<FoldCandidate> &FoldList,
                              MachineInstr *MI, unsigned OpNo,
                              MachineOperand *OpToFold,
                              const SIInstrInfo *TII) {
   if (!TII->isOperandLegal(MI, OpNo, OpToFold)) {
+
+    // Special case for v_mac_f32_e64 if we are trying to fold into src2
+    unsigned Opc = MI->getOpcode();
+    if (Opc == AMDGPU::V_MAC_F32_e64 &&
+        (int)OpNo == AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2)) {
+      // Check if changing this to a v_mad_f32 instruction will allow us to
+      // fold the operand.
+      MI->setDesc(TII->get(AMDGPU::V_MAD_F32));
+      bool FoldAsMAD = tryAddToFoldList(FoldList, MI, OpNo, OpToFold, TII);
+      if (FoldAsMAD) {
+        MI->untieRegOperand(OpNo);
+        return true;
+      }
+      MI->setDesc(TII->get(Opc));
+    }
+
+    // If we are already folding into another operand of MI, then
+    // we can't commute the instruction, otherwise we risk making the
+    // other fold illegal.
+    if (isUseMIInFoldList(FoldList, MI))
+      return false;
+
     // Operand is not legal, so try to commute the instruction to
     // see if this makes it possible to fold.
     unsigned CommuteIdx0;

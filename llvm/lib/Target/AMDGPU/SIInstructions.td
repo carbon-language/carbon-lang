@@ -1488,7 +1488,10 @@ defm V_AND_B32 : VOP2Inst <vop2<0x1b, 0x13>, "v_and_b32", VOP_I32_I32_I32>;
 defm V_OR_B32 : VOP2Inst <vop2<0x1c, 0x14>, "v_or_b32", VOP_I32_I32_I32>;
 defm V_XOR_B32 : VOP2Inst <vop2<0x1d, 0x15>, "v_xor_b32", VOP_I32_I32_I32>;
 
-defm V_MAC_F32 : VOP2Inst <vop2<0x1f, 0x16>, "v_mac_f32", VOP_F32_F32_F32>;
+let Constraints = "$dst = $src2", DisableEncoding="$src2",
+    isConvertibleToThreeAddress = 1 in {
+defm V_MAC_F32 : VOP2Inst <vop2<0x1f, 0x16>, "v_mac_f32", VOP_MAC>;
+}
 } // End isCommutable = 1
 
 defm V_MADMK_F32 : VOP2MADK <vop2<0x20, 0x17>, "v_madmk_f32">;
@@ -2204,6 +2207,15 @@ def : Pat <
 def : Pat <
   (i32 (select i1:$src0, i32:$src1, i32:$src2)),
   (V_CNDMASK_B32_e64 $src2, $src1, $src0)
+>;
+
+// Pattern for V_MAC_F32
+def : Pat <
+  (fmad  (VOP3NoMods0 f32:$src0, i32:$src0_modifiers, i1:$clamp, i32:$omod),
+         (VOP3NoMods f32:$src1, i32:$src1_modifiers),
+         (VOP3NoMods f32:$src2, i32:$src2_modifiers)),
+  (V_MAC_F32_e64 $src0_modifiers, $src0, $src1_modifiers, $src1,
+                 $src2_modifiers, $src2, $clamp, $omod)
 >;
 
 /********** ======================= **********/
