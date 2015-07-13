@@ -840,8 +840,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Reduce count based on the type of unrolling and the threshold values.
   unsigned OriginalCount = Count;
-  bool AllowRuntime = UserRuntime ? CurrentRuntime : UP.Runtime;
-  if (HasRuntimeUnrollDisablePragma(L)) {
+  bool AllowRuntime =
+      (PragmaCount > 0) || (UserRuntime ? CurrentRuntime : UP.Runtime);
+  // Don't unroll a runtime trip count loop with unroll full pragma.
+  if (HasRuntimeUnrollDisablePragma(L) || PragmaFullUnroll) {
     AllowRuntime = false;
   }
   if (Unrolling == Partial) {

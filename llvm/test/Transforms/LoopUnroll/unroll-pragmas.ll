@@ -86,9 +86,9 @@ for.end:                                          ; preds = %for.body
 ; #pragma clang loop unroll(full)
 ; Loop should be fully unrolled.
 ;
-; CHECK-LABEL: @loop64_with_enable(
+; CHECK-LABEL: @loop64_with_full(
 ; CHECK-NOT: br i1
-define void @loop64_with_enable(i32* nocapture %a) {
+define void @loop64_with_full(i32* nocapture %a) {
 entry:
   br label %for.body
 
@@ -139,14 +139,13 @@ for.end:                                          ; preds = %for.body
 !6 = !{!"llvm.loop.unroll.count", i32 4}
 
 ; #pragma clang loop unroll(full)
-; Full unrolling is requested, but loop has a dynamic trip count so
+; Full unrolling is requested, but loop has a runtime trip count so
 ; no unrolling should occur.
 ;
-; CHECK-LABEL: @dynamic_loop_with_enable(
+; CHECK-LABEL: @runtime_loop_with_full(
 ; CHECK: store i32
 ; CHECK-NOT: store i32
-; CHECK: br i1
-define void @dynamic_loop_with_enable(i32* nocapture %a, i32 %b) {
+define void @runtime_loop_with_full(i32* nocapture %a, i32 %b) {
 entry:
   %cmp3 = icmp sgt i32 %b, 0
   br i1 %cmp3, label %for.body, label %for.end, !llvm.loop !8
@@ -168,22 +167,22 @@ for.end:                                          ; preds = %for.body, %entry
 !8 = !{!8, !4}
 
 ; #pragma clang loop unroll_count(4)
-; Loop has a dynamic trip count.  Unrolling should occur, but no
-; conditional branches can be removed.
+; Loop has a runtime trip count.  Runtime unrolling should occur and loop
+; should be duplicated (original and 4x unrolled).
 ;
-; CHECK-LABEL: @dynamic_loop_with_count4(
+; CHECK-LABEL: @runtime_loop_with_count4(
+; CHECK: for.body.prol:
+; CHECK: store
 ; CHECK-NOT: store
 ; CHECK: br i1
+; CHECK: for.body
 ; CHECK: store
-; CHECK: br i1
 ; CHECK: store
-; CHECK: br i1
 ; CHECK: store
-; CHECK: br i1
 ; CHECK: store
+; CHECK-NOT: store
 ; CHECK: br i1
-; CHECK-NOT: br i1
-define void @dynamic_loop_with_count4(i32* nocapture %a, i32 %b) {
+define void @runtime_loop_with_count4(i32* nocapture %a, i32 %b) {
 entry:
   %cmp3 = icmp sgt i32 %b, 0
   br i1 %cmp3, label %for.body, label %for.end, !llvm.loop !9
