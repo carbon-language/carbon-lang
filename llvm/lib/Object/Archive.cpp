@@ -162,10 +162,10 @@ ErrorOr<StringRef> Archive::Child::getName() const {
                    + Parent->StringTable->getSize()))
       return object_error::parse_failed;
 
-    // GNU long file names end with a /.
+    // GNU long file names end with a "/\n".
     if (Parent->kind() == K_GNU || Parent->kind() == K_MIPS64) {
-      StringRef::size_type End = StringRef(addr).find('/');
-      return StringRef(addr, End);
+      StringRef::size_type End = StringRef(addr).find('\n');
+      return StringRef(addr, End - 1);
     }
     return StringRef(addr);
   } else if (name.startswith("#1/")) {

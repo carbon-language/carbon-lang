@@ -38,3 +38,9 @@ THIN-NEXT: rw-r--r-- 1000/1000   2280 2014-12-16 00:56:27.000000000 IsNAN.o
 Test reading an archive with just a symbol table. We use to reject them.
 RUN: llvm-ar tv %p/Inputs/symtab-only.a | FileCheck --allow-empty --check-prefix=EMPTY %s
 EMPTY-NOT: {{.}}
+
+Test reading a thin archive with directory names.
+RUN: env TZ=GMT llvm-ar tv %p/Inputs/thin-path.a | FileCheck %s --check-prefix=THINPATH -strict-whitespace
+
+THINPATH: rw-r--r-- 0/0   1224 1970-01-01 00:00:00.000000000 test.o
+THINPATH-NEXT: rw-r--r-- 0/0   1224 1970-01-01 00:00:00.000000000 t/test2.o
