@@ -17,8 +17,8 @@ entry:
 }
 
 ; CHECK-LABEL: @test
-; CHECK: xxspltd
-; CHECK: lxvd2x
+; CHECK-DAG: xxspltd
+; CHECK-DAG: lxvd2x
 ; CHECK: xvadddp
 ; CHECK: stxvd2x
 ; CHECK-NOT: xxswapd
