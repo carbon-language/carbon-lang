@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <uuid/uuid.h>
-
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -41,6 +39,8 @@
 
 #ifndef __APPLE__
 #include "Utility/UuidCompatibility.h"
+#else
+#include <uuid/uuid.h>
 #endif
 
 using namespace lldb;
