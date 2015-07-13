@@ -701,10 +701,11 @@ __kmpc_master(ident_t *loc, kmp_int32 global_tid)
 
 #if OMPT_SUPPORT && OMPT_TRACE
     if (status) {
-        kmp_info_t  *this_thr        = __kmp_threads[ global_tid ];
-        kmp_team_t  *team            = this_thr -> th.th_team;
         if ((ompt_status == ompt_status_track_callback) &&
             ompt_callbacks.ompt_callback(ompt_event_master_begin)) {
+            kmp_info_t  *this_thr        = __kmp_threads[ global_tid ];
+            kmp_team_t  *team            = this_thr -> th.th_team;
+
             int  tid = __kmp_tid_from_gtid( global_tid );
             ompt_callbacks.ompt_callback(ompt_event_master_begin)(
                 team->t.ompt_team_info.parallel_id,

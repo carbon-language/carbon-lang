@@ -34,11 +34,11 @@
     macro (ompt_get_thread_id)
 
 #define FOREACH_OMPT_PLACEHOLDER_FN(macro)  \
-    macro (omp_idle)                        \
-    macro (omp_overhead)                    \
-    macro (omp_barrier_wait)                \
-    macro (omp_task_wait)                   \
-    macro (omp_mutex_wait)
+    macro (ompt_idle)                       \
+    macro (ompt_overhead)                   \
+    macro (ompt_barrier_wait)               \
+    macro (ompt_task_wait)                  \
+    macro (ompt_mutex_wait)
 
 #define FOREACH_OMPT_STATE(macro)                                                               \
                                                                                                 \

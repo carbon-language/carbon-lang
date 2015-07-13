@@ -299,48 +299,61 @@ OMPT_API_ROUTINE void *ompt_get_task_function(int depth)
  * placeholders
  ****************************************************************************/
 
+// Don't define this as static. The loader may choose to eliminate the symbol
+// even though it is needed by tools.  
+#define OMPT_API_PLACEHOLDER 
 
-OMPT_API_ROUTINE void omp_idle(void)
+// Ensure that placeholders don't have mangled names in the symbol table.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+OMPT_API_PLACEHOLDER void ompt_idle(void)  
 {
-    // this function is a placeholder used to represent the calling context of
+    // This function is a placeholder used to represent the calling context of
     // idle OpenMP worker threads. It is not meant to be invoked.
     assert(0);
 }
 
 
-OMPT_API_ROUTINE void omp_overhead(void)
+OMPT_API_PLACEHOLDER void ompt_overhead(void)
 {
-    // this function is a placeholder used to represent the OpenMP context of
+    // This function is a placeholder used to represent the OpenMP context of
     // threads working in the OpenMP runtime.  It is not meant to be invoked.
     assert(0);
 }
 
 
-OMPT_API_ROUTINE void omp_barrier_wait(void)
+OMPT_API_PLACEHOLDER void ompt_barrier_wait(void)
 {
-    // this function is a placeholder used to represent the OpenMP context of
+    // This function is a placeholder used to represent the OpenMP context of
     // threads waiting for a barrier in the OpenMP runtime. It is not meant
     // to be invoked.
     assert(0);
 }
 
 
-OMPT_API_ROUTINE void omp_task_wait(void)
+OMPT_API_PLACEHOLDER void ompt_task_wait(void)
 {
-    // this function is a placeholder used to represent the OpenMP context of
+    // This function is a placeholder used to represent the OpenMP context of
     // threads waiting for a task in the OpenMP runtime. It is not meant
     // to be invoked.
     assert(0);
 }
 
 
-OMPT_API_ROUTINE void omp_mutex_wait(void)
+OMPT_API_PLACEHOLDER void ompt_mutex_wait(void)
 {
-    // this function is a placeholder used to represent the OpenMP context of
+    // This function is a placeholder used to represent the OpenMP context of
     // threads waiting for a mutex in the OpenMP runtime. It is not meant
     // to be invoked.
     assert(0);
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 
 /*****************************************************************************

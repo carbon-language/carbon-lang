@@ -349,11 +349,6 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, void (*unwrapped_task)(void *), mic
     va_list ap;
     va_start(ap, argc);
 
-#if OMPT_SUPPORT
-    team->t.t_implicit_task_taskdata[tid].
-        ompt_task_info.frame.reenter_runtime_frame = NULL;
-#endif
-
     rc = __kmp_fork_call(loc, gtid, fork_context_gnu, argc,
 #if OMPT_SUPPORT
       VOLATILE_CAST(void *) unwrapped_task,
@@ -372,8 +367,9 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, void (*unwrapped_task)(void *), mic
         __kmp_run_before_invoked_task(gtid, tid, thr, team);
     }
 
-#if OMPT_SUPPORT && OMPT_TRACE
+#if OMPT_SUPPORT 
     if (ompt_status & ompt_status_track) {
+#if OMPT_TRACE
         ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);
         ompt_task_info_t *task_info = __ompt_get_taskinfo(0);
 
@@ -383,6 +379,7 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, void (*unwrapped_task)(void *), mic
             ompt_callbacks.ompt_callback(ompt_event_implicit_task_begin)(
                 team_info->parallel_id, task_info->task_id);
         }
+#endif
         thr->th.ompt_thread_info.state = ompt_state_work_parallel;
     }
 #endif
