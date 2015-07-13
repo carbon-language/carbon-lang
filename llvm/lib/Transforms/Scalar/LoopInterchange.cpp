@@ -282,21 +282,21 @@ static void populateWorklist(Loop &L, SmallVector<LoopVector, 8> &V) {
   DEBUG(dbgs() << "Calling populateWorklist called\n");
   LoopVector LoopList;
   Loop *CurrentLoop = &L;
-  std::vector<Loop *> vec = CurrentLoop->getSubLoopsVector();
-  while (vec.size() != 0) {
+  const std::vector<Loop *> *Vec = &CurrentLoop->getSubLoops();
+  while (!Vec->empty()) {
     // The current loop has multiple subloops in it hence it is not tightly
     // nested.
     // Discard all loops above it added into Worklist.
-    if (vec.size() != 1) {
+    if (Vec->size() != 1) {
       LoopList.clear();
       return;
     }
     LoopList.push_back(CurrentLoop);
-    CurrentLoop = *(vec.begin());
-    vec = CurrentLoop->getSubLoopsVector();
+    CurrentLoop = Vec->front();
+    Vec = &CurrentLoop->getSubLoops();
   }
   LoopList.push_back(CurrentLoop);
-  V.push_back(LoopList);
+  V.push_back(std::move(LoopList));
 }
 
 static PHINode *getInductionVariable(Loop *L, ScalarEvolution *SE) {

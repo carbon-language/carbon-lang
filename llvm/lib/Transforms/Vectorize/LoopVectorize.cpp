@@ -3807,7 +3807,7 @@ bool LoopVectorizationLegality::canVectorize() {
   }
 
   // We can only vectorize innermost loops.
-  if (!TheLoop->getSubLoopsVector().empty()) {
+  if (!TheLoop->empty()) {
     emitAnalysis(VectorizationReport() << "loop is not the innermost loop");
     return false;
   }
