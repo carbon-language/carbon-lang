@@ -81,16 +81,5 @@ bool EliminateAvailableExternally::runOnModule(Module &M) {
     NumFunctions++;
   }
 
-  // Drop targets of available externally aliases.
-  for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end(); I != E;
-       ++I) {
-    if (!I->hasAvailableExternallyLinkage())
-      continue;
-    I->setAliasee(nullptr);
-    I->removeDeadConstantUsers();
-    I->setLinkage(GlobalValue::ExternalLinkage);
-    NumAliases++;
-  }
-
   return Changed;
 }
