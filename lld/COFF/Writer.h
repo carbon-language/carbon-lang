@@ -87,12 +87,14 @@ private:
   void assignAddresses();
   void removeEmptySections();
   void createSymbolAndStringTable();
-  size_t addEntryToStringTable(StringRef Str);
   std::error_code openFile(StringRef OutputPath);
   template <typename PEHeaderTy> void writeHeader();
   void writeSections();
   void sortExceptionTable();
   void applyRelocations();
+
+  coff_symbol16 createSymbol(DefinedRegular *D);
+  size_t addEntryToStringTable(StringRef Str);
 
   OutputSection *findSection(StringRef Name);
   OutputSection *createSection(StringRef Name);

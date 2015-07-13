@@ -291,6 +291,33 @@ size_t Writer::addEntryToStringTable(StringRef Str) {
   return OffsetOfEntry;
 }
 
+coff_symbol16 Writer::createSymbol(DefinedRegular *D) {
+  uint64_t RVA = D->getRVA();
+  OutputSection *Sec = nullptr;
+  for (OutputSection *S : OutputSections) {
+    if (S->getRVA() > RVA)
+      break;
+    Sec = S;
+  }
+
+  coff_symbol16 Sym;
+  StringRef Name = D->getName();
+  if (Name.size() > COFF::NameSize) {
+    Sym.Name.Offset.Zeroes = 0;
+    Sym.Name.Offset.Offset = addEntryToStringTable(Name);
+  } else {
+    memset(Sym.Name.ShortName, 0, COFF::NameSize);
+    memcpy(Sym.Name.ShortName, Name.data(), Name.size());
+  }
+  COFFSymbolRef DSymRef = D->getCOFFSymbol();
+  Sym.Value = RVA - Sec->getRVA();
+  Sym.SectionNumber = Sec->SectionIndex;
+  Sym.Type = DSymRef.getType();
+  Sym.StorageClass = DSymRef.getStorageClass();
+  Sym.NumberOfAuxSymbols = 0;
+  return Sym;
+}
+
 void Writer::createSymbolAndStringTable() {
   if (!Config->Debug)
     return;
@@ -302,40 +329,13 @@ void Writer::createSymbolAndStringTable() {
       continue;
     Sec->setStringTableOff(addEntryToStringTable(Name));
   }
-  for (ObjectFile *File : Symtab->ObjectFiles) {
-    for (SymbolBody *B : File->getSymbols()) {
-      auto *D = dyn_cast<DefinedRegular>(B);
-      if (!D || !D->isLive())
-        continue;
-      uint64_t RVA = D->getRVA();
-      OutputSection *SymSec = nullptr;
-      for (OutputSection *Sec : OutputSections) {
-        if (Sec->getRVA() > RVA)
-          break;
-        SymSec = Sec;
-      }
-      uint64_t SectionRVA = SymSec->getRVA();
-      uint64_t SymbolValue = RVA - SectionRVA;
 
-      StringRef Name = D->getName();
-      coff_symbol16 Sym;
-      if (Name.size() > COFF::NameSize) {
-        Sym.Name.Offset.Zeroes = 0;
-        Sym.Name.Offset.Offset = addEntryToStringTable(Name);
-      } else {
-        memset(Sym.Name.ShortName, 0, COFF::NameSize);
-        memcpy(Sym.Name.ShortName, Name.data(), Name.size());
-      }
+  for (ObjectFile *File : Symtab->ObjectFiles)
+    for (SymbolBody *B : File->getSymbols())
+      if (auto *D = dyn_cast<DefinedRegular>(B))
+        if (D->isLive())
+          OutputSymtab.push_back(createSymbol(D));
 
-      COFFSymbolRef DSymRef= D->getCOFFSymbol();
-      Sym.Value = SymbolValue;
-      Sym.SectionNumber = SymSec->SectionIndex;
-      Sym.Type = DSymRef.getType();
-      Sym.StorageClass = DSymRef.getStorageClass();
-      Sym.NumberOfAuxSymbols = 0;
-      OutputSymtab.push_back(Sym);
-    }
-  }
   OutputSection *LastSection = OutputSections.back();
   // We position the symbol table to be adjacent to the end of the last section.
   uint64_t FileOff =
