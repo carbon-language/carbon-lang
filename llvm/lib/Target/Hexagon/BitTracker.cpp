@@ -84,8 +84,7 @@ namespace {
   }
 }
 
-
-raw_ostream &operator<< (raw_ostream &OS, const BT::BitValue &BV) {
+raw_ostream &llvm::operator<<(raw_ostream &OS, const BT::BitValue &BV) {
   switch (BV.Type) {
     case BT::BitValue::Top:
       OS << 'T';
@@ -103,8 +102,7 @@ raw_ostream &operator<< (raw_ostream &OS, const BT::BitValue &BV) {
   return OS;
 }
 
-
-raw_ostream &operator<< (raw_ostream &OS, const BT::RegisterCell &RC) {
+raw_ostream &llvm::operator<<(raw_ostream &OS, const BT::RegisterCell &RC) {
   unsigned n = RC.Bits.size();
   OS << "{ w:" << n;
   // Instead of printing each bit value individually, try to group them
@@ -169,11 +167,8 @@ raw_ostream &operator<< (raw_ostream &OS, const BT::RegisterCell &RC) {
   return OS;
 }
 
-
-BitTracker::BitTracker(const MachineEvaluator &E, llvm::MachineFunction &F) :
-  Trace(false), ME(E), MF(F), MRI(F.getRegInfo()), Map(*new CellMapType) {
-}
-
+BitTracker::BitTracker(const MachineEvaluator &E, MachineFunction &F)
+    : Trace(false), ME(E), MF(F), MRI(F.getRegInfo()), Map(*new CellMapType) {}
 
 BitTracker::~BitTracker() {
   delete &Map;

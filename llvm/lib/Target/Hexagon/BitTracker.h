@@ -25,7 +25,6 @@ namespace llvm {
   class MachineInstr;
   class MachineOperand;
   class raw_ostream;
-}
 
 struct BitTracker {
   struct BitRef;
@@ -35,13 +34,13 @@ struct BitTracker {
   struct RegisterCell;
   struct MachineEvaluator;
 
-  typedef llvm::SetVector<const llvm::MachineBasicBlock*> BranchTargetList;
+  typedef SetVector<const MachineBasicBlock *> BranchTargetList;
 
   struct CellMapType : public std::map<unsigned,RegisterCell> {
     bool has(unsigned Reg) const;
   };
 
-  BitTracker(const MachineEvaluator &E, llvm::MachineFunction &F);
+  BitTracker(const MachineEvaluator &E, MachineFunction &F);
   ~BitTracker();
 
   void run();
@@ -51,18 +50,18 @@ struct BitTracker {
   RegisterCell get(RegisterRef RR) const;
   void put(RegisterRef RR, const RegisterCell &RC);
   void subst(RegisterRef OldRR, RegisterRef NewRR);
-  bool reached(const llvm::MachineBasicBlock *B) const;
+  bool reached(const MachineBasicBlock *B) const;
 
 private:
-  void visitPHI(const llvm::MachineInstr *PI);
-  void visitNonBranch(const llvm::MachineInstr *MI);
-  void visitBranchesFrom(const llvm::MachineInstr *BI);
+  void visitPHI(const MachineInstr *PI);
+  void visitNonBranch(const MachineInstr *MI);
+  void visitBranchesFrom(const MachineInstr *BI);
   void visitUsesOf(unsigned Reg);
   void reset();
 
   typedef std::pair<int,int> CFGEdge;
   typedef std::set<CFGEdge> EdgeSetType;
-  typedef std::set<const llvm::MachineInstr*> InstrSetType;
+  typedef std::set<const MachineInstr *> InstrSetType;
   typedef std::queue<CFGEdge> EdgeQueueType;
 
   EdgeSetType EdgeExec;       // Executable flow graph edges.
@@ -71,8 +70,8 @@ private:
   bool Trace;                 // Enable tracing for debugging.
 
   const MachineEvaluator &ME;
-  llvm::MachineFunction &MF;
-  llvm::MachineRegisterInfo &MRI;
+  MachineFunction &MF;
+  MachineRegisterInfo &MRI;
   CellMapType &Map;
 };
 
@@ -95,8 +94,8 @@ struct BitTracker::BitRef {
 struct BitTracker::RegisterRef {
   RegisterRef(unsigned R = 0, unsigned S = 0)
     : Reg(R), Sub(S) {}
-  RegisterRef(const llvm::MachineOperand &MO)
-    : Reg(MO.getReg()), Sub(MO.getSubReg()) {}
+  RegisterRef(const MachineOperand &MO)
+      : Reg(MO.getReg()), Sub(MO.getSubReg()) {}
   unsigned Reg, Sub;
 };
 
@@ -216,8 +215,7 @@ struct BitTracker::BitValue {
     return Type == One;
   }
 
-  friend llvm::raw_ostream &operator<< (llvm::raw_ostream &OS,
-                                        const BitValue &BV);
+  friend raw_ostream &operator<<(raw_ostream &OS, const BitValue &BV);
 };
 
 
@@ -299,11 +297,10 @@ private:
   // The DefaultBitN is here only to avoid frequent reallocation of the
   // memory in the vector.
   static const unsigned DefaultBitN = 32;
-  typedef llvm::SmallVector<BitValue,DefaultBitN> BitValueList;
+  typedef SmallVector<BitValue, DefaultBitN> BitValueList;
   BitValueList Bits;
 
-  friend llvm::raw_ostream &operator<< (llvm::raw_ostream &OS,
-                                        const RegisterCell &RC);
+  friend raw_ostream &operator<<(raw_ostream &OS, const RegisterCell &RC);
 };
 
 
@@ -352,14 +349,13 @@ inline bool BitTracker::CellMapType::has(unsigned Reg) const {
   return find(Reg) != end();
 }
 
-
 // A class to evaluate target's instructions and update the cell maps.
 // This is used internally by the bit tracker.  A target that wants to
 // utilize this should implement the evaluation functions (noted below)
 // in a subclass of this class.
 struct BitTracker::MachineEvaluator {
-  MachineEvaluator(const llvm::TargetRegisterInfo &T,
-        llvm::MachineRegisterInfo &M) : TRI(T), MRI(M) {}
+  MachineEvaluator(const TargetRegisterInfo &T, MachineRegisterInfo &M)
+      : TRI(T), MRI(M) {}
   virtual ~MachineEvaluator() {}
 
   uint16_t getRegBitWidth(const RegisterRef &RR) const;
@@ -382,7 +378,7 @@ struct BitTracker::MachineEvaluator {
 
   // Generate cell from an immediate value.
   RegisterCell eIMM(int64_t V, uint16_t W) const;
-  RegisterCell eIMM(const llvm::ConstantInt *CI) const;
+  RegisterCell eIMM(const ConstantInt *CI) const;
 
   // Arithmetic.
   RegisterCell eADD(const RegisterCell &A1, const RegisterCell &A2) const;
@@ -431,25 +427,23 @@ struct BitTracker::MachineEvaluator {
   // does).
   virtual BitMask mask(unsigned Reg, unsigned Sub) const;
   // Indicate whether a given register class should be tracked.
-  virtual bool track(const llvm::TargetRegisterClass *RC) const {
-    return true;
-  }
+  virtual bool track(const TargetRegisterClass *RC) const { return true; }
   // Evaluate a non-branching machine instruction, given the cell map with
   // the input values. Place the results in the Outputs map. Return "true"
   // if evaluation succeeded, "false" otherwise.
-  virtual bool evaluate(const llvm::MachineInstr *MI,
-        const CellMapType &Inputs, CellMapType &Outputs) const;
+  virtual bool evaluate(const MachineInstr *MI, const CellMapType &Inputs,
+                        CellMapType &Outputs) const;
   // Evaluate a branch, given the cell map with the input values. Fill out
   // a list of all possible branch targets and indicate (through a flag)
   // whether the branch could fall-through. Return "true" if this information
   // has been successfully computed, "false" otherwise.
-  virtual bool evaluate(const llvm::MachineInstr *BI,
-        const CellMapType &Inputs, BranchTargetList &Targets,
-        bool &FallsThru) const = 0;
+  virtual bool evaluate(const MachineInstr *BI, const CellMapType &Inputs,
+                        BranchTargetList &Targets, bool &FallsThru) const = 0;
 
-  const llvm::TargetRegisterInfo &TRI;
-  llvm::MachineRegisterInfo &MRI;
+  const TargetRegisterInfo &TRI;
+  MachineRegisterInfo &MRI;
 };
 
-#endif
+} // end namespace llvm
 
+#endif

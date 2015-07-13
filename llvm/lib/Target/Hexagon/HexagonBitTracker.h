@@ -16,7 +16,6 @@
 namespace llvm {
   class HexagonInstrInfo;
   class HexagonRegisterInfo;
-}
 
 struct HexagonEvaluator : public BitTracker::MachineEvaluator {
   typedef BitTracker::CellMapType CellMapType;
@@ -24,27 +23,25 @@ struct HexagonEvaluator : public BitTracker::MachineEvaluator {
   typedef BitTracker::RegisterCell RegisterCell;
   typedef BitTracker::BranchTargetList BranchTargetList;
 
-  HexagonEvaluator(const llvm::HexagonRegisterInfo &tri,
-        llvm::MachineRegisterInfo &mri, const llvm::HexagonInstrInfo &tii,
-        llvm::MachineFunction &mf);
+  HexagonEvaluator(const HexagonRegisterInfo &tri, MachineRegisterInfo &mri,
+                   const HexagonInstrInfo &tii, MachineFunction &mf);
 
-  virtual bool evaluate(const llvm::MachineInstr *MI,
-        const CellMapType &Inputs, CellMapType &Outputs) const;
-  virtual bool evaluate(const llvm::MachineInstr *BI,
-        const CellMapType &Inputs, BranchTargetList &Targets,
-        bool &FallsThru) const;
+  bool evaluate(const MachineInstr *MI, const CellMapType &Inputs,
+                CellMapType &Outputs) const override;
+  bool evaluate(const MachineInstr *BI, const CellMapType &Inputs,
+                BranchTargetList &Targets, bool &FallsThru) const override;
 
-  virtual BitTracker::BitMask mask(unsigned Reg, unsigned Sub) const;
+  BitTracker::BitMask mask(unsigned Reg, unsigned Sub) const override;
 
-  llvm::MachineFunction &MF;
-  llvm::MachineFrameInfo &MFI;
-  const llvm::HexagonInstrInfo &TII;
+  MachineFunction &MF;
+  MachineFrameInfo &MFI;
+  const HexagonInstrInfo &TII;
 
 private:
-  bool evaluateLoad(const llvm::MachineInstr *MI, const CellMapType &Inputs,
-        CellMapType &Outputs) const;
-  bool evaluateFormalCopy(const llvm::MachineInstr *MI,
-        const CellMapType &Inputs, CellMapType &Outputs) const;
+  bool evaluateLoad(const MachineInstr *MI, const CellMapType &Inputs,
+                    CellMapType &Outputs) const;
+  bool evaluateFormalCopy(const MachineInstr *MI, const CellMapType &Inputs,
+                          CellMapType &Outputs) const;
 
   unsigned getNextPhysReg(unsigned PReg, unsigned Width) const;
   unsigned getVirtRegFor(unsigned PReg) const;
@@ -58,9 +55,10 @@ private:
     ExtType(char t, uint16_t w) : Type(t), Width(w) {}
   };
   // Map VR -> extension type.
-  typedef llvm::DenseMap<unsigned,ExtType> RegExtMap;
+  typedef DenseMap<unsigned, ExtType> RegExtMap;
   RegExtMap VRX;
 };
 
-#endif
+} // end namespace llvm
 
+#endif
