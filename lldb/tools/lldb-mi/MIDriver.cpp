@@ -925,7 +925,7 @@ bool
 CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbCmdYesValid)
 {
     // Convert any CLI commands into MI commands
-    CMIUtilString vMITextLine(WrapCLICommandIntoMICommand(vTextLine));
+    const CMIUtilString vMITextLine(WrapCLICommandIntoMICommand(vTextLine));
 
     vwbCmdYesValid = false;
     bool bCmdNotInCmdFactor = false;
