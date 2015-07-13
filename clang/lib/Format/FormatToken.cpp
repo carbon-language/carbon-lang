@@ -23,6 +23,20 @@
 namespace clang {
 namespace format {
 
+const char *getTokenTypeName(TokenType Type) {
+  static const char *const TokNames[] = {
+#define TYPE(X) #X,
+LIST_TOKEN_TYPES
+#undef TYPE
+    nullptr
+  };
+
+  if (Type < NUM_TOKEN_TYPES)
+    return TokNames[Type];
+  llvm_unreachable("unknown TokenType");
+  return nullptr;
+}
+
 // FIXME: This is copy&pasted from Sema. Put it in a common place and remove
 // duplication.
 bool FormatToken::isSimpleTypeSpecifier() const {

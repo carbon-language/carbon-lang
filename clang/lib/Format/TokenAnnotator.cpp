@@ -2274,7 +2274,8 @@ void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
   const FormatToken *Tok = Line.First;
   while (Tok) {
     llvm::errs() << " M=" << Tok->MustBreakBefore
-                 << " C=" << Tok->CanBreakBefore << " T=" << Tok->Type
+                 << " C=" << Tok->CanBreakBefore
+                 << " T=" << getTokenTypeName(Tok->Type)
                  << " S=" << Tok->SpacesRequiredBefore
                  << " B=" << Tok->BlockParameterCount
                  << " P=" << Tok->SplitPenalty << " Name=" << Tok->Tok.getName()
