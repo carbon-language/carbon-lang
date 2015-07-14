@@ -295,11 +295,11 @@ static ArchiveOperation parseCommandLine() {
 
 // Implements the 'p' operation. This function traverses the archive
 // looking for members that match the path list.
-static void doPrint(StringRef Name, object::Archive::child_iterator I) {
+static void doPrint(StringRef Name, const object::Archive::Child &C) {
   if (Verbose)
     outs() << "Printing " << Name << "\n";
 
-  StringRef Data = I->getBuffer();
+  StringRef Data = C.getBuffer();
   outs().write(Data.data(), Data.size());
 }
 
@@ -324,16 +324,16 @@ static void printMode(unsigned mode) {
 // the file names of each of the members. However, if verbose mode is requested
 // ('v' modifier) then the file type, permission mode, user, group, size, and
 // modification time are also printed.
-static void doDisplayTable(StringRef Name, object::Archive::child_iterator I) {
+static void doDisplayTable(StringRef Name, const object::Archive::Child &C) {
   if (Verbose) {
-    sys::fs::perms Mode = I->getAccessMode();
+    sys::fs::perms Mode = C.getAccessMode();
     printMode((Mode >> 6) & 007);
     printMode((Mode >> 3) & 007);
     printMode(Mode & 007);
-    outs() << ' ' << I->getUID();
-    outs() << '/' << I->getGID();
-    outs() << ' ' << format("%6llu", I->getSize());
-    outs() << ' ' << I->getLastModified().str();
+    outs() << ' ' << C.getUID();
+    outs() << '/' << C.getGID();
+    outs() << ' ' << format("%6llu", C.getSize());
+    outs() << ' ' << C.getLastModified().str();
     outs() << ' ';
   }
   outs() << Name << "\n";
@@ -341,9 +341,9 @@ static void doDisplayTable(StringRef Name, object::Archive::child_iterator I) {
 
 // Implement the 'x' operation. This function extracts files back to the file
 // system.
-static void doExtract(StringRef Name, object::Archive::child_iterator I) {
+static void doExtract(StringRef Name, const object::Archive::Child &C) {
   // Retain the original mode.
-  sys::fs::perms Mode = I->getAccessMode();
+  sys::fs::perms Mode = C.getAccessMode();
   SmallString<128> Storage = Name;
 
   int FD;
@@ -355,7 +355,7 @@ static void doExtract(StringRef Name, object::Archive::child_iterator I) {
     raw_fd_ostream file(FD, false);
 
     // Get the data and its length
-    StringRef Data = I->getBuffer();
+    StringRef Data = C.getBuffer();
 
     // Write the data.
     file.write(Data.data(), Data.size());
@@ -365,7 +365,7 @@ static void doExtract(StringRef Name, object::Archive::child_iterator I) {
   // now.
   if (OriginalDates)
     failIfError(
-        sys::fs::setLastModificationAndAccessTime(FD, I->getLastModified()));
+        sys::fs::setLastModificationAndAccessTime(FD, C.getLastModified()));
 
   if (close(FD))
     fail("Could not close the file");
@@ -391,10 +391,8 @@ static bool shouldCreateArchive(ArchiveOperation Op) {
 
 static void performReadOperation(ArchiveOperation Operation,
                                  object::Archive *OldArchive) {
-  for (object::Archive::child_iterator I = OldArchive->child_begin(),
-                                       E = OldArchive->child_end();
-       I != E; ++I) {
-    ErrorOr<StringRef> NameOrErr = I->getName();
+  for (const object::Archive::Child &C : OldArchive->children()) {
+    ErrorOr<StringRef> NameOrErr = C.getName();
     failIfError(NameOrErr.getError());
     StringRef Name = NameOrErr.get();
 
@@ -406,13 +404,13 @@ static void performReadOperation(ArchiveOperation Operation,
     default:
       llvm_unreachable("Not a read operation");
     case Print:
-      doPrint(Name, I);
+      doPrint(Name, C);
       break;
     case DisplayTable:
-      doDisplayTable(Name, I);
+      doDisplayTable(Name, C);
       break;
     case Extract:
-      doExtract(Name, I);
+      doExtract(Name, C);
       break;
     }
   }
