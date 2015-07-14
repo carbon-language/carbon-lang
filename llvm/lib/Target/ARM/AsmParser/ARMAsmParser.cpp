@@ -189,9 +189,9 @@ class ARMAsmParser : public MCTargetAsmParser {
     return getParser().Error(L, Msg, Ranges);
   }
 
-  bool validatetLDMRegList(MCInst Inst, const OperandVector &Operands,
+  bool validatetLDMRegList(const MCInst &Inst, const OperandVector &Operands,
                            unsigned ListNo, bool IsARPop = false);
-  bool validatetSTMRegList(MCInst Inst, const OperandVector &Operands,
+  bool validatetSTMRegList(const MCInst &Inst, const OperandVector &Operands,
                            unsigned ListNo);
 
   int tryParseRegister();
@@ -6033,8 +6033,9 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 // return 'true' if register list contains non-low GPR registers,
 // 'false' otherwise. If Reg is in the register list or is HiReg, set
 // 'containsReg' to true.
-static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
-                                 unsigned HiReg, bool &containsReg) {
+static bool checkLowRegisterList(const MCInst &Inst, unsigned OpNo,
+                                 unsigned Reg, unsigned HiReg,
+                                 bool &containsReg) {
   containsReg = false;
   for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
     unsigned OpReg = Inst.getOperand(i).getReg();
@@ -6049,8 +6050,8 @@ static bool checkLowRegisterList(MCInst Inst, unsigned OpNo, unsigned Reg,
 
 // Check if the specified regisgter is in the register list of the inst,
 // starting at the indicated operand number.
-static bool listContainsReg(MCInst &Inst, unsigned OpNo, unsigned Reg) {
-  for (unsigned i = OpNo; i < Inst.getNumOperands(); ++i) {
+static bool listContainsReg(const MCInst &Inst, unsigned OpNo, unsigned Reg) {
+  for (unsigned i = OpNo, e = Inst.getNumOperands(); i < e; ++i) {
     unsigned OpReg = Inst.getOperand(i).getReg();
     if (OpReg == Reg)
       return true;
@@ -6068,7 +6069,7 @@ static bool instIsBreakpoint(const MCInst &Inst) {
 
 }
 
-bool ARMAsmParser::validatetLDMRegList(MCInst Inst,
+bool ARMAsmParser::validatetLDMRegList(const MCInst &Inst,
                                        const OperandVector &Operands,
                                        unsigned ListNo, bool IsARPop) {
   const ARMOperand &Op = static_cast<const ARMOperand &>(*Operands[ListNo]);
@@ -6091,7 +6092,7 @@ bool ARMAsmParser::validatetLDMRegList(MCInst Inst,
   return false;
 }
 
-bool ARMAsmParser::validatetSTMRegList(MCInst Inst,
+bool ARMAsmParser::validatetSTMRegList(const MCInst &Inst,
                                        const OperandVector &Operands,
                                        unsigned ListNo) {
   const ARMOperand &Op = static_cast<const ARMOperand &>(*Operands[ListNo]);
