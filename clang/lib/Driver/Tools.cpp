@@ -8947,6 +8947,12 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   // handled somewhere else.
   Args.ClaimAllArgs(options::OPT_w);
 
+  StringRef LinkerName = Args.getLastArgValue(options::OPT_fuse_ld_EQ, "ld");
+  if (LinkerName.equals_lower("lld")) {
+    CmdArgs.push_back("-flavor");
+    CmdArgs.push_back("gnu");
+  }
+
   if (!D.SysRoot.empty())
     CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
 
@@ -8958,6 +8964,8 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("i386pe");
   if (TC.getArch() == llvm::Triple::x86_64)
     CmdArgs.push_back("i386pep");
+  if (TC.getArch() == llvm::Triple::arm)
+    CmdArgs.push_back("thumb2pe");
 
   if (Args.hasArg(options::OPT_mwindows)) {
     CmdArgs.push_back("--subsystem");
@@ -9067,7 +9075,7 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
       if (Args.hasArg(options::OPT_static))
         CmdArgs.push_back("--end-group");
-      else
+      else if (!LinkerName.equals_lower("lld"))
         AddLibGCC(Args, CmdArgs);
     }
 
@@ -9078,7 +9086,7 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crtend.o")));
     }
   }
-  const char *Exec = Args.MakeArgString(TC.GetProgramPath("ld"));
+  const char *Exec = Args.MakeArgString(TC.GetProgramPath(LinkerName.data()));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
 }
 
