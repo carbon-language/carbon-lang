@@ -7,7 +7,9 @@
 
 ; CHECK-LABEL: foo:
 ; CHECK: movq {{.*}}, %rax
-; CHECK: testl $32768, %eax
+; CHECK: shlq $48, %rax
+; CHECK: sets %al
+; CHECK: testb %al, %al
 ; CHECK: flds LCPI0_0(%rip)
 ; CHECK: flds LCPI0_1(%rip)
 ; CHECK: fcmovne %st(1), %st(0)
