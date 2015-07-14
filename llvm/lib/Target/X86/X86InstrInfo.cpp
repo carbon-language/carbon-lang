@@ -3806,7 +3806,7 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
                                                X86::MOVPQIto64rr);
     if (X86::VR64RegClass.contains(SrcReg))
       // Copy from a VR64 register to a GR64 register.
-      return X86::MOVSDto64rr;
+      return X86::MMX_MOVD64from64rr;
   } else if (X86::GR64RegClass.contains(SrcReg)) {
     // Copy from a GR64 register to a VR128 register.
     if (X86::VR128XRegClass.contains(DestReg))
@@ -3814,7 +3814,7 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
                                                X86::MOV64toPQIrr);
     // Copy from a GR64 register to a VR64 register.
     if (X86::VR64RegClass.contains(DestReg))
-      return X86::MOV64toSDrr;
+      return X86::MMX_MOVD64to64rr;
   }
 
   // SrcReg(FR32) -> DestReg(GR32)
