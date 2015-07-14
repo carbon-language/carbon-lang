@@ -32,7 +32,9 @@ public:
                 DefinedAtom::ContentPermissions permissions,
                 TargetLayout<ELF64LE>::SectionOrder order) override;
 
-  const AArch64GOTSection &getGOTSection() const { return *_gotSection; }
+  const std::vector<AArch64GOTSection *> &getGOTSections() const {
+    return _gotSections;
+  }
 
   uint64_t getTPOffset() {
     std::call_once(_tpOffOnce, [this]() {
@@ -53,7 +55,7 @@ private:
   };
 
 private:
-  AArch64GOTSection *_gotSection;
+  std::vector<AArch64GOTSection *> _gotSections;
   uint64_t _tpOff = 0;
   std::once_flag _tpOffOnce;
 };

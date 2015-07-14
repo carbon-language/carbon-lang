@@ -18,14 +18,17 @@ using namespace lld;
 using namespace elf;
 
 AArch64TargetLayout::AArch64TargetLayout(ELFLinkingContext &ctx) :
-  TargetLayout(ctx),
-  _gotSection(new (this->_allocator) AArch64GOTSection(ctx)) {}
+  TargetLayout(ctx) {}
 
 AtomSection<ELF64LE> *AArch64TargetLayout::createSection(
     StringRef name, int32_t type, DefinedAtom::ContentPermissions permissions,
     TargetLayout<ELF64LE>::SectionOrder order) {
-  if (type == DefinedAtom::typeGOT && name == ".got")
-    return _gotSection;
+  if (type == DefinedAtom::typeGOT && (name == ".got" || name == ".got.plt")) {
+    auto section = new (this->_allocator) AArch64GOTSection(this->_ctx, name,
+                        order);
+    _gotSections.push_back(section);
+    return section;
+  }
   return TargetLayout<ELF64LE>::createSection(name, type, permissions, order);
 }
 

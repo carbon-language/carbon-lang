@@ -288,7 +288,8 @@ protected:
   }
 
   std::error_code handleTLSDESC(const Reference &ref) {
-    if (isa<DefinedAtom>(ref.target())) {
+    if (isa<DefinedAtom>(ref.target()) ||
+        isa<SharedLibraryAtom>(ref.target())) {
       const_cast<Reference &>(ref).setTarget(getTLSDESCPLTEntry(ref.target()));
     }
     return std::error_code();

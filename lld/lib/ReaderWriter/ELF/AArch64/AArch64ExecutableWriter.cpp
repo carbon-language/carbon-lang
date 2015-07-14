@@ -33,10 +33,12 @@ void AArch64ExecutableWriter::buildDynamicSymbolTable(const File &file) {
   for (auto sec : this->_layout.sections()) {
     if (auto section = dyn_cast<AtomSection<ELF64LE>>(sec)) {
       for (const auto &atom : section->atoms()) {
-        if (_targetLayout.getGOTSection().hasGlobalGOTEntry(atom->_atom)) {
-          this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
-                                               atom->_virtualAddr, atom);
-          continue;
+        // Add all globals GOT symbols (in both .got and .got.plt sections)
+        // on dynamic symbol table.
+        for (const auto &section : _targetLayout.getGOTSections()) {
+          if (section->hasGlobalGOTEntry(atom->_atom))
+            _dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
+                                           atom->_virtualAddr, atom);
         }
       }
     }

@@ -31,13 +31,13 @@
 
 #CHECKRELOCATION: Relocations [
 #CHECKRELOCATION:  .rela.dyn {
-#CHECKRELOCATION:    0x401090 R_AARCH64_TLSDESC - 0x0
+#CHECKRELOCATION:    0x401090 R_AARCH64_TLSDESC var 0x0
 #CHECKRELOCATION: }
 
 #CHECK: Contents of section .text:
-#CHECK:      400230 a8c31fb8 40018052 0b000094 000000b0  ....@..R........
+#CHECK:      400250 a8c31fb8 40018052 0b000094 000000b0  ....@..R........
 #                                              \_        adrp    x0, 401000 <_DYNAMIC> (R_AARCH64_TLSDESC_ADR_PAGE21)
-#CHECK-NEXT: 400240 014840f9 00400291 20003fd6 49d03bd5  .H@..@.. .?.I.;.
+#CHECK-NEXT: 400260 014840f9 00400291 20003fd6 49d03bd5  .H@..@.. .?.I.;.
 #                   \_       |        |                  ldr     x1, [x0,#144]         (R_AARCH64_TLSDESC_LD64_LO12_NC)
 #                            \_       |                  add     x0, x0, #0x90         (R_AARCH64_TLSDESC_ADD_LO12_NC)
 #                                     \_                 blr     x1                    (R_AARCH64_TLSDESC_CALL)

@@ -17,7 +17,8 @@ namespace elf {
 
 class AArch64GOTSection : public AtomSection<ELF64LE> {
 public:
-  AArch64GOTSection(const ELFLinkingContext &ctx);
+  AArch64GOTSection(const ELFLinkingContext &ctx, StringRef name,
+                    int32_t order);
 
   bool hasGlobalGOTEntry(const Atom *a) const {
     return _tlsMap.count(a);
