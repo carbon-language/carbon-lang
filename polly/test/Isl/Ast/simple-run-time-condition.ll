@@ -24,13 +24,13 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK: )
 
 ; CHECK:     if (o >= 1) {
-; CHECK:       for (int c1 = 0; c1 < n; c1 += 1)
-; CHECK:         for (int c2 = 0; c2 < m; c2 += 1)
-; CHECK:           Stmt_for_j(c1, c2);
+; CHECK:       for (int c0 = 0; c0 < n; c0 += 1)
+; CHECK:         for (int c1 = 0; c1 < m; c1 += 1)
+; CHECK:           Stmt_for_j(c0, c1);
 ; CHECK:     } else
-; CHECK:       for (int c1 = 0; c1 < n; c1 += 1)
-; CHECK:         for (int c2 = 0; c2 < m; c2 += 1)
-; CHECK:           Stmt_for_j_1(c1, c2);
+; CHECK:       for (int c0 = 0; c0 < n; c0 += 1)
+; CHECK:         for (int c1 = 0; c1 < m; c1 += 1)
+; CHECK:           Stmt_for_j_1(c0, c1);
 
 ; CHECK: else
 ; CHECK:     {  /* original code */ }

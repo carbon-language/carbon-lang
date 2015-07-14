@@ -43,6 +43,6 @@ return:
 ; CHECK:              (P >= 1 and i0 >= 0 and i0 <= -1 + N)
 ; CHECK:                   };
 ; CHECK:        Schedule :=
-; CHECK:            [N, P] -> { Stmt_store[i0] -> [i0] };
+; CHECK:            [N, P] -> { Stmt_store[i0] -> [i0] : P <= -1 or P >= 1 };
 ; CHECK:        MustWriteAccess := [Reduction Type: NONE]
 ; CHECK:            [N, P] -> { Stmt_store[i0] -> MemRef_a[i0] };

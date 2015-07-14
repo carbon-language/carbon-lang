@@ -105,6 +105,8 @@ IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
 unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
   isl_union_map *Schedule = IslAstInfo::getSchedule(For);
   isl_set *LoopDomain = isl_set_from_union_set(isl_union_map_range(Schedule));
+  if (isl_set_is_wrapping(LoopDomain))
+    LoopDomain = isl_map_range(isl_set_unwrap(LoopDomain));
   int Dim = isl_set_dim(LoopDomain, isl_dim_set);
 
   // Calculate a map similar to the identity map, but with the last input

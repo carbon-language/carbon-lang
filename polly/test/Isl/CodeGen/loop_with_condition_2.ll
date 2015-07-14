@@ -5,10 +5,10 @@
 
 ; CHECK: #pragma simd
 ; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1) {
-; CHECK:   if (c0 >= m + 1025) {
-; CHECK:     Stmt_if_else(c0);
-; CHECK:   } else
+; CHECK:   if (m + 1024 >= c0) {
 ; CHECK:     Stmt_if_then(c0);
+; CHECK:   } else
+; CHECK:     Stmt_if_else(c0);
 ; CHECK:   Stmt_if_end(c0);
 ; CHECK: }
 

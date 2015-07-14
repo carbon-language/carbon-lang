@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-opt-isl -polly-ast -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-opt-isl -polly-ast -analyze -polly-no-early-exit < %s | FileCheck %s
 ;
 ;    void jacobi1d(long T, long N, float *A, float *B) {
 ;      long t, i, j;
@@ -13,10 +13,10 @@
 ; Verify that we do not tile bands that have just a single dimension.
 
 ; CHECK: for (int c0 = 0; c0 < T; c0 += 1) {
-; CHECK:   for (int c2 = 0; c2 < N - 2; c2 += 1)
-; CHECK:     Stmt_for_body3(c0, c2);
-; CHECK:   for (int c2 = 0; c2 < N - 2; c2 += 1)
-; CHECK:     Stmt_for_body15(c0, c2);
+; CHECK:   for (int c1 = 0; c1 < N - 2; c1 += 1)
+; CHECK:     Stmt_for_body3(c0, c1);
+; CHECK:   for (int c1 = 0; c1 < N - 2; c1 += 1)
+; CHECK:     Stmt_for_body15(c0, c1);
 ; CHECK: }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

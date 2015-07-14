@@ -16,9 +16,9 @@
 ; CHECK:    Statements {
 ; CHECK:      Stmt_bb2
 ; CHECK:            Domain :=
-; CHECK:                [N] -> { Stmt_bb2[i0] : i0 >= 0 and N >= 1 and i0 <= N; Stmt_bb2[0] : N <= 0 };
+; CHECK:                [N] -> { Stmt_bb2[i0] : i0 >= 0 and N >= 1 and i0 <= N; Stmt_bb2[0] : N <= 0 }
 ; CHECK:            Schedule :=
-; CHECK:                [N] -> { Stmt_bb2[i0] -> [i0, 0] };
+; CHECK:                [N] -> { Stmt_bb2[i0] -> [i0, 0] : i0 <= N and N >= 1; Stmt_bb2[0] -> [0, 0] : N <= 0 }
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                [N] -> { Stmt_bb2[i0] -> MemRef_j_0[] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]

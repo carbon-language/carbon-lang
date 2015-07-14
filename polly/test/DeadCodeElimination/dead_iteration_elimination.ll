@@ -67,12 +67,12 @@ exit.4:
   ret void
 }
 
-; CHECK: for (int c1 = 50; c1 <= 99; c1 += 1)
-; CHECK:   Stmt_for_body_1(c1);
-; CHECK: for (int c1 = 110; c1 <= 199; c1 += 1)
-; CHECK:   Stmt_for_body_1(c1);
-; CHECK: for (int c1 = 0; c1 <= 49; c1 += 1)
-; CHECK:   Stmt_for_body_2(c1);
-; CHECK: for (int c1 = 0; c1 <= 69; c1 += 1)
-; CHECK:   Stmt_for_body_3(c1);
-; CHECK: for (int c1 = 0; c1 <= 9; c1 += 1)
+; CHECK: for (int c0 = 50; c0 <= 99; c0 += 1)
+; CHECK:   Stmt_for_body_1(c0);
+; CHECK: for (int c0 = 110; c0 <= 199; c0 += 1)
+; CHECK:   Stmt_for_body_1(c0);
+; CHECK: for (int c0 = 0; c0 <= 49; c0 += 1)
+; CHECK:   Stmt_for_body_2(c0);
+; CHECK: for (int c0 = 0; c0 <= 69; c0 += 1)
+; CHECK:   Stmt_for_body_3(c0);
+; CHECK: for (int c0 = 0; c0 <= 9; c0 += 1)

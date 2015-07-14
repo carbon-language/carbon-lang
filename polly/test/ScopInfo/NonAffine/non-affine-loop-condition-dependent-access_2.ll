@@ -23,7 +23,7 @@
 ; INNERMOST:            Domain :=
 ; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] : (i0 <= 1023 - p_1 and i0 >= 0 and i0 <= 1024 + p_0) or (i0 >= 0 and i0 >= 1025 - p_1 and i0 <= 1024 + p_0) };
 ; INNERMOST:            Schedule :=
-; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> [i0] };
+; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> [i0] : i0 >= 1025 - p_1 or i0 <= 1023 - p_1 };
 ; INNERMOST:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; INNERMOST:                [p_0, p_1, p_2, p_3, p_4] -> { Stmt_bb16[i0] -> MemRef_A[o0] : 4o0 = p_2 };
 ; INNERMOST:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]

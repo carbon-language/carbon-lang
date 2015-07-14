@@ -45,7 +45,7 @@ static cl::opt<int> OptComputeOut(
     "polly-dependences-computeout",
     cl::desc("Bound the dependence analysis by a maximal amount of "
              "computational steps (0 means no bound)"),
-    cl::Hidden, cl::init(410000), cl::ZeroOrMore, cl::cat(PollyCategory));
+    cl::Hidden, cl::init(500000), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> LegalityCheckDisabled(
     "disable-polly-legality", cl::desc("Disable polly legality check"),
@@ -220,15 +220,31 @@ void Dependences::addPrivatizationDependences() {
 }
 
 void Dependences::calculateDependences(Scop &S) {
-  isl_union_map *Read, *Write, *MayWrite, *AccessSchedule, *StmtSchedule,
-      *ScheduleMap;
+  isl_union_map *Read, *Write, *MayWrite, *AccessSchedule, *StmtSchedule;
+  isl_schedule *Schedule;
 
   DEBUG(dbgs() << "Scop: \n" << S << "\n");
 
   collectInfo(S, &Read, &Write, &MayWrite, &AccessSchedule, &StmtSchedule);
 
-  ScheduleMap =
-      isl_union_map_union(AccessSchedule, isl_union_map_copy(StmtSchedule));
+  // TODO: Compute dependences directly on the schedule tree
+  //
+  // We currently don't do this yet, as the compile-time performance
+  // implications are not 100% understood (we see some regressions).
+  if (false && isl_union_map_is_empty(AccessSchedule)) {
+    isl_union_map_free(AccessSchedule);
+    Schedule = S.getScheduleTree();
+  } else {
+    auto *ScheduleMap =
+        isl_union_map_union(AccessSchedule, isl_union_map_copy(StmtSchedule));
+    Schedule = isl_schedule_from_domain(
+        isl_union_map_domain(isl_union_map_copy(ScheduleMap)));
+    if (!isl_union_map_is_empty(ScheduleMap))
+      Schedule = isl_schedule_insert_partial_schedule(
+          Schedule, isl_multi_union_pw_aff_from_union_map(ScheduleMap));
+    else
+      isl_union_map_free(ScheduleMap);
+  }
 
   Read = isl_union_map_coalesce(Read);
   Write = isl_union_map_coalesce(Write);
@@ -241,15 +257,9 @@ void Dependences::calculateDependences(Scop &S) {
 
   DEBUG(dbgs() << "Read: " << Read << "\n";
         dbgs() << "Write: " << Write << "\n";
-        dbgs() << "MayWrite: " << MayWrite << "\n";
-        dbgs() << "Schedule: " << ScheduleMap << "\n");
+        dbgs() << "MayWrite: " << MayWrite << "\n");
 
   RAW = WAW = WAR = RED = nullptr;
-
-  auto *Schedule = isl_schedule_from_domain(
-      isl_union_map_domain(isl_union_map_copy(ScheduleMap)));
-  Schedule = isl_schedule_insert_partial_schedule(
-      Schedule, isl_multi_union_pw_aff_from_union_map(ScheduleMap));
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_access_info *AI;

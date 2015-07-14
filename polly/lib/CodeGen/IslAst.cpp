@@ -382,9 +382,6 @@ IslAst::IslAst(Scop *Scop, const Dependences &D)
 
   Build = isl_ast_build_set_at_each_domain(Build, AtEachDomain, nullptr);
 
-  isl_union_map *Schedule =
-      isl_union_map_intersect_domain(S->getSchedule(), S->getDomains());
-
   if (PerformParallelTest) {
     BuildInfo.Deps = &D;
     BuildInfo.InParallelFor = 0;
@@ -397,7 +394,7 @@ IslAst::IslAst(Scop *Scop, const Dependences &D)
 
   buildRunCondition(Build);
 
-  Root = isl_ast_build_ast_from_schedule(Build, Schedule);
+  Root = isl_ast_build_node_from_schedule(Build, S->getScheduleTree());
 
   isl_ast_build_free(Build);
 }

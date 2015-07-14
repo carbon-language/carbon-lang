@@ -11,10 +11,10 @@
 ; the size of A and as a result S1 may write for example to A[1024], which
 ; is not overwritten by S2.
 
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
-; CHECK:   Stmt_S1(c1);
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
-; CHECK:   Stmt_S2(c1);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
+; CHECK:   Stmt_S1(c0);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
+; CHECK:   Stmt_S2(c0);
 
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 

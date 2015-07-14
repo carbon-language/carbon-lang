@@ -60,10 +60,10 @@ exit.3:
 ; CHECK:   Stmt_S3(c0);
 ; CHECK: }
 
-; TIMEOUT: for (int c1 = 0; c1 <= 99; c1 += 1)
-; TIMEOUT: Stmt_S1(c1);
-; TIMEOUT: for (int c1 = 0; c1 <= 9; c1 += 1)
-; TIMEOUT: Stmt_S2(c1);
-; TIMEOUT: for (int c1 = 0; c1 <= 199; c1 += 1)
-; TIMEOUT: Stmt_S3(c1);
+; TIMEOUT: for (int c0 = 0; c0 <= 99; c0 += 1)
+; TIMEOUT: Stmt_S1(c0);
+; TIMEOUT: for (int c0 = 0; c0 <= 9; c0 += 1)
+; TIMEOUT: Stmt_S2(c0);
+; TIMEOUT: for (int c0 = 0; c0 <= 199; c0 += 1)
+; TIMEOUT: Stmt_S3(c0);
 

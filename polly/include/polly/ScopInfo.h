@@ -51,6 +51,7 @@ struct isl_space;
 struct isl_ast_build;
 struct isl_constraint;
 struct isl_pw_multi_aff;
+struct isl_schedule;
 
 namespace polly {
 
@@ -422,13 +423,11 @@ public:
 
   /// Create the ScopStmt from a BasicBlock.
   ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
-           BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
-           SmallVectorImpl<unsigned> &ScheduleVec);
+           BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops);
 
   /// Create an overapproximating ScopStmt for the region @p R.
   ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion, Region &R,
-           SmallVectorImpl<Loop *> &NestLoops,
-           SmallVectorImpl<unsigned> &ScheduleVec);
+           SmallVectorImpl<Loop *> &NestLoops);
 
 private:
   /// Polyhedral description
@@ -457,36 +456,6 @@ private:
   /// A pair of statement and iteration vector (S, (5,3)) is called statement
   /// instance.
   isl_set *Domain;
-
-  /// The schedule map describes the execution order of the statement
-  /// instances.
-  ///
-  /// A statement and its iteration domain do not give any information about the
-  /// order in time in which the different statement instances are executed.
-  /// This information is provided by the schedule.
-  ///
-  /// The schedule maps every instance of each statement into a multi
-  /// dimensional schedule space. This space can be seen as a multi
-  /// dimensional clock.
-  ///
-  /// Example:
-  ///
-  /// <S,(5,4)>  may be mapped to (5,4) by this schedule:
-  ///
-  /// s0 = i (Year of execution)
-  /// s1 = j (Day of execution)
-  ///
-  /// or to (9, 20) by this schedule:
-  ///
-  /// s0 = i + j (Year of execution)
-  /// s1 = 20 (Day of execution)
-  ///
-  /// The order statement instances are executed is defined by the
-  /// schedule vectors they are mapped to. A statement instance
-  /// <A, (i, j, ..)> is executed before a statement instance <B, (i', ..)>, if
-  /// the schedule vector of A is lexicographic smaller than the schedule
-  /// vector of B.
-  isl_map *Schedule;
 
   /// The memory accesses of this statement.
   ///
@@ -530,7 +499,6 @@ private:
   __isl_give isl_set *addLoopBoundsToDomain(__isl_take isl_set *Domain,
                                             TempScop &tempScop);
   __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
-  void buildSchedule(SmallVectorImpl<unsigned> &ScheduleVec);
 
   /// @brief Create the accesses for instructions in @p Block.
   ///
@@ -612,7 +580,6 @@ public:
   ///
   /// @return The schedule function of this ScopStmt.
   __isl_give isl_map *getSchedule() const;
-  void setSchedule(__isl_take isl_map *Schedule);
 
   /// @brief Get an isl string representing this schedule.
   std::string getScheduleStr() const;
@@ -679,7 +646,6 @@ public:
 
   unsigned getNumParams() const;
   unsigned getNumIterators() const;
-  unsigned getNumSchedule() const;
 
   Scop *getParent() { return &Parent; }
   const Scop *getParent() const { return &Parent; }
@@ -800,6 +766,42 @@ private:
   /// this scop and that need to be code generated as a run-time test.
   isl_set *AssumedContext;
 
+  /// @brief The schedule of the SCoP
+  ///
+  /// The schedule of the SCoP describes the execution order of the statements
+  /// in the scop by assigning each statement instance a possibly
+  /// multi-dimensional execution time. The schedule is stored as a tree of
+  /// schedule nodes.
+  ///
+  /// The most common nodes in a schedule tree are so-called band nodes. Band
+  /// nodes map statement instances into a multi dimensional schedule space.
+  /// This space can be seen as a multi-dimensional clock.
+  ///
+  /// Example:
+  ///
+  /// <S,(5,4)>  may be mapped to (5,4) by this schedule:
+  ///
+  /// s0 = i (Year of execution)
+  /// s1 = j (Day of execution)
+  ///
+  /// or to (9, 20) by this schedule:
+  ///
+  /// s0 = i + j (Year of execution)
+  /// s1 = 20 (Day of execution)
+  ///
+  /// The order statement instances are executed is defined by the
+  /// schedule vectors they are mapped to. A statement instance
+  /// <A, (i, j, ..)> is executed before a statement instance <B, (i', ..)>, if
+  /// the schedule vector of A is lexicographic smaller than the schedule
+  /// vector of B.
+  ///
+  /// Besides band nodes, schedule trees contain additional nodes that specify
+  /// a textual ordering between two subtrees or filter nodes that filter the
+  /// set of statement instances that will be scheduled in a subtree. There
+  /// are also several other nodes. A full description of the different nodes
+  /// in a schedule tree is given in the isl manual.
+  isl_schedule *Schedule;
+
   /// @brief The set of minimal/maximal accesses for each alias group.
   ///
   /// When building runtime alias checks we look at all memory instructions and
@@ -850,18 +852,23 @@ private:
   /// @param tempScop   The temp SCoP we use as model.
   /// @param CurRegion  The SCoP region.
   /// @param NestLoops  A vector of all surrounding loops.
-  /// @param Schedule   The position of the new statement as schedule.
-  void addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
-                   const Region &CurRegion, SmallVectorImpl<Loop *> &NestLoops,
-                   SmallVectorImpl<unsigned> &Schedule);
+  ScopStmt *addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
+                        const Region &CurRegion,
+                        SmallVectorImpl<Loop *> &NestLoops);
 
-  /// Build the Scop and Statement with precalculated scop information.
-  void buildScop(TempScop &TempScop, const Region &CurRegion,
-                 // Loops in Scop containing CurRegion
-                 SmallVectorImpl<Loop *> &NestLoops,
-                 // The schedule numbers
-                 SmallVectorImpl<unsigned> &Schedule, LoopInfo &LI,
-                 ScopDetection &SD);
+  /// @brief Build Scop and ScopStmts from a given TempScop.
+  ///
+  /// @param TempScop  The temporary scop that is translated into an actual
+  ///                  scop.
+  /// @param CurRegion The subregion of the current scop that we are currently
+  ///                  translating.
+  /// @param NestLoop  The set of loops that surround the current subregion.
+  /// @param LI        The LoopInfo object.
+  /// @param SD        The ScopDetection object.
+  __isl_give isl_schedule *buildScop(TempScop &TempScop,
+                                     const Region &CurRegion,
+                                     SmallVectorImpl<Loop *> &NestLoops,
+                                     LoopInfo &LI, ScopDetection &SD);
 
   /// @name Helper function for printing the Scop.
   ///
@@ -938,18 +945,6 @@ public:
   /// @return The maximum depth of the loop.
   inline unsigned getMaxLoopDepth() const { return MaxLoopDepth; }
 
-  /// @brief Get the schedule dimension number of this Scop.
-  ///
-  /// @return The schedule dimension number of this Scop.
-  inline unsigned getScheduleDim() const {
-    unsigned maxScheduleDim = 0;
-
-    for (const ScopStmt &Stmt : *this)
-      maxScheduleDim = std::max(maxScheduleDim, Stmt.getNumSchedule());
-
-    return maxScheduleDim;
-  }
-
   /// @brief Mark the SCoP as optimized by the scheduler.
   void markAsOptimized() { IsOptimized = true; }
 
@@ -989,13 +984,6 @@ public:
   ///
   /// @returns True if __no__ error occurred, false otherwise.
   bool buildAliasGroups(AliasAnalysis &AA);
-
-  //// @brief Drop all constant dimensions from statment schedules.
-  ///
-  ///  Schedule dimensions that are constant accross the scop do not carry
-  ///  any information, but would cost compile time due to the increased number
-  ///  of schedule dimensions. To not pay this cost, we remove them.
-  void dropConstantScheduleDims();
 
   /// @brief Return all alias groups for this SCoP.
   const MinMaxVectorVectorTy &getAliasGroups() const {
@@ -1064,7 +1052,7 @@ public:
   isl_ctx *getIslCtx() const;
 
   /// @brief Get a union set containing the iteration domains of all statements.
-  __isl_give isl_union_set *getDomains();
+  __isl_give isl_union_set *getDomains() const;
 
   /// @brief Get a union map of all may-writes performed in the SCoP.
   __isl_give isl_union_map *getMayWrites();
@@ -1079,7 +1067,20 @@ public:
   __isl_give isl_union_map *getReads();
 
   /// @brief Get the schedule of all the statements in the SCoP.
-  __isl_give isl_union_map *getSchedule();
+  __isl_give isl_union_map *getSchedule() const;
+
+  /// @brief Get a schedule tree describing the schedule of all statements.
+  __isl_give isl_schedule *getScheduleTree() const;
+
+  /// @brief Update the current schedule
+  ///
+  /// @brief NewSchedule The new schedule (given as a flat union-map).
+  void setSchedule(__isl_take isl_union_map *NewSchedule);
+
+  /// @brief Update the current schedule
+  ///
+  /// @brief NewSchedule The new schedule (given as schedule tree).
+  void setScheduleTree(__isl_take isl_schedule *NewSchedule);
 
   /// @brief Intersects the domains of all statements in the SCoP.
   ///

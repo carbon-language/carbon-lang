@@ -130,8 +130,8 @@ bb17:                                             ; preds = %bb16, %bb13, %bb7
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
 ; CHECK: {
-; CHECK:   for (int c1 = 0; c1 <= 511; c1 += 1)
-; CHECK:     Stmt_bb2(c1);
-; CHECK:   for (int c1 = 0; c1 <= 511; c1 += 1)
-; CHECK:     Stmt_bb6(c1);
+; CHECK:   for (int c0 = 0; c0 <= 511; c0 += 1)
+; CHECK:     Stmt_bb2(c0);
+; CHECK:   for (int c0 = 0; c0 <= 511; c0 += 1)
+; CHECK:     Stmt_bb6(c0);
 ; CHECK: }

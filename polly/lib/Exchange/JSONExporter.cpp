@@ -27,6 +27,7 @@
 #include "isl/map.h"
 #include "isl/printer.h"
 #include "isl/set.h"
+#include "isl/union_map.h"
 #include "json/reader.h"
 #include "json/writer.h"
 #include <memory>
@@ -260,10 +261,15 @@ bool JSONImporter::runOnScop(Scop &S) {
     return false;
   }
 
+  auto ScheduleMap = isl_union_map_empty(S.getParamSpace());
   for (ScopStmt &Stmt : S) {
     if (NewSchedule.find(&Stmt) != NewSchedule.end())
-      Stmt.setSchedule(NewSchedule[&Stmt]);
+      ScheduleMap = isl_union_map_add_map(ScheduleMap, NewSchedule[&Stmt]);
+    else
+      ScheduleMap = isl_union_map_add_map(ScheduleMap, Stmt.getSchedule());
   }
+
+  S.setSchedule(ScheduleMap);
 
   int statementIdx = 0;
   for (ScopStmt &Stmt : S) {

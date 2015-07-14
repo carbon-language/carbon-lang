@@ -176,8 +176,20 @@ private:
   /// @param User A pointer to forward some use information (currently unused).
   static isl_schedule_node *optimizeBand(isl_schedule_node *Node, void *User);
 
-  static __isl_give isl_union_map *
-  getScheduleMap(__isl_keep isl_schedule *Schedule);
+  /// @brief Apply post-scheduling transformations.
+  ///
+  /// This function applies a set of additional local transformations on the
+  /// schedule tree as it computed by the isl scheduler. Local transformations
+  /// applied include:
+  ///
+  ///   - Tiling
+  ///   - Prevectorization
+  ///
+  /// @param Schedule The schedule object post-transformations will be applied
+  ///                 on.
+  /// @returns        The transformed schedule.
+  static __isl_give isl_schedule *
+  addPostTransforms(__isl_take isl_schedule *Schedule);
 
   using llvm::Pass::doFinalization;
 
@@ -313,15 +325,15 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
   return Res;
 }
 
-__isl_give isl_union_map *
-IslScheduleOptimizer::getScheduleMap(__isl_keep isl_schedule *Schedule) {
+__isl_give isl_schedule *
+IslScheduleOptimizer::addPostTransforms(__isl_take isl_schedule *Schedule) {
   isl_schedule_node *Root = isl_schedule_get_root(Schedule);
+  isl_schedule_free(Schedule);
   Root = isl_schedule_node_map_descendant_bottom_up(
       Root, IslScheduleOptimizer::optimizeBand, NULL);
-  auto ScheduleMap = isl_schedule_node_get_subtree_schedule_union_map(Root);
-  ScheduleMap = isl_union_map_detect_equalities(ScheduleMap);
+  auto S = isl_schedule_node_get_schedule(Root);
   isl_schedule_node_free(Root);
-  return ScheduleMap;
+  return S;
 }
 
 bool IslScheduleOptimizer::isProfitableSchedule(
@@ -463,36 +475,19 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     isl_printer_free(P);
   });
 
-  isl_union_map *NewSchedule = getScheduleMap(Schedule);
+  isl_schedule *NewSchedule = addPostTransforms(Schedule);
+  isl_union_map *NewScheduleMap = isl_schedule_get_map(NewSchedule);
 
-  // Check if the optimizations performed were profitable, otherwise exit early.
-  if (!isProfitableSchedule(S, NewSchedule)) {
-    isl_schedule_free(Schedule);
-    isl_union_map_free(NewSchedule);
+  if (!isProfitableSchedule(S, NewScheduleMap)) {
+    isl_union_map_free(NewScheduleMap);
+    isl_schedule_free(NewSchedule);
     return false;
   }
 
+  S.setScheduleTree(NewSchedule);
   S.markAsOptimized();
 
-  for (ScopStmt &Stmt : S) {
-    isl_map *StmtSchedule;
-    isl_set *Domain = Stmt.getDomain();
-    isl_union_map *StmtBand;
-    StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(NewSchedule),
-                                              isl_union_set_from_set(Domain));
-    if (isl_union_map_is_empty(StmtBand)) {
-      StmtSchedule = isl_map_from_domain(isl_set_empty(Stmt.getDomainSpace()));
-      isl_union_map_free(StmtBand);
-    } else {
-      assert(isl_union_map_n_map(StmtBand) == 1);
-      StmtSchedule = isl_map_from_union_map(StmtBand);
-    }
-
-    Stmt.setSchedule(StmtSchedule);
-  }
-
-  isl_schedule_free(Schedule);
-  isl_union_map_free(NewSchedule);
+  isl_union_map_free(NewScheduleMap);
   return false;
 }
 

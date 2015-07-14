@@ -4,10 +4,6 @@
 ;
 ; CHECK: Read: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> MemRef_sum[0] : i0 >= 0 and i0 <= 100 }
 ; CHECK: Write: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> MemRef_sum[0] : i0 >= 0 and i0 <= 100 }
-; CHECK: Schedule: {
-; CHECK-DAG: [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [i0] : i0 <= 100 and i0 >= 0
-; CHECK-DAG: Stmt_for_cond[i0] -> [i0]
-; CHECK: }
 ; CHECK: Wrapped Dependences:
 ; CHECK: RAW dependences:
 ; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 <= 99 and i0 >= 0 }

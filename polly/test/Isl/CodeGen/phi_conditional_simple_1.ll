@@ -11,12 +11,10 @@
 ;    }
 
 ; AST:    for (int c0 = 0; c0 <= 1023; c0 += 1) {
-; AST:      if (c <= -1) {
-; AST:        Stmt_if_then(c0);
-; AST:      } else if (c >= 1) {
-; AST:        Stmt_if_then(c0);
-; AST:      } else
+; AST:      if (c == 0) {
 ; AST:        Stmt_if_else(c0);
+; AST:      } else if (c <= -1 || c >= 1)
+; AST:        Stmt_if_then(c0);
 ; AST:      Stmt_if_end(c0);
 ; AST:    }
 ;
@@ -26,14 +24,11 @@
 ; CHECK-NEXT:     %phi.phiops.reload = load i32, i32* %phi.phiops
 ; CHECK-NEXT:     %scevgep
 ; CHECK-NEXT:     store i32 %phi.phiops.reload, i32*
-; CHECK-LABEL:  polly.stmt.if.then:
-; CHECK-NEXT:     store i32 1, i32* %phi.phiops
-; CHECK-NEXT:     br label %polly.merge{{[.]?}}
-; CHECK-LABEL:  polly.stmt.if.then{{.}}:
-; CHECK-NEXT:     store i32 1, i32* %phi.phiops
-; CHECK-NEXT:     br label %polly.merge{{[.]?}}
 ; CHECK-LABEL:  polly.stmt.if.else:
 ; CHECK-NEXT:     store i32 2, i32* %phi.phiops
+; CHECK-NEXT:     br label %polly.merge{{[.]?}}
+; CHECK-LABEL:  polly.stmt.if.then:
+; CHECK-NEXT:     store i32 1, i32* %phi.phiops
 ; CHECK-NEXT:     br label %polly.merge{{[.]?}}
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
