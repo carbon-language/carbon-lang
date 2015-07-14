@@ -30,6 +30,7 @@
 namespace llvm {
 class raw_fd_ostream;
 class Timer;
+class TimerGroup;
 }
 
 namespace clang {
@@ -101,7 +102,10 @@ class CompilerInstance : public ModuleLoader {
   /// \brief The semantic analysis object.
   std::unique_ptr<Sema> TheSema;
 
-  /// \brief The frontend timer
+  /// \brief The frontend timer group.
+  std::unique_ptr<llvm::TimerGroup> FrontendTimerGroup;
+
+  /// \brief The frontend timer.
   std::unique_ptr<llvm::Timer> FrontendTimer;
 
   /// \brief The ASTReader, if one exists.

@@ -497,7 +497,9 @@ void CompilerInstance::createCodeCompletionConsumer() {
 }
 
 void CompilerInstance::createFrontendTimer() {
-  FrontendTimer.reset(new llvm::Timer("Clang front-end timer"));
+  FrontendTimerGroup.reset(new llvm::TimerGroup("Clang front-end time report"));
+  FrontendTimer.reset(
+      new llvm::Timer("Clang front-end timer", *FrontendTimerGroup));
 }
 
 CodeCompleteConsumer *
@@ -1237,13 +1239,18 @@ void CompilerInstance::createModuleManager() {
     HeaderSearchOptions &HSOpts = getHeaderSearchOpts();
     std::string Sysroot = HSOpts.Sysroot;
     const PreprocessorOptions &PPOpts = getPreprocessorOpts();
+    std::unique_ptr<llvm::Timer> ReadTimer;
+    if (FrontendTimerGroup)
+      ReadTimer = llvm::make_unique<llvm::Timer>("Reading modules",
+                                                 *FrontendTimerGroup);
     ModuleManager = new ASTReader(
         getPreprocessor(), *Context, *getPCHContainerOperations(),
         Sysroot.empty() ? "" : Sysroot.c_str(), PPOpts.DisablePCHValidation,
         /*AllowASTWithCompilerErrors=*/false,
         /*AllowConfigurationMismatch=*/false,
         HSOpts.ModulesValidateSystemHeaders,
-        getFrontendOpts().UseGlobalModuleIndex);
+        getFrontendOpts().UseGlobalModuleIndex,
+        std::move(ReadTimer));
     if (hasASTConsumer()) {
       ModuleManager->setDeserializationListener(
         getASTConsumer().GetASTDeserializationListener());
@@ -1259,6 +1266,11 @@ void CompilerInstance::createModuleManager() {
 }
 
 bool CompilerInstance::loadModuleFile(StringRef FileName) {
+  llvm::Timer Timer;
+  if (FrontendTimerGroup)
+    Timer.init("Preloading " + FileName.str(), *FrontendTimerGroup);
+  llvm::TimeRegion TimeLoading(FrontendTimerGroup ? &Timer : nullptr);
+
   // Helper to recursively read the module names for all modules we're adding.
   // We mark these as known and redirect any attempt to load that module to
   // the files we were handed.
@@ -1417,6 +1429,11 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     for (auto &Listener : DependencyCollectors)
       Listener->attachToASTReader(*ModuleManager);
+
+    llvm::Timer Timer;
+    if (FrontendTimerGroup)
+      Timer.init("Loading " + ModuleFileName, *FrontendTimerGroup);
+    llvm::TimeRegion TimeLoading(FrontendTimerGroup ? &Timer : nullptr);
 
     // Try to load the module file.
     unsigned ARRFlags =

@@ -42,6 +42,7 @@
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Timer.h"
 #include <deque>
 #include <map>
 #include <memory>
@@ -379,6 +380,9 @@ private:
 
   /// \brief The module manager which manages modules and their dependencies
   ModuleManager ModuleMgr;
+
+  /// \brief A timer used to track the time spent deserializing.
+  std::unique_ptr<llvm::Timer> ReadTimer;
 
   /// \brief The location where the module file will be considered as
   /// imported from. For non-module AST types it should be invalid.
@@ -1281,12 +1285,16 @@ public:
   ///
   /// \param UseGlobalIndex If true, the AST reader will try to load and use
   /// the global module index.
+  ///
+  /// \param ReadTimer If non-null, a timer used to track the time spent
+  /// deserializing.
   ASTReader(Preprocessor &PP, ASTContext &Context,
             const PCHContainerOperations &PCHContainerOps,
             StringRef isysroot = "", bool DisableValidation = false,
             bool AllowASTWithCompilerErrors = false,
             bool AllowConfigurationMismatch = false,
-            bool ValidateSystemInputs = false, bool UseGlobalIndex = true);
+            bool ValidateSystemInputs = false, bool UseGlobalIndex = true,
+            std::unique_ptr<llvm::Timer> ReadTimer = {});
 
   ~ASTReader() override;
 
@@ -1710,7 +1718,7 @@ public:
   /// \brief Notify ASTReader that we started deserialization of
   /// a decl or type so until FinishedDeserializing is called there may be
   /// decls that are initializing. Must be paired with FinishedDeserializing.
-  void StartedDeserializing() override { ++NumCurrentElementsDeserializing; }
+  void StartedDeserializing() override;
 
   /// \brief Notify ASTReader that we finished the deserialization of
   /// a decl or type. Must be paired with StartedDeserializing.
