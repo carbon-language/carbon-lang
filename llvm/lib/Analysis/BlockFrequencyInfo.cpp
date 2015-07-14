@@ -105,31 +105,9 @@ struct DOTGraphTraits<BlockFrequencyInfo*> : public DefaultDOTGraphTraits {
 } // end namespace llvm
 #endif
 
-INITIALIZE_PASS_BEGIN(BlockFrequencyInfo, "block-freq",
-                      "Block Frequency Analysis", true, true)
-INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfo)
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_END(BlockFrequencyInfo, "block-freq",
-                    "Block Frequency Analysis", true, true)
-
-char BlockFrequencyInfo::ID = 0;
-
-
-BlockFrequencyInfo::BlockFrequencyInfo() : FunctionPass(ID) {
-  initializeBlockFrequencyInfoPass(*PassRegistry::getPassRegistry());
-}
-
-BlockFrequencyInfo::~BlockFrequencyInfo() {}
-
-void BlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<BranchProbabilityInfo>();
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.setPreservesAll();
-}
-
-bool BlockFrequencyInfo::runOnFunction(Function &F) {
-  BranchProbabilityInfo &BPI = getAnalysis<BranchProbabilityInfo>();
-  LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+void BlockFrequencyInfo::calculate(const Function &F,
+                                   const BranchProbabilityInfo &BPI,
+                                   const LoopInfo &LI) {
   if (!BFI)
     BFI.reset(new ImplType);
   BFI->doFunction(&F, &BPI, &LI);
@@ -137,13 +115,6 @@ bool BlockFrequencyInfo::runOnFunction(Function &F) {
   if (ViewBlockFreqPropagationDAG != GVDT_None)
     view();
 #endif
-  return false;
-}
-
-void BlockFrequencyInfo::releaseMemory() { BFI.reset(); }
-
-void BlockFrequencyInfo::print(raw_ostream &O, const Module *) const {
-  if (BFI) BFI->print(O);
 }
 
 BlockFrequency BlockFrequencyInfo::getBlockFreq(const BasicBlock *BB) const {
@@ -179,4 +150,49 @@ BlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
 
 uint64_t BlockFrequencyInfo::getEntryFreq() const {
   return BFI ? BFI->getEntryFreq() : 0;
+}
+
+void BlockFrequencyInfo::releaseMemory() { BFI.reset(); }
+
+void BlockFrequencyInfo::print(raw_ostream &OS) const {
+  if (BFI)
+    BFI->print(OS);
+}
+
+
+INITIALIZE_PASS_BEGIN(BlockFrequencyInfoWrapperPass, "block-freq",
+                      "Block Frequency Analysis", true, true)
+INITIALIZE_PASS_DEPENDENCY(BranchProbabilityInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_END(BlockFrequencyInfoWrapperPass, "block-freq",
+                    "Block Frequency Analysis", true, true)
+
+char BlockFrequencyInfoWrapperPass::ID = 0;
+
+
+BlockFrequencyInfoWrapperPass::BlockFrequencyInfoWrapperPass()
+    : FunctionPass(ID) {
+  initializeBlockFrequencyInfoWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
+BlockFrequencyInfoWrapperPass::~BlockFrequencyInfoWrapperPass() {}
+
+void BlockFrequencyInfoWrapperPass::print(raw_ostream &OS,
+                                          const Module *) const {
+  BFI.print(OS);
+}
+
+void BlockFrequencyInfoWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<BranchProbabilityInfo>();
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.setPreservesAll();
+}
+
+void BlockFrequencyInfoWrapperPass::releaseMemory() { BFI.releaseMemory(); }
+
+bool BlockFrequencyInfoWrapperPass::runOnFunction(Function &F) {
+  BranchProbabilityInfo &BPI = getAnalysis<BranchProbabilityInfo>();
+  LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  BFI.calculate(F, BPI, LI);
+  return false;
 }
