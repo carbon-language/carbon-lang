@@ -1,16 +1,17 @@
-; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
-; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt < %s | FileCheck -strict-whitespace -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs -mattr=+load-store-opt < %s | FileCheck -strict-whitespace -check-prefix=SI %s
 
-; XFAIL: *
 
 @lds = addrspace(3) global [512 x float] undef, align 4
 
+; offset0 is larger than offset1
+
 ; SI-LABEL: {{^}}offset_order:
 
-; SI: ds_read_b32 v{{[0-9]+}}, v{{[0-9]+}} offset:56
-; SI: ds_read2st64_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]+}} offset0:0 offset1:4
-; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]+}} offset0:2 offset1:3
-; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]+}} offset0:11 offset1:1
+; SI: ds_read2st64_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]+}} offset1:4{{$}}
+; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]+}} offset0:3 offset1:2
+; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]+}} offset0:12 offset1:14
+; SI: ds_read_b32 v{{[0-9]+}}, v{{[0-9]+}} offset:44
 
 define void @offset_order(float addrspace(1)* %out) {
 entry:

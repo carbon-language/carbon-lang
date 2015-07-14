@@ -1,10 +1,10 @@
-; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt < %s | FileCheck -strict-whitespace -check-prefix=SI %s
 
 ; FIXME: We don't get cases where the address was an SGPR because we
 ; get a copy to the address register for each one.
 
 @lds = addrspace(3) global [512 x float] undef, align 4
- @lds.f64 = addrspace(3) global [512 x double] undef, align 8
+@lds.f64 = addrspace(3) global [512 x double] undef, align 8
 
 ; SI-LABEL: @simple_read2_f32
 ; SI: ds_read2_b32 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}}, v{{[0-9]+}} offset1:8

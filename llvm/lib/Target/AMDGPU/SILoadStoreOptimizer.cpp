@@ -214,12 +214,11 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
   // cases, like vectors of pointers.
   const MachineOperand *AddrReg = TII->getNamedOperand(*I, AMDGPU::OpName::addr);
 
-  unsigned DestReg0 = TII->getNamedOperand(*I, AMDGPU::OpName::vdst)->getReg();
-  unsigned DestReg1
-    = TII->getNamedOperand(*Paired, AMDGPU::OpName::vdst)->getReg();
+  const MachineOperand *Dest0 = TII->getNamedOperand(*I, AMDGPU::OpName::vdst);
+  const MachineOperand *Dest1 = TII->getNamedOperand(*Paired, AMDGPU::OpName::vdst);
 
   unsigned Offset0
-          = TII->getNamedOperand(*I, AMDGPU::OpName::offset)->getImm() & 0xffff;
+    = TII->getNamedOperand(*I, AMDGPU::OpName::offset)->getImm() & 0xffff;
   unsigned Offset1
     = TII->getNamedOperand(*Paired, AMDGPU::OpName::offset)->getImm() & 0xffff;
 
@@ -258,20 +257,43 @@ MachineBasicBlock::iterator  SILoadStoreOptimizer::mergeRead2Pair(
 
   unsigned SubRegIdx0 = (EltSize == 4) ? AMDGPU::sub0 : AMDGPU::sub0_sub1;
   unsigned SubRegIdx1 = (EltSize == 4) ? AMDGPU::sub1 : AMDGPU::sub2_sub3;
-  updateRegDefsUses(DestReg0, DestReg, SubRegIdx0);
-  updateRegDefsUses(DestReg1, DestReg, SubRegIdx1);
 
-  LIS->RemoveMachineInstrFromMaps(I);
-  // Replacing Paired in the maps with Read2 allows us to avoid updating the
-  // live range for the m0 register.
-  LIS->ReplaceMachineInstrInMaps(Paired, Read2);
+  const MCInstrDesc &CopyDesc = TII->get(TargetOpcode::COPY);
+
+  // Copy to the old destination registers.
+  MachineInstr *Copy0 = BuildMI(*MBB, I, DL, CopyDesc)
+    .addOperand(*Dest0) // Copy to same destination including flags and sub reg.
+    .addReg(DestReg, 0, SubRegIdx0);
+  MachineInstr *Copy1 = BuildMI(*MBB, I, DL, CopyDesc)
+    .addOperand(*Dest1)
+    .addReg(DestReg, RegState::Kill, SubRegIdx1);
+
+  LIS->InsertMachineInstrInMaps(Read2);
+
+  // repairLiveintervalsInRange() doesn't handle physical register, so we have
+  // to update the M0 range manually.
+  SlotIndex PairedIndex = LIS->getInstructionIndex(Paired);
+  LiveRange &M0Range = LIS->getRegUnit(*MCRegUnitIterator(AMDGPU::M0, TRI));
+  LiveRange::Segment *M0Segment = M0Range.getSegmentContaining(PairedIndex);
+  bool UpdateM0Range = M0Segment->end == PairedIndex.getRegSlot();
+
+  // The new write to the original destination register is now the copy. Steal
+  // the old SlotIndex.
+  LIS->ReplaceMachineInstrInMaps(I, Copy0);
+  LIS->ReplaceMachineInstrInMaps(Paired, Copy1);
+
   I->eraseFromParent();
   Paired->eraseFromParent();
 
   LiveInterval &AddrRegLI = LIS->getInterval(AddrReg->getReg());
   LIS->shrinkToUses(&AddrRegLI);
 
-  LIS->getInterval(DestReg); // Create new LI
+  LIS->createAndComputeVirtRegInterval(DestReg);
+
+  if (UpdateM0Range) {
+    SlotIndex Read2Index = LIS->getInstructionIndex(Read2);
+    M0Segment->end = Read2Index.getRegSlot();
+  }
 
   DEBUG(dbgs() << "Inserted read2: " << *Read2 << '\n');
   return Read2.getInstr();

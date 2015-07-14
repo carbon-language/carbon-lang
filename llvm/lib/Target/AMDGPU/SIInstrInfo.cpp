@@ -227,9 +227,8 @@ bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
 
     uint8_t Offset0 = Offset0Imm->getImm();
     uint8_t Offset1 = Offset1Imm->getImm();
-    assert(Offset1 > Offset0);
 
-    if (Offset1 - Offset0 == 1) {
+    if (Offset1 > Offset0 && Offset1 - Offset0 == 1) {
       // Each of these offsets is in element sized units, so we need to convert
       // to bytes of the individual reads.
 

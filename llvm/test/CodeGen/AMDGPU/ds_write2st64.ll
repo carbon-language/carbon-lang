@@ -1,8 +1,6 @@
-; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI %s
-
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt < %s | FileCheck -check-prefix=SI %s
 
 @lds = addrspace(3) global [512 x float] undef, align 4
-
 
 ; SI-LABEL: @simple_write2st64_one_val_f32_0_1
 ; SI-DAG: buffer_load_dword [[VAL:v[0-9]+]]

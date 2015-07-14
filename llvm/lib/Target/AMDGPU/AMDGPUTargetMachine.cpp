@@ -271,6 +271,7 @@ void GCNPassConfig::addPreRegAlloc() {
     // also need extra copies to the address operand to be eliminated.
     initializeSILoadStoreOptimizerPass(*PassRegistry::getPassRegistry());
     insertPass(&MachineSchedulerID, &SILoadStoreOptimizerID);
+    insertPass(&MachineSchedulerID, &RegisterCoalescerID);
   }
   addPass(createSIShrinkInstructionsPass(), false);
   addPass(createSIFixSGPRLiveRangesPass(), false);
