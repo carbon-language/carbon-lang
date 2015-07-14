@@ -877,28 +877,34 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
   return true;
 }
 
-void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
-    MachineFunction &MF, RegScavenger *RS) const {
+void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                                BitVector &SavedRegs,
+                                                RegScavenger *RS) const {
+  // All calls are tail calls in GHC calling conv, and functions have no
+  // prologue/epilogue.
+  if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
+    return;
+
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
   const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
       MF.getSubtarget().getRegisterInfo());
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
-  MachineRegisterInfo *MRI = &MF.getRegInfo();
   SmallVector<unsigned, 4> UnspilledCSGPRs;
   SmallVector<unsigned, 4> UnspilledCSFPRs;
 
   // The frame record needs to be created by saving the appropriate registers
   if (hasFP(MF)) {
-    MRI->setPhysRegUsed(AArch64::FP);
-    MRI->setPhysRegUsed(AArch64::LR);
+    SavedRegs.set(AArch64::FP);
+    SavedRegs.set(AArch64::LR);
   }
 
   // Spill the BasePtr if it's used. Do this first thing so that the
   // getCalleeSavedRegs() below will get the right answer.
   if (RegInfo->hasBasePointer(MF))
-    MRI->setPhysRegUsed(RegInfo->getBaseRegister());
+    SavedRegs.set(RegInfo->getBaseRegister());
 
   if (RegInfo->needsStackRealignment(MF) && !RegInfo->hasBasePointer(MF))
-    MRI->setPhysRegUsed(AArch64::X9);
+    SavedRegs.set(AArch64::X9);
 
   // If any callee-saved registers are used, the frame cannot be eliminated.
   unsigned NumGPRSpilled = 0;
@@ -920,8 +926,8 @@ void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
                 AArch64::FPR64RegClass.contains(EvenReg)) &&
            "Register class mismatch!");
 
-    const bool OddRegUsed = MRI->isPhysRegUsed(OddReg);
-    const bool EvenRegUsed = MRI->isPhysRegUsed(EvenReg);
+    const bool OddRegUsed = SavedRegs.test(OddReg);
+    const bool EvenRegUsed = SavedRegs.test(EvenReg);
 
     // Early exit if none of the registers in the register pair is actually
     // used.
@@ -942,7 +948,7 @@ void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
     if (OddRegUsed ^ EvenRegUsed) {
       // Find out which register is the additional spill.
       Reg = OddRegUsed ? EvenReg : OddReg;
-      MRI->setPhysRegUsed(Reg);
+      SavedRegs.set(Reg);
     }
 
     DEBUG(dbgs() << ' ' << PrintReg(OddReg, RegInfo));
@@ -997,7 +1003,7 @@ void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
       UnspilledCSGPRs.pop_back();
       DEBUG(dbgs() << "Spilling " << PrintReg(Reg, RegInfo)
                    << " to get a scratch register.\n");
-      MRI->setPhysRegUsed(Reg);
+      SavedRegs.set(Reg);
       ExtraCSSpill = true;
       ++Count;
     }

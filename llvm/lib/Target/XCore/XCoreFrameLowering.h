@@ -47,8 +47,8 @@ namespace llvm {
 
     bool hasFP(const MachineFunction &MF) const override;
 
-    void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS = nullptr) const override;
+    void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
+                              RegScavenger *RS = nullptr) const override;
 
     void processFunctionBeforeFrameFinalized(MachineFunction &MF,
                                      RegScavenger *RS = nullptr) const override;

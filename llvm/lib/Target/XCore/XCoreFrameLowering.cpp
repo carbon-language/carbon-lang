@@ -525,12 +525,15 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-void XCoreFrameLowering::
-processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS) const {
+void XCoreFrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                              BitVector &SavedRegs,
+                                              RegScavenger *RS) const {
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
+
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
 
-  bool LRUsed = MF.getRegInfo().isPhysRegUsed(XCore::LR);
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  bool LRUsed = MRI.isPhysRegModified(XCore::LR);
 
   if (!LRUsed && !MF.getFunction()->isVarArg() &&
       MF.getFrameInfo()->estimateStackSize(MF))
@@ -550,7 +553,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (LRUsed) {
     // We will handle the LR in the prologue/epilogue
     // and allocate space on the stack ourselves.
-    MF.getRegInfo().setPhysRegUnused(XCore::LR);
+    SavedRegs.reset(XCore::LR);
     XFI->createLRSpillSlot(MF);
   }
 

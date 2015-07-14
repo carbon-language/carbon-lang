@@ -61,11 +61,12 @@ SystemZFrameLowering::getCalleeSavedSpillSlots(unsigned &NumEntries) const {
   return SpillOffsetTable;
 }
 
-void SystemZFrameLowering::
-processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS) const {
+void SystemZFrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                                BitVector &SavedRegs,
+                                                RegScavenger *RS) const {
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
+
   MachineFrameInfo *MFFrame = MF.getFrameInfo();
-  MachineRegisterInfo &MRI = MF.getRegInfo();
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   bool HasFP = hasFP(MF);
   SystemZMachineFunctionInfo *MFI = MF.getInfo<SystemZMachineFunctionInfo>();
@@ -77,17 +78,17 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // argument register R6D.
   if (IsVarArg)
     for (unsigned I = MFI->getVarArgsFirstGPR(); I < SystemZ::NumArgGPRs; ++I)
-      MRI.setPhysRegUsed(SystemZ::ArgGPRs[I]);
+      SavedRegs.set(SystemZ::ArgGPRs[I]);
 
   // If the function requires a frame pointer, record that the hard
   // frame pointer will be clobbered.
   if (HasFP)
-    MRI.setPhysRegUsed(SystemZ::R11D);
+    SavedRegs.set(SystemZ::R11D);
 
   // If the function calls other functions, record that the return
   // address register will be clobbered.
   if (MFFrame->hasCalls())
-    MRI.setPhysRegUsed(SystemZ::R14D);
+    SavedRegs.set(SystemZ::R14D);
 
   // If we are saving GPRs other than the stack pointer, we might as well
   // save and restore the stack pointer at the same time, via STMG and LMG.
@@ -96,8 +97,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   const MCPhysReg *CSRegs = TRI->getCalleeSavedRegs(&MF);
   for (unsigned I = 0; CSRegs[I]; ++I) {
     unsigned Reg = CSRegs[I];
-    if (SystemZ::GR64BitRegClass.contains(Reg) && MRI.isPhysRegUsed(Reg)) {
-      MRI.setPhysRegUsed(SystemZ::R15D);
+    if (SystemZ::GR64BitRegClass.contains(Reg) && SavedRegs.test(Reg)) {
+      SavedRegs.set(SystemZ::R15D);
       break;
     }
   }

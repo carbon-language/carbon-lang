@@ -621,10 +621,17 @@ MipsSEFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
     !MFI->hasVarSizedObjects();
 }
 
-void MipsSEFrameLowering::
-processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS) const {
-  MachineRegisterInfo &MRI = MF.getRegInfo();
+/// Mark \p Reg and all registers aliasing it in the bitset.
+void setAliasRegs(MachineFunction &MF, BitVector &SavedRegs, unsigned Reg) {
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+    SavedRegs.set(*AI);
+}
+
+void MipsSEFrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                               BitVector &SavedRegs,
+                                               RegScavenger *RS) const {
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MipsABIInfo ABI = STI.getABI();
   unsigned FP = ABI.GetFramePtr();
@@ -632,10 +639,10 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Mark $fp as used if function has dedicated frame pointer.
   if (hasFP(MF))
-    MRI.setPhysRegUsed(FP);
+    setAliasRegs(MF, SavedRegs, FP);
   // Mark $s7 as used if function has dedicated base pointer.
   if (hasBP(MF))
-    MRI.setPhysRegUsed(BP);
+    setAliasRegs(MF, SavedRegs, BP);
 
   // Create spill slots for eh data registers if function calls eh_return.
   if (MipsFI->callsEhReturn())

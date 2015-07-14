@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -440,4 +441,50 @@ void MachineRegisterInfo::markUsesInDebugValueAsUndef(unsigned Reg) const {
     if (UseMI->isDebugValue())
       UseMI->getOperand(0).setReg(0U);
   }
+}
+
+static const Function *getCalledFunction(const MachineInstr &MI) {
+  for (const MachineOperand &MO : MI.operands()) {
+    if (!MO.isGlobal())
+      continue;
+    const Function *Func = dyn_cast<Function>(MO.getGlobal());
+    if (Func != nullptr)
+      return Func;
+  }
+  return nullptr;
+}
+
+static bool isNoReturnDef(const MachineOperand &MO) {
+  // Anything which is not a noreturn function is a real def.
+  const MachineInstr &MI = *MO.getParent();
+  if (!MI.isCall())
+    return false;
+  const MachineBasicBlock &MBB = *MI.getParent();
+  if (!MBB.succ_empty())
+    return false;
+  const MachineFunction &MF = *MBB.getParent();
+  // We need to keep correct unwind information even if the function will
+  // not return, since the runtime may need it.
+  if (MF.getFunction()->hasFnAttribute(Attribute::UWTable))
+    return false;
+  const Function *Called = getCalledFunction(MI);
+  if (Called == nullptr || !Called->hasFnAttribute(Attribute::NoReturn)
+      || !Called->hasFnAttribute(Attribute::NoUnwind))
+    return false;
+
+  return true;
+}
+
+bool MachineRegisterInfo::isPhysRegModified(unsigned PhysReg) const {
+  if (UsedPhysRegMask.test(PhysReg))
+    return true;
+  const TargetRegisterInfo *TRI = getTargetRegisterInfo();
+  for (MCRegAliasIterator AI(PhysReg, TRI, true); AI.isValid(); ++AI) {
+    for (const MachineOperand &MO : make_range(def_begin(*AI), def_end())) {
+      if (isNoReturnDef(MO))
+        continue;
+      return true;
+    }
+  }
+  return false;
 }

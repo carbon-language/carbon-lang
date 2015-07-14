@@ -68,8 +68,8 @@ public:
   void adjustForHiPEPrologue(MachineFunction &MF,
                              MachineBasicBlock &PrologueMBB) const override;
 
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS = nullptr) const override;
+  void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
+                            RegScavenger *RS = nullptr) const override;
 
   bool
   assignCalleeSavedSpillSlots(MachineFunction &MF,

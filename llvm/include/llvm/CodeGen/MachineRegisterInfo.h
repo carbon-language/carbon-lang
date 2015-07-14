@@ -647,6 +647,12 @@ public:
   /// deleted during LiveDebugVariables analysis.
   void markUsesInDebugValueAsUndef(unsigned Reg) const;
 
+  /// Return true if the specified register is modified in this function.
+  /// This checks that no defining machine operands exist for the register or
+  /// any of its aliases. Definitions found on functions marked noreturn are
+  /// ignored.
+  bool isPhysRegModified(unsigned PhysReg) const;
+
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info
   //===--------------------------------------------------------------------===//
@@ -655,9 +661,7 @@ public:
   /// function. Also check for clobbered aliases and registers clobbered by
   /// function calls with register mask operands.
   ///
-  /// This only works after register allocation. It is primarily used by
-  /// PrologEpilogInserter to determine which callee-saved registers need
-  /// spilling.
+  /// This only works after register allocation.
   bool isPhysRegUsed(unsigned Reg) const {
     if (UsedPhysRegMask.test(Reg))
       return true;

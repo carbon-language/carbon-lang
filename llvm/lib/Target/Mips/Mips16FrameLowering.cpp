@@ -152,18 +152,19 @@ Mips16FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
   return isInt<15>(MFI->getMaxCallFrameSize()) && !MFI->hasVarSizedObjects();
 }
 
-void Mips16FrameLowering::
-processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                     RegScavenger *RS) const {
+void Mips16FrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                               BitVector &SavedRegs,
+                                               RegScavenger *RS) const {
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
   const Mips16InstrInfo &TII =
       *static_cast<const Mips16InstrInfo *>(STI.getInstrInfo());
   const MipsRegisterInfo &RI = TII.getRegisterInfo();
   const BitVector Reserved = RI.getReservedRegs(MF);
   bool SaveS2 = Reserved[Mips::S2];
   if (SaveS2)
-    MF.getRegInfo().setPhysRegUsed(Mips::S2);
+    SavedRegs.set(Mips::S2);
   if (hasFP(MF))
-    MF.getRegInfo().setPhysRegUsed(Mips::S0);
+    SavedRegs.set(Mips::S0);
 }
 
 const MipsFrameLowering *

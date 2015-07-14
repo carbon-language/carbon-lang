@@ -959,8 +959,11 @@ bool HexagonFrameLowering::replacePredRegPseudoSpillCode(MachineFunction &MF)
 }
 
 
-void HexagonFrameLowering::processFunctionBeforeCalleeSavedScan(
-      MachineFunction &MF, RegScavenger* RS) const {
+void HexagonFrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                                BitVector &SavedRegs,
+                                                RegScavenger *RS) const {
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
+
   auto &HST = static_cast<const HexagonSubtarget&>(MF.getSubtarget());
   auto &HRI = *HST.getRegisterInfo();
 
@@ -969,11 +972,9 @@ void HexagonFrameLowering::processFunctionBeforeCalleeSavedScan(
   // If we have a function containing __builtin_eh_return we want to spill and
   // restore all callee saved registers. Pretend that they are used.
   if (HasEHReturn) {
-    MachineRegisterInfo &MRI = MF.getRegInfo();
     for (const MCPhysReg *CSRegs = HRI.getCalleeSavedRegs(&MF); *CSRegs;
          ++CSRegs)
-      if (!MRI.isPhysRegUsed(*CSRegs))
-        MRI.setPhysRegUsed(*CSRegs);
+      SavedRegs.set(*CSRegs);
   }
 
   const TargetRegisterClass &RC = Hexagon::IntRegsRegClass;

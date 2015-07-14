@@ -45,7 +45,7 @@ public:
       MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const override;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
         RegScavenger *RS = nullptr) const override;
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+  void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
         RegScavenger *RS) const override;
 
   bool targetHandlesStackFrameRounding() const override {

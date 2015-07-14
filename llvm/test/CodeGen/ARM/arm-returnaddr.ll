@@ -8,7 +8,6 @@
 define i8* @rt0(i32 %x) nounwind readnone {
 entry:
 ; CHECK-LABEL: rt0:
-; CHECK: {r7, lr}
 ; CHECK: mov r0, lr
   %0 = tail call i8* @llvm.returnaddress(i32 0)
   ret i8* %0
@@ -17,10 +16,9 @@ entry:
 define i8* @rt2() nounwind readnone {
 entry:
 ; CHECK-LABEL: rt2:
-; CHECK: {r7, lr}
 ; CHECK: ldr r[[R0:[0-9]+]], [r7]
-; CHECK: ldr r0, [r0]
-; CHECK: ldr r0, [r0, #4]
+; CHECK: ldr r0, [r[[R0]]]
+; CHECK: ldr r0, [r[[R0]], #4]
   %0 = tail call i8* @llvm.returnaddress(i32 2)
   ret i8* %0
 }

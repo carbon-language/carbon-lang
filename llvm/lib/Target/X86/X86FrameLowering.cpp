@@ -1425,9 +1425,11 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-void
-X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                       RegScavenger *RS) const {
+void X86FrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                            BitVector &SavedRegs,
+                                            RegScavenger *RS) const {
+  TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
+
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
@@ -1449,7 +1451,7 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Spill the BasePtr if it's used.
   if (TRI->hasBasePointer(MF))
-    MF.getRegInfo().setPhysRegUsed(TRI->getBaseRegister());
+    SavedRegs.set(TRI->getBaseRegister());
 }
 
 static bool
