@@ -10,7 +10,6 @@ target_link_libraries(DriverTests
   lldDriver
   lldCOFF
   lldCore
-  lldELF2
   lldPECOFF
   lldMachO
   )
