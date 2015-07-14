@@ -1,5 +1,8 @@
 // RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -fmodule-map-file=%S/Inputs/diagnostics-aux.modulemap -fmodule-map-file=%s -fsyntax-only -x c++ /dev/null 2>&1 | FileCheck %s
 
+// CHECK: In file included from {{.*}}diagnostics-aux.modulemap:3:
+// CHECK: diagnostics-aux-2.modulemap:2:3: error: expected
+
 // PR22299: Ensure we can produce diagnostics for duplicate modules from -fmodule-map-file=.
 //
 // CHECK: diagnostics.modulemap:[[@LINE+2]]:8: error: redefinition of module 'foo'

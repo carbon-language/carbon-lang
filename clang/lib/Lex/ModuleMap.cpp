@@ -1528,7 +1528,7 @@ void ModuleMapParser::parseModuleDecl() {
 ///     'extern' 'module' module-id string-literal
 void ModuleMapParser::parseExternModuleDecl() {
   assert(Tok.is(MMToken::ExternKeyword));
-  consumeToken(); // 'extern' keyword
+  SourceLocation ExternLoc = consumeToken(); // 'extern' keyword
 
   // Parse 'module' keyword.
   if (!Tok.is(MMToken::ModuleKeyword)) {
@@ -1567,7 +1567,7 @@ void ModuleMapParser::parseExternModuleDecl() {
         File, /*IsSystem=*/false,
         Map.HeaderInfo.getHeaderSearchOpts().ModuleMapFileHomeIsCwd
             ? Directory
-            : File->getDir());
+            : File->getDir(), ExternLoc);
 }
 
 /// \brief Parse a requires declaration.
@@ -2319,7 +2319,8 @@ bool ModuleMapParser::parseModuleMapFile() {
 }
 
 bool ModuleMap::parseModuleMapFile(const FileEntry *File, bool IsSystem,
-                                   const DirectoryEntry *Dir) {
+                                   const DirectoryEntry *Dir,
+                                   SourceLocation ExternModuleLoc) {
   llvm::DenseMap<const FileEntry *, bool>::iterator Known
     = ParsedModuleMap.find(File);
   if (Known != ParsedModuleMap.end())
@@ -2327,7 +2328,7 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File, bool IsSystem,
 
   assert(Target && "Missing target information");
   auto FileCharacter = IsSystem ? SrcMgr::C_System : SrcMgr::C_User;
-  FileID ID = SourceMgr.createFileID(File, SourceLocation(), FileCharacter);
+  FileID ID = SourceMgr.createFileID(File, ExternModuleLoc, FileCharacter);
   const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(ID);
   if (!Buffer)
     return ParsedModuleMap[File] = true;
