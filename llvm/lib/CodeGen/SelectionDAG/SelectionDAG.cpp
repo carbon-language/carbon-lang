@@ -1915,9 +1915,9 @@ SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1,
     break;
   }
 
-  if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode())) {
+  if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2)) {
     const APInt &C2 = N2C->getAPIntValue();
-    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
+    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1)) {
       const APInt &C1 = N1C->getAPIntValue();
 
       switch (Cond) {
@@ -1935,8 +1935,8 @@ SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1,
       }
     }
   }
-  if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.getNode())) {
-    if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.getNode())) {
+  if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1)) {
+    if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2)) {
       APFloat::cmpResult R = N1C->getValueAPF().compare(N2C->getValueAPF());
       switch (Cond) {
       default: break;
@@ -2822,7 +2822,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
   // doesn't create new constants with different values. Nevertheless, the
   // opaque flag is preserved during folding to prevent future folding with
   // other constants.
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.getNode())) {
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand)) {
     const APInt &Val = C->getAPIntValue();
     switch (Opcode) {
     default: break;
@@ -2869,7 +2869,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
   }
 
   // Constant fold unary operations with a floating point constant operand.
-  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.getNode())) {
+  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand)) {
     APFloat V = C->getValueAPF();    // make copy
     switch (Opcode) {
     case ISD::FNEG:
@@ -2930,7 +2930,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
   }
 
   // Constant fold unary operations with a vector integer or float operand.
-  if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Operand.getNode())) {
+  if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Operand)) {
     if (BV->isConstant()) {
       switch (Opcode) {
       default:
@@ -3286,8 +3286,8 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, SDLoc DL, EVT VT,
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
                               SDValue N2, const SDNodeFlags *Flags) {
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
   switch (Opcode) {
   default: break;
   case ISD::TokenFactor:
@@ -3507,7 +3507,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
           Ops.push_back(Op);
           continue;
         }
-        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getNode())) {
+        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
           APInt Val = C->getAPIntValue();
           Ops.push_back(SignExtendInReg(Val));
           continue;
@@ -3562,7 +3562,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       // if the indices are known different, extract the element from
       // the original vector.
       SDValue N1Op2 = N1.getOperand(2);
-      ConstantSDNode *N1Op2C = dyn_cast<ConstantSDNode>(N1Op2.getNode());
+      ConstantSDNode *N1Op2C = dyn_cast<ConstantSDNode>(N1Op2);
 
       if (N1Op2C && N2C) {
         if (N1Op2C->getZExtValue() == N2C->getZExtValue()) {
@@ -3608,9 +3608,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       assert(VT.getSimpleVT() <= N1.getSimpleValueType() &&
              "Extract subvector must be from larger vector to smaller vector!");
 
-      if (isa<ConstantSDNode>(Index.getNode())) {
+      if (isa<ConstantSDNode>(Index)) {
         assert((VT.getVectorNumElements() +
-                cast<ConstantSDNode>(Index.getNode())->getZExtValue()
+                cast<ConstantSDNode>(Index)->getZExtValue()
                 <= N1.getValueType().getVectorNumElements())
                && "Extract subvector overflow!");
       }
@@ -3636,8 +3636,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
 
   // Constant fold FP operations.
   bool HasFPExceptions = TLI->hasFloatingPointExceptions();
-  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.getNode());
-  ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.getNode());
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+  ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2);
   if (N1CFP) {
     if (!N2CFP && isCommutativeBinOp(Opcode)) {
       // Canonicalize constant to RHS if commutative.
@@ -3795,7 +3795,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
                               SDValue N1, SDValue N2, SDValue N3) {
   // Perform various simplifications.
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   switch (Opcode) {
   case ISD::FMA: {
     ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
@@ -3853,9 +3853,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
              "Dest and insert subvector source types must match!");
       assert(N2.getSimpleValueType() <= N1.getSimpleValueType() &&
              "Insert subvector must be from smaller vector to larger vector!");
-      if (isa<ConstantSDNode>(Index.getNode())) {
+      if (isa<ConstantSDNode>(Index)) {
         assert((N2.getValueType().getVectorNumElements() +
-                cast<ConstantSDNode>(Index.getNode())->getZExtValue()
+                cast<ConstantSDNode>(Index)->getZExtValue()
                 <= VT.getVectorNumElements())
                && "Insert subvector overflow!");
       }
@@ -7093,14 +7093,12 @@ SDValue BuildVectorSDNode::getSplatValue(BitVector *UndefElements) const {
 
 ConstantSDNode *
 BuildVectorSDNode::getConstantSplatNode(BitVector *UndefElements) const {
-  return dyn_cast_or_null<ConstantSDNode>(
-      getSplatValue(UndefElements).getNode());
+  return dyn_cast_or_null<ConstantSDNode>(getSplatValue(UndefElements));
 }
 
 ConstantFPSDNode *
 BuildVectorSDNode::getConstantFPSplatNode(BitVector *UndefElements) const {
-  return dyn_cast_or_null<ConstantFPSDNode>(
-      getSplatValue(UndefElements).getNode());
+  return dyn_cast_or_null<ConstantFPSDNode>(getSplatValue(UndefElements));
 }
 
 bool BuildVectorSDNode::isConstant() const {
