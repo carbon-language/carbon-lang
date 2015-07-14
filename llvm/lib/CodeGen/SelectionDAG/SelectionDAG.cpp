@@ -151,8 +151,8 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
   if (N->getOpcode() != ISD::BUILD_VECTOR) return false;
 
   bool IsAllUndef = true;
-  for (unsigned i = 0, e = N->getNumOperands(); i < e; ++i) {
-    if (N->getOperand(i).getOpcode() == ISD::UNDEF)
+  for (const SDValue &Op : N->op_values()) {
+    if (Op.getOpcode() == ISD::UNDEF)
       continue;
     IsAllUndef = false;
     // Do not accept build_vectors that aren't all constants or which have non-0
@@ -163,12 +163,11 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
     // We only want to check enough bits to cover the vector elements, because
     // we care if the resultant vector is all zeros, not whether the individual
     // constants are.
-    SDValue Zero = N->getOperand(i);
     unsigned EltSize = N->getValueType(0).getVectorElementType().getSizeInBits();
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Zero)) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Op)) {
       if (CN->getAPIntValue().countTrailingZeros() < EltSize)
         return false;
-    } else if (ConstantFPSDNode *CFPN = dyn_cast<ConstantFPSDNode>(Zero)) {
+    } else if (ConstantFPSDNode *CFPN = dyn_cast<ConstantFPSDNode>(Op)) {
       if (CFPN->getValueAPF().bitcastToAPInt().countTrailingZeros() < EltSize)
         return false;
     } else
@@ -6694,8 +6693,8 @@ bool SDValue::isOperandOf(SDNode *N) const {
 }
 
 bool SDNode::isOperandOf(SDNode *N) const {
-  for (unsigned i = 0, e = N->NumOperands; i != e; ++i)
-    if (this == N->OperandList[i].getNode())
+  for (const SDValue &Op : N->op_values())
+    if (this == Op.getNode())
       return true;
   return false;
 }
