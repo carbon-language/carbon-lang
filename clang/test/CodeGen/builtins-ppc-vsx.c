@@ -140,14 +140,31 @@ void test1() {
 // CHECK: call <4 x i32> @llvm.ppc.vsx.xvcmpgtsp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
 // CHECK-LE: call <4 x i32> @llvm.ppc.vsx.xvcmpgtsp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
 
+  /* vec_cpsgn */
+  res_vf = vec_cpsgn(vf, vf);
+// CHECK: call <4 x float> @llvm.copysign.v4f32(<4 x float> %{{.+}}, <4 x float> %{{.+}})
+// CHECK-LE: call <4 x float> @llvm.copysign.v4f32(<4 x float> %{{.+}}, <4 x float> %{{.+}})
+
+  res_vd = vec_cpsgn(vd, vd);
+// CHECK: call <2 x double> @llvm.copysign.v2f64(<2 x double> %{{.+}}, <2 x double> %{{.+}})
+// CHECK-LE: call <2 x double> @llvm.copysign.v2f64(<2 x double> %{{.+}}, <2 x double> %{{.+}})
+
   /* vec_div */
+  res_vsll = vec_div(vsll, vsll);
+// CHECK: sdiv <2 x i64>
+// CHECK-LE: sdiv <2 x i64>
+
+  res_vull = vec_div(vull, vull);
+// CHECK: udiv <2 x i64>
+// CHECK-LE: udiv <2 x i64>
+
   res_vf = vec_div(vf, vf);
-// CHECK: @llvm.ppc.vsx.xvdivsp
-// CHECK-LE: @llvm.ppc.vsx.xvdivsp
+// CHECK: fdiv <4 x float>
+// CHECK-LE: fdiv <4 x float>
 
   res_vd = vec_div(vd, vd);
-// CHECK: @llvm.ppc.vsx.xvdivdp
-// CHECK-LE: @llvm.ppc.vsx.xvdivdp
+// CHECK: fdiv <2 x double>
+// CHECK-LE: fdiv <2 x double>
 
   /* vec_max */
   res_vf = vec_max(vf, vf);
@@ -248,6 +265,18 @@ void test1() {
 // CHECK-LE: [[T1:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
 // CHECK-LE: [[T2:%.+]] = bitcast <2 x i64> {{.+}} to <4 x i32>
 // CHECK-LE: call <4 x i32> @llvm.ppc.altivec.vperm(<4 x i32> [[T1]], <4 x i32> [[T2]], <16 x i8>
+
+  res_vsi = vec_pack(vsll, vsll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_pack(vull, vull);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vbi = vec_pack(vbll, vbll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
 
   res_vsll = vec_vperm(vsll, vsll, vuc);
 // CHECK: @llvm.ppc.altivec.vperm
@@ -430,6 +459,57 @@ void test1() {
 // CHECK: call <2 x double> @llvm.fma.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}})
 // CHECK-LE: call <2 x double> @llvm.fma.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}})
 
+  /* vec_mergeh */
+  res_vsll = vec_mergeh(vsll, vsll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vsll = vec_mergeh(vsll, vbll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vsll = vec_mergeh(vbll, vsll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergeh(vull, vull);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergeh(vull, vbll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergeh(vbll, vull);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  /* vec_mergel */
+  res_vsll = vec_mergel(vsll, vsll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vsll = vec_mergel(vsll, vbll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vsll = vec_mergel(vbll, vsll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergel(vull, vull);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergel(vull, vbll);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vull = vec_mergel(vbll, vull);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  /* vec_msub */
   res_vf = vec_msub(vf, vf, vf);
 // CHECK: fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %{{[0-9]+}}
 // CHECK-NEXT: call <4 x float> @llvm.fma.v4f32(<4 x float> %{{[0-9]+}}, <4 x float> %{{[0-9]+}}, <4 x float>
@@ -441,6 +521,14 @@ void test1() {
 // CHECK-NEXT: call <2 x double> @llvm.fma.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double>
 // CHECK-LE: fsub <2 x double> <double -0.000000e+00, double -0.000000e+00>, %{{[0-9]+}}
 // CHECK-LE-NEXT: call <2 x double> @llvm.fma.v2f64(<2 x double> %{{[0-9]+}}, <2 x double> %{{[0-9]+}}, <2 x double>
+
+  res_vsll = vec_mul(vsll, vsll);
+// CHECK: mul <2 x i64>
+// CHECK-LE: mul <2 x i64>
+
+  res_vull = vec_mul(vull, vull);
+// CHECK: mul <2 x i64>
+// CHECK-LE: mul <2 x i64>
 
   res_vf = vec_mul(vf, vf);
 // CHECK: fmul <4 x float> %{{[0-9]+}}, %{{[0-9]+}}
@@ -547,6 +635,30 @@ void test1() {
 // CHECK: or <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
 // CHECK-LE: bitcast <2 x double> %{{[0-9]+}} to <2 x i64>
 // CHECK-LE: or <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
+
+  res_vd = vec_or(vbll, vd);
+// CHECK: [[T1:%.+]] = bitcast <2 x double> %{{[0-9]+}} to <2 x i64>
+// CHECK: [[T2:%.+]] = or <2 x i64> %{{[0-9]+}}, [[T1]]
+// CHECK: bitcast <2 x i64> [[T2]] to <2 x double>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x double> %{{[0-9]+}} to <2 x i64>
+// CHECK-LE: [[T2:%.+]] = or <2 x i64> %{{[0-9]+}}, [[T1]]
+// CHECK-LE: bitcast <2 x i64> [[T2]] to <2 x double>
+
+  res_vd = vec_or(vd, vbll);
+// CHECK: [[T1:%.+]] = bitcast <2 x double> %{{[0-9]+}} to <2 x i64>
+// CHECK: [[T2:%.+]] = or <2 x i64> [[T1]], %{{[0-9]+}}
+// CHECK: bitcast <2 x i64> [[T2]] to <2 x double>
+// CHECK-LE: [[T1:%.+]] = bitcast <2 x double> %{{[0-9]+}} to <2 x i64>
+// CHECK-LE: [[T2:%.+]] = or <2 x i64> [[T1]], %{{[0-9]+}}
+// CHECK-LE: bitcast <2 x i64> [[T2]] to <2 x double>
+
+  res_vf = vec_re(vf);
+// CHECK: call <4 x float> @llvm.ppc.vsx.xvresp(<4 x float>
+// CHECK-LE: call <4 x float> @llvm.ppc.vsx.xvresp(<4 x float>
+
+  res_vd = vec_re(vd);
+// CHECK: call <2 x double> @llvm.ppc.vsx.xvredp(<2 x double>
+// CHECK-LE: call <2 x double> @llvm.ppc.vsx.xvredp(<2 x double>
 
   res_vf = vec_rint(vf);
 // CHECK: call <4 x float> @llvm.nearbyint.v4f32(<4 x float> %{{[0-9]+}})

@@ -6642,6 +6642,27 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID, ResultType);
     return Builder.CreateCall(F, X);
   }
+  // Count leading zeros
+  case PPC::BI__builtin_altivec_vclzb:
+  case PPC::BI__builtin_altivec_vclzh:
+  case PPC::BI__builtin_altivec_vclzw:
+  case PPC::BI__builtin_altivec_vclzd: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Undef = ConstantInt::get(Builder.getInt1Ty(), false);
+    Function *F = CGM.getIntrinsic(Intrinsic::ctlz, ResultType);
+    return Builder.CreateCall(F, {X, Undef});
+  }
+  // Copy sign
+  case PPC::BI__builtin_vsx_xvcpsgnsp:
+  case PPC::BI__builtin_vsx_xvcpsgndp: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Y = EmitScalarExpr(E->getArg(1));
+    ID = Intrinsic::copysign;
+    llvm::Function *F = CGM.getIntrinsic(ID, ResultType);
+    return Builder.CreateCall(F, {X, Y});
+  }
   // Rounding/truncation
   case PPC::BI__builtin_vsx_xvrspip:
   case PPC::BI__builtin_vsx_xvrdpip:

@@ -35,7 +35,7 @@ vector signed short res_vss;
 vector unsigned short res_vus;
 vector bool short res_vbs;
 
-vector int res_vsi;
+vector signed int res_vsi;
 vector unsigned int res_vui;
 vector bool int res_vbi;
 
@@ -441,6 +441,39 @@ void test1() {
 // CHECK-LE: [[T3:%.+]] = call <4 x i32> @llvm.ppc.vsx.xxleqv(<4 x i32> [[T1]], <4 x i32>
 // CHECK-LE: bitcast <4 x i32> [[T3]] to <2 x double>
 // CHECK-PPC: error: assigning to
+
+  res_vsc = vec_cntlz(vsc);
+// CHECK: call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %{{.+}}, i1 false)
+// CHECK-LE: call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %{{.+}}, i1 false)
+// CHECK-PPC: warning: implicit declaration of function 'vec_cntlz' is invalid in C99
+
+  res_vuc = vec_cntlz(vuc);
+// CHECK: call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %{{.+}}, i1 false)
+// CHECK-LE: call <16 x i8> @llvm.ctlz.v16i8(<16 x i8> %{{.+}}, i1 false)
+
+  res_vss = vec_cntlz(vss);
+// CHECK: call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %{{.+}}, i1 false)
+// CHECK-LE: call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %{{.+}}, i1 false)
+
+  res_vus = vec_cntlz(vus);
+// CHECK: call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %{{.+}}, i1 false)
+// CHECK-LE: call <8 x i16> @llvm.ctlz.v8i16(<8 x i16> %{{.+}}, i1 false)
+
+  res_vsi = vec_cntlz(vsi);
+// CHECK: call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %{{.+}}, i1 false)
+// CHECK-LE: call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %{{.+}}, i1 false)
+
+  res_vui = vec_cntlz(vui);
+// CHECK: call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %{{.+}}, i1 false)
+// CHECK-LE: call <4 x i32> @llvm.ctlz.v4i32(<4 x i32> %{{.+}}, i1 false)
+
+  res_vsll = vec_cntlz(vsll);
+// CHECK: call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %{{.+}}, i1 false)
+// CHECK-LE: call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %{{.+}}, i1 false)
+
+  res_vull = vec_cntlz(vull);
+// CHECK: call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %{{.+}}, i1 false)
+// CHECK-LE: call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %{{.+}}, i1 false)
 
   /* ----------------------- predicates --------------------------- */
   /* vec_all_eq */
@@ -1135,6 +1168,298 @@ void test1() {
   res_vull = vec_min(vbll, vull);
 // CHECK: @llvm.ppc.altivec.vminud
 // CHECK-LE: @llvm.ppc.altivec.vminud
+
+  /* vec_nand */
+  res_vsc = vec_nand(vsc, vsc);
+// CHECK: [[T1:%.+]] = and <16 x i8>
+// CHECK: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: [[T1:%.+]] = and <16 x i8>
+// CHECK-LE: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-PPC: warning: implicit declaration of function 'vec_nand' is invalid in C99
+
+  res_vsc = vec_nand(vsc, vbc);
+// CHECK: [[T1:%.+]] = and <16 x i8>
+// CHECK: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: [[T1:%.+]] = and <16 x i8>
+// CHECK-LE: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+  
+  res_vsc = vec_nand(vbc, vsc);
+// CHECK: [[T1:%.+]] = and <16 x i8>
+// CHECK: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: [[T1:%.+]] = and <16 x i8>
+// CHECK-LE: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+  
+  res_vuc = vec_nand(vuc, vuc);
+// CHECK: [[T1:%.+]] = and <16 x i8>
+// CHECK: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: [[T1:%.+]] = and <16 x i8>
+// CHECK-LE: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+  
+  res_vuc = vec_nand(vuc, vbc);
+// CHECK: [[T1:%.+]] = and <16 x i8>
+// CHECK: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: [[T1:%.+]] = and <16 x i8>
+// CHECK-LE: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+  
+  res_vuc = vec_nand(vbc, vuc);
+// CHECK: [[T1:%.+]] = and <16 x i8>
+// CHECK: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: [[T1:%.+]] = and <16 x i8>
+// CHECK-LE: xor <16 x i8> [[T1]], <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+  
+  res_vss = vec_nand(vss, vss);
+// CHECK: [[T1:%.+]] = and <8 x i16>
+// CHECK: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: [[T1:%.+]] = and <8 x i16>
+// CHECK-LE: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+
+  res_vss = vec_nand(vss, vbs);
+// CHECK: [[T1:%.+]] = and <8 x i16>
+// CHECK: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: [[T1:%.+]] = and <8 x i16>
+// CHECK-LE: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+
+  res_vss = vec_nand(vbs, vss);
+// CHECK: [[T1:%.+]] = and <8 x i16>
+// CHECK: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: [[T1:%.+]] = and <8 x i16>
+// CHECK-LE: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+
+  res_vus = vec_nand(vus, vus);
+// CHECK: [[T1:%.+]] = and <8 x i16>
+// CHECK: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: [[T1:%.+]] = and <8 x i16>
+// CHECK-LE: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+
+  res_vus = vec_nand(vus, vbs);
+// CHECK: [[T1:%.+]] = and <8 x i16>
+// CHECK: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: [[T1:%.+]] = and <8 x i16>
+// CHECK-LE: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+
+  res_vus = vec_nand(vbs, vus);
+// CHECK: [[T1:%.+]] = and <8 x i16>
+// CHECK: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: [[T1:%.+]] = and <8 x i16>
+// CHECK-LE: xor <8 x i16> [[T1]], <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+
+  res_vsi = vec_nand(vsi, vsi);
+// CHECK: [[T1:%.+]] = and <4 x i32>
+// CHECK: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: [[T1:%.+]] = and <4 x i32>
+// CHECK-LE: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+
+  res_vsi = vec_nand(vsi, vbi);
+// CHECK: [[T1:%.+]] = and <4 x i32>
+// CHECK: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: [[T1:%.+]] = and <4 x i32>
+// CHECK-LE: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+
+  res_vsi = vec_nand(vbi, vsi);
+// CHECK: [[T1:%.+]] = and <4 x i32>
+// CHECK: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: [[T1:%.+]] = and <4 x i32>
+// CHECK-LE: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+
+  res_vui = vec_nand(vui, vui);
+// CHECK: [[T1:%.+]] = and <4 x i32>
+// CHECK: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: [[T1:%.+]] = and <4 x i32>
+// CHECK-LE: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+
+  res_vui = vec_nand(vui, vbi);
+// CHECK: [[T1:%.+]] = and <4 x i32>
+// CHECK: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: [[T1:%.+]] = and <4 x i32>
+// CHECK-LE: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+
+  res_vui = vec_nand(vbi, vui);
+// CHECK: [[T1:%.+]] = and <4 x i32>
+// CHECK: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: [[T1:%.+]] = and <4 x i32>
+// CHECK-LE: xor <4 x i32> [[T1]], <i32 -1, i32 -1, i32 -1, i32 -1>
+
+  res_vsll = vec_nand(vsll, vsll);
+// CHECK: [[T1:%.+]] = and <2 x i64>
+// CHECK: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+// CHECK-LE: [[T1:%.+]] = and <2 x i64>
+// CHECK-LE: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+
+  res_vsll = vec_nand(vsll, vbll);
+// CHECK: [[T1:%.+]] = and <2 x i64>
+// CHECK: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+// CHECK-LE: [[T1:%.+]] = and <2 x i64>
+// CHECK-LE: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+
+  res_vsll = vec_nand(vbll, vsll);
+// CHECK: [[T1:%.+]] = and <2 x i64>
+// CHECK: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+// CHECK-LE: [[T1:%.+]] = and <2 x i64>
+// CHECK-LE: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+
+  res_vull = vec_nand(vull, vull);
+// CHECK: [[T1:%.+]] = and <2 x i64>
+// CHECK: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+// CHECK-LE: [[T1:%.+]] = and <2 x i64>
+// CHECK-LE: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+
+  res_vull = vec_nand(vull, vbll);
+// CHECK: [[T1:%.+]] = and <2 x i64>
+// CHECK: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+// CHECK-LE: [[T1:%.+]] = and <2 x i64>
+// CHECK-LE: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+
+  res_vull = vec_nand(vbll, vull);
+// CHECK: [[T1:%.+]] = and <2 x i64>
+// CHECK: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+// CHECK-LE: [[T1:%.+]] = and <2 x i64>
+// CHECK-LE: xor <2 x i64> [[T1]], <i64 -1, i64 -1>
+
+  /* vec_orc */
+  res_vsc = vec_orc(vsc, vsc);
+// CHECK: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-PPC: warning: implicit declaration of function 'vec_orc' is invalid in C99
+
+  res_vsc = vec_orc(vsc, vbc);
+// CHECK: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: or <16 x i8> {{%.+}}, [[T1]]
+
+  res_vsc = vec_orc(vbc, vsc);
+// CHECK: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: or <16 x i8> {{%.+}}, [[T1]]
+
+  res_vuc = vec_orc(vuc, vuc);
+// CHECK: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: or <16 x i8> {{%.+}}, [[T1]]
+
+  res_vuc = vec_orc(vuc, vbc);
+// CHECK: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: or <16 x i8> {{%.+}}, [[T1]]
+
+  res_vuc = vec_orc(vbc, vuc);
+// CHECK: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK: or <16 x i8> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <16 x i8> {{%.+}}, <i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1, i8 -1>
+// CHECK-LE: or <16 x i8> {{%.+}}, [[T1]]
+
+  res_vss = vec_orc(vss, vss);
+// CHECK: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK: or <8 x i16> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: or <8 x i16> {{%.+}}, [[T1]]
+
+  res_vss = vec_orc(vss, vbs);
+// CHECK: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK: or <8 x i16> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: or <8 x i16> {{%.+}}, [[T1]]
+
+  res_vss = vec_orc(vbs, vss);
+// CHECK: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK: or <8 x i16> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: or <8 x i16> {{%.+}}, [[T1]]
+
+  res_vus = vec_orc(vus, vus);
+// CHECK: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK: or <8 x i16> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: or <8 x i16> {{%.+}}, [[T1]]
+
+  res_vus = vec_orc(vus, vbs);
+// CHECK: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK: or <8 x i16> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: or <8 x i16> {{%.+}}, [[T1]]
+
+  res_vus = vec_orc(vbs, vus);
+// CHECK: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK: or <8 x i16> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <8 x i16> {{%.+}}, <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>
+// CHECK-LE: or <8 x i16> {{%.+}}, [[T1]]
+
+  res_vsi = vec_orc(vsi, vsi);
+// CHECK: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK: or <4 x i32> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: or <4 x i32> {{%.+}}, [[T1]]
+
+  res_vsi = vec_orc(vsi, vbi);
+// CHECK: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK: or <4 x i32> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: or <4 x i32> {{%.+}}, [[T1]]
+
+  res_vsi = vec_orc(vbi, vsi);
+// CHECK: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK: or <4 x i32> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: or <4 x i32> {{%.+}}, [[T1]]
+
+  res_vui = vec_orc(vui, vui);
+// CHECK: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK: or <4 x i32> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: or <4 x i32> {{%.+}}, [[T1]]
+
+  res_vui = vec_orc(vui, vbi);
+// CHECK: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK: or <4 x i32> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: or <4 x i32> {{%.+}}, [[T1]]
+
+  res_vui = vec_orc(vbi, vui);
+// CHECK: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK: or <4 x i32> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <4 x i32> {{%.+}}, <i32 -1, i32 -1, i32 -1, i32 -1>
+// CHECK-LE: or <4 x i32> {{%.+}}, [[T1]]
+
+  res_vsll = vec_orc(vsll, vsll);
+// CHECK: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK: or <2 x i64> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK-LE: or <2 x i64> {{%.+}}, [[T1]]
+
+  res_vsll = vec_orc(vsll, vbll);
+// CHECK: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK: or <2 x i64> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK-LE: or <2 x i64> {{%.+}}, [[T1]]
+
+  res_vsll = vec_orc(vbll, vsll);
+// CHECK: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK: or <2 x i64> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK-LE: or <2 x i64> {{%.+}}, [[T1]]
+
+  res_vull = vec_orc(vull, vull);
+// CHECK: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK: or <2 x i64> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK-LE: or <2 x i64> {{%.+}}, [[T1]]
+
+  res_vull = vec_orc(vull, vbll);
+// CHECK: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK: or <2 x i64> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK-LE: or <2 x i64> {{%.+}}, [[T1]]
+
+  res_vull = vec_orc(vbll, vull);
+// CHECK: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK: or <2 x i64> {{%.+}}, [[T1]]
+// CHECK-LE: [[T1:%.+]] = xor <2 x i64> {{%.+}}, <i64 -1, i64 -1>
+// CHECK-LE: or <2 x i64> {{%.+}}, [[T1]]
 
   /* vec_vbpermq */
   res_vsll = vec_vbpermq(vsc, vsc);

@@ -248,6 +248,11 @@ BUILTIN(__builtin_altivec_crypto_vpmsumh, "V8UsV8UsV8Us", "")
 BUILTIN(__builtin_altivec_crypto_vpmsumw, "V4UiV4UiV4Ui", "")
 BUILTIN(__builtin_altivec_crypto_vpmsumd, "V2ULLiV2ULLiV2ULLi", "")
 
+BUILTIN(__builtin_altivec_vclzb, "V16UcV16Uc", "")
+BUILTIN(__builtin_altivec_vclzh, "V8UsV8Us", "")
+BUILTIN(__builtin_altivec_vclzw, "V4UiV4Ui", "")
+BUILTIN(__builtin_altivec_vclzd, "V2ULLiV2ULLi", "")
+
 // VSX built-ins.
 
 BUILTIN(__builtin_vsx_lxvd2x, "V2divC*", "")
@@ -306,6 +311,9 @@ BUILTIN(__builtin_vsx_xvnmaddasp, "V4fV4fV4fV4f", "")
 BUILTIN(__builtin_vsx_xvnmsubadp, "V2dV2dV2dV2d", "")
 BUILTIN(__builtin_vsx_xvnmsubasp, "V4fV4fV4fV4f", "")
 
+BUILTIN(__builtin_vsx_xvredp, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvresp, "V4fV4f", "")
+
 BUILTIN(__builtin_vsx_xvrsqrtedp, "V2dV2d", "")
 BUILTIN(__builtin_vsx_xvrsqrtesp, "V4fV4f", "")
 
@@ -313,6 +321,9 @@ BUILTIN(__builtin_vsx_xvsqrtdp, "V2dV2d", "")
 BUILTIN(__builtin_vsx_xvsqrtsp, "V4fV4f", "")
 
 BUILTIN(__builtin_vsx_xxleqv, "V4UiV4UiV4Ui", "")
+
+BUILTIN(__builtin_vsx_xvcpsgndp, "V2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcpsgnsp, "V4fV4fV4f", "")
 
 // HTM builtins
 BUILTIN(__builtin_tbegin, "UiUIi", "")

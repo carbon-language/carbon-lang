@@ -1081,6 +1081,31 @@ void test6() {
 // CHECK: @llvm.ppc.altivec.vctuxs
 // CHECK-LE: @llvm.ppc.altivec.vctuxs
 
+  /* vec_div */
+  res_vsc = vec_div(vsc, vsc);
+// CHECK: sdiv <16 x i8>
+// CHECK-LE: sdiv <16 x i8>
+
+  res_vuc = vec_div(vuc, vuc);
+// CHECK: udiv <16 x i8>
+// CHECK-LE: udiv <16 x i8>
+
+  res_vs = vec_div(vs, vs);
+// CHECK: sdiv <8 x i16>
+// CHECK-LE: sdiv <8 x i16>
+
+  res_vus = vec_div(vus, vus);
+// CHECK: udiv <8 x i16>
+// CHECK-LE: udiv <8 x i16>
+
+  res_vi = vec_div(vi, vi);
+// CHECK: sdiv <4 x i32>
+// CHECK-LE: sdiv <4 x i32>
+
+  res_vui = vec_div(vui, vui);
+// CHECK: udiv <4 x i32>
+// CHECK-LE: udiv <4 x i32>
+
   /* vec_dss */
   vec_dss(0);
 // CHECK: @llvm.ppc.altivec.dss
@@ -2126,6 +2151,31 @@ void test6() {
   vec_mtvscr(vbi);
 // CHECK: @llvm.ppc.altivec.mtvscr
 // CHECK-LE: @llvm.ppc.altivec.mtvscr
+
+  /* vec_mul */
+  res_vsc = vec_mul(vsc, vsc);
+// CHECK: mul <16 x i8>
+// CHECK-LE: mul <16 x i8>
+
+  res_vuc = vec_mul(vuc, vuc);
+// CHECK: mul <16 x i8>
+// CHECK-LE: mul <16 x i8>
+
+  res_vs = vec_mul(vs, vs);
+// CHECK: mul <8 x i16>
+// CHECK-LE: mul <8 x i16>
+
+  res_vus = vec_mul(vus, vus);
+// CHECK: mul <8 x i16>
+// CHECK-LE: mul <8 x i16>
+
+  res_vi = vec_mul(vi, vi);
+// CHECK: mul <4 x i32>
+// CHECK-LE: mul <4 x i32>
+
+  res_vui = vec_mul(vui, vui);
+// CHECK: mul <4 x i32>
+// CHECK-LE: mul <4 x i32>
 
   /* vec_mule */
   res_vs  = vec_mule(vsc, vsc);
