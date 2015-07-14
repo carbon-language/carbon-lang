@@ -50,7 +50,10 @@ public:
     Archive::child_iterator ci = member->second;
 
     // Don't return a member already returned
-    const char *memberStart = ci->getBuffer().data();
+    ErrorOr<StringRef> buf = ci->getBuffer();
+    if (!buf)
+      return nullptr;
+    const char *memberStart = buf->data();
     if (_membersInstantiated.count(memberStart))
       return nullptr;
     if (dataSymbolOnly && !isDataSymbol(ci, name))
@@ -85,7 +88,10 @@ public:
     Archive::child_iterator ci = member->second;
 
     // Do nothing if a member is already instantiated.
-    const char *memberStart = ci->getBuffer().data();
+    ErrorOr<StringRef> buf = ci->getBuffer();
+    if (!buf)
+      return;
+    const char *memberStart = buf->data();
     if (_membersInstantiated.count(memberStart))
       return;
 
@@ -234,7 +240,7 @@ private:
       Archive::child_iterator member = memberOrErr.get();
       DEBUG_WITH_TYPE(
           "FileArchive",
-          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
+          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer()->data())
                        << "'" << name << "'\n");
       _symbolMemberMap.insert(std::make_pair(name, member));
     }
