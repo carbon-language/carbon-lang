@@ -289,9 +289,8 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
 /// ClusterNodes - Cluster certain nodes which should be scheduled together.
 ///
 void ScheduleDAGSDNodes::ClusterNodes() {
-  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
-       E = DAG->allnodes_end(); NI != E; ++NI) {
-    SDNode *Node = &*NI;
+  for (SDNode &NI : DAG->allnodes()) {
+    SDNode *Node = &NI;
     if (!Node || !Node->isMachineOpcode())
       continue;
 
@@ -308,9 +307,8 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
   // to their associated SUnits by holding SUnits table indices. A value
   // of -1 means the SDNode does not yet have an associated SUnit.
   unsigned NumNodes = 0;
-  for (SelectionDAG::allnodes_iterator NI = DAG->allnodes_begin(),
-       E = DAG->allnodes_end(); NI != E; ++NI) {
-    NI->setNodeId(-1);
+  for (SDNode &NI : DAG->allnodes()) {
+    NI.setNodeId(-1);
     ++NumNodes;
   }
 

@@ -323,6 +323,14 @@ public:
     return AllNodes.size();
   }
 
+  iterator_range<allnodes_iterator> allnodes() {
+    return iterator_range<allnodes_iterator>(allnodes_begin(), allnodes_end());
+  }
+  iterator_range<allnodes_const_iterator> allnodes() const {
+    return iterator_range<allnodes_const_iterator>(allnodes_begin(),
+                                                   allnodes_end());
+  }
+
   /// Return the root tag of the SelectionDAG.
   const SDValue &getRoot() const { return Root; }
 

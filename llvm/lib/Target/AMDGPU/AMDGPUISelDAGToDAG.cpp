@@ -1371,18 +1371,14 @@ void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
   do {
     IsModified = false;
     // Go over all selected nodes and try to fold them a bit more
-    for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
-         E = CurDAG->allnodes_end(); I != E; ++I) {
-
-      SDNode *Node = I;
-
-      MachineSDNode *MachineNode = dyn_cast<MachineSDNode>(I);
+    for (SDNode &Node : CurDAG->allnodes()) {
+      MachineSDNode *MachineNode = dyn_cast<MachineSDNode>(&Node);
       if (!MachineNode)
         continue;
 
       SDNode *ResNode = Lowering.PostISelFolding(MachineNode, *CurDAG);
-      if (ResNode != Node) {
-        ReplaceUses(Node, ResNode);
+      if (ResNode != &Node) {
+        ReplaceUses(&Node, ResNode);
         IsModified = true;
       }
     }

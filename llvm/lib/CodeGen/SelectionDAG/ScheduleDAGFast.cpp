@@ -725,9 +725,8 @@ void ScheduleDAGLinearize::Schedule() {
 
   SmallVector<SDNode*, 8> Glues;
   unsigned DAGSize = 0;
-  for (SelectionDAG::allnodes_iterator I = DAG->allnodes_begin(),
-         E = DAG->allnodes_end(); I != E; ++I) {
-    SDNode *N = I;
+  for (SDNode &Node : DAG->allnodes()) {
+    SDNode *N = &Node;
 
     // Use node id to record degree.
     unsigned Degree = N->use_size();
