@@ -357,15 +357,15 @@ private:
   /// The number of entries in the Operand/Value list.
   unsigned short NumOperands, NumValues;
 
-  /// Source line information.
-  DebugLoc debugLoc;
-
   // The ordering of the SDNodes. It roughly corresponds to the ordering of the
   // original LLVM instructions.
   // This is used for turning off scheduling, because we'll forgo
   // the normal scheduling algorithms and output the instructions according to
   // this ordering.
   unsigned IROrder;
+
+  /// Source line information.
+  DebugLoc debugLoc;
 
   /// Return a pointer to the specified value type.
   static const EVT *getValueTypeList(EVT VT);
@@ -732,7 +732,7 @@ protected:
         SubclassData(0), NodeId(-1),
         OperandList(Ops.size() ? new SDUse[Ops.size()] : nullptr),
         ValueList(VTs.VTs), UseList(nullptr), NumOperands(Ops.size()),
-        NumValues(VTs.NumVTs), debugLoc(std::move(dl)), IROrder(Order) {
+        NumValues(VTs.NumVTs), IROrder(Order), debugLoc(std::move(dl)) {
     assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
     assert(NumOperands == Ops.size() &&
            "NumOperands wasn't wide enough for its operands!");
@@ -752,7 +752,7 @@ protected:
       : NodeType(Opc), OperandsNeedDelete(false), HasDebugValue(false),
         SubclassData(0), NodeId(-1), OperandList(nullptr), ValueList(VTs.VTs),
         UseList(nullptr), NumOperands(0), NumValues(VTs.NumVTs),
-        debugLoc(std::move(dl)), IROrder(Order) {
+        IROrder(Order), debugLoc(std::move(dl)) {
     assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
     assert(NumValues == VTs.NumVTs &&
            "NumValues wasn't wide enough for its operands!");
