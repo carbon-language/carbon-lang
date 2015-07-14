@@ -94,4 +94,20 @@ CHECKSYMS-NEXT: Value: 0x506038
 
 CHECKSYMS:      Name: prog2
 CHECKSYMS-NEXT: Value: 0x506050
+
+RUN: llvm-readobj -program-headers %t1 | FileCheck -check-prefix CHECKPHDRS %s
+
+CHECKPHDRS:           Type: PT_LOAD (0x1)
+CHECKPHDRS:           Offset: 0x1000
+CHECKPHDRS-NEXT:      VirtualAddress: 0x500000
+CHECKPHDRS-NEXT:      PhysicalAddress: 0x500000
+CHECKPHDRS-NEXT:      FileSize: 48
+CHECKPHDRS-NEXT:      MemSize: 48
+
+CHECKPHDRS:           Type: PT_LOAD (0x1)
+CHECKPHDRS:           Offset: 0x2030
+CHECKPHDRS-NEXT:      VirtualAddress: 0x506030
+CHECKPHDRS-NEXT:      PhysicalAddress: 0x506030
+CHECKPHDRS-NEXT:      FileSize: 168
+CHECKPHDRS-NEXT:      MemSize: 168
 */

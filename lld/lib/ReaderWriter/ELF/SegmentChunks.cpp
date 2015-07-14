@@ -118,13 +118,23 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
   uint64_t lastVirtualAddress = 0;
 
   this->setFileOffset(startOffset);
+  bool changeOffset = false;
+  uint64_t newOffset = 0;
   for (auto &slice : slices()) {
     bool isFirstSection = true;
     for (auto section : slice->sections()) {
       // Handle linker script expressions, which may change the offset
-      if (!isFirstSection)
-        if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(section))
-          fileOffset += expr->virtualAddr() - lastVirtualAddress;
+      if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(section)) {
+        if (!isFirstSection) {
+          changeOffset = true;
+          newOffset = fileOffset + expr->virtualAddr() - lastVirtualAddress;
+        }
+        continue;
+      }
+      if (changeOffset) {
+        changeOffset = false;
+        fileOffset = newOffset;
+      }
       // Align fileoffset to the alignment of the section.
       fileOffset = llvm::RoundUpToAlignment(fileOffset, section->alignment());
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
@@ -136,17 +146,14 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
         // OutputMagic::NMAGIC/OutputMagic::OMAGIC
         if (alignSegments)
           fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align);
-        else {
-          // Align according to ELF spec.
-          // in p75, http://www.sco.com/developers/devspecs/gabi41.pdf
-          uint64_t virtualAddress = slice->virtualAddr();
-          Section<ELFT> *sect = dyn_cast<Section<ELFT>>(section);
-          if (sect && sect->isLoadableSection() &&
-              ((virtualAddress & (p_align - 1)) !=
-               (fileOffset & (p_align - 1))))
-            fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align) +
-                         (virtualAddress % p_align);
-        }
+        // Align according to ELF spec.
+        // in p75, http://www.sco.com/developers/devspecs/gabi41.pdf
+        uint64_t virtualAddress = slice->virtualAddr();
+        Section<ELFT> *sect = dyn_cast<Section<ELFT>>(section);
+        if (sect && sect->isLoadableSection() &&
+            ((virtualAddress & (p_align - 1)) != (fileOffset & (p_align - 1))))
+          fileOffset = llvm::RoundUpToAlignment(fileOffset, p_align) +
+                       (virtualAddress % p_align);
       } else if (!isDataPageAlignedForNMagic && needAlign(section)) {
         fileOffset =
             llvm::RoundUpToAlignment(fileOffset, this->_ctx.getPageSize());
@@ -161,6 +168,7 @@ void Segment<ELFT>::assignFileOffsets(uint64_t startOffset) {
       fileOffset += section->fileSize();
       lastVirtualAddress = section->virtualAddr() + section->memSize();
     }
+    changeOffset = false;
     slice->setFileSize(fileOffset - curSliceFileOffset);
   }
   this->setFileSize(fileOffset - startOffset);
@@ -242,6 +250,8 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
     ++si;
   }
 
+  uint64_t scriptAddr = 0;
+  bool forceScriptAddr = false;
   for (auto e = _sections.end(); si != e; ++si) {
     uint64_t curAddr = curSliceAddress + curSliceSize;
     if (!isDataPageAlignedForNMagic && needAlign(*si)) {
@@ -251,23 +261,25 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       curAddr = llvm::RoundUpToAlignment(curAddr, this->_ctx.getPageSize());
       isDataPageAlignedForNMagic = true;
     }
-    uint64_t newAddr = llvm::RoundUpToAlignment(curAddr, (*si)->alignment());
-    // Handle linker script expressions, which *may update newAddr* if the
-    // expression assigns to "."
-    if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si))
+    uint64_t newAddr = llvm::RoundUpToAlignment(
+        forceScriptAddr ? scriptAddr : curAddr, (*si)->alignment());
+    forceScriptAddr = false;
+
+    // Handle linker script expressions, which may force an address change if
+    // the expression assigns to "."
+    if (auto expr = dyn_cast<ExpressionChunk<ELFT>>(*si)) {
+      uint64_t oldAddr = newAddr;
       expr->evalExpr(newAddr);
-    Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
-    StringRef curOutputSectionName;
-    if (sec) {
-      curOutputSectionName = sec->outputSectionName();
-    } else {
-      // If this is a linker script expression, propagate the name of the
-      // previous section instead
-      if (isa<ExpressionChunk<ELFT>>(*si))
-        curOutputSectionName = prevOutputSectionName;
-      else
-        curOutputSectionName = (*si)->name();
+      if (oldAddr != newAddr) {
+        forceScriptAddr = true;
+        scriptAddr = newAddr;
+      }
+      (*si)->setVirtualAddr(newAddr);
+      continue;
     }
+    Section<ELFT> *sec = dyn_cast<Section<ELFT>>(*si);
+    StringRef curOutputSectionName =
+        sec ? sec->outputSectionName() : (*si)->name();
     bool autoCreateSlice = true;
     if (curOutputSectionName == prevOutputSectionName)
       autoCreateSlice = false;
