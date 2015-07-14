@@ -554,6 +554,20 @@ static bool isMemcpyEquivalentSpecialMember(const CXXMethodDecl *D) {
   return false;
 }
 
+static void EmitLValueForAnyFieldInitialization(CodeGenFunction &CGF,
+                                                CXXCtorInitializer *MemberInit,
+                                                LValue &LHS) {
+  FieldDecl *Field = MemberInit->getAnyMember();
+  if (MemberInit->isIndirectMemberInitializer()) {
+    // If we are initializing an anonymous union field, drill down to the field.
+    IndirectFieldDecl *IndirectField = MemberInit->getIndirectMember();
+    for (const auto *I : IndirectField->chain())
+      LHS = CGF.EmitLValueForFieldInitialization(LHS, cast<FieldDecl>(I));
+  } else {
+    LHS = CGF.EmitLValueForFieldInitialization(LHS, Field);
+  }
+}
+
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
                                   CXXCtorInitializer *MemberInit,
@@ -572,16 +586,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   QualType RecordTy = CGF.getContext().getTypeDeclType(ClassDecl);
   LValue LHS = CGF.MakeNaturalAlignAddrLValue(ThisPtr, RecordTy);
 
-  if (MemberInit->isIndirectMemberInitializer()) {
-    // If we are initializing an anonymous union field, drill down to
-    // the field.
-    IndirectFieldDecl *IndirectField = MemberInit->getIndirectMember();
-    for (const auto *I : IndirectField->chain())
-      LHS = CGF.EmitLValueForFieldInitialization(LHS, cast<FieldDecl>(I));
-    FieldType = MemberInit->getIndirectMember()->getAnonField()->getType();
-  } else {
-    LHS = CGF.EmitLValueForFieldInitialization(LHS, Field);
-  }
+  EmitLValueForAnyFieldInitialization(CGF, MemberInit, LHS);
 
   // Special case: if we are in a copy or move constructor, and we are copying
   // an array of PODs or classes with trivial copy constructors, ignore the
@@ -1072,6 +1077,7 @@ namespace {
           CopyingValueRepresentation CVR(CGF);
           EmitMemberInitializer(CGF, ConstructorDecl->getParent(),
                                 AggregatedInits[0], ConstructorDecl, Args);
+          AggregatedInits.clear();
         }
         reset();
         return;
@@ -1088,10 +1094,14 @@ namespace {
       LValue LHS = CGF.MakeNaturalAlignAddrLValue(ThisPtr, RecordTy);
 
       for (unsigned i = 0; i < AggregatedInits.size(); ++i) {
-        QualType FieldType = AggregatedInits[i]->getMember()->getType();
+        CXXCtorInitializer *MemberInit = AggregatedInits[i];
+        QualType FieldType = MemberInit->getAnyMember()->getType();
         QualType::DestructionKind dtorKind = FieldType.isDestructedType();
-        if (CGF.needsEHCleanup(dtorKind))
-          CGF.pushEHDestroy(dtorKind, LHS.getAddress(), FieldType);
+        if (!CGF.needsEHCleanup(dtorKind))
+          continue;
+        LValue FieldLHS = LHS;
+        EmitLValueForAnyFieldInitialization(CGF, MemberInit, FieldLHS);
+        CGF.pushEHDestroy(dtorKind, FieldLHS.getAddress(), FieldType);
       }
     }
 
