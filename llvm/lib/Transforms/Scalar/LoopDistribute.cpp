@@ -437,9 +437,9 @@ public:
     unsigned N = RtPtrCheck->Pointers.size();
     SmallVector<int, 8> PtrToPartitions(N);
     for (unsigned I = 0; I < N; ++I) {
-      Value *Ptr = RtPtrCheck->Pointers[I];
+      Value *Ptr = RtPtrCheck->Pointers[I].PointerValue;
       auto Instructions =
-          LAI.getInstructionsForAccess(Ptr, RtPtrCheck->IsWritePtr[I]);
+          LAI.getInstructionsForAccess(Ptr, RtPtrCheck->Pointers[I].IsWritePtr);
 
       int &Partition = PtrToPartitions[I];
       // First set it to uninitialized.

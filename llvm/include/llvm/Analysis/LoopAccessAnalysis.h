@@ -295,18 +295,37 @@ private:
 /// This struct holds information about the memory runtime legality check that
 /// a group of pointers do not overlap.
 struct RuntimePointerChecking {
+  struct PointerInfo {
+    /// Holds the pointer value that we need to check.
+    TrackingVH<Value> PointerValue;
+    /// Holds the pointer value at the beginning of the loop.
+    const SCEV *Start;
+    /// Holds the pointer value at the end of the loop.
+    const SCEV *End;
+    /// Holds the information if this pointer is used for writing to memory.
+    bool IsWritePtr;
+    /// Holds the id of the set of pointers that could be dependent because of a
+    /// shared underlying object.
+    unsigned DependencySetId;
+    /// Holds the id of the disjoint alias set to which this pointer belongs.
+    unsigned AliasSetId;
+    /// SCEV for the access.
+    const SCEV *Expr;
+
+    PointerInfo(Value *PointerValue, const SCEV *Start, const SCEV *End,
+                bool IsWritePtr, unsigned DependencySetId, unsigned AliasSetId,
+                const SCEV *Expr)
+        : PointerValue(PointerValue), Start(Start), End(End),
+          IsWritePtr(IsWritePtr), DependencySetId(DependencySetId),
+          AliasSetId(AliasSetId), Expr(Expr) {}
+  };
+
   RuntimePointerChecking(ScalarEvolution *SE) : Need(false), SE(SE) {}
 
   /// Reset the state of the pointer runtime information.
   void reset() {
     Need = false;
     Pointers.clear();
-    Starts.clear();
-    Ends.clear();
-    IsWritePtr.clear();
-    DependencySetId.clear();
-    AliasSetId.clear();
-    Exprs.clear();
   }
 
   /// Insert a pointer and calculate the start and end SCEVs.
@@ -322,8 +341,8 @@ struct RuntimePointerChecking {
     /// \brief Create a new pointer checking group containing a single
     /// pointer, with index \p Index in RtCheck.
     CheckingPtrGroup(unsigned Index, RuntimePointerChecking &RtCheck)
-        : RtCheck(RtCheck), High(RtCheck.Ends[Index]),
-          Low(RtCheck.Starts[Index]) {
+        : RtCheck(RtCheck), High(RtCheck.Pointers[Index].End),
+          Low(RtCheck.Pointers[Index].Start) {
       Members.push_back(Index);
     }
 
@@ -387,23 +406,13 @@ struct RuntimePointerChecking {
 
   /// This flag indicates if we need to add the runtime check.
   bool Need;
-  /// Holds the pointers that we need to check.
-  SmallVector<TrackingVH<Value>, 2> Pointers;
-  /// Holds the pointer value at the beginning of the loop.
-  SmallVector<const SCEV *, 2> Starts;
-  /// Holds the pointer value at the end of the loop.
-  SmallVector<const SCEV *, 2> Ends;
-  /// Holds the information if this pointer is used for writing to memory.
-  SmallVector<bool, 2> IsWritePtr;
-  /// Holds the id of the set of pointers that could be dependent because of a
-  /// shared underlying object.
-  SmallVector<unsigned, 2> DependencySetId;
-  /// Holds the id of the disjoint alias set to which this pointer belongs.
-  SmallVector<unsigned, 2> AliasSetId;
-  /// Holds at position i the SCEV for the access i
-  SmallVector<const SCEV *, 2> Exprs;
+
+  /// Information about the pointers that may require checking.
+  SmallVector<PointerInfo, 2> Pointers;
+
   /// Holds a partitioning of pointers into "check groups".
   SmallVector<CheckingPtrGroup, 2> CheckingGroups;
+
   /// Holds a pointer to the ScalarEvolution analysis.
   ScalarEvolution *SE;
 };
