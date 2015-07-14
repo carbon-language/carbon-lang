@@ -395,3 +395,13 @@ define i8 @add_of_mul(i8 %x, i8 %y, i8 %z) {
   %sum = add nsw i8 %mA, %mB
   ret i8 %sum
 }
+
+define i32 @add_of_selects(i1 %A, i32 %B) {
+  %sel0 = select i1 %A, i32 0, i32 -2
+  %sel1 = select i1 %A, i32 %B, i32 2
+  %add = add i32 %sel0, %sel1
+  ret i32 %add
+; CHECK-LABEL: @add_of_selects(
+; CHECK-NEXT: %[[sel:.*]] = select i1 %A, i32 %B, i32 0
+; CHECK-NEXT: ret i32 %[[sel]]
+}
