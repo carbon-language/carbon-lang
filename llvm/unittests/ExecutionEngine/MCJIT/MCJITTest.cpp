@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include "MCJITTestBase.h"
 #include "gtest/gtest.h"
 
@@ -197,6 +198,87 @@ TEST_F(MCJITTest, multiple_decl_lookups) {
 
   EXPECT_TRUE(A != 0) << "Failed lookup - test not correctly configured.";
   EXPECT_EQ(A, B) << "Repeat calls to getPointerToFunction fail.";
+}
+
+typedef void * (*FunctionHandlerPtr)(const std::string &str);
+
+TEST_F(MCJITTest, lazy_function_creator_pointer) {
+  SKIP_UNSUPPORTED_PLATFORM;
+  
+  Function *Foo = insertExternalReferenceToFunction<int32_t(void)>(M.get(),
+                                                                   "\1Foo");
+  startFunction<int32_t(void)>(M.get(), "Parent");
+  CallInst *Call = Builder.CreateCall(Foo, {});
+  Builder.CreateRet(Call);
+  
+  createJIT(std::move(M));
+  
+  // Set up the lazy function creator that records the name of the last
+  // unresolved external function found in the module. Using a function pointer
+  // prevents us from capturing local variables, which is why this is static.
+  static std::string UnresolvedExternal;
+  FunctionHandlerPtr UnresolvedHandler = [] (const std::string &str) {
+    // Try to resolve the function in the current process before marking it as
+    // unresolved. This solves an issue on ARM where '__aeabi_*' function names
+    // are passed to this handler.
+    void *symbol =
+        llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(str.c_str());
+    if (symbol) {
+      return symbol;
+    }
+    
+    UnresolvedExternal = str;
+    return (void *)(uintptr_t)-1;
+  };
+  TheJIT->InstallLazyFunctionCreator(UnresolvedHandler);
+  
+  // JIT the module.
+  TheJIT->finalizeObject();
+  
+  // Verify that our handler was called.
+  EXPECT_EQ(UnresolvedExternal, "Foo");
+}
+
+TEST_F(MCJITTest, lazy_function_creator_lambda) {
+  SKIP_UNSUPPORTED_PLATFORM;
+  
+  Function *Foo1 = insertExternalReferenceToFunction<int32_t(void)>(M.get(),
+                                                                   "\1Foo1");
+  Function *Foo2 = insertExternalReferenceToFunction<int32_t(void)>(M.get(),
+                                                                   "\1Foo2");
+  startFunction<int32_t(void)>(M.get(), "Parent");
+  CallInst *Call1 = Builder.CreateCall(Foo1, {});
+  CallInst *Call2 = Builder.CreateCall(Foo2, {});
+  Value *Result = Builder.CreateAdd(Call1, Call2);
+  Builder.CreateRet(Result);
+  
+  createJIT(std::move(M));
+  
+  // Set up the lazy function creator that records the name of unresolved
+  // external functions in the module.
+  std::vector<std::string> UnresolvedExternals;
+  auto UnresolvedHandler = [&UnresolvedExternals] (const std::string &str) {
+    // Try to resolve the function in the current process before marking it as
+    // unresolved. This solves an issue on ARM where '__aeabi_*' function names
+    // are passed to this handler.
+    void *symbol =
+        llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(str.c_str());
+    if (symbol) {
+      return symbol;
+    }
+    UnresolvedExternals.push_back(str);
+    return (void *)(uintptr_t)-1;
+  };
+  TheJIT->InstallLazyFunctionCreator(UnresolvedHandler);
+  
+  // JIT the module.
+  TheJIT->finalizeObject();
+  
+  // Verify that our handler was called for each unresolved function.
+  auto I = UnresolvedExternals.begin(), E = UnresolvedExternals.end();
+  EXPECT_EQ(UnresolvedExternals.size(), 2u);
+  EXPECT_FALSE(std::find(I, E, "Foo1") == E);
+  EXPECT_FALSE(std::find(I, E, "Foo2") == E);
 }
 
 }

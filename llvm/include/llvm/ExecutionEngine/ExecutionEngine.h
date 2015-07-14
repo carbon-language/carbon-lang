@@ -31,6 +31,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace llvm {
 
@@ -88,6 +89,8 @@ public:
   /// \returns The address that \p ToUnmap was happed to.
   uint64_t RemoveMapping(StringRef Name);
 };
+
+using FunctionCreator = std::function<void *(const std::string &)>;
 
 /// \brief Abstract interface for implementation execution of LLVM modules,
 /// designed to support both interpreter and just-in-time (JIT) compiler
@@ -147,7 +150,7 @@ protected:
   /// LazyFunctionCreator - If an unknown function is needed, this function
   /// pointer is invoked to create it.  If this returns null, the JIT will
   /// abort.
-  void *(*LazyFunctionCreator)(const std::string &);
+  FunctionCreator LazyFunctionCreator;
 
   /// getMangledName - Get mangled name.
   std::string getMangledName(const GlobalValue *GV);
@@ -470,8 +473,8 @@ public:
   /// InstallLazyFunctionCreator - If an unknown function is needed, the
   /// specified function pointer is invoked to create it.  If it returns null,
   /// the JIT will abort.
-  void InstallLazyFunctionCreator(void* (*P)(const std::string &)) {
-    LazyFunctionCreator = P;
+  void InstallLazyFunctionCreator(FunctionCreator C) {
+    LazyFunctionCreator = C;
   }
 
 protected:
