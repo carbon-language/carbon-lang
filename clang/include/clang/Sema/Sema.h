@@ -7699,7 +7699,7 @@ private:
                                                    OpenMPClauseKind CKind);
 public:
   /// \brief Check if the specified variable is used in a private clause in
-  /// \brief Checks if the specified variable is used in one of the private
+  /// Checks if the specified variable is used in one of the private
   /// clauses in OpenMP constructs.
   bool IsOpenMPCapturedVar(VarDecl *VD);
 
