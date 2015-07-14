@@ -56,4 +56,10 @@ int main() {
   fread(buf, 50, 1, f);
   fwrite(buf, 50, 1, f);
   fclose(f);
+
+  f = fopencookie(cookie, "rw", {nullptr, nullptr, nullptr, nullptr});
+  fseek(f, 100, SEEK_SET);
+  fread(buf, 50, 1, f);
+  fwrite(buf, 50, 1, f);
+  fclose(f);
 }
