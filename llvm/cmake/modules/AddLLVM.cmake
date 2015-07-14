@@ -696,6 +696,9 @@ macro(add_llvm_external_project name)
   endif()
   if(NOT LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR)
     set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}")
+  else()
+    set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR
+        CACHE PATH "Path to ${name} source directory")
   endif()
   if (EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}/CMakeLists.txt)
     option(LLVM_EXTERNAL_${nameUPPER}_BUILD
