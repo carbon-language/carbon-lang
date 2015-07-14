@@ -5086,13 +5086,9 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
     }
   }
 
-  // Only enable C++ exceptions if the user opts into it by passing
-  // -fexceptions. Lots of build systems implicitly pass /EHsc when users don't
-  // actually need it.
-  // FIXME: Remove this when they work out of the box.
-  if (!Args.hasFlag(options::OPT_fexceptions, options::OPT_fno_exceptions,
-                    /*default=*/false))
-    EH = EHFlags();
+  // FIXME: Disable C++ EH completely, until it becomes more reliable. Users
+  // can use -Xclang to manually enable C++ EH until then.
+  EH = EHFlags();
 
   return EH;
 }
