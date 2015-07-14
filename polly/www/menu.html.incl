@@ -9,6 +9,10 @@ Optimizations</span></h2>
 </div>
 <div id="menu">
   <div class="submenu">
+    <label>LLVM</label>
+    <a href="http://llvm.org">llvm.org</a>
+  </div>
+  <div class="submenu">
     <label>Information</label>
     <a href="/index.html">About Polly</a>
     <a href="/documentation.html">Documentation</a>
