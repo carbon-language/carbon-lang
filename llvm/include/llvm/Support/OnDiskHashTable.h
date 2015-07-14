@@ -280,13 +280,19 @@ public:
   };
 
   /// \brief Look up the stored data for a particular key.
-  iterator find(const external_key_type &EKey, Info *InfoPtr = 0) {
-    if (!InfoPtr)
-      InfoPtr = &InfoObj;
-
-    using namespace llvm::support;
+  iterator find(const external_key_type &EKey, Info *InfoPtr = nullptr) {
     const internal_key_type &IKey = InfoObj.GetInternalKey(EKey);
     hash_value_type KeyHash = InfoObj.ComputeHash(IKey);
+    return find_hashed(IKey, KeyHash, InfoPtr);
+  }
+
+  /// \brief Look up the stored data for a particular key with a known hash.
+  iterator find_hashed(const internal_key_type &IKey, hash_value_type KeyHash,
+                       Info *InfoPtr = nullptr) {
+    using namespace llvm::support;
+
+    if (!InfoPtr)
+      InfoPtr = &InfoObj;
 
     // Each bucket is just an offset into the hash table file.
     offset_type Idx = KeyHash & (NumBuckets - 1);
