@@ -1067,10 +1067,12 @@ public:
                          0)
     {
         SetHelpLong(
-"Examples: \n\
-\n\
-    platform get-file /the/remote/file/path /the/local/file/path\n\
-    # Transfer a file from the remote end with file path /the/remote/file/path to the local host.\n");
+R"(Examples:
+
+(lldb) platform get-file /the/remote/file/path /the/local/file/path
+
+    Transfer a file from the remote end with file path /the/remote/file/path to the local host.)"
+        );
 
         CommandArgumentEntry arg1, arg2;
         CommandArgumentData file_arg_remote, file_arg_host;
@@ -1150,10 +1152,12 @@ public:
                          0)
     {
         SetHelpLong(
-"Examples: \n\
-\n\
-    platform get-size /the/remote/file/path\n\
-    # Get the file size from the remote end with path /the/remote/file/path.\n");
+R"(Examples:
+
+(lldb) platform get-size /the/remote/file/path
+
+    Get the file size from the remote end with path /the/remote/file/path.)"
+        );
 
         CommandArgumentEntry arg1;
         CommandArgumentData file_arg_remote;

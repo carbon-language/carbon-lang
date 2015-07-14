@@ -10,6 +10,7 @@
 #include "lldb/Interpreter/CommandObject.h"
 
 #include <string>
+#include <sstream>
 #include <map>
 
 #include <stdlib.h>
@@ -921,6 +922,27 @@ ExprPathHelpTextCallback()
 }
 
 void
+CommandObject::FormatLongHelpText (Stream &output_strm, const char *long_help)
+{
+    CommandInterpreter& interpreter = GetCommandInterpreter();
+    std::stringstream lineStream (long_help);
+    std::string line;
+    while (std::getline (lineStream, line)) {
+        if (line.empty()) {
+            output_strm << "\n";
+            continue;
+        }
+        size_t result = line.find_first_not_of (" \t");
+        if (result == std::string::npos) {
+            result = 0;
+        }
+        std::string whitespace_prefix = line.substr (0, result);
+        std::string remainder = line.substr (result);
+        interpreter.OutputFormattedHelpText(output_strm, whitespace_prefix.c_str(), remainder.c_str());
+    }
+}
+
+void
 CommandObject::GenerateHelpText (CommandReturnObject &result)
 {
     GenerateHelpText(result.GetOutputStream());
@@ -947,7 +969,7 @@ CommandObject::GenerateHelpText (Stream &output_strm)
         const char *long_help = GetHelpLong();
         if ((long_help != nullptr)
             && (strlen (long_help) > 0))
-            output_strm.Printf ("\n%s", long_help);
+            FormatLongHelpText (output_strm, long_help);
         if (WantsRawCommandString() && !WantsCompletion())
         {
             // Emit the message about using ' -- ' between the end of the command options and the raw input
@@ -984,7 +1006,7 @@ CommandObject::GenerateHelpText (Stream &output_strm)
         const char *long_help = GetHelpLong();
         if ((long_help != nullptr)
             && (strlen (long_help) > 0))
-            output_strm.Printf ("%s", long_help);
+            FormatLongHelpText (output_strm, long_help);
         else if (WantsRawCommandString())
         {
             std::string help_text (GetHelp());

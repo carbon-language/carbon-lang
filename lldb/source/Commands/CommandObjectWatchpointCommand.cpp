@@ -48,121 +48,112 @@ public:
         m_options (interpreter)
     {
         SetHelpLong (
-"\nGeneral information about entering watchpoint commands \n\
------------------------------------------------------- \n\
- \n\
-This command will cause you to be prompted to enter the command or set \n\
-of commands you wish to be executed when the specified watchpoint is \n\
-hit.  You will be told to enter your command(s), and will see a '> ' \n\
-prompt. Because you can enter one or many commands to be executed when \n\
-a watchpoint is hit, you will continue to be prompted after each \n\
-new-line that you enter, until you enter the word 'DONE', which will \n\
-cause the commands you have entered to be stored with the watchpoint \n\
-and executed when the watchpoint is hit. \n\
- \n\
-Syntax checking is not necessarily done when watchpoint commands are \n\
-entered.  An improperly written watchpoint command will attempt to get \n\
-executed when the watchpoint gets hit, and usually silently fail.  If \n\
-your watchpoint command does not appear to be getting executed, go \n\
-back and check your syntax. \n\
- \n\
- \n\
-Special information about PYTHON watchpoint commands                            \n\
-----------------------------------------------------                            \n\
-                                                                                \n\
-You may enter either one line of Python or multiple lines of Python             \n\
-(including defining whole functions, if desired).  If you enter a               \n\
-single line of Python, that will be passed to the Python interpreter            \n\
-'as is' when the watchpoint gets hit.  If you enter function                    \n\
-definitions, they will be passed to the Python interpreter as soon as           \n\
-you finish entering the watchpoint command, and they can be called              \n\
-later (don't forget to add calls to them, if you want them called when          \n\
-the watchpoint is hit).  If you enter multiple lines of Python that             \n\
-are not function definitions, they will be collected into a new,                \n\
-automatically generated Python function, and a call to the newly                \n\
-generated function will be attached to the watchpoint.                          \n\
-                                                                                \n\
-This auto-generated function is passed in two arguments:                        \n\
-                                                                                \n\
-    frame:  an SBFrame object representing the frame which hit the watchpoint.  \n\
-            From the frame you can get back to the thread and process.          \n\
-    wp:     the watchpoint that was hit.                                        \n\
-                                                                                \n\
-Important Note: Because loose Python code gets collected into functions,        \n\
-if you want to access global variables in the 'loose' code, you need to         \n\
-specify that they are global, using the 'global' keyword.  Be sure to           \n\
-use correct Python syntax, including indentation, when entering Python          \n\
-watchpoint commands.                                                            \n\
-                                                                                \n\
-As a third option, you can pass the name of an already existing Python function \n\
-and that function will be attached to the watchpoint. It will get passed the    \n\
-frame and wp_loc arguments mentioned above.                                     \n\
-                                                                                \n\
-Example Python one-line watchpoint command: \n\
- \n\
-(lldb) watchpoint command add -s python 1 \n\
-Enter your Python command(s). Type 'DONE' to end. \n\
-> print \"Hit this watchpoint!\" \n\
-> DONE \n\
- \n\
-As a convenience, this also works for a short Python one-liner: \n\
-(lldb) watchpoint command add -s python 1 -o \"import time; print time.asctime()\" \n\
-(lldb) run \n\
-Launching '.../a.out'  (x86_64) \n\
-(lldb) Fri Sep 10 12:17:45 2010 \n\
-Process 21778 Stopped \n\
-* thread #1: tid = 0x2e03, 0x0000000100000de8 a.out`c + 7 at main.c:39, stop reason = watchpoint 1.1, queue = com.apple.main-thread \n\
-  36   	\n\
-  37   	int c(int val)\n\
-  38   	{\n\
-  39 ->	    return val + 3;\n\
-  40   	}\n\
-  41   	\n\
-  42   	int main (int argc, char const *argv[])\n\
-(lldb) \n\
- \n\
-Example multiple line Python watchpoint command, using function definition: \n\
- \n\
-(lldb) watchpoint command add -s python 1 \n\
-Enter your Python command(s). Type 'DONE' to end. \n\
-> def watchpoint_output (wp_no): \n\
->     out_string = \"Hit watchpoint number \" + repr (wp_no) \n\
->     print out_string \n\
->     return True \n\
-> watchpoint_output (1) \n\
-> DONE \n\
- \n\
- \n\
-Example multiple line Python watchpoint command, using 'loose' Python: \n\
- \n\
-(lldb) watchpoint command add -s p 1 \n\
-Enter your Python command(s). Type 'DONE' to end. \n\
-> global wp_count \n\
-> wp_count = wp_count + 1 \n\
-> print \"Hit this watchpoint \" + repr(wp_count) + \" times!\" \n\
-> DONE \n\
- \n\
-In this case, since there is a reference to a global variable, \n\
-'wp_count', you will also need to make sure 'wp_count' exists and is \n\
-initialized: \n\
- \n\
-(lldb) script \n\
->>> wp_count = 0 \n\
->>> quit() \n\
- \n\
-(lldb)  \n\
- \n\
- \n\
-Final Note:  If you get a warning that no watchpoint command was generated, \n\
-but you did not get any syntax errors, you probably forgot to add a call \n\
-to your functions. \n\
- \n\
-Special information about debugger command watchpoint commands \n\
--------------------------------------------------------------- \n\
- \n\
-You may enter any debugger command, exactly as you would at the \n\
-debugger prompt.  You may enter as many debugger commands as you like, \n\
-but do NOT enter more than one command per line. \n" );
+R"(
+General information about entering watchpoint commands
+------------------------------------------------------
+
+)" "This command will prompt for commands to be executed when the specified \
+watchpoint is hit.  Each command is typed on its own line following the '> ' \
+prompt until 'DONE' is entered." R"(
+
+)" "Syntactic errors may not be detected when initially entered, and many \
+malformed commands can silently fail when executed.  If your watchpoint commands \
+do not appear to be executing, double-check the command syntax." R"(
+
+)" "Note: You may enter any debugger command exactly as you would at the debugger \
+prompt.  There is no limit to the number of commands supplied, but do NOT enter \
+more than one command per line." R"(
+
+Special information about PYTHON watchpoint commands
+----------------------------------------------------
+
+)" "You may enter either one or more lines of Python, including function \
+definitions or calls to functions that will have been imported by the time \
+the code executes.  Single line watchpoint commands will be interpreted 'as is' \
+when the watchpoint is hit.  Multiple lines of Python will be wrapped in a \
+generated function, and a call to the function will be attached to the watchpoint." R"(
+
+This auto-generated function is passed in three arguments:
+
+    frame:  an lldb.SBFrame object for the frame which hit the watchpoint.
+
+    wp:     the watchpoint that was hit.
+
+)" "When specifying a python function with the --python-function option, you need \
+to supply the function name prepended by the module name:" R"(
+
+    --python-function myutils.watchpoint_callback
+
+The function itself must have the following prototype:
+
+def watchpoint_callback(frame, wp):
+  # Your code goes here
+
+)" "The arguments are the same as the arguments passed to generated functions as \
+described above.  Note that the global variable 'lldb.frame' will NOT be updated when \
+this function is called, so be sure to use the 'frame' argument. The 'frame' argument \
+can get you to the thread via frame.GetThread(), the thread can get you to the \
+process via thread.GetProcess(), and the process can get you back to the target \
+via process.GetTarget()." R"(
+
+)" "Important Note: As Python code gets collected into functions, access to global \
+variables requires explicit scoping using the 'global' keyword.  Be sure to use correct \
+Python syntax, including indentation, when entering Python watchpoint commands." R"(
+
+Example Python one-line watchpoint command:
+
+(lldb) watchpoint command add -s python 1
+Enter your Python command(s). Type 'DONE' to end.
+> print "Hit this watchpoint!"
+> DONE
+
+As a convenience, this also works for a short Python one-liner:
+
+(lldb) watchpoint command add -s python 1 -o 'import time; print time.asctime()'
+(lldb) run
+Launching '.../a.out'  (x86_64)
+(lldb) Fri Sep 10 12:17:45 2010
+Process 21778 Stopped
+* thread #1: tid = 0x2e03, 0x0000000100000de8 a.out`c + 7 at main.c:39, stop reason = watchpoint 1.1, queue = com.apple.main-thread
+  36
+  37   	int c(int val)
+  38   	{
+  39 ->	    return val + 3;
+  40   	}
+  41
+  42   	int main (int argc, char const *argv[])
+
+Example multiple line Python watchpoint command, using function definition:
+
+(lldb) watchpoint command add -s python 1
+Enter your Python command(s). Type 'DONE' to end.
+> def watchpoint_output (wp_no):
+>     out_string = "Hit watchpoint number " + repr (wp_no)
+>     print out_string
+>     return True
+> watchpoint_output (1)
+> DONE
+
+Example multiple line Python watchpoint command, using 'loose' Python:
+
+(lldb) watchpoint command add -s p 1
+Enter your Python command(s). Type 'DONE' to end.
+> global wp_count
+> wp_count = wp_count + 1
+> print "Hit this watchpoint " + repr(wp_count) + " times!"
+> DONE
+
+)" "In this case, since there is a reference to a global variable, \
+'wp_count', you will also need to make sure 'wp_count' exists and is \
+initialized:" R"(
+
+(lldb) script
+>>> wp_count = 0
+>>> quit()
+
+)" "Final Note: A warning that no watchpoint command was generated when there \
+are no syntax errors may indicate that a function was declared but never called."
+        );
 
         CommandArgumentEntry arg;
         CommandArgumentData wp_id_arg;

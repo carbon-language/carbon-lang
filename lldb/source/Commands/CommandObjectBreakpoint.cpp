@@ -1249,27 +1249,27 @@ public:
     CommandObjectBreakpointDisable (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
                              "breakpoint disable",
-                             "Disable the specified breakpoint(s) without removing it/them.  If no breakpoints are specified, disable them all.",
+                             "Disable the specified breakpoint(s) without removing them.  If none are specified, disable all breakpoints.",
                              NULL)
     {
         SetHelpLong(
-"Disable the specified breakpoint(s) without removing it/them.  \n\
-If no breakpoints are specified, disable them all.\n\
-\n\
-Note: disabling a breakpoint will cause none of its locations to be hit\n\
-regardless of whether they are enabled or disabled.  So the sequence: \n\
-\n\
-    (lldb) break disable 1\n\
-    (lldb) break enable 1.1\n\
-\n\
-will NOT cause location 1.1 to get hit.  To achieve that, do:\n\
-\n\
-    (lldb) break disable 1.*\n\
-    (lldb) break enable 1.1\n\
-\n\
-The first command disables all the locations of breakpoint 1, \n\
+"Disable the specified breakpoint(s) without removing them.  \
+If none are specified, disable all breakpoints." R"(
+
+)" "Note: disabling a breakpoint will cause none of its locations to be hit \
+regardless of whether they are enabled or disabled.  After the sequence:" R"(
+
+    (lldb) break disable 1
+    (lldb) break enable 1.1
+
+execution will NOT stop at location 1.1.  To achieve that, type:
+
+    (lldb) break disable 1.*
+    (lldb) break enable 1.1
+
+)" "The first command disables all the locations of breakpoint 1, \
 the second re-enables the first location."
-                    );
+        );
         
         CommandArgumentEntry arg;
         CommandObject::AddIDsArgumentData(arg, eArgTypeBreakpointID, eArgTypeBreakpointIDRange);

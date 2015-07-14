@@ -931,10 +931,14 @@ public:
         m_option_watchpoint ()
     {
         SetHelpLong(
-    "Examples: \n\
-    \n\
-        watchpoint set variable -w read_write my_global_var \n\
-        # Watch my_global_var for read/write access, with the region to watch corresponding to the byte size of the data type.\n");
+R"(
+Examples:
+
+(lldb) watchpoint set variable -w read_write my_global_var
+
+)" "    Watches my_global_var for read/write access, with the region to watch \
+corresponding to the byte size of the data type."
+        );
 
         CommandArgumentEntry arg;
         CommandArgumentData var_name_arg;
@@ -1138,10 +1142,13 @@ public:
         m_option_watchpoint ()
     {
         SetHelpLong(
-    "Examples: \n\
-    \n\
-        watchpoint set expression -w write -x 1 -- foo + 32\n\
-        # Watch write access for the 1-byte region pointed to by the address 'foo + 32'.\n");
+R"(
+Examples:
+
+(lldb) watchpoint set expression -w write -x 1 -- foo + 32
+
+    Watches write access for the 1-byte region pointed to by the address 'foo + 32')"
+        );
 
         CommandArgumentEntry arg;
         CommandArgumentData expression_arg;

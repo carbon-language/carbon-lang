@@ -1681,7 +1681,8 @@ public:
                              NULL),
         m_options (interpreter)
     {
-        SetHelpLong ("If no signals are specified, update them all.  If no update option is specified, list the current values.\n");
+        SetHelpLong ("\nIf no signals are specified, update them all.  If no update "
+                     "option is specified, list the current values.");
         CommandArgumentEntry arg;
         CommandArgumentData signal_arg;
 

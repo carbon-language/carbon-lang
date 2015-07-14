@@ -764,31 +764,39 @@ public:
         m_arguments.push_back (type_arg);
         
         SetHelpLong(
-                    "Some examples of using this command.\n"
-                    "We use as reference the following snippet of code:\n"
-                    "\n"
-                    "typedef int Aint;\n"
-                    "typedef float Afloat;\n"
-                    "typedef Aint Bint;\n"
-                    "typedef Afloat Bfloat;\n"
-                    "\n"
-                    "Aint ix = 5;\n"
-                    "Bint iy = 5;\n"
-                    "\n"
-                    "Afloat fx = 3.14;\n"
-                    "BFloat fy = 3.14;\n"
-                    "\n"
-                    "Typing:\n"
-                    "type format add -f hex AInt\n"
-                    "frame variable iy\n"
-                    "will produce an hex display of iy, because no formatter is available for Bint and the one for Aint is used instead\n"
-                    "To prevent this type\n"
-                    "type format add -f hex -C no AInt\n"
-                    "\n"
-                    "A similar reasoning applies to\n"
-                    "type format add -f hex -C no float -p\n"
-                    "which now prints all floats and float&s as hexadecimal, but does not format float*s\n"
-                    "and does not change the default display for Afloat and Bfloat objects.\n"
+R"(
+The following examples of 'type format add' refer to this code snippet for context:
+
+    typedef int Aint;
+    typedef float Afloat;
+    typedef Aint Bint;
+    typedef Afloat Bfloat;
+
+    Aint ix = 5;
+    Bint iy = 5;
+
+    Afloat fx = 3.14;
+    BFloat fy = 3.14;
+
+Adding default formatting:
+
+(lldb) type format add -f hex AInt
+(lldb) frame variable iy
+
+)" "    Produces hexidecimal display of iy, because no formatter is available for Bint and \
+the one for Aint is used instead." R"(
+
+To prevent this use the cascade option '-C no' to prevent evaluation of typedef chains:
+
+
+(lldb) type format add -f hex -C no AInt
+
+Similar reasoning applies to this:
+
+(lldb) type format add -f hex -C no float -p
+
+)" "    All float values and float references are now formatted as hexadecimal, but not \
+pointers to floats.  Nor will it change the default display for Afloat and Bfloat objects."
                     );
     
         // Add the "--format" to all options groups
@@ -1736,69 +1744,86 @@ CommandObjectTypeSummaryAdd::CommandObjectTypeSummaryAdd (CommandInterpreter &in
     m_arguments.push_back (type_arg);
     
     SetHelpLong(
-                "Some examples of using this command.\n"
-                "We use as reference the following snippet of code:\n"
-                "struct JustADemo\n"
-                "{\n"
-                "int* ptr;\n"
-                "float value;\n"
-                "JustADemo(int p = 1, float v = 0.1) : ptr(new int(p)), value(v) {}\n"
-                "};\n"
-                "JustADemo object(42,3.14);\n"
-                "struct AnotherDemo : public JustADemo\n"
-                "{\n"
-                "uint8_t byte;\n"
-                "AnotherDemo(uint8_t b = 'E', int p = 1, float v = 0.1) : JustADemo(p,v), byte(b) {}\n"
-                "};\n"
-                "AnotherDemo *another_object = new AnotherDemo('E',42,3.14);\n"
-                "\n"
-                "type summary add --summary-string \"the answer is ${*var.ptr}\" JustADemo\n"
-                "when typing frame variable object you will get \"the answer is 42\"\n"
-                "type summary add --summary-string \"the answer is ${*var.ptr}, and the question is ${var.value}\" JustADemo\n"
-                "when typing frame variable object you will get \"the answer is 42 and the question is 3.14\"\n"
-                "\n"
-                "Alternatively, you could also say\n"
-                "type summary add --summary-string \"${var%V} -> ${*var}\" \"int *\"\n"
-                "and replace the above summary string with\n"
-                "type summary add --summary-string \"the answer is ${var.ptr}, and the question is ${var.value}\" JustADemo\n"
-                "to obtain a similar result\n"
-                "\n"
-                "To add a summary valid for both JustADemo and AnotherDemo you can use the scoping operator, as in:\n"
-                "type summary add --summary-string \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes\n"
-                "\n"
-                "This will be used for both variables of type JustADemo and AnotherDemo. To prevent this, change the -C to read -C no\n"
-                "If you do not want pointers to be shown using that summary, you can use the -p option, as in:\n"
-                "type summary add --summary-string \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes -p\n"
-                "A similar option -r exists for references.\n"
-                "\n"
-                "If you simply want a one-line summary of the content of your variable, without typing an explicit string to that effect\n"
-                "you can use the -c option, without giving any summary string:\n"
-                "type summary add -c JustADemo\n"
-                "frame variable object\n"
-                "the output being similar to (ptr=0xsomeaddress, value=3.14)\n"
-                "\n"
-                "If you want to display some summary text, but also expand the structure of your object, you can add the -e option, as in:\n"
-                "type summary add -e --summary-string \"*ptr = ${*var.ptr}\" JustADemo\n"
-                "Here the value of the int* is displayed, followed by the standard LLDB sequence of children objects, one per line.\n"
-                "to get an output like:\n"
-                "\n"
-                "*ptr = 42 {\n"
-                " ptr = 0xsomeaddress\n"
-                " value = 3.14\n"
-                "}\n"
-                "\n"
-                "You can also add Python summaries, in which case you will use lldb public API to gather information from your variables"
-                "and elaborate them to a meaningful summary inside a script written in Python. The variable object will be passed to your"
-                "script as an SBValue object. The following example might help you when starting to use the Python summaries feature:\n"
-                "type summary add JustADemo -o \"value = valobj.GetChildMemberWithName('value'); return 'My value is ' + value.GetValue();\"\n"
-                "If you prefer to type your scripts on multiple lines, you will use the -P option and then type your script, ending it with "
-                "the word DONE on a line by itself to mark you're finished editing your code:\n"
-                "(lldb)type summary add JustADemo -P\n"
-                "     value = valobj.GetChildMemberWithName('value');\n"
-                "     return 'My value is ' + value.GetValue();\n"
-                "DONE\n"
-                "(lldb) <-- type further LLDB commands here\n"
-                );
+R"(
+The following examples of 'type summary add' refer to this code snippet for context:
+
+    struct JustADemo
+    {
+        int* ptr;
+        float value;
+        JustADemo(int p = 1, float v = 0.1) : ptr(new int(p)), value(v) {}
+    };
+    JustADemo demo_instance(42, 3.14);
+
+    typedef JustADemo NewDemo;
+    NewDemo new_demo_instance(42, 3.14);
+
+(lldb) type summary add --summary-string "the answer is ${*var.ptr}" JustADemo
+
+    Subsequently displaying demo_instance with 'frame variable' or 'expression' will display "the answer is 42"
+
+(lldb) type summary add --summary-string "the answer is ${*var.ptr}, and the question is ${var.value}" JustADemo
+
+    Subsequently displaying demo_instance with 'frame variable' or 'expression' will display "the answer is 42 and the question is 3.14"
+
+)" "Alternatively, you could define formatting for all pointers to integers and \
+rely on that when formatting JustADemo to obtain the same result:" R"(
+
+(lldb) type summary add --summary-string "${var%V} -> ${*var}" "int *"
+(lldb) type summary add --summary-string "the answer is ${var.ptr}, and the question is ${var.value}" JustADemo
+
+)" "Type summaries are automatically applied to derived typedefs, so the examples \
+above apply to both JustADemo and NewDemo.  The cascade option can be used to \
+suppress this behavior:" R"(
+
+(lldb) type summary add --summary-string "${var.ptr}, ${var.value},{${var.byte}}" JustADemo -C no
+
+    The summary will now be used for values of JustADemo but not NewDemo.
+
+)" "By default summaries are shown for pointers and references to values of the \
+specified type.  To suppress formatting for pointers use the -p option, or apply \
+the corresponding -r option to suppress formatting for references:" R"(
+
+(lldb) type summary add -p -r --summary-string "${var.ptr}, ${var.value},{${var.byte}}" JustADemo
+
+)" "One-line summaries including all fields in a type can be inferred without supplying an \
+explicit summary string by passing the -c option:" R"(
+
+(lldb) type summary add -c JustADemo
+(lldb) frame variable demo_instance
+(ptr=<address>, value=3.14)
+
+)" "Type summaries normally suppress the nested display of individual fields.  To \
+supply a summary to supplement the default structure add the -e option:" R"(
+
+(lldb) type summary add -e --summary-string "*ptr = ${*var.ptr}" JustADemo
+
+)" "Now when displaying JustADemo values the int* is displayed, followed by the \
+standard LLDB sequence of children, one per line:" R"(
+
+*ptr = 42 {
+  ptr = <address>
+  value = 3.14
+}
+
+)" "You can also add summaries written in Python.  These scripts use lldb public API to \
+gather information from your variables and produce a meaningful summary.  To start a \
+multi-line script use the -P option.  The function declaration will be displayed along with \
+a comment describing the two arguments.  End your script with the  word 'DONE' on a line by \
+itself:" R"(
+
+(lldb) type summary add JustADemo -P
+def function (valobj,internal_dict):
+"""valobj: an SBValue which you want to provide a summary for
+internal_dict: an LLDB support object not to be used"""
+    value = valobj.GetChildMemberWithName('value');
+    return 'My value is ' + value.GetValue();
+    DONE
+
+Alternatively, the -o option can be used when providing a simple one-line Python script:
+
+(lldb) type summary add JustADemo -o "value = valobj.GetChildMemberWithName('value'); return 'My value is ' + value.GetValue();")"
+    );
 }
 
 bool
@@ -4117,31 +4142,37 @@ public:
         m_arguments.push_back (type_arg);
         
         SetHelpLong(
-                    "Some examples of using this command.\n"
-                    "We use as reference the following snippet of code:\n"
-                    "\n"
-                    "class Foo {;\n"
-                    "    int a;\n"
-                    "    int b;\n"
-                    "    int c;\n"
-                    "    int d;\n"
-                    "    int e;\n"
-                    "    int f;\n"
-                    "    int g;\n"
-                    "    int h;\n"
-                    "    int i;\n"
-                    "} \n"
-                    "Typing:\n"
-                    "type filter add --child a --child g Foo\n"
-                    "frame variable a_foo\n"
-                    "will produce an output where only a and g are displayed\n"
-                    "Other children of a_foo (b,c,d,e,f,h and i) are available by asking for them, as in:\n"
-                    "frame variable a_foo.b a_foo.c ... a_foo.i\n"
-                    "\n"
-                    "Use option --raw to frame variable prevails on the filter\n"
-                    "frame variable a_foo --raw\n"
-                    "shows all the children of a_foo (a thru i) as if no filter was defined\n"
-                    );        
+R"(
+The following examples of 'type filter add' refer to this code snippet for context:
+
+    class Foo {
+        int a;
+        int b;
+        int c;
+        int d;
+        int e;
+        int f;
+        int g;
+        int h;
+        int i;
+    }
+    Foo my_foo;
+
+Adding a simple filter:
+
+(lldb) type filter add --child a --child g Foo
+(lldb) frame variable my_foo
+
+)" "Produces output where only a and g are displayed.  Other children of my_foo \
+(b, c, d, e, f, h and i) are available by asking for them explicitly:" R"(
+
+(lldb) frame variable my_foo.b my_foo.c my_foo.i
+
+)" "The formatting option --raw on frame variable bypasses the filter, showing \
+all children of my_foo as if no filter was defined:" R"(
+
+(lldb) frame variable my_foo --raw)"
+        );
     }
     
     ~CommandObjectTypeFilterAdd ()

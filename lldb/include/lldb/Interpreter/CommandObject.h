@@ -161,6 +161,9 @@ public:
     }
 
     void
+    FormatLongHelpText (Stream &output_strm, const char *long_help);
+
+    void
     GenerateHelpText (CommandReturnObject &result);
 
     virtual void
