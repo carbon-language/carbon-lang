@@ -140,7 +140,7 @@ public:
   }
 
   // Return true if this node is an operand of N.
-  bool isOperandOf(SDNode *N) const;
+  bool isOperandOf(const SDNode *N) const;
 
   /// Return the ValueType of the referenced return value.
   inline EVT getValueType() const;
@@ -532,10 +532,10 @@ public:
   bool hasAnyUseOfValue(unsigned Value) const;
 
   /// Return true if this node is the only use of N.
-  bool isOnlyUserOf(SDNode *N) const;
+  bool isOnlyUserOf(const SDNode *N) const;
 
   /// Return true if this node is an operand of N.
-  bool isOperandOf(SDNode *N) const;
+  bool isOperandOf(const SDNode *N) const;
 
   /// Return true if this node is a predecessor of N.
   /// NOTE: Implemented on top of hasPredecessor and every bit as

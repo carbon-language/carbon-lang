@@ -6670,7 +6670,7 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 
 /// isOnlyUserOf - Return true if this node is the only use of N.
 ///
-bool SDNode::isOnlyUserOf(SDNode *N) const {
+bool SDNode::isOnlyUserOf(const SDNode *N) const {
   bool Seen = false;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
     SDNode *User = *I;
@@ -6685,14 +6685,14 @@ bool SDNode::isOnlyUserOf(SDNode *N) const {
 
 /// isOperand - Return true if this node is an operand of N.
 ///
-bool SDValue::isOperandOf(SDNode *N) const {
+bool SDValue::isOperandOf(const SDNode *N) const {
   for (const SDValue &Op : N->op_values())
     if (*this == Op)
       return true;
   return false;
 }
 
-bool SDNode::isOperandOf(SDNode *N) const {
+bool SDNode::isOperandOf(const SDNode *N) const {
   for (const SDValue &Op : N->op_values())
     if (this == Op.getNode())
       return true;
