@@ -91,7 +91,7 @@ template <class ELFT> std::error_code elfv2::ObjectFile<ELFT>::parse() {
   }
 
   // Read section and symbol tables.
-  if (EC = initializeChunks())
+  if ((EC = initializeChunks()))
     return EC;
   return initializeSymbols();
 }
@@ -140,7 +140,7 @@ std::error_code elfv2::ObjectFile<ELFT>::initializeChunks() {
 template <class ELFT>
 std::error_code elfv2::ObjectFile<ELFT>::initializeSymbols() {
   auto Syms = ELFObj->symbols();
-  Syms = ELFFile<ELFT>::Elf_Sym_Range(Syms.begin() + 1, Syms.end());
+  Syms = typename ELFFile<ELFT>::Elf_Sym_Range(Syms.begin() + 1, Syms.end());
   auto NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols + 1);
   SparseSymbolBodies.resize(NumSymbols + 1);

@@ -59,10 +59,6 @@ template <class ELFT> void SectionChunk<ELFT>::mark() {
   // FIXME: Relocations
 }
 
-static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
-static void add32(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
-static void add64(uint8_t *P, int64_t V) { write64le(P, read64le(P) + V); }
-
 template <class ELFT>
 void SectionChunk<ELFT>::applyReloc(uint8_t *Buf, const Elf_Rela *Rel) {
   // FIXME: Relocations
