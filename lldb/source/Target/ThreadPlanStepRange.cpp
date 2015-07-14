@@ -127,7 +127,7 @@ ThreadPlanStepRange::DumpRanges(Stream *s)
     {
         for (size_t i = 0; i < num_ranges; i++)
         {
-            s->PutCString("%d: ");
+            s->Printf(" %d: ", i);
             m_address_ranges[i].Dump (s, m_thread.CalculateTarget().get(), Address::DumpStyleLoadAddress);
         }
     }
