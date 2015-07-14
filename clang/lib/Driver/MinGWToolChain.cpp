@@ -24,6 +24,9 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     : ToolChain(D, Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
 
+  llvm::SmallString<1024> LibDir;
+
+#ifdef LLVM_ON_WIN32
   if (getDriver().SysRoot.size())
     Base = getDriver().SysRoot;
   else if (llvm::ErrorOr<std::string> GPPName =
@@ -33,8 +36,17 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   else
     Base = llvm::sys::path::parent_path(getDriver().getInstalledDir());
   Base += llvm::sys::path::get_separator();
-  llvm::SmallString<1024> LibDir(Base);
+  LibDir = Base;
   llvm::sys::path::append(LibDir, "lib", "gcc");
+#else
+  if (getDriver().SysRoot.size())
+    Base = getDriver().SysRoot;
+  else
+    Base = "/usr/";
+  LibDir = Base;
+  llvm::sys::path::append(LibDir, "lib64", "gcc");
+#endif
+
   LibDir += llvm::sys::path::get_separator();
 
   // First look for mingw-w64.
@@ -58,6 +70,10 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   getFilePaths().push_back(GccLibDir);
   getFilePaths().push_back(Base + "lib");
   getFilePaths().push_back(Base + Arch + "lib");
+#ifdef LLVM_ON_UNIX
+  // For openSUSE.
+  getFilePaths().push_back(Base + Arch + "sys-root/mingw/lib");
+#endif
 }
 
 bool MinGW::IsIntegratedAssemblerDefault() const { return true; }
@@ -117,6 +133,11 @@ void MinGW::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   llvm::sys::path::append(IncludeDir, "include");
   addSystemInclude(DriverArgs, CC1Args, IncludeDir.c_str());
   IncludeDir += "-fixed";
+#ifdef LLVM_ON_UNIX
+  // For openSUSE.
+  addSystemInclude(DriverArgs, CC1Args,
+                   "/usr/x86_64-w64-mingw32/sys-root/mingw/include");
+#endif
   addSystemInclude(DriverArgs, CC1Args, IncludeDir.c_str());
   addSystemInclude(DriverArgs, CC1Args, Base + Arch + "include");
   addSystemInclude(DriverArgs, CC1Args, Base + "include");
@@ -129,9 +150,15 @@ void MinGW::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     return;
 
   // C++ includes may be found in several locations depending on distribution.
+  // Windows
+  // -------
   // mingw-w64 mingw-builds: $sysroot/i686-w64-mingw32/include/c++.
   // mingw-w64 msys2:        $sysroot/include/c++/4.9.2
   // mingw.org:              GccLibDir/include/c++
+  //
+  // Linux
+  // -----
+  // openSUSE:               GccLibDir/include/c++
   llvm::SmallVector<llvm::SmallString<1024>, 3> CppIncludeBases;
   CppIncludeBases.emplace_back(Base);
   llvm::sys::path::append(CppIncludeBases[0], Arch, "include", "c++");
