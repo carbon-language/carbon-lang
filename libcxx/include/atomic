@@ -554,7 +554,8 @@ namespace __gcc_atomic {
 template <typename _Tp>
 struct __gcc_atomic_t {
   __gcc_atomic_t() _NOEXCEPT {}
-  explicit __gcc_atomic_t(_Tp value) _NOEXCEPT : __a_value(value) {}
+  _LIBCPP_CONSTEXPR explicit __gcc_atomic_t(_Tp value) _NOEXCEPT
+    : __a_value(value) {}
   _Tp __a_value;
 };
 #define _Atomic(x) __gcc_atomic::__gcc_atomic_t<x>
