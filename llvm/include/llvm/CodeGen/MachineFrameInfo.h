@@ -541,6 +541,14 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].Size == ~0ULL;
   }
 
+  /// Returns true if the specified index corresponds to a variable sized
+  /// object.
+  bool isVariableSizedObjectIndex(int ObjectIdx) const {
+    assert(unsigned(ObjectIdx + NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
+    return Objects[ObjectIdx + NumFixedObjects].Size == 0;
+  }
+
   /// Create a new statically sized stack object, returning
   /// a nonnegative identifier to represent it.
   int CreateStackObject(uint64_t Size, unsigned Alignment, bool isSS,

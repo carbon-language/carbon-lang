@@ -391,9 +391,14 @@ bool MIRParserImpl::initializeFrameInfo(MachineFrameInfo &MFI,
 
   // Initialize the ordinary frame objects.
   for (const auto &Object : YamlMF.StackObjects) {
-    int ObjectIdx = MFI.CreateStackObject(
-        Object.Size, Object.Alignment,
-        Object.Type == yaml::MachineStackObject::SpillSlot);
+    int ObjectIdx;
+    if (Object.Type == yaml::MachineStackObject::VariableSized)
+      ObjectIdx =
+          MFI.CreateVariableSizedObject(Object.Alignment, /*Alloca=*/nullptr);
+    else
+      ObjectIdx = MFI.CreateStackObject(
+          Object.Size, Object.Alignment,
+          Object.Type == yaml::MachineStackObject::SpillSlot);
     MFI.setObjectOffset(ObjectIdx, Object.Offset);
     // TODO: Store the mapping between object IDs and object indices to parse
     // stack object references correctly.

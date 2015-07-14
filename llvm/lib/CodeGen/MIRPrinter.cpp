@@ -188,7 +188,9 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
     YamlObject.ID = ID++;
     YamlObject.Type = MFI.isSpillSlotObjectIndex(I)
                           ? yaml::MachineStackObject::SpillSlot
-                          : yaml::MachineStackObject::DefaultType;
+                          : MFI.isVariableSizedObjectIndex(I)
+                                ? yaml::MachineStackObject::VariableSized
+                                : yaml::MachineStackObject::DefaultType;
     YamlObject.Offset = MFI.getObjectOffset(I);
     YamlObject.Size = MFI.getObjectSize(I);
     YamlObject.Alignment = MFI.getObjectAlignment(I);

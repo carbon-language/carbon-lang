@@ -129,9 +129,8 @@ template <> struct MappingTraits<MachineBasicBlock> {
 ///
 /// TODO: Determine isPreallocated flag by mapping between objects and local
 /// objects (Serialize local objects).
-/// TODO: Serialize variable sized objects.
 struct MachineStackObject {
-  enum ObjectType { DefaultType, SpillSlot };
+  enum ObjectType { DefaultType, SpillSlot, VariableSized };
   // TODO: Serialize LLVM alloca reference.
   unsigned ID;
   ObjectType Type = DefaultType;
@@ -144,6 +143,7 @@ template <> struct ScalarEnumerationTraits<MachineStackObject::ObjectType> {
   static void enumeration(yaml::IO &IO, MachineStackObject::ObjectType &Type) {
     IO.enumCase(Type, "default", MachineStackObject::DefaultType);
     IO.enumCase(Type, "spill-slot", MachineStackObject::SpillSlot);
+    IO.enumCase(Type, "variable-sized", MachineStackObject::VariableSized);
   }
 };
 
@@ -154,7 +154,8 @@ template <> struct MappingTraits<MachineStackObject> {
         "type", Object.Type,
         MachineStackObject::DefaultType); // Don't print the default type.
     YamlIO.mapOptional("offset", Object.Offset);
-    YamlIO.mapRequired("size", Object.Size);
+    if (Object.Type != MachineStackObject::VariableSized)
+      YamlIO.mapRequired("size", Object.Size);
     YamlIO.mapOptional("alignment", Object.Alignment);
   }
 
