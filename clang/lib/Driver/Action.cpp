@@ -153,13 +153,6 @@ VerifyJobAction::VerifyJobAction(ActionClass Kind,
          "ActionClass is not a valid VerifyJobAction");
 }
 
-VerifyJobAction::VerifyJobAction(ActionClass Kind, ActionList &Inputs,
-                                 types::ID Type)
-    : JobAction(Kind, Inputs, Type) {
-  assert((Kind == VerifyDebugInfoJobClass || Kind == VerifyPCHJobClass) &&
-           "ActionClass is not a valid VerifyJobAction");
-}
-
 void VerifyDebugInfoJobAction::anchor() {}
 
 VerifyDebugInfoJobAction::VerifyDebugInfoJobAction(
