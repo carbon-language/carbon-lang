@@ -35,7 +35,7 @@ define fastcc double @f2(i64 %g1, double %f1, i64 %g2, double %f2, i64 %g3, doub
 }
 
 define void @cg2(i64 %v) #0 {
-  tail call fastcc i64 @g1(i64 0, double 0.0, i64 %v, double 0.0, i64 0, double 0.0, i64 0, double 0.0)
+  call fastcc i64 @g1(i64 0, double 0.0, i64 %v, double 0.0, i64 0, double 0.0, i64 0, double 0.0)
   ret void
 
 ; CHECK-LABEL: @cg2
@@ -44,11 +44,11 @@ define void @cg2(i64 %v) #0 {
 }
 
 define void @cf2(double %v) #0 {
-  tail call fastcc i64 @g1(i64 0, double 0.0, i64 0, double %v, i64 0, double 0.0, i64 0, double 0.0)
+  call fastcc i64 @g1(i64 0, double 0.0, i64 0, double %v, i64 0, double 0.0, i64 0, double 0.0)
   ret void
 
 ; CHECK-LABEL: @cf2
-; CHECK: mr 2, 1
+; CHECK: fmr 2, 1
 ; CHECK: blr
 }
 

@@ -15,8 +15,8 @@ entry:
 ; CHECK-DAG: cmplwi {{[0-9]+}}, 3, 0
 ; CHECK-DAG: li [[REG2:[0-9]+]], 1
 ; CHECK-DAG: cntlzw [[REG3:[0-9]+]],
-; CHECK: isel 3, 0, [[REG2]]
-; CHECK: and 3, 3, [[REG3]]
+; CHECK: isel [[REG4:[0-9]+]], 0, [[REG2]]
+; CHECK: and 3, [[REG4]], [[REG3]]
 ; CHECK: blr
 }
 

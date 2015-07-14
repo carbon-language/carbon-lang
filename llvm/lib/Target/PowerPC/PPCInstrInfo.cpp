@@ -57,6 +57,10 @@ static cl::opt<bool> VSXSelfCopyCrash("crash-on-ppc-vsx-self-copy",
 cl::desc("Causes the backend to crash instead of generating a nop VSX copy"),
 cl::Hidden);
 
+static cl::opt<bool>
+UseOldLatencyCalc("ppc-old-latency-calc", cl::Hidden,
+  cl::desc("Use the old (incorrect) instruction latency calculation"));
+
 // Pin the vtable to this file.
 void PPCInstrInfo::anchor() {}
 
@@ -103,6 +107,35 @@ PPCInstrInfo::CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
   return new ScoreboardHazardRecognizer(II, DAG);
 }
 
+unsigned PPCInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                       const MachineInstr *MI,
+                                       unsigned *PredCost) const {
+  if (!ItinData || UseOldLatencyCalc)
+    return PPCGenInstrInfo::getInstrLatency(ItinData, MI, PredCost);
+
+  // The default implementation of getInstrLatency calls getStageLatency, but
+  // getStageLatency does not do the right thing for us. While we have
+  // itinerary, most cores are fully pipelined, and so the itineraries only
+  // express the first part of the pipeline, not every stage. Instead, we need
+  // to use the listed output operand cycle number (using operand 0 here, which
+  // is an output).
+
+  unsigned Latency = 1;
+  unsigned DefClass = MI->getDesc().getSchedClass();
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isDef() || MO.isImplicit())
+      continue;
+
+    int Cycle = ItinData->getOperandCycle(DefClass, i);
+    if (Cycle < 0)
+      continue;
+
+    Latency = std::max(Latency, (unsigned) Cycle);
+  }
+
+  return Latency;
+}
 
 int PPCInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
                                     const MachineInstr *DefMI, unsigned DefIdx,

@@ -521,8 +521,9 @@ define void @cv13(<4 x i32> %v) #0 {
   ret void
 
 ; CHECK-LABEL: @cv13
-; CHECK: li [[REG1:[0-9]+]], 96
-; CHECK: stvx 2, 1, [[REG1]]
+; CHECK-DAG: li [[REG1:[0-9]+]], 96
+; CHECK-DAG: vor [[REG2:[0-9]+]], 2, 2
+; CHECK: stvx [[REG2]], 1, [[REG1]]
 ; CHECK: blr
 }
 
@@ -531,8 +532,9 @@ define void @cv14(<4 x i32> %v) #0 {
   ret void
 
 ; CHECK-LABEL: @cv14
-; CHECK: li [[REG1:[0-9]+]], 128
-; CHECK: stvx 2, 1, [[REG1]]
+; CHECK-DAG: li [[REG1:[0-9]+]], 128
+; CHECK-DAG: vor [[REG2:[0-9]+]], 2, 2
+; CHECK: stvx [[REG2]], 1, [[REG1]]
 ; CHECK: blr
 }
 

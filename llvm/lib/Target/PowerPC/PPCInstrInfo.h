@@ -95,6 +95,10 @@ public:
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
                                      const ScheduleDAG *DAG) const override;
 
+  unsigned getInstrLatency(const InstrItineraryData *ItinData,
+                           const MachineInstr *MI,
+                           unsigned *PredCost = nullptr) const override;
+
   int getOperandLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx,
                         const MachineInstr *UseMI,

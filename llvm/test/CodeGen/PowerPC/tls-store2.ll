@@ -29,6 +29,8 @@ entry:
 ; CHECK: addi 3, {{[0-9]+}}, __once_call@got@tlsgd@l
 ; CHECK: bl __tls_get_addr(__once_call@tlsgd)
 ; CHECK-NEXT: nop
-; CHECK: std {{[0-9]+}}, 0(3)
+; FIXME: We don't really need the copy here either, we could move the store up.
+; CHECK: mr [[REG1:[0-9]+]], 3
+; CHECK: std {{[0-9]+}}, 0([[REG1]])
 
 declare void @__once_call_impl()

@@ -18,10 +18,10 @@ entry:
 ; CHECK: addi [[REG]], [[REG]], env_sigill@toc@l
 ; CHECK: ld 31, 0([[REG]])
 ; CHECK: ld [[REG2:[0-9]+]], 8([[REG]])
-; CHECK: ld 1, 16([[REG]])
-; CHECK: mtctr [[REG2]]
-; CHECK: ld 30, 32([[REG]])
-; CHECK: ld 2, 24([[REG]])
+; CHECK-DAG: ld 1, 16([[REG]])
+; CHECK-DAG: mtctr [[REG2]]
+; CHECK-DAG: ld 30, 32([[REG]])
+; CHECK-DAG: ld 2, 24([[REG]])
 ; CHECK: bctr
 
 return:                                           ; No predecessors!
