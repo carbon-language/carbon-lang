@@ -29,7 +29,6 @@ MachineRegisterInfo::MachineRegisterInfo(const MachineFunction *MF)
     TracksSubRegLiveness(false) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
-  UsedRegUnits.resize(getTargetRegisterInfo()->getNumRegUnits());
   UsedPhysRegMask.resize(getTargetRegisterInfo()->getNumRegs());
 
   // Create the physreg use/def lists.

@@ -91,7 +91,6 @@ bool SIPrepareScratchRegs::runOnMachineFunction(MachineFunction &MF) {
 
   if (ScratchOffsetReg != AMDGPU::NoRegister) {
     // Found an SGPR to use
-    MRI.setPhysRegUsed(ScratchOffsetReg);
     BuildMI(*Entry, I, DL, TII->get(AMDGPU::S_MOV_B32), ScratchOffsetReg)
             .addReg(ScratchOffsetPreloadReg);
   } else {
