@@ -68,7 +68,8 @@ void WebAssemblyFrameLowering::emitEpilogue(MachineFunction &MF,
   llvm_unreachable("TODO: implement emitEpilogue");
 }
 
-void WebAssemblyFrameLowering::processFunctionBeforeCalleeSavedScan(
-    MachineFunction &MF, RegScavenger *RS) const {
-  llvm_unreachable("TODO: implement processFunctionBeforeCalleeSavedScan");
+void WebAssemblyFrameLowering::determineCalleeSaves(MachineFunction &MF,
+                                                    BitVector &SavedRegs,
+                                                    RegScavenger *RS) const {
+  llvm_unreachable("TODO: implement determineCalleeSaves");
 }

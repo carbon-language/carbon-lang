@@ -910,7 +910,7 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
   unsigned NumFPRSpilled = 0;
   bool ExtraCSSpill = false;
   bool CanEliminateFrame = true;
-  DEBUG(dbgs() << "*** processFunctionBeforeCalleeSavedScan\nUsed CSRs:");
+  DEBUG(dbgs() << "*** determineCalleeSaves\nUsed CSRs:");
   const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
 
   // Check pairs of consecutive callee-saved registers.

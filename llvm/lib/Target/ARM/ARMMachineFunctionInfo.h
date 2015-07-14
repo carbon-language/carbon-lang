@@ -52,7 +52,7 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   unsigned ReturnRegsCount;
 
   /// HasStackFrame - True if this function has a stack frame. Set by
-  /// processFunctionBeforeCalleeSavedScan().
+  /// determineCalleeSaves().
   bool HasStackFrame;
 
   /// RestoreSPFromFP - True if epilogue should restore SP from FP. Set by

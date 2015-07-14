@@ -1,9 +1,9 @@
 ; RUN: llc -mtriple=arm64-apple-ios < %s
 @bar = common global i32 0, align 4
 
-; Leaf function which uses all callee-saved registers and allocates >= 256 bytes on the stack
-; this will cause processFunctionBeforeCalleeSavedScan() to spill LR as an additional scratch
-; register.
+; Leaf function which uses all callee-saved registers and allocates >= 256 bytes
+; on the stack this will cause determineCalleeSaves() to spill LR as an
+; additional scratch register.
 ;
 ; This is a crash-only regression test for rdar://15124582.
 define i32 @foo(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g, i32 %h) nounwind {
