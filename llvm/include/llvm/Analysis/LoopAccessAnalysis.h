@@ -292,9 +292,10 @@ private:
   bool couldPreventStoreLoadForward(unsigned Distance, unsigned TypeByteSize);
 };
 
-/// This struct holds information about the memory runtime legality check that
-/// a group of pointers do not overlap.
-struct RuntimePointerChecking {
+/// \brief Holds information about the memory runtime legality checks to verify
+/// that a group of pointers do not overlap.
+class RuntimePointerChecking {
+public:
   struct PointerInfo {
     /// Holds the pointer value that we need to check.
     TrackingVH<Value> PointerValue;
@@ -374,15 +375,6 @@ struct RuntimePointerChecking {
   void groupChecks(MemoryDepChecker::DepCandidates &DepCands,
                    bool UseDependencies);
 
-  /// \brief Decide whether we need to issue a run-time check for pointer at
-  /// index \p I and \p J to prove their independence.
-  ///
-  /// If \p PtrPartition is set, it contains the partition number for
-  /// pointers (-1 if the pointer belongs to multiple partitions).  In this
-  /// case omit checks between pointers belonging to the same partition.
-  bool needsChecking(unsigned I, unsigned J,
-                     const SmallVectorImpl<int> *PtrPartition) const;
-
   /// \brief Decide if we need to add a check between two groups of pointers,
   /// according to needsChecking.
   bool needsChecking(const CheckingPtrGroup &M, const CheckingPtrGroup &N,
@@ -412,6 +404,16 @@ struct RuntimePointerChecking {
 
   /// Holds a partitioning of pointers into "check groups".
   SmallVector<CheckingPtrGroup, 2> CheckingGroups;
+
+private:
+  /// \brief Decide whether we need to issue a run-time check for pointer at
+  /// index \p I and \p J to prove their independence.
+  ///
+  /// If \p PtrPartition is set, it contains the partition number for
+  /// pointers (-1 if the pointer belongs to multiple partitions).  In this
+  /// case omit checks between pointers belonging to the same partition.
+  bool needsChecking(unsigned I, unsigned J,
+                     const SmallVectorImpl<int> *PtrPartition) const;
 
   /// Holds a pointer to the ScalarEvolution analysis.
   ScalarEvolution *SE;
