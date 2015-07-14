@@ -1,6 +1,8 @@
-; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=VI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=GCN -check-prefix=FUNC %s
+; XUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=VI -check-prefix=GCN -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+
+declare i32 @llvm.r600.read.tidig.x() #0
 
 ; FUNC-LABEL: {{^}}lshr_i32:
 ; SI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
@@ -184,3 +186,32 @@ define void @lshr_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> addrspace(1)* %i
   store <4 x i64> %result, <4 x i64> addrspace(1)* %out
   ret void
 }
+
+; Make sure load width gets reduced to i32 load.
+; GCN-LABEL: {{^}}s_lshr_32_i64:
+; GCN-DAG: s_load_dword [[HI_A:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc{{$}}
+; GCN-DAG: s_mov_b32 s[[SHI:[0-9]+]], 0{{$}}
+; GCN-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; GCN-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], [[HI_A]]
+; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
+define void @s_lshr_32_i64(i64 addrspace(1)* %out, i64 %a) {
+  %result = lshr i64 %a, 32
+  store i64 %result, i64 addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_lshr_32_i64:
+; GCN-DAG: buffer_load_dword v[[HI_A:[0-9]+]], v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:4
+; GCN-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], 0{{$}}
+; GCN: buffer_store_dwordx2 v{{\[}}[[HI_A]]:[[VHI]]{{\]}}
+define void @v_lshr_32_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
+  %tid = call i32 @llvm.r600.read.tidig.x() #0
+  %gep.in = getelementptr i64, i64 addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
+  %a = load i64, i64 addrspace(1)* %gep.in
+  %result = lshr i64 %a, 32
+  store i64 %result, i64 addrspace(1)* %gep.out
+  ret void
+}
+
+attributes #0 = { nounwind readnone }

@@ -52,16 +52,18 @@ entry:
 ; FUNC_LABEL: {{^}}mul24_i64:
 ; EG; MUL_UINT24
 ; EG: MULHI
-; SI: v_mul_u32_u24
 ; FIXME: SI support 24-bit mulhi
-; SI: v_mul_hi_u32
-define void @mul24_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
+
+; SI-DAG: v_mul_u32_u24
+; SI-DAG: v_mul_hi_u32
+; SI: s_endpgm
+define void @mul24_i64(i64 addrspace(1)* %out, i64 %a, i64 %b, i64 %c) {
 entry:
-  %0 = shl i64 %a, 40
-  %a_24 = lshr i64 %0, 40
-  %1 = shl i64 %b, 40
-  %b_24 = lshr i64 %1, 40
-  %2 = mul i64 %a_24, %b_24
-  store i64 %2, i64 addrspace(1)* %out
+  %tmp0 = shl i64 %a, 40
+  %a_24 = lshr i64 %tmp0, 40
+  %tmp1 = shl i64 %b, 40
+  %b_24 = lshr i64 %tmp1, 40
+  %tmp2 = mul i64 %a_24, %b_24
+  store i64 %tmp2, i64 addrspace(1)* %out
   ret void
 }

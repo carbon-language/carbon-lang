@@ -1,6 +1,9 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG %s
-;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI %s
-;RUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck --check-prefix=VI %s
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG %s
+; RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck -check-prefix=GCN -check-prefix=SI %s
+; XUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck -check-prefix=GCN -check-prefix=VI %s
+
+declare i32 @llvm.r600.read.tidig.x() #0
+
 
 ;EG: {{^}}shl_v2i32:
 ;EG: LSHL {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -178,3 +181,32 @@ define void @shl_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> addrspace(1)* %in
   store <4 x i64> %result, <4 x i64> addrspace(1)* %out
   ret void
 }
+
+; Make sure load width gets reduced to i32 load.
+; GCN-LABEL: {{^}}s_shl_32_i64:
+; GCN-DAG: s_load_dword [[LO_A:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb{{$}}
+; GCN-DAG: s_mov_b32 s[[SLO:[0-9]+]], 0{{$}}
+; GCN-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; GCN-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], [[LO_A]]
+; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
+define void @s_shl_32_i64(i64 addrspace(1)* %out, i64 %a) {
+  %result = shl i64 %a, 32
+  store i64 %result, i64 addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_shl_32_i64:
+; GCN-DAG: buffer_load_dword v[[LO_A:[0-9]+]],
+; GCN-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], 0{{$}}
+; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[LO_A]]{{\]}}
+define void @v_shl_32_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
+  %tid = call i32 @llvm.r600.read.tidig.x() #0
+  %gep.in = getelementptr i64, i64 addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
+  %a = load i64, i64 addrspace(1)* %gep.in
+  %result = shl i64 %a, 32
+  store i64 %result, i64 addrspace(1)* %gep.out
+  ret void
+}
+
+attributes #0 = { nounwind readnone }

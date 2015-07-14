@@ -65,6 +65,7 @@ private:
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue performStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue performShlCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performMulCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
 protected:

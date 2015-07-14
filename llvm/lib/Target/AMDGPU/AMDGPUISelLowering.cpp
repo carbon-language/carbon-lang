@@ -406,6 +406,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setOperationAction(ISD::FNEARBYINT, MVT::f32, Custom);
   setOperationAction(ISD::FNEARBYINT, MVT::f64, Custom);
 
+  setTargetDAGCombine(ISD::SHL);
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::SELECT_CC);
@@ -2415,6 +2416,33 @@ SDValue AMDGPUTargetLowering::performStoreCombine(SDNode *N,
                       SN->getBasePtr(), SN->getMemOperand());
 }
 
+SDValue AMDGPUTargetLowering::performShlCombine(SDNode *N,
+                                                DAGCombinerInfo &DCI) const {
+  if (N->getValueType(0) != MVT::i64)
+    return SDValue();
+
+  // i64 (shl x, 32) -> (build_pair 0, x)
+
+  // Doing this with moves theoretically helps MI optimizations that understand
+  // copies. 2 v_mov_b32_e32 will have the same code size / cycle count as
+  // v_lshl_b64. In the SALU case, I think this is slightly worse since it
+  // doubles the code size and I'm unsure about cycle count.
+  const ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  if (!RHS || RHS->getZExtValue() != 32)
+    return SDValue();
+
+  SDValue LHS = N->getOperand(0);
+
+  SDLoc SL(N);
+  SelectionDAG &DAG = DCI.DAG;
+
+  // Extract low 32-bits.
+  SDValue Lo = DAG.getNode(ISD::TRUNCATE, SL, MVT::i32, LHS);
+
+  const SDValue Zero = DAG.getConstant(0, SL, MVT::i32);
+  return DAG.getNode(ISD::BUILD_PAIR, SL, MVT::i64, Zero, Lo);
+}
+
 SDValue AMDGPUTargetLowering::performMulCombine(SDNode *N,
                                                 DAGCombinerInfo &DCI) const {
   EVT VT = N->getValueType(0);
@@ -2454,6 +2482,12 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
   switch(N->getOpcode()) {
   default:
     break;
+  case ISD::SHL: {
+    if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
+      break;
+
+    return performShlCombine(N, DCI);
+  }
   case ISD::MUL:
     return performMulCombine(N, DCI);
   case AMDGPUISD::MUL_I24:
