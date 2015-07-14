@@ -208,7 +208,7 @@ typedef std::vector<bit_value_t> insn_t;
 ///
 /// The Debug output shows the path that the decoding tree follows to reach the
 /// the conclusion that there is a conflict.  VST4q8a is a vst4 to double-spaced
-/// even registers, while VST4q8b is a vst4 to double-spaced odd regsisters.
+/// even registers, while VST4q8b is a vst4 to double-spaced odd registers.
 ///
 /// The encoding info in the .td files does not specify this meta information,
 /// which could have been used by the decoder to resolve the conflict.  The
