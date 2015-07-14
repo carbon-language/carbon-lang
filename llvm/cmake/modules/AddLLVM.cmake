@@ -691,7 +691,7 @@ macro(add_llvm_external_project name)
   string(TOUPPER ${nameUNDERSCORE} nameUPPER)
   #TODO: Remove this check in a few days once it has circulated through
   # buildbots and people's checkouts (cbieneman - July 14, 2015)
-  if(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}")
+  if("${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}")
     unset(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR CACHE)
   endif()
   if(NOT LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR)
