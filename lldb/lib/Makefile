@@ -1,10 +1,10 @@
 ##===- source/Makefile -------------------------------------*- Makefile -*-===##
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../../..
@@ -28,9 +28,9 @@ USEDLIBS = lldbAPI.a \
 	lldbCore.a \
 	lldbDataFormatters.a \
 	lldbExpression.a \
-	lldbHostCommon.a \
-	lldbInitialize.a \
-	lldbInitAndLog.a \
+	lldbInitialization.a \
+	lldbHost.a \
+	lldbBase.a \
 	lldbInterpreter.a \
 	lldbPluginABIMacOSX_arm.a \
 	lldbPluginABIMacOSX_arm64.a \
@@ -46,33 +46,33 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginABISysV_hexagon.a \
 	lldbPluginDisassemblerLLVM.a \
 	lldbPluginDynamicLoaderStatic.a \
-	lldbPluginDynamicLoaderPOSIX.a \
+	lldbPluginDynamicLoaderPosixDYLD.a \
 	lldbPluginDynamicLoaderHexagon.a \
-	lldbPluginDynamicLoaderMacOSX.a \
+	lldbPluginDynamicLoaderMacOSXDYLD.a \
 	lldbPluginDynamicLoaderWindowsDYLD.a \
-	lldbPluginEmulateInstructionARM.a \
-	lldbPluginEmulateInstructionARM64.a \
-	lldbPluginEmulateInstructionMIPS.a \
-	lldbPluginEmulateInstructionMIPS64.a \
+	lldbPluginInstructionARM.a \
+	lldbPluginInstructionARM64.a \
+	lldbPluginInstructionMIPS.a \
+	lldbPluginInstructionMIPS64.a \
 	lldbPluginInstrumentationRuntimeAddressSanitizer.a \
-	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
-	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
-	lldbPluginLanguageRuntimeRenderScriptRuntime.a \
+	lldbPluginCXXItaniumABI.a \
+	lldbPluginAppleObjCRuntime.a \
+	lldbPluginRenderScriptRuntime.a \
 	lldbPluginMemoryHistoryASan.a \
 	lldbPluginObjectContainerBSDArchive.a \
-	lldbPluginObjectContainerUniversalMachO.a \
+	lldbPluginObjectContainerMachOArchive.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginObjectFileJIT.a \
 	lldbPluginSymbolVendorELF.a \
 	lldbPluginObjectFilePECOFF.a \
-	lldbPluginOperatingSystemPython.a \
-	lldbPluginPlatformGDBServer.a \
+	lldbPluginOSPython.a \
+	lldbPluginPlatformGDB.a \
 	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
 	lldbPluginSystemRuntimeMacOSX.a \
 	lldbPluginUnwindAssemblyInstEmulation.a \
-	lldbPluginUnwindAssemblyx86.a \
+	lldbPluginUnwindAssemblyX86.a \
 	lldbPluginUtility.a \
 	lldbSymbol.a \
 	lldbTarget.a \
@@ -113,9 +113,7 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
                    linker option
 
 ifeq ($(HOST_OS),Darwin)
-  USEDLIBS += lldbHostMacOSX.a \
-              lldbHostPosix.a \
-              lldbPluginDynamicLoaderDarwinKernel.a \
+  USEDLIBS += lldbPluginDynamicLoaderDarwinKernel.a \
               lldbPluginObjectFileMachO.a \
               lldbPluginSymbolVendorMacOSX.a \
               lldbPluginProcessDarwin.a \
@@ -125,24 +123,19 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 ifeq ($(HOST_OS),Linux)
-  USEDLIBS += lldbHostLinux.a \
-              lldbHostPosix.a \
-              lldbPluginProcessLinux.a \
+  USEDLIBS += lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
 endif
 
 ifeq ($(HOST_OS),MingW)
-  USEDLIBS += lldbHostWindows.a \
-              lldbPluginProcessElfCore.a \
+  USEDLIBS += lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
-  USEDLIBS += lldbHostFreeBSD.a \
-              lldbHostPosix.a \
-              lldbPluginProcessPOSIX.a \
+  USEDLIBS += lldbPluginProcessPOSIX.a \
               lldbPluginProcessFreeBSD.a \
               lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
@@ -165,7 +158,7 @@ ifeq ($(HOST_OS),Darwin)
                            -Wl,$(LLDB_SUBMIT_VERSION).$(LLDB_SUBMIT_SUBVERSION) \
                            -Wl,-compatibility_version -Wl,1
     endif
-    # extra options to override libtool defaults 
+    # extra options to override libtool defaults
 	LLVMLibsOptions += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
 	LLVMLibsOptions += -framework Foundation -framework CoreFoundation
 	LLVMLibsOptions += -framework CoreServices -framework Carbon -framework Security

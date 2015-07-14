@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ../..
-LIBRARYNAME := lldbInitialize
+LIBRARYNAME := lldbInitialization
 BUILD_ARCHIVE = 1
 
 include $(LLDB_LEVEL)/Makefile

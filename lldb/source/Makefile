@@ -1,21 +1,21 @@
 ##===- source/Makefile -------------------------------------*- Makefile -*-===##
-# 
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
 # License. See LICENSE.TXT for details.
-# 
+#
 ##===----------------------------------------------------------------------===##
 
 LLDB_LEVEL := ..
 PARALLEL_DIRS := API Initialization Breakpoint Commands Core DataFormatters Expression Host Interpreter Plugins Symbol Target Utility
-LIBRARYNAME := lldbInitAndLog
+LIBRARYNAME := lldbBase
 BUILD_ARCHIVE = 1
 
 # Although LLVM makefiles provide $(HOST_OS), we cannot use that here because it is defined by including the $(LLDB_LEVEL)/Makefile
 # below. Instead, we use uname -s to detect the HOST_OS and generate LLDB_vers.c only on Mac. On Linux, the version number is
 # calculated in the same way as Clang's version.
-ifeq (Darwin,$(shell uname -s)) 
+ifeq (Darwin,$(shell uname -s))
 BUILT_SOURCES = LLDB_vers.c
 endif
 
