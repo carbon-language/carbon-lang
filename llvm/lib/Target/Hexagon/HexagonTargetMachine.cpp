@@ -46,6 +46,10 @@ static cl::opt<bool> EnableCommGEP("hexagon-commgep", cl::init(true),
 static cl::opt<bool> EnableGenExtract("hexagon-extract", cl::init(true),
   cl::Hidden, cl::desc("Generate \"extract\" instructions"));
 
+static cl::opt<bool> EnableGenPred("hexagon-gen-pred", cl::init(true),
+  cl::Hidden, cl::desc("Enable conversion of arithmetic operations to "
+  "predicate instructions"));
+
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
 /// library.  In particular, it seems that it is not possible to get
@@ -76,6 +80,7 @@ namespace llvm {
   FunctionPass *createHexagonFixupHwLoops();
   FunctionPass *createHexagonGenExtract();
   FunctionPass *createHexagonGenInsert();
+  FunctionPass *createHexagonGenPredicate();
   FunctionPass *createHexagonHardwareLoops();
   FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel);
@@ -166,6 +171,9 @@ bool HexagonPassConfig::addInstSelector() {
   addPass(createHexagonISelDag(TM, getOptLevel()));
 
   if (!NoOpt) {
+    // Create logical operations on predicate registers.
+    if (EnableGenPred)
+      addPass(createHexagonGenPredicate(), false);
     addPass(createHexagonPeephole());
     printAndVerify("After hexagon peephole pass");
     if (EnableGenInsert)

@@ -24,6 +24,7 @@ add_llvm_target(HexagonCodeGen
   HexagonFrameLowering.cpp
   HexagonGenExtract.cpp
   HexagonGenInsert.cpp
+  HexagonGenPredicate.cpp
   HexagonHardwareLoops.cpp
   HexagonInstrInfo.cpp
   HexagonISelDAGToDAG.cpp
