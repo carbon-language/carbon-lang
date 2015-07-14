@@ -321,6 +321,14 @@ bool MIRParserImpl::initializeMachineBasicBlock(
     // TODO: Report an error when adding the same successor more than once.
     MBB.addSuccessor(SuccMBB);
   }
+  // Parse the liveins.
+  for (const auto &LiveInSource : YamlMBB.LiveIns) {
+    unsigned Reg = 0;
+    if (parseNamedRegisterReference(Reg, SM, MF, LiveInSource.Value, PFS,
+                                    IRSlots, Error))
+      return error(Error, LiveInSource.SourceRange);
+    MBB.addLiveIn(Reg);
+  }
   // Parse the instructions.
   for (const auto &MISource : YamlMBB.Instructions) {
     MachineInstr *MI = nullptr;

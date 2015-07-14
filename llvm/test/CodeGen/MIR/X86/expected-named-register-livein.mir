@@ -1,0 +1,21 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @test(i32 %a) {
+  body:
+    ret i32 %a
+  }
+
+...
+---
+name:            test
+body:
+  - id:          0
+    name:        body
+    # CHECK: [[@LINE+1]]:21: expected a named register
+    liveins:     [ '%0' ]
+    instructions:
+      - '%eax = COPY %edi'
+      - 'RETQ %eax'
+...

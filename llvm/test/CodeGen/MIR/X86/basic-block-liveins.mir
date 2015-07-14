@@ -1,0 +1,25 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses basic block liveins correctly.
+
+--- |
+
+  define i32 @test(i32 %a, i32 %b) {
+  body:
+    %c = add i32 %a, %b
+    ret i32 %c
+  }
+
+...
+---
+name:            test
+body:
+  # CHECK: name: body
+  # CHECK: liveins: [ '%edi', '%esi' ]
+  # CHECK-NEXT: instructions:
+  - id:          0
+    name:        body
+    liveins:     [ '%edi', '%esi' ]
+    instructions:
+      - '%eax = LEA64_32r killed %rdi, 1, killed %rsi, 0, _'
+      - 'RETQ %eax'
+...

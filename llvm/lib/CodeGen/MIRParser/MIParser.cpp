@@ -78,6 +78,7 @@ public:
 
   bool parse(MachineInstr *&MI);
   bool parseMBB(MachineBasicBlock *&MBB);
+  bool parseNamedRegister(unsigned &Reg);
 
   bool parseRegister(unsigned &Reg);
   bool parseRegisterFlag(unsigned &Flags);
@@ -212,6 +213,18 @@ bool MIParser::parseMBB(MachineBasicBlock *&MBB) {
   if (Token.isNot(MIToken::Eof))
     return error(
         "expected end of string after the machine basic block reference");
+  return false;
+}
+
+bool MIParser::parseNamedRegister(unsigned &Reg) {
+  lex();
+  if (Token.isNot(MIToken::NamedRegister))
+    return error("expected a named register");
+  if (parseRegister(Reg))
+    return 0;
+  lex();
+  if (Token.isNot(MIToken::Eof))
+    return error("expected end of string after the register reference");
   return false;
 }
 
@@ -582,4 +595,12 @@ bool llvm::parseMBBReference(MachineBasicBlock *&MBB, SourceMgr &SM,
                              const PerFunctionMIParsingState &PFS,
                              const SlotMapping &IRSlots, SMDiagnostic &Error) {
   return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseMBB(MBB);
+}
+
+bool llvm::parseNamedRegisterReference(unsigned &Reg, SourceMgr &SM,
+                                       MachineFunction &MF, StringRef Src,
+                                       const PerFunctionMIParsingState &PFS,
+                                       const SlotMapping &IRSlots,
+                                       SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseNamedRegister(Reg);
 }

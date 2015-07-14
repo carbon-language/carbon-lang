@@ -233,7 +233,15 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
     MIPrinter(StrOS, MST, RegisterMaskIds).printMBBReference(*SuccMBB);
     YamlMBB.Successors.push_back(StrOS.str());
   }
-
+  // Print the live in registers.
+  const auto *TRI = MBB.getParent()->getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  for (auto I = MBB.livein_begin(), E = MBB.livein_end(); I != E; ++I) {
+    std::string Str;
+    raw_string_ostream StrOS(Str);
+    printReg(*I, StrOS, TRI);
+    YamlMBB.LiveIns.push_back(StrOS.str());
+  }
   // Print the machine instructions.
   YamlMBB.Instructions.reserve(MBB.size());
   std::string Str;

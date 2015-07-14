@@ -102,9 +102,9 @@ struct MachineBasicBlock {
   unsigned Alignment = 0;
   bool IsLandingPad = false;
   bool AddressTaken = false;
-  // TODO: Serialize the successor weights and liveins.
+  // TODO: Serialize the successor weights.
   std::vector<FlowStringValue> Successors;
-
+  std::vector<FlowStringValue> LiveIns;
   std::vector<StringValue> Instructions;
 };
 
@@ -117,6 +117,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
     YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
     YamlIO.mapOptional("addressTaken", MBB.AddressTaken);
     YamlIO.mapOptional("successors", MBB.Successors);
+    YamlIO.mapOptional("liveins", MBB.LiveIns);
     YamlIO.mapOptional("instructions", MBB.Instructions);
   }
 };

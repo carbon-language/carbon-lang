@@ -40,6 +40,12 @@ bool parseMBBReference(MachineBasicBlock *&MBB, SourceMgr &SM,
                        const PerFunctionMIParsingState &PFS,
                        const SlotMapping &IRSlots, SMDiagnostic &Error);
 
+bool parseNamedRegisterReference(unsigned &Reg, SourceMgr &SM,
+                                 MachineFunction &MF, StringRef Src,
+                                 const PerFunctionMIParsingState &PFS,
+                                 const SlotMapping &IRSlots,
+                                 SMDiagnostic &Error);
+
 } // end namespace llvm
 
 #endif
