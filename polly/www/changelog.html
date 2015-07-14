@@ -12,6 +12,17 @@
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
 <h1> ChangeLog </h1>
+<h2> trunk</h2>
+
+<ul>
+<li>Optimized isl for small integers, such that mostly cheap 32bit operations
+are used instead of costly arbitrary precision integers that often also involve
+malloc/free calls. As a result, the compile-time increase due to Polly has
+been largely reduced.</li>
+
+<li>Support for modulo operations: Accesses such as <pre>A[t%2][i]</pre> can
+    now be analyzed.
+</ul>
 
 <h2> 3.7 </h2>
 
