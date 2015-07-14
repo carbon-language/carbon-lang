@@ -95,13 +95,18 @@ static bool canShrink(MachineInstr &MI, const SIInstrInfo *TII,
   // a register allocation hint pre-regalloc and then do the shrining
   // post-regalloc.
   if (Src2) {
-    if (MI.getOpcode() != AMDGPU::V_MAC_F32_e64)
-      return false;
+    switch (MI.getOpcode()) {
+      default: return false;
 
-    const MachineOperand *Src2Mod =
-        TII->getNamedOperand(MI, AMDGPU::OpName::src2_modifiers);
-    if (!isVGPR(Src2, TRI, MRI) || (Src2Mod && Src2Mod->getImm() != 0))
-      return false;
+      case AMDGPU::V_MAC_F32_e64:
+        if (!isVGPR(Src2, TRI, MRI) ||
+            TII->hasModifiersSet(MI, AMDGPU::OpName::src2_modifiers))
+          return false;
+        break;
+
+      case AMDGPU::V_CNDMASK_B32_e64:
+        break;
+    }
   }
 
   const MachineOperand *Src1 = TII->getNamedOperand(MI, AMDGPU::OpName::src1);
@@ -247,6 +252,22 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
           continue;
         }
         if (DstReg != AMDGPU::VCC)
+          continue;
+      }
+
+      if (Op32 == AMDGPU::V_CNDMASK_B32_e32) {
+        // We shrink V_CNDMASK_B32_e64 using regalloc hints like we do for VOPC
+        // instructions.
+        const MachineOperand *Src2 =
+            TII->getNamedOperand(MI, AMDGPU::OpName::src2);
+        if (!Src2->isReg())
+          continue;
+        unsigned SReg = Src2->getReg();
+        if (TargetRegisterInfo::isVirtualRegister(SReg)) {
+          MRI.setRegAllocationHint(SReg, 0, AMDGPU::VCC);
+          continue;
+        }
+        if (SReg != AMDGPU::VCC)
           continue;
       }
 

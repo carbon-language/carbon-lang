@@ -72,11 +72,11 @@ define void @s_uint_to_fp_v4i32_to_v4f64(<4 x double> addrspace(1)* %out, <4 x i
 
 ; FIXME: select on 0, 0
 ; SI-LABEL: {{^}}uint_to_fp_i1_to_f64:
-; SI: v_cmp_eq_i32_e64 [[CMP:s\[[0-9]+:[0-9]\]]],
-; We can't fold the SGPRs into v_cndmask_b32_e64, because it already
-; uses an SGPR for [[CMP]]
-; SI: v_cndmask_b32_e64 v{{[0-9]+}}, 0, v{{[0-9]+}}, [[CMP]]
-; SI: v_cndmask_b32_e64 v{{[0-9]+}}, 0, 0, [[CMP]]
+; SI: v_cmp_eq_i32_e64 vcc
+; We can't fold the SGPRs into v_cndmask_b32_e32, because it already
+; uses an SGPR (implicit vcc).
+; SI: v_cndmask_b32_e32 v{{[0-9]+}}, 0, v{{[0-9]+}}
+; SI: v_cndmask_b32_e64 v{{[0-9]+}}, 0, 0, vcc
 ; SI: buffer_store_dwordx2
 ; SI: s_endpgm
 define void @uint_to_fp_i1_to_f64(double addrspace(1)* %out, i32 %in) {
