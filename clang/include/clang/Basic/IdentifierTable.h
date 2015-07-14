@@ -49,7 +49,7 @@ class IdentifierInfo {
   // Objective-C keyword ('protocol' in '@protocol') or builtin (__builtin_inf).
   // First NUM_OBJC_KEYWORDS values are for Objective-C, the remaining values
   // are for builtins.
-  unsigned ObjCOrBuiltinID    :11;
+  unsigned ObjCOrBuiltinID    :13;
   bool HasMacro               : 1; // True if there is a #define for this.
   bool HadMacro               : 1; // True if there was a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
@@ -69,7 +69,7 @@ class IdentifierInfo {
                                    // stored externally.
   bool IsModulesImport        : 1; // True if this is the 'import' contextual
                                    // keyword.
-  // 32-bit word is filled.
+  // 30 bit left in 64-bit word.
 
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
