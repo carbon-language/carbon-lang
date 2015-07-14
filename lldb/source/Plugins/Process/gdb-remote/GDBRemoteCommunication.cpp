@@ -564,7 +564,7 @@ GDBRemoteCommunication::DecompressPacket ()
         return true;
 
     size_t pkt_size = m_bytes.size();
-    if (pkt_size < 6)
+    if (pkt_size < 5)
         return true;
     if (m_bytes[0] != '$' && m_bytes[0] != '%')
         return true;
