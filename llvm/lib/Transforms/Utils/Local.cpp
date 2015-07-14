@@ -900,13 +900,10 @@ static unsigned enforceKnownAlignment(Value *V, unsigned Align,
 
   if (auto *GO = dyn_cast<GlobalObject>(V)) {
     // If there is a large requested alignment and we can, bump up the alignment
-    // of the global.
-    if (GO->isDeclaration())
-      return Align;
-    // If the memory we set aside for the global may not be the memory used by
-    // the final program then it is impossible for us to reliably enforce the
-    // preferred alignment.
-    if (GO->isWeakForLinker())
+    // of the global.  If the memory we set aside for the global may not be the
+    // memory used by the final program then it is impossible for us to reliably
+    // enforce the preferred alignment.
+    if (!GO->isStrongDefinitionForLinker())
       return Align;
 
     if (GO->getAlignment() >= PrefAlign)
