@@ -19,5 +19,5 @@ thread_local int z[3]; // expected-note {{previous}}
 void f() {
   thread_local int x;
   static thread_local int y;
-  extern thread_local int z; // expected-error {{redefinition of 'z' with a different type}}
+  extern thread_local int z; // expected-error {{redeclaration of 'z' with a different type}}
 }

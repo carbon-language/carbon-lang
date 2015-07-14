@@ -35,17 +35,17 @@ extern ID CFRunLoopGetMain8();
 extern __weak id WLoopGetMain(); // expected-note {{previous declaration is here}}
 extern id WLoopGetMain();	// expected-error {{functions that differ only in their return type cannot be overloaded}}
 
-extern id p3;	// expected-note {{previous definition is here}}
-extern __weak id p3;	// expected-error {{redefinition of 'p3' with a different type}}
+extern id p3;	// expected-note {{previous declaration is here}}
+extern __weak id p3;	// expected-error {{redeclaration of 'p3' with a different type}}
 
-extern void *p4; // expected-note {{previous definition is here}}
-extern void * __strong p4; // expected-error {{redefinition of 'p4' with a different type}}
+extern void *p4; // expected-note {{previous declaration is here}}
+extern void * __strong p4; // expected-error {{redeclaration of 'p4' with a different type}}
 
 extern id p5;
 extern __strong id p5;
 
-extern char* __strong p6; // expected-note {{previous definition is here}}
-extern char* p6; // expected-error {{redefinition of 'p6' with a different type}}
+extern char* __strong p6; // expected-note {{previous declaration is here}}
+extern char* p6; // expected-error {{redeclaration of 'p6' with a different type}}
 
-extern __strong char* p7; // expected-note {{previous definition is here}}
-extern char* p7; // expected-error {{redefinition of 'p7' with a different type}}
+extern __strong char* p7; // expected-note {{previous declaration is here}}
+extern char* p7; // expected-error {{redeclaration of 'p7' with a different type}}

@@ -158,7 +158,7 @@ namespace dependent {
   }
 
   template<typename T> void n() {
-    extern T n_var; // expected-error {{redefinition of 'n_var' with a different type: 'double' vs 'int'}} expected-note {{previous}}
+    extern T n_var; // expected-error {{redeclaration of 'n_var' with a different type: 'double' vs 'int'}} expected-note {{previous}}
     extern T n_fn(); // expected-error {{functions that differ only in their return type cannot be overloaded}} expected-note {{previous}}
   }
   template void n<int>();

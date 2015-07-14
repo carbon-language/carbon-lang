@@ -98,8 +98,8 @@ namespace odr_tmpl {
   namespace pvt_extern {
     template<typename T> T v = T();
     template<typename T> extern T v;      // redeclaration is allowed \
-                                          // expected-note {{previous definition is here}}
-    template<typename T> extern int v;    // expected-error {{redefinition of 'v' with a different type: 'int' vs 'T'}}
+                                          // expected-note {{previous declaration is here}}
+    template<typename T> extern int v;    // expected-error {{redeclaration of 'v' with a different type: 'int' vs 'T'}}
 
 #ifndef PRECXX11
     template<typename T> extern auto v;   // expected-error {{declaration of variable 'v' with type 'auto' requires an initializer}}
@@ -117,7 +117,7 @@ namespace odr_tmpl {
     template<typename T> auto v2 = T();  // expected-note {{previous definition is here}}
     template<typename T> T v2;   // expected-error {{redefinition of 'v2'}}
     template<typename T> auto v3 = T();   // expected-note {{previous definition is here}}
-    template<typename T> extern T v3;     // expected-error {{redefinition of 'v3' with a different type: 'T' vs 'auto'}}
+    template<typename T> extern T v3;     // expected-error {{redeclaration of 'v3' with a different type: 'T' vs 'auto'}}
     template<typename T> auto v4 = T();
     template<typename T> extern auto v4;   // expected-error {{declaration of variable 'v4' with type 'auto' requires an initializer}}
   }

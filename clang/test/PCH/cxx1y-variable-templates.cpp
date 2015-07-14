@@ -89,8 +89,8 @@ namespace join {
 
   namespace diff_types {
 #ifdef ERROR
-    template<typename T> extern T err0; // expected-error {{redefinition of 'err0' with a different type: 'T' vs 'float'}}  // expected-note@42 {{previous definition is here}}
-    template<typename T> extern float err1; // expected-error {{redefinition of 'err1' with a different type: 'float' vs 'T'}} // expected-note@43 {{previous definition is here}}
+    template<typename T> extern T err0; // expected-error {{redeclaration of 'err0' with a different type: 'T' vs 'float'}}  // expected-note@42 {{previous declaration is here}}
+    template<typename T> extern float err1; // expected-error {{redeclaration of 'err1' with a different type: 'float' vs 'T'}} // expected-note@43 {{previous declaration is here}}
 #endif
     template<typename T> extern T def;
   }

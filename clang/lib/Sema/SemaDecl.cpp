@@ -3270,9 +3270,16 @@ void Sema::MergeVarDeclTypes(VarDecl *New, VarDecl *Old,
     //
     // Neither C nor C++ requires a diagnostic for this, but we should still try
     // to diagnose it.
-    Diag(New->getLocation(), diag::err_redefinition_different_type)
-      << New->getDeclName() << New->getType() << Old->getType();
-    Diag(Old->getLocation(), diag::note_previous_definition);
+    Diag(New->getLocation(), New->isThisDeclarationADefinition()
+                                 ? diag::err_redefinition_different_type
+                                 : diag::err_redeclaration_different_type)
+        << New->getDeclName() << New->getType() << Old->getType();
+
+    diag::kind PrevDiag;
+    SourceLocation OldLocation;
+    std::tie(PrevDiag, OldLocation) =
+        getNoteDiagForInvalidRedeclaration(Old, New);
+    Diag(OldLocation, PrevDiag);
     return New->setInvalidDecl();
   }
 

@@ -214,7 +214,7 @@ namespace in_class_template {
     template<typename T>
     class D0a {
       template<typename U> static U Data;
-      template<typename U> static CONST U Data<U*> = U(10);  // expected-note {{previous definition is here}}
+      template<typename U> static CONST U Data<U*> = U(10);  // expected-note {{previous declaration is here}}
     };
     template<>
     template<typename U> U D0a<float>::Data<U*> = U(100);  // expected-error {{redefinition of 'Data'}}
@@ -228,7 +228,7 @@ namespace in_class_template {
     template<typename T>
     class D1 {
       template<typename U> static U Data;
-      template<typename U> static CONST U Data<U*> = U(10);  // expected-note {{previous definition is here}}
+      template<typename U> static CONST U Data<U*> = U(10);  // expected-note {{previous declaration is here}}
     };
     template<>
     template<typename U> U D1<float>::Data = U(10);

@@ -21,7 +21,7 @@ float test2_x; // expected-error {{declaration of 'test2_x' in global scope conf
 namespace test3 {
   extern "C" {
     void test3_f() {
-      extern int test3_b; // expected-note {{previous definition is here}}
+      extern int test3_b; // expected-note {{previous declaration is here}}
     }
   }
   extern "C" {

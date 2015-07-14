@@ -45,7 +45,7 @@ extern int i[1LL];
 int i[(short)1];
 
 enum e { e_1 };
-extern int j[sizeof(enum e)];  // expected-note {{previous definition}}
+extern int j[sizeof(enum e)];  // expected-note {{previous declaration}}
 int j[42];   // expected-error {{redefinition of 'j' with a different type: 'int [42]' vs 'int [4]'}}
 
 // rdar://6880104

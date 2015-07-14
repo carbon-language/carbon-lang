@@ -16,8 +16,8 @@ static int f2(float); // okay: considered distinct
 extern int f3(float); // okay: considered distinct
 
 extern float v0;
-// expected-error@-1{{redefinition of 'v0' with a different type: 'float' vs 'int'}}
-// expected-note@Inputs/linkage-merge-sub.h:6{{previous definition is here}}
+// expected-error@-1{{redeclaration of 'v0' with a different type: 'float' vs 'int'}}
+// expected-note@Inputs/linkage-merge-sub.h:6{{previous declaration is here}}
 
 static float v1;
 static float v2;
