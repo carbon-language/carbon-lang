@@ -1357,6 +1357,25 @@ static bool CanSkipVTablePointerInitialization(ASTContext &Context,
   return true;
 }
 
+// Generates function call for handling object poisoning, passing in
+// references to 'this' and its size as arguments.
+static void EmitDtorSanitizerCallback(CodeGenFunction &CGF,
+                                      const CXXDestructorDecl *Dtor) {
+  const ASTRecordLayout &Layout =
+      CGF.getContext().getASTRecordLayout(Dtor->getParent());
+
+  llvm::Value *Args[] = {
+      CGF.Builder.CreateBitCast(CGF.LoadCXXThis(), CGF.VoidPtrTy),
+      llvm::ConstantInt::get(CGF.SizeTy, Layout.getSize().getQuantity())};
+  llvm::Type *ArgTypes[] = {CGF.VoidPtrTy, CGF.SizeTy};
+
+  llvm::FunctionType *FnType =
+      llvm::FunctionType::get(CGF.VoidTy, ArgTypes, false);
+  llvm::Value *Fn =
+      CGF.CGM.CreateRuntimeFunction(FnType, "__sanitizer_dtor_callback");
+  CGF.EmitNounwindRuntimeCall(Fn, Args);
+}
+
 /// EmitDestructorBody - Emits the body of the current destructor.
 void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CurGD.getDecl());
@@ -1444,6 +1463,10 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   // Exit the try if applicable.
   if (isTryBody)
     ExitCXXTryStmt(*cast<CXXTryStmt>(Body), true);
+
+  // Insert memory-poisoning instrumentation.
+  if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor)
+    EmitDtorSanitizerCallback(*this, Dtor);
 }
 
 void CodeGenFunction::emitImplicitAssignmentOperatorBody(FunctionArgList &Args) {
