@@ -183,6 +183,7 @@ public:
   };
 
   Kind kind() const { return (Kind)Format; }
+  bool isThin() const { return IsThin; }
 
   child_iterator child_begin(bool SkipInternal = true) const;
   child_iterator child_end() const;

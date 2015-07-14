@@ -391,6 +391,11 @@ static bool shouldCreateArchive(ArchiveOperation Op) {
 
 static void performReadOperation(ArchiveOperation Operation,
                                  object::Archive *OldArchive) {
+  if (Operation == Extract && OldArchive->isThin()) {
+    errs() << "extracting from a thin archive is not supported\n";
+    std::exit(1);
+  }
+
   bool Filter = !Members.empty();
   for (const object::Archive::Child &C : OldArchive->children()) {
     ErrorOr<StringRef> NameOrErr = C.getName();
