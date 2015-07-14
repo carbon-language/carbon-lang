@@ -6,6 +6,9 @@
 // RUN: %clang_cc1 -fopenmp -emit-llvm -include %s -include %s %s -o - | FileCheck %s -check-prefix=CHECK-TLS
 // with PCH
 // RUN: %clang_cc1 -fopenmp -emit-llvm -chain-include %s -chain-include %s %s -o - | FileCheck %s -check-prefix=CHECK-TLS
+
+// REQUIRES: tls
+
 #if !defined(PASS1)
 #define PASS1
 
