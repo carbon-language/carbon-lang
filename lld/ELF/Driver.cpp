@@ -205,17 +205,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  // Resolve auxiliary symbols until converge.
-  // (Trying to resolve a symbol may trigger a Lazy symbol to load a new file.
-  // A new file may contain a directive section to add new command line options.
-  // That's why we have to repeat until converge.)
-  /*for (;;) {
-    size_t Ver = Symtab.getVersion();
-
-    if (Ver == Symtab.getVersion())
-      break;
-  }*/
-
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
