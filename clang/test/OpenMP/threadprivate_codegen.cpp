@@ -7,6 +7,7 @@
 // RUN: %clang_cc1 -fopenmp -DBODY -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -g -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck --check-prefix=CHECK-TLS %s
 
 // expected-no-diagnostics
+// REQUIRES: x86-registered-target
 #ifndef HEADER
 #define HEADER
 // CHECK-DAG: [[IDENT:%.+]] = type { i32, i32, i32, i32, i8* }
@@ -30,7 +31,6 @@
 // CHECK-TLS-DAG: [[S5:%.+]] = type { [[INT]], [[INT]], [[INT]] }
 // CHECK-TLS-DAG: [[SMAIN:%.+]] = type { [[INT]], double, double }
 
-// REQUIRES: x86-registered-target
 struct S1 {
   int a;
   S1()
