@@ -43,7 +43,12 @@ int main()
     }
     {
         typedef std::vector<bool, some_alloc<bool>> C;
+    //  In C++17, move constructors for allocators are not allowed to throw
+#if TEST_STD_VER > 14
+        static_assert( std::is_nothrow_move_constructible<C>::value, "");
+#else
         static_assert(!std::is_nothrow_move_constructible<C>::value, "");
+#endif
     }
 #endif
 }
