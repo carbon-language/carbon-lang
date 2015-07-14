@@ -17,8 +17,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
-
-#include <stdint.h>
+#include "llvm/Support/MathExtras.h"
 
 namespace clang {
 
@@ -47,22 +46,28 @@ enum SanitizerOrdinal : uint64_t {
 }
 
 struct SanitizerSet {
-  SanitizerSet();
+  SanitizerSet() : Mask(0) {}
 
   /// \brief Check if a certain (single) sanitizer is enabled.
-  bool has(SanitizerMask K) const;
+  bool has(SanitizerMask K) const {
+    assert(llvm::isPowerOf2_64(K));
+    return Mask & K;
+  }
 
   /// \brief Check if one or more sanitizers are enabled.
-  bool hasOneOf(SanitizerMask K) const;
+  bool hasOneOf(SanitizerMask K) const { return Mask & K; }
 
   /// \brief Enable or disable a certain (single) sanitizer.
-  void set(SanitizerMask K, bool Value);
+  void set(SanitizerMask K, bool Value) {
+    assert(llvm::isPowerOf2_64(K));
+    Mask = Value ? (Mask | K) : (Mask & ~K);
+  }
 
   /// \brief Disable all sanitizers.
-  void clear();
+  void clear() { Mask = 0; }
 
   /// \brief Returns true if at least one sanitizer is enabled.
-  bool empty() const;
+  bool empty() const { return Mask == 0; }
 
   /// \brief Bitmask of enabled sanitizers.
   SanitizerMask Mask;

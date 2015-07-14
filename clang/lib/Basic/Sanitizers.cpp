@@ -14,33 +14,8 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/MathExtras.h"
 
 using namespace clang;
-
-SanitizerSet::SanitizerSet() : Mask(0) {}
-
-bool SanitizerSet::has(SanitizerMask K) const {
-  assert(llvm::countPopulation(K) == 1);
-  return Mask & K;
-}
-
-bool SanitizerSet::hasOneOf(SanitizerMask K) const {
-  return Mask & K;
-}
-
-void SanitizerSet::set(SanitizerMask K, bool Value) {
-  assert(llvm::countPopulation(K) == 1);
-  Mask = Value ? (Mask | K) : (Mask & ~K);
-}
-
-void SanitizerSet::clear() {
-  Mask = 0;
-}
-
-bool SanitizerSet::empty() const {
-  return Mask == 0;
-}
 
 SanitizerMask clang::parseSanitizerValue(StringRef Value, bool AllowGroups) {
   SanitizerMask ParsedKind = llvm::StringSwitch<SanitizerMask>(Value)
