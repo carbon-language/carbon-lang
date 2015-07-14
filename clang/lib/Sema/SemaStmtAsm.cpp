@@ -254,17 +254,19 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                          << Info.getConstraintStr()
                          << InputExpr->getSourceRange());
     } else if (Info.requiresImmediateConstant() && !Info.allowsRegister()) {
-      llvm::APSInt Result;
-      if (!InputExpr->EvaluateAsInt(Result, Context))
-        return StmtError(
-            Diag(InputExpr->getLocStart(), diag::err_asm_immediate_expected)
-            << Info.getConstraintStr() << InputExpr->getSourceRange());
-      if (Result.slt(Info.getImmConstantMin()) ||
-          Result.sgt(Info.getImmConstantMax()))
-        return StmtError(Diag(InputExpr->getLocStart(),
-                              diag::err_invalid_asm_value_for_constraint)
-                         << Result.toString(10) << Info.getConstraintStr()
-                         << InputExpr->getSourceRange());
+      if (!InputExpr->isValueDependent()) {
+        llvm::APSInt Result;
+        if (!InputExpr->EvaluateAsInt(Result, Context))
+           return StmtError(
+               Diag(InputExpr->getLocStart(), diag::err_asm_immediate_expected)
+                << Info.getConstraintStr() << InputExpr->getSourceRange());
+         if (Result.slt(Info.getImmConstantMin()) ||
+             Result.sgt(Info.getImmConstantMax()))
+           return StmtError(Diag(InputExpr->getLocStart(),
+                                 diag::err_invalid_asm_value_for_constraint)
+                            << Result.toString(10) << Info.getConstraintStr()
+                            << InputExpr->getSourceRange());
+      }
 
     } else {
       ExprResult Result = DefaultFunctionArrayLvalueConversion(Exprs[i]);
