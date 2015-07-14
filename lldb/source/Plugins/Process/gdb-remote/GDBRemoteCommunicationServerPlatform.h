@@ -79,6 +79,9 @@ protected:
     PacketResult
     Handle_qC (StringExtractorGDBRemote &packet);
 
+    PacketResult
+    Handle_jSignalsInfo(StringExtractorGDBRemote &packet);
+
 private:
     bool
     DebugserverProcessReaped (lldb::pid_t pid);

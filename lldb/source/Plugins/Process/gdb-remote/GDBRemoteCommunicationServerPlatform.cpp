@@ -19,6 +19,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/Host.h"
@@ -26,6 +27,7 @@
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/UnixSignals.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
@@ -54,6 +56,8 @@ GDBRemoteCommunicationServerPlatform::GDBRemoteCommunicationServerPlatform() :
                                   &GDBRemoteCommunicationServerPlatform::Handle_qProcessInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_QSetWorkingDir,
                                   &GDBRemoteCommunicationServerPlatform::Handle_QSetWorkingDir);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_jSignalsInfo,
+                                  &GDBRemoteCommunicationServerPlatform::Handle_jSignalsInfo);
 
     RegisterPacketHandler(StringExtractorGDBRemote::eServerPacketType_interrupt,
                           [this](StringExtractorGDBRemote packet,
@@ -249,6 +253,35 @@ GDBRemoteCommunicationServerPlatform::Handle_qC (StringExtractorGDBRemote &packe
     }
 
     return SendPacketNoLock (response.GetData(), response.GetSize());
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerPlatform::Handle_jSignalsInfo(StringExtractorGDBRemote &packet)
+{
+    StructuredData::Array signal_array;
+
+    const auto &signals = Host::GetUnixSignals();
+    for (auto signo = signals->GetFirstSignalNumber();
+         signo != LLDB_INVALID_SIGNAL_NUMBER;
+         signo = signals->GetNextSignalNumber(signo))
+    {
+        auto dictionary = std::make_shared<StructuredData::Dictionary>();
+
+        dictionary->AddIntegerItem("signo", signo);
+        dictionary->AddStringItem("name", signals->GetSignalAsCString(signo));
+
+        bool suppress, stop, notify;
+        signals->GetSignalInfo(signo, suppress, stop, notify);
+        dictionary->AddBooleanItem("suppress", suppress);
+        dictionary->AddBooleanItem("stop", stop);
+        dictionary->AddBooleanItem("notify", notify);
+
+        signal_array.Push(dictionary);
+    }
+
+    StreamString response;
+    signal_array.Dump(response);
+    return SendPacketNoLock(response.GetData(), response.GetSize());
 }
 
 bool

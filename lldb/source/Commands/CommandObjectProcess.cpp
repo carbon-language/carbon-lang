@@ -1337,7 +1337,7 @@ protected:
             if (::isxdigit (signal_name[0]))
                 signo = StringConvert::ToSInt32(signal_name, LLDB_INVALID_SIGNAL_NUMBER, 0);
             else
-                signo = process->GetUnixSignals().GetSignalNumberFromName (signal_name);
+                signo = process->GetUnixSignals()->GetSignalNumberFromName(signal_name);
             
             if (signo == LLDB_INVALID_SIGNAL_NUMBER)
             {
@@ -1734,14 +1734,14 @@ public:
     }  
 
     void
-    PrintSignal (Stream &str, int32_t signo, const char *sig_name, UnixSignals &signals)
+    PrintSignal(Stream &str, int32_t signo, const char *sig_name, const UnixSignalsSP &signals_sp)
     {
         bool stop;
         bool suppress;
         bool notify;
 
         str.Printf ("%-11s  ", sig_name);
-        if (signals.GetSignalInfo (signo, suppress, stop, notify))
+        if (signals_sp->GetSignalInfo(signo, suppress, stop, notify))
         {
             bool pass = !suppress;
             str.Printf ("%s  %s  %s", 
@@ -1753,7 +1753,7 @@ public:
     }
 
     void
-    PrintSignalInformation (Stream &str, Args &signal_args, int num_valid_signals, UnixSignals &signals)
+    PrintSignalInformation(Stream &str, Args &signal_args, int num_valid_signals, const UnixSignalsSP &signals_sp)
     {
         PrintSignalHeader (str);
 
@@ -1762,18 +1762,18 @@ public:
             size_t num_args = signal_args.GetArgumentCount();
             for (size_t i = 0; i < num_args; ++i)
             {
-                int32_t signo = signals.GetSignalNumberFromName (signal_args.GetArgumentAtIndex (i));
+                int32_t signo = signals_sp->GetSignalNumberFromName(signal_args.GetArgumentAtIndex(i));
                 if (signo != LLDB_INVALID_SIGNAL_NUMBER)
-                    PrintSignal (str, signo, signal_args.GetArgumentAtIndex (i), signals);
+                    PrintSignal (str, signo, signal_args.GetArgumentAtIndex (i), signals_sp);
             }
         }
         else // Print info for ALL signals
         {
-            int32_t signo = signals.GetFirstSignalNumber(); 
+            int32_t signo = signals_sp->GetFirstSignalNumber();
             while (signo != LLDB_INVALID_SIGNAL_NUMBER)
             {
-                PrintSignal (str, signo, signals.GetSignalAsCString (signo), signals);
-                signo = signals.GetNextSignalNumber (signo);
+                PrintSignal(str, signo, signals_sp->GetSignalAsCString(signo), signals_sp);
+                signo = signals_sp->GetNextSignalNumber(signo);
             }
         }
     }
@@ -1830,27 +1830,27 @@ protected:
         }
 
         size_t num_args = signal_args.GetArgumentCount();
-        UnixSignals &signals = process_sp->GetUnixSignals();
+        UnixSignalsSP signals_sp = process_sp->GetUnixSignals();
         int num_signals_set = 0;
 
         if (num_args > 0)
         {
             for (size_t i = 0; i < num_args; ++i)
             {
-                int32_t signo = signals.GetSignalNumberFromName (signal_args.GetArgumentAtIndex (i));
+                int32_t signo = signals_sp->GetSignalNumberFromName(signal_args.GetArgumentAtIndex(i));
                 if (signo != LLDB_INVALID_SIGNAL_NUMBER)
                 {
                     // Casting the actions as bools here should be okay, because VerifyCommandOptionValue guarantees
                     // the value is either 0 or 1.
                     if (stop_action != -1)
-                        signals.SetShouldStop (signo, (bool) stop_action);
+                        signals_sp->SetShouldStop(signo, stop_action);
                     if (pass_action != -1)
                     {
-                        bool suppress = ! ((bool) pass_action);
-                        signals.SetShouldSuppress (signo, suppress);
+                        bool suppress = !pass_action;
+                        signals_sp->SetShouldSuppress(signo, suppress);
                     }
                     if (notify_action != -1)
-                        signals.SetShouldNotify (signo, (bool) notify_action);
+                        signals_sp->SetShouldNotify(signo, notify_action);
                     ++num_signals_set;
                 }
                 else
@@ -1866,25 +1866,25 @@ protected:
             {
                 if (m_interpreter.Confirm ("Do you really want to update all the signals?", false))
                 {
-                    int32_t signo = signals.GetFirstSignalNumber();
+                    int32_t signo = signals_sp->GetFirstSignalNumber();
                     while (signo != LLDB_INVALID_SIGNAL_NUMBER)
                     {
                         if (notify_action != -1)
-                            signals.SetShouldNotify (signo, (bool) notify_action);
+                            signals_sp->SetShouldNotify(signo, notify_action);
                         if (stop_action != -1)
-                            signals.SetShouldStop (signo, (bool) stop_action);
+                            signals_sp->SetShouldStop(signo, stop_action);
                         if (pass_action != -1)
                         {
-                            bool suppress = ! ((bool) pass_action);
-                            signals.SetShouldSuppress (signo, suppress);
+                            bool suppress = !pass_action;
+                            signals_sp->SetShouldSuppress(signo, suppress);
                         }
-                        signo = signals.GetNextSignalNumber (signo);
+                        signo = signals_sp->GetNextSignalNumber(signo);
                     }
                 }
             }
         }
 
-        PrintSignalInformation (result.GetOutputStream(), signal_args, num_signals_set, signals);
+        PrintSignalInformation (result.GetOutputStream(), signal_args, num_signals_set, signals_sp);
 
         if (num_signals_set > 0)
             result.SetStatus (eReturnStatusSuccessFinishNoResult);

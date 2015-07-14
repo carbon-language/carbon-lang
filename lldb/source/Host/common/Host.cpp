@@ -1070,13 +1070,9 @@ Host::SetCrashDescription (const char *description)
 
 #endif
 
-#if !defined (__linux__) && !defined (__FreeBSD__) && !defined(__FreeBSD_kernel__) && !defined (__NetBSD__)
-
-const lldb_private::UnixSignalsSP&
-Host::GetUnixSignals ()
+const UnixSignalsSP &
+Host::GetUnixSignals()
 {
-    static UnixSignalsSP s_unix_signals_sp (new UnixSignals ());
+    static const auto s_unix_signals_sp = UnixSignals::Create(HostInfo::GetArchitecture());
     return s_unix_signals_sp;
 }
-
-#endif

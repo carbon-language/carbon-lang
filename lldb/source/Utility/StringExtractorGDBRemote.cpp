@@ -82,7 +82,7 @@ StringExtractorGDBRemote::GetServerPacketType () const
 
     case 'A':
         return eServerPacketType_A;
-            
+
     case 'Q':
 
         switch (packet_cstr[1])
@@ -122,7 +122,7 @@ StringExtractorGDBRemote::GetServerPacketType () const
             break;
         }
         break;
-            
+
     case 'q':
         switch (packet_cstr[1])
         {
@@ -219,6 +219,10 @@ StringExtractorGDBRemote::GetServerPacketType () const
             break;
         }
         break;
+
+    case 'j':
+        if (PACKET_MATCHES("jSignalInfo")) return eServerPacketType_jSignalsInfo;
+
     case 'v':
             if (PACKET_STARTS_WITH("vFile:"))
             {

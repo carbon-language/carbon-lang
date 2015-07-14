@@ -392,7 +392,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 
                     case eStopReasonSignal:
                         {
-                            stop_desc = exe_ctx.GetProcessPtr()->GetUnixSignals ().GetSignalAsCString (stop_info_sp->GetValue());
+                            stop_desc = exe_ctx.GetProcessPtr()->GetUnixSignals()->GetSignalAsCString(stop_info_sp->GetValue());
                             if (stop_desc == NULL || stop_desc[0] == '\0')
                             {
                                 static char signal_desc[] = "signal";

@@ -950,7 +950,7 @@ public:
     /// Construct with a shared pointer to a target, the Process listener,
     /// and the appropriate UnixSignalsSP for the process.
     //------------------------------------------------------------------
-    Process(Target &target, Listener &listener, const UnixSignalsSP &unix_signals_sp);
+    Process(Target &target, Listener &listener, const lldb::UnixSignalsSP &unix_signals_sp);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -1402,10 +1402,10 @@ public:
     Signal (int signal);
 
     void
-    SetUnixSignals (const UnixSignalsSP &signals_sp);
+    SetUnixSignals(const lldb::UnixSignalsSP &signals_sp);
 
-    UnixSignals &
-    GetUnixSignals ();
+    const lldb::UnixSignalsSP &
+    GetUnixSignals();
 
     //==================================================================
     // Plug-in Process Control Overrides
@@ -3237,7 +3237,7 @@ protected:
     lldb::DynamicCheckerFunctionsUP m_dynamic_checkers_ap; ///< The functions used by the expression parser to validate data that expressions use.
     lldb::OperatingSystemUP     m_os_ap;
     lldb::SystemRuntimeUP       m_system_runtime_ap;
-    UnixSignalsSP               m_unix_signals_sp;         /// This is the current signal set for this process.
+    lldb::UnixSignalsSP         m_unix_signals_sp;         /// This is the current signal set for this process.
     lldb::ABISP                 m_abi_sp;
     lldb::IOHandlerSP           m_process_input_reader;
     Communication               m_stdio_communication;

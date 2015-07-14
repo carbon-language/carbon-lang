@@ -11,6 +11,7 @@
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBLaunchInfo.h"
+#include "lldb/API/SBUnixSignals.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/File.h"
@@ -638,3 +639,11 @@ SBPlatform::SetFilePermissions (const char *path, uint32_t file_permissions)
     
 }
 
+SBUnixSignals
+SBPlatform::GetUnixSignals() const
+{
+    if (auto platform_sp = GetSP())
+        return SBUnixSignals{platform_sp};
+
+    return {};
+}

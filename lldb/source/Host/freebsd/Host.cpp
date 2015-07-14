@@ -40,8 +40,6 @@
 #include "lldb/Utility/CleanUp.h"
 #include "lldb/Utility/NameMatches.h"
 
-#include "Plugins/Process/Utility/FreeBSDSignals.h"
-
 #include "llvm/Support/Host.h"
 
 extern "C" {
@@ -275,13 +273,6 @@ Host::GetAuxvData(lldb_private::Process *process)
    }
 
    return buf_sp;
-}
-
-const UnixSignalsSP&
-Host::GetUnixSignals ()
-{
-    static const lldb_private::UnixSignalsSP s_unix_signals_sp (new FreeBSDSignals ());
-    return s_unix_signals_sp;
 }
 
 Error

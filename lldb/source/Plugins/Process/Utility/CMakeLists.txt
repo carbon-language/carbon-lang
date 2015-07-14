@@ -5,6 +5,7 @@ set(LLVM_NO_RTTI 1)
 add_lldb_library(lldbPluginProcessUtility
   DynamicRegisterInfo.cpp
   FreeBSDSignals.cpp
+  GDBRemoteSignals.cpp
   HistoryThread.cpp
   HistoryUnwind.cpp
   InferiorCallPOSIX.cpp

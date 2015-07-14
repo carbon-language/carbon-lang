@@ -118,6 +118,8 @@ public:
         eServerPacketType_qWatchpointSupportInfoSupported,
         eServerPacketType_qXfer_auxv_read,
 
+        eServerPacketType_jSignalsInfo,
+
         eServerPacketType_vAttach,
         eServerPacketType_vAttachWait,
         eServerPacketType_vAttachOrWait,

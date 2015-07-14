@@ -13,16 +13,19 @@
 // Project includes
 #include "lldb/Target/UnixSignals.h"
 
+namespace lldb_private {
+
 /// FreeBSD specific set of Unix signals.
-class FreeBSDSignals
-    : public lldb_private::UnixSignals
+class FreeBSDSignals : public UnixSignals
 {
 public:
     FreeBSDSignals();
 
 private:
     void
-    Reset();
+    Reset() override;
 };
+
+} // namespace lldb_private
 
 #endif // liblldb_FreeBSDSignals_H_

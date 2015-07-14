@@ -13,16 +13,21 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Host/StringConvert.h"
+
+#include "Plugins/Process/Utility/FreeBSDSignals.h"
+#include "Plugins/Process/Utility/LinuxSignals.h"
+#include "Plugins/Process/Utility/MipsLinuxSignals.h"
 
 using namespace lldb_private;
 
-UnixSignals::Signal::Signal 
+UnixSignals::Signal::Signal
 (
-    const char *name, 
-    const char *short_name, 
-    bool default_suppress, 
-    bool default_stop, 
+    const char *name,
+    const char *short_name,
+    bool default_suppress,
+    bool default_stop,
     bool default_notify,
     const char *description
 ) :
@@ -37,12 +42,45 @@ UnixSignals::Signal::Signal
         m_description.assign (description);
 }
 
+lldb::UnixSignalsSP
+UnixSignals::Create(const ArchSpec &arch)
+{
+    const auto &triple = arch.GetTriple();
+    switch (triple.getOS())
+    {
+        case llvm::Triple::Linux:
+        {
+            switch (triple.getArch())
+            {
+                case llvm::Triple::mips:
+                case llvm::Triple::mipsel:
+                case llvm::Triple::mips64:
+                case llvm::Triple::mips64el:
+                    return std::make_shared<MipsLinuxSignals>();
+                default:
+                    return std::make_shared<LinuxSignals>();
+            }
+        }
+        case llvm::Triple::FreeBSD:
+        case llvm::Triple::OpenBSD:
+        case llvm::Triple::NetBSD:
+            return std::make_shared<FreeBSDSignals>();
+        default:
+            return std::make_shared<UnixSignals>();
+    }
+}
+
 //----------------------------------------------------------------------
 // UnixSignals constructor
 //----------------------------------------------------------------------
 UnixSignals::UnixSignals ()
 {
     Reset ();
+}
+
+UnixSignals::UnixSignals(const UnixSignals &rhs)
+    : m_signals(rhs.m_signals)
+{
 }
 
 //----------------------------------------------------------------------
@@ -290,4 +328,20 @@ UnixSignals::SetShouldNotify (const char *signal_name, bool value)
     if (signo != LLDB_INVALID_SIGNAL_NUMBER)
         return SetShouldNotify (signo, value);
     return false;
+}
+
+int32_t
+UnixSignals::GetNumSignals() const
+{
+    return m_signals.size();
+}
+
+int32_t
+UnixSignals::GetSignalAtIndex(int32_t index) const
+{
+    if (index < 0 || m_signals.size() <= static_cast<size_t>(index))
+        return LLDB_INVALID_SIGNAL_NUMBER;
+    auto it = m_signals.begin();
+    std::advance(it, index);
+    return it->first;
 }

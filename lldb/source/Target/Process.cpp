@@ -693,7 +693,7 @@ Process::GetStaticBroadcasterClass ()
 // Process constructor
 //----------------------------------------------------------------------
 Process::Process(Target &target, Listener &listener) :
-    Process(target, listener, Host::GetUnixSignals ())
+    Process(target, listener, UnixSignals::Create(HostInfo::GetArchitecture()))
 {
     // This constructor just delegates to the full Process constructor,
     // defaulting to using the Host's UnixSignals.
@@ -763,14 +763,14 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
         log->Printf ("%p Process::Process()", static_cast<void*>(this));
 
     if (!m_unix_signals_sp)
-        m_unix_signals_sp.reset (new UnixSignals ());
+        m_unix_signals_sp = std::make_shared<UnixSignals>();
 
     SetEventName (eBroadcastBitStateChanged, "state-changed");
     SetEventName (eBroadcastBitInterrupt, "interrupt");
     SetEventName (eBroadcastBitSTDOUT, "stdout-available");
     SetEventName (eBroadcastBitSTDERR, "stderr-available");
     SetEventName (eBroadcastBitProfileData, "profile-data-available");
-    
+
     m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlStop  , "control-stop"  );
     m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlPause , "control-pause" );
     m_private_state_control_broadcaster.SetEventName (eBroadcastInternalStateControlResume, "control-resume");
@@ -1164,7 +1164,7 @@ Process::HandleProcessStateChangedEvent (const EventSP &event_sp,
                                     // signal.  We have to have had another reason for stopping here, and
                                     // the user doesn't want to see this thread.
                                     uint64_t signo = thread->GetStopInfo()->GetValue();
-                                    if (process_sp->GetUnixSignals().GetShouldStop(signo))
+                                    if (process_sp->GetUnixSignals()->GetShouldStop(signo))
                                     {
                                         if (!other_thread)
                                             other_thread = thread;
@@ -1523,7 +1523,7 @@ Process::SetProcessExitStatus (void *callback_baton,
             {
                 const char *signal_cstr = NULL;
                 if (signo)
-                    signal_cstr = process_sp->GetUnixSignals().GetSignalAsCString (signo);
+                    signal_cstr = process_sp->GetUnixSignals()->GetSignalAsCString(signo);
 
                 process_sp->SetExitStatus (exit_status, signal_cstr);
             }
@@ -4101,11 +4101,11 @@ Process::SetUnixSignals (const UnixSignalsSP &signals_sp)
     m_unix_signals_sp = signals_sp;
 }
 
-UnixSignals &
+const lldb::UnixSignalsSP &
 Process::GetUnixSignals ()
 {
     assert (m_unix_signals_sp && "null m_unix_signals_sp");
-    return *m_unix_signals_sp;
+    return m_unix_signals_sp;
 }
 
 lldb::ByteOrder

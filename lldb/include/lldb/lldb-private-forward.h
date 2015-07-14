@@ -34,7 +34,6 @@ namespace lldb_private
     typedef std::weak_ptr<lldb_private::NativeProcessProtocol> NativeProcessProtocolWP;
     typedef std::shared_ptr<lldb_private::NativeRegisterContext> NativeRegisterContextSP;
     typedef std::shared_ptr<lldb_private::NativeThreadProtocol> NativeThreadProtocolSP;
-    typedef std::shared_ptr<lldb_private::UnixSignals> UnixSignalsSP;
 }
 
 #endif // #if defined(__cplusplus)

@@ -18,6 +18,7 @@
 // Project includes
 #include "lldb/Target/Platform.h"
 #include "../../Process/gdb-remote/GDBRemoteCommunicationClient.h"
+#include "Plugins/Process/Utility/GDBRemoteSignals.h"
 
 namespace lldb_private {
 namespace platform_gdb_server {
@@ -213,11 +214,16 @@ public:
     void
     CalculateTrapHandlerSymbolNames () override;
 
+    const lldb::UnixSignalsSP &
+    GetRemoteUnixSignals() override;
+
 protected:
     process_gdb_remote::GDBRemoteCommunicationClient m_gdb_client;
     std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to
     std::string m_platform_scheme;
     std::string m_platform_hostname;
+
+    lldb::UnixSignalsSP m_remote_signals_sp;
 
     // Launch the lldb-gdbserver on the remote host and return the port it is listening on or 0 on
     // failure. Subclasses should override this method if they want to do extra actions before or

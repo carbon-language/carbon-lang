@@ -1,4 +1,4 @@
-//===-- MipsLinuxSignals.h ------------------------------------------*- C++ -*-===//
+//===-- GDBRemoteSignals.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_MipsLinuxSignals_H_
-#define liblldb_MipsLinuxSignals_H_
+#ifndef liblldb_GDBRemoteSignals_H_
+#define liblldb_GDBRemoteSignals_H_
 
 // C Includes
 // C++ Includes
@@ -18,11 +18,13 @@
 
 namespace lldb_private {
 
-/// Linux specific set of Unix signals.
-class MipsLinuxSignals : public UnixSignals
+/// Empty set of Unix signals to be filled by PlatformRemoteGDBServer
+class GDBRemoteSignals : public UnixSignals
 {
 public:
-    MipsLinuxSignals();
+    GDBRemoteSignals();
+
+    GDBRemoteSignals(const lldb::UnixSignalsSP &rhs);
 
 private:
     void
@@ -31,4 +33,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // liblldb_MipsLinuxSignals_H_
+#endif // liblldb_GDBRemoteSignals_H_

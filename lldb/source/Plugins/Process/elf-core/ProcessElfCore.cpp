@@ -29,8 +29,6 @@
 
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
-#include "Plugins/Process/Utility/FreeBSDSignals.h"
-#include "Plugins/Process/Utility/LinuxSignals.h"
 
 // Project includes
 #include "ProcessElfCore.h"
@@ -237,23 +235,7 @@ ProcessElfCore::DoLoadCore ()
     if (arch.IsValid())
         m_target.SetArchitecture(arch);
 
-    switch (m_os)
-    {
-        case llvm::Triple::FreeBSD:
-        {
-            static UnixSignalsSP s_freebsd_signals_sp(new FreeBSDSignals ());
-            SetUnixSignals(s_freebsd_signals_sp);
-            break;
-        }
-        case llvm::Triple::Linux:
-        {
-            static UnixSignalsSP s_linux_signals_sp(new process_linux::LinuxSignals ());
-            SetUnixSignals(s_linux_signals_sp);
-            break;
-        }
-        default:
-            break;
-    }
+    SetUnixSignals(UnixSignals::Create(GetArchitecture()));
 
     return error;
 }
@@ -370,7 +352,7 @@ ProcessElfCore::Clear()
     m_thread_list.Clear();
     m_os = llvm::Triple::UnknownOS;
 
-    static UnixSignalsSP s_default_unix_signals_sp(new UnixSignals());
+    static const auto s_default_unix_signals_sp = std::make_shared<UnixSignals>();
     SetUnixSignals(s_default_unix_signals_sp);
 }
 

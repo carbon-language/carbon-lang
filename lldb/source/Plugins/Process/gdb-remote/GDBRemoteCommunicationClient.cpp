@@ -1056,8 +1056,8 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     // may change if we are interrupted and we continue after an async packet...
     std::string continue_packet(payload, packet_length);
 
-    const auto sigstop_signo = process->GetUnixSignals().GetSignalNumberFromName("SIGSTOP");
-    const auto sigint_signo = process->GetUnixSignals().GetSignalNumberFromName("SIGINT");
+    const auto sigstop_signo = process->GetUnixSignals()->GetSignalNumberFromName("SIGSTOP");
+    const auto sigint_signo = process->GetUnixSignals()->GetSignalNumberFromName("SIGINT");
 
     bool got_async_packet = false;
     

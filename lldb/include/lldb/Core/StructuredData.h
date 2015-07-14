@@ -238,14 +238,15 @@ public:
         {
         }
 
-        void
+        bool
         ForEach (std::function <bool(Object* object)> const &foreach_callback) const
         {
             for (const auto &object_sp : m_items)
             {
                 if (foreach_callback(object_sp.get()) == false)
-                    break;
+                    return false;
             }
+            return true;
         }
 
 

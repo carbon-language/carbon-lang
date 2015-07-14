@@ -754,9 +754,6 @@ PlatformLinux::DebugProcess (ProcessLaunchInfo &launch_info,
             log->Printf ("PlatformLinux::%s successfully created process", __FUNCTION__);
     }
 
-    // Set the unix signals properly.
-    process_sp->SetUnixSignals (Host::GetUnixSignals ());
-
     // Adjust launch for a hijacker.
     ListenerSP listener_sp;
     if (!launch_info.GetHijackListener ())

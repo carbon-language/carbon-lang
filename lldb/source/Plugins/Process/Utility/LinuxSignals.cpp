@@ -12,7 +12,7 @@
 // Project includes
 #include "LinuxSignals.h"
 
-using namespace lldb_private::process_linux;
+using namespace lldb_private;
 
 LinuxSignals::LinuxSignals()
     : UnixSignals()

@@ -215,14 +215,14 @@ ThreadGDBRemote::WillResume (StateType resume_state)
             break;
 
         case eStateRunning:
-            if (gdb_process->GetUnixSignals().SignalIsValid (signo))
+            if (gdb_process->GetUnixSignals()->SignalIsValid(signo))
                 gdb_process->m_continue_C_tids.push_back(std::make_pair(tid, signo));
             else
                 gdb_process->m_continue_c_tids.push_back(tid);
             break;
 
         case eStateStepping:
-            if (gdb_process->GetUnixSignals().SignalIsValid (signo))
+            if (gdb_process->GetUnixSignals()->SignalIsValid(signo))
                 gdb_process->m_continue_S_tids.push_back(std::make_pair(tid, signo));
             else
                 gdb_process->m_continue_s_tids.push_back(tid);

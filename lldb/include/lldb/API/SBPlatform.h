@@ -189,6 +189,9 @@ namespace lldb {
         SBError
         SetFilePermissions (const char *path, uint32_t file_permissions);
 
+        SBUnixSignals
+        GetUnixSignals() const;
+
     protected:
         
         friend class SBDebugger;

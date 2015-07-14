@@ -65,17 +65,20 @@ public:
 
 protected:
     friend class SBProcess;
+    friend class SBPlatform;
 
-    SBUnixSignals (lldb::ProcessSP &process_sp);
+    SBUnixSignals(lldb::ProcessSP &process_sp);
 
-    lldb::ProcessSP
+    SBUnixSignals(lldb::PlatformSP &platform_sp);
+
+    lldb::UnixSignalsSP
     GetSP() const;
 
     void
-    SetSP (const lldb::ProcessSP &process_sp);
+    SetSP(const lldb::UnixSignalsSP &signals_sp);
 
 private:
-    lldb::ProcessWP m_opaque_wp;
+    lldb::UnixSignalsWP m_opaque_wp;
 };
 
 

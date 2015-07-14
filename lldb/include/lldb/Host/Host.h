@@ -244,8 +244,8 @@ public:
 #endif // !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
 #endif // defined (__APPLE__) || defined (__linux__) || defined (__FreeBSD__) || defined (__GLIBC__) || defined(__NetBSD__)
 
-    static const lldb_private::UnixSignalsSP&
-    GetUnixSignals ();
+    static const lldb::UnixSignalsSP &
+    GetUnixSignals();
 
     static Error
     LaunchProcess (ProcessLaunchInfo &launch_info);

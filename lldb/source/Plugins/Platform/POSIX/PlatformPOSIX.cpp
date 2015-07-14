@@ -535,6 +535,14 @@ PlatformPOSIX::CalculateMD5 (const FileSpec& file_spec,
     return false;
 }
 
+const lldb::UnixSignalsSP &
+PlatformPOSIX::GetRemoteUnixSignals() {
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->GetRemoteUnixSignals();
+    return Platform::GetRemoteUnixSignals();
+}
+
+
 FileSpec
 PlatformPOSIX::GetRemoteWorkingDirectory()
 {
@@ -785,9 +793,6 @@ PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
 
             if (process_sp)
             {
-                // Set UnixSignals appropriately.
-                process_sp->SetUnixSignals (Host::GetUnixSignals ());
-
                 auto listener_sp = attach_info.GetHijackListener();
                 if (listener_sp == nullptr)
                 {

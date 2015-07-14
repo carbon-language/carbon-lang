@@ -13,6 +13,8 @@
 // Project includes
 #include "FreeBSDSignals.h"
 
+using namespace lldb_private;
+
 FreeBSDSignals::FreeBSDSignals()
     : UnixSignals()
 {

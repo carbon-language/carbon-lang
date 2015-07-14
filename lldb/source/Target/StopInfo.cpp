@@ -891,7 +891,7 @@ public:
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
-            return thread_sp->GetProcess()->GetUnixSignals().GetShouldStop (m_value);
+            return thread_sp->GetProcess()->GetUnixSignals()->GetShouldStop(m_value);
         return false;
     }
 
@@ -900,7 +900,7 @@ public:
     {
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
-            return thread_sp->GetProcess()->GetUnixSignals().GetShouldStop (m_value);
+            return thread_sp->GetProcess()->GetUnixSignals()->GetShouldStop(m_value);
         return false;
     }
     
@@ -912,13 +912,13 @@ public:
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
         {
-            bool should_notify = thread_sp->GetProcess()->GetUnixSignals().GetShouldNotify (m_value);
+            bool should_notify = thread_sp->GetProcess()->GetUnixSignals()->GetShouldNotify(m_value);
             if (should_notify)
             {
                 StreamString strm;
                 strm.Printf ("thread %d received signal: %s",
                              thread_sp->GetIndexID(),
-                             thread_sp->GetProcess()->GetUnixSignals().GetSignalAsCString (m_value));
+                             thread_sp->GetProcess()->GetUnixSignals()->GetSignalAsCString(m_value));
                 Process::ProcessEventData::AddRestartedReason(event_ptr, strm.GetData());
             }
             return should_notify;
@@ -933,7 +933,7 @@ public:
         ThreadSP thread_sp (m_thread_wp.lock());
         if (thread_sp)
         {
-            if (thread_sp->GetProcess()->GetUnixSignals().GetShouldSuppress(m_value) == false)
+            if (thread_sp->GetProcess()->GetUnixSignals()->GetShouldSuppress(m_value) == false)
                 thread_sp->SetResumeSignal(m_value);
         }
     }
@@ -947,7 +947,7 @@ public:
             if (thread_sp)
             {
                 StreamString strm;
-                const char *signal_name = thread_sp->GetProcess()->GetUnixSignals().GetSignalAsCString (m_value);
+                const char *signal_name = thread_sp->GetProcess()->GetUnixSignals()->GetSignalAsCString(m_value);
                 if (signal_name)
                     strm.Printf("signal %s", signal_name);
                 else
