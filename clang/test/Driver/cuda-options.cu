@@ -102,8 +102,8 @@
 // CUDA-NH-SAME-NOT: "-x" "cuda"
 
 // Match linker
-// CUDA-L: "{{.*}}ld{{(.exe)?}}"
+// CUDA-L: "{{.*}}{{ld|link}}{{(.exe)?}}"
 // CUDA-L-SAME: "[[HOSTOBJ]]"
 
 // Match no linker
-// CUDA-NL-NOT: "{{.*}}ld{{(.exe)?}}"
+// CUDA-NL-NOT: "{{.*}}{{ld|link}}{{(.exe)?}}"
