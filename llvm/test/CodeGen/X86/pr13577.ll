@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-darwin | FileCheck %s
 
 ; CHECK-LABEL: LCPI0_0:
 ; CHECK-NEXT: .long 4286578688
