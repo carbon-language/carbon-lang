@@ -231,7 +231,11 @@ template <class ELFT> OutputSection *Writer<ELFT>::findSection(StringRef Name) {
   return nullptr;
 }
 
+namespace lld {
+namespace elfv2 {
 template class Writer<ELF32LE>;
 template class Writer<ELF32BE>;
 template class Writer<ELF64LE>;
 template class Writer<ELF64BE>;
+}
+}

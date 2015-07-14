@@ -296,7 +296,11 @@ SymbolTable<ELFT>::createLTOObject(LTOCodeGenerator *CG) {
   return Obj;
 }
 
+namespace lld {
+namespace elfv2 {
 template class SymbolTable<llvm::object::ELF32LE>;
 template class SymbolTable<llvm::object::ELF32BE>;
 template class SymbolTable<llvm::object::ELF64LE>;
 template class SymbolTable<llvm::object::ELF64BE>;
+}
+}

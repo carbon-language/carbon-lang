@@ -135,7 +135,11 @@ ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   return std::move(Obj);
 }
 
+namespace lld {
+namespace elfv2 {
 template class DefinedRegular<llvm::object::ELF32LE>;
 template class DefinedRegular<llvm::object::ELF32BE>;
 template class DefinedRegular<llvm::object::ELF64LE>;
 template class DefinedRegular<llvm::object::ELF64BE>;
+}
+}

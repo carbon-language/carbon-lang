@@ -114,6 +114,8 @@ template <class ELFT> uint32_t CommonChunk<ELFT>::getFlags() const {
   return PF_R | PF_W;
 }
 
+namespace lld {
+namespace elfv2 {
 template class SectionChunk<llvm::object::ELF32LE>;
 template class SectionChunk<llvm::object::ELF32BE>;
 template class SectionChunk<llvm::object::ELF64LE>;
@@ -123,3 +125,5 @@ template class CommonChunk<llvm::object::ELF32LE>;
 template class CommonChunk<llvm::object::ELF32BE>;
 template class CommonChunk<llvm::object::ELF64LE>;
 template class CommonChunk<llvm::object::ELF64BE>;
+}
+}

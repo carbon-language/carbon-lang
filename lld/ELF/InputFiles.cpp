@@ -206,7 +206,11 @@ std::error_code BitcodeFile::parse() {
   return std::error_code();
 }
 
+namespace lld {
+namespace elfv2 {
 template class elfv2::ObjectFile<llvm::object::ELF32LE>;
 template class elfv2::ObjectFile<llvm::object::ELF32BE>;
 template class elfv2::ObjectFile<llvm::object::ELF64LE>;
 template class elfv2::ObjectFile<llvm::object::ELF64BE>;
+}
+}
