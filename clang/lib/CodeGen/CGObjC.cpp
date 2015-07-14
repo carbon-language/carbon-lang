@@ -2009,7 +2009,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
 
   // Call the marker asm if we made one, which we do only at -O0.
   if (marker)
-    Builder.CreateCall(marker, {});
+    Builder.CreateCall(marker);
 
   return emitARCValueOperation(*this, value,
                      CGM.getARCEntrypoints().objc_retainAutoreleasedReturnValue,

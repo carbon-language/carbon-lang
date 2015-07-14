@@ -988,7 +988,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       llvm::Value *Stack = CreateTempAlloca(Int8PtrTy, "saved_stack");
 
       llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
-      llvm::Value *V = Builder.CreateCall(F, {});
+      llvm::Value *V = Builder.CreateCall(F);
 
       Builder.CreateStore(V, Stack);
 
