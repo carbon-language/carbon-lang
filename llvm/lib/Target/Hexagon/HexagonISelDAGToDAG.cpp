@@ -1345,8 +1345,8 @@ bool HexagonDAGToDAGISel::isConstExtProfitable(SDNode *N) const {
 void HexagonDAGToDAGISel::PreprocessISelDAG() {
   SelectionDAG &DAG = *CurDAG;
   std::vector<SDNode*> Nodes;
-  for (auto I = DAG.allnodes_begin(), E = DAG.allnodes_end(); I != E; ++I)
-    Nodes.push_back(I);
+  for (SDNode &Node : DAG.allnodes())
+    Nodes.push_back(&Node);
 
   // Simplify: (or (select c x 0) z)  ->  (select c (or x z) z)
   //           (or (select c 0 y) z)  ->  (select c z (or y z))

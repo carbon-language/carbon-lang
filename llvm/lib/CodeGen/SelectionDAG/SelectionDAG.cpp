@@ -624,9 +624,9 @@ void SelectionDAG::RemoveDeadNodes() {
   SmallVector<SDNode*, 128> DeadNodes;
 
   // Add all obviously-dead nodes to the DeadNodes worklist.
-  for (allnodes_iterator I = allnodes_begin(), E = allnodes_end(); I != E; ++I)
-    if (I->use_empty())
-      DeadNodes.push_back(I);
+  for (SDNode &Node : allnodes())
+    if (Node.use_empty())
+      DeadNodes.push_back(&Node);
 
   RemoveDeadNodes(DeadNodes);
 
@@ -6470,8 +6470,8 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
 
   // Visit all the nodes. As we iterate, move nodes into sorted order,
   // such that by the time the end is reached all nodes will be sorted.
-  for (allnodes_iterator I = allnodes_begin(),E = allnodes_end(); I != E; ++I) {
-    SDNode *N = I;
+  for (SDNode &Node : allnodes()) {
+    SDNode *N = &Node;
     checkForCycles(N, this);
     // N is in sorted position, so all its uses have one less operand
     // that needs to be sorted.
@@ -6493,8 +6493,9 @@ unsigned SelectionDAG::AssignTopologicalOrder() {
         P->setNodeId(Degree);
       }
     }
-    if (I == SortedPos) {
+    if (&Node == SortedPos) {
 #ifndef NDEBUG
+      allnodes_iterator I = N;
       SDNode *S = ++I;
       dbgs() << "Overran sorted position:\n";
       S->dumprFull(this); dbgs() << "\n";

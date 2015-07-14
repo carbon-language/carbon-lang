@@ -73,21 +73,20 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
   // (for example because it was created but not used).  In general, we cannot
   // distinguish between new nodes and deleted nodes.
   SmallVector<SDNode*, 16> NewNodes;
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I) {
+  for (SDNode &Node : DAG.allnodes()) {
     // Remember nodes marked NewNode - they are subject to extra checking below.
-    if (I->getNodeId() == NewNode)
-      NewNodes.push_back(I);
+    if (Node.getNodeId() == NewNode)
+      NewNodes.push_back(&Node);
 
-    for (unsigned i = 0, e = I->getNumValues(); i != e; ++i) {
-      SDValue Res(I, i);
+    for (unsigned i = 0, e = Node.getNumValues(); i != e; ++i) {
+      SDValue Res(&Node, i);
       bool Failed = false;
 
       unsigned Mapped = 0;
       if (ReplacedValues.find(Res) != ReplacedValues.end()) {
         Mapped |= 1;
         // Check that remapped values are only used by nodes marked NewNode.
-        for (SDNode::use_iterator UI = I->use_begin(), UE = I->use_end();
+        for (SDNode::use_iterator UI = Node.use_begin(), UE = Node.use_end();
              UI != UE; ++UI)
           if (UI.getUse().getResNo() == i)
             assert(UI->getNodeId() == NewNode &&
@@ -119,16 +118,16 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
       if (WidenedVectors.find(Res) != WidenedVectors.end())
         Mapped |= 128;
 
-      if (I->getNodeId() != Processed) {
+      if (Node.getNodeId() != Processed) {
         // Since we allow ReplacedValues to map deleted nodes, it may map nodes
         // marked NewNode too, since a deleted node may have been reallocated as
         // another node that has not been seen by the LegalizeTypes machinery.
-        if ((I->getNodeId() == NewNode && Mapped > 1) ||
-            (I->getNodeId() != NewNode && Mapped != 0)) {
+        if ((Node.getNodeId() == NewNode && Mapped > 1) ||
+            (Node.getNodeId() != NewNode && Mapped != 0)) {
           dbgs() << "Unprocessed value in a map!";
           Failed = true;
         }
-      } else if (isTypeLegal(Res.getValueType()) || IgnoreNodeResults(I)) {
+      } else if (isTypeLegal(Res.getValueType()) || IgnoreNodeResults(&Node)) {
         if (Mapped > 1) {
           dbgs() << "Value with legal type was transformed!";
           Failed = true;
@@ -194,13 +193,12 @@ bool DAGTypeLegalizer::run() {
   // Walk all nodes in the graph, assigning them a NodeId of 'ReadyToProcess'
   // (and remembering them) if they are leaves and assigning 'Unanalyzed' if
   // non-leaves.
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I) {
-    if (I->getNumOperands() == 0) {
-      I->setNodeId(ReadyToProcess);
-      Worklist.push_back(I);
+  for (SDNode &Node : DAG.allnodes()) {
+    if (Node.getNumOperands() == 0) {
+      Node.setNodeId(ReadyToProcess);
+      Worklist.push_back(&Node);
     } else {
-      I->setNodeId(Unanalyzed);
+      Node.setNodeId(Unanalyzed);
     }
   }
 
@@ -409,40 +407,39 @@ NodeDone:
   // In a debug build, scan all the nodes to make sure we found them all.  This
   // ensures that there are no cycles and that everything got processed.
 #ifndef NDEBUG
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I) {
+  for (SDNode &Node : DAG.allnodes()) {
     bool Failed = false;
 
     // Check that all result types are legal.
-    if (!IgnoreNodeResults(I))
-      for (unsigned i = 0, NumVals = I->getNumValues(); i < NumVals; ++i)
-        if (!isTypeLegal(I->getValueType(i))) {
+    if (!IgnoreNodeResults(&Node))
+      for (unsigned i = 0, NumVals = Node.getNumValues(); i < NumVals; ++i)
+        if (!isTypeLegal(Node.getValueType(i))) {
           dbgs() << "Result type " << i << " illegal!\n";
           Failed = true;
         }
 
     // Check that all operand types are legal.
-    for (unsigned i = 0, NumOps = I->getNumOperands(); i < NumOps; ++i)
-      if (!IgnoreNodeResults(I->getOperand(i).getNode()) &&
-          !isTypeLegal(I->getOperand(i).getValueType())) {
+    for (unsigned i = 0, NumOps = Node.getNumOperands(); i < NumOps; ++i)
+      if (!IgnoreNodeResults(Node.getOperand(i).getNode()) &&
+          !isTypeLegal(Node.getOperand(i).getValueType())) {
         dbgs() << "Operand type " << i << " illegal!\n";
         Failed = true;
       }
 
-    if (I->getNodeId() != Processed) {
-       if (I->getNodeId() == NewNode)
+    if (Node.getNodeId() != Processed) {
+       if (Node.getNodeId() == NewNode)
          dbgs() << "New node not analyzed?\n";
-       else if (I->getNodeId() == Unanalyzed)
+       else if (Node.getNodeId() == Unanalyzed)
          dbgs() << "Unanalyzed node not noticed?\n";
-       else if (I->getNodeId() > 0)
+       else if (Node.getNodeId() > 0)
          dbgs() << "Operand not processed?\n";
-       else if (I->getNodeId() == ReadyToProcess)
+       else if (Node.getNodeId() == ReadyToProcess)
          dbgs() << "Not added to worklist?\n";
        Failed = true;
     }
 
     if (Failed) {
-      I->dump(&DAG); dbgs() << "\n";
+      Node.dump(&DAG); dbgs() << "\n";
       llvm_unreachable(nullptr);
     }
   }
