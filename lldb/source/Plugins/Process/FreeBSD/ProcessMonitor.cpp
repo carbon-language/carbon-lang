@@ -1297,7 +1297,7 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
         if (log)
             log->Printf ("ProcessMonitor::%s() received signal %s with code %s, pid = %d",
                             __FUNCTION__,
-                            monitor->m_process->GetUnixSignals().GetSignalAsCString (signo),
+                            monitor->m_process->GetUnixSignals()->GetSignalAsCString (signo),
                             "SI_USER",
                             info->si_pid);
         if (info->si_pid == getpid())
@@ -1307,7 +1307,7 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
     }
 
     if (log)
-        log->Printf ("ProcessMonitor::%s() received signal %s", __FUNCTION__, monitor->m_process->GetUnixSignals().GetSignalAsCString (signo));
+        log->Printf ("ProcessMonitor::%s() received signal %s", __FUNCTION__, monitor->m_process->GetUnixSignals()->GetSignalAsCString (signo));
 
     switch (signo)
     {
@@ -1483,7 +1483,7 @@ ProcessMonitor::Resume(lldb::tid_t unused, uint32_t signo)
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     if (log) {
-        const char *signame = m_process->GetUnixSignals().GetSignalAsCString (signo);
+        const char *signame = m_process->GetUnixSignals()->GetSignalAsCString (signo);
         if (signame == nullptr)
             signame = "<none>";
         log->Printf("ProcessMonitor::%s() resuming pid %"  PRIu64 " with signal %s",

@@ -33,7 +33,7 @@ public:
     //------------------------------------------------------------------
     ProcessPOSIX(lldb_private::Target& target,
                  lldb_private::Listener &listener,
-                 lldb_private::UnixSignalsSP &unix_signals_sp);
+                 lldb::UnixSignalsSP &unix_signals_sp);
 
     virtual
     ~ProcessPOSIX();

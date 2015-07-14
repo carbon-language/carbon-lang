@@ -46,7 +46,7 @@ FreeBSDThread::WillResume(lldb::StateType resume_state)
     ProcessSP process_sp(GetProcess());
     ProcessFreeBSD *process = static_cast<ProcessFreeBSD *>(process_sp.get());
     int signo = GetResumeSignal();
-    bool signo_valid = process->GetUnixSignals().SignalIsValid(signo);
+    bool signo_valid = process->GetUnixSignals()->SignalIsValid(signo);
 
     switch (resume_state)
     {
