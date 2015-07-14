@@ -11772,13 +11772,19 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       TheCall->getMethodDecl()->isPure()) {
     const CXXMethodDecl *MD = TheCall->getMethodDecl();
 
-    if (isa<CXXThisExpr>(MemExpr->getBase()->IgnoreParenCasts())) {
-      Diag(MemExpr->getLocStart(), 
+    if (isa<CXXThisExpr>(MemExpr->getBase()->IgnoreParenCasts()) &&
+        MemExpr->performsVirtualDispatch(getLangOpts())) {
+      Diag(MemExpr->getLocStart(),
            diag::warn_call_to_pure_virtual_member_function_from_ctor_dtor)
         << MD->getDeclName() << isa<CXXDestructorDecl>(CurContext)
         << MD->getParent()->getDeclName();
 
       Diag(MD->getLocStart(), diag::note_previous_decl) << MD->getDeclName();
+      if (getLangOpts().AppleKext)
+        Diag(MemExpr->getLocStart(),
+             diag::note_pure_qualified_call_kext)
+             << MD->getParent()->getDeclName()
+             << MD->getDeclName();
     }
   }
   return MaybeBindToTemporary(TheCall);

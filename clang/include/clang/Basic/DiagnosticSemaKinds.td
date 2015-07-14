@@ -1100,6 +1100,9 @@ def err_type_defined_in_alias_template : Error<
 def note_pure_virtual_function : Note<
   "unimplemented pure virtual method %0 in %1">;
 
+def note_pure_qualified_call_kext : Note<
+  "qualified call to %0::%1 is treated as a virtual call to %1 due to -fapple-kext">;
+
 def err_deleted_decl_not_first : Error<
   "deleted definition must be first declaration">;
 
@@ -1312,8 +1315,9 @@ def err_qualified_member_of_unrelated : Error<
   "%q0 is not a member of class %1">;
 
 def warn_call_to_pure_virtual_member_function_from_ctor_dtor : Warning<
-  "call to pure virtual member function %0; overrides of %0 in subclasses are "
-  "not available in the %select{constructor|destructor}1 of %2">;
+  "call to pure virtual member function %0 has undefined behavior; "
+  "overrides of %0 in subclasses are not available in the "
+  "%select{constructor|destructor}1 of %2">;
 
 def note_member_declared_at : Note<"member is declared here">;
 def note_ivar_decl : Note<"instance variable is declared here">;
