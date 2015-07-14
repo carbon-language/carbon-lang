@@ -694,6 +694,12 @@ def int_ppc_vsx_xvrspip :
 def int_ppc_vsx_xvrdpip :
       Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
 
+// Vector reciprocal estimate
+def int_ppc_vsx_xvresp : GCCBuiltin<"__builtin_vsx_xvresp">,
+      Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvredp : GCCBuiltin<"__builtin_vsx_xvredp">,
+      Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+
 // Vector rsqrte
 def int_ppc_vsx_xvrsqrtesp : GCCBuiltin<"__builtin_vsx_xvrsqrtesp">,
       Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;

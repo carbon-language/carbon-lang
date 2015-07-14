@@ -989,6 +989,12 @@ def : Pat<(int_ppc_vsx_xvdivsp v4f32:$A, v4f32:$B),
 def : Pat<(int_ppc_vsx_xvdivdp v2f64:$A, v2f64:$B),
           (XVDIVDP $A, $B)>;
 
+// Reciprocal estimate
+def : Pat<(int_ppc_vsx_xvresp v4f32:$A),
+          (XVRESP $A)>;
+def : Pat<(int_ppc_vsx_xvredp v2f64:$A),
+          (XVREDP $A)>;
+
 // Recip. square root estimate
 def : Pat<(int_ppc_vsx_xvrsqrtesp v4f32:$A),
           (XVRSQRTESP $A)>;

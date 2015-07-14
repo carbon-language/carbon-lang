@@ -134,6 +134,36 @@ entry:
 ; CHECK: xvcmpgtsp {{[0-9]+}}, {{[0-9]+}}, {{[0-9]+}}
 }
 
+; Function Attrs: nounwind
+define <4 x float> @emit_xvresp(<4 x float> %a) {
+entry:
+  %a.addr = alloca <4 x float>, align 16
+  store <4 x float> %a, <4 x float>* %a.addr, align 16
+  %0 = load <4 x float>, <4 x float>* %a.addr, align 16
+  %1 = call <4 x float> @llvm.ppc.vsx.xvresp(<4 x float> %0)
+  ret <4 x float> %1
+; CHECK-LABEL: @emit_xvresp
+; CHECK: xvresp {{[0-9]+}}, {{[0-9]+}}
+}
+
+; Function Attrs: nounwind
+define <2 x double> @emit_xvredp(<2 x double> %a) {
+entry:
+  %a.addr = alloca <2 x double>, align 16
+  store <2 x double> %a, <2 x double>* %a.addr, align 16
+  %0 = load <2 x double>, <2 x double>* %a.addr, align 16
+  %1 = call <2 x double> @llvm.ppc.vsx.xvredp(<2 x double> %0)
+  ret <2 x double> %1
+; CHECK-LABEL: @emit_xvredp
+; CHECK: xvredp {{[0-9]+}}, {{[0-9]+}}
+}
+
+; Function Attrs: nounwind readnone
+declare <4 x float> @llvm.ppc.vsx.xvresp(<4 x float>)
+
+; Function Attrs: nounwind readnone
+declare <2 x double> @llvm.ppc.vsx.xvredp(<2 x double>)
+
 ; Function Attrs: nounwind readnone
 declare <2 x double> @llvm.ceil.v2f64(<2 x double>)
 
