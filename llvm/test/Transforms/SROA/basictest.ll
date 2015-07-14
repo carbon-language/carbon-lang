@@ -1595,3 +1595,14 @@ entry:
   store i32 %load, i32* %a.gep1
   ret void
 }
+
+define void @PR23737() {
+; CHECK-LABEL: @PR23737(
+; CHECK: store atomic volatile {{.*}} seq_cst
+; CHECK: load atomic volatile {{.*}} seq_cst
+entry:
+  %ptr = alloca i64, align 8
+  store atomic volatile i64 0, i64* %ptr seq_cst, align 8
+  %load = load atomic volatile i64, i64* %ptr seq_cst, align 8
+  ret void
+}
