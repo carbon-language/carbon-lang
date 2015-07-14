@@ -28,15 +28,15 @@
 /// C++14 [func.require] 20.9.1
 ///
 /// Define INVOKE (f, t1, t2, ..., tN) as follows:
-///   (1.1) — (t1.*f)(t2, ..., tN) when f is a pointer to a member function of a class T and t1 is an object of
+///   (1.1) - (t1.*f)(t2, ..., tN) when f is a pointer to a member function of a class T and t1 is an object of
 ///   type T or a reference to an object of type T or a reference to an object of a type derived from T;
-///   (1.2) — ((*t1).*f)(t2, ..., tN) when f is a pointer to a member function of a class T and t1 is not one of
+///   (1.2) - ((*t1).*f)(t2, ..., tN) when f is a pointer to a member function of a class T and t1 is not one of
 ///   the types described in the previous item;
-///   (1.3) — t1.*f when N == 1 and f is a pointer to member data of a class T and t1 is an object of type T or a
+///   (1.3) - t1.*f when N == 1 and f is a pointer to member data of a class T and t1 is an object of type T or a
 ///   reference to an object of type T or a reference to an object of a type derived from T;
-///   (1.4) — (*t1).*f when N == 1 and f is a pointer to member data of a class T and t1 is not one of the types
+///   (1.4) - (*t1).*f when N == 1 and f is a pointer to member data of a class T and t1 is not one of the types
 ///   described in the previous item;
-///   (1.5) — f(t1, t2, ..., tN) in all other cases.
+///   (1.5) - f(t1, t2, ..., tN) in all other cases.
 
 #include <functional>
 #include <type_traits>
