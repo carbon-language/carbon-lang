@@ -1767,7 +1767,7 @@ void emitRRI(unsigned Opcode, unsigned DstReg, unsigned SrcReg, int16_t Imm,
           Instructions);
 }
 
-template <unsigned ShiftAmount>
+template <int16_t ShiftAmount>
 void createLShiftOri(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions) {
   if (ShiftAmount >= 32)
