@@ -221,12 +221,10 @@ lowered according to the calling convention specified at the
 intrinsic's callsite. Variants of the intrinsic with non-void return
 type also return a value according to calling convention.
 
-On PowerPC, note that ``<target>`` must be the actual intended target of
-the indirect call. Specifically, even when compiling for the ELF V1 ABI,
-``<target>`` is not the function-descriptor address normally used as the C/C++
-function-pointer representation. As a result, the call target must be local
-because no adjustment or restoration of the TOC pointer (in register r2) will
-be performed.
+On PowerPC, note that ``<target>`` must be the ABI function pointer for the
+intended target of the indirect call. Specifically, when compiling for the
+ELF V1 ABI, ``<target>`` is the function-descriptor address normally used as
+the C/C++ function-pointer representation.
 
 Requesting zero patch point arguments is valid. In this case, all
 variable operands are handled just like
