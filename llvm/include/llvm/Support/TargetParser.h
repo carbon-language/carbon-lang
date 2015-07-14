@@ -178,7 +178,6 @@ public:
   static     unsigned getFPUVersion(unsigned FPUKind);
   static     unsigned getFPUNeonSupportLevel(unsigned FPUKind);
   static     unsigned getFPURestriction(unsigned FPUKind);
-  static     unsigned getDefaultFPU(StringRef CPU);
   // FIXME: This should be moved to TargetTuple once it exists
   static       bool   getFPUFeatures(unsigned FPUKind,
                                      std::vector<const char*> &Features);
