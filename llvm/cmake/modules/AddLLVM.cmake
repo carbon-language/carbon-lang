@@ -689,10 +689,15 @@ macro(add_llvm_external_project name)
   list(APPEND LLVM_IMPLICIT_PROJECT_IGNORE "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}")
   string(REPLACE "-" "_" nameUNDERSCORE ${name})
   string(TOUPPER ${nameUNDERSCORE} nameUPPER)
-  set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}"
-      CACHE PATH "Path to ${name} source directory")
-  if (NOT ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} STREQUAL ""
-      AND EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}/CMakeLists.txt)
+  #TODO: Remove this check in a few days once it has circulated through
+  # buildbots and people's checkouts (cbieneman - July 14, 2015)
+  if(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}")
+    unset(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR CACHE)
+  endif()
+  if(NOT LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR)
+    set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}")
+  endif()
+  if (EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}/CMakeLists.txt)
     option(LLVM_EXTERNAL_${nameUPPER}_BUILD
            "Whether to build ${name} as part of LLVM" ON)
     if (LLVM_EXTERNAL_${nameUPPER}_BUILD)
