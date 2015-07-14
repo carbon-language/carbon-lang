@@ -810,6 +810,9 @@ EOF
     *:MINGW*:*)
 	echo ${UNAME_MACHINE}-pc-mingw32
 	exit ;;
+    *:MSYS*:*)
+	echo ${UNAME_MACHINE}-pc-msys
+	exit ;;
     i*:windows32*:*)
 	# uname -m includes "-pc" on this system.
 	echo ${UNAME_MACHINE}-mingw32
