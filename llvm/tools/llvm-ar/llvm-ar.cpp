@@ -391,14 +391,18 @@ static bool shouldCreateArchive(ArchiveOperation Op) {
 
 static void performReadOperation(ArchiveOperation Operation,
                                  object::Archive *OldArchive) {
+  bool Filter = !Members.empty();
   for (const object::Archive::Child &C : OldArchive->children()) {
     ErrorOr<StringRef> NameOrErr = C.getName();
     failIfError(NameOrErr.getError());
     StringRef Name = NameOrErr.get();
 
-    if (!Members.empty() &&
-        std::find(Members.begin(), Members.end(), Name) == Members.end())
-      continue;
+    if (Filter) {
+      auto I = std::find(Members.begin(), Members.end(), Name);
+      if (I == Members.end())
+        continue;
+      Members.erase(I);
+    }
 
     switch (Operation) {
     default:
@@ -414,6 +418,11 @@ static void performReadOperation(ArchiveOperation Operation,
       break;
     }
   }
+  if (Members.empty())
+    return;
+  for (StringRef Name : Members)
+    errs() << Name << " was not found\n";
+  std::exit(1);
 }
 
 template <typename T>
