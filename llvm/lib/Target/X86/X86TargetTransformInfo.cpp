@@ -1120,11 +1120,11 @@ unsigned X86TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
 
 bool X86TTIImpl::isLegalMaskedLoad(Type *DataTy, int Consecutive) {
   int DataWidth = DataTy->getPrimitiveSizeInBits();
-  
+
   // Todo: AVX512 allows gather/scatter, works with strided and random as well
   if ((DataWidth < 32) || (Consecutive == 0))
     return false;
-  if (ST->hasAVX512() || ST->hasAVX2()) 
+  if (ST->hasAVX512() || ST->hasAVX2())
     return true;
   return false;
 }
