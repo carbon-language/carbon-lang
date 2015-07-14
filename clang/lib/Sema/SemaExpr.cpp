@@ -12533,6 +12533,8 @@ static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
   // By default, capture variables by reference.
   bool ByRef = true;
   // Using an LValue reference type is consistent with Lambdas (see below).
+  if (S.getLangOpts().OpenMP && S.IsOpenMPCapturedVar(Var))
+    DeclRefType = DeclRefType.getUnqualifiedType();
   CaptureType = S.Context.getLValueReferenceType(DeclRefType);
   Expr *CopyExpr = nullptr;
   if (BuildAndDiagnose) {
@@ -12766,6 +12768,7 @@ bool Sema::tryCaptureVariable(
         if (RSI->CapRegionKind == CR_OpenMP) {
           if (isOpenMPPrivateVar(Var, OpenMPLevel)) {
             Nested = true;
+            DeclRefType = DeclRefType.getUnqualifiedType();
             CaptureType = Context.getLValueReferenceType(DeclRefType);
             break;
           }

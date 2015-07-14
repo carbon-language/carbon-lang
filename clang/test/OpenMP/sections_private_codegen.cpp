@@ -56,7 +56,7 @@ int main() {
     // LAMBDA: store %{{.+}}* [[ARG]], %{{.+}}** [[ARG_REF:%.+]],
     g = 1;
     // LAMBDA: call {{.*}}void @__kmpc_for_static_init_4(
-    // LAMBDA: store volatile double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
+    // LAMBDA: store double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
     // LAMBDA: [[G_PRIVATE_ADDR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // LAMBDA: store double* [[G_PRIVATE_ADDR]], double** [[G_PRIVATE_ADDR_REF]]
     // LAMBDA: call{{.*}} void [[INNER_LAMBDA:@.+]](%{{.+}}* [[ARG]])
@@ -69,7 +69,7 @@ int main() {
       // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
       // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
       // LAMBDA: [[G_REF:%.+]] = load double*, double** [[G_PTR_REF]]
-      // LAMBDA: store volatile double 2.0{{.+}}, double* [[G_REF]]
+      // LAMBDA: store double 2.0{{.+}}, double* [[G_REF]]
     }();
   }
   }();
@@ -89,7 +89,7 @@ int main() {
     // BLOCKS: store %{{.+}}* [[ARG]], %{{.+}}** [[ARG_REF:%.+]],
     g = 1;
     // BLOCKS: call {{.*}}void @__kmpc_for_static_init_4(
-    // BLOCKS: store volatile double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
+    // BLOCKS: store double 1.0{{.+}}, double* [[G_PRIVATE_ADDR]],
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
     // BLOCKS: double* [[G_PRIVATE_ADDR]]
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
@@ -100,7 +100,7 @@ int main() {
       // BLOCKS: define {{.+}} void {{@.+}}(i8*
       g = 2;
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
-      // BLOCKS: store volatile double 2.0{{.+}}, double*
+      // BLOCKS: store double 2.0{{.+}}, double*
       // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
       // BLOCKS: ret
     }();

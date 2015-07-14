@@ -67,11 +67,11 @@ int main() {
     // LAMBDA: [[ARG_PTR:%.+]] = load %{{.+}}*, %{{.+}}** [[ARG_PTR_REF]]
     // LAMBDA: [[G_PTR_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[ARG_PTR]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
     // LAMBDA: [[G_REF:%.+]] = load double*, double** [[G_PTR_REF]]
-    // LAMBDA: store volatile double 2.0{{.+}}, double* [[G_REF]]
+    // LAMBDA: store double 2.0{{.+}}, double* [[G_REF]]
 
     // LAMBDA: define internal i32 [[TASK_ENTRY]](i32, %{{.+}}*)
     g = 1;
-    // LAMBDA: store volatile double 1.0{{.+}}, double* %{{.+}},
+    // LAMBDA: store double 1.0{{.+}}, double* %{{.+}},
     // LAMBDA: call void [[INNER_LAMBDA]](%
     // LAMBDA: ret
     [&]() {
@@ -95,13 +95,13 @@ int main() {
   {
     // BLOCKS: define {{.+}} void {{@.+}}(i8*
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
-    // BLOCKS: store volatile double 2.0{{.+}}, double*
+    // BLOCKS: store double 2.0{{.+}}, double*
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
     // BLOCKS: ret
 
     // BLOCKS: define internal i32 [[TASK_ENTRY]](i32, %{{.+}}*)
     g = 1;
-    // BLOCKS: store volatile double 1.0{{.+}}, double* %{{.+}},
+    // BLOCKS: store double 1.0{{.+}}, double* %{{.+}},
     // BLOCKS-NOT: [[G]]{{[[^:word:]]}}
     // BLOCKS: call void {{%.+}}(i8
     ^{

@@ -7697,13 +7697,13 @@ private:
   void DestroyDataSharingAttributesStack();
   ExprResult VerifyPositiveIntegerConstantInClause(Expr *Op,
                                                    OpenMPClauseKind CKind);
+public:
+  /// \brief Check if the specified variable is used in a private clause in
   /// \brief Checks if the specified variable is used in one of the private
   /// clauses in OpenMP constructs.
   bool IsOpenMPCapturedVar(VarDecl *VD);
 
-public:
-  /// \brief Check if the specified variable is used in one of the private
-  /// clauses in OpenMP constructs.
+  /// OpenMP constructs.
   /// \param Level Relative level of nested OpenMP construct for that the check
   /// is performed.
   bool isOpenMPPrivateVar(VarDecl *VD, unsigned Level);
