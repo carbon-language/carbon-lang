@@ -948,3 +948,41 @@ auto f(T x) {
 
 auto x = f(0)();
 }
+
+namespace PR13987 {
+class Enclosing {
+  void Method(char c = []()->char {
+    int d = [](auto x)->int {
+        struct LocalClass {
+          int Method() { return 0; }
+        };
+      return 0;
+    }(0);
+    return d; }()
+  );
+};
+
+class Enclosing2 {
+  void Method(char c = [](auto x)->char {
+    int d = []()->int {
+        struct LocalClass {
+          int Method() { return 0; }
+        };
+      return 0;
+    }();
+    return d; }(0)
+  );
+};
+
+class Enclosing3 {
+  void Method(char c = [](auto x)->char {
+    int d = [](auto y)->int {
+        struct LocalClass {
+          int Method() { return 0; }
+        };
+      return 0;
+    }(0);
+    return d; }(0)
+  );
+};
+}
