@@ -102,15 +102,14 @@ display_usage (const char *progname, const char *subcommand)
 static Error
 save_port_to_file(const uint16_t port, const FileSpec &port_file_spec)
 {
-    const ConstString& port_file_dir = port_file_spec.GetDirectory();
-    auto error = FileSystem::MakeDirectory(
-        FileSpec(port_file_dir.AsCString(), false), eFilePermissionsDirectoryDefault);
+    FileSpec temp_file_spec(port_file_spec.GetDirectory().AsCString(), false);
+    auto error = FileSystem::MakeDirectory(temp_file_spec, eFilePermissionsDirectoryDefault);
     if (error.Fail())
-       return Error("Failed to create directory %s: %s", port_file_dir.AsCString(), error.AsCString());
+       return Error("Failed to create directory %s: %s", temp_file_spec.GetCString(), error.AsCString());
 
     llvm::SmallString<PATH_MAX> temp_file_path;
-    auto err_code = llvm::sys::fs::createTemporaryFile(
-        port_file_spec.GetPath().c_str(), "", temp_file_path);
+    temp_file_spec.AppendPathComponent("port-file.%%%%%%");
+    auto err_code = llvm::sys::fs::createUniqueFile(temp_file_spec.GetCString(), temp_file_path);
     if (err_code)
         return Error("Failed to create temp file: %s", err_code.message().c_str());
 
