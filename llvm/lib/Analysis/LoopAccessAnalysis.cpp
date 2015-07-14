@@ -119,9 +119,9 @@ const SCEV *llvm::replaceSymbolicStrideSCEV(ScalarEvolution *SE,
   return SE->getSCEV(Ptr);
 }
 
-void LoopAccessInfo::RuntimePointerCheck::insert(
-    Loop *Lp, Value *Ptr, bool WritePtr, unsigned DepSetId, unsigned ASId,
-    const ValueToValueMap &Strides) {
+void RuntimePointerChecking::insert(Loop *Lp, Value *Ptr, bool WritePtr,
+                                    unsigned DepSetId, unsigned ASId,
+                                    const ValueToValueMap &Strides) {
   // Get the stride replaced scev.
   const SCEV *Sc = replaceSymbolicStrideSCEV(SE, Strides, Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
@@ -137,7 +137,7 @@ void LoopAccessInfo::RuntimePointerCheck::insert(
   Exprs.push_back(Sc);
 }
 
-bool LoopAccessInfo::RuntimePointerCheck::needsChecking(
+bool RuntimePointerChecking::needsChecking(
     const CheckingPtrGroup &M, const CheckingPtrGroup &N,
     const SmallVectorImpl<int> *PtrPartition) const {
   for (unsigned I = 0, EI = M.Members.size(); EI != I; ++I)
@@ -161,8 +161,7 @@ static const SCEV *getMinFromExprs(const SCEV *I, const SCEV *J,
   return I;
 }
 
-bool LoopAccessInfo::RuntimePointerCheck::CheckingPtrGroup::addPointer(
-    unsigned Index) {
+bool RuntimePointerChecking::CheckingPtrGroup::addPointer(unsigned Index) {
   // Compare the starts and ends with the known minimum and maximum
   // of this set. We need to know how we compare against the min/max
   // of the set in order to be able to emit memchecks.
@@ -186,9 +185,8 @@ bool LoopAccessInfo::RuntimePointerCheck::CheckingPtrGroup::addPointer(
   return true;
 }
 
-void LoopAccessInfo::RuntimePointerCheck::groupChecks(
-    MemoryDepChecker::DepCandidates &DepCands,
-    bool UseDependencies) {
+void RuntimePointerChecking::groupChecks(
+    MemoryDepChecker::DepCandidates &DepCands, bool UseDependencies) {
   // We build the groups from dependency candidates equivalence classes
   // because:
   //    - We know that pointers in the same equivalence class share
@@ -283,7 +281,7 @@ void LoopAccessInfo::RuntimePointerCheck::groupChecks(
   }
 }
 
-bool LoopAccessInfo::RuntimePointerCheck::needsChecking(
+bool RuntimePointerChecking::needsChecking(
     unsigned I, unsigned J, const SmallVectorImpl<int> *PtrPartition) const {
   // No need to check if two readonly pointers intersect.
   if (!IsWritePtr[I] && !IsWritePtr[J])
@@ -307,7 +305,7 @@ bool LoopAccessInfo::RuntimePointerCheck::needsChecking(
   return true;
 }
 
-void LoopAccessInfo::RuntimePointerCheck::print(
+void RuntimePointerChecking::print(
     raw_ostream &OS, unsigned Depth,
     const SmallVectorImpl<int> *PtrPartition) const {
 
@@ -353,7 +351,7 @@ void LoopAccessInfo::RuntimePointerCheck::print(
   }
 }
 
-unsigned LoopAccessInfo::RuntimePointerCheck::getNumberOfChecks(
+unsigned RuntimePointerChecking::getNumberOfChecks(
     const SmallVectorImpl<int> *PtrPartition) const {
 
   unsigned NumPartitions = CheckingGroups.size();
@@ -366,7 +364,7 @@ unsigned LoopAccessInfo::RuntimePointerCheck::getNumberOfChecks(
   return CheckCount;
 }
 
-bool LoopAccessInfo::RuntimePointerCheck::needsAnyChecking(
+bool RuntimePointerChecking::needsAnyChecking(
     const SmallVectorImpl<int> *PtrPartition) const {
   unsigned NumPointers = Pointers.size();
 
@@ -414,9 +412,8 @@ public:
   ///
   /// Returns true if we need no check or if we do and we can generate them
   /// (i.e. the pointers have computable bounds).
-  bool canCheckPtrAtRT(LoopAccessInfo::RuntimePointerCheck &RtCheck,
-                       ScalarEvolution *SE, Loop *TheLoop,
-                       const ValueToValueMap &Strides,
+  bool canCheckPtrAtRT(RuntimePointerChecking &RtCheck, ScalarEvolution *SE,
+                       Loop *TheLoop, const ValueToValueMap &Strides,
                        bool ShouldCheckStride = false);
 
   /// \brief Goes over all memory accesses, checks whether a RT check is needed
@@ -492,9 +489,10 @@ static bool hasComputableBounds(ScalarEvolution *SE,
   return AR->isAffine();
 }
 
-bool AccessAnalysis::canCheckPtrAtRT(
-    LoopAccessInfo::RuntimePointerCheck &RtCheck, ScalarEvolution *SE,
-    Loop *TheLoop, const ValueToValueMap &StridesMap, bool ShouldCheckStride) {
+bool AccessAnalysis::canCheckPtrAtRT(RuntimePointerChecking &RtCheck,
+                                     ScalarEvolution *SE, Loop *TheLoop,
+                                     const ValueToValueMap &StridesMap,
+                                     bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
   bool CanDoRT = true;
@@ -1320,8 +1318,8 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   unsigned NumReads = 0;
   unsigned NumReadWrites = 0;
 
-  PtrRtCheck.Pointers.clear();
-  PtrRtCheck.Need = false;
+  PtrRtChecking.Pointers.clear();
+  PtrRtChecking.Need = false;
 
   const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
 
@@ -1481,7 +1479,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
   bool CanDoRTIfNeeded =
-      Accesses.canCheckPtrAtRT(PtrRtCheck, SE, TheLoop, Strides);
+      Accesses.canCheckPtrAtRT(PtrRtChecking, SE, TheLoop, Strides);
   if (!CanDoRTIfNeeded) {
     emitAnalysis(LoopAccessReport() << "cannot identify array bounds");
     DEBUG(dbgs() << "LAA: We can't vectorize because we can't find "
@@ -1505,11 +1503,11 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       // Clear the dependency checks. We assume they are not needed.
       Accesses.resetDepChecks(DepChecker);
 
-      PtrRtCheck.reset();
-      PtrRtCheck.Need = true;
+      PtrRtChecking.reset();
+      PtrRtChecking.Need = true;
 
       CanDoRTIfNeeded =
-          Accesses.canCheckPtrAtRT(PtrRtCheck, SE, TheLoop, Strides, true);
+          Accesses.canCheckPtrAtRT(PtrRtChecking, SE, TheLoop, Strides, true);
 
       // Check that we found the bounds for the pointer.
       if (!CanDoRTIfNeeded) {
@@ -1526,7 +1524,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
 
   if (CanVecMem)
     DEBUG(dbgs() << "LAA: No unsafe dependent memory operations in loop.  We"
-                 << (PtrRtCheck.Need ? "" : " don't")
+                 << (PtrRtChecking.Need ? "" : " don't")
                  << " need runtime memory checks.\n");
   else {
     emitAnalysis(LoopAccessReport() <<
@@ -1566,7 +1564,7 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
 
 std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
     Instruction *Loc, const SmallVectorImpl<int> *PtrPartition) const {
-  if (!PtrRtCheck.Need)
+  if (!PtrRtChecking.Need)
     return std::make_pair(nullptr, nullptr);
 
   SmallVector<TrackingVH<Value>, 2> Starts;
@@ -1576,10 +1574,10 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
   SCEVExpander Exp(*SE, DL, "induction");
   Instruction *FirstInst = nullptr;
 
-  for (unsigned i = 0; i < PtrRtCheck.CheckingGroups.size(); ++i) {
-    const RuntimePointerCheck::CheckingPtrGroup &CG =
-        PtrRtCheck.CheckingGroups[i];
-    Value *Ptr = PtrRtCheck.Pointers[CG.Members[0]];
+  for (unsigned i = 0; i < PtrRtChecking.CheckingGroups.size(); ++i) {
+    const RuntimePointerChecking::CheckingPtrGroup &CG =
+        PtrRtChecking.CheckingGroups[i];
+    Value *Ptr = PtrRtChecking.Pointers[CG.Members[0]];
     const SCEV *Sc = SE->getSCEV(Ptr);
 
     if (SE->isLoopInvariant(Sc, TheLoop)) {
@@ -1606,14 +1604,14 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
   IRBuilder<> ChkBuilder(Loc);
   // Our instructions might fold to a constant.
   Value *MemoryRuntimeCheck = nullptr;
-  for (unsigned i = 0; i < PtrRtCheck.CheckingGroups.size(); ++i) {
-    for (unsigned j = i + 1; j < PtrRtCheck.CheckingGroups.size(); ++j) {
-      const RuntimePointerCheck::CheckingPtrGroup &CGI =
-          PtrRtCheck.CheckingGroups[i];
-      const RuntimePointerCheck::CheckingPtrGroup &CGJ =
-          PtrRtCheck.CheckingGroups[j];
+  for (unsigned i = 0; i < PtrRtChecking.CheckingGroups.size(); ++i) {
+    for (unsigned j = i + 1; j < PtrRtChecking.CheckingGroups.size(); ++j) {
+      const RuntimePointerChecking::CheckingPtrGroup &CGI =
+          PtrRtChecking.CheckingGroups[i];
+      const RuntimePointerChecking::CheckingPtrGroup &CGJ =
+          PtrRtChecking.CheckingGroups[j];
 
-      if (!PtrRtCheck.needsChecking(CGI, CGJ, PtrPartition))
+      if (!PtrRtChecking.needsChecking(CGI, CGJ, PtrPartition))
         continue;
 
       unsigned AS0 = Starts[i]->getType()->getPointerAddressSpace();
@@ -1664,8 +1662,8 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                                DominatorTree *DT, LoopInfo *LI,
                                const ValueToValueMap &Strides)
-    : PtrRtCheck(SE), DepChecker(SE, L), TheLoop(L), SE(SE), DL(DL), TLI(TLI),
-      AA(AA), DT(DT), LI(LI), NumLoads(0), NumStores(0),
+    : PtrRtChecking(SE), DepChecker(SE, L), TheLoop(L), SE(SE), DL(DL),
+      TLI(TLI), AA(AA), DT(DT), LI(LI), NumLoads(0), NumStores(0),
       MaxSafeDepDistBytes(-1U), CanVecMem(false),
       StoreToLoopInvariantAddress(false) {
   if (canAnalyzeLoop())
@@ -1674,7 +1672,7 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
 
 void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   if (CanVecMem) {
-    if (PtrRtCheck.Need)
+    if (PtrRtChecking.Need)
       OS.indent(Depth) << "Memory dependences are safe with run-time checks\n";
     else
       OS.indent(Depth) << "Memory dependences are safe\n";
@@ -1693,7 +1691,7 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
     OS.indent(Depth) << "Too many interesting dependences, not recorded\n";
 
   // List the pair of accesses need run-time checks to prove independence.
-  PtrRtCheck.print(OS, Depth);
+  PtrRtChecking.print(OS, Depth);
   OS << "\n";
 
   OS.indent(Depth) << "Store to invariant address was "

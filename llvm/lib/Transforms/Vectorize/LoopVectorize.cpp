@@ -924,8 +924,8 @@ public:
   bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  const LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() const {
-    return LAI->getRuntimePointerCheck();
+  const RuntimePointerChecking *getRuntimePointerChecking() const {
+    return LAI->getRuntimePointerChecking();
   }
 
   const LoopAccessInfo *getLAI() const {
@@ -3873,10 +3873,11 @@ bool LoopVectorizationLegality::canVectorize() {
   // Collect all of the variables that remain uniform after vectorization.
   collectLoopUniforms();
 
-  DEBUG(dbgs() << "LV: We can vectorize this loop" <<
-        (LAI->getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
-         "")
-        <<"!\n");
+  DEBUG(dbgs() << "LV: We can vectorize this loop"
+               << (LAI->getRuntimePointerChecking()->Need
+                       ? " (with a runtime bound check)"
+                       : "")
+               << "!\n");
 
   // Analyze interleaved memory accesses.
   if (EnableInterleavedMemAccesses)
@@ -4449,7 +4450,7 @@ LoopVectorizationCostModel::VectorizationFactor
 LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   // Width 1 means no vectorize
   VectorizationFactor Factor = { 1U, 0U };
-  if (OptForSize && Legal->getRuntimePointerCheck()->Need) {
+  if (OptForSize && Legal->getRuntimePointerChecking()->Need) {
     emitAnalysis(VectorizationReport() <<
                  "runtime pointer checks needed. Enable vectorization of this "
                  "loop with '#pragma clang loop vectorize(enable)' when "
@@ -4713,7 +4714,7 @@ unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
   // Note that if we've already vectorized the loop we will have done the
   // runtime check and so interleaving won't require further checks.
   bool InterleavingRequiresRuntimePointerCheck =
-      (VF == 1 && Legal->getRuntimePointerCheck()->Need);
+      (VF == 1 && Legal->getRuntimePointerChecking()->Need);
 
   // We want to interleave small loops in order to reduce the loop overhead and
   // potentially expose ILP opportunities.

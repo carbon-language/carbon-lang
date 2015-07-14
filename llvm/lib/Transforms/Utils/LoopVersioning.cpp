@@ -32,7 +32,7 @@ LoopVersioning::LoopVersioning(const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
 }
 
 bool LoopVersioning::needsRuntimeChecks() const {
-  return LAI.getRuntimePointerCheck()->needsAnyChecking(PtrToPartition);
+  return LAI.getRuntimePointerChecking()->needsAnyChecking(PtrToPartition);
 }
 
 void LoopVersioning::versionLoop(Pass *P) {
