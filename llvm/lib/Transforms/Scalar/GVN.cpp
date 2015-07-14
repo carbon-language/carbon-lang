@@ -1795,7 +1795,7 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
     // In general, GVN unifies expressions over different control-flow
     // regions, and so we need a conservative combination of the noalias
     // scopes.
-    unsigned KnownIDs[] = {
+    static const unsigned KnownIDs[] = {
       LLVMContext::MD_tbaa,
       LLVMContext::MD_alias_scope,
       LLVMContext::MD_noalias,
