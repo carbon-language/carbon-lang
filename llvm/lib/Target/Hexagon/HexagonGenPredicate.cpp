@@ -54,6 +54,8 @@ namespace {
     Register Reg;
     const TargetRegisterInfo &TRI;
   };
+  raw_ostream &operator<< (raw_ostream &OS, const PrintRegister &PR)
+    LLVM_ATTRIBUTE_UNUSED;
   raw_ostream &operator<< (raw_ostream &OS, const PrintRegister &PR) {
     return OS << PrintReg(PR.Reg.R, &PR.TRI, PR.Reg.S);
   }
