@@ -62,6 +62,7 @@ public:
   // for U from the symbol table, and if found, set the symbol as
   // a weak alias for U.
   void mangleMaybe(Undefined *U);
+  StringRef findMangle(StringRef Name);
 
   // Print a layout map to OS.
   void printMap(llvm::raw_ostream &OS);
@@ -92,6 +93,7 @@ private:
   std::error_code addSymbol(SymbolBody *New);
   void addLazy(Lazy *New, std::vector<Symbol *> *Accum);
   Symbol *insert(SymbolBody *New);
+  StringRef findByPrefix(StringRef Prefix);
 
   std::error_code addMemberFile(Lazy *Body);
   ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);

@@ -274,28 +274,39 @@ Symbol *SymbolTable::find(StringRef Name) {
   return It->second;
 }
 
+StringRef SymbolTable::findByPrefix(StringRef Prefix) {
+  for (auto Pair : Symtab) {
+    StringRef Name = Pair.first;
+    if (Name.startswith(Prefix))
+      return Name;
+  }
+  return "";
+}
+
+StringRef SymbolTable::findMangle(StringRef Name) {
+  if (Symbol *Sym = find(Name))
+    if (!isa<Undefined>(Sym->Body))
+      return Name;
+  if (Config->is64())
+    return findByPrefix(("?" + Name + "@@Y").str());
+  if (!Name.startswith("_"))
+    return "";
+  // Search for x86 C function.
+  StringRef S = findByPrefix((Name + "@").str());
+  if (!S.empty())
+    return S;
+  // Search for x86 C++ non-member function.
+  return findByPrefix(("?" + Name.substr(1) + "@@Y").str());
+}
+
 void SymbolTable::mangleMaybe(Undefined *U) {
   if (U->WeakAlias)
     return;
   if (!isa<Undefined>(U->repl()))
     return;
-
-  // In Microsoft ABI, a non-member function name is mangled this way.
-  std::string Prefix;
-  if (Config->is64()) {
-    Prefix = ("?" + U->getName() + "@@Y").str();
-  } else {
-    if (!U->getName().startswith("_"))
-      return;
-    Prefix = ("?" + U->getName().substr(1) + "@@Y").str();
-  }
-  for (auto Pair : Symtab) {
-    StringRef Name = Pair.first;
-    if (!Name.startswith(Prefix))
-      continue;
-    U->WeakAlias = addUndefined(Name);
-    return;
-  }
+  StringRef Alias = findMangle(U->getName());
+  if (!Alias.empty())
+    U->WeakAlias = addUndefined(Alias);
 }
 
 Undefined *SymbolTable::addUndefined(StringRef Name) {

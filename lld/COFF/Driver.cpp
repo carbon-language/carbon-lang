@@ -227,8 +227,8 @@ StringRef LinkerDriver::findDefaultEntry() {
       {"wWinMain", "wWinMainCRTStartup"},
   };
   for (auto E : Entries) {
-    Symbol *Sym = Symtab.find(mangle(E[0]));
-    if (Sym && !isa<Undefined>(Sym->Body))
+    StringRef Entry = Symtab.findMangle(mangle(E[0]));
+    if (!Entry.empty() && !isa<Undefined>(Symtab.find(Entry)->Body))
       return mangle(E[1]);
   }
   return "";
