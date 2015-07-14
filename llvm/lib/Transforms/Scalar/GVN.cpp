@@ -656,10 +656,13 @@ namespace {
       LeaderTableEntry* Prev = nullptr;
       LeaderTableEntry* Curr = &LeaderTable[N];
 
-      while (Curr->Val != I || Curr->BB != BB) {
+      while (Curr && (Curr->Val != I || Curr->BB != BB)) {
         Prev = Curr;
         Curr = Curr->Next;
       }
+
+      if (!Curr)
+        return;
 
       if (Prev) {
         Prev->Next = Curr->Next;
