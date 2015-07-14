@@ -17,6 +17,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 using namespace object;
@@ -115,6 +116,23 @@ uint64_t Archive::Child::getRawSize() const {
   return getHeader()->getSize();
 }
 
+ErrorOr<StringRef> Archive::Child::getBuffer() const {
+  if (!Parent->IsThin)
+    return StringRef(Data.data() + StartOfFile, getSize());
+  ErrorOr<StringRef> Name = getName();
+  if (std::error_code EC = Name.getError())
+    return EC;
+  SmallString<128> FullName =
+      Parent->getMemoryBufferRef().getBufferIdentifier();
+  sys::path::remove_filename(FullName);
+  sys::path::append(FullName, *Name);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(FullName);
+  if (std::error_code EC = Buf.getError())
+    return EC;
+  Parent->ThinBuffers.push_back(std::move(*Buf));
+  return Parent->ThinBuffers.back()->getBuffer();
+}
+
 Archive::Child Archive::Child::getNext() const {
   size_t SpaceToSkip = Data.size();
   // If it's odd, add 1 to make it even.
@@ -186,7 +204,10 @@ ErrorOr<MemoryBufferRef> Archive::Child::getMemoryBufferRef() const {
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   StringRef Name = NameOrErr.get();
-  return MemoryBufferRef(getBuffer(), Name);
+  ErrorOr<StringRef> Buf = getBuffer();
+  if (std::error_code EC = Buf.getError())
+    return EC;
+  return MemoryBufferRef(*Buf, Name);
 }
 
 ErrorOr<std::unique_ptr<Binary>>
