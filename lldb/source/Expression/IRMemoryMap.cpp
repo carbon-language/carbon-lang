@@ -418,6 +418,32 @@ IRMemoryMap::Free (lldb::addr_t process_address, Error &error)
     m_allocations.erase(iter);
 }
 
+bool
+IRMemoryMap::GetAllocSize(lldb::addr_t address, size_t &size)
+{
+    AllocationMap::iterator iter = FindAllocation(address, size);
+    if (iter == m_allocations.end())
+        return false;
+
+    Allocation &al = iter->second;
+
+    if (address > (al.m_process_start + al.m_size))
+    {
+        size = 0;
+        return false;
+    }
+
+    if (address > al.m_process_start)
+    {
+        int dif = address - al.m_process_start;
+        size = al.m_size - dif;
+        return true;
+    }
+
+    size = al.m_size;
+    return true;
+}
+
 void
 IRMemoryMap::WriteMemory (lldb::addr_t process_address, const uint8_t *bytes, size_t size, Error &error)
 {

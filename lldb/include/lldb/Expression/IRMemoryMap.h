@@ -60,7 +60,7 @@ public:
     void ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t size, Error &error);
     void ReadScalarFromMemory (Scalar &scalar, lldb::addr_t process_address, size_t size, Error &error);
     void ReadPointerFromMemory (lldb::addr_t *address, lldb::addr_t process_address, Error &error);
-    
+    bool GetAllocSize(lldb::addr_t address, size_t &size);
     void GetMemoryData (DataExtractor &extractor, lldb::addr_t process_address, size_t size, Error &error);
     
     lldb::ByteOrder GetByteOrder();

@@ -2689,6 +2689,8 @@
 		E7723D4B1AC4A944002BA082 /* RegisterContextPOSIX_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIX_arm64.h; path = Utility/RegisterContextPOSIX_arm64.h; sourceTree = "<group>"; };
 		E778E99F1B062D1700247609 /* EmulateInstructionMIPS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EmulateInstructionMIPS.cpp; sourceTree = "<group>"; };
 		E778E9A01B062D1700247609 /* EmulateInstructionMIPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulateInstructionMIPS.h; sourceTree = "<group>"; };
+		EBDD01241B39B62F00E04792 /* ThreadPlanCallFunctionUsingABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunctionUsingABI.cpp; path = source/Target/ThreadPlanCallFunctionUsingABI.cpp; sourceTree = "<group>"; };
+		EBDD01261B39B66700E04792 /* ThreadPlanCallFunctionUsingABI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallFunctionUsingABI.h; path = include/lldb/Target/ThreadPlanCallFunctionUsingABI.h; sourceTree = "<group>"; };
 		ED88244F15114CA200BC98B9 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherRootXPCService.mm; sourceTree = "<group>"; };
 		EDB919B214F6EC85008FF64B /* LauncherXPCService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LauncherXPCService.h; sourceTree = "<group>"; };
@@ -4522,6 +4524,8 @@
 		26BC7DEF10F1B80200F91463 /* Target */ = {
 			isa = PBXGroup;
 			children = (
+				EBDD01261B39B66700E04792 /* ThreadPlanCallFunctionUsingABI.h */,
+				EBDD01241B39B62F00E04792 /* ThreadPlanCallFunctionUsingABI.cpp */,
 				8CF02AE019DCBF3B00B14BE0 /* InstrumentationRuntime.h */,
 				8CF02ADF19DCBF3B00B14BE0 /* InstrumentationRuntime.cpp */,
 				8CF02AEE19DD15CF00B14BE0 /* InstrumentationRuntimeStopInfo.h */,
@@ -6315,6 +6319,7 @@
 				26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */,
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
 				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
+				EBDD01251B39B62F00E04792 /* ThreadPlanCallFunctionUsingABI.cpp in Sources */,
 				2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */,
 				26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */,
 				3FDFED0B19B7C8DE009756A7 /* HostThreadMacOSX.mm in Sources */,

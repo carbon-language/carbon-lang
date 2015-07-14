@@ -754,6 +754,7 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
     m_force_next_event_delivery (false),
     m_last_broadcast_state (eStateInvalid),
     m_destroy_in_process (false),
+    m_can_interpret_function_calls(false),
     m_can_jit(eCanJITDontKnow)
 {
     CheckInWithManager ();
@@ -3009,6 +3010,13 @@ void
 Process::SetCanJIT (bool can_jit)
 {
     m_can_jit = (can_jit ? eCanJITYes : eCanJITNo);
+}
+
+void
+Process::SetCanRunCode (bool can_run_code)
+{
+    SetCanJIT(can_run_code);
+    m_can_interpret_function_calls = can_run_code;
 }
 
 Error

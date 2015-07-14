@@ -34,6 +34,10 @@ public:
                             llvm::ArrayRef<lldb::addr_t> args,
                             const EvaluateExpressionOptions &options);
 
+    ThreadPlanCallFunction(Thread &thread,
+                           const Address &function,
+                           const EvaluateExpressionOptions &options);
+
     virtual
     ~ThreadPlanCallFunction ();
 
@@ -134,7 +138,8 @@ protected:
     virtual bool
     DoPlanExplainsStop (Event *event_ptr);
 
-private:
+    virtual void
+    SetReturnValue();
 
     bool
     ConstructorSetup (Thread &thread,
@@ -153,7 +158,7 @@ private:
     
     bool
     BreakpointsExplainStop ();
-    
+
     bool                                            m_valid;
     bool                                            m_stop_other_threads;
     bool                                            m_unwind_on_error;
@@ -172,13 +177,14 @@ private:
                                                                          // it's nice to know the real stop reason.
                                                                          // This gets set in DoTakedown.
     StreamString                                    m_constructor_errors;
-    ClangASTType                                    m_return_type;
     lldb::ValueObjectSP                             m_return_valobj_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
     bool                                            m_should_clear_objc_exception_bp;
     bool                                            m_should_clear_cxx_exception_bp;
     lldb::addr_t                                    m_stop_address;     // This is the address we stopped at.  Also set in DoTakedown;
 
+private:
+    ClangASTType                                    m_return_type;
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };
 

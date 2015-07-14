@@ -891,7 +891,8 @@ ClangUserExpression::Execute (Stream &error_stream,
                                       *m_execution_unit_sp.get(),
                                       interpreter_error,
                                       function_stack_bottom,
-                                      function_stack_top);
+                                      function_stack_top,
+                                      exe_ctx);
 
             if (!interpreter_error.Success())
             {

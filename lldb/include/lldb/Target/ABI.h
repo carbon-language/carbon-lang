@@ -39,10 +39,9 @@ public:
         };
         eType  type;                /* value of eType */
         size_t size;                /* size in bytes of this argument */
-        union {
-            lldb::addr_t  value;    /* literal value */
-            uint8_t      *data;     /* host data pointer */
-        };
+
+        lldb::addr_t  value;                    /* literal value */
+        std::unique_ptr<uint8_t[]> data_ap;     /* host data pointer */
     };
 
     virtual
@@ -58,7 +57,7 @@ public:
                          lldb::addr_t returnAddress, 
                          llvm::ArrayRef<lldb::addr_t> args) const = 0;
 
-    // Prepare trivial call used from ThreadPlanFunctionCallGDB
+    // Prepare trivial call used from ThreadPlanFunctionCallUsingABI
     // AD:
     //  . Because i don't want to change other ABI's this is not declared pure virtual.
     //    The dummy implementation will simply fail.  Only HexagonABI will currently

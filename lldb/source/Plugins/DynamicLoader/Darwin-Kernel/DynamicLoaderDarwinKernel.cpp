@@ -182,7 +182,7 @@ DynamicLoaderDarwinKernel::CreateInstance (Process* process, bool force)
     addr_t kernel_load_address = SearchForDarwinKernel (process);
     if (kernel_load_address != LLDB_INVALID_ADDRESS)
     {
-        process->SetCanJIT(false);
+        process->SetCanRunCode(false);
         return new DynamicLoaderDarwinKernel (process, kernel_load_address);
     }
     return NULL;

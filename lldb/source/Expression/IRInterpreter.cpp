@@ -10,17 +10,28 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Expression/IRMemoryMap.h"
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/Endian.h"
+
+#include "lldb/Target/ABI.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadPlan.h"
+#include "lldb/Target/ThreadPlanCallFunctionUsingABI.h"
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -455,7 +466,8 @@ static const char *infinite_loop_error              = "Interpreter ran for too m
 bool
 IRInterpreter::CanInterpret (llvm::Module &module,
                              llvm::Function &function,
-                             lldb_private::Error &error)
+                             lldb_private::Error &error,
+                             const bool support_function_calls)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -507,7 +519,7 @@ IRInterpreter::CanInterpret (llvm::Module &module,
                         return false;
                     }
 
-                    if (!CanIgnoreCall(call_inst))
+                    if (!CanIgnoreCall(call_inst) && !support_function_calls)
                     {
                         if (log)
                             log->Printf("Unsupported instruction: %s", PrintValue(ii).c_str());
@@ -611,7 +623,8 @@ IRInterpreter::Interpret (llvm::Module &module,
                           lldb_private::IRMemoryMap &memory_map,
                           lldb_private::Error &error,
                           lldb::addr_t stack_frame_bottom,
-                          lldb::addr_t stack_frame_top)
+                          lldb::addr_t stack_frame_top,
+                          lldb_private::ExecutionContext &exe_ctx)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
@@ -668,29 +681,7 @@ IRInterpreter::Interpret (llvm::Module &module,
         {
             default:
                 break;
-            case Instruction::Call:
-            {
-                const CallInst *call_inst = dyn_cast<CallInst>(inst);
 
-                if (!call_inst)
-                {
-                    if (log)
-                        log->Printf("getOpcode() returns %s, but instruction is not a CallInst", inst->getOpcodeName());
-                    error.SetErrorToGenericError();
-                    error.SetErrorString(interpreter_internal_error);
-                    return false;
-                }
-
-                if (!CanIgnoreCall(call_inst))
-                {
-                    if (log)
-                        log->Printf("The interpreter shouldn't have accepted %s", PrintValue(call_inst).c_str());
-                    error.SetErrorToGenericError();
-                    error.SetErrorString(interpreter_internal_error);
-                    return false;
-                }
-            }
-                break;
             case Instruction::Add:
             case Instruction::Sub:
             case Instruction::Mul:
@@ -1474,6 +1465,242 @@ IRInterpreter::Interpret (llvm::Module &module,
                     log->Printf("  P : 0x%" PRIx64, P);
                     log->Printf("  R : 0x%" PRIx64, R);
                 }
+            }
+                break;
+            case Instruction::Call:
+            {
+                const CallInst *call_inst = dyn_cast<CallInst>(inst);
+
+                if (!call_inst)
+                {
+                    if (log)
+                       log->Printf("getOpcode() returns %s, but instruction is not a CallInst", inst->getOpcodeName());
+                    error.SetErrorToGenericError();
+                    error.SetErrorString(interpreter_internal_error);
+                    return false;
+                }
+
+                if (CanIgnoreCall(call_inst))
+                    break;
+
+                // Get the return type
+                llvm::Type *returnType = call_inst->getType();
+                if (returnType == nullptr)
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorString("unable to access return type");
+                    return false;
+                }
+
+                // Work with void, integer and pointer return types
+                if (!returnType->isVoidTy() &&
+                    !returnType->isIntegerTy() &&
+                    !returnType->isPointerTy())
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorString("return type is not supported");
+                    return false;
+                }
+
+                // Check we can actually get a thread
+                if (exe_ctx.GetThreadPtr() == nullptr)
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorStringWithFormat("unable to acquire thread");
+                    return false;
+                }
+
+                // Make sure we have a valid process
+                if (!exe_ctx.GetProcessPtr())
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorStringWithFormat("unable to get the process");
+                    return false;
+                }
+
+                // Find the address of the callee function
+                lldb_private::Scalar I;
+                const llvm::Value *val = call_inst->getCalledValue();
+
+                if (!frame.EvaluateValue(I, val, module))
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorString("unable to get address of function");
+                    return false;
+                }
+                lldb_private::Address funcAddr(I.ULongLong(LLDB_INVALID_ADDRESS));
+
+                lldb_private::StreamString error_stream;
+                lldb_private::EvaluateExpressionOptions options;
+
+                // We generally receive a function pointer which we must dereference
+                llvm::Type* prototype = val->getType();
+                if (!prototype->isPointerTy())
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorString("call need function pointer");
+                    return false;
+                }
+
+                // Dereference the function pointer
+                prototype = prototype->getPointerElementType();
+                if (!(prototype->isFunctionTy() || prototype->isFunctionVarArg()))
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorString("call need function pointer");
+                    return false;
+                }
+
+                // Find number of arguments
+                const int numArgs = call_inst->getNumArgOperands();
+
+                // We work with a fixed array of 16 arguments which is our upper limit
+                static lldb_private::ABI::CallArgument rawArgs[16];
+                if (numArgs >= 16)
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorStringWithFormat("function takes too many arguments");
+                    return false;
+                }
+
+                // Push all function arguments to the argument list that will
+                // be passed to the call function thread plan
+                for (int i = 0; i < numArgs; i++)
+                {
+                    // Get details of this argument
+                    llvm::Value *arg_op = call_inst->getArgOperand(i);
+                    llvm::Type  *arg_ty = arg_op->getType();
+
+                    // Ensure that this argument is an supported type
+                    if (!arg_ty->isIntegerTy() && !arg_ty->isPointerTy())
+                    {
+                         error.SetErrorToGenericError();
+                         error.SetErrorStringWithFormat("argument %d must be integer type", i);
+                         return false;
+                    }
+
+                    // Extract the arguments value
+                    lldb_private::Scalar tmp_op = 0;
+                    if (!frame.EvaluateValue(tmp_op, arg_op, module))
+                    {
+                         error.SetErrorToGenericError();
+                         error.SetErrorStringWithFormat("unable to evaluate argument %d", i);
+                         return false;
+                    }
+
+                    // Check if this is a string literal or constant string pointer
+                    if (arg_ty->isPointerTy())
+                    {
+                        // Pointer to just one type
+                        assert(arg_ty->getNumContainedTypes() == 1);
+
+                        lldb::addr_t addr = tmp_op.ULongLong();
+                        size_t dataSize = 0;
+
+                        if (memory_map.GetAllocSize(addr, dataSize))
+                        {
+                            // Create the required buffer
+                            rawArgs[i].size = dataSize;
+                            rawArgs[i].data_ap.reset(new uint8_t[dataSize + 1]);
+
+                            // Read string from host memory
+                            memory_map.ReadMemory(rawArgs[i].data_ap.get(), addr, dataSize, error);
+                            if (error.Fail())
+                            {
+                                assert(!"we have failed to read the string from memory");
+                                return false;
+                            }
+                            // Add null terminator
+                            rawArgs[i].data_ap[dataSize] = '\0';
+                            rawArgs[i].type = lldb_private::ABI::CallArgument::HostPointer;
+                        }
+                        else
+                        {
+                            assert(!"unable to locate host data for transfer to device");
+                            return false;
+                        }
+                    }
+                    else /* if ( arg_ty->isPointerTy() ) */
+                    {
+                        rawArgs[i].type = lldb_private::ABI::CallArgument::TargetValue;
+                        // Get argument size in bytes
+                        rawArgs[i].size = arg_ty->getIntegerBitWidth() / 8;
+                        // Push value into argument list for thread plan
+                        rawArgs[i].value = tmp_op.ULongLong();
+                    }
+
+                }
+
+                // Pack the arguments into an llvm::array
+                llvm::ArrayRef<lldb_private::ABI::CallArgument> args(rawArgs, numArgs);
+
+                // Setup a thread plan to call the target function
+                lldb::ThreadPlanSP call_plan_sp
+                (
+                    new lldb_private::ThreadPlanCallFunctionUsingABI
+                    (
+                        exe_ctx.GetThreadRef(),
+                        funcAddr,
+                        *prototype,
+                        *returnType,
+                        args,
+                        options
+                    )
+                );
+
+                // Check if the plan is valid
+                if (!call_plan_sp || !call_plan_sp->ValidatePlan(&error_stream))
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorStringWithFormat("unable to make ThreadPlanCallFunctionUsingABI for 0x%llx", I.ULongLong());
+                    return false;
+                }
+
+                exe_ctx.GetProcessPtr()->SetRunningUserExpression(true);
+
+                // Execute the actual function call thread plan
+                lldb::ExpressionResults res = exe_ctx.GetProcessRef().RunThreadPlan(exe_ctx, call_plan_sp, options, error_stream);
+
+                // Check that the thread plan completed successfully
+                if (res != lldb::ExpressionResults::eExpressionCompleted)
+                {
+                    error.SetErrorToGenericError();
+                    error.SetErrorStringWithFormat("ThreadPlanCallFunctionUsingABI failed");
+                    return false;
+                }
+
+                exe_ctx.GetProcessPtr()->SetRunningUserExpression(false);
+
+                // Void return type
+                if (returnType->isVoidTy())
+                {
+                    // Cant assign to void types, so we leave the frame untouched
+                }
+                else
+                    // Integer or pointer return type
+                    if (returnType->isIntegerTy() || returnType->isPointerTy())
+                    {
+                        // Get the encapsulated return value
+                        lldb::ValueObjectSP retVal = call_plan_sp.get()->GetReturnValueObject();
+
+                        lldb_private::Scalar returnVal = -1;
+                        lldb_private::ValueObject *vobj = retVal.get();
+
+                        // Check if the return value is valid
+                        if (vobj == nullptr || retVal.empty())
+                        {
+                            error.SetErrorToGenericError();
+                            error.SetErrorStringWithFormat("unable to get the return value");
+                            return false;
+                        }
+
+                        // Extract the return value as a integer
+                        lldb_private::Value & value = vobj->GetValue();
+                        returnVal = value.GetScalar();
+
+                        // Push the return value as the result
+                        frame.AssignValue(inst, returnVal, module);
+                    }
             }
                 break;
         }

@@ -168,6 +168,9 @@ DynamicLoaderHexagonDYLD::DidAttach()
     // Disable JIT for hexagon targets because its not supported
     m_process->SetCanJIT(false);
 
+    // Enable Interpreting of function call expressions
+    m_process->SetCanInterpretFunctionCalls(true);
+
     // Add the current executable to the module list
     ModuleList module_list;
     module_list.Append(executable);

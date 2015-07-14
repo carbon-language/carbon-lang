@@ -541,10 +541,11 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
         bool ir_can_run = ir_for_target.runOnModule(*execution_unit_sp->GetModule());
 
         Error interpret_error;
-
-        can_interpret = IRInterpreter::CanInterpret(*execution_unit_sp->GetModule(), *execution_unit_sp->GetFunction(), interpret_error);
-
         Process *process = exe_ctx.GetProcessPtr();
+
+        bool interpret_function_calls = !process ? false : process->CanInterpretFunctionCalls();
+        can_interpret = IRInterpreter::CanInterpret(*execution_unit_sp->GetModule(), *execution_unit_sp->GetFunction(), interpret_error, interpret_function_calls);
+
 
         if (!ir_can_run)
         {

@@ -147,15 +147,16 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_trap_exceptions (options.GetTrapExceptions()),
     m_function_addr (function),
     m_function_sp (0),
-    m_return_type (return_type),
     m_takedown_done (false),
     m_should_clear_objc_exception_bp(false),
     m_should_clear_cxx_exception_bp (false),
-    m_stop_address (LLDB_INVALID_ADDRESS)
+    m_stop_address (LLDB_INVALID_ADDRESS),
+    m_return_type (return_type)
 {
-    lldb::addr_t start_load_addr;
-    ABI *abi;
-    lldb::addr_t function_load_addr;
+    lldb::addr_t start_load_addr = LLDB_INVALID_ADDRESS;
+    lldb::addr_t function_load_addr = LLDB_INVALID_ADDRESS;
+    ABI *abi = nullptr;
+
     if (!ConstructorSetup (thread, abi, start_load_addr, function_load_addr))
         return;
 
@@ -169,6 +170,27 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     ReportRegisterState ("Function call was set up.  Register state was:");
 
     m_valid = true;    
+}
+
+ThreadPlanCallFunction::ThreadPlanCallFunction(Thread &thread,
+                                               const Address &function,
+                                               const EvaluateExpressionOptions &options) :
+    ThreadPlan(ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
+    m_valid(false),
+    m_stop_other_threads(options.GetStopOthers()),
+    m_unwind_on_error(options.DoesUnwindOnError()),
+    m_ignore_breakpoints(options.DoesIgnoreBreakpoints()),
+    m_debug_execution(options.GetDebug()),
+    m_trap_exceptions(options.GetTrapExceptions()),
+    m_function_addr(function),
+    m_function_sp(0),
+    m_takedown_done(false),
+    m_should_clear_objc_exception_bp(false),
+    m_should_clear_cxx_exception_bp(false),
+    m_stop_address(LLDB_INVALID_ADDRESS),
+    m_return_type(ClangASTType())
+{
+
 }
 
 ThreadPlanCallFunction::~ThreadPlanCallFunction ()
@@ -222,13 +244,7 @@ ThreadPlanCallFunction::DoTakedown (bool success)
     {
         if (success)
         {
-            ProcessSP process_sp (m_thread.GetProcess());
-            const ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
-            if (abi && m_return_type.IsValid())
-            {
-                const bool persistent = false;
-                m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type, persistent);
-            }
+            SetReturnValue();
         }
         if (log)
             log->Printf ("ThreadPlanCallFunction(%p): DoTakedown called for thread 0x%4.4" PRIx64 ", m_valid: %d complete: %d.\n",
@@ -574,3 +590,15 @@ ThreadPlanCallFunction::RestoreThreadState()
     return GetThread().RestoreThreadStateFromCheckpoint(m_stored_thread_state);
 }
 
+
+void
+ThreadPlanCallFunction::SetReturnValue()
+{
+    ProcessSP process_sp(m_thread.GetProcess());
+    const ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
+    if (abi && m_return_type.IsValid())
+    {
+        const bool persistent = false;
+        m_return_valobj_sp = abi->GetReturnValueObject(m_thread, m_return_type, persistent);
+    }
+}

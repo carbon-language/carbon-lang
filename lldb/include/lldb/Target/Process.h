@@ -2471,7 +2471,40 @@ public:
     ///     True if execution of JIT code is possible; false otherwise.
     //------------------------------------------------------------------
     void SetCanJIT (bool can_jit);
+
+    //------------------------------------------------------------------
+    /// Determines whether executing function calls using the interpreter
+    /// is possible for this process.
+    ///
+    /// @return
+    ///     True if possible; false otherwise.
+    //------------------------------------------------------------------
+    bool CanInterpretFunctionCalls ()
+    {
+        return m_can_interpret_function_calls;
+    }
     
+    //------------------------------------------------------------------
+    /// Sets whether executing function calls using the interpreter
+    /// is possible for this process.
+    ///
+    /// @param[in] can_interpret_function_calls
+    ///     True if possible; false otherwise.
+    //------------------------------------------------------------------
+    void SetCanInterpretFunctionCalls (bool can_interpret_function_calls)
+    {
+        m_can_interpret_function_calls = can_interpret_function_calls;
+    }
+
+    //------------------------------------------------------------------
+    /// Sets whether executing code in this process is possible.
+    /// This could be either through JIT or interpreting.
+    ///
+    /// @param[in] can_run_code
+    ///     True if execution of code is possible; false otherwise.
+    //------------------------------------------------------------------
+    void SetCanRunCode (bool can_run_code);
+
     //------------------------------------------------------------------
     /// Actually deallocate memory in the process.
     ///
@@ -3268,6 +3301,7 @@ protected:
     lldb::StateType             m_last_broadcast_state;   /// This helps with the Public event coalescing in ShouldBroadcastEvent.
     std::map<lldb::addr_t,lldb::addr_t> m_resolved_indirect_addresses;
     bool m_destroy_in_process;
+    bool m_can_interpret_function_calls; // Some targets, e.g the OSX kernel, don't support the ability to modify the stack.
     
     enum {
         eCanJITDontKnow= 0,
