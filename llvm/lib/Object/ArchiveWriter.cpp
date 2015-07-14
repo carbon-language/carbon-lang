@@ -154,10 +154,8 @@ static void writeStringTable(raw_fd_ostream &Out,
                              ArrayRef<NewArchiveIterator> Members,
                              std::vector<unsigned> &StringMapIndexes) {
   unsigned StartOffset = 0;
-  for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
-                                              E = Members.end();
-       I != E; ++I) {
-    StringRef Name = I->getName();
+  for (const NewArchiveIterator &I : Members) {
+    StringRef Name = I.getName();
     if (Name.size() < 16)
       continue;
     if (StartOffset == 0) {
