@@ -90,6 +90,19 @@ template <> struct BlockScalarTraits<Module> {
 } // end namespace yaml
 } // end namespace llvm
 
+static void printReg(unsigned Reg, raw_ostream &OS,
+                     const TargetRegisterInfo *TRI) {
+  // TODO: Print Stack Slots.
+  if (!Reg)
+    OS << '_';
+  else if (TargetRegisterInfo::isVirtualRegister(Reg))
+    OS << '%' << TargetRegisterInfo::virtReg2Index(Reg);
+  else if (Reg < TRI->getNumRegs())
+    OS << '%' << StringRef(TRI->getName(Reg)).lower();
+  else
+    llvm_unreachable("Can't print this kind of register yet");
+}
+
 void MIRPrinter::print(const MachineFunction &MF) {
   initRegisterMaskIds(MF);
 
@@ -269,19 +282,6 @@ void MIPrinter::print(const MachineInstr &MI) {
     print(MI.getOperand(I), TRI);
     NeedComma = true;
   }
-}
-
-static void printReg(unsigned Reg, raw_ostream &OS,
-                     const TargetRegisterInfo *TRI) {
-  // TODO: Print Stack Slots.
-  if (!Reg)
-    OS << '_';
-  else if (TargetRegisterInfo::isVirtualRegister(Reg))
-    OS << '%' << TargetRegisterInfo::virtReg2Index(Reg);
-  else if (Reg < TRI->getNumRegs())
-    OS << '%' << StringRef(TRI->getName(Reg)).lower();
-  else
-    llvm_unreachable("Can't print this kind of register yet");
 }
 
 void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
