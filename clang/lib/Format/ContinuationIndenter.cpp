@@ -862,6 +862,8 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   unsigned LastSpace = State.Stack.back().LastSpace;
   bool AvoidBinPacking;
   bool BreakBeforeParameter = false;
+  unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
+                                        State.Stack.back().NestedBlockIndent);
   if (Current.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare)) {
     if (Current.opensBlockTypeList(Style)) {
       NewIndent = State.Stack.back().NestedBlockIndent + Style.IndentWidth;
@@ -875,6 +877,8 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
         Current.isOneOf(TT_ArrayInitializerLSquare, TT_DictLiteral) ||
         Style.Language == FormatStyle::LK_Proto || !Style.BinPackArguments ||
         (NextNoComment && NextNoComment->is(TT_DesignatedInitializerPeriod));
+    if (Current.ParameterCount > 1)
+      NestedBlockIndent = std::max(NestedBlockIndent, State.Column + 1);
   } else {
     NewIndent = Style.ContinuationIndentWidth +
                 std::max(State.Stack.back().LastSpace,
@@ -922,8 +926,6 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
   bool NoLineBreak = State.Stack.back().NoLineBreak ||
                      (Current.is(TT_TemplateOpener) &&
                       State.Stack.back().ContainsUnwrappedBuilder);
-  unsigned NestedBlockIndent = std::max(State.Stack.back().StartOfFunctionCall,
-                                        State.Stack.back().NestedBlockIndent);
   State.Stack.push_back(ParenState(NewIndent, NewIndentLevel, LastSpace,
                                    AvoidBinPacking, NoLineBreak));
   State.Stack.back().NestedBlockIndent = NestedBlockIndent;

@@ -9866,6 +9866,15 @@ TEST_F(FormatTest, FormatsLambdas) {
                "  return aaaaaaaaaaaaaaaaaaaaaaa != aaaaaaaaaaaaaaaaaaaaaaa;\n"
                "});",
                getLLVMStyleWithColumns(60));
+  verifyFormat("SomeFunction({[&] {\n"
+               "                // comment\n"
+               "              },\n"
+               "              [&] {\n"
+               "                // comment\n"
+               "              }});");
+  verifyFormat("SomeFunction({[&] {\n"
+               "  // comment\n"
+               "}});");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");
