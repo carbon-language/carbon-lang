@@ -741,7 +741,7 @@ static void emitSafelenClause(CodeGenFunction &CGF,
     RValue Len = CGF.EmitAnyExpr(C->getSafelen(), AggValueSlot::ignored(),
                                  /*ignoreResult=*/true);
     llvm::ConstantInt *Val = cast<llvm::ConstantInt>(Len.getScalarVal());
-    CGF.LoopStack.setVectorizerWidth(Val->getZExtValue());
+    CGF.LoopStack.setVectorizeWidth(Val->getZExtValue());
     // In presence of finite 'safelen', it may be unsafe to mark all
     // the memory instructions parallel, because loop-carried
     // dependences of 'safelen' iterations are possible.
@@ -752,7 +752,7 @@ static void emitSafelenClause(CodeGenFunction &CGF,
 void CodeGenFunction::EmitOMPSimdInit(const OMPLoopDirective &D) {
   // Walk clauses and process safelen/lastprivate.
   LoopStack.setParallel();
-  LoopStack.setVectorizerEnable(true);
+  LoopStack.setVectorizeEnable(true);
   emitSafelenClause(*this, D);
 }
 

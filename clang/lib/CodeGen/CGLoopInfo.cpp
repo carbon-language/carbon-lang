@@ -20,9 +20,9 @@ using namespace llvm;
 
 static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 
-  if (!Attrs.IsParallel && Attrs.VectorizerWidth == 0 &&
-      Attrs.VectorizerUnroll == 0 &&
-      Attrs.VectorizerEnable == LoopAttributes::VecUnspecified)
+  if (!Attrs.IsParallel && Attrs.VectorizeWidth == 0 &&
+      Attrs.InterleaveCount == 0 &&
+      Attrs.VectorizeEnable == LoopAttributes::Unspecified)
     return nullptr;
 
   SmallVector<Metadata *, 4> Args;
@@ -30,29 +30,28 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
   auto TempNode = MDNode::getTemporary(Ctx, None);
   Args.push_back(TempNode.get());
 
-  // Setting vectorizer.width
-  if (Attrs.VectorizerWidth > 0) {
+  // Setting vectorize.width
+  if (Attrs.VectorizeWidth > 0) {
     Metadata *Vals[] = {MDString::get(Ctx, "llvm.loop.vectorize.width"),
                         ConstantAsMetadata::get(ConstantInt::get(
-                            Type::getInt32Ty(Ctx), Attrs.VectorizerWidth))};
+                            Type::getInt32Ty(Ctx), Attrs.VectorizeWidth))};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
-  // Setting vectorizer.unroll
-  if (Attrs.VectorizerUnroll > 0) {
+  // Setting interleave.count
+  if (Attrs.InterleaveCount > 0) {
     Metadata *Vals[] = {MDString::get(Ctx, "llvm.loop.interleave.count"),
                         ConstantAsMetadata::get(ConstantInt::get(
-                            Type::getInt32Ty(Ctx), Attrs.VectorizerUnroll))};
+                            Type::getInt32Ty(Ctx), Attrs.InterleaveCount))};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
-  // Setting vectorizer.enable
-  if (Attrs.VectorizerEnable != LoopAttributes::VecUnspecified) {
-    Metadata *Vals[] = {
-        MDString::get(Ctx, "llvm.loop.vectorize.enable"),
-        ConstantAsMetadata::get(ConstantInt::get(
-            Type::getInt1Ty(Ctx),
-            (Attrs.VectorizerEnable == LoopAttributes::VecEnable)))};
+  // Setting vectorize.enable
+  if (Attrs.VectorizeEnable != LoopAttributes::Unspecified) {
+    Metadata *Vals[] = {MDString::get(Ctx, "llvm.loop.vectorize.enable"),
+                        ConstantAsMetadata::get(ConstantInt::get(
+                            Type::getInt1Ty(Ctx), (Attrs.VectorizeEnable ==
+                                                   LoopAttributes::Enable)))};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
@@ -63,14 +62,14 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 }
 
 LoopAttributes::LoopAttributes(bool IsParallel)
-    : IsParallel(IsParallel), VectorizerEnable(LoopAttributes::VecUnspecified),
-      VectorizerWidth(0), VectorizerUnroll(0) {}
+    : IsParallel(IsParallel), VectorizeEnable(LoopAttributes::Unspecified),
+      VectorizeWidth(0), InterleaveCount(0) {}
 
 void LoopAttributes::clear() {
   IsParallel = false;
-  VectorizerWidth = 0;
-  VectorizerUnroll = 0;
-  VectorizerEnable = LoopAttributes::VecUnspecified;
+  VectorizeWidth = 0;
+  InterleaveCount = 0;
+  VectorizeEnable = LoopAttributes::Unspecified;
 }
 
 LoopInfo::LoopInfo(BasicBlock *Header, const LoopAttributes &Attrs)
