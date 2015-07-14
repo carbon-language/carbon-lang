@@ -12,22 +12,23 @@
 ///
 //===----------------------------------------------------------------------===//
 
+defm ADD : BinaryInt<add>;
+defm SUB : BinaryInt<sub>;
+defm MUL : BinaryInt<mul>;
+defm SDIV : BinaryInt<sdiv>;
+defm UDIV : BinaryInt<udiv>;
+defm SREM : BinaryInt<srem>;
+defm UREM : BinaryInt<urem>;
+defm AND : BinaryInt<and>;
+defm IOR : BinaryInt<or>;
+defm XOR : BinaryInt<xor>;
+defm SHL : BinaryInt<shl>;
+defm SHR : BinaryInt<srl>;
+defm SAR : BinaryInt<sra>;
+
 /*
  * TODO(jfb): Add the following for 32-bit and 64-bit.
  *
- * int32.add: signed-less addition
- * int32.sub: signed-less subtraction
- * int32.mul: signed-less multiplication (lower 32-bits)
- * int32.sdiv: signed division
- * int32.udiv: unsigned division
- * int32.srem: signed remainder
- * int32.urem: unsigned remainder
- * int32.and: signed-less logical and
- * int32.ior: signed-less inclusive or
- * int32.xor: signed-less exclusive or
- * int32.shl: signed-less shift left
- * int32.shr: signed-less logical shift right
- * int32.sar: signed-less arithmetic shift right
  * int32.eq: signed-less compare equal
  * int32.slt: signed less than
  * int32.sle: signed less than or equal
@@ -37,7 +38,8 @@
  * int32.sge: signed greater than or equal
  * int32.ugt: unsigned greater than
  * int32.uge: unsigned greater than or equal
- * int32.clz: count leading zeroes (defined for all values, including zero)
- * int32.ctz: count trailing zeroes (defined for all values, including zero)
- * int32.popcnt: count number of ones
  */
+
+defm CLZ : UnaryInt<ctlz>;
+defm CTZ : UnaryInt<cttz>;
+defm POPCNT : UnaryInt<ctpop>;
