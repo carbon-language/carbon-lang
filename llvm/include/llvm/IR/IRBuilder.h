@@ -1464,7 +1464,7 @@ public:
     return Insert(PHINode::Create(Ty, NumReservedValues), Name);
   }
 
-  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args = {},
+  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args = None,
                        const Twine &Name = "") {
     return Insert(CallInst::Create(Callee, Args), Name);
   }
