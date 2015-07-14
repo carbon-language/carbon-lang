@@ -667,7 +667,9 @@ DynamicLoaderPOSIXDYLD::ResolveExecutableModule (lldb::ModuleSP &module_sp)
     if (module_sp && module_sp->MatchesModuleSpec (module_spec))
         return;
 
-    auto error = platform_sp->ResolveExecutable (module_spec, module_sp, nullptr);
+    const auto executable_search_paths (Target::GetDefaultExecutableSearchPaths());
+    auto error = platform_sp->ResolveExecutable (
+        module_spec, module_sp, !executable_search_paths.IsEmpty() ? &executable_search_paths : nullptr);
     if (error.Fail ())
     {
         StreamString stream;

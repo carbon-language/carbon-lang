@@ -141,13 +141,14 @@ PlatformRemoteGDBServer::ResolveExecutable (const ModuleSpec &module_spec,
     // Resolve any executable within an apk on Android?
     //Host::ResolveExecutableInBundle (resolved_module_spec.GetFileSpec());
 
-    if (resolved_module_spec.GetFileSpec().Exists())
+    if (resolved_module_spec.GetFileSpec().Exists() ||
+        module_spec.GetUUID().IsValid())
     {
         if (resolved_module_spec.GetArchitecture().IsValid() || resolved_module_spec.GetUUID().IsValid())
         {
             error = ModuleList::GetSharedModule (resolved_module_spec,
                                                  exe_module_sp,
-                                                 NULL,
+                                                 module_search_paths_ptr,
                                                  NULL,
                                                  NULL);
 
@@ -163,7 +164,7 @@ PlatformRemoteGDBServer::ResolveExecutable (const ModuleSpec &module_spec,
         {
             error = ModuleList::GetSharedModule (resolved_module_spec,
                                                  exe_module_sp,
-                                                 NULL,
+                                                 module_search_paths_ptr,
                                                  NULL,
                                                  NULL);
             // Did we find an executable using one of the
