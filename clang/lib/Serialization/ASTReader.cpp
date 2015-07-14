@@ -845,7 +845,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
 }
 
 unsigned 
-ASTDeclContextNameLookupTrait::ComputeHash(const DeclNameKey &Key) const {
+ASTDeclContextNameLookupTrait::ComputeHash(const DeclNameKey &Key) {
   llvm::FoldingSetNodeID ID;
   ID.AddInteger(Key.Kind);
 
@@ -874,7 +874,7 @@ ASTDeclContextNameLookupTrait::ComputeHash(const DeclNameKey &Key) const {
 
 ASTDeclContextNameLookupTrait::internal_key_type 
 ASTDeclContextNameLookupTrait::GetInternalKey(
-                                          const external_key_type& Name) const {
+                                          const external_key_type& Name) {
   DeclNameKey Key;
   Key.Kind = Name.getNameKind();
   switch (Name.getNameKind()) {
@@ -1644,6 +1644,7 @@ namespace {
   /// \brief Visitor class used to look up identifirs in an AST file.
   class IdentifierLookupVisitor {
     StringRef Name;
+    unsigned NameHash;
     unsigned PriorGeneration;
     unsigned &NumIdentifierLookups;
     unsigned &NumIdentifierLookupHits;
@@ -1653,7 +1654,8 @@ namespace {
     IdentifierLookupVisitor(StringRef Name, unsigned PriorGeneration,
                             unsigned &NumIdentifierLookups,
                             unsigned &NumIdentifierLookupHits)
-      : Name(Name), PriorGeneration(PriorGeneration),
+      : Name(Name), NameHash(ASTIdentifierLookupTrait::ComputeHash(Name)),
+        PriorGeneration(PriorGeneration),
         NumIdentifierLookups(NumIdentifierLookups),
         NumIdentifierLookupHits(NumIdentifierLookupHits),
         Found()
@@ -1676,7 +1678,8 @@ namespace {
       ASTIdentifierLookupTrait Trait(IdTable->getInfoObj().getReader(),
                                      M, This->Found);
       ++This->NumIdentifierLookups;
-      ASTIdentifierLookupTable::iterator Pos = IdTable->find(This->Name,&Trait);
+      ASTIdentifierLookupTable::iterator Pos =
+          IdTable->find_hashed(This->Name, This->NameHash, &Trait);
       if (Pos == IdTable->end())
         return false;
       
@@ -6295,6 +6298,27 @@ void ASTReader::FindFileRegionDecls(FileID File,
     Decls.push_back(GetDecl(getGlobalDeclID(*DInfo.Mod, *DIt)));
 }
 
+/// \brief Retrieve the "definitive" module file for the definition of the
+/// given declaration context, if there is one.
+///
+/// The "definitive" module file is the only place where we need to look to
+/// find information about the declarations within the given declaration
+/// context. For example, C++ and Objective-C classes, C structs/unions, and
+/// Objective-C protocols, categories, and extensions are all defined in a
+/// single place in the source code, so they have definitive module files
+/// associated with them. C++ namespaces, on the other hand, can have
+/// definitions in multiple different module files.
+///
+/// Note: this needs to be kept in sync with ASTWriter::AddedVisibleDecl's
+/// NDEBUG checking.
+static ModuleFile *getDefinitiveModuleFileFor(const DeclContext *DC,
+                                              ASTReader &Reader) {
+  if (const DeclContext *DefDC = getDefinitiveDeclContext(DC))
+    return Reader.getOwningModuleFile(cast<Decl>(DefDC));
+
+  return nullptr;
+}
+
 namespace {
   /// \brief ModuleFile visitor used to perform name lookup into a
   /// declaration context.
@@ -6302,18 +6326,38 @@ namespace {
     ASTReader &Reader;
     ArrayRef<const DeclContext *> Contexts;
     DeclarationName Name;
+    ASTDeclContextNameLookupTrait::DeclNameKey NameKey;
+    unsigned NameHash;
     SmallVectorImpl<NamedDecl *> &Decls;
     llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet;
 
   public:
     DeclContextNameLookupVisitor(ASTReader &Reader,
-                                 ArrayRef<const DeclContext *> Contexts,
                                  DeclarationName Name,
                                  SmallVectorImpl<NamedDecl *> &Decls,
                                  llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet)
-      : Reader(Reader), Contexts(Contexts), Name(Name), Decls(Decls),
-        DeclSet(DeclSet) { }
+      : Reader(Reader), Name(Name),
+        NameKey(ASTDeclContextNameLookupTrait::GetInternalKey(Name)),
+        NameHash(ASTDeclContextNameLookupTrait::ComputeHash(NameKey)),
+        Decls(Decls), DeclSet(DeclSet) {}
 
+    void visitContexts(ArrayRef<const DeclContext*> Contexts) {
+      if (Contexts.empty())
+        return;
+      this->Contexts = Contexts;
+
+      // If we can definitively determine which module file to look into,
+      // only look there. Otherwise, look in all module files.
+      ModuleFile *Definitive;
+      if (Contexts.size() == 1 &&
+          (Definitive = getDefinitiveModuleFileFor(Contexts[0], Reader))) {
+        visit(*Definitive, this);
+      } else {
+        Reader.getModuleManager().visit(&visit, this);
+      }
+    }
+
+  private:
     static bool visit(ModuleFile &M, void *UserData) {
       DeclContextNameLookupVisitor *This
         = static_cast<DeclContextNameLookupVisitor *>(UserData);
@@ -6338,7 +6382,7 @@ namespace {
       ASTDeclContextNameLookupTable *LookupTable =
         Info->second.NameLookupTableData;
       ASTDeclContextNameLookupTable::iterator Pos
-        = LookupTable->find(This->Name);
+        = LookupTable->find_hashed(This->NameKey, This->NameHash);
       if (Pos == LookupTable->end())
         return false;
 
@@ -6370,27 +6414,6 @@ namespace {
   };
 }
 
-/// \brief Retrieve the "definitive" module file for the definition of the
-/// given declaration context, if there is one.
-///
-/// The "definitive" module file is the only place where we need to look to
-/// find information about the declarations within the given declaration
-/// context. For example, C++ and Objective-C classes, C structs/unions, and
-/// Objective-C protocols, categories, and extensions are all defined in a
-/// single place in the source code, so they have definitive module files
-/// associated with them. C++ namespaces, on the other hand, can have
-/// definitions in multiple different module files.
-///
-/// Note: this needs to be kept in sync with ASTWriter::AddedVisibleDecl's
-/// NDEBUG checking.
-static ModuleFile *getDefinitiveModuleFileFor(const DeclContext *DC,
-                                              ASTReader &Reader) {
-  if (const DeclContext *DefDC = getDefinitiveDeclContext(DC))
-    return Reader.getOwningModuleFile(cast<Decl>(DefDC));
-
-  return nullptr;
-}
-
 bool
 ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                           DeclarationName Name) {
@@ -6419,21 +6442,8 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     }
   }
 
-  auto LookUpInContexts = [&](ArrayRef<const DeclContext*> Contexts) {
-    DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls, DeclSet);
-
-    // If we can definitively determine which module file to look into,
-    // only look there. Otherwise, look in all module files.
-    ModuleFile *Definitive;
-    if (Contexts.size() == 1 &&
-        (Definitive = getDefinitiveModuleFileFor(Contexts[0], *this))) {
-      DeclContextNameLookupVisitor::visit(*Definitive, &Visitor);
-    } else {
-      ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
-    }
-  };
-
-  LookUpInContexts(Contexts);
+  DeclContextNameLookupVisitor Visitor(*this, Name, Decls, DeclSet);
+  Visitor.visitContexts(Contexts);
 
   // If this might be an implicit special member function, then also search
   // all merged definitions of the surrounding class. We need to search them
@@ -6444,7 +6454,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
     if (Merged != MergedLookups.end()) {
       for (unsigned I = 0; I != Merged->second.size(); ++I) {
         const DeclContext *Context = Merged->second[I];
-        LookUpInContexts(Context);
+        Visitor.visitContexts(Context);
         // We might have just added some more merged lookups. If so, our
         // iterator is now invalid, so grab a fresh one before continuing.
         Merged = MergedLookups.find(DC);

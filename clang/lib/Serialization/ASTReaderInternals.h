@@ -68,8 +68,8 @@ public:
     return a.Kind == b.Kind && a.Data == b.Data;
   }
 
-  hash_value_type ComputeHash(const DeclNameKey &Key) const;
-  internal_key_type GetInternalKey(const external_key_type& Name) const;
+  static hash_value_type ComputeHash(const DeclNameKey &Key);
+  static internal_key_type GetInternalKey(const external_key_type& Name);
 
   static std::pair<unsigned, unsigned>
   ReadKeyDataLength(const unsigned char*& d);
