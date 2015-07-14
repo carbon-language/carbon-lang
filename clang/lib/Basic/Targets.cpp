@@ -580,6 +580,8 @@ public:
   PS4OSTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
     this->WCharType = this->UnsignedShort;
 
+    // On PS4, TLS variable cannot be aligned to more than 32 bytes (256 bits).
+    this->MaxTLSAlign = 256;
     this->UserLabelPrefix = "";
 
     switch (Triple.getArch()) {

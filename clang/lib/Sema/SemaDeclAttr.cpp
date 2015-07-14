@@ -2985,11 +2985,27 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   //      specifier shall have no effect
   // C11 6.7.5p6:
   //   An alignment specification of zero has no effect.
-  if (!(TmpAttr.isAlignas() && !Alignment) &&
-      !llvm::isPowerOf2_64(Alignment.getZExtValue())) {
-    Diag(AttrLoc, diag::err_alignment_not_power_of_two)
-      << E->getSourceRange();
-    return;
+  if (!(TmpAttr.isAlignas() && !Alignment)) {
+    if(!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
+      Diag(AttrLoc, diag::err_alignment_not_power_of_two)
+        << E->getSourceRange();
+      return;
+    }
+    if (Context.getTargetInfo().isTLSSupported()) {
+      if (unsigned MaxAlign = Context.getTargetInfo().getMaxTLSAlign()) {
+        if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+          if (VD->getTLSKind()) {
+            CharUnits MaxAlignChars = Context.toCharUnitsFromBits(MaxAlign);
+            if (Alignment.getSExtValue() > MaxAlignChars.getQuantity()) {
+              Diag(VD->getLocation(), diag::err_tls_var_aligned_over_maximum)
+                << (unsigned)Alignment.getZExtValue() << VD
+                << (unsigned)MaxAlignChars.getQuantity();
+              return;
+            }
+          }
+        }
+      }
+    }
   }
 
   // Alignment calculations can wrap around if it's greater than 2**28.

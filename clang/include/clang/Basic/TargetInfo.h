@@ -70,6 +70,7 @@ protected:
   unsigned char MinGlobalAlign;
   unsigned char MaxAtomicPromoteWidth, MaxAtomicInlineWidth;
   unsigned short MaxVectorAlign;
+  unsigned short MaxTLSAlign;
   unsigned short SimdDefaultAlign;
   const char *DescriptionString;
   const char *UserLabelPrefix;
@@ -807,6 +808,14 @@ public:
   /// \brief Whether the target supports thread-local storage.
   bool isTLSSupported() const {
     return TLSSupported;
+  }
+
+  /// \brief Return the maximum alignment (in bits) of a TLS variable
+  ///
+  /// Gets the maximum alignment (in bits) of a TLS variable on this target.
+  /// Returns zero if there is no such constraint.
+  unsigned short getMaxTLSAlign() const {
+    return MaxTLSAlign;
   }
 
   /// \brief Whether the target supports SEH __try.
