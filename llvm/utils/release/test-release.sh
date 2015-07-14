@@ -29,7 +29,6 @@ RC=""
 Triple=""
 use_gzip="no"
 do_checkout="yes"
-do_clang="yes"
 do_64bit="yes"
 do_debug="no"
 do_asserts="no"
@@ -48,7 +47,6 @@ function usage() {
     echo " -build-dir DIR       Directory to perform testing in. [default: pwd]"
     echo " -no-checkout         Don't checkout the sources from SVN."
     echo " -no-64bit            Don't test the 64-bit version. [default: yes]"
-    echo " -disable-clang       Do not test clang. [default: enable]"
     echo " -test-debug          Test the debug build. [default: no]"
     echo " -test-asserts        Test with asserts on. [default: no]"
     echo " -no-compare-files    Don't test that phase 2 and 3 files are identical."
@@ -95,9 +93,6 @@ while [ $# -gt 0 ]; do
             ;;
         -no-64bit | --no-64bit )
             do_64bit="no"
-            ;;
-        -disable-clang | --disable-clang )
-            do_clang="no"
             ;;
         -test-debug | --test-debug )
             do_debug="yes"
@@ -258,6 +253,13 @@ function configure_llvmCore() {
             ;;
     esac
 
+    if [ -z "$InstallDir" ]; then
+      echo "Using default install prefix"
+      PrefixArg=""
+    else
+      PrefixArg="--prefix=$InstallDir"
+    fi
+
     echo "# Using C compiler: $c_compiler"
     echo "# Using C++ compiler: $cxx_compiler"
 
@@ -265,13 +267,13 @@ function configure_llvmCore() {
 
     cd $ObjDir
     echo "# Configuring llvm $Release-$RC $Flavor"
-    echo "# $BuildDir/llvm.src/configure --prefix=$InstallDir \
+    echo "# $BuildDir/llvm.src/configure $PrefixArg \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
         --disable-timestamps \
         $build_triple_option"
     env CC="$c_compiler" CXX="$cxx_compiler" \
-        $BuildDir/llvm.src/configure --prefix=$InstallDir \
+        $BuildDir/llvm.src/configure $PrefixArg \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
         --disable-timestamps \
@@ -284,6 +286,7 @@ function build_llvmCore() {
     Phase="$1"
     Flavor="$2"
     ObjDir="$3"
+    DestDir="$4"
     ExtraOpts=""
 
     if [ "$Flavor" = "Release-64" ]; then
@@ -299,6 +302,7 @@ function build_llvmCore() {
     echo "# Installing llvm $Release-$RC $Flavor"
     echo "# ${MAKE} install"
     ${MAKE} install \
+        DESTDIR="${DestDir}" \
         2>&1 | tee $LogDir/llvm.install-Phase$Phase-$Flavor.log
     cd $BuildDir
 }
@@ -385,89 +389,80 @@ for Flavor in $Flavors ; do
     cxx_compiler="$CXX"
 
     llvmCore_phase1_objdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-$RC.obj
-    llvmCore_phase1_installdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-$RC.install
+    llvmCore_phase1_destdir=$BuildDir/Phase1/$Flavor/llvmCore-$Release-$RC.install
 
     llvmCore_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.obj
-    llvmCore_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.install
+    llvmCore_phase2_destdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.install
 
     llvmCore_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.obj
-    llvmCore_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.install
+    llvmCore_phase3_destdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.install
 
     rm -rf $llvmCore_phase1_objdir
-    rm -rf $llvmCore_phase1_installdir
+    rm -rf $llvmCore_phase1_destdir
 
     rm -rf $llvmCore_phase2_objdir
-    rm -rf $llvmCore_phase2_installdir
+    rm -rf $llvmCore_phase2_destdir
 
     rm -rf $llvmCore_phase3_objdir
-    rm -rf $llvmCore_phase3_installdir
+    rm -rf $llvmCore_phase3_destdir
 
     mkdir -p $llvmCore_phase1_objdir
-    mkdir -p $llvmCore_phase1_installdir
+    mkdir -p $llvmCore_phase1_destdir
 
     mkdir -p $llvmCore_phase2_objdir
-    mkdir -p $llvmCore_phase2_installdir
+    mkdir -p $llvmCore_phase2_destdir
 
     mkdir -p $llvmCore_phase3_objdir
-    mkdir -p $llvmCore_phase3_installdir
+    mkdir -p $llvmCore_phase3_destdir
 
     ############################################################################
     # Phase 1: Build llvmCore and clang
     echo "# Phase 1: Building llvmCore"
     configure_llvmCore 1 $Flavor \
-        $llvmCore_phase1_objdir $llvmCore_phase1_installdir
+        $llvmCore_phase1_objdir ""
     build_llvmCore 1 $Flavor \
-        $llvmCore_phase1_objdir
-    clean_RPATH $llvmCore_phase1_installdir
+        $llvmCore_phase1_objdir $llvmCore_phase1_destdir
+    clean_RPATH $llvmCore_phase1_destdir/usr/local
 
-    # Test clang
-    if [ "$do_clang" = "yes" ]; then
-        ########################################################################
-        # Phase 2: Build llvmCore with newly built clang from phase 1.
-        c_compiler=$llvmCore_phase1_installdir/bin/clang
-        cxx_compiler=$llvmCore_phase1_installdir/bin/clang++
-        echo "# Phase 2: Building llvmCore"
-        configure_llvmCore 2 $Flavor \
-            $llvmCore_phase2_objdir $llvmCore_phase2_installdir
-        build_llvmCore 2 $Flavor \
-            $llvmCore_phase2_objdir
-        clean_RPATH $llvmCore_phase2_installdir
+    ########################################################################
+    # Phase 2: Build llvmCore with newly built clang from phase 1.
+    c_compiler=$llvmCore_phase1_destdir/usr/local/bin/clang
+    cxx_compiler=$llvmCore_phase1_destdir/usr/local/bin/clang++
+    echo "# Phase 2: Building llvmCore"
+    configure_llvmCore 2 $Flavor \
+        $llvmCore_phase2_objdir ""
+    build_llvmCore 2 $Flavor \
+        $llvmCore_phase2_objdir $llvmCore_phase2_destdir
+    clean_RPATH $llvmCore_phase2_destdir/usr/local
 
-        ########################################################################
-        # Phase 3: Build llvmCore with newly built clang from phase 2.
-        c_compiler=$llvmCore_phase2_installdir/bin/clang
-        cxx_compiler=$llvmCore_phase2_installdir/bin/clang++
-        echo "# Phase 3: Building llvmCore"
-        configure_llvmCore 3 $Flavor \
-            $llvmCore_phase3_objdir $llvmCore_phase3_installdir
-        build_llvmCore 3 $Flavor \
-            $llvmCore_phase3_objdir
-        clean_RPATH $llvmCore_phase3_installdir
+    ########################################################################
+    # Phase 3: Build llvmCore with newly built clang from phase 2.
+    c_compiler=$llvmCore_phase2_destdir/usr/local/bin/clang
+    cxx_compiler=$llvmCore_phase2_destdir/usr/local/bin/clang++
+    echo "# Phase 3: Building llvmCore"
+    configure_llvmCore 3 $Flavor \
+        $llvmCore_phase3_objdir ""
+    build_llvmCore 3 $Flavor \
+        $llvmCore_phase3_objdir $llvmCore_phase3_destdir
+    clean_RPATH $llvmCore_phase3_destdir/usr/local
 
-        ########################################################################
-        # Testing: Test phase 3
-        echo "# Testing - built with clang"
-        test_llvmCore 3 $Flavor $llvmCore_phase3_objdir
+    ########################################################################
+    # Testing: Test phase 3
+    echo "# Testing - built with clang"
+    test_llvmCore 3 $Flavor $llvmCore_phase3_objdir
 
-        ########################################################################
-        # Compare .o files between Phase2 and Phase3 and report which ones
-        # differ.
-        if [ "$do_compare" = "yes" ]; then
-            echo
-            echo "# Comparing Phase 2 and Phase 3 files"
-            for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
-                p3=`echo $o | sed -e 's,Phase2,Phase3,'`
-                if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
-                    echo "file `basename $o` differs between phase 2 and phase 3"
-                fi
-            done
-        fi
-    fi
-
-    # Otherwise just test the core.
-    if [ "$do_clang" != "yes" ]; then
-        echo "# Testing - built with system compiler"
-        test_llvmCore 1 $Flavor $llvmCore_phase1_objdir
+    ########################################################################
+    # Compare .o files between Phase2 and Phase3 and report which ones
+    # differ.
+    if [ "$do_compare" = "yes" ]; then
+        echo
+        echo "# Comparing Phase 2 and Phase 3 files"
+        for o in `find $llvmCore_phase2_objdir -name '*.o'` ; do
+            p3=`echo $o | sed -e 's,Phase2,Phase3,'`
+            if ! cmp --ignore-initial=16 $o $p3 > /dev/null 2>&1 ; then
+                echo "file `basename $o` differs between phase 2 and phase 3"
+            fi
+        done
     fi
 done
 ) 2>&1 | tee $LogDir/testing.$Release-$RC.log
