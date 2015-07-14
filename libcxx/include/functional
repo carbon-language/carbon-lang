@@ -2447,6 +2447,15 @@ struct _LIBCPP_TYPE_VIS_ONLY hash
 };
 #endif
 
+
+#if _LIBCPP_STD_VER > 14
+template <class _Fn, class ..._Args>
+result_of_t<_Fn&&(_Args&&...)>
+invoke(_Fn&& __f, _Args&&... __args) {
+    return __invoke(_VSTD::forward<_Fn>(__f), _VSTD::forward<_Args>(__args)...);
+}
+#endif
+
 // struct hash<T*> in <memory>
 
 _LIBCPP_END_NAMESPACE_STD
