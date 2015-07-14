@@ -69,24 +69,32 @@ void ARMException::beginFunction(const MachineFunction *MF) {
 ///
 void ARMException::endFunction(const MachineFunction *MF) {
   ARMTargetStreamer &ATS = getTargetStreamer();
+  const Function *F = MF->getFunction();
+  const Function *Per = nullptr;
+  if (F->hasPersonalityFn())
+    Per = dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
+  assert(!MMI->getPersonality() || Per == MMI->getPersonality());
+  bool forceEmitPersonality =
+    F->hasPersonalityFn() && !isNoOpWithoutInvoke(classifyEHPersonality(Per)) &&
+    F->needsUnwindTableEntry();
+  bool shouldEmitPersonality = forceEmitPersonality ||
+    !MMI->getLandingPads().empty();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry() &&
-      MMI->getLandingPads().empty())
+      !shouldEmitPersonality)
     ATS.emitCantUnwind();
-  else {
-    if (!MMI->getLandingPads().empty()) {
-      // Emit references to personality.
-      if (const Function *Personality = MMI->getPersonality()) {
-        MCSymbol *PerSym = Asm->getSymbol(Personality);
-        Asm->OutStreamer->EmitSymbolAttribute(PerSym, MCSA_Global);
-        ATS.emitPersonality(PerSym);
-      }
-
-      // Emit .handlerdata directive.
-      ATS.emitHandlerData();
-
-      // Emit actual exception table
-      emitExceptionTable();
+  else if (shouldEmitPersonality) {
+    // Emit references to personality.
+    if (Per) {
+      MCSymbol *PerSym = Asm->getSymbol(Per);
+      Asm->OutStreamer->EmitSymbolAttribute(PerSym, MCSA_Global);
+      ATS.emitPersonality(PerSym);
     }
+
+    // Emit .handlerdata directive.
+    ATS.emitHandlerData();
+
+    // Emit actual exception table
+    emitExceptionTable();
   }
 
   if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)

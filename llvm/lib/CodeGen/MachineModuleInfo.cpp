@@ -320,7 +320,10 @@ void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
                                        const Function *Personality) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   LP.Personality = Personality;
+  addPersonality(Personality);
+}
 
+void MachineModuleInfo::addPersonality(const Function *Personality) {
   for (unsigned i = 0; i < Personalities.size(); ++i)
     if (Personalities[i] == Personality)
       return;

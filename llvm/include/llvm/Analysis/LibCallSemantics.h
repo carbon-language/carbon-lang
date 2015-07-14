@@ -206,6 +206,18 @@ class InvokeInst;
     llvm_unreachable("invalid enum");
   }
 
+  /// \brief Return true if this personality may be safely removed if there
+  /// are no invoke instructions remaining in the current function.
+  inline bool isNoOpWithoutInvoke(EHPersonality Pers) {
+    switch (Pers) {
+    case EHPersonality::Unknown:
+      return false;
+    // All known personalities currently have this behavior
+    default: return true;
+    }
+    llvm_unreachable("invalid enum");
+  }
+
   bool canSimplifyInvokeNoUnwind(const Function *F);
 
 } // end namespace llvm

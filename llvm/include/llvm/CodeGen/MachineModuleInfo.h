@@ -320,6 +320,7 @@ public:
   /// information.
   void addPersonality(MachineBasicBlock *LandingPad,
                       const Function *Personality);
+  void addPersonality(const Function *Personality);
 
   void addWinEHState(MachineBasicBlock *LandingPad, int State);
 

@@ -74,8 +74,12 @@ void WinException::beginFunction(const MachineFunction *MF) {
   if (F->hasPersonalityFn())
     Per = dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
 
-  shouldEmitPersonality = hasLandingPads &&
-    PerEncoding != dwarf::DW_EH_PE_omit && Per;
+  bool forceEmitPersonality =
+    F->hasPersonalityFn() && !isNoOpWithoutInvoke(classifyEHPersonality(Per)) &&
+    F->needsUnwindTableEntry();
+
+  shouldEmitPersonality = forceEmitPersonality || (hasLandingPads &&
+    PerEncoding != dwarf::DW_EH_PE_omit && Per);
 
   unsigned LSDAEncoding = TLOF.getLSDAEncoding();
   shouldEmitLSDA = shouldEmitPersonality &&

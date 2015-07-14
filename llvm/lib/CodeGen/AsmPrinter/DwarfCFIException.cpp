@@ -89,6 +89,7 @@ void DwarfCFIException::endModule() {
 
 void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
+  const Function *F = MF->getFunction();
 
   // If any landing pads survive, we need an EH table.
   bool hasLandingPads = !MMI->getLandingPads().empty();
@@ -104,10 +105,24 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
-  const Function *Per = MMI->getPersonality();
+  const Function *Per = nullptr;
+  if (F->hasPersonalityFn())
+    Per = dyn_cast<Function>(F->getPersonalityFn()->stripPointerCasts());
+  assert(!MMI->getPersonality() || Per == MMI->getPersonality());
 
-  shouldEmitPersonality = hasLandingPads &&
-    PerEncoding != dwarf::DW_EH_PE_omit && Per;
+  // Emit a personality function even when there are no landing pads
+  bool forceEmitPersonality =
+      // ...if a personality function is explicitly specified
+      F->hasPersonalityFn() &&
+      // ... and it's not known to be a noop in the absence of invokes
+      !isNoOpWithoutInvoke(classifyEHPersonality(Per)) &&
+      // ... and we're not explicitly asked not to emit it
+      F->needsUnwindTableEntry();
+
+  shouldEmitPersonality =
+      (forceEmitPersonality ||
+       (hasLandingPads && PerEncoding != dwarf::DW_EH_PE_omit)) &&
+      Per;
 
   unsigned LSDAEncoding = TLOF.getLSDAEncoding();
   shouldEmitLSDA = shouldEmitPersonality &&
@@ -122,6 +137,11 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   // Indicate personality routine, if any.
   if (!shouldEmitPersonality)
     return;
+
+  // If we are forced to emit this personality, make sure to record
+  // it because it might not appear in any landingpad
+  if (forceEmitPersonality)
+    MMI->addPersonality(Per);
 
   const MCSymbol *Sym =
       TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
