@@ -30,7 +30,7 @@
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/ExecutionContext.h"
 
-namespace lldb_private 
+namespace lldb_private
 {
 
 //----------------------------------------------------------------------
@@ -45,7 +45,7 @@ namespace lldb_private
 class ClangUserExpression : public ClangExpression
 {
 public:
-   
+
     enum { kDefaultTimeout = 500000u };
     //------------------------------------------------------------------
     /// Constructor
@@ -59,7 +59,7 @@ public:
     ///
     /// @param[in] language
     ///     If not eLanguageTypeUnknown, a language to use when parsing
-    ///     the expression.  Currently restricted to those languages 
+    ///     the expression.  Currently restricted to those languages
     ///     supported by Clang.
     ///
     /// @param[in] desired_type
@@ -70,13 +70,13 @@ public:
                          const char *expr_prefix,
                          lldb::LanguageType language,
                          ResultType desired_type);
-    
+
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    virtual 
+    virtual
     ~ClangUserExpression ();
-    
+
     //------------------------------------------------------------------
     /// Parse the expression
     ///
@@ -92,28 +92,28 @@ public:
     ///     Determines whether interpretation is possible or mandatory.
     ///
     /// @param[in] keep_result_in_memory
-    ///     True if the resulting persistent variable should reside in 
+    ///     True if the resulting persistent variable should reside in
     ///     target memory, if applicable.
     ///
     /// @return
     ///     True on success (no errors); false otherwise.
     //------------------------------------------------------------------
     bool
-    Parse (Stream &error_stream, 
+    Parse (Stream &error_stream,
            ExecutionContext &exe_ctx,
            lldb_private::ExecutionPolicy execution_policy,
            bool keep_result_in_memory,
            bool generate_debug_info);
-    
+
     bool
     CanInterpret ()
     {
         return m_can_interpret;
     }
-    
+
     bool
     MatchesContext (ExecutionContext &exe_ctx);
-    
+
     //------------------------------------------------------------------
     /// Execute the parsed expression
     ///
@@ -131,9 +131,9 @@ public:
     ///     This is a shared pointer to this ClangUserExpression.  This is
     ///     needed because Execute can push a thread plan that will hold onto
     ///     the ClangUserExpression for an unbounded period of time.  So you
-    ///     need to give the thread plan a reference to this object that can 
+    ///     need to give the thread plan a reference to this object that can
     ///     keep it alive.
-    /// 
+    ///
     /// @param[in] result
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
@@ -147,7 +147,7 @@ public:
              const EvaluateExpressionOptions& options,
              lldb::ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result);
-             
+
     //------------------------------------------------------------------
     /// Apply the side effects of the function to program state.
     ///
@@ -157,7 +157,7 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to use when looking up entities that
     ///     are needed for parsing (locations of variables, etc.)
-    /// 
+    ///
     /// @param[in] result
     ///     A pointer to direct at the persistent variable in which the
     ///     expression's result is stored.
@@ -177,7 +177,7 @@ public:
                           lldb::ClangExpressionVariableSP &result,
                           lldb::addr_t function_stack_bottom = LLDB_INVALID_ADDRESS,
                           lldb::addr_t function_stack_top = LLDB_INVALID_ADDRESS);
-    
+
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
     /// translation unit.
@@ -187,7 +187,7 @@ public:
     {
         return m_transformed_text.c_str();
     }
-    
+
     //------------------------------------------------------------------
     /// Return the string that the user typed.
     //------------------------------------------------------------------
@@ -196,7 +196,7 @@ public:
     {
         return m_expr_text.c_str();
     }
-    
+
     //------------------------------------------------------------------
     /// Return the function name that should be used for executing the
     /// expression.  Text() should contain the definition of this
@@ -207,7 +207,7 @@ public:
     {
         return "$__lldb_expr";
     }
-    
+
     //------------------------------------------------------------------
     /// Return the language that should be used when parsing.  To use
     /// the default, return eLanguageTypeUnknown.
@@ -217,7 +217,7 @@ public:
     {
         return m_language;
     }
-    
+
     //------------------------------------------------------------------
     /// Return the object that the parser should use when resolving external
     /// values.  May be NULL if everything should be self-contained.
@@ -227,7 +227,7 @@ public:
     {
         return m_expr_decl_map.get();
     }
-    
+
     //------------------------------------------------------------------
     /// Return the object that the parser should allow to access ASTs.
     /// May be NULL if the ASTs do not need to be transformed.
@@ -238,9 +238,9 @@ public:
     //------------------------------------------------------------------
     clang::ASTConsumer *
     ASTTransformer (clang::ASTConsumer *passthrough);
-    
+
     //------------------------------------------------------------------
-    /// Return the desired result type of the function, or 
+    /// Return the desired result type of the function, or
     /// eResultTypeAny if indifferent.
     //------------------------------------------------------------------
     virtual ResultType
@@ -248,7 +248,7 @@ public:
     {
         return m_desired_type;
     }
-    
+
     //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
     /// expression.
@@ -258,7 +258,7 @@ public:
     {
         return true;
     }
-    
+
     //------------------------------------------------------------------
     /// Return true if external variables in the expression should be
     /// resolved.
@@ -302,15 +302,15 @@ public:
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
               Error &error);
-    
+
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:
     //------------------------------------------------------------------
     /// Populate m_in_cplusplus_method and m_in_objectivec_method based on the environment.
     //------------------------------------------------------------------
-    
+
     void
-    ScanContext (ExecutionContext &exe_ctx, 
+    ScanContext (ExecutionContext &exe_ctx,
                  lldb_private::Error &err);
 
     bool
@@ -319,21 +319,21 @@ private:
                                    lldb::addr_t &struct_address,
                                    lldb::addr_t &object_ptr,
                                    lldb::addr_t &cmd_ptr);
-    
+
     void
     InstallContext (ExecutionContext &exe_ctx);
-    
+
     bool
     LockAndCheckContext (ExecutionContext &exe_ctx,
                          lldb::TargetSP &target_sp,
                          lldb::ProcessSP &process_sp,
                          lldb::StackFrameSP &frame_sp);
-    
+
     lldb::ProcessWP                             m_process_wp;           ///< The process used as the context for the expression.
     Address                                     m_address;              ///< The address the process is stopped in.
     lldb::addr_t                                m_stack_frame_bottom;   ///< The bottom of the allocated stack frame.
     lldb::addr_t                                m_stack_frame_top;      ///< The top of the allocated stack frame.
-    
+
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
     lldb::LanguageType                          m_language;             ///< The language to use when parsing (eLanguageTypeUnknown means use defaults)
@@ -341,7 +341,7 @@ private:
     bool                                        m_allow_objc;           ///< True if the language allows Objective-C.
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
     ResultType                                  m_desired_type;         ///< The type to coerce the expression's result to.  If eResultTypeAny, inferred from the expression.
-    
+
     std::unique_ptr<ClangExpressionDeclMap>     m_expr_decl_map;        ///< The map to use when parsing the expression.
     std::shared_ptr<IRExecutionUnit>            m_execution_unit_sp;    ///< The execution unit the expression is stored in.
     std::unique_ptr<Materializer>               m_materializer_ap;      ///< The materializer to use when running the expression.
@@ -354,12 +354,12 @@ private:
     bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be NULL.
     bool                                        m_const_object;         ///< True if "this" is const.
     Target                                     *m_target;               ///< The target for storing persistent data like types and variables.
-    
+
     bool                                        m_can_interpret;        ///< True if the expression could be evaluated statically; false otherwise.
     lldb::addr_t                                m_materialized_address; ///< The address at which the arguments to the expression have been materialized.
     Materializer::DematerializerSP              m_dematerializer_sp;    ///< The dematerializer.
 };
-    
+
 } // namespace lldb_private
 
 #endif  // liblldb_ClangUserExpression_h_
