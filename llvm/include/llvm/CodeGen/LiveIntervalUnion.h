@@ -203,6 +203,11 @@ public:
       assert(idx <  Size && "idx out of bounds");
       return LIUs[idx];
     }
+
+    const LiveIntervalUnion& operator[](unsigned Idx) const {
+      assert(Idx < Size && "Idx out of bounds");
+      return LIUs[Idx];
+    }
   };
 };
 

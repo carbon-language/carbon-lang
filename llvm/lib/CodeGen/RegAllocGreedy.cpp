@@ -400,6 +400,8 @@ private:
   typedef SmallVector<HintInfo, 4> HintsInfo;
   BlockFrequency getBrokenHintFreq(const HintsInfo &, unsigned);
   void collectHintInfo(unsigned, HintsInfo &);
+
+  bool isUnusedCalleeSavedReg(unsigned PhysReg) const;
 };
 } // end anonymous namespace
 
@@ -816,6 +818,16 @@ void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
   }
 }
 
+/// Returns true if the given \p PhysReg is a callee saved register and has not
+/// been used for allocation yet.
+bool RAGreedy::isUnusedCalleeSavedReg(unsigned PhysReg) const {
+  unsigned CSR = RegClassInfo.getLastCalleeSavedAlias(PhysReg);
+  if (CSR == 0)
+    return false;
+
+  return !Matrix->isPhysRegUsed(PhysReg);
+}
+
 /// tryEvict - Try to evict all interferences for a physreg.
 /// @param  VirtReg Currently unassigned virtual register.
 /// @param  Order   Physregs to try.
@@ -861,13 +873,12 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
       continue;
     // The first use of a callee-saved register in a function has cost 1.
     // Don't start using a CSR when the CostPerUseLimit is low.
-    if (CostPerUseLimit == 1)
-     if (unsigned CSR = RegClassInfo.getLastCalleeSavedAlias(PhysReg))
-       if (!MRI->isPhysRegUsed(CSR)) {
-         DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " would clobber CSR "
-                      << PrintReg(CSR, TRI) << '\n');
-         continue;
-       }
+    if (CostPerUseLimit == 1 && isUnusedCalleeSavedReg(PhysReg)) {
+      DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " would clobber CSR "
+            << PrintReg(RegClassInfo.getLastCalleeSavedAlias(PhysReg), TRI)
+            << '\n');
+      continue;
+    }
 
     if (!canEvictInterference(VirtReg, PhysReg, false, BestCost))
       continue;
@@ -1348,9 +1359,8 @@ unsigned RAGreedy::calculateRegionSplitCost(LiveInterval &VirtReg,
   unsigned BestCand = NoCand;
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
-   if (unsigned CSR = RegClassInfo.getLastCalleeSavedAlias(PhysReg))
-     if (IgnoreCSR && !MRI->isPhysRegUsed(CSR))
-       continue;
+    if (IgnoreCSR && isUnusedCalleeSavedReg(PhysReg))
+      continue;
 
     // Discard bad candidates before we run out of interference cache cursors.
     // This will only affect register classes with a lot of registers (>32).
@@ -2134,7 +2144,8 @@ unsigned RAGreedy::tryLastChanceRecoloring(LiveInterval &VirtReg,
       unsigned ItVirtReg = (*It)->reg;
       if (VRM->hasPhys(ItVirtReg))
         Matrix->unassign(**It);
-      Matrix->assign(**It, VirtRegToPhysReg[ItVirtReg]);
+      unsigned ItPhysReg = VirtRegToPhysReg[ItVirtReg];
+      Matrix->assign(**It, ItPhysReg);
     }
   }
 
@@ -2441,16 +2452,11 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
   // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs)) {
-    // We check other options if we are using a CSR for the first time.
-    bool CSRFirstUse = false;
-    if (unsigned CSR = RegClassInfo.getLastCalleeSavedAlias(PhysReg))
-      if (!MRI->isPhysRegUsed(CSR))
-        CSRFirstUse = true;
-
     // When NewVRegs is not empty, we may have made decisions such as evicting
     // a virtual register, go with the earlier decisions and use the physical
     // register.
-    if (CSRCost.getFrequency() && CSRFirstUse && NewVRegs.empty()) {
+    if (CSRCost.getFrequency() && isUnusedCalleeSavedReg(PhysReg) &&
+        NewVRegs.empty()) {
       unsigned CSRReg = tryAssignCSRFirstTime(VirtReg, Order, PhysReg,
                                               CostPerUseLimit, NewVRegs);
       if (CSRReg || !NewVRegs.empty())

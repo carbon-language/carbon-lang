@@ -114,6 +114,9 @@ public:
   /// the assignment and updates VirtRegMap accordingly.
   void unassign(LiveInterval &VirtReg);
 
+  /// Returns true if the given \p PhysReg has any live intervals assigned.
+  bool isPhysRegUsed(unsigned PhysReg) const;
+
   //===--------------------------------------------------------------------===//
   // Low-level interface.
   //===--------------------------------------------------------------------===//

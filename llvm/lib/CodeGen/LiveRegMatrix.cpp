@@ -131,6 +131,14 @@ void LiveRegMatrix::unassign(LiveInterval &VirtReg) {
   DEBUG(dbgs() << '\n');
 }
 
+bool LiveRegMatrix::isPhysRegUsed(unsigned PhysReg) const {
+  for (MCRegUnitIterator Unit(PhysReg, TRI); Unit.isValid(); ++Unit) {
+    if (!Matrix[*Unit].empty())
+      return true;
+  }
+  return false;
+}
+
 bool LiveRegMatrix::checkRegMaskInterference(LiveInterval &VirtReg,
                                              unsigned PhysReg) {
   // Check if the cached information is valid.
