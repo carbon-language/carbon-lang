@@ -76,7 +76,7 @@ std::error_code ArchiveFile::parse() {
   // all members are mapped to false, which indicates all these files
   // are not read yet.
   for (const Archive::Child &Child : File->children())
-    Seen[Child.getBuffer().data()].clear();
+    Seen[Child.getChildOffset()].clear();
   return std::error_code();
 }
 
@@ -89,8 +89,7 @@ ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
   Archive::child_iterator It = ItOrErr.get();
 
   // Return an empty buffer if we have already returned the same buffer.
-  const char *StartAddr = It->getBuffer().data();
-  if (Seen[StartAddr].test_and_set())
+  if (Seen[It->getChildOffset()].test_and_set())
     return MemoryBufferRef();
   return It->getMemoryBufferRef();
 }

@@ -107,7 +107,7 @@ private:
   std::unique_ptr<Archive> File;
   std::string Filename;
   std::vector<Lazy *> LazySymbols;
-  std::map<const char *, std::atomic_flag> Seen;
+  std::map<uint64_t, std::atomic_flag> Seen;
   llvm::MallocAllocator Alloc;
 };
 
