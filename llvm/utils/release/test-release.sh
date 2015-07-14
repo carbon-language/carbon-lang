@@ -231,7 +231,6 @@ function configure_llvmCore() {
     Phase="$1"
     Flavor="$2"
     ObjDir="$3"
-    InstallDir="$4"
 
     case $Flavor in
         Release | Release-64 )
@@ -253,13 +252,6 @@ function configure_llvmCore() {
             ;;
     esac
 
-    if [ -z "$InstallDir" ]; then
-      echo "Using default install prefix"
-      PrefixArg=""
-    else
-      PrefixArg="--prefix=$InstallDir"
-    fi
-
     echo "# Using C compiler: $c_compiler"
     echo "# Using C++ compiler: $cxx_compiler"
 
@@ -267,13 +259,13 @@ function configure_llvmCore() {
 
     cd $ObjDir
     echo "# Configuring llvm $Release-$RC $Flavor"
-    echo "# $BuildDir/llvm.src/configure $PrefixArg \
+    echo "# $BuildDir/llvm.src/configure \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
         --disable-timestamps \
         $build_triple_option"
     env CC="$c_compiler" CXX="$cxx_compiler" \
-        $BuildDir/llvm.src/configure $PrefixArg \
+        $BuildDir/llvm.src/configure \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
         --disable-timestamps \
@@ -418,8 +410,7 @@ for Flavor in $Flavors ; do
     ############################################################################
     # Phase 1: Build llvmCore and clang
     echo "# Phase 1: Building llvmCore"
-    configure_llvmCore 1 $Flavor \
-        $llvmCore_phase1_objdir ""
+    configure_llvmCore 1 $Flavor $llvmCore_phase1_objdir
     build_llvmCore 1 $Flavor \
         $llvmCore_phase1_objdir $llvmCore_phase1_destdir
     clean_RPATH $llvmCore_phase1_destdir/usr/local
@@ -429,8 +420,7 @@ for Flavor in $Flavors ; do
     c_compiler=$llvmCore_phase1_destdir/usr/local/bin/clang
     cxx_compiler=$llvmCore_phase1_destdir/usr/local/bin/clang++
     echo "# Phase 2: Building llvmCore"
-    configure_llvmCore 2 $Flavor \
-        $llvmCore_phase2_objdir ""
+    configure_llvmCore 2 $Flavor $llvmCore_phase2_objdir
     build_llvmCore 2 $Flavor \
         $llvmCore_phase2_objdir $llvmCore_phase2_destdir
     clean_RPATH $llvmCore_phase2_destdir/usr/local
@@ -440,8 +430,7 @@ for Flavor in $Flavors ; do
     c_compiler=$llvmCore_phase2_destdir/usr/local/bin/clang
     cxx_compiler=$llvmCore_phase2_destdir/usr/local/bin/clang++
     echo "# Phase 3: Building llvmCore"
-    configure_llvmCore 3 $Flavor \
-        $llvmCore_phase3_objdir ""
+    configure_llvmCore 3 $Flavor $llvmCore_phase3_objdir
     build_llvmCore 3 $Flavor \
         $llvmCore_phase3_objdir $llvmCore_phase3_destdir
     clean_RPATH $llvmCore_phase3_destdir/usr/local
