@@ -731,7 +731,9 @@ void ELFFile<ELFT>::scanDynamicTable() {
       IntervalMapImpl::NodeSizer<uintX_t, uintptr_t>::LeafSize,
       IntervalMapHalfOpenInfo<uintX_t>> LoadMapT;
   typename LoadMapT::Allocator Alloc;
-  LoadMapT LoadMap(Alloc);
+  // Allocate the IntervalMap on the heap to work around MSVC bug where the
+  // stack doesn't get realigned despite LoadMap having alignment 8 (PR24113).
+  std::unique_ptr<LoadMapT> LoadMap(new LoadMapT(Alloc));
 
   for (Elf_Phdr_Iter PhdrI = program_header_begin(),
                      PhdrE = program_header_end();
@@ -746,13 +748,13 @@ void ELFFile<ELFT>::scanDynamicTable() {
       continue;
     if (PhdrI->p_filesz == 0)
       continue;
-    LoadMap.insert(PhdrI->p_vaddr, PhdrI->p_vaddr + PhdrI->p_filesz,
-                   PhdrI->p_offset);
+    LoadMap->insert(PhdrI->p_vaddr, PhdrI->p_vaddr + PhdrI->p_filesz,
+                    PhdrI->p_offset);
   }
 
   auto toMappedAddr = [&](uint64_t VAddr) -> const uint8_t * {
-    auto I = LoadMap.find(VAddr);
-    if (I == LoadMap.end())
+    auto I = LoadMap->find(VAddr);
+    if (I == LoadMap->end())
       return nullptr;
     return this->base() + I.value() + (VAddr - I.start());
   };
