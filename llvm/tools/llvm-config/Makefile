@@ -65,12 +65,6 @@ $(ObjDir)/BuildVariables.inc: $(BUILDVARIABLES_SRCPATH) Makefile $(ObjDir)/.dir
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_TARGETS_BUILT@/$(subst /,\/,$(TARGETS_TO_BUILD))/' \
 	  >> temp.sed
-	$(if $(filter-out $(ENABLE_SHARED),0),\
-	  $(Verb) $(ECHO) 's/@BUILD_SHARED_LIBS@/ON/',\
-	  $(Verb) $(ECHO) 's/@BUILD_SHARED_LIBS@/OFF/') \
-	  >> temp.sed
-	$(Verb) $(ECHO) 's/@WAS_BUILT_WITH_CMAKE@/OFF/' \
-	  >> temp.sed
 	$(Verb) $(SED) -f temp.sed < $< > $@
 	$(Verb) $(RM) temp.sed
 
