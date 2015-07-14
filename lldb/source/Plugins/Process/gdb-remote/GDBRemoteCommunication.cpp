@@ -564,8 +564,12 @@ GDBRemoteCommunication::DecompressPacket ()
         return true;
 
     size_t pkt_size = m_bytes.size();
+
+    // Smallest possible compressed packet is $N#00 - an uncompressed empty reply, most commonly indicating
+    // an unsupported packet.  Anything less than 5 characters, it's definitely not a compressed packet.
     if (pkt_size < 5)
         return true;
+
     if (m_bytes[0] != '$' && m_bytes[0] != '%')
         return true;
     if (m_bytes[1] != 'C' && m_bytes[1] != 'N')
