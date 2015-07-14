@@ -1727,37 +1727,59 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
 }
 
 namespace {
+void emitRX(unsigned Opcode, unsigned DstReg, MCOperand Imm, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createReg(DstReg));
+  tmpInst.addOperand(Imm);
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitRI(unsigned Opcode, unsigned DstReg, int16_t Imm, SMLoc IDLoc,
+            SmallVectorImpl<MCInst> &Instructions) {
+  emitRX(Opcode, DstReg, MCOperand::createImm(Imm), IDLoc, Instructions);
+}
+
+
+void emitRRX(unsigned Opcode, unsigned DstReg, unsigned SrcReg, MCOperand Imm,
+             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  MCInst tmpInst;
+  tmpInst.setOpcode(Opcode);
+  tmpInst.addOperand(MCOperand::createReg(DstReg));
+  tmpInst.addOperand(MCOperand::createReg(SrcReg));
+  tmpInst.addOperand(Imm);
+  tmpInst.setLoc(IDLoc);
+  Instructions.push_back(tmpInst);
+}
+
+void emitRRR(unsigned Opcode, unsigned DstReg, unsigned SrcReg,
+             unsigned SrcReg2, SMLoc IDLoc,
+             SmallVectorImpl<MCInst> &Instructions) {
+  emitRRX(Opcode, DstReg, SrcReg, MCOperand::createReg(SrcReg2), IDLoc,
+          Instructions);
+}
+
+void emitRRI(unsigned Opcode, unsigned DstReg, unsigned SrcReg, int16_t Imm,
+             SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+  emitRRX(Opcode, DstReg, SrcReg, MCOperand::createImm(Imm), IDLoc,
+          Instructions);
+}
+
 template <unsigned ShiftAmount>
 void createLShiftOri(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions) {
-  MCInst tmpInst;
-  if (ShiftAmount >= 32) {
-    tmpInst.setOpcode(Mips::DSLL32);
-    tmpInst.addOperand(MCOperand::createReg(RegNo));
-    tmpInst.addOperand(MCOperand::createReg(RegNo));
-    tmpInst.addOperand(MCOperand::createImm(ShiftAmount - 32));
-    tmpInst.setLoc(IDLoc);
-    Instructions.push_back(tmpInst);
-    tmpInst.clear();
-  } else if (ShiftAmount > 0) {
-    tmpInst.setOpcode(Mips::DSLL);
-    tmpInst.addOperand(MCOperand::createReg(RegNo));
-    tmpInst.addOperand(MCOperand::createReg(RegNo));
-    tmpInst.addOperand(MCOperand::createImm(ShiftAmount));
-    tmpInst.setLoc(IDLoc);
-    Instructions.push_back(tmpInst);
-    tmpInst.clear();
-  }
+  if (ShiftAmount >= 32)
+    emitRRI(Mips::DSLL32, RegNo, RegNo, ShiftAmount - 32, IDLoc, Instructions);
+  else if (ShiftAmount > 0)
+    emitRRI(Mips::DSLL, RegNo, RegNo, ShiftAmount, IDLoc, Instructions);
+
   // There's no need for an ORi if the immediate is 0.
   if (Operand.isImm() && Operand.getImm() == 0)
     return;
 
-  tmpInst.setOpcode(Mips::ORi);
-  tmpInst.addOperand(MCOperand::createReg(RegNo));
-  tmpInst.addOperand(MCOperand::createReg(RegNo));
-  tmpInst.addOperand(Operand);
-  tmpInst.setLoc(IDLoc);
-  Instructions.push_back(tmpInst);
+  emitRRX(Mips::ORi, RegNo, RegNo, Operand, IDLoc, Instructions);
 }
 
 template <unsigned ShiftAmount>
@@ -1818,11 +1840,21 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     return true;
   }
 
+  if (Is32BitImm) {
+    if (isInt<32>(ImmValue) || isUInt<32>(ImmValue)) {
+      // Sign extend up to 64-bit so that the predicates match the hardware
+      // behaviour. In particular, isInt<16>(0xffff8000) and similar should be
+      // true.
+      ImmValue = SignExtend64<32>(ImmValue);
+    } else {
+      Error(IDLoc, "instruction requires a 32-bit immediate");
+      return true;
+    }
+  }
+
   bool UseSrcReg = false;
   if (SrcReg != Mips::NoRegister)
     UseSrcReg = true;
-
-  MCInst tmpInst;
 
   unsigned TmpReg = DstReg;
   if (UseSrcReg && (DstReg == SrcReg)) {
@@ -1834,29 +1866,26 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     TmpReg = ATReg;
   }
 
-  tmpInst.setLoc(IDLoc);
   // FIXME: gas has a special case for values that are 000...1111, which
   // becomes a li -1 and then a dsrl
-  if (0 <= ImmValue && ImmValue <= 65535) {
-    // For unsigned and positive signed 16-bit values (0 <= j <= 65535):
-    // li d,j => ori d,$zero,j
-    if (!UseSrcReg)
-      SrcReg = isGP64bit() ? Mips::ZERO_64 : Mips::ZERO;
-    tmpInst.setOpcode(Mips::ORi);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
-    tmpInst.addOperand(MCOperand::createReg(SrcReg));
-    tmpInst.addOperand(MCOperand::createImm(ImmValue));
-    Instructions.push_back(tmpInst);
-  } else if (ImmValue < 0 && ImmValue >= -32768) {
-    // For negative signed 16-bit values (-32768 <= j < 0):
+  if (isInt<16>(ImmValue)) {
     // li d,j => addiu d,$zero,j
     if (!UseSrcReg)
       SrcReg = Mips::ZERO;
-    tmpInst.setOpcode(Mips::ADDiu);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
-    tmpInst.addOperand(MCOperand::createReg(SrcReg));
-    tmpInst.addOperand(MCOperand::createImm(ImmValue));
-    Instructions.push_back(tmpInst);
+    emitRRI(Mips::ADDiu, DstReg, SrcReg, ImmValue, IDLoc, Instructions);
+  } else if (isUInt<16>(ImmValue)) {
+    // li d,j => ori d,$zero,j
+    unsigned TmpReg = DstReg;
+    if (SrcReg == DstReg) {
+      unsigned ATReg = getATReg(IDLoc);
+      if (!ATReg)
+        return true;
+      TmpReg = ATReg;
+    }
+
+    emitRRI(Mips::ORi, TmpReg, Mips::ZERO, ImmValue, IDLoc, Instructions);
+    if (UseSrcReg)
+      emitRRR(Mips::ADDu, DstReg, TmpReg, SrcReg, IDLoc, Instructions);
   } else if (isInt<32>(ImmValue) || isUInt<32>(ImmValue)) {
     warnIfNoMacro(IDLoc);
 
@@ -1869,30 +1898,16 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     if (!Is32BitImm && !isInt<32>(ImmValue)) {
       // For DLI, expand to an ORi instead of a LUi to avoid sign-extending the
       // upper 32 bits.
-      tmpInst.setOpcode(Mips::ORi);
-      tmpInst.addOperand(MCOperand::createReg(TmpReg));
-      tmpInst.addOperand(MCOperand::createReg(Mips::ZERO));
-      tmpInst.addOperand(MCOperand::createImm(Bits31To16));
-      tmpInst.setLoc(IDLoc);
-      Instructions.push_back(tmpInst);
-      // Move the value to the upper 16 bits by doing a 16-bit left shift.
-      createLShiftOri<16>(0, TmpReg, IDLoc, Instructions);
-    } else {
-      tmpInst.setOpcode(Mips::LUi);
-      tmpInst.addOperand(MCOperand::createReg(TmpReg));
-      tmpInst.addOperand(MCOperand::createImm(Bits31To16));
-      Instructions.push_back(tmpInst);
-    }
+      emitRRI(Mips::ORi, TmpReg, Mips::ZERO, Bits31To16, IDLoc, Instructions);
+      emitRRI(Mips::DSLL, TmpReg, TmpReg, 16, IDLoc, Instructions);
+    } else
+      emitRI(Mips::LUi, TmpReg, Bits31To16, IDLoc, Instructions);
     createLShiftOri<0>(Bits15To0, TmpReg, IDLoc, Instructions);
 
     if (UseSrcReg)
       createAddu(DstReg, TmpReg, SrcReg, !Is32BitImm, Instructions);
 
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
-    if (Is32BitImm) {
-      Error(IDLoc, "instruction requires a 32-bit immediate");
-      return true;
-    }
     warnIfNoMacro(IDLoc);
 
     //            <-------  lo32 ------>
@@ -1912,10 +1927,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     uint16_t Bits31To16 = (ImmValue >> 16) & 0xffff;
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
-    tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(TmpReg));
-    tmpInst.addOperand(MCOperand::createImm(Bits47To32));
-    Instructions.push_back(tmpInst);
+    emitRI(Mips::LUi, TmpReg, Bits47To32, IDLoc, Instructions);
     createLShiftOri<0>(Bits31To16, TmpReg, IDLoc, Instructions);
     createLShiftOri<16>(Bits15To0, TmpReg, IDLoc, Instructions);
 
@@ -1923,10 +1935,6 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       createAddu(DstReg, TmpReg, SrcReg, !Is32BitImm, Instructions);
 
   } else {
-    if (Is32BitImm) {
-      Error(IDLoc, "instruction requires a 32-bit immediate");
-      return true;
-    }
     warnIfNoMacro(IDLoc);
 
     // <-------  hi32 ------> <-------  lo32 ------>
@@ -1948,10 +1956,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     uint16_t Bits31To16 = (ImmValue >> 16) & 0xffff;
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
-    tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(TmpReg));
-    tmpInst.addOperand(MCOperand::createImm(Bits63To48));
-    Instructions.push_back(tmpInst);
+    emitRI(Mips::LUi, TmpReg, Bits63To48, IDLoc, Instructions);
     createLShiftOri<0>(Bits47To32, TmpReg, IDLoc, Instructions);
 
     // When Bits31To16 is 0, do a left shift of 32 bits instead of doing
@@ -2096,8 +2101,8 @@ bool MipsAsmParser::loadAndAddSymbolAddress(
     tmpInst.addOperand(MCOperand::createExpr(HiExpr));
     Instructions.push_back(tmpInst);
 
-    createLShiftOri<0>(MCOperand::createExpr(LoExpr), TmpReg, SMLoc(),
-                       Instructions);
+    emitRRX(Mips::ADDiu, TmpReg, TmpReg, MCOperand::createExpr(LoExpr), SMLoc(),
+            Instructions);
   }
 
   if (UseSrcReg)
@@ -2708,12 +2713,8 @@ void MipsAsmParser::createNop(bool hasShortDelaySlot, SMLoc IDLoc,
 void MipsAsmParser::createAddu(unsigned DstReg, unsigned SrcReg,
                                unsigned TrgReg, bool Is64Bit,
                                SmallVectorImpl<MCInst> &Instructions) {
-  MCInst AdduInst;
-  AdduInst.setOpcode(Is64Bit ? Mips::DADDu : Mips::ADDu);
-  AdduInst.addOperand(MCOperand::createReg(DstReg));
-  AdduInst.addOperand(MCOperand::createReg(SrcReg));
-  AdduInst.addOperand(MCOperand::createReg(TrgReg));
-  Instructions.push_back(AdduInst);
+  emitRRR(Is64Bit ? Mips::DADDu : Mips::ADDu, DstReg, SrcReg, TrgReg, SMLoc(),
+          Instructions);
 }
 
 unsigned MipsAsmParser::checkTargetMatchPredicate(MCInst &Inst) {

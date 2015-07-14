@@ -4,7 +4,7 @@
 
 # Immediate is <= 32 bits.
   dli $5, 123
-# CHECK:     ori   $5, $zero, 123   # encoding: [0x7b,0x00,0x05,0x34]
+# CHECK:     addiu $5, $zero, 123   # encoding: [0x7b,0x00,0x05,0x24]
 
   dli $6, -2345
 # CHECK:     addiu $6, $zero, -2345 # encoding: [0xd7,0xf6,0x06,0x24]
