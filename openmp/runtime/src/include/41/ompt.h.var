@@ -376,27 +376,27 @@ OMPT_API_FUNCTION(ompt_frame_t *, ompt_get_task_frame, (
  ***************************************************************************/
 
 /* idle */
-OMPT_API_FUNCTION(void, omp_idle, (
+OMPT_API_FUNCTION(void, ompt_idle, (
     void
 ));
 
 /* overhead */
-OMPT_API_FUNCTION(void, omp_overhead, (
+OMPT_API_FUNCTION(void, ompt_overhead, (
     void
 ));
 
 /* barrier wait */
-OMPT_API_FUNCTION(void, omp_barrier_wait, (
+OMPT_API_FUNCTION(void, ompt_barrier_wait, (
     void
 ));
 
 /* task wait */
-OMPT_API_FUNCTION(void, omp_task_wait, (
+OMPT_API_FUNCTION(void, ompt_task_wait, (
     void
 ));
 
 /* mutex wait */
-OMPT_API_FUNCTION(void, omp_mutex_wait, (
+OMPT_API_FUNCTION(void, ompt_mutex_wait, (
     void
 ));
 
