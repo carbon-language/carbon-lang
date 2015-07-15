@@ -1,15 +1,35 @@
 # RUN: yaml2obj < %p/Inputs/hello32.yaml > %t.obj
 # RUN: lld -flavor link2 %t.obj %p/Inputs/std32.lib /subsystem:console \
 # RUN:   /entry:main@0 /alternatename:___delayLoadHelper2@8=main@0 /out:%t.exe
-# RUN: llvm-readobj -coff-imports %t.exe | FileCheck %s
+# RUN: llvm-readobj -coff-imports %t.exe | FileCheck -check-prefix=IMPORT %s
+# RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck -check-prefix=BASEREL %s
 
-CHECK: Format: COFF-i386
-CHECK: Arch: i386
-CHECK: AddressSize: 32bit
-CHECK: Import {
-CHECK:   Name: std32.dll
-CHECK:   ImportLookupTableRVA: 0x3028
-CHECK:   ImportAddressTableRVA: 0x3034
-CHECK:   Symbol: ExitProcess (0)
-CHECK:   Symbol: MessageBoxA (1)
-CHECK: }
+IMPORT: Format: COFF-i386
+IMPORT: Arch: i386
+IMPORT: AddressSize: 32bit
+IMPORT: Import {
+IMPORT:   Name: std32.dll
+IMPORT:   ImportLookupTableRVA: 0x3028
+IMPORT:   ImportAddressTableRVA: 0x3034
+IMPORT:   Symbol: ExitProcess (0)
+IMPORT:   Symbol: MessageBoxA (1)
+IMPORT: }
+
+BASEREL:      BaseReloc [
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x2005
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x200C
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x2022
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x2032
+BASEREL-NEXT:   }
+BASEREL-NEXT: ]

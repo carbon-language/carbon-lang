@@ -249,7 +249,7 @@ public:
 // This code calls __delayLoadHelper2 function to resolve a symbol
 // and then overwrites its jump table slot with the result
 // for subsequent function calls.
-static const uint8_t Thunk[] = {
+static const uint8_t ThunkX64[] = {
     0x51,                               // push    rcx
     0x52,                               // push    rdx
     0x41, 0x50,                         // push    r8
@@ -274,17 +274,54 @@ static const uint8_t Thunk[] = {
     0xFF, 0xE0,                         // jmp     rax
 };
 
+static const uint8_t ThunkX86[] = {
+    0x51,              // push  ecx
+    0x52,              // push  edx
+    0x68, 0, 0, 0, 0,  // push  offset ___imp__<FUNCNAME>
+    0x68, 0, 0, 0, 0,  // push  offset ___DELAY_IMPORT_DESCRIPTOR_<DLLNAME>_dll
+    0xE8, 0, 0, 0, 0,  // call  ___delayLoadHelper2@8
+    0x5A,              // pop   edx
+    0x59,              // pop   ecx
+    0xFF, 0xE0,        // jmp   eax
+};
+
 // A chunk for the delay import thunk.
-class ThunkChunk : public Chunk {
+class ThunkChunkX64 : public Chunk {
 public:
-  ThunkChunk(Defined *I, Chunk *D, Defined *H) : Imp(I), Desc(D), Helper(H) {}
-  size_t getSize() const override { return sizeof(Thunk); }
+  ThunkChunkX64(Defined *I, Chunk *D, Defined *H)
+      : Imp(I), Desc(D), Helper(H) {}
+
+  size_t getSize() const override { return sizeof(ThunkX64); }
 
   void writeTo(uint8_t *Buf) override {
-    memcpy(Buf + FileOff, Thunk, sizeof(Thunk));
+    memcpy(Buf + FileOff, ThunkX64, sizeof(ThunkX64));
     write32le(Buf + FileOff + 36, Imp->getRVA() - RVA - 40);
     write32le(Buf + FileOff + 43, Desc->getRVA() - RVA - 47);
     write32le(Buf + FileOff + 48, Helper->getRVA() - RVA - 52);
+  }
+
+  Defined *Imp = nullptr;
+  Chunk *Desc = nullptr;
+  Defined *Helper = nullptr;
+};
+
+class ThunkChunkX86 : public Chunk {
+public:
+  ThunkChunkX86(Defined *I, Chunk *D, Defined *H)
+      : Imp(I), Desc(D), Helper(H) {}
+
+  size_t getSize() const override { return sizeof(ThunkX86); }
+
+  void writeTo(uint8_t *Buf) override {
+    memcpy(Buf + FileOff, ThunkX86, sizeof(ThunkX86));
+    write32le(Buf + FileOff + 3, Imp->getRVA() + Config->ImageBase);
+    write32le(Buf + FileOff + 8, Desc->getRVA() + Config->ImageBase);
+    write32le(Buf + FileOff + 13, Helper->getRVA() - RVA + 17);
+  }
+
+  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override {
+    Res->push_back(RVA + 3);
+    Res->push_back(RVA + 8);
   }
 
   Defined *Imp = nullptr;
@@ -354,10 +391,15 @@ void DelayLoadContents::create(Defined *H) {
 
     size_t Base = Addresses.size();
     for (DefinedImportData *S : Syms) {
-      auto T = make_unique<ThunkChunk>(S, Dir.get(), Helper);
-      auto A = make_unique<DelayAddressChunk>(T.get());
+      Chunk *T;
+      if (Config->is64()) {
+        T = new ThunkChunkX64(S, Dir.get(), Helper);
+      } else {
+        T = new ThunkChunkX86(S, Dir.get(), Helper);
+      }
+      auto A = make_unique<DelayAddressChunk>(T);
       Addresses.push_back(std::move(A));
-      Thunks.push_back(std::move(T));
+      Thunks.push_back(std::unique_ptr<Chunk>(T));
       StringRef ExtName = S->getExternalName();
       if (ExtName.empty()) {
         Names.push_back(make_unique<OrdinalOnlyChunk>(S->getOrdinal()));
