@@ -1224,4 +1224,3 @@ bool MachineBlockPlacementStats::runOnMachineFunction(MachineFunction &F) {
 
   return false;
 }
-
