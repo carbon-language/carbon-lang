@@ -500,6 +500,19 @@ private:
         return false;
       break;
     case tok::l_paren:
+      // When faced with 'operator()()', the kw_operator handler incorrectly
+      // marks the first l_paren as a OverloadedOperatorLParen. Here, we make
+      // the first two parens OverloadedOperators and the second l_paren an
+      // OverloadedOperatorLParen.
+      if (Tok->Previous &&
+          Tok->Previous->is(tok::r_paren) &&
+          Tok->Previous->MatchingParen &&
+          Tok->Previous->MatchingParen->is(TT_OverloadedOperatorLParen)) {
+        Tok->Previous->Type = TT_OverloadedOperator;
+        Tok->Previous->MatchingParen->Type = TT_OverloadedOperator;
+        Tok->Type = TT_OverloadedOperatorLParen;
+      }
+
       if (!parseParens())
         return false;
       if (Line.MustBeDeclaration && Contexts.size() == 1 &&
@@ -1460,25 +1473,56 @@ void TokenAnnotator::annotate(AnnotatedLine &Line) {
 // This function heuristically determines whether 'Current' starts the name of a
 // function declaration.
 static bool isFunctionDeclarationName(const FormatToken &Current) {
-  if (!Current.is(TT_StartOfName) || Current.NestingLevel != 0)
-    return false;
-  const FormatToken *Next = Current.Next;
-  for (; Next; Next = Next->Next) {
-    if (Next->is(TT_TemplateOpener)) {
-      Next = Next->MatchingParen;
-    } else if (Next->is(tok::coloncolon)) {
-      Next = Next->Next;
-      if (!Next || !Next->is(tok::identifier))
-        return false;
-    } else if (Next->is(tok::l_paren)) {
+  auto skipOperatorName = [](const FormatToken* Next) -> const FormatToken* {
+    for (; Next; Next = Next->Next) {
+      if (Next->is(TT_OverloadedOperatorLParen))
+        return Next;
+      if (Next->is(TT_OverloadedOperator))
+        continue;
+      if (Next->isOneOf(tok::kw_new, tok::kw_delete)) {
+        // For 'new[]' and 'delete[]'.
+        if (Next->Next && Next->Next->is(tok::l_square) &&
+            Next->Next->Next && Next->Next->Next->is(tok::r_square))
+          Next = Next->Next->Next;
+        continue;
+      }
+
       break;
-    } else {
+    }
+    return nullptr;
+  };
+
+  const FormatToken *Next = Current.Next;
+  if (Current.is(tok::kw_operator)) {
+    if (Current.Previous && Current.Previous->is(tok::coloncolon))
       return false;
+    Next = skipOperatorName(Next);
+  } else {
+    if (!Current.is(TT_StartOfName) || Current.NestingLevel != 0)
+      return false;
+    for (; Next; Next = Next->Next) {
+      if (Next->is(TT_TemplateOpener)) {
+        Next = Next->MatchingParen;
+      } else if (Next->is(tok::coloncolon)) {
+        Next = Next->Next;
+        if (!Next)
+          return false;
+        if (Next->is(tok::kw_operator)) {
+          Next = skipOperatorName(Next->Next);
+          break;
+        }
+        if (!Next->is(tok::identifier))
+          return false;
+      } else if (Next->is(tok::l_paren)) {
+        break;
+      } else {
+        return false;
+      }
     }
   }
-  if (!Next)
+
+  if (!Next || !Next->is(tok::l_paren))
     return false;
-  assert(Next->is(tok::l_paren));
   if (Next->Next == Next->MatchingParen)
     return true;
   for (const FormatToken *Tok = Next->Next; Tok && Tok != Next->MatchingParen;
