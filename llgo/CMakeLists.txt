@@ -234,8 +234,8 @@ set(LLGO_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX})
 
 install(FILES ${LLGO_LIBRARY_DIR}/libgo-llgo.a
               ${LLGO_LIBRARY_DIR}/libgo-llgo.so
-              ${LLGO_LIBRARY_DIR}/libgo-llgo.so.6
-              ${LLGO_LIBRARY_DIR}/libgo-llgo.so.6.0.0
+              ${LLGO_LIBRARY_DIR}/libgo-llgo.so.7
+              ${LLGO_LIBRARY_DIR}/libgo-llgo.so.7.0.0
               ${LLGO_LIBRARY_DIR}/libgobegin-llgo.a
         DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 
