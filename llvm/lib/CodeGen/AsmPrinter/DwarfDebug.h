@@ -203,6 +203,30 @@ struct SymbolCU {
   DwarfCompileUnit *CU;
 };
 
+/// Identify a debugger for "tuning" the debug info.
+///
+/// The "debugger tuning" concept allows us to present a more intuitive
+/// interface that unpacks into different sets of defaults for the various
+/// individual feature-flag settings, that suit the preferences of the
+/// various debuggers.  However, it's worth remembering that debuggers are
+/// not the only consumers of debug info, and some variations in DWARF might
+/// better be treated as target/platform issues. Fundamentally,
+/// o if the feature is useful (or not) to a particular debugger, regardless
+///   of the target, that's a tuning decision;
+/// o if the feature is useful (or not) on a particular platform, regardless
+///   of the debugger, that's a target decision.
+/// It's not impossible to see both factors in some specific case.
+///
+/// The "tuning" should be used to set defaults for individual feature flags
+/// in DwarfDebug; if a given feature has a more specific command-line option,
+/// that option should take precedence over the tuning.
+enum class DebuggerKind {
+  Default,  // No specific tuning requested.
+  GDB,      // Tune debug info for gdb.
+  LLDB,     // Tune debug info for lldb.
+  SCE       // Tune debug info for SCE targets (e.g. PS4).
+};
+
 /// Collects and handles dwarf debug information.
 class DwarfDebug : public AsmPrinterHandler {
   /// Target of Dwarf emission.
@@ -338,7 +362,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// True iff there are multiple CUs in this module.
   bool SingleCU;
   bool IsDarwin;
-  bool IsPS4;
 
   AddressPool AddrPool;
 
@@ -348,6 +371,9 @@ class DwarfDebug : public AsmPrinterHandler {
   DwarfAccelTable AccelTypes;
 
   DenseMap<const Function *, DISubprogram *> FunctionDIs;
+
+  // Identify a debugger for "tuning" the debug info.
+  DebuggerKind DebuggerTuning;
 
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
@@ -564,6 +590,15 @@ public:
   /// Returns whether to use DW_OP_GNU_push_tls_address, instead of the
   /// standard DW_OP_form_tls_address opcode
   bool useGNUTLSOpcode() const { return UseGNUTLSOpcode; }
+
+  /// \defgroup DebuggerTuning Predicates to tune DWARF for a given debugger.
+  ///
+  /// Returns whether we are "tuning" for a given debugger.
+  /// @{
+  bool tuneForGDB() const { return DebuggerTuning == DebuggerKind::GDB; }
+  bool tuneForLLDB() const { return DebuggerTuning == DebuggerKind::LLDB; }
+  bool tuneForSCE() const { return DebuggerTuning == DebuggerKind::SCE; }
+  /// @}
 
   // Experimental DWARF5 features.
 

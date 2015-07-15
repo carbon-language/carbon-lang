@@ -14,7 +14,7 @@
 ; RUN:   | FileCheck --check-prefix=DARWIN --check-prefix=STDOP %s
 
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-freebsd \
-; RUN:   | FileCheck --check-prefix=SINGLE --check-prefix=SINGLE-64 --check-prefix=GNUOP %s
+; RUN:   | FileCheck --check-prefix=SINGLE --check-prefix=SINGLE-64 --check-prefix=STDOP %s
 
 ; FIXME: add relocation and DWARF expression support to llvm-dwarfdump & use
 ; that here instead of raw assembly printing

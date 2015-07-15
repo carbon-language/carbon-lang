@@ -76,6 +76,17 @@ static cl::opt<bool> GenerateARangeSection("generate-arange-section",
                                            cl::desc("Generate dwarf aranges"),
                                            cl::init(false));
 
+static cl::opt<DebuggerKind>
+DebuggerTuningOpt("debugger-tune",
+                  cl::desc("Tune debug info for a particular debugger"),
+                  cl::init(DebuggerKind::Default),
+                  cl::values(
+                      clEnumValN(DebuggerKind::GDB, "gdb", "gdb"),
+                      clEnumValN(DebuggerKind::LLDB, "lldb", "lldb"),
+                      clEnumValN(DebuggerKind::SCE, "sce",
+                                 "SCE targets (e.g. PS4)"),
+                      clEnumValEnd));
+
 namespace {
 enum DefaultOnOff { Default, Enable, Disable };
 }
@@ -197,32 +208,44 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator),
       IsDarwin(Triple(A->getTargetTriple()).isOSDarwin()),
-      IsPS4(Triple(A->getTargetTriple()).isPS4()),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                        dwarf::DW_FORM_data4)),
       AccelObjC(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                       dwarf::DW_FORM_data4)),
       AccelNamespace(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                            dwarf::DW_FORM_data4)),
-      AccelTypes(TypeAtoms) {
+      AccelTypes(TypeAtoms), DebuggerTuning(DebuggerKind::Default) {
 
   CurFn = nullptr;
   CurMI = nullptr;
+  Triple TT(Asm->getTargetTriple());
 
-  // Turn on accelerator tables for Darwin by default, pubnames by
-  // default for non-Darwin/PS4, and handle split dwarf.
+  // Make sure we know our "debugger tuning."  The command-line option takes
+  // precedence; fall back to triple-based defaults.
+  if (DebuggerTuningOpt != DebuggerKind::Default)
+    DebuggerTuning = DebuggerTuningOpt;
+  else if (IsDarwin || TT.isOSFreeBSD())
+    DebuggerTuning = DebuggerKind::LLDB;
+  else if (TT.isPS4CPU())
+    DebuggerTuning = DebuggerKind::SCE;
+  else
+    DebuggerTuning = DebuggerKind::GDB;
+
+  // Turn on accelerator tables for LLDB by default.
   if (DwarfAccelTables == Default)
-    HasDwarfAccelTables = IsDarwin;
+    HasDwarfAccelTables = tuneForLLDB();
   else
     HasDwarfAccelTables = DwarfAccelTables == Enable;
 
+  // Handle split DWARF. Off by default for now.
   if (SplitDwarf == Default)
     HasSplitDwarf = false;
   else
     HasSplitDwarf = SplitDwarf == Enable;
 
+  // Pubnames/pubtypes on by default for GDB.
   if (DwarfPubSections == Default)
-    HasDwarfPubSections = !IsDarwin && !IsPS4;
+    HasDwarfPubSections = tuneForGDB();
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 
@@ -230,9 +253,12 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber
                                     : MMI->getModule()->getDwarfVersion();
 
-  // Darwin and PS4 use the standard TLS opcode (defined in DWARF 3).
-  // Everybody else uses GNU's.
-  UseGNUTLSOpcode = !(IsDarwin || IsPS4) || DwarfVersion < 3;
+  // Work around a GDB bug. GDB doesn't support the standard opcode;
+  // SCE doesn't support GNU's; LLDB prefers the standard opcode, which
+  // is defined as of DWARF 3.
+  // See GDB bug 11616 - DW_OP_form_tls_address is unimplemented
+  // https://sourceware.org/bugzilla/show_bug.cgi?id=11616
+  UseGNUTLSOpcode = tuneForGDB() || DwarfVersion < 3;
 
   Asm->OutStreamer->getContext().setDwarfVersion(DwarfVersion);
 
