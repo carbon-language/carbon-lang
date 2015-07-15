@@ -44,9 +44,10 @@ struct EncodingField {
 struct OperandInfo {
   std::vector<EncodingField> Fields;
   std::string Decoder;
+  bool HasCompleteDecoder;
 
-  OperandInfo(std::string D)
-    : Decoder(D) { }
+  OperandInfo(std::string D, bool HCD)
+    : Decoder(D), HasCompleteDecoder(HCD) { }
 
   void addField(unsigned Base, unsigned Width, unsigned Offset) {
     Fields.push_back(EncodingField(Base, Width, Offset));
@@ -85,8 +86,7 @@ public:
   FixedLenDecoderEmitter(RecordKeeper &R,
                          std::string PredicateNamespace,
                          std::string GPrefix  = "if (",
-                         std::string GPostfix = " == MCDisassembler::Fail)"
-                         " return MCDisassembler::Fail;",
+                         std::string GPostfix = " == MCDisassembler::Fail)",
                          std::string ROK      = "MCDisassembler::Success",
                          std::string RFail    = "MCDisassembler::Fail",
                          std::string L        = "") :
@@ -448,10 +448,13 @@ protected:
                                const Filter &Best) const;
 
   void emitBinaryParser(raw_ostream &o, unsigned &Indentation,
-                        const OperandInfo &OpInfo) const;
+                        const OperandInfo &OpInfo,
+                        bool &OpHasCompleteDecoder) const;
 
-  void emitDecoder(raw_ostream &OS, unsigned Indentation, unsigned Opc) const;
-  unsigned getDecoderIndex(DecoderSet &Decoders, unsigned Opc) const;
+  void emitDecoder(raw_ostream &OS, unsigned Indentation, unsigned Opc,
+                   bool &HasCompleteDecoder) const;
+  unsigned getDecoderIndex(DecoderSet &Decoders, unsigned Opc,
+                           bool &HasCompleteDecoder) const;
 
   // Assign a single filter and run with it.
   void runSingleFilter(unsigned startBit, unsigned numBit, bool mixed);
@@ -779,7 +782,9 @@ void FixedLenDecoderEmitter::emitTable(formatted_raw_ostream &OS,
       OS << "// Skip to: " << ((I - Table.begin()) + NumToSkip) << "\n";
       break;
     }
-    case MCD::OPC_Decode: {
+    case MCD::OPC_Decode:
+    case MCD::OPC_TryDecode: {
+      bool IsTry = *I == MCD::OPC_TryDecode;
       ++I;
       // Extract the ULEB128 encoded Opcode to a buffer.
       uint8_t Buffer[8], *p = Buffer;
@@ -788,7 +793,8 @@ void FixedLenDecoderEmitter::emitTable(formatted_raw_ostream &OS,
                && "ULEB128 value too large!");
       // Decode the Opcode value.
       unsigned Opc = decodeULEB128(Buffer);
-      OS.indent(Indentation) << "MCD::OPC_Decode, ";
+      OS.indent(Indentation) << "MCD::OPC_" << (IsTry ? "Try" : "")
+        << "Decode, ";
       for (p = Buffer; *p >= 128; ++p)
         OS << utostr(*p) << ", ";
       OS << utostr(*p) << ", ";
@@ -798,8 +804,25 @@ void FixedLenDecoderEmitter::emitTable(formatted_raw_ostream &OS,
         OS << utostr(*I) << ", ";
       OS << utostr(*I++) << ", ";
 
+      if (!IsTry) {
+        OS << "// Opcode: "
+           << NumberedInstructions->at(Opc)->TheDef->getName() << "\n";
+        break;
+      }
+
+      // Fallthrough for OPC_TryDecode.
+
+      // 16-bit numtoskip value.
+      uint8_t Byte = *I++;
+      uint32_t NumToSkip = Byte;
+      OS << utostr(Byte) << ", ";
+      Byte = *I++;
+      OS << utostr(Byte) << ", ";
+      NumToSkip |= Byte << 8;
+
       OS << "// Opcode: "
-         << NumberedInstructions->at(Opc)->TheDef->getName() << "\n";
+         << NumberedInstructions->at(Opc)->TheDef->getName()
+         << ", skip to: " << ((I - Table.begin()) + NumToSkip) << "\n";
       break;
     }
     case MCD::OPC_SoftFail: {
@@ -876,8 +899,9 @@ emitDecoderFunction(formatted_raw_ostream &OS, DecoderSet &Decoders,
   OS.indent(Indentation) << "static DecodeStatus decodeToMCInst(DecodeStatus S,"
     << " unsigned Idx, InsnType insn, MCInst &MI,\n";
   OS.indent(Indentation) << "                                   uint64_t "
-    << "Address, const void *Decoder) {\n";
+    << "Address, const void *Decoder, bool &DecodeComplete) {\n";
   Indentation += 2;
+  OS.indent(Indentation) << "DecodeComplete = true;\n";
   OS.indent(Indentation) << "InsnType tmp;\n";
   OS.indent(Indentation) << "switch (Idx) {\n";
   OS.indent(Indentation) << "default: llvm_unreachable(\"Invalid index!\");\n";
@@ -1033,7 +1057,8 @@ unsigned FilterChooser::getIslands(std::vector<unsigned> &StartBits,
 }
 
 void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
-                                     const OperandInfo &OpInfo) const {
+                                     const OperandInfo &OpInfo,
+                                     bool &OpHasCompleteDecoder) const {
   const std::string &Decoder = OpInfo.Decoder;
 
   if (OpInfo.numFields() != 1)
@@ -1049,39 +1074,52 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
     o << ";\n";
   }
 
-  if (Decoder != "")
+  if (Decoder != "") {
+    OpHasCompleteDecoder = OpInfo.HasCompleteDecoder;
     o.indent(Indentation) << Emitter->GuardPrefix << Decoder
-                          << "(MI, tmp, Address, Decoder)"
-                          << Emitter->GuardPostfix << "\n";
-  else
+      << "(MI, tmp, Address, Decoder)"
+      << Emitter->GuardPostfix
+      << " { " << (OpHasCompleteDecoder ? "" : "DecodeComplete = false; ")
+      << "return MCDisassembler::Fail; }\n";
+  } else {
+    OpHasCompleteDecoder = true;
     o.indent(Indentation) << "MI.addOperand(MCOperand::createImm(tmp));\n";
-
+  }
 }
 
 void FilterChooser::emitDecoder(raw_ostream &OS, unsigned Indentation,
-                                unsigned Opc) const {
+                                unsigned Opc, bool &HasCompleteDecoder) const {
+  HasCompleteDecoder = true;
+
   for (const auto &Op : Operands.find(Opc)->second) {
     // If a custom instruction decoder was specified, use that.
     if (Op.numFields() == 0 && Op.Decoder.size()) {
+      HasCompleteDecoder = Op.HasCompleteDecoder;
       OS.indent(Indentation) << Emitter->GuardPrefix << Op.Decoder
         << "(MI, insn, Address, Decoder)"
-        << Emitter->GuardPostfix << "\n";
+        << Emitter->GuardPostfix
+        << " { " << (HasCompleteDecoder ? "" : "DecodeComplete = false; ")
+        << "return MCDisassembler::Fail; }\n";
       break;
     }
 
-    emitBinaryParser(OS, Indentation, Op);
+    bool OpHasCompleteDecoder;
+    emitBinaryParser(OS, Indentation, Op, OpHasCompleteDecoder);
+    if (!OpHasCompleteDecoder)
+      HasCompleteDecoder = false;
   }
 }
 
 unsigned FilterChooser::getDecoderIndex(DecoderSet &Decoders,
-                                        unsigned Opc) const {
+                                        unsigned Opc,
+                                        bool &HasCompleteDecoder) const {
   // Build up the predicate string.
   SmallString<256> Decoder;
   // FIXME: emitDecoder() function can take a buffer directly rather than
   // a stream.
   raw_svector_ostream S(Decoder);
   unsigned I = 4;
-  emitDecoder(S, I, Opc);
+  emitDecoder(S, I, Opc, HasCompleteDecoder);
   S.flush();
 
   // Using the full decoder string as the key value here is a bit
@@ -1308,14 +1346,26 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
   // Check for soft failure of the match.
   emitSoftFailTableEntry(TableInfo, Opc);
 
-  TableInfo.Table.push_back(MCD::OPC_Decode);
+  bool HasCompleteDecoder;
+  unsigned DIdx = getDecoderIndex(TableInfo.Decoders, Opc, HasCompleteDecoder);
+
+  // Produce OPC_Decode or OPC_TryDecode opcode based on the information
+  // whether the instruction decoder is complete or not. If it is complete
+  // then it handles all possible values of remaining variable/unfiltered bits
+  // and for any value can determine if the bitpattern is a valid instruction
+  // or not. This means OPC_Decode will be the final step in the decoding
+  // process. If it is not complete, then the Fail return code from the
+  // decoder method indicates that additional processing should be done to see
+  // if there is any other instruction that also matches the bitpattern and
+  // can decode it.
+  TableInfo.Table.push_back(HasCompleteDecoder ? MCD::OPC_Decode :
+      MCD::OPC_TryDecode);
   uint8_t Buffer[8], *p;
   encodeULEB128(Opc, Buffer);
   for (p = Buffer; *p >= 128 ; ++p)
     TableInfo.Table.push_back(*p);
   TableInfo.Table.push_back(*p);
 
-  unsigned DIdx = getDecoderIndex(TableInfo.Decoders, Opc);
   SmallString<16> Bytes;
   raw_svector_ostream S(Bytes);
   encodeULEB128(DIdx, S);
@@ -1324,6 +1374,14 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
   // Decoder index
   for (unsigned i = 0, e = Bytes.size(); i != e; ++i)
     TableInfo.Table.push_back(Bytes[i]);
+
+  if (!HasCompleteDecoder) {
+    // Push location for NumToSkip backpatching.
+    TableInfo.FixupStack.back().push_back(TableInfo.Table.size());
+    // Allocate the space for the fixup.
+    TableInfo.Table.push_back(0);
+    TableInfo.Table.push_back(0);
+  }
 }
 
 // Emits table entries to decode the singleton, and then to decode the rest.
@@ -1679,7 +1737,8 @@ static bool populateInstruction(CodeGenTarget &Target,
   // of trying to auto-generate the decoder.
   std::string InstDecoder = Def.getValueAsString("DecoderMethod");
   if (InstDecoder != "") {
-    InsnOperands.push_back(OperandInfo(InstDecoder));
+    bool HasCompleteInstDecoder = Def.getValueAsBit("hasCompleteDecoder");
+    InsnOperands.push_back(OperandInfo(InstDecoder, HasCompleteInstDecoder));
     Operands[Opc] = InsnOperands;
     return true;
   }
@@ -1835,7 +1894,14 @@ static bool populateInstruction(CodeGenTarget &Target,
       if (!isReg && String && String->getValue() != "")
         Decoder = String->getValue();
 
-      OperandInfo OpInfo(Decoder);
+      RecordVal *HasCompleteDecoderVal =
+        TypeRecord->getValue("hasCompleteDecoder");
+      BitInit *HasCompleteDecoderBit = HasCompleteDecoderVal ?
+        dyn_cast<BitInit>(HasCompleteDecoderVal->getValue()) : nullptr;
+      bool HasCompleteDecoder = HasCompleteDecoderBit ?
+        HasCompleteDecoderBit->getValue() : true;
+
+      OperandInfo OpInfo(Decoder, HasCompleteDecoder);
       OpInfo.addField(bitStart, bitWidth, 0);
 
       NumberedInsnOperands[Name].push_back(OpInfo);
@@ -1907,7 +1973,14 @@ static bool populateInstruction(CodeGenTarget &Target,
     if (!isReg && String && String->getValue() != "")
       Decoder = String->getValue();
 
-    OperandInfo OpInfo(Decoder);
+    RecordVal *HasCompleteDecoderVal =
+      TypeRecord->getValue("hasCompleteDecoder");
+    BitInit *HasCompleteDecoderBit = HasCompleteDecoderVal ?
+      dyn_cast<BitInit>(HasCompleteDecoderVal->getValue()) : nullptr;
+    bool HasCompleteDecoder = HasCompleteDecoderBit ?
+      HasCompleteDecoderBit->getValue() : true;
+
+    OperandInfo OpInfo(Decoder, HasCompleteDecoder);
     unsigned Base = ~0U;
     unsigned Width = 0;
     unsigned Offset = 0;
@@ -2096,12 +2169,51 @@ static void emitDecodeInstruction(formatted_raw_ostream &OS) {
      << "      Ptr += Len;\n"
      << "      unsigned DecodeIdx = decodeULEB128(Ptr, &Len);\n"
      << "      Ptr += Len;\n"
-     << "      DEBUG(dbgs() << Loc << \": OPC_Decode: opcode \" << Opc\n"
-     << "                   << \", using decoder \" << DecodeIdx << \"\\n\" );\n"
-     << "      DEBUG(dbgs() << \"----- DECODE SUCCESSFUL -----\\n\");\n"
      << "\n"
      << "      MI.setOpcode(Opc);\n"
-     << "      return decodeToMCInst(S, DecodeIdx, insn, MI, Address, DisAsm);\n"
+     << "      bool DecodeComplete;\n"
+     << "      S = decodeToMCInst(S, DecodeIdx, insn, MI, Address, DisAsm, DecodeComplete);\n"
+     << "      assert(DecodeComplete);\n"
+     << "\n"
+     << "      DEBUG(dbgs() << Loc << \": OPC_Decode: opcode \" << Opc\n"
+     << "                   << \", using decoder \" << DecodeIdx << \": \"\n"
+     << "                   << (S != MCDisassembler::Fail ? \"PASS\" : \"FAIL\") << \"\\n\");\n"
+     << "      return S;\n"
+     << "    }\n"
+     << "    case MCD::OPC_TryDecode: {\n"
+     << "      unsigned Len;\n"
+     << "      // Decode the Opcode value.\n"
+     << "      unsigned Opc = decodeULEB128(++Ptr, &Len);\n"
+     << "      Ptr += Len;\n"
+     << "      unsigned DecodeIdx = decodeULEB128(Ptr, &Len);\n"
+     << "      Ptr += Len;\n"
+     << "      // NumToSkip is a plain 16-bit integer.\n"
+     << "      unsigned NumToSkip = *Ptr++;\n"
+     << "      NumToSkip |= (*Ptr++) << 8;\n"
+     << "\n"
+     << "      // Perform the decode operation.\n"
+     << "      MCInst TmpMI;\n"
+     << "      TmpMI.setOpcode(Opc);\n"
+     << "      bool DecodeComplete;\n"
+     << "      S = decodeToMCInst(S, DecodeIdx, insn, TmpMI, Address, DisAsm, DecodeComplete);\n"
+     << "      DEBUG(dbgs() << Loc << \": OPC_TryDecode: opcode \" << Opc\n"
+     << "                   << \", using decoder \" << DecodeIdx << \": \");\n"
+     << "\n"
+     << "      if (DecodeComplete) {\n"
+     << "        // Decoding complete.\n"
+     << "        DEBUG(dbgs() << (S != MCDisassembler::Fail ? \"PASS\" : \"FAIL\") << \"\\n\");\n"
+     << "        MI = TmpMI;\n"
+     << "        return S;\n"
+     << "      } else {\n"
+     << "        assert(S == MCDisassembler::Fail);\n"
+     << "        // If the decoding was incomplete, skip.\n"
+     << "        Ptr += NumToSkip;\n"
+     << "        DEBUG(dbgs() << \"FAIL: continuing at \" << (Ptr - DecodeTable) << \"\\n\");\n"
+     << "        // Reset decode status. This also drops a SoftFail status that could be\n"
+     << "        // set before the decode attempt.\n"
+     << "        S = MCDisassembler::Success;\n"
+     << "      }\n"
+     << "      break;\n"
      << "    }\n"
      << "    case MCD::OPC_SoftFail: {\n"
      << "      // Decode the mask values.\n"
