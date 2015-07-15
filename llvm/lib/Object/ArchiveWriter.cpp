@@ -318,9 +318,8 @@ llvm::writeArchive(StringRef ArcName,
       MemberRef = Buffers.back()->getMemBufferRef();
     } else {
       object::Archive::child_iterator OldMember = Member.getOld();
-      assert(!Thin ||
-             OldMember->getParent()->isThin() &&
-                 "Thin archives cannot refers to member of other archives");
+      assert((!Thin || OldMember->getParent()->isThin()) &&
+             "Thin archives cannot refers to member of other archives");
       ErrorOr<MemoryBufferRef> MemberBufferOrErr =
           OldMember->getMemoryBufferRef();
       if (auto EC = MemberBufferOrErr.getError())
