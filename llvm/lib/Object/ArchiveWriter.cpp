@@ -38,8 +38,8 @@ NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
                                        StringRef Name)
     : IsNewMember(false), Name(Name), OldI(I) {}
 
-NewArchiveIterator::NewArchiveIterator(StringRef NewFilename, StringRef Name)
-    : IsNewMember(true), Name(Name), NewFilename(NewFilename) {}
+NewArchiveIterator::NewArchiveIterator(StringRef FileName)
+    : IsNewMember(true), Name(FileName) {}
 
 StringRef NewArchiveIterator::getName() const { return Name; }
 
@@ -52,14 +52,14 @@ object::Archive::child_iterator NewArchiveIterator::getOld() const {
 
 StringRef NewArchiveIterator::getNew() const {
   assert(IsNewMember);
-  return NewFilename;
+  return Name;
 }
 
 llvm::ErrorOr<int>
 NewArchiveIterator::getFD(sys::fs::file_status &NewStatus) const {
   assert(IsNewMember);
   int NewFD;
-  if (auto EC = sys::fs::openFileForRead(NewFilename, NewFD))
+  if (auto EC = sys::fs::openFileForRead(Name, NewFD))
     return EC;
   assert(NewFD != -1);
 

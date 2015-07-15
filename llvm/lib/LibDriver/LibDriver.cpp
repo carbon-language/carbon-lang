@@ -135,8 +135,7 @@ int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
       llvm::errs() << Arg->getValue() << ": no such file or directory\n";
       return 1;
     }
-    Members.emplace_back(Saver.save(*Path),
-                         llvm::sys::path::filename(Arg->getValue()));
+    Members.emplace_back(Saver.save(*Path));
   }
 
   std::pair<StringRef, std::error_code> Result =

@@ -437,8 +437,8 @@ static void performReadOperation(ArchiveOperation Operation,
 }
 
 void addMember(std::vector<NewArchiveIterator> &Members, StringRef FileName,
-               StringRef Name, int Pos = -1) {
-  NewArchiveIterator NI(FileName, Name);
+               int Pos = -1) {
+  NewArchiveIterator NI(FileName);
   if (Pos == -1)
     Members.push_back(NI);
   else
@@ -544,7 +544,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
         addMember(Ret, Child, Name);
         break;
       case IA_AddNewMeber:
-        addMember(Ret, *MemberI, Name);
+        addMember(Ret, *MemberI);
         break;
       case IA_Delete:
         break;
@@ -552,7 +552,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
         addMember(Moved, Child, Name);
         break;
       case IA_MoveNewMember:
-        addMember(Moved, *MemberI, Name);
+        addMember(Moved, *MemberI);
         break;
       }
       if (MemberI != Members.end())
@@ -572,12 +572,10 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   assert(unsigned(InsertPos) <= Ret.size());
   Ret.insert(Ret.begin() + InsertPos, Moved.begin(), Moved.end());
 
-  Ret.insert(Ret.begin() + InsertPos, Members.size(),
-             NewArchiveIterator("", ""));
+  Ret.insert(Ret.begin() + InsertPos, Members.size(), NewArchiveIterator(""));
   int Pos = InsertPos;
   for (auto &Member : Members) {
-    StringRef Name = sys::path::filename(Member);
-    addMember(Ret, Member, Name, Pos);
+    addMember(Ret, Member, Pos);
     ++Pos;
   }
 
@@ -736,7 +734,7 @@ static void runMRIScript() {
       break;
     }
     case MRICommand::AddMod:
-      addMember(NewMembers, Rest, sys::path::filename(Rest));
+      addMember(NewMembers, Rest);
       break;
     case MRICommand::Create:
       Create = true;
