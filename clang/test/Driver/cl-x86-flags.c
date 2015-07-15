@@ -1,5 +1,3 @@
-// Don't attempt slash switches on msys bash.
-// REQUIRES: shell-preserves-root
 // REQUIRES: x86-registered-target
 
 // We support -m32 and -m64.  We support all x86 CPU feature flags in gcc's -m

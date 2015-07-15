@@ -110,5 +110,4 @@ void B::func_fwd() {}
 // CHECK-NOLIMIT-NOT:              DIFlagFwdDecl
 // CHECK-NOLIMIT-SAME:             ){{$}}
 
-// REQUIRES: shell-preserves-root
 // REQUIRES: dw2
