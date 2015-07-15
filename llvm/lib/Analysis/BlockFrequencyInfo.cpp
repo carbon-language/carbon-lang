@@ -110,7 +110,7 @@ void BlockFrequencyInfo::calculate(const Function &F,
                                    const LoopInfo &LI) {
   if (!BFI)
     BFI.reset(new ImplType);
-  BFI->doFunction(&F, &BPI, &LI);
+  BFI->calculate(F, BPI, LI);
 #ifndef NDEBUG
   if (ViewBlockFreqPropagationDAG != GVDT_None)
     view();

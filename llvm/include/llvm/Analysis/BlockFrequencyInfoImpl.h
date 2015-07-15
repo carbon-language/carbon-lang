@@ -905,8 +905,8 @@ template <class BT> class BlockFrequencyInfoImpl : BlockFrequencyInfoImplBase {
 public:
   const FunctionT *getFunction() const { return F; }
 
-  void doFunction(const FunctionT *F, const BranchProbabilityInfoT *BPI,
-                  const LoopInfoT *LI);
+  void calculate(const FunctionT &F, const BranchProbabilityInfoT &BPI,
+                 const LoopInfoT &LI);
   BlockFrequencyInfoImpl() : BPI(nullptr), LI(nullptr), F(nullptr) {}
 
   using BlockFrequencyInfoImplBase::getEntryFreq;
@@ -938,13 +938,13 @@ public:
 };
 
 template <class BT>
-void BlockFrequencyInfoImpl<BT>::doFunction(const FunctionT *F,
-                                            const BranchProbabilityInfoT *BPI,
-                                            const LoopInfoT *LI) {
+void BlockFrequencyInfoImpl<BT>::calculate(const FunctionT &F,
+                                           const BranchProbabilityInfoT &BPI,
+                                           const LoopInfoT &LI) {
   // Save the parameters.
-  this->BPI = BPI;
-  this->LI = LI;
-  this->F = F;
+  this->BPI = &BPI;
+  this->LI = &LI;
+  this->F = &F;
 
   // Clean up left-over data structures.
   BlockFrequencyInfoImplBase::clear();
@@ -952,8 +952,8 @@ void BlockFrequencyInfoImpl<BT>::doFunction(const FunctionT *F,
   Nodes.clear();
 
   // Initialize.
-  DEBUG(dbgs() << "\nblock-frequency: " << F->getName() << "\n================="
-               << std::string(F->getName().size(), '=') << "\n");
+  DEBUG(dbgs() << "\nblock-frequency: " << F.getName() << "\n================="
+               << std::string(F.getName().size(), '=') << "\n");
   initializeRPOT();
   initializeLoops();
 
