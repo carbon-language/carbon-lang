@@ -34,3 +34,17 @@ RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 NEWER: newer
 OLDER: older
+
+RUN: rm -f %t.a
+RUN: echo foo > foo
+RUN: echo bar > bar
+RUN: llvm-ar --format=gnu rcT %t.a foo
+RUN: llvm-ar --format=gnu rcT %t.a bar
+RUN: llvm-ar t %t.a | FileCheck --check-prefix=BOTH-FILES %s
+BOTH-FILES: foo
+BOTH-FILES: bar
+
+RUN: rm -f %t.a
+RUN: llvm-ar --format=gnu rc %t.a foo
+RUN: not llvm-ar --format=gnu rcT %t.a bar 2>&1 | FileCheck --check-prefix=ERROR %s
+ERROR: Cannot convert a regular archive to a thin one.

@@ -74,6 +74,7 @@ public:
       return Data.begin() < other.Data.begin();
     }
 
+    const Archive *getParent() const { return Parent; }
     Child getNext() const;
 
     ErrorOr<StringRef> getName() const;

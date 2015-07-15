@@ -436,9 +436,20 @@ static void performReadOperation(ArchiveOperation Operation,
   std::exit(1);
 }
 
-template <typename T>
-void addMember(std::vector<NewArchiveIterator> &Members, T I, StringRef Name,
+void addMember(std::vector<NewArchiveIterator> &Members, StringRef FileName,
+               StringRef Name, int Pos = -1) {
+  NewArchiveIterator NI(FileName, Name);
+  if (Pos == -1)
+    Members.push_back(NI);
+  else
+    Members[Pos] = NI;
+}
+
+void addMember(std::vector<NewArchiveIterator> &Members,
+               object::Archive::child_iterator I, StringRef Name,
                int Pos = -1) {
+  if (Thin && !I->getParent()->isThin())
+    fail("Cannot convert a regular archive to a thin one");
   NewArchiveIterator NI(I, Name);
   if (Pos == -1)
     Members.push_back(NI);
