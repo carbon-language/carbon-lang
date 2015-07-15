@@ -889,8 +889,7 @@ std::error_code is_other(const Twine &Path, bool &Result) {
 }
 
 void directory_entry::replace_filename(const Twine &filename, file_status st) {
-  SmallString<128> path(Path.begin(), Path.end());
-  path::remove_filename(path);
+  SmallString<128> path = path::parent_path(Path);
   path::append(path, filename);
   Path = path.str();
   Status = st;

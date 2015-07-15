@@ -262,8 +262,7 @@ public:
     if (!getCacheFilename(ModuleID, CacheName))
       return;
     if (!CacheDir.empty()) { // Create user-defined cache dir.
-      SmallString<128> dir(CacheName);
-      sys::path::remove_filename(dir);
+      SmallString<128> dir(sys::path::parent_path(CacheName));
       sys::fs::create_directories(Twine(dir));
     }
     std::error_code EC;

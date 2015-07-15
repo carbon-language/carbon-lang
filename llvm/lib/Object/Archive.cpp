@@ -122,9 +122,8 @@ ErrorOr<StringRef> Archive::Child::getBuffer() const {
   ErrorOr<StringRef> Name = getName();
   if (std::error_code EC = Name.getError())
     return EC;
-  SmallString<128> FullName =
-      Parent->getMemoryBufferRef().getBufferIdentifier();
-  sys::path::remove_filename(FullName);
+  SmallString<128> FullName = sys::path::parent_path(
+      Parent->getMemoryBufferRef().getBufferIdentifier());
   sys::path::append(FullName, *Name);
   ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(FullName);
   if (std::error_code EC = Buf.getError())
