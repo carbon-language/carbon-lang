@@ -130,6 +130,7 @@ static bool OnlyUpdate = false;    ///< 'u' modifier
 static bool Verbose = false;       ///< 'v' modifier
 static bool Symtab = true;         ///< 's' modifier
 static bool Deterministic = true;  ///< 'D' and 'U' modifiers
+static bool Thin = false;          ///< 'T' modifier
 
 // Relative Positional Argument (for insert/move). This variable holds
 // the name of the archive member to which the 'a', 'b' or 'i' modifier
@@ -251,6 +252,9 @@ static ArchiveOperation parseCommandLine() {
       break;
     case 'U':
       Deterministic = false;
+      break;
+    case 'T':
+      Thin = true;
       break;
     default:
       cl::PrintHelpMessage();
@@ -590,15 +594,15 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
     break;
   }
   if (NewMembersP) {
-    std::pair<StringRef, std::error_code> Result =
-        writeArchive(ArchiveName, *NewMembersP, Symtab, Kind, Deterministic);
+    std::pair<StringRef, std::error_code> Result = writeArchive(
+        ArchiveName, *NewMembersP, Symtab, Kind, Deterministic, Thin);
     failIfError(Result.second, Result.first);
     return;
   }
   std::vector<NewArchiveIterator> NewMembers =
       computeNewArchiveMembers(Operation, OldArchive);
   auto Result =
-      writeArchive(ArchiveName, NewMembers, Symtab, Kind, Deterministic);
+      writeArchive(ArchiveName, NewMembers, Symtab, Kind, Deterministic, Thin);
   failIfError(Result.second, Result.first);
 }
 

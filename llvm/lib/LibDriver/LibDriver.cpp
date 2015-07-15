@@ -142,7 +142,7 @@ int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
   std::pair<StringRef, std::error_code> Result =
       llvm::writeArchive(getOutputPath(&Args, Members[0]), Members,
                          /*WriteSymtab=*/true, object::Archive::K_GNU,
-                         /*Deterministic*/ true);
+                         /*Deterministic*/ true, /*Thin*/ false);
 
   if (Result.second) {
     if (Result.first.empty())

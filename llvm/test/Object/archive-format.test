@@ -27,3 +27,14 @@ BSD-NEXT: #1/20           0           0     0     644     24        `
 BSD-NEXT: 0123456789abcde{{.....}}bar.
 BSD-SAME: #1/16           0           0     0     644     20        `
 BSD-NEXT: 0123456789abcdefzed.
+
+RUN: rm -f %t.a
+RUN: llvm-ar --format=gnu rcT %t.a 0123456789abcde 0123456789abcdef
+RUN: cat %t.a | FileCheck -strict-whitespace --check-prefix=THIN %s
+THIN: !<thin>
+THIN-NEXT: //                                              36        `
+THIN-NEXT: 0123456789abcde/
+THIN-NEXT: 0123456789abcdef/{{$}}
+THIN: {{^$}}
+THIN: /0              0           0     0     644     4         `
+THIN-NEXT: /17             0           0     0     644     4         `
