@@ -670,13 +670,12 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Windows specific -- when we are creating a .dll file, we also
   // need to create a .lib file.
-  if (!Config->Exports.empty())
-    writeImportLibrary();
-
-  // Windows specific -- fix up dllexported symbols.
-  if (!Config->Exports.empty())
+  if (!Config->Exports.empty()) {
     if (fixupExports())
       return false;
+    writeImportLibrary();
+    assignExportOrdinals();
+  }
 
   // Windows specific -- Create a side-by-side manifest file.
   if (Config->Manifest == Configuration::SideBySide)

@@ -9,10 +9,10 @@ EXPORT:      Export Table:
 EXPORT:      DLL name: dll.test.tmp.dll
 EXPORT:      Ordinal      RVA  Name
 EXPORT-NEXT:       0        0
-EXPORT-NEXT:       1   0x1008  exportfn1
-EXPORT-NEXT:       2   0x1010  exportfn2
-EXPORT-NEXT:       3   0x1010  exportfn3
-EXPORT-NEXT:       4   0x1010  mangled
+EXPORT-NEXT:       1   0x1010  ?mangled@@YAHXZ
+EXPORT-NEXT:       2   0x1008  exportfn1
+EXPORT-NEXT:       3   0x1010  exportfn2
+EXPORT-NEXT:       4   0x1010  exportfn3
 
 # RUN: yaml2obj < %p/Inputs/export2.yaml > %t5.obj
 # RUN: rm -f %t5.lib
@@ -24,8 +24,8 @@ EXPORT2:      Export Table:
 EXPORT2:      DLL name: dll.test.tmp5.dll
 EXPORT2:      Ordinal      RVA  Name
 EXPORT2-NEXT:       0        0
-EXPORT2-NEXT:       1   0x1010  exportfn3
-EXPORT2-NEXT:       2   0x101c  mangled2
+EXPORT2-NEXT:       1   0x101c  ?mangled2@@YAHXZ
+EXPORT2-NEXT:       2   0x1010  exportfn3
 
 # RUN: llvm-as -o %t.lto.obj %p/Inputs/export.ll
 # RUN: lld -flavor link2 /out:%t.lto.dll /dll %t.lto.obj /export:exportfn1 /export:exportfn2
@@ -38,10 +38,6 @@ EXPORT-LTO-NEXT:       0        0
 EXPORT-LTO-NEXT:       1   0x1010  exportfn1
 EXPORT-LTO-NEXT:       2   0x1020  exportfn2
 EXPORT-LTO-NEXT:       3   0x1030  exportfn3
-
-# RUN: yaml2obj < %p/Inputs/import.yaml > %t2.obj
-# RUN: lld -flavor link2 /out:%t2.exe /entry:main %t2.obj %t.lib
-# RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=IMPORT %s
 
 # RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /implib:%t2.lib \
 # RUN:   /export:exportfn1 /export:exportfn2

@@ -16,6 +16,7 @@
 #include "Config.h"
 #include "Driver.h"
 #include "Error.h"
+#include "Symbols.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -372,8 +373,6 @@ ErrorOr<Export> parseExport(StringRef Arg) {
     std::tie(E.ExtName, E.Name) = E.Name.split("=");
     if (E.Name.empty())
       goto err;
-  } else {
-    E.ExtName = E.Name;
   }
 
   while (!Rest.empty()) {
@@ -425,6 +424,15 @@ std::error_code fixupExports() {
     }
   }
 
+  for (Export &E : Config->Exports) {
+    if (!E.ExtName.empty())
+      continue;
+    StringRef S = E.Sym->repl()->getName();
+    if (!Config->is64() && S.startswith("_"))
+      S = S.substr(1);
+    E.ExtName = S;
+  }
+
   // Uniquefy by name.
   std::map<StringRef, Export *> Map;
   std::vector<Export> V;
@@ -447,7 +455,10 @@ std::error_code fixupExports() {
   std::sort(
       Config->Exports.begin(), Config->Exports.end(),
       [](const Export &A, const Export &B) { return A.ExtName < B.ExtName; });
+  return std::error_code();
+}
 
+void assignExportOrdinals() {
   // Assign unique ordinals if default (= 0).
   uint16_t Max = 0;
   for (Export &E : Config->Exports)
@@ -455,7 +466,6 @@ std::error_code fixupExports() {
   for (Export &E : Config->Exports)
     if (E.Ordinal == 0)
       E.Ordinal = ++Max;
-  return std::error_code();
 }
 
 // Parses a string in the form of "key=value" and check

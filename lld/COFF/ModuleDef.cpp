@@ -195,7 +195,7 @@ private:
 
   std::error_code parseExport() {
     Export E;
-    E.ExtName = Tok.Value;
+    E.Name = Tok.Value;
     read();
     if (Tok.K == Equal) {
       read();
@@ -203,10 +203,10 @@ private:
         llvm::errs() << "identifier expected, but got " << Tok.Value << "\n";
         return make_error_code(LLDError::InvalidOption);
       }
+      E.ExtName = E.Name;
       E.Name = Tok.Value;
     } else {
       unget();
-      E.Name = E.ExtName;
     }
 
     if (!Config->is64() && !E.Name.startswith("_@?"))

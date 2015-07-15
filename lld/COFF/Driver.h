@@ -150,6 +150,7 @@ std::error_code createSideBySideManifest();
 // Used for dllexported symbols.
 ErrorOr<Export> parseExport(StringRef Arg);
 std::error_code fixupExports();
+void assignExportOrdinals();
 
 // Parses a string in the form of "key=value" and check
 // if value matches previous values for the key.
