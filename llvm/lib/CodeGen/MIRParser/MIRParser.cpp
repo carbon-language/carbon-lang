@@ -111,6 +111,10 @@ public:
   bool initializeFrameInfo(const Function &F, MachineFrameInfo &MFI,
                            const yaml::MachineFunction &YamlMF);
 
+  bool initializeJumpTableInfo(MachineFunction &MF,
+                               const yaml::MachineJumpTable &YamlJTI,
+                               const PerFunctionMIParsingState &PFS);
+
 private:
   /// Return a MIR diagnostic converted from an MI string diagnostic.
   SMDiagnostic diagFromMIStringDiag(const SMDiagnostic &Error,
@@ -292,6 +296,11 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (YamlMF.BasicBlocks.empty())
     return error(Twine("machine function '") + Twine(MF.getName()) +
                  "' requires at least one machine basic block in its body");
+  // Initialize the jump table after creating all the MBBs so that the MBB
+  // references can be resolved.
+  if (!YamlMF.JumpTableInfo.Entries.empty() &&
+      initializeJumpTableInfo(MF, YamlMF.JumpTableInfo, PFS))
+    return true;
   // Initialize the machine basic blocks after creating them all so that the
   // machine instructions parser can resolve the MBB references.
   unsigned I = 0;
@@ -421,6 +430,24 @@ bool MIRParserImpl::initializeFrameInfo(const Function &F,
     MFI.setObjectOffset(ObjectIdx, Object.Offset);
     // TODO: Store the mapping between object IDs and object indices to parse
     // stack object references correctly.
+  }
+  return false;
+}
+
+bool MIRParserImpl::initializeJumpTableInfo(
+    MachineFunction &MF, const yaml::MachineJumpTable &YamlJTI,
+    const PerFunctionMIParsingState &PFS) {
+  MachineJumpTableInfo *JTI = MF.getOrCreateJumpTableInfo(YamlJTI.Kind);
+  SMDiagnostic Error;
+  for (const auto &Entry : YamlJTI.Entries) {
+    std::vector<MachineBasicBlock *> Blocks;
+    for (const auto &MBBSource : Entry.Blocks) {
+      MachineBasicBlock *MBB = nullptr;
+      if (parseMBBReference(MBB, SM, MF, MBBSource.Value, PFS, IRSlots, Error))
+        return error(Error, MBBSource.SourceRange);
+      Blocks.push_back(MBB);
+    }
+    JTI->createJumpTableIndex(Blocks);
   }
   return false;
 }

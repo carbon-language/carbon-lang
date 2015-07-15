@@ -19,6 +19,7 @@
 #define LLVM_LIB_CODEGEN_MIRYAMLMAPPING_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <vector>
 
@@ -70,6 +71,22 @@ template <> struct ScalarTraits<FlowStringValue> {
   }
 
   static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
+};
+
+template <> struct ScalarEnumerationTraits<MachineJumpTableInfo::JTEntryKind> {
+  static void enumeration(yaml::IO &IO,
+                          MachineJumpTableInfo::JTEntryKind &EntryKind) {
+    IO.enumCase(EntryKind, "block-address",
+                MachineJumpTableInfo::EK_BlockAddress);
+    IO.enumCase(EntryKind, "gp-rel64-block-address",
+                MachineJumpTableInfo::EK_GPRel64BlockAddress);
+    IO.enumCase(EntryKind, "gp-rel32-block-address",
+                MachineJumpTableInfo::EK_GPRel32BlockAddress);
+    IO.enumCase(EntryKind, "label-difference32",
+                MachineJumpTableInfo::EK_LabelDifference32);
+    IO.enumCase(EntryKind, "inline", MachineJumpTableInfo::EK_Inline);
+    IO.enumCase(EntryKind, "custom32", MachineJumpTableInfo::EK_Custom32);
+  }
 };
 
 } // end namespace yaml
@@ -206,6 +223,23 @@ template <> struct MappingTraits<FixedMachineStackObject> {
   static const bool flow = true;
 };
 
+struct MachineJumpTable {
+  struct Entry {
+    unsigned ID;
+    std::vector<FlowStringValue> Blocks;
+  };
+
+  MachineJumpTableInfo::JTEntryKind Kind = MachineJumpTableInfo::EK_Custom32;
+  std::vector<Entry> Entries;
+};
+
+template <> struct MappingTraits<MachineJumpTable::Entry> {
+  static void mapping(IO &YamlIO, MachineJumpTable::Entry &Entry) {
+    YamlIO.mapRequired("id", Entry.ID);
+    YamlIO.mapOptional("blocks", Entry.Blocks);
+  }
+};
+
 } // end namespace yaml
 } // end namespace llvm
 
@@ -213,9 +247,17 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::VirtualRegisterDefinition)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineBasicBlock)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineStackObject)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::FixedMachineStackObject)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineJumpTable::Entry)
 
 namespace llvm {
 namespace yaml {
+
+template <> struct MappingTraits<MachineJumpTable> {
+  static void mapping(IO &YamlIO, MachineJumpTable &JT) {
+    YamlIO.mapRequired("kind", JT.Kind);
+    YamlIO.mapOptional("entries", JT.Entries);
+  }
+};
 
 /// Serializable representation of MachineFrameInfo.
 ///
@@ -278,6 +320,7 @@ struct MachineFunction {
   MachineFrameInfo FrameInfo;
   std::vector<FixedMachineStackObject> FixedStackObjects;
   std::vector<MachineStackObject> StackObjects;
+  MachineJumpTable JumpTableInfo;
 
   std::vector<MachineBasicBlock> BasicBlocks;
 };
@@ -295,6 +338,8 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("frameInfo", MF.FrameInfo);
     YamlIO.mapOptional("fixedStack", MF.FixedStackObjects);
     YamlIO.mapOptional("stack", MF.StackObjects);
+    if (!YamlIO.outputting() || !MF.JumpTableInfo.Entries.empty())
+      YamlIO.mapOptional("jumpTable", MF.JumpTableInfo);
     YamlIO.mapOptional("body", MF.BasicBlocks);
   }
 };
