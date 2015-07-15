@@ -3,8 +3,8 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 @known_constant = internal unnamed_addr constant [10 x i32] [i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1], align 16
 
-; We should be able to propagate constant data thru different types of casts.
-; For example, in this test we have a load, which becomes constant after
+; We should be able to propagate constant data through different types of
+; casts. For example, in this test we have a load, which becomes constant after
 ; unrolling, which then is truncated to i8. Obviously, truncated value is also a
 ; constant, which can be used in the further simplifications.
 ;
@@ -14,7 +14,8 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 ; optimize  ~60% of all instructions in this case.
 ;
 ; CHECK-LABEL: @const_load_trunc
-; CHECK-NOT: br i1 %exitcond86.i, label %loop.end, label %loop
+; CHECK-NOT: br i1
+; CHECK: ret i8 %
 define i8 @const_load_trunc(i32* noalias nocapture readonly %src) {
 entry:
   br label %loop
@@ -41,7 +42,8 @@ loop.end:                                            ; preds = %loop
 
 ; The same test as before, but with ZEXT instead of TRUNC.
 ; CHECK-LABEL: @const_load_zext
-; CHECK-NOT: br i1 %exitcond86.i, label %loop.end, label %loop
+; CHECK-NOT: br i1
+; CHECK: ret i64 %
 define i64 @const_load_zext(i32* noalias nocapture readonly %src) {
 entry:
   br label %loop
@@ -68,7 +70,8 @@ loop.end:                                            ; preds = %loop
 
 ; The same test as the first one, but with SEXT instead of TRUNC.
 ; CHECK-LABEL: @const_load_sext
-; CHECK-NOT: br i1 %exitcond86.i, label %loop.end, label %loop
+; CHECK-NOT: br i1
+; CHECK: ret i64 %
 define i64 @const_load_sext(i32* noalias nocapture readonly %src) {
 entry:
   br label %loop
