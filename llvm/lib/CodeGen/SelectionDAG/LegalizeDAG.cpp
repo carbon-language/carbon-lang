@@ -599,8 +599,7 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
                             false, false, 0);
 
   // Truncate or zero extend offset to target pointer type.
-  unsigned CastOpc = IdxVT.bitsGT(PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
-  Tmp3 = DAG.getNode(CastOpc, dl, PtrVT, Tmp3);
+  Tmp3 = DAG.getZExtOrTrunc(Tmp3, dl, PtrVT);
   // Add the offset to the index.
   unsigned EltSize = EltVT.getSizeInBits()/8;
   Tmp3 = DAG.getNode(ISD::MUL, dl, IdxVT, Tmp3,

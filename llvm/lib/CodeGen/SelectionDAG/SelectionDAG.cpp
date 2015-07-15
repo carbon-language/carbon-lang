@@ -1852,8 +1852,7 @@ SDValue SelectionDAG::getShiftAmountOperand(EVT LHSTy, SDValue Op) {
   EVT ShTy = TLI->getShiftAmountTy(LHSTy, getDataLayout());
   if (OpTy == ShTy || OpTy.isVector()) return Op;
 
-  ISD::NodeType Opcode = OpTy.bitsGT(ShTy) ?  ISD::TRUNCATE : ISD::ZERO_EXTEND;
-  return getNode(Opcode, SDLoc(Op), ShTy, Op);
+  return getZExtOrTrunc(Op, SDLoc(Op), ShTy);
 }
 
 /// CreateStackTemporary - Create a stack temporary, suitable for holding the
