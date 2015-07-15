@@ -31,9 +31,6 @@
 // CHECK-NONROOT: "-cc1"
 // CHECK-NONROOT-NOT: "-isysroot"
 //
-// It doesn't make sense on msys bash.
-// REQUIRES: shell
-//
 // This test fails with MSYS or MSYS2 env.exe, since it does not preserve
 // root, expanding / into C:/MINGW/MSYS/1.0 or c:/msys64. To reproduce the
 // problem, run:
