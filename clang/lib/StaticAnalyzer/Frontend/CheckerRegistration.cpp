@@ -52,7 +52,12 @@ ClangCheckerRegistry::ClangCheckerRegistry(ArrayRef<std::string> plugins,
   for (ArrayRef<std::string>::iterator i = plugins.begin(), e = plugins.end();
        i != e; ++i) {
     // Get access to the plugin.
-    DynamicLibrary lib = DynamicLibrary::getPermanentLibrary(i->c_str());
+    std::string err;
+    DynamicLibrary lib = DynamicLibrary::getPermanentLibrary(i->c_str(), &err);
+    if (!lib.isValid()) {
+      diags->Report(diag::err_fe_unable_to_load_plugin) << *i << err;
+      continue;
+    }
 
     // See if it's compatible with this build of clang.
     const char *pluginAPIVersion =
