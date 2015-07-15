@@ -1054,6 +1054,9 @@ func (v Value) AddTargetDependentFunctionAttr(attr, value string) {
 	defer C.free(unsafe.Pointer(cvalue))
 	C.LLVMAddTargetDependentFunctionAttr(v.C, cattr, cvalue)
 }
+func (v Value) SetPersonality(p Value) {
+	C.LLVMSetPersonalityFn(v.C, p.C)
+}
 
 // Operations on parameters
 func (v Value) ParamsCount() int { return int(C.LLVMCountParams(v.C)) }
@@ -1206,7 +1209,7 @@ func (b Builder) Dispose() { C.LLVMDisposeBuilder(b.C) }
 func (b Builder) SetCurrentDebugLocation(line, col uint, scope, inlinedAt Metadata) {
 	C.LLVMSetCurrentDebugLocation2(b.C, C.unsigned(line), C.unsigned(col), scope.C, inlinedAt.C)
 }
-func (b Builder) SetInstDebugLocation(v Value)    { C.LLVMSetInstDebugLocation(b.C, v.C) }
+func (b Builder) SetInstDebugLocation(v Value) { C.LLVMSetInstDebugLocation(b.C, v.C) }
 func (b Builder) InsertDeclare(module Module, storage Value, md Value) Value {
 	f := module.NamedFunction("llvm.dbg.declare")
 	if f.IsNil() {
@@ -1725,7 +1728,7 @@ func (b Builder) CreatePtrDiff(lhs, rhs Value, name string) (v Value) {
 	return
 }
 
-func (b Builder) CreateLandingPad(t Type, personality Value, nclauses int, name string) (l Value) {
+func (b Builder) CreateLandingPad(t Type, nclauses int, name string) (l Value) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	l.C = C.LLVMBuildLandingPad(b.C, t.C, C.unsigned(nclauses), cname)
