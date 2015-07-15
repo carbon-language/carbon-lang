@@ -231,8 +231,18 @@ static const DriverSuffix *FindDriverSuffix(StringRef ProgName) {
   return nullptr;
 }
 
-static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
-                          std::set<std::string> &SavedStrings) {
+/// Normalize the program name from argv[0] by stripping the file extension if
+/// present and lower-casing the string on Windows.
+static std::string normalizeProgramName(const char *Argv0) {
+  std::string ProgName = llvm::sys::path::stem(Argv0);
+#ifdef LLVM_ON_WIN32
+  // Transform to lowercase for case insensitive file systems.
+  std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(), ::tolower);
+#endif
+  return ProgName;
+}
+
+static const DriverSuffix *parseDriverSuffix(StringRef ProgName) {
   // Try to infer frontend type and default target from the program name by
   // comparing it against DriverSuffixes in order.
 
@@ -240,54 +250,53 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
   // E.g. "x86_64-linux-clang" as interpreted as suffix "clang" with target
   // prefix "x86_64-linux". If such a target prefix is found, is gets added via
   // -target as implicit first argument.
-
-  std::string ProgName =llvm::sys::path::stem(ArgVector[0]);
-#ifdef LLVM_ON_WIN32
-  // Transform to lowercase for case insensitive file systems.
-  ProgName = StringRef(ProgName).lower();
-#endif
-
-  StringRef ProgNameRef = ProgName;
-  const DriverSuffix *DS = FindDriverSuffix(ProgNameRef);
+  const DriverSuffix *DS = FindDriverSuffix(ProgName);
 
   if (!DS) {
     // Try again after stripping any trailing version number:
     // clang++3.5 -> clang++
-    ProgNameRef = ProgNameRef.rtrim("0123456789.");
-    DS = FindDriverSuffix(ProgNameRef);
+    ProgName = ProgName.rtrim("0123456789.");
+    DS = FindDriverSuffix(ProgName);
   }
 
   if (!DS) {
     // Try again after stripping trailing -component.
     // clang++-tot -> clang++
-    ProgNameRef = ProgNameRef.slice(0, ProgNameRef.rfind('-'));
-    DS = FindDriverSuffix(ProgNameRef);
+    ProgName = ProgName.slice(0, ProgName.rfind('-'));
+    DS = FindDriverSuffix(ProgName);
+  }
+   return DS;
+}
+
+static void insertArgsFromProgramName(StringRef ProgName,
+                                      const DriverSuffix *DS,
+                                      SmallVectorImpl<const char *> &ArgVector,
+                                      std::set<std::string> &SavedStrings) {
+  if (!DS)
+    return;
+
+  if (const char *Flag = DS->ModeFlag) {
+    // Add Flag to the arguments.
+    auto it = ArgVector.begin();
+    if (it != ArgVector.end())
+      ++it;
+    ArgVector.insert(it, Flag);
   }
 
-  if (DS) {
-    if (const char *Flag = DS->ModeFlag) {
-      // Add Flag to the arguments.
-      auto it = ArgVector.begin();
-      if (it != ArgVector.end())
-        ++it;
-      ArgVector.insert(it, Flag);
-    }
+  StringRef::size_type LastComponent = ProgName.rfind(
+      '-', ProgName.size() - strlen(DS->Suffix));
+  if (LastComponent == StringRef::npos)
+    return;
 
-    StringRef::size_type LastComponent = ProgNameRef.rfind(
-        '-', ProgNameRef.size() - strlen(DS->Suffix));
-    if (LastComponent == StringRef::npos)
-      return;
-
-    // Infer target from the prefix.
-    StringRef Prefix = ProgNameRef.slice(0, LastComponent);
-    std::string IgnoredError;
-    if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
-      auto it = ArgVector.begin();
-      if (it != ArgVector.end())
-        ++it;
-      const char *arr[] = { "-target", GetStableCStr(SavedStrings, Prefix) };
-      ArgVector.insert(it, std::begin(arr), std::end(arr));
-    }
+  // Infer target from the prefix.
+  StringRef Prefix = ProgName.slice(0, LastComponent);
+  std::string IgnoredError;
+  if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
+    auto it = ArgVector.begin();
+    if (it != ArgVector.end())
+      ++it;
+    const char *arr[] = { "-target", GetStableCStr(SavedStrings, Prefix) };
+    ArgVector.insert(it, std::begin(arr), std::end(arr));
   }
 }
 
@@ -380,16 +389,33 @@ int main(int argc_, const char **argv_) {
     return 1;
   }
 
+  std::string ProgName = normalizeProgramName(argv[0]);
+  const DriverSuffix *DS = parseDriverSuffix(ProgName);
+
   llvm::BumpPtrAllocator A;
   llvm::BumpPtrStringSaver Saver(A);
+
+  // Parse response files using the GNU syntax, unless we're in CL mode. There
+  // are two ways to put clang in CL compatibility mode: argv[0] is either
+  // clang-cl or cl, or --driver-mode=cl is on the command line. The normal
+  // command line parsing can't happen until after response file parsing, so we
+  // have to manually search for a --driver-mode=cl argument the hard way.
+  // Finally, our -cc1 tools don't care which tokenization mode we use because
+  // response files written by clang will tokenize the same way in either mode.
+  llvm::cl::TokenizerCallback Tokenizer = &llvm::cl::TokenizeGNUCommandLine;
+  if ((DS && DS->ModeFlag && strcmp(DS->ModeFlag, "--driver-mode=cl") == 0) ||
+      std::find_if(argv.begin(), argv.end(), [](const char *F) {
+        return F && strcmp(F, "--driver-mode=cl") == 0;
+      }) != argv.end()) {
+    Tokenizer = &llvm::cl::TokenizeWindowsCommandLine;
+  }
 
   // Determines whether we want nullptr markers in argv to indicate response
   // files end-of-lines. We only use this for the /LINK driver argument.
   bool MarkEOLs = true;
   if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1"))
     MarkEOLs = false;
-  llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, argv,
-                                MarkEOLs);
+  llvm::cl::ExpandResponseFiles(Saver, Tokenizer, argv, MarkEOLs);
 
   // Handle -cc1 integrated tools, even if -cc1 was expanded from a response
   // file.
@@ -450,7 +476,7 @@ int main(int argc_, const char **argv_) {
   SetInstallDir(argv, TheDriver);
 
   llvm::InitializeAllTargets();
-  ParseProgName(argv, SavedStrings);
+  insertArgsFromProgramName(ProgName, DS, argv, SavedStrings);
 
   SetBackdoorDriverOutputsFromEnvVars(TheDriver);
 

@@ -98,7 +98,9 @@ void Command::writeResponseFile(raw_ostream &OS) const {
     return;
   }
 
-  // In regular response files, we send all arguments to the response file
+  // In regular response files, we send all arguments to the response file.
+  // Wrapping all arguments in double quotes ensures that both Unix tools and
+  // Windows tools understand the response file.
   for (const char *Arg : Arguments) {
     OS << '"';
 
