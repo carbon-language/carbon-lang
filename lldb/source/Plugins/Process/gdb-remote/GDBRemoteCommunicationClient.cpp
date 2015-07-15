@@ -2293,7 +2293,8 @@ GDBRemoteCommunicationClient::Detach (bool keep_stopped)
             const int packet_len = ::snprintf(packet, sizeof(packet), "qSupportsDetachAndStayStopped:");
             assert (packet_len < (int)sizeof(packet));
             StringExtractorGDBRemote response;
-            if (SendPacketAndWaitForResponse (packet, packet_len, response, false) == PacketResult::Success)
+            if (SendPacketAndWaitForResponse (packet, packet_len, response, false) == PacketResult::Success
+                  && response.IsOKResponse())
             {
                 m_supports_detach_stay_stopped = eLazyBoolYes;        
             }
