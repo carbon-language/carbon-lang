@@ -32,5 +32,6 @@ HANDLE_DI_FLAG((1 << 11), Vector)
 HANDLE_DI_FLAG((1 << 12), StaticMember)
 HANDLE_DI_FLAG((1 << 13), LValueReference)
 HANDLE_DI_FLAG((1 << 14), RValueReference)
+HANDLE_DI_FLAG((1 << 15), ExternalTypeRef)
 
 #undef HANDLE_DI_FLAG

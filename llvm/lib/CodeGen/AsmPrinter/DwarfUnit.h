@@ -228,7 +228,11 @@ public:
   /// Add a DIE attribute data and value.
   void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIEEntry Entry);
 
+  /// Add a type's DW_AT_signature and set the  declaration flag.
   void addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type);
+  /// Add an attribute containing the type signature for a unique identifier.
+  void addDIETypeSignature(DIE &Die, dwarf::Attribute Attribute,
+                           StringRef Identifier);
 
   /// Add block data.
   void addBlock(DIE &Die, dwarf::Attribute Attribute, DIELoc *Block);

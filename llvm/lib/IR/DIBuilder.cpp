@@ -435,6 +435,18 @@ DISubroutineType *DIBuilder::createSubroutineType(DIFile *File,
   return DISubroutineType::get(VMContext, Flags, ParameterTypes);
 }
 
+DICompositeType *DIBuilder::createExternalTypeRef(unsigned Tag, DIFile *File,
+                                                  StringRef UniqueIdentifier) {
+  assert(!UniqueIdentifier.empty() && "external type ref without uid");
+  auto *CTy =
+      DICompositeType::get(VMContext, Tag, "", nullptr, 0, nullptr, nullptr, 0,
+                           0, 0, DINode::FlagExternalTypeRef, nullptr, 0,
+                           nullptr, nullptr, UniqueIdentifier);
+  // Types with unique IDs need to be in the type map.
+  retainType(CTy);
+  return CTy;
+}
+
 DICompositeType *DIBuilder::createEnumerationType(
     DIScope *Scope, StringRef Name, DIFile *File, unsigned LineNumber,
     uint64_t SizeInBits, uint64_t AlignInBits, DINodeArray Elements,

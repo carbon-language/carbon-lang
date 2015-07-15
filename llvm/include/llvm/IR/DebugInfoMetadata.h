@@ -574,6 +574,7 @@ public:
   bool isStaticMember() const { return getFlags() & FlagStaticMember; }
   bool isLValueReference() const { return getFlags() & FlagLValueReference; }
   bool isRValueReference() const { return getFlags() & FlagRValueReference; }
+  bool isExternalTypeRef() const { return getFlags() & FlagExternalTypeRef; }
 
   DITypeRef getRef() const { return DITypeRef::get(this); }
 
