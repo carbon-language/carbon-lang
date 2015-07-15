@@ -15,6 +15,7 @@
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentParser.h"
 #include "clang/AST/CommentSema.h"
+#include "clang/Basic/CharInfo.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
@@ -62,12 +63,53 @@ std::pair<RawComment::CommentKind, bool> getCommentKind(StringRef Comment,
 bool mergedCommentIsTrailingComment(StringRef Comment) {
   return (Comment.size() > 3) && (Comment[3] == '<');
 }
+
+/// Returns true if R1 and R2 both have valid locations that start on the same
+/// column.
+bool commentsStartOnSameColumn(const SourceManager &SM, const RawComment &R1,
+                               const RawComment &R2) {
+  SourceLocation L1 = R1.getLocStart();
+  SourceLocation L2 = R2.getLocStart();
+  bool Invalid = false;
+  unsigned C1 = SM.getPresumedColumnNumber(L1, &Invalid);
+  if (!Invalid) {
+    unsigned C2 = SM.getPresumedColumnNumber(L2, &Invalid);
+    return !Invalid && (C1 == C2);
+  }
+  return false;
+}
 } // unnamed namespace
+
+/// \brief Determines whether there is only whitespace in `Buffer` between `P`
+/// and the previous line.
+/// \param Buffer The buffer to search in.
+/// \param P The offset from the beginning of `Buffer` to start from.
+/// \return true if all of the characters in `Buffer` ranging from the closest
+/// line-ending character before `P` (or the beginning of `Buffer`) to `P - 1`
+/// are whitespace.
+static bool onlyWhitespaceOnLineBefore(const char *Buffer, unsigned P) {
+  // Search backwards until we see linefeed or carriage return.
+  for (unsigned I = P; I != 0; --I) {
+    char C = Buffer[I - 1];
+    if (isVerticalWhitespace(C))
+      return true;
+    if (!isHorizontalWhitespace(C))
+      return false;
+  }
+  // We hit the beginning of the buffer.
+  return true;
+}
+
+/// Returns whether `K` is an ordinary comment kind.
+static bool isOrdinaryKind(RawComment::CommentKind K) {
+  return (K == RawComment::RCK_OrdinaryBCPL) ||
+         (K == RawComment::RCK_OrdinaryC);
+}
 
 RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
                        bool Merged, bool ParseAllComments) :
     Range(SR), RawTextValid(false), BriefTextValid(false),
-    IsAttached(false), IsAlmostTrailingComment(false),
+    IsAttached(false), IsTrailingComment(false), IsAlmostTrailingComment(false),
     ParseAllComments(ParseAllComments) {
   // Extract raw comment text, if possible.
   if (SR.getBegin() == SR.getEnd() || getRawText(SourceMgr).empty()) {
@@ -75,17 +117,34 @@ RawComment::RawComment(const SourceManager &SourceMgr, SourceRange SR,
     return;
   }
 
+  // Guess comment kind.
+  std::pair<CommentKind, bool> K = getCommentKind(RawText, ParseAllComments);
+
+  // Guess whether an ordinary comment is trailing.
+  if (ParseAllComments && isOrdinaryKind(K.first)) {
+    FileID BeginFileID;
+    unsigned BeginOffset;
+    std::tie(BeginFileID, BeginOffset) =
+        SourceMgr.getDecomposedLoc(Range.getBegin());
+    if (BeginOffset != 0) {
+      bool Invalid = false;
+      const char *Buffer =
+          SourceMgr.getBufferData(BeginFileID, &Invalid).data();
+      IsTrailingComment |=
+          (!Invalid && !onlyWhitespaceOnLineBefore(Buffer, BeginOffset));
+    }
+  }
+
   if (!Merged) {
-    // Guess comment kind.
-    std::pair<CommentKind, bool> K = getCommentKind(RawText, ParseAllComments);
     Kind = K.first;
-    IsTrailingComment = K.second;
+    IsTrailingComment |= K.second;
 
     IsAlmostTrailingComment = RawText.startswith("//<") ||
                                  RawText.startswith("/*<");
   } else {
     Kind = RCK_Merged;
-    IsTrailingComment = mergedCommentIsTrailingComment(RawText);
+    IsTrailingComment =
+        IsTrailingComment || mergedCommentIsTrailingComment(RawText);
   }
 }
 
@@ -239,9 +298,22 @@ void RawCommentList::addComment(const RawComment &RC,
   const RawComment &C2 = RC;
 
   // Merge comments only if there is only whitespace between them.
-  // Can't merge trailing and non-trailing comments.
+  // Can't merge trailing and non-trailing comments unless the second is
+  // non-trailing ordinary in the same column, as in the case:
+  //   int x; // documents x
+  //          // more text
+  // versus:
+  //   int x; // documents x
+  //   int y; // documents y
+  // or:
+  //   int x; // documents x
+  //   // documents y
+  //   int y;
   // Merge comments if they are on same or consecutive lines.
-  if (C1.isTrailingComment() == C2.isTrailingComment() &&
+  if ((C1.isTrailingComment() == C2.isTrailingComment() ||
+       (C1.isTrailingComment() && !C2.isTrailingComment() &&
+        isOrdinaryKind(C2.getKind()) &&
+        commentsStartOnSameColumn(SourceMgr, C1, C2))) &&
       onlyWhitespaceBetween(SourceMgr, C1.getLocEnd(), C2.getLocStart(),
                             /*MaxNewlinesAllowed=*/1)) {
     SourceRange MergedRange(C1.getLocStart(), C2.getLocEnd());
