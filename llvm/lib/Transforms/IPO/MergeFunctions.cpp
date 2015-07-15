@@ -1516,6 +1516,8 @@ void MergeFunctions::remove(Function *F) {
 void MergeFunctions::removeUsers(Value *V) {
   std::vector<Value *> Worklist;
   Worklist.push_back(V);
+  SmallSet<Value*, 8> Visited;
+  Visited.insert(V);
   while (!Worklist.empty()) {
     Value *V = Worklist.back();
     Worklist.pop_back();
@@ -1526,8 +1528,10 @@ void MergeFunctions::removeUsers(Value *V) {
       } else if (isa<GlobalValue>(U)) {
         // do nothing
       } else if (Constant *C = dyn_cast<Constant>(U)) {
-        for (User *UU : C->users())
-          Worklist.push_back(UU);
+        for (User *UU : C->users()) {
+          if (!Visited.insert(UU).second)
+            Worklist.push_back(UU);
+        }
       }
     }
   }
