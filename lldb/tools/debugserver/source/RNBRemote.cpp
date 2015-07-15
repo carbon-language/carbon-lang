@@ -265,7 +265,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_qSymbol                , NULL, "qSymbol:", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (json_query_thread_extended_info,&RNBRemote::HandlePacket_jThreadExtendedInfo   , NULL, "jThreadExtendedInfo", "Replies with JSON data of thread extended information."));
     t.push_back (Packet (json_query_get_loaded_dynamic_libraries_infos,          &RNBRemote::HandlePacket_jGetLoadedDynamicLibrariesInfos,     NULL, "jGetLoadedDynamicLibrariesInfos", "Replies with JSON data of all the shared libraries loaded in this process."));
-    //t.push_back (Packet (json_query_threads_info,       &RNBRemote::HandlePacket_jThreadsInfo           , NULL, "jThreadsInfo", "Replies with JSON data with information about all threads."));
+    t.push_back (Packet (json_query_threads_info,       &RNBRemote::HandlePacket_jThreadsInfo           , NULL, "jThreadsInfo", "Replies with JSON data with information about all threads."));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
     t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specific packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
     t.push_back (Packet (set_logging_mode,              &RNBRemote::HandlePacket_QSetLogging            , NULL, "QSetLogging:", "Check if register packets ('g', 'G', 'p', and 'P' support having the thread ID prefix"));
@@ -2304,6 +2304,7 @@ RNBRemote::HandlePacket_QListThreadsInStopReply (const char *p)
     // Send the OK packet first so the correct checksum is appended...
     rnb_err_t result = SendPacket ("OK");
     m_list_threads_in_stop_reply = true;
+
     return result;
 }
 
@@ -2719,7 +2720,6 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
         // and qsThreadInfo packets, but it also might take a lot of room in the
         // stop reply packet, so it must be enabled only on systems where there
         // are no limits on packet lengths.
-        
         if (m_list_threads_in_stop_reply)
         {
             const nub_size_t numthreads = DNBProcessGetNumThreads (pid);
@@ -2735,7 +2735,25 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
                 }
                 ostrm << ';';
             }
+
+            // Include JSON info that describes the stop reason for all threads
+            // so when stepping we don't have to query each thread for its stop
+            // info. We use the new "jthreads" key whose values is hex ascii JSON
+            // that contains the thread IDs and only the stop info.
+            const bool queue_info = false;
+            const bool registers = false;
+            const bool memory = false;
+            JSONGenerator::ObjectSP threads_info_sp = GetJSONThreadsInfo(queue_info, registers, memory);
+            if (threads_info_sp)
+            {
+                ostrm << std::hex << "jthreads:";
+                std::ostringstream json_strm;
+                threads_info_sp->Dump (json_strm);
+                append_hexified_string (ostrm, json_strm.str());
+                ostrm << ';';
+            }
         }
+
 
         if (g_num_reg_entries == 0)
             InitializeRegisters ();
@@ -4962,16 +4980,14 @@ get_integer_value_for_key_name_from_json (const char *key, const char *json_stri
 
 }
 
-rnb_err_t
-RNBRemote::HandlePacket_jThreadsInfo (const char *p)
+JSONGenerator::ObjectSP
+RNBRemote::GetJSONThreadsInfo(bool queue_info, bool registers, bool memory)
 {
-    JSONGenerator::Array threads_array;
-
-    std::ostringstream json;
-    std::ostringstream reply_strm;
-    // If we haven't run the process yet, return an error.
+    JSONGenerator::ArraySP threads_array_sp;
     if (m_ctx.HasValidProcessID())
     {
+        threads_array_sp.reset(new JSONGenerator::Array());
+
         nub_process_t pid = m_ctx.ProcessID();
 
         nub_size_t numthreads = DNBProcessGetNumThreads (pid);
@@ -5027,81 +5043,112 @@ RNBRemote::HandlePacket_jThreadsInfo (const char *p)
                 thread_dict_sp->AddStringItem("name", thread_name);
 
 
-            thread_identifier_info_data_t thread_ident_info;
-            if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))
+            if (queue_info)
             {
-                if (thread_ident_info.dispatch_qaddr != 0)
+                thread_identifier_info_data_t thread_ident_info;
+                if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))
                 {
-                    thread_dict_sp->AddIntegerItem("qaddr", thread_ident_info.dispatch_qaddr);
-
-                    const DispatchQueueOffsets *dispatch_queue_offsets = GetDispatchQueueOffsets();
-                    if (dispatch_queue_offsets)
+                    if (thread_ident_info.dispatch_qaddr != 0)
                     {
-                        std::string queue_name;
-                        uint64_t queue_width = 0;
-                        uint64_t queue_serialnum = 0;
-                        dispatch_queue_offsets->GetThreadQueueInfo(pid, thread_ident_info.dispatch_qaddr, queue_name, queue_width, queue_serialnum);
-                        if (!queue_name.empty())
-                            thread_dict_sp->AddStringItem("qname", queue_name);
-                        if (queue_width == 1)
-                            thread_dict_sp->AddStringItem("qkind", "serial");
-                        else if (queue_width > 1)
-                            thread_dict_sp->AddStringItem("qkind", "concurrent");
-                        if (queue_serialnum > 0)
-                            thread_dict_sp->AddIntegerItem("qserial", queue_serialnum);
+                        thread_dict_sp->AddIntegerItem("qaddr", thread_ident_info.dispatch_qaddr);
+
+                        const DispatchQueueOffsets *dispatch_queue_offsets = GetDispatchQueueOffsets();
+                        if (dispatch_queue_offsets)
+                        {
+                            std::string queue_name;
+                            uint64_t queue_width = 0;
+                            uint64_t queue_serialnum = 0;
+                            dispatch_queue_offsets->GetThreadQueueInfo(pid, thread_ident_info.dispatch_qaddr, queue_name, queue_width, queue_serialnum);
+                            if (!queue_name.empty())
+                                thread_dict_sp->AddStringItem("qname", queue_name);
+                            if (queue_width == 1)
+                                thread_dict_sp->AddStringItem("qkind", "serial");
+                            else if (queue_width > 1)
+                                thread_dict_sp->AddStringItem("qkind", "concurrent");
+                            if (queue_serialnum > 0)
+                                thread_dict_sp->AddIntegerItem("qserial", queue_serialnum);
+                        }
                     }
                 }
             }
-            DNBRegisterValue reg_value;
 
-            if (g_reg_entries != NULL)
+            if (registers)
             {
-                JSONGenerator::DictionarySP registers_dict_sp(new JSONGenerator::Dictionary());
+                DNBRegisterValue reg_value;
 
-                for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
+                if (g_reg_entries != NULL)
                 {
-                    // Expedite all registers in the first register set that aren't
-                    // contained in other registers
-                    if (g_reg_entries[reg].nub_info.set == 1 &&
-                        g_reg_entries[reg].nub_info.value_regs == NULL)
+                    JSONGenerator::DictionarySP registers_dict_sp(new JSONGenerator::Dictionary());
+
+                    for (uint32_t reg = 0; reg < g_num_reg_entries; reg++)
                     {
-                        if (!DNBThreadGetRegisterValueByID (pid, tid, g_reg_entries[reg].nub_info.set, g_reg_entries[reg].nub_info.reg, &reg_value))
-                            continue;
+                        // Expedite all registers in the first register set that aren't
+                        // contained in other registers
+                        if (g_reg_entries[reg].nub_info.set == 1 &&
+                            g_reg_entries[reg].nub_info.value_regs == NULL)
+                        {
+                            if (!DNBThreadGetRegisterValueByID (pid, tid, g_reg_entries[reg].nub_info.set, g_reg_entries[reg].nub_info.reg, &reg_value))
+                                continue;
 
-                        std::ostringstream reg_num;
-                        reg_num << std::dec << g_reg_entries[reg].gdb_regnum;
-                        // Encode native byte ordered bytes as hex ascii
-                        registers_dict_sp->AddBytesAsHexASCIIString(reg_num.str(), reg_value.value.v_uint8, g_reg_entries[reg].nub_info.size);
+                            std::ostringstream reg_num;
+                            reg_num << std::dec << g_reg_entries[reg].gdb_regnum;
+                            // Encode native byte ordered bytes as hex ascii
+                            registers_dict_sp->AddBytesAsHexASCIIString(reg_num.str(), reg_value.value.v_uint8, g_reg_entries[reg].nub_info.size);
+                        }
                     }
+                    thread_dict_sp->AddItem("registers", registers_dict_sp);
                 }
-                thread_dict_sp->AddItem("registers", registers_dict_sp);
             }
 
-            // Add expedited stack memory so stack backtracing doesn't need to read anything from the
-            // frame pointer chain.
-            StackMemoryMap stack_mmap;
-            ReadStackMemory (pid, tid, stack_mmap);
-            if (!stack_mmap.empty())
+            if (memory)
             {
-                JSONGenerator::ArraySP memory_array_sp(new JSONGenerator::Array());
-
-                for (const auto &stack_memory : stack_mmap)
+                // Add expedited stack memory so stack backtracing doesn't need to read anything from the
+                // frame pointer chain.
+                StackMemoryMap stack_mmap;
+                ReadStackMemory (pid, tid, stack_mmap);
+                if (!stack_mmap.empty())
                 {
-                    JSONGenerator::DictionarySP stack_memory_sp(new JSONGenerator::Dictionary());
-                    stack_memory_sp->AddIntegerItem("address", stack_memory.first);
-                    stack_memory_sp->AddBytesAsHexASCIIString("bytes", stack_memory.second.bytes, stack_memory.second.length);
-                    memory_array_sp->AddItem(stack_memory_sp);
+                    JSONGenerator::ArraySP memory_array_sp(new JSONGenerator::Array());
+
+                    for (const auto &stack_memory : stack_mmap)
+                    {
+                        JSONGenerator::DictionarySP stack_memory_sp(new JSONGenerator::Dictionary());
+                        stack_memory_sp->AddIntegerItem("address", stack_memory.first);
+                        stack_memory_sp->AddBytesAsHexASCIIString("bytes", stack_memory.second.bytes, stack_memory.second.length);
+                        memory_array_sp->AddItem(stack_memory_sp);
+                    }
+                    thread_dict_sp->AddItem("memory", memory_array_sp);
                 }
-                thread_dict_sp->AddItem("memory", memory_array_sp);
             }
-            threads_array.AddItem(thread_dict_sp);
+
+            threads_array_sp->AddItem(thread_dict_sp);
         }
+    }
+    return threads_array_sp;
+}
 
-        std::ostringstream strm;
-        threads_array.Dump (strm);
-        std::string binary_packet = binary_encode_string (strm.str());
-        if (!binary_packet.empty())
-            return SendPacket (binary_packet.c_str());
+rnb_err_t
+RNBRemote::HandlePacket_jThreadsInfo (const char *p)
+{
+    JSONGenerator::ObjectSP threads_info_sp;
+    std::ostringstream json;
+    std::ostringstream reply_strm;
+    // If we haven't run the process yet, return an error.
+    if (m_ctx.HasValidProcessID())
+    {
+        const bool queue_info = true;
+        const bool registers = true;
+        const bool memory = true;
+        JSONGenerator::ObjectSP threads_info_sp = GetJSONThreadsInfo(queue_info, registers, memory);
+
+        if (threads_info_sp)
+        {
+            std::ostringstream strm;
+            threads_info_sp->Dump (strm);
+            std::string binary_packet = binary_encode_string (strm.str());
+            if (!binary_packet.empty())
+                return SendPacket (binary_packet.c_str());
+        }
     }
     return SendPacket ("E85");
 

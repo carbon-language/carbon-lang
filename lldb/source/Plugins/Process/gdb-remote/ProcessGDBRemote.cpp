@@ -2341,6 +2341,18 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     if (tid != LLDB_INVALID_THREAD_ID)
                         m_thread_ids.push_back (tid);
                 }
+                else if (key.compare("jthreads") == 0)
+                {
+                    StringExtractor json_extractor;
+                    // Swap "value" over into "name_extractor"
+                    json_extractor.GetStringRef().swap(value);
+                    // Now convert the HEX bytes into a string value
+                    json_extractor.GetHexByteString (value);
+
+                    // This JSON contains thread IDs and thread stop info for all threads.
+                    // It doesn't contain expedited registers, memory or queue info.
+                    m_threads_info_sp = StructuredData::ParseJSON (value);
+                }
                 else if (key.compare("hexname") == 0)
                 {
                     StringExtractor name_extractor;
