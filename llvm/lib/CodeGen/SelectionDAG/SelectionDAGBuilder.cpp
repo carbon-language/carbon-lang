@@ -1375,13 +1375,11 @@ SelectionDAGBuilder::EmitBranchForMergedCondition(const Value *Cond,
       ISD::CondCode Condition;
       if (const ICmpInst *IC = dyn_cast<ICmpInst>(Cond)) {
         Condition = getICmpCondCode(IC->getPredicate());
-      } else if (const FCmpInst *FC = dyn_cast<FCmpInst>(Cond)) {
+      } else {
+        const FCmpInst *FC = cast<FCmpInst>(Cond);
         Condition = getFCmpCondCode(FC->getPredicate());
         if (TM.Options.NoNaNsFPMath)
           Condition = getFCmpCodeWithoutNaN(Condition);
-      } else {
-        (void)Condition; // silence warning.
-        llvm_unreachable("Unknown compare instruction");
       }
 
       CaseBlock CB(Condition, BOp->getOperand(0), BOp->getOperand(1), nullptr,
