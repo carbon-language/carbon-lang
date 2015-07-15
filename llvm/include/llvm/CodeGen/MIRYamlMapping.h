@@ -132,8 +132,9 @@ template <> struct MappingTraits<MachineBasicBlock> {
 /// objects (Serialize local objects).
 struct MachineStackObject {
   enum ObjectType { DefaultType, SpillSlot, VariableSized };
-  // TODO: Serialize LLVM alloca reference.
   unsigned ID;
+  StringValue Name;
+  // TODO: Serialize unnamed LLVM alloca reference.
   ObjectType Type = DefaultType;
   int64_t Offset = 0;
   uint64_t Size = 0;
@@ -151,6 +152,8 @@ template <> struct ScalarEnumerationTraits<MachineStackObject::ObjectType> {
 template <> struct MappingTraits<MachineStackObject> {
   static void mapping(yaml::IO &YamlIO, MachineStackObject &Object) {
     YamlIO.mapRequired("id", Object.ID);
+    YamlIO.mapOptional("name", Object.Name,
+                       StringValue()); // Don't print out an empty name.
     YamlIO.mapOptional(
         "type", Object.Type,
         MachineStackObject::DefaultType); // Don't print the default type.

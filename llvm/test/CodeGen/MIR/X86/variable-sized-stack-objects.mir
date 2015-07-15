@@ -26,11 +26,11 @@ frameInfo:
 # CHECK: stack:
 # CHECK-NEXT: - { id: 0, offset: -20, size: 4, alignment: 4 }
 # CHECK-NEXT: - { id: 1, offset: -32, size: 8, alignment: 8 }
-# CHECK-NEXT: - { id: 2, type: variable-sized, offset: -32, alignment: 1 }
+# CHECK-NEXT: - { id: 2, name: y, type: variable-sized, offset: -32, alignment: 1 }
 stack:
   - { id: 0, offset: -20, size: 4, alignment: 4 }
   - { id: 1, offset: -32, size: 8, alignment: 8 }
-  - { id: 2, type: variable-sized, offset: -32, alignment: 1 }
+  - { id: 2, name: y, type: variable-sized, offset: -32, alignment: 1 }
 body:
   - id:          0
     name:        entry

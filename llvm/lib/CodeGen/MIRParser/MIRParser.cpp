@@ -108,7 +108,7 @@ public:
                          const yaml::MachineFunction &YamlMF,
                          DenseMap<unsigned, unsigned> &VirtualRegisterSlots);
 
-  bool initializeFrameInfo(MachineFrameInfo &MFI,
+  bool initializeFrameInfo(const Function &F, MachineFrameInfo &MFI,
                            const yaml::MachineFunction &YamlMF);
 
 private:
@@ -264,7 +264,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF,
                              PFS.VirtualRegisterSlots))
     return true;
-  if (initializeFrameInfo(*MF.getFrameInfo(), YamlMF))
+  if (initializeFrameInfo(*MF.getFunction(), *MF.getFrameInfo(), YamlMF))
     return true;
 
   const auto &F = *MF.getFunction();
@@ -366,7 +366,8 @@ bool MIRParserImpl::initializeRegisterInfo(
   return false;
 }
 
-bool MIRParserImpl::initializeFrameInfo(MachineFrameInfo &MFI,
+bool MIRParserImpl::initializeFrameInfo(const Function &F,
+                                        MachineFrameInfo &MFI,
                                         const yaml::MachineFunction &YamlMF) {
   const yaml::MachineFrameInfo &YamlMFI = YamlMF.FrameInfo;
   MFI.setFrameAddressIsTaken(YamlMFI.IsFrameAddressTaken);
@@ -400,13 +401,23 @@ bool MIRParserImpl::initializeFrameInfo(MachineFrameInfo &MFI,
   // Initialize the ordinary frame objects.
   for (const auto &Object : YamlMF.StackObjects) {
     int ObjectIdx;
+    const AllocaInst *Alloca = nullptr;
+    const yaml::StringValue &Name = Object.Name;
+    if (!Name.Value.empty()) {
+      Alloca = dyn_cast_or_null<AllocaInst>(
+          F.getValueSymbolTable().lookup(Name.Value));
+      if (!Alloca)
+        return error(Name.SourceRange.Start,
+                     "alloca instruction named '" + Name.Value +
+                         "' isn't defined in the function '" + F.getName() +
+                         "'");
+    }
     if (Object.Type == yaml::MachineStackObject::VariableSized)
-      ObjectIdx =
-          MFI.CreateVariableSizedObject(Object.Alignment, /*Alloca=*/nullptr);
+      ObjectIdx = MFI.CreateVariableSizedObject(Object.Alignment, Alloca);
     else
       ObjectIdx = MFI.CreateStackObject(
           Object.Size, Object.Alignment,
-          Object.Type == yaml::MachineStackObject::SpillSlot);
+          Object.Type == yaml::MachineStackObject::SpillSlot, Alloca);
     MFI.setObjectOffset(ObjectIdx, Object.Offset);
     // TODO: Store the mapping between object IDs and object indices to parse
     // stack object references correctly.

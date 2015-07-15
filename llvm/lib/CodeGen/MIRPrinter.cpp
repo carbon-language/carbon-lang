@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -199,6 +200,9 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
 
     yaml::MachineStackObject YamlObject;
     YamlObject.ID = ID++;
+    if (const auto *Alloca = MFI.getObjectAllocation(I))
+      YamlObject.Name.Value =
+          Alloca->hasName() ? Alloca->getName() : "<unnamed alloca>";
     YamlObject.Type = MFI.isSpillSlotObjectIndex(I)
                           ? yaml::MachineStackObject::SpillSlot
                           : MFI.isVariableSizedObjectIndex(I)
