@@ -1409,7 +1409,8 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
                                                MachineBasicBlock *FBB,
                                                MachineBasicBlock *CurBB,
                                                MachineBasicBlock *SwitchBB,
-                                               unsigned Opc, uint32_t TWeight,
+                                               Instruction::BinaryOps Opc,
+                                               uint32_t TWeight,
                                                uint32_t FWeight) {
   // If this node is not part of the or/and tree, emit it as a branch.
   const Instruction *BOp = dyn_cast<Instruction>(Cond);
