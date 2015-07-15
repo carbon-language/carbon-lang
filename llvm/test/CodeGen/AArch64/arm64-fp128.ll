@@ -148,14 +148,9 @@ define i1 @test_setcc2() {
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
   %val = fcmp ugt fp128 %lhs, %rhs
-; CHECK: bl      __gttf2
+; CHECK: bl      __letf2
 ; CHECK: cmp     w0, #0
-; CHECK: cset   [[GT:w[0-9]+]], gt
-
-; CHECK: bl      __unordtf2
-; CHECK: cmp     w0, #0
-; CHECK: cset   [[UNORDERED:w[0-9]+]], ne
-; CHECK: orr     w0, [[UNORDERED]], [[GT]]
+; CHECK: cset    w0, gt
 
   ret i1 %val
 ; CHECK: ret
@@ -169,31 +164,21 @@ define i32 @test_br_cc() {
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
-  ; olt == !uge, which LLVM unfortunately "optimizes" this to.
+  ; olt == !uge, which LLVM optimizes this to.
   %cond = fcmp olt fp128 %lhs, %rhs
-; CHECK: bl      __getf2
-; CHECK: cmp     w0, #0
-; CHECK: cset   [[OGE:w[0-9]+]], ge
-
-; CHECK: bl      __unordtf2
-; CHECK: cmp     w0, #0
-; CHECK: cset   [[UNORDERED:w[0-9]+]], ne
-
-; CHECK: orr     [[UGE:w[0-9]+]], [[UNORDERED]], [[OGE]]
-; CHECK: cbnz [[UGE]], [[RET29:.LBB[0-9]+_[0-9]+]]
+; CHECK: bl      __lttf2
+; CHECK-NEXT: cmp     w0, #0
+; CHECK-NEXT: b.ge {{.LBB[0-9]+_[0-9]+}}
   br i1 %cond, label %iftrue, label %iffalse
 
 iftrue:
   ret i32 42
 ; CHECK-NEXT: BB#
 ; CHECK-NEXT: movz w0, #0x2a
-; CHECK-NEXT: b [[REALRET:.LBB[0-9]+_[0-9]+]]
-
+; CHECK: ret
 iffalse:
   ret i32 29
-; CHECK: [[RET29]]:
-; CHECK-NEXT: movz w0, #0x1d
-; CHECK-NEXT: [[REALRET]]:
+; CHECK: movz w0, #0x1d
 ; CHECK: ret
 }
 

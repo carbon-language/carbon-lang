@@ -81,8 +81,9 @@ define i1 @cmp_f_ord(float %a, float %b) {
 }
 define i1 @cmp_f_ugt(float %a, float %b) {
 ; CHECK-LABEL: cmp_f_ugt:
-; NONE: bl __aeabi_fcmpgt
-; NONE: bl __aeabi_fcmpun
+; NONE: bl __aeabi_fcmple
+; NONE: cmp r0, #0
+; NONE-NEXT: it eq
 ; HARD: vcmpe.f32
 ; HARD: movhi r0, #1
   %1 = fcmp ugt float %a, %b
@@ -90,8 +91,9 @@ define i1 @cmp_f_ugt(float %a, float %b) {
 }
 define i1 @cmp_f_uge(float %a, float %b) {
 ; CHECK-LABEL: cmp_f_uge:
-; NONE: bl __aeabi_fcmpge
-; NONE: bl __aeabi_fcmpun
+; NONE: bl __aeabi_fcmplt
+; NONE: cmp r0, #0
+; NONE-NEXT: it eq
 ; HARD: vcmpe.f32
 ; HARD: movpl r0, #1
   %1 = fcmp uge float %a, %b
@@ -99,8 +101,9 @@ define i1 @cmp_f_uge(float %a, float %b) {
 }
 define i1 @cmp_f_ult(float %a, float %b) {
 ; CHECK-LABEL: cmp_f_ult:
-; NONE: bl __aeabi_fcmplt
-; NONE: bl __aeabi_fcmpun
+; NONE: bl __aeabi_fcmpge
+; NONE: cmp r0, #0
+; NONE-NEXT: it eq
 ; HARD: vcmpe.f32
 ; HARD: movlt r0, #1
   %1 = fcmp ult float %a, %b
@@ -108,8 +111,9 @@ define i1 @cmp_f_ult(float %a, float %b) {
 }
 define i1 @cmp_f_ule(float %a, float %b) {
 ; CHECK-LABEL: cmp_f_ule:
-; NONE: bl __aeabi_fcmple
-; NONE: bl __aeabi_fcmpun
+; NONE: bl __aeabi_fcmpgt
+; NONE: cmp r0, #0
+; NONE-NEXT: it eq
 ; HARD: vcmpe.f32
 ; HARD: movle r0, #1
   %1 = fcmp ule float %a, %b
@@ -214,10 +218,8 @@ define i1 @cmp_d_ord(double %a, double %b) {
 }
 define i1 @cmp_d_ugt(double %a, double %b) {
 ; CHECK-LABEL: cmp_d_ugt:
-; NONE: bl __aeabi_dcmpgt
-; NONE: bl __aeabi_dcmpun
-; SP: bl __aeabi_dcmpgt
-; SP: bl __aeabi_dcmpun
+; NONE: bl __aeabi_dcmple
+; SP: bl __aeabi_dcmple
 ; DP: vcmpe.f64
 ; DP: movhi r0, #1
   %1 = fcmp ugt double %a, %b
@@ -226,10 +228,8 @@ define i1 @cmp_d_ugt(double %a, double %b) {
 
 define i1 @cmp_d_ult(double %a, double %b) {
 ; CHECK-LABEL: cmp_d_ult:
-; NONE: bl __aeabi_dcmplt
-; NONE: bl __aeabi_dcmpun
-; SP: bl __aeabi_dcmplt
-; SP: bl __aeabi_dcmpun
+; NONE: bl __aeabi_dcmpge
+; SP: bl __aeabi_dcmpge
 ; DP: vcmpe.f64
 ; DP: movlt r0, #1
   %1 = fcmp ult double %a, %b
@@ -268,10 +268,8 @@ define i1 @cmp_d_ueq(double %a, double %b) {
 
 define i1 @cmp_d_uge(double %a, double %b) {
 ; CHECK-LABEL: cmp_d_uge:
-; NONE: bl __aeabi_dcmpge
-; NONE: bl __aeabi_dcmpun
-; SP: bl __aeabi_dcmpge
-; SP: bl __aeabi_dcmpun
+; NONE: bl __aeabi_dcmplt
+; SP: bl __aeabi_dcmplt
 ; DP: vcmpe.f64
 ; DP: movpl r0, #1
   %1 = fcmp uge double %a, %b
@@ -280,10 +278,8 @@ define i1 @cmp_d_uge(double %a, double %b) {
 
 define i1 @cmp_d_ule(double %a, double %b) {
 ; CHECK-LABEL: cmp_d_ule:
-; NONE: bl __aeabi_dcmple
-; NONE: bl __aeabi_dcmpun
-; SP: bl __aeabi_dcmple
-; SP: bl __aeabi_dcmpun
+; NONE: bl __aeabi_dcmpgt
+; SP: bl __aeabi_dcmpgt
 ; DP: vcmpe.f64
 ; DP: movle r0, #1
   %1 = fcmp ule double %a, %b

@@ -109,9 +109,8 @@ declare double     @llvm.fabs.f64(double %Val)
 define double @abs_d(double %a) {
 ; CHECK-LABEL: abs_d:
 ; NONE: bic r1, r1, #-2147483648
-; SP: bl __aeabi_dcmpgt
-; SP: bl __aeabi_dcmpun
 ; SP: bl __aeabi_dsub
+; SP: bl __aeabi_dcmple
 ; DP: vabs.f64 d0, d0
   %1 = call double @llvm.fabs.f64(double %a)
   ret double %1
