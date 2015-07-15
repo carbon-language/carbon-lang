@@ -2311,7 +2311,7 @@ GDBRemoteCommunicationClient::Detach (bool keep_stopped)
         else
         {
             StringExtractorGDBRemote response;
-            PacketResult packet_result = SendPacketAndWaitForResponse ("D1", 1, response, false);
+            PacketResult packet_result = SendPacketAndWaitForResponse ("D1", 2, response, false);
             if (packet_result != PacketResult::Success)
                 error.SetErrorString ("Sending extended disconnect packet failed.");
         }
