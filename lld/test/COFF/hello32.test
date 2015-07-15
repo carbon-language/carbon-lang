@@ -64,7 +64,7 @@ HEADER-NEXT:     ExceptionTableSize: 0x0
 HEADER-NEXT:     CertificateTableRVA: 0x0
 HEADER-NEXT:     CertificateTableSize: 0x0
 HEADER-NEXT:     BaseRelocationTableRVA: 0x4000
-HEADER-NEXT:     BaseRelocationTableSize: 0xC
+HEADER-NEXT:     BaseRelocationTableSize: 0x10
 HEADER-NEXT:     DebugRVA: 0x0
 HEADER-NEXT:     DebugSize: 0x0
 HEADER-NEXT:     ArchitectureRVA: 0x0

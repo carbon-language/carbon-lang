@@ -252,6 +252,12 @@ ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
   Align = 16;
 }
 
+void ImportThunkChunk::getBaserels(std::vector<uint32_t> *Res,
+                                   Defined *ImageBase) {
+  if (!Config->is64())
+    Res->push_back(getRVA() + 2);
+}
+
 void ImportThunkChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
   // The first two bytes is a JMP instruction. Fill its operand.

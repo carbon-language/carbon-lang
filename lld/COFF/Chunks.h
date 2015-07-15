@@ -234,6 +234,7 @@ class ImportThunkChunk : public Chunk {
 public:
   explicit ImportThunkChunk(Defined *ImpSymbol);
   size_t getSize() const override { return sizeof(ImportThunkData); }
+  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
   void writeTo(uint8_t *Buf) override;
 
 private:
