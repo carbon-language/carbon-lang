@@ -598,7 +598,8 @@ func (fr *frame) fixupPhis() {
 }
 
 func (fr *frame) createLandingPad(cleanup bool) llvm.Value {
-	lp := fr.builder.CreateLandingPad(fr.runtime.gccgoExceptionType, fr.runtime.gccgoPersonality, 0, "")
+	fr.function.SetPersonality(fr.runtime.gccgoPersonality)
+	lp := fr.builder.CreateLandingPad(fr.runtime.gccgoExceptionType, 0, "")
 	if cleanup {
 		lp.SetCleanup(true)
 	} else {
