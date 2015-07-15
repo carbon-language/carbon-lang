@@ -1872,8 +1872,7 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
 /// CreateStackTemporary - Create a stack temporary suitable for holding
 /// either of the specified value types.
 SDValue SelectionDAG::CreateStackTemporary(EVT VT1, EVT VT2) {
-  unsigned Bytes = std::max(VT1.getStoreSizeInBits(),
-                            VT2.getStoreSizeInBits())/8;
+  unsigned Bytes = std::max(VT1.getStoreSize(), VT2.getStoreSize());
   Type *Ty1 = VT1.getTypeForEVT(*getContext());
   Type *Ty2 = VT2.getTypeForEVT(*getContext());
   const DataLayout &DL = getDataLayout();
