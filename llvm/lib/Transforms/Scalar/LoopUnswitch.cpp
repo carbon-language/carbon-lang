@@ -641,7 +641,8 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
         break;
       }
     }
-  }
+  } else
+	  return false;
 
   // If we didn't find a single unique LoopExit block, or if the loop exit block
   // contains phi nodes, this isn't trivial.
