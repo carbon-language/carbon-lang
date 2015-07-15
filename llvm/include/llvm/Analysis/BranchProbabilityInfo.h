@@ -126,9 +126,6 @@ private:
 
   DenseMap<Edge, uint32_t> Weights;
 
-  /// \brief Handle to the LoopInfo analysis.
-  LoopInfo *LI;
-
   /// \brief Track the last function we run over for printing.
   Function *LastF;
 
