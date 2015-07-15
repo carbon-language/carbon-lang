@@ -266,7 +266,8 @@ TargetRegisterInfo::getRegAllocationHints(unsigned VirtReg,
                                           ArrayRef<MCPhysReg> Order,
                                           SmallVectorImpl<MCPhysReg> &Hints,
                                           const MachineFunction &MF,
-                                          const VirtRegMap *VRM) const {
+                                          const VirtRegMap *VRM,
+                                          const LiveRegMatrix *Matrix) const {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   std::pair<unsigned, unsigned> Hint = MRI.getRegAllocationHint(VirtReg);
 

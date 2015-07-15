@@ -637,7 +637,7 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 //===----------------------------------------------------------------------===//
 
 unsigned RAGreedy::canReassign(LiveInterval &VirtReg, unsigned PrevReg) {
-  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
+  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo, Matrix);
   unsigned PhysReg;
   while ((PhysReg = Order.next())) {
     if (PhysReg == PrevReg)
@@ -2450,7 +2450,7 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
                                      unsigned Depth) {
   unsigned CostPerUseLimit = ~0u;
   // First try assigning a free register.
-  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
+  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo, Matrix);
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs)) {
     // When NewVRegs is not empty, we may have made decisions such as evicting
     // a virtual register, go with the earlier decisions and use the physical

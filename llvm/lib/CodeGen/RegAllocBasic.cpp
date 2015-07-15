@@ -223,7 +223,7 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   SmallVector<unsigned, 8> PhysRegSpillCands;
 
   // Check for an available register in this class.
-  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
+  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo, Matrix);
   while (unsigned PhysReg = Order.next()) {
     // Check for interference in PhysReg
     switch (Matrix->checkInterference(VirtReg, PhysReg)) {

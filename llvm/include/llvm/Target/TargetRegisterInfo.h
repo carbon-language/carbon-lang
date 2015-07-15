@@ -32,6 +32,7 @@ class RegScavenger;
 template<class T> class SmallVectorImpl;
 class VirtRegMap;
 class raw_ostream;
+class LiveRegMatrix;
 
 class TargetRegisterClass {
 public:
@@ -709,7 +710,9 @@ public:
                                      ArrayRef<MCPhysReg> Order,
                                      SmallVectorImpl<MCPhysReg> &Hints,
                                      const MachineFunction &MF,
-                                     const VirtRegMap *VRM = nullptr) const;
+                                     const VirtRegMap *VRM = nullptr,
+                                     const LiveRegMatrix *Matrix = nullptr)
+    const;
 
   /// updateRegAllocHint - A callback to allow target a chance to update
   /// register allocation hints when a register is "changed" (e.g. coalesced)

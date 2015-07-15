@@ -126,7 +126,8 @@ public:
                              ArrayRef<MCPhysReg> Order,
                              SmallVectorImpl<MCPhysReg> &Hints,
                              const MachineFunction &MF,
-                             const VirtRegMap *VRM) const override;
+                             const VirtRegMap *VRM,
+                             const LiveRegMatrix *Matrix) const override;
 
   void updateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const override;
