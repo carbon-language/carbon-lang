@@ -841,8 +841,12 @@ void CodeGenModule::EmitDeferredVTables() {
 }
 
 bool CodeGenModule::IsCFIBlacklistedRecord(const CXXRecordDecl *RD) {
-  // FIXME: Make this user configurable.
-  return RD->isInStdNamespace();
+  if (RD->hasAttr<UuidAttr>() &&
+      getContext().getSanitizerBlacklist().isBlacklistedType("attr:uuid"))
+    return true;
+
+  return getContext().getSanitizerBlacklist().isBlacklistedType(
+      RD->getQualifiedNameAsString());
 }
 
 void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,

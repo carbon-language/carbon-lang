@@ -2190,15 +2190,6 @@ void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,
   if (!ClassDecl->isCompleteDefinition() || !ClassDecl->isDynamicClass())
     return;
 
-  SmallString<64> MangledName;
-  llvm::raw_svector_ostream Out(MangledName);
-  CGM.getCXXABI().getMangleContext().mangleCXXRTTI(T.getUnqualifiedType(),
-                                                   Out);
-
-  // Blacklist based on the mangled type.
-  if (CGM.getContext().getSanitizerBlacklist().isBlacklistedType(Out.str()))
-    return;
-
   if (!SanOpts.has(SanitizerKind::CFICastStrict))
     ClassDecl = LeastDerivedClassWithSameLayout(ClassDecl);
 

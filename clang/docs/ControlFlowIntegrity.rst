@@ -41,11 +41,9 @@ derived class of the static type of the object used to make the call.
 This CFI scheme can be enabled on its own using ``-fsanitize=cfi-vcall``.
 
 For this scheme to work, all translation units containing the definition
-of a virtual member function (whether inline or not) must be compiled
-with ``-fsanitize=cfi-vcall`` enabled and be statically linked into the
-program. Classes in the C++ standard library (under namespace ``std``) are
-exempted from checking, and therefore programs may be linked against a
-pre-built standard library, but this may change in the future.
+of a virtual member function (whether inline or not), other than members
+of :ref:`blacklisted <cfi-blacklist>` types, must be compiled with
+``-fsanitize=cfi-vcall`` enabled and be statically linked into the program.
 
 Performance
 ~~~~~~~~~~~
@@ -85,15 +83,13 @@ If a program as a matter of policy forbids the second type of cast, that
 restriction can normally be enforced. However it may in some cases be necessary
 for a function to perform a forbidden cast to conform with an external API
 (e.g. the ``allocate`` member function of a standard library allocator). Such
-functions may be blacklisted using a :doc:`SanitizerSpecialCaseList`.
+functions may be :ref:`blacklisted <cfi-blacklist>`.
 
 For this scheme to work, all translation units containing the definition
-of a virtual member function (whether inline or not) must be compiled with
+of a virtual member function (whether inline or not), other than members
+of :ref:`blacklisted <cfi-blacklist>` types, must be compiled with
 ``-fsanitize=cfi-derived-cast`` or ``-fsanitize=cfi-unrelated-cast`` enabled
-and be statically linked into the program. Classes in the C++ standard library
-(under namespace ``std``) are exempted from checking, and therefore programs
-may be linked against a pre-built standard library, but this may change in
-the future.
+and be statically linked into the program.
 
 Non-Virtual Member Function Call Checking
 -----------------------------------------
@@ -106,11 +102,9 @@ polymorphic class type.  This CFI scheme can be enabled on its own using
 ``-fsanitize=cfi-nvcall``.
 
 For this scheme to work, all translation units containing the definition
-of a virtual member function (whether inline or not) must be compiled
-with ``-fsanitize=cfi-nvcall`` enabled and be statically linked into the
-program. Classes in the C++ standard library (under namespace ``std``) are
-exempted from checking, and therefore programs may be linked against a
-pre-built standard library, but this may change in the future.
+of a virtual member function (whether inline or not), other than members
+of :ref:`blacklisted <cfi-blacklist>` types, must be compiled with
+``-fsanitize=cfi-nvcall`` enabled and be statically linked into the program.
 
 .. _cfi-strictness:
 
@@ -128,6 +122,32 @@ undefined behavior, but it is a relatively common hack for introducing
 member functions on class instances with specific properties that works under
 most compilers and should not have security implications, so we allow it by
 default. It can be disabled with ``-fsanitize=cfi-cast-strict``.
+
+.. _cfi-blacklist:
+
+Blacklist
+---------
+
+A :doc:`SanitizerSpecialCaseList` can be used to relax CFI checks for certain
+source files, functions and types using the ``src``, ``fun`` and ``type``
+entity types.
+
+In addition, if a type has a ``uuid`` attribute and the blacklist contains
+the type entry ``attr:uuid``, CFI checks are suppressed for that type. This
+allows all COM types to be easily blacklisted, which is useful as COM types
+are typically defined outside of the linked program.
+
+.. code-block:: bash
+
+    # Suppress checking for code in a file.
+    src:bad_file.cpp
+    src:bad_header.h
+    # Ignore all functions with names containing MyFooBar.
+    fun:*MyFooBar*
+    # Ignore all types in the standard library.
+    type:std::*
+    # Ignore all types with a uuid attribute.
+    type:attr:uuid
 
 Design
 ------

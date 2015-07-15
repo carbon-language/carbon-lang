@@ -90,6 +90,8 @@ static bool getDefaultBlacklist(const Driver &D, SanitizerMask Kinds,
     BlacklistFile = "tsan_blacklist.txt";
   else if (Kinds & DataFlow)
     BlacklistFile = "dfsan_abilist.txt";
+  else if (Kinds & CFI)
+    BlacklistFile = "cfi_blacklist.txt";
 
   if (BlacklistFile) {
     clang::SmallString<64> Path(D.ResourceDir);
