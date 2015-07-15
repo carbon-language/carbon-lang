@@ -25,6 +25,8 @@ ifeq "$(OS)" "Darwin"
 	EXEC_PATH_B := -install_name $(EXEC_PATH)/$(LIB_B)
 	EXEC_PATH_C := -install_name $(EXEC_PATH)/$(LIB_C)
 	EXEC_PATH_D := -install_name $(CWD)/$(LIB_D)
+
+	DS_IF_DARWIN = $(DS) -o $@.dSYM $@
 else
 	CFLAGS += -fPIC
 	LD_FLAGS := -shared
@@ -45,32 +47,32 @@ main.o: main.c
 
 hidden/$(LIB_D): dh.o
 	$(CC) $(CFLAGS) $(LD_FLAGS) -o hidden/$(LIB_D) dh.o
-	if [ "$(OS)" = "Darwin" ]; then dsymutil -o hidden/$(LIB_D).dSYM hidden/$(LIB_D); fi
+	$(DS_IF_DARWIN)
 
 $(LIB_A): a.o $(LIB_B)
 	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_A) -o $(LIB_A) a.o -L. -lloadunload_b
-	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_A); fi
+	$(DS_IF_DARWIN)
 
 a.o: a.c
 	$(CC) $(CFLAGS) -c a.c
 
 $(LIB_B): b.o
 	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_B) -o $(LIB_B) b.o
-	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_B); fi
+	$(DS_IF_DARWIN)
 
 b.o: b.c
 	$(CC) $(CFLAGS) -c b.c
 
 $(LIB_C): c.o
 	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_C) -o $(LIB_C) c.o
-	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_C); fi
+	$(DS_IF_DARWIN)
 
 c.o: c.c
 	$(CC) $(CFLAGS) -c c.c
 
 $(LIB_D): d.o
 	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_D) -o $(LIB_D) d.o
-	if [ "$(OS)" = "Darwin" ]; then dsymutil $(LIB_D); fi
+	$(DS_IF_DARWIN)
 
 d.o: d.c
 	$(CC) $(CFLAGS) -c d.c
