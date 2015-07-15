@@ -84,10 +84,10 @@ syn match   llvmConstant /\<DW_LANG_[a-zA-Z0-9_]\+\>/
 syn match   llvmConstant /\<DW_VIRTUALITY_[a-z_]\+\>/
 syn match   llvmConstant /\<DIFlag[A-Za-z]\+\>/
 
-" Syntax-highlight dejagnu test commands.
-syn match  llvmSpecialComment /;\s*RUN:.*$/
+" Syntax-highlight lit test commands and bug numbers.
 syn match  llvmSpecialComment /;\s*PR\d*\s*$/
-syn match  llvmSpecialComment /;\s*END\.\s*$/
+syn match  llvmSpecialComment /;\s*REQUIRES:.*$/
+syn match  llvmSpecialComment /;\s*RUN:.*$/
 syn match  llvmSpecialComment /;\s*XFAIL:.*$/
 
 if version >= 508 || !exists("did_c_syn_inits")
