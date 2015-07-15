@@ -4919,6 +4919,45 @@ public:
   }
 };
 
+// ARM MinGW target
+class MinGWARMTargetInfo : public WindowsARMTargetInfo {
+public:
+  MinGWARMTargetInfo(const llvm::Triple &Triple)
+      : WindowsARMTargetInfo(Triple) {
+    TheCXXABI.set(TargetCXXABI::GenericARM);
+  }
+
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    WindowsARMTargetInfo::getTargetDefines(Opts, Builder);
+    DefineStd(Builder, "WIN32", Opts);
+    DefineStd(Builder, "WINNT", Opts);
+    Builder.defineMacro("_ARM_");
+    addMinGWDefines(Opts, Builder);
+  }
+};
+
+// ARM Cygwin target
+class CygwinARMTargetInfo : public ARMleTargetInfo {
+public:
+  CygwinARMTargetInfo(const llvm::Triple &Triple) : ARMleTargetInfo(Triple) {
+    TLSSupported = false;
+    WCharType = UnsignedShort;
+    DoubleAlign = LongLongAlign = 64;
+    DescriptionString = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64";
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    ARMleTargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("_ARM_");
+    Builder.defineMacro("__CYGWIN__");
+    Builder.defineMacro("__CYGWIN32__");
+    DefineStd(Builder, "unix", Opts);
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
+  }
+};
+
 class DarwinARMTargetInfo :
   public DarwinTargetInfo<ARMleTargetInfo> {
 protected:
@@ -7039,6 +7078,10 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       switch (Triple.getEnvironment()) {
       default:
         return new ARMleTargetInfo(Triple);
+      case llvm::Triple::Cygnus:
+        return new CygwinARMTargetInfo(Triple);
+      case llvm::Triple::GNU:
+        return new MinGWARMTargetInfo(Triple);
       case llvm::Triple::Itanium:
         return new ItaniumWindowsARMleTargetInfo(Triple);
       case llvm::Triple::MSVC:
