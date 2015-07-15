@@ -1828,9 +1828,8 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     SDValue Chain = ST->getChain();
 
     unsigned StoreBits = ST->getMemoryVT().getStoreSizeInBits();
-    if (StoreBits % 8) {
-      break;
-    }
+    assert((StoreBits % 8) == 0 &&
+           "Store size in bits must be a multiple of 8");
     unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(
         ST->getMemoryVT().getTypeForEVT(*DCI.DAG.getContext()));
     unsigned Alignment = ST->getAlignment();
