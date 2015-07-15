@@ -42,6 +42,10 @@
 #include <algorithm>
 using namespace llvm;
 
+/// Enable analysis of recursive PHI nodes.
+static cl::opt<bool> EnableRecPhiAnalysis("basicaa-recphi",
+                                          cl::Hidden, cl::init(false));
+
 /// Cutoff after which to stop analysing a set of phi nodes potentially involved
 /// in a cycle. Because we are analysing 'through' phi nodes we need to be
 /// careful with value equivalence. We use reachability to make sure a value
@@ -1297,6 +1301,7 @@ AliasResult BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
 
   SmallPtrSet<Value*, 4> UniqueSrc;
   SmallVector<Value*, 4> V1Srcs;
+  bool isRecursive = false;
   for (Value *PV1 : PN->incoming_values()) {
     if (isa<PHINode>(PV1))
       // If any of the source itself is a PHI, return MayAlias conservatively
@@ -1304,12 +1309,33 @@ AliasResult BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
       // sides are PHI nodes. In which case, this is O(m x n) time where 'm'
       // and 'n' are the number of PHI sources.
       return MayAlias;
+
+    if (EnableRecPhiAnalysis)
+      if (GEPOperator *PV1GEP = dyn_cast<GEPOperator>(PV1)) {
+        // Check whether the incoming value is a GEP that advances the pointer
+        // result of this PHI node (e.g. in a loop). If this is the case, we
+        // would recurse and always get a MayAlias. Handle this case specially
+        // below.
+        if (PV1GEP->getPointerOperand() == PN && PV1GEP->getNumIndices() == 1 &&
+            isa<ConstantInt>(PV1GEP->idx_begin())) {
+          isRecursive = true;
+          continue;
+        }
+      }
+
     if (UniqueSrc.insert(PV1).second)
       V1Srcs.push_back(PV1);
   }
 
+  // If this PHI node is recursive, set the size of the accessed memory to
+  // unknown to represent all the possible values the GEP could advance the
+  // pointer to.
+  if (isRecursive)
+    PNSize = MemoryLocation::UnknownSize;
+
   AliasResult Alias = aliasCheck(V2, V2Size, V2AAInfo,
                                  V1Srcs[0], PNSize, PNAAInfo);
+
   // Early exit if the check of the first PHI source against V2 is MayAlias.
   // Other results are not possible.
   if (Alias == MayAlias)
