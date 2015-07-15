@@ -189,7 +189,6 @@ protected:
 
         // Transform: (O2 * O3) + O1 -> (O2 * O1) + O3.
 
-        unsigned AddReg = AddendMI->getOperand(1).getReg();
         unsigned KilledProdReg = MI->getOperand(KilledProdOp).getReg();
         unsigned OtherProdReg  = MI->getOperand(OtherProdOp).getReg();
 
@@ -220,7 +219,7 @@ protected:
 
         MI->getOperand(0).setReg(KilledProdReg);
         MI->getOperand(1).setReg(KilledProdReg);
-        MI->getOperand(3).setReg(AddReg);
+        MI->getOperand(3).setReg(AddendSrcReg);
         MI->getOperand(2).setReg(OtherProdReg);
 
         MI->getOperand(0).setSubReg(KilledProdSubReg);
@@ -277,6 +276,20 @@ protected:
                                                      NewFMAValNo));
         }
         DEBUG(dbgs() << "  extended: " << NewFMAInt << '\n');
+
+        // Extend the live interval of the addend source (it might end at the
+        // copy to be removed, or somewhere in between there and here). This
+        // is necessary only if it is a physical register.
+        if (!TargetRegisterInfo::isVirtualRegister(AddendSrcReg))
+          for (MCRegUnitIterator Units(AddendSrcReg, TRI); Units.isValid();
+               ++Units) {
+            unsigned Unit = *Units;
+
+            LiveRange &AddendSrcRange = LIS->getRegUnit(Unit);
+            AddendSrcRange.extendInBlock(LIS->getMBBStartIdx(&MBB),
+                                         FMAIdx.getRegSlot());
+            DEBUG(dbgs() << "  extended: " << AddendSrcRange << '\n');
+          }
 
         FMAInt.removeValNo(FMAValNo);
         DEBUG(dbgs() << "  trimmed:  " << FMAInt << '\n');
