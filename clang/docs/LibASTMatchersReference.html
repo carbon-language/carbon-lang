@@ -1754,7 +1754,7 @@ Given
   private:   int c;
   };
 fieldDecl(isPrivate())
-  matches 'int c;' 
+  matches 'int c;'
 </pre></td></tr>
 
 
@@ -1768,7 +1768,7 @@ Given
   private:   int c;
   };
 fieldDecl(isProtected())
-  matches 'int b;' 
+  matches 'int b;'
 </pre></td></tr>
 
 
@@ -1782,7 +1782,7 @@ Given
   private:   int c;
   };
 fieldDecl(isPublic())
-  matches 'int a;' 
+  matches 'int a;'
 </pre></td></tr>
 
 
@@ -2290,6 +2290,18 @@ Example matches A, va, fa
   void fb();  Doesn't match, as it has no body.
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TagDecl.html">TagDecl</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;</td><td class="name" onclick="toggle('isExceptionVariable1')"><a name="isExceptionVariable1Anchor">isExceptionVariable</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isExceptionVariable1"><pre>Matches if a variable declaration is for a C++ catch handler or Objective-C @catch variable.
+
+Example matches x (matcher = varDecl(isExceptionVariable())
+  void f(int y) {
+    try {
+    } catch (int x) {
+    }
+  }
 </pre></td></tr>
 
 

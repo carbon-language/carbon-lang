@@ -3329,6 +3329,10 @@ TEST(ExceptionHandling, SimpleCases) {
                       catchStmt(isCatchAll())));
   EXPECT_TRUE(notMatches("void foo() try { throw; } catch(int) { }",
                          catchStmt(isCatchAll())));
+  EXPECT_TRUE(matches("void foo() try {} catch(int X) { }",
+                      varDecl(isExceptionVariable())));
+  EXPECT_TRUE(notMatches("void foo() try { int X; } catch (...) { }",
+                         varDecl(isExceptionVariable())));
 }
 
 TEST(HasConditionVariableStatement, DoesNotMatchCondition) {
