@@ -319,9 +319,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, SDLoc DL,
     assert(PartEVT.getVectorNumElements() == ValueVT.getVectorNumElements() &&
       "Cannot handle this kind of promotion");
     // Promoted vector extract
-    bool Smaller = ValueVT.bitsLE(PartEVT);
-    return DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
-                       DL, ValueVT, Val);
+    return DAG.getAnyExtOrTrunc(Val, DL, ValueVT);
 
   }
 
@@ -339,11 +337,8 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, SDLoc DL,
   }
 
   if (ValueVT.getVectorNumElements() == 1 &&
-      ValueVT.getVectorElementType() != PartEVT) {
-    bool Smaller = ValueVT.bitsLE(PartEVT);
-    Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
-                       DL, ValueVT.getScalarType(), Val);
-  }
+      ValueVT.getVectorElementType() != PartEVT)
+    Val = DAG.getAnyExtOrTrunc(Val, DL, ValueVT.getScalarType());
 
   return DAG.getNode(ISD::BUILD_VECTOR, DL, ValueVT, Val);
 }
@@ -520,9 +515,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, SDLoc DL,
                PartEVT.getVectorNumElements() == ValueVT.getVectorNumElements()) {
 
       // Promoted vector extract
-      bool Smaller = PartEVT.bitsLE(ValueVT);
-      Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
-                        DL, PartVT, Val);
+      Val = DAG.getAnyExtOrTrunc(Val, DL, PartVT);
     } else{
       // Vector -> scalar conversion.
       assert(ValueVT.getVectorNumElements() == 1 &&
@@ -531,9 +524,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, SDLoc DL,
           ISD::EXTRACT_VECTOR_ELT, DL, PartVT, Val,
           DAG.getConstant(0, DL, TLI.getVectorIdxTy(DAG.getDataLayout())));
 
-      bool Smaller = ValueVT.bitsLE(PartVT);
-      Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
-                         DL, PartVT, Val);
+      Val = DAG.getAnyExtOrTrunc(Val, DL, PartVT);
     }
 
     Parts[0] = Val;
