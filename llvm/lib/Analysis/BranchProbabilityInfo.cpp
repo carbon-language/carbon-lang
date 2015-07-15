@@ -27,13 +27,13 @@ using namespace llvm;
 
 #define DEBUG_TYPE "branch-prob"
 
-INITIALIZE_PASS_BEGIN(BranchProbabilityInfo, "branch-prob",
+INITIALIZE_PASS_BEGIN(BranchProbabilityInfoWrapperPass, "branch-prob",
                       "Branch Probability Analysis", false, true)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_END(BranchProbabilityInfo, "branch-prob",
+INITIALIZE_PASS_END(BranchProbabilityInfoWrapperPass, "branch-prob",
                     "Branch Probability Analysis", false, true)
 
-char BranchProbabilityInfo::ID = 0;
+char BranchProbabilityInfoWrapperPass::ID = 0;
 
 // Weights are for internal use only. They are used by heuristics to help to
 // estimate edges' probability. Example:
@@ -319,8 +319,9 @@ bool BranchProbabilityInfo::calcPointerHeuristics(BasicBlock *BB) {
 
 // Calculate Edge Weights using "Loop Branch Heuristics". Predict backedges
 // as taken, exiting edges as not-taken.
-bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
-  Loop *L = LI->getLoopFor(BB);
+bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB,
+                                                     const LoopInfo &LI) {
+  Loop *L = LI.getLoopFor(BB);
   if (!L)
     return false;
 
@@ -504,50 +505,11 @@ bool BranchProbabilityInfo::calcInvokeHeuristics(BasicBlock *BB) {
   return true;
 }
 
-void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.setPreservesAll();
-}
-
-bool BranchProbabilityInfo::runOnFunction(Function &F) {
-  DEBUG(dbgs() << "---- Branch Probability Info : " << F.getName()
-               << " ----\n\n");
-  LastF = &F; // Store the last function we ran on for printing.
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  assert(PostDominatedByUnreachable.empty());
-  assert(PostDominatedByColdCall.empty());
-
-  // Walk the basic blocks in post-order so that we can build up state about
-  // the successors of a block iteratively.
-  for (auto BB : post_order(&F.getEntryBlock())) {
-    DEBUG(dbgs() << "Computing probabilities for " << BB->getName() << "\n");
-    if (calcUnreachableHeuristics(BB))
-      continue;
-    if (calcMetadataWeights(BB))
-      continue;
-    if (calcColdCallHeuristics(BB))
-      continue;
-    if (calcLoopBranchHeuristics(BB))
-      continue;
-    if (calcPointerHeuristics(BB))
-      continue;
-    if (calcZeroHeuristics(BB))
-      continue;
-    if (calcFloatingPointHeuristics(BB))
-      continue;
-    calcInvokeHeuristics(BB);
-  }
-
-  PostDominatedByUnreachable.clear();
-  PostDominatedByColdCall.clear();
-  return false;
-}
-
 void BranchProbabilityInfo::releaseMemory() {
   Weights.clear();
 }
 
-void BranchProbabilityInfo::print(raw_ostream &OS, const Module *) const {
+void BranchProbabilityInfo::print(raw_ostream &OS) const {
   OS << "---- Branch Probabilities ----\n";
   // We print the probabilities from the last function the analysis ran over,
   // or the function it is currently running over.
@@ -687,4 +649,55 @@ BranchProbabilityInfo::printEdgeProbability(raw_ostream &OS,
      << (isEdgeHot(Src, Dst) ? " [HOT edge]\n" : "\n");
 
   return OS;
+}
+
+void BranchProbabilityInfo::calculate(Function &F, const LoopInfo& LI) {
+  DEBUG(dbgs() << "---- Branch Probability Info : " << F.getName()
+               << " ----\n\n");
+  LastF = &F; // Store the last function we ran on for printing.
+  assert(PostDominatedByUnreachable.empty());
+  assert(PostDominatedByColdCall.empty());
+
+  // Walk the basic blocks in post-order so that we can build up state about
+  // the successors of a block iteratively.
+  for (auto BB : post_order(&F.getEntryBlock())) {
+    DEBUG(dbgs() << "Computing probabilities for " << BB->getName() << "\n");
+    if (calcUnreachableHeuristics(BB))
+      continue;
+    if (calcMetadataWeights(BB))
+      continue;
+    if (calcColdCallHeuristics(BB))
+      continue;
+    if (calcLoopBranchHeuristics(BB, LI))
+      continue;
+    if (calcPointerHeuristics(BB))
+      continue;
+    if (calcZeroHeuristics(BB))
+      continue;
+    if (calcFloatingPointHeuristics(BB))
+      continue;
+    calcInvokeHeuristics(BB);
+  }
+
+  PostDominatedByUnreachable.clear();
+  PostDominatedByColdCall.clear();
+}
+
+void BranchProbabilityInfoWrapperPass::getAnalysisUsage(
+    AnalysisUsage &AU) const {
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.setPreservesAll();
+}
+
+bool BranchProbabilityInfoWrapperPass::runOnFunction(Function &F) {
+  const LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  BPI.calculate(F, LI);
+  return false;
+}
+
+void BranchProbabilityInfoWrapperPass::releaseMemory() { BPI.releaseMemory(); }
+
+void BranchProbabilityInfoWrapperPass::print(raw_ostream &OS,
+                                             const Module *) const {
+  BPI.print(OS);
 }
