@@ -34,12 +34,13 @@
 // It doesn't make sense on msys bash.
 // REQUIRES: shell-preserves-root
 //
-// This test will fail with MSYS env.exe, since it does not preserve root,
-// expanding / into C:/MINGW/MSYS/1.0. To see the problem, from cmd.exe run:
+// This test fails with MSYS or MSYS2 env.exe, since it does not preserve
+// root, expanding / into C:/MINGW/MSYS/1.0 or c:/msys64. To reproduce the
+// problem, run:
 //
 //   env SDKROOT=/ cmd //c echo %SDKROOT%
 //
-// This test passes using env.exe from GnuWin32.
+// This test do pass using GnuWin32 env.exe.
 
 // Check if clang set the correct deployment target from -sysroot
 //
