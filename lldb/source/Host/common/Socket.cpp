@@ -24,7 +24,11 @@
 #include <asm-generic/errno-base.h>
 #include <errno.h>
 #include <arpa/inet.h>
-#endif
+#if defined(ANDROID_ARM_BUILD_STATIC)
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif // ANDROID_ARM_BUILD_STATIC
+#endif // __ANDROID_NDK__
 
 #ifndef LLDB_DISABLE_POSIX
 #include <arpa/inet.h>
@@ -70,7 +74,20 @@ NativeSocket CreateSocket(const int domain, const int type, const int protocol, 
 
 NativeSocket Accept(NativeSocket sockfd, struct sockaddr *addr, socklen_t *addrlen, bool child_processes_inherit)
 {
-#ifdef SOCK_CLOEXEC
+#if defined(ANDROID_ARM_BUILD_STATIC)
+	// Temporary workaround for statically linking Android lldb-server with the
+	// latest API.
+	int fd = syscall(__NR_accept, sockfd, addr, addrlen);
+	if (fd >= 0 && !child_processes_inherit)
+	{
+		int flags = ::fcntl(fd, F_GETFD);
+		if (flags == -1)
+			return -1;
+		if (::fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
+			return -1;
+	}
+	return fd;
+#elif defined(SOCK_CLOEXEC)
     int flags = 0;
     if (!child_processes_inherit) {
         flags |= SOCK_CLOEXEC;

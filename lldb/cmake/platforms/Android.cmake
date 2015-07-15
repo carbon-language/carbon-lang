@@ -102,6 +102,10 @@ elseif( ANDROID_ABI STREQUAL "armeabi" )
  # 64 bit atomic operations used in c++ libraries require armv7-a instructions
  # armv5te and armv6 were tried but do not work.
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv7-a" )
+ if ( LLVM_BUILD_STATIC )
+  # Temporary workaround for static linking with the latest API.
+  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -DANDROID_ARM_BUILD_STATIC" )
+ endif()
 endif()
 
 # linker flags
