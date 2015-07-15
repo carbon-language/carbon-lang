@@ -88,6 +88,7 @@ public:
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
   bool parseGlobalAddressOperand(MachineOperand &Dest);
+  bool parseJumpTableIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
@@ -468,6 +469,20 @@ bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseJumpTableIndexOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::JumpTableIndex));
+  unsigned ID;
+  if (getUnsigned(ID))
+    return true;
+  auto JumpTableEntryInfo = PFS.JumpTableSlots.find(ID);
+  if (JumpTableEntryInfo == PFS.JumpTableSlots.end())
+    return error("use of undefined jump table '%jump-table." + Twine(ID) + "'");
+  lex();
+  // TODO: Parse target flags.
+  Dest = MachineOperand::CreateJTI(JumpTableEntryInfo->second);
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
@@ -486,6 +501,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::GlobalValue:
   case MIToken::NamedGlobalValue:
     return parseGlobalAddressOperand(Dest);
+  case MIToken::JumpTableIndex:
+    return parseJumpTableIndexOperand(Dest);
   case MIToken::Error:
     return true;
   case MIToken::Identifier:

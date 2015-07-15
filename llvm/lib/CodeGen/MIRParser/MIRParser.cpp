@@ -113,7 +113,7 @@ public:
 
   bool initializeJumpTableInfo(MachineFunction &MF,
                                const yaml::MachineJumpTable &YamlJTI,
-                               const PerFunctionMIParsingState &PFS);
+                               PerFunctionMIParsingState &PFS);
 
 private:
   /// Return a MIR diagnostic converted from an MI string diagnostic.
@@ -436,7 +436,7 @@ bool MIRParserImpl::initializeFrameInfo(const Function &F,
 
 bool MIRParserImpl::initializeJumpTableInfo(
     MachineFunction &MF, const yaml::MachineJumpTable &YamlJTI,
-    const PerFunctionMIParsingState &PFS) {
+    PerFunctionMIParsingState &PFS) {
   MachineJumpTableInfo *JTI = MF.getOrCreateJumpTableInfo(YamlJTI.Kind);
   SMDiagnostic Error;
   for (const auto &Entry : YamlJTI.Entries) {
@@ -447,7 +447,9 @@ bool MIRParserImpl::initializeJumpTableInfo(
         return error(Error, MBBSource.SourceRange);
       Blocks.push_back(MBB);
     }
-    JTI->createJumpTableIndex(Blocks);
+    unsigned Index = JTI->createJumpTableIndex(Blocks);
+    // TODO: Report an error when the same jump table slot ID is redefined.
+    PFS.JumpTableSlots.insert(std::make_pair(Entry.ID, Index));
   }
   return false;
 }

@@ -350,6 +350,10 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   case MachineOperand::MO_MachineBasicBlock:
     printMBBReference(*Op.getMBB());
     break;
+  case MachineOperand::MO_JumpTableIndex:
+    OS << "%jump-table." << Op.getIndex();
+    // TODO: Print target flags.
+    break;
   case MachineOperand::MO_GlobalAddress:
     Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
     // TODO: Print offset and target flags.

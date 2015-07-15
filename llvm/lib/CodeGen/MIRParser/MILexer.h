@@ -53,7 +53,8 @@ struct MIToken {
 
     // Other tokens
     IntegerLiteral,
-    VirtualRegister
+    VirtualRegister,
+    JumpTableIndex
   };
 
 private:
@@ -96,7 +97,8 @@ public:
 
   bool hasIntegerValue() const {
     return Kind == IntegerLiteral || Kind == MachineBasicBlock ||
-           Kind == GlobalValue || Kind == VirtualRegister;
+           Kind == GlobalValue || Kind == VirtualRegister ||
+           Kind == JumpTableIndex;
   }
 };
 

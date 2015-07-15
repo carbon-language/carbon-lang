@@ -115,6 +115,23 @@ static Cursor maybeLexMachineBasicBlock(
   return C;
 }
 
+static Cursor maybeLexIndex(Cursor C, MIToken &Token, StringRef Rule,
+                            MIToken::TokenKind Kind) {
+  if (!C.remaining().startswith(Rule) || !isdigit(C.peek(Rule.size())))
+    return None;
+  auto Range = C;
+  C.advance(Rule.size());
+  auto NumberRange = C;
+  while (isdigit(C.peek()))
+    C.advance();
+  Token = MIToken(Kind, Range.upto(C), APSInt(NumberRange.upto(C)));
+  return C;
+}
+
+static Cursor maybeLexJumpTableIndex(Cursor C, MIToken &Token) {
+  return maybeLexIndex(C, Token, "%jump-table.", MIToken::JumpTableIndex);
+}
+
 static Cursor lexVirtualRegister(Cursor C, MIToken &Token) {
   auto Range = C;
   C.advance(); // Skip '%'
@@ -208,6 +225,8 @@ StringRef llvm::lexMIToken(
   if (Cursor R = maybeLexIdentifier(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexMachineBasicBlock(C, Token, ErrorCallback))
+    return R.remaining();
+  if (Cursor R = maybeLexJumpTableIndex(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexRegister(C, Token))
     return R.remaining();
