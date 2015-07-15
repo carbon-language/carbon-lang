@@ -586,8 +586,7 @@ RegsForValue::RegsForValue(LLVMContext &Context, const TargetLowering &TLI,
                            const DataLayout &DL, unsigned Reg, Type *Ty) {
   ComputeValueVTs(TLI, DL, Ty, ValueVTs);
 
-  for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-    EVT ValueVT = ValueVTs[Value];
+  for (EVT ValueVT : ValueVTs) {
     unsigned NumRegs = TLI.getNumRegisters(Context, ValueVT);
     MVT RegisterVT = TLI.getRegisterType(Context, ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i)
