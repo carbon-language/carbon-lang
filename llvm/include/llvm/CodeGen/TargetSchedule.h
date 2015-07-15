@@ -81,6 +81,12 @@ public:
     return nullptr;
   }
 
+  /// \brief Return true if this machine model includes an instruction-level
+  /// scheduling model or cycle-to-cycle itinerary data.
+  bool hasInstrSchedModelOrItineraries() const {
+    return hasInstrSchedModel() || hasInstrItineraries();
+  }
+
   /// \brief Identify the processor corresponding to the current subtarget.
   unsigned getProcessorID() const { return SchedModel.getProcessorID(); }
 
