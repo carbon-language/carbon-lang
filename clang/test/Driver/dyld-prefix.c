@@ -1,4 +1,4 @@
-// REQUIRES: shell-preserves-root
+// REQUIRES: shell
 
 // RUN: touch %t.o
 
