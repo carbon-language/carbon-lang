@@ -57,6 +57,11 @@ EnableExtraTOCRegDeps("enable-ppc-extra-toc-reg-deps",
                       cl::desc("Add extra TOC register dependencies"),
                       cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+EnableMachineCombinerPass("ppc-machine-combiner",
+                          cl::desc("Enable the machine combiner pass"),
+                          cl::init(true), cl::Hidden);
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
@@ -316,6 +321,10 @@ bool PPCPassConfig::addPreISel() {
 
 bool PPCPassConfig::addILPOpts() {
   addPass(&EarlyIfConverterID);
+
+  if (EnableMachineCombinerPass)
+    addPass(&MachineCombinerID);
+
   return true;
 }
 
