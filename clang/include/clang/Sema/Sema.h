@@ -7698,7 +7698,6 @@ private:
   ExprResult VerifyPositiveIntegerConstantInClause(Expr *Op,
                                                    OpenMPClauseKind CKind);
 public:
-  /// \brief Check if the specified variable is used in a private clause in
   /// Checks if the specified variable is used in one of the private
   /// clauses in OpenMP constructs.
   bool IsOpenMPCapturedVar(VarDecl *VD);
