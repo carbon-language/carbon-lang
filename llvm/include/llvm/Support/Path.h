@@ -61,7 +61,6 @@ public:
   reference operator*() const { return Component; }
   pointer   operator->() const { return &Component; }
   const_iterator &operator++();    // preincrement
-  const_iterator &operator++(int); // postincrement
   bool operator==(const const_iterator &RHS) const;
   bool operator!=(const const_iterator &RHS) const { return !(*this == RHS); }
 
@@ -87,7 +86,6 @@ public:
   reference operator*() const { return Component; }
   pointer   operator->() const { return &Component; }
   reverse_iterator &operator++();    // preincrement
-  reverse_iterator &operator++(int); // postincrement
   bool operator==(const reverse_iterator &RHS) const;
   bool operator!=(const reverse_iterator &RHS) const { return !(*this == RHS); }
 };
