@@ -877,19 +877,13 @@ NativeRegisterContextLinux_mips64::IsWatchpointHit (uint32_t wp_index, bool &is_
 
     // reading the current state of watch regs
     struct pt_watch_regs watch_readback;
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
-    Error error = process_p->DoOperation([&] {
-        return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&watch_readback));
-    });
+    Error error =  DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&watch_readback));
 
     if (GetWatchHi (&watch_readback, wp_index) & (IRW))
     {
         // clear hit flag in watchhi 
         SetWatchHi (&watch_readback, wp_index, (GetWatchHi (&watch_readback, wp_index) & ~(IRW)));
-        process_p->DoOperation([&] {
-            return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&watch_readback));
-        });
+        DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&watch_readback));
      
         is_hit = true;
         return error;
@@ -930,11 +924,7 @@ NativeRegisterContextLinux_mips64::ClearHardwareWatchpoint(uint32_t wp_index)
 
     struct pt_watch_regs regs;
     // First reading the current state of watch regs
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
-    process_p->DoOperation([&] {
-        return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void*>(&regs));
-    });
+    DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void*>(&regs));
 
     if (regs.style == pt_watch_style_mips32)
     {
@@ -949,9 +939,7 @@ NativeRegisterContextLinux_mips64::ClearHardwareWatchpoint(uint32_t wp_index)
         regs.mips64.watch_masks[wp_index] = default_watch_regs.mips64.watch_masks[wp_index];
     }
 
-    Error error = process_p->DoOperation([&] {
-        return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
-    });
+    Error error = DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
     if(!error.Fail())
     {
         hw_addr_map[wp_index] = LLDB_INVALID_ADDRESS;
@@ -963,11 +951,7 @@ NativeRegisterContextLinux_mips64::ClearHardwareWatchpoint(uint32_t wp_index)
 Error
 NativeRegisterContextLinux_mips64::ClearAllHardwareWatchpoints()
 {
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux *> (process_sp.get ());
-    return process_p->DoOperation([&] {
-        return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&default_watch_regs));
-    });
+    return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&default_watch_regs));
 }
 
 Error
@@ -986,11 +970,7 @@ NativeRegisterContextLinux_mips64::SetHardwareWatchpoint (
     struct pt_watch_regs regs;
 
     // First reading the current state of watch regs
-    NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
-    process_p->DoOperation([&] {
-        return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
-    });
+    DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
 
     // Try if a new watch point fits in this state
     int index = GetVacantWatchIndex (&regs, addr, size, watch_flags, NumSupportedHardwareWatchpoints());
@@ -1001,9 +981,7 @@ NativeRegisterContextLinux_mips64::SetHardwareWatchpoint (
 
 
     // It fits, so we go ahead with updating the state of watch regs 
-    process_p->DoOperation([&] {
-        return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
-    });
+    DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
 
     // Storing exact address  
     hw_addr_map[index] = addr; 
@@ -1027,17 +1005,7 @@ NativeRegisterContextLinux_mips64::NumSupportedHardwareWatchpoints ()
     static int num_valid = 0;
     if (!num_valid)
     {
-        NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-        if (!process_sp)
-        {
-            printf ("NativeProcessProtocol is NULL");
-            return 0;
-        }
-
-        NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
-        process_p->DoOperation([&] {
-            return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
-        });
+        DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
         default_watch_regs = regs; // Keeping default watch regs values for future use
         switch (regs.style)
         {
