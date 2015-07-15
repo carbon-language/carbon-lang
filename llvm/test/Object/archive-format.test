@@ -6,17 +6,26 @@ RUN: cd %t
 
 RUN: echo -n bar. > 0123456789abcde
 RUN: echo -n zed. > 0123456789abcdef
+RUN: mkdir -p foo
+RUN: echo -n bar2 > foo/0123456789abcde
+RUN: echo -n zed2 > foo/0123456789abcdef
 
 RUN: rm -f %t.a
-RUN: llvm-ar --format=gnu rc %t.a 0123456789abcde 0123456789abcdef
+RUN: llvm-ar --format=gnu rc %t.a 0123456789abcde 0123456789abcdef foo/0123456789abcde foo/0123456789abcdef
 RUN: cat %t.a | FileCheck -strict-whitespace %s
 
 CHECK:      !<arch>
-CHECK-NEXT: //                                              18        `
+CHECK-NEXT: //                                              36        `
+CHECK-NEXT: 0123456789abcdef/
 CHECK-NEXT: 0123456789abcdef/
 CHECK-NEXT: 0123456789abcde/0           0     0     644     4         `
-CHECK-NEXT: bar./0              0           0     0     644     4         `
+CHECK-NEXT: bar.
+CHECK-SAME: /0              0           0     0     644     4         `
 CHECK-NEXT: zed.
+CHECK-SAME: 0123456789abcde/0           0     0     644     4         `
+CHECK-NEXT: bar2
+CHECK-SAME: /18             0           0     0     644     4         `
+CHECK-NEXT: zed2
 
 RUN: rm -f %t.a
 RUN: llvm-ar --format=bsd rc %t.a 0123456789abcde 0123456789abcdef

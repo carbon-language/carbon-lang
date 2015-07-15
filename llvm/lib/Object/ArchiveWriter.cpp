@@ -160,7 +160,7 @@ static void writeStringTable(raw_fd_ostream &Out,
                              bool Thin) {
   unsigned StartOffset = 0;
   for (const NewArchiveIterator &I : Members) {
-    StringRef Name = I.getName();
+    StringRef Name = sys::path::filename(I.getName());
     if (!useStringTable(Thin, Name))
       continue;
     if (StartOffset == 0) {
