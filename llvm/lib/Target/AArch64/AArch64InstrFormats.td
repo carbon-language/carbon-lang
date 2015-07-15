@@ -913,6 +913,9 @@ class MSRpstateI
   let Inst{7-5} = pstatefield{2-0};
 
   let DecoderMethod = "DecodeSystemPStateInstruction";
+  // MSRpstateI aliases with MSRI. When the MSRpstateI decoder method returns
+  // Fail the decoder should attempt to decode the instruction as MSRI.
+  let hasCompleteDecoder = 0;
 }
 
 // SYS and SYSL generic system instructions.
