@@ -3791,7 +3791,8 @@ void ASTWriter::WriteRedeclarations() {
     unsigned Size = 0;
     LocalRedeclChains.push_back(0); // Placeholder for the size.
 
-    // Collect the set of local redeclarations of this declaration.
+    // Collect the set of local redeclarations of this declaration, from newest
+    // to oldest.
     for (const Decl *Prev = MostRecent; Prev;
          Prev = Prev->getPreviousDecl()) { 
       if (!Prev->isFromASTFile() && Prev != Key) {
@@ -3801,10 +3802,6 @@ void ASTWriter::WriteRedeclarations() {
     }
 
     LocalRedeclChains[Offset] = Size;
-
-    // Reverse the set of local redeclarations, so that we store them in
-    // order (since we found them in reverse order).
-    std::reverse(LocalRedeclChains.end() - Size, LocalRedeclChains.end());
 
     // Add the mapping from the first ID from the AST to the set of local
     // declarations.

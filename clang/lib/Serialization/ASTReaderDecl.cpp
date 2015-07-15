@@ -3423,19 +3423,19 @@ namespace {
                        GlobalDeclID CanonID)
       : Reader(Reader), SearchDecls(SearchDecls), Deserialized(Deserialized),
         CanonID(CanonID) {
-      // Ensure that the canonical ID goes at the start of the chain.
-      addToChain(Reader.GetDecl(CanonID));
+      assert(std::is_sorted(SearchDecls.begin(), SearchDecls.end()));
     }
 
-    static ModuleManager::DFSPreorderControl
-    visitPreorder(ModuleFile &M, void *UserData) {
-      return static_cast<RedeclChainVisitor *>(UserData)->visitPreorder(M);
+    static bool visit(ModuleFile &M, void *UserData) {
+      return static_cast<RedeclChainVisitor*>(UserData)->visit(M);
+    }
+    
+    /// Get the chain, in order from newest to oldest.
+    ArrayRef<Decl *> getChain() const {
+      return Chain;
     }
 
-    static bool visitPostorder(ModuleFile &M, void *UserData) {
-      return static_cast<RedeclChainVisitor *>(UserData)->visitPostorder(M);
-    }
-
+  private:
     void addToChain(Decl *D) {
       if (!D)
         return;
@@ -3444,75 +3444,82 @@ namespace {
         Chain.push_back(D);
     }
 
-    void searchForID(ModuleFile &M, GlobalDeclID GlobalID) {
-      // Map global ID of the first declaration down to the local ID
-      // used in this module file.
-      DeclID ID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
-      if (!ID)
-        return;
-
-      // If the search decl was from this module, add it to the chain before any
-      // of its redeclarations in this module or users of it, and after any from
-      // imported modules.
-      if (CanonID != GlobalID && Reader.isDeclIDFromModule(GlobalID, M))
-        addToChain(Reader.GetDecl(GlobalID));
-
+    llvm::Optional<unsigned> findRedeclOffset(ModuleFile &M, DeclID LocalID) {
       // Perform a binary search to find the local redeclarations for this
       // declaration (if any).
-      const LocalRedeclarationsInfo Compare = { ID, 0 };
-      const LocalRedeclarationsInfo *Result
-        = std::lower_bound(M.RedeclarationsMap,
-                           M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, 
-                           Compare);
-      if (Result == M.RedeclarationsMap + M.LocalNumRedeclarationsInMap ||
-          Result->FirstID != ID)
-        return;
-
-      // Dig out all of the redeclarations.
-      unsigned Offset = Result->Offset;
-      unsigned N = M.RedeclarationChains[Offset];
-      M.RedeclarationChains[Offset++] = 0; // Don't try to deserialize again
-      for (unsigned I = 0; I != N; ++I)
-        addToChain(Reader.GetLocalDecl(M, M.RedeclarationChains[Offset++]));
-    }
-
-    bool needsToVisitImports(ModuleFile &M, GlobalDeclID GlobalID) {
-      DeclID ID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
-      if (!ID)
-        return false;
-
-      const LocalRedeclarationsInfo Compare = {ID, 0};
+      const LocalRedeclarationsInfo Compare = { LocalID, 0 };
       const LocalRedeclarationsInfo *Result = std::lower_bound(
           M.RedeclarationsMap,
           M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, Compare);
       if (Result == M.RedeclarationsMap + M.LocalNumRedeclarationsInMap ||
-          Result->FirstID != ID) {
-        return true;
-      }
-      unsigned Offset = Result->Offset;
-      unsigned N = M.RedeclarationChains[Offset];
-      // We don't need to visit a module or any of its imports if we've already
-      // deserialized the redecls from this module.
-      return N != 0;
+          Result->FirstID != LocalID)
+        return None;
+      return Result->Offset;
     }
 
-    ModuleManager::DFSPreorderControl visitPreorder(ModuleFile &M) {
-      for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I) {
-        if (needsToVisitImports(M, SearchDecls[I]))
-          return ModuleManager::Continue;
-      }
-      return ModuleManager::SkipImports;
-    }
+    bool visit(ModuleFile &M) {
+      llvm::ArrayRef<DeclID> ToSearch = SearchDecls;
+      GlobalDeclID LocalSearchDeclID = 0;
 
-    bool visitPostorder(ModuleFile &M) {
-      // Visit each of the declarations.
-      for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I)
-        searchForID(M, SearchDecls[I]);
-      return false;
-    }
-    
-    ArrayRef<Decl *> getChain() const {
-      return Chain;
+      // First, check whether any of our search decls was declared in M.
+      auto I = std::lower_bound(SearchDecls.begin(), SearchDecls.end(),
+                                M.BaseDeclID + NUM_PREDEF_DECL_IDS);
+      if (I != SearchDecls.end() && Reader.isDeclIDFromModule(*I, M)) {
+        LocalSearchDeclID = *I;
+        ToSearch = llvm::makeArrayRef(*I);
+      }
+
+      // Now, walk the search decls looking for one that's declared in this
+      // module file.
+      bool ImportedModulesMightHaveDecls = false;
+      for (auto GlobalID : ToSearch) {
+        // Map global ID of the first declaration down to the local ID
+        // used in this module file.
+        DeclID LocalID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
+        if (!LocalID)
+          continue;
+
+        auto MaybeOffset = findRedeclOffset(M, LocalID);
+        if (MaybeOffset) {
+          // We found it. Dig out all of the redeclarations.
+          unsigned Offset = *MaybeOffset;
+          unsigned N = M.RedeclarationChains[Offset];
+          if (!N)
+            // We've already loaded these.
+            // FIXME: In this case, we may be able to skip processing any
+            // imported modules too. We can't do that yet, though, because
+            // it's possible that our list of search decls misses out some
+            // search decls from modules that M imports.
+            continue;
+          M.RedeclarationChains[Offset++] = 0; // Don't try to deserialize again
+
+          // Note, declarations are listed from newest to oldest, which is the
+          // order that we want.
+          for (unsigned I = 0; I != N; ++I)
+            addToChain(Reader.GetLocalDecl(M, M.RedeclarationChains[Offset++]));
+        }
+
+        // We found a search decl that is not from this module, but was
+        // imported into this module, so some imported module has more decls
+        // of this entity.
+        if (!LocalSearchDeclID)
+          ImportedModulesMightHaveDecls = true;
+
+        // If we found redecls for some search decl, there are no redecls for
+        // any other search decl for the same chain in this module.
+        if (MaybeOffset)
+          break;
+      }
+
+      if (LocalSearchDeclID && LocalSearchDeclID != CanonID) {
+        // If the search decl was from this module, add it to the chain.
+        // Note, the chain is sorted from newest to oldest, so this goes last.
+        // We exclude the canonical declaration; it implicitly goes at the end.
+        addToChain(Reader.GetDecl(LocalSearchDeclID));
+      }
+
+      // Stop looking if we know that no imported module has any declarations.
+      return !ImportedModulesMightHaveDecls;
     }
   };
 }
@@ -3531,15 +3538,15 @@ void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
   KeyDeclsMap::iterator KeyPos = KeyDecls.find(CanonDecl);
   if (KeyPos != KeyDecls.end())
     SearchDecls.append(KeyPos->second.begin(), KeyPos->second.end());
+  llvm::array_pod_sort(SearchDecls.begin(), SearchDecls.end());
 
   // Build up the list of redeclarations.
   RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized, CanonID);
-  ModuleMgr.visitDepthFirst(&RedeclChainVisitor::visitPreorder,
-                            &RedeclChainVisitor::visitPostorder, &Visitor);
+  ModuleMgr.visit(&RedeclChainVisitor::visit, &Visitor);
 
   // Retrieve the chains.
   ArrayRef<Decl *> Chain = Visitor.getChain();
-  if (Chain.empty() || (Chain.size() == 1 && Chain[0] == CanonDecl))
+  if (Chain.empty())
     return;
 
   // Hook up the chains.
@@ -3550,11 +3557,9 @@ void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
   if (!MostRecent)
     MostRecent = CanonDecl;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (Chain[I] == CanonDecl)
-      continue;
-
-    ASTDeclReader::attachPreviousDecl(*this, Chain[I], MostRecent, CanonDecl);
-    MostRecent = Chain[I];
+    auto *D = Chain[N - I - 1];
+    ASTDeclReader::attachPreviousDecl(*this, D, MostRecent, CanonDecl);
+    MostRecent = D;
   }
   ASTDeclReader::attachLatestDecl(CanonDecl, MostRecent);
 }
