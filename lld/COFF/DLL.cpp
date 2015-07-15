@@ -316,7 +316,7 @@ public:
     memcpy(Buf + FileOff, ThunkX86, sizeof(ThunkX86));
     write32le(Buf + FileOff + 3, Imp->getRVA() + Config->ImageBase);
     write32le(Buf + FileOff + 8, Desc->getRVA() + Config->ImageBase);
-    write32le(Buf + FileOff + 13, Helper->getRVA() - RVA + 17);
+    write32le(Buf + FileOff + 13, Helper->getRVA() - RVA - 17);
   }
 
   void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override {

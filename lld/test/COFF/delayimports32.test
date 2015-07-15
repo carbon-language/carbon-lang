@@ -1,21 +1,41 @@
 # RUN: yaml2obj < %p/Inputs/hello32.yaml > %t.obj
 # RUN: lld -flavor link2 %t.obj %p/Inputs/std32.lib /subsystem:console \
-# RUN:   /entry:main@0 /alternatename:___delayLoadHelper2@8=main@0 /out:%t.exe
+# RUN:   /entry:main@0 /alternatename:___delayLoadHelper2@8=_main@0 \
+# RUN:   /debug /delayload:std32.dll /out:%t.exe
 # RUN: llvm-readobj -coff-imports %t.exe | FileCheck -check-prefix=IMPORT %s
 # RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck -check-prefix=BASEREL %s
+# RUN: llvm-objdump -d %t.exe | FileCheck -check-prefix=DISASM %s
 
-IMPORT: Format: COFF-i386
-IMPORT: Arch: i386
-IMPORT: AddressSize: 32bit
-IMPORT: Import {
-IMPORT:   Name: std32.dll
-IMPORT:   ImportLookupTableRVA: 0x3028
-IMPORT:   ImportAddressTableRVA: 0x3034
-IMPORT:   Symbol: ExitProcess (0)
-IMPORT:   Symbol: MessageBoxA (1)
-IMPORT: }
+IMPORT:      Format: COFF-i386
+IMPORT-NEXT: Arch: i386
+IMPORT-NEXT: AddressSize: 32bit
+IMPORT-NEXT: DelayImport {
+IMPORT-NEXT:   Name: std32.dll
+IMPORT-NEXT:   Attributes: 0x1
+IMPORT-NEXT:   ModuleHandle: 0x1018
+IMPORT-NEXT:   ImportAddressTable: 0x1020
+IMPORT-NEXT:   ImportNameTable: 0x3040
+IMPORT-NEXT:   BoundDelayImportTable: 0x0
+IMPORT-NEXT:   UnloadDelayImportTable: 0x0
+IMPORT-NEXT:   Import {
+IMPORT-NEXT:     Symbol: ExitProcess (0)
+IMPORT-NEXT:     Address: 0x40002036
+IMPORT-NEXT:   }
+IMPORT-NEXT:   Import {
+IMPORT-NEXT:     Symbol: MessageBoxA (0)
+IMPORT-NEXT:     Address: 0x1
+IMPORT-NEXT:   }
+IMPORT-NEXT: }
 
 BASEREL:      BaseReloc [
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x1020
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x1028
+BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: DIR64
 BASEREL-NEXT:     Address: 0x2005
@@ -32,4 +52,38 @@ BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: DIR64
 BASEREL-NEXT:     Address: 0x2032
 BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x2039
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x203E
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x204E
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: DIR64
+BASEREL-NEXT:     Address: 0x2053
+BASEREL-NEXT:   }
 BASEREL-NEXT: ]
+
+DISASM:      2030:       ff 25 28 10 00 40       jmpl    *1073745960
+DISASM-NEXT: 2036:       51      pushl   %ecx
+DISASM-NEXT: 2037:       52      pushl   %edx
+DISASM-NEXT: 2038:       68 20 10 00 40  pushl   $1073745952
+DISASM-NEXT: 203d:       68 00 30 00 40  pushl   $1073754112
+DISASM-NEXT: 2042:       e8 b9 ff ff ff  calll   -71 <_main@0>
+DISASM-NEXT: 2047:       5a      popl    %edx
+DISASM-NEXT: 2048:       59      popl    %ecx
+DISASM-NEXT: 2049:       ff e0   jmpl    *%eax
+DISASM-NEXT: 204b:       51      pushl   %ecx
+DISASM-NEXT: 204c:       52      pushl   %edx
+DISASM-NEXT: 204d:       68 28 10 00 40  pushl   $1073745960
+DISASM-NEXT: 2052:       68 00 30 00 40  pushl   $1073754112
+DISASM-NEXT: 2057:       e8 a4 ff ff ff  calll   -92 <_main@0>
+DISASM-NEXT: 205c:       5a      popl    %edx
+DISASM-NEXT: 205d:       59      popl    %ecx
+DISASM-NEXT: 205e:       ff e0   jmpl    *%eax
