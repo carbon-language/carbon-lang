@@ -643,6 +643,8 @@ protected:
 
       if (Opts.CXXExceptions)
         Builder.defineMacro("_CPPUNWIND");
+
+      Builder.defineMacro("__BOOL_DEFINED");
     }
 
     if (!Opts.CharIsSigned)

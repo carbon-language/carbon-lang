@@ -144,12 +144,14 @@
 //
 // MSEXT-CXX:#define _NATIVE_WCHAR_T_DEFINED 1
 // MSEXT-CXX:#define _WCHAR_T_DEFINED 1
+// MSEXT-CXX:#define __BOOL_DEFINED 1
 //
 //
 // RUN: %clang_cc1 -x c++ -fno-wchar -fms-extensions -triple i686-pc-win32 -E -dM < /dev/null | FileCheck -check-prefix MSEXT-CXX-NOWCHAR %s
 //
 // MSEXT-CXX-NOWCHAR-NOT:#define _NATIVE_WCHAR_T_DEFINED 1
 // MSEXT-CXX-NOWCHAR-NOT:#define _WCHAR_T_DEFINED 1
+// MSEXT-CXX-NOWCHAR:#define __BOOL_DEFINED 1
 //
 // 
 // RUN: %clang_cc1 -x objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
