@@ -73,7 +73,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginSystemRuntimeMacOSX.a \
 	lldbPluginUnwindAssemblyInstEmulation.a \
 	lldbPluginUnwindAssemblyX86.a \
-	lldbPluginUtility.a \
+	lldbPluginProcessUtility.a \
 	lldbSymbol.a \
 	lldbTarget.a \
 	lldbUtility.a \
