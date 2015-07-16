@@ -786,6 +786,7 @@ MachineInstr *ARMLoadStoreOpt::MergeOpsUpdate(const MergeCandidate &Cand) {
   SmallVector<std::pair<unsigned, bool>, 8> Regs;
   SmallVector<unsigned, 4> ImpDefs;
   DenseSet<unsigned> KilledRegs;
+  DenseSet<unsigned> UsedRegs;
   // Determine list of registers and list of implicit super-register defs.
   for (const MachineInstr *MI : Cand.Instrs) {
     const MachineOperand &MO = getLoadStoreRegOp(*MI);
@@ -794,6 +795,7 @@ MachineInstr *ARMLoadStoreOpt::MergeOpsUpdate(const MergeCandidate &Cand) {
     if (IsKill)
       KilledRegs.insert(Reg);
     Regs.push_back(std::make_pair(Reg, IsKill));
+    UsedRegs.insert(Reg);
 
     if (IsLoad) {
       // Collect any implicit defs of super-registers, after merging we can't
@@ -883,7 +885,7 @@ MachineInstr *ARMLoadStoreOpt::MergeOpsUpdate(const MergeCandidate &Cand) {
       for (MachineOperand &MO : MI.uses()) {
         if (!MO.isReg() || !MO.isKill())
           continue;
-        if (KilledRegs.count(MO.getReg()))
+        if (UsedRegs.count(MO.getReg()))
           MO.setIsKill(false);
       }
     }
