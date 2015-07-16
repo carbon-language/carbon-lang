@@ -5568,15 +5568,12 @@ bool Sema::adjustContextForLocalExternDecl(DeclContext *&DC) {
   return true;
 }
 
-/// \brief Returns true if given declaration is TU-scoped and externally
-/// visible.
-static bool isDeclTUScopedExternallyVisible(const Decl *D) {
-  if (auto *FD = dyn_cast<FunctionDecl>(D))
-    return (FD->getDeclContext()->isTranslationUnit() || FD->isExternC()) &&
-           FD->hasExternalFormalLinkage();
-  else if (auto *VD = dyn_cast<VarDecl>(D))
-    return (VD->getDeclContext()->isTranslationUnit() || VD->isExternC()) &&
-           VD->hasExternalFormalLinkage();
+/// \brief Returns true if given declaration has external C language linkage.
+static bool isDeclExternC(const Decl *D) {
+  if (const auto *FD = dyn_cast<FunctionDecl>(D))
+    return FD->isExternC();
+  if (const auto *VD = dyn_cast<VarDecl>(D))
+    return VD->isExternC();
 
   llvm_unreachable("Unknown type of decl!");
 }
@@ -6005,13 +6002,16 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0),
                                                 Context, Label, 0));
-  } else if (!ExtnameUndeclaredIdentifiers.empty() &&
-             isDeclTUScopedExternallyVisible(NewVD)) {
+  } else if (!ExtnameUndeclaredIdentifiers.empty()) {
     llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*>::iterator I =
       ExtnameUndeclaredIdentifiers.find(NewVD->getIdentifier());
     if (I != ExtnameUndeclaredIdentifiers.end()) {
-      NewVD->addAttr(I->second);
-      ExtnameUndeclaredIdentifiers.erase(I);
+      if (isDeclExternC(NewVD)) {
+        NewVD->addAttr(I->second);
+        ExtnameUndeclaredIdentifiers.erase(I);
+      } else
+        Diag(NewVD->getLocation(), diag::warn_redefine_extname_not_applied)
+            << /*Variable*/1 << NewVD;
     }
   }
 
@@ -7533,13 +7533,16 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     StringLiteral *SE = cast<StringLiteral>(E);
     NewFD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), Context,
                                                 SE->getString(), 0));
-  } else if (!ExtnameUndeclaredIdentifiers.empty() &&
-             isDeclTUScopedExternallyVisible(NewFD)) {
+  } else if (!ExtnameUndeclaredIdentifiers.empty()) {
     llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*>::iterator I =
       ExtnameUndeclaredIdentifiers.find(NewFD->getIdentifier());
     if (I != ExtnameUndeclaredIdentifiers.end()) {
-      NewFD->addAttr(I->second);
-      ExtnameUndeclaredIdentifiers.erase(I);
+      if (isDeclExternC(NewFD)) {
+        NewFD->addAttr(I->second);
+        ExtnameUndeclaredIdentifiers.erase(I);
+      } else
+        Diag(NewFD->getLocation(), diag::warn_redefine_extname_not_applied)
+            << /*Variable*/0 << NewFD;
     }
   }
 
@@ -14388,12 +14391,14 @@ void Sema::ActOnPragmaRedefineExtname(IdentifierInfo* Name,
   // 1) declares a function or a variable
   // 2) has external linkage
   // already exists, add a label attribute to it.
-  if (PrevDecl &&
-      (isa<FunctionDecl>(PrevDecl) || isa<VarDecl>(PrevDecl)) &&
-      PrevDecl->hasExternalFormalLinkage())
-    PrevDecl->addAttr(Attr);
+  if (PrevDecl && (isa<FunctionDecl>(PrevDecl) || isa<VarDecl>(PrevDecl))) {
+    if (isDeclExternC(PrevDecl))
+      PrevDecl->addAttr(Attr);
+    else
+      Diag(PrevDecl->getLocation(), diag::warn_redefine_extname_not_applied)
+          << /*Variable*/(isa<FunctionDecl>(PrevDecl) ? 0 : 1) << PrevDecl;
   // Otherwise, add a label atttibute to ExtnameUndeclaredIdentifiers.
-  else
+  } else
     (void)ExtnameUndeclaredIdentifiers.insert(std::make_pair(Name, Attr));
 }
 

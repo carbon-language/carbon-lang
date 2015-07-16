@@ -6343,6 +6343,10 @@ def warn_cast_qual : Warning<"cast from %0 to %1 drops %select{const and "
   InGroup<CastQual>, DefaultIgnore;
 def warn_cast_qual2 : Warning<"cast from %0 to %1 must have all intermediate "
   "pointers const qualified to be safe">, InGroup<CastQual>, DefaultIgnore;
+def warn_redefine_extname_not_applied : Warning<
+  "#pragma redefine_extname is applicable to external C declarations only; "
+  "not applied to %select{function|variable}0 %1">,
+  InGroup<Pragmas>;
 } // End of general sema category.
 
 // inline asm.
