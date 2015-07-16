@@ -127,7 +127,7 @@ ThreadPlanStepRange::DumpRanges(Stream *s)
     {
         for (size_t i = 0; i < num_ranges; i++)
         {
-            s->Printf(" %d: ", i);
+            s->Printf(" %" PRIu64 ": ", uint64_t(i));
             m_address_ranges[i].Dump (s, m_thread.CalculateTarget().get(), Address::DumpStyleLoadAddress);
         }
     }
