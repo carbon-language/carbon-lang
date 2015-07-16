@@ -2,30 +2,30 @@
 // rdar://10383444
 
 // RUN: %clang -### -c -g %s -target x86_64-linux-gnu 2>&1 \
-                    | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -g2 %s -target x86_64-linux-gnu 2>&1 \
-                    | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -g3 %s -target x86_64-linux-gnu 2>&1 \
-                    | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -ggdb %s -target x86_64-linux-gnu 2>&1 \
-                    | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -ggdb1 %s -target x86_64-linux-gnu 2>&1 \
-                    | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=G %s
 // RUN: %clang -### -c -ggdb3 %s -target x86_64-linux-gnu 2>&1 \
-                    | FileCheck -check-prefix=G %s
+// RUN:             | FileCheck -check-prefix=G %s
 
 // RUN: %clang -### -c -g %s -target x86_64-apple-darwin 2>&1 \
-                    | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=G_DARWIN %s
 // RUN: %clang -### -c -g2 %s -target x86_64-apple-darwin 2>&1 \
-                    | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=G_DARWIN %s
 // RUN: %clang -### -c -g3 %s -target x86_64-apple-darwin 2>&1 \
-                    | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=G_DARWIN %s
 // RUN: %clang -### -c -ggdb %s -target x86_64-apple-darwin 2>&1 \
-                    | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=G_DARWIN %s
 // RUN: %clang -### -c -ggdb1 %s -target x86_64-apple-darwin 2>&1 \
-                    | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=G_DARWIN %s
 // RUN: %clang -### -c -ggdb3 %s -target x86_64-apple-darwin 2>&1 \
-                    | FileCheck -check-prefix=G_DARWIN %s
+// RUN:             | FileCheck -check-prefix=G_DARWIN %s
 
 // RUN: %clang -### -c -gdwarf-2 %s 2>&1 | FileCheck -check-prefix=G_D2 %s
 //
