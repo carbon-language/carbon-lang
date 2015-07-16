@@ -20,7 +20,7 @@ class StopHookMechanismTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr15037
     @expectedFlakeyLinux('llvm.org/pr15037') # stop-hooks sometimes fail to fire on Linux
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @expectedFailureHostWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @dwarf_test
     def test_with_dwarf(self):
         """Test the stop-hook mechanism."""
