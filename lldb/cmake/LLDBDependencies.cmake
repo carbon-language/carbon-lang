@@ -155,7 +155,12 @@ endif()
 list(APPEND LLDB_SYSTEM_LIBS ${system_libs})
 
 if (LLVM_BUILD_STATIC)
-  list(APPEND LLDB_SYSTEM_LIBS python2.7 z util termcap gpm ssl crypto bsd)
+  if (NOT LLDB_DISABLE_PYTHON)
+    list(APPEND LLDB_SYSTEM_LIBS python2.7 util)
+  endif()
+  if (NOT LLDB_DISABLE_CURSES)
+    list(APPEND LLDB_SYSTEM_LIBS gpm)
+  endif()
 endif()
 
 set( LLVM_LINK_COMPONENTS
