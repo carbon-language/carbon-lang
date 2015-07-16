@@ -968,7 +968,7 @@ void Interpreter::visitAllocaInst(AllocaInst &I) {
   unsigned NumElements = 
     getOperandValue(I.getOperand(0), SF).IntVal.getZExtValue();
 
-  unsigned TypeSize = (size_t)TD.getTypeAllocSize(Ty);
+  unsigned TypeSize = (size_t)getDataLayout().getTypeAllocSize(Ty);
 
   // Avoid malloc-ing zero bytes, use max()...
   unsigned MemToAlloc = std::max(1U, NumElements * TypeSize);
@@ -1000,7 +1000,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
 
   for (; I != E; ++I) {
     if (StructType *STy = dyn_cast<StructType>(*I)) {
-      const StructLayout *SLO = TD.getStructLayout(STy);
+      const StructLayout *SLO = getDataLayout().getStructLayout(STy);
 
       const ConstantInt *CPU = cast<ConstantInt>(I.getOperand());
       unsigned Index = unsigned(CPU->getZExtValue());
@@ -1020,7 +1020,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
         assert(BitWidth == 64 && "Invalid index type for getelementptr");
         Idx = (int64_t)IdxGV.IntVal.getZExtValue();
       }
-      Total += TD.getTypeAllocSize(ST->getElementType())*Idx;
+      Total += getDataLayout().getTypeAllocSize(ST->getElementType()) * Idx;
     }
   }
 
@@ -1477,7 +1477,7 @@ GenericValue Interpreter::executeIntToPtrInst(Value *SrcVal, Type *DstTy,
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
   assert(DstTy->isPointerTy() && "Invalid PtrToInt instruction");
 
-  uint32_t PtrSize = TD.getPointerSizeInBits();
+  uint32_t PtrSize = getDataLayout().getPointerSizeInBits();
   if (PtrSize != Src.IntVal.getBitWidth())
     Src.IntVal = Src.IntVal.zextOrTrunc(PtrSize);
 
@@ -1497,7 +1497,7 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, Type *DstTy,
       (DstTy->getTypeID() == Type::VectorTyID)) {
     // vector src bitcast to vector dst or vector src bitcast to scalar dst or
     // scalar src bitcast to vector dst
-    bool isLittleEndian = TD.isLittleEndian();
+    bool isLittleEndian = getDataLayout().isLittleEndian();
     GenericValue TempDst, TempSrc, SrcVec;
     const Type *SrcElemTy;
     const Type *DstElemTy;

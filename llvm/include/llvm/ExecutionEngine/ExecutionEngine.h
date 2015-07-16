@@ -104,7 +104,12 @@ class ExecutionEngine {
   ExecutionEngineState EEState;
 
   /// The target data for the platform for which execution is being performed.
-  const DataLayout *DL;
+  ///
+  /// Note: the DataLayout is LLVMContext specific because it has an
+  /// internal cache based on type pointers. It makes unsafe to reuse the
+  /// ExecutionEngine across context, we don't enforce this rule but undefined
+  /// behavior can occurs if the user tries to do it.
+  const DataLayout DL;
 
   /// Whether lazy JIT compilation is enabled.
   bool CompilingLazily;
@@ -125,8 +130,6 @@ protected:
   /// The list of Modules that we are JIT'ing from.  We use a SmallVector to
   /// optimize for the case where there is only one module.
   SmallVector<std::unique_ptr<Module>, 1> Modules;
-
-  void setDataLayout(const DataLayout *Val) { DL = Val; }
 
   /// getMemoryforGV - Allocate memory for a global variable.
   virtual char *getMemoryForGV(const GlobalVariable *GV);
@@ -194,7 +197,7 @@ public:
 
   //===--------------------------------------------------------------------===//
 
-  const DataLayout *getDataLayout() const { return DL; }
+  const DataLayout &getDataLayout() const { return DL; }
 
   /// removeModule - Remove a Module from the list of modules.  Returns true if
   /// M is found.
@@ -478,8 +481,8 @@ public:
   }
 
 protected:
-  ExecutionEngine() {}
-  explicit ExecutionEngine(std::unique_ptr<Module> M);
+  ExecutionEngine(const DataLayout DL) : DL(std::move(DL)){};
+  explicit ExecutionEngine(const DataLayout DL, std::unique_ptr<Module> M);
 
   void emitGlobals();
 

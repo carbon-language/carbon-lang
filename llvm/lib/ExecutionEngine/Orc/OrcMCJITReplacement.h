@@ -137,25 +137,26 @@ public:
   }
 
   OrcMCJITReplacement(
-                    std::shared_ptr<MCJITMemoryManager> MemMgr,
-                    std::shared_ptr<RuntimeDyld::SymbolResolver> ClientResolver,
-                    std::unique_ptr<TargetMachine> TM)
-      : TM(std::move(TM)), MemMgr(*this, std::move(MemMgr)),
-        Resolver(*this), ClientResolver(std::move(ClientResolver)),
-        NotifyObjectLoaded(*this), NotifyFinalized(*this),
+      std::shared_ptr<MCJITMemoryManager> MemMgr,
+      std::shared_ptr<RuntimeDyld::SymbolResolver> ClientResolver,
+      std::unique_ptr<TargetMachine> TM)
+      : ExecutionEngine(*TM->getDataLayout()), TM(std::move(TM)),
+        MemMgr(*this, std::move(MemMgr)), Resolver(*this),
+        ClientResolver(std::move(ClientResolver)), NotifyObjectLoaded(*this),
+        NotifyFinalized(*this),
         ObjectLayer(NotifyObjectLoaded, NotifyFinalized),
         CompileLayer(ObjectLayer, SimpleCompiler(*this->TM)),
-        LazyEmitLayer(CompileLayer) {
-    setDataLayout(this->TM->getDataLayout());
-  }
+        LazyEmitLayer(CompileLayer) {}
 
   void addModule(std::unique_ptr<Module> M) override {
 
     // If this module doesn't have a DataLayout attached then attach the
     // default.
-    if (M->getDataLayout().isDefault())
-      M->setDataLayout(*getDataLayout());
-
+    if (M->getDataLayout().isDefault()) {
+      M->setDataLayout(getDataLayout());
+    } else {
+      assert(M->getDataLayout() == getDataLayout() && "DataLayout Mismatch");
+    }
     Modules.push_back(std::move(M));
     std::vector<Module *> Ms;
     Ms.push_back(&*Modules.back());
@@ -310,7 +311,7 @@ private:
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
-      Mang.getNameWithPrefix(MangledNameStream, Name, *TM->getDataLayout());
+      Mang.getNameWithPrefix(MangledNameStream, Name, getDataLayout());
     }
     return MangledName;
   }
