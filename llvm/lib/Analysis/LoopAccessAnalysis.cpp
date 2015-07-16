@@ -280,6 +280,13 @@ void RuntimePointerChecking::groupChecks(
   }
 }
 
+bool RuntimePointerChecking::arePointersInSamePartition(
+    const SmallVectorImpl<int> &PtrToPartition, unsigned PtrIdx1,
+    unsigned PtrIdx2) {
+  return (PtrToPartition[PtrIdx1] != -1 &&
+          PtrToPartition[PtrIdx1] == PtrToPartition[PtrIdx2]);
+}
+
 bool RuntimePointerChecking::needsChecking(
     unsigned I, unsigned J, const SmallVectorImpl<int> *PtrPartition) const {
   const PointerInfo &PointerI = Pointers[I];
@@ -298,10 +305,7 @@ bool RuntimePointerChecking::needsChecking(
     return false;
 
   // If PtrPartition is set omit checks between pointers of the same partition.
-  // Partition number -1 means that the pointer is used in multiple partitions.
-  // In this case we can't omit the check.
-  if (PtrPartition && (*PtrPartition)[I] != -1 &&
-      (*PtrPartition)[I] == (*PtrPartition)[J])
+  if (PtrPartition && arePointersInSamePartition(*PtrPartition, I, J))
     return false;
 
   return true;
