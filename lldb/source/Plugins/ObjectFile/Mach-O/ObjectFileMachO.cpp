@@ -54,6 +54,7 @@
 #include "Utility/UuidCompatibility.h"
 #endif
 
+#define THUMB_ADDRESS_BIT_MASK 0xfffffffffffffffeull
 using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
@@ -2058,6 +2059,7 @@ struct TrieEntryWithOffset
 static void
 ParseTrieEntries (DataExtractor &data,
                   lldb::offset_t offset,
+                  const bool is_arm,
                   std::vector<llvm::StringRef> &nameSlices,
                   std::set<lldb::addr_t> &resolver_addresses,
                   std::vector<TrieEntryWithOffset>& output)
@@ -2080,9 +2082,11 @@ ParseTrieEntries (DataExtractor &data,
 			e.entry.address = data.GetULEB128(&offset);
 			if ( e.entry.flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER )
             {
-                //resolver_addresses.insert(e.entry.address);
 				e.entry.other = data.GetULEB128(&offset);
-                resolver_addresses.insert(e.entry.other);
+                uint64_t resolver_addr = e.entry.other;
+                if (is_arm)
+                    resolver_addr &= THUMB_ADDRESS_BIT_MASK;
+                resolver_addresses.insert(resolver_addr);
             }
 			else
 				e.entry.other = 0;
@@ -2118,6 +2122,7 @@ ParseTrieEntries (DataExtractor &data,
         {
             ParseTrieEntries(data,
                              childNodeOffset,
+                             is_arm,
                              nameSlices,
                              resolver_addresses,
                              output);
@@ -2542,6 +2547,7 @@ ObjectFileMachO::ParseSymtab ()
             std::vector<llvm::StringRef> nameSlices;
             ParseTrieEntries (dyld_trie_data,
                               0,
+                              is_arm,
                               nameSlices,
                               resolver_addresses,
                               trie_entries);
@@ -3423,7 +3429,7 @@ ObjectFileMachO::ParseSymtab ()
                                                             {
                                                                 if (symbol_file_addr & 1)
                                                                     symbol_flags = MACHO_NLIST_ARM_SYMBOL_IS_THUMB;
-                                                                symbol_file_addr &= 0xfffffffffffffffeull;
+                                                                symbol_file_addr &= THUMB_ADDRESS_BIT_MASK;
                                                             }
 
                                                             const FunctionStarts::Entry *next_func_start_entry = function_starts.FindNextEntry (func_start_entry);
@@ -3434,7 +3440,7 @@ ObjectFileMachO::ParseSymtab ()
                                                                 // Be sure the clear the Thumb address bit when we calculate the size
                                                                 // from the current and next address
                                                                 if (is_arm)
-                                                                    next_symbol_file_addr &= 0xfffffffffffffffeull;
+                                                                    next_symbol_file_addr &= THUMB_ADDRESS_BIT_MASK;
                                                                 symbol_byte_size = std::min<lldb::addr_t>(next_symbol_file_addr - symbol_file_addr, section_end_file_addr - symbol_file_addr);
                                                             }
                                                             else
@@ -4275,7 +4281,7 @@ ObjectFileMachO::ParseSymtab ()
 
                                 addr_t symbol_file_addr = func_start_entry->addr;
                                 if (is_arm)
-                                    symbol_file_addr &= 0xfffffffffffffffeull;
+                                    symbol_file_addr &= THUMB_ADDRESS_BIT_MASK;
 
                                 const FunctionStarts::Entry *next_func_start_entry = function_starts.FindNextEntry (func_start_entry);
                                 const addr_t section_end_file_addr = section_file_addr + symbol_section->GetByteSize();
@@ -4285,7 +4291,7 @@ ObjectFileMachO::ParseSymtab ()
                                     // Be sure the clear the Thumb address bit when we calculate the size
                                     // from the current and next address
                                     if (is_arm)
-                                        next_symbol_file_addr &= 0xfffffffffffffffeull;
+                                        next_symbol_file_addr &= THUMB_ADDRESS_BIT_MASK;
                                     symbol_byte_size = std::min<lldb::addr_t>(next_symbol_file_addr - symbol_file_addr, section_end_file_addr - symbol_file_addr);
                                 }
                                 else
@@ -4459,7 +4465,7 @@ ObjectFileMachO::ParseSymtab ()
                         {
                             if (symbol_file_addr & 1)
                                 symbol_flags = MACHO_NLIST_ARM_SYMBOL_IS_THUMB;
-                            symbol_file_addr &= 0xfffffffffffffffeull;
+                            symbol_file_addr &= THUMB_ADDRESS_BIT_MASK;
                         }
                         Address symbol_addr;
                         if (module_sp->ResolveFileAddress (symbol_file_addr, symbol_addr))
@@ -4475,7 +4481,7 @@ ObjectFileMachO::ParseSymtab ()
                                 {
                                     addr_t next_symbol_file_addr = next_func_start_entry->addr;
                                     if (is_arm)
-                                        next_symbol_file_addr &= 0xfffffffffffffffeull;
+                                        next_symbol_file_addr &= THUMB_ADDRESS_BIT_MASK;
                                     symbol_byte_size = std::min<lldb::addr_t>(next_symbol_file_addr - symbol_file_addr, section_end_file_addr - symbol_file_addr);
                                 }
                                 else
