@@ -622,7 +622,8 @@ MipsSEFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 }
 
 /// Mark \p Reg and all registers aliasing it in the bitset.
-void setAliasRegs(MachineFunction &MF, BitVector &SavedRegs, unsigned Reg) {
+static void setAliasRegs(MachineFunction &MF, BitVector &SavedRegs,
+                         unsigned Reg) {
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
     SavedRegs.set(*AI);
