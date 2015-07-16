@@ -65,13 +65,12 @@ MCJIT::createJIT(std::unique_ptr<Module> M,
                    std::move(Resolver));
 }
 
-MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> TM,
+MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
              std::shared_ptr<MCJITMemoryManager> MemMgr,
              std::shared_ptr<RuntimeDyld::SymbolResolver> Resolver)
-    : ExecutionEngine(*TM->getDataLayout(), std::move(M)), TM(std::move(TM)),
-      Ctx(nullptr), MemMgr(std::move(MemMgr)),
-      Resolver(*this, std::move(Resolver)), Dyld(*this->MemMgr, this->Resolver),
-      ObjCache(nullptr) {
+    : ExecutionEngine(std::move(M)), TM(std::move(tm)), Ctx(nullptr),
+      MemMgr(std::move(MemMgr)), Resolver(*this, std::move(Resolver)),
+      Dyld(*this->MemMgr, this->Resolver), ObjCache(nullptr) {
   // FIXME: We are managing our modules, so we do not want the base class
   // ExecutionEngine to manage them as well. To avoid double destruction
   // of the first (and only) module added in ExecutionEngine constructor
@@ -86,6 +85,7 @@ MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> TM,
   Modules.clear();
 
   OwnedModules.addModule(std::move(First));
+  setDataLayout(TM->getDataLayout());
   RegisterJITEventListener(JITEventListener::createGDBRegistrationListener());
 }
 
@@ -193,11 +193,7 @@ void MCJIT::generateCodeForModule(Module *M) {
   if (ObjCache)
     ObjectToLoad = ObjCache->getObject(M);
 
-  if (M->getDataLayout().isDefault()) {
-    M->setDataLayout(getDataLayout());
-  } else {
-    assert(M->getDataLayout() == getDataLayout() && "DataLayout Mismatch");
-  }
+  M->setDataLayout(*TM->getDataLayout());
 
   // If the cache did not contain a suitable object, compile the object
   if (!ObjectToLoad) {
@@ -269,7 +265,7 @@ void MCJIT::finalizeModule(Module *M) {
 
 RuntimeDyld::SymbolInfo MCJIT::findExistingSymbol(const std::string &Name) {
   SmallString<128> FullName;
-  Mangler::getNameWithPrefix(FullName, Name, getDataLayout());
+  Mangler::getNameWithPrefix(FullName, Name, *TM->getDataLayout());
   return Dyld.getSymbol(FullName);
 }
 

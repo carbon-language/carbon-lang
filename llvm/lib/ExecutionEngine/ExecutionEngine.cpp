@@ -61,8 +61,8 @@ ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
 
 void JITEventListener::anchor() {}
 
-ExecutionEngine::ExecutionEngine(const DataLayout DL, std::unique_ptr<Module> M)
-    : DL(std::move(DL)), LazyFunctionCreator(nullptr) {
+ExecutionEngine::ExecutionEngine(std::unique_ptr<Module> M)
+  : LazyFunctionCreator(nullptr) {
   CompilingLazily         = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
@@ -115,7 +115,7 @@ public:
 }  // anonymous namespace
 
 char *ExecutionEngine::getMemoryForGV(const GlobalVariable *GV) {
-  return GVMemoryBlock::Create(GV, getDataLayout());
+  return GVMemoryBlock::Create(GV, *getDataLayout());
 }
 
 void ExecutionEngine::addObjectFile(std::unique_ptr<object::ObjectFile> O) {
@@ -326,7 +326,7 @@ void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
                        const std::vector<std::string> &InputArgv) {
   Values.clear();  // Free the old contents.
   Values.reserve(InputArgv.size());
-  unsigned PtrSize = EE->getDataLayout().getPointerSize();
+  unsigned PtrSize = EE->getDataLayout()->getPointerSize();
   Array = make_unique<char[]>((InputArgv.size()+1)*PtrSize);
 
   DEBUG(dbgs() << "JIT: ARGV = " << (void*)Array.get() << "\n");
@@ -401,7 +401,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
 #ifndef NDEBUG
 /// isTargetNullPtr - Return whether the target pointer stored at Loc is null.
 static bool isTargetNullPtr(ExecutionEngine *EE, void *Loc) {
-  unsigned PtrSize = EE->getDataLayout().getPointerSize();
+  unsigned PtrSize = EE->getDataLayout()->getPointerSize();
   for (unsigned i = 0; i < PtrSize; ++i)
     if (*(i + (uint8_t*)Loc))
       return false;
@@ -634,8 +634,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     case Instruction::GetElementPtr: {
       // Compute the index
       GenericValue Result = getConstantValue(Op0);
-      APInt Offset(DL.getPointerSizeInBits(), 0);
-      cast<GEPOperator>(CE)->accumulateConstantOffset(DL, Offset);
+      APInt Offset(DL->getPointerSizeInBits(), 0);
+      cast<GEPOperator>(CE)->accumulateConstantOffset(*DL, Offset);
 
       char* tmp = (char*) Result.PointerVal;
       Result = PTOGV(tmp + Offset.getSExtValue());
@@ -722,16 +722,16 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::PtrToInt: {
       GenericValue GV = getConstantValue(Op0);
-      uint32_t PtrWidth = DL.getTypeSizeInBits(Op0->getType());
+      uint32_t PtrWidth = DL->getTypeSizeInBits(Op0->getType());
       assert(PtrWidth <= 64 && "Bad pointer width");
       GV.IntVal = APInt(PtrWidth, uintptr_t(GV.PointerVal));
-      uint32_t IntWidth = DL.getTypeSizeInBits(CE->getType());
+      uint32_t IntWidth = DL->getTypeSizeInBits(CE->getType());
       GV.IntVal = GV.IntVal.zextOrTrunc(IntWidth);
       return GV;
     }
     case Instruction::IntToPtr: {
       GenericValue GV = getConstantValue(Op0);
-      uint32_t PtrWidth = DL.getTypeSizeInBits(CE->getType());
+      uint32_t PtrWidth = DL->getTypeSizeInBits(CE->getType());
       GV.IntVal = GV.IntVal.zextOrTrunc(PtrWidth);
       assert(GV.IntVal.getBitWidth() <= 64 && "Bad pointer width");
       GV.PointerVal = PointerTy(uintptr_t(GV.IntVal.getZExtValue()));
@@ -1033,7 +1033,7 @@ static void StoreIntToMemory(const APInt &IntVal, uint8_t *Dst,
 
 void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
                                          GenericValue *Ptr, Type *Ty) {
-  const unsigned StoreBytes = getDataLayout().getTypeStoreSize(Ty);
+  const unsigned StoreBytes = getDataLayout()->getTypeStoreSize(Ty);
 
   switch (Ty->getTypeID()) {
   default:
@@ -1073,7 +1073,7 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
     break;
   }
 
-  if (sys::IsLittleEndianHost != getDataLayout().isLittleEndian())
+  if (sys::IsLittleEndianHost != getDataLayout()->isLittleEndian())
     // Host and target are different endian - reverse the stored bytes.
     std::reverse((uint8_t*)Ptr, StoreBytes + (uint8_t*)Ptr);
 }
@@ -1110,7 +1110,7 @@ static void LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
 void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
                                           GenericValue *Ptr,
                                           Type *Ty) {
-  const unsigned LoadBytes = getDataLayout().getTypeStoreSize(Ty);
+  const unsigned LoadBytes = getDataLayout()->getTypeStoreSize(Ty);
 
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
@@ -1176,20 +1176,20 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   
   if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {
     unsigned ElementSize =
-        getDataLayout().getTypeAllocSize(CP->getType()->getElementType());
+      getDataLayout()->getTypeAllocSize(CP->getType()->getElementType());
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
     return;
   }
   
   if (isa<ConstantAggregateZero>(Init)) {
-    memset(Addr, 0, (size_t)getDataLayout().getTypeAllocSize(Init->getType()));
+    memset(Addr, 0, (size_t)getDataLayout()->getTypeAllocSize(Init->getType()));
     return;
   }
   
   if (const ConstantArray *CPA = dyn_cast<ConstantArray>(Init)) {
     unsigned ElementSize =
-        getDataLayout().getTypeAllocSize(CPA->getType()->getElementType());
+      getDataLayout()->getTypeAllocSize(CPA->getType()->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -1197,7 +1197,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   
   if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(Init)) {
     const StructLayout *SL =
-        getDataLayout().getStructLayout(cast<StructType>(CPS->getType()));
+      getDataLayout()->getStructLayout(cast<StructType>(CPS->getType()));
     for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
       InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->getElementOffset(i));
     return;
@@ -1342,7 +1342,7 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
     InitializeMemory(GV->getInitializer(), GA);
 
   Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getDataLayout().getTypeAllocSize(ElTy);
+  size_t GVSize = (size_t)getDataLayout()->getTypeAllocSize(ElTy);
   NumInitBytes += (unsigned)GVSize;
   ++NumGlobals;
 }
