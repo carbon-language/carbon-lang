@@ -165,6 +165,9 @@ public:
   /// Return information about data layout.
   const DataLayout &getDataLayout() const;
 
+  /// Return the pointer size from the TargetMachine
+  unsigned getPointerSize() const;
+
   /// Return information about subtarget.
   const MCSubtargetInfo &getSubtargetInfo() const;
 

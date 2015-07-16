@@ -140,6 +140,8 @@ const DataLayout &AsmPrinter::getDataLayout() const {
   return *TM.getDataLayout();
 }
 
+unsigned AsmPrinter::getPointerSize() const { return TM.getDataLayout()->getPointerSize(); }
+
 const MCSubtargetInfo &AsmPrinter::getSubtargetInfo() const {
   assert(MF && "getSubtargetInfo requires a valid MachineFunction!");
   return MF->getSubtarget<MCSubtargetInfo>();

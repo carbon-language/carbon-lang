@@ -264,7 +264,8 @@ void DIEInteger::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_udata: Asm->EmitULEB128(Integer); return;
   case dwarf::DW_FORM_sdata: Asm->EmitSLEB128(Integer); return;
   case dwarf::DW_FORM_addr:
-    Size = Asm->getDataLayout().getPointerSize(); break;
+    Size = Asm->getPointerSize();
+    break;
   case dwarf::DW_FORM_ref_addr:
     Size = SizeOf(Asm, dwarf::DW_FORM_ref_addr);
     break;
@@ -294,10 +295,11 @@ unsigned DIEInteger::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_GNU_addr_index: return getULEB128Size(Integer);
   case dwarf::DW_FORM_udata: return getULEB128Size(Integer);
   case dwarf::DW_FORM_sdata: return getSLEB128Size(Integer);
-  case dwarf::DW_FORM_addr:  return AP->getDataLayout().getPointerSize();
+  case dwarf::DW_FORM_addr:
+    return AP->getPointerSize();
   case dwarf::DW_FORM_ref_addr:
     if (AP->OutStreamer->getContext().getDwarfVersion() == 2)
-      return AP->getDataLayout().getPointerSize();
+      return AP->getPointerSize();
     return sizeof(int32_t);
   default: llvm_unreachable("DIE Value form not supported yet");
   }
@@ -326,7 +328,7 @@ unsigned DIEExpr::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
   if (Form == dwarf::DW_FORM_sec_offset) return 4;
   if (Form == dwarf::DW_FORM_strp) return 4;
-  return AP->getDataLayout().getPointerSize();
+  return AP->getPointerSize();
 }
 
 #ifndef NDEBUG
@@ -352,7 +354,7 @@ unsigned DIELabel::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
   if (Form == dwarf::DW_FORM_sec_offset) return 4;
   if (Form == dwarf::DW_FORM_strp) return 4;
-  return AP->getDataLayout().getPointerSize();
+  return AP->getPointerSize();
 }
 
 #ifndef NDEBUG
@@ -375,7 +377,7 @@ unsigned DIEDelta::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   if (Form == dwarf::DW_FORM_data4) return 4;
   if (Form == dwarf::DW_FORM_sec_offset) return 4;
   if (Form == dwarf::DW_FORM_strp) return 4;
-  return AP->getDataLayout().getPointerSize();
+  return AP->getPointerSize();
 }
 
 #ifndef NDEBUG
@@ -472,7 +474,7 @@ unsigned DIEEntry::getRefAddrSize(const AsmPrinter *AP) {
   const DwarfDebug *DD = AP->getDwarfDebug();
   assert(DD && "Expected Dwarf Debug info to be available");
   if (DD->getDwarfVersion() == 2)
-    return AP->getDataLayout().getPointerSize();
+    return AP->getPointerSize();
   return sizeof(int32_t);
 }
 
@@ -608,7 +610,7 @@ unsigned DIELocList::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
     return 4;
   if (Form == dwarf::DW_FORM_sec_offset)
     return 4;
-  return AP->getDataLayout().getPointerSize();
+  return AP->getPointerSize();
 }
 
 /// EmitValue - Emit label value.
