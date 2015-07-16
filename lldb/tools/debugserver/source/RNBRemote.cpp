@@ -2573,7 +2573,7 @@ typedef std::map<nub_addr_t, StackMemory> StackMemoryMap;
 
 
 static void
-ReadStackMemory (nub_process_t pid, nub_thread_t tid, StackMemoryMap &stack_mmap)
+ReadStackMemory (nub_process_t pid, nub_thread_t tid, StackMemoryMap &stack_mmap, uint32_t backtrace_limit = 256)
 {
     DNBRegisterValue reg_value;
     if (DNBThreadGetRegisterValueByID(pid, tid, REGISTER_SET_GENERIC, GENERIC_REGNUM_FP, &reg_value))
@@ -2588,7 +2588,7 @@ ReadStackMemory (nub_process_t pid, nub_thread_t tid, StackMemoryMap &stack_mmap
         {
             // Make sure we never recurse more than 256 times so we don't recurse too far or
             // store up too much memory in the expedited cache
-            if (++frame_count > 256)
+            if (++frame_count > backtrace_limit)
                 break;
 
             const nub_size_t read_size = reg_value.info.size*2;
@@ -2791,7 +2791,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
         // Add expedited stack memory so stack backtracing doesn't need to read anything from the
         // frame pointer chain.
         StackMemoryMap stack_mmap;
-        ReadStackMemory (pid, tid, stack_mmap);
+        ReadStackMemory (pid, tid, stack_mmap, 1);
         if (!stack_mmap.empty())
         {
             for (const auto &stack_memory : stack_mmap)
