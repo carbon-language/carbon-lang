@@ -318,7 +318,7 @@ void *LLVMRecompileAndRelinkFunction(LLVMExecutionEngineRef EE,
 }
 
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE) {
-  return wrap(unwrap(EE)->getDataLayout());
+  return wrap(&unwrap(EE)->getDataLayout());
 }
 
 LLVMTargetMachineRef

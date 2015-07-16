@@ -95,7 +95,6 @@ struct ExecutionContext {
 //
 class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   GenericValue ExitValue;          // The return value of the called function
-  DataLayout TD;
   IntrinsicLowering *IL;
 
   // The runtime stack of executing code.  The top of the stack is the current

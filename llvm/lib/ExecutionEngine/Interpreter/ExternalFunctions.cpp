@@ -178,7 +178,7 @@ static void *ffiValueFor(Type *Ty, const GenericValue &AV,
 }
 
 static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
-                      const DataLayout *TD, GenericValue &Result) {
+                      const DataLayout &TD, GenericValue &Result) {
   ffi_cif cif;
   FunctionType *FTy = F->getFunctionType();
   const unsigned NumArgs = F->arg_size();
@@ -368,7 +368,7 @@ static GenericValue lle_X_sprintf(FunctionType *FT,
       case 'x': case 'X':
         if (HowLong >= 1) {
           if (HowLong == 1 &&
-              TheInterpreter->getDataLayout()->getPointerSizeInBits() == 64 &&
+              TheInterpreter->getDataLayout().getPointerSizeInBits() == 64 &&
               sizeof(long) < sizeof(int64_t)) {
             // Make sure we use %lld with a 64 bit argument because we might be
             // compiling LLI on a 32 bit compiler.

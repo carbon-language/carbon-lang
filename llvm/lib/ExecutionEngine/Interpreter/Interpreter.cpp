@@ -49,16 +49,15 @@ ExecutionEngine *Interpreter::create(std::unique_ptr<Module> M,
 // Interpreter ctor - Initialize stuff
 //
 Interpreter::Interpreter(std::unique_ptr<Module> M)
-  : ExecutionEngine(std::move(M)), TD(Modules.back().get()) {
+    : ExecutionEngine(std::move(M)) {
 
   memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
-  setDataLayout(&TD);
   // Initialize the "backend"
   initializeExecutionEngine();
   initializeExternalFunctions();
   emitGlobals();
 
-  IL = new IntrinsicLowering(TD);
+  IL = new IntrinsicLowering(getDataLayout());
 }
 
 Interpreter::~Interpreter() {
