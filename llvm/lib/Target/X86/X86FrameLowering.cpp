@@ -794,6 +794,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   int StackOffset = 2 * stackGrowth;
 
   while (MBBI != MBB.end() &&
+         MBBI->getFlag(MachineInstr::FrameSetup) &&
          (MBBI->getOpcode() == X86::PUSH32r ||
           MBBI->getOpcode() == X86::PUSH64r)) {
     PushedRegs = true;
