@@ -175,7 +175,7 @@ class LoadUnloadTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr14424 - missing FreeBSD Makefiles/testcase support
     @skipUnlessListedRemote(['android'])
-    @unittest2.expectedFailure("rdar://15367406")
+    @expectedFailureAndroid # dlopen and dlclose prefixed with "__dl_" on android causing JIT compilation issues
     def test_lldb_process_load_and_unload_commands(self):
         """Test that lldb process load/unload command work correctly."""
 
