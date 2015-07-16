@@ -27,6 +27,7 @@
 #if defined(ANDROID_ARM_BUILD_STATIC)
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <fcntl.h>
 #endif // ANDROID_ARM_BUILD_STATIC
 #endif // __ANDROID_NDK__
 
