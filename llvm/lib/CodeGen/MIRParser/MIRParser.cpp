@@ -109,7 +109,9 @@ public:
                          DenseMap<unsigned, unsigned> &VirtualRegisterSlots);
 
   bool initializeFrameInfo(const Function &F, MachineFrameInfo &MFI,
-                           const yaml::MachineFunction &YamlMF);
+                           const yaml::MachineFunction &YamlMF,
+                           DenseMap<unsigned, int> &StackObjectSlots,
+                           DenseMap<unsigned, int> &FixedStackObjectSlots);
 
   bool initializeJumpTableInfo(MachineFunction &MF,
                                const yaml::MachineJumpTable &YamlJTI,
@@ -268,7 +270,8 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF,
                              PFS.VirtualRegisterSlots))
     return true;
-  if (initializeFrameInfo(*MF.getFunction(), *MF.getFrameInfo(), YamlMF))
+  if (initializeFrameInfo(*MF.getFunction(), *MF.getFrameInfo(), YamlMF,
+                          PFS.StackObjectSlots, PFS.FixedStackObjectSlots))
     return true;
 
   const auto &F = *MF.getFunction();
@@ -375,9 +378,11 @@ bool MIRParserImpl::initializeRegisterInfo(
   return false;
 }
 
-bool MIRParserImpl::initializeFrameInfo(const Function &F,
-                                        MachineFrameInfo &MFI,
-                                        const yaml::MachineFunction &YamlMF) {
+bool MIRParserImpl::initializeFrameInfo(
+    const Function &F, MachineFrameInfo &MFI,
+    const yaml::MachineFunction &YamlMF,
+    DenseMap<unsigned, int> &StackObjectSlots,
+    DenseMap<unsigned, int> &FixedStackObjectSlots) {
   const yaml::MachineFrameInfo &YamlMFI = YamlMF.FrameInfo;
   MFI.setFrameAddressIsTaken(YamlMFI.IsFrameAddressTaken);
   MFI.setReturnAddressIsTaken(YamlMFI.IsReturnAddressTaken);
@@ -403,8 +408,8 @@ bool MIRParserImpl::initializeFrameInfo(const Function &F,
     else
       ObjectIdx = MFI.CreateFixedSpillStackObject(Object.Size, Object.Offset);
     MFI.setObjectAlignment(ObjectIdx, Object.Alignment);
-    // TODO: Store the mapping between fixed object IDs and object indices to
-    // parse fixed stack object references correctly.
+    // TODO: Report an error when objects are redefined.
+    FixedStackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
   }
 
   // Initialize the ordinary frame objects.
@@ -428,8 +433,8 @@ bool MIRParserImpl::initializeFrameInfo(const Function &F,
           Object.Size, Object.Alignment,
           Object.Type == yaml::MachineStackObject::SpillSlot, Alloca);
     MFI.setObjectOffset(ObjectIdx, Object.Offset);
-    // TODO: Store the mapping between object IDs and object indices to parse
-    // stack object references correctly.
+    // TODO: Report an error when objects are redefined.
+    StackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
   }
   return false;
 }

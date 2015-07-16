@@ -17,8 +17,10 @@
 #include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
@@ -87,6 +89,8 @@ public:
   bool parseImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
+  bool parseStackObjectOperand(MachineOperand &Dest);
+  bool parseFixedStackObjectOperand(MachineOperand &Dest);
   bool parseGlobalAddressOperand(MachineOperand &Dest);
   bool parseJumpTableIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
@@ -439,6 +443,41 @@ bool MIParser::parseMBBOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseStackObjectOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::StackObject));
+  unsigned ID;
+  if (getUnsigned(ID))
+    return true;
+  auto ObjectInfo = PFS.StackObjectSlots.find(ID);
+  if (ObjectInfo == PFS.StackObjectSlots.end())
+    return error(Twine("use of undefined stack object '%stack.") + Twine(ID) +
+                 "'");
+  StringRef Name;
+  if (const auto *Alloca =
+          MF.getFrameInfo()->getObjectAllocation(ObjectInfo->second))
+    Name = Alloca->getName();
+  if (!Token.stringValue().empty() && Token.stringValue() != Name)
+    return error(Twine("the name of the stack object '%stack.") + Twine(ID) +
+                 "' isn't '" + Token.stringValue() + "'");
+  lex();
+  Dest = MachineOperand::CreateFI(ObjectInfo->second);
+  return false;
+}
+
+bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::FixedStackObject));
+  unsigned ID;
+  if (getUnsigned(ID))
+    return true;
+  auto ObjectInfo = PFS.FixedStackObjectSlots.find(ID);
+  if (ObjectInfo == PFS.FixedStackObjectSlots.end())
+    return error(Twine("use of undefined fixed stack object '%fixed-stack.") +
+                 Twine(ID) + "'");
+  lex();
+  Dest = MachineOperand::CreateFI(ObjectInfo->second);
+  return false;
+}
+
 bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::NamedGlobalValue: {
@@ -498,6 +537,10 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseImmediateOperand(Dest);
   case MIToken::MachineBasicBlock:
     return parseMBBOperand(Dest);
+  case MIToken::StackObject:
+    return parseStackObjectOperand(Dest);
+  case MIToken::FixedStackObject:
+    return parseFixedStackObjectOperand(Dest);
   case MIToken::GlobalValue:
   case MIToken::NamedGlobalValue:
     return parseGlobalAddressOperand(Dest);

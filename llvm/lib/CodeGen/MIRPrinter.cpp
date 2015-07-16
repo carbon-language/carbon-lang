@@ -32,11 +32,34 @@ using namespace llvm;
 
 namespace {
 
+/// This structure describes how to print out stack object references.
+struct FrameIndexOperand {
+  std::string Name;
+  unsigned ID;
+  bool IsFixed;
+
+  FrameIndexOperand(StringRef Name, unsigned ID, bool IsFixed)
+      : Name(Name.str()), ID(ID), IsFixed(IsFixed) {}
+
+  /// Return an ordinary stack object reference.
+  static FrameIndexOperand create(StringRef Name, unsigned ID) {
+    return FrameIndexOperand(Name, ID, /*IsFixed=*/false);
+  }
+
+  /// Return a fixed stack object reference.
+  static FrameIndexOperand createFixed(unsigned ID) {
+    return FrameIndexOperand("", ID, /*IsFixed=*/true);
+  }
+};
+
 /// This class prints out the machine functions using the MIR serialization
 /// format.
 class MIRPrinter {
   raw_ostream &OS;
   DenseMap<const uint32_t *, unsigned> RegisterMaskIds;
+  /// Maps from stack object indices to operand indices which will be used when
+  /// printing frame index machine operands.
+  DenseMap<int, FrameIndexOperand> StackObjectOperandMapping;
 
 public:
   MIRPrinter(raw_ostream &OS) : OS(OS) {}
@@ -63,14 +86,18 @@ class MIPrinter {
   raw_ostream &OS;
   ModuleSlotTracker &MST;
   const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds;
+  const DenseMap<int, FrameIndexOperand> &StackObjectOperandMapping;
 
 public:
   MIPrinter(raw_ostream &OS, ModuleSlotTracker &MST,
-            const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds)
-      : OS(OS), MST(MST), RegisterMaskIds(RegisterMaskIds) {}
+            const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds,
+            const DenseMap<int, FrameIndexOperand> &StackObjectOperandMapping)
+      : OS(OS), MST(MST), RegisterMaskIds(RegisterMaskIds),
+        StackObjectOperandMapping(StackObjectOperandMapping) {}
 
   void print(const MachineInstr &MI);
   void printMBBReference(const MachineBasicBlock &MBB);
+  void printStackObjectReference(int FrameIndex);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
 };
 
@@ -182,7 +209,7 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
       continue;
 
     yaml::FixedMachineStackObject YamlObject;
-    YamlObject.ID = ID++;
+    YamlObject.ID = ID;
     YamlObject.Type = MFI.isSpillSlotObjectIndex(I)
                           ? yaml::FixedMachineStackObject::SpillSlot
                           : yaml::FixedMachineStackObject::DefaultType;
@@ -192,8 +219,8 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
     YamlObject.IsImmutable = MFI.isImmutableObjectIndex(I);
     YamlObject.IsAliased = MFI.isAliasedObjectIndex(I);
     MF.FixedStackObjects.push_back(YamlObject);
-    // TODO: Store the mapping between fixed object IDs and object indices to
-    // print the fixed stack object references correctly.
+    StackObjectOperandMapping.insert(
+        std::make_pair(I, FrameIndexOperand::createFixed(ID++)));
   }
 
   // Process ordinary stack objects.
@@ -203,7 +230,7 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
       continue;
 
     yaml::MachineStackObject YamlObject;
-    YamlObject.ID = ID++;
+    YamlObject.ID = ID;
     if (const auto *Alloca = MFI.getObjectAllocation(I))
       YamlObject.Name.Value =
           Alloca->hasName() ? Alloca->getName() : "<unnamed alloca>";
@@ -217,8 +244,8 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
     YamlObject.Alignment = MFI.getObjectAlignment(I);
 
     MF.StackObjects.push_back(YamlObject);
-    // TODO: Store the mapping between object IDs and object indices to print
-    // the stack object references correctly.
+    StackObjectOperandMapping.insert(std::make_pair(
+        I, FrameIndexOperand::create(YamlObject.Name.Value, ID++)));
   }
 }
 
@@ -233,7 +260,8 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
     Entry.ID = ID++;
     for (const auto *MBB : Table.MBBs) {
       raw_string_ostream StrOS(Str);
-      MIPrinter(StrOS, MST, RegisterMaskIds).printMBBReference(*MBB);
+      MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
+          .printMBBReference(*MBB);
       Entry.Blocks.push_back(StrOS.str());
       Str.clear();
     }
@@ -257,7 +285,8 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
   for (const auto *SuccMBB : MBB.successors()) {
     std::string Str;
     raw_string_ostream StrOS(Str);
-    MIPrinter(StrOS, MST, RegisterMaskIds).printMBBReference(*SuccMBB);
+    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
+        .printMBBReference(*SuccMBB);
     YamlMBB.Successors.push_back(StrOS.str());
   }
   // Print the live in registers.
@@ -274,7 +303,7 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
   std::string Str;
   for (const auto &MI : MBB) {
     raw_string_ostream StrOS(Str);
-    MIPrinter(StrOS, MST, RegisterMaskIds).print(MI);
+    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping).print(MI);
     YamlMBB.Instructions.push_back(StrOS.str());
     Str.clear();
   }
@@ -327,6 +356,20 @@ void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
   }
 }
 
+void MIPrinter::printStackObjectReference(int FrameIndex) {
+  auto ObjectInfo = StackObjectOperandMapping.find(FrameIndex);
+  assert(ObjectInfo != StackObjectOperandMapping.end() &&
+         "Invalid frame index");
+  const FrameIndexOperand &Operand = ObjectInfo->second;
+  if (Operand.IsFixed) {
+    OS << "%fixed-stack." << Operand.ID;
+    return;
+  }
+  OS << "%stack." << Operand.ID;
+  if (!Operand.Name.empty())
+    OS << '.' << Operand.Name;
+}
+
 void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
@@ -349,6 +392,9 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     break;
   case MachineOperand::MO_MachineBasicBlock:
     printMBBReference(*Op.getMBB());
+    break;
+  case MachineOperand::MO_FrameIndex:
+    printStackObjectReference(Op.getIndex());
     break;
   case MachineOperand::MO_JumpTableIndex:
     OS << "%jump-table." << Op.getIndex();
