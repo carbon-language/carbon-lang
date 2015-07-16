@@ -770,27 +770,25 @@ _InterlockedCompareExchange64(__int64 volatile *_Destination,
 /*----------------------------------------------------------------------------*\
 |* Barriers
 \*----------------------------------------------------------------------------*/
-#if defined(__i386__) || defined(__x86_64__)
 static __inline__ void __DEFAULT_FN_ATTRS
 __attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
 _ReadWriteBarrier(void) {
-  __asm__ volatile ("" : : : "memory");
+  __atomic_signal_fence(__ATOMIC_SEQ_CST);
 }
 static __inline__ void __DEFAULT_FN_ATTRS
 __attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
 _ReadBarrier(void) {
-  __asm__ volatile ("" : : : "memory");
+  __atomic_signal_fence(__ATOMIC_SEQ_CST);
 }
 static __inline__ void __DEFAULT_FN_ATTRS
 __attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
 _WriteBarrier(void) {
-  __asm__ volatile ("" : : : "memory");
+  __atomic_signal_fence(__ATOMIC_SEQ_CST);
 }
-#endif
 #ifdef __x86_64__
 static __inline__ void __DEFAULT_FN_ATTRS
 __faststorefence(void) {
-  __asm__ volatile("lock orq $0, (%%rsp)" : : : "memory");
+  __atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
 #endif
 /*----------------------------------------------------------------------------*\
