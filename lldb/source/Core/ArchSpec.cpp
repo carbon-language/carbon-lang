@@ -419,8 +419,8 @@ ArchSpec::ArchSpec() :
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid),
-    m_distribution_id (),
-    m_flags (0)
+    m_flags (0),
+    m_distribution_id ()
 {
 }
 
@@ -428,8 +428,8 @@ ArchSpec::ArchSpec (const char *triple_cstr, Platform *platform) :
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid),
-    m_distribution_id (),
-    m_flags (0)
+    m_flags (0),
+    m_distribution_id ()
 {
     if (triple_cstr)
         SetTriple(triple_cstr, platform);
@@ -440,8 +440,8 @@ ArchSpec::ArchSpec (const char *triple_cstr) :
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid),
-    m_distribution_id (),
-    m_flags (0)
+    m_flags (0),
+    m_distribution_id ()
 {
     if (triple_cstr)
         SetTriple(triple_cstr);
@@ -451,8 +451,8 @@ ArchSpec::ArchSpec(const llvm::Triple &triple) :
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid),
-    m_distribution_id (),
-    m_flags (0)
+    m_flags (0),
+    m_distribution_id ()
 {
     SetTriple(triple);
 }
@@ -461,8 +461,8 @@ ArchSpec::ArchSpec (ArchitectureType arch_type, uint32_t cpu, uint32_t subtype) 
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid),
-    m_distribution_id (),
-    m_flags (0)
+    m_flags (0),
+    m_distribution_id ()
 {
     SetArchitecture (arch_type, cpu, subtype);
 }
