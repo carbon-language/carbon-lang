@@ -181,6 +181,7 @@ void NVPTXPassConfig::addIRPasses() {
   // requires manual work and might be error-prone.
   addPass(createDeadCodeEliminationPass());
   addPass(createSeparateConstOffsetFromGEPPass());
+  addPass(createSpeculativeExecutionPass());
   // ReassociateGEPs exposes more opportunites for SLSR. See
   // the example in reassociate-geps-and-slsr.ll.
   addPass(createStraightLineStrengthReducePass());
