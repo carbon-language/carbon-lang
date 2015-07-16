@@ -396,9 +396,6 @@ static void extendSegmentsToUses(LiveRange &LR, const SlotIndexes &Indexes,
   }
 }
 
-/// shrinkToUses - After removing some uses of a register, shrink its live
-/// range to just the remaining uses. This method does not compute reaching
-/// defs for new uses, and it doesn't remove dead defs.
 bool LiveIntervals::shrinkToUses(LiveInterval *li,
                                  SmallVectorImpl<MachineInstr*> *dead) {
   DEBUG(dbgs() << "Shrink: " << *li << '\n');

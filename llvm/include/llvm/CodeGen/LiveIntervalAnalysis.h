@@ -147,13 +147,12 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
     LiveInterval::Segment addSegmentToEndOfBlock(unsigned reg,
                                                  MachineInstr* startInst);
 
-    /// shrinkToUses - After removing some uses of a register, shrink its live
-    /// range to just the remaining uses. This method does not compute reaching
-    /// defs for new uses, and it doesn't remove dead defs.
-    /// Dead PHIDef values are marked as unused.
-    /// New dead machine instructions are added to the dead vector.
-    /// Return true if the interval may have been separated into multiple
-    /// connected components.
+    /// After removing some uses of a register, shrink its live range to just
+    /// the remaining uses. This method does not compute reaching defs for new
+    /// uses, and it doesn't remove dead defs.
+    /// Dead PHIDef values are marked as unused. New dead machine instructions
+    /// are added to the dead vector. Returns true if the interval may have been
+    /// separated into multiple connected components.
     bool shrinkToUses(LiveInterval *li,
                       SmallVectorImpl<MachineInstr*> *dead = nullptr);
 
