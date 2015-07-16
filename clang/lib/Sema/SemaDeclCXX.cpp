@@ -162,34 +162,31 @@ Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
 
   ExceptionSpecificationType EST = Proto->getExceptionSpecType();
 
-  // If this function can throw any exceptions, make a note of that.
-  if (EST == EST_MSAny || EST == EST_None) {
-    ClearExceptions();
-    ComputedEST = EST;
-    return;
-  }
-
-  // FIXME: If the call to this decl is using any of its default arguments, we
-  // need to search them for potentially-throwing calls.
-
-  // If this function has a basic noexcept, it doesn't affect the outcome.
-  if (EST == EST_BasicNoexcept)
-    return;
-
   // If we have a throw-all spec at this point, ignore the function.
   if (ComputedEST == EST_None)
     return;
 
+  switch(EST) {
+  // If this function can throw any exceptions, make a note of that.
+  case EST_MSAny:
+  case EST_None:
+    ClearExceptions();
+    ComputedEST = EST;
+    return;
+  // FIXME: If the call to this decl is using any of its default arguments, we
+  // need to search them for potentially-throwing calls.
+  // If this function has a basic noexcept, it doesn't affect the outcome.
+  case EST_BasicNoexcept:
+    return;
   // If we're still at noexcept(true) and there's a nothrow() callee,
   // change to that specification.
-  if (EST == EST_DynamicNone) {
+  case EST_DynamicNone:
     if (ComputedEST == EST_BasicNoexcept)
       ComputedEST = EST_DynamicNone;
     return;
-  }
-
   // Check out noexcept specs.
-  if (EST == EST_ComputedNoexcept) {
+  case EST_ComputedNoexcept:
+  {
     FunctionProtoType::NoexceptResult NR =
         Proto->getNoexceptSpec(Self->Context);
     assert(NR != FunctionProtoType::NR_NoNoexcept &&
@@ -197,7 +194,6 @@ Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
     assert(NR != FunctionProtoType::NR_Dependent &&
            "Should not generate implicit declarations for dependent cases, "
            "and don't know how to handle them anyway.");
-
     // noexcept(false) -> no spec on the new function
     if (NR == FunctionProtoType::NR_Throw) {
       ClearExceptions();
@@ -206,7 +202,9 @@ Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
     // noexcept(true) won't change anything either.
     return;
   }
-
+  default:
+    break;
+  }
   assert(EST == EST_Dynamic && "EST case not considered earlier.");
   assert(ComputedEST != EST_None &&
          "Shouldn't collect exceptions when throw-all is guaranteed.");
