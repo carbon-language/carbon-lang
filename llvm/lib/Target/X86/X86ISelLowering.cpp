@@ -16991,7 +16991,7 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getMergeValues(Ops, dl);
 }
 
-// Return true if the requred (according to Opcode) shift-imm form is natively
+// Return true if the required (according to Opcode) shift-imm form is natively
 // supported by the Subtarget
 static bool SupportedVectorShiftWithImm(MVT VT, const X86Subtarget *Subtarget,
                                         unsigned Opcode) {
@@ -17011,14 +17011,14 @@ static bool SupportedVectorShiftWithImm(MVT VT, const X86Subtarget *Subtarget,
 }
 
 // The shift amount is a variable, but it is the same for all vector lanes.
-// These instrcutions are defined together with shift-immediate.
+// These instructions are defined together with shift-immediate.
 static
 bool SupportedVectorShiftWithBaseAmnt(MVT VT, const X86Subtarget *Subtarget,
                                       unsigned Opcode) {
   return SupportedVectorShiftWithImm(VT, Subtarget, Opcode);
 }
 
-// Return true if the requred (according to Opcode) variable-shift form is
+// Return true if the required (according to Opcode) variable-shift form is
 // natively supported by the Subtarget
 static bool SupportedVectorVarShift(MVT VT, const X86Subtarget *Subtarget,
                                     unsigned Opcode) {
