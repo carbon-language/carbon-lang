@@ -119,8 +119,6 @@ private:
   MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol);
   MCSymbol *GetARMJTIPICJumpTableLabel(unsigned uid) const;
 
-  MCSymbol *GetARMSJLJEHLabel() const;
-
   MCSymbol *GetARMGVSymbol(const GlobalValue *GV, unsigned char TargetFlags);
 
 public:

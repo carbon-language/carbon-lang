@@ -205,15 +205,6 @@ GetARMJTIPICJumpTableLabel(unsigned uid) const {
   return OutContext.getOrCreateSymbol(Name);
 }
 
-
-MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
-  const DataLayout &DL = getDataLayout();
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << DL.getPrivateGlobalPrefix() << "SJLJEH"
-                            << getFunctionNumber();
-  return OutContext.getOrCreateSymbol(Name);
-}
-
 bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                     unsigned AsmVariant, const char *ExtraCode,
                                     raw_ostream &O) {
@@ -1649,12 +1640,12 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // adds $val, #7
     // str $val, [$src, #4]
     // movs r0, #0
-    // b 1f
+    // b LSJLJEH
     // movs r0, #1
-    // 1:
+    // LSJLJEH:
     unsigned SrcReg = MI->getOperand(0).getReg();
     unsigned ValReg = MI->getOperand(1).getReg();
-    MCSymbol *Label = GetARMSJLJEHLabel();
+    MCSymbol *Label = OutContext.createTempSymbol("SJLJEH", false, true);
     OutStreamer->AddComment("eh_setjmp begin");
     EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::tMOVr)
       .addReg(ValReg)
