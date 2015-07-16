@@ -43,7 +43,6 @@ using namespace llvm;
 void TargetLoweringObjectFile::Initialize(MCContext &ctx,
                                           const TargetMachine &TM) {
   Ctx = &ctx;
-  DL = TM.getDataLayout();
   InitMCObjectFileInfo(TM.getTargetTriple(), TM.getRelocationModel(),
                        TM.getCodeModel(), *Ctx);
 }
@@ -107,7 +106,7 @@ MCSymbol *TargetLoweringObjectFile::getSymbolWithGlobalValueBase(
   assert(!Suffix.empty());
 
   SmallString<60> NameStr;
-  NameStr += DL->getPrivateGlobalPrefix();
+  NameStr += GV->getParent()->getDataLayout().getPrivateGlobalPrefix();
   TM.getNameWithPrefix(NameStr, GV, Mang);
   NameStr.append(Suffix.begin(), Suffix.end());
   return Ctx->getOrCreateSymbol(NameStr);
@@ -120,7 +119,7 @@ MCSymbol *TargetLoweringObjectFile::getCFIPersonalitySymbol(
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
-                                                    const TargetMachine &TM,
+                                                    const DataLayout &,
                                                     const MCSymbol *Sym) const {
 }
 
@@ -200,7 +199,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
       // Otherwise, just drop it into a mergable constant section.  If we have
       // a section for this size, use it, otherwise use the arbitrary sized
       // mergable section.
-      switch (TM.getDataLayout()->getTypeAllocSize(C->getType())) {
+      switch (GV->getParent()->getDataLayout().getTypeAllocSize(C->getType())) {
       case 4:  return SectionKind::getMergeableConst4();
       case 8:  return SectionKind::getMergeableConst8();
       case 16: return SectionKind::getMergeableConst16();
@@ -273,7 +272,8 @@ TargetLoweringObjectFile::SectionForGlobal(const GlobalValue *GV,
 
 MCSection *TargetLoweringObjectFile::getSectionForJumpTable(
     const Function &F, Mangler &Mang, const TargetMachine &TM) const {
-  return getSectionForConstant(SectionKind::getReadOnly(), /*C=*/nullptr);
+  return getSectionForConstant(F.getParent()->getDataLayout(),
+                               SectionKind::getReadOnly(), /*C=*/nullptr);
 }
 
 bool TargetLoweringObjectFile::shouldPutJumpTableInFunctionSection(
@@ -296,9 +296,8 @@ bool TargetLoweringObjectFile::shouldPutJumpTableInFunctionSection(
 
 /// Given a mergable constant with the specified size and relocation
 /// information, return a section that it should be placed in.
-MCSection *
-TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind,
-                                                const Constant *C) const {
+MCSection *TargetLoweringObjectFile::getSectionForConstant(
+    const DataLayout &DL, SectionKind Kind, const Constant *C) const {
   if (Kind.isReadOnly() && ReadOnlySection != nullptr)
     return ReadOnlySection;
 

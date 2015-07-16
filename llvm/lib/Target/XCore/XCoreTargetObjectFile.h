@@ -33,7 +33,7 @@ static const unsigned CodeModelLargeSize = 256;
                                       Mangler &Mang,
                                       const TargetMachine &TM) const override;
 
-    MCSection *getSectionForConstant(SectionKind Kind,
+    MCSection *getSectionForConstant(const DataLayout &DL, SectionKind Kind,
                                      const Constant *C) const override;
   };
 } // end namespace llvm

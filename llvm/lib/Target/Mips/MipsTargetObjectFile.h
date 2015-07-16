@@ -39,7 +39,7 @@ class MipsTargetMachine;
     bool IsConstantInSmallSection(const Constant *CN,
                                   const TargetMachine &TM) const;
 
-    MCSection *getSectionForConstant(SectionKind Kind,
+    MCSection *getSectionForConstant(const DataLayout &DL, SectionKind Kind,
                                      const Constant *C) const override;
   };
 } // end namespace llvm

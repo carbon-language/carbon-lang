@@ -46,7 +46,7 @@ public:
     DwarfRangesSection = nullptr;
   }
 
-  MCSection *getSectionForConstant(SectionKind Kind,
+  MCSection *getSectionForConstant(const DataLayout &DL, SectionKind Kind,
                                    const Constant *C) const override {
     return ReadOnlySection;
   }

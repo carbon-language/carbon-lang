@@ -83,7 +83,7 @@ void DwarfCFIException::endModule() {
     if (!Personalities[i])
       continue;
     MCSymbol *Sym = Asm->getSymbol(Personalities[i]);
-    TLOF.emitPersonalityValue(*Asm->OutStreamer, Asm->TM, Sym);
+    TLOF.emitPersonalityValue(*Asm->OutStreamer, Asm->getDataLayout(), Sym);
   }
 }
 

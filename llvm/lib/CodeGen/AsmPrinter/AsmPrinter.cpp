@@ -137,7 +137,7 @@ const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
 
 /// getDataLayout - Return information about data layout.
 const DataLayout &AsmPrinter::getDataLayout() const {
-  return *TM.getDataLayout();
+  return MMI->getModule()->getDataLayout();
 }
 
 unsigned AsmPrinter::getPointerSize() const { return TM.getDataLayout()->getPointerSize(); }
@@ -377,13 +377,13 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GV, TM);
 
-  const DataLayout *DL = TM.getDataLayout();
-  uint64_t Size = DL->getTypeAllocSize(GV->getType()->getElementType());
+  const DataLayout &DL = GV->getParent()->getDataLayout();
+  uint64_t Size = DL.getTypeAllocSize(GV->getType()->getElementType());
 
   // If the alignment is specified, we *must* obey it.  Overaligning a global
   // with a specified alignment is a prompt way to break globals emitted to
   // sections and expected to be contiguous (e.g. ObjC metadata).
-  unsigned AlignLog = getGVAlignmentLog2(GV, *DL);
+  unsigned AlignLog = getGVAlignmentLog2(GV, DL);
 
   for (const HandlerInfo &HI : Handlers) {
     NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
@@ -492,7 +492,7 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - __tlv_bootstrap - used to make sure support exists
     //   - spare pointer, used when mapped by the runtime
     //   - pointer to mangled symbol above with initializer
-    unsigned PtrSize = DL->getPointerTypeSize(GV->getType());
+    unsigned PtrSize = DL.getPointerTypeSize(GV->getType());
     OutStreamer->EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
                                 PtrSize);
     OutStreamer->EmitIntValue(0, PtrSize);
@@ -1122,9 +1122,8 @@ bool AsmPrinter::doFinalization(Module &M) {
 
   // Emit __morestack address if needed for indirect calls.
   if (MMI->usesMorestackAddr()) {
-    MCSection *ReadOnlySection =
-        getObjFileLowering().getSectionForConstant(SectionKind::getReadOnly(),
-                                                   /*C=*/nullptr);
+    MCSection *ReadOnlySection = getObjFileLowering().getSectionForConstant(
+        getDataLayout(), SectionKind::getReadOnly(), /*C=*/nullptr);
     OutStreamer->SwitchSection(ReadOnlySection);
 
     MCSymbol *AddrSymbol =
@@ -1215,7 +1214,8 @@ void AsmPrinter::EmitConstantPool() {
     if (!CPE.isMachineConstantPoolEntry())
       C = CPE.Val.ConstVal;
 
-    MCSection *S = getObjFileLowering().getSectionForConstant(Kind, C);
+    MCSection *S =
+        getObjFileLowering().getSectionForConstant(getDataLayout(), Kind, C);
 
     // The number of sections are small, just do a linear search from the
     // last section to the first.

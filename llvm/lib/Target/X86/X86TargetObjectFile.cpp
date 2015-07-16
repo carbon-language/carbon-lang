@@ -152,9 +152,8 @@ static std::string scalarConstantToHexString(const Constant *C) {
   }
 }
 
-MCSection *
-X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
-                                                  const Constant *C) const {
+MCSection *X86WindowsTargetObjectFile::getSectionForConstant(
+    const DataLayout &DL, SectionKind Kind, const Constant *C) const {
   if (Kind.isMergeableConst() && C) {
     const unsigned Characteristics = COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                                      COFF::IMAGE_SCN_MEM_READ |
@@ -171,5 +170,5 @@ X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
                                          COFF::IMAGE_COMDAT_SELECT_ANY);
   }
 
-  return TargetLoweringObjectFile::getSectionForConstant(Kind, C);
+  return TargetLoweringObjectFile::getSectionForConstant(DL, Kind, C);
 }
