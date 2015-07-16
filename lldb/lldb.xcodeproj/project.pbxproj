@@ -808,6 +808,7 @@
 		AF0F6E501739A76D009180FE /* RegisterContextKDP_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0F6E4E1739A76D009180FE /* RegisterContextKDP_arm64.cpp */; };
 		AF1729D6182C907200E0AB97 /* HistoryThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D4182C907200E0AB97 /* HistoryThread.cpp */; };
 		AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */; };
+		AF1D88691B575E8D003CB899 /* ValueObjectConstResultCast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF94726E1B575E430063D65C /* ValueObjectConstResultCast.cpp */; };
 		AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */; };
 		AF1FA88A1A60A69500272AFC /* RegisterNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */; };
 		AF20F7661AF18F8500751A6E /* ABISysV_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F7641AF18F8500751A6E /* ABISysV_arm.cpp */; };
@@ -2642,6 +2643,8 @@
 		AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDarwin_arm64.cpp; path = Utility/RegisterContextDarwin_arm64.cpp; sourceTree = "<group>"; };
 		AF9107ED168570D200DBCD3C /* RegisterContextDarwin_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDarwin_arm64.h; path = Utility/RegisterContextDarwin_arm64.h; sourceTree = "<group>"; };
 		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
+		AF94726E1B575E430063D65C /* ValueObjectConstResultCast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectConstResultCast.cpp; path = source/Core/ValueObjectConstResultCast.cpp; sourceTree = "<group>"; };
+		AF9472701B575E5F0063D65C /* ValueObjectConstResultCast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ValueObjectConstResultCast.h; path = include/lldb/Core/ValueObjectConstResultCast.h; sourceTree = "<group>"; };
 		AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SystemRuntimeMacOSX.cpp; sourceTree = "<group>"; };
 		AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemRuntimeMacOSX.h; sourceTree = "<group>"; };
 		AFB3D27E1AC262AB003B4B30 /* MICmdCmdGdbShow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdGdbShow.cpp; path = "tools/lldb-mi/MICmdCmdGdbShow.cpp"; sourceTree = SOURCE_ROOT; };
@@ -4101,6 +4104,8 @@
 				26BC7E9B10F1B85900F91463 /* ValueObjectChild.cpp */,
 				26424E3E125986D30016D82C /* ValueObjectConstResult.h */,
 				26424E3C125986CB0016D82C /* ValueObjectConstResult.cpp */,
+				AF9472701B575E5F0063D65C /* ValueObjectConstResultCast.h */,
+				AF94726E1B575E430063D65C /* ValueObjectConstResultCast.cpp */,
 				94FA3DDD1405D4E500833217 /* ValueObjectConstResultChild.h */,
 				94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */,
 				949ADF001406F62E004833E1 /* ValueObjectConstResultImpl.h */,
@@ -6341,6 +6346,7 @@
 				AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
+				AF1D88691B575E8D003CB899 /* ValueObjectConstResultCast.cpp in Sources */,
 				2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */,
 				263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */,
 				E7723D481AC4A8C8002BA082 /* RegisterContextFreeBSD_arm64.cpp in Sources */,
