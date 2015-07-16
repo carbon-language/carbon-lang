@@ -503,7 +503,7 @@ class ConcurrentEventsTestCase(TestBase):
 
             # The inferior process should have exited without crashing
             self.assertEqual(0, self.crash_count, "Unexpected thread(s) in crashed state")
-            self.assertTrue(self.inferior_process.GetState() == lldb.eStateExited, PROCESS_EXITED)
+            self.assertEqual(self.inferior_process.GetState(), lldb.eStateExited, PROCESS_EXITED)
 
             # Verify the number of actions took place matches expected numbers
             expected_breakpoint_threads = num_delay_breakpoint_threads + num_breakpoint_threads

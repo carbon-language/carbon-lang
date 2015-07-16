@@ -43,6 +43,7 @@
 #include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/Host/common/NativeThreadProtocol.h"
+#include "lldb/Utility/JSON.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
@@ -161,6 +162,8 @@ GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
                                   &GDBRemoteCommunicationServerLLGS::Handle_qsThreadInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qThreadStopInfo,
                                   &GDBRemoteCommunicationServerLLGS::Handle_qThreadStopInfo);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_jThreadsInfo,
+                                  &GDBRemoteCommunicationServerLLGS::Handle_jThreadsInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qWatchpointSupportInfo,
                                   &GDBRemoteCommunicationServerLLGS::Handle_qWatchpointSupportInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qXfer_auxv_read,
@@ -455,6 +458,83 @@ WriteRegisterValueInHexFixedWidth (StreamString &response,
     }
 }
 
+static JSONObject::SP
+GetRegistersAsJSON(NativeThreadProtocol &thread)
+{
+    Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_THREAD));
+
+    NativeRegisterContextSP reg_ctx_sp = thread.GetRegisterContext ();
+    if (! reg_ctx_sp)
+        return nullptr;
+
+    JSONObject::SP register_object_sp = std::make_shared<JSONObject>();
+    // Expedite all registers in the first register set (i.e. should be GPRs) that are not contained in other registers.
+    const RegisterSet *reg_set_p = reg_ctx_sp->GetRegisterSet(0);
+    if (! reg_set_p)
+        return nullptr;
+
+    for (const uint32_t *reg_num_p = reg_set_p->registers; *reg_num_p != LLDB_INVALID_REGNUM; ++reg_num_p)
+    {
+        const RegisterInfo *const reg_info_p = reg_ctx_sp->GetRegisterInfoAtIndex(*reg_num_p);
+        if (reg_info_p == nullptr)
+        {
+            if (log)
+                log->Printf("%s failed to get register info for register index %" PRIu32,
+                        __FUNCTION__, *reg_num_p);
+            continue;
+        }
+
+        if (reg_info_p->value_regs != nullptr)
+            continue; // Only expedite registers that are not contained in other registers.
+
+        RegisterValue reg_value;
+        Error error = reg_ctx_sp->ReadRegister(reg_info_p, reg_value);
+        if (error.Fail())
+        {
+            if (log)
+                log->Printf("%s failed to read register '%s' index %" PRIu32 ": %s", __FUNCTION__,
+                        reg_info_p->name ? reg_info_p->name : "<unnamed-register>", *reg_num_p,
+                        error.AsCString ());
+            continue;
+        }
+
+        StreamString stream;
+        WriteRegisterValueInHexFixedWidth(stream, reg_ctx_sp, *reg_info_p, &reg_value);
+
+        register_object_sp->SetObject(std::to_string(*reg_num_p),
+                std::make_shared<JSONString>(stream.GetString()));
+    }
+
+    return register_object_sp;
+}
+
+static const char *
+GetStopReasonString(StopReason stop_reason)
+{
+    switch (stop_reason)
+    {
+    case eStopReasonTrace:
+        return "trace";
+    case eStopReasonBreakpoint:
+        return "breakpoint";
+    case eStopReasonWatchpoint:
+        return "watchpoint";
+    case eStopReasonSignal:
+        return "signal";
+    case eStopReasonException:
+        return "exception";
+    case eStopReasonExec:
+        return "exec";
+    case eStopReasonInstrumentation:
+    case eStopReasonInvalid:
+    case eStopReasonPlanComplete:
+    case eStopReasonThreadExiting:
+    case eStopReasonNone:
+        break; // ignored
+    }
+    return nullptr;
+}
+
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
 {
@@ -595,34 +675,7 @@ GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
         }
     }
 
-    const char* reason_str = nullptr;
-    switch (tid_stop_info.reason)
-    {
-    case eStopReasonTrace:
-        reason_str = "trace";
-        break;
-    case eStopReasonBreakpoint:
-        reason_str = "breakpoint";
-        break;
-    case eStopReasonWatchpoint:
-        reason_str = "watchpoint";
-        break;
-    case eStopReasonSignal:
-        reason_str = "signal";
-        break;
-    case eStopReasonException:
-        reason_str = "exception";
-        break;
-    case eStopReasonExec:
-        reason_str = "exec";
-        break;
-    case eStopReasonInstrumentation:
-    case eStopReasonInvalid:
-    case eStopReasonPlanComplete:
-    case eStopReasonThreadExiting:
-    case eStopReasonNone:
-        break;
-    }
+    const char* reason_str = GetStopReasonString(tid_stop_info.reason);
     if (reason_str != nullptr)
     {
         response.Printf ("reason:%s;", reason_str);
@@ -2635,6 +2688,92 @@ GDBRemoteCommunicationServerLLGS::Handle_qThreadStopInfo (StringExtractorGDBRemo
         return SendErrorResponse (0x15);
     }
     return SendStopReplyPacketForThread (tid);
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerLLGS::Handle_jThreadsInfo (StringExtractorGDBRemote &)
+{
+    Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_THREAD));
+
+    // Ensure we have a debugged process.
+    if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
+        return SendErrorResponse (50);
+
+    if (log)
+        log->Printf ("GDBRemoteCommunicationServerLLGS::%s preparing packet for pid %" PRIu64,
+                __FUNCTION__, m_debugged_process_sp->GetID());
+
+    JSONArray threads_array;
+
+    // Ensure we can get info on the given thread.
+    uint32_t thread_idx = 0;
+    for ( NativeThreadProtocolSP thread_sp;
+          (thread_sp = m_debugged_process_sp->GetThreadAtIndex(thread_idx)) != nullptr;
+          ++thread_idx)
+    {
+
+        JSONObject::SP thread_obj_sp = std::make_shared<JSONObject>();
+
+        lldb::tid_t tid = thread_sp->GetID();
+
+        // Grab the reason this thread stopped.
+        struct ThreadStopInfo tid_stop_info;
+        std::string description;
+        if (!thread_sp->GetStopReason (tid_stop_info, description))
+            return SendErrorResponse (52);
+
+        const int signum = tid_stop_info.details.signal.signo;
+        if (log)
+        {
+            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " tid %" PRIu64 " got signal signo = %d, reason = %d, exc_type = %" PRIu64,
+                    __FUNCTION__,
+                    m_debugged_process_sp->GetID (),
+                    tid,
+                    signum,
+                    tid_stop_info.reason,
+                    tid_stop_info.details.exception.type);
+        }
+
+        thread_obj_sp->SetObject("tid", std::make_shared<JSONNumber>(tid));
+        if (signum != LLDB_INVALID_SIGNAL_NUMBER)
+            thread_obj_sp->SetObject("signal", std::make_shared<JSONNumber>(uint64_t(signum)));
+
+        const std::string thread_name = thread_sp->GetName ();
+        if (! thread_name.empty())
+            thread_obj_sp->SetObject("name", std::make_shared<JSONString>(thread_name));
+
+        if (JSONObject::SP registers_sp = GetRegistersAsJSON(*thread_sp))
+            thread_obj_sp->SetObject("registers", registers_sp);
+
+        if (const char *stop_reason_str = GetStopReasonString(tid_stop_info.reason))
+            thread_obj_sp->SetObject("reason", std::make_shared<JSONString>(stop_reason_str));
+
+        if (! description.empty())
+            thread_obj_sp->SetObject("description", std::make_shared<JSONString>(description));
+
+        if ((tid_stop_info.reason == eStopReasonException) && tid_stop_info.details.exception.type)
+        {
+            thread_obj_sp->SetObject("metype",
+                    std::make_shared<JSONNumber>(tid_stop_info.details.exception.type));
+
+            JSONArray::SP medata_array_sp = std::make_shared<JSONArray>();
+            for (uint32_t i = 0; i < tid_stop_info.details.exception.data_count; ++i)
+            {
+                medata_array_sp->AppendObject(std::make_shared<JSONNumber>(
+                            tid_stop_info.details.exception.data[i]));
+            }
+            thread_obj_sp->SetObject("medata", medata_array_sp);
+        }
+
+        threads_array.AppendObject(thread_obj_sp);
+    }
+    // TODO: Expedite interesting regions of inferior memory
+
+    StreamString response;
+    threads_array.Write(response);
+    StreamGDBRemote escaped_response;
+    escaped_response.PutEscapedBytes(response.GetData(), response.GetSize());
+    return SendPacketNoLock (escaped_response.GetData(), escaped_response.GetSize());
 }
 
 GDBRemoteCommunication::PacketResult

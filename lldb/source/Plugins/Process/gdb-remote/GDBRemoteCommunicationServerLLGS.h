@@ -241,6 +241,9 @@ protected:
     Handle_qThreadStopInfo (StringExtractorGDBRemote &packet);
 
     PacketResult
+    Handle_jThreadsInfo (StringExtractorGDBRemote &packet);
+
+    PacketResult
     Handle_qWatchpointSupportInfo (StringExtractorGDBRemote &packet);
 
     PacketResult

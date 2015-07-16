@@ -1530,3 +1530,67 @@ for this region.
 //  Low.  If this packet is absent, lldb will read the Mach-O headers/load
 //  commands out of memory.
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "jThreadsInfo"
+//
+// BRIEF
+//  Ask for the server for thread stop information of all threads.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. This is a performance optimization, which speeds up debugging by avoiding
+//  multiple round-trips for retrieving thread information. The information from this
+//  packet can be retrieved using a combination of qThreadStopInfo and m packets.
+//----------------------------------------------------------------------
+
+The data in this packet is very similar to the stop reply packets, but is packaged in
+JSON and uses JSON arrays where applicable. The JSON output looks like:
+    [
+      { "tid":1580681,
+        "metype":6,
+        "medata":[2,0],
+        "reason":"exception",
+        "qaddr":140735118423168,
+        "registers": {
+          "0":"8000000000000000",
+          "1":"0000000000000000",
+          "2":"20fabf5fff7f0000",
+          "3":"e8f8bf5fff7f0000",
+          "4":"0100000000000000",
+          "5":"d8f8bf5fff7f0000",
+          "6":"b0f8bf5fff7f0000",
+          "7":"20f4bf5fff7f0000",
+          "8":"8000000000000000",
+          "9":"61a8db78a61500db",
+          "10":"3200000000000000",
+          "11":"4602000000000000",
+          "12":"0000000000000000",
+          "13":"0000000000000000",
+          "14":"0000000000000000",
+          "15":"0000000000000000",
+          "16":"960b000001000000",
+          "17":"0202000000000000",
+          "18":"2b00000000000000",
+          "19":"0000000000000000",
+          "20":"0000000000000000"
+        },
+        "memory":[
+          {"address":140734799804592,"bytes":"c8f8bf5fff7f0000c9a59e8cff7f0000"},
+          {"address":140734799804616,"bytes":"00000000000000000100000000000000"}
+        ]
+      }
+    ]
+
+It contains an array of dictionaries with all of the key value pairs that are
+normally in the stop reply packet, including the expedited registers. The registers are
+passed as hex-encoded JSON string in debuggee-endian byte order. Note that the register
+numbers are decimal numbers, unlike the stop-reply packet, where they are written in
+hex. The packet also contains expedited memory in the "memory" key.  This allows the
+server to expedite memory that the client is likely to use (e.g., areas around the
+stack pointer, which are needed for computing backtraces) and it reduces the packet
+count.
+
+On MacOSX with debugserver, we expedite the frame pointer backchain for a thread
+(up to 256 entries) by reading 2 pointers worth of bytes at the frame pointer (for
+the previous FP and PC), and follow the backchain. Most backtraces on MacOSX and
+iOS now don't require us to read any memory!

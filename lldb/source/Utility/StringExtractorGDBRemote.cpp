@@ -221,7 +221,9 @@ StringExtractorGDBRemote::GetServerPacketType () const
         break;
 
     case 'j':
-        if (PACKET_MATCHES("jSignalInfo")) return eServerPacketType_jSignalsInfo;
+        if (PACKET_MATCHES("jSignalInfo"))                      return eServerPacketType_jSignalsInfo;
+        if (PACKET_MATCHES("jThreadsInfo"))                     return eServerPacketType_jThreadsInfo;
+
 
     case 'v':
             if (PACKET_STARTS_WITH("vFile:"))

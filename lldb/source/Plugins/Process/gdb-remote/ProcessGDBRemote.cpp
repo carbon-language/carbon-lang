@@ -1397,6 +1397,7 @@ ProcessGDBRemote::WillResume ()
     m_continue_C_tids.clear();
     m_continue_s_tids.clear();
     m_continue_S_tids.clear();
+    m_threads_info_sp.reset();
     return Error();
 }
 
@@ -2094,6 +2095,7 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
     static ConstString g_key_address("address");
     static ConstString g_key_bytes("bytes");
     static ConstString g_key_description("description");
+    static ConstString g_key_signal("signal");
 
     // Stop with signal and thread info
     lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
@@ -2238,6 +2240,8 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
             }
 
         }
+        else if (key == g_key_signal)
+            signo = object->GetIntegerValue(LLDB_INVALID_SIGNAL_NUMBER);
         return true; // Keep iterating through all dictionary key/value pairs
     });
 
