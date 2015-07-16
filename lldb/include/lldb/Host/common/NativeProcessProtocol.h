@@ -16,7 +16,6 @@
 #include "lldb/lldb-types.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Host/MainLoop.h"
 #include "llvm/ADT/StringRef.h"
 
 #include "NativeBreakpointList.h"
@@ -285,6 +284,10 @@ namespace lldb_private
         bool
         UnregisterNativeDelegate (NativeDelegate &native_delegate);
 
+        // Called before termination of NativeProcessProtocol's instance.
+        virtual void
+        Terminate ();
+
         virtual Error
         GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) = 0;
 
@@ -304,11 +307,6 @@ namespace lldb_private
         ///     inferior.  Must outlive the NativeProcessProtocol
         ///     instance.
         ///
-        /// @param[in] mainloop
-        ///     The mainloop instance with which the process can register
-        ///     callbacks. Must outlive the NativeProcessProtocol
-        ///     instance.
-        ///
         /// @param[out] process_sp
         ///     On successful return from the method, this parameter
         ///     contains the shared pointer to the
@@ -322,7 +320,6 @@ namespace lldb_private
         static Error
         Launch (ProcessLaunchInfo &launch_info,
                 NativeDelegate &native_delegate,
-                MainLoop &mainloop,
                 NativeProcessProtocolSP &process_sp);
 
         //------------------------------------------------------------------
@@ -338,11 +335,6 @@ namespace lldb_private
         ///     inferior.  Must outlive the NativeProcessProtocol
         ///     instance.
         ///
-        /// @param[in] mainloop
-        ///     The mainloop instance with which the process can register
-        ///     callbacks. Must outlive the NativeProcessProtocol
-        ///     instance.
-        ///
         /// @param[out] process_sp
         ///     On successful return from the method, this parameter
         ///     contains the shared pointer to the
@@ -356,7 +348,6 @@ namespace lldb_private
         static Error
         Attach (lldb::pid_t pid,
                 NativeDelegate &native_delegate,
-                MainLoop &mainloop,
                 NativeProcessProtocolSP &process_sp);
 
     protected:

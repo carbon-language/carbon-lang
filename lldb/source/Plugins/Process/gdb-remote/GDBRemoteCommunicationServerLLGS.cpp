@@ -96,6 +96,20 @@ GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
     RegisterPacketHandlers();
 }
 
+//----------------------------------------------------------------------
+// Destructor
+//----------------------------------------------------------------------
+GDBRemoteCommunicationServerLLGS::~GDBRemoteCommunicationServerLLGS()
+{
+    Mutex::Locker locker (m_debugged_process_mutex);
+
+    if (m_debugged_process_sp)
+    {
+        m_debugged_process_sp->Terminate ();
+        m_debugged_process_sp.reset ();
+    }
+}
+
 void
 GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
 {
@@ -209,7 +223,6 @@ GDBRemoteCommunicationServerLLGS::LaunchProcess ()
         error = NativeProcessProtocol::Launch(
             m_process_launch_info,
             *this,
-            m_mainloop,
             m_debugged_process_sp);
     }
 
@@ -295,7 +308,7 @@ GDBRemoteCommunicationServerLLGS::AttachToProcess (lldb::pid_t pid)
         }
 
         // Try to attach.
-        error = NativeProcessProtocol::Attach(pid, *this, m_mainloop, m_debugged_process_sp);
+        error = NativeProcessProtocol::Attach(pid, *this, m_debugged_process_sp);
         if (!error.Success ())
         {
             fprintf (stderr, "%s: failed to attach to process %" PRIu64 ": %s", __FUNCTION__, pid, error.AsCString ());
