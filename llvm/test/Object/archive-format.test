@@ -54,10 +54,10 @@ RUN: llvm-ar --format=gnu rcT bar/test.a 0123456789abcde 0123456789abcdef foo/01
 RUN: cat bar/test.a | FileCheck -strict-whitespace --check-prefix=THIN-PATH %s
 THIN-PATH: !<thin>
 THIN-PATH-NEXT: //                                              90        `
-THIN-PATH-NEXT: ../0123456789abcde/
-THIN-PATH-NEXT: ../0123456789abcdef/
-THIN-PATH-NEXT: ../foo/0123456789abcde/
-THIN-PATH-NEXT: ../foo/0123456789abcdef/
+THIN-PATH-NEXT: ..{{/|\\}}0123456789abcde/
+THIN-PATH-NEXT: ..{{/|\\}}0123456789abcdef/
+THIN-PATH-NEXT: ..{{/|\\}}foo{{/|\\}}0123456789abcde/
+THIN-PATH-NEXT: ..{{/|\\}}foo{{/|\\}}0123456789abcdef/
 THIN-PATH-NEXT: /0              0           0     0     644     4         `
 THIN-PATH-NEXT: /20             0           0     0     644     4         `
 THIN-PATH-NEXT: /41             0           0     0     644     4         `
