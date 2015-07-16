@@ -699,6 +699,12 @@ deoptimization or introspection) at safepoints.  In that case, ask on the
 llvmdev mailing list for suggestions.
 
 
+Supported Architectures
+=======================
+
+Support for statepoint generation requires some code for each backend.
+Today, only X86_64 is supported.  
+
 Bugs and Enhancements
 =====================
 

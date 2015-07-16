@@ -499,3 +499,13 @@ the same requirement imposed by the llvm.gcroot intrinsic.) LLVM
 transformations must not substitute the alloca with any intervening
 value. This can be verified by the runtime simply by checking that the
 stack map's location is a Direct location type.
+
+
+Supported Architectures
+=======================
+
+Support for StackMap generation and the related intrinsics requires 
+some code for each backend.  Today, only a subset of LLVM's backends 
+are supported.  The currently supported architectures are X86_64, 
+PowerPC, and Aarch64.
+
