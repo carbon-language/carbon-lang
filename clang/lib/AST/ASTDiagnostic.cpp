@@ -66,11 +66,63 @@ static QualType Desugar(ASTContext &Context, QualType QT, bool &ShouldAKA) {
       continue;
     }
 
-    // Don't desugar template specializations, unless it's an alias template.
-    if (const TemplateSpecializationType *TST
-          = dyn_cast<TemplateSpecializationType>(Ty))
-      if (!TST->isTypeAlias())
+    // Desugar FunctionType if return type or any parameter type should be
+    // desugared. Preserve nullability attribute on desugared types.
+    if (const FunctionType *FT = dyn_cast<FunctionType>(Ty)) {
+      bool DesugarReturn = false;
+      QualType SugarRT = FT->getReturnType();
+      QualType RT = Desugar(Context, SugarRT, DesugarReturn);
+      if (auto nullability = AttributedType::stripOuterNullability(SugarRT)) {
+        RT = Context.getAttributedType(
+            AttributedType::getNullabilityAttrKind(*nullability), RT, RT);
+      }
+
+      bool DesugarArgument = false;
+      SmallVector<QualType, 4> Args;
+      const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT);
+      if (FPT) {
+        for (QualType SugarPT : FPT->param_types()) {
+          QualType PT = Desugar(Context, SugarPT, DesugarArgument);
+          if (auto nullability =
+                  AttributedType::stripOuterNullability(SugarPT)) {
+            PT = Context.getAttributedType(
+                AttributedType::getNullabilityAttrKind(*nullability), PT, PT);
+          }
+          Args.push_back(PT);
+        }
+      }
+
+      if (DesugarReturn || DesugarArgument) {
+        ShouldAKA = true;
+        QT = FPT ? Context.getFunctionType(RT, Args, FPT->getExtProtoInfo())
+                 : Context.getFunctionNoProtoType(RT, FT->getExtInfo());
         break;
+      }
+    }
+
+    // Desugar template specializations if any template argument should be
+    // desugared.
+    if (const TemplateSpecializationType *TST =
+            dyn_cast<TemplateSpecializationType>(Ty)) {
+      if (!TST->isTypeAlias()) {
+        bool DesugarArgument = false;
+        SmallVector<TemplateArgument, 4> Args;
+        for (unsigned I = 0, N = TST->getNumArgs(); I != N; ++I) {
+          const TemplateArgument &Arg = TST->getArg(I);
+          if (Arg.getKind() == TemplateArgument::Type)
+            Args.push_back(Desugar(Context, Arg.getAsType(), DesugarArgument));
+          else
+            Args.push_back(Arg);
+        }
+
+        if (DesugarArgument) {
+          ShouldAKA = true;
+          QT = Context.getTemplateSpecializationType(
+              TST->getTemplateName(), Args.data(), Args.size(), QT);
+        }
+        break;
+      }
+    }
 
     // Don't desugar magic Objective-C types.
     if (QualType(Ty,0) == Context.getObjCIdType() ||

@@ -47,6 +47,7 @@ typedef _Nonnull int *(^ block_type_3)(int, int);
 typedef _Nonnull int *(* function_pointer_type_3)(int, int);
 typedef _Nonnull int_ptr (^ block_type_4)(int, int);
 typedef _Nonnull int_ptr (* function_pointer_type_4)(int, int);
+typedef void (* function_pointer_type_5)(int_ptr _Nonnull);
 
 void acceptFunctionPtr(_Nonnull int *(*)(void));
 void acceptBlockPtr(_Nonnull int *(^)(void));
@@ -55,7 +56,8 @@ void testBlockFunctionPtrNullability() {
   float *fp;
   fp = (function_pointer_type_3)0; // expected-warning{{from 'function_pointer_type_3' (aka 'int * _Nonnull (*)(int, int)')}}
   fp = (block_type_3)0; // expected-error{{from incompatible type 'block_type_3' (aka 'int * _Nonnull (^)(int, int)')}}
-  fp = (function_pointer_type_4)0; // expected-warning{{from 'function_pointer_type_4' (aka 'int_ptr  _Nonnull (*)(int, int)')}}
+  fp = (function_pointer_type_4)0; // expected-warning{{from 'function_pointer_type_4' (aka 'int * _Nonnull (*)(int, int)')}}
+  fp = (function_pointer_type_5)0; // expected-warning{{from 'function_pointer_type_5' (aka 'void (*)(int * _Nonnull)')}}
   fp = (block_type_4)0; // expected-error{{from incompatible type 'block_type_4' (aka 'int_ptr  _Nonnull (^)(int, int)')}}
 
   acceptFunctionPtr(0); // no-warning
