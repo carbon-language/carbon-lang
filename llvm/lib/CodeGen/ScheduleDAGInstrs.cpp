@@ -890,7 +890,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       BarrierChain = SU;
       // This is a barrier event that acts as a pivotal node in the DAG,
       // so it is safe to clear list of exposed nodes.
-      adjustChainDeps(AA, MFI, *TM.getDataLayout(), SU, &ExitSU, RejectMemNodes,
+      adjustChainDeps(AA, MFI, MF.getDataLayout(), SU, &ExitSU, RejectMemNodes,
                       TrueMemOrderLatency);
       RejectMemNodes.clear();
       NonAliasMemDefs.clear();
@@ -903,27 +903,27 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         unsigned ChainLatency = 0;
         if (AliasChain->getInstr()->mayLoad())
           ChainLatency = TrueMemOrderLatency;
-        addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU, AliasChain,
+        addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU, AliasChain,
                            RejectMemNodes, ChainLatency);
       }
       AliasChain = SU;
       for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-        addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+        addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                            PendingLoads[k], RejectMemNodes,
                            TrueMemOrderLatency);
       for (MapVector<ValueType, std::vector<SUnit *> >::iterator I =
            AliasMemDefs.begin(), E = AliasMemDefs.end(); I != E; ++I) {
         for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-          addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+          addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                              I->second[i], RejectMemNodes);
       }
       for (MapVector<ValueType, std::vector<SUnit *> >::iterator I =
            AliasMemUses.begin(), E = AliasMemUses.end(); I != E; ++I) {
         for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-          addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+          addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                              I->second[i], RejectMemNodes, TrueMemOrderLatency);
       }
-      adjustChainDeps(AA, MFI, *TM.getDataLayout(), SU, &ExitSU, RejectMemNodes,
+      adjustChainDeps(AA, MFI, MF.getDataLayout(), SU, &ExitSU, RejectMemNodes,
                       TrueMemOrderLatency);
       PendingLoads.clear();
       AliasMemDefs.clear();
@@ -937,7 +937,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         BarrierChain->addPred(SDep(SU, SDep::Barrier));
 
       UnderlyingObjectsVector Objs;
-      getUnderlyingObjectsForInstr(MI, MFI, Objs, *TM.getDataLayout());
+      getUnderlyingObjectsForInstr(MI, MFI, Objs, MF.getDataLayout());
 
       if (Objs.empty()) {
         // Treat all other stores conservatively.
@@ -961,7 +961,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           ((ThisMayAlias) ? AliasMemDefs.end() : NonAliasMemDefs.end());
         if (I != IE) {
           for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-            addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+            addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                                I->second[i], RejectMemNodes, 0, true);
 
           // If we're not using AA, then we only need one store per object.
@@ -986,7 +986,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           ((ThisMayAlias) ? AliasMemUses.end() : NonAliasMemUses.end());
         if (J != JE) {
           for (unsigned i = 0, e = J->second.size(); i != e; ++i)
-            addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+            addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                                J->second[i], RejectMemNodes,
                                TrueMemOrderLatency, true);
           J->second.clear();
@@ -996,15 +996,15 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         // Add dependencies from all the PendingLoads, i.e. loads
         // with no underlying object.
         for (unsigned k = 0, m = PendingLoads.size(); k != m; ++k)
-          addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+          addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                              PendingLoads[k], RejectMemNodes,
                              TrueMemOrderLatency);
         // Add dependence on alias chain, if needed.
         if (AliasChain)
-          addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU, AliasChain,
+          addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU, AliasChain,
                              RejectMemNodes);
       }
-      adjustChainDeps(AA, MFI, *TM.getDataLayout(), SU, &ExitSU, RejectMemNodes,
+      adjustChainDeps(AA, MFI, MF.getDataLayout(), SU, &ExitSU, RejectMemNodes,
                       TrueMemOrderLatency);
     } else if (MI->mayLoad()) {
       bool MayAlias = true;
@@ -1012,7 +1012,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         // Invariant load, no chain dependencies needed!
       } else {
         UnderlyingObjectsVector Objs;
-        getUnderlyingObjectsForInstr(MI, MFI, Objs, *TM.getDataLayout());
+        getUnderlyingObjectsForInstr(MI, MFI, Objs, MF.getDataLayout());
 
         if (Objs.empty()) {
           // A load with no underlying object. Depend on all
@@ -1020,7 +1020,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
           for (MapVector<ValueType, std::vector<SUnit *> >::iterator I =
                  AliasMemDefs.begin(), E = AliasMemDefs.end(); I != E; ++I)
             for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-              addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+              addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                                  I->second[i], RejectMemNodes);
 
           PendingLoads.push_back(SU);
@@ -1044,7 +1044,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
             ((ThisMayAlias) ? AliasMemDefs.end() : NonAliasMemDefs.end());
           if (I != IE)
             for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-              addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU,
+              addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU,
                                  I->second[i], RejectMemNodes, 0, true);
           if (ThisMayAlias)
             AliasMemUses[V].push_back(SU);
@@ -1052,11 +1052,11 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
             NonAliasMemUses[V].push_back(SU);
         }
         if (MayAlias)
-          adjustChainDeps(AA, MFI, *TM.getDataLayout(), SU, &ExitSU,
+          adjustChainDeps(AA, MFI, MF.getDataLayout(), SU, &ExitSU,
                           RejectMemNodes, /*Latency=*/0);
         // Add dependencies on alias and barrier chains, if needed.
         if (MayAlias && AliasChain)
-          addChainDependency(AAForDep, MFI, *TM.getDataLayout(), SU, AliasChain,
+          addChainDependency(AAForDep, MFI, MF.getDataLayout(), SU, AliasChain,
                              RejectMemNodes);
         if (BarrierChain)
           BarrierChain->addPred(SDep(SU, SDep::Barrier));

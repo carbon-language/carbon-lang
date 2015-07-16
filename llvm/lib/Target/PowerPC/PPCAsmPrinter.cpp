@@ -163,7 +163,7 @@ static const char *stripRegisterPrefix(const char *RegName) {
 
 void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                  raw_ostream &O) {
-  const DataLayout *DL = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
   const MachineOperand &MO = MI->getOperand(OpNo);
   
   switch (MO.getType()) {
@@ -184,8 +184,8 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     MO.getMBB()->getSymbol()->print(O, MAI);
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << DL->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << MO.getIndex();
+    O << DL.getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+      << MO.getIndex();
     return;
   case MachineOperand::MO_BlockAddress:
     GetBlockAddressSymbol(MO.getBlockAddress())->print(O, MAI);
@@ -1132,9 +1132,9 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
 
 
 bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
 
-  bool isPPC64 = TD->getPointerSizeInBits() == 64;
+  bool isPPC64 = DL.getPointerSizeInBits() == 64;
 
   PPCTargetStreamer &TS =
       static_cast<PPCTargetStreamer &>(*OutStreamer->getTargetStreamer());
@@ -1325,7 +1325,7 @@ static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
 
 void PPCDarwinAsmPrinter::
 EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
-  bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
+  bool isPPC64 = getDataLayout().getPointerSizeInBits() == 64;
 
   // Construct a local MCSubtargetInfo and shadow EmitToStreamer here.
   // This is because the MachineFunction won't exist (but have not yet been
@@ -1469,7 +1469,7 @@ EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
 
 
 bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
-  bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
+  bool isPPC64 = getDataLayout().getPointerSizeInBits() == 64;
 
   // Darwin/PPC always uses mach-o.
   const TargetLoweringObjectFileMachO &TLOFMacho = 

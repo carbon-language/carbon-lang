@@ -123,8 +123,9 @@ XCoreTargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
     if (Kind.isMergeableConst16())      return MergeableConst16Section;
   }
   Type *ObjType = GV->getType()->getPointerElementType();
+  auto &DL = GV->getParent()->getDataLayout();
   if (TM.getCodeModel() == CodeModel::Small || !ObjType->isSized() ||
-      TM.getDataLayout()->getTypeAllocSize(ObjType) < CodeModelLargeSize) {
+      DL.getTypeAllocSize(ObjType) < CodeModelLargeSize) {
     if (Kind.isReadOnly())              return UseCPRel? ReadOnlySection
                                                        : DataRelROSection;
     if (Kind.isBSS() || Kind.isCommon())return BSSSection;

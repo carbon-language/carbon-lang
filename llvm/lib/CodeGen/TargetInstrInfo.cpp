@@ -315,7 +315,7 @@ bool TargetInstrInfo::getStackSlotRange(const TargetRegisterClass *RC,
 
   assert(RC->getSize() >= (Offset + Size) && "bad subregister range");
 
-  if (!MF.getTarget().getDataLayout()->isLittleEndian()) {
+  if (!MF.getDataLayout().isLittleEndian()) {
     Offset = RC->getSize() - (Offset + Size);
   }
   return true;

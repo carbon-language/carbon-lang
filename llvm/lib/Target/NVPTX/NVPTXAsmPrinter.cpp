@@ -1029,7 +1029,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       GVar->getName().startswith("nvvm."))
     return;
 
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
   const PointerType *PTy = GVar->getType();
@@ -1159,7 +1159,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
   }
 
   if (GVar->getAlignment() == 0)
-    O << " .align " << (int) TD->getPrefTypeAlignment(ETy);
+    O << " .align " << (int)DL.getPrefTypeAlignment(ETy);
   else
     O << " .align " << GVar->getAlignment();
 
@@ -1205,7 +1205,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
     case Type::StructTyID:
     case Type::ArrayTyID:
     case Type::VectorTyID:
-      ElementSize = TD->getTypeStoreSize(ETy);
+      ElementSize = DL.getTypeStoreSize(ETy);
       // Ptx allows variable initilization only for constant and
       // global state spaces.
       if (((PTy->getAddressSpace() == llvm::ADDRESS_SPACE_GLOBAL) ||
@@ -1339,7 +1339,7 @@ NVPTXAsmPrinter::getPTXFundamentalTypeStr(const Type *Ty, bool useB4PTR) const {
 void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
                                             raw_ostream &O) {
 
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
   const PointerType *PTy = GVar->getType();
@@ -1348,7 +1348,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   O << ".";
   emitPTXAddressSpace(PTy->getAddressSpace(), O);
   if (GVar->getAlignment() == 0)
-    O << " .align " << (int) TD->getPrefTypeAlignment(ETy);
+    O << " .align " << (int)DL.getPrefTypeAlignment(ETy);
   else
     O << " .align " << GVar->getAlignment();
 
@@ -1370,7 +1370,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   case Type::StructTyID:
   case Type::ArrayTyID:
   case Type::VectorTyID:
-    ElementSize = TD->getTypeStoreSize(ETy);
+    ElementSize = DL.getTypeStoreSize(ETy);
     O << " .b8 ";
     getSymbol(GVar)->print(O, MAI);
     O << "[";
@@ -1385,13 +1385,13 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   return;
 }
 
-static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
+static unsigned int getOpenCLAlignment(const DataLayout &DL, Type *Ty) {
   if (Ty->isSingleValueType())
-    return TD->getPrefTypeAlignment(Ty);
+    return DL.getPrefTypeAlignment(Ty);
 
   const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
   if (ATy)
-    return getOpenCLAlignment(TD, ATy->getElementType());
+    return getOpenCLAlignment(DL, ATy->getElementType());
 
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (STy) {
@@ -1400,7 +1400,7 @@ static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
     // largest alignment.
     for (unsigned i = 0, e = STy->getNumElements(); i != e; i++) {
       Type *ETy = STy->getElementType(i);
-      unsigned int align = getOpenCLAlignment(TD, ETy);
+      unsigned int align = getOpenCLAlignment(DL, ETy);
       if (align > alignStruct)
         alignStruct = align;
     }
@@ -1409,8 +1409,8 @@ static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
 
   const FunctionType *FTy = dyn_cast<FunctionType>(Ty);
   if (FTy)
-    return TD->getPointerPrefAlignment();
-  return TD->getPrefTypeAlignment(Ty);
+    return DL.getPointerPrefAlignment();
+  return DL.getPrefTypeAlignment(Ty);
 }
 
 void NVPTXAsmPrinter::printParamName(Function::const_arg_iterator I,
@@ -1425,7 +1425,7 @@ void NVPTXAsmPrinter::printParamName(int paramIndex, raw_ostream &O) {
 }
 
 void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
   const AttributeSet &PAL = F->getAttributes();
   const TargetLowering *TLI = nvptxSubtarget->getTargetLowering();
   Function::const_arg_iterator I, E;
@@ -1433,7 +1433,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
   bool first = true;
   bool isKernelFunc = llvm::isKernelFunction(*F);
   bool isABI = (nvptxSubtarget->getSmVersion() >= 20);
-  MVT thePointerTy = TLI->getPointerTy(*TD);
+  MVT thePointerTy = TLI->getPointerTy(DL);
 
   O << "(\n";
 
@@ -1485,9 +1485,9 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
         // size = typeallocsize of element type
         unsigned align = PAL.getParamAlignment(paramIndex + 1);
         if (align == 0)
-          align = TD->getABITypeAlignment(Ty);
+          align = DL.getABITypeAlignment(Ty);
 
-        unsigned sz = TD->getTypeAllocSize(Ty);
+        unsigned sz = DL.getTypeAllocSize(Ty);
         O << "\t.param .align " << align << " .b8 ";
         printParamName(I, paramIndex, O);
         O << "[" << sz << "]";
@@ -1519,7 +1519,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
               O << ".ptr .global ";
               break;
             }
-            O << ".align " << (int) getOpenCLAlignment(TD, ETy) << " ";
+            O << ".align " << (int)getOpenCLAlignment(DL, ETy) << " ";
           }
           printParamName(I, paramIndex, O);
           continue;
@@ -1566,9 +1566,9 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
       // size = typeallocsize of element type
       unsigned align = PAL.getParamAlignment(paramIndex + 1);
       if (align == 0)
-        align = TD->getABITypeAlignment(ETy);
+        align = DL.getABITypeAlignment(ETy);
 
-      unsigned sz = TD->getTypeAllocSize(ETy);
+      unsigned sz = DL.getTypeAllocSize(ETy);
       O << "\t.param .align " << align << " .b8 ";
       printParamName(I, paramIndex, O);
       O << "[" << sz << "]";
@@ -1579,7 +1579,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
       // Further, if a part is vector, print the above for
       // each vector element.
       SmallVector<EVT, 16> vtparts;
-      ComputeValueVTs(*TLI, getDataLayout(), ETy, vtparts);
+      ComputeValueVTs(*TLI, DL, ETy, vtparts);
       for (unsigned i = 0, e = vtparts.size(); i != e; ++i) {
         unsigned elems = 1;
         EVT elemtype = vtparts[i];
@@ -1786,10 +1786,10 @@ static void ConvertDoubleToBytes(unsigned char *p, double val) {
 void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
                                    AggBuffer *aggBuffer) {
 
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
 
   if (isa<UndefValue>(CPV) || CPV->isNullValue()) {
-    int s = TD->getTypeAllocSize(CPV->getType());
+    int s = DL.getTypeAllocSize(CPV->getType());
     if (s < Bytes)
       s = Bytes;
     aggBuffer->addZeros(s);
@@ -1817,7 +1817,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
         break;
       } else if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
         if (const ConstantInt *constInt = dyn_cast<ConstantInt>(
-                ConstantFoldConstantExpression(Cexpr, *TD))) {
+                ConstantFoldConstantExpression(Cexpr, DL))) {
           int int32 = (int)(constInt->getZExtValue());
           ConvertIntToBytes<>(ptr, int32);
           aggBuffer->addBytes(ptr, 4, Bytes);
@@ -1839,7 +1839,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
         break;
       } else if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
         if (const ConstantInt *constInt = dyn_cast<ConstantInt>(
-                ConstantFoldConstantExpression(Cexpr, *TD))) {
+                ConstantFoldConstantExpression(Cexpr, DL))) {
           long long int64 = (long long)(constInt->getZExtValue());
           ConvertIntToBytes<>(ptr, int64);
           aggBuffer->addBytes(ptr, 8, Bytes);
@@ -1881,7 +1881,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
       const Value *v = Cexpr->stripPointerCasts();
       aggBuffer->addSymbol(v, Cexpr);
     }
-    unsigned int s = TD->getTypeAllocSize(CPV->getType());
+    unsigned int s = DL.getTypeAllocSize(CPV->getType());
     aggBuffer->addZeros(s);
     break;
   }
@@ -1891,7 +1891,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
   case Type::StructTyID: {
     if (isa<ConstantArray>(CPV) || isa<ConstantVector>(CPV) ||
         isa<ConstantStruct>(CPV) || isa<ConstantDataSequential>(CPV)) {
-      int ElementSize = TD->getTypeAllocSize(CPV->getType());
+      int ElementSize = DL.getTypeAllocSize(CPV->getType());
       bufferAggregateConstant(CPV, aggBuffer);
       if (Bytes > ElementSize)
         aggBuffer->addZeros(Bytes - ElementSize);
@@ -1909,7 +1909,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
 
 void NVPTXAsmPrinter::bufferAggregateConstant(const Constant *CPV,
                                               AggBuffer *aggBuffer) {
-  const DataLayout *TD = TM.getDataLayout();
+  const DataLayout &DL = getDataLayout();
   int Bytes;
 
   // Old constants
@@ -1934,12 +1934,12 @@ void NVPTXAsmPrinter::bufferAggregateConstant(const Constant *CPV,
       StructType *ST = cast<StructType>(CPV->getType());
       for (unsigned i = 0, e = CPV->getNumOperands(); i != e; ++i) {
         if (i == (e - 1))
-          Bytes = TD->getStructLayout(ST)->getElementOffset(0) +
-                  TD->getTypeAllocSize(ST) -
-                  TD->getStructLayout(ST)->getElementOffset(i);
+          Bytes = DL.getStructLayout(ST)->getElementOffset(0) +
+                  DL.getTypeAllocSize(ST) -
+                  DL.getStructLayout(ST)->getElementOffset(i);
         else
-          Bytes = TD->getStructLayout(ST)->getElementOffset(i + 1) -
-                  TD->getStructLayout(ST)->getElementOffset(i);
+          Bytes = DL.getStructLayout(ST)->getElementOffset(i + 1) -
+                  DL.getStructLayout(ST)->getElementOffset(i);
         bufferLEByte(cast<Constant>(CPV->getOperand(i)), Bytes, aggBuffer);
       }
     }
@@ -2054,7 +2054,7 @@ NVPTXAsmPrinter::lowerConstantForGV(const Constant *CV, bool ProcessingGeneric) 
     // If the code isn't optimized, there may be outstanding folding
     // opportunities. Attempt to fold the expression using DataLayout as a
     // last resort before giving up.
-    if (Constant *C = ConstantFoldConstantExpression(CE, *TM.getDataLayout()))
+    if (Constant *C = ConstantFoldConstantExpression(CE, getDataLayout()))
       if (C != CE)
         return lowerConstantForGV(C, ProcessingGeneric);
 
@@ -2083,7 +2083,7 @@ NVPTXAsmPrinter::lowerConstantForGV(const Constant *CV, bool ProcessingGeneric) 
   }
 
   case Instruction::GetElementPtr: {
-    const DataLayout &DL = *TM.getDataLayout();
+    const DataLayout &DL = getDataLayout();
 
     // Generate a symbolic expression for the byte address
     APInt OffsetAI(DL.getPointerTypeSizeInBits(CE->getType()), 0);
@@ -2109,7 +2109,7 @@ NVPTXAsmPrinter::lowerConstantForGV(const Constant *CV, bool ProcessingGeneric) 
     return lowerConstantForGV(CE->getOperand(0), ProcessingGeneric);
 
   case Instruction::IntToPtr: {
-    const DataLayout &DL = *TM.getDataLayout();
+    const DataLayout &DL = getDataLayout();
 
     // Handle casts to pointers by changing them into casts to the appropriate
     // integer type.  This promotes constant folding and simplifies this code.
@@ -2120,7 +2120,7 @@ NVPTXAsmPrinter::lowerConstantForGV(const Constant *CV, bool ProcessingGeneric) 
   }
 
   case Instruction::PtrToInt: {
-    const DataLayout &DL = *TM.getDataLayout();
+    const DataLayout &DL = getDataLayout();
 
     // Support only foldable casts to/from pointers that can be eliminated by
     // changing the pointer to the appropriately sized integer type.

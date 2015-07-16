@@ -216,11 +216,11 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
   if (CSI.empty())
     return;
 
-  const DataLayout *TD = MF.getTarget().getDataLayout();
+  const DataLayout &TD = MF.getDataLayout();
   bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
-  int stackGrowth = -TD->getPointerSize(0);
+  int stackGrowth = -TD.getPointerSize(0);
 
   // Calculate offsets.
   int64_t saveAreaOffset = (HasFP ? 2 : 1) * stackGrowth;
@@ -399,8 +399,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   }
 
   if (needsFrameMoves) {
-    const DataLayout *TD = MF.getTarget().getDataLayout();
-    const int StackGrowth = -TD->getPointerSize(0);
+    const DataLayout &TD = MF.getDataLayout();
+    const int StackGrowth = -TD.getPointerSize(0);
     unsigned FramePtr = RegInfo->getFrameRegister(MF);
     // An example of the prologue:
     //

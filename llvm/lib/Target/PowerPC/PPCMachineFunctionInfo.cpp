@@ -18,8 +18,8 @@ using namespace llvm;
 void PPCFunctionInfo::anchor() { }
 
 MCSymbol *PPCFunctionInfo::getPICOffsetSymbol() const {
-  const DataLayout *DL = MF.getTarget().getDataLayout();
-  return MF.getContext().getOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix()) +
+  const DataLayout &DL = MF.getDataLayout();
+  return MF.getContext().getOrCreateSymbol(Twine(DL.getPrivateGlobalPrefix()) +
                                            Twine(MF.getFunctionNumber()) +
                                            "$poff");
 }

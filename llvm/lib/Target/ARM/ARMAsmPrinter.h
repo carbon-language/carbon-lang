@@ -84,7 +84,7 @@ public:
   void EmitFunctionEntryLabel() override;
   void EmitStartOfAsmFile(Module &M) override;
   void EmitEndOfAsmFile(Module &M) override;
-  void EmitXXStructor(const Constant *CV) override;
+  void EmitXXStructor(const DataLayout &DL, const Constant *CV) override;
 
   // lowerOperand - Convert a MachineOperand into the equivalent MCOperand.
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
