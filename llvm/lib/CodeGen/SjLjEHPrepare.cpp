@@ -50,7 +50,7 @@ class SjLjEHPrepare : public FunctionPass {
   Type *FunctionContextTy;
   Constant *RegisterFn;
   Constant *UnregisterFn;
-  Constant *BuiltinSetjmpFn;
+  Constant *BuiltinSetupDispatchFn;
   Constant *FrameAddrFn;
   Constant *StackAddrFn;
   Constant *StackRestoreFn;
@@ -112,7 +112,8 @@ bool SjLjEHPrepare::doInitialization(Module &M) {
   FrameAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::frameaddress);
   StackAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::stacksave);
   StackRestoreFn = Intrinsic::getDeclaration(&M, Intrinsic::stackrestore);
-  BuiltinSetjmpFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_setjmp);
+  BuiltinSetupDispatchFn =
+    Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_setup_dispatch);
   LSDAAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_lsda);
   CallSiteFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_callsite);
   FuncCtxFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_functioncontext);
@@ -421,9 +422,8 @@ bool SjLjEHPrepare::setupEntryBlockAndCallSites(Function &F) {
   Val = Builder.CreateCall(StackAddrFn, {}, "sp");
   Builder.CreateStore(Val, StackPtr, /*isVolatile=*/true);
 
-  // Call the setjmp instrinsic. It fills in the rest of the jmpbuf.
-  Value *SetjmpArg = Builder.CreateBitCast(JBufPtr, Builder.getInt8PtrTy());
-  Builder.CreateCall(BuiltinSetjmpFn, SetjmpArg);
+  // Call the setup_dispatch instrinsic. It fills in the rest of the jmpbuf.
+  Builder.CreateCall(BuiltinSetupDispatchFn, {});
 
   // Store a pointer to the function context so that the back-end will know
   // where to look for it.

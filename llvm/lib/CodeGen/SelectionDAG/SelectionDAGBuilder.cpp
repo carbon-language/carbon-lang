@@ -4410,6 +4410,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                             getRoot(), getValue(I.getArgOperand(0))));
     return nullptr;
   }
+  case Intrinsic::eh_sjlj_setup_dispatch: {
+    DAG.setRoot(DAG.getNode(ISD::EH_SJLJ_SETUP_DISPATCH, sdl, MVT::Other,
+                            getRoot()));
+    return nullptr;
+  }
 
   case Intrinsic::masked_gather:
     visitMaskedGather(I);

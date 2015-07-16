@@ -108,6 +108,10 @@ namespace ISD {
     /// and returns an outchain.
     EH_SJLJ_LONGJMP,
 
+    /// OUTCHAIN = EH_SJLJ_SETUP_DISPATCH(INCHAIN)
+    /// The target initializes the dispatch table here.
+    EH_SJLJ_SETUP_DISPATCH,
+
     /// TargetConstant* - Like Constant*, but the DAG does not do any folding,
     /// simplification, or lowering of the constant. They are used for constants
     /// which are known to fit in the immediate fields of their users, or for
