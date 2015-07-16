@@ -811,9 +811,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       // parseEnum falls through and does not yet add an unwrapped line as an
       // enum definition can start a structural element.
       parseEnum();
-      // This does not apply for Java and JavaScript.
-      if (Style.Language == FormatStyle::LK_Java ||
-          Style.Language == FormatStyle::LK_JavaScript) {
+      // This only applies for C++.
+      if (Style.Language != FormatStyle::LK_Cpp) {
         addUnwrappedLine();
         return;
       }
@@ -1553,6 +1552,9 @@ void UnwrappedLineParser::parseEnum() {
   if (Style.Language == FormatStyle::LK_Java) {
     // Java enums are different.
     parseJavaEnumBody();
+    return;
+  } else if (Style.Language == FormatStyle::LK_Proto) {
+    parseBlock(/*MustBeDeclaration=*/true);
     return;
   }
 
