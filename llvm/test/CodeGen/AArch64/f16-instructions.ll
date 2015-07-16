@@ -684,10 +684,9 @@ define half @test_copysign(half %a, half %b) #0 {
 }
 
 ; CHECK-LABEL: test_floor:
-; CHECK-NEXT: fcvt s1, h0
-; CHECK-NEXT: frintm s0, s1
-; CHECK-NEXT: fcvt h0, s0
-; CHECK-NEXT: frintx s1, s1
+; CHECK-NEXT: fcvt [[FLOAT32:s[0-9]+]], h0
+; CHECK-NEXT: frintm [[INT32:s[0-9]+]], [[FLOAT32]]
+; CHECK-NEXT: fcvt h0, [[INT32]]
 ; CHECK-NEXT: ret
 define half @test_floor(half %a) #0 {
   %r = call half @llvm.floor.f16(half %a)
@@ -695,10 +694,9 @@ define half @test_floor(half %a) #0 {
 }
 
 ; CHECK-LABEL: test_ceil:
-; CHECK-NEXT: fcvt s1, h0
-; CHECK-NEXT: frintp s0, s1
-; CHECK-NEXT: fcvt h0, s0
-; CHECK-NEXT: frintx s1, s1
+; CHECK-NEXT: fcvt [[FLOAT32:s[0-9]+]], h0
+; CHECK-NEXT: frintp [[INT32:s[0-9]+]], [[FLOAT32]]
+; CHECK-NEXT: fcvt h0, [[INT32]]
 ; CHECK-NEXT: ret
 define half @test_ceil(half %a) #0 {
   %r = call half @llvm.ceil.f16(half %a)
@@ -706,10 +704,9 @@ define half @test_ceil(half %a) #0 {
 }
 
 ; CHECK-LABEL: test_trunc:
-; CHECK-NEXT: fcvt s1, h0
-; CHECK-NEXT: frintz s0, s1
-; CHECK-NEXT: fcvt h0, s0
-; CHECK-NEXT: frintx s1, s1
+; CHECK-NEXT: fcvt [[FLOAT32:s[0-9]+]], h0
+; CHECK-NEXT: frintz [[INT32:s[0-9]+]], [[FLOAT32]]
+; CHECK-NEXT: fcvt h0, [[INT32]]
 ; CHECK-NEXT: ret
 define half @test_trunc(half %a) #0 {
   %r = call half @llvm.trunc.f16(half %a)
@@ -737,10 +734,9 @@ define half @test_nearbyint(half %a) #0 {
 }
 
 ; CHECK-LABEL: test_round:
-; CHECK-NEXT: fcvt s1, h0
-; CHECK-NEXT: frinta s0, s1
-; CHECK-NEXT: fcvt h0, s0
-; CHECK-NEXT: frintx s1, s1
+; CHECK-NEXT: fcvt [[FLOAT32:s[0-9]+]], h0
+; CHECK-NEXT: frinta [[INT32:s[0-9]+]], [[FLOAT32]]
+; CHECK-NEXT: fcvt h0, [[INT32]]
 ; CHECK-NEXT: ret
 define half @test_round(half %a) #0 {
   %r = call half @llvm.round.f16(half %a)

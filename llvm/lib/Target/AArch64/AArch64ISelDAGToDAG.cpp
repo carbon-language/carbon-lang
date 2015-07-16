@@ -2062,7 +2062,7 @@ SDNode *AArch64DAGToDAGISel::SelectLIBM(SDNode *N) {
   SmallVector<SDValue, 2> Ops;
   Ops.push_back(In);
 
-  if (!TM.Options.UnsafeFPMath) {
+  if (Subtarget->isTargetDarwin() && !TM.Options.UnsafeFPMath) {
     SDNode *FRINTX = CurDAG->getMachineNode(FRINTXOpc, dl, VT, MVT::Glue, In);
     Ops.push_back(SDValue(FRINTX, 1));
   }
