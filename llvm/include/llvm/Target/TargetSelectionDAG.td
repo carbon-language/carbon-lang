@@ -386,6 +386,8 @@ def smax       : SDNode<"ISD::SMAX"      , SDTIntBinOp>;
 def umin       : SDNode<"ISD::UMIN"      , SDTIntBinOp>;
 def umax       : SDNode<"ISD::UMAX"      , SDTIntBinOp>;
 
+def sabsdiff   : SDNode<"ISD::SABSDIFF"   , SDTIntBinOp>;
+def uabsdiff   : SDNode<"ISD::UABSDIFF"   , SDTIntBinOp>;
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;
 def ctlz       : SDNode<"ISD::CTLZ"       , SDTIntUnaryOp>;

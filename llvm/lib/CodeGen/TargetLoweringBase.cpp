@@ -827,6 +827,8 @@ void TargetLoweringBase::initActions() {
     setOperationAction(ISD::USUBO, VT, Expand);
     setOperationAction(ISD::SMULO, VT, Expand);
     setOperationAction(ISD::UMULO, VT, Expand);
+    setOperationAction(ISD::UABSDIFF, VT, Expand);
+    setOperationAction(ISD::SABSDIFF, VT, Expand);
 
     // These library functions default to expand.
     setOperationAction(ISD::FROUND, VT, Expand);
