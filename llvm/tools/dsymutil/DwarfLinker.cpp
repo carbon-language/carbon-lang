@@ -324,12 +324,6 @@ public:
   /// one.
   uint32_t getStringOffset(StringRef S);
 
-  /// \brief Get permanent storage for \p S (but do not necessarily
-  /// emit \p S in the output section).
-  /// \returns The StringRef that points to permanent storage to use
-  /// in place of \p S.
-  StringRef internString(StringRef S);
-
   // \brief Return the first entry of the string table.
   const MapTy::MapEntryTy *getFirstEntry() const {
     return getNextEntry(&Sentinel);
@@ -371,16 +365,6 @@ uint32_t NonRelocatableStringpool::getStringOffset(StringRef S) {
     Last = &*It;
   }
   return It->getValue().first;
-}
-
-/// \brief Put \p S into the StringMap so that it gets permanent
-/// storage, but do not actually link it in the chain of elements
-/// that go into the output section. A latter call to
-/// getStringOffset() with the same string will chain it though.
-StringRef NonRelocatableStringpool::internString(StringRef S) {
-  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
-  auto InsertResult = Strings.insert(std::make_pair(S, Entry));
-  return InsertResult.first->getKey();
 }
 
 /// \brief The Dwarf streaming logic
