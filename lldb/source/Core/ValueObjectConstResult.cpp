@@ -365,6 +365,12 @@ ValueObjectConstResult::GetDynamicValue (lldb::DynamicValueType use_dynamic)
     return ValueObjectSP();
 }
 
+lldb::ValueObjectSP
+ValueObjectConstResult::Cast (const ClangASTType &clang_ast_type)
+{
+    return m_impl.Cast(clang_ast_type);
+}
+
 lldb::LanguageType
 ValueObjectConstResult::GetPreferredDisplayLanguage ()
 {

@@ -65,6 +65,7 @@ add_lldb_library(lldbCore
   ValueObjectCast.cpp
   ValueObjectChild.cpp
   ValueObjectConstResult.cpp
+  ValueObjectConstResultCast.cpp
   ValueObjectConstResultChild.cpp
   ValueObjectConstResultImpl.cpp
   ValueObjectDynamicValue.cpp

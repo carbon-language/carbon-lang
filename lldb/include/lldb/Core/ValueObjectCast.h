@@ -71,11 +71,11 @@ protected:
     
     ClangASTType m_cast_type;
     
-private:
     ValueObjectCast (ValueObject &parent, 
                      const ConstString &name, 
                      const ClangASTType &cast_type);
     
+private:
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

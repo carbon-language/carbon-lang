@@ -131,6 +131,9 @@ public:
     virtual lldb::LanguageType
     GetPreferredDisplayLanguage ();
 
+    virtual lldb::ValueObjectSP
+    Cast (const ClangASTType &clang_ast_type);
+
 protected:
     virtual bool
     UpdateValue ();

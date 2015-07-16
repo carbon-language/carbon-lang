@@ -34,7 +34,8 @@ public:
                                  uint32_t bitfield_bit_size,
                                  uint32_t bitfield_bit_offset,
                                  bool is_base_class,
-                                 bool is_deref_of_parent);
+                                 bool is_deref_of_parent,
+                                 lldb::addr_t live_address = LLDB_INVALID_ADDRESS);
     
     virtual ~ValueObjectConstResultChild();
     
@@ -60,6 +61,9 @@ public:
     GetPointeeData (DataExtractor& data,
                     uint32_t item_idx = 0,
 					uint32_t item_count = 1);
+
+    virtual lldb::ValueObjectSP
+    Cast (const ClangASTType &clang_ast_type);
     
 protected:
     ValueObjectConstResultImpl m_impl;

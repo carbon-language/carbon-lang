@@ -11,6 +11,7 @@
 
 #include "lldb/Core/ValueObjectChild.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Core/ValueObjectConstResultCast.h"
 #include "lldb/Core/ValueObjectConstResultChild.h"
 #include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/Core/DataExtractor.h"
@@ -96,7 +97,7 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
         ConstString child_name;
         if (!child_name_str.empty())
             child_name.SetCString (child_name_str.c_str());
-        
+
         valobj = new ValueObjectConstResultChild (*m_impl_backend,
                                                   child_clang_type,
                                                   child_name,
@@ -153,6 +154,17 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
     }
     else
         return m_impl_backend->ValueObject::AddressOf(error);
+}
+
+lldb::ValueObjectSP
+ValueObjectConstResultImpl::Cast (const ClangASTType &clang_ast_type)
+{
+    if (m_impl_backend == NULL)
+        return lldb::ValueObjectSP();
+
+    ValueObjectConstResultCast *result_cast = new ValueObjectConstResultCast(
+        *m_impl_backend, m_impl_backend->GetName(), clang_ast_type, m_live_address);
+    return result_cast->GetSP();
 }
 
 lldb::addr_t

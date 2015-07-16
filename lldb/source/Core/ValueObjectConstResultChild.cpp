@@ -26,7 +26,8 @@ ValueObjectConstResultChild::ValueObjectConstResultChild
     uint32_t bitfield_bit_size,
     uint32_t bitfield_bit_offset,
     bool is_base_class,
-    bool is_deref_of_parent
+    bool is_deref_of_parent,
+    lldb::addr_t live_address
 ) :
     ValueObjectChild (parent,
                       clang_type,
@@ -38,7 +39,7 @@ ValueObjectConstResultChild::ValueObjectConstResultChild
                       is_base_class,
                       is_deref_of_parent,
                       eAddressTypeLoad),
-    m_impl(this)
+    m_impl(this, live_address)
 {
     m_name = name;
 }
@@ -77,4 +78,10 @@ ValueObjectConstResultChild::GetPointeeData (DataExtractor& data,
                                              uint32_t item_count)
 {
     return m_impl.GetPointeeData(data, item_idx, item_count);
+}
+
+lldb::ValueObjectSP
+ValueObjectConstResultChild::Cast (const ClangASTType &clang_ast_type)
+{
+    return m_impl.Cast(clang_ast_type);
 }

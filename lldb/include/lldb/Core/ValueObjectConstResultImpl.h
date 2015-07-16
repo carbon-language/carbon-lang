@@ -52,6 +52,9 @@ public:
     {
         return m_live_address;
     }
+
+    lldb::ValueObjectSP
+    Cast (const ClangASTType &clang_ast_type);
     
     void
     SetLiveAddress(lldb::addr_t addr = LLDB_INVALID_ADDRESS,
