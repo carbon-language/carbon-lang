@@ -14,6 +14,8 @@
 
 #include <bitset>
 #include <cassert>
+#include <algorithm> // for 'min' and 'max'
+#include <stdexcept> // for 'invalid_argument'
 
 #pragma clang diagnostic ignored "-Wtautological-compare"
 
