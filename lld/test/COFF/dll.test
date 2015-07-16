@@ -1,4 +1,5 @@
 # REQUIRES: winres
+# REQUIRES: winlib
 
 # RUN: yaml2obj < %p/Inputs/export.yaml > %t.obj
 # RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1 /export:exportfn2 \
