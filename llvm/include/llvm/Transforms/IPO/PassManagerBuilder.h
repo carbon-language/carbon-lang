@@ -81,6 +81,11 @@ public:
     /// run after everything else.
     EP_OptimizerLast,
 
+    /// EP_VectorizerStart - This extension point allows adding optimization
+    /// passes before the vectorizer and other highly target specific
+    /// optimization passes are executed.
+    EP_VectorizerStart,
+
     /// EP_EnabledOnOptLevel0 - This extension point allows adding passes that
     /// should not be disabled by O0 optimization level. The passes will be
     /// inserted after the inlining pass.
