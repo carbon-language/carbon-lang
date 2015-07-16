@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
 // Lower aggregate copies, memset, memcpy, memmov intrinsics into loops when
 // the size is large or is not a compile-time constant.
 //
@@ -25,12 +26,14 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #define DEBUG_TYPE "nvptx"
 
 using namespace llvm;
 
 namespace {
+
 // actual analysis class, which is a functionpass
 struct NVPTXLowerAggrCopies : public FunctionPass {
   static char ID;
@@ -50,14 +53,13 @@ struct NVPTXLowerAggrCopies : public FunctionPass {
     return "Lower aggregate copies/intrinsics into loops";
   }
 };
-} // namespace
 
 char NVPTXLowerAggrCopies::ID = 0;
 
-// Lower MemTransferInst or load-store pair to loop
-static void convertTransferToLoop(
-    Instruction *splitAt, Value *srcAddr, Value *dstAddr, Value *len,
-    bool srcVolatile, bool dstVolatile, LLVMContext &Context, Function &F) {
+// Lower memcpy to loop.
+void convertMemCpyToLoop(Instruction *splitAt, Value *srcAddr, Value *dstAddr,
+                         Value *len, bool srcVolatile, bool dstVolatile,
+                         LLVMContext &Context, Function &F) {
   Type *indType = len->getType();
 
   BasicBlock *origBB = splitAt->getParent();
@@ -98,10 +100,105 @@ static void convertTransferToLoop(
   loop.CreateCondBr(loop.CreateICmpULT(newind, len), loopBB, newBB);
 }
 
-// Lower MemSetInst to loop
-static void convertMemSetToLoop(Instruction *splitAt, Value *dstAddr,
-                                Value *len, Value *val, LLVMContext &Context,
-                                Function &F) {
+// Lower memmove to IR. memmove is required to correctly copy overlapping memory
+// regions; therefore, it has to check the relative positions of the source and
+// destination pointers and choose the copy direction accordingly.
+//
+// The code below is an IR rendition of this C function:
+//
+// void* memmove(void* dst, const void* src, size_t n) {
+//   unsigned char* d = dst;
+//   const unsigned char* s = src;
+//   if (s < d) {
+//     // copy backwards
+//     while (n--) {
+//       d[n] = s[n];
+//     }
+//   } else {
+//     // copy forward
+//     for (size_t i = 0; i < n; ++i) {
+//       d[i] = s[i];
+//     }
+//   }
+//   return dst;
+// }
+void convertMemMoveToLoop(Instruction *splitAt, Value *srcAddr, Value *dstAddr,
+                          Value *len, bool srcVolatile, bool dstVolatile,
+                          LLVMContext &Context, Function &F) {
+  Type *TypeOfLen = len->getType();
+  BasicBlock *OrigBB = splitAt->getParent();
+
+  // Create the a comparison of src and dst, based on which we jump to either
+  // the forward-copy part of the function (if src >= dst) or the backwards-copy
+  // part (if src < dst).
+  // SplitBlockAndInsertIfThenElse conveniently creates the basic if-then-else
+  // structure. Its block terminators (unconditional branches) are replaced by
+  // the appropriate conditional branches when the loop is built.
+  ICmpInst *PtrCompare = new ICmpInst(splitAt, ICmpInst::ICMP_ULT, srcAddr,
+                                      dstAddr, "compare_src_dst");
+  TerminatorInst *ThenTerm, *ElseTerm;
+  SplitBlockAndInsertIfThenElse(PtrCompare, splitAt, &ThenTerm, &ElseTerm);
+
+  // Each part of the function consists of two blocks:
+  //   copy_backwards:        used to skip the loop when n == 0
+  //   copy_backwards_loop:   the actual backwards loop BB
+  //   copy_forward:          used to skip the loop when n == 0
+  //   copy_forward_loop:     the actual forward loop BB
+  BasicBlock *CopyBackwardsBB = ThenTerm->getParent();
+  CopyBackwardsBB->setName("copy_backwards");
+  BasicBlock *CopyForwardBB = ElseTerm->getParent();
+  CopyForwardBB->setName("copy_forward");
+  BasicBlock *ExitBB = splitAt->getParent();
+  ExitBB->setName("memmove_done");
+
+  // Initial comparison of n == 0 that lets us skip the loops altogether. Shared
+  // between both backwards and forward copy clauses.
+  ICmpInst *CompareN =
+      new ICmpInst(OrigBB->getTerminator(), ICmpInst::ICMP_EQ, len,
+                   ConstantInt::get(TypeOfLen, 0), "compare_n_to_0");
+
+  // Copying backwards.
+  BasicBlock *LoopBB =
+      BasicBlock::Create(Context, "copy_backwards_loop", &F, CopyForwardBB);
+  IRBuilder<> LoopBuilder(LoopBB);
+  PHINode *LoopPhi = LoopBuilder.CreatePHI(TypeOfLen, 0);
+  Value *IndexPtr = LoopBuilder.CreateSub(
+      LoopPhi, ConstantInt::get(TypeOfLen, 1), "index_ptr");
+  Value *Element = LoopBuilder.CreateLoad(
+      LoopBuilder.CreateInBoundsGEP(srcAddr, IndexPtr), "element");
+  LoopBuilder.CreateStore(Element,
+                          LoopBuilder.CreateInBoundsGEP(dstAddr, IndexPtr));
+  LoopBuilder.CreateCondBr(
+      LoopBuilder.CreateICmpEQ(IndexPtr, ConstantInt::get(TypeOfLen, 0)),
+      ExitBB, LoopBB);
+  LoopPhi->addIncoming(IndexPtr, LoopBB);
+  LoopPhi->addIncoming(len, CopyBackwardsBB);
+  BranchInst::Create(ExitBB, LoopBB, CompareN, ThenTerm);
+  ThenTerm->removeFromParent();
+
+  // Copying forward.
+  BasicBlock *FwdLoopBB =
+      BasicBlock::Create(Context, "copy_forward_loop", &F, ExitBB);
+  IRBuilder<> FwdLoopBuilder(FwdLoopBB);
+  PHINode *FwdCopyPhi = FwdLoopBuilder.CreatePHI(TypeOfLen, 0, "index_ptr");
+  Value *FwdElement = FwdLoopBuilder.CreateLoad(
+      FwdLoopBuilder.CreateInBoundsGEP(srcAddr, FwdCopyPhi), "element");
+  FwdLoopBuilder.CreateStore(
+      FwdElement, FwdLoopBuilder.CreateInBoundsGEP(dstAddr, FwdCopyPhi));
+  Value *FwdIndexPtr = FwdLoopBuilder.CreateAdd(
+      FwdCopyPhi, ConstantInt::get(TypeOfLen, 1), "index_increment");
+  FwdLoopBuilder.CreateCondBr(FwdLoopBuilder.CreateICmpEQ(FwdIndexPtr, len),
+                              ExitBB, FwdLoopBB);
+  FwdCopyPhi->addIncoming(FwdIndexPtr, FwdLoopBB);
+  FwdCopyPhi->addIncoming(ConstantInt::get(TypeOfLen, 0), CopyForwardBB);
+
+  BranchInst::Create(ExitBB, FwdLoopBB, CompareN, ElseTerm);
+  ElseTerm->removeFromParent();
+}
+
+// Lower memset to loop.
+void convertMemSetToLoop(Instruction *splitAt, Value *dstAddr, Value *len,
+                         Value *val, LLVMContext &Context, Function &F) {
   BasicBlock *origBB = splitAt->getParent();
   BasicBlock *newBB = splitAt->getParent()->splitBasicBlock(splitAt, "split");
   BasicBlock *loopBB = BasicBlock::Create(Context, "loadstoreloop", &F, newBB);
@@ -129,15 +226,12 @@ static void convertMemSetToLoop(Instruction *splitAt, Value *dstAddr,
 
 bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   SmallVector<LoadInst *, 4> aggrLoads;
-  SmallVector<MemTransferInst *, 4> aggrMemcpys;
-  SmallVector<MemSetInst *, 4> aggrMemsets;
+  SmallVector<MemIntrinsic *, 4> MemCalls;
 
   const DataLayout &DL = F.getParent()->getDataLayout();
   LLVMContext &Context = F.getParent()->getContext();
 
-  //
-  // Collect all the aggrLoads, aggrMemcpys and addrMemsets.
-  //
+  // Collect all aggregate loads and mem* calls.
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
          ++II) {
@@ -154,34 +248,23 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
             continue;
           aggrLoads.push_back(load);
         }
-      } else if (MemTransferInst *intr = dyn_cast<MemTransferInst>(II)) {
-        Value *len = intr->getLength();
-        // If the number of elements being copied is greater
-        // than MaxAggrCopySize, lower it to a loop
-        if (ConstantInt *len_int = dyn_cast<ConstantInt>(len)) {
-          if (len_int->getZExtValue() >= MaxAggrCopySize) {
-            aggrMemcpys.push_back(intr);
+      } else if (MemIntrinsic *IntrCall = dyn_cast<MemIntrinsic>(II)) {
+        // Convert intrinsic calls with variable size or with constant size
+        // larger than the MaxAggrCopySize threshold.
+        if (ConstantInt *LenCI = dyn_cast<ConstantInt>(IntrCall->getLength())) {
+          if (LenCI->getZExtValue() >= MaxAggrCopySize) {
+            MemCalls.push_back(IntrCall);
           }
         } else {
-          // turn variable length memcpy/memmov into loop
-          aggrMemcpys.push_back(intr);
-        }
-      } else if (MemSetInst *memsetintr = dyn_cast<MemSetInst>(II)) {
-        Value *len = memsetintr->getLength();
-        if (ConstantInt *len_int = dyn_cast<ConstantInt>(len)) {
-          if (len_int->getZExtValue() >= MaxAggrCopySize) {
-            aggrMemsets.push_back(memsetintr);
-          }
-        } else {
-          // turn variable length memset into loop
-          aggrMemsets.push_back(memsetintr);
+          MemCalls.push_back(IntrCall);
         }
       }
     }
   }
-  if ((aggrLoads.size() == 0) && (aggrMemcpys.size() == 0) &&
-      (aggrMemsets.size() == 0))
+
+  if (aggrLoads.size() == 0 && MemCalls.size() == 0) {
     return false;
+  }
 
   //
   // Do the transformation of an aggr load/copy/set to a loop
@@ -193,35 +276,57 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
     unsigned numLoads = DL.getTypeStoreSize(load->getType());
     Value *len = ConstantInt::get(Type::getInt32Ty(Context), numLoads);
 
-    convertTransferToLoop(store, srcAddr, dstAddr, len, load->isVolatile(),
-                          store->isVolatile(), Context, F);
+    convertMemCpyToLoop(store, srcAddr, dstAddr, len, load->isVolatile(),
+                        store->isVolatile(), Context, F);
 
     store->eraseFromParent();
     load->eraseFromParent();
   }
 
-  for (MemTransferInst *cpy : aggrMemcpys) {
-    convertTransferToLoop(/* splitAt */ cpy,
-                          /* srcAddr */ cpy->getSource(),
-                          /* dstAddr */ cpy->getDest(),
-                          /* len */ cpy->getLength(),
-                          /* srcVolatile */ cpy->isVolatile(),
-                          /* dstVolatile */ cpy->isVolatile(),
+  // Transform mem* intrinsic calls.
+  for (MemIntrinsic *MemCall : MemCalls) {
+    if (MemCpyInst *Memcpy = dyn_cast<MemCpyInst>(MemCall)) {
+      convertMemCpyToLoop(/* splitAt */ Memcpy,
+                          /* srcAddr */ Memcpy->getRawSource(),
+                          /* dstAddr */ Memcpy->getRawDest(),
+                          /* len */ Memcpy->getLength(),
+                          /* srcVolatile */ Memcpy->isVolatile(),
+                          /* dstVolatile */ Memcpy->isVolatile(),
                           /* Context */ Context,
                           /* Function F */ F);
-    cpy->eraseFromParent();
-  }
+    } else if (MemMoveInst *Memmove = dyn_cast<MemMoveInst>(MemCall)) {
+      convertMemMoveToLoop(/* splitAt */ Memmove,
+                           /* srcAddr */ Memmove->getRawSource(),
+                           /* dstAddr */ Memmove->getRawDest(),
+                           /* len */ Memmove->getLength(),
+                           /* srcVolatile */ Memmove->isVolatile(),
+                           /* dstVolatile */ Memmove->isVolatile(),
+                           /* Context */ Context,
+                           /* Function F */ F);
 
-  for (MemSetInst *memsetinst : aggrMemsets) {
-    Value *len = memsetinst->getLength();
-    Value *val = memsetinst->getValue();
-    convertMemSetToLoop(memsetinst, memsetinst->getDest(), len, val, Context,
-                        F);
-    memsetinst->eraseFromParent();
+    } else if (MemSetInst *Memset = dyn_cast<MemSetInst>(MemCall)) {
+      convertMemSetToLoop(/* splitAt */ Memset,
+                          /* dstAddr */ Memset->getRawDest(),
+                          /* len */ Memset->getLength(),
+                          /* val */ Memset->getValue(),
+                          /* Context */ Context,
+                          /* F */ F);
+    }
+    MemCall->eraseFromParent();
   }
 
   return true;
 }
+
+} // namespace
+
+namespace llvm {
+void initializeNVPTXLowerAggrCopiesPass(PassRegistry &);
+}
+
+INITIALIZE_PASS(NVPTXLowerAggrCopies, "nvptx-lower-aggr-copies",
+                "Lower aggregate copies, and llvm.mem* intrinsics into loops",
+                false, false)
 
 FunctionPass *llvm::createLowerAggrCopies() {
   return new NVPTXLowerAggrCopies();

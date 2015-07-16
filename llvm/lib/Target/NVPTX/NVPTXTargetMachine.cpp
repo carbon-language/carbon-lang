@@ -53,6 +53,7 @@ void initializeGenericToNVVMPass(PassRegistry&);
 void initializeNVPTXAllocaHoistingPass(PassRegistry &);
 void initializeNVPTXAssignValidGlobalNamesPass(PassRegistry&);
 void initializeNVPTXFavorNonGenericAddrSpacesPass(PassRegistry &);
+void initializeNVPTXLowerAggrCopiesPass(PassRegistry &);
 void initializeNVPTXLowerKernelArgsPass(PassRegistry &);
 void initializeNVPTXLowerAllocaPass(PassRegistry &);
 }
@@ -64,14 +65,15 @@ extern "C" void LLVMInitializeNVPTXTarget() {
 
   // FIXME: This pass is really intended to be invoked during IR optimization,
   // but it's very NVPTX-specific.
-  initializeNVVMReflectPass(*PassRegistry::getPassRegistry());
-  initializeGenericToNVVMPass(*PassRegistry::getPassRegistry());
-  initializeNVPTXAllocaHoistingPass(*PassRegistry::getPassRegistry());
-  initializeNVPTXAssignValidGlobalNamesPass(*PassRegistry::getPassRegistry());
-  initializeNVPTXFavorNonGenericAddrSpacesPass(
-    *PassRegistry::getPassRegistry());
-  initializeNVPTXLowerKernelArgsPass(*PassRegistry::getPassRegistry());
-  initializeNVPTXLowerAllocaPass(*PassRegistry::getPassRegistry());
+  PassRegistry &PR = *PassRegistry::getPassRegistry();
+  initializeNVVMReflectPass(PR);
+  initializeGenericToNVVMPass(PR);
+  initializeNVPTXAllocaHoistingPass(PR);
+  initializeNVPTXAssignValidGlobalNamesPass(PR);
+  initializeNVPTXFavorNonGenericAddrSpacesPass(PR);
+  initializeNVPTXLowerKernelArgsPass(PR);
+  initializeNVPTXLowerAllocaPass(PR);
+  initializeNVPTXLowerAggrCopiesPass(PR);
 }
 
 static std::string computeDataLayout(bool is64Bit) {
