@@ -69,6 +69,9 @@ public:
   typedef DominatorTreeBase<BasicBlock> Base;
 
   DominatorTree() : DominatorTreeBase<BasicBlock>(false) {}
+  explicit DominatorTree(Function &F) : DominatorTreeBase<BasicBlock>(false) {
+    recalculate(F);
+  }
 
   DominatorTree(DominatorTree &&Arg)
       : Base(std::move(static_cast<Base &>(Arg))) {}

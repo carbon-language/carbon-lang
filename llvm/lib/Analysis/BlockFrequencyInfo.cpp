@@ -105,6 +105,14 @@ struct DOTGraphTraits<BlockFrequencyInfo*> : public DefaultDOTGraphTraits {
 } // end namespace llvm
 #endif
 
+BlockFrequencyInfo::BlockFrequencyInfo() {}
+
+BlockFrequencyInfo::BlockFrequencyInfo(const Function &F,
+                                       const BranchProbabilityInfo &BPI,
+                                       const LoopInfo &LI) {
+  calculate(F, BPI, LI);
+}
+
 void BlockFrequencyInfo::calculate(const Function &F,
                                    const BranchProbabilityInfo &BPI,
                                    const LoopInfo &LI) {

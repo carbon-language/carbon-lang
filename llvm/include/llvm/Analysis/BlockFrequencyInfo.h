@@ -31,6 +31,10 @@ class BlockFrequencyInfo {
   std::unique_ptr<ImplType> BFI;
 
 public:
+  BlockFrequencyInfo();
+  BlockFrequencyInfo(const Function &F, const BranchProbabilityInfo &BPI,
+                     const LoopInfo &LI);
+
   const Function *getFunction() const;
   void view() const;
 

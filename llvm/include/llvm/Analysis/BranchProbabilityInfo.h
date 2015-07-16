@@ -39,6 +39,9 @@ class raw_ostream;
 /// value 10.
 class BranchProbabilityInfo {
 public:
+  BranchProbabilityInfo() {}
+  BranchProbabilityInfo(Function &F, const LoopInfo &LI) { calculate(F, LI); }
+
   void releaseMemory();
 
   void print(raw_ostream &OS) const;
