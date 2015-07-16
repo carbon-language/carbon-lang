@@ -211,10 +211,8 @@ namespace {
     /// Diagnose all the ignored type attributes, given that the
     /// declarator worked out to the given type.
     void diagnoseIgnoredTypeAttrs(QualType type) const {
-      for (SmallVectorImpl<AttributeList*>::const_iterator
-             i = ignoredTypeAttrs.begin(), e = ignoredTypeAttrs.end();
-           i != e; ++i)
-        diagnoseBadTypeAttribute(getSema(), **i, type);
+      for (auto *Attr : ignoredTypeAttrs)
+        diagnoseBadTypeAttribute(getSema(), *Attr, type);
     }
 
     ~TypeProcessingState() {
