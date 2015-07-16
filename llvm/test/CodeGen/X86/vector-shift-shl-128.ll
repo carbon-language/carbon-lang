@@ -10,7 +10,7 @@
 ; Variable Shifts
 ;
 
-define <2 x i64> @var_shift_v2i64(<2 x i64> %a, <2 x i64> %b) {
+define <2 x i64> @var_shift_v2i64(<2 x i64> %a, <2 x i64> %b) nounwind {
 ; SSE2-LABEL: var_shift_v2i64:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm1[2,3,0,1]
@@ -57,7 +57,7 @@ define <2 x i64> @var_shift_v2i64(<2 x i64> %a, <2 x i64> %b) {
   ret <2 x i64> %shift
 }
 
-define <4 x i32> @var_shift_v4i32(<4 x i32> %a, <4 x i32> %b) {
+define <4 x i32> @var_shift_v4i32(<4 x i32> %a, <4 x i32> %b) nounwind {
 ; SSE2-LABEL: var_shift_v4i32:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    pslld $23, %xmm1
@@ -112,7 +112,7 @@ define <4 x i32> @var_shift_v4i32(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %shift
 }
 
-define <8 x i16> @var_shift_v8i16(<8 x i16> %a, <8 x i16> %b) {
+define <8 x i16> @var_shift_v8i16(<8 x i16> %a, <8 x i16> %b) nounwind {
 ; SSE2-LABEL: var_shift_v8i16:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    psllw $12, %xmm1
@@ -244,7 +244,7 @@ define <8 x i16> @var_shift_v8i16(<8 x i16> %a, <8 x i16> %b) {
   ret <8 x i16> %shift
 }
 
-define <16 x i8> @var_shift_v16i8(<16 x i8> %a, <16 x i8> %b) {
+define <16 x i8> @var_shift_v16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-LABEL: var_shift_v16i8:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    psllw $5, %xmm1
@@ -350,7 +350,7 @@ define <16 x i8> @var_shift_v16i8(<16 x i8> %a, <16 x i8> %b) {
 ; Uniform Variable Shifts
 ;
 
-define <2 x i64> @splatvar_shift_v2i64(<2 x i64> %a, <2 x i64> %b) {
+define <2 x i64> @splatvar_shift_v2i64(<2 x i64> %a, <2 x i64> %b) nounwind {
 ; SSE-LABEL: splatvar_shift_v2i64:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    psllq %xmm1, %xmm0
@@ -371,7 +371,7 @@ define <2 x i64> @splatvar_shift_v2i64(<2 x i64> %a, <2 x i64> %b) {
   ret <2 x i64> %shift
 }
 
-define <4 x i32> @splatvar_shift_v4i32(<4 x i32> %a, <4 x i32> %b) {
+define <4 x i32> @splatvar_shift_v4i32(<4 x i32> %a, <4 x i32> %b) nounwind {
 ; SSE2-LABEL: splatvar_shift_v4i32:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    xorps %xmm2, %xmm2
@@ -404,7 +404,7 @@ define <4 x i32> @splatvar_shift_v4i32(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %shift
 }
 
-define <8 x i16> @splatvar_shift_v8i16(<8 x i16> %a, <8 x i16> %b) {
+define <8 x i16> @splatvar_shift_v8i16(<8 x i16> %a, <8 x i16> %b) nounwind {
 ; SSE2-LABEL: splatvar_shift_v8i16:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movd %xmm1, %eax
@@ -439,7 +439,7 @@ define <8 x i16> @splatvar_shift_v8i16(<8 x i16> %a, <8 x i16> %b) {
   ret <8 x i16> %shift
 }
 
-define <16 x i8> @splatvar_shift_v16i8(<16 x i8> %a, <16 x i8> %b) {
+define <16 x i8> @splatvar_shift_v16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-LABEL: splatvar_shift_v16i8:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
@@ -575,7 +575,7 @@ define <16 x i8> @splatvar_shift_v16i8(<16 x i8> %a, <16 x i8> %b) {
 ; Constant Shifts
 ;
 
-define <2 x i64> @constant_shift_v2i64(<2 x i64> %a) {
+define <2 x i64> @constant_shift_v2i64(<2 x i64> %a) nounwind {
 ; SSE2-LABEL: constant_shift_v2i64:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa %xmm0, %xmm1
@@ -621,7 +621,7 @@ define <2 x i64> @constant_shift_v2i64(<2 x i64> %a) {
   ret <2 x i64> %shift
 }
 
-define <4 x i32> @constant_shift_v4i32(<4 x i32> %a) {
+define <4 x i32> @constant_shift_v4i32(<4 x i32> %a) nounwind {
 ; SSE2-LABEL: constant_shift_v4i32:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa {{.*#+}} xmm1 = [16,32,64,128]
@@ -664,7 +664,7 @@ define <4 x i32> @constant_shift_v4i32(<4 x i32> %a) {
   ret <4 x i32> %shift
 }
 
-define <8 x i16> @constant_shift_v8i16(<8 x i16> %a) {
+define <8 x i16> @constant_shift_v8i16(<8 x i16> %a) nounwind {
 ; SSE-LABEL: constant_shift_v8i16:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    pmullw {{.*}}(%rip), %xmm0
@@ -683,7 +683,7 @@ define <8 x i16> @constant_shift_v8i16(<8 x i16> %a) {
   ret <8 x i16> %shift
 }
 
-define <16 x i8> @constant_shift_v16i8(<16 x i8> %a) {
+define <16 x i8> @constant_shift_v16i8(<16 x i8> %a) nounwind {
 ; SSE2-LABEL: constant_shift_v16i8:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]
@@ -790,7 +790,7 @@ define <16 x i8> @constant_shift_v16i8(<16 x i8> %a) {
 ; Uniform Constant Shifts
 ;
 
-define <2 x i64> @splatconstant_shift_v2i64(<2 x i64> %a) {
+define <2 x i64> @splatconstant_shift_v2i64(<2 x i64> %a) nounwind {
 ; SSE-LABEL: splatconstant_shift_v2i64:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    psllq $7, %xmm0
@@ -809,7 +809,7 @@ define <2 x i64> @splatconstant_shift_v2i64(<2 x i64> %a) {
   ret <2 x i64> %shift
 }
 
-define <4 x i32> @splatconstant_shift_v4i32(<4 x i32> %a) {
+define <4 x i32> @splatconstant_shift_v4i32(<4 x i32> %a) nounwind {
 ; SSE-LABEL: splatconstant_shift_v4i32:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    pslld $5, %xmm0
@@ -828,7 +828,7 @@ define <4 x i32> @splatconstant_shift_v4i32(<4 x i32> %a) {
   ret <4 x i32> %shift
 }
 
-define <8 x i16> @splatconstant_shift_v8i16(<8 x i16> %a) {
+define <8 x i16> @splatconstant_shift_v8i16(<8 x i16> %a) nounwind {
 ; SSE-LABEL: splatconstant_shift_v8i16:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    psllw $3, %xmm0
@@ -847,7 +847,7 @@ define <8 x i16> @splatconstant_shift_v8i16(<8 x i16> %a) {
   ret <8 x i16> %shift
 }
 
-define <16 x i8> @splatconstant_shift_v16i8(<16 x i8> %a) {
+define <16 x i8> @splatconstant_shift_v16i8(<16 x i8> %a) nounwind {
 ; SSE-LABEL: splatconstant_shift_v16i8:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    psllw $3, %xmm0

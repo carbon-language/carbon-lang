@@ -5,7 +5,7 @@
 ; Variable Shifts
 ;
 
-define <4 x i64> @var_shift_v4i64(<4 x i64> %a, <4 x i64> %b) {
+define <4 x i64> @var_shift_v4i64(<4 x i64> %a, <4 x i64> %b) nounwind {
 ; AVX1-LABEL: var_shift_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
@@ -29,7 +29,7 @@ define <4 x i64> @var_shift_v4i64(<4 x i64> %a, <4 x i64> %b) {
   ret <4 x i64> %shift
 }
 
-define <8 x i32> @var_shift_v8i32(<8 x i32> %a, <8 x i32> %b) {
+define <8 x i32> @var_shift_v8i32(<8 x i32> %a, <8 x i32> %b) nounwind {
 ; AVX1-LABEL: var_shift_v8i32:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
@@ -54,7 +54,7 @@ define <8 x i32> @var_shift_v8i32(<8 x i32> %a, <8 x i32> %b) {
   ret <8 x i32> %shift
 }
 
-define <16 x i16> @var_shift_v16i16(<16 x i16> %a, <16 x i16> %b) {
+define <16 x i16> @var_shift_v16i16(<16 x i16> %a, <16 x i16> %b) nounwind {
 ; AVX1-LABEL: var_shift_v16i16:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
@@ -107,7 +107,7 @@ define <16 x i16> @var_shift_v16i16(<16 x i16> %a, <16 x i16> %b) {
   ret <16 x i16> %shift
 }
 
-define <32 x i8> @var_shift_v32i8(<32 x i8> %a, <32 x i8> %b) {
+define <32 x i8> @var_shift_v32i8(<32 x i8> %a, <32 x i8> %b) nounwind {
 ; AVX1-LABEL: var_shift_v32i8:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
@@ -161,7 +161,7 @@ define <32 x i8> @var_shift_v32i8(<32 x i8> %a, <32 x i8> %b) {
 ; Uniform Variable Shifts
 ;
 
-define <4 x i64> @splatvar_shift_v4i64(<4 x i64> %a, <4 x i64> %b) {
+define <4 x i64> @splatvar_shift_v4i64(<4 x i64> %a, <4 x i64> %b) nounwind {
 ; AVX1-LABEL: splatvar_shift_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
@@ -179,7 +179,7 @@ define <4 x i64> @splatvar_shift_v4i64(<4 x i64> %a, <4 x i64> %b) {
   ret <4 x i64> %shift
 }
 
-define <8 x i32> @splatvar_shift_v8i32(<8 x i32> %a, <8 x i32> %b) {
+define <8 x i32> @splatvar_shift_v8i32(<8 x i32> %a, <8 x i32> %b) nounwind {
 ; AVX1-LABEL: splatvar_shift_v8i32:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
@@ -201,7 +201,7 @@ define <8 x i32> @splatvar_shift_v8i32(<8 x i32> %a, <8 x i32> %b) {
   ret <8 x i32> %shift
 }
 
-define <16 x i16> @splatvar_shift_v16i16(<16 x i16> %a, <16 x i16> %b) {
+define <16 x i16> @splatvar_shift_v16i16(<16 x i16> %a, <16 x i16> %b) nounwind {
 ; AVX1-LABEL: splatvar_shift_v16i16:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
@@ -225,7 +225,7 @@ define <16 x i16> @splatvar_shift_v16i16(<16 x i16> %a, <16 x i16> %b) {
   ret <16 x i16> %shift
 }
 
-define <32 x i8> @splatvar_shift_v32i8(<32 x i8> %a, <32 x i8> %b) {
+define <32 x i8> @splatvar_shift_v32i8(<32 x i8> %a, <32 x i8> %b) nounwind {
 ; AVX1-LABEL: splatvar_shift_v32i8:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
@@ -279,7 +279,7 @@ define <32 x i8> @splatvar_shift_v32i8(<32 x i8> %a, <32 x i8> %b) {
 ; Constant Shifts
 ;
 
-define <4 x i64> @constant_shift_v4i64(<4 x i64> %a) {
+define <4 x i64> @constant_shift_v4i64(<4 x i64> %a) nounwind {
 ; AVX1-LABEL: constant_shift_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
@@ -300,7 +300,7 @@ define <4 x i64> @constant_shift_v4i64(<4 x i64> %a) {
   ret <4 x i64> %shift
 }
 
-define <8 x i32> @constant_shift_v8i32(<8 x i32> %a) {
+define <8 x i32> @constant_shift_v8i32(<8 x i32> %a) nounwind {
 ; AVX1-LABEL: constant_shift_v8i32:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpmulld {{.*}}(%rip), %xmm0, %xmm1
@@ -317,7 +317,7 @@ define <8 x i32> @constant_shift_v8i32(<8 x i32> %a) {
   ret <8 x i32> %shift
 }
 
-define <16 x i16> @constant_shift_v16i16(<16 x i16> %a) {
+define <16 x i16> @constant_shift_v16i16(<16 x i16> %a) nounwind {
 ; AVX1-LABEL: constant_shift_v16i16:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpmullw {{.*}}(%rip), %xmm0, %xmm1
@@ -334,7 +334,7 @@ define <16 x i16> @constant_shift_v16i16(<16 x i16> %a) {
   ret <16 x i16> %shift
 }
 
-define <32 x i8> @constant_shift_v32i8(<32 x i8> %a) {
+define <32 x i8> @constant_shift_v32i8(<32 x i8> %a) nounwind {
 ; AVX1-LABEL: constant_shift_v32i8:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
@@ -386,7 +386,7 @@ define <32 x i8> @constant_shift_v32i8(<32 x i8> %a) {
 ; Uniform Constant Shifts
 ;
 
-define <4 x i64> @splatconstant_shift_v4i64(<4 x i64> %a) {
+define <4 x i64> @splatconstant_shift_v4i64(<4 x i64> %a) nounwind {
 ; AVX1-LABEL: splatconstant_shift_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpsllq $7, %xmm0, %xmm1
@@ -403,7 +403,7 @@ define <4 x i64> @splatconstant_shift_v4i64(<4 x i64> %a) {
   ret <4 x i64> %shift
 }
 
-define <8 x i32> @splatconstant_shift_v8i32(<8 x i32> %a) {
+define <8 x i32> @splatconstant_shift_v8i32(<8 x i32> %a) nounwind {
 ; AVX1-LABEL: splatconstant_shift_v8i32:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpslld $5, %xmm0, %xmm1
@@ -420,7 +420,7 @@ define <8 x i32> @splatconstant_shift_v8i32(<8 x i32> %a) {
   ret <8 x i32> %shift
 }
 
-define <16 x i16> @splatconstant_shift_v16i16(<16 x i16> %a) {
+define <16 x i16> @splatconstant_shift_v16i16(<16 x i16> %a) nounwind {
 ; AVX1-LABEL: splatconstant_shift_v16i16:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpsllw $3, %xmm0, %xmm1
@@ -437,7 +437,7 @@ define <16 x i16> @splatconstant_shift_v16i16(<16 x i16> %a) {
   ret <16 x i16> %shift
 }
 
-define <32 x i8> @splatconstant_shift_v32i8(<32 x i8> %a) {
+define <32 x i8> @splatconstant_shift_v32i8(<32 x i8> %a) nounwind {
 ; AVX1-LABEL: splatconstant_shift_v32i8:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
