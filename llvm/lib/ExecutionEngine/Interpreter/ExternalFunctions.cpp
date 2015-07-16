@@ -198,7 +198,7 @@ static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
     const unsigned ArgNo = A->getArgNo();
     Type *ArgTy = FTy->getParamType(ArgNo);
     args[ArgNo] = ffiTypeFor(ArgTy);
-    ArgBytes += TD->getTypeStoreSize(ArgTy);
+    ArgBytes += TD.getTypeStoreSize(ArgTy);
   }
 
   SmallVector<uint8_t, 128> ArgData;
@@ -210,7 +210,7 @@ static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
     const unsigned ArgNo = A->getArgNo();
     Type *ArgTy = FTy->getParamType(ArgNo);
     values[ArgNo] = ffiValueFor(ArgTy, ArgVals[ArgNo], ArgDataPtr);
-    ArgDataPtr += TD->getTypeStoreSize(ArgTy);
+    ArgDataPtr += TD.getTypeStoreSize(ArgTy);
   }
 
   Type *RetTy = FTy->getReturnType();
@@ -219,7 +219,7 @@ static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
   if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, NumArgs, rtype, &args[0]) == FFI_OK) {
     SmallVector<uint8_t, 128> ret;
     if (RetTy->getTypeID() != Type::VoidTyID)
-      ret.resize(TD->getTypeStoreSize(RetTy));
+      ret.resize(TD.getTypeStoreSize(RetTy));
     ffi_call(&cif, Fn, ret.data(), values.data());
     switch (RetTy->getTypeID()) {
       case Type::IntegerTyID:
