@@ -1936,6 +1936,7 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
             Arg->getOperand(0).getOperand(Element));
       }
     }
+    break;
   }
 
   case ISD::SELECT_CC: {
