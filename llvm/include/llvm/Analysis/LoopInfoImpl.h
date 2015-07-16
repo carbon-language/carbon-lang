@@ -345,7 +345,7 @@ void LoopBase<BlockT, LoopT>::print(raw_ostream &OS, unsigned Depth) const {
 template<class BlockT, class LoopT>
 static void discoverAndMapSubloop(LoopT *L, ArrayRef<BlockT*> Backedges,
                                   LoopInfoBase<BlockT, LoopT> *LI,
-                                  DominatorTreeBase<BlockT> &DomTree) {
+                                  const DominatorTreeBase<BlockT> &DomTree) {
   typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
 
   unsigned NumBlocks = 0;
@@ -468,10 +468,10 @@ void PopulateLoopsDFS<BlockT, LoopT>::insertIntoLoop(BlockT *Block) {
 /// insertions per block.
 template<class BlockT, class LoopT>
 void LoopInfoBase<BlockT, LoopT>::
-Analyze(DominatorTreeBase<BlockT> &DomTree) {
+analyze(const DominatorTreeBase<BlockT> &DomTree) {
 
   // Postorder traversal of the dominator tree.
-  DomTreeNodeBase<BlockT>* DomRoot = DomTree.getRootNode();
+  const DomTreeNodeBase<BlockT> *DomRoot = DomTree.getRootNode();
   for (auto DomNode : post_order(DomRoot)) {
 
     BlockT *Header = DomNode->getBlock();

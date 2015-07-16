@@ -675,7 +675,7 @@ LoopInfo LoopAnalysis::run(Function &F, AnalysisManager<Function> *AM) {
   // objects. I don't want to add that kind of complexity until the scope of
   // the problem is better understood.
   LoopInfo LI;
-  LI.Analyze(AM->getResult<DominatorTreeAnalysis>(F));
+  LI.analyze(AM->getResult<DominatorTreeAnalysis>(F));
   return LI;
 }
 
@@ -698,7 +698,7 @@ INITIALIZE_PASS_END(LoopInfoWrapperPass, "loops", "Natural Loop Information",
 
 bool LoopInfoWrapperPass::runOnFunction(Function &) {
   releaseMemory();
-  LI.Analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
+  LI.analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
   return false;
 }
 

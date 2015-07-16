@@ -263,6 +263,21 @@ template <> struct GraphTraits<MachineDomTreeNode *> {
   }
 };
 
+template <> struct GraphTraits<const MachineDomTreeNode *> {
+  typedef const MachineDomTreeNode NodeType;
+  typedef NodeType::const_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(NodeType *N) {
+    return N;
+  }
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->begin();
+  }
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->end();
+  }
+};
+
 template <> struct GraphTraits<MachineDominatorTree*>
   : public GraphTraits<MachineDomTreeNode *> {
   static NodeType *getEntryNode(MachineDominatorTree *DT) {

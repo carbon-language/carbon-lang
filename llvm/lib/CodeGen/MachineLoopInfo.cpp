@@ -37,7 +37,7 @@ char &llvm::MachineLoopInfoID = MachineLoopInfo::ID;
 
 bool MachineLoopInfo::runOnMachineFunction(MachineFunction &) {
   releaseMemory();
-  LI.Analyze(getAnalysis<MachineDominatorTree>().getBase());
+  LI.analyze(getAnalysis<MachineDominatorTree>().getBase());
   return false;
 }
 

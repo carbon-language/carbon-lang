@@ -622,7 +622,7 @@ public:
   }
 
   /// Create the loop forest using a stable algorithm.
-  void Analyze(DominatorTreeBase<BlockT> &DomTree);
+  void analyze(const DominatorTreeBase<BlockT> &DomTree);
 
   // Debugging
   void print(raw_ostream &OS) const;
