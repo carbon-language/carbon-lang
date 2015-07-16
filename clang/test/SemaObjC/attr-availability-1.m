@@ -3,6 +3,10 @@
 // RUN: %clang_cc1 -x objective-c++ -std=c++03 -triple x86_64-apple-darwin9.0.0 -fsyntax-only -verify %s
 // rdar://18490958
 
+#if !__has_feature(attribute_availability_with_version_underscores)
+# error "missing feature"
+#endif
+
 @protocol P
 - (void)proto_method __attribute__((availability(macosx,introduced=10_1,deprecated=10_2))); // expected-note 2 {{'proto_method' has been explicitly marked deprecated here}}
 @end
