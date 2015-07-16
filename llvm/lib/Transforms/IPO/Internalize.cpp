@@ -60,6 +60,10 @@ namespace {
     explicit InternalizePass();
     explicit InternalizePass(ArrayRef<const char *> ExportList);
     void LoadFile(const char *Filename);
+    bool maybeInternalize(GlobalValue &GV,
+                          const std::set<const Comdat *> &ExternalComdats);
+    void checkComdatVisibility(GlobalValue &GV,
+                               std::set<const Comdat *> &ExternalComdats);
     bool runOnModule(Module &M) override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -105,39 +109,84 @@ void InternalizePass::LoadFile(const char *Filename) {
   }
 }
 
-static bool shouldInternalize(const GlobalValue &GV,
-                              const std::set<std::string> &ExternalNames) {
+static bool isExternallyVisible(const GlobalValue &GV,
+                                const std::set<std::string> &ExternalNames) {
   // Function must be defined here
   if (GV.isDeclaration())
-    return false;
+    return true;
 
   // Available externally is really just a "declaration with a body".
   if (GV.hasAvailableExternallyLinkage())
-    return false;
+    return true;
 
   // Assume that dllexported symbols are referenced elsewhere
   if (GV.hasDLLExportStorageClass())
-    return false;
-
-  // Already has internal linkage
-  if (GV.hasLocalLinkage())
-    return false;
+    return true;
 
   // Marked to keep external?
-  if (ExternalNames.count(GV.getName()))
-    return false;
+  if (!GV.hasLocalLinkage() && ExternalNames.count(GV.getName()))
+    return true;
 
+  return false;
+}
+
+// Internalize GV if it is possible to do so, i.e. it is not externally visible
+// and is not a member of an externally visible comdat.
+bool InternalizePass::maybeInternalize(
+    GlobalValue &GV, const std::set<const Comdat *> &ExternalComdats) {
+  if (Comdat *C = GV.getComdat()) {
+    if (ExternalComdats.count(C))
+      return false;
+
+    // If a comdat is not externally visible we can drop it.
+    if (auto GO = dyn_cast<GlobalObject>(&GV))
+      GO->setComdat(nullptr);
+
+    if (GV.hasLocalLinkage())
+      return false;
+  } else {
+    if (GV.hasLocalLinkage())
+      return false;
+
+    if (isExternallyVisible(GV, ExternalNames))
+      return false;
+  }
+
+  GV.setVisibility(GlobalValue::DefaultVisibility);
+  GV.setLinkage(GlobalValue::InternalLinkage);
   return true;
+}
+
+// If GV is part of a comdat and is externally visible, keep track of its
+// comdat so that we don't internalize any of its members.
+void InternalizePass::checkComdatVisibility(
+    GlobalValue &GV, std::set<const Comdat *> &ExternalComdats) {
+  Comdat *C = GV.getComdat();
+  if (!C)
+    return;
+
+  if (isExternallyVisible(GV, ExternalNames))
+    ExternalComdats.insert(C);
 }
 
 bool InternalizePass::runOnModule(Module &M) {
   CallGraphWrapperPass *CGPass = getAnalysisIfAvailable<CallGraphWrapperPass>();
   CallGraph *CG = CGPass ? &CGPass->getCallGraph() : nullptr;
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : nullptr;
-  bool Changed = false;
 
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(M, Used, false);
+
+  // Collect comdat visiblity information for the module.
+  std::set<const Comdat *> ExternalComdats;
+  if (!M.getComdatSymbolTable().empty()) {
+    for (Function &F : M)
+      checkComdatVisibility(F, ExternalComdats);
+    for (GlobalVariable &GV : M.globals())
+      checkComdatVisibility(GV, ExternalComdats);
+    for (GlobalAlias &GA : M.aliases())
+      checkComdatVisibility(GA, ExternalComdats);
+  }
 
   // We must assume that globals in llvm.used have a reference that not even
   // the linker can see, so we don't internalize them.
@@ -154,17 +203,13 @@ bool InternalizePass::runOnModule(Module &M) {
 
   // Mark all functions not in the api as internal.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!shouldInternalize(*I, ExternalNames))
+    if (!maybeInternalize(*I, ExternalComdats))
       continue;
-
-    I->setVisibility(GlobalValue::DefaultVisibility);
-    I->setLinkage(GlobalValue::InternalLinkage);
 
     if (ExternalNode)
       // Remove a callgraph edge from the external node to this function.
       ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
 
-    Changed = true;
     ++NumFunctions;
     DEBUG(dbgs() << "Internalizing func " << I->getName() << "\n");
   }
@@ -191,12 +236,9 @@ bool InternalizePass::runOnModule(Module &M) {
   // internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    if (!shouldInternalize(*I, ExternalNames))
+    if (!maybeInternalize(*I, ExternalComdats))
       continue;
 
-    I->setVisibility(GlobalValue::DefaultVisibility);
-    I->setLinkage(GlobalValue::InternalLinkage);
-    Changed = true;
     ++NumGlobals;
     DEBUG(dbgs() << "Internalized gvar " << I->getName() << "\n");
   }
@@ -204,17 +246,20 @@ bool InternalizePass::runOnModule(Module &M) {
   // Mark all aliases that are not in the api as internal as well.
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I) {
-    if (!shouldInternalize(*I, ExternalNames))
+    if (!maybeInternalize(*I, ExternalComdats))
       continue;
 
-    I->setVisibility(GlobalValue::DefaultVisibility);
-    I->setLinkage(GlobalValue::InternalLinkage);
-    Changed = true;
     ++NumAliases;
     DEBUG(dbgs() << "Internalized alias " << I->getName() << "\n");
   }
 
-  return Changed;
+  // We do not keep track of whether this pass changed the module because
+  // it adds unnecessary complexity:
+  // 1) This pass will generally be near the start of the pass pipeline, so
+  //    there will be no analyses to invalidate.
+  // 2) This pass will most likely end up changing the module and it isn't worth
+  //    worrying about optimizing the case where the module is unchanged.
+  return true;
 }
 
 ModulePass *llvm::createInternalizePass() { return new InternalizePass(); }
