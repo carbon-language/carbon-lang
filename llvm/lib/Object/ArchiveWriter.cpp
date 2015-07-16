@@ -154,7 +154,30 @@ printMemberHeader(raw_fd_ostream &Out, object::Archive::Kind Kind, bool Thin,
   printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
 }
 
-static void writeStringTable(raw_fd_ostream &Out,
+// Compute the relative path from From to To.
+static std::string computeRelativePath(StringRef From, StringRef To) {
+  if (sys::path::is_absolute(From) || sys::path::is_absolute(To))
+    return To;
+
+  StringRef DirFrom = sys::path::parent_path(From);
+  auto FromI = sys::path::begin(DirFrom);
+  auto ToI = sys::path::begin(To);
+  while (*FromI == *ToI) {
+    ++FromI;
+    ++ToI;
+  }
+
+  SmallString<128> Relative;
+  for (auto FromE = sys::path::end(DirFrom); FromI != FromE; ++FromI)
+    sys::path::append(Relative, "..");
+
+  for (auto ToE = sys::path::end(To); ToI != ToE; ++ToI)
+    sys::path::append(Relative, *ToI);
+
+  return Relative.str();
+}
+
+static void writeStringTable(raw_fd_ostream &Out, StringRef ArcName,
                              ArrayRef<NewArchiveIterator> Members,
                              std::vector<unsigned> &StringMapIndexes,
                              bool Thin) {
@@ -169,7 +192,13 @@ static void writeStringTable(raw_fd_ostream &Out,
       StartOffset = Out.tell();
     }
     StringMapIndexes.push_back(Out.tell() - StartOffset);
-    Out << Name << "/\n";
+
+    if (Thin)
+      Out << computeRelativePath(ArcName, I.getName());
+    else
+      Out << Name;
+
+    Out << "/\n";
   }
   if (StartOffset == 0)
     return;
@@ -340,7 +369,7 @@ llvm::writeArchive(StringRef ArcName,
 
   std::vector<unsigned> StringMapIndexes;
   if (Kind != object::Archive::K_BSD)
-    writeStringTable(Out, NewMembers, StringMapIndexes, Thin);
+    writeStringTable(Out, ArcName, NewMembers, StringMapIndexes, Thin);
 
   unsigned MemberNum = 0;
   unsigned NewMemberNum = 0;

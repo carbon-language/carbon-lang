@@ -37,9 +37,9 @@ BSD-NEXT: 0123456789abcde{{.....}}bar.
 BSD-SAME: #1/16           0           0     0     644     20        `
 BSD-NEXT: 0123456789abcdefzed.
 
-RUN: rm -f %t.a
-RUN: llvm-ar --format=gnu rcT %t.a 0123456789abcde 0123456789abcdef
-RUN: cat %t.a | FileCheck -strict-whitespace --check-prefix=THIN %s
+RUN: rm -f test.a
+RUN: llvm-ar --format=gnu rcT test.a 0123456789abcde 0123456789abcdef
+RUN: cat test.a | FileCheck -strict-whitespace --check-prefix=THIN %s
 THIN: !<thin>
 THIN-NEXT: //                                              36        `
 THIN-NEXT: 0123456789abcde/
@@ -47,3 +47,18 @@ THIN-NEXT: 0123456789abcdef/{{$}}
 THIN: {{^$}}
 THIN: /0              0           0     0     644     4         `
 THIN-NEXT: /17             0           0     0     644     4         `
+
+RUN: mkdir -p bar
+RUN: rm -f bar/test.a
+RUN: llvm-ar --format=gnu rcT bar/test.a 0123456789abcde 0123456789abcdef foo/0123456789abcde foo/0123456789abcdef
+RUN: cat bar/test.a | FileCheck -strict-whitespace --check-prefix=THIN-PATH %s
+THIN-PATH: !<thin>
+THIN-PATH-NEXT: //                                              90        `
+THIN-PATH-NEXT: ../0123456789abcde/
+THIN-PATH-NEXT: ../0123456789abcdef/
+THIN-PATH-NEXT: ../foo/0123456789abcde/
+THIN-PATH-NEXT: ../foo/0123456789abcdef/
+THIN-PATH-NEXT: /0              0           0     0     644     4         `
+THIN-PATH-NEXT: /20             0           0     0     644     4         `
+THIN-PATH-NEXT: /41             0           0     0     644     4         `
+THIN-PATH-NEXT: /65             0           0     0     644     4         `
