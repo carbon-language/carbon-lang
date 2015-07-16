@@ -174,7 +174,7 @@ void convertMemMoveToLoop(Instruction *splitAt, Value *srcAddr, Value *dstAddr,
   LoopPhi->addIncoming(IndexPtr, LoopBB);
   LoopPhi->addIncoming(len, CopyBackwardsBB);
   BranchInst::Create(ExitBB, LoopBB, CompareN, ThenTerm);
-  ThenTerm->removeFromParent();
+  ThenTerm->eraseFromParent();
 
   // Copying forward.
   BasicBlock *FwdLoopBB =
@@ -193,7 +193,7 @@ void convertMemMoveToLoop(Instruction *splitAt, Value *srcAddr, Value *dstAddr,
   FwdCopyPhi->addIncoming(ConstantInt::get(TypeOfLen, 0), CopyForwardBB);
 
   BranchInst::Create(ExitBB, FwdLoopBB, CompareN, ElseTerm);
-  ElseTerm->removeFromParent();
+  ElseTerm->eraseFromParent();
 }
 
 // Lower memset to loop.
