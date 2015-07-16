@@ -1671,6 +1671,8 @@ void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
       report("Lane masks of sub ranges overlap in live interval", MF, LI);
     if ((SR.LaneMask & ~MaxMask) != 0)
       report("Subrange lanemask is invalid", MF, LI);
+    if (SR.empty())
+      report("Subrange must not be empty", MF, SR, LI.reg, SR.LaneMask);
     Mask |= SR.LaneMask;
     verifyLiveRange(SR, LI.reg, SR.LaneMask);
     if (!LI.covers(SR))

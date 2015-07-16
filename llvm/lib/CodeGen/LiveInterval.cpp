@@ -1110,6 +1110,8 @@ void LiveInterval::verify(const MachineRegisterInfo *MRI) const {
 
     // subrange mask should not contained in maximum lane mask for the vreg.
     assert((Mask & ~MaxMask) == 0);
+    // empty subranges must be removed.
+    assert(!SR.empty());
 
     SR.verify();
     // Main liverange should cover subrange.

@@ -160,6 +160,8 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
     /// shrinkToUses(LiveInterval *li, SmallVectorImpl<MachineInstr*> *dead)
     /// that works on a subregister live range and only looks at uses matching
     /// the lane mask of the subregister range.
+    /// This may leave the subrange empty which needs to be cleaned up with
+    /// LiveInterval::removeEmptySubranges() afterwards.
     void shrinkToUses(LiveInterval::SubRange &SR, unsigned Reg);
 
     /// extendToIndices - Extend the live range of LI to reach all points in

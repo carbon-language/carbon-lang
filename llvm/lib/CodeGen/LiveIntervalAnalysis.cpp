@@ -403,9 +403,14 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
          && "Can only shrink virtual registers");
 
   // Shrink subregister live ranges.
+  bool NeedsCleanup = false;
   for (LiveInterval::SubRange &S : li->subranges()) {
     shrinkToUses(S, li->reg);
+    if (S.empty())
+      NeedsCleanup = true;
   }
+  if (NeedsCleanup)
+    li->removeEmptySubRanges();
 
   // Find all the values used, including PHI kills.
   ShrinkToUsesWorkList WorkList;
