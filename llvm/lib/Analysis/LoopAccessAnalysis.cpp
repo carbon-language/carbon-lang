@@ -127,9 +127,25 @@ void RuntimePointerChecking::insert(Loop *Lp, Value *Ptr, bool WritePtr,
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
   assert(AR && "Invalid addrec expression");
   const SCEV *Ex = SE->getBackedgeTakenCount(Lp);
+
+  const SCEV *ScStart = AR->getStart();
   const SCEV *ScEnd = AR->evaluateAtIteration(Ex, *SE);
-  Pointers.emplace_back(Ptr, AR->getStart(), ScEnd, WritePtr, DepSetId, ASId,
-                        Sc);
+  const SCEV *Step = AR->getStepRecurrence(*SE);
+
+  // For expressions with negative step, the upper bound is ScStart and the
+  // lower bound is ScEnd.
+  if (const SCEVConstant *CStep = dyn_cast<const SCEVConstant>(Step)) {
+    if (CStep->getValue()->isNegative())
+      std::swap(ScStart, ScEnd);
+  } else {
+    // Fallback case: the step is not constant, but the we can still
+    // get the upper and lower bounds of the interval by using min/max
+    // expressions.
+    ScStart = SE->getUMinExpr(ScStart, ScEnd);
+    ScEnd = SE->getUMaxExpr(AR->getStart(), ScEnd);
+  }
+
+  Pointers.emplace_back(Ptr, ScStart, ScEnd, WritePtr, DepSetId, ASId, Sc);
 }
 
 bool RuntimePointerChecking::needsChecking(
