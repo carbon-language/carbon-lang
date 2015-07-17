@@ -433,6 +433,9 @@ public:
   /// compiler runtime or math libraries.
   bool hasSinCos() const;
 
+  /// Returns true if machine scheduler should be enabled.
+  bool enableMachineScheduler() const override;
+
   /// True for some subtargets at > -O0.
   bool enablePostRAScheduler() const override;
 

@@ -228,9 +228,9 @@ define void @truncstore_v4i32tov4i8(<4 x i8>** %ptr, <4 x i32> %val) {
 ;CHECK: ldr.w   r9, [sp]
 ;CHECK: vmov    {{d[0-9]+}}, r3, r9
 ;CHECK: vmov    {{d[0-9]+}}, r1, r2
+;CHECK: ldr     r[[PTRREG:[0-9]+]], [r0]
 ;CHECK: vmovn.i32       [[VECLO:d[0-9]+]], {{q[0-9]+}}
 ;CHECK: vuzp.8  [[VECLO]], {{d[0-9]+}}
-;CHECK: ldr     r[[PTRREG:[0-9]+]], [r0]
 ;CHECK: vst1.32 {[[VECLO]][0]}, [r[[PTRREG]]:32]
 	%A = load <4 x i8>*, <4 x i8>** %ptr
         %trunc = trunc <4 x i32> %val to <4 x i8>
@@ -243,10 +243,10 @@ define void @truncstore_v4i32tov4i8_fake_update(<4 x i8>** %ptr, <4 x i32> %val)
 ;CHECK: ldr.w   r9, [sp]
 ;CHECK: vmov    {{d[0-9]+}}, r3, r9
 ;CHECK: vmov    {{d[0-9]+}}, r1, r2
-;CHECK: movs    [[IMM16:r[0-9]+]], #16
+;CHECK: ldr     r[[PTRREG:[0-9]+]], [r0]
 ;CHECK: vmovn.i32       [[VECLO:d[0-9]+]], {{q[0-9]+}}
 ;CHECK: vuzp.8  [[VECLO]], {{d[0-9]+}}
-;CHECK: ldr     r[[PTRREG:[0-9]+]], [r0]
+;CHECK: movs    [[IMM16:r[0-9]+]], #16
 ;CHECK: vst1.32 {[[VECLO]][0]}, [r[[PTRREG]]:32], [[IMM16]]
 ;CHECK: str     r[[PTRREG]], [r0]
 	%A = load <4 x i8>*, <4 x i8>** %ptr
