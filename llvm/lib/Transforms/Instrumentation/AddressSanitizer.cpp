@@ -525,6 +525,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   ShadowMapping Mapping;
 
   SmallVector<AllocaInst *, 16> AllocaVec;
+  SmallVector<AllocaInst *, 16> NonInstrumentedStaticAllocaVec;
   SmallVector<Instruction *, 8> RetVec;
   unsigned StackAlignment;
 
@@ -625,7 +626,10 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   /// \brief Collect Alloca instructions we want (and can) handle.
   void visitAllocaInst(AllocaInst &AI) {
-    if (!ASan.isInterestingAlloca(AI)) return;
+    if (!ASan.isInterestingAlloca(AI)) {
+      if (AI.isStaticAlloca()) NonInstrumentedStaticAllocaVec.push_back(&AI);
+      return;
+    }
 
     StackAlignment = std::max(StackAlignment, AI.getAlignment());
     if (ASan.isDynamicAlloca(AI))
@@ -1733,6 +1737,8 @@ void FunctionStackPoisoner::poisonStack() {
   Instruction *InsBefore = AllocaVec[0];
   IRBuilder<> IRB(InsBefore);
   IRB.SetCurrentDebugLocation(EntryDebugLocation);
+
+  for (auto *AI : NonInstrumentedStaticAllocaVec) AI->moveBefore(InsBefore);
 
   SmallVector<ASanStackVariableDescription, 16> SVD;
   SVD.reserve(AllocaVec.size());
