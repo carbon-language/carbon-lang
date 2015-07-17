@@ -63,6 +63,19 @@ class NSStringDataFormatterTestCase(TestBase):
         """Check that Unicode characters come out of CFString summary correctly."""
         self.appkit_tester_impl(self.buildDwarf,self.rdar11106605_commands)
 
+    @skipUnlessDarwin
+    @dsym_test
+    def test_nsstring_withNULs_with_dsym_and_run_command(self):
+        """Test formatters for NSString."""
+        self.appkit_tester_impl(self.buildDsym,self.nsstring_withNULs_commands)
+
+    @skipUnlessDarwin
+    @dwarf_test
+    def test_nsstring_withNULS_with_dwarf_and_run_command(self):
+        """Test formatters for NSString."""
+        self.appkit_tester_impl(self.buildDwarf,self.nsstring_withNULs_commands)
+
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -102,9 +115,15 @@ class NSStringDataFormatterTestCase(TestBase):
         self.expect('expr -d run-target -- path',substrs = ['usr/blah/stuff'])
         self.expect('frame variable path',substrs = ['usr/blah/stuff'])
 
+    def nsstring_withNULs_commands(self):
+        """Check that the NSString formatter supports embedded NULs in the text"""
         self.expect('po strwithNULs', substrs=['a very much boring task to write'])
         self.expect('expr [strwithNULs length]', substrs=['54'])
         self.expect('frame variable strwithNULs', substrs=['@"a very much boring task to write\\0a string this way!!'])
+        self.expect('po strwithNULs2', substrs=['a very much boring task to write'])
+        self.expect('expr [strwithNULs2 length]', substrs=['52'])
+        self.expect('frame variable strwithNULs2', substrs=['@"a very much boring task to write\\0a string this way!!'])
+
 
 if __name__ == '__main__':
     import atexit

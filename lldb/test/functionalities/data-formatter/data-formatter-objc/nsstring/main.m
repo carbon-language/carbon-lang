@@ -86,6 +86,13 @@ int main (int argc, const char * argv[])
   NSString *strwithNULs = [NSString stringWithCharacters: someOfTheseAreNUL
                                            length: sizeof someOfTheseAreNUL / sizeof *someOfTheseAreNUL];
 
+  const unichar someOfTheseAreNUL2[] = {'a',' ', 'v','e','r','y',' ',
+      'm','u','c','h',' ','b','o','r','i','n','g',' ','t','a','s','k',
+      ' ','t','o',' ','w','r','i','t','e', 0, 'a', ' ', 's', 't', 'r', 'i', 'n', 'g', ' ',
+      't','h','i','s',' ','w','a','y','!','!'};
+  NSString *strwithNULs2 = [NSString stringWithCharacters: someOfTheseAreNUL2
+                                           length: sizeof someOfTheseAreNUL2 / sizeof *someOfTheseAreNUL2];
+
     [pool drain]; // break here
     return 0;
 }

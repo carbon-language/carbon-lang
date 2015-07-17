@@ -1008,15 +1008,30 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     {
         uint64_t location = valobj_addr + 2*ptr_size;
         if (!has_explicit_length)
+        {
+            // in this kind of string, the byte before the string content is a length byte
+            // so let's try and use it to handle the embedded NUL case
+            Error error;
+            explicit_length = process_sp->ReadUnsignedIntegerFromMemory(location, 1, 0, error);
+            if (error.Fail() || explicit_length == 0)
+                has_explicit_length = false;
+            else
+                has_explicit_length = true;
             location++;
+        }
         ReadStringAndDumpToStreamOptions options(valobj);
         options.SetLocation(location);
         options.SetProcessSP(process_sp);
         options.SetStream(&stream);
         options.SetPrefixToken('@');
         options.SetSourceSize(explicit_length);
+        options.SetNeedsZeroTermination(!has_explicit_length);
         options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
-        return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
+        options.SetBinaryZeroIsTerminator(!has_explicit_length);
+        if (has_explicit_length)
+            return ReadStringAndDumpToStream<StringElementType::UTF8>(options);
+        else
+            return ReadStringAndDumpToStream<StringElementType::ASCII>(options);
     }
     else
     {
