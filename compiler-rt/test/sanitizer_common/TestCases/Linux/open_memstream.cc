@@ -25,16 +25,18 @@ static void check_mem_is_good(void *p, size_t s) {
 static void check_mem_is_good(void *p, size_t s) {}
 #endif
 
-static void run(void) {
+static void run(bool flush) {
   char *buf;
   size_t buf_len;
   fprintf(stderr, " &buf %p, &buf_len %p\n", &buf, &buf_len);
   FILE *fp = open_memstream(&buf, &buf_len);
   fprintf(fp, "hello");
-  fflush(fp);
-  check_mem_is_good(&buf, sizeof(buf));
-  check_mem_is_good(&buf_len, sizeof(buf_len));
-  check_mem_is_good(buf, buf_len);
+  if (flush) {
+    fflush(fp);
+    check_mem_is_good(&buf, sizeof(buf));
+    check_mem_is_good(&buf_len, sizeof(buf_len));
+    check_mem_is_good(buf, buf_len);
+  }
 
   char *p = new char[1024];
   memset(p, 'a', 1023);
@@ -42,17 +44,27 @@ static void run(void) {
   for (int i = 0; i < 100; ++i)
     fprintf(fp, "%s", p);
   delete[] p;
-  fflush(fp);
-  fprintf(stderr, " %p addr %p, len %zu\n", &buf, buf, buf_len);
+
+  if (flush) {
+    fflush(fp);
+    fprintf(stderr, " %p addr %p, len %zu\n", &buf, buf, buf_len);
+    check_mem_is_good(&buf, sizeof(buf));
+    check_mem_is_good(&buf_len, sizeof(buf_len));
+    check_mem_is_good(buf, buf_len);\
+  }
+
+  fclose(fp);
   check_mem_is_good(&buf, sizeof(buf));
   check_mem_is_good(&buf_len, sizeof(buf_len));
   check_mem_is_good(buf, buf_len);
-  fclose(fp);
+
   free(buf);
 }
 
 int main(void) {
   for (int i = 0; i < 100; ++i)
-    run();
+    run(false);
+  for (int i = 0; i < 100; ++i)
+    run(true);
   return 0;
 }
