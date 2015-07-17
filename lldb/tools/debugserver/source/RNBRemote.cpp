@@ -2736,21 +2736,24 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
                 ostrm << ';';
             }
 
-            // Include JSON info that describes the stop reason for all threads
-            // so when stepping we don't have to query each thread for its stop
-            // info. We use the new "jthreads" key whose values is hex ascii JSON
-            // that contains the thread IDs and only the stop info.
-            const bool queue_info = false;
-            const bool registers = false;
-            const bool memory = false;
-            JSONGenerator::ObjectSP threads_info_sp = GetJSONThreadsInfo(queue_info, registers, memory);
-            if (threads_info_sp)
+            // Include JSON info that describes the stop reason for any threads
+            // that actually have stop reasons. We use the new "jstopinfo" key
+            // whose values is hex ascii JSON that contains the thread IDs
+            // thread stop info only for threads that have stop reasons. Only send
+            // this if we have more than one thread otherwise this packet has all
+            // the info it needs.
+            if (numthreads > 1)
             {
-                ostrm << std::hex << "jthreads:";
-                std::ostringstream json_strm;
-                threads_info_sp->Dump (json_strm);
-                append_hexified_string (ostrm, json_strm.str());
-                ostrm << ';';
+                const bool threads_with_valid_stop_info_only = true;
+                JSONGenerator::ObjectSP threads_info_sp = GetJSONThreadsInfo(threads_with_valid_stop_info_only);
+                if (threads_info_sp)
+                {
+                    ostrm << std::hex << "jstopinfo:";
+                    std::ostringstream json_strm;
+                    threads_info_sp->Dump (json_strm);
+                    append_hexified_string (ostrm, json_strm.str());
+                    ostrm << ';';
+                }
             }
         }
 
@@ -4981,7 +4984,7 @@ get_integer_value_for_key_name_from_json (const char *key, const char *json_stri
 }
 
 JSONGenerator::ObjectSP
-RNBRemote::GetJSONThreadsInfo(bool queue_info, bool registers, bool memory)
+RNBRemote::GetJSONThreadsInfo(bool threads_with_valid_stop_info_only)
 {
     JSONGenerator::ArraySP threads_array_sp;
     if (m_ctx.HasValidProcessID())
@@ -4997,54 +5000,64 @@ RNBRemote::GetJSONThreadsInfo(bool queue_info, bool registers, bool memory)
 
             struct DNBThreadStopInfo tid_stop_info;
 
-            JSONGenerator::DictionarySP thread_dict_sp(new JSONGenerator::Dictionary());
+            const bool stop_info_valid = DNBThreadGetStopReason (pid, tid, &tid_stop_info);
 
+            // If we are doing stop info only, then we only show threads that have a
+            // valid stop reason
+            if (threads_with_valid_stop_info_only)
+            {
+                if (!stop_info_valid || tid_stop_info.reason == eStopTypeInvalid)
+                    continue;
+            }
+
+            JSONGenerator::DictionarySP thread_dict_sp(new JSONGenerator::Dictionary());
             thread_dict_sp->AddIntegerItem("tid", tid);
 
             std::string reason_value("none");
-            if (DNBThreadGetStopReason (pid, tid, &tid_stop_info))
+
+            if (stop_info_valid)
             {
                 switch (tid_stop_info.reason)
                 {
                     case eStopTypeInvalid:
                         break;
+
                     case eStopTypeSignal:
                         if (tid_stop_info.details.signal.signo != 0)
+                        {
+                            thread_dict_sp->AddIntegerItem("signal", tid_stop_info.details.signal.signo);
                             reason_value = "signal";
+                        }
                         break;
+
                     case eStopTypeException:
                         if (tid_stop_info.details.exception.type != 0)
+                        {
                             reason_value = "exception";
+                            thread_dict_sp->AddIntegerItem("metype", tid_stop_info.details.exception.type);
+                            JSONGenerator::ArraySP medata_array_sp(new JSONGenerator::Array());
+                            for (nub_size_t i=0; i<tid_stop_info.details.exception.data_count; ++i)
+                            {
+                                medata_array_sp->AddItem(JSONGenerator::IntegerSP(new JSONGenerator::Integer(tid_stop_info.details.exception.data[i])));
+                            }
+                            thread_dict_sp->AddItem("medata", medata_array_sp);
+                        }
                         break;
+
                     case eStopTypeExec:
                         reason_value = "exec";
                         break;
-                }
-                if (tid_stop_info.reason == eStopTypeSignal)
-                {
-                    thread_dict_sp->AddIntegerItem("signal", tid_stop_info.details.signal.signo);
-                }
-                else if (tid_stop_info.reason == eStopTypeException && tid_stop_info.details.exception.type != 0)
-                {
-                    thread_dict_sp->AddIntegerItem("metype", tid_stop_info.details.exception.type);
-                    JSONGenerator::ArraySP medata_array_sp(new JSONGenerator::Array());
-                    for (nub_size_t i=0; i<tid_stop_info.details.exception.data_count; ++i)
-                    {
-                        medata_array_sp->AddItem(JSONGenerator::IntegerSP(new JSONGenerator::Integer(tid_stop_info.details.exception.data[i])));
-                    }
-                    thread_dict_sp->AddItem("medata", medata_array_sp);
                 }
             }
 
             thread_dict_sp->AddStringItem("reason", reason_value);
 
-            const char *thread_name = DNBThreadGetName (pid, tid);
-            if (thread_name && thread_name[0])
-                thread_dict_sp->AddStringItem("name", thread_name);
-
-
-            if (queue_info)
+            if (threads_with_valid_stop_info_only == false)
             {
+                const char *thread_name = DNBThreadGetName (pid, tid);
+                if (thread_name && thread_name[0])
+                    thread_dict_sp->AddStringItem("name", thread_name);
+
                 thread_identifier_info_data_t thread_ident_info;
                 if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))
                 {
@@ -5070,10 +5083,7 @@ RNBRemote::GetJSONThreadsInfo(bool queue_info, bool registers, bool memory)
                         }
                     }
                 }
-            }
 
-            if (registers)
-            {
                 DNBRegisterValue reg_value;
 
                 if (g_reg_entries != NULL)
@@ -5098,10 +5108,7 @@ RNBRemote::GetJSONThreadsInfo(bool queue_info, bool registers, bool memory)
                     }
                     thread_dict_sp->AddItem("registers", registers_dict_sp);
                 }
-            }
 
-            if (memory)
-            {
                 // Add expedited stack memory so stack backtracing doesn't need to read anything from the
                 // frame pointer chain.
                 StackMemoryMap stack_mmap;
@@ -5136,10 +5143,8 @@ RNBRemote::HandlePacket_jThreadsInfo (const char *p)
     // If we haven't run the process yet, return an error.
     if (m_ctx.HasValidProcessID())
     {
-        const bool queue_info = true;
-        const bool registers = true;
-        const bool memory = true;
-        JSONGenerator::ObjectSP threads_info_sp = GetJSONThreadsInfo(queue_info, registers, memory);
+        const bool threads_with_valid_stop_info_only = false;
+        JSONGenerator::ObjectSP threads_info_sp = GetJSONThreadsInfo(threads_with_valid_stop_info_only);
 
         if (threads_info_sp)
         {

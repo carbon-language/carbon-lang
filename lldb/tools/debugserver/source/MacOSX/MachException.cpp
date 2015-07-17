@@ -206,6 +206,13 @@ MachException::Data::GetStopInfo(struct DNBThreadStopInfo *stop_info) const
 {
     // Zero out the structure.
     memset(stop_info, 0, sizeof(struct DNBThreadStopInfo));
+
+    if (exc_type == 0)
+    {
+        stop_info->reason = eStopTypeInvalid;
+        return true;
+    }
+
     // We always stop with a mach exceptions
     stop_info->reason = eStopTypeException;
     // Save the EXC_XXXX exception type

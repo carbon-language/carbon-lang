@@ -376,7 +376,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread_state_mutex(Mutex::eMutexTypeRecursive),
     m_thread_ids (),
-    m_threads_info_sp (),
+    m_jstopinfo_sp (),
+    m_jthreadsinfo_sp (),
     m_continue_c_tids (),
     m_continue_C_tids (),
     m_continue_s_tids (),
@@ -792,7 +793,7 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
             }
 
             const StateType state = SetThreadStopInfo (response);
-            if (state == eStateStopped)
+            if (state != eStateInvalid)
             {
                 SetPrivateState (state);
             }
@@ -1397,7 +1398,8 @@ ProcessGDBRemote::WillResume ()
     m_continue_C_tids.clear();
     m_continue_s_tids.clear();
     m_continue_S_tids.clear();
-    m_threads_info_sp.reset();
+    m_jstopinfo_sp.reset();
+    m_jthreadsinfo_sp.reset();
     return Error();
 }
 
@@ -1717,10 +1719,10 @@ ProcessGDBRemote::UpdateThreadIDList ()
 {
     Mutex::Locker locker(m_thread_list_real.GetMutex());
 
-    if (m_threads_info_sp)
+    if (m_jthreadsinfo_sp)
     {
         // If we have the JSON threads info, we can get the thread list from that
-        StructuredData::Array *thread_infos = m_threads_info_sp->GetAsArray();
+        StructuredData::Array *thread_infos = m_jthreadsinfo_sp->GetAsArray();
         if (thread_infos && thread_infos->GetSize() > 0)
         {
             m_thread_ids.clear();
@@ -1841,13 +1843,14 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
     return true;
 }
 
+
 bool
-ProcessGDBRemote::CalculateThreadStopInfo (ThreadGDBRemote *thread)
+ProcessGDBRemote::GetThreadStopInfoFromJSON (ThreadGDBRemote *thread, const StructuredData::ObjectSP &thread_infos_sp)
 {
     // See if we got thread stop infos for all threads via the "jThreadsInfo" packet
-    if (m_threads_info_sp)
+    if (thread_infos_sp)
     {
-        StructuredData::Array *thread_infos = m_threads_info_sp->GetAsArray();
+        StructuredData::Array *thread_infos = thread_infos_sp->GetAsArray();
         if (thread_infos)
         {
             lldb::tid_t tid;
@@ -1860,11 +1863,35 @@ ProcessGDBRemote::CalculateThreadStopInfo (ThreadGDBRemote *thread)
                     if (thread_dict->GetValueForKeyAsInteger<lldb::tid_t>("tid", tid, LLDB_INVALID_THREAD_ID))
                     {
                         if (tid == thread->GetID())
-                            return SetThreadStopInfo(thread_dict);
+                            return (bool)SetThreadStopInfo(thread_dict);
                     }
                 }
             }
         }
+    }
+    return false;
+}
+
+bool
+ProcessGDBRemote::CalculateThreadStopInfo (ThreadGDBRemote *thread)
+{
+    // See if we got thread stop infos for all threads via the "jThreadsInfo" packet
+    if (GetThreadStopInfoFromJSON (thread, m_jthreadsinfo_sp))
+        return true;
+
+    // See if we got thread stop info for any threads valid stop info reasons threads
+    // via the "jstopinfo" packet stop reply packet key/value pair?
+    if (m_jstopinfo_sp)
+    {
+        // If we have "jstopinfo" then we have stop descriptions for all threads
+        // that have stop reasons, and if there is no entry for a thread, then
+        // it has no stop reason.
+        thread->GetRegisterContext()->InvalidateIfNeeded(true);
+        if (!GetThreadStopInfoFromJSON (thread, m_jstopinfo_sp))
+        {
+            thread->SetStopInfo (StopInfoSP());
+        }
+        return true;
     }
 
     // Fall back to using the qThreadStopInfo packet
@@ -1921,8 +1948,6 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
                 gdb_thread->PrivateSetRegisterValue (pair.first, reg_value_extractor);
             }
 
-            // Clear the stop info just in case we don't set it to anything
-            thread_sp->SetStopInfo (StopInfoSP());
             thread_sp->SetName (thread_name.empty() ? NULL : thread_name.c_str());
 
             gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
@@ -1932,144 +1957,149 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
             else
                 gdb_thread->ClearQueueInfo();
 
-
-            if (exc_type != 0)
+            // Make sure we update our thread stop reason just once
+            if (!thread_sp->StopInfoIsUpToDate())
             {
-                const size_t exc_data_size = exc_data.size();
+                thread_sp->SetStopInfo (StopInfoSP());
 
-                thread_sp->SetStopInfo (StopInfoMachException::CreateStopReasonWithMachException (*thread_sp,
-                                                                                                  exc_type,
-                                                                                                  exc_data_size,
-                                                                                                  exc_data_size >= 1 ? exc_data[0] : 0,
-                                                                                                  exc_data_size >= 2 ? exc_data[1] : 0,
-                                                                                                  exc_data_size >= 3 ? exc_data[2] : 0));
-            }
-            else
-            {
-                bool handled = false;
-                bool did_exec = false;
-                if (!reason.empty())
+                if (exc_type != 0)
                 {
-                    if (reason.compare("trace") == 0)
-                    {
-                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
-                        handled = true;
-                    }
-                    else if (reason.compare("breakpoint") == 0)
-                    {
-                        addr_t pc = thread_sp->GetRegisterContext()->GetPC();
-                        lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-                        if (bp_site_sp)
-                        {
-                            // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
-                            // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
-                            // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
-                            handled = true;
-                            if (bp_site_sp->ValidForThisThread (thread_sp.get()))
-                            {
-                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
-                            }
-                            else
-                            {
-                                StopInfoSP invalid_stop_info_sp;
-                                thread_sp->SetStopInfo (invalid_stop_info_sp);
-                            }
-                        }
-                    }
-                    else if (reason.compare("trap") == 0)
-                    {
-                        // Let the trap just use the standard signal stop reason below...
-                    }
-                    else if (reason.compare("watchpoint") == 0)
-                    {
-                        StringExtractor desc_extractor(description.c_str());
-                        addr_t wp_addr = desc_extractor.GetU64(LLDB_INVALID_ADDRESS);
-                        uint32_t wp_index = desc_extractor.GetU32(LLDB_INVALID_INDEX32);
-                        watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
-                        if (wp_addr != LLDB_INVALID_ADDRESS)
-                        {
-                            WatchpointSP wp_sp = GetTarget().GetWatchpointList().FindByAddress(wp_addr);
-                            if (wp_sp)
-                            {
-                                wp_sp->SetHardwareIndex(wp_index);
-                                watch_id = wp_sp->GetID();
-                            }
-                        }
-                        if (watch_id == LLDB_INVALID_WATCH_ID)
-                        {
-                            Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_WATCHPOINTS));
-                            if (log) log->Printf ("failed to find watchpoint");
-                        }
-                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID (*thread_sp, watch_id));
-                        handled = true;
-                    }
-                    else if (reason.compare("exception") == 0)
-                    {
-                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException(*thread_sp, description.c_str()));
-                        handled = true;
-                    }
-                    else if (reason.compare("exec") == 0)
-                    {
-                        did_exec = true;
-                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithExec(*thread_sp));
-                        handled = true;
-                    }
+                    const size_t exc_data_size = exc_data.size();
+
+                    thread_sp->SetStopInfo (StopInfoMachException::CreateStopReasonWithMachException (*thread_sp,
+                                                                                                      exc_type,
+                                                                                                      exc_data_size,
+                                                                                                      exc_data_size >= 1 ? exc_data[0] : 0,
+                                                                                                      exc_data_size >= 2 ? exc_data[1] : 0,
+                                                                                                      exc_data_size >= 3 ? exc_data[2] : 0));
                 }
-
-                if (!handled && signo && did_exec == false)
+                else
                 {
-                    if (signo == SIGTRAP)
+                    bool handled = false;
+                    bool did_exec = false;
+                    if (!reason.empty())
                     {
-                        // Currently we are going to assume SIGTRAP means we are either
-                        // hitting a breakpoint or hardware single stepping.
-                        handled = true;
-                        addr_t pc = thread_sp->GetRegisterContext()->GetPC() + m_breakpoint_pc_offset;
-                        lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-
-                        if (bp_site_sp)
+                        if (reason.compare("trace") == 0)
                         {
-                            // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
-                            // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
-                            // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
-                            if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                            handled = true;
+                        }
+                        else if (reason.compare("breakpoint") == 0)
+                        {
+                            addr_t pc = thread_sp->GetRegisterContext()->GetPC();
+                            lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+                            if (bp_site_sp)
                             {
-                                if(m_breakpoint_pc_offset != 0)
-                                    thread_sp->GetRegisterContext()->SetPC(pc);
-                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                                // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                                // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                                // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                                handled = true;
+                                if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                                {
+                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                                }
+                                else
+                                {
+                                    StopInfoSP invalid_stop_info_sp;
+                                    thread_sp->SetStopInfo (invalid_stop_info_sp);
+                                }
+                            }
+                        }
+                        else if (reason.compare("trap") == 0)
+                        {
+                            // Let the trap just use the standard signal stop reason below...
+                        }
+                        else if (reason.compare("watchpoint") == 0)
+                        {
+                            StringExtractor desc_extractor(description.c_str());
+                            addr_t wp_addr = desc_extractor.GetU64(LLDB_INVALID_ADDRESS);
+                            uint32_t wp_index = desc_extractor.GetU32(LLDB_INVALID_INDEX32);
+                            watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
+                            if (wp_addr != LLDB_INVALID_ADDRESS)
+                            {
+                                WatchpointSP wp_sp = GetTarget().GetWatchpointList().FindByAddress(wp_addr);
+                                if (wp_sp)
+                                {
+                                    wp_sp->SetHardwareIndex(wp_index);
+                                    watch_id = wp_sp->GetID();
+                                }
+                            }
+                            if (watch_id == LLDB_INVALID_WATCH_ID)
+                            {
+                                Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_WATCHPOINTS));
+                                if (log) log->Printf ("failed to find watchpoint");
+                            }
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID (*thread_sp, watch_id));
+                            handled = true;
+                        }
+                        else if (reason.compare("exception") == 0)
+                        {
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException(*thread_sp, description.c_str()));
+                            handled = true;
+                        }
+                        else if (reason.compare("exec") == 0)
+                        {
+                            did_exec = true;
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithExec(*thread_sp));
+                            handled = true;
+                        }
+                    }
+
+                    if (!handled && signo && did_exec == false)
+                    {
+                        if (signo == SIGTRAP)
+                        {
+                            // Currently we are going to assume SIGTRAP means we are either
+                            // hitting a breakpoint or hardware single stepping.
+                            handled = true;
+                            addr_t pc = thread_sp->GetRegisterContext()->GetPC() + m_breakpoint_pc_offset;
+                            lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+
+                            if (bp_site_sp)
+                            {
+                                // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                                // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                                // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                                if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                                {
+                                    if(m_breakpoint_pc_offset != 0)
+                                        thread_sp->GetRegisterContext()->SetPC(pc);
+                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                                }
+                                else
+                                {
+                                    StopInfoSP invalid_stop_info_sp;
+                                    thread_sp->SetStopInfo (invalid_stop_info_sp);
+                                }
                             }
                             else
                             {
-                                StopInfoSP invalid_stop_info_sp;
-                                thread_sp->SetStopInfo (invalid_stop_info_sp);
+                                // If we were stepping then assume the stop was the result of the trace.  If we were
+                                // not stepping then report the SIGTRAP.
+                                // FIXME: We are still missing the case where we single step over a trap instruction.
+                                if (thread_sp->GetTemporaryResumeState() == eStateStepping)
+                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                                else
+                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo, description.c_str()));
                             }
+                        }
+                        if (!handled)
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo, description.c_str()));
+                    }
+
+                    if (!description.empty())
+                    {
+                        lldb::StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
+                        if (stop_info_sp)
+                        {
+                            const char *stop_info_desc = stop_info_sp->GetDescription();
+                            if (!stop_info_desc || !stop_info_desc[0])
+                                stop_info_sp->SetDescription (description.c_str());
                         }
                         else
                         {
-                            // If we were stepping then assume the stop was the result of the trace.  If we were
-                            // not stepping then report the SIGTRAP.
-                            // FIXME: We are still missing the case where we single step over a trap instruction.
-                            if (thread_sp->GetTemporaryResumeState() == eStateStepping)
-                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
-                            else
-                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo, description.c_str()));
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException (*thread_sp, description.c_str()));
                         }
-                    }
-                    if (!handled)
-                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo, description.c_str()));
-                }
-
-                if (!description.empty())
-                {
-                    lldb::StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
-                    if (stop_info_sp)
-                    {
-                        const char *stop_info_desc = stop_info_sp->GetDescription();
-                        if (!stop_info_desc || !stop_info_desc[0])
-                            stop_info_sp->SetDescription (description.c_str());
-                    }
-                    else
-                    {
-                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException (*thread_sp, description.c_str()));
                     }
                 }
             }
@@ -2078,7 +2108,7 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
     return thread_sp;
 }
 
-StateType
+lldb::ThreadSP
 ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
 {
     static ConstString g_key_tid("tid");
@@ -2245,21 +2275,19 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
         return true; // Keep iterating through all dictionary key/value pairs
     });
 
-    SetThreadStopInfo (tid,
-                       expedited_register_map,
-                       signo,
-                       thread_name,
-                       reason,
-                       description,
-                       exc_type,
-                       exc_data,
-                       thread_dispatch_qaddr,
-                       queue_vars_valid,
-                       queue_name,
-                       queue_kind,
-                       queue_serial);
-
-    return eStateExited;
+    return SetThreadStopInfo (tid,
+                              expedited_register_map,
+                              signo,
+                              thread_name,
+                              reason,
+                              description,
+                              exc_type,
+                              exc_data,
+                              thread_dispatch_qaddr,
+                              queue_vars_valid,
+                              queue_name,
+                              queue_kind,
+                              queue_serial);
 }
 
 StateType
@@ -2345,7 +2373,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     if (tid != LLDB_INVALID_THREAD_ID)
                         m_thread_ids.push_back (tid);
                 }
-                else if (key.compare("jthreads") == 0)
+                else if (key.compare("jstopinfo") == 0)
                 {
                     StringExtractor json_extractor;
                     // Swap "value" over into "name_extractor"
@@ -2355,7 +2383,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 
                     // This JSON contains thread IDs and thread stop info for all threads.
                     // It doesn't contain expedited registers, memory or queue info.
-                    m_threads_info_sp = StructuredData::ParseJSON (value);
+                    m_jstopinfo_sp = StructuredData::ParseJSON (value);
                 }
                 else if (key.compare("hexname") == 0)
                 {
@@ -2539,11 +2567,6 @@ ProcessGDBRemote::RefreshStateAfterStop ()
         m_thread_list.SetSelectedThreadByID(m_initial_tid);
         m_initial_tid = LLDB_INVALID_THREAD_ID;
     }
-
-    // Fetch the threads via an efficient packet that gets stop infos for all threads
-    // only if we have more than one thread
-    if (m_thread_ids.size() > 1)
-        m_threads_info_sp = m_gdb_comm.GetThreadsInfo();
 
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
@@ -2819,13 +2842,18 @@ ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
     {
         // Lock the thread stack while we access it
         Mutex::Locker stop_stack_lock(m_last_stop_packet_mutex);
+
+        // We are are not using non-stop mode, there can only be one last stop
+        // reply packet, so clear the list.
+        if (GetTarget().GetNonStopModeEnabled() == false)
+            m_stop_packet_stack.clear();
+
         // Add this stop packet to the stop packet stack
         // This stack will get popped and examined when we switch to the
         // Stopped state
         m_stop_packet_stack.push_back(response);
     }
 }
-
 
 //------------------------------------------------------------------
 // Process Queries
@@ -2852,6 +2880,35 @@ ProcessGDBRemote::GetImageInfoAddress()
     }
 
     return addr;
+}
+
+void
+ProcessGDBRemote::WillPublicStop ()
+{
+    // See if the GDB remote client supports the JSON threads info.
+    // If so, we gather stop info for all threads, expedited registers,
+    // expedited memory, runtime queue information (iOS and MacOSX only),
+    // and more. Expediting memory will help stack backtracing be much
+    // faster. Expediting registers will make sure we don't have to read
+    // the thread registers for GPRs.
+    m_jthreadsinfo_sp = m_gdb_comm.GetThreadsInfo();
+
+    if (m_jthreadsinfo_sp)
+    {
+        // Now set the stop info for each thread and also expedite any registers
+        // and memory that was in the jThreadsInfo response.
+        StructuredData::Array *thread_infos = m_jthreadsinfo_sp->GetAsArray();
+        if (thread_infos)
+        {
+            const size_t n = thread_infos->GetSize();
+            for (size_t i=0; i<n; ++i)
+            {
+                StructuredData::Dictionary *thread_dict = thread_infos->GetItemAtIndex(i)->GetAsDictionary();
+                if (thread_dict)
+                    SetThreadStopInfo(thread_dict);
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------

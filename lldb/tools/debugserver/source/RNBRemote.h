@@ -398,7 +398,7 @@ protected:
     GetDispatchQueueOffsets();
 
     JSONGenerator::ObjectSP
-    GetJSONThreadsInfo (bool queue_info, bool registers, bool memory);
+    GetJSONThreadsInfo (bool threads_with_valid_stop_info_only);
 
     RNBContext      m_ctx;              // process context
     RNBSocket       m_comm;             // communication port

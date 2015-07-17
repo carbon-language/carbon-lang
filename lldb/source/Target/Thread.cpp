@@ -501,6 +501,15 @@ Thread::GetStopReason()
 }
 
 
+bool
+Thread::StopInfoIsUpToDate() const
+{
+    ProcessSP process_sp (GetProcess());
+    if (process_sp)
+        return m_stop_info_stop_id == process_sp->GetStopID();
+    else
+        return true; // Process is no longer around so stop info is always up to date...
+}
 
 void
 Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)

@@ -303,6 +303,9 @@ public:
     lldb::StopReason
     GetStopReason();
 
+    bool
+    StopInfoIsUpToDate() const;
+
     // This sets the stop reason to a "blank" stop reason, so you can call functions on the thread
     // without having the called function run with whatever stop reason you stopped with.
     void

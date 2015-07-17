@@ -161,6 +161,9 @@ public:
     lldb::addr_t
     GetImageInfoAddress() override;
 
+    void
+    WillPublicStop () override;
+
     //------------------------------------------------------------------
     // Process Memory
     //------------------------------------------------------------------
@@ -359,7 +362,8 @@ protected:
     typedef std::map<lldb::addr_t, lldb::addr_t> MMapMap;
     typedef std::map<uint32_t, std::string> ExpeditedRegisterMap;
     tid_collection m_thread_ids; // Thread IDs for all threads. This list gets updated after stopping
-    StructuredData::ObjectSP m_threads_info_sp; // Stop info for all threads if "jThreadsInfo" packet is supported
+    StructuredData::ObjectSP m_jstopinfo_sp; // Stop info only for any threads that have valid stop infos
+    StructuredData::ObjectSP m_jthreadsinfo_sp; // Full stop info, expedited registers and memory for all threads if "jThreadsInfo" packet is supported
     tid_collection m_continue_c_tids;                  // 'c' for continue
     tid_sig_collection m_continue_C_tids; // 'C' for continue with signal
     tid_collection m_continue_s_tids;                  // 's' for step
@@ -396,7 +400,10 @@ protected:
     lldb::StateType
     SetThreadStopInfo (StringExtractor& stop_packet);
 
-    lldb::StateType
+    bool
+    GetThreadStopInfoFromJSON (ThreadGDBRemote *thread, const StructuredData::ObjectSP &thread_infos_sp);
+
+    lldb::ThreadSP
     SetThreadStopInfo (StructuredData::Dictionary *thread_dict);
 
     lldb::ThreadSP
