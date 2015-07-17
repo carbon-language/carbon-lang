@@ -2062,6 +2062,10 @@ SDNode *AArch64DAGToDAGISel::SelectLIBM(SDNode *N) {
   SmallVector<SDValue, 2> Ops;
   Ops.push_back(In);
 
+  // C11 leaves it implementation-defined whether these operations trigger an
+  // inexact exception. IEEE says they don't.  Unfortunately, Darwin decided
+  // they do so we sometimes have to insert a special instruction just to set
+  // the right bit in FPSR.
   if (Subtarget->isTargetDarwin() && !TM.Options.UnsafeFPMath) {
     SDNode *FRINTX = CurDAG->getMachineNode(FRINTXOpc, dl, VT, MVT::Glue, In);
     Ops.push_back(SDValue(FRINTX, 1));
