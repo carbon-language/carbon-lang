@@ -1077,11 +1077,11 @@ defm : CMOVmr<X86_COND_NO, CMOVO16rm , CMOVO32rm , CMOVO64rm>;
 
 // zextload bool -> zextload byte
 def : Pat<(zextloadi8i1  addr:$src), (AND8ri (MOV8rm addr:$src), (i8 1))>;
-def : Pat<(zextloadi16i1 addr:$src), (AND16ri (MOVZX16rm8 addr:$src), (i16 1))>;
-def : Pat<(zextloadi32i1 addr:$src), (AND32ri (MOVZX32rm8 addr:$src), (i32 1))>;
+def : Pat<(zextloadi16i1 addr:$src), (AND16ri8 (MOVZX16rm8 addr:$src), (i16 1))>;
+def : Pat<(zextloadi32i1 addr:$src), (AND32ri8 (MOVZX32rm8 addr:$src), (i32 1))>;
 def : Pat<(zextloadi64i1 addr:$src),
           (SUBREG_TO_REG (i64 0),
-           (AND32ri (MOVZX32rm8 addr:$src), (i32 1)), sub_32bit)>;
+           (AND32ri8 (MOVZX32rm8 addr:$src), (i32 1)), sub_32bit)>;
 
 // extload bool -> extload byte
 // When extloading from 16-bit and smaller memory locations into 64-bit
