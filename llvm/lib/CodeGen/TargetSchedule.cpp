@@ -211,11 +211,9 @@ unsigned TargetSchedModel::computeOperandLatency(
   if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit()
       && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()
       && SchedModel.isComplete()) {
-    std::string Err;
-    raw_string_ostream ss(Err);
-    ss << "DefIdx " << DefIdx << " exceeds machine model writes for "
-       << *DefMI;
-    report_fatal_error(ss.str());
+    errs() << "DefIdx " << DefIdx << " exceeds machine model writes for "
+           << *DefMI;
+    llvm_unreachable("incomplete machine model");
   }
 #endif
   // FIXME: Automatically giving all implicit defs defaultDefLatency is
