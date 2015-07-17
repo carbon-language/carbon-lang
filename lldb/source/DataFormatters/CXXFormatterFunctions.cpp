@@ -716,48 +716,6 @@ lldb_private::formatters::NSDataSummaryProvider (ValueObject& valobj, Stream& st
     return true;
 }
 
-static bool
-ReadAsciiBufferAndDumpToStream (lldb::addr_t location,
-                                lldb::ProcessSP& process_sp,
-                                Stream& dest,
-                                uint32_t size = 0,
-                                Error* error = NULL,
-                                size_t *data_read = NULL,
-                                char prefix_token = '@',
-                                char quote = '"')
-{
-    Error my_error;
-    size_t my_data_read;
-    if (!process_sp || location == 0)
-        return false;
-    
-    if (!size)
-        size = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
-    else
-        size = std::min(size,process_sp->GetTarget().GetMaximumSizeOfStringSummary());
-    
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(size,0));
-    
-    my_data_read = process_sp->ReadCStringFromMemory(location, (char*)buffer_sp->GetBytes(), size, my_error);
-
-    if (error)
-        *error = my_error;
-    if (data_read)
-        *data_read = my_data_read;
-    
-    if (my_error.Fail())
-        return false;
-    
-    dest.Printf("%c%c",prefix_token,quote);
-    
-    if (my_data_read)
-        dest.Printf("%s",(char*)buffer_sp->GetBytes());
-    
-    dest.Printf("%c",quote);
-    
-    return true;
-}
-
 bool
 lldb_private::formatters::NSTaggedString_SummaryProvider (ObjCLanguageRuntime::ClassDescriptorSP descriptor, Stream& stream)
 {
@@ -956,7 +914,16 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
     else if (is_inline && has_explicit_length && !is_unicode && !is_path_store && !is_mutable)
     {
         uint64_t location = 3 * ptr_size + valobj_addr;
-        return ReadAsciiBufferAndDumpToStream(location,process_sp,stream,explicit_length);
+        
+        ReadStringAndDumpToStreamOptions options(valobj);
+        options.SetLocation(location);
+        options.SetProcessSP(process_sp);
+        options.SetStream(&stream);
+        options.SetPrefixToken('@');
+        options.SetQuote('"');
+        options.SetSourceSize(explicit_length);
+        options.SetIgnoreMaxLength(summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryUncapped);
+        return ReadStringAndDumpToStream<StringElementType::ASCII> (options);
     }
     else if (is_unicode)
     {
