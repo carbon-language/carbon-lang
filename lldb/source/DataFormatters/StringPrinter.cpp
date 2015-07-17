@@ -382,6 +382,8 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
             utf8_data_end_ptr = utf8_data_ptr + utf8_data_buffer_sp->GetByteSize();
             ConvertFunction ( &data_ptr, data_end_ptr, &utf8_data_ptr, utf8_data_end_ptr, lenientConversion );
+            if (false == zero_is_terminator)
+                utf8_data_end_ptr = utf8_data_ptr;
             utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes(); // needed because the ConvertFunction will change the value of the data_ptr
         }
         else

@@ -494,7 +494,7 @@ ExtractLibcxxStringInfo (ValueObject& valobj,
 }
 
 bool
-lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
+lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& summary_options)
 {
     uint64_t size = 0;
     ValueObjectSP location_sp((ValueObject*)nullptr);
@@ -507,7 +507,43 @@ lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Str
     }   
     if (!location_sp)
         return false;
-    return WCharStringSummaryProvider(*location_sp.get(), stream, options);
+    
+    DataExtractor extractor;
+    if (summary_options.GetCapping() == TypeSummaryCapping::eTypeSummaryCapped)
+        size = std::min<decltype(size)>(size, valobj.GetTargetSP()->GetMaximumSizeOfStringSummary());
+    location_sp->GetPointeeData(extractor, 0, size);
+    
+    // std::wstring::size() is measured in 'characters', not bytes
+    auto wchar_t_size = valobj.GetTargetSP()->GetScratchClangASTContext()->GetBasicType(lldb::eBasicTypeWChar).GetByteSize(nullptr);
+    
+    ReadBufferAndDumpToStreamOptions options(valobj);
+    options.SetData(extractor);
+    options.SetStream(&stream);
+    options.SetPrefixToken('L');
+    options.SetQuote('"');
+    options.SetSourceSize(size);
+    options.SetBinaryZeroIsTerminator(false);
+    
+    switch (wchar_t_size)
+    {
+        case 1:
+            lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF8>(options);
+            break;
+            
+        case 2:
+            lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF16>(options);
+            break;
+            
+        case 4:
+            lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::UTF32>(options);
+            break;
+            
+        default:
+            stream.Printf("size for wchar_t is not valid");
+            return true;
+    }
+    
+    return true;
 }
 
 bool
@@ -534,7 +570,7 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
     location_sp->GetPointeeData(extractor, 0, size);
     
     ReadBufferAndDumpToStreamOptions options(valobj);
-    options.SetData(extractor); // none of this matters for a string - pass some defaults
+    options.SetData(extractor);
     options.SetStream(&stream);
     options.SetPrefixToken(0);
     options.SetQuote('"');
