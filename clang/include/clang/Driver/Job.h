@@ -25,6 +25,7 @@ namespace driver {
 class Action;
 class Command;
 class Tool;
+class InputInfo;
 
 // Re-export this as clang::driver::ArgStringList.
 using llvm::opt::ArgStringList;
@@ -53,6 +54,9 @@ class Command {
   /// argument, which will be the executable).
   llvm::opt::ArgStringList Arguments;
 
+  /// The list of program arguments which are inputs.
+  llvm::opt::ArgStringList InputFilenames;
+
   /// Response file name, if this command is set to use one, or nullptr
   /// otherwise
   const char *ResponseFile;
@@ -79,7 +83,8 @@ class Command {
 
 public:
   Command(const Action &Source, const Tool &Creator, const char *Executable,
-          const llvm::opt::ArgStringList &Arguments);
+          const llvm::opt::ArgStringList &Arguments,
+          ArrayRef<InputInfo> Inputs);
   virtual ~Command() {}
 
   virtual void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
@@ -117,6 +122,7 @@ class FallbackCommand : public Command {
 public:
   FallbackCommand(const Action &Source_, const Tool &Creator_,
                   const char *Executable_, const ArgStringList &Arguments_,
+                  ArrayRef<InputInfo> Inputs,
                   std::unique_ptr<Command> Fallback_);
 
   void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,

@@ -2579,12 +2579,13 @@ static void SplitDebugInfo(const ToolChain &TC, Compilation &C, const Tool &T,
   ExtractArgs.push_back(OutFile);
 
   const char *Exec = Args.MakeArgString(TC.GetProgramPath("objcopy"));
+  InputInfo II(Output.getFilename(), types::TY_Object, Output.getFilename());
 
   // First extract the dwo sections.
-  C.addCommand(llvm::make_unique<Command>(JA, T, Exec, ExtractArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, T, Exec, ExtractArgs, II));
 
   // Then remove them from the original .o file.
-  C.addCommand(llvm::make_unique<Command>(JA, T, Exec, StripArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, T, Exec, StripArgs, II));
 }
 
 /// \brief Vectorize at all optimization levels greater than 1 except for -Oz.
@@ -4883,10 +4884,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       (InputType == types::TY_C || InputType == types::TY_CXX)) {
     auto CLCommand =
         getCLFallback()->GetCommand(C, JA, Output, Inputs, Args, LinkingOutput);
-    C.addCommand(llvm::make_unique<FallbackCommand>(JA, *this, Exec, CmdArgs,
-                                                    std::move(CLCommand)));
+    C.addCommand(llvm::make_unique<FallbackCommand>(
+        JA, *this, Exec, CmdArgs, Inputs, std::move(CLCommand)));
   } else {
-    C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+    C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
   }
 
   // Handle the debug info splitting at object creation time if we're
@@ -5374,7 +5375,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Input.getFilename());
 
   const char *Exec = getToolChain().getDriver().getClangProgramPath();
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 
   // Handle the debug info splitting at object creation time if we're
   // creating an object.
@@ -5497,7 +5498,7 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     GCCName = "gcc";
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void gcc::Preprocessor::RenderExtraToolArgs(const JobAction &JA,
@@ -5596,7 +5597,7 @@ void hexagon::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *GCCName = "hexagon-as";
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void hexagon::Linker::RenderExtraToolArgs(const JobAction &JA,
@@ -5771,7 +5772,7 @@ void hexagon::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   std::string Linker = ToolChain.GetProgramPath("hexagon-ld");
   C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Linker),
-                                          CmdArgs));
+                                          CmdArgs, Inputs));
 }
 // Hexagon tools end.
 
@@ -6087,7 +6088,7 @@ void cloudabi::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
 
   const char *Exec = Args.MakeArgString(ToolChain.GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void darwin::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6155,7 +6156,7 @@ void darwin::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   // asm_final spec is empty.
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void darwin::MachOTool::anchor() {}
@@ -6388,7 +6389,7 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     const char *Exec =
         Args.MakeArgString(getToolChain().GetProgramPath("touch"));
     CmdArgs.push_back(Output.getFilename());
-    C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+    C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, None));
     return;
   }
 
@@ -6524,7 +6525,7 @@ void darwin::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
   std::unique_ptr<Command> Cmd =
-      llvm::make_unique<Command>(JA, *this, Exec, CmdArgs);
+      llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs);
   Cmd->setInputFileList(std::move(InputFileList));
   C.addCommand(std::move(Cmd));
 }
@@ -6548,7 +6549,7 @@ void darwin::Lipo::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("lipo"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void darwin::Dsymutil::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6568,7 +6569,7 @@ void darwin::Dsymutil::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
       Args.MakeArgString(getToolChain().GetProgramPath("dsymutil"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void darwin::VerifyDebug::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6591,7 +6592,7 @@ void darwin::VerifyDebug::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
       Args.MakeArgString(getToolChain().GetProgramPath("dwarfdump"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void solaris::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6611,7 +6612,7 @@ void solaris::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6715,7 +6716,7 @@ void solaris::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   addProfileRT(getToolChain(), Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void openbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6785,7 +6786,7 @@ void openbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6915,7 +6916,7 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void bitrig::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -6935,7 +6936,7 @@ void bitrig::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void bitrig::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -7049,7 +7050,7 @@ void bitrig::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -7131,7 +7132,7 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -7314,7 +7315,7 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   addProfileRT(ToolChain, Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void netbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -7389,7 +7390,7 @@ void netbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString((getToolChain().GetProgramPath("as")));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void netbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -7599,7 +7600,7 @@ void netbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   addProfileRT(getToolChain(), Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -7802,7 +7803,7 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 
   // Handle the debug info splitting at object creation time if we're
   // creating an object.
@@ -8189,8 +8190,8 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  C.addCommand(
-      llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(), CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(),
+                                          CmdArgs, Inputs));
 }
 
 // NaCl ARM assembly (inline or standalone) can be written with a set of macros
@@ -8365,8 +8366,8 @@ void nacltools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  C.addCommand(
-      llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(), CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, ToolChain.Linker.c_str(),
+                                          CmdArgs, Inputs));
 }
 
 void minix::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -8386,7 +8387,7 @@ void minix::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void minix::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -8441,7 +8442,7 @@ void minix::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 /// DragonFly Tools
@@ -8470,7 +8471,7 @@ void dragonfly::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void dragonfly::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -8615,7 +8616,7 @@ void dragonfly::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   addProfileRT(getToolChain(), Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 // Try to find Exe from a Visual Studio distribution.  This first tries to find
@@ -8776,7 +8777,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec = Args.MakeArgString(linkPath);
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void visualstudio::Compiler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -8871,7 +8872,7 @@ std::unique_ptr<Command> visualstudio::Compiler::GetCommand(
   std::string Exec = FindVisualStudioExecutable(getToolChain(), "cl.exe",
                                                 D.getClangProgramPath());
   return llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
-                                    CmdArgs);
+                                    CmdArgs, Inputs);
 }
 
 /// MinGW Tools
@@ -8898,7 +8899,7 @@ void MinGW::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 
   if (Args.hasArg(options::OPT_gsplit_dwarf))
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output,
@@ -9083,7 +9084,7 @@ void MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
   const char *Exec = Args.MakeArgString(TC.GetProgramPath(LinkerName.data()));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 /// XCore Tools
@@ -9119,7 +9120,7 @@ void XCore::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("xcc"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void XCore::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -9147,7 +9148,7 @@ void XCore::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("xcc"));
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void CrossWindows::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -9186,7 +9187,7 @@ void CrossWindows::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   const std::string Assembler = TC.GetProgramPath("as");
   Exec = Args.MakeArgString(Assembler);
 
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -9328,7 +9329,7 @@ void CrossWindows::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const std::string Linker = TC.GetProgramPath("ld");
   Exec = Args.MakeArgString(Linker);
 
-  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
 void tools::SHAVE::Compiler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -9372,8 +9373,8 @@ void tools::SHAVE::Compiler::ConstructJob(Compilation &C, const JobAction &JA,
 
   std::string Exec =
       Args.MakeArgString(getToolChain().GetProgramPath("moviCompile"));
-  C.addCommand(
-      llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec), CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
+                                          CmdArgs, Inputs));
 }
 
 void tools::SHAVE::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -9404,6 +9405,6 @@ void tools::SHAVE::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
 
   std::string Exec =
       Args.MakeArgString(getToolChain().GetProgramPath("moviAsm"));
-  C.addCommand(
-      llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec), CmdArgs));
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
+                                          CmdArgs, Inputs));
 }
