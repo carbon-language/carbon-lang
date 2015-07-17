@@ -21,6 +21,7 @@ Basic Commands
    lli
    llvm-link
    llvm-ar
+   llvm-lib
    llvm-nm
    llvm-config
    llvm-diff
