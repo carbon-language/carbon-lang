@@ -6605,8 +6605,15 @@
 // PPC-DARWIN:#define __powerpc__ 1
 // PPC-DARWIN:#define __ppc__ 1
 //
-// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=amdgcn < /dev/null | FileCheck -check-prefix AMDGCN %s
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=amdgcn < /dev/null | FileCheck -check-prefix AMDGCN --check-prefix AMDGPU %s
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=r600 -target-cpu caicos < /dev/null | FileCheck --check-prefix AMDGPU %s
+//
+// AMDGPU:#define cl_khr_byte_addressable_store 1
 // AMDGCN:#define cl_khr_fp64 1
+// AMDGPU:#define cl_khr_global_int32_base_atomics 1
+// AMDGPU:#define cl_khr_global_int32_extended_atomics 1
+// AMDGPU:#define cl_khr_local_int32_base_atomics 1
+// AMDGPU:#define cl_khr_local_int32_extended_atomics 1
 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=s390x-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix S390X %s
 //

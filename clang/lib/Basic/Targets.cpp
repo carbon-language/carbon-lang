@@ -1835,8 +1835,16 @@ public:
       Builder.defineMacro("__HAS_FMAF__");
     if (hasLDEXPF)
       Builder.defineMacro("__HAS_LDEXPF__");
-    if (hasFP64 && Opts.OpenCL) {
+    if (hasFP64 && Opts.OpenCL)
       Builder.defineMacro("cl_khr_fp64");
+    if (Opts.OpenCL) {
+      if (GPU >= GK_NORTHERN_ISLANDS) {
+        Builder.defineMacro("cl_khr_byte_addressable_store");
+        Builder.defineMacro("cl_khr_global_int32_base_atomics");
+        Builder.defineMacro("cl_khr_global_int32_extended_atomics");
+        Builder.defineMacro("cl_khr_local_int32_base_atomics");
+        Builder.defineMacro("cl_khr_local_int32_extended_atomics");
+      }
     }
   }
 
