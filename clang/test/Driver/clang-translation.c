@@ -266,5 +266,5 @@
 // RUN: FileCheck -check-prefix=MIPS64EL-ANDROID %s
 // MIPS64EL-ANDROID: clang
 // MIPS64EL-ANDROID: "-cc1"
-// MIPS64EL-ANDROID: "-target-cpu" "mips64r2"
+// MIPS64EL-ANDROID: "-target-cpu" "mips64r6"
 // MIPS64EL-ANDROID: "-mfloat-abi" "hard"
