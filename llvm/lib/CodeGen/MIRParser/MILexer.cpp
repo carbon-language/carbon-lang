@@ -61,8 +61,11 @@ static Cursor skipWhitespace(Cursor C) {
   return C;
 }
 
+/// Return true if the given character satisfies the following regular
+/// expression: [-a-zA-Z$._0-9]
 static bool isIdentifierChar(char C) {
-  return isalpha(C) || isdigit(C) || C == '_' || C == '-' || C == '.';
+  return isalpha(C) || isdigit(C) || C == '_' || C == '-' || C == '.' ||
+         C == '$';
 }
 
 static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {

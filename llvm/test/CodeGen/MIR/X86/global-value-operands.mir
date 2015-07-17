@@ -20,6 +20,20 @@
     ret i32 %b
   }
 
+  @.$0  = external global i32
+  @-_-  = external global i32
+  @_-_a = external global i32
+  @$.-B = external global i32
+
+  define i32 @test() {
+  entry:
+    %a = load i32, i32* @.$0
+    store i32 %a, i32* @-_-
+    %b = load i32, i32* @_-_a
+    store i32 %b, i32* @$.-B
+    ret i32 %b
+  }
+
 ...
 ---
 # CHECK: name: inc
@@ -45,5 +59,25 @@ body:
       - '%rax = MOV64rm %rip, 1, _, @0, _'
       - '%eax = MOV32rm %rax, 1, _, 0, _'
       - '%eax = INC32r %eax, implicit-def %eflags'
+      - 'RETQ %eax'
+...
+---
+name:            test
+body:
+  - id:              0
+    name:            entry
+    instructions:
+      # CHECK: , @".$0",
+      # CHECK: , @-_-,
+      # CHECK: , @_-_a,
+      # CHECK: , @"$.-B",
+      - '%rax = MOV64rm %rip, 1, _, @.$0, _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%rcx = MOV64rm %rip, 1, _, @-_-, _'
+      - 'MOV32mr killed %rcx, 1, _, 0, _, killed %eax'
+      - '%rax = MOV64rm %rip, 1, _, @_-_a, _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%rcx = MOV64rm %rip, 1, _, @$.-B, _'
+      - 'MOV32mr killed %rcx, 1, _, 0, _, %eax'
       - 'RETQ %eax'
 ...
