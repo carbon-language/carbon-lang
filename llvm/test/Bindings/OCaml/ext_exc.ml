@@ -1,7 +1,7 @@
 (* RUN: cp %s %T/ext_exc.ml
- * RUN: %ocamlc -g -warn-error A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
+ * RUN: %ocamlc -g -w +A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
  * RUN: %t
- * RUN: %ocamlopt -g -warn-error A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
+ * RUN: %ocamlopt -g -w +A -package llvm.bitreader -linkpkg %T/ext_exc.ml -o %t
  * RUN: %t
  * XFAIL: vg_leak
  *)

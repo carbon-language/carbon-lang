@@ -1,7 +1,7 @@
 (* RUN: cp %s %T/core.ml
- * RUN: %ocamlc -g -warn-error A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/core.ml -o %t
+ * RUN: %ocamlc -g -w +A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/core.ml -o %t
  * RUN: %t %t.bc
- * RUN: %ocamlopt -g -warn-error A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/core.ml -o %t
+ * RUN: %ocamlopt -g -w +A -package llvm.analysis -package llvm.bitwriter -linkpkg %T/core.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
  * RUN: FileCheck %s < %t.ll

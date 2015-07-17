@@ -1,7 +1,7 @@
 (* RUN: cp %s %T/ipo_opts.ml
- * RUN: %ocamlc -g -warn-error A -package llvm.ipo -linkpkg %T/ipo_opts.ml -o %t
+ * RUN: %ocamlc -g -w +A -package llvm.ipo -linkpkg %T/ipo_opts.ml -o %t
  * RUN: %t %t.bc
- * RUN: %ocamlopt -g -warn-error A -package llvm.ipo -linkpkg %T/ipo_opts.ml -o %t
+ * RUN: %ocamlopt -g -w +A -package llvm.ipo -linkpkg %T/ipo_opts.ml -o %t
  * RUN: %t %t.bc
  * XFAIL: vg_leak
  *)

@@ -1,7 +1,7 @@
 (* RUN: cp %s %T/bitwriter.ml
- * RUN: %ocamlc -g -w -3 -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
+ * RUN: %ocamlc -g -w -3 -w +A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
  * RUN: %t %t.bc
- * RUN: %ocamlopt -g -w -3 -warn-error A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
+ * RUN: %ocamlopt -g -w -3 -w +A -package llvm.bitreader -package llvm.bitwriter -linkpkg %T/bitwriter.ml -o %t
  * RUN: %t %t.bc
  * RUN: llvm-dis < %t.bc
  * XFAIL: vg_leak
