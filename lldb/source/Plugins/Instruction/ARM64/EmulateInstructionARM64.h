@@ -272,7 +272,7 @@ protected:
     BranchTo (const Context &context, uint32_t N, lldb::addr_t target);
 
     bool
-    ConditionHolds (const uint32_t cond, bool *is_conditional = nullptr);
+    ConditionHolds (const uint32_t cond);
 
     bool
     UsingAArch32 ();

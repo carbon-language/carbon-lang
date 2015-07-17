@@ -511,7 +511,8 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         log->PutCString(strm.GetData());
     }
 
-    SetRegisterValue (*reg_info, reg_value);
+    if (!instruction->IsInstructionConditional())
+        SetRegisterValue (*reg_info, reg_value);
 
     switch (context.type)
     {
@@ -573,18 +574,21 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 
         case EmulateInstruction::eContextPopRegisterOffStack:
             {
-                const uint32_t reg_num = reg_info->kinds[m_unwind_plan_ptr->GetRegisterKind()];
-                const uint32_t generic_regnum = reg_info->kinds[eRegisterKindGeneric];
-                if (reg_num != LLDB_INVALID_REGNUM && generic_regnum != LLDB_REGNUM_GENERIC_SP)
+                if (!instruction->IsInstructionConditional())
                 {
-                    m_curr_row->SetRegisterLocationToSame (reg_num, /*must_replace*/ false);
-                    m_curr_row_modified = true;
+                    const uint32_t reg_num = reg_info->kinds[m_unwind_plan_ptr->GetRegisterKind()];
+                    const uint32_t generic_regnum = reg_info->kinds[eRegisterKindGeneric];
+                    if (reg_num != LLDB_INVALID_REGNUM && generic_regnum != LLDB_REGNUM_GENERIC_SP)
+                    {
+                        m_curr_row->SetRegisterLocationToSame (reg_num, /*must_replace*/ false);
+                        m_curr_row_modified = true;
+                    }
                 }
             }
             break;
 
         case EmulateInstruction::eContextSetFramePointer:
-            if (!m_fp_is_cfa)
+            if (!m_fp_is_cfa && !instruction->IsInstructionConditional())
             {
                 m_fp_is_cfa = true;
                 m_cfa_reg_info = *reg_info;
@@ -599,7 +603,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextAdjustStackPointer:
             // If we have created a frame using the frame pointer, don't follow
             // subsequent adjustments to the stack pointer.
-            if (!m_fp_is_cfa)
+            if (!m_fp_is_cfa && !instruction->IsInstructionConditional())
             {
                 m_curr_row->GetCFAValue().SetIsRegisterPlusOffset(
                         m_curr_row->GetCFAValue().GetRegisterNumber(),

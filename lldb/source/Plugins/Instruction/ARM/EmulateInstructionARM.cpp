@@ -387,9 +387,8 @@ EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding enc
     }
 #endif
 
-    bool conditional = false;
     bool success = false;
-    if (ConditionPassed(opcode, &conditional))
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -442,10 +441,7 @@ EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding enc
         uint32_t i;
         
         EmulateInstruction::Context context;
-        if (conditional)
-            context.type = EmulateInstruction::eContextRegisterStore;
-        else
-            context.type = EmulateInstruction::eContextPushRegisterOnStack;
+        context.type = EmulateInstruction::eContextPushRegisterOnStack;
         RegisterInfo reg_info;
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
@@ -511,8 +507,7 @@ EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding enco
 
     bool success = false;
 
-    bool conditional = false;
-    if (ConditionPassed(opcode, &conditional))
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -574,10 +569,7 @@ EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding enco
         uint32_t i, data;
         
         EmulateInstruction::Context context;
-        if (conditional)
-            context.type = EmulateInstruction::eContextRegisterLoad;
-        else
-            context.type = EmulateInstruction::eContextPopRegisterOffStack;
+        context.type = EmulateInstruction::eContextPopRegisterOffStack;
         
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
@@ -1971,9 +1963,8 @@ EmulateInstructionARM::EmulateSTRRtSP (const uint32_t opcode, const ARMEncoding 
     }
 #endif
 
-    bool conditional = false;
     bool success = false;
-    if (ConditionPassed(opcode, &conditional))
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -2018,10 +2009,7 @@ EmulateInstructionARM::EmulateSTRRtSP (const uint32_t opcode, const ARMEncoding 
             addr = sp;
         
         EmulateInstruction::Context context;
-        if (conditional)
-            context.type = EmulateInstruction::eContextRegisterStore;
-        else
-            context.type = EmulateInstruction::eContextPushRegisterOnStack;
+        context.type = EmulateInstruction::eContextPushRegisterOnStack;
         RegisterInfo sp_reg;
         RegisterInfo dwarf_reg;
 
@@ -2082,8 +2070,7 @@ EmulateInstructionARM::EmulateVPUSH (const uint32_t opcode, const ARMEncoding en
 #endif
 
     bool success = false;
-    bool conditional = false;
-    if (ConditionPassed(opcode, &conditional))
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -2125,10 +2112,8 @@ EmulateInstructionARM::EmulateVPUSH (const uint32_t opcode, const ARMEncoding en
         uint32_t i;
         
         EmulateInstruction::Context context;
-        if (conditional)
-            context.type = EmulateInstruction::eContextRegisterStore;
-        else
-            context.type = EmulateInstruction::eContextPushRegisterOnStack;
+        context.type = EmulateInstruction::eContextPushRegisterOnStack;
+
         RegisterInfo dwarf_reg;
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
@@ -2178,8 +2163,7 @@ EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding enc
 #endif
 
     bool success = false;
-    bool conditional = false;
-    if (ConditionPassed(opcode, &conditional))
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -2222,10 +2206,8 @@ EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding enc
         uint64_t data; // uint64_t to accommodate 64-bit registers.
         
         EmulateInstruction::Context context;
-        if (conditional)
-            context.type = EmulateInstruction::eContextRegisterLoad;
-        else
-            context.type = EmulateInstruction::eContextPopRegisterOffStack;
+        context.type = EmulateInstruction::eContextPopRegisterOffStack;
+
         RegisterInfo dwarf_reg;
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
@@ -3462,8 +3444,7 @@ EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding enco
 #endif
             
     bool success = false;
-    bool conditional = false;
-    if (ConditionPassed(opcode, &conditional))
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -3535,12 +3516,7 @@ EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding enco
                 context.type = EmulateInstruction::eContextRegisterPlusOffset;
                 context.SetRegisterPlusOffset (dwarf_reg, offset);
                 if (wback && (n == 13)) // Pop Instruction
-                {
-                    if (conditional)
-                        context.type = EmulateInstruction::eContextRegisterLoad;
-                    else
-                        context.type = EmulateInstruction::eContextPopRegisterOffStack;
-                }
+                    context.type = EmulateInstruction::eContextPopRegisterOffStack;
 
                 // R[i] = MemA [address, 4]; address = address + 4;
                 uint32_t data = MemARead (context, base_address + offset, addr_byte_size, 0, &success);
@@ -13076,7 +13052,7 @@ EmulateInstructionARM::ArchVersion ()
 }
 
 bool
-EmulateInstructionARM::ConditionPassed (const uint32_t opcode, bool *is_conditional)
+EmulateInstructionARM::ConditionPassed (const uint32_t opcode)
 {
    // If we are ignoring conditions, then always return true.
    // this allows us to iterate over disassembly code and still
@@ -13084,12 +13060,8 @@ EmulateInstructionARM::ConditionPassed (const uint32_t opcode, bool *is_conditio
    // bits set in the CPSR register...
     if (m_ignore_conditions)
         return true;
-    
-    if (is_conditional)
-        *is_conditional = true;
 
     const uint32_t cond = CurrentCond (opcode);
-    
     if (cond == UINT32_MAX)
         return false;
     
@@ -13149,8 +13121,6 @@ EmulateInstructionARM::ConditionPassed (const uint32_t opcode, bool *is_conditio
     case 7: 
         // Always execute (cond == 0b1110, or the special 0b1111 which gives
         // opcodes different meanings, but always means execution happens.
-        if (is_conditional)
-            *is_conditional = false;
         return true;
     }
 
@@ -13640,6 +13610,13 @@ EmulateInstructionARM::EvaluateInstruction (uint32_t evaluate_options)
         }
     }
     return true;
+}
+
+bool
+EmulateInstructionARM::IsInstructionConditional()
+{
+    const uint32_t cond = CurrentCond (m_opcode.GetOpcode32());
+    return cond != 0xe && cond != 0xf && cond != UINT32_MAX;
 }
 
 bool

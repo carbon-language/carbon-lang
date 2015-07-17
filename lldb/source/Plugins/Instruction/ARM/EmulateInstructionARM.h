@@ -165,7 +165,10 @@ public:
 
     virtual bool
     EvaluateInstruction (uint32_t evaluate_options);
-    
+
+    bool
+    IsInstructionConditional() override;
+
     virtual bool
     TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data);
 
@@ -180,9 +183,7 @@ public:
     ArchVersion();
 
     bool
-    ConditionPassed (const uint32_t opcode, 
-                     bool *is_conditional = NULL);  // Filled in with true if the opcode is a conditional opcode
-                                                    // Filled in with false if the opcode is always executed
+    ConditionPassed (const uint32_t opcode);
 
     uint32_t
     CurrentCond (const uint32_t opcode);

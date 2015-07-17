@@ -404,7 +404,10 @@ public:
 
     virtual bool
     EvaluateInstruction (uint32_t evaluate_options) = 0;
-    
+
+    virtual bool
+    IsInstructionConditional() { return false; }
+
     virtual bool
     TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data) = 0;
 

@@ -462,7 +462,7 @@ EmulateInstructionARM64::BranchTo (const Context &context, uint32_t N, addr_t ta
 }
 
 bool
-EmulateInstructionARM64::ConditionHolds (const uint32_t cond, bool *is_conditional)
+EmulateInstructionARM64::ConditionHolds (const uint32_t cond)
 {
    // If we are ignoring conditions, then always return true.
    // this allows us to iterate over disassembly code and still
@@ -470,10 +470,7 @@ EmulateInstructionARM64::ConditionHolds (const uint32_t cond, bool *is_condition
    // bits set in the CPSR register...
     if (m_ignore_conditions)
         return true;
-    
-    if (is_conditional)
-        *is_conditional = true;
-  
+
     bool result = false;
     switch (UnsignedBits(cond, 3, 1))
     {
@@ -499,13 +496,12 @@ EmulateInstructionARM64::ConditionHolds (const uint32_t cond, bool *is_condition
         result = (m_opcode_pstate.N == m_opcode_pstate.V && m_opcode_pstate.Z == 0);
         break;
     case 7:
-        result = true;
-        if (is_conditional)
-            *is_conditional = false;
-        break;
+        // Always execute (cond == 0b1110, or the special 0b1111 which gives
+        // opcodes different meanings, but always means execution happens.
+        return true;
     }
 
-    if (cond & 1 && cond != 15)
+    if (cond & 1)
         result = !result;
     return result;
 }
