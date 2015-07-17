@@ -138,7 +138,9 @@ if( NOT uses_ocaml LESS 0 )
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
     COMMAND ${OCAMLFIND} ocamldoc -d ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html
-                                  -sort -colorize-code -html ${odoc_files})
+                                  -sort -colorize-code -html ${odoc_files}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/_ocamldoc/style.css
+                                     ${CMAKE_CURRENT_BINARY_DIR}/ocamldoc/html)
 
   add_dependencies(ocaml_doc ${doc_targets})
 
