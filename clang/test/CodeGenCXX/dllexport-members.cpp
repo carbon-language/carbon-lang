@@ -623,13 +623,13 @@ extern template const int MemVarTmpl::ExportedStaticVar<ExplicitDecl_Exported>;
 template const int MemVarTmpl::ExportedStaticVar<ExplicitInst_Exported>;
 
 // Export specialization of an exported member variable template.
-// MSC-DAG: @"\01??$ExportedStaticVar@UExplicitSpec_Def_Exported@@@MemVarTmpl@@2HB" = dllexport constant i32 1, align 4
+// MSC-DAG: @"\01??$ExportedStaticVar@UExplicitSpec_Def_Exported@@@MemVarTmpl@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
 // GNU-DAG: @_ZN10MemVarTmpl17ExportedStaticVarI25ExplicitSpec_Def_ExportedEE       = dllexport constant i32 1, align 4
 template<> __declspec(dllexport) const int MemVarTmpl::ExportedStaticVar<ExplicitSpec_Def_Exported> = 1;
 
 // Not exporting specialization of an exported member variable template without
 // explicit dllexport.
-// MSC-DAG: @"\01??$ExportedStaticVar@UExplicitSpec_NotExported@@@MemVarTmpl@@2HB" = constant i32 1, align 4
+// MSC-DAG: @"\01??$ExportedStaticVar@UExplicitSpec_NotExported@@@MemVarTmpl@@2HB" = weak_odr constant i32 1, comdat, align 4
 // GNU-DAG: @_ZN10MemVarTmpl17ExportedStaticVarI24ExplicitSpec_NotExportedEE       = constant i32 1, align 4
 template<> const int MemVarTmpl::ExportedStaticVar<ExplicitSpec_NotExported> = 1;
 
@@ -648,6 +648,6 @@ extern template __declspec(dllexport) const int MemVarTmpl::StaticVar<ExplicitDe
 template __declspec(dllexport) const int MemVarTmpl::StaticVar<ExplicitInst_Exported>;
 
 // Export specialization of a non-exported member variable template.
-// MSC-DAG: @"\01??$StaticVar@UExplicitSpec_Def_Exported@@@MemVarTmpl@@2HB" = dllexport constant i32 1, align 4
+// MSC-DAG: @"\01??$StaticVar@UExplicitSpec_Def_Exported@@@MemVarTmpl@@2HB" = weak_odr dllexport constant i32 1, comdat, align 4
 // GNU-DAG: @_ZN10MemVarTmpl9StaticVarI25ExplicitSpec_Def_ExportedEE        = dllexport constant i32 1, align 4
 template<> __declspec(dllexport) const int MemVarTmpl::StaticVar<ExplicitSpec_Def_Exported> = 1;
