@@ -341,6 +341,8 @@ public:
   child_range children() { 
     // Note: we're taking advantage of the layout of the KeyValuePair struct
     // here. If that struct changes, this code will need to change as well.
+    static_assert(sizeof(KeyValuePair) == sizeof(Stmt *) * 2,
+                  "KeyValuePair is expected size");
     return child_range(reinterpret_cast<Stmt **>(this + 1),
                        reinterpret_cast<Stmt **>(this + 1) + NumElements * 2);
   }

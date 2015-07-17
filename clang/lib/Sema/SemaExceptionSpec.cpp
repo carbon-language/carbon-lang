@@ -973,8 +973,9 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::LambdaExprClass: {
     const LambdaExpr *Lambda = cast<LambdaExpr>(E);
     CanThrowResult CT = CT_Cannot;
-    for (LambdaExpr::capture_init_iterator Cap = Lambda->capture_init_begin(),
-                                        CapEnd = Lambda->capture_init_end();
+    for (LambdaExpr::const_capture_init_iterator
+             Cap = Lambda->capture_init_begin(),
+             CapEnd = Lambda->capture_init_end();
          Cap != CapEnd; ++Cap)
       CT = mergeCanThrow(CT, canThrow(*Cap));
     return CT;

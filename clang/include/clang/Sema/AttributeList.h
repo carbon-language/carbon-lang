@@ -137,11 +137,9 @@ private:
   AttributeList *NextInPool;
 
   /// Arguments, if any, are stored immediately following the object.
-  ArgsUnion *getArgsBuffer() {
-    return reinterpret_cast<ArgsUnion*>(this+1);
-  }
+  ArgsUnion *getArgsBuffer() { return reinterpret_cast<ArgsUnion *>(this + 1); }
   ArgsUnion const *getArgsBuffer() const {
-    return reinterpret_cast<ArgsUnion const *>(this+1);
+    return reinterpret_cast<ArgsUnion const *>(this + 1);
   }
 
   enum AvailabilitySlot {

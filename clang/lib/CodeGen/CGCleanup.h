@@ -216,7 +216,7 @@ public:
 };
 
 /// A cleanup scope which generates the cleanup blocks lazily.
-class EHCleanupScope : public EHScope {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) EHCleanupScope : public EHScope {
   /// The nearest normal cleanup scope enclosing this one.
   EHScopeStack::stable_iterator EnclosingNormal;
 
@@ -396,6 +396,15 @@ public:
     return (Scope->getKind() == Cleanup);
   }
 };
+// NOTE: there's a bunch of different data classes tacked on after an
+// EHCleanupScope. It is asserted (in EHScopeStack::pushCleanup*) that
+// they don't require greater alignment than ScopeStackAlignment. So,
+// EHCleanupScope ought to have alignment equal to that -- not more
+// (would be misaligned by the stack allocator), and not less (would
+// break the appended classes).
+static_assert(llvm::AlignOf<EHCleanupScope>::Alignment ==
+                  EHScopeStack::ScopeStackAlignment,
+              "EHCleanupScope expected alignment");
 
 /// An exceptions scope which filters exceptions thrown through it.
 /// Only exceptions matching the filter types will be permitted to be
@@ -472,27 +481,27 @@ public:
   EHScope &operator*() const { return *get(); }
 
   iterator &operator++() {
+    size_t Size;
     switch (get()->getKind()) {
     case EHScope::Catch:
-      Ptr += EHCatchScope::getSizeForNumHandlers(
-          static_cast<const EHCatchScope*>(get())->getNumHandlers());
+      Size = EHCatchScope::getSizeForNumHandlers(
+          static_cast<const EHCatchScope *>(get())->getNumHandlers());
       break;
 
     case EHScope::Filter:
-      Ptr += EHFilterScope::getSizeForNumFilters(
-          static_cast<const EHFilterScope*>(get())->getNumFilters());
+      Size = EHFilterScope::getSizeForNumFilters(
+          static_cast<const EHFilterScope *>(get())->getNumFilters());
       break;
 
     case EHScope::Cleanup:
-      Ptr += static_cast<const EHCleanupScope*>(get())
-        ->getAllocatedSize();
+      Size = static_cast<const EHCleanupScope *>(get())->getAllocatedSize();
       break;
 
     case EHScope::Terminate:
-      Ptr += EHTerminateScope::getSize();
+      Size = EHTerminateScope::getSize();
       break;
     }
-
+    Ptr += llvm::RoundUpToAlignment(Size, ScopeStackAlignment);
     return *this;
   }
 
@@ -528,7 +537,7 @@ inline void EHScopeStack::popCatch() {
 
   EHCatchScope &scope = cast<EHCatchScope>(*begin());
   InnermostEHScope = scope.getEnclosingEHScope();
-  StartOfData += EHCatchScope::getSizeForNumHandlers(scope.getNumHandlers());
+  deallocate(EHCatchScope::getSizeForNumHandlers(scope.getNumHandlers()));
 }
 
 inline void EHScopeStack::popTerminate() {
@@ -536,7 +545,7 @@ inline void EHScopeStack::popTerminate() {
 
   EHTerminateScope &scope = cast<EHTerminateScope>(*begin());
   InnermostEHScope = scope.getEnclosingEHScope();
-  StartOfData += EHTerminateScope::getSize();
+  deallocate(EHTerminateScope::getSize());
 }
 
 inline EHScopeStack::iterator EHScopeStack::find(stable_iterator sp) const {

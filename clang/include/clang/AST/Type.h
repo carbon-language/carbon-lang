@@ -3118,11 +3118,13 @@ private:
     assert(hasAnyConsumedParams());
 
     // Find the end of the exceptions.
-    Expr *const *eh_end = reinterpret_cast<Expr *const *>(param_type_end());
-    if (getExceptionSpecType() != EST_ComputedNoexcept)
-      eh_end += NumExceptions;
-    else
+    Expr *const *eh_end = reinterpret_cast<Expr *const *>(exception_end());
+    if (getExceptionSpecType() == EST_ComputedNoexcept)
       eh_end += 1; // NoexceptExpr
+    // The memory layout of these types isn't handled here, so
+    // hopefully this is never called for them?
+    assert(getExceptionSpecType() != EST_Uninstantiated &&
+           getExceptionSpecType() != EST_Unevaluated);
 
     return reinterpret_cast<const bool*>(eh_end);
   }
@@ -3294,7 +3296,6 @@ public:
                       param_type_iterator ArgTys, unsigned NumArgs,
                       const ExtProtoInfo &EPI, const ASTContext &Context);
 };
-
 
 /// \brief Represents the dependent type named by a dependently-scoped
 /// typename using declaration, e.g.
@@ -3936,8 +3937,9 @@ public:
 /// TemplateArguments, followed by a QualType representing the
 /// non-canonical aliased type when the template is a type alias
 /// template.
-class TemplateSpecializationType
-  : public Type, public llvm::FoldingSetNode {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) TemplateSpecializationType
+    : public Type,
+      public llvm::FoldingSetNode {
   /// The name of the template being specialized.  This is
   /// either a TemplateName::Template (in which case it is a
   /// ClassTemplateDecl*, a TemplateTemplateParmDecl*, or a
@@ -4328,8 +4330,9 @@ public:
 /// Represents a template specialization type whose template cannot be
 /// resolved, e.g.
 ///   A<T>::template B<T>
-class DependentTemplateSpecializationType :
-  public TypeWithKeyword, public llvm::FoldingSetNode {
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) DependentTemplateSpecializationType
+    : public TypeWithKeyword,
+      public llvm::FoldingSetNode {
 
   /// The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;

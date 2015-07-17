@@ -399,10 +399,15 @@ DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
     Size += sizeof(NestedNameSpecifierLoc);
   if (FoundD)
     Size += sizeof(NamedDecl *);
-  if (TemplateArgs)
+  if (TemplateArgs) {
+    Size = llvm::RoundUpToAlignment(Size,
+                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
-  else if (TemplateKWLoc.isValid())
+  } else if (TemplateKWLoc.isValid()) {
+    Size = llvm::RoundUpToAlignment(Size,
+                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
+  }
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(Context, QualifierLoc, TemplateKWLoc, D,
@@ -420,8 +425,11 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(const ASTContext &Context,
     Size += sizeof(NestedNameSpecifierLoc);
   if (HasFoundDecl)
     Size += sizeof(NamedDecl *);
-  if (HasTemplateKWAndArgsInfo)
+  if (HasTemplateKWAndArgsInfo) {
+    Size = llvm::RoundUpToAlignment(Size,
+                                    llvm::alignOf<ASTTemplateKWAndArgsInfo>());
     Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
+  }
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(EmptyShell());
@@ -3939,7 +3947,8 @@ DesignatedInitExpr::Create(const ASTContext &C, Designator *Designators,
                            SourceLocation ColonOrEqualLoc,
                            bool UsesColonSyntax, Expr *Init) {
   void *Mem = C.Allocate(sizeof(DesignatedInitExpr) +
-                         sizeof(Stmt *) * (IndexExprs.size() + 1), 8);
+                             sizeof(Stmt *) * (IndexExprs.size() + 1),
+                         llvm::alignOf<DesignatedInitExpr>());
   return new (Mem) DesignatedInitExpr(C, C.VoidTy, NumDesignators, Designators,
                                       ColonOrEqualLoc, UsesColonSyntax,
                                       IndexExprs, Init);

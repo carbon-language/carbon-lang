@@ -2156,8 +2156,8 @@ LValue CodeGenFunction::InitCapturedStruct(const CapturedStmt &S) {
       CreateMemTemp(RecordTy, "agg.captured"), RecordTy);
 
   RecordDecl::field_iterator CurField = RD->field_begin();
-  for (CapturedStmt::capture_init_iterator I = S.capture_init_begin(),
-                                           E = S.capture_init_end();
+  for (CapturedStmt::const_capture_init_iterator I = S.capture_init_begin(),
+                                                 E = S.capture_init_end();
        I != E; ++I, ++CurField) {
     LValue LV = EmitLValueForFieldInitialization(SlotLV, *CurField);
     if (CurField->hasCapturedVLAType()) {
