@@ -110,15 +110,15 @@ static llvm::ManagedStatic<TrueMatcherImpl> TrueMatcherInstance;
 
 DynTypedMatcher DynTypedMatcher::constructVariadic(
     DynTypedMatcher::VariadicOperator Op,
+    ast_type_traits::ASTNodeKind SupportedKind,
     std::vector<DynTypedMatcher> InnerMatchers) {
   assert(InnerMatchers.size() > 0 && "Array must not be empty.");
   assert(std::all_of(InnerMatchers.begin(), InnerMatchers.end(),
-                     [&InnerMatchers](const DynTypedMatcher &M) {
-           return InnerMatchers[0].canConvertTo(M.SupportedKind);
-         }) &&
-         "SupportedKind must be convertible to a common type!");
+                     [SupportedKind](const DynTypedMatcher &M) {
+                       return M.canConvertTo(SupportedKind);
+                     }) &&
+         "InnerMatchers must be convertible to SupportedKind!");
 
-  auto SupportedKind = InnerMatchers[0].SupportedKind;
   // We must relax the restrict kind here.
   // The different operators might deal differently with a mismatch.
   // Make it the same as SupportedKind, since that is the broadest type we are

@@ -281,6 +281,7 @@ public:
   };
   static DynTypedMatcher
   constructVariadic(VariadicOperator Op,
+                    ast_type_traits::ASTNodeKind SupportedKind,
                     std::vector<DynTypedMatcher> InnerMatchers);
 
   /// \brief Get a "true" matcher for \p NodeKind.
@@ -1137,7 +1138,8 @@ public:
 
   template <typename T> operator Matcher<T>() const {
     return DynTypedMatcher::constructVariadic(
-               Op, getMatchers<T>(llvm::index_sequence_for<Ps...>()))
+               Op, ast_type_traits::ASTNodeKind::getFromNodeKind<T>(),
+               getMatchers<T>(llvm::index_sequence_for<Ps...>()))
         .template unconditionalConvertTo<T>();
   }
 
@@ -1191,8 +1193,10 @@ BindableMatcher<T> makeAllOfComposite(
   std::vector<DynTypedMatcher> DynMatchers(PI(InnerMatchers.begin()),
                                            PI(InnerMatchers.end()));
   return BindableMatcher<T>(
-      DynTypedMatcher::constructVariadic(DynTypedMatcher::VO_AllOf,
-                                         std::move(DynMatchers))
+      DynTypedMatcher::constructVariadic(
+          DynTypedMatcher::VO_AllOf,
+          ast_type_traits::ASTNodeKind::getFromNodeKind<T>(),
+          std::move(DynMatchers))
           .template unconditionalConvertTo<T>());
 }
 

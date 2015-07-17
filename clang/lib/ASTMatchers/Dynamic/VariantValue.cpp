@@ -72,7 +72,7 @@ VariantMatcher::MatcherOps::constructVariadicOperator(
       return llvm::None;
     DynMatchers.push_back(*Inner);
   }
-  return DynTypedMatcher::constructVariadic(Op, DynMatchers);
+  return DynTypedMatcher::constructVariadic(Op, NodeKind, DynMatchers);
 }
 
 VariantMatcher::Payload::~Payload() {}

@@ -453,6 +453,16 @@ TEST(AllOf, AllOverloadsWork) {
                      hasArgument(3, integerLiteral(equals(4)))))));
 }
 
+TEST(ConstructVariadic, MismatchedTypes_Regression) {
+  EXPECT_TRUE(
+      matches("const int a = 0;",
+              internal::DynTypedMatcher::constructVariadic(
+                  internal::DynTypedMatcher::VO_AnyOf,
+                  ast_type_traits::ASTNodeKind::getFromNodeKind<QualType>(),
+                  {isConstQualified(), arrayType()})
+                  .convertTo<QualType>()));
+}
+
 TEST(DeclarationMatcher, MatchAnyOf) {
   DeclarationMatcher YOrZDerivedFromX =
       recordDecl(anyOf(hasName("Y"), allOf(isDerivedFrom("X"), hasName("Z"))));
