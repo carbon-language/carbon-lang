@@ -60,25 +60,25 @@ public:
 protected:
     ReadHandleUP
     CreateReadHandle(const lldb::IOObjectSP &object_sp)
-    { return ReadHandleUP(new ReadHandle(*this, object_sp)); }
+    { return ReadHandleUP(new ReadHandle(*this, object_sp->GetWaitableHandle())); }
 
     virtual void
-    UnregisterReadObject(const lldb::IOObjectSP &object_sp)
+    UnregisterReadObject(IOObject::WaitableHandle handle)
     { llvm_unreachable("Not implemented"); }
 
 private:
     class ReadHandle
     {
     public:
-        ~ReadHandle() { m_mainloop.UnregisterReadObject(m_object_sp); }
+        ~ReadHandle() { m_mainloop.UnregisterReadObject(m_handle); }
 
     private:
-        ReadHandle(MainLoopBase &mainloop, const lldb::IOObjectSP &object_sp)
-            : m_mainloop(mainloop), m_object_sp(object_sp)
+        ReadHandle(MainLoopBase &mainloop, IOObject::WaitableHandle handle)
+            : m_mainloop(mainloop), m_handle(handle)
         { }
 
         MainLoopBase &m_mainloop;
-        lldb::IOObjectSP m_object_sp;
+        IOObject::WaitableHandle m_handle;
 
         friend class MainLoopBase;
         DISALLOW_COPY_AND_ASSIGN(ReadHandle);

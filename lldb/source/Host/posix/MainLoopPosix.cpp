@@ -94,9 +94,9 @@ MainLoopPosix::RegisterSignal(int signo, const Callback &callback, Error &error)
 }
 
 void
-MainLoopPosix::UnregisterReadObject(const lldb::IOObjectSP &object_sp)
+MainLoopPosix::UnregisterReadObject(IOObject::WaitableHandle handle)
 {
-    bool erased = m_read_fds.erase(object_sp->GetWaitableHandle());
+    bool erased = m_read_fds.erase(handle);
     (void) erased;
     assert(erased);
 }

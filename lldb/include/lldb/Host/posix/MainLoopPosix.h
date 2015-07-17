@@ -60,7 +60,7 @@ public:
 
 protected:
     void
-    UnregisterReadObject(const lldb::IOObjectSP &object_sp) override;
+    UnregisterReadObject(IOObject::WaitableHandle handle) override;
 
     void
     UnregisterSignal(int signo);
