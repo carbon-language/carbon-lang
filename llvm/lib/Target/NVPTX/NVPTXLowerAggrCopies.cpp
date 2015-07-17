@@ -87,14 +87,15 @@ void convertMemCpyToLoop(Instruction *ConvertedInst, Value *SrcAddr,
   // load from SrcAddr+LoopIndex
   // TODO: we can leverage the align parameter of llvm.memcpy for more efficient
   // word-sized loads and stores.
-  Value *Element = LoopBuilder.CreateLoad(
-      LoopBuilder.CreateGEP(LoopBuilder.getInt8Ty(), SrcAddr, LoopIndex),
-      SrcIsVolatile);
+  Value *Element =
+      LoopBuilder.CreateLoad(LoopBuilder.CreateInBoundsGEP(
+                                 LoopBuilder.getInt8Ty(), SrcAddr, LoopIndex),
+                             SrcIsVolatile);
   // store at DstAddr+LoopIndex
-  LoopBuilder.CreateStore(
-      Element,
-      LoopBuilder.CreateGEP(LoopBuilder.getInt8Ty(), DstAddr, LoopIndex),
-      DstIsVolatile);
+  LoopBuilder.CreateStore(Element,
+                          LoopBuilder.CreateInBoundsGEP(LoopBuilder.getInt8Ty(),
+                                                        DstAddr, LoopIndex),
+                          DstIsVolatile);
 
   // The value for LoopIndex coming from backedge is (LoopIndex + 1)
   Value *NewIndex =
@@ -225,7 +226,8 @@ void convertMemSetToLoop(Instruction *ConvertedInst, Value *DstAddr,
   LoopIndex->addIncoming(ConstantInt::get(CopyLen->getType(), 0), OrigBB);
 
   LoopBuilder.CreateStore(
-      SetValue, LoopBuilder.CreateGEP(SetValue->getType(), DstAddr, LoopIndex),
+      SetValue,
+      LoopBuilder.CreateInBoundsGEP(SetValue->getType(), DstAddr, LoopIndex),
       false);
 
   Value *NewIndex =

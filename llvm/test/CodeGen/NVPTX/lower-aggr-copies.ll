@@ -18,9 +18,9 @@ entry:
 
 ; IR-LABEL:   @memcpy_caller
 ; IR:         loadstoreloop:
-; IR:         [[LOADPTR:%[0-9]+]] = getelementptr i8, i8* %src, i64
+; IR:         [[LOADPTR:%[0-9]+]] = getelementptr inbounds i8, i8* %src, i64
 ; IR-NEXT:    [[VAL:%[0-9]+]] = load i8, i8* [[LOADPTR]]
-; IR-NEXT:    [[STOREPTR:%[0-9]+]] = getelementptr i8, i8* %dst, i64
+; IR-NEXT:    [[STOREPTR:%[0-9]+]] = getelementptr inbounds i8, i8* %dst, i64
 ; IR-NEXT:    store i8 [[VAL]], i8* [[STOREPTR]]
 
 ; PTX-LABEL:  .visible .func (.param .b64 func_retval0) memcpy_caller
@@ -61,8 +61,8 @@ entry:
 ; IR-LABEL:   @memcpy_casting_caller
 ; IR:         [[DSTCAST:%[0-9]+]] = bitcast i32* %dst to i8*
 ; IR:         [[SRCCAST:%[0-9]+]] = bitcast i32* %src to i8*
-; IR:         getelementptr i8, i8* [[SRCCAST]]
-; IR:         getelementptr i8, i8* [[DSTCAST]]
+; IR:         getelementptr inbounds i8, i8* [[SRCCAST]]
+; IR:         getelementptr inbounds i8, i8* [[DSTCAST]]
 }
 
 define i8* @memset_caller(i8* %dst, i32 %c, i64 %n) #0 {
@@ -74,7 +74,7 @@ entry:
 ; IR-LABEL:   @memset_caller
 ; IR:         [[VAL:%[0-9]+]] = trunc i32 %c to i8
 ; IR:         loadstoreloop:
-; IR:         [[STOREPTR:%[0-9]+]] = getelementptr i8, i8* %dst, i64
+; IR:         [[STOREPTR:%[0-9]+]] = getelementptr inbounds i8, i8* %dst, i64
 ; IR-NEXT:    store i8 [[VAL]], i8* [[STOREPTR]]
 
 ; PTX-LABEL:  .visible .func (.param .b64 func_retval0) memset_caller(
