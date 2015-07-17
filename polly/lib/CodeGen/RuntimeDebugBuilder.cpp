@@ -130,14 +130,19 @@ void RuntimeDebugBuilder::createGPUVAPrinter(PollyIRBuilder &Builder,
         Ty = Builder.getInt64Ty();
         Val = Builder.CreateSExt(Val, Ty);
       }
+    } else if (auto PtTy = dyn_cast<PointerType>(Ty)) {
+      if (PtTy->getAddressSpace() == 4) {
+        // Pointers in constant address space are printed as strings
+        Val = Builder.CreateGEP(Val, Builder.getInt64(0));
+        auto F = RuntimeDebugBuilder::getAddressSpaceCast(Builder, 4, 0);
+        Val = Builder.CreateCall(F, Val);
+        Ty = Val->getType();
+      } else {
+        Val = Builder.CreatePtrToInt(Val, Builder.getInt64Ty());
+        Ty = Val->getType();
+      }
     } else {
-      // If it is not a number, it must be a string type.
-      Val = Builder.CreateGEP(Val, Builder.getInt64(0));
-      assert((Val->getType() == Builder.getInt8PtrTy(4)) &&
-             "Expected i8 ptr placed in constant address space");
-      auto F = RuntimeDebugBuilder::getAddressSpaceCast(Builder, 4, 0);
-      Val = Builder.CreateCall(F, Val);
-      Ty = Val->getType();
+      llvm_unreachable("Unknown type");
     }
 
     Ptr = Builder.CreatePointerBitCastOrAddrSpaceCast(Ptr, Ty->getPointerTo(5));
