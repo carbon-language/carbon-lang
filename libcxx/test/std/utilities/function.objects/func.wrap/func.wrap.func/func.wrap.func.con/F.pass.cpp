@@ -11,7 +11,7 @@
 
 // class function<R(ArgTypes...)>
 
-// function(nullptr_t);
+// function(F);
 
 #include <functional>
 #include <cassert>
@@ -86,5 +86,9 @@ int main()
       assert(f);
       assert(f.target<int(*)(int)>() != 0);
       f(1);
+    }
+    {
+        std::function <void()> f(static_cast<void (*)()>(0));
+        assert(!f);
     }
 }

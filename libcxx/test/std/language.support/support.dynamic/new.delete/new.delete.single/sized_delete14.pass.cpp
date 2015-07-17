@@ -11,11 +11,10 @@
 
 // UNSUPPORTED: sanitizer-new-delete, c++98, c++03, c++11
 
-// TODO: Clang does not enable sized-deallocation in c++14 and beyond by
+// NOTE: Clang does not enable sized-deallocation in c++14 and beyond by
 // default. It is only enabled when -fsized-deallocation is given.
-// (except clang-3.6 which temporarly enabled sized-deallocation)
-// XFAIL: clang-3.4, clang-3.5, clang-3.7, clang-3.8
-// XFAIL: apple-clang
+// (except clang-3.6 which temporarily enabled sized-deallocation)
+// UNSUPPORTED: clang, apple-clang
 
 // NOTE: GCC 4.9.1 does not support sized-deallocation in c++14. However
 // GCC 5.1 does.

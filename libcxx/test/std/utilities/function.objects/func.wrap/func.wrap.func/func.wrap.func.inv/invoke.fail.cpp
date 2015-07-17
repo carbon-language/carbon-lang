@@ -30,13 +30,13 @@ test_int_1()
 {
     // member data pointer
     {
-    int A_int_1::*fp = &A_int_1::data_;
-    A_int_1 a;
-    std::function<int& (const A_int_1*)> r2(fp);
-    const A_int_1* ap = &a;
-    assert(r2(ap) == 6);
-    r2(ap) = 7;
-    assert(r2(ap) == 7);
+        int A_int_1::*fp = &A_int_1::data_;
+        A_int_1 a;
+        std::function<int& (const A_int_1*)> r2(fp);
+        const A_int_1* ap = &a;
+        assert(r2(ap) == 6);
+        r2(ap) = 7;
+        assert(r2(ap) == 7);
     }
 }
 
