@@ -539,6 +539,7 @@ lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stre
     options.SetPrefixToken(0);
     options.SetQuote('"');
     options.SetSourceSize(size);
+    options.SetBinaryZeroIsTerminator(false);
     lldb_private::formatters::ReadBufferAndDumpToStream<lldb_private::formatters::StringElementType::ASCII>(options);
     
     return true;

@@ -64,7 +64,8 @@ class LibcxxStringDataFormatterTestCase(TestBase):
                     '(std::__1::wstring) S = L"!!!!"',
                     '(const wchar_t *) mazeltov = 0x','L"מזל טוב"',
                     '(std::__1::string) q = "hello world"',
-                    '(std::__1::string) Q = "quite a long std::strin with lots of info inside it"'])
+                    '(std::__1::string) Q = "quite a long std::strin with lots of info inside it"',
+                    '(std::__1::string) IHaveEmbeddedZeros = "a\\0b\\0c\\0d"'])
 
         self.runCmd("n")
 
@@ -86,7 +87,8 @@ class LibcxxStringDataFormatterTestCase(TestBase):
                     '(std::__1::wstring) S = L"!!!!!"',
                     '(const wchar_t *) mazeltov = 0x','L"מזל טוב"',
                     '(std::__1::string) q = "hello world"',
-                    '(std::__1::string) Q = "quite a long std::strin with lots of info inside it"'])
+                    '(std::__1::string) Q = "quite a long std::strin with lots of info inside it"',
+                    '(std::__1::string) IHaveEmbeddedZeros = "a\\0b\\0c\\0d"'])
 
 if __name__ == '__main__':
     import atexit

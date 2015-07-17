@@ -334,40 +334,43 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
                                                             UTF8**,
                                                             UTF8*,
                                                             ConversionFlags),
-                       const DataExtractor& data,
-                       Stream& stream,
-                       char prefix_token,
-                       char quote,
-                       uint32_t sourceSize,
-                       bool escapeNonPrintables)
+                       const ReadBufferAndDumpToStreamOptions& dump_options)
 {
-    if (prefix_token != 0)
-        stream.Printf("%c",prefix_token);
-    if (quote != 0)
-        stream.Printf("%c",quote);
+    Stream &stream(*dump_options.GetStream());
+    if (dump_options.GetPrefixToken() != 0)
+        stream.Printf("%c",dump_options.GetPrefixToken());
+    if (dump_options.GetQuote() != 0)
+        stream.Printf("%c",dump_options.GetQuote());
+    auto data(dump_options.GetData());
+    auto source_size(dump_options.GetSourceSize());
     if (data.GetByteSize() && data.GetDataStart() && data.GetDataEnd())
     {
         const int bufferSPSize = data.GetByteSize();
-        if (sourceSize == 0)
+        if (dump_options.GetSourceSize() == 0)
         {
             const int origin_encoding = 8*sizeof(SourceDataType);
-            sourceSize = bufferSPSize/(origin_encoding / 4);
+            source_size = bufferSPSize/(origin_encoding / 4);
         }
         
         const SourceDataType *data_ptr = (const SourceDataType*)data.GetDataStart();
-        const SourceDataType *data_end_ptr = data_ptr + sourceSize;
+        const SourceDataType *data_end_ptr = data_ptr + source_size;
         
-        while (data_ptr < data_end_ptr)
+        const bool zero_is_terminator = dump_options.GetBinaryZeroIsTerminator();
+        
+        if (zero_is_terminator)
         {
-            if (!*data_ptr)
+            while (data_ptr < data_end_ptr)
             {
-                data_end_ptr = data_ptr;
-                break;
+                if (!*data_ptr)
+                {
+                    data_end_ptr = data_ptr;
+                    break;
+                }
+                data_ptr++;
             }
-            data_ptr++;
+            
+            data_ptr = (const SourceDataType*)data.GetDataStart();
         }
-        
-        data_ptr = (const SourceDataType*)data.GetDataStart();
         
         lldb::DataBufferSP utf8_data_buffer_sp;
         UTF8* utf8_data_ptr = nullptr;
@@ -389,15 +392,17 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             utf8_data_end_ptr = (UTF8*)data_end_ptr;
         }
         
+        const bool escape_non_printables = dump_options.GetEscapeNonPrintables();
+        
         // since we tend to accept partial data (and even partially malformed data)
         // we might end up with no NULL terminator before the end_ptr
         // hence we need to take a slower route and ensure we stay within boundaries
         for (;utf8_data_ptr < utf8_data_end_ptr;)
         {
-            if (!*utf8_data_ptr)
+            if (zero_is_terminator && !*utf8_data_ptr)
                 break;
             
-            if (escapeNonPrintables)
+            if (escape_non_printables)
             {
                 uint8_t* next_data = nullptr;
                 auto printable = GetPrintable(StringElementType::UTF8, utf8_data_ptr, utf8_data_end_ptr, next_data);
@@ -421,8 +426,8 @@ DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType
             }
         }
     }
-    if (quote != 0)
-        stream.Printf("%c",quote);
+    if (dump_options.GetQuote() != 0)
+        stream.Printf("%c",dump_options.GetQuote());
     return true;
 }
 
@@ -438,6 +443,16 @@ lldb_private::formatters::ReadBufferAndDumpToStreamOptions::ReadBufferAndDumpToS
     SetEscapeNonPrintables(valobj.GetTargetSP()->GetDebugger().GetEscapeNonPrintables());
 }
 
+lldb_private::formatters::ReadBufferAndDumpToStreamOptions::ReadBufferAndDumpToStreamOptions (const lldb_private::formatters::ReadStringAndDumpToStreamOptions& options) :
+    ReadBufferAndDumpToStreamOptions()
+{
+    SetStream(options.GetStream());
+    SetPrefixToken(options.GetPrefixToken());
+    SetQuote(options.GetQuote());
+    SetEscapeNonPrintables(options.GetEscapeNonPrintables());
+    SetBinaryZeroIsTerminator(options.GetBinaryZeroIsTerminator());
+}
+
 
 namespace lldb_private
 {
@@ -447,7 +462,7 @@ namespace formatters
 
 template <>
 bool
-ReadStringAndDumpToStream<StringElementType::ASCII> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::ASCII> (const ReadStringAndDumpToStreamOptions& options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
     Error my_error;
@@ -581,13 +596,17 @@ ReadUTFBufferAndDumpToStream (const ReadStringAndDumpToStreamOptions& options,
     }
 
     DataExtractor data(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+    
+    ReadBufferAndDumpToStreamOptions dump_options(options);
+    dump_options.SetData(data);
+    dump_options.SetSourceSize(sourceSize);
 
-    return DumpUTFBufferToStream(ConvertFunction, data, *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), sourceSize, options.GetEscapeNonPrintables());
+    return DumpUTFBufferToStream(ConvertFunction, dump_options);
 }
 
 template <>
 bool
-ReadStringAndDumpToStream<StringElementType::UTF8> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::UTF8> (const ReadStringAndDumpToStreamOptions& options)
 {
     return ReadUTFBufferAndDumpToStream<UTF8>(options,
                                               nullptr);
@@ -595,7 +614,7 @@ ReadStringAndDumpToStream<StringElementType::UTF8> (ReadStringAndDumpToStreamOpt
 
 template <>
 bool
-ReadStringAndDumpToStream<StringElementType::UTF16> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::UTF16> (const ReadStringAndDumpToStreamOptions& options)
 {
     return ReadUTFBufferAndDumpToStream<UTF16>(options,
                                                ConvertUTF16toUTF8);
@@ -603,7 +622,7 @@ ReadStringAndDumpToStream<StringElementType::UTF16> (ReadStringAndDumpToStreamOp
 
 template <>
 bool
-ReadStringAndDumpToStream<StringElementType::UTF32> (ReadStringAndDumpToStreamOptions options)
+ReadStringAndDumpToStream<StringElementType::UTF32> (const ReadStringAndDumpToStreamOptions& options)
 {
     return ReadUTFBufferAndDumpToStream<UTF32>(options,
                                                ConvertUTF32toUTF8);
@@ -611,16 +630,16 @@ ReadStringAndDumpToStream<StringElementType::UTF32> (ReadStringAndDumpToStreamOp
 
 template <>
 bool
-ReadBufferAndDumpToStream<StringElementType::UTF8> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::UTF8> (const ReadBufferAndDumpToStreamOptions& options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
 
-    return DumpUTFBufferToStream<UTF8>(nullptr, options.GetData(), *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), options.GetSourceSize(), options.GetEscapeNonPrintables());
+    return DumpUTFBufferToStream<UTF8>(nullptr, options);
 }
 
 template <>
 bool
-ReadBufferAndDumpToStream<StringElementType::ASCII> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::ASCII> (const ReadBufferAndDumpToStreamOptions& options)
 {
     // treat ASCII the same as UTF8
     // FIXME: can we optimize ASCII some more?
@@ -629,20 +648,20 @@ ReadBufferAndDumpToStream<StringElementType::ASCII> (ReadBufferAndDumpToStreamOp
 
 template <>
 bool
-ReadBufferAndDumpToStream<StringElementType::UTF16> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::UTF16> (const ReadBufferAndDumpToStreamOptions& options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
 
-    return DumpUTFBufferToStream(ConvertUTF16toUTF8, options.GetData(), *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), options.GetSourceSize(), options.GetEscapeNonPrintables());
+    return DumpUTFBufferToStream(ConvertUTF16toUTF8, options);
 }
 
 template <>
 bool
-ReadBufferAndDumpToStream<StringElementType::UTF32> (ReadBufferAndDumpToStreamOptions options)
+ReadBufferAndDumpToStream<StringElementType::UTF32> (const ReadBufferAndDumpToStreamOptions& options)
 {
     assert(options.GetStream() && "need a Stream to print the string to");
 
-    return DumpUTFBufferToStream(ConvertUTF32toUTF8, options.GetData(), *options.GetStream(), options.GetPrefixToken(), options.GetQuote(), options.GetSourceSize(), options.GetEscapeNonPrintables());
+    return DumpUTFBufferToStream(ConvertUTF32toUTF8, options);
 }
 
 } // namespace formatters

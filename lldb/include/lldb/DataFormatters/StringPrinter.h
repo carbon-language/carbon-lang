@@ -38,7 +38,8 @@ namespace lldb_private {
             m_source_size(0),
             m_needs_zero_termination(true),
             m_escape_non_printables(true),
-            m_ignore_max_length(false)
+            m_ignore_max_length(false),
+            m_zero_is_terminator(true)
             {
             }
             
@@ -136,6 +137,19 @@ namespace lldb_private {
             }
             
             ReadStringAndDumpToStreamOptions&
+            SetBinaryZeroIsTerminator (bool e)
+            {
+                m_zero_is_terminator = e;
+                return *this;
+            }
+            
+            bool
+            GetBinaryZeroIsTerminator () const
+            {
+                return m_zero_is_terminator;
+            }
+            
+            ReadStringAndDumpToStreamOptions&
             SetEscapeNonPrintables (bool e)
             {
                 m_escape_non_printables = e;
@@ -171,6 +185,7 @@ namespace lldb_private {
             bool m_needs_zero_termination;
             bool m_escape_non_printables;
             bool m_ignore_max_length;
+            bool m_zero_is_terminator;
         };
         
         class ReadBufferAndDumpToStreamOptions
@@ -183,11 +198,14 @@ namespace lldb_private {
             m_prefix_token(0),
             m_quote('"'),
             m_source_size(0),
-            m_escape_non_printables(true)
+            m_escape_non_printables(true),
+            m_zero_is_terminator(true)
             {
             }
             
             ReadBufferAndDumpToStreamOptions (ValueObject& valobj);
+            
+            ReadBufferAndDumpToStreamOptions (const ReadStringAndDumpToStreamOptions& options);
             
             ReadBufferAndDumpToStreamOptions&
             SetData (DataExtractor d)
@@ -267,6 +285,19 @@ namespace lldb_private {
                 return m_escape_non_printables;
             }
             
+            ReadBufferAndDumpToStreamOptions&
+            SetBinaryZeroIsTerminator (bool e)
+            {
+                m_zero_is_terminator = e;
+                return *this;
+            }
+            
+            bool
+            GetBinaryZeroIsTerminator () const
+            {
+                return m_zero_is_terminator;
+            }
+            
         private:
             DataExtractor m_data;
             Stream* m_stream;
@@ -274,15 +305,16 @@ namespace lldb_private {
             char m_quote;
             uint32_t m_source_size;
             bool m_escape_non_printables;
+            bool m_zero_is_terminator;
         };
         
         template <StringElementType element_type>
         bool
-        ReadStringAndDumpToStream (ReadStringAndDumpToStreamOptions options);
+        ReadStringAndDumpToStream (const ReadStringAndDumpToStreamOptions& options);
         
         template <StringElementType element_type>
         bool
-        ReadBufferAndDumpToStream (ReadBufferAndDumpToStreamOptions options);
+        ReadBufferAndDumpToStream (const ReadBufferAndDumpToStreamOptions& options);
         
     } // namespace formatters
 } // namespace lldb_private
