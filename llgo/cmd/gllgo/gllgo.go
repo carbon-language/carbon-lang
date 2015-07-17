@@ -324,6 +324,14 @@ func parseArguments(args []string) (opts driverOptions, err error) {
 		case strings.HasPrefix(args[0], "-fgo-relative-import-path="):
 			// TODO(pcc): Handle this.
 
+		case strings.HasPrefix(args[0], "-fstack-protector"):
+			// TODO(axw) set ssp function attributes. This can be useful
+			// even for Go, if it interfaces with code written in a non-
+			// memory safe language (e.g. via cgo).
+
+		case strings.HasPrefix(args[0], "-W"):
+			// Go doesn't do warnings. Ignore.
+
 		case args[0] == "-fload-plugin":
 			if len(args) == 1 {
 				return opts, errors.New("missing argument after '-fload-plugin'")
