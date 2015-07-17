@@ -50,12 +50,13 @@ class ExprFormattersTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
-        self.runCmd("script import formatters")
-        self.runCmd("script import foosynth")
+        self.runCmd("command script import formatters.py")
+        self.runCmd("command script import foosynth.py")
         
-        self.runCmd("frame variable foo1 --show-types")
-        self.runCmd("frame variable foo1.b --show-types")
-        self.runCmd("frame variable foo1.b.b_ref --show-types")
+        if self.TraceOn():
+            self.runCmd("frame variable foo1 --show-types")
+            self.runCmd("frame variable foo1.b --show-types")
+            self.runCmd("frame variable foo1.b.b_ref --show-types")
 
         self.expect("expression --show-types -- *(new foo(47))",
             substrs = ['(int) a = 47', '(bar) b = {', '(int) i = 94', '(baz) b = {', '(int) k = 99'])
