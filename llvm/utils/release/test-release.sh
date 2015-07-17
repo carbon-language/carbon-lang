@@ -35,6 +35,7 @@ do_compare="yes"
 BuildDir="`pwd`"
 use_autoconf="no"
 ExtraConfigureFlags=""
+ExportBranch=""
 
 function usage() {
     echo "usage: `basename $0` -release X.Y.Z -rc NUM [OPTIONS]"
@@ -52,6 +53,8 @@ function usage() {
     echo " -use-gzip            Use gzip instead of xz."
     echo " -configure-flags FLAGS  Extra flags to pass to the configure step."
     echo " -use-autoconf        Use autoconf instead of cmake"
+    echo " -svn-path DIR        Use the specified DIR instead of a release."
+    echo "                      For example -svn-path trunk or -svn-path branches/release_37"
 }
 
 if [ `uname -s` = "Darwin" ]; then
@@ -72,6 +75,16 @@ while [ $# -gt 0 ]; do
             ;;
         -final | --final )
             RC=final
+            ;;
+        -svn-path | --svn-path )
+            shift
+            Release="test"
+            Release_no_dot="test"
+            ExportBranch="$1"
+            RC="`echo $ExportBranch | sed -e 's,/,_,g'`"
+            echo "WARNING: Using the branch $ExportBranch instead of a release tag"
+            echo "         This is intended to aid new packagers in trialing "
+            echo "         builds without requiring a tag to be created first"
             ;;
         -triple | --triple )
             shift
@@ -132,6 +145,9 @@ if [ -z "$RC" ]; then
     echo "error: no release candidate number specified"
     exit 1
 fi
+if [ -z "$ExportBranch" ]; then
+    ExportBranch="tags/RELEASE_$Release_no_dot/$RC"
+fi
 if [ -z "$Triple" ]; then
     echo "error: no target triple specified"
     exit 1
@@ -187,8 +203,8 @@ function check_valid_urls() {
     for proj in $projects ; do
         echo "# Validating $proj SVN URL"
 
-        if ! svn ls $Base_url/$proj/tags/RELEASE_$Release_no_dot/$RC > /dev/null 2>&1 ; then
-            echo "$proj $Release release candidate $RC doesn't exist!"
+        if ! svn ls $Base_url/$proj/$ExportBranch > /dev/null 2>&1 ; then
+            echo "$proj does not have a $ExportBranch branch/tag!"
             exit 1
         fi
     done
@@ -200,7 +216,7 @@ function export_sources() {
 
     for proj in $projects ; do
         echo "# Exporting $proj $Release-$RC sources"
-        if ! svn export -q $Base_url/$proj/tags/RELEASE_$Release_no_dot/$RC $proj.src ; then
+        if ! svn export -q $Base_url/$proj/$ExportBranch $proj.src ; then
             echo "error: failed to export $proj project"
             exit 1
         fi
