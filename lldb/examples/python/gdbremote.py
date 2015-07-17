@@ -34,6 +34,7 @@ import xml.etree.ElementTree as ET
 g_log_file = ''
 g_byte_order = 'little'
 g_number_regex = re.compile('^(0x[0-9a-fA-F]+|[0-9]+)')
+g_thread_id_regex = re.compile('^(-1|[0-9a-fA-F]+|0)')
 
 class TerminalColors:
     '''Simple terminal colors class'''
@@ -354,6 +355,15 @@ class Packet:
         else:
             return False
 
+    def get_thread_id(self, fail_value = -1):
+        match = g_number_regex.match (self.str)
+        if match:
+            number_str = match.group(1)
+            self.str = self.str[len(number_str):]
+            return int(number_str, 0)
+        else:
+            return fail_value
+        
     def get_hex_uint8(self):
         if self.str and len(self.str) >= 2 and self.str[0] in string.hexdigits and self.str[1] in string.hexdigits:
             uval = int(self.str[0:2], 16)
@@ -498,6 +508,11 @@ def get_thread_from_thread_suffix(str):
             return int(match.group(1), 16)
     return None
 
+def cmd_qThreadStopInfo(options, cmd, args):
+    packet = Packet(args)
+    tid = packet.get_hex_uint('big')
+    print "get_thread_stop_info  (tid = 0x%x)" % (tid)
+    
 def cmd_stop_reply(options, cmd, args):
     print "get_last_stop_info()"
     return False
@@ -604,7 +619,31 @@ def rsp_qXfer(options, cmd, cmd_args, rsp):
                             g_register_infos.append(reg_info)
                     print 'XML for "%s":' % (data[2])
                     ET.dump(xml_root)
-    
+
+def cmd_A(options, cmd, args):
+    print 'launch process:'
+    packet = Packet(args)
+    while 1:
+        arg_len = packet.get_number()
+        if not packet.skip_exact_string(','):
+            break
+        arg_idx = packet.get_number()
+        if not packet.skip_exact_string(','):
+            break;
+        arg_value = packet.get_hex_ascii_str(arg_len)
+        print 'argv[%u] = "%s"' % (arg_idx, arg_value)
+        
+def cmd_qC(options, cmd, args):
+    print "query_current_thread_id()"
+
+def rsp_qC(options, cmd, cmd_args, rsp):
+    packet = Packet(rsp)
+    if packet.skip_exact_string("QC"):
+        tid = packet.get_thread_id()
+        print "current_thread_id = %#x" % (tid)
+    else:
+        print "current_thread_id = old thread ID"
+
 def cmd_query_packet(options, cmd, args):
     if args:
         print "%s%s" % (cmd, args)
@@ -989,39 +1028,45 @@ def cmd_kill(options, cmd, args):
     return False
 
 gdb_remote_commands = {
-    '\\?'                     : { 'cmd' : cmd_stop_reply    , 'rsp' : rsp_stop_reply          , 'name' : "stop reply pacpket"},
-    'QStartNoAckMode'         : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if no ack mode is supported"},
-    'QThreadSuffixSupported'  : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if thread suffix is supported" },
-    'QListThreadsInStopReply' : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if threads in stop reply packets are supported" },
-    'QSetDetachOnError' :       { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if we should detach on error" },
-    'qVAttachOrWaitSupported' : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query if threads attach with optional wait is supported" },
-    'qHostInfo'               : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get host information" },
-    'vCont'                   : { 'cmd' : cmd_vCont         , 'rsp' : rsp_vCont               , 'name' : "extended continue command" },
-    'vAttach'                 : { 'cmd' : cmd_vAttach       , 'rsp' : rsp_stop_reply          , 'name' : "attach to process" },
-    'c'                       : { 'cmd' : cmd_c             , 'rsp' : rsp_stop_reply          , 'name' : "continue" },
-    's'                       : { 'cmd' : cmd_s             , 'rsp' : rsp_stop_reply          , 'name' : "step" },
-    'qRegisterInfo'           : { 'cmd' : cmd_qRegisterInfo , 'rsp' : rsp_qRegisterInfo       , 'name' : "query register info" },
-    'qfThreadInfo'            : { 'cmd' : cmd_qThreadInfo   , 'rsp' : rsp_qThreadInfo         , 'name' : "get current thread list" },
-    'qsThreadInfo'            : { 'cmd' : cmd_qThreadInfo   , 'rsp' : rsp_qThreadInfo         , 'name' : "get current thread list" },
-    'qShlibInfoAddr'          : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_hex_big_endian      , 'name' : "get shared library info address" },
-    'qMemoryRegionInfo'       : { 'cmd' : cmd_mem_rgn_info  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get memory region information" },
-    'qProcessInfo'            : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get process info" },
-    'qSupported'              : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query supported" },
-    'qXfer:'                  : { 'cmd' : cmd_qXfer         , 'rsp' : rsp_qXfer               , 'name' : "qXfer" },
-    'qSymbol:'                : { 'cmd' : cmd_qSymbol       , 'rsp' : rsp_qSymbol             , 'name' : "qSymbol" },
-    'x'                       : { 'cmd' : cmd_read_mem_bin  , 'rsp' : rsp_mem_bin_bytes       , 'name' : "read memory binary" },
-    'X'                       : { 'cmd' : cmd_write_memory  , 'rsp' : rsp_ok_means_success    , 'name' : "write memory binary" },
-    'm'                       : { 'cmd' : cmd_read_memory   , 'rsp' : rsp_memory_bytes        , 'name' : "read memory" },
-    'M'                       : { 'cmd' : cmd_write_memory  , 'rsp' : rsp_ok_means_success    , 'name' : "write memory" },
-    '_M'                      : { 'cmd' : cmd_alloc_memory  , 'rsp' : rsp_alloc_memory        , 'name' : "allocate memory" },
-    '_m'                      : { 'cmd' : cmd_dealloc_memory, 'rsp' : rsp_ok_means_success    , 'name' : "deallocate memory" },
-    'p'                       : { 'cmd' : cmd_read_one_reg  , 'rsp' : rsp_read_one_reg        , 'name' : "read single register" },
-    'P'                       : { 'cmd' : cmd_write_one_reg , 'rsp' : rsp_ok_means_success    , 'name' : "write single register" },
-    'g'                       : { 'cmd' : cmd_read_all_regs , 'rsp' : rsp_read_all_regs       , 'name' : "read all registers" },
-    'G'                       : { 'cmd' : cmd_write_all_regs, 'rsp' : rsp_ok_means_success    , 'name' : "write all registers" },
-    'z'                       : { 'cmd' : cmd_bp            , 'rsp' : rsp_ok_means_success    , 'name' : "clear breakpoint or watchpoint" },
-    'Z'                       : { 'cmd' : cmd_bp            , 'rsp' : rsp_ok_means_success    , 'name' : "set breakpoint or watchpoint" },
-    'k'                       : { 'cmd' : cmd_kill          , 'rsp' : rsp_stop_reply          , 'name' : "kill process" },
+    '\\?'                     : { 'cmd' : cmd_stop_reply        , 'rsp' : rsp_stop_reply          , 'name' : "stop reply pacpket"},
+    'qThreadStopInfo'         : { 'cmd' : cmd_qThreadStopInfo   , 'rsp' : rsp_stop_reply          , 'name' : "stop reply pacpket"},
+    'QStartNoAckMode'         : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_supported  , 'name' : "query if no ack mode is supported"},
+    'QThreadSuffixSupported'  : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_supported  , 'name' : "query if thread suffix is supported" },
+    'QListThreadsInStopReply' : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_supported  , 'name' : "query if threads in stop reply packets are supported" },
+    'QSetDetachOnError'       : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_success    , 'name' : "set if we should detach on error" },
+    'QSetDisableASLR'         : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_success    , 'name' : "set if we should disable ASLR" },
+    'qLaunchSuccess'          : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_success    , 'name' : "check on launch success for the A packet" },
+    'A'                       : { 'cmd' : cmd_A                 , 'rsp' : rsp_ok_means_success    , 'name' : "launch process" },
+    'QLaunchArch'             : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_supported  , 'name' : "set if we should disable ASLR" },
+    'qVAttachOrWaitSupported' : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_supported  , 'name' : "set the launch architecture" },
+    'qHostInfo'               : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get host information" },
+    'qC'                      : { 'cmd' : cmd_qC                , 'rsp' : rsp_qC                  , 'name' : "return the current thread ID" },
+    'vCont'                   : { 'cmd' : cmd_vCont             , 'rsp' : rsp_vCont               , 'name' : "extended continue command" },
+    'vAttach'                 : { 'cmd' : cmd_vAttach           , 'rsp' : rsp_stop_reply          , 'name' : "attach to process" },
+    'c'                       : { 'cmd' : cmd_c                 , 'rsp' : rsp_stop_reply          , 'name' : "continue" },
+    's'                       : { 'cmd' : cmd_s                 , 'rsp' : rsp_stop_reply          , 'name' : "step" },
+    'qRegisterInfo'           : { 'cmd' : cmd_qRegisterInfo     , 'rsp' : rsp_qRegisterInfo       , 'name' : "query register info" },
+    'qfThreadInfo'            : { 'cmd' : cmd_qThreadInfo       , 'rsp' : rsp_qThreadInfo         , 'name' : "get current thread list" },
+    'qsThreadInfo'            : { 'cmd' : cmd_qThreadInfo       , 'rsp' : rsp_qThreadInfo         , 'name' : "get current thread list" },
+    'qShlibInfoAddr'          : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_hex_big_endian      , 'name' : "get shared library info address" },
+    'qMemoryRegionInfo'       : { 'cmd' : cmd_mem_rgn_info      , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get memory region information" },
+    'qProcessInfo'            : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get process info" },
+    'qSupported'              : { 'cmd' : cmd_query_packet      , 'rsp' : rsp_ok_means_supported  , 'name' : "query supported" },
+    'qXfer:'                  : { 'cmd' : cmd_qXfer             , 'rsp' : rsp_qXfer               , 'name' : "qXfer" },
+    'qSymbol:'                : { 'cmd' : cmd_qSymbol           , 'rsp' : rsp_qSymbol             , 'name' : "qSymbol" },
+    'x'                       : { 'cmd' : cmd_read_mem_bin      , 'rsp' : rsp_mem_bin_bytes       , 'name' : "read memory binary" },
+    'X'                       : { 'cmd' : cmd_write_memory      , 'rsp' : rsp_ok_means_success    , 'name' : "write memory binary" },
+    'm'                       : { 'cmd' : cmd_read_memory       , 'rsp' : rsp_memory_bytes        , 'name' : "read memory" },
+    'M'                       : { 'cmd' : cmd_write_memory      , 'rsp' : rsp_ok_means_success    , 'name' : "write memory" },
+    '_M'                      : { 'cmd' : cmd_alloc_memory      , 'rsp' : rsp_alloc_memory        , 'name' : "allocate memory" },
+    '_m'                      : { 'cmd' : cmd_dealloc_memory    , 'rsp' : rsp_ok_means_success    , 'name' : "deallocate memory" },
+    'p'                       : { 'cmd' : cmd_read_one_reg      , 'rsp' : rsp_read_one_reg        , 'name' : "read single register" },
+    'P'                       : { 'cmd' : cmd_write_one_reg     , 'rsp' : rsp_ok_means_success    , 'name' : "write single register" },
+    'g'                       : { 'cmd' : cmd_read_all_regs     , 'rsp' : rsp_read_all_regs       , 'name' : "read all registers" },
+    'G'                       : { 'cmd' : cmd_write_all_regs    , 'rsp' : rsp_ok_means_success    , 'name' : "write all registers" },
+    'z'                       : { 'cmd' : cmd_bp                , 'rsp' : rsp_ok_means_success    , 'name' : "clear breakpoint or watchpoint" },
+    'Z'                       : { 'cmd' : cmd_bp                , 'rsp' : rsp_ok_means_success    , 'name' : "set breakpoint or watchpoint" },
+    'k'                       : { 'cmd' : cmd_kill              , 'rsp' : rsp_stop_reply          , 'name' : "kill process" },
 }
 
 def calculate_mean_and_standard_deviation(floats):
@@ -1108,6 +1153,8 @@ def parse_gdb_log(file, options):
                         m = packet_names_regex.match (contents)
                         if m:
                             last_command = m.group(1)
+                            if last_command == '?':
+                                last_command = '\\?'
                             packet_name = last_command
                             last_command_args = m.group(2)
                             last_command_packet = contents
