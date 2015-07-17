@@ -203,9 +203,7 @@ struct {
   { "cortex-r7",     ARM::AK_ARMV7R,   ARM::FK_VFPV3_D16_FP16, false },
   { "sc300",         ARM::AK_ARMV7M,   ARM::FK_NONE,           false },
   { "cortex-m3",     ARM::AK_ARMV7M,   ARM::FK_NONE,           true },
-  { "cortex-m4",     ARM::AK_ARMV7EM,  ARM::FK_NONE,           true },
-  // FIXME cortex-m4f missing from ARM.td
-  { "cortex-m4f",    ARM::AK_ARMV7EM,  ARM::FK_FPV4_SP_D16,          false },
+  { "cortex-m4",     ARM::AK_ARMV7EM,  ARM::FK_FPV4_SP_D16,    true },
   { "cortex-m7",     ARM::AK_ARMV7EM,  ARM::FK_FPV5_D16,             false },
   { "cortex-a53",    ARM::AK_ARMV8A,   ARM::FK_CRYPTO_NEON_FP_ARMV8, true },
   { "cortex-a57",    ARM::AK_ARMV8A,   ARM::FK_CRYPTO_NEON_FP_ARMV8, false },
