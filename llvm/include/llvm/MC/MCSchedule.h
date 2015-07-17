@@ -206,9 +206,6 @@ struct MCSchedModel {
   /// scheduling class (itinerary class or SchedRW list).
   bool isComplete() const { return CompleteModel; }
 
-  /// Return true if machine supports out of order execution.
-  bool isOutOfOrder() const { return MicroOpBufferSize > 1; }
-
   unsigned getNumProcResourceKinds() const {
     return NumProcResourceKinds;
   }
