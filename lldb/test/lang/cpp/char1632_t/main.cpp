@@ -10,6 +10,8 @@
 
 int main (int argc, char const *argv[])
 {
+  auto cs16_zero = (char16_t)0;
+  auto cs32_zero = (char32_t)0;
     auto cs16 = u"hello world ྒྙྐ";
 	auto cs32 = U"hello world ྒྙྐ";
     char16_t *s16 = (char16_t *)u"ﺸﺵۻ";

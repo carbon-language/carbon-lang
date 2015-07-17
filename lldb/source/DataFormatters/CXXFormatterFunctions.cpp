@@ -362,6 +362,7 @@ lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& st
     options.SetPrefixToken('u');
     options.SetQuote('\'');
     options.SetSourceSize(1);
+    options.SetBinaryZeroIsTerminator(false);
     
     return ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
 }
@@ -387,6 +388,7 @@ lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& st
     options.SetPrefixToken('U');
     options.SetQuote('\'');
     options.SetSourceSize(1);
+    options.SetBinaryZeroIsTerminator(false);
     
     return ReadBufferAndDumpToStream<StringElementType::UTF32>(options);
 }
@@ -407,6 +409,7 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     options.SetPrefixToken('L');
     options.SetQuote('\'');
     options.SetSourceSize(1);
+    options.SetBinaryZeroIsTerminator(false);
     
     return ReadBufferAndDumpToStream<StringElementType::UTF16>(options);
 }
