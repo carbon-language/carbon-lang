@@ -40,6 +40,8 @@ typedef SizeClassAllocator64<
   kAllocatorSpace, kAllocatorSize, 16, CompactSizeClassMap> Allocator64Compact;
 #elif defined(__mips64)
 static const u64 kAddressSpaceSize = 1ULL << 40;
+#elif defined(__aarch64__)
+static const u64 kAddressSpaceSize = 1ULL << 39;
 #else
 static const u64 kAddressSpaceSize = 1ULL << 32;
 #endif
