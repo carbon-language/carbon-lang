@@ -413,8 +413,8 @@ struct CounterCoverageMappingBuilder
           SourceRegions.emplace_back(Region.getCounter(), NestedLoc, EndLoc);
 
           EndLoc = getPreciseTokenLocEnd(getIncludeOrExpansionLoc(EndLoc));
-          assert(!EndLoc.isInvalid() &&
-                 "File exit was not handled before popRegions");
+          if (EndLoc.isInvalid())
+            llvm::report_fatal_error("File exit not handled before popRegions");
         }
         Region.setEndLoc(EndLoc);
 
