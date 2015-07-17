@@ -1755,10 +1755,7 @@ public:
   /// declarations with this name are visible from translation unit scope, their
   /// declarations will be deserialized and introduced into the declaration
   /// chain of the identifier.
-  virtual IdentifierInfo *get(const char *NameStart, const char *NameEnd);
-  IdentifierInfo *get(StringRef Name) override {
-    return get(Name.begin(), Name.end());
-  }
+  IdentifierInfo *get(StringRef Name) override;
 
   /// \brief Retrieve an iterator into the set of all identifiers
   /// in all loaded AST files.
