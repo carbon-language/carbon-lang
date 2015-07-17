@@ -35,10 +35,13 @@ define void @g1(i32 %a1, i32 %a2) {
 
 ;CHECK:	.globl	x
 ;CHECK: x = _MergedGlobals_x
+;CHECK: .size x, 4
 ;CHECK:	.globl	y
 ;CHECK: y = _MergedGlobals_x+4
+;CHECK: .size y, 4
 ;CHECK:	.globl	z
 ;CHECK: z = _MergedGlobals_x+8
+;CHECK: .size z, 4
 
 ;CHECK-APPLE-IOS: .globl	__MergedGlobals_x       ; @_MergedGlobals_x
 ;CHECK-APPLE-IOS: .zerofill __DATA,__common,__MergedGlobals_x,12,3
