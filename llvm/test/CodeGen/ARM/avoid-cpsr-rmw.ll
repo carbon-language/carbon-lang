@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=swift     | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a9 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-CORTEX
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=swift     | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SWIFT
 ; Avoid some 's' 16-bit instruction which partially update CPSR (and add false
 ; dependency) when it isn't dependent on last CPSR defining instruction.
 ; rdar://8928208
@@ -7,8 +7,10 @@
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind readnone {
  entry:
 ; CHECK-LABEL: t1:
-; CHECK: muls [[REG:(r[0-9]+)]], r3, r2
-; CHECK-NEXT: mul  [[REG2:(r[0-9]+)]], r1, r0
+; CHECK-CORTEX: muls [[REG:(r[0-9]+)]], r3, r2
+; CHECK-CORTEX-NEXT: mul  [[REG2:(r[0-9]+)]], r1, r0
+; CHECK-SWIFT: muls  [[REG2:(r[0-9]+)]], r1, r0
+; CHECK-SWIFT-NEXT: mul [[REG:(r[0-9]+)]], r2, r3
 ; CHECK-NEXT: muls r0, [[REG]], [[REG2]]
   %0 = mul nsw i32 %a, %b
   %1 = mul nsw i32 %c, %d
@@ -21,8 +23,7 @@ define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind readnone {
 define void @t2(i32* nocapture %ptr1, i32* %ptr2, i32 %c) nounwind {
 entry:
 ; CHECK-LABEL: t2:
-  %tobool7 = icmp eq i32* %ptr2, null
-  br i1 %tobool7, label %while.end, label %while.body
+  br label %while.body
 
 while.body:
 ; CHECK: while.body
@@ -55,8 +56,7 @@ while.end:
 define void @t3(i32* nocapture %ptr1, i32* %ptr2, i32 %c) nounwind minsize {
 entry:
 ; CHECK-LABEL: t3:
-  %tobool7 = icmp eq i32* %ptr2, null
-  br i1 %tobool7, label %while.end, label %while.body
+  br label %while.body
 
 while.body:
 ; CHECK: while.body

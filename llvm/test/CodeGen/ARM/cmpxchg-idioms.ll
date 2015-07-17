@@ -15,14 +15,14 @@ define i32 @test_return(i32* %p, i32 %oldval, i32 %newval) {
 ; CHECK: bne [[LOOP]]
 
 ; CHECK-NOT: cmp {{r[0-9]+}}, {{r[0-9]+}}
-; CHECK: movs r0, #1
 ; CHECK: dmb ish
+; CHECK: movs r0, #1
 ; CHECK: bx lr
 
 ; CHECK: [[FAILED]]:
 ; CHECK-NOT: cmp {{r[0-9]+}}, {{r[0-9]+}}
-; CHECK: movs r0, #0
 ; CHECK: dmb ish
+; CHECK: movs r0, #0
 ; CHECK: bx lr
 
   %pair = cmpxchg i32* %p, i32 %oldval, i32 %newval seq_cst seq_cst
@@ -34,8 +34,8 @@ define i32 @test_return(i32* %p, i32 %oldval, i32 %newval) {
 define i1 @test_return_bool(i8* %value, i8 %oldValue, i8 %newValue) {
 ; CHECK-LABEL: test_return_bool:
 
-; CHECK: uxtb [[OLDBYTE:r[0-9]+]], r1
 ; CHECK: dmb ishst
+; CHECK: uxtb [[OLDBYTE:r[0-9]+]], r1
 
 ; CHECK: [[LOOP:LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldrexb [[LOADED:r[0-9]+]], [r0]
