@@ -1738,6 +1738,9 @@ void FunctionStackPoisoner::poisonStack() {
   IRBuilder<> IRB(InsBefore);
   IRB.SetCurrentDebugLocation(EntryDebugLocation);
 
+  // Make sure non-instrumented allocas stay in the first basic block.
+  // Otherwise, debug info is broken, because only first-basic-block allocas are
+  // treated as regular stack slots.
   for (auto *AI : NonInstrumentedStaticAllocaVec) AI->moveBefore(InsBefore);
 
   SmallVector<ASanStackVariableDescription, 16> SVD;
