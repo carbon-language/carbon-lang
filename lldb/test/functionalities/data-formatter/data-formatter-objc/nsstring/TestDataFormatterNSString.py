@@ -102,6 +102,10 @@ class NSStringDataFormatterTestCase(TestBase):
         self.expect('expr -d run-target -- path',substrs = ['usr/blah/stuff'])
         self.expect('frame variable path',substrs = ['usr/blah/stuff'])
 
+        self.expect('po strwithNULs', substrs=['a very much boring task to write'])
+        self.expect('expr [strwithNULs length]', substrs=['54'])
+        self.expect('frame variable strwithNULs', substrs=['@"a very much boring task to write\\0a string this way!!'])
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

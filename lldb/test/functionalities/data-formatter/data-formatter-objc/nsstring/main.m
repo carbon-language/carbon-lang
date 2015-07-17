@@ -79,6 +79,13 @@ int main (int argc, const char * argv[])
 	NSArray *components = @[@"usr", @"blah", @"stuff"];
 	NSString *path = [NSString pathWithComponents: components];
 
+  const unichar someOfTheseAreNUL[] = {'a',' ', 'v','e','r','y',' ',
+      'm','u','c','h',' ','b','o','r','i','n','g',' ','t','a','s','k',
+      ' ','t','o',' ','w','r','i','t','e', 0, 'a', ' ', 's', 't', 'r', 'i', 'n', 'g', ' ',
+      't','h','i','s',' ','w','a','y','!','!', 0x03C3, 0};
+  NSString *strwithNULs = [NSString stringWithCharacters: someOfTheseAreNUL
+                                           length: sizeof someOfTheseAreNUL / sizeof *someOfTheseAreNUL];
+
     [pool drain]; // break here
     return 0;
 }
