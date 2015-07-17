@@ -8138,7 +8138,9 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
     // Undo the fmul 2.0, x -> fadd x, x transformation, since if it occurs
     // during an early run of DAGCombiner can prevent folding with fmuls
     // inserted during lowering.
-    if (N0.getOpcode() == ISD::FADD && N0.getOperand(0) == N0.getOperand(1)) {
+    if (N0.getOpcode() == ISD::FADD &&
+        (N0.getOperand(0) == N0.getOperand(1)) &&
+        N0.hasOneUse()) {
       const SDValue Two = DAG.getConstantFP(2.0, DL, VT);
       SDValue MulConsts = DAG.getNode(ISD::FMUL, DL, VT, Two, N1);
       return DAG.getNode(ISD::FMUL, DL, VT, N0.getOperand(0), MulConsts);
