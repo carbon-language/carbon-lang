@@ -140,40 +140,40 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   Die();
 }
 
-uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
-                      uptr max_len, error_t *errno_p) {
+bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
+                      uptr *read_len, uptr max_len, error_t *errno_p) {
   uptr PageSize = GetPageSizeCached();
   uptr kMinFileLen = PageSize;
-  uptr read_len = 0;
-  *buff = 0;
+  *buff = nullptr;
   *buff_size = 0;
+  *read_len = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
     fd_t fd = OpenFile(file_name, RdOnly, errno_p);
-    if (fd == kInvalidFd) return 0;
+    if (fd == kInvalidFd) return false;
     UnmapOrDie(*buff, *buff_size);
     *buff = (char*)MmapOrDie(size, __func__);
     *buff_size = size;
+    *read_len = 0;
     // Read up to one page at a time.
-    read_len = 0;
     bool reached_eof = false;
-    while (read_len + PageSize <= size) {
+    while (*read_len + PageSize <= size) {
       uptr just_read;
-      if (!ReadFromFile(fd, *buff + read_len, PageSize, &just_read, errno_p)) {
+      if (!ReadFromFile(fd, *buff + *read_len, PageSize, &just_read, errno_p)) {
         UnmapOrDie(*buff, *buff_size);
-        return 0;
+        return false;
       }
       if (just_read == 0) {
         reached_eof = true;
         break;
       }
-      read_len += just_read;
+      *read_len += just_read;
     }
     CloseFile(fd);
     if (reached_eof)  // We've read the whole file.
       break;
   }
-  return read_len;
+  return true;
 }
 
 typedef bool UptrComparisonFunction(const uptr &a, const uptr &b);

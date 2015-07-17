@@ -60,15 +60,13 @@ void SuppressionContext::ParseFromFile(const char *filename) {
   }
 
   // Read the file.
-  char *file_contents;
-  uptr buffer_size;
-  const uptr max_len = 1 << 26;
-  uptr contents_size =
-    ReadFileToBuffer(filename, &file_contents, &buffer_size, max_len);
   VPrintf(1, "%s: reading suppressions file at %s\n",
           SanitizerToolName, filename);
-
-  if (contents_size == 0) {
+  char *file_contents;
+  uptr buffer_size;
+  uptr contents_size;
+  if (!ReadFileToBuffer(filename, &file_contents, &buffer_size,
+                        &contents_size)) {
     Printf("%s: failed to read suppressions file '%s'\n", SanitizerToolName,
            filename);
     Die();

@@ -54,11 +54,10 @@ class FlagHandlerInclude : public FlagHandlerBase {
   bool Parse(const char *value) final {
     char *data;
     uptr data_mapped_size;
+    uptr len;
     error_t err;
-    uptr len =
-      ReadFileToBuffer(value, &data, &data_mapped_size,
-                       Max(kMaxIncludeSize, GetPageSizeCached()), &err);
-    if (!len) {
+    if (!ReadFileToBuffer(value, &data, &data_mapped_size, &len,
+                          Max(kMaxIncludeSize, GetPageSizeCached()), &err)) {
       Printf("Failed to read options from '%s': error %d\n", value, err);
       return false;
     }

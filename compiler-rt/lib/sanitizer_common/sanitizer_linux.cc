@@ -375,8 +375,8 @@ const char *GetEnv(const char *name) {
   if (!inited) {
     inited = true;
     uptr environ_size;
-    len = ReadFileToBuffer("/proc/self/environ",
-                           &environ, &environ_size, 1 << 26);
+    if (!ReadFileToBuffer("/proc/self/environ", &environ, &environ_size, &len))
+      environ = nullptr;
   }
   if (!environ || len == 0) return 0;
   uptr namelen = internal_strlen(name);
@@ -405,9 +405,13 @@ extern "C" {
 static void ReadNullSepFileToArray(const char *path, char ***arr,
                                    int arr_size) {
   char *buff;
-  uptr buff_size = 0;
+  uptr buff_size;
+  uptr buff_len;
   *arr = (char **)MmapOrDie(arr_size * sizeof(char *), "NullSepFileArray");
-  ReadFileToBuffer(path, &buff, &buff_size, 1024 * 1024);
+  if (!ReadFileToBuffer(path, &buff, &buff_size, &buff_len, 1024 * 1024)) {
+    (*arr)[0] = nullptr;
+    return;
+  }
   (*arr)[0] = buff;
   int count, i;
   for (count = 1, i = 1; ; i++) {
@@ -418,7 +422,7 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
       count++;
     }
   }
-  (*arr)[count] = 0;
+  (*arr)[count] = nullptr;
 }
 #endif
 

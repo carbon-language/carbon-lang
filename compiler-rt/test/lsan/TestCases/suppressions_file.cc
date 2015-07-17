@@ -1,6 +1,10 @@
 // RUN: LSAN_BASE="use_registers=0:use_stacks=0"
 // RUN: %clangxx_lsan %s -o %t
 
+// RUN: rm -f %t.supp
+// RUN: touch %t.supp
+// RUN: LSAN_OPTIONS="$LSAN_BASE:suppressions='%t.supp'" not %run %t 2>&1 | FileCheck %s --check-prefix=NOSUPP
+
 // RUN: echo "leak:*LSanTestLeakingFunc*" > %t.supp
 // RUN: LSAN_OPTIONS="$LSAN_BASE:suppressions='%t.supp'" not %run %t 2>&1 | FileCheck %s
 
@@ -24,3 +28,5 @@ int main() {
 // CHECK: Suppressions used:
 // CHECK: 1 666 *LSanTestLeakingFunc*
 // CHECK: SUMMARY: {{(Leak|Address)}}Sanitizer: 1337 byte(s) leaked in 1 allocation(s)
+
+// NOSUPP: SUMMARY: {{(Leak|Address)}}Sanitizer: 2003 byte(s) leaked in 2 allocation(s).
