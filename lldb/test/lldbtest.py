@@ -1651,6 +1651,7 @@ class Base(unittest2.TestCase):
 
         if compiler[1] == ':':
             compiler = compiler[2:]
+        compiler = compiler.replace(os.path.altsep, os.path.sep)
 
         fname = "{}-{}-{}".format(self.id(), self.getArchitecture(), "_".join(compiler.split(os.path.sep)))
         if len(fname) > 200:
