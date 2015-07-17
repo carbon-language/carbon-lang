@@ -86,6 +86,14 @@ static cl::opt<bool> EnableLocalReassignment(
              "may be compile time intensive"),
     cl::init(false));
 
+static cl::opt<bool> EnableDeferredSpilling(
+    "enable-deferred-spilling", cl::Hidden,
+    cl::desc("Instead of spilling a variable right away, defer the actual "
+             "code insertion to the end of the allocation. That way the "
+             "allocator might still find a suitable coloring for this "
+             "variable because of other evicted variables."),
+    cl::init(false));
+
 // FIXME: Find a good default for this flag and remove the flag.
 static cl::opt<unsigned>
 CSRFirstTimeCost("regalloc-csr-first-time-cost",
@@ -156,6 +164,11 @@ class RAGreedy : public MachineFunctionPass,
 
     /// Live range will be spilled.  No more splitting will be attempted.
     RS_Spill,
+
+
+    /// Live range is in memory. Because of other evictions, it might get moved
+    /// in a register in the end.
+    RS_Memory,
 
     /// There is nothing more we can do to this live range.  Abort compilation
     /// if it can't be assigned.
@@ -414,6 +427,7 @@ const char *const RAGreedy::StageName[] = {
     "RS_Split",
     "RS_Split2",
     "RS_Spill",
+    "RS_Memory",
     "RS_Done"
 };
 #endif
@@ -536,6 +550,13 @@ void RAGreedy::enqueue(PQueue &CurQueue, LiveInterval *LI) {
     // Unsplit ranges that couldn't be allocated immediately are deferred until
     // everything else has been allocated.
     Prio = Size;
+  } else if (ExtraRegInfo[Reg].Stage == RS_Memory) {
+    // Memory operand should be considered last.
+    // Change the priority such that Memory operand are assigned in
+    // the reverse order that they came in.
+    // TODO: Make this a member variable and probably do something about hints.
+    static unsigned MemOp = 0;
+    Prio = MemOp++;
   } else {
     // Giant live ranges fall back to the global assignment heuristic, which
     // prevents excessive spilling in pathological cases.
@@ -2512,13 +2533,23 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
     return PhysReg;
 
   // Finally spill VirtReg itself.
-  NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
-  LiveRangeEdit LRE(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
-  spiller().spill(LRE);
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Done);
+  if (EnableDeferredSpilling && getStage(VirtReg) < RS_Memory) {
+    // TODO: This is experimental and in particular, we do not model
+    // the live range splitting done by spilling correctly.
+    // We would need a deep integration with the spiller to do the
+    // right thing here. Anyway, that is still good for early testing.
+    setStage(VirtReg, RS_Memory);
+    DEBUG(dbgs() << "Do as if this register is in memory\n");
+    NewVRegs.push_back(VirtReg.reg);
+  } else {
+    NamedRegionTimer T("Spiller", TimerGroupName, TimePassesIsEnabled);
+    LiveRangeEdit LRE(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
+    spiller().spill(LRE);
+    setStage(NewVRegs.begin(), NewVRegs.end(), RS_Done);
 
-  if (VerifyEnabled)
-    MF->verify(this, "After spilling");
+    if (VerifyEnabled)
+      MF->verify(this, "After spilling");
+  }
 
   // The live virtual register requesting allocation was spilled, so tell
   // the caller not to allocate anything during this round.
