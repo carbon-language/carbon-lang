@@ -468,19 +468,34 @@ GetRegistersAsJSON(NativeThreadProtocol &thread)
         return nullptr;
 
     JSONObject::SP register_object_sp = std::make_shared<JSONObject>();
+
+#ifdef LLDB_JTHREADSINFO_FULL_REGISTER_SET
     // Expedite all registers in the first register set (i.e. should be GPRs) that are not contained in other registers.
     const RegisterSet *reg_set_p = reg_ctx_sp->GetRegisterSet(0);
     if (! reg_set_p)
         return nullptr;
-
     for (const uint32_t *reg_num_p = reg_set_p->registers; *reg_num_p != LLDB_INVALID_REGNUM; ++reg_num_p)
     {
-        const RegisterInfo *const reg_info_p = reg_ctx_sp->GetRegisterInfoAtIndex(*reg_num_p);
+        uint32_t reg_num = *reg_num_p;
+#else
+    // Expedite only a couple of registers until we figure out why sending registers is
+    // expensive.
+    static const uint32_t k_expedited_registers[] = {
+        LLDB_REGNUM_GENERIC_PC, LLDB_REGNUM_GENERIC_SP, LLDB_REGNUM_GENERIC_FP, LLDB_REGNUM_GENERIC_RA
+    };
+    for (uint32_t generic_reg: k_expedited_registers)
+    {
+        uint32_t reg_num = reg_ctx_sp->ConvertRegisterKindToRegisterNumber(eRegisterKindGeneric, generic_reg);
+        if (reg_num == LLDB_INVALID_REGNUM)
+            continue; // Target does not support the given register.
+#endif
+
+        const RegisterInfo *const reg_info_p = reg_ctx_sp->GetRegisterInfoAtIndex(reg_num);
         if (reg_info_p == nullptr)
         {
             if (log)
                 log->Printf("%s failed to get register info for register index %" PRIu32,
-                        __FUNCTION__, *reg_num_p);
+                        __FUNCTION__, reg_num);
             continue;
         }
 
@@ -493,7 +508,7 @@ GetRegistersAsJSON(NativeThreadProtocol &thread)
         {
             if (log)
                 log->Printf("%s failed to read register '%s' index %" PRIu32 ": %s", __FUNCTION__,
-                        reg_info_p->name ? reg_info_p->name : "<unnamed-register>", *reg_num_p,
+                        reg_info_p->name ? reg_info_p->name : "<unnamed-register>", reg_num,
                         error.AsCString ());
             continue;
         }
@@ -501,7 +516,7 @@ GetRegistersAsJSON(NativeThreadProtocol &thread)
         StreamString stream;
         WriteRegisterValueInHexFixedWidth(stream, reg_ctx_sp, *reg_info_p, &reg_value);
 
-        register_object_sp->SetObject(std::to_string(*reg_num_p),
+        register_object_sp->SetObject(std::to_string(reg_num),
                 std::make_shared<JSONString>(stream.GetString()));
     }
 
