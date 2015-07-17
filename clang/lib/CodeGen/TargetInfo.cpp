@@ -1907,16 +1907,18 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 
   if (const VectorType *VT = Ty->getAs<VectorType>()) {
     uint64_t Size = getContext().getTypeSize(VT);
-    if (Size == 32) {
-      // gcc passes all <4 x char>, <2 x short>, <1 x int>, <1 x
-      // float> as integer.
+    if (Size == 1 || Size == 8 || Size == 16 || Size == 32) {
+      // gcc passes the following as integer:
+      // 4 bytes - <4 x char>, <2 x short>, <1 x int>, <1 x float>
+      // 2 bytes - <2 x char>, <1 x short>
+      // 1 byte  - <1 x char>
       Current = Integer;
 
       // If this type crosses an eightbyte boundary, it should be
       // split.
-      uint64_t EB_Real = (OffsetBase) / 64;
-      uint64_t EB_Imag = (OffsetBase + Size - 1) / 64;
-      if (EB_Real != EB_Imag)
+      uint64_t EB_Lo = (OffsetBase) / 64;
+      uint64_t EB_Hi = (OffsetBase + Size - 1) / 64;
+      if (EB_Lo != EB_Hi)
         Hi = Lo;
     } else if (Size == 64) {
       // gcc passes <1 x double> in memory. :(
