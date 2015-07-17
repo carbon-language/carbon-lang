@@ -73,6 +73,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("dead", MIToken::kw_dead)
       .Case("killed", MIToken::kw_killed)
       .Case("undef", MIToken::kw_undef)
+      .Case("frame-setup", MIToken::kw_frame_setup)
       .Default(MIToken::Identifier);
 }
 

@@ -43,6 +43,7 @@ struct MIToken {
     kw_dead,
     kw_killed,
     kw_undef,
+    kw_frame_setup,
 
     // Identifier tokens
     Identifier,

@@ -334,8 +334,10 @@ void MIPrinter::print(const MachineInstr &MI) {
 
   if (I)
     OS << " = ";
+  if (MI.getFlag(MachineInstr::FrameSetup))
+    OS << "frame-setup ";
   OS << TII->getName(MI.getOpcode());
-  // TODO: Print the instruction flags, machine mem operands.
+  // TODO: Print the bundling instruction flags, machine mem operands.
   if (I < E)
     OS << ' ';
 

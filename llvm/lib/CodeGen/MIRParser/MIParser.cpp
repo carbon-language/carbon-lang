@@ -107,7 +107,7 @@ private:
   /// instruction name is invalid.
   bool parseInstrName(StringRef InstrName, unsigned &OpCode);
 
-  bool parseInstruction(unsigned &OpCode);
+  bool parseInstruction(unsigned &OpCode, unsigned &Flags);
 
   bool verifyImplicitOperands(ArrayRef<MachineOperandWithLocation> Operands,
                               const MCInstrDesc &MCID);
@@ -175,11 +175,11 @@ bool MIParser::parse(MachineInstr *&MI) {
     lex();
   }
 
-  unsigned OpCode;
-  if (Token.isError() || parseInstruction(OpCode))
+  unsigned OpCode, Flags = 0;
+  if (Token.isError() || parseInstruction(OpCode, Flags))
     return true;
 
-  // TODO: Parse the instruction flags and memory operands.
+  // TODO: Parse the bundle instruction flags and memory operands.
 
   // Parse the remaining machine operands.
   while (Token.isNot(MIToken::Eof)) {
@@ -203,6 +203,7 @@ bool MIParser::parse(MachineInstr *&MI) {
 
   // TODO: Check for extraneous machine operands.
   MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
+  MI->setFlags(Flags);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand.Operand);
   return false;
@@ -295,7 +296,11 @@ bool MIParser::verifyImplicitOperands(
   return false;
 }
 
-bool MIParser::parseInstruction(unsigned &OpCode) {
+bool MIParser::parseInstruction(unsigned &OpCode, unsigned &Flags) {
+  if (Token.is(MIToken::kw_frame_setup)) {
+    Flags |= MachineInstr::FrameSetup;
+    lex();
+  }
   if (Token.isNot(MIToken::Identifier))
     return error("expected a machine instruction");
   StringRef InstrName = Token.stringValue();
