@@ -719,7 +719,7 @@ public:
   ///
   /// \param Filename - The AST file to load.
   ///
-  /// \param PCHContainerOps - The PCHContainerOperations to use for loading and
+  /// \param PCHContainerRdr - The PCHContainerOperations to use for loading and
   /// creating modules.
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.

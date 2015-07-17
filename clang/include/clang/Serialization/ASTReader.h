@@ -1261,7 +1261,7 @@ public:
   /// \param Context the AST context that this precompiled header will be
   /// loaded into.
   ///
-  /// \param PCHContainerOps the PCHContainerOperations to use for loading and
+  /// \param PCHContainerRdr the PCHContainerOperations to use for loading and
   /// creating modules.
   ///
   /// \param isysroot If non-NULL, the system include path specified by the
