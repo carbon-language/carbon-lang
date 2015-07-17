@@ -39,8 +39,8 @@ set( ANDROID True )
 set( __ANDROID_NDK__ True )
 
 # linking lldb-server statically for Android avoids the need to ship two
-# binaries (pie for API 21+ and non-pie for API 14-). It's possible to use
-# a non-pie shim on API 14-, but that requires lldb-server to dynamically export
+# binaries (pie for API 21+ and non-pie for API 16-). It's possible to use
+# a non-pie shim on API 16-, but that requires lldb-server to dynamically export
 # its symbols, which significantly increases the binary size. Static linking, on
 # the other hand, has little to no effect on the binary size.
 if ( NOT DEFINED LLVM_BUILD_STATIC )
@@ -110,8 +110,8 @@ endif()
 
 if ( NOT LLVM_BUILD_STATIC )
  # PIE is required for API 21+ so we enable it if we're not statically linking
- # unfortunately, it is not supported before API 14 so we need to do something else there
- # see http://llvm.org/pr23457
+ # unfortunately, it is not supported before API 16 so we need to do something
+ # else there see http://llvm.org/pr23457
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -pie -fPIE" )
 endif()
 

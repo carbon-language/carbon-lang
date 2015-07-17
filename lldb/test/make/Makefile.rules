@@ -251,7 +251,9 @@ endif
 # Android specific options
 #----------------------------------------------------------------------
 ifeq "$(OS)" "Android"
-    LDFLAGS += -pie
+    ifdef PIE
+        LDFLAGS += -pie
+    endif
     replace_with = $(if $(findstring clang,$(1)), \
                         $(subst clang,$(2),$(1)), \
                         $(if $(findstring gcc,$(1)), \

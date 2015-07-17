@@ -431,21 +431,30 @@ def run_adb_command(cmd, device_id):
     stdout, stderr = p.communicate()
     return p.returncode, stdout, stderr
 
+def target_is_android():
+    if not hasattr(target_is_android, 'result'):
+        triple = lldb.DBG.GetSelectedPlatform().GetTriple()
+        match = re.match(".*-.*-.*-android", triple)
+        target_is_android.result = match is not None
+    return target_is_android.result
+
 def android_device_api():
-    assert lldb.platform_url is not None
-    device_id = None
-    parsed_url = urlparse.urlparse(lldb.platform_url)
-    if parsed_url.scheme == "adb":
-        device_id = parsed_url.netloc.split(":")[0]
-    retcode, stdout, stderr = run_adb_command(
-        ["shell", "getprop", "ro.build.version.sdk"], device_id)
-    if retcode == 0:
-        return int(stdout)
-    else:
-        raise LookupError(
-            ">>> Unable to determine the API level of the Android device.\n"
-            ">>> stdout:\n%s\n"
-            ">>> stderr:\n%s\n" % (stdout, stderr))
+    if not hasattr(android_device_api, 'result'):
+        assert lldb.platform_url is not None
+        device_id = None
+        parsed_url = urlparse.urlparse(lldb.platform_url)
+        if parsed_url.scheme == "adb":
+            device_id = parsed_url.netloc.split(":")[0]
+        retcode, stdout, stderr = run_adb_command(
+            ["shell", "getprop", "ro.build.version.sdk"], device_id)
+        if retcode == 0:
+            android_device_api.result = int(stdout)
+        else:
+            raise LookupError(
+                ">>> Unable to determine the API level of the Android device.\n"
+                ">>> stdout:\n%s\n"
+                ">>> stderr:\n%s\n" % (stdout, stderr))
+    return android_device_api.result
 
 #
 # Decorators for categorizing test cases.
@@ -690,9 +699,7 @@ def expectedFailureAndroid(bugnumber=None, api_levels=None):
             for which a test is expected to fail.
     """
     def fn(self):
-        triple = self.dbg.GetSelectedPlatform().GetTriple()
-        match = re.match(".*-.*-.*-android", triple)
-        if match:
+        if target_is_android():
             if not api_levels:
                 return True
             device_api = android_device_api()
@@ -1036,8 +1043,7 @@ def skipIfTargetAndroid(api_levels=None):
         def wrapper(*args, **kwargs):
             from unittest2 import case
             self = args[0]
-            triple = self.dbg.GetSelectedPlatform().GetTriple()
-            if re.match(".*-.*-.*-android", triple):
+            if target_is_android():
                 if api_levels:
                     device_api = android_device_api()
                     if device_api and (device_api in api_levels):
@@ -1984,6 +1990,12 @@ class Base(unittest2.TestCase):
         if lldb.skip_build_and_cleanup:
             return
         module = builder_module()
+        if target_is_android():
+            if dictionary is None:
+                dictionary = {}
+            dictionary["OS"] = "Android"
+            if android_device_api() >= 16:
+                dictionary["PIE"] = 1
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
