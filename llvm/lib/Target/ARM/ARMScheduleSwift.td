@@ -1558,6 +1558,13 @@ let SchedModel = SwiftModel in {
         (instregex "STM(IB|IA|DB|DA)_UPD", "(t2|sys|t)STM(IB|IA|DB|DA)_UPD",
         "PUSH", "tPUSH")>;
 
+  // LDRLIT pseudo instructions, they expand to LDR + PICADD
+  def : InstRW<[SwiftWriteP2ThreeCycle, WriteALU],
+        (instregex "t?LDRLIT_ga_abs", "t?LDRLIT_ga_pcrel")>;
+  // LDRLIT_ga_pcrel_ldr expands to LDR + PICLDR
+  def : InstRW<[SwiftWriteP2ThreeCycle, SwiftWriteP2ThreeCycle],
+        (instregex "LDRLIT_ga_pcrel_ldr")>;
+
   // 4.2.26 Branch
   def : WriteRes<WriteBr, [SwiftUnitP1]> { let Latency = 0; }
   def : WriteRes<WriteBrL, [SwiftUnitP1]> { let Latency = 2; }
