@@ -1005,6 +1005,14 @@ void __msan_allocated_memory(const void *data, uptr size) {
   }
 }
 
+void __sanitizer_dtor_callback(const void *data, uptr size) {
+  GET_MALLOC_STACK_TRACE;
+  if (flags()->poison_in_dtor) {
+    stack.tag = STACK_TRACE_TAG_POISON;
+    PoisonMemory(data, size, &stack);
+  }
+}
+
 INTERCEPTOR(void *, mmap, void *addr, SIZE_T length, int prot, int flags,
             int fd, OFF_T offset) {
   if (msan_init_is_running)

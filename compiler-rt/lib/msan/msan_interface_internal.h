@@ -140,6 +140,11 @@ void __msan_partial_poison(const void* data, void* shadow, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_allocated_memory(const void* data, uptr size);
 
+// Tell MSan about newly destroyed memory. Memory will be marked
+// uninitialized.
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_dtor_callback(const void* data, uptr size);
+
 SANITIZER_INTERFACE_ATTRIBUTE
 u16 __sanitizer_unaligned_load16(const uu16 *p);
 
