@@ -48,6 +48,17 @@ bool LLParser::Run() {
          ValidateEndOfModule();
 }
 
+bool LLParser::parseStandaloneConstantValue(Constant *&C) {
+  Lex.Lex();
+
+  Type *Ty = nullptr;
+  if (ParseType(Ty) || parseConstantValue(Ty, C))
+    return true;
+  if (Lex.getKind() != lltok::Eof)
+    return Error(Lex.getLoc(), "expected end of string");
+  return false;
+}
+
 /// ValidateEndOfModule - Do final validity and sanity checks at the end of the
 /// module.
 bool LLParser::ValidateEndOfModule() {
@@ -4063,6 +4074,30 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
     return false;
   }
   llvm_unreachable("Invalid ValID");
+}
+
+bool LLParser::parseConstantValue(Type *Ty, Constant *&C) {
+  C = nullptr;
+  ValID ID;
+  auto Loc = Lex.getLoc();
+  if (ParseValID(ID, /*PFS=*/nullptr))
+    return true;
+  switch (ID.Kind) {
+  case ValID::t_APSInt:
+  case ValID::t_APFloat:
+  case ValID::t_Constant:
+  case ValID::t_ConstantStruct:
+  case ValID::t_PackedConstantStruct: {
+    Value *V;
+    if (ConvertValIDToValue(Ty, ID, V, /*PFS=*/nullptr))
+      return true;
+    assert(isa<Constant>(V) && "Expected a constant value");
+    C = cast<Constant>(V);
+    return false;
+  }
+  default:
+    return Error(Loc, "expected a constant value");
+  }
 }
 
 bool LLParser::ParseValue(Type *Ty, Value *&V, PerFunctionState *PFS) {

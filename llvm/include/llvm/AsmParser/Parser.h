@@ -18,6 +18,7 @@
 
 namespace llvm {
 
+class Constant;
 class LLVMContext;
 class Module;
 struct SlotMapping;
@@ -78,6 +79,14 @@ std::unique_ptr<Module> parseAssembly(MemoryBufferRef F, SMDiagnostic &Err,
 /// \return true on error.
 bool parseAssemblyInto(MemoryBufferRef F, Module &M, SMDiagnostic &Err,
                        SlotMapping *Slots = nullptr);
+
+/// Parse a type and a constant value in the given string.
+///
+/// The constant value can be any LLVM constant, including a constant
+/// expression.
+///
+/// \return null on error.
+Constant *parseConstantValue(StringRef Asm, SMDiagnostic &Err, const Module &M);
 
 } // End llvm namespace
 

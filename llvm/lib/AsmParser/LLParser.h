@@ -143,6 +143,8 @@ namespace llvm {
           Slots(Slots), BlockAddressPFS(nullptr) {}
     bool Run();
 
+    bool parseStandaloneConstantValue(Constant *&C);
+
     LLVMContext &getContext() { return Context; }
 
   private:
@@ -343,6 +345,7 @@ namespace llvm {
     bool ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
                              PerFunctionState *PFS);
 
+    bool parseConstantValue(Type *Ty, Constant *&C);
     bool ParseValue(Type *Ty, Value *&V, PerFunctionState *PFS);
     bool ParseValue(Type *Ty, Value *&V, PerFunctionState &PFS) {
       return ParseValue(Ty, V, &PFS);

@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/AsmParser/SlotMapping.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
@@ -62,6 +63,53 @@ TEST(AsmParserTest, SlotMappingTest) {
   EXPECT_EQ(Mapping.MetadataNodes.count(0), 1u);
   EXPECT_EQ(Mapping.MetadataNodes.count(42), 1u);
   EXPECT_EQ(Mapping.MetadataNodes.count(1), 0u);
+}
+
+TEST(AsmParserTest, TypeAndConstantValueParsing) {
+  LLVMContext &Ctx = getGlobalContext();
+  SMDiagnostic Error;
+  StringRef Source = "define void @test() {\n  entry:\n  ret void\n}";
+  auto Mod = parseAssemblyString(Source, Error, Ctx);
+  ASSERT_TRUE(Mod != nullptr);
+  auto &M = *Mod;
+
+  const Value *V;
+  V = parseConstantValue("double 3.5", Error, M);
+  ASSERT_TRUE(V);
+  EXPECT_TRUE(V->getType()->isDoubleTy());
+  ASSERT_TRUE(isa<ConstantFP>(V));
+  EXPECT_TRUE(cast<ConstantFP>(V)->isExactlyValue(3.5));
+
+  V = parseConstantValue("i32 42", Error, M);
+  ASSERT_TRUE(V);
+  EXPECT_TRUE(V->getType()->isIntegerTy());
+  ASSERT_TRUE(isa<ConstantInt>(V));
+  EXPECT_TRUE(cast<ConstantInt>(V)->equalsInt(42));
+
+  V = parseConstantValue("<4 x i32> <i32 0, i32 1, i32 2, i32 3>", Error, M);
+  ASSERT_TRUE(V);
+  EXPECT_TRUE(V->getType()->isVectorTy());
+  ASSERT_TRUE(isa<ConstantDataVector>(V));
+
+  V = parseConstantValue("i32 add (i32 1, i32 2)", Error, M);
+  ASSERT_TRUE(V);
+  ASSERT_TRUE(isa<ConstantInt>(V));
+
+  V = parseConstantValue("i8* blockaddress(@test, %entry)", Error, M);
+  ASSERT_TRUE(V);
+  ASSERT_TRUE(isa<BlockAddress>(V));
+
+  EXPECT_FALSE(parseConstantValue("duble 3.25", Error, M));
+  EXPECT_EQ(Error.getMessage(), "expected type");
+
+  EXPECT_FALSE(parseConstantValue("i32 3.25", Error, M));
+  EXPECT_EQ(Error.getMessage(), "floating point constant invalid for type");
+
+  EXPECT_FALSE(parseConstantValue("i32* @foo", Error, M));
+  EXPECT_EQ(Error.getMessage(), "expected a constant value");
+
+  EXPECT_FALSE(parseConstantValue("i32 3, ", Error, M));
+  EXPECT_EQ(Error.getMessage(), "expected end of string");
 }
 
 } // end anonymous namespace
