@@ -33,6 +33,7 @@ import xml.etree.ElementTree as ET
 #----------------------------------------------------------------------
 g_log_file = ''
 g_byte_order = 'little'
+g_number_regex = re.compile('^(0x[0-9a-fA-F]+|[0-9]+)')
 
 class TerminalColors:
     '''Simple terminal colors class'''
@@ -346,6 +347,13 @@ class Packet:
             self.str = self.str[1:]
         return ch
         
+    def skip_exact_string(self, s):
+        if self.str and self.str.startswith(s):
+            self.str = self.str[len(s):]
+            return True
+        else:
+            return False
+
     def get_hex_uint8(self):
         if self.str and len(self.str) >= 2 and self.str[0] in string.hexdigits and self.str[1] in string.hexdigits:
             uval = int(self.str[0:2], 16)
@@ -399,6 +407,19 @@ class Packet:
             uval |= self.get_hex_uint8() << 56
         return uval
     
+    def get_number(self, fail_value=-1):
+        '''Get a number from the packet. The number must be in big endian format and should be parsed
+        according to its prefix (starts with "0x" means hex, starts with "0" means octal, starts with 
+        [1-9] means decimal, etc)'''
+        match = g_number_regex.match (self.str)
+        if match:
+            number_str = match.group(1)
+            self.str = self.str[len(number_str):]
+            return int(number_str, 0)
+        else:
+            return fail_value
+        
+        
     def get_hex_ascii_str(self, n=0):
         hex_chars = self.get_hex_chars(n)
         if hex_chars:
@@ -479,6 +500,7 @@ def get_thread_from_thread_suffix(str):
 
 def cmd_stop_reply(options, cmd, args):
     print "get_last_stop_info()"
+    return False
 
 def rsp_stop_reply(options, cmd, cmd_args, rsp):
     global g_byte_order
@@ -498,6 +520,7 @@ def rsp_stop_reply(options, cmd, cmd_args, rsp):
             elif key == 'jthreads' or key == 'jstopinfo':
                 key_value_pair[1] = binascii.unhexlify(key_value_pair[1])
         key_value_pairs.insert(0, ['signal', signo])
+        print 'Stop reply:'
         dump_key_value_pairs (key_value_pairs)
     elif stop_type == 'W':
         exit_status = packet.get_hex_uint8()
@@ -511,10 +534,45 @@ def cmd_unknown_packet(options, cmd, args):
         print "cmd: %s, args: %s", cmd, args
     else:
         print "cmd: %s", cmd
+    return False
+
+def cmd_qSymbol(options, cmd, args):
+    if args == ':':
+        print 'ready to serve symbols'
+    else:
+        packet = Packet(args)
+        symbol_addr = packet.get_hex_uint('big')
+        if symbol_addr is None:
+            if packet.skip_exact_string(':'):
+                symbol_name = packet.get_hex_ascii_str()
+                print 'lookup_symbol("%s") -> symbol not available yet' % (symbol_name)
+            else:
+                print 'error: bad command format'
+        else:
+            if packet.skip_exact_string(':'):
+                symbol_name = packet.get_hex_ascii_str()
+                print 'lookup_symbol("%s") -> 0x%x' % (symbol_name, symbol_addr)
+            else:
+                print 'error: bad command format'
+
+def rsp_qSymbol(options, cmd, cmd_args, rsp):
+    if len(rsp) == 0:
+        print "Unsupported"
+    else:
+        if rsp == "OK":
+            print "No more symbols to lookup"
+        else:
+            packet = Packet(rsp)
+            if packet.skip_exact_string("qSymbol:"):
+                symbol_name = packet.get_hex_ascii_str()
+                print 'lookup_symbol("%s")' % (symbol_name)
+            else:
+                print 'error: response string should start with "qSymbol:": respnse is "%s"' % (rsp)
 
 def cmd_qXfer(options, cmd, args):
     # $qXfer:features:read:target.xml:0,1ffff#14
     print "read target special data %s" % (args)
+    return True
 
 def rsp_qXfer(options, cmd, cmd_args, rsp):
     data = string.split(cmd_args, ':')
@@ -544,14 +602,16 @@ def rsp_qXfer(options, cmd, cmd_args, rsp):
                             if 'bitsize' in reg_element.attrib:
                                 reg_info.info['bitsize'] = reg_element.attrib['bitsize']
                             g_register_infos.append(reg_info)
-                        
+                    print 'XML for "%s":' % (data[2])
+                    ET.dump(xml_root)
     
 def cmd_query_packet(options, cmd, args):
     if args:
-        print "query: %s, args: %s" % (cmd, args)
+        print "%s%s" % (cmd, args)
     else:
-        print "query: %s" % (cmd)
-
+        print "%s" % (cmd)
+    return False
+    
 def rsp_ok_error(rsp):
     print "rsp: ", rsp
 
@@ -584,6 +644,7 @@ def dump_key_value_pairs(key_value_pairs):
 
 def rsp_dump_key_value_pairs(options, cmd, cmd_args, rsp):
     if rsp:
+        print '%s response:' % (cmd)
         packet = Packet(rsp)
         key_value_pairs = packet.get_key_value_pairs()
         dump_key_value_pairs(key_value_pairs)
@@ -592,9 +653,11 @@ def rsp_dump_key_value_pairs(options, cmd, cmd_args, rsp):
 
 def cmd_c(options, cmd, args):
     print "continue()"
+    return False
 
 def cmd_s(options, cmd, args):
     print "step()"
+    return False
     
 def cmd_vCont(options, cmd, args):
     if args == '?':
@@ -626,6 +689,7 @@ def cmd_vCont(options, cmd, args):
             print "extended_continue (%s)" % (s)
         else:
             print "extended_continue (%s, other-threads: suspend)" % (s)
+    return False
 
 def rsp_vCont(options, cmd, cmd_args, rsp):
     if cmd_args == '?':
@@ -663,10 +727,13 @@ def cmd_vAttach(options, cmd, args):
     if extra_command:
         print "%s%s(%s)" % (cmd, extra_command, args)
     else:
-        print "attach_pid(%s)" % args
+        print "attach(pid = %u)" % int(args, 16)
+    return False
+    
 
 def cmd_qRegisterInfo(options, cmd, args):
     print 'query_register_info(reg_num=%i)' % (int(args, 16))
+    return False
 
 def rsp_qRegisterInfo(options, cmd, cmd_args, rsp):
     global g_max_register_info_name_len
@@ -683,7 +750,7 @@ def rsp_qRegisterInfo(options, cmd, cmd_args, rsp):
         reg_info = RegisterInfo(packet.get_key_value_pairs())
         g_register_infos.append(reg_info)
         print reg_info
-        
+    return False
 
 def cmd_qThreadInfo(options, cmd, args):
     if cmd == 'qfThreadInfo':
@@ -691,6 +758,7 @@ def cmd_qThreadInfo(options, cmd, args):
     else: 
         query_type = 'subsequent'
     print 'get_current_thread_list(type=%s)' % (query_type)
+    return False
 
 def rsp_qThreadInfo(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
@@ -710,12 +778,31 @@ def rsp_hex_big_endian(options, cmd, cmd_args, rsp):
     uval = packet.get_hex_uint('big')
     print '%s: 0x%x' % (cmd, uval)
 
+def cmd_read_mem_bin(options, cmd, args):
+    # x0x7fff5fc39200,0x200
+    packet = Packet(args)
+    addr = packet.get_number()
+    comma = packet.get_char()
+    size = packet.get_number()
+    print 'binary_read_memory (addr = 0x%16.16x, size = %u)' % (addr, size)
+    return False
+
+def rsp_mem_bin_bytes(options, cmd, cmd_args, rsp):
+    packet = Packet(cmd_args)
+    addr = packet.get_number()
+    comma = packet.get_char()
+    size = packet.get_number()
+    print 'memory:'
+    if size > 0:
+        dump_hex_memory_buffer (addr, rsp) 
+
 def cmd_read_memory(options, cmd, args):
     packet = Packet(args)
     addr = packet.get_hex_uint('big')
     comma = packet.get_char()
     size = packet.get_hex_uint('big')
-    print 'read_memory (addr = 0x%x, size = %u)' % (addr, size)
+    print 'read_memory (addr = 0x%16.16x, size = %u)' % (addr, size)
+    return False
 
 def dump_hex_memory_buffer(addr, hex_byte_str):
     packet = Packet(hex_byte_str)
@@ -749,8 +836,9 @@ def cmd_write_memory(options, cmd, args):
     if packet.get_char() != ':':
         print 'error: invalid write memory command (missing colon after size)'
         return
-    print 'write_memory (addr = 0x%x, size = %u, data:' % (addr, size)
+    print 'write_memory (addr = 0x%16.16x, size = %u, data:' % (addr, size)
     dump_hex_memory_buffer (addr, packet.str) 
+    return False
 
 def cmd_alloc_memory(options, cmd, args):
     packet = Packet(args)
@@ -759,6 +847,7 @@ def cmd_alloc_memory(options, cmd, args):
         print 'error: invalid allocate memory command (missing comma after address)'
         return
     print 'allocate_memory (byte-size = %u (0x%x), permissions = %s)' % (byte_size, byte_size, packet.str)
+    return False
 
 def rsp_alloc_memory(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
@@ -770,9 +859,9 @@ def cmd_dealloc_memory(options, cmd, args):
     addr = packet.get_hex_uint('big')
     if packet.get_char() != ',':
         print 'error: invalid allocate memory command (missing comma after address)'
-        return
-    print 'deallocate_memory (addr = 0x%x, permissions = %s)' % (addr, packet.str)
-
+    else:
+        print 'deallocate_memory (addr = 0x%x, permissions = %s)' % (addr, packet.str)
+    return False
 def rsp_memory_bytes(options, cmd, cmd_args, rsp):
     addr = Packet(cmd_args).get_hex_uint('big')
     dump_hex_memory_buffer (addr, rsp) 
@@ -813,6 +902,7 @@ def cmd_read_one_reg(options, cmd, args):
         s += ', tid = 0x%4.4x' % (tid)
     s += ')'
     print s
+    return False
 
 def rsp_read_one_reg(options, cmd, cmd_args, rsp):
     packet = Packet(cmd_args)
@@ -837,6 +927,7 @@ def cmd_write_one_reg(options, cmd, args):
             s += ', tid = 0x%4.4x' % (tid)
         s += ')'
         print s
+    return False
 
 def dump_all_regs(packet):
     for reg_info in g_register_infos:
@@ -856,6 +947,7 @@ def cmd_read_all_regs(cmd, cmd_args):
         print 'read_all_register(thread = 0x%4.4x)' % tid
     else:
         print 'read_all_register()'
+    return False
 
 def rsp_read_all_regs(options, cmd, cmd_args, rsp):
     packet = Packet(rsp)
@@ -865,6 +957,7 @@ def cmd_write_all_regs(options, cmd, args):
     packet = Packet(args)
     print 'write_all_registers()'
     dump_all_regs (packet)
+    return False
     
 g_bp_types = [ "software_bp", "hardware_bp", "write_wp", "read_wp", "access_wp" ]
 
@@ -882,15 +975,18 @@ def cmd_bp(options, cmd, args):
     s += g_bp_types[bp_type]
     s += " (addr = 0x%x, size = %u)" % (bp_addr, bp_size)
     print s
+    return False
 
 def cmd_mem_rgn_info(options, cmd, args):
     packet = Packet(args)
     packet.get_char() # skip ':' character
     addr = packet.get_hex_uint('big')
     print 'get_memory_region_info (addr=0x%x)' % (addr)
+    return False
 
 def cmd_kill(options, cmd, args):
     print 'kill_process()'
+    return False
 
 gdb_remote_commands = {
     '\\?'                     : { 'cmd' : cmd_stop_reply    , 'rsp' : rsp_stop_reply          , 'name' : "stop reply pacpket"},
@@ -912,6 +1008,9 @@ gdb_remote_commands = {
     'qProcessInfo'            : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get process info" },
     'qSupported'              : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query supported" },
     'qXfer:'                  : { 'cmd' : cmd_qXfer         , 'rsp' : rsp_qXfer               , 'name' : "qXfer" },
+    'qSymbol:'                : { 'cmd' : cmd_qSymbol       , 'rsp' : rsp_qSymbol             , 'name' : "qSymbol" },
+    'x'                       : { 'cmd' : cmd_read_mem_bin  , 'rsp' : rsp_mem_bin_bytes       , 'name' : "read memory binary" },
+    'X'                       : { 'cmd' : cmd_write_memory  , 'rsp' : rsp_ok_means_success    , 'name' : "write memory binary" },
     'm'                       : { 'cmd' : cmd_read_memory   , 'rsp' : rsp_memory_bytes        , 'name' : "read memory" },
     'M'                       : { 'cmd' : cmd_write_memory  , 'rsp' : rsp_ok_means_success    , 'name' : "write memory" },
     '_M'                      : { 'cmd' : cmd_alloc_memory  , 'rsp' : rsp_alloc_memory        , 'name' : "allocate memory" },
@@ -943,7 +1042,7 @@ def calculate_mean_and_standard_deviation(floats):
 
 def parse_gdb_log_file(path, options):
     f = open(path)
-    parse_gdb_log(f)
+    parse_gdb_log(f, options)
     f.close()
     
 def parse_gdb_log(file, options):
@@ -974,6 +1073,7 @@ def parse_gdb_log(file, options):
     last_command = None
     last_command_args = None
     last_command_packet = None
+    hide_next_response = False
     for line in lines:
         m = packet_transmit_name_regex.search(line)
         is_command = False
@@ -983,12 +1083,16 @@ def parse_gdb_log(file, options):
             is_command = direction == 'send'
             packet = m.group('packet')
             sys.stdout.write(options.colors.green())
-            if not options.quiet:
+            if not options.quiet and not hide_next_response:
                 print '#  ', line
             sys.stdout.write(options.colors.reset())
                 
             #print 'direction = "%s", packet = "%s"' % (direction, packet)
             
+            if is_command:
+                print '-->',
+            else:
+                print '<--',
             if packet[0] == '+':
                 if not options.quiet: print 'ACK'
                 continue
@@ -1000,13 +1104,14 @@ def parse_gdb_log(file, options):
                 if m:
                     contents = m.group(1)
                     if is_command:
+                        hide_next_response = False
                         m = packet_names_regex.match (contents)
                         if m:
                             last_command = m.group(1)
                             packet_name = last_command
                             last_command_args = m.group(2)
                             last_command_packet = contents
-                            gdb_remote_commands[last_command]['cmd'](options, last_command, last_command_args)
+                            hide_next_response = gdb_remote_commands[last_command]['cmd'](options, last_command, last_command_args)
                         else:
                             packet_match = packet_name_regex.match (contents)
                             if packet_match:
@@ -1056,7 +1161,8 @@ def parse_gdb_log(file, options):
         # else:
         #     print line
     (average, std_dev) = calculate_mean_and_standard_deviation(packet_times)
-    print '%u packets with average packet time of %f and standard deviation of %f' % (len(packet_times), average, std_dev)
+    if average and std_dev:
+        print '%u packets with average packet time of %f and standard deviation of %f' % (len(packet_times), average, std_dev)
     if packet_total_times:
         total_packet_time = 0.0
         total_packet_count = 0
