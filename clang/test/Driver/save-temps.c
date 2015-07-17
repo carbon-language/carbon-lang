@@ -2,7 +2,7 @@
 // RUN:   | FileCheck %s
 // CHECK: "-o" "save-temps.i"
 // CHECK: "-emit-llvm-uselists"
-// CHECK: "-disable-llvm-optzns"
+// CHECK: "-disable-llvm-passes"
 // CHECK: "-o" "save-temps.bc"
 // CHECK: "-o" "save-temps.s"
 // CHECK: "-o" "save-temps.o"
@@ -14,7 +14,7 @@
 // RUN:   | FileCheck %s -check-prefix=CWD
 // CWD: "-o" "save-temps.i"
 // CWD: "-emit-llvm-uselists"
-// CWD: "-disable-llvm-optzns"
+// CWD: "-disable-llvm-passes"
 // CWD: "-o" "save-temps.bc"
 // CWD: "-o" "save-temps.s"
 // CWD: "-o" "save-temps.o"
@@ -63,7 +63,7 @@
 // RUN: %clang -target x86_64-apple-darwin -save-temps=obj -o obj/dir/a.out -arch x86_64 %s -### 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK-OBJ
 // CHECK-OBJ: "-o" "obj/dir{{/|\\\\}}save-temps.i"
-// CHECK-OBJ: "-disable-llvm-optzns"
+// CHECK-OBJ: "-disable-llvm-passes"
 // CHECK-OBJ: "-o" "obj/dir{{/|\\\\}}save-temps.bc"
 // CHECK-OBJ: "-o" "obj/dir{{/|\\\\}}save-temps.s"
 // CHECK-OBJ: "-o" "obj/dir{{/|\\\\}}save-temps.o"
@@ -72,7 +72,7 @@
 // RUN: %clang -target x86_64-apple-darwin -save-temps=obj -arch x86_64 %s -### 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK-OBJ-NOO
 // CHECK-OBJ-NOO: "-o" "save-temps.i"
-// CHECK-OBJ-NOO: "-disable-llvm-optzns"
+// CHECK-OBJ-NOO: "-disable-llvm-passes"
 // CHECK-OBJ-NOO: "-o" "save-temps.bc"
 // CHECK-OBJ-NOO: "-o" "save-temps.s"
 // CHECK-OBJ-NOO: "-o" "save-temps.o"

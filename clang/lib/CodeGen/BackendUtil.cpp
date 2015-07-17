@@ -272,6 +272,9 @@ static void addSymbolRewriterPass(const CodeGenOptions &Opts,
 }
 
 void EmitAssemblyHelper::CreatePasses() {
+  if (CodeGenOpts.DisableLLVMPasses)
+    return;
+
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
 
