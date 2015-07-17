@@ -736,11 +736,10 @@ ASTIdentifierLookupTraitBase::ReadKey(const unsigned char* d, unsigned n) {
 
 /// \brief Whether the given identifier is "interesting".
 static bool isInterestingIdentifier(IdentifierInfo &II) {
-  return II.isPoisoned() ||
-         II.isExtensionToken() ||
+  return II.hadMacroDefinition() ||
+         II.isPoisoned() ||
          II.getObjCOrBuiltinID() ||
          II.hasRevertedTokenIDToIdentifier() ||
-         II.hadMacroDefinition() ||
          II.getFETokenInfo<void>();
 }
 
