@@ -744,6 +744,12 @@ static bool isInterestingIdentifier(IdentifierInfo &II) {
          II.getFETokenInfo<void>();
 }
 
+static bool readBit(unsigned &Bits) {
+  bool Value = Bits & 0x1;
+  Bits >>= 1;
+  return Value;
+}
+
 IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
                                                    const unsigned char* d,
                                                    unsigned DataLen) {
@@ -754,56 +760,37 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   // Wipe out the "is interesting" bit.
   RawID = RawID >> 1;
 
+  // Build the IdentifierInfo and link the identifier ID with it.
+  IdentifierInfo *II = KnownII;
+  if (!II) {
+    II = &Reader.getIdentifierTable().getOwn(k);
+    KnownII = II;
+  }
+  if (!II->isFromAST()) {
+    II->setIsFromAST();
+    if (isInterestingIdentifier(*II))
+      II->setChangedSinceDeserialization();
+  }
+  Reader.markIdentifierUpToDate(II);
+
   IdentID ID = Reader.getGlobalIdentifierID(F, RawID);
   if (!IsInteresting) {
-    // For uninteresting identifiers, just build the IdentifierInfo
-    // and associate it with the persistent ID.
-    IdentifierInfo *II = KnownII;
-    if (!II) {
-      II = &Reader.getIdentifierTable().getOwn(k);
-      KnownII = II;
-    }
+    // For uninteresting identifiers, there's nothing else to do. Just notify
+    // the reader that we've finished loading this identifier.
     Reader.SetIdentifierInfo(ID, II);
-    if (!II->isFromAST()) {
-      bool WasInteresting = isInterestingIdentifier(*II);
-      II->setIsFromAST();
-      if (WasInteresting)
-        II->setChangedSinceDeserialization();
-    }
-    Reader.markIdentifierUpToDate(II);
     return II;
   }
 
   unsigned ObjCOrBuiltinID = endian::readNext<uint16_t, little, unaligned>(d);
   unsigned Bits = endian::readNext<uint16_t, little, unaligned>(d);
-  bool CPlusPlusOperatorKeyword = Bits & 0x01;
-  Bits >>= 1;
-  bool HasRevertedTokenIDToIdentifier = Bits & 0x01;
-  Bits >>= 1;
-  bool Poisoned = Bits & 0x01;
-  Bits >>= 1;
-  bool ExtensionToken = Bits & 0x01;
-  Bits >>= 1;
-  bool hadMacroDefinition = Bits & 0x01;
-  Bits >>= 1;
+  bool CPlusPlusOperatorKeyword = readBit(Bits);
+  bool HasRevertedTokenIDToIdentifier = readBit(Bits);
+  bool Poisoned = readBit(Bits);
+  bool ExtensionToken = readBit(Bits);
+  bool HadMacroDefinition = readBit(Bits);
 
   assert(Bits == 0 && "Extra bits in the identifier?");
   DataLen -= 8;
-
-  // Build the IdentifierInfo itself and link the identifier ID with
-  // the new IdentifierInfo.
-  IdentifierInfo *II = KnownII;
-  if (!II) {
-    II = &Reader.getIdentifierTable().getOwn(StringRef(k));
-    KnownII = II;
-  }
-  Reader.markIdentifierUpToDate(II);
-  if (!II->isFromAST()) {
-    bool WasInteresting = isInterestingIdentifier(*II);
-    II->setIsFromAST();
-    if (WasInteresting)
-      II->setChangedSinceDeserialization();
-  }
 
   // Set or check the various bits in the IdentifierInfo structure.
   // Token IDs are read-only.
@@ -821,7 +808,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
 
   // If this identifier is a macro, deserialize the macro
   // definition.
-  if (hadMacroDefinition) {
+  if (HadMacroDefinition) {
     uint32_t MacroDirectivesOffset =
         endian::readNext<uint32_t, little, unaligned>(d);
     DataLen -= 4;
