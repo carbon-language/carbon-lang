@@ -304,8 +304,10 @@ SocketAddress::getaddrinfo (const char *host,
         *this = service_info_list;
         result = IsValid ();
     }
-    
-    :: freeaddrinfo (service_info_list);
+
+    if (service_info_list)
+        ::freeaddrinfo(service_info_list);
+
     return result;
 }
 
