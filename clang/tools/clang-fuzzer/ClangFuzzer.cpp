@@ -40,7 +40,7 @@ extern "C" void LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   std::unique_ptr<tooling::ToolAction> action(
       tooling::newFrontendActionFactory<clang::SyntaxOnlyAction>());
   std::shared_ptr<PCHContainerOperations> PCHContainerOps =
-      std::make_shared<RawPCHContainerOperations>();
+      std::make_shared<PCHContainerOperations>();
   action->runInvocation(Invocation.release(), Files.get(), PCHContainerOps,
                         &Diags);
 }
