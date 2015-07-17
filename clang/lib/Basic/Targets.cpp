@@ -4750,6 +4750,10 @@ public:
     if (RegNo == 1) return 1;
     return -1;
   }
+
+  bool hasSjLjLowering() const override {
+    return true;
+  }
 };
 
 bool ARMTargetInfo::setFPMath(StringRef Name) {
