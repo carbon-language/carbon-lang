@@ -4517,7 +4517,7 @@ public:
 
     // ACLE 6.4.1 ARM/Thumb instruction set architecture
     // __ARM_ARCH is defined as an integer value indicating the current ARM ISA
-    Builder.defineMacro("__ARM_ARCH", std::to_string(ArchVersion));
+    Builder.defineMacro("__ARM_ARCH", llvm::utostr(ArchVersion));
     if (ArchVersion >= 8) {
       Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN");
       Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING");
