@@ -41,6 +41,20 @@ STATISTIC(NumNoMemFunctions, "Number of functions that do not access memory");
 STATISTIC(NumReadMemFunctions, "Number of functions that only read memory");
 STATISTIC(NumIndirectGlobalVars, "Number of indirect global objects");
 
+// An option to enable unsafe alias results from the GlobalsModRef analysis.
+// When enabled, GlobalsModRef will provide no-alias results which in extremely
+// rare cases may not be conservatively correct. In particular, in the face of
+// transforms which cause assymetry between how effective GetUnderlyingObject
+// is for two pointers, it may produce incorrect results.
+//
+// These unsafe results have been returned by GMR for many years without
+// causing significant issues in the wild and so we provide a mechanism to
+// re-enable them for users of LLVM that have a particular performance
+// sensitivity and no known issues. The option also makes it easy to evaluate
+// the performance impact of these results.
+static cl::opt<bool> EnableUnsafeGlobalsModRefAliasResults(
+    "enable-unsafe-globalsmodref-alias-results", cl::init(false), cl::Hidden);
+
 namespace {
 /// FunctionRecord - One instance of this structure is stored for every
 /// function in the program.  Later, the entries for these functions are
@@ -508,9 +522,16 @@ AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
       GV2 = nullptr;
 
     // If the two pointers are derived from two different non-addr-taken
-    // globals, or if one is and the other isn't, we know these can't alias.
-    if ((GV1 || GV2) && GV1 != GV2)
+    // globals we know these can't alias.
+    if (GV1 && GV2 && GV1 != GV2)
       return NoAlias;
+
+    // If one is and the other isn't, it isn't strictly safe but we can fake
+    // this result if necessary for performance. This does not appear to be
+    // a common problem in practice.
+    if (EnableUnsafeGlobalsModRefAliasResults)
+      if ((GV1 || GV2) && GV1 != GV2)
+        return NoAlias;
 
     // Otherwise if they are both derived from the same addr-taken global, we
     // can't know the two accesses don't overlap.
@@ -537,11 +558,17 @@ AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
     GV2 = AllocsForIndirectGlobals[UV2];
 
   // Now that we know whether the two pointers are related to indirect globals,
-  // use this to disambiguate the pointers.  If either pointer is based on an
-  // indirect global and if they are not both based on the same indirect global,
-  // they cannot alias.
-  if ((GV1 || GV2) && GV1 != GV2)
+  // use this to disambiguate the pointers. If the pointers are based on
+  // different indirect globals they cannot alias.
+  if (GV1 && GV2 && GV1 != GV2)
     return NoAlias;
+
+  // If one is based on an indirect global and the other isn't, it isn't
+  // strictly safe but we can fake this result if necessary for performance.
+  // This does not appear to be a common problem in practice.
+  if (EnableUnsafeGlobalsModRefAliasResults)
+    if ((GV1 || GV2) && GV1 != GV2)
+      return NoAlias;
 
   return AliasAnalysis::alias(LocA, LocB);
 }

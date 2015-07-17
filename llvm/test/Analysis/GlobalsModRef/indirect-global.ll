@@ -1,4 +1,7 @@
-; RUN: opt < %s -basicaa -globalsmodref-aa -gvn -instcombine -S | FileCheck %s
+; RUN: opt < %s -basicaa -globalsmodref-aa -gvn -instcombine -S -enable-unsafe-globalsmodref-alias-results | FileCheck %s
+;
+; Note that this test relies on an unsafe feature of GlobalsModRef. While this
+; test is correct and safe, GMR's technique for handling this isn't generally.
 
 @G = internal global i32* null		; <i32**> [#uses=3]
 
