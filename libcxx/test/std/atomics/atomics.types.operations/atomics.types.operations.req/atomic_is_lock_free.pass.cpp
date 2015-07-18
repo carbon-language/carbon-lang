@@ -20,6 +20,7 @@
 //     atomic_is_lock_free(const atomic<T>* obj);
 
 #include <atomic>
+#include <cassert>
 
 template <class T>
 void
@@ -30,6 +31,7 @@ test()
     bool b1 = std::atomic_is_lock_free(static_cast<const A*>(&t));
     volatile A vt;
     bool b2 = std::atomic_is_lock_free(static_cast<const volatile A*>(&vt));
+    assert(b1 == b2);
 }
 
 struct A

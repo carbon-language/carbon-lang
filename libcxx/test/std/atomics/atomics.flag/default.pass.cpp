@@ -22,7 +22,8 @@
 int main()
 {
     std::atomic_flag f;
-
+    f.clear();
+    assert(f.test_and_set() == 0);
     {
         typedef std::atomic_flag A;
         _ALIGNAS_TYPE(A) char storage[sizeof(A)] = {1};

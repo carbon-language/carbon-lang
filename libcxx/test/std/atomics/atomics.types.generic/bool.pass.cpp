@@ -60,7 +60,6 @@
 int main()
 {
     {
-        volatile std::atomic<bool> _;
         volatile std::atomic<bool> obj(true);
         assert(obj == true);
         std::atomic_init(&obj, false);
@@ -116,7 +115,6 @@ int main()
         assert(obj == true);
     }
     {
-        std::atomic<bool> _;
         std::atomic<bool> obj(true);
         assert(obj == true);
         std::atomic_init(&obj, false);
@@ -172,7 +170,6 @@ int main()
         assert(obj == true);
     }
     {
-        std::atomic_bool _;
         std::atomic_bool obj(true);
         assert(obj == true);
         std::atomic_init(&obj, false);

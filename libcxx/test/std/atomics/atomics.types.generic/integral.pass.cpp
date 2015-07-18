@@ -103,6 +103,7 @@ do_test()
     std::atomic_init(&obj, T(2));
     assert(obj == T(2));
     bool b0 = obj.is_lock_free();
+    ((void)b0); // mark as unused
     obj.store(T(0));
     assert(obj == T(0));
     obj.store(T(1), std::memory_order_release);
