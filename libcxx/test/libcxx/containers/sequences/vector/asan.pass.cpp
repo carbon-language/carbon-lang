@@ -15,15 +15,18 @@
 #include <cassert>
 #include <cstdlib>
 
-#include "min_allocator.h"
 #include "asan_testing.h"
+#include "min_allocator.h"
+#include "test_iterators.h"
+#include "test_macros.h"
 
 #ifndef _LIBCPP_HAS_NO_ASAN
 extern "C" void __asan_set_error_exit_code(int);
 
+
 int main()
 {
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
         typedef int T;
         typedef std::vector<T, min_allocator<T>> C;
@@ -33,7 +36,18 @@ int main()
         T foo = c[c.size()];    // bad, but not caught by ASAN
     }
 #endif
-    
+
+    {
+        typedef input_iterator<int*> MyInputIter;
+        // Sould not trigger ASan.
+        std::vector<int> v;
+        v.reserve(1);
+        int i[] = {42};
+        v.insert(v.begin(), MyInputIter(i), MyInputIter(i + 1));
+        assert(v[0] == 42);
+        assert(is_contiguous_container_asan_correct(v));
+    }
+
     __asan_set_error_exit_code(0);
     {
         typedef int T;
@@ -41,7 +55,7 @@ int main()
         const T t[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         C c(std::begin(t), std::end(t));
         c.reserve(2*c.size());
-        assert(is_contiguous_container_asan_correct(c)); 
+        assert(is_contiguous_container_asan_correct(c));
         assert(!__sanitizer_verify_contiguous_container ( c.data(), c.data() + 1, c.data() + c.capacity()));
         T foo = c[c.size()];    // should trigger ASAN
         assert(false);          // if we got here, ASAN didn't trigger

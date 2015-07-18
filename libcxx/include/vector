@@ -1897,9 +1897,11 @@ vector<_Tp, _Allocator>::insert(const_iterator __position, _InputIterator __firs
     pointer __old_last = this->__end_;
     for (; this->__end_ != this->__end_cap() && __first != __last; ++__first)
     {
+        __RAII_IncreaseAnnotator __annotator(*this);
         __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(this->__end_),
                                   *__first);
         ++this->__end_;
+        __annotator.__done();
     }
     __split_buffer<value_type, allocator_type&> __v(__a);
     if (__first != __last)
