@@ -430,7 +430,7 @@ define <2 x i64> @fptosi_2f32_to_2i64(<4 x float> %a) {
 ; AVX-NEXT:    vmovq %rax, %xmm0
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; AVX-NEXT:    retq
-  %shuf = shufflevector <4 x float> %a, <4 x float> %a, <2 x i32> <i32 0, i32 1>
+  %shuf = shufflevector <4 x float> %a, <4 x float> undef, <2 x i32> <i32 0, i32 1>
   %cvt = fptosi <2 x float> %shuf to <2 x i64>
   ret <2 x i64> %cvt
 }
@@ -488,7 +488,7 @@ define <4 x i64> @fptosi_4f32_to_4i64(<8 x float> %a) {
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm2[0],xmm0[0]
 ; AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX-NEXT:    retq
-  %shuf = shufflevector <8 x float> %a, <8 x float> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %shuf = shufflevector <8 x float> %a, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %cvt = fptosi <4 x float> %shuf to <4 x i64>
   ret <4 x i64> %cvt
 }
@@ -584,7 +584,7 @@ define <2 x i64> @fptoui_2f32_to_2i64(<4 x float> %a) {
 ; AVX-NEXT:    vmovq %rcx, %xmm0
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm2[0],xmm0[0]
 ; AVX-NEXT:    retq
-  %shuf = shufflevector <4 x float> %a, <4 x float> %a, <2 x i32> <i32 0, i32 1>
+  %shuf = shufflevector <4 x float> %a, <4 x float> undef, <2 x i32> <i32 0, i32 1>
   %cvt = fptoui <2 x float> %shuf to <2 x i64>
   ret <2 x i64> %cvt
 }
@@ -744,7 +744,7 @@ define <4 x i64> @fptoui_4f32_to_4i64(<8 x float> %a) {
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm3[0],xmm0[0]
 ; AVX-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
 ; AVX-NEXT:    retq
-  %shuf = shufflevector <8 x float> %a, <8 x float> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %shuf = shufflevector <8 x float> %a, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %cvt = fptoui <4 x float> %shuf to <4 x i64>
   ret <4 x i64> %cvt
 }
