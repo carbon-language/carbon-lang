@@ -32,4 +32,5 @@
 int main()
 {
     std::va_list va;
+    ((void)va);
 }

@@ -10,10 +10,14 @@
 // test terminate_handler
 
 #include <exception>
+#include <type_traits>
+#include <cassert>
 
 void f() {}
 
 int main()
 {
+    static_assert(std::is_same<std::terminate_handler, void(*)()>::value, "");
     std::terminate_handler p = f;
+    assert(p == &f);
 }

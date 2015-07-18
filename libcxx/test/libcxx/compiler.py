@@ -150,3 +150,14 @@ class CXXCompiler(object):
         cmd, out, err, rc = self.compile(os.devnull, out=os.devnull,
                                          flags=flags)
         return rc == 0
+
+    def addCompileFlagIfSupported(self, flag):
+        if isinstance(flag, list):
+            flags = list(flag)
+        else:
+            flags = [flag]
+        if self.hasCompileFlag(flags):
+            self.compile_flags += flags
+            return True
+        else:
+            return False

@@ -11,6 +11,7 @@
 
 #include <cstdlib>
 #include <type_traits>
+#include <cassert>
 
 #ifndef EXIT_FAILURE
 #error EXIT_FAILURE not defined
@@ -32,12 +33,23 @@
 #error RAND_MAX not defined
 #endif
 
+template <class TestType, class IntType>
+void test_div_struct() {
+    TestType obj;
+    static_assert(sizeof(obj) >= sizeof(IntType) * 2, ""); // >= to account for alignment.
+    static_assert(std::is_same<decltype(obj.quot), IntType>::value, "");
+    static_assert(std::is_same<decltype(obj.rem), IntType>::value, "");
+    ((void) obj);
+};
+
 int main()
 {
     std::size_t s = 0;
-    std::div_t d;
-    std::ldiv_t ld;
-    std::lldiv_t lld;
+    ((void)s);
+    static_assert(std::is_same<std::size_t, decltype(sizeof(int))>::value, "");
+    test_div_struct<std::div_t, int>();
+    test_div_struct<std::ldiv_t, long>();
+    test_div_struct<std::lldiv_t, long long>();
     char** endptr = 0;
     static_assert((std::is_same<decltype(std::atof("")), double>::value), "");
     static_assert((std::is_same<decltype(std::atoi("")), int>::value), "");
