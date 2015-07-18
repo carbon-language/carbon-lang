@@ -46,7 +46,7 @@ void IteratorReplacer::run(const MatchFinder::MatchResult &Result) {
            "Expected constructor with single argument");
 
     // Drill down to the as-written initializer.
-    const Expr *E = Construct->arg_begin()->IgnoreParenImpCasts();
+    const Expr *E = (*Construct->arg_begin())->IgnoreParenImpCasts();
     if (E != E->IgnoreConversionOperator())
       // We hit a conversion operator. Early-out now as they imply an implicit
       // conversion from a different type. Could also mean an explicit
