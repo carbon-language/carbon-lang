@@ -431,6 +431,14 @@ def run_adb_command(cmd, device_id):
     stdout, stderr = p.communicate()
     return p.returncode, stdout, stderr
 
+def append_android_envs(dictionary):
+    if dictionary is None:
+        dictionary = {}
+    dictionary["OS"] = "Android"
+    if android_device_api() >= 16:
+        dictionary["PIE"] = 1
+    return dictionary
+
 def target_is_android():
     if not hasattr(target_is_android, 'result'):
         triple = lldb.DBG.GetSelectedPlatform().GetTriple()
@@ -1974,6 +1982,8 @@ class Base(unittest2.TestCase):
         if lldb.skip_build_and_cleanup:
             return
         module = builder_module()
+        if target_is_android():
+            dictionary = append_android_envs(dictionary)
         if not module.buildDefault(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build default binary")
 
@@ -1991,11 +2001,7 @@ class Base(unittest2.TestCase):
             return
         module = builder_module()
         if target_is_android():
-            if dictionary is None:
-                dictionary = {}
-            dictionary["OS"] = "Android"
-            if android_device_api() >= 16:
-                dictionary["PIE"] = 1
+            dictionary = append_android_envs(dictionary)
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
