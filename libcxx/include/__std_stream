@@ -276,7 +276,6 @@ __stdoutbuf<_CharT>::overflow(int_type __c)
             codecvt_base::result __r;
             char_type* pbase = &__1buf;
             char_type* pptr = pbase + 1;
-            char_type* epptr = pptr;
             do
             {
                 const char_type* __e;

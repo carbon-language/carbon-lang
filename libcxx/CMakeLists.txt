@@ -175,6 +175,8 @@ macro(append_if list condition var)
 endmacro()
 
 # Get warning flags
+# Disable the system header pragma.
+add_definitions(-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 if (NOT MSVC)
   append_if(LIBCXX_COMPILE_FLAGS LIBCXX_HAS_WALL_FLAG -Wall)
   list(APPEND LIBCXX_COMPILE_FLAGS -Werror=return-type)

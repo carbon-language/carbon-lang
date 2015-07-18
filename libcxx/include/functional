@@ -2402,14 +2402,14 @@ struct _LIBCPP_TYPE_VIS_ONLY hash<long double>
                 size_t __b;
                 size_t __c;
                 size_t __d;
-            };
+            } __s;
         } __u;
-        __u.__a = 0;
-        __u.__b = 0;
-        __u.__c = 0;
-        __u.__d = 0;
+        __u.__s.__a = 0;
+        __u.__s.__b = 0;
+        __u.__s.__c = 0;
+        __u.__s.__d = 0;
         __u.__t = __v;
-        return __u.__a ^ __u.__b ^ __u.__c ^ __u.__d;
+        return __u.__s.__a ^ __u.__s.__b ^ __u.__s.__c ^ __u.__s.__d;
 #elif defined(__x86_64__)
         // Zero out padding bits
         union
@@ -2419,12 +2419,12 @@ struct _LIBCPP_TYPE_VIS_ONLY hash<long double>
             {
                 size_t __a;
                 size_t __b;
-            };
+            } __s;
         } __u;
-        __u.__a = 0;
-        __u.__b = 0;
+        __u.__s.__a = 0;
+        __u.__s.__b = 0;
         __u.__t = __v;
-        return __u.__a ^ __u.__b;
+        return __u.__s.__a ^ __u.__s.__b;
 #else
         return __scalar_hash<long double>::operator()(__v);
 #endif
