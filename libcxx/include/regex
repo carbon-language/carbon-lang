@@ -4065,7 +4065,6 @@ basic_regex<_CharT, _Traits>::__parse_collating_symbol(_ForwardIterator __first,
         throw regex_error(regex_constants::error_brack);
 #endif  // _LIBCPP_NO_EXCEPTIONS
     // [__first, __temp) contains all text in [. ... .]
-    typedef typename _Traits::string_type string_type;
     __col_sym = __traits_.lookup_collatename(__first, __temp);
     switch (__col_sym.size())
     {
