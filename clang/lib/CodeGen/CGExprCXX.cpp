@@ -196,7 +196,7 @@ RValue CodeGenFunction::EmitCXXMemberOrOperatorMemberCallExpr(
         // Trivial move and copy ctor are the same.
         assert(CE->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
         llvm::Value *RHS = EmitLValue(*CE->arg_begin()).getAddress();
-        EmitAggregateCopy(This, RHS, CE->arg_begin()->getType());
+        EmitAggregateCopy(This, RHS, (*CE->arg_begin())->getType());
         return RValue::get(This);
       }
       llvm_unreachable("unknown trivial member function");
@@ -1089,8 +1089,7 @@ RValue CodeGenFunction::EmitBuiltinNewDeleteCall(const FunctionProtoType *Type,
                                                  bool IsDelete) {
   CallArgList Args;
   const Stmt *ArgS = Arg;
-  EmitCallArgs(Args, *Type->param_type_begin(),
-               ConstExprIterator(&ArgS), ConstExprIterator(&ArgS + 1));
+  EmitCallArgs(Args, *Type->param_type_begin(), &ArgS, &ArgS + 1);
   // Find the allocation or deallocation function that we're calling.
   ASTContext &Ctx = getContext();
   DeclarationName Name = Ctx.DeclarationNames

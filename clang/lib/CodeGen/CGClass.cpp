@@ -1832,7 +1832,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
            "trivial 1-arg ctor not a copy/move ctor");
     EmitAggregateCopyCtor(This, Src,
                           getContext().getTypeDeclType(D->getParent()),
-                          E->arg_begin()->getType());
+                          (*E->arg_begin())->getType());
     return;
   }
   llvm::Value *Callee = CGM.getAddrOfCXXStructor(D, StructorType::Complete);
