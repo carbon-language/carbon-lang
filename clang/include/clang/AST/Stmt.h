@@ -394,19 +394,20 @@ public:
   typedef StmtIterator       child_iterator;
   typedef ConstStmtIterator  const_child_iterator;
 
-  typedef StmtRange          child_range;
-  typedef ConstStmtRange     const_child_range;
+  typedef llvm::iterator_range<child_iterator> child_range;
+  typedef llvm::iterator_range<const_child_iterator> const_child_range;
 
   child_range children();
   const_child_range children() const {
-    return const_cast<Stmt*>(this)->children();
+    auto Children = const_cast<Stmt *>(this)->children();
+    return const_child_range(Children.begin(), Children.end());
   }
 
-  child_iterator child_begin() { return children().first; }
-  child_iterator child_end() { return children().second; }
+  child_iterator child_begin() { return children().begin(); }
+  child_iterator child_end() { return children().end(); }
 
-  const_child_iterator child_begin() const { return children().first; }
-  const_child_iterator child_end() const { return children().second; }
+  const_child_iterator child_begin() const { return children().begin(); }
+  const_child_iterator child_end() const { return children().end(); }
 
   /// \brief Produce a unique representation of the given statement.
   ///
@@ -527,7 +528,9 @@ public:
     return T->getStmtClass() == NullStmtClass;
   }
 
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -626,7 +629,8 @@ public:
   }
 
   const_child_range children() const {
-    return child_range(Body, Body + CompoundStmtBits.NumStmts);
+    return const_child_range(child_iterator(Body),
+                             child_iterator(Body + CompoundStmtBits.NumStmts));
   }
 };
 
@@ -1222,7 +1226,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// IndirectGotoStmt - This represents an indirect goto.
@@ -1290,7 +1296,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// BreakStmt - This represents a break.
@@ -1318,7 +1326,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 
@@ -1373,7 +1383,7 @@ public:
   // Iterators
   child_range children() {
     if (RetExpr) return child_range(&RetExpr, &RetExpr+1);
-    return child_range();
+    return child_range(child_iterator(), child_iterator());
   }
 };
 
@@ -1957,7 +1967,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This captures a statement into a function. For example, the following

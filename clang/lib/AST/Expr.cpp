@@ -3891,7 +3891,7 @@ DesignatedInitExpr::DesignatedInitExpr(const ASTContext &C, QualType Ty,
   this->Designators = new (C) Designator[NumDesignators];
 
   // Record the initializer itself.
-  child_range Child = children();
+  child_iterator Child = child_begin();
   *Child++ = Init;
 
   // Copy the designators and their subexpressions, computing
@@ -4175,7 +4175,7 @@ Stmt::child_range UnaryExprOrTypeTraitExpr::children() {
     if (const VariableArrayType* T = dyn_cast<VariableArrayType>(
                                    getArgumentType().getTypePtr()))
       return child_range(child_iterator(T), child_iterator());
-    return child_range();
+    return child_range(child_iterator(), child_iterator());
   }
   return child_range(&Argument.Ex, &Argument.Ex + 1);
 }

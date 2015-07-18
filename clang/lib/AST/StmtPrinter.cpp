@@ -2129,14 +2129,11 @@ void StmtPrinter::VisitObjCBoxedExpr(ObjCBoxedExpr *E) {
 
 void StmtPrinter::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
   OS << "@[ ";
-  StmtRange ch = E->children();
-  if (ch.first != ch.second) {
-    while (1) {
-      Visit(*ch.first);
-      ++ch.first;
-      if (ch.first == ch.second) break;
+  ObjCArrayLiteral::child_range Ch = E->children();
+  for (auto I = Ch.begin(), E = Ch.end(); I != E; ++I) {
+    if (I != Ch.begin())
       OS << ", ";
-    }
+    Visit(*I);
   }
   OS << " ]";
 }

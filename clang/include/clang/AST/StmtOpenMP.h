@@ -195,7 +195,7 @@ public:
 
   child_range children() {
     if (!hasAssociatedStmt())
-      return child_range();
+      return child_range(child_iterator(), child_iterator());
     Stmt **ChildStorage = reinterpret_cast<Stmt **>(getClauses().end());
     return child_range(ChildStorage, ChildStorage + NumChildren);
   }

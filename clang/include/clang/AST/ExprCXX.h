@@ -457,7 +457,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief The null pointer literal (C++11 [lex.nullptr])
@@ -484,7 +486,9 @@ public:
     return T->getStmtClass() == CXXNullPtrLiteralExprClass;
   }
 
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief Implicit construction of a std::initializer_list<T> object from an
@@ -607,7 +611,8 @@ public:
 
   // Iterators
   child_range children() {
-    if (isTypeOperand()) return child_range();
+    if (isTypeOperand())
+      return child_range(child_iterator(), child_iterator());
     Stmt **begin = reinterpret_cast<Stmt**>(&Operand);
     return child_range(begin, begin + 1);
   }
@@ -749,7 +754,8 @@ public:
 
   // Iterators
   child_range children() {
-    if (isTypeOperand()) return child_range();
+    if (isTypeOperand())
+      return child_range(child_iterator(), child_iterator());
     Stmt **begin = reinterpret_cast<Stmt**>(&Operand);
     return child_range(begin, begin + 1);
   }
@@ -797,7 +803,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief A C++ throw-expression (C++ [except.throw]).
@@ -935,7 +943,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -991,7 +1001,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   friend class ASTReader;
   friend class ASTStmtReader;
@@ -1652,7 +1664,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief Represents a new-expression for memory allocation and constructor
@@ -2201,8 +2215,10 @@ public:
   }
   
   // Iterators
-  child_range children() { return child_range(); }
-  
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 
@@ -2274,7 +2290,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   friend class ASTStmtReader;
 };
@@ -2331,7 +2349,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   friend class ASTStmtReader;
 };
@@ -2622,7 +2642,9 @@ public:
     return getNameInfo().getLocEnd();
   }
 
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnresolvedLookupExprClass;
@@ -2785,7 +2807,9 @@ public:
     return T->getStmtClass() == DependentScopeDeclRefExprClass;
   }
 
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -3222,7 +3246,8 @@ public:
 
   // Iterators
   child_range children() {
-    if (isImplicitAccess()) return child_range();
+    if (isImplicitAccess())
+      return child_range(child_iterator(), child_iterator());
     return child_range(&Base, &Base + 1);
   }
 
@@ -3365,7 +3390,8 @@ public:
 
   // Iterators
   child_range children() {
-    if (isImplicitAccess()) return child_range();
+    if (isImplicitAccess())
+      return child_range(child_iterator(), child_iterator());
     return child_range(&Base, &Base + 1);
   }
 };
@@ -3592,7 +3618,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief Represents a reference to a non-type template parameter
@@ -3695,7 +3723,9 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief Represents a reference to a function parameter pack that has been
@@ -3762,7 +3792,9 @@ public:
     return T->getStmtClass() == FunctionParmPackExprClass;
   }
 
-  child_range children() { return child_range(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief Represents a prvalue temporary that is written into memory so that

@@ -4128,7 +4128,8 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper &Helper,
     if (const StmtExpr *SE = dyn_cast<StmtExpr>(S)) {
       const CompoundStmt *Sub = SE->getSubStmt();
 
-      if (Sub->children()) {
+      auto Children = Sub->children();
+      if (Children.begin() != Children.end()) {
         OS << "({ ... ; ";
         Helper.handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
         OS << " })\n";

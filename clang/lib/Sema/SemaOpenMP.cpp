@@ -3377,11 +3377,11 @@ StmtResult Sema::ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
     BaseStmt = CS->getCapturedStmt();
   if (auto C = dyn_cast_or_null<CompoundStmt>(BaseStmt)) {
     auto S = C->children();
-    if (!S)
+    if (S.begin() == S.end())
       return StmtError();
     // All associated statements must be '#pragma omp section' except for
     // the first one.
-    for (Stmt *SectionStmt : ++S) {
+    for (Stmt *SectionStmt : llvm::make_range(std::next(S.begin()), S.end())) {
       if (!SectionStmt || !isa<OMPSectionDirective>(SectionStmt)) {
         if (SectionStmt)
           Diag(SectionStmt->getLocStart(),
@@ -3535,11 +3535,11 @@ Sema::ActOnOpenMPParallelSectionsDirective(ArrayRef<OMPClause *> Clauses,
     BaseStmt = CS->getCapturedStmt();
   if (auto C = dyn_cast_or_null<CompoundStmt>(BaseStmt)) {
     auto S = C->children();
-    if (!S)
+    if (S.begin() == S.end())
       return StmtError();
     // All associated statements must be '#pragma omp section' except for
     // the first one.
-    for (Stmt *SectionStmt : ++S) {
+    for (Stmt *SectionStmt : llvm::make_range(std::next(S.begin()), S.end())) {
       if (!SectionStmt || !isa<OMPSectionDirective>(SectionStmt)) {
         if (SectionStmt)
           Diag(SectionStmt->getLocStart(),

@@ -57,9 +57,15 @@ public:
 
   bool isImplicit() const { return StartLoc.isInvalid(); }
 
-  StmtRange children();
-  ConstStmtRange children() const {
-    return const_cast<OMPClause *>(this)->children();
+  typedef StmtIterator child_iterator;
+  typedef ConstStmtIterator const_child_iterator;
+  typedef llvm::iterator_range<child_iterator> child_range;
+  typedef llvm::iterator_range<const_child_iterator> const_child_range;
+
+  child_range children();
+  const_child_range children() const {
+    auto Children = const_cast<OMPClause *>(this)->children();
+    return const_child_range(Children.begin(), Children.end());
   }
   static bool classof(const OMPClause *) { return true; }
 };
@@ -193,7 +199,7 @@ public:
     return T->getClauseKind() == OMPC_if;
   }
 
-  StmtRange children() { return StmtRange(&Condition, &Condition + 1); }
+  child_range children() { return child_range(&Condition, &Condition + 1); }
 };
 
 /// \brief This represents 'final' clause in the '#pragma omp ...' directive.
@@ -246,7 +252,7 @@ public:
     return T->getClauseKind() == OMPC_final;
   }
 
-  StmtRange children() { return StmtRange(&Condition, &Condition + 1); }
+  child_range children() { return child_range(&Condition, &Condition + 1); }
 };
 
 /// \brief This represents 'num_threads' clause in the '#pragma omp ...'
@@ -300,7 +306,7 @@ public:
     return T->getClauseKind() == OMPC_num_threads;
   }
 
-  StmtRange children() { return StmtRange(&NumThreads, &NumThreads + 1); }
+  child_range children() { return child_range(&NumThreads, &NumThreads + 1); }
 };
 
 /// \brief This represents 'safelen' clause in the '#pragma omp ...'
@@ -356,7 +362,7 @@ public:
     return T->getClauseKind() == OMPC_safelen;
   }
 
-  StmtRange children() { return StmtRange(&Safelen, &Safelen + 1); }
+  child_range children() { return child_range(&Safelen, &Safelen + 1); }
 };
 
 /// \brief This represents 'collapse' clause in the '#pragma omp ...'
@@ -412,7 +418,7 @@ public:
     return T->getClauseKind() == OMPC_collapse;
   }
 
-  StmtRange children() { return StmtRange(&NumForLoops, &NumForLoops + 1); }
+  child_range children() { return child_range(&NumForLoops, &NumForLoops + 1); }
 };
 
 /// \brief This represents 'default' clause in the '#pragma omp ...' directive.
@@ -481,7 +487,9 @@ public:
     return T->getClauseKind() == OMPC_default;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'proc_bind' clause in the '#pragma omp ...'
@@ -552,7 +560,9 @@ public:
     return T->getClauseKind() == OMPC_proc_bind;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'schedule' clause in the '#pragma omp ...' directive.
@@ -676,8 +686,8 @@ public:
     return T->getClauseKind() == OMPC_schedule;
   }
 
-  StmtRange children() {
-    return StmtRange(&ChunkSizes[CHUNK_SIZE], &ChunkSizes[CHUNK_SIZE] + 1);
+  child_range children() {
+    return child_range(&ChunkSizes[CHUNK_SIZE], &ChunkSizes[CHUNK_SIZE] + 1);
   }
 };
 
@@ -707,7 +717,9 @@ public:
     return T->getClauseKind() == OMPC_ordered;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'nowait' clause in the '#pragma omp ...' directive.
@@ -736,7 +748,9 @@ public:
     return T->getClauseKind() == OMPC_nowait;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'untied' clause in the '#pragma omp ...' directive.
@@ -765,7 +779,9 @@ public:
     return T->getClauseKind() == OMPC_untied;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'mergeable' clause in the '#pragma omp ...'
@@ -795,7 +811,9 @@ public:
     return T->getClauseKind() == OMPC_mergeable;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'read' clause in the '#pragma omp atomic' directive.
@@ -823,7 +841,9 @@ public:
     return T->getClauseKind() == OMPC_read;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'write' clause in the '#pragma omp atomic' directive.
@@ -852,7 +872,9 @@ public:
     return T->getClauseKind() == OMPC_write;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'update' clause in the '#pragma omp atomic'
@@ -882,7 +904,9 @@ public:
     return T->getClauseKind() == OMPC_update;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'capture' clause in the '#pragma omp atomic'
@@ -912,7 +936,9 @@ public:
     return T->getClauseKind() == OMPC_capture;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents 'seq_cst' clause in the '#pragma omp atomic'
@@ -942,7 +968,9 @@ public:
     return T->getClauseKind() == OMPC_seq_cst;
   }
 
-  StmtRange children() { return StmtRange(); }
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
 };
 
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
@@ -1026,9 +1054,9 @@ public:
                                       getPrivateCopies().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1147,9 +1175,9 @@ public:
     return inits_const_range(getInits().begin(), getInits().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1332,9 +1360,9 @@ public:
                              getAssignmentOps().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1391,9 +1419,9 @@ public:
   ///
   static OMPSharedClause *CreateEmpty(const ASTContext &C, unsigned N);
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1571,9 +1599,9 @@ public:
                              getReductionOps().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1750,9 +1778,9 @@ public:
     return finals_const_range(getFinals().begin(), getFinals().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1835,9 +1863,9 @@ public:
   /// \brief Returns alignment.
   const Expr *getAlignment() const { return *varlist_end(); }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1993,9 +2021,9 @@ public:
                              getAssignmentOps().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -2138,9 +2166,9 @@ public:
                              getAssignmentOps().end());
   }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -2202,9 +2230,9 @@ public:
   ///
   static OMPFlushClause *CreateEmpty(const ASTContext &C, unsigned N);
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -2290,9 +2318,9 @@ public:
   /// \brief Get colon location.
   SourceLocation getColonLoc() const { return ColonLoc; }
 
-  StmtRange children() {
-    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end()));
+  child_range children() {
+    return child_range(reinterpret_cast<Stmt **>(varlist_begin()),
+                       reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
