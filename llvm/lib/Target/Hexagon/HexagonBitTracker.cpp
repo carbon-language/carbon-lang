@@ -95,30 +95,29 @@ BT::BitMask HexagonEvaluator::mask(unsigned Reg, unsigned Sub) const {
   llvm_unreachable("Unexpected register/subregister");
 }
 
-
 namespace {
-  struct RegisterRefs : public std::vector<BT::RegisterRef> {
-    typedef std::vector<BT::RegisterRef> Base;
-    RegisterRefs(const MachineInstr *MI);
-    const BT::RegisterRef &operator[](unsigned n) const {
-      // The main purpose of this operator is to assert with bad argument.
-      assert(n < size());
-      return Base::operator[](n);
-    }
-  };
+class RegisterRefs {
+  std::vector<BT::RegisterRef> Vector;
 
-  RegisterRefs::RegisterRefs(const MachineInstr *MI)
-    : Base(MI->getNumOperands()) {
-    for (unsigned i = 0, n = size(); i < n; ++i) {
+public:
+  RegisterRefs(const MachineInstr *MI) : Vector(MI->getNumOperands()) {
+    for (unsigned i = 0, n = Vector.size(); i < n; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg())
-        at(i) = BT::RegisterRef(MO);
+        Vector[i] = BT::RegisterRef(MO);
       // For indices that don't correspond to registers, the entry will
       // remain constructed via the default constructor.
     }
   }
-}
 
+  size_t size() const { return Vector.size(); }
+  const BT::RegisterRef &operator[](unsigned n) const {
+    // The main purpose of this operator is to assert with bad argument.
+    assert(n < Vector.size());
+    return Vector[n];
+  }
+};
+}
 
 bool HexagonEvaluator::evaluate(const MachineInstr *MI,
       const CellMapType &Inputs, CellMapType &Outputs) const {

@@ -868,7 +868,7 @@ void BT::visitNonBranch(const MachineInstr *MI) {
       continue;
 
     bool Changed = false;
-    if (!Eval || !ResMap.has(RD.Reg)) {
+    if (!Eval || ResMap.count(RD.Reg) == 0) {
       // Set to "ref" (aka "bottom").
       uint16_t DefBW = ME.getRegBitWidth(RD);
       RegisterCell RefC = RegisterCell::self(RD.Reg, DefBW);
@@ -1005,7 +1005,7 @@ void BT::put(RegisterRef RR, const RegisterCell &RC) {
 // Replace all references to bits from OldRR with the corresponding bits
 // in NewRR.
 void BT::subst(RegisterRef OldRR, RegisterRef NewRR) {
-  assert(Map.has(OldRR.Reg) && "OldRR not present in map");
+  assert(Map.count(OldRR.Reg) > 0 && "OldRR not present in map");
   BitMask OM = ME.mask(OldRR.Reg, OldRR.Sub);
   BitMask NM = ME.mask(NewRR.Reg, NewRR.Sub);
   uint16_t OMB = OM.first(), OME = OM.last();

@@ -36,9 +36,7 @@ struct BitTracker {
 
   typedef SetVector<const MachineBasicBlock *> BranchTargetList;
 
-  struct CellMapType : public std::map<unsigned,RegisterCell> {
-    bool has(unsigned Reg) const;
-  };
+  typedef std::map<unsigned, RegisterCell> CellMapType;
 
   BitTracker(const MachineEvaluator &E, MachineFunction &F);
   ~BitTracker();
@@ -342,11 +340,6 @@ BitTracker::RegisterCell::ref(const RegisterCell &C) {
   for (unsigned i = 0; i < W; ++i)
     RC[i] = BitValue::ref(C[i]);
   return RC;
-}
-
-
-inline bool BitTracker::CellMapType::has(unsigned Reg) const {
-  return find(Reg) != end();
 }
 
 // A class to evaluate target's instructions and update the cell maps.

@@ -59,29 +59,22 @@ namespace {
 
   // Numbering map for gep nodes. Used to keep track of ordering for
   // gep nodes.
-  struct NodeNumbering : public std::map<const GepNode*,unsigned> {
-  };
-
-  struct NodeOrdering : public NodeNumbering {
+  struct NodeOrdering {
     NodeOrdering() : LastNum(0) {}
-#ifdef _MSC_VER
-    void special_insert_for_special_msvc(const GepNode *N)
-#else
-    using NodeNumbering::insert;
-    void insert(const GepNode* N)
-#endif
-    {
-      insert(std::make_pair(N, ++LastNum));
-    }
-    bool operator() (const GepNode* N1, const GepNode *N2) const {
-      const_iterator F1 = find(N1), F2 = find(N2);
-      assert(F1 != end() && F2 != end());
+
+    void insert(const GepNode *N) { Map.insert(std::make_pair(N, ++LastNum)); }
+    void clear() { Map.clear(); }
+
+    bool operator()(const GepNode *N1, const GepNode *N2) const {
+      auto F1 = Map.find(N1), F2 = Map.find(N2);
+      assert(F1 != Map.end() && F2 != Map.end());
       return F1->second < F2->second;
     }
+
   private:
+    std::map<const GepNode *, unsigned> Map;
     unsigned LastNum;
   };
-
 
   class HexagonCommonGEP : public FunctionPass {
   public:
@@ -360,11 +353,7 @@ void HexagonCommonGEP::processGepInst(GetElementPtrInst *GepI,
     Us.insert(&UI.getUse());
   }
   Nodes.push_back(N);
-#ifdef _MSC_VER
-  NodeOrder.special_insert_for_special_msvc(N);
-#else
   NodeOrder.insert(N);
-#endif
 
   // Skip the first index operand, since we only handle 0. This dereferences
   // the pointer operand.
@@ -379,11 +368,7 @@ void HexagonCommonGEP::processGepInst(GetElementPtrInst *GepI,
     Nx->PTy = PtrTy;
     Nx->Idx = Op;
     Nodes.push_back(Nx);
-#ifdef _MSC_VER
-    NodeOrder.special_insert_for_special_msvc(Nx);
-#else
     NodeOrder.insert(Nx);
-#endif
     PN = Nx;
 
     PtrTy = next_type(PtrTy, Op);
