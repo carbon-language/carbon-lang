@@ -172,7 +172,6 @@ public:
   }
 
   void deleteValue(Value *V) override;
-  void addEscapingUse(Use &U) override;
 
   /// getAdjustedAnalysisPointer - This method is used when a pass implements
   /// an analysis interface through multiple inheritance.  If needed, it
@@ -622,14 +621,4 @@ void GlobalsModRef::deleteValue(Value *V) {
   AllocsForIndirectGlobals.erase(V);
 
   AliasAnalysis::deleteValue(V);
-}
-
-void GlobalsModRef::addEscapingUse(Use &U) {
-  // For the purposes of this analysis, it is conservatively correct to treat
-  // a newly escaping value equivalently to a deleted one.  We could perhaps
-  // be more precise by processing the new use and attempting to update our
-  // saved analysis results to accommodate it.
-  deleteValue(U);
-
-  AliasAnalysis::addEscapingUse(U);
 }

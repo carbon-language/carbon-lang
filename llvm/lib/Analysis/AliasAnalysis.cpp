@@ -71,11 +71,6 @@ void AliasAnalysis::deleteValue(Value *V) {
   AA->deleteValue(V);
 }
 
-void AliasAnalysis::addEscapingUse(Use &U) {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  AA->addEscapingUse(U);
-}
-
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(Instruction *I, ImmutableCallSite Call) {
   // We may have two calls
