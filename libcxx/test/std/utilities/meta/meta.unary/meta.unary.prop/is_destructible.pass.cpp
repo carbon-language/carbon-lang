@@ -13,6 +13,8 @@
 
 #include <type_traits>
 
+#include "test_macros.h"
+
 template <class T>
 void test_is_destructible()
 {
@@ -68,6 +70,7 @@ struct PurePublicDestructor              { public:    virtual ~PurePublicDestruc
 struct PureProtectedDestructor           { protected: virtual ~PureProtectedDestructor() = 0; };
 struct PurePrivateDestructor             { private:   virtual ~PurePrivateDestructor() = 0; };
 
+#if TEST_STD_VER >= 11
 struct DeletedPublicDestructor           { public:    ~DeletedPublicDestructor() = delete; };
 struct DeletedProtectedDestructor        { protected: ~DeletedProtectedDestructor() = delete; };
 struct DeletedPrivateDestructor          { private:   ~DeletedPrivateDestructor() = delete; };
@@ -75,6 +78,7 @@ struct DeletedPrivateDestructor          { private:   ~DeletedPrivateDestructor(
 struct DeletedVirtualPublicDestructor    { public:    virtual ~DeletedVirtualPublicDestructor() = delete; };
 struct DeletedVirtualProtectedDestructor { protected: virtual ~DeletedVirtualProtectedDestructor() = delete; };
 struct DeletedVirtualPrivateDestructor   { private:   virtual ~DeletedVirtualPrivateDestructor() = delete; };
+#endif
 
 
 int main()
@@ -99,23 +103,27 @@ int main()
 
     test_is_not_destructible<int[]>();
     test_is_not_destructible<void>();
+    test_is_not_destructible<Function>();
 
+#if TEST_STD_VER >= 11
+    // Test access controlled destructors
     test_is_not_destructible<ProtectedDestructor>();
     test_is_not_destructible<PrivateDestructor>();
     test_is_not_destructible<VirtualProtectedDestructor>();
     test_is_not_destructible<VirtualPrivateDestructor>();
     test_is_not_destructible<PureProtectedDestructor>();
     test_is_not_destructible<PurePrivateDestructor>();
+
+    // Test deleted constructors
     test_is_not_destructible<DeletedPublicDestructor>();
     test_is_not_destructible<DeletedProtectedDestructor>();
     test_is_not_destructible<DeletedPrivateDestructor>();
-
-//     test_is_not_destructible<DeletedVirtualPublicDestructor>(); // currently fails due to clang bug #20268
+    //test_is_not_destructible<DeletedVirtualPublicDestructor>(); // previously failed due to clang bug #20268
     test_is_not_destructible<DeletedVirtualProtectedDestructor>();
     test_is_not_destructible<DeletedVirtualPrivateDestructor>();
 
-#if __has_feature(cxx_access_control_sfinae) 
+    // Test private destructors
     test_is_not_destructible<NotEmpty>();
 #endif
-    test_is_not_destructible<Function>();
+
 }

@@ -13,6 +13,8 @@
 
 #include <type_traits>
 
+#include "test_macros.h"
+
 template <class T>
 void test_is_nothrow_destructible()
 {
@@ -31,14 +33,23 @@ void test_is_not_nothrow_destructible()
     static_assert(!std::is_nothrow_destructible<const volatile T>::value, "");
 }
 
+
+struct PublicDestructor           { public:     ~PublicDestructor() {}};
+struct ProtectedDestructor        { protected:  ~ProtectedDestructor() {}};
+struct PrivateDestructor          { private:    ~PrivateDestructor() {}};
+
+struct VirtualPublicDestructor           { public:    virtual ~VirtualPublicDestructor() {}};
+struct VirtualProtectedDestructor        { protected: virtual ~VirtualProtectedDestructor() {}};
+struct VirtualPrivateDestructor          { private:   virtual ~VirtualPrivateDestructor() {}};
+
+struct PurePublicDestructor              { public:    virtual ~PurePublicDestructor() = 0; };
+struct PureProtectedDestructor           { protected: virtual ~PureProtectedDestructor() = 0; };
+struct PurePrivateDestructor             { private:   virtual ~PurePrivateDestructor() = 0; };
+
 class Empty
 {
 };
 
-class NotEmpty
-{
-    virtual ~NotEmpty();
-};
 
 union Union {};
 
@@ -52,40 +63,36 @@ class Abstract
     virtual void foo() = 0;
 };
 
-class AbstractDestructor
-{
-    virtual ~AbstractDestructor() = 0;
-};
-
-struct A
-{
-    ~A();
-};
 
 int main()
 {
     test_is_not_nothrow_destructible<void>();
-    test_is_not_nothrow_destructible<AbstractDestructor>();
-    test_is_not_nothrow_destructible<NotEmpty>();
     test_is_not_nothrow_destructible<char[]>();
+    test_is_not_nothrow_destructible<char[][3]>();
 
-#if __has_feature(cxx_noexcept)
-    test_is_nothrow_destructible<A>();
-#endif
     test_is_nothrow_destructible<int&>();
-#if  __has_feature(cxx_unrestricted_unions) 
-    test_is_nothrow_destructible<Union>();
-#endif
-#if __has_feature(cxx_access_control_sfinae)
-    test_is_nothrow_destructible<Empty>();
-#endif
     test_is_nothrow_destructible<int>();
     test_is_nothrow_destructible<double>();
     test_is_nothrow_destructible<int*>();
     test_is_nothrow_destructible<const int*>();
     test_is_nothrow_destructible<char[3]>();
-    test_is_nothrow_destructible<Abstract>();
-#if __has_feature(cxx_noexcept)
+
+#if TEST_STD_VER >= 11
+    // requires noexcept. These are all destructible.
+    test_is_nothrow_destructible<PublicDestructor>();
+    test_is_nothrow_destructible<VirtualPublicDestructor>();
+    test_is_nothrow_destructible<PurePublicDestructor>();
     test_is_nothrow_destructible<bit_zero>();
+    test_is_nothrow_destructible<Abstract>();
+    test_is_nothrow_destructible<Empty>();
+    test_is_nothrow_destructible<Union>();
+
+    // requires access control
+    test_is_not_nothrow_destructible<ProtectedDestructor>();
+    test_is_not_nothrow_destructible<PrivateDestructor>();
+    test_is_not_nothrow_destructible<VirtualProtectedDestructor>();
+    test_is_not_nothrow_destructible<VirtualPrivateDestructor>();
+    test_is_not_nothrow_destructible<PureProtectedDestructor>();
+    test_is_not_nothrow_destructible<PurePrivateDestructor>();
 #endif
 }

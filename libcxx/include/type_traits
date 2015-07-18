@@ -2917,6 +2917,9 @@ template <class _Tp> struct __libcpp_trivial_destructor
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible
     : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
 
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible<_Tp[]>
+    : public false_type {};
+
 #endif
 
 // is_nothrow_constructible
@@ -3240,6 +3243,10 @@ template <class _Tp> struct __libcpp_nothrow_destructor
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_destructible
     : public __libcpp_nothrow_destructor<typename remove_all_extents<_Tp>::type> {};
+
+template <class _Tp>
+struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_destructible<_Tp[]>
+    : public false_type {};
 
 #endif
 
