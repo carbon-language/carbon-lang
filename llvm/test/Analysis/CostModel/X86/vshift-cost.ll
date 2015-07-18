@@ -62,9 +62,9 @@ define <2 x i64> @test5(<2 x i64> %a) {
   ret <2 x i64> %shl
 }
 ; CHECK: 'Cost Model Analysis' for function 'test5':
-; SSE2: Found an estimated cost of 20 for instruction:   %shl
-; SSE41: Found an estimated cost of 20 for instruction:   %shl
-; AVX: Found an estimated cost of 20 for instruction:   %shl
+; SSE2: Found an estimated cost of 4 for instruction:   %shl
+; SSE41: Found an estimated cost of 4 for instruction:   %shl
+; AVX: Found an estimated cost of 4 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
 
 
@@ -117,9 +117,9 @@ define <4 x i64> @test8(<4 x i64> %a) {
   ret <4 x i64> %shl
 }
 ; CHECK: 'Cost Model Analysis' for function 'test8':
-; SSE2: Found an estimated cost of 40 for instruction:   %shl
-; SSE41: Found an estimated cost of 40 for instruction:   %shl
-; AVX: Found an estimated cost of 40 for instruction:   %shl
+; SSE2: Found an estimated cost of 8 for instruction:   %shl
+; SSE41: Found an estimated cost of 8 for instruction:   %shl
+; AVX: Found an estimated cost of 8 for instruction:   %shl
 ; AVX2: Found an estimated cost of 1 for instruction:   %shl
 
 
@@ -159,9 +159,9 @@ define <8 x i64> @test11(<8 x i64> %a) {
   ret <8 x i64> %shl
 }
 ; CHECK: 'Cost Model Analysis' for function 'test11':
-; SSE2: Found an estimated cost of 80 for instruction:   %shl
-; SSE41: Found an estimated cost of 80 for instruction:   %shl
-; AVX: Found an estimated cost of 80 for instruction:   %shl
+; SSE2: Found an estimated cost of 16 for instruction:   %shl
+; SSE41: Found an estimated cost of 16 for instruction:   %shl
+; AVX: Found an estimated cost of 16 for instruction:   %shl
 ; AVX2: Found an estimated cost of 2 for instruction:   %shl
 
 

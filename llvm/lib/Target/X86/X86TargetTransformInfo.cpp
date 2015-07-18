@@ -259,13 +259,13 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
     { ISD::SHL,  MVT::v16i8,    26 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v8i16,    32 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v4i32,   2*5 }, // We optimized this using mul.
-    { ISD::SHL,  MVT::v2i64,  2*10 }, // Scalarized.
-    { ISD::SHL,  MVT::v4i64,  4*10 }, // Scalarized.
+    { ISD::SHL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
+    { ISD::SHL,  MVT::v4i64,     8 }, // splat+shuffle sequence.
 
     { ISD::SRL,  MVT::v16i8,    26 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v8i16,    32 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v4i32,    16 }, // Shift each lane + blend.
-    { ISD::SRL,  MVT::v2i64,  2*10 }, // Scalarized.
+    { ISD::SRL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
 
     { ISD::SRA,  MVT::v16i8,    54 }, // unpacked cmpgtb sequence.
     { ISD::SRA,  MVT::v8i16,    32 }, // cmpgtb sequence.
