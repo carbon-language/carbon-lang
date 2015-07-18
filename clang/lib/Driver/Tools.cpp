@@ -5788,7 +5788,7 @@ void amdgpu::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-flavor");
   CmdArgs.push_back("gnu");
   CmdArgs.push_back("-target");
-  CmdArgs.push_back(getToolChain().getTripleString().c_str());
+  CmdArgs.push_back(Args.MakeArgString(getToolChain().getTripleString()));
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
