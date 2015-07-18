@@ -387,6 +387,9 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 
   InputArgList Args = ParseArgStrings(ArgList.slice(1));
 
+  // Silence driver warnings if requested
+  Diags.setIgnoreAllWarnings(Args.hasArg(options::OPT_w));
+
   // -no-canonical-prefixes is used very early in main.
   Args.ClaimAllArgs(options::OPT_no_canonical_prefixes);
 
