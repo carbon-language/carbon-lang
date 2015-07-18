@@ -27,7 +27,7 @@ struct testbuf
         : base(str, which) {}
 
     typename base::int_type
-        pbackfail(typename base::int_type c = base::type_traits::eof())
+        pbackfail(typename base::int_type c = base::traits_type::eof())
         {return base::pbackfail(c);}
 
     void pbump(int n) {base::pbump(n);}
@@ -35,6 +35,10 @@ struct testbuf
 
 int main()
 {
+    {  // sanity check
+    testbuf<char> tb("");;
+    tb.pbackfail();
+    }
     {
         testbuf<char> sb("123", std::ios_base::in);
         assert(sb.sgetc() == '1');

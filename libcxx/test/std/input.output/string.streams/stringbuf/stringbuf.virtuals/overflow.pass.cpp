@@ -29,7 +29,7 @@ struct testbuf
         : base(str, which) {}
 
     typename base::int_type
-        overflow(typename base::int_type c = base::type_traits::eof())
+        overflow(typename base::int_type c = base::traits_type::eof())
         {++overflow_called; return base::overflow(c);}
 
     void pbump(int n) {base::pbump(n);}
@@ -37,6 +37,10 @@ struct testbuf
 
 int main()
 {
+    {  // sanity check
+    testbuf<char> tb("");;
+    tb.overflow();
+    }
     {
         testbuf<char> sb("abc");
         assert(sb.sputc('1') == '1');
