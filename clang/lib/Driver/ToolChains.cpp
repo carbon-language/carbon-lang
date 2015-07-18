@@ -2293,6 +2293,16 @@ StringRef Hexagon_TC::GetTargetCPU(const ArgList &Args) {
 }
 // End Hexagon
 
+/// AMDGPU Toolchain
+AMDGPUToolChain::AMDGPUToolChain(const Driver &D, const llvm::Triple &Triple,
+                                 const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) { }
+
+Tool *AMDGPUToolChain::buildLinker() const {
+  return new tools::amdgpu::Linker(*this);
+}
+// End AMDGPU
+
 /// NaCl Toolchain
 NaCl_TC::NaCl_TC(const Driver &D, const llvm::Triple &Triple,
                  const ArgList &Args)

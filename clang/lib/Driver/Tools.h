@@ -224,6 +224,21 @@ public:
 };
 } // end namespace hexagon.
 
+namespace amdgpu {
+
+class LLVM_LIBRARY_VISIBILITY Linker : public GnuTool {
+public:
+  Linker(const ToolChain &TC) : GnuTool("amdgpu::Linker", "lld", TC) {}
+  bool isLinkJob() const override { return true; }
+  bool hasIntegratedCPP() const override { return false; }
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+
+} // end namespace amdgpu
+
 namespace arm {
 std::string getARMTargetCPU(const llvm::opt::ArgList &Args,
                             const llvm::Triple &Triple);
