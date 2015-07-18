@@ -1485,11 +1485,46 @@ private:
     return Text.count('\r') * 2 > Text.count('\n');
   }
 
+  bool
+  hasCpp03IncompatibleFormat(const SmallVectorImpl<AnnotatedLine *> &Lines) {
+    for (const AnnotatedLine* Line : Lines) {
+      if (hasCpp03IncompatibleFormat(Line->Children))
+        return true;
+      for (FormatToken *Tok = Line->First->Next; Tok; Tok = Tok->Next) {
+        if (Tok->WhitespaceRange.getBegin() == Tok->WhitespaceRange.getEnd()) {
+          if (Tok->is(tok::coloncolon) && Tok->Previous->is(TT_TemplateOpener))
+            return true;
+          if (Tok->is(TT_TemplateCloser) &&
+              Tok->Previous->is(TT_TemplateCloser))
+            return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int countVariableAlignments(const SmallVectorImpl<AnnotatedLine *> &Lines) {
+    int AlignmentDiff = 0;
+    for (const AnnotatedLine* Line : Lines) {
+      AlignmentDiff += countVariableAlignments(Line->Children);
+      for (FormatToken *Tok = Line->First; Tok && Tok->Next; Tok = Tok->Next) {
+        if (!Tok->is(TT_PointerOrReference))
+          continue;
+        bool SpaceBefore =
+            Tok->WhitespaceRange.getBegin() != Tok->WhitespaceRange.getEnd();
+        bool SpaceAfter = Tok->Next->WhitespaceRange.getBegin() !=
+                          Tok->Next->WhitespaceRange.getEnd();
+        if (SpaceBefore && !SpaceAfter)
+          ++AlignmentDiff;
+        if (!SpaceBefore && SpaceAfter)
+          --AlignmentDiff;
+      }
+    }
+    return AlignmentDiff;
+  }
+
   void
   deriveLocalStyle(const SmallVectorImpl<AnnotatedLine *> &AnnotatedLines) {
-    unsigned CountBoundToVariable = 0;
-    unsigned CountBoundToType = 0;
-    bool HasCpp03IncompatibleFormat = false;
     bool HasBinPackedFunction = false;
     bool HasOnePerLineFunction = false;
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
@@ -1497,25 +1532,6 @@ private:
         continue;
       FormatToken *Tok = AnnotatedLines[i]->First->Next;
       while (Tok->Next) {
-        if (Tok->is(TT_PointerOrReference)) {
-          bool SpacesBefore =
-              Tok->WhitespaceRange.getBegin() != Tok->WhitespaceRange.getEnd();
-          bool SpacesAfter = Tok->Next->WhitespaceRange.getBegin() !=
-                             Tok->Next->WhitespaceRange.getEnd();
-          if (SpacesBefore && !SpacesAfter)
-            ++CountBoundToVariable;
-          else if (!SpacesBefore && SpacesAfter)
-            ++CountBoundToType;
-        }
-
-        if (Tok->WhitespaceRange.getBegin() == Tok->WhitespaceRange.getEnd()) {
-          if (Tok->is(tok::coloncolon) && Tok->Previous->is(TT_TemplateOpener))
-            HasCpp03IncompatibleFormat = true;
-          if (Tok->is(TT_TemplateCloser) &&
-              Tok->Previous->is(TT_TemplateCloser))
-            HasCpp03IncompatibleFormat = true;
-        }
-
         if (Tok->PackingKind == PPK_BinPacked)
           HasBinPackedFunction = true;
         if (Tok->PackingKind == PPK_OnePerLine)
@@ -1524,16 +1540,14 @@ private:
         Tok = Tok->Next;
       }
     }
-    if (Style.DerivePointerAlignment) {
-      if (CountBoundToType > CountBoundToVariable)
-        Style.PointerAlignment = FormatStyle::PAS_Left;
-      else if (CountBoundToType < CountBoundToVariable)
-        Style.PointerAlignment = FormatStyle::PAS_Right;
-    }
-    if (Style.Standard == FormatStyle::LS_Auto) {
-      Style.Standard = HasCpp03IncompatibleFormat ? FormatStyle::LS_Cpp11
-                                                  : FormatStyle::LS_Cpp03;
-    }
+    if (Style.DerivePointerAlignment)
+      Style.PointerAlignment = countVariableAlignments(AnnotatedLines) <= 0
+                                   ? FormatStyle::PAS_Left
+                                   : FormatStyle::PAS_Right;
+    if (Style.Standard == FormatStyle::LS_Auto)
+      Style.Standard = hasCpp03IncompatibleFormat(AnnotatedLines)
+                           ? FormatStyle::LS_Cpp11
+                           : FormatStyle::LS_Cpp03;
     BinPackInconclusiveFunctions =
         HasBinPackedFunction || !HasOnePerLineFunction;
   }
