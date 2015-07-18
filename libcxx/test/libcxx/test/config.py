@@ -576,6 +576,7 @@ class Configuration(object):
             ]
             self.cxx.addCompileFlagIfSupported('-Wno-attributes')
             if self.cxx.type == 'clang' or self.cxx.type == 'apple-clang':
+                self.cxx.addCompileFlagIfSupported('-Wno-pessimizing-move')
                 self.cxx.addCompileFlagIfSupported('-Wno-c++11-extensions')
                 self.cxx.addCompileFlagIfSupported('-Wno-user-defined-literals')
 

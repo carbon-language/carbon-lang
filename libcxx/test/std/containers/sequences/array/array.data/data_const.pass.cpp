@@ -14,6 +14,8 @@
 #include <array>
 #include <cassert>
 
+#include "../suppress_array_warnings.h"
+
 int main()
 {
     {

@@ -17,6 +17,10 @@
 #include <array>
 #include <cassert>
 
+#include "test_macros.h"
+
+#include "suppress_array_warnings.h"
+
 int main()
 {
     {
@@ -42,13 +46,13 @@ int main()
         C::const_reference r2 = c[2];
         assert(r2 == 3.5);
     }
-    
-#if _LIBCPP_STD_VER > 11 
+
+#if TEST_STD_VER > 11
     {
         typedef double T;
         typedef std::array<T, 3> C;
         constexpr C c = {1, 2, 3.5};
-        
+
         constexpr T t1 = c[0];
         static_assert (t1 == 1, "");
 

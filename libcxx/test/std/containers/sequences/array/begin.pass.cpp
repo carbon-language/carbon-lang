@@ -14,6 +14,8 @@
 #include <array>
 #include <cassert>
 
+#include "suppress_array_warnings.h"
+
 int main()
 {
     {
@@ -26,7 +28,5 @@ int main()
         assert(&*i == c.data());
         *i = 5.5;
         assert(c[0] == 5.5);
-    }
-    {
     }
 }

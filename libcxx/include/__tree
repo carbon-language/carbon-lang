@@ -1118,8 +1118,8 @@ __tree<_Tp, _Compare, _Allocator>::__tree(const value_compare& __comp)
 
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(const allocator_type& __a)
-    : __pair1_(__node_allocator(__a)),
-      __begin_node_(__node_pointer()),
+    : __begin_node_(__node_pointer()),
+      __pair1_(__node_allocator(__a)),
       __pair3_(0)
 {
     __begin_node() = __end_node();
@@ -1128,8 +1128,8 @@ __tree<_Tp, _Compare, _Allocator>::__tree(const allocator_type& __a)
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(const value_compare& __comp,
                                            const allocator_type& __a)
-    : __pair1_(__node_allocator(__a)),
-      __begin_node_(__node_pointer()),
+    : __begin_node_(__node_pointer()),
+      __pair1_(__node_allocator(__a)),
       __pair3_(0, __comp)
 {
     __begin_node() = __end_node();

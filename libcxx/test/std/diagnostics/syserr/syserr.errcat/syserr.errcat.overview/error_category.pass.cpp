@@ -16,4 +16,5 @@
 int main()
 {
     std::error_category* p = 0;
+    ((void)p);
 }

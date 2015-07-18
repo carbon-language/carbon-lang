@@ -17,6 +17,10 @@
 #include <array>
 #include <cassert>
 
+#include "test_macros.h"
+
+#include "suppress_array_warnings.h"
+
 int main()
 {
     {
@@ -27,7 +31,7 @@ int main()
         assert(r1 == 1);
         r1 = 5.5;
         assert(c.front() == 5.5);
-        
+
         C::reference r2 = c.at(2);
         assert(r2 == 3.5);
         r2 = 7.5;
@@ -50,7 +54,7 @@ int main()
         catch (const std::out_of_range &) {}
     }
     
-#if _LIBCPP_STD_VER > 11 
+#if TEST_STD_VER > 11
     {
         typedef double T;
         typedef std::array<T, 3> C;
