@@ -25,6 +25,8 @@ void
 test()
 {
     static_assert((std::is_same<typename std::auto_ptr<T>::element_type, T>::value), "");
+    std::auto_ptr<T> p;
+    ((void)p);
 }
 
 int main()
@@ -32,5 +34,4 @@ int main()
     test<int>();
     test<double>();
     test<void>();
-    std::auto_ptr<void> p;
 }

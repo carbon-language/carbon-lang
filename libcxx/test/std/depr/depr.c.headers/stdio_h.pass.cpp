@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <type_traits>
+#include "test_macros.h"
 
 #ifndef BUFSIZ
 #error BUFSIZ not defined
@@ -78,14 +79,16 @@
 
 #include <cstdarg>
 
-#pragma clang diagnostic ignored "-Wformat-zero-length"
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations" // for tmpnam
 
 int main()
 {
     FILE* fp = 0;
     fpos_t fpos = {0};
-    size_t s = 0;
+    size_t s = 0; ((void)s);
     char* cp = 0;
+    char arr[] = {'a', 'b'};
     va_list va;
     static_assert((std::is_same<decltype(remove("")), int>::value), "");
     static_assert((std::is_same<decltype(rename("","")), int>::value), "");
@@ -117,7 +120,7 @@ int main()
     static_assert((std::is_same<decltype(fputs("",fp)), int>::value), "");
     static_assert((std::is_same<decltype(getc(fp)), int>::value), "");
     static_assert((std::is_same<decltype(getchar()), int>::value), "");
-#if _LIBCPP_STD_VER < 14
+#if TEST_STD_VER < 14
     static_assert((std::is_same<decltype(gets(cp)), char*>::value), "");
 #endif
     static_assert((std::is_same<decltype(putc(0,fp)), int>::value), "");
@@ -125,7 +128,7 @@ int main()
     static_assert((std::is_same<decltype(puts("")), int>::value), "");
     static_assert((std::is_same<decltype(ungetc(0,fp)), int>::value), "");
     static_assert((std::is_same<decltype(fread((void*)0,0,0,fp)), size_t>::value), "");
-    static_assert((std::is_same<decltype(fwrite((const void*)0,0,0,fp)), size_t>::value), "");
+    static_assert((std::is_same<decltype(fwrite((const void*)arr,1,0,fp)), size_t>::value), "");
     static_assert((std::is_same<decltype(fgetpos(fp, &fpos)), int>::value), "");
     static_assert((std::is_same<decltype(fseek(fp, 0,0)), int>::value), "");
     static_assert((std::is_same<decltype(fsetpos(fp, &fpos)), int>::value), "");

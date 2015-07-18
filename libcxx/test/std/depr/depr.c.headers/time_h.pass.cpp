@@ -22,7 +22,7 @@
 
 int main()
 {
-    clock_t c = 0;
+    clock_t c = 0; ((void)c);
     size_t s = 0;
     time_t t = 0;
     tm tmv = {0};

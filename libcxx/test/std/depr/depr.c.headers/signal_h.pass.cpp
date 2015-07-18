@@ -50,7 +50,7 @@
 
 int main()
 {
-    sig_atomic_t sig;
+    sig_atomic_t sig; ((void)sig);
     typedef void (*func)(int);
     static_assert((std::is_same<decltype(signal(0, (func)0)), func>::value), "");
     static_assert((std::is_same<decltype(raise(0)), int>::value), "");

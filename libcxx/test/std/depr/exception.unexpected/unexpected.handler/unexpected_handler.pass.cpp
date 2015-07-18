@@ -16,4 +16,5 @@ void f() {}
 int main()
 {
     std::unexpected_handler p = f;
+    ((void)p);
 }

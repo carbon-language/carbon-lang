@@ -32,4 +32,5 @@
 int main()
 {
     va_list va;
+    ((void)va);
 }

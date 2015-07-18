@@ -34,10 +34,10 @@
 
 int main()
 {
-    size_t s = 0;
-    div_t d;
-    ldiv_t ld;
-    lldiv_t lld;
+    size_t s = 0; ((void)s);
+    div_t d; ((void)d);
+    ldiv_t ld; ((void)ld);
+    lldiv_t lld; ((void)lld);
     char** endptr = 0;
     static_assert((std::is_same<decltype(atof("")), double>::value), "");
     static_assert((std::is_same<decltype(atoi("")), int>::value), "");

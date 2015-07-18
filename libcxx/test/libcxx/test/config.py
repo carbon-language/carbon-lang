@@ -574,8 +574,10 @@ class Configuration(object):
                 '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
                 '-Wall', '-Werror'
             ]
-            self.cxx.addCompileFlagIfSupported('-Wno-c++11-extensions')
-            self.cxx.addCompileFlagIfSupported('-Wno-user-defined-literals')
+            self.cxx.addCompileFlagIfSupported('-Wno-attributes')
+            if self.cxx.type == 'clang' or self.cxx.type == 'apple-clang':
+                self.cxx.addCompileFlagIfSupported('-Wno-c++11-extensions')
+                self.cxx.addCompileFlagIfSupported('-Wno-user-defined-literals')
 
     def configure_sanitizer(self):
         san = self.get_lit_conf('use_sanitizer', '').strip()

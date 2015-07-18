@@ -28,6 +28,10 @@
 #error WEOF not defined
 #endif
 
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#endif
+
 int main()
 {
     mbstate_t mb = {0};

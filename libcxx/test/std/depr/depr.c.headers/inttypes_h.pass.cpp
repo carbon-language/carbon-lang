@@ -631,7 +631,8 @@
 int main()
 {
     {
-    imaxdiv_t  i1 = {0};
+      imaxdiv_t  i1 = {0};
+      ((void)i1);
     }
     intmax_t i = 0;
     static_assert((std::is_same<decltype(imaxabs(i)), intmax_t>::value), "");
