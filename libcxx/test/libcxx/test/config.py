@@ -570,8 +570,11 @@ class Configuration(object):
     def configure_warnings(self):
         enable_warnings = self.get_lit_bool('enable_warnings', False)
         if enable_warnings:
-            self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
-                '-Wall', '-Werror']
+            self.cxx.compile_flags += [
+                '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
+                '-Wall', '-Werror'
+            ]
+            self.cxx.addCompileFlagIfSupported('-Wno-c++11-extensions')
             self.cxx.addCompileFlagIfSupported('-Wno-user-defined-literals')
 
     def configure_sanitizer(self):

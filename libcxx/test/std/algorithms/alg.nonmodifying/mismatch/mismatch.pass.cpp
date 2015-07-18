@@ -17,18 +17,16 @@
 #include <algorithm>
 #include <cassert>
 
+#include "test_macros.h"
 #include "test_iterators.h"
 
-#if _LIBCPP_STD_VER > 11
-#define HAS_FOUR_ITERATOR_VERSION
-#endif
 
 int main()
 {
     int ia[] = {0, 1, 2, 2, 0, 1, 2, 3};
     const unsigned sa = sizeof(ia)/sizeof(ia[0]);
     int ib[] = {0, 1, 2, 3, 0, 1, 2, 3};
-    const unsigned sb = sizeof(ib)/sizeof(ib[0]);
+    const unsigned sb = sizeof(ib)/sizeof(ib[0]); ((void)sb); // unused in c++11
 
     typedef input_iterator<const int*> II;
     typedef random_access_iterator<const int*>  RAI;
@@ -39,7 +37,7 @@ int main()
     assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib))
             == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
 
-#ifdef HAS_FOUR_ITERATOR_VERSION
+#if TEST_STD_VER > 11 // We have the four iteration version
     assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+sb))
             == (std::pair<II, II>(II(ia+3), II(ib+3))));
 

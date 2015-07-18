@@ -17,10 +17,9 @@
 
 #include <algorithm>
 #include <cassert>
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
-#endif
 
+#include "test_macros.h"
 #include "test_iterators.h"
 
 struct is_odd
@@ -283,7 +282,7 @@ test()
     }
 }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if TEST_STD_VER >= 11
 
 struct is_null
 {
@@ -298,9 +297,10 @@ test1()
     const unsigned size = 5;
     std::unique_ptr<int> array[size];
     Iter r = std::stable_partition(Iter(array), Iter(array+size), is_null());
+    assert(r == Iter(array+size));
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // TEST_STD_VER >= 11
 
 int main()
 {
@@ -308,7 +308,7 @@ int main()
     test<random_access_iterator<std::pair<int,int>*> >();
     test<std::pair<int,int>*>();
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if TEST_STD_VER >= 11
     test1<bidirectional_iterator<std::unique_ptr<int>*> >();
 #endif
 }

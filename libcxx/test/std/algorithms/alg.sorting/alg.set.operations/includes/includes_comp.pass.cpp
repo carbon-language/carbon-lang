@@ -30,9 +30,9 @@ test()
     int ib[] = {2, 4};
     const unsigned sb = sizeof(ib)/sizeof(ib[0]);
     int ic[] = {1, 2};
-    const unsigned sc = sizeof(ic)/sizeof(ic[0]);
+    const unsigned sc = sizeof(ic)/sizeof(ic[0]); ((void)sc);
     int id[] = {3, 3, 3, 3};
-    const unsigned sd = sizeof(id)/sizeof(id[0]);
+    const unsigned sd = sizeof(id)/sizeof(id[0]); ((void)sd);
 
     assert(std::includes(Iter1(ia), Iter1(ia), Iter2(ib), Iter2(ib), std::less<int>()));
     assert(!std::includes(Iter1(ia), Iter1(ia), Iter2(ib), Iter2(ib+1), std::less<int>()));
