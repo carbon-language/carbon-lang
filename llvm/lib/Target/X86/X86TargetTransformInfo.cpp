@@ -467,40 +467,6 @@ unsigned X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  std::pair<unsigned, MVT> LTSrc = TLI->getTypeLegalizationCost(DL, Src);
-  std::pair<unsigned, MVT> LTDest = TLI->getTypeLegalizationCost(DL, Dst);
-
-  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
-  SSE2ConvTbl[] = {
-    // These are somewhat magic numbers justified by looking at the output of
-    // Intel's IACA, running some kernels and making sure when we take
-    // legalization into account the throughput will be overestimated.
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v16i8, 16*10 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
-    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v16i8, 16*10 },
-    // There are faster sequences for float conversions.
-    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
-    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i32, 8 },
-    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v8i16, 15 },
-    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
-    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
-    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i32, 15 },
-    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v8i16, 15 },
-    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
-  };
-
-  if (ST->hasSSE2() && !ST->hasAVX()) {
-    int Idx =
-        ConvertCostTableLookup(SSE2ConvTbl, ISD, LTDest.second, LTSrc.second);
-    if (Idx != -1)
-      return LTSrc.first * SSE2ConvTbl[Idx].Cost;
-  }
-
   static const TypeConversionCostTblEntry<MVT::SimpleValueType>
   AVX512ConversionTbl[] = {
     { ISD::FP_EXTEND, MVT::v8f64,   MVT::v8f32,  1 },
@@ -533,19 +499,6 @@ unsigned X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i16,  2 },
     { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i32,  1 },
   };
-
-  if (ST->hasAVX512()) {
-    int Idx = ConvertCostTableLookup(AVX512ConversionTbl, ISD, LTDest.second,
-                                     LTSrc.second);
-    if (Idx != -1)
-      return AVX512ConversionTbl[Idx].Cost;
-  }
-  EVT SrcTy = TLI->getValueType(DL, Src);
-  EVT DstTy = TLI->getValueType(DL, Dst);
-
-  // The function getSimpleVT only handles simple value types.
-  if (!SrcTy.isSimple() || !DstTy.isSimple())
-    return BaseT::getCastInstrCost(Opcode, Dst, Src);
 
   static const TypeConversionCostTblEntry<MVT::SimpleValueType>
   AVX2ConversionTbl[] = {
@@ -649,6 +602,54 @@ unsigned X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::FP_TO_UINT,  MVT::v8i32, MVT::v8f32, 8*4 },
     { ISD::FP_TO_UINT,  MVT::v4i32, MVT::v4f64, 4*4 },
   };
+
+  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  SSE2ConvTbl[] = {
+    // These are somewhat magic numbers justified by looking at the output of
+    // Intel's IACA, running some kernels and making sure when we take
+    // legalization into account the throughput will be overestimated.
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v16i8, 16*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
+    { ISD::SINT_TO_FP, MVT::v2f64, MVT::v16i8, 16*10 },
+    // There are faster sequences for float conversions.
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i32, 8 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v8i16, 15 },
+    { ISD::UINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v4i32, 15 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v8i16, 15 },
+    { ISD::SINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
+  };
+
+  std::pair<unsigned, MVT> LTSrc = TLI->getTypeLegalizationCost(DL, Src);
+  std::pair<unsigned, MVT> LTDest = TLI->getTypeLegalizationCost(DL, Dst);
+
+  if (ST->hasSSE2() && !ST->hasAVX()) {
+    int Idx =
+        ConvertCostTableLookup(SSE2ConvTbl, ISD, LTDest.second, LTSrc.second);
+    if (Idx != -1)
+      return LTSrc.first * SSE2ConvTbl[Idx].Cost;
+  }
+
+  if (ST->hasAVX512()) {
+    int Idx = ConvertCostTableLookup(AVX512ConversionTbl, ISD, LTDest.second,
+                                     LTSrc.second);
+    if (Idx != -1)
+      return AVX512ConversionTbl[Idx].Cost;
+  }
+
+  EVT SrcTy = TLI->getValueType(DL, Src);
+  EVT DstTy = TLI->getValueType(DL, Dst);
+
+  // The function getSimpleVT only handles simple value types.
+  if (!SrcTy.isSimple() || !DstTy.isSimple())
+    return BaseT::getCastInstrCost(Opcode, Dst, Src);
 
   if (ST->hasAVX2()) {
     int Idx = ConvertCostTableLookup(AVX2ConversionTbl, ISD,
