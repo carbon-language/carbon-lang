@@ -22,12 +22,12 @@
 #include <algorithm>
 #include <cassert>
 
+#include "test_macros.h"
 #include "min_allocator.h"
 
 template <class C>
 void test(int N, int M)
 {
-    typedef typename C::value_type T;
     C c1;
     for (int i = 0; i < N; ++i)
         c1.push_front(i);
@@ -52,7 +52,7 @@ int main()
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
             test<std::forward_list<int> >(i, j);
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     for (int i = 0; i < 10; ++i)
         for (int j = 0; j < 10; ++j)
             test<std::forward_list<int, min_allocator<int>> >(i, j);

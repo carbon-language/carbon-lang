@@ -15,6 +15,7 @@
 #include <cassert>
 #include <iterator>
 
+#include "test_macros.h"
 #include "min_allocator.h"
 
 typedef int T;
@@ -44,7 +45,6 @@ tests(const C& c, int p, int f)
 {
     typename C::const_iterator i = c.begin();
     int n = 0;
-    int d = 1;
     if (p == f || p == f+1)
     {
         for (n = 0; n < size_t1; ++n, ++i)
@@ -106,7 +106,7 @@ int main()
         }
     }
     }
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
     // splicing different containers
     typedef std::forward_list<T, min_allocator<T>> C;
