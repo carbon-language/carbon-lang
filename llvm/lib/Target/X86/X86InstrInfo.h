@@ -342,11 +342,6 @@ public:
                                       MachineBasicBlock::iterator InsertPt,
                                       MachineInstr *LoadMI) const override;
 
-  /// canFoldMemoryOperand - Returns true if the specified load / store is
-  /// folding is possible.
-  bool canFoldMemoryOperand(const MachineInstr *,
-                            ArrayRef<unsigned>) const override;
-
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.

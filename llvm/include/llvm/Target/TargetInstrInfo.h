@@ -819,10 +819,6 @@ protected:
   }
 
 public:
-  /// Returns true for the specified load / store if folding is possible.
-  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
-                                    ArrayRef<unsigned> Ops) const;
-
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.

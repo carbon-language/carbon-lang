@@ -384,11 +384,6 @@ void TargetInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   llvm_unreachable("Not a MachO target");
 }
 
-bool TargetInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
-                                           ArrayRef<unsigned> Ops) const {
-  return MI->isCopy() && Ops.size() == 1 && canFoldCopy(MI, Ops[0]);
-}
-
 static MachineInstr *foldPatchpoint(MachineFunction &MF, MachineInstr *MI,
                                     ArrayRef<unsigned> Ops, int FrameIndex,
                                     const TargetInstrInfo &TII) {

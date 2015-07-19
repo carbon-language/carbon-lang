@@ -164,11 +164,6 @@ MachineInstr *AMDGPUInstrInfo::foldMemoryOperandImpl(
   // TODO: Implement this function
   return nullptr;
 }
-bool AMDGPUInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
-                                           ArrayRef<unsigned> Ops) const {
-  // TODO: Implement this function
-  return false;
-}
 bool
 AMDGPUInstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                  unsigned Reg, bool UnfoldLoad,

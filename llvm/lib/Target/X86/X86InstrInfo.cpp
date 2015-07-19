@@ -5469,62 +5469,6 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
                                /*Size=*/0, Alignment, /*AllowCommute=*/true);
 }
 
-bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
-                                        ArrayRef<unsigned> Ops) const {
-  // Check switch flag
-  if (NoFusing) return 0;
-
-  if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
-    switch (MI->getOpcode()) {
-    default: return false;
-    case X86::TEST8rr:
-    case X86::TEST16rr:
-    case X86::TEST32rr:
-    case X86::TEST64rr:
-      return true;
-    case X86::ADD32ri:
-      // FIXME: AsmPrinter doesn't know how to handle
-      // X86II::MO_GOT_ABSOLUTE_ADDRESS after folding.
-      if (MI->getOperand(2).getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS)
-        return false;
-      break;
-    }
-  }
-
-  if (Ops.size() != 1)
-    return false;
-
-  unsigned OpNum = Ops[0];
-  unsigned Opc = MI->getOpcode();
-  unsigned NumOps = MI->getDesc().getNumOperands();
-  bool isTwoAddr = NumOps > 1 &&
-    MI->getDesc().getOperandConstraint(1, MCOI::TIED_TO) != -1;
-
-  // Folding a memory location into the two-address part of a two-address
-  // instruction is different than folding it other places.  It requires
-  // replacing the *two* registers with the memory location.
-  const DenseMap<unsigned,
-                 std::pair<unsigned,unsigned> > *OpcodeTablePtr = nullptr;
-  if (isTwoAddr && NumOps >= 2 && OpNum < 2) {
-    OpcodeTablePtr = &RegOp2MemOpTable2Addr;
-  } else if (OpNum == 0) {
-    if (Opc == X86::MOV32r0)
-      return true;
-
-    OpcodeTablePtr = &RegOp2MemOpTable0;
-  } else if (OpNum == 1) {
-    OpcodeTablePtr = &RegOp2MemOpTable1;
-  } else if (OpNum == 2) {
-    OpcodeTablePtr = &RegOp2MemOpTable2;
-  } else if (OpNum == 3) {
-    OpcodeTablePtr = &RegOp2MemOpTable3;
-  }
-
-  if (OpcodeTablePtr && OpcodeTablePtr->count(Opc))
-    return true;
-  return TargetInstrInfo::canFoldMemoryOperand(MI, Ops);
-}
-
 bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
