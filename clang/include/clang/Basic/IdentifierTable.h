@@ -161,7 +161,7 @@ public:
   /// TokenID is normally read-only but there are 2 instances where we revert it
   /// to tok::identifier for libstdc++ 4.2. Keep track of when this happens
   /// using this method so we can inform serialization about it.
-  void RevertTokenIDToIdentifier() {
+  void revertTokenIDToIdentifier() {
     assert(TokenID != tok::identifier && "Already at tok::identifier");
     TokenID = tok::identifier;
     RevertedTokenID = true;
@@ -182,6 +182,18 @@ public:
       return tok::objc_not_keyword;
   }
   void setObjCKeywordID(tok::ObjCKeywordKind ID) { ObjCOrBuiltinID = ID; }
+
+  /// \brief True if setNotBuiltin() was called.
+  bool hasRevertedBuiltin() const {
+    return ObjCOrBuiltinID == tok::NUM_OBJC_KEYWORDS;
+  }
+
+  /// \brief Revert the identifier to a non-builtin identifier. We do this if
+  /// the name of a known builtin library function is used to declare that
+  /// function, but an unexpected type is specified.
+  void revertBuiltin() {
+    setBuiltinID(0);
+  }
 
   /// \brief Return a value indicating whether this is a builtin function.
   ///

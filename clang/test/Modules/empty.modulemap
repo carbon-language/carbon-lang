@@ -10,6 +10,12 @@
 // RUN:   -emit-module -fmodule-name=empty -o %t/check.pcm \
 // RUN:   %s
 //
+// The module file should be identical each time we produce it.
 // RUN: diff %t/base.pcm %t/check.pcm
+//
+// We expect an empty module to be less than 30KB.
+// REQUIRES: shell
+// RUN: wc -c %t/base.pcm | FileCheck --check-prefix=CHECK-SIZE %s
+// CHECK-SIZE: {{^[12][0-9]{4} }}
 
 module empty { header "Inputs/empty.h" export * }

@@ -476,6 +476,11 @@ public:
   /// any point during translation.
   bool isDirectlyImported() const { return DirectlyImported; }
 
+  /// \brief Is this a module file for a module (rather than a PCH or similar).
+  bool isModule() const {
+    return Kind == MK_ImplicitModule || Kind == MK_ExplicitModule;
+  }
+
   /// \brief Dump debugging output for this module.
   void dump();
 };

@@ -3102,15 +3102,16 @@ class ASTIdentifierTableTrait {
   ASTWriter &Writer;
   Preprocessor &PP;
   IdentifierResolver &IdResolver;
+  bool IsModule;
   
   /// \brief Determines whether this is an "interesting" identifier that needs a
   /// full IdentifierInfo structure written into the hash table. Notably, this
   /// doesn't check whether the name has macros defined; use PublicMacroIterator
   /// to check that.
-  bool isInterestingIdentifier(IdentifierInfo *II, uint64_t MacroOffset) {
+  bool isInterestingIdentifier(const IdentifierInfo *II, uint64_t MacroOffset) {
     if (MacroOffset ||
         II->isPoisoned() ||
-        II->getObjCOrBuiltinID() ||
+        (IsModule ? II->hasRevertedBuiltin() : II->getObjCOrBuiltinID()) ||
         II->hasRevertedTokenIDToIdentifier() ||
         II->getFETokenInfo<void>())
       return true;
@@ -3129,11 +3130,15 @@ public:
   typedef unsigned offset_type;
 
   ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP,
-                          IdentifierResolver &IdResolver)
-      : Writer(Writer), PP(PP), IdResolver(IdResolver) {}
+                          IdentifierResolver &IdResolver, bool IsModule)
+      : Writer(Writer), PP(PP), IdResolver(IdResolver), IsModule(IsModule) {}
 
   static hash_value_type ComputeHash(const IdentifierInfo* II) {
     return llvm::HashString(II->getName());
+  }
+
+  bool isInterestingNonMacroIdentifier(const IdentifierInfo *II) {
+    return isInterestingIdentifier(II, 0);
   }
 
   std::pair<unsigned,unsigned>
@@ -3192,6 +3197,7 @@ public:
     Bits = (Bits << 1) | unsigned(HadMacroDefinition);
     Bits = (Bits << 1) | unsigned(II->isExtensionToken());
     Bits = (Bits << 1) | unsigned(II->isPoisoned());
+    Bits = (Bits << 1) | unsigned(II->hasRevertedBuiltin());
     Bits = (Bits << 1) | unsigned(II->hasRevertedTokenIDToIdentifier());
     Bits = (Bits << 1) | unsigned(II->isCPlusPlusOperatorKeyword());
     LE.write<uint16_t>(Bits);
@@ -3229,7 +3235,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
   // strings.
   {
     llvm::OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
-    ASTIdentifierTableTrait Trait(*this, PP, IdResolver);
+    ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
 
     // Look for any identifiers that were named while processing the
     // headers, but are otherwise not needed. We add these to the hash
@@ -3245,7 +3251,8 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
     // that their order is stable.
     std::sort(IIs.begin(), IIs.end(), llvm::less_ptr<IdentifierInfo>());
     for (const IdentifierInfo *II : IIs)
-      getIdentifierRef(II);
+      if (Trait.isInterestingNonMacroIdentifier(II))
+        getIdentifierRef(II);
 
     // Create the on-disk hash table representation. We only store offsets
     // for identifiers that appear here for the first time.
@@ -4444,6 +4451,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   WriteHeaderSearch(PP.getHeaderSearchInfo());
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
+  WriteLateParsedTemplates(SemaRef);
   WriteIdentifierTable(PP, SemaRef.IdResolver, isModule);
   WriteFPPragmaOptions(SemaRef.getFPOptions());
   WriteOpenCLExtensions(SemaRef);
@@ -4559,7 +4567,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   WriteDeclReplacementsBlock();
   WriteRedeclarations();
   WriteObjCCategories();
-  WriteLateParsedTemplates(SemaRef);
   if(!WritingModule)
     WriteOptimizePragmaOptions(SemaRef);
 
