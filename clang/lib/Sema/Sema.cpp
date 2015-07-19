@@ -40,7 +40,6 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Support/CrashRecoveryContext.h"
 using namespace clang;
 using namespace sema;
 
