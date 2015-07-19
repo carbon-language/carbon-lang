@@ -469,9 +469,9 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         // If this is a direct call to an external function, we can never inline
         // it.  If it is an indirect call, inlining may resolve it to be a
         // direct call, so we keep it.
-        Function *Callee = CS.getCalledFunction();
-        if (Callee && Callee->isDeclaration())
-          continue;
+        if (Function *Callee = CS.getCalledFunction())
+          if (Callee->isDeclaration())
+            continue;
         
         CallSites.push_back(std::make_pair(CS, -1));
       }
