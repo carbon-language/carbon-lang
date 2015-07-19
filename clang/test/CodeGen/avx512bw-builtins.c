@@ -830,6 +830,53 @@ __m512i test_mm512_mask_permutex2var_epi16(__m512i __A, __mmask32 __U, __m512i _
 }
 __m512i test_mm512_maskz_permutex2var_epi16(__mmask32 __U, __m512i __A, __m512i __I, __m512i __B) {
   // CHECK-LABEL: @test_mm512_maskz_permutex2var_epi16
-  // CHECK: @llvm.x86.avx512.mask.vpermt2var.hi.512
+  // CHECK: @llvm.x86.avx512.maskz.vpermt2var.hi.512
   return _mm512_maskz_permutex2var_epi16(__U,__A,__I,__B); 
 }
+
+__m512i test_mm512_mulhrs_epi16(__m512i __A, __m512i __B) {
+  // CHECK-LABEL: @test_mm512_mulhrs_epi16
+  // CHECK: @llvm.x86.avx512.mask.pmul.hr.sw.512
+  return _mm512_mulhrs_epi16(__A,__B); 
+}
+__m512i test_mm512_mask_mulhrs_epi16(__m512i __W, __mmask32 __U, __m512i __A,        __m512i __B) {
+  // CHECK-LABEL: @test_mm512_mask_mulhrs_epi16
+  // CHECK: @llvm.x86.avx512.mask.pmul.hr.sw.512
+  return _mm512_mask_mulhrs_epi16(__W,__U,__A,__B); 
+}
+__m512i test_mm512_maskz_mulhrs_epi16(__mmask32 __U, __m512i __A, __m512i __B) {
+  // CHECK-LABEL: @test_mm512_maskz_mulhrs_epi16
+  // CHECK: @llvm.x86.avx512.mask.pmul.hr.sw.512
+  return _mm512_maskz_mulhrs_epi16(__U,__A,__B); 
+}
+__m512i test_mm512_mulhi_epi16(__m512i __A, __m512i __B) {
+  // CHECK-LABEL: @test_mm512_mulhi_epi16
+  // CHECK: @llvm.x86.avx512.mask.pmulh.w.512
+  return _mm512_mulhi_epi16(__A,__B); 
+}
+__m512i test_mm512_mask_mulhi_epi16(__m512i __W, __mmask32 __U, __m512i __A,       __m512i __B) {
+  // CHECK-LABEL: @test_mm512_mask_mulhi_epi16
+  // CHECK: @llvm.x86.avx512.mask.pmulh.w.512
+  return _mm512_mask_mulhi_epi16(__W,__U,__A,__B); 
+}
+__m512i test_mm512_maskz_mulhi_epi16(__mmask32 __U, __m512i __A, __m512i __B) {
+  // CHECK-LABEL: @test_mm512_maskz_mulhi_epi16
+  // CHECK: @llvm.x86.avx512.mask.pmulh.w.512
+  return _mm512_maskz_mulhi_epi16(__U,__A,__B); 
+}
+__m512i test_mm512_mulhi_epu16(__m512i __A, __m512i __B) {
+  // CHECK-LABEL: @test_mm512_mulhi_epu16
+  // CHECK: @llvm.x86.avx512.mask.pmulhu.w.512
+  return _mm512_mulhi_epu16(__A,__B); 
+}
+__m512i test_mm512_mask_mulhi_epu16(__m512i __W, __mmask32 __U, __m512i __A,       __m512i __B) {
+  // CHECK-LABEL: @test_mm512_mask_mulhi_epu16
+  // CHECK: @llvm.x86.avx512.mask.pmulhu.w.512
+  return _mm512_mask_mulhi_epu16(__W,__U,__A,__B); 
+}
+__m512i test_mm512_maskz_mulhi_epu16(__mmask32 __U, __m512i __A, __m512i __B) {
+  // CHECK-LABEL: @test_mm512_maskz_mulhi_epu16
+  // CHECK: @llvm.x86.avx512.mask.pmulhu.w.512
+  return _mm512_maskz_mulhi_epu16(__U,__A,__B); 
+}
+

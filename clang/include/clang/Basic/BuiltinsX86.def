@@ -1217,5 +1217,7 @@ BUILTIN(__builtin_ia32_vpermt2varhi128_mask, "V8sV8sV8sV8sUc", "")
 BUILTIN(__builtin_ia32_vpermt2varhi128_maskz, "V8sV8sV8sV8sUc", "")
 BUILTIN(__builtin_ia32_vpermt2varhi256_mask, "V16sV16sV16sV16sUs", "")
 BUILTIN(__builtin_ia32_vpermt2varhi256_maskz, "V16sV16sV16sV16sUs", "")
-
+BUILTIN(__builtin_ia32_pmulhrsw512_mask, "V32sV32sV32sV32sUi", "")
+BUILTIN(__builtin_ia32_pmulhuw512_mask, "V32sV32sV32sV32sUi", "")
+BUILTIN(__builtin_ia32_pmulhw512_mask, "V32sV32sV32sV32sUi", "")
 #undef BUILTIN
