@@ -635,9 +635,11 @@ add byte ptr [rax], 1
 // CHECK: addw $1, (%rax)
 // CHECK: addb $1, (%rax)
 
+fstp tbyte ptr [rax]
 fstp xword ptr [rax]
 fstp qword ptr [rax]
 fstp dword ptr [rax]
+// CHECK: fstpt (%rax)
 // CHECK: fstpt (%rax)
 // CHECK: fstpl (%rax)
 // CHECK: fstps (%rax)
