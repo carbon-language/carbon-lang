@@ -7237,10 +7237,10 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
     ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N0);
 
     // If operands are a bitcast, peek through if it casts the original VT.
-    // If operands are a UNDEF or constant, just bitcast back to original VT.
+    // If operands are a constant, just bitcast back to original VT.
     auto PeekThroughBitcast = [&](SDValue Op) {
       if (Op.getOpcode() == ISD::BITCAST &&
-          Op.getOperand(0)->getValueType(0) == VT)
+          Op.getOperand(0).getValueType() == VT)
         return SDValue(Op.getOperand(0));
       if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode()) ||
           ISD::isBuildVectorOfConstantFPSDNodes(Op.getNode()))
