@@ -1352,8 +1352,33 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,           MVT::v16i8, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
     if (Subtarget->hasDQI()) {
-      setOperationAction(ISD::TRUNCATE,           MVT::v2i1, Custom);
-      setOperationAction(ISD::TRUNCATE,           MVT::v4i1, Custom);
+      setOperationAction(ISD::TRUNCATE,         MVT::v2i1, Custom);
+      setOperationAction(ISD::TRUNCATE,         MVT::v4i1, Custom);
+
+      setOperationAction(ISD::SINT_TO_FP,       MVT::v8i64, Legal);
+      setOperationAction(ISD::UINT_TO_FP,       MVT::v8i64, Legal);
+      setOperationAction(ISD::FP_TO_SINT,       MVT::v8i64, Legal);
+      setOperationAction(ISD::FP_TO_UINT,       MVT::v8i64, Legal);
+      if (Subtarget->hasVLX()) {
+        setOperationAction(ISD::SINT_TO_FP,    MVT::v4i64, Legal);
+        setOperationAction(ISD::SINT_TO_FP,    MVT::v2i64, Legal);
+        setOperationAction(ISD::UINT_TO_FP,    MVT::v4i64, Legal);
+        setOperationAction(ISD::UINT_TO_FP,    MVT::v2i64, Legal);
+        setOperationAction(ISD::FP_TO_SINT,    MVT::v4i64, Legal);
+        setOperationAction(ISD::FP_TO_SINT,    MVT::v2i64, Legal);
+        setOperationAction(ISD::FP_TO_UINT,    MVT::v4i64, Legal);
+        setOperationAction(ISD::FP_TO_UINT,    MVT::v2i64, Legal);
+      }
+    }
+    if (Subtarget->hasVLX()) {
+      setOperationAction(ISD::SINT_TO_FP,       MVT::v8i32, Legal);
+      setOperationAction(ISD::UINT_TO_FP,       MVT::v8i32, Legal);
+      setOperationAction(ISD::FP_TO_SINT,       MVT::v8i32, Legal);
+      setOperationAction(ISD::FP_TO_UINT,       MVT::v8i32, Legal);
+      setOperationAction(ISD::SINT_TO_FP,       MVT::v4i32, Legal);
+      setOperationAction(ISD::UINT_TO_FP,       MVT::v4i32, Legal);
+      setOperationAction(ISD::FP_TO_SINT,       MVT::v4i32, Legal);
+      setOperationAction(ISD::FP_TO_UINT,       MVT::v4i32, Legal);
     }
     setOperationAction(ISD::TRUNCATE,           MVT::v8i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i1, Custom);
