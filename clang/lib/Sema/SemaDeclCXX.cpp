@@ -4138,7 +4138,7 @@ static void DiagnoseBaseOrMemInitializerOrder(
         if (InitKey == IdealInitKeys[IdealIndex])
           break;
 
-      assert(IdealIndex != NumIdealInits &&
+      assert(IdealIndex >= 0 && IdealIndex < NumIdealInits &&
              "initializer not found in initializer list");
     }
 
