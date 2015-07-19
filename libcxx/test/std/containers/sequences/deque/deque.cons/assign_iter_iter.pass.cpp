@@ -15,6 +15,7 @@
 #include <deque>
 #include <cassert>
 
+#include "test_macros.h"
 #include "test_iterators.h"
 #include "min_allocator.h"
 
@@ -44,7 +45,6 @@ template <class C>
 void
 test(C& c1, const C& c2)
 {
-    std::size_t c1_osize = c1.size();
     c1.assign(c2.begin(), c2.end());
     assert(distance(c1.begin(), c1.end()) == c1.size());
     assert(c1 == c2);
@@ -54,8 +54,6 @@ template <class C>
 void
 testN(int start, int N, int M)
 {
-    typedef typename C::iterator I;
-    typedef typename C::const_iterator CI;
     C c1 = make<C>(N, start);
     C c2 = make<C>(M);
     test(c1, c2);
@@ -67,7 +65,6 @@ testI(C& c1, const C& c2)
 {
     typedef typename C::const_iterator CI;
     typedef input_iterator<CI> ICI;
-    std::size_t c1_osize = c1.size();
     c1.assign(ICI(c2.begin()), ICI(c2.end()));
     assert(distance(c1.begin(), c1.end()) == c1.size());
     assert(c1 == c2);
@@ -77,8 +74,6 @@ template <class C>
 void
 testNI(int start, int N, int M)
 {
-    typedef typename C::iterator I;
-    typedef typename C::const_iterator CI;
     C c1 = make<C>(N, start);
     C c2 = make<C>(M);
     testI(c1, c2);
@@ -95,7 +90,7 @@ int main()
                 testN<std::deque<int> >(rng[i], rng[j], rng[k]);
     testNI<std::deque<int> >(1500, 2000, 1000);
     }
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);

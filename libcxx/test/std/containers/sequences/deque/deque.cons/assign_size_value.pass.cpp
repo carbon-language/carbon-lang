@@ -14,6 +14,7 @@
 #include <deque>
 #include <cassert>
 
+#include "test_macros.h"
 #include "test_iterators.h"
 #include "min_allocator.h"
 
@@ -44,7 +45,6 @@ void
 test(C& c1, int size, int v)
 {
     typedef typename C::const_iterator CI;
-    std::size_t c1_osize = c1.size();
     c1.assign(size, v);
     assert(c1.size() == size);
     assert(distance(c1.begin(), c1.end()) == c1.size());
@@ -56,8 +56,6 @@ template <class C>
 void
 testN(int start, int N, int M)
 {
-    typedef typename C::iterator I;
-    typedef typename C::const_iterator CI;
     C c1 = make<C>(N, start);
     test(c1, M, -10);
 }
@@ -72,7 +70,7 @@ int main()
             for (int k = 0; k < N; ++k)
                 testN<std::deque<int> >(rng[i], rng[j], rng[k]);
     }
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
     int rng[] = {0, 1, 2, 3, 1023, 1024, 1025, 2047, 2048, 2049};
     const int N = sizeof(rng)/sizeof(rng[0]);

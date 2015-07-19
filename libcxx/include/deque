@@ -2029,7 +2029,6 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, size_type __n, const value_ty
         if (__n > __front_spare())
             __add_front_capacity(__n - __front_spare());
         // __n <= __front_spare()
-        size_type __old_n = __n;
         iterator __old_begin = __base::begin();
         iterator __i = __old_begin;
         if (__n > __pos)
@@ -2054,7 +2053,6 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, size_type __n, const value_ty
         if (__n > __back_capacity)
             __add_back_capacity(__n - __back_capacity);
         // __n <= __back_capacity
-        size_type __old_n = __n;
         iterator __old_end = __base::end();
         iterator __i = __old_end;
         size_type __de = __base::size() - __pos;
@@ -2119,7 +2117,6 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
         if (__n > __front_spare())
             __add_front_capacity(__n - __front_spare());
         // __n <= __front_spare()
-        size_type __old_n = __n;
         iterator __old_begin = __base::begin();
         iterator __i = __old_begin;
         _BiIter __m = __f;
@@ -2150,7 +2147,6 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
         if (__n > __back_capacity)
             __add_back_capacity(__n - __back_capacity);
         // __n <= __back_capacity
-        size_type __old_n = __n;
         iterator __old_end = __base::end();
         iterator __i = __old_end;
         _BiIter __m = __l;
@@ -2685,7 +2681,6 @@ template <class _Tp, class _Allocator>
 typename deque<_Tp, _Allocator>::iterator
 deque<_Tp, _Allocator>::erase(const_iterator __f)
 {
-    difference_type __n = 1;
     iterator __b = __base::begin();
     difference_type __pos = __f - __b;
     iterator __p = __b + __pos;
