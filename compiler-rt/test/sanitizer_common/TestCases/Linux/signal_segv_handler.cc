@@ -32,7 +32,8 @@ int main() {
   a.sa_sigaction = handler;
   a.sa_flags = SA_SIGINFO;
   sigaction(SIGSEGV, &a, &old);
-  guard = mmap(0, 4096, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
+  guard = (char *)mmap(0, 3 * 4096, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0) +
+          4096;
   for (int i = 0; i < 1000000; i++) {
     mprotect(guard, 4096, PROT_NONE);
     *(int*)guard = 1;
