@@ -2191,8 +2191,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
       return SDValue();
 
     // Target-specific implementation of sdiv x, pow2.
-    SDValue Res = BuildSDIVPow2(N);
-    if (Res.getNode())
+    if (SDValue Res = BuildSDIVPow2(N))
       return Res;
 
     unsigned lg2 = N1C->getAPIntValue().countTrailingZeros();
@@ -2228,10 +2227,9 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
   // If integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
-  if (N1C && !TLI.isIntDivCheap()) {
-    SDValue Op = BuildSDIV(N);
-    if (Op.getNode()) return Op;
-  }
+  if (N1C && !TLI.isIntDivCheap())
+    if (SDValue Op = BuildSDIV(N))
+      return Op;
 
   // undef / X -> 0
   if (N0.getOpcode() == ISD::UNDEF)
@@ -2284,10 +2282,9 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     }
   }
   // fold (udiv x, c) -> alternate
-  if (N1C && !TLI.isIntDivCheap()) {
-    SDValue Op = BuildUDIV(N);
-    if (Op.getNode()) return Op;
-  }
+  if (N1C && !TLI.isIntDivCheap())
+    if (SDValue Op = BuildUDIV(N))
+      return Op;
 
   // undef / X -> 0
   if (N0.getOpcode() == ISD::UNDEF)
@@ -2531,8 +2528,8 @@ SDValue DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
 }
 
 SDValue DAGCombiner::visitSMUL_LOHI(SDNode *N) {
-  SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS);
-  if (Res.getNode()) return Res;
+  if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS))
+    return Res;
 
   EVT VT = N->getValueType(0);
   SDLoc DL(N);
@@ -2562,8 +2559,8 @@ SDValue DAGCombiner::visitSMUL_LOHI(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitUMUL_LOHI(SDNode *N) {
-  SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU);
-  if (Res.getNode()) return Res;
+  if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU))
+    return Res;
 
   EVT VT = N->getValueType(0);
   SDLoc DL(N);
@@ -2613,15 +2610,15 @@ SDValue DAGCombiner::visitUMULO(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitSDIVREM(SDNode *N) {
-  SDValue Res = SimplifyNodeWithTwoResults(N, ISD::SDIV, ISD::SREM);
-  if (Res.getNode()) return Res;
+  if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::SDIV, ISD::SREM))
+    return Res;
 
   return SDValue();
 }
 
 SDValue DAGCombiner::visitUDIVREM(SDNode *N) {
-  SDValue Res = SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM);
-  if (Res.getNode()) return Res;
+  if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM))
+    return Res;
 
   return SDValue();
 }
@@ -3141,10 +3138,9 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
     return Combined;
 
   // Simplify: (and (op x...), (op y...))  -> (op (and x, y))
-  if (N0.getOpcode() == N1.getOpcode()) {
-    SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N);
-    if (Tmp.getNode()) return Tmp;
-  }
+  if (N0.getOpcode() == N1.getOpcode())
+    if (SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N))
+      return Tmp;
 
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   // fold (and (sra)) -> (and (srl)) when possible.
@@ -3664,11 +3660,9 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     return Combined;
 
   // Recognize halfword bswaps as (bswap + rotl 16) or (bswap + shl 16)
-  SDValue BSwap = MatchBSwapHWord(N, N0, N1);
-  if (BSwap.getNode())
+  if (SDValue BSwap = MatchBSwapHWord(N, N0, N1))
     return BSwap;
-  BSwap = MatchBSwapHWordLow(N, N0, N1);
-  if (BSwap.getNode())
+  if (SDValue BSwap = MatchBSwapHWordLow(N, N0, N1))
     return BSwap;
 
   // reassociate or
@@ -3689,10 +3683,9 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     }
   }
   // Simplify: (or (op x...), (op y...))  -> (op (or x, y))
-  if (N0.getOpcode() == N1.getOpcode()) {
-    SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N);
-    if (Tmp.getNode()) return Tmp;
-  }
+  if (N0.getOpcode() == N1.getOpcode())
+    if (SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N))
+      return Tmp;
 
   // See if this is some rotate idiom.
   if (SDNode *Rot = MatchRotate(N0, N1, SDLoc(N)))
@@ -4111,10 +4104,9 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   }
 
   // Simplify: xor (op x...), (op y...)  -> (op (xor x, y))
-  if (N0.getOpcode() == N1.getOpcode()) {
-    SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N);
-    if (Tmp.getNode()) return Tmp;
-  }
+  if (N0.getOpcode() == N1.getOpcode())
+    if (SDValue Tmp = SimplifyBinOpWithSameOpcodeHands(N))
+      return Tmp;
 
   // Simplify the expression using non-local knowledge.
   if (!VT.isVector() &&
@@ -4433,11 +4425,9 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     return DAG.getNode(ISD::ADD, SDLoc(N), VT, Shl0, Shl1);
   }
 
-  if (N1C && !N1C->isOpaque()) {
-    SDValue NewSHL = visitShiftByConstant(N, N1C);
-    if (NewSHL.getNode())
+  if (N1C && !N1C->isOpaque())
+    if (SDValue NewSHL = visitShiftByConstant(N, N1C))
       return NewSHL;
-  }
 
   return SDValue();
 }
@@ -4582,11 +4572,9 @@ SDValue DAGCombiner::visitSRA(SDNode *N) {
   if (DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::SRL, SDLoc(N), VT, N0, N1);
 
-  if (N1C && !N1C->isOpaque()) {
-    SDValue NewSRA = visitShiftByConstant(N, N1C);
-    if (NewSRA.getNode())
+  if (N1C && !N1C->isOpaque())
+    if (SDValue NewSRA = visitShiftByConstant(N, N1C))
       return NewSRA;
-  }
 
   return SDValue();
 }
@@ -5836,8 +5824,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::TRUNCATE) {
     // fold (sext (truncate (load x))) -> (sext (smaller load x))
     // fold (sext (truncate (srl (load x), c))) -> (sext (smaller load (x+c/n)))
-    SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
-    if (NarrowLoad.getNode()) {
+    if (SDValue NarrowLoad = ReduceLoadWidth(N0.getNode())) {
       SDNode* oye = N0.getNode()->getOperand(0).getNode();
       if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
@@ -6119,8 +6106,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (truncate (load x))) -> (zext (smaller load x))
   // fold (zext (truncate (srl (load x), c))) -> (zext (small load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
-    SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
-    if (NarrowLoad.getNode()) {
+    if (SDValue NarrowLoad = ReduceLoadWidth(N0.getNode())) {
       SDNode* oye = N0.getNode()->getOperand(0).getNode();
       if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
@@ -6137,8 +6123,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
     // fold (zext (truncate (load x))) -> (zext (smaller load x))
     // fold (zext (truncate (srl (load x), c))) -> (zext (smaller load (x+c/n)))
-    SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
-    if (NarrowLoad.getNode()) {
+    if (SDValue NarrowLoad = ReduceLoadWidth(N0.getNode())) {
       SDNode* oye = N0.getNode()->getOperand(0).getNode();
       if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
@@ -6545,8 +6530,7 @@ SDValue DAGCombiner::GetDemandedBits(SDValue V, const APInt &Mask) {
       // Watch out for shift count overflow though.
       if (Amt >= Mask.getBitWidth()) break;
       APInt NewMask = Mask << Amt;
-      SDValue SimplifyLHS = GetDemandedBits(V.getOperand(0), NewMask);
-      if (SimplifyLHS.getNode())
+      if (SDValue SimplifyLHS = GetDemandedBits(V.getOperand(0), NewMask))
         return DAG.getNode(ISD::SRL, SDLoc(V), V.getValueType(),
                            SimplifyLHS, V.getOperand(1));
     }
@@ -6770,8 +6754,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
 
   // fold (sext_in_reg (load x)) -> (smaller sextload x)
   // fold (sext_in_reg (srl (load x), c)) -> (smaller sextload (x+c/evtbits))
-  SDValue NarrowLoad = ReduceLoadWidth(N);
-  if (NarrowLoad.getNode())
+  if (SDValue NarrowLoad = ReduceLoadWidth(N))
     return NarrowLoad;
 
   // fold (sext_in_reg (srl X, 24), i8) -> (sra X, 24)
@@ -6998,9 +6981,9 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   // fold (truncate (load x)) -> (smaller load x)
   // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
   if (!LegalTypes || TLI.isTypeDesirableForOp(N0.getOpcode(), VT)) {
-    SDValue Reduced = ReduceLoadWidth(N);
-    if (Reduced.getNode())
+    if (SDValue Reduced = ReduceLoadWidth(N))
       return Reduced;
+
     // Handle the case where the load remains an extending load even
     // after truncation.
     if (N0.hasOneUse() && ISD::isUNINDEXEDLoad(N0.getNode())) {
@@ -7239,11 +7222,9 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   }
 
   // bitconvert(build_pair(ld, ld)) -> ld iff load locations are consecutive.
-  if (N0.getOpcode() == ISD::BUILD_PAIR) {
-    SDValue CombineLD = CombineConsecutiveLoads(N0.getNode(), VT);
-    if (CombineLD.getNode())
+  if (N0.getOpcode() == ISD::BUILD_PAIR)
+    if (SDValue CombineLD = CombineConsecutiveLoads(N0.getNode(), VT))
       return CombineLD;
-  }
 
   // Remove double bitcasts from shuffles - this is often a legacy of
   // XformToShuffleWithZero being used to combine bitmaskings (of
