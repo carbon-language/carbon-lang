@@ -19,15 +19,16 @@
 #include <string>
 #include <cassert>
 
+#include "test_macros.h"
 #include "min_allocator.h"
 
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
 template <typename Unordered>
 bool only_deletions ( const Unordered &whole, const Unordered &part ) {
     typename Unordered::const_iterator w = whole.begin();
     typename Unordered::const_iterator p = part.begin();
-    
-    while ( w != whole.end () && p != part.end()) {        
+
+    while ( w != whole.end () && p != part.end()) {
         if ( *w == *p )
             p++;
         w++;
@@ -96,7 +97,7 @@ int main()
         assert(c.erase(3) == 0);
         assert(c.size() == 0);
     }
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
         typedef std::unordered_map<int, std::string, std::hash<int>, std::equal_to<int>,
                             min_allocator<std::pair<const int, std::string>>> C;
@@ -161,7 +162,7 @@ int main()
         m[i] = i;
         m2[i] = i;
         }
-    
+
     C::iterator i = m2.begin();
     int ctr = 0;
     while (i != m2.end()) {

@@ -579,6 +579,11 @@ class Configuration(object):
                 self.cxx.addCompileFlagIfSupported('-Wno-pessimizing-move')
                 self.cxx.addCompileFlagIfSupported('-Wno-c++11-extensions')
                 self.cxx.addCompileFlagIfSupported('-Wno-user-defined-literals')
+            std = self.get_lit_conf('std', None)
+            if std in ['c++98', 'c++03']:
+                # The '#define static_assert' provided by libc++ in C++03 mode
+                # causes an unused local typedef whenever it is used.
+                self.cxx.addCompileFlagIfSupported('-Wno-unused-local-typedef')
 
     def configure_sanitizer(self):
         san = self.get_lit_conf('use_sanitizer', '').strip()

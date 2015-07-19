@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// UNSUPPORTED: c++03, c++11, c++14
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
 // <unordered_map>
 
@@ -22,12 +22,10 @@
 // template <class M>
 //  iterator insert_or_assign(const_iterator hint, key_type&& k, M&& obj);        // C++17
 
-#include <__config>
 #include <unordered_map>
 #include <cassert>
 #include <tuple>
 
-#include <iostream>
 
 class Moveable
 {
@@ -53,7 +51,7 @@ public:
     bool operator<(const Moveable& x) const
         {return int_ < x.int_ || (int_ == x.int_ && double_ < x.double_);}
     size_t hash () const { return std::hash<int>()(int_) + std::hash<double>()(double_); }
-    
+
     int get() const {return int_;}
     bool moved() const {return int_ == -1;}
 };
@@ -66,8 +64,6 @@ namespace std {
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-#ifndef _LIBCPP_HAS_NO_VARIADICS
 
     { // pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj);
         typedef std::unordered_map<int, Moveable> M;
@@ -193,6 +189,4 @@ int main()
         assert(r->second.get() == 5);  // value
     }
 
-#endif  // _LIBCPP_HAS_NO_VARIADICS
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

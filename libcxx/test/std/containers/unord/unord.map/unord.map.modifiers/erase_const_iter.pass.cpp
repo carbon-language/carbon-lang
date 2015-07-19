@@ -19,6 +19,7 @@
 #include <string>
 #include <cassert>
 
+#include "test_macros.h"
 #include "min_allocator.h"
 
 struct TemplateConstructor
@@ -46,13 +47,13 @@ int main()
         };
         C c(a, a + sizeof(a)/sizeof(a[0]));
         C::const_iterator i = c.find(2);
-        C::iterator j = c.erase(i);
+        c.erase(i);
         assert(c.size() == 3);
         assert(c.at(1) == "one");
         assert(c.at(3) == "three");
         assert(c.at(4) == "four");
     }
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
         typedef std::unordered_map<int, std::string, std::hash<int>, std::equal_to<int>,
                             min_allocator<std::pair<const int, std::string>>> C;
@@ -68,14 +69,14 @@ int main()
         };
         C c(a, a + sizeof(a)/sizeof(a[0]));
         C::const_iterator i = c.find(2);
-        C::iterator j = c.erase(i);
+        c.erase(i);
         assert(c.size() == 3);
         assert(c.at(1) == "one");
         assert(c.at(3) == "three");
         assert(c.at(4) == "four");
     }
 #endif
-#if __cplusplus >= 201402L
+#if TEST_STD_VER >= 14
     {
     //  This is LWG #2059
         typedef TemplateConstructor T;

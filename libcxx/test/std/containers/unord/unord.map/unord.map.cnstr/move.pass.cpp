@@ -15,6 +15,8 @@
 
 // unordered_map(unordered_map&& u);
 
+// UNSUPPORTED: c++98, c++03
+
 #include <unordered_map>
 #include <string>
 #include <cassert>
@@ -27,23 +29,12 @@
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
         typedef std::unordered_map<int, std::string,
                                    test_hash<std::hash<int> >,
                                    test_compare<std::equal_to<int> >,
                                    test_allocator<std::pair<const int, std::string> >
                                    > C;
-        typedef std::pair<int, std::string> P;
-        P a[] =
-        {
-            P(1, "one"),
-            P(2, "two"),
-            P(3, "three"),
-            P(4, "four"),
-            P(1, "four"),
-            P(2, "four"),
-        };
         C c0(7,
             test_hash<std::hash<int> >(8),
             test_compare<std::equal_to<int> >(9),
@@ -105,23 +96,12 @@ int main()
 
         assert(c0.empty());
     }
-#if __cplusplus >= 201103L
     {
         typedef std::unordered_map<int, std::string,
                                    test_hash<std::hash<int> >,
                                    test_compare<std::equal_to<int> >,
                                    min_allocator<std::pair<const int, std::string> >
                                    > C;
-        typedef std::pair<int, std::string> P;
-        P a[] =
-        {
-            P(1, "one"),
-            P(2, "two"),
-            P(3, "three"),
-            P(4, "four"),
-            P(1, "four"),
-            P(2, "four"),
-        };
         C c0(7,
             test_hash<std::hash<int> >(8),
             test_compare<std::equal_to<int> >(9),
@@ -183,7 +163,6 @@ int main()
 
         assert(c0.empty());
     }
-#endif
 #if _LIBCPP_DEBUG >= 1
     {
         std::unordered_map<int, int> s1 = {{1, 1}, {2, 2}, {3, 3}};
@@ -195,5 +174,4 @@ int main()
         assert(s2.size() == 2);
     }
 #endif
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }
