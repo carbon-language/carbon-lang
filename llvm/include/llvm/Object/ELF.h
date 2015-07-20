@@ -140,8 +140,7 @@ public:
   typedef Elf_Vernaux_Impl<ELFT> Elf_Vernaux;
   typedef Elf_Versym_Impl<ELFT> Elf_Versym;
   typedef Elf_Hash_Impl<ELFT> Elf_Hash;
-  typedef ELFEntityIterator<const Elf_Dyn> Elf_Dyn_Iter;
-  typedef iterator_range<Elf_Dyn_Iter> Elf_Dyn_Range;
+  typedef iterator_range<const Elf_Dyn *> Elf_Dyn_Range;
   typedef iterator_range<const Elf_Shdr *> Elf_Shdr_Range;
 
   /// \brief Archive files are 2 byte aligned, so we need this for
@@ -282,10 +281,10 @@ public:
     return make_range(symbol_begin(), symbol_end());
   }
 
-  Elf_Dyn_Iter dynamic_table_begin() const;
+  const Elf_Dyn *dynamic_table_begin() const;
   /// \param NULLEnd use one past the first DT_NULL entry as the end instead of
   /// the section size.
-  Elf_Dyn_Iter dynamic_table_end(bool NULLEnd = false) const;
+  const Elf_Dyn *dynamic_table_end(bool NULLEnd = false) const;
   Elf_Dyn_Range dynamic_table(bool NULLEnd = false) const {
     return make_range(dynamic_table_begin(), dynamic_table_end(NULLEnd));
   }
@@ -668,16 +667,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
       DotDynSymSec = &Sec;
       break;
     }
-    case ELF::SHT_DYNAMIC:
-      if (DynamicRegion.Addr) {
-        // More than one .dynamic!
-        EC = object_error::parse_failed;
-        return;
-      }
-      DynamicRegion.Addr = base() + Sec.sh_offset;
-      DynamicRegion.Size = Sec.sh_size;
-      DynamicRegion.EntSize = Sec.sh_entsize;
-      break;
     case ELF::SHT_GNU_versym:
       if (dot_gnu_version_sec != nullptr) {
         // More than one .gnu.version section!
@@ -742,7 +731,6 @@ template <class ELFT> void ELFFile<ELFT>::scanDynamicTable() {
     if (Phdr.p_type == ELF::PT_DYNAMIC) {
       DynamicRegion.Addr = base() + Phdr.p_offset;
       DynamicRegion.Size = Phdr.p_filesz;
-      DynamicRegion.EntSize = sizeof(Elf_Dyn);
       continue;
     }
     if (Phdr.p_type != ELF::PT_LOAD || Phdr.p_filesz == 0)
@@ -763,32 +751,31 @@ template <class ELFT> void ELFFile<ELFT>::scanDynamicTable() {
     return this->base() + Phdr.p_offset + Delta;
   };
 
-  for (Elf_Dyn_Iter DynI = dynamic_table_begin(), DynE = dynamic_table_end();
-       DynI != DynE; ++DynI) {
-    switch (DynI->d_tag) {
+  for (const Elf_Dyn &Dyn : dynamic_table()) {
+    switch (Dyn.d_tag) {
     case ELF::DT_HASH:
       if (HashTable)
         continue;
       HashTable =
-          reinterpret_cast<const Elf_Hash *>(toMappedAddr(DynI->getPtr()));
+          reinterpret_cast<const Elf_Hash *>(toMappedAddr(Dyn.getPtr()));
       break;
     case ELF::DT_STRTAB:
       if (!DynStrRegion.Addr)
-        DynStrRegion.Addr = toMappedAddr(DynI->getPtr());
+        DynStrRegion.Addr = toMappedAddr(Dyn.getPtr());
       break;
     case ELF::DT_STRSZ:
       if (!DynStrRegion.Size)
-        DynStrRegion.Size = DynI->getVal();
+        DynStrRegion.Size = Dyn.getVal();
       break;
     case ELF::DT_RELA:
       if (!DynRelaRegion.Addr)
-        DynRelaRegion.Addr = toMappedAddr(DynI->getPtr());
+        DynRelaRegion.Addr = toMappedAddr(Dyn.getPtr());
       break;
     case ELF::DT_RELASZ:
-      DynRelaRegion.Size = DynI->getVal();
+      DynRelaRegion.Size = Dyn.getVal();
       break;
     case ELF::DT_RELAENT:
-      DynRelaRegion.EntSize = DynI->getVal();
+      DynRelaRegion.EntSize = Dyn.getVal();
     }
   }
 }
@@ -824,24 +811,22 @@ const typename ELFFile<ELFT>::Elf_Sym *ELFFile<ELFT>::symbol_end() const {
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::Elf_Dyn_Iter
+const typename ELFFile<ELFT>::Elf_Dyn *
 ELFFile<ELFT>::dynamic_table_begin() const {
-  if (DynamicRegion.Addr)
-    return Elf_Dyn_Iter(DynamicRegion.EntSize,
-                        (const char *)DynamicRegion.Addr);
-  return Elf_Dyn_Iter(0, nullptr);
+  return reinterpret_cast<const Elf_Dyn *>(DynamicRegion.Addr);
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::Elf_Dyn_Iter
+const typename ELFFile<ELFT>::Elf_Dyn *
 ELFFile<ELFT>::dynamic_table_end(bool NULLEnd) const {
-  if (!DynamicRegion.Addr)
-    return Elf_Dyn_Iter(0, nullptr);
-  Elf_Dyn_Iter Ret(DynamicRegion.EntSize,
-                    (const char *)DynamicRegion.Addr + DynamicRegion.Size);
+  uint64_t Size = DynamicRegion.Size;
+  if (Size % sizeof(Elf_Dyn))
+    report_fatal_error("Invalid dynamic table size");
+
+  const Elf_Dyn *Ret = dynamic_table_begin() + Size / sizeof(Elf_Dyn);
 
   if (NULLEnd) {
-    Elf_Dyn_Iter Start = dynamic_table_begin();
+    const Elf_Dyn *Start = dynamic_table_begin();
     while (Start != Ret && Start->getTag() != ELF::DT_NULL)
       ++Start;
 
