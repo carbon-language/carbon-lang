@@ -337,14 +337,14 @@ public:
   }
 
   /// Get the local offset mapping for a for an object.
-  std::pair<int, int64_t> getLocalFrameObjectMap(int i) {
+  std::pair<int, int64_t> getLocalFrameObjectMap(int i) const {
     assert (i >= 0 && (unsigned)i < LocalFrameObjects.size() &&
             "Invalid local object reference!");
     return LocalFrameObjects[i];
   }
 
   /// Return the number of objects allocated into the local object block.
-  int64_t getLocalFrameObjectCount() { return LocalFrameObjects.size(); }
+  int64_t getLocalFrameObjectCount() const { return LocalFrameObjects.size(); }
 
   /// Set the size of the local object blob.
   void setLocalFrameSize(int64_t sz) { LocalFrameSize = sz; }
@@ -361,7 +361,9 @@ public:
 
   /// Get whether the local allocation blob should be allocated together or
   /// let PEI allocate the locals in it directly.
-  bool getUseLocalStackAllocationBlock() {return UseLocalStackAllocationBlock;}
+  bool getUseLocalStackAllocationBlock() const {
+    return UseLocalStackAllocationBlock;
+  }
 
   /// setUseLocalStackAllocationBlock - Set whether the local allocation blob
   /// should be allocated together or let PEI allocate the locals in it
