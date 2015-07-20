@@ -650,15 +650,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
         return;
       }
       DotDynSymSec = &Sec;
-      ErrorOr<const Elf_Shdr *> SectionOrErr = getSection(Sec.sh_link);
-      if ((EC = SectionOrErr.getError()))
-        return;
-      ErrorOr<StringRef> SymtabOrErr = getStringTable(*SectionOrErr);
-      if ((EC = SymtabOrErr.getError()))
-        return;
-      DynStrRegion.Addr = SymtabOrErr->data();
-      DynStrRegion.Size = SymtabOrErr->size();
-      DynStrRegion.EntSize = 1;
       break;
     }
     case ELF::SHT_DYNAMIC:
