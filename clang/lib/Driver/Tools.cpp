@@ -719,12 +719,6 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
       Features.push_back("+long-calls");
   }
 
-  // llvm does not support reserving registers in general. There is support
-  // for reserving r9 on ARM though (defined as a platform-specific register
-  // in ARM EABI).
-  if (Args.hasArg(options::OPT_ffixed_r9))
-    Features.push_back("+reserve-r9");
-
   // The kext linker doesn't know how to deal with movw/movt.
   if (KernelOrKext)
     Features.push_back("+no-movt");
@@ -834,6 +828,13 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
                     options::OPT_mno_implicit_float, true))
     CmdArgs.push_back("-no-implicit-float");
 
+  // llvm does not support reserving registers in general. There is support
+  // for reserving r9 on ARM though (defined as a platform-specific register
+  // in ARM EABI).
+  if (Args.hasArg(options::OPT_ffixed_r9)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-arm-reserve-r9");
+  }
 }
 
 /// getAArch64TargetCPU - Get the (LLVM) name of the AArch64 cpu we are
