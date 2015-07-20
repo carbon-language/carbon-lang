@@ -24,3 +24,10 @@ RUN: not llvm-readobj %p/Inputs/corrupt-version.elf-x86_64 -dt \
 RUN:     2>&1 | FileCheck --check-prefix=VER %s
 
 VER: Error reading file: Invalid data was encountered while parsing the file.
+
+
+// The file is missing the dynamic string table but has references to it.
+RUN: not llvm-readobj -dynamic-table %p/Inputs/corrupt-invalid-strtab.elf.x86-64 \
+RUN:     2>&1 | FileCheck --check-prefix=STRTAB %s
+
+STRTAB: Invalid dynamic string table reference

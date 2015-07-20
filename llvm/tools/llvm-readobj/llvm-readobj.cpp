@@ -188,13 +188,13 @@ namespace opts {
 
 } // namespace opts
 
-static void reportError(Twine Msg) {
+namespace llvm {
+
+void reportError(Twine Msg) {
   outs() << Msg << "\n";
   outs().flush();
   exit(1);
 }
-
-namespace llvm {
 
 void error(std::error_code EC) {
   if (!EC)

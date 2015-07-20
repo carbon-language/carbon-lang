@@ -954,6 +954,14 @@ void printFlags(T Value, ArrayRef<EnumEntry<TFlag>> Flags, raw_ostream &OS) {
 }
 
 template <class ELFT>
+static const char *getDynamicString(const ELFFile<ELFT> &O, uint64_t Value) {
+  const char *Ret = O.getDynamicString(Value);
+  if (!Ret)
+    reportError("Invalid dynamic string table reference");
+  return Ret;
+}
+
+template <class ELFT>
 static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
                        bool Is64, raw_ostream &OS) {
   switch (Type) {
@@ -1011,14 +1019,14 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
     OS << Value << " (bytes)";
     break;
   case DT_NEEDED:
-    OS << "SharedLibrary (" << O->getDynamicString(Value) << ")";
+    OS << "SharedLibrary (" << getDynamicString(*O, Value) << ")";
     break;
   case DT_SONAME:
-    OS << "LibrarySoname (" << O->getDynamicString(Value) << ")";
+    OS << "LibrarySoname (" << getDynamicString(*O, Value) << ")";
     break;
   case DT_RPATH:
   case DT_RUNPATH:
-    OS << O->getDynamicString(Value);
+    OS << getDynamicString(*O, Value);
     break;
   case DT_MIPS_FLAGS:
     printFlags(Value, makeArrayRef(ElfDynamicDTMipsFlags), OS);
@@ -1088,7 +1096,7 @@ void ELFDumper<ELFT>::printNeededLibraries() {
 
   for (const auto &Entry : Obj->dynamic_table())
     if (Entry.d_tag == ELF::DT_NEEDED)
-      Libs.push_back(Obj->getDynamicString(Entry.d_un.d_val));
+      Libs.push_back(getDynamicString(*Obj, Entry.d_un.d_val));
 
   std::stable_sort(Libs.begin(), Libs.end());
 

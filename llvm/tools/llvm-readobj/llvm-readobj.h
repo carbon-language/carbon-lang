@@ -19,6 +19,7 @@ namespace llvm {
   }
 
   // Various helper functions.
+  void reportError(Twine Msg);
   void error(std::error_code ec);
   bool relocAddressLess(object::RelocationRef A,
                         object::RelocationRef B);
