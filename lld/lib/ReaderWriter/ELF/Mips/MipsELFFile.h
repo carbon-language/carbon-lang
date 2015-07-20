@@ -71,9 +71,8 @@ protected:
 private:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
-  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter Elf_Rel_Iter;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela_Iter Elf_Rela_Iter;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
 
   enum { TP_OFFSET = 0x7000, DTP_OFFSET = 0x8000 };
 
@@ -90,11 +89,11 @@ private:
 
   void createRelocationReferences(const Elf_Sym *symbol,
                                   ArrayRef<uint8_t> content,
-                                  range<Elf_Rela_Iter> rels) override;
+                                  range<const Elf_Rela *> rels) override;
   void createRelocationReferences(const Elf_Sym *symbol,
                                   ArrayRef<uint8_t> symContent,
                                   ArrayRef<uint8_t> secContent,
-                                  range<Elf_Rel_Iter> rels) override;
+                                  range<const Elf_Rel *> rels) override;
 
   const Elf_Shdr *findSectionByType(uint64_t type) const;
   const Elf_Shdr *findSectionByFlags(uint64_t flags) const;
@@ -114,8 +113,9 @@ private:
 
   uint32_t getPairRelocation(const Elf_Rel &rel) const;
 
-  Elf_Rel_Iter findMatchingRelocation(uint32_t pairRelType, Elf_Rel_Iter rit,
-                                      Elf_Rel_Iter eit) const;
+  const Elf_Rel *findMatchingRelocation(uint32_t pairRelType,
+                                        const Elf_Rel *rit,
+                                        const Elf_Rel *eit) const;
 
   bool isLocalBinding(const Elf_Rel &rel) const;
 };

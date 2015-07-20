@@ -222,9 +222,9 @@ template <class ELFT> std::error_code MipsELFFile<ELFT>::readAuxData() {
 }
 
 template <class ELFT>
-void MipsELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
-                                                   ArrayRef<uint8_t> content,
-                                                   range<Elf_Rela_Iter> rels) {
+void MipsELFFile<ELFT>::createRelocationReferences(
+    const Elf_Sym *symbol, ArrayRef<uint8_t> content,
+    range<const Elf_Rela *> rels) {
   const auto value = this->getSymbolValue(symbol);
   for (const auto &rel : rels) {
     if (rel.r_offset < value || value + content.size() <= rel.r_offset)
@@ -236,12 +236,12 @@ void MipsELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
 }
 
 template <class ELFT>
-void MipsELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
-                                                   ArrayRef<uint8_t> symContent,
-                                                   ArrayRef<uint8_t> secContent,
-                                                   range<Elf_Rel_Iter> rels) {
+void MipsELFFile<ELFT>::createRelocationReferences(
+    const Elf_Sym *symbol, ArrayRef<uint8_t> symContent,
+    ArrayRef<uint8_t> secContent, range<const Elf_Rel *> rels) {
   const auto value = this->getSymbolValue(symbol);
-  for (Elf_Rel_Iter rit = rels.begin(), eit = rels.end(); rit != eit; ++rit) {
+  for (const Elf_Rel *rit = rels.begin(), *eit = rels.end(); rit != eit;
+       ++rit) {
     if (rit->r_offset < value || value + symContent.size() <= rit->r_offset)
       continue;
 
@@ -303,10 +303,10 @@ uint32_t MipsELFFile<ELFT>::getPairRelocation(const Elf_Rel &rel) const {
 }
 
 template <class ELFT>
-typename MipsELFFile<ELFT>::Elf_Rel_Iter
+const typename MipsELFFile<ELFT>::Elf_Rel *
 MipsELFFile<ELFT>::findMatchingRelocation(uint32_t pairRelType,
-                                          Elf_Rel_Iter rit,
-                                          Elf_Rel_Iter eit) const {
+                                          const Elf_Rel *rit,
+                                          const Elf_Rel *eit) const {
   return std::find_if(rit, eit, [&](const Elf_Rel &rel) {
     return getPrimaryType(rel) == pairRelType &&
            rel.getSymbol(isMips64EL<ELFT>()) ==

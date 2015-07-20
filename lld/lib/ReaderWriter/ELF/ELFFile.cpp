@@ -583,7 +583,7 @@ ELFDefinedAtom<ELFT> *ELFFile<ELFT>::createDefinedAtomAndAssignRelocations(
 template <class ELFT>
 void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
                                                ArrayRef<uint8_t> content,
-                                               range<Elf_Rela_Iter> rels) {
+                                               range<const Elf_Rela *> rels) {
   bool isMips64EL = _objFile->isMips64EL();
   const auto symValue = getSymbolValue(symbol);
   for (const auto &rel : rels) {
@@ -601,7 +601,7 @@ template <class ELFT>
 void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
                                                ArrayRef<uint8_t> symContent,
                                                ArrayRef<uint8_t> secContent,
-                                               range<Elf_Rel_Iter> rels) {
+                                               range<const Elf_Rel *> rels) {
   bool isMips64EL = _objFile->isMips64EL();
   const auto symValue = getSymbolValue(symbol);
   for (const auto &rel : rels) {
