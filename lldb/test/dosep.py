@@ -45,13 +45,12 @@ from optparse import OptionParser
 
 def get_timeout_command():
     """Search for a suitable timeout command."""
-    if sys.platform.startswith("win32"):
-        return None
-    try:
-        subprocess.call("timeout", stderr=subprocess.PIPE)
-        return "timeout"
-    except OSError:
-        pass
+    if not sys.platform.startswith("win32"):
+        try:
+            subprocess.call("timeout", stderr=subprocess.PIPE)
+            return "timeout"
+        except OSError:
+            pass
     try:
         subprocess.call("gtimeout", stderr=subprocess.PIPE)
         return "gtimeout"
