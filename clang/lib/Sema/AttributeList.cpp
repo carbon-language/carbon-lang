@@ -17,6 +17,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/SemaInternal.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -155,7 +156,7 @@ struct ParsedAttrInfo {
   bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
                                const Decl *);
   bool (*DiagLangOpts)(Sema &S, const AttributeList &Attr);
-  bool (*ExistsInTarget)(const llvm::Triple &T);
+  bool (*ExistsInTarget)(const TargetInfo &Target);
   unsigned (*SpellingIndexToSemanticSpelling)(const AttributeList &Attr);
 };
 
@@ -195,8 +196,8 @@ bool AttributeList::isTypeAttr() const {
   return getInfo(*this).IsType;
 }
 
-bool AttributeList::existsInTarget(const llvm::Triple &T) const {
-  return getInfo(*this).ExistsInTarget(T);
+bool AttributeList::existsInTarget(const TargetInfo &Target) const {
+  return getInfo(*this).ExistsInTarget(Target);
 }
 
 bool AttributeList::isKnownToGCC() const {

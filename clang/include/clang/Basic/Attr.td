@@ -241,14 +241,18 @@ def COnly : LangOpt<"CPlusPlus", 1>;
 class TargetArch<list<string> arches> {
   list<string> Arches = arches;
   list<string> OSes;
+  list<string> CXXABIs;
 }
 def TargetARM : TargetArch<["arm", "thumb"]>;
+def TargetMips : TargetArch<["mips", "mipsel"]>;
 def TargetMSP430 : TargetArch<["msp430"]>;
 def TargetX86 : TargetArch<["x86"]>;
 def TargetWindows : TargetArch<["x86", "x86_64", "arm", "thumb"]> {
   let OSes = ["Win32"];
 }
-def TargetMips : TargetArch<["mips", "mipsel"]>;
+def TargetMicrosoftCXXABI : TargetArch<["x86", "x86_64", "arm", "thumb"]> {
+  let CXXABIs = ["Microsoft"];
+}
 
 class Attr {
   // The various ways in which an attribute can be spelled in source
@@ -1820,7 +1824,7 @@ def TypeTagForDatatype : InheritableAttr {
 
 // Microsoft-related attributes
 
-def MSNoVTable : InheritableAttr {
+def MSNoVTable : InheritableAttr, TargetSpecificAttr<TargetMicrosoftCXXABI> {
   let Spellings = [Declspec<"novtable">];
   let Subjects = SubjectList<[CXXRecord]>;
   let Documentation = [MSNoVTableDocs];

@@ -4,8 +4,8 @@
 using namespace clang;
 
 int clang::hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
-                         const IdentifierInfo *Attr, const llvm::Triple &T,
-                         const LangOptions &LangOpts) {
+                        const IdentifierInfo *Attr, const TargetInfo &Target,
+                        const LangOptions &LangOpts) {
   StringRef Name = Attr->getName();
   // Normalize the attribute name, __foo__ becomes foo.
   if (Name.size() >= 4 && Name.startswith("__") && Name.endswith("__"))

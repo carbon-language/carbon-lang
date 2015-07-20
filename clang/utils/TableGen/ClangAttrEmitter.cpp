@@ -1885,7 +1885,8 @@ static void GenerateHasAttrSpellingStringSwitch(
       }
     }
 
-    // It is assumed that there will be an llvm::Triple object named T within
+    // It is assumed that there will be an llvm::Triple object
+    // named "T" and a TargetInfo object named "Target" within
     // scope that can be used to determine whether the attribute exists in
     // a given target.
     std::string Test;
@@ -1902,6 +1903,7 @@ static void GenerateHasAttrSpellingStringSwitch(
       }
       Test += ")";
 
+      // If the attribute is specific to particular OSes, check those.
       std::vector<std::string> OSes;
       if (!R->isValueUnset("OSes")) {
         Test += " && (";
@@ -1916,6 +1918,21 @@ static void GenerateHasAttrSpellingStringSwitch(
         Test += ")";
       }
       
+      // If one or more CXX ABIs are specified, check those as well.
+      if (!R->isValueUnset("CXXABIs")) {
+        Test += " && (";
+        std::vector<std::string> CXXABIs =
+          R->getValueAsListOfStrings("CXXABIs");
+        for (auto AI = CXXABIs.begin(), AE = CXXABIs.end(); AI != AE; ++AI) {
+          std::string Part = *AI;
+
+          Test += "Target.getCXXABI().getKind() == TargetCXXABI::" + Part;
+          if (AI + 1 != AE)
+            Test += " || ";
+        }
+        Test += ")";
+      }
+
       // If this is the C++11 variety, also add in the LangOpts test.
       if (Variety == "CXX11")
         Test += " && LangOpts.CPlusPlus11";
@@ -1962,6 +1979,7 @@ void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     }
   }
 
+  OS << "const llvm::Triple &T = Target.getTriple();\n";
   OS << "switch (Syntax) {\n";
   OS << "case AttrSyntax::GNU:\n";
   OS << "  return llvm::StringSwitch<int>(Name)\n";
@@ -2464,7 +2482,7 @@ static std::string GenerateLangOptRequirements(const Record &R,
 }
 
 static void GenerateDefaultTargetRequirements(raw_ostream &OS) {
-  OS << "static bool defaultTargetRequirements(const llvm::Triple &) {\n";
+  OS << "static bool defaultTargetRequirements(const TargetInfo &) {\n";
   OS << "  return true;\n";
   OS << "}\n\n";
 }
@@ -2533,6 +2551,20 @@ static std::string GenerateTargetRequirements(const Record &Attr,
     Test += ")";
   }
 
+  // Test for the C++ ABI, if specified.
+  if (!R->isValueUnset("CXXABIs")) {
+    Test += " && (";
+    std::vector<std::string> CXXABIs = R->getValueAsListOfStrings("CXXABIs");
+    for (auto I = CXXABIs.begin(), E = CXXABIs.end(); I != E; ++I) {
+      std::string Part = *I;
+      Test += "Target.getCXXABI().getKind() == TargetCXXABI::" + Part;
+      if (I + 1 != E)
+        Test += " || ";
+      FnName += Part;
+    }
+    Test += ")";
+  }
+
   // If this code has already been generated, simply return the previous
   // instance of it.
   static std::set<std::string> CustomTargetSet;
@@ -2540,7 +2572,8 @@ static std::string GenerateTargetRequirements(const Record &Attr,
   if (I != CustomTargetSet.end())
     return *I;
 
-  OS << "static bool " << FnName << "(const llvm::Triple &T) {\n";
+  OS << "static bool " << FnName << "(const TargetInfo &Target) {\n";
+  OS << "  const llvm::Triple &T = Target.getTriple();\n";
   OS << "  llvm::Triple::ArchType Arch = T.getArch();\n";
   if (UsesOS)
     OS << "  llvm::Triple::OSType OS = T.getOS();\n";
