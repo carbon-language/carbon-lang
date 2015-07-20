@@ -19,3 +19,72 @@ void c(int *i) {}
 // ===============
 void g(int i);             // Don't remove stuff in declarations
 void h(int i) { (void)i; } // Don't remove used parameters
+
+// Remove parameters of local functions
+// ====================================
+static void staticFunctionA(int i);
+// CHECK-FIXES: {{^}}static void staticFunctionA();
+static void staticFunctionA(int i) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:33: warning
+// CHECK-FIXES: {{^}}static void staticFunctionA()
+
+static void staticFunctionB(int i, int j) { (void)i; }
+// CHECK-MESSAGES: :[[@LINE-1]]:40: warning
+// CHECK-FIXES: {{^}}static void staticFunctionB(int i)
+
+static void staticFunctionC(int i, int j) { (void)j; }
+// CHECK-MESSAGES: :[[@LINE-1]]:33: warning
+// CHECK-FIXES: {{^}}static void staticFunctionC( int j)
+
+static void staticFunctionD(int i, int j, int k) { (void)i; (void)k; }
+// CHECK-MESSAGES: :[[@LINE-1]]:40: warning
+// CHECK-FIXES: {{^}}static void staticFunctionD(int i, int k)
+
+static void staticFunctionE(int i = 4) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:33: warning
+// CHECK-FIXES: {{^}}static void staticFunctionE()
+
+
+static void someCallSites() {
+  staticFunctionA(1);
+// CHECK-FIXES: staticFunctionA();
+  staticFunctionB(1, 2);
+// CHECK-FIXES: staticFunctionB(1);
+  staticFunctionC(1, 2);
+// CHECK-FIXES: staticFunctionC( 2);
+  staticFunctionD(1, 2, 3);
+// CHECK-FIXES: staticFunctionD(1, 3);
+  staticFunctionE();
+}
+
+namespace {
+class C {
+public:
+  void f(int i);
+// CHECK-FIXES: void f();
+  void g(int i) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:14: warning
+// CHECK-FIXES: void g() {}
+  void h(int i) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:14: warning
+// CHECK-FIXES: void h(int  /*i*/) {}
+};
+
+void C::f(int i) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:15: warning
+// CHECK-FIXES: void C::f() {}
+
+template <typename T>
+void useFunction(T t);
+
+void someMoreCallSites() {
+  C c;
+  c.f(1);
+// CHECK-FIXES: c.f();
+  c.g(1);
+// CHECK-FIXES: c.g();
+
+  useFunction(&C::h);
+}
+
+} // end namespace
