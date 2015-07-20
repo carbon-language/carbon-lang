@@ -170,9 +170,9 @@ define void @test_varsize(...) minsize {
 ; CHECK-T1: push	{r5, r6, r7, lr}
 ; ...
 ; CHECK-T1: pop	{r2, r3, r7}
-; CHECK-T1: pop	{r3}
+; CHECK-T1: pop {[[POP_REG:r[0-3]]]}
 ; CHECK-T1: add	sp, #16
-; CHECK-T1: bx	r3
+; CHECK-T1: bx	[[POP_REG]]
 
 ; CHECK-LABEL: test_varsize:
 ; CHECK: sub	sp, #16

@@ -32,12 +32,12 @@ bb7:            ; preds = %bb
         call void @llvm.va_end( i8* %va.upgrd.4 )
         ret void
 
-; The return sequence should pop the lr to r3, recover the stack space used to
+; The return sequence should pop the lr to r0-3, recover the stack space used to
 ; store variadic argument registers, then return via r3. Possibly there is a pop
 ; before this, but only if the function happened to use callee-saved registers.
-; CHECK: pop {r3}
+; CHECK: pop {[[POP_REG:r[0-3]]]}
 ; CHECK: add sp, #[[IMM]]
-; CHECK: bx r3
+; CHECK: bx [[POP_REG]]
 }
 
 declare void @llvm.va_start(i8*)

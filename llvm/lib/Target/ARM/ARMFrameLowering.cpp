@@ -689,60 +689,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF,
     AFI->setShouldRestoreSPFromFP(true);
 }
 
-// Resolve TCReturn pseudo-instruction
-void ARMFrameLowering::fixTCReturn(MachineFunction &MF,
-                                   MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  assert(MBBI->isReturn() && "Can only insert epilog into returning blocks");
-  unsigned RetOpcode = MBBI->getOpcode();
-  DebugLoc dl = MBBI->getDebugLoc();
-  const ARMBaseInstrInfo &TII =
-      *static_cast<const ARMBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
-
-  if (!(RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNri))
-    return;
-
-  // Tail call return: adjust the stack pointer and jump to callee.
-  MBBI = MBB.getLastNonDebugInstr();
-  MachineOperand &JumpTarget = MBBI->getOperand(0);
-
-  // Jump to label or value in register.
-  if (RetOpcode == ARM::TCRETURNdi) {
-    unsigned TCOpcode = STI.isThumb() ?
-             (STI.isTargetMachO() ? ARM::tTAILJMPd : ARM::tTAILJMPdND) :
-             ARM::TAILJMPd;
-    MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(TCOpcode));
-    if (JumpTarget.isGlobal())
-      MIB.addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
-                           JumpTarget.getTargetFlags());
-    else {
-      assert(JumpTarget.isSymbol());
-      MIB.addExternalSymbol(JumpTarget.getSymbolName(),
-                            JumpTarget.getTargetFlags());
-    }
-
-    // Add the default predicate in Thumb mode.
-    if (STI.isThumb()) MIB.addImm(ARMCC::AL).addReg(0);
-  } else if (RetOpcode == ARM::TCRETURNri) {
-    BuildMI(MBB, MBBI, dl,
-            TII.get(STI.isThumb() ? ARM::tTAILJMPr : ARM::TAILJMPr)).
-      addReg(JumpTarget.getReg(), RegState::Kill);
-  }
-
-  MachineInstr *NewMI = std::prev(MBBI);
-  for (unsigned i = 1, e = MBBI->getNumOperands(); i != e; ++i)
-    NewMI->addOperand(MBBI->getOperand(i));
-
-  // Delete the pseudo instruction TCRETURN.
-  MBB.erase(MBBI);
-  MBBI = NewMI;
-}
-
 void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  assert(MBBI->isReturn() && "Can only insert epilog into returning blocks");
-  DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
@@ -758,10 +706,12 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // All calls are tail calls in GHC calling conv, and functions have no
   // prologue/epilogue.
-  if (MF.getFunction()->getCallingConv() == CallingConv::GHC) {
-    fixTCReturn(MF, MBB);
+  if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
     return;
-  }
+
+  // First put ourselves on the first (from top) terminator instructions.
+  MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
+  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes - ArgRegsSaveSize != 0)
@@ -839,8 +789,6 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
     if (AFI->getGPRCalleeSavedArea2Size()) MBBI++;
     if (AFI->getGPRCalleeSavedArea1Size()) MBBI++;
   }
-
-  fixTCReturn(MF, MBB);
 
   if (ArgRegsSaveSize)
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, ArgRegsSaveSize);
@@ -1008,7 +956,8 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
     // Put any subsequent vpush instructions before this one: they will refer to
     // higher register numbers so need to be pushed first in order to preserve
     // monotonicity.
-    --MI;
+    if (MI != MBB.begin())
+      --MI;
   }
 }
 
@@ -1022,12 +971,16 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  DebugLoc DL = MI->getDebugLoc();
-  unsigned RetOpcode = MI->getOpcode();
-  bool isTailCall = (RetOpcode == ARM::TCRETURNdi ||
-                     RetOpcode == ARM::TCRETURNri);
-  bool isInterrupt =
-      RetOpcode == ARM::SUBS_PC_LR || RetOpcode == ARM::t2SUBS_PC_LR;
+  DebugLoc DL;
+  bool isTailCall = false;
+  bool isInterrupt = false;
+  if (MBB.end() != MI) {
+    DL = MI->getDebugLoc();
+    unsigned RetOpcode = MI->getOpcode();
+    isTailCall = (RetOpcode == ARM::TCRETURNdi || RetOpcode == ARM::TCRETURNri);
+    isInterrupt =
+        RetOpcode == ARM::SUBS_PC_LR || RetOpcode == ARM::t2SUBS_PC_LR;
+  }
 
   SmallVector<unsigned, 4> Regs;
   unsigned i = CSI.size();
@@ -1044,10 +997,13 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
 
       if (Reg == ARM::LR && !isTailCall && !isVarArg && !isInterrupt &&
           STI.hasV5TOps()) {
-        Reg = ARM::PC;
-        LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
+        if (MBB.succ_empty()) {
+          Reg = ARM::PC;
+          DeleteRet = true;
+          LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_RET : ARM::LDMIA_RET;
+        } else
+          LdmOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
         // Fold the return instruction into the LDM.
-        DeleteRet = true;
       }
 
       // If NoGap is true, pop consecutive registers and then leave the rest
@@ -1068,7 +1024,7 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
                        .addReg(ARM::SP));
       for (unsigned i = 0, e = Regs.size(); i < e; ++i)
         MIB.addReg(Regs[i], getDefRegState(true));
-      if (DeleteRet) {
+      if (DeleteRet && MI != MBB.end()) {
         MIB.copyImplicitOps(&*MI);
         MI->eraseFromParent();
       }
@@ -1095,7 +1051,8 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
 
     // Put any subsequent vpop instructions after this one: they will refer to
     // higher register numbers so need to be popped afterwards.
-    ++MI;
+    if (MI != MBB.end())
+      ++MI;
   }
 }
 
@@ -1913,21 +1870,51 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   MachineBasicBlock *GetMBB = MF.CreateMachineBasicBlock();
   MachineBasicBlock *McrMBB = MF.CreateMachineBasicBlock();
 
+  // Grab everything that reaches PrologueMBB to update there liveness as well.
+  SmallPtrSet<MachineBasicBlock *, 8> BeforePrologueRegion;
+  SmallVector<MachineBasicBlock *, 2> WalkList;
+  WalkList.push_back(&PrologueMBB);
+
+  do {
+    MachineBasicBlock *CurMBB = WalkList.pop_back_val();
+    for (MachineBasicBlock *PredBB : CurMBB->predecessors()) {
+      if (BeforePrologueRegion.insert(PredBB).second)
+        WalkList.push_back(PredBB);
+    }
+  } while (!WalkList.empty());
+
+  // The order in that list is important.
+  // The blocks will all be inserted before PrologueMBB using that order.
+  // Therefore the block that should appear first in the CFG should appear
+  // first in the list.
+  MachineBasicBlock *AddedBlocks[] = {PrevStackMBB, McrMBB, GetMBB, AllocMBB,
+                                      PostStackMBB};
+  const int NbAddedBlocks = sizeof(AddedBlocks) / sizeof(AddedBlocks[0]);
+
+  for (int Idx = 0; Idx < NbAddedBlocks; ++Idx)
+    BeforePrologueRegion.insert(AddedBlocks[Idx]);
+
   for (MachineBasicBlock::livein_iterator i = PrologueMBB.livein_begin(),
                                           e = PrologueMBB.livein_end();
        i != e; ++i) {
-    AllocMBB->addLiveIn(*i);
-    GetMBB->addLiveIn(*i);
-    McrMBB->addLiveIn(*i);
-    PrevStackMBB->addLiveIn(*i);
-    PostStackMBB->addLiveIn(*i);
+    for (MachineBasicBlock *PredBB : BeforePrologueRegion)
+      PredBB->addLiveIn(*i);
   }
 
-  MF.push_front(PostStackMBB);
-  MF.push_front(AllocMBB);
-  MF.push_front(GetMBB);
-  MF.push_front(McrMBB);
-  MF.push_front(PrevStackMBB);
+  // Remove the newly added blocks from the list, since we know
+  // we do not have to do the following updates for them.
+  for (int Idx = 0; Idx < NbAddedBlocks; ++Idx) {
+    BeforePrologueRegion.erase(AddedBlocks[Idx]);
+    MF.insert(&PrologueMBB, AddedBlocks[Idx]);
+  }
+
+  for (MachineBasicBlock *MBB : BeforePrologueRegion) {
+    // Make sure the LiveIns are still sorted and unique.
+    MBB->sortUniqueLiveIns();
+    // Replace the edges to PrologueMBB by edges to the sequences
+    // we are about to add.
+    MBB->ReplaceUsesOfBlockWith(&PrologueMBB, AddedBlocks[0]);
+  }
 
   // The required stack size that is aligned to ARM constant criterion.
   AlignedStackSize = alignToARMConstant(StackSize);

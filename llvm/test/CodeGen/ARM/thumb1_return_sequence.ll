@@ -23,11 +23,9 @@ entry:
 ; --------
 ; CHECK-V4T:         add sp,
 ; CHECK-V4T-NEXT:    pop {[[SAVED]]}
-; CHECK-V4T-NEXT:    mov r12, r3
-; CHECK-V4T-NEXT:    pop {r3}
-; CHECK-V4T-NEXT:    mov lr, r3
-; CHECK-V4T-NEXT:    mov r3, r12
-; CHECK-V4T:         bx  lr
+; We do not have any SP update to insert so we can just optimize
+; the pop sequence.
+; CHECK-V4T-NEXT:    pop {pc}
 ; CHECK-V5T:         pop {[[SAVED]], pc}
 }
 
@@ -53,19 +51,19 @@ entry:
 ; Epilogue
 ; --------
 ; CHECK-V4T:         pop {[[SAVED]]}
-; CHECK-V4T-NEXT:    mov r12, r3
-; CHECK-V4T-NEXT:    pop {r3}
+; CHECK-V4T-NEXT:    mov r12, [[POP_REG:r[0-7]]]
+; CHECK-V4T-NEXT:    pop {[[POP_REG]]}
 ; CHECK-V4T-NEXT:    add sp,
-; CHECK-V4T-NEXT:    mov lr, r3
-; CHECK-V4T-NEXT:    mov r3, r12
+; CHECK-V4T-NEXT:    mov lr, [[POP_REG]]
+; CHECK-V4T-NEXT:    mov [[POP_REG]], r12
 ; CHECK-V4T:         bx  lr
 ; CHECK-V5T:         add sp,
 ; CHECK-V5T-NEXT:    pop {[[SAVED]]}
-; CHECK-V5T-NEXT:    mov r12, r3
-; CHECK-V5T-NEXT:    pop {r3}
+; CHECK-V5T-NEXT:    mov r12, [[POP_REG:r[0-7]]]
+; CHECK-V5T-NEXT:    pop {[[POP_REG]]}
 ; CHECK-V5T-NEXT:    add sp,
-; CHECK-V5T-NEXT:    mov lr, r3
-; CHECK-V5T-NEXT:    mov r3, r12
+; CHECK-V5T-NEXT:    mov lr, [[POP_REG]]
+; CHECK-V5T-NEXT:    mov [[POP_REG]], r12
 ; CHECK-V5T-NEXT:    bx lr
 }
 
@@ -95,8 +93,7 @@ entry:
 ; Epilogue
 ; --------
 ; CHECK-V4T:    pop {[[SAVED]]}
-; CHECK-V4T:    pop {r3}
-; CHECK-V4T:    bx r3
+; CHECK-V4T:    pop {pc}
 ; CHECK-V5T:    pop {[[SAVED]], pc}
 }
 
@@ -148,14 +145,18 @@ entry:
 ; --------
 ; CHECK-V4T:         add sp,
 ; CHECK-V4T-NEXT:    pop {[[SAVED]]}
-; CHECK-V4T-NEXT:    pop {r3}
+; Only r1 to r3 are available to pop LR.
+; r0 is used for the return value.
+; CHECK-V4T-NEXT:    pop {[[POP_REG:r[1-3]]]}
 ; CHECK-V4T-NEXT:    add sp,
-; CHECK-V4T-NEXT:    bx r3
+; CHECK-V4T-NEXT:    bx [[POP_REG]]
 ; CHECK-V5T:         add sp,
 ; CHECK-V5T-NEXT:    pop {[[SAVED]]}
-; CHECK-V5T-NEXT:    pop {r3}
+; Only r1 to r3 are available to pop LR.
+; r0 is used for the return value.
+; CHECK-V5T-NEXT:    pop {[[POP_REG:r[1-3]]]}
 ; CHECK-V5T-NEXT:    add sp,
-; CHECK-V5T-NEXT:    bx r3
+; CHECK-V5T-NEXT:    bx [[POP_REG]]
 }
 
 ; CHECK-V4T-LABEL: noframe
@@ -191,13 +192,17 @@ entry:
 ; Epilogue
 ; --------
 ; CHECK-V4T:         pop {[[SAVED]]}
-; CHECK-V4T-NEXT:    pop {r3}
+; Only r1 to r3 are available to pop LR.
+; r0 is used for the return value.
+; CHECK-V4T-NEXT:    pop {[[POP_REG:r[1-3]]]}
 ; CHECK-V4T-NEXT:    add sp,
-; CHECK-V4T-NEXT:    bx r3
+; CHECK-V4T-NEXT:    bx [[POP_REG]]
 ; CHECK-V5T:         pop {[[SAVED]]}
-; CHECK-V5T-NEXT:    pop {r3}
+; Only r1 to r3 are available to pop LR.
+; r0 is used for the return value.
+; CHECK-V5T-NEXT:    pop {[[POP_REG:r[1-3]]]}
 ; CHECK-V5T-NEXT:    add sp,
-; CHECK-V5T-NEXT:    bx r3
+; CHECK-V5T-NEXT:    bx [[POP_REG]]
 }
 
 declare void @llvm.va_start(i8*) nounwind
