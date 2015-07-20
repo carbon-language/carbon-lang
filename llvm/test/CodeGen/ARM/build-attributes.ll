@@ -122,7 +122,7 @@
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=dynamic-no-pic | FileCheck %s --check-prefix=RELOC-OTHER
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=RELOC-OTHER
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=PCS-R9-USE
-; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -mattr=+reserve-r9 | FileCheck %s --check-prefix=PCS-R9-RESERVE
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -arm-reserve-r9 | FileCheck %s --check-prefix=PCS-R9-RESERVE
 
 ; ARMv8.1a (AArch32)
 ; RUN: llc < %s -mtriple=armv8.1a-none-linux-gnueabi -arm-no-strict-align | FileCheck %s --check-prefix=NO-STRICT-ALIGN
