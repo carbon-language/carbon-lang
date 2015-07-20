@@ -1052,9 +1052,20 @@ template <> void ELFDumper<ELFType<support::little, false>>::printUnwindInfo() {
 
 template<class ELFT>
 void ELFDumper<ELFT>::printDynamicTable() {
-  auto DynTable = Obj->dynamic_table(true);
+  auto I = Obj->dynamic_table_begin();
+  auto E = Obj->dynamic_table_end();
 
-  ptrdiff_t Total = std::distance(DynTable.begin(), DynTable.end());
+  if (I == E)
+    return;
+
+  --E;
+  while (I != E && E->getTag() == ELF::DT_NULL)
+    --E;
+  if (E->getTag() != ELF::DT_NULL)
+    ++E;
+  ++E;
+
+  ptrdiff_t Total = std::distance(I, E);
   if (Total == 0)
     return;
 
@@ -1066,7 +1077,9 @@ void ELFDumper<ELFT>::printDynamicTable() {
   W.startLine()
      << "  Tag" << (Is64 ? "                " : "        ") << "Type"
      << "                 " << "Name/Value\n";
-  for (const auto &Entry : DynTable) {
+  while (I != E) {
+    const typename ELFO::Elf_Dyn &Entry = *I;
+    ++I;
     W.startLine()
        << "  "
        << format(Is64 ? "0x%016" PRIX64 : "0x%08" PRIX64, Entry.getTag())

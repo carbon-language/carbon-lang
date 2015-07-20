@@ -282,11 +282,9 @@ public:
   }
 
   const Elf_Dyn *dynamic_table_begin() const;
-  /// \param NULLEnd use one past the first DT_NULL entry as the end instead of
-  /// the section size.
-  const Elf_Dyn *dynamic_table_end(bool NULLEnd = false) const;
-  Elf_Dyn_Range dynamic_table(bool NULLEnd = false) const {
-    return make_range(dynamic_table_begin(), dynamic_table_end(NULLEnd));
+  const Elf_Dyn *dynamic_table_end() const;
+  Elf_Dyn_Range dynamic_table() const {
+    return make_range(dynamic_table_begin(), dynamic_table_end());
   }
 
   const Elf_Sym *dynamic_symbol_begin() const {
@@ -818,24 +816,12 @@ ELFFile<ELFT>::dynamic_table_begin() const {
 
 template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Dyn *
-ELFFile<ELFT>::dynamic_table_end(bool NULLEnd) const {
+ELFFile<ELFT>::dynamic_table_end() const {
   uint64_t Size = DynamicRegion.Size;
   if (Size % sizeof(Elf_Dyn))
     report_fatal_error("Invalid dynamic table size");
 
-  const Elf_Dyn *Ret = dynamic_table_begin() + Size / sizeof(Elf_Dyn);
-
-  if (NULLEnd) {
-    const Elf_Dyn *Start = dynamic_table_begin();
-    while (Start != Ret && Start->getTag() != ELF::DT_NULL)
-      ++Start;
-
-    // Include the DT_NULL.
-    if (Start != Ret)
-      ++Start;
-    Ret = Start;
-  }
-  return Ret;
+  return dynamic_table_begin() + Size / sizeof(Elf_Dyn);
 }
 
 template <class ELFT>
