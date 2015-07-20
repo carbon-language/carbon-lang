@@ -744,6 +744,9 @@ NativeProcessLinux::Monitor::MainLoop()
         int r = select(max_fd, &fds, nullptr, nullptr, nullptr);
         if (r < 0)
         {
+            if (errno == EINTR)
+                continue;
+
             Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
             if (log)
                 log->Printf("NativeProcessLinux::Monitor::%s exiting because select failed: %s",
