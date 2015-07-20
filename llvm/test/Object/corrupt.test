@@ -43,3 +43,10 @@ RUN:   %p/Inputs/corrupt-invalid-virtual-addr.elf.x86-64 2>&1 | \
 RUN:   FileCheck --check-prefix=VIRTADDR %s
 
 VIRTADDR: Virtual address is not in any segment
+
+
+RUN: not llvm-readobj -dyn-relocations \
+RUN:   %p/Inputs/corrupt-invalid-relocation-size.elf.x86-64 2>&1 | \
+RUN:   FileCheck --check-prefix=RELOC %s
+
+RELOC:  Invalid relocation entry size

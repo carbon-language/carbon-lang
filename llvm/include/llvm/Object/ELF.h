@@ -142,8 +142,6 @@ public:
   typedef Elf_Hash_Impl<ELFT> Elf_Hash;
   typedef ELFEntityIterator<const Elf_Dyn> Elf_Dyn_Iter;
   typedef iterator_range<Elf_Dyn_Iter> Elf_Dyn_Range;
-  typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
-  typedef ELFEntityIterator<const Elf_Rel> Elf_Rel_Iter;
   typedef iterator_range<const Elf_Shdr *> Elf_Shdr_Range;
 
   /// \brief Archive files are 2 byte aligned, so we need this for
@@ -311,40 +309,58 @@ public:
     return make_range(dynamic_symbol_begin(), dynamic_symbol_end());
   }
 
-  Elf_Rela_Iter dyn_rela_begin() const {
-    if (DynRelaRegion.Addr)
-      return Elf_Rela_Iter(DynRelaRegion.EntSize,
-        (const char *)DynRelaRegion.Addr);
-    return Elf_Rela_Iter(0, nullptr);
+  const Elf_Rela *dyn_rela_begin() const {
+    if (DynRelaRegion.Size && DynRelaRegion.EntSize != sizeof(Elf_Rela))
+      report_fatal_error("Invalid relocation entry size");
+    return reinterpret_cast<const Elf_Rela *>(DynRelaRegion.Addr);
   }
 
-  Elf_Rela_Iter dyn_rela_end() const {
-    if (DynRelaRegion.Addr)
-      return Elf_Rela_Iter(
-        DynRelaRegion.EntSize,
-        (const char *)DynRelaRegion.Addr + DynRelaRegion.Size);
-    return Elf_Rela_Iter(0, nullptr);
+  const Elf_Rela *dyn_rela_end() const {
+    uint64_t Size = DynRelaRegion.Size;
+    if (Size % sizeof(Elf_Rela))
+      report_fatal_error("Invalid relocation table size");
+    return dyn_rela_begin() + Size / sizeof(Elf_Rela);
   }
 
-  Elf_Rela_Iter rela_begin(const Elf_Shdr *sec) const {
-    return Elf_Rela_Iter(sec->sh_entsize,
-                         (const char *)(base() + sec->sh_offset));
+  typedef iterator_range<const Elf_Rela *> Elf_Rela_Range;
+
+  Elf_Rela_Range dyn_relas() const {
+    return make_range(dyn_rela_begin(), dyn_rela_end());
   }
 
-  Elf_Rela_Iter rela_end(const Elf_Shdr *sec) const {
-    return Elf_Rela_Iter(
-        sec->sh_entsize,
-        (const char *)(base() + sec->sh_offset + sec->sh_size));
+  const Elf_Rela *rela_begin(const Elf_Shdr *sec) const {
+    if (sec->sh_entsize != sizeof(Elf_Rela))
+      report_fatal_error("Invalid relocation entry size");
+    return reinterpret_cast<const Elf_Rela *>(base() + sec->sh_offset);
   }
 
-  Elf_Rel_Iter rel_begin(const Elf_Shdr *sec) const {
-    return Elf_Rel_Iter(sec->sh_entsize,
-                        (const char *)(base() + sec->sh_offset));
+  const Elf_Rela *rela_end(const Elf_Shdr *sec) const {
+    uint64_t Size = sec->sh_size;
+    if (Size % sizeof(Elf_Rela))
+      report_fatal_error("Invalid relocation table size");
+    return rela_begin(sec) + Size / sizeof(Elf_Rela);
   }
 
-  Elf_Rel_Iter rel_end(const Elf_Shdr *sec) const {
-    return Elf_Rel_Iter(sec->sh_entsize,
-                        (const char *)(base() + sec->sh_offset + sec->sh_size));
+  Elf_Rela_Range relas(const Elf_Shdr *Sec) const {
+    return make_range(rela_begin(Sec), rela_end(Sec));
+  }
+
+  const Elf_Rel *rel_begin(const Elf_Shdr *sec) const {
+    if (sec->sh_entsize != sizeof(Elf_Rel))
+      report_fatal_error("Invalid relocation entry size");
+    return reinterpret_cast<const Elf_Rel *>(base() + sec->sh_offset);
+  }
+
+  const Elf_Rel *rel_end(const Elf_Shdr *sec) const {
+    uint64_t Size = sec->sh_size;
+    if (Size % sizeof(Elf_Rel))
+      report_fatal_error("Invalid relocation table size");
+    return rel_begin(sec) + Size / sizeof(Elf_Rel);
+  }
+
+  typedef iterator_range<const Elf_Rel *> Elf_Rel_Range;
+  Elf_Rel_Range rels(const Elf_Shdr *Sec) const {
+    return make_range(rel_begin(Sec), rel_end(Sec));
   }
 
   /// \brief Iterate over program header table.
