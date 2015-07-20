@@ -231,58 +231,72 @@ EmulateInstructionARM64::GetOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0xff000000, 0xd1000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "SUB  <Xd|SP>, <Xn|SP>, #<imm> {, <shift>}" },
-        { 0xff000000, 0xf1000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "SUBS  <Xd>, <Xn|SP>, #<imm> {, <shift>}" },
-        { 0xff000000, 0x91000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADD  <Xd|SP>, <Xn|SP>, #<imm> {, <shift>}" },
-        { 0xff000000, 0xb1000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADDS  <Xd>, <Xn|SP>, #<imm> {, <shift>}" },
+        { 0xff000000, 0xd1000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "SUB  <Xd|SP>, <Xn|SP>, #<imm> {, <shift>}" },
+        { 0xff000000, 0xf1000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "SUBS  <Xd>, <Xn|SP>, #<imm> {, <shift>}"   },
+        { 0xff000000, 0x91000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "ADD  <Xd|SP>, <Xn|SP>, #<imm> {, <shift>}" },
+        { 0xff000000, 0xb1000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "ADDS  <Xd>, <Xn|SP>, #<imm> {, <shift>}"   },
 
-        { 0xff000000, 0x51000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "SUB  <Wd|WSP>, <Wn|WSP>, #<imm> {, <shift>}" },
-        { 0xff000000, 0x71000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "SUBS  <Wd>, <Wn|WSP>, #<imm> {, <shift>}" },
-        { 0xff000000, 0x11000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADD  <Wd|WSP>, <Wn|WSP>, #<imm> {, <shift>}" },
-        { 0xff000000, 0x31000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADDS  <Wd>, <Wn|WSP>, #<imm> {, <shift>}" },
+        { 0xff000000, 0x51000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "SUB  <Wd|WSP>, <Wn|WSP>, #<imm> {, <shift>}" },
+        { 0xff000000, 0x71000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "SUBS  <Wd>, <Wn|WSP>, #<imm> {, <shift>}"    },
+        { 0xff000000, 0x11000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "ADD  <Wd|WSP>, <Wn|WSP>, #<imm> {, <shift>}" },
+        { 0xff000000, 0x31000000, No_VFP, &EmulateInstructionARM64::EmulateADDSUBImm, "ADDS  <Wd>, <Wn|WSP>, #<imm> {, <shift>}"    },
 
-        { 0xffc00000, 0x29000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0xa9000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0x2d000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0x6d000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0xad000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x29000000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "STP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xa9000000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "STP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x2d000000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "STP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x6d000000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "STP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xad000000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "STP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
 
-        { 0xffc00000, 0x29800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xa9800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x2d800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x6d800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xad800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x29800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa9800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2d800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6d800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xad800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
 
-        { 0xffc00000, 0x28800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xa8800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x2c800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x6c800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xac800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x28800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa8800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2c800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6c800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xac800000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
 
-        { 0xffc00000, 0x29400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0xa9400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0x2d400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0x6d400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0xad400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x29400000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "LDP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xa9400000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "LDP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x2d400000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "LDP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x6d400000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "LDP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xad400000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_OFF>, "LDP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
 
-        { 0xffc00000, 0x29c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xa9c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x2dc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x6dc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xadc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x29c00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "LDP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa9c00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "LDP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2dc00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "LDP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6dc00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "LDP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xadc00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_PRE>, "LDP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
 
-        { 0xffc00000, 0x28c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xa8c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x2cc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x6cc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xacc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x28c00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "LDP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa8c00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "LDP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2cc00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "LDP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6cc00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "LDP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xacc00000, No_VFP, &EmulateInstructionARM64::EmulateLDPSTP<AddrMode_POST>, "LDP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
 
-        { 0xfc000000, 0x14000000, No_VFP, &EmulateInstructionARM64::EmulateB,              "B <label>"                            },
-        { 0xff000010, 0x54000000, No_VFP, &EmulateInstructionARM64::EmulateBcond,          "B.<cond> <label>"                     },
-        { 0x7f000000, 0x34000000, No_VFP, &EmulateInstructionARM64::EmulateCBZ,            "CBZ <Wt>, <label>"                    },
-        { 0x7f000000, 0x35000000, No_VFP, &EmulateInstructionARM64::EmulateCBZ,            "CBNZ <Wt>, <label>"                   },
-        { 0x7f000000, 0x36000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,            "TBZ <R><t>, #<imm>, <label>"          },
-        { 0x7f000000, 0x37000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,            "TBNZ <R><t>, #<imm>, <label>"         },
+        { 0xffe00c00, 0xb8000400, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_POST>, "STR <Wt>, [<Xn|SP>], #<simm>"   },
+        { 0xffe00c00, 0xf8000400, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_POST>, "STR <Xt>, [<Xn|SP>], #<simm>"   },
+        { 0xffe00c00, 0xb8000c00, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_PRE>,  "STR <Wt>, [<Xn|SP>, #<simm>]!"  },
+        { 0xffe00c00, 0xf8000c00, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_PRE>,  "STR <Xt>, [<Xn|SP>, #<simm>]!"  },
+        { 0xffc00000, 0xb9000000, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_OFF>,  "STR <Wt>, [<Xn|SP>{, #<pimm>}]" },
+        { 0xffc00000, 0xf9000000, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_OFF>,  "STR <Xt>, [<Xn|SP>{, #<pimm>}]" },
+
+        { 0xffe00c00, 0xb8400400, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_POST>, "LDR <Wt>, [<Xn|SP>], #<simm>"   },
+        { 0xffe00c00, 0xf8400400, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_POST>, "LDR <Xt>, [<Xn|SP>], #<simm>"   },
+        { 0xffe00c00, 0xb8400c00, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_PRE>,  "LDR <Wt>, [<Xn|SP>, #<simm>]!"  },
+        { 0xffe00c00, 0xf8400c00, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_PRE>,  "LDR <Xt>, [<Xn|SP>, #<simm>]!"  },
+        { 0xffc00000, 0xb9400000, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_OFF>,  "LDR <Wt>, [<Xn|SP>{, #<pimm>}]" },
+        { 0xffc00000, 0xf9400000, No_VFP, &EmulateInstructionARM64::EmulateLDRSTRImm<AddrMode_OFF>,  "LDR <Xt>, [<Xn|SP>{, #<pimm>}]" },
+
+        { 0xfc000000, 0x14000000, No_VFP, &EmulateInstructionARM64::EmulateB,     "B <label>"                    },
+        { 0xff000010, 0x54000000, No_VFP, &EmulateInstructionARM64::EmulateBcond, "B.<cond> <label>"             },
+        { 0x7f000000, 0x34000000, No_VFP, &EmulateInstructionARM64::EmulateCBZ,   "CBZ <Wt>, <label>"            },
+        { 0x7f000000, 0x35000000, No_VFP, &EmulateInstructionARM64::EmulateCBZ,   "CBNZ <Wt>, <label>"           },
+        { 0x7f000000, 0x36000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,   "TBZ <R><t>, #<imm>, <label>"  },
+        { 0x7f000000, 0x37000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,   "TBNZ <R><t>, #<imm>, <label>" },
 
     };
     static const size_t k_num_arm_opcodes = llvm::array_lengthof(g_opcodes);
@@ -507,7 +521,7 @@ EmulateInstructionARM64::ConditionHolds (const uint32_t cond)
 }
 
 bool
-EmulateInstructionARM64::Emulate_addsub_imm (const uint32_t opcode)
+EmulateInstructionARM64::EmulateADDSUBImm (const uint32_t opcode)
 {
     // integer d = UInt(Rd);
     // integer n = UInt(Rn);
@@ -624,26 +638,8 @@ EmulateInstructionARM64::Emulate_addsub_imm (const uint32_t opcode)
     return false;
 }
 
-bool
-EmulateInstructionARM64::Emulate_ldstpair_off (const uint32_t opcode)
-{
-    return Emulate_ldstpair (opcode, AddrMode_OFF);
-}
-
-bool
-EmulateInstructionARM64::Emulate_ldstpair_pre (const uint32_t opcode)
-{
-    return Emulate_ldstpair (opcode, AddrMode_PRE);
-}
-
-bool
-EmulateInstructionARM64::Emulate_ldstpair_post (const uint32_t opcode)
-{
-    return Emulate_ldstpair (opcode, AddrMode_POST);
-}
-
-bool
-EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mode)
+template <EmulateInstructionARM64::AddrMode a_mode> bool
+EmulateInstructionARM64::EmulateLDPSTP (const uint32_t opcode)
 {
     uint32_t opc = Bits32(opcode, 31, 30);
     uint32_t V = Bit32(opcode, 26);
@@ -772,8 +768,6 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
     Context context_t;
     Context context_t2;
 
-    context_t.type = eContextRegisterPlusOffset;
-    context_t2.type = eContextRegisterPlusOffset;
     context_t.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, 0);
     context_t2.SetRegisterToRegisterPlusOffset (reg_info_Rt2, reg_info_base, size);
     uint8_t buffer [RegisterValue::kMaxRegisterByteSize];
@@ -787,6 +781,11 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
             {
                 context_t.type = eContextPushRegisterOnStack;
                 context_t2.type = eContextPushRegisterOnStack;
+            }
+            else
+            {
+                context_t.type = eContextRegisterStore;
+                context_t2.type = eContextRegisterStore;
             }
 
             if (!ReadRegister (&reg_info_Rt, data_Rt))
@@ -815,6 +814,11 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
             {
                 context_t.type = eContextPopRegisterOffStack;
                 context_t2.type = eContextPopRegisterOffStack;
+            }
+            else
+            {
+                context_t.type = eContextRegisterLoad;
+                context_t2.type = eContextRegisterLoad;
             }
 
             if (rt_unknown)
@@ -867,6 +871,138 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
             context.type = eContextAdjustBaseRegister;
         WriteRegisterUnsigned (context, &reg_info_base, wb_address);
     }    
+    return true;
+}
+
+template <EmulateInstructionARM64::AddrMode a_mode> bool
+EmulateInstructionARM64::EmulateLDRSTRImm (const uint32_t opcode)
+{
+    uint32_t size = Bits32(opcode, 31, 30);
+    uint32_t opc = Bits32(opcode, 23, 22);
+    uint32_t n = Bits32(opcode, 9, 5);
+    uint32_t t = Bits32(opcode, 4, 0);
+
+    bool wback;
+    bool postindex;
+    uint64_t offset;
+
+    switch (a_mode)
+    {
+        case AddrMode_POST:
+            wback = true;
+            postindex = true;
+            offset = llvm::SignExtend64<9>(Bits32(opcode, 20, 12));
+            break;
+        case AddrMode_PRE:
+            wback = true;
+            postindex = false;
+            offset = llvm::SignExtend64<9>(Bits32(opcode, 20, 12));
+            break;
+        case AddrMode_OFF:
+            wback = false;
+            postindex = false;
+            offset = LSL(Bits32(opcode, 21, 10), size);
+            break;
+    }
+
+    MemOp memop;
+    bool is_signed;
+    uint32_t regsize;
+
+    if (Bit32(opc, 1) == 0)
+    {
+        memop = Bit32(opc, 0) == 1 ? MemOp_LOAD : MemOp_STORE;
+        regsize = size == 3 ? 64 : 32;
+        is_signed = false;
+    }
+    else
+    {
+        memop = MemOp_LOAD;
+        if (size == 2 && Bit32(opc, 0) == 1)
+            return false;
+        regsize = Bit32(opc, 0) == 1 ? 32 : 64;
+        is_signed = true;
+    }
+
+    Error error;
+    bool success = false;
+    uint64_t address;
+    uint8_t buffer[RegisterValue::kMaxRegisterByteSize];
+    RegisterValue data_Rt;
+
+    if (n == 31)
+        address = ReadRegisterUnsigned (eRegisterKindDWARF, arm64_dwarf::sp, 0, &success);
+    else
+        address = ReadRegisterUnsigned (eRegisterKindDWARF, arm64_dwarf::x0 + n, 0, &success);
+
+    if (!success)
+        return false;
+
+    if (!postindex)
+        address += offset;
+
+    RegisterInfo reg_info_base;
+    if (!GetRegisterInfo (eRegisterKindDWARF, arm64_dwarf::x0 + n, reg_info_base))
+        return false;
+
+    RegisterInfo reg_info_Rt;
+    if (!GetRegisterInfo (eRegisterKindDWARF, arm64_dwarf::x0 + t, reg_info_Rt))
+        return false;
+
+    Context context;
+    context.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, postindex ? 0 : offset);
+
+    switch (memop)
+    {
+        case MemOp_STORE:
+            if (n == 31 || n == GetFramePointerRegisterNumber()) // if this store is based off of the sp or fp register
+                context.type = eContextPushRegisterOnStack;
+            else
+                context.type = eContextRegisterStore;
+
+            if (!ReadRegister (&reg_info_Rt, data_Rt))
+                return false;
+            
+            if (data_Rt.GetAsMemoryData(&reg_info_Rt, buffer, reg_info_Rt.byte_size, eByteOrderLittle, error) == 0)
+                return false;
+
+            if (!WriteMemory(context, address, buffer, reg_info_Rt.byte_size))
+                return false;
+            break;
+            
+        case MemOp_LOAD:
+            if (n == 31 || n == GetFramePointerRegisterNumber()) // if this store is based off of the sp or fp register
+                context.type = eContextPopRegisterOffStack;
+            else
+                context.type = eContextRegisterLoad;
+
+            if (!ReadMemory (context, address, buffer, reg_info_Rt.byte_size))
+                return false;
+
+            if (data_Rt.SetFromMemoryData(&reg_info_Rt, buffer, reg_info_Rt.byte_size, eByteOrderLittle, error) == 0)
+                return false;
+
+            if (!WriteRegister (context, &reg_info_Rt, data_Rt))
+                return false;
+
+        default:
+            return false;
+    }
+
+    if (wback)
+    {
+        if (postindex)
+            address += offset;
+
+        if (n == 31)
+            context.type = eContextAdjustStackPointer;
+        else
+            context.type = eContextAdjustBaseRegister;
+        context.SetImmediateSigned (offset);
+
+        if (!WriteRegisterUnsigned (context, &reg_info_base, address))
+            return false;
+    }
     return true;
 }
 

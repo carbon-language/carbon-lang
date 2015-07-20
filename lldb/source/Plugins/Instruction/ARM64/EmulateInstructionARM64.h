@@ -278,19 +278,13 @@ protected:
     UsingAArch32 ();
 
     bool
-    Emulate_addsub_imm (const uint32_t opcode);
+    EmulateADDSUBImm (const uint32_t opcode);
 
-    bool
-    Emulate_ldstpair_off (const uint32_t opcode);
+    template <AddrMode a_mode> bool
+    EmulateLDPSTP (const uint32_t opcode);
 
-    bool
-    Emulate_ldstpair_pre (const uint32_t opcode);
-
-    bool
-    Emulate_ldstpair_post (const uint32_t opcode);
-
-    bool
-    Emulate_ldstpair (const uint32_t opcode, AddrMode a_mode);
+    template <AddrMode a_mode> bool
+    EmulateLDRSTRImm (const uint32_t opcode);
 
     bool
     EmulateB (const uint32_t opcode);
