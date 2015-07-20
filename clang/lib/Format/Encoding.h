@@ -135,7 +135,7 @@ inline unsigned getEscapeSequenceLength(StringRef Text) {
         ++I;
       return I;
     }
-    return 2;
+    return 1 + getNumBytesForUTF8(Text[1]);
   }
 }
 

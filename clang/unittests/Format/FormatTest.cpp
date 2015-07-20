@@ -9555,6 +9555,11 @@ TEST_F(FormatTest, SplitsUTF8Strings) {
             "\"八九十\tqq\"",
             format("\"一\t二 \t三 四 五\t六 \t七 八九十\tqq\"",
                    getLLVMStyleWithColumns(11)));
+
+  // UTF8 character in an escape sequence.
+  EXPECT_EQ("\"aaaaaa\"\n"
+            "\"\\\xC2\x8D\"",
+            format("\"aaaaaa\\\xC2\x8D\"", getLLVMStyleWithColumns(10)));
 }
 
 TEST_F(FormatTest, HandlesDoubleWidthCharsInMultiLineStrings) {
