@@ -46,6 +46,9 @@ static cl::opt<bool> EnableCommGEP("hexagon-commgep", cl::init(true),
 static cl::opt<bool> EnableGenExtract("hexagon-extract", cl::init(true),
   cl::Hidden, cl::desc("Generate \"extract\" instructions"));
 
+static cl::opt<bool> EnableGenMux("hexagon-mux", cl::init(true), cl::Hidden,
+  cl::desc("Enable converting conditional transfers into MUX instructions"));
+
 static cl::opt<bool> EnableGenPred("hexagon-gen-pred", cl::init(true),
   cl::Hidden, cl::desc("Enable conversion of arithmetic operations to "
   "predicate instructions"));
@@ -80,6 +83,7 @@ namespace llvm {
   FunctionPass *createHexagonFixupHwLoops();
   FunctionPass *createHexagonGenExtract();
   FunctionPass *createHexagonGenInsert();
+  FunctionPass *createHexagonGenMux();
   FunctionPass *createHexagonGenPredicate();
   FunctionPass *createHexagonHardwareLoops();
   FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
@@ -215,6 +219,10 @@ void HexagonPassConfig::addPreEmitPass() {
   if (!NoOpt) {
     if (!DisableHardwareLoops)
       addPass(createHexagonFixupHwLoops(), false);
+    // Generate MUX from pairs of conditional transfers.
+    if (EnableGenMux)
+      addPass(createHexagonGenMux(), false);
+
     addPass(createHexagonPacketizer(), false);
   }
 }
