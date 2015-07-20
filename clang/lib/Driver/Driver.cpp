@@ -1238,11 +1238,8 @@ void Driver::BuildInputs(const ToolChain &TC, DerivedArgList &Args,
 // CudaHostAction which combines both host and device side actions.
 static std::unique_ptr<Action>
 buildCudaActions(const Driver &D, const ToolChain &TC, DerivedArgList &Args,
-                 const Arg *InputArg, const types::ID InputType,
-                 std::unique_ptr<Action> Current, ActionList &Actions) {
-
-  assert(InputType == types::TY_CUDA &&
-         "CUDA Actions only apply to CUDA inputs.");
+                 const Arg *InputArg, std::unique_ptr<Action> HostAction,
+                 ActionList &Actions) {
 
   // Collect all cuda_gpu_arch parameters, removing duplicates.
   SmallVector<const char *, 4> GpuArchList;
@@ -1280,6 +1277,12 @@ buildCudaActions(const Driver &D, const ToolChain &TC, DerivedArgList &Args,
     }
   }
 
+  // Figure out which NVPTX triple to use for device-side compilation based on
+  // whether host is 64-bit.
+  const char *DeviceTriple = TC.getTriple().isArch64Bit()
+                                 ? "nvptx64-nvidia-cuda"
+                                 : "nvptx-nvidia-cuda";
+
   // Figure out what to do with device actions -- pass them as inputs to the
   // host action or run each of them independently.
   bool DeviceOnlyCompilation = Args.hasArg(options::OPT_cuda_device_only);
@@ -1296,26 +1299,26 @@ buildCudaActions(const Driver &D, const ToolChain &TC, DerivedArgList &Args,
     }
 
     for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I)
-      Actions.push_back(
-          new CudaDeviceAction(std::unique_ptr<Action>(CudaDeviceActions[I]),
-                               GpuArchList[I], /* AtTopLevel */ true));
+      Actions.push_back(new CudaDeviceAction(
+          std::unique_ptr<Action>(CudaDeviceActions[I]), GpuArchList[I],
+          DeviceTriple, /* AtTopLevel */ true));
     // Kill host action in case of device-only compilation.
     if (DeviceOnlyCompilation)
-      Current.reset(nullptr);
-    return Current;
+      HostAction.reset(nullptr);
+    return HostAction;
   }
 
   // Outputs of device actions during complete CUDA compilation get created
   // with AtTopLevel=false and become inputs for the host action.
   ActionList DeviceActions;
   for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I)
-    DeviceActions.push_back(
-        new CudaDeviceAction(std::unique_ptr<Action>(CudaDeviceActions[I]),
-                             GpuArchList[I], /* AtTopLevel */ false));
+    DeviceActions.push_back(new CudaDeviceAction(
+        std::unique_ptr<Action>(CudaDeviceActions[I]), GpuArchList[I],
+        DeviceTriple, /* AtTopLevel */ false));
   // Return a new host action that incorporates original host action and all
   // device actions.
   return std::unique_ptr<Action>(
-      new CudaHostAction(std::move(Current), DeviceActions));
+      new CudaHostAction(std::move(HostAction), DeviceActions));
 }
 
 void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
@@ -1461,7 +1464,7 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
 
       if (InputType == types::TY_CUDA && Phase == CudaInjectionPhase &&
           !Args.hasArg(options::OPT_cuda_host_only)) {
-        Current = buildCudaActions(*this, TC, Args, InputArg, InputType,
+        Current = buildCudaActions(*this, TC, Args, InputArg,
                                    std::move(Current), Actions);
         if (!Current)
           break;
@@ -1791,15 +1794,11 @@ void Driver::BuildJobsForAction(Compilation &C, const Action *A,
   }
 
   if (const CudaDeviceAction *CDA = dyn_cast<CudaDeviceAction>(A)) {
-    // Figure out which NVPTX triple to use for device-side compilation based on
-    // whether host is 64-bit.
-    llvm::Triple DeviceTriple(TC->getTriple().isArch64Bit()
-                                  ? "nvptx64-nvidia-cuda"
-                                  : "nvptx-nvidia-cuda");
-    BuildJobsForAction(C, *CDA->begin(),
-                       &getToolChain(C.getArgs(), DeviceTriple),
-                       CDA->getGpuArchName(), CDA->isAtTopLevel(),
-                       /*MultipleArchs*/ true, LinkingOutput, Result);
+    BuildJobsForAction(
+        C, *CDA->begin(),
+        &getToolChain(C.getArgs(), llvm::Triple(CDA->getDeviceTriple())),
+        CDA->getGpuArchName(), CDA->isAtTopLevel(),
+        /*MultipleArchs*/ true, LinkingOutput, Result);
     return;
   }
 
