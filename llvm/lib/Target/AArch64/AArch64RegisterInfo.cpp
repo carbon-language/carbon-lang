@@ -186,29 +186,6 @@ bool AArch64RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   return false;
 }
 
-bool AArch64RegisterInfo::canRealignStack(const MachineFunction &MF) const {
-
-  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
-    return false;
-
-  return true;
-}
-
-// FIXME: share this with other backends with identical implementation?
-bool
-AArch64RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const AArch64FrameLowering *TFI = getFrameLowering(MF);
-  const Function *F = MF.getFunction();
-  unsigned StackAlign = TFI->getStackAlignment();
-  bool requiresRealignment =
-      ((MFI->getMaxAlignment() > StackAlign) ||
-       F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                       Attribute::StackAlignment));
-
-  return requiresRealignment && canRealignStack(MF);
-}
-
 unsigned
 AArch64RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const AArch64FrameLowering *TFI = getFrameLowering(MF);

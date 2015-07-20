@@ -66,22 +66,3 @@ WebAssemblyRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const WebAssemblyFrameLowering *TFI = getFrameLowering(MF);
   return Regs[TFI->hasFP(MF)][TT.isArch64Bit()];
 }
-
-bool WebAssemblyRegisterInfo::canRealignStack(const MachineFunction &MF) const {
-  return !MF.getFunction()->hasFnAttribute("no-realign-stack");
-}
-
-// FIXME: share this with other backends with identical implementation?
-bool WebAssemblyRegisterInfo::needsStackRealignment(
-    const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const WebAssemblyFrameLowering *TFI = getFrameLowering(MF);
-  const Function *F = MF.getFunction();
-  unsigned StackAlign = TFI->getStackAlignment();
-  bool requiresRealignment =
-      ((MFI->getMaxAlignment() > StackAlign) ||
-       F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                       Attribute::StackAlignment));
-
-  return requiresRealignment && canRealignStack(MF);
-}

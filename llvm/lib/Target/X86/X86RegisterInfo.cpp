@@ -44,12 +44,6 @@ using namespace llvm;
 #define GET_REGINFO_TARGET_DESC
 #include "X86GenRegisterInfo.inc"
 
-cl::opt<bool>
-ForceStackAlign("force-align-stack",
-                 cl::desc("Force align the stack to the minimum alignment"
-                           " needed for the function."),
-                 cl::init(false), cl::Hidden);
-
 static cl::opt<bool>
 EnableBasePointer("x86-use-base-pointer", cl::Hidden, cl::init(true),
           cl::desc("Enable use of a base pointer for complex stack frames"));
@@ -457,7 +451,7 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 }
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
-  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
+  if (!TargetRegisterInfo::canRealignStack(MF))
     return false;
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -473,21 +467,6 @@ bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
   if (MFI->hasVarSizedObjects())
     return MRI->canReserveReg(BasePtr);
   return true;
-}
-
-bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const X86FrameLowering *TFI = getFrameLowering(MF);
-  const Function *F = MF.getFunction();
-  unsigned StackAlign = TFI->getStackAlignment();
-  bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
-                              F->hasFnAttribute(Attribute::StackAlignment));
-
-  // If we've requested that we force align the stack do so now.
-  if (ForceStackAlign)
-    return canRealignStack(MF);
-
-  return requiresRealignment && canRealignStack(MF);
 }
 
 bool X86RegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,

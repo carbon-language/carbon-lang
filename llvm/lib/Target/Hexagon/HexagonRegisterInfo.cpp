@@ -245,13 +245,6 @@ HexagonRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF) const {
 }
 
 
-bool
-HexagonRegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->getMaxAlignment() > 8;
-}
-
-
 unsigned HexagonRegisterInfo::getFirstCallerSavedNonParamReg() const {
   return Hexagon::R6;
 }

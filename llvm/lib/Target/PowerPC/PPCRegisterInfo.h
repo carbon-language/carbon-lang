@@ -136,8 +136,6 @@ public:
   // Base pointer (stack realignment) support.
   unsigned getBaseRegister(const MachineFunction &MF) const;
   bool hasBasePointer(const MachineFunction &MF) const;
-  bool canRealignStack(const MachineFunction &MF) const;
-  bool needsStackRealignment(const MachineFunction &MF) const override;
 };
 
 } // end namespace llvm

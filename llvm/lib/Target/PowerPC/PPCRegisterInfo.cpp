@@ -898,24 +898,6 @@ bool PPCRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   return needsStackRealignment(MF);
 }
 
-bool PPCRegisterInfo::canRealignStack(const MachineFunction &MF) const {
-  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
-    return false;
-
-  return true;
-}
-
-bool PPCRegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
-  const PPCFrameLowering *TFI = getFrameLowering(MF);
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const Function *F = MF.getFunction();
-  unsigned StackAlign = TFI->getStackAlignment();
-  bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
-                              F->hasFnAttribute(Attribute::StackAlignment));
-
-  return requiresRealignment && canRealignStack(MF);
-}
-
 /// Returns true if the instruction's frame index
 /// reference would be better served by a base register other than FP
 /// or SP. Used by LocalStackFrameAllocation to determine which frame index

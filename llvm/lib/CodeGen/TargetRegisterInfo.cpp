@@ -11,13 +11,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+
+#define DEBUG_TYPE "target-reg-info"
+
+namespace llvm {
+cl::opt<bool>
+    ForceStackAlign("force-align-stack",
+                    cl::desc("Force align the stack to the minimum alignment"
+                             " needed for the function."),
+                    cl::init(false), cl::Hidden);
+} // end namespace llvm
 
 using namespace llvm;
 
@@ -294,6 +307,26 @@ TargetRegisterInfo::getRegAllocationHints(unsigned VirtReg,
 
   // All clear, tell the register allocator to prefer this register.
   Hints.push_back(Phys);
+}
+
+bool TargetRegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  return !MF.getFunction()->hasFnAttribute("no-realign-stack");
+}
+
+bool TargetRegisterInfo::needsStackRealignment(
+    const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const Function *F = MF.getFunction();
+  unsigned StackAlign = TFI->getStackAlignment();
+  bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
+                              F->hasFnAttribute(Attribute::StackAlignment));
+  if (ForceStackAlign || requiresRealignment) {
+    if (canRealignStack(MF))
+      return true;
+    DEBUG(dbgs() << "Can't realign function's stack: " << F->getName() << "\n");
+  }
+  return false;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
