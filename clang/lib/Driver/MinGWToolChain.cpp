@@ -27,7 +27,7 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   llvm::SmallString<1024> LibDir;
 
   // In Windows there aren't any standard install locations, we search
-  // for gcc on the PATH. In Liunx the base is always /usr.
+  // for gcc on the PATH. In Linux the base is always /usr.
 #ifdef LLVM_ON_WIN32
   if (getDriver().SysRoot.size())
     Base = getDriver().SysRoot;
