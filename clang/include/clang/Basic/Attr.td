@@ -867,6 +867,12 @@ def ReturnsTwice : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def NoAlias : InheritableAttr {
+  let Spellings = [Declspec<"noalias">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [NoAliasDocs];
+}
+
 def NoCommon : InheritableAttr {
   let Spellings = [GCC<"nocommon">];
   let Subjects = SubjectList<[Var]>;

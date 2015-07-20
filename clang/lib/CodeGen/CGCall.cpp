@@ -1421,12 +1421,15 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
     }
 
-    // 'const' and 'pure' attribute functions are also nounwind.
+    // 'const', 'pure' and 'noalias' attributed functions are also nounwind.
     if (TargetDecl->hasAttr<ConstAttr>()) {
       FuncAttrs.addAttribute(llvm::Attribute::ReadNone);
       FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
     } else if (TargetDecl->hasAttr<PureAttr>()) {
       FuncAttrs.addAttribute(llvm::Attribute::ReadOnly);
+      FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
+    } else if (TargetDecl->hasAttr<NoAliasAttr>()) {
+      FuncAttrs.addAttribute(llvm::Attribute::ArgMemOnly);
       FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
     }
     if (TargetDecl->hasAttr<RestrictAttr>())

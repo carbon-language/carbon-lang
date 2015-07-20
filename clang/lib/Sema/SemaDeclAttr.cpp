@@ -4723,6 +4723,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Mode:
     handleModeAttr(S, D, Attr);
     break;
+  case AttributeList::AT_NoAlias:
+    handleSimpleAttribute<NoAliasAttr>(S, D, Attr);
+    break;
   case AttributeList::AT_NoCommon:
     handleSimpleAttribute<NoCommonAttr>(S, D, Attr);
     break;

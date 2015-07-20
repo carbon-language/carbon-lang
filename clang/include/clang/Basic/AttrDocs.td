@@ -1583,3 +1583,13 @@ The ``returns_nonnull`` attribute indicates that a particular function (or Objec
 The ``returns_nonnull`` attribute implies that returning a null pointer is undefined behavior, which the optimizer may take advantage of. The ``_Nonnull`` type qualifier indicates that a pointer cannot be null in a more general manner (because it is part of the type system) and does not imply undefined behavior, making it more widely applicable
 }];
 }
+
+def NoAliasDocs : Documentation {
+  let Category = DocCatFunction;
+  let Heading = "noalias";
+  let Content = [{
+The ``noalias`` attribute indicates that the only memory accesses inside
+function are loads and stores from objects pointed to by its pointer-typed
+arguments, with arbitrary offsets.
+  }];
+}
