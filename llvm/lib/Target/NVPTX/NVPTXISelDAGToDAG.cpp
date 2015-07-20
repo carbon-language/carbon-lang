@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXISelDAGToDAG.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
@@ -544,6 +545,21 @@ static unsigned int getCodeAddrSpace(MemSDNode *N) {
   return NVPTX::PTXLdStInstCode::GENERIC;
 }
 
+static bool canLowerToLDG(MemSDNode *N, const NVPTXSubtarget &Subtarget,
+                          unsigned codeAddrSpace, const DataLayout &DL) {
+  if (!Subtarget.hasLDG() || codeAddrSpace != NVPTX::PTXLdStInstCode::GLOBAL) {
+    return false;
+  }
+
+  // Check whether load operates on a readonly argument.
+  bool canUseLDG = false;
+  if (const Argument *A = dyn_cast<const Argument>(
+          GetUnderlyingObject(N->getMemOperand()->getValue(), DL)))
+    canUseLDG = A->onlyReadsMemory() && A->hasNoAliasAttr();
+
+  return canUseLDG;
+}
+
 SDNode *NVPTXDAGToDAGISel::SelectIntrinsicNoChain(SDNode *N) {
   unsigned IID = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
   switch (IID) {
@@ -637,6 +653,10 @@ SDNode *NVPTXDAGToDAGISel::SelectLoad(SDNode *N) {
 
   // Address Space Setting
   unsigned int codeAddrSpace = getCodeAddrSpace(LD);
+
+  if (canLowerToLDG(LD, *Subtarget, codeAddrSpace, CurDAG->getDataLayout())) {
+    return SelectLDGLDU(N);
+  }
 
   // Volatile Setting
   // - .volatile is only availalble for .global and .shared
@@ -871,6 +891,10 @@ SDNode *NVPTXDAGToDAGISel::SelectLoadVector(SDNode *N) {
 
   // Address Space Setting
   unsigned int CodeAddrSpace = getCodeAddrSpace(MemSD);
+
+  if (canLowerToLDG(MemSD, *Subtarget, CodeAddrSpace, CurDAG->getDataLayout())) {
+    return SelectLDGLDU(N);
+  }
 
   // Volatile Setting
   // - .volatile is only availalble for .global and .shared
@@ -1425,6 +1449,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
       switch (N->getOpcode()) {
       default:
         return nullptr;
+      case ISD::LOAD:
       case ISD::INTRINSIC_W_CHAIN:
         if (IsLDG) {
           switch (EltVT.getSimpleVT().SimpleTy) {
@@ -1474,6 +1499,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           }
         }
         break;
+      case NVPTXISD::LoadV2:
       case NVPTXISD::LDGV2:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1522,6 +1548,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           break;
         }
         break;
+      case NVPTXISD::LoadV4:
       case NVPTXISD::LDGV4:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1563,6 +1590,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
       switch (N->getOpcode()) {
       default:
         return nullptr;
+      case ISD::LOAD:
       case ISD::INTRINSIC_W_CHAIN:
         if (IsLDG) {
           switch (EltVT.getSimpleVT().SimpleTy) {
@@ -1612,6 +1640,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           }
         }
         break;
+      case NVPTXISD::LoadV2:
       case NVPTXISD::LDGV2:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1660,6 +1689,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           break;
         }
         break;
+      case NVPTXISD::LoadV4:
       case NVPTXISD::LDGV4:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1707,6 +1737,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
       switch (N->getOpcode()) {
       default:
         return nullptr;
+      case ISD::LOAD:
       case ISD::INTRINSIC_W_CHAIN:
         if (IsLDG) {
           switch (EltVT.getSimpleVT().SimpleTy) {
@@ -1756,6 +1787,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           }
         }
         break;
+      case NVPTXISD::LoadV2:
       case NVPTXISD::LDGV2:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1804,6 +1836,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           break;
         }
         break;
+      case NVPTXISD::LoadV4:
       case NVPTXISD::LDGV4:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1845,6 +1878,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
       switch (N->getOpcode()) {
       default:
         return nullptr;
+      case ISD::LOAD:
       case ISD::INTRINSIC_W_CHAIN:
         if (IsLDG) {
           switch (EltVT.getSimpleVT().SimpleTy) {
@@ -1894,6 +1928,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           }
         }
         break;
+      case NVPTXISD::LoadV2:
       case NVPTXISD::LDGV2:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
@@ -1942,6 +1977,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDU(SDNode *N) {
           break;
         }
         break;
+      case NVPTXISD::LoadV4:
       case NVPTXISD::LDGV4:
         switch (EltVT.getSimpleVT().SimpleTy) {
         default:
