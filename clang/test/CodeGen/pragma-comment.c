@@ -30,3 +30,4 @@
 // PS4: !{!"\01msvcrt.lib"}
 // PS4: !{!"\01kernel32"}
 // PS4: !{!"\01USER32.LIB"}
+// PS4: !{!"\01\22with space\22"}
