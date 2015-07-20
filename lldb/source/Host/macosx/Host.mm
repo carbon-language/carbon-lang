@@ -39,6 +39,7 @@
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Communication.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -790,21 +791,23 @@ GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
     {
         int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, (int)process_info.GetProcessID() };
 
-        char arg_data[8192];
-        size_t arg_data_size = sizeof(arg_data);
-        if (::sysctl (proc_args_mib, 3, arg_data, &arg_data_size , NULL, 0) == 0)
+        size_t arg_data_size = 0;
+        if (::sysctl (proc_args_mib, 3, nullptr, &arg_data_size, NULL, 0) || arg_data_size == 0)
+            arg_data_size = 8192;
+
+        // Add a few bytes to the calculated length, I know we need to add at least one byte
+        // to this number otherwise we get junk back, so add 128 just in case...
+        DataBufferHeap arg_data(arg_data_size+128, 0);
+        arg_data_size = arg_data.GetByteSize();
+        if (::sysctl (proc_args_mib, 3, arg_data.GetBytes(), &arg_data_size , NULL, 0) == 0)
         {
-            DataExtractor data (arg_data, arg_data_size, lldb::endian::InlHostByteOrder(), sizeof(void *));
+            DataExtractor data (arg_data.GetBytes(), arg_data_size, lldb::endian::InlHostByteOrder(), sizeof(void *));
             lldb::offset_t offset = 0;
             uint32_t argc = data.GetU32 (&offset);
-            const char *cstr;
-            
-            
             llvm::Triple &triple = process_info.GetArchitecture().GetTriple();
             const llvm::Triple::ArchType triple_arch = triple.getArch();
             const bool check_for_ios_simulator = (triple_arch == llvm::Triple::x86 || triple_arch == llvm::Triple::x86_64);
-            
-            cstr = data.GetCStr (&offset);
+            const char *cstr = data.GetCStr (&offset);
             if (cstr)
             {
                 process_info.GetExecutableFile().SetFile(cstr, false);
