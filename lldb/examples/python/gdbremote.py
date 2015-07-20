@@ -129,9 +129,9 @@ class TerminalColors:
         The foreground color will be set if "fg" tests True. The background color will be set if "fg" tests False.'''
         if self.enabled:         
             if fg:               
-                return "\x1b[43m";
-            else:                
                 return "\x1b[33m";
+            else:                
+                return "\x1b[43m";
         return ''
     
     def blue(self, fg = True):         
@@ -625,9 +625,13 @@ def cmd_A(options, cmd, args):
     packet = Packet(args)
     while 1:
         arg_len = packet.get_number()
+        if arg_len == -1:
+            break
         if not packet.skip_exact_string(','):
             break
         arg_idx = packet.get_number()
+        if arg_idx == -1:
+            break
         if not packet.skip_exact_string(','):
             break;
         arg_value = packet.get_hex_ascii_str(arg_len)
@@ -1138,6 +1142,7 @@ def parse_gdb_log(file, options):
                 print '-->',
             else:
                 print '<--',
+
             if packet[0] == '+':
                 if not options.quiet: print 'ACK'
                 continue
