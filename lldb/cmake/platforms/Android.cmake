@@ -125,17 +125,19 @@ set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -Wl,--gc-sections" )
 # Therefore, in order to statically link lldb-server, we need a temporary
 # workaround. This creates a dummy libdl.a stub until the actual
 # libdl.a can be implemented in the toolchain.
-set( ANDROID_LIBDL_STUB "${CMAKE_BINARY_DIR}/libdl_stub" )
-file( MAKE_DIRECTORY ${ANDROID_LIBDL_STUB} )
-file( WRITE "${ANDROID_LIBDL_STUB}/libdl.c" "
+if( LLVM_BUILD_STATIC )
+ set( ANDROID_LIBDL_STUB "${CMAKE_BINARY_DIR}/libdl_stub" )
+ file( MAKE_DIRECTORY ${ANDROID_LIBDL_STUB} )
+ file( WRITE "${ANDROID_LIBDL_STUB}/libdl.c" "
 #include <dlfcn.h>
 void *       dlopen  (const char *filename, int flag)   { return 0; }
 const char * dlerror (void)                             { return 0; }
 void *       dlsym   (void *handle, const char *symbol) { return 0; }
 int          dlclose (void *handle)                     { return 0; }")
-execute_process( COMMAND ${CMAKE_C_COMPILER} -c ${ANDROID_LIBDL_STUB}/libdl.c -o ${ANDROID_LIBDL_STUB}/libdl.o )
-execute_process( COMMAND ${CMAKE_AR} rcs ${ANDROID_LIBDL_STUB}/libdl.a ${ANDROID_LIBDL_STUB}/libdl.o )
-set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -L${ANDROID_LIBDL_STUB}" )
+ execute_process( COMMAND ${CMAKE_C_COMPILER} -c ${ANDROID_LIBDL_STUB}/libdl.c -o ${ANDROID_LIBDL_STUB}/libdl.o )
+ execute_process( COMMAND ${CMAKE_AR} rcs ${ANDROID_LIBDL_STUB}/libdl.a ${ANDROID_LIBDL_STUB}/libdl.o )
+ set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -L${ANDROID_LIBDL_STUB}" )
+endif()
 ################# END EVIL HACK ##################
 
 # cache flags
