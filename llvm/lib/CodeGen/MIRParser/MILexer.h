@@ -52,6 +52,7 @@ struct MIToken {
     StackObject,
     FixedStackObject,
     NamedGlobalValue,
+    QuotedNamedGlobalValue,
     GlobalValue,
 
     // Other tokens
@@ -94,7 +95,26 @@ public:
 
   StringRef::iterator location() const { return Range.begin(); }
 
-  StringRef stringValue() const { return Range.drop_front(StringOffset); }
+  bool isStringValueQuoted() const { return Kind == QuotedNamedGlobalValue; }
+
+  /// Return the token's raw string value.
+  ///
+  /// If the string value is quoted, this method returns that quoted string as
+  /// it is, without unescaping the string value.
+  StringRef rawStringValue() const { return Range.drop_front(StringOffset); }
+
+  /// Return token's string value.
+  ///
+  /// Expects the string value to be unquoted.
+  StringRef stringValue() const {
+    assert(!isStringValueQuoted() && "String value is quoted");
+    return Range.drop_front(StringOffset);
+  }
+
+  /// Unescapes the token's string value.
+  ///
+  /// Expects the string value to be quoted.
+  void unescapeQuotedStringValue(std::string &Str) const;
 
   const APSInt &integerValue() const { return IntVal; }
 

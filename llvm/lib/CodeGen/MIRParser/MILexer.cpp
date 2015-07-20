@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MILexer.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include <cctype>
@@ -66,6 +67,51 @@ static Cursor skipWhitespace(Cursor C) {
 static bool isIdentifierChar(char C) {
   return isalpha(C) || isdigit(C) || C == '_' || C == '-' || C == '.' ||
          C == '$';
+}
+
+void MIToken::unescapeQuotedStringValue(std::string &Str) const {
+  assert(isStringValueQuoted() && "String value isn't quoted");
+  StringRef Value = Range.drop_front(StringOffset);
+  assert(Value.front() == '"' && Value.back() == '"');
+  Cursor C = Cursor(Value.substr(1, Value.size() - 2));
+
+  Str.clear();
+  Str.reserve(C.remaining().size());
+  while (!C.isEOF()) {
+    char Char = C.peek();
+    if (Char == '\\') {
+      if (C.peek(1) == '\\') {
+        // Two '\' become one
+        Str += '\\';
+        C.advance(2);
+        continue;
+      }
+      if (isxdigit(C.peek(1)) && isxdigit(C.peek(2))) {
+        Str += hexDigitValue(C.peek(1)) * 16 + hexDigitValue(C.peek(2));
+        C.advance(3);
+        continue;
+      }
+    }
+    Str += Char;
+    C.advance();
+  }
+}
+
+/// Lex a string constant using the following regular expression: \"[^\"]*\"
+static Cursor lexStringConstant(
+    Cursor C,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  assert(C.peek() == '"');
+  for (C.advance(); C.peek() != '"'; C.advance()) {
+    if (C.isEOF()) {
+      ErrorCallback(
+          C.location(),
+          "end of machine instruction reached before the closing '\"'");
+      return None;
+    }
+  }
+  C.advance();
+  return C;
 }
 
 static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
@@ -190,12 +236,22 @@ static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
   return C;
 }
 
-static Cursor maybeLexGlobalValue(Cursor C, MIToken &Token) {
+static Cursor maybeLexGlobalValue(
+    Cursor C, MIToken &Token,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
   if (C.peek() != '@')
     return None;
   auto Range = C;
   C.advance(); // Skip the '@'
-  // TODO: add support for quoted names.
+  if (C.peek() == '"') {
+    if (Cursor R = lexStringConstant(C, ErrorCallback)) {
+      Token = MIToken(MIToken::QuotedNamedGlobalValue, Range.upto(R),
+                      /*StringOffset=*/1); // Drop the '@'
+      return R;
+    }
+    Token = MIToken(MIToken::Error, Range.remaining());
+    return Range;
+  }
   if (!isdigit(C.peek())) {
     while (isIdentifierChar(C.peek()))
       C.advance();
@@ -267,7 +323,7 @@ StringRef llvm::lexMIToken(
     return R.remaining();
   if (Cursor R = maybeLexRegister(C, Token))
     return R.remaining();
-  if (Cursor R = maybeLexGlobalValue(C, Token))
+  if (Cursor R = maybeLexGlobalValue(C, Token, ErrorCallback))
     return R.remaining();
   if (Cursor R = maybeLexIntegerLiteral(C, Token))
     return R.remaining();

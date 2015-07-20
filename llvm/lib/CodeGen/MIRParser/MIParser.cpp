@@ -31,6 +31,22 @@ using namespace llvm;
 
 namespace {
 
+struct StringValueUtility {
+  StringRef String;
+  std::string UnescapedString;
+
+  StringValueUtility(const MIToken &Token) {
+    if (Token.isStringValueQuoted()) {
+      Token.unescapeQuotedStringValue(UnescapedString);
+      String = UnescapedString;
+      return;
+    }
+    String = Token.stringValue();
+  }
+
+  operator StringRef() const { return String; }
+};
+
 /// A wrapper struct around the 'MachineOperand' struct that includes a source
 /// range.
 struct MachineOperandWithLocation {
@@ -485,14 +501,16 @@ bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
 
 bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
-  case MIToken::NamedGlobalValue: {
-    auto Name = Token.stringValue();
+  case MIToken::NamedGlobalValue:
+  case MIToken::QuotedNamedGlobalValue: {
+    StringValueUtility Name(Token);
     const Module *M = MF.getFunction()->getParent();
     if (const auto *GV = M->getNamedValue(Name)) {
       Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
       break;
     }
-    return error(Twine("use of undefined global value '@") + Name + "'");
+    return error(Twine("use of undefined global value '@") +
+                 Token.rawStringValue() + "'");
   }
   case MIToken::GlobalValue: {
     unsigned GVIdx;
@@ -548,6 +566,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseFixedStackObjectOperand(Dest);
   case MIToken::GlobalValue:
   case MIToken::NamedGlobalValue:
+  case MIToken::QuotedNamedGlobalValue:
     return parseGlobalAddressOperand(Dest);
   case MIToken::JumpTableIndex:
     return parseJumpTableIndexOperand(Dest);

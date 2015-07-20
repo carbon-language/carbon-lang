@@ -1,0 +1,24 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  @"quoted name" = external global i32
+
+  define i32 @test() {
+  entry:
+    %a = load i32, i32* @"quoted name"
+    ret i32 %a
+  }
+
+...
+---
+name:            test
+body:
+  - id:          0
+    name:        entry
+    instructions:
+      # CHECK: [[@LINE+1]]:53: end of machine instruction reached before the closing '"'
+      - '%rax = MOV64rm %rip, 1, _, @"quoted name, _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - 'RETQ %eax'
+...

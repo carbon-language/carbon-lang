@@ -34,6 +34,14 @@
     ret i32 %b
   }
 
+  @"\01Hello@$%09 \\ World," = external global i32
+
+  define i32 @test2() {
+  entry:
+    %a = load i32, i32* @"\01Hello@$%09 \\ World,"
+    ret i32 %a
+  }
+
 ...
 ---
 # CHECK: name: inc
@@ -79,5 +87,16 @@ body:
       - '%eax = MOV32rm killed %rax, 1, _, 0, _'
       - '%rcx = MOV64rm %rip, 1, _, @$.-B, _'
       - 'MOV32mr killed %rcx, 1, _, 0, _, %eax'
+      - 'RETQ %eax'
+...
+---
+name:            test2
+body:
+  - id:              0
+    name:            entry
+    instructions:
+      # CHECK: , @"\01Hello@$%09 \5C World,",
+      - '%rax = MOV64rm %rip, 1, _, @"\01Hello@$%09 \\ World,", _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
       - 'RETQ %eax'
 ...
