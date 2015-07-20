@@ -253,13 +253,13 @@ static std::error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
 
 static StringRef getLoadName(const ObjectFile *Obj) {
   if (auto *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
-    return ELF->getLoadName();
+    return ELF->getELFFile()->getLoadName();
   if (auto *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
-    return ELF->getLoadName();
+    return ELF->getELFFile()->getLoadName();
   if (auto *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
-    return ELF->getLoadName();
+    return ELF->getELFFile()->getLoadName();
   if (auto *ELF = dyn_cast<ELF64BEObjectFile>(Obj))
-    return ELF->getLoadName();
+    return ELF->getELFFile()->getLoadName();
   llvm_unreachable("Not ELF");
 }
 
