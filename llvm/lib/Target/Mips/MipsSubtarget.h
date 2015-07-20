@@ -189,7 +189,7 @@ public:
   }
   bool hasMips32r5() const {
     return (MipsArchVersion >= Mips32r5 && MipsArchVersion < Mips32Max) ||
-           hasMips64r2();
+           hasMips64r5();
   }
   bool hasMips32r6() const {
     return (MipsArchVersion >= Mips32r6 && MipsArchVersion < Mips32Max) ||

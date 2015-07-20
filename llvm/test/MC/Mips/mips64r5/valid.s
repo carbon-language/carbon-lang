@@ -132,6 +132,7 @@ a:
         ei        $14                  # CHECK: ei  $14       # encoding: [0x41,0x6e,0x60,0x20]
         ei                             # CHECK: ei            # encoding: [0x41,0x60,0x60,0x20]
         eret
+        eretnc                         # CHECK: eretnc        # encoding: [0x42,0x00,0x00,0x58]
         floor.l.d $f26,$f7
         floor.l.s $f12,$f5
         floor.w.d $f14,$f11

@@ -103,6 +103,8 @@ a:
         divu    $2,$3,$4         # CHECK: divu $2, $3, $4  # encoding: [0x00,0x64,0x10,0x9b]
         ei      $14              # CHECK: ei  $14          # encoding: [0x41,0x6e,0x60,0x20]
         ei                       # CHECK: ei               # encoding: [0x41,0x60,0x60,0x20]
+        eret
+        eretnc                   # CHECK: eretnc           # encoding: [0x42,0x00,0x00,0x58]
         jialc   $5, 256          # CHECK: jialc $5, 256    # encoding: [0xf8,0x05,0x01,0x00]
         jic     $5, 256          # CHECK: jic $5, 256      # encoding: [0xd8,0x05,0x01,0x00]
         lsa     $2, $3, $4, 3    # CHECK: lsa  $2, $3, $4, 3 # encoding: [0x00,0x64,0x10,0xc5]

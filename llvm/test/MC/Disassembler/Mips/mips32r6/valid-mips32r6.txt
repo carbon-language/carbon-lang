@@ -126,6 +126,7 @@
 0x46 0xa4 0x18 0x8d # CHECK: cmp.sult.d $f2, $f3, $f4
 0x46 0xa4 0x18 0x8e # CHECK: cmp.sle.d $f2, $f3, $f4
 0x46 0xa4 0x18 0x8f # CHECK: cmp.sule.d $f2, $f3, $f4
+0x42 0x00 0x00 0x58 # CHECK: eretnc
 # FIXME: The encode/decode functions are not inverses of each other.
 #        The immediate should be 8 but the disassembler currently emits 12
 0x49 0x20 0x00 0x02 # CHECK: bc2eqz $0, 12

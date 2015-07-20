@@ -132,6 +132,7 @@ a:
         dsubu   $15,$11,5025     # CHECK: daddiu $15, $11, -5025 # encoding: [0x65,0x6f,0xec,0x5f]
         ei                       # CHECK: ei               # encoding: [0x41,0x60,0x60,0x20]
         ei      $14              # CHECK: ei  $14          # encoding: [0x41,0x6e,0x60,0x20]
+        eretnc                   # CHECK: eretnc                 # encoding: [0x42,0x00,0x00,0x58]
         j       1f               # CHECK: j $tmp0                # encoding: [0b000010AA,A,A,A]
                                  # CHECK:                        #   fixup A - offset: 0, value: ($tmp0), kind: fixup_Mips_26
         j       a                # CHECK: j a                    # encoding: [0b000010AA,A,A,A]
