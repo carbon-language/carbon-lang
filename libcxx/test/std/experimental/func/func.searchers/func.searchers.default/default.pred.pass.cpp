@@ -9,6 +9,8 @@
 
 // <functional>
 
+// UNSUPPORTED: c++98, c++03, c++11
+
 // default searcher
 // template<class _ForwardIterator, class _BinaryPredicate = equal_to<>>
 // class default_searcher {
@@ -39,7 +41,7 @@ struct count_equal
 {
     static unsigned count;
     template <class T>
-    bool operator()(const T& x, const T& y)
+    bool operator()(const T& x, const T& y) const
         {++count; return x == y;}
 };
 
