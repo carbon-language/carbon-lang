@@ -1,0 +1,118 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses constant pool constants and
+# constant pool operands correctly.
+
+--- |
+
+  define double @test(double %a, float %b) {
+  entry:
+    %c = fadd double %a, 3.250000e+00
+    %d = fadd float %b, 6.250000e+00
+    %e = fpext float %d to double
+    %f = fmul double %c, %e
+    ret double %f
+  }
+
+  define double @test2(double %a, float %b) {
+  entry:
+    %c = fadd double %a, 3.250000e+00
+    %d = fadd float %b, 6.250000e+00
+    %e = fpext float %d to double
+    %f = fmul double %c, %e
+    ret double %f
+  }
+
+  define double @test3(double %a, float %b) {
+  entry:
+    %c = fadd double %a, 3.250000e+00
+    %d = fadd float %b, 6.250000e+00
+    %e = fpext float %d to double
+    %f = fmul double %c, %e
+    ret double %f
+  }
+...
+---
+# CHECK: name: test
+# CHECK: constants:
+# CHECK-NEXT: - id: 0
+# CHECK-NEXT:   value: 'double 3.250000e+00'
+# CHECK-NEXT:   alignment: 8
+# CHECK-NEXT: - id: 1
+# CHECK-NEXT:   value: 'float 6.250000e+00'
+# CHECK-NEXT:   alignment: 4
+name:            test
+constants:
+  - id:          0
+    value:       'double 3.250000e+00'
+    alignment:   8
+  - id:          1
+    value:       'float 6.250000e+00'
+    alignment:   4
+body:
+  - id: 0
+    name: entry
+    instructions:
+      # CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+      # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
+      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
+      - '%xmm1 = CVTSS2SDrr killed %xmm1'
+      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
+      - 'RETQ %xmm0'
+...
+---
+# Verify that alignment can be inferred:
+# CHECK: name: test2
+# CHECK: constants:
+# CHECK-NEXT: - id: 0
+# CHECK-NEXT:   value: 'double 3.250000e+00'
+# CHECK-NEXT:   alignment: 8
+# CHECK-NEXT: - id: 1
+# CHECK-NEXT:   value: 'float 6.250000e+00'
+# CHECK-NEXT:   alignment: 4
+name:            test2
+constants:
+  - id:          0
+    value:       'double 3.250000e+00'
+  - id:          1
+    value:       'float 6.250000e+00'
+body:
+  - id: 0
+    name: entry
+    instructions:
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
+      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
+      - '%xmm1 = CVTSS2SDrr killed %xmm1'
+      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
+      - 'RETQ %xmm0'
+...
+---
+# Verify that the non-standard alignments are respected:
+# CHECK: name: test3
+# CHECK: constants:
+# CHECK-NEXT: - id: 0
+# CHECK-NEXT:   value: 'double 3.250000e+00'
+# CHECK-NEXT:   alignment: 128
+# CHECK-NEXT: - id: 1
+# CHECK-NEXT:   value: 'float 6.250000e+00'
+# CHECK-NEXT:   alignment: 1
+name:            test3
+constants:
+  - id:          0
+    value:       'double 3.250000e+00'
+    alignment:   128
+  - id:          1
+    value:       'float 6.250000e+00'
+    alignment:   1
+body:
+  - id: 0
+    name: entry
+    instructions:
+      # CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+      # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
+      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
+      - '%xmm1 = CVTSS2SDrr killed %xmm1'
+      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
+      - 'RETQ %xmm0'
+...

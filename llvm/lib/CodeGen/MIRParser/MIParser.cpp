@@ -108,6 +108,7 @@ public:
   bool parseStackObjectOperand(MachineOperand &Dest);
   bool parseFixedStackObjectOperand(MachineOperand &Dest);
   bool parseGlobalAddressOperand(MachineOperand &Dest);
+  bool parseConstantPoolIndexOperand(MachineOperand &Dest);
   bool parseJumpTableIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
@@ -531,6 +532,20 @@ bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseConstantPoolIndexOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::ConstantPoolItem));
+  unsigned ID;
+  if (getUnsigned(ID))
+    return true;
+  auto ConstantInfo = PFS.ConstantPoolSlots.find(ID);
+  if (ConstantInfo == PFS.ConstantPoolSlots.end())
+    return error("use of undefined constant '%const." + Twine(ID) + "'");
+  lex();
+  // TODO: Parse offset and target flags.
+  Dest = MachineOperand::CreateCPI(ID, /*Offset=*/0);
+  return false;
+}
+
 bool MIParser::parseJumpTableIndexOperand(MachineOperand &Dest) {
   assert(Token.is(MIToken::JumpTableIndex));
   unsigned ID;
@@ -568,6 +583,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::NamedGlobalValue:
   case MIToken::QuotedNamedGlobalValue:
     return parseGlobalAddressOperand(Dest);
+  case MIToken::ConstantPoolItem:
+    return parseConstantPoolIndexOperand(Dest);
   case MIToken::JumpTableIndex:
     return parseJumpTableIndexOperand(Dest);
   case MIToken::Error:

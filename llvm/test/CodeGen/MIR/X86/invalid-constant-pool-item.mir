@@ -1,0 +1,27 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+# This test ensures that the MIR parser reports an error when parsing an invalid
+# constant pool item operand.
+
+--- |
+
+  define double @test(double %a, float %b) {
+  entry:
+    %c = fadd double %a, 3.250000e+00
+    ret double %c
+  }
+
+...
+---
+name:            test
+constants:
+  - id:          0
+    value:       'double 3.250000e+00'
+body:
+  - id: 0
+    name: entry
+    instructions:
+      # CHECK: [[@LINE+1]]:52: use of undefined constant '%const.10'
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.10, _'
+      - 'RETQ %xmm0'
+...
+

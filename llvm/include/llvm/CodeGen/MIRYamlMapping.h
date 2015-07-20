@@ -223,6 +223,20 @@ template <> struct MappingTraits<FixedMachineStackObject> {
   static const bool flow = true;
 };
 
+struct MachineConstantPoolValue {
+  unsigned ID;
+  StringValue Value;
+  unsigned Alignment = 0;
+};
+
+template <> struct MappingTraits<MachineConstantPoolValue> {
+  static void mapping(IO &YamlIO, MachineConstantPoolValue &Constant) {
+    YamlIO.mapRequired("id", Constant.ID);
+    YamlIO.mapOptional("value", Constant.Value);
+    YamlIO.mapOptional("alignment", Constant.Alignment);
+  }
+};
+
 struct MachineJumpTable {
   struct Entry {
     unsigned ID;
@@ -247,6 +261,7 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::VirtualRegisterDefinition)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineBasicBlock)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineStackObject)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::FixedMachineStackObject)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineConstantPoolValue)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineJumpTable::Entry)
 
 namespace llvm {
@@ -320,6 +335,7 @@ struct MachineFunction {
   MachineFrameInfo FrameInfo;
   std::vector<FixedMachineStackObject> FixedStackObjects;
   std::vector<MachineStackObject> StackObjects;
+  std::vector<MachineConstantPoolValue> Constants; /// Constant pool.
   MachineJumpTable JumpTableInfo;
 
   std::vector<MachineBasicBlock> BasicBlocks;
@@ -338,6 +354,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("frameInfo", MF.FrameInfo);
     YamlIO.mapOptional("fixedStack", MF.FixedStackObjects);
     YamlIO.mapOptional("stack", MF.StackObjects);
+    YamlIO.mapOptional("constants", MF.Constants);
     if (!YamlIO.outputting() || !MF.JumpTableInfo.Entries.empty())
       YamlIO.mapOptional("jumpTable", MF.JumpTableInfo);
     YamlIO.mapOptional("body", MF.BasicBlocks);

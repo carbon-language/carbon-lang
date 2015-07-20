@@ -31,6 +31,7 @@ struct PerFunctionMIParsingState {
   DenseMap<unsigned, unsigned> VirtualRegisterSlots;
   DenseMap<unsigned, int> FixedStackObjectSlots;
   DenseMap<unsigned, int> StackObjectSlots;
+  DenseMap<unsigned, unsigned> ConstantPoolSlots;
   DenseMap<unsigned, unsigned> JumpTableSlots;
 };
 

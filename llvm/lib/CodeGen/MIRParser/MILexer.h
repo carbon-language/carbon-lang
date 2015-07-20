@@ -58,6 +58,7 @@ struct MIToken {
     // Other tokens
     IntegerLiteral,
     VirtualRegister,
+    ConstantPoolItem,
     JumpTableIndex
   };
 
@@ -122,7 +123,7 @@ public:
     return Kind == IntegerLiteral || Kind == MachineBasicBlock ||
            Kind == StackObject || Kind == FixedStackObject ||
            Kind == GlobalValue || Kind == VirtualRegister ||
-           Kind == JumpTableIndex;
+           Kind == ConstantPoolItem || Kind == JumpTableIndex;
   }
 };
 
