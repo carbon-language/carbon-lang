@@ -1860,6 +1860,65 @@ void EmitClangAttrPCHWrite(RecordKeeper &Records, raw_ostream &OS) {
   OS << "  }\n";
 }
 
+// Generate a conditional expression to check if the current target satisfies
+// the conditions for a TargetSpecificAttr record, and append the code for
+// those checks to the Test string. If the FnName string pointer is non-null,
+// append a unique suffix to distinguish this set of target checks from other
+// TargetSpecificAttr records.
+static void GenerateTargetSpecificAttrChecks(const Record *R,
+                                             std::vector<std::string> &Arches,
+                                             std::string &Test,
+                                             std::string *FnName) {
+  // It is assumed that there will be an llvm::Triple object
+  // named "T" and a TargetInfo object named "Target" within
+  // scope that can be used to determine whether the attribute exists in
+  // a given target.
+  Test += "(";
+
+  for (auto I = Arches.begin(), E = Arches.end(); I != E; ++I) {
+    std::string Part = *I;
+    Test += "T.getArch() == llvm::Triple::" + Part;
+    if (I + 1 != E)
+      Test += " || ";
+    if (FnName)
+      *FnName += Part;
+  }
+  Test += ")";
+
+  // If the attribute is specific to particular OSes, check those.
+  if (!R->isValueUnset("OSes")) {
+    // We know that there was at least one arch test, so we need to and in the
+    // OS tests.
+    Test += " && (";
+    std::vector<std::string> OSes = R->getValueAsListOfStrings("OSes");
+    for (auto I = OSes.begin(), E = OSes.end(); I != E; ++I) {
+      std::string Part = *I;
+
+      Test += "T.getOS() == llvm::Triple::" + Part;
+      if (I + 1 != E)
+        Test += " || ";
+      if (FnName)
+        *FnName += Part;
+    }
+    Test += ")";
+  }
+
+  // If one or more CXX ABIs are specified, check those as well.
+  if (!R->isValueUnset("CXXABIs")) {
+    Test += " && (";
+    std::vector<std::string> CXXABIs = R->getValueAsListOfStrings("CXXABIs");
+    for (auto I = CXXABIs.begin(), E = CXXABIs.end(); I != E; ++I) {
+      std::string Part = *I;
+      Test += "Target.getCXXABI().getKind() == TargetCXXABI::" + Part;
+      if (I + 1 != E)
+        Test += " || ";
+      if (FnName)
+        *FnName += Part;
+    }
+    Test += ")";
+  }
+}
+
 static void GenerateHasAttrSpellingStringSwitch(
     const std::vector<Record *> &Attrs, raw_ostream &OS,
     const std::string &Variety = "", const std::string &Scope = "") {
@@ -1885,53 +1944,11 @@ static void GenerateHasAttrSpellingStringSwitch(
       }
     }
 
-    // It is assumed that there will be an llvm::Triple object
-    // named "T" and a TargetInfo object named "Target" within
-    // scope that can be used to determine whether the attribute exists in
-    // a given target.
     std::string Test;
     if (Attr->isSubClassOf("TargetSpecificAttr")) {
       const Record *R = Attr->getValueAsDef("Target");
       std::vector<std::string> Arches = R->getValueAsListOfStrings("Arches");
-
-      Test += "(";
-      for (auto AI = Arches.begin(), AE = Arches.end(); AI != AE; ++AI) {
-        std::string Part = *AI;
-        Test += "T.getArch() == llvm::Triple::" + Part;
-        if (AI + 1 != AE)
-          Test += " || ";
-      }
-      Test += ")";
-
-      // If the attribute is specific to particular OSes, check those.
-      std::vector<std::string> OSes;
-      if (!R->isValueUnset("OSes")) {
-        Test += " && (";
-        std::vector<std::string> OSes = R->getValueAsListOfStrings("OSes");
-        for (auto AI = OSes.begin(), AE = OSes.end(); AI != AE; ++AI) {
-          std::string Part = *AI;
-
-          Test += "T.getOS() == llvm::Triple::" + Part;
-          if (AI + 1 != AE)
-            Test += " || ";
-        }
-        Test += ")";
-      }
-      
-      // If one or more CXX ABIs are specified, check those as well.
-      if (!R->isValueUnset("CXXABIs")) {
-        Test += " && (";
-        std::vector<std::string> CXXABIs =
-          R->getValueAsListOfStrings("CXXABIs");
-        for (auto AI = CXXABIs.begin(), AE = CXXABIs.end(); AI != AE; ++AI) {
-          std::string Part = *AI;
-
-          Test += "Target.getCXXABI().getKind() == TargetCXXABI::" + Part;
-          if (AI + 1 != AE)
-            Test += " || ";
-        }
-        Test += ")";
-      }
+      GenerateTargetSpecificAttrChecks(R, Arches, Test, 0);
 
       // If this is the C++11 variety, also add in the LangOpts test.
       if (Variety == "CXX11")
@@ -2521,49 +2538,9 @@ static std::string GenerateTargetRequirements(const Record &Attr,
     }
   }
 
-  std::string FnName = "isTarget", Test = "(";
-  for (auto I = Arches.begin(), E = Arches.end(); I != E; ++I) {
-    std::string Part = *I;
-    Test += "Arch == llvm::Triple::" + Part;
-    if (I + 1 != E)
-      Test += " || ";
-    FnName += Part;
-  }
-  Test += ")";
-
-  // If the target also requires OS testing, generate those tests as well.
-  bool UsesOS = false;
-  if (!R->isValueUnset("OSes")) {
-    UsesOS = true;
-    
-    // We know that there was at least one arch test, so we need to and in the
-    // OS tests.
-    Test += " && (";
-    std::vector<std::string> OSes = R->getValueAsListOfStrings("OSes");
-    for (auto I = OSes.begin(), E = OSes.end(); I != E; ++I) {
-      std::string Part = *I;
-
-      Test += "OS == llvm::Triple::" + Part;
-      if (I + 1 != E)
-        Test += " || ";
-      FnName += Part;
-    }
-    Test += ")";
-  }
-
-  // Test for the C++ ABI, if specified.
-  if (!R->isValueUnset("CXXABIs")) {
-    Test += " && (";
-    std::vector<std::string> CXXABIs = R->getValueAsListOfStrings("CXXABIs");
-    for (auto I = CXXABIs.begin(), E = CXXABIs.end(); I != E; ++I) {
-      std::string Part = *I;
-      Test += "Target.getCXXABI().getKind() == TargetCXXABI::" + Part;
-      if (I + 1 != E)
-        Test += " || ";
-      FnName += Part;
-    }
-    Test += ")";
-  }
+  std::string FnName = "isTarget";
+  std::string Test;
+  GenerateTargetSpecificAttrChecks(R, Arches, Test, &FnName);
 
   // If this code has already been generated, simply return the previous
   // instance of it.
@@ -2574,9 +2551,6 @@ static std::string GenerateTargetRequirements(const Record &Attr,
 
   OS << "static bool " << FnName << "(const TargetInfo &Target) {\n";
   OS << "  const llvm::Triple &T = Target.getTriple();\n";
-  OS << "  llvm::Triple::ArchType Arch = T.getArch();\n";
-  if (UsesOS)
-    OS << "  llvm::Triple::OSType OS = T.getOS();\n";
   OS << "  return " << Test << ";\n";
   OS << "}\n\n";
 
