@@ -9,6 +9,7 @@
 // CHECK: @_ZZ2h2vE1i = linkonce_odr global i32 0, comdat, align
 // CHECK: @_ZGVZ2h2vE1i = linkonce_odr global i64 0, comdat{{$}}
 // CHECK: @_ZZN5test1L6getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
+// CHECK: @_ZZN5test414useStaticLocalEvE3obj = linkonce_odr global %"struct.test4::HasVTable" zeroinitializer, comdat, align 8
 
 struct A {
   A();
@@ -153,4 +154,20 @@ namespace test3 {
   }
   // CHECK-LABEL: define void @_ZN5test31BC2Ev(
   // CHECK-LABEL: define void @_ZN5test31BC1Ev(
+}
+
+// We forgot to set the comdat when replacing the global with a different type.
+namespace test4 {
+struct HasVTable {
+  virtual void f();
+};
+inline HasVTable &useStaticLocal() {
+  static HasVTable obj;
+  return obj;
+}
+void useit() {
+  useStaticLocal();
+}
+// CHECK: define linkonce_odr dereferenceable(8) %"struct.test4::HasVTable"* @_ZN5test414useStaticLocalEv()
+// CHECK: ret %"struct.test4::HasVTable"* @_ZZN5test414useStaticLocalEvE3obj
 }
