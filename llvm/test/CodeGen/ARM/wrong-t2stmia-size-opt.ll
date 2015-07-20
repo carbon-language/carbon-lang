@@ -5,20 +5,16 @@ target triple = "thumbv7--linux-gnueabi"
 
 declare i8* @llvm.returnaddress(i32)
 
-define i32* @wrong-t2stmia-size-reduction(i32* %addr, i32 %val0, i32 %val1) minsize {
+define i32* @wrong-t2stmia-size-reduction(i32* %addr, i32 %val0) minsize {
   store i32 %val0, i32* %addr
   %addr1 = getelementptr i32, i32* %addr, i32 1
-  %addr2 = getelementptr i32, i32* %addr, i32 2
   %lr = call i8* @llvm.returnaddress(i32 0)
   %lr32 = ptrtoint i8* %lr to i32
-  store i32 %val1, i32* %addr1
-  store i32 %lr32, i32* %addr2
-
-  %addr3 = getelementptr i32, i32* %addr, i32 3
-  ret i32* %addr3
+  store i32 %lr32, i32* %addr1
+  %addr2 = getelementptr i32, i32* %addr1, i32 1
+  ret i32* %addr2
 }
 
-; Check that stm writes three registers.  The bug caused one of registers (LR,
+; Check that stm writes two registers.  The bug caused one of registers (LR,
 ; which invalid for Thumb1 form of STMIA instruction) to be dropped.
-; CHECK-LABEL: wrong-t2stmia-size-reduction:
-; CHECK: stm{{[^,]*}}, {{{.*,.*,.*}}}
+; CHECK: stm{{[^,]*}}, {{{.*,.*}}}

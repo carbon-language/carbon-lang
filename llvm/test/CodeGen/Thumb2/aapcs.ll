@@ -33,7 +33,8 @@ define float @float_on_stack(double %a, double %b, double %c, double %d, double 
 
 define double @double_on_stack(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i) {
 ; CHECK-LABEL: double_on_stack:
-; SOFT: ldrd r0, r1, [sp, #48]
+; SOFT: ldr r0, [sp, #48]
+; SOFT: ldr r1, [sp, #52]
 ; HARD: vldr d0, [sp]
 ; CHECK-NEXT: bx lr
   ret double %i
@@ -41,7 +42,8 @@ define double @double_on_stack(double %a, double %b, double %c, double %d, doubl
 
 define double @double_not_split(double %a, double %b, double %c, double %d, double %e, double %f, double %g, float %h, double %i) {
 ; CHECK-LABEL: double_not_split:
-; SOFT: ldrd r0, r1, [sp, #48]
+; SOFT: ldr r0, [sp, #48]
+; SOFT: ldr r1, [sp, #52]
 ; HARD: vldr d0, [sp]
 ; CHECK-NEXT: bx lr
   ret double %i
