@@ -49,7 +49,7 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   Arch = (getTriple().getArchName() + "-w64-mingw32").str();
   // lib: Arch Linux, Ubuntu, Windows
   // lib64: openSUSE Linux
-  for (StringRef Lib : {"lib", "lib64 "}) {
+  for (StringRef Lib : {"lib", "lib64"}) {
     LibDir = Base;
     llvm::sys::path::append(LibDir, Lib, "gcc");
     LibDir += llvm::sys::path::get_separator();
