@@ -349,18 +349,20 @@ public:
   }
 
   /// \brief Iterate over program header table.
-  typedef ELFEntityIterator<const Elf_Phdr> Elf_Phdr_Iter;
-
-  Elf_Phdr_Iter program_header_begin() const {
-    return Elf_Phdr_Iter(Header->e_phentsize,
-                         (const char*)base() + Header->e_phoff);
+  const Elf_Phdr *program_header_begin() const {
+    if (Header->e_phnum && Header->e_phentsize != sizeof(Elf_Phdr))
+      report_fatal_error("Invalid program header size");
+    return reinterpret_cast<const Elf_Phdr *>(base() + Header->e_phoff);
   }
 
-  Elf_Phdr_Iter program_header_end() const {
-    return Elf_Phdr_Iter(Header->e_phentsize,
-                         (const char*)base() +
-                           Header->e_phoff +
-                           (Header->e_phnum * Header->e_phentsize));
+  const Elf_Phdr *program_header_end() const {
+    return program_header_begin() + Header->e_phnum;
+  }
+
+  typedef iterator_range<const Elf_Phdr *> Elf_Phdr_Range;
+
+  const Elf_Phdr_Range program_headers() const {
+    return make_range(program_header_begin(), program_header_end());
   }
 
   uint64_t getNumSections() const;
@@ -735,21 +737,16 @@ void ELFFile<ELFT>::scanDynamicTable() {
   // stack doesn't get realigned despite LoadMap having alignment 8 (PR24113).
   std::unique_ptr<LoadMapT> LoadMap(new LoadMapT(Alloc));
 
-  for (Elf_Phdr_Iter PhdrI = program_header_begin(),
-                     PhdrE = program_header_end();
-       PhdrI != PhdrE; ++PhdrI) {
-    if (PhdrI->p_type == ELF::PT_DYNAMIC) {
-      DynamicRegion.Addr = base() + PhdrI->p_offset;
-      DynamicRegion.Size = PhdrI->p_filesz;
+  for (const Elf_Phdr &Phdr : program_headers()) {
+    if (Phdr.p_type == ELF::PT_DYNAMIC) {
+      DynamicRegion.Addr = base() + Phdr.p_offset;
+      DynamicRegion.Size = Phdr.p_filesz;
       DynamicRegion.EntSize = sizeof(Elf_Dyn);
       continue;
     }
-    if (PhdrI->p_type != ELF::PT_LOAD)
+    if (Phdr.p_type != ELF::PT_LOAD || Phdr.p_filesz == 0)
       continue;
-    if (PhdrI->p_filesz == 0)
-      continue;
-    LoadMap->insert(PhdrI->p_vaddr, PhdrI->p_vaddr + PhdrI->p_filesz,
-                    PhdrI->p_offset);
+    LoadMap->insert(Phdr.p_vaddr, Phdr.p_vaddr + Phdr.p_filesz, Phdr.p_offset);
   }
 
   auto toMappedAddr = [&](uint64_t VAddr) -> const uint8_t * {

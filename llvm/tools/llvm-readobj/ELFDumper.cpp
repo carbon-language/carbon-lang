@@ -1109,20 +1109,18 @@ template<class ELFT>
 void ELFDumper<ELFT>::printProgramHeaders() {
   ListScope L(W, "ProgramHeaders");
 
-  for (typename ELFO::Elf_Phdr_Iter PI = Obj->program_header_begin(),
-                                    PE = Obj->program_header_end();
-       PI != PE; ++PI) {
+  for (const typename ELFO::Elf_Phdr &Phdr : Obj->program_headers()) {
     DictScope P(W, "ProgramHeader");
-    W.printHex   ("Type",
-                  getElfSegmentType(Obj->getHeader()->e_machine, PI->p_type),
-                  PI->p_type);
-    W.printHex   ("Offset", PI->p_offset);
-    W.printHex   ("VirtualAddress", PI->p_vaddr);
-    W.printHex   ("PhysicalAddress", PI->p_paddr);
-    W.printNumber("FileSize", PI->p_filesz);
-    W.printNumber("MemSize", PI->p_memsz);
-    W.printFlags ("Flags", PI->p_flags, makeArrayRef(ElfSegmentFlags));
-    W.printNumber("Alignment", PI->p_align);
+    W.printHex("Type",
+               getElfSegmentType(Obj->getHeader()->e_machine, Phdr.p_type),
+               Phdr.p_type);
+    W.printHex("Offset", Phdr.p_offset);
+    W.printHex("VirtualAddress", Phdr.p_vaddr);
+    W.printHex("PhysicalAddress", Phdr.p_paddr);
+    W.printNumber("FileSize", Phdr.p_filesz);
+    W.printNumber("MemSize", Phdr.p_memsz);
+    W.printFlags("Flags", Phdr.p_flags, makeArrayRef(ElfSegmentFlags));
+    W.printNumber("Alignment", Phdr.p_align);
   }
 }
 
