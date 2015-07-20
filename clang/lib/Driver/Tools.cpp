@@ -4873,11 +4873,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Host-side cuda compilation receives device-side outputs as Inputs[1...].
   // Include them with -fcuda-include-gpubinary.
   if (IsCuda && Inputs.size() > 1)
-    for (InputInfoList::const_iterator it = std::next(Inputs.begin()),
-                                       ie = Inputs.end();
-         it != ie; ++it) {
+    for (auto I = std::next(Inputs.begin()), E = Inputs.end(); I != E; ++I) {
       CmdArgs.push_back("-fcuda-include-gpubinary");
-      CmdArgs.push_back(it->getFilename());
+      CmdArgs.push_back(I->getFilename());
     }
 
   // Finally add the compile command to the compilation.
