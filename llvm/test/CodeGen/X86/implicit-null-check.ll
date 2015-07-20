@@ -101,6 +101,40 @@ define i32 @imp_null_check_hoist_over_unrelated_load(i32* %x, i32* %y, i32* %z) 
   ret i32 %t1
 }
 
+define i32 @imp_null_check_via_mem_comparision(i32* %x, i32 %val) {
+; CHECK-LABEL: _imp_null_check_via_mem_comparision
+; CHECK: Ltmp9:
+; CHECK: cmpl   %esi, 4(%rdi)
+; CHECK: jge    LBB4_2
+; CHECK: movl   $100, %eax
+; CHECK: retq
+; CHECK: Ltmp8:
+; CHECK: movl   $42, %eax
+; CHECK: retq
+; CHECK: LBB4_2:
+; CHECK: movl   $200, %eax
+; CHECK: retq
+
+ entry:
+  %c = icmp eq i32* %x, null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
+
+ is_null:
+  ret i32 42
+
+ not_null:
+  %x.loc = getelementptr i32, i32* %x, i32 1
+  %t = load i32, i32* %x.loc
+  %m = icmp slt i32 %t, %val
+  br i1 %m, label %ret_100, label %ret_200
+
+ ret_100:
+  ret i32 100
+
+ ret_200:
+  ret i32 200
+}
+
 !0 = !{}
 
 ; CHECK-LABEL: __LLVM_FaultMaps:
@@ -113,7 +147,7 @@ define i32 @imp_null_check_hoist_over_unrelated_load(i32* %x, i32* %y, i32* %z) 
 ; CHECK-NEXT: .short 0
 
 ; # functions:
-; CHECK-NEXT: .long 4
+; CHECK-NEXT: .long 5
 
 ; FunctionAddr:
 ; CHECK-NEXT: .quad _imp_null_check_add_result
@@ -167,9 +201,22 @@ define i32 @imp_null_check_hoist_over_unrelated_load(i32* %x, i32* %y, i32* %z) 
 ; Fault[0].HandlerOffset:
 ; CHECK-NEXT: .long Ltmp0-_imp_null_check_load
 
+; FunctionAddr:
+; CHECK-NEXT: .quad     _imp_null_check_via_mem_comparision
+; NumFaultingPCs
+; CHECK-NEXT: .long   1
+; Reserved:
+; CHECK-NEXT: .long   0
+; Fault[0].Type:
+; CHECK-NEXT: .long   1
+; Fault[0].FaultOffset:
+; CHECK-NEXT: .long   Ltmp9-_imp_null_check_via_mem_comparision
+; Fault[0].HandlerOffset:
+; CHECK-NEXT: .long   Ltmp8-_imp_null_check_via_mem_comparision
+
 ; OBJDUMP: FaultMap table:
 ; OBJDUMP-NEXT: Version: 0x1
-; OBJDUMP-NEXT: NumFunctions: 4
+; OBJDUMP-NEXT: NumFunctions: 5
 ; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1
 ; OBJDUMP-NEXT: Fault kind: FaultingLoad, faulting PC offset: 0, handling PC offset: 5
 ; OBJDUMP-NEXT: FunctionAddress: 0x000000, NumFaultingPCs: 1

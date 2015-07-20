@@ -238,7 +238,7 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
     unsigned BaseReg, Offset;
     if (TII->getMemOpBaseRegImmOfs(MI, BaseReg, Offset, TRI))
       if (MI->mayLoad() && !MI->isPredicable() && BaseReg == PointerReg &&
-          Offset < PageSize && MI->getDesc().getNumDefs() == 1 &&
+          Offset < PageSize && MI->getDesc().getNumDefs() <= 1 &&
           IsSafeToHoist(MI)) {
         NullCheckList.emplace_back(MI, MBP.ConditionDef, &MBB, NotNullSucc,
                                    NullSucc);
@@ -281,14 +281,19 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
 MachineInstr *ImplicitNullChecks::insertFaultingLoad(MachineInstr *LoadMI,
                                                      MachineBasicBlock *MBB,
                                                      MCSymbol *HandlerLabel) {
+  const unsigned NoRegister = 0; // Guaranteed to be the NoRegister value for
+                                 // all targets.
+
   DebugLoc DL;
   unsigned NumDefs = LoadMI->getDesc().getNumDefs();
-  assert(NumDefs == 1 && "other cases unhandled!");
-  (void)NumDefs;
+  assert(NumDefs <= 1 && "other cases unhandled!");
 
-  unsigned DefReg = LoadMI->defs().begin()->getReg();
-  assert(std::distance(LoadMI->defs().begin(), LoadMI->defs().end()) == 1 &&
-         "expected exactly one def!");
+  unsigned DefReg = NoRegister;
+  if (NumDefs != 0) {
+    DefReg = LoadMI->defs().begin()->getReg();
+    assert(std::distance(LoadMI->defs().begin(), LoadMI->defs().end()) == 1 &&
+           "expected exactly one def!");
+  }
 
   auto MIB = BuildMI(MBB, DL, TII->get(TargetOpcode::FAULTING_LOAD_OP), DefReg)
                  .addSym(HandlerLabel)

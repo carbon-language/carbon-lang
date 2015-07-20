@@ -875,7 +875,10 @@ void X86AsmPrinter::LowerFAULTING_LOAD_OP(const MachineInstr &MI,
 
   MCInst LoadMI;
   LoadMI.setOpcode(LoadOpcode);
-  LoadMI.addOperand(MCOperand::createReg(LoadDefRegister));
+
+  if (LoadDefRegister != X86::NoRegister)
+    LoadMI.addOperand(MCOperand::createReg(LoadDefRegister));
+
   for (auto I = MI.operands_begin() + LoadOperandsBeginIdx,
             E = MI.operands_end();
        I != E; ++I)
