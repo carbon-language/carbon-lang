@@ -43,7 +43,7 @@ set( __ANDROID_NDK__ True )
 # a non-pie shim on API 16-, but that requires lldb-server to dynamically export
 # its symbols, which significantly increases the binary size. Static linking, on
 # the other hand, has little to no effect on the binary size.
-#if ( NOT DEFINED LLVM_BUILD_STATIC )
+#if( NOT DEFINED LLVM_BUILD_STATIC )
 # set( LLVM_BUILD_STATIC True )
 #endif()
 
@@ -102,13 +102,13 @@ elseif( ANDROID_ABI STREQUAL "armeabi" )
  # 64 bit atomic operations used in c++ libraries require armv7-a instructions
  # armv5te and armv6 were tried but do not work.
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv7-a" )
- if ( LLVM_BUILD_STATIC )
+ if( LLVM_BUILD_STATIC )
   # Temporary workaround for static linking with the latest API.
   set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -DANDROID_ARM_BUILD_STATIC" )
  endif()
 endif()
 
-if ( NOT LLVM_BUILD_STATIC )
+if( NOT LLVM_BUILD_STATIC )
  # PIE is required for API 21+ so we enable it if we're not statically linking
  # unfortunately, it is not supported before API 16 so we need to do something
  # else there see http://llvm.org/pr23457
