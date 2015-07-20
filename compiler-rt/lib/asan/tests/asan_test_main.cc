@@ -12,6 +12,12 @@
 //===----------------------------------------------------------------------===//
 #include "asan_test_utils.h"
 
+// Default ASAN_OPTIONS for the unit tests. Let's turn symbolication off to
+// speed up testing (unit tests don't use it anyway).
+extern "C" const char* __asan_default_options() {
+  return "symbolize=false";
+}
+
 int main(int argc, char **argv) {
   testing::GTEST_FLAG(death_test_style) = "threadsafe";
   testing::InitGoogleTest(&argc, argv);
