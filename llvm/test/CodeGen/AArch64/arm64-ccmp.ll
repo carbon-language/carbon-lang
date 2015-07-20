@@ -104,11 +104,14 @@ if.end:                                           ; preds = %if.then, %lor.lhs.f
 ; Speculatively execute division by zero.
 ; The sdiv/udiv instructions do not trap when the divisor is zero, so they are
 ; safe to speculate.
-; CHECK: speculate_division
-; CHECK-NOT: cmp
-; CHECK: sdiv
-; CHECK: cmp
-; CHECK-NEXT: ccmp
+; CHECK-LABEL: speculate_division:
+; CHECK: cmp w0, #1
+; CHECK: sdiv [[DIVRES:w[0-9]+]], w1, w0
+; CHECK: ccmp [[DIVRES]], #16, #0, ge
+; CHECK: b.gt [[BLOCK:LBB[0-9_]+]]
+; CHECK: bl _foo
+; CHECK: [[BLOCK]]:
+; CHECK: orr w0, wzr, #0x7
 define i32 @speculate_division(i32 %a, i32 %b) nounwind ssp {
 entry:
   %cmp = icmp sgt i32 %a, 0
