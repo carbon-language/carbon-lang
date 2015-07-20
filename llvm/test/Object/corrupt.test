@@ -37,3 +37,9 @@ RUN:   %p/Inputs/corrupt-invalid-phentsize.elf.x86-64 2>&1 | \
 RUN:   FileCheck --check-prefix=PHENTSIZE %s
 
 PHENTSIZE: Invalid program header size
+
+RUN: not llvm-readobj -dynamic-table \
+RUN:   %p/Inputs/corrupt-invalid-virtual-addr.elf.x86-64 2>&1 | \
+RUN:   FileCheck --check-prefix=VIRTADDR %s
+
+VIRTADDR: Virtual address is not in any segment

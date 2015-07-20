@@ -738,9 +738,13 @@ template <class ELFT> void ELFFile<ELFT>::scanDynamicTable() {
     const Elf_Phdr **I = std::upper_bound(
         LoadSegments.begin(), LoadSegments.end(), VAddr, compareAddr<ELFT>);
     if (I == LoadSegments.begin())
-      return nullptr;
+      report_fatal_error("Virtual address is not in any segment");
     --I;
-    return this->base() + (*I)->p_offset + (VAddr - (*I)->p_vaddr);
+    const Elf_Phdr &Phdr = **I;
+    uint64_t Delta = VAddr - Phdr.p_vaddr;
+    if (Delta >= Phdr.p_filesz)
+      report_fatal_error("Virtual address is not in any segment");
+    return this->base() + Phdr.p_offset + Delta;
   };
 
   for (Elf_Dyn_Iter DynI = dynamic_table_begin(), DynE = dynamic_table_end();
