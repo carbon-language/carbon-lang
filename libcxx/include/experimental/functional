@@ -1,0 +1,133 @@
+// -*- C++ -*-
+//===-------------------------- functional --------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef _LIBCPP_EXPERIMENTAL_FUNCTIONAL
+#define _LIBCPP_EXPERIMENTAL_FUNCTIONAL
+
+/*
+   experimental/functional synopsis
+
+#include <algorithm>
+
+namespace std {
+namespace experimental {
+inline namespace fundamentals_v1 {
+
+    // See C++14 §20.9.9, Function object binders
+    template <class T> constexpr bool is_bind_expression_v
+      = is_bind_expression<T>::value;
+    template <class T> constexpr int is_placeholder_v
+      = is_placeholder<T>::value;
+
+    // 4.2, Class template function
+    template<class> class function; // undefined
+    template<class R, class... ArgTypes> class function<R(ArgTypes...)>;
+
+    template<class R, class... ArgTypes>
+    void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&);
+
+    template<class R, class... ArgTypes>
+    bool operator==(const function<R(ArgTypes...)>&, nullptr_t) noexcept;
+    template<class R, class... ArgTypes>
+    bool operator==(nullptr_t, const function<R(ArgTypes...)>&) noexcept;
+    template<class R, class... ArgTypes>
+    bool operator!=(const function<R(ArgTypes...)>&, nullptr_t) noexcept;
+    template<class R, class... ArgTypes>
+    bool operator!=(nullptr_t, const function<R(ArgTypes...)>&) noexcept;
+
+    // 4.3, Searchers
+    template<class ForwardIterator, class BinaryPredicate = equal_to<>>
+      class default_searcher;
+
+    template<class RandomAccessIterator,
+             class Hash = hash<typename iterator_traits<RandomAccessIterator>::value_type>,
+             class BinaryPredicate = equal_to<>>
+      class boyer_moore_searcher;
+
+    template<class RandomAccessIterator,
+             class Hash = hash<typename iterator_traits<RandomAccessIterator>::value_type>,
+             class BinaryPredicate = equal_to<>>
+      class boyer_moore_horspool_searcher;
+
+    template<class ForwardIterator, class BinaryPredicate = equal_to<>>
+    default_searcher<ForwardIterator, BinaryPredicate>
+    make_default_searcher(ForwardIterator pat_first, ForwardIterator pat_last,
+                          BinaryPredicate pred = BinaryPredicate());
+
+    template<class RandomAccessIterator,
+             class Hash = hash<typename iterator_traits<RandomAccessIterator>::value_type>,
+             class BinaryPredicate = equal_to<>>
+    boyer_moore_searcher<RandomAccessIterator, Hash, BinaryPredicate>
+    make_boyer_moore_searcher(
+        RandomAccessIterator pat_first, RandomAccessIterator pat_last,
+        Hash hf = Hash(), BinaryPredicate pred = BinaryPredicate());
+
+    template<class RandomAccessIterator,
+             class Hash = hash<typename iterator_traits<RandomAccessIterator>::value_type>,
+             class BinaryPredicate = equal_to<>>
+    boyer_moore_horspool_searcher<RandomAccessIterator, Hash, BinaryPredicate>
+    make_boyer_moore_horspool_searcher(
+        RandomAccessIterator pat_first, RandomAccessIterator pat_last,
+        Hash hf = Hash(), BinaryPredicate pred = BinaryPredicate());
+
+  } // namespace fundamentals_v1
+  } // namespace experimental
+
+  template<class R, class... ArgTypes, class Alloc>
+  struct uses_allocator<experimental::function<R(ArgTypes...)>, Alloc>;
+
+} // namespace std
+
+*/
+
+#include <experimental/__config>
+#include <functional>
+#include <algorithm>
+
+#include <__undef_min_max>
+
+#include <__debug>
+
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
+#pragma GCC system_header
+#endif
+
+_LIBCPP_BEGIN_NAMESPACE_LFTS
+
+// default searcher
+template<class _ForwardIterator, class _BinaryPredicate = equal_to<>>
+class default_searcher {
+public:
+    default_searcher(_ForwardIterator __f, _ForwardIterator __l, 
+                       _BinaryPredicate __p = _BinaryPredicate())
+        : __first_(__f), __last_(__l), __pred_(__p) {}
+
+    template <typename _ForwardIterator2>
+    _ForwardIterator2 operator () (_ForwardIterator2 __f, _ForwardIterator2 __l) const {
+        return _VSTD::search(__f, __l, __first_, __last_, __pred_);
+        }
+
+private:
+    _ForwardIterator __first_;
+    _ForwardIterator __last_;
+    _BinaryPredicate __pred_;
+    };
+
+template<class _ForwardIterator, class _BinaryPredicate = equal_to<>>
+default_searcher<_ForwardIterator, _BinaryPredicate>
+make_default_searcher( _ForwardIterator __f, _ForwardIterator __l, _BinaryPredicate __p = _BinaryPredicate ())
+{
+    return default_searcher<_ForwardIterator, _BinaryPredicate>(__f, __l, __p);
+}
+
+
+_LIBCPP_END_NAMESPACE_LFTS
+
+#endif /* _LIBCPP_EXPERIMENTAL_FUNCTIONAL */
