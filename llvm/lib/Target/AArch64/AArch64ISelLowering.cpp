@@ -1220,7 +1220,7 @@ static SDValue emitComparison(SDValue LHS, SDValue RHS, ISD::CondCode CC,
 /// by conditional compare sequences.
 /// @{
 
-/// Create a conditional comparison; Use CCMP, CCMN or FCCMP as apropriate.
+/// Create a conditional comparison; Use CCMP, CCMN or FCCMP as appropriate.
 static SDValue emitConditionalComparison(SDValue LHS, SDValue RHS,
                                          ISD::CondCode CC, SDValue CCOp,
                                          SDValue Condition, unsigned NZCV,
