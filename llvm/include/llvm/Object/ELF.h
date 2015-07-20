@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -726,17 +725,12 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
 }
 
 template <class ELFT>
-void ELFFile<ELFT>::scanDynamicTable() {
-  // Build load-address to file-offset map.
-  typedef IntervalMap<
-      uintX_t, uintptr_t,
-      IntervalMapImpl::NodeSizer<uintX_t, uintptr_t>::LeafSize,
-      IntervalMapHalfOpenInfo<uintX_t>> LoadMapT;
-  typename LoadMapT::Allocator Alloc;
-  // Allocate the IntervalMap on the heap to work around MSVC bug where the
-  // stack doesn't get realigned despite LoadMap having alignment 8 (PR24113).
-  std::unique_ptr<LoadMapT> LoadMap(new LoadMapT(Alloc));
+static bool compareAddr(uint64_t VAddr, const Elf_Phdr_Impl<ELFT> *Phdr) {
+  return VAddr < Phdr->p_vaddr;
+}
 
+template <class ELFT> void ELFFile<ELFT>::scanDynamicTable() {
+  SmallVector<const Elf_Phdr *, 4> LoadSegments;
   for (const Elf_Phdr &Phdr : program_headers()) {
     if (Phdr.p_type == ELF::PT_DYNAMIC) {
       DynamicRegion.Addr = base() + Phdr.p_offset;
@@ -746,14 +740,16 @@ void ELFFile<ELFT>::scanDynamicTable() {
     }
     if (Phdr.p_type != ELF::PT_LOAD || Phdr.p_filesz == 0)
       continue;
-    LoadMap->insert(Phdr.p_vaddr, Phdr.p_vaddr + Phdr.p_filesz, Phdr.p_offset);
+    LoadSegments.push_back(&Phdr);
   }
 
   auto toMappedAddr = [&](uint64_t VAddr) -> const uint8_t * {
-    auto I = LoadMap->find(VAddr);
-    if (I == LoadMap->end())
+    const Elf_Phdr **I = std::upper_bound(
+        LoadSegments.begin(), LoadSegments.end(), VAddr, compareAddr<ELFT>);
+    if (I == LoadSegments.begin())
       return nullptr;
-    return this->base() + I.value() + (VAddr - I.start());
+    --I;
+    return this->base() + (*I)->p_offset + (VAddr - (*I)->p_vaddr);
   };
 
   for (Elf_Dyn_Iter DynI = dynamic_table_begin(), DynE = dynamic_table_end();
