@@ -43,9 +43,9 @@ set( __ANDROID_NDK__ True )
 # a non-pie shim on API 16-, but that requires lldb-server to dynamically export
 # its symbols, which significantly increases the binary size. Static linking, on
 # the other hand, has little to no effect on the binary size.
-if ( NOT DEFINED LLVM_BUILD_STATIC )
- set( LLVM_BUILD_STATIC True )
-endif()
+#if ( NOT DEFINED LLVM_BUILD_STATIC )
+# set( LLVM_BUILD_STATIC True )
+#endif()
 
 set( ANDROID_ABI "${ANDROID_ABI}" CACHE INTERNAL "Android Abi" FORCE )
 if( ANDROID_ABI STREQUAL "x86" )
