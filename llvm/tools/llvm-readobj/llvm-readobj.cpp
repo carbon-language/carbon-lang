@@ -190,15 +190,19 @@ namespace opts {
 
 static int ReturnValue = EXIT_SUCCESS;
 
+static void reportError(Twine Msg) {
+  ReturnValue = EXIT_FAILURE;
+  outs() << Msg << "\n";
+  outs().flush();
+}
+
 namespace llvm {
 
 bool error(std::error_code EC) {
   if (!EC)
     return false;
 
-  ReturnValue = EXIT_FAILURE;
-  outs() << "\nError reading file: " << EC.message() << ".\n";
-  outs().flush();
+  reportError(Twine("\nError reading file: ") + EC.message() + ".");
   return true;
 }
 
@@ -212,17 +216,14 @@ static void reportError(StringRef Input, std::error_code EC) {
   if (Input == "-")
     Input = "<stdin>";
 
-  errs() << Input << ": " << EC.message() << "\n";
-  errs().flush();
-  ReturnValue = EXIT_FAILURE;
+  reportError(Twine(Input) + ": " + EC.message());
 }
 
 static void reportError(StringRef Input, StringRef Message) {
   if (Input == "-")
     Input = "<stdin>";
 
-  errs() << Input << ": " << Message << "\n";
-  ReturnValue = EXIT_FAILURE;
+  reportError(Twine(Input) + ": " + Message);
 }
 
 static bool isMipsArch(unsigned Arch) {
