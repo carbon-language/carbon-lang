@@ -188,22 +188,19 @@ namespace opts {
 
 } // namespace opts
 
-static int ReturnValue = EXIT_SUCCESS;
-
 static void reportError(Twine Msg) {
-  ReturnValue = EXIT_FAILURE;
   outs() << Msg << "\n";
   outs().flush();
+  exit(1);
 }
 
 namespace llvm {
 
-bool error(std::error_code EC) {
+void error(std::error_code EC) {
   if (!EC)
-    return false;
+    return;
 
   reportError(Twine("\nError reading file: ") + EC.message() + ".");
-  return true;
 }
 
 bool relocAddressLess(RelocationRef a, RelocationRef b) {
@@ -408,5 +405,5 @@ int main(int argc, const char *argv[]) {
   std::for_each(opts::InputFilenames.begin(), opts::InputFilenames.end(),
                 dumpInput);
 
-  return ReturnValue;
+  return 0;
 }

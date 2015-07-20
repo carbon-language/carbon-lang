@@ -164,8 +164,8 @@ getSectionNameIndex(const ELFO &Obj, const typename ELFO::Elf_Sym *Symbol,
     if (SectionIndex == SHN_XINDEX)
       SectionIndex = Obj.getExtendedSymbolTableIndex(&*Symbol);
     ErrorOr<const typename ELFO::Elf_Shdr *> Sec = Obj.getSection(SectionIndex);
-    if (!error(Sec.getError()))
-      SectionName = errorOrDefault(Obj.getSectionName(*Sec));
+    error(Sec.getError());
+    SectionName = errorOrDefault(Obj.getSectionName(*Sec));
   }
 }
 
@@ -752,19 +752,17 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
       Obj->getRelocationSymbol(Sec, &Rel);
   if (Sym.second && Sym.second->getType() == ELF::STT_SECTION) {
     ErrorOr<const Elf_Shdr *> Sec = Obj->getSection(Sym.second);
-    if (!error(Sec.getError())) {
-      ErrorOr<StringRef> SecName = Obj->getSectionName(*Sec);
-      if (SecName)
-        TargetName = SecName.get();
-    }
+    error(Sec.getError());
+    ErrorOr<StringRef> SecName = Obj->getSectionName(*Sec);
+    if (SecName)
+      TargetName = SecName.get();
   } else if (Sym.first) {
     const Elf_Shdr *SymTable = Sym.first;
     ErrorOr<const Elf_Shdr *> StrTableSec = Obj->getSection(SymTable->sh_link);
-    if (!error(StrTableSec.getError())) {
-      ErrorOr<StringRef> StrTableOrErr = Obj->getStringTable(*StrTableSec);
-      if (!error(StrTableOrErr.getError()))
-        TargetName = errorOrDefault(Sym.second->getName(*StrTableOrErr));
-    }
+    error(StrTableSec.getError());
+    ErrorOr<StringRef> StrTableOrErr = Obj->getStringTable(*StrTableSec);
+    error(StrTableOrErr.getError());
+    TargetName = errorOrDefault(Sym.second->getName(*StrTableOrErr));
   }
 
   if (opts::ExpandRelocs) {

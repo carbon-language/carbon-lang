@@ -17,7 +17,6 @@ RUN:     2>&1 | FileCheck --check-prefix=VER %s
 SECNAME: Error reading file: Invalid data was encountered while parsing the file.
 
 SECDATA: Error reading file: Invalid data was encountered while parsing the file.
-SECDATA: Error reading file: Invalid data was encountered while parsing the file.
 
 SYMNAME: Error reading file: Invalid data was encountered while parsing the file.
 

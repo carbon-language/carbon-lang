@@ -375,8 +375,7 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
     DataRefImpl DR = Section.getRawDataRefImpl();
 
     StringRef Name;
-    if (error(Section.getName(Name)))
-      Name = "";
+    error(Section.getName(Name));
 
     ArrayRef<char> RawName = Obj->getSectionRawName(DR);
     StringRef SegmentName = Obj->getSectionFinalSegmentName(DR);
@@ -419,8 +418,7 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
       bool IsBSS = Section.isBSS();
       if (!IsBSS) {
         StringRef Data;
-        if (error(Section.getContents(Data)))
-          break;
+        error(Section.getContents(Data));
 
         W.printBinaryBlock("SectionData", Data);
       }
@@ -434,8 +432,7 @@ void MachODumper::printRelocations() {
   std::error_code EC;
   for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
-    if (error(Section.getName(Name)))
-      continue;
+    error(Section.getName(Name));
 
     bool PrintedGroup = false;
     for (const RelocationRef &Reloc : Section.relocations()) {
@@ -475,15 +472,13 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
     symbol_iterator Symbol = Reloc.getSymbol();
     if (Symbol != Obj->symbol_end()) {
       ErrorOr<StringRef> TargetNameOrErr = Symbol->getName();
-      if (error(TargetNameOrErr.getError()))
-        return;
+      error(TargetNameOrErr.getError());
       TargetName = *TargetNameOrErr;
     }
   } else if (!IsScattered) {
     section_iterator SecI = Obj->getRelocationSection(DR);
     if (SecI != Obj->section_end()) {
-      if (error(SecI->getName(TargetName)))
-        return;
+      error(SecI->getName(TargetName));
     }
   }
   if (TargetName.empty())
@@ -548,7 +543,8 @@ void MachODumper::printSymbol(const SymbolRef &Symbol) {
 
   StringRef SectionName = "";
   section_iterator SecI(Obj->section_begin());
-  if (!error(Symbol.getSection(SecI)) && SecI != Obj->section_end())
+  error(Symbol.getSection(SecI));
+  if (SecI != Obj->section_end())
     error(SecI->getName(SectionName));
 
   DictScope D(W, "Symbol");
