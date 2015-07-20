@@ -31,7 +31,7 @@ class ShellEnvironment(object):
 
     def __init__(self, cwd, env):
         self.cwd = cwd
-        self.env = env
+        self.env = dict(env)
 
 def executeShCmd(cmd, shenv, results):
     if isinstance(cmd, ShUtil.Seq):
@@ -62,14 +62,18 @@ def executeShCmd(cmd, shenv, results):
 
     # Handle shell builtins first.
     if cmd.commands[0].args[0] == 'cd':
-        # Update the cwd in the environment.
+        if len(cmd.commands) != 1:
+            raise ValueError("'cd' cannot be part of a pipeline")
         if len(cmd.commands[0].args) != 2:
-            raise ValueError('cd supports only one argument')
+            raise ValueError("'cd' supports only one argument")
         newdir = cmd.commands[0].args[1]
+        # Update the cwd in the parent environment.
         if os.path.isabs(newdir):
             shenv.cwd = newdir
         else:
             shenv.cwd = os.path.join(shenv.cwd, newdir)
+        # The cd builtin always succeeds. If the directory does not exist, the
+        # following Popen calls will fail instead.
         return 0
 
     procs = []
@@ -81,6 +85,23 @@ def executeShCmd(cmd, shenv, results):
     # output. This is null until we have seen some output using
     # stderr.
     for i,j in enumerate(cmd.commands):
+        # Reference the global environment by default.
+        cmd_shenv = shenv
+        if j.args[0] == 'env':
+            # Create a copy of the global environment and modify it for this one
+            # command. There might be multiple envs in a pipeline:
+            #   env FOO=1 llc < %s | env BAR=2 llvm-mc | FileCheck %s
+            cmd_shenv = ShellEnvironment(shenv.cwd, shenv.env)
+            arg_idx = 1
+            for arg_idx, arg in enumerate(j.args[1:]):
+                # Partition the string into KEY=VALUE.
+                key, eq, val = arg.partition('=')
+                # Stop if there was no equals.
+                if eq == '':
+                    break
+                cmd_shenv.env[key] = val
+            j.args = j.args[arg_idx+1:]
+
         # Apply the redirections, we use (N,) as a sentinel to indicate stdin,
         # stdout, stderr for N equal to 0, 1, or 2 respectively. Redirects to or
         # from a file are represented with a list [file, mode, file-object]
@@ -126,7 +147,7 @@ def executeShCmd(cmd, shenv, results):
                         r[2] = tempfile.TemporaryFile(mode=r[1])
                     else:
                         # Make sure relative paths are relative to the cwd.
-                        redir_filename = os.path.join(shenv.cwd, r[0])
+                        redir_filename = os.path.join(cmd_shenv.cwd, r[0])
                         r[2] = open(redir_filename, r[1])
                     # Workaround a Win32 and/or subprocess bug when appending.
                     #
@@ -157,7 +178,7 @@ def executeShCmd(cmd, shenv, results):
 
         # Resolve the executable path ourselves.
         args = list(j.args)
-        executable = lit.util.which(args[0], shenv.env['PATH'])
+        executable = lit.util.which(args[0], cmd_shenv.env['PATH'])
         if not executable:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
@@ -171,12 +192,12 @@ def executeShCmd(cmd, shenv, results):
                     args[i] = f.name
 
         try:
-            procs.append(subprocess.Popen(args, cwd=shenv.cwd,
+            procs.append(subprocess.Popen(args, cwd=cmd_shenv.cwd,
                                           executable = executable,
                                           stdin = stdin,
                                           stdout = stdout,
                                           stderr = stderr,
-                                          env = shenv.env,
+                                          env = cmd_shenv.env,
                                           close_fds = kUseCloseFDs))
         except OSError as e:
             raise InternalShellError(j, 'Could not create process due to {}'.format(e))
