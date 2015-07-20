@@ -110,9 +110,9 @@ void single_x()
 }
 
 // CHECK: @single_Y
-void single_Y0()
+void single_Y()
 {
-  // Y constraint currently broken.
+  // 'Y' constraint currently broken.
   //asm("foo %1,%0" : "=Y0" (mout0) : "Y0" (min1));
   //asm("foo %1,%0" : "=Yz" (mout0) : "Yz" (min1));
   //asm("foo %1,%0" : "=Yt" (mout0) : "Yt" (min1));
@@ -144,8 +144,12 @@ void single_K()
 // CHECK: @single_L
 void single_L()
 {
-  // CHECK: asm "foo $1,$0", "=*m,L[[CLOBBERS]](i32* @mout0, i32 1)
-  asm("foo %1,%0" : "=m" (mout0) : "L" (1));
+  // CHECK: asm "foo $1,$0", "=*m,L[[CLOBBERS]](i32* @mout0, i32 255)
+  asm("foo %1,%0" : "=m" (mout0) : "L" (0xff));
+  // CHECK: asm "foo $1,$0", "=*m,L[[CLOBBERS]](i32* @mout0, i32 65535)
+  asm("foo %1,%0" : "=m" (mout0) : "L" (0xffff));
+  // CHECK: asm "foo $1,$0", "=*m,L[[CLOBBERS]](i32* @mout0, i32 -1)
+  asm("foo %1,%0" : "=m" (mout0) : "L" (0xffffffff));
 }
 
 // CHECK: @single_M

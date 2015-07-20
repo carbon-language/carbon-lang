@@ -260,8 +260,7 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
            return StmtError(
                Diag(InputExpr->getLocStart(), diag::err_asm_immediate_expected)
                 << Info.getConstraintStr() << InputExpr->getSourceRange());
-         if (Result.slt(Info.getImmConstantMin()) ||
-             Result.sgt(Info.getImmConstantMax()))
+         if (!Info.isValidAsmImmediate(Result))
            return StmtError(Diag(InputExpr->getLocStart(),
                                  diag::err_invalid_asm_value_for_constraint)
                             << Result.toString(10) << Info.getConstraintStr()

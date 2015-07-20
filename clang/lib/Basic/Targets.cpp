@@ -3447,6 +3447,14 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &Info) const {
   switch (*Name) {
   default: return false;
+  // Constant constraints.
+  case 'e': // 32-bit signed integer constant for use with sign-extending x86_64
+            // instructions.
+  case 'Z': // 32-bit unsigned integer constant for use with zero-extending
+            // x86_64 instructions.
+  case 's':
+    Info.setRequiresImmediate();
+    return true;
   case 'I':
     Info.setRequiresImmediate(0, 31);
     return true;
@@ -3457,8 +3465,7 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
     Info.setRequiresImmediate(-128, 127);
     return true;
   case 'L':
-    // FIXME: properly analyze this constraint:
-    //  must be one of 0xff, 0xffff, or 0xffffffff
+    Info.setRequiresImmediate({ int(0xff), int(0xffff), int(0xffffffff) });
     return true;
   case 'M':
     Info.setRequiresImmediate(0, 3);
@@ -3469,20 +3476,24 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
   case 'O':
     Info.setRequiresImmediate(0, 127);
     return true;
-  case 'Y': // first letter of a pair:
-    switch (*(Name+1)) {
-    default: return false;
-    case '0':  // First SSE register.
-    case 't':  // Any SSE register, when SSE2 is enabled.
-    case 'i':  // Any SSE register, when SSE2 and inter-unit moves enabled.
-    case 'm':  // any MMX register, when inter-unit moves enabled.
-      break;   // falls through to setAllowsRegister.
-  }
-  case 'f': // any x87 floating point stack register.
+  // Register constraints.
+  case 'Y': // 'Y' is the first character for several 2-character constraints.
+    // Shift the pointer to the second character of the constraint.
+    Name++;
+    switch (*Name) {
+    default:
+      return false;
+    case '0': // First SSE register.
+    case 't': // Any SSE register, when SSE2 is enabled.
+    case 'i': // Any SSE register, when SSE2 and inter-unit moves enabled.
+    case 'm': // Any MMX register, when inter-unit moves enabled.
+      Info.setAllowsRegister();
+      return true;
+    }
+  case 'f': // Any x87 floating point stack register.
     // Constraint 'f' cannot be used for output operands.
     if (Info.ConstraintStr[0] == '=')
       return false;
-
     Info.setAllowsRegister();
     return true;
   case 'a': // eax.
@@ -3492,8 +3503,8 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
   case 'S': // esi.
   case 'D': // edi.
   case 'A': // edx:eax.
-  case 't': // top of floating point stack.
-  case 'u': // second from top of floating point stack.
+  case 't': // Top of floating point stack.
+  case 'u': // Second from top of floating point stack.
   case 'q': // Any register accessible as [r]l: a, b, c, and d.
   case 'y': // Any MMX register.
   case 'x': // Any SSE register.
@@ -3503,12 +3514,9 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
             // index in a base+index memory access.
     Info.setAllowsRegister();
     return true;
+  // Floating point constant constraints.
   case 'C': // SSE floating point constant.
   case 'G': // x87 floating point constant.
-  case 'e': // 32-bit signed integer constant for use with zero-extending
-            // x86_64 instructions.
-  case 'Z': // 32-bit unsigned integer constant for use with zero-extending
-            // x86_64 instructions.
     return true;
   }
 }
@@ -3540,8 +3548,30 @@ bool X86TargetInfo::validateOperandSize(StringRef Constraint,
   case 'u':
     return Size <= 128;
   case 'x':
-    // 256-bit ymm registers can be used if target supports AVX.
-    return Size <= (SSELevel >= AVX ? 256U : 128U);
+    if (SSELevel >= AVX512F)
+      // 512-bit zmm registers can be used if target supports AVX512F.
+      return Size <= 512U;
+    else if (SSELevel >= AVX)
+      // 256-bit ymm registers can be used if target supports AVX.
+      return Size <= 256U;
+    return Size <= 128U;
+  case 'Y':
+    // 'Y' is the first character for several 2-character constraints.
+    switch (Constraint[1]) {
+    default: break;
+    case 'm':
+      // 'Ym' is synonymous with 'y'.
+      return Size <= 64;
+    case 'i':
+    case 't':
+      // 'Yi' and 'Yt' are synonymous with 'x' when SSE2 is enabled.
+      if (SSELevel >= AVX512F)
+        return Size <= 512U;
+      else if (SSELevel >= AVX)
+        return Size <= 256U;
+      return SSELevel >= SSE2 && Size <= 128U;
+    }
+
   }
 
   return true;
