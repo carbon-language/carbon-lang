@@ -30,7 +30,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include <list>
+#include <algorithm>
 using namespace llvm;
 
 #define DEBUG_TYPE "memcpyopt"
@@ -200,15 +200,14 @@ bool MemsetRange::isProfitableToUseMemset(const DataLayout &DL) const {
 
 namespace {
 class MemsetRanges {
-  /// Ranges - A sorted list of the memset ranges.  We use std::list here
-  /// because each element is relatively large and expensive to copy.
-  std::list<MemsetRange> Ranges;
-  typedef std::list<MemsetRange>::iterator range_iterator;
+  /// Ranges - A sorted list of the memset ranges.
+  SmallVector<MemsetRange, 8> Ranges;
+  typedef SmallVectorImpl<MemsetRange>::iterator range_iterator;
   const DataLayout &DL;
 public:
   MemsetRanges(const DataLayout &DL) : DL(DL) {}
 
-  typedef std::list<MemsetRange>::const_iterator const_iterator;
+  typedef SmallVectorImpl<MemsetRange>::const_iterator const_iterator;
   const_iterator begin() const { return Ranges.begin(); }
   const_iterator end() const { return Ranges.end(); }
   bool empty() const { return Ranges.empty(); }
@@ -243,23 +242,17 @@ public:
 /// addRange - Add a new store to the MemsetRanges data structure.  This adds a
 /// new range for the specified store at the specified offset, merging into
 /// existing ranges as appropriate.
-///
-/// Do a linear search of the ranges to see if this can be joined and/or to
-/// find the insertion point in the list.  We keep the ranges sorted for
-/// simplicity here.  This is a linear search of a linked list, which is ugly,
-/// however the number of ranges is limited, so this won't get crazy slow.
 void MemsetRanges::addRange(int64_t Start, int64_t Size, Value *Ptr,
                             unsigned Alignment, Instruction *Inst) {
   int64_t End = Start+Size;
-  range_iterator I = Ranges.begin(), E = Ranges.end();
 
-  while (I != E && Start > I->End)
-    ++I;
+  range_iterator I = std::lower_bound(Ranges.begin(), Ranges.end(), Start,
+    [](const MemsetRange &LHS, int64_t RHS) { return LHS.End < RHS; });
 
   // We now know that I == E, in which case we didn't find anything to merge
   // with, or that Start <= I->End.  If End < I->Start or I == E, then we need
   // to insert a new range.  Handle this now.
-  if (I == E || End < I->Start) {
+  if (I == Ranges.end() || End < I->Start) {
     MemsetRange &R = *Ranges.insert(I, MemsetRange());
     R.Start        = Start;
     R.End          = End;
@@ -295,7 +288,7 @@ void MemsetRanges::addRange(int64_t Start, int64_t Size, Value *Ptr,
   if (End > I->End) {
     I->End = End;
     range_iterator NextI = I;
-    while (++NextI != E && End >= NextI->Start) {
+    while (++NextI != Ranges.end() && End >= NextI->Start) {
       // Merge the range in.
       I->TheStores.append(NextI->TheStores.begin(), NextI->TheStores.end());
       if (NextI->End > I->End)
