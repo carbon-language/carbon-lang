@@ -694,8 +694,8 @@ macro(add_llvm_external_project name)
     set(add_llvm_external_dir ${name})
   endif()
   canonicalize_tool_name(${name} nameUPPER)
-  if(NOT DEFINED LLVM_TOOL_${projectName}_BUILD)
-    option(LLVM_TOOL_${name}_BUILD
+  if(NOT DEFINED LLVM_TOOL_${nameUPPER}_BUILD)
+    option(LLVM_TOOL_${nameUPPER}_BUILD
            "Whether to build ${name} as part of LLVM" On)
   endif()
   if (LLVM_TOOL_${nameUPPER}_BUILD)
