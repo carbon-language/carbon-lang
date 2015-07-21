@@ -55,6 +55,8 @@ template <class ELFT> bool DynamicFile<ELFT>::canParse(file_magic magic) {
 
 template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
   typedef llvm::object::ELFFile<ELFT> ELFO;
+  typedef typename ELFO::Elf_Shdr Elf_Shdr;
+  typedef typename ELFO::Elf_Dyn Elf_Dyn;
 
   std::error_code ec;
   _objFile.reset(new ELFO(_mb->getBuffer(), ec));
@@ -63,15 +65,38 @@ template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
 
   ELFO &obj = *_objFile;
 
-  _soname = obj.getLoadName();
-  if (_soname.empty())
-    _soname = llvm::sys::path::filename(path());
+  const char *base = _mb->getBuffer().data();
+  const Elf_Dyn *dynStart = nullptr;
+  const Elf_Dyn *dynEnd = nullptr;
+  for (const Elf_Shdr &sec : obj.sections()) {
+    if (sec.sh_type == llvm::ELF::SHT_DYNAMIC) {
+      dynStart = reinterpret_cast<const Elf_Dyn *>(base + sec.sh_offset);
+      uint64_t size = sec.sh_size;
+      if (size % sizeof(Elf_Dyn))
+        return llvm::object::object_error::parse_failed;
+      dynEnd = dynStart + size / sizeof(Elf_Dyn);
+      break;
+    }
+  }
 
-  const typename ELFO::Elf_Shdr *dynSymSec = obj.getDotDynSymSec();
+  const Elf_Shdr *dynSymSec = obj.getDotDynSymSec();
   ErrorOr<StringRef> strTableOrErr = obj.getStringTableForSymtab(*dynSymSec);
   if (std::error_code ec = strTableOrErr.getError())
     return ec;
   StringRef stringTable = *strTableOrErr;
+
+  for (const Elf_Dyn &dyn : llvm::make_range(dynStart, dynEnd)) {
+    if (dyn.d_tag == llvm::ELF::DT_SONAME) {
+      uint64_t offset = dyn.getVal();
+      if (offset >= stringTable.size())
+        return llvm::object::object_error::parse_failed;
+      _soname = StringRef(stringTable.data() + offset);
+      break;
+    }
+  }
+
+  if (_soname.empty())
+    _soname = llvm::sys::path::filename(path());
 
   // Create a map from names to dynamic symbol table entries.
   // TODO: This should use the object file's build in hash table instead if
