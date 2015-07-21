@@ -335,10 +335,10 @@ CMICmdArgSet::IsArgContextEmpty(void) const
 // Details: Retrieve the number of arguments that are being used for the command.
 // Type:    Method.
 // Args:    None.
-// Return:  MIuint - Argument count.
+// Return:  size_t - Argument count.
 // Throws:  None.
 //--
-MIuint
+size_t
 CMICmdArgSet::GetCount(void) const
 {
     return m_setCmdArgs.size();

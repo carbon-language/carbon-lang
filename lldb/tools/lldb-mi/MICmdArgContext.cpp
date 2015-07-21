@@ -149,9 +149,9 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
 // Throws:  None.
 //--
 bool
-CMICmdArgContext::RemoveArgAtPos(const CMIUtilString &vArg, const MIuint nArgIndex)
+CMICmdArgContext::RemoveArgAtPos(const CMIUtilString &vArg, size_t nArgIndex)
 {
-    MIuint nWordIndex = 0;
+    size_t nWordIndex = 0;
     CMIUtilString strBuildContextUp;
     const CMIUtilString::VecString_t vecWords(GetArgs());
     const bool bSpaceRequired(GetNumberArgsPresent() > 2);
@@ -202,10 +202,10 @@ CMICmdArgContext::RemoveArgAtPos(const CMIUtilString &vArg, const MIuint nArgInd
 // Details: Retrieve number of arguments or options present in the command's option text.
 // Type:    Method.
 // Args:    None.
-// Return:  MIuint  - 0 to n arguments present.
+// Return:  size_t  - 0 to n arguments present.
 // Throws:  None.
 //--
-MIuint
+size_t
 CMICmdArgContext::GetNumberArgsPresent(void) const
 {
     CMIUtilString::VecString_t vecOptions;

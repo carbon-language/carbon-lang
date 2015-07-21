@@ -67,7 +67,7 @@ class CMICmdArgSet : public CMICmnBase
     bool GetArg(const CMIUtilString &vArgName, CMICmdArgValBase *&vpArg) const;
     const SetCmdArgs_t &GetArgsThatAreMissing(void) const;
     const SetCmdArgs_t &GetArgsThatInvalid(void) const;
-    MIuint GetCount(void) const;
+    size_t GetCount(void) const;
     bool IsArgContextEmpty(void) const;
     bool IsArgsPresentButNotHandledByCmd(void) const;
     void WarningArgsNotHandledbyCmdLogFile(const CMIUtilString &vrCmdName);

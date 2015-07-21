@@ -28,11 +28,11 @@ class CMICmdArgContext
     /* ctor */ CMICmdArgContext(const CMIUtilString &vrCmdLineArgsRaw);
     //
     const CMIUtilString &GetArgsLeftToParse(void) const;
-    MIuint GetNumberArgsPresent(void) const;
+    size_t GetNumberArgsPresent(void) const;
     CMIUtilString::VecString_t GetArgs(void) const;
     bool IsEmpty(void) const;
     bool RemoveArg(const CMIUtilString &vArg);
-    bool RemoveArgAtPos(const CMIUtilString &vArg, const MIuint nArgIndex);
+    bool RemoveArgAtPos(const CMIUtilString &vArg, size_t nArgIndex);
     //
     CMICmdArgContext &operator=(const CMICmdArgContext &vOther);
 
