@@ -19,6 +19,11 @@ declare i32 @llvm.ctpop.i32(i32) nounwind readnone
 declare i8 @llvm.ctlz.i8(i8, i1) nounwind readnone
 declare double @llvm.cos.f64(double %Val) nounwind readonly
 declare double @llvm.sin.f64(double %Val) nounwind readonly
+declare double @llvm.floor.f64(double %Val) nounwind readonly
+declare double @llvm.ceil.f64(double %Val) nounwind readonly
+declare double @llvm.trunc.f64(double %Val) nounwind readonly
+declare double @llvm.rint.f64(double %Val) nounwind readonly
+declare double @llvm.nearbyint.f64(double %Val) nounwind readonly
 
 define i8 @uaddtest1(i8 %A, i8 %B) {
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
@@ -446,4 +451,64 @@ entry:
   ret void
 ; CHECK-LABEL: @sin(
 ; CHECK: store volatile double 0.000000e+00, double* %P
+}
+
+define void @floor(double *%P) {
+entry:
+  %B = tail call double @llvm.floor.f64(double 1.5) nounwind
+  store volatile double %B, double* %P
+  %C = tail call double @llvm.floor.f64(double -1.5) nounwind
+  store volatile double %C, double* %P
+  ret void
+; CHECK-LABEL: @floor(
+; CHECK: store volatile double 1.000000e+00, double* %P, align 8
+; CHECK: store volatile double -2.000000e+00, double* %P, align 8
+}
+
+define void @ceil(double *%P) {
+entry:
+  %B = tail call double @llvm.ceil.f64(double 1.5) nounwind
+  store volatile double %B, double* %P
+  %C = tail call double @llvm.ceil.f64(double -1.5) nounwind
+  store volatile double %C, double* %P
+  ret void
+; CHECK-LABEL: @ceil(
+; CHECK: store volatile double 2.000000e+00, double* %P, align 8
+; CHECK: store volatile double -1.000000e+00, double* %P, align 8
+}
+
+define void @trunc(double *%P) {
+entry:
+  %B = tail call double @llvm.trunc.f64(double 1.5) nounwind
+  store volatile double %B, double* %P
+  %C = tail call double @llvm.trunc.f64(double -1.5) nounwind
+  store volatile double %C, double* %P
+  ret void
+; CHECK-LABEL: @trunc(
+; CHECK: store volatile double 1.000000e+00, double* %P, align 8
+; CHECK: store volatile double -1.000000e+00, double* %P, align 8
+}
+
+define void @rint(double *%P) {
+entry:
+  %B = tail call double @llvm.rint.f64(double 1.5) nounwind
+  store volatile double %B, double* %P
+  %C = tail call double @llvm.rint.f64(double -1.5) nounwind
+  store volatile double %C, double* %P
+  ret void
+; CHECK-LABEL: @rint(
+; CHECK: store volatile double 2.000000e+00, double* %P, align 8
+; CHECK: store volatile double -2.000000e+00, double* %P, align 8
+}
+
+define void @nearbyint(double *%P) {
+entry:
+  %B = tail call double @llvm.nearbyint.f64(double 1.5) nounwind
+  store volatile double %B, double* %P
+  %C = tail call double @llvm.nearbyint.f64(double -1.5) nounwind
+  store volatile double %C, double* %P
+  ret void
+; CHECK-LABEL: @nearbyint(
+; CHECK: store volatile double 2.000000e+00, double* %P, align 8
+; CHECK: store volatile double -2.000000e+00, double* %P, align 8
 }

@@ -1236,6 +1236,9 @@ bool llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::sqrt:
   case Intrinsic::sin:
   case Intrinsic::cos:
+  case Intrinsic::trunc:
+  case Intrinsic::rint:
+  case Intrinsic::nearbyint:
   case Intrinsic::pow:
   case Intrinsic::powi:
   case Intrinsic::bswap:
@@ -1422,6 +1425,36 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
         return ConstantFP::get(Ty->getContext(), V);
       }
 
+      if (IntrinsicID == Intrinsic::floor) {
+        APFloat V = Op->getValueAPF();
+        V.roundToIntegral(APFloat::rmTowardNegative);
+        return ConstantFP::get(Ty->getContext(), V);
+      }
+
+      if (IntrinsicID == Intrinsic::ceil) {
+        APFloat V = Op->getValueAPF();
+        V.roundToIntegral(APFloat::rmTowardPositive);
+        return ConstantFP::get(Ty->getContext(), V);
+      }
+
+      if (IntrinsicID == Intrinsic::trunc) {
+        APFloat V = Op->getValueAPF();
+        V.roundToIntegral(APFloat::rmTowardZero);
+        return ConstantFP::get(Ty->getContext(), V);
+      }
+
+      if (IntrinsicID == Intrinsic::rint) {
+        APFloat V = Op->getValueAPF();
+        V.roundToIntegral(APFloat::rmNearestTiesToEven);
+        return ConstantFP::get(Ty->getContext(), V);
+      }
+
+      if (IntrinsicID == Intrinsic::nearbyint) {
+        APFloat V = Op->getValueAPF();
+        V.roundToIntegral(APFloat::rmNearestTiesToEven);
+        return ConstantFP::get(Ty->getContext(), V);
+      }
+
       /// We only fold functions with finite arguments. Folding NaN and inf is
       /// likely to be aborted with an exception anyway, and some host libms
       /// have known errors raising exceptions.
@@ -1448,10 +1481,6 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
           return ConstantFoldFP(exp, V, Ty);
         case Intrinsic::exp2:
           return ConstantFoldFP(exp2, V, Ty);
-        case Intrinsic::floor:
-          return ConstantFoldFP(floor, V, Ty);
-        case Intrinsic::ceil:
-          return ConstantFoldFP(ceil, V, Ty);
         case Intrinsic::sin:
           return ConstantFoldFP(sin, V, Ty);
         case Intrinsic::cos:
