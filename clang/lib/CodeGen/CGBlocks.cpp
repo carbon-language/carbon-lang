@@ -978,8 +978,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr *E,
   QualType FnType = BPT->getPointeeType();
 
   // And the rest of the arguments.
-  EmitCallArgs(Args, FnType->getAs<FunctionProtoType>(),
-               E->arg_begin(), E->arg_end());
+  EmitCallArgs(Args, FnType->getAs<FunctionProtoType>(), E->arguments());
 
   // Load the function.
   llvm::Value *Func = Builder.CreateLoad(FuncPtr);

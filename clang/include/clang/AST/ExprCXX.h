@@ -1821,6 +1821,14 @@ public:
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
 
+  llvm::iterator_range<arg_iterator> placement_arguments() {
+    return llvm::make_range(placement_arg_begin(), placement_arg_end());
+  }
+
+  llvm::iterator_range<const_arg_iterator> placement_arguments() const {
+    return llvm::make_range(placement_arg_begin(), placement_arg_end());
+  }
+
   arg_iterator placement_arg_begin() {
     return SubExprs + Array + hasInitializer();
   }
