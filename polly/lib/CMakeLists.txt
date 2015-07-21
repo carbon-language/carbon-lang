@@ -319,18 +319,24 @@ endif()
 
 # Build a monolithic Polly.a and a thin module LLVMPolly.moduleext that links to
 # that static library.
-add_polly_loadable_module(LLVMPolly
-  Polly.cpp
-)
+if (MSVC)
+  # Add dummy target, because loadable modules are not supported on Windows
+  add_custom_target(LLVMPolly)
+else ()
+  add_polly_loadable_module(LLVMPolly
+    Polly.cpp
+  )
+
+  target_link_libraries(LLVMPolly Polly)
+
+  set_target_properties(LLVMPolly
+    PROPERTIES
+    LINKER_LANGUAGE CXX
+    PREFIX "")
+endif ()
 
 if (TARGET intrinsics_gen)
   # Check if we are building as part of an LLVM build
   add_dependencies(Polly intrinsics_gen)
 endif()
 
-target_link_libraries(LLVMPolly Polly)
-
-set_target_properties(LLVMPolly
-  PROPERTIES
-  LINKER_LANGUAGE CXX
-  PREFIX "")
