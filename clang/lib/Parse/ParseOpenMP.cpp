@@ -64,9 +64,9 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
 
       if (!TokenIsAnnotation && SDKind == OMPD_unknown) {
         TokenMatched =
-            (i == 0) && 
-                !P.getPreprocessor().getSpelling(Tok).compare("point") ||
-            (i == 1) && !P.getPreprocessor().getSpelling(Tok).compare("data");
+            ((i == 0) &&
+             !P.getPreprocessor().getSpelling(Tok).compare("point")) ||
+            ((i == 1) && !P.getPreprocessor().getSpelling(Tok).compare("data"));
       } else {
         TokenMatched = SDKind == F[i][1] && SDKind != OMPD_unknown;
       }
@@ -138,6 +138,8 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_cancel:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
+    break;
+  case OMPD_target_data:
     break;
   }
   SkipUntil(tok::annot_pragma_openmp_end);
