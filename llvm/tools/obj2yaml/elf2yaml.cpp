@@ -27,7 +27,8 @@ class ELFDumper {
 
   const object::ELFFile<ELFT> &Obj;
 
-  std::error_code dumpSymbol(const Elf_Sym *Sym, ELFYAML::Symbol &S);
+  std::error_code dumpSymbol(const Elf_Sym *Sym, StringRef StrTable,
+                             ELFYAML::Symbol &S);
   std::error_code dumpCommonSection(const Elf_Shdr *Shdr, ELFYAML::Section &S);
   std::error_code dumpCommonRelocationSection(const Elf_Shdr *Shdr,
                                               ELFYAML::RelocationSection &S);
@@ -121,6 +122,12 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
   }
 
   // Dump symbols
+  const Elf_Shdr *Symtab = Obj.getDotSymtabSec();
+  ErrorOr<StringRef> StrTableOrErr = Obj.getStringTableForSymtab(*Symtab);
+  if (std::error_code EC = StrTableOrErr.getError())
+    return EC;
+  StringRef StrTable = *StrTableOrErr;
+
   bool IsFirstSym = true;
   for (const Elf_Sym &Sym : Obj.symbols()) {
     if (IsFirstSym) {
@@ -129,7 +136,7 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
     }
 
     ELFYAML::Symbol S;
-    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(&Sym, S))
+    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(&Sym, StrTable, S))
       return EC;
 
     switch (Sym.getBinding())
@@ -153,13 +160,14 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
 
 template <class ELFT>
 std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym,
+                                            StringRef StrTable,
                                             ELFYAML::Symbol &S) {
   S.Type = Sym->getType();
   S.Value = Sym->st_value;
   S.Size = Sym->st_size;
   S.Other = Sym->st_other;
 
-  ErrorOr<StringRef> NameOrErr = Obj.getStaticSymbolName(Sym);
+  ErrorOr<StringRef> NameOrErr = Sym->getName(StrTable);
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   S.Name = NameOrErr.get();

@@ -388,7 +388,6 @@ public:
   ErrorOr<const Elf_Shdr *> getSection(uint32_t Index) const;
   const Elf_Sym *getSymbol(uint32_t index) const;
 
-  ErrorOr<StringRef> getStaticSymbolName(const Elf_Sym *Symb) const;
   ErrorOr<StringRef> getDynamicSymbolName(const Elf_Sym *Symb) const;
 
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
@@ -895,12 +894,6 @@ const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
   if (Offset >= DynStrRegion.Size)
     return nullptr;
   return (const char *)DynStrRegion.Addr + Offset;
-}
-
-template <class ELFT>
-ErrorOr<StringRef>
-ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
-  return Symb->getName(DotStrtab);
 }
 
 template <class ELFT>
