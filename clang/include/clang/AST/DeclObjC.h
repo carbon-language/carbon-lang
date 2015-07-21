@@ -1202,13 +1202,8 @@ public:
     // might bring in a definition.
     // Note: a null value indicates that we don't have a definition and that
     // modules are enabled.
-    if (!Data.getOpaqueValue()) {
-      if (IdentifierInfo *II = getIdentifier()) {
-        if (II->isOutOfDate()) {
-          updateOutOfDate(*II);
-        }
-      }
-    }
+    if (!Data.getOpaqueValue())
+      getMostRecentDecl();
 
     return Data.getPointer();
   }
@@ -1851,13 +1846,8 @@ public:
     // might bring in a definition.
     // Note: a null value indicates that we don't have a definition and that
     // modules are enabled.
-    if (!Data.getOpaqueValue()) {
-      if (IdentifierInfo *II = getIdentifier()) {
-        if (II->isOutOfDate()) {
-          updateOutOfDate(*II);
-        }
-      }
-    }
+    if (!Data.getOpaqueValue())
+      getMostRecentDecl();
 
     return Data.getPointer();
   }

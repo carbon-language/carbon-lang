@@ -8,11 +8,12 @@
 //   friends members of the befriending class.
 
 struct S { static void f(); }; // expected-note 2 {{'S' declared here}}
-S* g() { return 0; } // expected-note 2 {{'g' declared here}}
+S* g() { return 0; }
 
 struct X {
   friend struct S;
-  friend S* g();
+  friend S* g(); // expected-note 2 {{'g' declared here}}
+  // FIXME: The above two notes would be better attached to line 11.
 };
 
 void test1() {

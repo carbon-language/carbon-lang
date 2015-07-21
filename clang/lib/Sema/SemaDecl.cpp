@@ -1796,37 +1796,6 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
   return New;
 }
 
-/// \brief Filter out any previous declarations that the given declaration
-/// should not consider because they are not permitted to conflict, e.g.,
-/// because they come from hidden sub-modules and do not refer to the same
-/// entity.
-static void filterNonConflictingPreviousDecls(Sema &S,
-                                              NamedDecl *decl,
-                                              LookupResult &previous){
-  // This is only interesting when modules are enabled.
-  if ((!S.getLangOpts().Modules && !S.getLangOpts().ModulesLocalVisibility) ||
-      !S.getLangOpts().ModulesHideInternalLinkage)
-    return;
-
-  // Empty sets are uninteresting.
-  if (previous.empty())
-    return;
-
-  LookupResult::Filter filter = previous.makeFilter();
-  while (filter.hasNext()) {
-    NamedDecl *old = filter.next();
-
-    // Non-hidden declarations are never ignored.
-    if (S.isVisible(old))
-      continue;
-
-    if (!old->isExternallyVisible())
-      filter.erase();
-  }
-
-  filter.done();
-}
-
 /// Typedef declarations don't have linkage, but they still denote the same
 /// entity if their types are the same.
 /// FIXME: This is notionally doing the same thing as ASTReaderDecl's
@@ -4801,6 +4770,13 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
 
+  // If we're hiding internal-linkage symbols in modules from redeclaration
+  // lookup, let name lookup know.
+  if ((getLangOpts().Modules || getLangOpts().ModulesLocalVisibility) &&
+      getLangOpts().ModulesHideInternalLinkage &&
+      D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef)
+    Previous.setAllowHiddenInternal(false);
+
   // See if this is a redefinition of a variable in the same scope.
   if (!D.getCXXScopeSpec().isSet()) {
     bool IsLinkageLookup = false;
@@ -6500,9 +6476,6 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous) {
       checkForConflictWithNonVisibleExternC(*this, NewVD, Previous))
     Previous.setShadowed();
 
-  // Filter out any non-conflicting previous declarations.
-  filterNonConflictingPreviousDecls(*this, NewVD, Previous);
-
   if (!Previous.empty()) {
     MergeVarDecl(NewVD, Previous);
     return true;
@@ -8058,9 +8031,6 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   bool MergeTypeWithPrevious = !getLangOpts().CPlusPlus &&
                                !Previous.isShadowed();
 
-  // Filter out any non-conflicting previous declarations.
-  filterNonConflictingPreviousDecls(*this, NewFD, Previous);
-
   bool Redeclaration = false;
   NamedDecl *OldDecl = nullptr;
 
@@ -8114,7 +8084,6 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   // Check for a previous extern "C" declaration with this name.
   if (!Redeclaration &&
       checkForConflictWithNonVisibleExternC(*this, NewFD, Previous)) {
-    filterNonConflictingPreviousDecls(*this, NewFD, Previous);
     if (!Previous.empty()) {
       // This is an extern "C" declaration with the same name as a previous
       // declaration, and thus redeclares that entity...
