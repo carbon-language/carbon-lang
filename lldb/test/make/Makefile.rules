@@ -200,6 +200,7 @@ EXE ?= a.out
 ifneq "$(DYLIB_NAME)" ""
 	ifeq "$(OS)" "Darwin"
 		DYLIB_FILENAME = lib$(DYLIB_NAME).dylib
+		DYLIB_EXECUTABLE_PATH ?= @executable_path
 	else ifeq "$(OS)" "Windows_NT"
 		DYLIB_FILENAME = $(DYLIB_NAME).dll
 	else
@@ -452,7 +453,7 @@ $(DYLIB_OBJECTS) : CFLAGS += -DCOMPILING_LLDB_TEST_DLL
 
 $(DYLIB_FILENAME) : $(DYLIB_OBJECTS)
 ifeq "$(OS)" "Darwin"
-	$(LD) $(DYLIB_OBJECTS) $(LDFLAGS) -install_name "@executable_path/$(DYLIB_FILENAME)" -dynamiclib -o "$(DYLIB_FILENAME)"
+	$(LD) $(DYLIB_OBJECTS) $(LDFLAGS) -install_name "$(DYLIB_EXECUTABLE_PATH)/$(DYLIB_FILENAME)" -dynamiclib -o "$(DYLIB_FILENAME)"
 ifneq "$(MAKE_DSYM)" "NO"
 ifneq "$(DS)" ""
 	"$(DS)" $(DSFLAGS) "$(DYLIB_FILENAME)"

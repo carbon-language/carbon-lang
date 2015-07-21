@@ -1,84 +1,24 @@
-CC ?= clang
-ifeq "$(ARCH)" ""
-	ARCH = x86_64
-endif
+LEVEL := ../../make
 
-ifeq "$(OS)" ""
-	OS = $(shell uname -s)
-endif
+LIB_PREFIX := loadunload_
 
-CFLAGS ?= -g -O0
-CWD := $(shell pwd)
+LD_EXTRAS := -L. -l$(LIB_PREFIX)d -ldl
+C_SOURCES := main.c
 
-LIB_PREFIX := libloadunload_
+include $(LEVEL)/Makefile.rules
 
-ifeq "$(OS)" "Darwin"
-	CFLAGS += -arch $(ARCH)
-	DS := dsymutil
-	LD_FLAGS := -dynamiclib
-	LIB_A := $(LIB_PREFIX)a.dylib
-	LIB_B := $(LIB_PREFIX)b.dylib
-	LIB_C := $(LIB_PREFIX)c.dylib
-	LIB_D := $(LIB_PREFIX)d.dylib
-	EXEC_PATH := "@executable_path"
-	EXEC_PATH_A := -install_name $(EXEC_PATH)/$(LIB_A)
-	EXEC_PATH_B := -install_name $(EXEC_PATH)/$(LIB_B)
-	EXEC_PATH_C := -install_name $(EXEC_PATH)/$(LIB_C)
-	EXEC_PATH_D := -install_name $(CWD)/$(LIB_D)
+.PHONY:
+a.out: lib_a lib_b lib_c lib_d hidden_lib_d
 
-	DS_IF_DARWIN = $(DS) -o $@.dSYM $@
-else
-	CFLAGS += -fPIC
-	LD_FLAGS := -shared
-	LIB_DL := -ldl
-	LIB_A := $(LIB_PREFIX)a.so
-	LIB_B := $(LIB_PREFIX)b.so
-	LIB_C := $(LIB_PREFIX)c.so
-	LIB_D := $(LIB_PREFIX)d.so
-endif
+lib_%:
+	$(MAKE) -f $*.mk
 
-all: a.out $(LIB_A) $(LIB_B) $(LIB_C) $(LIB_D) hidden/$(LIB_D)
+hidden_lib_d:
+	$(MAKE) -C hidden
 
-a.out: main.o $(LIB_D)
-	$(CC) $(CFLAGS) -o a.out main.o -L. -pie -lloadunload_d $(LIB_DL)
-
-main.o: main.c
-	$(CC) $(CFLAGS) -c main.c
-
-hidden/$(LIB_D): dh.o
-	$(CC) $(CFLAGS) $(LD_FLAGS) -o hidden/$(LIB_D) dh.o
-	$(DS_IF_DARWIN)
-
-$(LIB_A): a.o $(LIB_B)
-	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_A) -o $(LIB_A) a.o -L. -lloadunload_b
-	$(DS_IF_DARWIN)
-
-a.o: a.c
-	$(CC) $(CFLAGS) -c a.c
-
-$(LIB_B): b.o
-	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_B) -o $(LIB_B) b.o
-	$(DS_IF_DARWIN)
-
-b.o: b.c
-	$(CC) $(CFLAGS) -c b.c
-
-$(LIB_C): c.o
-	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_C) -o $(LIB_C) c.o
-	$(DS_IF_DARWIN)
-
-c.o: c.c
-	$(CC) $(CFLAGS) -c c.c
-
-$(LIB_D): d.o
-	$(CC) $(CFLAGS) $(LD_FLAGS) $(EXEC_PATH_D) -o $(LIB_D) d.o
-	$(DS_IF_DARWIN)
-
-d.o: d.c
-	$(CC) $(CFLAGS) -c d.c
-
-dh.o: d.c
-	$(CC) $(CFLAGS) -DHIDDEN -c d.c -o dh.o
-
-clean:
-	rm -rf $(wildcard *.o *~ *.dylib *.so a.out *.dSYM hidden/*)
+clean::
+	$(MAKE) -f a.mk clean
+	$(MAKE) -f b.mk clean
+	$(MAKE) -f c.mk clean
+	$(MAKE) -f d.mk clean
+	$(MAKE) -C hidden clean
