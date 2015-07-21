@@ -439,6 +439,7 @@ struct AddressSanitizer : public FunctionPass {
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
   bool runOnFunction(Function &F) override;
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
+  void markEscapedLocalAllocas(Function &F);
   bool doInitialization(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
 
@@ -451,6 +452,16 @@ struct AddressSanitizer : public FunctionPass {
   bool GlobalIsLinkerInitialized(GlobalVariable *G);
   bool isSafeAccess(ObjectSizeOffsetVisitor &ObjSizeVis, Value *Addr,
                     uint64_t TypeSize) const;
+
+  /// Helper to cleanup per-function state.
+  struct FunctionStateRAII {
+    AddressSanitizer *Pass;
+    FunctionStateRAII(AddressSanitizer *Pass) : Pass(Pass) {
+      assert(Pass->ProcessedAllocas.empty() &&
+             "last pass forgot to clear cache");
+    }
+    ~FunctionStateRAII() { Pass->ProcessedAllocas.clear(); }
+  };
 
   LLVMContext *C;
   Triple TargetTriple;
@@ -548,6 +559,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   SmallVector<AllocaInst *, 1> DynamicAllocaVec;
   SmallVector<IntrinsicInst *, 1> StackRestoreVec;
   AllocaInst *DynamicAllocaLayout = nullptr;
+  IntrinsicInst *LocalEscapeCall = nullptr;
 
   // Maps Value to an AllocaInst from which the Value is originated.
   typedef DenseMap<Value *, AllocaInst *> AllocaForValueMapTy;
@@ -645,6 +657,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   void visitIntrinsicInst(IntrinsicInst &II) {
     Intrinsic::ID ID = II.getIntrinsicID();
     if (ID == Intrinsic::stackrestore) StackRestoreVec.push_back(&II);
+    if (ID == Intrinsic::localescape) LocalEscapeCall = &II;
     if (!ClCheckLifetime) return;
     if (ID != Intrinsic::lifetime_start && ID != Intrinsic::lifetime_end)
       return;
@@ -1479,6 +1492,34 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   return false;
 }
 
+void AddressSanitizer::markEscapedLocalAllocas(Function &F) {
+  // Find the one possible call to llvm.localescape and pre-mark allocas passed
+  // to it as uninteresting. This assumes we haven't started processing allocas
+  // yet. This check is done up front because iterating the use list in
+  // isInterestingAlloca would be algorithmically slower.
+  assert(ProcessedAllocas.empty() && "must process localescape before allocas");
+
+  // Try to get the declaration of llvm.localescape. If it's not in the module,
+  // we can exit early.
+  if (!F.getParent()->getFunction("llvm.localescape")) return;
+
+  // Look for a call to llvm.localescape call in the entry block. It can't be in
+  // any other block.
+  for (Instruction &I : F.getEntryBlock()) {
+    IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I);
+    if (II && II->getIntrinsicID() == Intrinsic::localescape) {
+      // We found a call. Mark all the allocas passed in as uninteresting.
+      for (Value *Arg : II->arg_operands()) {
+        AllocaInst *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts());
+        assert(AI && AI->isStaticAlloca() &&
+               "non-static alloca arg to localescape");
+        ProcessedAllocas[AI] = false;
+      }
+      break;
+    }
+  }
+}
+
 bool AddressSanitizer::runOnFunction(Function &F) {
   if (&F == AsanCtorFunction) return false;
   if (F.getLinkage() == GlobalValue::AvailableExternallyLinkage) return false;
@@ -1493,6 +1534,12 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   if (!F.hasFnAttribute(Attribute::SanitizeAddress)) return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName()) return false;
+
+  FunctionStateRAII CleanupObj(this);
+
+  // We can't instrument allocas used with llvm.localescape. Only static allocas
+  // can be passed to that intrinsic.
+  markEscapedLocalAllocas(F);
 
   // We want to instrument every address only once per basic block (unless there
   // are calls between uses).
@@ -1744,6 +1791,9 @@ void FunctionStackPoisoner::poisonStack() {
   // Otherwise, debug info is broken, because only first-basic-block allocas are
   // treated as regular stack slots.
   for (auto *AI : NonInstrumentedStaticAllocaVec) AI->moveBefore(InsBefore);
+
+  // If we have a call to llvm.localescape, keep it in the entry block.
+  if (LocalEscapeCall) LocalEscapeCall->moveBefore(InsBefore);
 
   SmallVector<ASanStackVariableDescription, 16> SVD;
   SVD.reserve(AllocaVec.size());
