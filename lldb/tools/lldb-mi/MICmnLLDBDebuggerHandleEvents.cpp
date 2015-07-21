@@ -1,4 +1,4 @@
-//===-- MICmnLLDBDebuggerHandleEvents.cpp --------------------------------------------*- C++ -*-===//
+//===-- MICmnLLDBDebuggerHandleEvents.cpp -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

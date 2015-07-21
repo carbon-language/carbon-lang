@@ -1,4 +1,4 @@
-//===-- MIUtilStreamStdin.cpp -----------------------------------*- C++ -*-===//
+//===-- MICmnStreamStdin.cpp ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

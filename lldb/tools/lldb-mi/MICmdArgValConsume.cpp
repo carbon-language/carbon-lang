@@ -1,4 +1,4 @@
-//===-- MICmdArgValConsume.cpp -------------------------------------*- C++ -*-===//
+//===-- MICmdArgValConsume.cpp ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

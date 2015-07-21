@@ -1,4 +1,4 @@
-//===-- MICmnMIOutOfBandRecord.cpp --------------------------------------------*- C++ -*-===//
+//===-- MICmnMIOutOfBandRecord.cpp ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

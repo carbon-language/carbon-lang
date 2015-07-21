@@ -1,4 +1,4 @@
-//===-- MICmnThreadMgr.cpp --------------------------------------*- C++ -*-===//
+//===-- MICmnThreadMgrStd.cpp -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

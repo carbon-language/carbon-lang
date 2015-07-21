@@ -1,4 +1,4 @@
-//===-- CMICmdArgValBase.h --------------------------------------*- C++ -*-===//
+//===-- MICmdArgValBase.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

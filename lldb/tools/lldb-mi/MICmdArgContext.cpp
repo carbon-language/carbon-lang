@@ -1,4 +1,4 @@
-//===-- MICmnArgContext.cpp -------------------------------------*- C++ -*-===//
+//===-- MICmdArgContext.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- MICmdCmdGdbInfo.h --------------------------*- C++ -*-===//
+//===-- MICmdCmdGdbInfo.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
