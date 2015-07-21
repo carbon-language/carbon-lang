@@ -7,8 +7,8 @@
 # RUN: FileCheck --check-prefix=CHECK-BASIC-ERR < %t.err %s
 #
 # CHECK-BASIC-ERR: loading suite config '{{.*}}/discovery/lit.cfg'
-# CHECK-BASIC-ERR: loading suite config '{{.*}}/discovery/subsuite/lit.cfg'
-# CHECK-BASIC-ERR: loading local config '{{.*}}/discovery/subdir/lit.local.cfg'
+# CHECK-BASIC-ERR-DAG: loading suite config '{{.*}}/discovery/subsuite/lit.cfg'
+# CHECK-BASIC-ERR-DAG: loading local config '{{.*}}/discovery/subdir/lit.local.cfg'
 #
 # CHECK-BASIC-OUT: -- Test Suites --
 # CHECK-BASIC-OUT:   sub-suite - 2 tests
@@ -51,8 +51,8 @@
 # CHECK-ASEXEC-ERR: load_config from '{{.*}}/discovery/lit.cfg'
 # CHECK-ASEXEC-ERR: loaded config '{{.*}}/discovery/lit.cfg'
 # CHECK-ASEXEC-ERR: loaded config '{{.*}}/exec-discovery/lit.site.cfg'
-# CHECK-ASEXEC-ERR: loading suite config '{{.*}}/discovery/subsuite/lit.cfg'
-# CHECK-ASEXEC-ERR: loading local config '{{.*}}/discovery/subdir/lit.local.cfg'
+# CHECK-ASEXEC-ERR-DAG: loading suite config '{{.*}}/discovery/subsuite/lit.cfg'
+# CHECK-ASEXEC-ERR-DAG: loading local config '{{.*}}/discovery/subdir/lit.local.cfg'
 #
 # CHECK-ASEXEC-OUT: -- Test Suites --
 # CHECK-ASEXEC-OUT:   sub-suite - 2 tests
