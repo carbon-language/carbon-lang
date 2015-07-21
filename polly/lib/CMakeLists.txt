@@ -32,6 +32,7 @@ elseif (EXISTS "${ISL_SOURCE_DIR}/gitversion.h")
   string(REGEX REPLACE ".*\\\"([^\\\"]*)\\\".*" "\\1" GIT_HEAD_ID "${GITVERSION_H}")
 elseif ()
   # Unknown revision
+  # TODO: We could look for a .git and get the revision from HEAD
   set(GIT_HEAD_ID "UNKNOWN")
 endif ()
 
@@ -45,6 +46,19 @@ set(USE_SMALL_INT_OPT ON)
 # Determine compiler characteristics
 include(CheckCSourceCompiles)
 
+# Like check_c_source_compiles, but sets the result to either
+# 0 (error while compiling) or 1 (compiled successfully)
+# Required for compatibility with autotool's AC_CHECK_DECLS
+function (check_c_source_compiles_numeric _prog _var)
+  check_c_source_compiles("${_prog}" "${_var}")
+  if ("${${_var}}")
+    set("${_var}" 1 PARENT_SCOPE)
+  else ()
+    set("${_var}" 0 PARENT_SCOPE)
+  endif ()
+endfunction ()
+
+
 check_c_source_compiles("
   int func(void) __attribute__((__warn_unused_result__));
   int main() { return 0; }
@@ -55,29 +69,79 @@ if (HAS_ATTRIBUTE_WARN_UNUSED_RESULT)
 endif ()
 
 check_c_source_compiles("
-  #include <strings.h>
-  int main() { ffs(0); return 0; }
-  " HAVE_DECL_FFS)
-if (NOT HAVE_DECL_FFS)
-  set(HAVE_DECL_FFS 0)
-endif ()
-
-check_c_source_compiles("
-  int main() { __builtin_ffs(0); return 0; }
-  " HAVE_DECL___BUILTIN_FFS)
-if (NOT HAVE_DECL___BUILTIN_FFS)
-  set(HAVE_DECL___BUILTIN_FFS 0)
-endif ()
-
-check_c_source_compiles("
   static void foo(void) __attribute__ ((unused));
   int main() { return 0; }
   " HAVE___ATTRIBUTE__)
 
+
+check_c_source_compiles_numeric("
+  #include <strings.h>
+  int main() { ffs(0); return 0; }
+  " HAVE_DECL_FFS)
+
+check_c_source_compiles_numeric("
+  int main() { __builtin_ffs(0); return 0; }
+  " HAVE_DECL___BUILTIN_FFS)
+
+check_c_source_compiles_numeric("
+  #include <intrin.h>
+  int main() { _BitScanForward(NULL, 0); return 0; }
+  " HAVE_DECL__BITSCANFORWARD)
+
+if (NOT HAVE_DECL_FFS AND
+    NOT HAVE_DECL___BUILTIN_FFS AND
+    NOT HAVE_DECL__BITSCANFORWARD)
+  message(FATAL_ERROR "No ffs implementation found")
+endif ()
+
+
+check_c_source_compiles_numeric("
+  #include <strings.h>
+  int main() { strcasecmp(\"\", \"\"); return 0; }
+  " HAVE_DECL_STRCASECMP)
+
+check_c_source_compiles_numeric("
+  #include <string.h>
+  int main() { _stricmp(\"\", \"\"); return 0; }
+  " HAVE_DECL__STRICMP)
+
+if (NOT HAVE_DECL_STRCASECMP AND NOT HAVE_DECL__STRICMP)
+  message(FATAL_ERROR "No strcasecmp implementation found")
+endif ()
+
+
+check_c_source_compiles_numeric("
+  #include <strings.h>
+  int main() { strncasecmp(\"\", \"\", 0); return 0; }
+  " HAVE_DECL_STRNCASECMP)
+
+check_c_source_compiles_numeric("
+  #include <string.h>
+  int main() { _strnicmp(\"\", \"\", 0); return 0; }
+  " HAVE_DECL__STRNICMP)
+
+if (NOT HAVE_DECL_STRNCASECMP AND NOT HAVE_DECL__STRNICMP)
+  message(FATAL_ERROR "No strncasecmp implementation found")
+endif ()
+
+
+check_c_source_compiles_numeric("
+  #include <stdio.h>
+  int main() { snprintf((void*)0, 0, \"\"); return 0; }
+  " HAVE_DECL_SNPRINTF)
+
+check_c_source_compiles_numeric("
+  #include <stdio.h>
+  int main() { _snprintf((void*)0, 0, \"\"); return 0; }
+  " HAVE_DECL__SNPRINTF)
+
+if (NOT HAVE_DECL_SNPRINTF AND NOT HAVE_DECL__SNPRINTF)
+  message(FATAL_ERROR "No snprintf implementation found")
+endif ()
+
 # Write configure result
 configure_file("External/gitversion.h.cmake" "${ISL_BINARY_DIR}/gitversion.h")
 configure_file("External/isl_config.h.cmake" "${ISL_BINARY_DIR}/isl_config.h")
-file(WRITE "${ISL_BINARY_DIR}/include/isl/stdint.h" "#include <stdint.h>")
 
 # ISL files to compile
 set (ISL_FILES
@@ -103,6 +167,7 @@ set (ISL_FILES
     External/isl/isl_equalities.c
     External/isl/isl_factorization.c
     External/isl/isl_farkas.c
+    External/isl/isl_ffs.c
     External/isl/isl_flow.c
     External/isl/isl_fold.c
     External/isl/isl_hash.c
