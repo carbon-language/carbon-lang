@@ -629,14 +629,18 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
   }
 
   // Get string table sections.
-  ErrorOr<const Elf_Shdr *> StrTabSecOrErr = getSection(getStringTableIndex());
-  if ((EC = StrTabSecOrErr.getError()))
-    return;
+  uintX_t StringTableIndex = getStringTableIndex();
+  if (StringTableIndex) {
+    ErrorOr<const Elf_Shdr *> StrTabSecOrErr =
+        getSection(getStringTableIndex());
+    if ((EC = StrTabSecOrErr.getError()))
+      return;
 
-  ErrorOr<StringRef> SymtabOrErr = getStringTable(*StrTabSecOrErr);
-  if ((EC = SymtabOrErr.getError()))
-    return;
-  DotShstrtab = *SymtabOrErr;
+    ErrorOr<StringRef> SymtabOrErr = getStringTable(*StrTabSecOrErr);
+    if ((EC = SymtabOrErr.getError()))
+      return;
+    DotShstrtab = *SymtabOrErr;
+  }
 
   // Build symbol name side-mapping if there is one.
   if (SymbolTableSectionHeaderIndex) {
@@ -746,6 +750,8 @@ template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
   uint32_t Offset = Section->sh_name;
+  if (Offset == 0)
+    return StringRef();
   if (Offset >= DotShstrtab.size())
     return object_error::parse_failed;
   return StringRef(DotShstrtab.data() + Offset);
