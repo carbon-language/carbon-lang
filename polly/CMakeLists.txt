@@ -75,9 +75,12 @@ if (CMAKE_COMPILER_IS_GNUCXX)
   # FIXME: Turn off exceptions, RTTI:
   # -fno-exceptions -fno-rtti
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-common -Woverloaded-virtual -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings -fno-exceptions -fno-rtti")
+elseif (MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHs-c-")
+  add_definitions("-D_HAS_EXCEPTIONS=0")
+else ()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 endif ()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 
 # Define the FLAGS for the compilation of isl and imath
 #
