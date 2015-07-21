@@ -111,8 +111,12 @@ namespace {
       /// Index into the basic block where the merged instruction will be
       /// inserted. (See MemOpQueueEntry.Position)
       unsigned InsertPos;
+      /// Whether the instructions can be merged into a ldm/stm instruction.
+      bool CanMergeToLSMulti;
+      /// Whether the instructions can be merged into a ldrd/strd instruction.
+      bool CanMergeToLSDouble;
     };
-    BumpPtrAllocator Allocator;
+    SpecificBumpPtrAllocator<MergeCandidate> Allocator;
     SmallVector<const MergeCandidate*,4> Candidates;
 
     void moveLiveRegsBefore(const MachineBasicBlock &MBB,
@@ -122,11 +126,14 @@ namespace {
                            MachineBasicBlock::iterator MBBI,
                            DebugLoc DL, unsigned Base, unsigned WordOffset,
                            ARMCC::CondCodes Pred, unsigned PredReg);
-    MachineInstr *MergeOps(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator InsertBefore, int Offset,
-                           unsigned Base, bool BaseKill, unsigned Opcode,
-                           ARMCC::CondCodes Pred, unsigned PredReg, DebugLoc DL,
-                           ArrayRef<std::pair<unsigned, bool>> Regs);
+    MachineInstr *CreateLoadStoreMulti(MachineBasicBlock &MBB,
+        MachineBasicBlock::iterator InsertBefore, int Offset, unsigned Base,
+        bool BaseKill, unsigned Opcode, ARMCC::CondCodes Pred, unsigned PredReg,
+        DebugLoc DL, ArrayRef<std::pair<unsigned, bool>> Regs);
+    MachineInstr *CreateLoadStoreDouble(MachineBasicBlock &MBB,
+        MachineBasicBlock::iterator InsertBefore, int Offset, unsigned Base,
+        bool BaseKill, unsigned Opcode, ARMCC::CondCodes Pred, unsigned PredReg,
+        DebugLoc DL, ArrayRef<std::pair<unsigned, bool>> Regs) const;
     void FormCandidates(const MemOpQueue &MemOps);
     MachineInstr *MergeOpsUpdate(const MergeCandidate &Cand);
     bool FixInvalidRegPairOp(MachineBasicBlock &MBB,
@@ -555,12 +562,10 @@ static bool ContainsReg(const ArrayRef<std::pair<unsigned, bool>> &Regs,
 /// Create and insert a LDM or STM with Base as base register and registers in
 /// Regs as the register operands that would be loaded / stored.  It returns
 /// true if the transformation is done.
-MachineInstr *
-ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator InsertBefore, int Offset,
-                          unsigned Base, bool BaseKill, unsigned Opcode,
-                          ARMCC::CondCodes Pred, unsigned PredReg, DebugLoc DL,
-                          ArrayRef<std::pair<unsigned, bool>> Regs) {
+MachineInstr *ARMLoadStoreOpt::CreateLoadStoreMulti(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator InsertBefore, int Offset, unsigned Base,
+    bool BaseKill, unsigned Opcode, ARMCC::CondCodes Pred, unsigned PredReg,
+    DebugLoc DL, ArrayRef<std::pair<unsigned, bool>> Regs) {
   unsigned NumRegs = Regs.size();
   assert(NumRegs > 1);
 
@@ -749,6 +754,28 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   return MIB.getInstr();
 }
 
+MachineInstr *ARMLoadStoreOpt::CreateLoadStoreDouble(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator InsertBefore, int Offset, unsigned Base,
+    bool BaseKill, unsigned Opcode, ARMCC::CondCodes Pred, unsigned PredReg,
+    DebugLoc DL, ArrayRef<std::pair<unsigned, bool>> Regs) const {
+  bool IsLoad = isi32Load(Opcode);
+  assert((IsLoad || isi32Store(Opcode)) && "Must have integer load or store");
+  unsigned LoadStoreOpcode = IsLoad ? ARM::t2LDRDi8 : ARM::t2STRDi8;
+
+  assert(Regs.size() == 2);
+  MachineInstrBuilder MIB = BuildMI(MBB, InsertBefore, DL,
+                                    TII->get(LoadStoreOpcode));
+  if (IsLoad) {
+    MIB.addReg(Regs[0].first, RegState::Define)
+       .addReg(Regs[1].first, RegState::Define);
+  } else {
+    MIB.addReg(Regs[0].first, getKillRegState(Regs[0].second))
+       .addReg(Regs[1].first, getKillRegState(Regs[1].second));
+  }
+  MIB.addReg(Base).addImm(Offset).addImm(Pred).addReg(PredReg);
+  return MIB.getInstr();
+}
+
 /// Call MergeOps and update MemOps and merges accordingly on success.
 MachineInstr *ARMLoadStoreOpt::MergeOpsUpdate(const MergeCandidate &Cand) {
   const MachineInstr *First = Cand.Instrs.front();
@@ -799,7 +826,12 @@ MachineInstr *ARMLoadStoreOpt::MergeOpsUpdate(const MergeCandidate &Cand) {
   unsigned PredReg = 0;
   ARMCC::CondCodes Pred = getInstrPredicate(First, PredReg);
   DebugLoc DL = First->getDebugLoc();
-  MachineInstr *Merged = MergeOps(MBB, InsertBefore, Offset, Base, BaseKill,
+  MachineInstr *Merged = nullptr;
+  if (Cand.CanMergeToLSDouble)
+    Merged = CreateLoadStoreDouble(MBB, InsertBefore, Offset, Base, BaseKill,
+                                   Opcode, Pred, PredReg, DL, Regs);
+  if (!Merged && Cand.CanMergeToLSMulti)
+    Merged = CreateLoadStoreMulti(MBB, InsertBefore, Offset, Base, BaseKill,
                                   Opcode, Pred, PredReg, DL, Regs);
   if (!Merged)
     return nullptr;
@@ -861,6 +893,13 @@ MachineInstr *ARMLoadStoreOpt::MergeOpsUpdate(const MergeCandidate &Cand) {
   return Merged;
 }
 
+static bool isValidLSDoubleOffset(int Offset) {
+  unsigned Value = abs(Offset);
+  // t2LDRDi8/t2STRDi8 supports an 8 bit immediate which is internally
+  // multiplied by 4.
+  return (Value % 4) == 0 && Value < 1024;
+}
+
 /// Find candidates for load/store multiple merge in list of MemOpQueueEntries.
 void ARMLoadStoreOpt::FormCandidates(const MemOpQueue &MemOps) {
   const MachineInstr *FirstMI = MemOps[0].MI;
@@ -880,29 +919,55 @@ void ARMLoadStoreOpt::FormCandidates(const MemOpQueue &MemOps) {
     unsigned Latest = SIndex;
     unsigned Earliest = SIndex;
     unsigned Count = 1;
+    bool CanMergeToLSDouble =
+      STI->isThumb2() && isNotVFP && isValidLSDoubleOffset(Offset);
+    // ARM errata 602117: LDRD with base in list may result in incorrect base
+    // register when interrupted or faulted.
+    if (STI->isCortexM3() && isi32Load(Opcode) &&
+        PReg == getLoadStoreBaseOp(*MI).getReg())
+      CanMergeToLSDouble = false;
 
-    // Merge additional instructions fulfilling LDM/STM constraints.
+    bool CanMergeToLSMulti = true;
+    // On swift vldm/vstm starting with an odd register number as that needs
+    // more uops than single vldrs.
+    if (STI->isSwift() && !isNotVFP && (PRegNum % 2) == 1)
+      CanMergeToLSMulti = false;
+
+    // LDRD/STRD do not allow SP/PC. LDM/STM do not support it or have it
+    // deprecated; LDM to PC is fine but cannot happen here.
+    if (PReg == ARM::SP || PReg == ARM::PC)
+      CanMergeToLSMulti = CanMergeToLSDouble = false;
+
+    // Merge following instructions where possible.
     for (unsigned I = SIndex+1; I < EIndex; ++I, ++Count) {
       int NewOffset = MemOps[I].Offset;
       if (NewOffset != Offset + (int)Size)
         break;
       const MachineOperand &MO = getLoadStoreRegOp(*MemOps[I].MI);
       unsigned Reg = MO.getReg();
-      if (Reg == ARM::SP)
-        break;
-      unsigned RegNum = MO.isUndef() ? UINT_MAX : TRI->getEncodingValue(Reg);
-      // Register numbers must be in ascending order.
-      if (RegNum <= PRegNum)
-        break;
-      // For VFP / NEON load/store multiples, the registers must be consecutive
-      // and within the limit on the number of registers per instruction.
-      if (!isNotVFP && RegNum != PRegNum+1)
-        break;
-      // On Swift we don't want vldm/vstm to start with a odd register num
-      // because Q register unaligned vldm/vstm need more uops.
-      if (!isNotVFP && STI->isSwift() && Count == 1 && (PRegNum % 2) == 1)
+      if (Reg == ARM::SP || Reg == ARM::PC)
         break;
 
+      // See if the current load/store may be part of a multi load/store.
+      unsigned RegNum = MO.isUndef() ? UINT_MAX : TRI->getEncodingValue(Reg);
+      bool PartOfLSMulti = CanMergeToLSMulti;
+      if (PartOfLSMulti) {
+        // Register numbers must be in ascending order.
+        if (RegNum <= PRegNum)
+          PartOfLSMulti = false;
+        // For VFP / NEON load/store multiples, the registers must be
+        // consecutive and within the limit on the number of registers per
+        // instruction.
+        else if (!isNotVFP && RegNum != PRegNum+1)
+          PartOfLSMulti = false;
+      }
+      // See if the current load/store may be part of a double load/store.
+      bool PartOfLSDouble = CanMergeToLSDouble && Count <= 1;
+
+      if (!PartOfLSMulti && !PartOfLSDouble)
+        break;
+      CanMergeToLSMulti &= PartOfLSMulti;
+      CanMergeToLSDouble &= PartOfLSDouble;
       // Track MemOp with latest and earliest position (Positions are
       // counted in reverse).
       unsigned Position = MemOps[I].Position;
@@ -916,12 +981,16 @@ void ARMLoadStoreOpt::FormCandidates(const MemOpQueue &MemOps) {
     }
 
     // Form a candidate from the Ops collected so far.
-    MergeCandidate *Candidate = new(Allocator) MergeCandidate;
+    MergeCandidate *Candidate = new(Allocator.Allocate()) MergeCandidate;
     for (unsigned C = SIndex, CE = SIndex + Count; C < CE; ++C)
       Candidate->Instrs.push_back(MemOps[C].MI);
     Candidate->LatestMIIdx = Latest - SIndex;
     Candidate->EarliestMIIdx = Earliest - SIndex;
     Candidate->InsertPos = MemOps[Latest].Position;
+    if (Count == 1)
+      CanMergeToLSMulti = CanMergeToLSDouble = false;
+    Candidate->CanMergeToLSMulti = CanMergeToLSMulti;
+    Candidate->CanMergeToLSDouble = CanMergeToLSDouble;
     Candidates.push_back(Candidate);
     // Continue after the chain.
     SIndex += Count;
@@ -1653,12 +1722,14 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   // Go through list of candidates and merge.
   bool Changed = false;
   for (const MergeCandidate *Candidate : Candidates) {
-    if (Candidate->Instrs.size() > 1) {
+    if (Candidate->CanMergeToLSMulti || Candidate->CanMergeToLSDouble) {
       MachineInstr *Merged = MergeOpsUpdate(*Candidate);
       // Merge preceding/trailing base inc/dec into the merged op.
       if (Merged) {
-        MergeBaseUpdateLSMultiple(Merged);
         Changed = true;
+        unsigned Opcode = Merged->getOpcode();
+        if (Opcode != ARM::t2STRDi8 && Opcode != ARM::t2LDRDi8)
+          MergeBaseUpdateLSMultiple(Merged);
       } else {
         for (MachineInstr *MI : Candidate->Instrs) {
           if (MergeBaseUpdateLoadStore(MI))
@@ -1738,7 +1809,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
       Modified |= MergeReturnIntoLDM(MBB);
   }
 
-  Allocator.Reset();
+  Allocator.DestroyAll();
   return Modified;
 }
 
