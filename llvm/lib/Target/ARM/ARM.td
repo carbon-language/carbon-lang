@@ -154,6 +154,10 @@ def FeatureLongCalls : SubtargetFeature<"long-calls", "GenLongCalls", "true",
                                         "Generate calls via indirect call "
                                         "instructions">;
 
+def FeatureReserveR9 : SubtargetFeature<"reserve-r9", "ReserveR9", "true",
+                                        "Reserve R9, making it unavailable as "
+                                        "GPR">;
+
 def FeatureNoMovt : SubtargetFeature<"no-movt", "NoMovt", "true",
                                      "Don't use movt/movw pairs for 32-bit "
                                      "imms">;
