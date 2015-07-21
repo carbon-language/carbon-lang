@@ -123,17 +123,17 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
 
   // Dump symbols
   bool IsFirstSym = true;
-  for (auto SI = Obj.symbol_begin(), SE = Obj.symbol_end(); SI != SE; ++SI) {
+  for (const Elf_Sym &Sym : Obj.symbols()) {
     if (IsFirstSym) {
       IsFirstSym = false;
       continue;
     }
 
     ELFYAML::Symbol S;
-    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(SI, false, S))
+    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(&Sym, false, S))
       return EC;
 
-    switch (SI->getBinding())
+    switch (Sym.getBinding())
     {
     case ELF::STB_LOCAL:
       Y->Symbols.Local.push_back(S);
