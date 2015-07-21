@@ -58,6 +58,21 @@ function (check_c_source_compiles_numeric _prog _var)
   endif ()
 endfunction ()
 
+# Check for the existance of a type
+function (check_c_type_exists _type _files _variable)
+  set(_includes "")
+  foreach (file_name ${_files})
+     set(_includes "${_includes}#include<${file_name}>\n")
+  endforeach()
+  check_c_source_compiles("
+    ${_includes}
+    ${_type} typeVar;
+    int main() {
+        return 0;
+    }
+    " ${_variable})
+endfunction ()
+
 
 check_c_source_compiles("
   int func(void) __attribute__((__warn_unused_result__));
@@ -139,6 +154,23 @@ if (NOT HAVE_DECL_SNPRINTF AND NOT HAVE_DECL__SNPRINTF)
   message(FATAL_ERROR "No snprintf implementation found")
 endif ()
 
+
+check_c_type_exists(uint8_t "" HAVE_UINT8T)
+check_c_type_exists(uint8_t "stdint.h" HAVE_STDINT_H)
+check_c_type_exists(uint8_t "inttypes.h" HAVE_INTTYPES_H)
+check_c_type_exists(uint8_t "sys/types.h" HAVE_SYS_INTTYPES_H)
+if (HAVE_UINT8T)
+  set(INCLUDE_STDINT_H "")
+elseif (HAVE_STDINT_H)
+  set(INCLUDE_STDINT_H "#include <stdint.h>")
+elseif (HAVE_INTTYPES_H)
+  set(INCLUDE_STDINT_H "#include <inttypes.h>")
+elseif (HAVE_SYS_INTTYPES_H)
+  set(INCLUDE_STDINT_H "#include <sys/inttypes.h>")
+else ()
+  message(FATAL_ERROR "No stdint.h or compatible found")
+endif ()
+
 # Write configure result
 # configure_file(... COPYONLY) avoids that the time stamp changes if the file is identical
 file(WRITE "${ISL_BINARY_DIR}/gitversion.h.tmp"
@@ -146,7 +178,13 @@ file(WRITE "${ISL_BINARY_DIR}/gitversion.h.tmp"
 configure_file("${ISL_BINARY_DIR}/gitversion.h.tmp"
                "${ISL_BINARY_DIR}/gitversion.h" COPYONLY)
 
+file(WRITE "${ISL_BINARY_DIR}/include/isl/stdint.h.tmp"
+     "${INCLUDE_STDINT_H}")
+configure_file("${ISL_BINARY_DIR}/include/isl/stdint.h.tmp"
+               "${ISL_BINARY_DIR}/include/isl/stdint.h" COPYONLY)
+
 configure_file("External/isl_config.h.cmake" "${ISL_BINARY_DIR}/isl_config.h")
+
 
 # ISL files to compile
 set (ISL_FILES
