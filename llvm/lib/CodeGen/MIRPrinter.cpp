@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -429,6 +430,11 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   case MachineOperand::MO_JumpTableIndex:
     OS << "%jump-table." << Op.getIndex();
     // TODO: Print target flags.
+    break;
+  case MachineOperand::MO_ExternalSymbol:
+    OS << '$';
+    printLLVMNameWithoutPrefix(OS, Op.getSymbolName());
+    // TODO: Print the target flags.
     break;
   case MachineOperand::MO_GlobalAddress:
     Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);

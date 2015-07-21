@@ -110,6 +110,7 @@ public:
   bool parseGlobalAddressOperand(MachineOperand &Dest);
   bool parseConstantPoolIndexOperand(MachineOperand &Dest);
   bool parseJumpTableIndexOperand(MachineOperand &Dest);
+  bool parseExternalSymbolOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
@@ -560,6 +561,17 @@ bool MIParser::parseJumpTableIndexOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseExternalSymbolOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::ExternalSymbol) ||
+         Token.is(MIToken::QuotedExternalSymbol));
+  StringValueUtility Name(Token);
+  const char *Symbol = MF.createExternalSymbolName(Name);
+  lex();
+  // TODO: Parse the target flags.
+  Dest = MachineOperand::CreateES(Symbol);
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
@@ -587,6 +599,9 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseConstantPoolIndexOperand(Dest);
   case MIToken::JumpTableIndex:
     return parseJumpTableIndexOperand(Dest);
+  case MIToken::ExternalSymbol:
+  case MIToken::QuotedExternalSymbol:
+    return parseExternalSymbolOperand(Dest);
   case MIToken::Error:
     return true;
   case MIToken::Identifier:

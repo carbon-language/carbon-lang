@@ -54,6 +54,8 @@ struct MIToken {
     NamedGlobalValue,
     QuotedNamedGlobalValue,
     GlobalValue,
+    ExternalSymbol,
+    QuotedExternalSymbol,
 
     // Other tokens
     IntegerLiteral,
@@ -96,7 +98,9 @@ public:
 
   StringRef::iterator location() const { return Range.begin(); }
 
-  bool isStringValueQuoted() const { return Kind == QuotedNamedGlobalValue; }
+  bool isStringValueQuoted() const {
+    return Kind == QuotedNamedGlobalValue || Kind == QuotedExternalSymbol;
+  }
 
   /// Return the token's raw string value.
   ///

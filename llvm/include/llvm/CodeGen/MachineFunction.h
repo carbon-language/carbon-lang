@@ -475,6 +475,9 @@ public:
     extractStoreMemRefs(MachineInstr::mmo_iterator Begin,
                         MachineInstr::mmo_iterator End);
 
+  /// Allocate a string and populate it with the given external symbol name.
+  const char *createExternalSymbolName(StringRef Name);
+
   //===--------------------------------------------------------------------===//
   // Label Manipulation.
   //

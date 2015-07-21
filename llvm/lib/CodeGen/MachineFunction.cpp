@@ -322,6 +322,13 @@ MachineFunction::extractStoreMemRefs(MachineInstr::mmo_iterator Begin,
   return std::make_pair(Result, Result + Num);
 }
 
+const char *MachineFunction::createExternalSymbolName(StringRef Name) {
+  char *Dest = Allocator.Allocate<char>(Name.size() + 1);
+  std::copy(Name.begin(), Name.end(), Dest);
+  Dest[Name.size()] = 0;
+  return Dest;
+}
+
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MachineFunction::dump() const {
   print(dbgs());
