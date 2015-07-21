@@ -7115,6 +7115,17 @@ TreeTransform<Derived>::TransformOMPTargetDirective(OMPTargetDirective *D) {
 }
 
 template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformOMPTargetDataDirective(
+    OMPTargetDataDirective *D) {
+  DeclarationNameInfo DirName;
+  getDerived().getSema().StartOpenMPDSABlock(OMPD_target_data, DirName, nullptr,
+                                             D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template <typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformOMPTeamsDirective(OMPTeamsDirective *D) {
   DeclarationNameInfo DirName;

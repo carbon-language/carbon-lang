@@ -1300,6 +1300,7 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
+  case OMPD_target_data:
   case OMPD_target: {
     Sema::CapturedParamNameType Params[] = {
         std::make_pair(StringRef(), QualType()) // __context with shared vars
@@ -2123,6 +2124,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(
     assert(AStmt == nullptr &&
            "No associated statement allowed for 'omp cancel' directive");
     Res = ActOnOpenMPCancelDirective(StartLoc, EndLoc, CancelRegion);
+    break;
+  case OMPD_target_data:
+    Res = ActOnOpenMPTargetDataDirective(ClausesWithImplicit, AStmt, StartLoc,
+                                         EndLoc);
     break;
   case OMPD_threadprivate:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -4318,6 +4323,16 @@ StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,
   getCurFunction()->setHasBranchProtectedScope();
 
   return OMPTargetDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
+}
+
+StmtResult Sema::ActOnOpenMPTargetDataDirective(ArrayRef<OMPClause *> Clauses,
+                                                Stmt *AStmt,
+                                                SourceLocation StartLoc,
+                                                SourceLocation EndLoc) {
+  getCurFunction()->setHasBranchProtectedScope();
+
+  return OMPTargetDataDirective::Create(Context, StartLoc, EndLoc, Clauses,
+                                        AStmt);
 }
 
 StmtResult Sema::ActOnOpenMPTeamsDirective(ArrayRef<OMPClause *> Clauses,
@@ -6593,4 +6608,3 @@ Sema::ActOnOpenMPDependClause(OpenMPDependClauseKind DepKind,
   return OMPDependClause::Create(Context, StartLoc, LParenLoc, EndLoc, DepKind,
                                  DepLoc, ColonLoc, Vars);
 }
-

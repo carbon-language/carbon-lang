@@ -19,6 +19,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/PointerIntPair.h"
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -32,6 +33,7 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
   const OpenMPDirectiveKind F[][3] = {
       {OMPD_unknown /*cancellation*/, OMPD_unknown /*point*/,
        OMPD_cancellation_point},
+      {OMPD_target, OMPD_unknown /*data*/, OMPD_target_data},
       {OMPD_for, OMPD_simd, OMPD_for_simd},
       {OMPD_parallel, OMPD_for, OMPD_parallel_for},
       {OMPD_parallel_for, OMPD_simd, OMPD_parallel_for_simd},
@@ -41,6 +43,7 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
       Tok.isAnnotation()
           ? OMPD_unknown
           : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
+
   bool TokenMatched = false;
   for (unsigned i = 0; i < llvm::array_lengthof(F); ++i) {
     if (!Tok.isAnnotation() && DKind == OMPD_unknown) {
@@ -50,18 +53,24 @@ static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
     } else {
       TokenMatched = DKind == F[i][0] && DKind != OMPD_unknown;
     }
+
     if (TokenMatched) {
       Tok = P.getPreprocessor().LookAhead(0);
+      auto TokenIsAnnotation = Tok.isAnnotation();
       auto SDKind =
-          Tok.isAnnotation()
+          TokenIsAnnotation
               ? OMPD_unknown
               : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
-      if (!Tok.isAnnotation() && DKind == OMPD_unknown) {
+
+      if (!TokenIsAnnotation && SDKind == OMPD_unknown) {
         TokenMatched =
-            (i == 0) && !P.getPreprocessor().getSpelling(Tok).compare("point");
+            (i == 0) && 
+                !P.getPreprocessor().getSpelling(Tok).compare("point") ||
+            (i == 1) && !P.getPreprocessor().getSpelling(Tok).compare("data");
       } else {
         TokenMatched = SDKind == F[i][1] && SDKind != OMPD_unknown;
       }
+
       if (TokenMatched) {
         P.ConsumeToken();
         DKind = F[i][2];
@@ -146,8 +155,8 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///         'section' | 'single' | 'master' | 'critical' [ '(' <name> ')' ] |
 ///         'parallel for' | 'parallel sections' | 'task' | 'taskyield' |
 ///         'barrier' | 'taskwait' | 'flush' | 'ordered' | 'atomic' |
-///         'for simd' | 'parallel for simd' | 'target' | 'teams' | 'taskgroup'
-///         {clause}
+///         'for simd' | 'parallel for simd' | 'target' | 'target data' |
+///         'taskgroup' | 'teams' {clause}
 ///         annot_pragma_openmp_end
 ///
 StmtResult
@@ -221,7 +230,8 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_atomic:
   case OMPD_target:
   case OMPD_teams:
-  case OMPD_taskgroup: {
+  case OMPD_taskgroup:
+  case OMPD_target_data: {
     ConsumeToken();
     // Parse directive name of the 'critical' directive if any.
     if (DKind == OMPD_critical) {
@@ -385,7 +395,7 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///       lastprivate-clause | reduction-clause | proc_bind-clause |
 ///       schedule-clause | copyin-clause | copyprivate-clause | untied-clause |
 ///       mergeable-clause | flush-clause | read-clause | write-clause |
-///       update-clause | capture-clause | seq_cst-clause
+///       update-clause | capture-clause | seq_cst-clause 
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {

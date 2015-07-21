@@ -821,6 +821,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OMPOrderedDirectiveClass:
     case Stmt::OMPAtomicDirectiveClass:
     case Stmt::OMPTargetDirectiveClass:
+    case Stmt::OMPTargetDataDirectiveClass:
     case Stmt::OMPTeamsDirectiveClass:
     case Stmt::OMPCancellationPointDirectiveClass:
     case Stmt::OMPCancelDirectiveClass:

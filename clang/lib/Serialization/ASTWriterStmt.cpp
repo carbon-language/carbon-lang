@@ -2063,6 +2063,13 @@ void ASTStmtWriter::VisitOMPTargetDirective(OMPTargetDirective *D) {
   Code = serialization::STMT_OMP_TARGET_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPTargetDataDirective(OMPTargetDataDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_TARGET_DATA_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPTaskyieldDirective(OMPTaskyieldDirective *D) {
   VisitStmt(D);
   VisitOMPExecutableDirective(D);

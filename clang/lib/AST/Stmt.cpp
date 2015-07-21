@@ -2225,6 +2225,30 @@ OMPTargetDirective *OMPTargetDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPTargetDirective(NumClauses);
 }
 
+OMPTargetDataDirective *OMPTargetDataDirective::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+    ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt) {
+  void *Mem =
+      C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPTargetDataDirective),
+                                          llvm::alignOf<OMPClause *>()) +
+                 sizeof(OMPClause *) * Clauses.size() + sizeof(Stmt *));
+  OMPTargetDataDirective *Dir =
+      new (Mem) OMPTargetDataDirective(StartLoc, EndLoc, Clauses.size());
+  Dir->setClauses(Clauses);
+  Dir->setAssociatedStmt(AssociatedStmt);
+  return Dir;
+}
+
+OMPTargetDataDirective *OMPTargetDataDirective::CreateEmpty(const ASTContext &C,
+                                                            unsigned N,
+                                                            EmptyShell) {
+  void *Mem =
+      C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPTargetDataDirective),
+                                          llvm::alignOf<OMPClause *>()) +
+                 sizeof(OMPClause *) * N + sizeof(Stmt *));
+  return new (Mem) OMPTargetDataDirective(N);
+}
+
 OMPTeamsDirective *OMPTeamsDirective::Create(const ASTContext &C,
                                              SourceLocation StartLoc,
                                              SourceLocation EndLoc,

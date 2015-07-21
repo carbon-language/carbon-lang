@@ -2405,6 +2405,9 @@ DEF_TRAVERSE_STMT(OMPAtomicDirective,
 DEF_TRAVERSE_STMT(OMPTargetDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
+DEF_TRAVERSE_STMT(OMPTargetDataDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
+
 DEF_TRAVERSE_STMT(OMPTeamsDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 

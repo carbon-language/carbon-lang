@@ -2121,3 +2121,12 @@ CodeGenFunction::getOMPCancelDestination(OpenMPDirectiveKind Kind) {
                                       : BreakContinueStack.back().BreakBlock;
   return JumpDest();
 }
+
+// Generate the instructions for '#pragma omp target data' directive.
+void CodeGenFunction::EmitOMPTargetDataDirective(
+    const OMPTargetDataDirective &S) {
+
+  // emit the code inside the construct for now
+  auto CS = cast<CapturedStmt>(S.getAssociatedStmt());
+  EmitStmt(CS->getCapturedStmt());
+}
