@@ -21,7 +21,8 @@ namespace {
 enum class CrossJumpMode {
   None,      // Not a jump or non-isa-cross jump
   ToRegular, // cross isa jump to regular symbol
-  ToMicro    // cross isa jump to microMips symbol
+  ToMicro,   // cross isa jump to microMips symbol
+  ToMicroJalr// cross isa jump to microMips symbol referenced by R_MIPS_JALR
 };
 
 typedef std::function<std::error_code(int64_t, bool)> OverflowChecker;
@@ -178,7 +179,7 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MICROMIPS_GOT_OFST:
     return {4, 0xffff, 0, true, signedCheck<16>};
   case R_MIPS_JALR:
-    return {4, 0x0, 0, false, dummyCheck};
+    return {4, 0xffffffff, 0, false, dummyCheck};
   case R_MICROMIPS_JALR:
     return {4, 0x0, 0, true, dummyCheck};
   case R_MIPS_JUMP_SLOT:
@@ -199,6 +200,10 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
     llvm_unreachable("Unknown relocation");
   }
 }
+
+template <class ELFT>
+static uint64_t relocRead(const MipsRelocationParams &params,
+                          const uint8_t *loc);
 
 static int64_t getHi16(int64_t value) {
   return ((value + 0x8000) >> 16) & 0xffff;
@@ -299,6 +304,22 @@ static ErrorOr<int64_t> relocPc26(uint64_t P, uint64_t S, int64_t A) {
   return S + A - P;
 }
 
+template <class ELFT>
+static ErrorOr<int64_t> relocJalr(uint64_t P, uint64_t S, bool isCrossJump,
+                                  uint8_t *location) {
+  uint64_t ins = relocRead<ELFT>(getRelocationParams(R_MIPS_JALR), location);
+  if (isCrossJump)
+    return ins;
+  int64_t off = S - P - 4;
+  if (!llvm::isInt<18>(off))
+    return ins;
+  if (ins == 0x0320f809) // jalr t9
+    return 0x04110000 | ((off >> 2) & 0xffff);
+  if (ins == 0x03200008) // jr t9
+    return 0x10000000 | ((off >> 2) & 0xffff);
+  return ins;
+}
+
 static int64_t relocRel32(int64_t A) {
   // If output relocation format is REL and the input one is RELA, the only
   // method to transfer the relocation addend from the input relocation
@@ -309,7 +330,7 @@ static int64_t relocRel32(int64_t A) {
 
 static std::error_code adjustJumpOpCode(uint64_t &ins, uint64_t tgt,
                                         CrossJumpMode mode) {
-  if (mode == CrossJumpMode::None)
+  if (mode == CrossJumpMode::None || mode == CrossJumpMode::ToMicroJalr)
     return std::error_code();
 
   bool toMicro = mode == CrossJumpMode::ToMicro;
@@ -345,6 +366,8 @@ static CrossJumpMode getCrossJumpMode(const Reference &ref) {
     return CrossJumpMode::None;
   bool isTgtMicro = isMicroMipsAtom(ref.target());
   switch (ref.kindValue()) {
+  case R_MIPS_JALR:
+    return isTgtMicro ? CrossJumpMode::ToMicroJalr : CrossJumpMode::None;
   case R_MIPS_26:
   case LLD_R_MIPS_GLOBAL_26:
     return isTgtMicro ? CrossJumpMode::ToMicro : CrossJumpMode::None;
@@ -356,11 +379,12 @@ static CrossJumpMode getCrossJumpMode(const Reference &ref) {
   }
 }
 
-static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
-                                            Reference::Addend addend,
-                                            uint64_t tgtAddr, uint64_t relAddr,
-                                            uint64_t gpAddr, bool isGP,
-                                            bool isCrossJump, bool isDynamic) {
+template <class ELFT>
+static ErrorOr<int64_t>
+calculateRelocation(Reference::KindValue kind, Reference::Addend addend,
+                    uint64_t tgtAddr, uint64_t relAddr, uint64_t gpAddr,
+                    bool isGP, bool isCrossJump, bool isDynamic,
+                    uint8_t *location) {
   switch (kind) {
   case R_MIPS_NONE:
     return 0;
@@ -461,6 +485,7 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case R_MICROMIPS_LITERAL:
     return tgtAddr + addend - gpAddr;
   case R_MIPS_JALR:
+    return relocJalr<ELFT>(relAddr, tgtAddr, isCrossJump, location);
   case R_MICROMIPS_JALR:
     // We do not do JALR optimization now.
     return 0;
@@ -591,8 +616,8 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     if (kind == R_MIPS_NONE)
       break;
     auto params = getRelocationParams(kind);
-    res = calculateRelocation(kind, *res, sym, relAddr, gpAddr, isGpDisp,
-                              isCrossJump, _ctx.isDynamic());
+    res = calculateRelocation<ELFT>(kind, *res, sym, relAddr, gpAddr, isGpDisp,
+                                    isCrossJump, _ctx.isDynamic(), location);
     if (auto ec = res.getError())
       return ec;
     // Check result for the last relocation only.

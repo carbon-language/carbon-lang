@@ -771,6 +771,10 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     ref.setTarget(getTLSGOTEntry(ref.target(), ref.addend()));
   else if (kind == R_MIPS_GPREL32 || (isLocal(ref.target()) && isGpRelReloc(kind)))
     ref.setAddend(ref.addend() + atom.file().getGP0());
+  else if (kind == R_MIPS_JALR) {
+    if (_ctx.getOutputELFType() != ET_EXEC || !isLocalCall(ref.target()))
+      ref.setKindValue(R_MIPS_NONE);
+  }
 }
 
 template <typename ELFT>
