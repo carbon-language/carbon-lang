@@ -212,6 +212,14 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
 
 ScriptInterpreterPython::~ScriptInterpreterPython ()
 {
+    // the session dictionary may hold objects with complex state
+    // which means that they may need to be torn down with some level of smarts
+    // and that, in turn, requires a valid thread state
+    // force Python to procure itself such a thread state, nuke the session dictionary
+    // and then release it for others to use and proceed with the rest of the shutdown
+    auto gil_state = PyGILState_Ensure();
+    m_session_dict.Reset();
+    PyGILState_Release(gil_state);
 }
 
 void
