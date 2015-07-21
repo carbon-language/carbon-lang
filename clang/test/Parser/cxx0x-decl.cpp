@@ -132,3 +132,7 @@ void NoMissingSemicolonHere(struct S
                             [3]);
 template<int ...N> void NoMissingSemicolonHereEither(struct S
                                                      ... [N]);
+
+// This must be at the end of the file; we used to look ahead past the EOF token here.
+// expected-error@+1 {{expected unqualified-id}}
+using

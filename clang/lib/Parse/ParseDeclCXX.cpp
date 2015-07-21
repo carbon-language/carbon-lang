@@ -546,7 +546,8 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   } else if (ParseUnqualifiedId(
                  SS, /*EnteringContext=*/false,
                  /*AllowDestructorName=*/true,
-                 /*AllowConstructorName=*/NextToken().isNot(tok::equal),
+                 /*AllowConstructorName=*/!(Tok.is(tok::identifier) &&
+                                            NextToken().is(tok::equal)),
                  ParsedType(), TemplateKWLoc, Name)) {
     SkipUntil(tok::semi);
     return nullptr;
