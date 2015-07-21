@@ -461,8 +461,8 @@ unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
       return ABIInfo ? Alignments[i].ABIAlign : Alignments[i].PrefAlign;
 
     // The best match so far depends on what we're looking for.
-     if (AlignType == INTEGER_ALIGN &&
-         Alignments[i].AlignType == INTEGER_ALIGN) {
+    if (AlignType == INTEGER_ALIGN &&
+        Alignments[i].AlignType == INTEGER_ALIGN) {
       // The "best match" for integers is the smallest size that is larger than
       // the BitWidth requested.
       if (Alignments[i].TypeBitWidth > BitWidth && (BestMatchIdx == -1 ||
