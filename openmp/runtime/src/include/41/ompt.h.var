@@ -81,7 +81,7 @@
                                                                                                                 \
     /*--- Mandatory Events ---*/                                                                                \
     macro (ompt_event_parallel_begin,           ompt_new_parallel_callback_t,   1) /* parallel begin */         \
-    macro (ompt_event_parallel_end,             ompt_parallel_callback_t,       2) /* parallel end */           \
+    macro (ompt_event_parallel_end,             ompt_end_parallel_callback_t,   2) /* parallel end */           \
                                                                                                                 \
     macro (ompt_event_task_begin,               ompt_new_task_callback_t,       3) /* task begin */             \
     macro (ompt_event_task_end,                 ompt_task_callback_t,           4) /* task destroy */           \
@@ -267,6 +267,11 @@ typedef enum {
     ompt_thread_other   = 3
 } ompt_thread_type_t;
 
+typedef enum {
+    ompt_invoker_program = 0,         /* program invokes master task  */
+    ompt_invoker_runtime = 1          /* runtime invokes master task  */
+} ompt_invoker_t;
+
 typedef void (*ompt_thread_type_callback_t) (
     ompt_thread_type_t thread_type,   /* type of thread               */
     ompt_thread_id_t thread_id        /* ID of thread                 */
@@ -293,7 +298,14 @@ typedef void (*ompt_new_parallel_callback_t) (
     ompt_frame_t *parent_task_frame,  /* frame data of parent task    */
     ompt_parallel_id_t parallel_id,   /* id of parallel region        */
     uint32_t requested_team_size,     /* number of threads in team    */
-    void *parallel_function           /* pointer to outlined function */
+    void *parallel_function,          /* pointer to outlined function */
+    ompt_invoker_t invoker            /* who invokes master task?    */ 
+);
+
+typedef void (*ompt_end_parallel_callback_t) (
+    ompt_parallel_id_t parallel_id,   /* id of parallel region       */
+    ompt_task_id_t task_id,           /* id of task                  */
+    ompt_invoker_t invoker            /* who invokes master task?    */ 
 );
 
 /* tasks */

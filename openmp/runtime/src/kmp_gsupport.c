@@ -407,7 +407,8 @@ __kmp_GOMP_serialized_parallel(ident_t *loc, kmp_int32 gtid, void (*task)(void *
             int team_size = 1;
             ompt_callbacks.ompt_callback(ompt_event_parallel_begin)(
                 ompt_task_id, ompt_frame, ompt_parallel_id,
-                team_size, (void *) task);
+                team_size, (void *) task,
+                OMPT_INVOKER(fork_context_gnu));
         }
 
         // set up lightweight task
@@ -488,8 +489,10 @@ xexpand(KMP_API_NAME_GOMP_PARALLEL_END)(void)
         ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);
         parallel_id = team_info->parallel_id;
 
+        // Record that we re-entered the runtime system in the implicit
+        // task frame representing the parallel region. 
         ompt_frame = __ompt_get_task_frame_internal(0);
-        ompt_frame->exit_runtime_frame = __builtin_frame_address(0);
+        ompt_frame->reenter_runtime_frame = __builtin_frame_address(0);
 
 #if OMPT_TRACE
         if ((ompt_status == ompt_status_track_callback) &&
@@ -503,7 +506,19 @@ xexpand(KMP_API_NAME_GOMP_PARALLEL_END)(void)
         // unlink if necessary. no-op if there is not a lightweight task.
         ompt_lw_taskteam_t *lwt = __ompt_lw_taskteam_unlink(thr);
         // GOMP allocates/frees lwt since it can't be kept on the stack
-        if (lwt) __kmp_free(lwt);
+        if (lwt) { 
+           __kmp_free(lwt);
+     
+#if OMPT_SUPPORT
+           if (ompt_status & ompt_status_track) {
+              // Since a lightweight task was destroyed, make sure that the
+              // remaining deepest task knows the stack frame where the runtime 
+              // was reentered.
+              ompt_frame = __ompt_get_task_frame_internal(0);
+              ompt_frame->reenter_runtime_frame = __builtin_frame_address(0);
+           }
+#endif
+        }
     }
 #endif
 
@@ -511,26 +526,48 @@ xexpand(KMP_API_NAME_GOMP_PARALLEL_END)(void)
         kmp_info_t *thr = __kmp_threads[gtid];
         __kmp_run_after_invoked_task(gtid, __kmp_tid_from_gtid(gtid), thr,
           thr->th.th_team);
-        __kmp_join_call(&loc, gtid);
+
+#if OMPT_SUPPORT
+        if (ompt_status & ompt_status_track) {
+          // Set reenter frame in parent task, which will become current task
+          // in the midst of join. This is needed before the end_parallel callback.
+          ompt_frame = __ompt_get_task_frame_internal(1);
+          ompt_frame->reenter_runtime_frame = __builtin_frame_address(0);
+        }
+#endif
+
+        __kmp_join_call(&loc, gtid, fork_context_gnu);
+
+#if OMPT_SUPPORT
+        if (ompt_status & ompt_status_track) {
+          ompt_frame->reenter_runtime_frame = NULL;
+        }
+#endif
     }
     else {
         __kmpc_end_serialized_parallel(&loc, gtid);
 
 #if OMPT_SUPPORT
         if (ompt_status & ompt_status_track) {
+            // Record that we re-entered the runtime system in the frame that 
+            // created the parallel region.
+            ompt_frame->reenter_runtime_frame = __builtin_frame_address(0);
+
             if ((ompt_status == ompt_status_track_callback) &&
                 ompt_callbacks.ompt_callback(ompt_event_parallel_end)) {
                 ompt_task_info_t *task_info = __ompt_get_taskinfo(0);
                 ompt_callbacks.ompt_callback(ompt_event_parallel_end)(
-                    parallel_id, task_info->task_id);
+                    parallel_id, task_info->task_id, 
+                    OMPT_INVOKER(fork_context_gnu));
             }
+
+            ompt_frame->reenter_runtime_frame = NULL;
 
             thr->th.ompt_thread_info.state =
                 (((thr->th.th_team)->t.t_serialized) ?
                 ompt_state_work_serial : ompt_state_work_parallel);
         }
 #endif
-
     }
 }
 
@@ -817,7 +854,7 @@ LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT), \
 // There are no ull versions (yet).
 //
 
-#define PARALLEL_LOOP_START(func, schedule) \
+#define PARALLEL_LOOP_START(func, schedule, ompt_pre, ompt_post) \
     void func (void (*task) (void *), void *data, unsigned num_threads,      \
       long lb, long ub, long str, long chunk_sz)                             \
     {                                                                        \
@@ -825,6 +862,8 @@ LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT), \
         MKLOC(loc, #func);                                                   \
         KA_TRACE(20, ( #func ": T#%d, lb 0x%lx, ub 0x%lx, str 0x%lx, chunk_sz 0x%lx\n",        \
           gtid, lb, ub, str, chunk_sz ));                                    \
+                                                                             \
+        ompt_pre();                                                          \
                                                                              \
         if (__kmpc_ok_to_fork(&loc) && (num_threads != 1)) {                 \
             if (num_threads != 0) {                                          \
@@ -843,14 +882,45 @@ LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT), \
           (str > 0) ? (ub - 1) : (ub + 1), str, chunk_sz,                    \
           (schedule) != kmp_sch_static);                                     \
                                                                              \
+        ompt_post();                                                         \
+                                                                             \
         KA_TRACE(20, ( #func " exit: T#%d\n", gtid));                        \
     }
 
 
-PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC_START), kmp_sch_static)
-PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC_START), kmp_sch_dynamic_chunked)
-PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START), kmp_sch_guided_chunked)
-PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START), kmp_sch_runtime)
+
+#if OMPT_SUPPORT
+
+#define OMPT_LOOP_PRE() \
+    ompt_frame_t *parent_frame; \
+    if (ompt_status & ompt_status_track) { \
+        parent_frame = __ompt_get_task_frame_internal(0); \
+        parent_frame->reenter_runtime_frame = __builtin_frame_address(0); \
+    }
+
+
+#define OMPT_LOOP_POST() \
+    if (ompt_status & ompt_status_track) { \
+        parent_frame->reenter_runtime_frame = NULL; \
+    }
+
+#else
+
+#define OMPT_LOOP_PRE() 
+
+#define OMPT_LOOP_POST()
+
+#endif
+
+
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_STATIC_START), 
+                    kmp_sch_static, OMPT_LOOP_PRE, OMPT_LOOP_POST)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_DYNAMIC_START), 
+                    kmp_sch_dynamic_chunked, OMPT_LOOP_PRE, OMPT_LOOP_POST)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START), 
+                    kmp_sch_guided_chunked, OMPT_LOOP_PRE, OMPT_LOOP_POST)
+PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START), 
+                    kmp_sch_runtime, OMPT_LOOP_PRE, OMPT_LOOP_POST)
 
 
 //

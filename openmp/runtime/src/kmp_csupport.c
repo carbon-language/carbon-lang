@@ -289,11 +289,13 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     va_start(   ap, microtask );
 
 #if OMPT_SUPPORT
+    int tid = __kmp_tid_from_gtid( gtid );
     kmp_info_t *master_th = __kmp_threads[ gtid ];
     kmp_team_t *parent_team = master_th->th.th_team;
-    int tid = __kmp_tid_from_gtid( gtid );
-    parent_team->t.t_implicit_task_taskdata[tid].
-        ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(0);
+    if (ompt_status & ompt_status_track) {
+       parent_team->t.t_implicit_task_taskdata[tid].
+           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(0);
+    }
 #endif
 
 #if INCLUDE_SSC_MARKS
@@ -316,7 +318,7 @@ __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
 #if INCLUDE_SSC_MARKS
     SSC_MARK_JOINING();
 #endif
-    __kmp_join_call( loc, gtid );
+    __kmp_join_call( loc, gtid, fork_context_intel );
 
     va_end( ap );
 
@@ -372,6 +374,15 @@ __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
     this_thr->th.th_teams_microtask = microtask;
     this_thr->th.th_teams_level = this_thr->th.th_team->t.t_level; // AC: can be >0 on host
 
+#if OMPT_SUPPORT
+    kmp_team_t *parent_team = this_thr->th.th_team;
+    int tid = __kmp_tid_from_gtid( gtid );
+    if (ompt_status & ompt_status_track) {
+        parent_team->t.t_implicit_task_taskdata[tid].
+           ompt_task_info.frame.reenter_runtime_frame = __builtin_frame_address(0);
+    }
+#endif
+
     // check if __kmpc_push_num_teams called, set default number of teams otherwise
     if ( this_thr->th.th_teams_size.nteams == 0 ) {
         __kmp_push_num_teams( loc, gtid, 0, 0 );
@@ -393,7 +404,15 @@ __kmpc_fork_teams(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...)
             ap
 #endif
             );
-    __kmp_join_call( loc, gtid );
+    __kmp_join_call( loc, gtid, fork_context_intel );
+
+#if OMPT_SUPPORT
+    if (ompt_status & ompt_status_track) {
+        parent_team->t.t_implicit_task_taskdata[tid].
+           ompt_task_info.frame.reenter_runtime_frame = NULL;
+    }
+#endif
+
     this_thr->th.th_teams_microtask = NULL;
     this_thr->th.th_teams_level = 0;
     *(kmp_int64*)(&this_thr->th.th_teams_size) = 0L;
