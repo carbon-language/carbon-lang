@@ -54,23 +54,31 @@ template <class ELFT> bool DynamicFile<ELFT>::canParse(file_magic magic) {
 }
 
 template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
+  typedef llvm::object::ELFFile<ELFT> ELFO;
+
   std::error_code ec;
-  _objFile.reset(new llvm::object::ELFFile<ELFT>(_mb->getBuffer(), ec));
+  _objFile.reset(new ELFO(_mb->getBuffer(), ec));
   if (ec)
     return ec;
 
-  llvm::object::ELFFile<ELFT> &obj = *_objFile;
+  ELFO &obj = *_objFile;
 
   _soname = obj.getLoadName();
   if (_soname.empty())
     _soname = llvm::sys::path::filename(path());
+
+  const typename ELFO::Elf_Shdr *dynSymSec = obj.getDotDynSymSec();
+  ErrorOr<StringRef> strTableOrErr = obj.getStringTableForSymtab(*dynSymSec);
+  if (std::error_code ec = strTableOrErr.getError())
+    return ec;
+  StringRef stringTable = *strTableOrErr;
 
   // Create a map from names to dynamic symbol table entries.
   // TODO: This should use the object file's build in hash table instead if
   // it exists.
   for (auto i = obj.dynamic_symbol_begin(), e = obj.dynamic_symbol_end();
        i != e; ++i) {
-    auto name = obj.getDynamicSymbolName(i);
+    auto name = i->getName(stringTable);
     if ((ec = name.getError()))
       return ec;
 
