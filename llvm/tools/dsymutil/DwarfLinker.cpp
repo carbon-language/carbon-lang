@@ -15,6 +15,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DIE.h"
+#include "llvm/Config/config.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
@@ -80,6 +81,112 @@ struct PatchLocation {
   }
 };
 
+class CompileUnit;
+struct DeclMapInfo;
+class NonRelocatableStringpool;
+
+/// A DeclContext is a named program scope that is used for ODR
+/// uniquing of types.
+/// The set of DeclContext for the ODR-subject parts of a Dwarf link
+/// is expanded (and uniqued) with each new object file processed. We
+/// need to determine the context of each DIE in an linked object file
+/// to see if the corresponding type has already been emitted.
+///
+/// The contexts are conceptually organised as a tree (eg. a function
+/// scope is contained in a namespace scope that contains other
+/// scopes), but storing/accessing them in an actual tree is too
+/// inefficient: we need to be able to very quickly query a context
+/// for a given child context by name. Storing a StringMap in each
+/// DeclContext would be too space inefficient.
+/// The solution here is to give each DeclContext a link to its parent
+/// (this allows to walk up the tree), but to query the existance of a
+/// specific DeclContext using a separate DenseMap keyed on the hash
+/// of the fully qualified name of the context.
+class DeclContext {
+  unsigned QualifiedNameHash;
+  uint32_t Line;
+  uint32_t ByteSize;
+  uint16_t Tag;
+  StringRef Name;
+  StringRef File;
+  const DeclContext &Parent;
+  const DWARFDebugInfoEntryMinimal *LastSeenDIE;
+  uint32_t LastSeenCompileUnitID;
+  uint32_t CanonicalDIEOffset;
+
+  friend DeclMapInfo;
+
+public:
+  typedef DenseSet<DeclContext *, DeclMapInfo> Map;
+
+  DeclContext()
+      : QualifiedNameHash(0), Line(0), ByteSize(0),
+        Tag(dwarf::DW_TAG_compile_unit), Name(), File(), Parent(*this),
+        LastSeenDIE(nullptr), LastSeenCompileUnitID(0), CanonicalDIEOffset(0) {}
+
+  DeclContext(unsigned Hash, uint32_t Line, uint32_t ByteSize, uint16_t Tag,
+              StringRef Name, StringRef File, const DeclContext &Parent,
+              const DWARFDebugInfoEntryMinimal *LastSeenDIE = nullptr,
+              unsigned CUId = 0)
+      : QualifiedNameHash(Hash), Line(Line), ByteSize(ByteSize), Tag(Tag),
+        Name(Name), File(File), Parent(Parent), LastSeenDIE(LastSeenDIE),
+        LastSeenCompileUnitID(CUId), CanonicalDIEOffset(0) {}
+
+  uint32_t getQualifiedNameHash() const { return QualifiedNameHash; }
+
+  bool setLastSeenDIE(CompileUnit &U, const DWARFDebugInfoEntryMinimal *Die);
+
+  uint32_t getCanonicalDIEOffset() const { return CanonicalDIEOffset; }
+  void setCanonicalDIEOffset(uint32_t Offset) { CanonicalDIEOffset = Offset; }
+
+  uint16_t getTag() const { return Tag; }
+  StringRef getName() const { return Name; }
+};
+
+/// Info type for the DenseMap storing the DeclContext pointers.
+struct DeclMapInfo : private DenseMapInfo<DeclContext *> {
+  using DenseMapInfo<DeclContext *>::getEmptyKey;
+  using DenseMapInfo<DeclContext *>::getTombstoneKey;
+
+  static unsigned getHashValue(const DeclContext *Ctxt) {
+    return Ctxt->QualifiedNameHash;
+  }
+
+  static bool isEqual(const DeclContext *LHS, const DeclContext *RHS) {
+    if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+      return RHS == LHS;
+    return LHS->QualifiedNameHash == RHS->QualifiedNameHash &&
+           LHS->Line == RHS->Line && LHS->ByteSize == RHS->ByteSize &&
+           LHS->Name.data() == RHS->Name.data() &&
+           LHS->File.data() == RHS->File.data() &&
+           LHS->Parent.QualifiedNameHash == RHS->Parent.QualifiedNameHash;
+  }
+};
+
+/// This class gives a tree-like API to the DenseMap that stores the
+/// DeclContext objects. It also holds the BumpPtrAllocator where
+/// these objects will be allocated.
+class DeclContextTree {
+  BumpPtrAllocator Allocator;
+  DeclContext Root;
+  DeclContext::Map Contexts;
+
+public:
+  /// Get the child of \a Context described by \a DIE in \a Unit. The
+  /// required strings will be interned in \a StringPool.
+  /// \returns The child DeclContext along with one bit that is set if
+  /// this context is invalid.
+  /// FIXME: the invalid bit along the return value is to emulate some
+  /// dsymutil-classic functionality. See the fucntion definition for
+  /// a more thorough discussion of its use.
+  PointerIntPair<DeclContext *, 1>
+  getChildDeclContext(DeclContext &Context,
+                      const DWARFDebugInfoEntryMinimal *DIE, CompileUnit &Unit,
+                      NonRelocatableStringpool &StringPool);
+
+  DeclContext &getRoot() { return Root; }
+};
+
 /// \brief Stores all information relating to a compile unit, be it in
 /// its original instance in the object file to its brand new cloned
 /// and linked DIE tree.
@@ -88,16 +195,26 @@ public:
   /// \brief Information gathered about a DIE in the object file.
   struct DIEInfo {
     int64_t AddrAdjust; ///< Address offset to apply to the described entity.
+    DeclContext *Ctxt;  ///< ODR Declaration context.
     DIE *Clone;         ///< Cloned version of that DIE.
     uint32_t ParentIdx; ///< The index of this DIE's parent.
     bool Keep;          ///< Is the DIE part of the linked output?
     bool InDebugMap;    ///< Was this DIE's entity found in the map?
   };
 
-  CompileUnit(DWARFUnit &OrigUnit, unsigned ID)
+  CompileUnit(DWARFUnit &OrigUnit, unsigned ID, bool CanUseODR)
       : OrigUnit(OrigUnit), ID(ID), LowPc(UINT64_MAX), HighPc(0), RangeAlloc(),
         Ranges(RangeAlloc) {
     Info.resize(OrigUnit.getNumDIEs());
+
+    const auto *CUDie = OrigUnit.getUnitDIE(false);
+    unsigned Lang = CUDie->getAttributeValueAsUnsignedConstant(
+        &OrigUnit, dwarf::DW_AT_language, 0);
+    HasODR = CanUseODR && (Lang == dwarf::DW_LANG_C_plus_plus ||
+                           Lang == dwarf::DW_LANG_C_plus_plus_03 ||
+                           Lang == dwarf::DW_LANG_C_plus_plus_11 ||
+                           Lang == dwarf::DW_LANG_C_plus_plus_14 ||
+                           Lang == dwarf::DW_LANG_ObjC_plus_plus);
   }
 
   CompileUnit(CompileUnit &&RHS)
@@ -115,6 +232,8 @@ public:
 
   DIE *getOutputUnitDIE() const { return CUDie; }
   void setOutputUnitDIE(DIE *Die) { CUDie = Die; }
+
+  bool hasODR() const { return HasODR; }
 
   DIEInfo &getInfo(unsigned Idx) { return Info[Idx]; }
   const DIEInfo &getInfo(unsigned Idx) const { return Info[Idx]; }
@@ -147,9 +266,10 @@ public:
 
   /// \brief Keep track of a forward reference to DIE \p Die in \p
   /// RefUnit by \p Attr. The attribute should be fixed up later to
-  /// point to the absolute offset of \p Die in the debug_info section.
+  /// point to the absolute offset of \p Die in the debug_info section
+  /// or to the canonical offset of \p Ctxt if it is non-null.
   void noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
-                            PatchLocation Attr);
+                            DeclContext *Ctxt, PatchLocation Attr);
 
   /// \brief Apply all fixups recored by noteForwardReference().
   void fixupForwardReferences();
@@ -190,11 +310,27 @@ public:
   const std::vector<AccelInfo> &getPubnames() const { return Pubnames; }
   const std::vector<AccelInfo> &getPubtypes() const { return Pubtypes; }
 
+  /// Get the full path for file \a FileNum in the line table
+  const char *getResolvedPath(unsigned FileNum) {
+    if (FileNum >= ResolvedPaths.size())
+      return nullptr;
+    return ResolvedPaths[FileNum].size() ? ResolvedPaths[FileNum].c_str()
+                                         : nullptr;
+  }
+
+  /// Set the fully resolved path for the line-table's file \a FileNum
+  /// to \a Path.
+  void setResolvedPath(unsigned FileNum, const std::string &Path) {
+    if (ResolvedPaths.size() <= FileNum)
+      ResolvedPaths.resize(FileNum + 1);
+    ResolvedPaths[FileNum] = Path;
+  }
+
 private:
   DWARFUnit &OrigUnit;
   unsigned ID;
-  std::vector<DIEInfo> Info;  ///< DIE info indexed by DIE index.
-  DIE *CUDie;                 ///< Root of the linked DIE tree.
+  std::vector<DIEInfo> Info; ///< DIE info indexed by DIE index.
+  DIE *CUDie;                ///< Root of the linked DIE tree.
 
   uint64_t StartOffset;
   uint64_t NextUnitOffset;
@@ -208,8 +344,8 @@ private:
   /// The offsets for the attributes in this array couldn't be set while
   /// cloning because for cross-cu forward refences the target DIE's
   /// offset isn't known you emit the reference attribute.
-  std::vector<std::tuple<DIE *, const CompileUnit *, PatchLocation>>
-      ForwardDIEReferences;
+  std::vector<std::tuple<DIE *, const CompileUnit *, DeclContext *,
+                         PatchLocation>> ForwardDIEReferences;
 
   FunctionIntervals::Allocator RangeAlloc;
   /// \brief The ranges in that interval map are the PC ranges for
@@ -236,6 +372,12 @@ private:
   std::vector<AccelInfo> Pubnames;
   std::vector<AccelInfo> Pubtypes;
   /// @}
+
+  /// Cached resolved paths from the line table.
+  std::vector<std::string> ResolvedPaths;
+
+  /// Is this unit subject to the ODR rule?
+  bool HasODR;
 };
 
 uint64_t CompileUnit::computeNextUnitOffset() {
@@ -251,8 +393,8 @@ uint64_t CompileUnit::computeNextUnitOffset() {
 /// \brief Keep track of a forward cross-cu reference from this unit
 /// to \p Die that lives in \p RefUnit.
 void CompileUnit::noteForwardReference(DIE *Die, const CompileUnit *RefUnit,
-                                       PatchLocation Attr) {
-  ForwardDIEReferences.emplace_back(Die, RefUnit, Attr);
+                                       DeclContext *Ctxt, PatchLocation Attr) {
+  ForwardDIEReferences.emplace_back(Die, RefUnit, Ctxt, Attr);
 }
 
 /// \brief Apply all fixups recorded by noteForwardReference().
@@ -261,8 +403,12 @@ void CompileUnit::fixupForwardReferences() {
     DIE *RefDie;
     const CompileUnit *RefUnit;
     PatchLocation Attr;
-    std::tie(RefDie, RefUnit, Attr) = Ref;
-    Attr.set(RefDie->getOffset() + RefUnit->getStartOffset());
+    DeclContext *Ctxt;
+    std::tie(RefDie, RefUnit, Ctxt, Attr) = Ref;
+    if (Ctxt && Ctxt->getCanonicalDIEOffset())
+      Attr.set(Ctxt->getCanonicalDIEOffset());
+    else
+      Attr.set(RefDie->getOffset() + RefUnit->getStartOffset());
   }
 }
 
@@ -324,6 +470,12 @@ public:
   /// one.
   uint32_t getStringOffset(StringRef S);
 
+  /// \brief Get permanent storage for \p S (but do not necessarily
+  /// emit \p S in the output section).
+  /// \returns The StringRef that points to permanent storage to use
+  /// in place of \p S.
+  StringRef internString(StringRef S);
+
   // \brief Return the first entry of the string table.
   const MapTy::MapEntryTy *getFirstEntry() const {
     return getNextEntry(&Sentinel);
@@ -366,6 +518,16 @@ uint32_t NonRelocatableStringpool::getStringOffset(StringRef S) {
   }
   return It->getValue().first;
 }
+
+/// \brief Put \p S into the StringMap so that it gets permanent
+/// storage, but do not actually link it in the chain of elements
+/// that go into the output section. A latter call to
+/// getStringOffset() with the same string will chain it though.
+StringRef NonRelocatableStringpool::internString(StringRef S) {
+  std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
+  auto InsertResult = Strings.insert(std::make_pair(S, Entry));
+  return InsertResult.first->getKey();
+};
 
 /// \brief The Dwarf streaming logic
 ///
@@ -1089,6 +1251,7 @@ private:
     TF_InFunctionScope = 1 << 1, ///< Current scope is a fucntion scope.
     TF_DependencyWalk = 1 << 2,  ///< Walking the dependencies of a kept DIE.
     TF_ParentWalk = 1 << 3,      ///< Walking up the parents of a kept DIE.
+    TF_ODR = 1 << 4,             ///< Use the ODR whhile keeping dependants.
   };
 
   /// \brief Mark the passed DIE as well as all the ones it depends on
@@ -1096,7 +1259,7 @@ private:
   void keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
                                CompileUnit::DIEInfo &MyInfo,
                                const DebugMapObject &DMO, CompileUnit &CU,
-                               unsigned Flags);
+                               bool UseODR);
 
   unsigned shouldKeepDIE(const DWARFDebugInfoEntryMinimal &DIE,
                          CompileUnit &Unit, CompileUnit::DIEInfo &MyInfo,
@@ -1227,11 +1390,14 @@ private:
   BumpPtrAllocator DIEAlloc;
   /// @}
 
+  /// ODR Contexts for that link.
+  DeclContextTree ODRContexts;
+
   /// \defgroup Helpers Various helper methods.
   ///
   /// @{
   const DWARFDebugInfoEntryMinimal *
-  resolveDIEReference(DWARFFormValue &RefValue, const DWARFUnit &Unit,
+  resolveDIEReference(const DWARFFormValue &RefValue, const DWARFUnit &Unit,
                       const DWARFDebugInfoEntryMinimal &DIE,
                       CompileUnit *&ReferencedCU);
 
@@ -1296,7 +1462,7 @@ CompileUnit *DwarfLinker::getUnitForOffset(unsigned Offset) {
 /// CompileUnit which is stored into \p ReferencedCU.
 /// \returns null if resolving fails for any reason.
 const DWARFDebugInfoEntryMinimal *DwarfLinker::resolveDIEReference(
-    DWARFFormValue &RefValue, const DWARFUnit &Unit,
+    const DWARFFormValue &RefValue, const DWARFUnit &Unit,
     const DWARFDebugInfoEntryMinimal &DIE, CompileUnit *&RefCU) {
   assert(RefValue.isFormClass(DWARFFormValue::FC_Reference));
   uint64_t RefOffset = *RefValue.getAsReference(&Unit);
@@ -1307,6 +1473,220 @@ const DWARFDebugInfoEntryMinimal *DwarfLinker::resolveDIEReference(
 
   reportWarning("could not find referenced DIE", &Unit, &DIE);
   return nullptr;
+}
+
+/// \returns whether the passed \a Attr type might contain a DIE
+/// reference suitable for ODR uniquing.
+static bool isODRAttribute(uint16_t Attr) {
+  switch (Attr) {
+  default:
+    return false;
+  case dwarf::DW_AT_type:
+  case dwarf::DW_AT_containing_type:
+  case dwarf::DW_AT_specification:
+  case dwarf::DW_AT_abstract_origin:
+  case dwarf::DW_AT_import:
+    return true;
+  }
+  llvm_unreachable("Improper attribute.");
+}
+
+/// Set the last DIE/CU a context was seen in and, possibly invalidate
+/// the context if it is ambiguous.
+///
+/// In the current implementation, we don't handle overloaded
+/// functions well, because the argument types are not taken into
+/// account when computing the DeclContext tree.
+///
+/// Some of this is mitigated byt using mangled names that do contain
+/// the arguments types, but sometimes (eg. with function templates)
+/// we don't have that. In that case, just do not unique anything that
+/// refers to the contexts we are not able to distinguish.
+///
+/// If a context that is not a namespace appears twice in the same CU,
+/// we know it is ambiguous. Make it invalid.
+bool DeclContext::setLastSeenDIE(CompileUnit &U,
+                                 const DWARFDebugInfoEntryMinimal *Die) {
+  if (LastSeenCompileUnitID == U.getUniqueID()) {
+    DWARFUnit &OrigUnit = U.getOrigUnit();
+    uint32_t FirstIdx = OrigUnit.getDIEIndex(LastSeenDIE);
+    U.getInfo(FirstIdx).Ctxt = nullptr;
+    return false;
+  }
+
+  LastSeenCompileUnitID = U.getUniqueID();
+  LastSeenDIE = Die;
+  return true;
+}
+
+/// Get the child context of \a Context corresponding to \a DIE.
+///
+/// \returns the child context or null if we shouldn't track children
+/// contexts. It also returns an additional bit meaning 'invalid'. An
+/// invalid context means it shouldn't be considered for uniquing, but
+/// its not returning null, because some children of that context
+/// might be uniquing candidates.
+/// FIXME: this is for dsymutil-classic compatibility, I don't think
+/// it buys us much.
+PointerIntPair<DeclContext *, 1> DeclContextTree::getChildDeclContext(
+    DeclContext &Context, const DWARFDebugInfoEntryMinimal *DIE, CompileUnit &U,
+    NonRelocatableStringpool &StringPool) {
+  unsigned Tag = DIE->getTag();
+
+  // FIXME: dsymutil-classic compat: We should bail out here if we
+  // have a specification or an abstract_origin. We will get the
+  // parent context wrong here.
+
+  switch (Tag) {
+  default:
+    // By default stop gathering child contexts.
+    return PointerIntPair<DeclContext *, 1>(nullptr);
+  case dwarf::DW_TAG_compile_unit:
+    // FIXME: Add support for DW_TAG_module.
+    return PointerIntPair<DeclContext *, 1>(&Context);
+  case dwarf::DW_TAG_subprogram:
+    // Do not unique anything inside CU local functions.
+    if ((Context.getTag() == dwarf::DW_TAG_namespace ||
+         Context.getTag() == dwarf::DW_TAG_compile_unit) &&
+        !DIE->getAttributeValueAsUnsignedConstant(&U.getOrigUnit(),
+                                                  dwarf::DW_AT_external, 0))
+      return PointerIntPair<DeclContext *, 1>(nullptr);
+  // Fallthrough
+  case dwarf::DW_TAG_member:
+  case dwarf::DW_TAG_namespace:
+  case dwarf::DW_TAG_structure_type:
+  case dwarf::DW_TAG_class_type:
+  case dwarf::DW_TAG_union_type:
+  case dwarf::DW_TAG_enumeration_type:
+  case dwarf::DW_TAG_typedef:
+    // Artificial things might be ambiguous, because they might be
+    // created on demand. For example implicitely defined constructors
+    // are ambiguous because of the way we identify contexts, and they
+    // won't be generated everytime everywhere.
+    if (DIE->getAttributeValueAsUnsignedConstant(&U.getOrigUnit(),
+                                                 dwarf::DW_AT_artificial, 0))
+      return PointerIntPair<DeclContext *, 1>(nullptr);
+    break;
+  }
+
+  const char *Name = DIE->getName(&U.getOrigUnit(), DINameKind::LinkageName);
+  const char *ShortName = DIE->getName(&U.getOrigUnit(), DINameKind::ShortName);
+  StringRef NameRef;
+  StringRef ShortNameRef;
+  StringRef FileRef;
+
+  if (Name)
+    NameRef = StringPool.internString(Name);
+  else if (Tag == dwarf::DW_TAG_namespace)
+    // FIXME: For dsymutil-classic compatibility. I think uniquing
+    // within anonymous namespaces is wrong. There is no ODR guarantee
+    // there.
+    NameRef = StringPool.internString("(anonymous namespace)");
+
+  if (ShortName && ShortName != Name)
+    ShortNameRef = StringPool.internString(ShortName);
+  else
+    ShortNameRef = NameRef;
+
+  if (Tag != dwarf::DW_TAG_class_type && Tag != dwarf::DW_TAG_structure_type &&
+      Tag != dwarf::DW_TAG_union_type &&
+      Tag != dwarf::DW_TAG_enumeration_type && NameRef.empty())
+    return PointerIntPair<DeclContext *, 1>(nullptr);
+
+  std::string File;
+  unsigned Line = 0;
+  unsigned ByteSize = 0;
+
+  // Gather some discriminating data about the DeclContext we will be
+  // creating: File, line number and byte size. This shouldn't be
+  // necessary, because the ODR is just about names, but given that we
+  // do some approximations with overloaded functions and anonymous
+  // namespaces, use these additional data points to make the process safer.
+  ByteSize = DIE->getAttributeValueAsUnsignedConstant(
+      &U.getOrigUnit(), dwarf::DW_AT_byte_size, UINT64_MAX);
+  if (Tag != dwarf::DW_TAG_namespace || !Name) {
+    if (unsigned FileNum = DIE->getAttributeValueAsUnsignedConstant(
+            &U.getOrigUnit(), dwarf::DW_AT_decl_file, 0)) {
+      if (const auto *LT = U.getOrigUnit().getContext().getLineTableForUnit(
+              &U.getOrigUnit())) {
+        // FIXME: dsymutil-classic compatibility. I'd rather not
+        // unique anything in anonymous namespaces, but if we do, then
+        // verify that the file and line correspond.
+        if (!Name && Tag == dwarf::DW_TAG_namespace)
+          FileNum = 1;
+
+        // FIXME: Passing U.getOrigUnit().getCompilationDir()
+        // instead of "" would allow more uniquing, but for now, do
+        // it this way to match dsymutil-classic.
+        if (LT->getFileNameByIndex(
+                FileNum, "",
+                DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath,
+                File)) {
+          Line = DIE->getAttributeValueAsUnsignedConstant(
+              &U.getOrigUnit(), dwarf::DW_AT_decl_line, 0);
+#ifdef HAVE_REALPATH
+          // Cache the resolved paths, because calling realpath is expansive.
+          if (const char *ResolvedPath = U.getResolvedPath(FileNum)) {
+            File = ResolvedPath;
+          } else {
+            char RealPath[PATH_MAX + 1];
+            RealPath[PATH_MAX] = 0;
+            if (::realpath(File.c_str(), RealPath))
+              File = RealPath;
+            U.setResolvedPath(FileNum, File);
+          }
+#endif
+          FileRef = StringPool.internString(File);
+        }
+      }
+    }
+  }
+
+  if (!Line && NameRef.empty())
+    return PointerIntPair<DeclContext *, 1>(nullptr);
+
+  // FIXME: dsymutil-classic compat won't unique the same type
+  // presented once as a struct and once as a class. Use the Tag in
+  // the fully qualified name hash to get the same effect.
+  // We hash NameRef, which is the mangled name, in order to get most
+  // overloaded functions resolvec correctly.
+  unsigned Hash = hash_combine(Context.getQualifiedNameHash(), Tag, NameRef);
+
+  // FIXME: dsymutil-classic compatibility: when we don't have a name,
+  // use the filename.
+  if (Tag == dwarf::DW_TAG_namespace && NameRef == "(anonymous namespace)")
+    Hash = hash_combine(Hash, FileRef);
+
+  // Now look if this context already exists.
+  DeclContext Key(Hash, Line, ByteSize, Tag, NameRef, FileRef, Context);
+  auto ContextIter = Contexts.find(&Key);
+
+  if (ContextIter == Contexts.end()) {
+    // The context wasn't found.
+    bool Inserted;
+    DeclContext *NewContext =
+        new (Allocator) DeclContext(Hash, Line, ByteSize, Tag, NameRef, FileRef,
+                                    Context, DIE, U.getUniqueID());
+    std::tie(ContextIter, Inserted) = Contexts.insert(NewContext);
+    assert(Inserted && "Failed to insert DeclContext");
+    (void)Inserted;
+  } else if (Tag != dwarf::DW_TAG_namespace &&
+             !(*ContextIter)->setLastSeenDIE(U, DIE)) {
+    // The context was found, but it is ambiguous with another context
+    // in the same file. Mark it invalid.
+    return PointerIntPair<DeclContext *, 1>(*ContextIter, /* Invalid= */ 1);
+  }
+
+  assert(ContextIter != Contexts.end());
+  // FIXME: dsymutil-classic compatibility. Union types aren't
+  // uniques, but their children might be.
+  if ((Tag == dwarf::DW_TAG_subprogram &&
+       Context.getTag() != dwarf::DW_TAG_structure_type &&
+       Context.getTag() != dwarf::DW_TAG_class_type) ||
+      (Tag == dwarf::DW_TAG_union_type))
+    return PointerIntPair<DeclContext *, 1>(*ContextIter, /* Invalid= */ 1);
+
+  return PointerIntPair<DeclContext *, 1>(*ContextIter);
 }
 
 /// \brief Get the potential name and mangled name for the entity
@@ -1355,14 +1735,30 @@ bool DwarfLinker::createStreamer(Triple TheTriple, StringRef OutputFilename) {
 /// \brief Recursive helper to gather the child->parent relationships in the
 /// original compile unit.
 static void gatherDIEParents(const DWARFDebugInfoEntryMinimal *DIE,
-                             unsigned ParentIdx, CompileUnit &CU) {
+                             unsigned ParentIdx, CompileUnit &CU,
+                             DeclContext *CurrentDeclContext,
+                             NonRelocatableStringpool &StringPool,
+                             DeclContextTree &Contexts) {
   unsigned MyIdx = CU.getOrigUnit().getDIEIndex(DIE);
-  CU.getInfo(MyIdx).ParentIdx = ParentIdx;
+  CompileUnit::DIEInfo &Info = CU.getInfo(MyIdx);
+
+  Info.ParentIdx = ParentIdx;
+  if (CU.hasODR()) {
+    if (CurrentDeclContext) {
+      auto PtrInvalidPair = Contexts.getChildDeclContext(*CurrentDeclContext,
+                                                         DIE, CU, StringPool);
+      CurrentDeclContext = PtrInvalidPair.getPointer();
+      Info.Ctxt =
+          PtrInvalidPair.getInt() ? nullptr : PtrInvalidPair.getPointer();
+    } else
+      Info.Ctxt = CurrentDeclContext = nullptr;
+  }
 
   if (DIE->hasChildren())
     for (auto *Child = DIE->getFirstChild(); Child && !Child->isNULL();
          Child = Child->getSibling())
-      gatherDIEParents(Child, MyIdx, CU);
+      gatherDIEParents(Child, MyIdx, CU, CurrentDeclContext, StringPool,
+                       Contexts);
 }
 
 static bool dieNeedsChildrenToBeMeaningful(uint32_t Tag) {
@@ -1378,6 +1774,12 @@ static bool dieNeedsChildrenToBeMeaningful(uint32_t Tag) {
     return true;
   }
   llvm_unreachable("Invalid Tag");
+}
+
+static unsigned getRefAddrSize(const DWARFUnit &U) {
+  if (U.getVersion() == 2)
+    return U.getAddressByteSize();
+  return 4;
 }
 
 void DwarfLinker::startDebugObject(DWARFContext &Dwarf, DebugMapObject &Obj) {
@@ -1686,15 +2088,16 @@ unsigned DwarfLinker::shouldKeepDIE(const DWARFDebugInfoEntryMinimal &DIE,
 void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
                                           CompileUnit::DIEInfo &MyInfo,
                                           const DebugMapObject &DMO,
-                                          CompileUnit &CU, unsigned Flags) {
+                                          CompileUnit &CU, bool UseODR) {
   const DWARFUnit &Unit = CU.getOrigUnit();
   MyInfo.Keep = true;
 
   // First mark all the parent chain as kept.
   unsigned AncestorIdx = MyInfo.ParentIdx;
   while (!CU.getInfo(AncestorIdx).Keep) {
+    unsigned ODRFlag = UseODR ? TF_ODR : 0;
     lookForDIEsToKeep(*Unit.getDIEAtIndex(AncestorIdx), DMO, CU,
-                      TF_ParentWalk | TF_Keep | TF_DependencyWalk);
+                      TF_ParentWalk | TF_Keep | TF_DependencyWalk | ODRFlag);
     AncestorIdx = CU.getInfo(AncestorIdx).ParentIdx;
   }
 
@@ -1715,9 +2118,27 @@ void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
 
     Val.extractValue(Data, &Offset, &Unit);
     CompileUnit *ReferencedCU;
-    if (const auto *RefDIE = resolveDIEReference(Val, Unit, DIE, ReferencedCU))
+    if (const auto *RefDIE =
+            resolveDIEReference(Val, Unit, DIE, ReferencedCU)) {
+      uint32_t RefIdx = ReferencedCU->getOrigUnit().getDIEIndex(RefDIE);
+      CompileUnit::DIEInfo &Info = ReferencedCU->getInfo(RefIdx);
+      // If the referenced DIE has a DeclContext that has already been
+      // emitted, then do not keep the one in this CU. We'll link to
+      // the canonical DIE in cloneDieReferenceAttribute.
+      // FIXME: compatibility with dsymutil-classic. UseODR shouldn't
+      // be necessary and could be advantageously replaced by
+      // ReferencedCU->hasODR() && CU.hasODR().
+      // FIXME: compatibility with dsymutil-classic. There is no
+      // reason not to unique ref_addr references.
+      if (AttrSpec.Form != dwarf::DW_FORM_ref_addr && UseODR && Info.Ctxt &&
+          Info.Ctxt != ReferencedCU->getInfo(Info.ParentIdx).Ctxt &&
+          Info.Ctxt->getCanonicalDIEOffset() && isODRAttribute(AttrSpec.Attr))
+        continue;
+
+      unsigned ODRFlag = UseODR ? TF_ODR : 0;
       lookForDIEsToKeep(*RefDIE, DMO, *ReferencedCU,
-                        TF_Keep | TF_DependencyWalk);
+                        TF_Keep | TF_DependencyWalk | ODRFlag);
+    }
   }
 }
 
@@ -1752,9 +2173,10 @@ void DwarfLinker::lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &DIE,
     Flags = shouldKeepDIE(DIE, CU, MyInfo, Flags);
 
   // If it is a newly kept DIE mark it as well as all its dependencies as kept.
-  if (!AlreadyKept && (Flags & TF_Keep))
-    keepDIEAndDenpendencies(DIE, MyInfo, DMO, CU, Flags);
-
+  if (!AlreadyKept && (Flags & TF_Keep)) {
+    bool UseOdr = (Flags & TF_DependencyWalk) ? (Flags & TF_ODR) : CU.hasODR();
+    keepDIEAndDenpendencies(DIE, MyInfo, DMO, CU, UseOdr);
+  }
   // The TF_ParentWalk flag tells us that we are currently walking up
   // the parent chain of a required DIE, and we don't want to mark all
   // the children of the parents as kept (consider for example a
@@ -1823,24 +2245,34 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
     DIE &Die, const DWARFDebugInfoEntryMinimal &InputDIE,
     AttributeSpec AttrSpec, unsigned AttrSize, const DWARFFormValue &Val,
     CompileUnit &Unit) {
-  uint32_t Ref = *Val.getAsReference(&Unit.getOrigUnit());
+  const DWARFUnit &U = Unit.getOrigUnit();
+  uint32_t Ref = *Val.getAsReference(&U);
   DIE *NewRefDie = nullptr;
   CompileUnit *RefUnit = nullptr;
-  const DWARFDebugInfoEntryMinimal *RefDie = nullptr;
+  DeclContext *Ctxt = nullptr;
 
-  if (!(RefUnit = getUnitForOffset(Ref)) ||
-      !(RefDie = RefUnit->getOrigUnit().getDIEForOffset(Ref))) {
-    const char *AttributeString = dwarf::AttributeString(AttrSpec.Attr);
-    if (!AttributeString)
-      AttributeString = "DW_AT_???";
-    reportWarning(Twine("Missing DIE for ref in attribute ") + AttributeString +
-                      ". Dropping.",
-                  &Unit.getOrigUnit(), &InputDIE);
+  const DWARFDebugInfoEntryMinimal *RefDie =
+      resolveDIEReference(Val, U, InputDIE, RefUnit);
+
+  // If the referenced DIE is not found,  drop the attribute.
+  if (!RefDie)
     return 0;
-  }
 
   unsigned Idx = RefUnit->getOrigUnit().getDIEIndex(RefDie);
   CompileUnit::DIEInfo &RefInfo = RefUnit->getInfo(Idx);
+
+  // If we already have emitted an equivalent DeclContext, just point
+  // at it.
+  if (isODRAttribute(AttrSpec.Attr)) {
+    Ctxt = RefInfo.Ctxt;
+    if (Ctxt && Ctxt->getCanonicalDIEOffset()) {
+      DIEInteger Attr(Ctxt->getCanonicalDIEOffset());
+      Die.addValue(DIEAlloc, dwarf::Attribute(AttrSpec.Attr),
+                   dwarf::DW_FORM_ref_addr, Attr);
+      return getRefAddrSize(U);
+    }
+  }
+
   if (!RefInfo.Clone) {
     assert(Ref > InputDIE.getOffset());
     // We haven't cloned this DIE yet. Just create an empty one and
@@ -1849,7 +2281,8 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
   }
   NewRefDie = RefInfo.Clone;
 
-  if (AttrSpec.Form == dwarf::DW_FORM_ref_addr) {
+  if (AttrSpec.Form == dwarf::DW_FORM_ref_addr ||
+      (Unit.hasODR() && isODRAttribute(AttrSpec.Attr))) {
     // We cannot currently rely on a DIEEntry to emit ref_addr
     // references, because the implementation calls back to DwarfDebug
     // to find the unit offset. (We don't have a DwarfDebug)
@@ -1867,11 +2300,11 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
       // A forward reference. Note and fixup later.
       Attr = 0xBADDEF;
       Unit.noteForwardReference(
-          NewRefDie, RefUnit,
+          NewRefDie, RefUnit, Ctxt,
           Die.addValue(DIEAlloc, dwarf::Attribute(AttrSpec.Attr),
                        dwarf::DW_FORM_ref_addr, DIEInteger(Attr)));
     }
-    return AttrSize;
+    return getRefAddrSize(U);
   }
 
   Die.addValue(DIEAlloc, dwarf::Attribute(AttrSpec.Attr),
@@ -2150,6 +2583,14 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
     Die = Info.Clone = DIE::get(DIEAlloc, dwarf::Tag(InputDIE.getTag()));
   assert(Die->getTag() == InputDIE.getTag());
   Die->setOffset(OutOffset);
+  if (Unit.hasODR() && Die->getTag() != dwarf::DW_TAG_namespace && Info.Ctxt &&
+      Info.Ctxt != Unit.getInfo(Info.ParentIdx).Ctxt &&
+      !Info.Ctxt->getCanonicalDIEOffset()) {
+    // We are about to emit a DIE that is the root of its own valid
+    // DeclContext tree. Make the current offset the canonical offset
+    // for this context.
+    Info.Ctxt->setCanonicalDIEOffset(OutOffset + Unit.getStartOffset());
+  }
 
   // Extract and clone every attribute.
   DataExtractor Data = U.getDebugInfoExtractor();
@@ -2611,8 +3052,9 @@ bool DwarfLinker::link(const DebugMap &Map) {
         outs() << "Input compilation unit:";
         CUDie->dump(outs(), CU.get(), 0);
       }
-      Units.emplace_back(*CU, UnitID++);
-      gatherDIEParents(CUDie, 0, Units.back());
+      Units.emplace_back(*CU, UnitID++, !Options.NoODR);
+      gatherDIEParents(CUDie, 0, Units.back(), &ODRContexts.getRoot(),
+                       StringPool, ODRContexts);
     }
 
     // Then mark all the DIEs that need to be present in the linked

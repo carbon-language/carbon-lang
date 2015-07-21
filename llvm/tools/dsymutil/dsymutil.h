@@ -27,6 +27,7 @@ namespace dsymutil {
 struct LinkOptions {
   bool Verbose;  ///< Verbosity
   bool NoOutput; ///< Skip emitting output
+  bool NoODR;    ///< Do not unique types according to ODR
 
   LinkOptions() : Verbose(false), NoOutput(false) {}
 };

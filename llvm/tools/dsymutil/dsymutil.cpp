@@ -47,6 +47,11 @@ static opt<bool>
              desc("Do the link in memory, but do not emit the result file."),
              init(false));
 
+static opt<bool>
+    NoODR("no-odr",
+          desc("Do not use ODR (One Definition Rule) for type uniquing."),
+          init(false));
+
 static opt<bool> DumpDebugMap(
     "dump-debug-map",
     desc("Parse and dump the debug map to standard output. Not DWARF link "
@@ -71,6 +76,7 @@ int main(int argc, char **argv) {
 
   Options.Verbose = Verbose;
   Options.NoOutput = NoOutput;
+  Options.NoODR = NoODR;
 
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
