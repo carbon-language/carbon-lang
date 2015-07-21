@@ -119,12 +119,16 @@ public:
 protected:
     lldb::PlatformSP m_platform_sp;
     MainLoop &m_mainloop;
-    MainLoop::ReadHandleUP m_read_handle_up;
+    MainLoop::ReadHandleUP m_network_handle_up;
     lldb::tid_t m_current_tid;
     lldb::tid_t m_continue_tid;
     Mutex m_debugged_process_mutex;
     NativeProcessProtocolSP m_debugged_process_sp;
+
+    Mutex m_stdio_communication_mutex; // Protects m_stdio_communication and m_stdio_handle_up
     Communication m_stdio_communication;
+    MainLoop::ReadHandleUP m_stdio_handle_up;
+
     lldb::StateType m_inferior_prev_state;
     lldb::DataBufferSP m_active_auxv_buffer_sp;
     Mutex m_saved_registers_mutex;
@@ -142,7 +146,7 @@ protected:
     SendStopReplyPacketForThread (lldb::tid_t tid);
 
     PacketResult
-    SendStopReasonForState (lldb::StateType process_state, bool flush_on_exit);
+    SendStopReasonForState (lldb::StateType process_state);
 
     PacketResult
     Handle_k (StringExtractorGDBRemote &packet);
@@ -264,9 +268,6 @@ protected:
     Error
     SetSTDIOFileDescriptor (int fd);
 
-    static void
-    STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
-
     FileSpec
     FindModuleFile (const std::string& module_path, const ArchSpec& arch) override;
 
@@ -287,9 +288,6 @@ private:
     void
     HandleInferiorState_Stopped (NativeProcessProtocol *process);
 
-    void
-    FlushInferiorOutput ();
-
     NativeThreadProtocolSP
     GetThreadFromSuffix (StringExtractorGDBRemote &packet);
 
@@ -307,6 +305,12 @@ private:
 
     void
     DataAvailableCallback ();
+
+    void
+    SendProcessOutput ();
+
+    void
+    StopSTDIOForwarding();
 
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationServerLLGS only

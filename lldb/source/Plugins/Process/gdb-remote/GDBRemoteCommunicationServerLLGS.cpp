@@ -731,10 +731,7 @@ GDBRemoteCommunicationServerLLGS::HandleInferiorState_Exited (NativeProcessProto
     if (log)
         log->Printf ("GDBRemoteCommunicationServerLLGS::%s called", __FUNCTION__);
 
-    // Send the exit result, and don't flush output.
-    // Note: flushing output here would join the inferior stdio reflection thread, which
-    // would gunk up the waitpid monitor thread that is calling this.
-    PacketResult result = SendStopReasonForState (StateType::eStateExited, false);
+    PacketResult result = SendStopReasonForState(StateType::eStateExited);
     if (result != PacketResult::Success)
     {
         if (log)
@@ -752,22 +749,8 @@ GDBRemoteCommunicationServerLLGS::HandleInferiorState_Exited (NativeProcessProto
         }
     }
 
-    // FIXME can't do this yet - since process state propagation is currently
-    // synchronous, it is running off the NativeProcessProtocol's innards and
-    // will tear down the NPP while it still has code to execute.
-#if 0
-    // Clear the NativeProcessProtocol pointer.
-    {
-        Mutex::Locker locker (m_debugged_process_mutex);
-        m_debugged_process_sp.reset();
-    }
-#endif
-
     // Close the pipe to the inferior terminal i/o if we launched it
-    // and set one up.  Otherwise, 'k' and its flush of stdio could
-    // end up waiting on a thread join that will never end.  Consider
-    // adding a timeout to the connection thread join call so we
-    // can avoid that scenario altogether.
+    // and set one up.
     MaybeCloseInferiorTerminalConnection ();
 
     // We are ready to exit the debug monitor.
@@ -793,7 +776,7 @@ GDBRemoteCommunicationServerLLGS::HandleInferiorState_Stopped (NativeProcessProt
             break;
         default:
             // In all other cases, send the stop reason.
-            PacketResult result = SendStopReasonForState (StateType::eStateStopped, false);
+            PacketResult result = SendStopReasonForState(StateType::eStateStopped);
             if (result != PacketResult::Success)
             {
                 if (log)
@@ -819,7 +802,7 @@ GDBRemoteCommunicationServerLLGS::ProcessStateChanged (NativeProcessProtocol *pr
     // Make sure we get all of the pending stdout/stderr from the inferior
     // and send it to the lldb host before we send the state change
     // notification
-    m_stdio_communication.SynchronizeWithReadThread();
+    SendProcessOutput();
 
     switch (state)
     {
@@ -864,7 +847,6 @@ GDBRemoteCommunicationServerLLGS::DataAvailableCallback ()
             if(log)
                 log->Printf("GDBRemoteCommunicationServerLLGS::%s handshake with client failed, exiting",
                         __FUNCTION__);
-            m_read_handle_up.reset();
             m_mainloop.RequestTermination();
             return;
         }
@@ -885,7 +867,6 @@ GDBRemoteCommunicationServerLLGS::DataAvailableCallback ()
             if(log)
                 log->Printf("GDBRemoteCommunicationServerLLGS::%s processing a packet failed: %s",
                         __FUNCTION__, error.AsCString());
-            m_read_handle_up.reset();
             m_mainloop.RequestTermination();
             break;
         }
@@ -899,7 +880,7 @@ GDBRemoteCommunicationServerLLGS::InitializeConnection (std::unique_ptr<Connecti
     GDBRemoteCommunicationServer::SetConnection(connection.release());
 
     Error error;
-    m_read_handle_up = m_mainloop.RegisterReadObject(read_object_sp,
+    m_network_handle_up = m_mainloop.RegisterReadObject(read_object_sp,
             [this] (MainLoopBase &) { DataAvailableCallback(); }, error);
     return error;
 }
@@ -925,7 +906,7 @@ GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor (int fd)
 {
     Error error;
 
-    // Set up the Read Thread for reading/handling process I/O
+    // Set up the reading/handling of process I/O
     std::unique_ptr<ConnectionFileDescriptor> conn_up (new ConnectionFileDescriptor (fd, true));
     if (!conn_up)
     {
@@ -933,6 +914,7 @@ GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor (int fd)
         return error;
     }
 
+    Mutex::Locker locker(m_stdio_communication_mutex);
     m_stdio_communication.SetCloseOnEOF (false);
     m_stdio_communication.SetConnection (conn_up.release());
     if (!m_stdio_communication.IsConnected ())
@@ -951,19 +933,55 @@ GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor (int fd)
         )
     {
         // output from the process must be forwarded over gdb-remote
-        // create a thread to read the handle and send the data
-        m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
-        m_stdio_communication.StartReadThread();
+        m_stdio_handle_up = m_mainloop.RegisterReadObject(
+                m_stdio_communication.GetConnection()->GetReadObject(),
+                [this] (MainLoopBase &) { SendProcessOutput(); }, error);
+        if (! m_stdio_handle_up)
+        {
+            m_stdio_communication.Disconnect();
+            return error;
+        }
     }
 
-    return error;
+    return Error();
 }
 
 void
-GDBRemoteCommunicationServerLLGS::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len)
+GDBRemoteCommunicationServerLLGS::StopSTDIOForwarding()
 {
-    GDBRemoteCommunicationServerLLGS *server = reinterpret_cast<GDBRemoteCommunicationServerLLGS*> (baton);
-    static_cast<void> (server->SendONotification (static_cast<const char *>(src), src_len));
+    Mutex::Locker locker(m_stdio_communication_mutex);
+    m_stdio_handle_up.reset();
+}
+
+void
+GDBRemoteCommunicationServerLLGS::SendProcessOutput()
+{
+    char buffer[1024];
+    ConnectionStatus status;
+    Error error;
+    Mutex::Locker locker(m_stdio_communication_mutex);
+    while (true)
+    {
+        size_t bytes_read = m_stdio_communication.Read(buffer, sizeof buffer, 0, status, &error);
+        switch (status)
+        {
+        case eConnectionStatusSuccess:
+            SendONotification(buffer, bytes_read);
+            break;
+        case eConnectionStatusLostConnection:
+        case eConnectionStatusEndOfFile:
+        case eConnectionStatusError:
+        case eConnectionStatusNoConnection:
+            if (Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS))
+                log->Printf("GDBRemoteCommunicationServerLLGS::%s Stopping stdio forwarding as communication returned status %d (error: %s)", __FUNCTION__, status, error.AsCString());
+            m_stdio_handle_up.reset();
+            return;
+
+        case eConnectionStatusInterrupted:
+        case eConnectionStatusTimedOut:
+            return;
+        }
+    }
 }
 
 GDBRemoteCommunication::PacketResult
@@ -1051,7 +1069,7 @@ GDBRemoteCommunicationServerLLGS::Handle_k (StringExtractorGDBRemote &packet)
         }
     }
 
-    FlushInferiorOutput ();
+    StopSTDIOForwarding();
 
     // No OK response for kill packet.
     // return SendOKResponse ();
@@ -1384,11 +1402,11 @@ GDBRemoteCommunicationServerLLGS::Handle_stop_reason (StringExtractorGDBRemote &
     if (!m_debugged_process_sp)
         return SendErrorResponse (02);
 
-    return SendStopReasonForState (m_debugged_process_sp->GetState (), true);
+    return SendStopReasonForState (m_debugged_process_sp->GetState());
 }
 
 GDBRemoteCommunication::PacketResult
-GDBRemoteCommunicationServerLLGS::SendStopReasonForState (lldb::StateType process_state, bool flush_on_exit)
+GDBRemoteCommunicationServerLLGS::SendStopReasonForState (lldb::StateType process_state)
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
@@ -1417,8 +1435,6 @@ GDBRemoteCommunicationServerLLGS::SendStopReasonForState (lldb::StateType proces
         case eStateInvalid:
         case eStateUnloaded:
         case eStateExited:
-            if (flush_on_exit)
-                FlushInferiorOutput ();
             return SendWResponse(m_debugged_process_sp.get());
 
         default:
@@ -1879,6 +1895,7 @@ GDBRemoteCommunicationServerLLGS::Handle_I (StringExtractorGDBRemote &packet)
         // TODO: enqueue this block in circular buffer and send window size to remote host
         ConnectionStatus status;
         Error error;
+        Mutex::Locker locker(m_stdio_communication_mutex);
         m_stdio_communication.Write(tmp, read, status, &error);
         if (error.Fail())
         {
@@ -2623,13 +2640,15 @@ GDBRemoteCommunicationServerLLGS::Handle_vAttach (StringExtractorGDBRemote &pack
     }
 
     // Notify we attached by sending a stop packet.
-    return SendStopReasonForState (m_debugged_process_sp->GetState (), true);
+    return SendStopReasonForState (m_debugged_process_sp->GetState ());
 }
 
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::Handle_D (StringExtractorGDBRemote &packet)
 {
     Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
+
+    StopSTDIOForwarding();
 
     // Scope for mutex locker.
     Mutex::Locker locker (m_spawned_pids_mutex);
@@ -2669,11 +2688,6 @@ GDBRemoteCommunicationServerLLGS::Handle_D (StringExtractorGDBRemote &packet)
         m_debugged_process_sp->GetID () != pid)
     {
         return SendIllFormedResponse (packet, "Invalid pid");
-    }
-
-    if (m_stdio_communication.IsConnected ())
-    {
-        m_stdio_communication.StopReadThread ();
     }
 
     const Error error = m_debugged_process_sp->Detach ();
@@ -2840,25 +2854,11 @@ GDBRemoteCommunicationServerLLGS::Handle_qFileLoadAddress (StringExtractorGDBRem
 }
 
 void
-GDBRemoteCommunicationServerLLGS::FlushInferiorOutput ()
-{
-    // If we're not monitoring an inferior's terminal, ignore this.
-    if (!m_stdio_communication.IsConnected())
-        return;
-
-    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_THREAD));
-    if (log)
-        log->Printf ("GDBRemoteCommunicationServerLLGS::%s() called", __FUNCTION__);
-
-    // FIXME implement a timeout on the join.
-    m_stdio_communication.JoinReadThread();
-}
-
-void
 GDBRemoteCommunicationServerLLGS::MaybeCloseInferiorTerminalConnection ()
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
+    Mutex::Locker locker(m_stdio_communication_mutex);
     // Tell the stdio connection to shut down.
     if (m_stdio_communication.IsConnected())
     {
