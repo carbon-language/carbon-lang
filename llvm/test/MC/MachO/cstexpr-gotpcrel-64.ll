@@ -1,6 +1,7 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t
 ; RUN:  FileCheck %s -check-prefix=X86 < %t
 ; RUN:  FileCheck %s -check-prefix=X86-GOT-EQUIV < %t
+; RUN:  FileCheck %s -check-prefix=X86-NOGOT-EQUIV < %t
 
 ; GOT equivalent globals references can be replaced by the GOT entry of the
 ; final symbol instead.
@@ -86,10 +87,15 @@ define i32** @t1() {
 }
 
 ; Do not crash when a pattern cannot be matched as a GOT equivalent
-
+define void @foo() {
+; X86-NOGOT-EQUIV-LABEL: _foo:
+; X86-NOGOT-EQUIV: leaq  _b(%rip), %rax
+  store i8** @b, i8*** null
+  ret void
+}
 @a = external global i8
 @b = internal unnamed_addr constant i8* @a
 
-; X86-LABEL: _c:
-; X86:   .quad _b
+; X86-NOGOT-EQUIV-LABEL: _c:
+; X86-NOGOT-EQUIV:   .quad _b
 @c = global i8** @b

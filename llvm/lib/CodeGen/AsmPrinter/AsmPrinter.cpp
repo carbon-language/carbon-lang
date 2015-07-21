@@ -2101,7 +2101,7 @@ static void handleIndirectSymViaGOTPCRel(AsmPrinter &AP, const MCExpr **ME,
   if (!AP.GlobalGOTEquivs.count(GOTEquivSym))
     return;
 
-  const GlobalValue *BaseGV = dyn_cast<GlobalValue>(BaseCst);
+  const GlobalValue *BaseGV = dyn_cast_or_null<GlobalValue>(BaseCst);
   if (!BaseGV)
     return;
 
