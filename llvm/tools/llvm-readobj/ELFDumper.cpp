@@ -695,13 +695,14 @@ template<class ELFT>
 void ELFDumper<ELFT>::printDynamicRelocations() {
   W.startLine() << "Dynamic Relocations {\n";
   W.indent();
+  StringRef StringTable = Obj->getDynamicStringTable();
   for (const typename ELFO::Elf_Rela &Rel : Obj->dyn_relas()) {
     SmallString<32> RelocName;
     Obj->getRelocationTypeName(Rel.getType(Obj->isMips64EL()), RelocName);
     StringRef SymbolName;
     uint32_t SymIndex = Rel.getSymbol(Obj->isMips64EL());
     const typename ELFO::Elf_Sym *Sym = Obj->dynamic_symbol_begin() + SymIndex;
-    SymbolName = errorOrDefault(Obj->getSymbolName(Sym, true));
+    SymbolName = errorOrDefault(Sym->getName(StringTable));
     if (opts::ExpandRelocs) {
       DictScope Group(W, "Relocation");
       W.printHex("Offset", Rel.r_offset);

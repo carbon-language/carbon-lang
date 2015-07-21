@@ -237,6 +237,9 @@ public:
   const Elf_Shdr *getDotSymtabSec() const { return dot_symtab_sec; }
   const Elf_Shdr *getDotDynSymSec() const { return DotDynSymSec; }
   const Elf_Hash *getHashTable() const { return HashTable; }
+  StringRef getDynamicStringTable() const {
+    return StringRef((const char *)DynStrRegion.Addr, DynStrRegion.Size);
+  }
 
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;

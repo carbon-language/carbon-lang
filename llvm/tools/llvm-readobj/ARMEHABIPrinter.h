@@ -344,10 +344,15 @@ template <typename ET>
 ErrorOr<StringRef>
 PrinterContext<ET>::FunctionAtAddress(unsigned Section,
                                       uint64_t Address) const {
+  const Elf_Shdr *Symtab = ELF->getDotSymtabSec();
+  ErrorOr<StringRef> StrTableOrErr = ELF->getStringTableForSymtab(*Symtab);
+  error(StrTableOrErr.getError());
+  StringRef StrTable = *StrTableOrErr;
+
   for (const Elf_Sym &Sym : ELF->symbols())
     if (Sym.st_shndx == Section && Sym.st_value == Address &&
         Sym.getType() == ELF::STT_FUNC)
-      return ELF->getSymbolName(&Sym, false);
+      return Sym.getName(StrTable);
   return readobj_error::unknown_symbol;
 }
 
