@@ -27,8 +27,7 @@ class ELFDumper {
 
   const object::ELFFile<ELFT> &Obj;
 
-  std::error_code dumpSymbol(const Elf_Sym *Sym, bool IsDynamic,
-                             ELFYAML::Symbol &S);
+  std::error_code dumpSymbol(const Elf_Sym *Sym, ELFYAML::Symbol &S);
   std::error_code dumpCommonSection(const Elf_Shdr *Shdr, ELFYAML::Section &S);
   std::error_code dumpCommonRelocationSection(const Elf_Shdr *Shdr,
                                               ELFYAML::RelocationSection &S);
@@ -130,7 +129,7 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
     }
 
     ELFYAML::Symbol S;
-    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(&Sym, false, S))
+    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(&Sym, S))
       return EC;
 
     switch (Sym.getBinding())
@@ -153,14 +152,14 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
 }
 
 template <class ELFT>
-std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym, bool IsDynamic,
+std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym,
                                             ELFYAML::Symbol &S) {
   S.Type = Sym->getType();
   S.Value = Sym->st_value;
   S.Size = Sym->st_size;
   S.Other = Sym->st_other;
 
-  ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(Sym, IsDynamic);
+  ErrorOr<StringRef> NameOrErr = Obj.getStaticSymbolName(Sym);
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   S.Name = NameOrErr.get();
