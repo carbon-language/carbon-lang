@@ -1300,7 +1300,7 @@ def MSNoVTableDocs : Documentation {
   let Content = [{
 This attribute can be added to a class declaration or definition to signal to
 the compiler that constructors and destructors will not reference the virtual
-function table.
+function table. It is only supported when using the Microsoft C++ ABI.
   }];
 }
 
