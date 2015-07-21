@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
@@ -103,6 +104,8 @@ public:
   void printMBBReference(const MachineBasicBlock &MBB);
   void printStackObjectReference(int FrameIndex);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
+
+  void print(const MCCFIInstruction &CFI);
 };
 
 } // end anonymous namespace
@@ -347,6 +350,8 @@ void MIPrinter::print(const MachineInstr &MI) {
   assert(TRI && "Expected target register info");
   const auto *TII = SubTarget.getInstrInfo();
   assert(TII && "Expected target instruction info");
+  if (MI.isCFIInstruction())
+    assert(MI.getNumOperands() == 1 && "Expected 1 operand in CFI instruction");
 
   unsigned I = 0, E = MI.getNumOperands();
   for (; I < E && MI.getOperand(I).isReg() && MI.getOperand(I).isDef() &&
@@ -448,9 +453,29 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
       llvm_unreachable("Can't print this machine register mask yet.");
     break;
   }
+  case MachineOperand::MO_CFIIndex: {
+    const auto &MMI = Op.getParent()->getParent()->getParent()->getMMI();
+    print(MMI.getFrameInstructions()[Op.getCFIIndex()]);
+    break;
+  }
   default:
     // TODO: Print the other machine operands.
     llvm_unreachable("Can't print this machine operand at the moment");
+  }
+}
+
+void MIPrinter::print(const MCCFIInstruction &CFI) {
+  switch (CFI.getOperation()) {
+  case MCCFIInstruction::OpDefCfaOffset:
+    OS << ".cfi_def_cfa_offset ";
+    if (CFI.getLabel())
+      OS << "<mcsymbol> ";
+    OS << CFI.getOffset();
+    break;
+  default:
+    // TODO: Print the other CFI Operations.
+    OS << "<unserializable cfi operation>";
+    break;
   }
 }
 

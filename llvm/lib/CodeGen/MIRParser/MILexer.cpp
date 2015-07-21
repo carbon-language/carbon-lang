@@ -123,11 +123,12 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("killed", MIToken::kw_killed)
       .Case("undef", MIToken::kw_undef)
       .Case("frame-setup", MIToken::kw_frame_setup)
+      .Case(".cfi_def_cfa_offset", MIToken::kw_cfi_def_cfa_offset)
       .Default(MIToken::Identifier);
 }
 
 static Cursor maybeLexIdentifier(Cursor C, MIToken &Token) {
-  if (!isalpha(C.peek()) && C.peek() != '_')
+  if (!isalpha(C.peek()) && C.peek() != '_' && C.peek() != '.')
     return None;
   auto Range = C;
   while (isIdentifierChar(C.peek()))

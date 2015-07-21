@@ -44,6 +44,7 @@ struct MIToken {
     kw_killed,
     kw_undef,
     kw_frame_setup,
+    kw_cfi_def_cfa_offset,
 
     // Identifier tokens
     Identifier,
