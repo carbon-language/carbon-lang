@@ -1164,10 +1164,7 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> LiveVariables,
                               ArrayRef<llvm::Value *> BasePtrs,
                               Instruction *StatepointToken,
                               IRBuilder<> Builder) {
-  SmallVector<Instruction *, 64> NewDefs;
-  NewDefs.reserve(LiveVariables.size());
-
-  Module *M = StatepointToken->getParent()->getParent()->getParent();
+  Module *M = StatepointToken->getModule();
 
   for (unsigned i = 0; i < LiveVariables.size(); i++) {
     // We generate a (potentially) unique declaration for every pointer type
@@ -1189,18 +1186,14 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> LiveVariables,
       Builder.getInt32(LiveStart + find_index(LiveVariables, LiveVariables[i]));
 
     // only specify a debug name if we can give a useful one
-    Value *Reloc = Builder.CreateCall(
+    CallInst *Reloc = Builder.CreateCall(
         GCRelocateDecl, {StatepointToken, BaseIdx, LiveIdx},
         LiveVariables[i]->hasName() ? LiveVariables[i]->getName() + ".relocated"
                                     : "");
     // Trick CodeGen into thinking there are lots of free registers at this
     // fake call.
-    cast<CallInst>(Reloc)->setCallingConv(CallingConv::Cold);
-
-    NewDefs.push_back(cast<Instruction>(Reloc));
+    Reloc->setCallingConv(CallingConv::Cold);
   }
-  assert(NewDefs.size() == LiveVariables.size() &&
-         "missing or extra redefinition at safepoint");
 }
 
 static void
@@ -1396,8 +1389,7 @@ makeStatepointExplicit(DominatorTree &DT, const CallSite &CS, Pass *P,
   basevec.reserve(liveset.size());
   for (Value *L : liveset) {
     livevec.push_back(L);
-
-    assert(PointerToBase.find(L) != PointerToBase.end());
+    assert(PointerToBase.count(L));
     Value *base = PointerToBase[L];
     basevec.push_back(base);
   }
@@ -1957,7 +1949,7 @@ static void rematerializeLiveValues(CallSite CS,
   for (Value *LiveValue: Info.liveset) {
     // For each live pointer find it's defining chain
     SmallVector<Instruction *, 3> ChainToBase;
-    assert(Info.PointerToBase.find(LiveValue) != Info.PointerToBase.end());
+    assert(Info.PointerToBase.count(LiveValue));
     bool FoundChain =
       findRematerializableChainToBasePointer(ChainToBase,
                                              LiveValue,
