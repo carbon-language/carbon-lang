@@ -100,7 +100,7 @@ static uint32_t isl_sioimath_smallgcd(int32_t lhs, int32_t rhs)
  *
  * Per GMP convention, gcd(0,0)==0 and otherwise always positive.
  */
-inline void isl_sioimath_gcd(isl_sioimath_ptr dst, isl_sioimath_src lhs,
+void isl_sioimath_gcd(isl_sioimath_ptr dst, isl_sioimath_src lhs,
 	isl_sioimath_src rhs)
 {
 	int32_t lhssmall, rhssmall;

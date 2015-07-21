@@ -106,6 +106,7 @@ libisl_la_SOURCES = \
 	isl_flow.c \
 	isl_fold.c \
 	isl_hash.c \
+	isl_hash_private.h \
 	isl_id_to_ast_expr.c \
 	isl_id_to_pw_aff.c \
 	isl_ilp.c \
@@ -322,7 +323,10 @@ EXTRA_DIST = \
 	print_templ.c \
 	isl_power_templ.c \
 	isl_pw_templ.c \
+	isl_union_macro.h \
 	isl_union_templ.c \
+	isl_union_eval.c \
+	isl_union_neg.c \
 	isl.py \
 	doc/CodingStyle \
 	doc/SubmittingPatches \

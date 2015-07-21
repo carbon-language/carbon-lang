@@ -179,9 +179,10 @@ am__libisl_la_SOURCES_DIST = mp_get_memory_functions.c isl_int_gmp.h \
 	isl_convex_hull.c isl_ctx.c isl_ctx_private.h isl_deprecated.c \
 	isl_dim_map.h isl_dim_map.c isl_equalities.c isl_equalities.h \
 	isl_factorization.c isl_factorization.h isl_farkas.c isl_ffs.c \
-	isl_flow.c isl_fold.c isl_hash.c isl_id_to_ast_expr.c \
-	isl_id_to_pw_aff.c isl_ilp.c isl_ilp_private.h isl_input.c \
-	isl_int.h isl_local_space_private.h isl_local_space.c isl_lp.c \
+	isl_flow.c isl_fold.c isl_hash.c isl_hash_private.h \
+	isl_id_to_ast_expr.c isl_id_to_pw_aff.c isl_ilp.c \
+	isl_ilp_private.h isl_input.c isl_int.h \
+	isl_local_space_private.h isl_local_space.c isl_lp.c \
 	isl_lp_private.h isl_map.c isl_map_list.c isl_map_simplify.c \
 	isl_map_subtract.c isl_map_private.h isl_map_to_basic_set.c \
 	isl_mat.c isl_mat_private.h isl_morph.c isl_morph.h isl_id.c \
@@ -849,6 +850,7 @@ libisl_la_SOURCES = \
 	isl_flow.c \
 	isl_fold.c \
 	isl_hash.c \
+	isl_hash_private.h \
 	isl_id_to_ast_expr.c \
 	isl_id_to_pw_aff.c \
 	isl_ilp.c \
@@ -1063,7 +1065,10 @@ EXTRA_DIST = \
 	print_templ.c \
 	isl_power_templ.c \
 	isl_pw_templ.c \
+	isl_union_macro.h \
 	isl_union_templ.c \
+	isl_union_eval.c \
+	isl_union_neg.c \
 	isl.py \
 	doc/CodingStyle \
 	doc/SubmittingPatches \

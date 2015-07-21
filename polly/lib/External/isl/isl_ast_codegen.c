@@ -1449,6 +1449,7 @@ static __isl_give isl_ast_graft *create_node_scaled(
 
 	depth = isl_ast_build_get_depth(build);
 	sub_build = isl_ast_build_copy(build);
+	bounds = isl_basic_set_remove_redundancies(bounds);
 	sub_build = isl_ast_build_set_loop_bounds(sub_build,
 						isl_basic_set_copy(bounds));
 	degenerate = isl_ast_build_has_value(sub_build);

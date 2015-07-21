@@ -2578,9 +2578,8 @@ __isl_give isl_pw_aff *isl_pw_aff_from_aff(__isl_take isl_aff *aff)
 #undef PARTS
 #define PARTS pw_aff
 
-#define NO_EVAL
-
 #include <isl_union_templ.c>
+#include <isl_union_neg.c>
 
 static __isl_give isl_set *align_params_pw_pw_set_and(
 	__isl_take isl_pw_aff *pwaff1, __isl_take isl_pw_aff *pwaff2,
@@ -4074,9 +4073,8 @@ __isl_give isl_set *isl_multi_aff_lex_ge_set(__isl_take isl_multi_aff *ma1,
 #undef PARTS
 #define PARTS pw_multi_aff
 
-#define NO_EVAL
-
 #include <isl_union_templ.c>
+#include <isl_union_neg.c>
 
 /* Given a function "cmp" that returns the set of elements where
  * "ma1" is "better" than "ma2", return the intersection of this
@@ -5765,8 +5763,7 @@ static __isl_give isl_union_pw_multi_aff *bin_op(
 		goto error;
 
 	data.upma2 = upma2;
-	data.res = isl_union_pw_multi_aff_alloc(isl_space_copy(upma1->space),
-				       upma1->table.n);
+	data.res = isl_union_pw_multi_aff_alloc_same_size(upma1);
 	if (isl_hash_table_foreach(upma1->space->ctx, &upma1->table,
 				   &bin_entry, &data) < 0)
 		goto error;
@@ -6049,40 +6046,26 @@ error:
 	return NULL;
 }
 
-/* Internal data structure for isl_union_pw_multi_aff_scale_multi_val.
- * mv contains the mv argument.
- * res collects the results.
- */
-struct isl_union_pw_multi_aff_scale_multi_val_data {
-	isl_multi_val *mv;
-	isl_union_pw_multi_aff *res;
-};
-
 /* This function is called for each entry of an isl_union_pw_multi_aff.
  * If the space of the entry matches that of data->mv,
- * then apply isl_pw_multi_aff_scale_multi_val and add the result
- * to data->res.
+ * then apply isl_pw_multi_aff_scale_multi_val and return the result.
+ * Otherwise, return an empty isl_pw_multi_aff.
  */
-static isl_stat union_pw_multi_aff_scale_multi_val_entry(void **entry,
-	void *user)
+static __isl_give isl_pw_multi_aff *union_pw_multi_aff_scale_multi_val_entry(
+	__isl_take isl_pw_multi_aff *pma, void *user)
 {
-	struct isl_union_pw_multi_aff_scale_multi_val_data *data = user;
-	isl_pw_multi_aff *pma = *entry;
+	isl_multi_val *mv = user;
 
 	if (!pma)
-		return isl_stat_error;
+		return NULL;
 	if (!isl_space_tuple_is_equal(pma->dim, isl_dim_out,
-				    data->mv->space, isl_dim_set))
-		return isl_stat_ok;
+				    mv->space, isl_dim_set)) {
+		isl_space *space = isl_pw_multi_aff_get_space(pma);
+		isl_pw_multi_aff_free(pma);
+		return isl_pw_multi_aff_empty(space);
+	}
 
-	pma = isl_pw_multi_aff_copy(pma);
-	pma = isl_pw_multi_aff_scale_multi_val(pma,
-						isl_multi_val_copy(data->mv));
-	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma);
-	if (!data->res)
-		return isl_stat_error;
-
-	return isl_stat_ok;
+	return isl_pw_multi_aff_scale_multi_val(pma, isl_multi_val_copy(mv));
 }
 
 /* Scale the elements of "upma" by the corresponding elements of "mv",
@@ -6091,8 +6074,6 @@ static isl_stat union_pw_multi_aff_scale_multi_val_entry(void **entry,
 __isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_scale_multi_val(
 	__isl_take isl_union_pw_multi_aff *upma, __isl_take isl_multi_val *mv)
 {
-	struct isl_union_pw_multi_aff_scale_multi_val_data data;
-
 	upma = isl_union_pw_multi_aff_align_params(upma,
 						isl_multi_val_get_space(mv));
 	mv = isl_multi_val_align_params(mv,
@@ -6100,16 +6081,11 @@ __isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_scale_multi_val(
 	if (!upma || !mv)
 		goto error;
 
-	data.mv = mv;
-	data.res = isl_union_pw_multi_aff_alloc(isl_space_copy(upma->space),
-						upma->table.n);
-	if (isl_hash_table_foreach(upma->space->ctx, &upma->table,
-		       &union_pw_multi_aff_scale_multi_val_entry, &data) < 0)
-		goto error;
+	return isl_union_pw_multi_aff_transform(upma,
+		       &union_pw_multi_aff_scale_multi_val_entry, mv);
 
 	isl_multi_val_free(mv);
-	isl_union_pw_multi_aff_free(upma);
-	return data.res;
+	return upma;
 error:
 	isl_multi_val_free(mv);
 	isl_union_pw_multi_aff_free(upma);
@@ -7707,8 +7683,7 @@ __isl_give isl_union_pw_aff *isl_union_pw_aff_pullback_union_pw_multi_aff(
 
 	ctx = isl_union_pw_aff_get_ctx(upa);
 	data.upma = upma;
-	space = isl_union_pw_aff_get_space(upa);
-	data.res = isl_union_pw_aff_alloc(space, upa->table.n);
+	data.res = isl_union_pw_aff_alloc_same_size(upa);
 	if (isl_hash_table_foreach(ctx, &upa->table, &upa_pb_upma, &data) < 0)
 		data.res = isl_union_pw_aff_free(data.res);
 

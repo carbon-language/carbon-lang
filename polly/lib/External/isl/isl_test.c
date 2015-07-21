@@ -21,6 +21,7 @@
 #include <isl_ctx_private.h>
 #include <isl_map_private.h>
 #include <isl_aff_private.h>
+#include <isl_space_private.h>
 #include <isl/set.h>
 #include <isl/flow.h>
 #include <isl_constraint_private.h>
@@ -4384,6 +4385,35 @@ int test_union_pw(isl_ctx *ctx)
 	return 0;
 }
 
+/* Test that isl_union_pw_qpolynomial_eval picks up the function
+ * defined over the correct domain space.
+ */
+static int test_eval(isl_ctx *ctx)
+{
+	const char *str;
+	isl_point *pnt;
+	isl_set *set;
+	isl_union_pw_qpolynomial *upwqp;
+	isl_val *v;
+	int cmp;
+
+	str = "{ A[x] -> x^2; B[x] -> -x^2 }";
+	upwqp = isl_union_pw_qpolynomial_read_from_str(ctx, str);
+	str = "{ A[6] }";
+	set = isl_set_read_from_str(ctx, str);
+	pnt = isl_set_sample_point(set);
+	v = isl_union_pw_qpolynomial_eval(upwqp, pnt);
+	cmp = isl_val_cmp_si(v, 36);
+	isl_val_free(v);
+
+	if (!v)
+		return -1;
+	if (cmp != 0)
+		isl_die(ctx, isl_error_unknown, "unexpected value", return -1);
+
+	return 0;
+}
+
 int test_output(isl_ctx *ctx)
 {
 	char *s;
@@ -5885,10 +5915,37 @@ static int test_tile(isl_ctx *ctx)
 	return 0;
 }
 
+/* Check that the domain hash of a space is equal to the hash
+ * of the domain of the space.
+ */
+static int test_domain_hash(isl_ctx *ctx)
+{
+	isl_map *map;
+	isl_space *space;
+	uint32_t hash1, hash2;
+
+	map = isl_map_read_from_str(ctx, "[n] -> { A[B[x] -> C[]] -> D[] }");
+	space = isl_map_get_space(map);
+	isl_map_free(map);
+	hash1 = isl_space_get_domain_hash(space);
+	space = isl_space_domain(space);
+	hash2 = isl_space_get_hash(space);
+	isl_space_free(space);
+
+	if (!space)
+		return -1;
+	if (hash1 != hash2)
+		isl_die(ctx, isl_error_unknown,
+			"domain hash not equal to hash of domain", return -1);
+
+	return 0;
+}
+
 struct {
 	const char *name;
 	int (*fn)(isl_ctx *ctx);
 } tests [] = {
+	{ "domain hash", &test_domain_hash },
 	{ "dual", &test_dual },
 	{ "dependence analysis", &test_flow },
 	{ "val", &test_val },
@@ -5925,6 +5982,7 @@ struct {
 	{ "schedule tree grouping", &test_schedule_tree_group },
 	{ "tile", &test_tile },
 	{ "union_pw", &test_union_pw },
+	{ "eval", &test_eval },
 	{ "parse", &test_parse },
 	{ "single-valued", &test_sv },
 	{ "affine hull", &test_affine_hull },

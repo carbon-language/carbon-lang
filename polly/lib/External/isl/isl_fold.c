@@ -685,6 +685,7 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_gist_params(
 #define NO_SUB
 
 #include <isl_union_templ.c>
+#include <isl_union_eval.c>
 
 __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_empty(enum isl_fold type,
 	__isl_take isl_space *dim)
@@ -927,7 +928,6 @@ __isl_give isl_union_pw_qpolynomial_fold *isl_union_pw_qpolynomial_fold_fold_pw_
 	__isl_take isl_union_pw_qpolynomial_fold *u,
 	__isl_take isl_pw_qpolynomial_fold *part)
 {
-	uint32_t hash;
 	struct isl_hash_table_entry *entry;
 
 	u = isl_union_pw_qpolynomial_fold_cow(u);
@@ -939,10 +939,7 @@ __isl_give isl_union_pw_qpolynomial_fold *isl_union_pw_qpolynomial_fold_fold_pw_
 	    isl_space_match(part->dim, isl_dim_param, u->space, isl_dim_param),
 	    goto error);
 
-	hash = isl_space_get_hash(part->dim);
-	entry = isl_hash_table_find(u->space->ctx, &u->table, hash,
-			&isl_union_pw_qpolynomial_fold_has_same_domain_space,
-			part->dim, 1);
+	entry = isl_union_pw_qpolynomial_fold_find_part_entry(u, part->dim, 1);
 	if (!entry)
 		goto error;
 
@@ -1399,15 +1396,12 @@ static isl_stat add_pwqp(__isl_take isl_pw_qpolynomial *pwqp, void *user)
 	isl_ctx *ctx;
 	isl_pw_qpolynomial_fold *pwf;
 	isl_union_pw_qpolynomial_fold **upwf;
-	uint32_t hash;
 	struct isl_hash_table_entry *entry;
 
 	upwf = (isl_union_pw_qpolynomial_fold **)user;
 
 	ctx = pwqp->dim->ctx;
-	hash = isl_space_get_hash(pwqp->dim);
-	entry = isl_hash_table_find(ctx, &(*upwf)->table, hash,
-			 &isl_union_pw_qpolynomial_fold_has_same_domain_space,
+	entry = isl_union_pw_qpolynomial_fold_find_part_entry(*upwf,
 			 pwqp->dim, 1);
 	if (!entry)
 		goto error;
@@ -1419,10 +1413,9 @@ static isl_stat add_pwqp(__isl_take isl_pw_qpolynomial *pwqp, void *user)
 		entry->data = isl_pw_qpolynomial_fold_add(entry->data, pwf);
 		if (!entry->data)
 			return isl_stat_error;
-		if (isl_pw_qpolynomial_fold_is_zero(entry->data)) {
-			isl_pw_qpolynomial_fold_free(entry->data);
-			isl_hash_table_remove(ctx, &(*upwf)->table, entry);
-		}
+		if (isl_pw_qpolynomial_fold_is_zero(entry->data))
+			*upwf = isl_union_pw_qpolynomial_fold_remove_part_entry(
+								*upwf, entry);
 	}
 
 	return isl_stat_ok;

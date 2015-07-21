@@ -1897,30 +1897,64 @@ int isl_space_compatible(__isl_keep isl_space *dim1,
 	       dim1->n_in + dim1->n_out == dim2->n_in + dim2->n_out;
 }
 
-static uint32_t isl_hash_dim(uint32_t hash, __isl_keep isl_space *dim)
+/* Update "hash" by hashing in "space".
+ * Changes in this function should be reflected in isl_hash_space_domain.
+ */
+static uint32_t isl_hash_space(uint32_t hash, __isl_keep isl_space *space)
 {
 	int i;
 	isl_id *id;
 
-	if (!dim)
+	if (!space)
 		return hash;
 
-	isl_hash_byte(hash, dim->nparam % 256);
-	isl_hash_byte(hash, dim->n_in % 256);
-	isl_hash_byte(hash, dim->n_out % 256);
+	isl_hash_byte(hash, space->nparam % 256);
+	isl_hash_byte(hash, space->n_in % 256);
+	isl_hash_byte(hash, space->n_out % 256);
 
-	for (i = 0; i < dim->nparam; ++i) {
-		id = get_id(dim, isl_dim_param, i);
+	for (i = 0; i < space->nparam; ++i) {
+		id = get_id(space, isl_dim_param, i);
 		hash = isl_hash_id(hash, id);
 	}
 
-	id = tuple_id(dim, isl_dim_in);
+	id = tuple_id(space, isl_dim_in);
 	hash = isl_hash_id(hash, id);
-	id = tuple_id(dim, isl_dim_out);
+	id = tuple_id(space, isl_dim_out);
 	hash = isl_hash_id(hash, id);
 
-	hash = isl_hash_dim(hash, dim->nested[0]);
-	hash = isl_hash_dim(hash, dim->nested[1]);
+	hash = isl_hash_space(hash, space->nested[0]);
+	hash = isl_hash_space(hash, space->nested[1]);
+
+	return hash;
+}
+
+/* Update "hash" by hashing in the domain of "space".
+ * The result of this function is equal to the result of applying
+ * isl_hash_space to the domain of "space".
+ */
+static uint32_t isl_hash_space_domain(uint32_t hash,
+	__isl_keep isl_space *space)
+{
+	int i;
+	isl_id *id;
+
+	if (!space)
+		return hash;
+
+	isl_hash_byte(hash, space->nparam % 256);
+	isl_hash_byte(hash, 0);
+	isl_hash_byte(hash, space->n_in % 256);
+
+	for (i = 0; i < space->nparam; ++i) {
+		id = get_id(space, isl_dim_param, i);
+		hash = isl_hash_id(hash, id);
+	}
+
+	hash = isl_hash_id(hash, &isl_id_none);
+	id = tuple_id(space, isl_dim_in);
+	hash = isl_hash_id(hash, id);
+
+	hash = isl_hash_space(hash, space->nested[0]);
 
 	return hash;
 }
@@ -1933,7 +1967,24 @@ uint32_t isl_space_get_hash(__isl_keep isl_space *dim)
 		return 0;
 
 	hash = isl_hash_init();
-	hash = isl_hash_dim(hash, dim);
+	hash = isl_hash_space(hash, dim);
+
+	return hash;
+}
+
+/* Return the hash value of the domain of "space".
+ * That is, isl_space_get_domain_hash(space) is equal to
+ * isl_space_get_hash(isl_space_domain(space)).
+ */
+uint32_t isl_space_get_domain_hash(__isl_keep isl_space *space)
+{
+	uint32_t hash;
+
+	if (!space)
+		return 0;
+
+	hash = isl_hash_init();
+	hash = isl_hash_space_domain(hash, space);
 
 	return hash;
 }

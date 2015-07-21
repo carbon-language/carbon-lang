@@ -196,7 +196,7 @@ an C<isl_val> instead of an C<isl_qpolynomial>.
 
 =item * The function C<isl_band_member_is_zero_distance>
 has been removed.  Essentially the same functionality is available
-through C<isl_band_member_is_coincident>, except that is requires
+through C<isl_band_member_is_coincident>, except that it requires
 setting up coincidence constraints.
 The option C<schedule_outer_zero_distance> has accordingly been
 replaced by the option C<schedule_outer_coincidence>.

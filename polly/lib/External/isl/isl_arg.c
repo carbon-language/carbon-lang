@@ -812,7 +812,8 @@ static int parse_choice_option(struct isl_arg *decl, char **arg,
 
 	if (!has_argument && (!arg[1] || arg[1][0] == '-')) {
 		unsigned u = decl->u.choice.default_selected;
-		*(unsigned *)(((char *)opt) + decl->offset) = u;
+		if (decl->offset != (size_t) -1)
+			*(unsigned *)(((char *)opt) + decl->offset) = u;
 		if (decl->u.choice.set)
 			decl->u.choice.set(opt, u);
 
@@ -829,7 +830,8 @@ static int parse_choice_option(struct isl_arg *decl, char **arg,
 			continue;
 
 		u = decl->u.choice.choice[i].value;
-		*(unsigned *)(((char *)opt) + decl->offset) = u;
+		if (decl->offset != (size_t) -1)
+			*(unsigned *)(((char *)opt) + decl->offset) = u;
 		if (decl->u.choice.set)
 			decl->u.choice.set(opt, u);
 
