@@ -4293,9 +4293,10 @@ class ARMTargetInfo : public TargetInfo {
     case llvm::ARM::AK_ARMV6SM:
     case llvm::ARM::AK_ARMV6HL:
       return "6M";
+    case llvm::ARM::AK_ARMV7S:
+      return "7S";
     case llvm::ARM::AK_ARMV7:
     case llvm::ARM::AK_ARMV7A:
-    case llvm::ARM::AK_ARMV7S:
     case llvm::ARM::AK_ARMV7L:
     case llvm::ARM::AK_ARMV7HL:
       return "7A";

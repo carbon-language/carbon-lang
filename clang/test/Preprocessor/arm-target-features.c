@@ -7,13 +7,20 @@
 // CHECK: __ARM_FEATURE_NUMERIC_MAXMIN 1
 
 // RUN: %clang -target armv7a-none-linux-gnu -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-V7 %s
-// RUN: %clang -target x86_64-apple-macosx10.10 -arch armv7s -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-V7 %s
 // CHECK-V7: __ARMEL__ 1
 // CHECK-V7: __ARM_ARCH 7
 // CHECK-V7: __ARM_ARCH_7A__ 1
 // CHECK-V7-NOT: __ARM_FEATURE_CRC32
 // CHECK-V7-NOT: __ARM_FEATURE_NUMERIC_MAXMIN                                   
 // CHECK-V7-NOT: __ARM_FEATURE_DIRECTED_ROUNDING
+
+// RUN: %clang -target x86_64-apple-macosx10.10 -arch armv7s -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-V7S %s
+// CHECK-V7S: __ARMEL__ 1
+// CHECK-V7S: __ARM_ARCH 7
+// CHECK-V7S: __ARM_ARCH_7S__ 1
+// CHECK-V7S-NOT: __ARM_FEATURE_CRC32
+// CHECK-V7S-NOT: __ARM_FEATURE_NUMERIC_MAXMIN
+// CHECK-V7S-NOT: __ARM_FEATURE_DIRECTED_ROUNDING
 
 // RUN: %clang -target armv8a -mfloat-abi=hard -x c -E -dM %s | FileCheck --check-prefix=CHECK-V8-BAREHF %s
 // CHECK-V8-BAREHF: __ARMEL__ 1
