@@ -1411,7 +1411,6 @@ More details can be found in the OpenCL C language Spec v2.0, Section 6.5.
 
 def OpenCLAddressSpaceGenericDocs : Documentation {
   let Category = DocOpenCLAddressSpaces;
-  let Heading = "__generic(generic)";
   let Content = [{
 The generic address space attribute is only available with OpenCL v2.0 and later.
 It can be used with pointer types. Variables in global and local scope and
@@ -1424,7 +1423,6 @@ spaces.
 
 def OpenCLAddressSpaceConstantDocs : Documentation {
   let Category = DocOpenCLAddressSpaces;
-  let Heading = "__constant(constant)";
   let Content = [{
 The constant address space attribute signals that an object is located in
 a constant (non-modifiable) memory region. It is available to all work items.
@@ -1436,7 +1434,6 @@ have an initializer.
 
 def OpenCLAddressSpaceGlobalDocs : Documentation {
   let Category = DocOpenCLAddressSpaces;
-  let Heading = "__global(global)";
   let Content = [{
 The global address space attribute specifies that an object is allocated in
 global memory, which is accessible by all work items. The content stored in this
@@ -1449,7 +1446,6 @@ scope) variables and static local variable as well.
 
 def OpenCLAddressSpaceLocalDocs : Documentation {
   let Category = DocOpenCLAddressSpaces;
-  let Heading = "__local(local)";
   let Content = [{
 The local address space specifies that an object is allocated in the local (work
 group) memory area, which is accessible to all work items in the same work
@@ -1462,7 +1458,6 @@ space are allowed. Local address space variables cannot have an initializer.
 
 def OpenCLAddressSpacePrivateDocs : Documentation {
   let Category = DocOpenCLAddressSpaces;
-  let Heading = "__private(private)";
   let Content = [{
 The private address space specifies that an object is allocated in the private
 (work item) memory. Other work items cannot access the same memory area and its
@@ -1506,7 +1501,6 @@ In Objective-C, there is an alternate spelling for the nullability qualifiers th
 
 def TypeNonNullDocs : Documentation {
   let Category = NullabilityDocs;
-  let Heading = "_Nonnull";
   let Content = [{
 The ``_Nonnull`` nullability qualifier indicates that null is not a meaningful value for a value of the ``_Nonnull`` pointer type. For example, given a declaration such as:
 
@@ -1520,7 +1514,6 @@ a caller of ``fetch`` should not provide a null value, and the compiler will pro
 
 def TypeNullableDocs : Documentation {
   let Category = NullabilityDocs;
-  let Heading = "_Nullable";
   let Content = [{
 The ``_Nullable`` nullability qualifier indicates that a value of the ``_Nullable`` pointer type can be null. For example, given:
 
@@ -1534,7 +1527,6 @@ a caller of ``fetch_or_zero`` can provide null.
 
 def TypeNullUnspecifiedDocs : Documentation {
   let Category = NullabilityDocs;
-  let Heading = "_Null_unspecified";
   let Content = [{
 The ``_Null_unspecified`` nullability qualifier indicates that neither the ``_Nonnull`` nor ``_Nullable`` qualifiers make sense for a particular pointer type. It is used primarily to indicate that the role of null with specific pointers in a nullability-annotated header is unclear, e.g., due to overly-complex implementations or historical factors with a long-lived API.
   }];
@@ -1542,7 +1534,6 @@ The ``_Null_unspecified`` nullability qualifier indicates that neither the ``_No
 
 def NonNullDocs : Documentation {
   let Category = NullabilityDocs;
-  let Heading = "nonnull";
   let Content = [{
 The ``nonnull`` attribute indicates that some function parameters must not be null, and can be used in several different ways. It's original usage (`from GCC <https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes>`_) is as a function (or Objective-C method) attribute that specifies which parameters of the function are nonnull in a comma-separated list. For example:
 
@@ -1572,7 +1563,6 @@ Note that the ``nonnull`` attribute indicates that passing null to a non-null pa
 
 def ReturnsNonNullDocs : Documentation {
   let Category = NullabilityDocs;
-  let Heading = "returns_nonnull";
   let Content = [{
 The ``returns_nonnull`` attribute indicates that a particular function (or Objective-C method) always returns a non-null pointer. For example, a particular system ``malloc`` might be defined to terminate a process when memory is not available rather than returning a null pointer:
 
@@ -1586,7 +1576,6 @@ The ``returns_nonnull`` attribute implies that returning a null pointer is undef
 
 def NoAliasDocs : Documentation {
   let Category = DocCatFunction;
-  let Heading = "noalias";
   let Content = [{
 The ``noalias`` attribute indicates that the only memory accesses inside
 function are loads and stores from objects pointed to by its pointer-typed
