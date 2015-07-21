@@ -198,9 +198,8 @@ private:
   DynRegionInfo DynStrRegion;
   DynRegionInfo DynRelaRegion;
 
-  // Pointer to SONAME entry in dynamic string table
-  // This is set the first time getLoadName is called.
-  mutable const char *dt_soname = nullptr;
+  // SONAME entry in dynamic string table
+  StringRef DTSoname;
 
   // Records for each version index the corresponding Verdef or Vernaux entry.
   // This is filled the first time LoadVersionMap() is called.
@@ -749,6 +748,7 @@ template <class ELFT> void ELFFile<ELFT>::scanDynamicTable() {
     return this->base() + Phdr.p_offset + Delta;
   };
 
+  uint64_t SONameOffset = 0;
   for (const Elf_Dyn &Dyn : dynamic_table()) {
     switch (Dyn.d_tag) {
     case ELF::DT_HASH:
@@ -774,8 +774,14 @@ template <class ELFT> void ELFFile<ELFT>::scanDynamicTable() {
       break;
     case ELF::DT_RELAENT:
       DynRelaRegion.EntSize = Dyn.getVal();
+      break;
+    case ELF::DT_SONAME:
+      SONameOffset = Dyn.getVal();
+      break;
     }
   }
+  if (SONameOffset)
+    DTSoname = getDynamicString(SONameOffset);
 }
 
 template <class ELFT>
@@ -826,16 +832,7 @@ ELFFile<ELFT>::dynamic_table_end() const {
 
 template <class ELFT>
 StringRef ELFFile<ELFT>::getLoadName() const {
-  if (!dt_soname) {
-    dt_soname = "";
-    // Find the DT_SONAME entry
-    for (const auto &Entry : dynamic_table())
-      if (Entry.getTag() == ELF::DT_SONAME) {
-        dt_soname = getDynamicString(Entry.getVal());
-        break;
-      }
-  }
-  return dt_soname;
+  return DTSoname;
 }
 
 template <class ELFT>
