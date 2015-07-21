@@ -624,5 +624,5 @@ patent-related trouble with their changes (including from third parties).  If
 you or your employer own the rights to a patent and would like to contribute
 code to LLVM that relies on it, we require that the copyright owner sign an
 agreement that allows any other user of LLVM to freely use your patent.  Please
-contact the `oversight group <mailto:llvm-oversight@cs.uiuc.edu>`_ for more
+contact the `LLVM Foundation Board of Directors <mailto:board@llvm.org>`_ for more
 details.
