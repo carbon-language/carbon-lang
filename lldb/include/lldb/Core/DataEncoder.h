@@ -252,7 +252,7 @@ public:
     ///     The offset in bytes into the contained data at which to
     ///     start encoding.
     ///
-    /// @param[int] src
+    /// @param[in] src
     ///     The buffer that contains the bytes to encode.
     ///
     /// @param[in] src_len

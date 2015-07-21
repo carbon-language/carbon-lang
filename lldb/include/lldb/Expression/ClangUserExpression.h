@@ -285,7 +285,7 @@ public:
     ///     If non-NULL, a C string containing translation-unit level
     ///     definitions to be included when the expression is parsed.
     ///
-    /// @param[in/out] result_valobj_sp
+    /// @param[in,out] result_valobj_sp
     ///      If execution is successful, the result valobj is placed here.
     ///
     /// @param[out]

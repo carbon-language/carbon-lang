@@ -2389,7 +2389,7 @@ public:
     ///     that a block that isn't set writable can still be written on from lldb,
     ///     just not by the process itself.
     ///
-    /// @param[in/out] error
+    /// @param[in,out] error
     ///     An error object to fill in if things go wrong.
     /// @return
     ///     The address of the allocated buffer in the process, or
@@ -2871,7 +2871,7 @@ public:
     /// @param[in] stream
     ///     The output stream to get the state change description
     ///
-    /// @param[inout] pop_process_io_handler
+    /// @param[in,out] pop_process_io_handler
     ///     If this value comes in set to \b true, then pop the Process IOHandler if needed.
     ///     Else this variable will be set to \b true or \b false to indicate if the process
     ///     needs to have its process IOHandler popped.

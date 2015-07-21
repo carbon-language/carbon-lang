@@ -337,7 +337,7 @@ public:
     ///
     /// @param[in] commands
     ///    The list of commands to execute.
-    /// @param[in/out] context 
+    /// @param[in,out] context
     ///    The execution context in which to run the commands.  Can be NULL in which case the default
     ///    context will be used.
     /// @param[in] options
@@ -358,7 +358,7 @@ public:
     ///
     /// @param[in] file
     ///    The file from which to read in commands.
-    /// @param[in/out] context 
+    /// @param[in,out] context
     ///    The execution context in which to run the commands.  Can be NULL in which case the default
     ///    context will be used.
     /// @param[in] options

@@ -104,7 +104,7 @@ public:
     /// path. If \a path is not NULL or empty, this function will call
     /// File::Open (const char *path, uint32_t options, uint32_t permissions).
     ///
-    /// @param[in] path
+    /// @param[in] filespec
     ///     The FileSpec for this file.
     ///
     /// @param[in] options
@@ -247,7 +247,7 @@ public:
     /// @param[in] buf
     ///     A buffer where to put the bytes that are read.
     ///
-    /// @param[in/out] num_bytes
+    /// @param[in,out] num_bytes
     ///     The number of bytes to read form the current file position
     ///     which gets modified with the number of bytes that were read.
     ///
@@ -268,7 +268,7 @@ public:
     /// @param[in] buf
     ///     A buffer where to put the bytes that are read.
     ///
-    /// @param[in/out] num_bytes
+    /// @param[in,out] num_bytes
     ///     The number of bytes to write to the current file position
     ///     which gets modified with the number of bytes that were 
     ///     written.
@@ -335,7 +335,7 @@ public:
     /// @see File::Read (void *, size_t, off_t &)
     /// @see File::Write (const void *, size_t, off_t &)
     ///
-    /// @param[in/out] offset
+    /// @param[in,out] offset
     ///     The offset to seek to within the file relative to the 
     ///     end of the file which gets filled in with the resulting
     ///     absolute file offset.
@@ -357,14 +357,14 @@ public:
     /// own file position markers and reads on other threads won't mess
     /// up the current read.
     ///
-    /// @param[in] buf
+    /// @param[in] dst
     ///     A buffer where to put the bytes that are read.
     ///
-    /// @param[in/out] num_bytes
+    /// @param[in,out] num_bytes
     ///     The number of bytes to read form the current file position
     ///     which gets modified with the number of bytes that were read.
     ///
-    /// @param[in/out] offset
+    /// @param[in,out] offset
     ///     The offset within the file from which to read \a num_bytes
     ///     bytes. This offset gets incremented by the number of bytes
     ///     that were read.
@@ -383,11 +383,11 @@ public:
     /// own file position markers and reads on other threads won't mess
     /// up the current read.
     ///
-    /// @param[in/out] num_bytes
+    /// @param[in,out] num_bytes
     ///     The number of bytes to read form the current file position
     ///     which gets modified with the number of bytes that were read.
     ///
-    /// @param[in/out] offset
+    /// @param[in,out] offset
     ///     The offset within the file from which to read \a num_bytes
     ///     bytes. This offset gets incremented by the number of bytes
     ///     that were read.
@@ -419,15 +419,15 @@ public:
     /// their own locking externally to avoid multiple people writing
     /// to the file at the same time.
     ///
-    /// @param[in] buf
+    /// @param[in] src
     ///     A buffer containing the bytes to write.
     ///
-    /// @param[in/out] num_bytes
+    /// @param[in,out] num_bytes
     ///     The number of bytes to write to the file at offset \a offset.
     ///     \a num_bytes gets modified with the number of bytes that 
     ///     were read.
     ///
-    /// @param[in/out] offset
+    /// @param[in,out] offset
     ///     The offset within the file at which to write \a num_bytes
     ///     bytes. This offset gets incremented by the number of bytes
     ///     that were written.

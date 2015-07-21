@@ -330,7 +330,7 @@ public:
     ///     added to the variable list until there are no parent blocks
     ///     or the parent block has inlined function info.
     ///
-    /// @param[in/out] variable_list
+    /// @param[in,out] variable_list
     ///     All variables in this block, and optionally all parent
     ///     blocks will be added to this list.
     ///
