@@ -835,31 +835,32 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   std::sort(Keys.begin(), Keys.end(), order_by_name);
   // TODO: adjust naming patterns to avoid this order of iteration dependency
   for (Value *V : Keys) {
-    Instruction *v = cast<Instruction>(V);
-    PhiState state = states[V];
-    assert(!isKnownBaseResult(v) && "why did it get added?");
-    assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
-    if (!state.isConflict())
+    Instruction *I = cast<Instruction>(V);
+    PhiState State = states[I];
+    assert(!isKnownBaseResult(I) && "why did it get added?");
+    assert(!State.isUnknown() && "Optimistic algorithm didn't complete!");
+    if (!State.isConflict())
       continue;
 
-    if (isa<PHINode>(v)) {
-      int num_preds =
-          std::distance(pred_begin(v->getParent()), pred_end(v->getParent()));
-      assert(num_preds > 0 && "how did we reach here");
-      PHINode *phi = PHINode::Create(v->getType(), num_preds, "base_phi", v);
-      // Add metadata marking this as a base value
-      phi->setMetadata("is_base_value", MDNode::get(v->getContext(), {}));
-      states[v] = PhiState(PhiState::Conflict, phi);
-    } else {
-      SelectInst *sel = cast<SelectInst>(v);
+    /// Create and insert a new instruction which will represent the base of
+    /// the given instruction 'I'.
+    auto MakeBaseInstPlaceholder = [](Instruction *I) -> Instruction* {
+      if (isa<PHINode>(I)) {
+        BasicBlock *BB = I->getParent();
+        int NumPreds = std::distance(pred_begin(BB), pred_end(BB));
+        assert(NumPreds > 0 && "how did we reach here");
+        return PHINode::Create(I->getType(), NumPreds, "base_phi", I);
+      }
+      SelectInst *Sel = cast<SelectInst>(I);
       // The undef will be replaced later
-      UndefValue *undef = UndefValue::get(sel->getType());
-      SelectInst *basesel = SelectInst::Create(sel->getCondition(), undef,
-                                               undef, "base_select", sel);
-      // Add metadata marking this as a base value
-      basesel->setMetadata("is_base_value", MDNode::get(v->getContext(), {}));
-      states[v] = PhiState(PhiState::Conflict, basesel);
-    }
+      UndefValue *Undef = UndefValue::get(Sel->getType());
+      return SelectInst::Create(Sel->getCondition(), Undef,
+                                Undef, "base_select", Sel);
+    };
+    Instruction *BaseInst = MakeBaseInstPlaceholder(I);
+    // Add metadata marking this as a base value
+    BaseInst->setMetadata("is_base_value", MDNode::get(I->getContext(), {}));
+    states[I] = PhiState(PhiState::Conflict, BaseInst);
   }
 
   // Fixup all the inputs of the new PHIs
@@ -1304,10 +1305,8 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
             unwindBlock->getLandingPadInst(), idx, "relocate_token"));
     result.UnwindToken = exceptional_token;
 
-    // Just throw away return value. We will use the one we got for normal
-    // block.
-    (void)CreateGCRelocates(liveVariables, live_start, basePtrs,
-                            exceptional_token, Builder);
+    CreateGCRelocates(liveVariables, live_start, basePtrs,
+                      exceptional_token, Builder);
 
     // Generate gc relocates and returns for normal block
     BasicBlock *normalDest = toReplace->getNormalDest();
