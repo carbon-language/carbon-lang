@@ -322,6 +322,7 @@ endif()
 if (MSVC)
   # Add dummy target, because loadable modules are not supported on Windows
   add_custom_target(LLVMPolly)
+  set_target_properties(LLVMPolly PROPERTIES FOLDER "Polly")
 else ()
   add_polly_loadable_module(LLVMPolly
     Polly.cpp
