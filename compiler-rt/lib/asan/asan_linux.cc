@@ -157,10 +157,6 @@ void AsanCheckIncompatibleRT() {
 }
 #endif  // SANITIZER_ANDROID
 
-void AsanPlatformThreadInit() {
-  // Nothing here for now.
-}
-
 #if !SANITIZER_ANDROID
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   ucontext_t *ucp = (ucontext_t*)context;

@@ -194,10 +194,6 @@ void AsanCheckDynamicRTPrereqs() {}
 
 void AsanCheckIncompatibleRT() {}
 
-void AsanPlatformThreadInit() {
-  // Nothing here for now.
-}
-
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
 }

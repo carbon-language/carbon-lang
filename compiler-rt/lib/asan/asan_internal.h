@@ -80,7 +80,6 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context);
 void DisableReexec();
 void MaybeReexec();
 void ReadContextStack(void *context, uptr *stack, uptr *ssize);
-void AsanPlatformThreadInit();
 void StopInitOrderChecking();
 
 // Wrapper for TLS/TSD.

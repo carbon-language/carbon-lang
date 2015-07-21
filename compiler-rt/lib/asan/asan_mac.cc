@@ -244,9 +244,6 @@ void AsanCheckDynamicRTPrereqs() {}
 // No-op. Mac does not support static linkage anyway.
 void AsanCheckIncompatibleRT() {}
 
-void AsanPlatformThreadInit() {
-}
-
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
 }

@@ -161,7 +161,6 @@ void AsanThread::Init() {
   VReport(1, "T%d: stack [%p,%p) size 0x%zx; local=%p\n", tid(),
           (void *)stack_bottom_, (void *)stack_top_, stack_top_ - stack_bottom_,
           &local);
-  AsanPlatformThreadInit();
 }
 
 thread_return_t AsanThread::ThreadStart(
