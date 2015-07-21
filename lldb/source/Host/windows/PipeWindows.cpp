@@ -289,7 +289,7 @@ PipeWindows::ReadWithTimeout(void *buf, size_t size, const std::chrono::microsec
     if (!result && GetLastError() != ERROR_IO_PENDING)
         return Error(::GetLastError(), eErrorTypeWin32);
 
-    DWORD timeout = (duration == kInfiniteTimeout) ? INFINITE : duration.count() * 1000;
+    DWORD timeout = (duration == std::chrono::microseconds::zero()) ? INFINITE : duration.count() * 1000;
     DWORD wait_result = ::WaitForSingleObject(m_read_overlapped.hEvent, timeout);
     if (wait_result != WAIT_OBJECT_0)
     {
@@ -319,10 +319,7 @@ PipeWindows::ReadWithTimeout(void *buf, size_t size, const std::chrono::microsec
 }
 
 Error
-PipeWindows::WriteWithTimeout(const void *buf,
-                              size_t num_bytes,
-                              const std::chrono::microseconds &duration,
-                              size_t &bytes_written)
+PipeWindows::Write(const void *buf, size_t num_bytes, size_t &bytes_written)
 {
     if (!CanWrite())
         return Error(ERROR_INVALID_HANDLE, eErrorTypeWin32);
@@ -332,32 +329,8 @@ PipeWindows::WriteWithTimeout(const void *buf,
     if (!write_result && GetLastError() != ERROR_IO_PENDING)
         return Error(::GetLastError(), eErrorTypeWin32);
 
-    DWORD timeout = (duration == kInfiniteTimeout) ? INFINITE : duration.count() * 1000;
-    DWORD wait_result = ::WaitForSingleObject(m_write_overlapped.hEvent, timeout);
-    if (wait_result != WAIT_OBJECT_0)
-    {
-        // The operation probably failed.  However, if it timed out, we need to cancel the I/O.
-        // Between the time we returned from WaitForSingleObject and the time we call CancelIoEx,
-        // the operation may complete.  If that hapens, CancelIoEx will fail and return ERROR_NOT_FOUND.
-        // If that happens, the original operation should be considered to have been successful.
-        bool failed = true;
-        DWORD failure_error = ::GetLastError();
-        if (wait_result == WAIT_TIMEOUT)
-        {
-            BOOL cancel_result = CancelIoEx(m_read, &m_write_overlapped);
-            if (!cancel_result && GetLastError() == ERROR_NOT_FOUND)
-                failed = false;
-        }
-        if (failed)
-            return Error(failure_error, eErrorTypeWin32);
-    }
-
-    // Now we call GetOverlappedResult setting bWait to false, since we've already waited
-    // as long as we're willing to.
-    BOOL result = GetOverlappedResult(m_write, &m_write_overlapped, &sys_bytes_written, FALSE);
+    BOOL result = GetOverlappedResult(m_write, &m_write_overlapped, &sys_bytes_written, TRUE);
     if (!result)
         return Error(::GetLastError(), eErrorTypeWin32);
-
-    bytes_written = sys_bytes_written;
     return Error();
 }

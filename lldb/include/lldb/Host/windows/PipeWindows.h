@@ -49,7 +49,7 @@ class PipeWindows : public PipeBase
 
     Error Delete(llvm::StringRef name) override;
 
-    Error WriteWithTimeout(const void *buf, size_t size, const std::chrono::microseconds &timeout, size_t &bytes_written) override;
+    Error Write(const void *buf, size_t size, size_t &bytes_written) override;
     Error ReadWithTimeout(void *buf, size_t size, const std::chrono::microseconds &timeout, size_t &bytes_read) override;
 
     // PipeWindows specific methods.  These allow access to the underlying OS handle.

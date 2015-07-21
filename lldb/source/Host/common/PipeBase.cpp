@@ -11,24 +11,17 @@
 
 using namespace lldb_private;
 
-const std::chrono::microseconds PipeBase::kInfiniteTimeout(-1);
 
 PipeBase::~PipeBase() = default;
 
 Error
 PipeBase::OpenAsWriter(llvm::StringRef name, bool child_process_inherit)
 {
-    return OpenAsWriterWithTimeout(name, child_process_inherit, kInfiniteTimeout);
+    return OpenAsWriterWithTimeout(name, child_process_inherit, std::chrono::microseconds::zero());
 }
 
 Error
 PipeBase::Read(void *buf, size_t size, size_t &bytes_read)
 {
-    return ReadWithTimeout(buf, size, kInfiniteTimeout, bytes_read);
-}
-
-Error
-PipeBase::Write(const void *buf, size_t size, size_t &bytes_written)
-{
-    return WriteWithTimeout(buf, size, kInfiniteTimeout, bytes_written);
+    return ReadWithTimeout(buf, size, std::chrono::microseconds::zero(), bytes_read);
 }

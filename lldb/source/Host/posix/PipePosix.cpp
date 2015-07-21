@@ -73,8 +73,7 @@ SelectIO(int handle, bool is_read, const std::function<Error(bool&)> &io_handler
     while (!done)
     {
         struct timeval tv = {0, 0};
-        struct timeval *tv_p = &tv;
-        if (timeout != PipeBase::kInfiniteTimeout)
+        if (timeout != microseconds::zero())
         {
             const auto remaining_dur = duration_cast<microseconds>(finish_time - Now());
             if (remaining_dur.count() <= 0)
@@ -89,7 +88,7 @@ SelectIO(int handle, bool is_read, const std::function<Error(bool&)> &io_handler
             tv.tv_usec = dur_usecs.count();
         }
         else
-            tv_p = nullptr;
+            tv.tv_sec = 1;
 
         FD_ZERO(&fds);
         FD_SET(handle, &fds);
@@ -97,7 +96,7 @@ SelectIO(int handle, bool is_read, const std::function<Error(bool&)> &io_handler
         const auto retval = ::select(handle + 1,
                                      (is_read) ? &fds : nullptr,
                                      (is_read) ? nullptr : &fds,
-                                     nullptr, tv_p);
+                                     nullptr, &tv);
         if (retval == -1)
         {
             if (errno == EINTR)
@@ -271,7 +270,7 @@ PipePosix::OpenAsWriterWithTimeout(llvm::StringRef name, bool child_process_inhe
 
     while (!CanWrite())
     {
-        if (timeout != kInfiniteTimeout)
+        if (timeout != microseconds::zero())
         {
             const auto dur = duration_cast<microseconds>(finish_time - Now()).count();
             if (dur <= 0)
@@ -402,10 +401,7 @@ PipePosix::ReadWithTimeout(void *buf, size_t size, const std::chrono::microsecon
 }
 
 Error
-PipePosix::WriteWithTimeout(const void *buf,
-                            size_t size,
-                            const std::chrono::microseconds &timeout,
-                            size_t &bytes_written)
+PipePosix::Write(const void *buf, size_t size, size_t &bytes_written)
 {
     bytes_written = 0;
     if (!CanWrite())
@@ -431,5 +427,5 @@ PipePosix::WriteWithTimeout(const void *buf,
 
                         return error;
                     },
-                    timeout);
+                    std::chrono::microseconds::zero());
 }
