@@ -41,6 +41,7 @@
 
 #include "lldb/Expression/ClangModulesDeclVendor.h"
 
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 
 #include "lldb/Symbol/Block.h"
@@ -145,6 +146,43 @@ removeHostnameFromPathname(const char* path_from_dwarf)
 
     return colon_pos + 1;
 }
+
+// DW_AT_comp_dir can be overridden by setting compiler's PWD environment
+// variable - for example, set to "/proc/self/cwd" in order to cope with
+// distributed builds.
+static const char* comp_dir_symlinks[] = {"/proc/self/cwd"};
+
+static const char*
+resolveCompDir(const char* path_from_dwarf)
+{
+    if (!path_from_dwarf)
+        return nullptr;
+
+    // DWARF2/3 suggests the form hostname:pathname for compilation directory.
+    // Remove the host part if present.
+    const char* local_path = removeHostnameFromPathname(path_from_dwarf);
+    if (!local_path)
+        return nullptr;
+
+    bool is_symlink = false;
+    for (unsigned long i = 0; i < sizeof(comp_dir_symlinks)/sizeof(comp_dir_symlinks[0]) && !is_symlink; ++i)
+        is_symlink = !strcmp(comp_dir_symlinks[i], local_path);
+
+    if (!is_symlink)
+        return local_path;
+
+    const FileSpec local_path_spec(local_path, true);
+    if (!local_path_spec.IsSymbolicLink())
+        return local_path;
+
+    FileSpec resolved_local_path_spec;
+    const auto error = FileSystem::Readlink(local_path_spec, resolved_local_path_spec);
+    if (error.Success())
+        return resolved_local_path_spec.GetCString();
+
+    return nullptr;
+}
+
 
 #if defined(LLDB_CONFIGURATION_DEBUG) || defined(LLDB_CONFIGURATION_RELEASE)
 
@@ -979,10 +1017,8 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
                             // the file.  This can be expensive e.g. when the source files are NFS mounted.
                             if (cu_file_spec.IsRelative())
                             {
-                                // DWARF2/3 suggests the form hostname:pathname for compilation directory.
-                                // Remove the host part if present.
                                 const char *cu_comp_dir{cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, nullptr)};
-                                cu_file_spec.PrependPathComponent(removeHostnameFromPathname(cu_comp_dir));
+                                cu_file_spec.PrependPathComponent(resolveCompDir(cu_comp_dir));
                             }
 
                             std::string remapped_file;
@@ -1247,11 +1283,7 @@ SymbolFileDWARF::ParseCompileUnitSupportFiles (const SymbolContext& sc, FileSpec
 
         if (cu_die)
         {
-            const char * cu_comp_dir = cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, NULL);
-
-            // DWARF2/3 suggests the form hostname:pathname for compilation directory.
-            // Remove the host part if present.
-            cu_comp_dir = removeHostnameFromPathname(cu_comp_dir);
+            const char * cu_comp_dir = resolveCompDir(cu_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_comp_dir, nullptr));
 
             dw_offset_t stmt_list = cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_stmt_list, DW_INVALID_OFFSET);
 
