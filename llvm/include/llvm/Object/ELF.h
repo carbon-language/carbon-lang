@@ -390,7 +390,6 @@ public:
 
   ErrorOr<StringRef> getStaticSymbolName(const Elf_Sym *Symb) const;
   ErrorOr<StringRef> getDynamicSymbolName(const Elf_Sym *Symb) const;
-  ErrorOr<StringRef> getSymbolName(const Elf_Sym *Symb, bool IsDynamic) const;
 
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   ErrorOr<ArrayRef<uint8_t> > getSectionContents(const Elf_Shdr *Sec) const;
@@ -908,14 +907,6 @@ template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getDynamicSymbolName(const Elf_Sym *Symb) const {
   return StringRef(getDynamicString(Symb->st_name));
-}
-
-template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Sym *Symb,
-                                                bool IsDynamic) const {
-  if (IsDynamic)
-    return getDynamicSymbolName(Symb);
-  return getStaticSymbolName(Symb);
 }
 
 template <class ELFT>
