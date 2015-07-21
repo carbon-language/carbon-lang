@@ -320,12 +320,12 @@ static ErrorOr<int64_t> relocJalr(uint64_t P, uint64_t S, bool isCrossJump,
   return ins;
 }
 
-static int64_t relocRel32(int64_t A) {
+static int64_t relocRel32(uint64_t S, int64_t A, bool isLocal) {
   // If output relocation format is REL and the input one is RELA, the only
   // method to transfer the relocation addend from the input relocation
   // to the output dynamic relocation is to save this addend to the location
   // modified by R_MIPS_REL32.
-  return A;
+  return isLocal ? S + A : A;
 }
 
 static std::error_code adjustJumpOpCode(uint64_t &ins, uint64_t tgt,
@@ -383,8 +383,8 @@ template <class ELFT>
 static ErrorOr<int64_t>
 calculateRelocation(Reference::KindValue kind, Reference::Addend addend,
                     uint64_t tgtAddr, uint64_t relAddr, uint64_t gpAddr,
-                    bool isGP, bool isCrossJump, bool isDynamic,
-                    uint8_t *location) {
+                    uint8_t *location, bool isGP, bool isCrossJump,
+                    bool isDynamic, bool isLocalSym) {
   switch (kind) {
   case R_MIPS_NONE:
     return 0;
@@ -490,7 +490,7 @@ calculateRelocation(Reference::KindValue kind, Reference::Addend addend,
     // We do not do JALR optimization now.
     return 0;
   case R_MIPS_REL32:
-    return relocRel32(addend);
+    return relocRel32(tgtAddr, addend, isLocalSym);
   case R_MIPS_JUMP_SLOT:
   case R_MIPS_COPY:
     // Ignore runtime relocations.
@@ -585,6 +585,12 @@ static uint8_t getRelShift(Reference::KindValue kind,
   return shift;
 }
 
+static bool isLocalTarget(const Atom *a) {
+  if (auto *da = dyn_cast<DefinedAtom>(a))
+    return da->scope() == Atom::scopeTranslationUnit;
+  return false;
+}
+
 template <class ELFT>
 std::error_code RelocationHandler<ELFT>::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
@@ -595,6 +601,7 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
 
   uint64_t gpAddr = _targetLayout.getGPAddr();
   bool isGpDisp = ref.target()->name() == "_gp_disp";
+  bool isLocalSym = isLocalTarget(ref.target());
 
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
   uint8_t *location = atomContent + ref.offsetInAtom();
@@ -616,8 +623,9 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     if (kind == R_MIPS_NONE)
       break;
     auto params = getRelocationParams(kind);
-    res = calculateRelocation<ELFT>(kind, *res, sym, relAddr, gpAddr, isGpDisp,
-                                    isCrossJump, _ctx.isDynamic(), location);
+    res = calculateRelocation<ELFT>(kind, *res, sym, relAddr, gpAddr, location,
+                                    isGpDisp, isCrossJump, _ctx.isDynamic(),
+                                    isLocalSym);
     if (auto ec = res.getError())
       return ec;
     // Check result for the last relocation only.

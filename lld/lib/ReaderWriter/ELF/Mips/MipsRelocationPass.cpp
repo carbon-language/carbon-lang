@@ -586,7 +586,8 @@ std::error_code RelocationPass<ELFT>::perform(SimpleFile &mf) {
 
   // Create R_MIPS_REL32 relocations.
   for (auto *ref : _rel32Candidates) {
-    if (!isDynamic(ref->target()) || hasPLTEntry(ref->target()))
+    bool forceRel = isLocal(ref->target()) && _ctx.getOutputELFType() == ET_DYN;
+    if (!forceRel && (!isDynamic(ref->target()) || hasPLTEntry(ref->target())))
       continue;
     ref->setKindValue(R_MIPS_REL32);
     if (ELFT::Is64Bits)
@@ -817,10 +818,10 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
   if (!isConstrainSym(atom, refKind))
     return std::error_code();
 
-  if (mightBeDynamic(atom, refKind))
-    _rel32Candidates.push_back(&ref);
-  else
+  if (!mightBeDynamic(atom, refKind))
     _hasStaticRelocations.insert(ref.target());
+  else if (refKind == R_MIPS_32 || refKind == R_MIPS_64)
+    _rel32Candidates.push_back(&ref);
 
   if (!isBranchReloc(refKind) && !isAllCallReloc(refKind) &&
       refKind != R_MIPS_EH)
