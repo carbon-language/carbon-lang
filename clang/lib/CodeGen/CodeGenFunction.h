@@ -3006,8 +3006,8 @@ public:
            "Extra arguments in non-variadic function!");
 
     // If we still have any arguments, emit them using the type of the argument.
-    for (auto *Arg : llvm::make_range(Arg, ArgRange.end()))
-      ArgTypes.push_back(getVarArgType(Arg));
+    for (auto *A : llvm::make_range(Arg, ArgRange.end()))
+      ArgTypes.push_back(getVarArgType(A));
 
     EmitCallArgs(Args, ArgTypes, ArgRange, CalleeDecl, ParamsToSkip);
   }
