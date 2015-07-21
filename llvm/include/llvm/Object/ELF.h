@@ -245,8 +245,7 @@ public:
   ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;
 
   const char *getDynamicString(uintX_t Offset) const;
-  ErrorOr<StringRef> getSymbolVersion(const Elf_Shdr *section,
-                                      const Elf_Sym *Symb,
+  ErrorOr<StringRef> getSymbolVersion(const Elf_Sym *Symb,
                                       bool &IsDefault) const;
   void VerifyStrTab(const Elf_Shdr *sh) const;
 
@@ -904,40 +903,8 @@ ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
 }
 
 template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
-                                                   const Elf_Sym *symb,
+ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Sym *symb,
                                                    bool &IsDefault) const {
-  StringRef StrTab;
-  if (section) {
-    ErrorOr<StringRef> StrTabOrErr = getStringTable(section);
-    if (std::error_code EC = StrTabOrErr.getError())
-      return EC;
-    StrTab = *StrTabOrErr;
-  }
-  // Handle non-dynamic symbols.
-  if (section != DotDynSymSec && section != nullptr) {
-    // Non-dynamic symbols can have versions in their names
-    // A name of the form 'foo@V1' indicates version 'V1', non-default.
-    // A name of the form 'foo@@V2' indicates version 'V2', default version.
-    ErrorOr<StringRef> SymName = symb->getName(StrTab);
-    if (!SymName)
-      return SymName;
-    StringRef Name = *SymName;
-    size_t atpos = Name.find('@');
-    if (atpos == StringRef::npos) {
-      IsDefault = false;
-      return StringRef("");
-    }
-    ++atpos;
-    if (atpos < Name.size() && Name[atpos] == '@') {
-      IsDefault = true;
-      ++atpos;
-    } else {
-      IsDefault = false;
-    }
-    return Name.substr(atpos);
-  }
-
   // This is a dynamic symbol. Look in the GNU symbol version table.
   if (!dot_gnu_version_sec) {
     // No version table.

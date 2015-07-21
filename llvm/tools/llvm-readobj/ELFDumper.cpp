@@ -134,8 +134,7 @@ static std::string getFullSymbolName(const ELFO &Obj,
   std::string FullSymbolName(SymbolName);
 
   bool IsDefault;
-  ErrorOr<StringRef> Version =
-      Obj.getSymbolVersion(nullptr, &*Symbol, IsDefault);
+  ErrorOr<StringRef> Version = Obj.getSymbolVersion(&*Symbol, IsDefault);
   if (Version) {
     FullSymbolName += (IsDefault ? "@@" : "@");
     FullSymbolName += *Version;
