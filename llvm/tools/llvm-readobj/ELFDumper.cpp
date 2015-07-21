@@ -755,9 +755,7 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
       TargetName = SecName.get();
   } else if (Sym.first) {
     const Elf_Shdr *SymTable = Sym.first;
-    ErrorOr<const Elf_Shdr *> StrTableSec = Obj->getSection(SymTable->sh_link);
-    error(StrTableSec.getError());
-    ErrorOr<StringRef> StrTableOrErr = Obj->getStringTable(*StrTableSec);
+    ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*SymTable);
     error(StrTableOrErr.getError());
     TargetName = errorOrDefault(Sym.second->getName(*StrTableOrErr));
   }
