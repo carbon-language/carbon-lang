@@ -47,6 +47,12 @@ FunctionPass *createPrintFunctionPass(raw_ostream &OS,
 BasicBlockPass *createPrintBasicBlockPass(raw_ostream &OS,
                                           const std::string &Banner = "");
 
+/// Print out a name of an LLVM value without any prefixes.
+///
+/// The name is surrounded with ""'s and escaped if it has any special or
+/// non-printable characters in it.
+void printLLVMNameWithoutPrefix(raw_ostream &OS, StringRef Name);
+
 /// \brief Pass for printing a Module as LLVM's text IR assembly.
 ///
 /// Note: This pass is for use with the new pass manager. Use the create...Pass

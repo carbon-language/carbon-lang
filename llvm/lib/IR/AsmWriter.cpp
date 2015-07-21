@@ -343,18 +343,8 @@ enum PrefixType {
   NoPrefix
 };
 
-/// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
-/// prefixed with % (if the string only contains simple characters) or is
-/// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
+void llvm::printLLVMNameWithoutPrefix(raw_ostream &OS, StringRef Name) {
   assert(!Name.empty() && "Cannot get empty name!");
-  switch (Prefix) {
-  case NoPrefix: break;
-  case GlobalPrefix: OS << '@'; break;
-  case ComdatPrefix: OS << '$'; break;
-  case LabelPrefix:  break;
-  case LocalPrefix:  OS << '%'; break;
-  }
 
   // Scan the name to see if it needs quotes first.
   bool NeedsQuotes = isdigit(static_cast<unsigned char>(Name[0]));
@@ -386,9 +376,31 @@ static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
   OS << '"';
 }
 
-/// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
-/// prefixed with % (if the string only contains simple characters) or is
-/// surrounded with ""'s (if it has special chars in it).  Print it out.
+/// Turn the specified name into an 'LLVM name', which is either prefixed with %
+/// (if the string only contains simple characters) or is surrounded with ""'s
+/// (if it has special chars in it). Print it out.
+static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
+  switch (Prefix) {
+  case NoPrefix:
+    break;
+  case GlobalPrefix:
+    OS << '@';
+    break;
+  case ComdatPrefix:
+    OS << '$';
+    break;
+  case LabelPrefix:
+    break;
+  case LocalPrefix:
+    OS << '%';
+    break;
+  }
+  printLLVMNameWithoutPrefix(OS, Name);
+}
+
+/// Turn the specified name into an 'LLVM name', which is either prefixed with %
+/// (if the string only contains simple characters) or is surrounded with ""'s
+/// (if it has special chars in it). Print it out.
 static void PrintLLVMName(raw_ostream &OS, const Value *V) {
   PrintLLVMName(OS, V->getName(),
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
