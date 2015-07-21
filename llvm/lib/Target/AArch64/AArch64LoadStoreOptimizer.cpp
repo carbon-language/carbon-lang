@@ -51,6 +51,29 @@ static cl::opt<bool> EnableAArch64UnscaledMemOp(
     cl::desc("Allow AArch64 unscaled load/store combining"), cl::init(true));
 
 namespace {
+
+typedef struct LdStPairFlags {
+  // If a matching instruction is found, MergeForward is set to true if the
+  // merge is to remove the first instruction and replace the second with
+  // a pair-wise insn, and false if the reverse is true.
+  bool MergeForward;
+
+  // SExtIdx gives the index of the result of the load pair that must be
+  // extended. The value of SExtIdx assumes that the paired load produces the
+  // value in this order: (I, returned iterator), i.e., -1 means no value has
+  // to be extended, 0 means I, and 1 means the returned iterator.
+  int SExtIdx;
+
+  LdStPairFlags() : MergeForward(false), SExtIdx(-1) {}
+
+  void setMergeForward(bool V = true) { MergeForward = V; }
+  bool getMergeForward() const { return MergeForward; }
+
+  void setSExtIdx(int V) { SExtIdx = V; }
+  int getSExtIdx() const { return SExtIdx; }
+
+} LdStPairFlags;
+
 struct AArch64LoadStoreOpt : public MachineFunctionPass {
   static char ID;
   AArch64LoadStoreOpt() : MachineFunctionPass(ID) {}
@@ -61,27 +84,17 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   // Scan the instructions looking for a load/store that can be combined
   // with the current instruction into a load/store pair.
   // Return the matching instruction if one is found, else MBB->end().
-  // If a matching instruction is found, MergeForward is set to true if the
-  // merge is to remove the first instruction and replace the second with
-  // a pair-wise insn, and false if the reverse is true.
-  // \p SExtIdx[out] gives the index of the result of the load pair that
-  // must be extended. The value of SExtIdx assumes that the paired load
-  // produces the value in this order: (I, returned iterator), i.e.,
-  // -1 means no value has to be extended, 0 means I, and 1 means the
-  // returned iterator.
   MachineBasicBlock::iterator findMatchingInsn(MachineBasicBlock::iterator I,
-                                               bool &MergeForward, int &SExtIdx,
+                                               LdStPairFlags &Flags,
                                                unsigned Limit);
   // Merge the two instructions indicated into a single pair-wise instruction.
   // If MergeForward is true, erase the first instruction and fold its
   // operation into the second. If false, the reverse. Return the instruction
   // following the first instruction (which may change during processing).
-  // \p SExtIdx index of the result that must be extended for a paired load.
-  // -1 means none, 0 means I, and 1 means Paired.
   MachineBasicBlock::iterator
   mergePairedInsns(MachineBasicBlock::iterator I,
-                   MachineBasicBlock::iterator Paired, bool MergeForward,
-                   int SExtIdx);
+                   MachineBasicBlock::iterator Paired,
+                   LdStPairFlags const &Flags);
 
   // Scan the instruction list to find a base register update that can
   // be combined with the current instruction (a load or store) using
@@ -328,7 +341,7 @@ static unsigned getPostIndexedOpcode(unsigned Opc) {
 MachineBasicBlock::iterator
 AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
                                       MachineBasicBlock::iterator Paired,
-                                      bool MergeForward, int SExtIdx) {
+                                      const LdStPairFlags &Flags) {
   MachineBasicBlock::iterator NextI = I;
   ++NextI;
   // If NextI is the second of the two instructions to be merged, we need
@@ -338,12 +351,14 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   if (NextI == Paired)
     ++NextI;
 
+  int SExtIdx = Flags.getSExtIdx();
   unsigned Opc =
       SExtIdx == -1 ? I->getOpcode() : getMatchingNonSExtOpcode(I->getOpcode());
   bool IsUnscaled = isUnscaledLdst(Opc);
   int OffsetStride =
       IsUnscaled && EnableAArch64UnscaledMemOp ? getMemSize(I) : 1;
 
+  bool MergeForward = Flags.getMergeForward();
   unsigned NewOpc = getMatchingPairOpcode(Opc);
   // Insert our new paired instruction after whichever of the paired
   // instructions MergeForward indicates.
@@ -511,7 +526,7 @@ static bool mayAlias(MachineInstr *MIa,
 /// be combined with the current instruction into a load/store pair.
 MachineBasicBlock::iterator
 AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
-                                      bool &MergeForward, int &SExtIdx,
+                                      LdStPairFlags &Flags,
                                       unsigned Limit) {
   MachineBasicBlock::iterator E = I->getParent()->end();
   MachineBasicBlock::iterator MBBI = I;
@@ -557,14 +572,14 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
     ++Count;
 
     bool CanMergeOpc = Opc == MI->getOpcode();
-    SExtIdx = -1;
+    Flags.setSExtIdx(-1);
     if (!CanMergeOpc) {
       bool IsValidLdStrOpc;
       unsigned NonSExtOpc = getMatchingNonSExtOpcode(Opc, &IsValidLdStrOpc);
       if (!IsValidLdStrOpc)
         continue;
       // Opc will be the first instruction in the pair.
-      SExtIdx = NonSExtOpc == (unsigned)Opc ? 1 : 0;
+      Flags.setSExtIdx(NonSExtOpc == (unsigned)Opc ? 1 : 0);
       CanMergeOpc = NonSExtOpc == getMatchingNonSExtOpcode(MI->getOpcode());
     }
 
@@ -625,7 +640,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         if (!ModifiedRegs[MI->getOperand(0).getReg()] &&
             !(MI->mayLoad() && UsedRegs[MI->getOperand(0).getReg()]) &&
             !mayAlias(MI, MemInsns, TII)) {
-          MergeForward = false;
+          Flags.setMergeForward(false);
           return MBBI;
         }
 
@@ -637,7 +652,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
             !(FirstMI->mayLoad() &&
               UsedRegs[FirstMI->getOperand(0).getReg()]) &&
             !mayAlias(FirstMI, MemInsns, TII)) {
-          MergeForward = true;
+          Flags.setMergeForward(true);
           return MBBI;
         }
         // Unable to combine these instructions due to interference in between.
@@ -958,15 +973,14 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
         break;
       }
       // Look ahead up to ScanLimit instructions for a pairable instruction.
-      bool MergeForward = false;
-      int SExtIdx = -1;
+      LdStPairFlags Flags;
       MachineBasicBlock::iterator Paired =
-          findMatchingInsn(MBBI, MergeForward, SExtIdx, ScanLimit);
+          findMatchingInsn(MBBI, Flags, ScanLimit);
       if (Paired != E) {
         // Merge the loads into a pair. Keeping the iterator straight is a
         // pain, so we let the merge routine tell us what the next instruction
         // is after it's done mucking about.
-        MBBI = mergePairedInsns(MBBI, Paired, MergeForward, SExtIdx);
+        MBBI = mergePairedInsns(MBBI, Paired, Flags);
 
         Modified = true;
         ++NumPairCreated;
