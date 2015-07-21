@@ -93,6 +93,7 @@ class FlagParser {
   void RegisterHandler(const char *name, FlagHandlerBase *handler,
                        const char *desc);
   void ParseString(const char *s);
+  bool ParseFile(const char *path, bool ignore_missing);
   void PrintFlagDescriptions();
 
   static LowLevelAllocator Alloc;

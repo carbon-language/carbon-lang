@@ -372,8 +372,8 @@ void __msan_init() {
   SetDieCallback(MsanDie);
   InitTlsSize();
 
-  InitializeFlags();
   CacheBinaryName();
+  InitializeFlags();
   __sanitizer_set_report_path(common_flags()->log_path);
 
   InitializeInterceptors();

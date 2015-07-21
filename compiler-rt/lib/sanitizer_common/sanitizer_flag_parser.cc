@@ -127,6 +127,24 @@ void FlagParser::ParseString(const char *s) {
   pos_ = old_pos_;
 }
 
+bool FlagParser::ParseFile(const char *path, bool ignore_missing) {
+  static const uptr kMaxIncludeSize = 1 << 15;
+  char *data;
+  uptr data_mapped_size;
+  error_t err;
+  uptr len;
+  if (!ReadFileToBuffer(path, &data, &data_mapped_size, &len,
+                        Max(kMaxIncludeSize, GetPageSizeCached()), &err)) {
+    if (ignore_missing)
+      return true;
+    Printf("Failed to read options from '%s': error %d\n", path, err);
+    return false;
+  }
+  ParseString(data);
+  UnmapOrDie(data, data_mapped_size);
+  return true;
+}
+
 bool FlagParser::run_handler(const char *name, const char *value) {
   for (int i = 0; i < n_flags_; ++i) {
     if (internal_strcmp(name, flags_[i].name) == 0)

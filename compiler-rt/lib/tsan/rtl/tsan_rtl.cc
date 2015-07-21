@@ -318,8 +318,8 @@ void Initialize(ThreadState *thr) {
 
   ctx = new(ctx_placeholder) Context;
   const char *options = GetEnv(kTsanOptionsEnv);
-  InitializeFlags(&ctx->flags, options);
   CacheBinaryName();
+  InitializeFlags(&ctx->flags, options);
 #ifndef SANITIZER_GO
   InitializeAllocator();
 #endif

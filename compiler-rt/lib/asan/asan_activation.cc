@@ -38,7 +38,7 @@ static struct AsanDeactivatedFlags {
 #undef ASAN_ACTIVATION_FLAG
 #undef COMMON_ACTIVATION_FLAG
 
-    RegisterIncludeFlag(parser, cf);
+    RegisterIncludeFlags(parser, cf);
   }
 
   void OverrideFromActivationFlags() {

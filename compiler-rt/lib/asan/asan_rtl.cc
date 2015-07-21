@@ -363,11 +363,11 @@ static void AsanInitInternal() {
   CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
 
+  CacheBinaryName();
+
   // Initialize flags. This must be done early, because most of the
   // initialization steps look at flags().
   InitializeFlags();
-
-  CacheBinaryName();
 
   AsanCheckIncompatibleRT();
   AsanCheckDynamicRTPrereqs();

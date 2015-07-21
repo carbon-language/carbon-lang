@@ -49,7 +49,7 @@ inline void OverrideCommonFlags(const CommonFlags &cf) {
 class FlagParser;
 void RegisterCommonFlags(FlagParser *parser,
                          CommonFlags *cf = &common_flags_dont_use);
-void RegisterIncludeFlag(FlagParser *parser, CommonFlags *cf);
+void RegisterIncludeFlags(FlagParser *parser, CommonFlags *cf);
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_FLAGS_H

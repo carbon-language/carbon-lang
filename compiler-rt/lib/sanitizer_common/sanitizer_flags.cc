@@ -45,33 +45,49 @@ void CommonFlags::CopyFrom(const CommonFlags &other) {
   internal_memcpy(this, &other, sizeof(*this));
 }
 
+// Copy the string from "s" to "out", replacing "%b" with the binary basename.
+static void SubstituteBinaryName(const char *s, char *out, uptr out_size) {
+  char *out_end = out + out_size;
+  while (*s && out < out_end - 1) {
+    if (s[0] != '%' || s[1] != 'b') { *out++ = *s++; continue; }
+    const char *base = GetBinaryBasename();
+    CHECK(base);
+    while (*base && out < out_end - 1)
+      *out++ = *base++;
+    s += 2; // skip "%b"
+  }
+  *out = '\0';
+}
+
 class FlagHandlerInclude : public FlagHandlerBase {
-  static const uptr kMaxIncludeSize = 1 << 15;
   FlagParser *parser_;
+  bool ignore_missing_;
 
  public:
-  explicit FlagHandlerInclude(FlagParser *parser) : parser_(parser) {}
+  explicit FlagHandlerInclude(FlagParser *parser, bool ignore_missing)
+      : parser_(parser), ignore_missing_(ignore_missing) {}
   bool Parse(const char *value) final {
-    char *data;
-    uptr data_mapped_size;
-    uptr len;
-    error_t err;
-    if (!ReadFileToBuffer(value, &data, &data_mapped_size, &len,
-                          Max(kMaxIncludeSize, GetPageSizeCached()), &err)) {
-      Printf("Failed to read options from '%s': error %d\n", value, err);
-      return false;
+    if (internal_strchr(value, '%')) {
+      char *buf = (char *)MmapOrDie(kMaxPathLength, "FlagHandlerInclude");
+      SubstituteBinaryName(value, buf, kMaxPathLength);
+      bool res = parser_->ParseFile(buf, ignore_missing_);
+      UnmapOrDie(buf, kMaxPathLength);
+      return res;
     }
-    parser_->ParseString(data);
-    UnmapOrDie(data, data_mapped_size);
-    return true;
+    return parser_->ParseFile(value, ignore_missing_);
   }
 };
 
-void RegisterIncludeFlag(FlagParser *parser, CommonFlags *cf) {
-  FlagHandlerInclude *fh_include =
-      new (FlagParser::Alloc) FlagHandlerInclude(parser);  // NOLINT
+void RegisterIncludeFlags(FlagParser *parser, CommonFlags *cf) {
+  FlagHandlerInclude *fh_include = new (FlagParser::Alloc) // NOLINT
+      FlagHandlerInclude(parser, /*ignore_missing*/ false);
   parser->RegisterHandler("include", fh_include,
                           "read more options from the given file");
+  FlagHandlerInclude *fh_include_if_exists = new (FlagParser::Alloc) // NOLINT
+      FlagHandlerInclude(parser, /*ignore_missing*/ true);
+  parser->RegisterHandler(
+      "include_if_exists", fh_include_if_exists,
+      "read more options from the given file (if it exists)");
 }
 
 void RegisterCommonFlags(FlagParser *parser, CommonFlags *cf) {
@@ -80,7 +96,7 @@ void RegisterCommonFlags(FlagParser *parser, CommonFlags *cf) {
 #include "sanitizer_flags.inc"
 #undef COMMON_FLAG
 
-  RegisterIncludeFlag(parser, cf);
+  RegisterIncludeFlags(parser, cf);
 }
 
 }  // namespace __sanitizer

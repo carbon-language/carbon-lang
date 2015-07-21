@@ -69,6 +69,7 @@ extern "C" void __lsan_init() {
     return;
   lsan_init_is_running = true;
   SanitizerToolName = "LeakSanitizer";
+  CacheBinaryName();
   InitializeFlags();
   InitCommonLsan();
   InitializeAllocator();
