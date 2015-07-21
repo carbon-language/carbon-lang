@@ -140,7 +140,12 @@ if (NOT HAVE_DECL_SNPRINTF AND NOT HAVE_DECL__SNPRINTF)
 endif ()
 
 # Write configure result
-configure_file("External/gitversion.h.cmake" "${ISL_BINARY_DIR}/gitversion.h")
+# configure_file(... COPYONLY) avoids that the time stamp changes if the file is identical
+file(WRITE "${ISL_BINARY_DIR}/gitversion.h.tmp"
+     "#define GIT_HEAD_ID \"${GIT_HEAD_ID}\"")
+configure_file("${ISL_BINARY_DIR}/gitversion.h.tmp"
+               "${ISL_BINARY_DIR}/gitversion.h" COPYONLY)
+
 configure_file("External/isl_config.h.cmake" "${ISL_BINARY_DIR}/isl_config.h")
 
 # ISL files to compile
