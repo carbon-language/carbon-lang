@@ -848,14 +848,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       assert(num_preds > 0 && "how did we reach here");
       PHINode *phi = PHINode::Create(v->getType(), num_preds, "base_phi", v);
       // Add metadata marking this as a base value
-      auto *const_1 = ConstantInt::get(
-          Type::getInt32Ty(
-              v->getParent()->getParent()->getParent()->getContext()),
-          1);
-      auto MDConst = ConstantAsMetadata::get(const_1);
-      MDNode *md = MDNode::get(
-          v->getParent()->getParent()->getParent()->getContext(), MDConst);
-      phi->setMetadata("is_base_value", md);
+      phi->setMetadata("is_base_value", MDNode::get(v->getContext(), {}));
       states[v] = PhiState(PhiState::Conflict, phi);
     } else {
       SelectInst *sel = cast<SelectInst>(v);
@@ -864,14 +857,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       SelectInst *basesel = SelectInst::Create(sel->getCondition(), undef,
                                                undef, "base_select", sel);
       // Add metadata marking this as a base value
-      auto *const_1 = ConstantInt::get(
-          Type::getInt32Ty(
-              v->getParent()->getParent()->getParent()->getContext()),
-          1);
-      auto MDConst = ConstantAsMetadata::get(const_1);
-      MDNode *md = MDNode::get(
-          v->getParent()->getParent()->getParent()->getContext(), MDConst);
-      basesel->setMetadata("is_base_value", md);
+      basesel->setMetadata("is_base_value", MDNode::get(v->getContext(), {}));
       states[v] = PhiState(PhiState::Conflict, basesel);
     }
   }
@@ -1198,11 +1184,9 @@ static void CreateGCRelocates(ArrayRef<llvm::Value *> LiveVariables,
 
     // Generate the gc.relocate call and save the result
     Value *BaseIdx =
-        ConstantInt::get(Type::getInt32Ty(M->getContext()),
-                         LiveStart + find_index(LiveVariables, BasePtrs[i]));
-    Value *LiveIdx = ConstantInt::get(
-        Type::getInt32Ty(M->getContext()),
-        LiveStart + find_index(LiveVariables, LiveVariables[i]));
+      Builder.getInt32(LiveStart + find_index(LiveVariables, BasePtrs[i]));
+    Value *LiveIdx =
+      Builder.getInt32(LiveStart + find_index(LiveVariables, LiveVariables[i]));
 
     // only specify a debug name if we can give a useful one
     Value *Reloc = Builder.CreateCall(
