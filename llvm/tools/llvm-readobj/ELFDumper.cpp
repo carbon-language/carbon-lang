@@ -57,6 +57,7 @@ public:
   void printNeededLibraries() override;
   void printProgramHeaders() override;
   void printHashTable() override;
+  void printLoadName() override;
 
   void printAttributes() override;
   void printMipsPLTGOT() override;
@@ -1138,6 +1139,10 @@ void ELFDumper<ELFT>::printHashTable() {
   W.printNumber("Num Chains", HT->nchain);
   W.printList("Buckets", HT->buckets());
   W.printList("Chains", HT->chains());
+}
+
+template <typename ELFT> void ELFDumper<ELFT>::printLoadName() {
+  outs() << "LoadName: " << Obj->getLoadName() << '\n';
 }
 
 template <class ELFT>

@@ -251,18 +251,6 @@ static std::error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
   return readobj_error::unsupported_obj_file_format;
 }
 
-static StringRef getLoadName(const ObjectFile *Obj) {
-  if (auto *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
-    return ELF->getELFFile()->getLoadName();
-  if (auto *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
-    return ELF->getELFFile()->getLoadName();
-  if (auto *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
-    return ELF->getELFFile()->getLoadName();
-  if (auto *ELF = dyn_cast<ELF64BEObjectFile>(Obj))
-    return ELF->getELFFile()->getLoadName();
-  llvm_unreachable("Not ELF");
-}
-
 /// @brief Dumps the specified object file.
 static void dumpObject(const ObjectFile *Obj) {
   StreamWriter Writer(outs());
@@ -279,8 +267,7 @@ static void dumpObject(const ObjectFile *Obj) {
          << Triple::getArchTypeName((llvm::Triple::ArchType)Obj->getArch())
          << "\n";
   outs() << "AddressSize: " << (8*Obj->getBytesInAddress()) << "bit\n";
-  if (Obj->isELF())
-    outs() << "LoadName: " << getLoadName(Obj) << "\n";
+  Dumper->printLoadName();
 
   if (opts::FileHeaders)
     Dumper->printFileHeaders();
