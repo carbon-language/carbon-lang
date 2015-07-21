@@ -194,7 +194,6 @@ private:
   };
 
   DynRegionInfo DynamicRegion;
-  DynRegionInfo DynHashRegion;
   DynRegionInfo DynStrRegion;
   DynRegionInfo DynRelaRegion;
 
