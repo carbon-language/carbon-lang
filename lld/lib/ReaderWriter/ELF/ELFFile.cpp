@@ -208,18 +208,25 @@ template <class ELFT>
 std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
   // Increment over all the symbols collecting atoms and symbol names for
   // later use.
-  auto SymI = _objFile->symbol_begin(), SymE = _objFile->symbol_end();
+  const Elf_Shdr *symtab = _objFile->getDotSymtabSec();
+  if (!symtab)
+    return std::error_code();
 
+  ErrorOr<StringRef> strTableOrErr = _objFile->getStringTableForSymtab(*symtab);
+  if (std::error_code ec = strTableOrErr.getError())
+    return ec;
+  StringRef strTable = *strTableOrErr;
+
+  auto SymI = _objFile->symbol_begin(), SymE = _objFile->symbol_end();
   // Skip over dummy sym.
-  if (SymI != SymE)
-    ++SymI;
+  ++SymI;
 
   for (; SymI != SymE; ++SymI) {
     ErrorOr<const Elf_Shdr *> section = _objFile->getSection(&*SymI);
     if (std::error_code ec = section.getError())
       return ec;
 
-    auto symbolName = _objFile->getStaticSymbolName(SymI);
+    auto symbolName = SymI->getName(strTable);
     if (std::error_code ec = symbolName.getError())
       return ec;
 
@@ -301,11 +308,19 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
     ELFDefinedAtom<ELFT> *previousAtom = nullptr;
     ELFReference<ELFT> *anonFollowedBy = nullptr;
 
+    const Elf_Shdr *symtab = _objFile->getDotSymtabSec();
+    if (!symtab)
+      continue;
+    ErrorOr<StringRef> strTableOrErr =
+        _objFile->getStringTableForSymtab(*symtab);
+    if (std::error_code ec = strTableOrErr.getError())
+      return ec;
+    StringRef strTable = *strTableOrErr;
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
       auto symbol = *si;
       StringRef symbolName = "";
       if (symbol->getType() != llvm::ELF::STT_SECTION) {
-        auto symName = _objFile->getStaticSymbolName(symbol);
+        auto symName = symbol->getName(strTable);
         if (std::error_code ec = symName.getError())
           return ec;
         symbolName = *symName;
