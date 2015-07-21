@@ -94,7 +94,7 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   MachineBasicBlock::iterator
   mergePairedInsns(MachineBasicBlock::iterator I,
                    MachineBasicBlock::iterator Paired,
-                   LdStPairFlags const &Flags);
+                   const LdStPairFlags &Flags);
 
   // Scan the instruction list to find a base register update that can
   // be combined with the current instruction (a load or store) using
