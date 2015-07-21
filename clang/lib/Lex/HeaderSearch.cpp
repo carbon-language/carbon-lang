@@ -127,8 +127,9 @@ std::string HeaderSearch::getModuleFileName(Module *Module) {
 
 std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
                                             StringRef ModuleMapPath) {
-  // If we don't have a module cache path, we can't do anything.
-  if (ModuleCachePath.empty()) 
+  // If we don't have a module cache path or aren't supposed to use one, we
+  // can't do anything.
+  if (ModuleCachePath.empty() || !LangOpts.ImplicitModules) 
     return std::string();
 
   SmallString<256> Result(ModuleCachePath);

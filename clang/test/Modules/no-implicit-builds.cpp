@@ -4,6 +4,11 @@
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \
 // RUN:     -fmodule-map-file=%S/Inputs/no-implicit-builds/b.modulemap \
 // RUN:     -fno-implicit-modules %s -verify
+//
+// Same thing if we're running -cc1 and no module cache path has been provided.
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules -fimplicit-module-maps \
+// RUN:     -fmodule-map-file=%S/Inputs/no-implicit-builds/b.modulemap \
+// RUN:     %s -verify
 
 // Compile the module and put it into the cache.
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \

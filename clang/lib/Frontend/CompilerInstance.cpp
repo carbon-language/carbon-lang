@@ -372,9 +372,8 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
 std::string CompilerInstance::getSpecificModuleCachePath() {
   // Set up the module path, including the hash for the
   // module-creation options.
-  SmallString<256> SpecificModuleCache(
-                           getHeaderSearchOpts().ModuleCachePath);
-  if (!getHeaderSearchOpts().DisableModuleHash)
+  SmallString<256> SpecificModuleCache(getHeaderSearchOpts().ModuleCachePath);
+  if (!SpecificModuleCache.empty() && !getHeaderSearchOpts().DisableModuleHash)
     llvm::sys::path::append(SpecificModuleCache,
                             getInvocation().getModuleHash());
   return SpecificModuleCache.str();
@@ -1406,16 +1405,16 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     auto Override = ModuleFileOverrides.find(ModuleName);
     bool Explicit = Override != ModuleFileOverrides.end();
-    if (!Explicit && !getLangOpts().ImplicitModules) {
+
+    std::string ModuleFileName =
+        Explicit ? Override->second
+                 : PP->getHeaderSearchInfo().getModuleFileName(Module);
+    if (ModuleFileName.empty()) {
       getDiagnostics().Report(ModuleNameLoc, diag::err_module_build_disabled)
           << ModuleName;
       ModuleBuildFailed = true;
       return ModuleLoadResult();
     }
-
-    std::string ModuleFileName =
-        Explicit ? Override->second
-                 : PP->getHeaderSearchInfo().getModuleFileName(Module);
 
     // If we don't already have an ASTReader, create one now.
     if (!ModuleManager)
