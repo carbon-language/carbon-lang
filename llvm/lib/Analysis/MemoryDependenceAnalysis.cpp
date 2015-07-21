@@ -49,7 +49,11 @@ STATISTIC(NumCacheCompleteNonLocalPtr,
           "Number of block queries that were completely cached");
 
 // Limit for the number of instructions to scan in a block.
-static const unsigned int BlockScanLimit = 100;
+
+static cl::opt<unsigned> BlockScanLimit(
+    "memdep-block-scan-limit", cl::Hidden, cl::init(100),
+    cl::desc("The number of instructions to scan in a block in memory "
+             "dependency analysis (default = 100)"));
 
 // Limit on the number of memdep results to process.
 static const unsigned int NumResultsLimit = 100;
