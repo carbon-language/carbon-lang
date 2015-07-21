@@ -789,6 +789,28 @@ FileSpec::GetFileType () const
     return eFileTypeInvalid;
 }
 
+bool
+FileSpec::IsSymbolicLink () const
+{
+    char resolved_path[PATH_MAX];
+    if (!GetPath (resolved_path, sizeof (resolved_path)))
+        return false;
+
+#ifdef _WIN32
+    auto attrs = ::GetFileAttributes (resolved_path);
+    if (attrs == INVALID_FILE_ATTRIBUTES)
+        return false;
+
+    return (attrs & FILE_ATTRIBUTE_REPARSE_POINT);
+#else
+    struct stat file_stats;
+    if (::lstat (resolved_path, &file_stats) != 0)
+        return false;
+
+    return (file_stats.st_mode & S_IFMT) == S_IFLNK;
+#endif
+}
+
 uint32_t
 FileSpec::GetPermissions () const
 {

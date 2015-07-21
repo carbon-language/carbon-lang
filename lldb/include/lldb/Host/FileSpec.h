@@ -510,10 +510,7 @@ public:
     }
 
     bool
-    IsSymbolicLink () const
-    {
-        return GetFileType() == FileSpec::eFileTypeSymbolicLink;
-    }
+    IsSymbolicLink () const;
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.
