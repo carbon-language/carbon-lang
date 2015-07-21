@@ -111,6 +111,7 @@ public:
             m_throw_bp (true),
             m_hardware (false),
             m_exception_language (eLanguageTypeUnknown),
+            m_language (lldb::eLanguageTypeUnknown),
             m_skip_prologue (eLazyBoolCalculate),
             m_one_shot (false),
             m_all_files (false),
@@ -249,6 +250,12 @@ public:
                     break;
                 }
 
+                case 'L':
+                    m_language = LanguageRuntime::GetLanguageTypeFromString (option_arg);
+                    if (m_language == eLanguageTypeUnknown)
+                        error.SetErrorStringWithFormat ("Unknown language type: '%s' for breakpoint", option_arg);
+                    break;
+
                 case 'm':
                 {
                     bool success;
@@ -370,6 +377,7 @@ public:
             m_throw_bp = true;
             m_hardware = false;
             m_exception_language = eLanguageTypeUnknown;
+            m_language = lldb::eLanguageTypeUnknown;
             m_skip_prologue = eLazyBoolCalculate;
             m_one_shot = false;
             m_use_dummy = false;
@@ -411,6 +419,7 @@ public:
         bool m_throw_bp;
         bool m_hardware; // Request to use hardware breakpoints
         lldb::LanguageType m_exception_language;
+        lldb::LanguageType m_language;
         LazyBool m_skip_prologue;
         bool m_one_shot;
         bool m_use_dummy;
@@ -516,6 +525,7 @@ protected:
                                                    &(m_options.m_filenames),
                                                    m_options.m_func_names,
                                                    name_type_mask,
+                                                   m_options.m_language,
                                                    m_options.m_skip_prologue,
                                                    internal,
                                                    m_options.m_hardware).get();
@@ -709,6 +719,7 @@ private:
 #define LLDB_OPT_NOT_10 ( LLDB_OPT_SET_FROM_TO(1, 10) & ~LLDB_OPT_SET_10 )
 #define LLDB_OPT_SKIP_PROLOGUE ( LLDB_OPT_SET_1 | LLDB_OPT_SET_FROM_TO(3,8) )
 #define LLDB_OPT_MOVE_TO_NEAREST_CODE ( LLDB_OPT_SET_1 | LLDB_OPT_SET_9 )
+#define LLDB_OPT_EXPR_LANGUAGE ( LLDB_OPT_SET_FROM_TO(3, 8) & ~LLDB_OPT_SET_7 )
 
 OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
@@ -799,6 +810,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 //  Don't add this option till it actually does something useful...
 //    { LLDB_OPT_SET_10, false, "exception-typename", 'O', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeTypeName,
 //        "The breakpoint will only stop if an exception Object of this type is thrown.  Can be repeated multiple times to stop for multiple object types" },
+
+    { LLDB_OPT_EXPR_LANGUAGE, false, "language", 'L', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,
+        "Specifies the Language to use when interpreting the breakpoint's expression (note: currently only implemented for breakpoints identifiers).  If not set the target.language setting is used." },
 
     { LLDB_OPT_SKIP_PROLOGUE, false, "skip-prologue", 'K', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,
         "sKip the prologue if the breakpoint is at the beginning of a function.  If not set the target.skip-prologue setting is used." },

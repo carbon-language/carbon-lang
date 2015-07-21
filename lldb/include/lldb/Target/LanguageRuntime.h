@@ -105,6 +105,15 @@ public:
     static bool
     LanguageIsCPlusPlus (lldb::LanguageType language);
     
+    static bool
+    LanguageIsObjC (lldb::LanguageType language);
+    
+    static bool
+    LanguageIsC (lldb::LanguageType language);
+    
+    static bool
+    LanguageIsPascal (lldb::LanguageType language);
+    
     Process *
     GetProcess()
     {

@@ -847,11 +847,11 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
         {
             FileSpecList module_spec_list;
             module_spec_list.Append (FileSpec (module_name, false));
-            *sb_bp = target_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeAuto, skip_prologue, internal, hardware);
+            *sb_bp = target_sp->CreateBreakpoint (&module_spec_list, NULL, symbol_name, eFunctionNameTypeAuto, eLanguageTypeUnknown, skip_prologue, internal, hardware);
         }
         else
         {
-            *sb_bp = target_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeAuto, skip_prologue, internal, hardware);
+            *sb_bp = target_sp->CreateBreakpoint (NULL, NULL, symbol_name, eFunctionNameTypeAuto, eLanguageTypeUnknown, skip_prologue, internal, hardware);
         }
     }
 
@@ -892,6 +892,7 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
                                               comp_unit_list.get(),
                                               symbol_name,
                                               name_type_mask,
+                                              eLanguageTypeUnknown,
                                               skip_prologue,
                                               internal,
                                               hardware);
@@ -927,6 +928,7 @@ SBTarget::BreakpointCreateByNames (const char *symbol_names[],
                                                 symbol_names,
                                                 num_names,
                                                 name_type_mask, 
+                                                eLanguageTypeUnknown,
                                                 skip_prologue,
                                                 internal,
                                                 hardware);

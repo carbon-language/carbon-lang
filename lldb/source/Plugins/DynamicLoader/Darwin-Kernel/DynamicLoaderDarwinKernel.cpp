@@ -1546,6 +1546,7 @@ DynamicLoaderDarwinKernel::SetNotificationBreakpointIfNeeded ()
                                                                   NULL,
                                                                   "OSKextLoadedKextSummariesUpdated",
                                                                   eFunctionNameTypeFull,
+                                                                  eLanguageTypeUnknown,
                                                                   skip_prologue,
                                                                   internal_bp,
                                                                   hardware).get();

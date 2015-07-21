@@ -1067,6 +1067,10 @@ public:
     ///     The mask of bits from lldb::FunctionNameType enumerations
     ///     that tell us what kind of name we are looking for.
     ///
+    /// @param[out] language
+    ///     If known, the language to use for determining the
+    ///     lookup_name_type_mask.
+    ///
     /// @param[out] lookup_name
     ///     The actual name that will be used when calling
     ///     SymbolVendor::FindFunctions() or Symtab::FindFunctionSymbols()
@@ -1087,6 +1091,7 @@ public:
     static void
     PrepareForFunctionNameLookup (const ConstString &name,
                                   uint32_t name_type_mask,
+                                  lldb::LanguageType language,
                                   ConstString &lookup_name,
                                   uint32_t &lookup_name_type_mask,
                                   bool &match_name_after_lookup);

@@ -420,6 +420,7 @@ ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch
                                                                   exception_names.data(),
                                                                   exception_names.size(),
                                                                   eFunctionNameTypeBase,
+                                                                  eLanguageTypeC_plus_plus,
                                                                   eLazyBoolNo));
 
     return resolver_sp;

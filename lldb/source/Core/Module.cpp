@@ -778,6 +778,7 @@ Module::FindFunctions (const ConstString &name,
         bool match_name_after_lookup = false;
         Module::PrepareForFunctionNameLookup (name,
                                               name_type_mask,
+                                              eLanguageTypeUnknown, // TODO: add support
                                               lookup_name,
                                               lookup_name_type_mask,
                                               match_name_after_lookup);
@@ -1739,6 +1740,7 @@ Module::GetVersion (uint32_t *versions, uint32_t num_versions)
 void
 Module::PrepareForFunctionNameLookup (const ConstString &name,
                                       uint32_t name_type_mask,
+                                      LanguageType language,
                                       ConstString &lookup_name,
                                       uint32_t &lookup_name_type_mask,
                                       bool &match_name_after_lookup)
@@ -1754,11 +1756,19 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
     {
         if (CPPLanguageRuntime::IsCPPMangledName (name_cstr))
             lookup_name_type_mask = eFunctionNameTypeFull;
-        else if (ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
+        else if ((language == eLanguageTypeUnknown ||
+                  LanguageRuntime::LanguageIsObjC(language)) &&
+                 ObjCLanguageRuntime::IsPossibleObjCMethodName (name_cstr))
             lookup_name_type_mask = eFunctionNameTypeFull;
+        else if (LanguageRuntime::LanguageIsC(language))
+        {
+            lookup_name_type_mask = eFunctionNameTypeFull;
+        }
         else
         {
-            if (ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
+            if ((language == eLanguageTypeUnknown ||
+                 LanguageRuntime::LanguageIsObjC(language)) &&
+                ObjCLanguageRuntime::IsPossibleObjCSelector(name_cstr))
                 lookup_name_type_mask |= eFunctionNameTypeSelector;
             
             CPPLanguageRuntime::MethodName cpp_method (name);

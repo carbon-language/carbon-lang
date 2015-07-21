@@ -372,6 +372,7 @@ ModuleList::FindFunctions (const ConstString &name,
         uint32_t lookup_name_type_mask = 0;
         bool match_name_after_lookup = false;
         Module::PrepareForFunctionNameLookup (name, name_type_mask,
+                                              eLanguageTypeUnknown, // TODO: add support
                                               lookup_name,
                                               lookup_name_type_mask,
                                               match_name_after_lookup);
@@ -436,6 +437,7 @@ ModuleList::FindFunctionSymbols (const ConstString &name,
         uint32_t lookup_name_type_mask = 0;
         bool match_name_after_lookup = false;
         Module::PrepareForFunctionNameLookup (name, name_type_mask,
+                                              eLanguageTypeUnknown, // TODO: add support
                                               lookup_name,
                                               lookup_name_type_mask,
                                               match_name_after_lookup);

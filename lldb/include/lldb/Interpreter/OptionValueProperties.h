@@ -171,6 +171,9 @@ public:
     OptionValueArch *
     GetPropertyAtIndexAsOptionValueArch (const ExecutionContext *exe_ctx, uint32_t idx) const;
 
+    OptionValueLanguage *
+    GetPropertyAtIndexAsOptionValueLanguage (const ExecutionContext *exe_ctx, uint32_t idx) const;
+
     bool
     GetPropertyAtIndexAsArgs (const ExecutionContext *exe_ctx, uint32_t idx, Args &args) const;
 

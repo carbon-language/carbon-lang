@@ -311,6 +311,15 @@ OptionValueProperties::GetPropertyAtIndexAsOptionValueArch (const ExecutionConte
     return nullptr;
 }
 
+OptionValueLanguage *
+OptionValueProperties::GetPropertyAtIndexAsOptionValueLanguage (const ExecutionContext *exe_ctx, uint32_t idx) const
+{
+    const Property *property = GetPropertyAtIndex (exe_ctx, false, idx);
+    if (property)
+        return property->GetValue()->GetAsLanguage();
+    return nullptr;
+}
+
 bool
 OptionValueProperties::GetPropertyAtIndexAsArgs (const ExecutionContext *exe_ctx, uint32_t idx, Args &args) const
 {

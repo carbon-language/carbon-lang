@@ -169,6 +169,9 @@ public:
     bool
     GetBreakpointsConsultPlatformAvoidList ();
     
+    lldb::LanguageType
+    GetLanguage () const;
+
     const char *
     GetExpressionPrefixContentsAsCString ();
 
@@ -770,6 +773,7 @@ public:
                       const FileSpecList *containingSourceFiles,
                       const char *func_name,
                       uint32_t func_name_type_mask, 
+                      lldb::LanguageType language,
                       LazyBool skip_prologue,
                       bool internal,
                       bool request_hardware);
@@ -792,6 +796,7 @@ public:
                       const char *func_names[],
                       size_t num_names, 
                       uint32_t func_name_type_mask, 
+                      lldb::LanguageType language,
                       LazyBool skip_prologue,
                       bool internal,
                       bool request_hardware);
@@ -801,6 +806,7 @@ public:
                       const FileSpecList *containingSourceFiles,
                       const std::vector<std::string> &func_names,
                       uint32_t func_name_type_mask,
+                      lldb::LanguageType language,
                       LazyBool skip_prologue,
                       bool internal,
                       bool request_hardware);

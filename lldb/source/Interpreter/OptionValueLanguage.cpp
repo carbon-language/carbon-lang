@@ -47,9 +47,21 @@ OptionValueLanguage::SetValueFromString (llvm::StringRef value, VarSetOperationT
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
         {
-            LanguageType new_type = LanguageRuntime::GetLanguageTypeFromString(value.data());
-            m_value_was_set = true;
-            m_current_value = new_type;
+            ConstString lang_name(value.trim());
+            LanguageType new_type = LanguageRuntime::GetLanguageTypeFromString(lang_name.GetCString());
+            if (new_type)
+            {
+                m_value_was_set = true;
+                m_current_value = new_type;
+            }
+            else
+            {
+                StreamString error_strm;
+                error_strm.Printf("invalid language type '%s', ", value.str().c_str());
+                error_strm.Printf("valid values are:\n");
+                LanguageRuntime::PrintAllLanguages(error_strm, "    ", "\n");
+                error.SetErrorString(error_strm.GetData());
+            }
         }
         break;
         
