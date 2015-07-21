@@ -11,14 +11,46 @@
 #include "MICmnMIResultRecord.h"
 #include "MICmnResources.h"
 
-// Instantiations:
-CMICmnMIResultRecord::MapResultClassToResultClassText_t ms_MapResultClassToResultClassText = {
-    {CMICmnMIResultRecord::eResultClass_Done, "done"},
-    {CMICmnMIResultRecord::eResultClass_Running, "running"},
-    {CMICmnMIResultRecord::eResultClass_Connected, "connected"},
-    {CMICmnMIResultRecord::eResultClass_Error, "error"},
-    {CMICmnMIResultRecord::eResultClass_Exit, "exit"}};
-const CMIUtilString CMICmnMIResultRecord::ms_constStrResultRecordHat("^");
+//++ ------------------------------------------------------------------------------------
+// Details: Map a result class to the corresponding string.
+// Args:    veType      - (R) A MI result class enumeration.
+// Return:  const char* - The string corresponding to the result class.
+// Throws:  None.
+//--
+static const char*
+MapResultClassToResultClassText(CMICmnMIResultRecord::ResultClass_e veType)
+{
+    switch (veType)
+    {
+      case CMICmnMIResultRecord::eResultClass_Done:
+        return "done";
+      case CMICmnMIResultRecord::eResultClass_Running:
+        return "running";
+      case CMICmnMIResultRecord::eResultClass_Connected:
+        return "connected";
+      case CMICmnMIResultRecord::eResultClass_Error:
+        return "error";
+      case CMICmnMIResultRecord::eResultClass_Exit:
+        return "exit";
+    }
+    assert(false && "unknown CMICmnMIResultRecord::ResultClass_e");
+    return NULL;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Build the result record's mandatory data part. The part up to the first
+//          (additional) result i.e. result-record ==>  [ token ] "^" result-class.
+// Args:    vrToken     - (R) The command's transaction ID or token.
+//          veType      - (R) A MI result class enumeration.
+// Return:  CMIUtilString & - MI result record mandatory data
+// Throws:  None.
+//--
+static const CMIUtilString
+BuildResultRecord(const CMIUtilString &vrToken, CMICmnMIResultRecord::ResultClass_e veType)
+{
+    const char *pStrResultRecord = MapResultClassToResultClassText(veType);
+    return CMIUtilString::Format("%s^%s", vrToken.c_str(), pStrResultRecord);
+}
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnMIResultRecord constructor.
@@ -27,7 +59,7 @@ const CMIUtilString CMICmnMIResultRecord::ms_constStrResultRecordHat("^");
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIResultRecord::CMICmnMIResultRecord(void)
+CMICmnMIResultRecord::CMICmnMIResultRecord()
     : m_strResultRecord(MIRSRC(IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION))
 {
 }
@@ -40,12 +72,9 @@ CMICmnMIResultRecord::CMICmnMIResultRecord(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIResultRecord::CMICmnMIResultRecord(const CMIUtilString &vrToken, const ResultClass_e veType)
-    : m_strResultRecordToken(vrToken)
-    , m_eResultRecordResultClass(veType)
-    , m_strResultRecord(MIRSRC(IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION))
+CMICmnMIResultRecord::CMICmnMIResultRecord(const CMIUtilString &vrToken, ResultClass_e veType)
+    : m_strResultRecord(BuildResultRecord(vrToken, veType))
 {
-    BuildResultRecord();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -57,14 +86,10 @@ CMICmnMIResultRecord::CMICmnMIResultRecord(const CMIUtilString &vrToken, const R
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIResultRecord::CMICmnMIResultRecord(const CMIUtilString &vrToken, const ResultClass_e veType, const CMICmnMIValueResult &vValue)
-    : m_strResultRecordToken(vrToken)
-    , m_eResultRecordResultClass(veType)
-    , m_strResultRecord(MIRSRC(IDS_CMD_ERR_CMD_RUN_BUT_NO_ACTION))
-    , m_partResult(vValue)
+CMICmnMIResultRecord::CMICmnMIResultRecord(const CMIUtilString &vrToken, ResultClass_e veType, const CMICmnMIValueResult &vValue)
+    : m_strResultRecord(BuildResultRecord(vrToken, veType))
 {
-    BuildResultRecord();
-    Add(m_partResult);
+    Add(vValue);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -74,7 +99,7 @@ CMICmnMIResultRecord::CMICmnMIResultRecord(const CMIUtilString &vrToken, const R
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIResultRecord::~CMICmnMIResultRecord(void)
+CMICmnMIResultRecord::~CMICmnMIResultRecord()
 {
 }
 
@@ -89,29 +114,9 @@ CMICmnMIResultRecord::~CMICmnMIResultRecord(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnMIResultRecord::GetString(void) const
+CMICmnMIResultRecord::GetString() const
 {
     return m_strResultRecord;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Build the result record's mandatory data part. The part up to the first
-//          (additional) result i.e. result-record ==>  [ token ] "^" result-class.
-// Type:    Method.
-// Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnMIResultRecord::BuildResultRecord(void)
-{
-    const char *pFormat = "%s%s%s";
-    const CMIUtilString &rStrResultRecord(ms_MapResultClassToResultClassText[m_eResultRecordResultClass]);
-    m_strResultRecord =
-        CMIUtilString::Format(pFormat, m_strResultRecordToken.c_str(), ms_constStrResultRecordHat.c_str(), rStrResultRecord.c_str());
-
-    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
