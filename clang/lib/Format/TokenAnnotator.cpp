@@ -836,7 +836,8 @@ private:
       Contexts.back().IsExpression = true;
       if (!Line.startsWith(TT_UnaryOperator)) {
         for (FormatToken *Previous = Current.Previous;
-             Previous && !Previous->isOneOf(tok::comma, tok::semi);
+             Previous && Previous->Previous &&
+             !Previous->Previous->isOneOf(tok::comma, tok::semi);
              Previous = Previous->Previous) {
           if (Previous->isOneOf(tok::r_square, tok::r_paren)) {
             Previous = Previous->MatchingParen;
