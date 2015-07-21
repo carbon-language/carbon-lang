@@ -436,12 +436,6 @@ NativeProcessProtocol::DoStopIDBumped (uint32_t /* newBumpId */)
     // Default implementation does nothing.
 }
 
-void
-NativeProcessProtocol::Terminate ()
-{
-    // Default implementation does nothing.
-}
-
 #ifndef __linux__
 // These need to be implemented to support lldb-gdb-server on a given platform. Stubs are
 // provided to make the rest of the code link on non-supported platforms.
@@ -449,6 +443,7 @@ NativeProcessProtocol::Terminate ()
 Error
 NativeProcessProtocol::Launch (ProcessLaunchInfo &launch_info,
         NativeDelegate &native_delegate,
+        MainLoop &mainloop,
         NativeProcessProtocolSP &process_sp)
 {
     llvm_unreachable("Platform has no NativeProcessProtocol support");
@@ -457,6 +452,7 @@ NativeProcessProtocol::Launch (ProcessLaunchInfo &launch_info,
 Error
 NativeProcessProtocol::Attach (lldb::pid_t pid,
         NativeDelegate &native_delegate,
+        MainLoop &mainloop,
         NativeProcessProtocolSP &process_sp)
 {
     llvm_unreachable("Platform has no NativeProcessProtocol support");

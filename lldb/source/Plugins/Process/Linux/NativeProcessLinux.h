@@ -43,25 +43,16 @@ namespace process_linux {
         friend Error
         NativeProcessProtocol::Launch (ProcessLaunchInfo &launch_info,
                 NativeDelegate &native_delegate,
+                MainLoop &mainloop,
                 NativeProcessProtocolSP &process_sp);
 
         friend Error
         NativeProcessProtocol::Attach (lldb::pid_t pid,
-            NativeProcessProtocol::NativeDelegate &native_delegate,
-            NativeProcessProtocolSP &native_process_sp);
+                NativeProcessProtocol::NativeDelegate &native_delegate,
+                MainLoop &mainloop,
+                NativeProcessProtocolSP &process_sp);
 
     public:
-        //------------------------------------------------------------------------------
-        /// @class Operation
-        /// @brief Represents a NativeProcessLinux operation.
-        ///
-        /// Under Linux, it is not possible to ptrace() from any other thread but the
-        /// one that spawned or attached to the process from the start.  Therefore, when
-        /// a NativeProcessLinux is asked to deliver or change the state of an inferior
-        /// process the operation must be "funneled" to a specific thread to perform the
-        /// task.
-        typedef std::function<Error()> Operation;
-
         // ---------------------------------------------------------------------
         // NativeProcessProtocol Interface
         // ---------------------------------------------------------------------
@@ -113,17 +104,8 @@ namespace process_linux {
         Error
         SetBreakpoint (lldb::addr_t addr, uint32_t size, bool hardware) override;
 
-        Error
-        SetWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch_flags, bool hardware) override;
-
-        Error
-        RemoveWatchpoint (lldb::addr_t addr) override;
-
         void
         DoStopIDBumped (uint32_t newBumpId) override;
-
-        void
-        Terminate () override;
 
         Error
         GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) override;
@@ -134,9 +116,6 @@ namespace process_linux {
         // ---------------------------------------------------------------------
         // Interface used by NativeRegisterContext-derived classes.
         // ---------------------------------------------------------------------
-        Error
-        DoOperation(const Operation &op);
-
         static Error
         PtraceWrapper(int req,
                       lldb::pid_t pid,
@@ -154,11 +133,8 @@ namespace process_linux {
 
     private:
 
-        class Monitor;
-
+        MainLoop::SignalHandleUP m_sigchld_handle;
         ArchSpec m_arch;
-
-        std::unique_ptr<Monitor> m_monitor_up;
 
         LazyBool m_supports_mem_region;
         std::vector<MemoryRegionInfo> m_mem_region_cache;
@@ -206,6 +182,7 @@ namespace process_linux {
         /// implementation of Process::DoLaunch.
         void
         LaunchInferior (
+            MainLoop &mainloop,
             Module *module,
             char const *argv[],
             char const *envp[],
@@ -219,10 +196,7 @@ namespace process_linux {
         /// Attaches to an existing process.  Forms the
         /// implementation of Process::DoAttach
         void
-        AttachToInferior (lldb::pid_t pid, Error &error);
-
-        void
-        StartMonitorThread(const InitialOperation &operation, Error &error);
+        AttachToInferior (MainLoop &mainloop, lldb::pid_t pid, Error &error);
 
         ::pid_t
         Launch(LaunchArgs *args, Error &error);
@@ -369,6 +343,9 @@ namespace process_linux {
 
         void
         ThreadWasCreated (lldb::tid_t tid);
+
+        void
+        SigchldHandler();
 
         // Member variables.
         PendingNotificationUP m_pending_notification_up;

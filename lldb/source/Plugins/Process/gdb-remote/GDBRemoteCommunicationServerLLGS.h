@@ -42,9 +42,6 @@ public:
     //------------------------------------------------------------------
     GDBRemoteCommunicationServerLLGS(const lldb::PlatformSP& platform_sp, MainLoop &mainloop);
 
-    virtual
-    ~GDBRemoteCommunicationServerLLGS();
-
     //------------------------------------------------------------------
     /// Specify the program to launch and its arguments.
     ///
