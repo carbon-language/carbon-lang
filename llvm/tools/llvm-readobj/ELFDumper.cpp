@@ -75,6 +75,7 @@ private:
 
   void printRelocations(const Elf_Shdr *Sec);
   void printRelocation(const Elf_Shdr *Sec, typename ELFO::Elf_Rela Rel);
+  void printValue(uint64_t Type, uint64_t Value);
 
   const ELFO *Obj;
 };
@@ -967,8 +968,8 @@ static const char *getDynamicString(const ELFFile<ELFT> &O, uint64_t Value) {
 }
 
 template <class ELFT>
-static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
-                       bool Is64, raw_ostream &OS) {
+void ELFDumper<ELFT>::printValue(uint64_t Type, uint64_t Value) {
+  raw_ostream &OS = W.getOStream();
   switch (Type) {
   case DT_PLTREL:
     if (Value == DT_REL) {
@@ -1024,14 +1025,14 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
     OS << Value << " (bytes)";
     break;
   case DT_NEEDED:
-    OS << "SharedLibrary (" << getDynamicString(*O, Value) << ")";
+    OS << "SharedLibrary (" << getDynamicString(*Obj, Value) << ")";
     break;
   case DT_SONAME:
-    OS << "LibrarySoname (" << getDynamicString(*O, Value) << ")";
+    OS << "LibrarySoname (" << getDynamicString(*Obj, Value) << ")";
     break;
   case DT_RPATH:
   case DT_RUNPATH:
-    OS << getDynamicString(*O, Value);
+    OS << getDynamicString(*Obj, Value);
     break;
   case DT_MIPS_FLAGS:
     printFlags(Value, makeArrayRef(ElfDynamicDTMipsFlags), OS);
@@ -1098,7 +1099,7 @@ void ELFDumper<ELFT>::printDynamicTable() {
        << "  "
        << format(Is64 ? "0x%016" PRIX64 : "0x%08" PRIX64, Entry.getTag())
        << " " << format("%-21s", getTypeString(Entry.getTag()));
-    printValue(Obj, Entry.getTag(), Entry.getVal(), Is64, OS);
+    printValue(Entry.getTag(), Entry.getVal());
     OS << "\n";
   }
 
