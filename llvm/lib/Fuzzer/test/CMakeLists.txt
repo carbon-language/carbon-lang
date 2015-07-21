@@ -5,8 +5,8 @@
 set(CMAKE_CXX_FLAGS_RELEASE "${LIBFUZZER_FLAGS_BASE} -O0 -fsanitize-coverage=edge,indirect-calls")
 
 set(DFSanTests
-  DFSanMemcmpTest
-  DFSanSimpleCmpTest
+  MemcmpTest
+  SimpleCmpTest
   )
 
 set(Tests
@@ -16,9 +16,9 @@ set(Tests
   FullCoverageSetTest
   InfiniteTest
   NullDerefTest
+  SimpleCmpTest
   SimpleTest
   TimeoutTest
-  ${DFSanTests}
   )
 
 set(CustomMainTests

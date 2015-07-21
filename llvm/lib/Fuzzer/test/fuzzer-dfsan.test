@@ -1,0 +1,6 @@
+CHECK: BINGO
+
+RUN: not ./LLVMFuzzer-SimpleCmpTest-DFSan -use_traces=1 -seed=1 -runs=1000000 -timeout=5 2>&1 | FileCheck %s
+
+RUN: not ./LLVMFuzzer-MemcmpTest-DFSan -use_traces=1 -seed=1 -runs=100 -timeout=5 2>&1 | FileCheck %s
+
