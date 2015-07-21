@@ -3843,3 +3843,70 @@ define <16 x i16>@test_int_x86_avx512_mask_pmulhr_sw_256(<16 x i16> %x0, <16 x i
   %res2 = add <16 x i16> %res, %res1
   ret <16 x i16> %res2
 }
+
+declare <4 x i32> @llvm.x86.avx512.mask.pmaddw.d.128(<8 x i16>, <8 x i16>, <4 x i32>, i8)
+
+define <4 x i32>@test_int_x86_avx512_mask_pmaddw_d_128(<8 x i16> %x0, <8 x i16> %x1, <4 x i32> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmaddw_d_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movzbl %dil, %eax
+; CHECK-NEXT:    kmovw %eax, %k1
+; CHECK-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpaddd %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <4 x i32> @llvm.x86.avx512.mask.pmaddw.d.128(<8 x i16> %x0, <8 x i16> %x1, <4 x i32> %x2, i8 %x3)
+  %res1 = call <4 x i32> @llvm.x86.avx512.mask.pmaddw.d.128(<8 x i16> %x0, <8 x i16> %x1, <4 x i32> %x2, i8 -1)
+  %res2 = add <4 x i32> %res, %res1
+  ret <4 x i32> %res2
+}
+
+declare <8 x i32> @llvm.x86.avx512.mask.pmaddw.d.256(<16 x i16>, <16 x i16>, <8 x i32>, i8)
+
+define <8 x i32>@test_int_x86_avx512_mask_pmaddw_d_256(<16 x i16> %x0, <16 x i16> %x1, <8 x i32> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmaddw_d_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movzbl %dil, %eax
+; CHECK-NEXT:    kmovw %eax, %k1
+; CHECK-NEXT:    vpmaddwd %ymm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    vpmaddwd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpaddd %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    retq
+  %res = call <8 x i32> @llvm.x86.avx512.mask.pmaddw.d.256(<16 x i16> %x0, <16 x i16> %x1, <8 x i32> %x2, i8 %x3)
+  %res1 = call <8 x i32> @llvm.x86.avx512.mask.pmaddw.d.256(<16 x i16> %x0, <16 x i16> %x1, <8 x i32> %x2, i8 -1)
+  %res2 = add <8 x i32> %res, %res1
+  ret <8 x i32> %res2
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pmaddubs.w.128(<16 x i8>, <16 x i8>, <8 x i16>, i8)
+
+define <8 x i16>@test_int_x86_avx512_mask_pmaddubs_w_128(<16 x i8> %x0, <16 x i8> %x1, <8 x i16> %x2, i8 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmaddubs_w_128:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movzbl %dil, %eax
+; CHECK-NEXT:    kmovw %eax, %k1
+; CHECK-NEXT:    vpmaddubsw %xmm1, %xmm0, %xmm2 {%k1}
+; CHECK-NEXT:    vpmaddubsw %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpaddw %xmm0, %xmm2, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pmaddubs.w.128(<16 x i8> %x0, <16 x i8> %x1, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pmaddubs.w.128(<16 x i8> %x0, <16 x i8> %x1, <8 x i16> %x2, i8 -1)
+  %res2 = add <8 x i16> %res, %res1
+  ret <8 x i16> %res2
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pmaddubs.w.256(<32 x i8>, <32 x i8>, <16 x i16>, i16)
+
+define <16 x i16>@test_int_x86_avx512_mask_pmaddubs_w_256(<32 x i8> %x0, <32 x i8> %x1, <16 x i16> %x2, i16 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmaddubs_w_256:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vpmaddubsw %ymm1, %ymm0, %ymm2 {%k1}
+; CHECK-NEXT:    vpmaddubsw %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpaddw %ymm0, %ymm2, %ymm0
+; CHECK-NEXT:    retq
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pmaddubs.w.256(<32 x i8> %x0, <32 x i8> %x1, <16 x i16> %x2, i16 %x3)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pmaddubs.w.256(<32 x i8> %x0, <32 x i8> %x1, <16 x i16> %x2, i16 -1)
+  %res2 = add <16 x i16> %res, %res1
+  ret <16 x i16> %res2
+}

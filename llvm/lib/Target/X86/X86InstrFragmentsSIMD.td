@@ -288,6 +288,9 @@ def X86Packus : SDNode<"X86ISD::PACKUS", SDTPack>;
 def X86Unpckl : SDNode<"X86ISD::UNPCKL", SDTShuff2Op>;
 def X86Unpckh : SDNode<"X86ISD::UNPCKH", SDTShuff2Op>;
 
+def X86vpmaddubsw  : SDNode<"X86ISD::VPMADDUBSW" , SDTPack>;
+def X86vpmaddwd    : SDNode<"X86ISD::VPMADDWD"   , SDTPack>;
+
 def X86VPermilpv  : SDNode<"X86ISD::VPERMILPV", SDTShuff2OpM>;
 def X86VPermilpi  : SDNode<"X86ISD::VPERMILPI", SDTShuff2OpI>;
 def X86VPermv     : SDNode<"X86ISD::VPERMV",    SDTShuff2Op>;

@@ -403,7 +403,8 @@ namespace llvm {
       PMULDQ,
       // Vector Multiply Packed UnsignedIntegers with Round and Scale
       MULHRS,
-
+      // Multiply and Add Packed Integers
+      VPMADDUBSW, VPMADDWD,
       // FMA nodes
       FMADD,
       FNMADD,
