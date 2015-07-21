@@ -239,6 +239,8 @@ public:
   const Elf_Hash *getHashTable() const { return HashTable; }
 
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
+  ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;
+
   const char *getDynamicString(uintX_t Offset) const;
   ErrorOr<StringRef> getSymbolVersion(const Elf_Shdr *section,
                                       const Elf_Sym *Symb,
@@ -646,10 +648,7 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
         return;
       }
       dot_symtab_sec = &Sec;
-      ErrorOr<const Elf_Shdr *> SectionOrErr = getSection(Sec.sh_link);
-      if ((EC = SectionOrErr.getError()))
-        return;
-      ErrorOr<StringRef> SymtabOrErr = getStringTable(*SectionOrErr);
+      ErrorOr<StringRef> SymtabOrErr = getStringTableForSymtab(Sec);
       if ((EC = SymtabOrErr.getError()))
         return;
       DotStrtab = *SymtabOrErr;
@@ -876,6 +875,17 @@ ELFFile<ELFT>::getStringTable(const Elf_Shdr *Section) const {
   if (Data[Size - 1] != '\0')
     return object_error::string_table_non_null_end;
   return Data;
+}
+
+template <class ELFT>
+ErrorOr<StringRef>
+ELFFile<ELFT>::getStringTableForSymtab(const Elf_Shdr &Sec) const {
+  if (Sec.sh_type != ELF::SHT_SYMTAB && Sec.sh_type != ELF::SHT_DYNSYM)
+    return object_error::parse_failed;
+  ErrorOr<const Elf_Shdr *> SectionOrErr = getSection(Sec.sh_link);
+  if (std::error_code EC = SectionOrErr.getError())
+    return EC;
+  return getStringTable(*SectionOrErr);
 }
 
 template <class ELFT>
