@@ -4671,7 +4671,7 @@ INTERCEPTOR(__sanitizer_FILE *, freopen, const char *path, const char *mode,
             __sanitizer_FILE *fp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, freopen, path, mode, fp);
-  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
   COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
   __sanitizer_FILE *res = REAL(freopen)(path, mode, fp);
@@ -4702,7 +4702,7 @@ INTERCEPTOR(__sanitizer_FILE *, freopen64, const char *path, const char *mode,
             __sanitizer_FILE *fp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, freopen64, path, mode, fp);
-  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
   COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
   __sanitizer_FILE *res = REAL(freopen64)(path, mode, fp);
