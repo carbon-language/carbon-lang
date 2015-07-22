@@ -19,6 +19,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/TimeValue.h"
 
 namespace llvm {
 namespace dsymutil {
@@ -46,12 +47,14 @@ class BinaryHolder {
   /// This function performs no system calls, it just looks up a
   /// potential match for the given \p Filename in the currently
   /// mapped archive if there is one.
-  ErrorOr<MemoryBufferRef> GetArchiveMemberBuffer(StringRef Filename);
+  ErrorOr<MemoryBufferRef> GetArchiveMemberBuffer(StringRef Filename,
+                                                  sys::TimeValue Timestamp);
 
   /// \brief Interpret Filename as an archive member specification,
   /// map the corresponding archive to memory and return the
   /// MemoryBufferRef corresponding to the described member.
-  ErrorOr<MemoryBufferRef> MapArchiveAndGetMemberBuffer(StringRef Filename);
+  ErrorOr<MemoryBufferRef>
+  MapArchiveAndGetMemberBuffer(StringRef Filename, sys::TimeValue Timestamp);
 
   /// \brief Return the MemoryBufferRef that holds the memory
   /// mapping for the given \p Filename. This function will try to
@@ -61,7 +64,8 @@ class BinaryHolder {
   /// The returned MemoryBufferRef points to a buffer owned by this
   /// object. The buffer is valid until the next call to
   /// GetMemoryBufferForFile() on this object.
-  ErrorOr<MemoryBufferRef> GetMemoryBufferForFile(StringRef Filename);
+  ErrorOr<MemoryBufferRef> GetMemoryBufferForFile(StringRef Filename,
+                                                  sys::TimeValue Timestamp);
 
 public:
   BinaryHolder(bool Verbose) : Verbose(Verbose) {}
@@ -72,11 +76,15 @@ public:
   ///
   /// Calling this function invalidates the previous mapping owned by
   /// the BinaryHolder.
-  ErrorOr<const object::ObjectFile &> GetObjectFile(StringRef Filename);
+  ErrorOr<const object::ObjectFile &>
+  GetObjectFile(StringRef Filename,
+                sys::TimeValue Timestamp = sys::TimeValue::PosixZeroTime());
 
   /// \brief Wraps GetObjectFile() to return a derived ObjectFile type.
   template <typename ObjectFileType>
-  ErrorOr<const ObjectFileType &> GetFileAs(StringRef Filename) {
+  ErrorOr<const ObjectFileType &>
+  GetFileAs(StringRef Filename,
+            sys::TimeValue Timestamp = sys::TimeValue::PosixZeroTime()) {
     auto ErrOrObjFile = GetObjectFile(Filename);
     if (auto Err = ErrOrObjFile.getError())
       return Err;

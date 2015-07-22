@@ -19,18 +19,20 @@ namespace llvm {
 namespace dsymutil {
 
 ErrorOr<MemoryBufferRef>
-BinaryHolder::GetMemoryBufferForFile(StringRef Filename) {
+BinaryHolder::GetMemoryBufferForFile(StringRef Filename,
+                                     sys::TimeValue Timestamp) {
   if (Verbose)
     outs() << "trying to open '" << Filename << "'\n";
 
   // Try that first as it doesn't involve any filesystem access.
-  if (auto ErrOrArchiveMember = GetArchiveMemberBuffer(Filename))
+  if (auto ErrOrArchiveMember = GetArchiveMemberBuffer(Filename, Timestamp))
     return *ErrOrArchiveMember;
 
   // If the name ends with a closing paren, there is a huge chance
   // it is an archive member specification.
   if (Filename.endswith(")"))
-    if (auto ErrOrArchiveMember = MapArchiveAndGetMemberBuffer(Filename))
+    if (auto ErrOrArchiveMember =
+            MapArchiveAndGetMemberBuffer(Filename, Timestamp))
       return *ErrOrArchiveMember;
 
   // Otherwise, just try opening a standard file. If this is an
@@ -50,7 +52,8 @@ BinaryHolder::GetMemoryBufferForFile(StringRef Filename) {
 }
 
 ErrorOr<MemoryBufferRef>
-BinaryHolder::GetArchiveMemberBuffer(StringRef Filename) {
+BinaryHolder::GetArchiveMemberBuffer(StringRef Filename,
+                                     sys::TimeValue Timestamp) {
   if (!CurrentArchive)
     return make_error_code(errc::no_such_file_or_directory);
 
@@ -64,6 +67,12 @@ BinaryHolder::GetArchiveMemberBuffer(StringRef Filename) {
   for (const auto &Child : CurrentArchive->children()) {
     if (auto NameOrErr = Child.getName())
       if (*NameOrErr == Filename) {
+        if (Timestamp != sys::TimeValue::PosixZeroTime() &&
+            Timestamp != Child.getLastModified()) {
+          if (Verbose)
+            outs() << "\tmember had timestamp mismatch.\n";
+          continue;
+        }
         if (Verbose)
           outs() << "\tfound member in current archive.\n";
         return Child.getMemoryBufferRef();
@@ -74,7 +83,8 @@ BinaryHolder::GetArchiveMemberBuffer(StringRef Filename) {
 }
 
 ErrorOr<MemoryBufferRef>
-BinaryHolder::MapArchiveAndGetMemberBuffer(StringRef Filename) {
+BinaryHolder::MapArchiveAndGetMemberBuffer(StringRef Filename,
+                                           sys::TimeValue Timestamp) {
   StringRef ArchiveFilename = Filename.substr(0, Filename.find('('));
 
   auto ErrOrBuff = MemoryBuffer::getFileOrSTDIN(ArchiveFilename);
@@ -90,12 +100,12 @@ BinaryHolder::MapArchiveAndGetMemberBuffer(StringRef Filename) {
   CurrentArchive = std::move(*ErrOrArchive);
   CurrentMemoryBuffer = std::move(*ErrOrBuff);
 
-  return GetArchiveMemberBuffer(Filename);
+  return GetArchiveMemberBuffer(Filename, Timestamp);
 }
 
 ErrorOr<const object::ObjectFile &>
-BinaryHolder::GetObjectFile(StringRef Filename) {
-  auto ErrOrMemBufferRef = GetMemoryBufferForFile(Filename);
+BinaryHolder::GetObjectFile(StringRef Filename, sys::TimeValue Timestamp) {
+  auto ErrOrMemBufferRef = GetMemoryBufferForFile(Filename, Timestamp);
   if (auto Err = ErrOrMemBufferRef.getError())
     return Err;
 

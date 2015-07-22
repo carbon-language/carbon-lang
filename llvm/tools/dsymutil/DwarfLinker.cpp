@@ -3027,7 +3027,8 @@ bool DwarfLinker::link(const DebugMap &Map) {
 
     if (Options.Verbose)
       outs() << "DEBUG MAP OBJECT: " << Obj->getObjectFilename() << "\n";
-    auto ErrOrObj = BinHolder.GetObjectFile(Obj->getObjectFilename());
+    auto ErrOrObj =
+        BinHolder.GetObjectFile(Obj->getObjectFilename(), Obj->getTimestamp());
     if (std::error_code EC = ErrOrObj.getError()) {
       reportWarning(Twine(Obj->getObjectFilename()) + ": " + EC.message());
       continue;

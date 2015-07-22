@@ -20,8 +20,9 @@ namespace dsymutil {
 
 using namespace llvm::object;
 
-DebugMapObject::DebugMapObject(StringRef ObjectFilename)
-    : Filename(ObjectFilename) {}
+DebugMapObject::DebugMapObject(StringRef ObjectFilename,
+                               sys::TimeValue Timestamp)
+    : Filename(ObjectFilename), Timestamp(Timestamp) {}
 
 bool DebugMapObject::addSymbol(StringRef Name, uint64_t ObjectAddress,
                                uint64_t LinkedAddress, uint32_t Size) {
@@ -58,8 +59,9 @@ void DebugMapObject::print(raw_ostream &OS) const {
 void DebugMapObject::dump() const { print(errs()); }
 #endif
 
-DebugMapObject &DebugMap::addDebugMapObject(StringRef ObjectFilePath) {
-  Objects.emplace_back(new DebugMapObject(ObjectFilePath));
+DebugMapObject &DebugMap::addDebugMapObject(StringRef ObjectFilePath,
+                                            sys::TimeValue Timestamp) {
+  Objects.emplace_back(new DebugMapObject(ObjectFilePath, Timestamp));
   return *Objects.back();
 }
 
@@ -121,11 +123,12 @@ namespace yaml {
 
 // Normalize/Denormalize between YAML and a DebugMapObject.
 struct MappingTraits<dsymutil::DebugMapObject>::YamlDMO {
-  YamlDMO(IO &io) {}
+  YamlDMO(IO &io) { Timestamp = 0; }
   YamlDMO(IO &io, dsymutil::DebugMapObject &Obj);
   dsymutil::DebugMapObject denormalize(IO &IO);
 
   std::string Filename;
+  sys::TimeValue::SecondsType Timestamp;
   std::vector<dsymutil::DebugMapObject::YAMLSymbolMapping> Entries;
 };
 
@@ -141,6 +144,7 @@ void MappingTraits<dsymutil::DebugMapObject>::mapping(
     IO &io, dsymutil::DebugMapObject &DMO) {
   MappingNormalization<YamlDMO, dsymutil::DebugMapObject> Norm(io, DMO);
   io.mapRequired("filename", Norm->Filename);
+  io.mapOptional("timestamp", Norm->Timestamp);
   io.mapRequired("symbols", Norm->Entries);
 }
 
@@ -192,6 +196,7 @@ void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
 MappingTraits<dsymutil::DebugMapObject>::YamlDMO::YamlDMO(
     IO &io, dsymutil::DebugMapObject &Obj) {
   Filename = Obj.Filename;
+  Timestamp = Obj.getTimestamp().toEpochTime();
   Entries.reserve(Obj.Symbols.size());
   for (auto &Entry : Obj.Symbols)
     Entries.push_back(std::make_pair(Entry.getKey(), Entry.getValue()));
@@ -224,7 +229,9 @@ MappingTraits<dsymutil::DebugMapObject>::YamlDMO::denormalize(IO &IO) {
     }
   }
 
-  dsymutil::DebugMapObject Res(Path);
+  sys::TimeValue TV;
+  TV.fromEpochTime(Timestamp);
+  dsymutil::DebugMapObject Res(Path, TV);
   for (auto &Entry : Entries) {
     auto &Mapping = Entry.second;
     uint64_t ObjAddress = Mapping.ObjectAddress;

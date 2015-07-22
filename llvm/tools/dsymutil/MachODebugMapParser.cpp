@@ -55,7 +55,7 @@ private:
   const char *CurrentFunctionName;
   uint64_t CurrentFunctionAddress;
 
-  void switchToNewDebugMapObject(StringRef Filename);
+  void switchToNewDebugMapObject(StringRef Filename, sys::TimeValue Timestamp);
   void resetParserState();
   uint64_t getMainBinarySymbolAddress(StringRef Name);
   void loadMainBinarySymbols();
@@ -84,13 +84,15 @@ void MachODebugMapParser::resetParserState() {
 /// Create a new DebugMapObject. This function resets the state of the
 /// parser that was referring to the last object file and sets
 /// everything up to add symbols to the new one.
-void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename) {
+void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename,
+                                                    sys::TimeValue Timestamp) {
   resetParserState();
 
   SmallString<80> Path(PathPrefix);
   sys::path::append(Path, Filename);
 
-  auto MachOOrError = CurrentObjectHolder.GetFileAs<MachOObjectFile>(Path);
+  auto MachOOrError =
+      CurrentObjectHolder.GetFileAs<MachOObjectFile>(Path, Timestamp);
   if (auto Error = MachOOrError.getError()) {
     Warning(Twine("cannot open debug object \"") + Path.str() + "\": " +
             Error.message() + "\n");
@@ -98,7 +100,7 @@ void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename) {
   }
 
   loadCurrentObjectFileSymbols();
-  CurrentDebugMapObject = &Result->addDebugMapObject(Path);
+  CurrentDebugMapObject = &Result->addDebugMapObject(Path, Timestamp);
 }
 
 static Triple getTriple(const object::MachOObjectFile &Obj) {
@@ -144,8 +146,11 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
   const char *Name = &MainBinaryStrings.data()[StringIndex];
 
   // An N_OSO entry represents the start of a new object file description.
-  if (Type == MachO::N_OSO)
-    return switchToNewDebugMapObject(Name);
+  if (Type == MachO::N_OSO) {
+    sys::TimeValue Timestamp;
+    Timestamp.fromEpochTime(Value);
+    return switchToNewDebugMapObject(Name, Timestamp);
+  }
 
   // If the last N_OSO object file wasn't found,
   // CurrentDebugMapObject will be null. Do not update anything
