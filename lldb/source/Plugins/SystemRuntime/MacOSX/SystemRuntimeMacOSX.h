@@ -199,7 +199,7 @@ private:
             dqo_target_queue = UINT16_MAX;
             dqo_target_queue = UINT16_MAX;
             dqo_priority = UINT16_MAX;
-        };
+        }
 
         bool
         IsValid ()

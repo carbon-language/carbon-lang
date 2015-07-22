@@ -192,7 +192,7 @@ public:
         {
             for (uint32_t i = 0; i < e_num; ++i)
                 m_has[i] = false;
-        };
+        }
 
         void set_name (const std::string & name)
         {

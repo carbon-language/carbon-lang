@@ -63,7 +63,7 @@ protected:
     WriteFPR();
 
     virtual void*
-    GetGPRBuffer() { return nullptr; };
+    GetGPRBuffer() { return nullptr; }
 
     virtual size_t
     GetGPRSize() { return GetRegisterInfoInterface().GetGPRSize(); }
@@ -105,4 +105,3 @@ protected:
 } // namespace lldb_private
 
 #endif // #ifndef lldb_NativeRegisterContextLinux_h
-

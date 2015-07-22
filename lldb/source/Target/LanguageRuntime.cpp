@@ -34,7 +34,7 @@ public:
     }
 
     virtual
-    ~ExceptionSearchFilter() {};
+    ~ExceptionSearchFilter() {}
 
     bool
     ModulePasses (const lldb::ModuleSP &module_sp) override
@@ -493,6 +493,3 @@ LanguageRuntime::CreateExceptionSearchFilter ()
 {
     return m_process->GetTarget().GetSearchFilterForModule(NULL);
 }
-
-
-

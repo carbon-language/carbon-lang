@@ -50,7 +50,7 @@ class CMICmdFactory : public CMICmnBase, public MI::ISingleton<CMICmdFactory>
         // virtual CMICmdBase *         CreateSelf( void ) = 0;             // Not possible as require a static creator
         // function in the command class, here for awareness
 
-        /* dtor */ virtual ~ICmd(void){};
+        /* dtor */ virtual ~ICmd(void){}
     };
 
     // Methods:

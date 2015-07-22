@@ -62,7 +62,7 @@ public:
                            StringList &commands_help);
 
     virtual bool
-    WantsRawCommandString() { return false; };
+    WantsRawCommandString() { return false; }
 
     virtual int
     HandleCompletion (Args &input,

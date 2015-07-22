@@ -37,7 +37,7 @@ class ICallback
   public:
     virtual void Delete(SMICmdData &vCmd) = 0;
 
-    /* dtor */ virtual ~ICallback(void){};
+    /* dtor */ virtual ~ICallback(void){}
 };
 
 //++ ============================================================================

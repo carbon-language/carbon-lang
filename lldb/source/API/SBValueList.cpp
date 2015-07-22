@@ -39,7 +39,7 @@ public:
             return *this;
         m_values = rhs.m_values;
         return *this;
-    };
+    }
     
     uint32_t
     GetSize ()
@@ -297,5 +297,3 @@ SBValueList::ref ()
     CreateIfNeeded();
     return *m_opaque_ap.get();
 }
-
-

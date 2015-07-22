@@ -503,7 +503,7 @@ public:
         CommandObject (interpreter, name, help, syntax, flags) {}
 
     virtual
-    ~CommandObjectParsed () {};
+    ~CommandObjectParsed () {}
     
     virtual bool
     Execute (const char *args_string, CommandReturnObject &result);
@@ -514,7 +514,7 @@ protected:
              CommandReturnObject &result) = 0;
     
     virtual bool
-    WantsRawCommandString() { return false; };
+    WantsRawCommandString() { return false; }
 };
 
 class CommandObjectRaw : public CommandObject
@@ -529,7 +529,7 @@ public:
         CommandObject (interpreter, name, help, syntax, flags) {}
 
     virtual
-    ~CommandObjectRaw () {};
+    ~CommandObjectRaw () {}
     
     virtual bool
     Execute (const char *args_string, CommandReturnObject &result);
@@ -539,7 +539,7 @@ protected:
     DoExecute (const char *command, CommandReturnObject &result) = 0;
 
     virtual bool
-    WantsRawCommandString() { return true; };
+    WantsRawCommandString() { return true; }
 };
 
 

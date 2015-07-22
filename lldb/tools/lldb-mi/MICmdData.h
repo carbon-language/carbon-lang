@@ -26,7 +26,7 @@ struct SMICmdData
         , bCmdValid(false)
         , bCmdExecutedSuccessfully(false)
         , bMIOldStyle(false)
-        , bHasResultRecordExtra(false){};
+        , bHasResultRecordExtra(false){}
 
     MIuint id;                               // A command's unique ID i.e. GUID
     CMIUtilString strMiCmdToken;             // The command's MI token (a number)

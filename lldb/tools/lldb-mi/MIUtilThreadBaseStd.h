@@ -34,7 +34,7 @@ class CMIUtilThreadMutex
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilThreadMutex(void){};
+    /* ctor */ CMIUtilThreadMutex(void){}
     //
     void
     Lock(void); // Wait until mutex can be obtained
@@ -46,7 +46,7 @@ class CMIUtilThreadMutex
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilThreadMutex(void){};
+    /* dtor */ virtual ~CMIUtilThreadMutex(void){}
 
     // Attributes:
   private:

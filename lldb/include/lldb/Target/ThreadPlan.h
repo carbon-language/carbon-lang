@@ -568,7 +568,7 @@ protected:
     //------------------------------------------------------------------
 
     virtual bool
-    DoWillResume (lldb::StateType resume_state, bool current_plan) { return true; };
+    DoWillResume (lldb::StateType resume_state, bool current_plan) { return true; }
 
     virtual bool
     DoPlanExplainsStop (Event *event_ptr) = 0;

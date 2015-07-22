@@ -63,7 +63,7 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
         virtual const CMIUtilString &GetMIResultRecordExtra(void) const = 0;
         virtual bool HasMIResultRecordExtra(void) const = 0;
 
-        /* dtor */ virtual ~ICmd(void){};
+        /* dtor */ virtual ~ICmd(void){}
     };
 
     // Methods:

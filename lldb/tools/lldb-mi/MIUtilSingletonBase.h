@@ -52,7 +52,7 @@ template <typename T> class ISingleton
     virtual bool Initialize(void) = 0;
     virtual bool Shutdown(void) = 0;
     //
-    /* dtor */ virtual ~ISingleton(void){};
+    /* dtor */ virtual ~ISingleton(void){}
 };
 
 } // namespace MI

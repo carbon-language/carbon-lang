@@ -52,7 +52,7 @@ class CMICmdArgSet : public CMICmnBase
         virtual bool GetValid(void) const = 0;
         virtual bool Validate(CMICmdArgContext &vwArgContext) = 0;
 
-        /* dtor */ virtual ~IArg(void){};
+        /* dtor */ virtual ~IArg(void){}
     };
 
     // Typedefs:
