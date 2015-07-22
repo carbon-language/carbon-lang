@@ -88,3 +88,14 @@ void someMoreCallSites() {
 }
 
 } // end namespace
+
+template <typename T> void someFunctionTemplate(T b, T e) { (void)b; (void)e; }
+
+template <typename T> void someFunctionTemplateOneUnusedParam(T b, T e) { (void)e; }
+// CHECK-MESSAGES: :[[@LINE-1]]:65: warning
+// CHECK-FIXES: {{^}}template <typename T> void someFunctionTemplateOneUnusedParam(T  /*b*/, T e) { (void)e; }
+
+template <typename T> void someFunctionTemplateAllUnusedParams(T b, T e) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:66: warning
+// CHECK-MESSAGES: :[[@LINE-2]]:71: warning
+// CHECK-FIXES: {{^}}template <typename T> void someFunctionTemplateAllUnusedParams(T  /*b*/, T  /*e*/) {}

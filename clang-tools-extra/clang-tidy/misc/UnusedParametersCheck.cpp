@@ -59,7 +59,8 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Function->doesThisDeclarationHaveABody())
     return;
   const auto *Param = Result.Nodes.getNodeAs<ParmVarDecl>("x");
-  if (Param->isUsed())
+  if (Param->isUsed() || Param->isReferenced() || !Param->getDeclName() ||
+     Param->hasAttr<UnusedAttr>())
     return;
 
   auto MyDiag = diag(Param->getLocation(), "parameter '%0' is unused")
@@ -102,4 +103,3 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
 
 } // namespace tidy
 } // namespace clang
-
