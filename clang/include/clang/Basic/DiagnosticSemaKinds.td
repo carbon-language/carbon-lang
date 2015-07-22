@@ -1965,6 +1965,12 @@ def warn_private_extern : Warning<
 def note_private_extern : Note<
   "use __attribute__((visibility(\"hidden\"))) attribute instead">;
 
+// C++ Concepts TS
+def err_concept_decls_may_only_appear_in_namespace_scope : Error<
+  "concept declarations may only appear in namespace scope">;
+def err_function_concept_not_defined : Error<
+  "function concept declaration must be a definition">;
+
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<
   "'%0' type specifier is incompatible with C++98">,
