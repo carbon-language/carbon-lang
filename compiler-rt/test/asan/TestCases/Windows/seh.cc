@@ -1,15 +1,16 @@
-// Clang doesn't support SEH on Windows yet, so for the time being we
-// build this program in two parts: the code with SEH is built with CL,
-// the rest is built with Clang.  This represents the typical scenario when we
-// build a large project using "clang-cl -fallback -fsanitize=address".
+// Make sure that ASan works with SEH in both Clang and MSVC. MSVC uses a
+// different EH personality depending on the -GS setting, so test both -GS+ and
+// -GS-.
 //
-// Check both -GS and -GS- builds:
-// RUN: cl -c %s -Fo%t.obj
+// RUN: cl -c %s -Fo%t.obj -DCOMPILE_SEH
 // RUN: %clangxx_asan -o %t.exe %s %t.obj
 // RUN: %run %t.exe
 //
-// RUN: cl -GS- -c %s -Fo%t.obj
+// RUN: cl -GS- -c %s -Fo%t.obj -DCOMPILE_SEH
 // RUN: %clangxx_asan -o %t.exe %s %t.obj
+// RUN: %run %t.exe
+//
+// RUN: %clang_cl_asan %s -DCOMPILE_SEH -Fe%t.exe
 // RUN: %run %t.exe
 
 #include <windows.h>
@@ -22,7 +23,7 @@ extern "C" bool __asan_address_is_poisoned(void *p);
 
 void ThrowAndCatch();
 
-#if !defined(__clang__)
+#if defined(COMPILE_SEH)
 __declspec(noinline)
 void Throw() {
   int local, zero = 0;
@@ -39,8 +40,9 @@ void ThrowAndCatch() {
     fprintf(stderr, "__except:  %p\n", &local);
   }
 }
-#else
+#endif
 
+#if defined(__clang__)
 int main() {
   char x[32];
   fprintf(stderr, "Before: %p poisoned: %d\n", &x,
