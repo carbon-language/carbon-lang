@@ -101,7 +101,7 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
 
   /// FunctionInfo - For each function, keep track of what globals are
   /// modified or read.
-  std::map<const Function *, FunctionRecord> FunctionInfo;
+  DenseMap<const Function *, FunctionRecord> FunctionInfo;
 
   /// Handle to clear this analysis on deletion of values.
   struct DeletionCallbackHandle final : CallbackVH {
@@ -227,8 +227,7 @@ private:
   /// getFunctionInfo - Return the function info for the function, or null if
   /// we don't have anything useful to say about it.
   FunctionRecord *getFunctionInfo(const Function *F) {
-    std::map<const Function *, FunctionRecord>::iterator I =
-        FunctionInfo.find(F);
+    auto I = FunctionInfo.find(F);
     if (I != FunctionInfo.end())
       return &I->second;
     return nullptr;
