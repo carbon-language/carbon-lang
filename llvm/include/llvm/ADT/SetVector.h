@@ -44,6 +44,8 @@ public:
   typedef Vector vector_type;
   typedef typename vector_type::const_iterator iterator;
   typedef typename vector_type::const_iterator const_iterator;
+  typedef typename vector_type::const_reverse_iterator reverse_iterator;
+  typedef typename vector_type::const_reverse_iterator const_reverse_iterator;
   typedef typename vector_type::size_type size_type;
 
   /// \brief Construct an empty SetVector
@@ -83,6 +85,26 @@ public:
   /// \brief Get a const_iterator to the end of the SetVector.
   const_iterator end() const {
     return vector_.end();
+  }
+
+  /// \brief Get an reverse_iterator to the end of the SetVector.
+  reverse_iterator rbegin() {
+    return vector_.rbegin();
+  }
+
+  /// \brief Get a const_reverse_iterator to the end of the SetVector.
+  const_reverse_iterator rbegin() const {
+    return vector_.rbegin();
+  }
+
+  /// \brief Get a reverse_iterator to the beginning of the SetVector.
+  reverse_iterator rend() {
+    return vector_.rend();
+  }
+
+  /// \brief Get a const_reverse_iterator to the beginning of the SetVector.
+  const_reverse_iterator rend() const {
+    return vector_.rend();
   }
 
   /// \brief Return the last element of the SetVector.
