@@ -453,6 +453,9 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
       llvm_unreachable("Can't print this machine register mask yet.");
     break;
   }
+  case MachineOperand::MO_Metadata:
+    Op.getMetadata()->printAsOperand(OS, MST);
+    break;
   case MachineOperand::MO_CFIIndex: {
     const auto &MMI = Op.getParent()->getParent()->getParent()->getMMI();
     print(MMI.getFrameInstructions()[Op.getCFIIndex()]);

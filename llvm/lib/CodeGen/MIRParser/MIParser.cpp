@@ -112,6 +112,7 @@ public:
   bool parseConstantPoolIndexOperand(MachineOperand &Dest);
   bool parseJumpTableIndexOperand(MachineOperand &Dest);
   bool parseExternalSymbolOperand(MachineOperand &Dest);
+  bool parseMetadataOperand(MachineOperand &Dest);
   bool parseCFIOffset(int &Offset);
   bool parseCFIOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
@@ -575,6 +576,23 @@ bool MIParser::parseExternalSymbolOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseMetadataOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::exclaim));
+  auto Loc = Token.location();
+  lex();
+  if (Token.isNot(MIToken::IntegerLiteral) || Token.integerValue().isSigned())
+    return error("expected metadata id after '!'");
+  unsigned ID;
+  if (getUnsigned(ID))
+    return true;
+  auto NodeInfo = IRSlots.MetadataNodes.find(ID);
+  if (NodeInfo == IRSlots.MetadataNodes.end())
+    return error(Loc, "use of undefined metadata '!" + Twine(ID) + "'");
+  lex();
+  Dest = MachineOperand::CreateMetadata(NodeInfo->second.get());
+  return false;
+}
+
 bool MIParser::parseCFIOffset(int &Offset) {
   if (Token.isNot(MIToken::IntegerLiteral))
     return error("expected a cfi offset");
@@ -628,6 +646,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::ExternalSymbol:
   case MIToken::QuotedExternalSymbol:
     return parseExternalSymbolOperand(Dest);
+  case MIToken::exclaim:
+    return parseMetadataOperand(Dest);
   case MIToken::kw_cfi_def_cfa_offset:
     return parseCFIOperand(Dest);
   case MIToken::Error:

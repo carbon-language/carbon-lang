@@ -310,6 +310,8 @@ static MIToken::TokenKind symbolToken(char C) {
     return MIToken::equal;
   case ':':
     return MIToken::colon;
+  case '!':
+    return MIToken::exclaim;
   default:
     return MIToken::Error;
   }

@@ -36,6 +36,7 @@ struct MIToken {
     equal,
     underscore,
     colon,
+    exclaim,
 
     // Keywords
     kw_implicit,
