@@ -50,6 +50,11 @@ MCAsmBackend *createWebAssemblyAsmBackend(const Target &T,
 #define GET_REGINFO_ENUM
 #include "WebAssemblyGenRegisterInfo.inc"
 
+// Defines symbolic names for the WebAssembly instructions.
+//
+#define GET_INSTRINFO_ENUM
+#include "WebAssemblyGenInstrInfo.inc"
+
 #define GET_SUBTARGETINFO_ENUM
 #include "WebAssemblyGenSubtargetInfo.inc"
 

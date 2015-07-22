@@ -39,7 +39,12 @@ using namespace llvm;
 /// Return true if the specified function should have a dedicated frame pointer
 /// register.
 bool WebAssemblyFrameLowering::hasFP(const MachineFunction &MF) const {
-  llvm_unreachable("TODO: implement hasFP");
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const auto *RegInfo = static_cast<const WebAssemblyRegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
+  return MFI->hasCalls() || MFI->hasVarSizedObjects() ||
+         MFI->isFrameAddressTaken() || MFI->hasStackMap() ||
+         MFI->hasPatchPoint() || RegInfo->needsStackRealignment(MF);
 }
 
 /// Under normal circumstances, when a frame pointer is not required, we reserve
@@ -60,16 +65,10 @@ void WebAssemblyFrameLowering::eliminateCallFramePseudoInstr(
 
 void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
                                             MachineBasicBlock &MBB) const {
-  llvm_unreachable("TODO: implement emitPrologue");
+  // FIXME: Implement WebAssemblyFrameLowering::emitPrologue.
 }
 
 void WebAssemblyFrameLowering::emitEpilogue(MachineFunction &MF,
                                             MachineBasicBlock &MBB) const {
   llvm_unreachable("TODO: implement emitEpilogue");
-}
-
-void WebAssemblyFrameLowering::determineCalleeSaves(MachineFunction &MF,
-                                                    BitVector &SavedRegs,
-                                                    RegScavenger *RS) const {
-  llvm_unreachable("TODO: implement determineCalleeSaves");
 }

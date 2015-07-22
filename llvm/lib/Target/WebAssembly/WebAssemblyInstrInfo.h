@@ -19,11 +19,14 @@
 #include "WebAssemblyRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "WebAssemblyGenInstrInfo.inc"
+
 namespace llvm {
 
 class WebAssemblySubtarget;
 
-class WebAssemblyInstrInfo final {
+class WebAssemblyInstrInfo final : public WebAssemblyGenInstrInfo {
   const WebAssemblyRegisterInfo RI;
 
 public:

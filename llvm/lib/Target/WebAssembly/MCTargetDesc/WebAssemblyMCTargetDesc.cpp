@@ -26,6 +26,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "wasm-mc-target-desc"
 
+#define GET_INSTRINFO_MC_DESC
+#include "WebAssemblyGenInstrInfo.inc"
+
 #define GET_SUBTARGETINFO_MC_DESC
 #include "WebAssemblyGenSubtargetInfo.inc"
 

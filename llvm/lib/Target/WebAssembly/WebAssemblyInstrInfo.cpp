@@ -24,5 +24,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "wasm-instr-info"
 
+#define GET_INSTRINFO_CTOR_DTOR
+#include "WebAssemblyGenInstrInfo.inc"
+
 WebAssemblyInstrInfo::WebAssemblyInstrInfo(const WebAssemblySubtarget &STI)
     : RI(STI.getTargetTriple()) {}

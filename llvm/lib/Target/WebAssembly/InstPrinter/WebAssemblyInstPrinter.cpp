@@ -26,6 +26,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
+#include "WebAssemblyGenAsmWriter.inc"
+
 WebAssemblyInstPrinter::WebAssemblyInstPrinter(const MCAsmInfo &MAI,
                                                const MCInstrInfo &MII,
                                                const MCRegisterInfo &MRI)
@@ -33,11 +35,12 @@ WebAssemblyInstPrinter::WebAssemblyInstPrinter(const MCAsmInfo &MAI,
 
 void WebAssemblyInstPrinter::printRegName(raw_ostream &OS,
                                           unsigned RegNo) const {
-  llvm_unreachable("TODO: implement printRegName");
+  OS << getRegisterName(RegNo);
 }
 
 void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
                                        StringRef Annot,
                                        const MCSubtargetInfo &STI) {
-  llvm_unreachable("TODO: implement printInst");
+  printInstruction(MI, OS);
+  printAnnotation(OS, Annot);
 }
