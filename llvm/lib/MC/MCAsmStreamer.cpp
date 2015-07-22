@@ -79,7 +79,7 @@ public:
     EmitCommentsAndEOL();
   }
 
-  virtual void EmitSyntaxDirective();
+  void EmitSyntaxDirective() override;
 
   void EmitCommentsAndEOL();
 
