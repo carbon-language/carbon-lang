@@ -288,7 +288,7 @@ MachProcess::GetTSDAddressForThread (nub_thread_t tid, uint64_t plo_pthread_tsd_
 JSONGenerator::ObjectSP
 MachProcess::GetLoadedDynamicLibrariesInfos (nub_process_t pid, nub_addr_t image_list_address, nub_addr_t image_count)
 {
-    JSONGenerator::ObjectSP reply_sp;
+    JSONGenerator::DictionarySP reply_sp;
 
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
     struct kinfo_proc processInfo;
@@ -497,53 +497,53 @@ MachProcess::GetLoadedDynamicLibrariesInfos (nub_process_t pid, nub_addr_t image
         ////  Thrid, format all of the above in the JSONGenerator object.
 
 
-        JSONGenerator::ObjectSP image_infos_array_sp (new JSONGenerator::Array());
+        JSONGenerator::ArraySP image_infos_array_sp (new JSONGenerator::Array());
         for (size_t i = 0; i < image_count; i++)
         {
-            JSONGenerator::ObjectSP image_info_dict_sp (new JSONGenerator::Dictionary());
-            image_info_dict_sp->GetAsDictionary()->AddIntegerItem ("load_address", image_infos[i].load_address);
-            image_info_dict_sp->GetAsDictionary()->AddIntegerItem ("mod_date", image_infos[i].mod_date);
-            image_info_dict_sp->GetAsDictionary()->AddStringItem ("pathname", image_infos[i].pathname);
+            JSONGenerator::DictionarySP image_info_dict_sp (new JSONGenerator::Dictionary());
+            image_info_dict_sp->AddIntegerItem ("load_address", image_infos[i].load_address);
+            image_info_dict_sp->AddIntegerItem ("mod_date", image_infos[i].mod_date);
+            image_info_dict_sp->AddStringItem ("pathname", image_infos[i].pathname);
 
             uuid_string_t uuidstr;
             uuid_unparse_upper (image_infos[i].uuid, uuidstr);
-            image_info_dict_sp->GetAsDictionary()->AddStringItem ("uuid", uuidstr);
+            image_info_dict_sp->AddStringItem ("uuid", uuidstr);
 
-            JSONGenerator::ObjectSP mach_header_dict_sp (new JSONGenerator::Dictionary());
-            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("magic", image_infos[i].mach_header.magic);
-            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("cputype", image_infos[i].mach_header.cputype);
-            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("cpusubtype", image_infos[i].mach_header.cpusubtype);
-            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("filetype", image_infos[i].mach_header.filetype);
+            JSONGenerator::DictionarySP mach_header_dict_sp (new JSONGenerator::Dictionary());
+            mach_header_dict_sp->AddIntegerItem ("magic", image_infos[i].mach_header.magic);
+            mach_header_dict_sp->AddIntegerItem ("cputype", image_infos[i].mach_header.cputype);
+            mach_header_dict_sp->AddIntegerItem ("cpusubtype", image_infos[i].mach_header.cpusubtype);
+            mach_header_dict_sp->AddIntegerItem ("filetype", image_infos[i].mach_header.filetype);
 
 //          DynamicLoaderMacOSX doesn't currently need these fields, so don't send them.
-//            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("ncmds", image_infos[i].mach_header.ncmds);
-//            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("sizeofcmds", image_infos[i].mach_header.sizeofcmds);
-//            mach_header_dict_sp->GetAsDictionary()->AddIntegerItem ("flags", image_infos[i].mach_header.flags);
-            image_info_dict_sp->GetAsDictionary()->AddItem ("mach_header", mach_header_dict_sp);
+//            mach_header_dict_sp->AddIntegerItem ("ncmds", image_infos[i].mach_header.ncmds);
+//            mach_header_dict_sp->AddIntegerItem ("sizeofcmds", image_infos[i].mach_header.sizeofcmds);
+//            mach_header_dict_sp->AddIntegerItem ("flags", image_infos[i].mach_header.flags);
+            image_info_dict_sp->AddItem ("mach_header", mach_header_dict_sp);
 
-            JSONGenerator::ObjectSP segments_sp (new JSONGenerator::Array());
+            JSONGenerator::ArraySP segments_sp (new JSONGenerator::Array());
             for (size_t j = 0; j < image_infos[i].segments.size(); j++)
             {
-                JSONGenerator::ObjectSP segment_sp (new JSONGenerator::Dictionary());
-                segment_sp->GetAsDictionary()->AddStringItem ("name", image_infos[i].segments[j].name);
-                segment_sp->GetAsDictionary()->AddIntegerItem ("vmaddr", image_infos[i].segments[j].vmaddr);
-                segment_sp->GetAsDictionary()->AddIntegerItem ("vmsize", image_infos[i].segments[j].vmsize);
-                segment_sp->GetAsDictionary()->AddIntegerItem ("fileoff", image_infos[i].segments[j].fileoff);
-                segment_sp->GetAsDictionary()->AddIntegerItem ("filesize", image_infos[i].segments[j].filesize);
-                segment_sp->GetAsDictionary()->AddIntegerItem ("maxprot", image_infos[i].segments[j].maxprot);
+                JSONGenerator::DictionarySP segment_sp (new JSONGenerator::Dictionary());
+                segment_sp->AddStringItem ("name", image_infos[i].segments[j].name);
+                segment_sp->AddIntegerItem ("vmaddr", image_infos[i].segments[j].vmaddr);
+                segment_sp->AddIntegerItem ("vmsize", image_infos[i].segments[j].vmsize);
+                segment_sp->AddIntegerItem ("fileoff", image_infos[i].segments[j].fileoff);
+                segment_sp->AddIntegerItem ("filesize", image_infos[i].segments[j].filesize);
+                segment_sp->AddIntegerItem ("maxprot", image_infos[i].segments[j].maxprot);
 
 //              DynamicLoaderMacOSX doesn't currently need these fields, so don't send them.
-//                segment_sp->GetAsDictionary()->AddIntegerItem ("initprot", image_infos[i].segments[j].initprot);
-//                segment_sp->GetAsDictionary()->AddIntegerItem ("nsects", image_infos[i].segments[j].nsects);
-//                segment_sp->GetAsDictionary()->AddIntegerItem ("flags", image_infos[i].segments[j].flags);
-                segments_sp->GetAsArray()->AddItem (segment_sp);
+//                segment_sp->AddIntegerItem ("initprot", image_infos[i].segments[j].initprot);
+//                segment_sp->AddIntegerItem ("nsects", image_infos[i].segments[j].nsects);
+//                segment_sp->AddIntegerItem ("flags", image_infos[i].segments[j].flags);
+                segments_sp->AddItem (segment_sp);
             }
-            image_info_dict_sp->GetAsDictionary()->AddItem ("segments", segments_sp);
+            image_info_dict_sp->AddItem ("segments", segments_sp);
 
-            image_infos_array_sp->GetAsArray()->AddItem (image_info_dict_sp);
+            image_infos_array_sp->AddItem (image_info_dict_sp);
         }
         reply_sp.reset (new JSONGenerator::Dictionary());
-        reply_sp->GetAsDictionary()->AddItem ("images", image_infos_array_sp);
+        reply_sp->AddItem ("images", image_infos_array_sp);
     }
     return reply_sp;
 }
