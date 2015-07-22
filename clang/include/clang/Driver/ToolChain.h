@@ -184,7 +184,7 @@ public:
   /// This is used when handling the verbose option to print detailed,
   /// toolchain-specific information useful for understanding the behavior of
   /// the driver on a specific platform.
-  virtual void printVerboseInfo(raw_ostream &OS) const {};
+  virtual void printVerboseInfo(raw_ostream &OS) const {}
 
   // Platform defaults information
 

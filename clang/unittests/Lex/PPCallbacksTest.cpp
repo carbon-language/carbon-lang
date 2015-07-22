@@ -47,7 +47,7 @@ class VoidModuleLoader : public ModuleLoader {
   GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override
     { return nullptr; }
   bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override
-    { return 0; };
+    { return 0; }
 };
 
 // Stub to collect data from InclusionDirective callbacks.
@@ -88,7 +88,7 @@ public:
     unsigned State;
   } CallbackParameters;
 
-  PragmaOpenCLExtensionCallbacks() : Name("Not called."), State(99) {};
+  PragmaOpenCLExtensionCallbacks() : Name("Not called."), State(99) {}
 
   void PragmaOpenCLExtension(clang::SourceLocation NameLoc,
                              const clang::IdentifierInfo *Name,
@@ -98,7 +98,7 @@ public:
       this->Name = Name->getName();
       this->StateLoc = StateLoc;
       this->State = State;
-  };
+  }
 
   SourceLocation NameLoc;
   SmallString<16> Name;

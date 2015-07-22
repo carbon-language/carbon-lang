@@ -2082,7 +2082,7 @@ void EmitClangAttrASTVisitor(RecordKeeper &Records, raw_ostream &OS) {
     OS << "  bool Visit"
        << R.getName() << "Attr(" << R.getName() << "Attr *A) {\n"
        << "    return true; \n"
-       << "  };\n";
+       << "  }\n";
   }
   OS << "\n#else // ATTR_VISITOR_DECLS_ONLY\n\n";
 

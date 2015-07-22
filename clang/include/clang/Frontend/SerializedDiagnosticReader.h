@@ -81,43 +81,43 @@ protected:
   /// \brief Visit the start of a diagnostic block.
   virtual std::error_code visitStartOfDiagnostic() {
     return std::error_code();
-  };
+  }
   /// \brief Visit the end of a diagnostic block.
-  virtual std::error_code visitEndOfDiagnostic() { return std::error_code(); };
+  virtual std::error_code visitEndOfDiagnostic() { return std::error_code(); }
   /// \brief Visit a category. This associates the category \c ID to a \c Name.
   virtual std::error_code visitCategoryRecord(unsigned ID, StringRef Name) {
     return std::error_code();
-  };
+  }
   /// \brief Visit a flag. This associates the flag's \c ID to a \c Name.
   virtual std::error_code visitDiagFlagRecord(unsigned ID, StringRef Name) {
     return std::error_code();
-  };
+  }
   /// \brief Visit a diagnostic.
   virtual std::error_code
   visitDiagnosticRecord(unsigned Severity, const Location &Location,
                         unsigned Category, unsigned Flag, StringRef Message) {
     return std::error_code();
-  };
+  }
   /// \brief Visit a filename. This associates the file's \c ID to a \c Name.
   virtual std::error_code visitFilenameRecord(unsigned ID, unsigned Size,
                                               unsigned Timestamp,
                                               StringRef Name) {
     return std::error_code();
-  };
+  }
   /// \brief Visit a fixit hint.
   virtual std::error_code
   visitFixitRecord(const Location &Start, const Location &End, StringRef Text) {
     return std::error_code();
-  };
+  }
   /// \brief Visit a source range.
   virtual std::error_code visitSourceRangeRecord(const Location &Start,
                                                  const Location &End) {
     return std::error_code();
-  };
+  }
   /// \brief Visit the version of the set of diagnostics.
   virtual std::error_code visitVersionRecord(unsigned Version) {
     return std::error_code();
-  };
+  }
 };
 
 } // end serialized_diags namespace

@@ -139,7 +139,7 @@ public:
   /// be invoked multiple times; the external source should take care not to
   /// introduce the same declarations repeatedly.
   virtual void ReadUnusedLocalTypedefNameCandidates(
-      llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) {};
+      llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) {}
 
   /// \brief Read the set of referenced selectors known to the
   /// external Sema source.

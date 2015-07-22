@@ -71,7 +71,7 @@ namespace consumed {
     virtual void warnParamReturnTypestateMismatch(SourceLocation Loc,
                                                   StringRef VariableName,
                                                   StringRef ExpectedState,
-                                                  StringRef ObservedState) {};
+                                                  StringRef ObservedState) {}
     
     // FIXME: Add documentation.
     virtual void warnParamTypestateMismatch(SourceLocation LOC,

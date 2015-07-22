@@ -6536,7 +6536,7 @@ class TypeStringCache {
   unsigned IncompleteCount;     // Number of Incomplete entries in the Map.
   unsigned IncompleteUsedCount; // Number of IncompleteUsed entries in the Map.
 public:
-  TypeStringCache() : IncompleteCount(0), IncompleteUsedCount(0) {};
+  TypeStringCache() : IncompleteCount(0), IncompleteUsedCount(0) {}
   void addIncomplete(const IdentifierInfo *ID, std::string StubEnc);
   bool removeIncomplete(const IdentifierInfo *ID);
   void addIfComplete(const IdentifierInfo *ID, StringRef Str,
@@ -6550,8 +6550,8 @@ class FieldEncoding {
   bool HasName;
   std::string Enc;
 public:
-  FieldEncoding(bool b, SmallStringEnc &e) : HasName(b), Enc(e.c_str()) {};
-  StringRef str() {return Enc.c_str();};
+  FieldEncoding(bool b, SmallStringEnc &e) : HasName(b), Enc(e.c_str()) {}
+  StringRef str() {return Enc.c_str();}
   bool operator<(const FieldEncoding &rhs) const {
     if (HasName != rhs.HasName) return HasName;
     return Enc < rhs.Enc;
