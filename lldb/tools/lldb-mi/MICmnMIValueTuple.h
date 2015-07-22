@@ -42,9 +42,9 @@ class CMICmnMIValueTuple : public CMICmnMIValue
     /* ctor */ CMICmnMIValueTuple(const CMICmnMIValueResult &vResult);
     /* ctor */ CMICmnMIValueTuple(const CMICmnMIValueResult &vResult, const bool vbUseSpacing);
     //
-    bool Add(const CMICmnMIValueResult &vResult);
-    bool Add(const CMICmnMIValueResult &vResult, const bool vbUseSpacing);
-    bool Add(const CMICmnMIValueConst &vValue, const bool vbUseSpacing);
+    void Add(const CMICmnMIValueResult &vResult);
+    void Add(const CMICmnMIValueResult &vResult, const bool vbUseSpacing);
+    void Add(const CMICmnMIValueConst &vValue, const bool vbUseSpacing);
     CMIUtilString ExtractContentNoBrackets(void) const;
 
     // Overridden:
@@ -54,9 +54,9 @@ class CMICmnMIValueTuple : public CMICmnMIValue
 
     // Methods:
   private:
-    bool BuildTuple(void);
-    bool BuildTuple(const CMICmnMIValueResult &vResult);
-    bool BuildTuple(const CMIUtilString &vValue);
+    void BuildTuple(void);
+    void BuildTuple(const CMICmnMIValueResult &vResult);
+    void BuildTuple(const CMIUtilString &vValue);
 
     // Attributes:
   private:

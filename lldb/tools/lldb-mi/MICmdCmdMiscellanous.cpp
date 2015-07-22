@@ -171,14 +171,12 @@ CMICmdCmdListThreadGroups::~CMICmdCmdListThreadGroups(void)
 bool
 CMICmdCmdListThreadGroups::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgNamedAvailable, false, true)));
-    bOk = bOk &&
-          m_setCmdArgs.Add(
-              *(new CMICmdArgValOptionLong(m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    bOk =
-        bOk && m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValThreadGrp(m_constStrArgNamedThreadGroup, false, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgNamedAvailable, false, true)));
+    m_setCmdArgs.Add(
+        *(new CMICmdArgValOptionLong(m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
+    m_setCmdArgs.Add(*(new CMICmdArgValListOfN(m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number)));
+    m_setCmdArgs.Add(*(new CMICmdArgValThreadGrp(m_constStrArgNamedThreadGroup, false, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -432,9 +430,9 @@ CMICmdCmdInterpreterExec::~CMICmdCmdInterpreterExec(void)
 bool
 CMICmdCmdInterpreterExec::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedInterpreter, true, true)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedCommand, true, true, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedInterpreter, true, true)));
+    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedCommand, true, true, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------

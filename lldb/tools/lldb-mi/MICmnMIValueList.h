@@ -41,8 +41,8 @@ class CMICmnMIValueList : public CMICmnMIValue
     /* ctor */ CMICmnMIValueList(const CMICmnMIValueResult &vResult);
     /* ctor */ CMICmnMIValueList(const CMICmnMIValue &vValue);
     //
-    bool Add(const CMICmnMIValueResult &vResult);
-    bool Add(const CMICmnMIValue &vValue);
+    void Add(const CMICmnMIValueResult &vResult);
+    void Add(const CMICmnMIValue &vValue);
     CMIUtilString ExtractContentNoBrackets(void) const;
 
     // Overridden:
@@ -52,7 +52,7 @@ class CMICmnMIValueList : public CMICmnMIValue
 
     // Methods:
   private:
-    bool BuildList(void);
-    bool BuildList(const CMICmnMIValueResult &vResult);
-    bool BuildList(const CMICmnMIValue &vResult);
+    void BuildList(void);
+    void BuildList(const CMICmnMIValueResult &vResult);
+    void BuildList(const CMICmnMIValue &vResult);
 };

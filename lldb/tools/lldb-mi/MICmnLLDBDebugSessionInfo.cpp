@@ -376,8 +376,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo(const SMICmdData &vCmdData,
     const CMIUtilString strId(CMIUtilString::Format("%d", rThread.GetIndexID()));
     const CMICmnMIValueConst miValueConst1(strId);
     const CMICmnMIValueResult miValueResult1("id", miValueConst1);
-    if (!vwrMIValueTuple.Add(miValueResult1))
-        return MIstatus::failure;
+    vwrMIValueTuple.Add(miValueResult1);
 
     // Add "target-id"
     const char *pThreadName = rThread.GetName();
@@ -392,8 +391,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo(const SMICmdData &vCmdData,
         strThread = CMIUtilString::Format(pThrdFmt, rThread.GetIndexID());
     const CMICmnMIValueConst miValueConst2(strThread);
     const CMICmnMIValueResult miValueResult2("target-id", miValueConst2);
-    if (!vwrMIValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
+    vwrMIValueTuple.Add(miValueResult2);
 
     // Add "frame"
     if (veThreadInfoFormat != eThreadInfoFormat_NoFrames)
@@ -403,15 +401,13 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo(const SMICmdData &vCmdData,
             return MIstatus::failure;
 
         const CMICmnMIValueConst miValueConst3(strFrames, true);
-        if (!vwrMIValueTuple.Add(miValueConst3, false))
-            return MIstatus::failure;
+        vwrMIValueTuple.Add(miValueConst3, false);
     }
 
     // Add "state"
     const CMICmnMIValueConst miValueConst4(strState);
     const CMICmnMIValueResult miValueResult4("state", miValueConst4);
-    if (!vwrMIValueTuple.Add(miValueResult4))
-        return MIstatus::failure;
+    vwrMIValueTuple.Add(miValueResult4);
 
     return MIstatus::success;
 }
@@ -461,9 +457,8 @@ CMICmnLLDBDebugSessionInfo::MIResponseForVariableInfoInternal(const VariableInfo
                                                               const bool vbIsArgs,
                                                               const bool vbMarkArgs)
 {
-    bool bOk = MIstatus::success;
     const MIuint nArgs = vwrSBValueList.GetSize();
-    for (MIuint i = 0; bOk && (i < nArgs); i++)
+    for (MIuint i = 0; i < nArgs; i++)
     {
         CMICmnMIValueTuple miValueTuple;
         lldb::SBValue value = vwrSBValueList.GetValueAtIndex(i);
@@ -514,7 +509,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseForVariableInfoInternal(const VariableInfo
             vwrMiValueList.Add(miValueResultName);
         }
     }
-    return bOk;
+    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -567,17 +562,14 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::SBThread &vrThre
     const CMIUtilString strLevel(CMIUtilString::Format("%d", vnLevel));
     const CMICmnMIValueConst miValueConst(strLevel);
     const CMICmnMIValueResult miValueResult("level", miValueConst);
-    if (!vwrMiValueTuple.Add(miValueResult))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult);
     const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, pc));
     const CMICmnMIValueConst miValueConst2(strAddr);
     const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
-    if (!vwrMiValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult2);
     const CMICmnMIValueConst miValueConst3(fnName);
     const CMICmnMIValueResult miValueResult3("func", miValueConst3);
-    if (!vwrMiValueTuple.Add(miValueResult3))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult3);
     if (veFrameInfoFormat != eFrameInfoFormat_NoArguments)
     {
         CMICmnMIValueList miValueList(true);
@@ -592,22 +584,18 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormFrameInfo(const lldb::SBThread &vrThre
                 return MIstatus::failure;
 
         const CMICmnMIValueResult miValueResult4("args", miValueList);
-        if (!vwrMiValueTuple.Add(miValueResult4))
-            return MIstatus::failure;
+        vwrMiValueTuple.Add(miValueResult4);
     }
     const CMICmnMIValueConst miValueConst5(fileName);
     const CMICmnMIValueResult miValueResult5("file", miValueConst5);
-    if (!vwrMiValueTuple.Add(miValueResult5))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult5);
     const CMICmnMIValueConst miValueConst6(path);
     const CMICmnMIValueResult miValueResult6("fullname", miValueConst6);
-    if (!vwrMiValueTuple.Add(miValueResult6))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult6);
     const CMIUtilString strLine(CMIUtilString::Format("%d", nLine));
     const CMICmnMIValueConst miValueConst7(strLine);
     const CMICmnMIValueResult miValueResult7("line", miValueConst7);
-    if (!vwrMiValueTuple.Add(miValueResult7))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult7);
 
     return MIstatus::success;
 }
@@ -659,38 +647,30 @@ CMICmnLLDBDebugSessionInfo::GetFrameInfo(const lldb::SBFrame &vrFrame, lldb::add
 // Type:    Method.
 // Args:    vrBrkPtInfo     - (R) Break point information object.
 //          vwrMIValueTuple - (W) MI value tuple object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  None.
 // Throws:  None.
 //--
-bool
+void
 CMICmnLLDBDebugSessionInfo::MIResponseFormBrkPtFrameInfo(const SBrkPtInfo &vrBrkPtInfo, CMICmnMIValueTuple &vwrMiValueTuple)
 {
     const CMIUtilString strAddr(CMIUtilString::Format("0x%016" PRIx64, vrBrkPtInfo.m_pc));
     const CMICmnMIValueConst miValueConst2(strAddr);
     const CMICmnMIValueResult miValueResult2("addr", miValueConst2);
-    if (!vwrMiValueTuple.Add(miValueResult2))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult2);
     const CMICmnMIValueConst miValueConst3(vrBrkPtInfo.m_fnName);
     const CMICmnMIValueResult miValueResult3("func", miValueConst3);
-    if (!vwrMiValueTuple.Add(miValueResult3))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult3);
     const CMICmnMIValueConst miValueConst5(vrBrkPtInfo.m_fileName);
     const CMICmnMIValueResult miValueResult5("file", miValueConst5);
-    if (!vwrMiValueTuple.Add(miValueResult5))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult5);
     const CMIUtilString strN5 = CMIUtilString::Format("%s/%s", vrBrkPtInfo.m_path.c_str(), vrBrkPtInfo.m_fileName.c_str());
     const CMICmnMIValueConst miValueConst6(strN5);
     const CMICmnMIValueResult miValueResult6("fullname", miValueConst6);
-    if (!vwrMiValueTuple.Add(miValueResult6))
-        return MIstatus::failure;
+    vwrMiValueTuple.Add(miValueResult6);
     const CMIUtilString strLine(CMIUtilString::Format("%d", vrBrkPtInfo.m_nLine));
     const CMICmnMIValueConst miValueConst7(strLine);
     const CMICmnMIValueResult miValueResult7("line", miValueConst7);
-    if (!vwrMiValueTuple.Add(miValueResult7))
-        return MIstatus::failure;
-
-    return MIstatus::success;
+    vwrMiValueTuple.Add(miValueResult7);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -716,65 +696,65 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormBrkPtInfo(const SBrkPtInfo &vrBrkPtInf
     // "type="
     const CMICmnMIValueConst miValueConst2(vrBrkPtInfo.m_strType);
     const CMICmnMIValueResult miValueResult2("type", miValueConst2);
-    bool bOk = miValueTuple.Add(miValueResult2);
+    miValueTuple.Add(miValueResult2);
     // "disp="
     const CMICmnMIValueConst miValueConst3(vrBrkPtInfo.m_bDisp ? "del" : "keep");
     const CMICmnMIValueResult miValueResult3("disp", miValueConst3);
-    bOk = bOk && miValueTuple.Add(miValueResult3);
+    miValueTuple.Add(miValueResult3);
     // "enabled="
     const CMICmnMIValueConst miValueConst4(vrBrkPtInfo.m_bEnabled ? "y" : "n");
     const CMICmnMIValueResult miValueResult4("enabled", miValueConst4);
-    bOk = bOk && miValueTuple.Add(miValueResult4);
+    miValueTuple.Add(miValueResult4);
     // "addr="
     // "func="
     // "file="
     // "fullname="
     // "line="
-    bOk = bOk && MIResponseFormBrkPtFrameInfo(vrBrkPtInfo, miValueTuple);
+    MIResponseFormBrkPtFrameInfo(vrBrkPtInfo, miValueTuple);
     // "pending="
     if (vrBrkPtInfo.m_bPending)
     {
         const CMICmnMIValueConst miValueConst(vrBrkPtInfo.m_strOrigLoc);
         const CMICmnMIValueList miValueList(miValueConst);
         const CMICmnMIValueResult miValueResult("pending", miValueList);
-        bOk = bOk && miValueTuple.Add(miValueResult);
+        miValueTuple.Add(miValueResult);
     }
     if (vrBrkPtInfo.m_bHaveArgOptionThreadGrp)
     {
         const CMICmnMIValueConst miValueConst(vrBrkPtInfo.m_strOptThrdGrp);
         const CMICmnMIValueList miValueList(miValueConst);
         const CMICmnMIValueResult miValueResult("thread-groups", miValueList);
-        bOk = bOk && miValueTuple.Add(miValueResult);
+        miValueTuple.Add(miValueResult);
     }
     // "times="
     const CMICmnMIValueConst miValueConstB(CMIUtilString::Format("%d", vrBrkPtInfo.m_nTimes));
     const CMICmnMIValueResult miValueResultB("times", miValueConstB);
-    bOk = bOk && miValueTuple.Add(miValueResultB);
+    miValueTuple.Add(miValueResultB);
     // "thread="
     if (vrBrkPtInfo.m_bBrkPtThreadId)
     {
         const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%d", vrBrkPtInfo.m_nBrkPtThreadId));
         const CMICmnMIValueResult miValueResult("thread", miValueConst);
-        bOk = bOk && miValueTuple.Add(miValueResult);
+        miValueTuple.Add(miValueResult);
     }
     // "cond="
     if (vrBrkPtInfo.m_bCondition)
     {
         const CMICmnMIValueConst miValueConst(vrBrkPtInfo.m_strCondition);
         const CMICmnMIValueResult miValueResult("cond", miValueConst);
-        bOk = bOk && miValueTuple.Add(miValueResult);
+        miValueTuple.Add(miValueResult);
     }
     // "ignore="
     if (vrBrkPtInfo.m_nIgnore != 0)
     {
         const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%d", vrBrkPtInfo.m_nIgnore));
         const CMICmnMIValueResult miValueResult("ignore", miValueConst);
-        bOk = bOk && miValueTuple.Add(miValueResult);
+        miValueTuple.Add(miValueResult);
     }
     // "original-location="
     const CMICmnMIValueConst miValueConstC(vrBrkPtInfo.m_strOrigLoc);
     const CMICmnMIValueResult miValueResultC("original-location", miValueConstC);
-    bOk = bOk && miValueTuple.Add(miValueResultC);
+    miValueTuple.Add(miValueResultC);
 
     vwrMiValueTuple = miValueTuple;
 

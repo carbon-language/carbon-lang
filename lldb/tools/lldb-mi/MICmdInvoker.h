@@ -55,7 +55,7 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
         virtual bool Acknowledge(void) = 0;
         virtual bool Execute(void) = 0;
         virtual bool ParseArgs(void) = 0;
-        virtual bool SetCmdData(const SMICmdData &vCmdData) = 0;
+        virtual void SetCmdData(const SMICmdData &vCmdData) = 0;
         virtual const SMICmdData &GetCmdData(void) const = 0;
         virtual const CMIUtilString &GetErrorDescription(void) const = 0;
         virtual void CmdFinishedTellInvoker(void) const = 0;

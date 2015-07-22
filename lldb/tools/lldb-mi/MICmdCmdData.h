@@ -255,7 +255,7 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
     // Methods:
   private:
     lldb::SBValue GetRegister(const MIuint vRegisterIndex) const;
-    bool AddToOutput(const MIuint vnIndex, const lldb::SBValue &vrValue, CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat);
+    void AddToOutput(const MIuint vnIndex, const lldb::SBValue &vrValue, CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat);
 
     // Attributes:
   private:

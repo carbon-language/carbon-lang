@@ -60,8 +60,8 @@ CMICmdCmdSymbolListLines::~CMICmdCmdSymbolListLines(void)
 bool
 CMICmdCmdSymbolListLines::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNameFile, true, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNameFile, true, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -142,11 +142,9 @@ CMICmdCmdSymbolListLines::Acknowledge(void)
             const CMIUtilString strLine(strPathOrLine.IsNumber() ? strPathOrLine : strLineOrColumn);
             const CMICmnMIValueConst miValueConst2(strLine);
             const CMICmnMIValueResult miValueResult2("line", miValueConst2);
-            bool bOk = miValueTuple.Add(miValueResult2);
+            miValueTuple.Add(miValueResult2);
 
-            bOk = bOk && miValueList.Add(miValueTuple);
-            if (!bOk)
-                return MIstatus::failure;
+            miValueList.Add(miValueTuple);
         }
 
         // MI print "%s^done,lines=[{pc=\"%d\",line=\"%d\"}...]"

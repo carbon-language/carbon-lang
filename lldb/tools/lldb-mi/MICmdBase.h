@@ -57,7 +57,7 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
     // From CMICmdInvoker::ICmd
     virtual const SMICmdData &GetCmdData(void) const;
     virtual const CMIUtilString &GetErrorDescription(void) const;
-    virtual bool SetCmdData(const SMICmdData &vCmdData);
+    virtual void SetCmdData(const SMICmdData &vCmdData);
     virtual void CmdFinishedTellInvoker(void) const;
     virtual const CMIUtilString &GetMIResultRecord(void) const;
     virtual const CMIUtilString &GetMIResultRecordExtra(void) const;

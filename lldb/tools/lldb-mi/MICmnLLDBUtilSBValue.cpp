@@ -341,16 +341,12 @@ CMICmnLLDBUtilSBValue::GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIV
         {
             const bool bUseSpacing = true;
             const CMICmnMIValueResult miValueResult(utilMember.GetName(), miValueConst, bUseSpacing);
-            const bool bOk = vwrMiValueTuple.Add(miValueResult, bUseSpacing);
-            if (!bOk)
-                return MIstatus::failure;
+            vwrMiValueTuple.Add(miValueResult, bUseSpacing);
         }
         else
         {
             const bool bUseSpacing = false;
-            const bool bOk = vwrMiValueTuple.Add(miValueConst, bUseSpacing);
-            if (!bOk)
-                return MIstatus::failure;
+            vwrMiValueTuple.Add(miValueConst, bUseSpacing);
         }
     }
 

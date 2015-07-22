@@ -81,7 +81,7 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
     /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vResult);
     //
     const CMIUtilString &GetString(void) const;
-    bool Add(const CMICmnMIValueResult &vResult);
+    void Add(const CMICmnMIValueResult &vResult);
 
     // Overridden:
   public:
@@ -90,7 +90,7 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
 
     // Methods:
   private:
-    bool BuildAsyncRecord(void);
+    void BuildAsyncRecord(void);
 
     // Attributes:
   private:

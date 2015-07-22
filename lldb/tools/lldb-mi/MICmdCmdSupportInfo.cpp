@@ -58,8 +58,8 @@ CMICmdCmdSupportInfoMiCmdQuery::~CMICmdCmdSupportInfoMiCmdQuery(void)
 bool
 CMICmdCmdSupportInfoMiCmdQuery::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgCmdName, true, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgCmdName, true, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------

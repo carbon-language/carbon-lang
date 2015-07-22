@@ -83,16 +83,13 @@ CMICmdBase::GetMiCmd(void) const
 //          provide data about its status or provide information to other objects.
 // Type:    Overridden.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  None.
 // Throws:  None.
 //--
-bool
+void
 CMICmdBase::SetCmdData(const SMICmdData &vCmdData)
 {
     m_cmdData = vCmdData;
-
-    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------

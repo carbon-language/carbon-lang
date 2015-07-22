@@ -67,9 +67,9 @@ CMICmdCmdTargetSelect::~CMICmdCmdTargetSelect(void)
 bool
 CMICmdCmdTargetSelect::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedType, true, true)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedParameters, true, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedType, true, true)));
+    m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedParameters, true, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -250,11 +250,11 @@ CMICmdCmdTargetAttach::~CMICmdCmdTargetAttach(void)
 bool
 CMICmdCmdTargetAttach::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPid, false, true)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedFile, false, true,
+    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPid, false, true)));
+    m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedFile, false, true,
                                                               CMICmdArgValListBase::eArgValType_String, 1)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgWaitFor, false, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgWaitFor, false, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------

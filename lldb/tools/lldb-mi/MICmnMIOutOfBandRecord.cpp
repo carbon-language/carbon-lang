@@ -136,34 +136,28 @@ CMICmnMIOutOfBandRecord::GetString(void) const
 //          (additional) result i.e. async-record ==>  "*" type.
 // Type:    Method.
 // Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  None.
 // Throws:  None.
 //--
-bool
+void
 CMICmnMIOutOfBandRecord::BuildAsyncRecord(void)
 {
     const char *pFormat = "%s%s";
     const CMIUtilString &rStrAsyncRecord(ms_MapOutOfBandToOutOfBandText[m_eResultAsyncRecordClass]);
     const CMIUtilString &rStrToken(ms_constMapAsyncRecordTextToToken[m_eResultAsyncRecordClass]);
     m_strAsyncRecord = CMIUtilString::Format(pFormat, rStrToken.c_str(), rStrAsyncRecord.c_str());
-
-    return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
 // Details: Add to *this Out-of-band record additional information.
 // Type:    Method.
 // Args:    vResult           - (R) A MI result object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  None.
 // Throws:  None.
 //--
-bool
+void
 CMICmnMIOutOfBandRecord::Add(const CMICmnMIValueResult &vResult)
 {
     m_strAsyncRecord += ",";
     m_strAsyncRecord += vResult.GetString();
-
-    return MIstatus::success;
 }

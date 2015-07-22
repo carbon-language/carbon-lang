@@ -57,9 +57,9 @@ CMICmdCmdEnvironmentCd::~CMICmdCmdEnvironmentCd(void)
 bool
 CMICmdCmdEnvironmentCd::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNamePathDir, true, true)));
+    m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNamePathDir, true, true)));
     CMICmdArgContext argCntxt(m_cmdData.strMiCmdOption);
-    return (bOk && ParseValidateCmdOptions());
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------

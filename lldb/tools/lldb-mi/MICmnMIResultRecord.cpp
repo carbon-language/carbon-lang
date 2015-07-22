@@ -126,15 +126,12 @@ CMICmnMIResultRecord::GetString() const
 // Details: Add to *this result record additional information.
 // Type:    Method.
 // Args:    vMIValue    - (R) A MI value derived object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
+// Return:  None.
 // Throws:  None.
 //--
-bool
+void
 CMICmnMIResultRecord::Add(const CMICmnMIValue &vMIValue)
 {
     m_strResultRecord += ",";
     m_strResultRecord += vMIValue.GetString();
-
-    return MIstatus::success;
 }

@@ -63,7 +63,7 @@ class CMICmnMIResultRecord : public CMICmnBase
     /* ctor */ CMICmnMIResultRecord(const CMIUtilString &vrToken, ResultClass_e veType, const CMICmnMIValueResult &vValue);
     //
     const CMIUtilString &GetString() const;
-    bool Add(const CMICmnMIValue &vMIValue);
+    void Add(const CMICmnMIValue &vMIValue);
 
     // Overridden:
   public:

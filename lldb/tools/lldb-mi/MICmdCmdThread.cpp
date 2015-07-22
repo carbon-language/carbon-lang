@@ -64,8 +64,8 @@ CMICmdCmdThreadInfo::~CMICmdCmdThreadInfo(void)
 bool
 CMICmdCmdThreadInfo::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedThreadId, false, true)));
-    return (bOk && ParseValidateCmdOptions());
+    m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedThreadId, false, true)));
+    return ParseValidateCmdOptions();
 }
 
 //++ ------------------------------------------------------------------------------------
