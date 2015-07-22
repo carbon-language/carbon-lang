@@ -288,7 +288,6 @@ static void emitAligningInstructions(MachineFunction &MF, ARMFunctionInfo *AFI,
 
 void ARMFrameLowering::emitPrologue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  assert(&MBB == &MF.front() && "Shrink-wrapping not yet implemented");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -1842,7 +1841,6 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   if (!ST->isTargetAndroid() && !ST->isTargetLinux())
     report_fatal_error("Segmented stacks not supported on this platform.");
 
-  assert(&PrologueMBB == &MF.front() && "Shrink-wrapping not yet implemented");
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   MCContext &Context = MMI.getContext();

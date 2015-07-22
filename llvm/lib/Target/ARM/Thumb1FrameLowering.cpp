@@ -85,7 +85,6 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 void Thumb1FrameLowering::emitPrologue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
-  assert(&MBB == &MF.front() && "Shrink-wrapping not yet implemented");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -385,135 +384,156 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   }
 
+  if (needPopSpecialFixUp(MF)) {
+    bool Done = emitPopSpecialFixUp(MBB, /* DoIt */ true);
+    (void)Done;
+    assert(Done && "Emission of the special fixup failed!?");
+  }
+}
+
+bool Thumb1FrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {
+  if (!needPopSpecialFixUp(*MBB.getParent()))
+    return true;
+
+  MachineBasicBlock *TmpMBB = const_cast<MachineBasicBlock *>(&MBB);
+  return emitPopSpecialFixUp(*TmpMBB, /* DoIt */ false);
+}
+
+bool Thumb1FrameLowering::needPopSpecialFixUp(const MachineFunction &MF) const {
+  ARMFunctionInfo *AFI =
+      const_cast<MachineFunction *>(&MF)->getInfo<ARMFunctionInfo>();
+  if (AFI->getArgRegsSaveSize())
+    return true;
+
   bool IsV4PopReturn = false;
-  for (const CalleeSavedInfo &CSI : MFI->getCalleeSavedInfo())
+  for (const CalleeSavedInfo &CSI : MF.getFrameInfo()->getCalleeSavedInfo())
     if (CSI.getReg() == ARM::LR)
       IsV4PopReturn = true;
-  IsV4PopReturn &= STI.hasV4TOps() && !STI.hasV5TOps();
+  return IsV4PopReturn && STI.hasV4TOps() && !STI.hasV5TOps();
+}
 
-  // Unlike T2 and ARM mode, the T1 pop instruction cannot restore
-  // to LR, and we can't pop the value directly to the PC since
-  // we need to update the SP after popping the value. So instead
-  // we have to emit:
-  //   POP {r3}
-  //   ADD sp, #offset
-  //   BX r3
-  // If this would clobber a return value, then generate this sequence instead:
-  //   MOV ip, r3
-  //   POP {r3}
-  //   ADD sp, #offset
-  //   MOV lr, r3
-  //   MOV r3, ip
-  //   BX lr
-  if (ArgRegsSaveSize || IsV4PopReturn) {
-    // If MBBI is a return instruction, we may be able to directly restore
-    // LR in the PC.
-    // This is possible if we do not need to emit any SP update.
-    // Otherwise, we need a temporary register to pop the value
-    // and copy that value into LR.
-    MBBI = MBB.getFirstTerminator();
-    if (!ArgRegsSaveSize && MBBI != MBB.end() &&
-        MBBI->getOpcode() == ARM::tBX_RET) {
-      MachineInstrBuilder MIB =
-          AddDefaultPred(
-              BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII.get(ARM::tPOP_RET)))
-              .addReg(ARM::PC, RegState::Define);
-      MIB.copyImplicitOps(&*MBBI);
-      // erase the old tBX_RET instruction
-      MBB.erase(MBBI);
-      return;
-    }
+bool Thumb1FrameLowering::emitPopSpecialFixUp(MachineBasicBlock &MBB,
+                                              bool DoIt) const {
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
+  const ThumbRegisterInfo *RegInfo =
+      static_cast<const ThumbRegisterInfo *>(STI.getRegisterInfo());
 
-    // Look for a temporary register to use.
-    // First, compute the liveness information.
-    LivePhysRegs UsedRegs(STI.getRegisterInfo());
-    UsedRegs.addLiveOuts(&MBB, /*AddPristines*/ true);
-    // The semantic of pristines changed recently and now,
-    // the callee-saved registers that are touched in the function
-    // are not part of the pristines set anymore.
-    // Add those callee-saved now.
-    const TargetRegisterInfo *TRI = STI.getRegisterInfo();
-    const MCPhysReg *CSRegs = TRI->getCalleeSavedRegs(&MF);
-    for (unsigned i = 0; CSRegs[i]; ++i)
-      UsedRegs.addReg(CSRegs[i]);
+  // If MBBI is a return instruction, we may be able to directly restore
+  // LR in the PC.
+  // This is possible if we do not need to emit any SP update.
+  // Otherwise, we need a temporary register to pop the value
+  // and copy that value into LR.
+  auto MBBI = MBB.getFirstTerminator();
+  if (!ArgRegsSaveSize && MBBI != MBB.end() &&
+      MBBI->getOpcode() == ARM::tBX_RET) {
+    if (!DoIt)
+      return true;
+    MachineInstrBuilder MIB =
+        AddDefaultPred(
+            BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII.get(ARM::tPOP_RET)))
+            .addReg(ARM::PC, RegState::Define);
+    MIB.copyImplicitOps(&*MBBI);
+    // erase the old tBX_RET instruction
+    MBB.erase(MBBI);
+    return true;
+  }
 
-    DebugLoc dl = DebugLoc();
-    if (MBBI != MBB.end()) {
-      dl = MBBI->getDebugLoc();
-      auto InstUpToMBBI = MBB.end();
-      // The post-decrement is on purpose here.
-      // We want to have the liveness right before MBBI.
-      while (InstUpToMBBI-- != MBBI)
-        UsedRegs.stepBackward(*InstUpToMBBI);
-    }
+  // Look for a temporary register to use.
+  // First, compute the liveness information.
+  LivePhysRegs UsedRegs(STI.getRegisterInfo());
+  UsedRegs.addLiveOuts(&MBB, /*AddPristines*/ true);
+  // The semantic of pristines changed recently and now,
+  // the callee-saved registers that are touched in the function
+  // are not part of the pristines set anymore.
+  // Add those callee-saved now.
+  const TargetRegisterInfo *TRI = STI.getRegisterInfo();
+  const MCPhysReg *CSRegs = TRI->getCalleeSavedRegs(&MF);
+  for (unsigned i = 0; CSRegs[i]; ++i)
+    UsedRegs.addReg(CSRegs[i]);
 
-    // Look for a register that can be directly use in the POP.
-    unsigned PopReg = 0;
-    // And some temporary register, just in case.
-    unsigned TemporaryReg = 0;
-    BitVector PopFriendly =
-        TRI->getAllocatableSet(MF, TRI->getRegClass(ARM::tGPRRegClassID));
-    assert(PopFriendly.any() && "No allocatable pop-friendly register?!");
-    // Rebuild the GPRs from the high registers because they are removed
-    // form the GPR reg class for thumb1.
-    BitVector GPRsNoLRSP =
-        TRI->getAllocatableSet(MF, TRI->getRegClass(ARM::hGPRRegClassID));
-    GPRsNoLRSP |= PopFriendly;
-    GPRsNoLRSP.reset(ARM::LR);
-    GPRsNoLRSP.reset(ARM::SP);
-    GPRsNoLRSP.reset(ARM::PC);
-    for (int Register = GPRsNoLRSP.find_first(); Register != -1;
-         Register = GPRsNoLRSP.find_next(Register)) {
-      if (!UsedRegs.contains(Register)) {
-        // Remember the first pop-friendly register and exit.
-        if (PopFriendly.test(Register)) {
-          PopReg = Register;
-          TemporaryReg = 0;
-          break;
-        }
-        // Otherwise, remember that the register will be available to
-        // save a pop-friendly register.
-        TemporaryReg = Register;
+  DebugLoc dl = DebugLoc();
+  if (MBBI != MBB.end()) {
+    dl = MBBI->getDebugLoc();
+    auto InstUpToMBBI = MBB.end();
+    // The post-decrement is on purpose here.
+    // We want to have the liveness right before MBBI.
+    while (InstUpToMBBI-- != MBBI)
+      UsedRegs.stepBackward(*InstUpToMBBI);
+  }
+
+  // Look for a register that can be directly use in the POP.
+  unsigned PopReg = 0;
+  // And some temporary register, just in case.
+  unsigned TemporaryReg = 0;
+  BitVector PopFriendly =
+      TRI->getAllocatableSet(MF, TRI->getRegClass(ARM::tGPRRegClassID));
+  assert(PopFriendly.any() && "No allocatable pop-friendly register?!");
+  // Rebuild the GPRs from the high registers because they are removed
+  // form the GPR reg class for thumb1.
+  BitVector GPRsNoLRSP =
+      TRI->getAllocatableSet(MF, TRI->getRegClass(ARM::hGPRRegClassID));
+  GPRsNoLRSP |= PopFriendly;
+  GPRsNoLRSP.reset(ARM::LR);
+  GPRsNoLRSP.reset(ARM::SP);
+  GPRsNoLRSP.reset(ARM::PC);
+  for (int Register = GPRsNoLRSP.find_first(); Register != -1;
+       Register = GPRsNoLRSP.find_next(Register)) {
+    if (!UsedRegs.contains(Register)) {
+      // Remember the first pop-friendly register and exit.
+      if (PopFriendly.test(Register)) {
+        PopReg = Register;
+        TemporaryReg = 0;
+        break;
       }
-    }
-
-    assert((PopReg || TemporaryReg) && "Cannot get LR");
-
-    if (TemporaryReg) {
-      assert(!PopReg && "Unnecessary MOV is about to be inserted");
-      PopReg = PopFriendly.find_first();
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
-                         .addReg(TemporaryReg, RegState::Define)
-                         .addReg(PopReg, RegState::Kill));
-    }
-
-    assert(PopReg && "Do not know how to get LR");
-    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
-        .addReg(PopReg, RegState::Define);
-
-    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, ArgRegsSaveSize);
-
-    if (!TemporaryReg && MBBI != MBB.end() &&
-        MBBI->getOpcode() == ARM::tBX_RET) {
-      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX))
-                                    .addReg(PopReg, RegState::Kill);
-      AddDefaultPred(MIB);
-      MIB.copyImplicitOps(&*MBBI);
-      // erase the old tBX_RET instruction
-      MBB.erase(MBBI);
-      return;
-    }
-
-    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
-                       .addReg(ARM::LR, RegState::Define)
-                       .addReg(PopReg, RegState::Kill));
-
-    if (TemporaryReg) {
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
-                         .addReg(PopReg, RegState::Define)
-                         .addReg(TemporaryReg, RegState::Kill));
+      // Otherwise, remember that the register will be available to
+      // save a pop-friendly register.
+      TemporaryReg = Register;
     }
   }
+
+  if (!DoIt && !PopReg && !TemporaryReg)
+    return false;
+
+  assert((PopReg || TemporaryReg) && "Cannot get LR");
+
+  if (TemporaryReg) {
+    assert(!PopReg && "Unnecessary MOV is about to be inserted");
+    PopReg = PopFriendly.find_first();
+    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
+                       .addReg(TemporaryReg, RegState::Define)
+                       .addReg(PopReg, RegState::Kill));
+  }
+
+  assert(PopReg && "Do not know how to get LR");
+  AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
+      .addReg(PopReg, RegState::Define);
+
+  emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, ArgRegsSaveSize);
+
+  if (!TemporaryReg && MBBI != MBB.end() && MBBI->getOpcode() == ARM::tBX_RET) {
+    MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX))
+                                  .addReg(PopReg, RegState::Kill);
+    AddDefaultPred(MIB);
+    MIB.copyImplicitOps(&*MBBI);
+    // erase the old tBX_RET instruction
+    MBB.erase(MBBI);
+    return true;
+  }
+
+  AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
+                     .addReg(ARM::LR, RegState::Define)
+                     .addReg(PopReg, RegState::Kill));
+
+  if (TemporaryReg) {
+    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
+                       .addReg(PopReg, RegState::Define)
+                       .addReg(TemporaryReg, RegState::Kill));
+  }
+
+  return true;
 }
 
 bool Thumb1FrameLowering::
@@ -567,7 +587,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   const TargetInstrInfo &TII = *STI.getInstrInfo();
 
   bool isVarArg = AFI->getArgRegsSaveSize() > 0;
-  DebugLoc DL = MI->getDebugLoc();
+  DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, TII.get(ARM::tPOP));
   AddDefaultPred(MIB);
 
