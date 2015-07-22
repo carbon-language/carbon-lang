@@ -481,9 +481,9 @@ static void AddAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap,
 
         IsFuncCall = true;
         if (AA) {
-          AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(ICS);
-          if (MRB == AliasAnalysis::OnlyAccessesArgumentPointees ||
-              MRB == AliasAnalysis::OnlyReadsArgumentPointees)
+          FunctionModRefBehavior MRB = AA->getModRefBehavior(ICS);
+          if (MRB == FMRB_OnlyAccessesArgumentPointees ||
+              MRB == FMRB_OnlyReadsArgumentPointees)
             IsArgMemOnlyCall = true;
         }
 

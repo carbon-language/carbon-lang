@@ -246,9 +246,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
 
       // If we have alias analysis and it says the store won't modify the loaded
       // value, ignore the store.
-      if (AA &&
-          (AA->getModRefInfo(SI, StrippedPtr, AccessSize) &
-           AliasAnalysis::Mod) == 0)
+      if (AA && (AA->getModRefInfo(SI, StrippedPtr, AccessSize) & MRI_Mod) == 0)
         continue;
 
       // Otherwise the store that may or may not alias the pointer, bail out.
@@ -261,8 +259,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
       // If alias analysis claims that it really won't modify the load,
       // ignore it.
       if (AA &&
-          (AA->getModRefInfo(Inst, StrippedPtr, AccessSize) &
-           AliasAnalysis::Mod) == 0)
+          (AA->getModRefInfo(Inst, StrippedPtr, AccessSize) & MRI_Mod) == 0)
         continue;
 
       // May modify the pointer, bail out.

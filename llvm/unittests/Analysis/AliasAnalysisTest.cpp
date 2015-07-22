@@ -27,11 +27,11 @@ protected:
   // This is going to check that calling getModRefInfo without a location, and
   // with a default location, first, doesn't crash, and second, gives the right
   // answer.
-  void CheckModRef(Instruction *I, AliasAnalysis::ModRefResult Result) {
+  void CheckModRef(Instruction *I, ModRefInfo Result) {
     static char ID;
     class CheckModRefTestPass : public FunctionPass {
     public:
-      CheckModRefTestPass(Instruction *I, AliasAnalysis::ModRefResult Result)
+      CheckModRefTestPass(Instruction *I, ModRefInfo Result)
           : FunctionPass(ID), ExpectResult(Result), I(I) {}
       static int initialize() {
         PassInfo *PI = new PassInfo("CheckModRef testing pass", "", &ID,
@@ -51,7 +51,7 @@ protected:
         EXPECT_EQ(AA.getModRefInfo(I), ExpectResult);
         return false;
       }
-      AliasAnalysis::ModRefResult ExpectResult;
+      ModRefInfo ExpectResult;
       Instruction *I;
     };
     static int initialize = CheckModRefTestPass::initialize();
@@ -92,12 +92,12 @@ TEST_F(AliasAnalysisTest, getModRefInfo) {
   ReturnInst::Create(C, nullptr, BB);
 
   // Check basic results
-  CheckModRef(Store1, AliasAnalysis::ModRefResult::Mod);
-  CheckModRef(Load1, AliasAnalysis::ModRefResult::Ref);
-  CheckModRef(Add1, AliasAnalysis::ModRefResult::NoModRef);
-  CheckModRef(VAArg1, AliasAnalysis::ModRefResult::ModRef);
-  CheckModRef(CmpXChg1, AliasAnalysis::ModRefResult::ModRef);
-  CheckModRef(AtomicRMW, AliasAnalysis::ModRefResult::ModRef);
+  CheckModRef(Store1, MRI_Mod);
+  CheckModRef(Load1, MRI_Ref);
+  CheckModRef(Add1, MRI_NoModRef);
+  CheckModRef(VAArg1, MRI_ModRef);
+  CheckModRef(CmpXChg1, MRI_ModRef);
+  CheckModRef(AtomicRMW, MRI_ModRef);
 }
 
 } // end anonymous namspace

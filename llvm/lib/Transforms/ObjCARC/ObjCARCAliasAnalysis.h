@@ -60,12 +60,12 @@ namespace objcarc {
                       const MemoryLocation &LocB) override;
     bool pointsToConstantMemory(const MemoryLocation &Loc,
                                 bool OrLocal) override;
-    ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-    ModRefBehavior getModRefBehavior(const Function *F) override;
-    ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const MemoryLocation &Loc) override;
-    ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) override;
+    FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
+    FunctionModRefBehavior getModRefBehavior(const Function *F) override;
+    ModRefInfo getModRefInfo(ImmutableCallSite CS,
+                             const MemoryLocation &Loc) override;
+    ModRefInfo getModRefInfo(ImmutableCallSite CS1,
+                             ImmutableCallSite CS2) override;
   };
 
 } // namespace objcarc

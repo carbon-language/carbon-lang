@@ -103,14 +103,14 @@ namespace {
       return AliasAnalysis::alias(LocA, LocB);
     }
 
-    ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const MemoryLocation &Loc) override {
+    ModRefInfo getModRefInfo(ImmutableCallSite CS,
+                             const MemoryLocation &Loc) override {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::getModRefInfo(CS, Loc);
     }
 
-    ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) override {
+    ModRefInfo getModRefInfo(ImmutableCallSite CS1,
+                             ImmutableCallSite CS2) override {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
 

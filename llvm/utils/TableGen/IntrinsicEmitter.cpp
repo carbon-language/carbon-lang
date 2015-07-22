@@ -722,29 +722,30 @@ EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
      << "\"Unknown intrinsic.\");\n\n";
 
   OS << "static const uint8_t IntrinsicModRefBehavior[] = {\n"
-     << "  /* invalid */ UnknownModRefBehavior,\n";
+     << "  /* invalid */ FMRB_UnknownModRefBehavior,\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     OS << "  /* " << TargetPrefix << Ints[i].EnumName << " */ ";
     switch (Ints[i].ModRef) {
     case CodeGenIntrinsic::NoMem:
-      OS << "DoesNotAccessMemory,\n";
+      OS << "FMRB_DoesNotAccessMemory,\n";
       break;
     case CodeGenIntrinsic::ReadArgMem:
-      OS << "OnlyReadsArgumentPointees,\n";
+      OS << "FMRB_OnlyReadsArgumentPointees,\n";
       break;
     case CodeGenIntrinsic::ReadMem:
-      OS << "OnlyReadsMemory,\n";
+      OS << "FMRB_OnlyReadsMemory,\n";
       break;
     case CodeGenIntrinsic::ReadWriteArgMem:
-      OS << "OnlyAccessesArgumentPointees,\n";
+      OS << "FMRB_OnlyAccessesArgumentPointees,\n";
       break;
     case CodeGenIntrinsic::ReadWriteMem:
-      OS << "UnknownModRefBehavior,\n";
+      OS << "FMRB_UnknownModRefBehavior,\n";
       break;
     }
   }
   OS << "};\n\n"
-     << "return static_cast<ModRefBehavior>(IntrinsicModRefBehavior[iid]);\n"
+     << "return "
+        "static_cast<FunctionModRefBehavior>(IntrinsicModRefBehavior[iid]);\n"
      << "#endif // GET_INTRINSIC_MODREF_BEHAVIOR\n\n";
 }
 

@@ -506,7 +506,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
         MemoryLocation StoreLoc = MemoryLocation::get(SI);
         for (BasicBlock::iterator I = --BasicBlock::iterator(SI),
                                   E = C; I != E; --I) {
-          if (AA.getModRefInfo(&*I, StoreLoc) != AliasAnalysis::NoModRef) {
+          if (AA.getModRefInfo(&*I, StoreLoc) != MRI_NoModRef) {
             C = nullptr;
             break;
           }
@@ -704,11 +704,11 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   // the use analysis, we also need to know that it does not sneakily
   // access dest.  We rely on AA to figure this out for us.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  AliasAnalysis::ModRefResult MR = AA.getModRefInfo(C, cpyDest, srcSize);
+  ModRefInfo MR = AA.getModRefInfo(C, cpyDest, srcSize);
   // If necessary, perform additional analysis.
-  if (MR != AliasAnalysis::NoModRef)
+  if (MR != MRI_NoModRef)
     MR = AA.callCapturesBefore(C, cpyDest, srcSize, &DT);
-  if (MR != AliasAnalysis::NoModRef)
+  if (MR != MRI_NoModRef)
     return false;
 
   // All the checks have passed, so do the transformation.

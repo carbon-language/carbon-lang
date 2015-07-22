@@ -122,43 +122,43 @@ static void RemoveFromReverseMap(DenseMap<Instruction*,
 /// location, fill in Loc with the details, otherwise set Loc.Ptr to null.
 /// Return a ModRefInfo value describing the general behavior of the
 /// instruction.
-static AliasAnalysis::ModRefResult
-GetLocation(const Instruction *Inst, MemoryLocation &Loc, AliasAnalysis *AA) {
+static ModRefInfo GetLocation(const Instruction *Inst, MemoryLocation &Loc,
+                              AliasAnalysis *AA) {
   if (const LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
     if (LI->isUnordered()) {
       Loc = MemoryLocation::get(LI);
-      return AliasAnalysis::Ref;
+      return MRI_Ref;
     }
     if (LI->getOrdering() == Monotonic) {
       Loc = MemoryLocation::get(LI);
-      return AliasAnalysis::ModRef;
+      return MRI_ModRef;
     }
     Loc = MemoryLocation();
-    return AliasAnalysis::ModRef;
+    return MRI_ModRef;
   }
 
   if (const StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
     if (SI->isUnordered()) {
       Loc = MemoryLocation::get(SI);
-      return AliasAnalysis::Mod;
+      return MRI_Mod;
     }
     if (SI->getOrdering() == Monotonic) {
       Loc = MemoryLocation::get(SI);
-      return AliasAnalysis::ModRef;
+      return MRI_ModRef;
     }
     Loc = MemoryLocation();
-    return AliasAnalysis::ModRef;
+    return MRI_ModRef;
   }
 
   if (const VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
     Loc = MemoryLocation::get(V);
-    return AliasAnalysis::ModRef;
+    return MRI_ModRef;
   }
 
   if (const CallInst *CI = isFreeCall(Inst, AA->getTargetLibraryInfo())) {
     // calls to free() deallocate the entire structure
     Loc = MemoryLocation(CI->getArgOperand(0));
-    return AliasAnalysis::Mod;
+    return MRI_Mod;
   }
 
   if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
@@ -174,7 +174,7 @@ GetLocation(const Instruction *Inst, MemoryLocation &Loc, AliasAnalysis *AA) {
           cast<ConstantInt>(II->getArgOperand(0))->getZExtValue(), AAInfo);
       // These intrinsics don't really modify the memory, but returning Mod
       // will allow them to be handled conservatively.
-      return AliasAnalysis::Mod;
+      return MRI_Mod;
     case Intrinsic::invariant_end:
       II->getAAMetadata(AAInfo);
       Loc = MemoryLocation(
@@ -182,7 +182,7 @@ GetLocation(const Instruction *Inst, MemoryLocation &Loc, AliasAnalysis *AA) {
           cast<ConstantInt>(II->getArgOperand(1))->getZExtValue(), AAInfo);
       // These intrinsics don't really modify the memory, but returning Mod
       // will allow them to be handled conservatively.
-      return AliasAnalysis::Mod;
+      return MRI_Mod;
     default:
       break;
     }
@@ -190,10 +190,10 @@ GetLocation(const Instruction *Inst, MemoryLocation &Loc, AliasAnalysis *AA) {
 
   // Otherwise, just do the coarse-grained thing that always works.
   if (Inst->mayWriteToMemory())
-    return AliasAnalysis::ModRef;
+    return MRI_ModRef;
   if (Inst->mayReadFromMemory())
-    return AliasAnalysis::Ref;
-  return AliasAnalysis::NoModRef;
+    return MRI_Ref;
+  return MRI_NoModRef;
 }
 
 /// getCallSiteDependencyFrom - Private helper for finding the local
@@ -215,10 +215,10 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 
     // If this inst is a memory op, get the pointer it accessed
     MemoryLocation Loc;
-    AliasAnalysis::ModRefResult MR = GetLocation(Inst, Loc, AA);
+    ModRefInfo MR = GetLocation(Inst, Loc, AA);
     if (Loc.Ptr) {
       // A simple instruction.
-      if (AA->getModRefInfo(CS, Loc) != AliasAnalysis::NoModRef)
+      if (AA->getModRefInfo(CS, Loc) != MRI_NoModRef)
         return MemDepResult::getClobber(Inst);
       continue;
     }
@@ -228,10 +228,10 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       if (isa<DbgInfoIntrinsic>(Inst)) continue;
       // If these two calls do not interfere, look past it.
       switch (AA->getModRefInfo(CS, InstCS)) {
-      case AliasAnalysis::NoModRef:
+      case MRI_NoModRef:
         // If the two calls are the same, return InstCS as a Def, so that
         // CS can be found redundant and eliminated.
-        if (isReadOnlyCall && !(MR & AliasAnalysis::Mod) &&
+        if (isReadOnlyCall && !(MR & MRI_Mod) &&
             CS.getInstruction()->isIdenticalToWhenDefined(Inst))
           return MemDepResult::getDef(Inst);
 
@@ -245,7 +245,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 
     // If we could not obtain a pointer for the instruction and the instruction
     // touches memory then assume that this is a dependency.
-    if (MR != AliasAnalysis::NoModRef)
+    if (MR != MRI_NoModRef)
       return MemDepResult::getClobber(Inst);
   }
 
@@ -571,7 +571,7 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
       // If alias analysis can tell that this store is guaranteed to not modify
       // the query pointer, ignore it.  Use getModRefInfo to handle cases where
       // the query pointer points to constant memory etc.
-      if (AA->getModRefInfo(SI, MemLoc) == AliasAnalysis::NoModRef)
+      if (AA->getModRefInfo(SI, MemLoc) == MRI_NoModRef)
         continue;
 
       // Ok, this store might clobber the query pointer.  Check to see if it is
@@ -620,17 +620,17 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
        continue;
 
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
-    AliasAnalysis::ModRefResult MR = AA->getModRefInfo(Inst, MemLoc);
+    ModRefInfo MR = AA->getModRefInfo(Inst, MemLoc);
     // If necessary, perform additional analysis.
-    if (MR == AliasAnalysis::ModRef)
+    if (MR == MRI_ModRef)
       MR = AA->callCapturesBefore(Inst, MemLoc, DT);
     switch (MR) {
-    case AliasAnalysis::NoModRef:
+    case MRI_NoModRef:
       // If the call has no effect on the queried pointer, just ignore it.
       continue;
-    case AliasAnalysis::Mod:
+    case MRI_Mod:
       return MemDepResult::getClobber(Inst);
-    case AliasAnalysis::Ref:
+    case MRI_Ref:
       // If the call is known to never store to the pointer, and if this is a
       // load query, we can safely ignore it (scan past it).
       if (isLoad)
@@ -681,10 +681,10 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       LocalCache = MemDepResult::getNonFuncLocal();
   } else {
     MemoryLocation MemLoc;
-    AliasAnalysis::ModRefResult MR = GetLocation(QueryInst, MemLoc, AA);
+    ModRefInfo MR = GetLocation(QueryInst, MemLoc, AA);
     if (MemLoc.Ptr) {
       // If we can do a pointer scan, make it happen.
-      bool isLoad = !(MR & AliasAnalysis::Mod);
+      bool isLoad = !(MR & MRI_Mod);
       if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(QueryInst))
         isLoad |= II->getIntrinsicID() == Intrinsic::lifetime_start;
 

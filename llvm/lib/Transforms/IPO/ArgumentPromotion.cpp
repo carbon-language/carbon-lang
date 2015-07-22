@@ -571,8 +571,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
     BasicBlock *BB = Load->getParent();
 
     MemoryLocation Loc = MemoryLocation::get(Load);
-    if (AA.canInstructionRangeModRef(BB->front(), *Load, Loc,
-        AliasAnalysis::Mod))
+    if (AA.canInstructionRangeModRef(BB->front(), *Load, Loc, MRI_Mod))
       return false;  // Pointer is invalidated!
 
     // Now check every path from the entry block to the load for transparency.

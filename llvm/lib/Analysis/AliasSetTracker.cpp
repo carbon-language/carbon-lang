@@ -167,8 +167,7 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
   if (!UnknownInsts.empty()) {
     for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i)
       if (AA.getModRefInfo(UnknownInsts[i],
-                           MemoryLocation(Ptr, Size, AAInfo)) !=
-          AliasAnalysis::NoModRef)
+                           MemoryLocation(Ptr, Size, AAInfo)) != MRI_NoModRef)
         return true;
   }
 
@@ -182,16 +181,14 @@ bool AliasSet::aliasesUnknownInst(const Instruction *Inst,
 
   for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i) {
     ImmutableCallSite C1(getUnknownInst(i)), C2(Inst);
-    if (!C1 || !C2 ||
-        AA.getModRefInfo(C1, C2) != AliasAnalysis::NoModRef ||
-        AA.getModRefInfo(C2, C1) != AliasAnalysis::NoModRef)
+    if (!C1 || !C2 || AA.getModRefInfo(C1, C2) != MRI_NoModRef ||
+        AA.getModRefInfo(C2, C1) != MRI_NoModRef)
       return true;
   }
 
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.getModRefInfo(
-            Inst, MemoryLocation(I.getPointer(), I.getSize(), I.getAAInfo())) !=
-        AliasAnalysis::NoModRef)
+    if (AA.getModRefInfo(Inst, MemoryLocation(I.getPointer(), I.getSize(),
+                                              I.getAAInfo())) != MRI_NoModRef)
       return true;
 
   return false;

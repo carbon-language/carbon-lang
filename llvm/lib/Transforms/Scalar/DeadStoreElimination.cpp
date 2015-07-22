@@ -609,7 +609,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       if (DepWrite == &BB.front()) break;
 
       // Can't look past this instruction if it might read 'Loc'.
-      if (AA->getModRefInfo(DepWrite, Loc) & AliasAnalysis::Ref)
+      if (AA->getModRefInfo(DepWrite, Loc) & MRI_Ref)
         break;
 
       InstDep = MD->getPointerDependencyFrom(Loc, false, DepWrite, &BB);
@@ -795,10 +795,10 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       // the call is live.
       DeadStackObjects.remove_if([&](Value *I) {
         // See if the call site touches the value.
-        AliasAnalysis::ModRefResult A = AA->getModRefInfo(
+        ModRefInfo A = AA->getModRefInfo(
             CS, I, getPointerSize(I, DL, AA->getTargetLibraryInfo()));
 
-        return A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref;
+        return A == MRI_ModRef || A == MRI_Ref;
       });
 
       // If all of the allocas were clobbered by the call then we're not going

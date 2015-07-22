@@ -241,7 +241,7 @@ bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(const Instruction& Start,
                                                       const Instruction& End,
                                                       LoadInst* LI) {
   MemoryLocation Loc = MemoryLocation::get(LI);
-  return AA->canInstructionRangeModRef(Start, End, Loc, AliasAnalysis::Mod);
+  return AA->canInstructionRangeModRef(Start, End, Loc, MRI_Mod);
 }
 
 ///
@@ -398,7 +398,7 @@ bool MergedLoadStoreMotion::mergeLoads(BasicBlock *BB) {
 bool MergedLoadStoreMotion::isStoreSinkBarrierInRange(const Instruction &Start,
                                                       const Instruction &End,
                                                       MemoryLocation Loc) {
-  return AA->canInstructionRangeModRef(Start, End, Loc, AliasAnalysis::ModRef);
+  return AA->canInstructionRangeModRef(Start, End, Loc, MRI_ModRef);
 }
 
 ///

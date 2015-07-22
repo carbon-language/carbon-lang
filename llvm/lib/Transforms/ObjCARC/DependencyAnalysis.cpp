@@ -49,7 +49,7 @@ bool llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
   assert(CS && "Only calls can alter reference counts!");
 
   // See if AliasAnalysis can help us with the call.
-  AliasAnalysis::ModRefBehavior MRB = PA.getAA()->getModRefBehavior(CS);
+  FunctionModRefBehavior MRB = PA.getAA()->getModRefBehavior(CS);
   if (AliasAnalysis::onlyReadsMemory(MRB))
     return false;
   if (AliasAnalysis::onlyAccessesArgPointees(MRB)) {

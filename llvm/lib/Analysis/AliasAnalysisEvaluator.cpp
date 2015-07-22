@@ -292,19 +292,19 @@ bool AAEval::runOnFunction(Function &F) {
       if (ElTy->isSized()) Size = AA.getTypeStoreSize(ElTy);
 
       switch (AA.getModRefInfo(*C, *V, Size)) {
-      case AliasAnalysis::NoModRef:
+      case MRI_NoModRef:
         PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
         ++NoModRefCount;
         break;
-      case AliasAnalysis::Mod:
+      case MRI_Mod:
         PrintModRefResults("Just Mod", PrintMod, I, *V, F.getParent());
         ++ModCount;
         break;
-      case AliasAnalysis::Ref:
+      case MRI_Ref:
         PrintModRefResults("Just Ref", PrintRef, I, *V, F.getParent());
         ++RefCount;
         break;
-      case AliasAnalysis::ModRef:
+      case MRI_ModRef:
         PrintModRefResults("Both ModRef", PrintModRef, I, *V, F.getParent());
         ++ModRefCount;
         break;
@@ -319,19 +319,19 @@ bool AAEval::runOnFunction(Function &F) {
       if (D == C)
         continue;
       switch (AA.getModRefInfo(*C, *D)) {
-      case AliasAnalysis::NoModRef:
+      case MRI_NoModRef:
         PrintModRefResults("NoModRef", PrintNoModRef, *C, *D, F.getParent());
         ++NoModRefCount;
         break;
-      case AliasAnalysis::Mod:
+      case MRI_Mod:
         PrintModRefResults("Just Mod", PrintMod, *C, *D, F.getParent());
         ++ModCount;
         break;
-      case AliasAnalysis::Ref:
+      case MRI_Ref:
         PrintModRefResults("Just Ref", PrintRef, *C, *D, F.getParent());
         ++RefCount;
         break;
-      case AliasAnalysis::ModRef:
+      case MRI_ModRef:
         PrintModRefResults("Both ModRef", PrintModRef, *C, *D, F.getParent());
         ++ModRefCount;
         break;

@@ -479,11 +479,11 @@ namespace {
       return Alias;
     }
 
-    ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const MemoryLocation &Loc) override;
+    ModRefInfo getModRefInfo(ImmutableCallSite CS,
+                             const MemoryLocation &Loc) override;
 
-    ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) override;
+    ModRefInfo getModRefInfo(ImmutableCallSite CS1,
+                             ImmutableCallSite CS2) override;
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
@@ -491,16 +491,15 @@ namespace {
                                 bool OrLocal) override;
 
     /// Get the location associated with a pointer argument of a callsite.
-    ModRefResult getArgModRefInfo(ImmutableCallSite CS,
-                                  unsigned ArgIdx) override;
+    ModRefInfo getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) override;
 
     /// getModRefBehavior - Return the behavior when calling the given
     /// call site.
-    ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
+    FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
 
     /// getModRefBehavior - Return the behavior when calling the given function.
     /// For use when the call site is not known.
-    ModRefBehavior getModRefBehavior(const Function *F) override;
+    FunctionModRefBehavior getModRefBehavior(const Function *F) override;
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
@@ -676,33 +675,33 @@ static bool isMemsetPattern16(const Function *MS,
 }
 
 /// getModRefBehavior - Return the behavior when calling the given call site.
-AliasAnalysis::ModRefBehavior
+FunctionModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   if (CS.doesNotAccessMemory())
     // Can't do better than this.
-    return DoesNotAccessMemory;
+    return FMRB_DoesNotAccessMemory;
 
-  ModRefBehavior Min = UnknownModRefBehavior;
+  FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
 
   // If the callsite knows it only reads memory, don't return worse
   // than that.
   if (CS.onlyReadsMemory())
-    Min = OnlyReadsMemory;
+    Min = FMRB_OnlyReadsMemory;
 
   if (CS.onlyAccessesArgMemory())
-    Min = ModRefBehavior(Min & OnlyAccessesArgumentPointees);
+    Min = FunctionModRefBehavior(Min & FMRB_OnlyAccessesArgumentPointees);
 
   // The AliasAnalysis base class has some smarts, lets use them.
-  return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
+  return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
 }
 
 /// getModRefBehavior - Return the behavior when calling the given function.
 /// For use when the call site is not known.
-AliasAnalysis::ModRefBehavior
+FunctionModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   // If the function declares it doesn't access memory, we can't do better.
   if (F->doesNotAccessMemory())
-    return DoesNotAccessMemory;
+    return FMRB_DoesNotAccessMemory;
 
   // For intrinsics, we can check the table.
   if (Intrinsic::ID iid = F->getIntrinsicID()) {
@@ -711,26 +710,26 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
 #undef GET_INTRINSIC_MODREF_BEHAVIOR
   }
 
-  ModRefBehavior Min = UnknownModRefBehavior;
+  FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
 
   // If the function declares it only reads memory, go with that.
   if (F->onlyReadsMemory())
-    Min = OnlyReadsMemory;
+    Min = FMRB_OnlyReadsMemory;
 
   if (F->onlyAccessesArgMemory())
-    Min = ModRefBehavior(Min & OnlyAccessesArgumentPointees);
+    Min = FunctionModRefBehavior(Min & FMRB_OnlyAccessesArgumentPointees);
 
   const TargetLibraryInfo &TLI =
       getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   if (isMemsetPattern16(F, TLI))
-    Min = OnlyAccessesArgumentPointees;
+    Min = FMRB_OnlyAccessesArgumentPointees;
 
   // Otherwise be conservative.
-  return ModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
+  return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
 }
 
-AliasAnalysis::ModRefResult
-BasicAliasAnalysis::getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) {
+ModRefInfo BasicAliasAnalysis::getArgModRefInfo(ImmutableCallSite CS,
+                                                unsigned ArgIdx) {
   if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction()))
     switch (II->getIntrinsicID()) {
     default:
@@ -740,7 +739,7 @@ BasicAliasAnalysis::getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) {
     case Intrinsic::memmove:
       assert((ArgIdx == 0 || ArgIdx == 1) &&
              "Invalid argument index for memory intrinsic");
-      return ArgIdx ? Ref : Mod;
+      return ArgIdx ? MRI_Ref : MRI_Mod;
     }
 
   // We can bound the aliasing properties of memset_pattern16 just as we can
@@ -751,7 +750,7 @@ BasicAliasAnalysis::getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) {
       isMemsetPattern16(CS.getCalledFunction(), *TLI)) {
     assert((ArgIdx == 0 || ArgIdx == 1) &&
            "Invalid argument index for memset_pattern16");
-    return ArgIdx ? Ref : Mod;
+    return ArgIdx ? MRI_Ref : MRI_Mod;
   }
   // FIXME: Handle memset_pattern4 and memset_pattern8 also.
 
@@ -775,9 +774,8 @@ bool BasicAliasAnalysis::doInitialization(Module &M) {
 /// specified memory object.  Since we only look at local properties of this
 /// function, we really can't say much about this query.  We do, however, use
 /// simple "address taken" analysis on local objects.
-AliasAnalysis::ModRefResult
-BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
-                                  const MemoryLocation &Loc) {
+ModRefInfo BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
+                                             const MemoryLocation &Loc) {
   assert(notDifferentParent(CS.getInstruction(), Loc.Ptr) &&
          "AliasAnalysis query involving multiple functions!");
 
@@ -791,7 +789,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   if (isa<AllocaInst>(Object))
     if (const CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
       if (CI->isTailCall())
-        return NoModRef;
+        return MRI_NoModRef;
 
   // If the pointer is to a locally allocated object that does not escape,
   // then the call can not mod/ref the pointer unless the call takes the pointer
@@ -820,27 +818,26 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     }
 
     if (!PassedAsArg)
-      return NoModRef;
+      return MRI_NoModRef;
   }
 
   // While the assume intrinsic is marked as arbitrarily writing so that
   // proper control dependencies will be maintained, it never aliases any
   // particular memory location.
   if (isAssumeIntrinsic(CS))
-    return NoModRef;
+    return MRI_NoModRef;
 
   // The AliasAnalysis base class has some smarts, lets use them.
   return AliasAnalysis::getModRefInfo(CS, Loc);
 }
 
-AliasAnalysis::ModRefResult
-BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
-                                  ImmutableCallSite CS2) {
+ModRefInfo BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
+                                             ImmutableCallSite CS2) {
   // While the assume intrinsic is marked as arbitrarily writing so that
   // proper control dependencies will be maintained, it never aliases any
   // particular memory location.
   if (isAssumeIntrinsic(CS1) || isAssumeIntrinsic(CS2))
-    return NoModRef;
+    return MRI_NoModRef;
 
   // The AliasAnalysis base class has some smarts, lets use them.
   return AliasAnalysis::getModRefInfo(CS1, CS2);

@@ -112,20 +112,20 @@ bool ObjCARCAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
   return false;
 }
 
-AliasAnalysis::ModRefBehavior
+FunctionModRefBehavior
 ObjCARCAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   // We have nothing to do. Just chain to the next AliasAnalysis.
   return AliasAnalysis::getModRefBehavior(CS);
 }
 
-AliasAnalysis::ModRefBehavior
+FunctionModRefBehavior
 ObjCARCAliasAnalysis::getModRefBehavior(const Function *F) {
   if (!EnableARCOpts)
     return AliasAnalysis::getModRefBehavior(F);
 
   switch (GetFunctionClass(F)) {
   case ARCInstKind::NoopCast:
-    return DoesNotAccessMemory;
+    return FMRB_DoesNotAccessMemory;
   default:
     break;
   }
@@ -133,9 +133,8 @@ ObjCARCAliasAnalysis::getModRefBehavior(const Function *F) {
   return AliasAnalysis::getModRefBehavior(F);
 }
 
-AliasAnalysis::ModRefResult
-ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
-                                    const MemoryLocation &Loc) {
+ModRefInfo ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
+                                               const MemoryLocation &Loc) {
   if (!EnableARCOpts)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 
@@ -151,7 +150,7 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     // These functions don't access any memory visible to the compiler.
     // Note that this doesn't include objc_retainBlock, because it updates
     // pointers when it copies block data.
-    return NoModRef;
+    return MRI_NoModRef;
   default:
     break;
   }
@@ -159,10 +158,9 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   return AliasAnalysis::getModRefInfo(CS, Loc);
 }
 
-AliasAnalysis::ModRefResult
-ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
-                                    ImmutableCallSite CS2) {
+ModRefInfo ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
+                                               ImmutableCallSite CS2) {
   // TODO: Theoretically we could check for dependencies between objc_* calls
-  // and OnlyAccessesArgumentPointees calls or other well-behaved calls.
+  // and FMRB_OnlyAccessesArgumentPointees calls or other well-behaved calls.
   return AliasAnalysis::getModRefInfo(CS1, CS2);
 }

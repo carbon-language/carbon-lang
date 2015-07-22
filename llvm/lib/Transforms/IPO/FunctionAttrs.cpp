@@ -166,8 +166,8 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       // memory and give up.
       return false;
 
-    AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(F);
-    if (MRB == AliasAnalysis::DoesNotAccessMemory)
+    FunctionModRefBehavior MRB = AA->getModRefBehavior(F);
+    if (MRB == FMRB_DoesNotAccessMemory)
       // Already perfect!
       continue;
 
@@ -193,7 +193,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
         // Ignore calls to functions in the same SCC.
         if (CS.getCalledFunction() && SCCNodes.count(CS.getCalledFunction()))
           continue;
-        AliasAnalysis::ModRefBehavior MRB = AA->getModRefBehavior(CS);
+        FunctionModRefBehavior MRB = AA->getModRefBehavior(CS);
         // If the call doesn't access arbitrary memory, we may be able to
         // figure out something.
         if (AliasAnalysis::onlyAccessesArgPointees(MRB)) {
@@ -210,10 +210,10 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
 
                 MemoryLocation Loc(Arg, MemoryLocation::UnknownSize, AAInfo);
                 if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
-                  if (MRB & AliasAnalysis::Mod)
+                  if (MRB & MRI_Mod)
                     // Writes non-local memory.  Give up.
                     return false;
-                  if (MRB & AliasAnalysis::Ref)
+                  if (MRB & MRI_Ref)
                     // Ok, it reads non-local memory.
                     ReadsMemory = true;
                 }
@@ -222,10 +222,10 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
           continue;
         }
         // The call could access any memory. If that includes writes, give up.
-        if (MRB & AliasAnalysis::Mod)
+        if (MRB & MRI_Mod)
           return false;
         // If it reads, note it.
-        if (MRB & AliasAnalysis::Ref)
+        if (MRB & MRI_Ref)
           ReadsMemory = true;
         continue;
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
