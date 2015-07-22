@@ -16,6 +16,7 @@
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
@@ -30,7 +31,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include <list>
-#include <set>
 using namespace llvm;
 
 #define DEBUG_TYPE "globalsmodref-aa"
@@ -89,11 +89,11 @@ struct FunctionRecord {
 /// GlobalsModRef - The actual analysis pass.
 class GlobalsModRef : public ModulePass, public AliasAnalysis {
   /// The globals that do not have their addresses taken.
-  std::set<const GlobalValue *> NonAddressTakenGlobals;
+  SmallPtrSet<const GlobalValue *, 8> NonAddressTakenGlobals;
 
   /// IndirectGlobals - The memory pointed to by this global is known to be
   /// 'owned' by the global.
-  std::set<const GlobalValue *> IndirectGlobals;
+  SmallPtrSet<const GlobalValue *, 8> IndirectGlobals;
 
   /// AllocsForIndirectGlobals - If an instruction allocates memory for an
   /// indirect global, this map indicates which one.
