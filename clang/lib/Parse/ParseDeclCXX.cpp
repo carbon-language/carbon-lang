@@ -1308,6 +1308,35 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     // allow libstdc++ 4.2 and libc++ to work properly.
     TryKeywordIdentFallback(true);
 
+  struct PreserveAtomicIdentifierInfoRAII {
+    PreserveAtomicIdentifierInfoRAII(Token &Tok, bool Enabled)
+        : AtomicII(nullptr) {
+      if (!Enabled)
+        return;
+      assert(Tok.is(tok::kw__Atomic));
+      AtomicII = Tok.getIdentifierInfo();
+      AtomicII->revertTokenIDToIdentifier();
+      Tok.setKind(tok::identifier);
+    }
+    ~PreserveAtomicIdentifierInfoRAII() {
+      if (!AtomicII)
+        return;
+      AtomicII->revertIdentifierToTokenID(tok::kw__Atomic);
+    }
+    IdentifierInfo *AtomicII;
+  };
+
+  // HACK: MSVC doesn't consider _Atomic to be a keyword and its STL
+  // implementation for VS2013 uses _Atomic as an identifier for one of the
+  // classes in <atomic>.  When we are parsing 'struct _Atomic', don't consider
+  // '_Atomic' to be a keyword.  We are careful to undo this so that clang can
+  // use '_Atomic' in its own header files.
+  bool ShouldChangeAtomicToIdentifier = getLangOpts().MSVCCompat &&
+                                        Tok.is(tok::kw__Atomic) &&
+                                        TagType == DeclSpec::TST_struct;
+  PreserveAtomicIdentifierInfoRAII AtomicTokenGuard(
+      Tok, ShouldChangeAtomicToIdentifier);
+
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLangOpts().CPlusPlus) {
@@ -1859,6 +1888,15 @@ BaseResult Parser::ParseBaseSpecifier(Decl *ClassDecl) {
   CheckMisplacedCXX11Attribute(Attributes, StartLoc);
 
   // Parse the class-name.
+
+  // HACK: MSVC doesn't consider _Atomic to be a keyword and its STL
+  // implementation for VS2013 uses _Atomic as an identifier for one of the
+  // classes in <atomic>.  Treat '_Atomic' to be an identifier when we are
+  // parsing the class-name for a base specifier.
+  if (getLangOpts().MSVCCompat && Tok.is(tok::kw__Atomic) &&
+      NextToken().is(tok::less))
+    Tok.setKind(tok::identifier);
+
   SourceLocation EndLocation;
   SourceLocation BaseLoc;
   TypeResult BaseType = ParseBaseTypeSpecifier(BaseLoc, EndLocation);

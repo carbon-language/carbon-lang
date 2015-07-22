@@ -62,7 +62,7 @@ class IdentifierInfo {
                                    // partially) from an AST file.
   bool ChangedAfterLoad       : 1; // True if identifier has changed from the
                                    // definition loaded from an AST file.
-  bool RevertedTokenID        : 1; // True if RevertTokenIDToIdentifier was
+  bool RevertedTokenID        : 1; // True if revertTokenIDToIdentifier was
                                    // called.
   bool OutOfDate              : 1; // True if there may be additional
                                    // information about this identifier
@@ -152,7 +152,7 @@ public:
   /// tokens.
   tok::TokenKind getTokenID() const { return (tok::TokenKind)TokenID; }
 
-  /// \brief True if RevertTokenIDToIdentifier() was called.
+  /// \brief True if revertTokenIDToIdentifier() was called.
   bool hasRevertedTokenIDToIdentifier() const { return RevertedTokenID; }
 
   /// \brief Revert TokenID to tok::identifier; used for GNU libstdc++ 4.2
@@ -165,6 +165,11 @@ public:
     assert(TokenID != tok::identifier && "Already at tok::identifier");
     TokenID = tok::identifier;
     RevertedTokenID = true;
+  }
+  void revertIdentifierToTokenID(tok::TokenKind TK) {
+    assert(TokenID == tok::identifier && "Should be at tok::identifier");
+    TokenID = TK;
+    RevertedTokenID = false;
   }
 
   /// \brief Return the preprocessor keyword ID for this identifier.

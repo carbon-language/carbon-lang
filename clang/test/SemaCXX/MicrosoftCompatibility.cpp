@@ -9,11 +9,18 @@ typedef unsigned short char16_t;
 typedef unsigned int char32_t;
 #endif
 
-#if _MSC_VER >= 1900
 _Atomic(int) z;
-#else
-struct _Atomic {};
-#endif
+template <typename T>
+struct _Atomic {
+  _Atomic() {}
+  ~_Atomic() {}
+};
+template <typename T>
+struct atomic : _Atomic<T> {
+  typedef _Atomic<T> TheBase;
+  TheBase field;
+};
+_Atomic(int) alpha;
 
 typename decltype(3) a; // expected-warning {{expected a qualified name after 'typename'}}
 

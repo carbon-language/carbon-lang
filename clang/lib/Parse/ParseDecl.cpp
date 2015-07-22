@@ -2647,6 +2647,18 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     const char *PrevSpec = nullptr;
     unsigned DiagID = 0;
 
+    // HACK: MSVC doesn't consider _Atomic to be a keyword and its STL
+    // implementation for VS2013 uses _Atomic as an identifier for one of the
+    // classes in <atomic>.
+    //
+    // A typedef declaration containing _Atomic<...> is among the places where
+    // the class is used.  If we are currently parsing such a declaration, treat
+    // the token as an identifier.
+    if (getLangOpts().MSVCCompat && Tok.is(tok::kw__Atomic) &&
+        DS.getStorageClassSpec() == clang::DeclSpec::SCS_typedef &&
+        !DS.hasTypeSpecifier() && GetLookAheadToken(1).is(tok::less))
+      Tok.setKind(tok::identifier);
+
     SourceLocation Loc = Tok.getLocation();
 
     switch (Tok.getKind()) {
