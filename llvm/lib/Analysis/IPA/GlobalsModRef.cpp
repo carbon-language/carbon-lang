@@ -104,7 +104,45 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
   std::map<const Function *, FunctionRecord> FunctionInfo;
 
   /// Handle to clear this analysis on deletion of values.
-  struct DeletionCallbackHandle;
+  struct DeletionCallbackHandle final : CallbackVH {
+    GlobalsModRef &GMR;
+    std::list<DeletionCallbackHandle>::iterator I;
+
+    DeletionCallbackHandle(GlobalsModRef &GMR, Value *V)
+        : CallbackVH(V), GMR(GMR) {}
+
+    void deleted() override {
+      Value *V = getValPtr();
+      if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+        if (GMR.NonAddressTakenGlobals.erase(GV)) {
+          // This global might be an indirect global.  If so, remove it and
+          // remove
+          // any AllocRelatedValues for it.
+          if (GMR.IndirectGlobals.erase(GV)) {
+            // Remove any entries in AllocsForIndirectGlobals for this global.
+            for (std::map<const Value *, const GlobalValue *>::iterator
+                     I = GMR.AllocsForIndirectGlobals.begin(),
+                     E = GMR.AllocsForIndirectGlobals.end();
+                 I != E;) {
+              if (I->second == GV) {
+                GMR.AllocsForIndirectGlobals.erase(I++);
+              } else {
+                ++I;
+              }
+            }
+          }
+        }
+      }
+
+      // If this is an allocation related to an indirect global, remove it.
+      GMR.AllocsForIndirectGlobals.erase(V);
+
+      // And clear out the handle.
+      setValPtr(nullptr);
+      GMR.Handles.erase(I);
+      // This object is now destroyed!
+    }
+  };
 
   /// List of callbacks for globals being tracked by this analysis. Note that
   /// these objects are quite large, but we only anticipate having one per
@@ -220,45 +258,6 @@ INITIALIZE_AG_PASS_END(GlobalsModRef, AliasAnalysis, "globalsmodref-aa",
                        false)
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
-
-struct GlobalsModRef::DeletionCallbackHandle final : CallbackVH {
-  GlobalsModRef &GMR;
-  std::list<DeletionCallbackHandle>::iterator I;
-
-  DeletionCallbackHandle(GlobalsModRef &GMR, Value *V)
-      : CallbackVH(V), GMR(GMR) {}
-
-  void deleted() override {
-    Value *V = getValPtr();
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-      if (GMR.NonAddressTakenGlobals.erase(GV)) {
-        // This global might be an indirect global.  If so, remove it and remove
-        // any AllocRelatedValues for it.
-        if (GMR.IndirectGlobals.erase(GV)) {
-          // Remove any entries in AllocsForIndirectGlobals for this global.
-          for (std::map<const Value *, const GlobalValue *>::iterator
-                   I = GMR.AllocsForIndirectGlobals.begin(),
-                   E = GMR.AllocsForIndirectGlobals.end();
-               I != E;) {
-            if (I->second == GV) {
-              GMR.AllocsForIndirectGlobals.erase(I++);
-            } else {
-              ++I;
-            }
-          }
-        }
-      }
-    }
-
-    // If this is an allocation related to an indirect global, remove it.
-    GMR.AllocsForIndirectGlobals.erase(V);
-
-    // And clear out the handle.
-    setValPtr(nullptr);
-    GMR.Handles.erase(I);
-    // This object is now destroyed!
-  }
-};
 
 /// AnalyzeGlobals - Scan through the users of all of the internal
 /// GlobalValue's in the program.  If none of them have their "address taken"
