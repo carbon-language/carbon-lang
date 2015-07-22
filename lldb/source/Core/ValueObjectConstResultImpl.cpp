@@ -106,9 +106,8 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
                                                   child_bitfield_bit_size,
                                                   child_bitfield_bit_offset,
                                                   child_is_base_class,
-                                                  child_is_deref_of_parent);
-        if (m_live_address != LLDB_INVALID_ADDRESS)
-            valobj->m_impl.SetLiveAddress(m_live_address+child_byte_offset);
+                                                  child_is_deref_of_parent,
+                                                  m_live_address == LLDB_INVALID_ADDRESS ? m_live_address : m_live_address+child_byte_offset);
     }
     
     return valobj;
