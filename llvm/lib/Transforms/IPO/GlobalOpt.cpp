@@ -2000,9 +2000,6 @@ struct MutatedGlobal {
   GlobalVariable *GV;
   Constant *Initializer;
   StoreMap Pending;
-
-public:
-  MutatedGlobal(GlobalVariable *GV) : GV(GV), Initializer(nullptr) {}
 };
 
 /// MutatedGlobals - This class tracks and commits stores to globals as basic
@@ -2050,7 +2047,7 @@ void MutatedGlobals::AddStore(Constant *Ptr, Constant *Value) {
 
   auto I = Globals.find(GV);
   if (I == Globals.end()) {
-    auto R = Globals.insert(std::make_pair(GV, MutatedGlobal(GV)));
+    auto R = Globals.insert(std::make_pair(GV, MutatedGlobal{GV, nullptr, {}}));
     assert(R.second && "Global value already in the map?");
     I = R.first;
   }
