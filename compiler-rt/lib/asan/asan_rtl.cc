@@ -545,10 +545,18 @@ int NOINLINE __asan_set_error_exit_code(int exit_code) {
 void NOINLINE __asan_handle_no_return() {
   int local_stack;
   AsanThread *curr_thread = GetCurrentThread();
-  CHECK(curr_thread);
   uptr PageSize = GetPageSizeCached();
-  uptr top = curr_thread->stack_top();
-  uptr bottom = ((uptr)&local_stack - PageSize) & ~(PageSize-1);
+  uptr top, bottom;
+  if (curr_thread) {
+    top = curr_thread->stack_top();
+    bottom = ((uptr)&local_stack - PageSize) & ~(PageSize - 1);
+  } else {
+    // If we haven't seen this thread, try asking the OS for stack bounds.
+    uptr tls_addr, tls_size, stack_size;
+    GetThreadStackAndTls(/*main=*/false, &bottom, &stack_size, &tls_addr,
+                         &tls_size);
+    top = bottom + stack_size;
+  }
   static const uptr kMaxExpectedCleanupSize = 64 << 20;  // 64M
   if (top - bottom > kMaxExpectedCleanupSize) {
     static bool reported_warning = false;
@@ -564,7 +572,7 @@ void NOINLINE __asan_handle_no_return() {
     return;
   }
   PoisonShadow(bottom, top - bottom, 0);
-  if (curr_thread->has_fake_stack())
+  if (curr_thread && curr_thread->has_fake_stack())
     curr_thread->fake_stack()->HandleNoReturn();
 }
 
