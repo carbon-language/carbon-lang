@@ -16,6 +16,7 @@ config.enable_thread_unsafe_c_functions = "@LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTI
 config.enable_monotonic_clock   = "@LIBCXX_ENABLE_MONOTONIC_CLOCK@"
 config.cxx_abi                  = "@LIBCXX_CXX_ABI_LIBNAME@"
 config.use_sanitizer            = "@LLVM_USE_SANITIZER@"
+config.sanitizer_library        = "@LIBCXX_SANITIZER_LIBRARY@"
 config.abi_library_path         = "@LIBCXX_CXX_ABI_LIBRARY_PATH@"
 config.configuration_variant    = "@LIBCXX_LIT_VARIANT@"
 config.target_triple            = "@LIBCXX_TARGET_TRIPLE@"

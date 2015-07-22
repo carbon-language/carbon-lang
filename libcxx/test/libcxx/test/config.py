@@ -623,6 +623,8 @@ class Configuration(object):
                                    '-fno-sanitize-recover']
                 self.cxx.compile_flags += ['-O3']
                 self.config.available_features.add('ubsan')
+                if self.target_info.platform() == 'darwin':
+                    self.config.available_features.add('sanitizer-new-delete')
             elif san == 'Thread':
                 self.cxx.flags += ['-fsanitize=thread']
                 self.config.available_features.add('tsan')
@@ -630,6 +632,10 @@ class Configuration(object):
             else:
                 self.lit_config.fatal('unsupported value for '
                                       'use_sanitizer: {0}'.format(san))
+            san_lib = self.get_lit_conf('sanitizer_library')
+            if san_lib:
+                self.cxx.link_flags += [
+                    san_lib, '-Wl,-rpath,%s' % os.path.dirname(san_lib)]
 
     def configure_coverage(self):
         self.generate_coverage = self.get_lit_bool('generate_coverage', False)
