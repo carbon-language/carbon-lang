@@ -127,11 +127,6 @@ addressof(__unsafe_unretained _Tp& __x) _NOEXCEPT
 }
 #endif
 
-#ifdef _LIBCPP_HAS_NO_VARIADICS
-
-#include <__functional_base_03>
-
-#else  // _LIBCPP_HAS_NO_VARIADICS
 
 // __weak_result_type
 
@@ -314,6 +309,8 @@ struct __weak_result_type<_Rp (_Cp::*)(_A1) const volatile>
 {
 };
 
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 // 3 or more arguments
 
 template <class _Rp, class _A1, class _A2, class _A3, class ..._A4>
@@ -358,7 +355,11 @@ struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2, _A3...) const volatile>
     typedef _Rp result_type;
 };
 
+#endif // _LIBCPP_HAS_NO_VARIADICS
+
 // __invoke
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 // bullets 1 and 2
 
@@ -414,31 +415,79 @@ __invoke(_Fp&& __f, _Args&& ...__args)
 {
     return _VSTD::forward<_Fp>(__f)(_VSTD::forward<_Args>(__args)...);
 }
-
 template <class _Tp, class ..._Args>
 struct __invoke_return
 {
     typedef decltype(__invoke(_VSTD::declval<_Tp>(), _VSTD::declval<_Args>()...)) type;
 };
 
+#else // _LIBCPP_HAS_NO_VARIADICS
+
+#include <__functional_base_03>
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+
 template <class _Ret>
 struct __invoke_void_return_wrapper
 {
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class ..._Args>
-    static _Ret __call(_Args&&... __args)
-    {
+    static _Ret __call(_Args&&... __args) {
         return __invoke(_VSTD::forward<_Args>(__args)...);
     }
+#else
+    template <class _Fn>
+    static _Ret __call(_Fn __f) {
+        return __invoke(__f);
+    }
+
+    template <class _Fn, class _A0>
+    static _Ret __call(_Fn __f, _A0& __a0) {
+        return __invoke(__f, __a0);
+    }
+
+    template <class _Fn, class _A0, class _A1>
+    static _Ret __call(_Fn __f, _A0& __a0, _A1& __a1) {
+        return __invoke(__f, __a0, __a1);
+    }
+
+    template <class _Fn, class _A0, class _A1, class _A2>
+    static _Ret __call(_Fn __f, _A0& __a0, _A1& __a1, _A2& __a2){
+        return __invoke(__f, __a0, __a1, __a2);
+    }
+#endif
 };
 
 template <>
 struct __invoke_void_return_wrapper<void>
 {
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class ..._Args>
-    static void __call(_Args&&... __args)
-    {
+    static void __call(_Args&&... __args) {
         __invoke(_VSTD::forward<_Args>(__args)...);
     }
+#else
+    template <class _Fn>
+    static void __call(_Fn __f) {
+        __invoke(__f);
+    }
+
+    template <class _Fn, class _A0>
+    static void __call(_Fn __f, _A0& __a0) {
+        __invoke(__f, __a0);
+    }
+
+    template <class _Fn, class _A0, class _A1>
+    static void __call(_Fn __f, _A0& __a0, _A1& __a1) {
+        __invoke(__f, __a0, __a1);
+    }
+
+    template <class _Fn, class _A0, class _A1, class _A2>
+    static void __call(_Fn __f, _A0& __a0, _A1& __a1, _A2& __a2) {
+        __invoke(__f, __a0, __a1, __a2);
+    }
+#endif
 };
 
 template <class _Tp>
@@ -463,6 +512,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY operator type&    () const _NOEXCEPT {return *__f_;}
     _LIBCPP_INLINE_VISIBILITY          type& get() const _NOEXCEPT {return *__f_;}
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
     // invoke
     template <class... _ArgTypes>
        _LIBCPP_INLINE_VISIBILITY
@@ -471,6 +521,39 @@ public:
           {
               return __invoke(get(), _VSTD::forward<_ArgTypes>(__args)...);
           }
+#else
+
+    _LIBCPP_INLINE_VISIBILITY
+    typename __invoke_return<type>::type
+       operator() () const
+       {
+           return __invoke(get());
+       }
+
+    template <class _A0>
+       _LIBCPP_INLINE_VISIBILITY
+       typename __invoke_return0<type&, _A0>::type
+          operator() (_A0& __a0) const
+          {
+              return __invoke<type&, _A0>(get(), __a0);
+          }
+
+    template <class _A0, class _A1>
+       _LIBCPP_INLINE_VISIBILITY
+       typename __invoke_return1<type&, _A0, _A1>::type
+          operator() (_A0& __a0, _A1& __a1) const
+          {
+              return __invoke<type&, _A0, _A1>(get(), __a0, __a1);
+          }
+
+    template <class _A0, class _A1, class _A2>
+       _LIBCPP_INLINE_VISIBILITY
+       typename __invoke_return2<type&, _A0, _A1, _A2>::type
+          operator() (_A0& __a0, _A1& __a1, _A2& __a2) const
+          {
+              return __invoke<type&, _A0, _A1, _A2>(get(), __a0, __a1, __a2);
+          }
+#endif // _LIBCPP_HAS_NO_VARIADICS
 };
 
 template <class _Tp> struct __is_reference_wrapper_impl : public false_type {};
@@ -510,6 +593,7 @@ cref(reference_wrapper<_Tp> __t) _NOEXCEPT
     return cref(__t.get());
 }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 
