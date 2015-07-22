@@ -541,7 +541,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
     if (!OuterL && !CompletelyUnroll)
       OuterL = L;
     if (OuterL) {
-      simplifyLoop(OuterL, DT, LI, PP, /*AliasAnalysis*/ nullptr, SE, AC);
+      simplifyLoop(OuterL, DT, LI, PP, SE, AC);
 
       // LCSSA must be performed on the outermost affected loop. The unrolled
       // loop's last loop latch is guaranteed to be in the outermost loop after

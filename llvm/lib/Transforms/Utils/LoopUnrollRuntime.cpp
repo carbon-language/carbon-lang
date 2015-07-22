@@ -62,8 +62,8 @@ STATISTIC(NumRuntimeUnrolled,
 static void ConnectProlog(Loop *L, Value *BECount, unsigned Count,
                           BasicBlock *LastPrologBB, BasicBlock *PrologEnd,
                           BasicBlock *OrigPH, BasicBlock *NewPH,
-                          ValueToValueMapTy &VMap, AliasAnalysis *AA,
-                          DominatorTree *DT, LoopInfo *LI, Pass *P) {
+                          ValueToValueMapTy &VMap, DominatorTree *DT,
+                          LoopInfo *LI, Pass *P) {
   BasicBlock *Latch = L->getLoopLatch();
   assert(Latch && "Loop must have a latch");
 
@@ -127,7 +127,7 @@ static void ConnectProlog(Loop *L, Value *BECount, unsigned Count,
   assert(Exit && "Loop must have a single exit block only");
   // Split the exit to maintain loop canonicalization guarantees
   SmallVector<BasicBlock*, 4> Preds(pred_begin(Exit), pred_end(Exit));
-  SplitBlockPredecessors(Exit, Preds, ".unr-lcssa", AA, DT, LI,
+  SplitBlockPredecessors(Exit, Preds, ".unr-lcssa", DT, LI,
                          P->mustPreserveAnalysisID(LCSSAID));
   // Add the branch to the exit block (around the unrolled loop)
   B.CreateCondBr(BrLoopExit, Exit, NewPH);
@@ -414,8 +414,8 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
   // Connect the prolog code to the original loop and update the
   // PHI functions.
   BasicBlock *LastLoopBB = cast<BasicBlock>(VMap[Latch]);
-  ConnectProlog(L, BECount, Count, LastLoopBB, PEnd, PH, NewPH, VMap,
-                /*AliasAnalysis*/ nullptr, DT, LI, LPM->getAsPass());
+  ConnectProlog(L, BECount, Count, LastLoopBB, PEnd, PH, NewPH, VMap, DT, LI,
+                LPM->getAsPass());
   NumRuntimeUnrolled++;
   return true;
 }

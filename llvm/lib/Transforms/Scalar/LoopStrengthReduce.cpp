@@ -4658,8 +4658,7 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
                                           .setDontDeleteUselessPHIs());
           } else {
             SmallVector<BasicBlock*, 2> NewBBs;
-            SplitLandingPadPredecessors(Parent, BB, "", "", NewBBs,
-                                        /*AliasAnalysis*/ nullptr, &DT, &LI);
+            SplitLandingPadPredecessors(Parent, BB, "", "", NewBBs, &DT, &LI);
             NewBB = NewBBs[0];
           }
           // If NewBB==NULL, then SplitCriticalEdge refused to split because all
