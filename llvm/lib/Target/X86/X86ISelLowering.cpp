@@ -15358,28 +15358,45 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue PassThru = Op.getOperand(2);
       SDValue Mask = Op.getOperand(3);
       SDValue RoundingMode;
+      // We allways add rounding mode to the Node.
+      // If the rounding mode is not specified, we add the 
+      // "current direction" mode.
       if (Op.getNumOperands() == 4)
-        RoundingMode = DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
+        RoundingMode =
+          DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
       else
         RoundingMode = Op.getOperand(4);
       unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
-      if (IntrWithRoundingModeOpcode != 0) {
-        unsigned Round = cast<ConstantSDNode>(RoundingMode)->getZExtValue();
-        if (Round != X86::STATIC_ROUNDING::CUR_DIRECTION)
+      if (IntrWithRoundingModeOpcode != 0)
+        if (cast<ConstantSDNode>(RoundingMode)->getZExtValue() !=
+            X86::STATIC_ROUNDING::CUR_DIRECTION)
           return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
                                       dl, Op.getValueType(), Src, RoundingMode),
                                       Mask, PassThru, Subtarget, DAG);
-      }
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src,
                                               RoundingMode),
                                   Mask, PassThru, Subtarget, DAG);
     }
     case INTR_TYPE_1OP_MASK: {
       SDValue Src = Op.getOperand(1);
-      SDValue Passthru = Op.getOperand(2);
+      SDValue PassThru = Op.getOperand(2);
       SDValue Mask = Op.getOperand(3);
+      // We add rounding mode to the Node when
+      //   - RM Opcode is specified and
+      //   - RM is not "current direction".
+      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
+      if (IntrWithRoundingModeOpcode != 0) {
+        SDValue Rnd = Op.getOperand(4);
+        unsigned Round = cast<ConstantSDNode>(Rnd)->getZExtValue();
+        if (Round != X86::STATIC_ROUNDING::CUR_DIRECTION) {
+          return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
+                                      dl, Op.getValueType(),
+                                      Src, Rnd),
+                                      Mask, PassThru, Subtarget, DAG);
+        }
+      }
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src),
-                                  Mask, Passthru, Subtarget, DAG);
+                                  Mask, PassThru, Subtarget, DAG);
     }
     case INTR_TYPE_SCALAR_MASK_RM: {
       SDValue Src1 = Op.getOperand(1);
