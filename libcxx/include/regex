@@ -2952,7 +2952,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     __lookahead(const basic_regex<_CharT, _Traits>& __exp, bool __invert, __node<_CharT>* __s, unsigned __mexp)
-        : base(__s), __exp_(__exp), __invert_(__invert), __mexp_(__mexp) {}
+        : base(__s), __exp_(__exp), __mexp_(__mexp), __invert_(__invert) {}
 
     virtual void __exec(__state&) const;
 };
@@ -5421,8 +5421,8 @@ match_results<_BidirectionalIterator, _Allocator>::match_results(
       __unmatched_(),
       __prefix_(),
       __suffix_(),
-      __position_start_(),
-      __ready_(false)
+      __ready_(false),
+      __position_start_()
 {
 }
 
