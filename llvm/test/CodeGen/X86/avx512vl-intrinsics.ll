@@ -3481,3 +3481,55 @@ define <8 x float>@test_int_x86_avx512_mask_cvt_udq2ps_256(<8 x i32> %x0, <8 x f
   ret <8 x float> %res2
 }
 
+declare <2 x double> @llvm.x86.avx512.mask.rndscale.pd.128(<2 x double>, i32, <2 x double>, i8)
+; CHECK-LABEL: @test_int_x86_avx512_mask_rndscale_pd_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vrndscalepd {{.*}}{%k1} 
+; CHECK: vrndscalepd
+define <2 x double>@test_int_x86_avx512_mask_rndscale_pd_128(<2 x double> %x0, <2 x double> %x2, i8 %x3) {
+  %res = call <2 x double> @llvm.x86.avx512.mask.rndscale.pd.128(<2 x double> %x0, i32 4, <2 x double> %x2, i8 %x3)
+  %res1 = call <2 x double> @llvm.x86.avx512.mask.rndscale.pd.128(<2 x double> %x0, i32 88, <2 x double> %x2, i8 -1)
+  %res2 = fadd <2 x double> %res, %res1
+  ret <2 x double> %res2
+}
+
+declare <4 x double> @llvm.x86.avx512.mask.rndscale.pd.256(<4 x double>, i32, <4 x double>, i8)
+; CHECK-LABEL: @test_int_x86_avx512_mask_rndscale_pd_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vrndscalepd {{.*}}{%k1} 
+; CHECK: vrndscalepd
+define <4 x double>@test_int_x86_avx512_mask_rndscale_pd_256(<4 x double> %x0, <4 x double> %x2, i8 %x3) {
+  %res = call <4 x double> @llvm.x86.avx512.mask.rndscale.pd.256(<4 x double> %x0, i32 4, <4 x double> %x2, i8 %x3)
+  %res1 = call <4 x double> @llvm.x86.avx512.mask.rndscale.pd.256(<4 x double> %x0, i32 88, <4 x double> %x2, i8 -1)
+  %res2 = fadd <4 x double> %res, %res1
+  ret <4 x double> %res2
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.rndscale.ps.128(<4 x float>, i32, <4 x float>, i8)
+; CHECK-LABEL: @test_int_x86_avx512_mask_rndscale_ps_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vrndscaleps {{.*}}{%k1} 
+; CHECK: vrndscaleps
+define <4 x float>@test_int_x86_avx512_mask_rndscale_ps_128(<4 x float> %x0, <4 x float> %x2, i8 %x3) {
+  %res = call <4 x float> @llvm.x86.avx512.mask.rndscale.ps.128(<4 x float> %x0, i32 88, <4 x float> %x2, i8 %x3)
+  %res1 = call <4 x float> @llvm.x86.avx512.mask.rndscale.ps.128(<4 x float> %x0, i32 4, <4 x float> %x2, i8 -1)
+  %res2 = fadd <4 x float> %res, %res1
+  ret <4 x float> %res2
+}
+
+declare <8 x float> @llvm.x86.avx512.mask.rndscale.ps.256(<8 x float>, i32, <8 x float>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_rndscale_ps_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vrndscaleps {{.*}}{%k1} 
+; CHECK: vrndscaleps
+define <8 x float>@test_int_x86_avx512_mask_rndscale_ps_256(<8 x float> %x0, <8 x float> %x2, i8 %x3) {
+  %res = call <8 x float> @llvm.x86.avx512.mask.rndscale.ps.256(<8 x float> %x0, i32 5, <8 x float> %x2, i8 %x3)
+  %res1 = call <8 x float> @llvm.x86.avx512.mask.rndscale.ps.256(<8 x float> %x0, i32 66, <8 x float> %x2, i8 -1)
+  %res2 = fadd <8 x float> %res, %res1
+  ret <8 x float> %res2
+}
