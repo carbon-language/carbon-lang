@@ -527,7 +527,7 @@ StringRef NonRelocatableStringpool::internString(StringRef S) {
   std::pair<uint32_t, StringMapEntryBase *> Entry(0, nullptr);
   auto InsertResult = Strings.insert(std::make_pair(S, Entry));
   return InsertResult.first->getKey();
-};
+}
 
 /// \brief The Dwarf streaming logic
 ///
