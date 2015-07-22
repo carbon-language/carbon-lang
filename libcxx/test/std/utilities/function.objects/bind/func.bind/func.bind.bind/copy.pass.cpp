@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 // <functional>
 
 // template<CopyConstructible Fn, CopyConstructible... Types>

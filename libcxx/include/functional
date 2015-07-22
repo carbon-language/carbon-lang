@@ -1234,11 +1234,11 @@ const_mem_fun1_ref_t<_Sp,_Tp,_Ap>
 mem_fun_ref(_Sp (_Tp::*__f)(_Ap) const)
     {return const_mem_fun1_ref_t<_Sp,_Tp,_Ap>(__f);}
 
-#ifdef _LIBCPP_HAS_NO_VARIADICS
+////////////////////////////////////////////////////////////////////////////////
+//                                MEMFUN
+//==============================================================================
 
-#include <__functional_03>
-
-#else  // _LIBCPP_HAS_NO_VARIADICS
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp>
 class __mem_fn
@@ -1271,6 +1271,12 @@ mem_fn(_Rp _Tp::* __pm)
     return __mem_fn<_Rp _Tp::*>(__pm);
 }
 
+#endif // _LIBCPP_HAS_NO_VARIADICS
+
+////////////////////////////////////////////////////////////////////////////////
+//                                FUNCTION
+//==============================================================================
+
 // bad_function_call
 
 class _LIBCPP_EXCEPTION_ABI bad_function_call
@@ -1283,7 +1289,7 @@ template<class _Fp> class _LIBCPP_TYPE_VIS_ONLY function; // undefined
 namespace __function
 {
 
-template<class _Rp, class ..._ArgTypes>
+template<class _Rp>
 struct __maybe_derive_from_unary_function
 {
 };
@@ -1294,7 +1300,7 @@ struct __maybe_derive_from_unary_function<_Rp(_A1)>
 {
 };
 
-template<class _Rp, class ..._ArgTypes>
+template<class _Rp>
 struct __maybe_derive_from_binary_function
 {
 };
@@ -1304,6 +1310,12 @@ struct __maybe_derive_from_binary_function<_Rp(_A1, _A2)>
     : public binary_function<_A1, _A2, _Rp>
 {
 };
+
+} // namespace __function
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+namespace __function {
 
 template<class _Fp> class __base;
 
@@ -1848,6 +1860,12 @@ void
 swap(function<_Rp(_ArgTypes...)>& __x, function<_Rp(_ArgTypes...)>& __y) _NOEXCEPT
 {return __x.swap(__y);}
 
+#endif // _LIBCPP_HAS_NO_VARIADICS
+
+////////////////////////////////////////////////////////////////////////////////
+//                                  BIND
+//==============================================================================
+
 template<class _Tp> struct __is_bind_expression : public false_type {};
 template<class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_bind_expression
     : public __is_bind_expression<typename remove_cv<_Tp>::type> {};
@@ -1877,6 +1895,9 @@ _LIBCPP_FUNC_VIS extern __ph<10> _10;
 template<int _Np>
 struct __is_placeholder<placeholders::__ph<_Np> >
     : public integral_constant<int, _Np> {};
+
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Uj>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2457,6 +2478,15 @@ invoke(_Fn&& __f, _Args&&... __args) {
 #endif
 
 // struct hash<T*> in <memory>
+
+
+////////////////////////////////////////////////////////////////////////////////
+//                            FUNCTIONAL 03
+//==============================================================================
+
+#ifdef _LIBCPP_HAS_NO_VARIADICS
+#include <__functional_03>
+#endif
 
 _LIBCPP_END_NAMESPACE_STD
 
