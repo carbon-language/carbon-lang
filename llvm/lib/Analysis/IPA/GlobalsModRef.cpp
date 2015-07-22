@@ -236,8 +236,9 @@ private:
 
   void AnalyzeGlobals(Module &M);
   void AnalyzeCallGraph(CallGraph &CG, Module &M);
-  bool AnalyzeUsesOfPointer(Value *V, std::vector<Function *> &Readers,
-                            std::vector<Function *> &Writers,
+  bool AnalyzeUsesOfPointer(Value *V,
+                            SmallPtrSetImpl<Function *> *Readers = nullptr,
+                            SmallPtrSetImpl<Function *> *Writers = nullptr,
                             GlobalValue *OkayStoreDest = nullptr);
   bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
 };
@@ -259,23 +260,21 @@ Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 /// (really, their address passed to something nontrivial), record this fact,
 /// and record the functions that they are used directly in.
 void GlobalsModRef::AnalyzeGlobals(Module &M) {
-  std::vector<Function *> Readers, Writers;
   for (Function &F : M)
-    if (F.hasLocalLinkage()) {
-      if (!AnalyzeUsesOfPointer(&F, Readers, Writers)) {
+    if (F.hasLocalLinkage())
+      if (!AnalyzeUsesOfPointer(&F)) {
         // Remember that we are tracking this global.
         NonAddressTakenGlobals.insert(&F);
         Handles.emplace_front(*this, &F);
         Handles.front().I = Handles.begin();
         ++NumNonAddrTakenFunctions;
       }
-      Readers.clear();
-      Writers.clear();
-    }
 
+  SmallPtrSet<Function *, 64> Readers, Writers;
   for (GlobalVariable &GV : M.globals())
     if (GV.hasLocalLinkage()) {
-      if (!AnalyzeUsesOfPointer(&GV, Readers, Writers)) {
+      if (!AnalyzeUsesOfPointer(&GV, &Readers,
+                                GV.isConstant() ? nullptr : &Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
         NonAddressTakenGlobals.insert(&GV);
         Handles.emplace_front(*this, &GV);
@@ -306,8 +305,8 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
 ///
 /// If OkayStoreDest is non-null, stores into this global are allowed.
 bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
-                                         std::vector<Function *> &Readers,
-                                         std::vector<Function *> &Writers,
+                                         SmallPtrSetImpl<Function *> *Readers,
+                                         SmallPtrSetImpl<Function *> *Writers,
                                          GlobalValue *OkayStoreDest) {
   if (!V->getType()->isPointerTy())
     return true;
@@ -315,10 +314,12 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
   for (Use &U : V->uses()) {
     User *I = U.getUser();
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      Readers.push_back(LI->getParent()->getParent());
+      if (Readers)
+        Readers->insert(LI->getParent()->getParent());
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
       if (V == SI->getOperand(1)) {
-        Writers.push_back(SI->getParent()->getParent());
+        if (Writers)
+          Writers->insert(SI->getParent()->getParent());
       } else if (SI->getOperand(1) != OkayStoreDest) {
         return true; // Storing the pointer
       }
@@ -333,10 +334,12 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       // passing into the function.
       if (!CS.isCallee(&U)) {
         // Detect calls to free.
-        if (isFreeCall(I, TLI))
-          Writers.push_back(CS->getParent()->getParent());
-        else
+        if (isFreeCall(I, TLI)) {
+          if (Writers)
+            Writers->insert(CS->getParent()->getParent());
+        } else {
           return true; // Argument of an unknown call.
+        }
       }
     } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
@@ -368,8 +371,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       // The pointer loaded from the global can only be used in simple ways:
       // we allow addressing of it and loading storing to it.  We do *not* allow
       // storing the loaded pointer somewhere else or passing to a function.
-      std::vector<Function *> ReadersWriters;
-      if (AnalyzeUsesOfPointer(LI, ReadersWriters, ReadersWriters))
+      if (AnalyzeUsesOfPointer(LI))
         return false; // Loaded pointer escapes.
       // TODO: Could try some IP mod/ref of the loaded pointer.
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
@@ -390,8 +392,8 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
 
       // Analyze all uses of the allocation.  If any of them are used in a
       // non-simple way (e.g. stored to another global) bail out.
-      std::vector<Function *> ReadersWriters;
-      if (AnalyzeUsesOfPointer(Ptr, ReadersWriters, ReadersWriters, GV))
+      if (AnalyzeUsesOfPointer(Ptr, /*Readers*/ nullptr, /*Writers*/ nullptr,
+                               GV))
         return false; // Loaded pointer escapes.
 
       // Remember that this allocation is related to the indirect global.
