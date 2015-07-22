@@ -97,7 +97,7 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
 
   /// AllocsForIndirectGlobals - If an instruction allocates memory for an
   /// indirect global, this map indicates which one.
-  std::map<const Value *, const GlobalValue *> AllocsForIndirectGlobals;
+  DenseMap<const Value *, const GlobalValue *> AllocsForIndirectGlobals;
 
   /// FunctionInfo - For each function, keep track of what globals are
   /// modified or read.
@@ -120,16 +120,11 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
           // any AllocRelatedValues for it.
           if (GMR.IndirectGlobals.erase(GV)) {
             // Remove any entries in AllocsForIndirectGlobals for this global.
-            for (std::map<const Value *, const GlobalValue *>::iterator
-                     I = GMR.AllocsForIndirectGlobals.begin(),
-                     E = GMR.AllocsForIndirectGlobals.end();
-                 I != E;) {
-              if (I->second == GV) {
-                GMR.AllocsForIndirectGlobals.erase(I++);
-              } else {
-                ++I;
-              }
-            }
+            for (auto I = GMR.AllocsForIndirectGlobals.begin(),
+                      E = GMR.AllocsForIndirectGlobals.end();
+                 I != E; ++I)
+              if (I->second == GV)
+                GMR.AllocsForIndirectGlobals.erase(I);
           }
         }
       }
