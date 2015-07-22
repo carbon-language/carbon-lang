@@ -176,8 +176,8 @@ MemoryHistoryASan::GetHistoryThreads(lldb::addr_t address)
     
     HistoryThreads result;
 
-    CreateHistoryThreadFromValueObject(process_sp, return_value_sp, "alloc", "Memory allocated at", result);
     CreateHistoryThreadFromValueObject(process_sp, return_value_sp, "free", "Memory deallocated at", result);
+    CreateHistoryThreadFromValueObject(process_sp, return_value_sp, "alloc", "Memory allocated at", result);
     
     return result;
 }
