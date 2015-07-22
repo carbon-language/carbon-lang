@@ -5920,7 +5920,7 @@ ClangASTType::CompleteTagDeclarationDefinition ()
         {
             clang::EnumDecl *enum_decl = enum_type->getDecl();
             
-            if (enum_decl)
+            if (enum_decl && !enum_decl->isCompleteDefinition())
             {
                 /// TODO This really needs to be fixed.
                 
