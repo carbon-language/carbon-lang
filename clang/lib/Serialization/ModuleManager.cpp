@@ -316,28 +316,24 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     SmallVector<ModuleFile *, 4> Queue;
     Queue.reserve(N);
     llvm::SmallVector<unsigned, 4> UnusedIncomingEdges;
-    UnusedIncomingEdges.reserve(size());
-    for (ModuleIterator M = begin(), MEnd = end(); M != MEnd; ++M) {
-      if (unsigned Size = (*M)->ImportedBy.size())
-        UnusedIncomingEdges.push_back(Size);
-      else {
-        UnusedIncomingEdges.push_back(0);
+    UnusedIncomingEdges.resize(size());
+    for (auto M = rbegin(), MEnd = rend(); M != MEnd; ++M) {
+      unsigned Size = (*M)->ImportedBy.size();
+      UnusedIncomingEdges[(*M)->Index] = Size;
+      if (!Size)
         Queue.push_back(*M);
-      }
     }
 
     // Traverse the graph, making sure to visit a module before visiting any
     // of its dependencies.
-    unsigned QueueStart = 0;
-    while (QueueStart < Queue.size()) {
-      ModuleFile *CurrentModule = Queue[QueueStart++];
+    while (!Queue.empty()) {
+      ModuleFile *CurrentModule = Queue.pop_back_val();
       VisitOrder.push_back(CurrentModule);
 
       // For any module that this module depends on, push it on the
       // stack (if it hasn't already been marked as visited).
-      for (llvm::SetVector<ModuleFile *>::iterator
-             M = CurrentModule->Imports.begin(),
-             MEnd = CurrentModule->Imports.end();
+      for (auto M = CurrentModule->Imports.rbegin(),
+                MEnd = CurrentModule->Imports.rend();
            M != MEnd; ++M) {
         // Remove our current module as an impediment to visiting the
         // module we depend on. If we were the last unvisited module

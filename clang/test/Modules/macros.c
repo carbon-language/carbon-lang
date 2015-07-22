@@ -1,5 +1,6 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -x objective-c -verify -fmodules-cache-path=%t -I %S/Inputs %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -x objective-c -verify -fmodules-cache-path=%t -I %S/Inputs %s -DALT
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -x objective-c -verify -fmodules-cache-path=%t -I %S/Inputs %s -detailed-preprocessing-record
 // RUN: %clang_cc1 -fmodules -fimplicit-module-maps -DLOCAL_VISIBILITY -fmodules-local-submodule-visibility -x objective-c++ -verify -fmodules-cache-path=%t -I %S/Inputs %s
 // RUN: not %clang_cc1 -E -fmodules -fimplicit-module-maps -x objective-c -fmodules-cache-path=%t -I %S/Inputs %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
@@ -157,6 +158,10 @@ int TOP_DEF_RIGHT_UNDEF; // ok, no longer defined
 # endif
 #endif
 
+#ifdef ALT
+int tmp = TOP_OTHER_REDEF1;
+#endif
+
 @import macros_other;
 
 #ifndef TOP_OTHER_UNDEF1
@@ -166,13 +171,13 @@ int TOP_DEF_RIGHT_UNDEF; // ok, no longer defined
 #ifndef TOP_OTHER_UNDEF2
 # error TOP_OTHER_UNDEF2 should still be defined
 #endif
-
+#pragma clang __debug macro TOP_OTHER_REDEF1
 #ifndef TOP_OTHER_REDEF1
 # error TOP_OTHER_REDEF1 should still be defined
 #endif
 int n1 = TOP_OTHER_REDEF1; // expected-warning{{ambiguous expansion of macro 'TOP_OTHER_REDEF1'}}
-// expected-note@macros_top.h:19 {{expanding this definition}}
-// expected-note@macros_other.h:4 {{other definition}}
+// expected-note@macros_other.h:4 {{expanding this definition}}
+// expected-note@macros_top.h:19 {{other definition}}
 
 #ifndef TOP_OTHER_REDEF2
 # error TOP_OTHER_REDEF2 should still be defined
