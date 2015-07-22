@@ -532,6 +532,10 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
       return GV->getInitializer();
 
+  if (auto *GA = dyn_cast<GlobalAlias>(C))
+    if (GA->getAliasee() && !GA->mayBeOverridden())
+      return ConstantFoldLoadFromConstPtr(GA->getAliasee(), DL);
+
   // If the loaded value isn't a constant expr, we can't handle it.
   ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
   if (!CE)
