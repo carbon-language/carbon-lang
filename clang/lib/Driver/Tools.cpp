@@ -5316,6 +5316,9 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     // assembler on assembly source files.
     CmdArgs.push_back("-dwarf-debug-producer");
     CmdArgs.push_back(Args.MakeArgString(getClangFullVersion()));
+
+    // And pass along -I options
+    Args.AddAllArgs(CmdArgs, options::OPT_I);
   }
 
   // Optionally embed the -cc1as level arguments into the debug info, for build
@@ -7813,6 +7816,7 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   if (NeedsKPIC)
     addAssemblerKPIC(Args, CmdArgs);
 
+  Args.AddAllArgs(CmdArgs, options::OPT_I);
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
 
   CmdArgs.push_back("-o");
