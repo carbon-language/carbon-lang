@@ -178,7 +178,14 @@ def executeShCmd(cmd, shenv, results):
 
         # Resolve the executable path ourselves.
         args = list(j.args)
-        executable = lit.util.which(args[0], cmd_shenv.env['PATH'])
+        executable = None
+        # For paths relative to cwd, use the cwd of the shell environment.
+        if args[0].startswith('.'):
+            exe_in_cwd = os.path.join(cmd_shenv.cwd, args[0])
+            if os.path.isfile(exe_in_cwd):
+                executable = exe_in_cwd
+        if not executable:
+            executable = lit.util.which(args[0], cmd_shenv.env['PATH'])
         if not executable:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
