@@ -112,6 +112,7 @@ public:
   bool parseConstantPoolIndexOperand(MachineOperand &Dest);
   bool parseJumpTableIndexOperand(MachineOperand &Dest);
   bool parseExternalSymbolOperand(MachineOperand &Dest);
+  bool parseMDNode(MDNode *&Node);
   bool parseMetadataOperand(MachineOperand &Dest);
   bool parseCFIOffset(int &Offset);
   bool parseCFIOperand(MachineOperand &Dest);
@@ -576,7 +577,7 @@ bool MIParser::parseExternalSymbolOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseMetadataOperand(MachineOperand &Dest) {
+bool MIParser::parseMDNode(MDNode *&Node) {
   assert(Token.is(MIToken::exclaim));
   auto Loc = Token.location();
   lex();
@@ -589,7 +590,15 @@ bool MIParser::parseMetadataOperand(MachineOperand &Dest) {
   if (NodeInfo == IRSlots.MetadataNodes.end())
     return error(Loc, "use of undefined metadata '!" + Twine(ID) + "'");
   lex();
-  Dest = MachineOperand::CreateMetadata(NodeInfo->second.get());
+  Node = NodeInfo->second.get();
+  return false;
+}
+
+bool MIParser::parseMetadataOperand(MachineOperand &Dest) {
+  MDNode *Node = nullptr;
+  if (parseMDNode(Node))
+    return true;
+  Dest = MachineOperand::CreateMetadata(Node);
   return false;
 }
 
