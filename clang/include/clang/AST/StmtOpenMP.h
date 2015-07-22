@@ -1813,7 +1813,7 @@ class OMPTargetDataDirective : public OMPExecutableDirective {
   ///
   /// \param StartLoc Starting location of the directive kind.
   /// \param EndLoc Ending Location of the directive.
-  /// \param N The number of clauses.
+  /// \param NumClauses The number of clauses.
   ///
   OMPTargetDataDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                          unsigned NumClauses)
@@ -1823,7 +1823,7 @@ class OMPTargetDataDirective : public OMPExecutableDirective {
 
   /// \brief Build an empty directive.
   ///
-  /// \param N Number of clauses.
+  /// \param NumClauses Number of clauses.
   ///
   explicit OMPTargetDataDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPTargetDataDirectiveClass, 
