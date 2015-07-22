@@ -26,7 +26,10 @@ class AllocaInst;
 }
 
 namespace clang {
+class FunctionDecl;
 namespace CodeGen {
+class CodeGenModule;
+class CodeGenFunction;
 
 /// A protected scope for zero-cost EH handling.
 class EHScope {
@@ -560,6 +563,32 @@ EHScopeStack::stabilize(iterator ir) const {
   return stable_iterator(EndOfBuffer - ir.Ptr);
 }
 
+/// The exceptions personality for a function.
+struct EHPersonality {
+  const char *PersonalityFn;
+
+  // If this is non-null, this personality requires a non-standard
+  // function for rethrowing an exception after a catchall cleanup.
+  // This function must have prototype void(void*).
+  const char *CatchallRethrowFn;
+
+  static const EHPersonality &get(CodeGenModule &CGM, const FunctionDecl *FD);
+  static const EHPersonality &get(CodeGenFunction &CGF);
+
+  static const EHPersonality GNU_C;
+  static const EHPersonality GNU_C_SJLJ;
+  static const EHPersonality GNU_C_SEH;
+  static const EHPersonality GNU_ObjC;
+  static const EHPersonality GNUstep_ObjC;
+  static const EHPersonality GNU_ObjCXX;
+  static const EHPersonality NeXT_ObjC;
+  static const EHPersonality GNU_CPlusPlus;
+  static const EHPersonality GNU_CPlusPlus_SJLJ;
+  static const EHPersonality GNU_CPlusPlus_SEH;
+  static const EHPersonality MSVC_except_handler;
+  static const EHPersonality MSVC_C_specific_handler;
+  static const EHPersonality MSVC_CxxFrameHandler3;
+};
 }
 }
 
