@@ -136,10 +136,9 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_teams:
   case OMPD_cancellation_point:
   case OMPD_cancel:
+  case OMPD_target_data:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
-    break;
-  case OMPD_target_data:
     break;
   }
   SkipUntil(tok::annot_pragma_openmp_end);
