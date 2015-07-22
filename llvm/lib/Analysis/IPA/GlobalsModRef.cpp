@@ -599,10 +599,10 @@ AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
 
   // These pointers may also be from an allocation for the indirect global.  If
   // so, also handle them.
-  if (AllocsForIndirectGlobals.count(UV1))
-    GV1 = AllocsForIndirectGlobals[UV1];
-  if (AllocsForIndirectGlobals.count(UV2))
-    GV2 = AllocsForIndirectGlobals[UV2];
+  if (!GV1)
+    GV1 = AllocsForIndirectGlobals.lookup(UV1);
+  if (!GV2)
+    GV2 = AllocsForIndirectGlobals.lookup(UV2);
 
   // Now that we know whether the two pointers are related to indirect globals,
   // use this to disambiguate the pointers. If the pointers are based on
