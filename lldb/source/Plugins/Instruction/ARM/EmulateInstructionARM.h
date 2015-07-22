@@ -94,20 +94,20 @@ public:
         return false;
     }
 
-    virtual lldb_private::ConstString
-    GetPluginName()
+    lldb_private::ConstString
+    GetPluginName() override
     {
         return GetPluginNameStatic();
     }
 
-    virtual uint32_t
-    GetPluginVersion()
+    uint32_t
+    GetPluginVersion()  override
     {
         return 1;
     }
 
     bool
-    SetTargetTriple (const ArchSpec &arch);
+    SetTargetTriple (const ArchSpec &arch)  override;
     
     enum Mode
     {
@@ -148,8 +148,8 @@ public:
 //    {
 //    }
     
-    virtual bool
-    SupportsEmulatingInstructionsOfType (InstructionType inst_type)
+    bool
+    SupportsEmulatingInstructionsOfType (InstructionType inst_type)  override
     {
         return SupportsEmulatingInstructionsOfTypeStatic (inst_type);
     }
@@ -157,27 +157,26 @@ public:
     virtual bool
     SetArchitecture (const ArchSpec &arch);
 
-    virtual bool 
-    ReadInstruction ();
+    bool
+    ReadInstruction ()  override;
     
-    virtual bool
-    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr, Target *target);
+    bool
+    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr, Target *target)  override;
 
-    virtual bool
-    EvaluateInstruction (uint32_t evaluate_options);
+    bool
+    EvaluateInstruction (uint32_t evaluate_options) override;
 
     bool
     IsInstructionConditional() override;
 
-    virtual bool
-    TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data);
+    bool
+    TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data)  override;
 
-    virtual bool
-    GetRegisterInfo (lldb::RegisterKind reg_kind, uint32_t reg_num, RegisterInfo &reg_info);
-    
+    bool
+    GetRegisterInfo (lldb::RegisterKind reg_kind, uint32_t reg_num, RegisterInfo &reg_info)  override;
 
-    virtual bool
-    CreateFunctionEntryUnwind (UnwindPlan &unwind_plan);
+    bool
+    CreateFunctionEntryUnwind (UnwindPlan &unwind_plan) override;
 
     uint32_t
     ArchVersion();
