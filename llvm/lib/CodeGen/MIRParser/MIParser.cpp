@@ -205,7 +205,7 @@ bool MIParser::parse(MachineInstr *&MI) {
   // TODO: Parse the bundle instruction flags and memory operands.
 
   // Parse the remaining machine operands.
-  while (Token.isNot(MIToken::Eof)) {
+  while (Token.isNot(MIToken::Eof) && Token.isNot(MIToken::kw_debug_location)) {
     auto Loc = Token.location();
     if (parseMachineOperand(MO))
       return true;
@@ -217,6 +217,17 @@ bool MIParser::parse(MachineInstr *&MI) {
     lex();
   }
 
+  DebugLoc DebugLocation;
+  if (Token.is(MIToken::kw_debug_location)) {
+    lex();
+    if (Token.isNot(MIToken::exclaim))
+      return error("expected a metadata node after 'debug-location'");
+    MDNode *Node = nullptr;
+    if (parseMDNode(Node))
+      return true;
+    DebugLocation = DebugLoc(Node);
+  }
+
   const auto &MCID = MF.getSubtarget().getInstrInfo()->get(OpCode);
   if (!MCID.isVariadic()) {
     // FIXME: Move the implicit operand verification to the machine verifier.
@@ -225,7 +236,7 @@ bool MIParser::parse(MachineInstr *&MI) {
   }
 
   // TODO: Check for extraneous machine operands.
-  MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
+  MI = MF.CreateMachineInstr(MCID, DebugLocation, /*NoImplicit=*/true);
   MI->setFlags(Flags);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand.Operand);

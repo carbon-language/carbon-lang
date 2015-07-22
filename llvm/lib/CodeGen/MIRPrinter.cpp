@@ -378,6 +378,13 @@ void MIPrinter::print(const MachineInstr &MI) {
     print(MI.getOperand(I), TRI);
     NeedComma = true;
   }
+
+  if (MI.getDebugLoc()) {
+    if (NeedComma)
+      OS << ',';
+    OS << " debug-location ";
+    MI.getDebugLoc()->printAsOperand(OS, MST);
+  }
 }
 
 void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
