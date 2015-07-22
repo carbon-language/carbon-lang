@@ -18,6 +18,7 @@
 
 import binascii
 import commands
+import json
 import math
 import optparse
 import os
@@ -535,13 +536,13 @@ def rsp_stop_reply(options, cmd, cmd_args, rsp):
             elif key == 'jthreads' or key == 'jstopinfo':
                 key_value_pair[1] = binascii.unhexlify(key_value_pair[1])
         key_value_pairs.insert(0, ['signal', signo])
-        print 'Stop reply:'
+        print 'stop_reply():'
         dump_key_value_pairs (key_value_pairs)
     elif stop_type == 'W':
         exit_status = packet.get_hex_uint8()
-        print 'exit (status=%i)' % exit_status
+        print 'stop_reply(): exit (status=%i)' % exit_status
     elif stop_type == 'O':
-        print 'stdout = %s' % packet.str
+        print 'stop_reply(): stdout = "%s"' % packet.str
         
 
 def cmd_unknown_packet(options, cmd, args):
@@ -1031,6 +1032,42 @@ def cmd_kill(options, cmd, args):
     print 'kill_process()'
     return False
 
+def cmd_jThreadsInfo(options, cmd, args):
+    print 'jThreadsInfo()'
+    return False
+    
+def cmd_jGetLoadedDynamicLibrariesInfos(options, cmd, args):
+    print 'jGetLoadedDynamicLibrariesInfos()'
+    return False
+
+def decode_packet(s, start_index = 0):
+    #print '\ndecode_packet("%s")' % (s[start_index:])
+    index = s.find('}', start_index)
+    have_escapes = index != -1
+    if have_escapes:
+        normal_s = s[start_index:index]
+    else:
+        normal_s = s[start_index:]
+    #print 'normal_s = "%s"' % (normal_s)
+    if have_escapes:
+        escape_char = '%c' % (ord(s[index+1]) ^ 0x20)
+        #print 'escape_char for "%s" = %c' % (s[index:index+2], escape_char)
+        return normal_s + escape_char + decode_packet(s, index+2)
+    else:
+        return normal_s
+
+def rsp_json(options, cmd, cmd_args, rsp):
+    print '%s() reply:' % (cmd)
+    json_tree = json.loads(rsp)
+    print json.dumps(json_tree, indent=4, separators=(',', ': '))
+    
+        
+def rsp_jGetLoadedDynamicLibrariesInfos(options, cmd, cmd_args, rsp):
+    if cmd_args:
+        rsp_json(options, cmd, cmd_args, rsp)
+    else:
+        rsp_ok_means_supported(options, cmd, cmd_args, rsp)
+    
 gdb_remote_commands = {
     '\\?'                     : { 'cmd' : cmd_stop_reply        , 'rsp' : rsp_stop_reply          , 'name' : "stop reply pacpket"},
     'qThreadStopInfo'         : { 'cmd' : cmd_qThreadStopInfo   , 'rsp' : rsp_stop_reply          , 'name' : "stop reply pacpket"},
@@ -1071,6 +1108,8 @@ gdb_remote_commands = {
     'z'                       : { 'cmd' : cmd_bp                , 'rsp' : rsp_ok_means_success    , 'name' : "clear breakpoint or watchpoint" },
     'Z'                       : { 'cmd' : cmd_bp                , 'rsp' : rsp_ok_means_success    , 'name' : "set breakpoint or watchpoint" },
     'k'                       : { 'cmd' : cmd_kill              , 'rsp' : rsp_stop_reply          , 'name' : "kill process" },
+    'jThreadsInfo'            : { 'cmd' : cmd_jThreadsInfo      , 'rsp' : rsp_json                , 'name' : "JSON get all threads info" },
+    'jGetLoadedDynamicLibrariesInfos:' : { 'cmd' : cmd_jGetLoadedDynamicLibrariesInfos, 'rsp' : rsp_jGetLoadedDynamicLibrariesInfos, 'name' : 'JSON get loaded dynamic libraries' },
 }
 
 def calculate_mean_and_standard_deviation(floats):
@@ -1109,6 +1148,7 @@ def parse_gdb_log(file, options):
     packet_name_regex = re.compile('([A-Za-z_]+)[^a-z]')
     packet_transmit_name_regex = re.compile('(?P<direction>send|read) packet: (?P<packet>.*)')
     packet_contents_name_regex = re.compile('\$([^#]+)#[0-9a-fA-F]{2}')
+    packet_checksum_regex = re.compile('.*#[0-9a-fA-F]{2}$')
     packet_names_regex_str = '(' + '|'.join(gdb_remote_commands.keys()) + ')(.*)';
     packet_names_regex = re.compile(packet_names_regex_str);
     
@@ -1123,7 +1163,13 @@ def parse_gdb_log(file, options):
     last_command_args = None
     last_command_packet = None
     hide_next_response = False
-    for line in lines:
+    num_lines = len(lines)
+    skip_count = 0
+    for (line_index, line) in enumerate(lines):
+        # See if we need to skip any lines
+        if skip_count > 0:
+            skip_count -= 1
+            continue
         m = packet_transmit_name_regex.search(line)
         is_command = False
         direction = None
@@ -1138,21 +1184,42 @@ def parse_gdb_log(file, options):
                 
             #print 'direction = "%s", packet = "%s"' % (direction, packet)
             
-            if is_command:
-                print '-->',
-            else:
-                print '<--',
-
             if packet[0] == '+':
+                if is_command:
+                    print '-->',
+                else:
+                    print '<--',
                 if not options.quiet: print 'ACK'
                 continue
             elif packet[0] == '-':
+                if is_command:
+                    print '-->',
+                else:
+                    print '<--',
                 if not options.quiet: print 'NACK'
                 continue
             elif packet[0] == '$':
                 m = packet_contents_name_regex.match(packet)
+                if not m and packet[0] == '$':
+                    multiline_packet = packet
+                    idx = line_index + 1
+                    while idx < num_lines:
+                        if not options.quiet and not hide_next_response:
+                            print '#  ', lines[idx]
+                        multiline_packet += lines[idx]
+                        m = packet_contents_name_regex.match(multiline_packet)
+                        if m:
+                            packet = multiline_packet
+                            skip_count = idx - line_index
+                            break
+                        else:
+                            idx += 1
                 if m:
-                    contents = m.group(1)
+                    if is_command:
+                        print '-->',
+                    else:
+                        print '<--',
+                    contents = decode_packet(m.group(1))
                     if is_command:
                         hide_next_response = False
                         m = packet_names_regex.match (contents)
