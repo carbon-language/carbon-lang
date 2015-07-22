@@ -4022,6 +4022,31 @@ public:
   }
 };
 
+// x86-64 Cygwin target
+class CygwinX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  CygwinX86_64TargetInfo(const llvm::Triple &Triple)
+      : X86_64TargetInfo(Triple) {
+    TLSSupported = false;
+    WCharType = UnsignedShort;
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    X86_64TargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("__x86_64__");
+    Builder.defineMacro("__CYGWIN__");
+    Builder.defineMacro("__CYGWIN64__");
+    addCygMingDefines(Opts, Builder);
+    DefineStd(Builder, "unix", Opts);
+    if (Opts.CPlusPlus)
+      Builder.defineMacro("_GNU_SOURCE");
+
+    // GCC defines this macro when it is using __gxx_personality_seh0.
+    if (!Opts.SjLjExceptions)
+      Builder.defineMacro("__SEH__");
+  }
+};
+
 class DarwinX86_64TargetInfo : public DarwinTargetInfo<X86_64TargetInfo> {
 public:
   DarwinX86_64TargetInfo(const llvm::Triple &Triple)
@@ -7428,6 +7453,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new SolarisTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::Win32: {
       switch (Triple.getEnvironment()) {
+      case llvm::Triple::Cygnus:
+        return new CygwinX86_64TargetInfo(Triple);
       case llvm::Triple::GNU:
         return new MinGWX86_64TargetInfo(Triple);
       case llvm::Triple::MSVC:
