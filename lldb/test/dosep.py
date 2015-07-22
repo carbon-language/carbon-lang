@@ -244,6 +244,7 @@ def getExpectedTimeouts(platform_name):
         expected_timeout |= {
             "TestAttachDenied.py",
             "TestAttachResume.py",
+            "TestProcessAttach.py",
             "TestConnectRemote.py",
             "TestCreateAfterAttach.py",
             "TestEvents.py",
