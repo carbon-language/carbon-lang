@@ -29,6 +29,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include <list>
 #include <set>
 using namespace llvm;
 
@@ -87,8 +88,7 @@ struct FunctionRecord {
 
 /// GlobalsModRef - The actual analysis pass.
 class GlobalsModRef : public ModulePass, public AliasAnalysis {
-  /// NonAddressTakenGlobals - The globals that do not have their addresses
-  /// taken.
+  /// The globals that do not have their addresses taken.
   std::set<const GlobalValue *> NonAddressTakenGlobals;
 
   /// IndirectGlobals - The memory pointed to by this global is known to be
@@ -102,6 +102,15 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
   /// FunctionInfo - For each function, keep track of what globals are
   /// modified or read.
   std::map<const Function *, FunctionRecord> FunctionInfo;
+
+  /// Handle to clear this analysis on deletion of values.
+  struct DeletionCallbackHandle;
+
+  /// List of callbacks for globals being tracked by this analysis. Note that
+  /// these objects are quite large, but we only anticipate having one per
+  /// global tracked by this analysis. There are numerous optimizations we
+  /// could perform to the memory utilization here if this becomes a problem.
+  std::list<DeletionCallbackHandle> Handles;
 
 public:
   static char ID;
@@ -171,8 +180,6 @@ public:
     return ModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
   }
 
-  void deleteValue(Value *V) override;
-
   /// getAdjustedAnalysisPointer - This method is used when a pass implements
   /// an analysis interface through multiple inheritance.  If needed, it
   /// should override this to adjust the this pointer as needed for the
@@ -214,6 +221,45 @@ INITIALIZE_AG_PASS_END(GlobalsModRef, AliasAnalysis, "globalsmodref-aa",
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 
+struct final GlobalsModRef::DeletionCallbackHandle : CallbackVH {
+  GlobalsModRef &GMR;
+  std::list<DeletionCallbackHandle>::iterator I;
+
+  DeletionCallbackHandle(GlobalsModRef &GMR, Value *V)
+      : CallbackVH(V), GMR(GMR) {}
+
+  void deleted() override {
+    Value *V = getValPtr();
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+      if (GMR.NonAddressTakenGlobals.erase(GV)) {
+        // This global might be an indirect global.  If so, remove it and remove
+        // any AllocRelatedValues for it.
+        if (GMR.IndirectGlobals.erase(GV)) {
+          // Remove any entries in AllocsForIndirectGlobals for this global.
+          for (std::map<const Value *, const GlobalValue *>::iterator
+                   I = GMR.AllocsForIndirectGlobals.begin(),
+                   E = GMR.AllocsForIndirectGlobals.end();
+               I != E;) {
+            if (I->second == GV) {
+              GMR.AllocsForIndirectGlobals.erase(I++);
+            } else {
+              ++I;
+            }
+          }
+        }
+      }
+    }
+
+    // If this is an allocation related to an indirect global, remove it.
+    GMR.AllocsForIndirectGlobals.erase(V);
+
+    // And clear out the handle.
+    setValPtr(nullptr);
+    GMR.Handles.erase(I);
+    // This object is now destroyed!
+  }
+};
+
 /// AnalyzeGlobals - Scan through the users of all of the internal
 /// GlobalValue's in the program.  If none of them have their "address taken"
 /// (really, their address passed to something nontrivial), record this fact,
@@ -225,6 +271,8 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
       if (!AnalyzeUsesOfPointer(&F, Readers, Writers)) {
         // Remember that we are tracking this global.
         NonAddressTakenGlobals.insert(&F);
+        Handles.emplace_front(*this, &F);
+        Handles.front().I = Handles.begin();
         ++NumNonAddrTakenFunctions;
       }
       Readers.clear();
@@ -236,6 +284,8 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
       if (!AnalyzeUsesOfPointer(&GV, Readers, Writers)) {
         // Remember that we are tracking this global, and the mod/ref fns
         NonAddressTakenGlobals.insert(&GV);
+        Handles.emplace_front(*this, &GV);
+        Handles.front().I = Handles.begin();
 
         for (Function *Reader : Readers)
           FunctionInfo[Reader].GlobalInfo[&GV] |= Ref;
@@ -362,9 +412,13 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
   // this global in AllocsForIndirectGlobals.
   while (!AllocRelatedValues.empty()) {
     AllocsForIndirectGlobals[AllocRelatedValues.back()] = GV;
+    Handles.emplace_front(*this, AllocRelatedValues.back());
+    Handles.front().I = Handles.begin();
     AllocRelatedValues.pop_back();
   }
   IndirectGlobals.insert(GV);
+  Handles.emplace_front(*this, GV);
+  Handles.front().I = Handles.begin();
   return true;
 }
 
@@ -590,35 +644,4 @@ GlobalsModRef::getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc) {
   if (Known == NoModRef)
     return NoModRef; // No need to query other mod/ref analyses
   return ModRefResult(Known & AliasAnalysis::getModRefInfo(CS, Loc));
-}
-
-//===----------------------------------------------------------------------===//
-// Methods to update the analysis as a result of the client transformation.
-//
-void GlobalsModRef::deleteValue(Value *V) {
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    if (NonAddressTakenGlobals.erase(GV)) {
-      // This global might be an indirect global.  If so, remove it and remove
-      // any AllocRelatedValues for it.
-      if (IndirectGlobals.erase(GV)) {
-        // Remove any entries in AllocsForIndirectGlobals for this global.
-        for (std::map<const Value *, const GlobalValue *>::iterator
-                 I = AllocsForIndirectGlobals.begin(),
-                 E = AllocsForIndirectGlobals.end();
-             I != E;) {
-          if (I->second == GV) {
-            AllocsForIndirectGlobals.erase(I++);
-          } else {
-            ++I;
-          }
-        }
-      }
-    }
-  }
-
-  // Otherwise, if this is an allocation related to an indirect global, remove
-  // it.
-  AllocsForIndirectGlobals.erase(V);
-
-  AliasAnalysis::deleteValue(V);
 }
