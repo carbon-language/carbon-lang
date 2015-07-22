@@ -4108,7 +4108,7 @@ AST_MATCHER_P(CaseStmt, hasCaseConstant, internal::Matcher<Expr>,
 /// \code
 ///   __attribute__((device)) void f() { ... }
 /// \endcode
-/// decl(hasAttr(clang::attr::CUDADevice))) matches the function declaration of
+/// decl(hasAttr(clang::attr::CUDADevice)) matches the function declaration of
 /// f.
 AST_MATCHER_P(Decl, hasAttr, attr::Kind, AttrKind) {
   for (const auto *Attr : Node.attrs()) {
