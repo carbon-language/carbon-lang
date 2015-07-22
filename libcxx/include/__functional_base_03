@@ -234,182 +234,6 @@ struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2) volatile>
 
 // __invoke
 
-// __ref_return0
-//
-// template <class _Tp, bool _HasResultType>
-// struct ________ref_return0  // _HasResultType is true
-// {
-//     typedef typename _Tp::result_type type;
-// };
-//
-// template <class _Tp>
-// struct ________ref_return0<_Tp, false>
-// {
-//     typedef void type;
-// };
-//
-// template <class _Tp, bool _IsClass>
-// struct ____ref_return0  // _IsClass is true
-//     : public ________ref_return0<_Tp, __has_result_type<typename remove_cv<_Tp>::type>::value>
-// {
-// };
-//
-// template <class _Tp, bool _HasResultType>
-// struct ______ref_return0  // _HasResultType is true
-// {
-//     typedef typename __callable_type<_Tp>::result_type type;
-// };
-//
-// template <class _Tp>
-// struct ______ref_return0<_Tp, false>  // pointer to member data
-// {
-//     typedef void type;
-// };
-//
-// template <class _Tp>
-// struct ____ref_return0<_Tp, false>
-//     : public ______ref_return0<typename remove_cv<_Tp>::type,
-//                  __has_result_type<__callable_type<typename remove_cv<_Tp>::type> >::value>
-// {
-// };
-//
-// template <class _Tp>
-// struct __ref_return0
-//     : public ____ref_return0<typename remove_reference<_Tp>::type,
-//                    is_class<typename remove_reference<_Tp>::type>::value>
-// {
-// };
-//
-// __ref_return1
-//
-// template <class _Tp, bool _IsClass, class _A0>
-// struct ____ref_return1  // _IsClass is true
-// {
-//     typedef typename result_of<_Tp(_A0)>::type type;
-// };
-//
-// template <class _Tp, bool _HasResultType, class _A0>
-// struct ______ref_return1  // _HasResultType is true
-// {
-//     typedef typename __callable_type<_Tp>::result_type type;
-// };
-//
-// template <class _Tp, class _A0, bool>
-// struct __ref_return1_member_data1;
-//
-// template <class _Rp, class _Cp, class _A0>
-// struct __ref_return1_member_data1<_Rp _Cp::*, _A0, true>
-// {
-//     typedef typename __apply_cv<_A0, _Rp>::type& type;
-// };
-//
-// template <class _Rp, class _Cp, class _A0>
-// struct __ref_return1_member_data1<_Rp _Cp::*, _A0, false>
-// {
-//     static _A0 __a;
-//     typedef typename __apply_cv<decltype(*__a), _Rp>::type& type;
-// };
-//
-// template <class _Tp, class _A0>
-// struct __ref_return1_member_data;
-//
-// template <class _Rp, class _Cp, class _A0>
-// struct __ref_return1_member_data<_Rp _Cp::*, _A0>
-//     : public __ref_return1_member_data1<_Rp _Cp::*, _A0,
-//                 is_same<typename remove_cv<_Cp>::type,
-//                         typename remove_cv<typename remove_reference<_A0>::type>::type>::value>
-// {
-// };
-//
-// template <class _Tp, class _A0>
-// struct ______ref_return1<_Tp, false, _A0>  // pointer to member data
-//     : public __ref_return1_member_data<typename remove_cv<_Tp>::type, _A0>
-// {
-// };
-//
-// template <class _Tp, class _A0>
-// struct ____ref_return1<_Tp, false, _A0>
-//     : public ______ref_return1<typename remove_cv<_Tp>::type,
-//                  __has_result_type<__callable_type<typename remove_cv<_Tp>::type> >::value, _A0>
-// {
-// };
-//
-// template <class _Tp, class _A0>
-// struct __ref_return1
-//     : public ____ref_return1<typename remove_reference<_Tp>::type,
-//                    is_class<typename remove_reference<_Tp>::type>::value, _A0>
-// {
-// };
-//
-// __ref_return2
-//
-// template <class _Tp, bool _IsClass, class _A0, class _A1>
-// struct ____ref_return2  // _IsClass is true
-// {
-//     typedef typename result_of<_Tp(_A0, _A1)>::type type;
-// };
-//
-// template <class _Tp, bool _HasResultType, class _A0, class _A1>
-// struct ______ref_return2  // _HasResultType is true
-// {
-//     typedef typename __callable_type<_Tp>::result_type type;
-// };
-//
-// template <class _Tp>
-// struct ______ref_return2<_Tp, false, class _A0, class _A1>  // pointer to member data
-// {
-//     static_assert(sizeof(_Tp) == 0, "An attempt has been made to `call` a pointer"
-//                          " to member data with too many arguments.");
-// };
-//
-// template <class _Tp, class _A0, class _A1>
-// struct ____ref_return2<_Tp, false, _A0, _A1>
-//     : public ______ref_return2<typename remove_cv<_Tp>::type,
-//                  __has_result_type<__callable_type<typename remove_cv<_Tp>::type> >::value, _A0, _A1>
-// {
-// };
-//
-// template <class _Tp, class _A0, class _A1>
-// struct __ref_return2
-//     : public ____ref_return2<typename remove_reference<_Tp>::type,
-//                    is_class<typename remove_reference<_Tp>::type>::value, _A0, _A1>
-// {
-// };
-//
-// __ref_return3
-//
-// template <class _Tp, bool _IsClass, class _A0, class _A1, class _A2>
-// struct ____ref_return3  // _IsClass is true
-// {
-//     typedef typename result_of<_Tp(_A0, _A1, _A2)>::type type;
-// };
-//
-// template <class _Tp, bool _HasResultType, class _A0, class _A1, class _A2>
-// struct ______ref_return3  // _HasResultType is true
-// {
-//     typedef typename __callable_type<_Tp>::result_type type;
-// };
-//
-// template <class _Tp>
-// struct ______ref_return3<_Tp, false, class _A0, class _A1, class _A2>  // pointer to member data
-// {
-//     static_assert(sizeof(_Tp) == 0, "An attempt has been made to `call` a pointer"
-//                          " to member data with too many arguments.");
-// };
-//
-// template <class _Tp, class _A0, class _A1, class _A2>
-// struct ____ref_return3<_Tp, false, _A0, _A1, _A2>
-//     : public ______ref_return3<typename remove_cv<_Tp>::type,
-//                  __has_result_type<__callable_type<typename remove_cv<_Tp>::type> >::value, _A0, _A1, _A2>
-// {
-// };
-//
-// template <class _Tp, class _A0, class _A1, class _A2>
-// struct __ref_return3
-//     : public ____ref_return3<typename remove_reference<_Tp>::type,
-//                    is_class<typename remove_reference<_Tp>::type>::value, _A0, _A1, _A2>
-// {
-// };
 
 // first bullet
 
@@ -820,18 +644,6 @@ __invoke(_Rp _Tp::*)
 {
 }
 
-// template <class _Dp, class _Rp, class _Tp, class _T1>
-// inline _LIBCPP_INLINE_VISIBILITY
-// typename enable_if
-// <
-//     is_base_of<_Tp, typename remove_reference<_T1>::type>::value,
-//     typename __ref_return1<_Rp _Tp::*, _T1>::type
-// >::type
-// __invoke(_Rp _Tp::* __f, _T1& __t1)
-// {
-//     return __t1.*__f;
-// }
-
 // forth bullet
 
 template <class _T1, class _Rp, bool>
@@ -856,18 +668,6 @@ __invoke(_Rp _Tp::* __f, _T1& __t1)
 {
     return (*__t1).*__f;
 }
-
-// template <class _Dp, class _Rp, class _Tp, class _T1>
-// inline _LIBCPP_INLINE_VISIBILITY
-// typename enable_if
-// <
-//     !is_base_of<_Tp, typename remove_reference<_T1>::type>::value,
-//     typename __ref_return1<_Rp _Tp::*, _T1>::type
-// >::type
-// __invoke(_Rp _Tp::* __f, _T1 __t1)
-// {
-//     return (*__t1).*__f;
-// }
 
 // fifth bullet
 
@@ -902,42 +702,6 @@ __invoke(_Fp __f, _A0& __a0, _A1& __a1, _A2& __a2)
 {
     return __f(__a0, __a1, __a2);
 }
-
-// template <class _Rp, class _Fp>
-// inline _LIBCPP_INLINE_VISIBILITY
-// _Rp
-// __invoke(_Fp& __f)
-// {
-//     return __f();
-// }
-//
-// template <class _Rp, class _Fp, class _A0>
-// inline _LIBCPP_INLINE_VISIBILITY
-// typename enable_if
-// <
-//     !is_member_pointer<_Fp>::value,
-//     _Rp
-// >::type
-// __invoke(_Fp& __f, _A0& __a0)
-// {
-//     return __f(__a0);
-// }
-//
-// template <class _Rp, class _Fp, class _A0, class _A1>
-// inline _LIBCPP_INLINE_VISIBILITY
-// _Rp
-// __invoke(_Fp& __f, _A0& __a0, _A1& __a1)
-// {
-//     return __f(__a0, __a1);
-// }
-//
-// template <class _Rp, class _Fp, class _A0, class _A1, class _A2>
-// inline _LIBCPP_INLINE_VISIBILITY
-// _Rp
-// __invoke(_Fp& __f, _A0& __a0, _A1& __a1, _A2& __a2)
-// {
-//     return __f(__a0, __a1, __a2);
-// }
 
 template <class _Tp>
 struct __has_type
