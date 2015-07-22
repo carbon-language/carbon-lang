@@ -161,7 +161,7 @@ public:
 
     nub_thread_t    GetCurrentThread () const
                     {
-                        if (m_thread == 0 || m_thread == -1)
+                        if (m_thread == 0 || m_thread == (nub_thread_t)-1)
                             return DNBProcessGetCurrentThread (m_ctx.ProcessID());
                         return m_thread;
                     }

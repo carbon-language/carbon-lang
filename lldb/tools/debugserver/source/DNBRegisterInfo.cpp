@@ -45,7 +45,6 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
 {
     if (info.name != NULL)
     {
-        int i;
         char str[1024];
         char *pos;
         char *end = str + sizeof(str);
@@ -62,7 +61,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
             default:
                 strncpy(str, "0x", 3);
                 pos = str + 2;
-                for (i=0; i<info.size; ++i)
+                for (uint32_t i=0; i<info.size; ++i)
                 {
                     if (pos < end)
                         pos += snprintf(pos, end - pos, "%2.2x", (uint32_t)value.v_uint8[i]);
@@ -113,7 +112,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfSInt8:
                         snprintf(str, sizeof(str), "%s", "sint8   { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size; ++i)
+                        for (uint32_t i=0; i<info.size; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -127,7 +126,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfUInt8:
                         snprintf(str, sizeof(str), "%s", "uint8   { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size; ++i)
+                        for (uint32_t i=0; i<info.size; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -138,7 +137,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfSInt16:
                         snprintf(str, sizeof(str), "%s", "sint16  { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size/2; ++i)
+                        for (uint32_t i=0; i<info.size/2; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -149,7 +148,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfUInt16:
                         snprintf(str, sizeof(str), "%s", "uint16  { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size/2; ++i)
+                        for (uint32_t i=0; i<info.size/2; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -160,7 +159,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfSInt32:
                         snprintf(str, sizeof(str), "%s", "sint32  { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size/4; ++i)
+                        for (uint32_t i=0; i<info.size/4; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -171,7 +170,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfUInt32:
                         snprintf(str, sizeof(str), "%s", "uint32  { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size/4; ++i)
+                        for (uint32_t i=0; i<info.size/4; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -182,7 +181,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfFloat32:
                         snprintf(str, sizeof(str), "%s", "float32 { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size/4; ++i)
+                        for (uint32_t i=0; i<info.size/4; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)
@@ -193,7 +192,7 @@ DNBRegisterValueClass::Dump(const char *pre, const char *post) const
                     case VectorOfUInt128:
                         snprintf(str, sizeof(str), "%s", "uint128 { ");
                         pos = str + strlen(str);
-                        for (i=0; i<info.size/16; ++i)
+                        for (uint32_t i=0; i<info.size/16; ++i)
                         {
                             PRINT_COMMA_SEPARATOR;
                             if (pos < end)

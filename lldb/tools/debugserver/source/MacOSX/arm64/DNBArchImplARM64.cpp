@@ -84,7 +84,7 @@ DNBArchMachARM64::Create (MachThread *thread)
     return obj;
 }
 
-const uint8_t * const
+const uint8_t *
 DNBArchMachARM64::SoftwareBreakpointOpcode (nub_size_t byte_size)
 {
     return g_arm_breakpoint_opcode;
@@ -1995,6 +1995,7 @@ DNBArchMachARM64::GetRegisterContext (void *buf, nub_size_t buf_len)
         p += sizeof(m_state.context.exc);
         
         size_t bytes_written = p - (uint8_t *)buf;
+        (void)bytes_written;
         assert (bytes_written == size);
     }
     DNBLogThreadedIf (LOG_THREAD, "DNBArchMachARM64::GetRegisterContext (buf = %p, len = %zu) => %zu", buf, buf_len, size);
@@ -2027,6 +2028,7 @@ DNBArchMachARM64::SetRegisterContext (const void *buf, nub_size_t buf_len)
         p += sizeof(m_state.context.exc);
         
         size_t bytes_written = p - (uint8_t *)buf;
+        (void)bytes_written;
         assert (bytes_written == size);
         SetGPRState();
         SetVFPState();

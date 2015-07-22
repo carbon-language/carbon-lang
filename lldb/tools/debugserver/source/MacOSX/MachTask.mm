@@ -266,7 +266,7 @@ static void get_threads_profile_data(DNBProfileDataScanType scanType, task_t tas
     if (kr != KERN_SUCCESS)
         return;
     
-    for (int i = 0; i < tcnt; i++)
+    for (mach_msg_type_number_t i = 0; i < tcnt; i++)
     {
         thread_identifier_info_data_t identifier_info;
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
@@ -431,7 +431,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
                         // Make sure that thread name doesn't interfere with our delimiter.
                         profile_data_stream << RAW_HEXBASE << std::setw(2);
                         const uint8_t *ubuf8 = (const uint8_t *)(thread_name);
-                        for (int j=0; j<len; j++)
+                        for (size_t j=0; j<len; j++)
                         {
                             profile_data_stream << (uint32_t)(ubuf8[j]);
                         }
@@ -720,7 +720,7 @@ MachTask::ShutDownExcecptionThread()
 
     // NULL our our exception port and let our exception thread exit
     mach_port_t exception_port = m_exception_port;
-    m_exception_port = NULL;
+    m_exception_port = 0;
 
     err.SetError(::pthread_cancel(m_exception_thread), DNBError::POSIX);
     if (DNBLogCheckLogBit(LOG_TASK) || err.Fail())

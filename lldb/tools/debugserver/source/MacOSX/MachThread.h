@@ -83,11 +83,11 @@ public:
     bool            NotifyException(MachException::Data& exc);
     const MachException::Data& GetStopException() { return m_stop_exception; }
 
-    nub_size_t      GetNumRegistersInSet(int regSet) const;
-    const char *    GetRegisterSetName(int regSet) const;
+    nub_size_t      GetNumRegistersInSet(nub_size_t regSet) const;
+    const char *    GetRegisterSetName(nub_size_t regSet) const;
     const DNBRegisterInfo *
-                    GetRegisterInfo(int regSet, int regIndex) const;
-    void            DumpRegisterState(int regSet);
+                    GetRegisterInfo(nub_size_t regSet, nub_size_t regIndex) const;
+    void            DumpRegisterState(nub_size_t regSet);
     const DNBRegisterSetInfo *
                     GetRegisterSetInfo(nub_size_t *num_reg_sets ) const;
     bool            GetRegisterValue ( uint32_t reg_set_idx, uint32_t reg_idx, DNBRegisterValue *reg_value );

@@ -227,7 +227,7 @@ protected:
     static DNBArchProtocol *
     Create (MachThread *thread);
     
-    static const uint8_t * const
+    static const uint8_t *
     SoftwareBreakpointOpcode (nub_size_t byte_size);
 
     static const DNBRegisterSetInfo *

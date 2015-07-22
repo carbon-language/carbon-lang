@@ -72,7 +72,7 @@ public:
     virtual bool            NotifyException(MachException::Data& exc);
 
     static DNBArchProtocol *Create (MachThread *thread);
-    static const uint8_t * const SoftwareBreakpointOpcode (nub_size_t byte_size);
+    static const uint8_t *  SoftwareBreakpointOpcode (nub_size_t byte_size);
     static uint32_t         GetCPUType();
 
     virtual uint32_t        NumSupportedHardwareBreakpoints();

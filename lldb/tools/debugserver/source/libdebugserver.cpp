@@ -189,18 +189,18 @@ HandleProcessStateChange (RNBRemoteSP &remote, bool initialize)
 					
 					if (ctx.GetProcessStopCount() == 1)
 					{
-						DNBLogThreadedIf (LOG_RNB_MINIMAL, "%s (&remote, initialize=%i)  pid_state = %s pid_stop_count %u (old %u)) Notify??? no, first stop...", __FUNCTION__, (int)initialize, DNBStateAsString (pid_state), ctx.GetProcessStopCount(), prev_pid_stop_count);
+						DNBLogThreadedIf (LOG_RNB_MINIMAL, "%s (&remote, initialize=%i)  pid_state = %s pid_stop_count %zu (old %zu)) Notify??? no, first stop...", __FUNCTION__, (int)initialize, DNBStateAsString (pid_state), ctx.GetProcessStopCount(), prev_pid_stop_count);
 					}
 					else
 					{
 						
-						DNBLogThreadedIf (LOG_RNB_MINIMAL, "%s (&remote, initialize=%i)  pid_state = %s pid_stop_count %u (old %u)) Notify??? YES!!!", __FUNCTION__, (int)initialize, DNBStateAsString (pid_state), ctx.GetProcessStopCount(), prev_pid_stop_count);
+						DNBLogThreadedIf (LOG_RNB_MINIMAL, "%s (&remote, initialize=%i)  pid_state = %s pid_stop_count %zu (old %zu)) Notify??? YES!!!", __FUNCTION__, (int)initialize, DNBStateAsString (pid_state), ctx.GetProcessStopCount(), prev_pid_stop_count);
 						remote->NotifyThatProcessStopped ();
 					}
 				}
 				else
 				{
-					DNBLogThreadedIf (LOG_RNB_MINIMAL, "%s (&remote, initialize=%i)  pid_state = %s pid_stop_count %u (old %u)) Notify??? skipping...", __FUNCTION__, (int)initialize, DNBStateAsString (pid_state), ctx.GetProcessStopCount(), prev_pid_stop_count);
+					DNBLogThreadedIf (LOG_RNB_MINIMAL, "%s (&remote, initialize=%i)  pid_state = %s pid_stop_count %zu (old %zu)) Notify??? skipping...", __FUNCTION__, (int)initialize, DNBStateAsString (pid_state), ctx.GetProcessStopCount(), prev_pid_stop_count);
 				}
 			}
 			return eRNBRunLoopModeInferiorExecuting; 

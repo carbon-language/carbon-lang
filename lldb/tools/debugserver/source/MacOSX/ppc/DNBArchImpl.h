@@ -46,7 +46,7 @@ public:
     virtual bool            ThreadWillResume();
     virtual bool            ThreadDidStop();
 
-    static const uint8_t * const SoftwareBreakpointOpcode (nub_size_t byte_size);
+    static const uint8_t *  SoftwareBreakpointOpcode (nub_size_t byte_size);
     static uint32_t         GetCPUType();
 
 protected:

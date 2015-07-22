@@ -334,7 +334,7 @@ DNBDataRef::Dump
     uint32_t count;
     char str[1024];
     str[0] = '\0';
-    int str_offset = 0;
+    size_t str_offset = 0;
 
     for (offset = startOffset, count = 0; ValidOffset(offset) && offset < endOffset; ++count)
     {

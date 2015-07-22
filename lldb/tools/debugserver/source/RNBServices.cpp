@@ -11,21 +11,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-#import "RNBServices.h"
+#include "RNBServices.h"
 
-#import <CoreFoundation/CoreFoundation.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <libproc.h>
-#import <unistd.h>
+#include <unistd.h>
 #include <sys/sysctl.h>
 #include "CFString.h"
 #include <vector>
-#import "DNBLog.h"
+#include "DNBLog.h"
 #include "MacOSX/CFUtils.h"
 
 // For now only SpringBoard has a notion of "Applications" that it can list for us.
 // So we have to use the SpringBoard API's here.
 #if defined (WITH_SPRINGBOARD) || defined (WITH_BKS)
-#import <SpringBoardServices/SpringBoardServices.h>
+#include <SpringBoardServices/SpringBoardServices.h>
 #endif
 
 // From DNB.cpp

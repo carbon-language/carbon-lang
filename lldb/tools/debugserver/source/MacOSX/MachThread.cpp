@@ -539,7 +539,7 @@ MachThread::SetState(nub_state_t state)
 }
 
 nub_size_t
-MachThread::GetNumRegistersInSet(int regSet) const
+MachThread::GetNumRegistersInSet(nub_size_t regSet) const
 {
     if (regSet < m_num_reg_sets)
         return m_reg_sets[regSet].num_registers;
@@ -547,7 +547,7 @@ MachThread::GetNumRegistersInSet(int regSet) const
 }
 
 const char *
-MachThread::GetRegisterSetName(int regSet) const
+MachThread::GetRegisterSetName(nub_size_t regSet) const
 {
     if (regSet < m_num_reg_sets)
         return m_reg_sets[regSet].name;
@@ -555,7 +555,7 @@ MachThread::GetRegisterSetName(int regSet) const
 }
 
 const DNBRegisterInfo *
-MachThread::GetRegisterInfo(int regSet, int regIndex) const
+MachThread::GetRegisterInfo(nub_size_t regSet, nub_size_t regIndex) const
 {
     if (regSet < m_num_reg_sets)
         if (regIndex < m_reg_sets[regSet].num_registers)
@@ -563,7 +563,7 @@ MachThread::GetRegisterInfo(int regSet, int regIndex) const
     return NULL;
 }
 void
-MachThread::DumpRegisterState(int regSet)
+MachThread::DumpRegisterState(nub_size_t regSet)
 {
     if (regSet == REGISTER_SET_ALL)
     {

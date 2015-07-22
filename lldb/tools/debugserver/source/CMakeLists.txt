@@ -10,6 +10,30 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -Wl,-sectcreate,__TEXT,__info_plist,${CMAKE_CURRENT_SOURCE_DIR}/../resources/lldb-debugserver-Info.plist")
 endif()
 
+check_cxx_compiler_flag("-Wno-gnu-zero-variadic-macro-arguments"
+                        CXX_SUPPORTS_NO_GNU_ZERO_VARIADIC_MACRO_ARGUMENTS)
+if (CXX_SUPPORTS_NO_GNU_ZERO_VARIADIC_MACRO_ARGUMENTS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
+endif ()
+
+check_cxx_compiler_flag("-Wno-vla-extension"
+                        CXX_SUPPORTS_NO_VLA_EXTENSION)
+if (CXX_SUPPORTS_NO_VLA_EXTENSION)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-vla-extension")
+endif ()
+
+check_cxx_compiler_flag("-Wno-zero-length-array"
+                        CXX_SUPPORTS_NO_ZERO_LENGTH_ARRAY)
+if (CXX_SUPPORTS_NO_ZERO_LENGTH_ARRAY)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-zero-length-array")
+endif ()
+
+check_cxx_compiler_flag("-Wno-extended-offsetof"
+                        CXX_SUPPORTS_NO_EXTENDED_OFFSETOF)
+if (CXX_SUPPORTS_NO_EXTENDED_OFFSETOF)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-extended-offsetof")
+endif ()
+
 add_definitions(
   -DDEBUGSERVER_VERSION_STR="${LLDB_VERSION}"
   )

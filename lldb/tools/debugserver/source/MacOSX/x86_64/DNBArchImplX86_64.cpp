@@ -1566,7 +1566,7 @@ DNBArchImplX86_64::Create (MachThread *thread)
     return obj;
 }
 
-const uint8_t * const
+const uint8_t *
 DNBArchImplX86_64::SoftwareBreakpointOpcode (nub_size_t byte_size)
 {
     static const uint8_t g_breakpoint_opcode[] = { 0xCC };
@@ -2089,6 +2089,7 @@ DNBArchImplX86_64::GetRegisterContext (void *buf, nub_size_t buf_len)
             
             // make sure we end up with exactly what we think we should have
             size_t bytes_written = p - (uint8_t *)buf;
+            (void)bytes_written;
             assert (bytes_written == size);
         }
 
@@ -2176,6 +2177,7 @@ DNBArchImplX86_64::SetRegisterContext (const void *buf, nub_size_t buf_len)
         
         // make sure we end up with exactly what we think we should have
         size_t bytes_written = p - (uint8_t *)buf;
+        (void)bytes_written;
         assert (bytes_written == size);
 
         kern_return_t kret;

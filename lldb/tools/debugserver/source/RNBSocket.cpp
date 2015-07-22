@@ -395,7 +395,7 @@ RNBSocket::Write (const void *buffer, size_t length)
     if (bytessent < 0)
         return rnb_err;
 
-    if (bytessent != length)
+    if ((size_t)bytessent != length)
         return rnb_err;
 
     DNBLogThreadedIf(LOG_RNB_PACKETS, "putpkt: %*s", (int)length, (char *)buffer);   // All data is string based in debugserver, so this is safe

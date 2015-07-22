@@ -86,7 +86,7 @@ DNBArchProtocol::Create (MachThread *thread)
 
 }
 
-const uint8_t * const 
+const uint8_t *
 DNBArchProtocol::GetBreakpointOpcode (nub_size_t byte_size)
 {
     const DNBArchPluginInfo *arch_info = GetArchInfo ();

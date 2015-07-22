@@ -158,16 +158,16 @@ MachProcess::MachProcess() :
     m_stdio_thread      (0),
     m_stdio_mutex       (PTHREAD_MUTEX_RECURSIVE),
     m_stdout_data       (),
-    m_thread_actions    (),
     m_profile_enabled   (false),
     m_profile_interval_usec (0),
     m_profile_thread    (0),
     m_profile_data_mutex(PTHREAD_MUTEX_RECURSIVE),
     m_profile_data      (),
-    m_thread_list        (),
-    m_activities         (),
+    m_thread_actions    (),
     m_exception_messages (),
     m_exception_messages_mutex (PTHREAD_MUTEX_RECURSIVE),
+    m_thread_list       (),
+    m_activities        (),
     m_state             (eStateUnloaded),
     m_state_mutex       (PTHREAD_MUTEX_RECURSIVE),
     m_events            (0, kAllEventsMask),
@@ -376,7 +376,7 @@ MachProcess::GetLoadedDynamicLibrariesInfos (nub_process_t pid, nub_addr_t image
                 info.pathname += strbuf;
                 pathname_ptr += sizeof (strbuf) - 1;
                 // Stop if we found nul byte indicating the end of the string
-                for (int i = 0; i < sizeof(strbuf) - 1; i++)
+                for (size_t i = 0; i < sizeof(strbuf) - 1; i++)
                 {
                     if (strbuf[i] == '\0')
                     {
@@ -1032,6 +1032,7 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
         DNBBreakpoint *bp = bps[i];
 
         const bool intersects = bp->IntersectsRange(addr, size, &intersect_addr, &intersect_size, &opcode_offset);
+        (void)intersects;
         assert(intersects);
         assert(addr <= intersect_addr && intersect_addr < addr + size);
         assert(addr < intersect_addr + intersect_size && intersect_addr + intersect_size <= addr + size);

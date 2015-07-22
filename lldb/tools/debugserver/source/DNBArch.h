@@ -27,7 +27,7 @@ class MachThread;
 
 typedef DNBArchProtocol * (* DNBArchCallbackCreate)(MachThread *thread);
 typedef const DNBRegisterSetInfo * (* DNBArchCallbackGetRegisterSetInfo)(nub_size_t *num_reg_sets);
-typedef const uint8_t * const (* DNBArchCallbackGetBreakpointOpcode)(nub_size_t byte_size);
+typedef const uint8_t * (* DNBArchCallbackGetBreakpointOpcode)(nub_size_t byte_size);
 
 typedef struct DNBArchPluginInfoTag
 {
@@ -49,7 +49,7 @@ public:
     static const DNBRegisterSetInfo * 
     GetRegisterSetInfo (nub_size_t *num_reg_sets);
 
-    static const uint8_t * const 
+    static const uint8_t *
     GetBreakpointOpcode (nub_size_t byte_size);
 
     static void
@@ -94,7 +94,7 @@ public:
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task) { return INVALID_NUB_HW_INDEX; }
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_index) { return false; }
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_index, bool also_set_on_task) { return false; }
-    virtual uint32_t        GetHardwareWatchpointHit() { return INVALID_NUB_HW_INDEX; }
+    virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr) { return INVALID_NUB_HW_INDEX; }
     virtual bool            StepNotComplete () { return false; }
 
 protected:

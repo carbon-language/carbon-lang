@@ -1246,7 +1246,7 @@ DNBArchImplI386::Create (MachThread *thread)
     return obj;
 }
 
-const uint8_t * const
+const uint8_t *
 DNBArchImplI386::SoftwareBreakpointOpcode (nub_size_t byte_size)
 {
     static const uint8_t g_breakpoint_opcode[] = { 0xCC };
@@ -1703,6 +1703,7 @@ DNBArchImplI386::GetRegisterContext (void *buf, nub_size_t buf_len)
             
             // make sure we end up with exactly what we think we should have
             size_t bytes_written = p - (uint8_t *)buf;
+            (void)bytes_written;
             assert (bytes_written == size);
         }
     }
@@ -1788,6 +1789,7 @@ DNBArchImplI386::SetRegisterContext (const void *buf, nub_size_t buf_len)
         
         // make sure we end up with exactly what we think we should have
         size_t bytes_written = p - (uint8_t *)buf;
+        (void)bytes_written;
         assert (bytes_written == size);
         kern_return_t kret;
         if ((kret = SetGPRState()) != KERN_SUCCESS)
