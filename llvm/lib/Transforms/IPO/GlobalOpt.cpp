@@ -1963,6 +1963,240 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   return Changed;
 }
 
+namespace {
+
+/// Sorts GEP expressions in ascending order by their indexes.
+struct GEPComparator {
+  bool operator()(GEPOperator *A, GEPOperator *B) const {
+    int NumOpA = A->getNumOperands();
+    int NumOpB = B->getNumOperands();
+
+    // Globals are always pointers, the first index should be 0.
+    assert(cast<ConstantInt>(A->getOperand(1))->isZero() &&
+           "GEP A steps over object");
+    assert(cast<ConstantInt>(B->getOperand(1))->isZero() &&
+           "GEP B steps over object");
+
+    for (int i = 2; i < NumOpA && i < NumOpB; i++) {
+      ConstantInt *IndexA = cast<ConstantInt>(A->getOperand(i));
+      ConstantInt *IndexB = cast<ConstantInt>(B->getOperand(i));
+
+      if (IndexA->getZExtValue() < IndexB->getZExtValue()) {
+        return true;
+      }
+    }
+
+    return NumOpA < NumOpB;
+  }
+};
+
+typedef std::map<GEPOperator *, Constant *, GEPComparator> StoreMap;
+
+/// MutatedGlobal - Holds mutations for a global. If a store overwrites the
+/// the entire global, Initializer is updated with the new value. If a store
+/// writes to a GEP of a global, the store is instead added to the Pending
+/// map to be merged later during MergePendingStores.
+struct MutatedGlobal {
+  GlobalVariable *GV;
+  Constant *Initializer;
+  StoreMap Pending;
+};
+
+/// MutatedGlobals - This class tracks and commits stores to globals as basic
+/// blocks are evaluated.
+class MutatedGlobals {
+  DenseMap<GlobalVariable *, MutatedGlobal> Globals;
+  typedef DenseMap<GlobalVariable *, MutatedGlobal>::const_iterator
+      const_iterator;
+
+  GlobalVariable *GetGlobalForPointer(Constant *Ptr) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
+      return GV;
+    }
+
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        return cast<GlobalVariable>(CE->getOperand(0));
+      }
+    }
+
+    return nullptr;
+  }
+
+  Constant *MergePendingStores(Constant *Init, StoreMap &Pending,
+                               uint64_t CurrentIdx, unsigned OpNum);
+
+public:
+  const_iterator begin() const { return Globals.begin(); }
+  const_iterator end() const { return Globals.end(); }
+  size_t size() const { return Globals.size(); }
+
+  void AddStore(Constant *Ptr, Constant *Value);
+  Constant *LookupStore(Constant *Ptr);
+
+  void Commit(MutatedGlobal &MG);
+};
+}
+
+/// AddStore - Add store for the global variable referenced by Ptr.
+/// Currently, it's assumed that the incoming pointer is either the global
+/// variable itself, or a GEP expression referencing the global.
+void MutatedGlobals::AddStore(Constant *Ptr, Constant *Value) {
+  GlobalVariable *GV = GetGlobalForPointer(Ptr);
+  assert(GV && "Failed to resolve global for pointer");
+
+  auto I = Globals.find(GV);
+  if (I == Globals.end()) {
+    auto R = Globals.insert(std::make_pair(GV, MutatedGlobal{GV, nullptr, {}}));
+    assert(R.second && "Global value already in the map?");
+    I = R.first;
+  }
+
+  MutatedGlobal &MG = I->second;
+
+  if (Ptr == GV) {
+    MG.Initializer = Value;
+    // Pending stores are no longer valid.
+    MG.Pending.clear();
+  } else if (GEPOperator *GEPOp = dyn_cast<GEPOperator>(Ptr)) {
+    MG.Pending[GEPOp] = Value;
+  } else {
+    llvm_unreachable("Unexpected address type");
+  }
+}
+
+Constant *MutatedGlobals::LookupStore(Constant *Ptr) {
+  GlobalVariable *GV = GetGlobalForPointer(Ptr);
+  if (!GV) {
+    return nullptr;
+  }
+
+  auto I = Globals.find(GV);
+  if (I == Globals.end()) {
+    return nullptr;
+  }
+
+  MutatedGlobal &MG = I->second;
+
+  if (Ptr == MG.GV) {
+    if (MG.Initializer) {
+      // If there are any pending stores, Initializer isn't valid, it would
+      // need them merged in first. This situation currently doesn't occur
+      // due to isSimpleEnoughPointerToCommit / isSimpleEnoughValueToCommit
+      // not letting stores for aggregate types pass through. If this needs
+      // to be supported, calling Commit() at this point should do the trick.
+      assert(MG.Pending.empty() &&
+             "Can't use pending initializer without merging pending stores.");
+      return MG.Initializer;
+    }
+  } else if (GEPOperator *GEPOp = dyn_cast<GEPOperator>(Ptr)) {
+    auto SI = MG.Pending.find(GEPOp);
+    if (SI != MG.Pending.end()) {
+      return SI->second;
+    }
+  }
+
+  return nullptr;
+}
+
+/// MergePendingStores - Recursively merge stores to a global variable into its
+/// initializer. Merging any number of stores into the initializer requires
+/// cloning the entire initializer, so stores are batched up during evaluation
+/// and processed all at once.
+Constant *MutatedGlobals::MergePendingStores(Constant *Init, StoreMap &Pending,
+                                             uint64_t CurrentIdx,
+                                             unsigned OpNum) {
+  if (Pending.empty()) {
+    // Nothing left to merge.
+    return Init;
+  }
+
+  // If the GEP expression has been traversed completely, terminate.
+  auto It = Pending.begin();
+  GEPOperator *GEP = It->first;
+
+  if (OpNum >= GEP->getNumOperands()) {
+    Constant *Val = It->second;
+    assert(Val->getType() == Init->getType() && "Type mismatch!");
+
+    // Move on to the next expression.
+    Pending.erase(It++);
+
+    return Val;
+  }
+
+  // Clone the existing initializer so it can be merged into.
+  Type *InitTy = Init->getType();
+  ArrayType *ATy = dyn_cast<ArrayType>(InitTy);
+  StructType *STy = dyn_cast<StructType>(InitTy);
+  VectorType *VTy = dyn_cast<VectorType>(InitTy);
+
+  unsigned NumElts;
+  if (ATy) {
+    NumElts = ATy->getNumElements();
+  } else if (STy) {
+    NumElts = STy->getNumElements();
+  } else if (VTy) {
+    NumElts = VTy->getNumElements();
+  } else {
+    llvm_unreachable("Unexpected initializer type");
+  }
+
+  SmallVector<Constant *, 32> Elts;
+  for (unsigned i = 0; i < NumElts; ++i) {
+    Elts.push_back(Init->getAggregateElement(i));
+  }
+
+  // Iterate over the sorted stores, merging all stores for the current GEP
+  // index.
+  while (!Pending.empty()) {
+    It = Pending.begin();
+    GEP = It->first;
+
+    // If the store doesn't belong to the current index, we're done.
+    ConstantInt *CI = cast<ConstantInt>(GEP->getOperand(OpNum - 1));
+    uint64_t Idx = CI->getZExtValue();
+    if (Idx != CurrentIdx) {
+      break;
+    }
+
+    // Recurse into the next index.
+    CI = cast<ConstantInt>(GEP->getOperand(OpNum));
+    Idx = CI->getZExtValue();
+    assert(Idx < NumElts && "GEP index out of range!");
+    Elts[Idx] = MergePendingStores(Elts[Idx], Pending, Idx, OpNum + 1);
+  }
+
+  if (ATy) {
+    return ConstantArray::get(ATy, Elts);
+  } else if (STy) {
+    return ConstantStruct::get(STy, Elts);
+  } else if (VTy) {
+    return ConstantVector::get(Elts);
+  } else {
+    llvm_unreachable("Unexpected initializer type");
+  }
+
+  return nullptr;
+};
+
+/// Commit - We have decided that stores to the global (which satisfy the
+/// predicate isSimpleEnoughPointerToCommit) should be committed.
+void MutatedGlobals::Commit(MutatedGlobal &MG) {
+  Constant *Init = MG.Initializer ? MG.Initializer : MG.GV->getInitializer();
+
+  // Globals are always pointers, skip first GEP index assuming it's 0.
+  Init = MergePendingStores(Init, MG.Pending, 0, 2);
+
+  // Reset pending state.
+  MG.Initializer = nullptr;
+  assert(MG.Pending.empty() &&
+         "Expected pending stores to be empty after merging");
+
+  MG.GV->setInitializer(Init);
+}
+
+
 static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
                             SmallPtrSetImpl<Constant *> &SimpleConstants,
@@ -2095,69 +2329,6 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
   return false;
 }
 
-/// EvaluateStoreInto - Evaluate a piece of a constantexpr store into a global
-/// initializer.  This returns 'Init' modified to reflect 'Val' stored into it.
-/// At this point, the GEP operands of Addr [0, OpNo) have been stepped into.
-static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
-                                   ConstantExpr *Addr, unsigned OpNo) {
-  // Base case of the recursion.
-  if (OpNo == Addr->getNumOperands()) {
-    assert(Val->getType() == Init->getType() && "Type mismatch!");
-    return Val;
-  }
-
-  SmallVector<Constant*, 32> Elts;
-  if (StructType *STy = dyn_cast<StructType>(Init->getType())) {
-    // Break up the constant into its elements.
-    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-      Elts.push_back(Init->getAggregateElement(i));
-
-    // Replace the element that we are supposed to.
-    ConstantInt *CU = cast<ConstantInt>(Addr->getOperand(OpNo));
-    unsigned Idx = CU->getZExtValue();
-    assert(Idx < STy->getNumElements() && "Struct index out of range!");
-    Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1);
-
-    // Return the modified struct.
-    return ConstantStruct::get(STy, Elts);
-  }
-
-  ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
-  SequentialType *InitTy = cast<SequentialType>(Init->getType());
-
-  uint64_t NumElts;
-  if (ArrayType *ATy = dyn_cast<ArrayType>(InitTy))
-    NumElts = ATy->getNumElements();
-  else
-    NumElts = InitTy->getVectorNumElements();
-
-  // Break up the array into elements.
-  for (uint64_t i = 0, e = NumElts; i != e; ++i)
-    Elts.push_back(Init->getAggregateElement(i));
-
-  assert(CI->getZExtValue() < NumElts);
-  Elts[CI->getZExtValue()] =
-    EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1);
-
-  if (Init->getType()->isArrayTy())
-    return ConstantArray::get(cast<ArrayType>(InitTy), Elts);
-  return ConstantVector::get(Elts);
-}
-
-/// CommitValueTo - We have decided that Addr (which satisfies the predicate
-/// isSimpleEnoughPointerToCommit) should get Val as its value.  Make it happen.
-static void CommitValueTo(Constant *Val, Constant *Addr) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Addr)) {
-    assert(GV->hasInitializer());
-    GV->setInitializer(Val);
-    return;
-  }
-
-  ConstantExpr *CE = cast<ConstantExpr>(Addr);
-  GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
-  GV->setInitializer(EvaluateStoreInto(GV->getInitializer(), Val, CE, 2));
-}
-
 namespace {
 
 /// Evaluator - This class evaluates LLVM IR, producing the Constant
@@ -2202,8 +2373,8 @@ public:
     ValueStack.back()[V] = C;
   }
 
-  const DenseMap<Constant*, Constant*> &getMutatedMemory() const {
-    return MutatedMemory;
+  MutatedGlobals &getMutated() {
+    return Mutated;
   }
 
   const SmallPtrSetImpl<GlobalVariable*> &getInvariants() const {
@@ -2223,10 +2394,10 @@ private:
   /// unbounded.
   SmallVector<Function*, 4> CallStack;
 
-  /// MutatedMemory - For each store we execute, we update this map.  Loads
-  /// check this to get the most up-to-date value.  If evaluation is successful,
+  /// Mutated - For each store we execute, we update this map.  Loads check
+  /// this to get the most up-to-date value.  If evaluation is successful,
   /// this state is committed to the process.
-  DenseMap<Constant*, Constant*> MutatedMemory;
+  MutatedGlobals Mutated;
 
   /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
   /// to represent its body.  This vector is needed so we can delete the
@@ -2253,8 +2424,8 @@ private:
 Constant *Evaluator::ComputeLoadResult(Constant *P) {
   // If this memory location has been recently stored, use the stored value: it
   // is the most up-to-date.
-  DenseMap<Constant*, Constant*>::const_iterator I = MutatedMemory.find(P);
-  if (I != MutatedMemory.end()) return I->second;
+  Constant *Val = Mutated.LookupStore(P);
+  if (Val) return Val;
 
   // Access it.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(P)) {
@@ -2358,7 +2529,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
         }
       }
 
-      MutatedMemory[Ptr] = Val;
+      Mutated.AddStore(Ptr, Val);
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
       InstResult = ConstantExpr::get(BO->getOpcode(),
                                      getVal(BO->getOperand(0)),
@@ -2694,12 +2865,13 @@ static bool EvaluateStaticConstructor(Function *F, const DataLayout &DL,
 
     // We succeeded at evaluation: commit the result.
     DEBUG(dbgs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
-          << F->getName() << "' to " << Eval.getMutatedMemory().size()
-          << " stores.\n");
-    for (DenseMap<Constant*, Constant*>::const_iterator I =
-           Eval.getMutatedMemory().begin(), E = Eval.getMutatedMemory().end();
-         I != E; ++I)
-      CommitValueTo(I->second, I->first);
+          << F->getName() << "' to " << Eval.getMutated().size()
+          << " mutated globals.\n");
+
+    MutatedGlobals &Mutated = Eval.getMutated();
+    for (auto I : Mutated)
+      Mutated.Commit(I.second);
+
     for (GlobalVariable *GV : Eval.getInvariants())
       GV->setConstant(true);
   }
