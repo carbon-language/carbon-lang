@@ -30,14 +30,19 @@ namespace serialization {
 
 /// \brief Manages the set of modules loaded by an AST reader.
 class ModuleManager {
-  /// \brief The chain of AST files. The first entry is the one named by the
-  /// user, the last one is the one that doesn't depend on anything further.
+  /// \brief The chain of AST files, in the order in which we started to load
+  /// them (this order isn't really useful for anything).
   SmallVector<ModuleFile *, 2> Chain;
+
+  /// \brief The chain of non-module PCH files. The first entry is the one named
+  /// by the user, the last one is the one that doesn't depend on anything
+  /// further.
+  SmallVector<ModuleFile *, 2> PCHChain;
 
   // \brief The roots of the dependency DAG of AST files. This is used
   // to implement short-circuiting logic when running DFS over the dependencies.
   SmallVector<ModuleFile *, 2> Roots;
-  
+
   /// \brief All loaded modules, indexed by name.
   llvm::DenseMap<const FileEntry *, ModuleFile *> Modules;
 
@@ -138,6 +143,11 @@ public:
   ModuleReverseIterator rbegin() { return Chain.rbegin(); }
   /// \brief Reverse iterator end-point to traverse all loaded modules.
   ModuleReverseIterator rend() { return Chain.rend(); }
+
+  /// \brief A range covering the PCH and preamble module files loaded.
+  llvm::iterator_range<ModuleConstIterator> pch_modules() const {
+    return llvm::make_range(PCHChain.begin(), PCHChain.end());
+  }
   
   /// \brief Returns the primary module associated with the manager, that is,
   /// the first module loaded

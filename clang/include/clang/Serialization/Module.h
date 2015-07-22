@@ -270,6 +270,10 @@ public:
   /// IdentifierHashTable.
   void *IdentifierLookupTable;
 
+  /// \brief Offsets of identifiers that we're going to preload within
+  /// IdentifierTableData.
+  std::vector<unsigned> PreloadIdentifierOffsets;
+
   // === Macros ===
 
   /// \brief The cursor to the start of the preprocessor block, which stores

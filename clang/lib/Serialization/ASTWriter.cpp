@@ -3104,6 +3104,7 @@ class ASTIdentifierTableTrait {
   IdentifierResolver &IdResolver;
   bool IsModule;
   bool NeedDecls;
+  ASTWriter::RecordData *InterestingIdentifierOffsets;
   
   /// \brief Determines whether this is an "interesting" identifier that needs a
   /// full IdentifierInfo structure written into the hash table. Notably, this
@@ -3131,14 +3132,20 @@ public:
   typedef unsigned offset_type;
 
   ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP,
-                          IdentifierResolver &IdResolver, bool IsModule)
+                          IdentifierResolver &IdResolver, bool IsModule,
+                          ASTWriter::RecordData *InterestingIdentifierOffsets)
       : Writer(Writer), PP(PP), IdResolver(IdResolver), IsModule(IsModule),
-        NeedDecls(!IsModule || !Writer.getLangOpts().CPlusPlus) {}
+        NeedDecls(!IsModule || !Writer.getLangOpts().CPlusPlus),
+        InterestingIdentifierOffsets(InterestingIdentifierOffsets) {}
 
   static hash_value_type ComputeHash(const IdentifierInfo* II) {
     return llvm::HashString(II->getName());
   }
 
+  bool isInterestingIdentifier(const IdentifierInfo *II) {
+    auto MacroOffset = Writer.getMacroDirectivesOffset(II);
+    return isInterestingIdentifier(II, MacroOffset);
+  }
   bool isInterestingNonMacroIdentifier(const IdentifierInfo *II) {
     return isInterestingIdentifier(II, 0);
   }
@@ -3178,6 +3185,12 @@ public:
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     Writer.SetIdentifierOffset(II, Out.tell());
+
+    // Emit the offset of the key/data length information to the interesting
+    // identifiers table if necessary.
+    if (InterestingIdentifierOffsets && isInterestingIdentifier(II))
+      InterestingIdentifierOffsets->push_back(Out.tell() - 4);
+
     Out.write(II->getNameStart(), KeyLen);
   }
 
@@ -3238,11 +3251,15 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
                                      bool IsModule) {
   using namespace llvm;
 
+  RecordData InterestingIdents;
+
   // Create and write out the blob that contains the identifier
   // strings.
   {
     llvm::OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
-    ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
+    ASTIdentifierTableTrait Trait(
+        *this, PP, IdResolver, IsModule,
+        (getLangOpts().CPlusPlus && IsModule) ? &InterestingIdents : nullptr);
 
     // Look for any identifiers that were named while processing the
     // headers, but are otherwise not needed. We add these to the hash
@@ -3316,6 +3333,11 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
   Record.push_back(FirstIdentID - NUM_PREDEF_IDENT_IDS);
   Stream.EmitRecordWithBlob(IdentifierOffsetAbbrev, Record,
                             bytes(IdentifierOffsets));
+
+  // In C++, write the list of interesting identifiers (those that are
+  // defined as macros, poisoned, or similar unusual things).
+  if (!InterestingIdents.empty())
+    Stream.EmitRecord(INTERESTING_IDENTIFIERS, InterestingIdents);
 }
 
 //===----------------------------------------------------------------------===//

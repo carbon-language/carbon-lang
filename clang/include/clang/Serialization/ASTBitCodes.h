@@ -543,7 +543,10 @@ namespace clang {
       /// macro definition.
       MACRO_OFFSET = 47,
 
-      // ID 48 used to be a table of macros.
+      /// \brief A list of "interesting" identifiers. Only used in C++ (where we
+      /// don't normally do lookups into the serialized identifier table). These
+      /// are eagerly deserialized.
+      INTERESTING_IDENTIFIERS = 48,
 
       /// \brief Record code for undefined but used functions and variables that
       /// need a definition in this TU.

@@ -95,6 +95,8 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     New->File = Entry;
     New->ImportLoc = ImportLoc;
     Chain.push_back(New);
+    if (!New->isModule())
+      PCHChain.push_back(New);
     if (!ImportedBy)
       Roots.push_back(New);
     NewModule = true;
@@ -159,6 +161,8 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
         Modules.erase(Entry);
         assert(Chain.back() == ModuleEntry);
         Chain.pop_back();
+        if (!ModuleEntry->isModule())
+          PCHChain.pop_back();
         if (Roots.back() == ModuleEntry)
           Roots.pop_back();
         else
@@ -225,6 +229,15 @@ void ModuleManager::removeModules(
 
   // Remove the modules from the chain.
   Chain.erase(first, last);
+
+  // Also remove them from the PCH chain.
+  for (auto I = first; I != last; ++I) {
+    if (!(*I)->isModule()) {
+      PCHChain.erase(std::find(PCHChain.begin(), PCHChain.end(), *I),
+                     PCHChain.end());
+      break;
+    }
+  }
 }
 
 void
