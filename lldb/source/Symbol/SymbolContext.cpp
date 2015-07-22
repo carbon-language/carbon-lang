@@ -391,24 +391,24 @@ SymbolContext::GetResolvedMask () const
 void
 SymbolContext::Dump(Stream *s, Target *target) const
 {
-    *s << (void *)this << ": ";
+    *s << this << ": ";
     s->Indent();
     s->PutCString("SymbolContext");
     s->IndentMore();
     s->EOL();
     s->IndentMore();
     s->Indent();
-    *s << "Module       = " << (void *)module_sp.get() << ' ';
+    *s << "Module       = " << module_sp.get() << ' ';
     if (module_sp)
         module_sp->GetFileSpec().Dump(s);
     s->EOL();
     s->Indent();
-    *s << "CompileUnit  = " << (void *)comp_unit;
+    *s << "CompileUnit  = " << comp_unit;
     if (comp_unit != nullptr)
         *s << " {0x" << comp_unit->GetID() << "} " << *(static_cast<FileSpec*> (comp_unit));
     s->EOL();
     s->Indent();
-    *s << "Function     = " << (void *)function;
+    *s << "Function     = " << function;
     if (function != nullptr)
     {
         *s << " {0x" << function->GetID() << "} " << function->GetType()->GetName() << ", address-range = ";
@@ -424,7 +424,7 @@ SymbolContext::Dump(Stream *s, Target *target) const
     }
     s->EOL();
     s->Indent();
-    *s << "Block        = " << (void *)block;
+    *s << "Block        = " << block;
     if (block != nullptr)
         *s << " {0x" << block->GetID() << '}';
     // Dump the block and pass it a negative depth to we print all the parent blocks
@@ -436,11 +436,11 @@ SymbolContext::Dump(Stream *s, Target *target) const
     line_entry.Dump (s, target, true, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress, true);
     s->EOL();
     s->Indent();
-    *s << "Symbol       = " << (void *)symbol;
+    *s << "Symbol       = " << symbol;
     if (symbol != nullptr && symbol->GetMangled())
         *s << ' ' << symbol->GetName().AsCString();
     s->EOL();
-    *s << "Variable     = " << (void *)variable;
+    *s << "Variable     = " << variable;
     if (variable != nullptr)
     {
         *s << " {0x" << variable->GetID() << "} " << variable->GetType()->GetName();
@@ -1178,7 +1178,7 @@ void
 SymbolContextList::Dump(Stream *s, Target *target) const
 {
 
-    *s << (void *)this << ": ";
+    *s << this << ": ";
     s->Indent();
     s->PutCString("SymbolContextList");
     s->EOL();

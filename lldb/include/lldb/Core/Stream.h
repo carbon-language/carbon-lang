@@ -221,7 +221,7 @@ public:
     ///     in one statement.
     //------------------------------------------------------------------
     Stream&
-    operator<< (void *p);
+    operator<< (const void *p);
 
     //------------------------------------------------------------------
     /// Output a character \a ch to the stream \a s.

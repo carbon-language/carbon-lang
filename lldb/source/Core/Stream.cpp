@@ -284,9 +284,9 @@ Stream::operator<<  (const char *s)
 // Stream the pointer value out to this stream.
 //------------------------------------------------------------------
 Stream&
-Stream::operator<< (void *p)
+Stream::operator<< (const void *p)
 {
-    Printf ("0x%.*tx", (int)sizeof(void*) * 2, (ptrdiff_t)p);
+    Printf ("0x%.*tx", (int)sizeof(const void*) * 2, (ptrdiff_t)p);
     return *this;
 }
 
