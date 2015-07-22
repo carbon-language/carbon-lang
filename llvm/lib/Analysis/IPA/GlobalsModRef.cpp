@@ -57,33 +57,61 @@ static cl::opt<bool> EnableUnsafeGlobalsModRefAliasResults(
     "enable-unsafe-globalsmodref-alias-results", cl::init(false), cl::Hidden);
 
 namespace {
-/// FunctionRecord - One instance of this structure is stored for every
-/// function in the program.  Later, the entries for these functions are
-/// removed if the function is found to call an external function (in which
-/// case we know nothing about it.
-struct FunctionRecord {
-  /// GlobalInfo - Maintain mod/ref info for all of the globals without
-  /// addresses taken that are read or written (transitively) by this
-  /// function.
-  std::map<const GlobalValue *, unsigned> GlobalInfo;
+/// The mod/ref information collected for a particular function.
+///
+/// We collect information about mod/ref behavior of a function here, both in
+/// general and as pertains to specific globals. We only have this detailed
+/// information when we know *something* useful about the behavior. If we
+/// saturate to fully general mod/ref, we remove the info for the function.
+class FunctionInfo {
+public:
+  FunctionInfo() : MayReadAnyGlobal(false), MRI(MRI_NoModRef) {}
 
-  /// MayReadAnyGlobal - May read global variables, but it is not known which.
-  bool MayReadAnyGlobal;
+  /// Returns the \c ModRefInfo info for this function.
+  ModRefInfo getModRefInfo() const { return MRI; }
 
-  unsigned getInfoForGlobal(const GlobalValue *GV) const {
-    unsigned Effect = MayReadAnyGlobal ? MRI_Ref : 0;
-    std::map<const GlobalValue *, unsigned>::const_iterator I =
-        GlobalInfo.find(GV);
+  /// Adds new \c ModRefInfo for this function to its state.
+  void addModRefInfo(ModRefInfo NewMRI) { MRI = ModRefInfo(MRI | NewMRI); }
+
+  /// Returns whether this function may read any global variable, and we don't
+  /// know which global.
+  bool mayReadAnyGlobal() const { return MayReadAnyGlobal; }
+
+  /// Sets this function as potentially reading from any global.
+  void setMayReadAnyGlobal() { MayReadAnyGlobal = true; }
+
+  /// Returns the \c ModRefInfo info for this function w.r.t. a particular
+  /// global, which may be more precise than the general information above.
+  ModRefInfo getModRefInfoForGlobal(const GlobalValue &GV) const {
+    ModRefInfo GlobalMRI = MayReadAnyGlobal ? MRI_Ref : MRI_NoModRef;
+    auto I = GlobalInfo.find(&GV);
     if (I != GlobalInfo.end())
-      Effect |= I->second;
-    return Effect;
+      GlobalMRI = ModRefInfo(GlobalMRI | I->second);
+    return GlobalMRI;
   }
 
-  /// FunctionEffect - Capture whether or not this function reads or writes to
-  /// ANY memory.  If not, we can do a lot of aggressive analysis on it.
-  unsigned FunctionEffect;
+  /// Access the entire map of mod/ref info for specific globals.
+  const std::map<const GlobalValue *, ModRefInfo> &getGlobalModRefInfo() const {
+    return GlobalInfo;
+  }
 
-  FunctionRecord() : MayReadAnyGlobal(false), FunctionEffect(0) {}
+  void addModRefInfoForGlobal(const GlobalValue &GV, ModRefInfo NewMRI) {
+    auto &GlobalMRI = GlobalInfo[&GV];
+    GlobalMRI = ModRefInfo(GlobalMRI | NewMRI);
+  }
+
+private:
+  /// Maintain mod/ref info for all of the globals without addresses taken that
+  /// are read or written (transitively) by this function.
+  std::map<const GlobalValue *, ModRefInfo> GlobalInfo;
+
+  /// Flag indicating this function read global variables, but it is not known
+  /// which.
+  bool MayReadAnyGlobal;
+
+  /// Captures whether or not this function reads or writes to ANY memory. If
+  /// not, we can do a lot of aggressive analysis on it.
+  ModRefInfo MRI;
 };
 
 /// GlobalsModRef - The actual analysis pass.
@@ -99,9 +127,8 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
   /// indirect global, this map indicates which one.
   DenseMap<const Value *, const GlobalValue *> AllocsForIndirectGlobals;
 
-  /// FunctionInfo - For each function, keep track of what globals are
-  /// modified or read.
-  DenseMap<const Function *, FunctionRecord> FunctionInfo;
+  /// For each function, keep track of what globals are modified or read.
+  DenseMap<const Function *, FunctionInfo> FunctionInfos;
 
   /// Handle to clear this analysis on deletion of values.
   struct DeletionCallbackHandle final : CallbackVH {
@@ -196,10 +223,10 @@ public:
   FunctionModRefBehavior getModRefBehavior(const Function *F) override {
     FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
 
-    if (FunctionRecord *FR = getFunctionInfo(F)) {
-      if (FR->FunctionEffect == 0)
+    if (FunctionInfo *FI = getFunctionInfo(F)) {
+      if (FI->getModRefInfo() == MRI_NoModRef)
         Min = FMRB_DoesNotAccessMemory;
-      else if ((FR->FunctionEffect & MRI_Mod) == 0)
+      else if ((FI->getModRefInfo() & MRI_Mod) == 0)
         Min = FMRB_OnlyReadsMemory;
     }
 
@@ -213,10 +240,10 @@ public:
     FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
 
     if (const Function *F = CS.getCalledFunction())
-      if (FunctionRecord *FR = getFunctionInfo(F)) {
-        if (FR->FunctionEffect == 0)
+      if (FunctionInfo *FI = getFunctionInfo(F)) {
+        if (FI->getModRefInfo() == MRI_NoModRef)
           Min = FMRB_DoesNotAccessMemory;
-        else if ((FR->FunctionEffect & MRI_Mod) == 0)
+        else if ((FI->getModRefInfo() & MRI_Mod) == 0)
           Min = FMRB_OnlyReadsMemory;
       }
 
@@ -224,11 +251,11 @@ public:
   }
 
 private:
-  /// getFunctionInfo - Return the function info for the function, or null if
-  /// we don't have anything useful to say about it.
-  FunctionRecord *getFunctionInfo(const Function *F) {
-    auto I = FunctionInfo.find(F);
-    if (I != FunctionInfo.end())
+  /// Returns the function info for the function, or null if we don't have
+  /// anything useful to say about it.
+  FunctionInfo *getFunctionInfo(const Function *F) {
+    auto I = FunctionInfos.find(F);
+    if (I != FunctionInfos.end())
       return &I->second;
     return nullptr;
   }
@@ -280,11 +307,11 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
         Handles.front().I = Handles.begin();
 
         for (Function *Reader : Readers)
-          FunctionInfo[Reader].GlobalInfo[&GV] |= MRI_Ref;
+          FunctionInfos[Reader].addModRefInfoForGlobal(GV, MRI_Ref);
 
         if (!GV.isConstant()) // No need to keep track of writers to constants
           for (Function *Writer : Writers)
-            FunctionInfo[Writer].GlobalInfo[&GV] |= MRI_Mod;
+            FunctionInfos[Writer].addModRefInfoForGlobal(GV, MRI_Mod);
         ++NumNonAddrTakenGlobalVars;
 
         // If this global holds a pointer type, see if it is an indirect global.
@@ -432,14 +459,14 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
       // Calls externally - can't say anything useful.  Remove any existing
       // function records (may have been created when scanning globals).
       for (auto *Node : SCC)
-        FunctionInfo.erase(Node->getFunction());
+        FunctionInfos.erase(Node->getFunction());
       continue;
     }
 
-    FunctionRecord &FR = FunctionInfo[SCC[0]->getFunction()];
+    FunctionInfo &FI = FunctionInfos[SCC[0]->getFunction()];
 
     bool KnowNothing = false;
-    unsigned FunctionEffect = 0;
+    unsigned FunctionMRI = 0;
 
     // Collect the mod/ref properties due to called functions.  We only compute
     // one mod-ref set.
@@ -455,13 +482,13 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
         if (F->doesNotAccessMemory()) {
           // Can't do better than that!
         } else if (F->onlyReadsMemory()) {
-          FunctionEffect |= MRI_Ref;
+          FunctionMRI |= MRI_Ref;
           if (!F->isIntrinsic())
             // This function might call back into the module and read a global -
             // consider every global as possibly being read by this function.
-            FR.MayReadAnyGlobal = true;
+            FI.setMayReadAnyGlobal();
         } else {
-          FunctionEffect |= MRI_ModRef;
+          FunctionMRI |= MRI_ModRef;
           // Can't say anything useful unless it's an intrinsic - they don't
           // read or write global variables of the kind considered here.
           KnowNothing = !F->isIntrinsic();
@@ -472,14 +499,16 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
       for (CallGraphNode::iterator CI = SCC[i]->begin(), E = SCC[i]->end();
            CI != E && !KnowNothing; ++CI)
         if (Function *Callee = CI->second->getFunction()) {
-          if (FunctionRecord *CalleeFR = getFunctionInfo(Callee)) {
+          if (FunctionInfo *CalleeFI = getFunctionInfo(Callee)) {
             // Propagate function effect up.
-            FunctionEffect |= CalleeFR->FunctionEffect;
+            FunctionMRI |= CalleeFI->getModRefInfo();
 
             // Incorporate callee's effects on globals into our info.
-            for (const auto &G : CalleeFR->GlobalInfo)
-              FR.GlobalInfo[G.first] |= G.second;
-            FR.MayReadAnyGlobal |= CalleeFR->MayReadAnyGlobal;
+            for (const auto &G : CalleeFI->getGlobalModRefInfo())
+              FI.addModRefInfoForGlobal(*G.first, G.second);
+
+            if (CalleeFI->mayReadAnyGlobal())
+              FI.setMayReadAnyGlobal();
           } else {
             // Can't say anything about it.  However, if it is inside our SCC,
             // then nothing needs to be done.
@@ -493,19 +522,19 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     }
 
     // If we can't say anything useful about this SCC, remove all SCC functions
-    // from the FunctionInfo map.
+    // from the FunctionInfos map.
     if (KnowNothing) {
       for (auto *Node : SCC)
-        FunctionInfo.erase(Node->getFunction());
+        FunctionInfos.erase(Node->getFunction());
       continue;
     }
 
     // Scan the function bodies for explicit loads or stores.
     for (auto *Node : SCC) {
-      if (FunctionEffect == MRI_ModRef)
+      if (FunctionMRI == MRI_ModRef)
         break; // The mod/ref lattice saturates here.
       for (Instruction &I : inst_range(Node->getFunction())) {
-        if (FunctionEffect == MRI_ModRef)
+        if (FunctionMRI == MRI_ModRef)
           break; // The mod/ref lattice saturates here.
 
         // We handle calls specially because the graph-relevant aspects are
@@ -514,13 +543,13 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           if (isAllocationFn(&I, TLI) || isFreeCall(&I, TLI)) {
             // FIXME: It is completely unclear why this is necessary and not
             // handled by the above graph code.
-            FunctionEffect |= MRI_ModRef;
+            FunctionMRI |= MRI_ModRef;
           } else if (Function *Callee = CS.getCalledFunction()) {
             // The callgraph doesn't include intrinsic calls.
             if (Callee->isIntrinsic()) {
               FunctionModRefBehavior Behaviour =
                   AliasAnalysis::getModRefBehavior(Callee);
-              FunctionEffect |= (Behaviour & MRI_ModRef);
+              FunctionMRI |= (Behaviour & MRI_ModRef);
             }
           }
           continue;
@@ -529,22 +558,22 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
         // All non-call instructions we use the primary predicates for whether
         // thay read or write memory.
         if (I.mayReadFromMemory())
-          FunctionEffect |= MRI_Ref;
+          FunctionMRI |= MRI_Ref;
         if (I.mayWriteToMemory())
-          FunctionEffect |= MRI_Mod;
+          FunctionMRI |= MRI_Mod;
       }
     }
 
-    if ((FunctionEffect & MRI_Mod) == 0)
+    if ((FunctionMRI & MRI_Mod) == 0)
       ++NumReadMemFunctions;
-    if (FunctionEffect == 0)
+    if (FunctionMRI == MRI_NoModRef)
       ++NumNoMemFunctions;
-    FR.FunctionEffect = FunctionEffect;
+    FI.addModRefInfo(ModRefInfo(FunctionMRI));
 
     // Finally, now that we know the full effect on this SCC, clone the
     // information to each function in the SCC.
     for (unsigned i = 1, e = SCC.size(); i != e; ++i)
-      FunctionInfo[SCC[i]->getFunction()] = FR;
+      FunctionInfos[SCC[i]->getFunction()] = FI;
   }
 }
 
@@ -633,8 +662,8 @@ ModRefInfo GlobalsModRef::getModRefInfo(ImmutableCallSite CS,
     if (GV->hasLocalLinkage())
       if (const Function *F = CS.getCalledFunction())
         if (NonAddressTakenGlobals.count(GV))
-          if (const FunctionRecord *FR = getFunctionInfo(F))
-            Known = FR->getInfoForGlobal(GV);
+          if (const FunctionInfo *FI = getFunctionInfo(F))
+            Known = FI->getModRefInfoForGlobal(*GV);
 
   if (Known == MRI_NoModRef)
     return MRI_NoModRef; // No need to query other mod/ref analyses
