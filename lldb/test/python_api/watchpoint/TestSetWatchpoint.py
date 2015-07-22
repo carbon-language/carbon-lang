@@ -30,6 +30,7 @@ class SetWatchpointAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watch_val_with_dwarf(self):
         """Exercise SBValue.Watch() API to set a watchpoint."""
         self.buildDwarf()

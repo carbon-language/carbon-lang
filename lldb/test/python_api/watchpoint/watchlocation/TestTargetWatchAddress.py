@@ -32,6 +32,7 @@ class TargetWatchAddressAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watch_address_with_dwarf(self):
         """Exercise SBTarget.WatchAddress() API to set a watchpoint."""
         self.buildDwarf()
@@ -47,6 +48,7 @@ class TargetWatchAddressAPITestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watch_address_with_invalid_watch_size_with_dwarf(self):
         """Exercise SBTarget.WatchAddress() API but pass an invalid watch_size."""
         self.buildDwarf()

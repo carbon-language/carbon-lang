@@ -698,20 +698,23 @@ def expectedFailureWindows(bugnumber=None, compilers=None):
 def expectedFailureHostWindows(bugnumber=None, compilers=None):
     return expectedFailureHostOS(['windows'], bugnumber, compilers)
 
-def expectedFailureAndroid(bugnumber=None, api_levels=None):
+def expectedFailureAndroid(bugnumber=None, api_levels=None, archs=None):
     """ Mark a test as xfail for Android.
 
     Arguments:
         bugnumber - The LLVM pr associated with the problem.
         api_levels - A sequence of numbers specifying the Android API levels
-            for which a test is expected to fail.
+            for which a test is expected to fail. None means all API level.
+        arch - A sequence of architecture names specifying the architectures
+            for which a test is expected to fail. None means all architectures.
     """
     def fn(self):
         if target_is_android():
-            if not api_levels:
-                return True
-            device_api = android_device_api()
-            return device_api and (device_api in api_levels)
+            if archs is not None and self.getArchitecture() not in archs:
+                return False
+            if api_levels is not None and android_device_api() not in api_levels:
+                return False
+            return True
 
     return expectedFailure(fn, bugnumber)
 

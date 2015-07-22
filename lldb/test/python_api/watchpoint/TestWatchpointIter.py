@@ -30,6 +30,7 @@ class WatchpointIteratorTestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watch_iter_with_dwarf(self):
         """Exercise SBTarget.watchpoint_iter() API to iterate on the available watchpoints."""
         self.buildDwarf()

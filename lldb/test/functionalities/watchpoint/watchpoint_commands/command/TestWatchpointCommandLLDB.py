@@ -34,6 +34,7 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.watchpoint_command()
 
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""
         self.buildDwarf(dictionary=self.d)
@@ -49,6 +50,7 @@ class WatchpointLLDBCommandTestCase(TestBase):
         self.watchpoint_command_can_disable_a_watchpoint()
 
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_command_can_disable_a_watchpoint_with_dwarf(self):
         """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
         self.buildDwarf(dictionary=self.d)

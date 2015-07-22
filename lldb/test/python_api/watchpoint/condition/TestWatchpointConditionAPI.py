@@ -34,6 +34,7 @@ class WatchpointConditionAPITestCase(TestBase):
         self.watchpoint_condition_api()
 
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_cond_api_with_dwarf(self):
         """Test watchpoint condition API."""
         self.buildDwarf(dictionary=self.d)

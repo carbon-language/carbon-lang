@@ -20,6 +20,7 @@ class TestWatchpointEvents (TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_with_dwarf_and_python_api(self):
         """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
         self.buildDwarf()

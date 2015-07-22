@@ -34,6 +34,7 @@ class WatchpointConditionCmdTestCase(TestBase):
         self.watchpoint_condition()
 
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_cond_with_dwarf(self):
         """Test watchpoint condition."""
         self.buildDwarf(dictionary=self.d)

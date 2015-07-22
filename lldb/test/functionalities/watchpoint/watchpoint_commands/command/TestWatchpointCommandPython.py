@@ -35,6 +35,7 @@ class WatchpointPythonCommandTestCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD # timing out on buildbot
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""
         self.buildDwarf(dictionary=self.d)

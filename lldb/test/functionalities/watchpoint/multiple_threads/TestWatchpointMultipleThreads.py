@@ -22,6 +22,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.hello_multiple_threads()
 
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_multiple_threads_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads."""
         self.buildDwarf()
@@ -37,6 +38,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         self.hello_multiple_threads_wp_set_and_then_delete()
 
     @dwarf_test
+    @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_multiple_threads_wp_set_and_then_delete_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads, and after the watchpoint is deleted, the watchpoint event should no longer fires."""
         self.buildDwarf()
