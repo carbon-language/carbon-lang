@@ -758,15 +758,10 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
         const size_t byte_size = return_clang_type.GetByteSize(nullptr);
         if (byte_size > 0)
         {
+            const RegisterInfo *altivec_reg = reg_ctx->GetRegisterInfoByName("xmm0", 0);
+            if (altivec_reg == nullptr)
+                altivec_reg = reg_ctx->GetRegisterInfoByName("mm0", 0);
 
-            const RegisterInfo *altivec_reg = reg_ctx->GetRegisterInfoByName("ymm0", 0);
-            if (altivec_reg == NULL)
-            {
-                altivec_reg = reg_ctx->GetRegisterInfoByName("xmm0", 0);
-                if (altivec_reg == NULL)
-                    altivec_reg = reg_ctx->GetRegisterInfoByName("mm0", 0);
-            }
-            
             if (altivec_reg)
             {
                 if (byte_size <= altivec_reg->byte_size)
@@ -793,6 +788,45 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
                                                                                    return_clang_type,
                                                                                    ConstString(""),
                                                                                    data);
+                            }
+                        }
+                    }
+                }
+                else if (byte_size <= altivec_reg->byte_size*2)
+                {
+                    const RegisterInfo *altivec_reg2 = reg_ctx->GetRegisterInfoByName("xmm1", 0);
+                    if (altivec_reg2)
+                    {
+                        ProcessSP process_sp (thread.GetProcess());
+                        if (process_sp)
+                        {
+                            std::unique_ptr<DataBufferHeap> heap_data_ap (new DataBufferHeap(byte_size, 0));
+                            const ByteOrder byte_order = process_sp->GetByteOrder();
+                            RegisterValue reg_value;
+                            RegisterValue reg_value2;
+                            if (reg_ctx->ReadRegister(altivec_reg, reg_value) && reg_ctx->ReadRegister(altivec_reg2, reg_value2))
+                            {
+
+                                Error error;
+                                if (reg_value.GetAsMemoryData (altivec_reg,
+                                                               heap_data_ap->GetBytes(),
+                                                               altivec_reg->byte_size,
+                                                               byte_order,
+                                                               error) &&
+                                    reg_value2.GetAsMemoryData (altivec_reg2,
+                                                               heap_data_ap->GetBytes() + altivec_reg->byte_size,
+                                                               heap_data_ap->GetByteSize() - altivec_reg->byte_size,
+                                                               byte_order,
+                                                               error))
+                                {
+                                    DataExtractor data (DataBufferSP (heap_data_ap.release()),
+                                                        byte_order,
+                                                        process_sp->GetTarget().GetArchitecture().GetAddressByteSize());
+                                    return_valobj_sp = ValueObjectConstResult::Create (&thread,
+                                                                                       return_clang_type,
+                                                                                       ConstString(""),
+                                                                                       data);
+                                }
                             }
                         }
                     }
