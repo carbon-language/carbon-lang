@@ -457,7 +457,7 @@ static void Cleanup() {
       llvm::sys::fs::remove(FilesToRemove->back());
       FilesToRemove->pop_back();
     }
-  RunCallBacksToRun();
+  llvm::sys::RunSignalHandlers();
   LeaveCriticalSection(&CriticalSection);
 }
 

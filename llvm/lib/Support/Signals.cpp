@@ -28,7 +28,7 @@ using namespace sys;
 
 static ManagedStatic<std::vector<std::pair<void (*)(void *), void *>>>
     CallBacksToRun;
-void RunCallBacksToRun() {
+void sys::RunSignalHandlers() {
   if (!CallBacksToRun.isConstructed())
     return;
   for (auto &I : *CallBacksToRun)
