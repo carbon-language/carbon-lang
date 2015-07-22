@@ -160,7 +160,7 @@ class MCLOHContainer {
 public:
   typedef SmallVectorImpl<MCLOHDirective> LOHDirectives;
 
-  MCLOHContainer() : EmitSize(0) {};
+  MCLOHContainer() : EmitSize(0) {}
 
   /// Const accessor to the directives.
   const LOHDirectives &getDirectives() const {

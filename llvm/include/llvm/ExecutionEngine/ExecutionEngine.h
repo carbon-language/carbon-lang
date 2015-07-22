@@ -481,7 +481,7 @@ public:
   }
 
 protected:
-  ExecutionEngine(const DataLayout DL) : DL(std::move(DL)){};
+  ExecutionEngine(const DataLayout DL) : DL(std::move(DL)){}
   explicit ExecutionEngine(DataLayout DL, std::unique_ptr<Module> M);
   explicit ExecutionEngine(std::unique_ptr<Module> M);
 

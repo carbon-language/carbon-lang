@@ -159,7 +159,7 @@ namespace llvm {
     BitcodeDiagnosticInfo(std::error_code EC, DiagnosticSeverity Severity,
                           const Twine &Msg);
     void print(DiagnosticPrinter &DP) const override;
-    std::error_code getError() const { return EC; };
+    std::error_code getError() const { return EC; }
 
     static bool classof(const DiagnosticInfo *DI) {
       return DI->getKind() == DK_Bitcode;

@@ -190,7 +190,7 @@ public:
 
     Function &getFunction() const {
       return F;
-    };
+    }
 
     iterator begin() const {
       return iterator(*G, Callees.begin(), Callees.end());

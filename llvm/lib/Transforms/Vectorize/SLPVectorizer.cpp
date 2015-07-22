@@ -506,7 +506,7 @@ private:
   /// This POD struct describes one external user in the vectorized tree.
   struct ExternalUser {
     ExternalUser (Value *S, llvm::User *U, int L) :
-      Scalar(S), User(U), Lane(L){};
+      Scalar(S), User(U), Lane(L){}
     // Which scalar in our function.
     Value *Scalar;
     // Which user that uses the scalar.

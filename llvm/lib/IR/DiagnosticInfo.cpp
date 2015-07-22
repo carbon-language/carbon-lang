@@ -49,7 +49,7 @@ struct PassRemarksOpt {
                                "' in -pass-remarks: " + RegexError,
                            false);
     }
-  };
+  }
 };
 
 static PassRemarksOpt PassRemarksOptLoc;

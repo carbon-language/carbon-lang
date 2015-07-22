@@ -67,8 +67,8 @@ public:
 
   operator Metadata *() const { return const_cast<Metadata *>(MD); }
 
-  bool operator==(const TypedDINodeRef<T> &X) const { return MD == X.MD; };
-  bool operator!=(const TypedDINodeRef<T> &X) const { return MD != X.MD; };
+  bool operator==(const TypedDINodeRef<T> &X) const { return MD == X.MD; }
+  bool operator!=(const TypedDINodeRef<T> &X) const { return MD != X.MD; }
 
   /// \brief Create a reference.
   ///

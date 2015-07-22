@@ -290,7 +290,7 @@ private:
              "Incorrect number of Infos for Objects.");
       for (unsigned I = 0; I < Objects.size(); ++I)
         M.MemMgr.notifyObjectLoaded(&M, *Objects[I]);
-    };
+    }
 
   private:
     OrcMCJITReplacement &M;

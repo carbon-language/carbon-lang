@@ -374,7 +374,7 @@ namespace llvm {
     /// correspond to schedulable entities (e.g. instructions) and do not have a
     /// valid ID. Consequently, always check for boundary nodes before accessing
     /// an assoicative data structure keyed on node ID.
-    bool isBoundaryNode() const { return NodeNum == BoundaryID; };
+    bool isBoundaryNode() const { return NodeNum == BoundaryID; }
 
     /// setNode - Assign the representative SDNode for this SUnit.
     /// This may be used during pre-regalloc scheduling.

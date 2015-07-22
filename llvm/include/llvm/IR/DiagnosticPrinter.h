@@ -63,7 +63,7 @@ protected:
   raw_ostream &Stream;
 
 public:
-  DiagnosticPrinterRawOStream(raw_ostream &Stream) : Stream(Stream) {};
+  DiagnosticPrinterRawOStream(raw_ostream &Stream) : Stream(Stream) {}
 
   // Simple types.
   DiagnosticPrinter &operator<<(char C) override;

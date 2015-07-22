@@ -54,7 +54,7 @@ private:
   struct CallContext {
     CallContext()
         : Call(nullptr), SPCopy(nullptr), ExpectedDist(0),
-          MovVector(4, nullptr), NoStackParams(false), UsePush(false){};
+          MovVector(4, nullptr), NoStackParams(false), UsePush(false){}
 
     // Actuall call instruction
     MachineInstr *Call;

@@ -915,7 +915,7 @@ public:
                   MachineBasicBlock::iterator End,
                   unsigned NumRegionInstrs) override {
     /* no configurable policy */
-  };
+  }
 
   /// PostRA scheduling does not track pressure.
   bool shouldTrackPressure() const override { return false; }

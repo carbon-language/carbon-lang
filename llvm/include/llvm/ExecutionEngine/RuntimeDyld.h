@@ -87,7 +87,7 @@ public:
   /// \brief Memory Management.
   class MemoryManager {
   public:
-    virtual ~MemoryManager() {};
+    virtual ~MemoryManager() {}
 
     /// Allocate a memory block of (at least) the given size suitable for
     /// executable code. The SectionID is a unique identifier assigned by the
@@ -149,7 +149,7 @@ public:
   /// \brief Symbol resolution.
   class SymbolResolver {
   public:
-    virtual ~SymbolResolver() {};
+    virtual ~SymbolResolver() {}
 
     /// This method returns the address of the specified function or variable.
     /// It is used to resolve symbols during module linking.

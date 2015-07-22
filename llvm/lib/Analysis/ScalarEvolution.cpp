@@ -6731,7 +6731,7 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
     ScalarEvolution &SE;
 
     explicit ClearWalkingBEDominatingCondsOnExit(ScalarEvolution &SE)
-        : SE(SE){};
+        : SE(SE){}
 
     ~ClearWalkingBEDominatingCondsOnExit() {
       SE.WalkingBEDominatingConds = false;

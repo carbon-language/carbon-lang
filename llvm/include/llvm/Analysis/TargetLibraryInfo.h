@@ -201,13 +201,13 @@ public:
   }
   bool isFunctionVectorizable(StringRef F, unsigned VF) const {
     return Impl->isFunctionVectorizable(F, VF);
-  };
+  }
   bool isFunctionVectorizable(StringRef F) const {
     return Impl->isFunctionVectorizable(F);
-  };
+  }
   StringRef getVectorizedFunction(StringRef F, unsigned VF) const {
     return Impl->getVectorizedFunction(F, VF);
-  };
+  }
 
   /// \brief Tests if the function is both available and a candidate for
   /// optimized code generation.
