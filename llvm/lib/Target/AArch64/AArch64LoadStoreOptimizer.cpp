@@ -138,25 +138,15 @@ static bool isUnscaledLdst(unsigned Opc) {
   default:
     return false;
   case AArch64::STURSi:
-    return true;
   case AArch64::STURDi:
-    return true;
   case AArch64::STURQi:
-    return true;
   case AArch64::STURWi:
-    return true;
   case AArch64::STURXi:
-    return true;
   case AArch64::LDURSi:
-    return true;
   case AArch64::LDURDi:
-    return true;
   case AArch64::LDURQi:
-    return true;
   case AArch64::LDURWi:
-    return true;
   case AArch64::LDURXi:
-    return true;
   case AArch64::LDURSWi:
     return true;
   }
