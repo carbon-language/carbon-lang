@@ -92,13 +92,12 @@ BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
     if (R->contains(*PI))
       Preds.push_back(*PI);
 
-  auto *AA = P->getAnalysisIfAvailable<AliasAnalysis>();
   auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
-  return SplitBlockPredecessors(BB, Preds, ".region", AA, DT, LI);
+  return SplitBlockPredecessors(BB, Preds, ".region", DT, LI);
 }
 
 static void replaceScopAndRegionEntry(polly::Scop *S, BasicBlock *OldEntry,
