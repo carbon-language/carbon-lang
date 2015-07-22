@@ -17,7 +17,6 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/Program.h"
@@ -25,7 +24,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <string>
-#include <vector>
 #if HAVE_EXECINFO_H
 # include <execinfo.h>         // For backtrace().
 #endif
@@ -58,8 +56,6 @@ static ManagedStatic<SmartMutex<true> > SignalsMutex;
 static void (*InterruptFunction)() = nullptr;
 
 static ManagedStatic<std::vector<std::string>> FilesToRemove;
-static ManagedStatic<std::vector<std::pair<void (*)(void *), void *>>>
-    CallBacksToRun;
 
 // IntSigs - Signals that represent requested termination. There's no bug
 // or failure, or if there is, it's not our direct responsibility. For whatever
@@ -205,11 +201,7 @@ static RETSIGTYPE SignalHandler(int Sig) {
   }
 
   // Otherwise if it is a fault (like SEGV) run any handler.
-  if (CallBacksToRun.isConstructed()) {
-    auto &CallBacksToRunRef = *CallBacksToRun;
-    for (unsigned i = 0, e = CallBacksToRun->size(); i != e; ++i)
-      CallBacksToRunRef[i].first(CallBacksToRunRef[i].second);
-  }
+  RunCallBacksToRun();
 
 #ifdef __s390__
   // On S/390, certain signals are delivered with PSW Address pointing to

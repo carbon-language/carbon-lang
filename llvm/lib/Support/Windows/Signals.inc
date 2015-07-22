@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <signal.h>
 #include <stdio.h>
-#include <vector>
 
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -164,6 +163,8 @@ static bool load64BitDebugHelp(void) {
   return fStackWalk64 && fSymInitialize && fSymSetOptions;
 }
 
+using namespace llvm;
+
 // Forward declare.
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep);
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
@@ -172,7 +173,6 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 static void (*InterruptFunction)() = 0;
 
 static std::vector<std::string> *FilesToRemove = NULL;
-static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
 static bool RegisteredUnhandledExceptionFilter = false;
 static bool CleanupExecuted = false;
 static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
@@ -436,8 +436,6 @@ void llvm::sys::SetInterruptFunction(void (*IF)()) {
 /// to the process.  The handler can have a cookie passed to it to identify
 /// what instance of the handler it is.
 void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
-  if (CallBacksToRun == 0)
-    CallBacksToRun = new std::vector<std::pair<void(*)(void*), void*> >();
   CallBacksToRun->push_back(std::make_pair(FnPtr, Cookie));
   RegisterHandler();
   LeaveCriticalSection(&CriticalSection);
@@ -454,17 +452,12 @@ static void Cleanup() {
   CleanupExecuted = true;
 
   // FIXME: open files cannot be deleted.
-
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
       llvm::sys::fs::remove(FilesToRemove->back());
       FilesToRemove->pop_back();
     }
-
-  if (CallBacksToRun)
-    for (auto &I : *CallBacksToRun)
-      I.first(I.second);
-
+  RunCallBacksToRun();
   LeaveCriticalSection(&CriticalSection);
 }
 

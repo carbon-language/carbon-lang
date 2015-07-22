@@ -12,8 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Signals.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/Signals.h"
+
+#include <vector>
 
 namespace llvm {
 using namespace sys;
@@ -23,6 +26,15 @@ using namespace sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
+static ManagedStatic<std::vector<std::pair<void (*)(void *), void *>>>
+    CallBacksToRun;
+void RunCallBacksToRun() {
+  if (!CallBacksToRun.isConstructed())
+    return;
+  for (auto &I : *CallBacksToRun)
+    I.first(I.second);
+  CallBacksToRun->clear();
+}
 }
 
 // Include the platform-specific parts of this class.
