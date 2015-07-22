@@ -212,6 +212,8 @@ namespace {
     /// Update the appropriate Phi nodes as we do so.
     void SplitExitEdges(Loop *L, const SmallVectorImpl<BasicBlock *> &ExitBlocks);
 
+    bool TryTrivialLoopUnswitch(bool &Changed);
+
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val,
                               TerminatorInst *TI = nullptr);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
@@ -229,9 +231,6 @@ namespace {
                                         TerminatorInst *TI);
 
     void SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L);
-    bool IsTrivialUnswitchCondition(Value *Cond, Constant **Val = nullptr,
-                                    BasicBlock **LoopExit = nullptr);
-
   };
 }
 
@@ -460,6 +459,13 @@ bool LoopUnswitch::processCurrentLoop() {
           AC))
     return false;
 
+  // Trivial unswitch condition can only occur at loop header basic block because
+  // that condition needs to control whether or not the loop does anything at all.
+  // Try trivial unswitch first before loop over other basic blocks in the loop.
+  if (TryTrivialLoopUnswitch(Changed)) {
+    return true;
+  }
+
   // Loop over all of the basic blocks in the loop.  If we find an interior
   // block that is branching on a loop-invariant condition, we can unswitch this
   // loop.
@@ -578,105 +584,12 @@ static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
   return nullptr;
 }
 
-/// IsTrivialUnswitchCondition - Check to see if this unswitch condition is
-/// trivial: that is, that the condition controls whether or not the loop does
-/// anything at all.  If this is a trivial condition, unswitching produces no
-/// code duplications (equivalently, it produces a simpler loop and a new empty
-/// loop, which gets deleted).
-///
-/// If this is a trivial condition, return true, otherwise return false.  When
-/// returning true, this sets Cond and Val to the condition that controls the
-/// trivial condition: when Cond dynamically equals Val, the loop is known to
-/// exit.  Finally, this sets LoopExit to the BB that the loop exits to when
-/// Cond == Val.
-///
-bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
-                                       BasicBlock **LoopExit) {
-  BasicBlock *Header = currentLoop->getHeader();
-  TerminatorInst *HeaderTerm = Header->getTerminator();
-  LLVMContext &Context = Header->getContext();
-
-  BasicBlock *LoopExitBB = nullptr;
-  if (BranchInst *BI = dyn_cast<BranchInst>(HeaderTerm)) {
-    // If the header block doesn't end with a conditional branch on Cond, we
-    // can't handle it.
-    if (!BI->isConditional() || BI->getCondition() != Cond)
-      return false;
-
-    // Check to see if a successor of the branch is guaranteed to
-    // exit through a unique exit block without having any
-    // side-effects.  If so, determine the value of Cond that causes it to do
-    // this.
-    if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop,
-                                             BI->getSuccessor(0)))) {
-      if (Val) *Val = ConstantInt::getTrue(Context);
-    } else if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop,
-                                                    BI->getSuccessor(1)))) {
-      if (Val) *Val = ConstantInt::getFalse(Context);
-    }
-  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
-    // If this isn't a switch on Cond, we can't handle it.
-    if (SI->getCondition() != Cond) return false;
-
-    // Check to see if a successor of the switch is guaranteed to go to the
-    // latch block or exit through a one exit block without having any
-    // side-effects.  If so, determine the value of Cond that causes it to do
-    // this.
-    // Note that we can't trivially unswitch on the default case or
-    // on already unswitched cases.
-    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
-         i != e; ++i) {
-      BasicBlock *LoopExitCandidate;
-      if ((LoopExitCandidate = isTrivialLoopExitBlock(currentLoop,
-                                               i.getCaseSuccessor()))) {
-        // Okay, we found a trivial case, remember the value that is trivial.
-        ConstantInt *CaseVal = i.getCaseValue();
-
-        // Check that it was not unswitched before, since already unswitched
-        // trivial vals are looks trivial too.
-        if (BranchesInfo.isUnswitched(SI, CaseVal))
-          continue;
-        LoopExitBB = LoopExitCandidate;
-        if (Val) *Val = CaseVal;
-        break;
-      }
-    }
-  } else
-	  return false;
-
-  // If we didn't find a single unique LoopExit block, or if the loop exit block
-  // contains phi nodes, this isn't trivial.
-  if (!LoopExitBB || isa<PHINode>(LoopExitBB->begin()))
-    return false;   // Can't handle this.
-
-  if (LoopExit) *LoopExit = LoopExitBB;
-
-  // We already know that nothing uses any scalar values defined inside of this
-  // loop.  As such, we just have to check to see if this loop will execute any
-  // side-effecting instructions (e.g. stores, calls, volatile loads) in the
-  // part of the loop that the code *would* execute.  We already checked the
-  // tail, check the header now.
-  for (BasicBlock::iterator I = Header->begin(), E = Header->end(); I != E; ++I)
-    if (I->mayHaveSideEffects())
-      return false;
-  return true;
-}
-
 /// UnswitchIfProfitable - We have found that we can unswitch currentLoop when
 /// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
                                         TerminatorInst *TI) {
   Function *F = loopHeader->getParent();
-  Constant *CondVal = nullptr;
-  BasicBlock *ExitBlock = nullptr;
-
-  if (IsTrivialUnswitchCondition(LoopCond, &CondVal, &ExitBlock)) {
-    // If the condition is trivial, always unswitch. There is no code growth
-    // for this case.
-    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, ExitBlock, TI);
-    return true;
-  }
 
   // Check to see if it would be profitable to unswitch current loop.
   if (!BranchesInfo.CostAllowsUnswitching()) {
@@ -828,6 +741,109 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
   // at least eliminate the old branch.
   RewriteLoopBodyWithConditionConstant(L, Cond, Val, false);
   ++NumTrivial;
+}
+
+/// TryTrivialLoopUnswitch - Check if loop header block's terminator is a trivial
+/// unswitch condition: that is, the condition controls whether or not the loop
+/// does anything at all (which means it can only occur in loop header). If it is
+/// a trivial condition, unswitching produces no code duplications (equivalently,
+/// it produces a simpler loop and a new empty loop, which gets deleted). Therefore
+/// always unswitch trivial condition.
+///
+bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
+  BasicBlock *Header = currentLoop->getHeader();
+  TerminatorInst *HeaderTerm = Header->getTerminator();
+  LLVMContext &Context = Header->getContext();
+
+  // Check if this loop will execute any side-effecting instructions (e.g.
+  // stores, calls, volatile loads) in the part of the loop that the code
+  // *would* execute. Check the header first.
+  for (BasicBlock::iterator I :*Header)
+    if (I->mayHaveSideEffects())
+      return false;
+
+  // CondVal is the condition that controls the trivial condition.
+  // LoopExitBB is the BasicBlock that loop exits when meets trivial condition.
+  Constant *CondVal = nullptr;
+  BasicBlock *LoopExitBB = nullptr;
+
+  if (BranchInst *BI = dyn_cast<BranchInst>(HeaderTerm)) {
+    // If this isn't branching on an invariant condition, we can't unswitch it.
+    if (!BI->isConditional())
+      return false;
+
+    Value *LoopCond = FindLIVLoopCondition(BI->getCondition(),
+                                           currentLoop, Changed);
+
+    // Unswitch only if the trivial condition itself is an LIV (not
+    // partial LIV which could occur in and/or)
+    if (!LoopCond || LoopCond != BI->getCondition())
+      return false;
+
+    // Check to see if a successor of the branch is guaranteed to
+    // exit through a unique exit block without having any
+    // side-effects.  If so, determine the value of Cond that causes
+    // it to do this.
+    if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop,
+                                             BI->getSuccessor(0)))) {
+      CondVal = ConstantInt::getTrue(Context);
+    } else if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop,
+                                                    BI->getSuccessor(1)))) {
+      CondVal = ConstantInt::getFalse(Context);
+    }
+
+    // If we didn't find a single unique LoopExit block, or if the loop exit block
+    // contains phi nodes, this isn't trivial.
+    if (!LoopExitBB || isa<PHINode>(LoopExitBB->begin()))
+      return false;   // Can't handle this.
+
+    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, LoopExitBB, HeaderTerm);
+    ++NumBranches;
+    return true;
+  } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
+    // If this isn't switching on an invariant condition, we can't unswitch it.
+    Value *LoopCond = FindLIVLoopCondition(SI->getCondition(),
+                                           currentLoop, Changed);
+
+    // Unswitch only if the trivial condition itself is an LIV (not
+    // partial LIV which could occur in and/or)
+    if (!LoopCond || LoopCond != SI->getCondition())
+      return false;
+
+    // Check to see if a successor of the switch is guaranteed to go to the
+    // latch block or exit through a one exit block without having any
+    // side-effects.  If so, determine the value of Cond that causes it to do
+    // this.
+    // Note that we can't trivially unswitch on the default case or
+    // on already unswitched cases.
+    for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
+         i != e; ++i) {
+      BasicBlock *LoopExitCandidate;
+      if ((LoopExitCandidate = isTrivialLoopExitBlock(currentLoop,
+                                               i.getCaseSuccessor()))) {
+        // Okay, we found a trivial case, remember the value that is trivial.
+        ConstantInt *CaseVal = i.getCaseValue();
+
+        // Check that it was not unswitched before, since already unswitched
+        // trivial vals are looks trivial too.
+        if (BranchesInfo.isUnswitched(SI, CaseVal))
+          continue;
+        LoopExitBB = LoopExitCandidate;
+        CondVal = CaseVal;
+        break;
+      }
+    }
+
+    // If we didn't find a single unique LoopExit block, or if the loop exit block
+    // contains phi nodes, this isn't trivial.
+    if (!LoopExitBB || isa<PHINode>(LoopExitBB->begin()))
+      return false;   // Can't handle this.
+
+    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, LoopExitBB, nullptr);
+    ++NumSwitches;
+    return true;
+  }
+  return false;
 }
 
 /// SplitExitEdges - Split all of the edges from inside the loop to their exit
