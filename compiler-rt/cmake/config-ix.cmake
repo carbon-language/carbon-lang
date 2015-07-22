@@ -222,7 +222,7 @@ message(STATUS "Compiler-RT supported architectures: ${COMPILER_RT_SUPPORTED_ARC
 
 # Takes ${ARGN} and puts only supported architectures in @out_var list.
 function(filter_available_targets out_var)
-  set(archs)
+  set(archs ${${out_var}})
   foreach(arch ${ARGN})
     list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
     if(NOT (ARCH_INDEX EQUAL -1) AND CAN_TARGET_${arch})
@@ -253,6 +253,9 @@ filter_available_targets(UBSAN_COMMON_SUPPORTED_ARCH
   ${SANITIZER_COMMON_SUPPORTED_ARCH})
 filter_available_targets(ASAN_SUPPORTED_ARCH
   x86_64 i386 i686 powerpc64 powerpc64le arm mips mipsel mips64 mips64el)
+if(ANDROID)
+  filter_available_targets(ASAN_SUPPORTED_ARCH aarch64)
+endif()
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64 mips64 mips64el)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64 mips64 mips64el)
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64 mips64 mips64el)
