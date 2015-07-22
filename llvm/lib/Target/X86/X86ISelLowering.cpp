@@ -13962,26 +13962,26 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-    if (VT.isVector() && VT.getScalarType() == MVT::i1) {
-      SDValue Op1Scalar;
-      if (ISD::isBuildVectorOfConstantSDNodes(Op1.getNode()))
-        Op1Scalar = ConvertI1VectorToInterger(Op1, DAG);
-      else if (Op1.getOpcode() == ISD::BITCAST && Op1.getOperand(0))
-        Op1Scalar = Op1.getOperand(0);
-      SDValue Op2Scalar;
-      if (ISD::isBuildVectorOfConstantSDNodes(Op2.getNode()))
-        Op2Scalar = ConvertI1VectorToInterger(Op2, DAG);
-      else if (Op2.getOpcode() == ISD::BITCAST && Op2.getOperand(0))
-        Op2Scalar = Op2.getOperand(0);
-      if (Op1Scalar.getNode() && Op2Scalar.getNode()) {
-        SDValue newSelect = DAG.getNode(ISD::SELECT, DL,
-                                        Op1Scalar.getValueType(),
-                                        Cond, Op1Scalar, Op2Scalar);
-        if (newSelect.getValueSizeInBits() == VT.getSizeInBits())
-          return DAG.getBitcast(VT, newSelect);
-        SDValue ExtVec = DAG.getBitcast(MVT::v8i1, newSelect);
-        return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, ExtVec,
-                           DAG.getIntPtrConstant(0, DL));
+  if (VT.isVector() && VT.getScalarType() == MVT::i1) {
+    SDValue Op1Scalar;
+    if (ISD::isBuildVectorOfConstantSDNodes(Op1.getNode()))
+      Op1Scalar = ConvertI1VectorToInterger(Op1, DAG);
+    else if (Op1.getOpcode() == ISD::BITCAST && Op1.getOperand(0))
+      Op1Scalar = Op1.getOperand(0);
+    SDValue Op2Scalar;
+    if (ISD::isBuildVectorOfConstantSDNodes(Op2.getNode()))
+      Op2Scalar = ConvertI1VectorToInterger(Op2, DAG);
+    else if (Op2.getOpcode() == ISD::BITCAST && Op2.getOperand(0))
+      Op2Scalar = Op2.getOperand(0);
+    if (Op1Scalar.getNode() && Op2Scalar.getNode()) {
+      SDValue newSelect = DAG.getNode(ISD::SELECT, DL,
+                                      Op1Scalar.getValueType(),
+                                      Cond, Op1Scalar, Op2Scalar);
+      if (newSelect.getValueSizeInBits() == VT.getSizeInBits())
+        return DAG.getBitcast(VT, newSelect);
+      SDValue ExtVec = DAG.getBitcast(MVT::v8i1, newSelect);
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, ExtVec,
+                         DAG.getIntPtrConstant(0, DL));
     }
   }
 
