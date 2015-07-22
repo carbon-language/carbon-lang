@@ -268,13 +268,6 @@ void llvm::sys::DontRemoveFileOnSignal(StringRef Filename) {
   std::vector<std::string>::iterator I = FilesToRemove->end();
   if (RI != FilesToRemove->rend())
     I = FilesToRemove->erase(RI.base()-1);
-
-  // We need to call c_str() on every element which would have been moved by
-  // the erase. These elements, in a C++98 implementation where c_str()
-  // requires a reallocation on the first call may have had the call to c_str()
-  // made on insertion become invalid by being copied down an element.
-  for (std::vector<std::string>::iterator E = FilesToRemove->end(); I != E; ++I)
-    I->c_str();
 }
 
 /// AddSignalHandler - Add a function to be called when a signal is delivered
