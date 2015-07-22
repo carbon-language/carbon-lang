@@ -1042,16 +1042,8 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     BaseExpr = new (Context) CXXThisExpr(Loc, BaseExprType,/*isImplicit=*/true);
   }
 
-  bool ShouldCheckUse = true;
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MemberDecl)) {
-    // Don't diagnose the use of a virtual member function unless it's
-    // explicitly qualified.
-    if (MD->isVirtual() && !SS.isSet())
-      ShouldCheckUse = false;
-  }
-
   // Check the use of this member.
-  if (ShouldCheckUse && DiagnoseUseOfDecl(MemberDecl, MemberLoc))
+  if (DiagnoseUseOfDecl(MemberDecl, MemberLoc))
     return ExprError();
 
   if (FieldDecl *FD = dyn_cast<FieldDecl>(MemberDecl))

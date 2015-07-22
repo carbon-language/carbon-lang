@@ -26,12 +26,12 @@ void A::h(A* a)
 }
 
 struct B {
-  virtual void f() __attribute__((deprecated)); // expected-note 4 {{'f' has been explicitly marked deprecated here}}
+  virtual void f() __attribute__((deprecated)); // expected-note 6 {{'f' has been explicitly marked deprecated here}}
   void g();
 };
 
 void B::g() {
-  f();
+  f(); // expected-warning{{'f' is deprecated}}
   B::f(); // expected-warning{{'f' is deprecated}}
 }
 
@@ -47,7 +47,7 @@ void C::g() {
 }
 
 void f(B* b, C *c) {
-  b->f();
+  b->f(); // expected-warning{{'f' is deprecated}}
   b->B::f(); // expected-warning{{'f' is deprecated}}
   
   c->f();
@@ -59,10 +59,10 @@ struct D {
   virtual void f() __attribute__((deprecated));
 };
 
-void D::f() { }
+void D::f() { } // expected-note{{'f' has been explicitly marked deprecated here}}
 
 void f(D* d) {
-  d->f();
+  d->f(); // expected-warning{{'f' is deprecated}}
 }
 
 
