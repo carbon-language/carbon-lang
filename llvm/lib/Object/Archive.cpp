@@ -87,17 +87,17 @@ Archive::Child::Child(const Archive *Parent, const char *Start)
   if (!Start)
     return;
 
-  const ArchiveMemberHeader *Header =
-      reinterpret_cast<const ArchiveMemberHeader *>(Start);
   uint64_t Size = sizeof(ArchiveMemberHeader);
-  if (!Parent->IsThin || Header->getName() == "/" || Header->getName() == "//")
-    Size += Header->getSize();
   Data = StringRef(Start, Size);
+  if (!isThinMember()) {
+    Size += getRawSize();
+    Data = StringRef(Start, Size);
+  }
 
   // Setup StartOfFile and PaddingBytes.
   StartOfFile = sizeof(ArchiveMemberHeader);
   // Don't include attached name.
-  StringRef Name = Header->getName();
+  StringRef Name = getRawName();
   if (Name.startswith("#1/")) {
     uint64_t NameSize;
     if (Name.substr(3).rtrim(" ").getAsInteger(10, NameSize))
@@ -116,8 +116,13 @@ uint64_t Archive::Child::getRawSize() const {
   return getHeader()->getSize();
 }
 
+bool Archive::Child::isThinMember() const {
+  StringRef Name = getHeader()->getName();
+  return Parent->IsThin && Name != "/" && Name != "//";
+}
+
 ErrorOr<StringRef> Archive::Child::getBuffer() const {
-  if (!Parent->IsThin)
+  if (!isThinMember())
     return StringRef(Data.data() + StartOfFile, getSize());
   ErrorOr<StringRef> Name = getName();
   if (std::error_code EC = Name.getError())

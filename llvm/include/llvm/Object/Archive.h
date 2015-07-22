@@ -62,6 +62,8 @@ public:
       return reinterpret_cast<const ArchiveMemberHeader *>(Data.data());
     }
 
+    bool isThinMember() const;
+
   public:
     Child(const Archive *Parent, const char *Start);
 
