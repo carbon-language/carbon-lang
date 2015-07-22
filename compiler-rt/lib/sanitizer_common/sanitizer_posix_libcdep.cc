@@ -15,6 +15,7 @@
 #include "sanitizer_platform.h"
 
 #if SANITIZER_POSIX
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_platform_limits_posix.h"
@@ -30,10 +31,16 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
+
+#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+#include <android/log.h>
+#else
+#include <syslog.h>
+#endif
 
 #if SANITIZER_FREEBSD
 // The MAP_NORESERVE define has been removed in FreeBSD 11.x, and even before
@@ -275,6 +282,49 @@ void *MmapNoAccess(uptr fixed_addr, uptr size, const char *name) {
                                0);
 }
 
-}  // namespace __sanitizer
+// 64-bit Android targets don't provide the deprecated __android_log_write.
+// Starting with the L release, syslog() works and is preferable to
+// __android_log_write.
+#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+static atomic_uint8_t android_log_initialized;
+
+void AndroidLogInit() {
+  atomic_store(&android_log_initialized, 1, memory_order_release);
+}
+
+static bool IsSyslogAvailable() {
+  return atomic_load(&android_log_initialized, memory_order_acquire);
+}
+
+static void WriteOneLineToSyslog(const char *s) {
+  __android_log_write(ANDROID_LOG_INFO, NULL, s);
+}
+#else
+void AndroidLogInit() {}
+
+static bool IsSyslogAvailable() { return true; }
+
+static void WriteOneLineToSyslog(const char *s) { syslog(LOG_INFO, "%s", s); }
+#endif
+
+void WriteToSyslog(const char *buffer) {
+  if (!IsSyslogAvailable())
+    return;
+  char *copy = internal_strdup(buffer);
+  char *p = copy;
+  char *q;
+  // syslog, at least on Android, has an implicit message length limit.
+  // Print one line at a time.
+  do {
+    q = internal_strchr(p, '\n');
+    if (q)
+      *q = '\0';
+    WriteOneLineToSyslog(p);
+    if (q)
+      p = q + 1;
+  } while (q);
+  InternalFree(copy);
+}
+} // namespace __sanitizer
 
 #endif  // SANITIZER_POSIX
