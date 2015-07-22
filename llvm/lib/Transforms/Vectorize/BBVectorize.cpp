@@ -2809,52 +2809,51 @@ namespace {
     if (isa<StoreInst>(I)) {
       AA->replaceWithNewValue(I, K);
       AA->replaceWithNewValue(J, K);
-    } else {
-      Type *IType = I->getType();
-      Type *JType = J->getType();
-
-      VectorType *VType = getVecTypeForPair(IType, JType);
-      unsigned numElem = VType->getNumElements();
-
-      unsigned numElemI = getNumScalarElements(IType);
-      unsigned numElemJ = getNumScalarElements(JType);
-
-      if (IType->isVectorTy()) {
-        std::vector<Constant*> Mask1(numElemI), Mask2(numElemI);
-        for (unsigned v = 0; v < numElemI; ++v) {
-          Mask1[v] = ConstantInt::get(Type::getInt32Ty(Context), v);
-          Mask2[v] = ConstantInt::get(Type::getInt32Ty(Context), numElemJ+v);
-        }
-
-        K1 = new ShuffleVectorInst(K, UndefValue::get(VType),
-                                   ConstantVector::get( Mask1),
-                                   getReplacementName(K, false, 1));
-      } else {
-        Value *CV0 = ConstantInt::get(Type::getInt32Ty(Context), 0);
-        K1 = ExtractElementInst::Create(K, CV0,
-                                          getReplacementName(K, false, 1));
-      }
-
-      if (JType->isVectorTy()) {
-        std::vector<Constant*> Mask1(numElemJ), Mask2(numElemJ);
-        for (unsigned v = 0; v < numElemJ; ++v) {
-          Mask1[v] = ConstantInt::get(Type::getInt32Ty(Context), v);
-          Mask2[v] = ConstantInt::get(Type::getInt32Ty(Context), numElemI+v);
-        }
-
-        K2 = new ShuffleVectorInst(K, UndefValue::get(VType),
-                                   ConstantVector::get( Mask2),
-                                   getReplacementName(K, false, 2));
-      } else {
-        Value *CV1 = ConstantInt::get(Type::getInt32Ty(Context), numElem-1);
-        K2 = ExtractElementInst::Create(K, CV1,
-                                          getReplacementName(K, false, 2));
-      }
-
-      K1->insertAfter(K);
-      K2->insertAfter(K1);
-      InsertionPt = K2;
+      return;
     }
+
+    Type *IType = I->getType();
+    Type *JType = J->getType();
+
+    VectorType *VType = getVecTypeForPair(IType, JType);
+    unsigned numElem = VType->getNumElements();
+
+    unsigned numElemI = getNumScalarElements(IType);
+    unsigned numElemJ = getNumScalarElements(JType);
+
+    if (IType->isVectorTy()) {
+      std::vector<Constant *> Mask1(numElemI), Mask2(numElemI);
+      for (unsigned v = 0; v < numElemI; ++v) {
+        Mask1[v] = ConstantInt::get(Type::getInt32Ty(Context), v);
+        Mask2[v] = ConstantInt::get(Type::getInt32Ty(Context), numElemJ + v);
+      }
+
+      K1 = new ShuffleVectorInst(K, UndefValue::get(VType),
+                                 ConstantVector::get(Mask1),
+                                 getReplacementName(K, false, 1));
+    } else {
+      Value *CV0 = ConstantInt::get(Type::getInt32Ty(Context), 0);
+      K1 = ExtractElementInst::Create(K, CV0, getReplacementName(K, false, 1));
+    }
+
+    if (JType->isVectorTy()) {
+      std::vector<Constant *> Mask1(numElemJ), Mask2(numElemJ);
+      for (unsigned v = 0; v < numElemJ; ++v) {
+        Mask1[v] = ConstantInt::get(Type::getInt32Ty(Context), v);
+        Mask2[v] = ConstantInt::get(Type::getInt32Ty(Context), numElemI + v);
+      }
+
+      K2 = new ShuffleVectorInst(K, UndefValue::get(VType),
+                                 ConstantVector::get(Mask2),
+                                 getReplacementName(K, false, 2));
+    } else {
+      Value *CV1 = ConstantInt::get(Type::getInt32Ty(Context), numElem - 1);
+      K2 = ExtractElementInst::Create(K, CV1, getReplacementName(K, false, 2));
+    }
+
+    K1->insertAfter(K);
+    K2->insertAfter(K1);
+    InsertionPt = K2;
   }
 
   // Move all uses of the function I (including pairing-induced uses) after J.
