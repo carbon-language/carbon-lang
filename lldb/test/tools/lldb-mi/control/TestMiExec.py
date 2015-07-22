@@ -154,7 +154,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Warning: the following is sensative to the lines in the source
+        # Warning: the following is sensitive to the lines in the source
 
         # Test -exec-next
         self.runCmd("-exec-next --thread 1 --frame 0")
@@ -208,7 +208,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Warning: the following is sensative to the lines in the
+        # Warning: the following is sensitive to the lines in the
         # source and optimizations
 
         # Test -exec-next-instruction
@@ -262,7 +262,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Warning: the following is sensative to the lines in the source
+        # Warning: the following is sensitive to the lines in the source
 
         # Test that -exec-step steps into (or not) printf depending on debug info
         # Note that message is different in Darwin and Linux:
@@ -324,7 +324,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
         self.expect("\^done")
 
-        # Warning: the following is sensative to the lines in the
+        # Warning: the following is sensitive to the lines in the
         # source and optimizations
 
         # Run to main
