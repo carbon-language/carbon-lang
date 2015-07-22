@@ -301,17 +301,46 @@ return_one_int_one_pointer (struct one_int_one_pointer value)
   return value;
 }
 
-typedef float vector_size_float32 __attribute__((__vector_size__(16)));
-typedef float ext_vector_size_float32 __attribute__((ext_vector_type(4)));
+typedef float vector_size_float32_8 __attribute__((__vector_size__(8)));
+typedef float vector_size_float32_16 __attribute__((__vector_size__(16)));
+typedef float vector_size_float32_32 __attribute__((__vector_size__(32)));
 
-vector_size_float32
-return_vector_size_float32 (vector_size_float32 value)
+typedef float ext_vector_size_float32_2 __attribute__((ext_vector_type(2)));
+typedef float ext_vector_size_float32_4 __attribute__((ext_vector_type(4)));
+typedef float ext_vector_size_float32_8 __attribute__((ext_vector_type(8)));
+
+vector_size_float32_8
+return_vector_size_float32_8 (vector_size_float32_8 value)
 {
     return value;
 }
 
-ext_vector_size_float32
-return_ext_vector_size_float32 (ext_vector_size_float32 value)
+vector_size_float32_16
+return_vector_size_float32_16 (vector_size_float32_16 value)
+{
+    return value;
+}
+
+vector_size_float32_32
+return_vector_size_float32_32 (vector_size_float32_32 value)
+{
+    return value;
+}
+
+ext_vector_size_float32_2
+return_ext_vector_size_float32_2 (ext_vector_size_float32_2 value)
+{
+    return value;
+}
+
+ext_vector_size_float32_4
+return_ext_vector_size_float32_4 (ext_vector_size_float32_4 value)
+{
+    return value;
+}
+
+ext_vector_size_float32_8
+return_ext_vector_size_float32_8 (ext_vector_size_float32_8 value)
 {
     return value;
 }
@@ -366,9 +395,13 @@ main ()
   return_one_int_one_double_packed ((struct one_int_one_double_packed) {10, 20.0});
   return_one_int_one_long ((struct one_int_one_long) {10, 20});
 
-  return_vector_size_float32 (( vector_size_float32 ){1.5, 2.25, 4.125, 8.0625});
-  return_ext_vector_size_float32 ((ext_vector_size_float32){ 16.5, 32.25, 64.125, 128.0625});
-  
-  return 0;
-  
+  return_vector_size_float32_8 (( vector_size_float32_8 ){1.5, 2.25});
+  return_vector_size_float32_16 (( vector_size_float32_16 ){1.5, 2.25, 4.125, 8.0625});
+  return_vector_size_float32_32 (( vector_size_float32_32 ){1.5, 2.25, 4.125, 8.0625, 7.89, 8.52, 6.31, 9.12});
+
+  return_ext_vector_size_float32_2 ((ext_vector_size_float32_2){ 16.5, 32.25});
+  return_ext_vector_size_float32_4 ((ext_vector_size_float32_4){ 16.5, 32.25, 64.125, 128.0625});
+  return_ext_vector_size_float32_8 ((ext_vector_size_float32_8){ 16.5, 32.25, 64.125, 128.0625, 1.59, 3.57, 8.63, 9.12 });
+
+  return 0; 
 }

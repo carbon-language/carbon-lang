@@ -398,6 +398,23 @@ ABISysV_arm::GetArgumentValues (Thread &thread,
     return true;
 }
 
+static bool
+GetReturnValuePassedInMemory(Thread &thread, RegisterContext* reg_ctx, size_t byte_size, Value& value)
+{
+    Error error;
+    DataBufferHeap buffer(byte_size, 0);
+
+    const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1);
+    uint32_t address = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+    thread.GetProcess()->ReadMemory(address, buffer.GetBytes(), buffer.GetByteSize(), error);
+
+    if (error.Fail())
+        return false;
+
+    value.SetBytes(buffer.GetBytes(), buffer.GetByteSize());
+    return true;
+}
+
 ValueObjectSP
 ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
                                        lldb_private::ClangASTType &clang_type) const
@@ -472,6 +489,27 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
         value.GetScalar() = ptr;
     }
+    else if (clang_type.IsVectorType(nullptr, nullptr))
+    {
+        size_t byte_size = clang_type.GetByteSize(&thread);
+        if (byte_size <= 16)
+        {
+            DataBufferHeap buffer(16, 0);
+            uint32_t* buffer_ptr = (uint32_t*)buffer.GetBytes();
+            
+            for (uint32_t i = 0; 4*i < byte_size; ++i)
+            {
+                const RegisterInfo *reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + i);
+                buffer_ptr[i] = reg_ctx->ReadRegisterAsUnsigned(reg_info, 0) & UINT32_MAX;
+            }
+            value.SetBytes(buffer.GetBytes(), byte_size);
+        }
+        else
+        {
+            if (!GetReturnValuePassedInMemory(thread, reg_ctx, byte_size, value))
+                return return_valobj_sp;
+        }
+    }
     else if (clang_type.IsFloatingPointType(float_count, is_complex))
     {
         if (float_count == 1 && !is_complex)
@@ -517,16 +555,7 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
         }
         else
         {
-            RegisterValue r0_reg_value;
-            uint32_t address = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
-
-            Error error;
-            DataBufferHeap buffer(byte_size, 0);
-            thread.GetProcess()->ReadMemory(address, buffer.GetBytes(), buffer.GetByteSize(), error);
-
-            if (error.Success())
-                value.SetBytes(buffer.GetBytes(), buffer.GetByteSize());
-            else
+            if (!GetReturnValuePassedInMemory(thread, reg_ctx, byte_size, value))
                 return return_valobj_sp;
         }
     }
