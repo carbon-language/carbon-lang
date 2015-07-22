@@ -58,7 +58,7 @@ public:
     ///
     /// @param[out] error_ptr
     ///     A pointer to an error object that should be given an
-    ///     approriate error value if this method returns false. This
+    ///     appropriate error value if this method returns false. This
     ///     value can be NULL if the error value should be ignored.
     ///
     /// @return
@@ -77,7 +77,7 @@ public:
     ///
     /// @param[out] error_ptr
     ///     A pointer to an error object that should be given an
-    ///     approriate error value if this method returns false. This
+    ///     appropriate error value if this method returns false. This
     ///     value can be NULL if the error value should be ignored.
     ///
     /// @return
@@ -115,12 +115,12 @@ public:
     ///     The number of microseconds to wait for the data.
     ///
     /// @param[out] status
-    ///     On return, indicates whether the call was sucessful or terminated
+    ///     On return, indicates whether the call was successful or terminated
     ///     due to some error condition.
     ///
     /// @param[out] error_ptr
     ///     A pointer to an error object that should be given an
-    ///     approriate error value if this method returns zero. This
+    ///     appropriate error value if this method returns zero. This
     ///     value can be NULL if the error value should be ignored.
     ///
     /// @return
@@ -151,7 +151,7 @@ public:
     ///
     /// @param[out] error_ptr
     ///     A pointer to an error object that should be given an
-    ///     approriate error value if this method returns zero. This
+    ///     appropriate error value if this method returns zero. This
     ///     value can be NULL if the error value should be ignored.
     ///
     /// @return
@@ -182,7 +182,7 @@ public:
     /// operation).
     ///
     /// @return
-    ///     Returns true is the interrupt request was sucessful.
+    ///     Returns true is the interrupt request was successful.
     //------------------------------------------------------------------
     virtual bool
     InterruptRead() = 0;

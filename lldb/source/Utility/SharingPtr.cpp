@@ -11,7 +11,7 @@
 
 #if defined (ENABLE_SP_LOGGING)
 
-// If ENABLE_SP_LOGGING is defined, then log all shared pointer assignements
+// If ENABLE_SP_LOGGING is defined, then log all shared pointer assignments
 // and allow them to be queried using a pointer by a call to:
 #include <execinfo.h>
 #include <map>

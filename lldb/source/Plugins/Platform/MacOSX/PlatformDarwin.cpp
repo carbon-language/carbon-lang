@@ -649,17 +649,17 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite 
 bool
 PlatformDarwin::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
-    bool sucess = false;
+    bool success = false;
     if (IsHost())
     {
-        sucess = Platform::GetProcessInfo (pid, process_info);
+        success = Platform::GetProcessInfo (pid, process_info);
     }
     else
     {
         if (m_remote_platform_sp)
-            sucess = m_remote_platform_sp->GetProcessInfo (pid, process_info);
+            success = m_remote_platform_sp->GetProcessInfo (pid, process_info);
     }
-    return sucess;
+    return success;
 }
 
 uint32_t

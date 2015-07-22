@@ -77,7 +77,7 @@ SymbolVendor::~SymbolVendor()
 }
 
 //----------------------------------------------------------------------
-// Add a represention given an object file.
+// Add a representation given an object file.
 //----------------------------------------------------------------------
 void
 SymbolVendor::AddSymbolFileRepresentation(const ObjectFileSP &objfile_sp)

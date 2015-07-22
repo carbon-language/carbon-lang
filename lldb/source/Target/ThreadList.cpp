@@ -46,7 +46,7 @@ ThreadList::operator = (const ThreadList& rhs)
     if (this != &rhs)
     {
         // Lock both mutexes to make sure neither side changes anyone on us
-        // while the assignement occurs
+        // while the assignment occurs
         Mutex::Locker locker(GetMutex());
         m_process = rhs.m_process;
         m_stop_id = rhs.m_stop_id;
@@ -750,7 +750,7 @@ ThreadList::Update (ThreadList &rhs)
     if (this != &rhs)
     {
         // Lock both mutexes to make sure neither side changes anyone on us
-        // while the assignement occurs
+        // while the assignment occurs
         Mutex::Locker locker(GetMutex());
         m_process = rhs.m_process;
         m_stop_id = rhs.m_stop_id;

@@ -192,7 +192,7 @@ public:
 
   static lldb::LogChannelSP FindPlugin(const char *plugin_name);
 
-    // categories is a an array of chars that ends with a NULL element.
+    // categories is an array of chars that ends with a NULL element.
   virtual void Disable(const char **categories, Stream *feedback_strm) = 0;
 
   virtual bool Enable(

@@ -297,7 +297,7 @@ CompactUnwindInfo::ScanIndex (const ProcessSP &process_sp)
             Host::SystemLog (Host::eSystemLogError,
                     "error: Invalid offset encountered in compact unwind info, skipping\n");
             // don't trust anything from this compact_unwind section if it looks
-            // blatently invalid data in the header.
+            // blatantly invalid data in the header.
             m_indexes_computed = eLazyBoolNo;
             return;
         }

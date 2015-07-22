@@ -215,7 +215,7 @@ LineTable::FindLineEntryByAddress (const Address &so_addr, LineEntry& line_entry
                         --pos;
                     else if (pos->file_addr == search_entry.file_addr)
                     {
-                        // If this is a termination entry, it should't match since
+                        // If this is a termination entry, it shouldn't match since
                         // entries with the "is_terminal_entry" member set to true 
                         // are termination entries that define the range for the 
                         // previous entry.
@@ -529,7 +529,7 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
         {
             entry_linked_file_addr = entry.file_addr - file_range_entry->GetRangeBase() + file_range_entry->data;
             // Determine if we need to terminate the previous entry when the previous
-            // entry was not contguous with this one after being linked.
+            // entry was not contiguous with this one after being linked.
             if (range_changed && prev_file_range_entry)
             {
                 prev_end_entry_linked_file_addr = std::min<lldb::addr_t>(entry.file_addr, prev_file_range_entry->GetRangeEnd()) - prev_file_range_entry->GetRangeBase() + prev_file_range_entry->data;

@@ -392,7 +392,7 @@ JSONParser::GetToken (std::string &value)
                         case 'E':
                             if (exp_index != 0)
                             {
-                                error.Printf("error: extra expenent character found at offset %" PRIu64, start_index);
+                                error.Printf("error: extra exponent character found at offset %" PRIu64, start_index);
                                 value = std::move(error.GetString());
                                 return Token::Error;
                             }

@@ -3331,7 +3331,7 @@ SymbolFileDWARF::Index ()
         s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
         s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
         s.Printf("\nTypes:\n");                 m_type_index.Dump (&s);
-        s.Printf("\nNamepaces:\n");             m_namespace_index.Dump (&s);
+        s.Printf("\nNamespaces:\n")             m_namespace_index.Dump (&s);
 #endif
     }
 }
@@ -8014,7 +8014,7 @@ SymbolFileDWARF::DumpIndexes ()
     s.Printf("\nObjective C class selectors:\n");    m_objc_class_selectors_index.Dump (&s);
     s.Printf("\nGlobals and statics:\n");   m_global_index.Dump (&s); 
     s.Printf("\nTypes:\n");                 m_type_index.Dump (&s);
-    s.Printf("\nNamepaces:\n");             m_namespace_index.Dump (&s);
+    s.Printf("\nNamespaces:\n");            m_namespace_index.Dump (&s);
 }
 
 void

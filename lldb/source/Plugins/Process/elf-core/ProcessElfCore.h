@@ -10,7 +10,7 @@
 //  2) The ELF file's PT_NOTE and PT_LOAD segments describes the program's
 //     address space and thread contexts.
 //  3) PT_NOTE segment contains note entries which describes a thread context.
-//  4) PT_LOAD segment describes a valid contigous range of process address
+//  4) PT_LOAD segment describes a valid contiguous range of process address
 //     space.
 //===----------------------------------------------------------------------===//
 

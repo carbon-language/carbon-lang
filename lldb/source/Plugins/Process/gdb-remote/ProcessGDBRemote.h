@@ -376,7 +376,7 @@ protected:
     bool m_destroy_tried_resuming;
     lldb::CommandObjectSP m_command_sp;
     int64_t m_breakpoint_pc_offset;
-    lldb::tid_t m_initial_tid; // The inital thread ID, given by stub on attach
+    lldb::tid_t m_initial_tid; // The initial thread ID, given by stub on attach
 
     bool
     HandleNotifyPacket(StringExtractorGDBRemote &packet);

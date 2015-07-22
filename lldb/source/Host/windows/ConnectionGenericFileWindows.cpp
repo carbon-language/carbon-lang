@@ -21,7 +21,7 @@ using namespace lldb_private;
 namespace
 {
 // This is a simple helper class to package up the information needed to return from a Read/Write
-// operation function.  Since there is alot of code to be run before exit regardless of whether the
+// operation function.  Since there is a lot of code to be run before exit regardless of whether the
 // operation succeeded or failed, combined with many possible return paths, this is the cleanest
 // way to represent it.
 class ReturnInfo
@@ -251,7 +251,7 @@ ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ll
     }
     else
     {
-        // An unknown error occured.  Fail out.
+        // An unknown error occurred.  Fail out.
         return_info.Set(0, eConnectionStatusError, ::GetLastError());
     }
     goto finish;

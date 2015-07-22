@@ -395,7 +395,7 @@ CommandObject::HandleCompletion
     StringList &matches
 )
 {
-    // Default implmentation of WantsCompletion() is !WantsRawCommandString().
+    // Default implementation of WantsCompletion() is !WantsRawCommandString().
     // Subclasses who want raw command string but desire, for example,
     // argument completion should override WantsCompletion() to return true,
     // instead.

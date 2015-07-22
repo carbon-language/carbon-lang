@@ -43,7 +43,7 @@ public:
     Timer(const char *category, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 
     //--------------------------------------------------------------
-    /// Desstructor
+    /// Destructor
     //--------------------------------------------------------------
     ~Timer();
 

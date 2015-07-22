@@ -35,7 +35,7 @@ struct el_binding
 // stored key bindings
 static std::vector<el_binding*> _bindings;
 
-//TODO: this should infact be related to the exact edit line context we create
+//TODO: this should in fact be related to the exact edit line context we create
 static void *clientData = NULL;
 
 // store the current prompt string
@@ -125,7 +125,7 @@ el_get_s (char *buffer, int chars)
         DWORD _read = 0;
         if ( ReadConsoleInputA( GetStdHandle( STD_INPUT_HANDLE ), &_record, 1, &_read ) == FALSE )
             break;
-        // if we didnt read a key
+        // if we didn't read a key
         if ( _read == 0 )
             continue;
         // only interested in key events
@@ -179,7 +179,7 @@ el_get_s (char *buffer, int chars)
 }
 #endif
 
-// edit line initalise
+// edit line initialize
 EditLine *
 el_init (const char *, FILE *, FILE *, FILE *)
 {
@@ -263,7 +263,7 @@ el_set (EditLine *el, int code, ...)
     case ( EL_HIST ):
         {
             // EL_HIST, History *(*fun)(History *, int op, ... ), const char *ptr
-            //      defines which histroy function to use, which is usualy history(). Ptr should be the
+            //      defines which history function to use, which is usually history(). Ptr should be the
             //      value returned by history_init().
         }
         break;
@@ -271,7 +271,7 @@ el_set (EditLine *el, int code, ...)
         {
             // EL_ADDFN, const char *name, const char *help, unsigned char (*func)(EditLine *e, int ch)
             //      add a user defined function, func), referred to as 'name' which is invoked when a key which is bound to 'name' is
-            //      entered. 'help' is a description of 'name'. at involcation time, 'ch' is the key which caused the invocation. the
+            //      entered. 'help' is a description of 'name'. at invocation time, 'ch' is the key which caused the invocation. the
             //      return value of 'func()' should be one of:
             //          CC_NORM         add a normal character
             //          CC_NEWLINE      end of line was entered
@@ -280,8 +280,8 @@ el_set (EditLine *el, int code, ...)
             //          CC_REFRESH      refresh display.
             //          CC_REFRESH_BEEP refresh display and beep.
             //          CC_CURSOR       cursor moved so update and perform CC_REFRESH
-            //          CC_REDISPLAY        redisplay entire input line. this is usefull if a key binding outputs extra information.
-            //          CC_ERROR            an error occured. beep and flush tty.
+            //          CC_REDISPLAY        redisplay entire input line. this is useful if a key binding outputs extra information.
+            //          CC_ERROR            an error occurred. beep and flush tty.
             //          CC_FATAL            fatal error, reset tty to known state.
 
             el_binding *binding = new el_binding;
@@ -296,7 +296,7 @@ el_set (EditLine *el, int code, ...)
     case ( EL_BIND ):
         {
             // EL_BIND, const char *, ..., NULL
-            //      perform the BIND buildin command.  Refer to editrc(5) for more information.
+            //      perform the BIND built-in command.  Refer to editrc(5) for more information.
 
             const char *name = va_arg( vl, const char* );
 

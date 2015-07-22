@@ -85,7 +85,7 @@ public:
         Locker(Mutex* m);
 
         //--------------------------------------------------------------
-        /// Desstructor
+        /// Destructor
         ///
         /// Unlocks any valid pthread_mutex_t that this object may
         /// contain.
@@ -120,7 +120,7 @@ public:
         /// will not take ownership of the mutex.
         ///
         /// @return
-        ///     Returns \b true if the lock was aquired and the this 
+        ///     Returns \b true if the lock was acquired and the this
         ///     object will unlock the mutex when it goes out of scope,
         ///     returns \b false otherwise.
         //--------------------------------------------------------------

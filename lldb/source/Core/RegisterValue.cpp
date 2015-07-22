@@ -119,7 +119,7 @@ RegisterValue::GetAsMemoryData (const RegisterInfo *reg_info,
         return 0;
     }
     
-    // ReadRegister should have already been called on tgus object prior to 
+    // ReadRegister should have already been called on this object prior to
     // calling this.
     if (GetType() == eTypeInvalid)
     {
@@ -217,7 +217,7 @@ RegisterValue::SetFromMemoryData (const RegisterInfo *reg_info,
     {
         m_data.buffer.byte_order = src_byte_order;
         // Make sure to set the buffer length of the destination buffer to avoid
-        // problems due to uninitalized variables.
+        // problems due to uninitialized variables.
         m_data.buffer.length = src_len;
     }
 

@@ -249,9 +249,9 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
                             {
                                 if (type_scope_pos >= 2)
                                 {
-                                    // Our match scope ends with the type scope we were lookikng for,
+                                    // Our match scope ends with the type scope we were looking for,
                                     // but we need to make sure what comes before the matching
-                                    // type scope is a namepace boundary in case we are trying to match:
+                                    // type scope is a namespace boundary in case we are trying to match:
                                     // type_basename = "d"
                                     // type_scope = "b::c::"
                                     // We want to match:

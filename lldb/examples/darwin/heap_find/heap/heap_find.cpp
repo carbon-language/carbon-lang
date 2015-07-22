@@ -144,7 +144,7 @@ range_info_callback (task_t task,
                      uint64_t ptr_size);
 
 //----------------------------------------------------------------------
-// Redefine private gloval variables prototypes from 
+// Redefine private global variables prototypes from
 // "/usr/local/include/stack_logging.h"
 //----------------------------------------------------------------------
 
@@ -556,7 +556,7 @@ private:
     static int
     compare_bytes (const Entry *a, const Entry *b)
     {
-        // Reverse the comparisong to most bytes entries end up at top of list
+        // Reverse the comparison to most bytes entries end up at top of list
         if (a->bytes > b->bytes) return -1;
         if (a->bytes < b->bytes) return +1;
         return 0;
@@ -565,7 +565,7 @@ private:
     static int
     compare_count (const Entry *a, const Entry *b)
     {
-        // Reverse the comparisong to most count entries end up at top of list
+        // Reverse the comparison to most count entries end up at top of list
         if (a->count > b->count) return -1;
         if (a->count < b->count) return +1;
         return 0;
@@ -659,7 +659,7 @@ foreach_zone_in_this_process (range_callback_info_t *info)
 // dump_malloc_block_callback
 //
 // A simple callback that will dump each malloc block and all available
-// info from the enumeration callback perpective.
+// info from the enumeration callback perspective.
 //----------------------------------------------------------------------
 static void
 dump_malloc_block_callback (task_t task, void *baton, unsigned type, uint64_t ptr_addr, uint64_t ptr_size)

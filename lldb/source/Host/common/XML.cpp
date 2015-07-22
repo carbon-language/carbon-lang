@@ -329,7 +329,7 @@ XMLNode::ForEachSiblingElementWithName (const char *name, NodeCallback const &ca
             else
             {
                 if (node->name)
-                    continue; // nullptr name specified and this elemnt has a name, ignore this one
+                    continue; // nullptr name specified and this element has a name, ignore this one
             }
             
             if (callback(XMLNode(node)) == false)

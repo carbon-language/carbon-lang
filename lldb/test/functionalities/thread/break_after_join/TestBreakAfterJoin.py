@@ -59,7 +59,7 @@ class BreakpointAfterJoinTestCase(TestBase):
         target = self.dbg.GetSelectedTarget()
         process = target.GetProcess()
 
-        # The exit probably occured during breakpoint handling, but it isn't
+        # The exit probably occurred during breakpoint handling, but it isn't
         # guaranteed.  The main thing we're testing here is that the debugger
         # handles this cleanly is some way.
 

@@ -161,7 +161,7 @@ public:
     /// the Itanium C++ ABI mangling specification as implemented by Clang
     ///
     /// @result Newly allocated null-terminated demangled name when demangling
-    /// is succesful, and nullptr when demangling fails.  The caller is
+    /// is successful, and nullptr when demangling fails.  The caller is
     /// responsible for freeing the allocated memory.
 
     char *
