@@ -10,7 +10,7 @@ CHECK-NOT: bar
 
 
 RUN: rm -f %t.a
-RUN: llvm-ar rcT %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
+RUN: llvm-ar --format=gnu rcT %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
 RUN: llvm-nm -M %t.a | FileCheck --check-prefix=THIN %s
 
 THIN: Archive map
