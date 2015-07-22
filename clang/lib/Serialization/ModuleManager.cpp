@@ -207,6 +207,15 @@ void ModuleManager::removeModules(
   Roots.erase(std::remove_if(Roots.begin(), Roots.end(), IsVictim),
               Roots.end());
 
+  // Remove the modules from the PCH chain.
+  for (auto I = first; I != last; ++I) {
+    if (!(*I)->isModule()) {
+      PCHChain.erase(std::find(PCHChain.begin(), PCHChain.end(), *I),
+                     PCHChain.end());
+      break;
+    }
+  }
+
   // Delete the modules and erase them from the various structures.
   for (ModuleIterator victim = first; victim != last; ++victim) {
     Modules.erase((*victim)->File);
@@ -229,15 +238,6 @@ void ModuleManager::removeModules(
 
   // Remove the modules from the chain.
   Chain.erase(first, last);
-
-  // Also remove them from the PCH chain.
-  for (auto I = first; I != last; ++I) {
-    if (!(*I)->isModule()) {
-      PCHChain.erase(std::find(PCHChain.begin(), PCHChain.end(), *I),
-                     PCHChain.end());
-      break;
-    }
-  }
 }
 
 void
