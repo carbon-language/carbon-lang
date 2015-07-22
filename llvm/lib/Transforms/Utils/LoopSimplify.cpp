@@ -216,7 +216,6 @@ static PHINode *findPHIToPartitionLoops(Loop *L, AliasAnalysis *AA,
     if (Value *V = SimplifyInstruction(PN, DL, nullptr, DT, AC)) {
       // This is a degenerate PHI already, don't modify it!
       PN->replaceAllUsesWith(V);
-      if (AA) AA->deleteValue(PN);
       PN->eraseFromParent();
       continue;
     }
@@ -443,7 +442,6 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
     // eliminate the PHI Node.
     if (HasUniqueIncomingValue) {
       NewPN->replaceAllUsesWith(UniqueValue);
-      if (AA) AA->deleteValue(NewPN);
       BEBlock->getInstList().erase(NewPN);
     }
   }
@@ -618,7 +616,6 @@ ReprocessLoop:
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
     if (Value *V = SimplifyInstruction(PN, DL, nullptr, DT, AC)) {
-      if (AA) AA->deleteValue(PN);
       if (SE) SE->forgetValue(PN);
       PN->replaceAllUsesWith(V);
       PN->eraseFromParent();

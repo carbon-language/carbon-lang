@@ -1618,7 +1618,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction *RemInst) {
 
 
   assert(!NonLocalDeps.count(RemInst) && "RemInst got reinserted?");
-  AA->deleteValue(RemInst);
   DEBUG(verifyRemoved(RemInst));
 }
 /// verifyRemoved - Verify that the specified instruction does not occur

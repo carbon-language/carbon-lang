@@ -66,11 +66,6 @@ AliasAnalysis::getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) {
   return AA->getArgModRefInfo(CS, ArgIdx);
 }
 
-void AliasAnalysis::deleteValue(Value *V) {
-  assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  AA->deleteValue(V);
-}
-
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(Instruction *I, ImmutableCallSite Call) {
   // We may have two calls

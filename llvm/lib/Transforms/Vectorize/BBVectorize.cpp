@@ -2806,11 +2806,8 @@ namespace {
                      Instruction *J, Instruction *K,
                      Instruction *&InsertionPt,
                      Instruction *&K1, Instruction *&K2) {
-    if (isa<StoreInst>(I)) {
-      AA->replaceWithNewValue(I, K);
-      AA->replaceWithNewValue(J, K);
+    if (isa<StoreInst>(I))
       return;
-    }
 
     Type *IType = I->getType();
     Type *JType = J->getType();
@@ -3144,8 +3141,6 @@ namespace {
       if (!isa<StoreInst>(I)) {
         L->replaceAllUsesWith(K1);
         H->replaceAllUsesWith(K2);
-        AA->replaceWithNewValue(L, K1);
-        AA->replaceWithNewValue(H, K2);
       }
 
       // Instructions that may read from memory may be in the load move set.

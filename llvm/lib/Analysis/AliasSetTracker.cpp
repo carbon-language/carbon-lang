@@ -505,9 +505,6 @@ bool AliasSetTracker::remove(Instruction *I) {
 // dangling pointers to deleted instructions.
 //
 void AliasSetTracker::deleteValue(Value *PtrVal) {
-  // Notify the alias analysis implementation that this value is gone.
-  AA.deleteValue(PtrVal);
-
   // If this is a call instruction, remove the callsite from the appropriate
   // AliasSet (if present).
   if (Instruction *Inst = dyn_cast<Instruction>(PtrVal)) {

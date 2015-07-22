@@ -507,26 +507,6 @@ public:
                                  uint64_t Size, const ModRefResult Mode) {
     return canInstructionRangeModRef(I1, I2, MemoryLocation(Ptr, Size), Mode);
   }
-
-  //===--------------------------------------------------------------------===//
-  /// Methods that clients should call when they transform the program to allow
-  /// alias analyses to update their internal data structures.  Note that these
-  /// methods may be called on any instruction, regardless of whether or not
-  /// they have pointer-analysis implications.
-  ///
-
-  /// deleteValue - This method should be called whenever an LLVM Value is
-  /// deleted from the program, for example when an instruction is found to be
-  /// redundant and is eliminated.
-  ///
-  virtual void deleteValue(Value *V);
-
-  /// replaceWithNewValue - This method is the obvious combination of the two
-  /// above, and it provided as a helper to simplify client code.
-  ///
-  void replaceWithNewValue(Value *Old, Value *New) {
-    deleteValue(Old);
-  }
 };
 
 /// isNoAliasCall - Return true if this pointer is returned by a noalias

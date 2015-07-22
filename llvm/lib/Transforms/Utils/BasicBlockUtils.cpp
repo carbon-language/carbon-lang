@@ -77,8 +77,6 @@ void llvm::FoldSingleEntryPHINodes(BasicBlock *BB, AliasAnalysis *AA,
 
     if (MemDep)
       MemDep->removeInstruction(PN);  // Memdep updates AA itself.
-    else if (AA && isa<PointerType>(PN->getType()))
-      AA->deleteValue(PN);
 
     PN->eraseFromParent();
   }

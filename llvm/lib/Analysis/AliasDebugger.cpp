@@ -119,12 +119,6 @@ namespace {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
     }
-
-    void deleteValue(Value *V) override {
-      assert(Vals.find(V) != Vals.end() && "Never seen value in AA before");
-      AliasAnalysis::deleteValue(V);
-    }
-
   };
 }
 
