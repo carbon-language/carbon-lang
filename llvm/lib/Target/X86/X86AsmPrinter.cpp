@@ -535,6 +535,7 @@ void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
           S, MCConstantExpr::create(int64_t(1), MMI->getContext()));
     }
   }
+  OutStreamer->EmitSyntaxDirective();
 }
 
 static void

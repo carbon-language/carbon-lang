@@ -682,6 +682,8 @@ public:
   virtual void EmitWinEHHandler(const MCSymbol *Sym, bool Unwind, bool Except);
   virtual void EmitWinEHHandlerData();
 
+  virtual void EmitSyntaxDirective();
+
   /// \brief Emit the given \p Instruction into the current section.
   virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI);
 

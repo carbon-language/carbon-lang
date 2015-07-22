@@ -78,6 +78,9 @@ public:
     }
     EmitCommentsAndEOL();
   }
+
+  virtual void EmitSyntaxDirective();
+
   void EmitCommentsAndEOL();
 
   /// isVerboseAsm - Return true if this streamer supports verbose assembly at
@@ -478,6 +481,14 @@ void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   Symbol->print(OS, MAI);
   OS << ',' << DescValue;
   EmitEOL();
+}
+
+void MCAsmStreamer::EmitSyntaxDirective() {
+  if (MAI->getAssemblerDialect() == 1)
+    OS << "\t.intel_syntax noprefix\n";
+  // FIXME: Currently emit unprefix'ed registers.
+  // The intel_syntax directive has one optional argument 
+  // with may have a value of prefix or noprefix.
 }
 
 void MCAsmStreamer::BeginCOFFSymbolDef(const MCSymbol *Symbol) {
