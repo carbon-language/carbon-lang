@@ -939,7 +939,8 @@ file_magic identify_magic(StringRef Magic) {
       break;
     case '!':
       if (Magic.size() >= 8)
-        if (memcmp(Magic.data(),"!<arch>\n",8) == 0)
+        if (memcmp(Magic.data(), "!<arch>\n", 8) == 0 ||
+            memcmp(Magic.data(), "!<thin>\n", 8) == 0)
           return file_magic::archive;
       break;
 

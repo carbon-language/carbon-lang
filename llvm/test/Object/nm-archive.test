@@ -58,3 +58,12 @@ GNU AR is able to parse the unaligned member and warns about the member with
 the unknown format. We should probably simply warn on both. For now just check
 that we don't produce an error.
 RUN: llvm-nm %p/Inputs/corrupt-archive.a
+
+
+RUN: llvm-nm %p/Inputs/thin.a | FileCheck %s -check-prefix THIN
+
+THIN: IsNAN.o:
+THIN: 00000014 T _ZN4llvm5IsNANEd
+THIN: 00000000 T _ZN4llvm5IsNANEf
+THIN:          U __isnan
+THIN:          U __isnanf
