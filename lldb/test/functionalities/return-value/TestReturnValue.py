@@ -24,6 +24,7 @@ class ReturnValueTestCase(TestBase):
     @expectedFailurei386
     @python_api_test
     @dwarf_test
+    @expectedFailureAll(oslist=["linux"], compiler="clang", archs=["x86_64"])
     def test_with_dwarf_python(self):
         """Test getting return values from stepping out."""
         self.buildDwarf()
