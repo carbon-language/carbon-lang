@@ -221,7 +221,7 @@ INITIALIZE_AG_PASS_END(GlobalsModRef, AliasAnalysis, "globalsmodref-aa",
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 
-struct final GlobalsModRef::DeletionCallbackHandle : CallbackVH {
+struct GlobalsModRef::DeletionCallbackHandle final : CallbackVH {
   GlobalsModRef &GMR;
   std::list<DeletionCallbackHandle>::iterator I;
 
