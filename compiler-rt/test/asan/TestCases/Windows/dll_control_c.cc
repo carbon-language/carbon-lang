@@ -1,6 +1,6 @@
 // RUN: %clang_cl_asan -O0 %p/dll_host.cc -Fe%t
 // RUN: %clang_cl_asan -LD -O2 %s -Fe%t.dll
-// RUN: %run %t %t.dll 2>&1 | FileCheck %s
+// RUNX: %run %t %t.dll 2>&1 | FileCheck %s
 
 // Check that ASan does not CHECK fail when SEH is used around a crash from a
 // thread injected by control C.
