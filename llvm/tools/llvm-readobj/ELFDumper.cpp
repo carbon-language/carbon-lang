@@ -1342,8 +1342,6 @@ public:
 
 private:
   typedef typename ObjectFile::Elf_Addr GOTEntry;
-  typedef typename ObjectFile::template ELFEntityIterator<const GOTEntry>
-  GOTIter;
 
   const ObjectFile *Obj;
   StreamWriter &W;
@@ -1354,16 +1352,18 @@ private:
   llvm::Optional<uint64_t> DtJmpRel;
 
   std::size_t getGOTTotal(ArrayRef<uint8_t> GOT) const;
-  GOTIter makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum);
+  const GOTEntry *makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum);
 
-  void printGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It);
-  void printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It,
-                           const Elf_Sym *Sym, StringRef StrTable,
-                           bool IsDynamic);
-  void printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt, GOTIter It,
-                     StringRef Purpose);
-  void printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt, GOTIter It,
-                     StringRef StrTable, const Elf_Sym *Sym);
+  void printGotEntry(uint64_t GotAddr, const GOTEntry *BeginIt,
+                     const GOTEntry *It);
+  void printGlobalGotEntry(uint64_t GotAddr, const GOTEntry *BeginIt,
+                           const GOTEntry *It, const Elf_Sym *Sym,
+                           StringRef StrTable, bool IsDynamic);
+  void printPLTEntry(uint64_t PLTAddr, const GOTEntry *BeginIt,
+                     const GOTEntry *It, StringRef Purpose);
+  void printPLTEntry(uint64_t PLTAddr, const GOTEntry *BeginIt,
+                     const GOTEntry *It, StringRef StrTable,
+                     const Elf_Sym *Sym);
 };
 }
 
@@ -1445,9 +1445,9 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
     return;
   }
 
-  GOTIter GotBegin = makeGOTIter(*GOT, 0);
-  GOTIter GotLocalEnd = makeGOTIter(*GOT, *DtLocalGotNum);
-  GOTIter It = GotBegin;
+  const GOTEntry *GotBegin = makeGOTIter(*GOT, 0);
+  const GOTEntry *GotLocalEnd = makeGOTIter(*GOT, *DtLocalGotNum);
+  const GOTEntry *It = GotBegin;
 
   DictScope GS(W, "Primary GOT");
 
@@ -1477,7 +1477,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
   {
     ListScope GS(W, "Global entries");
 
-    GOTIter GotGlobalEnd = makeGOTIter(*GOT, *DtLocalGotNum + GlobalGotNum);
+    const GOTEntry *GotGlobalEnd =
+        makeGOTIter(*GOT, *DtLocalGotNum + GlobalGotNum);
     const Elf_Sym *GotDynSym = DynSymBegin + *DtGotSym;
     for (; It != GotGlobalEnd; ++It) {
       DictScope D(W, "Entry");
@@ -1522,9 +1523,9 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
   ErrorOr<StringRef> StrTable = Obj->getStringTableForSymtab(**SymTableOrErr);
   error(StrTable.getError());
 
-  GOTIter PLTBegin = makeGOTIter(*PLT, 0);
-  GOTIter PLTEnd = makeGOTIter(*PLT, getGOTTotal(*PLT));
-  GOTIter It = PLTBegin;
+  const GOTEntry *PLTBegin = makeGOTIter(*PLT, 0);
+  const GOTEntry *PLTEnd = makeGOTIter(*PLT, getGOTTotal(*PLT));
+  const GOTEntry *It = PLTBegin;
 
   DictScope GS(W, "PLT GOT");
   {
@@ -1566,15 +1567,16 @@ std::size_t MipsGOTParser<ELFT>::getGOTTotal(ArrayRef<uint8_t> GOT) const {
 }
 
 template <class ELFT>
-typename MipsGOTParser<ELFT>::GOTIter
+const typename MipsGOTParser<ELFT>::GOTEntry *
 MipsGOTParser<ELFT>::makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum) {
   const char *Data = reinterpret_cast<const char *>(GOT.data());
-  return GOTIter(sizeof(GOTEntry), Data + EntryNum * sizeof(GOTEntry));
+  return reinterpret_cast<const GOTEntry *>(Data + EntryNum * sizeof(GOTEntry));
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::printGotEntry(uint64_t GotAddr, GOTIter BeginIt,
-                                        GOTIter It) {
+void MipsGOTParser<ELFT>::printGotEntry(uint64_t GotAddr,
+                                        const GOTEntry *BeginIt,
+                                        const GOTEntry *It) {
   int64_t Offset = std::distance(BeginIt, It) * sizeof(GOTEntry);
   W.printHex("Address", GotAddr + Offset);
   W.printNumber("Access", Offset - 0x7ff0);
@@ -1582,10 +1584,9 @@ void MipsGOTParser<ELFT>::printGotEntry(uint64_t GotAddr, GOTIter BeginIt,
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt,
-                                              GOTIter It, const Elf_Sym *Sym,
-                                              StringRef StrTable,
-                                              bool IsDynamic) {
+void MipsGOTParser<ELFT>::printGlobalGotEntry(
+    uint64_t GotAddr, const GOTEntry *BeginIt, const GOTEntry *It,
+    const Elf_Sym *Sym, StringRef StrTable, bool IsDynamic) {
   printGotEntry(GotAddr, BeginIt, It);
 
   W.printHex("Value", Sym->st_value);
@@ -1602,8 +1603,9 @@ void MipsGOTParser<ELFT>::printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt,
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt,
-                                        GOTIter It, StringRef Purpose) {
+void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr,
+                                        const GOTEntry *BeginIt,
+                                        const GOTEntry *It, StringRef Purpose) {
   DictScope D(W, "Entry");
   int64_t Offset = std::distance(BeginIt, It) * sizeof(GOTEntry);
   W.printHex("Address", PLTAddr + Offset);
@@ -1612,8 +1614,9 @@ void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt,
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt,
-                                        GOTIter It, StringRef StrTable,
+void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr,
+                                        const GOTEntry *BeginIt,
+                                        const GOTEntry *It, StringRef StrTable,
                                         const Elf_Sym *Sym) {
   DictScope D(W, "Entry");
   int64_t Offset = std::distance(BeginIt, It) * sizeof(GOTEntry);
