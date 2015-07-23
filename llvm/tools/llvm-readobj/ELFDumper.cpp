@@ -71,10 +71,12 @@ private:
   typedef typename ELFO::Elf_Sym Elf_Sym;
   typedef typename ELFO::Elf_Dyn Elf_Dyn;
   typedef typename ELFO::Elf_Dyn_Range Elf_Dyn_Range;
+  typedef typename ELFO::Elf_Rel Elf_Rel;
   typedef typename ELFO::Elf_Rela Elf_Rela;
   typedef typename ELFO::Elf_Rela_Range Elf_Rela_Range;
   typedef typename ELFO::Elf_Phdr Elf_Phdr;
   typedef typename ELFO::Elf_Hash Elf_Hash;
+  typedef typename ELFO::Elf_Ehdr Elf_Ehdr;
   typedef typename ELFO::uintX_t uintX_t;
 
   /// \brief Represents a region described by entries in the .dynamic table.
@@ -91,7 +93,7 @@ private:
   void printSymbol(const Elf_Sym *Symbol, StringRef StrTable, bool IsDynamic);
 
   void printRelocations(const Elf_Shdr *Sec);
-  void printRelocation(const Elf_Shdr *Sec, typename ELFO::Elf_Rela Rel);
+  void printRelocation(const Elf_Shdr *Sec, Elf_Rela Rel);
   void printValue(uint64_t Type, uint64_t Value);
 
   const Elf_Rela *dyn_rela_begin() const;
@@ -203,18 +205,18 @@ getSectionNameIndex(const ELFO &Obj, const typename ELFO::Elf_Sym *Symbol,
   }
 }
 
-template <class ELFT>
-static const typename ELFFile<ELFT>::Elf_Shdr *
-findSectionByAddress(const ELFFile<ELFT> *Obj, uint64_t Addr) {
+template <class ELFO>
+static const typename ELFO::Elf_Shdr *findSectionByAddress(const ELFO *Obj,
+                                                           uint64_t Addr) {
   for (const auto &Shdr : Obj->sections())
     if (Shdr.sh_addr == Addr)
       return &Shdr;
   return nullptr;
 }
 
-template <class ELFT>
-static const typename ELFFile<ELFT>::Elf_Shdr *
-findSectionByName(const ELFFile<ELFT> &Obj, StringRef Name) {
+template <class ELFO>
+static const typename ELFO::Elf_Shdr *findSectionByName(const ELFO &Obj,
+                                                        StringRef Name) {
   for (const auto &Shdr : Obj.sections()) {
     if (Name == errorOrDefault(Obj.getSectionName(&Shdr)))
       return &Shdr;
@@ -703,7 +705,7 @@ ELFDumper<ELFT>::dynamic_table_end() const {
 
 template<class ELFT>
 void ELFDumper<ELFT>::printFileHeaders() {
-  const typename ELFO::Elf_Ehdr *Header = Obj->getHeader();
+  const Elf_Ehdr *Header = Obj->getHeader();
 
   {
     DictScope D(W, "ElfHeader");
@@ -754,7 +756,7 @@ void ELFDumper<ELFT>::printSections() {
   ListScope SectionsD(W, "Sections");
 
   int SectionIndex = -1;
-  for (const typename ELFO::Elf_Shdr &Sec : Obj->sections()) {
+  for (const Elf_Shdr &Sec : Obj->sections()) {
     ++SectionIndex;
 
     StringRef Name = errorOrDefault(Obj->getSectionName(&Sec));
@@ -786,7 +788,7 @@ void ELFDumper<ELFT>::printSections() {
       error(StrTableOrErr.getError());
       StringRef StrTable = *StrTableOrErr;
 
-      for (const typename ELFO::Elf_Sym &Sym : Obj->symbols()) {
+      for (const Elf_Sym &Sym : Obj->symbols()) {
         ErrorOr<const Elf_Shdr *> SymSec = Obj->getSection(&Sym);
         if (!SymSec)
           continue;
@@ -808,7 +810,7 @@ void ELFDumper<ELFT>::printRelocations() {
   ListScope D(W, "Relocations");
 
   int SectionNumber = -1;
-  for (const typename ELFO::Elf_Shdr &Sec : Obj->sections()) {
+  for (const Elf_Shdr &Sec : Obj->sections()) {
     ++SectionNumber;
 
     if (Sec.sh_type != ELF::SHT_REL && Sec.sh_type != ELF::SHT_RELA)
@@ -830,12 +832,12 @@ template<class ELFT>
 void ELFDumper<ELFT>::printDynamicRelocations() {
   W.startLine() << "Dynamic Relocations {\n";
   W.indent();
-  for (const typename ELFO::Elf_Rela &Rel : dyn_relas()) {
+  for (const Elf_Rela &Rel : dyn_relas()) {
     SmallString<32> RelocName;
     Obj->getRelocationTypeName(Rel.getType(Obj->isMips64EL()), RelocName);
     StringRef SymbolName;
     uint32_t SymIndex = Rel.getSymbol(Obj->isMips64EL());
-    const typename ELFO::Elf_Sym *Sym = Obj->dynamic_symbol_begin() + SymIndex;
+    const Elf_Sym *Sym = Obj->dynamic_symbol_begin() + SymIndex;
     SymbolName = errorOrDefault(Sym->getName(DynamicStringTable));
     if (opts::ExpandRelocs) {
       DictScope Group(W, "Relocation");
@@ -859,8 +861,8 @@ template <class ELFT>
 void ELFDumper<ELFT>::printRelocations(const Elf_Shdr *Sec) {
   switch (Sec->sh_type) {
   case ELF::SHT_REL:
-    for (const typename ELFO::Elf_Rel &R : Obj->rels(Sec)) {
-      typename ELFO::Elf_Rela Rela;
+    for (const Elf_Rel &R : Obj->rels(Sec)) {
+      Elf_Rela Rela;
       Rela.r_offset = R.r_offset;
       Rela.r_info = R.r_info;
       Rela.r_addend = 0;
@@ -868,15 +870,14 @@ void ELFDumper<ELFT>::printRelocations(const Elf_Shdr *Sec) {
     }
     break;
   case ELF::SHT_RELA:
-    for (const typename ELFO::Elf_Rela &R : Obj->relas(Sec))
+    for (const Elf_Rela &R : Obj->relas(Sec))
       printRelocation(Sec, R);
     break;
   }
 }
 
 template <class ELFT>
-void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
-                                      typename ELFO::Elf_Rela Rel) {
+void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec, Elf_Rela Rel) {
   SmallString<32> RelocName;
   Obj->getRelocationTypeName(Rel.getType(Obj->isMips64EL()), RelocName);
   StringRef TargetName;
@@ -918,7 +919,7 @@ void ELFDumper<ELFT>::printSymbols() {
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
-  for (const typename ELFO::Elf_Sym &Sym : Obj->symbols())
+  for (const Elf_Sym &Sym : Obj->symbols())
     printSymbol(&Sym, StrTable, false);
 }
 
@@ -930,13 +931,13 @@ void ELFDumper<ELFT>::printDynamicSymbols() {
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
-  for (const typename ELFO::Elf_Sym &Sym : Obj->dynamic_symbols())
+  for (const Elf_Sym &Sym : Obj->dynamic_symbols())
     printSymbol(&Sym, StrTable, true);
 }
 
 template <class ELFT>
-void ELFDumper<ELFT>::printSymbol(const typename ELFO::Elf_Sym *Symbol,
-                                  StringRef StrTable, bool IsDynamic) {
+void ELFDumper<ELFT>::printSymbol(const Elf_Sym *Symbol, StringRef StrTable,
+                                  bool IsDynamic) {
   unsigned SectionIndex = 0;
   StringRef SectionName;
   getSectionNameIndex(*Obj, Symbol, SectionName, SectionIndex);
@@ -1226,7 +1227,7 @@ void ELFDumper<ELFT>::printDynamicTable() {
      << "  Tag" << (Is64 ? "                " : "        ") << "Type"
      << "                 " << "Name/Value\n";
   while (I != E) {
-    const typename ELFO::Elf_Dyn &Entry = *I;
+    const Elf_Dyn &Entry = *I;
     ++I;
     W.startLine()
        << "  "
@@ -1261,7 +1262,7 @@ template<class ELFT>
 void ELFDumper<ELFT>::printProgramHeaders() {
   ListScope L(W, "ProgramHeaders");
 
-  for (const typename ELFO::Elf_Phdr &Phdr : Obj->program_headers()) {
+  for (const Elf_Phdr &Phdr : Obj->program_headers()) {
     DictScope P(W, "ProgramHeader");
     W.printHex("Type",
                getElfSegmentType(Obj->getHeader()->e_machine, Phdr.p_type),
@@ -1330,20 +1331,21 @@ template <> void ELFDumper<ELFType<support::little, false>>::printAttributes() {
 namespace {
 template <class ELFT> class MipsGOTParser {
 public:
-  typedef object::ELFFile<ELFT> ObjectFile;
-  typedef typename ObjectFile::Elf_Shdr Elf_Shdr;
-  typedef typename ObjectFile::Elf_Sym Elf_Sym;
-  typedef typename ObjectFile::Elf_Dyn_Range Elf_Dyn_Range;
+  typedef object::ELFFile<ELFT> ELFO;
+  typedef typename ELFO::Elf_Shdr Elf_Shdr;
+  typedef typename ELFO::Elf_Sym Elf_Sym;
+  typedef typename ELFO::Elf_Dyn_Range Elf_Dyn_Range;
+  typedef typename ELFO::Elf_Addr GOTEntry;
+  typedef typename ELFO::Elf_Rel Elf_Rel;
+  typedef typename ELFO::Elf_Rela Elf_Rela;
 
-  MipsGOTParser(const ObjectFile *Obj, Elf_Dyn_Range DynTable, StreamWriter &W);
+  MipsGOTParser(const ELFO *Obj, Elf_Dyn_Range DynTable, StreamWriter &W);
 
   void parseGOT();
   void parsePLT();
 
 private:
-  typedef typename ObjectFile::Elf_Addr GOTEntry;
-
-  const ObjectFile *Obj;
+  const ELFO *Obj;
   StreamWriter &W;
   llvm::Optional<uint64_t> DtPltGot;
   llvm::Optional<uint64_t> DtLocalGotNum;
@@ -1368,8 +1370,8 @@ private:
 }
 
 template <class ELFT>
-MipsGOTParser<ELFT>::MipsGOTParser(const ObjectFile *Obj,
-                                   Elf_Dyn_Range DynTable, StreamWriter &W)
+MipsGOTParser<ELFT>::MipsGOTParser(const ELFO *Obj, Elf_Dyn_Range DynTable,
+                                   StreamWriter &W)
     : Obj(Obj), W(W) {
   for (const auto &Entry : DynTable) {
     switch (Entry.getTag()) {
@@ -1539,8 +1541,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
 
     switch (PLTRelShdr->sh_type) {
     case ELF::SHT_REL:
-      for (const typename ObjectFile::Elf_Rel *RI = Obj->rel_begin(PLTRelShdr),
-                                              *RE = Obj->rel_end(PLTRelShdr);
+      for (const Elf_Rel *RI = Obj->rel_begin(PLTRelShdr),
+                         *RE = Obj->rel_end(PLTRelShdr);
            RI != RE && It != PLTEnd; ++RI, ++It) {
         const Elf_Sym *Sym =
             Obj->getRelocationSymbol(&*PLTRelShdr, &*RI).second;
@@ -1548,9 +1550,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
       }
       break;
     case ELF::SHT_RELA:
-      for (const typename ObjectFile::Elf_Rela
-             *RI = Obj->rela_begin(PLTRelShdr),
-             *RE = Obj->rela_end(PLTRelShdr);
+      for (const Elf_Rela *RI = Obj->rela_begin(PLTRelShdr),
+                          *RE = Obj->rela_end(PLTRelShdr);
            RI != RE && It != PLTEnd; ++RI, ++It) {
         const Elf_Sym *Sym =
             Obj->getRelocationSymbol(&*PLTRelShdr, &*RI).second;
@@ -1782,7 +1783,7 @@ template <class ELFT> void ELFDumper<ELFT>::printMipsReginfo() {
 }
 
 template <class ELFT> void ELFDumper<ELFT>::printStackMap() const {
-  const typename ELFFile<ELFT>::Elf_Shdr *StackMapSection = nullptr;
+  const Elf_Shdr *StackMapSection = nullptr;
   for (const auto &Sec : Obj->sections()) {
     ErrorOr<StringRef> Name = Obj->getSectionName(&Sec);
     if (*Name == ".llvm_stackmaps") {
