@@ -2610,8 +2610,8 @@ NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, size_t size, size_
             // Format bytes from data by moving into print_dst for log output
             for (unsigned i = 0; i < remainder; ++i)
                 print_dst |= (((data >> i*8) & 0xFF) << i*8);
-            log->Printf ("NativeProcessLinux::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
-                    (void*)addr, print_dst, (unsigned long)data);
+            log->Printf ("NativeProcessLinux::%s() [0x%" PRIx64 "]:0x%" PRIx64 " (0x%" PRIx64 ")",
+                    __FUNCTION__, addr, uint64_t(print_dst), uint64_t(data));
         }
         addr += k_ptrace_word_size;
         dst += k_ptrace_word_size;
@@ -2641,7 +2641,7 @@ NativeProcessLinux::WriteMemory(lldb::addr_t addr, const void *buf, size_t size,
     if (log)
         ProcessPOSIXLog::IncNestLevel();
     if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
-        log->Printf ("NativeProcessLinux::%s(%p, %p, %" PRIu64 ")", __FUNCTION__, (void*)addr, buf, size);
+        log->Printf ("NativeProcessLinux::%s(0x%" PRIx64 ", %p, %zu)", __FUNCTION__, addr, buf, size);
 
     for (bytes_written = 0; bytes_written < size; bytes_written += remainder)
     {
