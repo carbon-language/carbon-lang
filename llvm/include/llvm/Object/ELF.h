@@ -268,7 +268,13 @@ public:
   const Elf_Ehdr *getHeader() const { return Header; }
   ErrorOr<const Elf_Shdr *> getSection(const Elf_Sym *symb) const;
   ErrorOr<const Elf_Shdr *> getSection(uint32_t Index) const;
-  const Elf_Sym *getSymbol(uint32_t index) const;
+
+  const Elf_Sym *getSymbol(const Elf_Shdr *Sec, uint32_t Index) const {
+    return &*(symbol_begin(Sec) + Index);
+  }
+  const Elf_Sym *getSymbol(uint32_t Index) const {
+    return getSymbol(dot_symtab_sec, Index);
+  }
 
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   ErrorOr<ArrayRef<uint8_t> > getSectionContents(const Elf_Shdr *Sec) const;
@@ -376,12 +382,6 @@ ELFFile<ELFT>::getSection(const Elf_Sym *symb) const {
   if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
     return nullptr;
   return getSection(symb->st_shndx);
-}
-
-template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Sym *
-ELFFile<ELFT>::getSymbol(uint32_t Index) const {
-  return &*(symbol_begin() + Index);
 }
 
 template <class ELFT>

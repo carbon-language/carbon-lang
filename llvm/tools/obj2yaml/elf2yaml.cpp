@@ -338,11 +338,12 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
   if (std::error_code EC = dumpCommonSection(Shdr, *S))
     return EC;
   // Get sh_info which is the signature.
-  const Elf_Sym *symbol = Obj.getSymbol(Shdr->sh_info);
-  ErrorOr<const Elf_Shdr *> Symtab = Obj.getSection(Shdr->sh_link);
-  if (std::error_code EC = Symtab.getError())
+  ErrorOr<const Elf_Shdr *> SymtabOrErr = Obj.getSection(Shdr->sh_link);
+  if (std::error_code EC = SymtabOrErr.getError())
     return EC;
-  ErrorOr<const Elf_Shdr *> StrTabSec = Obj.getSection((*Symtab)->sh_link);
+  const Elf_Shdr *Symtab = *SymtabOrErr;
+  const Elf_Sym *symbol = Obj.getSymbol(Symtab, Shdr->sh_info);
+  ErrorOr<const Elf_Shdr *> StrTabSec = Obj.getSection(Symtab->sh_link);
   if (std::error_code EC = StrTabSec.getError())
     return EC;
   ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(*StrTabSec);
