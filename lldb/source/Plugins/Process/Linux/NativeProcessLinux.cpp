@@ -1492,7 +1492,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                 if (m_pending_notification_up && m_pending_notification_up->triggering_tid == pid)
                     linux_thread_sp->SetStoppedBySignal(SIGSTOP, info);
                 else
-                    linux_thread_sp->SetStoppedBySignal(0);
+                    linux_thread_sp->SetStoppedWithNoReason();
 
                 SetCurrentThreadID (thread_sp->GetID ());
                 ThreadDidStop (thread_sp->GetID (), true);

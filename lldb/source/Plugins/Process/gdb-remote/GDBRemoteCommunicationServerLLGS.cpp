@@ -537,6 +537,86 @@ GetStopReasonString(StopReason stop_reason)
     return nullptr;
 }
 
+static JSONArray::SP
+GetJSONThreadsInfo(NativeProcessProtocol &process, bool threads_with_valid_stop_info_only)
+{
+    Log *log (GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_THREAD));
+
+    JSONArray::SP threads_array_sp = std::make_shared<JSONArray>();
+
+    // Ensure we can get info on the given thread.
+    uint32_t thread_idx = 0;
+    for ( NativeThreadProtocolSP thread_sp;
+          (thread_sp = process.GetThreadAtIndex(thread_idx)) != nullptr;
+          ++thread_idx)
+    {
+
+        lldb::tid_t tid = thread_sp->GetID();
+
+        // Grab the reason this thread stopped.
+        struct ThreadStopInfo tid_stop_info;
+        std::string description;
+        if (!thread_sp->GetStopReason (tid_stop_info, description))
+            return nullptr;
+
+        const int signum = tid_stop_info.details.signal.signo;
+        if (log)
+        {
+            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " tid %" PRIu64 " got signal signo = %d, reason = %d, exc_type = %" PRIu64,
+                    __FUNCTION__,
+                    process.GetID (),
+                    tid,
+                    signum,
+                    tid_stop_info.reason,
+                    tid_stop_info.details.exception.type);
+        }
+
+        if (threads_with_valid_stop_info_only && tid_stop_info.reason == eStopReasonNone)
+            continue; // No stop reason, skip this thread completely.
+
+        JSONObject::SP thread_obj_sp = std::make_shared<JSONObject>();
+        threads_array_sp->AppendObject(thread_obj_sp);
+
+        thread_obj_sp->SetObject("tid", std::make_shared<JSONNumber>(tid));
+        if (signum != 0)
+            thread_obj_sp->SetObject("signal", std::make_shared<JSONNumber>(uint64_t(signum)));
+
+        const std::string thread_name = thread_sp->GetName ();
+        if (! thread_name.empty())
+            thread_obj_sp->SetObject("name", std::make_shared<JSONString>(thread_name));
+
+        if (const char *stop_reason_str = GetStopReasonString(tid_stop_info.reason))
+            thread_obj_sp->SetObject("reason", std::make_shared<JSONString>(stop_reason_str));
+
+        if (! description.empty())
+            thread_obj_sp->SetObject("description", std::make_shared<JSONString>(description));
+
+        if ((tid_stop_info.reason == eStopReasonException) && tid_stop_info.details.exception.type)
+        {
+            thread_obj_sp->SetObject("metype",
+                    std::make_shared<JSONNumber>(tid_stop_info.details.exception.type));
+
+            JSONArray::SP medata_array_sp = std::make_shared<JSONArray>();
+            for (uint32_t i = 0; i < tid_stop_info.details.exception.data_count; ++i)
+            {
+                medata_array_sp->AppendObject(std::make_shared<JSONNumber>(
+                            tid_stop_info.details.exception.data[i]));
+            }
+            thread_obj_sp->SetObject("medata", medata_array_sp);
+        }
+
+        if (threads_with_valid_stop_info_only)
+            continue; // Only send the abridged stop info.
+
+        if (JSONObject::SP registers_sp = GetRegistersAsJSON(*thread_sp))
+            thread_obj_sp->SetObject("registers", registers_sp);
+
+        // TODO: Expedite interesting regions of inferior memory
+    }
+
+    return threads_array_sp;
+}
+
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
 {
@@ -630,6 +710,31 @@ GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
             response.Printf ("%" PRIx64, listed_thread_sp->GetID ());
         }
         response.PutChar (';');
+
+        // Include JSON info that describes the stop reason for any threads
+        // that actually have stop reasons. We use the new "jstopinfo" key
+        // whose values is hex ascii JSON that contains the thread IDs
+        // thread stop info only for threads that have stop reasons. Only send
+        // this if we have more than one thread otherwise this packet has all
+        // the info it needs.
+        if (thread_index > 0)
+        {
+            const bool threads_with_valid_stop_info_only = true;
+            JSONArray::SP threads_info_sp = GetJSONThreadsInfo(*m_debugged_process_sp,
+                                                               threads_with_valid_stop_info_only);
+            if (threads_info_sp)
+            {
+                response.PutCString("jstopinfo:");
+                StreamString unescaped_response;
+                threads_info_sp->Write(unescaped_response);
+                response.PutCStringAsRawHex8(unescaped_response.GetData());
+                response.PutChar(';');
+            }
+            else if (log)
+                log->Printf ("GDBRemoteCommunicationServerLLGS::%s failed to prepare a jstopinfo field for pid %" PRIu64,
+                        __FUNCTION__, m_debugged_process_sp->GetID());
+
+        }
     }
 
     //
@@ -2719,74 +2824,20 @@ GDBRemoteCommunicationServerLLGS::Handle_jThreadsInfo (StringExtractorGDBRemote 
         log->Printf ("GDBRemoteCommunicationServerLLGS::%s preparing packet for pid %" PRIu64,
                 __FUNCTION__, m_debugged_process_sp->GetID());
 
-    JSONArray threads_array;
-
-    // Ensure we can get info on the given thread.
-    uint32_t thread_idx = 0;
-    for ( NativeThreadProtocolSP thread_sp;
-          (thread_sp = m_debugged_process_sp->GetThreadAtIndex(thread_idx)) != nullptr;
-          ++thread_idx)
-    {
-
-        JSONObject::SP thread_obj_sp = std::make_shared<JSONObject>();
-
-        lldb::tid_t tid = thread_sp->GetID();
-
-        // Grab the reason this thread stopped.
-        struct ThreadStopInfo tid_stop_info;
-        std::string description;
-        if (!thread_sp->GetStopReason (tid_stop_info, description))
-            return SendErrorResponse (52);
-
-        const int signum = tid_stop_info.details.signal.signo;
-        if (log)
-        {
-            log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " tid %" PRIu64 " got signal signo = %d, reason = %d, exc_type = %" PRIu64,
-                    __FUNCTION__,
-                    m_debugged_process_sp->GetID (),
-                    tid,
-                    signum,
-                    tid_stop_info.reason,
-                    tid_stop_info.details.exception.type);
-        }
-
-        thread_obj_sp->SetObject("tid", std::make_shared<JSONNumber>(tid));
-        if (signum != LLDB_INVALID_SIGNAL_NUMBER)
-            thread_obj_sp->SetObject("signal", std::make_shared<JSONNumber>(uint64_t(signum)));
-
-        const std::string thread_name = thread_sp->GetName ();
-        if (! thread_name.empty())
-            thread_obj_sp->SetObject("name", std::make_shared<JSONString>(thread_name));
-
-        if (JSONObject::SP registers_sp = GetRegistersAsJSON(*thread_sp))
-            thread_obj_sp->SetObject("registers", registers_sp);
-
-        if (const char *stop_reason_str = GetStopReasonString(tid_stop_info.reason))
-            thread_obj_sp->SetObject("reason", std::make_shared<JSONString>(stop_reason_str));
-
-        if (! description.empty())
-            thread_obj_sp->SetObject("description", std::make_shared<JSONString>(description));
-
-        if ((tid_stop_info.reason == eStopReasonException) && tid_stop_info.details.exception.type)
-        {
-            thread_obj_sp->SetObject("metype",
-                    std::make_shared<JSONNumber>(tid_stop_info.details.exception.type));
-
-            JSONArray::SP medata_array_sp = std::make_shared<JSONArray>();
-            for (uint32_t i = 0; i < tid_stop_info.details.exception.data_count; ++i)
-            {
-                medata_array_sp->AppendObject(std::make_shared<JSONNumber>(
-                            tid_stop_info.details.exception.data[i]));
-            }
-            thread_obj_sp->SetObject("medata", medata_array_sp);
-        }
-
-        threads_array.AppendObject(thread_obj_sp);
-    }
-    // TODO: Expedite interesting regions of inferior memory
 
     StreamString response;
-    threads_array.Write(response);
+    const bool threads_with_valid_stop_info_only = false;
+    JSONArray::SP threads_array_sp = GetJSONThreadsInfo(*m_debugged_process_sp,
+                                                        threads_with_valid_stop_info_only);
+    if (! threads_array_sp)
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServerLLGS::%s failed to prepare a packet for pid %" PRIu64,
+                    __FUNCTION__, m_debugged_process_sp->GetID());
+        return SendErrorResponse(52);
+    }
+
+    threads_array_sp->Write(response);
     StreamGDBRemote escaped_response;
     escaped_response.PutEscapedBytes(response.GetData(), response.GetSize());
     return SendPacketNoLock (escaped_response.GetData(), escaped_response.GetSize());

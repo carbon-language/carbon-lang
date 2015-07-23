@@ -362,14 +362,14 @@ NativeThreadLinux::SetStoppedByTrace ()
 }
 
 void
-NativeThreadLinux::SetSuspended ()
+NativeThreadLinux::SetStoppedWithNoReason ()
 {
-    const StateType new_state = StateType::eStateSuspended;
+    const StateType new_state = StateType::eStateStopped;
     MaybeLogStateChange (new_state);
     m_state = new_state;
 
-    // FIXME what makes sense here? Do we need a suspended StopReason?
     m_stop_info.reason = StopReason::eStopReasonNone;
+    m_stop_info.details.signal.signo = 0;
 }
 
 void

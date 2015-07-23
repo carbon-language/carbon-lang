@@ -87,10 +87,7 @@ namespace process_linux {
         SetStoppedByTrace ();
 
         void
-        SetCrashedWithException (const siginfo_t& info);
-
-        void
-        SetSuspended ();
+        SetStoppedWithNoReason ();
 
         void
         SetExited ();
