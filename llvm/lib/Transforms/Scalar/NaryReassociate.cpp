@@ -508,11 +508,6 @@ Instruction *NaryReassociate::tryReassociateAdd(Value *LHS, Value *RHS,
 
 Instruction *NaryReassociate::tryReassociatedAdd(const SCEV *LHSExpr,
                                                  Value *RHS, Instruction *I) {
-  auto Pos = SeenExprs.find(LHSExpr);
-  // Bail out if LHSExpr is not previously seen.
-  if (Pos == SeenExprs.end())
-    return nullptr;
-
   // Look for the closest dominator LHS of I that computes LHSExpr, and replace
   // I with LHS + RHS.
   auto *LHS = findClosestMatchingDominator(LHSExpr, I);
