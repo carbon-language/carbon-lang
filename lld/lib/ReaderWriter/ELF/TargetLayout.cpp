@@ -133,7 +133,7 @@ TargetLayout<ELFT>::getOutputSectionName(StringRef archivePath,
 /// \brief Gets the segment for a output section
 template <class ELFT>
 typename TargetLayout<ELFT>::SegmentType
-TargetLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
+TargetLayout<ELFT>::getSegmentType(const Section<ELFT> *section) const {
   switch (section->order()) {
   case ORDER_INTERP:
     return llvm::ELF::PT_INTERP;
@@ -320,7 +320,6 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
     } else {
       outputSection = new (_allocator.Allocate<OutputSection<ELFT>>())
           OutputSection<ELFT>(section->outputSectionName());
-      checkOutputSectionSegment(outputSection);
       _outputSections.push_back(outputSection);
       outputSectionInsert.first->second = outputSection;
     }
@@ -328,15 +327,66 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
   }
 }
 
-// Check that output section has proper segment set
 template <class ELFT>
-void TargetLayout<ELFT>::checkOutputSectionSegment(
-    const OutputSection<ELFT> *sec) {
+std::vector<const script::PHDR *>
+TargetLayout<ELFT>::getCustomSegments(const OutputSection<ELFT> *sec) const {
   std::vector<const script::PHDR *> phdrs;
   if (_linkerScriptSema.getPHDRsForOutputSection(sec->name(), phdrs)) {
     llvm::report_fatal_error(
         "Linker script has wrong segments set for output sections");
   }
+  return phdrs;
+}
+
+template <class ELFT>
+std::vector<const script::PHDR *>
+TargetLayout<ELFT>::getCustomSegments(const Section<ELFT> *section) const {
+  auto sec = section->getOutputSection();
+  assert(sec && "Output section should be already set for input section");
+  return getCustomSegments(sec);
+}
+
+template <class ELFT>
+std::vector<typename TargetLayout<ELFT>::SegmentKey>
+TargetLayout<ELFT>::getSegmentsForSection(const OutputSection<ELFT> *os,
+                                          const Section<ELFT> *sec) const {
+  std::vector<SegmentKey> segKeys;
+  auto phdrs = getCustomSegments(os);
+  if (!phdrs.empty()) {
+    if (phdrs.size() == 1 && phdrs[0]->isNone()) {
+      segKeys.emplace_back("NONE", llvm::ELF::PT_NULL, 0, false);
+      return segKeys;
+    }
+
+    for (auto phdr : phdrs) {
+      segKeys.emplace_back(phdr->name(), phdr->type(), phdr->flags(), true);
+    }
+    return segKeys;
+  }
+
+  uint64_t flags = getLookupSectionFlags(os);
+  int64_t segmentType = getSegmentType(sec);
+  StringRef segmentName = sec->segmentKindToStr();
+
+  // We need a separate segment for sections that don't have
+  // the segment type to be PT_LOAD
+  if (segmentType != llvm::ELF::PT_LOAD)
+    segKeys.emplace_back(segmentName, segmentType, flags, false);
+
+  if (segmentType == llvm::ELF::PT_NULL)
+    return segKeys;
+
+  // If the output magic is set to OutputMagic::NMAGIC or
+  // OutputMagic::OMAGIC, Place the data alongside text in one single
+  // segment
+  ELFLinkingContext::OutputMagic outputMagic = _ctx.getOutputMagic();
+  if (outputMagic == ELFLinkingContext::OutputMagic::NMAGIC ||
+      outputMagic == ELFLinkingContext::OutputMagic::OMAGIC)
+    flags =
+        llvm::ELF::SHF_EXECINSTR | llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_WRITE;
+
+  segKeys.emplace_back("LOAD", llvm::ELF::PT_LOAD, flags, false);
+  return segKeys;
 }
 
 template <class ELFT>
@@ -356,7 +406,6 @@ TargetLayout<ELFT>::getLookupSectionFlags(const OutputSection<ELFT> *os) const {
 
 template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
-  ELFLinkingContext::OutputMagic outputMagic = _ctx.getOutputMagic();
   // sort the sections by their order as defined by the layout
   sortInputSections();
 
@@ -381,66 +430,40 @@ template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
         continue;
 
       osi->setLoadableSection(section->isLoadableSection());
-
-      // Get the segment type for the section
-      int64_t segmentType = getSegmentType(section);
-
       osi->setHasSegment();
-      section->setSegmentType(segmentType);
-      StringRef segmentName = section->segmentKindToStr();
 
-      uint64_t lookupSectionFlag = getLookupSectionFlags(osi);
+      auto segKeys = getSegmentsForSection(osi, section);
+      assert(!segKeys.empty() && "Must always be at least one segment");
+      section->setSegmentType(segKeys[0]._type);
 
-      Segment<ELFT> *segment;
-      // We need a separate segment for sections that don't have
-      // the segment type to be PT_LOAD
-      if (segmentType != llvm::ELF::PT_LOAD) {
-        const AdditionalSegmentKey key(segmentType, lookupSectionFlag);
-        const std::pair<AdditionalSegmentKey, Segment<ELFT> *>
-            additionalSegment(key, nullptr);
-        std::pair<typename AdditionalSegmentMapT::iterator, bool>
-            additionalSegmentInsert(
-                _additionalSegmentMap.insert(additionalSegment));
-        if (!additionalSegmentInsert.second) {
-          segment = additionalSegmentInsert.first->second;
+      for (auto key : segKeys) {
+        // Try to find non-load (real) segment type if possible
+        if (key._type != llvm::ELF::PT_LOAD)
+          section->setSegmentType(key._type);
+
+        const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key,
+                                                                    nullptr);
+        std::pair<typename SegmentMapT::iterator, bool> segmentInsert(
+            _segmentMap.insert(currentSegment));
+        Segment<ELFT> *segment;
+        if (!segmentInsert.second) {
+          segment = segmentInsert.first->second;
         } else {
-          segment =
-              new (_allocator) Segment<ELFT>(_ctx, segmentName, segmentType);
-          additionalSegmentInsert.first->second = segment;
+          segment = new (_allocator) Segment<ELFT>(_ctx, key._name, key._type);
+          if (key._segmentFlags)
+            segment->setSegmentFlags(key._flags);
+          segmentInsert.first->second = segment;
           _segments.push_back(segment);
+        }
+        if (key._type == llvm::ELF::PT_LOAD) {
+          // Insert chunks with linker script expressions that occur at this
+          // point, just before appending a new input section
+          addExtraChunksToSegment(segment, section->archivePath(),
+                                  section->memberPath(),
+                                  section->inputSectionName());
         }
         segment->append(section);
       }
-      if (segmentType == llvm::ELF::PT_NULL)
-        continue;
-
-      // If the output magic is set to OutputMagic::NMAGIC or
-      // OutputMagic::OMAGIC, Place the data alongside text in one single
-      // segment
-      if (outputMagic == ELFLinkingContext::OutputMagic::NMAGIC ||
-          outputMagic == ELFLinkingContext::OutputMagic::OMAGIC)
-        lookupSectionFlag = llvm::ELF::SHF_EXECINSTR | llvm::ELF::SHF_ALLOC |
-                            llvm::ELF::SHF_WRITE;
-
-      // Use the flags of the merged Section for the segment
-      const SegmentKey key("PT_LOAD", lookupSectionFlag);
-      const std::pair<SegmentKey, Segment<ELFT> *> currentSegment(key, nullptr);
-      std::pair<typename SegmentMapT::iterator, bool> segmentInsert(
-          _segmentMap.insert(currentSegment));
-      if (!segmentInsert.second) {
-        segment = segmentInsert.first->second;
-      } else {
-        segment =
-            new (_allocator) Segment<ELFT>(_ctx, "PT_LOAD", llvm::ELF::PT_LOAD);
-        segmentInsert.first->second = segment;
-        _segments.push_back(segment);
-      }
-      // Insert chunks with linker script expressions that occur at this
-      // point, just before appending a new input section
-      addExtraChunksToSegment(segment, section->archivePath(),
-                              section->memberPath(),
-                              section->inputSectionName());
-      segment->append(section);
     }
   }
   if (_ctx.isDynamic() && !_ctx.isDynamicLibrary()) {

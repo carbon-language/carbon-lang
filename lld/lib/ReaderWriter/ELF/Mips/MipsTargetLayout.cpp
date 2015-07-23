@@ -33,7 +33,7 @@ AtomSection<ELFT> *MipsTargetLayout<ELFT>::createSection(
 
 template <class ELFT>
 typename TargetLayout<ELFT>::SegmentType
-MipsTargetLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
+MipsTargetLayout<ELFT>::getSegmentType(const Section<ELFT> *section) const {
   switch (section->order()) {
   case ORDER_MIPS_REGINFO:
     return _abiInfo.hasMipsAbiSection() ? llvm::ELF::PT_LOAD

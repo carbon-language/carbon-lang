@@ -38,7 +38,7 @@ public:
                 typename TargetLayout<ELFT>::SectionOrder order) override;
 
   typename TargetLayout<ELFT>::SegmentType
-  getSegmentType(Section<ELFT> *section) const override;
+  getSegmentType(const Section<ELFT> *section) const override;
 
   /// \brief GP offset relative to .got section.
   uint64_t getGPOffset() const { return 0x7FF0; }

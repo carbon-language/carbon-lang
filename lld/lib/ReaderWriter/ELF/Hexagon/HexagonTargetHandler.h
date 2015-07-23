@@ -79,7 +79,7 @@ public:
 
   /// \brief get the segment type for the section thats defined by the target
   TargetLayout::SegmentType
-  getSegmentType(Section<ELF32LE> *section) const override {
+  getSegmentType(const Section<ELF32LE> *section) const override {
     if (section->order() == ORDER_SDATA)
       return PT_LOAD;
     return TargetLayout::getSegmentType(section);

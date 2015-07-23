@@ -89,7 +89,7 @@ public:
                                                     inputSectionName));
   }
 
-  SegmentType getSegmentType(Section<ELF32LE> *section) const override {
+  SegmentType getSegmentType(const Section<ELF32LE> *section) const override {
     switch (section->order()) {
     case ORDER_ARM_EXIDX:
       return llvm::ELF::PT_ARM_EXIDX;

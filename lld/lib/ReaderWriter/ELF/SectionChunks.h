@@ -85,6 +85,10 @@ public:
     return nullptr;
   }
 
+  const OutputSection<ELFT> *getOutputSection() const {
+    return _outputSection;
+  }
+
   void setOutputSection(OutputSection<ELFT> *os, bool isFirst = false) {
     _outputSection = os;
     _isFirstSectionInOutputSection = isFirst;

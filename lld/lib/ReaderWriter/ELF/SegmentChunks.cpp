@@ -23,7 +23,7 @@ template <class ELFT>
 Segment<ELFT>::Segment(const ELFLinkingContext &ctx, StringRef name,
                        const typename TargetLayout<ELFT>::SegmentType type)
     : Chunk<ELFT>(name, Chunk<ELFT>::Kind::ELFSegment, ctx), _segmentType(type),
-      _flags(0), _atomflags(0) {
+      _flags(0), _atomflags(0), _segmentFlags(false) {
   this->_alignment = 1;
   this->_fsize = 0;
   _outputMagic = ctx.getOutputMagic();
@@ -46,17 +46,37 @@ static DefinedAtom::ContentPermissions toAtomPerms(uint64_t flags) {
   }
 }
 
+// This function actually is used, but not in all instantiations of Segment.
+LLVM_ATTRIBUTE_UNUSED
+static DefinedAtom::ContentPermissions toAtomPermsSegment(uint64_t flags) {
+  switch (flags & (llvm::ELF::PF_R | llvm::ELF::PF_W | llvm::ELF::PF_X)) {
+  case llvm::ELF::PF_R | llvm::ELF::PF_W | llvm::ELF::PF_X:
+    return DefinedAtom::permRWX;
+  case llvm::ELF::PF_R | llvm::ELF::PF_X:
+    return DefinedAtom::permR_X;
+  case llvm::ELF::PF_R:
+    return DefinedAtom::permR__;
+  case llvm::ELF::PF_R | llvm::ELF::PF_W:
+    return DefinedAtom::permRW_;
+  default:
+    return DefinedAtom::permUnknown;
+  }
+}
+
 template <class ELFT> void Segment<ELFT>::append(Chunk<ELFT> *chunk) {
   _sections.push_back(chunk);
   Section<ELFT> *section = dyn_cast<Section<ELFT>>(chunk);
   if (!section)
     return;
+  if (this->_alignment < section->alignment())
+    this->_alignment = section->alignment();
+
+  if (_segmentFlags)
+    return;
   if (_flags < section->getFlags())
     _flags |= section->getFlags();
   if (_atomflags < toAtomPerms(_flags))
     _atomflags = toAtomPerms(_flags);
-  if (this->_alignment < section->alignment())
-    this->_alignment = section->alignment();
 }
 
 template <class ELFT>
@@ -389,6 +409,9 @@ void Segment<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
 }
 
 template <class ELFT> int64_t Segment<ELFT>::flags() const {
+  if (_segmentFlags)
+    return (int64_t)_flags;
+
   int64_t fl = 0;
   if (_flags & llvm::ELF::SHF_ALLOC)
     fl |= llvm::ELF::PF_R;
@@ -397,6 +420,13 @@ template <class ELFT> int64_t Segment<ELFT>::flags() const {
   if (_flags & llvm::ELF::SHF_EXECINSTR)
     fl |= llvm::ELF::PF_X;
   return fl;
+}
+
+template <class ELFT> void Segment<ELFT>::setSegmentFlags(uint64_t flags) {
+  assert(!_segmentFlags && !_flags && "Flags has already been set");
+  _segmentFlags = true;
+  _flags = flags;
+  _atomflags = toAtomPermsSegment(flags);
 }
 
 template <class ELFT> void Segment<ELFT>::finalize() {

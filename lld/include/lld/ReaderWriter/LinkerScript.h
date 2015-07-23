@@ -817,11 +817,11 @@ public:
         _includePHDRs(includePHDRs), _at(at), _flags(flags) {}
 
   StringRef name() const { return _name; }
+  uint64_t type() const { return _type; }
+  uint64_t flags() const { return _flags; }
+  bool isNone() const;
 
   void dump(raw_ostream &os) const;
-
-  /// Special header that discards output sections assigned to it.
-  static const PHDR *NONE;
 
 private:
   StringRef _name;

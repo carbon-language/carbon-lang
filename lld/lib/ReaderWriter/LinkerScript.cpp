@@ -937,6 +937,13 @@ void OutputSectionDescription::dump(raw_ostream &os) const {
   }
 }
 
+// Special header that discards output sections assigned to it.
+static const PHDR PHDR_NONE("NONE", 0, false, false, nullptr, 0);
+
+bool PHDR::isNone() const {
+  return this == &PHDR_NONE;
+}
+
 void PHDR::dump(raw_ostream &os) const {
   os << _name << " " << _type;
   if (_includeFileHdr)
@@ -952,9 +959,6 @@ void PHDR::dump(raw_ostream &os) const {
     os << " FLAGS (" << _flags << ")";
   os << ";\n";
 }
-
-static PHDR none("NONE", 0, false, false, NULL, 0);
-const PHDR *PHDR::NONE = &none;
 
 void PHDRS::dump(raw_ostream &os) const {
   os << "PHDRS\n{\n";
@@ -2736,11 +2740,11 @@ std::error_code Sema::buildSectionToPHDR() {
 
   // Add NONE header to the map provided there's no user-defined
   // header with the same name.
-  if (!_sectionToPHDR.count(PHDR::NONE->name()))
-    phdrs[PHDR::NONE->name()] = PHDR::NONE;
+  if (!_sectionToPHDR.count(PHDR_NONE.name()))
+    phdrs[PHDR_NONE.name()] = &PHDR_NONE;
 
   // Match output sections to available headers.
-  llvm::SmallVector<const PHDR *, 2> phdrsCur, phdrsLast { PHDR::NONE };
+  llvm::SmallVector<const PHDR *, 2> phdrsCur, phdrsLast { &PHDR_NONE };
   for (const Command *cmd : _layoutCommands) {
     auto osd = dyn_cast<OutputSectionDescription>(cmd);
     if (!osd || osd->isDiscarded())

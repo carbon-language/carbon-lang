@@ -106,36 +106,31 @@ public:
   typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
   typedef typename std::vector<Segment<ELFT> *>::iterator SegmentIter;
 
-  // The additional segments are used to figure out
-  // if there is a segment by that type already created
-  // For example : PT_TLS, we have two sections .tdata/.tbss
-  // that are part of PT_TLS, we need to create this additional
-  // segment only once
-  typedef std::pair<int64_t, int64_t> AdditionalSegmentKey;
-  // The segments are created using
-  // SegmentName, Segment flags
-  typedef std::pair<StringRef, int64_t> SegmentKey;
+  // Properties used during segment creation
+  struct SegmentKey {
+    SegmentKey(StringRef name, int64_t type, uint64_t flags, bool segFlags)
+        : _name(name), _type(type), _flags(flags),
+          _segmentFlags(segFlags && flags != 0) {}
+    StringRef _name = "";
+    int64_t _type = 0;
+    uint64_t _flags = 0;
+    bool _segmentFlags = false;
+  };
 
-  // HashKey for the Segment
-  class SegmentHashKey {
-  public:
-    int64_t operator() (const SegmentKey &k) const {
-      // k.first = SegmentName
-      // k.second = SegmentFlags
-      return llvm::hash_combine(k.first, k.second);
+  struct SegmentKeyHash {
+    int64_t operator()(const SegmentKey &k) const {
+      return llvm::hash_combine(k._name, k._type, k._flags);
     }
   };
 
-  class AdditionalSegmentHashKey {
-  public:
-    int64_t operator()(const AdditionalSegmentKey &k) const {
-      // k.first = SegmentName
-      // k.second = SegmentFlags
-      return llvm::hash_combine(k.first, k.second);
+  struct SegmentKeyEq {
+    bool operator()(const SegmentKey &lhs, const SegmentKey &rhs) const {
+      return ((lhs._name == rhs._name) && (lhs._type == rhs._type) &&
+              (lhs._flags == rhs._flags));
     }
   };
 
-  // Output Sections contain the map of Sectionnames to a vector of sections,
+  // Output Sections contain the map of Section names to a vector of sections,
   // that have been merged to form a single section
   typedef llvm::StringMap<OutputSection<ELFT> *> OutputSectionMapT;
   typedef
@@ -143,10 +138,8 @@ public:
 
   typedef std::unordered_map<SectionKey, AtomSection<ELFT> *, SectionKeyHash,
                              SectionKeyEq> SectionMapT;
-  typedef std::unordered_map<AdditionalSegmentKey, Segment<ELFT> *,
-                             AdditionalSegmentHashKey> AdditionalSegmentMapT;
-  typedef std::unordered_map<SegmentKey, Segment<ELFT> *, SegmentHashKey>
-  SegmentMapT;
+  typedef std::unordered_map<SegmentKey, Segment<ELFT> *, SegmentKeyHash,
+                             SegmentKeyEq> SegmentMapT;
 
   typedef typename std::vector<AtomLayout *>::iterator AbsoluteAtomIterT;
 
@@ -177,7 +170,7 @@ public:
              const DefinedAtom *da);
 
   /// \brief Gets the segment for a output section
-  virtual SegmentType getSegmentType(Section<ELFT> *section) const;
+  virtual SegmentType getSegmentType(const Section<ELFT> *section) const;
 
   /// \brief Returns true/false depending on whether the section has a Output
   //         segment or not
@@ -209,8 +202,17 @@ public:
   // Output sections with the same name into a OutputSection
   void createOutputSections();
 
-  // Check that output section has proper segment set
-  void checkOutputSectionSegment(const OutputSection<ELFT> *sec);
+  // Query for custom segments of the given section
+  std::vector<const script::PHDR *>
+  getCustomSegments(const Section<ELFT> *section) const;
+
+  // Query for custom segments of the given output section
+  std::vector<const script::PHDR *>
+  getCustomSegments(const OutputSection<ELFT> *sec) const;
+
+  // Query for segments based on output and input sections
+  std::vector<SegmentKey> getSegmentsForSection(const OutputSection<ELFT> *os,
+                                                const Section<ELFT> *sec) const;
 
   /// \brief Sort the sections by their order as defined by the layout,
   /// preparing all sections to be assigned to a segment.
@@ -312,7 +314,6 @@ protected:
   llvm::BumpPtrAllocator _allocator;
   SectionMapT _sectionMap;
   OutputSectionMapT _outputSectionMap;
-  AdditionalSegmentMapT _additionalSegmentMap;
   SegmentMapT _segmentMap;
   std::vector<Chunk<ELFT> *> _sections;
   std::vector<Segment<ELFT> *> _segments;

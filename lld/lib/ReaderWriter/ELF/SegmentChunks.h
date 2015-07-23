@@ -139,6 +139,9 @@ public:
 
   int64_t flags() const;
 
+  // Set segment flags directly.
+  void setSegmentFlags(uint64_t flags);
+
   /// Prepend a generic chunk to the segment.
   void prepend(Chunk<ELFT> *c) {
     _sections.insert(_sections.begin(), c);
@@ -188,6 +191,7 @@ protected:
   typename TargetLayout<ELFT>::SegmentType _segmentType;
   uint64_t _flags;
   int64_t _atomflags;
+  bool _segmentFlags;
   llvm::BumpPtrAllocator _segmentAllocate;
 };
 
