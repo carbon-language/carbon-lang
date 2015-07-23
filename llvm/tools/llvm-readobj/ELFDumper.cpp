@@ -110,6 +110,7 @@ private:
   DynRegionInfo DynRelaRegion;
   DynRegionInfo DynamicRegion;
   StringRef DynamicStringTable;
+  const Elf_Sym *DynSymStart = nullptr;
   StringRef SOName;
   const Elf_Hash *HashTable = nullptr;
 };
@@ -660,6 +661,10 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
     case ELF::DT_STRSZ:
       StringTableSize = Dyn.getVal();
       break;
+    case ELF::DT_SYMTAB:
+      DynSymStart =
+          reinterpret_cast<const Elf_Sym *>(toMappedAddr(Dyn.getPtr()));
+      break;
     }
   }
   if (StringTableBegin)
@@ -837,7 +842,7 @@ void ELFDumper<ELFT>::printDynamicRelocations() {
     Obj->getRelocationTypeName(Rel.getType(Obj->isMips64EL()), RelocName);
     StringRef SymbolName;
     uint32_t SymIndex = Rel.getSymbol(Obj->isMips64EL());
-    const Elf_Sym *Sym = Obj->dynamic_symbol_begin() + SymIndex;
+    const Elf_Sym *Sym = DynSymStart + SymIndex;
     SymbolName = errorOrDefault(Sym->getName(DynamicStringTable));
     if (opts::ExpandRelocs) {
       DictScope Group(W, "Relocation");
@@ -931,7 +936,7 @@ void ELFDumper<ELFT>::printDynamicSymbols() {
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
-  for (const Elf_Sym &Sym : Obj->dynamic_symbols())
+  for (const Elf_Sym &Sym : Obj->symbols(Symtab))
     printSymbol(&Sym, StrTable, true);
 }
 
@@ -1431,8 +1436,8 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
   const Elf_Shdr *DynSymSec = Obj->getDotDynSymSec();
   ErrorOr<StringRef> StrTable = Obj->getStringTableForSymtab(*DynSymSec);
   error(StrTable.getError());
-  const Elf_Sym *DynSymBegin = Obj->dynamic_symbol_begin();
-  const Elf_Sym *DynSymEnd = Obj->dynamic_symbol_end();
+  const Elf_Sym *DynSymBegin = Obj->symbol_begin(DynSymSec);
+  const Elf_Sym *DynSymEnd = Obj->symbol_end(DynSymSec);
   std::size_t DynSymTotal = std::size_t(std::distance(DynSymBegin, DynSymEnd));
 
   if (*DtGotSym > DynSymTotal) {

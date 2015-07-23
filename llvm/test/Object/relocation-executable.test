@@ -35,3 +35,15 @@ RUN:   %p/Inputs/hello-world.elf-x86-64 | FileCheck %s --check-prefix=DYN
 // DYN-NEXT:     Addend: 0x0
 // DYN-NEXT:   }
 // DYN-NEXT: }
+
+RUN: llvm-readobj -dyn-relocations -expand-relocs \
+RUN:   %p/Inputs/rel-no-sec-table.elf-x86-64 | FileCheck %s --check-prefix=DYN2
+
+// DYN2:      Dynamic Relocations {
+// DYN2-NEXT:   Relocation {
+// DYN2-NEXT:     Offset: 0x12F0
+// DYN2-NEXT:     Type: R_X86_64_GLOB_DAT (6)
+// DYN2-NEXT:     Symbol: g
+// DYN2-NEXT:     Addend: 0x0
+// DYN2-NEXT:   }
+// DYN2-NEXT: }
