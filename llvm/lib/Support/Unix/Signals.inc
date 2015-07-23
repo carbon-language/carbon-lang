@@ -144,9 +144,6 @@ static void RemoveFilesToRemove() {
   // memory.
   std::vector<std::string>& FilesToRemoveRef = *FilesToRemove;
   for (unsigned i = 0, e = FilesToRemoveRef.size(); i != e; ++i) {
-    // We rely on a std::string implementation for which repeated calls to
-    // 'c_str()' don't allocate memory. We pre-call 'c_str()' on all of these
-    // strings to try to ensure this is safe.
     const char *path = FilesToRemoveRef[i].c_str();
 
     // Get the status so we can determine if it's a file or directory. If we
@@ -231,21 +228,7 @@ bool llvm::sys::RemoveFileOnSignal(StringRef Filename,
                                    std::string* ErrMsg) {
   {
     sys::SmartScopedLock<true> Guard(*SignalsMutex);
-    std::vector<std::string>& FilesToRemoveRef = *FilesToRemove;
-    std::string *OldPtr =
-        FilesToRemoveRef.empty() ? nullptr : &FilesToRemoveRef[0];
-    FilesToRemoveRef.push_back(Filename);
-
-    // We want to call 'c_str()' on every std::string in this vector so that if
-    // the underlying implementation requires a re-allocation, it happens here
-    // rather than inside of the signal handler. If we see the vector grow, we
-    // have to call it on every entry. If it remains in place, we only need to
-    // call it on the latest one.
-    if (OldPtr == &FilesToRemoveRef[0])
-      FilesToRemoveRef.back().c_str();
-    else
-      for (unsigned i = 0, e = FilesToRemoveRef.size(); i != e; ++i)
-        FilesToRemoveRef[i].c_str();
+    FilesToRemove->push_back(Filename);
   }
 
   RegisterHandlers();
