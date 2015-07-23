@@ -63,7 +63,7 @@ public:
     _defined.addReference(std::unique_ptr<SimpleReference>(ref));
     addAtom(_defined);
     addAtom(_undefined);
-  };
+  }
 
 private:
   SimpleUndefinedAtom _undefined;
@@ -79,7 +79,7 @@ public:
       : SimpleFile("<symbol-rename>"), _fromSym(from), _toSym(to),
         _from(*this, _fromSym, &_to), _to(*this, _toSym) {
     addAtom(_from);
-  };
+  }
 
 private:
   std::string _fromSym;
@@ -100,7 +100,7 @@ public:
         _imageBaseAtom(*this, ctx.decorateSymbol("__ImageBase"),
                        Atom::scopeGlobal, ctx.getBaseAddress()) {
     addAtom(_imageBaseAtom);
-  };
+  }
 
 private:
   SimpleAbsoluteAtom _imageBaseAtom;

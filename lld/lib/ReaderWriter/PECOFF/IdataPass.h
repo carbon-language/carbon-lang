@@ -87,7 +87,7 @@ public:
 
   StringRef customSectionName() const override {
     return _sectionName;
-  };
+  }
 
 private:
   std::vector<uint8_t> assembleRawContent(uint64_t contents, bool is64);

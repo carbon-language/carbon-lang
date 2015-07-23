@@ -61,7 +61,7 @@ public:
   /// should be marked live (along with all Atoms they reference).  Usually
   /// this method returns false for main executables, but true for dynamic
   /// shared libraries.
-  bool globalsAreDeadStripRoots() const { return _globalsAreDeadStripRoots; };
+  bool globalsAreDeadStripRoots() const { return _globalsAreDeadStripRoots; }
 
   /// Only used if deadStrip() returns true.  This method returns the names
   /// of DefinedAtoms that should be marked live (along with all Atoms they

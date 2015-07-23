@@ -42,7 +42,7 @@ protected:
     std::error_code ec =
         GnuLdDriver::evalLinkerScript(*_ctx, std::move(mb), out, nostdlib);
     EXPECT_FALSE(ec);
-  };
+  }
 
   std::unique_ptr<ELFLinkingContext> _ctx;
 };
@@ -281,4 +281,3 @@ TEST_F(LinkerScriptTest, ExprEval) {
   EXPECT_EQ(0x14000, result);
   EXPECT_EQ(0, sa2->symbol().compare(StringRef(".")));
 }
-
