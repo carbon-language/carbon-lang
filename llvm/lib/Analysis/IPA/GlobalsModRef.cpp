@@ -90,9 +90,16 @@ public:
     return GlobalMRI;
   }
 
-  /// Access the entire map of mod/ref info for specific globals.
-  const std::map<const GlobalValue *, ModRefInfo> &getGlobalModRefInfo() const {
-    return GlobalInfo;
+  /// Add mod/ref info from another function into ours, saturating towards
+  /// MRI_ModRef.
+  void addFunctionInfo(const FunctionInfo &FI) {
+    addModRefInfo(FI.getModRefInfo());
+
+    if (FI.mayReadAnyGlobal())
+      setMayReadAnyGlobal();
+
+    for (const auto &G : FI.GlobalInfo)
+      addModRefInfoForGlobal(*G.first, G.second);
   }
 
   void addModRefInfoForGlobal(const GlobalValue &GV, ModRefInfo NewMRI) {
@@ -464,9 +471,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     }
 
     FunctionInfo &FI = FunctionInfos[SCC[0]->getFunction()];
-
     bool KnowNothing = false;
-    unsigned FunctionMRI = 0;
 
     // Collect the mod/ref properties due to called functions.  We only compute
     // one mod-ref set.
@@ -482,13 +487,13 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
         if (F->doesNotAccessMemory()) {
           // Can't do better than that!
         } else if (F->onlyReadsMemory()) {
-          FunctionMRI |= MRI_Ref;
+          FI.addModRefInfo(MRI_Ref);
           if (!F->isIntrinsic())
             // This function might call back into the module and read a global -
             // consider every global as possibly being read by this function.
             FI.setMayReadAnyGlobal();
         } else {
-          FunctionMRI |= MRI_ModRef;
+          FI.addModRefInfo(MRI_ModRef);
           // Can't say anything useful unless it's an intrinsic - they don't
           // read or write global variables of the kind considered here.
           KnowNothing = !F->isIntrinsic();
@@ -501,14 +506,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
         if (Function *Callee = CI->second->getFunction()) {
           if (FunctionInfo *CalleeFI = getFunctionInfo(Callee)) {
             // Propagate function effect up.
-            FunctionMRI |= CalleeFI->getModRefInfo();
-
-            // Incorporate callee's effects on globals into our info.
-            for (const auto &G : CalleeFI->getGlobalModRefInfo())
-              FI.addModRefInfoForGlobal(*G.first, G.second);
-
-            if (CalleeFI->mayReadAnyGlobal())
-              FI.setMayReadAnyGlobal();
+            FI.addFunctionInfo(*CalleeFI);
           } else {
             // Can't say anything about it.  However, if it is inside our SCC,
             // then nothing needs to be done.
@@ -531,10 +529,10 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
 
     // Scan the function bodies for explicit loads or stores.
     for (auto *Node : SCC) {
-      if (FunctionMRI == MRI_ModRef)
+      if (FI.getModRefInfo() == MRI_ModRef)
         break; // The mod/ref lattice saturates here.
       for (Instruction &I : inst_range(Node->getFunction())) {
-        if (FunctionMRI == MRI_ModRef)
+        if (FI.getModRefInfo() == MRI_ModRef)
           break; // The mod/ref lattice saturates here.
 
         // We handle calls specially because the graph-relevant aspects are
@@ -543,13 +541,13 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           if (isAllocationFn(&I, TLI) || isFreeCall(&I, TLI)) {
             // FIXME: It is completely unclear why this is necessary and not
             // handled by the above graph code.
-            FunctionMRI |= MRI_ModRef;
+            FI.addModRefInfo(MRI_ModRef);
           } else if (Function *Callee = CS.getCalledFunction()) {
             // The callgraph doesn't include intrinsic calls.
             if (Callee->isIntrinsic()) {
               FunctionModRefBehavior Behaviour =
                   AliasAnalysis::getModRefBehavior(Callee);
-              FunctionMRI |= (Behaviour & MRI_ModRef);
+              FI.addModRefInfo(ModRefInfo(Behaviour & MRI_ModRef));
             }
           }
           continue;
@@ -558,17 +556,16 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
         // All non-call instructions we use the primary predicates for whether
         // thay read or write memory.
         if (I.mayReadFromMemory())
-          FunctionMRI |= MRI_Ref;
+          FI.addModRefInfo(MRI_Ref);
         if (I.mayWriteToMemory())
-          FunctionMRI |= MRI_Mod;
+          FI.addModRefInfo(MRI_Mod);
       }
     }
 
-    if ((FunctionMRI & MRI_Mod) == 0)
+    if ((FI.getModRefInfo() & MRI_Mod) == 0)
       ++NumReadMemFunctions;
-    if (FunctionMRI == MRI_NoModRef)
+    if (FI.getModRefInfo() == MRI_NoModRef)
       ++NumNoMemFunctions;
-    FI.addModRefInfo(ModRefInfo(FunctionMRI));
 
     // Finally, now that we know the full effect on this SCC, clone the
     // information to each function in the SCC.
