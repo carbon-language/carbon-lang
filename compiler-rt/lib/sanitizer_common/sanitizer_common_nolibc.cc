@@ -16,6 +16,8 @@
 
 namespace __sanitizer {
 
+#if SANITIZER_LINUX
 void WriteToSyslog(const char *buffer) {}
+#endif
 
 }
