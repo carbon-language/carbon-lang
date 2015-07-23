@@ -533,6 +533,14 @@ void AArch64InstrInfo::insertSelect(MachineBasicBlock &MBB,
       CC);
 }
 
+/// Returns true if a MOVi32imm or MOVi64imm can be expanded to an ORRxx.
+static bool canBeExpandedToORR(const MachineInstr *MI, unsigned BitSize) {
+  uint64_t Imm = MI->getOperand(1).getImm();
+  uint64_t UImm = Imm << (64 - BitSize) >> (64 - BitSize);
+  uint64_t Encoding;
+  return AArch64_AM::processLogicalImmediate(UImm, BitSize, Encoding);
+}
+
 // FIXME: this implementation should be micro-architecture dependent, so a
 // micro-architecture target hook should be introduced here in future.
 bool AArch64InstrInfo::isAsCheapAsAMove(const MachineInstr *MI) const {
@@ -573,6 +581,12 @@ bool AArch64InstrInfo::isAsCheapAsAMove(const MachineInstr *MI) const {
   case AArch64::ORRWrr:
   case AArch64::ORRXrr:
     return true;
+  // If MOVi32imm or MOVi64imm can be expanded into ORRWri or
+  // ORRXri, it is as cheap as MOV
+  case AArch64::MOVi32imm:
+    return canBeExpandedToORR(MI, 32);
+  case AArch64::MOVi64imm:
+    return canBeExpandedToORR(MI, 64);
   }
 
   llvm_unreachable("Unknown opcode to check as cheap as a move!");
