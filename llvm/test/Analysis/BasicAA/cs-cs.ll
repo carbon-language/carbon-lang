@@ -233,4 +233,7 @@ define void @test6(i8* %P) nounwind ssp {
 ; CHECK: Just Ref:   call void @a_readonly_func(i8* %P) <->   call void @llvm.memset.p0i8.i64(i8* %P, i8 -51, i64 32, i32 8, i1 false)
 }
 
-attributes #0 = { nounwind }
+attributes #0 = { nounwind readonly }
+attributes #1 = { nounwind }
+attributes #2 = { noinline nounwind readonly }
+attributes #3 = { nounwind ssp }
