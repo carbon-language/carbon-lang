@@ -1692,7 +1692,8 @@ and reference to that variable declaration within a compound statement.
 Given
   __attribute__((device)) void f() { ... }
 decl(hasAttr(clang::attr::CUDADevice)) matches the function declaration of
-f.
+f. If the matcher is use from clang-query, attr::Kind parameter should be
+passed as a quoted string. e.g., hasAttr("attr::CUDADevice").
 </pre></td></tr>
 
 
