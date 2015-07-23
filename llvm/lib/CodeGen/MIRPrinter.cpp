@@ -105,7 +105,7 @@ public:
   void printStackObjectReference(int FrameIndex);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
 
-  void print(const MCCFIInstruction &CFI);
+  void print(const MCCFIInstruction &CFI, const TargetRegisterInfo *TRI);
 };
 
 } // end anonymous namespace
@@ -465,7 +465,7 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     break;
   case MachineOperand::MO_CFIIndex: {
     const auto &MMI = Op.getParent()->getParent()->getParent()->getMMI();
-    print(MMI.getFrameInstructions()[Op.getCFIIndex()]);
+    print(MMI.getFrameInstructions()[Op.getCFIIndex()], TRI);
     break;
   }
   default:
@@ -474,8 +474,26 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   }
 }
 
-void MIPrinter::print(const MCCFIInstruction &CFI) {
+static void printCFIRegister(unsigned DwarfReg, raw_ostream &OS,
+                             const TargetRegisterInfo *TRI) {
+  int Reg = TRI->getLLVMRegNum(DwarfReg, true);
+  if (Reg == -1) {
+    OS << "<badreg>";
+    return;
+  }
+  printReg(Reg, OS, TRI);
+}
+
+void MIPrinter::print(const MCCFIInstruction &CFI,
+                      const TargetRegisterInfo *TRI) {
   switch (CFI.getOperation()) {
+  case MCCFIInstruction::OpOffset:
+    OS << ".cfi_offset ";
+    if (CFI.getLabel())
+      OS << "<mcsymbol> ";
+    printCFIRegister(CFI.getRegister(), OS, TRI);
+    OS << ", " << CFI.getOffset();
+    break;
   case MCCFIInstruction::OpDefCfaOffset:
     OS << ".cfi_def_cfa_offset ";
     if (CFI.getLabel())

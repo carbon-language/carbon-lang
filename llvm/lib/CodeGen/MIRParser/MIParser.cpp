@@ -115,6 +115,7 @@ public:
   bool parseMDNode(MDNode *&Node);
   bool parseMetadataOperand(MachineOperand &Dest);
   bool parseCFIOffset(int &Offset);
+  bool parseCFIRegister(unsigned &Reg);
   bool parseCFIOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
@@ -123,6 +124,10 @@ private:
   ///
   /// Return true if an error occurred.
   bool getUnsigned(unsigned &Result);
+
+  /// If the current token is of the given kind, consume it and return false.
+  /// Otherwise report an error and return true.
+  bool expectAndConsume(MIToken::TokenKind TokenKind);
 
   void initNames2InstrOpCodes();
 
@@ -179,6 +184,22 @@ bool MIParser::error(StringRef::iterator Loc, const Twine &Msg) {
       SM.getMemoryBuffer(SM.getMainFileID())->getBufferIdentifier(), 1,
       Loc - Source.data(), SourceMgr::DK_Error, Msg.str(), Source, None, None);
   return true;
+}
+
+static const char *toString(MIToken::TokenKind TokenKind) {
+  switch (TokenKind) {
+  case MIToken::comma:
+    return "','";
+  default:
+    return "<unknown token>";
+  }
+}
+
+bool MIParser::expectAndConsume(MIToken::TokenKind TokenKind) {
+  if (Token.isNot(TokenKind))
+    return error(Twine("expected ") + toString(TokenKind));
+  lex();
+  return false;
 }
 
 bool MIParser::parse(MachineInstr *&MI) {
@@ -623,16 +644,49 @@ bool MIParser::parseCFIOffset(int &Offset) {
   return false;
 }
 
-bool MIParser::parseCFIOperand(MachineOperand &Dest) {
-  // TODO: Parse the other CFI operands.
-  assert(Token.is(MIToken::kw_cfi_def_cfa_offset));
-  lex();
-  int Offset;
-  if (parseCFIOffset(Offset))
+bool MIParser::parseCFIRegister(unsigned &Reg) {
+  if (Token.isNot(MIToken::NamedRegister))
+    return error("expected a cfi register");
+  unsigned LLVMReg;
+  if (parseRegister(LLVMReg))
     return true;
-  // NB: MCCFIInstruction::createDefCfaOffset negates the offset.
-  Dest = MachineOperand::CreateCFIIndex(MF.getMMI().addFrameInst(
-      MCCFIInstruction::createDefCfaOffset(nullptr, -Offset)));
+  const auto *TRI = MF.getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  int DwarfReg = TRI->getDwarfRegNum(LLVMReg, true);
+  if (DwarfReg < 0)
+    return error("invalid DWARF register");
+  Reg = (unsigned)DwarfReg;
+  lex();
+  return false;
+}
+
+bool MIParser::parseCFIOperand(MachineOperand &Dest) {
+  auto Kind = Token.kind();
+  lex();
+  auto &MMI = MF.getMMI();
+  int Offset;
+  unsigned Reg;
+  unsigned CFIIndex;
+  switch (Kind) {
+  case MIToken::kw_cfi_offset:
+    if (parseCFIRegister(Reg) || expectAndConsume(MIToken::comma) ||
+        parseCFIOffset(Offset))
+      return true;
+    CFIIndex =
+        MMI.addFrameInst(MCCFIInstruction::createOffset(nullptr, Reg, Offset));
+    break;
+  case MIToken::kw_cfi_def_cfa_offset:
+    if (parseCFIOffset(Offset))
+      return true;
+    // NB: MCCFIInstruction::createDefCfaOffset negates the offset.
+    CFIIndex = MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(nullptr, -Offset));
+    break;
+  default:
+    // TODO: Parse the other CFI operands.
+    llvm_unreachable("The current token should be a cfi operand");
+  }
+  Dest = MachineOperand::CreateCFIIndex(CFIIndex);
   return false;
 }
 
@@ -668,6 +722,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseExternalSymbolOperand(Dest);
   case MIToken::exclaim:
     return parseMetadataOperand(Dest);
+  case MIToken::kw_cfi_offset:
   case MIToken::kw_cfi_def_cfa_offset:
     return parseCFIOperand(Dest);
   case MIToken::Error:
