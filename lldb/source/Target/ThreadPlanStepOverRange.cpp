@@ -368,27 +368,22 @@ ThreadPlanStepOverRange::DoPlanExplainsStop (Event *event_ptr)
     {
         StopReason reason = stop_info_sp->GetStopReason();
 
-        switch (reason)
+        if (reason == eStopReasonTrace)
         {
-        case eStopReasonTrace:
             return_value = true;
-            break;
-        case eStopReasonBreakpoint:
+        }
+        else if (reason == eStopReasonBreakpoint)
+        {
             if (NextRangeBreakpointExplainsStop(stop_info_sp))
                 return_value = true;
             else
                 return_value = false;
-            break;
-        case eStopReasonWatchpoint:
-        case eStopReasonSignal:
-        case eStopReasonException:
-        case eStopReasonExec:
-        case eStopReasonThreadExiting:
-        default:
+        }
+        else
+        {
             if (log)
                 log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
             return_value = false;
-            break;
         }
     }
     else

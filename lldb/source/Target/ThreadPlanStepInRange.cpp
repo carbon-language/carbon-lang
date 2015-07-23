@@ -476,7 +476,7 @@ ThreadPlanStepInRange::DoPlanExplainsStop (Event *event_ptr)
     // The only variation is that if we are doing "step by running to next branch" in which case
     // if we hit our branch breakpoint we don't set the plan to complete.
             
-    bool return_value;
+    bool return_value = false;
     
     if (m_virtual_step)
     {
@@ -488,30 +488,24 @@ ThreadPlanStepInRange::DoPlanExplainsStop (Event *event_ptr)
         if (stop_info_sp)
         {
             StopReason reason = stop_info_sp->GetStopReason();
-
-            switch (reason)
+            
+            if (reason ==  eStopReasonBreakpoint)
             {
-            case eStopReasonBreakpoint:
                 if (NextRangeBreakpointExplainsStop(stop_info_sp))
                 {
                     return_value = true;
-                    break;
                 }
-            case eStopReasonWatchpoint:
-            case eStopReasonSignal:
-            case eStopReasonException:
-            case eStopReasonExec:
-            case eStopReasonThreadExiting:
-                {
-                    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-                    if (log)
-                        log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
-                }
+            }
+            else if (IsUsuallyUnexplainedStopReason(reason))
+            {
+                Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+                if (log)
+                    log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
                 return_value = false;
-                break;
-            default:
+            }
+            else
+            {
                 return_value = true;
-                break;
             }
         }
         else

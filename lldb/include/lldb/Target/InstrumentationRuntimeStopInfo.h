@@ -37,6 +37,12 @@ public:
     
     virtual const char *
     GetDescription ();
+
+    virtual bool
+    DoShouldNotify (Event *event_ptr)
+    {
+        return true;
+    }
     
     static lldb::StopInfoSP
     CreateStopReasonWithInstrumentationData (Thread &thread, std::string description, StructuredData::ObjectSP additional_data);

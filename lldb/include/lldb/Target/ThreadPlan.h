@@ -613,6 +613,9 @@ protected:
     virtual lldb::StateType
     GetPlanRunState () = 0;
 
+    bool
+    IsUsuallyUnexplainedStopReason(lldb::StopReason);
+
     Thread &m_thread;
     Vote m_stop_vote;
     Vote m_run_vote;

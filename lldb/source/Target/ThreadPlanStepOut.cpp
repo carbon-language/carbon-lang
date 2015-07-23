@@ -262,9 +262,7 @@ ThreadPlanStepOut::DoPlanExplainsStop (Event *event_ptr)
     if (stop_info_sp)
     {
         StopReason reason = stop_info_sp->GetStopReason();
-        switch (reason)
-        {
-        case eStopReasonBreakpoint:
+        if (reason == eStopReasonBreakpoint)
         {
             // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
             BreakpointSiteSP site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (stop_info_sp->GetValue()));
@@ -310,16 +308,10 @@ ThreadPlanStepOut::DoPlanExplainsStop (Event *event_ptr)
             }
             return false;
         }
-        case eStopReasonWatchpoint:
-        case eStopReasonSignal:
-        case eStopReasonException:
-        case eStopReasonExec:
-        case eStopReasonThreadExiting:
+        else if (IsUsuallyUnexplainedStopReason(reason))
             return false;
-
-        default:
+        else
             return true;
-        }
     }
     return true;
 }

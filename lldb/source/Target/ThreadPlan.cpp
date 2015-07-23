@@ -206,6 +206,24 @@ ThreadPlan::RunState ()
         return GetPlanRunState();
 }
 
+bool
+ThreadPlan::IsUsuallyUnexplainedStopReason(lldb::StopReason reason)
+{
+    switch (reason)
+    {
+        case eStopReasonWatchpoint:
+        case eStopReasonSignal:
+        case eStopReasonException:
+        case eStopReasonExec:
+        case eStopReasonThreadExiting:
+        case eStopReasonInstrumentation:
+            return true;
+        default:
+            return false;
+    }
+}
+
+
 //----------------------------------------------------------------------
 // ThreadPlanNull
 //----------------------------------------------------------------------
