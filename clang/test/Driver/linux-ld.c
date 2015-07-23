@@ -66,9 +66,9 @@
 // CHECK-LD-RT: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../.."
 // CHECK-LD-RT: "-L[[SYSROOT]]/lib"
 // CHECK-LD-RT: "-L[[SYSROOT]]/usr/lib"
-// CHECK-LD-RT: libclang_rt.builtins-x86_64.a" "-lgcc_s"
+// CHECK-LD-RT: libclang_rt.builtins-x86_64.a"
 // CHECK-LD-RT: "-lc"
-// CHECK-LD-RT: libclang_rt.builtins-x86_64.a" "-lgcc_s"
+// CHECK-LD-RT: libclang_rt.builtins-x86_64.a"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=arm-linux-androideabi \
@@ -81,9 +81,9 @@
 // CHECK-LD-RT-ANDROID: "--eh-frame-hdr"
 // CHECK-LD-RT-ANDROID: "-m" "armelf_linux_eabi"
 // CHECK-LD-RT-ANDROID: "-dynamic-linker"
-// CHECK-LD-RT-ANDROID: libclang_rt.builtins-arm-android.a" "-lgcc_s"
+// CHECK-LD-RT-ANDROID: libclang_rt.builtins-arm-android.a"
 // CHECK-LD-RT-ANDROID: "-lc"
-// CHECK-LD-RT-ANDROID: libclang_rt.builtins-arm-android.a" "-lgcc_s"
+// CHECK-LD-RT-ANDROID: libclang_rt.builtins-arm-android.a"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=x86_64-unknown-linux \

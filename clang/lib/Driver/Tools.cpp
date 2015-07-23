@@ -2293,13 +2293,6 @@ SmallString<128> tools::getCompilerRT(const ToolChain &TC, StringRef Component,
 static void addClangRT(const ToolChain &TC, const ArgList &Args,
                        ArgStringList &CmdArgs) {
   CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, "builtins")));
-
-  if (!TC.getTriple().isOSWindows()) {
-    // FIXME: why do we link against gcc when we are using compiler-rt?
-    CmdArgs.push_back("-lgcc_s");
-    if (TC.getDriver().CCCIsCXX())
-      CmdArgs.push_back("-lgcc_eh");
-  }
 }
 
 static void addProfileRT(const ToolChain &TC, const ArgList &Args,
