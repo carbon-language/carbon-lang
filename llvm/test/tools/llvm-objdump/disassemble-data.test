@@ -1,0 +1,6 @@
+// This test checks that -D disassembles from a data section
+// RUN: llvm-mc -filetype=obj -o - %s | llvm-objdump -D - | FileCheck %s
+
+// CHECK: Disassembly of section .data:
+.data
+.word 0x0

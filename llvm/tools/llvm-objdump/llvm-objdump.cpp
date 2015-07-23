@@ -73,6 +73,13 @@ Disassembled("d", cl::desc("Alias for --disassemble"),
              cl::aliasopt(Disassemble));
 
 cl::opt<bool>
+llvm::DisassembleAll("disassemble-all",
+  cl::desc("Display assembler mnemonics for the machine instructions"));
+static cl::alias
+DisassembleAlld("D", cl::desc("Alias for --disassemble-all"),
+             cl::aliasopt(DisassembleAll));
+
+cl::opt<bool>
 llvm::Relocations("r", cl::desc("Display the relocation entries in the file"));
 
 cl::opt<bool>
@@ -837,7 +844,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   }
 
   for (const SectionRef &Section : Obj->sections()) {
-    if (!Section.isText() || Section.isVirtual())
+    if (!DisassembleAll && (!Section.isText() || Section.isVirtual()))
       continue;
 
     uint64_t SectionAddr = Section.getAddress();
@@ -1514,6 +1521,8 @@ int main(int argc, char **argv) {
   if (InputFilenames.size() == 0)
     InputFilenames.push_back("a.out");
 
+  if (DisassembleAll)
+    Disassemble = true;
   if (!Disassemble
       && !Relocations
       && !SectionHeaders
