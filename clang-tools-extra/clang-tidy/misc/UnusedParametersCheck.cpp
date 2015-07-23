@@ -18,7 +18,7 @@ namespace tidy {
 
 void UnusedParametersCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
-      parmVarDecl(hasAncestor(functionDecl().bind("function"))).bind("x"),
+      parmVarDecl(hasParent(functionDecl().bind("function"))).bind("x"),
       this);
 }
 
@@ -60,7 +60,7 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   const auto *Param = Result.Nodes.getNodeAs<ParmVarDecl>("x");
   if (Param->isUsed() || Param->isReferenced() || !Param->getDeclName() ||
-     Param->hasAttr<UnusedAttr>())
+      Param->hasAttr<UnusedAttr>())
     return;
 
   auto MyDiag = diag(Param->getLocation(), "parameter '%0' is unused")
@@ -88,6 +88,8 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
 
   // Handle local functions by deleting the parameters.
   unsigned ParamIndex = Param->getFunctionScopeIndex();
+  assert(ParamIndex < Function->getNumParams());
+
   // Fix all redeclarations.
   for (const FunctionDecl *FD : Function->redecls())
     MyDiag << removeParameter(FD, ParamIndex);
