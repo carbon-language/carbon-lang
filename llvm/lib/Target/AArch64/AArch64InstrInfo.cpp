@@ -533,7 +533,7 @@ void AArch64InstrInfo::insertSelect(MachineBasicBlock &MBB,
       CC);
 }
 
-/// Returns true if a MOVi32imm or MOVi64imm can be expanded to an ORRxx.
+/// Returns true if a MOVi32imm or MOVi64imm can be expanded to an  ORRxx.
 static bool canBeExpandedToORR(const MachineInstr *MI, unsigned BitSize) {
   uint64_t Imm = MI->getOperand(1).getImm();
   uint64_t UImm = Imm << (64 - BitSize) >> (64 - BitSize);
