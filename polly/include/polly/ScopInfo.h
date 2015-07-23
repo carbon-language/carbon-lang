@@ -713,8 +713,13 @@ public:
   /// @brief Vector of minimal/maximal accesses to different arrays.
   using MinMaxVectorTy = SmallVector<MinMaxAccessTy, 4>;
 
-  /// @brief Vector of minimal/maximal access vectors one for each alias group.
-  using MinMaxVectorVectorTy = SmallVector<MinMaxVectorTy *, 4>;
+  /// @brief Pair of minimal/maximal access vectors representing
+  /// read write and read only accesses
+  using MinMaxVectorPairTy = std::pair<MinMaxVectorTy *,MinMaxVectorTy *>;
+
+  /// @brief Vector of pair of minimal/maximal access vectors representing
+  /// non read only and read only accesses for each alias group.
+  using MinMaxVectorPairVectorTy = SmallVector<MinMaxVectorPairTy, 4>;
 
 private:
   Scop(const Scop &) = delete;
@@ -815,7 +820,7 @@ private:
   ///
   /// During code generation we will create a runtime alias check for each alias
   /// group to ensure the SCoP is executed in an alias free environment.
-  MinMaxVectorVectorTy MinMaxAliasGroups;
+  MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
@@ -986,7 +991,7 @@ public:
   bool buildAliasGroups(AliasAnalysis &AA);
 
   /// @brief Return all alias groups for this SCoP.
-  const MinMaxVectorVectorTy &getAliasGroups() const {
+  const MinMaxVectorPairVectorTy &getAliasGroups() const {
     return MinMaxAliasGroups;
   }
 

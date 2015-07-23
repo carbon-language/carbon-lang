@@ -303,6 +303,30 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
   return isl_ast_node_set_annotation(Node, Id);
 }
 
+// Build alias check condition given a pair of minimal/maximal access.
+static __isl_give isl_ast_expr *buildCondition(__isl_keep isl_ast_build *Build,
+                             Scop::MinMaxAccessTy *It0,
+                             Scop::MinMaxAccessTy *It1){
+    isl_ast_expr *NonAliasGroup,*MinExpr, *MaxExpr;
+    MinExpr =
+        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+            Build, isl_pw_multi_aff_copy(It0->first)));
+    MaxExpr =
+        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+            Build, isl_pw_multi_aff_copy(It1->second)));
+    NonAliasGroup = isl_ast_expr_le(MaxExpr, MinExpr);
+    MinExpr =
+        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+            Build, isl_pw_multi_aff_copy(It1->first)));
+    MaxExpr =
+        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+            Build, isl_pw_multi_aff_copy(It0->second)));
+    NonAliasGroup =
+        isl_ast_expr_or(NonAliasGroup, isl_ast_expr_le(MaxExpr, MinExpr));
+
+    return NonAliasGroup;
+}
+
 void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   // The conditions that need to be checked at run-time for this scop are
   // available as an isl_set in the AssumedContext from which we can directly
@@ -310,30 +334,22 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   RunCondition = isl_ast_build_expr_from_set(Build, S->getAssumedContext());
 
   // Create the alias checks from the minimal/maximal accesses in each alias
-  // group. This operation is by construction quadratic in the number of
-  // elements in each alias group.
-  isl_ast_expr *NonAliasGroup, *MinExpr, *MaxExpr;
-  for (const Scop::MinMaxVectorTy *MinMaxAccesses : S->getAliasGroups()) {
-    auto AccEnd = MinMaxAccesses->end();
-    for (auto AccIt0 = MinMaxAccesses->begin(); AccIt0 != AccEnd; ++AccIt0) {
-      for (auto AccIt1 = AccIt0 + 1; AccIt1 != AccEnd; ++AccIt1) {
-        MinExpr =
-            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-                Build, isl_pw_multi_aff_copy(AccIt0->first)));
-        MaxExpr =
-            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-                Build, isl_pw_multi_aff_copy(AccIt1->second)));
-        NonAliasGroup = isl_ast_expr_le(MaxExpr, MinExpr);
-        MinExpr =
-            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-                Build, isl_pw_multi_aff_copy(AccIt1->first)));
-        MaxExpr =
-            isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-                Build, isl_pw_multi_aff_copy(AccIt0->second)));
-        NonAliasGroup =
-            isl_ast_expr_or(NonAliasGroup, isl_ast_expr_le(MaxExpr, MinExpr));
-        RunCondition = isl_ast_expr_and(RunCondition, NonAliasGroup);
-      }
+  // group which consists of read only and non read only (read write) accesses.
+  // This operation is by construction quadratic in the read-write pointers and
+  // linear int the read only pointers in each alias group.
+  for (const Scop::MinMaxVectorPairTy &MinMaxAccessPair : S->getAliasGroups()) {
+    auto *MinMaxReadWrite = MinMaxAccessPair.first;
+    auto *MinMaxReadOnly = MinMaxAccessPair.second;
+    auto RWAccEnd = MinMaxReadWrite->end();
+
+    for (auto RWAccIt0 = MinMaxReadWrite->begin(); RWAccIt0 != RWAccEnd;
+         ++RWAccIt0) {
+      for (auto RWAccIt1 = RWAccIt0 + 1; RWAccIt1 != RWAccEnd; ++RWAccIt1)
+        RunCondition = isl_ast_expr_and(RunCondition,
+                                       buildCondition(Build,RWAccIt0,RWAccIt1));
+      for (Scop::MinMaxAccessTy &ROAccIt : *MinMaxReadOnly)
+        RunCondition = isl_ast_expr_and(RunCondition,
+                                       buildCondition(Build,RWAccIt0,&ROAccIt));
     }
   }
 }
