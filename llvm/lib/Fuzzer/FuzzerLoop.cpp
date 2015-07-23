@@ -49,7 +49,7 @@ void Fuzzer::DeathCallback() {
   Printf("DEATH:\n");
   Print(CurrentUnit, "\n");
   PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
-  WriteToCrash(CurrentUnit, "crash-");
+  WriteUnitToFileWithPrefix(CurrentUnit, "crash-");
 }
 
 void Fuzzer::StaticAlarmCallback() {
@@ -70,7 +70,7 @@ void Fuzzer::AlarmCallback() {
            Options.UnitTimeoutSec);
     Print(CurrentUnit, "\n");
     PrintUnitInASCIIOrTokens(CurrentUnit, "\n");
-    WriteToCrash(CurrentUnit, "timeout-");
+    WriteUnitToFileWithPrefix(CurrentUnit, "timeout-");
     exit(1);
   }
 }
@@ -161,6 +161,7 @@ size_t Fuzzer::RunOne(const Unit &U) {
     TimeOfLongestUnitInSeconds = TimeOfUnit;
     Printf("Longest unit: %zd s:\n", TimeOfLongestUnitInSeconds);
     Print(U, "\n");
+    WriteUnitToFileWithPrefix(U, "long-running-unit-");
   }
   return Res;
 }
@@ -248,10 +249,10 @@ void Fuzzer::WriteToOutputCorpus(const Unit &U) {
     Printf("Written to %s\n", Path.c_str());
 }
 
-void Fuzzer::WriteToCrash(const Unit &U, const char *Prefix) {
+void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
   std::string Path = Prefix + Hash(U);
   WriteToFile(U, Path);
-  Printf("CRASHED; file written to %s\nBase64: ", Path.c_str());
+  Printf("Test unit written to %s\nBase64: ", Path.c_str());
   PrintFileAsBase64(Path);
 }
 

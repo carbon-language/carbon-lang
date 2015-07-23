@@ -108,7 +108,7 @@ class Fuzzer {
   size_t RunOneMaximizeFullCoverageSet(const Unit &U);
   size_t RunOneMaximizeCoveragePairs(const Unit &U);
   void WriteToOutputCorpus(const Unit &U);
-  void WriteToCrash(const Unit &U, const char *Prefix);
+  void WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix);
   void PrintStats(const char *Where, size_t Cov, const char *End = "\n");
   void PrintUnitInASCIIOrTokens(const Unit &U, const char *PrintAfter = "");
 
