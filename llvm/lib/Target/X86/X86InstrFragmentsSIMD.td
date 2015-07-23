@@ -114,17 +114,19 @@ def X86vsext   : SDNode<"X86ISD::VSEXT",
                                               SDTCisInt<0>, SDTCisInt<1>,
                                               SDTCisOpSmallerThanOp<1, 0>]>>;
 
-def SDTVtrunc    : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                       SDTCisInt<0>, SDTCisInt<1>,
-                                       SDTCisOpSmallerThanOp<0, 1>]>;
-
-def X86vtrunc    : SDNode<"X86ISD::VTRUNC",   SDTVtrunc>;
-def X86vtruncs   : SDNode<"X86ISD::VTRUNCS",  SDTVtrunc>;
-def X86vtruncus  : SDNode<"X86ISD::VTRUNCUS", SDTVtrunc>;
-
+def X86vtrunc   : SDNode<"X86ISD::VTRUNC",
+                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
+                                              SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisOpSmallerThanOp<0, 1>]>>;
 def X86trunc    : SDNode<"X86ISD::TRUNC",
                          SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>,
                                               SDTCisOpSmallerThanOp<0, 1>]>>;
+
+def X86vtruncm   : SDNode<"X86ISD::VTRUNCM",
+                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
+                                              SDTCisInt<0>, SDTCisInt<1>,
+                                              SDTCisVec<2>, SDTCisInt<2>,
+                                              SDTCisOpSmallerThanOp<0, 2>]>>;
 def X86vfpext  : SDNode<"X86ISD::VFPEXT",
                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
                                              SDTCisFP<0>, SDTCisFP<1>,
