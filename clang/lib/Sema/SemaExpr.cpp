@@ -5400,7 +5400,16 @@ static bool breakDownVectorType(QualType type, uint64_t &len,
   return true;
 }
 
-static bool VectorTypesMatch(Sema &S, QualType srcTy, QualType destTy) {
+/// Are the two types lax-compatible vector types?  That is, given
+/// that one of them is a vector, do they have equal storage sizes,
+/// where the storage size is the number of elements times the element
+/// size?
+///
+/// This will also return false if either of the types is neither a
+/// vector nor a real type.
+bool Sema::areLaxCompatibleVectorTypes(QualType srcTy, QualType destTy) {
+  assert(destTy->isVectorType() || srcTy->isVectorType());
+
   uint64_t srcLen, destLen;
   QualType srcElt, destElt;
   if (!breakDownVectorType(srcTy, srcLen, srcElt)) return false;
@@ -5409,27 +5418,28 @@ static bool VectorTypesMatch(Sema &S, QualType srcTy, QualType destTy) {
   // ASTContext::getTypeSize will return the size rounded up to a
   // power of 2, so instead of using that, we need to use the raw
   // element size multiplied by the element count.
-  uint64_t srcEltSize = S.Context.getTypeSize(srcElt);
-  uint64_t destEltSize = S.Context.getTypeSize(destElt);
+  uint64_t srcEltSize = Context.getTypeSize(srcElt);
+  uint64_t destEltSize = Context.getTypeSize(destElt);
   
   return (srcLen * srcEltSize == destLen * destEltSize);
 }
 
-/// Is this a legal conversion between two known vector types?
+/// Is this a legal conversion between two types, one of which is
+/// known to be a vector type?
 bool Sema::isLaxVectorConversion(QualType srcTy, QualType destTy) {
   assert(destTy->isVectorType() || srcTy->isVectorType());
   
   if (!Context.getLangOpts().LaxVectorConversions)
     return false;
-  return VectorTypesMatch(*this, srcTy, destTy);
+  return areLaxCompatibleVectorTypes(srcTy, destTy);
 }
 
 bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
                            CastKind &Kind) {
   assert(VectorTy->isVectorType() && "Not a vector type!");
 
-  if (Ty->isVectorType() || Ty->isIntegerType()) {
-    if (!VectorTypesMatch(*this, Ty, VectorTy))
+  if (Ty->isVectorType() || Ty->isIntegralType(Context)) {
+    if (!areLaxCompatibleVectorTypes(Ty, VectorTy))
       return Diag(R.getBegin(),
                   Ty->isVectorType() ?
                   diag::err_invalid_conversion_between_vectors :
@@ -5455,7 +5465,7 @@ ExprResult Sema::CheckExtVectorCast(SourceRange R, QualType DestTy,
   // In OpenCL, casts between vectors of different types are not allowed.
   // (See OpenCL 6.2).
   if (SrcTy->isVectorType()) {
-    if (!VectorTypesMatch(*this, SrcTy, DestTy)
+    if (!areLaxCompatibleVectorTypes(SrcTy, DestTy)
         || (getLangOpts().OpenCL &&
             (DestTy.getCanonicalType() != SrcTy.getCanonicalType()))) {
       Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)

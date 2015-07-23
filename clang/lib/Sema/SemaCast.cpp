@@ -1877,28 +1877,29 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     return TC_Success;
   }
 
+  // Allow reinterpret_casts between vectors of the same size and
+  // between vectors and integers of the same size.
   bool destIsVector = DestType->isVectorType();
   bool srcIsVector = SrcType->isVectorType();
   if (srcIsVector || destIsVector) {
-    // FIXME: Should this also apply to floating point types?
-    bool srcIsScalar = SrcType->isIntegralType(Self.Context);
-    bool destIsScalar = DestType->isIntegralType(Self.Context);
-    
-    // Check if this is a cast between a vector and something else.
-    if (!(srcIsScalar && destIsVector) && !(srcIsVector && destIsScalar) &&
-        !(srcIsVector && destIsVector))
+    // The non-vector type, if any, must have integral type.  This is
+    // the same rule that C vector casts use; note, however, that enum
+    // types are not integral in C++.
+    if ((!destIsVector && !DestType->isIntegralType(Self.Context)) ||
+        (!srcIsVector && !SrcType->isIntegralType(Self.Context)))
       return TC_NotApplicable;
 
-    // If both types have the same size, we can successfully cast.
-    if (Self.Context.getTypeSize(SrcType)
-          == Self.Context.getTypeSize(DestType)) {
+    // The size we want to consider is eltCount * eltSize.
+    // That's exactly what the lax-conversion rules will check.
+    if (Self.areLaxCompatibleVectorTypes(SrcType, DestType)) {
       Kind = CK_BitCast;
       return TC_Success;
     }
-    
-    if (destIsScalar)
+
+    // Otherwise, pick a reasonable diagnostic.
+    if (!destIsVector)
       msg = diag::err_bad_cxx_cast_vector_to_scalar_different_size;
-    else if (srcIsScalar)
+    else if (!srcIsVector)
       msg = diag::err_bad_cxx_cast_scalar_to_vector_different_size;
     else
       msg = diag::err_bad_cxx_cast_vector_to_vector_different_size;
