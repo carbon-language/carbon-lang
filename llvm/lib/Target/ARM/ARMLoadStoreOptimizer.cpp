@@ -2297,3 +2297,4 @@ FunctionPass *llvm::createARMLoadStoreOptimizationPass(bool PreAlloc) {
     return new ARMPreAllocLoadStoreOpt();
   return new ARMLoadStoreOpt();
 }
+
