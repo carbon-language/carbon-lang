@@ -546,13 +546,10 @@ static Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &Cache) {
   Value *&Cached = Cache[I];
   if (!Cached) {
     Cached = findBaseDefiningValue(I);
+    DEBUG(dbgs() << "fBDV-cached: " << I->getName() << " -> "
+                 << Cached->getName() << "\n");
   }
   assert(Cache[I] != nullptr);
-
-  if (TraceLSP) {
-    dbgs() << "fBDV-cached: " << I->getName() << " -> " << Cached->getName()
-           << "\n";
-  }
   return Cached;
 }
 
@@ -612,15 +609,24 @@ public:
 
   bool operator!=(const PhiState &other) const { return !(*this == other); }
 
-  void dump() {
-    errs() << status << " (" << base << " - "
-           << (base ? base->getName() : "nullptr") << "): ";
+  LLVM_DUMP_METHOD
+  void dump() const { print(dbgs()); dbgs() << '\n'; }
+  
+  void print(raw_ostream &OS) const {
+    OS << status << " (" << base << " - "
+       << (base ? base->getName() : "nullptr") << "): ";
   }
 
 private:
   Status status;
   Value *base; // non null only if status == base
 };
+
+inline raw_ostream &operator<<(raw_ostream &OS, const PhiState &State) {
+  State.print(OS);
+  return OS;
+}
+
 
 typedef DenseMap<Value *, PhiState> ConflictStateMapTy;
 // Values of type PhiState form a lattice, and this is a helper
@@ -646,7 +652,10 @@ private:
   static PhiState meet(PhiState LHS, PhiState RHS) {
     assert((pureMeet(LHS, RHS) == pureMeet(RHS, LHS)) &&
            "math is wrong: meet does not commute!");
-    return pureMeet(LHS, RHS);
+    PhiState Result = pureMeet(LHS, RHS);
+    DEBUG(dbgs() << "meet of " << LHS << " with " << RHS
+                 << " produced " << Result << "\n");
+    return Result;
   }
 
   static PhiState pureMeet(const PhiState &stateA, const PhiState &stateB) {
@@ -754,12 +763,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
 
   if (TraceLSP) {
     errs() << "States after initialization:\n";
-    for (auto Pair : states) {
-      Instruction *v = cast<Instruction>(Pair.first);
-      PhiState state = Pair.second;
-      state.dump();
-      v->dump();
-    }
+    for (auto Pair : states)
+      dbgs() << " " << Pair.second << " for " << Pair.first << "\n";
   }
 
   // TODO: come back and revisit the state transitions around inputs which
@@ -815,12 +820,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
 
   if (TraceLSP) {
     errs() << "States after meet iteration:\n";
-    for (auto Pair : states) {
-      Instruction *v = cast<Instruction>(Pair.first);
-      PhiState state = Pair.second;
-      state.dump();
-      v->dump();
-    }
+    for (auto Pair : states)
+      dbgs() << " " << Pair.second << " for " << Pair.first << "\n";
   }
 
   // Insert Phis for all conflicts
