@@ -15,9 +15,6 @@
 //++ ============================================================================
 // Details: MI command metadata. Holds the command's name, MI number and options
 //          as found on stdin. Holds the command's MI output (written to stdout).
-// Gotchas: None.
-// Authors: Illya Rudkin 18/02/2014.
-// Changes: None.
 //--
 struct SMICmdData
 {

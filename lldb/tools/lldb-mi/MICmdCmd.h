@@ -41,9 +41,6 @@ MI commands implemented are:
 //          *this class implements MI command "enable-pretty-printing".
 //          Enables Python base pretty printing.
 // Ref:     http://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Variable-Objects.html
-// Gotchas: None.
-// Authors: Illya Rudkin 03/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdEnablePrettyPrinting : public CMICmdBase
 {
@@ -68,9 +65,6 @@ class CMICmdCmdEnablePrettyPrinting : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "source".
-// Gotchas: None.
-// Authors: Illya Rudkin 05/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdSource : public CMICmdBase
 {

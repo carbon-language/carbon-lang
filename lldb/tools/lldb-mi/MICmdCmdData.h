@@ -42,9 +42,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-evaluate-expression".
-// Gotchas: None.
-// Authors: Illya Rudkin 26/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataEvaluateExpression : public CMICmdBase
 {
@@ -87,9 +84,6 @@ class CMICmdCmdDataEvaluateExpression : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-disassemble".
-// Gotchas: None.
-// Authors: Illya Rudkin 19/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataDisassemble : public CMICmdBase
 {
@@ -124,9 +118,6 @@ class CMICmdCmdDataDisassemble : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-read-memory-bytes".
-// Gotchas: None.
-// Authors: Illya Rudkin 20/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataReadMemoryBytes : public CMICmdBase
 {
@@ -163,9 +154,6 @@ class CMICmdCmdDataReadMemoryBytes : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-read-memory".
-// Gotchas: None.
-// Authors: Illya Rudkin 21/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataReadMemory : public CMICmdBase
 {
@@ -190,9 +178,6 @@ class CMICmdCmdDataReadMemory : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-list-register-names".
-// Gotchas: None.
-// Authors: Illya Rudkin 21/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataListRegisterNames : public CMICmdBase
 {
@@ -228,9 +213,6 @@ class CMICmdCmdDataListRegisterNames : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-list-register-values".
-// Gotchas: None.
-// Authors: Illya Rudkin 21/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataListRegisterValues : public CMICmdBase
 {
@@ -269,9 +251,6 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-list-changed-registers".
-// Gotchas: None.
-// Authors: Illya Rudkin 22/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataListRegisterChanged : public CMICmdBase
 {
@@ -296,9 +275,6 @@ class CMICmdCmdDataListRegisterChanged : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-read-memory-bytes".
-// Gotchas: None.
-// Authors: Illya Rudkin 30/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataWriteMemoryBytes : public CMICmdBase
 {
@@ -333,9 +309,6 @@ class CMICmdCmdDataWriteMemoryBytes : public CMICmdBase
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "data-read-memory".
 //          Not specified in MI spec but Eclipse gives *this command.
-// Gotchas: None.
-// Authors: Illya Rudkin 02/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdDataWriteMemory : public CMICmdBase
 {

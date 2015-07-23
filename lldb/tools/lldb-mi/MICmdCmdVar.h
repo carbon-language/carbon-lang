@@ -41,9 +41,6 @@ class CMICmnLLDBDebugSessionInfoVarObj;
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-create".
-// Gotchas: None.
-// Authors: Illya Rudkin 24/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarCreate : public CMICmdBase
 {
@@ -92,9 +89,6 @@ class CMICmdCmdVarCreate : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-update".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarUpdate : public CMICmdBase
 {
@@ -135,9 +129,6 @@ class CMICmdCmdVarUpdate : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-delete".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarDelete : public CMICmdBase
 {
@@ -167,9 +158,6 @@ class CMICmdCmdVarDelete : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-assign".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarAssign : public CMICmdBase
 {
@@ -202,9 +190,6 @@ class CMICmdCmdVarAssign : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-set-format".
-// Gotchas: None.
-// Authors: Illya Rudkin 26/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarSetFormat : public CMICmdBase
 {
@@ -236,9 +221,6 @@ class CMICmdCmdVarSetFormat : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-list-children".
-// Gotchas: None.
-// Authors: Illya Rudkin 26/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarListChildren : public CMICmdBase
 {
@@ -275,9 +257,6 @@ class CMICmdCmdVarListChildren : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-evaluate-expression".
-// Gotchas: None.
-// Authors: Illya Rudkin 26/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarEvaluateExpression : public CMICmdBase
 {
@@ -310,9 +289,6 @@ class CMICmdCmdVarEvaluateExpression : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-info-path-expression".
-// Gotchas: None.
-// Authors: Illya Rudkin 26/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarInfoPathExpression : public CMICmdBase
 {
@@ -344,9 +320,6 @@ class CMICmdCmdVarInfoPathExpression : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "var-show-attributes".
-// Gotchas: None.
-// Authors: Illya Rudkin 19/05/2014.
-// Changes: None.
 //--
 class CMICmdCmdVarShowAttributes : public CMICmdBase
 {

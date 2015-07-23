@@ -29,9 +29,6 @@
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "target-select".
 //          http://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Target-Manipulation.html#GDB_002fMI-Target-Manipulation
-// Gotchas: None.
-// Authors: Illya Rudkin 05/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdTargetSelect : public CMICmdBase
 {

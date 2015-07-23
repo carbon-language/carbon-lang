@@ -19,9 +19,6 @@
 //++ ============================================================================
 // Details: MI debug session variable object. The static functionality in *this
 //          class manages a map container of *these variable objects.
-// Gotchas: None.
-// Authors: Illya Rudkin 24/03/2014.
-// Changes: None.
 //--
 class CMICmnLLDBDebugSessionInfoVarObj
 {

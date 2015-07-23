@@ -15,9 +15,6 @@
 
 //++ ============================================================================
 // Details: MI common code utility class. File handling.
-// Gotchas: None.
-// Authors: Aidan Dodds 10/03/2014.
-// Changes: None.
 //--
 class CMIUtilFileStd : public CMICmnBase
 {

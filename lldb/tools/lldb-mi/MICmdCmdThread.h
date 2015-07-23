@@ -28,9 +28,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "thread-info".
-// Gotchas: None.
-// Authors: Illya Rudkin 07/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdThreadInfo : public CMICmdBase
 {

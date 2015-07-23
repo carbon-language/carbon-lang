@@ -21,9 +21,6 @@ class CMIUtilString;
 //++ ============================================================================
 // Details: MI proxy wrapper class to lldb::SBValue. The class provides functionality
 //          to assist in the use of SBValue's particular function usage.
-// Gotchas: None.
-// Authors: Illya Rudkin 03/04/2014.
-// Changes: None.
 //--
 class CMICmnLLDBProxySBValue
 {

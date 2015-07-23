@@ -38,9 +38,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-run".
-// Gotchas: None.
-// Authors: Illya Rudkin 07/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecRun : public CMICmdBase
 {
@@ -69,9 +66,6 @@ class CMICmdCmdExecRun : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-continue".
-// Gotchas: None.
-// Authors: Illya Rudkin 07/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecContinue : public CMICmdBase
 {
@@ -100,9 +94,6 @@ class CMICmdCmdExecContinue : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-next".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecNext : public CMICmdBase
 {
@@ -134,9 +125,6 @@ class CMICmdCmdExecNext : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-step".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecStep : public CMICmdBase
 {
@@ -168,9 +156,6 @@ class CMICmdCmdExecStep : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-next-instruction".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecNextInstruction : public CMICmdBase
 {
@@ -202,9 +187,6 @@ class CMICmdCmdExecNextInstruction : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-step-instruction".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecStepInstruction : public CMICmdBase
 {
@@ -236,9 +218,6 @@ class CMICmdCmdExecStepInstruction : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-finish".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecFinish : public CMICmdBase
 {
@@ -273,8 +252,6 @@ class CMICmdCmdExecFinish : public CMICmdBase
 //          *this class implements MI command "exec-interrupt".
 // Gotchas: Using Eclipse this command is injected into the command system when a
 //          SIGINT signal is received while running an inferior program.
-// Authors: Illya Rudkin 03/06/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecInterrupt : public CMICmdBase
 {
@@ -303,9 +280,6 @@ class CMICmdCmdExecInterrupt : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "exec-arguments".
-// Gotchas: None.
-// Authors: Ilia Kirianovskii 25/11/2014.
-// Changes: None.
 //--
 class CMICmdCmdExecArguments : public CMICmdBase
 {

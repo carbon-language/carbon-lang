@@ -31,9 +31,6 @@ class SBBroadcaster;
 //          CDriverMgr to manage either (any) driver to be operated on.
 //          Each driver instance (the CMIDriver, LLDB::Driver) has its own
 //          LLDB::SBDebugger object.
-// Gotchas: None.
-// Authors: Illya Rudkin 30/01/2014.
-// Changes: None.
 //--
 class CMIDriverBase
 {

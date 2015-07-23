@@ -26,9 +26,6 @@ class CMIUtilString;
 //          created to hold each of those option's values belong to *this argument
 //          object and so are deleted when *this object goes out of scope.
 //          Based on the Interpreter pattern.
-// Gotchas: None.
-// Authors: Illya Rudkin 16/04/2014.
-// Changes: None.
 //--
 class CMICmdArgValOptionLong : public CMICmdArgValListBase
 {

@@ -20,9 +20,6 @@
 //++ ============================================================================
 // Details: MI common code utility class. Used to help handle text.
 //          Derived from std::string
-// Gotchas: None.
-// Authors: Illya Rudkin 02/02/2014.
-// Changes: None.
 //--
 class CMIUtilString : public std::string
 {

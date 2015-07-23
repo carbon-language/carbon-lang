@@ -30,9 +30,6 @@
 //          hardwired to fail and catch arguments or options that presented by
 //          different driver clients.
 //          Based on the Interpreter pattern.
-// Gotchas: None.
-// Authors: Illya Rudkin 14/04/2014.
-// Changes: None.
 //--
 class CMICmdArgValBase : public CMICmdArgSet::IArg
 {
@@ -68,9 +65,6 @@ class CMICmdArgValBase : public CMICmdArgSet::IArg
 
 //++ ============================================================================
 // Details: MI common code class. Templated command argument base class.
-// Gotchas: None.
-// Authors: Illya Rudkin 14/04/2014.
-// Changes: None.
 //--
 template <class T> class CMICmdArgValBaseTemplate : public CMICmdArgValBase
 {

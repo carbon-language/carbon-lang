@@ -21,9 +21,6 @@
 //          *** not
 //
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 28/02/2014.
-// Changes: None.
 //--
 class CMICmnLLDBBroadcaster : public CMICmnBase, public lldb::SBBroadcaster, public MI::ISingleton<CMICmnLLDBBroadcaster>
 {

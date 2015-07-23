@@ -6,9 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// Copyright:   None.
-//--
 
 #pragma once
 
@@ -26,9 +23,6 @@
 //++ ============================================================================
 // Details: MI common code utility class. Handle thread mutual exclusion.
 //          Embed Mutexes in your Active Object and then use them through Locks.
-// Gotchas: None.
-// Authors: Aidan Dodds 10/03/2014.
-// Changes: None.
 //--
 class CMIUtilThreadMutex
 {
@@ -55,9 +49,6 @@ class CMIUtilThreadMutex
 
 //++ ============================================================================
 // Details: MI common code utility class. Thread object.
-// Gotchas: None.
-// Authors: Aidan Dodds 10/03/2014.
-// Changes: None.
 //--
 class CMIUtilThread
 {
@@ -92,9 +83,6 @@ class CMIUtilThread
 //++ ============================================================================
 // Details: MI common code utility class. Base class for a worker thread active
 //          object. Runs an 'captive thread'.
-// Gotchas: None.
-// Authors: Aidan Dodds 10/03/2014..
-// Changes: None.
 //--
 class CMIUtilThreadActiveObjBase
 {
@@ -148,9 +136,6 @@ class CMIUtilThreadActiveObjBase
 // Details: MI common code utility class. Handle thread resource locking.
 //          Put Locks inside all the methods of your Active Object that access
 //          data shared with the captive thread.
-// Gotchas: None.
-// Authors: Aidan Dodds 10/03/2014.
-// Changes: None.
 //--
 class CMIUtilThreadLock
 {

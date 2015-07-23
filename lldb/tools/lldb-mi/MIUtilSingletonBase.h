@@ -29,8 +29,6 @@ namespace MI
 //++ ============================================================================
 // Details: Base class for the singleton pattern.
 // Gotchas: Derived class must specify MI::ISingleton<> as a friend class.
-// Authors: Aidan Dodds 17/03/2014.
-// Changes: None.
 //--
 template <typename T> class ISingleton
 {

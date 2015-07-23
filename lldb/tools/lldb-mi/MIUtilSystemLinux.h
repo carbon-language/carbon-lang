@@ -19,9 +19,6 @@
 //          about the current system or user.
 //          *** If you change, remove or add functionality it must be replicated
 //          *** for the all platforms supported; Windows, OSX, LINUX
-// Gotchas: None.
-// Authors: Illya Rudkin 29/01/2014.
-// Changes: None.
 //--
 class CMIUtilSystemLinux
 {

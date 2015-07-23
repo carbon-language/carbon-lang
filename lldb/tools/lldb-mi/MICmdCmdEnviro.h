@@ -28,9 +28,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "environment-cd".
-// Gotchas: None.
-// Authors: Illya Rudkin 03/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdEnvironmentCd : public CMICmdBase
 {

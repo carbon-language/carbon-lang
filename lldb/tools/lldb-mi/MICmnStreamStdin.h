@@ -21,9 +21,6 @@
 //          provide can receive callbacks when a new line of data is received.
 //          Each line is determined by a carriage return.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 10/02/2014.
-// Changes: Factored out OS specific handling of reading stdin  - IOR 16/06/2014.
 //--
 class CMICmnStreamStdin : public CMICmnBase, public MI::ISingleton<CMICmnStreamStdin>
 {

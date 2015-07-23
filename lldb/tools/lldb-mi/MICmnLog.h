@@ -26,9 +26,6 @@
 //          *this logs initialization so it will always have a file log for the
 //          application.
 //          Singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 01/02/2012.
-// Changes: None.
 //--
 class CMICmnLog : public MI::ISingleton<CMICmnLog>
 {

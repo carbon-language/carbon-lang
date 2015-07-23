@@ -20,9 +20,6 @@
 //          CMICmnStreamStdout sets up and tears downs stdout for the driver.
 //
 //          Singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 12/02/2014.
-// Changes: None.
 //--
 class CMICmnStreamStdout : public CMICmnBase, public MI::ISingleton<CMICmnStreamStdout>
 {

@@ -16,9 +16,6 @@
 // Details: MI common code class. Command arguments and options string. Holds
 //          the context string.
 //          Based on the Interpreter pattern.
-// Gotchas: None.
-// Authors: Illya Rudkin 14/04/2014.
-// Changes: None.
 //--
 class CMICmdArgContext
 {

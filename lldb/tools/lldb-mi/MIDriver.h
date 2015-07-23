@@ -32,9 +32,6 @@ class CMICmnStreamStdout;
 //          work depending on the one selected to work. A driver can if not able
 //          to handle an instruction or 'command' can pass that command onto
 //          another driver object registered with the Driver Manager.
-// Gotchas: None.
-// Authors: Illya Rudkin 29/01/2014.
-// Changes: None.
 //--
 class CMIDriver : public CMICmnBase,
                   public CMIDriverMgr::IDriver,

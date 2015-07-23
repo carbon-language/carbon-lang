@@ -31,8 +31,6 @@
 //          This command does not follow the MI documentation exactly.
 // Gotchas: This command has additional flags that were not available in GDB MI.
 //          See MIextensions.txt for details.
-// Authors: Illya Rudkin 25/02/2014.
-// Changes: None.
 //--
 class CMICmdCmdFileExecAndSymbols : public CMICmdBase
 {

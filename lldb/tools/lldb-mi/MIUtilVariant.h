@@ -6,8 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// Copyright:   None.
-//--
 
 #pragma once
 
@@ -20,9 +18,6 @@
 //          data object specified is made and stored in *this wrapper. When the
 //          *this object is destroyed the data object hold within calls its
 //          destructor should it have one.
-// Gotchas: None.
-// Authors: Illya Rudkin 18/06/2014.
-// Changes: None.
 //--
 class CMIUtilVariant
 {

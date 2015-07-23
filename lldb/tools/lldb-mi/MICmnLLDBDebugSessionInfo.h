@@ -38,9 +38,6 @@ class CMICmnMIValueList;
 //          retrieved by the same or other subsequent commands.
 //          It primarily holds LLDB type objects.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 04/03/2014.
-// Changes: None.
 //--
 class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMICmnLLDBDebugSessionInfo>
 {

@@ -31,9 +31,6 @@ class CMICmdArgContext;
 //          container. The option arguments belong to that derived class and will
 //          be deleted that object goes out of scope.
 //          Based on the Interpreter pattern.
-// Gotchas: None.
-// Authors: Illya Rudkin 16/04/2014.
-// Changes: None.
 //--
 class CMICmdArgValListBase : public CMICmdArgValBaseTemplate<std::vector<CMICmdArgValBase *>>
 {

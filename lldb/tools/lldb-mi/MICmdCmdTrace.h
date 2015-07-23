@@ -26,9 +26,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "trace-status".
-// Gotchas: None.
-// Authors: Illya Rudkin 07/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdTraceStatus : public CMICmdBase
 {

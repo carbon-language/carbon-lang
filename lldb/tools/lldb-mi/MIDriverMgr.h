@@ -39,9 +39,6 @@
 //          Each driver instance (the CMIDriver, LLDB::Driver) has its own
 //          LLDB::SBDebugger.
 //          Singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 28/02/2014.
-// Changes: None.
 //--
 class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
 {

@@ -26,9 +26,6 @@ class CMICmnMIOutOfBandRecord;
 //          MI Out-of-band records from the information inside the event object.
 //          These records are then pushed to stdout.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 02/03/2014.
-// Changes: None.
 //--
 class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<CMICmnLLDBDebuggerHandleEvents>
 {

@@ -18,9 +18,6 @@
 //++ ============================================================================
 // Details: MI common code utility class. Used to retrieve system local date
 //          time.
-// Gotchas: None.
-// Authors: Illya Rudkin 16/07/2014.
-// Changes: None.
 //--
 class CMIUtilDateTimeStd
 {

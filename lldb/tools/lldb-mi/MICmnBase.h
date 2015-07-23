@@ -18,9 +18,6 @@ class CMICmnLog;
 
 //++ ============================================================================
 // Details: MI common code implementation base class.
-// Gotchas: None.
-// Authors: Illya Rudkin 28/01/2014.
-// Changes: None.
 //--
 class CMICmnBase
 {

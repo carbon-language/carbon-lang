@@ -6,8 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// Copyright:   None.
-//--
 
 // In-house headers:
 #include "MIUtilVariant.h"

@@ -25,9 +25,6 @@
 //          This manager will stop and delete all threads on *this manager's
 //          shutdown.
 //          Singleton class.
-// Gotchas: None.
-// Authors: Aidan Dodds 12/03/2014.
-// Changes: None.
 //--
 class CMICmnThreadMgrStd : public CMICmnBase, public MI::ISingleton<CMICmnThreadMgrStd>
 {

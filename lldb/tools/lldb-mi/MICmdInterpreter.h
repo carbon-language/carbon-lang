@@ -23,9 +23,6 @@ class CMICmdFactory;
 //          matches Machine Interface (MI) format and commands defined in the
 //          MI application.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 18/02/2014.
-// Changes: None.
 //--
 class CMICmdInterpreter : public CMICmnBase, public MI::ISingleton<CMICmdInterpreter>
 {

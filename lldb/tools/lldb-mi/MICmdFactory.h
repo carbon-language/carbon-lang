@@ -25,9 +25,6 @@ struct SMICmdData;
 //          MI application understands to interpret. Creates commands objects.
 //          The Command Factory is carried out in the main thread.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 19/02/2014.
-// Changes: None.
 //--
 class CMICmdFactory : public CMICmnBase, public MI::ISingleton<CMICmdFactory>
 {

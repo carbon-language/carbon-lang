@@ -22,9 +22,6 @@
 // Details: MI common code utility class. Map type container that hold general
 //          object types (by being a variant wrapper)
 //          objects by ID.
-// Gotchas: None.
-// Authors: Illya Rudkin 19/06/2014.
-// Changes: None.
 //--
 class CMIUtilMapIdToVariant : public CMICmnBase
 {

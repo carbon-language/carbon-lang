@@ -6,9 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// Copyright:   None.
-//--
 
 #pragma once
 
@@ -29,8 +26,6 @@ namespace MI
 //          vwrErrMsg       - (W)  MI driver module initialise error description on failure.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
-// Authors: Aidan Dodds 17/03/2014.
-// Changes: None.
 //--
 template <typename T>
 bool
@@ -58,8 +53,6 @@ ModuleInit(const MIint vErrorResrcId, bool &vwrbOk, CMIUtilString &vwrErrMsg)
 //                                 failure.
 // Return:  True - Module shutdown succeeded.
 //          False - Module shutdown failed.
-// Authors: Aidan Dodds 17/03/2014.
-// Changes: None.
 //--
 template <typename T>
 bool

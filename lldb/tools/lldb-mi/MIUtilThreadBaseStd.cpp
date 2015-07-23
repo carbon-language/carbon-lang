@@ -6,8 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// Copyright:   None.
-//--
 
 // Third Party Headers:
 #include <assert.h>

@@ -20,9 +20,6 @@
 //          CMICmnStreamStderr sets up and tears downs stderr for the driver.
 //
 //          Singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 19/03/2014.
-// Changes: None.
 //--
 class CMICmnStreamStderr : public CMICmnBase, public MI::ISingleton<CMICmnStreamStderr>
 {

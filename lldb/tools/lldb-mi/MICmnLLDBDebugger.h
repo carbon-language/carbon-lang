@@ -32,9 +32,6 @@ class CMICmnLLDBDebuggerHandleEvents;
 //          to facilitate their work effort. The instance runs in its own worker
 //          thread.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 26/02/2014.
-// Changes: None.
 //--
 class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase, public MI::ISingleton<CMICmnLLDBDebugger>
 {

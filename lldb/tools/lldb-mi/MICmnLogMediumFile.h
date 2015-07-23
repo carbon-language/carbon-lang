@@ -23,9 +23,6 @@
 //          which the Logger when given data to write to registered medium comes
 //          *this medium.
 //          Singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 30/01/2014.
-// Changes: None.
 //--
 class CMICmnLogMediumFile : public CMICmnBase, public CMICmnLog::IMedium
 {

@@ -30,9 +30,6 @@ class CMICmdArgValBase;
 //          objects on the heap.
 //          It is assumed the arguments to be parsed are read from left to right in
 //          order. The order added to *this container is the order they will parsed.
-// Gotchas: None.
-// Authors: Illya Rudkin 14/04/2014.
-// Changes: None.
 //--
 class CMICmdArgSet : public CMICmnBase
 {

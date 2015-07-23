@@ -30,9 +30,6 @@ class CMICmdBase;
 //          Command Invoker, Command Factory and Command Monitor while independent
 //          units are overseen/managed by *this manager.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 19/02/2014.
-// Changes: None.
 //--
 class CMICmdMgr : public CMICmnBase, public MI::ISingleton<CMICmdMgr>
 {

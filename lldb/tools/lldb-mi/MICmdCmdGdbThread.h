@@ -26,9 +26,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements GDB command "thread".
-// Gotchas: None.
-// Authors: Illya Rudkin 25/02/2014.
-// Changes: None.
 //--
 class CMICmdCmdGdbThread : public CMICmdBase
 {

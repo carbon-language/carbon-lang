@@ -36,9 +36,6 @@ class CMICmnStreamStdout;
 //          The Invoker takes ownership of any commands created which means it
 //          is the only object to delete them when a command is finished working.
 //          A singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 19/02/2014.
-// Changes: None.
 //--
 class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::ICallback, public MI::ISingleton<CMICmdInvoker>
 {

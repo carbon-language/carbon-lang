@@ -37,9 +37,6 @@
 //          class instantiates a request info command for a matching request. The
 //          design/code of *this class then does not then become bloated. Use a
 //          lightweight version of the current MI command system.
-// Gotchas: None.
-// Authors: Illya Rudkin 03/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdGdbSet : public CMICmdBase
 {

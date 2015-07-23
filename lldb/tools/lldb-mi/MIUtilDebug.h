@@ -19,9 +19,6 @@ class CMICmnLog;
 
 //++ ============================================================================
 // Details: MI debugging aid utility class.
-// Gotchas: None.
-// Authors:
-// Changes: None.
 //--
 class CMIUtilDebug
 {
@@ -48,9 +45,6 @@ class CMIUtilDebug
 //          the functions you wish to build up a trace off.
 //          Use preprocessor definition MI_USE_DEBUG_TRACE_FN to turn off or on
 //          tracing code.
-// Gotchas: None.
-// Authors: Illya Rudkin 07/03/2014.
-// Changes: None.
 //--
 class CMIUtilDebugFnTrace
 {

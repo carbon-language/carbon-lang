@@ -33,9 +33,6 @@
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "stack-info-depth".
-// Gotchas: None.
-// Authors: Illya Rudkin 21/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdStackInfoDepth : public CMICmdBase
 {
@@ -96,9 +93,6 @@ class CMICmdCmdStackInfoFrame : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "stack-list-frames".
-// Gotchas: None.
-// Authors: Illya Rudkin 21/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdStackListFrames : public CMICmdBase
 {
@@ -136,9 +130,6 @@ class CMICmdCmdStackListFrames : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "stack-list-arguments".
-// Gotchas: None.
-// Authors: Illya Rudkin 24/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdStackListArguments : public CMICmdBase
 {
@@ -173,9 +164,6 @@ class CMICmdCmdStackListArguments : public CMICmdBase
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
 //          *this class implements MI command "stack-list-locals".
-// Gotchas: None.
-// Authors: Illya Rudkin 24/03/2014.
-// Changes: None.
 //--
 class CMICmdCmdStackListLocals : public CMICmdBase
 {

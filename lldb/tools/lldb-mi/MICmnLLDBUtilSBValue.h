@@ -22,9 +22,6 @@ class CMIUtilString;
 //++ ============================================================================
 // Details: Utility helper class to lldb::SBValue. Using a lldb::SBValue extract
 //          value object information to help form verbose debug information.
-// Gotchas: None.
-// Authors: Illya Rudkin 08/07/2014.
-// Changes: None.
 //--
 class CMICmnLLDBUtilSBValue
 {

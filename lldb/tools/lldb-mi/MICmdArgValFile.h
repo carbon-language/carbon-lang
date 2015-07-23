@@ -22,9 +22,6 @@ class CMICmdArgContext;
 //          interpret the options (context) string to find and validate a matching
 //          argument and so extract a value from it .
 //          Based on the Interpreter pattern.
-// Gotchas: None.
-// Authors: Illya Rudkin 15/04/2014.
-// Changes: None.
 //--
 class CMICmdArgValFile : public CMICmdArgValBaseTemplate<CMIUtilString>
 {

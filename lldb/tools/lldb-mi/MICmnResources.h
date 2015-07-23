@@ -279,9 +279,6 @@ enum
 // Details: MI common code implementation class. Handle application resources
 //          and locality.
 //          Singleton class.
-// Gotchas: None.
-// Authors: Illya Rudkin 29/01/2014.
-// Changes: None.
 //--
 class CMICmnResources : public CMICmnBase, public MI::ISingleton<CMICmnResources>
 {
