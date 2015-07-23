@@ -19,6 +19,7 @@
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -60,6 +61,7 @@ namespace {
     bool runOnFunction(Function &F) override;
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
+      AU.addPreserved<AliasAnalysis>();
     }
 
     void findRoots(Function &F, SmallPtrSet<Instruction*,8> &Roots);
