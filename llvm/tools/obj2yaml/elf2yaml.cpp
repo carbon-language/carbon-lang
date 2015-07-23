@@ -343,10 +343,7 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
     return EC;
   const Elf_Shdr *Symtab = *SymtabOrErr;
   const Elf_Sym *symbol = Obj.getSymbol(Symtab, Shdr->sh_info);
-  ErrorOr<const Elf_Shdr *> StrTabSec = Obj.getSection(Symtab->sh_link);
-  if (std::error_code EC = StrTabSec.getError())
-    return EC;
-  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(*StrTabSec);
+  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTableForSymtab(*Symtab);
   if (std::error_code EC = StrTabOrErr.getError())
     return EC;
   StringRef StrTab = *StrTabOrErr;
