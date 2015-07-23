@@ -219,6 +219,8 @@ extern "C" {
   }
 }
 
+INTERFACE_FUNCTION(__asan_version_mismatch_check)
+
 INTERFACE_FUNCTION(__asan_handle_no_return)
 
 INTERFACE_FUNCTION(__asan_report_store1)
