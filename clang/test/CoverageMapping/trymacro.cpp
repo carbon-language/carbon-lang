@@ -14,7 +14,7 @@ catch(...) {}               // CHECK: [[@LINE]]:12 -> [[@LINE]]:14 = #2
 #define CATCH(x) catch (x)
 
 // CHECK: Z3fn3v:
-void fn3() TRY { return; } // CHECK: [[@LINE]]:12 -> [[@LINE+1]]:14 = #1
+void fn3() TRY { return; } // CHECK: [[@LINE]]:15 -> [[@LINE+1]]:14 = #1
 CATCH(...) {}              // CHECK: [[@LINE]]:12 -> [[@LINE]]:14 = #2
 
 int main() {
