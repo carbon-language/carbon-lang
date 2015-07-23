@@ -8,7 +8,7 @@
 // RUN: nm -g `%clang_asan %s -fsanitize=address -### 2>&1 | grep "libclang_rt.asan_osx_dynamic.dylib" | sed -e 's/.*"\(.*libclang_rt.asan_osx_dynamic.dylib\)".*/\1/'` \
 // RUN:   | grep " T " | sed "s/.* T //" \
 // RUN:   | grep "__asan_" | sed "s/___asan_/__asan_/" \
-// RUN:   | sed -E "s/__asan_init_v[0-9]+/__asan_init/" \
+// RUN:   | sed -E "s/__asan_version_mismatch_check_v[0-9]+/__asan_version_mismatch_check/" \
 // RUN:   | grep -v "__asan_default_options" \
 // RUN:   | grep -v "__asan_on_error" > %t.symbols
 

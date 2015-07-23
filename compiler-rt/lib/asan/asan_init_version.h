@@ -27,8 +27,8 @@ extern "C" {
   // v3=>v4: added '__asan_global_source_location' to __asan_global.
   // v4=>v5: changed the semantics and format of __asan_stack_malloc_ and
   //         __asan_stack_free_ functions.
-  #define __asan_init __asan_init_v5
-  #define __asan_init_name "__asan_init_v5"
+  // v5=>v6: changed the name of the version check symbol
+  #define __asan_version_mismatch_check __asan_version_mismatch_check_v6
 }
 
 #endif  // ASAN_INIT_VERSION_H

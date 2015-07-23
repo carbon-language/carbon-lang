@@ -210,7 +210,7 @@ extern "C" {
     // __asan_init is expected to be called by only one thread.
     if (fn) return;
 
-    fn = (fntype)getRealProcAddressOrDie(__asan_init_name);
+    fn = (fntype)getRealProcAddressOrDie("__asan_init");
     fn();
     __asan_option_detect_stack_use_after_return =
         (__asan_should_detect_stack_use_after_return() != 0);

@@ -586,3 +586,7 @@ void __asan_init() {
   AsanActivate();
   AsanInitInternal();
 }
+
+void __asan_version_mismatch_check() {
+  // Do nothing.
+}
