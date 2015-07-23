@@ -16,9 +16,8 @@ TEMPORARY_FILE=$3.cpp
 shift 3
 if [ "$#" -eq 0 ] ; then
   # Default to -- --std=c++11
-  set - -- --std=c++11
   # Suppress -target=*-win32.
-  set - -- -fno-delayed-template-parsing
+  set - -- --std=c++11 -fno-delayed-template-parsing
 fi
 
 set -o errexit
