@@ -7380,8 +7380,9 @@ static SDValue lowerVectorShuffleAsElementInsertion(
   // all the smarts here sunk into that routine. However, the current
   // lowering of BUILD_VECTOR makes that nearly impossible until the old
   // vector shuffle lowering is dead.
-  if (SDValue V2S = getScalarValueForVectorElement(
-          V2, Mask[V2Index] - Mask.size(), DAG)) {
+  SDValue V2S = getScalarValueForVectorElement(V2, Mask[V2Index] - Mask.size(),
+                                               DAG);
+  if (V2S && DAG.getTargetLoweringInfo().isTypeLegal(V2S.getValueType())) {
     // We need to zext the scalar if it is smaller than an i32.
     V2S = DAG.getBitcast(EltVT, V2S);
     if (EltVT == MVT::i8 || EltVT == MVT::i16) {
