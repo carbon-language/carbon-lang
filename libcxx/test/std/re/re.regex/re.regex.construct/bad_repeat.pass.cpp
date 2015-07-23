@@ -17,29 +17,26 @@
 #include <regex>
 #include <cassert>
 
-static bool error_escape_thrown(const char *pat) 
+static bool error_badrepeat_thrown(const char *pat) 
 {
     bool result = false;
     try {
         std::regex re(pat);
     } catch (const std::regex_error &ex) {
-        result = (ex.code() == std::regex_constants::error_escape);
+        result = (ex.code() == std::regex_constants::error_badrepeat);
     }
     return result;
 }
 
 int main() 
 {
-    assert(error_escape_thrown("[\\a]"));
-    assert(error_escape_thrown("\\a"));
+    assert(error_badrepeat_thrown("?a"));
+    assert(error_badrepeat_thrown("*a"));
+    assert(error_badrepeat_thrown("+a"));
+    assert(error_badrepeat_thrown("{a"));
 
-    assert(error_escape_thrown("[\\e]"));
-    assert(error_escape_thrown("\\e"));
-
-    assert(error_escape_thrown("[\\c:]"));
-    assert(error_escape_thrown("\\c:"));
-    assert(error_escape_thrown("\\c"));
-    assert(!error_escape_thrown("[\\cA]"));
-    assert(!error_escape_thrown("\\cA"));
-
+    assert(error_badrepeat_thrown("?(a+)"));
+    assert(error_badrepeat_thrown("*(a+)"));
+    assert(error_badrepeat_thrown("+(a+)"));
+    assert(error_badrepeat_thrown("{(a+)"));
 }

@@ -4305,6 +4305,14 @@ basic_regex<_CharT, _Traits>::__parse_atom(_ForwardIterator __first,
                 }
             }
             break;
+        case '*':
+        case '+':
+        case '?':
+        case '{':
+#ifndef _LIBCPP_NO_EXCEPTIONS
+            throw regex_error(regex_constants::error_badrepeat);
+#endif
+            break;
         default:
             __first = __parse_pattern_character(__first, __last);
             break;
