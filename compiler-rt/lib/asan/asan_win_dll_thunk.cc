@@ -219,7 +219,9 @@ extern "C" {
   }
 }
 
-INTERFACE_FUNCTION(__asan_version_mismatch_check)
+extern "C" void __asan_version_mismatch_check() {
+  // Do nothing.
+}
 
 INTERFACE_FUNCTION(__asan_handle_no_return)
 
