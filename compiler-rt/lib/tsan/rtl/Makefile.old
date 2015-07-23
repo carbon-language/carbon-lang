@@ -35,7 +35,7 @@ LIBTSAN_HEADERS=$(wildcard *.h) \
 LIBTSAN_SRC=$(wildcard *.cc)
 LIBTSAN_ASM_SRC=$(wildcard *.S)
 INTERCEPTION_SRC=$(wildcard $(INTERCEPTION)/*.cc)
-COMMON_SRC=$(wildcard $(COMMON)/*.cc)
+COMMON_SRC=$(filter-out $(wildcard $(COMMON)/*_nolibc.cc),$(wildcard $(COMMON)/*.cc))
 
 LIBTSAN_OBJ=$(patsubst %.cc,%.o,$(LIBTSAN_SRC)) \
 	    $(patsubst %.S,%.o,$(LIBTSAN_ASM_SRC)) \

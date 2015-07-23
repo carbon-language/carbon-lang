@@ -45,6 +45,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 		../../sanitizer_common/sanitizer_procmaps_common.cc
 		../../sanitizer_common/sanitizer_procmaps_linux.cc
 		../../sanitizer_common/sanitizer_linux.cc
+		../../sanitizer_common/sanitizer_linux_libcdep.cc
 		../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc
 	"
 elif [ "`uname -a | grep FreeBSD`" != "" ]; then

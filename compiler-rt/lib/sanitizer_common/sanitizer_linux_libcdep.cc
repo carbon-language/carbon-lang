@@ -15,6 +15,7 @@
 #include "sanitizer_platform.h"
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
 
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_atomic.h"
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
@@ -45,6 +46,12 @@
 
 #if SANITIZER_ANDROID
 #include <android/api-level.h>
+#endif
+
+#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+#include <android/log.h>
+#else
+#include <syslog.h>
 #endif
 
 #if !SANITIZER_ANDROID
@@ -161,7 +168,7 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 #endif
 }
 
-#if !SANITIZER_FREEBSD
+#if !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 static uptr g_tls_size;
 #endif
 
@@ -198,7 +205,7 @@ void InitTlsSize() {
   size_t tls_align = 0;
   get_tls(&tls_size, &tls_align);
   g_tls_size = tls_size;
-#endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID
+#endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 }
 
 #if (defined(__x86_64__) || defined(__i386__) || defined(__mips__)) \
@@ -341,7 +348,7 @@ static void GetTls(uptr *addr, uptr *size) {
 
 #if !SANITIZER_GO
 uptr GetTlsSize() {
-#if SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD || SANITIZER_ANDROID
   uptr addr, size;
   GetTls(&addr, &size);
   return size;
@@ -376,6 +383,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 #endif
 }
 
+#if !SANITIZER_GO
 void AdjustStackSize(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
@@ -400,6 +408,7 @@ void AdjustStackSize(void *attr_) {
     }
   }
 }
+#endif // !SANITIZER_GO
 
 # if !SANITIZER_FREEBSD
 typedef ElfW(Phdr) Elf_Phdr;
@@ -508,6 +517,50 @@ uptr GetRSS() {
   while (*pos >= '0' && *pos <= '9')
     rss = rss * 10 + *pos++ - '0';
   return rss * GetPageSizeCached();
+}
+
+// 64-bit Android targets don't provide the deprecated __android_log_write.
+// Starting with the L release, syslog() works and is preferable to
+// __android_log_write.
+#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+static atomic_uint8_t android_log_initialized;
+
+void AndroidLogInit() {
+  atomic_store(&android_log_initialized, 1, memory_order_release);
+}
+
+static bool IsSyslogAvailable() {
+  return atomic_load(&android_log_initialized, memory_order_acquire);
+}
+
+static void WriteOneLineToSyslog(const char *s) {
+  __android_log_write(ANDROID_LOG_INFO, NULL, s);
+}
+#else
+void AndroidLogInit() {}
+
+static bool IsSyslogAvailable() { return true; }
+
+static void WriteOneLineToSyslog(const char *s) { syslog(LOG_INFO, "%s", s); }
+#endif
+
+void WriteToSyslog(const char *buffer) {
+  if (!IsSyslogAvailable())
+    return;
+  char *copy = internal_strdup(buffer);
+  char *p = copy;
+  char *q;
+  // syslog, at least on Android, has an implicit message length limit.
+  // Print one line at a time.
+  do {
+    q = internal_strchr(p, '\n');
+    if (q)
+      *q = '\0';
+    WriteOneLineToSyslog(p);
+    if (q)
+      p = q + 1;
+  } while (q);
+  InternalFree(copy);
 }
 
 }  // namespace __sanitizer

@@ -30,9 +30,9 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #if SANITIZER_FREEBSD
@@ -274,7 +274,6 @@ void *MmapNoAccess(uptr fixed_addr, uptr size, const char *name) {
   return (void *)internal_mmap((void *)fixed_addr, size, PROT_NONE, flags, fd,
                                0);
 }
-
-}  // namespace __sanitizer
+} // namespace __sanitizer
 
 #endif  // SANITIZER_POSIX
