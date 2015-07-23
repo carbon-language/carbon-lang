@@ -149,7 +149,7 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       auto sHdr = *sHdrOrErr;
       auto ri = _objFile->rel_begin(&section);
       auto re = _objFile->rel_end(&section);
-      _relocationReferences[sHdr] = make_range(ri, re);
+      _relocationReferences[sHdr] = &section;
       totalRelocs += std::distance(ri, re);
     } else {
       auto sectionName = _objFile->getSectionName(&section);
@@ -501,10 +501,10 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
       return ec;
     sectionNames.push_back(*sectionName);
   }
-  const Elf_Sym *symbol = _objFile->getSymbol(section->sh_info);
   ErrorOr<const Elf_Shdr *> symtab = _objFile->getSection(section->sh_link);
   if (std::error_code ec = symtab.getError())
     return ec;
+  const Elf_Sym *symbol = _objFile->getSymbol(*symtab, section->sh_info);
   ErrorOr<const Elf_Shdr *> strtab_sec =
       _objFile->getSection((*symtab)->sh_link);
   if (std::error_code ec = strtab_sec.getError())
@@ -616,7 +616,8 @@ template <class ELFT>
 void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
                                                ArrayRef<uint8_t> symContent,
                                                ArrayRef<uint8_t> secContent,
-                                               range<const Elf_Rel *> rels) {
+                                               const Elf_Shdr *relSec) {
+  auto rels = _objFile->rels(relSec);
   bool isMips64EL = _objFile->isMips64EL();
   const auto symValue = getSymbolValue(symbol);
   for (const auto &rel : rels) {
@@ -662,10 +663,12 @@ void ELFFile<ELFT>::updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
 }
 
 template <class ELFT> void ELFFile<ELFT>::updateReferences() {
+  const Elf_Shdr *symtab = _objFile->getDotSymtabSec();
   for (auto &ri : _references) {
     if (ri->kindNamespace() != Reference::KindNamespace::ELF)
       continue;
-    const Elf_Sym *symbol = _objFile->getSymbol(ri->targetSymbolIndex());
+    const Elf_Sym *symbol =
+        _objFile->getSymbol(symtab, ri->targetSymbolIndex());
     ErrorOr<const Elf_Shdr *> shdr = _objFile->getSection(symbol);
 
     // If the atom is not in mergeable string section, the target atom is

@@ -93,7 +93,7 @@ private:
   void createRelocationReferences(const Elf_Sym *symbol,
                                   ArrayRef<uint8_t> symContent,
                                   ArrayRef<uint8_t> secContent,
-                                  range<const Elf_Rel *> rels) override;
+                                  const Elf_Shdr *RelSec) override;
 
   const Elf_Shdr *findSectionByType(uint64_t type) const;
   const Elf_Shdr *findSectionByFlags(uint64_t flags) const;
@@ -111,13 +111,13 @@ private:
   Reference::Addend readAddend(const Elf_Rel &ri,
                                const ArrayRef<uint8_t> content) const;
 
-  uint32_t getPairRelocation(const Elf_Rel &rel) const;
+  uint32_t getPairRelocation(const Elf_Shdr *Symtab, const Elf_Rel &rel) const;
 
   const Elf_Rel *findMatchingRelocation(uint32_t pairRelType,
                                         const Elf_Rel *rit,
                                         const Elf_Rel *eit) const;
 
-  bool isLocalBinding(const Elf_Rel &rel) const;
+  bool isLocalBinding(const Elf_Shdr *Symtab, const Elf_Rel &rel) const;
 };
 
 } // elf

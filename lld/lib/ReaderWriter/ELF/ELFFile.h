@@ -141,7 +141,7 @@ protected:
   virtual void createRelocationReferences(const Elf_Sym *symbol,
                                           ArrayRef<uint8_t> symContent,
                                           ArrayRef<uint8_t> secContent,
-                                          range<const Elf_Rel *> rels);
+                                          const Elf_Shdr *relSec);
 
   /// \brief After all the Atoms and References are created, update each
   /// Reference's target with the Atom pointer it refers to.
@@ -328,8 +328,7 @@ protected:
   std::unordered_map<const Elf_Shdr *, range<const Elf_Rela *>>
       _relocationAddendReferences;
   MergedSectionMapT _mergedSectionMap;
-  std::unordered_map<const Elf_Shdr *, range<const Elf_Rel *>>
-      _relocationReferences;
+  std::unordered_map<const Elf_Shdr *, const Elf_Shdr *> _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
   llvm::DenseMap<const ELFReference<ELFT> *, const Elf_Sym *>
