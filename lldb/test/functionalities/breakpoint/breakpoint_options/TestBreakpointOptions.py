@@ -78,7 +78,7 @@ class BreakpointOptionsTestCase(TestBase):
         # This should create a breakpoint with 1 locations.
         lldbutil.run_break_set_by_symbol (self, 'ns::func', sym_exact=False, extra_options = "-L c++", num_expected_locations=1)
 
-        # This should create a breakpoint 0 locations.
+        # This should create a breakpoint with 0 locations.
         lldbutil.run_break_set_by_symbol (self, 'ns::func', sym_exact=False, extra_options = "-L c", num_expected_locations=0)
         self.runCmd("settings set target.language c")
         lldbutil.run_break_set_by_symbol (self, 'ns::func', sym_exact=False, num_expected_locations=0)
