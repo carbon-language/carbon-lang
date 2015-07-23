@@ -22,7 +22,6 @@ else()
       SOURCES ${SAFESTACK_SOURCES}
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-              $<TARGET_OBJECTS:RTSanitizerCommonNoLibc.${arch}>
       CFLAGS ${SAFESTACK_CFLAGS})
     add_dependencies(safestack clang_rt.safestack-${arch})
   endforeach()

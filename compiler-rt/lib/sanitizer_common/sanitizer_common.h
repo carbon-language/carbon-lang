@@ -628,20 +628,15 @@ enum AndroidApiLevel {
   ANDROID_POST_LOLLIPOP = 23
 };
 
-#if SANITIZER_POSIX
+#if SANITIZER_ANDROID
 // Initialize Android logging. Any writes before this are silently lost.
 void AndroidLogInit();
-void WriteToSyslog(const char *buffer);
-#else
-INLINE void AndroidLogInit() {}
-INLINE void WriteToSyslog(const char *buffer) {}
-#endif
-
-#if SANITIZER_ANDROID
+void AndroidLogWrite(const char *buffer);
 void GetExtraActivationFlags(char *buf, uptr size);
 void SanitizerInitializeUnwinder();
 AndroidApiLevel AndroidGetApiLevel();
 #else
+INLINE void AndroidLogInit() {}
 INLINE void AndroidLogWrite(const char *buffer_unused) {}
 INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
 INLINE void SanitizerInitializeUnwinder() {}

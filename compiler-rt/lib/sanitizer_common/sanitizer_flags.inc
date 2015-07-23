@@ -55,10 +55,6 @@ COMMON_FLAG(
     "Mention name of executable when reporting error and "
     "append executable name to logs (as in \"log_path.exe_name.pid\").")
 COMMON_FLAG(
-    bool, log_to_syslog, SANITIZER_ANDROID,
-    "Write all sanitizer output to syslog in addition to other means of "
-    "logging.")
-COMMON_FLAG(
     int, verbosity, 0,
     "Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).")
 COMMON_FLAG(bool, detect_leaks, true, "Enable memory leak detection.")

@@ -15,6 +15,7 @@
 #include "sanitizer_platform.h"
 #if SANITIZER_FREEBSD || SANITIZER_LINUX
 
+#include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_internal_defs.h"
@@ -74,6 +75,7 @@ extern char **environ;  // provided by crt1
 #endif
 
 #if SANITIZER_ANDROID
+#include <android/log.h>
 #include <sys/system_properties.h>
 #endif
 
@@ -918,6 +920,33 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
 #if SANITIZER_ANDROID
+static atomic_uint8_t android_log_initialized;
+
+void AndroidLogInit() {
+  atomic_store(&android_log_initialized, 1, memory_order_release);
+}
+// This thing is not, strictly speaking, async signal safe, but it does not seem
+// to cause any issues. Alternative is writing to log devices directly, but
+// their location and message format might change in the future, so we'd really
+// like to avoid that.
+void AndroidLogWrite(const char *buffer) {
+  if (!atomic_load(&android_log_initialized, memory_order_acquire))
+    return;
+
+  char *copy = internal_strdup(buffer);
+  char *p = copy;
+  char *q;
+  // __android_log_write has an implicit message length limit.
+  // Print one line at a time.
+  do {
+    q = internal_strchr(p, '\n');
+    if (q) *q = '\0';
+    __android_log_write(ANDROID_LOG_INFO, NULL, p);
+    if (q) p = q + 1;
+  } while (q);
+  InternalFree(copy);
+}
+
 void GetExtraActivationFlags(char *buf, uptr size) {
   CHECK(size > PROP_VALUE_MAX);
   __system_property_get("asan.options", buf);
