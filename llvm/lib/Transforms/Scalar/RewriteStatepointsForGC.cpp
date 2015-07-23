@@ -628,42 +628,25 @@ typedef DenseMap<Value *, PhiState> ConflictStateMapTy;
 // operation is implemented in MeetPhiStates::pureMeet
 class MeetPhiStates {
 public:
-  // phiStates is a mapping from PHINodes and SelectInst's to PhiStates.
-  explicit MeetPhiStates(const ConflictStateMapTy &phiStates)
-      : phiStates(phiStates) {}
+  /// Initializes the currentResult to the TOP state so that if can be met with
+  /// any other state to produce that state.
+  MeetPhiStates() {}
 
-  // Destructively meet the current result with the base V.  V can
-  // either be a merge instruction (SelectInst / PHINode), in which
-  // case its status is looked up in the phiStates map; or a regular
-  // SSA value, in which case it is assumed to be a base.
-  void meetWith(Value *V) {
-    PhiState otherState = getStateForBDV(V);
-    assert((MeetPhiStates::pureMeet(otherState, currentResult) ==
-            MeetPhiStates::pureMeet(currentResult, otherState)) &&
-           "math is wrong: meet does not commute!");
-    currentResult = MeetPhiStates::pureMeet(otherState, currentResult);
+  // Destructively meet the current result with the given PhiState
+  void meetWith(PhiState otherState) {
+    currentResult = meet(otherState, currentResult);
   }
 
   PhiState getResult() const { return currentResult; }
 
 private:
-  const ConflictStateMapTy &phiStates;
   PhiState currentResult;
 
-  /// Return a phi state for a base defining value.  We'll generate a new
-  /// base state for known bases and expect to find a cached state otherwise
-  PhiState getStateForBDV(Value *baseValue) {
-    if (isKnownBaseResult(baseValue)) {
-      return PhiState(baseValue);
-    } else {
-      return lookupFromMap(baseValue);
-    }
-  }
-
-  PhiState lookupFromMap(Value *V) {
-    auto I = phiStates.find(V);
-    assert(I != phiStates.end() && "lookup failed!");
-    return I->second;
+  /// Perform a meet operation on two elements of the PhiState lattice.
+  static PhiState meet(PhiState LHS, PhiState RHS) {
+    assert((pureMeet(LHS, RHS) == pureMeet(RHS, LHS)) &&
+           "math is wrong: meet does not commute!");
+    return pureMeet(LHS, RHS);
   }
 
   static PhiState pureMeet(const PhiState &stateA, const PhiState &stateB) {
@@ -782,6 +765,16 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // TODO: come back and revisit the state transitions around inputs which
   // have reached conflict state.  The current version seems too conservative.
 
+  // Return a phi state for a base defining value.  We'll generate a new
+  // base state for known bases and expect to find a cached state otherwise.
+  auto getStateForBDV = [&](Value *baseValue) {
+    if (isKnownBaseResult(baseValue))
+      return PhiState(baseValue);
+    auto I = states.find(baseValue);
+    assert(I != states.end() && "lookup failed!");
+    return I->second;
+  };
+
   bool progress = true;
   while (progress) {
 #ifndef NDEBUG
@@ -790,15 +783,23 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     progress = false;
     // We're only changing keys in this loop, thus safe to keep iterators
     for (auto Pair : states) {
-      MeetPhiStates calculateMeet(states);
       Value *v = Pair.first;
       assert(!isKnownBaseResult(v) && "why did it get added?");
+
+      // Given an input value for the current instruction, return a PhiState
+      // instance which represents the BDV of that value.
+      auto getStateForInput = [&](Value *V) mutable {
+        Value *BDV = findBaseOrBDV(V, cache);
+        return getStateForBDV(BDV);
+      };
+
+      MeetPhiStates calculateMeet;
       if (SelectInst *select = dyn_cast<SelectInst>(v)) {
-        calculateMeet.meetWith(findBaseOrBDV(select->getTrueValue(), cache));
-        calculateMeet.meetWith(findBaseOrBDV(select->getFalseValue(), cache));
+        calculateMeet.meetWith(getStateForInput(select->getTrueValue()));
+        calculateMeet.meetWith(getStateForInput(select->getFalseValue()));
       } else
         for (Value *Val : cast<PHINode>(v)->incoming_values())
-          calculateMeet.meetWith(findBaseOrBDV(Val, cache));
+          calculateMeet.meetWith(getStateForInput(Val));
 
       PhiState oldState = states[v];
       PhiState newState = calculateMeet.getResult();
