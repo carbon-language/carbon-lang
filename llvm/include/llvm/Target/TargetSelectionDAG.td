@@ -493,9 +493,10 @@ def atomic_load      : SDNode<"ISD::ATOMIC_LOAD", SDTAtomicLoad,
 def atomic_store     : SDNode<"ISD::ATOMIC_STORE", SDTAtomicStore,
                     [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 
-def masked_store : SDNode<"ISD::MSTORE",  SDTMaskedStore,
+// Do not use mld, mst directly. Use masked_store masked_load, masked_truncstore
+def mst            : SDNode<"ISD::MSTORE",  SDTMaskedStore,
                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
-def masked_load  : SDNode<"ISD::MLOAD",  SDTMaskedLoad,
+def mld            : SDNode<"ISD::MLOAD",  SDTMaskedLoad,
                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def masked_scatter : SDNode<"ISD::MSCATTER",  SDTMaskedScatter,
                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
@@ -680,6 +681,12 @@ def load : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
   return cast<LoadSDNode>(N)->getExtensionType() == ISD::NON_EXTLOAD;
 }]>;
 
+// masked load fragments.
+def masked_load : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                          (mld node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedLoadSDNode>(N)->getExtensionType() == ISD::NON_EXTLOAD;
+}]>;
+
 // extending load fragments.
 def extload   : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
   return cast<LoadSDNode>(N)->getExtensionType() == ISD::EXTLOAD;
@@ -791,6 +798,12 @@ def store : PatFrag<(ops node:$val, node:$ptr),
   return !cast<StoreSDNode>(N)->isTruncatingStore();
 }]>;
 
+// masked store fragments.
+def masked_store : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                           (mst node:$src1, node:$src2, node:$src3), [{
+  return !cast<MaskedStoreSDNode>(N)->isTruncatingStore();
+}]>;
+
 // truncstore fragments.
 def truncstore : PatFrag<(ops node:$val, node:$ptr),
                          (unindexedstore node:$val, node:$ptr), [{
@@ -815,6 +828,21 @@ def truncstoref32 : PatFrag<(ops node:$val, node:$ptr),
 def truncstoref64 : PatFrag<(ops node:$val, node:$ptr),
                             (truncstore node:$val, node:$ptr), [{
   return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f64;
+}]>;
+
+def truncstorevi8 : PatFrag<(ops node:$val, node:$ptr),
+                            (truncstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i8;
+}]>;
+
+def truncstorevi16 : PatFrag<(ops node:$val, node:$ptr),
+                             (truncstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i16;
+}]>;
+
+def truncstorevi32 : PatFrag<(ops node:$val, node:$ptr),
+                             (truncstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i32;
 }]>;
 
 // indexed store fragments.
@@ -889,6 +917,27 @@ def post_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
                               (post_truncst node:$val, node:$base, node:$offset), [{
   return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
+}]>;
+
+// masked truncstore fragments
+def masked_truncstore : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                                (mst node:$src1, node:$src2, node:$src3), [{
+    return cast<MaskedStoreSDNode>(N)->isTruncatingStore();
+}]>;
+def masked_truncstorevi8 :
+  PatFrag<(ops node:$src1, node:$src2, node:$src3),
+          (masked_truncstore node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedStoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i8;
+}]>;
+def masked_truncstorevi16 :
+  PatFrag<(ops node:$src1, node:$src2, node:$src3),
+          (masked_truncstore node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedStoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i16;
+}]>;
+def masked_truncstorevi32 :
+  PatFrag<(ops node:$src1, node:$src2, node:$src3),
+          (masked_truncstore node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedStoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i32;
 }]>;
 
 // setcc convenience fragments.
