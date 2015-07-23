@@ -207,27 +207,35 @@ static void checkForFunctionCall(Sema &S, const FunctionDecl *FD,
                                  CFGBlock &Block, unsigned ExitID,
                                  llvm::SmallVectorImpl<RecursiveState> &States,
                                  RecursiveState State) {
-  unsigned ID = Block.getBlockID();
+  SmallVector<std::pair<CFGBlock *, RecursiveState>, 16> Stack;
+  Stack.emplace_back(&Block, State);
 
-  // A block's state can only move to a higher state.
-  if (States[ID] >= State)
-    return;
+  while (!Stack.empty()) {
+    CFGBlock &CurBlock = *Stack.back().first;
+    RecursiveState CurState = Stack.back().second;
+    Stack.pop_back();
 
-  States[ID] = State;
+    unsigned ID = CurBlock.getBlockID();
 
-  if (State == FoundPathWithNoRecursiveCall) {
-    // Found a path to the exit node without a recursive call.
-    if (ExitID == ID)
-      return;
+    // A block's state can only move to a higher state.
+    if (States[ID] >= CurState)
+      continue;
 
-    if (hasRecursiveCallInPath(FD, Block))
-      State = FoundPath;
+    States[ID] = CurState;
+
+    if (CurState == FoundPathWithNoRecursiveCall) {
+      // Found a path to the exit node without a recursive call.
+      if (ExitID == ID)
+        continue;
+
+      if (hasRecursiveCallInPath(FD, CurBlock))
+        CurState = FoundPath;
+    }
+
+    for (auto I = CurBlock.succ_begin(), E = CurBlock.succ_end(); I != E; ++I)
+      if (*I)
+        Stack.emplace_back(*I, CurState);
   }
-
-  for (CFGBlock::succ_iterator I = Block.succ_begin(), E = Block.succ_end();
-       I != E; ++I)
-    if (*I)
-      checkForFunctionCall(S, FD, **I, ExitID, States, State);
 }
 
 static void checkRecursiveFunction(Sema &S, const FunctionDecl *FD,
