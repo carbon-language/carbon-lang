@@ -1,5 +1,6 @@
 // This test checks that -D disassembles from a data section
-// RUN: llvm-mc -filetype=obj -o - %s | llvm-objdump -D - | FileCheck %s
+// RUN: llvm-mc -triple x86_64-pc-linux-gnu -filetype=obj -o - %s | \
+// RUN: llvm-objdump -D - | FileCheck %s
 
 // CHECK: Disassembly of section .data:
 .data
