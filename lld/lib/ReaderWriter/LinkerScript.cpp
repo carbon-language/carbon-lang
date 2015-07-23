@@ -2740,7 +2740,7 @@ std::error_code Sema::buildSectionToPHDR() {
 
   // Add NONE header to the map provided there's no user-defined
   // header with the same name.
-  if (!_sectionToPHDR.count(PHDR_NONE.name()))
+  if (!phdrs.count(PHDR_NONE.name()))
     phdrs[PHDR_NONE.name()] = &PHDR_NONE;
 
   // Match output sections to available headers.
