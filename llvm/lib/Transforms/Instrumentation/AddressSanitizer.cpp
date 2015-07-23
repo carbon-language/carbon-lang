@@ -91,7 +91,9 @@ static const char *const kAsanUnregisterGlobalsName =
     "__asan_unregister_globals";
 static const char *const kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
 static const char *const kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
-static const char *const kAsanInitName = "__asan_init_v5";
+static const char *const kAsanInitName = "__asan_init";
+static const char *const kAsanVersionCheckName =
+    "__asan_version_mismatch_check_v6";
 static const char *const kAsanPtrCmp = "__sanitizer_ptr_cmp";
 static const char *const kAsanPtrSub = "__sanitizer_ptr_sub";
 static const char *const kAsanHandleNoReturnName = "__asan_handle_no_return";
@@ -1468,9 +1470,9 @@ bool AddressSanitizer::doInitialization(Module &M) {
 
   if (!CompileKernel) {
     std::tie(AsanCtorFunction, AsanInitFunction) =
-        createSanitizerCtorAndInitFunctions(M, kAsanModuleCtorName, kAsanInitName,
-                                            /*InitArgTypes=*/{},
-                                            /*InitArgs=*/{});
+        createSanitizerCtorAndInitFunctions(
+            M, kAsanModuleCtorName, kAsanInitName,
+            /*InitArgTypes=*/{}, /*InitArgs=*/{}, kAsanVersionCheckName);
     appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
   }
   Mapping = getShadowMapping(TargetTriple, LongSize, CompileKernel);

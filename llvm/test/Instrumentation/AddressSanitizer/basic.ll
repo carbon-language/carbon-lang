@@ -171,7 +171,7 @@ define void @memintr_test(i8* %a, i8* %b) nounwind uwtable sanitize_address {
 ; CHECK: ret void
 
 ; CHECK: define internal void @asan.module_ctor()
-; CHECK: call void @__asan_init_v5()
+; CHECK: call void @__asan_init()
 
 ; PROF
 ; CHECK: ![[PROF]] = !{!"branch_weights", i32 1, i32 100000}
