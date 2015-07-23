@@ -584,17 +584,19 @@ static bool isKnownBaseResult(Value *V) {
   return false;
 }
 
-// TODO: find a better name for this
 namespace {
-class PhiState {
+/// Models the state of a single base defining value in the findBasePointer
+/// algorithm for determining where a new instruction is needed to propagate
+/// the base of this BDV.
+class BDVState {
 public:
   enum Status { Unknown, Base, Conflict };
 
-  PhiState(Status s, Value *b = nullptr) : status(s), base(b) {
+  BDVState(Status s, Value *b = nullptr) : status(s), base(b) {
     assert(status != Base || b);
   }
-  PhiState(Value *b) : status(Base), base(b) {}
-  PhiState() : status(Unknown), base(nullptr) {}
+  explicit BDVState(Value *b) : status(Base), base(b) {}
+  BDVState() : status(Unknown), base(nullptr) {}
 
   Status getStatus() const { return status; }
   Value *getBase() const { return base; }
@@ -603,11 +605,11 @@ public:
   bool isUnknown() const { return getStatus() == Unknown; }
   bool isConflict() const { return getStatus() == Conflict; }
 
-  bool operator==(const PhiState &other) const {
+  bool operator==(const BDVState &other) const {
     return base == other.base && status == other.status;
   }
 
-  bool operator!=(const PhiState &other) const { return !(*this == other); }
+  bool operator!=(const BDVState &other) const { return !(*this == other); }
 
   LLVM_DUMP_METHOD
   void dump() const { print(dbgs()); dbgs() << '\n'; }
@@ -622,48 +624,48 @@ private:
   Value *base; // non null only if status == base
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS, const PhiState &State) {
+inline raw_ostream &operator<<(raw_ostream &OS, const BDVState &State) {
   State.print(OS);
   return OS;
 }
 
 
-typedef DenseMap<Value *, PhiState> ConflictStateMapTy;
-// Values of type PhiState form a lattice, and this is a helper
+typedef DenseMap<Value *, BDVState> ConflictStateMapTy;
+// Values of type BDVState form a lattice, and this is a helper
 // class that implementes the meet operation.  The meat of the meet
-// operation is implemented in MeetPhiStates::pureMeet
-class MeetPhiStates {
+// operation is implemented in MeetBDVStates::pureMeet
+class MeetBDVStates {
 public:
   /// Initializes the currentResult to the TOP state so that if can be met with
   /// any other state to produce that state.
-  MeetPhiStates() {}
+  MeetBDVStates() {}
 
-  // Destructively meet the current result with the given PhiState
-  void meetWith(PhiState otherState) {
+  // Destructively meet the current result with the given BDVState
+  void meetWith(BDVState otherState) {
     currentResult = meet(otherState, currentResult);
   }
 
-  PhiState getResult() const { return currentResult; }
+  BDVState getResult() const { return currentResult; }
 
 private:
-  PhiState currentResult;
+  BDVState currentResult;
 
-  /// Perform a meet operation on two elements of the PhiState lattice.
-  static PhiState meet(PhiState LHS, PhiState RHS) {
+  /// Perform a meet operation on two elements of the BDVState lattice.
+  static BDVState meet(BDVState LHS, BDVState RHS) {
     assert((pureMeet(LHS, RHS) == pureMeet(RHS, LHS)) &&
            "math is wrong: meet does not commute!");
-    PhiState Result = pureMeet(LHS, RHS);
+    BDVState Result = pureMeet(LHS, RHS);
     DEBUG(dbgs() << "meet of " << LHS << " with " << RHS
                  << " produced " << Result << "\n");
     return Result;
   }
 
-  static PhiState pureMeet(const PhiState &stateA, const PhiState &stateB) {
+  static BDVState pureMeet(const BDVState &stateA, const BDVState &stateB) {
     switch (stateA.getStatus()) {
-    case PhiState::Unknown:
+    case BDVState::Unknown:
       return stateB;
 
-    case PhiState::Base:
+    case BDVState::Base:
       assert(stateA.getBase() && "can't be null");
       if (stateB.isUnknown())
         return stateA;
@@ -673,12 +675,12 @@ private:
           assert(stateA == stateB && "equality broken!");
           return stateA;
         }
-        return PhiState(PhiState::Conflict);
+        return BDVState(BDVState::Conflict);
       }
       assert(stateB.isConflict() && "only three states!");
-      return PhiState(PhiState::Conflict);
+      return BDVState(BDVState::Conflict);
 
-    case PhiState::Conflict:
+    case BDVState::Conflict:
       return stateA;
     }
     llvm_unreachable("only three states!");
@@ -719,7 +721,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // overall worse solution.
 
   ConflictStateMapTy states;
-  states[def] = PhiState();
+  states[def] = BDVState();
   // Recursively fill in all phis & selects reachable from the initial one
   // for which we don't already know a definite base value for
   // TODO: This should be rewritten with a worklist
@@ -742,19 +744,19 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
         for (Value *InVal : phi->incoming_values()) {
           Value *local = findBaseOrBDV(InVal, cache);
           if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
-            states[local] = PhiState();
+            states[local] = BDVState();
             done = false;
           }
         }
       } else if (SelectInst *sel = dyn_cast<SelectInst>(v)) {
         Value *local = findBaseOrBDV(sel->getTrueValue(), cache);
         if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
-          states[local] = PhiState();
+          states[local] = BDVState();
           done = false;
         }
         local = findBaseOrBDV(sel->getFalseValue(), cache);
         if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
-          states[local] = PhiState();
+          states[local] = BDVState();
           done = false;
         }
       }
@@ -774,7 +776,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // base state for known bases and expect to find a cached state otherwise.
   auto getStateForBDV = [&](Value *baseValue) {
     if (isKnownBaseResult(baseValue))
-      return PhiState(baseValue);
+      return BDVState(baseValue);
     auto I = states.find(baseValue);
     assert(I != states.end() && "lookup failed!");
     return I->second;
@@ -791,14 +793,14 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
       Value *v = Pair.first;
       assert(!isKnownBaseResult(v) && "why did it get added?");
 
-      // Given an input value for the current instruction, return a PhiState
+      // Given an input value for the current instruction, return a BDVState
       // instance which represents the BDV of that value.
       auto getStateForInput = [&](Value *V) mutable {
         Value *BDV = findBaseOrBDV(V, cache);
         return getStateForBDV(BDV);
       };
 
-      MeetPhiStates calculateMeet;
+      MeetBDVStates calculateMeet;
       if (SelectInst *select = dyn_cast<SelectInst>(v)) {
         calculateMeet.meetWith(getStateForInput(select->getTrueValue()));
         calculateMeet.meetWith(getStateForInput(select->getFalseValue()));
@@ -806,8 +808,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
         for (Value *Val : cast<PHINode>(v)->incoming_values())
           calculateMeet.meetWith(getStateForInput(Val));
 
-      PhiState oldState = states[v];
-      PhiState newState = calculateMeet.getResult();
+      BDVState oldState = states[v];
+      BDVState newState = calculateMeet.getResult();
       if (oldState != newState) {
         progress = true;
         states[v] = newState;
@@ -838,7 +840,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // TODO: adjust naming patterns to avoid this order of iteration dependency
   for (Value *V : Keys) {
     Instruction *I = cast<Instruction>(V);
-    PhiState State = states[I];
+    BDVState State = states[I];
     assert(!isKnownBaseResult(I) && "why did it get added?");
     assert(!State.isUnknown() && "Optimistic algorithm didn't complete!");
     if (!State.isConflict())
@@ -862,13 +864,13 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
     Instruction *BaseInst = MakeBaseInstPlaceholder(I);
     // Add metadata marking this as a base value
     BaseInst->setMetadata("is_base_value", MDNode::get(I->getContext(), {}));
-    states[I] = PhiState(PhiState::Conflict, BaseInst);
+    states[I] = BDVState(BDVState::Conflict, BaseInst);
   }
 
   // Fixup all the inputs of the new PHIs
   for (auto Pair : states) {
     Instruction *v = cast<Instruction>(Pair.first);
-    PhiState state = Pair.second;
+    BDVState state = Pair.second;
 
     assert(!isKnownBaseResult(v) && "why did it get added?");
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
@@ -901,7 +903,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
             // Either conflict or base.
             assert(states.count(base));
             base = states[base].getBase();
-            assert(base != nullptr && "unknown PhiState!");
+            assert(base != nullptr && "unknown BDVState!");
           }
 
           // In essense this assert states: the only way two
@@ -924,7 +926,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
           // Either conflict or base.
           assert(states.count(base));
           base = states[base].getBase();
-          assert(base != nullptr && "unknown PhiState!");
+          assert(base != nullptr && "unknown BDVState!");
         }
         assert(base && "can't be null");
         // Must use original input BB since base may not be Instruction
@@ -950,7 +952,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
           // Either conflict or base.
           assert(states.count(base));
           base = states[base].getBase();
-          assert(base != nullptr && "unknown PhiState!");
+          assert(base != nullptr && "unknown BDVState!");
         }
         assert(base && "can't be null");
         // Must use original input BB since base may not be Instruction
