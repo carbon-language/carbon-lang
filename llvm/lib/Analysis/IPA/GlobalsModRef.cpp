@@ -64,29 +64,96 @@ namespace {
 /// information when we know *something* useful about the behavior. If we
 /// saturate to fully general mod/ref, we remove the info for the function.
 class FunctionInfo {
+  typedef SmallDenseMap<const GlobalValue *, ModRefInfo, 16> GlobalInfoMapType;
+
+  /// Build a wrapper struct that has 8-byte alignment. All heap allocations
+  /// should provide this much alignment at least, but this makes it clear we
+  /// specifically rely on this amount of alignment.
+  struct LLVM_ALIGNAS(8) AlignedMap {
+    AlignedMap() {}
+    AlignedMap(const AlignedMap &Arg) : Map(Arg.Map) {}
+    GlobalInfoMapType Map;
+  };
+
+  /// Pointer traits for our aligned map.
+  struct AlignedMapPointerTraits {
+    static inline void *getAsVoidPointer(AlignedMap *P) { return P; }
+    static inline AlignedMap *getFromVoidPointer(void *P) {
+      return (AlignedMap *)P;
+    }
+    enum { NumLowBitsAvailable = 3 };
+    static_assert(AlignOf<AlignedMap>::Alignment >= (1 << NumLowBitsAvailable),
+                  "AlignedMap insufficiently aligned to have enough low bits.");
+  };
+
+  /// The bit that flags that this function may read any global. This is
+  /// chosen to mix together with ModRefInfo bits.
+  enum { MayReadAnyGlobal = 4 };
+
+  /// Checks to document the invariants of the bit packing here.
+  static_assert((MayReadAnyGlobal & MRI_ModRef) == 0,
+                "ModRef and the MayReadAnyGlobal flag bits overlap.");
+  static_assert(((MayReadAnyGlobal | MRI_ModRef) >>
+                 AlignedMapPointerTraits::NumLowBitsAvailable) == 0,
+                "Insufficient low bits to store our flag and ModRef info.");
+
 public:
-  FunctionInfo() : MayReadAnyGlobal(false), MRI(MRI_NoModRef) {}
+  FunctionInfo() : Info() {}
+  ~FunctionInfo() {
+    delete Info.getPointer();
+  }
+  // Spell out the copy ond move constructors and assignment operators to get
+  // deep copy semantics and correct move semantics in the face of the
+  // pointer-int pair.
+  FunctionInfo(const FunctionInfo &Arg)
+      : Info(nullptr, Arg.Info.getInt()) {
+    if (const auto *ArgPtr = Arg.Info.getPointer())
+      Info.setPointer(new AlignedMap(*ArgPtr));
+  }
+  FunctionInfo(FunctionInfo &&Arg)
+      : Info(Arg.Info.getPointer(), Arg.Info.getInt()) {
+    Arg.Info.setPointerAndInt(nullptr, 0);
+  }
+  FunctionInfo &operator=(const FunctionInfo &RHS) {
+    delete Info.getPointer();
+    Info.setPointerAndInt(nullptr, RHS.Info.getInt());
+    if (const auto *RHSPtr = RHS.Info.getPointer())
+      Info.setPointer(new AlignedMap(*RHSPtr));
+    return *this;
+  }
+  FunctionInfo &operator=(FunctionInfo &&RHS) {
+    delete Info.getPointer();
+    Info.setPointerAndInt(RHS.Info.getPointer(), RHS.Info.getInt());
+    RHS.Info.setPointerAndInt(nullptr, 0);
+    return *this;
+  }
 
   /// Returns the \c ModRefInfo info for this function.
-  ModRefInfo getModRefInfo() const { return MRI; }
+  ModRefInfo getModRefInfo() const {
+    return ModRefInfo(Info.getInt() & MRI_ModRef);
+  }
 
   /// Adds new \c ModRefInfo for this function to its state.
-  void addModRefInfo(ModRefInfo NewMRI) { MRI = ModRefInfo(MRI | NewMRI); }
+  void addModRefInfo(ModRefInfo NewMRI) {
+    Info.setInt(Info.getInt() | NewMRI);
+  }
 
   /// Returns whether this function may read any global variable, and we don't
   /// know which global.
-  bool mayReadAnyGlobal() const { return MayReadAnyGlobal; }
+  bool mayReadAnyGlobal() const { return Info.getInt() & MayReadAnyGlobal; }
 
   /// Sets this function as potentially reading from any global.
-  void setMayReadAnyGlobal() { MayReadAnyGlobal = true; }
+  void setMayReadAnyGlobal() { Info.setInt(Info.getInt() | MayReadAnyGlobal); }
 
   /// Returns the \c ModRefInfo info for this function w.r.t. a particular
   /// global, which may be more precise than the general information above.
   ModRefInfo getModRefInfoForGlobal(const GlobalValue &GV) const {
-    ModRefInfo GlobalMRI = MayReadAnyGlobal ? MRI_Ref : MRI_NoModRef;
-    auto I = GlobalInfo.find(&GV);
-    if (I != GlobalInfo.end())
-      GlobalMRI = ModRefInfo(GlobalMRI | I->second);
+    ModRefInfo GlobalMRI = mayReadAnyGlobal() ? MRI_Ref : MRI_NoModRef;
+    if (AlignedMap *P = Info.getPointer()) {
+      auto I = P->Map.find(&GV);
+      if (I != P->Map.end())
+        GlobalMRI = ModRefInfo(GlobalMRI | I->second);
+    }
     return GlobalMRI;
   }
 
@@ -98,27 +165,28 @@ public:
     if (FI.mayReadAnyGlobal())
       setMayReadAnyGlobal();
 
-    for (const auto &G : FI.GlobalInfo)
-      addModRefInfoForGlobal(*G.first, G.second);
+    if (AlignedMap *P = FI.Info.getPointer())
+      for (const auto &G : P->Map)
+        addModRefInfoForGlobal(*G.first, G.second);
   }
 
   void addModRefInfoForGlobal(const GlobalValue &GV, ModRefInfo NewMRI) {
-    auto &GlobalMRI = GlobalInfo[&GV];
+    AlignedMap *P = Info.getPointer();
+    if (!P) {
+      P = new AlignedMap();
+      Info.setPointer(P);
+    }
+    auto &GlobalMRI = P->Map[&GV];
     GlobalMRI = ModRefInfo(GlobalMRI | NewMRI);
   }
 
 private:
-  /// Maintain mod/ref info for all of the globals without addresses taken that
-  /// are read or written (transitively) by this function.
-  std::map<const GlobalValue *, ModRefInfo> GlobalInfo;
-
-  /// Flag indicating this function read global variables, but it is not known
-  /// which.
-  bool MayReadAnyGlobal;
-
-  /// Captures whether or not this function reads or writes to ANY memory. If
-  /// not, we can do a lot of aggressive analysis on it.
-  ModRefInfo MRI;
+  /// All of the information is encoded into a single pointer, with a three bit
+  /// integer in the low three bits. The high bit provides a flag for when this
+  /// function may read any global. The low two bits are the ModRefInfo. And
+  /// the pointer, when non-null, points to a map from GlobalValue to
+  /// ModRefInfo specific to that GlobalValue.
+  PointerIntPair<AlignedMap *, 3, unsigned, AlignedMapPointerTraits> Info;
 };
 
 /// GlobalsModRef - The actual analysis pass.
