@@ -141,6 +141,10 @@ public:
   FunctionPass *createTargetRegisterAllocator(bool) override;
   void addFastRegAlloc(FunctionPass *RegAllocPass) override;
   void addOptimizedRegAlloc(FunctionPass *RegAllocPass) override;
+
+private:
+  // if the opt level is aggressive, add GVN; otherwise, add EarlyCSE.
+  void addEarlyCSEOrGVNPass();
 };
 } // end anonymous namespace
 
@@ -155,6 +159,13 @@ TargetIRAnalysis NVPTXTargetMachine::getTargetIRAnalysis() {
   });
 }
 
+void NVPTXPassConfig::addEarlyCSEOrGVNPass() {
+  if (getOptLevel() == CodeGenOpt::Aggressive)
+    addPass(createGVNPass());
+  else
+    addPass(createEarlyCSEPass());
+}
+
 void NVPTXPassConfig::addIRPasses() {
   // The following passes are known to not play well with virtual regs hanging
   // around after register allocation (which in our case, is *all* registers).
@@ -166,9 +177,10 @@ void NVPTXPassConfig::addIRPasses() {
   disablePass(&TailDuplicateID);
 
   addPass(createNVPTXImageOptimizerPass());
-  TargetPassConfig::addIRPasses();
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
+
+  // === Propagate special address spaces ===
   addPass(createNVPTXLowerKernelArgsPass(&getNVPTXTargetMachine()));
   // NVPTXLowerKernelArgs emits alloca for byval parameters which can often
   // be eliminated by SROA.
@@ -179,6 +191,8 @@ void NVPTXPassConfig::addIRPasses() {
   // them unused. We could remove dead code in an ad-hoc manner, but that
   // requires manual work and might be error-prone.
   addPass(createDeadCodeEliminationPass());
+
+  // === Straight-line scalar optimizations ===
   addPass(createSeparateConstOffsetFromGEPPass());
   addPass(createSpeculativeExecutionPass());
   // ReassociateGEPs exposes more opportunites for SLSR. See
@@ -187,15 +201,28 @@ void NVPTXPassConfig::addIRPasses() {
   // SeparateConstOffsetFromGEP and SLSR creates common expressions which GVN or
   // EarlyCSE can reuse. GVN generates significantly better code than EarlyCSE
   // for some of our benchmarks.
-  if (getOptLevel() == CodeGenOpt::Aggressive)
-    addPass(createGVNPass());
-  else
-    addPass(createEarlyCSEPass());
+  addEarlyCSEOrGVNPass();
   // Run NaryReassociate after EarlyCSE/GVN to be more effective.
   addPass(createNaryReassociatePass());
   // NaryReassociate on GEPs creates redundant common expressions, so run
   // EarlyCSE after it.
   addPass(createEarlyCSEPass());
+
+  // === LSR and other generic IR passes ===
+  TargetPassConfig::addIRPasses();
+  // EarlyCSE is not always strong enough to clean up what LSR produces. For
+  // example, GVN can combine
+  //
+  //   %0 = add %a, %b
+  //   %1 = add %b, %a
+  //
+  // and
+  //
+  //   %0 = shl nsw %a, 2
+  //   %1 = shl %a, 2
+  //
+  // but EarlyCSE can do neither of them.
+  addEarlyCSEOrGVNPass();
 }
 
 bool NVPTXPassConfig::addInstSelector() {
