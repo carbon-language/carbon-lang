@@ -272,9 +272,6 @@ public:
   const Elf_Sym *getSymbol(const Elf_Shdr *Sec, uint32_t Index) const {
     return &*(symbol_begin(Sec) + Index);
   }
-  const Elf_Sym *getSymbol(uint32_t Index) const {
-    return getSymbol(dot_symtab_sec, Index);
-  }
 
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   ErrorOr<ArrayRef<uint8_t> > getSectionContents(const Elf_Shdr *Sec) const;
