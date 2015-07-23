@@ -85,7 +85,7 @@ namespace llvm {
 
     /// Construct an ArrayRef from a std::initializer_list.
     /*implicit*/ ArrayRef(const std::initializer_list<T> &Vec)
-    : Data(Vec.begin() == Vec.end() ? (T*)0 : Vec.begin()),
+    : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()),
       Length(Vec.size()) {}
 
     /// Construct an ArrayRef<const T*> from ArrayRef<T*>. This uses SFINAE to
