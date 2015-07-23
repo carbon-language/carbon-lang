@@ -179,30 +179,34 @@ public:
     return make_range(section_begin(), section_end());
   }
 
-  const Elf_Sym *symbol_begin() const;
-  const Elf_Sym *symbol_end() const;
-  Elf_Sym_Range symbols() const {
-    return make_range(symbol_begin(), symbol_end());
+  const Elf_Sym *symbol_begin(const Elf_Shdr *Sec) const {
+    if (!Sec)
+      return nullptr;
+    if (Sec->sh_entsize != sizeof(Elf_Sym))
+      report_fatal_error("Invalid symbol size");
+    return reinterpret_cast<const Elf_Sym *>(base() + Sec->sh_offset);
   }
+  const Elf_Sym *symbol_end(const Elf_Shdr *Sec) const {
+    if (!Sec)
+      return nullptr;
+    uint64_t Size = Sec->sh_size;
+    if (Size % sizeof(Elf_Sym))
+      report_fatal_error("Invalid symbol table size");
+    return symbol_begin(Sec) + Size / sizeof(Elf_Sym);
+  }
+  Elf_Sym_Range symbols(const Elf_Shdr *Sec) const {
+    return make_range(symbol_begin(Sec), symbol_end(Sec));
+  }
+
+  const Elf_Sym *symbol_begin() const { return symbol_begin(dot_symtab_sec); }
+  const Elf_Sym *symbol_end() const { return symbol_end(dot_symtab_sec); }
+  Elf_Sym_Range symbols() const { return symbols(dot_symtab_sec); }
 
   const Elf_Sym *dynamic_symbol_begin() const {
-    if (!DotDynSymSec)
-      return nullptr;
-    if (DotDynSymSec->sh_entsize != sizeof(Elf_Sym))
-      report_fatal_error("Invalid symbol size");
-    return reinterpret_cast<const Elf_Sym *>(base() + DotDynSymSec->sh_offset);
+    return symbol_begin(DotDynSymSec);
   }
-
-  const Elf_Sym *dynamic_symbol_end() const {
-    if (!DotDynSymSec)
-      return nullptr;
-    return reinterpret_cast<const Elf_Sym *>(base() + DotDynSymSec->sh_offset +
-                                             DotDynSymSec->sh_size);
-  }
-
-  Elf_Sym_Range dynamic_symbols() const {
-    return make_range(dynamic_symbol_begin(), dynamic_symbol_end());
-  }
+  const Elf_Sym *dynamic_symbol_end() const { return symbol_end(DotDynSymSec); }
+  Elf_Sym_Range dynamic_symbols() const { return symbols(DotDynSymSec); }
 
   typedef iterator_range<const Elf_Rela *> Elf_Rela_Range;
 
@@ -600,23 +604,6 @@ const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_begin() const {
 template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_end() const {
   return section_begin() + getNumSections();
-}
-
-template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Sym *ELFFile<ELFT>::symbol_begin() const {
-  if (!dot_symtab_sec)
-    return nullptr;
-  if (dot_symtab_sec->sh_entsize != sizeof(Elf_Sym))
-    report_fatal_error("Invalid symbol size");
-  return reinterpret_cast<const Elf_Sym *>(base() + dot_symtab_sec->sh_offset);
-}
-
-template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Sym *ELFFile<ELFT>::symbol_end() const {
-  if (!dot_symtab_sec)
-    return nullptr;
-  return reinterpret_cast<const Elf_Sym *>(base() + dot_symtab_sec->sh_offset +
-                                           dot_symtab_sec->sh_size);
 }
 
 template <class ELFT>
