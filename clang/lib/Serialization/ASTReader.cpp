@@ -973,8 +973,9 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
       return true;
     }
 
-    Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair*>(Blob.data());
-    Info.NumLexicalDecls = Blob.size() / sizeof(KindDeclIDPair);
+    Info.LexicalDecls = llvm::makeArrayRef(
+        reinterpret_cast<const KindDeclIDPair *>(Blob.data()),
+        Blob.size() / sizeof(KindDeclIDPair));
   }
 
   // Now the lookup table.
@@ -2496,9 +2497,9 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     case TU_UPDATE_LEXICAL: {
       DeclContext *TU = Context.getTranslationUnitDecl();
       DeclContextInfo &Info = F.DeclContextInfos[TU];
-      Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair *>(Blob.data());
-      Info.NumLexicalDecls 
-        = static_cast<unsigned int>(Blob.size() / sizeof(KindDeclIDPair));
+      Info.LexicalDecls = llvm::makeArrayRef(
+          reinterpret_cast<const KindDeclIDPair *>(Blob.data()),
+          static_cast<unsigned int>(Blob.size() / sizeof(KindDeclIDPair)));
       TU->setHasExternalLexicalStorage(true);
       break;
     }
@@ -6202,26 +6203,24 @@ namespace {
 
       ModuleFile::DeclContextInfosMap::iterator Info
         = M.DeclContextInfos.find(This->DC);
-      if (Info == M.DeclContextInfos.end() || !Info->second.LexicalDecls)
+      if (Info == M.DeclContextInfos.end() || Info->second.LexicalDecls.empty())
         return false;
 
       // Load all of the declaration IDs
-      for (const KindDeclIDPair *ID = Info->second.LexicalDecls,
-                               *IDE = ID + Info->second.NumLexicalDecls; 
-           ID != IDE; ++ID) {
-        if (This->isKindWeWant && !This->isKindWeWant((Decl::Kind)ID->first))
+      for (const KindDeclIDPair &P : Info->second.LexicalDecls) {
+        if (This->isKindWeWant && !This->isKindWeWant((Decl::Kind)P.first))
           continue;
 
         // Don't add predefined declarations to the lexical context more
         // than once.
-        if (ID->second < NUM_PREDEF_DECL_IDS) {
-          if (This->PredefsVisited[ID->second])
+        if (P.second < NUM_PREDEF_DECL_IDS) {
+          if (This->PredefsVisited[P.second])
             continue;
 
-          This->PredefsVisited[ID->second] = true;
+          This->PredefsVisited[P.second] = true;
         }
 
-        if (Decl *D = This->Reader.GetLocalDecl(M, ID->second)) {
+        if (Decl *D = This->Reader.GetLocalDecl(M, P.second)) {
           if (!This->DC->isDeclInLexicalTraversal(D))
             This->Decls.push_back(D);
         }
