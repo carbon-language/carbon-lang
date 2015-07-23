@@ -27,7 +27,7 @@
 #endif
 
 // Enable extra mutex error checking
-#ifdef LLDB_CONFIGURATION_DEBUG
+#if 0 // LLDB_CONFIGURATION_DEBUG
 #define ENABLE_MUTEX_ERROR_CHECKING 1
 #include <inttypes.h>
 #endif
