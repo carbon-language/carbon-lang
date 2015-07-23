@@ -842,7 +842,6 @@ struct CounterCoverageMappingBuilder
   }
 
   void VisitCXXCatchStmt(const CXXCatchStmt *S) {
-    extendRegion(S);
     propagateCounts(getRegionCounter(S), S->getHandlerBlock());
   }
 
