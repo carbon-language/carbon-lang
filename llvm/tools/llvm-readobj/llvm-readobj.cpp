@@ -302,15 +302,16 @@ static void dumpObject(const ObjectFile *Obj) {
     if (opts::MipsReginfo)
       Dumper->printMipsReginfo();
   }
-  if (opts::COFFImports)
-    Dumper->printCOFFImports();
-  if (opts::COFFExports)
-    Dumper->printCOFFExports();
-  if (opts::COFFDirectives)
-    Dumper->printCOFFDirectives();
-  if (opts::COFFBaseRelocs)
-    Dumper->printCOFFBaseReloc();
-
+  if (Obj->isCOFF()) {
+    if (opts::COFFImports)
+      Dumper->printCOFFImports();
+    if (opts::COFFExports)
+      Dumper->printCOFFExports();
+    if (opts::COFFDirectives)
+      Dumper->printCOFFDirectives();
+    if (opts::COFFBaseRelocs)
+      Dumper->printCOFFBaseReloc();
+  }
   if (opts::PrintStackMap)
     Dumper->printStackMap();
 }
