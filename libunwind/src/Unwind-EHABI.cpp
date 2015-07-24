@@ -997,7 +997,7 @@ _Unwind_DeleteException(_Unwind_Exception *exception_object) {
                                            exception_object);
 }
 
-_LIBUNWIND_EXPORT extern "C" _Unwind_Reason_Code
+extern "C" _LIBUNWIND_EXPORT _Unwind_Reason_Code
 __gnu_unwind_frame(_Unwind_Exception *exception_object,
                    struct _Unwind_Context *context) {
   unw_cursor_t *cursor = (unw_cursor_t *)context;
