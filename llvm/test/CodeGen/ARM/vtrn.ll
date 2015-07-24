@@ -325,3 +325,13 @@ define <16 x i16> @vtrnQi16_undef_QQres(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <16 x i32> <i32 0, i32 8, i32 undef, i32 undef, i32 4, i32 12, i32 6, i32 14, i32 1, i32 undef, i32 3, i32 11, i32 5, i32 13, i32 undef, i32 undef>
 	ret <16 x i16> %tmp3
 }
+
+define <8 x i16> @vtrn_lower_shufflemask_undef(<4 x i16>* %A, <4 x i16>* %B) {
+entry:
+  ; CHECK-LABEL: vtrn_lower_shufflemask_undef
+  ; CHECK: vtrn
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
+  %0 = shufflevector <4 x i16> %tmp1, <4 x i16> %tmp2, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 5, i32 3, i32 7>
+  ret <8 x i16> %0
+}

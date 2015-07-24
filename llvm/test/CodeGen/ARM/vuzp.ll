@@ -264,3 +264,24 @@ define <16 x i16> @vuzpQi16_undef_QQres(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <16 x i32> <i32 0, i32 undef, i32 4, i32 undef, i32 8, i32 10, i32 12, i32 14, i32 1, i32 3, i32 5, i32 undef, i32 undef, i32 11, i32 13, i32 15>
 	ret <16 x i16> %tmp3
 }
+
+define <8 x i16> @vuzp_lower_shufflemask_undef(<4 x i16>* %A, <4 x i16>* %B) {
+entry:
+  ; CHECK-LABEL: vuzp_lower_shufflemask_undef
+  ; CHECK: vuzp
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
+  %0 = shufflevector <4 x i16> %tmp1, <4 x i16> %tmp2, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 3, i32 5, i32 7>
+  ret <8 x i16> %0
+}
+
+define <4 x i32> @vuzp_lower_shufflemask_zeroed(<2 x i32>* %A, <2 x i32>* %B) {
+entry:
+  ; CHECK-LABEL: vuzp_lower_shufflemask_zeroed
+  ; CHECK-NOT: vtrn
+  ; CHECK: vuzp
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
+  %0 = shufflevector <2 x i32> %tmp1, <2 x i32> %tmp2, <4 x i32> <i32 0, i32 0, i32 1, i32 3>
+  ret <4 x i32> %0
+}
