@@ -79,6 +79,12 @@ protected:
     return RelocationEntry(SectionID, Offset, RelType, 0, IsPCRel, Size);
   }
 
+  /// Process a scattered vanilla relocation.
+  relocation_iterator processScatteredVANILLA(
+                           unsigned SectionID, relocation_iterator RelI,
+                           const ObjectFile &BaseObjT,
+                           RuntimeDyldMachO::ObjSectionToIDMap &ObjSectionToID);
+
   /// Construct a RelocationValueRef representing the relocation target.
   /// For Symbols in known sections, this will return a RelocationValueRef
   /// representing a (SectionID, Offset) pair.

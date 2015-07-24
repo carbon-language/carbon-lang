@@ -40,6 +40,13 @@ insn4:
         .comm   baz, 4, 2
         .comm   foo, 4, 2
 
+	.section        __DATA,__data
+	.globl  _a
+	.align  2
+# rtdyld-check: *{4}bar_ofs = bar + 4
+bar_ofs:
+	.long   bar + 4
+
 # Check that the symbol pointer section entries are fixed up properly:
 # rtdyld-check: *{4}foo$non_lazy_ptr = foo
         .section	__DATA,__nl_symbol_ptr,non_lazy_symbol_pointers

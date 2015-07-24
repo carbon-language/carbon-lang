@@ -64,8 +64,10 @@ public:
       if (RelType == MachO::ARM_RELOC_HALF_SECTDIFF)
         return processHALFSECTDIFFRelocation(SectionID, RelI, Obj,
                                              ObjSectionToID);
+      else if (RelType == MachO::GENERIC_RELOC_VANILLA)
+        return processScatteredVANILLA(SectionID, RelI, Obj, ObjSectionToID);
       else
-        return ++++RelI;
+        return ++RelI;
     }
 
     RelocationEntry RE(getRelocationEntry(SectionID, Obj, RelI));
