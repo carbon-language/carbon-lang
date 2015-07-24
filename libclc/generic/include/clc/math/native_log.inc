@@ -20,8 +20,4 @@
  * THE SOFTWARE.
  */
 
-#define __CLC_BODY <clc/math/native_log2.inc>
-#define __FLOAT_ONLY
-#include <clc/math/gentype.inc>
-#undef __CLC_BODY
-#undef __FLOAT_ONLY
+_CLC_OVERLOAD _CLC_DECL __CLC_GENTYPE native_log(__CLC_GENTYPE a);

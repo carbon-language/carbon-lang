@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Advanced Micro Devices, Inc.
+ * Copyright (c) 2014,2015 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,6 @@
  * THE SOFTWARE.
  */
 
-#define __CLC_BODY <clc/math/native_log2.inc>
-#define __FLOAT_ONLY
-#include <clc/math/gentype.inc>
-#undef __CLC_BODY
-#undef __FLOAT_ONLY
+_CLC_OVERLOAD _CLC_DEF __CLC_GENTYPE native_log2(__CLC_GENTYPE val) {
+  return __clc_native_log2(val);
+}

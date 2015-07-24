@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Advanced Micro Devices, Inc.
+ * Copyright (c) 2014,2015 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,8 +20,13 @@
  * THE SOFTWARE.
  */
 
-#define __CLC_BODY <clc/math/native_log2.inc>
+#include <clc/clc.h>
+
+#define __CLC_FUNCTION __clc_native_log
+#define __CLC_INTRINSIC "llvm.log"
+#undef cl_khr_fp64
+#include <clc/math/unary_intrin.inc>
+
+#define __CLC_BODY <native_log.inc>
 #define __FLOAT_ONLY
 #include <clc/math/gentype.inc>
-#undef __CLC_BODY
-#undef __FLOAT_ONLY
