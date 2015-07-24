@@ -647,45 +647,21 @@ public:
   }
 };
 
-/// \brief Base class for DIDerivedType and DICompositeType.
-///
-/// TODO: Delete; they're not really related.
-class DIDerivedTypeBase : public DIType {
-protected:
-  DIDerivedTypeBase(LLVMContext &C, unsigned ID, StorageType Storage,
-                    unsigned Tag, unsigned Line, uint64_t SizeInBits,
-                    uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
-                    ArrayRef<Metadata *> Ops)
-      : DIType(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits, OffsetInBits,
-               Flags, Ops) {}
-  ~DIDerivedTypeBase() = default;
-
-public:
-  DITypeRef getBaseType() const { return DITypeRef(getRawBaseType()); }
-  Metadata *getRawBaseType() const { return getOperand(3); }
-
-  static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == DIDerivedTypeKind ||
-           MD->getMetadataID() == DICompositeTypeKind ||
-           MD->getMetadataID() == DISubroutineTypeKind;
-  }
-};
-
 /// \brief Derived types.
 ///
 /// This includes qualified types, pointers, references, friends, typedefs, and
 /// class members.
 ///
 /// TODO: Split out members (inheritance, fields, methods, etc.).
-class DIDerivedType : public DIDerivedTypeBase {
+class DIDerivedType : public DIType {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   DIDerivedType(LLVMContext &C, StorageType Storage, unsigned Tag,
                 unsigned Line, uint64_t SizeInBits, uint64_t AlignInBits,
                 uint64_t OffsetInBits, unsigned Flags, ArrayRef<Metadata *> Ops)
-      : DIDerivedTypeBase(C, DIDerivedTypeKind, Storage, Tag, Line, SizeInBits,
-                          AlignInBits, OffsetInBits, Flags, Ops) {}
+      : DIType(C, DIDerivedTypeKind, Storage, Tag, Line, SizeInBits,
+               AlignInBits, OffsetInBits, Flags, Ops) {}
   ~DIDerivedType() = default;
 
   static DIDerivedType *getImpl(LLVMContext &Context, unsigned Tag,
@@ -733,6 +709,10 @@ public:
 
   TempDIDerivedType clone() const { return cloneImpl(); }
 
+  //// Get the base type this is derived from.
+  DITypeRef getBaseType() const { return DITypeRef(getRawBaseType()); }
+  Metadata *getRawBaseType() const { return getOperand(3); }
+
   /// \brief Get extra data associated with this derived type.
   ///
   /// Class type for pointer-to-members, objective-c property node for ivars,
@@ -768,7 +748,7 @@ public:
 /// \brief Base class for DICompositeType and DISubroutineType.
 ///
 /// TODO: Delete; they're not really related.
-class DICompositeTypeBase : public DIDerivedTypeBase {
+class DICompositeTypeBase : public DIType {
   unsigned RuntimeLang;
 
 protected:
@@ -777,12 +757,15 @@ protected:
                       uint64_t SizeInBits, uint64_t AlignInBits,
                       uint64_t OffsetInBits, unsigned Flags,
                       ArrayRef<Metadata *> Ops)
-      : DIDerivedTypeBase(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits,
-                          OffsetInBits, Flags, Ops),
+      : DIType(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits, OffsetInBits,
+               Flags, Ops),
         RuntimeLang(RuntimeLang) {}
   ~DICompositeTypeBase() = default;
 
 public:
+  //// Get the base type this is derived from, if any.
+  DITypeRef getBaseType() const { return DITypeRef(getRawBaseType()); }
+
   /// \brief Get the elements of the composite type.
   ///
   /// \note Calling this is only valid for \a DICompositeType.  This assertion
@@ -799,6 +782,7 @@ public:
   StringRef getIdentifier() const { return getStringOperand(7); }
   unsigned getRuntimeLang() const { return RuntimeLang; }
 
+  Metadata *getRawBaseType() const { return getOperand(3); }
   Metadata *getRawElements() const { return getOperand(4); }
   Metadata *getRawVTableHolder() const { return getOperand(5); }
   Metadata *getRawTemplateParams() const { return getOperand(6); }

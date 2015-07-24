@@ -302,7 +302,6 @@ private:
 #define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS) void visit##CLASS(const CLASS &N);
 #include "llvm/IR/Metadata.def"
   void visitDIScope(const DIScope &N);
-  void visitDIDerivedTypeBase(const DIDerivedTypeBase &N);
   void visitDIVariable(const DIVariable &N);
   void visitDILexicalBlockBase(const DILexicalBlockBase &N);
   void visitDITemplateParameter(const DITemplateParameter &N);
@@ -779,18 +778,9 @@ void Verifier::visitDIBasicType(const DIBasicType &N) {
          "invalid tag", &N);
 }
 
-void Verifier::visitDIDerivedTypeBase(const DIDerivedTypeBase &N) {
+void Verifier::visitDIDerivedType(const DIDerivedType &N) {
   // Common scope checks.
   visitDIScope(N);
-
-  Assert(isScopeRef(N, N.getScope()), "invalid scope", &N, N.getScope());
-  Assert(isTypeRef(N, N.getBaseType()), "invalid base type", &N,
-         N.getBaseType());
-}
-
-void Verifier::visitDIDerivedType(const DIDerivedType &N) {
-  // Common derived type checks.
-  visitDIDerivedTypeBase(N);
 
   Assert(N.getTag() == dwarf::DW_TAG_typedef ||
              N.getTag() == dwarf::DW_TAG_pointer_type ||
@@ -808,6 +798,10 @@ void Verifier::visitDIDerivedType(const DIDerivedType &N) {
     Assert(isTypeRef(N, N.getExtraData()), "invalid pointer to member type", &N,
            N.getExtraData());
   }
+
+  Assert(isScopeRef(N, N.getScope()), "invalid scope", &N, N.getScope());
+  Assert(isTypeRef(N, N.getBaseType()), "invalid base type", &N,
+         N.getBaseType());
 }
 
 static bool hasConflictingReferenceFlags(unsigned Flags) {
@@ -825,8 +819,8 @@ void Verifier::visitTemplateParams(const MDNode &N, const Metadata &RawParams) {
 }
 
 void Verifier::visitDICompositeType(const DICompositeType &N) {
-  // Common derived type checks.
-  visitDIDerivedTypeBase(N);
+  // Common scope checks.
+  visitDIScope(N);
 
   Assert(N.getTag() == dwarf::DW_TAG_array_type ||
              N.getTag() == dwarf::DW_TAG_structure_type ||
@@ -834,6 +828,10 @@ void Verifier::visitDICompositeType(const DICompositeType &N) {
              N.getTag() == dwarf::DW_TAG_enumeration_type ||
              N.getTag() == dwarf::DW_TAG_class_type,
          "invalid tag", &N);
+
+  Assert(isScopeRef(N, N.getScope()), "invalid scope", &N, N.getScope());
+  Assert(isTypeRef(N, N.getBaseType()), "invalid base type", &N,
+         N.getBaseType());
 
   Assert(!N.getRawElements() || isa<MDTuple>(N.getRawElements()),
          "invalid composite elements", &N, N.getRawElements());
