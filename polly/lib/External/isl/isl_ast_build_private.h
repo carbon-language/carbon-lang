@@ -221,6 +221,8 @@ __isl_give isl_ast_build *isl_ast_build_product(
 	__isl_take isl_ast_build *build, __isl_take isl_space *embedding);
 __isl_give isl_ast_build *isl_ast_build_set_loop_bounds(
 	__isl_take isl_ast_build *build, __isl_take isl_basic_set *bounds);
+__isl_give isl_ast_build *isl_ast_build_set_pending_generated(
+	__isl_take isl_ast_build *build, __isl_take isl_basic_set *bounds);
 __isl_give isl_ast_build *isl_ast_build_detect_strides(
 	__isl_take isl_ast_build *build, __isl_take isl_set *set);
 __isl_give isl_ast_build *isl_ast_build_include_stride(
@@ -270,6 +272,8 @@ int isl_ast_build_has_isolated(__isl_keep isl_ast_build *build);
 __isl_give isl_set *isl_ast_build_get_isolated(
 	__isl_keep isl_ast_build *build);
 
+__isl_give isl_basic_set *isl_ast_build_specialize_basic_set(
+	__isl_keep isl_ast_build *build, __isl_take isl_basic_set *bset);
 __isl_give isl_basic_set *isl_ast_build_compute_gist_basic_set(
 	__isl_keep isl_ast_build *build, __isl_take isl_basic_set *bset);
 __isl_give isl_set *isl_ast_build_specialize(__isl_keep isl_ast_build *build,

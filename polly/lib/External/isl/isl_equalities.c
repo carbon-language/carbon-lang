@@ -514,7 +514,7 @@ __isl_give isl_mat *isl_mat_variable_compression(__isl_take isl_mat *B,
 				isl_mat_free(U);
 				if (T2) {
 					isl_mat_free(*T2);
-					*T2 = NULL;
+					*T2 = isl_mat_alloc(ctx, 0, 1 + dim);
 				}
 				return isl_mat_alloc(ctx, 1 + dim, 0);
 			}

@@ -10,23 +10,6 @@
  * and Ecole Normale Superieure, 45 rue d'Ulm, 75230 Paris, France
  */
 
-#include <isl_hash_private.h>
-#include <isl_union_macro.h>
-
-/* A union of expressions defined over different domain spaces.
- * "space" describes the parameters.
- * The entries of "table" are keyed on the domain space of the entry.
- */
-struct UNION {
-	int ref;
-#ifdef HAS_TYPE
-	enum isl_fold type;
-#endif
-	isl_space *space;
-
-	struct isl_hash_table	table;
-};
-
 __isl_give UNION *FN(UNION,cow)(__isl_take UNION *u);
 
 isl_ctx *FN(UNION,get_ctx)(__isl_keep UNION *u)
@@ -120,113 +103,6 @@ __isl_give UNION *FN(UNION,copy)(__isl_keep UNION *u)
 	return u;
 }
 
-/* Return the number of base expressions in "u".
- */
-int FN(FN(UNION,n),PARTS)(__isl_keep UNION *u)
-{
-	return u ? u->table.n : 0;
-}
-
-S(UNION,foreach_data)
-{
-	isl_stat (*fn)(__isl_take PART *part, void *user);
-	void *user;
-};
-
-static isl_stat FN(UNION,call_on_copy)(void **entry, void *user)
-{
-	PART *part = *entry;
-	S(UNION,foreach_data) *data = (S(UNION,foreach_data) *)user;
-
-	return data->fn(FN(PART,copy)(part), data->user);
-}
-
-isl_stat FN(FN(UNION,foreach),PARTS)(__isl_keep UNION *u,
-	isl_stat (*fn)(__isl_take PART *part, void *user), void *user)
-{
-	S(UNION,foreach_data) data = { fn, user };
-
-	if (!u)
-		return isl_stat_error;
-
-	return isl_hash_table_foreach(u->space->ctx, &u->table,
-				      &FN(UNION,call_on_copy), &data);
-}
-
-/* Is the domain space of "entry" equal to the domain of "space"?
- */
-static int FN(UNION,has_same_domain_space)(const void *entry, const void *val)
-{
-	PART *part = (PART *)entry;
-	isl_space *space = (isl_space *) val;
-
-	if (isl_space_is_set(space))
-		return isl_space_is_set(part->dim);
-
-	return isl_space_tuple_is_equal(part->dim, isl_dim_in,
-					space, isl_dim_in);
-}
-
-/* Return the entry, if any, in "u" that lives in "space".
- * If "reserve" is set, then an entry is created if it does not exist yet.
- * Return NULL on error and isl_hash_table_entry_none if no entry was found.
- * Note that when "reserve" is set, the function will never return
- * isl_hash_table_entry_none.
- *
- * First look for the entry (if any) with the same domain space.
- * If it exists, then check if the range space also matches.
- */
-static struct isl_hash_table_entry *FN(UNION,find_part_entry)(
-	__isl_keep UNION *u, __isl_keep isl_space *space, int reserve)
-{
-	isl_ctx *ctx;
-	uint32_t hash;
-	struct isl_hash_table_entry *entry;
-	isl_bool equal;
-	PART *part;
-
-	if (!u || !space)
-		return NULL;
-
-	ctx = FN(UNION,get_ctx)(u);
-	hash = isl_space_get_domain_hash(space);
-	entry = isl_hash_table_find(ctx, &u->table, hash,
-			&FN(UNION,has_same_domain_space), space, reserve);
-	if (!entry)
-		return reserve ? NULL : isl_hash_table_entry_none;
-	if (reserve && !entry->data)
-		return entry;
-	part = entry->data;
-	equal = isl_space_tuple_is_equal(part->dim, isl_dim_out,
-					    space, isl_dim_out);
-	if (equal < 0)
-		return NULL;
-	if (equal)
-		return entry;
-	if (!reserve)
-		return isl_hash_table_entry_none;
-	isl_die(FN(UNION,get_ctx)(u), isl_error_invalid,
-		"union expression can only contain a single "
-		"expression over a given domain", return NULL);
-}
-
-/* Remove "part_entry" from the hash table of "u".
- */
-static __isl_give UNION *FN(UNION,remove_part_entry)(__isl_take UNION *u,
-	struct isl_hash_table_entry *part_entry)
-{
-	isl_ctx *ctx;
-
-	if (!u || !part_entry)
-		return FN(UNION,free)(u);
-
-	ctx = FN(UNION,get_ctx)(u);
-	isl_hash_table_remove(ctx, &u->table, part_entry);
-	FN(PART,free)(part_entry->data);
-
-	return u;
-}
-
 /* Extract the element of "u" living in "space" (ignoring parameters).
  *
  * Return the ZERO element if "u" does not contain any element
@@ -266,7 +142,8 @@ error:
 
 /* Add "part" to "u".
  * If "disjoint" is set, then "u" is not allowed to already have
- * a part that is defined on the same space as "part".
+ * a part that is defined over a domain that overlaps with the domain
+ * of "part".
  * Otherwise, compute the union sum of "part" and the part in "u"
  * defined on the same space.
  */
@@ -295,6 +172,8 @@ static __isl_give UNION *FN(UNION,add_part_generic)(__isl_take UNION *u,
 	if (!u)
 		goto error;
 
+	if (FN(UNION,check_disjoint_domain_other)(u, part) < 0)
+		goto error;
 	entry = FN(UNION,find_part_entry)(u, part->dim, 1);
 	if (!entry)
 		goto error;
@@ -302,10 +181,9 @@ static __isl_give UNION *FN(UNION,add_part_generic)(__isl_take UNION *u,
 	if (!entry->data)
 		entry->data = part;
 	else {
-		if (disjoint)
-			isl_die(FN(UNION,get_ctx)(u), isl_error_invalid,
-				"additional part should live on separate "
-				"space", goto error);
+		if (disjoint &&
+		    FN(UNION,check_disjoint_domain)(entry->data, part) < 0)
+			goto error;
 		entry->data = FN(PART,union_add_)(entry->data,
 						FN(PART,copy)(part));
 		if (!entry->data)
@@ -365,19 +243,6 @@ static __isl_give UNION *FN(UNION,alloc_same_size)(__isl_keep UNION *u)
 	return FN(UNION,alloc_same_size_on_space)(u, FN(UNION,get_space)(u));
 }
 
-/* Call "fn" on each part entry of "u".
- */
-static isl_stat FN(UNION,foreach_inplace)(__isl_keep UNION *u,
-	isl_stat (*fn)(void **part, void *user), void *user)
-{
-	isl_ctx *ctx;
-
-	if (!u)
-		return isl_stat_error;
-	ctx = FN(UNION,get_ctx)(u);
-	return isl_hash_table_foreach(ctx, &u->table, fn, user);
-}
-
 /* Internal data structure for isl_union_*_transform_space.
  * "fn' is applied to each entry in the input.
  * "res" collects the results.
@@ -430,6 +295,43 @@ static __isl_give UNION *FN(UNION,transform)(__isl_take UNION *u,
 	return FN(UNION,transform_space)(u, FN(UNION,get_space)(u), fn, user);
 }
 
+/* Apply data->fn to *part and store the result back into *part.
+ */
+static isl_stat FN(UNION,transform_inplace_entry)(void **part, void *user)
+{
+	S(UNION,transform_data) *data = (S(UNION,transform_data) *) user;
+
+	*part = data->fn(*part, data->user);
+	if (!*part)
+		return isl_stat_error;
+	return isl_stat_ok;
+}
+
+/* Update "u" by applying "fn" to each entry.
+ * This operation is assumed not to change the number of entries nor
+ * the spaces of the entries.
+ *
+ * If there is only one reference to "u", then change "u" inplace.
+ * Otherwise, create a new UNION from "u" and discard the original.
+ */
+static __isl_give UNION *FN(UNION,transform_inplace)(__isl_take UNION *u,
+	__isl_give PART *(*fn)(__isl_take PART *part, void *user), void *user)
+{
+	isl_bool single_ref;
+
+	single_ref = FN(UNION,has_single_reference)(u);
+	if (single_ref < 0)
+		return FN(UNION,free)(u);
+	if (single_ref) {
+		S(UNION,transform_data) data = { fn, user };
+		if (FN(UNION,foreach_inplace)(u,
+				&FN(UNION,transform_inplace_entry), &data) < 0)
+			return FN(UNION,free)(u);
+		return u;
+	}
+	return FN(UNION,transform)(u, fn, user);
+}
+
 /* An isl_union_*_transform callback for use in isl_union_*_dup
  * that simply returns "part".
  */
@@ -453,13 +355,6 @@ __isl_give UNION *FN(UNION,cow)(__isl_take UNION *u)
 		return u;
 	u->ref--;
 	return FN(UNION,dup)(u);
-}
-
-static isl_stat FN(UNION,free_u_entry)(void **entry, void *user)
-{
-	PART *part = *entry;
-	FN(PART,free)(part);
-	return isl_stat_ok;
 }
 
 __isl_null UNION *FN(UNION,free)(__isl_take UNION *u)
@@ -605,34 +500,34 @@ S(UNION,match_bin_data) {
 	__isl_give PART *(*fn)(__isl_take PART *, __isl_take PART *);
 };
 
-/* Check if data->u2 has an element living in the same space as *entry.
+/* Check if data->u2 has an element living in the same space as "part".
  * If so, call data->fn on the two elements and add the result to
  * data->res.
  */
-static isl_stat FN(UNION,match_bin_entry)(void **entry, void *user)
+static isl_stat FN(UNION,match_bin_entry)(__isl_take PART *part, void *user)
 {
 	S(UNION,match_bin_data) *data = user;
 	struct isl_hash_table_entry *entry2;
 	isl_space *space;
-	PART *part = *entry;
 	PART *part2;
 
 	space = FN(PART,get_space)(part);
 	entry2 = FN(UNION,find_part_entry)(data->u2, space, 0);
 	isl_space_free(space);
 	if (!entry2)
-		return isl_stat_error;
-	if (entry2 == isl_hash_table_entry_none)
+		goto error;
+	if (entry2 == isl_hash_table_entry_none) {
+		FN(PART,free)(part);
 		return isl_stat_ok;
+	}
 
 	part2 = entry2->data;
 	if (!isl_space_tuple_is_equal(part->dim, isl_dim_out,
 					part2->dim, isl_dim_out))
 		isl_die(FN(UNION,get_ctx)(data->u2), isl_error_invalid,
 			"entries should have the same range space",
-			return isl_stat_error);
+			goto error);
 
-	part = FN(PART, copy)(part);
 	part = data->fn(part, FN(PART, copy)(entry2->data));
 
 	data->res = FN(FN(UNION,add),PARTS)(data->res, part);
@@ -640,6 +535,9 @@ static isl_stat FN(UNION,match_bin_entry)(void **entry, void *user)
 		return isl_stat_error;
 
 	return isl_stat_ok;
+error:
+	FN(PART,free)(part);
+	return isl_stat_error;
 }
 
 /* This function is currently only used from isl_polynomial.c
@@ -666,7 +564,7 @@ static __isl_give UNION *FN(UNION,match_bin_op)(__isl_take UNION *u1,
 
 	data.u2 = u2;
 	data.res = FN(UNION,alloc_same_size)(u1);
-	if (isl_hash_table_foreach(u1->space->ctx, &u1->table,
+	if (FN(FN(UNION,foreach),PARTS)(u1,
 				    &FN(UNION,match_bin_entry), &data) < 0)
 		goto error;
 
@@ -773,29 +671,29 @@ static int FN(UNION,set_has_dim)(const void *entry, const void *val)
 }
 
 /* Find the set in data->uset that lives in the same space as the domain
- * of *entry, apply data->fn to *entry and this set (if any), and add
+ * of "part", apply data->fn to *entry and this set (if any), and add
  * the result to data->res.
  */
-static isl_stat FN(UNION,match_domain_entry)(void **entry, void *user)
+static isl_stat FN(UNION,match_domain_entry)(__isl_take PART *part, void *user)
 {
 	S(UNION,match_domain_data) *data = user;
 	uint32_t hash;
 	struct isl_hash_table_entry *entry2;
-	PW *pw = *entry;
 	isl_space *space;
 
-	space = FN(PW,get_domain_space)(pw);
+	space = FN(PART,get_domain_space)(part);
 	hash = isl_space_get_hash(space);
 	entry2 = isl_hash_table_find(data->uset->dim->ctx, &data->uset->table,
 				     hash, &FN(UNION,set_has_dim), space, 0);
 	isl_space_free(space);
-	if (!entry2)
+	if (!entry2) {
+		FN(PART,free)(part);
 		return isl_stat_ok;
+	}
 
-	pw = FN(PW,copy)(pw);
-	pw = data->fn(pw, isl_set_copy(entry2->data));
+	part = data->fn(part, isl_set_copy(entry2->data));
 
-	data->res = FN(FN(UNION,add),PARTS)(data->res, pw);
+	data->res = FN(FN(UNION,add),PARTS)(data->res, part);
 	if (!data->res)
 		return isl_stat_error;
 
@@ -820,7 +718,7 @@ static __isl_give UNION *FN(UNION,match_domain_op)(__isl_take UNION *u,
 
 	data.uset = uset;
 	data.res = FN(UNION,alloc_same_size)(u);
-	if (isl_hash_table_foreach(u->space->ctx, &u->table,
+	if (FN(FN(UNION,foreach),PARTS)(u,
 				   &FN(UNION,match_domain_entry), &data) < 0)
 		goto error;
 
@@ -958,16 +856,12 @@ static __isl_give UNION *FN(UNION,negate_type)(__isl_take UNION *u)
 }
 #endif
 
-static isl_stat FN(UNION,mul_isl_int_entry)(void **entry, void *user)
+static __isl_give PART *FN(UNION,mul_isl_int_entry)(__isl_take PART *part,
+	void *user)
 {
-	PW **pw = (PW **)entry;
 	isl_int *v = user;
 
-	*pw = FN(PW,mul_isl_int)(*pw, *v);
-	if (!*pw)
-		return isl_stat_error;
-
-	return isl_stat_ok;
+	return FN(PW,mul_isl_int)(part, *v);
 }
 
 __isl_give UNION *FN(UNION,mul_isl_int)(__isl_take UNION *u, isl_int v)
@@ -987,36 +881,21 @@ __isl_give UNION *FN(UNION,mul_isl_int)(__isl_take UNION *u, isl_int v)
 		return zero;
 	}
 
-	u = FN(UNION,cow)(u);
+	u = FN(UNION,transform_inplace)(u, &FN(UNION,mul_isl_int_entry), &v);
 	if (isl_int_is_neg(v))
 		u = FN(UNION,negate_type)(u);
-	if (!u)
-		return NULL;
-
-	if (isl_hash_table_foreach(u->space->ctx, &u->table,
-				    &FN(UNION,mul_isl_int_entry), &v) < 0)
-		goto error;
 
 	return u;
-error:
-	FN(UNION,free)(u);
-	return NULL;
 }
 
-/* Multiply *entry by the isl_val "user".
- *
- * Return 0 on success and -1 on error.
+/* Multiply "part" by the isl_val "user" and return the result.
  */
-static isl_stat FN(UNION,scale_val_entry)(void **entry, void *user)
+static __isl_give PART *FN(UNION,scale_val_entry)(__isl_take PART *part,
+	void *user)
 {
-	PW **pw = (PW **)entry;
 	isl_val *v = user;
 
-	*pw = FN(PW,scale_val)(*pw, isl_val_copy(v));
-	if (!*pw)
-		return isl_stat_error;
-
-	return isl_stat_ok;
+	return FN(PART,scale_val)(part, isl_val_copy(v));
 }
 
 /* Multiply "u" by "v" and return the result.
@@ -1048,15 +927,9 @@ __isl_give UNION *FN(UNION,scale_val)(__isl_take UNION *u,
 		isl_die(isl_val_get_ctx(v), isl_error_invalid,
 			"expecting rational factor", goto error);
 
-	u = FN(UNION,cow)(u);
+	u = FN(UNION,transform_inplace)(u, &FN(UNION,scale_val_entry), v);
 	if (isl_val_is_neg(v))
 		u = FN(UNION,negate_type)(u);
-	if (!u)
-		return NULL;
-
-	if (isl_hash_table_foreach(u->space->ctx, &u->table,
-				    &FN(UNION,scale_val_entry), v) < 0)
-		goto error;
 
 	isl_val_free(v);
 	return u;
@@ -1066,20 +939,14 @@ error:
 	return NULL;
 }
 
-/* Divide *entry by the isl_val "user".
- *
- * Return 0 on success and -1 on error.
+/* Divide "part" by the isl_val "user" and return the result.
  */
-static isl_stat FN(UNION,scale_down_val_entry)(void **entry, void *user)
+static __isl_give PART *FN(UNION,scale_down_val_entry)(__isl_take PART *part,
+	void *user)
 {
-	PW **pw = (PW **)entry;
 	isl_val *v = user;
 
-	*pw = FN(PW,scale_down_val)(*pw, isl_val_copy(v));
-	if (!*pw)
-		return isl_stat_error;
-
-	return isl_stat_ok;
+	return FN(PART,scale_down_val)(part, isl_val_copy(v));
 }
 
 /* Divide "u" by "v" and return the result.
@@ -1101,15 +968,9 @@ __isl_give UNION *FN(UNION,scale_down_val)(__isl_take UNION *u,
 		isl_die(isl_val_get_ctx(v), isl_error_invalid,
 			"cannot scale down by zero", goto error);
 
-	u = FN(UNION,cow)(u);
+	u = FN(UNION,transform_inplace)(u, &FN(UNION,scale_down_val_entry), v);
 	if (isl_val_is_neg(v))
 		u = FN(UNION,negate_type)(u);
-	if (!u)
-		return NULL;
-
-	if (isl_hash_table_foreach(FN(UNION,get_ctx)(u), &u->table,
-				    &FN(UNION,scale_down_val_entry), v) < 0)
-		goto error;
 
 	isl_val_free(v);
 	return u;
@@ -1150,12 +1011,19 @@ static isl_stat FN(UNION,plain_is_equal_entry)(void **entry, void *user)
 isl_bool FN(UNION,plain_is_equal)(__isl_keep UNION *u1, __isl_keep UNION *u2)
 {
 	S(UNION,plain_is_equal_data) data = { NULL, isl_bool_true };
+	int n1, n2;
 
 	if (!u1 || !u2)
 		return isl_bool_error;
 	if (u1 == u2)
 		return isl_bool_true;
 	if (u1->table.n != u2->table.n)
+		return isl_bool_false;
+	n1 = FN(FN(UNION,n),PARTS)(u1);
+	n2 = FN(FN(UNION,n),PARTS)(u2);
+	if (n1 < 0 || n2 < 0)
+		return isl_bool_error;
+	if (n1 != n2)
 		return isl_bool_false;
 
 	u1 = FN(UNION,copy)(u1);

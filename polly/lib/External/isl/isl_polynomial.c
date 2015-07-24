@@ -2817,7 +2817,7 @@ __isl_give isl_pw_qpolynomial *isl_pw_qpolynomial_from_qpolynomial(
 #undef PARTS
 #define PARTS pw_qpolynomial
 
-#include <isl_union_templ.c>
+#include <isl_union_single.c>
 #include <isl_union_eval.c>
 #include <isl_union_neg.c>
 
@@ -4772,31 +4772,19 @@ error:
 	return NULL;
 }
 
-static isl_stat poly_entry(void **entry, void *user)
+static __isl_give isl_pw_qpolynomial *poly_entry(
+	__isl_take isl_pw_qpolynomial *pwqp, void *user)
 {
 	int *sign = user;
-	isl_pw_qpolynomial **pwqp = (isl_pw_qpolynomial **)entry;
 
-	*pwqp = isl_pw_qpolynomial_to_polynomial(*pwqp, *sign);
-
-	return *pwqp ? isl_stat_ok : isl_stat_error;
+	return isl_pw_qpolynomial_to_polynomial(pwqp, *sign);
 }
 
 __isl_give isl_union_pw_qpolynomial *isl_union_pw_qpolynomial_to_polynomial(
 	__isl_take isl_union_pw_qpolynomial *upwqp, int sign)
 {
-	upwqp = isl_union_pw_qpolynomial_cow(upwqp);
-	if (!upwqp)
-		return NULL;
-
-	if (isl_hash_table_foreach(upwqp->space->ctx, &upwqp->table,
-				   &poly_entry, &sign) < 0)
-		goto error;
-
-	return upwqp;
-error:
-	isl_union_pw_qpolynomial_free(upwqp);
-	return NULL;
+	return isl_union_pw_qpolynomial_transform_inplace(upwqp,
+				   &poly_entry, &sign);
 }
 
 __isl_give isl_basic_map *isl_basic_map_from_qpolynomial(

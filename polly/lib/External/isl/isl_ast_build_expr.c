@@ -1453,7 +1453,7 @@ __isl_give isl_ast_expr *isl_ast_build_expr_from_basic_set(
 		return NULL;
 	n = isl_constraint_list_n_constraint(list);
 	if (n == 0) {
-		isl_ctx *ctx = isl_basic_set_get_ctx(bset);
+		isl_ctx *ctx = isl_constraint_list_get_ctx(list);
 		isl_constraint_list_free(list);
 		return isl_ast_expr_alloc_int_si(ctx, 1);
 	}

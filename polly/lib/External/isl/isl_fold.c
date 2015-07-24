@@ -684,7 +684,7 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_gist_params(
 
 #define NO_SUB
 
-#include <isl_union_templ.c>
+#include <isl_union_single.c>
 #include <isl_union_eval.c>
 
 __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_empty(enum isl_fold type,

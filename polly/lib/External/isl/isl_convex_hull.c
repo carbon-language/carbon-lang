@@ -2326,6 +2326,25 @@ error:
 
 /* Compute a superset of the convex hull of map that is described
  * by only (translates of) the constraints in the constituents of map.
+ * Handle trivial cases where map is NULL or contains at most one disjunct.
+ */
+static __isl_give isl_basic_map *map_simple_hull_trivial(
+	__isl_take isl_map *map)
+{
+	isl_basic_map *hull;
+
+	if (!map)
+		return NULL;
+	if (map->n == 0)
+		return replace_map_by_empty_basic_map(map);
+
+	hull = isl_basic_map_copy(map->p[0]);
+	isl_map_free(map);
+	return hull;
+}
+
+/* Compute a superset of the convex hull of map that is described
+ * by only (translates of) the constraints in the constituents of map.
  * Translation is only allowed if "shift" is set.
  */
 static __isl_give isl_basic_map *map_simple_hull(__isl_take isl_map *map,
@@ -2337,17 +2356,12 @@ static __isl_give isl_basic_map *map_simple_hull(__isl_take isl_map *map,
 	struct isl_basic_map *affine_hull;
 	struct isl_basic_set *bset = NULL;
 
-	if (!map)
-		return NULL;
-	if (map->n == 0)
-		return replace_map_by_empty_basic_map(map);
-	if (map->n == 1) {
-		hull = isl_basic_map_copy(map->p[0]);
-		isl_map_free(map);
-		return hull;
-	}
+	if (!map || map->n <= 1)
+		return map_simple_hull_trivial(map);
 
 	map = isl_map_detect_equalities(map);
+	if (!map || map->n <= 1)
+		return map_simple_hull_trivial(map);
 	affine_hull = isl_map_affine_hull(isl_map_copy(map));
 	map = isl_map_align_divs(map);
 	model = map ? isl_basic_map_copy(map->p[0]) : NULL;

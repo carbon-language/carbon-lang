@@ -2578,7 +2578,7 @@ __isl_give isl_pw_aff *isl_pw_aff_from_aff(__isl_take isl_aff *aff)
 #undef PARTS
 #define PARTS pw_aff
 
-#include <isl_union_templ.c>
+#include <isl_union_single.c>
 #include <isl_union_neg.c>
 
 static __isl_give isl_set *align_params_pw_pw_set_and(
@@ -4073,7 +4073,7 @@ __isl_give isl_set *isl_multi_aff_lex_ge_set(__isl_take isl_multi_aff *ma1,
 #undef PARTS
 #define PARTS pw_multi_aff
 
-#include <isl_union_templ.c>
+#include <isl_union_multi.c>
 #include <isl_union_neg.c>
 
 /* Given a function "cmp" that returns the set of elements where
@@ -5722,23 +5722,23 @@ struct isl_union_pw_multi_aff_bin_data {
 	isl_union_pw_multi_aff *upma2;
 	isl_union_pw_multi_aff *res;
 	isl_pw_multi_aff *pma;
-	isl_stat (*fn)(void **entry, void *user);
+	isl_stat (*fn)(__isl_take isl_pw_multi_aff *pma, void *user);
 };
 
 /* Given an isl_pw_multi_aff from upma1, store it in data->pma
  * and call data->fn for each isl_pw_multi_aff in data->upma2.
  */
-static isl_stat bin_entry(void **entry, void *user)
+static isl_stat bin_entry(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	struct isl_union_pw_multi_aff_bin_data *data = user;
-	isl_pw_multi_aff *pma = *entry;
+	isl_stat r;
 
 	data->pma = pma;
-	if (isl_hash_table_foreach(data->upma2->space->ctx, &data->upma2->table,
-				   data->fn, data) < 0)
-		return isl_stat_error;
+	r = isl_union_pw_multi_aff_foreach_pw_multi_aff(data->upma2,
+				   data->fn, data);
+	isl_pw_multi_aff_free(pma);
 
-	return isl_stat_ok;
+	return r;
 }
 
 /* Call "fn" on each pair of isl_pw_multi_affs in "upma1" and "upma2".
@@ -5749,7 +5749,7 @@ static isl_stat bin_entry(void **entry, void *user)
 static __isl_give isl_union_pw_multi_aff *bin_op(
 	__isl_take isl_union_pw_multi_aff *upma1,
 	__isl_take isl_union_pw_multi_aff *upma2,
-	isl_stat (*fn)(void **entry, void *user))
+	isl_stat (*fn)(__isl_take isl_pw_multi_aff *pma, void *user))
 {
 	isl_space *space;
 	struct isl_union_pw_multi_aff_bin_data data = { NULL, NULL, NULL, fn };
@@ -5764,7 +5764,7 @@ static __isl_give isl_union_pw_multi_aff *bin_op(
 
 	data.upma2 = upma2;
 	data.res = isl_union_pw_multi_aff_alloc_same_size(upma1);
-	if (isl_hash_table_foreach(upma1->space->ctx, &upma1->table,
+	if (isl_union_pw_multi_aff_foreach_pw_multi_aff(upma1,
 				   &bin_entry, &data) < 0)
 		goto error;
 
@@ -5827,21 +5827,22 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_flat_range_product(
 					    &pw_multi_aff_flat_range_product);
 }
 
-/* If data->pma and *entry have the same domain space, then compute
+/* If data->pma and "pma2" have the same domain space, then compute
  * their flat range product and the result to data->res.
  */
-static isl_stat flat_range_product_entry(void **entry, void *user)
+static isl_stat flat_range_product_entry(__isl_take isl_pw_multi_aff *pma2,
+	void *user)
 {
 	struct isl_union_pw_multi_aff_bin_data *data = user;
-	isl_pw_multi_aff *pma2 = *entry;
 
 	if (!isl_space_tuple_is_equal(data->pma->dim, isl_dim_in,
-				 pma2->dim, isl_dim_in))
+				 pma2->dim, isl_dim_in)) {
+		isl_pw_multi_aff_free(pma2);
 		return isl_stat_ok;
+	}
 
 	pma2 = isl_pw_multi_aff_flat_range_product(
-					isl_pw_multi_aff_copy(data->pma),
-					isl_pw_multi_aff_copy(pma2));
+					isl_pw_multi_aff_copy(data->pma), pma2);
 
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma2);
 
@@ -7118,18 +7119,18 @@ __isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_multi_val_on_domain(
 /* Compute the pullback of data->pma by the function represented by "pma2",
  * provided the spaces match, and add the results to data->res.
  */
-static isl_stat pullback_entry(void **entry, void *user)
+static isl_stat pullback_entry(__isl_take isl_pw_multi_aff *pma2, void *user)
 {
 	struct isl_union_pw_multi_aff_bin_data *data = user;
-	isl_pw_multi_aff *pma2 = *entry;
 
 	if (!isl_space_tuple_is_equal(data->pma->dim, isl_dim_in,
-				 pma2->dim, isl_dim_out))
+				 pma2->dim, isl_dim_out)) {
+		isl_pw_multi_aff_free(pma2);
 		return isl_stat_ok;
+	}
 
 	pma2 = isl_pw_multi_aff_pullback_pw_multi_aff(
-					isl_pw_multi_aff_copy(data->pma),
-					isl_pw_multi_aff_copy(pma2));
+					isl_pw_multi_aff_copy(data->pma), pma2);
 
 	data->res = isl_union_pw_multi_aff_add_pw_multi_aff(data->res, pma2);
 	if (!data->res)
@@ -7265,18 +7266,11 @@ static __isl_give isl_union_pw_aff *isl_union_pw_aff_reset_domain_space(
 	return data.res;
 }
 
-/* Replace the entry of isl_union_pw_aff to which "entry" points
- * by its floor.
+/* Return the floor of "pa".
  */
-static isl_stat floor_entry(void **entry, void *user)
+static __isl_give isl_pw_aff *floor_entry(__isl_take isl_pw_aff *pa, void *user)
 {
-	isl_pw_aff **pa = (isl_pw_aff **) entry;
-
-	*pa = isl_pw_aff_floor(*pa);
-	if (!*pa)
-		return isl_stat_error;
-
-	return isl_stat_ok;
+	return isl_pw_aff_floor(pa);
 }
 
 /* Given f, return floor(f).
@@ -7284,17 +7278,7 @@ static isl_stat floor_entry(void **entry, void *user)
 __isl_give isl_union_pw_aff *isl_union_pw_aff_floor(
 	__isl_take isl_union_pw_aff *upa)
 {
-	isl_ctx *ctx;
-
-	upa = isl_union_pw_aff_cow(upa);
-	if (!upa)
-		return NULL;
-
-	ctx = isl_union_pw_aff_get_ctx(upa);
-	if (isl_hash_table_foreach(ctx, &upa->table, &floor_entry, NULL) < 0)
-		upa = isl_union_pw_aff_free(upa);
-
-	return upa;
+	return isl_union_pw_aff_transform_inplace(upa, &floor_entry, NULL);
 }
 
 /* Compute
@@ -7618,17 +7602,17 @@ struct isl_union_pw_aff_pullback_upma_data {
 /* Check if "pma" can be plugged into data->pa.
  * If so, perform the pullback and add the result to data->res.
  */
-static isl_stat pa_pb_pma(void **entry, void *user)
+static isl_stat pa_pb_pma(__isl_take isl_pw_multi_aff *pma, void *user)
 {
 	struct isl_union_pw_aff_pullback_upma_data *data = user;
-	isl_pw_multi_aff *pma = *entry;
 	isl_pw_aff *pa;
 
 	if (!isl_space_tuple_is_equal(data->pa->dim, isl_dim_in,
-				 pma->dim, isl_dim_out))
+				 pma->dim, isl_dim_out)) {
+		isl_pw_multi_aff_free(pma);
 		return isl_stat_ok;
+	}
 
-	pma = isl_pw_multi_aff_copy(pma);
 	pa = isl_pw_aff_copy(data->pa);
 	pa = isl_pw_aff_pullback_pw_multi_aff(pa, pma);
 
@@ -7640,19 +7624,17 @@ static isl_stat pa_pb_pma(void **entry, void *user)
 /* Check if any of the elements of data->upma can be plugged into pa,
  * add if so add the result to data->res.
  */
-static isl_stat upa_pb_upma(void **entry, void *user)
+static isl_stat upa_pb_upma(__isl_take isl_pw_aff *pa, void *user)
 {
 	struct isl_union_pw_aff_pullback_upma_data *data = user;
-	isl_ctx *ctx;
-	isl_pw_aff *pa = *entry;
+	isl_stat r;
 
 	data->pa = pa;
-	ctx = isl_union_pw_multi_aff_get_ctx(data->upma);
-	if (isl_hash_table_foreach(ctx, &data->upma->table,
-				   &pa_pb_pma, data) < 0)
-		return isl_stat_error;
+	r = isl_union_pw_multi_aff_foreach_pw_multi_aff(data->upma,
+				   &pa_pb_pma, data);
+	isl_pw_aff_free(pa);
 
-	return isl_stat_ok;
+	return r;
 }
 
 /* Compute the pullback of "upa" by the function represented by "upma".
@@ -7670,7 +7652,6 @@ __isl_give isl_union_pw_aff *isl_union_pw_aff_pullback_union_pw_multi_aff(
 	__isl_take isl_union_pw_multi_aff *upma)
 {
 	struct isl_union_pw_aff_pullback_upma_data data = { NULL, NULL };
-	isl_ctx *ctx;
 	isl_space *space;
 
 	space = isl_union_pw_multi_aff_get_space(upma);
@@ -7681,10 +7662,9 @@ __isl_give isl_union_pw_aff *isl_union_pw_aff_pullback_union_pw_multi_aff(
 	if (!upa || !upma)
 		goto error;
 
-	ctx = isl_union_pw_aff_get_ctx(upa);
 	data.upma = upma;
 	data.res = isl_union_pw_aff_alloc_same_size(upa);
-	if (isl_hash_table_foreach(ctx, &upa->table, &upa_pb_upma, &data) < 0)
+	if (isl_union_pw_aff_foreach_pw_aff(upa, &upa_pb_upma, &data) < 0)
 		data.res = isl_union_pw_aff_free(data.res);
 
 	isl_union_pw_aff_free(upa);

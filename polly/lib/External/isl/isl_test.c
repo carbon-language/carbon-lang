@@ -1105,6 +1105,30 @@ int test_affine_hull(struct isl_ctx *ctx)
 	return 0;
 }
 
+static int test_simple_hull(struct isl_ctx *ctx)
+{
+	const char *str;
+	isl_set *set;
+	isl_basic_set *bset;
+	isl_bool is_empty;
+
+	str = "{ [x, y] : 3y <= 2x and y >= -2 + 2x and 2y >= 2 - x;"
+		"[y, x] : 3y <= 2x and y >= -2 + 2x and 2y >= 2 - x }";
+	set = isl_set_read_from_str(ctx, str);
+	bset = isl_set_simple_hull(set);
+	is_empty = isl_basic_set_is_empty(bset);
+	isl_basic_set_free(bset);
+
+	if (is_empty == isl_bool_error)
+		return -1;
+
+	if (is_empty == isl_bool_false)
+		isl_die(ctx, isl_error_unknown, "Empty set should be detected",
+			return -1);
+
+	return 0;
+}
+
 void test_convex_hull_case(struct isl_ctx *ctx, const char *name)
 {
 	char *filename;
@@ -1598,6 +1622,7 @@ struct {
 		"32e0 >= -31 + i2 and 32e0 <= 30 + i2 and 32e0 <= 31 + i1 and "
 		"32e0 <= 31 + i0)) or "
 		"i0 >= 0 }" },
+	{ 1, "{ [a, b, c] : 2b = 1 + a and 2c = 2 + a; [0, 0, 0] }" },
 };
 
 /* A specialized coalescing test case that would result
@@ -3896,6 +3921,17 @@ struct {
 	{ &isl_union_pw_multi_aff_union_add, "{ A[] -> [0]; B[0] -> [1] }",
 	  "{ B[x] -> [2] : x >= 0 }",
 	  "{ A[] -> [0]; B[0] -> [3]; B[x] -> [2] : x >= 1 }" },
+	{ &isl_union_pw_multi_aff_pullback_union_pw_multi_aff,
+	  "{ A[] -> B[0]; C[x] -> B[1] : x < 10; C[y] -> B[2] : y >= 10 }",
+	  "{ D[i] -> A[] : i < 0; D[i] -> C[i + 5] : i >= 0 }",
+	  "{ D[i] -> B[0] : i < 0; D[i] -> B[1] : 0 <= i < 5; "
+	    "D[i] -> B[2] : i >= 5 }" },
+	{ &isl_union_pw_multi_aff_union_add, "{ B[x] -> A[1] : x <= 0 }",
+	  "{ B[x] -> C[2] : x > 0 }",
+	  "{ B[x] -> A[1] : x <= 0; B[x] -> C[2] : x > 0 }" },
+	{ &isl_union_pw_multi_aff_union_add, "{ B[x] -> A[1] : x <= 0 }",
+	  "{ B[x] -> A[2] : x >= 0 }",
+	  "{ B[x] -> A[1] : x < 0; B[x] -> A[2] : x > 0; B[0] -> A[3] }" },
 };
 
 /* Perform some basic tests of binary operations on
@@ -3928,6 +3964,47 @@ static int test_bin_upma(isl_ctx *ctx)
 	return 0;
 }
 
+struct {
+	__isl_give isl_union_pw_multi_aff *(*fn)(
+		__isl_take isl_union_pw_multi_aff *upma1,
+		__isl_take isl_union_pw_multi_aff *upma2);
+	const char *arg1;
+	const char *arg2;
+} upma_bin_fail_tests[] = {
+	{ &isl_union_pw_multi_aff_union_add, "{ B[x] -> A[1] : x <= 0 }",
+	  "{ B[x] -> C[2] : x >= 0 }" },
+};
+
+/* Perform some basic tests of binary operations on
+ * isl_union_pw_multi_aff objects that are expected to fail.
+ */
+static int test_bin_upma_fail(isl_ctx *ctx)
+{
+	int i, n;
+	isl_union_pw_multi_aff *upma1, *upma2;
+	int on_error;
+
+	on_error = isl_options_get_on_error(ctx);
+	isl_options_set_on_error(ctx, ISL_ON_ERROR_CONTINUE);
+	n = ARRAY_SIZE(upma_bin_fail_tests);
+	for (i = 0; i < n; ++i) {
+		upma1 = isl_union_pw_multi_aff_read_from_str(ctx,
+						upma_bin_fail_tests[i].arg1);
+		upma2 = isl_union_pw_multi_aff_read_from_str(ctx,
+						upma_bin_fail_tests[i].arg2);
+		upma1 = upma_bin_fail_tests[i].fn(upma1, upma2);
+		isl_union_pw_multi_aff_free(upma1);
+		if (upma1)
+			break;
+	}
+	isl_options_set_on_error(ctx, on_error);
+	if (i < n)
+		isl_die(ctx, isl_error_unknown,
+			"operation not expected to succeed", return -1);
+
+	return 0;
+}
+
 int test_aff(isl_ctx *ctx)
 {
 	const char *str;
@@ -3940,6 +4017,8 @@ int test_aff(isl_ctx *ctx)
 	if (test_bin_aff(ctx) < 0)
 		return -1;
 	if (test_bin_upma(ctx) < 0)
+		return -1;
+	if (test_bin_upma_fail(ctx) < 0)
 		return -1;
 
 	space = isl_space_set_alloc(ctx, 0, 1);
@@ -5986,6 +6065,7 @@ struct {
 	{ "parse", &test_parse },
 	{ "single-valued", &test_sv },
 	{ "affine hull", &test_affine_hull },
+	{ "simple_hull", &test_simple_hull },
 	{ "coalesce", &test_coalesce },
 	{ "factorize", &test_factorize },
 	{ "subset", &test_subset },

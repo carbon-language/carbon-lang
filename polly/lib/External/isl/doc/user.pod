@@ -212,9 +212,6 @@ a regular basic set, rather than a rational basic set.
 
 =over
 
-=item * Objects of type C<isl_union_pw_multi_aff> can no longer contain
-two or more C<isl_pw_multi_aff> objects with the same domain space.
-
 =item * The function C<isl_union_pw_multi_aff_add> now consistently
 computes the sum on the shared definition domain.
 The function C<isl_union_pw_multi_aff_union_add> has been added
@@ -3128,6 +3125,14 @@ is that of the shared parameter space.
 The union expression types defined by C<isl>
 are C<isl_union_pw_aff>, C<isl_union_pw_multi_aff>,
 C<isl_union_pw_qpolynomial> and C<isl_union_pw_qpolynomial_fold>.
+In case of
+C<isl_union_pw_aff>,
+C<isl_union_pw_qpolynomial> and C<isl_union_pw_qpolynomial_fold>,
+there can be at most one base expression for a given domain space.
+In case of
+C<isl_union_pw_multi_aff>,
+there can be multiple such expressions for a given domain space,
+but the domains of these expressions need to be disjoint.
 
 An empty union expression can be created using the following functions.
 
