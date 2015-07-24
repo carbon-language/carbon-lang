@@ -4314,7 +4314,7 @@ class ARMTargetInfo : public TargetInfo {
     switch(ArchKind) {
     default:
       CPUAttr = llvm::ARMTargetParser::getCPUAttr(ArchKind);
-      return CPUAttr ? CPUAttr : "";      
+      return CPUAttr ? CPUAttr : "";
     case llvm::ARM::AK_ARMV6M:
     case llvm::ARM::AK_ARMV6SM:
     case llvm::ARM::AK_ARMV6HL:
@@ -4366,10 +4366,10 @@ public:
       PtrDiffType = SignedInt;
       break;
     }
-   
+
     // cache arch related info
     setArchInfo();
-  
+
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.
     NoAsmVariants = true;
