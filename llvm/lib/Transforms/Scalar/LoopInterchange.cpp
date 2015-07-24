@@ -817,9 +817,6 @@ bool LoopInterchangeLegality::currentLimitations() {
     InnerIndexVarInc =
         dyn_cast<Instruction>(InnerInductionVar->getIncomingValue(0));
 
-  if (!InnerIndexVarInc)
-    return true;
-
   // Since we split the inner loop latch on this induction variable. Make sure
   // we do not have any instruction between the induction variable and branch
   // instruction.
