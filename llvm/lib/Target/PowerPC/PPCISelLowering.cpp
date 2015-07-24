@@ -925,22 +925,22 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
 
 /// getMaxByValAlign - Helper for getByValTypeAlignment to determine
 /// the desired ByVal argument alignment.
-static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign,
+static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign,
                              unsigned MaxMaxAlign) {
   if (MaxAlign == MaxMaxAlign)
     return;
-  if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     if (MaxMaxAlign >= 32 && VTy->getBitWidth() >= 256)
       MaxAlign = 32;
     else if (VTy->getBitWidth() >= 128 && MaxAlign < 16)
       MaxAlign = 16;
-  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     unsigned EltAlign = 0;
     getMaxByValAlign(ATy->getElementType(), EltAlign, MaxMaxAlign);
     if (EltAlign > MaxAlign)
       MaxAlign = EltAlign;
-  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
-    for (auto *EltTy : STy->elements()) {
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    for (const auto *EltTy : STy->elements()) {
       unsigned EltAlign = 0;
       getMaxByValAlign(EltTy, EltAlign, MaxMaxAlign);
       if (EltAlign > MaxAlign)

@@ -1806,19 +1806,19 @@ EVT X86TargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &,
 
 /// Helper for getByValTypeAlignment to determine
 /// the desired ByVal argument alignment.
-static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign) {
+static void getMaxByValAlign(const Type *Ty, unsigned &MaxAlign) {
   if (MaxAlign == 16)
     return;
-  if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     if (VTy->getBitWidth() == 128)
       MaxAlign = 16;
-  } else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     unsigned EltAlign = 0;
     getMaxByValAlign(ATy->getElementType(), EltAlign);
     if (EltAlign > MaxAlign)
       MaxAlign = EltAlign;
-  } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
-    for (auto *EltTy : STy->elements()) {
+  } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    for (const auto *EltTy : STy->elements()) {
       unsigned EltAlign = 0;
       getMaxByValAlign(EltTy, EltAlign);
       if (EltAlign > MaxAlign)
