@@ -24,6 +24,7 @@ name:            foo
 body:
  - id:              0
    name:            entry
+   successors:      [ '%bb.1.less', '%bb.2.exit' ]
    instructions:
      - '%eax = MOV32rm %rdi, 1, _, 0, _'
      - 'CMP32ri8 %eax, 10, implicit-def %eflags'

@@ -44,6 +44,8 @@ registers:
 body:
   - id:          0
     name:        entry
+    successors:  [ '%bb.2.exit', '%bb.1.less' ]
+    liveins:     [ '%edi' ]
     # CHECK:      %0 = COPY %edi
     # CHECK-NEXT: %1 = SUB32ri8 %0, 10
     instructions:
@@ -81,6 +83,8 @@ registers:
 body:
   - id:          0
     name:        entry
+    successors:  [ '%bb.2.exit', '%bb.1.less' ]
+    liveins:     [ '%edi' ]
     # CHECK:      %0 = COPY %edi
     # CHECK-NEXT: %1 = SUB32ri8 %0, 10
     instructions:

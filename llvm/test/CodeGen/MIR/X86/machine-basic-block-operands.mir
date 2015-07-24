@@ -37,6 +37,7 @@ body:
  # CHECK: name: entry
  - id:              0
    name:            entry
+   successors:      [ '%bb.1.less', '%bb.2.exit' ]
    instructions:
      - '%eax = MOV32rm %rdi, 1, _, 0, _'
      # CHECK:      - 'CMP32ri8 %eax, 10
@@ -60,6 +61,7 @@ body:
  # CHECK: name: entry
  - id: 0
    name: entry
+   successors:  [ '%bb.1', '%bb.3' ]
    instructions:
      - '%eax = MOV32rm %rdi, 1, _, 0, _'
      # CHECK:      - 'CMP32ri8 %eax, 10

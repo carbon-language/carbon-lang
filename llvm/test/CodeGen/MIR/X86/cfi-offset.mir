@@ -29,6 +29,7 @@ fixedStack:
 body:
   - id:              0
     name:            entry
+    liveins:         [ '%ecx', '%edi', '%edx', '%esi', '%rbx' ]
     instructions:
       - 'PUSH64r killed %rbx, implicit-def %rsp, implicit %rsp'
       - 'CFI_INSTRUCTION .cfi_def_cfa_offset 16'

@@ -53,6 +53,7 @@ stack:
 body:
   - id:          0
     name:        entry
+    liveins:     [ '%edi' ]
     instructions:
       # CHECK:      %0 = COPY %edi
       # CHECK-NEXT: DBG_VALUE _, 0, !12, !13

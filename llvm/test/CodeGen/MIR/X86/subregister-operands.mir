@@ -21,6 +21,7 @@ registers:
 body:
   - name:        entry
     id:          0
+    liveins:     [ '%edi' ]
     instructions:
       # CHECK:      %0 = COPY %edi
       # CHECK-NEXT: %1 = COPY %0:sub_8bit

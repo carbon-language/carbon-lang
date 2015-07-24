@@ -33,6 +33,7 @@ body:
   - id:              0
     name:            entry
     successors:      [ '%bb.1.entry', '%bb.2.entry' ]
+    liveins:         [ '%edi' ]
     instructions:
       - '%rsp = SUB64ri32 %rsp, 520, implicit-def %eflags'
       - '%rcx = LOAD_STACK_GUARD'
@@ -43,6 +44,7 @@ body:
       - 'JNE_1 %bb.2.entry, implicit %eflags'
   - id:              1
     name:            entry
+    liveins:         [ '%eax' ]
     instructions:
       - '%rsp = ADD64ri32 %rsp, 520, implicit-def %eflags'
       - 'RETQ %eax'
