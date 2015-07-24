@@ -63,7 +63,10 @@ char *dirname(char *path);
 
 int strcasecmp(const char* s1, const char* s2);
 int strncasecmp(const char* s1, const char* s2, size_t n);
+
+#if _MSC_VER < 1900
 int snprintf(char *buffer, size_t count, const char *format, ...);
+#endif
 
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
@@ -77,11 +80,16 @@ int snprintf(char *buffer, size_t count, const char *format, ...);
 #endif // _MSC_VER
 
 // timespec
+// MSVC 2015 and higher have timespec.  Otherwise we need to define it ourselves.
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#include <time.h>
+#else
 struct timespec
 {
     time_t tv_sec;
     long   tv_nsec;
 };
+#endif
 
 
 #endif  // LLDB_lldb_win32_h_

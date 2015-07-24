@@ -202,6 +202,7 @@ int usleep(uint32_t useconds)
     return 0;
 }
 
+#if _MSC_VER < 1900
 int snprintf(char *buffer, size_t count, const char *format, ...)
 {
     int old_errno = errno;
@@ -226,5 +227,6 @@ int snprintf(char *buffer, size_t count, const char *format, ...)
     va_end(argptr);
     return r;
 }
+#endif
 
 #endif // _MSC_VER
