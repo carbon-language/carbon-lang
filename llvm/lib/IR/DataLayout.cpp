@@ -37,7 +37,7 @@ using namespace llvm;
 // Support for StructLayout
 //===----------------------------------------------------------------------===//
 
-StructLayout::StructLayout(StructType *ST, const DataLayout &DL) {
+StructLayout::StructLayout(const StructType *ST, const DataLayout &DL) {
   assert(!ST->isOpaque() && "Cannot get layout of opaque structs");
   StructAlignment = 0;
   StructSize = 0;
@@ -451,7 +451,7 @@ void DataLayout::setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
 /// preferred if ABIInfo = false) the layout wants for the specified datatype.
 unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
                                       uint32_t BitWidth, bool ABIInfo,
-                                      Type *Ty) const {
+                                      const Type *Ty) const {
   // Check to see if we have an exact match and remember the best match we see.
   int BestMatchIdx = -1;
   int LargestInt = -1;
@@ -516,7 +516,7 @@ unsigned DataLayout::getAlignmentInfo(AlignTypeEnum AlignType,
 namespace {
 
 class StructLayoutMap {
-  typedef DenseMap<StructType*, StructLayout*> LayoutInfoTy;
+  typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
   LayoutInfoTy LayoutInfo;
 
 public:
@@ -529,7 +529,7 @@ public:
     }
   }
 
-  StructLayout *&operator[](StructType *STy) {
+  StructLayout *&operator[](const StructType *STy) {
     return LayoutInfo[STy];
   }
 };
@@ -548,7 +548,7 @@ DataLayout::~DataLayout() {
   clear();
 }
 
-const StructLayout *DataLayout::getStructLayout(StructType *Ty) const {
+const StructLayout *DataLayout::getStructLayout(const StructType *Ty) const {
   if (!LayoutMap)
     LayoutMap = new StructLayoutMap();
 
@@ -599,7 +599,7 @@ unsigned DataLayout::getPointerSize(unsigned AS) const {
   return I->TypeByteWidth;
 }
 
-unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const {
+unsigned DataLayout::getPointerTypeSizeInBits(const Type *Ty) const {
   assert(Ty->isPtrOrPtrVectorTy() &&
          "This should only be called with a pointer or pointer vector type");
 
@@ -617,7 +617,7 @@ unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const {
   Get the ABI (\a abi_or_pref == true) or preferred alignment (\a abi_or_pref
   == false) for the requested type \a Ty.
  */
-unsigned DataLayout::getAlignment(Type *Ty, bool abi_or_pref) const {
+unsigned DataLayout::getAlignment(const Type *Ty, bool abi_or_pref) const {
   int AlignType = -1;
 
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
@@ -671,7 +671,7 @@ unsigned DataLayout::getAlignment(Type *Ty, bool abi_or_pref) const {
                           abi_or_pref, Ty);
 }
 
-unsigned DataLayout::getABITypeAlignment(Type *Ty) const {
+unsigned DataLayout::getABITypeAlignment(const Type *Ty) const {
   return getAlignment(Ty, true);
 }
 
@@ -681,11 +681,11 @@ unsigned DataLayout::getABIIntegerTypeAlignment(unsigned BitWidth) const {
   return getAlignmentInfo(INTEGER_ALIGN, BitWidth, true, nullptr);
 }
 
-unsigned DataLayout::getPrefTypeAlignment(Type *Ty) const {
+unsigned DataLayout::getPrefTypeAlignment(const Type *Ty) const {
   return getAlignment(Ty, false);
 }
 
-unsigned DataLayout::getPreferredTypeAlignmentShift(Type *Ty) const {
+unsigned DataLayout::getPreferredTypeAlignmentShift(const Type *Ty) const {
   unsigned Align = getPrefTypeAlignment(Ty);
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
   return Log2_32(Align);
@@ -696,12 +696,12 @@ IntegerType *DataLayout::getIntPtrType(LLVMContext &C,
   return IntegerType::get(C, getPointerSizeInBits(AddressSpace));
 }
 
-Type *DataLayout::getIntPtrType(Type *Ty) const {
+Type *DataLayout::getIntPtrType(const Type *Ty) const {
   assert(Ty->isPtrOrPtrVectorTy() &&
          "Expected a pointer or pointer vector type.");
   unsigned NumBits = getPointerTypeSizeInBits(Ty);
   IntegerType *IntTy = IntegerType::get(Ty->getContext(), NumBits);
-  if (VectorType *VecTy = dyn_cast<VectorType>(Ty))
+  if (const VectorType *VecTy = dyn_cast<VectorType>(Ty))
     return VectorType::get(IntTy, VecTy->getNumElements());
   return IntTy;
 }
@@ -720,7 +720,7 @@ unsigned DataLayout::getLargestLegalIntTypeSize() const {
 
 uint64_t DataLayout::getIndexedOffset(Type *ptrTy,
                                       ArrayRef<Value *> Indices) const {
-  Type *Ty = ptrTy;
+  const Type *Ty = ptrTy;
   assert(Ty->isPointerTy() && "Illegal argument for getIndexedOffset()");
   uint64_t Result = 0;
 

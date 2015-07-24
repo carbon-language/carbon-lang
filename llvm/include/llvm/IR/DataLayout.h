@@ -150,12 +150,12 @@ private:
   void setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                     unsigned pref_align, uint32_t bit_width);
   unsigned getAlignmentInfo(AlignTypeEnum align_type, uint32_t bit_width,
-                            bool ABIAlign, Type *Ty) const;
+                            bool ABIAlign, const Type *Ty) const;
   void setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
                            unsigned PrefAlign, uint32_t TypeByteWidth);
 
   /// Internal helper method that returns requested alignment for type.
-  unsigned getAlignment(Type *Ty, bool abi_or_pref) const;
+  unsigned getAlignment(const Type *Ty, bool abi_or_pref) const;
 
   /// \brief Valid alignment predicate.
   ///
@@ -335,9 +335,9 @@ public:
   /// If this function is called with a vector of pointers, then the type size
   /// of the pointer is returned.  This should only be called with a pointer or
   /// vector of pointers.
-  unsigned getPointerTypeSizeInBits(Type *) const;
+  unsigned getPointerTypeSizeInBits(const Type *) const;
 
-  unsigned getPointerTypeSize(Type *Ty) const {
+  unsigned getPointerTypeSize(const Type *Ty) const {
     return getPointerTypeSizeInBits(Ty) / 8;
   }
 
@@ -362,13 +362,13 @@ public:
   ///
   /// For example, returns 36 for i36 and 80 for x86_fp80. The type passed must
   /// have a size (Type::isSized() must return true).
-  uint64_t getTypeSizeInBits(Type *Ty) const;
+  uint64_t getTypeSizeInBits(const Type *Ty) const;
 
   /// \brief Returns the maximum number of bytes that may be overwritten by
   /// storing the specified type.
   ///
   /// For example, returns 5 for i36 and 10 for x86_fp80.
-  uint64_t getTypeStoreSize(Type *Ty) const {
+  uint64_t getTypeStoreSize(const Type *Ty) const {
     return (getTypeSizeInBits(Ty) + 7) / 8;
   }
 
@@ -376,7 +376,7 @@ public:
   /// storing the specified type; always a multiple of 8.
   ///
   /// For example, returns 40 for i36 and 80 for x86_fp80.
-  uint64_t getTypeStoreSizeInBits(Type *Ty) const {
+  uint64_t getTypeStoreSizeInBits(const Type *Ty) const {
     return 8 * getTypeStoreSize(Ty);
   }
 
@@ -385,7 +385,7 @@ public:
   ///
   /// This is the amount that alloca reserves for this type. For example,
   /// returns 12 or 16 for x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSize(Type *Ty) const {
+  uint64_t getTypeAllocSize(const Type *Ty) const {
     // Round up to the next alignment boundary.
     return RoundUpToAlignment(getTypeStoreSize(Ty), getABITypeAlignment(Ty));
   }
@@ -395,12 +395,12 @@ public:
   ///
   /// This is the amount that alloca reserves for this type. For example,
   /// returns 96 or 128 for x86_fp80, depending on alignment.
-  uint64_t getTypeAllocSizeInBits(Type *Ty) const {
+  uint64_t getTypeAllocSizeInBits(const Type *Ty) const {
     return 8 * getTypeAllocSize(Ty);
   }
 
   /// \brief Returns the minimum ABI-required alignment for the specified type.
-  unsigned getABITypeAlignment(Type *Ty) const;
+  unsigned getABITypeAlignment(const Type *Ty) const;
 
   /// \brief Returns the minimum ABI-required alignment for an integer type of
   /// the specified bitwidth.
@@ -410,11 +410,11 @@ public:
   /// type.
   ///
   /// This is always at least as good as the ABI alignment.
-  unsigned getPrefTypeAlignment(Type *Ty) const;
+  unsigned getPrefTypeAlignment(const Type *Ty) const;
 
   /// \brief Returns the preferred alignment for the specified type, returned as
   /// log2 of the value (a shift amount).
-  unsigned getPreferredTypeAlignmentShift(Type *Ty) const;
+  unsigned getPreferredTypeAlignmentShift(const Type *Ty) const;
 
   /// \brief Returns an integer type with size at least as big as that of a
   /// pointer in the given address space.
@@ -422,7 +422,7 @@ public:
 
   /// \brief Returns an integer (vector of integer) type with size at least as
   /// big as that of a pointer of the given pointer (vector of pointer) type.
-  Type *getIntPtrType(Type *) const;
+  Type *getIntPtrType(const Type *) const;
 
   /// \brief Returns the smallest integer type with size at least as big as
   /// Width bits.
@@ -448,7 +448,7 @@ public:
   /// struct, its size, and the offsets of its fields.
   ///
   /// Note that this information is lazily cached.
-  const StructLayout *getStructLayout(StructType *Ty) const;
+  const StructLayout *getStructLayout(const StructType *Ty) const;
 
   /// \brief Returns the preferred alignment of the specified global.
   ///
@@ -499,12 +499,12 @@ public:
 
 private:
   friend class DataLayout; // Only DataLayout can create this class
-  StructLayout(StructType *ST, const DataLayout &DL);
+  StructLayout(const StructType *ST, const DataLayout &DL);
 };
 
 // The implementation of this method is provided inline as it is particularly
 // well suited to constant folding when called on a specific Type subclass.
-inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
+inline uint64_t DataLayout::getTypeSizeInBits(const Type *Ty) const {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
   case Type::LabelTyID:
@@ -512,7 +512,7 @@ inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   case Type::PointerTyID:
     return getPointerSizeInBits(Ty->getPointerAddressSpace());
   case Type::ArrayTyID: {
-    ArrayType *ATy = cast<ArrayType>(Ty);
+    const ArrayType *ATy = cast<ArrayType>(Ty);
     return ATy->getNumElements() *
            getTypeAllocSizeInBits(ATy->getElementType());
   }
@@ -536,7 +536,7 @@ inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   case Type::X86_FP80TyID:
     return 80;
   case Type::VectorTyID: {
-    VectorType *VTy = cast<VectorType>(Ty);
+    const VectorType *VTy = cast<VectorType>(Ty);
     return VTy->getNumElements() * getTypeSizeInBits(VTy->getElementType());
   }
   default:
