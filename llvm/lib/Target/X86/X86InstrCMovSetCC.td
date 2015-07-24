@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 
-// SetCC instructions.
+// CMOV instructions.
 multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
   let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
       isCommutable = 1, SchedRW = [WriteALU] in {
