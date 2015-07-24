@@ -6,7 +6,7 @@
 # CHECK: warning: {{.*}}libbasic.a(basic3.macho.x86_64.o): {{[Nn]o}} such file
 
 ---
-triple:          'x86_64-unknown-unknown-macho'
+triple:          'x86_64-apple-darwin'
 objects:
   - filename:        '/Inputs/libbasic.a(basic2.macho.x86_64.o)'
     timestamp:       141869239

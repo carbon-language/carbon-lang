@@ -9,7 +9,7 @@
 # link twice the same file using this made-up debug map:
 
 ---
-triple:          'i386-unknown-unknown-macho'
+triple:          'i386-apple-darwin'
 objects:
   - filename: frame-dw2.o
     symbols:

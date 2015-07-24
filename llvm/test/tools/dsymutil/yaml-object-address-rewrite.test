@@ -5,7 +5,7 @@
 # rewrite these addresses to the right values.
 #
 # CHECK: ---
-# CHECK-NEXT: triple:{{.*}}'x86_64-unknown-unknown-macho'
+# CHECK-NEXT: triple:{{.*}}'x86_64-apple-darwin'
 # CHECK-NEXT: objects:
 # CHECK-NEXT: filename:{{.*}}/Inputs/basic1.macho.x86_64.o
 # CHECK-NEXT: timestamp: 0
@@ -28,7 +28,7 @@
 # CHECK-NOT: { sym:
 # CHECK-NEXT: ...
 ---
-triple:          'x86_64-unknown-unknown-macho'
+triple:          'x86_64-apple-darwin'
 objects:
   - filename: /Inputs/basic1.macho.x86_64.o
     symbols:

@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_DSYMUTIL_BINARYHOLDER_H
 #define LLVM_TOOLS_DSYMUTIL_BINARYHOLDER_H
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Object/ObjectFile.h"
@@ -108,6 +109,8 @@ public:
   template <typename ObjectFileType> const ObjectFileType &GetAs() {
     return cast<ObjectFileType>(*CurrentObjectFile);
   }
+
+  static Triple getTriple(const object::MachOObjectFile &Obj);
 };
 }
 }

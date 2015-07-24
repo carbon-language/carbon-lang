@@ -14,7 +14,7 @@
 # Totally made up debug map to test ODR uniquing
 
 ---
-triple:          'x86_64-unknown-unknown-macho'
+triple:          'x86_64-apple-darwin'
 objects:
   - filename: odr1.o
     symbols:

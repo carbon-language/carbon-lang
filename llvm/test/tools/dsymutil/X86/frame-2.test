@@ -12,7 +12,7 @@
 # appears again. This is a behavior we inherited from dsymutil-classic
 # but this should be fixed (see comment in patchFrameInfoForObject())
 ---
-triple:          'i386-unknown-unknown-macho'
+triple:          'i386-apple-darwin'
 objects:
   - filename: frame-dw2.o
     symbols:

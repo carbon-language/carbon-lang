@@ -9,7 +9,7 @@ Check that We can parse the debug map of the basic executable.
 
 CHECK-NOT: error
 CHECK: ---
-CHECK: triple: 'x86_64-unknown-unknown-macho'
+CHECK: triple: 'x86_64-apple-darwin'
 CHECK: filename:{{.*}}/Inputs/basic1.macho.x86_64.o
 CHECK-DAG: sym: _main, objAddr: 0x0000000000000000, binAddr: 0x0000000100000EA0, size: 0x00000024
 CHECK: filename{{.*}}/Inputs/basic2.macho.x86_64.o
@@ -28,7 +28,7 @@ Check that we can parse the debug-map of the basic-lto executable
 
 CHECK-LTO-NOT: error
 CHECK-LTO: ---
-CHECK-LTO: triple: 'x86_64-unknown-unknown-macho'
+CHECK-LTO: triple: 'x86_64-apple-darwin'
 CHECK-LTO: /Inputs/basic-lto.macho.x86_64.o
 CHECK-LTO-DAG: 	sym: _bar, objAddr: 0x0000000000000050, binAddr: 0x0000000100000F90, size: 0x00000024
 CHECK-LTO-DAG: 	sym: _baz, objAddr: 0x0000000000000658, binAddr: 0x0000000100001000, size: 0x00000000
@@ -51,7 +51,7 @@ CHECK-ARCHIVE-NEXT: 	found member in current archive.
 CHECK-ARCHIVE-NEXT: trying to open {{.*}}/libbasic.a(basic3.macho.x86_64.o)'
 CHECK-ARCHIVE-NEXT: 	found member in current archive.
 CHECK-ARCHIVE: ---
-CHECK-ARCHIVE: triple: 'x86_64-unknown-unknown-macho'
+CHECK-ARCHIVE: triple: 'x86_64-apple-darwin'
 CHECK-ARCHIVE: /Inputs/basic1.macho.x86_64.o
 CHECK-ARCHIVE-DAG: 	sym: _main, objAddr: 0x0000000000000000, binAddr: 0x0000000100000EA0, size: 0x00000024
 CHECK-ARCHIVE: /Inputs/./libbasic.a(basic2.macho.x86_64.o)
@@ -72,7 +72,7 @@ NOT-FOUND: cannot open{{.*}}"/Inputs/basic1.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic2.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic3.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: ---
-NOT-FOUND-NEXT: triple: 'x86_64-unknown-unknown-macho'
+NOT-FOUND-NEXT: triple: 'x86_64-apple-darwin'
 NOT-FOUND-NEXT: ...
 
 Check that we correctly error out on invalid executatble.
