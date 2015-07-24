@@ -71,6 +71,7 @@ check_library_exists(stdc++ __cxa_throw "" COMPILER_RT_HAS_LIBSTDCXX)
 # Linker flags.
 if(ANDROID)
   check_linker_flag("-Wl,-z,global" COMPILER_RT_HAS_Z_GLOBAL)
+  check_library_exists(log __android_log_write "" COMPILER_RT_HAS_LIBLOG)
 endif()
 
 # Architectures.

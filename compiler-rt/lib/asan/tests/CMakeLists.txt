@@ -106,7 +106,7 @@ append_list_if(COMPILER_RT_HAS_LIBPTHREAD -pthread
 
 # TODO(eugenis): move all -l flags above to _LIBS?
 set(ASAN_UNITTEST_NOINST_LIBS)
-append_list_if(ANDROID log ASAN_UNITTEST_NOINST_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBLOG log ASAN_UNITTEST_NOINST_LIBS)
 # NDK r10 requires -latomic almost always.
 append_list_if(ANDROID atomic ASAN_UNITTEST_NOINST_LIBS)
 
