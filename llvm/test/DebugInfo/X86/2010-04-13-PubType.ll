@@ -31,7 +31,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!20}
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 7, arg: 0, scope: !1, file: !2, type: !7)
+!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 7, arg: 1, scope: !1, file: !2, type: !7)
 !1 = !DISubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !18, scope: !2, type: !4, function: i32 (%struct.X*, %struct.Y*)* @foo)
 !2 = !DIFile(filename: "a.c", directory: "/tmp/")
 !3 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 0, file: !18, enums: !19, retainedTypes: !19, subprograms: !17, imports:  null)
@@ -45,7 +45,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !11 = !{!12}
 !12 = !DIDerivedType(tag: DW_TAG_member, name: "x", line: 5, size: 32, align: 32, file: !18, scope: !10, baseType: !6)
 !13 = !DILocation(line: 7, scope: !1)
-!14 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 7, arg: 0, scope: !1, file: !2, type: !9)
+!14 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 7, arg: 2, scope: !1, file: !2, type: !9)
 !15 = !DILocation(line: 7, scope: !16)
 !16 = distinct !DILexicalBlock(line: 7, column: 0, file: !18, scope: !1)
 !17 = !{!1}

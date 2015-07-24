@@ -35,7 +35,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!14}
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 0, scope: !1, file: !2, type: !7)
+!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 2, arg: 1, scope: !1, file: !2, type: !7)
 !1 = !DISubprogram(name: "testfunc", linkageName: "testfunc", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 2, file: !12, scope: !2, type: !4, function: double (i32, double)* @testfunc)
 !2 = !DIFile(filename: "testfunc.c", directory: "/tmp")
 !3 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !13, retainedTypes: !13)
@@ -44,7 +44,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !6 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !8 = !DILocation(line: 2, scope: !1)
-!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 2, arg: 0, scope: !1, file: !2, type: !6)
+!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 2, arg: 2, scope: !1, file: !2, type: !6)
 !10 = !DILocation(line: 3, scope: !11)
 !11 = distinct !DILexicalBlock(line: 2, column: 0, file: !12, scope: !1)
 !12 = !DIFile(filename: "testfunc.c", directory: "/tmp")

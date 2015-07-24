@@ -20,7 +20,7 @@
 !6 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0,
                       file: !2, line: 7, type: !3, flags: DIFlagArtificial)
 
-; CHECK: !7 = !DILocalVariable(tag: DW_TAG_arg_variable, arg: 0, scope: !0)
+; CHECK: !7 = !DILocalVariable(tag: DW_TAG_arg_variable, arg: 1, scope: !0)
 ; CHECK: !8 = !DILocalVariable(tag: DW_TAG_auto_variable, scope: !0)
-!7 = !DILocalVariable(tag: DW_TAG_arg_variable, scope: !0)
+!7 = !DILocalVariable(tag: DW_TAG_arg_variable, scope: !0, arg: 1)
 !8 = !DILocalVariable(tag: DW_TAG_auto_variable, scope: !0)

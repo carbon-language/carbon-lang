@@ -57,7 +57,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !25, scope: !4, baseType: !9)
 !16 = !DILocation(line: 3, scope: !1)
 !17 = !DILocation(line: 3, scope: !3)
-!18 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 3, arg: 0, scope: !12, file: !10, type: !19)
+!18 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 3, arg: 1, scope: !12, file: !10, type: !19)
 !19 = !DIDerivedType(tag: DW_TAG_const_type, size: 64, align: 64, flags: DIFlagArtificial, file: !25, scope: !4, baseType: !20)
 !20 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !25, scope: !4, baseType: !9)
 !21 = !DILocation(line: 3, scope: !12)

@@ -89,7 +89,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !5 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, scope: !2, baseType: !6)
 !6 = !DIDerivedType(tag: DW_TAG_typedef, name: "uint", file: !20, scope: !2, baseType: !7)
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
-!8 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "ip", line: 1, arg: 0, scope: !0, file: !1, type: !5)
+!8 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "ip", line: 1, arg: 1, scope: !0, file: !1, type: !5)
 !9 = !DILocation(line: 1, column: 32, scope: !0)
 !10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "tid", line: 3, scope: !11, file: !1, type: !6)
 !11 = distinct !DILexicalBlock(line: 2, column: 1, file: !1, scope: !0)

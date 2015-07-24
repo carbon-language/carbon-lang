@@ -397,7 +397,7 @@ argument allocas in ``PrototypeAST::CreateArgumentAllocas``.
                                       KSDbgInfo.TheCU.getDirectory());
   DILocalVariable D = DBuilder->createLocalVariable(
       dwarf::DW_TAG_arg_variable, Scope, Args[Idx], Unit, Line,
-      KSDbgInfo.getDoubleTy(), Idx);
+      KSDbgInfo.getDoubleTy(), true, 0, Idx + 1);
 
   Instruction *Call = DBuilder->insertDeclare(
       Alloca, D, DBuilder->createExpression(), Builder.GetInsertBlock());

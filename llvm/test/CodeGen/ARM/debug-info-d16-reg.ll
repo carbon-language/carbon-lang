@@ -86,8 +86,8 @@ declare i32 @puts(i8* nocapture) nounwind
 !50 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 2, scope: !9, file: !1, type: !7)
 !51 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 2, scope: !9, file: !1, type: !8)
 
-!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 17, arg: 0, scope: !10, file: !1, type: !5)
-!23 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 17, arg: 0, scope: !10, file: !1, type: !13)
+!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 17, arg: 1, scope: !10, file: !1, type: !5)
+!23 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 17, arg: 2, scope: !10, file: !1, type: !13)
 !24 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "dval", line: 19, scope: !25, file: !1, type: !7)
 !25 = distinct !DILexicalBlock(line: 18, column: 0, file: !46, scope: !10)
 !26 = !DILocation(line: 4, scope: !9)

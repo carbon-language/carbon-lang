@@ -34,10 +34,10 @@ entry:
 !6 = !DISubprogram(name: "bar", linkageName: "bar", line: 14, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !27, scope: !1, type: !7, function: i32 ()* @bar)
 !7 = !DISubroutineType(types: !8)
 !8 = !{!5}
-!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5)
+!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 1, scope: !0, file: !1, type: !5)
 !10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12)
 
-!109 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 0, scope: !0, file: !1, type: !5)
+!109 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "j", line: 9, arg: 1, scope: !0, file: !1, type: !5)
 !110 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 10, scope: !11, file: !1, type: !12)
 
 !11 = distinct !DILexicalBlock(line: 9, column: 0, file: !1, scope: !0)

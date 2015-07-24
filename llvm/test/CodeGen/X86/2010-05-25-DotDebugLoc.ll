@@ -199,7 +199,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!48}
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
+!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 1921, arg: 1, scope: !1, file: !2, type: !9)
 !1 = !DISubprogram(name: "__divsc3", linkageName: "__divsc3", line: 1922, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 1922, file: !45, scope: !2, type: !4, function: %0 (float, float, float, float)* @__divsc3, variables: !43)
 !2 = !DIFile(filename: "libgcc2.c", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
 !3 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !45, enums: !47, retainedTypes: !47, subprograms: !44, imports:  null)
@@ -210,9 +210,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "complex float", size: 64, align: 32, encoding: DW_ATE_complex_float)
 !9 = !DIDerivedType(tag: DW_TAG_typedef, name: "SFtype", line: 167, file: !46, scope: !7, baseType: !10)
 !10 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
-!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
-!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
-!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "d", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
+!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 1921, arg: 2, scope: !1, file: !2, type: !9)
+!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 1921, arg: 3, scope: !1, file: !2, type: !9)
+!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "d", line: 1921, arg: 4, scope: !1, file: !2, type: !9)
 !14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "denom", line: 1923, scope: !15, file: !2, type: !9)
 !15 = distinct !DILexicalBlock(line: 1922, column: 0, file: !45, scope: !1)
 !16 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "ratio", line: 1923, scope: !15, file: !2, type: !9)

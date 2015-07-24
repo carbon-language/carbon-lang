@@ -88,8 +88,8 @@ declare i32 @puts(i8* nocapture) nounwind
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 5, arg: 0, scope: !0, file: !1, type: !5)
-!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 0, scope: !0, file: !1, type: !5)
+!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 5, arg: 1, scope: !0, file: !1, type: !5)
+!11 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 2, scope: !0, file: !1, type: !5)
 !12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 6, scope: !13, file: !1, type: !5)
 !13 = distinct !DILexicalBlock(line: 5, column: 52, file: !31, scope: !0)
 !14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "m", line: 26, scope: !15, file: !1, type: !16)

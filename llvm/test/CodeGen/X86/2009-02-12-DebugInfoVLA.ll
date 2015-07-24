@@ -76,7 +76,7 @@ declare i64 @strlen(i8*) nounwind readonly
 
 declare void @llvm.stackrestore(i8*) nounwind
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s1", line: 2, arg: 0, scope: !1, file: !2, type: !6)
+!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s1", line: 2, arg: 1, scope: !1, file: !2, type: !6)
 !1 = !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !2, type: !3)
 !2 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !17, enums: !18, retainedTypes: !18)
 !3 = !DISubroutineType(types: !4)
