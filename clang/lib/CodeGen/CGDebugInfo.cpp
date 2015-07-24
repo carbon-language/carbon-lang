@@ -1509,9 +1509,7 @@ llvm::DIType *CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
-
-  auto *FwdDecl =
-      cast<llvm::DICompositeType>(getOrCreateLimitedType(Ty, DefUnit));
+  llvm::DICompositeType *FwdDecl = getOrCreateLimitedType(Ty, DefUnit);
 
   const RecordDecl *D = RD->getDefinition();
   if (!D || !D->isCompleteDefinition())
@@ -2175,11 +2173,11 @@ llvm::DIType *CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile *Unit) {
   llvm_unreachable("type should have been unwrapped!");
 }
 
-llvm::DIType *CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
-                                                  llvm::DIFile *Unit) {
+llvm::DICompositeType *CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
+                                                           llvm::DIFile *Unit) {
   QualType QTy(Ty, 0);
 
-  auto *T = cast_or_null<llvm::DICompositeTypeBase>(getTypeOrNull(QTy));
+  auto *T = cast_or_null<llvm::DICompositeType>(getTypeOrNull(QTy));
 
   // We may have cached a forward decl when we could have created
   // a non-forward decl. Go ahead and create a non-forward decl
