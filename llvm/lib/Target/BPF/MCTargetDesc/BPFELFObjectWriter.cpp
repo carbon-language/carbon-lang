@@ -44,6 +44,10 @@ unsigned BPFELFObjectWriter::GetRelocType(const MCValue &Target,
     return ELF::R_X86_64_64;
   case FK_SecRel_4:
     return ELF::R_X86_64_PC32;
+  case FK_Data_8:
+    return IsPCRel ? ELF::R_X86_64_PC64 : ELF::R_X86_64_64;
+  case FK_Data_4:
+    return IsPCRel ? ELF::R_X86_64_PC32 : ELF::R_X86_64_32;
   }
 }
 

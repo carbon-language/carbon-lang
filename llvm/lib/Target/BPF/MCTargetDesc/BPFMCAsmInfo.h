@@ -34,6 +34,8 @@ public:
     UsesELFSectionDirectiveForBSS = true;
     HasSingleParameterDotFile = false;
     HasDotTypeDotSizeDirective = false;
+
+    SupportsDebugInformation = true;
   }
 };
 }
