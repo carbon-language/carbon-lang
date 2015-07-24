@@ -218,6 +218,7 @@ public:
   }
 
   uint64_t getRVA() { return VA - Config->ImageBase; }
+  void setVA(uint64_t V) { VA = V; }
 
 private:
   uint64_t VA;

@@ -25,6 +25,7 @@ using namespace llvm::object;
 using namespace llvm::support::endian;
 using llvm::RoundUpToAlignment;
 using llvm::Triple;
+using llvm::support::ulittle32_t;
 using llvm::sys::fs::file_magic;
 using llvm::sys::fs::identify_magic;
 
@@ -112,7 +113,9 @@ std::error_code ObjectFile::parse() {
   // Read section and symbol tables.
   if (auto EC = initializeChunks())
     return EC;
-  return initializeSymbols();
+  if (auto EC = initializeSymbols())
+    return EC;
+  return initializeSEH();
 }
 
 std::error_code ObjectFile::initializeChunks() {
@@ -131,6 +134,10 @@ std::error_code ObjectFile::initializeChunks() {
       llvm::errs() << "getSectionName failed: " << Name << ": "
                    << EC.message() << "\n";
       return make_error_code(LLDError::BrokenFile);
+    }
+    if (Name == ".sxdata") {
+      SXData = Sec;
+      continue;
     }
     if (Name == ".drectve") {
       ArrayRef<uint8_t> Data;
@@ -214,8 +221,14 @@ Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
   if (Sym.isAbsolute()) {
     COFFObj->getSymbolName(Sym, Name);
     // Skip special symbols.
-    if (Name == "@comp.id" || Name == "@feat.00")
+    if (Name == "@comp.id")
       return nullptr;
+    // COFF spec 5.10.1. The .sxdata section.
+    if (Name == "@feat.00") {
+      if (Sym.getValue() & 1)
+        SEHCompat = true;
+      return nullptr;
+    }
     return new (Alloc) DefinedAbsolute(Name, Sym);
   }
   if (Sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_DEBUG)
@@ -240,6 +253,22 @@ Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
     SC->setSymbol(B);
 
   return B;
+}
+
+std::error_code ObjectFile::initializeSEH() {
+  if (!SEHCompat || !SXData)
+    return std::error_code();
+  ArrayRef<uint8_t> A;
+  COFFObj->getSectionContents(SXData, A);
+  if (A.size() % 4 != 0) {
+    llvm::errs() << ".sxdata must be an array of symbol table indices\n";
+    return make_error_code(LLDError::BrokenFile);
+  }
+  auto *I = reinterpret_cast<const ulittle32_t *>(A.data());
+  auto *E = reinterpret_cast<const ulittle32_t *>(A.data() + A.size());
+  for (; I != E; ++I)
+    SEHandlers.insert(SparseSymbolBodies[*I]);
+  return std::error_code();
 }
 
 MachineTypes ObjectFile::getMachineType() {

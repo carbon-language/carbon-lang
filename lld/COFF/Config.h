@@ -24,6 +24,8 @@ using llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
 using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
+class DefinedAbsolute;
+class DefinedRelative;
 class Undefined;
 
 // Represents an /export option.
@@ -71,6 +73,10 @@ struct Configuration {
   std::vector<Export> Exports;
   std::set<std::string> DelayLoads;
   Undefined *DelayLoadHelper = nullptr;
+
+  // Used for SafeSEH.
+  DefinedRelative *SEHTable = nullptr;
+  DefinedAbsolute *SEHCount = nullptr;
 
   // Used for /opt:icf
   bool ICF = false;

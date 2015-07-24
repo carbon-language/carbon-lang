@@ -317,8 +317,16 @@ Undefined *SymbolTable::addUndefined(StringRef Name) {
   return New;
 }
 
-void SymbolTable::addRelative(StringRef Name, uint64_t VA) {
-  addSymbol(new (Alloc) DefinedRelative(Name, VA));
+DefinedRelative *SymbolTable::addRelative(StringRef Name, uint64_t VA) {
+  auto *New = new (Alloc) DefinedRelative(Name, VA);
+  addSymbol(New);
+  return New;
+}
+
+DefinedAbsolute *SymbolTable::addAbsolute(StringRef Name, uint64_t VA) {
+  auto *New = new (Alloc) DefinedAbsolute(Name, VA);
+  addSymbol(New);
+  return New;
 }
 
 void SymbolTable::printMap(llvm::raw_ostream &OS) {

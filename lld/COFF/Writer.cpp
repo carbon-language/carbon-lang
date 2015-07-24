@@ -58,6 +58,7 @@ std::error_code Writer::write(StringRef OutputPath) {
   } else {
     writeHeader<pe32_header>();
   }
+  fixSafeSEHSymbols();
   writeSections();
   sortExceptionTable();
   return Buffer->commit();
@@ -211,11 +212,25 @@ void Writer::createSections() {
 }
 
 void Writer::createMiscChunks() {
-  if (Symtab->LocalImportChunks.empty())
+  // Create thunks for locally-dllimported symbols.
+  if (!Symtab->LocalImportChunks.empty()) {
+    OutputSection *Sec = createSection(".rdata");
+    for (Chunk *C : Symtab->LocalImportChunks)
+      Sec->addChunk(C);
+  }
+
+  // Create SEH table. x86-only.
+  if (Config->MachineType != IMAGE_FILE_MACHINE_I386)
     return;
-  OutputSection *Sec = createSection(".rdata");
-  for (Chunk *C : Symtab->LocalImportChunks)
-    Sec->addChunk(C);
+  std::set<Defined *> Handlers;
+  for (ObjectFile *File : Symtab->ObjectFiles) {
+    if (!File->SEHCompat)
+      return;
+    for (SymbolBody *B : File->SEHandlers)
+      Handlers.insert(cast<Defined>(B->repl()));
+  }
+  SEHTable.reset(new SEHTableChunk(Handlers));
+  createSection(".rdata")->addChunk(SEHTable.get());
 }
 
 // Create .idata section for the DLL-imported symbol table.
@@ -522,6 +537,13 @@ std::error_code Writer::openFile(StringRef Path) {
     return EC;
   }
   return std::error_code();
+}
+
+void Writer::fixSafeSEHSymbols() {
+  if (!SEHTable)
+    return;
+  Config->SEHTable->setRVA(SEHTable->getRVA());
+  Config->SEHCount->setVA(SEHTable->getSize() / 4);
 }
 
 // Write section contents to a mmap'ed file.

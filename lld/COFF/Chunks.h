@@ -255,6 +255,19 @@ private:
 };
 
 // Windows-specific.
+// A chunk for SEH table which contains RVAs of safe exception handler
+// functions. x86-only.
+class SEHTableChunk : public Chunk {
+public:
+  explicit SEHTableChunk(std::set<Defined *> S) : Syms(S) {}
+  size_t getSize() const override { return Syms.size() * 4; }
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  std::set<Defined *> Syms;
+};
+
+// Windows-specific.
 // This class represents a block in .reloc section.
 // See the PE/COFF spec 5.6 for details.
 class BaserelChunk : public Chunk {

@@ -603,6 +603,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   Symtab.addRelative(mangle("__ImageBase"), 0);
+  if (Config->MachineType == IMAGE_FILE_MACHINE_I386) {
+    Config->SEHTable = Symtab.addRelative("___safe_se_handler_table", 0);
+    Config->SEHCount = Symtab.addAbsolute("___safe_se_handler_count", 0);
+  }
 
   // Read as much files as we can from directives sections.
   if (auto EC = Symtab.run()) {
@@ -638,6 +642,12 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
         if (!U->WeakAlias)
           U->WeakAlias = Symtab.addUndefined(To);
     }
+
+    // Windows specific -- if __load_config_used can be resolved, resolve it.
+    if (Config->MachineType == IMAGE_FILE_MACHINE_I386)
+      if (Symbol *Sym = Symtab.find("__load_config_used"))
+        if (isa<Lazy>(Sym->Body))
+          Symtab.addUndefined("__load_config_used");
 
     if (Symtab.queueEmpty())
       break;

@@ -81,7 +81,8 @@ public:
 
   // Creates an Undefined symbol for a given name.
   Undefined *addUndefined(StringRef Name);
-  void addRelative(StringRef Name, uint64_t VA);
+  DefinedRelative *addRelative(StringRef Name, uint64_t VA);
+  DefinedAbsolute *addAbsolute(StringRef Name, uint64_t VA);
 
   // A list of chunks which to be added to .rdata.
   std::vector<Chunk *> LocalImportChunks;

@@ -89,6 +89,7 @@ private:
   void createSymbolAndStringTable();
   std::error_code openFile(StringRef OutputPath);
   template <typename PEHeaderTy> void writeHeader();
+  void fixSafeSEHSymbols();
   void writeSections();
   void sortExceptionTable();
   void applyRelocations();
@@ -114,6 +115,7 @@ private:
   IdataContents Idata;
   DelayLoadContents DelayIdata;
   EdataContents Edata;
+  std::unique_ptr<SEHTableChunk> SEHTable;
 
   bool Is64;
   uint64_t FileSize;

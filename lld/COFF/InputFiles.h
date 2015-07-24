@@ -29,6 +29,7 @@ using llvm::COFF::MachineTypes;
 using llvm::object::Archive;
 using llvm::object::COFFObjectFile;
 using llvm::object::COFFSymbolRef;
+using llvm::object::coff_section;
 
 class Chunk;
 class Defined;
@@ -130,9 +131,18 @@ public:
   // Returns the underying COFF file.
   COFFObjectFile *getCOFFObj() { return COFFObj.get(); }
 
+  // True if this object file is compatible with SEH.
+  // COFF-specific and x86-only.
+  bool SEHCompat = false;
+
+  // The list of safe exception handlers listed in .sxdata section.
+  // COFF-specific and x86-only.
+  std::set<SymbolBody *> SEHandlers;
+
 private:
   std::error_code initializeChunks();
   std::error_code initializeSymbols();
+  std::error_code initializeSEH();
 
   Defined *createDefined(COFFSymbolRef Sym, const void *Aux, bool IsFirst);
   Undefined *createUndefined(COFFSymbolRef Sym);
@@ -140,6 +150,7 @@ private:
 
   std::unique_ptr<COFFObjectFile> COFFObj;
   llvm::BumpPtrAllocator Alloc;
+  const coff_section *SXData = nullptr;
 
   // List of all chunks defined by this file. This includes both section
   // chunks and non-section chunks for common symbols.
