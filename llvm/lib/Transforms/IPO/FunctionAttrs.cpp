@@ -425,9 +425,6 @@ determinePointerReadAttrs(Argument *A,
   // We don't need to track IsWritten. If A is written to, return immediately.
 
   for (Use &U : A->uses()) {
-    if (Count++ >= 20)
-      return Attribute::None;
-
     Visited.insert(&U);
     Worklist.push_back(&U);
   }
