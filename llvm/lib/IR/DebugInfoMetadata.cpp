@@ -295,8 +295,7 @@ DISubroutineType *DISubroutineType::getImpl(LLVMContext &Context,
                                             StorageType Storage,
                                             bool ShouldCreate) {
   DEFINE_GETIMPL_LOOKUP(DISubroutineType, (Flags, TypeArray));
-  Metadata *Ops[] = {nullptr,   nullptr, nullptr, nullptr,
-                     TypeArray, nullptr, nullptr, nullptr};
+  Metadata *Ops[] = {nullptr, nullptr, nullptr, TypeArray};
   DEFINE_GETIMPL_STORE(DISubroutineType, (Flags), Ops);
 }
 

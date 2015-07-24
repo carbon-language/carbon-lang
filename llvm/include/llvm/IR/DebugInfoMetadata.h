@@ -745,92 +745,23 @@ public:
   }
 };
 
-/// \brief Base class for DICompositeType and DISubroutineType.
-///
-/// TODO: Delete; they're not really related.
-class DICompositeTypeBase : public DIType {
-  unsigned RuntimeLang;
-
-protected:
-  DICompositeTypeBase(LLVMContext &C, unsigned ID, StorageType Storage,
-                      unsigned Tag, unsigned Line, unsigned RuntimeLang,
-                      uint64_t SizeInBits, uint64_t AlignInBits,
-                      uint64_t OffsetInBits, unsigned Flags,
-                      ArrayRef<Metadata *> Ops)
-      : DIType(C, ID, Storage, Tag, Line, SizeInBits, AlignInBits, OffsetInBits,
-               Flags, Ops),
-        RuntimeLang(RuntimeLang) {}
-  ~DICompositeTypeBase() = default;
-
-public:
-  //// Get the base type this is derived from, if any.
-  DITypeRef getBaseType() const { return DITypeRef(getRawBaseType()); }
-
-  /// \brief Get the elements of the composite type.
-  ///
-  /// \note Calling this is only valid for \a DICompositeType.  This assertion
-  /// can be removed once \a DISubroutineType has been separated from
-  /// "composite types".
-  DINodeArray getElements() const {
-    assert(!isa<DISubroutineType>(this) && "no elements for DISubroutineType");
-    return cast_or_null<MDTuple>(getRawElements());
-  }
-  DITypeRef getVTableHolder() const { return DITypeRef(getRawVTableHolder()); }
-  DITemplateParameterArray getTemplateParams() const {
-    return cast_or_null<MDTuple>(getRawTemplateParams());
-  }
-  StringRef getIdentifier() const { return getStringOperand(7); }
-  unsigned getRuntimeLang() const { return RuntimeLang; }
-
-  Metadata *getRawBaseType() const { return getOperand(3); }
-  Metadata *getRawElements() const { return getOperand(4); }
-  Metadata *getRawVTableHolder() const { return getOperand(5); }
-  Metadata *getRawTemplateParams() const { return getOperand(6); }
-  MDString *getRawIdentifier() const { return getOperandAs<MDString>(7); }
-
-  /// \brief Replace operands.
-  ///
-  /// If this \a isUniqued() and not \a isResolved(), on a uniquing collision
-  /// this will be RAUW'ed and deleted.  Use a \a TrackingMDRef to keep track
-  /// of its movement if necessary.
-  /// @{
-  void replaceElements(DINodeArray Elements) {
-#ifndef NDEBUG
-    for (DINode *Op : getElements())
-      assert(std::find(Elements->op_begin(), Elements->op_end(), Op) &&
-             "Lost a member during member list replacement");
-#endif
-    replaceOperandWith(4, Elements.get());
-  }
-  void replaceVTableHolder(DITypeRef VTableHolder) {
-    replaceOperandWith(5, VTableHolder);
-  }
-  void replaceTemplateParams(DITemplateParameterArray TemplateParams) {
-    replaceOperandWith(6, TemplateParams.get());
-  }
-  /// @}
-
-  static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == DICompositeTypeKind ||
-           MD->getMetadataID() == DISubroutineTypeKind;
-  }
-};
-
 /// \brief Composite types.
 ///
 /// TODO: Detach from DerivedTypeBase (split out MDEnumType?).
 /// TODO: Create a custom, unrelated node for DW_TAG_array_type.
-class DICompositeType : public DICompositeTypeBase {
+class DICompositeType : public DIType {
   friend class LLVMContextImpl;
   friend class MDNode;
+
+  unsigned RuntimeLang;
 
   DICompositeType(LLVMContext &C, StorageType Storage, unsigned Tag,
                   unsigned Line, unsigned RuntimeLang, uint64_t SizeInBits,
                   uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
                   ArrayRef<Metadata *> Ops)
-      : DICompositeTypeBase(C, DICompositeTypeKind, Storage, Tag, Line,
-                            RuntimeLang, SizeInBits, AlignInBits, OffsetInBits,
-                            Flags, Ops) {}
+      : DIType(C, DICompositeTypeKind, Storage, Tag, Line, SizeInBits,
+               AlignInBits, OffsetInBits, Flags, Ops),
+        RuntimeLang(RuntimeLang) {}
   ~DICompositeType() = default;
 
   static DICompositeType *
@@ -888,6 +819,45 @@ public:
 
   TempDICompositeType clone() const { return cloneImpl(); }
 
+  DITypeRef getBaseType() const { return DITypeRef(getRawBaseType()); }
+  DINodeArray getElements() const {
+    return cast_or_null<MDTuple>(getRawElements());
+  }
+  DITypeRef getVTableHolder() const { return DITypeRef(getRawVTableHolder()); }
+  DITemplateParameterArray getTemplateParams() const {
+    return cast_or_null<MDTuple>(getRawTemplateParams());
+  }
+  StringRef getIdentifier() const { return getStringOperand(7); }
+  unsigned getRuntimeLang() const { return RuntimeLang; }
+
+  Metadata *getRawBaseType() const { return getOperand(3); }
+  Metadata *getRawElements() const { return getOperand(4); }
+  Metadata *getRawVTableHolder() const { return getOperand(5); }
+  Metadata *getRawTemplateParams() const { return getOperand(6); }
+  MDString *getRawIdentifier() const { return getOperandAs<MDString>(7); }
+
+  /// \brief Replace operands.
+  ///
+  /// If this \a isUniqued() and not \a isResolved(), on a uniquing collision
+  /// this will be RAUW'ed and deleted.  Use a \a TrackingMDRef to keep track
+  /// of its movement if necessary.
+  /// @{
+  void replaceElements(DINodeArray Elements) {
+#ifndef NDEBUG
+    for (DINode *Op : getElements())
+      assert(std::find(Elements->op_begin(), Elements->op_end(), Op) &&
+             "Lost a member during member list replacement");
+#endif
+    replaceOperandWith(4, Elements.get());
+  }
+  void replaceVTableHolder(DITypeRef VTableHolder) {
+    replaceOperandWith(5, VTableHolder);
+  }
+  void replaceTemplateParams(DITemplateParameterArray TemplateParams) {
+    replaceOperandWith(6, TemplateParams.get());
+  }
+  /// @}
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == DICompositeTypeKind;
   }
@@ -903,17 +873,15 @@ template <class T> TypedDINodeRef<T> TypedDINodeRef<T>::get(const T *N) {
 
 /// \brief Type array for a subprogram.
 ///
-/// TODO: Detach from CompositeType, and fold the array of types in directly
-/// as operands.
-class DISubroutineType : public DICompositeTypeBase {
+/// TODO: Fold the array of types in directly as operands.
+class DISubroutineType : public DIType {
   friend class LLVMContextImpl;
   friend class MDNode;
 
   DISubroutineType(LLVMContext &C, StorageType Storage, unsigned Flags,
                    ArrayRef<Metadata *> Ops)
-      : DICompositeTypeBase(C, DISubroutineTypeKind, Storage,
-                            dwarf::DW_TAG_subroutine_type, 0, 0, 0, 0, 0, Flags,
-                            Ops) {}
+      : DIType(C, DISubroutineTypeKind, Storage, dwarf::DW_TAG_subroutine_type,
+               0, 0, 0, 0, Flags, Ops) {}
   ~DISubroutineType() = default;
 
   static DISubroutineType *getImpl(LLVMContext &Context, unsigned Flags,
@@ -942,7 +910,7 @@ public:
   DITypeRefArray getTypeArray() const {
     return cast_or_null<MDTuple>(getRawTypeArray());
   }
-  Metadata *getRawTypeArray() const { return getRawElements(); }
+  Metadata *getRawTypeArray() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == DISubroutineTypeKind;
