@@ -720,9 +720,11 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // analougous to pessimistic data flow and would likely lead to an
   // overall worse solution.
 
+#ifndef NDEBUG
   auto isExpectedBDVType = [](Value *BDV) {
     return isa<PHINode>(BDV) || isa<SelectInst>(BDV);
   };
+#endif
 
   // Once populated, will contain a mapping from each potentially non-base BDV
   // to a lattice value (described above) which corresponds to that BDV.
