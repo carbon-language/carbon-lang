@@ -106,6 +106,10 @@ public:
                                      QualType DestTy) override;
 
   bool EmitBadCastCall(CodeGenFunction &CGF) override;
+  bool canEmitAvailableExternallyVTable(
+      const CXXRecordDecl *RD) const override {
+    return false;
+  }
 
   llvm::Value *
   GetVirtualBaseClassOffset(CodeGenFunction &CGF, llvm::Value *This,

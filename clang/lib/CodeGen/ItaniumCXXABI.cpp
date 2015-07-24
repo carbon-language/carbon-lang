@@ -215,6 +215,8 @@ public:
 
   void emitVirtualInheritanceTables(const CXXRecordDecl *RD) override;
 
+  bool canEmitAvailableExternallyVTable(const CXXRecordDecl *RD) const override;
+
   void setThunkLinkage(llvm::Function *Thunk, bool ForVTable, GlobalDecl GD,
                        bool ReturnAdjustment) override {
     // Allow inlining of thunks by emitting them with available_externally
@@ -302,6 +304,24 @@ public:
   friend class ItaniumRTTIBuilder;
 
   void emitCXXStructor(const CXXMethodDecl *MD, StructorType Type) override;
+
+ private:
+  /// Checks if function has any virtual inline function.
+  bool hasAnyVirtualInlineFunction(const CXXRecordDecl *RD) const {
+    const auto &VtableLayout =
+        CGM.getItaniumVTableContext().getVTableLayout(RD);
+
+    for (const auto &VtableComponent : VtableLayout.vtable_components()) {
+      if (VtableComponent.getKind() !=
+          VTableComponent::Kind::CK_FunctionPointer)
+        continue;
+
+      const auto &Method = VtableComponent.getFunctionDecl();
+      if (Method->getCanonicalDecl()->isInlined())
+        return true;
+    }
+    return false;
+  }
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1481,6 +1501,19 @@ void ItaniumCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   VTables.EmitVTTDefinition(VTT, CGM.getVTableLinkage(RD), RD);
 }
 
+bool ItaniumCXXABI::canEmitAvailableExternallyVTable(
+    const CXXRecordDecl *RD) const {
+  // We don't emit available_externally vtables if we are in -fapple-kext mode
+  // because kext mode does not permit devirtualization.
+  if (CGM.getLangOpts().AppleKext)
+    return false;
+
+  // If we don't have any inline virtual functions,
+  // then we are safe to emit available_externally copy of vtable.
+  // FIXME we can still emit a copy of the vtable if we
+  // can emit definition of the inline functions.
+  return !hasAnyVirtualInlineFunction(RD);
+}
 static llvm::Value *performTypeAdjustment(CodeGenFunction &CGF,
                                           llvm::Value *Ptr,
                                           int64_t NonVirtualAdjustment,

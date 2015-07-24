@@ -205,8 +205,11 @@ public:
 
   typedef const VTableComponent *vtable_component_iterator;
   typedef const VTableThunkTy *vtable_thunk_iterator;
+  typedef llvm::iterator_range<vtable_component_iterator>
+      vtable_component_range;
 
   typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
+
 private:
   uint64_t NumVTableComponents;
   std::unique_ptr<VTableComponent[]> VTableComponents;
@@ -231,6 +234,11 @@ public:
 
   uint64_t getNumVTableComponents() const {
     return NumVTableComponents;
+  }
+
+  vtable_component_range vtable_components() const {
+    return vtable_component_range(vtable_component_begin(),
+                                  vtable_component_end());
   }
 
   vtable_component_iterator vtable_component_begin() const {

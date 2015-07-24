@@ -139,10 +139,11 @@ void use_F() {
 // CHECK-OPT-DAG: @_ZTV1FIiE = external unnamed_addr constant
 
 // E<int> is an explicit template instantiation declaration. It has a
-// key function that is not instantiated, so we should only reference
-// its vtable, not define it.
+// key function is not instantiated, so we know that vtable definition
+// will be generated in TU where key function will be defined
+// so we can mark it as available_externally (only with optimizations)
 // CHECK-DAG: @_ZTV1EIiE = external unnamed_addr constant
-// CHECK-OPT-DAG: @_ZTV1EIiE = external unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTV1EIiE = available_externally unnamed_addr constant
 
 // The anonymous struct for e has no linkage, so the vtable should have
 // internal linkage.
@@ -196,8 +197,8 @@ void use_H() {
 // CHECK-DAG: @_ZTT1IIiE = external unnamed_addr constant
 // CHECK-NOT: @_ZTC1IIiE
 //
-// CHECK-OPT-DAG: @_ZTV1IIiE = external unnamed_addr constant
-// CHECK-OPT-DAG: @_ZTT1IIiE = external unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTV1IIiE = available_externally unnamed_addr constant
+// CHECK-OPT-DAG: @_ZTT1IIiE = available_externally unnamed_addr constant
 struct VBase1 { virtual void f(); }; struct VBase2 : virtual VBase1 {};
 template<typename T>
 struct I : VBase2 {};

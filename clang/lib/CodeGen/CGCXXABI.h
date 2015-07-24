@@ -218,6 +218,9 @@ public:
   virtual void emitThrow(CodeGenFunction &CGF, const CXXThrowExpr *E) = 0;
   virtual llvm::GlobalVariable *getThrowInfo(QualType T) { return nullptr; }
 
+  virtual bool canEmitAvailableExternallyVTable(
+      const CXXRecordDecl *RD) const = 0;
+
   virtual void emitBeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *C) = 0;
 
   virtual llvm::CallInst *
