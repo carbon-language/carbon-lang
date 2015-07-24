@@ -2367,8 +2367,6 @@ AST_MATCHER_P(DeclRefExpr, to, internal::Matcher<Decl>,
 /// \brief Matches a \c DeclRefExpr that refers to a declaration through a
 /// specific using shadow declaration.
 ///
-/// FIXME: This currently only works for functions. Fix.
-///
 /// Given
 /// \code
 ///   namespace a { void f() {} }
@@ -2378,7 +2376,7 @@ AST_MATCHER_P(DeclRefExpr, to, internal::Matcher<Decl>,
 ///     a::f();  // .. but not this.
 ///   }
 /// \endcode
-/// declRefExpr(throughUsingDeclaration(anything()))
+/// declRefExpr(throughUsingDecl(anything()))
 ///   matches \c f()
 AST_MATCHER_P(DeclRefExpr, throughUsingDecl,
               internal::Matcher<UsingShadowDecl>, InnerMatcher) {
