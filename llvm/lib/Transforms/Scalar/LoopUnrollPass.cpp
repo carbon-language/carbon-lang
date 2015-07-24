@@ -368,8 +368,6 @@ private:
     return simplifyInstWithSCEV(&I);
   }
 
-  /// TODO: Add visitors for other instruction types, e.g. ZExt, SExt.
-
   /// Try to simplify binary operator I.
   ///
   /// TODO: Probaly it's worth to hoist the code for estimating the
@@ -450,6 +448,44 @@ private:
       }
 
     return Base::visitCastInst(I);
+  }
+
+  bool visitCmpInst(CmpInst &I) {
+    Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
+
+    // First try to handle simplified comparisons.
+    if (!isa<Constant>(LHS))
+      if (Constant *SimpleLHS = SimplifiedValues.lookup(LHS))
+        LHS = SimpleLHS;
+    if (!isa<Constant>(RHS))
+      if (Constant *SimpleRHS = SimplifiedValues.lookup(RHS))
+        RHS = SimpleRHS;
+
+    if (!isa<Constant>(LHS) && !isa<Constant>(RHS)) {
+      auto SimplifiedLHS = SimplifiedAddresses.find(LHS);
+      if (SimplifiedLHS != SimplifiedAddresses.end()) {
+        auto SimplifiedRHS = SimplifiedAddresses.find(RHS);
+        if (SimplifiedRHS != SimplifiedAddresses.end()) {
+          SimplifiedAddress &LHSAddr = SimplifiedLHS->second;
+          SimplifiedAddress &RHSAddr = SimplifiedRHS->second;
+          if (LHSAddr.Base == RHSAddr.Base) {
+            LHS = LHSAddr.Offset;
+            RHS = RHSAddr.Offset;
+          }
+        }
+      }
+    }
+
+    if (Constant *CLHS = dyn_cast<Constant>(LHS)) {
+      if (Constant *CRHS = dyn_cast<Constant>(RHS)) {
+        if (Constant *C = ConstantExpr::getCompare(I.getPredicate(), CLHS, CRHS)) {
+          SimplifiedValues[&I] = C;
+          return true;
+        }
+      }
+    }
+
+    return Base::visitCmpInst(I);
   }
 };
 } // namespace
@@ -540,6 +576,28 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
         // If unrolled body turns out to be too big, bail out.
         if (UnrolledCost > MaxUnrolledLoopSize)
           return None;
+      }
+
+      TerminatorInst *TI = BB->getTerminator();
+
+      // Add in the live successors by first checking whether we have terminator
+      // that may be simplified based on the values simplified by this call.
+      if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+        if (BI->isConditional()) {
+          if (Constant *SimpleCond =
+                  SimplifiedValues.lookup(BI->getCondition())) {
+            BBWorklist.insert(BI->getSuccessor(
+                cast<ConstantInt>(SimpleCond)->isZero() ? 1 : 0));
+            continue;
+          }
+        }
+      } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+        if (Constant *SimpleCond =
+                SimplifiedValues.lookup(SI->getCondition())) {
+          BBWorklist.insert(
+              SI->getSuccessor(cast<ConstantInt>(SimpleCond)->getSExtValue()));
+          continue;
+        }
       }
 
       // Add BB's successors to the worklist.
