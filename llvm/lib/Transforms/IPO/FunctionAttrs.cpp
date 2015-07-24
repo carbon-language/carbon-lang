@@ -415,7 +415,6 @@ determinePointerReadAttrs(Argument *A,
                                                        
   SmallVector<Use*, 32> Worklist;
   SmallSet<Use*, 32> Visited;
-  int Count = 0;
 
   // inalloca arguments are always clobbered by the call.
   if (A->hasInAllocaAttr())
