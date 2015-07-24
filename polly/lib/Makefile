@@ -27,8 +27,8 @@ ISL_CODEGEN_FILES= CodeGen/IslAst.cpp \
                    CodeGen/CodeGeneration.cpp
 
 POLLY_JSON_FILES= JSON/json_reader.cpp \
-		  JSON/json_value.cpp \
-		  JSON/json_writer.cpp
+                  JSON/json_value.cpp \
+                  JSON/json_writer.cpp
 
 ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_aff.c \
@@ -66,7 +66,7 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_local_space.c \
            External/isl/isl_lp.c \
            External/isl/isl_map.c \
-	   External/isl/isl_map_list.c \
+           External/isl/isl_map_list.c \
            External/isl/isl_map_simplify.c \
            External/isl/isl_map_subtract.c \
            External/isl/isl_map_to_basic_set.c \
@@ -83,10 +83,10 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_sample.c \
            External/isl/isl_scan.c \
            External/isl/isl_schedule.c \
-	   External/isl/isl_schedule_band.c \
-	   External/isl/isl_schedule_node.c \
-	   External/isl/isl_schedule_read.c \
-	   External/isl/isl_schedule_tree.c \
+           External/isl/isl_schedule_band.c \
+           External/isl/isl_schedule_node.c \
+           External/isl/isl_schedule_read.c \
+           External/isl/isl_schedule_tree.c \
            External/isl/isl_scheduler.c \
            External/isl/isl_seq.c \
            External/isl/isl_set_list.c \
@@ -109,33 +109,33 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/imath/imrat.c
 
 SOURCES= Polly.cpp \
-	 Support/GICHelper.cpp \
-	 Support/SCEVValidator.cpp \
-	 Support/RegisterPasses.cpp \
-	 Support/ScopHelper.cpp \
-	 Support/ScopLocation.cpp \
-	 Analysis/DependenceInfo.cpp \
-	 Analysis/ScopDetection.cpp \
-	 Analysis/ScopDetectionDiagnostic.cpp \
-	 Analysis/ScopInfo.cpp \
-	 Analysis/ScopGraphPrinter.cpp \
-	 Analysis/ScopPass.cpp \
-	 Analysis/TempScopInfo.cpp \
-	 CodeGen/BlockGenerators.cpp \
-	 CodeGen/LoopGenerators.cpp \
-	 CodeGen/IRBuilder.cpp \
-	 CodeGen/Utils.cpp \
-	 CodeGen/RuntimeDebugBuilder.cpp \
-	 Exchange/JSONExporter.cpp \
-	 Transform/Canonicalization.cpp \
-	 Transform/CodePreparation.cpp \
-	 Transform/DeadCodeElimination.cpp \
-	 Transform/IndependentBlocks.cpp \
-	 Transform/ScheduleOptimizer.cpp \
-	 ${GPGPU_FILES} \
-	 ${ISL_CODEGEN_FILES} \
-	 ${POLLY_JSON_FILES} \
-	 ${ISL_FILES}
+         Support/GICHelper.cpp \
+         Support/SCEVValidator.cpp \
+         Support/RegisterPasses.cpp \
+         Support/ScopHelper.cpp \
+         Support/ScopLocation.cpp \
+         Analysis/DependenceInfo.cpp \
+         Analysis/ScopDetection.cpp \
+         Analysis/ScopDetectionDiagnostic.cpp \
+         Analysis/ScopInfo.cpp \
+         Analysis/ScopGraphPrinter.cpp \
+         Analysis/ScopPass.cpp \
+         Analysis/TempScopInfo.cpp \
+         CodeGen/BlockGenerators.cpp \
+         CodeGen/LoopGenerators.cpp \
+         CodeGen/IRBuilder.cpp \
+         CodeGen/Utils.cpp \
+         CodeGen/RuntimeDebugBuilder.cpp \
+         Exchange/JSONExporter.cpp \
+         Transform/Canonicalization.cpp \
+         Transform/CodePreparation.cpp \
+         Transform/DeadCodeElimination.cpp \
+         Transform/IndependentBlocks.cpp \
+         Transform/ScheduleOptimizer.cpp \
+         ${GPGPU_FILES} \
+         ${ISL_CODEGEN_FILES} \
+         ${POLLY_JSON_FILES} \
+         ${ISL_FILES}
 
 #
 # Include Makefile.common so we know what to do.
