@@ -290,8 +290,10 @@ BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
   write32le(P, Page);
   write32le(P + 4, Data.size());
   P += 8;
+  uint16_t RelTy =
+      Config->is64() ? IMAGE_REL_BASED_DIR64 : IMAGE_REL_BASED_HIGHLOW;
   for (uint32_t *I = Begin; I != End; ++I) {
-    write16le(P, (IMAGE_REL_BASED_DIR64 << 12) | (*I - Page));
+    write16le(P, (RelTy << 12) | (*I - Page));
     P += 2;
   }
 }

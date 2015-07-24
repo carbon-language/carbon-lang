@@ -120,11 +120,11 @@ IMPORTS: }
 
 BASEREL: BaseReloc [
 BASEREL:   Entry {
-BASEREL:     Type: DIR64
+BASEREL:     Type: HIGHLOW
 BASEREL:     Address: 0x2005
 BASEREL:   }
 BASEREL:   Entry {
-BASEREL:     Type: DIR64
+BASEREL:     Type: HIGHLOW
 BASEREL:     Address: 0x200C
 BASEREL:   }
 BASEREL: ]
