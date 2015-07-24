@@ -164,9 +164,7 @@ public:
 
     // Delete the instructions backwards, as it has a reduced likelihood of
     // having to update as many def-use and use-def chains.
-    for (auto I = Unused.rbegin(), E = Unused.rend(); I != E; ++I) {
-      auto *Inst = *I;
-
+    for (auto *Inst : make_range(Unused.rbegin(), Unused.rend())) {
       if (!Inst->use_empty())
         Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
       Inst->eraseFromParent();

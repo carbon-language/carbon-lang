@@ -242,11 +242,11 @@ void Float2Int::walkBackwards(const SmallPtrSetImpl<Instruction*> &Roots) {
 // Walk forwards down the list of seen instructions, so we visit defs before
 // uses.
 void Float2Int::walkForwards() {
-  for (auto It = SeenInsts.rbegin(), E = SeenInsts.rend(); It != E; ++It) {
-    if (It->second != unknownRange())
+  for (auto &It : make_range(SeenInsts.rbegin(), SeenInsts.rend())) {
+    if (It.second != unknownRange())
       continue;
 
-    Instruction *I = It->first;
+    Instruction *I = It.first;
     std::function<ConstantRange(ArrayRef<ConstantRange>)> Op;
     switch (I->getOpcode()) {
       // FIXME: Handle select and phi nodes.
@@ -507,9 +507,8 @@ Value *Float2Int::convert(Instruction *I, Type *ToTy) {
 
 // Perform dead code elimination on the instructions we just modified.
 void Float2Int::cleanup() {
-  for (auto I = ConvertedInsts.rbegin(), E = ConvertedInsts.rend();
-       I != E; ++I)
-    I->first->eraseFromParent();
+  for (auto &I : make_range(ConvertedInsts.rbegin(), ConvertedInsts.rend()))
+    I.first->eraseFromParent();
 }
 
 bool Float2Int::runOnFunction(Function &F) {

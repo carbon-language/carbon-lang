@@ -559,12 +559,11 @@ void ExeDepsFix::processUndefReads(MachineBasicBlock *MBB) {
   MachineInstr *UndefMI = UndefReads.back().first;
   unsigned OpIdx = UndefReads.back().second;
 
-  for (MachineBasicBlock::reverse_iterator I = MBB->rbegin(), E = MBB->rend();
-       I != E; ++I) {
+  for (MachineInstr &I : make_range(MBB->rbegin(), MBB->rend())) {
     // Update liveness, including the current instruction's defs.
-    LiveRegSet.stepBackward(*I);
+    LiveRegSet.stepBackward(I);
 
-    if (UndefMI == &*I) {
+    if (UndefMI == &I) {
       if (!LiveRegSet.contains(UndefMI->getOperand(OpIdx).getReg()))
         TII->breakPartialRegDependency(UndefMI, OpIdx, TRI);
 

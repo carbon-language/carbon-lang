@@ -151,10 +151,9 @@ static MachineInstr *getLastNonPseudo(MachineBasicBlock &MBB,
   // If there is no non-pseudo in the current block, loop back around and try
   // the previous block (if there is one).
   while ((FMBB = getBBFallenThrough(FMBB, TII))) {
-    for (auto I = FMBB->rbegin(), E = FMBB->rend(); I != E; ++I) {
-      if (!I->isPseudo())
-        return &*I;
-    }
+    for (MachineInstr &I : make_range(FMBB->rbegin(), FMBB->rend()))
+      if (!I.isPseudo())
+        return &I;
   }
 
   // There was no previous non-pseudo in the fallen through blocks

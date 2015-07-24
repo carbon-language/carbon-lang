@@ -804,8 +804,7 @@ std::string DwarfUnit::getParentContextString(const DIScope *Context) const {
 
   // Reverse iterate over our list to go from the outermost construct to the
   // innermost.
-  for (auto I = Parents.rbegin(), E = Parents.rend(); I != E; ++I) {
-    const DIScope *Ctx = *I;
+  for (const DIScope *Ctx : make_range(Parents.rbegin(), Parents.rend())) {
     StringRef Name = Ctx->getName();
     if (Name.empty() && isa<DINamespace>(Ctx))
       Name = "(anonymous namespace)";
