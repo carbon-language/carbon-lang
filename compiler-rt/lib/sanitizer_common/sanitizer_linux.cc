@@ -73,10 +73,6 @@ extern char **environ;  // provided by crt1
 #include <sys/signal.h>
 #endif
 
-#if SANITIZER_ANDROID
-#include <sys/system_properties.h>
-#endif
-
 #if SANITIZER_LINUX
 // <linux/time.h>
 struct kernel_timeval {
@@ -918,8 +914,12 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
 #if SANITIZER_ANDROID
+#define PROP_VALUE_MAX 92
+extern "C" SANITIZER_WEAK_ATTRIBUTE int __system_property_get(const char *name,
+                                                              char *value);
 void GetExtraActivationFlags(char *buf, uptr size) {
   CHECK(size > PROP_VALUE_MAX);
+  CHECK(&__system_property_get);
   __system_property_get("asan.options", buf);
 }
 
