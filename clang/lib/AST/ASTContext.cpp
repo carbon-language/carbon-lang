@@ -2759,9 +2759,10 @@ QualType ASTContext::getDependentSizedArrayType(QualType elementType,
   QualType canon = getQualifiedType(QualType(canonTy,0),
                                     canonElementType.Quals);
 
-  // If we didn't need extra canonicalization for the element type,
-  // then just use that as our result.
-  if (QualType(canonElementType.Ty, 0) == elementType)
+  // If we didn't need extra canonicalization for the element type or the size
+  // expression, then just use that as our result.
+  if (QualType(canonElementType.Ty, 0) == elementType &&
+      canonTy->getSizeExpr() == numElements)
     return canon;
 
   // Otherwise, we need to build a type which follows the spelling

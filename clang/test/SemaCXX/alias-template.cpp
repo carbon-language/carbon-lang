@@ -168,3 +168,14 @@ namespace SFINAE {
   fail1<int> f1; // expected-note {{here}}
   fail2<E> f2; // expected-note {{here}}
 }
+
+namespace PR24212 {
+struct X {};
+template <int I>
+struct S {
+  template <int J>
+  using T = X[J];
+  using U = T<I>;
+};
+static_assert(__is_same(S<3>::U, X[2]), ""); // expected-error {{static_assert failed}}
+}
