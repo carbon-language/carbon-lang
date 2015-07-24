@@ -166,7 +166,10 @@ namespace {
     typedef SmallVector<Instruction *, 16> SmallInstructionVector;
     typedef SmallSet<Instruction *, 16>   SmallInstructionSet;
 
-    // A chain of isomorphic instructions, indentified by a single-use PHI,
+    // Map between induction variable and its increment
+    DenseMap<Instruction *, int64_t> IVToIncMap;
+
+    // A chain of isomorphic instructions, identified by a single-use PHI
     // representing a reduction. Only the last value may be used outside the
     // loop.
     struct SimpleLoopReduction {
@@ -335,7 +338,7 @@ namespace {
     //   x[i*3+1] = y2
     //   x[i*3+2] = y3
     //
-    //   Base instruction -> i*3               
+    //   Base instruction -> i*3
     //                    +---+----+
     //                   /    |     \
     //               ST[y1]  +1     +2  <-- Roots
@@ -366,8 +369,10 @@ namespace {
     struct DAGRootTracker {
       DAGRootTracker(LoopReroll *Parent, Loop *L, Instruction *IV,
                      ScalarEvolution *SE, AliasAnalysis *AA,
-                     TargetLibraryInfo *TLI)
-          : Parent(Parent), L(L), SE(SE), AA(AA), TLI(TLI), IV(IV) {}
+                     TargetLibraryInfo *TLI,
+                     DenseMap<Instruction *, int64_t> &IncrMap)
+          : Parent(Parent), L(L), SE(SE), AA(AA), TLI(TLI), IV(IV),
+            IVToIncMap(IncrMap) {}
 
       /// Stage 1: Find all the DAG roots for the induction variable.
       bool findRoots();
@@ -417,7 +422,7 @@ namespace {
       // The loop induction variable.
       Instruction *IV;
       // Loop step amount.
-      uint64_t Inc;
+      int64_t Inc;
       // Loop reroll count; if Inc == 1, this records the scaling applied
       // to the indvar: a[i*2+0] = ...; a[i*2+1] = ... ;
       // If Inc is not 1, Scale = Inc.
@@ -430,6 +435,8 @@ namespace {
       // they are used in (or specially, IL_All for instructions
       // used in the loop increment mechanism).
       UsesTy Uses;
+      // Map between induction variable and its increment
+      DenseMap<Instruction *, int64_t> &IVToIncMap;
     };
 
     void collectPossibleIVs(Loop *L, SmallInstructionVector &PossibleIVs);
@@ -484,13 +491,12 @@ void LoopReroll::collectPossibleIVs(Loop *L,
         continue;
       if (const SCEVConstant *IncSCEV =
           dyn_cast<SCEVConstant>(PHISCEV->getStepRecurrence(*SE))) {
-        if (!IncSCEV->getValue()->getValue().isStrictlyPositive())
+        const APInt &AInt = IncSCEV->getValue()->getValue().abs();
+        if (IncSCEV->getValue()->isZero() || AInt.uge(MaxInc))
           continue;
-        if (IncSCEV->getValue()->uge(MaxInc))
-          continue;
-
-        DEBUG(dbgs() << "LRR: Possible IV: " << *I << " = " <<
-              *PHISCEV << "\n");
+        IVToIncMap[I] = IncSCEV->getValue()->getSExtValue();
+        DEBUG(dbgs() << "LRR: Possible IV: " << *I << " = " << *PHISCEV
+                     << "\n");
         PossibleIVs.push_back(I);
       }
     }
@@ -699,16 +705,10 @@ collectPossibleRoots(Instruction *Base, std::map<int64_t,Instruction*> &Roots) {
       }
     }
 
-    int64_t V = CI->getValue().getSExtValue();
+    int64_t V = std::abs(CI->getValue().getSExtValue());
     if (Roots.find(V) != Roots.end())
       // No duplicates, please.
       return false;
-
-    // FIXME: Add support for negative values.
-    if (V < 0) {
-      DEBUG(dbgs() << "LRR: Aborting due to negative value: " << V << "\n");
-      return false;
-    }
 
     Roots[V] = cast<Instruction>(I);
   }
@@ -731,7 +731,7 @@ collectPossibleRoots(Instruction *Base, std::map<int64_t,Instruction*> &Roots) {
   unsigned NumBaseUses = BaseUsers.size();
   if (NumBaseUses == 0)
     NumBaseUses = Roots.begin()->second->getNumUses();
-  
+
   // Check that every node has the same number of users.
   for (auto &KV : Roots) {
     if (KV.first == 0)
@@ -744,7 +744,7 @@ collectPossibleRoots(Instruction *Base, std::map<int64_t,Instruction*> &Roots) {
     }
   }
 
-  return true; 
+  return true;
 }
 
 bool LoopReroll::DAGRootTracker::
@@ -787,7 +787,7 @@ findRootsBase(Instruction *IVU, SmallInstructionSet SubsumedInsts) {
   if (!collectPossibleRoots(IVU, V))
     return false;
 
-  // If we didn't get a root for index zero, then IVU must be 
+  // If we didn't get a root for index zero, then IVU must be
   // subsumed.
   if (V.find(0) == V.end())
     SubsumedInsts.insert(IVU);
@@ -818,13 +818,10 @@ findRootsBase(Instruction *IVU, SmallInstructionSet SubsumedInsts) {
 }
 
 bool LoopReroll::DAGRootTracker::findRoots() {
-
-  const SCEVAddRecExpr *RealIVSCEV = cast<SCEVAddRecExpr>(SE->getSCEV(IV));
-  Inc = cast<SCEVConstant>(RealIVSCEV->getOperand(1))->
-    getValue()->getZExtValue();
+  Inc = IVToIncMap[IV];
 
   assert(RootSets.empty() && "Unclean state!");
-  if (Inc == 1) {
+  if (std::abs(Inc) == 1) {
     for (auto *IVU : IV->users()) {
       if (isLoopIncrement(IVU, IV))
         LoopIncs.push_back(cast<Instruction>(IVU));
@@ -1103,15 +1100,15 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
                 " vs. " << *RootInst << "\n");
           return false;
         }
-        
+
         RootIt = TryIt;
         RootInst = TryIt->first;
       }
 
       // All instructions between the last root and this root
-      // may belong to some other iteration. If they belong to a 
+      // may belong to some other iteration. If they belong to a
       // future iteration, then they're dangerous to alias with.
-      // 
+      //
       // Note that because we allow a limited amount of flexibility in the order
       // that we visit nodes, LastRootIt might be *before* RootIt, in which
       // case we've already checked this set of instructions so we shouldn't
@@ -1267,6 +1264,7 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
 
     ++J;
   }
+  bool Negative = IVToIncMap[IV] < 0;
   const DataLayout &DL = Header->getModule()->getDataLayout();
 
   // We need to create a new induction variable for each different BaseInst.
@@ -1275,10 +1273,9 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
     const SCEVAddRecExpr *RealIVSCEV =
       cast<SCEVAddRecExpr>(SE->getSCEV(DRS.BaseInst));
     const SCEV *Start = RealIVSCEV->getStart();
-    const SCEVAddRecExpr *H = cast<SCEVAddRecExpr>
-      (SE->getAddRecExpr(Start,
-                         SE->getConstant(RealIVSCEV->getType(), 1),
-                         L, SCEV::FlagAnyWrap));
+    const SCEVAddRecExpr *H = cast<SCEVAddRecExpr>(SE->getAddRecExpr(
+        Start, SE->getConstant(RealIVSCEV->getType(), Negative ? -1 : 1), L,
+        SCEV::FlagAnyWrap));
     { // Limit the lifetime of SCEVExpander.
       SCEVExpander Expander(*SE, DL, "reroll");
       Value *NewIV = Expander.expandCodeFor(H, IV->getType(), Header->begin());
@@ -1294,8 +1291,8 @@ void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
           const SCEV *ICSCEV = RealIVSCEV->evaluateAtIteration(IterCount, *SE);
 
           // Iteration count SCEV minus 1
-          const SCEV *ICMinus1SCEV =
-            SE->getMinusSCEV(ICSCEV, SE->getConstant(ICSCEV->getType(), 1));
+          const SCEV *ICMinus1SCEV = SE->getMinusSCEV(
+              ICSCEV, SE->getConstant(ICSCEV->getType(), Negative ? -1 : 1));
 
           Value *ICMinus1; // Iteration count minus 1
           if (isa<SCEVConstant>(ICMinus1SCEV)) {
@@ -1444,13 +1441,13 @@ void LoopReroll::ReductionTracker::replaceSelected() {
 bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
                         const SCEV *IterCount,
                         ReductionTracker &Reductions) {
-  DAGRootTracker DAGRoots(this, L, IV, SE, AA, TLI);
+  DAGRootTracker DAGRoots(this, L, IV, SE, AA, TLI, IVToIncMap);
 
   if (!DAGRoots.findRoots())
     return false;
   DEBUG(dbgs() << "LRR: Found all root induction increments for: " <<
                   *IV << "\n");
-  
+
   if (!DAGRoots.validate(Reductions))
     return false;
   if (!Reductions.validateSelected())
@@ -1497,6 +1494,7 @@ bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // First, we need to find the induction variable with respect to which we can
   // reroll (there may be several possible options).
   SmallInstructionVector PossibleIVs;
+  IVToIncMap.clear();
   collectPossibleIVs(L, PossibleIVs);
 
   if (PossibleIVs.empty()) {
