@@ -513,34 +513,35 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
 /// Return true if type encoding is unsigned.
 static bool isUnsignedDIType(DwarfDebug *DD, const DIType *Ty) {
-  if (auto *DTy = dyn_cast<DIDerivedTypeBase>(Ty)) {
+  if (auto *CTy = dyn_cast<DICompositeType>(Ty)) {
+    // FIXME: Enums without a fixed underlying type have unknown signedness
+    // here, leading to incorrectly emitted constants.
+    if (CTy->getTag() == dwarf::DW_TAG_enumeration_type)
+      return false;
+
+    // (Pieces of) aggregate types that get hacked apart by SROA may be
+    // represented by a constant. Encode them as unsigned bytes.
+    return true;
+  }
+
+  if (auto *DTy = dyn_cast<DIDerivedType>(Ty)) {
     dwarf::Tag T = (dwarf::Tag)Ty->getTag();
     // Encode pointer constants as unsigned bytes. This is used at least for
     // null pointer constant emission.
-    // (Pieces of) aggregate types that get hacked apart by SROA may also be
-    // represented by a constant. Encode them as unsigned bytes.
     // FIXME: reference and rvalue_reference /probably/ shouldn't be allowed
     // here, but accept them for now due to a bug in SROA producing bogus
     // dbg.values.
-    if (T == dwarf::DW_TAG_array_type ||
-        T == dwarf::DW_TAG_class_type ||
-        T == dwarf::DW_TAG_pointer_type ||
+    if (T == dwarf::DW_TAG_pointer_type ||
         T == dwarf::DW_TAG_ptr_to_member_type ||
         T == dwarf::DW_TAG_reference_type ||
-        T == dwarf::DW_TAG_rvalue_reference_type ||
-        T == dwarf::DW_TAG_structure_type ||
-        T == dwarf::DW_TAG_union_type)
+        T == dwarf::DW_TAG_rvalue_reference_type)
       return true;
     assert(T == dwarf::DW_TAG_typedef || T == dwarf::DW_TAG_const_type ||
            T == dwarf::DW_TAG_volatile_type ||
-           T == dwarf::DW_TAG_restrict_type ||
-           T == dwarf::DW_TAG_enumeration_type);
-    if (DITypeRef Deriv = DTy->getBaseType())
-      return isUnsignedDIType(DD, DD->resolve(Deriv));
-    // FIXME: Enums without a fixed underlying type have unknown signedness
-    // here, leading to incorrectly emitted constants.
-    assert(DTy->getTag() == dwarf::DW_TAG_enumeration_type);
-    return false;
+           T == dwarf::DW_TAG_restrict_type);
+    DITypeRef Deriv = DTy->getBaseType();
+    assert(Deriv && "Expected valid base type");
+    return isUnsignedDIType(DD, DD->resolve(Deriv));
   }
 
   auto *BTy = cast<DIBasicType>(Ty);
