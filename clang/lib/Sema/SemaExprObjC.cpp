@@ -187,8 +187,9 @@ static NSAPI::NSClassIdKindKind ClassKindFromLiteralKind(
     // between LK_None/LK_Block and NSClassIdKindKind
     case Sema::LK_Block:
     case Sema::LK_None:
-      llvm_unreachable("LiteralKind can't be converted into a ClassKind");
+      break;
   }
+  llvm_unreachable("LiteralKind can't be converted into a ClassKind");
 }
 
 /// \brief Validates ObjCInterfaceDecl availability.
