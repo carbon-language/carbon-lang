@@ -109,12 +109,14 @@ ValueObjectChild::GetDisplayTypeName()
     return display_name;
 }
 
-bool
+LazyBool
 ValueObjectChild::CanUpdateWithInvalidExecutionContext ()
 {
-    if (m_parent)
-        return m_parent->CanUpdateWithInvalidExecutionContext();
-    return this->ValueObject::CanUpdateWithInvalidExecutionContext();
+    ValueObject* opinionated_ancestor = FollowParentChain([] (ValueObject* vo) -> bool {
+        return (vo->CanUpdateWithInvalidExecutionContext() == eLazyBoolCalculate);
+    });
+    
+    return opinionated_ancestor ? opinionated_ancestor->CanUpdateWithInvalidExecutionContext() : this->ValueObject::CanUpdateWithInvalidExecutionContext();
 }
 
 bool
