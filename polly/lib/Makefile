@@ -52,6 +52,7 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_equalities.c \
            External/isl/isl_factorization.c \
            External/isl/isl_farkas.c \
+           External/isl/isl_ffs.c \
            External/isl/isl_flow.c \
            External/isl/isl_fold.c \
            External/isl/isl_hash.c \
