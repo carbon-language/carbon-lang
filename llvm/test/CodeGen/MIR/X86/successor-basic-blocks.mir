@@ -1,0 +1,80 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses basic block successors correctly.
+
+--- |
+
+  define i32 @foo(i32 %a) {
+  entry:
+    %0 = icmp sle i32 %a, 10
+    br i1 %0, label %less, label %exit
+
+  less:
+    ret i32 0
+
+  exit:
+    ret i32 %a
+  }
+
+  define i32 @bar(i32 %a) {
+  entry:
+    %b = icmp sle i32 %a, 10
+    br i1 %b, label %0, label %1
+
+  ; <label>:0
+    ret i32 0
+
+  ; <label>:1
+    ret i32 %a
+  }
+
+...
+---
+name:            foo
+body:
+  # CHECK: name: entry
+  # CHECK: successors: [ '%bb.1.less', '%bb.2.exit' ]
+  # CHECK: name: less
+  - id:          0
+    name:        entry
+    successors:  [ '%bb.1.less', '%bb.2.exit' ]
+    liveins:     [ '%edi' ]
+    instructions:
+      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
+      - 'JG_1 %bb.2.exit, implicit killed %eflags'
+  - id:          1
+    name:        less
+    instructions:
+      - '%eax = MOV32r0 implicit-def dead %eflags'
+      - 'RETQ killed %eax'
+  - id:          2
+    name:        exit
+    liveins:     [ '%edi' ]
+    instructions:
+      - '%eax = COPY killed %edi'
+      - 'RETQ killed %eax'
+...
+---
+name:            bar
+body:
+  # CHECK: name: bar
+  # CHECK: name: entry
+  # CHECK: successors: [ '%bb.1', '%bb.2' ]
+  # CHECK: id: 1
+  # CHECK: id: 2
+  - id:           0
+    name:         entry
+    successors:   [ '%bb.1', '%bb.2' ]
+    liveins:      [ '%edi' ]
+    instructions:
+      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
+      - 'JG_1 %bb.2, implicit killed %eflags'
+  - id:           1
+    instructions:
+      - '%eax = MOV32r0 implicit-def dead %eflags'
+      - 'RETQ killed %eax'
+  - id:           2
+    liveins:      [ '%edi' ]
+    instructions:
+      - '%eax = COPY killed %edi'
+      - 'RETQ killed %eax'
+...
