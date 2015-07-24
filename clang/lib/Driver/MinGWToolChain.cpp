@@ -21,18 +21,24 @@ using namespace clang;
 using namespace llvm::opt;
 
 namespace {
+// Simplified from Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple.
 bool findGccVersion(StringRef LibDir, std::string &GccLibDir,
                     std::string &Ver) {
+  Generic_GCC::GCCVersion Version = Generic_GCC::GCCVersion::Parse("0.0.0");
   std::error_code EC;
-  llvm::sys::fs::directory_iterator Entry(LibDir, EC);
-  while (!EC) {
-    GccLibDir = Entry->path();
-    Ver = llvm::sys::path::filename(GccLibDir);
-    if (Ver.size() && isdigit(Ver[0]))
-      return true;
-    Entry.increment(EC);
+  for (llvm::sys::fs::directory_iterator LI(LibDir, EC), LE; !EC && LI != LE;
+       LI = LI.increment(EC)) {
+    StringRef VersionText = llvm::sys::path::filename(LI->path());
+    Generic_GCC::GCCVersion CandidateVersion =
+        Generic_GCC::GCCVersion::Parse(VersionText);
+    if (CandidateVersion.Major == -1)
+      continue;
+    if (CandidateVersion <= Version)
+      continue;
+    Ver = VersionText;
+    GccLibDir = LI->path();
   }
-  return false;
+  return Ver.size();
 }
 }
 
@@ -44,12 +50,12 @@ void MinGW::findGccLibDir() {
   Arch = "unknown";
   // lib: Arch Linux, Ubuntu, Windows
   // lib64: openSUSE Linux
-  for (StringRef Lib : {"lib", "lib64"}) {
-    for (StringRef MaybeArch : Archs) {
+  for (StringRef CandidateLib : {"lib", "lib64"}) {
+    for (StringRef CandidateArch : Archs) {
       llvm::SmallString<1024> LibDir(Base);
-      llvm::sys::path::append(LibDir, Lib, "gcc", MaybeArch);
+      llvm::sys::path::append(LibDir, CandidateLib, "gcc", CandidateArch);
       if (findGccVersion(LibDir, GccLibDir, Ver)) {
-        Arch = MaybeArch;
+        Arch = CandidateArch;
         return;
       }
     }
