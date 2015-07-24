@@ -18,9 +18,9 @@ namespace fuzzer {
 // Cross Data1 and Data2, store the result (up to MaxOutSize bytes) in Out.
 size_t CrossOver(const uint8_t *Data1, size_t Size1,
                  const uint8_t *Data2, size_t Size2,
-                 uint8_t *Out, size_t MaxOutSize) {
+                 uint8_t *Out, size_t MaxOutSize, FuzzerRandomBase &Rand) {
   assert(Size1 || Size2);
-  MaxOutSize = rand() % MaxOutSize + 1;
+  MaxOutSize = Rand(MaxOutSize) + 1;
   size_t OutPos = 0;
   size_t Pos1 = 0;
   size_t Pos2 = 0;
@@ -34,7 +34,7 @@ size_t CrossOver(const uint8_t *Data1, size_t Size1,
     if (*InPos < InSize) {
       size_t InSizeLeft = InSize - *InPos;
       size_t MaxExtraSize = std::min(OutSizeLeft, InSizeLeft);
-      size_t ExtraSize = rand() % MaxExtraSize + 1;
+      size_t ExtraSize = Rand(MaxExtraSize) + 1;
       memcpy(Out + OutPos, Data + *InPos, ExtraSize);
       OutPos += ExtraSize;
       (*InPos) += ExtraSize;

@@ -10,6 +10,7 @@ extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
 TEST(Fuzzer, CrossOver) {
   using namespace fuzzer;
+  FuzzerRandomLibc Rand(0);
   Unit A({0, 1, 2}), B({5, 6, 7});
   Unit C;
   Unit Expected[] = {
@@ -53,7 +54,7 @@ TEST(Fuzzer, CrossOver) {
     for (int Iter = 0; Iter < 3000; Iter++) {
       C.resize(Len);
       size_t NewSize = CrossOver(A.data(), A.size(), B.data(), B.size(),
-                                 C.data(), C.size());
+                                 C.data(), C.size(), Rand);
       C.resize(NewSize);
       FoundUnits.insert(C);
     }

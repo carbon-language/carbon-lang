@@ -14,6 +14,8 @@ static const uint64_t kMagic = 8860221463604ULL;
 
 class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
  public:
+  MyFuzzer(fuzzer::FuzzerRandomBase *Rand)
+      : fuzzer::UserSuppliedFuzzer(Rand) {}
   void TargetFunction(const uint8_t *Data, size_t Size) {
     if (Size <= 10) return;
     if (memcmp(Data, &kMagic, sizeof(kMagic))) return;
@@ -42,6 +44,7 @@ class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
 };
 
 int main(int argc, char **argv) {
-  MyFuzzer F;
+  fuzzer::FuzzerRandomLibc Rand(0);
+  MyFuzzer F(&Rand);
   fuzzer::FuzzerDriver(argc, argv, F);
 }

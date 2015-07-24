@@ -42,6 +42,26 @@ int main(int argc, char **argv) {
 */
 int FuzzerDriver(int argc, char **argv, UserCallback Callback);
 
+class FuzzerRandomBase {
+ public:
+  FuzzerRandomBase(){}
+  virtual ~FuzzerRandomBase(){};
+  virtual void ResetSeed(int seed) = 0;
+  // Return a random number.
+  virtual size_t Rand() = 0;
+  // Return a random number in range [0,n).
+  size_t operator()(size_t n) { return Rand() % n; }
+  bool RandBool() { return Rand() % 2; }
+};
+
+class FuzzerRandomLibc : public FuzzerRandomBase {
+ public:
+  FuzzerRandomLibc(int seed) { ResetSeed(seed); }
+  void ResetSeed(int seed) override;
+  ~FuzzerRandomLibc() override {}
+  size_t Rand() override;
+};
+
 /** An abstract class that allows to use user-supplied mutators with libFuzzer.
 
 Usage:
@@ -50,6 +70,7 @@ Usage:
 #include "FuzzerInterface.h"
 class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
  public:
+  MyFuzzer(fuzzer::FuzzerRandomBase *Rand);
   // Must define the target function.
   void TargetFunction(...) { ... }
   // Optionally define the mutator.
@@ -66,6 +87,8 @@ int main(int argc, char **argv) {
 */
 class UserSuppliedFuzzer {
  public:
+  UserSuppliedFuzzer();  // Deprecated, don't use.
+  UserSuppliedFuzzer(FuzzerRandomBase *Rand);
   /// Executes the target function on 'Size' bytes of 'Data'.
   virtual void TargetFunction(const uint8_t *Data, size_t Size) = 0;
   /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
@@ -80,7 +103,9 @@ class UserSuppliedFuzzer {
                            uint8_t *Out, size_t MaxOutSize) {
     return BasicCrossOver(Data1, Size1, Data2, Size2, Out, MaxOutSize);
   }
-  virtual ~UserSuppliedFuzzer() {}
+  virtual ~UserSuppliedFuzzer();
+
+  FuzzerRandomBase &GetRand() { return *Rand; }
 
  protected:
   /// These can be called internally by Mutate and CrossOver.
@@ -88,6 +113,9 @@ class UserSuppliedFuzzer {
   size_t BasicCrossOver(const uint8_t *Data1, size_t Size1,
                         const uint8_t *Data2, size_t Size2,
                         uint8_t *Out, size_t MaxOutSize);
+ private:
+  bool OwnRand = false;
+  FuzzerRandomBase *Rand;
 };
 
 /// Runs the fuzzing with the UserSuppliedFuzzer.

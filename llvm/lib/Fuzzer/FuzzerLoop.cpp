@@ -113,14 +113,14 @@ void Fuzzer::RereadOutputCorpus() {
 
 void Fuzzer::ShuffleAndMinimize() {
   size_t MaxCov = 0;
-  bool PreferSmall =
-      (Options.PreferSmallDuringInitialShuffle == 1 ||
-       (Options.PreferSmallDuringInitialShuffle == -1 && rand() % 2));
+  bool PreferSmall = (Options.PreferSmallDuringInitialShuffle == 1 ||
+                      (Options.PreferSmallDuringInitialShuffle == -1 &&
+                       USF.GetRand().RandBool()));
   if (Options.Verbosity)
     Printf("PreferSmall: %d\n", PreferSmall);
   PrintStats("READ  ", 0);
   std::vector<Unit> NewCorpus;
-  std::random_shuffle(Corpus.begin(), Corpus.end());
+  std::random_shuffle(Corpus.begin(), Corpus.end(), USF.GetRand());
   if (PreferSmall)
     std::stable_sort(
         Corpus.begin(), Corpus.end(),
