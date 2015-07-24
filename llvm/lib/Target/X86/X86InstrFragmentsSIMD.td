@@ -114,19 +114,17 @@ def X86vsext   : SDNode<"X86ISD::VSEXT",
                                               SDTCisInt<0>, SDTCisInt<1>,
                                               SDTCisOpSmallerThanOp<1, 0>]>>;
 
-def X86vtrunc   : SDNode<"X86ISD::VTRUNC",
-                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
-                                              SDTCisInt<0>, SDTCisInt<1>,
-                                              SDTCisOpSmallerThanOp<0, 1>]>>;
+def SDTVtrunc    : SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
+                                       SDTCisInt<0>, SDTCisInt<1>,
+                                       SDTCisOpSmallerThanOp<0, 1>]>;
+
+def X86vtrunc    : SDNode<"X86ISD::VTRUNC",   SDTVtrunc>;
+def X86vtruncs   : SDNode<"X86ISD::VTRUNCS",  SDTVtrunc>;
+def X86vtruncus  : SDNode<"X86ISD::VTRUNCUS", SDTVtrunc>;
+
 def X86trunc    : SDNode<"X86ISD::TRUNC",
                          SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisInt<1>,
                                               SDTCisOpSmallerThanOp<0, 1>]>>;
-
-def X86vtruncm   : SDNode<"X86ISD::VTRUNCM",
-                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
-                                              SDTCisInt<0>, SDTCisInt<1>,
-                                              SDTCisVec<2>, SDTCisInt<2>,
-                                              SDTCisOpSmallerThanOp<0, 2>]>>;
 def X86vfpext  : SDNode<"X86ISD::VFPEXT",
                         SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,
                                              SDTCisFP<0>, SDTCisFP<1>,
@@ -859,29 +857,59 @@ def masked_load_unaligned : PatFrag<(ops node:$src1, node:$src2, node:$src3),
   return isa<MaskedLoadSDNode>(N);
 }]>;
 
+// masked store fragments.
+// X86mstore can't be implemented in core DAG files because some targets
+// doesn't support vector type ( llvm-tblgen will fail)
+def X86mstore : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                        (masked_store node:$src1, node:$src2, node:$src3), [{
+  return !cast<MaskedStoreSDNode>(N)->isTruncatingStore();
+}]>;
+
 def masked_store_aligned128 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-                         (masked_store node:$src1, node:$src2, node:$src3), [{
+                         (X86mstore node:$src1, node:$src2, node:$src3), [{
   if (auto *Store = dyn_cast<MaskedStoreSDNode>(N))
     return Store->getAlignment() >= 16;
   return false;
 }]>;
 
 def masked_store_aligned256 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-                         (masked_store node:$src1, node:$src2, node:$src3), [{
+                         (X86mstore node:$src1, node:$src2, node:$src3), [{
   if (auto *Store = dyn_cast<MaskedStoreSDNode>(N))
     return Store->getAlignment() >= 32;
   return false;
 }]>;
 
 def masked_store_aligned512 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-                         (masked_store node:$src1, node:$src2, node:$src3), [{
+                         (X86mstore node:$src1, node:$src2, node:$src3), [{
   if (auto *Store = dyn_cast<MaskedStoreSDNode>(N))
     return Store->getAlignment() >= 64;
   return false;
 }]>;
 
 def masked_store_unaligned : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-                         (masked_store node:$src1, node:$src2, node:$src3), [{
+                         (X86mstore node:$src1, node:$src2, node:$src3), [{
   return isa<MaskedStoreSDNode>(N);
 }]>;
 
+// masked truncstore fragments
+// X86mtruncstore can't be implemented in core DAG files because some targets
+// doesn't support vector type ( llvm-tblgen will fail)
+def X86mtruncstore : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                             (masked_store node:$src1, node:$src2, node:$src3), [{
+    return cast<MaskedStoreSDNode>(N)->isTruncatingStore();
+}]>;
+def masked_truncstorevi8 :
+  PatFrag<(ops node:$src1, node:$src2, node:$src3),
+          (X86mtruncstore node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedStoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i8;
+}]>;
+def masked_truncstorevi16 :
+  PatFrag<(ops node:$src1, node:$src2, node:$src3),
+          (X86mtruncstore node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedStoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i16;
+}]>;
+def masked_truncstorevi32 :
+  PatFrag<(ops node:$src1, node:$src2, node:$src3),
+          (X86mtruncstore node:$src1, node:$src2, node:$src3), [{
+  return cast<MaskedStoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i32;
+}]>;

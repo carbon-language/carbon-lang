@@ -1008,6 +1008,84 @@ define <32 x i16>@test_int_x86_avx512_mask_pmulhr_sw_512(<32 x i16> %x0, <32 x i
   ret <32 x i16> %res2
 }
 
+declare <32 x i8> @llvm.x86.avx512.mask.pmov.wb.512(<32 x i16>, <32 x i8>, i32)
+
+define <32 x i8>@test_int_x86_avx512_mask_pmov_wb_512(<32 x i16> %x0, <32 x i8> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmov_wb_512:
+; CHECK:       vpmovwb %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:  vpmovwb %zmm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:  vpmovwb %zmm0, %ymm0
+    %res0 = call <32 x i8> @llvm.x86.avx512.mask.pmov.wb.512(<32 x i16> %x0, <32 x i8> %x1, i32 -1)
+    %res1 = call <32 x i8> @llvm.x86.avx512.mask.pmov.wb.512(<32 x i16> %x0, <32 x i8> %x1, i32 %x2)
+    %res2 = call <32 x i8> @llvm.x86.avx512.mask.pmov.wb.512(<32 x i16> %x0, <32 x i8> zeroinitializer, i32 %x2)
+    %res3 = add <32 x i8> %res0, %res1
+    %res4 = add <32 x i8> %res3, %res2
+    ret <32 x i8> %res4
+}
+
+declare void @llvm.x86.avx512.mask.pmov.wb.mem.512(i8* %ptr, <32 x i16>, i32)
+
+define void @test_int_x86_avx512_mask_pmov_wb_mem_512(i8* %ptr, <32 x i16> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmov_wb_mem_512:
+; CHECK:  vpmovwb %zmm0, (%rdi)
+; CHECK:  vpmovwb %zmm0, (%rdi) {%k1}
+    call void @llvm.x86.avx512.mask.pmov.wb.mem.512(i8* %ptr, <32 x i16> %x1, i32 -1)
+    call void @llvm.x86.avx512.mask.pmov.wb.mem.512(i8* %ptr, <32 x i16> %x1, i32 %x2)
+    ret void
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pmovs.wb.512(<32 x i16>, <32 x i8>, i32)
+
+define <32 x i8>@test_int_x86_avx512_mask_pmovs_wb_512(<32 x i16> %x0, <32 x i8> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmovs_wb_512:
+; CHECK:       vpmovswb %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:  vpmovswb %zmm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:  vpmovswb %zmm0, %ymm0
+    %res0 = call <32 x i8> @llvm.x86.avx512.mask.pmovs.wb.512(<32 x i16> %x0, <32 x i8> %x1, i32 -1)
+    %res1 = call <32 x i8> @llvm.x86.avx512.mask.pmovs.wb.512(<32 x i16> %x0, <32 x i8> %x1, i32 %x2)
+    %res2 = call <32 x i8> @llvm.x86.avx512.mask.pmovs.wb.512(<32 x i16> %x0, <32 x i8> zeroinitializer, i32 %x2)
+    %res3 = add <32 x i8> %res0, %res1
+    %res4 = add <32 x i8> %res3, %res2
+    ret <32 x i8> %res4
+}
+
+declare void @llvm.x86.avx512.mask.pmovs.wb.mem.512(i8* %ptr, <32 x i16>, i32)
+
+define void @test_int_x86_avx512_mask_pmovs_wb_mem_512(i8* %ptr, <32 x i16> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmovs_wb_mem_512:
+; CHECK:  vpmovswb %zmm0, (%rdi)
+; CHECK:  vpmovswb %zmm0, (%rdi) {%k1}
+    call void @llvm.x86.avx512.mask.pmovs.wb.mem.512(i8* %ptr, <32 x i16> %x1, i32 -1)
+    call void @llvm.x86.avx512.mask.pmovs.wb.mem.512(i8* %ptr, <32 x i16> %x1, i32 %x2)
+    ret void
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pmovus.wb.512(<32 x i16>, <32 x i8>, i32)
+
+define <32 x i8>@test_int_x86_avx512_mask_pmovus_wb_512(<32 x i16> %x0, <32 x i8> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmovus_wb_512:
+; CHECK:       vpmovuswb %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:  vpmovuswb %zmm0, %ymm2 {%k1} {z}
+; CHECK-NEXT:  vpmovuswb %zmm0, %ymm0
+    %res0 = call <32 x i8> @llvm.x86.avx512.mask.pmovus.wb.512(<32 x i16> %x0, <32 x i8> %x1, i32 -1)
+    %res1 = call <32 x i8> @llvm.x86.avx512.mask.pmovus.wb.512(<32 x i16> %x0, <32 x i8> %x1, i32 %x2)
+    %res2 = call <32 x i8> @llvm.x86.avx512.mask.pmovus.wb.512(<32 x i16> %x0, <32 x i8> zeroinitializer, i32 %x2)
+    %res3 = add <32 x i8> %res0, %res1
+    %res4 = add <32 x i8> %res3, %res2
+    ret <32 x i8> %res4
+}
+
+declare void @llvm.x86.avx512.mask.pmovus.wb.mem.512(i8* %ptr, <32 x i16>, i32)
+
+define void @test_int_x86_avx512_mask_pmovus_wb_mem_512(i8* %ptr, <32 x i16> %x1, i32 %x2) {
+; CHECK-LABEL: test_int_x86_avx512_mask_pmovus_wb_mem_512:
+; CHECK:  vpmovuswb %zmm0, (%rdi)
+; CHECK:  vpmovuswb %zmm0, (%rdi) {%k1}
+    call void @llvm.x86.avx512.mask.pmovus.wb.mem.512(i8* %ptr, <32 x i16> %x1, i32 -1)
+    call void @llvm.x86.avx512.mask.pmovus.wb.mem.512(i8* %ptr, <32 x i16> %x1, i32 %x2)
+    ret void
+}
+
 declare <32 x i16> @llvm.x86.avx512.mask.pmaddubs.w.512(<64 x i8>, <64 x i8>, <32 x i16>, i32)
 
 define <32 x i16>@test_int_x86_avx512_mask_pmaddubs_w_512(<64 x i8> %x0, <64 x i8> %x1, <32 x i16> %x2, i32 %x3) {

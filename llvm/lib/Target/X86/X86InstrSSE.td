@@ -8718,16 +8718,16 @@ defm VPMASKMOVQ : avx2_pmovmask<"vpmaskmovq",
                                 int_x86_avx2_maskstore_q,
                                 int_x86_avx2_maskstore_q_256>, VEX_W;
 
-def: Pat<(masked_store addr:$ptr, (v8i32 VR256:$mask), (v8f32 VR256:$src)),
+def: Pat<(X86mstore addr:$ptr, (v8i32 VR256:$mask), (v8f32 VR256:$src)),
          (VMASKMOVPSYmr addr:$ptr, VR256:$mask, VR256:$src)>;
 
-def: Pat<(masked_store addr:$ptr, (v8i32 VR256:$mask), (v8i32 VR256:$src)),
+def: Pat<(X86mstore addr:$ptr, (v8i32 VR256:$mask), (v8i32 VR256:$src)),
          (VPMASKMOVDYmr addr:$ptr, VR256:$mask, VR256:$src)>;
 
-def: Pat<(masked_store addr:$ptr, (v4i32 VR128:$mask), (v4f32 VR128:$src)),
+def: Pat<(X86mstore addr:$ptr, (v4i32 VR128:$mask), (v4f32 VR128:$src)),
          (VMASKMOVPSmr addr:$ptr, VR128:$mask, VR128:$src)>;
 
-def: Pat<(masked_store addr:$ptr, (v4i32 VR128:$mask), (v4i32 VR128:$src)),
+def: Pat<(X86mstore addr:$ptr, (v4i32 VR128:$mask), (v4i32 VR128:$src)),
          (VPMASKMOVDmr addr:$ptr, VR128:$mask, VR128:$src)>;
 
 def: Pat<(v8f32 (masked_load addr:$ptr, (v8i32 VR256:$mask), undef)),
@@ -8772,10 +8772,10 @@ def: Pat<(v4i32 (masked_load addr:$ptr, (v4i32 VR128:$mask), (v4i32 VR128:$src0)
          (VBLENDVPSrr VR128:$src0, (VPMASKMOVDrm VR128:$mask, addr:$ptr),
                        VR128:$mask)>;
 
-def: Pat<(masked_store addr:$ptr, (v4i64 VR256:$mask), (v4f64 VR256:$src)),
+def: Pat<(X86mstore addr:$ptr, (v4i64 VR256:$mask), (v4f64 VR256:$src)),
          (VMASKMOVPDYmr addr:$ptr, VR256:$mask, VR256:$src)>;
 
-def: Pat<(masked_store addr:$ptr, (v4i64 VR256:$mask), (v4i64 VR256:$src)),
+def: Pat<(X86mstore addr:$ptr, (v4i64 VR256:$mask), (v4i64 VR256:$src)),
          (VPMASKMOVQYmr addr:$ptr, VR256:$mask, VR256:$src)>;
 
 def: Pat<(v4f64 (masked_load addr:$ptr, (v4i64 VR256:$mask), undef)),
@@ -8800,10 +8800,10 @@ def: Pat<(v4i64 (masked_load addr:$ptr, (v4i64 VR256:$mask), (v4i64 VR256:$src0)
          (VBLENDVPDYrr VR256:$src0, (VPMASKMOVQYrm VR256:$mask, addr:$ptr),
                        VR256:$mask)>;
 
-def: Pat<(masked_store addr:$ptr, (v2i64 VR128:$mask), (v2f64 VR128:$src)),
+def: Pat<(X86mstore addr:$ptr, (v2i64 VR128:$mask), (v2f64 VR128:$src)),
          (VMASKMOVPDmr addr:$ptr, VR128:$mask, VR128:$src)>;
 
-def: Pat<(masked_store addr:$ptr, (v2i64 VR128:$mask), (v2i64 VR128:$src)),
+def: Pat<(X86mstore addr:$ptr, (v2i64 VR128:$mask), (v2i64 VR128:$src)),
          (VPMASKMOVQmr addr:$ptr, VR128:$mask, VR128:$src)>;
 
 def: Pat<(v2f64 (masked_load addr:$ptr, (v2i64 VR128:$mask), undef)),

@@ -1348,6 +1348,24 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FP_ROUND,           MVT::v8f32, Legal);
     setOperationAction(ISD::FP_EXTEND,          MVT::v8f32, Legal);
 
+    setTruncStoreAction(MVT::v8i64,   MVT::v8i8,   Legal);
+    setTruncStoreAction(MVT::v8i64,   MVT::v8i16,  Legal);
+    setTruncStoreAction(MVT::v8i64,   MVT::v8i32,  Legal);
+    setTruncStoreAction(MVT::v16i32,  MVT::v16i8,  Legal);
+    setTruncStoreAction(MVT::v16i32,  MVT::v16i16, Legal);
+    if (Subtarget->hasVLX()){
+      setTruncStoreAction(MVT::v4i64, MVT::v4i8,  Legal);
+      setTruncStoreAction(MVT::v4i64, MVT::v4i16, Legal);
+      setTruncStoreAction(MVT::v4i64, MVT::v4i32, Legal);
+      setTruncStoreAction(MVT::v8i32, MVT::v8i8,  Legal);
+      setTruncStoreAction(MVT::v8i32, MVT::v8i16, Legal);
+
+      setTruncStoreAction(MVT::v2i64, MVT::v2i8,  Legal);
+      setTruncStoreAction(MVT::v2i64, MVT::v2i16, Legal);
+      setTruncStoreAction(MVT::v2i64, MVT::v2i32, Legal);
+      setTruncStoreAction(MVT::v4i32, MVT::v4i8,  Legal);
+      setTruncStoreAction(MVT::v4i32, MVT::v4i16, Legal);
+    }
     setOperationAction(ISD::TRUNCATE,           MVT::i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v16i8, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
@@ -1556,6 +1574,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::VSELECT,            MVT::v64i8, Legal);
     setOperationAction(ISD::TRUNCATE,           MVT::v32i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v64i1, Custom);
+    setOperationAction(ISD::TRUNCATE,           MVT::v32i8, Custom);
 
     setOperationAction(ISD::SMAX,               MVT::v64i8, Legal);
     setOperationAction(ISD::SMAX,               MVT::v32i16, Legal);
@@ -1565,6 +1584,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SMIN,               MVT::v32i16, Legal);
     setOperationAction(ISD::UMIN,               MVT::v64i8, Legal);
     setOperationAction(ISD::UMIN,               MVT::v32i16, Legal);
+
+    setTruncStoreAction(MVT::v32i16,  MVT::v32i8, Legal);
+    setTruncStoreAction(MVT::v16i16,  MVT::v16i8, Legal);
+    if (Subtarget->hasVLX())
+      setTruncStoreAction(MVT::v8i16,   MVT::v8i8,  Legal);
 
     for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
       const MVT VT = (MVT::SimpleValueType)i;
@@ -12486,10 +12510,8 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
         Subtarget->hasDQI() && Subtarget->hasVLX())
       return Op; // legal, will go to VPMOVB2M, VPMOVQ2M
   }
-  if (InVT.is512BitVector() || VT.getVectorElementType() == MVT::i1) {
-    if (VT.getVectorElementType().getSizeInBits() >=8)
-      return DAG.getNode(X86ISD::VTRUNC, DL, VT, In);
 
+  if (VT.getVectorElementType() == MVT::i1) {
     assert(VT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
     unsigned NumElts = InVT.getVectorNumElements();
     assert ((NumElts == 8 || NumElts == 16) && "Unexpected vector type");
@@ -12504,6 +12526,11 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
     SDValue And = DAG.getNode(ISD::AND, DL, InVT, OneV, In);
     return DAG.getNode(X86ISD::TESTM, DL, VT, And, And);
   }
+
+  // vpmovqb/w/d, vpmovdb/w, vpmovwb
+  if (((!InVT.is512BitVector() && Subtarget->hasVLX()) || InVT.is512BitVector()) &&
+      (InVT.getVectorElementType() != MVT::i16 || Subtarget->hasBWI()))
+    return DAG.getNode(X86ISD::VTRUNC, DL, VT, In);
 
   if ((VT == MVT::v4i32) && (InVT == MVT::v4i64)) {
     // On AVX2, v4i64 -> v4i32 becomes VPERMD.
@@ -15221,7 +15248,7 @@ static SDValue getTargetVShiftNode(unsigned Opc, SDLoc dl, MVT VT,
 
 /// \brief Return (and \p Op, \p Mask) for compare instructions or
 /// (vselect \p Mask, \p Op, \p PreservedSrc) for others along with the
-/// necessary casting for \p Mask when lowering masking intrinsics.
+/// necessary casting or extending for \p Mask when lowering masking intrinsics
 static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
                                     SDValue PreservedSrc,
                                     const X86Subtarget *Subtarget,
@@ -15229,8 +15256,8 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     EVT VT = Op.getValueType();
     EVT MaskVT = EVT::getVectorVT(*DAG.getContext(),
                                   MVT::i1, VT.getVectorNumElements());
-    EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                     Mask.getValueType().getSizeInBits());
+    SDValue VMask = SDValue();
+    unsigned OpcodeSelect = ISD::VSELECT;
     SDLoc dl(Op);
 
     assert(MaskVT.isSimple() && "invalid mask type");
@@ -15238,11 +15265,20 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
     if (isAllOnes(Mask))
       return Op;
 
-    // In case when MaskVT equals v2i1 or v4i1, low 2 or 4 elements
-    // are extracted by EXTRACT_SUBVECTOR.
-    SDValue VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
-                                DAG.getBitcast(BitcastVT, Mask),
-                                DAG.getIntPtrConstant(0, dl));
+    if (MaskVT.bitsGT(Mask.getValueType())) {
+      EVT newMaskVT =  EVT::getIntegerVT(*DAG.getContext(),
+                                         MaskVT.getSizeInBits());
+      VMask = DAG.getBitcast(MaskVT,
+                             DAG.getNode(ISD::ANY_EXTEND, dl, newMaskVT, Mask));
+    } else {
+      EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                       Mask.getValueType().getSizeInBits());
+      // In case when MaskVT equals v2i1 or v4i1, low 2 or 4 elements
+      // are extracted by EXTRACT_SUBVECTOR.
+      VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
+                          DAG.getBitcast(BitcastVT, Mask),
+                          DAG.getIntPtrConstant(0, dl));
+    }
 
     switch (Op.getOpcode()) {
       default: break;
@@ -15251,10 +15287,18 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
       case X86ISD::CMPM:
       case X86ISD::CMPMU:
         return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
+      case X86ISD::VTRUNC:
+      case X86ISD::VTRUNCS:
+      case X86ISD::VTRUNCUS:
+        // We can't use ISD::VSELECT here because it is not always "Legal"
+        // for the destination type. For example vpmovqb require only AVX512
+        // and vselect that can operate on byte element type require BWI
+        OpcodeSelect = X86ISD::SELECT;
+        break;
     }
     if (PreservedSrc.getOpcode() == ISD::UNDEF)
       PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
-    return DAG.getNode(ISD::VSELECT, dl, VT, VMask, Op, PreservedSrc);
+    return DAG.getNode(OpcodeSelect, dl, VT, VMask, Op, PreservedSrc);
 }
 
 /// \brief Creates an SDNode for a predicated scalar operation.
@@ -16112,6 +16156,45 @@ static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
   return Chain;
 }
 
+/// \brief Lower intrinsics for TRUNCATE_TO_MEM case
+/// return truncate Store/MaskedStore Node
+static SDValue LowerINTRINSIC_TRUNCATE_TO_MEM(const SDValue & Op,
+                                               SelectionDAG &DAG,
+                                               MVT ElementType) {
+  SDLoc dl(Op);
+  SDValue Mask = Op.getOperand(4);
+  SDValue DataToTruncate = Op.getOperand(3);
+  SDValue Addr = Op.getOperand(2);
+  SDValue Chain = Op.getOperand(0);
+
+  EVT VT  = DataToTruncate.getValueType();
+  EVT SVT = EVT::getVectorVT(*DAG.getContext(),
+                             ElementType, VT.getVectorNumElements());
+
+  if (isAllOnes(Mask)) // return just a truncate store
+    return DAG.getTruncStore(Chain, dl, DataToTruncate, Addr,
+                             MachinePointerInfo(), SVT, false, false,
+                             SVT.getScalarSizeInBits()/8);
+
+  EVT MaskVT = EVT::getVectorVT(*DAG.getContext(),
+                                MVT::i1, VT.getVectorNumElements());
+  EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                   Mask.getValueType().getSizeInBits());
+  // In case when MaskVT equals v2i1 or v4i1, low 2 or 4 elements
+  // are extracted by EXTRACT_SUBVECTOR.
+  SDValue VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
+                              DAG.getBitcast(BitcastVT, Mask),
+                              DAG.getIntPtrConstant(0, dl));
+
+  MachineMemOperand *MMO = DAG.getMachineFunction().
+    getMachineMemOperand(MachinePointerInfo(),
+                         MachineMemOperand::MOStore, SVT.getStoreSize(),
+                         SVT.getScalarSizeInBits()/8);
+
+  return DAG.getMaskedStore(Chain, dl, DataToTruncate, Addr,
+                            VMask, SVT, MMO, true);
+}
+
 static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                       SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
@@ -16245,6 +16328,12 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                         MachinePointerInfo(), false, false,
                         VT.getScalarSizeInBits()/8);
   }
+  case TRUNCATE_TO_MEM_VI8:
+    return LowerINTRINSIC_TRUNCATE_TO_MEM(Op, DAG, MVT::i8);
+  case TRUNCATE_TO_MEM_VI16:
+    return LowerINTRINSIC_TRUNCATE_TO_MEM(Op, DAG, MVT::i16);
+  case TRUNCATE_TO_MEM_VI32:
+    return LowerINTRINSIC_TRUNCATE_TO_MEM(Op, DAG, MVT::i32);
   case EXPAND_FROM_MEM: {
     SDLoc dl(Op);
     SDValue Mask = Op.getOperand(4);
@@ -18957,7 +19046,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VZEXT:              return "X86ISD::VZEXT";
   case X86ISD::VSEXT:              return "X86ISD::VSEXT";
   case X86ISD::VTRUNC:             return "X86ISD::VTRUNC";
-  case X86ISD::VTRUNCM:            return "X86ISD::VTRUNCM";
+  case X86ISD::VTRUNCS:            return "X86ISD::VTRUNCS";
+  case X86ISD::VTRUNCUS:           return "X86ISD::VTRUNCUS";
   case X86ISD::VINSERT:            return "X86ISD::VINSERT";
   case X86ISD::VFPEXT:             return "X86ISD::VFPEXT";
   case X86ISD::VFPROUND:           return "X86ISD::VFPROUND";
@@ -24096,6 +24186,15 @@ static SDValue PerformMSTORECombine(SDNode *N, SelectionDAG &DAG,
   unsigned FromSz = VT.getVectorElementType().getSizeInBits();
   unsigned ToSz = StVT.getVectorElementType().getSizeInBits();
 
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // The truncating store is legal in some cases. For example
+  // vpmovqb, vpmovqw, vpmovqd, vpmovdb, vpmovdw
+  // are designated for truncate store.
+  // In this case we don't need any further transformations.
+  if (TLI.isTruncStoreLegal(VT, StVT))
+    return SDValue();
+
   // From, To sizes and ElemCount must be pow of two
   assert (isPowerOf2_32(NumElems * FromSz * ToSz) &&
     "Unexpected size for truncating masked store");
@@ -24206,6 +24305,13 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
     assert(StVT != VT && "Cannot truncate to the same type");
     unsigned FromSz = VT.getVectorElementType().getSizeInBits();
     unsigned ToSz = StVT.getVectorElementType().getSizeInBits();
+
+    // The truncating store is legal in some cases. For example
+    // vpmovqb, vpmovqw, vpmovqd, vpmovdb, vpmovdw
+    // are designated for truncate store.
+    // In this case we don't need any further transformations.
+    if (TLI.isTruncStoreLegal(VT, StVT))
+      return SDValue();
 
     // From, To sizes and ElemCount must be pow of two
     if (!isPowerOf2_32(NumElems * FromSz * ToSz)) return SDValue();

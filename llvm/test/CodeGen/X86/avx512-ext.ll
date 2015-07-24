@@ -1,24 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s --check-prefix=KNL
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx | FileCheck %s --check-prefix=SKX 
  
- 
-; KNL-LABEL: trunc_16x32_to_16x8
-; KNL: vpmovdb
-; KNL: ret
-define <16 x i8> @trunc_16x32_to_16x8(<16 x i32> %i) nounwind readnone {
-  %x = trunc <16 x i32> %i to <16 x i8>
-  ret <16 x i8> %x
-}
-
-; KNL-LABEL: trunc_8x64_to_8x16
-; KNL: vpmovqw
-; KNL: ret
-define <8 x i16> @trunc_8x64_to_8x16(<8 x i64> %i) nounwind readnone {
-  %x = trunc <8 x i64> %i to <8 x i16>
-  ret <8 x i16> %x
-}
-
-;SKX-LABEL: zext_8x8mem_to_8x16:                  
+ ;SKX-LABEL: zext_8x8mem_to_8x16:                  
 ;SKX:       ## BB#0:
 ;SKX-NEXT:  vpmovw2m  %xmm0, %k1     
 ;SKX-NEXT:  vpmovzxbw (%rdi), %xmm0 {%k1} {z} 
@@ -895,13 +878,6 @@ define <8 x i32> @sext_8i1_8i32(<8 x i32> %a1, <8 x i32> %a2) nounwind {
   ret <8 x i32> %y
 }
 
-; KNL-LABEL: trunc_v16i32_to_v16i16
-; KNL: vpmovdw
-; KNL: ret
-define <16 x i16> @trunc_v16i32_to_v16i16(<16 x i32> %x) {
-  %1 = trunc <16 x i32> %x to <16 x i16>
-  ret <16 x i16> %1
-}
 
 ; KNL-LABEL: trunc_i32_to_i1
 ; KNL: movw    $-4, %ax

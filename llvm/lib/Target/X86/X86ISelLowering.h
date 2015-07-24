@@ -282,9 +282,8 @@ namespace llvm {
 
       // Vector integer truncate.
       VTRUNC,
-
-      // Vector integer truncate with mask.
-      VTRUNCM,
+      // Vector integer truncate with unsigned/signed saturation.
+      VTRUNCUS, VTRUNCS,
 
       // Vector FP extend.
       VFPEXT,

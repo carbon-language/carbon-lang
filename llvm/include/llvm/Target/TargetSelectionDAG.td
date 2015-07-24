@@ -817,6 +817,21 @@ def truncstoref64 : PatFrag<(ops node:$val, node:$ptr),
   return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f64;
 }]>;
 
+def truncstorevi8 : PatFrag<(ops node:$val, node:$ptr),
+                            (truncstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i8;
+}]>;
+
+def truncstorevi16 : PatFrag<(ops node:$val, node:$ptr),
+                             (truncstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i16;
+}]>;
+
+def truncstorevi32 : PatFrag<(ops node:$val, node:$ptr),
+                             (truncstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i32;
+}]>;
+
 // indexed store fragments.
 def istore : PatFrag<(ops node:$val, node:$base, node:$offset),
                      (ist node:$val, node:$base, node:$offset), [{
