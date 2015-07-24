@@ -149,20 +149,22 @@ void DebugInfoFinder::processType(DIType *DT) {
   if (!addType(DT))
     return;
   processScope(DT->getScope().resolve(TypeIdentifierMap));
-  if (auto *DCT = dyn_cast<DICompositeTypeBase>(DT)) {
+  if (auto *ST = dyn_cast<DISubroutineType>(DT)) {
+    for (DITypeRef Ref : ST->getTypeArray())
+      processType(Ref.resolve(TypeIdentifierMap));
+    return;
+  }
+  if (auto *DCT = dyn_cast<DICompositeType>(DT)) {
     processType(DCT->getBaseType().resolve(TypeIdentifierMap));
-    if (auto *ST = dyn_cast<DISubroutineType>(DCT)) {
-      for (DITypeRef Ref : ST->getTypeArray())
-        processType(Ref.resolve(TypeIdentifierMap));
-      return;
-    }
     for (Metadata *D : DCT->getElements()) {
       if (auto *T = dyn_cast<DIType>(D))
         processType(T);
       else if (auto *SP = dyn_cast<DISubprogram>(D))
         processSubprogram(SP);
     }
-  } else if (auto *DDT = dyn_cast<DIDerivedType>(DT)) {
+    return;
+  }
+  if (auto *DDT = dyn_cast<DIDerivedType>(DT)) {
     processType(DDT->getBaseType().resolve(TypeIdentifierMap));
   }
 }
