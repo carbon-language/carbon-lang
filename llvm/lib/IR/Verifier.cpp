@@ -800,7 +800,6 @@ void Verifier::visitDIDerivedTypeBase(const DIDerivedTypeBase &N) {
             Tag == dwarf::DW_TAG_restrict_type ||
             Tag == dwarf::DW_TAG_array_type ||
             Tag == dwarf::DW_TAG_enumeration_type ||
-            Tag == dwarf::DW_TAG_subroutine_type ||
             Tag == dwarf::DW_TAG_inheritance || Tag == dwarf::DW_TAG_friend ||
             Tag == dwarf::DW_TAG_structure_type ||
             Tag == dwarf::DW_TAG_member || Tag == dwarf::DW_TAG_typedef,
@@ -852,7 +851,6 @@ void Verifier::visitDICompositeType(const DICompositeType &N) {
              N.getTag() == dwarf::DW_TAG_structure_type ||
              N.getTag() == dwarf::DW_TAG_union_type ||
              N.getTag() == dwarf::DW_TAG_enumeration_type ||
-             N.getTag() == dwarf::DW_TAG_subroutine_type ||
              N.getTag() == dwarf::DW_TAG_class_type,
          "invalid tag", &N);
 
