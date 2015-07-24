@@ -91,6 +91,7 @@ math/half_sqrt.cl
 math/hypot.cl
 math/clc_ldexp.cl
 math/ldexp.cl
+math/log.cl
 math/log10.cl
 math/log1p.cl
 math/log2.cl
