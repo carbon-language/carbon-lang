@@ -1,8 +1,9 @@
 ; RUN: opt %s -rewrite-statepoints-for-gc -spp-print-base-pointers -S 2>&1 | FileCheck %s
 
-; CHECK: derived %next_x base %base_obj_x
-; CHECK: derived %next_y base %base_obj_y
-; CHECK: derived %next base %base_phi
+; CHECK: Base Pairs (w/o Relocation):
+; CHECK-DAG: derived %next base %next.base
+; CHECK-DAG: derived %next_x base %base_obj_x
+; CHECK-DAG: derived %next_y base %base_obj_y
 
 declare i1 @runtime_value()
 declare void @do_safepoint()

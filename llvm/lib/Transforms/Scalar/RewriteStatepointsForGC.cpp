@@ -858,13 +858,17 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
         BasicBlock *BB = I->getParent();
         int NumPreds = std::distance(pred_begin(BB), pred_end(BB));
         assert(NumPreds > 0 && "how did we reach here");
-        return PHINode::Create(I->getType(), NumPreds, "base_phi", I);
+        std::string Name = I->hasName() ?
+           (I->getName() + ".base").str() : "base_phi";
+        return PHINode::Create(I->getType(), NumPreds, Name, I);
       }
       SelectInst *Sel = cast<SelectInst>(I);
       // The undef will be replaced later
       UndefValue *Undef = UndefValue::get(Sel->getType());
+      std::string Name = I->hasName() ?
+         (I->getName() + ".base").str() : "base_select";
       return SelectInst::Create(Sel->getCondition(), Undef,
-                                Undef, "base_select", Sel);
+                                Undef, Name, Sel);
     };
     Instruction *BaseInst = MakeBaseInstPlaceholder(I);
     // Add metadata marking this as a base value
@@ -1283,7 +1287,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     // original block.
     InvokeInst *invoke = InvokeInst::Create(
         gc_statepoint_decl, toReplace->getNormalDest(),
-        toReplace->getUnwindDest(), args, "", toReplace->getParent());
+        toReplace->getUnwindDest(), args, "statepoint_token", toReplace->getParent());
     invoke->setCallingConv(toReplace->getCallingConv());
 
     // Currently we will fail on parameter attributes and on certain

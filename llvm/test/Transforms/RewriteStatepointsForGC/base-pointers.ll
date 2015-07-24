@@ -55,7 +55,7 @@ define i64 addrspace(1)* @test1(i32 %caller, i8 addrspace(1)* %a, i8 addrspace(1
 
  merge:
 ; CHECK: merge:
-; CHECK-NEXT: %base_phi = phi i64 addrspace(1)* [ [[CAST_L]], %left ], [ [[CAST_L]], %left ], [ [[CAST_L]], %left ], [ [[CAST_R]], %right ], !is_base_value !0
+; CHECK-NEXT: %value.base = phi i64 addrspace(1)* [ [[CAST_L]], %left ], [ [[CAST_L]], %left ], [ [[CAST_L]], %left ], [ [[CAST_R]], %right ], !is_base_value !0
   %value = phi i64 addrspace(1)* [ %a.cast, %left], [ %a.cast, %left], [ %a.cast, %left], [ %b.cast, %right]
   %safepoint_token = call i32 (i64, i32, void (i64 addrspace(1)*)*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidp1i64f(i64 0, i32 0, void (i64 addrspace(1)*)* @parse_point, i32 1, i32 0, i64 addrspace(1)* %value, i32 0, i32 5, i32 0, i32 0, i32 0, i32 0, i32 0)
 
@@ -74,16 +74,16 @@ entry:
 
 loop:                                             ; preds = %loop, %entry
 ; CHECK-LABEL: loop
-; CHECK:   %base_phi = phi i64 addrspace(1)*
+; CHECK:   %current.base = phi i64 addrspace(1)*
 ; CHECK-DAG: [ %base_obj, %entry ]
 ; Given the two selects are equivelent, so are their base phis - ideally,
 ; we'd have commoned these, but that's a missed optimization, not correctness.
-; CHECK-DAG: [ [[DISCARD:%base_select.*.relocated.casted]], %loop ]
-; CHECK-NOT: base_phi2
+; CHECK-DAG: [ [[DISCARD:%.*.base.relocated.casted]], %loop ]
+; CHECK-NOT: extra.base
+; CHECK: next.base = select
 ; CHECK: next = select
-; CHECK: base_select
+; CHECK: extra2.base = select
 ; CHECK: extra2 = select
-; CHECK: base_select
 ; CHECK: statepoint
 ;; Both 'next' and 'extra2' are live across the backedge safepoint...
   %current = phi i64 addrspace(1)* [ %obj, %entry ], [ %next, %loop ]
