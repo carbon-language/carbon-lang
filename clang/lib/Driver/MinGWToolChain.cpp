@@ -20,28 +20,38 @@ using namespace clang::driver::toolchains;
 using namespace clang;
 using namespace llvm::opt;
 
+namespace {
+bool findGccVersion(StringRef LibDir, std::string &GccLibDir,
+                    std::string &Ver) {
+  std::error_code EC;
+  llvm::sys::fs::directory_iterator Entry(LibDir, EC);
+  while (!EC) {
+    GccLibDir = Entry->path();
+    Ver = llvm::sys::path::filename(GccLibDir);
+    if (Ver.size() && isdigit(Ver[0]))
+      return true;
+    Entry.increment(EC);
+  }
+  return false;
+}
+}
+
 void MinGW::findGccLibDir() {
+  llvm::SmallVector<llvm::SmallString<32>, 2> Archs;
+  Archs.emplace_back(getTriple().getArchName());
+  Archs[0] += "-w64-mingw32";
+  Archs.emplace_back("mingw32");
+  Arch = "unknown";
   // lib: Arch Linux, Ubuntu, Windows
   // lib64: openSUSE Linux
-  llvm::SmallString<1024> LibDir;
   for (StringRef Lib : {"lib", "lib64"}) {
-    LibDir = Base;
-    llvm::sys::path::append(LibDir, Lib, "gcc");
-    LibDir += llvm::sys::path::get_separator();
-    std::error_code EC;
-    // First look for mingw-w64.
-    llvm::sys::fs::directory_iterator MingW64Entry(LibDir + Arch, EC);
-    if (!EC) {
-      GccLibDir = MingW64Entry->path();
-      break;
-    }
-    // If mingw-w64 not found, try looking for mingw.org.
-    llvm::sys::fs::directory_iterator MingwOrgEntry(LibDir + "mingw32", EC);
-    if (!EC) {
-      GccLibDir = MingwOrgEntry->path();
-      // Replace Arch with mingw32 arch.
-      Arch = "mingw32";
-      break;
+    for (StringRef MaybeArch : Archs) {
+      llvm::SmallString<1024> LibDir(Base);
+      llvm::sys::path::append(LibDir, Lib, "gcc", MaybeArch);
+      if (findGccVersion(LibDir, GccLibDir, Ver)) {
+        Arch = MaybeArch;
+        return;
+      }
     }
   }
 }
@@ -49,9 +59,6 @@ void MinGW::findGccLibDir() {
 MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     : ToolChain(D, Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
-
-  // Default Arch is mingw-w64.
-  Arch = (getTriple().getArchName() + "-w64-mingw32").str();
 
 // In Windows there aren't any standard install locations, we search
 // for gcc on the PATH. In Linux the base is always /usr.
@@ -73,7 +80,6 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   Base += llvm::sys::path::get_separator();
   findGccLibDir();
-  Ver = llvm::sys::path::filename(GccLibDir);
   // GccLibDir must precede Base/lib so that the
   // correct crtbegin.o ,cetend.o would be found.
   getFilePaths().push_back(GccLibDir);
