@@ -38,6 +38,13 @@ using namespace __tsan;  // NOLINT
 #define stderr __stderrp
 #endif
 
+#if SANITIZER_LINUX || SANITIZER_FREEBSD
+#define PTHREAD_CREATE_DETACHED 1
+#elif SANITIZER_MAC
+#define PTHREAD_CREATE_DETACHED 2
+#endif
+
+
 #ifdef __mips__
 const int kSigCount = 129;
 #else
@@ -880,7 +887,8 @@ TSAN_INTERCEPTOR(int, pthread_create,
     ThreadIgnoreEnd(thr, pc);
   }
   if (res == 0) {
-    int tid = ThreadCreate(thr, pc, *(uptr*)th, detached);
+    int tid = ThreadCreate(thr, pc, *(uptr*)th,
+                           detached == PTHREAD_CREATE_DETACHED);
     CHECK_NE(tid, 0);
     // Synchronization on p.tid serves two purposes:
     // 1. ThreadCreate must finish before the new thread starts.
