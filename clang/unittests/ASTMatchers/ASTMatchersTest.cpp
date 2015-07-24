@@ -1784,6 +1784,15 @@ TEST(Matcher, MatchesAccessSpecDecls) {
   EXPECT_TRUE(notMatches("class C { int i; };", accessSpecDecl()));
 }
 
+TEST(Matcher, MatchesFinal) {
+  EXPECT_TRUE(matches("class X final {};", recordDecl(isFinal())));
+  EXPECT_TRUE(matches("class X { virtual void f() final; };",
+                      methodDecl(isFinal())));
+  EXPECT_TRUE(notMatches("class X {};", recordDecl(isFinal())));
+  EXPECT_TRUE(notMatches("class X { virtual void f(); };",
+                         methodDecl(isFinal())));
+}
+
 TEST(Matcher, MatchesVirtualMethod) {
   EXPECT_TRUE(matches("class X { virtual int f(); };",
       methodDecl(isVirtual(), hasName("::X::f"))));

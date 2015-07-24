@@ -3147,6 +3147,27 @@ AST_MATCHER(CXXMethodDecl, isVirtual) {
   return Node.isVirtual();
 }
 
+/// \brief Matches if the given method or class declaration is final.
+///
+/// Given:
+/// \code
+///   class A final {};
+///
+///   struct B {
+///     virtual void f();
+///   };
+///
+///   struct C : B {
+///     void f() final;
+///   };
+/// \endcode
+/// matches A and C::f, but not B, C, or B::f
+AST_POLYMORPHIC_MATCHER(isFinal,
+                        AST_POLYMORPHIC_SUPPORTED_TYPES(CXXRecordDecl,
+                                                        CXXMethodDecl)) {
+  return Node.hasAttr<FinalAttr>();
+}
+
 /// \brief Matches if the given method declaration is pure.
 ///
 /// Given
