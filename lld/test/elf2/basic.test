@@ -1,0 +1,78 @@
+# RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
+# RUN: lld -flavor gnu2 %t -o %t2
+# RUN: llvm-readobj -file-headers -program-headers %t2 | FileCheck %s
+# REQUIRES: x86
+
+# exits with return code 42 on linux
+.globl _start;
+_start:
+  mov $60, %rax
+  mov $42, %rdi
+  syscall
+
+# CHECK:      ElfHeader {
+# CHECK-NEXT:   Ident {
+# CHECK-NEXT:     Magic: (7F 45 4C 46)
+# CHECK-NEXT:     Class: 64-bit (0x2)
+# CHECK-NEXT:     DataEncoding: LittleEndian (0x1)
+# CHECK-NEXT:     FileVersion: 1
+# CHECK-NEXT:     OS/ABI: GNU/Linux (0x3)
+# CHECK-NEXT:     ABIVersion: 0
+# CHECK-NEXT:     Unused: (00 00 00 00 00 00 00)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Type: Executable (0x2)
+# CHECK-NEXT:   Machine: EM_X86_64 (0x3E)
+# CHECK-NEXT:   Version: 1
+# CHECK-NEXT:   Entry: 0x401000
+# CHECK-NEXT:   ProgramHeaderOffset: 0x40
+# CHECK-NEXT:   SectionHeaderOffset: 0x0
+# CHECK-NEXT:   Flags [ (0x0)
+# CHECK-NEXT:   ]
+# CHECK-NEXT:   HeaderSize: 64
+# CHECK-NEXT:   ProgramHeaderEntrySize: 56
+# CHECK-NEXT:   ProgramHeaderCount: 1
+# CHECK-NEXT:   SectionHeaderEntrySize: 64
+# CHECK-NEXT:   SectionHeaderCount: 0
+# CHECK-NEXT:    StringTableSectionIndex: 0
+# CHECK-NEXT: }
+# CHECK-NEXT: ProgramHeaders [
+# CHECK-NEXT:   ProgramHeader {
+# CHECK-NEXT:     Type: PT_LOAD (0x1)
+# CHECK-NEXT:     Offset: 0x0
+# CHECK-NEXT:     VirtualAddress: 0x400000
+# CHECK-NEXT:     PhysicalAddress: 0x400000
+# CHECK-NEXT:     FileSize: 4112
+# CHECK-NEXT:     MemSize: 4112
+# CHECK-NEXT:     Flags [ (0x5)
+# CHECK-NEXT:       PF_R (0x4)
+# CHECK-NEXT:       PF_X (0x1)
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Alignment: 16384
+# CHECK-NEXT:   }
+# CHECK-NEXT: ]
+
+# RUN: not lld -flavor gnu2 %t 2>&1 | FileCheck --check-prefix=NO_O %s
+# NO_O: -o must be specified.
+
+# RUN: not lld -flavor gnu2 %t.foo -o %t2 2>&1 | \
+# RUN:  FileCheck --check-prefix=MISSING %s
+# MISSING: cannot open {{.*}}.foo: {{[Nn]}}o such file or directory
+
+# RUN: not lld -flavor gnu2 -o %t2 2>&1 | \
+# RUN:  FileCheck --check-prefix=NO_INPUT %s
+# NO_INPUT: no input files.
+
+# RUN: mkdir -p %t.dir
+# RUN: not lld -flavor gnu2 %t.dir -o %t2 2>&1 | \
+# RUN:  FileCheck --check-prefix=CANNOT_OPEN %s
+# CANNOT_OPEN: cannot open {{.*}}.dir: {{[Ii]}}s a directory
+
+# RUN: not lld -flavor gnu2 %t -o 2>&1 | FileCheck --check-prefix=NO_O_VAL %s
+# NO_O_VAL: missing arg value for "-o", expected 1 argument.
+
+# RUN: not lld -flavor gnu2 --foo 2>&1 | FileCheck --check-prefix=UNKNOWN %s
+# UNKNOWN: unknown argument: --foo
+
+# RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
+# RUN: not lld -flavor gnu2 %t %t -o %t2 2>&1 | FileCheck --check-prefix=DUP %s
+# DUP: duplicate symbol: _start
