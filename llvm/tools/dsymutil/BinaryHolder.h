@@ -17,6 +17,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/Error.h"
+#include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
@@ -37,77 +38,95 @@ namespace dsymutil {
 /// meaning that a mapping request will invalidate the previous memory
 /// mapping.
 class BinaryHolder {
-  std::unique_ptr<object::Archive> CurrentArchive;
+  std::vector<std::unique_ptr<object::Archive>> CurrentArchives;
   std::unique_ptr<MemoryBuffer> CurrentMemoryBuffer;
-  std::unique_ptr<object::ObjectFile> CurrentObjectFile;
+  std::vector<std::unique_ptr<object::ObjectFile>> CurrentObjectFiles;
+  std::unique_ptr<object::MachOUniversalBinary> CurrentFatBinary;
   bool Verbose;
 
-  /// \brief Get the MemoryBufferRef for the file specification in \p
-  /// Filename from the current archive.
+  /// Get the MemoryBufferRefs for the file specification in \p
+  /// Filename from the current archive. Multiple buffers are returned
+  /// when there are multiple architectures available for the
+  /// requested file.
   ///
   /// This function performs no system calls, it just looks up a
   /// potential match for the given \p Filename in the currently
   /// mapped archive if there is one.
-  ErrorOr<MemoryBufferRef> GetArchiveMemberBuffer(StringRef Filename,
-                                                  sys::TimeValue Timestamp);
+  ErrorOr<std::vector<MemoryBufferRef>>
+  GetArchiveMemberBuffers(StringRef Filename, sys::TimeValue Timestamp);
 
-  /// \brief Interpret Filename as an archive member specification,
-  /// map the corresponding archive to memory and return the
-  /// MemoryBufferRef corresponding to the described member.
-  ErrorOr<MemoryBufferRef>
-  MapArchiveAndGetMemberBuffer(StringRef Filename, sys::TimeValue Timestamp);
+  /// Interpret Filename as an archive member specification map the
+  /// corresponding archive to memory and return the MemoryBufferRefs
+  /// corresponding to the described member. Multiple buffers are
+  /// returned when there are multiple architectures available for the
+  /// requested file.
+  ErrorOr<std::vector<MemoryBufferRef>>
+  MapArchiveAndGetMemberBuffers(StringRef Filename, sys::TimeValue Timestamp);
 
-  /// \brief Return the MemoryBufferRef that holds the memory
-  /// mapping for the given \p Filename. This function will try to
-  /// parse archive member specifications of the form
-  /// /path/to/archive.a(member.o).
+  /// Return the MemoryBufferRef that holds the memory mapping for the
+  /// given \p Filename. This function will try to parse archive
+  /// member specifications of the form /path/to/archive.a(member.o).
   ///
-  /// The returned MemoryBufferRef points to a buffer owned by this
+  /// The returned MemoryBufferRefs points to a buffer owned by this
   /// object. The buffer is valid until the next call to
   /// GetMemoryBufferForFile() on this object.
-  ErrorOr<MemoryBufferRef> GetMemoryBufferForFile(StringRef Filename,
-                                                  sys::TimeValue Timestamp);
+  /// Multiple buffers are returned when there are multiple
+  /// architectures available for the requested file.
+  ErrorOr<std::vector<MemoryBufferRef>>
+  GetMemoryBuffersForFile(StringRef Filename, sys::TimeValue Timestamp);
 
   void changeBackingMemoryBuffer(std::unique_ptr<MemoryBuffer> &&MemBuf);
+  ErrorOr<const object::ObjectFile &> getObjfileForArch(const Triple &T);
 
 public:
   BinaryHolder(bool Verbose) : Verbose(Verbose) {}
 
-  /// \brief Get the ObjectFile designated by the \p Filename. This
+  /// Get the ObjectFiles designated by the \p Filename. This
   /// might be an archive member specification of the form
   /// /path/to/archive.a(member.o).
   ///
   /// Calling this function invalidates the previous mapping owned by
-  /// the BinaryHolder.
-  ErrorOr<const object::ObjectFile &>
-  GetObjectFile(StringRef Filename,
-                sys::TimeValue Timestamp = sys::TimeValue::PosixZeroTime());
+  /// the BinaryHolder. Multiple buffers are returned when there are
+  /// multiple architectures available for the requested file.
+  ErrorOr<std::vector<const object::ObjectFile *>>
+  GetObjectFiles(StringRef Filename,
+                 sys::TimeValue Timestamp = sys::TimeValue::PosixZeroTime());
 
-  /// \brief Wraps GetObjectFile() to return a derived ObjectFile type.
+  /// Wraps GetObjectFiles() to return a derived ObjectFile type.
   template <typename ObjectFileType>
-  ErrorOr<const ObjectFileType &>
-  GetFileAs(StringRef Filename,
-            sys::TimeValue Timestamp = sys::TimeValue::PosixZeroTime()) {
-    auto ErrOrObjFile = GetObjectFile(Filename);
+  ErrorOr<std::vector<const ObjectFileType *>>
+  GetFilesAs(StringRef Filename,
+             sys::TimeValue Timestamp = sys::TimeValue::PosixZeroTime()) {
+    auto ErrOrObjFile = GetObjectFiles(Filename, Timestamp);
     if (auto Err = ErrOrObjFile.getError())
       return Err;
-    if (const auto *Derived = dyn_cast<ObjectFileType>(CurrentObjectFile.get()))
-      return *Derived;
-    return make_error_code(object::object_error::invalid_file_type);
+
+    std::vector<const ObjectFileType *> Objects;
+    Objects.reserve((*ErrOrObjFile).size());
+    for (const auto &Obj : *ErrOrObjFile) {
+      const auto *Derived = dyn_cast<ObjectFileType>(Obj);
+      if (!Derived)
+        return make_error_code(object::object_error::invalid_file_type);
+      Objects.push_back(Derived);
+    }
+    return std::move(Objects);
   }
 
-  /// \brief Access the currently owned ObjectFile. As successfull
-  /// call to GetObjectFile() or GetFileAs() must have been performed
-  /// before calling this.
-  const object::ObjectFile &Get() {
-    assert(CurrentObjectFile);
-    return *CurrentObjectFile;
+  /// Access the currently owned ObjectFile with architecture \p T. As
+  /// successfull call to GetObjectFiles() or GetFilesAs() must have
+  /// been performed before calling this.
+  ErrorOr<const object::ObjectFile &> Get(const Triple &T) {
+    return getObjfileForArch(T);
   }
 
-  /// \brief Access to a derived version of the currently owned
+  /// Access to a derived version of the currently owned
   /// ObjectFile. The conversion must be known to be valid.
-  template <typename ObjectFileType> const ObjectFileType &GetAs() {
-    return cast<ObjectFileType>(*CurrentObjectFile);
+  template <typename ObjectFileType>
+  ErrorOr<const ObjectFileType &> GetAs(const Triple &T) {
+    auto ErrOrObj = Get(T);
+    if (auto Err = ErrOrObj.getError())
+      return Err;
+    return cast<ObjectFileType>(*ErrOrObj);
   }
 
   static Triple getTriple(const object::MachOObjectFile &Obj);

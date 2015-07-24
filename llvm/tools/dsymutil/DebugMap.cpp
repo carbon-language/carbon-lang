@@ -178,9 +178,9 @@ SequenceTraits<std::vector<std::unique_ptr<dsymutil::DebugMapObject>>>::element(
 void MappingTraits<dsymutil::DebugMap>::mapping(IO &io,
                                                 dsymutil::DebugMap &DM) {
   io.mapRequired("triple", DM.BinaryTriple);
-  io.mapOptional("objects", DM.Objects);
   if (void *Ctxt = io.getContext())
     reinterpret_cast<YAMLContext *>(Ctxt)->BinaryTriple = DM.BinaryTriple;
+  io.mapOptional("objects", DM.Objects);
 }
 
 void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
@@ -188,9 +188,9 @@ void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
   if (!DM)
     DM.reset(new DebugMap());
   io.mapRequired("triple", DM->BinaryTriple);
-  io.mapOptional("objects", DM->Objects);
   if (void *Ctxt = io.getContext())
     reinterpret_cast<YAMLContext *>(Ctxt)->BinaryTriple = DM->BinaryTriple;
+  io.mapOptional("objects", DM->Objects);
 }
 
 MappingTraits<dsymutil::DebugMapObject>::YamlDMO::YamlDMO(
@@ -210,11 +210,11 @@ MappingTraits<dsymutil::DebugMapObject>::YamlDMO::denormalize(IO &IO) {
   StringMap<uint64_t> SymbolAddresses;
 
   sys::path::append(Path, Filename);
-  auto ErrOrObjectFile = BinHolder.GetObjectFile(Path);
-  if (auto EC = ErrOrObjectFile.getError()) {
+  auto ErrOrObjectFiles = BinHolder.GetObjectFiles(Path);
+  if (auto EC = ErrOrObjectFiles.getError()) {
     llvm::errs() << "warning: Unable to open " << Path << " " << EC.message()
                  << '\n';
-  } else {
+  } else if (auto ErrOrObjectFile = BinHolder.Get(Ctxt.BinaryTriple)) {
     // Rewrite the object file symbol addresses in the debug map. The
     // YAML input is mainly used to test llvm-dsymutil without
     // requiring binaries checked-in. If we generate the object files

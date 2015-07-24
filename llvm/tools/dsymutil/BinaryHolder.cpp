@@ -28,30 +28,44 @@ Triple BinaryHolder::getTriple(const object::MachOObjectFile &Obj) {
   return ThumbTriple.getArch() ? ThumbTriple : T;
 }
 
+static std::vector<MemoryBufferRef>
+getMachOFatMemoryBuffers(StringRef Filename, MemoryBuffer &Mem,
+                         object::MachOUniversalBinary &Fat) {
+  std::vector<MemoryBufferRef> Buffers;
+  StringRef FatData = Fat.getData();
+  for (auto It = Fat.begin_objects(), End = Fat.end_objects(); It != End;
+       ++It) {
+    StringRef ObjData = FatData.substr(It->getOffset(), It->getSize());
+    Buffers.emplace_back(ObjData, Filename);
+  }
+  return Buffers;
+}
+
 void BinaryHolder::changeBackingMemoryBuffer(
     std::unique_ptr<MemoryBuffer> &&Buf) {
-  CurrentArchive.reset();
-  CurrentObjectFile.reset();
+  CurrentArchives.clear();
+  CurrentObjectFiles.clear();
+  CurrentFatBinary.reset();
 
   CurrentMemoryBuffer = std::move(Buf);
 }
 
-ErrorOr<MemoryBufferRef>
-BinaryHolder::GetMemoryBufferForFile(StringRef Filename,
-                                     sys::TimeValue Timestamp) {
+ErrorOr<std::vector<MemoryBufferRef>>
+BinaryHolder::GetMemoryBuffersForFile(StringRef Filename,
+                                      sys::TimeValue Timestamp) {
   if (Verbose)
     outs() << "trying to open '" << Filename << "'\n";
 
   // Try that first as it doesn't involve any filesystem access.
-  if (auto ErrOrArchiveMember = GetArchiveMemberBuffer(Filename, Timestamp))
-    return *ErrOrArchiveMember;
+  if (auto ErrOrArchiveMembers = GetArchiveMemberBuffers(Filename, Timestamp))
+    return *ErrOrArchiveMembers;
 
   // If the name ends with a closing paren, there is a huge chance
   // it is an archive member specification.
   if (Filename.endswith(")"))
-    if (auto ErrOrArchiveMember =
-            MapArchiveAndGetMemberBuffer(Filename, Timestamp))
-      return *ErrOrArchiveMember;
+    if (auto ErrOrArchiveMembers =
+            MapArchiveAndGetMemberBuffers(Filename, Timestamp))
+      return *ErrOrArchiveMembers;
 
   // Otherwise, just try opening a standard file. If this is an
   // archive member specifiaction and any of the above didn't handle it
@@ -65,43 +79,64 @@ BinaryHolder::GetMemoryBufferForFile(StringRef Filename,
   changeBackingMemoryBuffer(std::move(*ErrOrFile));
   if (Verbose)
     outs() << "\tloaded file.\n";
-  return CurrentMemoryBuffer->getMemBufferRef();
+
+  auto ErrOrFat = object::MachOUniversalBinary::create(
+      CurrentMemoryBuffer->getMemBufferRef());
+  if (ErrOrFat.getError()) {
+    // Not a fat binary must be a standard one. Return a one element vector.
+    return std::vector<MemoryBufferRef>{CurrentMemoryBuffer->getMemBufferRef()};
+  }
+
+  CurrentFatBinary = std::move(*ErrOrFat);
+  return getMachOFatMemoryBuffers(Filename, *CurrentMemoryBuffer,
+                                  *CurrentFatBinary);
 }
 
-ErrorOr<MemoryBufferRef>
-BinaryHolder::GetArchiveMemberBuffer(StringRef Filename,
-                                     sys::TimeValue Timestamp) {
-  if (!CurrentArchive)
+ErrorOr<std::vector<MemoryBufferRef>>
+BinaryHolder::GetArchiveMemberBuffers(StringRef Filename,
+                                      sys::TimeValue Timestamp) {
+  if (CurrentArchives.empty())
     return make_error_code(errc::no_such_file_or_directory);
 
-  StringRef CurArchiveName = CurrentArchive->getFileName();
+  StringRef CurArchiveName = CurrentArchives.front()->getFileName();
   if (!Filename.startswith(Twine(CurArchiveName, "(").str()))
     return make_error_code(errc::no_such_file_or_directory);
 
   // Remove the archive name and the parens around the archive member name.
   Filename = Filename.substr(CurArchiveName.size() + 1).drop_back();
 
-  for (const auto &Child : CurrentArchive->children()) {
-    if (auto NameOrErr = Child.getName())
-      if (*NameOrErr == Filename) {
-        if (Timestamp != sys::TimeValue::PosixZeroTime() &&
-            Timestamp != Child.getLastModified()) {
+  std::vector<MemoryBufferRef> Buffers;
+  Buffers.reserve(CurrentArchives.size());
+
+  for (const auto &CurrentArchive : CurrentArchives) {
+    for (const auto &Child : CurrentArchive->children()) {
+      if (auto NameOrErr = Child.getName()) {
+        if (*NameOrErr == Filename) {
+          if (Timestamp != sys::TimeValue::PosixZeroTime() &&
+              Timestamp != Child.getLastModified()) {
+            if (Verbose)
+              outs() << "\tmember had timestamp mismatch.\n";
+            continue;
+          }
           if (Verbose)
-            outs() << "\tmember had timestamp mismatch.\n";
-          continue;
+            outs() << "\tfound member in current archive.\n";
+          auto ErrOrMem = Child.getMemoryBufferRef();
+          if (auto Err = ErrOrMem.getError())
+            return Err;
+          Buffers.push_back(*ErrOrMem);
         }
-        if (Verbose)
-          outs() << "\tfound member in current archive.\n";
-        return Child.getMemoryBufferRef();
       }
+    }
   }
 
-  return make_error_code(errc::no_such_file_or_directory);
+  if (Buffers.empty())
+    return make_error_code(errc::no_such_file_or_directory);
+  return Buffers;
 }
 
-ErrorOr<MemoryBufferRef>
-BinaryHolder::MapArchiveAndGetMemberBuffer(StringRef Filename,
-                                           sys::TimeValue Timestamp) {
+ErrorOr<std::vector<MemoryBufferRef>>
+BinaryHolder::MapArchiveAndGetMemberBuffers(StringRef Filename,
+                                            sys::TimeValue Timestamp) {
   StringRef ArchiveFilename = Filename.substr(0, Filename.find('('));
 
   auto ErrOrBuff = MemoryBuffer::getFileOrSTDIN(ArchiveFilename);
@@ -112,29 +147,60 @@ BinaryHolder::MapArchiveAndGetMemberBuffer(StringRef Filename,
     outs() << "\topened new archive '" << ArchiveFilename << "'\n";
 
   changeBackingMemoryBuffer(std::move(*ErrOrBuff));
-  auto ErrOrArchive =
-      object::Archive::create(CurrentMemoryBuffer->getMemBufferRef());
-  if (auto Err = ErrOrArchive.getError())
-    return Err;
+  std::vector<MemoryBufferRef> ArchiveBuffers;
+  auto ErrOrFat = object::MachOUniversalBinary::create(
+      CurrentMemoryBuffer->getMemBufferRef());
+  if (ErrOrFat.getError()) {
+    // Not a fat binary must be a standard one.
+    ArchiveBuffers.push_back(CurrentMemoryBuffer->getMemBufferRef());
+  } else {
+    CurrentFatBinary = std::move(*ErrOrFat);
+    ArchiveBuffers = getMachOFatMemoryBuffers(
+        ArchiveFilename, *CurrentMemoryBuffer, *CurrentFatBinary);
+  }
 
-  CurrentArchive = std::move(*ErrOrArchive);
-
-  return GetArchiveMemberBuffer(Filename, Timestamp);
+  for (auto MemRef : ArchiveBuffers) {
+    auto ErrOrArchive = object::Archive::create(MemRef);
+    if (auto Err = ErrOrArchive.getError())
+      return Err;
+    CurrentArchives.push_back(std::move(*ErrOrArchive));
+  }
+  return GetArchiveMemberBuffers(Filename, Timestamp);
 }
 
 ErrorOr<const object::ObjectFile &>
-BinaryHolder::GetObjectFile(StringRef Filename, sys::TimeValue Timestamp) {
-  auto ErrOrMemBufferRef = GetMemoryBufferForFile(Filename, Timestamp);
-  if (auto Err = ErrOrMemBufferRef.getError())
+BinaryHolder::getObjfileForArch(const Triple &T) {
+  for (const auto &Obj : CurrentObjectFiles) {
+    if (const auto *MachO = dyn_cast<object::MachOObjectFile>(Obj.get())) {
+      if (getTriple(*MachO).str() == T.str())
+        return *MachO;
+    } else if (Obj->getArch() == T.getArch())
+      return *Obj;
+  }
+
+  return make_error_code(object::object_error::arch_not_found);
+}
+
+ErrorOr<std::vector<const object::ObjectFile *>>
+BinaryHolder::GetObjectFiles(StringRef Filename, sys::TimeValue Timestamp) {
+  auto ErrOrMemBufferRefs = GetMemoryBuffersForFile(Filename, Timestamp);
+  if (auto Err = ErrOrMemBufferRefs.getError())
     return Err;
 
-  auto ErrOrObjectFile =
-      object::ObjectFile::createObjectFile(*ErrOrMemBufferRef);
-  if (auto Err = ErrOrObjectFile.getError())
-    return Err;
+  std::vector<const object::ObjectFile *> Objects;
+  Objects.reserve(ErrOrMemBufferRefs->size());
 
-  CurrentObjectFile = std::move(*ErrOrObjectFile);
-  return *CurrentObjectFile;
+  CurrentObjectFiles.clear();
+  for (auto MemBuf : *ErrOrMemBufferRefs) {
+    auto ErrOrObjectFile = object::ObjectFile::createObjectFile(MemBuf);
+    if (auto Err = ErrOrObjectFile.getError())
+      return Err;
+
+    Objects.push_back(ErrOrObjectFile->get());
+    CurrentObjectFiles.push_back(std::move(*ErrOrObjectFile));
+  }
+
+  return std::move(Objects);
 }
 }
 }

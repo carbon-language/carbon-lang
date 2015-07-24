@@ -1410,6 +1410,11 @@ private:
                      const DWARFDebugInfoEntryMinimal *DIE = nullptr) const;
 
   bool createStreamer(Triple TheTriple, StringRef OutputFilename);
+
+  /// \brief Attempt to load a debug object from disk.
+  ErrorOr<const object::ObjectFile &> loadObject(BinaryHolder &BinaryHolder,
+                                                 DebugMapObject &Obj,
+                                                 const DebugMap &Map);
   /// @}
 
 private:
@@ -3008,6 +3013,19 @@ void DwarfLinker::patchFrameInfoForObject(const DebugMapObject &DMO,
   }
 }
 
+ErrorOr<const object::ObjectFile &>
+DwarfLinker::loadObject(BinaryHolder &BinaryHolder, DebugMapObject &Obj,
+                        const DebugMap &Map) {
+  auto ErrOrObjs =
+      BinaryHolder.GetObjectFiles(Obj.getObjectFilename(), Obj.getTimestamp());
+  if (std::error_code EC = ErrOrObjs.getError())
+    reportWarning(Twine(Obj.getObjectFilename()) + ": " + EC.message());
+  auto ErrOrObj = BinaryHolder.Get(Map.getTriple());
+  if (std::error_code EC = ErrOrObj.getError())
+    reportWarning(Twine(Obj.getObjectFilename()) + ": " + EC.message());
+  return ErrOrObj;
+}
+
 bool DwarfLinker::link(const DebugMap &Map) {
 
   if (Map.begin() == Map.end()) {
@@ -3027,12 +3045,9 @@ bool DwarfLinker::link(const DebugMap &Map) {
 
     if (Options.Verbose)
       outs() << "DEBUG MAP OBJECT: " << Obj->getObjectFilename() << "\n";
-    auto ErrOrObj =
-        BinHolder.GetObjectFile(Obj->getObjectFilename(), Obj->getTimestamp());
-    if (std::error_code EC = ErrOrObj.getError()) {
-      reportWarning(Twine(Obj->getObjectFilename()) + ": " + EC.message());
+    auto ErrOrObj = loadObject(BinHolder, *Obj, Map);
+    if (!ErrOrObj)
       continue;
-    }
 
     // Look for relocations that correspond to debug map entries.
     if (!findValidRelocsInDebugInfo(*ErrOrObj, *Obj)) {
