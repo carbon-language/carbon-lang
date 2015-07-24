@@ -521,7 +521,7 @@ bool LTOCodeGenerator::optimize(bool DisableInline,
   legacy::PassManager passes;
 
   // Add an appropriate DataLayout instance for this module...
-  mergedModule->setDataLayout(TargetMach->createDataLayout());
+  mergedModule->setDataLayout(*TargetMach->getDataLayout());
 
   passes.add(
       createTargetTransformInfoWrapperPass(TargetMach->getTargetIRAnalysis()));

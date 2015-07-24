@@ -716,7 +716,7 @@ public:
       M(new Module(GenerateUniqueName("jit_module_"),
                    Session.getLLVMContext())),
       Builder(Session.getLLVMContext()) {
-    M->setDataLayout(Session.getTarget().createDataLayout());
+    M->setDataLayout(*Session.getTarget().getDataLayout());
   }
 
   SessionContext& getSession() { return Session; }
@@ -1162,7 +1162,7 @@ public:
   typedef LazyEmitLayerT::ModuleSetHandleT ModuleHandleT;
 
   KaleidoscopeJIT(SessionContext &Session)
-      : DL(Session.getTarget().createDataLayout()),
+      : DL(*Session.getTarget().getDataLayout()),
         CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())),
         LazyEmitLayer(CompileLayer) {}
 
@@ -1204,7 +1204,7 @@ public:
   }
 
 private:
-  const DataLayout DL;
+  const DataLayout &DL;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   LazyEmitLayerT LazyEmitLayer;

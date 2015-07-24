@@ -717,7 +717,7 @@ public:
       M(new Module(GenerateUniqueName("jit_module_"),
                    Session.getLLVMContext())),
       Builder(Session.getLLVMContext()) {
-    M->setDataLayout(Session.getTarget().createDataLayout());
+    M->setDataLayout(*Session.getTarget().getDataLayout());
   }
 
   SessionContext& getSession() { return Session; }
@@ -1179,7 +1179,7 @@ public:
     {
       raw_string_ostream MangledNameStream(MangledName);
       Mangler::getNameWithPrefix(MangledNameStream, Name,
-                                 Session.getTarget().createDataLayout());
+                                 *Session.getTarget().getDataLayout());
     }
     return MangledName;
   }

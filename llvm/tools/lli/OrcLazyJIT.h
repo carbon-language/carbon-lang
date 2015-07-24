@@ -46,17 +46,16 @@ public:
     CallbackManagerBuilder;
 
   static CallbackManagerBuilder createCallbackManagerBuilder(Triple T);
-  const DataLayout &DL;
 
-  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, const DataLayout &DL,
-             LLVMContext &Context, CallbackManagerBuilder &BuildCallbackMgr)
-      : DL(DL), TM(std::move(TM)), ObjectLayer(),
-        CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
-        IRDumpLayer(CompileLayer, createDebugDumper()),
-        CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
-        CODLayer(IRDumpLayer, *CCMgr, false),
-        CXXRuntimeOverrides(
-            [this](const std::string &S) { return mangle(S); }) {}
+  OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context,
+             CallbackManagerBuilder &BuildCallbackMgr)
+    : TM(std::move(TM)),
+      ObjectLayer(),
+      CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
+      IRDumpLayer(CompileLayer, createDebugDumper()),
+      CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
+      CODLayer(IRDumpLayer, *CCMgr, false),
+      CXXRuntimeOverrides([this](const std::string &S) { return mangle(S); }) {}
 
   ~OrcLazyJIT() {
     // Run any destructors registered with __cxa_atexit.
@@ -74,7 +73,7 @@ public:
   ModuleHandleT addModule(std::unique_ptr<Module> M) {
     // Attach a data-layout if one isn't already present.
     if (M->getDataLayout().isDefault())
-      M->setDataLayout(DL);
+      M->setDataLayout(*TM->getDataLayout());
 
     // Record the static constructors and destructors. We have to do this before
     // we hand over ownership of the module to the JIT.
@@ -132,11 +131,12 @@ public:
   }
 
 private:
+
   std::string mangle(const std::string &Name) {
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
-      Mangler::getNameWithPrefix(MangledNameStream, Name, DL);
+      Mangler::getNameWithPrefix(MangledNameStream, Name, *TM->getDataLayout());
     }
     return MangledName;
   }

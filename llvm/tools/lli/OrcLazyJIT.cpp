@@ -136,8 +136,7 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   }
 
   // Everything looks good. Build the JIT.
-  auto &DL = M->getDataLayout();
-  OrcLazyJIT J(std::move(TM), DL, Context, CallbackMgrBuilder);
+  OrcLazyJIT J(std::move(TM), Context, CallbackMgrBuilder);
 
   // Add the module, look up main and run it.
   auto MainHandle = J.addModule(std::move(M));
