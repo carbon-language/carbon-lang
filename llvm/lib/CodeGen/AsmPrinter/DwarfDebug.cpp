@@ -189,7 +189,7 @@ const DIType *DbgVariable::getType() const {
 
     auto Elements = cast<DICompositeType>(subType)->getElements();
     for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
-      auto *DT = cast<DIDerivedTypeBase>(Elements[i]);
+      auto *DT = cast<DIDerivedType>(Elements[i]);
       if (getName() == DT->getName())
         return resolve(DT->getBaseType());
     }
