@@ -109,10 +109,10 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual LazyBool
+    virtual bool
     CanUpdateWithInvalidExecutionContext ()
     {
-        return eLazyBoolYes;
+        return true;
     }
     
     virtual lldb::DynamicValueType

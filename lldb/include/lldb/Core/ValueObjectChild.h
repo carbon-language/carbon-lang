@@ -84,7 +84,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual LazyBool
+    virtual bool
     CanUpdateWithInvalidExecutionContext ();
 
     virtual ClangASTType
