@@ -1137,15 +1137,13 @@ def err_rref_in_exception_spec : Error<
   "rvalue reference type %0 is not allowed in exception specification">;
 def err_mismatched_exception_spec : Error<
   "exception specification in declaration does not match previous declaration">;
-def ext_mismatched_exception_spec : ExtWarn<
-  "exception specification in declaration does not match previous declaration">,
+def ext_mismatched_exception_spec : ExtWarn<err_mismatched_exception_spec.Text>,
   InGroup<Microsoft>;
 def err_override_exception_spec : Error<
   "exception specification of overriding function is more lax than "
   "base version">;
-def ext_override_exception_spec : ExtWarn<
-  "exception specification of overriding function is more lax than "
-  "base version">, InGroup<Microsoft>;
+def ext_override_exception_spec : ExtWarn<err_override_exception_spec.Text>,
+  InGroup<Microsoft>;
 def err_incompatible_exception_specs : Error<
   "target exception specification is not superset of source">;
 def err_deep_exception_specs_differ : Error<
