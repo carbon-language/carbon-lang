@@ -140,6 +140,12 @@ static void printReg(unsigned Reg, raw_ostream &OS,
     llvm_unreachable("Can't print this kind of register yet");
 }
 
+static void printReg(unsigned Reg, yaml::StringValue &Dest,
+                     const TargetRegisterInfo *TRI) {
+  raw_string_ostream OS(Dest.Value);
+  printReg(Reg, OS, TRI);
+}
+
 void MIRPrinter::print(const MachineFunction &MF) {
   initRegisterMaskIds(MF);
 
@@ -188,6 +194,9 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
     VReg.ID = I;
     VReg.Class =
         StringRef(TRI->getRegClassName(RegInfo.getRegClass(Reg))).lower();
+    unsigned PreferredReg = RegInfo.getSimpleHint(Reg);
+    if (PreferredReg)
+      printReg(PreferredReg, VReg.PreferredRegister, TRI);
     MF.VirtualRegisters.push_back(VReg);
   }
 }

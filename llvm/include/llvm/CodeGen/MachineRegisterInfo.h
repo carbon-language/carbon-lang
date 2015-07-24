@@ -614,6 +614,12 @@ public:
     RegAllocHints[VReg].second = PrefReg;
   }
 
+  /// Specify the preferred register allocation hint for the specified virtual
+  /// register.
+  void setSimpleHint(unsigned VReg, unsigned PrefReg) {
+    setRegAllocationHint(VReg, /*Type=*/0, PrefReg);
+  }
+
   /// getRegAllocationHint - Return the register allocation hint for the
   /// specified virtual register.
   std::pair<unsigned, unsigned>

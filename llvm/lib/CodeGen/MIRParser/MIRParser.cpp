@@ -103,11 +103,9 @@ public:
                                    const yaml::MachineBasicBlock &YamlMBB,
                                    const PerFunctionMIParsingState &PFS);
 
-  bool
-  initializeRegisterInfo(const MachineFunction &MF,
-                         MachineRegisterInfo &RegInfo,
-                         const yaml::MachineFunction &YamlMF,
-                         DenseMap<unsigned, unsigned> &VirtualRegisterSlots);
+  bool initializeRegisterInfo(MachineFunction &MF, MachineRegisterInfo &RegInfo,
+                              const yaml::MachineFunction &YamlMF,
+                              PerFunctionMIParsingState &PFS);
 
   bool initializeFrameInfo(const Function &F, MachineFrameInfo &MFI,
                            const yaml::MachineFunction &YamlMF,
@@ -273,8 +271,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
   PerFunctionMIParsingState PFS;
-  if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF,
-                             PFS.VirtualRegisterSlots))
+  if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF, PFS))
     return true;
   if (initializeFrameInfo(*MF.getFunction(), *MF.getFrameInfo(), YamlMF,
                           PFS.StackObjectSlots, PFS.FixedStackObjectSlots))
@@ -368,10 +365,10 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   return false;
 }
 
-bool MIRParserImpl::initializeRegisterInfo(
-    const MachineFunction &MF, MachineRegisterInfo &RegInfo,
-    const yaml::MachineFunction &YamlMF,
-    DenseMap<unsigned, unsigned> &VirtualRegisterSlots) {
+bool MIRParserImpl::initializeRegisterInfo(MachineFunction &MF,
+                                           MachineRegisterInfo &RegInfo,
+                                           const yaml::MachineFunction &YamlMF,
+                                           PerFunctionMIParsingState &PFS) {
   assert(RegInfo.isSSA());
   if (!YamlMF.IsSSA)
     RegInfo.leaveSSA();
@@ -380,6 +377,7 @@ bool MIRParserImpl::initializeRegisterInfo(
     RegInfo.invalidateLiveness();
   RegInfo.enableSubRegLiveness(YamlMF.TracksSubRegLiveness);
 
+  SMDiagnostic Error;
   // Parse the virtual register information.
   for (const auto &VReg : YamlMF.VirtualRegisters) {
     const auto *RC = getRegClass(MF, VReg.Class.Value);
@@ -390,7 +388,15 @@ bool MIRParserImpl::initializeRegisterInfo(
     unsigned Reg = RegInfo.createVirtualRegister(RC);
     // TODO: Report an error when the same virtual register with the same ID is
     // redefined.
-    VirtualRegisterSlots.insert(std::make_pair(VReg.ID, Reg));
+    PFS.VirtualRegisterSlots.insert(std::make_pair(VReg.ID, Reg));
+    if (!VReg.PreferredRegister.Value.empty()) {
+      unsigned PreferredReg = 0;
+      if (parseNamedRegisterReference(PreferredReg, SM, MF,
+                                      VReg.PreferredRegister.Value, PFS,
+                                      IRSlots, Error))
+        return error(Error, VReg.PreferredRegister.SourceRange);
+      RegInfo.setSimpleHint(Reg, PreferredReg);
+    }
   }
   return false;
 }

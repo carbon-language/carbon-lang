@@ -101,13 +101,16 @@ namespace yaml {
 struct VirtualRegisterDefinition {
   unsigned ID;
   StringValue Class;
-  // TODO: Serialize the virtual register hints.
+  StringValue PreferredRegister;
+  // TODO: Serialize the target specific register hints.
 };
 
 template <> struct MappingTraits<VirtualRegisterDefinition> {
   static void mapping(IO &YamlIO, VirtualRegisterDefinition &Reg) {
     YamlIO.mapRequired("id", Reg.ID);
     YamlIO.mapRequired("class", Reg.Class);
+    YamlIO.mapOptional("preferred-register", Reg.PreferredRegister,
+                       StringValue()); // Don't print out when it's empty.
   }
 
   static const bool flow = true;
