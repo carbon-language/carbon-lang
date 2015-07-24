@@ -716,8 +716,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
 }
 
 static void runLTOPasses(Module &M, TargetMachine &TM) {
-  if (const DataLayout *DL = TM.getDataLayout())
-    M.setDataLayout(*DL);
+  M.setDataLayout(TM.createDataLayout());
 
   legacy::PassManager passes;
   passes.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
