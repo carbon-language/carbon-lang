@@ -40,7 +40,7 @@ void MinGW::findGccLibDir() {
     if (!EC) {
       GccLibDir = MingwOrgEntry->path();
       // Replace Arch with mingw32 arch.
-      Arch = "mingw32//";
+      Arch = "mingw32";
       break;
     }
   }
@@ -51,8 +51,7 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   getProgramPaths().push_back(getDriver().getInstalledDir());
 
   // Default Arch is mingw-w64.
-  Arch = (getTriple().getArchName() + "-w64-mingw32" +
-          llvm::sys::path::get_separator()).str();
+  Arch = (getTriple().getArchName() + "-w64-mingw32").str();
 
 // In Windows there aren't any standard install locations, we search
 // for gcc on the PATH. In Linux the base is always /usr.
@@ -66,25 +65,23 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   else
     Base = llvm::sys::path::parent_path(getDriver().getInstalledDir());
 #else
-  Base = "/usr";
+  if (getDriver().SysRoot.size())
+    Base = getDriver().SysRoot;
+  else
+    Base = "/usr";
 #endif
 
   Base += llvm::sys::path::get_separator();
-  if (getDriver().SysRoot.size())
-    GccLibDir = getDriver().SysRoot;
-  else
-    findGccLibDir();
+  findGccLibDir();
   Ver = llvm::sys::path::filename(GccLibDir);
   // GccLibDir must precede Base/lib so that the
   // correct crtbegin.o ,cetend.o would be found.
   getFilePaths().push_back(GccLibDir);
-  getFilePaths().push_back(Base + Arch + "lib");
-#ifdef LLVM_ON_WIN32
+  getFilePaths().push_back(
+      (Base + Arch + llvm::sys::path::get_separator() + "lib").str());
   getFilePaths().push_back(Base + "lib");
-#else
   // openSUSE
-  getFilePaths().push_back(Base + Arch + "sys-root/mingw/lib");
-#endif
+  getFilePaths().push_back(Base + Arch + "/sys-root/mingw/lib");
 }
 
 bool MinGW::IsIntegratedAssemblerDefault() const { return true; }
@@ -197,14 +194,13 @@ void MinGW::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     llvm::sys::path::append(IncludeDir, "include");
     addSystemInclude(DriverArgs, CC1Args, IncludeDir.c_str());
     IncludeDir += "-fixed";
-#ifdef LLVM_ON_UNIX
     // openSUSE
     addSystemInclude(DriverArgs, CC1Args,
                      "/usr/x86_64-w64-mingw32/sys-root/mingw/include");
-#endif
     addSystemInclude(DriverArgs, CC1Args, IncludeDir.c_str());
   }
-  addSystemInclude(DriverArgs, CC1Args, Base + Arch + "include");
+  addSystemInclude(DriverArgs, CC1Args,
+                   Base + Arch + llvm::sys::path::get_separator() + "include");
   addSystemInclude(DriverArgs, CC1Args, Base + "include");
 }
 
@@ -216,9 +212,9 @@ void MinGW::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
   switch (GetCXXStdlibType(DriverArgs)) {
   case ToolChain::CST_Libcxx:
-    addSystemInclude(DriverArgs, CC1Args, Base        + "include" +
-                     llvm::sys::path::get_separator() + "c++"     +
-                     llvm::sys::path::get_separator() + "v1");
+    addSystemInclude(DriverArgs, CC1Args,
+                     Base + "include" + llvm::sys::path::get_separator() +
+                         "c++" + llvm::sys::path::get_separator() + "v1");
     break;
 
   case ToolChain::CST_Libstdcxx:
@@ -232,8 +228,8 @@ void MinGW::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     CppIncludeBases.emplace_back(GccLibDir);
     llvm::sys::path::append(CppIncludeBases[3], "include", "c++");
     for (auto &CppIncludeBase : CppIncludeBases) {
-      CppIncludeBase += llvm::sys::path::get_separator();
       addSystemInclude(DriverArgs, CC1Args, CppIncludeBase);
+      CppIncludeBase += llvm::sys::path::get_separator();
       addSystemInclude(DriverArgs, CC1Args, CppIncludeBase + Arch);
       addSystemInclude(DriverArgs, CC1Args, CppIncludeBase + "backward");
     }
