@@ -8,15 +8,15 @@
 void checkNSDictionaryUnavailableDiagnostic() {
   id key;
   id value;
-  id dict = @{ key : value }; // expected-error {{NSDictionary must be available to use Objective-C dictionary literals}}
+  id dict = @{ key : value }; // expected-error {{definition of class NSDictionary must be available to use Objective-C dictionary literals}}
 }
 
-@class NSDictionary;
+@class NSDictionary; // expected-note {{forward declaration of class here}}
 
 void checkNSDictionaryFDDiagnostic() {
   id key;
   id value;
-  id dic = @{ key : value }; // expected-error {{declaration of 'dictionaryWithObjects:forKeys:count:' is missing in NSDictionary class}}
+  id dic = @{ key : value }; // expected-error {{definition of class NSDictionary must be available to use Objective-C dictionary literals}}
 }
 
 @interface NSNumber

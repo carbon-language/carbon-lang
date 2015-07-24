@@ -10,20 +10,20 @@ typedef int NSInteger;
 #endif
 
 void checkNSNumberUnavailableDiagnostic() {
-  id num = @1000; // expected-error {{NSNumber must be available to use Objective-C literals}}
+  id num = @1000; // expected-error {{definition of class NSNumber must be available to use Objective-C numeric literals}}
 
   int x = 1000;
-  id num1 = @(x); // expected-error {{NSNumber must be available to use Objective-C literals}}\
+  id num1 = @(x); // expected-error {{definition of class NSNumber must be available to use Objective-C numeric literals}}\
                   // expected-error {{illegal type 'int' used in a boxed expression}}
 }
 
-@class NSNumber;
+@class NSNumber; // expected-note 2 {{forward declaration of class here}}
 
 void checkNSNumberFDDiagnostic() {
-  id num = @1000; // expected-error {{NSNumber must be available to use Objective-C literals}}
+  id num = @1000; // expected-error {{definition of class NSNumber must be available to use Objective-C numeric literals}}
 
   int x = 1000;
-  id num1 = @(x); // expected-error {{declaration of 'numberWithInt:' is missing in NSNumber class}}\
+  id num1 = @(x); // expected-error {{definition of class NSNumber must be available to use Objective-C numeric literals}}\
                   // expected-error {{illegal type 'int' used in a boxed expression}}
 }
 
@@ -71,10 +71,10 @@ int main() {
 }
 
 // Dictionary test
-@class NSDictionary;
+@class NSDictionary;  // expected-note {{forward declaration of class here}}
 
 NSDictionary *err() {
-  return @{@"name" : @"value"}; // expected-error {{declaration of 'dictionaryWithObjects:forKeys:count:' is missing in NSDictionary class}}
+  return @{@"name" : @"value"}; // expected-error {{definition of class NSDictionary must be available to use Objective-C dictionary literals}}
 }
 
 @interface NSDate : NSObject

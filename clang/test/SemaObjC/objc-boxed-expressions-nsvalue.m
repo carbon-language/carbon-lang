@@ -46,7 +46,7 @@ typedef union BOXABLE _BoxableUnion {
 
 void checkNSValueDiagnostic() {
   NSRect rect;
-  id value = @(rect); // expected-error{{NSValue must be available to use Objective-C boxed expressions}}
+  id value = @(rect); // expected-error{{definition of class NSValue must be available to use Objective-C boxed expressions}}
 }
 
 @interface NSValue
