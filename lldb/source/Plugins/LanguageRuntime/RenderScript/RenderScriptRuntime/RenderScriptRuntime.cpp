@@ -776,7 +776,7 @@ RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* nam
         return;
     }
 
-    bool kernels_found;
+    bool kernels_found = false;
     ConstString kernel_name(name);
     for (const auto &module : m_rsmodules)
     {
