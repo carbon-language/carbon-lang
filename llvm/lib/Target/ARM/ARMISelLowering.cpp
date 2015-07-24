@@ -9691,7 +9691,7 @@ static bool getVShiftImm(SDValue Op, unsigned ElementBits, int64_t &Cnt) {
 ///   0 <= Value <= ElementBits for a long left shift.
 static bool isVShiftLImm(SDValue Op, EVT VT, bool isLong, int64_t &Cnt) {
   assert(VT.isVector() && "vector shift count is not a vector type");
-  unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
+  int64_t ElementBits = VT.getVectorElementType().getSizeInBits();
   if (! getVShiftImm(Op, ElementBits, Cnt))
     return false;
   return (Cnt >= 0 && (isLong ? Cnt-1 : Cnt) < ElementBits);
@@ -9706,12 +9706,16 @@ static bool isVShiftLImm(SDValue Op, EVT VT, bool isLong, int64_t &Cnt) {
 static bool isVShiftRImm(SDValue Op, EVT VT, bool isNarrow, bool isIntrinsic,
                          int64_t &Cnt) {
   assert(VT.isVector() && "vector shift count is not a vector type");
-  unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
+  int64_t ElementBits = VT.getVectorElementType().getSizeInBits();
   if (! getVShiftImm(Op, ElementBits, Cnt))
     return false;
-  if (isIntrinsic)
+  if (!isIntrinsic)
+    return (Cnt >= 1 && Cnt <= (isNarrow ? ElementBits/2 : ElementBits));
+  if (Cnt >= -(isNarrow ? ElementBits/2 : ElementBits) && Cnt <= -1) {
     Cnt = -Cnt;
-  return (Cnt >= 1 && Cnt <= (isNarrow ? ElementBits/2 : ElementBits));
+    return true;
+  }
+  return false;
 }
 
 /// PerformIntrinsicCombine - ARM-specific DAG combining for intrinsics.

@@ -6440,26 +6440,20 @@ static bool getVShiftImm(SDValue Op, unsigned ElementBits, int64_t &Cnt) {
 ///   0 <= Value <= ElementBits for a long left shift.
 static bool isVShiftLImm(SDValue Op, EVT VT, bool isLong, int64_t &Cnt) {
   assert(VT.isVector() && "vector shift count is not a vector type");
-  unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
+  int64_t ElementBits = VT.getVectorElementType().getSizeInBits();
   if (!getVShiftImm(Op, ElementBits, Cnt))
     return false;
   return (Cnt >= 0 && (isLong ? Cnt - 1 : Cnt) < ElementBits);
 }
 
 /// isVShiftRImm - Check if this is a valid build_vector for the immediate
-/// operand of a vector shift right operation.  For a shift opcode, the value
-/// is positive, but for an intrinsic the value count must be negative. The
-/// absolute value must be in the range:
-///   1 <= |Value| <= ElementBits for a right shift; or
-///   1 <= |Value| <= ElementBits/2 for a narrow right shift.
-static bool isVShiftRImm(SDValue Op, EVT VT, bool isNarrow, bool isIntrinsic,
-                         int64_t &Cnt) {
+/// operand of a vector shift right operation. The value must be in the range:
+///   1 <= Value <= ElementBits for a right shift; or
+static bool isVShiftRImm(SDValue Op, EVT VT, bool isNarrow, int64_t &Cnt) {
   assert(VT.isVector() && "vector shift count is not a vector type");
-  unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
+  int64_t ElementBits = VT.getVectorElementType().getSizeInBits();
   if (!getVShiftImm(Op, ElementBits, Cnt))
     return false;
-  if (isIntrinsic)
-    Cnt = -Cnt;
   return (Cnt >= 1 && Cnt <= (isNarrow ? ElementBits / 2 : ElementBits));
 }
 
@@ -6488,8 +6482,7 @@ SDValue AArch64TargetLowering::LowerVectorSRA_SRL_SHL(SDValue Op,
   case ISD::SRA:
   case ISD::SRL:
     // Right shift immediate
-    if (isVShiftRImm(Op.getOperand(1), VT, false, false, Cnt) &&
-        Cnt < EltSize) {
+    if (isVShiftRImm(Op.getOperand(1), VT, false, Cnt) && Cnt < EltSize) {
       unsigned Opc =
           (Op.getOpcode() == ISD::SRA) ? AArch64ISD::VASHR : AArch64ISD::VLSHR;
       return DAG.getNode(Opc, DL, VT, Op.getOperand(0),
