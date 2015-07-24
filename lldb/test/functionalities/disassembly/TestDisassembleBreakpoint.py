@@ -53,7 +53,7 @@ class DisassemblyTestCase(TestBase):
             self.assertFalse(op in disassembly)
 
         # make sure a few reasonable assembly instructions are here
-        self.expect(disassembly, exe=False, startstr = "a.out`sum(int, int)", substrs = instructions)
+        self.expect(disassembly, exe=False, startstr = "a.out`sum", substrs = instructions)
 
 if __name__ == '__main__':
     import atexit

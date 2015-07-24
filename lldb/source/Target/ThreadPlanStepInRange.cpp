@@ -375,7 +375,7 @@ ThreadPlanStepInRange::FrameMatchesAvoidCriteria ()
         SymbolContext sc = frame->GetSymbolContext(eSymbolContextFunction|eSymbolContextBlock|eSymbolContextSymbol);
         if (sc.symbol != NULL)
         {
-            const char *frame_function_name = sc.GetFunctionName().GetCString();
+            const char *frame_function_name = sc.GetFunctionName(Mangled::ePreferDemangledWithoutArguments).GetCString();
             if (frame_function_name)
             {
                 size_t num_matches = 0;

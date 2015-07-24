@@ -306,17 +306,14 @@ CPPLanguageRuntime::MethodName::Parse()
                     llvm::StringRef lt_gt("<>", 2);
                     if (ReverseFindMatchingChars (full, lt_gt, template_start, template_end, basename_end))
                     {
+                        // Check for templated functions that include return type like: 'void foo<Int>()'
+                        context_start = full.rfind(' ', template_start);
+                        if (context_start == llvm::StringRef::npos)
+                            context_start = 0;
+
                         context_end = full.rfind(':', template_start);
-                        if (context_end == llvm::StringRef::npos)
-                        {
-                            // Check for templated functions that include return type like:
-                            // 'void foo<Int>()'
-                            context_end = full.rfind(' ', template_start);
-                            if (context_end != llvm::StringRef::npos)
-                            {
-                                context_start = context_end;
-                            }
-                        }
+                        if (context_end == llvm::StringRef::npos || context_end < context_start)
+                            context_end = context_start;
                     }
                     else
                     {
