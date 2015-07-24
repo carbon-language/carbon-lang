@@ -11,12 +11,12 @@ entry:
   ret void
 }
 
-define internal i32 @_Z13get_global_idj(i32 %dim) nounwind ssp {
+define internal i32 @_Z13get_global_idj(i32 %dim) nounwind {
 entry:
   ret i32 undef
 }
 
-define void @wrap(i8 addrspace(1)* addrspace(1)* %arglist, i32 addrspace(1)* %gtid) nounwind ssp {
+define void @wrap(i8 addrspace(1)* addrspace(1)* %arglist, i32 addrspace(1)* %gtid) nounwind {
 entry:
   call void @stretch(<4 x i8> addrspace(1)* undef, <4 x i8> addrspace(1)* undef, i32 undef, i32 undef, i32 undef, i32 undef, <2 x float> undef, <4 x float> undef)
   ret void

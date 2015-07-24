@@ -2,7 +2,7 @@
 ; sext(a) + sext(b) != sext(a + b)
 ; RUN: llc -mtriple=powerpc64-unknown-freebsd10.0 %s -O0 -o - | FileCheck %s
 
-define zeroext i8 @gep_promotion(i8* %ptr) nounwind uwtable ssp {
+define zeroext i8 @gep_promotion(i8* %ptr) nounwind {
 entry:
   %ptr.addr = alloca i8*, align 8
   %add = add i8 64, 64 ; 0x40 + 0x40

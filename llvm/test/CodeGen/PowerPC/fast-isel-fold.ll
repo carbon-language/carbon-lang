@@ -4,7 +4,7 @@
 @b = global i16 2, align 2
 @c = global i32 4, align 4
 
-define void @t1() nounwind uwtable ssp {
+define void @t1() nounwind {
 ; ELF64: t1
   %1 = load i8, i8* @a, align 1
   call void @foo1(i8 zeroext %1)
@@ -14,7 +14,7 @@ define void @t1() nounwind uwtable ssp {
   ret void
 }
 
-define void @t2() nounwind uwtable ssp {
+define void @t2() nounwind {
 ; ELF64: t2
   %1 = load i16, i16* @b, align 2
   call void @foo2(i16 zeroext %1)
@@ -24,7 +24,7 @@ define void @t2() nounwind uwtable ssp {
   ret void
 }
 
-define void @t2a() nounwind uwtable ssp {
+define void @t2a() nounwind {
 ; ELF64: t2a
   %1 = load i32, i32* @c, align 4
   call void @foo3(i32 zeroext %1)
@@ -38,7 +38,7 @@ declare void @foo1(i8 zeroext)
 declare void @foo2(i16 zeroext)
 declare void @foo3(i32 zeroext)
 
-define i32 @t3() nounwind uwtable ssp {
+define i32 @t3() nounwind {
 ; ELF64: t3
   %1 = load i8, i8* @a, align 1
   %2 = zext i8 %1 to i32
@@ -47,7 +47,7 @@ define i32 @t3() nounwind uwtable ssp {
   ret i32 %2
 }
 
-define i32 @t4() nounwind uwtable ssp {
+define i32 @t4() nounwind {
 ; ELF64: t4
   %1 = load i16, i16* @b, align 2
   %2 = zext i16 %1 to i32
@@ -56,7 +56,7 @@ define i32 @t4() nounwind uwtable ssp {
   ret i32 %2
 }
 
-define i32 @t5() nounwind uwtable ssp {
+define i32 @t5() nounwind {
 ; ELF64: t5
   %1 = load i16, i16* @b, align 2
   %2 = sext i16 %1 to i32
@@ -65,7 +65,7 @@ define i32 @t5() nounwind uwtable ssp {
   ret i32 %2
 }
 
-define i32 @t6() nounwind uwtable ssp {
+define i32 @t6() nounwind {
 ; ELF64: t6
   %1 = load i8, i8* @a, align 2
   %2 = sext i8 %1 to i32
@@ -74,7 +74,7 @@ define i32 @t6() nounwind uwtable ssp {
   ret i32 %2
 }
 
-define i64 @t7() nounwind uwtable ssp {
+define i64 @t7() nounwind {
 ; ELF64: t7
   %1 = load i8, i8* @a, align 1
   %2 = zext i8 %1 to i64
@@ -83,7 +83,7 @@ define i64 @t7() nounwind uwtable ssp {
   ret i64 %2
 }
 
-define i64 @t8() nounwind uwtable ssp {
+define i64 @t8() nounwind {
 ; ELF64: t8
   %1 = load i16, i16* @b, align 2
   %2 = zext i16 %1 to i64
@@ -92,7 +92,7 @@ define i64 @t8() nounwind uwtable ssp {
   ret i64 %2
 }
 
-define i64 @t9() nounwind uwtable ssp {
+define i64 @t9() nounwind {
 ; ELF64: t9
   %1 = load i16, i16* @b, align 2
   %2 = sext i16 %1 to i64
@@ -101,7 +101,7 @@ define i64 @t9() nounwind uwtable ssp {
   ret i64 %2
 }
 
-define i64 @t10() nounwind uwtable ssp {
+define i64 @t10() nounwind {
 ; ELF64: t10
   %1 = load i8, i8* @a, align 2
   %2 = sext i8 %1 to i64
@@ -110,7 +110,7 @@ define i64 @t10() nounwind uwtable ssp {
   ret i64 %2
 }
 
-define i64 @t11() nounwind uwtable ssp {
+define i64 @t11() nounwind {
 ; ELF64: t11
   %1 = load i32, i32* @c, align 4
   %2 = zext i32 %1 to i64
@@ -119,7 +119,7 @@ define i64 @t11() nounwind uwtable ssp {
   ret i64 %2
 }
 
-define i64 @t12() nounwind uwtable ssp {
+define i64 @t12() nounwind {
 ; ELF64: t12
   %1 = load i32, i32* @c, align 4
   %2 = sext i32 %1 to i64

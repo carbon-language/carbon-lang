@@ -3,7 +3,7 @@
 ; When fastisel better supports VSX fix up this test case.
 ;
 ; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 -mattr=-vsx | FileCheck %s --check-prefix=ELF64
-define void @t1a(float %a) uwtable ssp {
+define void @t1a(float %a) nounwind {
 entry:
 ; ELF64: t1a
   %cmp = fcmp oeq float %a, 0.000000e+00
@@ -22,7 +22,7 @@ if.end:                                           ; preds = %if.then, %entry
 
 declare void @foo()
 
-define void @t1b(float %a) uwtable ssp {
+define void @t1b(float %a) nounwind {
 entry:
 ; ELF64: t1b
   %cmp = fcmp oeq float %a, -0.000000e+00
@@ -39,7 +39,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t2a(double %a) uwtable ssp {
+define void @t2a(double %a) nounwind {
 entry:
 ; ELF64: t2a
   %cmp = fcmp oeq double %a, 0.000000e+00
@@ -56,7 +56,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t2b(double %a) uwtable ssp {
+define void @t2b(double %a) nounwind {
 entry:
 ; ELF64: t2b
   %cmp = fcmp oeq double %a, -0.000000e+00
@@ -73,7 +73,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t4(i8 signext %a) uwtable ssp {
+define void @t4(i8 signext %a) nounwind {
 entry:
 ; ELF64: t4
   %cmp = icmp eq i8 %a, -1
@@ -89,7 +89,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t5(i8 zeroext %a) uwtable ssp {
+define void @t5(i8 zeroext %a) nounwind {
 entry:
 ; ELF64: t5
   %cmp = icmp eq i8 %a, 1
@@ -105,7 +105,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t6(i16 signext %a) uwtable ssp {
+define void @t6(i16 signext %a) nounwind {
 entry:
 ; ELF64: t6
   %cmp = icmp eq i16 %a, -1
@@ -121,7 +121,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t7(i16 zeroext %a) uwtable ssp {
+define void @t7(i16 zeroext %a) nounwind {
 entry:
 ; ELF64: t7
   %cmp = icmp eq i16 %a, 1
@@ -137,7 +137,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t8(i32 %a) uwtable ssp {
+define void @t8(i32 %a) nounwind {
 entry:
 ; ELF64: t8
   %cmp = icmp eq i32 %a, -1
@@ -152,7 +152,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t9(i32 %a) uwtable ssp {
+define void @t9(i32 %a) nounwind {
 entry:
 ; ELF64: t9
   %cmp = icmp eq i32 %a, 1
@@ -167,7 +167,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t10(i32 %a) uwtable ssp {
+define void @t10(i32 %a) nounwind {
 entry:
 ; ELF64: t10
   %cmp = icmp eq i32 %a, 384
@@ -182,7 +182,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t11(i32 %a) uwtable ssp {
+define void @t11(i32 %a) nounwind {
 entry:
 ; ELF64: t11
   %cmp = icmp eq i32 %a, 4096
@@ -197,7 +197,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t12(i8 %a) uwtable ssp {
+define void @t12(i8 %a) nounwind {
 entry:
 ; ELF64: t12
   %cmp = icmp ugt i8 %a, -113
@@ -229,7 +229,7 @@ if.end:                                           ; preds = %entry
   ret void
 }
 
-define void @t14(i64 %a) uwtable ssp {
+define void @t14(i64 %a) nounwind {
 entry:
 ; ELF64: t14
   %cmp = icmp eq i64 %a, -1
@@ -244,7 +244,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t15(i64 %a) uwtable ssp {
+define void @t15(i64 %a) nounwind {
 entry:
 ; ELF64: t15
   %cmp = icmp eq i64 %a, 1
@@ -259,7 +259,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t16(i64 %a) uwtable ssp {
+define void @t16(i64 %a) nounwind {
 entry:
 ; ELF64: t16
   %cmp = icmp eq i64 %a, 384
@@ -274,7 +274,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 }
 
-define void @t17(i64 %a) uwtable ssp {
+define void @t17(i64 %a) nounwind {
 entry:
 ; ELF64: t17
   %cmp = icmp eq i64 %a, 32768

@@ -2,7 +2,7 @@
 
 ; Test add with non-legal types
 
-define void @add_i8(i8 %a, i8 %b) nounwind ssp {
+define void @add_i8(i8 %a, i8 %b) nounwind {
 entry:
 ; ELF64: add_i8
   %a.addr = alloca i8, align 4
@@ -12,7 +12,7 @@ entry:
   ret void
 }
 
-define void @add_i8_imm(i8 %a) nounwind ssp {
+define void @add_i8_imm(i8 %a) nounwind {
 entry:
 ; ELF64: add_i8_imm
   %a.addr = alloca i8, align 4
@@ -22,7 +22,7 @@ entry:
   ret void
 }
 
-define void @add_i16(i16 %a, i16 %b) nounwind ssp {
+define void @add_i16(i16 %a, i16 %b) nounwind {
 entry:
 ; ELF64: add_i16
   %a.addr = alloca i16, align 4
@@ -32,7 +32,7 @@ entry:
   ret void
 }
 
-define void @add_i16_imm(i16 %a, i16 %b) nounwind ssp {
+define void @add_i16_imm(i16 %a, i16 %b) nounwind {
 entry:
 ; ELF64: add_i16_imm
   %a.addr = alloca i16, align 4
@@ -44,7 +44,7 @@ entry:
 
 ; Test or with non-legal types
 
-define void @or_i8(i8 %a, i8 %b) nounwind ssp {
+define void @or_i8(i8 %a, i8 %b) nounwind {
 entry:
 ; ELF64: or_i8
   %a.addr = alloca i8, align 4
@@ -54,7 +54,7 @@ entry:
   ret void
 }
 
-define void @or_i8_imm(i8 %a) nounwind ssp {
+define void @or_i8_imm(i8 %a) nounwind {
 entry:
 ; ELF64: or_i8_imm
   %a.addr = alloca i8, align 4
@@ -64,7 +64,7 @@ entry:
   ret void
 }
 
-define void @or_i16(i16 %a, i16 %b) nounwind ssp {
+define void @or_i16(i16 %a, i16 %b) nounwind {
 entry:
 ; ELF64: or_i16
   %a.addr = alloca i16, align 4
@@ -74,7 +74,7 @@ entry:
   ret void
 }
 
-define void @or_i16_imm(i16 %a) nounwind ssp {
+define void @or_i16_imm(i16 %a) nounwind {
 entry:
 ; ELF64: or_i16_imm
   %a.addr = alloca i16, align 4
@@ -86,7 +86,7 @@ entry:
 
 ; Test sub with non-legal types
 
-define void @sub_i8(i8 %a, i8 %b) nounwind ssp {
+define void @sub_i8(i8 %a, i8 %b) nounwind {
 entry:
 ; ELF64: sub_i8
   %a.addr = alloca i8, align 4
@@ -96,7 +96,7 @@ entry:
   ret void
 }
 
-define void @sub_i8_imm(i8 %a) nounwind ssp {
+define void @sub_i8_imm(i8 %a) nounwind {
 entry:
 ; ELF64: sub_i8_imm
   %a.addr = alloca i8, align 4
@@ -106,7 +106,7 @@ entry:
   ret void
 }
 
-define void @sub_i16(i16 %a, i16 %b) nounwind ssp {
+define void @sub_i16(i16 %a, i16 %b) nounwind {
 entry:
 ; ELF64: sub_i16
   %a.addr = alloca i16, align 4
@@ -116,7 +116,7 @@ entry:
   ret void
 }
 
-define void @sub_i16_imm(i16 %a) nounwind ssp {
+define void @sub_i16_imm(i16 %a) nounwind {
 entry:
 ; ELF64: sub_i16_imm
   %a.addr = alloca i16, align 4
@@ -126,7 +126,7 @@ entry:
   ret void
 }
 
-define void @sub_i16_badimm(i16 %a) nounwind ssp {
+define void @sub_i16_badimm(i16 %a) nounwind {
 entry:
 ; ELF64: sub_i16_imm
   %a.addr = alloca i16, align 4

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 | FileCheck %s --check-prefix=ELF64
 
-define i32 @shl() nounwind ssp {
+define i32 @shl() nounwind {
 entry:
 ; ELF64: shl
 ; ELF64: slw
@@ -8,7 +8,7 @@ entry:
   ret i32 %shl
 }
 
-define i32 @shl_reg(i32 %src1, i32 %src2) nounwind ssp {
+define i32 @shl_reg(i32 %src1, i32 %src2) nounwind {
 entry:
 ; ELF64: shl_reg
 ; ELF64: slw
@@ -16,7 +16,7 @@ entry:
   ret i32 %shl
 }
 
-define i32 @lshr() nounwind ssp {
+define i32 @lshr() nounwind {
 entry:
 ; ELF64: lshr
 ; ELF64: srw
@@ -24,7 +24,7 @@ entry:
   ret i32 %lshr
 }
 
-define i32 @lshr_reg(i32 %src1, i32 %src2) nounwind ssp {
+define i32 @lshr_reg(i32 %src1, i32 %src2) nounwind {
 entry:
 ; ELF64: lshr_reg
 ; ELF64: srw
@@ -32,7 +32,7 @@ entry:
   ret i32 %lshr
 }
 
-define i32 @ashr() nounwind ssp {
+define i32 @ashr() nounwind {
 entry:
 ; ELF64: ashr
 ; ELF64: srawi
@@ -40,7 +40,7 @@ entry:
   ret i32 %ashr
 }
 
-define i32 @ashr_reg(i32 %src1, i32 %src2) nounwind ssp {
+define i32 @ashr_reg(i32 %src1, i32 %src2) nounwind {
 entry:
 ; ELF64: ashr_reg
 ; ELF64: sraw

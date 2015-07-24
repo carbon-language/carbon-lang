@@ -3,7 +3,7 @@
 ; doesn't crash.  (It crashed formerly on ARM, and proved useful in
 ; discovering a bug on PowerPC as well.)
 
-define i32 @f(i32* %x) nounwind ssp {
+define i32 @f(i32* %x) nounwind {
   %y = getelementptr inbounds i32, i32* %x, i32 5000
   %tmp103 = load i32, i32* %y, align 4
   ret i32 %tmp103
