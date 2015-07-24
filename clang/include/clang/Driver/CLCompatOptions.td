@@ -243,6 +243,8 @@ def _SLASH_vmv : CLFlag<"vmv">,
 def _SLASH_volatile_ms  : Option<["/", "-"], "volatile:ms", KIND_FLAG>,
   Group<_SLASH_volatile_Group>, Flags<[CLOption, DriverOption]>,
   HelpText<"Volatile loads and stores have acquire and release semantics">;
+def _SLASH_Zl : CLFlag<"Zl">,
+  HelpText<"Don't mention any default libraries in the object file">;
 
 // Ignored:
 
@@ -333,5 +335,4 @@ def _SLASH_Zc : CLJoined<"Zc:">;
 def _SLASH_Ze : CLFlag<"Ze">;
 def _SLASH_Zg : CLFlag<"Zg">;
 def _SLASH_ZI : CLFlag<"ZI">;
-def _SLASH_Zl : CLFlag<"Zl">;
 def _SLASH_ZW : CLJoined<"ZW">;

@@ -5098,39 +5098,46 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (Arg *A = Args.getLastArg(options::OPT__SLASH_M_Group))
     RTOptionID = A->getOption().getID();
 
+  StringRef FlagForCRT;
   switch (RTOptionID) {
   case options::OPT__SLASH_MD:
     if (Args.hasArg(options::OPT__SLASH_LDd))
       CmdArgs.push_back("-D_DEBUG");
     CmdArgs.push_back("-D_MT");
     CmdArgs.push_back("-D_DLL");
-    CmdArgs.push_back("--dependent-lib=msvcrt");
+    FlagForCRT = "--dependent-lib=msvcrt";
     break;
   case options::OPT__SLASH_MDd:
     CmdArgs.push_back("-D_DEBUG");
     CmdArgs.push_back("-D_MT");
     CmdArgs.push_back("-D_DLL");
-    CmdArgs.push_back("--dependent-lib=msvcrtd");
+    FlagForCRT = "--dependent-lib=msvcrtd";
     break;
   case options::OPT__SLASH_MT:
     if (Args.hasArg(options::OPT__SLASH_LDd))
       CmdArgs.push_back("-D_DEBUG");
     CmdArgs.push_back("-D_MT");
-    CmdArgs.push_back("--dependent-lib=libcmt");
+    FlagForCRT = "--dependent-lib=libcmt";
     break;
   case options::OPT__SLASH_MTd:
     CmdArgs.push_back("-D_DEBUG");
     CmdArgs.push_back("-D_MT");
-    CmdArgs.push_back("--dependent-lib=libcmtd");
+    FlagForCRT = "--dependent-lib=libcmtd";
     break;
   default:
     llvm_unreachable("Unexpected option ID.");
   }
 
-  // This provides POSIX compatibility (maps 'open' to '_open'), which most
-  // users want.  The /Za flag to cl.exe turns this off, but it's not
-  // implemented in clang.
-  CmdArgs.push_back("--dependent-lib=oldnames");
+  if (Args.hasArg(options::OPT__SLASH_Zl)) {
+    CmdArgs.push_back("-D_VC_NODEFAULTLIB");
+  } else {
+    CmdArgs.push_back(FlagForCRT.data());
+
+    // This provides POSIX compatibility (maps 'open' to '_open'), which most
+    // users want.  The /Za flag to cl.exe turns this off, but it's not
+    // implemented in clang.
+    CmdArgs.push_back("--dependent-lib=oldnames");
+  }
 
   // Both /showIncludes and /E (and /EP) write to stdout. Allowing both
   // would produce interleaved output, so ignore /showIncludes in such cases.
