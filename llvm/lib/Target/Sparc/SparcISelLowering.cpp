@@ -1370,7 +1370,7 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM,
                                          const SparcSubtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
-  auto &DL = *TM.getDataLayout();
+  MVT PtrVT = MVT::getIntegerVT(8 * TM.getPointerSize());
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &SP::IntRegsRegClass);
@@ -1396,10 +1396,10 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM,
   setTruncStoreAction(MVT::f128, MVT::f64, Expand);
 
   // Custom legalize GlobalAddress nodes into LO/HI parts.
-  setOperationAction(ISD::GlobalAddress, getPointerTy(DL), Custom);
-  setOperationAction(ISD::GlobalTLSAddress, getPointerTy(DL), Custom);
-  setOperationAction(ISD::ConstantPool, getPointerTy(DL), Custom);
-  setOperationAction(ISD::BlockAddress, getPointerTy(DL), Custom);
+  setOperationAction(ISD::GlobalAddress, PtrVT, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, PtrVT, Custom);
+  setOperationAction(ISD::ConstantPool, PtrVT, Custom);
+  setOperationAction(ISD::BlockAddress, PtrVT, Custom);
 
   // Sparc doesn't have sext_inreg, replace them with shl/sra
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);

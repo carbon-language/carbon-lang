@@ -76,7 +76,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     : TargetLowering(TM), Subtarget(&STI) {
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();
-  TD = TM.getDataLayout();
+  MVT PtrVT = MVT::getIntegerVT(8 * TM.getPointerSize());
 
   // Set up the TargetLowering object.
   static const MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };
@@ -505,7 +505,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
 
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, getPointerTy(*TD), Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, PtrVT, Custom);
 
   // GC_TRANSITION_START and GC_TRANSITION_END need custom lowering.
   setOperationAction(ISD::GC_TRANSITION_START, MVT::Other, Custom);
@@ -16515,9 +16515,11 @@ SDValue X86TargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
 
         for (FunctionType::param_iterator I = FTy->param_begin(),
              E = FTy->param_end(); I != E; ++I, ++Idx)
-          if (Attrs.hasAttribute(Idx, Attribute::InReg))
+          if (Attrs.hasAttribute(Idx, Attribute::InReg)) {
+            auto &DL = DAG.getDataLayout();
             // FIXME: should only count parameters that are lowered to integers.
-            InRegCount += (TD->getTypeSizeInBits(*I) + 31) / 32;
+            InRegCount += (DL.getTypeSizeInBits(*I) + 31) / 32;
+          }
 
         if (InRegCount > 2) {
           report_fatal_error("Nest register in use - reduce number of inreg"

@@ -312,8 +312,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
   PM.add(new TargetLibraryInfoWrapperPass(TLII));
 
   // Add the target data from the target machine, if it exists, or the module.
-  if (const DataLayout *DL = Target->getDataLayout())
-    M->setDataLayout(*DL);
+  M->setDataLayout(Target->createDataLayout());
 
   // Override function attributes based on CPUStr, FeaturesStr, and command line
   // flags.

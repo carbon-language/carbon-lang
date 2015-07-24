@@ -84,8 +84,7 @@ static MachineOperand earlyUseOperand(MachineOperand Op) {
 SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
                                              const SystemZSubtarget &STI)
     : TargetLowering(TM), Subtarget(STI) {
-  auto &DL = *TM.getDataLayout();
-  MVT PtrVT = getPointerTy(DL);
+  MVT PtrVT = MVT::getIntegerVT(8 * TM.getPointerSize());
 
   // Set up the register classes.
   if (Subtarget.hasHighWord())
