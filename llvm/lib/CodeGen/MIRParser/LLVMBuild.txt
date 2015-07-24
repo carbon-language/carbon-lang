@@ -19,4 +19,4 @@
 type = Library
 name = MIRParser
 parent = CodeGen
-required_libraries = AsmParser CodeGen Core Support Target
+required_libraries = AsmParser CodeGen Core MC Support Target
