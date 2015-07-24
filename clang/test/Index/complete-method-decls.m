@@ -223,10 +223,10 @@ typedef A *MyObjectRef;
 // CHECK-CLASSTY: ObjCInstanceMethodDecl:{LeftParen (}{Text MyObject<P1> *}{RightParen )}{TypedText meth2}
 // CHECK-CLASSTY: ObjCInstanceMethodDecl:{LeftParen (}{Text MyObjectRef}{RightParen )}{TypedText meth3}
 
-// RUN: c-index-test -code-completion-at=%s:94:2 %s | FileCheck -check-prefix=CHECK-NULLABILITY %s
+// RUN: c-index-test -code-completion-at=%s:94:2 %s -target x86_64-apple-macosx10.7 | FileCheck -check-prefix=CHECK-NULLABILITY %s
 // CHECK-NULLABILITY: ObjCInstanceMethodDecl:{LeftParen (}{Text I2 *}{RightParen )}{TypedText produceI2}{TypedText :}{LeftParen (}{Text I2 *}{RightParen )}{Text i2} (40)
 // CHECK-NULLABILITY: ObjCInstanceMethodDecl:{LeftParen (}{Text int * _Nullable *}{RightParen )}{TypedText something}{TypedText :}{LeftParen (}{Text void (^)(int * _Nullable)}{RightParen )}{Text b}
 
-// RUN: c-index-test -code-completion-at=%s:105:2 %s | FileCheck -check-prefix=CHECK-NULLABILITY2 %s
+// RUN: c-index-test -code-completion-at=%s:105:2 %s -target x86_64-apple-macosx10.7 | FileCheck -check-prefix=CHECK-NULLABILITY2 %s
 // CHECK-NULLABILITY2: ObjCInstanceMethodDecl:{LeftParen (}{Text instancetype}{RightParen )}{TypedText getI3} (40)
 // CHECK-NULLABILITY2: ObjCInstanceMethodDecl:{LeftParen (}{Text I3 *}{RightParen )}{TypedText produceI3}{TypedText :}{LeftParen (}{Text I3 *}{RightParen )}{Text i3} (40)
