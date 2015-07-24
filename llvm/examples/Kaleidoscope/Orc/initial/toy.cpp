@@ -716,7 +716,7 @@ public:
       M(new Module(GenerateUniqueName("jit_module_"),
                    Session.getLLVMContext())),
       Builder(Session.getLLVMContext()) {
-    M->setDataLayout(*Session.getTarget().getDataLayout());
+    M->setDataLayout(Session.getTarget().createDataLayout());
   }
 
   SessionContext& getSession() { return Session; }
@@ -1160,7 +1160,7 @@ public:
   typedef CompileLayerT::ModuleSetHandleT ModuleHandleT;
 
   KaleidoscopeJIT(SessionContext &Session)
-      : DL(*Session.getTarget().getDataLayout()),
+      : DL(Session.getTarget().createDataLayout()),
         CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())) {}
 
   std::string mangle(const std::string &Name) {
@@ -1201,7 +1201,7 @@ public:
   }
 
 private:
-  const DataLayout &DL;
+  const DataLayout DL;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
 };

@@ -32,15 +32,25 @@
 
 using namespace llvm;
 
+
+// The TargetMachine uses to offer access to a DataLayout member. This is reflected
+// in the C API. For backward compatibility reason, this structure allows to keep
+// a DataLayout member accessible to C client that have a handle to a
+// LLVMTargetMachineRef.
+struct LLVMOpaqueTargetMachine {
+  std::unique_ptr<TargetMachine> Machine;
+  DataLayout DL;
+};
+
+
 inline TargetMachine *unwrap(LLVMTargetMachineRef P) {
-  return reinterpret_cast<TargetMachine*>(P);
+  return P->Machine.get();
 }
 inline Target *unwrap(LLVMTargetRef P) {
   return reinterpret_cast<Target*>(P);
 }
 inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
-  return
-    reinterpret_cast<LLVMTargetMachineRef>(const_cast<TargetMachine*>(P));
+  return new LLVMOpaqueTargetMachine{ std::unique_ptr<TargetMachine>(const_cast<TargetMachine*>(P)),  P->createDataLayout() };
 }
 inline LLVMTargetRef wrap(const Target * P) {
   return reinterpret_cast<LLVMTargetRef>(const_cast<Target*>(P));
@@ -147,7 +157,7 @@ LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T,
 
 
 void LLVMDisposeTargetMachine(LLVMTargetMachineRef T) {
-  delete unwrap(T);
+  delete T;
 }
 
 LLVMTargetRef LLVMGetTargetMachineTarget(LLVMTargetMachineRef T) {
@@ -170,8 +180,9 @@ char* LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T) {
   return strdup(StringRep.c_str());
 }
 
+/// @deprecated: see "struct LLVMOpaqueTargetMachine" description above
 LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T) {
-  return wrap(unwrap(T)->getDataLayout());
+  return wrap(&T->DL);
 }
 
 void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
@@ -190,14 +201,7 @@ static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
 
   std::string error;
 
-  const DataLayout *td = TM->getDataLayout();
-
-  if (!td) {
-    error = "No DataLayout in TargetMachine";
-    *ErrorMessage = strdup(error.c_str());
-    return true;
-  }
-  Mod->setDataLayout(*td);
+  Mod->setDataLayout(TM->createDataLayout());
 
   TargetMachine::CodeGenFileType ft;
   switch (codegen) {

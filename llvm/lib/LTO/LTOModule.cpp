@@ -232,7 +232,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
 
   TargetMachine *target = march->createTargetMachine(TripleStr, CPU, FeatureStr,
                                                      options);
-  M->setDataLayout(*target->getDataLayout());
+  M->setDataLayout(target->createDataLayout());
 
   std::unique_ptr<object::IRObjectFile> IRObj(
       new object::IRObjectFile(Buffer, std::move(M)));

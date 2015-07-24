@@ -76,7 +76,12 @@ protected: // Can only create subclasses.
   /// The Target that this machine was created for.
   const Target &TheTarget;
 
-  /// For ABI type size and alignment.
+  /// DataLayout for the target: keep ABI type size and alignment.
+  ///
+  /// The DataLayout is created based on the string representation provided
+  /// during construction. It is kept here only to avoid reparsing the string
+  /// but should not really be used during compilation, because it has an
+  /// internal cache that is context specific.
   const DataLayout DL;
 
   /// Triple string, CPU name, and target feature strings the TargetMachine
@@ -125,9 +130,13 @@ public:
     return *static_cast<const STC*>(getSubtargetImpl(F));
   }
 
-  /// This method returns a pointer to the DataLayout for the target. It should
-  /// be unchanging for every subtarget.
-  const DataLayout *getDataLayout() const { return &DL; }
+  /// Create a DataLayout.
+  const DataLayout createDataLayout() const { return DL; }
+
+  /// Get the pointer size for this target.
+  ///
+  /// This is the only time the DataLayout in the TargetMachine is used.
+  unsigned getPointerSize() const { return DL.getPointerSize(); }
 
   /// \brief Reset the target options based on the function's attributes.
   // FIXME: Remove TargetOptions that affect per-function code generation
