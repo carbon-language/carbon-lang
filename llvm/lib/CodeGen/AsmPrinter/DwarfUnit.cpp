@@ -762,7 +762,7 @@ void DwarfUnit::updateAcceleratorTables(const DIScope *Context,
                                         const DIType *Ty, const DIE &TyDIE) {
   if (!Ty->getName().empty() && !Ty->isForwardDecl()) {
     bool IsImplementation = 0;
-    if (auto *CT = dyn_cast<DICompositeTypeBase>(Ty)) {
+    if (auto *CT = dyn_cast<DICompositeType>(Ty)) {
       // A runtime language of 0 actually means C/C++ and that any
       // non-negative value is some version of Objective-C/C++.
       IsImplementation = CT->getRuntimeLang() == 0 || CT->isObjcClassComplete();
