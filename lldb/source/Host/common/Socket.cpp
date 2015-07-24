@@ -139,7 +139,7 @@ Error Socket::TcpConnect(llvm::StringRef host_and_port, bool child_processes_inh
     NativeSocket sock = kInvalidSocketValue;
     Error error;
 
-    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION));
     if (log)
         log->Printf ("Socket::TcpConnect (host/port = %s)", host_and_port.data());
 
@@ -632,7 +632,7 @@ Error Socket::Read (void *buf, size_t &num_bytes)
     else
         num_bytes = bytes_received;
 
-    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_COMMUNICATION)); 
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION)); 
     if (log)
     {
         log->Printf ("%p Socket::Read() (socket = %" PRIu64 ", src = %p, src_len = %" PRIu64 ", flags = 0) => %" PRIi64 " (error = %s)",
@@ -674,7 +674,7 @@ Error Socket::Write (const void *buf, size_t &num_bytes)
     else
         num_bytes = bytes_sent;
 
-    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_HOST));
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION));
     if (log)
     {
         log->Printf ("%p Socket::Write() (socket = %" PRIu64 ", src = %p, src_len = %" PRIu64 ", flags = 0) => %" PRIi64 " (error = %s)",
