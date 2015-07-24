@@ -1032,7 +1032,7 @@ MachProcess::WriteMemory (nub_addr_t addr, nub_size_t size, const void *buf)
         DNBBreakpoint *bp = bps[i];
 
         const bool intersects = bp->IntersectsRange(addr, size, &intersect_addr, &intersect_size, &opcode_offset);
-        (void)intersects;
+        UNUSED_IF_ASSERT_DISABLED(intersects);
         assert(intersects);
         assert(addr <= intersect_addr && intersect_addr < addr + size);
         assert(addr < intersect_addr + intersect_size && intersect_addr + intersect_size <= addr + size);

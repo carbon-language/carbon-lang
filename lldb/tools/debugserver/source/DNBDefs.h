@@ -365,4 +365,6 @@ typedef nub_addr_t (*DNBCallbackNameToAddress)(nub_process_t pid, const char *na
 typedef nub_size_t (*DNBCallbackCopyExecutableImageInfos)(nub_process_t pid, struct DNBExecutableImageInfo **image_infos, nub_bool_t only_changed, void *baton);
 typedef void (*DNBCallbackLog)(void *baton, uint32_t flags, const char *format, va_list args);
 
+#define UNUSED_IF_ASSERT_DISABLED(x) ((void)(x))
+
 #endif    // #ifndef __DNBDefs_h__

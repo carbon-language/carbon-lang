@@ -97,7 +97,7 @@ void
 MainLoopPosix::UnregisterReadObject(IOObject::WaitableHandle handle)
 {
     bool erased = m_read_fds.erase(handle);
-    (void) erased;
+    UNUSED_IF_ASSERT_DISABLED(erased);
     assert(erased);
 }
 

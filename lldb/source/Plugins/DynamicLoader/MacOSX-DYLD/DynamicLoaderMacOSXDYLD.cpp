@@ -718,7 +718,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
         const size_t count_v13 = count_v11 +
                                  addr_size +         // sharedCacheSlide
                                  sizeof (uuid_t);    // sharedCacheUUID
-        (void) count_v13; // Avoid warnings when assertions are off.
+        UNUSED_IF_ASSERT_DISABLED(count_v13);
         assert (sizeof (buf) >= count_v13);
 
         Error error;

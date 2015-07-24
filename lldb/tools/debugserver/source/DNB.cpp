@@ -446,7 +446,7 @@ DNBProcessLaunch (const char *path,
             else
             {
                 bool res = AddProcessToMap(pid, processSP);
-                (void)res;
+                UNUSED_IF_ASSERT_DISABLED(res);
                 assert(res && "Couldn't add process to map!");
                 return pid;
             }
@@ -495,7 +495,7 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
         if (pid != INVALID_NUB_PROCESS)
         {
             bool res = AddProcessToMap(pid, processSP);
-            (void)res;
+            UNUSED_IF_ASSERT_DISABLED(res);
             assert(res && "Couldn't add process to map!");
             spawn_waitpid_thread(pid);
         }

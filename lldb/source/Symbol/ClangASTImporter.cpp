@@ -623,7 +623,7 @@ ClangASTImporter::Minion::ExecuteDeportWorkQueues ()
         m_decls_to_deport->erase(decl);
         
         DeclOrigin &origin = to_context_md->m_origins[decl];
-        (void)origin;
+        UNUSED_IF_ASSERT_DISABLED(origin);
         
         assert (origin.ctx == m_source_ctx);    // otherwise we should never have added this
                                                 // because it doesn't need to be deported

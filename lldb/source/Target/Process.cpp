@@ -2843,7 +2843,7 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
                     size_t intersect_size;
                     size_t opcode_offset;
                     const bool intersects = bp->IntersectsRange(addr, size, &intersect_addr, &intersect_size, &opcode_offset);
-                    (void)intersects;
+                    UNUSED_IF_ASSERT_DISABLED(intersects);
                     assert(intersects);
                     assert(addr <= intersect_addr && intersect_addr < addr + size);
                     assert(addr < intersect_addr + intersect_size && intersect_addr + intersect_size <= addr + size);

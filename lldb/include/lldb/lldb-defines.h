@@ -137,6 +137,8 @@
 #define __attribute__(X)
 #endif
 
+#define UNUSED_IF_ASSERT_DISABLED(x) ((void)(x))
+
 #if defined(__cplusplus)
 
 //----------------------------------------------------------------------

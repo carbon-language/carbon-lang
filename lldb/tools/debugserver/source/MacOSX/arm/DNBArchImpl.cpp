@@ -2060,7 +2060,7 @@ DNBArchMachARM::GetRegisterContext (void *buf, nub_size_t buf_len)
         p += sizeof(m_state.context.exc);
 
         size_t bytes_written = p - (uint8_t *)buf;
-        (void)bytes_written;
+        UNUSED_IF_ASSERT_DISABLED(bytes_written);
         assert (bytes_written == size);
 
     }
@@ -2094,7 +2094,7 @@ DNBArchMachARM::SetRegisterContext (const void *buf, nub_size_t buf_len)
         p += sizeof(m_state.context.exc);
         
         size_t bytes_written = p - (uint8_t *)buf;
-        (void)bytes_written;
+        UNUSED_IF_ASSERT_DISABLED(bytes_written);
         assert (bytes_written == size);
 
         if (SetGPRState() | SetVFPState() | SetEXCState())

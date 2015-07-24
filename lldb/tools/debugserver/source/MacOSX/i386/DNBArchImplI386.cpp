@@ -1703,7 +1703,7 @@ DNBArchImplI386::GetRegisterContext (void *buf, nub_size_t buf_len)
             
             // make sure we end up with exactly what we think we should have
             size_t bytes_written = p - (uint8_t *)buf;
-            (void)bytes_written;
+            UNUSED_IF_ASSERT_DISABLED(bytes_written);
             assert (bytes_written == size);
         }
     }
@@ -1789,7 +1789,7 @@ DNBArchImplI386::SetRegisterContext (const void *buf, nub_size_t buf_len)
         
         // make sure we end up with exactly what we think we should have
         size_t bytes_written = p - (uint8_t *)buf;
-        (void)bytes_written;
+        UNUSED_IF_ASSERT_DISABLED(bytes_written);
         assert (bytes_written == size);
         kern_return_t kret;
         if ((kret = SetGPRState()) != KERN_SUCCESS)

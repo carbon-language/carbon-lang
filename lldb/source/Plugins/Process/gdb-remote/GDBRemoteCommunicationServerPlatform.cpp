@@ -133,7 +133,7 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
     int platform_port;
     std::string platform_path;
     bool ok = UriParser::Parse(GetConnection()->GetURI().c_str(), platform_scheme, platform_ip, platform_port, platform_path);
-    (void)ok;
+    UNUSED_IF_ASSERT_DISABLED(ok);
     assert(ok);
     Error error = StartDebugserverProcess (
                                      platform_ip.c_str(),
