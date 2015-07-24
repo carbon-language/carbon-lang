@@ -3165,7 +3165,7 @@ AST_MATCHER(CXXMethodDecl, isVirtual) {
 AST_POLYMORPHIC_MATCHER(isFinal,
                         AST_POLYMORPHIC_SUPPORTED_TYPES(CXXRecordDecl,
                                                         CXXMethodDecl)) {
-  return Node.hasAttr<FinalAttr>();
+  return Node.template hasAttr<FinalAttr>();
 }
 
 /// \brief Matches if the given method declaration is pure.
