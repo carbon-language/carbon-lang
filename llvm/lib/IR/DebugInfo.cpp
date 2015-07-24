@@ -60,7 +60,7 @@ DICompositeTypeBase *llvm::getDICompositeType(DIType *T) {
   if (auto *C = dyn_cast_or_null<DICompositeTypeBase>(T))
     return C;
 
-  if (auto *D = dyn_cast_or_null<DIDerivedTypeBase>(T)) {
+  if (auto *D = dyn_cast_or_null<DIDerivedType>(T)) {
     // This function is currently used by dragonegg and dragonegg does
     // not generate identifier for types, so using an empty map to resolve
     // DerivedFrom should be fine.
@@ -177,7 +177,7 @@ void DebugInfoFinder::processType(DIType *DT) {
       else if (auto *SP = dyn_cast<DISubprogram>(D))
         processSubprogram(SP);
     }
-  } else if (auto *DDT = dyn_cast<DIDerivedTypeBase>(DT)) {
+  } else if (auto *DDT = dyn_cast<DIDerivedType>(DT)) {
     processType(DDT->getBaseType().resolve(TypeIdentifierMap));
   }
 }
