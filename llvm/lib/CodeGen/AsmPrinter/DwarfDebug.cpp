@@ -187,7 +187,7 @@ const DIType *DbgVariable::getType() const {
     if (tag == dwarf::DW_TAG_pointer_type)
       subType = resolve(cast<DIDerivedType>(Ty)->getBaseType());
 
-    auto Elements = cast<DICompositeTypeBase>(subType)->getElements();
+    auto Elements = cast<DICompositeType>(subType)->getElements();
     for (unsigned i = 0, N = Elements.size(); i < N; ++i) {
       auto *DT = cast<DIDerivedTypeBase>(Elements[i]);
       if (getName() == DT->getName())

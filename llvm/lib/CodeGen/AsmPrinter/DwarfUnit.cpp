@@ -452,7 +452,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
-  DINodeArray Fields = cast<DICompositeTypeBase>(TmpTy)->getElements();
+  DINodeArray Fields = cast<DICompositeType>(TmpTy)->getElements();
   const DIDerivedType *varField = nullptr;
   const DIDerivedType *forwardingField = nullptr;
 
