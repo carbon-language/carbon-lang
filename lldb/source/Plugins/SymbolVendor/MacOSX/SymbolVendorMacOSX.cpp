@@ -204,6 +204,11 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                             plist.GetValueAsString("DBGSourcePath", DBGSourcePath);
                                             if (!DBGBuildSourcePath.empty() && !DBGSourcePath.empty())
                                             {
+                                                if (DBGSourcePath[0] == '~')
+                                                {
+                                                    FileSpec resolved_source_path(DBGSourcePath.c_str(), true);
+                                                    DBGSourcePath = resolved_source_path.GetPath();
+                                                }
                                                 module_sp->GetSourceMappingList().Append (ConstString(DBGBuildSourcePath), ConstString(DBGSourcePath), true);
                                             }
                                         }

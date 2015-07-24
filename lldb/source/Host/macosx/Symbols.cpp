@@ -133,39 +133,16 @@ LocateMacOSXFilesUsingDebugSymbols
                         }
                     }
 
-                    CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));
-                    CFDictionaryRef uuid_dict = NULL;
-                    if (dict.get())
-                    {
-                        CFCString uuid_cfstr (uuid->GetAsString().c_str());
-                        uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
-                        if (uuid_dict)
-                        {
-
-                            CFStringRef actual_src_cfpath = static_cast<CFStringRef>(::CFDictionaryGetValue (uuid_dict, CFSTR("DBGSourcePath")));
-                            if (actual_src_cfpath)
-                            {
-                                CFStringRef build_src_cfpath = static_cast<CFStringRef>(::CFDictionaryGetValue (uuid_dict, CFSTR("DBGBuildSourcePath")));
-                                if (build_src_cfpath)
-                                {
-                                    char actual_src_path[PATH_MAX];
-                                    char build_src_path[PATH_MAX];
-                                    ::CFStringGetFileSystemRepresentation (actual_src_cfpath, actual_src_path, sizeof(actual_src_path));
-                                    ::CFStringGetFileSystemRepresentation (build_src_cfpath, build_src_path, sizeof(build_src_path));
-                                    if (actual_src_path[0] == '~')
-                                    {
-                                        FileSpec resolved_source_path(actual_src_path, true);
-                                        resolved_source_path.GetPath(actual_src_path, sizeof(actual_src_path));
-                                    }
-                                    module_spec.GetSourceMappingList().Append (ConstString(build_src_path), ConstString(actual_src_path), true);
-                                }
-                            }
-                        }
-                    }
-
                     if (out_exec_fspec)
                     {
                         bool success = false;
+                        CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));
+                        CFDictionaryRef uuid_dict = NULL;
+                        if (dict.get())
+                        {
+                            CFCString uuid_cfstr (uuid->GetAsString().c_str());
+                            uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
+                        }
                         if (uuid_dict)
                         {
                             CFStringRef exec_cf_path = static_cast<CFStringRef>(::CFDictionaryGetValue (uuid_dict, CFSTR("DBGSymbolRichExecutable")));
