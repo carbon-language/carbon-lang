@@ -491,7 +491,7 @@ if (LLVM_ENABLE_DOXYGEN)
 
     option(LLVM_DOXYGEN_EXTERNAL_SEARCH "Enable doxygen external search." OFF)
     if (LLVM_DOXYGEN_EXTERNAL_SEARCH)
-      set(LLVM_DOXYGEN_SEARCHENGINE_URL "" CACHE STRING "URL to use for external searhc.")
+      set(LLVM_DOXYGEN_SEARCHENGINE_URL "" CACHE STRING "URL to use for external search.")
       set(LLVM_DOXYGEN_SEARCH_MAPPINGS "" CACHE STRING "Doxygen Search Mappings")
     endif()
   endif()
