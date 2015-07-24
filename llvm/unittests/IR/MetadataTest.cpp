@@ -1260,10 +1260,6 @@ TEST_F(DISubroutineTypeTest, get) {
   EXPECT_EQ(nullptr, N->getScope());
   EXPECT_EQ(nullptr, N->getFile());
   EXPECT_EQ("", N->getName());
-  EXPECT_EQ(nullptr, N->getBaseType());
-  EXPECT_EQ(nullptr, N->getVTableHolder());
-  EXPECT_EQ(nullptr, N->getTemplateParams().get());
-  EXPECT_EQ("", N->getIdentifier());
 }
 
 typedef MetadataTest DIFileTest;
