@@ -1737,6 +1737,7 @@ exported by the ``lib/VMCore/PassManager.cpp`` file.
 .. _dynamically loaded options:
 
 Dynamically adding command line options
+---------------------------------------
 
 .. todo::
 
