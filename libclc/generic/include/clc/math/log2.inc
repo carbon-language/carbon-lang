@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Advanced Micro Devices, Inc.
+ * Copyright (c) 2015 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,34 +20,4 @@
  * THE SOFTWARE.
  */
 
-#define TABLE_SPACE __constant
-
-#define TABLE_MANGLE(NAME) __clc_##NAME
-
-#define DECLARE_TABLE(TYPE,NAME,LENGTH) \
-    TABLE_SPACE TYPE NAME [ LENGTH ]
-
-#define TABLE_FUNCTION(TYPE,TABLE,NAME) \
-    TYPE TABLE_MANGLE(NAME)(size_t idx) { \
-        return TABLE[idx]; \
-    }
-
-#define TABLE_FUNCTION_DECL(TYPE, NAME) \
-    TYPE TABLE_MANGLE(NAME)(size_t idx);
-
-#define USE_TABLE(NAME, IDX) \
-    TABLE_MANGLE(NAME)(IDX)
-
-TABLE_FUNCTION_DECL(float2, loge_tbl);
-TABLE_FUNCTION_DECL(float, log_inv_tbl);
-TABLE_FUNCTION_DECL(float2, log2_tbl);
-TABLE_FUNCTION_DECL(uint4,  pibits_tbl);
-
-#ifdef cl_khr_fp64
-
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
-
-TABLE_FUNCTION_DECL(double2, ln_tbl);
-TABLE_FUNCTION_DECL(double2, atan_jby256_tbl);
-TABLE_FUNCTION_DECL(double2, two_to_jby64_ep_tbl);
-#endif // cl_khr_fp64
+_CLC_OVERLOAD _CLC_DECL __CLC_GENTYPE log2(__CLC_GENTYPE a);

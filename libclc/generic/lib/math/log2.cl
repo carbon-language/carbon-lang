@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Advanced Micro Devices, Inc.
+ * Copyright (c) 2015 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,34 +20,18 @@
  * THE SOFTWARE.
  */
 
-#define TABLE_SPACE __constant
-
-#define TABLE_MANGLE(NAME) __clc_##NAME
-
-#define DECLARE_TABLE(TYPE,NAME,LENGTH) \
-    TABLE_SPACE TYPE NAME [ LENGTH ]
-
-#define TABLE_FUNCTION(TYPE,TABLE,NAME) \
-    TYPE TABLE_MANGLE(NAME)(size_t idx) { \
-        return TABLE[idx]; \
-    }
-
-#define TABLE_FUNCTION_DECL(TYPE, NAME) \
-    TYPE TABLE_MANGLE(NAME)(size_t idx);
-
-#define USE_TABLE(NAME, IDX) \
-    TABLE_MANGLE(NAME)(IDX)
-
-TABLE_FUNCTION_DECL(float2, loge_tbl);
-TABLE_FUNCTION_DECL(float, log_inv_tbl);
-TABLE_FUNCTION_DECL(float2, log2_tbl);
-TABLE_FUNCTION_DECL(uint4,  pibits_tbl);
+#include <clc/clc.h>
+#include "../clcmacro.h"
+#include "tables.h"
 
 #ifdef cl_khr_fp64
-
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-
-TABLE_FUNCTION_DECL(double2, ln_tbl);
-TABLE_FUNCTION_DECL(double2, atan_jby256_tbl);
-TABLE_FUNCTION_DECL(double2, two_to_jby64_ep_tbl);
 #endif // cl_khr_fp64
+
+#define COMPILING_LOG2
+#include "log_base.h"
+#undef COMPILING_LOG2
+
+_CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, float, log2, float);
+
+_CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, double, log2, double);

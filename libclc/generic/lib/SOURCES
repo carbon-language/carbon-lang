@@ -93,6 +93,7 @@ math/clc_ldexp.cl
 math/ldexp.cl
 math/log10.cl
 math/log1p.cl
+math/log2.cl
 math/mad.cl
 math/native_log.cl
 math/native_log2.cl
