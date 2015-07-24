@@ -602,7 +602,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  Symtab.addAbsolute(mangle("__ImageBase"), Config->ImageBase);
+  Symtab.addRelative(mangle("__ImageBase"), 0);
 
   // Read as much files as we can from directives sections.
   if (auto EC = Symtab.run()) {

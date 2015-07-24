@@ -7,10 +7,6 @@
 # RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck %s -check-prefix=NOBASEREL
 #
 # BASEREL:      BaseReloc [
-# BASEREL-NEXT:   Entry {
-# BASEREL-NEXT:   Type: DIR64
-# BASEREL-NEXT:   Address: 0x2000
-# BASEREL-NEXT: }
 # BASEREL-NEXT: Entry {
 # BASEREL-NEXT:   Type: DIR64
 # BASEREL-NEXT:   Address: 0x2007
@@ -20,12 +16,12 @@
 # BASEREL-NEXT:   Address: 0x200C
 # BASEREL-NEXT: }
 # BASEREL-NEXT: Entry {
-# BASEREL-NEXT:   Type: ABSOLUTE
-# BASEREL-NEXT:   Address: 0x2000
+# BASEREL-NEXT:   Type: DIR64
+# BASEREL-NEXT:   Address: 0x201E
 # BASEREL-NEXT: }
 # BASEREL-NEXT: Entry {
-# BASEREL-NEXT:   Type: DIR64
-# BASEREL-NEXT:   Address: 0x3000
+# BASEREL-NEXT:   Type: ABSOLUTE
+# BASEREL-NEXT:   Address: 0x2000
 # BASEREL-NEXT: }
 # BASEREL-NEXT: Entry {
 # BASEREL-NEXT:   Type: DIR64
@@ -34,6 +30,10 @@
 # BASEREL-NEXT: Entry {
 # BASEREL-NEXT:   Type: DIR64
 # BASEREL-NEXT:   Address: 0x300C
+# BASEREL-NEXT: }
+# BASEREL-NEXT: Entry {
+# BASEREL-NEXT:   Type: DIR64
+# BASEREL-NEXT:   Address: 0x301E
 # BASEREL-NEXT: }
 # BASEREL-NEXT: Entry {
 # BASEREL-NEXT:   Type: ABSOLUTE

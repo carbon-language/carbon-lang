@@ -129,14 +129,12 @@ static bool isAbs(const coff_relocation &Rel) {
 // Collect all locations that contain absolute addresses, which need to be
 // fixed by the loader if load-time relocation is needed.
 // Only called when base relocation is enabled.
-void SectionChunk::getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {
+void SectionChunk::getBaserels(std::vector<uint32_t> *Res) {
   for (const coff_relocation &Rel : Relocs) {
-    // Symbol __ImageBase is special -- it's an absolute symbol, but its
-    // address never changes even if image is relocated.
     if (!isAbs(Rel))
       continue;
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
-    if (Body == ImageBase)
+    if (isa<DefinedAbsolute>(Body))
       continue;
     Res->push_back(RVA + Rel.VirtualAddress);
   }
@@ -252,8 +250,7 @@ ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
   Align = 16;
 }
 
-void ImportThunkChunk::getBaserels(std::vector<uint32_t> *Res,
-                                   Defined *ImageBase) {
+void ImportThunkChunk::getBaserels(std::vector<uint32_t> *Res) {
   if (!Config->is64())
     Res->push_back(getRVA() + 2);
 }
@@ -267,8 +264,7 @@ void ImportThunkChunk::writeTo(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, Operand);
 }
 
-void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res,
-                                   Defined *ImageBase) {
+void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res) {
   Res->push_back(getRVA());
 }
 

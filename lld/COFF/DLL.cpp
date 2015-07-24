@@ -319,7 +319,7 @@ public:
     write32le(Buf + FileOff + 13, Helper->getRVA() - RVA - 17);
   }
 
-  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override {
+  void getBaserels(std::vector<uint32_t> *Res) override {
     Res->push_back(RVA + 3);
     Res->push_back(RVA + 8);
   }
@@ -367,7 +367,7 @@ public:
     write64le(Buf + FileOff, Thunk->getRVA() + Config->ImageBase);
   }
 
-  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override {
+  void getBaserels(std::vector<uint32_t> *Res) override {
     Res->push_back(RVA);
   }
 

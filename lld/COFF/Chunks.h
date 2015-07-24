@@ -83,7 +83,7 @@ public:
 
   // Windows-specific.
   // Collect all locations that contain absolute addresses for base relocations.
-  virtual void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {}
+  virtual void getBaserels(std::vector<uint32_t> *Res) {}
 
   // Returns a human-readable name of this chunk. Chunks are unnamed chunks of
   // bytes, so this is used only for logging or debugging.
@@ -134,7 +134,7 @@ public:
   bool hasData() const override;
   uint32_t getPermissions() const override;
   StringRef getSectionName() const override { return SectionName; }
-  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
+  void getBaserels(std::vector<uint32_t> *Res) override;
   bool isCOMDAT() const;
   void applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S, uint64_t P);
   void applyRelX86(uint8_t *Off, uint16_t Type, uint64_t S, uint64_t P);
@@ -234,7 +234,7 @@ class ImportThunkChunk : public Chunk {
 public:
   explicit ImportThunkChunk(Defined *ImpSymbol);
   size_t getSize() const override { return sizeof(ImportThunkData); }
-  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
+  void getBaserels(std::vector<uint32_t> *Res) override;
   void writeTo(uint8_t *Buf) override;
 
 private:
@@ -247,7 +247,7 @@ class LocalImportChunk : public Chunk {
 public:
   explicit LocalImportChunk(Defined *S) : Sym(S) {}
   size_t getSize() const override;
-  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
+  void getBaserels(std::vector<uint32_t> *Res) override;
   void writeTo(uint8_t *Buf) override;
 
 private:

@@ -143,6 +143,7 @@ int SymbolBody::compare(SymbolBody *Other) {
   case DefinedImportThunkKind:
   case DefinedImportDataKind:
   case DefinedAbsoluteKind:
+  case DefinedRelativeKind:
     // These all simply tie.
     return 0;
   }
@@ -178,6 +179,8 @@ uint64_t Defined::getFileOff() {
     llvm_unreachable("There is no file offset for a bitcode symbol.");
   case DefinedAbsoluteKind:
     llvm_unreachable("Cannot get a file offset for an absolute symbol.");
+  case DefinedRelativeKind:
+    llvm_unreachable("Cannot get a file offset for a relative symbol.");
   case LazyKind:
   case UndefinedKind:
     llvm_unreachable("Cannot get a file offset for an undefined symbol.");

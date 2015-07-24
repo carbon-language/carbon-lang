@@ -59,6 +59,7 @@ public:
     DefinedImportThunkKind,
     DefinedImportDataKind,
     DefinedAbsoluteKind,
+    DefinedRelativeKind,
     DefinedBitcodeKind,
 
     UndefinedKind,
@@ -222,6 +223,26 @@ private:
   uint64_t VA;
 };
 
+// This is a kind of absolute symbol but relative to the image base.
+// Unlike absolute symbols, relocations referring this kind of symbols
+// are subject of the base relocation. This type is used rarely --
+// mainly for __ImageBase.
+class DefinedRelative : public Defined {
+public:
+  explicit DefinedRelative(StringRef Name, uint64_t V = 0)
+      : Defined(DefinedRelativeKind, Name), RVA(V) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedRelativeKind;
+  }
+
+  uint64_t getRVA() { return RVA; }
+  void setRVA(uint64_t V) { RVA = V; }
+
+private:
+  uint64_t RVA;
+};
+
 // This class represents a symbol defined in an archive file. It is
 // created from an archive file header, and it knows how to load an
 // object file from an archive to replace itself with a defined
@@ -364,6 +385,8 @@ inline uint64_t Defined::getRVA() {
   switch (kind()) {
   case DefinedAbsoluteKind:
     return cast<DefinedAbsolute>(this)->getRVA();
+  case DefinedRelativeKind:
+    return cast<DefinedRelative>(this)->getRVA();
   case DefinedImportDataKind:
     return cast<DefinedImportData>(this)->getRVA();
   case DefinedImportThunkKind:
