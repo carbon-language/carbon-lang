@@ -399,15 +399,18 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
 const lldb_private::UUID&
 Module::GetUUID()
 {
-    Mutex::Locker locker (m_mutex);
-    if (m_did_parse_uuid == false)
+    if (m_did_parse_uuid.load() == false)
     {
-        ObjectFile * obj_file = GetObjectFile ();
-
-        if (obj_file != NULL)
+        Mutex::Locker locker (m_mutex);
+        if (m_did_parse_uuid.load() == false)
         {
-            obj_file->GetUUID(&m_uuid);
-            m_did_parse_uuid = true;
+            ObjectFile * obj_file = GetObjectFile ();
+
+            if (obj_file != NULL)
+            {
+                obj_file->GetUUID(&m_uuid);
+                m_did_parse_uuid = true;
+            }
         }
     }
     return m_uuid;
@@ -416,32 +419,35 @@ Module::GetUUID()
 ClangASTContext &
 Module::GetClangASTContext ()
 {
-    Mutex::Locker locker (m_mutex);
-    if (m_did_init_ast == false)
+    if (m_did_init_ast.load() == false)
     {
-        ObjectFile * objfile = GetObjectFile();
-        ArchSpec object_arch;
-        if (objfile && objfile->GetArchitecture(object_arch))
+        Mutex::Locker locker (m_mutex);
+        if (m_did_init_ast.load() == false)
         {
-            m_did_init_ast = true;
-
-            // LLVM wants this to be set to iOS or MacOSX; if we're working on
-            // a bare-boards type image, change the triple for llvm's benefit.
-            if (object_arch.GetTriple().getVendor() == llvm::Triple::Apple 
-                && object_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
+            ObjectFile * objfile = GetObjectFile();
+            ArchSpec object_arch;
+            if (objfile && objfile->GetArchitecture(object_arch))
             {
-                if (object_arch.GetTriple().getArch() == llvm::Triple::arm || 
-                    object_arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
-                    object_arch.GetTriple().getArch() == llvm::Triple::thumb)
+                m_did_init_ast = true;
+
+                // LLVM wants this to be set to iOS or MacOSX; if we're working on
+                // a bare-boards type image, change the triple for llvm's benefit.
+                if (object_arch.GetTriple().getVendor() == llvm::Triple::Apple 
+                    && object_arch.GetTriple().getOS() == llvm::Triple::UnknownOS)
                 {
-                    object_arch.GetTriple().setOS(llvm::Triple::IOS);
+                    if (object_arch.GetTriple().getArch() == llvm::Triple::arm || 
+                        object_arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
+                        object_arch.GetTriple().getArch() == llvm::Triple::thumb)
+                    {
+                        object_arch.GetTriple().setOS(llvm::Triple::IOS);
+                    }
+                    else
+                    {
+                        object_arch.GetTriple().setOS(llvm::Triple::MacOSX);
+                    }
                 }
-                else
-                {
-                    object_arch.GetTriple().setOS(llvm::Triple::MacOSX);
-                }
+                m_ast->SetArchitecture (object_arch);
             }
-            m_ast->SetArchitecture (object_arch);
         }
     }
     return *m_ast;
@@ -1039,15 +1045,18 @@ Module::FindTypes (const SymbolContext& sc,
 SymbolVendor*
 Module::GetSymbolVendor (bool can_create, lldb_private::Stream *feedback_strm)
 {
-    Mutex::Locker locker (m_mutex);
-    if (m_did_load_symbol_vendor == false && can_create)
+    if (m_did_load_symbol_vendor.load() == false)
     {
-        ObjectFile *obj_file = GetObjectFile ();
-        if (obj_file != NULL)
+        Mutex::Locker locker (m_mutex);
+        if (m_did_load_symbol_vendor.load() == false && can_create)
         {
-            Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
-            m_symfile_ap.reset(SymbolVendor::FindPlugin(shared_from_this(), feedback_strm));
-            m_did_load_symbol_vendor = true;
+            ObjectFile *obj_file = GetObjectFile ();
+            if (obj_file != NULL)
+            {
+                Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+                m_symfile_ap.reset(SymbolVendor::FindPlugin(shared_from_this(), feedback_strm));
+                m_did_load_symbol_vendor = true;
+            }
         }
     }
     return m_symfile_ap.get();
@@ -1288,37 +1297,40 @@ Module::GetObjectName() const
 ObjectFile *
 Module::GetObjectFile()
 {
-    Mutex::Locker locker (m_mutex);
-    if (m_did_load_objfile == false)
+    if (m_did_load_objfile.load() == false)
     {
-        Timer scoped_timer(__PRETTY_FUNCTION__,
-                           "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
-        DataBufferSP data_sp;
-        lldb::offset_t data_offset = 0;
-        const lldb::offset_t file_size = m_file.GetByteSize();
-        if (file_size > m_object_offset)
+        Mutex::Locker locker (m_mutex);
+        if (m_did_load_objfile.load() == false)
         {
-            m_did_load_objfile = true;
-            m_objfile_sp = ObjectFile::FindPlugin (shared_from_this(),
-                                                   &m_file,
-                                                   m_object_offset,
-                                                   file_size - m_object_offset,
-                                                   data_sp,
-                                                   data_offset);
-            if (m_objfile_sp)
+            Timer scoped_timer(__PRETTY_FUNCTION__,
+                               "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
+            DataBufferSP data_sp;
+            lldb::offset_t data_offset = 0;
+            const lldb::offset_t file_size = m_file.GetByteSize();
+            if (file_size > m_object_offset)
             {
-                // Once we get the object file, update our module with the object file's
-                // architecture since it might differ in vendor/os if some parts were
-                // unknown.  But since the matching arch might already be more specific
-                // than the generic COFF architecture, only merge in those values that
-                // overwrite unspecified unknown values.
-                ArchSpec new_arch;
-                m_objfile_sp->GetArchitecture(new_arch);
-                m_arch.MergeFrom(new_arch);
-            }
-            else
-            {
-                ReportError ("failed to load objfile for %s", GetFileSpec().GetPath().c_str());
+                m_did_load_objfile = true;
+                m_objfile_sp = ObjectFile::FindPlugin (shared_from_this(),
+                                                       &m_file,
+                                                       m_object_offset,
+                                                       file_size - m_object_offset,
+                                                       data_sp,
+                                                       data_offset);
+                if (m_objfile_sp)
+                {
+                    // Once we get the object file, update our module with the object file's
+                    // architecture since it might differ in vendor/os if some parts were
+                    // unknown.  But since the matching arch might already be more specific
+                    // than the generic COFF architecture, only merge in those values that
+                    // overwrite unspecified unknown values.
+                    ArchSpec new_arch;
+                    m_objfile_sp->GetArchitecture(new_arch);
+                    m_arch.MergeFrom(new_arch);
+                }
+                else
+                {
+                    ReportError ("failed to load objfile for %s", GetFileSpec().GetPath().c_str());
+                }
             }
         }
     }
