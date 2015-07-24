@@ -202,7 +202,7 @@ void MinGW::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     IncludeDir += "-fixed";
     // openSUSE
     addSystemInclude(DriverArgs, CC1Args,
-                     "/usr/x86_64-w64-mingw32/sys-root/mingw/include");
+                     Base + Arch + "/sys-root/mingw/include");
     addSystemInclude(DriverArgs, CC1Args, IncludeDir.c_str());
   }
   addSystemInclude(DriverArgs, CC1Args,

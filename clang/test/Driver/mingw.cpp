@@ -32,7 +32,7 @@
 // CHECK_MINGW_OPENSUSE_TREE: "{{.*}}/Inputs/mingw_opensuse_tree/usr{{/|\\\\}}lib64{{/|\\\\}}gcc{{/|\\\\}}x86_64-w64-mingw32{{/|\\\\}}5.1.0{{/|\\\\}}include{{/|\\\\}}c++{{/|\\\\}}x86_64-w64-mingw32"
 // CHECK_MINGW_OPENSUSE_TREE: "{{.*}}/Inputs/mingw_opensuse_tree/usr{{/|\\\\}}lib64{{/|\\\\}}gcc{{/|\\\\}}x86_64-w64-mingw32{{/|\\\\}}5.1.0{{/|\\\\}}include{{/|\\\\}}c++{{/|\\\\}}backward"
 // CHECK_MINGW_OPENSUSE_TREE: "{{.*}}/Inputs/mingw_opensuse_tree/usr{{/|\\\\}}lib64{{/|\\\\}}gcc{{/|\\\\}}x86_64-w64-mingw32{{/|\\\\}}5.1.0{{/|\\\\}}include"
-// CHECK_MINGW_OPENSUSE_TREE: "/usr/x86_64-w64-mingw32/sys-root/mingw/include"
+// CHECK_MINGW_OPENSUSE_TREE: "{{.*}}/Inputs/mingw_opensuse_tree/usr{{/|\\\\}}x86_64-w64-mingw32/sys-root/mingw/include"
 // CHECK_MINGW_OPENSUSE_TREE: "{{.*}}/Inputs/mingw_opensuse_tree/usr{{/|\\\\}}lib64{{/|\\\\}}gcc{{/|\\\\}}x86_64-w64-mingw32{{/|\\\\}}5.1.0{{/|\\\\}}include-fixed"
 
 
