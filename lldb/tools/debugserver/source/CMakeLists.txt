@@ -34,9 +34,11 @@ if (CXX_SUPPORTS_NO_EXTENDED_OFFSETOF)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-extended-offsetof")
 endif ()
 
-add_definitions(
-  -DDEBUGSERVER_VERSION_STR="${LLDB_VERSION}"
-  )
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  add_definitions(
+    -DDEBUGSERVER_VERSION_STR="${LLDB_VERSION}"
+    )
+endif ()
 
 add_library(lldbDebugserverCommon
   #${dnbconfig_header}
