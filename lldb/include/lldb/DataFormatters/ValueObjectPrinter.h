@@ -344,6 +344,9 @@ protected:
     bool
     ShouldPrintChildren (bool is_failed_description,
                          uint32_t& curr_ptr_depth);
+
+    bool
+    ShouldExpandEmptyAggregates ();
     
     ValueObject*
     GetValueObjectForChildrenGeneration ();

@@ -480,6 +480,17 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
     return false;
 }
 
+bool
+ValueObjectPrinter::ShouldExpandEmptyAggregates ()
+{
+    TypeSummaryImpl* entry = GetSummaryFormatter();
+
+    if (!entry)
+        return true;
+
+    return entry->DoesPrintEmptyAggregates();
+}
+
 ValueObject*
 ValueObjectPrinter::GetValueObjectForChildrenGeneration ()
 {
@@ -582,7 +593,7 @@ ValueObjectPrinter::PrintChildren (uint32_t curr_ptr_depth)
         if (ShouldPrintValueObject())
         {
             // if it has a synthetic value, then don't print {}, the synthetic children are probably only being used to vend a value
-            if (m_valobj->DoesProvideSyntheticValue())
+            if (m_valobj->DoesProvideSyntheticValue() || !ShouldExpandEmptyAggregates())
                 m_stream->PutCString( "\n");
             else
                 m_stream->PutCString(" {}\n");

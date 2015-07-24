@@ -208,6 +208,12 @@ class SynthDataFormatterTestCase(TestBase):
         self.expect('frame variable bag_bag',
                     substrs = ['x.z = 12'])
 
+        self.runCmd('type summary add -e -s "I am always empty but have" EmptyStruct')
+        self.expect('frame variable es', substrs = ["I am always empty but have {}"])
+        self.runCmd('type summary add -e -h -s "I am really empty" EmptyStruct')
+        self.expect('frame variable es', substrs = ["I am really empty"])
+        self.expect('frame variable es', substrs = ["I am really empty {}"], matching=False)
+
 
 if __name__ == '__main__':
     import atexit

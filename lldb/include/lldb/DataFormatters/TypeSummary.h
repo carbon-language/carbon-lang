@@ -162,6 +162,22 @@ namespace lldb_private {
                     m_flags &= ~lldb::eTypeOptionHideChildren;
                 return *this;
             }
+
+            bool
+            GetHideEmptyAggregates () const
+            {
+                return (m_flags & lldb::eTypeOptionHideEmptyAggregates) == lldb::eTypeOptionHideEmptyAggregates;
+            }
+
+            Flags&
+            SetHideEmptyAggregates (bool value = true)
+            {
+                if (value)
+                    m_flags |= lldb::eTypeOptionHideEmptyAggregates;
+                else
+                    m_flags &= ~lldb::eTypeOptionHideEmptyAggregates;
+                return *this;
+            }
             
             bool
             GetDontShowValue () const
@@ -278,6 +294,12 @@ namespace lldb_private {
         DoesPrintChildren (ValueObject* valobj) const
         {
             return !m_flags.GetDontShowChildren();
+        }
+
+        virtual bool
+        DoesPrintEmptyAggregates () const
+        {
+            return !m_flags.GetHideEmptyAggregates();
         }
         
         virtual bool

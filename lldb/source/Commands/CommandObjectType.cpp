@@ -1438,6 +1438,9 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
         case 'e':
             m_flags.SetDontShowChildren(false);
             break;
+        case 'h':
+            m_flags.SetHideEmptyAggregates(true);
+            break;
         case 'v':
             m_flags.SetDontShowValue(true);
             break;
@@ -1924,6 +1927,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_3, false, "python-function", 'F', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePythonFunction, "Give the name of a Python function to use for this type."},
     { LLDB_OPT_SET_3, false, "input-python", 'P', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone, "Input Python code to use for this type manually."},
     { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "expand", 'e', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,    "Expand aggregate data types to show children on separate lines."},
+    { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "hide-empty", 'h', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,    "Do not expand aggregate data types with no children."},
     { LLDB_OPT_SET_2 | LLDB_OPT_SET_3,   false, "name", 'n', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,    "A name for this summary string."},
     { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };

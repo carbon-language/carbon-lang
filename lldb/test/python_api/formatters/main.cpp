@@ -26,6 +26,9 @@ struct CCC
 	int a, b, c;
 };
 
+struct Empty1 { void *data; };
+struct Empty2 { void *data; };
+
 
 int main(int argc, char const *argv[]) {
 	JustAStruct foo;
@@ -48,6 +51,9 @@ int main(int argc, char const *argv[]) {
 	std::vector<int> int_vector;
 
 	CCC ccc = {111, 222, 333};
+
+        Empty1 e1;
+        Empty2 e2;
 
 	return 0; // Set break point at this line.
 }

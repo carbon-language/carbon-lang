@@ -729,15 +729,16 @@ namespace lldb {
     //----------------------------------------------------------------------
     FLAGS_ENUM(TypeOptions)
     {
-        eTypeOptionNone            = (0u),
-        eTypeOptionCascade         = (1u << 0),
-        eTypeOptionSkipPointers    = (1u << 1),
-        eTypeOptionSkipReferences  = (1u << 2),
-        eTypeOptionHideChildren    = (1u << 3),
-        eTypeOptionHideValue       = (1u << 4),
-        eTypeOptionShowOneLiner    = (1u << 5),
-        eTypeOptionHideNames       = (1u << 6),
-        eTypeOptionNonCacheable    = (1u << 7)
+        eTypeOptionNone                = (0u),
+        eTypeOptionCascade             = (1u << 0),
+        eTypeOptionSkipPointers        = (1u << 1),
+        eTypeOptionSkipReferences      = (1u << 2),
+        eTypeOptionHideChildren        = (1u << 3),
+        eTypeOptionHideValue           = (1u << 4),
+        eTypeOptionShowOneLiner        = (1u << 5),
+        eTypeOptionHideNames           = (1u << 6),
+        eTypeOptionNonCacheable        = (1u << 7),
+        eTypeOptionHideEmptyAggregates = (1u << 8)
     };
 
    //----------------------------------------------------------------------

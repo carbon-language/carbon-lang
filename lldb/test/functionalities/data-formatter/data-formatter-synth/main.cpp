@@ -46,6 +46,8 @@ struct BagOfBags
     q(20.11) {}
 };
 
+struct EmptyStruct {};
+
 struct Plenty
 {
     BagOfInts *some_values;
@@ -70,6 +72,7 @@ int main (int argc, const char * argv[])
     BagOfFloats float_bag(2.71);
     
     BagOfBags bag_bag;
+    EmptyStruct es;
     
     Plenty plenty_of_stuff(5,true,false);
     

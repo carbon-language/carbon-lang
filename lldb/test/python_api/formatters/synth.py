@@ -48,6 +48,36 @@ class CCCSynthProvider(object):
             return self._sbvalue.GetChildMemberWithName("c")
 
 
+def empty1_summary(sbvalue, internal_dict):
+    return "I am an empty Empty1"
+
+
+class Empty1SynthProvider(object):
+    def __init__(self, sbvalue, internal_dict):
+        self._sbvalue = sbvalue
+
+    def num_children(self):
+        return 0
+
+    def get_child_at_index(self, index):
+        return None
+
+
+def empty2_summary(sbvalue, internal_dict):
+    return "I am an empty Empty2"
+
+
+class Empty2SynthProvider(object):
+    def __init__(self, sbvalue, internal_dict):
+        self._sbvalue = sbvalue
+
+    def num_children(self):
+        return 0
+
+    def get_child_at_index(self, index):
+        return None
+
+
 def __lldb_init_module(debugger,dict):
      debugger.CreateCategory("JASSynth").AddTypeSynthetic(lldb.SBTypeNameSpecifier("JustAStruct"),
         lldb.SBTypeSynthetic.CreateWithClassName("synth.jasSynthProvider"))
@@ -60,5 +90,16 @@ def __lldb_init_module(debugger,dict):
          lldb.SBTypeNameSpecifier("CCC"),
          lldb.SBTypeSummary.CreateWithFunctionName("synth.ccc_summary",
                                                    lldb.eTypeOptionCascade))
-
-
+     cat.AddTypeSynthetic(
+         lldb.SBTypeNameSpecifier("Empty1"),
+         lldb.SBTypeSynthetic.CreateWithClassName("synth.Empty1SynthProvider"))
+     cat.AddTypeSummary(
+         lldb.SBTypeNameSpecifier("Empty1"),
+         lldb.SBTypeSummary.CreateWithFunctionName("synth.empty1_summary"))
+     cat.AddTypeSynthetic(
+         lldb.SBTypeNameSpecifier("Empty2"),
+         lldb.SBTypeSynthetic.CreateWithClassName("synth.Empty2SynthProvider"))
+     cat.AddTypeSummary(
+         lldb.SBTypeNameSpecifier("Empty2"),
+         lldb.SBTypeSummary.CreateWithFunctionName("synth.empty2_summary",
+                                                   lldb.eTypeOptionHideEmptyAggregates))
