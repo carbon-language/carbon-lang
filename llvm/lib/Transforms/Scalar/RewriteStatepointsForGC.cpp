@@ -720,46 +720,49 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   // analougous to pessimistic data flow and would likely lead to an
   // overall worse solution.
 
+  auto isExpectedBDVType = [](Value *BDV) {
+    return isa<PHINode>(BDV) || isa<SelectInst>(BDV);
+  };
+
+  // Once populated, will contain a mapping from each potentially non-base BDV
+  // to a lattice value (described above) which corresponds to that BDV.
   ConflictStateMapTy states;
-  states[def] = BDVState();
   // Recursively fill in all phis & selects reachable from the initial one
   // for which we don't already know a definite base value for
-  // TODO: This should be rewritten with a worklist
-  bool done = false;
-  while (!done) {
-    done = true;
-    // Since we're adding elements to 'states' as we run, we can't keep
-    // iterators into the set.
-    SmallVector<Value *, 16> Keys;
-    Keys.reserve(states.size());
-    for (auto Pair : states) {
-      Value *V = Pair.first;
-      Keys.push_back(V);
-    }
-    for (Value *v : Keys) {
-      assert(!isKnownBaseResult(v) && "why did it get added?");
-      if (PHINode *phi = dyn_cast<PHINode>(v)) {
-        assert(phi->getNumIncomingValues() > 0 &&
-               "zero input phis are illegal");
-        for (Value *InVal : phi->incoming_values()) {
-          Value *local = findBaseOrBDV(InVal, cache);
-          if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
-            states[local] = BDVState();
-            done = false;
-          }
-        }
-      } else if (SelectInst *sel = dyn_cast<SelectInst>(v)) {
-        Value *local = findBaseOrBDV(sel->getTrueValue(), cache);
-        if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
-          states[local] = BDVState();
-          done = false;
-        }
-        local = findBaseOrBDV(sel->getFalseValue(), cache);
-        if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
-          states[local] = BDVState();
-          done = false;
-        }
+  /* scope */ {
+    DenseSet<Value *> Visited;
+    SmallVector<Value*, 16> Worklist;
+    Worklist.push_back(def);
+    Visited.insert(def);
+    while (!Worklist.empty()) {
+      Value *Current = Worklist.pop_back_val();
+      assert(!isKnownBaseResult(Current) && "why did it get added?");
+
+      auto visitIncomingValue = [&](Value *InVal) {
+        Value *Base = findBaseOrBDV(InVal, cache);
+        if (isKnownBaseResult(Base))
+          // Known bases won't need new instructions introduced and can be
+          // ignored safely
+          return;
+        assert(isExpectedBDVType(Base) && "the only non-base values "
+               "we see should be base defining values");
+        if (Visited.insert(Base).second)
+          Worklist.push_back(Base);
+      };
+      if (PHINode *Phi = dyn_cast<PHINode>(Current)) {
+        for (Value *InVal : Phi->incoming_values())
+          visitIncomingValue(InVal);
+      } else {
+        SelectInst *Sel = cast<SelectInst>(Current);
+        visitIncomingValue(Sel->getTrueValue());
+        visitIncomingValue(Sel->getFalseValue());
       }
+    }
+    // The frontier of visited instructions are the ones we might need to
+    // duplicate, so fill in the starting state for the optimistic algorithm
+    // that follows.
+    for (Value *BDV : Visited) {
+      states[BDV] = BDVState();
     }
   }
 
