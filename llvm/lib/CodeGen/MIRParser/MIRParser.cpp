@@ -325,6 +325,10 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
                                     PFS))
       return true;
   }
+  // FIXME: This is a temporary workaround until the reserved registers can be
+  // serialized.
+  MF.getRegInfo().freezeReservedRegs(MF);
+  MF.verify();
   return false;
 }
 

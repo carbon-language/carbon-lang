@@ -1,0 +1,23 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+# This test ensures that the MIR parser runs the machine verifier after parsing.
+
+--- |
+
+  define i32 @inc(i32 %a) {
+  entry:
+    ret i32 %a
+  }
+
+...
+---
+name:            inc
+body:
+ - id:           0
+   name:         entry
+   liveins:      [ '%edi' ]
+   instructions:
+   # CHECK: *** Bad machine code: Too few operands ***
+   # CHECK: instruction: COPY2 operands expected, but 0 given.
+     - 'COPY'
+     - 'RETQ'
+...
