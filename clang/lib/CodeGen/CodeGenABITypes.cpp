@@ -26,17 +26,12 @@
 using namespace clang;
 using namespace CodeGen;
 
-CodeGenABITypes::CodeGenABITypes(ASTContext &C,
-                                 llvm::Module &M,
-                                 const llvm::DataLayout &TD,
+CodeGenABITypes::CodeGenABITypes(ASTContext &C, llvm::Module &M,
                                  CoverageSourceInfo *CoverageInfo)
-  : CGO(new CodeGenOptions),
-    HSO(new HeaderSearchOptions),
-    PPO(new PreprocessorOptions),
-    CGM(new CodeGen::CodeGenModule(C, *HSO, *PPO, *CGO,
-                                   M, TD, C.getDiagnostics(),
-                                   CoverageInfo)) {
-}
+    : CGO(new CodeGenOptions), HSO(new HeaderSearchOptions),
+      PPO(new PreprocessorOptions),
+      CGM(new CodeGen::CodeGenModule(C, *HSO, *PPO, *CGO, M, C.getDiagnostics(),
+                                     CoverageInfo)) {}
 
 CodeGenABITypes::~CodeGenABITypes()
 {

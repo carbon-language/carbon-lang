@@ -77,12 +77,11 @@ static CGCXXABI *createCXXABI(CodeGenModule &CGM) {
 CodeGenModule::CodeGenModule(ASTContext &C, const HeaderSearchOptions &HSO,
                              const PreprocessorOptions &PPO,
                              const CodeGenOptions &CGO, llvm::Module &M,
-                             const llvm::DataLayout &TD,
                              DiagnosticsEngine &diags,
                              CoverageSourceInfo *CoverageInfo)
     : Context(C), LangOpts(C.getLangOpts()), HeaderSearchOpts(HSO),
       PreprocessorOpts(PPO), CodeGenOpts(CGO), TheModule(M), Diags(diags),
-      TheDataLayout(TD), Target(C.getTargetInfo()), ABI(createCXXABI(*this)),
+      Target(C.getTargetInfo()), ABI(createCXXABI(*this)),
       VMContext(M.getContext()), TBAA(nullptr), TheTargetCodeGenInfo(nullptr),
       Types(*this), VTables(*this), ObjCRuntime(nullptr),
       OpenCLRuntime(nullptr), OpenMPRuntime(nullptr), CUDARuntime(nullptr),
@@ -1893,8 +1892,8 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
 }
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(llvm::Type *Ty) const {
-    return Context.toCharUnitsFromBits(
-      TheDataLayout.getTypeStoreSizeInBits(Ty));
+  return Context.toCharUnitsFromBits(
+      getDataLayout().getTypeStoreSizeInBits(Ty));
 }
 
 unsigned CodeGenModule::GetGlobalVarAddressSpace(const VarDecl *D,

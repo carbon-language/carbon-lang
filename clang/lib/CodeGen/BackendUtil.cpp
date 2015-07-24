@@ -608,7 +608,7 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
   if (UsesCodeGen && !TM)
     return;
   if (TM)
-    TheModule->setDataLayout(*TM->getDataLayout());
+    TheModule->setDataLayout(TM->createDataLayout());
   CreatePasses();
 
   switch (Action) {
@@ -670,8 +670,7 @@ void clang::EmitBackendOutput(DiagnosticsEngine &Diags,
   // If an optional clang TargetInfo description string was passed in, use it to
   // verify the LLVM TargetMachine's DataLayout.
   if (AsmHelper.TM && !TDesc.empty()) {
-    std::string DLDesc =
-        AsmHelper.TM->getDataLayout()->getStringRepresentation();
+    std::string DLDesc = M->getDataLayout().getStringRepresentation();
     if (DLDesc != TDesc) {
       unsigned DiagID = Diags.getCustomDiagID(
           DiagnosticsEngine::Error, "backend data layout '%0' does not match "

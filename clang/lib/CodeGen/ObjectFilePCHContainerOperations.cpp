@@ -75,9 +75,8 @@ public:
     VMContext.reset(new llvm::LLVMContext());
     M.reset(new llvm::Module(MainFileName, *VMContext));
     M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
-    Builder.reset(new CodeGen::CodeGenModule(*Ctx, HeaderSearchOpts,
-                                             PreprocessorOpts, CodeGenOpts, *M,
-                                             M->getDataLayout(), Diags));
+    Builder.reset(new CodeGen::CodeGenModule(
+        *Ctx, HeaderSearchOpts, PreprocessorOpts, CodeGenOpts, *M, Diags));
   }
 
   /// Emit a container holding the serialized AST.

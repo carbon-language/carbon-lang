@@ -31,7 +31,6 @@ using namespace CodeGen;
 
 CodeGenTypes::CodeGenTypes(CodeGenModule &cgm)
   : CGM(cgm), Context(cgm.getContext()), TheModule(cgm.getModule()),
-    TheDataLayout(cgm.getDataLayout()),
     Target(cgm.getTarget()), TheCXXABI(cgm.getCXXABI()),
     TheABIInfo(cgm.getTargetCodeGenInfo().getABIInfo()) {
   SkippedLayout = false;

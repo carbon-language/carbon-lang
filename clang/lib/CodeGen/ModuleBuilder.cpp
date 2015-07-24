@@ -30,7 +30,6 @@ using namespace clang;
 namespace {
   class CodeGeneratorImpl : public CodeGenerator {
     DiagnosticsEngine &Diags;
-    std::unique_ptr<const llvm::DataLayout> TD;
     ASTContext *Ctx;
     const HeaderSearchOptions &HeaderSearchOpts; // Only used for debug info.
     const PreprocessorOptions &PreprocessorOpts; // Only used for debug info.
@@ -100,13 +99,9 @@ namespace {
 
       M->setTargetTriple(Ctx->getTargetInfo().getTriple().getTriple());
       M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
-      TD.reset(
-          new llvm::DataLayout(Ctx->getTargetInfo().getTargetDescription()));
-      Builder.reset(new CodeGen::CodeGenModule(Context,
-                                               HeaderSearchOpts,
-                                               PreprocessorOpts,
-                                               CodeGenOpts, *M, *TD,
-                                               Diags, CoverageInfo));
+      Builder.reset(new CodeGen::CodeGenModule(Context, HeaderSearchOpts,
+                                               PreprocessorOpts, CodeGenOpts,
+                                               *M, Diags, CoverageInfo));
 
       for (size_t i = 0, e = CodeGenOpts.DependentLibraries.size(); i < e; ++i)
         HandleDependentLibrary(CodeGenOpts.DependentLibraries[i]);

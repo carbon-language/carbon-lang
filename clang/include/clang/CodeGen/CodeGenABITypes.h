@@ -50,7 +50,7 @@ class CodeGenModule;
 class CodeGenABITypes
 {
 public:
-  CodeGenABITypes(ASTContext &C, llvm::Module &M, const llvm::DataLayout &TD,
+  CodeGenABITypes(ASTContext &C, llvm::Module &M,
                   CoverageSourceInfo *CoverageInfo = nullptr);
   ~CodeGenABITypes();
 
