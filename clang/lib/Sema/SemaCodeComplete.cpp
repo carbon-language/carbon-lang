@@ -7079,11 +7079,13 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
     
     // If the result type was not already provided, add it to the
     // pattern as (type).
-    if (ReturnType.isNull())
-      AddObjCPassingTypeChunk(Method->getSendResultType()
-                                  .stripObjCKindOfType(Context),
+    if (ReturnType.isNull()) {
+      QualType ResTy = Method->getSendResultType().stripObjCKindOfType(Context);
+      AttributedType::stripOuterNullability(ResTy);
+      AddObjCPassingTypeChunk(ResTy,
                               Method->getObjCDeclQualifier(), Context, Policy,
                               Builder);
+    }
 
     Selector Sel = Method->getSelector();
 
@@ -7114,6 +7116,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
         ParamType = (*P)->getOriginalType();
       ParamType = ParamType.substObjCTypeArgs(Context, {},
                                             ObjCSubstitutionContext::Parameter);
+      AttributedType::stripOuterNullability(ParamType);
       AddObjCPassingTypeChunk(ParamType,
                               (*P)->getObjCDeclQualifier(),
                               Context, Policy,
