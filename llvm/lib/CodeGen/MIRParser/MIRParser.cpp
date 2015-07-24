@@ -107,10 +107,15 @@ public:
                               const yaml::MachineFunction &YamlMF,
                               PerFunctionMIParsingState &PFS);
 
-  bool initializeFrameInfo(const Function &F, MachineFrameInfo &MFI,
+  bool initializeFrameInfo(MachineFunction &MF, MachineFrameInfo &MFI,
                            const yaml::MachineFunction &YamlMF,
-                           DenseMap<unsigned, int> &StackObjectSlots,
-                           DenseMap<unsigned, int> &FixedStackObjectSlots);
+                           PerFunctionMIParsingState &PFS);
+
+  bool parseCalleeSavedRegister(MachineFunction &MF,
+                                PerFunctionMIParsingState &PFS,
+                                std::vector<CalleeSavedInfo> &CSIInfo,
+                                const yaml::StringValue &RegisterSource,
+                                int FrameIdx);
 
   bool initializeConstantPool(MachineConstantPool &ConstantPool,
                               const yaml::MachineFunction &YamlMF,
@@ -273,8 +278,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   PerFunctionMIParsingState PFS;
   if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF, PFS))
     return true;
-  if (initializeFrameInfo(*MF.getFunction(), *MF.getFrameInfo(), YamlMF,
-                          PFS.StackObjectSlots, PFS.FixedStackObjectSlots))
+  if (initializeFrameInfo(MF, *MF.getFrameInfo(), YamlMF, PFS))
     return true;
   if (!YamlMF.Constants.empty()) {
     auto *ConstantPool = MF.getConstantPool();
@@ -401,11 +405,11 @@ bool MIRParserImpl::initializeRegisterInfo(MachineFunction &MF,
   return false;
 }
 
-bool MIRParserImpl::initializeFrameInfo(
-    const Function &F, MachineFrameInfo &MFI,
-    const yaml::MachineFunction &YamlMF,
-    DenseMap<unsigned, int> &StackObjectSlots,
-    DenseMap<unsigned, int> &FixedStackObjectSlots) {
+bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
+                                        MachineFrameInfo &MFI,
+                                        const yaml::MachineFunction &YamlMF,
+                                        PerFunctionMIParsingState &PFS) {
+  const Function &F = *MF.getFunction();
   const yaml::MachineFrameInfo &YamlMFI = YamlMF.FrameInfo;
   MFI.setFrameAddressIsTaken(YamlMFI.IsFrameAddressTaken);
   MFI.setReturnAddressIsTaken(YamlMFI.IsReturnAddressTaken);
@@ -422,6 +426,7 @@ bool MIRParserImpl::initializeFrameInfo(
   MFI.setHasVAStart(YamlMFI.HasVAStart);
   MFI.setHasMustTailInVarArgFunc(YamlMFI.HasMustTailInVarArgFunc);
 
+  std::vector<CalleeSavedInfo> CSIInfo;
   // Initialize the fixed frame objects.
   for (const auto &Object : YamlMF.FixedStackObjects) {
     int ObjectIdx;
@@ -432,7 +437,10 @@ bool MIRParserImpl::initializeFrameInfo(
       ObjectIdx = MFI.CreateFixedSpillStackObject(Object.Size, Object.Offset);
     MFI.setObjectAlignment(ObjectIdx, Object.Alignment);
     // TODO: Report an error when objects are redefined.
-    FixedStackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
+    PFS.FixedStackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
+    if (parseCalleeSavedRegister(MF, PFS, CSIInfo, Object.CalleeSavedRegister,
+                                 ObjectIdx))
+      return true;
   }
 
   // Initialize the ordinary frame objects.
@@ -457,8 +465,29 @@ bool MIRParserImpl::initializeFrameInfo(
           Object.Type == yaml::MachineStackObject::SpillSlot, Alloca);
     MFI.setObjectOffset(ObjectIdx, Object.Offset);
     // TODO: Report an error when objects are redefined.
-    StackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
+    PFS.StackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
+    if (parseCalleeSavedRegister(MF, PFS, CSIInfo, Object.CalleeSavedRegister,
+                                 ObjectIdx))
+      return true;
   }
+  MFI.setCalleeSavedInfo(CSIInfo);
+  if (!CSIInfo.empty())
+    MFI.setCalleeSavedInfoValid(true);
+  return false;
+}
+
+bool MIRParserImpl::parseCalleeSavedRegister(
+    MachineFunction &MF, PerFunctionMIParsingState &PFS,
+    std::vector<CalleeSavedInfo> &CSIInfo,
+    const yaml::StringValue &RegisterSource, int FrameIdx) {
+  if (RegisterSource.Value.empty())
+    return false;
+  unsigned Reg = 0;
+  SMDiagnostic Error;
+  if (parseNamedRegisterReference(Reg, SM, MF, RegisterSource.Value, PFS,
+                                  IRSlots, Error))
+    return error(Error, RegisterSource.SourceRange);
+  CSIInfo.push_back(CalleeSavedInfo(Reg, FrameIdx));
   return false;
 }
 

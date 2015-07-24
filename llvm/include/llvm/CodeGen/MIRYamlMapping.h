@@ -159,6 +159,7 @@ struct MachineStackObject {
   int64_t Offset = 0;
   uint64_t Size = 0;
   unsigned Alignment = 0;
+  StringValue CalleeSavedRegister;
 };
 
 template <> struct ScalarEnumerationTraits<MachineStackObject::ObjectType> {
@@ -181,6 +182,8 @@ template <> struct MappingTraits<MachineStackObject> {
     if (Object.Type != MachineStackObject::VariableSized)
       YamlIO.mapRequired("size", Object.Size);
     YamlIO.mapOptional("alignment", Object.Alignment);
+    YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
+                       StringValue()); // Don't print it out when it's empty.
   }
 
   static const bool flow = true;
@@ -197,6 +200,7 @@ struct FixedMachineStackObject {
   unsigned Alignment = 0;
   bool IsImmutable = false;
   bool IsAliased = false;
+  StringValue CalleeSavedRegister;
 };
 
 template <>
@@ -221,6 +225,8 @@ template <> struct MappingTraits<FixedMachineStackObject> {
       YamlIO.mapOptional("isImmutable", Object.IsImmutable);
       YamlIO.mapOptional("isAliased", Object.IsAliased);
     }
+    YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
+                       StringValue()); // Don't print it out when it's empty.
   }
 
   static const bool flow = true;
@@ -296,7 +302,6 @@ struct MachineFrameInfo {
   bool HasCalls = false;
   // TODO: Serialize StackProtectorIdx and FunctionContextIdx
   unsigned MaxCallFrameSize = 0;
-  // TODO: Serialize callee saved info.
   // TODO: Serialize local frame objects.
   bool HasOpaqueSPAdjustment = false;
   bool HasVAStart = false;
