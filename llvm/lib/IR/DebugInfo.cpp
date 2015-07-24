@@ -56,21 +56,6 @@ DISubprogram *llvm::getDISubprogram(const Function *F) {
   return nullptr;
 }
 
-DICompositeTypeBase *llvm::getDICompositeType(DIType *T) {
-  if (auto *C = dyn_cast_or_null<DICompositeTypeBase>(T))
-    return C;
-
-  if (auto *D = dyn_cast_or_null<DIDerivedType>(T)) {
-    // This function is currently used by dragonegg and dragonegg does
-    // not generate identifier for types, so using an empty map to resolve
-    // DerivedFrom should be fine.
-    DITypeIdentifierMap EmptyMap;
-    return getDICompositeType(D->getBaseType().resolve(EmptyMap));
-  }
-
-  return nullptr;
-}
-
 DITypeIdentifierMap
 llvm::generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes) {
   DITypeIdentifierMap Map;

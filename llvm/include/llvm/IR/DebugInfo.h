@@ -44,9 +44,6 @@ DISubprogram *getDISubprogram(const MDNode *Scope);
 /// \returns a valid subprogram, if found. Otherwise, return \c nullptr.
 DISubprogram *getDISubprogram(const Function *F);
 
-/// \brief Find underlying composite type.
-DICompositeTypeBase *getDICompositeType(DIType *T);
-
 /// \brief Generate map by visiting all retained types.
 DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);
 
