@@ -18,6 +18,14 @@
 namespace llvm {
 namespace dsymutil {
 
+void BinaryHolder::changeBackingMemoryBuffer(
+    std::unique_ptr<MemoryBuffer> &&Buf) {
+  CurrentArchive.reset();
+  CurrentObjectFile.reset();
+
+  CurrentMemoryBuffer = std::move(Buf);
+}
+
 ErrorOr<MemoryBufferRef>
 BinaryHolder::GetMemoryBufferForFile(StringRef Filename,
                                      sys::TimeValue Timestamp) {
@@ -44,10 +52,9 @@ BinaryHolder::GetMemoryBufferForFile(StringRef Filename,
   if (auto Err = ErrOrFile.getError())
     return Err;
 
+  changeBackingMemoryBuffer(std::move(*ErrOrFile));
   if (Verbose)
     outs() << "\tloaded file.\n";
-  CurrentArchive.reset();
-  CurrentMemoryBuffer = std::move(ErrOrFile.get());
   return CurrentMemoryBuffer->getMemBufferRef();
 }
 
@@ -93,12 +100,14 @@ BinaryHolder::MapArchiveAndGetMemberBuffer(StringRef Filename,
 
   if (Verbose)
     outs() << "\topened new archive '" << ArchiveFilename << "'\n";
-  auto ErrOrArchive = object::Archive::create((*ErrOrBuff)->getMemBufferRef());
+
+  changeBackingMemoryBuffer(std::move(*ErrOrBuff));
+  auto ErrOrArchive =
+      object::Archive::create(CurrentMemoryBuffer->getMemBufferRef());
   if (auto Err = ErrOrArchive.getError())
     return Err;
 
   CurrentArchive = std::move(*ErrOrArchive);
-  CurrentMemoryBuffer = std::move(*ErrOrBuff);
 
   return GetArchiveMemberBuffer(Filename, Timestamp);
 }

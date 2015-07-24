@@ -67,6 +67,8 @@ class BinaryHolder {
   ErrorOr<MemoryBufferRef> GetMemoryBufferForFile(StringRef Filename,
                                                   sys::TimeValue Timestamp);
 
+  void changeBackingMemoryBuffer(std::unique_ptr<MemoryBuffer> &&MemBuf);
+
 public:
   BinaryHolder(bool Verbose) : Verbose(Verbose) {}
 
