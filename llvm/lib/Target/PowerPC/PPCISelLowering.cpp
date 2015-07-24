@@ -940,9 +940,9 @@ static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign,
     if (EltAlign > MaxAlign)
       MaxAlign = EltAlign;
   } else if (StructType *STy = dyn_cast<StructType>(Ty)) {
-    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+    for (auto *EltTy : STy->elements()) {
       unsigned EltAlign = 0;
-      getMaxByValAlign(STy->getElementType(i), EltAlign, MaxMaxAlign);
+      getMaxByValAlign(EltTy, EltAlign, MaxMaxAlign);
       if (EltAlign > MaxAlign)
         MaxAlign = EltAlign;
       if (MaxAlign == MaxMaxAlign)

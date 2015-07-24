@@ -281,8 +281,8 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
         
         // If all the elements are single-value types, we can promote it.
         bool AllSimple = true;
-        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-          if (!STy->getElementType(i)->isSingleValueType()) {
+        for (const auto *EltTy : STy->elements()) {
+          if (!EltTy->isSingleValueType()) {
             AllSimple = false;
             break;
           }
@@ -303,8 +303,8 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     if (isSelfRecursive) {
       if (StructType *STy = dyn_cast<StructType>(AgTy)) {
         bool RecursiveType = false;
-        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-          if (STy->getElementType(i) == PtrArg->getType()) {
+        for (const auto *EltTy : STy->elements()) {
+          if (EltTy == PtrArg->getType()) {
             RecursiveType = true;
             break;
           }
