@@ -229,6 +229,12 @@ static const uint8_t ImportThunkX86[] = {
     0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // JMP *0x0
 };
 
+static const uint8_t ImportThunkARM[] = {
+    0x40, 0xf2, 0x00, 0x0c, // mov.w ip, #0
+    0xc0, 0xf2, 0x00, 0x0c, // mov.t ip, #0
+    0xdc, 0xf8, 0x00, 0xf0, // ldr.w pc, [ip]
+};
+
 // Windows-specific.
 // A chunk for DLL import jump table entry. In a final output, it's
 // contents will be a JMP instruction to some __imp_ symbol.
@@ -246,6 +252,17 @@ class ImportThunkChunkX86 : public Chunk {
 public:
   explicit ImportThunkChunkX86(Defined *S) : ImpSymbol(S) {}
   size_t getSize() const override { return sizeof(ImportThunkX86); }
+  void getBaserels(std::vector<Baserel> *Res) override;
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  Defined *ImpSymbol;
+};
+
+class ImportThunkChunkARM : public Chunk {
+public:
+  explicit ImportThunkChunkARM(Defined *S) : ImpSymbol(S) {}
+  size_t getSize() const override { return sizeof(ImportThunkARM); }
   void getBaserels(std::vector<Baserel> *Res) override;
   void writeTo(uint8_t *Buf) override;
 

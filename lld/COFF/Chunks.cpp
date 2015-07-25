@@ -313,6 +313,16 @@ void ImportThunkChunkX86::writeTo(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, ImpSymbol->getRVA() + Config->ImageBase);
 }
 
+void ImportThunkChunkARM::getBaserels(std::vector<Baserel> *Res) {
+  Res->emplace_back(getRVA(), IMAGE_REL_BASED_ARM_MOV32T);
+}
+
+void ImportThunkChunkARM::writeTo(uint8_t *Buf) {
+  memcpy(Buf + FileOff, ImportThunkARM, sizeof(ImportThunkARM));
+  // Fix mov.w and mov.t operands.
+  applyMOV32T(Buf + FileOff, ImpSymbol->getRVA() + Config->ImageBase);
+}
+
 void LocalImportChunk::getBaserels(std::vector<Baserel> *Res) {
   Res->emplace_back(getRVA());
 }
