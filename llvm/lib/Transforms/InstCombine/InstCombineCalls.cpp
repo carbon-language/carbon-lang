@@ -203,7 +203,7 @@ static Value *SimplifyX86insertps(const IntrinsicInst &II,
   if (auto *CInt = dyn_cast<ConstantInt>(II.getArgOperand(2))) {
     VectorType *VecTy = cast<VectorType>(II.getType());
     assert(VecTy->getNumElements() == 4 && "insertps with wrong vector type");
-    
+
     // The immediate permute control byte looks like this:
     //    [3:0] - zero mask for each 32-bit lane
     //    [5:4] - select one 32-bit destination lane
@@ -248,7 +248,7 @@ static Value *SimplifyX86insertps(const IntrinsicInst &II,
       // Replace the selected destination lane with the selected source lane.
       ShuffleMask[DestLane] = SourceLane + 4;
     }
-  
+
     return Builder.CreateShuffleVector(II.getArgOperand(0), V1, ShuffleMask);
   }
   return nullptr;
@@ -289,7 +289,7 @@ static Value *SimplifyX86vperm2(const IntrinsicInst &II,
     // The high bit of the selection field chooses the 1st or 2nd operand.
     bool LowInputSelect = Imm & 0x02;
     bool HighInputSelect = Imm & 0x20;
-    
+
     // The low bit of the selection field chooses the low or high half
     // of the selected operand.
     bool LowHalfSelect = Imm & 0x01;
@@ -298,11 +298,11 @@ static Value *SimplifyX86vperm2(const IntrinsicInst &II,
     // Determine which operand(s) are actually in use for this instruction.
     Value *V0 = LowInputSelect ? II.getArgOperand(1) : II.getArgOperand(0);
     Value *V1 = HighInputSelect ? II.getArgOperand(1) : II.getArgOperand(0);
-    
+
     // If needed, replace operands based on zero mask.
     V0 = LowHalfZero ? ZeroVector : V0;
     V1 = HighHalfZero ? ZeroVector : V1;
-    
+
     // Permute low half of result.
     unsigned StartIndex = LowHalfSelect ? HalfSize : 0;
     for (unsigned i = 0; i < HalfSize; ++i)
@@ -801,26 +801,27 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (Value *V = SimplifyX86insertps(*II, *Builder))
       return ReplaceInstUsesWith(*II, V);
     break;
-    
+
   case Intrinsic::x86_sse4a_insertqi: {
     // insertqi x, y, 64, 0 can just copy y's lower bits and leave the top
     // ones undef
     // TODO: eventually we should lower this intrinsic to IR
-    if (auto CIWidth = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
-      if (auto CIStart = dyn_cast<ConstantInt>(II->getArgOperand(3))) {
-        unsigned Index = CIStart->getZExtValue();
+    if (auto CILength = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
+      if (auto CIIndex = dyn_cast<ConstantInt>(II->getArgOperand(3))) {
+        unsigned Index = CIIndex->getZExtValue();
         // From AMD documentation: "a value of zero in the field length is
         // defined as length of 64".
-        unsigned Length = CIWidth->equalsInt(0) ? 64 : CIWidth->getZExtValue();
+        unsigned Length = CILength->equalsInt(0) ? 64 : CILength->getZExtValue();
 
         // From AMD documentation: "If the sum of the bit index + length field
         // is greater than 64, the results are undefined".
+        unsigned End = Index + Length;
 
         // Note that both field index and field length are 8-bit quantities.
         // Since variables 'Index' and 'Length' are unsigned values
         // obtained from zero-extending field index and field length
         // respectively, their sum should never wrap around.
-        if ((Index + Length) > 64)
+        if (End > 64)
           return ReplaceInstUsesWith(CI, UndefValue::get(II->getType()));
 
         if (Length == 64 && Index == 0) {
@@ -832,7 +833,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
               Builder->CreateShuffleVector(
                   Vec, Undef, ConstantDataVector::get(
                                   II->getContext(), makeArrayRef(Mask))));
-
         } else if (auto Source =
                        dyn_cast<IntrinsicInst>(II->getArgOperand(0))) {
           if (Source->hasOneUse() &&
@@ -840,37 +840,34 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
             // If the source of the insert has only one use and it's another
             // insert (and they're both inserting from the same vector), try to
             // bundle both together.
-            auto CISourceWidth =
+            auto CISourceLength =
                 dyn_cast<ConstantInt>(Source->getArgOperand(2));
-            auto CISourceStart =
+            auto CISourceIndex =
                 dyn_cast<ConstantInt>(Source->getArgOperand(3));
-            if (CISourceStart && CISourceWidth) {
-              unsigned Start = CIStart->getZExtValue();
-              unsigned Width = CIWidth->getZExtValue();
-              unsigned End = Start + Width;
-              unsigned SourceStart = CISourceStart->getZExtValue();
-              unsigned SourceWidth = CISourceWidth->getZExtValue();
-              unsigned SourceEnd = SourceStart + SourceWidth;
-              unsigned NewStart, NewWidth;
+            if (CISourceIndex && CISourceLength) {
+              unsigned SourceIndex = CISourceIndex->getZExtValue();
+              unsigned SourceLength = CISourceLength->getZExtValue();
+              unsigned SourceEnd = SourceIndex + SourceLength;
+              unsigned NewIndex, NewLength;
               bool ShouldReplace = false;
-              if (Start <= SourceStart && SourceStart <= End) {
-                NewStart = Start;
-                NewWidth = std::max(End, SourceEnd) - NewStart;
+              if (Index <= SourceIndex && SourceIndex <= End) {
+                NewIndex = Index;
+                NewLength = std::max(End, SourceEnd) - NewIndex;
                 ShouldReplace = true;
-              } else if (SourceStart <= Start && Start <= SourceEnd) {
-                NewStart = SourceStart;
-                NewWidth = std::max(SourceEnd, End) - NewStart;
+              } else if (SourceIndex <= Index && Index <= SourceEnd) {
+                NewIndex = SourceIndex;
+                NewLength = std::max(SourceEnd, End) - NewIndex;
                 ShouldReplace = true;
               }
 
               if (ShouldReplace) {
-                Constant *ConstantWidth = ConstantInt::get(
-                    II->getArgOperand(2)->getType(), NewWidth, false);
-                Constant *ConstantStart = ConstantInt::get(
-                    II->getArgOperand(3)->getType(), NewStart, false);
+                Constant *ConstantLength = ConstantInt::get(
+                    II->getArgOperand(2)->getType(), NewLength, false);
+                Constant *ConstantIndex = ConstantInt::get(
+                    II->getArgOperand(3)->getType(), NewIndex, false);
                 Value *Args[4] = { Source->getArgOperand(0),
-                                   II->getArgOperand(1), ConstantWidth,
-                                   ConstantStart };
+                                   II->getArgOperand(1), ConstantLength,
+                                   ConstantIndex };
                 Module *M = CI.getParent()->getParent()->getParent();
                 Value *F =
                     Intrinsic::getDeclaration(M, Intrinsic::x86_sse4a_insertqi);
