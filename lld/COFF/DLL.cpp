@@ -391,12 +391,7 @@ void DelayLoadContents::create(Defined *H) {
 
     size_t Base = Addresses.size();
     for (DefinedImportData *S : Syms) {
-      Chunk *T;
-      if (Config->is64()) {
-        T = new ThunkChunkX64(S, Dir.get(), Helper);
-      } else {
-        T = new ThunkChunkX86(S, Dir.get(), Helper);
-      }
+      Chunk *T = newThunkChunk(S, Dir.get());
       auto A = make_unique<DelayAddressChunk>(T);
       Addresses.push_back(std::move(A));
       Thunks.push_back(std::unique_ptr<Chunk>(T));
@@ -428,6 +423,17 @@ void DelayLoadContents::create(Defined *H) {
   // Add null terminator.
   Dirs.push_back(
       make_unique<NullChunk>(sizeof(delay_import_directory_table_entry)));
+}
+
+Chunk *DelayLoadContents::newThunkChunk(DefinedImportData *S, Chunk *Dir) {
+  switch (Config->MachineType) {
+  case AMD64:
+    return new ThunkChunkX64(S, Dir, Helper);
+  case I386:
+    return new ThunkChunkX86(S, Dir, Helper);
+  default:
+    llvm_unreachable("unsupported machine type");
+  }
 }
 
 // Export table

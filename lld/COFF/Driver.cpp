@@ -108,7 +108,7 @@ LinkerDriver::parseDirectives(StringRef S) {
       ErrorOr<Export> E = parseExport(Arg->getValue());
       if (auto EC = E.getError())
         return EC;
-      if (!Config->is64() && E->ExtName.startswith("_"))
+      if (Config->MachineType == I386 && E->ExtName.startswith("_"))
         E->ExtName = E->ExtName.substr(1);
       Config->Exports.push_back(E.get());
       break;
@@ -554,8 +554,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (auto *Arg = Args.getLastArg(OPT_entry)) {
     Config->Entry = addUndefined(mangle(Arg->getValue()));
   } else if (Args.hasArg(OPT_dll) && !Config->NoEntry) {
-    StringRef S =
-        Config->is64() ? "_DllMainCRTStartup" : "__DllMainCRTStartup@12";
+    StringRef S = (Config->MachineType == I386) ? "__DllMainCRTStartup@12"
+                                                : "_DllMainCRTStartup";
     Config->Entry = addUndefined(S);
   } else if (!Config->NoEntry) {
     // Windows specific -- If entry point name is not given, we need to
@@ -575,7 +575,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     ErrorOr<Export> E = parseExport(Arg->getValue());
     if (E.getError())
       return false;
-    if (!Config->is64() && !E->Name.startswith("_@?"))
+    if (Config->MachineType == I386 && !E->Name.startswith("_@?"))
       E->Name = mangle(E->Name);
     Config->Exports.push_back(E.get());
   }
@@ -595,10 +595,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Handle /delayload
   for (auto *Arg : Args.filtered(OPT_delayload)) {
     Config->DelayLoads.insert(StringRef(Arg->getValue()).lower());
-    if (Config->is64()) {
-      Config->DelayLoadHelper = addUndefined("__delayLoadHelper2");
-    } else {
+    if (Config->MachineType == I386) {
       Config->DelayLoadHelper = addUndefined("___delayLoadHelper2@8");
+    } else {
+      Config->DelayLoadHelper = addUndefined("__delayLoadHelper2");
     }
   }
 

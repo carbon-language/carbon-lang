@@ -21,12 +21,18 @@ namespace lld {
 namespace coff {
 
 using llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
+using llvm::COFF::IMAGE_FILE_MACHINE_I386;
 using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
 class DefinedAbsolute;
 class DefinedRelative;
 class Undefined;
+
+// Short aliases.
+static const auto AMD64 = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
+static const auto ARM = llvm::COFF::IMAGE_FILE_MACHINE_ARM;
+static const auto I386 = llvm::COFF::IMAGE_FILE_MACHINE_I386;
 
 // Represents an /export option.
 struct Export {

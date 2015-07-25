@@ -428,7 +428,7 @@ std::error_code fixupExports() {
     if (!E.ExtName.empty())
       continue;
     StringRef S = E.Sym->repl()->getName();
-    if (!Config->is64() && S.startswith("_"))
+    if (Config->MachineType == I386 && S.startswith("_"))
       S = S.substr(1);
     E.ExtName = S;
   }

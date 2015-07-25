@@ -57,6 +57,8 @@ public:
   uint64_t getDirSize();
 
 private:
+  Chunk *newThunkChunk(DefinedImportData *S, Chunk *Dir);
+
   Defined *Helper;
   std::vector<DefinedImportData *> Imports;
   std::vector<std::unique_ptr<Chunk>> Dirs;

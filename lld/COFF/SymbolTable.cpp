@@ -287,7 +287,7 @@ StringRef SymbolTable::findMangle(StringRef Name) {
   if (Symbol *Sym = find(Name))
     if (!isa<Undefined>(Sym->Body))
       return Name;
-  if (Config->is64())
+  if (Config->MachineType != I386)
     return findByPrefix(("?" + Name + "@@Y").str());
   if (!Name.startswith("_"))
     return "";

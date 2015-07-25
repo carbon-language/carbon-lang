@@ -252,17 +252,23 @@ ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
 }
 
 void ImportThunkChunk::getBaserels(std::vector<uint32_t> *Res) {
-  if (!Config->is64())
+  if (Config->MachineType == I386)
     Res->push_back(getRVA() + 2);
 }
 
 void ImportThunkChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
   // The first two bytes is a JMP instruction. Fill its operand.
-  uint32_t Operand = Config->is64()
-      ? ImpSymbol->getRVA() - RVA - getSize()
-      : ImpSymbol->getRVA() + Config->ImageBase;
-  write32le(Buf + FileOff + 2, Operand);
+  switch (Config->MachineType) {
+  case AMD64:
+    write32le(Buf + FileOff + 2, ImpSymbol->getRVA() - RVA - getSize());
+    break;
+  case I386:
+    write32le(Buf + FileOff + 2, ImpSymbol->getRVA() + Config->ImageBase);
+    break;
+  default:
+    llvm_unreachable("unsupported machine type");
+  }
 }
 
 void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res) {
@@ -299,10 +305,17 @@ BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
   write32le(P, Page);
   write32le(P + 4, Data.size());
   P += 8;
-  uint16_t RelTy =
-      Config->is64() ? IMAGE_REL_BASED_DIR64 : IMAGE_REL_BASED_HIGHLOW;
   for (uint32_t *I = Begin; I != End; ++I) {
-    write16le(P, (RelTy << 12) | (*I - Page));
+    switch (Config->MachineType) {
+    case AMD64:
+      write16le(P, (IMAGE_REL_BASED_DIR64 << 12) | (*I - Page));
+      break;
+    case I386:
+      write16le(P, (IMAGE_REL_BASED_HIGHLOW << 12) | (*I - Page));
+      break;
+    default:
+      llvm_unreachable("unsupported machine type");
+    }
     P += 2;
   }
 }
