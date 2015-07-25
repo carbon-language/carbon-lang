@@ -92,12 +92,21 @@ static void applyMOV32T(uint8_t *Off, uint32_t V) {
   or16(Off + 6, ((X & 0x700) << 4) | (X & 0xff));
 }
 
+static void applyBranch24T(uint8_t *Off, int32_t V) {
+  uint32_t S = V < 0 ? 1 : 0;
+  uint32_t J1 = ((~V >> 23) & 1) ^ S;
+  uint32_t J2 = ((~V >> 22) & 1) ^ S;
+  or16(Off, ((V >> 12) & 0x3ff) | (S << 10));
+  or16(Off + 2, ((V >> 1) & 0x7ff) | (J2 << 11) | (J1 << 13));
+}
+
 void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, uint64_t S,
                                uint64_t P) {
   switch (Type) {
-  case IMAGE_REL_ARM_ADDR32:   add32(Off, S + Config->ImageBase); break;
-  case IMAGE_REL_ARM_ADDR32NB: add32(Off, S); break;
-  case IMAGE_REL_ARM_MOV32T:   applyMOV32T(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_ARM_ADDR32:    add32(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_ARM_ADDR32NB:  add32(Off, S); break;
+  case IMAGE_REL_ARM_MOV32T:    applyMOV32T(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_ARM_BRANCH24T: applyBranch24T(Off, S - P - 4); break;
   default:
     llvm::report_fatal_error("Unsupported relocation type");
   }
