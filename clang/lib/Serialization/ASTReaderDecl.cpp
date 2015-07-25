@@ -3426,10 +3426,6 @@ namespace {
       assert(std::is_sorted(SearchDecls.begin(), SearchDecls.end()));
     }
 
-    static bool visit(ModuleFile &M, void *UserData) {
-      return static_cast<RedeclChainVisitor*>(UserData)->visit(M);
-    }
-    
     /// Get the chain, in order from newest to oldest.
     ArrayRef<Decl *> getChain() const {
       return Chain;
@@ -3457,7 +3453,8 @@ namespace {
       return Result->Offset;
     }
 
-    bool visit(ModuleFile &M) {
+  public:
+    bool operator()(ModuleFile &M) {
       llvm::ArrayRef<DeclID> ToSearch = SearchDecls;
       GlobalDeclID LocalSearchDeclID = 0;
 
@@ -3542,7 +3539,7 @@ void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
 
   // Build up the list of redeclarations.
   RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized, CanonID);
-  ModuleMgr.visit(&RedeclChainVisitor::visit, &Visitor);
+  ModuleMgr.visit(Visitor);
 
   // Retrieve the chains.
   ArrayRef<Decl *> Chain = Visitor.getChain();
@@ -3635,11 +3632,7 @@ namespace {
       }
     }
 
-    static bool visit(ModuleFile &M, void *UserData) {
-      return static_cast<ObjCCategoriesVisitor *>(UserData)->visit(M);
-    }
-
-    bool visit(ModuleFile &M) {
+    bool operator()(ModuleFile &M) {
       // If we've loaded all of the category information we care about from
       // this module file, we're done.
       if (M.Generation <= PreviousGeneration)
@@ -3684,7 +3677,7 @@ void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
                                    unsigned PreviousGeneration) {
   ObjCCategoriesVisitor Visitor(*this, ID, D, CategoriesDeserialized,
                                 PreviousGeneration);
-  ModuleMgr.visit(ObjCCategoriesVisitor::visit, &Visitor);
+  ModuleMgr.visit(Visitor);
 }
 
 template<typename DeclT, typename Fn>

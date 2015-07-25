@@ -269,19 +269,15 @@ public:
   /// operations that can find data in any of the loaded modules.
   ///
   /// \param Visitor A visitor function that will be invoked with each
-  /// module and the given user data pointer. The return value must be
-  /// convertible to bool; when false, the visitation continues to
-  /// modules that the current module depends on. When true, the
-  /// visitation skips any modules that the current module depends on.
-  ///
-  /// \param UserData User data associated with the visitor object, which
-  /// will be passed along to the visitor.
+  /// module. The return value must be convertible to bool; when false, the
+  /// visitation continues to modules that the current module depends on. When
+  /// true, the visitation skips any modules that the current module depends on.
   ///
   /// \param ModuleFilesHit If non-NULL, contains the set of module files
   /// that we know we need to visit because the global module index told us to.
   /// Any module that is known to both the global module index and the module
   /// manager that is *not* in this set can be skipped.
-  void visit(bool (*Visitor)(ModuleFile &M, void *UserData), void *UserData,
+  void visit(llvm::function_ref<bool(ModuleFile &M)> Visitor,
              llvm::SmallPtrSetImpl<ModuleFile *> *ModuleFilesHit = nullptr);
 
   /// \brief Control DFS behavior during preorder visitation.

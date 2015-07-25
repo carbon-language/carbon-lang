@@ -313,10 +313,8 @@ ModuleManager::~ModuleManager() {
   delete FirstVisitState;
 }
 
-void
-ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
-                     void *UserData,
-                     llvm::SmallPtrSetImpl<ModuleFile *> *ModuleFilesHit) {
+void ModuleManager::visit(llvm::function_ref<bool(ModuleFile &M)> Visitor,
+                          llvm::SmallPtrSetImpl<ModuleFile *> *ModuleFilesHit) {
   // If the visitation order vector is the wrong size, recompute the order.
   if (VisitOrder.size() != Chain.size()) {
     unsigned N = size();
@@ -388,7 +386,7 @@ ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     // Visit the module.
     assert(State->VisitNumber[CurrentModule->Index] == VisitNumber - 1);
     State->VisitNumber[CurrentModule->Index] = VisitNumber;
-    if (!Visitor(*CurrentModule, UserData))
+    if (!Visitor(*CurrentModule))
       continue;
 
     // The visitor has requested that cut off visitation of any
