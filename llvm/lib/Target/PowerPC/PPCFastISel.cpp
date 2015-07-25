@@ -1608,17 +1608,16 @@ bool PPCFastISel::SelectRet(const Instruction *I) {
     if (ValLocs.size() > 1)
       return false;
 
-    // Special case for returning a constant integer of any size.
-    // Materialize the constant as an i64 and copy it to the return
-    // register. We still need to worry about properly extending the sign. E.g:
-    // If the constant has only one bit, it means it is a boolean. Therefore
-    // we can't use PPCMaterializeInt because it extends the sign which will
-    // cause negations of the returned value to be incorrect as they are
-    // implemented as the flip of the least significant bit.
+    // Special case for returning a constant integer of any size - materialize
+    // the constant as an i64 and copy it to the return register.
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(RV)) {
       CCValAssign &VA = ValLocs[0];
 
       unsigned RetReg = VA.getLocReg();
+      // We still need to worry about properly extending the sign. For example,
+      // we could have only a single bit or a constant that needs zero
+      // extension rather than sign extension. Make sure we pass the return
+      // value extension property to integer materialization.
       unsigned SrcReg =
           PPCMaterializeInt(CI, MVT::i64, VA.getLocInfo() == CCValAssign::SExt);
 
@@ -2103,11 +2102,17 @@ unsigned PPCFastISel::PPCMaterializeInt(const ConstantInt *CI, MVT VT,
                                    &PPC::GPRCRegClass);
 
   // If the constant is in range, use a load-immediate.
-  if (isInt<16>(CI->getSExtValue())) {
+  if (UseSExt && isInt<16>(CI->getSExtValue())) {
     unsigned Opc = (VT == MVT::i64) ? PPC::LI8 : PPC::LI;
     unsigned ImmReg = createResultReg(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ImmReg)
-      .addImm( (UseSExt) ? CI->getSExtValue() : CI->getZExtValue() );
+        .addImm(CI->getSExtValue());
+    return ImmReg;
+  } else if (!UseSExt && isUInt<16>(CI->getZExtValue())) {
+    unsigned Opc = (VT == MVT::i64) ? PPC::LI8 : PPC::LI;
+    unsigned ImmReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ImmReg)
+        .addImm(CI->getZExtValue());
     return ImmReg;
   }
 
