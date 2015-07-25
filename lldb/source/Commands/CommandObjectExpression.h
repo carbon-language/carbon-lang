@@ -61,6 +61,7 @@ public:
         bool        debug;
         uint32_t    timeout;
         bool        try_all_threads;
+        lldb::LanguageType language;
         LanguageRuntimeDescriptionDisplayVerbosity m_verbosity;
     };
 

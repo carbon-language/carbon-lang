@@ -63,6 +63,7 @@ CommandObjectExpression::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value (in microseconds) for running the expression."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, or raises a signal.  Note, unlike gdb hitting a breakpoint is controlled by another option (-i)."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "debug",              'g', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone,       "When specified, debug the JIT code by setting a breakpoint on the first instruction and forcing breakpoints to not be ignored (-i0) and no unwinding to happen on error (-u0)."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "language",           'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,   "Specifies the Language to use when parsing the expression.  If not set the target.language setting is used." },
     { LLDB_OPT_SET_1, false, "description-verbosity", 'v', OptionParser::eOptionalArgument, NULL, g_description_verbosity_type, 0, eArgTypeDescriptionVerbosity,        "How verbose should the output of this expression be, if the object description is asked for."},
 };
 
@@ -84,12 +85,11 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
 
     switch (short_option)
     {
-      //case 'l':
-      //if (language.SetLanguageFromCString (option_arg) == false)
-      //{
-      //    error.SetErrorStringWithFormat("invalid language option argument '%s'", option_arg);
-      //}
-      //break;
+    case 'l':
+        language = LanguageRuntime::GetLanguageTypeFromString (option_arg);
+        if (language == eLanguageTypeUnknown)
+            error.SetErrorStringWithFormat ("unknown language type: '%s' for expression", option_arg);
+        break;
 
     case 'a':
         {
@@ -180,6 +180,7 @@ CommandObjectExpression::CommandOptions::OptionParsingStarting (CommandInterpret
     try_all_threads = true;
     timeout = 0;
     debug = false;
+    language = eLanguageTypeUnknown;
     m_verbosity = eLanguageRuntimeDescriptionDisplayVerbosityCompact;
 }
 
@@ -192,7 +193,7 @@ CommandObjectExpression::CommandOptions::GetDefinitions ()
 CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interpreter) :
     CommandObjectRaw (interpreter,
                       "expression",
-                      "Evaluate a C/ObjC/C++ expression in the current program context, using user defined variables and variables currently in scope.",
+                      "Evaluate an expression in the current program context, using user defined variables and variables currently in scope.",
                       NULL,
                       eCommandProcessMustBePaused | eCommandTryTargetAPILock),
     IOHandlerDelegate (IOHandlerDelegate::Completion::Expression),
@@ -300,6 +301,12 @@ CommandObjectExpression::EvaluateExpression
         options.SetTryAllThreads(m_command_options.try_all_threads);
         options.SetDebug(m_command_options.debug);
         
+        // If the language was not specified, set it from target's properties
+        if (m_command_options.language != eLanguageTypeUnknown)
+            options.SetLanguage(m_command_options.language);
+        else
+            options.SetLanguage(target->GetLanguage());
+
         // If there is any chance we are going to stop and want to see
         // what went wrong with our expression, we should generate debug info
         if (!m_command_options.ignore_breakpoints ||
