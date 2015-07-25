@@ -646,25 +646,12 @@ namespace {
   };
 }
 
-extern "C" {
-struct CodeCompleteAtInfo {
-  CXTranslationUnit TU;
-  const char *complete_filename;
-  unsigned complete_line;
-  unsigned complete_column;
-  ArrayRef<CXUnsavedFile> unsaved_files;
-  unsigned options;
-  CXCodeCompleteResults *result;
-};
-static void clang_codeCompleteAt_Impl(void *UserData) {
-  CodeCompleteAtInfo *CCAI = static_cast<CodeCompleteAtInfo*>(UserData);
-  CXTranslationUnit TU = CCAI->TU;
-  const char *complete_filename = CCAI->complete_filename;
-  unsigned complete_line = CCAI->complete_line;
-  unsigned complete_column = CCAI->complete_column;
-  unsigned options = CCAI->options;
+static CXCodeCompleteResults *
+clang_codeCompleteAt_Impl(CXTranslationUnit TU, const char *complete_filename,
+                          unsigned complete_line, unsigned complete_column,
+                          ArrayRef<CXUnsavedFile> unsaved_files,
+                          unsigned options) {
   bool IncludeBriefComments = options & CXCodeComplete_IncludeBriefComments;
-  CCAI->result = nullptr;
 
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #ifdef UDP_CODE_COMPLETION_LOGGER_PORT
@@ -676,12 +663,12 @@ static void clang_codeCompleteAt_Impl(void *UserData) {
 
   if (cxtu::isNotUsableTU(TU)) {
     LOG_BAD_TU(TU);
-    return;
+    return nullptr;
   }
 
   ASTUnit *AST = cxtu::getASTUnit(TU);
   if (!AST)
-    return;
+    return nullptr;
 
   CIndexer *CXXIdx = TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
@@ -692,7 +679,7 @@ static void clang_codeCompleteAt_Impl(void *UserData) {
   // Perform the remapping of source files.
   SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
 
-  for (auto &UF : CCAI->unsaved_files) {
+  for (auto &UF : unsaved_files) {
     std::unique_ptr<llvm::MemoryBuffer> MB =
         llvm::MemoryBuffer::getMemBufferCopy(getContents(UF), UF.Filename);
     RemappedFiles.push_back(std::make_pair(UF.Filename, MB.release()));
@@ -804,8 +791,10 @@ static void clang_codeCompleteAt_Impl(void *UserData) {
   }
 #endif
 #endif
-  CCAI->result = Results;
+  return Results;
 }
+
+extern "C" {
 CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
                                             const char *complete_filename,
                                             unsigned complete_line,
@@ -821,25 +810,28 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
   if (num_unsaved_files && !unsaved_files)
     return nullptr;
 
-  CodeCompleteAtInfo CCAI = {TU, complete_filename, complete_line,
-    complete_column, llvm::makeArrayRef(unsaved_files, num_unsaved_files),
-    options, nullptr};
+  CXCodeCompleteResults *result;
+  auto CodeCompleteAtImpl = [=, &result]() {
+    result = clang_codeCompleteAt_Impl(
+        TU, complete_filename, complete_line, complete_column,
+        llvm::makeArrayRef(unsaved_files, num_unsaved_files), options);
+  };
 
   if (getenv("LIBCLANG_NOTHREADS")) {
-    clang_codeCompleteAt_Impl(&CCAI);
-    return CCAI.result;
+    CodeCompleteAtImpl();
+    return result;
   }
 
   llvm::CrashRecoveryContext CRC;
 
-  if (!RunSafely(CRC, clang_codeCompleteAt_Impl, &CCAI)) {
+  if (!RunSafely(CRC, CodeCompleteAtImpl)) {
     fprintf(stderr, "libclang: crash detected in code completion\n");
     cxtu::getASTUnit(TU)->setUnsafeToFree(true);
     return nullptr;
   } else if (getenv("LIBCLANG_RESOURCE_USAGE"))
     PrintLibclangResourceUsage(TU);
 
-  return CCAI.result;
+  return result;
 }
 
 unsigned clang_defaultCodeCompleteOptions(void) {
