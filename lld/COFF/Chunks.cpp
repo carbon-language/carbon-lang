@@ -115,12 +115,16 @@ void SectionChunk::addAssociative(SectionChunk *Child) {
   Child->Root = false;
 }
 
-static bool isAbs(const coff_relocation &Rel) {
+static uint8_t getBaserelType(const coff_relocation &Rel) {
   switch (Config->MachineType) {
   case IMAGE_FILE_MACHINE_AMD64:
-    return Rel.Type == IMAGE_REL_AMD64_ADDR64;
+    if (Rel.Type == IMAGE_REL_AMD64_ADDR64)
+      return IMAGE_REL_BASED_DIR64;
+    return IMAGE_REL_BASED_ABSOLUTE;
   case IMAGE_FILE_MACHINE_I386:
-    return Rel.Type == IMAGE_REL_I386_DIR32;
+    if (Rel.Type == IMAGE_REL_I386_DIR32)
+      return IMAGE_REL_BASED_HIGHLOW;
+    return IMAGE_REL_BASED_ABSOLUTE;
   default:
     llvm_unreachable("unknown machine type");
   }
@@ -130,14 +134,15 @@ static bool isAbs(const coff_relocation &Rel) {
 // Collect all locations that contain absolute addresses, which need to be
 // fixed by the loader if load-time relocation is needed.
 // Only called when base relocation is enabled.
-void SectionChunk::getBaserels(std::vector<uint32_t> *Res) {
+void SectionChunk::getBaserels(std::vector<Baserel> *Res) {
   for (const coff_relocation &Rel : Relocs) {
-    if (!isAbs(Rel))
+    uint8_t Ty = getBaserelType(Rel);
+    if (Ty == IMAGE_REL_BASED_ABSOLUTE)
       continue;
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     if (isa<DefinedAbsolute>(Body))
       continue;
-    Res->push_back(RVA + Rel.VirtualAddress);
+    Res->emplace_back(RVA + Rel.VirtualAddress, Ty);
   }
 }
 
@@ -258,8 +263,8 @@ void ImportThunkChunkX64::writeTo(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, ImpSymbol->getRVA() - RVA - getSize());
 }
 
-void ImportThunkChunkX86::getBaserels(std::vector<uint32_t> *Res) {
-  Res->push_back(getRVA() + 2);
+void ImportThunkChunkX86::getBaserels(std::vector<Baserel> *Res) {
+  Res->emplace_back(getRVA() + 2);
 }
 
 void ImportThunkChunkX86::writeTo(uint8_t *Buf) {
@@ -268,8 +273,8 @@ void ImportThunkChunkX86::writeTo(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, ImpSymbol->getRVA() + Config->ImageBase);
 }
 
-void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res) {
-  Res->push_back(getRVA());
+void LocalImportChunk::getBaserels(std::vector<Baserel> *Res) {
+  Res->emplace_back(getRVA());
 }
 
 size_t LocalImportChunk::getSize() const {
@@ -294,7 +299,7 @@ void SEHTableChunk::writeTo(uint8_t *Buf) {
 
 // Windows-specific.
 // This class represents a block in .reloc section.
-BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
+BaserelChunk::BaserelChunk(uint32_t Page, Baserel *Begin, Baserel *End) {
   // Block header consists of 4 byte page RVA and 4 byte block size.
   // Each entry is 2 byte. Last entry may be padding.
   Data.resize(RoundUpToAlignment((End - Begin) * 2 + 8, 4));
@@ -302,23 +307,25 @@ BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
   write32le(P, Page);
   write32le(P + 4, Data.size());
   P += 8;
-  for (uint32_t *I = Begin; I != End; ++I) {
-    switch (Config->MachineType) {
-    case AMD64:
-      write16le(P, (IMAGE_REL_BASED_DIR64 << 12) | (*I - Page));
-      break;
-    case I386:
-      write16le(P, (IMAGE_REL_BASED_HIGHLOW << 12) | (*I - Page));
-      break;
-    default:
-      llvm_unreachable("unsupported machine type");
-    }
+  for (Baserel *I = Begin; I != End; ++I) {
+    write16le(P, (I->Type << 12) | (I->RVA - Page));
     P += 2;
   }
 }
 
 void BaserelChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, Data.data(), Data.size());
+}
+
+uint8_t Baserel::getDefaultType() {
+  switch (Config->MachineType) {
+  case IMAGE_FILE_MACHINE_AMD64:
+    return IMAGE_REL_BASED_DIR64;
+  case IMAGE_FILE_MACHINE_I386:
+    return IMAGE_REL_BASED_HIGHLOW;
+  default:
+    llvm_unreachable("unknown machine type");
+  }
 }
 
 } // namespace coff

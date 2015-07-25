@@ -618,7 +618,7 @@ OutputSection *Writer::createSection(StringRef Name) {
 
 // Dest is .reloc section. Add contents to that section.
 void Writer::addBaserels(OutputSection *Dest) {
-  std::vector<uint32_t> V;
+  std::vector<Baserel> V;
   for (OutputSection *Sec : OutputSections) {
     if (Sec == Dest)
       continue;
@@ -633,12 +633,12 @@ void Writer::addBaserels(OutputSection *Dest) {
 }
 
 // Add addresses to .reloc section. Note that addresses are grouped by page.
-void Writer::addBaserelBlocks(OutputSection *Dest, std::vector<uint32_t> &V) {
+void Writer::addBaserelBlocks(OutputSection *Dest, std::vector<Baserel> &V) {
   const uint32_t Mask = ~uint32_t(PageSize - 1);
-  uint32_t Page = V[0] & Mask;
+  uint32_t Page = V[0].RVA & Mask;
   size_t I = 0, J = 1;
   for (size_t E = V.size(); J < E; ++J) {
-    uint32_t P = V[J] & Mask;
+    uint32_t P = V[J].RVA & Mask;
     if (P == Page)
       continue;
     BaserelChunk *Buf = BAlloc.Allocate();

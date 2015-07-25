@@ -29,9 +29,10 @@ using llvm::object::coff_relocation;
 using llvm::object::coff_section;
 using llvm::sys::fs::file_magic;
 
+class Baserel;
 class Defined;
-class DefinedRegular;
 class DefinedImportData;
+class DefinedRegular;
 class ObjectFile;
 class OutputSection;
 class SymbolBody;
@@ -83,7 +84,7 @@ public:
 
   // Windows-specific.
   // Collect all locations that contain absolute addresses for base relocations.
-  virtual void getBaserels(std::vector<uint32_t> *Res) {}
+  virtual void getBaserels(std::vector<Baserel> *Res) {}
 
   // Returns a human-readable name of this chunk. Chunks are unnamed chunks of
   // bytes, so this is used only for logging or debugging.
@@ -134,7 +135,7 @@ public:
   bool hasData() const override;
   uint32_t getPermissions() const override;
   StringRef getSectionName() const override { return SectionName; }
-  void getBaserels(std::vector<uint32_t> *Res) override;
+  void getBaserels(std::vector<Baserel> *Res) override;
   bool isCOMDAT() const;
   void applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S, uint64_t P);
   void applyRelX86(uint8_t *Off, uint16_t Type, uint64_t S, uint64_t P);
@@ -244,7 +245,7 @@ class ImportThunkChunkX86 : public Chunk {
 public:
   explicit ImportThunkChunkX86(Defined *S) : ImpSymbol(S) {}
   size_t getSize() const override { return sizeof(ImportThunkX86); }
-  void getBaserels(std::vector<uint32_t> *Res) override;
+  void getBaserels(std::vector<Baserel> *Res) override;
   void writeTo(uint8_t *Buf) override;
 
 private:
@@ -257,7 +258,7 @@ class LocalImportChunk : public Chunk {
 public:
   explicit LocalImportChunk(Defined *S) : Sym(S) {}
   size_t getSize() const override;
-  void getBaserels(std::vector<uint32_t> *Res) override;
+  void getBaserels(std::vector<Baserel> *Res) override;
   void writeTo(uint8_t *Buf) override;
 
 private:
@@ -282,12 +283,22 @@ private:
 // See the PE/COFF spec 5.6 for details.
 class BaserelChunk : public Chunk {
 public:
-  BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End);
+  BaserelChunk(uint32_t Page, Baserel *Begin, Baserel *End);
   size_t getSize() const override { return Data.size(); }
   void writeTo(uint8_t *Buf) override;
 
 private:
   std::vector<uint8_t> Data;
+};
+
+class Baserel {
+public:
+  Baserel(uint32_t V, uint8_t Ty) : RVA(V), Type(Ty) {}
+  explicit Baserel(uint32_t V) : Baserel(V, getDefaultType()) {}
+  uint8_t getDefaultType();
+
+  uint32_t RVA;
+  uint8_t Type;
 };
 
 } // namespace coff

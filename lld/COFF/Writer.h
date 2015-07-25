@@ -100,7 +100,7 @@ private:
   OutputSection *findSection(StringRef Name);
   OutputSection *createSection(StringRef Name);
   void addBaserels(OutputSection *Dest);
-  void addBaserelBlocks(OutputSection *Dest, std::vector<uint32_t> &V);
+  void addBaserelBlocks(OutputSection *Dest, std::vector<Baserel> &V);
 
   uint32_t getSizeOfInitializedData();
   std::map<StringRef, std::vector<DefinedImportData *>> binImports();
