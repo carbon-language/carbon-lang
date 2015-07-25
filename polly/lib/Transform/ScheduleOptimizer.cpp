@@ -169,7 +169,8 @@ private:
   ///      - if the band is tileable
   ///      - if the band has more than one loop dimension
   ///
-  ///  - Prevectorize the point loop of the tile
+  ///  - Prevectorize the schedule of the band (or the point loop in case of
+  ///    tiling)
   ///      - if vectorization is enabled
   ///
   /// @param Node The schedule node to (possibly) optimize.
@@ -300,28 +301,29 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
     Res = Node;
   } else {
     Res = isl_schedule_node_band_tile(Node, Sizes);
+    Child = isl_schedule_node_get_child(Res, 0);
+    isl_schedule_node_free(Res);
+    Res = Child;
   }
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
     return Res;
 
-  Child = isl_schedule_node_get_child(Res, 0);
-  auto ChildSchedule = isl_schedule_node_band_get_partial_schedule(Child);
+  auto Schedule = isl_schedule_node_band_get_partial_schedule(Res);
 
   for (int i = Dims - 1; i >= 0; i--) {
-    if (isl_schedule_node_band_member_get_coincident(Child, i)) {
+    if (isl_schedule_node_band_member_get_coincident(Res, i)) {
       auto TileMap = IslScheduleOptimizer::getPrevectorMap(Ctx, i, Dims);
       auto TileUMap = isl_union_map_from_map(TileMap);
-      auto ChildSchedule2 = isl_union_map_apply_range(
-          isl_union_map_from_multi_union_pw_aff(ChildSchedule), TileUMap);
-      ChildSchedule = isl_multi_union_pw_aff_from_union_map(ChildSchedule2);
+      auto Schedule2 = isl_union_map_apply_range(
+          isl_union_map_from_multi_union_pw_aff(Schedule), TileUMap);
+      Schedule = isl_multi_union_pw_aff_from_union_map(Schedule2);
       break;
     }
   }
 
-  isl_schedule_node_free(Res);
-  Res = isl_schedule_node_delete(Child);
-  Res = isl_schedule_node_insert_partial_schedule(Res, ChildSchedule);
+  Res = isl_schedule_node_delete(Res);
+  Res = isl_schedule_node_insert_partial_schedule(Res, Schedule);
   return Res;
 }
 
