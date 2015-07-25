@@ -3512,16 +3512,14 @@ public:
   CXXCatchStmt *getFoundHandler() const { return FoundHandler; }
   CanQualType getFoundHandlerType() const { return FoundHandlerType; }
 
-  static bool FindPublicBasesOfType(const CXXBaseSpecifier *S, CXXBasePath &,
-                                    void *User) {
-    auto &PBOT = *reinterpret_cast<CatchTypePublicBases *>(User);
+  bool operator()(const CXXBaseSpecifier *S, CXXBasePath &) {
     if (S->getAccessSpecifier() == AccessSpecifier::AS_public) {
-      CatchHandlerType Check(S->getType(), PBOT.CheckAgainstPointer);
-      auto M = PBOT.TypesToCheck;
+      CatchHandlerType Check(S->getType(), CheckAgainstPointer);
+      auto M = TypesToCheck;
       auto I = M.find(Check);
       if (I != M.end()) {
-        PBOT.FoundHandler = I->second;
-        PBOT.FoundHandlerType = PBOT.Ctx.getCanonicalType(S->getType());
+        FoundHandler = I->second;
+        FoundHandlerType = Ctx.getCanonicalType(S->getType());
         return true;
       }
     }
@@ -3589,8 +3587,7 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
       CXXBasePaths Paths;
       Paths.setOrigin(RD);
       CatchTypePublicBases CTPB(Context, HandledTypes, HandlerCHT.isPointer());
-      if (RD->lookupInBases(CatchTypePublicBases::FindPublicBasesOfType, &CTPB,
-                            Paths)) {
+      if (RD->lookupInBases(CTPB, Paths)) {
         const CXXCatchStmt *Problem = CTPB.getFoundHandler();
         if (!Paths.isAmbiguous(CTPB.getFoundHandlerType())) {
           Diag(H->getExceptionDecl()->getTypeSpecStartLoc(),

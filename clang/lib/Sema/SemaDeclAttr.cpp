@@ -432,11 +432,10 @@ static bool checkRecordTypeForCapability(Sema &S, QualType Ty) {
   // Else check if any base classes have a capability.
   if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
     CXXBasePaths BPaths(false, false);
-    if (CRD->lookupInBases([](const CXXBaseSpecifier *BS, CXXBasePath &P,
-      void *) {
-      return BS->getType()->getAs<RecordType>()
-        ->getDecl()->hasAttr<CapabilityAttr>();
-    }, nullptr, BPaths))
+    if (CRD->lookupInBases([](const CXXBaseSpecifier *BS, CXXBasePath &) {
+          const auto *Type = BS->getType()->getAs<RecordType>();
+          return Type->getDecl()->hasAttr<CapabilityAttr>();
+        }, BPaths))
       return true;
   }
   return false;

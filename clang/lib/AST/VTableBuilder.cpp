@@ -2649,12 +2649,6 @@ struct InitialOverriddenDefinitionCollector {
 
 } // end namespace
 
-static bool BaseInSet(const CXXBaseSpecifier *Specifier,
-                      CXXBasePath &Path, void *BasesSet) {
-  BasesSetVectorTy *Bases = (BasesSetVectorTy *)BasesSet;
-  return Bases->count(Specifier->getType()->getAsCXXRecordDecl());
-}
-
 // Let's study one class hierarchy as an example:
 //   struct A {
 //     virtual void f();
@@ -2720,8 +2714,12 @@ VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
     return Overrider.Offset;
 
   CXXBasePaths Paths;
-  Overrider.Method->getParent()->lookupInBases(BaseInSet, &Collector.Bases,
-                                               Paths);
+  Overrider.Method->getParent()->lookupInBases(
+      [&Collector](const CXXBaseSpecifier *Specifier, CXXBasePath &) {
+        return Collector.Bases.count(
+            Specifier->getType()->getAsCXXRecordDecl());
+      },
+      Paths);
 
   // This will hold the smallest this offset among overridees of MD.
   // This implies that an offset of a non-virtual base will dominate an offset

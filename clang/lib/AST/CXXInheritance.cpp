@@ -85,9 +85,13 @@ bool CXXRecordDecl::isDerivedFrom(const CXXRecordDecl *Base,
     return false;
   
   Paths.setOrigin(const_cast<CXXRecordDecl*>(this));
-  return lookupInBases(&FindBaseClass,
-                       const_cast<CXXRecordDecl*>(Base->getCanonicalDecl()),
-                       Paths);
+
+  const CXXRecordDecl *BaseDecl = Base->getCanonicalDecl();
+  return lookupInBases(
+      [BaseDecl](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
+        return FindBaseClass(Specifier, Path, BaseDecl);
+      },
+      Paths);
 }
 
 bool CXXRecordDecl::isVirtuallyDerivedFrom(const CXXRecordDecl *Base) const {
@@ -102,20 +106,19 @@ bool CXXRecordDecl::isVirtuallyDerivedFrom(const CXXRecordDecl *Base) const {
   
   Paths.setOrigin(const_cast<CXXRecordDecl*>(this));
 
-  const void *BasePtr = static_cast<const void*>(Base->getCanonicalDecl());
-  return lookupInBases(&FindVirtualBaseClass,
-                       const_cast<void *>(BasePtr),
-                       Paths);
-}
-
-static bool BaseIsNot(const CXXRecordDecl *Base, void *OpaqueTarget) {
-  // OpaqueTarget is a CXXRecordDecl*.
-  return Base->getCanonicalDecl() != (const CXXRecordDecl*) OpaqueTarget;
+  const CXXRecordDecl *BaseDecl = Base->getCanonicalDecl();
+  return lookupInBases(
+      [BaseDecl](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
+        return FindVirtualBaseClass(Specifier, Path, BaseDecl);
+      },
+      Paths);
 }
 
 bool CXXRecordDecl::isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const {
-  return forallBases(BaseIsNot,
-                     const_cast<CXXRecordDecl *>(Base->getCanonicalDecl()));
+  const CXXRecordDecl *TargetDecl = Base->getCanonicalDecl();
+  return forallBases([TargetDecl](const CXXRecordDecl *Base) {
+    return Base->getCanonicalDecl() != TargetDecl;
+  });
 }
 
 bool
@@ -129,8 +132,7 @@ CXXRecordDecl::isCurrentInstantiation(const DeclContext *CurContext) const {
   return false;
 }
 
-bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
-                                void *OpaqueData,
+bool CXXRecordDecl::forallBases(ForallBasesCallback BaseMatches,
                                 bool AllowShortCircuit) const {
   SmallVector<const CXXRecordDecl*, 8> Queue;
 
@@ -156,7 +158,7 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
       }
       
       Queue.push_back(Base);
-      if (!BaseMatches(Base, OpaqueData)) {
+      if (!BaseMatches(Base)) {
         if (AllowShortCircuit) return false;
         AllMatches = false;
         continue;
@@ -171,10 +173,9 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
   return AllMatches;
 }
 
-bool CXXBasePaths::lookupInBases(ASTContext &Context,
-                                 const CXXRecordDecl *Record,
-                               CXXRecordDecl::BaseMatchesCallback *BaseMatches, 
-                                 void *UserData) {
+bool CXXBasePaths::lookupInBases(
+    ASTContext &Context, const CXXRecordDecl *Record,
+    CXXRecordDecl::BaseMatchesCallback BaseMatches) {
   bool FoundPath = false;
 
   // The access of the path down to this record.
@@ -248,7 +249,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
     // Track whether there's a path involving this specific base.
     bool FoundPathThroughBase = false;
     
-    if (BaseMatches(&BaseSpec, ScratchPath, UserData)) {
+    if (BaseMatches(&BaseSpec, ScratchPath)) {
       // We've found a path that terminates at this base.
       FoundPath = FoundPathThroughBase = true;
       if (isRecordingPaths()) {
@@ -263,7 +264,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
       CXXRecordDecl *BaseRecord
         = cast<CXXRecordDecl>(BaseSpec.getType()->castAs<RecordType>()
                                 ->getDecl());
-      if (lookupInBases(Context, BaseRecord, BaseMatches, UserData)) {
+      if (lookupInBases(Context, BaseRecord, BaseMatches)) {
         // C++ [class.member.lookup]p2:
         //   A member name f in one sub-object B hides a member name f in
         //   a sub-object A if A is a base class sub-object of B. Any
@@ -296,11 +297,10 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
   return FoundPath;
 }
 
-bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
-                                  void *UserData,
+bool CXXRecordDecl::lookupInBases(BaseMatchesCallback BaseMatches,
                                   CXXBasePaths &Paths) const {
   // If we didn't find anything, report that.
-  if (!Paths.lookupInBases(getASTContext(), this, BaseMatches, UserData))
+  if (!Paths.lookupInBases(getASTContext(), this, BaseMatches))
     return false;
 
   // If we're not recording paths or we won't ever find ambiguities,
@@ -353,7 +353,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
 
 bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier, 
                                   CXXBasePath &Path,
-                                  void *BaseRecord) {
+                                  const CXXRecordDecl *BaseRecord) {
   assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
          "User data for FindBaseClass is not canonical!");
   return Specifier->getType()->castAs<RecordType>()->getDecl()
@@ -362,7 +362,7 @@ bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier,
 
 bool CXXRecordDecl::FindVirtualBaseClass(const CXXBaseSpecifier *Specifier, 
                                          CXXBasePath &Path,
-                                         void *BaseRecord) {
+                                         const CXXRecordDecl *BaseRecord) {
   assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
          "User data for FindBaseClass is not canonical!");
   return Specifier->isVirtual() &&
@@ -372,12 +372,11 @@ bool CXXRecordDecl::FindVirtualBaseClass(const CXXBaseSpecifier *Specifier,
 
 bool CXXRecordDecl::FindTagMember(const CXXBaseSpecifier *Specifier, 
                                   CXXBasePath &Path,
-                                  void *Name) {
+                                  DeclarationName Name) {
   RecordDecl *BaseRecord =
     Specifier->getType()->castAs<RecordType>()->getDecl();
 
-  DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
-  for (Path.Decls = BaseRecord->lookup(N);
+  for (Path.Decls = BaseRecord->lookup(Name);
        !Path.Decls.empty();
        Path.Decls = Path.Decls.slice(1)) {
     if (Path.Decls.front()->isInIdentifierNamespace(IDNS_Tag))
@@ -389,13 +388,12 @@ bool CXXRecordDecl::FindTagMember(const CXXBaseSpecifier *Specifier,
 
 bool CXXRecordDecl::FindOrdinaryMember(const CXXBaseSpecifier *Specifier, 
                                        CXXBasePath &Path,
-                                       void *Name) {
+                                       DeclarationName Name) {
   RecordDecl *BaseRecord =
     Specifier->getType()->castAs<RecordType>()->getDecl();
   
   const unsigned IDNS = IDNS_Ordinary | IDNS_Tag | IDNS_Member;
-  DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
-  for (Path.Decls = BaseRecord->lookup(N);
+  for (Path.Decls = BaseRecord->lookup(Name);
        !Path.Decls.empty();
        Path.Decls = Path.Decls.slice(1)) {
     if (Path.Decls.front()->isInIdentifierNamespace(IDNS))
@@ -408,12 +406,11 @@ bool CXXRecordDecl::FindOrdinaryMember(const CXXBaseSpecifier *Specifier,
 bool CXXRecordDecl::
 FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier, 
                               CXXBasePath &Path,
-                              void *Name) {
+                              DeclarationName Name) {
   RecordDecl *BaseRecord =
     Specifier->getType()->castAs<RecordType>()->getDecl();
   
-  DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
-  for (Path.Decls = BaseRecord->lookup(N);
+  for (Path.Decls = BaseRecord->lookup(Name);
        !Path.Decls.empty();
        Path.Decls = Path.Decls.slice(1)) {
     // FIXME: Refactor the "is it a nested-name-specifier?" check

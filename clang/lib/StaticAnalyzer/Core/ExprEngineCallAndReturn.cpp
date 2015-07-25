@@ -690,9 +690,11 @@ static bool hasMember(const ASTContext &Ctx, const CXXRecordDecl *RD,
     return true;
 
   CXXBasePaths Paths(false, false, false);
-  if (RD->lookupInBases(&CXXRecordDecl::FindOrdinaryMember,
-                        DeclName.getAsOpaquePtr(),
-                        Paths))
+  if (RD->lookupInBases(
+          [DeclName](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
+            return CXXRecordDecl::FindOrdinaryMember(Specifier, Path, DeclName);
+          },
+          Paths))
     return true;
 
   return false;
