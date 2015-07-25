@@ -31,7 +31,7 @@ class Undefined;
 
 // Short aliases.
 static const auto AMD64 = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
-static const auto ARM = llvm::COFF::IMAGE_FILE_MACHINE_ARM;
+static const auto ARMNT = llvm::COFF::IMAGE_FILE_MACHINE_ARMNT;
 static const auto I386 = llvm::COFF::IMAGE_FILE_MACHINE_I386;
 
 // Represents an /export option.

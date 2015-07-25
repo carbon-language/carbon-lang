@@ -440,6 +440,9 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   if (!Config->NoEntry) {
     Defined *Entry = cast<Defined>(Config->Entry->repl());
     PE->AddressOfEntryPoint = Entry->getRVA();
+    // Pointer to thumb code must have the LSB set, so adjust it.
+    if (Config->MachineType == ARMNT)
+      PE->AddressOfEntryPoint |= 1;
   }
   PE->SizeOfStackReserve = Config->StackReserve;
   PE->SizeOfStackCommit = Config->StackCommit;
