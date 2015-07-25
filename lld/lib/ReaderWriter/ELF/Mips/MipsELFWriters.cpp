@@ -56,6 +56,9 @@ void MipsELFWriter<ELFT>::finalizeMipsRuntimeAtomValues() {
   setAtomValue("_gp", gp);
   setAtomValue("_gp_disp", gp);
   setAtomValue("__gnu_local_gp", gp);
+
+  if (_ctx.isDynamic() && _ctx.getOutputELFType() == ET_EXEC)
+    setAtomValue("_DYNAMIC_LINKING", 1);
 }
 
 template <class ELFT>
@@ -64,8 +67,11 @@ std::unique_ptr<RuntimeFile<ELFT>> MipsELFWriter<ELFT>::createRuntimeFile() {
   file->addAbsoluteAtom("_gp");
   file->addAbsoluteAtom("_gp_disp");
   file->addAbsoluteAtom("__gnu_local_gp");
-  if (_ctx.isDynamic())
+  if (_ctx.isDynamic()) {
     file->addAtom(*new (file->allocator()) MipsDynamicAtom(*file));
+    if (_ctx.getOutputELFType() == ET_EXEC)
+      file->addAbsoluteAtom("_DYNAMIC_LINKING");
+  }
   return file;
 }
 
