@@ -4080,7 +4080,7 @@ ClangASTType::GetIndexOfChildMemberWithName (const char *name,
                         clang::DeclarationName decl_name(&ident_ref);
                         
                         clang::CXXBasePaths paths;
-                        if (cxx_record_decl->lookupInBases([decl_name](const CXXBaseSpecifier *specifier, CXXBasePath &path) {
+                        if (cxx_record_decl->lookupInBases([decl_name](const clang::CXXBaseSpecifier *specifier, clang::CXXBasePath &path) {
                                                                return clang::CXXRecordDecl::FindOrdinaryMember(specifier, path, decl_name);
                                                            },
                                                            paths))
