@@ -327,20 +327,19 @@ private:
 // a regular name. A function pointer is given as a DefinedImportData.
 class DefinedImportThunk : public Defined {
 public:
-  DefinedImportThunk(StringRef N, DefinedImportData *S)
-      : Defined(DefinedImportThunkKind, N), Data(S) {}
+  DefinedImportThunk(StringRef Name, DefinedImportData *S,
+                     uint16_t MachineType);
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedImportThunkKind;
   }
 
-  uint64_t getRVA() { return Data.getRVA(); }
-  uint64_t getFileOff() { return Data.getFileOff(); }
-
-  Chunk *getChunk() { return &Data; }
+  uint64_t getRVA() { return Data->getRVA(); }
+  uint64_t getFileOff() { return Data->getFileOff(); }
+  Chunk *getChunk() { return Data.get(); }
 
 private:
-  ImportThunkChunk Data;
+  std::unique_ptr<Chunk> Data;
 };
 
 // If you have a symbol "__imp_foo" in your object file, a symbol name

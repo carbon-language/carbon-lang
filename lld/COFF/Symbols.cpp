@@ -196,6 +196,21 @@ COFFSymbolRef DefinedCOFF::getCOFFSymbol() {
   return COFFSymbolRef(reinterpret_cast<const coff_symbol32 *>(Sym));
 }
 
+DefinedImportThunk::DefinedImportThunk(StringRef Name, DefinedImportData *S,
+                                       uint16_t MachineType)
+    : Defined(DefinedImportThunkKind, Name) {
+  switch (MachineType) {
+  case AMD64:
+    Data.reset(new ImportThunkChunkX64(S));
+    return;
+  case I386:
+    Data.reset(new ImportThunkChunkX86(S));
+    return;
+  default:
+    llvm_unreachable("unknown machine type");
+  }
+}
+
 ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   auto MBRefOrErr = File->getMember(&Sym);
   if (auto EC = MBRefOrErr.getError())

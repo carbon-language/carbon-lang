@@ -245,31 +245,27 @@ void StringChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, Str.data(), Str.size());
 }
 
-ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
+ImportThunkChunkX64::ImportThunkChunkX64(Defined *S) : ImpSymbol(S) {
   // Intel Optimization Manual says that all branch targets
   // should be 16-byte aligned. MSVC linker does this too.
   if (Config->MachineType == AMD64)
       Align = 16;
 }
 
-void ImportThunkChunk::getBaserels(std::vector<uint32_t> *Res) {
-  if (Config->MachineType == I386)
-    Res->push_back(getRVA() + 2);
+void ImportThunkChunkX64::writeTo(uint8_t *Buf) {
+  memcpy(Buf + FileOff, ImportThunkX86, sizeof(ImportThunkX86));
+  // The first two bytes is a JMP instruction. Fill its operand.
+  write32le(Buf + FileOff + 2, ImpSymbol->getRVA() - RVA - getSize());
 }
 
-void ImportThunkChunk::writeTo(uint8_t *Buf) {
-  memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
+void ImportThunkChunkX86::getBaserels(std::vector<uint32_t> *Res) {
+  Res->push_back(getRVA() + 2);
+}
+
+void ImportThunkChunkX86::writeTo(uint8_t *Buf) {
+  memcpy(Buf + FileOff, ImportThunkX86, sizeof(ImportThunkX86));
   // The first two bytes is a JMP instruction. Fill its operand.
-  switch (Config->MachineType) {
-  case AMD64:
-    write32le(Buf + FileOff + 2, ImpSymbol->getRVA() - RVA - getSize());
-    break;
-  case I386:
-    write32le(Buf + FileOff + 2, ImpSymbol->getRVA() + Config->ImageBase);
-    break;
-  default:
-    llvm_unreachable("unsupported machine type");
-  }
+  write32le(Buf + FileOff + 2, ImpSymbol->getRVA() + Config->ImageBase);
 }
 
 void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res) {
