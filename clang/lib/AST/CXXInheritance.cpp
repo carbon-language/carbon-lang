@@ -87,8 +87,9 @@ bool CXXRecordDecl::isDerivedFrom(const CXXRecordDecl *Base,
   Paths.setOrigin(const_cast<CXXRecordDecl*>(this));
 
   const CXXRecordDecl *BaseDecl = Base->getCanonicalDecl();
+  // FIXME: Capturing 'this' is a workaround for name lookup bugs in GCC 4.7.
   return lookupInBases(
-      [BaseDecl](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
+      [this, BaseDecl](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
         return FindBaseClass(Specifier, Path, BaseDecl);
       },
       Paths);
@@ -107,8 +108,9 @@ bool CXXRecordDecl::isVirtuallyDerivedFrom(const CXXRecordDecl *Base) const {
   Paths.setOrigin(const_cast<CXXRecordDecl*>(this));
 
   const CXXRecordDecl *BaseDecl = Base->getCanonicalDecl();
+  // FIXME: Capturing 'this' is a workaround for name lookup bugs in GCC 4.7.
   return lookupInBases(
-      [BaseDecl](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
+      [this, BaseDecl](const CXXBaseSpecifier *Specifier, CXXBasePath &Path) {
         return FindVirtualBaseClass(Specifier, Path, BaseDecl);
       },
       Paths);
@@ -354,7 +356,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback BaseMatches,
 bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier, 
                                   CXXBasePath &Path,
                                   const CXXRecordDecl *BaseRecord) {
-  assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
+  assert(BaseRecord->getCanonicalDecl() == BaseRecord &&
          "User data for FindBaseClass is not canonical!");
   return Specifier->getType()->castAs<RecordType>()->getDecl()
             ->getCanonicalDecl() == BaseRecord;
@@ -363,7 +365,7 @@ bool CXXRecordDecl::FindBaseClass(const CXXBaseSpecifier *Specifier,
 bool CXXRecordDecl::FindVirtualBaseClass(const CXXBaseSpecifier *Specifier, 
                                          CXXBasePath &Path,
                                          const CXXRecordDecl *BaseRecord) {
-  assert(((Decl *)BaseRecord)->getCanonicalDecl() == BaseRecord &&
+  assert(BaseRecord->getCanonicalDecl() == BaseRecord &&
          "User data for FindBaseClass is not canonical!");
   return Specifier->isVirtual() &&
          Specifier->getType()->castAs<RecordType>()->getDecl()
