@@ -268,25 +268,10 @@ static ErrorOr<int64_t> relocPc18(uint64_t P, uint64_t S, int64_t A) {
   return S + A - ((P | 7) ^ 7);
 }
 
-/// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2
+/// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2, R_MIPS_PC21_S2,
+/// R_MICROMIPS_PC21_S2, R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
 /// local/external: (S + A - P) >> 2
-static ErrorOr<int64_t> relocPc19(uint64_t P, uint64_t S, int64_t A) {
-  if ((S + A) & 2)
-    return make_unaligned_range_reloc_error();
-  return S + A - P;
-}
-
-/// \brief R_MIPS_PC21_S2, R_MICROMIPS_PC21_S2
-/// local/external: (S + A - P) >> 2
-static ErrorOr<int64_t> relocPc21(uint64_t P, uint64_t S, int64_t A) {
-  if ((S + A) & 2)
-    return make_unaligned_range_reloc_error();
-  return S + A - P;
-}
-
-/// \brief R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
-/// local/external: (S + A - P) >> 2
-static ErrorOr<int64_t> relocPc26(uint64_t P, uint64_t S, int64_t A) {
+static ErrorOr<int64_t> relocPcS2(uint64_t P, uint64_t S, int64_t A) {
   if ((S + A) & 2)
     return make_unaligned_range_reloc_error();
   return S + A - P;
@@ -443,13 +428,11 @@ calculateRelocation(Reference::KindValue kind, Reference::Addend addend,
     return relocPc18(relAddr, tgtAddr, addend);
   case R_MIPS_PC19_S2:
   case R_MICROMIPS_PC19_S2:
-    return relocPc19(relAddr, tgtAddr, addend);
   case R_MIPS_PC21_S2:
   case R_MICROMIPS_PC21_S2:
-    return relocPc21(relAddr, tgtAddr, addend);
   case R_MIPS_PC26_S2:
   case R_MICROMIPS_PC26_S2:
-    return relocPc26(relAddr, tgtAddr, addend);
+    return relocPcS2(relAddr, tgtAddr, addend);
   case R_MICROMIPS_PC7_S1:
   case R_MICROMIPS_PC10_S1:
   case R_MICROMIPS_PC16_S1:
