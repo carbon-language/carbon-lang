@@ -19,7 +19,7 @@ IMPORT-NEXT:   BoundDelayImportTable: 0x0
 IMPORT-NEXT:   UnloadDelayImportTable: 0x0
 IMPORT-NEXT:   Import {
 IMPORT-NEXT:     Symbol: ExitProcess (0)
-IMPORT-NEXT:     Address: 0x40002036
+IMPORT-NEXT:     Address: 0x40002029
 IMPORT-NEXT:   }
 IMPORT-NEXT:   Import {
 IMPORT-NEXT:     Symbol: MessageBoxA (0)
@@ -46,44 +46,41 @@ BASEREL-NEXT:     Address: 0x200C
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x2022
+BASEREL-NEXT:     Address: 0x201F
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x2032
+BASEREL-NEXT:     Address: 0x2025
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x2039
+BASEREL-NEXT:     Address: 0x202C
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x203E
+BASEREL-NEXT:     Address: 0x2031
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x204E
+BASEREL-NEXT:     Address: 0x2041
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x2053
+BASEREL-NEXT:     Address: 0x2046
 BASEREL-NEXT:   }
 BASEREL-NEXT: ]
 
-DISASM:      2030:       ff 25 28 10 00 40       jmpl    *1073745960
-DISASM-NEXT: 2036:       51      pushl   %ecx
-DISASM-NEXT: 2037:       52      pushl   %edx
-DISASM-NEXT: 2038:       68 20 10 00 40  pushl   $1073745952
-DISASM-NEXT: 203d:       68 00 30 00 40  pushl   $1073754112
-DISASM-NEXT: 2042:       e8 b9 ff ff ff  calll   -71 <_main@0>
-DISASM-NEXT: 2047:       5a      popl    %edx
-DISASM-NEXT: 2048:       59      popl    %ecx
-DISASM-NEXT: 2049:       ff e0   jmpl    *%eax
-DISASM-NEXT: 204b:       51      pushl   %ecx
-DISASM-NEXT: 204c:       52      pushl   %edx
-DISASM-NEXT: 204d:       68 28 10 00 40  pushl   $1073745960
-DISASM-NEXT: 2052:       68 00 30 00 40  pushl   $1073754112
-DISASM-NEXT: 2057:       e8 a4 ff ff ff  calll   -92 <_main@0>
-DISASM-NEXT: 205c:       5a      popl    %edx
-DISASM-NEXT: 205d:       59      popl    %ecx
-DISASM-NEXT: 205e:       ff e0   jmpl    *%eax
+DISASM:      202b:      68 20 10 00 40  pushl   $1073745952
+DISASM-NEXT: 2030:      68 00 30 00 40  pushl   $1073754112
+DISASM-NEXT: 2035:      e8 c6 ff ff ff  calll   -58 <_main@0>
+DISASM-NEXT: 203a:      5a      popl    %edx
+DISASM-NEXT: 203b:      59      popl    %ecx
+DISASM-NEXT: 203c:      ff e0   jmpl    *%eax
+DISASM-NEXT: 203e:      51      pushl   %ecx
+DISASM-NEXT: 203f:      52      pushl   %edx
+DISASM-NEXT: 2040:      68 28 10 00 40  pushl   $1073745960
+DISASM-NEXT: 2045:      68 00 30 00 40  pushl   $1073754112
+DISASM-NEXT: 204a:      e8 b1 ff ff ff  calll   -79 <_main@0>
+DISASM-NEXT: 204f:      5a      popl    %edx
+DISASM-NEXT: 2050:      59      popl    %ecx
+DISASM-NEXT: 2051:      ff e0   jmpl    *%eax

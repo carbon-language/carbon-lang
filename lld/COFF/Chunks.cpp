@@ -248,7 +248,8 @@ void StringChunk::writeTo(uint8_t *Buf) {
 ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
   // Intel Optimization Manual says that all branch targets
   // should be 16-byte aligned. MSVC linker does this too.
-  Align = 16;
+  if (Config->MachineType == AMD64)
+      Align = 16;
 }
 
 void ImportThunkChunk::getBaserels(std::vector<uint32_t> *Res) {
