@@ -8869,6 +8869,7 @@ std::unique_ptr<Command> visualstudio::Compiler::GetCommand(
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_LD);
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_LDd);
   Args.AddAllArgs(CmdArgs, options::OPT__SLASH_EH);
+  Args.AddAllArgs(CmdArgs, options::OPT__SLASH_Zl);
 
   // The order of these flags is relevant, so pick the last one.
   if (Arg *A = Args.getLastArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd,
