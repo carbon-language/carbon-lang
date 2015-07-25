@@ -1,7 +1,6 @@
 # RUN: yaml2obj < %s > %t.obj
 # RUN: llvm-objdump -d %t.obj | FileCheck %s -check-prefix BEFORE
-# RUN: lld -flavor link2 /base:0x400000 /entry:function \
-# RUN:   /subsystem:console /out:%t.exe %t.obj
+# RUN: lld -flavor link2 /entry:function /subsystem:console /out:%t.exe %t.obj
 # RUN: llvm-objdump -d %t.exe | FileCheck %s -check-prefix AFTER
 
 # BEFORE: Disassembly of section .text:

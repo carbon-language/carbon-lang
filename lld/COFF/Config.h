@@ -105,7 +105,7 @@ struct Configuration {
   // Used for /alternatename.
   std::map<StringRef, StringRef> AlternateNames;
 
-  uint64_t ImageBase = 0x140000000U;
+  uint64_t ImageBase = -1;
   uint64_t StackReserve = 1024 * 1024;
   uint64_t StackCommit = 4096;
   uint64_t HeapReserve = 1024 * 1024;

@@ -29,7 +29,7 @@ HEADER-NEXT:   SizeOfUninitializedData: 0
 HEADER-NEXT:   AddressOfEntryPoint: 0x2000
 HEADER-NEXT:   BaseOfCode: 0x2000
 HEADER-NEXT:   BaseOfData: 0x0
-HEADER-NEXT:   ImageBase: 0x40000000
+HEADER-NEXT:   ImageBase: 0x400000
 HEADER-NEXT:   SectionAlignment: 4096
 HEADER-NEXT:   FileAlignment: 512
 HEADER-NEXT:   MajorOperatingSystemVersion: 6

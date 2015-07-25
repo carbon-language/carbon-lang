@@ -19,11 +19,11 @@ IMPORT-NEXT:   BoundDelayImportTable: 0x0
 IMPORT-NEXT:   UnloadDelayImportTable: 0x0
 IMPORT-NEXT:   Import {
 IMPORT-NEXT:     Symbol: ExitProcess (0)
-IMPORT-NEXT:     Address: 0x40002029
+IMPORT-NEXT:     Address: 0x402029
 IMPORT-NEXT:   }
 IMPORT-NEXT:   Import {
 IMPORT-NEXT:     Symbol: MessageBoxA (0)
-IMPORT-NEXT:     Address: 0x1
+IMPORT-NEXT:     Address: 0x0
 IMPORT-NEXT:   }
 IMPORT-NEXT: }
 
@@ -70,16 +70,16 @@ BASEREL-NEXT:     Address: 0x2046
 BASEREL-NEXT:   }
 BASEREL-NEXT: ]
 
-DISASM:      202b:      68 20 10 00 40  pushl   $1073745952
-DISASM-NEXT: 2030:      68 00 30 00 40  pushl   $1073754112
+DISASM:      202b:      68 20 10 40 00  pushl   $4198432
+DISASM-NEXT: 2030:      68 00 30 40 00  pushl   $4206592
 DISASM-NEXT: 2035:      e8 c6 ff ff ff  calll   -58 <_main@0>
 DISASM-NEXT: 203a:      5a      popl    %edx
 DISASM-NEXT: 203b:      59      popl    %ecx
 DISASM-NEXT: 203c:      ff e0   jmpl    *%eax
 DISASM-NEXT: 203e:      51      pushl   %ecx
 DISASM-NEXT: 203f:      52      pushl   %edx
-DISASM-NEXT: 2040:      68 28 10 00 40  pushl   $1073745960
-DISASM-NEXT: 2045:      68 00 30 00 40  pushl   $1073754112
+DISASM-NEXT: 2040:      68 28 10 40 00  pushl   $4198440
+DISASM-NEXT: 2045:      68 00 30 40 00  pushl   $4206592
 DISASM-NEXT: 204a:      e8 b1 ff ff ff  calll   -79 <_main@0>
 DISASM-NEXT: 204f:      5a      popl    %edx
 DISASM-NEXT: 2050:      59      popl    %ecx

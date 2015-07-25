@@ -244,6 +244,12 @@ WindowsSubsystem LinkerDriver::inferSubsystem() {
   return IMAGE_SUBSYSTEM_UNKNOWN;
 }
 
+static uint64_t getDefaultImageBase() {
+  if (Config->is64())
+    return Config->DLL ? 0x180000000 : 0x140000000;
+  return Config->DLL ? 0x10000000 : 0x400000;
+}
+
 bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Needed for LTO.
   llvm::InitializeAllTargetInfos();
@@ -311,7 +317,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Handle /dll
   if (Args.hasArg(OPT_dll)) {
     Config->DLL = true;
-    Config->ImageBase = 0x180000000U;
     Config->ManifestID = 2;
   }
 
@@ -601,6 +606,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       Config->DelayLoadHelper = addUndefined("__delayLoadHelper2");
     }
   }
+
+  // Set default image base if /base is not given.
+  if (Config->ImageBase == uint64_t(-1))
+    Config->ImageBase = getDefaultImageBase();
 
   Symtab.addRelative(mangle("__ImageBase"), 0);
   if (Config->MachineType == IMAGE_FILE_MACHINE_I386) {

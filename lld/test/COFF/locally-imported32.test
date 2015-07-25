@@ -6,7 +6,7 @@
 # CHECK-NEXT: 1000 00200000
 
 # CHECK:      Contents of section .rdata:
-# CHECK-NEXT: 2000 04100040
+# CHECK-NEXT: 2000 04104000
 
 ---
 header:
