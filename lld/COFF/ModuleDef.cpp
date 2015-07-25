@@ -209,7 +209,7 @@ private:
       unget();
     }
 
-    if (Config->MachineType == I386 && !E.Name.startswith("_@?"))
+    if (Config->Machine == I386 && !E.Name.startswith("_@?"))
       E.Name = Alloc->save("_" + E.Name);
 
     for (;;) {

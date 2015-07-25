@@ -20,8 +20,6 @@
 namespace lld {
 namespace coff {
 
-using llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
-using llvm::COFF::IMAGE_FILE_MACHINE_I386;
 using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
@@ -54,9 +52,9 @@ struct Export {
 // Global configuration.
 struct Configuration {
   enum ManifestKind { SideBySide, Embed, No };
-  bool is64() { return MachineType == IMAGE_FILE_MACHINE_AMD64; }
+  bool is64() { return Machine == AMD64; }
 
-  llvm::COFF::MachineTypes MachineType = IMAGE_FILE_MACHINE_UNKNOWN;
+  llvm::COFF::MachineTypes Machine = IMAGE_FILE_MACHINE_UNKNOWN;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
   Undefined *Entry = nullptr;

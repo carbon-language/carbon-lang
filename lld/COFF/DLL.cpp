@@ -426,7 +426,7 @@ void DelayLoadContents::create(Defined *H) {
 }
 
 Chunk *DelayLoadContents::newThunkChunk(DefinedImportData *S, Chunk *Dir) {
-  switch (Config->MachineType) {
+  switch (Config->Machine) {
   case AMD64:
     return new ThunkChunkX64(S, Dir, Helper);
   case I386:

@@ -367,11 +367,11 @@ MachineTypes BitcodeFile::getMachineType() {
     return IMAGE_FILE_MACHINE_UNKNOWN;
   switch (Triple(M->getTargetTriple()).getArch()) {
   case Triple::x86_64:
-    return IMAGE_FILE_MACHINE_AMD64;
+    return AMD64;
   case Triple::x86:
-    return IMAGE_FILE_MACHINE_I386;
+    return I386;
   case Triple::arm:
-    return IMAGE_FILE_MACHINE_ARMNT;
+    return ARMNT;
   default:
     return IMAGE_FILE_MACHINE_UNKNOWN;
   }

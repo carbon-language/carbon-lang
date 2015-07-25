@@ -126,14 +126,14 @@ void SectionChunk::writeTo(uint8_t *Buf) {
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     uint64_t S = cast<Defined>(Body)->getRVA();
     uint64_t P = RVA + Rel.VirtualAddress;
-    switch (Config->MachineType) {
-    case IMAGE_FILE_MACHINE_AMD64:
+    switch (Config->Machine) {
+    case AMD64:
       applyRelX64(Off, Rel.Type, S, P);
       break;
-    case IMAGE_FILE_MACHINE_I386:
+    case I386:
       applyRelX86(Off, Rel.Type, S, P);
       break;
-    case IMAGE_FILE_MACHINE_ARMNT:
+    case ARMNT:
       applyRelARM(Off, Rel.Type, S, P);
       break;
     default:
@@ -150,16 +150,16 @@ void SectionChunk::addAssociative(SectionChunk *Child) {
 }
 
 static uint8_t getBaserelType(const coff_relocation &Rel) {
-  switch (Config->MachineType) {
-  case IMAGE_FILE_MACHINE_AMD64:
+  switch (Config->Machine) {
+  case AMD64:
     if (Rel.Type == IMAGE_REL_AMD64_ADDR64)
       return IMAGE_REL_BASED_DIR64;
     return IMAGE_REL_BASED_ABSOLUTE;
-  case IMAGE_FILE_MACHINE_I386:
+  case I386:
     if (Rel.Type == IMAGE_REL_I386_DIR32)
       return IMAGE_REL_BASED_HIGHLOW;
     return IMAGE_REL_BASED_ABSOLUTE;
-  case IMAGE_FILE_MACHINE_ARMNT:
+  case ARMNT:
     if (Rel.Type == IMAGE_REL_ARM_ADDR32)
       return IMAGE_REL_BASED_HIGHLOW;
     if (Rel.Type == IMAGE_REL_ARM_MOV32T)
@@ -293,8 +293,7 @@ void StringChunk::writeTo(uint8_t *Buf) {
 ImportThunkChunkX64::ImportThunkChunkX64(Defined *S) : ImpSymbol(S) {
   // Intel Optimization Manual says that all branch targets
   // should be 16-byte aligned. MSVC linker does this too.
-  if (Config->MachineType == AMD64)
-      Align = 16;
+  Align = 16;
 }
 
 void ImportThunkChunkX64::writeTo(uint8_t *Buf) {
@@ -368,10 +367,10 @@ void BaserelChunk::writeTo(uint8_t *Buf) {
 }
 
 uint8_t Baserel::getDefaultType() {
-  switch (Config->MachineType) {
-  case IMAGE_FILE_MACHINE_AMD64:
+  switch (Config->Machine) {
+  case AMD64:
     return IMAGE_REL_BASED_DIR64;
-  case IMAGE_FILE_MACHINE_I386:
+  case I386:
     return IMAGE_REL_BASED_HIGHLOW;
   default:
     llvm_unreachable("unknown machine type");

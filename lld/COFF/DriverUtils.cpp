@@ -82,11 +82,11 @@ private:
 // Returns /machine's value.
 ErrorOr<MachineTypes> getMachineType(StringRef S) {
   MachineTypes MT = StringSwitch<MachineTypes>(S.lower())
-                        .Case("x64", IMAGE_FILE_MACHINE_AMD64)
-                        .Case("amd64", IMAGE_FILE_MACHINE_AMD64)
-                        .Case("x86", IMAGE_FILE_MACHINE_I386)
-                        .Case("i386", IMAGE_FILE_MACHINE_I386)
-                        .Case("arm", IMAGE_FILE_MACHINE_ARMNT)
+                        .Case("x64", AMD64)
+                        .Case("amd64", AMD64)
+                        .Case("x86", I386)
+                        .Case("i386", I386)
+                        .Case("arm", ARMNT)
                         .Default(IMAGE_FILE_MACHINE_UNKNOWN);
   if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
@@ -94,13 +94,13 @@ ErrorOr<MachineTypes> getMachineType(StringRef S) {
   return make_error_code(LLDError::InvalidOption);
 }
 
-StringRef machineTypeToStr(MachineTypes MT) {
+StringRef machineToStr(MachineTypes MT) {
   switch (MT) {
-  case IMAGE_FILE_MACHINE_ARMNT:
+  case ARMNT:
     return "arm";
-  case IMAGE_FILE_MACHINE_AMD64:
+  case AMD64:
     return "x64";
-  case IMAGE_FILE_MACHINE_I386:
+  case I386:
     return "x86";
   default:
     llvm_unreachable("unknown machine type");
@@ -428,7 +428,7 @@ std::error_code fixupExports() {
     if (!E.ExtName.empty())
       continue;
     StringRef S = E.Sym->repl()->getName();
-    if (Config->MachineType == I386 && S.startswith("_"))
+    if (Config->Machine == I386 && S.startswith("_"))
       S = S.substr(1);
     E.ExtName = S;
   }
@@ -498,7 +498,7 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
 
   // Execute cvtres.exe.
   Executor E("cvtres.exe");
-  E.add("/machine:" + machineTypeToStr(Config->MachineType));
+  E.add("/machine:" + machineToStr(Config->Machine));
   E.add("/readonly");
   E.add("/nologo");
   E.add("/out:" + Path);
@@ -551,7 +551,7 @@ std::error_code writeImportLibrary() {
 
   Executor E("lib.exe");
   E.add("/nologo");
-  E.add("/machine:" + machineTypeToStr(Config->MachineType));
+  E.add("/machine:" + machineToStr(Config->Machine));
   E.add(Twine("/def:") + Def);
   if (Config->Implib.empty()) {
     SmallString<128> Out = StringRef(Config->OutputFile);

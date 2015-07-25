@@ -327,8 +327,7 @@ private:
 // a regular name. A function pointer is given as a DefinedImportData.
 class DefinedImportThunk : public Defined {
 public:
-  DefinedImportThunk(StringRef Name, DefinedImportData *S,
-                     uint16_t MachineType);
+  DefinedImportThunk(StringRef Name, DefinedImportData *S, uint16_t Machine);
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedImportThunkKind;

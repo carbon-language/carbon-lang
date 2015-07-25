@@ -220,7 +220,7 @@ void Writer::createMiscChunks() {
   }
 
   // Create SEH table. x86-only.
-  if (Config->MachineType != IMAGE_FILE_MACHINE_I386)
+  if (Config->Machine != I386)
     return;
   std::set<Defined *> Handlers;
   for (ObjectFile *File : Symtab->ObjectFiles) {
@@ -406,7 +406,7 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   // Write COFF header
   auto *COFF = reinterpret_cast<coff_file_header *>(Buf);
   Buf += sizeof(*COFF);
-  COFF->Machine = Config->MachineType;
+  COFF->Machine = Config->Machine;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
   if (Config->is64()) {
@@ -441,7 +441,7 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
     Defined *Entry = cast<Defined>(Config->Entry->repl());
     PE->AddressOfEntryPoint = Entry->getRVA();
     // Pointer to thumb code must have the LSB set, so adjust it.
-    if (Config->MachineType == ARMNT)
+    if (Config->Machine == ARMNT)
       PE->AddressOfEntryPoint |= 1;
   }
   PE->SizeOfStackReserve = Config->StackReserve;

@@ -197,9 +197,9 @@ COFFSymbolRef DefinedCOFF::getCOFFSymbol() {
 }
 
 DefinedImportThunk::DefinedImportThunk(StringRef Name, DefinedImportData *S,
-                                       uint16_t MachineType)
+                                       uint16_t Machine)
     : Defined(DefinedImportThunkKind, Name) {
-  switch (MachineType) {
+  switch (Machine) {
   case AMD64:
     Data.reset(new ImportThunkChunkX64(S));
     return;
