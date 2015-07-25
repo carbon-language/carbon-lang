@@ -1467,9 +1467,9 @@ static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
 
 /// @brief Wrapper function to calculate minimal/maximal accesses to each array.
 static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
-                       __isl_take isl_union_set *Domains,
-                       __isl_take isl_set *AssumedContext,
-                       Scop::MinMaxVectorTy *MinMaxAccesses){
+                                  __isl_take isl_union_set *Domains,
+                                  __isl_take isl_set *AssumedContext,
+                                  Scop::MinMaxVectorTy *MinMaxAccesses) {
 
   Accesses = isl_union_map_intersect_domain(Accesses, Domains);
   isl_union_set *Locations = isl_union_map_range(Accesses);
@@ -1582,7 +1582,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
     // If we don't have read only pointers check if there are at least two
     // non read only pointers, otherwise clear the alias group.
-    if (ReadOnlyPairs.empty() && NonReadOnlyBaseValues.size() <= 1){
+    if (ReadOnlyPairs.empty() && NonReadOnlyBaseValues.size() <= 1) {
       AG.clear();
       continue;
     }
@@ -1603,15 +1603,14 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     for (MemoryAccess *MA : AG)
       Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
 
-    bool Valid = calculateMinMaxAccess(Accesses, getDomains(),
-                                       getAssumedContext(),
-                                       MinMaxAccessesNonReadOnly);
+    bool Valid = calculateMinMaxAccess(
+        Accesses, getDomains(), getAssumedContext(), MinMaxAccessesNonReadOnly);
 
     // Bail out if the number of values we need to compare is too large.
     // This is important as the number of comparisions grows quadratically with
     // the number of values we need to compare.
     if (!Valid || (MinMaxAccessesNonReadOnly->size() + !ReadOnlyPairs.empty() >
-                   RunTimeChecksMaxArraysPerGroup)){
+                   RunTimeChecksMaxArraysPerGroup)) {
       for (MinMaxAccessTy &MMA : *(MinMaxAccessesNonReadOnly)) {
         isl_pw_multi_aff_free(MMA.first);
         isl_pw_multi_aff_free(MMA.second);
@@ -1629,9 +1628,9 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       for (MemoryAccess *MA : ReadOnlyPair.second)
         Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
 
-    Valid = calculateMinMaxAccess(Accesses, getDomains(),getAssumedContext(),
+    Valid = calculateMinMaxAccess(Accesses, getDomains(), getAssumedContext(),
                                   MinMaxAccessesReadOnly);
-    MinMaxVectorPairTy pair(MinMaxAccessesNonReadOnly,MinMaxAccessesReadOnly);
+    MinMaxVectorPairTy pair(MinMaxAccessesNonReadOnly, MinMaxAccessesReadOnly);
     MinMaxAliasGroups.push_back(pair);
 
     if (!Valid)
@@ -1788,39 +1787,38 @@ void Scop::printContext(raw_ostream &OS) const {
 }
 
 void Scop::printAliasAssumptions(raw_ostream &OS) const {
-  int noOfGroups=0;
-  for (const MinMaxVectorPairTy &Pair : MinMaxAliasGroups){
+  int noOfGroups = 0;
+  for (const MinMaxVectorPairTy &Pair : MinMaxAliasGroups) {
     if (Pair.second->size() == 0)
       noOfGroups += 1;
     else
       noOfGroups += Pair.second->size();
   }
 
-  OS.indent(4) << "Alias Groups (" << noOfGroups  << "):\n";
+  OS.indent(4) << "Alias Groups (" << noOfGroups << "):\n";
   if (MinMaxAliasGroups.empty()) {
     OS.indent(8) << "n/a\n";
     return;
   }
 
-  for (const MinMaxVectorPairTy &Pair : MinMaxAliasGroups){
+  for (const MinMaxVectorPairTy &Pair : MinMaxAliasGroups) {
 
     // If the group has no read only accesses print the write accesses.
-    if (Pair.second->empty()){
+    if (Pair.second->empty()) {
       OS.indent(8) << "[[";
-      for (MinMaxAccessTy &MMANonReadOnly : *(Pair.first)){
-        OS << " <" << MMANonReadOnly.first << ", "
-           << MMANonReadOnly.second << ">";
+      for (MinMaxAccessTy &MMANonReadOnly : *(Pair.first)) {
+        OS << " <" << MMANonReadOnly.first << ", " << MMANonReadOnly.second
+           << ">";
       }
       OS << " ]]\n";
     }
 
-    for (MinMaxAccessTy &MMAReadOnly : *(Pair.second)){
+    for (MinMaxAccessTy &MMAReadOnly : *(Pair.second)) {
       OS.indent(8) << "[[";
-      OS << " <" << MMAReadOnly.first << ", "
-         << MMAReadOnly.second << ">";
-      for (MinMaxAccessTy &MMANonReadOnly : *(Pair.first)){
-        OS << " <" << MMANonReadOnly.first << ", "
-           << MMANonReadOnly.second << ">";
+      OS << " <" << MMAReadOnly.first << ", " << MMAReadOnly.second << ">";
+      for (MinMaxAccessTy &MMANonReadOnly : *(Pair.first)) {
+        OS << " <" << MMANonReadOnly.first << ", " << MMANonReadOnly.second
+           << ">";
       }
       OS << " ]]\n";
     }

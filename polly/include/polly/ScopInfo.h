@@ -715,7 +715,7 @@ public:
 
   /// @brief Pair of minimal/maximal access vectors representing
   /// read write and read only accesses
-  using MinMaxVectorPairTy = std::pair<MinMaxVectorTy *,MinMaxVectorTy *>;
+  using MinMaxVectorPairTy = std::pair<MinMaxVectorTy *, MinMaxVectorTy *>;
 
   /// @brief Vector of pair of minimal/maximal access vectors representing
   /// non read only and read only accesses for each alias group.

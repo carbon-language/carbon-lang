@@ -305,26 +305,22 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
 
 // Build alias check condition given a pair of minimal/maximal access.
 static __isl_give isl_ast_expr *buildCondition(__isl_keep isl_ast_build *Build,
-                             Scop::MinMaxAccessTy *It0,
-                             Scop::MinMaxAccessTy *It1){
-    isl_ast_expr *NonAliasGroup,*MinExpr, *MaxExpr;
-    MinExpr =
-        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-            Build, isl_pw_multi_aff_copy(It0->first)));
-    MaxExpr =
-        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-            Build, isl_pw_multi_aff_copy(It1->second)));
-    NonAliasGroup = isl_ast_expr_le(MaxExpr, MinExpr);
-    MinExpr =
-        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-            Build, isl_pw_multi_aff_copy(It1->first)));
-    MaxExpr =
-        isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
-            Build, isl_pw_multi_aff_copy(It0->second)));
-    NonAliasGroup =
-        isl_ast_expr_or(NonAliasGroup, isl_ast_expr_le(MaxExpr, MinExpr));
+                                               Scop::MinMaxAccessTy *It0,
+                                               Scop::MinMaxAccessTy *It1) {
+  isl_ast_expr *NonAliasGroup, *MinExpr, *MaxExpr;
+  MinExpr = isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+      Build, isl_pw_multi_aff_copy(It0->first)));
+  MaxExpr = isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+      Build, isl_pw_multi_aff_copy(It1->second)));
+  NonAliasGroup = isl_ast_expr_le(MaxExpr, MinExpr);
+  MinExpr = isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+      Build, isl_pw_multi_aff_copy(It1->first)));
+  MaxExpr = isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
+      Build, isl_pw_multi_aff_copy(It0->second)));
+  NonAliasGroup =
+      isl_ast_expr_or(NonAliasGroup, isl_ast_expr_le(MaxExpr, MinExpr));
 
-    return NonAliasGroup;
+  return NonAliasGroup;
 }
 
 void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
@@ -345,11 +341,11 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
     for (auto RWAccIt0 = MinMaxReadWrite->begin(); RWAccIt0 != RWAccEnd;
          ++RWAccIt0) {
       for (auto RWAccIt1 = RWAccIt0 + 1; RWAccIt1 != RWAccEnd; ++RWAccIt1)
-        RunCondition = isl_ast_expr_and(RunCondition,
-                                       buildCondition(Build,RWAccIt0,RWAccIt1));
+        RunCondition = isl_ast_expr_and(
+            RunCondition, buildCondition(Build, RWAccIt0, RWAccIt1));
       for (Scop::MinMaxAccessTy &ROAccIt : *MinMaxReadOnly)
-        RunCondition = isl_ast_expr_and(RunCondition,
-                                       buildCondition(Build,RWAccIt0,&ROAccIt));
+        RunCondition = isl_ast_expr_and(
+            RunCondition, buildCondition(Build, RWAccIt0, &ROAccIt));
     }
   }
 }
