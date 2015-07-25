@@ -40,6 +40,10 @@ def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
 def FeatureZCZeroing : SubtargetFeature<"zcz", "HasZeroCycleZeroing", "true",
                                         "Has zero-cycle zeroing instructions">;
 
+def FeatureReserveX18 : SubtargetFeature<"reserve-x18", "ReserveX18", "true",
+                                         "Reserve X18, making it unavailable "
+                                         "as a GPR">;
+
 //===----------------------------------------------------------------------===//
 // Architectures.
 //

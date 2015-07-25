@@ -51,6 +51,9 @@ protected:
   // HasZeroCycleZeroing - Has zero-cycle zeroing instructions.
   bool HasZeroCycleZeroing;
 
+  // ReserveX18 - X18 is not available as a general purpose register.
+  bool ReserveX18;
+
   bool IsLittle;
 
   /// CPUString - String name of used CPU.
@@ -101,6 +104,7 @@ public:
 
   bool hasZeroCycleZeroing() const { return HasZeroCycleZeroing; }
 
+  bool isX18Reserved() const { return ReserveX18; }
   bool hasFPARMv8() const { return HasFPARMv8; }
   bool hasNEON() const { return HasNEON; }
   bool hasCrypto() const { return HasCrypto; }

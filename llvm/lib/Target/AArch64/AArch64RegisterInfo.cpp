@@ -34,10 +34,6 @@ using namespace llvm;
 #define GET_REGINFO_TARGET_DESC
 #include "AArch64GenRegisterInfo.inc"
 
-static cl::opt<bool>
-ReserveX18("aarch64-reserve-x18", cl::Hidden,
-          cl::desc("Reserve X18, making it unavailable as GPR"));
-
 AArch64RegisterInfo::AArch64RegisterInfo(const Triple &TT)
     : AArch64GenRegisterInfo(AArch64::LR), TT(TT) {}
 
@@ -104,7 +100,7 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(AArch64::W29);
   }
 
-  if (TT.isOSDarwin() || ReserveX18) {
+  if (TT.isOSDarwin() || MF.getSubtarget<AArch64Subtarget>().isX18Reserved()) {
     Reserved.set(AArch64::X18); // Platform register
     Reserved.set(AArch64::W18);
   }
@@ -131,7 +127,8 @@ bool AArch64RegisterInfo::isReservedReg(const MachineFunction &MF,
     return true;
   case AArch64::X18:
   case AArch64::W18:
-    return TT.isOSDarwin() || ReserveX18;
+    return TT.isOSDarwin() ||
+           MF.getSubtarget<AArch64Subtarget>().isX18Reserved();
   case AArch64::FP:
   case AArch64::W29:
     return TFI->hasFP(MF) || TT.isOSDarwin();
@@ -402,9 +399,11 @@ unsigned AArch64RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case AArch64::GPR32commonRegClassID:
   case AArch64::GPR64commonRegClassID:
     return 32 - 1                                // XZR/SP
-           - (TFI->hasFP(MF) || TT.isOSDarwin()) // FP
-           - (TT.isOSDarwin() || ReserveX18) // X18 reserved as platform register
-           - hasBasePointer(MF);           // X19
+      - (TFI->hasFP(MF) || TT.isOSDarwin()) // FP
+      - (TT.isOSDarwin() ||
+         MF.getSubtarget<AArch64Subtarget>()
+             .isX18Reserved()) // X18 reserved as platform register
+      - hasBasePointer(MF);    // X19
   case AArch64::FPR8RegClassID:
   case AArch64::FPR16RegClassID:
   case AArch64::FPR32RegClassID:
