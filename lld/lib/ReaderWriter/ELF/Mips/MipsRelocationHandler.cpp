@@ -227,13 +227,6 @@ static int32_t reloc26loc(uint64_t P, uint64_t S, int32_t A, uint32_t shift) {
   return (A | ((P + 4) & (0xfc000000 << shift))) + S;
 }
 
-/// \brief LLD_R_MIPS_GLOBAL_26, LLD_R_MICROMIPS_GLOBAL_26_S1
-/// external: (sign-extend(A) + S) >> 2
-static int32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
-  A = shift == 1 ? llvm::SignExtend32<27>(A) : llvm::SignExtend32<28>(A);
-  return A + S;
-}
-
 /// \brief R_MIPS_HI16, R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_TPREL_HI16,
 /// R_MICROMIPS_HI16, R_MICROMIPS_TLS_DTPREL_HI16, R_MICROMIPS_TLS_TPREL_HI16
 /// local/external: hi16 (AHL + S) - (short)(AHL + S) (truncate)
@@ -262,7 +255,6 @@ static int32_t relocGOTOfst(uint64_t S, int64_t A) {
 /// \brief R_MIPS_PC16
 /// local/external: (S + A - P) >> 2
 static ErrorOr<int64_t> relocPc16(uint64_t P, uint64_t S, int64_t A) {
-  A = llvm::SignExtend32<18>(A);
   if ((S + A) & 3)
     return make_unaligned_range_reloc_error();
   return S + A - P;
@@ -271,7 +263,6 @@ static ErrorOr<int64_t> relocPc16(uint64_t P, uint64_t S, int64_t A) {
 /// \brief R_MIPS_PC18_S3, R_MICROMIPS_PC18_S3
 /// local/external: (S + A - P) >> 3 (P with cleared 3 less significant bits)
 static ErrorOr<int64_t> relocPc18(uint64_t P, uint64_t S, int64_t A) {
-  A = llvm::SignExtend32<21>(A);
   if ((S + A) & 6)
     return make_unaligned_range_reloc_error();
   return S + A - ((P | 7) ^ 7);
@@ -280,7 +271,6 @@ static ErrorOr<int64_t> relocPc18(uint64_t P, uint64_t S, int64_t A) {
 /// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2
 /// local/external: (S + A - P) >> 2
 static ErrorOr<int64_t> relocPc19(uint64_t P, uint64_t S, int64_t A) {
-  A = llvm::SignExtend32<21>(A);
   if ((S + A) & 2)
     return make_unaligned_range_reloc_error();
   return S + A - P;
@@ -289,7 +279,6 @@ static ErrorOr<int64_t> relocPc19(uint64_t P, uint64_t S, int64_t A) {
 /// \brief R_MIPS_PC21_S2, R_MICROMIPS_PC21_S2
 /// local/external: (S + A - P) >> 2
 static ErrorOr<int64_t> relocPc21(uint64_t P, uint64_t S, int64_t A) {
-  A = llvm::SignExtend32<23>(A);
   if ((S + A) & 2)
     return make_unaligned_range_reloc_error();
   return S + A - P;
@@ -298,7 +287,6 @@ static ErrorOr<int64_t> relocPc21(uint64_t P, uint64_t S, int64_t A) {
 /// \brief R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
 /// local/external: (S + A - P) >> 2
 static ErrorOr<int64_t> relocPc26(uint64_t P, uint64_t S, int64_t A) {
-  A = llvm::SignExtend32<28>(A);
   if ((S + A) & 2)
     return make_unaligned_range_reloc_error();
   return S + A - P;
@@ -389,9 +377,10 @@ calculateRelocation(Reference::KindValue kind, Reference::Addend addend,
   case R_MIPS_NONE:
     return 0;
   case R_MIPS_16:
-    return tgtAddr + llvm::SignExtend32<16>(addend);
   case R_MIPS_32:
   case R_MIPS_64:
+  case LLD_R_MIPS_GLOBAL_26:
+  case LLD_R_MICROMIPS_GLOBAL_26_S1:
     return tgtAddr + addend;
   case R_MIPS_SUB:
   case R_MICROMIPS_SUB:
@@ -509,10 +498,6 @@ calculateRelocation(Reference::KindValue kind, Reference::Addend addend,
   case LLD_R_MIPS_32_HI16:
   case LLD_R_MIPS_64_HI16:
     return maskLow16(tgtAddr + addend);
-  case LLD_R_MIPS_GLOBAL_26:
-    return reloc26ext(tgtAddr, addend, 2);
-  case LLD_R_MICROMIPS_GLOBAL_26_S1:
-    return reloc26ext(tgtAddr, addend, isCrossJump ? 2 : 1);
   case LLD_R_MIPS_STO_PLT:
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
@@ -526,7 +511,7 @@ template <class ELFT>
 static uint64_t relocRead(const MipsRelocationParams &params,
                           const uint8_t *loc) {
   assert((params._size == 4 || params._size == 8) && "Unexpected size");
-  uint64_t data;
+  uint64_t data = 0;
   memcpy(&data, loc, params._size);
   if (params._shuffle) {
     using namespace endian;
@@ -696,16 +681,34 @@ Reference::Addend readMipsRelocAddend(Reference::KindValue kind,
   case R_MIPS_LITERAL:
   case R_MICROMIPS_LITERAL:
     return llvm::SignExtend32<16>(res);
+  case R_MIPS_PC16:
+    return llvm::SignExtend32<18>(res);
   case R_MICROMIPS_GPREL7_S2:
     return llvm::SignExtend32<9>(res);
   case R_MICROMIPS_PC7_S1:
     return llvm::SignExtend32<8>(res);
   case R_MICROMIPS_PC10_S1:
     return llvm::SignExtend32<11>(res);
+  case R_MIPS_16:
+    return llvm::SignExtend32<16>(res);
   case R_MICROMIPS_PC16_S1:
     return llvm::SignExtend32<17>(res);
+  case R_MIPS_PC18_S3:
+  case R_MIPS_PC19_S2:
+  case R_MICROMIPS_PC18_S3:
+  case R_MICROMIPS_PC19_S2:
+    return llvm::SignExtend32<21>(res);
+  case R_MIPS_PC21_S2:
+  case R_MICROMIPS_PC21_S2:
+    return llvm::SignExtend32<23>(res);
   case R_MICROMIPS_PC23_S2:
     return llvm::SignExtend32<25>(res);
+  case R_MICROMIPS_26_S1:
+    return llvm::SignExtend32<27>(res);
+  case R_MIPS_26:
+  case R_MIPS_PC26_S2:
+  case R_MICROMIPS_PC26_S2:
+    return llvm::SignExtend32<28>(res);
   default:
     // Nothing to do
     break;
