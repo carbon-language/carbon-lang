@@ -1097,21 +1097,10 @@ visitAllOverriddenMethods(const CXXMethodDecl *MD, VisitorTy &Visitor) {
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
        E = MD->end_overridden_methods(); I != E; ++I) {
     const CXXMethodDecl *OverriddenMD = *I;
-    if (!Visitor.visit(OverriddenMD))
+    if (!Visitor(OverriddenMD))
       continue;
     visitAllOverriddenMethods(OverriddenMD, Visitor);
   }
-}
-
-namespace {
-  struct OverriddenMethodsCollector {
-    OverriddenMethodsSetTy *Methods;
-
-    bool visit(const CXXMethodDecl *MD) {
-      // Don't recurse on this method if we've already collected it.
-      return Methods->insert(MD).second;
-    }
-  };
 }
 
 /// ComputeAllOverriddenMethods - Given a method decl, will return a set of all
@@ -1119,8 +1108,11 @@ namespace {
 static void
 ComputeAllOverriddenMethods(const CXXMethodDecl *MD,
                             OverriddenMethodsSetTy& OverriddenMethods) {
-  OverriddenMethodsCollector Collector = { &OverriddenMethods };
-  visitAllOverriddenMethods(MD, Collector);
+  auto OverriddenMethodsCollector = [&](const CXXMethodDecl *MD) {
+    // Don't recurse on this method if we've already collected it.
+    return OverriddenMethods.insert(MD).second;
+  };
+  visitAllOverriddenMethods(MD, OverriddenMethodsCollector);
 }
 
 void ItaniumVTableBuilder::ComputeThisAdjustments() {
@@ -2633,20 +2625,6 @@ public:
   void dumpLayout(raw_ostream &);
 };
 
-/// InitialOverriddenDefinitionCollector - Finds the set of least derived bases
-/// that define the given method.
-struct InitialOverriddenDefinitionCollector {
-  BasesSetVectorTy Bases;
-  OverriddenMethodsSetTy VisitedOverriddenMethods;
-
-  bool visit(const CXXMethodDecl *OverriddenMD) {
-    if (OverriddenMD->size_overridden_methods() == 0)
-      Bases.insert(OverriddenMD->getParent());
-    // Don't recurse on this method if we've already collected it.
-    return VisitedOverriddenMethods.insert(OverriddenMD).second;
-  }
-};
-
 } // end namespace
 
 // Let's study one class hierarchy as an example:
@@ -2705,19 +2683,31 @@ struct InitialOverriddenDefinitionCollector {
 // for the given method, relative to the beginning of the MostDerivedClass.
 CharUnits
 VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
-  InitialOverriddenDefinitionCollector Collector;
-  visitAllOverriddenMethods(Overrider.Method, Collector);
+  BasesSetVectorTy Bases;
+
+  {
+    // Find the set of least derived bases that define the given method.
+    OverriddenMethodsSetTy VisitedOverriddenMethods;
+    auto InitialOverriddenDefinitionCollector = [&](
+        const CXXMethodDecl *OverriddenMD) {
+      if (OverriddenMD->size_overridden_methods() == 0)
+        Bases.insert(OverriddenMD->getParent());
+      // Don't recurse on this method if we've already collected it.
+      return VisitedOverriddenMethods.insert(OverriddenMD).second;
+    };
+    visitAllOverriddenMethods(Overrider.Method,
+                              InitialOverriddenDefinitionCollector);
+  }
 
   // If there are no overrides then 'this' is located
   // in the base that defines the method.
-  if (Collector.Bases.size() == 0)
+  if (Bases.size() == 0)
     return Overrider.Offset;
 
   CXXBasePaths Paths;
   Overrider.Method->getParent()->lookupInBases(
-      [&Collector](const CXXBaseSpecifier *Specifier, CXXBasePath &) {
-        return Collector.Bases.count(
-            Specifier->getType()->getAsCXXRecordDecl());
+      [&Bases](const CXXBaseSpecifier *Specifier, CXXBasePath &) {
+        return Bases.count(Specifier->getType()->getAsCXXRecordDecl());
       },
       Paths);
 
