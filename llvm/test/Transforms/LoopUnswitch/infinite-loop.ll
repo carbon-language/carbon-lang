@@ -9,23 +9,23 @@
 ; It can trivially unswitch on the false cas of condition %a though.
 
 ; STATS: 2 loop-unswitch - Number of branches unswitched
-; STATS: 1 loop-unswitch - Number of unswitches that are trivial
+; STATS: 2 loop-unswitch - Number of unswitches that are trivial
 
 ; CHECK-LABEL: @func_16(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %a, label %entry.split, label %abort0.split
 
 ; CHECK: entry.split:
-; CHECK-NEXT: br i1 %b, label %cond.end.us, label %abort1
+; CHECK-NEXT: br i1 %b, label %cond.end, label %abort1.split
 
-; CHECK: cond.end.us:
-; CHECK-NEXT: br label %cond.end.us
+; CHECK: cond.end:
+; CHECK-NEXT: br label %cond.end
 
 ; CHECK: abort0.split:
 ; CHECK-NEXT: call void @end0() [[NOR_NUW:#[0-9]+]]
 ; CHECK-NEXT: unreachable
 
-; CHECK: abort1:
+; CHECK: abort1.split:
 ; CHECK-NEXT: call void @end1() [[NOR_NUW]]
 ; CHECK-NEXT: unreachable
 
