@@ -60,7 +60,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         
         # First set the timeout too short, and make sure we fail.
         options = lldb.SBExpressionOptions()
-        options.SetTimeoutInMicroSeconds(100)
+        options.SetTimeoutInMicroSeconds(10)
         options.SetUnwindOnError(True)
 
         frame = thread.GetFrameAtIndex(0)
