@@ -398,6 +398,33 @@ entry:
   ret i1 %conv
 }
 
+define zeroext i16 @i32_trunc_i16(i32 %a) nounwind ssp {
+entry:
+; CHECK-LABEL: i32_trunc_i16
+; CHECK: and [[REG:w[0-9]+]], w0, #0xffff
+; CHECK: uxth w0, [[REG]]
+  %conv = trunc i32 %a to i16
+  ret i16 %conv
+}
+
+define zeroext i8 @i32_trunc_i8(i32 %a) nounwind ssp {
+entry:
+; CHECK-LABEL: i32_trunc_i8
+; CHECK: and [[REG:w[0-9]+]], w0, #0xff
+; CHECK: uxtb w0, [[REG]]
+  %conv = trunc i32 %a to i8
+  ret i8 %conv
+}
+
+define zeroext i1 @i32_trunc_i1(i32 %a) nounwind ssp {
+entry:
+; CHECK-LABEL: i32_trunc_i1
+; CHECK: and [[REG:w[0-9]+]], w0, #0x1
+; CHECK: and w0, [[REG]], #0x1
+  %conv = trunc i32 %a to i1
+  ret i1 %conv
+}
+
 ; rdar://15101939
 define void @stack_trunc() nounwind {
 ; CHECK-LABEL: stack_trunc
