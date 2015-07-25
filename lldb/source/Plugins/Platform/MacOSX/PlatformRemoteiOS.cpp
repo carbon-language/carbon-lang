@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
@@ -302,6 +303,7 @@ PlatformRemoteiOS::GetContainedFilesIntoVectorOfStringsCallback (void *baton,
 bool
 PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded()
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
     if (m_sdk_directory_infos.empty())
     {
         // A --sysroot option was supplied - add it to our list of SDKs to check
@@ -310,9 +312,17 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded()
             FileSpec sdk_sysroot_fspec(m_sdk_sysroot.GetCString(), true);
             const SDKDirectoryInfo sdk_sysroot_directory_info(sdk_sysroot_fspec);
             m_sdk_directory_infos.push_back(sdk_sysroot_directory_info);
+            if (log)
+            {
+                log->Printf ("PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded added --sysroot SDK directory %s", m_sdk_sysroot.GetCString());
+            }
             return true;
         }
         const char *device_support_dir = GetDeviceSupportDirectory();
+        if (log)
+        {
+            log->Printf ("PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded Got DeviceSupport directory %s", device_support_dir);
+        }
         if (device_support_dir)
         {
             const bool find_directories = true;
@@ -337,6 +347,10 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded()
                 if (sdk_symbols_symlink_fspec.Exists())
                 {
                     m_sdk_directory_infos.push_back(sdk_directory_info);
+                    if (log)
+                    {
+                        log->Printf ("PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded added builtin SDK directory %s", sdk_symbols_symlink_fspec.GetPath().c_str());
+                    }
                 }
             }
 
@@ -344,6 +358,10 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded()
             FileSpec local_sdk_cache("~/Library/Developer/Xcode/iOS DeviceSupport", true);
             if (local_sdk_cache.Exists())
             {
+                if (log)
+                {
+                    log->Printf ("PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded searching %s for additional SDKs", local_sdk_cache.GetPath().c_str());
+                }
                 char path[PATH_MAX];
                 if (local_sdk_cache.GetPath(path, sizeof(path)))
                 {
@@ -358,6 +376,10 @@ PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded()
                     for (uint32_t i=num_installed; i<num_sdk_infos; ++i)
                     {
                         m_sdk_directory_infos[i].user_cached = true;
+                        if (log)
+                        {
+                            log->Printf ("PlatformRemoteiOS::UpdateSDKDirectoryInfosIfNeeded user SDK directory %s", m_sdk_directory_infos[i].directory.GetPath().c_str());
+                        }
                     }
                 }
             }
@@ -592,6 +614,7 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
                                      bool symbols_dirs_only,
                                      lldb_private::FileSpec &local_file)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
     if (sdkroot_path && sdkroot_path[0] && platform_file_path && platform_file_path[0])
     {
         char resolved_path[PATH_MAX];
@@ -606,7 +629,13 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
             
             local_file.SetFile(resolved_path, true);
             if (local_file.Exists())
+            {
+                if (log)
+                {
+                    log->Printf ("Found a copy of %s in the SDK dir %s", platform_file_path, sdkroot_path);
+                }
                 return true;
+            }
         }
             
         ::snprintf (resolved_path,
@@ -617,7 +646,13 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
         
         local_file.SetFile(resolved_path, true);
         if (local_file.Exists())
+        {
+            if (log)
+            {
+                log->Printf ("Found a copy of %s in the SDK dir %s/Symbols.Internal", platform_file_path, sdkroot_path);
+            }
             return true;
+        }
         ::snprintf (resolved_path,
                     sizeof(resolved_path), 
                     "%s/Symbols%s", 
@@ -626,7 +661,13 @@ PlatformRemoteiOS::GetFileInSDKRoot (const char *platform_file_path,
         
         local_file.SetFile(resolved_path, true);
         if (local_file.Exists())
+        {
+            if (log)
+            {
+                log->Printf ("Found a copy of %s in the SDK dir %s/Symbols", platform_file_path, sdkroot_path);
+            }
             return true;                
+        }
     }
     return false;
 }
@@ -637,6 +678,7 @@ PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file,
                                   const UUID *uuid_ptr,
                                   FileSpec &local_file)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
     Error error;
     char platform_file_path[PATH_MAX];
     if (platform_file.GetPath(platform_file_path, sizeof(platform_file_path)))
@@ -654,7 +696,13 @@ PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file,
             
             local_file.SetFile(resolved_path, true);
             if (local_file.Exists())
+            {
+                if (log)
+                {
+                    log->Printf ("Found a copy of %s in the DeviceSupport dir %s", platform_file_path, os_version_dir);
+                }
                 return error;
+            }
 
             ::snprintf (resolved_path, 
                         sizeof(resolved_path), 
@@ -664,7 +712,13 @@ PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file,
 
             local_file.SetFile(resolved_path, true);
             if (local_file.Exists())
+            {
+                if (log)
+                {
+                    log->Printf ("Found a copy of %s in the DeviceSupport dir %s/Symbols.Internal", platform_file_path, os_version_dir);
+                }
                 return error;
+            }
             ::snprintf (resolved_path, 
                         sizeof(resolved_path), 
                         "%s/Symbols/%s", 
@@ -673,7 +727,13 @@ PlatformRemoteiOS::GetSymbolFile (const FileSpec &platform_file,
 
             local_file.SetFile(resolved_path, true);
             if (local_file.Exists())
+            {
+                if (log)
+                {
+                    log->Printf ("Found a copy of %s in the DeviceSupport dir %s/Symbols", platform_file_path, os_version_dir);
+                }
                 return error;
+            }
 
         }
         local_file = platform_file;

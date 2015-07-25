@@ -3049,6 +3049,11 @@ Process::ReadModuleFromMemory (const FileSpec& file_spec,
                                lldb::addr_t header_addr,
                                size_t size_to_read)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+    if (log)
+    {
+        log->Printf ("Process::ReadModuleFromMemory reading %s binary from memory", file_spec.GetPath().c_str());
+    }
     ModuleSP module_sp (new Module (file_spec, ArchSpec()));
     if (module_sp)
     {

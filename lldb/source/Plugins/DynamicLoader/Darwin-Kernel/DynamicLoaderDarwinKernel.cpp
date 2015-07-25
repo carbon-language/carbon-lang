@@ -668,6 +668,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::GetUUID () const
 bool
 DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
 {
+    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
     if (m_memory_module_sp.get() != NULL)
         return true;
     if (m_load_address == LLDB_INVALID_ADDRESS)
@@ -702,6 +703,10 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
     {
         if (m_uuid != memory_module_sp->GetUUID())
         {
+            if (log)
+            {
+                log->Printf ("KextImageInfo::ReadMemoryModule the kernel said to find uuid %s at 0x%" PRIx64 " but instead we found uuid %s, throwing it away", m_uuid.GetAsString().c_str(), m_load_address, memory_module_sp->GetUUID().GetAsString().c_str());
+            }
             return false;
         }
     }
@@ -716,6 +721,11 @@ DynamicLoaderDarwinKernel::KextImageInfo::ReadMemoryModule (Process *process)
     m_kernel_image = is_kernel;
     if (is_kernel)
     {
+        if (log)
+        {
+            // This is unusual and probably not intended
+            log->Printf ("KextImageInfo::ReadMemoryModule read the kernel binary out of memory");
+        }
         if (memory_module_sp->GetArchitecture().IsValid())
         {
             process->GetTarget().SetArchitecture(memory_module_sp->GetArchitecture());
