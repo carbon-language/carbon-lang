@@ -301,9 +301,7 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
     Res = Node;
   } else {
     Res = isl_schedule_node_band_tile(Node, Sizes);
-    Child = isl_schedule_node_get_child(Res, 0);
-    isl_schedule_node_free(Res);
-    Res = Child;
+    Res = isl_schedule_node_child(Res, 0);
   }
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
