@@ -18,6 +18,3 @@ static_assert(sizeof(0i32) == __SIZEOF_INT32__, "");
 #ifdef __SIZEOF_INT64__
 static_assert(sizeof(0i64) == __SIZEOF_INT64__, "");
 #endif
-#ifdef __SIZEOF_INT128__
-static_assert(sizeof(0i128) == __SIZEOF_INT128__, "");
-#endif

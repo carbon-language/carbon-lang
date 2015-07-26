@@ -3355,13 +3355,6 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
 
     // Get the value in the widest-possible width.
     unsigned MaxWidth = Context.getTargetInfo().getIntMaxTWidth();
-    // The microsoft literal suffix extensions support 128-bit literals, which
-    // may be wider than [u]intmax_t.
-    // FIXME: Actually, they don't. We seem to have accidentally invented the
-    //        i128 suffix.
-    if (Literal.MicrosoftInteger == 128 && MaxWidth < 128 &&
-        Context.getTargetInfo().hasInt128Type())
-      MaxWidth = 128;
     llvm::APInt ResultVal(MaxWidth, 0);
 
     if (Literal.GetIntegerValue(ResultVal)) {
@@ -3384,12 +3377,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok, Scope *UDLScope) {
 
       // Microsoft specific integer suffixes are explicitly sized.
       if (Literal.MicrosoftInteger) {
-        if (Literal.MicrosoftInteger > MaxWidth) {
-          // If this target doesn't support __int128, error and force to ull.
-          Diag(Tok.getLocation(), diag::err_int128_unsupported);
-          Width = MaxWidth;
-          Ty = Context.getIntMaxType();
-        } else if (Literal.MicrosoftInteger == 8 && !Literal.isUnsigned) {
+        if (Literal.MicrosoftInteger == 8 && !Literal.isUnsigned) {
           Width = 8;
           Ty = Context.CharTy;
         } else {
