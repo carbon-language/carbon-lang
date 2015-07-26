@@ -10,6 +10,7 @@
 #include "Writer.h"
 #include "Chunks.h"
 #include "Driver.h"
+#include <map>
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -58,24 +59,14 @@ void OutputSection::addChunk(Chunk *C) {
   Header.sh_size = Off;
 }
 
-static int compare(const Chunk *A, const Chunk *B) {
-  return A->getSectionName() < B->getSectionName();
-}
-
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
-  std::vector<Chunk *> Chunks = Symtab->getChunks();
-  if (Chunks.empty())
-    return;
-  std::sort(Chunks.begin(), Chunks.end(), compare);
-
-  Chunk *Prev = nullptr;
-  OutputSection *Sec = nullptr;
-  for (Chunk *C : Chunks) {
-    if (Prev == nullptr || Prev->getSectionName() != C->getSectionName()) {
+  std::map<StringRef, OutputSection *> Map;
+  for (Chunk *C : Symtab->getChunks()) {
+    OutputSection *&Sec = Map[C->getSectionName()];
+    if (!Sec) {
       Sec = new (CAlloc.Allocate()) OutputSection(C->getSectionName());
       OutputSections.push_back(Sec);
-      Prev = C;
     }
     Sec->addChunk(C);
   }
