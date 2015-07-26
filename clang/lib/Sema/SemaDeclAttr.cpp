@@ -2857,7 +2857,7 @@ void Sema::AddAlignValueAttr(SourceRange AttrRange, Decl *D, Expr *E,
   }
 
   if (!E->isValueDependent()) {
-    llvm::APSInt Alignment(32);
+    llvm::APSInt Alignment;
     ExprResult ICE
       = VerifyIntegerConstantExpression(E, &Alignment,
           diag::err_align_value_attribute_argument_not_int,
@@ -2971,7 +2971,7 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   }
 
   // FIXME: Cache the number on the Attr object?
-  llvm::APSInt Alignment(32);
+  llvm::APSInt Alignment;
   ExprResult ICE
     = VerifyIntegerConstantExpression(E, &Alignment,
         diag::err_aligned_attribute_argument_not_int,
@@ -2979,31 +2979,18 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   if (ICE.isInvalid())
     return;
 
+  uint64_t AlignVal = Alignment.getZExtValue();
+
   // C++11 [dcl.align]p2:
   //   -- if the constant expression evaluates to zero, the alignment
   //      specifier shall have no effect
   // C11 6.7.5p6:
   //   An alignment specification of zero has no effect.
   if (!(TmpAttr.isAlignas() && !Alignment)) {
-    if (!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
+    if (!llvm::isPowerOf2_64(AlignVal)) {
       Diag(AttrLoc, diag::err_alignment_not_power_of_two)
         << E->getSourceRange();
       return;
-    }
-    if (Context.getTargetInfo().isTLSSupported()) {
-      if (unsigned MaxAlign = Context.getTargetInfo().getMaxTLSAlign()) {
-        if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-          if (VD->getTLSKind()) {
-            CharUnits MaxAlignChars = Context.toCharUnitsFromBits(MaxAlign);
-            if (Alignment.getSExtValue() > MaxAlignChars.getQuantity()) {
-              Diag(VD->getLocation(), diag::err_tls_var_aligned_over_maximum)
-                << (unsigned)Alignment.getZExtValue() << VD
-                << (unsigned)MaxAlignChars.getQuantity();
-              return;
-            }
-          }
-        }
-      }
     }
   }
 
@@ -3011,10 +2998,23 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   unsigned MaxValidAlignment =
       Context.getTargetInfo().getTriple().isOSBinFormatCOFF() ? 8192
                                                               : 268435456;
-  if (Alignment.getZExtValue() > MaxValidAlignment) {
+  if (AlignVal > MaxValidAlignment) {
     Diag(AttrLoc, diag::err_attribute_aligned_too_great) << MaxValidAlignment
                                                          << E->getSourceRange();
     return;
+  }
+
+  if (Context.getTargetInfo().isTLSSupported()) {
+    unsigned MaxTLSAlign =
+        Context.toCharUnitsFromBits(Context.getTargetInfo().getMaxTLSAlign())
+            .getQuantity();
+    auto *VD = dyn_cast<VarDecl>(D);
+    if (MaxTLSAlign && AlignVal > MaxTLSAlign && VD &&
+        VD->getTLSKind() != VarDecl::TLS_None) {
+      Diag(VD->getLocation(), diag::err_tls_var_aligned_over_maximum)
+          << (unsigned)AlignVal << VD << MaxTLSAlign;
+      return;
+    }
   }
 
   AlignedAttr *AA = ::new (Context) AlignedAttr(AttrRange, Context, true,
