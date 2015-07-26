@@ -31,14 +31,9 @@ public:
   // Returns the size of the section in the output file.
   uint64_t getSize() { return Header.sh_size; }
 
-  // Set offset into the string table storing this section name.
-  // Used only when the name is longer than 8 bytes.
-  void setStringTableOff(uint32_t V) { StringTableOff = V; }
-
 private:
   StringRef Name;
   llvm::ELF::Elf64_Shdr Header;
-  uint32_t StringTableOff = 0;
   std::vector<Chunk *> Chunks;
 };
 
