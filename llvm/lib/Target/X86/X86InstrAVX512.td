@@ -2964,7 +2964,7 @@ multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
                            X86VectorVTInfo _, OpndItins itins,
                            bit IsCommutable = 0> {
   defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
-                    (ins _.RC:$src1, _.RC:$src2), OpcodeStr##_.Suffix,
+                    (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
                     "$src2, $src1", "$src1, $src2",
                     (_.VT (OpNode _.RC:$src1, _.RC:$src2)),
                     itins.rr, IsCommutable>,
@@ -2972,7 +2972,7 @@ multiclass avx512_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
   let mayLoad = 1 in
     defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
-                    (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr##_.Suffix,
+                    (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
                     "$src2, $src1", "$src1, $src2",
                     (_.VT (OpNode _.RC:$src1,
                                   (bitconvert (_.LdFrag addr:$src2)))),
@@ -2986,7 +2986,7 @@ multiclass avx512_binop_rmb<bits<8> opc, string OpcodeStr, SDNode OpNode,
            avx512_binop_rm<opc, OpcodeStr, OpNode, _, itins, IsCommutable> {
   let mayLoad = 1 in
     defm rmb : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
-                    (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr##_.Suffix,
+                    (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr,
                     "${src2}"##_.BroadcastStr##", $src1",
                     "$src1, ${src2}"##_.BroadcastStr,
                     (_.VT (OpNode _.RC:$src1,
@@ -3058,20 +3058,20 @@ multiclass avx512_binop_rm_vl_b<bits<8> opc, string OpcodeStr, SDNode OpNode,
 multiclass avx512_binop_rm_vl_dq<bits<8> opc_d, bits<8> opc_q, string OpcodeStr,
                                  SDNode OpNode, OpndItins itins, Predicate prd,
                                  bit IsCommutable = 0> {
-  defm Q : avx512_binop_rm_vl_q<opc_q, OpcodeStr, OpNode, itins, prd,
+  defm Q : avx512_binop_rm_vl_q<opc_q, OpcodeStr#"q", OpNode, itins, prd,
                                    IsCommutable>;
 
-  defm D : avx512_binop_rm_vl_d<opc_d, OpcodeStr, OpNode, itins, prd,
+  defm D : avx512_binop_rm_vl_d<opc_d, OpcodeStr#"d", OpNode, itins, prd,
                                    IsCommutable>;
 }
 
 multiclass avx512_binop_rm_vl_bw<bits<8> opc_b, bits<8> opc_w, string OpcodeStr,
                                  SDNode OpNode, OpndItins itins, Predicate prd,
                                  bit IsCommutable = 0> {
-  defm W : avx512_binop_rm_vl_w<opc_w, OpcodeStr, OpNode, itins, prd,
+  defm W : avx512_binop_rm_vl_w<opc_w, OpcodeStr#"w", OpNode, itins, prd,
                                    IsCommutable>;
 
-  defm B : avx512_binop_rm_vl_b<opc_b, OpcodeStr, OpNode, itins, prd,
+  defm B : avx512_binop_rm_vl_b<opc_b, OpcodeStr#"b", OpNode, itins, prd,
                                    IsCommutable>;
 }
 
@@ -3130,17 +3130,17 @@ defm VPADDUS : avx512_binop_rm_vl_bw<0xDC, 0xDD, "vpaddus", X86addus,
                                     SSE_INTALU_ITINS_P, HasBWI, 1>;
 defm VPSUBUS : avx512_binop_rm_vl_bw<0xD8, 0xD9, "vpsubus", X86subus,
                                     SSE_INTALU_ITINS_P, HasBWI, 0>;
-defm VPMULLD : avx512_binop_rm_vl_d<0x40, "vpmull", mul,
+defm VPMULLD : avx512_binop_rm_vl_d<0x40, "vpmulld", mul,
                                    SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
-defm VPMULLW : avx512_binop_rm_vl_w<0xD5, "vpmull", mul,
+defm VPMULLW : avx512_binop_rm_vl_w<0xD5, "vpmullw", mul,
                                    SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMULLQ : avx512_binop_rm_vl_q<0x40, "vpmull", mul,
+defm VPMULLQ : avx512_binop_rm_vl_q<0x40, "vpmullq", mul,
                                    SSE_INTALU_ITINS_P, HasDQI, 1>, T8PD;
-defm VPMULHW : avx512_binop_rm_vl_w<0xE5, "vpmulh", mulhs, SSE_INTALU_ITINS_P,
+defm VPMULHW : avx512_binop_rm_vl_w<0xE5, "vpmulhw", mulhs, SSE_INTALU_ITINS_P,
                                     HasBWI, 1>;
-defm VPMULHUW : avx512_binop_rm_vl_w<0xE4, "vpmulhu", mulhu, SSE_INTMUL_ITINS_P, 
+defm VPMULHUW : avx512_binop_rm_vl_w<0xE4, "vpmulhuw", mulhu, SSE_INTMUL_ITINS_P,
                                     HasBWI, 1>;
-defm VPMULHRSW : avx512_binop_rm_vl_w<0x0B, "vpmulhrs", X86mulhrs, SSE_INTMUL_ITINS_P, 
+defm VPMULHRSW : avx512_binop_rm_vl_w<0x0B, "vpmulhrsw", X86mulhrs, SSE_INTMUL_ITINS_P,
                                     HasBWI, 1>, T8PD;
 defm VPAVG : avx512_binop_rm_vl_bw<0xE0, 0xE3, "vpavg", X86avg,
                                     SSE_INTALU_ITINS_P, HasBWI, 1>;
@@ -3255,95 +3255,33 @@ let Predicates = [HasBWI] in {
                        avx512vl_i16_info, avx512vl_i32_info>, AVX512BIBase;
 }
 
-defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxs", smax,
+defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxsb", smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
-defm VPMAXSW : avx512_binop_rm_vl_w<0xEE, "vpmaxs", smax,
+defm VPMAXSW : avx512_binop_rm_vl_w<0xEE, "vpmaxsw", smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
 defm VPMAXS : avx512_binop_rm_vl_dq<0x3D, 0x3D, "vpmaxs", smax,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-defm VPMAXUB : avx512_binop_rm_vl_b<0xDE, "vpmaxu", umax,
+defm VPMAXUB : avx512_binop_rm_vl_b<0xDE, "vpmaxub", umax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMAXUW : avx512_binop_rm_vl_w<0x3E, "vpmaxu", umax,
+defm VPMAXUW : avx512_binop_rm_vl_w<0x3E, "vpmaxuw", umax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
 defm VPMAXU : avx512_binop_rm_vl_dq<0x3F, 0x3F, "vpmaxu", umax,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-defm VPMINSB : avx512_binop_rm_vl_b<0x38, "vpmins", smin,
+defm VPMINSB : avx512_binop_rm_vl_b<0x38, "vpminsb", smin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
-defm VPMINSW : avx512_binop_rm_vl_w<0xEA, "vpmins", smin,
+defm VPMINSW : avx512_binop_rm_vl_w<0xEA, "vpminsw", smin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
 defm VPMINS : avx512_binop_rm_vl_dq<0x39, 0x39, "vpmins", smin,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-defm VPMINUB : avx512_binop_rm_vl_b<0xDA, "vpminu", umin,
+defm VPMINUB : avx512_binop_rm_vl_b<0xDA, "vpminub", umin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMINUW : avx512_binop_rm_vl_w<0x3A, "vpminu", umin,
+defm VPMINUW : avx512_binop_rm_vl_w<0x3A, "vpminuw", umin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
 defm VPMINU : avx512_binop_rm_vl_dq<0x3B, 0x3B, "vpminu", umin,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
-
-//===----------------------------------------------------------------------===//
-// AVX-512 - Unpack Instructions
-//===----------------------------------------------------------------------===//
-
-multiclass avx512_unpack_fp<bits<8> opc, SDNode OpNode, ValueType vt,
-                                   PatFrag mem_frag, RegisterClass RC,
-                                   X86MemOperand x86memop, string asm,
-                                   Domain d> {
-    def rr : AVX512PI<opc, MRMSrcReg,
-                (outs RC:$dst), (ins RC:$src1, RC:$src2),
-                asm, [(set RC:$dst,
-                           (vt (OpNode RC:$src1, RC:$src2)))],
-                           d>, EVEX_4V;
-    def rm : AVX512PI<opc, MRMSrcMem,
-                (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
-                asm, [(set RC:$dst,
-                       (vt (OpNode RC:$src1,
-                            (bitconvert (mem_frag addr:$src2)))))],
-                        d>, EVEX_4V;
-}
-
-defm VUNPCKHPSZ: avx512_unpack_fp<0x15, X86Unpckh, v16f32, loadv8f64,
-      VR512, f512mem, "vunpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-      SSEPackedSingle>, PS, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VUNPCKHPDZ: avx512_unpack_fp<0x15, X86Unpckh, v8f64, loadv8f64,
-      VR512, f512mem, "vunpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-      SSEPackedDouble>, PD, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-defm VUNPCKLPSZ: avx512_unpack_fp<0x14, X86Unpckl, v16f32, loadv8f64,
-      VR512, f512mem, "vunpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-      SSEPackedSingle>, PS, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VUNPCKLPDZ: avx512_unpack_fp<0x14, X86Unpckl, v8f64, loadv8f64,
-      VR512, f512mem, "vunpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-      SSEPackedDouble>, PD, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-
-multiclass avx512_unpack_int<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                        ValueType OpVT, RegisterClass RC, PatFrag memop_frag,
-                        X86MemOperand x86memop> {
-  def rr : AVX512BI<opc, MRMSrcReg, (outs RC:$dst),
-       (ins RC:$src1, RC:$src2),
-       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-       [(set RC:$dst, (OpVT (OpNode (OpVT RC:$src1), (OpVT RC:$src2))))],
-       IIC_SSE_UNPCK>, EVEX_4V;
-  def rm : AVX512BI<opc, MRMSrcMem, (outs RC:$dst),
-       (ins RC:$src1, x86memop:$src2),
-       !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-       [(set RC:$dst, (OpVT (OpNode (OpVT RC:$src1),
-                                     (bitconvert (memop_frag addr:$src2)))))],
-                                     IIC_SSE_UNPCK>, EVEX_4V;
-}
-defm VPUNPCKLDQZ  : avx512_unpack_int<0x62, "vpunpckldq", X86Unpckl, v16i32,
-                                VR512, loadv16i32, i512mem>, EVEX_V512,
-                                EVEX_CD8<32, CD8VF>;
-defm VPUNPCKLQDQZ : avx512_unpack_int<0x6C, "vpunpcklqdq", X86Unpckl, v8i64,
-                                VR512, loadv8i64, i512mem>, EVEX_V512,
-                                VEX_W, EVEX_CD8<64, CD8VF>;
-defm VPUNPCKHDQZ  : avx512_unpack_int<0x6A, "vpunpckhdq", X86Unpckh, v16i32,
-                                VR512, loadv16i32, i512mem>, EVEX_V512,
-                                EVEX_CD8<32, CD8VF>;
-defm VPUNPCKHQDQZ : avx512_unpack_int<0x6D, "vpunpckhqdq", X86Unpckh, v8i64,
-                                VR512, loadv8i64, i512mem>, EVEX_V512,
-                                VEX_W, EVEX_CD8<64, CD8VF>;
 //===----------------------------------------------------------------------===//
 // AVX-512  Logical Instructions
 //===----------------------------------------------------------------------===//
@@ -6812,3 +6750,27 @@ def : Pat<(xor
           (bc_v8i64 (v8i1sextv8i64)),
           (bc_v8i64 (add (v8i64 VR512:$src), (v8i1sextv8i64)))),
           (VPABSQZrr VR512:$src)>;
+
+//===----------------------------------------------------------------------===//
+// AVX-512 - Unpack Instructions
+//===----------------------------------------------------------------------===//
+defm VUNPCKH : avx512_fp_binop_p<0x15, "vunpckh", X86Unpckh>;
+defm VUNPCKL : avx512_fp_binop_p<0x14, "vunpckl", X86Unpckl>;
+
+defm VPUNPCKLBW : avx512_binop_rm_vl_b<0x60, "vpunpcklbw", X86Unpckl,
+                                       SSE_INTALU_ITINS_P, HasBWI>;
+defm VPUNPCKHBW : avx512_binop_rm_vl_b<0x68, "vpunpckhbw", X86Unpckh,
+                                       SSE_INTALU_ITINS_P, HasBWI>;
+defm VPUNPCKLWD : avx512_binop_rm_vl_w<0x61, "vpunpcklwd", X86Unpckl,
+                                       SSE_INTALU_ITINS_P, HasBWI>;
+defm VPUNPCKHWD : avx512_binop_rm_vl_w<0x69, "vpunpckhwd", X86Unpckh,
+                                       SSE_INTALU_ITINS_P, HasBWI>;
+
+defm VPUNPCKLDQ : avx512_binop_rm_vl_d<0x62, "vpunpckldq", X86Unpckl,
+                                       SSE_INTALU_ITINS_P, HasAVX512>;
+defm VPUNPCKHDQ : avx512_binop_rm_vl_d<0x6A, "vpunpckhdq", X86Unpckh,
+                                       SSE_INTALU_ITINS_P, HasAVX512>;
+defm VPUNPCKLQDQ : avx512_binop_rm_vl_q<0x6C, "vpunpcklqdq", X86Unpckl,
+                                       SSE_INTALU_ITINS_P, HasAVX512>;
+defm VPUNPCKHQDQ : avx512_binop_rm_vl_q<0x6D, "vpunpckhqdq", X86Unpckh,
+                                       SSE_INTALU_ITINS_P, HasAVX512>;

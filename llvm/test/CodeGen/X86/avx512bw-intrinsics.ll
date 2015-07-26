@@ -1118,3 +1118,66 @@ define <16 x i32>@test_int_x86_avx512_mask_pmaddw_d_512(<32 x i16> %x0, <32 x i1
   ret <16 x i32> %res2
 }
 
+declare <64 x i8> @llvm.x86.avx512.mask.punpckhb.w.512(<64 x i8>, <64 x i8>, <64 x i8>, i64)
+
+define <64 x i8>@test_int_x86_avx512_mask_punpckhb_w_512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_punpckhb_w_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovq %rdi, %k1
+; CHECK-NEXT:    vpunpckhbw %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vpunpckhbw %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddb %zmm0, %zmm2, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <64 x i8> @llvm.x86.avx512.mask.punpckhb.w.512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 %x3)
+  %res1 = call <64 x i8> @llvm.x86.avx512.mask.punpckhb.w.512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 -1)
+  %res2 = add <64 x i8> %res, %res1
+  ret <64 x i8> %res2
+}
+
+declare <64 x i8> @llvm.x86.avx512.mask.punpcklb.w.512(<64 x i8>, <64 x i8>, <64 x i8>, i64)
+
+define <64 x i8>@test_int_x86_avx512_mask_punpcklb_w_512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_punpcklb_w_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovq %rdi, %k1
+; CHECK-NEXT:    vpunpcklbw %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vpunpcklbw %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddb %zmm0, %zmm2, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <64 x i8> @llvm.x86.avx512.mask.punpcklb.w.512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 %x3)
+  %res1 = call <64 x i8> @llvm.x86.avx512.mask.punpcklb.w.512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 -1)
+  %res2 = add <64 x i8> %res, %res1
+  ret <64 x i8> %res2
+}
+
+declare <32 x i16> @llvm.x86.avx512.mask.punpckhw.d.512(<32 x i16>, <32 x i16>, <32 x i16>, i32)
+
+define <32 x i16>@test_int_x86_avx512_mask_punpckhw_d_512(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_punpckhw_d_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovd %edi, %k1
+; CHECK-NEXT:    vpunpckhwd %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vpunpckhwd %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddw %zmm0, %zmm2, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <32 x i16> @llvm.x86.avx512.mask.punpckhw.d.512(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3)
+  %res1 = call <32 x i16> @llvm.x86.avx512.mask.punpckhw.d.512(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 -1)
+  %res2 = add <32 x i16> %res, %res1
+  ret <32 x i16> %res2
+}
+
+declare <32 x i16> @llvm.x86.avx512.mask.punpcklw.d.512(<32 x i16>, <32 x i16>, <32 x i16>, i32)
+
+define <32 x i16>@test_int_x86_avx512_mask_punpcklw_d_512(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3) {
+; CHECK-LABEL: test_int_x86_avx512_mask_punpcklw_d_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovd %edi, %k1
+; CHECK-NEXT:    vpunpcklwd %zmm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vpunpcklwd %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddw %zmm0, %zmm2, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <32 x i16> @llvm.x86.avx512.mask.punpcklw.d.512(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3)
+  %res1 = call <32 x i16> @llvm.x86.avx512.mask.punpcklw.d.512(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 -1)
+  %res2 = add <32 x i16> %res, %res1
+  ret <32 x i16> %res2
+}
