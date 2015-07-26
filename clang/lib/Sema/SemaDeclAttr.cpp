@@ -2985,7 +2985,7 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   // C11 6.7.5p6:
   //   An alignment specification of zero has no effect.
   if (!(TmpAttr.isAlignas() && !Alignment)) {
-    if(!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
+    if (!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
       Diag(AttrLoc, diag::err_alignment_not_power_of_two)
         << E->getSourceRange();
       return;
@@ -3008,7 +3008,9 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E,
   }
 
   // Alignment calculations can wrap around if it's greater than 2**28.
-  unsigned MaxValidAlignment = TmpAttr.isDeclspec() ? 8192 : 268435456;
+  unsigned MaxValidAlignment =
+      Context.getTargetInfo().getTriple().isOSBinFormatCOFF() ? 8192
+                                                              : 268435456;
   if (Alignment.getZExtValue() > MaxValidAlignment) {
     Diag(AttrLoc, diag::err_attribute_aligned_too_great) << MaxValidAlignment
                                                          << E->getSourceRange();
