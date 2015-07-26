@@ -234,6 +234,7 @@ bool StraightLineStrengthReduce::isBasisFor(const Candidate &Basis,
           Basis.CandidateKind == C.CandidateKind);
 }
 
+// TODO: use TTI->getGEPCost.
 static bool isGEPFoldable(GetElementPtrInst *GEP,
                           const TargetTransformInfo *TTI,
                           const DataLayout *DL) {

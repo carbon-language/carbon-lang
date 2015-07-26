@@ -78,7 +78,7 @@ namespace llvm {
     // current type directly.
     Type *operator->() const { return operator*(); }
 
-    Value *getOperand() const { return *OpIt; }
+    Value *getOperand() const { return const_cast<Value *>(&**OpIt); }
 
     generic_gep_type_iterator& operator++() {   // Preincrement
       if (CurTy.getInt()) {
