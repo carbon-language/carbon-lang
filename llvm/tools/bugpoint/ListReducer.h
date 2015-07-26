@@ -75,6 +75,11 @@ struct ListReducer {
     // Maximal number of allowed splitting iterations,
     // before the elements are randomly shuffled.
     const unsigned MaxIterationsWithoutProgress = 3;
+
+    // Maximal number of allowed single-element trim iterations. We add a
+    // threshhold here as single-element reductions may otherwise take a
+    // very long time to complete.
+    const unsigned MaxTrimIterationsWithoutBackJump = 3;
     bool ShufflingEnabled = true;
 
 Backjump:
@@ -157,6 +162,7 @@ Backjump:
     if (TheList.size() > 2) {
       bool Changed = true;
       std::vector<ElTy> EmptyList;
+      unsigned TrimIterations = 0;
       while (Changed) {  // Trimming loop.
         Changed = false;
         
@@ -186,9 +192,9 @@ Backjump:
           if (!Error.empty())
             return true;
         }
-        // This can take a long time if left uncontrolled.  For now, don't
-        // iterate.
-        break;
+        if (TrimIterations >= MaxTrimIterationsWithoutBackJump)
+          break;
+        TrimIterations++;
       }
     }
 
