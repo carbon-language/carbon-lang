@@ -86,9 +86,9 @@ class MetaMap {
   void OnThreadIdle(ThreadState *thr);
 
  private:
-  static const u32 kFlagMask  = 3 << 30;
-  static const u32 kFlagBlock = 1 << 30;
-  static const u32 kFlagSync  = 2 << 30;
+  static const u32 kFlagMask  = 3u << 30;
+  static const u32 kFlagBlock = 1u << 30;
+  static const u32 kFlagSync  = 2u << 30;
   typedef DenseSlabAlloc<MBlock, 1<<16, 1<<12> BlockAlloc;
   typedef DenseSlabAlloc<SyncVar, 1<<16, 1<<10> SyncAlloc;
   BlockAlloc block_alloc_;
