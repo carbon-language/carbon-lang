@@ -69,27 +69,22 @@ DumpType("debug-dump", cl::init(DIDT_All),
         clEnumValN(DIDT_StrOffsetsDwo, "str_offsets.dwo", ".debug_str_offsets.dwo"),
         clEnumValEnd));
 
-static int ReturnValue = EXIT_SUCCESS;
-
-static bool error(StringRef Filename, std::error_code EC) {
+static void error(StringRef Filename, std::error_code EC) {
   if (!EC)
-    return false;
+    return;
   errs() << Filename << ": " << EC.message() << "\n";
-  ReturnValue = EXIT_FAILURE;
-  return true;
+  exit(1);
 }
 
 static void DumpInput(StringRef Filename) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr =
       MemoryBuffer::getFileOrSTDIN(Filename);
-  if (error(Filename, BuffOrErr.getError()))
-    return;
+  error(Filename, BuffOrErr.getError());
   std::unique_ptr<MemoryBuffer> Buff = std::move(BuffOrErr.get());
 
   ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr =
       ObjectFile::createObjectFile(Buff->getMemBufferRef());
-  if (error(Filename, ObjOrErr.getError()))
-    return;
+  error(Filename, ObjOrErr.getError());
   ObjectFile &Obj = *ObjOrErr.get();
 
   std::unique_ptr<DIContext> DICtx(new DWARFContextInMemory(Obj));
@@ -114,5 +109,5 @@ int main(int argc, char **argv) {
 
   std::for_each(InputFilenames.begin(), InputFilenames.end(), DumpInput);
 
-  return ReturnValue;
+  return EXIT_SUCCESS;
 }
