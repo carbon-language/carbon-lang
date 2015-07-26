@@ -18,8 +18,8 @@
 // CHECK-MS64: #define _INTEGRAL_MAX_BITS 64
 // CHECK-MS64: #define _MSC_EXTENSIONS 1
 // CHECK-MS64: #define _MSC_VER 1300
-// CHECK-MS64: #define _M_AMD64 1
-// CHECK-MS64: #define _M_X64 1
+// CHECK-MS64: #define _M_AMD64 100
+// CHECK-MS64: #define _M_X64 100
 // CHECK-MS64: #define _WIN64 1
 // CHECK-MS64-NOT: #define __STRICT_ANSI__
 // CHECK-MS64-NOT: GCC
