@@ -60,7 +60,7 @@ for.body:                                         ; preds = %for.body, %entry
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %add, i32* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
-  %exitcond = icmp eq i64 %indvars.iv.next, 32
+  %exitcond = icmp eq i64 %indvars.iv.next, 64
   br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !0
 
 for.end:                                          ; preds = %for.body
@@ -111,7 +111,7 @@ for.body:                                         ; preds = %for.body, %entry
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %add, i32* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
-  %exitcond = icmp eq i64 %indvars.iv.next, 32
+  %exitcond = icmp eq i64 %indvars.iv.next, 64
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:                                          ; preds = %for.body
@@ -162,7 +162,7 @@ for.body:                                         ; preds = %for.body, %entry
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %add, i32* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
-  %exitcond = icmp eq i64 %indvars.iv.next, 32
+  %exitcond = icmp eq i64 %indvars.iv.next, 64
   br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !2
 
 for.end:                                          ; preds = %for.body
