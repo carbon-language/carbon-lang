@@ -1,3 +1,4 @@
+// Due to ln -sf:
 // REQUIRES: shell
 // RUN: mkdir -p %t
 // RUN: cd %t

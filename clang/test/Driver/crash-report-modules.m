@@ -9,11 +9,7 @@
 // RUN: FileCheck --check-prefix=CHECKSH %s -input-file %t/crash-report-*.sh
 // REQUIRES: crash-recovery
 
-// because of the glob (*.m, *.sh)
-// REQUIRES: shell
-
-// FIXME: This XFAIL is cargo-culted from crash-report.c. Do we need it?
-// XFAIL: mingw32
+// XFAIL: windows,win32
 
 @import simple;
 const int x = MODULE_MACRO;

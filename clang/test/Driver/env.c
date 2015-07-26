@@ -1,6 +1,6 @@
 // These tests try to ensure that the driver operates reasonably when run with
 // a strange environment. Unfortunately, it requires a normal shell and the
-// 'env' command.
+// 'env' command that understands arguments, unlike the LIT built-in env.
 //
 // REQUIRES: shell
 // The PATH variable is heavily used when trying to find a linker.

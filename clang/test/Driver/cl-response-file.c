@@ -1,6 +1,3 @@
-// Don't attempt slash switches on msys bash.
-// REQUIRES: shell-preserves-root
-
 // Test that we use the Windows tokenizer for clang-cl response files. The
 // trailing backslash before the space should be interpreted as a literal
 // backslash. PR23709

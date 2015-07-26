@@ -16,6 +16,3 @@ int x;
 // S: "-dwarf-debug-flags"
 
 // P: "-dwarf-debug-producer"
-
-// This depends on shell quoting.
-// REQUIRES: shell
