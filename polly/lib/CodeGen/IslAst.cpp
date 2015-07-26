@@ -304,9 +304,9 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
 }
 
 // Build alias check condition given a pair of minimal/maximal access.
-static __isl_give isl_ast_expr *buildCondition(__isl_keep isl_ast_build *Build,
-                                               Scop::MinMaxAccessTy *It0,
-                                               Scop::MinMaxAccessTy *It1) {
+static __isl_give isl_ast_expr *
+buildCondition(__isl_keep isl_ast_build *Build, const Scop::MinMaxAccessTy *It0,
+               const Scop::MinMaxAccessTy *It1) {
   isl_ast_expr *NonAliasGroup, *MinExpr, *MaxExpr;
   MinExpr = isl_ast_expr_address_of(isl_ast_build_access_from_pw_multi_aff(
       Build, isl_pw_multi_aff_copy(It0->first)));
@@ -334,16 +334,16 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   // This operation is by construction quadratic in the read-write pointers and
   // linear int the read only pointers in each alias group.
   for (const Scop::MinMaxVectorPairTy &MinMaxAccessPair : S->getAliasGroups()) {
-    auto *MinMaxReadWrite = MinMaxAccessPair.first;
-    auto *MinMaxReadOnly = MinMaxAccessPair.second;
-    auto RWAccEnd = MinMaxReadWrite->end();
+    auto &MinMaxReadWrite = MinMaxAccessPair.first;
+    auto &MinMaxReadOnly = MinMaxAccessPair.second;
+    auto RWAccEnd = MinMaxReadWrite.end();
 
-    for (auto RWAccIt0 = MinMaxReadWrite->begin(); RWAccIt0 != RWAccEnd;
+    for (auto RWAccIt0 = MinMaxReadWrite.begin(); RWAccIt0 != RWAccEnd;
          ++RWAccIt0) {
       for (auto RWAccIt1 = RWAccIt0 + 1; RWAccIt1 != RWAccEnd; ++RWAccIt1)
         RunCondition = isl_ast_expr_and(
             RunCondition, buildCondition(Build, RWAccIt0, RWAccIt1));
-      for (Scop::MinMaxAccessTy &ROAccIt : *MinMaxReadOnly)
+      for (const Scop::MinMaxAccessTy &ROAccIt : MinMaxReadOnly)
         RunCondition = isl_ast_expr_and(
             RunCondition, buildCondition(Build, RWAccIt0, &ROAccIt));
     }

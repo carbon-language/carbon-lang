@@ -1469,7 +1469,7 @@ static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
 static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
                                   __isl_take isl_union_set *Domains,
                                   __isl_take isl_set *AssumedContext,
-                                  Scop::MinMaxVectorTy *MinMaxAccesses) {
+                                  Scop::MinMaxVectorTy &MinMaxAccesses) {
 
   Accesses = isl_union_map_intersect_domain(Accesses, Domains);
   isl_union_set *Locations = isl_union_map_range(Accesses);
@@ -1477,7 +1477,7 @@ static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
   Locations = isl_union_set_coalesce(Locations);
   Locations = isl_union_set_detect_equalities(Locations);
   bool Valid = (0 == isl_union_set_foreach_set(Locations, buildMinMaxAccess,
-                                               MinMaxAccesses));
+                                               &MinMaxAccesses));
   isl_union_set_free(Locations);
   return Valid;
 }
@@ -1594,8 +1594,11 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     }
 
     // Calculate minimal and maximal accesses for non read only accesses.
-    MinMaxVectorTy *MinMaxAccessesNonReadOnly = new MinMaxVectorTy();
-    MinMaxAccessesNonReadOnly->reserve(AG.size());
+    MinMaxAliasGroups.emplace_back();
+    MinMaxVectorPairTy &pair = MinMaxAliasGroups.back();
+    MinMaxVectorTy &MinMaxAccessesNonReadOnly = pair.first;
+    MinMaxVectorTy &MinMaxAccessesReadOnly = pair.second;
+    MinMaxAccessesNonReadOnly.reserve(AG.size());
 
     isl_union_map *Accesses = isl_union_map_empty(getParamSpace());
 
@@ -1609,19 +1612,12 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     // Bail out if the number of values we need to compare is too large.
     // This is important as the number of comparisions grows quadratically with
     // the number of values we need to compare.
-    if (!Valid || (MinMaxAccessesNonReadOnly->size() + !ReadOnlyPairs.empty() >
-                   RunTimeChecksMaxArraysPerGroup)) {
-      for (MinMaxAccessTy &MMA : *(MinMaxAccessesNonReadOnly)) {
-        isl_pw_multi_aff_free(MMA.first);
-        isl_pw_multi_aff_free(MMA.second);
-      }
+    if (!Valid || (MinMaxAccessesNonReadOnly.size() + !ReadOnlyPairs.empty() >
+                   RunTimeChecksMaxArraysPerGroup))
       return false;
-    }
 
     // Calculate minimal and maximal accesses for read only accesses.
-    MinMaxVectorTy *MinMaxAccessesReadOnly = new MinMaxVectorTy();
-    MinMaxAccessesReadOnly->reserve(ReadOnlyPairs.size());
-
+    MinMaxAccessesReadOnly.reserve(ReadOnlyPairs.size());
     Accesses = isl_union_map_empty(getParamSpace());
 
     for (const auto &ReadOnlyPair : ReadOnlyPairs)
@@ -1630,8 +1626,6 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
     Valid = calculateMinMaxAccess(Accesses, getDomains(), getAssumedContext(),
                                   MinMaxAccessesReadOnly);
-    MinMaxVectorPairTy pair(MinMaxAccessesNonReadOnly, MinMaxAccessesReadOnly);
-    MinMaxAliasGroups.push_back(pair);
 
     if (!Valid)
       return false;
@@ -1698,16 +1692,14 @@ Scop::~Scop() {
 
   // Free the alias groups
   for (MinMaxVectorPairTy &MinMaxAccessPair : MinMaxAliasGroups) {
-    for (MinMaxAccessTy &MMA : *(MinMaxAccessPair.first)) {
+    for (MinMaxAccessTy &MMA : MinMaxAccessPair.first) {
       isl_pw_multi_aff_free(MMA.first);
       isl_pw_multi_aff_free(MMA.second);
     }
-    for (MinMaxAccessTy &MMA : *(MinMaxAccessPair.second)) {
+    for (MinMaxAccessTy &MMA : MinMaxAccessPair.second) {
       isl_pw_multi_aff_free(MMA.first);
       isl_pw_multi_aff_free(MMA.second);
     }
-    delete MinMaxAccessPair.first;
-    delete MinMaxAccessPair.second;
   }
 }
 
@@ -1789,10 +1781,10 @@ void Scop::printContext(raw_ostream &OS) const {
 void Scop::printAliasAssumptions(raw_ostream &OS) const {
   int noOfGroups = 0;
   for (const MinMaxVectorPairTy &Pair : MinMaxAliasGroups) {
-    if (Pair.second->size() == 0)
+    if (Pair.second.size() == 0)
       noOfGroups += 1;
     else
-      noOfGroups += Pair.second->size();
+      noOfGroups += Pair.second.size();
   }
 
   OS.indent(4) << "Alias Groups (" << noOfGroups << "):\n";
@@ -1804,19 +1796,19 @@ void Scop::printAliasAssumptions(raw_ostream &OS) const {
   for (const MinMaxVectorPairTy &Pair : MinMaxAliasGroups) {
 
     // If the group has no read only accesses print the write accesses.
-    if (Pair.second->empty()) {
+    if (Pair.second.empty()) {
       OS.indent(8) << "[[";
-      for (MinMaxAccessTy &MMANonReadOnly : *(Pair.first)) {
+      for (const MinMaxAccessTy &MMANonReadOnly : Pair.first) {
         OS << " <" << MMANonReadOnly.first << ", " << MMANonReadOnly.second
            << ">";
       }
       OS << " ]]\n";
     }
 
-    for (MinMaxAccessTy &MMAReadOnly : *(Pair.second)) {
+    for (const MinMaxAccessTy &MMAReadOnly : Pair.second) {
       OS.indent(8) << "[[";
       OS << " <" << MMAReadOnly.first << ", " << MMAReadOnly.second << ">";
-      for (MinMaxAccessTy &MMANonReadOnly : *(Pair.first)) {
+      for (const MinMaxAccessTy &MMANonReadOnly : Pair.first) {
         OS << " <" << MMANonReadOnly.first << ", " << MMANonReadOnly.second
            << ">";
       }
