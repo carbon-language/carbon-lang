@@ -19,7 +19,6 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 
@@ -93,8 +92,7 @@ public:
     }
   }
 
-  unsigned getGEPCost(Type *PointeeType, const Value *Ptr,
-                      ArrayRef<const Value *> Operands) {
+  unsigned getGEPCost(const Value *Ptr, ArrayRef<const Value *> Operands) {
     // In the basic model, we just assume that all-constant GEPs will be folded
     // into their uses via addressing modes.
     for (unsigned Idx = 0, Size = Operands.size(); Idx != Size; ++Idx)
@@ -380,54 +378,6 @@ public:
     return static_cast<T *>(this)->getCallCost(F, Arguments.size());
   }
 
-  using BaseT::getGEPCost;
-
-  unsigned getGEPCost(Type *PointeeType, const Value *Ptr,
-                      ArrayRef<const Value *> Operands) {
-    const GlobalValue *BaseGV = nullptr;
-    if (Ptr != nullptr) {
-      // TODO: will remove this when pointers have an opaque type.
-      assert(Ptr->getType()->getScalarType()->getPointerElementType() ==
-                 PointeeType &&
-             "explicit pointee type doesn't match operand's pointee type");
-      BaseGV = dyn_cast<GlobalValue>(Ptr->stripPointerCasts());
-    }
-    bool HasBaseReg = (BaseGV == nullptr);
-    int64_t BaseOffset = 0;
-    int64_t Scale = 0;
-
-    // Assumes the address space is 0 when Ptr is nullptr.
-    unsigned AS =
-        (Ptr == nullptr ? 0 : Ptr->getType()->getPointerAddressSpace());
-    auto GTI = gep_type_begin(PointerType::get(PointeeType, AS), Operands);
-    for (auto I = Operands.begin(); I != Operands.end(); ++I, ++GTI) {
-      if (isa<SequentialType>(*GTI)) {
-        int64_t ElementSize = DL.getTypeAllocSize(GTI.getIndexedType());
-        if (const ConstantInt *ConstIdx = dyn_cast<ConstantInt>(*I)) {
-          BaseOffset += ConstIdx->getSExtValue() * ElementSize;
-        } else {
-          // Needs scale register.
-          if (Scale != 0) {
-            // No addressing mode takes two scale registers.
-            return TTI::TCC_Basic;
-          }
-          Scale = ElementSize;
-        }
-      } else {
-        StructType *STy = cast<StructType>(*GTI);
-        uint64_t Field = cast<ConstantInt>(*I)->getZExtValue();
-        BaseOffset += DL.getStructLayout(STy)->getElementOffset(Field);
-      }
-    }
-
-    if (static_cast<T *>(this)->isLegalAddressingMode(
-            PointerType::get(*GTI, AS), const_cast<GlobalValue *>(BaseGV),
-            BaseOffset, HasBaseReg, Scale, AS)) {
-      return TTI::TCC_Free;
-    }
-    return TTI::TCC_Basic;
-  }
-
   using BaseT::getIntrinsicCost;
 
   unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
@@ -447,9 +397,9 @@ public:
       return TTI::TCC_Free; // Model all PHI nodes as free.
 
     if (const GEPOperator *GEP = dyn_cast<GEPOperator>(U)) {
-      SmallVector<Value *, 4> Indices(GEP->idx_begin(), GEP->idx_end());
-      return static_cast<T *>(this)->getGEPCost(
-          GEP->getSourceElementType(), GEP->getPointerOperand(), Indices);
+      SmallVector<const Value *, 4> Indices(GEP->idx_begin(), GEP->idx_end());
+      return static_cast<T *>(this)
+          ->getGEPCost(GEP->getPointerOperand(), Indices);
     }
 
     if (auto CS = ImmutableCallSite(U)) {
