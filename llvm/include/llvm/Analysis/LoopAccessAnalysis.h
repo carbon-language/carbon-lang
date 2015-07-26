@@ -368,6 +368,15 @@ public:
     SmallVector<unsigned, 2> Members;
   };
 
+  /// \brief A memcheck which made up of a pair of grouped pointers.
+  ///
+  /// These *have* to be const for now, since checks are generated from
+  /// CheckingPtrGroups in LAI::addRuntimeCheck which is a const member
+  /// function.  FIXME: once check-generation is moved inside this class (after
+  /// the PtrPartition hack is removed), we could drop const.
+  typedef std::pair<const CheckingPtrGroup *, const CheckingPtrGroup *>
+      PointerCheck;
+
   /// \brief Groups pointers such that a single memcheck is required
   /// between two different groups. This will clear the CheckingGroups vector
   /// and re-compute it. We will only group dependecies if \p UseDependencies
@@ -487,6 +496,16 @@ public:
   std::pair<Instruction *, Instruction *>
   addRuntimeCheck(Instruction *Loc,
                   const SmallVectorImpl<int> *PtrPartition = nullptr) const;
+
+  /// \brief Generete the instructions for the checks in \p PointerChecks.
+  ///
+  /// Returns a pair of instructions where the first element is the first
+  /// instruction generated in possibly a sequence of instructions and the
+  /// second value is the final comparator value or NULL if no check is needed.
+  std::pair<Instruction *, Instruction *>
+  addRuntimeCheck(Instruction *Loc,
+                  const SmallVectorImpl<RuntimePointerChecking::PointerCheck>
+                      &PointerChecks) const;
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
