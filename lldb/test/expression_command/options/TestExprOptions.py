@@ -69,7 +69,7 @@ class ExprOptionsTestCase(TestBase):
             self.DebugSBValue(val)
 
             # Make sure it still works if language is set to ObjC:
-            options.SetLanguage(lldb.eLanguageTypeObjC)
+            options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
             val = frame.EvaluateExpression('id my_id = 0; my_id', options)
             self.assertTrue(val.IsValid())
             self.assertTrue(val.GetError().Success())
