@@ -79,7 +79,7 @@ struct DumpValueObjectOptions
     DumpValueObjectOptions() :
     m_summary_sp(),
     m_root_valobj_name(),
-    m_max_ptr_depth{PointerDepth::Mode::Default,0},
+    m_max_ptr_depth(PointerDepth{PointerDepth::Mode::Default,0}),
     m_use_synthetic(true),
     m_scope_already_checked(false),
     m_flat_output(false),
