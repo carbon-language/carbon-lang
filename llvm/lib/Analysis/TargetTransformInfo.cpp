@@ -129,6 +129,10 @@ bool TargetTransformInfo::isTruncateFree(Type *Ty1, Type *Ty2) const {
   return TTIImpl->isTruncateFree(Ty1, Ty2);
 }
 
+bool TargetTransformInfo::isZExtFree(Type *Ty1, Type *Ty2) const {
+  return TTIImpl->isZExtFree(Ty1, Ty2);
+}
+
 bool TargetTransformInfo::isProfitableToHoist(Instruction *I) const {
   return TTIImpl->isProfitableToHoist(I);
 }
