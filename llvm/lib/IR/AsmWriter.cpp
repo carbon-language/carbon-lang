@@ -702,6 +702,11 @@ void ModuleSlotTracker::incorporateFunction(const Function &F) {
   this->F = &F;
 }
 
+int ModuleSlotTracker::getLocalSlot(const Value *V) {
+  assert(F && "No function incorporated");
+  return Machine->getLocalSlot(V);
+}
+
 static SlotTracker *createSlotTracker(const Module *M) {
   return new SlotTracker(M);
 }

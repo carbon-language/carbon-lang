@@ -175,4 +175,64 @@ TEST(ValueTest, printSlots) {
 #undef CHECK_PRINT_AS_OPERAND
 }
 
+TEST(ValueTest, getLocalSlots) {
+  // Verify that the getLocalSlot method returns the correct slot numbers.
+  LLVMContext C;
+  const char *ModuleString = "define void @f(i32 %x, i32 %y) {\n"
+                             "entry:\n"
+                             "  %0 = add i32 %y, 1\n"
+                             "  %1 = add i32 %y, 1\n"
+                             "  br label %2\n"
+                             "\n"
+                             "  ret void\n"
+                             "}\n";
+  SMDiagnostic Err;
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
+
+  Function *F = M->getFunction("f");
+  ASSERT_TRUE(F);
+  ASSERT_FALSE(F->empty());
+  BasicBlock &EntryBB = F->getEntryBlock();
+  ASSERT_EQ(3u, EntryBB.size());
+  BasicBlock *BB2 = ++F->begin();
+  ASSERT_TRUE(BB2);
+
+  Instruction *I0 = EntryBB.begin();
+  ASSERT_TRUE(I0);
+  Instruction *I1 = ++EntryBB.begin();
+  ASSERT_TRUE(I1);
+
+  ModuleSlotTracker MST(M.get());
+  MST.incorporateFunction(*F);
+  EXPECT_EQ(MST.getLocalSlot(I0), 0);
+  EXPECT_EQ(MST.getLocalSlot(I1), 1);
+  EXPECT_EQ(MST.getLocalSlot(&EntryBB), -1);
+  EXPECT_EQ(MST.getLocalSlot(BB2), 2);
+}
+
+#if defined(GTEST_HAS_DEATH_TEST) && !defined(NDEBUG)
+TEST(ValueTest, getLocalSlotDeath) {
+  LLVMContext C;
+  const char *ModuleString = "define void @f(i32 %x, i32 %y) {\n"
+                             "entry:\n"
+                             "  %0 = add i32 %y, 1\n"
+                             "  %1 = add i32 %y, 1\n"
+                             "  br label %2\n"
+                             "\n"
+                             "  ret void\n"
+                             "}\n";
+  SMDiagnostic Err;
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
+
+  Function *F = M->getFunction("f");
+  ASSERT_TRUE(F);
+  ASSERT_FALSE(F->empty());
+  BasicBlock *BB2 = ++F->begin();
+  ASSERT_TRUE(BB2);
+
+  ModuleSlotTracker MST(M.get());
+  EXPECT_DEATH(MST.getLocalSlot(BB2), "No function incorporated");
+}
+#endif
+
 } // end anonymous namespace
