@@ -5762,10 +5762,6 @@ QualType ASTReader::GetType(TypeID ID) {
       T = Context.ARCUnbridgedCastTy;
       break;
 
-    case PREDEF_TYPE_VA_LIST_TAG:
-      T = Context.getVaListTagType();
-      break;
-
     case PREDEF_TYPE_BUILTIN_FN:
       T = Context.BuiltinFnTy;
       break;
@@ -6077,6 +6073,9 @@ static Decl *getPredefinedDecl(ASTContext &Context, PredefinedDeclIDs ID) {
 
   case PREDEF_DECL_BUILTIN_VA_LIST_ID:
     return Context.getBuiltinVaListDecl();
+
+  case PREDEF_DECL_VA_LIST_TAG:
+    return Context.getVaListTagDecl();
 
   case PREDEF_DECL_EXTERN_C_CONTEXT_ID:
     return Context.getExternCContextDecl();
@@ -8141,6 +8140,8 @@ void ASTReader::finishPendingActions() {
     }
     assert(PendingDeclChainsKnown.empty());
     PendingDeclChains.clear();
+
+    assert(RedeclsDeserialized.empty() && "some redecls not wired up");
 
     // Make the most recent of the top-level declarations visible.
     for (TopLevelDeclsMap::iterator TLD = TopLevelDecls.begin(),
