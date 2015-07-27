@@ -43,16 +43,16 @@ struct LLVMOpaqueTargetMachine {
 };
 
 
-inline TargetMachine *unwrap(LLVMTargetMachineRef P) {
+static TargetMachine *unwrap(LLVMTargetMachineRef P) {
   return P->Machine.get();
 }
-inline Target *unwrap(LLVMTargetRef P) {
+static Target *unwrap(LLVMTargetRef P) {
   return reinterpret_cast<Target*>(P);
 }
-inline LLVMTargetMachineRef wrap(const TargetMachine *P) {
+static LLVMTargetMachineRef wrap(const TargetMachine *P) {
   return new LLVMOpaqueTargetMachine{ std::unique_ptr<TargetMachine>(const_cast<TargetMachine*>(P)),  P->createDataLayout() };
 }
-inline LLVMTargetRef wrap(const Target * P) {
+static LLVMTargetRef wrap(const Target * P) {
   return reinterpret_cast<LLVMTargetRef>(const_cast<Target*>(P));
 }
 
