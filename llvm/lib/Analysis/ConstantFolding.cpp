@@ -248,8 +248,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
 
   // Look through ptr->int and ptr->ptr casts.
   if (CE->getOpcode() == Instruction::PtrToInt ||
-      CE->getOpcode() == Instruction::BitCast ||
-      CE->getOpcode() == Instruction::AddrSpaceCast)
+      CE->getOpcode() == Instruction::BitCast)
     return IsConstantOffsetFromGlobal(CE->getOperand(0), GV, Offset, DL);
 
   // i32* getelementptr ([5 x i32]* @a, i32 0, i32 5)
