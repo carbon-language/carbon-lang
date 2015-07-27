@@ -196,7 +196,7 @@ struct SequenceOp : public SetTheory::Operator {
     if (IntInit *II = dyn_cast<IntInit>(Expr->arg_begin()[2]))
       To = II->getValue();
     else
-      PrintFatalError(Loc, "From must be an integer: " + Expr->getAsString());
+      PrintFatalError(Loc, "To must be an integer: " + Expr->getAsString());
     if (To < 0 || To >= (1 << 30))
       PrintFatalError(Loc, "To out of range");
 
