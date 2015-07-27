@@ -29,7 +29,7 @@ static std::string cleanPath(StringRef Path) {
       // Drop the last component.
       NewPath.resize(llvm::sys::path::parent_path(NewPath).size());
     } else {
-      if (!NewPath.empty())
+      if (!NewPath.empty() && !NewPath.endswith("/"))
         NewPath += '/';
       NewPath += *I;
     }
