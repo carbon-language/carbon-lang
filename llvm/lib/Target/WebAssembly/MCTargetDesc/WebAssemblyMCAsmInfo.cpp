@@ -27,15 +27,11 @@ WebAssemblyMCAsmInfo::WebAssemblyMCAsmInfo(const Triple &T) {
 
   // TODO: What should MaxInstLength be?
 
-  // WebAssembly's text format uses s-expressions to represent its AST,
-  // LISP-style comments are therefore suitable.
+  // The s-expression format of WebAssembly uses LISP-style comments.
   CommentString = ";";
 
   PrivateGlobalPrefix = "";
   PrivateLabelPrefix = "";
-
-  InlineAsmStart = ";APP\n";
-  InlineAsmEnd = ";NO_APP\n";
 
   UseDataRegionDirectives = true;
 
