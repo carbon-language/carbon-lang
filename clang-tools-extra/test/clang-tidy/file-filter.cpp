@@ -33,7 +33,7 @@ class A { A(int); };
 // CHECK4-NOT: warning:
 
 // CHECK: Suppressed 3 warnings (3 in non-user code)
-// CHECK: Use -header-filter='.*' to display errors from all non-system headers.
+// CHECK: Use -header-filter=.* to display errors from all non-system headers.
 // CHECK2: Suppressed 1 warnings (1 in non-user code)
 // CHECK2: Use -header-filter='.*' {{.*}}
 // CHECK3: Suppressed 2 warnings (2 in non-user code)
