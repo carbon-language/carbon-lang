@@ -116,7 +116,7 @@ int main() {
     // TLS-LAMBDA-DAG: [[G_CAPTURE_DST:%.+]] = call i{{[0-9]+}}* [[G_CTOR]]()
     // TLS-LAMBDA-DAG: [[G_CAPTURE_SRCC:%.+]] = ptrtoint i{{[0-9]+}}* [[G_CAPTURE_SRC]] to i{{[0-9]+}}
     // TLS-LAMBDA-DAG: [[G_CAPTURE_DSTC:%.+]] = ptrtoint i{{[0-9]+}}* [[G_CAPTURE_DST]] to i{{[0-9]+}}
-    // TLS-LAMBDA: icmp ne i{{[0-9]+}} [[G_CAPTURE_SRCC]], [[G_CAPTURE_DSTC]]
+    // TLS-LAMBDA: icmp ne i{{[0-9]+}} {{%.+}}, {{%.+}}
     // TLS-LAMBDA: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
     // TLS-LAMBDA: [[NOT_MASTER]]
     // TLS-LAMBDA: load i{{[0-9]+}}, i{{[0-9]+}}* [[G_CAPTURE_SRC]],
@@ -146,7 +146,7 @@ int main() {
   // BLOCKS: call {{.*}}void {{%.+}}(i8
 
   // TLS-BLOCKS: [[G_CAPTURE_TY:%.+]] = type { i{{[0-9]+}}* }
-  // TLS-BLOCKS: [[G:@.+]] = thread_local global i{{[0-9]+}} 1212,
+  // TLS-BLOCKS: [[G:@.+]] = {{.*}}thread_local {{.*}}global i{{[0-9]+}} 1212,
   // TLS-BLOCKS-LABEL: @main
   // TLS-BLOCKS: call {{.*}}void {{%.+}}(i8
   ^{
@@ -182,7 +182,7 @@ int main() {
     // TLS-BLOCKS-DAG: [[G_CAPTURE_DST:%.+]] = call i{{[0-9]+}}* [[G_CTOR]]()
     // TLS-BLOCKS-DAG: [[G_CAPTURE_SRCC:%.+]] = ptrtoint i{{[0-9]+}}* [[G_CAPTURE_SRC]] to i{{[0-9]+}}
     // TLS-BLOCKS-DAG: [[G_CAPTURE_DSTC:%.+]] = ptrtoint i{{[0-9]+}}* [[G_CAPTURE_DST]] to i{{[0-9]+}}
-    // TLS-BLOCKS: icmp ne i{{[0-9]+}} [[G_CAPTURE_SRCC]], [[G_CAPTURE_DSTC]]
+    // TLS-BLOCKS: icmp ne i{{[0-9]+}} {{%.+}}, {{%.+}}
     // TLS-BLOCKS: br i1 %{{.+}}, label %[[NOT_MASTER:.+]], label %[[DONE:.+]]
     // TLS-BLOCKS: [[NOT_MASTER]]
     // TLS-BLOCKS: load i{{[0-9]+}}, i{{[0-9]+}}* [[G_CAPTURE_SRC]],
