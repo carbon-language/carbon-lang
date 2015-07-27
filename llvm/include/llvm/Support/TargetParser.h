@@ -121,7 +121,7 @@ namespace ARM {
   };
 
   // Arch extension modifiers for CPUs.
-  enum ArchExtKind {
+  enum ArchExtKind : unsigned {
     AEK_INVALID  = 0x0,
     AEK_NONE     = 0x1,
     AEK_CRC      = 0x2,
