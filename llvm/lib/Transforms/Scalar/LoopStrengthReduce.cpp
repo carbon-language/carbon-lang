@@ -256,9 +256,22 @@ struct Formula {
   /// live in an add immediate field rather than a register.
   int64_t UnfoldedOffset;
 
+  /// ZeroExtendScaledReg - This formula zero extends the scale register to
+  /// ZeroExtendType before its use.
+  bool ZeroExtendScaledReg;
+
+  /// ZeroExtendBaseReg - This formula zero extends all the base registers to
+  /// ZeroExtendType before their use.
+  bool ZeroExtendBaseReg;
+
+  /// ZeroExtendType - The destination type of the zero extension implied by
+  /// the above two booleans.
+  Type *ZeroExtendType;
+
   Formula()
       : BaseGV(nullptr), BaseOffset(0), HasBaseReg(false), Scale(0),
-        ScaledReg(nullptr), UnfoldedOffset(0) {}
+        ScaledReg(nullptr), UnfoldedOffset(0), ZeroExtendScaledReg(false),
+        ZeroExtendBaseReg(false), ZeroExtendType(nullptr) {}
 
   void InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE);
 
@@ -413,10 +426,12 @@ size_t Formula::getNumRegs() const {
 /// getType - Return the type of this formula, if it has one, or null
 /// otherwise. This type is meaningless except for the bit size.
 Type *Formula::getType() const {
-  return !BaseRegs.empty() ? BaseRegs.front()->getType() :
-         ScaledReg ? ScaledReg->getType() :
-         BaseGV ? BaseGV->getType() :
-         nullptr;
+  return ZeroExtendType
+             ? ZeroExtendType
+             : !BaseRegs.empty()
+                   ? BaseRegs.front()->getType()
+                   : ScaledReg ? ScaledReg->getType()
+                               : BaseGV ? BaseGV->getType() : nullptr;
 }
 
 /// DeleteBaseReg - Delete the given base reg from the BaseRegs list.
@@ -457,7 +472,10 @@ void Formula::print(raw_ostream &OS) const {
   }
   for (const SCEV *BaseReg : BaseRegs) {
     if (!First) OS << " + "; else First = false;
-    OS << "reg(" << *BaseReg << ')';
+    if (ZeroExtendBaseReg)
+      OS << "reg(zext " << *BaseReg << " to " << *ZeroExtendType << ')';
+    else
+      OS << "reg(" << *BaseReg << ')';
   }
   if (HasBaseReg && BaseRegs.empty()) {
     if (!First) OS << " + "; else First = false;
@@ -469,9 +487,12 @@ void Formula::print(raw_ostream &OS) const {
   if (Scale != 0) {
     if (!First) OS << " + "; else First = false;
     OS << Scale << "*reg(";
-    if (ScaledReg)
-      OS << *ScaledReg;
-    else
+    if (ScaledReg) {
+      if (ZeroExtendScaledReg)
+        OS << "(zext " << *ScaledReg << " to " << *ZeroExtendType << ')';
+      else
+        OS << *ScaledReg;
+    } else
       OS << "<unknown>";
     OS << ')';
   }
@@ -1732,6 +1753,7 @@ class LSRInstance {
   void GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx, Formula Base);
   void GenerateScales(LSRUse &LU, unsigned LUIdx, Formula Base);
   void GenerateTruncates(LSRUse &LU, unsigned LUIdx, Formula Base);
+  void GenerateZExts(LSRUse &LU, unsigned LUIdx, Formula Base);
   void GenerateCrossUseConstantOffsets();
   void GenerateAllReuseFormulae();
 
@@ -3627,6 +3649,64 @@ void LSRInstance::GenerateTruncates(LSRUse &LU, unsigned LUIdx, Formula Base) {
   }
 }
 
+/// GenerateZExts - If a scale or a base register can be rewritten as
+/// "Zext({A,+,1})" then consider a formula of that form.
+void LSRInstance::GenerateZExts(LSRUse &LU, unsigned LUIdx, Formula Base) {
+  // Don't bother with symbolic values.
+  if (Base.BaseGV)
+    return;
+
+  auto CanBeNarrowed = [&](const SCEV *Reg) -> const SCEV * {
+    // Check if the register is an increment can be rewritten as zext(R) where
+    // the zext is free.
+
+    const auto *RegAR = dyn_cast_or_null<SCEVAddRecExpr>(Reg);
+    if (!RegAR)
+      return nullptr;
+
+    const auto *ZExtStart = dyn_cast<SCEVZeroExtendExpr>(RegAR->getStart());
+    const auto *ConstStep =
+        dyn_cast<SCEVConstant>(RegAR->getStepRecurrence(SE));
+    if (!ZExtStart || !ConstStep || ConstStep->getValue()->getValue() != 1)
+      return nullptr;
+
+    const SCEV *NarrowStart = ZExtStart->getOperand();
+    if (!TTI.isZExtFree(NarrowStart->getType(), ZExtStart->getType()))
+      return nullptr;
+
+    const auto *NarrowAR = dyn_cast<SCEVAddRecExpr>(
+        SE.getAddRecExpr(NarrowStart, SE.getConstant(NarrowStart->getType(), 1),
+                         RegAR->getLoop(), RegAR->getNoWrapFlags()));
+
+    if (!NarrowAR || !NarrowAR->getNoWrapFlags(SCEV::FlagNUW))
+      return nullptr;
+
+    return NarrowAR;
+  };
+
+  if (Base.ScaledReg && !Base.ZeroExtendType)
+    if (const SCEV *S = CanBeNarrowed(Base.ScaledReg)) {
+      Formula F = Base;
+      F.ZeroExtendType = Base.ScaledReg->getType();
+      F.ZeroExtendScaledReg = true;
+      F.ScaledReg = S;
+
+      if (isLegalUse(TTI, LU.MinOffset, LU.MaxOffset, LU.Kind, LU.AccessTy, F))
+        InsertFormula(LU, LUIdx, F);
+    }
+
+  if (Base.BaseRegs.size() == 1 && !Base.ZeroExtendType)
+    if (const SCEV *S = CanBeNarrowed(Base.BaseRegs[0])) {
+      Formula F = Base;
+      F.ZeroExtendType = Base.BaseRegs[0]->getType();
+      F.ZeroExtendBaseReg = true;
+      F.BaseRegs[0] = S;
+
+      if (isLegalUse(TTI, LU.MinOffset, LU.MaxOffset, LU.Kind, LU.AccessTy, F))
+        InsertFormula(LU, LUIdx, F);
+    }
+}
+
 namespace {
 
 /// WorkItem - Helper class for GenerateCrossUseConstantOffsets. It's used to
@@ -3846,6 +3926,8 @@ LSRInstance::GenerateAllReuseFormulae() {
     LSRUse &LU = Uses[LUIdx];
     for (size_t i = 0, f = LU.Formulae.size(); i != f; ++i)
       GenerateTruncates(LU, LUIdx, LU.Formulae[i]);
+    for (size_t i = 0, f = LU.Formulae.size(); i != f; ++i)
+      GenerateZExts(LU, LUIdx, LU.Formulae[i]);
   }
 
   GenerateCrossUseConstantOffsets();
@@ -4483,12 +4565,27 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
 
     // If we're expanding for a post-inc user, make the post-inc adjustment.
     PostIncLoopSet &Loops = const_cast<PostIncLoopSet &>(LF.PostIncLoops);
-    Reg = TransformForPostIncUse(Denormalize, Reg,
-                                 LF.UserInst, LF.OperandValToReplace,
-                                 Loops, SE, DT);
+    const SCEV *ExtendedReg =
+        F.ZeroExtendBaseReg ? SE.getZeroExtendExpr(Reg, F.ZeroExtendType) : Reg;
 
-    Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, nullptr, IP)));
+    const SCEV *PostIncReg =
+        TransformForPostIncUse(Denormalize, ExtendedReg, LF.UserInst,
+                               LF.OperandValToReplace, Loops, SE, DT);
+    if (PostIncReg == ExtendedReg) {
+      Value *Expanded = Rewriter.expandCodeFor(Reg, nullptr, IP);
+      if (F.ZeroExtendBaseReg)
+        Expanded = new ZExtInst(Expanded, F.ZeroExtendType, "", IP);
+      Ops.push_back(SE.getUnknown(Expanded));
+    } else {
+      Ops.push_back(
+          SE.getUnknown(Rewriter.expandCodeFor(PostIncReg, nullptr, IP)));
+    }
   }
+
+  // Note on post-inc uses and zero extends -- since the no-wrap behavior for
+  // the post-inc SCEV can be different from the no-wrap behavior of the pre-inc
+  // SCEV, if a post-inc transform is required we do the zero extension on the
+  // pre-inc expression before doing the post-inc transform.
 
   // Expand the ScaledReg portion.
   Value *ICmpScaledV = nullptr;
@@ -4497,22 +4594,33 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
 
     // If we're expanding for a post-inc user, make the post-inc adjustment.
     PostIncLoopSet &Loops = const_cast<PostIncLoopSet &>(LF.PostIncLoops);
-    ScaledS = TransformForPostIncUse(Denormalize, ScaledS,
-                                     LF.UserInst, LF.OperandValToReplace,
-                                     Loops, SE, DT);
+    const SCEV *ExtendedScaleS =
+        F.ZeroExtendScaledReg ? SE.getZeroExtendExpr(ScaledS, F.ZeroExtendType)
+                              : ScaledS;
+    const SCEV *PostIncScaleS =
+        TransformForPostIncUse(Denormalize, ExtendedScaleS, LF.UserInst,
+                               LF.OperandValToReplace, Loops, SE, DT);
 
     if (LU.Kind == LSRUse::ICmpZero) {
       // Expand ScaleReg as if it was part of the base regs.
+      Value *Expanded = nullptr;
+      if (PostIncScaleS == ExtendedScaleS) {
+        Expanded = Rewriter.expandCodeFor(ScaledS, nullptr, IP);
+        if (F.ZeroExtendScaledReg)
+          Expanded = new ZExtInst(Expanded, F.ZeroExtendType, "", IP);
+      } else {
+        Expanded = Rewriter.expandCodeFor(PostIncScaleS, nullptr, IP);
+      }
+
       if (F.Scale == 1)
-        Ops.push_back(
-            SE.getUnknown(Rewriter.expandCodeFor(ScaledS, nullptr, IP)));
+        Ops.push_back(SE.getUnknown(Expanded));
       else {
         // An interesting way of "folding" with an icmp is to use a negated
         // scale, which we'll implement by inserting it into the other operand
         // of the icmp.
         assert(F.Scale == -1 &&
                "The only scale supported by ICmpZero uses is -1!");
-        ICmpScaledV = Rewriter.expandCodeFor(ScaledS, nullptr, IP);
+        ICmpScaledV = Expanded;
       }
     } else {
       // Otherwise just expand the scaled register and an explicit scale,
@@ -4526,7 +4634,17 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
         Ops.clear();
         Ops.push_back(SE.getUnknown(FullV));
       }
-      ScaledS = SE.getUnknown(Rewriter.expandCodeFor(ScaledS, nullptr, IP));
+
+      Value *Expanded = nullptr;
+      if (PostIncScaleS == ExtendedScaleS) {
+        Expanded = Rewriter.expandCodeFor(ScaledS, nullptr, IP);
+        if (F.ZeroExtendScaledReg)
+          Expanded = new ZExtInst(Expanded, F.ZeroExtendType, "", IP);
+      } else {
+        Expanded = Rewriter.expandCodeFor(PostIncScaleS, nullptr, IP);
+      }
+
+      ScaledS = SE.getUnknown(Expanded);
       if (F.Scale != 1)
         ScaledS =
             SE.getMulExpr(ScaledS, SE.getConstant(ScaledS->getType(), F.Scale));
