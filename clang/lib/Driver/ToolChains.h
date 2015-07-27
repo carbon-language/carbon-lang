@@ -713,16 +713,16 @@ public:
                              llvm::opt::ArgStringList &CC1Args) const override;
 };
 
-class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public Linux {
+class LLVM_LIBRARY_VISIBILITY HexagonToolChain : public Linux {
 protected:
   GCCVersion GCCLibAndIncVersion;
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
 
 public:
-  Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
-             const llvm::opt::ArgList &Args);
-  ~Hexagon_TC() override;
+  HexagonToolChain(const Driver &D, const llvm::Triple &Triple,
+                   const llvm::opt::ArgList &Args);
+  ~HexagonToolChain() override;
 
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
@@ -754,10 +754,10 @@ public:
   bool IsIntegratedAssemblerDefault() const override { return true; }
 };
 
-class LLVM_LIBRARY_VISIBILITY NaCl_TC : public Generic_ELF {
+class LLVM_LIBRARY_VISIBILITY NaClToolChain : public Generic_ELF {
 public:
-  NaCl_TC(const Driver &D, const llvm::Triple &Triple,
-          const llvm::opt::ArgList &Args);
+  NaClToolChain(const Driver &D, const llvm::Triple &Triple,
+                const llvm::opt::ArgList &Args);
 
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
@@ -775,9 +775,9 @@ public:
     return getTriple().getArch() == llvm::Triple::mipsel;
   }
 
-  // Get the path to the file containing NaCl's ARM macros. It lives in NaCl_TC
-  // because the AssembleARM tool needs a const char * that it can pass around
-  // and the toolchain outlives all the jobs.
+  // Get the path to the file containing NaCl's ARM macros.
+  // It lives in NaClToolChain because the ARMAssembler tool needs a
+  // const char * that it can pass around,
   const char *GetNaClArmMacrosPath() const { return NaClArmMacrosPath.c_str(); }
 
   std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
@@ -877,10 +877,10 @@ protected:
   Tool *buildAssembler() const override;
 };
 
-class LLVM_LIBRARY_VISIBILITY XCore : public ToolChain {
+class LLVM_LIBRARY_VISIBILITY XCoreToolChain : public ToolChain {
 public:
-  XCore(const Driver &D, const llvm::Triple &Triple,
-        const llvm::opt::ArgList &Args);
+  XCoreToolChain(const Driver &D, const llvm::Triple &Triple,
+                 const llvm::opt::ArgList &Args);
 
 protected:
   Tool *buildAssembler() const override;
@@ -904,9 +904,9 @@ public:
                            llvm::opt::ArgStringList &CmdArgs) const override;
 };
 
-/// SHAVEToolChain - A tool chain using the compiler installed by the the
-// Movidius SDK into MV_TOOLS_DIR (which we assume will be copied to llvm's
-// installation dir) to perform all subcommands.
+/// SHAVEToolChain - A tool chain using the compiler installed by the
+/// Movidius SDK into MV_TOOLS_DIR (which we assume will be copied to llvm's
+/// installation dir) to perform all subcommands.
 class LLVM_LIBRARY_VISIBILITY SHAVEToolChain : public Generic_GCC {
 public:
   SHAVEToolChain(const Driver &D, const llvm::Triple &Triple,
