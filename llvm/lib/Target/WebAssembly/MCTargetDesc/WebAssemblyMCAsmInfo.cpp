@@ -23,12 +23,19 @@ using namespace llvm;
 WebAssemblyMCAsmInfo::~WebAssemblyMCAsmInfo() {}
 
 WebAssemblyMCAsmInfo::WebAssemblyMCAsmInfo(const Triple &T) {
-  PointerSize = CalleeSaveStackSlotSize = T.isArch64Bit();
+  PointerSize = CalleeSaveStackSlotSize = T.isArch64Bit() ? 8 : 4;
 
   // TODO: What should MaxInstLength be?
 
+  // WebAssembly's text format uses s-expressions to represent its AST,
+  // LISP-style comments are therefore suitable.
+  CommentString = ";";
+
   PrivateGlobalPrefix = "";
   PrivateLabelPrefix = "";
+
+  InlineAsmStart = ";APP\n";
+  InlineAsmEnd = ";NO_APP\n";
 
   UseDataRegionDirectives = true;
 
