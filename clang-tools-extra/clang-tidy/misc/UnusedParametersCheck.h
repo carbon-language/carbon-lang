@@ -23,6 +23,11 @@ public:
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+
+private:
+  void
+  warnOnUnusedParameter(const ast_matchers::MatchFinder::MatchResult &Result,
+                        const FunctionDecl *Function, unsigned ParamIndex);
 };
 
 } // namespace tidy

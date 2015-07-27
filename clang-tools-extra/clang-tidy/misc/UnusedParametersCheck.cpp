@@ -17,9 +17,7 @@ namespace clang {
 namespace tidy {
 
 void UnusedParametersCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(
-      parmVarDecl(hasParent(functionDecl().bind("function"))).bind("x"),
-      this);
+  Finder->addMatcher(functionDecl().bind("function"), this);
 }
 
 static FixItHint removeParameter(const FunctionDecl *Function, unsigned Index) {
@@ -54,15 +52,10 @@ static FixItHint removeArgument(const CallExpr *Call, unsigned Index) {
   return FixItHint::CreateRemoval(RemovalRange);
 }
 
-void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
-  const auto *Function = Result.Nodes.getNodeAs<FunctionDecl>("function");
-  if (!Function->doesThisDeclarationHaveABody())
-    return;
-  const auto *Param = Result.Nodes.getNodeAs<ParmVarDecl>("x");
-  if (Param->isUsed() || Param->isReferenced() || !Param->getDeclName() ||
-      Param->hasAttr<UnusedAttr>())
-    return;
-
+void UnusedParametersCheck::warnOnUnusedParameter(
+    const MatchFinder::MatchResult &Result, const FunctionDecl *Function,
+    unsigned ParamIndex) {
+  const auto *Param = Function->getParamDecl(ParamIndex);
   auto MyDiag = diag(Param->getLocation(), "parameter '%0' is unused")
                 << Param->getName();
 
@@ -86,10 +79,6 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  // Handle local functions by deleting the parameters.
-  unsigned ParamIndex = Param->getFunctionScopeIndex();
-  assert(ParamIndex < Function->getNumParams());
-
   // Fix all redeclarations.
   for (const FunctionDecl *FD : Function->redecls())
     MyDiag << removeParameter(FD, ParamIndex);
@@ -101,6 +90,19 @@ void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
       *Result.Context->getTranslationUnitDecl(), *Result.Context);
   for (const auto &Match : CallMatches)
     MyDiag << removeArgument(Match.getNodeAs<CallExpr>("x"), ParamIndex);
+}
+
+void UnusedParametersCheck::check(const MatchFinder::MatchResult &Result) {
+  const auto *Function = Result.Nodes.getNodeAs<FunctionDecl>("function");
+  if (!Function->doesThisDeclarationHaveABody())
+    return;
+  for (unsigned i = 0, e = Function->getNumParams(); i != e; ++i) {
+    const auto *Param = Function->getParamDecl(i);
+    if (Param->isUsed() || Param->isReferenced() || !Param->getDeclName() ||
+        Param->hasAttr<UnusedAttr>())
+      continue;
+    warnOnUnusedParameter(Result, Function, i);
+  }
 }
 
 } // namespace tidy
