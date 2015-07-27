@@ -349,7 +349,7 @@ public:
 
   ARMAsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : STI(STI), MII(MII), UC(Parser) {
+      : MCTargetAsmParser(Options), STI(STI), MII(MII), UC(Parser) {
     MCAsmParserExtension::Initialize(Parser);
 
     // Cache the MCRegisterInfo.

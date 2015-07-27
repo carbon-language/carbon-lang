@@ -10,8 +10,8 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 using namespace llvm;
 
-MCTargetAsmParser::MCTargetAsmParser()
-  : AvailableFeatures(0), ParsingInlineAsm(false)
+MCTargetAsmParser::MCTargetAsmParser(MCTargetOptions const &MCOptions)
+  : AvailableFeatures(0), ParsingInlineAsm(false), MCOptions(MCOptions)
 {
 }
 

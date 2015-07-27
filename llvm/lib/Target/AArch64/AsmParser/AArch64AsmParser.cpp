@@ -117,7 +117,7 @@ public:
   };
   AArch64AsmParser(MCSubtargetInfo &STI, MCAsmParser &Parser,
                    const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(STI) {
+      : MCTargetAsmParser(Options), STI(STI) {
     MCAsmParserExtension::Initialize(Parser);
     MCStreamer &S = getParser().getStreamer();
     if (S.getTargetStreamer() == nullptr)

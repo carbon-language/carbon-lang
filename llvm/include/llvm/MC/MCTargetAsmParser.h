@@ -92,7 +92,7 @@ private:
   MCTargetAsmParser(const MCTargetAsmParser &) = delete;
   void operator=(const MCTargetAsmParser &) = delete;
 protected: // Can only create subclasses.
-  MCTargetAsmParser();
+  MCTargetAsmParser(MCTargetOptions const &);
 
   /// AvailableFeatures - The current set of available features.
   uint64_t AvailableFeatures;

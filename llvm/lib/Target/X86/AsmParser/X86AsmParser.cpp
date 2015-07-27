@@ -800,7 +800,7 @@ private:
 public:
   X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &Parser,
                const MCInstrInfo &mii, const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(sti), MII(mii), InstInfo(nullptr) {
+      : MCTargetAsmParser(Options), STI(sti), MII(mii), InstInfo(nullptr) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));

@@ -328,7 +328,7 @@ public:
   AMDGPUAsmParser(MCSubtargetInfo &STI, MCAsmParser &_Parser,
                const MCInstrInfo &MII,
                const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(STI), MII(MII), Parser(_Parser),
+      : MCTargetAsmParser(Options), STI(STI), MII(MII), Parser(_Parser),
         ForcedEncodingSize(0){
 
     if (STI.getFeatureBits().none()) {
