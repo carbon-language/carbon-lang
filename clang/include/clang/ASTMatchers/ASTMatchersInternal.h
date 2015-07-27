@@ -754,7 +754,7 @@ const bool IsBaseType<T>::value;
 ///   at least one ancestor matched.
 ///
 /// FIXME: Currently we only allow Stmt and Decl nodes to start a traversal.
-/// In the future, we wan to implement this for all nodes for which it makes
+/// In the future, we want to implement this for all nodes for which it makes
 /// sense. In the case of matchesAncestorOf, we'll want to implement it for
 /// all nodes, as all nodes have ancestors.
 class ASTMatchFinder {
