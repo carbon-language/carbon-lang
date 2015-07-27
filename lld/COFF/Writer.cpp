@@ -305,17 +305,13 @@ size_t Writer::addEntryToStringTable(StringRef Str) {
   return OffsetOfEntry;
 }
 
-coff_symbol16 Writer::createSymbol(DefinedRegular *D) {
-  uint64_t RVA = D->getRVA();
-  OutputSection *Sec = nullptr;
-  for (OutputSection *S : OutputSections) {
-    if (S->getRVA() > RVA)
-      break;
-    Sec = S;
-  }
+Optional<coff_symbol16> Writer::createSymbol(Defined *Def) {
+  if (auto *D = dyn_cast<DefinedRegular>(Def))
+    if (!D->isLive())
+      return None;
 
   coff_symbol16 Sym;
-  StringRef Name = D->getName();
+  StringRef Name = Def->getName();
   if (Name.size() > COFF::NameSize) {
     Sym.Name.Offset.Zeroes = 0;
     Sym.Name.Offset.Offset = addEntryToStringTable(Name);
@@ -323,12 +319,36 @@ coff_symbol16 Writer::createSymbol(DefinedRegular *D) {
     memset(Sym.Name.ShortName, 0, COFF::NameSize);
     memcpy(Sym.Name.ShortName, Name.data(), Name.size());
   }
-  COFFSymbolRef DSymRef = D->getCOFFSymbol();
-  Sym.Value = RVA - Sec->getRVA();
-  Sym.SectionNumber = Sec->SectionIndex;
-  Sym.Type = DSymRef.getType();
-  Sym.StorageClass = DSymRef.getStorageClass();
+
+  if (auto *D = dyn_cast<DefinedCOFF>(Def)) {
+    COFFSymbolRef Ref = D->getCOFFSymbol();
+    Sym.Type = Ref.getType();
+    Sym.StorageClass = Ref.getStorageClass();
+  } else {
+    Sym.Type = IMAGE_SYM_TYPE_NULL;
+    Sym.StorageClass = IMAGE_SYM_CLASS_EXTERNAL;
+  }
   Sym.NumberOfAuxSymbols = 0;
+
+  switch (Def->kind()) {
+  case SymbolBody::DefinedAbsoluteKind:
+  case SymbolBody::DefinedRelativeKind:
+    Sym.Value = Def->getRVA();
+    Sym.SectionNumber = IMAGE_SYM_ABSOLUTE;
+    break;
+  default: {
+    uint64_t RVA = Def->getRVA();
+    OutputSection *Sec = nullptr;
+    for (OutputSection *S : OutputSections) {
+      if (S->getRVA() > RVA)
+        break;
+      Sec = S;
+    }
+    Sym.Value = RVA - Sec->getRVA();
+    Sym.SectionNumber = Sec->SectionIndex;
+    break;
+  }
+  }
   return Sym;
 }
 
@@ -346,9 +366,14 @@ void Writer::createSymbolAndStringTable() {
 
   for (ObjectFile *File : Symtab->ObjectFiles)
     for (SymbolBody *B : File->getSymbols())
-      if (auto *D = dyn_cast<DefinedRegular>(B))
-        if (D->isLive())
-          OutputSymtab.push_back(createSymbol(D));
+      if (auto *D = dyn_cast<Defined>(B))
+        if (Optional<coff_symbol16> Sym = createSymbol(D))
+          OutputSymtab.push_back(*Sym);
+
+  for (ImportFile *File : Symtab->ImportFiles)
+    for (SymbolBody *B : File->getSymbols())
+      if (Optional<coff_symbol16> Sym = createSymbol(cast<Defined>(B)))
+        OutputSymtab.push_back(*Sym);
 
   OutputSection *LastSection = OutputSections.back();
   // We position the symbol table to be adjacent to the end of the last section.

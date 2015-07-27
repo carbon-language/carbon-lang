@@ -13,6 +13,7 @@
 #include "DLL.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include <memory>
 #include <vector>
@@ -94,7 +95,7 @@ private:
   void sortExceptionTable();
   void applyRelocations();
 
-  coff_symbol16 createSymbol(DefinedRegular *D);
+  llvm::Optional<coff_symbol16> createSymbol(Defined *D);
   size_t addEntryToStringTable(StringRef Str);
 
   OutputSection *findSection(StringRef Name);
