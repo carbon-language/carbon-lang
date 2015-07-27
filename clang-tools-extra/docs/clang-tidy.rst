@@ -29,13 +29,13 @@ negative globs remove them. For example,
 
 .. code-block:: console
 
-  $ clang-tidy test.cpp -checks='-*,clang-analyzer-*,-clang-analyzer-alpha*'
+  $ clang-tidy test.cpp -checks=-*,clang-analyzer-*,-clang-analyzer-alpha*
 
 will disable all default checks (``-*``) and enable all ``clang-analyzer-*``
 checks except for ``clang-analyzer-alpha*`` ones.
 
 The ``-list-checks`` option lists all the enabled checks. When used without
-``-checks=``, it shows checks enabled by default. Use ``-checks='*'`` to see all
+``-checks=``, it shows checks enabled by default. Use ``-checks=*`` to see all
 available checks or with any other value of ``-checks=`` to see which checks are
 enabled by this value.
 
@@ -135,7 +135,7 @@ An overview of all the command-line options:
                                      {"name":"file2.h"}
                                    ]
     -list-checks               - List all enabled checks and exit. Use with
-                                 -checks='*' to list all available checks.
+                                 -checks=* to list all available checks.
     -p=<string>                - Build path
     -system-headers            - Display the errors from system headers.
 
@@ -243,26 +243,26 @@ The Directory Structure
 ::
 
   clang-tidy/                       # Clang-tidy core.
-  ├── ClangTidy.h                   # Interfaces for users and checks.
-  ├── ClangTidyModule.h             # Interface for clang-tidy modules.
-  ├── ClangTidyModuleRegistry.h     # Interface for registering of modules.
+  |-- ClangTidy.h                   # Interfaces for users and checks.
+  |-- ClangTidyModule.h             # Interface for clang-tidy modules.
+  |-- ClangTidyModuleRegistry.h     # Interface for registering of modules.
      ...
-  ├── google/                       # Google clang-tidy module.
-  │   ├── GoogleTidyModule.cpp
-  │   ├── GoogleTidyModule.h
+  |-- google/                       # Google clang-tidy module.
+  |--� |-- GoogleTidyModule.cpp
+  |--� |-- GoogleTidyModule.h
           ...
-  ├── llvm/                         # LLVM clang-tidy module.
-  │   ├── LLVMTidyModule.cpp
-  │   ├── LLVMTidyModule.h
+  |-- llvm/                         # LLVM clang-tidy module.
+  |--� |-- LLVMTidyModule.cpp
+  |--� |-- LLVMTidyModule.h
           ...
-  └── tool/                         # Sources of the clang-tidy binary.
+  |-- tool/                         # Sources of the clang-tidy binary.
           ...
   test/clang-tidy/                  # Integration tests.
       ...
   unittests/clang-tidy/             # Unit tests.
-  ├── ClangTidyTest.h
-  ├── GoogleModuleTest.cpp
-  ├── LLVMModuleTest.cpp
+  |-- ClangTidyTest.h
+  |-- GoogleModuleTest.cpp
+  |-- LLVMModuleTest.cpp
       ...
 
 
@@ -487,7 +487,7 @@ The script provides multiple configuration flags.
 
 * The default set of checks can be overridden using the ``-checks`` argument,
   taking the identical format as :program:`clang-tidy` does. For example
-  ``-checks='-*,misc-use-override'`` will run the ``misc-use-override``
+  ``-checks=-*,misc-use-override`` will run the ``misc-use-override``
   checker only.
 
 * To restrict the files examined you can provide one or more regex arguments

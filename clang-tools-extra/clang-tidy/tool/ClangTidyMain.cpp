@@ -106,7 +106,7 @@ static cl::opt<bool>
 static cl::opt<bool>
 ListChecks("list-checks",
            cl::desc("List all enabled checks and exit. Use with\n"
-                    "-checks='*' to list all available checks."),
+                    "-checks=* to list all available checks."),
            cl::init(false), cl::cat(ClangTidyCategory));
 
 static cl::opt<std::string> Config(
@@ -171,7 +171,7 @@ static void printStats(const ClangTidyStats &Stats) {
                    << " with check filters";
     llvm::errs() << ").\n";
     if (Stats.ErrorsIgnoredNonUserCode)
-      llvm::errs() << "Use -header-filter='.*' to display errors from all "
+      llvm::errs() << "Use -header-filter=.* to display errors from all "
                       "non-system headers.\n";
   }
 }
