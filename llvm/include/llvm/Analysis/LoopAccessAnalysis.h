@@ -414,6 +414,10 @@ public:
   void print(raw_ostream &OS, unsigned Depth = 0,
              const SmallVectorImpl<int> *PtrPartition = nullptr) const;
 
+  /// Print \p Checks.
+  void printChecks(raw_ostream &OS, const SmallVectorImpl<PointerCheck> &Checks,
+                   unsigned Depth = 0) const;
+
   /// This flag indicates if we need to add the runtime check.
   bool Need;
 

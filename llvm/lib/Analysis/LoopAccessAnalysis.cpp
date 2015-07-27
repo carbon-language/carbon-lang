@@ -344,48 +344,41 @@ bool RuntimePointerChecking::needsChecking(
   return true;
 }
 
+void RuntimePointerChecking::printChecks(
+    raw_ostream &OS, const SmallVectorImpl<PointerCheck> &Checks,
+    unsigned Depth) const {
+  unsigned N = 0;
+  for (const auto &Check : Checks) {
+    const auto &First = Check.first->Members, &Second = Check.second->Members;
+
+    OS.indent(Depth) << "Check " << N++ << ":\n";
+
+    OS.indent(Depth + 2) << "Comparing group (" << Check.first << "):\n";
+    for (unsigned K = 0; K < First.size(); ++K)
+      OS.indent(Depth + 2) << *Pointers[First[K]].PointerValue << "\n";
+
+    OS.indent(Depth + 2) << "Against group (" << Check.second << "):\n";
+    for (unsigned K = 0; K < Second.size(); ++K)
+      OS.indent(Depth + 2) << *Pointers[Second[K]].PointerValue << "\n";
+  }
+}
+
 void RuntimePointerChecking::print(
     raw_ostream &OS, unsigned Depth,
     const SmallVectorImpl<int> *PtrPartition) const {
 
   OS.indent(Depth) << "Run-time memory checks:\n";
-
-  unsigned N = 0;
-  for (unsigned I = 0; I < CheckingGroups.size(); ++I)
-    for (unsigned J = I + 1; J < CheckingGroups.size(); ++J)
-      if (needsChecking(CheckingGroups[I], CheckingGroups[J], PtrPartition)) {
-        OS.indent(Depth) << "Check " << N++ << ":\n";
-        OS.indent(Depth + 2) << "Comparing group " << I << ":\n";
-
-        for (unsigned K = 0; K < CheckingGroups[I].Members.size(); ++K) {
-          OS.indent(Depth + 2)
-              << *Pointers[CheckingGroups[I].Members[K]].PointerValue << "\n";
-          if (PtrPartition)
-            OS << " (Partition: "
-               << (*PtrPartition)[CheckingGroups[I].Members[K]] << ")"
-               << "\n";
-        }
-
-        OS.indent(Depth + 2) << "Against group " << J << ":\n";
-
-        for (unsigned K = 0; K < CheckingGroups[J].Members.size(); ++K) {
-          OS.indent(Depth + 2)
-              << *Pointers[CheckingGroups[J].Members[K]].PointerValue << "\n";
-          if (PtrPartition)
-            OS << " (Partition: "
-               << (*PtrPartition)[CheckingGroups[J].Members[K]] << ")"
-               << "\n";
-        }
-      }
+  printChecks(OS, generateChecks(PtrPartition), Depth);
 
   OS.indent(Depth) << "Grouped accesses:\n";
   for (unsigned I = 0; I < CheckingGroups.size(); ++I) {
-    OS.indent(Depth + 2) << "Group " << I << ":\n";
-    OS.indent(Depth + 4) << "(Low: " << *CheckingGroups[I].Low
-                         << " High: " << *CheckingGroups[I].High << ")\n";
-    for (unsigned J = 0; J < CheckingGroups[I].Members.size(); ++J) {
-      OS.indent(Depth + 6) << "Member: "
-                           << *Pointers[CheckingGroups[I].Members[J]].Expr
+    const auto &CG = CheckingGroups[I];
+
+    OS.indent(Depth + 2) << "Group " << &CG << ":\n";
+    OS.indent(Depth + 4) << "(Low: " << *CG.Low << " High: " << *CG.High
+                         << ")\n";
+    for (unsigned J = 0; J < CG.Members.size(); ++J) {
+      OS.indent(Depth + 6) << "Member: " << *Pointers[CG.Members[J]].Expr
                            << "\n";
     }
   }
