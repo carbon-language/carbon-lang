@@ -1,0 +1,19 @@
+# RUN: llc -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser preserves unnamed LLVM IR block
+# references.
+
+--- |
+
+  define i32 @foo() {
+    ret i32 0
+  }
+
+...
+---
+name:            foo
+body:
+# CHECK: id: 0
+# CHECK: ir-block: '%ir-block.0'
+ - id:           0
+   ir-block:     '%ir-block.0'
+...

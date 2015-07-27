@@ -219,6 +219,10 @@ static Cursor maybeLexConstantPoolItem(Cursor C, MIToken &Token) {
   return maybeLexIndex(C, Token, "%const.", MIToken::ConstantPoolItem);
 }
 
+static Cursor maybeLexIRBlock(Cursor C, MIToken &Token) {
+  return maybeLexIndex(C, Token, "%ir-block.", MIToken::IRBlock);
+}
+
 static Cursor lexVirtualRegister(Cursor C, MIToken &Token) {
   auto Range = C;
   C.advance(); // Skip '%'
@@ -350,6 +354,8 @@ StringRef llvm::lexMIToken(
   if (Cursor R = maybeLexFixedStackObject(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexConstantPoolItem(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexIRBlock(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexRegister(C, Token))
     return R.remaining();

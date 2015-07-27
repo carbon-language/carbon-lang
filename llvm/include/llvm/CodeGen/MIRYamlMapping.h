@@ -135,6 +135,7 @@ template <> struct MappingTraits<MachineFunctionLiveIn> {
 struct MachineBasicBlock {
   unsigned ID;
   StringValue Name;
+  StringValue IRBlock;
   unsigned Alignment = 0;
   bool IsLandingPad = false;
   bool AddressTaken = false;
@@ -149,6 +150,8 @@ template <> struct MappingTraits<MachineBasicBlock> {
     YamlIO.mapRequired("id", MBB.ID);
     YamlIO.mapOptional("name", MBB.Name,
                        StringValue()); // Don't print out an empty name.
+    YamlIO.mapOptional("ir-block", MBB.IRBlock,
+                       StringValue()); // Don't print out an empty BB reference.
     YamlIO.mapOptional("alignment", MBB.Alignment);
     YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
     YamlIO.mapOptional("addressTaken", MBB.AddressTaken);

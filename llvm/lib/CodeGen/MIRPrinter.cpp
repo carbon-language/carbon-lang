@@ -163,6 +163,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
     convert(YamlMF, *ConstantPool);
 
   ModuleSlotTracker MST(MF.getFunction()->getParent());
+  MST.incorporateFunction(*MF.getFunction());
   if (const auto *JumpTableInfo = MF.getJumpTableInfo())
     convert(MST, YamlMF.JumpTableInfo, *JumpTableInfo);
   int I = 0;
@@ -336,11 +337,17 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
                          const MachineBasicBlock &MBB) {
   assert(MBB.getNumber() >= 0 && "Invalid MBB number");
   YamlMBB.ID = (unsigned)MBB.getNumber();
-  // TODO: Serialize unnamed BB references.
-  if (const auto *BB = MBB.getBasicBlock())
-    YamlMBB.Name.Value = BB->hasName() ? BB->getName() : "<unnamed bb>";
-  else
-    YamlMBB.Name.Value = "";
+  if (const auto *BB = MBB.getBasicBlock()) {
+    if (BB->hasName()) {
+      YamlMBB.Name.Value = BB->getName();
+    } else {
+      int Slot = MST.getLocalSlot(BB);
+      if (Slot == -1)
+        YamlMBB.IRBlock.Value = "<badref>";
+      else
+        YamlMBB.IRBlock.Value = (Twine("%ir-block.") + Twine(Slot)).str();
+    }
+  }
   YamlMBB.Alignment = MBB.getAlignment();
   YamlMBB.AddressTaken = MBB.hasAddressTaken();
   YamlMBB.IsLandingPad = MBB.isLandingPad();

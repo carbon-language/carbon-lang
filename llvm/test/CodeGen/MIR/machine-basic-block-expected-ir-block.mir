@@ -1,0 +1,16 @@
+# RUN: not llc -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @foo() {
+    ret i32 0
+  }
+
+...
+---
+name:            foo
+body:
+ - id:           0
+# CHECK: [[@LINE+1]]:19: expected an IR block reference
+   ir-block:     '0'
+...
