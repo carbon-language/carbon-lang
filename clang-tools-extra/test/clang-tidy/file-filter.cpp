@@ -35,11 +35,11 @@ class A { A(int); };
 // CHECK: Suppressed 3 warnings (3 in non-user code)
 // CHECK: Use -header-filter=.* to display errors from all non-system headers.
 // CHECK2: Suppressed 1 warnings (1 in non-user code)
-// CHECK2: Use -header-filter='.*' {{.*}}
+// CHECK2: Use -header-filter=.* {{.*}}
 // CHECK3: Suppressed 2 warnings (2 in non-user code)
-// CHECK3: Use -header-filter='.*' {{.*}}
+// CHECK3: Use -header-filter=.* {{.*}}
 // CHECK4-NOT: Suppressed {{.*}} warnings
-// CHECK4-NOT: Use -header-filter='.*' {{.*}}
+// CHECK4-NOT: Use -header-filter=.* {{.*}}
 
 // FIXME: It doesn't pass on win32. Investigating.
 // REQUIRES: shell
