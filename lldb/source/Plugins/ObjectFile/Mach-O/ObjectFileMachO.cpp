@@ -1028,6 +1028,20 @@ ObjectFileMachO::GetSegmentNameDATA()
 }
 
 const ConstString &
+ObjectFileMachO::GetSegmentNameDATA_DIRTY()
+{
+    static ConstString g_segment_name ("__DATA_DIRTY");
+    return g_segment_name;
+}
+
+const ConstString &
+ObjectFileMachO::GetSegmentNameDATA_CONST()
+{
+    static ConstString g_segment_name ("__DATA_CONST");
+    return g_segment_name;
+}
+
+const ConstString &
 ObjectFileMachO::GetSegmentNameOBJC()
 {
     static ConstString g_segment_name_OBJC ("__OBJC");
@@ -2442,10 +2456,14 @@ ObjectFileMachO::ParseSymtab ()
 
         const ConstString &g_segment_name_TEXT = GetSegmentNameTEXT();
         const ConstString &g_segment_name_DATA = GetSegmentNameDATA();
+        const ConstString &g_segment_name_DATA_DIRTY = GetSegmentNameDATA_DIRTY();
+        const ConstString &g_segment_name_DATA_CONST = GetSegmentNameDATA_CONST();
         const ConstString &g_segment_name_OBJC = GetSegmentNameOBJC();
         const ConstString &g_section_name_eh_frame = GetSectionNameEHFrame();
         SectionSP text_section_sp(section_list->FindSectionByName(g_segment_name_TEXT));
         SectionSP data_section_sp(section_list->FindSectionByName(g_segment_name_DATA));
+        SectionSP data_dirty_section_sp(section_list->FindSectionByName(g_segment_name_DATA_DIRTY));
+        SectionSP data_const_section_sp(section_list->FindSectionByName(g_segment_name_DATA_CONST));
         SectionSP objc_section_sp(section_list->FindSectionByName(g_segment_name_OBJC));
         SectionSP eh_frame_section_sp;
         if (text_section_sp.get())
@@ -3298,7 +3316,9 @@ ObjectFileMachO::ParseSymtab ()
                                                                         else
                                                                             type = eSymbolTypeCode;
                                                                     }
-                                                                    else if (symbol_section->IsDescendant(data_section_sp.get()))
+                                                                    else if (symbol_section->IsDescendant(data_section_sp.get()) ||
+                                                                             symbol_section->IsDescendant(data_dirty_section_sp.get()) ||
+                                                                             symbol_section->IsDescendant(data_const_section_sp.get()))
                                                                     {
                                                                         if (symbol_sect_name && ::strstr (symbol_sect_name, "__objc") == symbol_sect_name)
                                                                         {
@@ -4148,7 +4168,9 @@ ObjectFileMachO::ParseSymtab ()
                                             type = eSymbolTypeCode;
                                     }
                                     else
-                                    if (symbol_section->IsDescendant(data_section_sp.get()))
+                                    if (symbol_section->IsDescendant(data_section_sp.get()) ||
+                                        symbol_section->IsDescendant(data_dirty_section_sp.get()) ||
+                                        symbol_section->IsDescendant(data_const_section_sp.get()))
                                     {
                                         if (symbol_sect_name && ::strstr (symbol_sect_name, "__objc") == symbol_sect_name)
                                         {

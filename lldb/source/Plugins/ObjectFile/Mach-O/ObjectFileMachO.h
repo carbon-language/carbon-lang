@@ -223,6 +223,8 @@ protected:
     llvm::MachO::mach_header m_header;
     static const lldb_private::ConstString &GetSegmentNameTEXT();
     static const lldb_private::ConstString &GetSegmentNameDATA();
+    static const lldb_private::ConstString &GetSegmentNameDATA_DIRTY();
+    static const lldb_private::ConstString &GetSegmentNameDATA_CONST();
     static const lldb_private::ConstString &GetSegmentNameOBJC();
     static const lldb_private::ConstString &GetSegmentNameLINKEDIT();
     static const lldb_private::ConstString &GetSectionNameEHFrame();
