@@ -48,6 +48,7 @@ namespace llvm {
   class LoopInfo;
   class Operator;
   class SCEVUnknown;
+  class SCEVAddRecExpr;
   class SCEV;
   template<> struct FoldingSetTrait<SCEV>;
 
@@ -579,6 +580,21 @@ namespace llvm {
     bool proveNoWrapByVaryingStart(const SCEV *Start, const SCEV *Step,
                                    const Loop *L);
 
+    bool isMonotonicPredicateImpl(const SCEVAddRecExpr *LHS,
+                                  ICmpInst::Predicate Pred, bool &Increasing);
+
+    /// Return true if, for all loop invariant X, the predicate "LHS `Pred` X"
+    /// is monotonically increasing or decreasing.  In the former case set
+    /// `Increasing` to true and in the latter case set `Increasing` to false.
+    ///
+    /// A predicate is said to be monotonically increasing if may go from being
+    /// false to being true as the loop iterates, but never the other way
+    /// around.  A predicate is said to be monotonically decreasing if may go
+    /// from being true to being false as the loop iterates, but never the other
+    /// way around.
+    bool isMonotonicPredicate(const SCEVAddRecExpr *LHS,
+                              ICmpInst::Predicate Pred, bool &Increasing);
+
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();
@@ -899,6 +915,16 @@ namespace llvm {
     ///
     bool isKnownPredicate(ICmpInst::Predicate Pred,
                           const SCEV *LHS, const SCEV *RHS);
+
+    /// Return true if the result of the predicate LHS `Pred` RHS is loop
+    /// invariant with respect to L.  Set InvariantPred, InvariantLHS and
+    /// InvariantLHS so that InvariantLHS `InvariantPred` InvariantRHS is the
+    /// loop invariant form of LHS `Pred` RHS.
+    bool isLoopInvariantPredicate(ICmpInst::Predicate Pred, const SCEV *LHS,
+                                  const SCEV *RHS, const Loop *L,
+                                  ICmpInst::Predicate &InvariantPred,
+                                  const SCEV *&InvariantLHS,
+                                  const SCEV *&InvariantRHS);
 
     /// SimplifyICmpOperands - Simplify LHS and RHS in a comparison with
     /// predicate Pred. Return true iff any changes were made. If the

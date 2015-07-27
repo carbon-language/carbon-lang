@@ -166,19 +166,68 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
   S = SE->getSCEVAtScope(S, ICmpLoop);
   X = SE->getSCEVAtScope(X, ICmpLoop);
 
+  ICmpInst::Predicate InvariantPredicate;
+  const SCEV *InvariantLHS, *InvariantRHS;
+
+  const char *Verb = nullptr;
+
   // If the condition is always true or always false, replace it with
   // a constant value.
-  if (SE->isKnownPredicate(Pred, S, X))
+  if (SE->isKnownPredicate(Pred, S, X)) {
     ICmp->replaceAllUsesWith(ConstantInt::getTrue(ICmp->getContext()));
-  else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X))
+    DeadInsts.emplace_back(ICmp);
+    Verb = "Eliminated";
+  } else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X)) {
     ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
-  else
+    DeadInsts.emplace_back(ICmp);
+    Verb = "Eliminated";
+  } else if (isa<PHINode>(IVOperand) &&
+             SE->isLoopInvariantPredicate(Pred, S, X, ICmpLoop,
+                                          InvariantPredicate, InvariantLHS,
+                                          InvariantRHS)) {
+
+    // Rewrite the comparision to a loop invariant comparision if it can be done
+    // cheaply, where cheaply means "we don't need to emit any new
+    // instructions".
+
+    Value *NewLHS = nullptr, *NewRHS = nullptr;
+
+    if (S == InvariantLHS || X == InvariantLHS)
+      NewLHS =
+          ICmp->getOperand(S == InvariantLHS ? IVOperIdx : (1 - IVOperIdx));
+
+    if (S == InvariantRHS || X == InvariantRHS)
+      NewRHS =
+          ICmp->getOperand(S == InvariantRHS ? IVOperIdx : (1 - IVOperIdx));
+
+    for (Value *Incoming : cast<PHINode>(IVOperand)->incoming_values()) {
+      if (NewLHS && NewRHS)
+        break;
+
+      const SCEV *IncomingS = SE->getSCEV(Incoming);
+
+      if (!NewLHS && IncomingS == InvariantLHS)
+        NewLHS = Incoming;
+      if (!NewRHS && IncomingS == InvariantRHS)
+        NewRHS = Incoming;
+    }
+
+    if (!NewLHS || !NewRHS)
+      // We could not find an existing value to replace either LHS or RHS.
+      // Generating new instructions has subtler tradeoffs, so avoid doing that
+      // for now.
+      return;
+
+    Verb = "Simplified";
+    ICmp->setPredicate(InvariantPredicate);
+    ICmp->setOperand(0, NewLHS);
+    ICmp->setOperand(1, NewRHS);
+  } else
     return;
 
-  DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
+  DEBUG(dbgs() << "INDVARS: " << Verb << " comparison: " << *ICmp << '\n');
   ++NumElimCmp;
   Changed = true;
-  DeadInsts.emplace_back(ICmp);
 }
 
 /// SimplifyIVUsers helper for eliminating useless
