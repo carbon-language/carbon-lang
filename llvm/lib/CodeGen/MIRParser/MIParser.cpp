@@ -96,8 +96,8 @@ public:
   bool error(StringRef::iterator Loc, const Twine &Msg);
 
   bool parse(MachineInstr *&MI);
-  bool parseMBB(MachineBasicBlock *&MBB);
-  bool parseNamedRegister(unsigned &Reg);
+  bool parseStandaloneMBB(MachineBasicBlock *&MBB);
+  bool parseStandaloneNamedRegister(unsigned &Reg);
   bool parseStandaloneVirtualRegister(unsigned &Reg);
 
   bool parseRegister(unsigned &Reg);
@@ -265,7 +265,7 @@ bool MIParser::parse(MachineInstr *&MI) {
   return false;
 }
 
-bool MIParser::parseMBB(MachineBasicBlock *&MBB) {
+bool MIParser::parseStandaloneMBB(MachineBasicBlock *&MBB) {
   lex();
   if (Token.isNot(MIToken::MachineBasicBlock))
     return error("expected a machine basic block reference");
@@ -278,7 +278,7 @@ bool MIParser::parseMBB(MachineBasicBlock *&MBB) {
   return false;
 }
 
-bool MIParser::parseNamedRegister(unsigned &Reg) {
+bool MIParser::parseStandaloneNamedRegister(unsigned &Reg) {
   lex();
   if (Token.isNot(MIToken::NamedRegister))
     return error("expected a named register");
@@ -846,7 +846,7 @@ bool llvm::parseMBBReference(MachineBasicBlock *&MBB, SourceMgr &SM,
                              MachineFunction &MF, StringRef Src,
                              const PerFunctionMIParsingState &PFS,
                              const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseMBB(MBB);
+  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseStandaloneMBB(MBB);
 }
 
 bool llvm::parseNamedRegisterReference(unsigned &Reg, SourceMgr &SM,
@@ -854,7 +854,8 @@ bool llvm::parseNamedRegisterReference(unsigned &Reg, SourceMgr &SM,
                                        const PerFunctionMIParsingState &PFS,
                                        const SlotMapping &IRSlots,
                                        SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseNamedRegister(Reg);
+  return MIParser(SM, MF, Error, Src, PFS, IRSlots)
+      .parseStandaloneNamedRegister(Reg);
 }
 
 bool llvm::parseVirtualRegisterReference(unsigned &Reg, SourceMgr &SM,
