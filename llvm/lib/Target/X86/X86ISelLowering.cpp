@@ -6471,6 +6471,92 @@ static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask, SDLoc DL,
   return DAG.getConstant(Imm, DL, MVT::i8);
 }
 
+/// \brief Compute whether each element of a shuffle is zeroable.
+///
+/// A "zeroable" vector shuffle element is one which can be lowered to zero.
+/// Either it is an undef element in the shuffle mask, the element of the input
+/// referenced is undef, or the element of the input referenced is known to be
+/// zero. Many x86 shuffles can zero lanes cheaply and we often want to handle
+/// as many lanes with this technique as possible to simplify the remaining
+/// shuffle.
+static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
+                                                     SDValue V1, SDValue V2) {
+  SmallBitVector Zeroable(Mask.size(), false);
+
+  while (V1.getOpcode() == ISD::BITCAST)
+    V1 = V1->getOperand(0);
+  while (V2.getOpcode() == ISD::BITCAST)
+    V2 = V2->getOperand(0);
+
+  bool V1IsZero = ISD::isBuildVectorAllZeros(V1.getNode());
+  bool V2IsZero = ISD::isBuildVectorAllZeros(V2.getNode());
+
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    int M = Mask[i];
+    // Handle the easy cases.
+    if (M < 0 || (M >= 0 && M < Size && V1IsZero) || (M >= Size && V2IsZero)) {
+      Zeroable[i] = true;
+      continue;
+    }
+
+    // If this is an index into a build_vector node (which has the same number
+    // of elements), dig out the input value and use it.
+    SDValue V = M < Size ? V1 : V2;
+    if (V.getOpcode() != ISD::BUILD_VECTOR || Size != (int)V.getNumOperands())
+      continue;
+
+    SDValue Input = V.getOperand(M % Size);
+    // The UNDEF opcode check really should be dead code here, but not quite
+    // worth asserting on (it isn't invalid, just unexpected).
+    if (Input.getOpcode() == ISD::UNDEF || X86::isZeroNode(Input))
+      Zeroable[i] = true;
+  }
+
+  return Zeroable;
+}
+
+/// \brief Try to emit a bitmask instruction for a shuffle.
+///
+/// This handles cases where we can model a blend exactly as a bitmask due to
+/// one of the inputs being zeroable.
+static SDValue lowerVectorShuffleAsBitMask(SDLoc DL, MVT VT, SDValue V1,
+                                           SDValue V2, ArrayRef<int> Mask,
+                                           SelectionDAG &DAG) {
+  MVT EltVT = VT.getScalarType();
+  int NumEltBits = EltVT.getSizeInBits();
+  MVT IntEltVT = MVT::getIntegerVT(NumEltBits);
+  SDValue Zero = DAG.getConstant(0, DL, IntEltVT);
+  SDValue AllOnes = DAG.getConstant(APInt::getAllOnesValue(NumEltBits), DL,
+                                    IntEltVT);
+  if (EltVT.isFloatingPoint()) {
+    Zero = DAG.getBitcast(EltVT, Zero);
+    AllOnes = DAG.getBitcast(EltVT, AllOnes);
+  }
+  SmallVector<SDValue, 16> VMaskOps(Mask.size(), Zero);
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+  SDValue V;
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    if (Zeroable[i])
+      continue;
+    if (Mask[i] % Size != i)
+      return SDValue(); // Not a blend.
+    if (!V)
+      V = Mask[i] < Size ? V1 : V2;
+    else if (V != (Mask[i] < Size ? V1 : V2))
+      return SDValue(); // Can only let one input through the mask.
+
+    VMaskOps[i] = AllOnes;
+  }
+  if (!V)
+    return SDValue(); // No non-zeroable elements!
+
+  SDValue VMask = DAG.getNode(ISD::BUILD_VECTOR, DL, VT, VMaskOps);
+  V = DAG.getNode(VT.isFloatingPoint()
+                  ? (unsigned) X86ISD::FAND : (unsigned) ISD::AND,
+                  DL, VT, V, VMask);
+  return V;
+}
+
 /// \brief Try to emit a blend instruction for a shuffle using bit math.
 ///
 /// This is used as a fallback approach when first class blend instructions are
@@ -6832,92 +6918,6 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
                                 DAG.getConstant(HiByteShift, DL, MVT::i8));
   return DAG.getBitcast(VT,
                         DAG.getNode(ISD::OR, DL, MVT::v2i64, LoShift, HiShift));
-}
-
-/// \brief Compute whether each element of a shuffle is zeroable.
-///
-/// A "zeroable" vector shuffle element is one which can be lowered to zero.
-/// Either it is an undef element in the shuffle mask, the element of the input
-/// referenced is undef, or the element of the input referenced is known to be
-/// zero. Many x86 shuffles can zero lanes cheaply and we often want to handle
-/// as many lanes with this technique as possible to simplify the remaining
-/// shuffle.
-static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
-                                                     SDValue V1, SDValue V2) {
-  SmallBitVector Zeroable(Mask.size(), false);
-
-  while (V1.getOpcode() == ISD::BITCAST)
-    V1 = V1->getOperand(0);
-  while (V2.getOpcode() == ISD::BITCAST)
-    V2 = V2->getOperand(0);
-
-  bool V1IsZero = ISD::isBuildVectorAllZeros(V1.getNode());
-  bool V2IsZero = ISD::isBuildVectorAllZeros(V2.getNode());
-
-  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    int M = Mask[i];
-    // Handle the easy cases.
-    if (M < 0 || (M >= 0 && M < Size && V1IsZero) || (M >= Size && V2IsZero)) {
-      Zeroable[i] = true;
-      continue;
-    }
-
-    // If this is an index into a build_vector node (which has the same number
-    // of elements), dig out the input value and use it.
-    SDValue V = M < Size ? V1 : V2;
-    if (V.getOpcode() != ISD::BUILD_VECTOR || Size != (int)V.getNumOperands())
-      continue;
-
-    SDValue Input = V.getOperand(M % Size);
-    // The UNDEF opcode check really should be dead code here, but not quite
-    // worth asserting on (it isn't invalid, just unexpected).
-    if (Input.getOpcode() == ISD::UNDEF || X86::isZeroNode(Input))
-      Zeroable[i] = true;
-  }
-
-  return Zeroable;
-}
-
-/// \brief Try to emit a bitmask instruction for a shuffle.
-///
-/// This handles cases where we can model a blend exactly as a bitmask due to
-/// one of the inputs being zeroable.
-static SDValue lowerVectorShuffleAsBitMask(SDLoc DL, MVT VT, SDValue V1,
-                                           SDValue V2, ArrayRef<int> Mask,
-                                           SelectionDAG &DAG) {
-  MVT EltVT = VT.getScalarType();
-  int NumEltBits = EltVT.getSizeInBits();
-  MVT IntEltVT = MVT::getIntegerVT(NumEltBits);
-  SDValue Zero = DAG.getConstant(0, DL, IntEltVT);
-  SDValue AllOnes = DAG.getConstant(APInt::getAllOnesValue(NumEltBits), DL,
-                                    IntEltVT);
-  if (EltVT.isFloatingPoint()) {
-    Zero = DAG.getBitcast(EltVT, Zero);
-    AllOnes = DAG.getBitcast(EltVT, AllOnes);
-  }
-  SmallVector<SDValue, 16> VMaskOps(Mask.size(), Zero);
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
-  SDValue V;
-  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    if (Zeroable[i])
-      continue;
-    if (Mask[i] % Size != i)
-      return SDValue(); // Not a blend.
-    if (!V)
-      V = Mask[i] < Size ? V1 : V2;
-    else if (V != (Mask[i] < Size ? V1 : V2))
-      return SDValue(); // Can only let one input through the mask.
-
-    VMaskOps[i] = AllOnes;
-  }
-  if (!V)
-    return SDValue(); // No non-zeroable elements!
-
-  SDValue VMask = DAG.getNode(ISD::BUILD_VECTOR, DL, VT, VMaskOps);
-  V = DAG.getNode(VT.isFloatingPoint()
-                  ? (unsigned) X86ISD::FAND : (unsigned) ISD::AND,
-                  DL, VT, V, VMask);
-  return V;
 }
 
 /// \brief Try to lower a vector shuffle as a bit shift (shifts in zeros).
