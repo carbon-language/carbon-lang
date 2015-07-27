@@ -502,11 +502,36 @@ static bool isNoCommonDefault(const llvm::Triple &Triple) {
   }
 }
 
+// ARM tools start.
+
+// Get SubArch (vN).
+static int getARMSubArchVersionNumber(const llvm::Triple &Triple) {
+  llvm::StringRef Arch = Triple.getArchName();
+  return llvm::ARMTargetParser::parseArchVersion(Arch);
+}
+
+// True if M-profile.
+static bool isARMMProfile(const llvm::Triple &Triple) {
+  llvm::StringRef Arch = Triple.getArchName();
+  unsigned Profile = llvm::ARMTargetParser::parseArchProfile(Arch);
+  return Profile == llvm::ARM::PK_M;
+}
+
+// Get Arch/CPU from args.
+static void getARMArchCPUFromArgs(const ArgList &Args,
+                                  llvm::StringRef &Arch,
+                                  llvm::StringRef &CPU) {
+  if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
+    CPU = A->getValue();
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
+    Arch = A->getValue();
+}
+
 // Handle -mhwdiv=.
 static void getARMHWDivFeatures(const Driver &D, const Arg *A,
                                 const ArgList &Args,
+                                StringRef HWDiv,
                                 std::vector<const char *> &Features) {
-  StringRef HWDiv = A->getValue();
   if (HWDiv == "arm") {
     Features.push_back("+hwdiv-arm");
     Features.push_back("-hwdiv");
@@ -526,22 +551,33 @@ static void getARMHWDivFeatures(const Driver &D, const Arg *A,
 // Handle -mfpu=.
 static void getARMFPUFeatures(const Driver &D, const Arg *A,
                               const ArgList &Args,
+                              StringRef FPU,
                               std::vector<const char *> &Features) {
-  StringRef FPU = A->getValue();
   unsigned FPUID = llvm::ARMTargetParser::parseFPU(FPU);
   if (!llvm::ARMTargetParser::getFPUFeatures(FPUID, Features))
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
-static int getARMSubArchVersionNumber(const llvm::Triple &Triple) {
-  llvm::StringRef Arch = Triple.getArchName();
-  return llvm::ARMTargetParser::parseArchVersion(Arch);
+// Check -march=.
+static void checkARMArchName(const Driver &D, const Arg *A,
+                             const ArgList &Args,
+                             llvm::StringRef ArchName,
+                             const llvm::Triple &Triple) {
+  std::string MArch = arm::getARMArch(ArchName, Triple);
+  if (llvm::ARMTargetParser::parseArch(MArch) == llvm::ARM::AK_INVALID)
+    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
-static bool isARMMProfile(const llvm::Triple &Triple) {
-  llvm::StringRef Arch = Triple.getArchName();
-  unsigned Profile = llvm::ARMTargetParser::parseArchProfile(Arch);
-  return Profile == llvm::ARM::PK_M;
+// Check -mcpu=.
+static void checkARMCPUName(const Driver &D, const Arg *A,
+                            const ArgList &Args,
+                            llvm::StringRef CPUName,
+                            llvm::StringRef ArchName,
+                            const llvm::Triple &Triple) {
+  std::string CPU = arm::getARMTargetCPU(CPUName, ArchName, Triple);
+  std::string Arch = arm::getARMArch(ArchName, Triple);
+  if (strcmp(arm::getLLVMArchSuffixForARM(CPU, Arch), "") == 0)
+    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
 // Select the float ABI as determined by -msoft-float, -mhard-float, and
@@ -665,27 +701,27 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   // Honor -mfpu=.
   if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    getARMFPUFeatures(D, A, Args, Features);
+    getARMFPUFeatures(D, A, Args, A->getValue(), Features);
+  // Honor -mhwdiv=
   if (const Arg *A = Args.getLastArg(options::OPT_mhwdiv_EQ))
-    getARMHWDivFeatures(D, A, Args, Features);
+    getARMHWDivFeatures(D, A, Args, A->getValue(), Features);
 
   // Check if -march is valid by checking if it can be canonicalised and parsed.
   // getARMArch is used here instead of just checking the -march value in order
   // to handle -march=native correctly.
+  StringRef ArchName;
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    std::string Arch = arm::getARMArch(Args, Triple);
-    if (llvm::ARMTargetParser::parseArch(Arch) == llvm::ARM::AK_INVALID)
-      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+    ArchName = A->getValue();
+    checkARMArchName(D, A, Args, ArchName, Triple);
   }
 
   // We do a similar thing with -mcpu, but here things are complicated because
   // the only function we have to check if a cpu is valid is
   // getLLVMArchSuffixForARM which also needs an architecture.
+  StringRef CPUName;
   if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
-    std::string CPU = arm::getARMTargetCPU(Args, Triple);
-    std::string Arch = arm::getARMArch(Args, Triple);
-    if (strcmp(arm::getLLVMArchSuffixForARM(CPU, Arch), "") == 0)
-      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+    CPUName = A->getValue();
+    checkARMCPUName(D, A, Args, CPUName, ArchName, Triple);
   }
 
   // Setting -msoft-float effectively disables NEON because of the GCC
@@ -835,6 +871,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
     CmdArgs.push_back("-no-implicit-float");
 
 }
+// ARM tools end.
 
 /// getAArch64TargetCPU - Get the (LLVM) name of the AArch64 cpu we are
 /// targeting.
@@ -1473,9 +1510,11 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
-  case llvm::Triple::thumbeb:
-    return arm::getARMTargetCPU(Args, T);
-
+  case llvm::Triple::thumbeb: {
+    StringRef MArch, MCPU;
+    getARMArchCPUFromArgs(Args, MArch, MCPU);
+    return arm::getARMTargetCPU(MCPU, MArch, T);
+  }
   case llvm::Triple::mips:
   case llvm::Triple::mipsel:
   case llvm::Triple::mips64:
@@ -5800,16 +5839,13 @@ void amdgpu::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 }
 // AMDGPU tools end.
 
-const std::string arm::getARMArch(const ArgList &Args,
+const std::string arm::getARMArch(StringRef Arch,
                                   const llvm::Triple &Triple) {
   std::string MArch;
-  if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    // Otherwise, if we have -march= choose the base CPU for that arch.
-    MArch = A->getValue();
-  } else {
-    // Otherwise, use the Arch from the triple.
+  if (!Arch.empty())
+    MArch = Arch;
+  else
     MArch = Triple.getArchName();
-  }
   MArch = StringRef(MArch).lower();
 
   // Handle -march=native.
@@ -5830,9 +5866,9 @@ const std::string arm::getARMArch(const ArgList &Args,
   return MArch;
 }
 /// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
-const char *arm::getARMCPUForMArch(const ArgList &Args,
+const char *arm::getARMCPUForMArch(StringRef Arch,
                                    const llvm::Triple &Triple) {
-  std::string MArch = getARMArch(Args, Triple);
+  std::string MArch = getARMArch(Arch, Triple);
   // getARMCPUForArch defaults to the triple if MArch is empty, but empty MArch
   // here means an -march=native that we can't handle, so instead return no CPU.
   if (MArch.empty())
@@ -5848,12 +5884,13 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
-std::string arm::getARMTargetCPU(const ArgList &Args,
+std::string arm::getARMTargetCPU(StringRef CPU,
+                                 StringRef Arch,
                                  const llvm::Triple &Triple) {
   // FIXME: Warn on inconsistent use of -mcpu and -march.
   // If we have -mcpu=, use that.
-  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
-    std::string MCPU = StringRef(A->getValue()).lower();
+  if (!CPU.empty()) {
+    std::string MCPU = StringRef(CPU).lower();
     // Handle -mcpu=native.
     if (MCPU == "native")
       return llvm::sys::getHostCPUName();
@@ -5861,7 +5898,7 @@ std::string arm::getARMTargetCPU(const ArgList &Args,
       return MCPU;
   }
 
-  return getARMCPUForMArch(Args, Triple);
+  return getARMCPUForMArch(Arch, Triple);
 }
 
 /// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
@@ -7360,8 +7397,10 @@ void netbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb: {
-    std::string MArch = arm::getARMTargetCPU(Args, getToolChain().getTriple());
-    CmdArgs.push_back(Args.MakeArgString("-mcpu=" + MArch));
+    StringRef MArch, MCPU;
+    getARMArchCPUFromArgs(Args, MArch, MCPU);
+    std::string Arch = arm::getARMTargetCPU(MCPU, MArch, getToolChain().getTriple());
+    CmdArgs.push_back(Args.MakeArgString("-mcpu=" + Arch));
     break;
   }
 
