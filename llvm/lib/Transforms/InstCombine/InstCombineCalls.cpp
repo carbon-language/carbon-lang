@@ -207,7 +207,7 @@ static Value *SimplifyX86extend(const IntrinsicInst &II,
 
   // Extract a subvector of the first NumDstElts lanes and sign/zero extend.
   SmallVector<int, 8> ShuffleMask;
-  for (int i = 0; i != NumDstElts; ++i)
+  for (int i = 0; i != (int)NumDstElts; ++i)
     ShuffleMask.push_back(i);
 
   Value *SV = Builder.CreateShuffleVector(II.getArgOperand(0),
