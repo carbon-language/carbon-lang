@@ -55,6 +55,7 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
   T Check("test-check", &Context);
   ast_matchers::MatchFinder Finder;
   Check.registerMatchers(&Finder);
+  Context.setCurrentFile(Filename.str());
 
   std::vector<std::string> ArgCXX11(1, "clang-tidy");
   ArgCXX11.push_back("-fsyntax-only");
