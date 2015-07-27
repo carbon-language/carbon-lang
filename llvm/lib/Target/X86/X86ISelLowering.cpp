@@ -67,10 +67,6 @@ static cl::opt<bool> ExperimentalVectorWideningLegalization(
              "rather than promotion."),
     cl::Hidden);
 
-// Forward declarations.
-static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
-                       SDValue V2);
-
 X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
                                      const X86Subtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
@@ -2867,6 +2863,18 @@ static SDValue EmitTailCallStoreRetAddr(SelectionDAG &DAG, MachineFunction &MF,
   return Chain;
 }
 
+/// Returns a vector_shuffle mask for an movs{s|d}, movd
+/// operation of specified width.
+static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
+                       SDValue V2) {
+  unsigned NumElems = VT.getVectorNumElements();
+  SmallVector<int, 8> Mask;
+  Mask.push_back(NumElems);
+  for (unsigned i = 1; i != NumElems; ++i)
+    Mask.push_back(i);
+  return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
+}
+
 SDValue
 X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                              SmallVectorImpl<SDValue> &InVals) const {
@@ -4397,18 +4405,6 @@ static SDValue getOnesVector(MVT VT, bool HasInt256, SelectionDAG &DAG,
     llvm_unreachable("Unexpected vector type");
 
   return DAG.getBitcast(VT, Vec);
-}
-
-/// Returns a vector_shuffle mask for an movs{s|d}, movd
-/// operation of specified width.
-static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
-                       SDValue V2) {
-  unsigned NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> Mask;
-  Mask.push_back(NumElems);
-  for (unsigned i = 1; i != NumElems; ++i)
-    Mask.push_back(i);
-  return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
 /// Returns a vector_shuffle node for an unpackl operation.
