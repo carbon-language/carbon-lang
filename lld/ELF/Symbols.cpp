@@ -21,28 +21,30 @@ DefinedRegular<ELFT>::DefinedRegular(StringRef Name)
 
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
-template <class ELFT> int DefinedRegular<ELFT>::compare(SymbolBody *Other) {
-  if (Other->kind() < kind())
+int SymbolBody::compare(SymbolBody *Other) {
+  Kind LK = kind();
+  Kind RK = Other->kind();
+
+  // Normalize so that the smaller kind is on the left.
+  if (LK > RK)
     return -Other->compare(this);
-  auto *R = dyn_cast<DefinedRegular>(Other);
-  if (!R)
+
+  // First handle comparisons between two different kinds.
+  if (LK != RK) {
+    assert(LK == DefinedRegularKind);
+    assert(RK == UndefinedKind);
     return 1;
+  }
 
-  return 0;
-}
-
-int Defined::compare(SymbolBody *Other) {
-  if (Other->kind() < kind())
-    return -Other->compare(this);
-  if (isa<Defined>(Other))
+  // Now handle the case where the kinds are the same.
+  switch (LK) {
+  case DefinedRegularKind:
     return 0;
-  return 1;
-}
-
-int Undefined::compare(SymbolBody *Other) {
-  if (Other->kind() < kind())
-    return -Other->compare(this);
-  return 1;
+  case UndefinedKind:
+    return 1;
+  default:
+    llvm_unreachable("unknown symbol kind");
+  }
 }
 
 template <class ELFT> StringRef DefinedRegular<ELFT>::getName() { return Name; }
