@@ -428,37 +428,26 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
 void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
                                          const Instruction *Inst,
                                          ValueMapT &BBMap) {
+  auto *MAL = Stmt.lookupAccessesFor(Inst);
 
-  // Iterate over all memory accesses for the given instruction and handle all
-  // scalar reads.
-  if (ScopStmt::MemoryAccessList *MAL = Stmt.lookupAccessesFor(Inst)) {
-    for (MemoryAccess &MA : *MAL) {
-      if (!MA.isScalar() || !MA.isRead())
-        continue;
+  if (!MAL)
+    return;
 
-      Instruction *ScalarBase = cast<Instruction>(MA.getBaseAddr());
-      Instruction *ScalarInst = MA.getAccessInstruction();
+  for (MemoryAccess &MA : *MAL) {
+    AllocaInst *Address;
+    if (!MA.isScalar() || !MA.isRead())
+      continue;
 
-      PHINode *ScalarBasePHI = dyn_cast<PHINode>(ScalarBase);
+    auto Base = cast<Instruction>(MA.getBaseAddr());
 
-      // This is either a common scalar use (second case) or the use of a phi
-      // operand by the PHI node (first case).
-      if (ScalarBasePHI == ScalarInst) {
-        AllocaInst *PHIOpAddr =
-            getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
-        LoadInst *LI =
-            Builder.CreateLoad(PHIOpAddr, PHIOpAddr->getName() + ".reload");
-        BBMap[ScalarBase] = LI;
-      } else {
-        // For non-PHI operand uses we look up the alloca in the ScalarMap,
-        // reload it and add the mapping to the ones in the current basic block.
-        AllocaInst *ScalarAddr =
-            getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
-        LoadInst *LI =
-            Builder.CreateLoad(ScalarAddr, ScalarAddr->getName() + ".reload");
-        BBMap[ScalarBase] = LI;
-      }
-    }
+    // This is either a common scalar use (second case) or the use of a phi
+    // operand by the PHI node (first case).
+    if (isa<PHINode>(Base) && Base == MA.getAccessInstruction())
+      Address = getOrCreateAlloca(Base, PHIOpMap, ".phiops");
+    else
+      Address = getOrCreateAlloca(Base, ScalarMap, ".s2a");
+
+    BBMap[Base] = Builder.CreateLoad(Address, Address->getName() + ".reload");
   }
 }
 
