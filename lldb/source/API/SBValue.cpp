@@ -1306,22 +1306,11 @@ SBValue::Dereference ()
     return sb_value;
 }
 
+// Deprecated - please use GetType().IsPointerType() instead.
 bool
 SBValue::TypeIsPointerType ()
 {
-    bool is_ptr_type = false;
-
-    ValueLocker locker;
-    lldb::ValueObjectSP value_sp(GetSP(locker));
-    if (value_sp)
-        is_ptr_type = value_sp->IsPointerType();
-
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (log)
-        log->Printf ("SBValue(%p)::TypeIsPointerType () => %i",
-                     static_cast<void*>(value_sp.get()), is_ptr_type);
-
-    return is_ptr_type;
+    return GetType().IsPointerType();
 }
 
 void *

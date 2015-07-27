@@ -350,6 +350,7 @@ public:
     lldb::SBValue
     Dereference ();
 
+    // Deprecated - please use GetType().IsPointerType() instead.
     bool
     TypeIsPointerType ();
     
