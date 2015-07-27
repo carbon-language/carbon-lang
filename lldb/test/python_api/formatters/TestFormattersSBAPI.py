@@ -19,6 +19,7 @@ class SBFormattersAPITestCase(TestBase):
         self.setTearDownCleanup()
         self.formatters()
 
+    @expectedFailureFreeBSD("llvm.org/pr24282 Empty2 fails")
     @python_api_test
     @dwarf_test
     def test_with_dwarf_formatters_api(self):
