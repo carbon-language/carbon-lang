@@ -75,6 +75,11 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
+        #FIXME: this test is disabled due to lldb bug llvm.org/pr24271.
+        # Test that we can set a BP using the global namespace token
+        #self.runCmd("-break-insert ::main")
+        #self.expect("\^done,bkpt={number=\"3\"")
+
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
@@ -206,21 +211,20 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"3\"")
 
-        # Test that the target.language=pascal setting works and that BP #5 is not set
+        # Test that the target.language=pascal setting works and that BP #5 is NOT set
         self.runCmd("-interpreter-exec console \"settings set target.language c\"")
         self.expect("\^done")
         self.runCmd("-break-insert ns.foo1")
         self.expect("\^error")
 
         # Test that the target.language=c++ setting works and that BP #6 is hit
-        # FIXME: lldb-mi interprets 'ns::func' as file:func where file='ns:'.
-        #self.runCmd("-interpreter-exec console \"settings set target.language c++\"")
-        #self.expect("\^done")
-        #self.runCmd("-break-insert ns::foo1")
-        #self.expect("\^done,bkpt={number=\"6\"")
-        #self.runCmd("-exec-run")
-        #self.expect("\^running")
-        #self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"6\"")
+        self.runCmd("-interpreter-exec console \"settings set target.language c++\"")
+        self.expect("\^done")
+        self.runCmd("-break-insert ns::foo1")
+        self.expect("\^done,bkpt={number=\"6\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"6\"")
 
         # Test that BP #1 and #2 weren't set by running to program exit
         self.runCmd("-exec-continue")

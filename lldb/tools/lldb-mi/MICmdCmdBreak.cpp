@@ -108,6 +108,25 @@ CMICmdCmdBreakInsert::ParseArgs(void)
 }
 
 //++ ------------------------------------------------------------------------------------
+// Helper function for CMICmdCmdBreakInsert::Execute(void).
+//
+// Given a string, return the position of the ':' separator in 'file:func'
+// or 'file:line', if any.  If not found, return npos.  For example, return
+// 5 for 'foo.c:std::string'.
+//--
+static size_t findFileSeparatorPos(const std::string& x)
+{
+    // Full paths in windows can have ':' after a drive letter, so we
+    // search backwards, taking care to skip C++ namespace tokens '::'.
+    size_t n = x.find_last_of(':');
+    while (n != std::string::npos && n > 1 && x[n-1] == ':')
+    {
+        n = x.find_last_of(':', n - 2);
+    }
+    return n;
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: The invoker requires this function. The command does work in this function.
 //          The command is likely to communicate with the LLDB SBDebugger in here.
 // Type:    Overridden.
@@ -161,17 +180,16 @@ CMICmdCmdBreakInsert::Execute(void)
 
     // Determine if break on a file line or at a function
     BreakPoint_e eBrkPtType = eBreakPoint_NotDefineYet;
-    const CMIUtilString cColon = ":";
     CMIUtilString fileName;
     MIuint nFileLine = 0;
     CMIUtilString strFileFn;
     CMIUtilString rStrLineOrFn;
-    // Full path in windows can have : after drive letter. So look for the
-    // last colon
-    const size_t nPosColon = m_brkName.find_last_of(cColon);
+    // Is the string in the form 'file:func' or 'file:line'?
+    // If so, find the position of the ':' separator.
+    const size_t nPosColon = findFileSeparatorPos(m_brkName);
     if (nPosColon != std::string::npos)
     {
-        // extract file name and line number from it
+        // Extract file name and line number from it
         fileName = m_brkName.substr(0, nPosColon);
         rStrLineOrFn = m_brkName.substr(nPosColon + 1, m_brkName.size() - nPosColon - 1);
 
