@@ -148,6 +148,23 @@ void RuntimePointerChecking::insert(Loop *Lp, Value *Ptr, bool WritePtr,
   Pointers.emplace_back(Ptr, ScStart, ScEnd, WritePtr, DepSetId, ASId, Sc);
 }
 
+SmallVector<RuntimePointerChecking::PointerCheck, 4>
+RuntimePointerChecking::generateChecks(
+    const SmallVectorImpl<int> *PtrPartition) const {
+  SmallVector<PointerCheck, 4> Checks;
+
+  for (unsigned i = 0; i < CheckingGroups.size(); ++i) {
+    for (unsigned j = i + 1; j < CheckingGroups.size(); ++j) {
+      const RuntimePointerChecking::CheckingPtrGroup &CGI = CheckingGroups[i];
+      const RuntimePointerChecking::CheckingPtrGroup &CGJ = CheckingGroups[j];
+
+      if (needsChecking(CGI, CGJ, PtrPartition))
+        Checks.push_back(std::make_pair(&CGI, &CGJ));
+    }
+  }
+  return Checks;
+}
+
 bool RuntimePointerChecking::needsChecking(
     const CheckingPtrGroup &M, const CheckingPtrGroup &N,
     const SmallVectorImpl<int> *PtrPartition) const {
@@ -1708,20 +1725,7 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
   if (!PtrRtChecking.Need)
     return std::make_pair(nullptr, nullptr);
 
-  SmallVector<RuntimePointerChecking::PointerCheck, 4> Checks;
-  for (unsigned i = 0; i < PtrRtChecking.CheckingGroups.size(); ++i) {
-    for (unsigned j = i + 1; j < PtrRtChecking.CheckingGroups.size(); ++j) {
-      const RuntimePointerChecking::CheckingPtrGroup &CGI =
-          PtrRtChecking.CheckingGroups[i];
-      const RuntimePointerChecking::CheckingPtrGroup &CGJ =
-          PtrRtChecking.CheckingGroups[j];
-
-      if (PtrRtChecking.needsChecking(CGI, CGJ, PtrPartition))
-        Checks.push_back(std::make_pair(&CGI, &CGJ));
-    }
-  }
-
-  return addRuntimeCheck(Loc, Checks);
+  return addRuntimeCheck(Loc, PtrRtChecking.generateChecks(PtrPartition));
 }
 
 LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,

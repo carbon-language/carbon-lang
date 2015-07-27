@@ -384,6 +384,15 @@ public:
   void groupChecks(MemoryDepChecker::DepCandidates &DepCands,
                    bool UseDependencies);
 
+  /// Generate the checks and return them.
+  ///
+  /// \p PtrToPartition contains the partition number for pointers.  If passed,
+  /// omit checks between pointers belonging to the same partition.  Partition
+  /// number -1 means that the pointer is used in multiple partitions.  In this
+  /// case we can't safely omit the check.
+  SmallVector<PointerCheck, 4>
+  generateChecks(const SmallVectorImpl<int> *PtrPartition = nullptr) const;
+
   /// \brief Decide if we need to add a check between two groups of pointers,
   /// according to needsChecking.
   bool needsChecking(const CheckingPtrGroup &M, const CheckingPtrGroup &N,
