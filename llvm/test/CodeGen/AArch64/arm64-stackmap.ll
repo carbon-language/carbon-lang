@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=arm64-apple-darwin                             < %s | FileCheck %s
-; RUN: llc -mtriple=arm64-apple-darwin -fast-isel -fast-isel-abort=1 < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-darwin -mattr=+reserve-x18                             < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-darwin -mattr=+reserve-x18 -fast-isel -fast-isel-abort=1 < %s | FileCheck %s
 ;
 ; Note: Print verbose stackmaps using -debug-only=stackmaps.
 

@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64-apple-ios -o - %s | FileCheck %s --check-prefix=CHECK-RESERVE-X18
+; RUN: llc -mtriple=arm64-apple-ios -mattr=+reserve-x18 -o - %s | FileCheck %s --check-prefix=CHECK-RESERVE-X18
 ; RUN: llc -mtriple=arm64-freebsd-gnu -mattr=+reserve-x18 -o - %s | FileCheck %s --check-prefix=CHECK-RESERVE-X18
 ; RUN: llc -mtriple=arm64-linux-gnu -o - %s | FileCheck %s
 
