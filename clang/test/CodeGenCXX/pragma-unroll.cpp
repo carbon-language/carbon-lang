@@ -7,7 +7,7 @@ void while_test(int *List, int Length) {
 
 #pragma unroll
   while (i < Length) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_1:.*]]
+    // CHECK: br label {{.*}}, !llvm.loop ![[LOOP_1:.*]]
     List[i] = i * 2;
     i++;
   }
@@ -15,6 +15,7 @@ void while_test(int *List, int Length) {
 
 // Verify do loop is recognized after multi-option pragma clang loop directive.
 void do_test(int *List, int Length) {
+  // CHECK: define {{.*}} @_Z7do_test
   int i = 0;
 
 #pragma nounroll
@@ -27,20 +28,22 @@ void do_test(int *List, int Length) {
 
 // Verify for loop is recognized after unroll pragma.
 void for_test(int *List, int Length) {
+// CHECK: define {{.*}} @_Z8for_test
 #pragma unroll 8
   for (int i = 0; i < Length; i++) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_3:.*]]
+    // CHECK: br label {{.*}}, !llvm.loop ![[LOOP_3:.*]]
     List[i] = i * 2;
   }
 }
 
 // Verify c++11 for range loop is recognized after unroll pragma.
 void for_range_test() {
+  // CHECK: define {{.*}} @_Z14for_range_test
   double List[100];
 
 #pragma unroll(4)
   for (int i : List) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_4:.*]]
+    // CHECK: br label {{.*}}, !llvm.loop ![[LOOP_4:.*]]
     List[i] = i;
   }
 }
@@ -49,9 +52,10 @@ void for_range_test() {
 
 // Verify defines are correctly resolved in unroll pragmas.
 void for_define_test(int *List, int Length, int Value) {
+// CHECK: define {{.*}} @_Z15for_define_test
 #pragma unroll(UNROLLCOUNT)
   for (int i = 0; i < Length; i++) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_5:.*]]
+    // CHECK: br label {{.*}}, !llvm.loop ![[LOOP_5:.*]]
     List[i] = i * Value;
   }
 }
@@ -59,9 +63,10 @@ void for_define_test(int *List, int Length, int Value) {
 // Verify metadata is generated when template is used.
 template <typename A>
 void for_template_test(A *List, int Length, A Value) {
+// CHECK: define {{.*}} @_Z13template_test
 #pragma unroll 8
   for (int i = 0; i < Length; i++) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_6:.*]]
+    // CHECK: br label {{.*}}, !llvm.loop ![[LOOP_6:.*]]
     List[i] = i * Value;
   }
 }
@@ -69,9 +74,11 @@ void for_template_test(A *List, int Length, A Value) {
 // Verify define is resolved correctly when template is used.
 template <typename A>
 void for_template_define_test(A *List, int Length, A Value) {
+// CHECK: define {{.*}} @_Z24for_template_define_test
+
 #pragma unroll(UNROLLCOUNT)
   for (int i = 0; i < Length; i++) {
-    // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_7:.*]]
+    // CHECK: br label {{.*}}, !llvm.loop ![[LOOP_7:.*]]
     List[i] = i * Value;
   }
 }
