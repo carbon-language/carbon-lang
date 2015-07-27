@@ -338,6 +338,7 @@ namespace {
                                          unsigned HiOp);
     SDValue CombineConsecutiveLoads(SDNode *N, EVT VT);
     SDValue CombineExtLoad(SDNode *N);
+    SDValue combineRepeatedFPDivisors(SDNode *N);
     SDValue ConstantFoldBITCASTofBUILD_VECTOR(SDNode *, EVT);
     SDValue BuildSDIV(SDNode *N);
     SDValue BuildSDIVPow2(SDNode *N);
@@ -8235,6 +8236,60 @@ SDValue DAGCombiner::visitFMA(SDNode *N) {
   return SDValue();
 }
 
+// Combine multiple FDIVs with the same divisor into multiple FMULs by the
+// reciprocal.
+// E.g., (a / D; b / D;) -> (recip = 1.0 / D; a * recip; b * recip)
+// Notice that this is not always beneficial. One reason is different target
+// may have different costs for FDIV and FMUL, so sometimes the cost of two
+// FDIVs may be lower than the cost of one FDIV and two FMULs. Another reason
+// is the critical path is increased from "one FDIV" to "one FDIV + one FMUL".
+SDValue DAGCombiner::combineRepeatedFPDivisors(SDNode *N) {
+  if (!DAG.getTarget().Options.UnsafeFPMath)
+    return SDValue();
+  
+  SDValue N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+
+  // Skip if current node is a reciprocal.
+  if (N0CFP && N0CFP->isExactlyValue(1.0))
+    return SDValue();
+  
+  SDValue N1 = N->getOperand(1);
+  SmallVector<SDNode *, 4> Users;
+
+  // Find all FDIV users of the same divisor.
+  for (auto *U : N1->uses()) {
+    if (U->getOpcode() == ISD::FDIV && U->getOperand(1) == N1)
+      Users.push_back(U);
+  }
+
+  if (!TLI.combineRepeatedFPDivisors(Users.size()))
+    return SDValue();
+
+  EVT VT = N->getValueType(0);
+  SDLoc DL(N);
+  SDValue FPOne = DAG.getConstantFP(1.0, DL, VT);
+  // FIXME: This optimization requires some level of fast-math, so the
+  // created reciprocal node should at least have the 'allowReciprocal'
+  // fast-math-flag set.
+  SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
+
+  // Dividend / Divisor -> Dividend * Reciprocal
+  for (auto *U : Users) {
+    SDValue Dividend = U->getOperand(0);
+    if (Dividend != FPOne) {
+      SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT, Dividend,
+                                    Reciprocal);
+      CombineTo(U, NewNode);
+    } else if (U != Reciprocal.getNode()) {
+      // In the absence of fast-math-flags, this user node is always the
+      // same node as Reciprocal, but with FMF they may be different nodes.
+      CombineTo(U, Reciprocal);
+    }
+  }
+  return SDValue(N, 0);  // N was replaced.
+}
+
 SDValue DAGCombiner::visitFDIV(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -8335,48 +8390,8 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
     }
   }
 
-  // Combine multiple FDIVs with the same divisor into multiple FMULs by the
-  // reciprocal.
-  // E.g., (a / D; b / D;) -> (recip = 1.0 / D; a * recip; b * recip)
-  // Notice that this is not always beneficial. One reason is different target
-  // may have different costs for FDIV and FMUL, so sometimes the cost of two
-  // FDIVs may be lower than the cost of one FDIV and two FMULs. Another reason
-  // is the critical path is increased from "one FDIV" to "one FDIV + one FMUL".
-  if (Options.UnsafeFPMath) {
-    // Skip if current node is a reciprocal.
-    if (N0CFP && N0CFP->isExactlyValue(1.0))
-      return SDValue();
-
-    SmallVector<SDNode *, 4> Users;
-    // Find all FDIV users of the same divisor.
-    for (auto *U : N1->uses()) {
-      if (U->getOpcode() == ISD::FDIV && U->getOperand(1) == N1)
-        Users.push_back(U);
-    }
-
-    if (TLI.combineRepeatedFPDivisors(Users.size())) {
-      SDValue FPOne = DAG.getConstantFP(1.0, DL, VT);
-      // FIXME: This optimization requires some level of fast-math, so the
-      // created reciprocal node should at least have the 'allowReciprocal'
-      // fast-math-flag set.
-      SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
-
-      // Dividend / Divisor -> Dividend * Reciprocal
-      for (auto *U : Users) {
-        SDValue Dividend = U->getOperand(0);
-        if (Dividend != FPOne) {
-          SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT, Dividend,
-                                        Reciprocal);
-          CombineTo(U, NewNode);
-        } else if (U != Reciprocal.getNode()) {
-          // In the absence of fast-math-flags, this user node is always the
-          // same node as Reciprocal, but with FMF they may be different nodes.
-          CombineTo(U, Reciprocal);
-        }
-      }
-      return SDValue(N, 0);  // N was replaced.
-    }
-  }
+  if (SDValue CombineRepeatedDivisors = combineRepeatedFPDivisors(N))
+    return CombineRepeatedDivisors;
 
   return SDValue();
 }
