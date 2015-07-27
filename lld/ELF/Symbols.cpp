@@ -15,10 +15,6 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
-template <class ELFT>
-DefinedRegular<ELFT>::DefinedRegular(StringRef Name)
-    : Defined(DefinedRegularKind), Name(Name) {}
-
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 int SymbolBody::compare(SymbolBody *Other) {
@@ -46,8 +42,6 @@ int SymbolBody::compare(SymbolBody *Other) {
     llvm_unreachable("unknown symbol kind");
   }
 }
-
-template <class ELFT> StringRef DefinedRegular<ELFT>::getName() { return Name; }
 
 namespace lld {
 namespace elf2 {

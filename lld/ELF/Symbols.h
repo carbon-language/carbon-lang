@@ -86,13 +86,13 @@ public:
 // Regular defined symbols read from object file symbol tables.
 template <class ELFT> class DefinedRegular : public Defined {
 public:
-  DefinedRegular(StringRef Name);
+  DefinedRegular(StringRef Name) : Defined(DefinedRegularKind), Name(Name) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
   }
 
-  StringRef getName() override;
+  StringRef getName() override { return Name; }
 
 private:
   StringRef Name;
