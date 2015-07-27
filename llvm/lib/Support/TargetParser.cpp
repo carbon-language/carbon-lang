@@ -113,22 +113,36 @@ struct {
 // FIXME: TableGen this.
 struct {
   const char *Name;
-  ARM::ArchExtKind ID;
+  unsigned ID;
 } ARCHExtNames[] = {
-  { "invalid",  ARM::AEK_INVALID },
-  { "crc",      ARM::AEK_CRC },
-  { "crypto",   ARM::AEK_CRYPTO },
-  { "fp",       ARM::AEK_FP },
-  { "idiv",     ARM::AEK_HWDIV },
-  { "mp",       ARM::AEK_MP },
-  { "simd",     ARM::AEK_SIMD },
-  { "sec",      ARM::AEK_SEC },
-  { "virt",     ARM::AEK_VIRT },
-  { "os",       ARM::AEK_OS },
-  { "iwmmxt",   ARM::AEK_IWMMXT },
-  { "iwmmxt2",  ARM::AEK_IWMMXT2 },
-  { "maverick", ARM::AEK_MAVERICK },
-  { "xscale",   ARM::AEK_XSCALE }
+  { "invalid",   ARM::AEK_INVALID },
+  { "none",      ARM::AEK_NONE },
+  { "crc",       ARM::AEK_CRC },
+  { "crypto",    ARM::AEK_CRYPTO },
+  { "fp",        ARM::AEK_FP },
+  { "idiv",     (ARM::AEK_HWDIVARM | ARM::AEK_HWDIV) },
+  { "mp",        ARM::AEK_MP },
+  { "simd",      ARM::AEK_SIMD },
+  { "sec",       ARM::AEK_SEC },
+  { "virt",      ARM::AEK_VIRT },
+  { "os",        ARM::AEK_OS },
+  { "iwmmxt",    ARM::AEK_IWMMXT },
+  { "iwmmxt2",   ARM::AEK_IWMMXT2 },
+  { "maverick",  ARM::AEK_MAVERICK },
+  { "xscale",    ARM::AEK_XSCALE }
+};
+// List of HWDiv names (use getHWDivSynonym) and which architectural
+// features they correspond to (use getHWDivFeatures).
+// FIXME: TableGen this.
+struct {
+  const char *Name;
+  unsigned ID;
+} HWDivNames[] = {
+  { "invalid",    ARM::AEK_INVALID },
+  { "none",       ARM::AEK_NONE },
+  { "thumb",      ARM::AEK_HWDIV },
+  { "arm",        ARM::AEK_HWDIVARM },
+  { "arm,thumb", (ARM::AEK_HWDIVARM | ARM::AEK_HWDIV) }
 };
 // List of CPU names and their arches.
 // The same CPU can have multiple arches and can be default on multiple arches.
@@ -266,6 +280,25 @@ unsigned ARMTargetParser::getDefaultFPU(StringRef CPU) {
   return ARM::FK_INVALID;
 }
 
+bool ARMTargetParser::getHWDivFeatures(unsigned HWDivKind,
+                                       std::vector<const char *> &Features) {
+
+  if (HWDivKind == ARM::AEK_INVALID)
+    return false;
+
+   if (HWDivKind & ARM::AEK_HWDIVARM)
+    Features.push_back("+hwdiv-arm");
+  else
+    Features.push_back("-hwdiv-arm");
+
+  if (HWDivKind & ARM::AEK_HWDIV)
+    Features.push_back("+hwdiv");
+  else
+    Features.push_back("-hwdiv");
+
+  return true;
+}
+
 bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
                                      std::vector<const char *> &Features) {
 
@@ -372,9 +405,19 @@ unsigned ARMTargetParser::getArchAttr(unsigned ArchKind) {
 }
 
 const char *ARMTargetParser::getArchExtName(unsigned ArchExtKind) {
-  if (ArchExtKind >= ARM::AEK_LAST)
-    return nullptr;
-  return ARCHExtNames[ArchExtKind].Name;
+  for (const auto AE : ARCHExtNames) {
+    if (ArchExtKind == AE.ID)
+      return AE.Name;
+  }
+  return nullptr;
+}
+
+const char *ARMTargetParser::getHWDivName(unsigned HWDivKind) {
+  for (const auto D : HWDivNames) {
+    if (HWDivKind == D.ID)
+      return D.Name;
+  }
+  return nullptr;
 }
 
 const char *ARMTargetParser::getDefaultCPU(StringRef Arch) {
@@ -393,6 +436,12 @@ const char *ARMTargetParser::getDefaultCPU(StringRef Arch) {
 // ======================================================= //
 // Parsers
 // ======================================================= //
+
+StringRef ARMTargetParser::getHWDivSynonym(StringRef HWDiv) {
+  return StringSwitch<StringRef>(HWDiv)
+    .Case("thumb,arm", "arm,thumb")
+    .Default(HWDiv);
+}
 
 StringRef ARMTargetParser::getFPUSynonym(StringRef FPU) {
   return StringSwitch<StringRef>(FPU)
@@ -475,6 +524,15 @@ StringRef ARMTargetParser::getCanonicalArchName(StringRef Arch) {
 
   // Arch will either be a 'v' name (v7a) or a marketing name (xscale).
   return A;
+}
+
+unsigned ARMTargetParser::parseHWDiv(StringRef HWDiv) {
+  StringRef Syn = getHWDivSynonym(HWDiv);
+  for (const auto D : HWDivNames) {
+    if (Syn == D.Name)
+      return D.ID;
+  }
+  return ARM::AEK_INVALID;
 }
 
 unsigned ARMTargetParser::parseFPU(StringRef FPU) {

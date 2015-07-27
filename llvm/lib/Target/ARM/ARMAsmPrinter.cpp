@@ -578,7 +578,7 @@ void ARMAsmPrinter::emitAttributes() {
       // We consider krait as a "cortex-a9" + hwdiv CPU
       // Enable hwdiv through ".arch_extension idiv"
       if (STI.hasDivide() || STI.hasDivideInARMMode())
-        ATS.emitArchExtension(ARM::AEK_HWDIV);
+        ATS.emitArchExtension(ARM::AEK_HWDIV | ARM::AEK_HWDIVARM);
     } else
       ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
   }
