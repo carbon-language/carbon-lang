@@ -126,9 +126,15 @@ removeHostnameFromPathname(const char* path_from_dwarf)
     {
         return path_from_dwarf;
     }
-
+    
     const char *colon_pos = strchr(path_from_dwarf, ':');
-    if (!colon_pos)
+    if (nullptr == colon_pos)
+    {
+        return path_from_dwarf;
+    }
+    
+    const char *slash_pos = strchr(path_from_dwarf, '/');
+    if (slash_pos && (slash_pos < colon_pos))
     {
         return path_from_dwarf;
     }
@@ -143,7 +149,7 @@ removeHostnameFromPathname(const char* path_from_dwarf)
     {
         return path_from_dwarf;
     }
-
+    
     return colon_pos + 1;
 }
 
