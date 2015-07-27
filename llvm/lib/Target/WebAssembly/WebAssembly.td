@@ -50,6 +50,9 @@ def WebAssemblyInstrInfo : InstrInfo;
 // Minimal Viable Product.
 def : ProcessorModel<"mvp", NoSchedModel, []>;
 
+// Generic processor: latest stable version.
+def : ProcessorModel<"generic", NoSchedModel, []>;
+
 // Latest and greatest experimental version of WebAssembly. Bugs included!
 def : ProcessorModel<"bleeding-edge", NoSchedModel, [FeatureSIMD128]>;
 
