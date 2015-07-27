@@ -1635,9 +1635,10 @@ static SmallVector<std::pair<PointerBounds, PointerBounds>, 4> expandBounds(
       PointerChecks.begin(), PointerChecks.end(),
       std::back_inserter(ChecksWithBounds),
       [&](const RuntimePointerChecking::PointerCheck &Check) {
-        return std::make_pair(
-            expandBounds(Check.first, L, Loc, Exp, SE, PtrRtChecking),
-            expandBounds(Check.second, L, Loc, Exp, SE, PtrRtChecking));
+        PointerBounds
+          First = expandBounds(Check.first, L, Loc, Exp, SE, PtrRtChecking),
+          Second = expandBounds(Check.second, L, Loc, Exp, SE, PtrRtChecking);
+        return std::make_pair(First, Second);
       });
 
   return ChecksWithBounds;
