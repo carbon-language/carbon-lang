@@ -528,6 +528,12 @@ void MIPrinter::print(const MCCFIInstruction &CFI,
     printCFIRegister(CFI.getRegister(), OS, TRI);
     OS << ", " << CFI.getOffset();
     break;
+  case MCCFIInstruction::OpDefCfaRegister:
+    OS << ".cfi_def_cfa_register ";
+    if (CFI.getLabel())
+      OS << "<mcsymbol> ";
+    printCFIRegister(CFI.getRegister(), OS, TRI);
+    break;
   case MCCFIInstruction::OpDefCfaOffset:
     OS << ".cfi_def_cfa_offset ";
     if (CFI.getLabel())

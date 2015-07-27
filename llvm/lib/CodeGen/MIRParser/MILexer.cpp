@@ -125,6 +125,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("frame-setup", MIToken::kw_frame_setup)
       .Case("debug-location", MIToken::kw_debug_location)
       .Case(".cfi_offset", MIToken::kw_cfi_offset)
+      .Case(".cfi_def_cfa_register", MIToken::kw_cfi_def_cfa_register)
       .Case(".cfi_def_cfa_offset", MIToken::kw_cfi_def_cfa_offset)
       .Default(MIToken::Identifier);
 }
