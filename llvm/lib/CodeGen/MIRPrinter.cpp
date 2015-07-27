@@ -201,6 +201,15 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
       printReg(PreferredReg, VReg.PreferredRegister, TRI);
     MF.VirtualRegisters.push_back(VReg);
   }
+
+  // Print the live ins.
+  for (auto I = RegInfo.livein_begin(), E = RegInfo.livein_end(); I != E; ++I) {
+    yaml::MachineFunctionLiveIn LiveIn;
+    printReg(I->first, LiveIn.Register, TRI);
+    if (I->second)
+      printReg(I->second, LiveIn.VirtualRegister, TRI);
+    MF.LiveIns.push_back(LiveIn);
+  }
 }
 
 void MIRPrinter::convert(yaml::MachineFrameInfo &YamlMFI,

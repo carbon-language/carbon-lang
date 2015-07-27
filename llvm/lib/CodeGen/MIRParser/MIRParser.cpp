@@ -402,6 +402,21 @@ bool MIRParserImpl::initializeRegisterInfo(MachineFunction &MF,
       RegInfo.setSimpleHint(Reg, PreferredReg);
     }
   }
+
+  // Parse the liveins.
+  for (const auto &LiveIn : YamlMF.LiveIns) {
+    unsigned Reg = 0;
+    if (parseNamedRegisterReference(Reg, SM, MF, LiveIn.Register.Value, PFS,
+                                    IRSlots, Error))
+      return error(Error, LiveIn.Register.SourceRange);
+    unsigned VReg = 0;
+    if (!LiveIn.VirtualRegister.Value.empty()) {
+      if (parseVirtualRegisterReference(
+              VReg, SM, MF, LiveIn.VirtualRegister.Value, PFS, IRSlots, Error))
+        return error(Error, LiveIn.VirtualRegister.SourceRange);
+    }
+    RegInfo.addLiveIn(Reg, VReg);
+  }
   return false;
 }
 
