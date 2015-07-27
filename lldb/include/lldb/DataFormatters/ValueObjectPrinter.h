@@ -26,13 +26,42 @@ namespace lldb_private {
 
 struct DumpValueObjectOptions
 {
-    uint32_t m_max_ptr_depth = 0;
+    struct PointerDepth
+    {
+        enum class Mode
+        {
+            Always,
+            Formatters,
+            Default,
+            Never
+        } m_mode;
+        uint32_t m_count;
+        
+        PointerDepth
+        operator --() const
+        {
+            if (m_count > 0)
+                return PointerDepth {m_mode,m_count-1};
+            return PointerDepth {m_mode,m_count};
+        }
+        
+        bool
+        CanAllowExpansion () const;
+        
+        bool
+        CanAllowExpansion (bool is_root,
+                           TypeSummaryImpl* entry,
+                           ValueObject *valobj,
+                           const std::string& summary);
+    };
+
     uint32_t m_max_depth = UINT32_MAX;
     lldb::DynamicValueType m_use_dynamic = lldb::eNoDynamicValues;
     uint32_t m_omit_summary_depth = 0;
     lldb::Format m_format = lldb::eFormatDefault;
     lldb::TypeSummaryImplSP m_summary_sp;
     std::string m_root_valobj_name;
+    PointerDepth m_max_ptr_depth;
     bool m_use_synthetic : 1;
     bool m_scope_already_checked : 1;
     bool m_flat_output : 1;
@@ -50,6 +79,7 @@ struct DumpValueObjectOptions
     DumpValueObjectOptions() :
     m_summary_sp(),
     m_root_valobj_name(),
+    m_max_ptr_depth{PointerDepth::Mode::Default,0},
     m_use_synthetic(true),
     m_scope_already_checked(false),
     m_flat_output(false),
@@ -78,7 +108,7 @@ struct DumpValueObjectOptions
     DumpValueObjectOptions (ValueObject& valobj);
     
     DumpValueObjectOptions&
-    SetMaximumPointerDepth(uint32_t depth = 0)
+    SetMaximumPointerDepth(PointerDepth depth = {PointerDepth::Mode::Never,0})
     {
         m_max_ptr_depth = depth;
         return *this;
@@ -268,7 +298,7 @@ protected:
     ValueObjectPrinter (ValueObject* valobj,
                         Stream* s,
                         const DumpValueObjectOptions& options,
-                        uint32_t ptr_depth,
+                        const DumpValueObjectOptions::PointerDepth& ptr_depth,
                         uint32_t curr_depth);
     
     // we should actually be using delegating constructors here
@@ -277,7 +307,7 @@ protected:
     Init (ValueObject* valobj,
           Stream* s,
           const DumpValueObjectOptions& options,
-          uint32_t ptr_depth,
+          const DumpValueObjectOptions::PointerDepth& ptr_depth,
           uint32_t curr_depth);
     
     bool
@@ -343,7 +373,7 @@ protected:
     
     bool
     ShouldPrintChildren (bool is_failed_description,
-                         uint32_t& curr_ptr_depth);
+                         DumpValueObjectOptions::PointerDepth& curr_ptr_depth);
 
     bool
     ShouldExpandEmptyAggregates ();
@@ -359,13 +389,15 @@ protected:
     
     void
     PrintChild (lldb::ValueObjectSP child_sp,
-                uint32_t curr_ptr_depth);
+                const DumpValueObjectOptions::PointerDepth& curr_ptr_depth);
     
     uint32_t
     GetMaxNumChildrenToPrint (bool& print_dotdotdot);
     
     void
-    PrintChildren (uint32_t curr_ptr_depth);
+    PrintChildren (bool value_printed,
+                   bool summary_printed,
+                   const DumpValueObjectOptions::PointerDepth& curr_ptr_depth);
     
     void
     PrintChildrenIfNeeded (bool value_printed,
@@ -382,7 +414,7 @@ private:
     DumpValueObjectOptions options;
     Flags m_type_flags;
     ClangASTType m_clang_type;
-    uint32_t m_ptr_depth;
+    DumpValueObjectOptions::PointerDepth m_ptr_depth;
     uint32_t m_curr_depth;
     LazyBool m_should_print;
     LazyBool m_is_nil;

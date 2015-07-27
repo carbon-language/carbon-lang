@@ -53,7 +53,7 @@ ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         Stream* s,
                                         const DumpValueObjectOptions& options,
-                                        uint32_t ptr_depth,
+                                        const DumpValueObjectOptions::PointerDepth& ptr_depth,
                                         uint32_t curr_depth)
 {
     Init(valobj,s,options,ptr_depth,curr_depth);
@@ -63,7 +63,7 @@ void
 ValueObjectPrinter::Init (ValueObject* valobj,
                           Stream* s,
                           const DumpValueObjectOptions& options,
-                          uint32_t ptr_depth,
+                          const DumpValueObjectOptions::PointerDepth& ptr_depth,
                           uint32_t curr_depth)
 {
     m_orig_valobj = valobj;
@@ -437,11 +437,50 @@ ValueObjectPrinter::PrintObjectDescriptionIfNeeded (bool value_printed,
 }
 
 bool
+DumpValueObjectOptions::PointerDepth::CanAllowExpansion (bool is_root,
+                                                         TypeSummaryImpl* entry,
+                                                         ValueObject *valobj,
+                                                         const std::string& summary)
+{
+    switch (m_mode)
+    {
+        case Mode::Always:
+            return (m_count > 0);
+        case Mode::Never:
+            return false;
+        case Mode::Default:
+            if (is_root)
+                m_count = std::min<decltype(m_count)>(m_count,1);
+            return m_count > 0;
+        case Mode::Formatters:
+            if (!entry || entry->DoesPrintChildren(valobj) || summary.empty())
+                return m_count > 0;
+            return false;
+    }
+}
+
+bool
+DumpValueObjectOptions::PointerDepth::CanAllowExpansion () const
+{
+    switch (m_mode)
+    {
+        case Mode::Always:
+        case Mode::Default:
+        case Mode::Formatters:
+            return (m_count > 0);
+        case Mode::Never:
+            return false;
+    }
+}
+
+bool
 ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
-                                         uint32_t& curr_ptr_depth)
+                                         DumpValueObjectOptions::PointerDepth& curr_ptr_depth)
 {
     const bool is_ref = IsRef ();
     const bool is_ptr = IsPtr ();
+
+    TypeSummaryImpl* entry = GetSummaryFormatter();
 
     if (is_failed_description || m_curr_depth < options.m_max_depth)
     {
@@ -461,20 +500,21 @@ ValueObjectPrinter::ShouldPrintChildren (bool is_failed_description,
             if (m_valobj->GetPointerValue (&ptr_address_type) == 0)
                 return false;
             
-            else if (is_ref && m_curr_depth == 0 && curr_ptr_depth == 0)
+            const bool is_root_level = m_curr_depth == 0;
+            
+            if (is_ref &&
+                is_root_level)
             {
                 // If this is the root object (depth is zero) that we are showing
                 // and it is a reference, and no pointer depth has been supplied
                 // print out what it references. Don't do this at deeper depths
                 // otherwise we can end up with infinite recursion...
-                curr_ptr_depth = 1;
+                return true;
             }
             
-            return (curr_ptr_depth > 0);
+            return curr_ptr_depth.CanAllowExpansion(false, entry, m_valobj, m_summary);
         }
         
-        TypeSummaryImpl* entry = GetSummaryFormatter();
-
         return (!entry || entry->DoesPrintChildren(m_valobj) || m_summary.empty());
     }
     return false;
@@ -515,7 +555,7 @@ ValueObjectPrinter::PrintChildrenPreamble ()
 
 void
 ValueObjectPrinter::PrintChild (ValueObjectSP child_sp,
-                                uint32_t curr_ptr_depth)
+                                const DumpValueObjectOptions::PointerDepth& curr_ptr_depth)
 {
     DumpValueObjectOptions child_options(options);
     child_options.SetFormat(options.m_format).SetSummary().SetRootValueObjectName();
@@ -526,11 +566,10 @@ ValueObjectPrinter::PrintChild (ValueObjectSP child_sp,
         ValueObjectPrinter child_printer(child_sp.get(),
                                          m_stream,
                                          child_options,
-                                         (IsPtr() || IsRef()) && curr_ptr_depth >= 1 ? curr_ptr_depth - 1 : curr_ptr_depth,
+                                         (IsPtr() || IsRef()) ? --curr_ptr_depth : curr_ptr_depth,
                                          m_curr_depth + 1);
         child_printer.PrintValueObject();
     }
-
 }
 
 uint32_t
@@ -569,7 +608,9 @@ ValueObjectPrinter::PrintChildrenPostamble (bool print_dotdotdot)
 }
 
 void
-ValueObjectPrinter::PrintChildren (uint32_t curr_ptr_depth)
+ValueObjectPrinter::PrintChildren (bool value_printed,
+                                   bool summary_printed,
+                                   const DumpValueObjectOptions::PointerDepth& curr_ptr_depth)
 {
     ValueObject* synth_m_valobj = GetValueObjectForChildrenGeneration();
     
@@ -662,9 +703,9 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
     // if that happens, we want to display the children, if any
     bool is_failed_description = !PrintObjectDescriptionIfNeeded(value_printed, summary_printed);
     
-    uint32_t curr_ptr_depth = m_ptr_depth;
+    auto curr_ptr_depth = m_ptr_depth;
     bool print_children = ShouldPrintChildren (is_failed_description,curr_ptr_depth);
-    bool print_oneline = (curr_ptr_depth > 0 ||
+    bool print_oneline = (curr_ptr_depth.CanAllowExpansion() ||
                           options.m_show_types ||
                           !options.m_allow_oneliner_mode ||
                           options.m_flat_output ||
@@ -679,7 +720,7 @@ ValueObjectPrinter::PrintChildrenIfNeeded (bool value_printed,
             m_stream->EOL();
         }
         else
-            PrintChildren (curr_ptr_depth);
+            PrintChildren (value_printed, summary_printed, curr_ptr_depth);
     }
     else if (m_curr_depth >= options.m_max_depth && IsAggregate() && ShouldPrintValueObject())
     {
