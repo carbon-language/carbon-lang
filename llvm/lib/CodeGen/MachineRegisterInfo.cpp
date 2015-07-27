@@ -116,6 +116,8 @@ void MachineRegisterInfo::clearVirtRegs() {
   }
 #endif
   VRegInfo.clear();
+  for (auto &I : LiveIns)
+    I.second = 0;
 }
 
 void MachineRegisterInfo::verifyUseList(unsigned Reg) const {
