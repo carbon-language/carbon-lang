@@ -81,7 +81,7 @@
 // J: -fno-signed-char
 
 // RUN: %clang_cl /Ofoo -### -- %s 2>&1 | FileCheck -check-prefix=O %s
-// O: -Ofoo
+// O: /Ofoo
 
 // RUN: %clang_cl /Ob0 -### -- %s 2>&1 | FileCheck -check-prefix=Ob0 %s
 // Ob0: -fno-inline
@@ -96,13 +96,24 @@
 // Oi_: -fno-builtin
 
 // RUN: %clang_cl /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
+// Os-NOT: -mdisable-fp-elim
+// Os: -momit-leaf-frame-pointer
 // Os: -Os
 
 // RUN: %clang_cl /Ot -### -- %s 2>&1 | FileCheck -check-prefix=Ot %s
+// Ot-NOT: -mdisable-fp-elim
+// Ot: -momit-leaf-frame-pointer
 // Ot: -O2
 
 // RUN: %clang_cl /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
-// Ox: -O3
+// Ox-NOT: -mdisable-fp-elim
+// Ox: -momit-leaf-frame-pointer
+// Ox: -O2
+
+// RUN: %clang_cl /O2sy- -### -- %s 2>&1 | FileCheck -check-prefix=PR24003 %s
+// PR24003: -mdisable-fp-elim
+// PR24003: -momit-leaf-frame-pointer
+// PR24003: -Os
 
 // RUN: %clang_cl /Zs /Oy -- %s 2>&1
 

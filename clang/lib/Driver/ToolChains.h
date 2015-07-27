@@ -811,6 +811,10 @@ public:
   MSVCToolChain(const Driver &D, const llvm::Triple &Triple,
                 const llvm::opt::ArgList &Args);
 
+  llvm::opt::DerivedArgList *
+  TranslateArgs(const llvm::opt::DerivedArgList &Args,
+                const char *BoundArch) const override;
+
   bool IsIntegratedAssemblerDefault() const override;
   bool IsUnwindTablesDefault() const override;
   bool isPICDefault() const override;

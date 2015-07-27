@@ -14,7 +14,12 @@
 // CHECK: "-D" "foo=bar"
 // CHECK: "-U" "baz"
 // CHECK: "-I" "foo"
-// CHECK: "/Ox"
+// CHECK: "/Oi"
+// CHECK: "/Og"
+// CHECK: "/Ot"
+// CHECK: "/Ob2"
+// CHECK: "/Oy"
+// CHECK: "/GF"
 // CHECK: "/GR-"
 // CHECK: "/Gy-"
 // CHECK: "/Gw-"
@@ -38,16 +43,16 @@
 // O0: "/Od"
 // RUN: %clang_cl /fallback /O1 -### -- %s 2>&1 | FileCheck -check-prefix=O1 %s
 // O1: cl.exe
-// O1: "-O1"
+// O1: "/Og" "/Os" "/Ob2" "/Oy" "/GF" "/Gy"
 // RUN: %clang_cl /fallback /O2 -### -- %s 2>&1 | FileCheck -check-prefix=O2 %s
 // O2: cl.exe
-// O2: "-O2"
+// O2: "/Oi" "/Og" "/Ot" "/Ob2" "/Oy" "/GF" "/Gy"
 // RUN: %clang_cl /fallback /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
 // Os: cl.exe
-// Os: "-Os"
+// Os: "/Os"
 // RUN: %clang_cl /fallback /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
 // Ox: cl.exe
-// Ox: "/Ox"
+// Ox: "/Oi" "/Og" "/Ot" "/Ob2" "/Oy" "/GF"
 
 // Only fall back when actually compiling, not for e.g. /P (preprocess).
 // RUN: %clang_cl /fallback /P -### -- %s 2>&1 | FileCheck -check-prefix=P %s

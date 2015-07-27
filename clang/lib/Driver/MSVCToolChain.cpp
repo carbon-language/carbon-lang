@@ -528,3 +528,101 @@ SanitizerMask MSVCToolChain::getSupportedSanitizers() const {
   Res |= SanitizerKind::Address;
   return Res;
 }
+
+llvm::opt::DerivedArgList *
+MSVCToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
+                             const char *BoundArch) const {
+  DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
+  const OptTable &Opts = getDriver().getOpts();
+
+  // The -O[12xd] flag actually expands to several flags.  We must desugar the
+  // flags so that options embedded can be negated.  For example, the '-O2' flag
+  // enables '-Oy'.  Expanding '-O2' into its constituent flags allows us to
+  // correctly handle '-O2 -Oy-' where the trailing '-Oy-' disables a single
+  // aspect of '-O2'.
+  //
+  // Note that this expansion logic only applies to the *last* of '[12xd]'.
+
+  // First step is to search for the character we'd like to expand.
+  const char *ExpandChar = nullptr;
+  for (Arg *A : Args) {
+    if (!A->getOption().matches(options::OPT__SLASH_O))
+      continue;
+    StringRef OptStr = A->getValue();
+    for (size_t I = 0, E = OptStr.size(); I != E; ++I) {
+      const char &OptChar = *(OptStr.data() + I);
+      if (OptChar == '1' || OptChar == '2' || OptChar == 'x' || OptChar == 'd')
+        ExpandChar = OptStr.data() + I;
+    }
+  }
+
+  // The -O flag actually takes an amalgam of other options.  For example,
+  // '/Ogyb2' is equivalent to '/Og' '/Oy' '/Ob2'.
+  for (Arg *A : Args) {
+    if (!A->getOption().matches(options::OPT__SLASH_O)) {
+      DAL->append(A);
+      continue;
+    }
+
+    StringRef OptStr = A->getValue();
+    for (size_t I = 0, E = OptStr.size(); I != E; ++I) {
+      const char &OptChar = *(OptStr.data() + I);
+      switch (OptChar) {
+      default:
+        break;
+      case '1':
+      case '2':
+      case 'x':
+      case 'd':
+        if (&OptChar == ExpandChar) {
+          if (OptChar == 'd') {
+            DAL->AddFlagArg(A, Opts.getOption(options::OPT_O0));
+          } else {
+            if (OptChar == '1') {
+              DAL->AddJoinedArg(A, Opts.getOption(options::OPT_O), "s");
+            } else if (OptChar == '2' || OptChar == 'x') {
+              DAL->AddFlagArg(A, Opts.getOption(options::OPT_fbuiltin));
+              DAL->AddJoinedArg(A, Opts.getOption(options::OPT_O), "2");
+            }
+            DAL->AddFlagArg(A,
+                            Opts.getOption(options::OPT_fomit_frame_pointer));
+            if (OptChar == '1' || OptChar == '2')
+              DAL->AddFlagArg(A,
+                              Opts.getOption(options::OPT_ffunction_sections));
+          }
+        }
+        break;
+      case 'b':
+        if (isdigit(OptStr[I + 1]))
+          ++I;
+        break;
+      case 'g':
+        break;
+      case 'i':
+        if (OptStr[I + 1] == '-') {
+          ++I;
+          DAL->AddFlagArg(A, Opts.getOption(options::OPT_fno_builtin));
+        } else {
+          DAL->AddFlagArg(A, Opts.getOption(options::OPT_fbuiltin));
+        }
+        break;
+      case 's':
+        DAL->AddJoinedArg(A, Opts.getOption(options::OPT_O), "s");
+        break;
+      case 't':
+        DAL->AddJoinedArg(A, Opts.getOption(options::OPT_O), "2");
+        break;
+      case 'y':
+        if (OptStr[I + 1] == '-') {
+          ++I;
+          DAL->AddFlagArg(A,
+                          Opts.getOption(options::OPT_fno_omit_frame_pointer));
+        } else {
+          DAL->AddFlagArg(A, Opts.getOption(options::OPT_fomit_frame_pointer));
+        }
+        break;
+      }
+    }
+  }
+  return DAL;
+}
