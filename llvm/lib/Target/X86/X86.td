@@ -182,8 +182,8 @@ def FeaturePadShortFunctions : SubtargetFeature<"pad-short-functions",
                                      "PadShortFunctions", "true",
                                      "Pad short functions">;
 // TODO: This feature ought to be renamed.
-// What it really refers to are CPUs where instruction that cause MSROM
-// lookups are expensive, so alternative sequences should be preferred.
+// What it really refers to are CPUs for which certain instructions
+// (which ones besides the example below?) are microcoded.
 // The best examples of this are the memory forms of CALL and PUSH
 // instructions, which should be avoided in favor of a MOV + register CALL/PUSH.
 def FeatureCallRegIndirect : SubtargetFeature<"call-reg-indirect",
