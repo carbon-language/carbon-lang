@@ -3407,8 +3407,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 //    EDI
 //    local1 ..
 
-/// GetAlignedArgumentStackSize - Make the stack size align e.g 16n + 12 aligned
-/// for a 16 byte align requirement.
+/// Make the stack size align e.g 16n + 12 aligned for a 16-byte align
+/// requirement.
 unsigned
 X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
                                                SelectionDAG& DAG) const {
@@ -3429,9 +3429,8 @@ X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
   return Offset;
 }
 
-/// MatchingStackOffset - Return true if the given stack call argument is
-/// already available in the same position (relatively) of the caller's
-/// incoming argument stack.
+/// Return true if the given stack call argument is already available in the
+/// same position (relatively) of the caller's incoming argument stack.
 static
 bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
                          MachineFrameInfo *MFI, const MachineRegisterInfo *MRI,
@@ -3484,9 +3483,8 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
   return Offset == MFI->getObjectOffset(FI) && Bytes == MFI->getObjectSize(FI);
 }
 
-/// IsEligibleForTailCallOptimization - Check whether the call is eligible
-/// for tail call optimization. Targets which want to do tail call
-/// optimization should implement this function.
+/// Check whether the call is eligible for tail call optimization. Targets
+/// that want to do tail call optimization should implement this function.
 bool
 X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                                      CallingConv::ID CalleeCC,
@@ -3821,8 +3819,8 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
   return false;
 }
 
-/// isCalleePop - Determines whether the callee is required to pop its
-/// own arguments. Callee pop is necessary to support tail calls.
+/// Determines whether the callee is required to pop its own arguments.
+/// Callee pop is necessary to support tail calls.
 bool X86::isCalleePop(CallingConv::ID CallingConv,
                       bool is64Bit, bool IsVarArg, bool TailCallOpt) {
   switch (CallingConv) {
@@ -3859,8 +3857,8 @@ static bool isX86CCUnsigned(unsigned X86CC) {
   llvm_unreachable("covered switch fell through?!");
 }
 
-/// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86
-/// specific condition code, returning the condition code and the LHS/RHS of the
+/// Do a one-to-one translation of a ISD::CondCode to the X86-specific
+/// condition code, returning the condition code and the LHS/RHS of the
 /// comparison to make.
 static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, SDLoc DL, bool isFP,
                                SDValue &LHS, SDValue &RHS, SelectionDAG &DAG) {
@@ -3947,8 +3945,8 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, SDLoc DL, bool isFP,
   }
 }
 
-/// hasFPCMov - is there a floating point cmov for the specific X86 condition
-/// code. Current x86 isa includes the following FP cmov instructions:
+/// Is there a floating point cmov for the specific X86 condition code?
+/// Current x86 isa includes the following FP cmov instructions:
 /// fcmovb, fcomvbe, fcomve, fcmovu, fcmovae, fcmova, fcmovne, fcmovnu.
 static bool hasFPCMov(unsigned X86CC) {
   switch (X86CC) {
@@ -3966,7 +3964,7 @@ static bool hasFPCMov(unsigned X86CC) {
   }
 }
 
-/// isFPImmLegal - Returns true if the target can instruction select the
+/// Returns true if the target can instruction select the
 /// specified FP immediate natively. If false, the legalizer will
 /// materialize the FP immediate as a load from a constant pool.
 bool X86TargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
@@ -4019,7 +4017,7 @@ bool X86TargetLowering::isCheapToSpeculateCtlz() const {
   return Subtarget->hasLZCNT();
 }
 
-/// isUndefInRange - Return true if every element in Mask, beginning
+/// Return true if every element in Mask, beginning
 /// from position Pos and ending in Pos+Size is undef.
 static bool isUndefInRange(ArrayRef<int> Mask, unsigned Pos, unsigned Size) {
   for (unsigned i = Pos, e = Pos + Size; i != e; ++i)
@@ -4028,19 +4026,18 @@ static bool isUndefInRange(ArrayRef<int> Mask, unsigned Pos, unsigned Size) {
   return true;
 }
 
-/// isUndefOrInRange - Return true if Val is undef or if its value falls within
-/// the specified range (L, H].
+/// Return true if Val is undef or if its value falls within the
+/// specified range (L, H].
 static bool isUndefOrInRange(int Val, int Low, int Hi) {
   return (Val < 0) || (Val >= Low && Val < Hi);
 }
 
-/// isUndefOrEqual - Val is either less than zero (undef) or equal to the
-/// specified value.
+/// Val is either less than zero (undef) or equal to the specified value.
 static bool isUndefOrEqual(int Val, int CmpVal) {
   return (Val < 0 || Val == CmpVal);
 }
 
-/// isSequentialOrUndefInRange - Return true if every element in Mask, beginning
+/// Return true if every element in Mask, beginning
 /// from position Pos and ending in Pos+Size, falls within the specified
 /// sequential range (Low, Low+Size]. or is undef.
 static bool isSequentialOrUndefInRange(ArrayRef<int> Mask,
@@ -4051,9 +4048,8 @@ static bool isSequentialOrUndefInRange(ArrayRef<int> Mask,
   return true;
 }
 
-/// isVEXTRACTIndex - Return true if the specified
-/// EXTRACT_SUBVECTOR operand specifies a vector extract that is
-/// suitable for instruction that extract 128 or 256 bit vectors
+/// Return true if the specified EXTRACT_SUBVECTOR operand specifies a vector
+/// extract that is suitable for instruction that extract 128 or 256 bit vectors
 static bool isVEXTRACTIndex(SDNode *N, unsigned vecWidth) {
   assert((vecWidth == 128 || vecWidth == 256) && "Unexpected vector width");
   if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
@@ -4070,7 +4066,7 @@ static bool isVEXTRACTIndex(SDNode *N, unsigned vecWidth) {
   return Result;
 }
 
-/// isVINSERTIndex - Return true if the specified INSERT_SUBVECTOR
+/// Return true if the specified INSERT_SUBVECTOR
 /// operand specifies a subvector insert that is suitable for input to
 /// insertion of 128 or 256-bit subvectors
 static bool isVINSERTIndex(SDNode *N, unsigned vecWidth) {
@@ -4134,42 +4130,37 @@ static unsigned getInsertVINSERTImmediate(SDNode *N, unsigned vecWidth) {
   return Index / NumElemsPerChunk;
 }
 
-/// getExtractVEXTRACT128Immediate - Return the appropriate immediate
-/// to extract the specified EXTRACT_SUBVECTOR index with VEXTRACTF128
-/// and VINSERTI128 instructions.
+/// Return the appropriate immediate to extract the specified
+/// EXTRACT_SUBVECTOR index with VEXTRACTF128 and VINSERTI128 instructions.
 unsigned X86::getExtractVEXTRACT128Immediate(SDNode *N) {
   return getExtractVEXTRACTImmediate(N, 128);
 }
 
-/// getExtractVEXTRACT256Immediate - Return the appropriate immediate
-/// to extract the specified EXTRACT_SUBVECTOR index with VEXTRACTF64x4
-/// and VINSERTI64x4 instructions.
+/// Return the appropriate immediate to extract the specified
+/// EXTRACT_SUBVECTOR index with VEXTRACTF64x4 and VINSERTI64x4 instructions.
 unsigned X86::getExtractVEXTRACT256Immediate(SDNode *N) {
   return getExtractVEXTRACTImmediate(N, 256);
 }
 
-/// getInsertVINSERT128Immediate - Return the appropriate immediate
-/// to insert at the specified INSERT_SUBVECTOR index with VINSERTF128
-/// and VINSERTI128 instructions.
+/// Return the appropriate immediate to insert at the specified
+/// INSERT_SUBVECTOR index with VINSERTF128 and VINSERTI128 instructions.
 unsigned X86::getInsertVINSERT128Immediate(SDNode *N) {
   return getInsertVINSERTImmediate(N, 128);
 }
 
-/// getInsertVINSERT256Immediate - Return the appropriate immediate
-/// to insert at the specified INSERT_SUBVECTOR index with VINSERTF46x4
-/// and VINSERTI64x4 instructions.
+/// Return the appropriate immediate to insert at the specified
+/// INSERT_SUBVECTOR index with VINSERTF46x4 and VINSERTI64x4 instructions.
 unsigned X86::getInsertVINSERT256Immediate(SDNode *N) {
   return getInsertVINSERTImmediate(N, 256);
 }
 
-/// isZero - Returns true if Elt is a constant integer zero
+/// Returns true if Elt is a constant integer zero
 static bool isZero(SDValue V) {
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
   return C && C->isNullValue();
 }
 
-/// isZeroNode - Returns true if Elt is a constant zero or a floating point
-/// constant +0.0.
+/// Returns true if Elt is a constant zero or a floating point constant +0.0.
 bool X86::isZeroNode(SDValue Elt) {
   if (isZero(Elt))
     return true;
@@ -4178,8 +4169,7 @@ bool X86::isZeroNode(SDValue Elt) {
   return false;
 }
 
-/// getZeroVector - Returns a vector of specified type with all zero elements.
-///
+/// Returns a vector of specified type with all zero elements.
 static SDValue getZeroVector(EVT VT, const X86Subtarget *Subtarget,
                              SelectionDAG &DAG, SDLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
@@ -4383,7 +4373,7 @@ static SDValue Concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
   return Insert256BitVector(V, V2, NumElems/2, DAG, dl);
 }
 
-/// getOnesVector - Returns a vector of specified type with all bits set.
+/// Returns a vector of specified type with all bits set.
 /// Always build ones vectors as <4 x i32> or <8 x i32>. For 256-bit types with
 /// no AVX2 supprt, use two <4 x i32> inserted in a <8 x i32> appropriately.
 /// Then bitcast to their original type, ensuring they get CSE'd.
@@ -4409,7 +4399,7 @@ static SDValue getOnesVector(MVT VT, bool HasInt256, SelectionDAG &DAG,
   return DAG.getBitcast(VT, Vec);
 }
 
-/// getMOVLMask - Returns a vector_shuffle mask for an movs{s|d}, movd
+/// Returns a vector_shuffle mask for an movs{s|d}, movd
 /// operation of specified width.
 static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
                        SDValue V2) {
@@ -4421,7 +4411,7 @@ static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-/// getUnpackl - Returns a vector_shuffle node for an unpackl operation.
+/// Returns a vector_shuffle node for an unpackl operation.
 static SDValue getUnpackl(SelectionDAG &DAG, SDLoc dl, MVT VT, SDValue V1,
                           SDValue V2) {
   unsigned NumElems = VT.getVectorNumElements();
@@ -4433,7 +4423,7 @@ static SDValue getUnpackl(SelectionDAG &DAG, SDLoc dl, MVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-/// getUnpackh - Returns a vector_shuffle node for an unpackh operation.
+/// Returns a vector_shuffle node for an unpackh operation.
 static SDValue getUnpackh(SelectionDAG &DAG, SDLoc dl, MVT VT, SDValue V1,
                           SDValue V2) {
   unsigned NumElems = VT.getVectorNumElements();
@@ -4445,10 +4435,10 @@ static SDValue getUnpackh(SelectionDAG &DAG, SDLoc dl, MVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, dl, V1, V2, &Mask[0]);
 }
 
-/// getShuffleVectorZeroOrUndef - Return a vector_shuffle of the specified
-/// vector of zero or undef vector.  This produces a shuffle where the low
-/// element of V2 is swizzled into the zero/undef vector, landing at element
-/// Idx.  This produces a shuffle mask like 4,1,2,3 (idx=0) or  0,1,2,4 (idx=3).
+/// Return a vector_shuffle of the specified vector of zero or undef vector.
+/// This produces a shuffle where the low element of V2 is swizzled into the
+/// zero/undef vector, landing at element Idx.
+/// This produces a shuffle mask like 4,1,2,3 (idx=0) or  0,1,2,4 (idx=3).
 static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
                                            bool IsZero,
                                            const X86Subtarget *Subtarget,
@@ -4464,10 +4454,10 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
   return DAG.getVectorShuffle(VT, SDLoc(V2), V1, V2, &MaskVec[0]);
 }
 
-/// getTargetShuffleMask - Calculates the shuffle mask corresponding to the
-/// target specific opcode. Returns true if the Mask could be calculated. Sets
-/// IsUnary to true if only uses one source. Note that this will set IsUnary for
-/// shuffles which use a single input multiple times, and in those cases it will
+/// Calculates the shuffle mask corresponding to the target-specific opcode.
+/// Returns true if the Mask could be calculated. Sets IsUnary to true if only
+/// uses one source. Note that this will set IsUnary for shuffles which use a
+/// single input multiple times, and in those cases it will
 /// adjust the mask to only have indices within that single input.
 /// FIXME: Add support for Decode*Mask functions that return SM_SentinelZero.
 static bool getTargetShuffleMask(SDNode *N, MVT VT,
@@ -4635,7 +4625,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
   return true;
 }
 
-/// getShuffleScalarElt - Returns the scalar element that will make up the ith
+/// Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
 static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
                                    unsigned Depth) {
@@ -4699,8 +4689,7 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// LowerBuildVectorv16i8 - Custom lower build_vector of v16i8.
-///
+/// Custom lower build_vector of v16i8.
 static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
                                        unsigned NumNonZero, unsigned NumZero,
                                        SelectionDAG &DAG,
@@ -4770,8 +4759,7 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
   return DAG.getBitcast(MVT::v16i8, V);
 }
 
-/// LowerBuildVectorv8i16 - Custom lower build_vector of v8i16.
-///
+/// Custom lower build_vector of v8i16.
 static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
                                      unsigned NumNonZero, unsigned NumZero,
                                      SelectionDAG &DAG,
@@ -4802,7 +4790,7 @@ static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
   return V;
 }
 
-/// LowerBuildVectorv4x32 - Custom lower build_vector of v4i32 or v4f32.
+/// Custom lower build_vector of v4i32 or v4f32.
 static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
                                      const X86Subtarget *Subtarget,
                                      const TargetLowering &TLI) {
@@ -6226,7 +6214,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-// LowerAVXCONCAT_VECTORS - 256-bit AVX can use the vinsertf128 instruction
+// 256-bit AVX can use the vinsertf128 instruction
 // to create 256-bit vectors from two other 128-bit ones.
 static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
