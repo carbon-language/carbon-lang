@@ -1993,7 +1993,7 @@ protected:
   unsigned MaxStoresPerMemmove;
 
   /// Maximum number of store instructions that may be substituted for a call to
-  /// memmove, used for functions with OpSize attribute.
+  /// memmove, used for functions with OptSize attribute.
   unsigned MaxStoresPerMemmoveOptSize;
 
   /// Tells the code generator that select is more expensive than a branch if
