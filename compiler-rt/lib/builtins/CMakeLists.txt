@@ -286,7 +286,6 @@ if (NOT WIN32 OR MINGW)
         endif ()
       endforeach ()
 
-      set_source_files_properties(${${arch}_SOURCES} PROPERTIES LANGUAGE C)
       add_compiler_rt_runtime(clang_rt.builtins-${arch} ${arch} STATIC
                               SOURCES ${${arch}_SOURCES}
                               CFLAGS "-std=c99")
