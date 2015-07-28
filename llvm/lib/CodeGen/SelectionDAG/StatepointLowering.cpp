@@ -289,7 +289,23 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
 
   ImmutableCallSite CS(ISP.getCallSite());
 
-  SDValue ActualCallee = Builder.getValue(ISP.getCalledValue());
+  SDValue ActualCallee;
+
+  if (ISP.getNumPatchBytes() > 0) {
+    // If we've been asked to emit a nop sequence instead of a call instruction
+    // for this statepoint then don't lower the call target, but use a constant
+    // `null` instead.  Not lowering the call target lets statepoint clients get
+    // away without providing a physical address for the symbolic call target at
+    // link time.
+
+    const auto &TLI = Builder.DAG.getTargetLoweringInfo();
+    const auto &DL = Builder.DAG.getDataLayout();
+
+    unsigned AS = ISP.getCalledValue()->getType()->getPointerAddressSpace();
+    ActualCallee = Builder.DAG.getConstant(0, Builder.getCurSDLoc(),
+                                           TLI.getPointerTy(DL, AS));
+  } else
+    ActualCallee = Builder.getValue(ISP.getCalledValue());
 
   assert(CS.getCallingConv() != CallingConv::AnyReg &&
          "anyregcc is not supported on statepoints!");

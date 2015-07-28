@@ -917,15 +917,10 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
       CS.getInstruction()->getContext(), AttributeSet::FunctionIndex,
       AttrsToRemove);
 
-  Value *StatepointTarget = NumPatchBytes == 0
-                                ? CS.getCalledValue()
-                                : ConstantPointerNull::get(cast<PointerType>(
-                                      CS.getCalledValue()->getType()));
-
   if (CS.isCall()) {
     CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
     CallInst *Call = Builder.CreateGCStatepointCall(
-        ID, NumPatchBytes, StatepointTarget,
+        ID, NumPatchBytes, CS.getCalledValue(),
         makeArrayRef(CS.arg_begin(), CS.arg_end()), None, None,
         "safepoint_token");
     Call->setTailCall(ToReplace->isTailCall());
@@ -951,7 +946,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     // original block.
     Builder.SetInsertPoint(ToReplace->getParent());
     InvokeInst *Invoke = Builder.CreateGCStatepointInvoke(
-        ID, NumPatchBytes, StatepointTarget, ToReplace->getNormalDest(),
+        ID, NumPatchBytes, CS.getCalledValue(), ToReplace->getNormalDest(),
         ToReplace->getUnwindDest(), makeArrayRef(CS.arg_begin(), CS.arg_end()),
         None, None, "safepoint_token");
 

@@ -1544,12 +1544,6 @@ void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
          "gc.statepoint callee must be of function pointer type", &CI, Target);
   FunctionType *TargetFuncType = cast<FunctionType>(PT->getElementType());
 
-  if (NumPatchBytes)
-    Assert(isa<ConstantPointerNull>(Target->stripPointerCasts()),
-           "gc.statepoint must have null as call target if number of patchable "
-           "bytes is non zero",
-           &CI);
-
   const Value *NumCallArgsV = CS.getArgument(3);
   Assert(isa<ConstantInt>(NumCallArgsV),
          "gc.statepoint number of arguments to underlying call "

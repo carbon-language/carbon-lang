@@ -22,7 +22,7 @@ define void @test_num_patch_bytes() gc "statepoint-example" personality i32 ()* 
 ; CHECK-LABEL: @test_num_patch_bytes(
 entry:
 ; CHECK-LABEL: entry:
-; CHECK: invoke i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 2882400000, i32 99, void ()* null,
+; CHECK: invoke i32 (i64, i32, void ()*, i32, i32, ...) @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 2882400000, i32 99, void ()* @f,
   invoke void @f()  "statepoint-num-patch-bytes"="99" to label %normal_return unwind label %exceptional_return
 
 normal_return:

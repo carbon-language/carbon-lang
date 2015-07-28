@@ -331,14 +331,16 @@ the user will patch over the 'num patch bytes' bytes of nops with a
 calling sequence specific to their runtime before executing the
 generated machine code.  There are no guarantees with respect to the
 alignment of the nop sequence.  Unlike :doc:`StackMaps` statepoints do
-not have a concept of shadow bytes.
+not have a concept of shadow bytes.  Note that semantically the
+statepoint still represents a call or invoke to 'target', and the nop
+sequence after patching is expected to represent an operation
+equivalent to a call or invoke to 'target'.
 
 The 'target' operand is the function actually being called.  The
 target can be specified as either a symbolic LLVM function, or as an
 arbitrary Value of appropriate function type.  Note that the function
 type must match the signature of the callee and the types of the 'call
-parameters' arguments.  If 'num patch bytes' is non-zero then 'target'
-has to be the constant pointer null of the appropriate function type.
+parameters' arguments.
 
 The '#call args' operand is the number of arguments to the actual
 call.  It must exactly match the number of arguments passed in the
