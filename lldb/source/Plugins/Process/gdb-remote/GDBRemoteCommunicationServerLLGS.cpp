@@ -1142,26 +1142,21 @@ GDBRemoteCommunicationServerLLGS::ReapDebuggedProcess (void *callback_baton,
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::Handle_k (StringExtractorGDBRemote &packet)
 {
-    // shutdown all spawned processes
-    std::set<lldb::pid_t> spawned_pids_copy;
-
-    // copy pids
-    {
-        Mutex::Locker locker (m_spawned_pids_mutex);
-        spawned_pids_copy.insert (m_spawned_pids.begin (), m_spawned_pids.end ());
-    }
-
-    // nuke the spawned processes
-    for (auto it = spawned_pids_copy.begin (); it != spawned_pids_copy.end (); ++it)
-    {
-        lldb::pid_t spawned_pid = *it;
-        if (!KillSpawnedProcess (spawned_pid))
-        {
-            fprintf (stderr, "%s: failed to kill spawned pid %" PRIu64 ", ignoring.\n", __FUNCTION__, spawned_pid);
-        }
-    }
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     StopSTDIOForwarding();
+
+    if (! m_debugged_process_sp)
+    {
+        if (log)
+            log->Printf("GDBRemoteCommunicationServerLLGS::%s No debugged process found.", __FUNCTION__);
+        return PacketResult::Success;
+    }
+
+    Error error = m_debugged_process_sp->Kill();
+    if (error.Fail() && log)
+        log->Printf("GDBRemoteCommunicationServerLLGS::%s Failed to kill debugged process %" PRIu64 ": %s",
+                __FUNCTION__, m_debugged_process_sp->GetID(), error.AsCString());
 
     // No OK response for kill packet.
     // return SendOKResponse ();
