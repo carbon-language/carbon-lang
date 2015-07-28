@@ -36,7 +36,7 @@ StreamAsynchronousIO::Flush ()
     if (!m_data.empty())
     {
         m_debugger.PrintAsync (m_data.data(), m_data.size(), m_for_stdout);
-        m_data = std::move(std::string());
+        m_data = std::string();
     }
 }
 

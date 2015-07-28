@@ -189,7 +189,7 @@ SBPlatformShellCommand::~SBPlatformShellCommand()
 void
 SBPlatformShellCommand::Clear()
 {
-    m_opaque_ptr->m_output = std::move(std::string());
+    m_opaque_ptr->m_output = std::string();
     m_opaque_ptr->m_status = 0;
     m_opaque_ptr->m_signo = 0;
 }

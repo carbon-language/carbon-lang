@@ -102,7 +102,7 @@ HostInfoBase::GetVendorString()
 {
     static std::once_flag g_once_flag;
     std::call_once(g_once_flag,  []() {
-        g_fields->m_vendor_string = std::move(HostInfo::GetArchitecture().GetTriple().getVendorName().str());
+        g_fields->m_vendor_string = HostInfo::GetArchitecture().GetTriple().getVendorName().str();
     });
     return g_fields->m_vendor_string;
 }

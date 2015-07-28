@@ -372,7 +372,7 @@ ClangExpressionParser::Parse (Stream &stream)
         if (HostInfo::GetLLDBPath(lldb::ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
         {
             tmpdir_file_spec.AppendPathComponent("lldb-%%%%%%.expr");
-            temp_source_path = std::move(tmpdir_file_spec.GetPath());
+            temp_source_path = tmpdir_file_spec.GetPath();
             llvm::sys::fs::createUniqueFile(temp_source_path, temp_fd, result_path);
         }
         else

@@ -153,7 +153,7 @@ RegularExpression::Match::GetMatchAtIndex (const char* s, uint32_t idx, std::str
     llvm::StringRef match_str_ref;
     if (GetMatchAtIndex(s, idx, match_str_ref))
     {
-        match_str = std::move(match_str_ref.str());
+        match_str = match_str_ref.str();
         return true;
     }
     return false;
@@ -258,4 +258,3 @@ RegularExpression::operator < (const RegularExpression& rhs) const
 {
     return (m_re < rhs.m_re);
 }
-

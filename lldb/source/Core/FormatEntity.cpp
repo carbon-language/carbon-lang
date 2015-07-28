@@ -1976,7 +1976,7 @@ ParseEntry (const llvm::StringRef &format_str,
             switch (entry_def->type)
             {
                 case FormatEntity::Entry::Type::ParentString:
-                    entry.string = std::move(format_str.str());
+                    entry.string = format_str.str();
                     return error; // Success
 
                 case FormatEntity::Entry::Type::ParentNumber:
@@ -2026,7 +2026,7 @@ ParseEntry (const llvm::StringRef &format_str,
                 {
                     // Any value whose separator is a with a ':' means this value has a string argument
                     // that needs to be stored in the entry (like "${script.var:modulename.function}")
-                    entry.string = std::move(value.str());
+                    entry.string = value.str();
                 }
                 else
                 {
@@ -2247,7 +2247,7 @@ FormatEntity::ParseInternal (llvm::StringRef &format, Entry &parent_entry, uint3
                         Entry entry;
                         if (!variable_format.empty())
                         {
-                            entry.printf_format = std::move(variable_format.str());
+                            entry.printf_format = variable_format.str();
                             
                             // If the format contains a '%' we are going to assume this is
                             // a printf style format. So if you want to format your thread ID
@@ -2449,7 +2449,7 @@ MakeMatch (const llvm::StringRef &prefix, const char *suffix)
 {
     std::string match(prefix.str());
     match.append(suffix);
-    return std::move(match);
+    return match;
 }
 
 static void
@@ -2463,7 +2463,7 @@ AddMatches (const FormatEntity::Entry::Definition *def,
     {
         for (size_t i=0; i<n; ++i)
         {
-            std::string match = std::move(prefix.str());
+            std::string match = prefix.str();
             if (match_prefix.empty())
                 matches.AppendString(MakeMatch (prefix, def->children[i].name));
             else if (strncmp(def->children[i].name, match_prefix.data(), match_prefix.size()) == 0)
@@ -2488,7 +2488,7 @@ FormatEntity::AutoComplete (const char *s,
         // Hitting TAB after $ at the end of the string add a "{"
         if (dollar_pos == str.size() - 1)
         {
-            std::string match = std::move(str.str());
+            std::string match = str.str();
             match.append("{");
             matches.AppendString(std::move(match));
         }
@@ -2521,12 +2521,12 @@ FormatEntity::AutoComplete (const char *s,
                                 if (n > 0)
                                 {
                                     // "${thread.info" <TAB>
-                                    matches.AppendString(std::move(MakeMatch (str, ".")));
+                                    matches.AppendString(MakeMatch(str, "."));
                                 }
                                 else
                                 {
                                     // "${thread.id" <TAB>
-                                    matches.AppendString(std::move(MakeMatch (str, "}")));
+                                    matches.AppendString(MakeMatch (str, "}"));
                                     word_complete = true;
                                 }
                             }
