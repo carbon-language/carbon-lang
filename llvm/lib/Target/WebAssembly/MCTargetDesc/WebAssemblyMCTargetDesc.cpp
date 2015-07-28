@@ -37,17 +37,15 @@ using namespace llvm;
 
 static MCAsmInfo *createWebAssemblyMCAsmInfo(const MCRegisterInfo &MRI,
                                              const Triple &TT) {
-  MCAsmInfo *MAI = new WebAssemblyMCAsmInfo(TT);
-  return MAI;
+  return new WebAssemblyMCAsmInfo(TT);
 }
 
 static MCInstPrinter *
 createWebAssemblyMCInstPrinter(const Triple &T, unsigned SyntaxVariant,
                                const MCAsmInfo &MAI, const MCInstrInfo &MII,
                                const MCRegisterInfo &MRI) {
-  if (SyntaxVariant == 0 || SyntaxVariant == 1)
-    return new WebAssemblyInstPrinter(MAI, MII, MRI);
-  return nullptr;
+  assert(SyntaxVariant == 0);
+  return new WebAssemblyInstPrinter(MAI, MII, MRI);
 }
 
 // Force static initialization.
