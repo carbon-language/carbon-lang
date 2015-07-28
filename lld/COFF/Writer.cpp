@@ -520,13 +520,13 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
     Dir[EXCEPTION_TABLE].RelativeVirtualAddress = Sec->getRVA();
     Dir[EXCEPTION_TABLE].Size = Sec->getVirtualSize();
   }
-  if (Symbol *Sym = Symtab->find("_tls_used")) {
+  if (Symbol *Sym = Symtab->findUnderscore("_tls_used")) {
     if (Defined *B = dyn_cast<Defined>(Sym->Body)) {
       Dir[TLS_TABLE].RelativeVirtualAddress = B->getRVA();
       Dir[TLS_TABLE].Size = 40;
     }
   }
-  if (Symbol *Sym = Symtab->find("__load_config_used")) {
+  if (Symbol *Sym = Symtab->findUnderscore("_load_config_used")) {
     if (Defined *B = dyn_cast<Defined>(Sym->Body)) {
       Dir[LOAD_CONFIG_TABLE].RelativeVirtualAddress = B->getRVA();
       Dir[LOAD_CONFIG_TABLE].Size = 64;

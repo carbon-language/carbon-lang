@@ -274,6 +274,12 @@ Symbol *SymbolTable::find(StringRef Name) {
   return It->second;
 }
 
+Symbol *SymbolTable::findUnderscore(StringRef Name) {
+  if (Config->Machine == I386)
+    return find(("_" + Name).str());
+  return find(Name);
+}
+
 StringRef SymbolTable::findByPrefix(StringRef Prefix) {
   for (auto Pair : Symtab) {
     StringRef Name = Pair.first;

@@ -56,6 +56,7 @@ public:
 
   // Returns a symbol for a given name. Returns a nullptr if not found.
   Symbol *find(StringRef Name);
+  Symbol *findUnderscore(StringRef Name);
 
   // Occasionally we have to resolve an undefined symbol to its
   // mangled symbol. This function tries to find a mangled name
