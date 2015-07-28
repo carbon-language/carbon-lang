@@ -180,6 +180,13 @@ public:
     GlobalMRI = ModRefInfo(GlobalMRI | NewMRI);
   }
 
+  /// Clear a global's ModRef info. Should be used when a global is being
+  /// deleted.
+  void eraseModRefInfoForGlobal(const GlobalValue &GV) {
+    if (AlignedMap *P = Info.getPointer())
+      P->Map.erase(&GV);
+  }
+
 private:
   /// All of the information is encoded into a single pointer, with a three bit
   /// integer in the low three bits. The high bit provides a flag for when this
@@ -215,11 +222,13 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
 
     void deleted() override {
       Value *V = getValPtr();
+      if (auto *F = dyn_cast<Function>(V))
+        GMR.FunctionInfos.erase(F);
+
       if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
         if (GMR.NonAddressTakenGlobals.erase(GV)) {
           // This global might be an indirect global.  If so, remove it and
-          // remove
-          // any AllocRelatedValues for it.
+          // remove any AllocRelatedValues for it.
           if (GMR.IndirectGlobals.erase(GV)) {
             // Remove any entries in AllocsForIndirectGlobals for this global.
             for (auto I = GMR.AllocsForIndirectGlobals.begin(),
@@ -228,6 +237,11 @@ class GlobalsModRef : public ModulePass, public AliasAnalysis {
               if (I->second == GV)
                 GMR.AllocsForIndirectGlobals.erase(I);
           }
+
+          // Scan the function info we have collected and remove this global
+          // from all of them.
+          for (auto &FIPair : GMR.FunctionInfos)
+            FIPair.second.eraseModRefInfoForGlobal(*GV);
         }
       }
 
@@ -361,11 +375,13 @@ Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 /// (really, their address passed to something nontrivial), record this fact,
 /// and record the functions that they are used directly in.
 void GlobalsModRef::AnalyzeGlobals(Module &M) {
+  SmallPtrSet<Function *, 64> TrackedFunctions;
   for (Function &F : M)
     if (F.hasLocalLinkage())
       if (!AnalyzeUsesOfPointer(&F)) {
         // Remember that we are tracking this global.
         NonAddressTakenGlobals.insert(&F);
+        TrackedFunctions.insert(&F);
         Handles.emplace_front(*this, &F);
         Handles.front().I = Handles.begin();
         ++NumNonAddrTakenFunctions;
@@ -381,12 +397,22 @@ void GlobalsModRef::AnalyzeGlobals(Module &M) {
         Handles.emplace_front(*this, &GV);
         Handles.front().I = Handles.begin();
 
-        for (Function *Reader : Readers)
+        for (Function *Reader : Readers) {
+          if (TrackedFunctions.insert(Reader).second) {
+            Handles.emplace_front(*this, Reader);
+            Handles.front().I = Handles.begin();
+          }
           FunctionInfos[Reader].addModRefInfoForGlobal(GV, MRI_Ref);
+        }
 
         if (!GV.isConstant()) // No need to keep track of writers to constants
-          for (Function *Writer : Writers)
+          for (Function *Writer : Writers) {
+            if (TrackedFunctions.insert(Writer).second) {
+              Handles.emplace_front(*this, Writer);
+              Handles.front().I = Handles.begin();
+            }
             FunctionInfos[Writer].addModRefInfoForGlobal(GV, MRI_Mod);
+          }
         ++NumNonAddrTakenGlobalVars;
 
         // If this global holds a pointer type, see if it is an indirect global.
