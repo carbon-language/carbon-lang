@@ -13308,8 +13308,8 @@ SDValue X86TargetLowering::getRecipEstimate(SDValue Op,
 /// This is because we still need one division to calculate the reciprocal and
 /// then we need two multiplies by that reciprocal as replacements for the
 /// original divisions.
-bool X86TargetLowering::combineRepeatedFPDivisors(unsigned NumUsers) const {
-  return NumUsers > 1;
+unsigned X86TargetLowering::combineRepeatedFPDivisors() const {
+  return 2;
 }
 
 static bool isAllOnes(SDValue V) {

@@ -8247,23 +8247,29 @@ SDValue DAGCombiner::combineRepeatedFPDivisors(SDNode *N) {
   if (!DAG.getTarget().Options.UnsafeFPMath)
     return SDValue();
   
+  // Skip if current node is a reciprocal.
   SDValue N0 = N->getOperand(0);
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
-
-  // Skip if current node is a reciprocal.
   if (N0CFP && N0CFP->isExactlyValue(1.0))
     return SDValue();
   
+  // Exit early if the target does not want this transform or if there can't
+  // possibly be enough uses of the divisor to make the transform worthwhile.
   SDValue N1 = N->getOperand(1);
-  SmallVector<SDNode *, 4> Users;
+  unsigned MinUses = TLI.combineRepeatedFPDivisors();
+  if (!MinUses || N1->use_size() < MinUses)
+    return SDValue();
 
   // Find all FDIV users of the same divisor.
+  SmallVector<SDNode *, 4> Users;
   for (auto *U : N1->uses()) {
     if (U->getOpcode() == ISD::FDIV && U->getOperand(1) == N1)
       Users.push_back(U);
   }
 
-  if (!TLI.combineRepeatedFPDivisors(Users.size()))
+  // Now that we have the actual number of divisor uses, make sure it meets
+  // the minimum threshold specified by the target.
+  if (Users.size() < MinUses)
     return SDValue();
 
   EVT VT = N->getValueType(0);

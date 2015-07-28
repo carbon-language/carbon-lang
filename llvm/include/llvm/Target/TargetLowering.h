@@ -2732,10 +2732,12 @@ public:
     return SDValue();
   }
 
-  /// Indicate whether this target prefers to combine the given number of FDIVs
-  /// with the same divisor.
-  virtual bool combineRepeatedFPDivisors(unsigned NumUsers) const {
-    return false;
+  /// Indicate whether this target prefers to combine FDIVs with the same
+  /// divisor. If the transform should never be done, return zero. If the
+  /// transform should be done, return the minimum number of divisor uses
+  /// that must exist.
+  virtual unsigned combineRepeatedFPDivisors() const {
+    return 0;
   }
 
   /// Hooks for building estimates in place of slower divisions and square
