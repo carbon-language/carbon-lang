@@ -542,19 +542,8 @@ static void getARMArchCPUFromArgs(const ArgList &Args, llvm::StringRef &Arch,
 static void getARMHWDivFeatures(const Driver &D, const Arg *A,
                                 const ArgList &Args, StringRef HWDiv,
                                 std::vector<const char *> &Features) {
-  if (HWDiv == "arm") {
-    Features.push_back("+hwdiv-arm");
-    Features.push_back("-hwdiv");
-  } else if (HWDiv == "thumb") {
-    Features.push_back("-hwdiv-arm");
-    Features.push_back("+hwdiv");
-  } else if (HWDiv == "arm,thumb" || HWDiv == "thumb,arm") {
-    Features.push_back("+hwdiv-arm");
-    Features.push_back("+hwdiv");
-  } else if (HWDiv == "none") {
-    Features.push_back("-hwdiv-arm");
-    Features.push_back("-hwdiv");
-  } else
+  unsigned HWDivID = llvm::ARMTargetParser::parseHWDiv(HWDiv);
+  if (!llvm::ARMTargetParser::getHWDivFeatures(HWDivID, Features))
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 }
 
