@@ -168,8 +168,6 @@ void Writer::dedupCOMDATs() {
 
 static StringRef getOutputSection(StringRef Name) {
   StringRef S = Name.split('$').first;
-  if (Config->Debug)
-    return S;
   auto It = Config->Merge.find(S);
   if (It == Config->Merge.end())
     return S;
