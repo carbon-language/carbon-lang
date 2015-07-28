@@ -15,6 +15,7 @@
 #define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
 #include "llvm/CodeGen/PBQPRAConstraint.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CodeGen.h"
 
@@ -79,6 +80,11 @@ public:
   }
   virtual const TargetLowering *getTargetLowering() const { return nullptr; }
   virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
+    return nullptr;
+  }
+  /// Target can subclass this hook to select a different DAG scheduler.
+  virtual RegisterScheduler::FunctionPassCtor
+      getDAGScheduler(CodeGenOpt::Level) const {
     return nullptr;
   }
 

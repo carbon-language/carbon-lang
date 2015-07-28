@@ -293,6 +293,11 @@ namespace llvm {
     const TargetLowering *TLI = IS->TLI;
     const TargetSubtargetInfo &ST = IS->MF->getSubtarget();
 
+    // Try first to see if the Target has its own way of selecting a scheduler
+    if (auto *SchedulerCtor = ST.getDAGScheduler(OptLevel)) {
+      return SchedulerCtor(IS, OptLevel);
+    }
+
     if (OptLevel == CodeGenOpt::None ||
         (ST.enableMachineScheduler() && ST.enableMachineSchedDefaultSched()) ||
         TLI->getSchedulingPreference() == Sched::Source)
@@ -1643,14 +1648,7 @@ SelectionDAGISel::FinishBasicBlock() {
 /// one preferred by the target.
 ///
 ScheduleDAGSDNodes *SelectionDAGISel::CreateScheduler() {
-  RegisterScheduler::FunctionPassCtor Ctor = RegisterScheduler::getDefault();
-
-  if (!Ctor) {
-    Ctor = ISHeuristic;
-    RegisterScheduler::setDefault(Ctor);
-  }
-
-  return Ctor(this, OptLevel);
+  return ISHeuristic(this, OptLevel);
 }
 
 //===----------------------------------------------------------------------===//
