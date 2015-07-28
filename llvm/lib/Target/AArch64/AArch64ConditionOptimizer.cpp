@@ -154,11 +154,18 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     // cmn is an alias for adds with a dead destination register.
     case AArch64::ADDSWri:
     case AArch64::ADDSXri:
-      if (MRI->use_empty(I->getOperand(0).getReg()))
-        return I;
-
-      DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
-      return nullptr;
+      if (!I->getOperand(2).isImm()) {
+        DEBUG(dbgs() << "Immediate of cmp is symbolic, " << *I << '\n');
+        return nullptr;
+      } else if (I->getOperand(2).getImm() << I->getOperand(3).getImm() >=
+                 0xfff) {
+        DEBUG(dbgs() << "Immediate of cmp may be out of range, " << *I << '\n');
+        return nullptr;
+      } else if (!MRI->use_empty(I->getOperand(0).getReg())) {
+        DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
+        return nullptr;
+      }
+      return I;
 
     // Prevent false positive case like:
     // cmp      w19, #0

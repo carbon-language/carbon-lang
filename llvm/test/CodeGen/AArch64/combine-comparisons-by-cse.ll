@@ -403,6 +403,32 @@ return:                                           ; preds = %land.lhs.true, %con
   ret i32 %retval.0
 }
 
+define void @cmp_shifted(i32 %in, i32 %lhs, i32 %rhs) {
+; CHECK-LABEL: cmp_shifted:
+; CHECK: cmp w0, #1
+; [...]
+; CHECK: cmp w0, #2, lsl #12
+
+  %tst_low = icmp sgt i32 %in, 0
+  br i1 %tst_low, label %true, label %false
+
+true:
+  call i32 @zoo(i32 128)
+  ret void
+
+false:
+  %tst = icmp sgt i32 %in, 8191
+  br i1 %tst, label %truer, label %falser
+
+truer:
+  call i32 @zoo(i32 42)
+  ret void
+
+falser:
+  call i32 @zoo(i32 1)
+  ret void
+}
+
 declare i32 @zoo(i32)
 
 declare double @yoo(i32)
