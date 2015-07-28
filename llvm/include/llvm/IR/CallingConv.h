@@ -69,6 +69,9 @@ namespace CallingConv {
     // (almost) all registers.
     PreserveAll = 15,
 
+    // Swift - Calling convention for Swift.
+    Swift = 16,
+
     // Target - This is the start of the target-specific calling conventions,
     // e.g. fastcall and thiscall on X86.
     FirstTargetCC = 64,

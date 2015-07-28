@@ -4081,6 +4081,8 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       uint64_t AlignRecord = Record[3];
       const uint64_t InAllocaMask = uint64_t(1) << 5;
       const uint64_t ExplicitTypeMask = uint64_t(1) << 6;
+      // Reserve bit 7 for SwiftError flag.
+      // const uint64_t SwiftErrorMask = uint64_t(1) << 7;
       const uint64_t FlagMask = InAllocaMask | ExplicitTypeMask;
       bool InAlloca = AlignRecord & InAllocaMask;
       Type *Ty = getTypeByID(Record[0]);
