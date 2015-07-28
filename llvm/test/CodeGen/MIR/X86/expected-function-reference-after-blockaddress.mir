@@ -1,0 +1,34 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  @addr = global i8* null
+
+  define void @test() {
+  entry:
+    store volatile i8* blockaddress(@test, %block), i8** @addr
+    %val = load volatile i8*, i8** @addr
+    indirectbr i8* %val, [label %block]
+
+  block:
+    ret void
+  }
+
+...
+---
+name:            test
+body:
+  - id:              0
+    name:            entry
+    successors:      [ '%bb.1.block' ]
+    instructions:
+      # CHECK: [[@LINE+1]]:49: expected an IR function reference
+      - '%rax = LEA64r %rip, 1, _, blockaddress(@addr, %ir-block.block), _'
+      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
+      - 'JMP64m %rip, 1, _, @addr, _'
+  - id:              1
+    name:            block
+    addressTaken:    true
+    instructions:
+      - RETQ
+...

@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/Module.h"
@@ -103,6 +104,7 @@ public:
 
   void print(const MachineInstr &MI);
   void printMBBReference(const MachineBasicBlock &MBB);
+  void printIRBlockReference(const BasicBlock &BB);
   void printStackObjectReference(int FrameIndex);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
 
@@ -428,6 +430,19 @@ void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
   }
 }
 
+void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
+  OS << "%ir-block.";
+  if (BB.hasName()) {
+    printLLVMNameWithoutPrefix(OS, BB.getName());
+    return;
+  }
+  int Slot = MST.getLocalSlot(&BB);
+  if (Slot == -1)
+    OS << "<badref>";
+  else
+    OS << Slot;
+}
+
 void MIPrinter::printStackObjectReference(int FrameIndex) {
   auto ObjectInfo = StackObjectOperandMapping.find(FrameIndex);
   assert(ObjectInfo != StackObjectOperandMapping.end() &&
@@ -483,6 +498,15 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     break;
   case MachineOperand::MO_GlobalAddress:
     Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
+    // TODO: Print offset and target flags.
+    break;
+  case MachineOperand::MO_BlockAddress:
+    OS << "blockaddress(";
+    Op.getBlockAddress()->getFunction()->printAsOperand(OS, /*PrintType=*/false,
+                                                        MST);
+    OS << ", ";
+    printIRBlockReference(*Op.getBlockAddress()->getBasicBlock());
+    OS << ')';
     // TODO: Print offset and target flags.
     break;
   case MachineOperand::MO_RegisterMask: {

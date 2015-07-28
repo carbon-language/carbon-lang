@@ -1,0 +1,89 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses the block address operands
+# correctly.
+
+--- |
+
+  @addr = global i8* null
+
+  define void @test() {
+  entry:
+    store volatile i8* blockaddress(@test, %block), i8** @addr
+    %val = load volatile i8*, i8** @addr
+    indirectbr i8* %val, [label %block]
+
+  block:
+    ret void
+  }
+
+  define void @test2() {
+  entry:
+    store volatile i8* blockaddress(@test2, %"quoted block"), i8** @addr
+    %val = load volatile i8*, i8** @addr
+    indirectbr i8* %val, [label %"quoted block"]
+
+  "quoted block":
+    ret void
+  }
+
+  define void @test3() {
+  entry:
+    store volatile i8* blockaddress(@test3, %0), i8** @addr
+    %val = load volatile i8*, i8** @addr
+    indirectbr i8* %val, [label %0]
+
+    ret void
+  }
+
+...
+---
+name:            test
+body:
+  - id:              0
+    name:            entry
+    successors:      [ '%bb.1.block' ]
+    instructions:
+    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block), _
+      - '%rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block), _'
+      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
+      - 'JMP64m %rip, 1, _, @addr, _'
+  - id:              1
+    name:            block
+    addressTaken:    true
+    instructions:
+      - RETQ
+...
+---
+name:            test2
+tracksRegLiveness: true
+body:
+  - id:              0
+    name:            entry
+    successors:      [ '%bb.1' ]
+    instructions:
+    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test2, %ir-block."quoted block"), _
+      - '%rax = LEA64r %rip, 1, _, blockaddress(@test2, %ir-block."quoted block"), _'
+      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
+      - 'JMP64m %rip, 1, _, @addr, _'
+  - id:              1
+    addressTaken:    true
+    instructions:
+      - RETQ
+...
+---
+name:            test3
+tracksRegLiveness: true
+body:
+  - id:              0
+    name:            entry
+    successors:      [ '%bb.1' ]
+    instructions:
+    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+      - '%rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _'
+      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
+      - 'JMP64m %rip, 1, _, @addr, _'
+  - id:              1
+    addressTaken:    true
+    instructions:
+      - RETQ
+...

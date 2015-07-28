@@ -22,8 +22,10 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -123,6 +125,8 @@ public:
   bool parseCFIOffset(int &Offset);
   bool parseCFIRegister(unsigned &Reg);
   bool parseCFIOperand(MachineOperand &Dest);
+  bool parseIRBlock(BasicBlock *&BB, const Function &F);
+  bool parseBlockAddressOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
@@ -200,6 +204,10 @@ static const char *toString(MIToken::TokenKind TokenKind) {
   switch (TokenKind) {
   case MIToken::comma:
     return "','";
+  case MIToken::lparen:
+    return "'('";
+  case MIToken::rparen:
+    return "')'";
   default:
     return "<unknown token>";
   }
@@ -741,6 +749,65 @@ bool MIParser::parseCFIOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseIRBlock(BasicBlock *&BB, const Function &F) {
+  switch (Token.kind()) {
+  case MIToken::NamedIRBlock:
+  case MIToken::QuotedNamedIRBlock: {
+    StringValueUtility Name(Token);
+    BB = dyn_cast_or_null<BasicBlock>(F.getValueSymbolTable().lookup(Name));
+    if (!BB)
+      return error(Twine("use of undefined IR block '%ir-block.") +
+                   Token.rawStringValue() + "'");
+    break;
+  }
+  case MIToken::IRBlock: {
+    unsigned SlotNumber = 0;
+    if (getUnsigned(SlotNumber))
+      return true;
+    BB = const_cast<BasicBlock *>(getIRBlock(SlotNumber));
+    if (!BB)
+      return error(Twine("use of undefined IR block '%ir-block.") +
+                   Twine(SlotNumber) + "'");
+    break;
+  }
+  default:
+    llvm_unreachable("The current token should be an IR block reference");
+  }
+  return false;
+}
+
+bool MIParser::parseBlockAddressOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::kw_blockaddress));
+  lex();
+  if (expectAndConsume(MIToken::lparen))
+    return true;
+  if (Token.isNot(MIToken::GlobalValue) &&
+      Token.isNot(MIToken::NamedGlobalValue) &&
+      Token.isNot(MIToken::QuotedNamedGlobalValue))
+    return error("expected a global value");
+  GlobalValue *GV = nullptr;
+  if (parseGlobalValue(GV))
+    return true;
+  auto *F = dyn_cast<Function>(GV);
+  if (!F)
+    return error("expected an IR function reference");
+  lex();
+  if (expectAndConsume(MIToken::comma))
+    return true;
+  BasicBlock *BB = nullptr;
+  if (Token.isNot(MIToken::IRBlock) && Token.isNot(MIToken::NamedIRBlock) &&
+      Token.isNot(MIToken::QuotedNamedIRBlock))
+    return error("expected an IR block reference");
+  if (parseIRBlock(BB, *F))
+    return true;
+  lex();
+  if (expectAndConsume(MIToken::rparen))
+    return true;
+  // TODO: parse offset and target flags.
+  Dest = MachineOperand::CreateBA(BlockAddress::get(F, BB), /*Offset=*/0);
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
@@ -777,6 +844,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::kw_cfi_def_cfa_register:
   case MIToken::kw_cfi_def_cfa_offset:
     return parseCFIOperand(Dest);
+  case MIToken::kw_blockaddress:
+    return parseBlockAddressOperand(Dest);
   case MIToken::Error:
     return true;
   case MIToken::Identifier:
