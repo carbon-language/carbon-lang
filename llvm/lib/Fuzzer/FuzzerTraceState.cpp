@@ -287,7 +287,8 @@ void TraceState::DFSanCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType,
 
 
   if (Options.Verbosity >= 3)
-    Printf("DFSAN: PC %lx S %zd T %zd A1 %llx A2 %llx R %d L1 %d L2 %d MU %zd\n",
+    Printf("DFSanCmpCallback: PC %lx S %zd T %zd A1 %llx A2 %llx R %d L1 %d L2 "
+           "%d MU %zd\n",
            PC, CmpSize, CmpType, Arg1, Arg2, Res, L1, L2, Mutations.size());
 }
 
