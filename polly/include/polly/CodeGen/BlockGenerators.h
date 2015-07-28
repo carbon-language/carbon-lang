@@ -136,31 +136,129 @@ protected:
 
   /// @brief Maps to resolve scalar dependences for PHI operands and scalars.
   ///
-  /// Usage example:
+  /// When translating code that contains scalar dependences as they result from
+  /// inter-block scalar dependences (including the use of data carrying
+  /// PHI nodes), we do not directly regenerate in-register SSA code, but
+  /// instead allocate some stack memory through which these scalar values are
+  /// passed. Only a later pass of -mem2reg will then (re)introduce in-register
+  /// computations.
   ///
-  ///  x1 = ...   // x1 will be inserted in the ScalarMap and PhiOpMap.
-  ///  for (i=0...N) {
-  ///      x2 = phi(x1, add) // x2 will be inserted in the ScalarMap, x1 and
-  ///                        // add are mapped in the PHIOpMap.
-  ///      add = x2 + A[i];  // add will be inserted in the ScalarMap and
-  ///                        // the PhiOpMap.
-  ///  }
-  ///  print(x1)  // x1 is mapped in the ScalarMap.
-  ///  print(x2)  // x2 is mapped in the ScalarMap.
-  ///  print(add) // add is mapped in the ScalarMap.
+  /// To keep track of the memory location(s) used to store the data computed by
+  /// a given SSA instruction, we use the maps 'ScalarMap' and 'PHIOpMap'. Each
+  /// maps a given scalar value to a junk of stack allocated memory.
+  ///
+  /// 'ScalarMap' is used for normal scalar dependences that go from a scalar
+  /// definition to its use. Such dependences are lowered by directly writing
+  /// the value an instruction computes into the corresponding chunk of memory
+  /// and reading it back from this chunk of memory right before every use of
+  /// this original scalar value. The memory locations in 'ScalarMap' end with
+  /// '.s2a'.
+  ///
+  /// 'PHIOpMap' is used to model PHI nodes. For each PHI nodes we introduce,
+  /// besides the memory in 'ScalarMap', a second chunk of memory into which we
+  /// write at the end of each basic block preceeding the PHI instruction the
+  /// value passed through this basic block. At the place where the PHI node is
+  /// executed, we replace the PHI node with a load from the corresponding
+  /// memory location in the 'PHIOpMap' table. The memory locations in
+  /// 'PHIOpMap' end with '.phiops'.
+  ///
+  /// An access to/from memory that belongs to a PHI node is in the ScopInfo
+  /// always modeled with the name of the PHI node. However, in reality PHI
+  /// nodes can introduce reads/writes to two different memory locations, the
+  /// normal '.s2a' locations and the special '.phiops' locations. We do not
+  /// track this difference in the polyhedral description, but only through
+  /// the content of the two maps 'ScalarMap' and 'PHIOpMap'.
+  ///
+  /// Example:
+  ///
+  ///                              Input C Code
+  ///                              ============
+  ///
+  ///                 S1:      x1 = ...
+  ///                          for (i=0...N) {
+  ///                 S2:           x2 = phi(x1, add)
+  ///                 S3:           add = x2 + 42;
+  ///                          }
+  ///                 S4:      print(x1)
+  ///                          print(x2)
+  ///                          print(add)
+  ///
+  ///
+  ///        Unmodified IR                         IR After expansion
+  ///        =============                         ==================
+  ///
+  /// S1:   x1 = ...                     S1:    x1 = ...
+  ///                                           x1.s2a = s1
+  ///                                           x2.phiops = s1
+  ///        |                                    |
+  ///        |   <--<--<--<--<                    |   <--<--<--<--<
+  ///        | /              \                   | /              \
+  ///        V V               \                  V V               \
+  /// S2:  x2 = phi (x1, add)   |        S2:    x2 = x2.phiops       |
+  ///                           |               x2.s2a = x2          |
+  ///                           |                                    |
+  /// S3:  add = x2 + 42        |        S3:    add = x2 + 42        |
+  ///                           |               add.s2a = add        |
+  ///                           |               x2.phiops = add      |
+  ///        | \               /                  | \               /
+  ///        |  \             /                   |  \             /
+  ///        |   >-->-->-->-->                    |   >-->-->-->-->
+  ///        V                                    V
+  ///
+  ///                                    S4:    x1 = x1.s2a
+  /// S4:  ... = x1                             ... = x1
+  ///                                           x2 = x2.s2a
+  ///      ... = x2                             ... = x2
+  ///                                           add = add.s2a
+  ///      ... = add                            ... = add
+  ///
+  ///      ScalarMap = { x1 -> x1.s2a, x2 -> x2.s2a, add -> add.s2a }
+  ///      PHIOpMap =  { x2 -> x2.phiops }
+  ///
+  ///
+  ///  ??? Why does a PHI-node require two memory chunks ???
+  ///
+  ///  One may wonder why a PHI node requires two memory chunks and not just
+  ///  all data is stored in a single location. The following example tries
+  ///  to store all data in .s2a and drops the .phiops location:
+  ///
+  ///      S1:    x1 = ...
+  ///             x1.s2a = s1
+  ///             x2.s2a = s1             // use .s2a instead of .phiops
+  ///               |
+  ///               |   <--<--<--<--<
+  ///               | /              \
+  ///               V V               \
+  ///      S2:    x2 = x2.s2a          |  // value is same as above, but read
+  ///                                  |  // from .s2a
+  ///                                  |
+  ///             x2.s2a = x2          |  // store into .s2a as normal
+  ///                                  |
+  ///      S3:    add = x2 + 42        |
+  ///             add.s2a = add        |
+  ///             x2.s2a = add         |  // use s2a instead of .phiops
+  ///               | \               /   // !!! This is wrong, as x2.s2a now
+  ///               |   >-->-->-->-->     // contains add instead of x2.
+  ///               V
+  ///
+  ///      S4:    x1 = x1.s2a
+  ///             ... = x1
+  ///             x2 = x2.s2a             // !!! We now read 'add' instead of
+  ///             ... = x2                // 'x2'
+  ///             add = add.s2a
+  ///             ... = add
+  ///
+  ///  As visible in the example, the SSA value of the PHI node may still be
+  ///  needed _after_ the basic block, which could conceptually branch to the
+  ///  PHI node, has been run and has overwritten the PHI's old value. Hence, a
+  ///  single memory location is not enough to code-generate a PHI node.
   ///
   ///{
-
-  /// The PHIOpMap is used to get the alloca to communicate a value to a PHI
-  /// node, hence when the operand of a PHI is demoted the corresponding write
-  /// access will use the PHIOpMap to look for the correct alloca. PHI nodes
-  /// will then read that location in order to get the correct/current operand
-  /// value.
+  ///
+  /// @brief Memory locations used for the special PHI node modeling.
   ScalarAllocaMapTy &PHIOpMap;
 
-  /// The ScalarMap is used in __all__ other cases, thus always when a scalar
-  /// variable is read/written and the write is not because the scalar is a PHI
-  /// operand.
+  /// @brief Memory locations used to model scalar dependences.
   ScalarAllocaMapTy &ScalarMap;
   ///}
 
