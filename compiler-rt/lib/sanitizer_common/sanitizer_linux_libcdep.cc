@@ -522,6 +522,7 @@ uptr GetRSS() {
 // 64-bit Android targets don't provide the deprecated __android_log_write.
 // Starting with the L release, syslog() works and is preferable to
 // __android_log_write.
+#if SANITIZER_LINUX
 #if SANITIZER_ANDROID && __ANDROID_API__ < 21
 static atomic_uint8_t android_log_initialized;
 
@@ -562,6 +563,7 @@ void WriteToSyslog(const char *buffer) {
   } while (q);
   InternalFree(copy);
 }
+#endif  // SANITIZER_LINUX
 
 }  // namespace __sanitizer
 
