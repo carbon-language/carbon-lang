@@ -30,6 +30,7 @@ namespace llvm {
   class DominatorTree;
   class TargetLibraryInfo;
   class LoopInfo;
+  class Loop;
 
   /// Determine which bits of V are known to be either zero or one and return
   /// them in the KnownZero/KnownOne bit sets.
@@ -288,7 +289,53 @@ namespace llvm {
                                                AssumptionCache *AC,
                                                const Instruction *CxtI,
                                                const DominatorTree *DT);
-  
+
+  /// Return true if this function can prove that the instruction I will
+  /// always transfer execution to one of its successors (including the next
+  /// instruction that follows within a basic block). E.g. this is not
+  /// guaranteed for function calls that could loop infinitely.
+  ///
+  /// In other words, this function returns false for instructions that may
+  /// transfer execution or fail to transfer execution in a way that is not
+  /// captured in the CFG nor in the sequence of instructions within a basic
+  /// block.
+  ///
+  /// Undefined behavior is assumed not to happen, so e.g. division is
+  /// guaranteed to transfer execution to the following instruction even
+  /// though division by zero might cause undefined behavior.
+  bool isGuaranteedToTransferExecutionToSuccessor(const Instruction *I);
+
+  /// Return true if this function can prove that the instruction I
+  /// is executed for every iteration of the loop L.
+  ///
+  /// Note that this currently only considers the loop header.
+  bool isGuaranteedToExecuteForEveryIteration(const Instruction *I,
+                                              const Loop *L);
+
+  /// Return true if this function can prove that I is guaranteed to yield
+  /// full-poison (all bits poison) if at least one of its operands are
+  /// full-poison (all bits poison).
+  ///
+  /// The exact rules for how poison propagates through instructions have
+  /// not been settled as of 2015-07-10, so this function is conservative
+  /// and only considers poison to be propagated in uncontroversial
+  /// cases. There is no attempt to track values that may be only partially
+  /// poison.
+  bool propagatesFullPoison(const Instruction *I);
+
+  /// Return either nullptr or an operand of I such that I will trigger
+  /// undefined behavior if I is executed and that operand has a full-poison
+  /// value (all bits poison).
+  const Value *getGuaranteedNonFullPoisonOp(const Instruction *I);
+
+  /// Return true if this function can prove that if PoisonI is executed
+  /// and yields a full-poison value (all bits poison), then that will
+  /// trigger undefined behavior.
+  ///
+  /// Note that this currently only considers the basic block that is
+  /// the parent of I.
+  bool isKnownNotFullPoison(const Instruction *PoisonI);
+
   /// \brief Specific patterns of select instructions we can match.
   enum SelectPatternFlavor {
     SPF_UNKNOWN = 0,

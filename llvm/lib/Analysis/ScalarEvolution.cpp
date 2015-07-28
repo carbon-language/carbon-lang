@@ -2936,7 +2936,8 @@ ScalarEvolution::getGEPExpr(Type *PointeeType, const SCEV *BaseExpr,
   // FIXME(PR23527): Don't blindly transfer the inbounds flag from the GEP
   // instruction to its SCEV, because the Instruction may be guarded by control
   // flow and the no-overflow bits may not be valid for the expression in any
-  // context.
+  // context. This can be fixed similarly to how these flags are handled for
+  // adds.
   SCEV::NoWrapFlags Wrap = InBounds ? SCEV::FlagNSW : SCEV::FlagAnyWrap;
 
   const SCEV *TotalOffset = getConstant(IntPtrTy, 0);
@@ -3315,22 +3316,25 @@ bool ScalarEvolution::checkValidity(const SCEV *S) const {
 const SCEV *ScalarEvolution::getSCEV(Value *V) {
   assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
 
+  const SCEV *S = getExistingSCEV(V);
+  if (S == nullptr) {
+    S = createSCEV(V);
+    ValueExprMap.insert(std::make_pair(SCEVCallbackVH(V, this), S));
+  }
+  return S;
+}
+
+const SCEV *ScalarEvolution::getExistingSCEV(Value *V) {
+  assert(isSCEVable(V->getType()) && "Value is not SCEVable!");
+
   ValueExprMapType::iterator I = ValueExprMap.find_as(V);
   if (I != ValueExprMap.end()) {
     const SCEV *S = I->second;
     if (checkValidity(S))
       return S;
-    else
-      ValueExprMap.erase(I);
+    ValueExprMap.erase(I);
   }
-  const SCEV *S = createSCEV(V);
-
-  // The process of creating a SCEV for V may have caused other SCEVs
-  // to have been created, so it's necessary to insert the new entry
-  // from scratch, rather than trying to remember the insert position
-  // above.
-  ValueExprMap.insert(std::make_pair(SCEVCallbackVH(V, this), S));
-  return S;
+  return nullptr;
 }
 
 /// getNegativeSCEV - Return a SCEV corresponding to -V = -1*V
@@ -4089,8 +4093,63 @@ ScalarEvolution::getRange(const SCEV *S,
   return setRange(S, SignHint, ConservativeResult);
 }
 
-/// createSCEV - We know that there is no SCEV for the specified value.
-/// Analyze the expression.
+SCEV::NoWrapFlags ScalarEvolution::getNoWrapFlagsFromUB(const Value *V) {
+  const BinaryOperator *BinOp = cast<BinaryOperator>(V);
+
+  // Return early if there are no flags to propagate to the SCEV.
+  SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap;
+  if (BinOp->hasNoUnsignedWrap())
+    Flags = ScalarEvolution::setFlags(Flags, SCEV::FlagNUW);
+  if (BinOp->hasNoSignedWrap())
+    Flags = ScalarEvolution::setFlags(Flags, SCEV::FlagNSW);
+  if (Flags == SCEV::FlagAnyWrap) {
+    return SCEV::FlagAnyWrap;
+  }
+
+  // Here we check that BinOp is in the header of the innermost loop
+  // containing BinOp, since we only deal with instructions in the loop
+  // header. The actual loop we need to check later will come from an add
+  // recurrence, but getting that requires computing the SCEV of the operands,
+  // which can be expensive. This check we can do cheaply to rule out some
+  // cases early.
+  Loop *innermostContainingLoop = LI->getLoopFor(BinOp->getParent());
+  if (innermostContainingLoop == nullptr ||
+      innermostContainingLoop->getHeader() != BinOp->getParent())
+    return SCEV::FlagAnyWrap;
+
+  // Only proceed if we can prove that BinOp does not yield poison.
+  if (!isKnownNotFullPoison(BinOp)) return SCEV::FlagAnyWrap;
+
+  // At this point we know that if V is executed, then it does not wrap
+  // according to at least one of NSW or NUW. If V is not executed, then we do
+  // not know if the calculation that V represents would wrap. Multiple
+  // instructions can map to the same SCEV. If we apply NSW or NUW from V to
+  // the SCEV, we must guarantee no wrapping for that SCEV also when it is
+  // derived from other instructions that map to the same SCEV. We cannot make
+  // that guarantee for cases where V is not executed. So we need to find the
+  // loop that V is considered in relation to and prove that V is executed for
+  // every iteration of that loop. That implies that the value that V
+  // calculates does not wrap anywhere in the loop, so then we can apply the
+  // flags to the SCEV.
+  //
+  // We check isLoopInvariant to disambiguate in case we are adding two
+  // recurrences from different loops, so that we know which loop to prove
+  // that V is executed in.
+  for (int OpIndex = 0; OpIndex < 2; ++OpIndex) {
+    const SCEV *Op = getSCEV(BinOp->getOperand(OpIndex));
+    if (auto *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
+      const int OtherOpIndex = 1 - OpIndex;
+      const SCEV *OtherOp = getSCEV(BinOp->getOperand(OtherOpIndex));
+      if (isLoopInvariant(OtherOp, AddRec->getLoop()) &&
+          isGuaranteedToExecuteForEveryIteration(BinOp, AddRec->getLoop()))
+        return Flags;
+    }
+  }
+  return SCEV::FlagAnyWrap;
+}
+
+/// createSCEV - We know that there is no SCEV for the specified value.  Analyze
+/// the expression.
 ///
 const SCEV *ScalarEvolution::createSCEV(Value *V) {
   if (!isSCEVable(V->getType()))
@@ -4127,29 +4186,52 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Instead, gather up all the operands and make a single getAddExpr call.
     // LLVM IR canonical form means we need only traverse the left operands.
     //
-    // Don't apply this instruction's NSW or NUW flags to the new
-    // expression. The instruction may be guarded by control flow that the
-    // no-wrap behavior depends on. Non-control-equivalent instructions can be
-    // mapped to the same SCEV expression, and it would be incorrect to transfer
-    // NSW/NUW semantics to those operations.
+    // FIXME: Expand this handling of NSW and NUW to other instructions, like
+    // sub and mul.
     SmallVector<const SCEV *, 4> AddOps;
-    AddOps.push_back(getSCEV(U->getOperand(1)));
-    for (Value *Op = U->getOperand(0); ; Op = U->getOperand(0)) {
-      unsigned Opcode = Op->getValueID() - Value::InstructionVal;
-      if (Opcode != Instruction::Add && Opcode != Instruction::Sub)
+    for (Value *Op = U;; Op = U->getOperand(0)) {
+      U = dyn_cast<Operator>(Op);
+      unsigned Opcode = U ? U->getOpcode() : 0;
+      if (!U || (Opcode != Instruction::Add && Opcode != Instruction::Sub)) {
+        assert(Op != V && "V should be an add");
+        AddOps.push_back(getSCEV(Op));
         break;
-      U = cast<Operator>(Op);
+      }
+
+      if (auto *OpSCEV = getExistingSCEV(Op)) {
+        AddOps.push_back(OpSCEV);
+        break;
+      }
+
+      // If a NUW or NSW flag can be applied to the SCEV for this
+      // addition, then compute the SCEV for this addition by itself
+      // with a separate call to getAddExpr. We need to do that
+      // instead of pushing the operands of the addition onto AddOps,
+      // since the flags are only known to apply to this particular
+      // addition - they may not apply to other additions that can be
+      // formed with operands from AddOps.
+      //
+      // FIXME: Expand this to sub instructions.
+      if (Opcode == Instruction::Add && isa<BinaryOperator>(U)) {
+        SCEV::NoWrapFlags Flags = getNoWrapFlagsFromUB(U);
+        if (Flags != SCEV::FlagAnyWrap) {
+          AddOps.push_back(getAddExpr(getSCEV(U->getOperand(0)),
+                                      getSCEV(U->getOperand(1)), Flags));
+          break;
+        }
+      }
+
       const SCEV *Op1 = getSCEV(U->getOperand(1));
       if (Opcode == Instruction::Sub)
         AddOps.push_back(getNegativeSCEV(Op1));
       else
         AddOps.push_back(Op1);
     }
-    AddOps.push_back(getSCEV(U->getOperand(0)));
     return getAddExpr(AddOps);
   }
+
   case Instruction::Mul: {
-    // Don't transfer NSW/NUW for the same reason as AddExpr.
+    // FIXME: Transfer NSW/NUW as in AddExpr.
     SmallVector<const SCEV *, 4> MulOps;
     MulOps.push_back(getSCEV(U->getOperand(1)));
     for (Value *Op = U->getOperand(0);

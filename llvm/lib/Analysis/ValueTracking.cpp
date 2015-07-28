@@ -3316,6 +3316,167 @@ OverflowResult llvm::computeOverflowForUnsignedAdd(Value *LHS, Value *RHS,
   return OverflowResult::MayOverflow;
 }
 
+bool llvm::isGuaranteedToTransferExecutionToSuccessor(const Instruction *I) {
+  // FIXME: This conservative implementation can be relaxed. E.g. most
+  // atomic operations are guaranteed to terminate on most platforms
+  // and most functions terminate.
+
+  return !I->isAtomic() &&       // atomics may never succeed on some platforms
+         !isa<CallInst>(I) &&    // could throw and might not terminate
+         !isa<InvokeInst>(I) &&  // might not terminate and could throw to
+                                 //   non-successor (see bug 24185 for details).
+         !isa<ResumeInst>(I) &&  // has no successors
+         !isa<ReturnInst>(I);    // has no successors
+}
+
+bool llvm::isGuaranteedToExecuteForEveryIteration(const Instruction *I,
+                                                  const Loop *L) {
+  // The loop header is guaranteed to be executed for every iteration.
+  //
+  // FIXME: Relax this constraint to cover all basic blocks that are
+  // guaranteed to be executed at every iteration.
+  if (I->getParent() != L->getHeader()) return false;
+
+  for (const Instruction &LI : *L->getHeader()) {
+    if (&LI == I) return true;
+    if (!isGuaranteedToTransferExecutionToSuccessor(&LI)) return false;
+  }
+  llvm_unreachable("Instruction not contained in its own parent basic block.");
+}
+
+bool llvm::propagatesFullPoison(const Instruction *I) {
+  switch (I->getOpcode()) {
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Xor:
+    case Instruction::Trunc:
+    case Instruction::BitCast:
+    case Instruction::AddrSpaceCast:
+      // These operations all propagate poison unconditionally. Note that poison
+      // is not any particular value, so xor or subtraction of poison with
+      // itself still yields poison, not zero.
+      return true;
+
+    case Instruction::AShr:
+    case Instruction::SExt:
+      // For these operations, one bit of the input is replicated across
+      // multiple output bits. A replicated poison bit is still poison.
+      return true;
+
+    case Instruction::Shl: {
+      // Left shift *by* a poison value is poison. The number of
+      // positions to shift is unsigned, so no negative values are
+      // possible there. Left shift by zero places preserves poison. So
+      // it only remains to consider left shift of poison by a positive
+      // number of places.
+      //
+      // A left shift by a positive number of places leaves the lowest order bit
+      // non-poisoned. However, if such a shift has a no-wrap flag, then we can
+      // make the poison operand violate that flag, yielding a fresh full-poison
+      // value.
+      auto *OBO = cast<OverflowingBinaryOperator>(I);
+      return OBO->hasNoUnsignedWrap() || OBO->hasNoSignedWrap();
+    }
+
+    case Instruction::Mul: {
+      // A multiplication by zero yields a non-poison zero result, so we need to
+      // rule out zero as an operand. Conservatively, multiplication by a
+      // non-zero constant is not multiplication by zero.
+      //
+      // Multiplication by a non-zero constant can leave some bits
+      // non-poisoned. For example, a multiplication by 2 leaves the lowest
+      // order bit unpoisoned. So we need to consider that.
+      //
+      // Multiplication by 1 preserves poison. If the multiplication has a
+      // no-wrap flag, then we can make the poison operand violate that flag
+      // when multiplied by any integer other than 0 and 1.
+      auto *OBO = cast<OverflowingBinaryOperator>(I);
+      if (OBO->hasNoUnsignedWrap() || OBO->hasNoSignedWrap()) {
+        for (Value *V : OBO->operands()) {
+          if (auto *CI = dyn_cast<ConstantInt>(V)) {
+            // A ConstantInt cannot yield poison, so we can assume that it is
+            // the other operand that is poison.
+            return !CI->isZero();
+          }
+        }
+      }
+      return false;
+    }
+
+    case Instruction::GetElementPtr:
+      // A GEP implicitly represents a sequence of additions, subtractions,
+      // truncations, sign extensions and multiplications. The multiplications
+      // are by the non-zero sizes of some set of types, so we do not have to be
+      // concerned with multiplication by zero. If the GEP is in-bounds, then
+      // these operations are implicitly no-signed-wrap so poison is propagated
+      // by the arguments above for Add, Sub, Trunc, SExt and Mul.
+      return cast<GEPOperator>(I)->isInBounds();
+
+    default:
+      return false;
+  }
+}
+
+const Value *llvm::getGuaranteedNonFullPoisonOp(const Instruction *I) {
+  switch (I->getOpcode()) {
+    case Instruction::Store:
+      return cast<StoreInst>(I)->getPointerOperand();
+
+    case Instruction::Load:
+      return cast<LoadInst>(I)->getPointerOperand();
+
+    case Instruction::AtomicCmpXchg:
+      return cast<AtomicCmpXchgInst>(I)->getPointerOperand();
+
+    case Instruction::AtomicRMW:
+      return cast<AtomicRMWInst>(I)->getPointerOperand();
+
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+      return I->getOperand(1);
+
+    default:
+      return nullptr;
+  }
+}
+
+bool llvm::isKnownNotFullPoison(const Instruction *PoisonI) {
+  // We currently only look for uses of poison values within the same basic
+  // block, as that makes it easier to guarantee that the uses will be
+  // executed given that PoisonI is executed.
+  //
+  // FIXME: Expand this to consider uses beyond the same basic block. To do
+  // this, look out for the distinction between post-dominance and strong
+  // post-dominance.
+  const BasicBlock *BB = PoisonI->getParent();
+
+  // Set of instructions that we have proved will yield poison if PoisonI
+  // does.
+  SmallSet<const Value *, 16> YieldsPoison;
+  YieldsPoison.insert(PoisonI);
+
+  for (const Instruction *I = PoisonI, *E = BB->end(); I != E;
+       I = I->getNextNode()) {
+    if (I != PoisonI) {
+      const Value *NotPoison = getGuaranteedNonFullPoisonOp(I);
+      if (NotPoison != nullptr && YieldsPoison.count(NotPoison)) return true;
+      if (!isGuaranteedToTransferExecutionToSuccessor(I)) return false;
+    }
+
+    // Mark poison that propagates from I through uses of I.
+    if (YieldsPoison.count(I)) {
+      for (const User *User : I->users()) {
+        const Instruction *UserI = cast<Instruction>(User);
+        if (UserI->getParent() == BB && propagatesFullPoison(UserI))
+          YieldsPoison.insert(User);
+      }
+    }
+  }
+  return false;
+}
+
 static SelectPatternFlavor matchSelectPattern(ICmpInst::Predicate Pred,
                                               Value *CmpLHS, Value *CmpRHS,
                                               Value *TrueVal, Value *FalseVal,

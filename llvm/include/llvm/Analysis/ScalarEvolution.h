@@ -566,6 +566,9 @@ namespace llvm {
     /// forgetMemoizedResults - Drop memoized information computed for S.
     void forgetMemoizedResults(const SCEV *S);
 
+    /// Return an existing SCEV for V if there is one, otherwise return nullptr.
+    const SCEV *getExistingSCEV(Value *V);
+
     /// Return false iff given SCEV contains a SCEVUnknown with NULL value-
     /// pointer.
     bool checkValidity(const SCEV *S) const;
@@ -594,6 +597,11 @@ namespace llvm {
     /// way around.
     bool isMonotonicPredicate(const SCEVAddRecExpr *LHS,
                               ICmpInst::Predicate Pred, bool &Increasing);
+
+    // Return SCEV no-wrap flags that can be proven based on reasoning
+    // about how poison produced from no-wrap flags on this value
+    // (e.g. a nuw add) would trigger undefined behavior on overflow.
+    SCEV::NoWrapFlags getNoWrapFlagsFromUB(const Value *V);
 
   public:
     static char ID; // Pass identification, replacement for typeid
