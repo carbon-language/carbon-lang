@@ -24,23 +24,22 @@ using namespace llvm;
 InlineAsm::~InlineAsm() {
 }
 
-
-InlineAsm *InlineAsm::get(FunctionType *Ty, StringRef AsmString,
+InlineAsm *InlineAsm::get(FunctionType *FTy, StringRef AsmString,
                           StringRef Constraints, bool hasSideEffects,
                           bool isAlignStack, AsmDialect asmDialect) {
-  InlineAsmKeyType Key(AsmString, Constraints, hasSideEffects, isAlignStack,
-                       asmDialect);
-  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
-  return pImpl->InlineAsms.getOrCreate(PointerType::getUnqual(Ty), Key);
+  InlineAsmKeyType Key(AsmString, Constraints, FTy, hasSideEffects,
+                       isAlignStack, asmDialect);
+  LLVMContextImpl *pImpl = FTy->getContext().pImpl;
+  return pImpl->InlineAsms.getOrCreate(PointerType::getUnqual(FTy), Key);
 }
 
-InlineAsm::InlineAsm(PointerType *Ty, const std::string &asmString,
+InlineAsm::InlineAsm(FunctionType *FTy, const std::string &asmString,
                      const std::string &constraints, bool hasSideEffects,
                      bool isAlignStack, AsmDialect asmDialect)
-  : Value(Ty, Value::InlineAsmVal),
-    AsmString(asmString), Constraints(constraints),
-    HasSideEffects(hasSideEffects), IsAlignStack(isAlignStack),
-    Dialect(asmDialect) {
+    : Value(PointerType::getUnqual(FTy), Value::InlineAsmVal),
+      AsmString(asmString), Constraints(constraints), FTy(FTy),
+      HasSideEffects(hasSideEffects), IsAlignStack(isAlignStack),
+      Dialect(asmDialect) {
 
   // Do various checks on the constraint string and type.
   assert(Verify(getFunctionType(), constraints) &&
@@ -53,7 +52,7 @@ void InlineAsm::destroyConstant() {
 }
 
 FunctionType *InlineAsm::getFunctionType() const {
-  return cast<FunctionType>(getType()->getElementType());
+  return FTy;
 }
     
 ///Default constructor.

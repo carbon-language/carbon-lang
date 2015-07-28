@@ -373,41 +373,45 @@ template <class ConstantClass> struct ConstantAggrKeyType {
 struct InlineAsmKeyType {
   StringRef AsmString;
   StringRef Constraints;
+  FunctionType *FTy;
   bool HasSideEffects;
   bool IsAlignStack;
   InlineAsm::AsmDialect AsmDialect;
 
   InlineAsmKeyType(StringRef AsmString, StringRef Constraints,
-                   bool HasSideEffects, bool IsAlignStack,
+                   FunctionType *FTy, bool HasSideEffects, bool IsAlignStack,
                    InlineAsm::AsmDialect AsmDialect)
-      : AsmString(AsmString), Constraints(Constraints),
+      : AsmString(AsmString), Constraints(Constraints), FTy(FTy),
         HasSideEffects(HasSideEffects), IsAlignStack(IsAlignStack),
         AsmDialect(AsmDialect) {}
   InlineAsmKeyType(const InlineAsm *Asm, SmallVectorImpl<Constant *> &)
       : AsmString(Asm->getAsmString()), Constraints(Asm->getConstraintString()),
-        HasSideEffects(Asm->hasSideEffects()),
+        FTy(Asm->getFunctionType()), HasSideEffects(Asm->hasSideEffects()),
         IsAlignStack(Asm->isAlignStack()), AsmDialect(Asm->getDialect()) {}
 
   bool operator==(const InlineAsmKeyType &X) const {
     return HasSideEffects == X.HasSideEffects &&
            IsAlignStack == X.IsAlignStack && AsmDialect == X.AsmDialect &&
-           AsmString == X.AsmString && Constraints == X.Constraints;
+           AsmString == X.AsmString && Constraints == X.Constraints &&
+           FTy == X.FTy;
   }
   bool operator==(const InlineAsm *Asm) const {
     return HasSideEffects == Asm->hasSideEffects() &&
            IsAlignStack == Asm->isAlignStack() &&
            AsmDialect == Asm->getDialect() &&
            AsmString == Asm->getAsmString() &&
-           Constraints == Asm->getConstraintString();
+           Constraints == Asm->getConstraintString() &&
+           FTy == Asm->getFunctionType();
   }
   unsigned getHash() const {
     return hash_combine(AsmString, Constraints, HasSideEffects, IsAlignStack,
-                        AsmDialect);
+                        AsmDialect, FTy);
   }
 
   typedef ConstantInfo<InlineAsm>::TypeClass TypeClass;
   InlineAsm *create(TypeClass *Ty) const {
-    return new InlineAsm(Ty, AsmString, Constraints, HasSideEffects,
+    assert(PointerType::getUnqual(FTy) == Ty);
+    return new InlineAsm(FTy, AsmString, Constraints, HasSideEffects,
                          IsAlignStack, AsmDialect);
   }
 };
