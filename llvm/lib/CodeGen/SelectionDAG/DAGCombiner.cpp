@@ -8261,11 +8261,11 @@ SDValue DAGCombiner::combineRepeatedFPDivisors(SDNode *N) {
     return SDValue();
 
   // Find all FDIV users of the same divisor.
-  SmallVector<SDNode *, 4> Users;
-  for (auto *U : N1->uses()) {
+  // Use a set because duplicates may be present in the user list.
+  SetVector<SDNode *> Users;
+  for (auto *U : N1->uses())
     if (U->getOpcode() == ISD::FDIV && U->getOperand(1) == N1)
-      Users.push_back(U);
-  }
+      Users.insert(U);
 
   // Now that we have the actual number of divisor uses, make sure it meets
   // the minimum threshold specified by the target.
