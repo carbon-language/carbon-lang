@@ -187,12 +187,12 @@ CodeGenFunction::GenerateVarArgsThunk(llvm::Function *Fn,
 
   if (!Thunk.Return.isEmpty()) {
     // Fix up the returned value, if necessary.
-    for (llvm::Function::iterator I = Fn->begin(), E = Fn->end(); I != E; I++) {
-      llvm::Instruction *T = I->getTerminator();
+    for (llvm::BasicBlock &BB : *Fn) {
+      llvm::Instruction *T = BB.getTerminator();
       if (isa<llvm::ReturnInst>(T)) {
         RValue RV = RValue::get(T->getOperand(0));
         T->eraseFromParent();
-        Builder.SetInsertPoint(&*I);
+        Builder.SetInsertPoint(&BB);
         RV = PerformReturnAdjustment(*this, ResultType, RV, Thunk);
         Builder.CreateRet(RV.getScalarVal());
         break;
@@ -850,13 +850,9 @@ void CodeGenModule::EmitDeferredVTables() {
   size_t savedSize = DeferredVTables.size();
 #endif
 
-  typedef std::vector<const CXXRecordDecl *>::const_iterator const_iterator;
-  for (const_iterator i = DeferredVTables.begin(),
-                      e = DeferredVTables.end(); i != e; ++i) {
-    const CXXRecordDecl *RD = *i;
+  for (const CXXRecordDecl *RD : DeferredVTables)
     if (shouldEmitVTableAtEndOfTranslationUnit(*this, RD))
       VTables.GenerateClassData(RD);
-  }
 
   assert(savedSize == DeferredVTables.size() &&
          "deferred extra v-tables during v-table emission?");

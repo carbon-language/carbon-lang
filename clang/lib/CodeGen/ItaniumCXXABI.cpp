@@ -1043,25 +1043,25 @@ static CharUnits computeOffsetHint(ASTContext &Context,
   CharUnits Offset;
 
   // Now walk all possible inheritance paths.
-  for (CXXBasePaths::paths_iterator I = Paths.begin(), E = Paths.end(); I != E;
-       ++I) {
-    if (I->Access != AS_public) // Ignore non-public inheritance.
+  for (const CXXBasePath &Path : Paths) {
+    if (Path.Access != AS_public)  // Ignore non-public inheritance.
       continue;
 
     ++NumPublicPaths;
 
-    for (CXXBasePath::iterator J = I->begin(), JE = I->end(); J != JE; ++J) {
+    for (const CXXBasePathElement &PathElement : Path) {
       // If the path contains a virtual base class we can't give any hint.
       // -1: no hint.
-      if (J->Base->isVirtual())
+      if (PathElement.Base->isVirtual())
         return CharUnits::fromQuantity(-1ULL);
 
       if (NumPublicPaths > 1) // Won't use offsets, skip computation.
         continue;
 
       // Accumulate the base class offsets.
-      const ASTRecordLayout &L = Context.getASTRecordLayout(J->Class);
-      Offset += L.getBaseClassOffset(J->Base->getType()->getAsCXXRecordDecl());
+      const ASTRecordLayout &L = Context.getASTRecordLayout(PathElement.Class);
+      Offset += L.getBaseClassOffset(
+          PathElement.Base->getType()->getAsCXXRecordDecl());
     }
   }
 
