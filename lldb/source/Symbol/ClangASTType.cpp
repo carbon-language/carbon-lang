@@ -2084,7 +2084,7 @@ ClangASTType::RemoveFastQualifiers () const
     if (m_type)
     {
         clang::QualType qual_type(GetQualType());
-        qual_type.getQualifiers().removeFastQualifiers();
+        qual_type.removeLocalFastQualifiers();
         return ClangASTType (m_ast, qual_type);
     }
     return ClangASTType();
