@@ -715,8 +715,45 @@ def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUAnonymousStruct,
 // A warning group for warnings about code that clang accepts but gcc doesn't.
 def GccCompat : DiagGroup<"gcc-compat">;
 
-// A warning group for warnings about Microsoft extensions.
-def Microsoft : DiagGroup<"microsoft">;
+// Warnings for Microsoft extensions.
+def MicrosoftCharize : DiagGroup<"microsoft-charize">;
+def MicrosoftCppMacro : DiagGroup<"microsoft-cpp-macro">;
+def MicrosoftFixedEnum : DiagGroup<"microsoft-fixed-enum">;
+def MicrosoftSealed : DiagGroup<"microsoft-sealed">;
+def MicrosoftUnqualifiedFriend : DiagGroup<"microsoft-unqualified-friend">;
+def MicrosoftExceptionSpec : DiagGroup<"microsoft-exception-spec">;
+def MicrosoftUsingDecl : DiagGroup<"microsoft-using-decl">;
+def MicrosoftMutableReference : DiagGroup<"microsoft-mutable-reference">;
+def MicrosoftPureDefinition : DiagGroup<"microsoft-pure-definition">;
+def MicrosoftUnionMemberReference : DiagGroup<
+    "microsoft-union-member-reference">;
+def MicrosoftExplicitConstructorCall : DiagGroup<
+    "microsoft-explicit-constructor-call">;
+def MicrosoftEnumValue : DiagGroup<"microsoft-enum-value">;
+def MicrosoftDefaultArgRedefinition :
+    DiagGroup<"microsoft-default-arg-redefinition">;
+def MicrosoftTemplate : DiagGroup<"microsoft-template">;
+def MicrosoftRedeclareStatic : DiagGroup<"microsoft-redeclare-static">;
+def MicrosoftEnumForwardReference :
+    DiagGroup<"microsoft-enum-forward-reference">;
+def MicrosoftGoto : DiagGroup<"microsoft-goto">;
+def MicrosoftFlexibleArray : DiagGroup<"microsoft-flexible-array">;
+def MicrosoftExtraQualification : DiagGroup<"microsoft-extra-qualification">;
+def MicrosoftCast : DiagGroup<"microsoft-cast">;
+def MicrosoftConstInit : DiagGroup<"microsoft-const-init">;
+def MicrosoftVoidPseudoDtor : DiagGroup<"microsoft-void-pseudo-dtor">;
+def MicrosoftAnonTag : DiagGroup<"microsoft-anon-tag">;
+
+// Warnings group for warnings about Microsoft extensions.
+def Microsoft : DiagGroup<"microsoft",
+    [MicrosoftCharize, MicrosoftCppMacro, MicrosoftFixedEnum, MicrosoftSealed,
+     MicrosoftUnqualifiedFriend, MicrosoftExceptionSpec, MicrosoftUsingDecl,
+     MicrosoftMutableReference, MicrosoftPureDefinition,
+     MicrosoftUnionMemberReference, MicrosoftExplicitConstructorCall,
+     MicrosoftEnumValue, MicrosoftDefaultArgRedefinition, MicrosoftTemplate,
+     MicrosoftRedeclareStatic, MicrosoftEnumForwardReference, MicrosoftGoto,
+     MicrosoftFlexibleArray, MicrosoftExtraQualification, MicrosoftCast,
+     MicrosoftConstInit, MicrosoftVoidPseudoDtor, MicrosoftAnonTag]>;
 
 def ObjCNonUnifiedException : DiagGroup<"objc-nonunified-exceptions">;
 

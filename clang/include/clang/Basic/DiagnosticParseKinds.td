@@ -101,7 +101,7 @@ def ext_cxx11_enum_fixed_underlying_type : Extension<
   InGroup<CXX11>;
 def ext_c_enum_fixed_underlying_type : Extension<
   "enumeration types with a fixed underlying type are a Microsoft extension">,
-  InGroup<Microsoft>;
+  InGroup<MicrosoftFixedEnum>;
 def warn_cxx98_compat_enum_fixed_underlying_type : Warning<
   "enumeration types with a fixed underlying type are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
@@ -508,7 +508,7 @@ def note_missing_end_of_definition_before : Note<
   "still within definition of %q0 here">;
 def ext_ellipsis_exception_spec : Extension<
   "exception specification of '...' is a Microsoft extension">,
-  InGroup<Microsoft>;
+  InGroup<MicrosoftExceptionSpec>;
 def err_dynamic_and_noexcept_specification : Error<
   "cannot have both throw() and noexcept() clause on the same function">;
 def err_except_spec_unparsed : Error<
@@ -780,7 +780,7 @@ def err_override_control_interface : Error<
   "'%0' keyword not permitted with interface types">;
 def ext_ms_sealed_keyword : ExtWarn<
   "'sealed' keyword is a Microsoft extension">,
-  InGroup<Microsoft>;
+  InGroup<MicrosoftSealed>;
 
 def err_access_specifier_interface : Error<
   "interface types cannot specify '%select{private|protected}0' access">;
@@ -941,7 +941,7 @@ def err_pragma_comment_malformed : Error<
 def err_pragma_comment_unknown_kind : Error<"unknown kind of pragma comment">;
 // PS4 recognizes only #pragma comment(lib)
 def warn_pragma_comment_ignored : Warning<"'#pragma comment %0' ignored">,
-  InGroup<Microsoft>;
+  InGroup<IgnoredPragmas>;
 // - #pragma detect_mismatch
 def err_pragma_detect_mismatch_malformed : Error<
   "pragma detect_mismatch is malformed; it requires two comma-separated "

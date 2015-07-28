@@ -57,8 +57,9 @@ def warn_cxx98_compat_no_newline_eof : Warning<
 
 def ext_dollar_in_identifier : Extension<"'$' in identifier">,
   InGroup<DiagGroup<"dollar-in-identifier-extension">>;
-def ext_charize_microsoft : Extension<"charizing operator #@ is a Microsoft extension">,
-  InGroup<Microsoft>;
+def ext_charize_microsoft : Extension<
+  "charizing operator #@ is a Microsoft extension">,
+  InGroup<MicrosoftCharize>;
 
 def ext_token_used : Extension<"extension used">,
   InGroup<DiagGroup<"language-extension-token">>;
@@ -510,7 +511,7 @@ def ext_pp_bad_paste_ms : ExtWarn<
 def err_pp_operator_used_as_macro_name : Error<
   "C++ operator %0 (aka %1) used as a macro name">;
 def ext_pp_operator_used_as_macro_name : Extension<
-  "C++ operator %0 (aka %1) used as a macro name">, InGroup<Microsoft>;
+  err_pp_operator_used_as_macro_name.Text>, InGroup<MicrosoftCppMacro>;
 def err_pp_illegal_floating_literal : Error<
   "floating point literal in preprocessor expression">;
 def err_pp_line_requires_integer : Error<
