@@ -239,8 +239,13 @@ CMICmdCmdBreakInsert::Execute(void)
             m_brkPt = sbTarget.BreakpointCreateByAddress(nAddress);
             break;
         case eBreakPoint_ByFileFn:
-            m_brkPt = sbTarget.BreakpointCreateByName(strFileFn.c_str(), fileName.c_str());
+        {
+            lldb::SBFileSpecList module;    // search in all modules
+            lldb::SBFileSpecList compUnit;
+            compUnit.Append (lldb::SBFileSpec(fileName.c_str()));
+            m_brkPt = sbTarget.BreakpointCreateByName(strFileFn.c_str(), module, compUnit);
             break;
+        }
         case eBreakPoint_ByFileLine:
             m_brkPt = sbTarget.BreakpointCreateByLocation(fileName.c_str(), nFileLine);
             break;
