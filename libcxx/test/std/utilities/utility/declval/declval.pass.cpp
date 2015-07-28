@@ -14,6 +14,8 @@
 #include <utility>
 #include <type_traits>
 
+#include "test_macros.h"
+
 class A
 {
     A(const A&);
@@ -22,9 +24,9 @@ class A
 
 int main()
 {
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if TEST_STD_VER >= 11
     static_assert((std::is_same<decltype(std::declval<A>()), A&&>::value), "");
 #else
-    static_assert((std::is_same<decltype(std::declval<A>()), A>::value), "");
+    static_assert((std::is_same<decltype(std::declval<A>()), A&>::value), "");
 #endif
 }

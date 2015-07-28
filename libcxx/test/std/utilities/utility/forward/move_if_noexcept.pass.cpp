@@ -56,13 +56,14 @@ int main()
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy&>::value), "");
 #else  // C++ < 11
-    // libc++ defines decltype to be __typeof__ in C++03. __typeof__ does not
-    // deduce the reference qualifiers.
-    static_assert((std::is_same<decltype(std::move_if_noexcept(i)), const int>::value), "");
-    static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int>::value), "");
-    static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A>::value), "");
-    static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A>::value), "");
-    static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy>::value), "");
+    // In C++03 libc++ #define's decltype to be __decltype on clang and
+    // __typeof__ for other compilers. __typeof__ does not deduce the reference
+    // qualifiers and will cause this test to fail.
+    static_assert((std::is_same<decltype(std::move_if_noexcept(i)), const int&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy&>::value), "");
 #endif
 
 #if TEST_STD_VER > 11

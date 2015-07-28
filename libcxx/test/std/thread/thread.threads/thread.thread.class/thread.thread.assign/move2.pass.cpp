@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03
 
 // NOTE: std::terminate is called so the destructors are not invoked and the
 // memory is not freed. This will cause ASAN to fail.
@@ -38,12 +39,7 @@ public:
     G(const G& g) : alive_(g.alive_) {++n_alive;}
     ~G() {alive_ = 0; --n_alive;}
 
-    void operator()()
-    {
-        assert(alive_ == 1);
-        assert(n_alive >= 1);
-        op_run = true;
-    }
+
 
     void operator()(int i, double j)
     {
@@ -60,7 +56,7 @@ bool G::op_run = false;
 
 void f1()
 {
-    std::exit(0);
+    std::_Exit(0);
 }
 
 int main()

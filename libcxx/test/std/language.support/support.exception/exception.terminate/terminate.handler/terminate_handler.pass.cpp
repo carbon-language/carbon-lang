@@ -17,7 +17,7 @@ void f() {}
 
 int main()
 {
-    static_assert(std::is_same<std::terminate_handler, void(*)()>::value, "");
+    static_assert((std::is_same<std::terminate_handler, void(*)()>::value), "");
     std::terminate_handler p = f;
     assert(p == &f);
 }
