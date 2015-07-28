@@ -799,6 +799,42 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
       Features.push_back("+long-calls");
   }
 
+  // Kernel code has more strict alignment requirements.
+  if (KernelOrKext)
+    Features.push_back("+strict-align");
+  else if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
+                                    options::OPT_munaligned_access)) {
+    if (A->getOption().matches(options::OPT_munaligned_access)) {
+      // No v6M core supports unaligned memory access (v6M ARM ARM A3.2).
+      if (Triple.getSubArch() == llvm::Triple::SubArchType::ARMSubArch_v6m)
+        D.Diag(diag::err_target_unsupported_unaligned) << "v6m";
+    } else
+      Features.push_back("+strict-align");
+  } else {
+    // Assume pre-ARMv6 doesn't support unaligned accesses.
+    //
+    // ARMv6 may or may not support unaligned accesses depending on the
+    // SCTLR.U bit, which is architecture-specific. We assume ARMv6
+    // Darwin and NetBSD targets support unaligned accesses, and others don't.
+    //
+    // ARMv7 always has SCTLR.U set to 1, but it has a new SCTLR.A bit
+    // which raises an alignment fault on unaligned accesses. Linux
+    // defaults this bit to 0 and handles it as a system-wide (not
+    // per-process) setting. It is therefore safe to assume that ARMv7+
+    // Linux targets support unaligned accesses. The same goes for NaCl.
+    //
+    // The above behavior is consistent with GCC.
+    int VersionNum = getARMSubArchVersionNumber(Triple);
+    if (Triple.isOSDarwin() || Triple.isOSNetBSD()) {
+      if (VersionNum < 6)
+        Features.push_back("+strict-align");
+    } else if (Triple.isOSLinux() || Triple.isOSNaCl()) {
+      if (VersionNum < 7)
+        Features.push_back("+strict-align");
+    } else
+      Features.push_back("+strict-align");
+  }
+
   // llvm does not support reserving registers in general. There is support
   // for reserving r9 on ARM though (defined as a platform-specific register
   // in ARM EABI).
@@ -877,27 +913,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
     assert(FloatABI == "hard" && "Invalid float abi!");
     CmdArgs.push_back("-mfloat-abi");
     CmdArgs.push_back("hard");
-  }
-
-  // Kernel code has more strict alignment requirements.
-  if (KernelOrKext) {
-    CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-arm-strict-align");
-  }
-
-  // -mkernel implies -mstrict-align; don't add the redundant option.
-  if (!KernelOrKext) {
-    if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
-                                 options::OPT_munaligned_access)) {
-      CmdArgs.push_back("-backend-option");
-      if (A->getOption().matches(options::OPT_mno_unaligned_access))
-        CmdArgs.push_back("-arm-strict-align");
-      else {
-        if (Triple.getSubArch() == llvm::Triple::SubArchType::ARMSubArch_v6m)
-          D.Diag(diag::err_target_unsupported_unaligned) << "v6m";
-        CmdArgs.push_back("-arm-no-strict-align");
-      }
-    }
   }
 
   // Forward the -mglobal-merge option for explicit control over the pass.

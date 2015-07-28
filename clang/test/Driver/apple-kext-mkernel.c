@@ -12,8 +12,8 @@
 // RUN: FileCheck --check-prefix=CHECK-ARM < %t %s
 
 // CHECK-ARM: "-target-feature" "+long-calls"
-// CHECK-ARM: "-backend-option" "-arm-strict-align"
-// CHECK-ARM-NOT: "-backend-option" "-arm-strict-align"
+// CHECK-ARM: "-target-feature" "+strict-align"
+// CHECK-ARM-NOT: "-target-feature" "+strict-align"
 // CHECK-ARM: "-fno-builtin"
 // CHECK-ARM: "-fno-rtti"
 // CHECK-ARM: "-fno-common"
