@@ -162,6 +162,6 @@ trivially a good fit for an official LLVM project.
 .. _LLVM's Phabricator: http://reviews.llvm.org
 .. _`http://reviews.llvm.org`: http://reviews.llvm.org
 .. _Code Repository Browser: http://reviews.llvm.org/diffusion/
-.. _Arcanist Quick Start: http://www.phabricator.com/docs/phabricator/article/Arcanist_Quick_Start.html
-.. _Arcanist User Guide: http://www.phabricator.com/docs/phabricator/article/Arcanist_User_Guide.html
+.. _Arcanist Quick Start: https://secure.phabricator.com/book/phabricator/article/arcanist_quick_start/
+.. _Arcanist User Guide: https://secure.phabricator.com/book/phabricator/article/arcanist/
 .. _llvm-reviews GitHub project: https://github.com/r4nt/llvm-reviews/
