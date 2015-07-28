@@ -7684,6 +7684,13 @@ TEST_F(FormatTest, BreaksStringLiterals) {
             format("#define A \"some text other\";", AlignLeft));
 }
 
+TEST_F(FormatTest, FullyRemoveEmptyLines) {
+  FormatStyle NoEmptyLines = getLLVMStyleWithColumns(80);
+  NoEmptyLines.MaxEmptyLinesToKeep = 0;
+  EXPECT_EQ("int i = a(b());",
+            format("int i=a(\n\n b(\n\n\n )\n\n);", NoEmptyLines));
+}
+
 TEST_F(FormatTest, BreaksStringLiteralsWithTabs) {
   EXPECT_EQ(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
