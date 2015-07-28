@@ -166,15 +166,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   MST.incorporateFunction(*MF.getFunction());
   if (const auto *JumpTableInfo = MF.getJumpTableInfo())
     convert(MST, YamlMF.JumpTableInfo, *JumpTableInfo);
-  int I = 0;
   for (const auto &MBB : MF) {
-    // TODO: Allow printing of non sequentially numbered MBBs.
-    // This is currently needed as the basic block references get their index
-    // from MBB.getNumber(), thus it should be sequential so that the parser can
-    // map back to the correct MBBs when parsing the output.
-    assert(MBB.getNumber() == I++ &&
-           "Can't print MBBs that aren't sequentially numbered");
-    (void)I;
     yaml::MachineBasicBlock YamlMBB;
     convert(MST, YamlMBB, MBB);
     YamlMF.BasicBlocks.push_back(YamlMBB);
