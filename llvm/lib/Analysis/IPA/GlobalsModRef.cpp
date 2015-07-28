@@ -701,6 +701,52 @@ AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
       if ((GV1 || GV2) && GV1 != GV2)
         return NoAlias;
 
+    // There are particular cases where we can conclude no-alias between
+    // a non-addr-taken global and some other underlying object. Specifically,
+    // a non-addr-taken global is known to not be escaped from any function. It
+    // is also incorrect for a transformation to introduce an escape of
+    // a global in a way that is observable when it was not there previously.
+    // One function being transformed to introduce an escape which could
+    // possibly be observed (via loading from a global or the return value for
+    // example) within another function is never safe. If the observation is
+    // made through non-atomic operations on different threads, it is
+    // a data-race and UB. If the observation is well defined, by being
+    // observed the transformation would have changed program behavior by
+    // introducing the observed escape, making it an invalid transform.
+    //
+    // This property does require that transformations which *temporarily*
+    // escape a global that was not previously escaped, prior to restoring
+    // it, cannot rely on the results of GMR::alias. This seems a reasonable
+    // restriction, although currently there is no way to enforce it. There is
+    // also no realistic optimization pass that would make this mistake. The
+    // closest example is a transformation pass which does reg2mem of SSA
+    // values but stores them into global variables temporarily before
+    // restoring the global variable's value. This could be useful to expose
+    // "benign" races for example. However, it seems reasonable to require that
+    // a pass which introduces escapes of global variables in this way to
+    // either not trust AA results while the escape is active, or to be forced
+    // to operate as a module pass that cannot co-exist with an alias analysis
+    // such as GMR.
+    if ((GV1 || GV2) && GV1 != GV2) {
+      const Value *UV = GV1 ? UV2 : UV1;
+
+      // In order to know that the underlying object cannot alias the
+      // non-addr-taken global, we must know that it would have to be an
+      // escape. Thus if the underlying object is a function argument, a load
+      // from a global, or the return of a function, it cannot alias.
+      if (isa<Argument>(UV) || isa<CallInst>(UV) || isa<InvokeInst>(UV)) {
+        // Arguments to functions or returns from functions are inherently
+        // escaping, so we can immediately classify those as not aliasing any
+        // non-addr-taken globals.
+        return NoAlias;
+      } else if (auto *LI = dyn_cast<LoadInst>(UV)) {
+        // A pointer loaded from a global would have been captured, and we know
+        // that GV is non-addr-taken, so no alias.
+        if (isa<GlobalValue>(LI->getPointerOperand()))
+          return NoAlias;
+      }
+    }
+
     // Otherwise if they are both derived from the same addr-taken global, we
     // can't know the two accesses don't overlap.
   }
