@@ -464,8 +464,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Config->AllowIsolation = false;
   if (Args.hasArg(OPT_dynamicbase_no))
     Config->DynamicBase = false;
-  if (Args.hasArg(OPT_highentropyva_no))
-    Config->HighEntropyVA = false;
   if (Args.hasArg(OPT_nxcompat_no))
     Config->NxCompat = false;
   if (Args.hasArg(OPT_tsaware_no))
@@ -558,6 +556,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Handle /largeaddressaware
   if (Config->is64() || Args.hasArg(OPT_largeaddressaware))
     Config->LargeAddressAware = true;
+
+  // Handle /highentropyva
+  if (Config->is64() && !Args.hasArg(OPT_highentropyva_no))
+    Config->HighEntropyVA = true;
 
   // Handle /entry and /dll
   if (auto *Arg = Args.getLastArg(OPT_entry)) {
