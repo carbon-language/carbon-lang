@@ -1,4 +1,5 @@
 ; RUN: opt < %s -globalopt -S | FileCheck %s
+; RUN: opt -emulated-tls < %s -globalopt -S | FileCheck %s
 
 declare void @wait()
 declare void @signal()

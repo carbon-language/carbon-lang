@@ -3044,3 +3044,46 @@ bool TargetLowering::expandFP_TO_SINT(SDNode *Node, SDValue &Result,
       DAG.getConstant(0, dl, NVT), Ret, ISD::SETLT);
   return true;
 }
+
+//===----------------------------------------------------------------------===//
+// Implementation of Emulated TLS Model
+//===----------------------------------------------------------------------===//
+
+SDValue TargetLowering::LowerToTLSEmulatedModel(const GlobalAddressSDNode *GA,
+                                                SelectionDAG &DAG) const {
+  // Access to address of TLS varialbe xyz is lowered to a function call:
+  //   __emutls_get_address( address of global variable named "__emutls_v.xyz" )
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
+  PointerType *VoidPtrType = Type::getInt8PtrTy(*DAG.getContext());
+  SDLoc dl(GA);
+
+  ArgListTy Args;
+  ArgListEntry Entry;
+  std::string NameString = ("__emutls_v." + GA->getGlobal()->getName()).str();
+  Module *VariableModule = const_cast<Module*>(GA->getGlobal()->getParent());
+  StringRef EmuTlsVarName(NameString);
+  GlobalVariable *EmuTlsVar = VariableModule->getNamedGlobal(EmuTlsVarName);
+  if (!EmuTlsVar)
+    EmuTlsVar = dyn_cast_or_null<GlobalVariable>(
+        VariableModule->getOrInsertGlobal(EmuTlsVarName, VoidPtrType));
+  Entry.Node = DAG.getGlobalAddress(EmuTlsVar, dl, PtrVT);
+  Entry.Ty = VoidPtrType;
+  Args.push_back(Entry);
+
+  SDValue EmuTlsGetAddr = DAG.getExternalSymbol("__emutls_get_address", PtrVT);
+
+  TargetLowering::CallLoweringInfo CLI(DAG);
+  CLI.setDebugLoc(dl).setChain(DAG.getEntryNode());
+  CLI.setCallee(CallingConv::C, VoidPtrType, EmuTlsGetAddr, std::move(Args), 0);
+  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
+
+  // TLSADDR will be codegen'ed as call. Inform MFI that function has calls.
+  // At last for X86 targets, maybe good for other targets too?
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setAdjustsStack(true);  // Is this only for X86 target?
+  MFI->setHasCalls(true);
+
+  assert((GA->getOffset() == 0) &&
+         "Emulated TLS must have zero offset in GlobalAddressSDNode");
+  return CallResult.first;
+}

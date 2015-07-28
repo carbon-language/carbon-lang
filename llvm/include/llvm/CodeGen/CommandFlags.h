@@ -219,6 +219,10 @@ FunctionSections("function-sections",
                  cl::desc("Emit functions into separate sections"),
                  cl::init(false));
 
+cl::opt<bool> EmulatedTLS("emulated-tls",
+                          cl::desc("Use emulated TLS model"),
+                          cl::init(false));
+
 cl::opt<bool> UniqueSectionNames("unique-section-names",
                                  cl::desc("Give unique names to every section"),
                                  cl::init(true));
@@ -260,6 +264,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.DataSections = DataSections;
   Options.FunctionSections = FunctionSections;
   Options.UniqueSectionNames = UniqueSectionNames;
+  Options.EmulatedTLS = EmulatedTLS;
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;

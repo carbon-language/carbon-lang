@@ -1,5 +1,8 @@
-; RUN: llc -O0 -filetype=asm -mtriple=armv7-linux-gnuehabi < %s | FileCheck %s
-;
+; RUN: llc -O0 -filetype=asm -mtriple=armv7-linux-gnuehabi < %s \
+; RUN:     | FileCheck %s --check-prefix=CHECK
+; RUN: llc -O0 -filetype=asm -mtriple=armv7-linux-gnuehabi -emulated-tls < %s \
+; RUN:     | FileCheck %s --check-prefix=EMU
+
 ; Generated with clang with source
 ; __thread int x;
 
@@ -15,6 +18,9 @@
 ; CHECK: .byte 12
 ; The debug relocation of the address of the tls variable
 ; CHECK: .long x(tlsldo)
+
+; TODO: Add expected output for -emulated-tls tests.
+; EMU-NOT: .long x(tlsldo)
 
 !0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !3, imports: !2)
 !1 = !DIFile(filename: "tls.c", directory: "/tmp")

@@ -494,6 +494,9 @@ model is not supported, or if a better choice of model can be made.
 A model can also be specified in a alias, but then it only governs how
 the alias is accessed. It will not have any effect in the aliasee.
 
+For platforms without linker support of ELF TLS model, the -femulated-tls
+flag can be used to generate GCC compatible emulated TLS code.
+
 .. _namedtypes:
 
 Structure Types

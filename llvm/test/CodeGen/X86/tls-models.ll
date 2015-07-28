@@ -18,6 +18,8 @@
 @external_le = external thread_local(localexec) global i32
 @internal_le = internal thread_local(localexec) global i32 42
 
+; See test cases for emulated model in emutls.ll, emutls-pic.ll and emutls-pie.ll.
+
 ; ----- no model specified -----
 
 define i32* @f1() {
