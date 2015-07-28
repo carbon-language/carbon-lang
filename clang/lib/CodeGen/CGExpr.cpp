@@ -1147,16 +1147,8 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
       llvm::Value *LoadVal = Builder.CreateLoad(Cast, Volatile, "loadVec4");
 
       // Shuffle vector to get vec3.
-      llvm::Constant *Mask[] = {
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 0),
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 1),
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 2)
-      };
-
-      llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
-      V = Builder.CreateShuffleVector(LoadVal,
-                                      llvm::UndefValue::get(vec4Ty),
-                                      MaskV, "extractVec");
+      V = Builder.CreateShuffleVector(LoadVal, llvm::UndefValue::get(vec4Ty),
+                                      {0, 1, 2}, "extractVec");
       return EmitFromMemory(V, Ty);
     }
   }
@@ -1253,18 +1245,10 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
     auto *VecTy = cast<llvm::VectorType>(SrcTy);
     // Handle vec3 special.
     if (VecTy->getNumElements() == 3) {
-      llvm::LLVMContext &VMContext = getLLVMContext();
-
       // Our source is a vec3, do a shuffle vector to make it a vec4.
-      SmallVector<llvm::Constant*, 4> Mask;
-      Mask.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                            0));
-      Mask.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                            1));
-      Mask.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                            2));
-      Mask.push_back(llvm::UndefValue::get(llvm::Type::getInt32Ty(VMContext)));
-
+      llvm::Constant *Mask[] = {Builder.getInt32(0), Builder.getInt32(1),
+                                Builder.getInt32(2),
+                                llvm::UndefValue::get(Builder.getInt32Ty())};
       llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       Value = Builder.CreateShuffleVector(Value,
                                           llvm::UndefValue::get(VecTy),
@@ -2573,16 +2557,6 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
   return LV;
 }
 
-static
-llvm::Constant *GenerateConstantVector(CGBuilderTy &Builder,
-                                       SmallVectorImpl<unsigned> &Elts) {
-  SmallVector<llvm::Constant*, 4> CElts;
-  for (unsigned i = 0, e = Elts.size(); i != e; ++i)
-    CElts.push_back(Builder.getInt32(Elts[i]));
-
-  return llvm::ConstantVector::get(CElts);
-}
-
 LValue CodeGenFunction::
 EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   // Emit the base vector as an l-value.
@@ -2617,11 +2591,12 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     E->getType().withCVRQualifiers(Base.getQuals().getCVRQualifiers());
 
   // Encode the element access list into a vector of unsigned indices.
-  SmallVector<unsigned, 4> Indices;
+  SmallVector<uint32_t, 4> Indices;
   E->getEncodedElementAccess(Indices);
 
   if (Base.isSimple()) {
-    llvm::Constant *CV = GenerateConstantVector(Builder, Indices);
+    llvm::Constant *CV =
+        llvm::ConstantDataVector::get(getLLVMContext(), Indices);
     return LValue::MakeExtVectorElt(Base.getAddress(), CV, type,
                                     Base.getAlignment());
   }
