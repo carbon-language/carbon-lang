@@ -169,9 +169,7 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
     // If this location is within a macro, walk from UnexpandedLoc up to Loc
     // and produce a macro backtrace.
     if (UnexpandedLoc.isValid() && UnexpandedLoc.isMacroID()) {
-      unsigned MacroDepth = 0;
-      emitMacroExpansions(UnexpandedLoc, Level, MutableRanges, FixItHints, *SM,
-                          MacroDepth);
+      emitMacroExpansions(UnexpandedLoc, Level, MutableRanges, FixItHints, *SM);
     }
   }
 
@@ -394,63 +392,17 @@ void DiagnosticRenderer::emitCaret(SourceLocation Loc,
   emitCodeContext(Loc, Level, SpellingRanges, Hints, SM);
 }
 
-/// \brief Recursively emit notes for each macro expansion and caret
-/// diagnostics where appropriate.
-///
-/// Walks up the macro expansion stack printing expansion notes, the code
-/// snippet, caret, underlines and FixItHint display as appropriate at each
-/// level.
-///
-/// \param Loc The location for this caret.
-/// \param Level The diagnostic level currently being emitted.
-/// \param Ranges The underlined ranges for this code snippet.
-/// \param Hints The FixIt hints active for this diagnostic.
-/// \param OnMacroInst The current depth of the macro expansion stack.
-void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
-                                             DiagnosticsEngine::Level Level,
-                                             ArrayRef<CharSourceRange> Ranges,
-                                             ArrayRef<FixItHint> Hints,
-                                             const SourceManager &SM,
-                                             unsigned &MacroDepth,
-                                             unsigned OnMacroInst) {
-  assert(!Loc.isInvalid() && "must have a valid source location here");
-
-  // Walk up to the caller of this macro, and produce a backtrace down to there.
-  SourceLocation OneLevelUp = SM.getImmediateMacroCallerLoc(Loc);
-  if (OneLevelUp.isMacroID())
-    emitMacroExpansions(OneLevelUp, Level, Ranges, Hints, SM,
-                        MacroDepth, OnMacroInst + 1);
-  else
-    MacroDepth = OnMacroInst + 1;
-
-  unsigned MacroSkipStart = 0, MacroSkipEnd = 0;
-  if (MacroDepth > DiagOpts->MacroBacktraceLimit &&
-      DiagOpts->MacroBacktraceLimit != 0) {
-    MacroSkipStart = DiagOpts->MacroBacktraceLimit / 2 +
-    DiagOpts->MacroBacktraceLimit % 2;
-    MacroSkipEnd = MacroDepth - DiagOpts->MacroBacktraceLimit / 2;
-  }
-
-  // Whether to suppress printing this macro expansion.
-  bool Suppressed = (OnMacroInst >= MacroSkipStart &&
-                     OnMacroInst < MacroSkipEnd);
-
-  if (Suppressed) {
-    // Tell the user that we've skipped contexts.
-    if (OnMacroInst == MacroSkipStart) {
-      SmallString<200> MessageStorage;
-      llvm::raw_svector_ostream Message(MessageStorage);
-      Message << "(skipping " << (MacroSkipEnd - MacroSkipStart)
-              << " expansions in backtrace; use -fmacro-backtrace-limit=0 to "
-                 "see all)";
-      emitBasicNote(Message.str());      
-    }
-    return;
-  }
-
+/// \brief A helper function for emitMacroExpansion to print the
+/// macro expansion message
+void DiagnosticRenderer::emitSingleMacroExpansion(
+    SourceLocation Loc,
+    DiagnosticsEngine::Level Level,
+    ArrayRef<CharSourceRange> Ranges,
+    const SourceManager &SM) {
   // Find the spelling location for the macro definition. We must use the
-  // spelling location here to avoid emitting a macro bactrace for the note.
+  // spelling location here to avoid emitting a macro backtrace for the note.
   SourceLocation SpellingLoc = Loc;
+
   // If this is the expansion of a macro argument, point the caret at the
   // use of the argument in the definition of the macro, not the expansion.
   if (SM.isMacroArgExpansion(Loc))
@@ -468,8 +420,65 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
     Message << "expanded from here";
   else
     Message << "expanded from macro '" << MacroName << "'";
+
   emitDiagnostic(SpellingLoc, DiagnosticsEngine::Note, Message.str(),
                  SpellingRanges, None, &SM);
+}
+
+/// \brief Recursively emit notes for each macro expansion and caret
+/// diagnostics where appropriate.
+///
+/// Walks up the macro expansion stack printing expansion notes, the code
+/// snippet, caret, underlines and FixItHint display as appropriate at each
+/// level.
+///
+/// \param Loc The location for this caret.
+/// \param Level The diagnostic level currently being emitted.
+/// \param Ranges The underlined ranges for this code snippet.
+/// \param Hints The FixIt hints active for this diagnostic.
+void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
+                                             DiagnosticsEngine::Level Level,
+                                             ArrayRef<CharSourceRange> Ranges,
+                                             ArrayRef<FixItHint> Hints,
+                                             const SourceManager &SM) {
+  assert(!Loc.isInvalid() && "must have a valid source location here");
+
+  // Produce a stack of macro backtraces.
+  SmallVector<SourceLocation, 8> LocationStack;
+  while (Loc.isMacroID()) {
+    LocationStack.push_back(Loc);
+    Loc = SM.getImmediateMacroCallerLoc(Loc);
+    assert(!Loc.isInvalid() && "must have a valid source location here");
+  }
+
+  unsigned MacroDepth = LocationStack.size();
+  unsigned MacroLimit = DiagOpts->MacroBacktraceLimit;
+  if (MacroDepth <= MacroLimit || MacroLimit == 0) {
+    for (auto I = LocationStack.rbegin(), E = LocationStack.rend();
+         I != E; ++I)
+      emitSingleMacroExpansion(*I, Level, Ranges, SM);
+    return;
+  }
+
+  unsigned MacroStartMessages = MacroLimit / 2;
+  unsigned MacroEndMessages = MacroLimit / 2 + MacroLimit % 2;
+
+  for (auto I = LocationStack.rbegin(),
+            E = LocationStack.rbegin() + MacroStartMessages;
+       I != E; ++I)
+    emitSingleMacroExpansion(*I, Level, Ranges, SM);
+
+  SmallString<200> MessageStorage;
+  llvm::raw_svector_ostream Message(MessageStorage);
+  Message << "(skipping " << (MacroDepth - MacroLimit)
+          << " expansions in backtrace; use -fmacro-backtrace-limit=0 to "
+             "see all)";
+  emitBasicNote(Message.str());
+
+  for (auto I = LocationStack.rend() - MacroEndMessages,
+            E = LocationStack.rend();
+       I != E; ++I)
+    emitSingleMacroExpansion(*I, Level, Ranges, SM);
 }
 
 DiagnosticNoteRenderer::~DiagnosticNoteRenderer() {}
