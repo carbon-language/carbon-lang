@@ -44,7 +44,8 @@ ValueObjectChild::ValueObjectChild
     m_bitfield_bit_size (bitfield_bit_size),
     m_bitfield_bit_offset (bitfield_bit_offset),
     m_is_base_class (is_base_class),
-    m_is_deref_of_parent (is_deref_of_parent)
+    m_is_deref_of_parent (is_deref_of_parent),
+    m_can_update_with_invalid_exe_ctx()
 {
     m_name = name;
     SetAddressTypeOfChildren(child_ptr_or_ref_addr_type);
@@ -109,12 +110,20 @@ ValueObjectChild::GetDisplayTypeName()
     return display_name;
 }
 
-bool
+LazyBool
 ValueObjectChild::CanUpdateWithInvalidExecutionContext ()
 {
+    if (m_can_update_with_invalid_exe_ctx.hasValue())
+        return m_can_update_with_invalid_exe_ctx.getValue();
     if (m_parent)
-        return m_parent->CanUpdateWithInvalidExecutionContext();
-    return this->ValueObject::CanUpdateWithInvalidExecutionContext();
+    {
+        ValueObject *opinionated_parent = m_parent->FollowParentChain([] (ValueObject* valobj) -> bool {
+            return (valobj->CanUpdateWithInvalidExecutionContext() == eLazyBoolCalculate);
+        });
+        if (opinionated_parent)
+            return (m_can_update_with_invalid_exe_ctx = opinionated_parent->CanUpdateWithInvalidExecutionContext()).getValue();
+    }
+    return (m_can_update_with_invalid_exe_ctx = this->ValueObject::CanUpdateWithInvalidExecutionContext()).getValue();
 }
 
 bool

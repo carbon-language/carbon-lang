@@ -861,7 +861,7 @@ public:
     bool
     NeedsUpdating ()
     {
-        const bool accept_invalid_exe_ctx = CanUpdateWithInvalidExecutionContext();
+        const bool accept_invalid_exe_ctx = (CanUpdateWithInvalidExecutionContext() == eLazyBoolYes);
         return m_update_point.NeedsUpdating(accept_invalid_exe_ctx);
     }
     
@@ -1172,10 +1172,10 @@ protected:
     virtual bool
     UpdateValue () = 0;
 
-    virtual bool
+    virtual LazyBool
     CanUpdateWithInvalidExecutionContext ()
     {
-        return false;
+        return eLazyBoolCalculate;
     }
     
     virtual void

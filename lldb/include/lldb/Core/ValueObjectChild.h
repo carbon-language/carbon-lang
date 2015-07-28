@@ -16,6 +16,8 @@
 // Project includes
 #include "lldb/Core/ValueObject.h"
 
+#include "llvm/ADT/Optional.h"
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------
@@ -84,7 +86,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual bool
+    virtual LazyBool
     CanUpdateWithInvalidExecutionContext ();
 
     virtual ClangASTType
@@ -101,6 +103,7 @@ protected:
     uint8_t m_bitfield_bit_offset;
     bool m_is_base_class;
     bool m_is_deref_of_parent;
+    llvm::Optional<LazyBool> m_can_update_with_invalid_exe_ctx;
 
 //
 //  void
