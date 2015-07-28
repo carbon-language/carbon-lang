@@ -31,10 +31,9 @@ raw_ostream &RewriteBuffer::write(raw_ostream &os) const {
   return os;
 }
 
-namespace {
 /// \brief Return true if this character is non-new-line whitespace:
 /// ' ', '\\t', '\\f', '\\v', '\\r'.
-inline bool isWhitespaceExceptNL(unsigned char c) {
+static inline bool isWhitespaceExceptNL(unsigned char c) {
   switch (c) {
   case ' ':
   case '\t':
@@ -45,7 +44,6 @@ inline bool isWhitespaceExceptNL(unsigned char c) {
   default:
     return false;
   }
-}
 }
 
 void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size,
