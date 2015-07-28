@@ -1,4 +1,4 @@
-; RUN: llvm-mc -triple arm64-apple-darwin -filetype=obj -o - %s | macho-dump | FileCheck %s
+; RUN: llvm-mc -triple arm64-apple-darwin -filetype=obj -o - %s | llvm-readobj -r | FileCheck %s
 
 foo:
   .long 0
@@ -9,16 +9,15 @@ baz:
   .byte foo - bar
   .short foo - bar
 
-; CHECK: # Relocation 0
-; CHECK: (('word-0', 0x9),
-; CHECK:  ('word-1', 0x1a000002)),
-; CHECK: # Relocation 1
-; CHECK: (('word-0', 0x9),
-; CHECK:  ('word-1', 0xa000001)),
-; CHECK: # Relocation 2
-; CHECK: (('word-0', 0x8),
-; CHECK:  ('word-1', 0x18000002)),
-; CHECK: # Relocation 3
-; CHECK: (('word-0', 0x8),
-; CHECK:  ('word-1', 0x8000001)),
-
+; CHECK: File: <stdin>
+; CHECK: Format: Mach-O arm64
+; CHECK: Arch: aarch64
+; CHECK: AddressSize: 64bit
+; CHECK: Relocations [
+; CHECK:  Section __text {
+; CHECK:    0x9 0 1 1 ARM64_RELOC_SUBTRACTOR 0 bar
+; CHECK:    0x9 0 1 1 ARM64_RELOC_UNSIGNED 0 foo
+; CHECK:    0x8 0 0 1 ARM64_RELOC_SUBTRACTOR 0 bar
+; CHECK:    0x8 0 0 1 ARM64_RELOC_UNSIGNED 0 foo
+; CHECK:  }
+; CHECK: ]
