@@ -285,7 +285,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(const lldb::SBValue &v
         }
     }
 
-    return utilValue.GetValue().Escape().AddSlashes();
+    return utilValue.GetValue().AddSlashes();
 }
 
 //++ ------------------------------------------------------------------------------------

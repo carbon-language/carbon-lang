@@ -34,9 +34,9 @@ class CMIUtilString : public std::string
     static CMIUtilString FormatValist(const CMIUtilString &vrFormating, va_list vArgs);
     static bool IsAllValidAlphaAndNumeric(const char *vpText);
     static bool Compare(const CMIUtilString &vrLhs, const CMIUtilString &vrRhs);
-    static CMIUtilString ConvertToPrintableASCII(const char vChar);
-    static CMIUtilString ConvertToPrintableASCII(const char16_t vChar16);
-    static CMIUtilString ConvertToPrintableASCII(const char32_t vChar32);
+    static CMIUtilString ConvertToPrintableASCII(const char vChar, bool bEscapeQuotes = false);
+    static CMIUtilString ConvertToPrintableASCII(const char16_t vChar16, bool bEscapeQuotes = false);
+    static CMIUtilString ConvertToPrintableASCII(const char32_t vChar32, bool bEscapeQuotes = false);
 
     // Methods:
   public:
@@ -75,6 +75,7 @@ class CMIUtilString : public std::string
     // Static method:
   private:
     static CMIUtilString FormatPriv(const CMIUtilString &vrFormat, va_list vArgs);
+    static CMIUtilString ConvertCharValueToPrintableASCII(char vChar, bool bEscapeQuotes);
 
     // Methods:
   private:

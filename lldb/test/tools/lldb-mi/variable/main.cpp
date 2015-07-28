@@ -57,12 +57,12 @@ var_list_children_test(void)
 void
 gdb_set_show_print_char_array_as_string_test(void)
 {
-    const char *cp = "hello";
-    const char ca[] = "hello";
-    const char16_t *u16p = u"hello";
-    const char16_t u16a[] = u"hello";
-    const char32_t *u32p = U"hello";
-    const char32_t u32a[] = U"hello";
+    const char *cp = "\t\"hello\"\n";
+    const char ca[] = "\t\"hello\"\n";
+    const char16_t *u16p = u"\t\"hello\"\n";
+    const char16_t u16a[] = u"\t\"hello\"\n";
+    const char32_t *u32p = U"\t\"hello\"\n";
+    const char32_t u32a[] = U"\t\"hello\"\n";
 
     // BP_gdb_set_show_print_char_array_as_string_test
 }

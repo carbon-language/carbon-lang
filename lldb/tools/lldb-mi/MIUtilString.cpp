@@ -895,7 +895,7 @@ CMIUtilString::StripSlashes(void) const
 }
 
 CMIUtilString
-CMIUtilString::ConvertToPrintableASCII(const char vChar)
+CMIUtilString::ConvertToPrintableASCII(const char vChar, bool bEscapeQuotes)
 {
     switch (vChar)
     {
@@ -917,6 +917,10 @@ CMIUtilString::ConvertToPrintableASCII(const char vChar)
             return "\\e";
         case '\\':
             return "\\\\";
+        case '"':
+            if (bEscapeQuotes)
+                return "\\\"";
+            // fall thru
         default:
             if (::isprint(vChar))
                 return Format("%c", vChar);
@@ -926,24 +930,65 @@ CMIUtilString::ConvertToPrintableASCII(const char vChar)
 }
 
 CMIUtilString
-CMIUtilString::ConvertToPrintableASCII(const char16_t vChar16)
+CMIUtilString::ConvertCharValueToPrintableASCII(char vChar, bool bEscapeQuotes)
 {
-    if (vChar16 == (char16_t)(char)vChar16 && ::isprint(vChar16))
+    switch (vChar)
+    {
+        case '\a':
+            return "\\a";
+        case '\b':
+            return "\\b";
+        case '\t':
+            return "\\t";
+        case '\n':
+            return "\\n";
+        case '\v':
+            return "\\v";
+        case '\f':
+            return "\\f";
+        case '\r':
+            return "\\r";
+        case '\033':
+            return "\\e";
+        case '\\':
+            return "\\\\";
+        case '"':
+            if (bEscapeQuotes)
+                return "\\\"";
+            // fall thru
+        default:
+            if (::isprint(vChar))
+                return Format("%c", vChar);
+            else
+                return CMIUtilString();
+    }
+}
+
+CMIUtilString
+CMIUtilString::ConvertToPrintableASCII(const char16_t vChar16, bool bEscapeQuotes)
+{
+    if (vChar16 == (char16_t)(char)vChar16)
+    {
         // Convert char16_t to char (if possible)
-        return Format("%c", vChar16);
-    else
-        return Format("\\u%02" PRIx8 "%02" PRIx8,
+        CMIUtilString str = ConvertCharValueToPrintableASCII((char)vChar16, bEscapeQuotes);
+        if (str.length() > 0)
+            return str;
+    }
+    return Format("\\u%02" PRIx8 "%02" PRIx8,
                       (vChar16 >> 8) & 0xff, vChar16 & 0xff);
 }
 
 CMIUtilString
-CMIUtilString::ConvertToPrintableASCII(const char32_t vChar32)
+CMIUtilString::ConvertToPrintableASCII(const char32_t vChar32, bool bEscapeQuotes)
 {
-    if (vChar32 == (char32_t)(char)vChar32 && ::isprint(vChar32))
+    if (vChar32 == (char32_t)(char)vChar32)
+    {
         // Convert char32_t to char (if possible)
-        return Format("%c", vChar32);
-    else
-        return Format("\\U%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8,
+        CMIUtilString str = ConvertCharValueToPrintableASCII((char)vChar32, bEscapeQuotes);
+        if (str.length() > 0)
+            return str;
+    }
+    return Format("\\U%02" PRIx8 "%02" PRIx8 "%02" PRIx8 "%02" PRIx8,
                       (vChar32 >> 24) & 0xff, (vChar32 >> 16) & 0xff,
                       (vChar32 >> 8) & 0xff, vChar32 & 0xff);
 }
