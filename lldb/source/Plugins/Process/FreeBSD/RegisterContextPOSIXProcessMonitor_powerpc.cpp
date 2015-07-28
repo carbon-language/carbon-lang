@@ -12,7 +12,7 @@
 #include "lldb/Target/Thread.h"
 
 #include "RegisterContextPOSIX_powerpc.h"
-#include "ProcessPOSIX.h"
+#include "ProcessFreeBSD.h"
 #include "RegisterContextPOSIXProcessMonitor_powerpc.h"
 #include "ProcessMonitor.h"
 
@@ -32,7 +32,7 @@ ProcessMonitor &
 RegisterContextPOSIXProcessMonitor_powerpc::GetMonitor()
 {
     ProcessSP base = CalculateProcess();
-    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
+    ProcessFreeBSD *process = static_cast<ProcessFreeBSD*>(base.get());
     return process->GetMonitor();
 }
 

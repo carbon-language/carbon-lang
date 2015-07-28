@@ -17,7 +17,7 @@
 #include "lldb/Target/StopInfo.h"
 
 #include "CrashReason.h"
-#include "POSIXThread.h"
+#include "FreeBSDThread.h"
 
 #include <string>
 
@@ -42,7 +42,7 @@ class POSIXLimboStopInfo
     : public POSIXStopInfo
 {
 public:
-    POSIXLimboStopInfo(POSIXThread &thread)
+    POSIXLimboStopInfo(FreeBSDThread &thread)
         : POSIXStopInfo(thread, 0)
         { }
 
@@ -70,7 +70,7 @@ class POSIXCrashStopInfo
     : public POSIXStopInfo
 {
 public:
-    POSIXCrashStopInfo(POSIXThread &thread, uint32_t status,
+    POSIXCrashStopInfo(FreeBSDThread &thread, uint32_t status,
                        CrashReason reason,
                        lldb::addr_t fault_addr);
     ~POSIXCrashStopInfo();
@@ -88,7 +88,7 @@ class POSIXNewThreadStopInfo
     : public POSIXStopInfo
 {
 public:
-    POSIXNewThreadStopInfo (POSIXThread &thread)
+    POSIXNewThreadStopInfo (FreeBSDThread &thread)
         : POSIXStopInfo (thread, 0)
         { }
 

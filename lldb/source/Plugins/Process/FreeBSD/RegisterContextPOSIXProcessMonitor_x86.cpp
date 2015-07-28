@@ -11,7 +11,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Target/Thread.h"
 
-#include "Plugins/Process/FreeBSD/ProcessPOSIX.h"
+#include "Plugins/Process/FreeBSD/ProcessFreeBSD.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
 #include "Plugins/Process/FreeBSD/ProcessMonitor.h"
 
@@ -64,7 +64,7 @@ ProcessMonitor &
 RegisterContextPOSIXProcessMonitor_x86_64::GetMonitor()
 {
     ProcessSP base = CalculateProcess();
-    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
+    ProcessFreeBSD *process = static_cast<ProcessFreeBSD*>(base.get());
     return process->GetMonitor();
 }
 

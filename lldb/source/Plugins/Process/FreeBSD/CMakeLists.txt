@@ -9,8 +9,6 @@ add_lldb_library(lldbPluginProcessFreeBSD
   FreeBSDThread.cpp
   ProcessMonitor.cpp
 
-  ProcessPOSIX.cpp
-  POSIXThread.cpp
   POSIXStopInfo.cpp
   RegisterContextPOSIXProcessMonitor_arm.cpp
   RegisterContextPOSIXProcessMonitor_arm64.cpp

@@ -45,7 +45,7 @@ POSIXLimboStopInfo::ShouldNotify(Event *event_ptr)
 //===----------------------------------------------------------------------===//
 // POSIXCrashStopInfo
 
-POSIXCrashStopInfo::POSIXCrashStopInfo(POSIXThread &thread,
+POSIXCrashStopInfo::POSIXCrashStopInfo(FreeBSDThread &thread,
                                        uint32_t status,
                                        CrashReason reason,
                                        lldb::addr_t fault_addr)
