@@ -114,6 +114,26 @@ static Cursor lexStringConstant(
   return C;
 }
 
+static Cursor lexName(
+    Cursor C, MIToken &Token, MIToken::TokenKind Type,
+    MIToken::TokenKind QuotedType, unsigned PrefixLength,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  auto Range = C;
+  C.advance(PrefixLength);
+  if (C.peek() == '"') {
+    if (Cursor R = lexStringConstant(C, ErrorCallback)) {
+      Token = MIToken(QuotedType, Range.upto(R), PrefixLength);
+      return R;
+    }
+    Token = MIToken(MIToken::Error, Range.remaining());
+    return Range;
+  }
+  while (isIdentifierChar(C.peek()))
+    C.advance();
+  Token = MIToken(Type, Range.upto(C), PrefixLength);
+  return C;
+}
+
 static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
   return StringSwitch<MIToken::TokenKind>(Identifier)
       .Case("_", MIToken::underscore)
@@ -245,26 +265,6 @@ static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
     C.advance();
   Token = MIToken(MIToken::NamedRegister, Range.upto(C),
                   /*StringOffset=*/1); // Drop the '%'
-  return C;
-}
-
-static Cursor lexName(
-    Cursor C, MIToken &Token, MIToken::TokenKind Type,
-    MIToken::TokenKind QuotedType, unsigned PrefixLength,
-    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
-  auto Range = C;
-  C.advance(PrefixLength);
-  if (C.peek() == '"') {
-    if (Cursor R = lexStringConstant(C, ErrorCallback)) {
-      Token = MIToken(QuotedType, Range.upto(R), PrefixLength);
-      return R;
-    }
-    Token = MIToken(MIToken::Error, Range.remaining());
-    return Range;
-  }
-  while (isIdentifierChar(C.peek()))
-    C.advance();
-  Token = MIToken(Type, Range.upto(C), PrefixLength);
   return C;
 }
 
