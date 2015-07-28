@@ -277,7 +277,7 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
       if (UseDebugObj) {
         DebugObj = LoadedObjInfo->getObjectForDebug(Obj);
         SymbolObj = DebugObj.getBinary();
-        LoadedObjInfo.release();
+        LoadedObjInfo.reset();
       }
     }
 
