@@ -14878,3 +14878,83 @@ vpermilpd $0x23, 0x400(%rbx), %zmm2
 // CHECK:  encoding: [0x62,0x61,0x85,0x58,0x6d,0x9a,0xf8,0xfb,0xff,0xff]
           vpunpckhqdq -1032(%rdx){1to8}, %zmm15, %zmm27
 
+// CHECK: vgetexpss %xmm26, %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0x82,0x75,0x08,0x43,0xe2]
+          vgetexpss %xmm26, %xmm1, %xmm20
+
+// CHECK: vgetexpss %xmm26, %xmm1, %xmm20 {%k7}
+// CHECK:  encoding: [0x62,0x82,0x75,0x0f,0x43,0xe2]
+          vgetexpss %xmm26, %xmm1, %xmm20 {%k7}
+
+// CHECK: vgetexpss %xmm26, %xmm1, %xmm20 {%k7} {z}
+// CHECK:  encoding: [0x62,0x82,0x75,0x8f,0x43,0xe2]
+          vgetexpss %xmm26, %xmm1, %xmm20 {%k7} {z}
+
+// CHECK: vgetexpss {sae}, %xmm26, %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0x82,0x75,0x18,0x43,0xe2]
+          vgetexpss {sae}, %xmm26, %xmm1, %xmm20
+
+// CHECK: vgetexpss (%rcx), %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0xe2,0x75,0x08,0x43,0x21]
+          vgetexpss (%rcx), %xmm1, %xmm20
+
+// CHECK: vgetexpss 291(%rax,%r14,8), %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0xa2,0x75,0x08,0x43,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          vgetexpss 291(%rax,%r14,8), %xmm1, %xmm20
+
+// CHECK: vgetexpss 508(%rdx), %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0xe2,0x75,0x08,0x43,0x62,0x7f]
+          vgetexpss 508(%rdx), %xmm1, %xmm20
+
+// CHECK: vgetexpss 512(%rdx), %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0xe2,0x75,0x08,0x43,0xa2,0x00,0x02,0x00,0x00]
+          vgetexpss 512(%rdx), %xmm1, %xmm20
+
+// CHECK: vgetexpss -512(%rdx), %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0xe2,0x75,0x08,0x43,0x62,0x80]
+          vgetexpss -512(%rdx), %xmm1, %xmm20
+
+// CHECK: vgetexpss -516(%rdx), %xmm1, %xmm20
+// CHECK:  encoding: [0x62,0xe2,0x75,0x08,0x43,0xa2,0xfc,0xfd,0xff,0xff]
+          vgetexpss -516(%rdx), %xmm1, %xmm20
+
+// CHECK: vgetexpsd %xmm2, %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0xd2]
+          vgetexpsd %xmm2, %xmm7, %xmm2
+
+// CHECK: vgetexpsd %xmm2, %xmm7, %xmm2 {%k5}
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x0d,0x43,0xd2]
+          vgetexpsd %xmm2, %xmm7, %xmm2 {%k5}
+
+// CHECK: vgetexpsd %xmm2, %xmm7, %xmm2 {%k5} {z}
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x8d,0x43,0xd2]
+          vgetexpsd %xmm2, %xmm7, %xmm2 {%k5} {z}
+
+// CHECK: vgetexpsd {sae}, %xmm2, %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x18,0x43,0xd2]
+          vgetexpsd {sae}, %xmm2, %xmm7, %xmm2
+
+// CHECK: vgetexpsd (%rcx), %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0x11]
+          vgetexpsd (%rcx), %xmm7, %xmm2
+
+// CHECK: vgetexpsd 291(%rax,%r14,8), %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xb2,0xc5,0x08,0x43,0x94,0xf0,0x23,0x01,0x00,0x00]
+          vgetexpsd 291(%rax,%r14,8), %xmm7, %xmm2
+
+// CHECK: vgetexpsd 1016(%rdx), %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0x52,0x7f]
+          vgetexpsd 1016(%rdx), %xmm7, %xmm2
+
+// CHECK: vgetexpsd 1024(%rdx), %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0x92,0x00,0x04,0x00,0x00]
+          vgetexpsd 1024(%rdx), %xmm7, %xmm2
+
+// CHECK: vgetexpsd -1024(%rdx), %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0x52,0x80]
+          vgetexpsd -1024(%rdx), %xmm7, %xmm2
+
+// CHECK: vgetexpsd -1032(%rdx), %xmm7, %xmm2
+// CHECK:  encoding: [0x62,0xf2,0xc5,0x08,0x43,0x92,0xf8,0xfb,0xff,0xff]
+          vgetexpsd -1032(%rdx), %xmm7, %xmm2
+
