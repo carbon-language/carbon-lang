@@ -157,41 +157,32 @@ FreeBSDThread::GetRegisterContext()
         RegisterInfoInterface *reg_interface = NULL;
         const ArchSpec &target_arch = GetProcess()->GetTarget().GetArchitecture();
 
-        switch (target_arch.GetTriple().getOS())
+        assert(target_arch.GetTriple().getOS() == llvm::Triple::FreeBSD);
+        switch (target_arch.GetMachine())
         {
-            case llvm::Triple::FreeBSD:
-                switch (target_arch.GetMachine())
-                {
-                    case llvm::Triple::arm:
-                        reg_interface = new RegisterContextFreeBSD_arm(target_arch);
-                        break;
-                    case llvm::Triple::ppc:
+            case llvm::Triple::arm:
+                reg_interface = new RegisterContextFreeBSD_arm(target_arch);
+                break;
+            case llvm::Triple::ppc:
 #ifndef __powerpc64__
-                        reg_interface = new RegisterContextFreeBSD_powerpc32(target_arch);
-                        break;
+                reg_interface = new RegisterContextFreeBSD_powerpc32(target_arch);
+                break;
 #endif
-                    case llvm::Triple::ppc64:
-                        reg_interface = new RegisterContextFreeBSD_powerpc64(target_arch);
-                        break;
-                    case llvm::Triple::mips64:
-                        reg_interface = new RegisterContextFreeBSD_mips64(target_arch);
-                        break;
-                    case llvm::Triple::x86:
-                        reg_interface = new RegisterContextFreeBSD_i386(target_arch);
-                        break;
-                    case llvm::Triple::x86_64:
-                        reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
-                        break;
-                    default:
-                        break;
-                }
+            case llvm::Triple::ppc64:
+                reg_interface = new RegisterContextFreeBSD_powerpc64(target_arch);
                 break;
-
+            case llvm::Triple::mips64:
+                reg_interface = new RegisterContextFreeBSD_mips64(target_arch);
+                break;
+            case llvm::Triple::x86:
+                reg_interface = new RegisterContextFreeBSD_i386(target_arch);
+                break;
+            case llvm::Triple::x86_64:
+                reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
+                break;
             default:
-                break;
+                llvm_unreachable("CPU not supported");
         }
-
-        assert(reg_interface && "OS or CPU not supported!");
 
         switch (target_arch.GetMachine())
         {
