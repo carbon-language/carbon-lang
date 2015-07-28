@@ -378,7 +378,7 @@ protected:
                                      const SectionRef &Section);
 
   // \brief Implementation of the generic part of the loadObject algorithm.
-  std::pair<unsigned, unsigned> loadObjectImpl(const object::ObjectFile &Obj);
+  ObjSectionToIDMap loadObjectImpl(const object::ObjectFile &Obj);
 
 public:
   RuntimeDyldImpl(RuntimeDyld::MemoryManager &MemMgr,

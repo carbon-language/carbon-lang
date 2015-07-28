@@ -29,9 +29,9 @@ namespace {
 class LoadedMachOObjectInfo
     : public RuntimeDyld::LoadedObjectInfoHelper<LoadedMachOObjectInfo> {
 public:
-  LoadedMachOObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
-                        unsigned EndIdx)
-      : LoadedObjectInfoHelper(RTDyld, BeginIdx, EndIdx) {}
+  LoadedMachOObjectInfo(RuntimeDyldImpl &RTDyld,
+                        ObjSectionToIDMap ObjSecToIDMap)
+      : LoadedObjectInfoHelper(RTDyld, std::move(ObjSecToIDMap)) {}
 
   OwningBinary<ObjectFile>
   getObjectForDebug(const ObjectFile &Obj) const override {
@@ -334,10 +334,7 @@ RuntimeDyldMachO::create(Triple::ArchType Arch,
 
 std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
 RuntimeDyldMachO::loadObject(const object::ObjectFile &O) {
-  unsigned SectionStartIdx, SectionEndIdx;
-  std::tie(SectionStartIdx, SectionEndIdx) = loadObjectImpl(O);
-  return llvm::make_unique<LoadedMachOObjectInfo>(*this, SectionStartIdx,
-                                                  SectionEndIdx);
+  return llvm::make_unique<LoadedMachOObjectInfo>(*this, loadObjectImpl(O));
 }
 
 } // end namespace llvm

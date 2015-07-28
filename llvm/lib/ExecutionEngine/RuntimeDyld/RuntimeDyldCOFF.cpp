@@ -27,9 +27,8 @@ namespace {
 class LoadedCOFFObjectInfo
     : public RuntimeDyld::LoadedObjectInfoHelper<LoadedCOFFObjectInfo> {
 public:
-  LoadedCOFFObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
-                       unsigned EndIdx)
-      : LoadedObjectInfoHelper(RTDyld, BeginIdx, EndIdx) {}
+  LoadedCOFFObjectInfo(RuntimeDyldImpl &RTDyld, ObjSectionToIDMap ObjSecToIDMap)
+      : LoadedObjectInfoHelper(RTDyld, std::move(ObjSecToIDMap)) {}
 
   OwningBinary<ObjectFile>
   getObjectForDebug(const ObjectFile &Obj) const override {
@@ -55,10 +54,7 @@ llvm::RuntimeDyldCOFF::create(Triple::ArchType Arch,
 
 std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
 RuntimeDyldCOFF::loadObject(const object::ObjectFile &O) {
-  unsigned SectionStartIdx, SectionEndIdx;
-  std::tie(SectionStartIdx, SectionEndIdx) = loadObjectImpl(O);
-  return llvm::make_unique<LoadedCOFFObjectInfo>(*this, SectionStartIdx,
-                                                 SectionEndIdx);
+  return llvm::make_unique<LoadedCOFFObjectInfo>(*this, loadObjectImpl(O));
 }
 
 uint64_t RuntimeDyldCOFF::getSymbolOffset(const SymbolRef &Sym) {

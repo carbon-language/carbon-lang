@@ -277,6 +277,7 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
       if (UseDebugObj) {
         DebugObj = LoadedObjInfo->getObjectForDebug(Obj);
         SymbolObj = DebugObj.getBinary();
+        LoadedObjInfo.release();
       }
     }
 
@@ -308,7 +309,7 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
           StringRef SecName;
           Sec->getName(SecName);
           uint64_t SectionLoadAddress =
-            LoadedObjInfo->getSectionLoadAddress(SecName);
+            LoadedObjInfo->getSectionLoadAddress(*Sec);
           if (SectionLoadAddress != 0)
             Addr += SectionLoadAddress - Sec->getAddress();
         }

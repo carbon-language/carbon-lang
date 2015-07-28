@@ -556,10 +556,11 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
       continue;
     StringRef data;
 
+    section_iterator RelocatedSection = Section.getRelocatedSection();
     // Try to obtain an already relocated version of this section.
     // Else use the unrelocated section from the object file. We'll have to
     // apply relocations ourselves later.
-    if (!L || !L->getLoadedSectionContents(name,data))
+    if (!L || !L->getLoadedSectionContents(*RelocatedSection,data))
       Section.getContents(data);
 
     name = name.substr(name.find_first_not_of("._")); // Skip . and _ prefixes.
@@ -623,7 +624,6 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
       TypesDWOSections[Section].Data = data;
     }
 
-    section_iterator RelocatedSection = Section.getRelocatedSection();
     if (RelocatedSection == Obj.section_end())
       continue;
 
@@ -634,7 +634,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     // If the section we're relocating was relocated already by the JIT,
     // then we used the relocated version above, so we do not need to process
     // relocations for it now.
-    if (L && L->getLoadedSectionContents(RelSecName,RelSecData))
+    if (L && L->getLoadedSectionContents(*RelocatedSection,RelSecData))
       continue;
 
     RelSecName = RelSecName.substr(
@@ -704,7 +704,10 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
           // we need to perform the same computation.
           StringRef SecName;
           RSec->getName(SecName);
-          SectionLoadAddress = L->getSectionLoadAddress(SecName);
+//           llvm::dbgs() << "Name: '" << SecName
+//                        << "', RSec: " << RSec->getRawDataRefImpl()
+//                        << ", Section: " << Section.getRawDataRefImpl() << "\n";
+          SectionLoadAddress = L->getSectionLoadAddress(*RSec);
           if (SectionLoadAddress != 0)
             SymAddr += SectionLoadAddress - RSec->getAddress();
         }

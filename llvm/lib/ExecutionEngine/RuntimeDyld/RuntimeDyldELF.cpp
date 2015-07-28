@@ -107,9 +107,8 @@ void DyldELFObject<ELFT>::updateSymbolAddress(const SymbolRef &SymRef,
 class LoadedELFObjectInfo
     : public RuntimeDyld::LoadedObjectInfoHelper<LoadedELFObjectInfo> {
 public:
-  LoadedELFObjectInfo(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
-                      unsigned EndIdx)
-      : LoadedObjectInfoHelper(RTDyld, BeginIdx, EndIdx) {}
+  LoadedELFObjectInfo(RuntimeDyldImpl &RTDyld, ObjSectionToIDMap ObjSecToIDMap)
+      : LoadedObjectInfoHelper(RTDyld, std::move(ObjSecToIDMap)) {}
 
   OwningBinary<ObjectFile>
   getObjectForDebug(const ObjectFile &Obj) const override;
@@ -118,6 +117,7 @@ public:
 template <typename ELFT>
 std::unique_ptr<DyldELFObject<ELFT>>
 createRTDyldELFObject(MemoryBufferRef Buffer,
+                      const ObjectFile &SourceObject,
                       const LoadedELFObjectInfo &L,
                       std::error_code &ec) {
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
@@ -127,6 +127,7 @@ createRTDyldELFObject(MemoryBufferRef Buffer,
     llvm::make_unique<DyldELFObject<ELFT>>(Buffer, ec);
 
   // Iterate over all sections in the object.
+  auto SI = SourceObject.section_begin();
   for (const auto &Sec : Obj->sections()) {
     StringRef SectionName;
     Sec.getName(SectionName);
@@ -135,12 +136,13 @@ createRTDyldELFObject(MemoryBufferRef Buffer,
       Elf_Shdr *shdr = const_cast<Elf_Shdr *>(
           reinterpret_cast<const Elf_Shdr *>(ShdrRef.p));
 
-      if (uint64_t SecLoadAddr = L.getSectionLoadAddress(SectionName)) {
+      if (uint64_t SecLoadAddr = L.getSectionLoadAddress(*SI)) {
         // This assumes that the address passed in matches the target address
         // bitness. The template-based type cast handles everything else.
         shdr->sh_addr = static_cast<addr_type>(SecLoadAddr);
       }
     }
+    ++SI;
   }
 
   return Obj;
@@ -158,16 +160,20 @@ OwningBinary<ObjectFile> createELFDebugObject(const ObjectFile &Obj,
   std::unique_ptr<ObjectFile> DebugObj;
   if (Obj.getBytesInAddress() == 4 && Obj.isLittleEndian()) {
     typedef ELFType<support::little, false> ELF32LE;
-    DebugObj = createRTDyldELFObject<ELF32LE>(Buffer->getMemBufferRef(), L, ec);
+    DebugObj = createRTDyldELFObject<ELF32LE>(Buffer->getMemBufferRef(), Obj, L,
+                                              ec);
   } else if (Obj.getBytesInAddress() == 4 && !Obj.isLittleEndian()) {
     typedef ELFType<support::big, false> ELF32BE;
-    DebugObj = createRTDyldELFObject<ELF32BE>(Buffer->getMemBufferRef(), L, ec);
+    DebugObj = createRTDyldELFObject<ELF32BE>(Buffer->getMemBufferRef(), Obj, L,
+                                              ec);
   } else if (Obj.getBytesInAddress() == 8 && !Obj.isLittleEndian()) {
     typedef ELFType<support::big, true> ELF64BE;
-    DebugObj = createRTDyldELFObject<ELF64BE>(Buffer->getMemBufferRef(), L, ec);
+    DebugObj = createRTDyldELFObject<ELF64BE>(Buffer->getMemBufferRef(), Obj, L,
+                                              ec);
   } else if (Obj.getBytesInAddress() == 8 && Obj.isLittleEndian()) {
     typedef ELFType<support::little, true> ELF64LE;
-    DebugObj = createRTDyldELFObject<ELF64LE>(Buffer->getMemBufferRef(), L, ec);
+    DebugObj = createRTDyldELFObject<ELF64LE>(Buffer->getMemBufferRef(), Obj, L,
+                                              ec);
   } else
     llvm_unreachable("Unexpected ELF format");
 
@@ -215,10 +221,7 @@ void RuntimeDyldELF::deregisterEHFrames() {
 
 std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
 RuntimeDyldELF::loadObject(const object::ObjectFile &O) {
-  unsigned SectionStartIdx, SectionEndIdx;
-  std::tie(SectionStartIdx, SectionEndIdx) = loadObjectImpl(O);
-  return llvm::make_unique<LoadedELFObjectInfo>(*this, SectionStartIdx,
-                                                SectionEndIdx);
+  return llvm::make_unique<LoadedELFObjectInfo>(*this, loadObjectImpl(O));
 }
 
 void RuntimeDyldELF::resolveX86_64Relocation(const SectionEntry &Section,
