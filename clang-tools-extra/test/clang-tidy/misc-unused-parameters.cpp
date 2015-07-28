@@ -1,5 +1,11 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-unused-parameters %t
+// RUN: echo "static void staticFunctionHeader(int i) {}" > %T/header.h
+// RUN: echo "static void staticFunctionHeader(int  /*i*/) {}" > %T/header-fixed.h
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-unused-parameters %t -header-filter='.*' --
+// RUN: diff %T/header.h %T/header-fixed.h
 // REQUIRES: shell
+
+#include "header.h"
+// CHECK-MESSAGES: header.h:1:38: warning
 
 // Basic removal
 // =============

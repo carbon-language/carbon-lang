@@ -70,7 +70,9 @@ void UnusedParametersCheck::warnOnUnusedParameter(
   };
 
   // Comment out parameter name for non-local functions.
-  if (Function->isExternallyVisible() || UsedByRef()) {
+  if (Function->isExternallyVisible() ||
+      !Result.SourceManager->isInMainFile(Function->getLocation()) ||
+      UsedByRef()) {
     SourceRange RemovalRange(Param->getLocation(), Param->getLocEnd());
     // Note: We always add a space before the '/*' to not accidentally create a
     // '*/*' for pointer types, which doesn't start a comment. clang-format will
