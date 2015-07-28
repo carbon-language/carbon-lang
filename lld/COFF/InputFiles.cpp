@@ -145,6 +145,10 @@ std::error_code ObjectFile::initializeChunks() {
       Directives = std::string((const char *)Data.data(), Data.size());
       continue;
     }
+    // Skip non-DWARF debug info. MSVC linker converts the sections into
+    // a PDB file, but we don't support that.
+    if (Name == ".debug" || Name.startswith(".debug$"))
+      continue;
     // We want to preserve DWARF debug sections only when /debug is on.
     if (!Config->Debug && Name.startswith(".debug"))
       continue;
