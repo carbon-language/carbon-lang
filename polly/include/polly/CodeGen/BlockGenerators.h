@@ -193,8 +193,8 @@ protected:
   ///                                           x2.phiops = s1
   ///        |                                    |
   ///        |   <--<--<--<--<                    |   <--<--<--<--<
-  ///        | /              \                   | /              \
-  ///        V V               \                  V V               \
+  ///        | /              \                   | /              \     .
+  ///        V V               \                  V V               \    .
   /// S2:  x2 = phi (x1, add)   |        S2:    x2 = x2.phiops       |
   ///                           |               x2.s2a = x2          |
   ///                           |                                    |
@@ -228,8 +228,8 @@ protected:
   ///             x2.s2a = s1             // use .s2a instead of .phiops
   ///               |
   ///               |   <--<--<--<--<
-  ///               | /              \
-  ///               V V               \
+  ///               | /              \    .
+  ///               V V               \   .
   ///      S2:    x2 = x2.s2a          |  // value is same as above, but read
   ///                                  |  // from .s2a
   ///                                  |
