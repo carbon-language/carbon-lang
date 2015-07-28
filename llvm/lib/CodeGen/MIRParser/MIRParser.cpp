@@ -103,11 +103,11 @@ public:
                                    const yaml::MachineBasicBlock &YamlMBB,
                                    const PerFunctionMIParsingState &PFS);
 
-  bool initializeRegisterInfo(MachineFunction &MF, MachineRegisterInfo &RegInfo,
+  bool initializeRegisterInfo(MachineFunction &MF,
                               const yaml::MachineFunction &YamlMF,
                               PerFunctionMIParsingState &PFS);
 
-  bool initializeFrameInfo(MachineFunction &MF, MachineFrameInfo &MFI,
+  bool initializeFrameInfo(MachineFunction &MF,
                            const yaml::MachineFunction &YamlMF,
                            PerFunctionMIParsingState &PFS);
 
@@ -276,9 +276,9 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
   PerFunctionMIParsingState PFS;
-  if (initializeRegisterInfo(MF, MF.getRegInfo(), YamlMF, PFS))
+  if (initializeRegisterInfo(MF, YamlMF, PFS))
     return true;
-  if (initializeFrameInfo(MF, *MF.getFrameInfo(), YamlMF, PFS))
+  if (initializeFrameInfo(MF, YamlMF, PFS))
     return true;
   if (!YamlMF.Constants.empty()) {
     auto *ConstantPool = MF.getConstantPool();
@@ -377,9 +377,9 @@ bool MIRParserImpl::initializeMachineBasicBlock(
 }
 
 bool MIRParserImpl::initializeRegisterInfo(MachineFunction &MF,
-                                           MachineRegisterInfo &RegInfo,
                                            const yaml::MachineFunction &YamlMF,
                                            PerFunctionMIParsingState &PFS) {
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
   assert(RegInfo.isSSA());
   if (!YamlMF.IsSSA)
     RegInfo.leaveSSA();
@@ -428,9 +428,9 @@ bool MIRParserImpl::initializeRegisterInfo(MachineFunction &MF,
 }
 
 bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
-                                        MachineFrameInfo &MFI,
                                         const yaml::MachineFunction &YamlMF,
                                         PerFunctionMIParsingState &PFS) {
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
   const Function &F = *MF.getFunction();
   const yaml::MachineFrameInfo &YamlMFI = YamlMF.FrameInfo;
   MFI.setFrameAddressIsTaken(YamlMFI.IsFrameAddressTaken);
