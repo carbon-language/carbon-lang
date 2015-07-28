@@ -150,6 +150,11 @@ def FeatureAClass : SubtargetFeature<"aclass", "ARMProcClass", "AClass",
 def FeatureNaClTrap : SubtargetFeature<"nacl-trap", "UseNaClTrap", "true",
                                        "NaCl trap">;
 
+def FeatureStrictAlign : SubtargetFeature<"strict-align",
+                                          "StrictAlign", "true",
+                                          "Disallow all unaligned memory "
+                                          "access">;
+
 def FeatureLongCalls : SubtargetFeature<"long-calls", "GenLongCalls", "true",
                                         "Generate calls via indirect call "
                                         "instructions">;

@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -mcpu=cortex-a8 -pre-RA-sched=source -disable-post-ra | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv6m-apple-ios -mcpu=cortex-m0 -pre-RA-sched=source -disable-post-ra | FileCheck %s -check-prefix=CHECK-T1
+; RUN: llc < %s -mtriple=thumbv6m-apple-ios -mcpu=cortex-m0 -pre-RA-sched=source -disable-post-ra -mattr=+strict-align | FileCheck %s -check-prefix=CHECK-T1
 %struct.x = type { i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8 }
 
 @src = external global %struct.x

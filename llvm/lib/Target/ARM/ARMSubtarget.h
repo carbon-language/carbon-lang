@@ -190,10 +190,10 @@ protected:
   /// particularly effective at zeroing a VFP register.
   bool HasZeroCycleZeroing;
 
-  /// AllowsUnalignedMem - If true, the subtarget allows unaligned memory
+  /// StrictAlign - If true, the subtarget disallows unaligned memory
   /// accesses for some types.  For details, see
   /// ARMTargetLowering::allowsMisalignedMemoryAccesses().
-  bool AllowsUnalignedMem;
+  bool StrictAlign;
 
   /// RestrictIT - If true, the subtarget disallows generation of deprecated IT
   ///  blocks to conform to ARMv8 rule.
@@ -409,10 +409,6 @@ public:
   bool isRClass() const { return ARMProcClass == RClass; }
   bool isAClass() const { return ARMProcClass == AClass; }
 
-  bool isV6M() const {
-    return isThumb1Only() && isMClass();
-  }
-
   bool isR9Reserved() const {
     return isTargetMachO() ? (ReserveR9 || !HasV6Ops) : ReserveR9;
   }
@@ -421,7 +417,7 @@ public:
 
   bool supportsTailCall() const { return SupportsTailCall; }
 
-  bool allowsUnalignedMem() const { return AllowsUnalignedMem; }
+  bool allowsUnalignedMem() const { return !StrictAlign; }
 
   bool restrictIT() const { return RestrictIT; }
 

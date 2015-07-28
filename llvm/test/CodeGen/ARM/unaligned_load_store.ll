@@ -1,7 +1,7 @@
-; RUN: llc -mtriple=arm-eabi -pre-RA-sched=source %s -o - \
+; RUN: llc -mtriple=arm-eabi -pre-RA-sched=source -mattr=+strict-align %s -o - \
 ; RUN:	| FileCheck %s -check-prefix=EXPANDED
 
-; RUN: llc -mtriple=armv6-apple-darwin -mcpu=cortex-a8 -mattr=-neon -arm-strict-align -pre-RA-sched=source %s -o - \
+; RUN: llc -mtriple=armv6-apple-darwin -mcpu=cortex-a8 -mattr=-neon,+strict-align -pre-RA-sched=source %s -o - \
 ; RUN:	| FileCheck %s -check-prefix=EXPANDED
 
 ; RUN: llc -mtriple=armv6-apple-darwin -mcpu=cortex-a8 %s -o - \

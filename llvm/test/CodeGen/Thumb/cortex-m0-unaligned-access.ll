@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumbv6m-apple-unknown-macho < %s | FileCheck --check-prefix=V6M %s
+; RUN: llc -mtriple=thumbv6m-apple-unknown-macho -mattr=+strict-align < %s | FileCheck --check-prefix=V6M %s
 ; RUN: llc -mtriple=thumbv7m-apple-unknown-macho < %s | FileCheck --check-prefix=V7M %s
 
 define i32 @split_load(i32* %p) nounwind {
