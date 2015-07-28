@@ -217,8 +217,9 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-; Don't merge pointers if there is some other check which could be falsely
-; invalidated. For example, in the following loop:
+; Don't merge pointers if we need to perform a check against a pointer
+; to the same underlying object (doing so would emit a check that could be
+; falsely invalidated) For example, in the following loop:
 ;
 ; for (i = 0; i < 5000; ++i)
 ;   a[i + offset] = a[i] + a[i + 10000]
@@ -226,6 +227,10 @@ for.end:                                          ; preds = %for.body
 ; we should not merge the intervals associated with the reads (0,5000) and
 ; (10000, 15000) into (0, 15000) as this will pottentially fail the check
 ; against the interval associated with the write.
+;
+; We cannot have this check unless ShouldRetryWithRuntimeCheck is set,
+; and therefore the grouping algorithm would create a separate group for
+; each pointer.
 
 ; CHECK: function 'testi':
 ; CHECK: Run-time memory checks:

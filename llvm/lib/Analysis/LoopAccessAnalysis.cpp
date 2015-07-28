@@ -237,8 +237,31 @@ void RuntimePointerChecking::groupChecks(
 
   CheckingGroups.clear();
 
+  // If we need to check two pointers to the same underlying object
+  // with a non-constant difference, we shouldn't perform any pointer
+  // grouping with those pointers. This is because we can easily get
+  // into cases where the resulting check would return false, even when
+  // the accesses are safe.
+  //
+  // The following example shows this:
+  // for (i = 0; i < 1000; ++i)
+  //   a[5000 + i * m] = a[i] + a[i + 9000]
+  //
+  // Here grouping gives a check of (5000, 5000 + 1000 * m) against
+  // (0, 10000) which is always false. However, if m is 1, there is no
+  // dependence. Not grouping the checks for a[i] and a[i + 9000] allows
+  // us to perform an accurate check in this case.
+  //
+  // The above case requires that we have an UnknownDependence between
+  // accesses to the same underlying object. This cannot happen unless
+  // ShouldRetryWithRuntimeCheck is set, and therefore UseDependencies
+  // is also false. In this case we will use the fallback path and create
+  // separate checking groups for all pointers.
+ 
   // If we don't have the dependency partitions, construct a new
-  // checking pointer group for each pointer.
+  // checking pointer group for each pointer. This is also required
+  // for correctness, because in this case we can have checking between
+  // pointers to the same underlying object.
   if (!UseDependencies) {
     for (unsigned I = 0; I < Pointers.size(); ++I)
       CheckingGroups.push_back(CheckingPtrGroup(I, *this));
