@@ -65,7 +65,7 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   StringRef Name = *NameOrErr;
   if (Sym->isUndefined())
     return new (Alloc) Undefined(Name);
-  return new (Alloc) DefinedRegular<ELFT>(Name);
+  return new (Alloc) DefinedRegular<ELFT>(this, Sym);
 }
 
 namespace lld {

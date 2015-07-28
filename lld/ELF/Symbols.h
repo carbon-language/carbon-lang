@@ -21,6 +21,7 @@ using llvm::object::ELFFile;
 class Chunk;
 class InputFile;
 class SymbolBody;
+template <class ELFT> class ObjectFile;
 
 // A real symbol object, SymbolBody, is usually accessed indirectly
 // through a Symbol. There's always one Symbol for each symbol name.
@@ -40,14 +41,13 @@ public:
     UndefinedKind,
   };
 
-  Kind kind() const { return SymbolKind; }
-  virtual ~SymbolBody() {}
+  Kind kind() const { return static_cast<Kind>(SymbolKind); }
 
   // Returns true if this is an external symbol.
-  virtual bool isExternal() { return true; }
+  bool isExternal() const { return true; }
 
   // Returns the symbol name.
-  virtual StringRef getName() = 0;
+  StringRef getName() const { return Name; }
 
   // A SymbolBody has a backreference to a Symbol. Originally they are
   // doubly-linked. A backreference will never change. But the pointer
@@ -64,10 +64,13 @@ public:
   int compare(SymbolBody *Other);
 
 protected:
-  SymbolBody(Kind K) : SymbolKind(K) {}
+  SymbolBody(Kind K, StringRef N = "")
+      : SymbolKind(K), IsExternal(true), Name(N) {}
 
-private:
-  const Kind SymbolKind;
+protected:
+  const unsigned SymbolKind : 8;
+  unsigned IsExternal : 1;
+  StringRef Name;
   Symbol *Backref = nullptr;
 };
 
@@ -75,7 +78,7 @@ private:
 // etc.
 class Defined : public SymbolBody {
 public:
-  Defined(Kind K) : SymbolBody(K) {}
+  Defined(Kind K, StringRef N = "") : SymbolBody(K, N) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
@@ -85,31 +88,28 @@ public:
 
 // Regular defined symbols read from object file symbol tables.
 template <class ELFT> class DefinedRegular : public Defined {
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+
 public:
-  DefinedRegular(StringRef Name) : Defined(DefinedRegularKind), Name(Name) {}
+  DefinedRegular(ObjectFile<ELFT> *F, const Elf_Sym *S);
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
   }
 
-  StringRef getName() override { return Name; }
-
 private:
-  StringRef Name;
+  ObjectFile<ELFT> *File;
+  const Elf_Sym *Sym;
 };
 
 // Undefined symbols.
 class Undefined : public SymbolBody {
 public:
-  explicit Undefined(StringRef N) : SymbolBody(UndefinedKind), Name(N) {}
+  explicit Undefined(StringRef N) : SymbolBody(UndefinedKind, N) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
   }
-  StringRef getName() override { return Name; }
-
-private:
-  StringRef Name;
 };
 
 } // namespace elf2
