@@ -11,4 +11,7 @@ set_target_properties(GPURuntime
   PREFIX "lib"
   )
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default ")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-sanitize=all ")
+endif()
