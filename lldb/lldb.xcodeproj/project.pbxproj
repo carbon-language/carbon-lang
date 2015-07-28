@@ -2605,10 +2605,6 @@
 		AF3F54AF1B3BA59C00186E73 /* CrashReason.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReason.h; sourceTree = "<group>"; };
 		AF3F54B21B3BA5D500186E73 /* POSIXStopInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = POSIXStopInfo.cpp; sourceTree = "<group>"; };
 		AF3F54B31B3BA5D500186E73 /* POSIXStopInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = POSIXStopInfo.h; sourceTree = "<group>"; };
-		AF3F54B41B3BA5D500186E73 /* POSIXThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = POSIXThread.cpp; sourceTree = "<group>"; };
-		AF3F54B51B3BA5D500186E73 /* POSIXThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = POSIXThread.h; sourceTree = "<group>"; };
-		AF3F54B61B3BA5D500186E73 /* ProcessPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessPOSIX.cpp; sourceTree = "<group>"; };
-		AF3F54B71B3BA5D500186E73 /* ProcessPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessPOSIX.h; sourceTree = "<group>"; };
 		AF3F54B81B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_arm.cpp; sourceTree = "<group>"; };
 		AF3F54B91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_arm.h; sourceTree = "<group>"; };
 		AF3F54BA1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_arm64.cpp; sourceTree = "<group>"; };
@@ -2905,10 +2901,6 @@
 			children = (
 				AF3F54B21B3BA5D500186E73 /* POSIXStopInfo.cpp */,
 				AF3F54B31B3BA5D500186E73 /* POSIXStopInfo.h */,
-				AF3F54B41B3BA5D500186E73 /* POSIXThread.cpp */,
-				AF3F54B51B3BA5D500186E73 /* POSIXThread.h */,
-				AF3F54B61B3BA5D500186E73 /* ProcessPOSIX.cpp */,
-				AF3F54B71B3BA5D500186E73 /* ProcessPOSIX.h */,
 				AF3F54B81B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.cpp */,
 				AF3F54B91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h */,
 				AF3F54BA1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.cpp */,
