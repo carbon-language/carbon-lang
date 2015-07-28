@@ -6663,6 +6663,10 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     assert((VT.getSizeInBits() == 128 || Subtarget->hasAVX2()) &&
            "256-bit byte-blends require AVX2 support!");
 
+    // Attempt to lower to a bitmask if we can. VPAND is faster than VPBLENDVB.
+    if (SDValue Masked = lowerVectorShuffleAsBitMask(DL, VT, V1, V2, Mask, DAG))
+      return Masked;
+
     // Scale the blend by the number of bytes per element.
     int Scale = VT.getScalarSizeInBits() / 8;
 
@@ -9070,6 +9074,10 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue V = tryToWidenViaDuplication())
       return V;
   }
+
+  if (SDValue Masked =
+          lowerVectorShuffleAsBitMask(DL, MVT::v16i8, V1, V2, Mask, DAG))
+    return Masked;
 
   // Use dedicated unpack instructions for masks that match their pattern.
   if (isShuffleEquivalent(V1, V2, Mask, {// Low half.
