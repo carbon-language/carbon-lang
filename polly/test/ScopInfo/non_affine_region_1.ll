@@ -21,20 +21,20 @@
 ; CHECK:       Region: %bb1---%bb21
 ; CHECK:       Stmt_bb3
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [b] -> { Stmt_bb3[i0] -> MemRef_x_1[] };
+; CHECK:                 [b] -> { Stmt_bb3[i0] -> MemRef_x_1__phi[] };
 ; CHECK:       Stmt_bb7
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [b] -> { Stmt_bb7[i0] -> MemRef_x_1[] };
+; CHECK:                 [b] -> { Stmt_bb7[i0] -> MemRef_x_1__phi[] };
 ; CHECK:       Stmt_bb8
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [b] -> { Stmt_bb8[i0] -> MemRef_x_1[] };
+; CHECK:                 [b] -> { Stmt_bb8[i0] -> MemRef_x_1__phi[] };
 ; CHECK:       Stmt_bb10__TO__bb18
 ; CHECK-NEXT:        Domain :=
 ; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] : i0 >= 0 and i0 <= 1023 };
 ; CHECK-NEXT:        Schedule :=
 ; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> [i0, 3] };
 ; CHECK-NEXT:        ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> MemRef_x_1[] }
+; CHECK-NEXT:            [b] -> { Stmt_bb10__TO__bb18[i0] -> MemRef_x_1__phi[] }
 ; CHECK-NOT:   [Scalar: 1]
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

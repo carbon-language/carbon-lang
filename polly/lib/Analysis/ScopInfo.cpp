@@ -350,10 +350,12 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
 }
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
-                             const SmallVector<const SCEV *, 4> &DimensionSizes)
+                             const SmallVector<const SCEV *, 4> &DimensionSizes,
+                             bool IsPHI)
     : BasePtr(BasePtr), ElementType(ElementType),
-      DimensionSizes(DimensionSizes) {
-  const std::string BasePtrName = getIslCompatibleName("MemRef_", BasePtr, "");
+      DimensionSizes(DimensionSizes), IsPHI(IsPHI) {
+  std::string BasePtrName =
+      getIslCompatibleName("MemRef_", BasePtr, IsPHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
 }
 
@@ -890,7 +892,7 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
 
     Type *ElementType = getAccessInstType(AccessInst);
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
-        Access.getBase(), ElementType, Access.Sizes);
+        Access.getBase(), ElementType, Access.Sizes, Access.isPHI());
 
     if (isApproximated && Access.isWrite())
       Access.setMayWrite();
@@ -1705,15 +1707,17 @@ Scop::~Scop() {
 
 const ScopArrayInfo *
 Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
-                               const SmallVector<const SCEV *, 4> &Sizes) {
-  auto &SAI = ScopArrayInfoMap[BasePtr];
+                               const SmallVector<const SCEV *, 4> &Sizes,
+                               bool IsPHI) {
+  auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)];
   if (!SAI)
-    SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes));
+    SAI.reset(
+        new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI));
   return SAI.get();
 }
 
-const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr) {
-  const ScopArrayInfo *SAI = ScopArrayInfoMap[BasePtr].get();
+const ScopArrayInfo *Scop::getScopArrayInfo(Value *BasePtr, bool IsPHI) {
+  auto *SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)].get();
   assert(SAI && "No ScopArrayInfo available for this base pointer");
   return SAI;
 }

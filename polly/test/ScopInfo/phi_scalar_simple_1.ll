@@ -17,7 +17,7 @@ entry:
 for.cond:                                         ; preds = %for.inc4, %entry
 ; CHECK-LABEL: Stmt_for_cond
 ; CHECK:       ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
+; CHECK:           [N] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0__phi[] };
 ; CHECK-NOT: Access
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:           [N] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
@@ -36,20 +36,20 @@ for.body:                                         ; preds = %for.cond
 ; CHECK:           [N] -> { Stmt_for_body[i0] -> MemRef_x_addr_0[] };
 ; CHECK-NOT: Access
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_body[i0] -> MemRef_x_addr_1[] };
+; CHECK:           [N] -> { Stmt_for_body[i0] -> MemRef_x_addr_1__phi[] };
 ; CHECK-NOT: Access
   br label %for.cond1
 
 for.cond1:                                        ; preds = %for.inc, %for.body
 ; CHECK-LABEL: Stmt_for_cond1
 ; CHECK:       ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1[] };
+; CHECK:           [N] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1__phi[] };
 ; CHECK-NOT: Access
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:           [N] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1[] };
 ; CHECK-NOT: Access
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1_lcssa[] };
+; CHECK:           [N] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1_lcssa__phi[] };
 ; CHECK-NOT: Access
   %x.addr.1 = phi i32 [ %x.addr.0, %for.body ], [ %add, %for.inc ]
   %j.0 = phi i32 [ 3, %for.body ], [ %inc, %for.inc ]
@@ -62,7 +62,7 @@ for.body3:                                        ; preds = %for.cond1
 for.inc:                                          ; preds = %for.body3
 ; CHECK-LABEL: Stmt_for_inc
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_inc[i0, i1] -> MemRef_x_addr_1[] };
+; CHECK:           [N] -> { Stmt_for_inc[i0, i1] -> MemRef_x_addr_1__phi[] };
 ; CHECK-NOT: Access
 ; CHECK:       ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:           [N] -> { Stmt_for_inc[i0, i1] -> MemRef_x_addr_1[] };
@@ -83,7 +83,7 @@ for.end:                                          ; preds = %for.cond1
 ; CHECK:           [N] -> { Stmt_for_end[i0] -> MemRef_x_addr_1_lcssa[] };
 ; CHECK-NOT: Access
 ; CHECK:       ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_end[i0] -> MemRef_x_addr_1_lcssa[] };
+; CHECK:           [N] -> { Stmt_for_end[i0] -> MemRef_x_addr_1_lcssa__phi[] };
 ; CHECK-NOT: Access
   %x.addr.1.lcssa = phi i32 [ %x.addr.1, %for.cond1 ]
   br label %for.inc4
@@ -95,7 +95,7 @@ for.inc4:                                         ; preds = %for.end
 ; CHECK:           [N] -> { Stmt_for_inc4[i0] -> MemRef_x_addr_1_lcssa[] };
 ; CHECK-NOT: Access
 ; CHECK:       MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:           [N] -> { Stmt_for_inc4[i0] -> MemRef_x_addr_0[] };
+; CHECK:           [N] -> { Stmt_for_inc4[i0] -> MemRef_x_addr_0__phi[] };
 ; CHECK-NOT: Access
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   br label %for.cond

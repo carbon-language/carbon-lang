@@ -141,12 +141,14 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
 
     Written = true;
 
-    IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true);
+    IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true,
+                          /* IsPHI */ true);
     AccFuncMap[OpBB].push_back(std::make_pair(ScalarAccess, OpI));
   }
 
   if (Written) {
-    IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true);
+    IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true,
+                          /* IsPHI */ true);
     Functions.push_back(std::make_pair(ScalarAccess, PHI));
   }
 }

@@ -48,20 +48,27 @@ private:
   TypeKind Type;
   bool IsAffine;
 
+  /// @brief Is this IRAccess modeling special PHI node accesses?
+  bool IsPHI;
+
 public:
   SmallVector<const SCEV *, 4> Subscripts, Sizes;
 
+  /// @brief Create a new IRAccess
+  ///
+  /// @param IsPHI Are we modeling special PHI node accesses?
   explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
-                    unsigned elemBytes, bool Affine)
+                    unsigned elemBytes, bool Affine, bool IsPHI = false)
       : BaseAddress(BaseAddress), Offset(Offset), ElemBytes(elemBytes),
-        Type(Type), IsAffine(Affine) {}
+        Type(Type), IsAffine(Affine), IsPHI(IsPHI) {}
 
   explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
                     unsigned elemBytes, bool Affine,
                     SmallVector<const SCEV *, 4> Subscripts,
                     SmallVector<const SCEV *, 4> Sizes)
       : BaseAddress(BaseAddress), Offset(Offset), ElemBytes(elemBytes),
-        Type(Type), IsAffine(Affine), Subscripts(Subscripts), Sizes(Sizes) {}
+        Type(Type), IsAffine(Affine), IsPHI(false), Subscripts(Subscripts),
+        Sizes(Sizes) {}
 
   enum TypeKind getType() const { return Type; }
 
@@ -82,6 +89,9 @@ public:
   bool isMayWrite() const { return Type == MAY_WRITE; }
 
   bool isScalar() const { return Subscripts.size() == 0; }
+
+  // @brief Is this IRAccess modeling special PHI node accesses?
+  bool isPHI() const { return IsPHI; }
 
   void print(raw_ostream &OS) const;
 };

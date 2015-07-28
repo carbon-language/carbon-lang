@@ -162,12 +162,13 @@ protected:
   /// memory location in the 'PHIOpMap' table. The memory locations in
   /// 'PHIOpMap' end with '.phiops'.
   ///
-  /// An access to/from memory that belongs to a PHI node is in the ScopInfo
-  /// always modeled with the name of the PHI node. However, in reality PHI
-  /// nodes can introduce reads/writes to two different memory locations, the
-  /// normal '.s2a' locations and the special '.phiops' locations. We do not
-  /// track this difference in the polyhedral description, but only through
-  /// the content of the two maps 'ScalarMap' and 'PHIOpMap'.
+  /// The ScopArrayInfo objects of accesses that belong to a PHI node may have
+  /// identical base pointers, even though they refer to two different memory
+  /// locations, the normal '.s2a' locations and the special '.phiops'
+  /// locations. For historic reasons we keep such accesses in two maps
+  /// 'ScalarMap' and 'PHIOpMap', index by the BasePointer. An alternative
+  /// implemenation, could use a single map that uses the ScopArrayInfo object
+  /// as index.
   ///
   /// Example:
   ///

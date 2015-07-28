@@ -76,8 +76,9 @@ public:
   /// @param ElementType    The type of the elements stored in the array.
   /// @param IslCtx         The isl context used to create the base pointer id.
   /// @param DimensionSizes A vector containing the size of each dimension.
+  /// @param IsPHI          Is this a PHI node specific array info object.
   ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
-                const SmallVector<const SCEV *, 4> &DimensionSizes);
+                const SmallVector<const SCEV *, 4> &DimensionSizes, bool IsPHI);
 
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();
@@ -106,6 +107,18 @@ public:
   /// @brief Return the isl id for the base pointer.
   __isl_give isl_id *getBasePtrId() const;
 
+  /// @brief Is this array info modeling special PHI node memory?
+  ///
+  /// During code generation of PHI nodes, there is a need for two kinds of
+  /// virtual storage. The normal one as it is used for all scalar dependences,
+  /// where the result of the PHI node is stored and later loaded from as well
+  /// as a second one where the incoming values of the PHI nodes are stored
+  /// into and reloaded when the PHI is executed. As both memories use the
+  /// original PHI node as virtual base pointer, we have this additional
+  /// attribute to distinguish the PHI node specific array modeling from the
+  /// normal scalar array modeling.
+  bool isPHI() const { return IsPHI; };
+
   /// @brief Dump a readable representation to stderr.
   void dump() const;
 
@@ -131,6 +144,9 @@ private:
 
   /// @brief The sizes of each dimension.
   SmallVector<const SCEV *, 4> DimensionSizes;
+
+  /// @brief Is this PHI node specific storage?
+  bool IsPHI;
 };
 
 /// @brief Represent memory accesses in statements.
@@ -757,9 +773,13 @@ private:
   /// Constraints on parameters.
   isl_set *Context;
 
-  typedef MapVector<const Value *, std::unique_ptr<ScopArrayInfo>>
-      ArrayInfoMapTy;
+  typedef MapVector<std::pair<const Value *, int>,
+                    std::unique_ptr<ScopArrayInfo>> ArrayInfoMapTy;
   /// @brief A map to remember ScopArrayInfo objects for all base pointers.
+  ///
+  /// As PHI nodes may have two array info objects associated, we add a flag
+  /// that distinguishes between the PHI node specific ArrayInfo object
+  /// and the normal one.
   ArrayInfoMapTy ScopArrayInfoMap;
 
   /// @brief The assumptions under which this scop was built.
@@ -1031,12 +1051,18 @@ public:
   /// @brief Return the (possibly new) ScopArrayInfo object for @p Access.
   ///
   /// @param ElementType The type of the elements stored in this array.
+  /// @param IsPHI       Is this ScopArrayInfo object modeling special
+  ///                    PHI node storage.
   const ScopArrayInfo *
   getOrCreateScopArrayInfo(Value *BasePtr, Type *ElementType,
-                           const SmallVector<const SCEV *, 4> &Sizes);
+                           const SmallVector<const SCEV *, 4> &Sizes,
+                           bool IsPHI = false);
 
   /// @brief Return the cached ScopArrayInfo object for @p BasePtr.
-  const ScopArrayInfo *getScopArrayInfo(Value *BasePtr);
+  ///
+  /// @param BasePtr The base pointer the object has been stored for
+  /// @param IsPHI   Are we looking for special PHI storage.
+  const ScopArrayInfo *getScopArrayInfo(Value *BasePtr, bool IsPHI = false);
 
   void setContext(isl_set *NewContext);
 

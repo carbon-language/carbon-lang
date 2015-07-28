@@ -13,17 +13,17 @@
 ; CHECK-LABEL:      Stmt_if_else
 ; CHECK-NOT: Access
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [c] -> { Stmt_if_else[i0] -> MemRef_phi[] };
+; CHECK:                [c] -> { Stmt_if_else[i0] -> MemRef_phi__phi[] };
 ; CHECK-NOT: Access
 ; CHECK-LABEL:      Stmt_if_then
 ; CHECK-NOT: Access
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [c] -> { Stmt_if_then[i0] -> MemRef_phi[] };
+; CHECK:                [c] -> { Stmt_if_then[i0] -> MemRef_phi__phi[] };
 ; CHECK-NOT: Access
 ; CHECK-LABEL:      Stmt_if_end
 ; CHECK-NOT: Access
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [c] -> { Stmt_if_end[i0] -> MemRef_phi[] };
+; CHECK:                [c] -> { Stmt_if_end[i0] -> MemRef_phi__phi[] };
 ; CHECK-NOT: Access
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                [c] -> { Stmt_if_end[i0] -> MemRef_A[i0] };

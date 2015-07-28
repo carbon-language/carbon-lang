@@ -20,7 +20,7 @@ for.cond:                                         ; preds = %for.inc5, %entry
 ; CHECK-LABEL: Stmt_for_cond
 ; CHECK-NOT: Access
 ; CHECK:     ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
+; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0__phi[] };
 ; CHECK-NOT: Access
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
@@ -45,7 +45,7 @@ for.body:                                         ; preds = %for.cond
 ; CHECK:         [N, c] -> { Stmt_for_body[i0] -> MemRef_x_addr_0[] };
 ; CHECK-NOT: Access
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_for_body[i0] -> MemRef_x_addr_1[] };
+; CHECK:         [N, c] -> { Stmt_for_body[i0] -> MemRef_x_addr_1__phi[] };
 ; CHECK-NOT: Access
   br label %for.cond1
 
@@ -56,7 +56,7 @@ for.cond1:                                        ; preds = %for.inc, %for.body
 ; CHECK:         [N, c] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1[] };
 ; CHECK-NOT: Access
 ; CHECK:     ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1[] };
+; CHECK:         [N, c] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1__phi[] };
 ; CHECK-NOT: Access
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_for_cond1[i0, i1] -> MemRef_x_addr_1[] };
@@ -76,7 +76,7 @@ for.body3:                                        ; preds = %for.cond1
 ; CHECK:         [N, c] -> { Stmt_for_body3[i0, i1] -> MemRef_x_addr_1[] };
 ; CHECK-NOT: Access
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_for_body3[i0, i1] -> MemRef_x_addr_2[] };
+; CHECK:         [N, c] -> { Stmt_for_body3[i0, i1] -> MemRef_x_addr_2__phi[] };
 ; CHECK-NOT: Access
   %cmp4 = icmp slt i64 %indvars.iv, %tmp1
   br i1 %cmp4, label %if.then, label %if.end
@@ -91,7 +91,7 @@ if.then:                                          ; preds = %for.body3
 ; CHECK:         [N, c] -> { Stmt_if_then[i0, i1] -> MemRef_A[i0] };
 ; CHECK-NOT: Access
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_if_then[i0, i1] -> MemRef_x_addr_2[] };
+; CHECK:         [N, c] -> { Stmt_if_then[i0, i1] -> MemRef_x_addr_2__phi[] };
 ; CHECK-NOT: Access
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %tmp2 = load i32, i32* %arrayidx, align 4
@@ -105,7 +105,7 @@ if.end:                                           ; preds = %if.then, %for.body3
 ; CHECK:         [N, c] -> { Stmt_if_end[i0, i1] -> MemRef_x_addr_2[] };
 ; CHECK-NOT: Access
 ; CHECK:     ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_if_end[i0, i1] -> MemRef_x_addr_2[] };
+; CHECK:         [N, c] -> { Stmt_if_end[i0, i1] -> MemRef_x_addr_2__phi[] };
 ; CHECK-NOT: Access
   %x.addr.2 = phi i32 [ %add, %if.then ], [ %x.addr.1, %for.body3 ]
   br label %for.inc
@@ -115,7 +115,7 @@ for.inc:                                          ; preds = %if.end
 ; CHECK:     ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_for_inc[i0, i1] -> MemRef_x_addr_2[] };
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_for_inc[i0, i1] -> MemRef_x_addr_1[] };
+; CHECK:         [N, c] -> { Stmt_for_inc[i0, i1] -> MemRef_x_addr_1__phi[] };
   %inc = add nsw i32 %j.0, 1
   br label %for.cond1
 
@@ -127,7 +127,7 @@ for.inc5:                                         ; preds = %for.end
 ; CHECK:     ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_for_inc5[i0] -> MemRef_x_addr_1[] };
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:         [N, c] -> { Stmt_for_inc5[i0] -> MemRef_x_addr_0[] };
+; CHECK:         [N, c] -> { Stmt_for_inc5[i0] -> MemRef_x_addr_0__phi[] };
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   br label %for.cond
 

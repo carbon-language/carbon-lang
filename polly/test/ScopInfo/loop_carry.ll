@@ -54,13 +54,13 @@ bb2:                                              ; preds = %bb, %entry
 ; CHECK:             Schedule :=
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> [i0] };
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_1[] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_1__phi[] };
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05[] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05__phi[] };
 ; CHECK:             ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_1[] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_1__phi[] };
 ; CHECK:             ReadAccess :=       [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05[] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_k_05__phi[] };
 ; CHECK:             MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef_a[1 + i0] };
 ; CHECK:             ReadAccess :=       [Reduction Type: NONE] [Scalar: 0]

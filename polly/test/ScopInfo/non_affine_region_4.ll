@@ -23,9 +23,9 @@
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_x[] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_y[] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_y__phi[] };
 ; CHECK:            MayWriteAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_y[] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_y__phi[] };
 ; CHECK:      Stmt_bb7
 ; CHECK:            Domain :=
 ; CHECK:                { Stmt_bb7[i0] : i0 >= 0 and i0 <= 1023 };
@@ -34,7 +34,7 @@
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:                { Stmt_bb7[i0] -> MemRef_x[] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                { Stmt_bb7[i0] -> MemRef_y[] };
+; CHECK:                { Stmt_bb7[i0] -> MemRef_y__phi[] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:                { Stmt_bb7[i0] -> MemRef_A[i0] };
 ;
