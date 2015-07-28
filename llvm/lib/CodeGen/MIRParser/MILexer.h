@@ -52,6 +52,7 @@ struct MIToken {
     kw_cfi_def_cfa_register,
     kw_cfi_def_cfa_offset,
     kw_blockaddress,
+    kw_target_index,
 
     // Identifier tokens
     Identifier,

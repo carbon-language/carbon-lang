@@ -145,6 +145,9 @@ public:
     return get(pseudoToMCOpcode(Opcode));
   }
 
+  ArrayRef<std::pair<int, const char *>>
+  getSerializableTargetIndices() const override;
+
 //===---------------------------------------------------------------------===//
 // Pure virtual funtions to be implemented by sub-classes.
 //===---------------------------------------------------------------------===//

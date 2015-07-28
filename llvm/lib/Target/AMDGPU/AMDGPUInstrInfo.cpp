@@ -362,3 +362,14 @@ int AMDGPUInstrInfo::pseudoToMCOpcode(int Opcode) const {
 
   return MCOp;
 }
+
+ArrayRef<std::pair<int, const char *>>
+AMDGPUInstrInfo::getSerializableTargetIndices() const {
+  static std::pair<int, const char *> TargetIndices[] = {
+      {AMDGPU::TI_CONSTDATA_START, "amdgpu-constdata-start"},
+      {AMDGPU::TI_SCRATCH_RSRC_DWORD0, "amdgpu-scratch-rsrc-dword0"},
+      {AMDGPU::TI_SCRATCH_RSRC_DWORD1, "amdgpu-scratch-rsrc-dword1"},
+      {AMDGPU::TI_SCRATCH_RSRC_DWORD2, "amdgpu-scratch-rsrc-dword2"},
+      {AMDGPU::TI_SCRATCH_RSRC_DWORD3, "amdgpu-scratch-rsrc-dword3"}};
+  return TargetIndices;
+}

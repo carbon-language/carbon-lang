@@ -457,6 +457,18 @@ void MIPrinter::printStackObjectReference(int FrameIndex) {
     OS << '.' << Operand.Name;
 }
 
+static const char *getTargetIndexName(const MachineFunction &MF, int Index) {
+  const auto *TII = MF.getSubtarget().getInstrInfo();
+  assert(TII && "expected instruction info");
+  auto Indices = TII->getSerializableTargetIndices();
+  for (const auto &I : Indices) {
+    if (I.first == Index) {
+      return I.second;
+    }
+  }
+  return nullptr;
+}
+
 void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
@@ -487,6 +499,17 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     OS << "%const." << Op.getIndex();
     // TODO: Print offset and target flags.
     break;
+  case MachineOperand::MO_TargetIndex: {
+    OS << "target-index(";
+    if (const auto *Name = getTargetIndexName(
+            *Op.getParent()->getParent()->getParent(), Op.getIndex()))
+      OS << Name;
+    else
+      OS << "<unknown>";
+    OS << ')';
+    // TODO: Print the offset and target flags.
+    break;
+  }
   case MachineOperand::MO_JumpTableIndex:
     OS << "%jump-table." << Op.getIndex();
     // TODO: Print target flags.

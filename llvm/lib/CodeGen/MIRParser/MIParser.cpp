@@ -82,6 +82,8 @@ class MIParser {
   StringMap<unsigned> Names2SubRegIndices;
   /// Maps from slot numbers to function's unnamed basic blocks.
   DenseMap<unsigned, const BasicBlock *> Slots2BasicBlocks;
+  /// Maps from target index names to target indices.
+  StringMap<int> Names2TargetIndices;
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
@@ -127,6 +129,7 @@ public:
   bool parseCFIOperand(MachineOperand &Dest);
   bool parseIRBlock(BasicBlock *&BB, const Function &F);
   bool parseBlockAddressOperand(MachineOperand &Dest);
+  bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
@@ -173,6 +176,13 @@ private:
   void initSlots2BasicBlocks();
 
   const BasicBlock *getIRBlock(unsigned Slot);
+
+  void initNames2TargetIndices();
+
+  /// Try to convert a name of target index to the corresponding target index.
+  ///
+  /// Return true if the name isn't a name of a target index.
+  bool getTargetIndex(StringRef Name, int &Index);
 };
 
 } // end anonymous namespace
@@ -808,6 +818,24 @@ bool MIParser::parseBlockAddressOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseTargetIndexOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::kw_target_index));
+  lex();
+  if (expectAndConsume(MIToken::lparen))
+    return true;
+  if (Token.isNot(MIToken::Identifier))
+    return error("expected the name of the target index");
+  int Index = 0;
+  if (getTargetIndex(Token.stringValue(), Index))
+    return error("use of undefined target index '" + Token.stringValue() + "'");
+  lex();
+  if (expectAndConsume(MIToken::rparen))
+    return true;
+  // TODO: Parse the offset and target flags.
+  Dest = MachineOperand::CreateTargetIndex(unsigned(Index), /*Offset=*/0);
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
@@ -846,6 +874,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseCFIOperand(Dest);
   case MIToken::kw_blockaddress:
     return parseBlockAddressOperand(Dest);
+  case MIToken::kw_target_index:
+    return parseTargetIndexOperand(Dest);
   case MIToken::Error:
     return true;
   case MIToken::Identifier:
@@ -965,6 +995,25 @@ const BasicBlock *MIParser::getIRBlock(unsigned Slot) {
   if (BlockInfo == Slots2BasicBlocks.end())
     return nullptr;
   return BlockInfo->second;
+}
+
+void MIParser::initNames2TargetIndices() {
+  if (!Names2TargetIndices.empty())
+    return;
+  const auto *TII = MF.getSubtarget().getInstrInfo();
+  assert(TII && "Expected target instruction info");
+  auto Indices = TII->getSerializableTargetIndices();
+  for (const auto &I : Indices)
+    Names2TargetIndices.insert(std::make_pair(StringRef(I.second), I.first));
+}
+
+bool MIParser::getTargetIndex(StringRef Name, int &Index) {
+  initNames2TargetIndices();
+  auto IndexInfo = Names2TargetIndices.find(Name);
+  if (IndexInfo == Names2TargetIndices.end())
+    return true;
+  Index = IndexInfo->second;
+  return false;
 }
 
 bool llvm::parseMachineInstr(MachineInstr *&MI, SourceMgr &SM,

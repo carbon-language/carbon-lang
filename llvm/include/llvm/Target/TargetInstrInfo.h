@@ -1262,6 +1262,16 @@ public:
     return 5;
   }
 
+  /// Return an array that contains the ids of the target indices (used for the
+  /// TargetIndex machine operand) and their names.
+  ///
+  /// MIR Serialization is able to serialize only the target indices that are
+  /// defined by this method.
+  virtual ArrayRef<std::pair<int, const char *>>
+  getSerializableTargetIndices() const {
+    return None;
+  }
+
 private:
   unsigned CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
