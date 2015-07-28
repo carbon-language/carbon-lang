@@ -11,9 +11,9 @@ struct A {
 
 struct B : public A {
 #ifdef TEST_FOR_ERROR
-  // expected-error@-2 {{ms_struct may not produce MSVC-compatible layouts for classes with base classes or virtual functions}}
+  // expected-error@-2 {{ms_struct may not produce Microsoft-compatible layouts for classes with base classes or virtual functions}}
 #else
-  // expected-warning@-4 {{ms_struct may not produce MSVC-compatible layouts for classes with base classes or virtual functions}}
+  // expected-warning@-4 {{ms_struct may not produce Microsoft-compatible layouts for classes with base classes or virtual functions}}
 #endif
   unsigned long c:16;
 	int d;
@@ -26,9 +26,9 @@ static_assert(__builtin_offsetof(B, d) == 12,
 // rdar://16178895
 struct C {
 #ifdef TEST_FOR_ERROR
-  // expected-error@-2 {{ms_struct may not produce MSVC-compatible layouts for classes with base classes or virtual functions}}
+  // expected-error@-2 {{ms_struct may not produce Microsoft-compatible layouts for classes with base classes or virtual functions}}
 #else
-  // expected-warning@-4 {{ms_struct may not produce MSVC-compatible layouts for classes with base classes or virtual functions}}
+  // expected-warning@-4 {{ms_struct may not produce Microsoft-compatible layouts for classes with base classes or virtual functions}}
 #endif
   virtual void foo();
   long long n;

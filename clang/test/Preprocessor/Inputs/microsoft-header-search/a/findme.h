@@ -1,3 +1,3 @@
 #pragma once
 
-#warning findme.h successfully included using MS search rules
+#warning findme.h successfully included using Microsoft header search rules
