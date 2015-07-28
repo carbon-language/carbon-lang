@@ -351,6 +351,17 @@ const char *GetProcessName() {
   return process_name_cache_str;
 }
 
+static uptr ReadProcessName(/*out*/ char *buf, uptr buf_len) {
+  ReadLongProcessName(buf, buf_len);
+  char *s = const_cast<char *>(StripModuleName(buf));
+  uptr len = internal_strlen(s);
+  if (s != buf) {
+    internal_memmove(buf, s, len);
+    buf[len] = '\0';
+  }
+  return len;
+}
+
 void UpdateProcessName() {
   ReadProcessName(process_name_cache_str, sizeof(process_name_cache_str));
 }

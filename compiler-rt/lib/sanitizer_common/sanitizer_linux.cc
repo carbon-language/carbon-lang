@@ -730,7 +730,7 @@ uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
   return module_name_len;
 }
 
-static uptr ReadLongProcessName(/*out*/ char *buf, uptr buf_len) {
+uptr ReadLongProcessName(/*out*/ char *buf, uptr buf_len) {
 #if SANITIZER_LINUX
   char *tmpbuf;
   uptr tmpsize;
@@ -743,17 +743,6 @@ static uptr ReadLongProcessName(/*out*/ char *buf, uptr buf_len) {
   }
 #endif
   return ReadBinaryName(buf, buf_len);
-}
-
-uptr ReadProcessName(/*out*/ char *buf, uptr buf_len) {
-  ReadLongProcessName(buf, buf_len);
-  char *s = const_cast<char *>(StripModuleName(buf));
-  uptr len = internal_strlen(s);
-  if (s != buf) {
-    internal_memmove(buf, s, len);
-    buf[len] = '\0';
-  }
-  return len;
 }
 
 // Match full names of the form /path/to/base_name{-,.}*

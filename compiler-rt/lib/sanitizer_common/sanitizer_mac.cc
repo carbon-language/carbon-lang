@@ -241,6 +241,10 @@ uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
   return 0;
 }
 
+uptr ReadLongProcessName(/*out*/char *buf, uptr buf_len) {
+  return ReadBinaryName(buf, buf_len);
+}
+
 void ReExec() {
   UNIMPLEMENTED();
 }
