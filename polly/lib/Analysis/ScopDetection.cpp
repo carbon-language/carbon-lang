@@ -487,7 +487,6 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
             SE->collectParametricTerms(AF2, Terms);
           if (auto *AF2 = dyn_cast<SCEVMulExpr>(Op)) {
             SmallVector<const SCEV *, 0> Operands;
-            bool TermsHasInRegionInst = false;
 
             for (auto *MulOp : AF2->operands()) {
               if (auto *Const = dyn_cast<SCEVConstant>(MulOp))
@@ -496,8 +495,6 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
                 if (auto *Inst = dyn_cast<Instruction>(Unknown->getValue())) {
                   if (!Context.CurRegion.contains(Inst))
                     Operands.push_back(MulOp);
-                  else
-                    TermsHasInRegionInst = true;
 
                 } else {
                   Operands.push_back(MulOp);
