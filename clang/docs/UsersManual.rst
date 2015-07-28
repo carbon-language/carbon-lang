@@ -1157,6 +1157,13 @@ are listed below.
    efficient model can be used. The TLS model can be overridden per
    variable using the ``tls_model`` attribute.
 
+.. option:: -femulated-tls
+
+   Select emulated TLS model, which overrides all -ftls-model choices.
+
+   In emulated TLS mode, all access to TLS variables are converted to
+   calls to __emutls_get_address in the runtime library.
+
 .. option:: -mhwdiv=[values]
 
    Select the ARM modes (arm or thumb) that support hardware division
