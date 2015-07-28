@@ -125,7 +125,6 @@ protected:
     void SignalNotify(const ProcessMessage &message);
     void SignalDeliveredNotify(const ProcessMessage &message);
     void CrashNotify(const ProcessMessage &message);
-    void ThreadNotify(const ProcessMessage &message);
     void ExitNotify(const ProcessMessage &message);
     void ExecNotify(const ProcessMessage &message);
 

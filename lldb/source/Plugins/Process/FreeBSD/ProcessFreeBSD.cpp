@@ -272,7 +272,7 @@ ProcessFreeBSD::SendMessage(const ProcessMessage &message)
         break;
 
     case ProcessMessage::eNewThreadMessage:
-        assert(0 && "eNewThreadMessage unexpected on FreeBSD");
+        llvm_unreachable("eNewThreadMessage unexpected on FreeBSD");
         break;
 
     case ProcessMessage::eExecMessage:
@@ -619,19 +619,6 @@ ProcessFreeBSD::RefreshStateAfterStop()
         lldb::tid_t tid = message.GetTID();
         if (log)
             log->Printf ("ProcessFreeBSD::%s(), message_queue size = %d, pid = %" PRIi64, __FUNCTION__, (int)m_message_queue.size(), tid);
-
-        if (message.GetKind() == ProcessMessage::eNewThreadMessage)
-        {
-            if (log)
-                log->Printf ("ProcessFreeBSD::%s() adding thread, tid = %" PRIi64, __FUNCTION__, message.GetChildTID());
-            lldb::tid_t child_tid = message.GetChildTID();
-            ThreadSP thread_sp;
-            thread_sp.reset(CreateNewFreeBSDThread(*this, child_tid));
-
-            Mutex::Locker lock(m_thread_list.GetMutex());
-
-            m_thread_list.AddThread(thread_sp);
-        }
 
         m_thread_list.RefreshStateAfterStop();
 

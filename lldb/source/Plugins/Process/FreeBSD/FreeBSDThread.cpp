@@ -412,10 +412,6 @@ FreeBSDThread::Notify(const ProcessMessage &message)
         CrashNotify(message);
         break;
 
-    case ProcessMessage::eNewThreadMessage:
-        ThreadNotify(message);
-        break;
-
     case ProcessMessage::eExecMessage:
         ExecNotify(message);
         break;
@@ -621,12 +617,6 @@ FreeBSDThread::CrashNotify(const ProcessMessage &message)
     SetStopInfo (lldb::StopInfoSP(new POSIXCrashStopInfo(*this, signo,
                                                          message.GetCrashReason(),
                                                          message.GetFaultAddress())));
-}
-
-void
-FreeBSDThread::ThreadNotify(const ProcessMessage &message)
-{
-    SetStopInfo (lldb::StopInfoSP(new POSIXNewThreadStopInfo(*this)));
 }
 
 unsigned
