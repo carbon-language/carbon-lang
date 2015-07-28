@@ -10,7 +10,7 @@
 #include "Writer.h"
 #include "Chunks.h"
 #include "Driver.h"
-#include <map>
+#include "llvm/ADT/DenseMap.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -61,7 +61,7 @@ void OutputSection::addChunk(Chunk *C) {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
-  std::map<StringRef, OutputSection *> Map;
+  SmallDenseMap<StringRef, OutputSection *> Map;
   for (Chunk *C : Symtab->getChunks()) {
     OutputSection *&Sec = Map[C->getSectionName()];
     if (!Sec) {

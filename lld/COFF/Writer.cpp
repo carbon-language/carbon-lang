@@ -10,8 +10,9 @@
 #include "Config.h"
 #include "Writer.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/FileOutputBuffer.h"
@@ -195,7 +196,7 @@ void Writer::createSections() {
   // '$' and all following characters in input section names are
   // discarded when determining output section. So, .text$foo
   // contributes to .text, for example. See PE/COFF spec 3.2.
-  std::map<StringRef, OutputSection *> Sections;
+  SmallDenseMap<StringRef, OutputSection *> Sections;
   for (auto Pair : Map) {
     StringRef Name = getOutputSection(Pair.first);
     OutputSection *&Sec = Sections[Name];
