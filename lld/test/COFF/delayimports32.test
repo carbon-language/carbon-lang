@@ -23,7 +23,7 @@ IMPORT-NEXT:     Address: 0x402029
 IMPORT-NEXT:   }
 IMPORT-NEXT:   Import {
 IMPORT-NEXT:     Symbol: MessageBoxA (0)
-IMPORT-NEXT:     Address: 0x0
+IMPORT-NEXT:     Address: 0x40203E
 IMPORT-NEXT:   }
 IMPORT-NEXT: }
 
@@ -34,7 +34,7 @@ BASEREL-NEXT:     Address: 0x1020
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
-BASEREL-NEXT:     Address: 0x1028
+BASEREL-NEXT:     Address: 0x1024
 BASEREL-NEXT:   }
 BASEREL-NEXT:   Entry {
 BASEREL-NEXT:     Type: HIGHLOW
@@ -78,7 +78,7 @@ DISASM-NEXT: 203b:      59      popl    %ecx
 DISASM-NEXT: 203c:      ff e0   jmpl    *%eax
 DISASM-NEXT: 203e:      51      pushl   %ecx
 DISASM-NEXT: 203f:      52      pushl   %edx
-DISASM-NEXT: 2040:      68 28 10 40 00  pushl   $4198440
+DISASM-NEXT: 2040:      68 24 10 40 00  pushl   $4198436
 DISASM-NEXT: 2045:      68 00 30 40 00  pushl   $4206592
 DISASM-NEXT: 204a:      e8 b1 ff ff ff  calll   -79 <_main@0>
 DISASM-NEXT: 204f:      5a      popl    %edx

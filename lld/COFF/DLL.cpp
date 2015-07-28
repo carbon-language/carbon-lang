@@ -361,10 +361,14 @@ uint64_t DelayLoadContents::getDirSize() {
 class DelayAddressChunk : public Chunk {
 public:
   explicit DelayAddressChunk(Chunk *C) : Thunk(C) {}
-  size_t getSize() const override { return 8; }
+  size_t getSize() const override { return ptrSize(); }
 
   void writeTo(uint8_t *Buf) override {
-    write64le(Buf + FileOff, Thunk->getRVA() + Config->ImageBase);
+    if (Config->is64()) {
+      write64le(Buf + FileOff, Thunk->getRVA() + Config->ImageBase);
+    } else {
+      write32le(Buf + FileOff, Thunk->getRVA() + Config->ImageBase);
+    }
   }
 
   void getBaserels(std::vector<Baserel> *Res) override {
