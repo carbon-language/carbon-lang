@@ -67,8 +67,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   unsigned CopyAlign = MI->getAlignment();
 
   if (CopyAlign < MinAlign) {
-    MI->setAlignment(ConstantInt::get(MI->getAlignmentType(),
-                                             MinAlign, false));
+    MI->setAlignment(ConstantInt::get(MI->getAlignmentType(), MinAlign, false));
     return MI;
   }
 
