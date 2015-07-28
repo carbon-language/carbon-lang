@@ -5983,8 +5983,18 @@ static void CheckMoveOnConstruction(Sema &S, const Expr *InitExpr,
     if (!VD || !VD->hasLocalStorage())
       return;
 
-    if (!VD->getType()->isRecordType())
+    QualType SourceType = VD->getType();
+    if (!SourceType->isRecordType())
       return;
+
+    if (!S.Context.hasSameUnqualifiedType(DestType, SourceType)) {
+      if (CXXRecordDecl *RD = SourceType->getAsCXXRecordDecl()) {
+        for (auto* Construct : RD->ctors()) {
+          if (Construct->isCopyConstructor() && Construct->isDeleted())
+            return;
+        }
+      }
+    }
 
     // If we're returning a function parameter, copy elision
     // is not possible.
