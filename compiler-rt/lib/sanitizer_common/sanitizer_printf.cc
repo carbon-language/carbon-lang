@@ -260,7 +260,7 @@ static void SharedPrintfCode(bool append_pid, const char *format,
       }
     if (append_pid) {
       int pid = internal_getpid();
-      const char *exe_name = GetBinaryBasename();
+      const char *exe_name = GetProcessName();
       if (common_flags()->log_exe_name && exe_name) {
         needed_length += internal_snprintf(buffer, buffer_size,
                                            "==%s", exe_name);

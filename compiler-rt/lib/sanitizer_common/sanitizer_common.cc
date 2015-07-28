@@ -57,7 +57,7 @@ void ReportFile::ReopenIfNecessary() {
       CloseFile(fd);
   }
 
-  const char *exe_name = GetBinaryBasename();
+  const char *exe_name = GetProcessName();
   if (common_flags()->log_exe_name && exe_name) {
     internal_snprintf(full_path, kMaxPathLength, "%s.%s.%zu", path_prefix,
                       exe_name, pid);
@@ -345,10 +345,14 @@ bool TemplateMatch(const char *templ, const char *str) {
 }
 
 static char binary_name_cache_str[kMaxPathLength];
-static const char *binary_basename_cache_str;
+static char process_name_cache_str[kMaxPathLength];
 
-const char *GetBinaryBasename() {
-  return binary_basename_cache_str;
+const char *GetProcessName() {
+  return process_name_cache_str;
+}
+
+void UpdateProcessName() {
+  ReadProcessName(process_name_cache_str, sizeof(process_name_cache_str));
 }
 
 // Call once to make sure that binary_name_cache_str is initialized
@@ -356,7 +360,7 @@ void CacheBinaryName() {
   if (binary_name_cache_str[0] != '\0')
     return;
   ReadBinaryName(binary_name_cache_str, sizeof(binary_name_cache_str));
-  binary_basename_cache_str = StripModuleName(binary_name_cache_str);
+  ReadProcessName(process_name_cache_str, sizeof(process_name_cache_str));
 }
 
 uptr ReadBinaryNameCached(/*out*/char *buf, uptr buf_len) {

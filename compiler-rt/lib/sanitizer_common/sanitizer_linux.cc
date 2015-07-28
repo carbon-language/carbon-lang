@@ -730,6 +730,32 @@ uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
   return module_name_len;
 }
 
+static uptr ReadLongProcessName(/*out*/ char *buf, uptr buf_len) {
+#if SANITIZER_LINUX
+  char *tmpbuf;
+  uptr tmpsize;
+  uptr tmplen;
+  if (ReadFileToBuffer("/proc/self/cmdline", &tmpbuf, &tmpsize, &tmplen,
+                       1024 * 1024)) {
+    internal_strncpy(buf, tmpbuf, buf_len);
+    UnmapOrDie(tmpbuf, tmpsize);
+    return internal_strlen(buf);
+  }
+#endif
+  return ReadBinaryName(buf, buf_len);
+}
+
+uptr ReadProcessName(/*out*/ char *buf, uptr buf_len) {
+  ReadLongProcessName(buf, buf_len);
+  char *s = const_cast<char *>(StripModuleName(buf));
+  uptr len = internal_strlen(s);
+  if (s != buf) {
+    internal_memmove(buf, s, len);
+    buf[len] = '\0';
+  }
+  return len;
+}
+
 // Match full names of the form /path/to/base_name{-,.}*
 bool LibraryNameIs(const char *full_name, const char *base_name) {
   const char *name = full_name;

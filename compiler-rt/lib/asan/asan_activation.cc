@@ -124,6 +124,8 @@ void AsanActivate() {
   if (!asan_is_deactivated) return;
   VReport(1, "Activating ASan\n");
 
+  UpdateProcessName();
+
   asan_deactivated_flags.OverrideFromActivationFlags();
 
   SetCanPoisonMemory(asan_deactivated_flags.poison_heap);

@@ -50,7 +50,7 @@ static void SubstituteBinaryName(const char *s, char *out, uptr out_size) {
   char *out_end = out + out_size;
   while (*s && out < out_end - 1) {
     if (s[0] != '%' || s[1] != 'b') { *out++ = *s++; continue; }
-    const char *base = GetBinaryBasename();
+    const char *base = GetProcessName();
     CHECK(base);
     while (*base && out < out_end - 1)
       *out++ = *base++;
