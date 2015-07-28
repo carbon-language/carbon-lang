@@ -58,20 +58,20 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 ; CHECK: for (int c0 = 0; c0 <= 47; c0 += 1)
 ; CHECK:   for (int c1 = 0; c1 <= 47; c1 += 1)
 ; CHECK:     for (int c2 = 0; c2 <= 31; c2 += 1)
-; CHECK:       for (int c3 = 0; c3 <= 31; c3 += 4)
+; CHECK:       for (int c3 = 0; c3 <= 7; c3 += 1)
 ; CHECK:         #pragma simd
-; CHECK:         for (int c4 = c3; c4 <= c3 + 3; c4 += 1)
-; CHECK:           Stmt_for_body3(32 * c0 + c2, 32 * c1 + c4);
+; CHECK:         for (int c4 = 0; c4 <= 3; c4 += 1)
+; CHECK:           Stmt_for_body3(32 * c0 + c2, 32 * c1 + 4 * c3 + c4);
 ; CHECK: #pragma known-parallel
 ; CHECK: for (int c0 = 0; c0 <= 47; c0 += 1)
 ; CHECK:   for (int c1 = 0; c1 <= 47; c1 += 1)
 ; CHECK:     for (int c2 = 0; c2 <= 47; c2 += 1)
 ; CHECK:       for (int c3 = 0; c3 <= 31; c3 += 1)
-; CHECK:         for (int c4 = 0; c4 <= 31; c4 += 4)
+; CHECK:         for (int c4 = 0; c4 <= 7; c4 += 1)
 ; CHECK:           for (int c5 = 0; c5 <= 31; c5 += 1)
 ; CHECK:             #pragma simd
-; CHECK:             for (int c6 = c4; c6 <= c4 + 3; c6 += 1)
-; CHECK:               Stmt_for_body8(32 * c0 + c3, 32 * c1 + c6, 32 * c2 + c5);
+; CHECK:             for (int c6 = 0; c6 <= 3; c6 += 1)
+; CHECK:               Stmt_for_body8(32 * c0 + c3, 32 * c1 + 4 * c4 + c6, 32 * c2 + c5);
 
 !llvm.ident = !{!0}
 
