@@ -535,7 +535,7 @@ EdataContents::EdataContents() {
   std::vector<Chunk *> Names;
   for (Export &E : Config->Exports)
     if (!E.Noname)
-      Names.push_back(new StringChunk(E.ExtName));
+      Names.push_back(new StringChunk(E.ExtDLLName));
   auto *NameTab = new NamePointersChunk(Names);
   auto *OrdinalTab = new ExportOrdinalChunk(Names.size());
   auto *Dir = new ExportDirectoryChunk(MaxOrdinal, Names.size(), DLLName,
