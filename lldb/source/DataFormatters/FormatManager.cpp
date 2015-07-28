@@ -1157,7 +1157,7 @@ FormatManager::LoadSystemFormatters()
     .SetHideItemNames(false);
     
     TypeSummaryImpl::Flags string_array_flags;
-    string_array_flags.SetCascades(false)
+    string_array_flags.SetCascades(true)
     .SetSkipPointers(true)
     .SetSkipReferences(false)
     .SetDontShowChildren(true)
