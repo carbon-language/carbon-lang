@@ -83,7 +83,15 @@ void BufferedStackTrace::FastUnwindStack(uptr pc, uptr bp, uptr stack_top,
   while (IsValidFrame((uptr)frame, stack_top, bottom) &&
          IsAligned((uptr)frame, sizeof(*frame)) &&
          size < max_depth) {
+#ifdef __powerpc__
+    uhwptr *caller_frame = (uhwptr*)frame[0];
+    if (!IsValidFrame((uptr)caller_frame, stack_top, bottom) ||
+        !IsAligned((uptr)caller_frame, sizeof(uhwptr)))
+      break;
+    uhwptr pc1 = caller_frame[2];
+#else
     uhwptr pc1 = frame[1];
+#endif
     if (pc1 != pc) {
       trace_buffer[size++] = (uptr) pc1;
     }
