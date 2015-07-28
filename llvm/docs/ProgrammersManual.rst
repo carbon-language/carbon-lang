@@ -1314,7 +1314,8 @@ never use hash_set and unordered_set because they are generally very expensive
 std::multiset is useful if you're not interested in elimination of duplicates,
 but has all the drawbacks of :ref:`std::set <dss_set>`.  A sorted vector
 (where you don't delete duplicate entries) or some other approach is almost
-always better.
+always better. LLVM actually offers SortedVector which does the job of a sorted
+std::vector.
 
 .. _ds_map:
 
