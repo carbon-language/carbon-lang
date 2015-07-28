@@ -203,7 +203,7 @@ def start_gdb_log(debugger, command, result, dict):
         return
 
     if g_log_file:
-        result.PutCString ('error: logging is already in progress with file "%s"', g_log_file)
+        result.PutCString ('error: logging is already in progress with file "%s"' % g_log_file)
     else:
         args_len = len(args)
         if args_len == 0:
