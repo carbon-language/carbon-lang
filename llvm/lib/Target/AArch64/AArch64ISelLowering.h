@@ -397,6 +397,8 @@ private:
                           SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals,
                           bool isThisReturn, SDValue ThisVal) const;
 
+  SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
+
   bool isEligibleForTailCallOptimization(
       SDValue Callee, CallingConv::ID CalleeCC, bool isVarArg,
       bool isCalleeStructRet, bool isCallerStructRet,
