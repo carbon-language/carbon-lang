@@ -3406,7 +3406,7 @@ void CodeGenModule::AddDeferredUnusedCoverageMapping(Decl *D) {
   case Decl::ObjCMethod:
   case Decl::CXXConstructor:
   case Decl::CXXDestructor: {
-    if (!cast<FunctionDecl>(D)->hasBody())
+    if (!cast<FunctionDecl>(D)->doesThisDeclarationHaveABody())
       return;
     auto I = DeferredEmptyCoverageMappingDecls.find(D);
     if (I == DeferredEmptyCoverageMappingDecls.end())
