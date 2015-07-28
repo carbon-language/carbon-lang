@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINEBASICBLOCK_H
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
+#include "llvm/ADT/SortedVector.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/DataTypes.h"
@@ -80,7 +81,7 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
 
   /// LiveIns - Keep track of the physical registers that are livein of
   /// the basicblock.
-  std::vector<unsigned> LiveIns;
+  mutable SortedVector<unsigned> LiveIns;
 
   /// Alignment - Alignment of the basic block. Zero if the basic block does
   /// not need to be aligned.
@@ -318,15 +319,12 @@ public:
   /// Adds the specified register as a live in. Note that it is an error to add
   /// the same register to the same set more than once unless the intention is
   /// to call sortUniqueLiveIns after all registers are added.
-  void addLiveIn(unsigned Reg) { LiveIns.push_back(Reg); }
+  void addLiveIn(unsigned Reg) { LiveIns.insert(Reg); }
 
   /// Sorts and uniques the LiveIns vector. It can be significantly faster to do
   /// this than repeatedly calling isLiveIn before calling addLiveIn for every
   /// LiveIn insertion.
-  void sortUniqueLiveIns() {
-    std::sort(LiveIns.begin(), LiveIns.end());
-    LiveIns.erase(std::unique(LiveIns.begin(), LiveIns.end()), LiveIns.end());
-  }
+  void sortUniqueLiveIns() { LiveIns.sortUnique(); }
 
   /// Add PhysReg as live in to this block, and ensure that there is a copy of
   /// PhysReg to a virtual register of class RC. Return the virtual register
@@ -339,14 +337,20 @@ public:
 
   /// isLiveIn - Return true if the specified register is in the live in set.
   ///
-  bool isLiveIn(unsigned Reg) const;
+  bool isLiveIn(unsigned Reg) const { return LiveIns.has(Reg); }
 
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.
   typedef std::vector<unsigned>::const_iterator livein_iterator;
-  livein_iterator livein_begin() const { return LiveIns.begin(); }
-  livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
+  livein_iterator livein_begin() const {
+    LiveIns.sortUnique();
+    return LiveIns.begin();
+  }
+  livein_iterator livein_end() const {
+    LiveIns.sortUnique();
+    return LiveIns.end();
+  }
 
   /// getAlignment - Return alignment of the basic block.
   /// The alignment is specified as log2(bytes).
