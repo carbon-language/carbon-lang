@@ -586,16 +586,20 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
         if (BI->isConditional()) {
           if (Constant *SimpleCond =
                   SimplifiedValues.lookup(BI->getCondition())) {
-            BBWorklist.insert(BI->getSuccessor(
-                cast<ConstantInt>(SimpleCond)->isZero() ? 1 : 0));
+            BasicBlock *Succ = BI->getSuccessor(
+                cast<ConstantInt>(SimpleCond)->isZero() ? 1 : 0);
+            if (L->contains(Succ))
+              BBWorklist.insert(Succ);
             continue;
           }
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
         if (Constant *SimpleCond =
                 SimplifiedValues.lookup(SI->getCondition())) {
-          BBWorklist.insert(
-              SI->getSuccessor(cast<ConstantInt>(SimpleCond)->getSExtValue()));
+          BasicBlock *Succ =
+              SI->getSuccessor(cast<ConstantInt>(SimpleCond)->getSExtValue());
+          if (L->contains(Succ))
+            BBWorklist.insert(Succ);
           continue;
         }
       }
