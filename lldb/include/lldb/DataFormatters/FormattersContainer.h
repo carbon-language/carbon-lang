@@ -43,10 +43,6 @@
 
 namespace lldb_private {
     
-// this file (and its. cpp) contain the low-level implementation of LLDB Data Visualization
-// class DataVisualization is the high-level front-end of this feature
-// clients should refer to that class as the entry-point into the data formatters
-// unless they have a good reason to bypass it and prefer to use this file's objects directly
 class IFormatChangeListener
 {
 public:
@@ -447,7 +443,6 @@ protected:
     {
         for (const FormattersMatchCandidate& candidate : candidates)
         {
-            // FIXME: could we do the IsMatch() check first?
             if (Get(candidate.GetTypeName(),entry))
             {
                 if (candidate.IsMatch(entry) == false)
