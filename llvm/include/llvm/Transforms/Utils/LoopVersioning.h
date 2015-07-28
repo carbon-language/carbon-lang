@@ -31,7 +31,8 @@ class LoopInfo;
 /// already has a preheader.
 class LoopVersioning {
 public:
-  LoopVersioning(const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
+  LoopVersioning(SmallVector<RuntimePointerChecking::PointerCheck, 4> Checks,
+                 const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
                  DominatorTree *DT,
                  const SmallVector<int, 8> *PtrToPartition = nullptr);
 
@@ -89,6 +90,9 @@ private:
   /// \brief This maps the instructions from VersionedLoop to their counterpart
   /// in NonVersionedLoop.
   ValueToValueMapTy VMap;
+
+  /// \brief The set of checks that we are versioning for.
+  SmallVector<RuntimePointerChecking::PointerCheck, 4> Checks;
 
   /// \brief Analyses used.
   const LoopAccessInfo &LAI;

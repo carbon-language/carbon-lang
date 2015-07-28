@@ -747,10 +747,12 @@ private:
     // If we need run-time checks to disambiguate pointers are run-time, version
     // the loop now.
     auto PtrToPartition = Partitions.computePartitionSetForPointers(LAI);
-    LoopVersioning LVer(LAI, L, LI, DT, &PtrToPartition);
-    if (LVer.needsRuntimeChecks()) {
+    auto Checks =
+        LAI.getRuntimePointerChecking()->generateChecks(&PtrToPartition);
+    if (!Checks.empty()) {
       DEBUG(dbgs() << "\nPointers:\n");
-      DEBUG(LAI.getRuntimePointerChecking()->print(dbgs(), 0, &PtrToPartition));
+      DEBUG(LAI.getRuntimePointerChecking()->printChecks(dbgs(), Checks));
+      LoopVersioning LVer(std::move(Checks), LAI, L, LI, DT);
       LVer.versionLoop(this);
       LVer.addPHINodes(DefsUsedOutside);
     }

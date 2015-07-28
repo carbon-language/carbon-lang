@@ -22,11 +22,12 @@
 
 using namespace llvm;
 
-LoopVersioning::LoopVersioning(const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
-                               DominatorTree *DT,
-                               const SmallVector<int, 8> *PtrToPartition)
+LoopVersioning::LoopVersioning(
+    SmallVector<RuntimePointerChecking::PointerCheck, 4> Checks,
+    const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI, DominatorTree *DT,
+    const SmallVector<int, 8> *PtrToPartition)
     : VersionedLoop(L), NonVersionedLoop(nullptr),
-      PtrToPartition(PtrToPartition), LAI(LAI), LI(LI), DT(DT) {
+      PtrToPartition(PtrToPartition), Checks(Checks), LAI(LAI), LI(LI), DT(DT) {
   assert(L->getExitBlock() && "No single exit block");
   assert(L->getLoopPreheader() && "No preheader");
 }
@@ -41,7 +42,7 @@ void LoopVersioning::versionLoop(Pass *P) {
   // Add the memcheck in the original preheader (this is empty initially).
   BasicBlock *MemCheckBB = VersionedLoop->getLoopPreheader();
   std::tie(FirstCheckInst, MemRuntimeCheck) =
-      LAI.addRuntimeCheck(MemCheckBB->getTerminator(), PtrToPartition);
+      LAI.addRuntimeCheck(MemCheckBB->getTerminator(), Checks);
   assert(MemRuntimeCheck && "called even though needsAnyChecking = false");
 
   // Rename the block to make the IR more readable.
