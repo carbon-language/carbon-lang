@@ -1,6 +1,6 @@
 ; RUN: llc < %s -emulated-tls -mtriple=powerpc64-unknown-linux-gnu -relocation-model=pic \
 ; RUN:     | FileCheck %s
-; RUN: llc < %s -emulated-tls -mtriple=powerpc-nnknown-linux-gnu -relocation-model=pic \
+; RUN: llc < %s -emulated-tls -mtriple=powerpc-unknown-linux-gnu -relocation-model=pic \
 ; RUN:     | FileCheck %s
 
 ; Make sure that TLS symbols are emitted in expected order.
