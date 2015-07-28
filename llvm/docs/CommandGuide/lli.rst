@@ -1,171 +1,126 @@
 lli - directly execute programs from LLVM bitcode
 =================================================
 
-
 SYNOPSIS
 --------
 
-
-**lli** [*options*] [*filename*] [*program args*]
-
+:program:`lli` [*options*] [*filename*] [*program args*]
 
 DESCRIPTION
 -----------
 
+:program:`lli` directly executes programs in LLVM bitcode format.  It takes a program
+in LLVM bitcode format and executes it using a just-in-time compiler or an
+interpreter.
 
-**lli** directly executes programs in LLVM bitcode format.  It takes a program
-in LLVM bitcode format and executes it using a just-in-time compiler, if one is
-available for the current architecture, or an interpreter.  **lli** takes all of
-the same code generator options as llc|llc, but they are only effective when
-**lli** is using the just-in-time compiler.
+:program:`lli` is *not* an emulator. It will not execute IR of different architectures
+and it can only interpret (or JIT-compile) for the host architecture.
 
-If *filename* is not specified, then **lli** reads the LLVM bitcode for the
+The JIT compiler takes the same arguments as other tools, like :program:`llc`,
+but they don't necessarily work for the interpreter.
+
+If `filename` is not specified, then :program:`lli` reads the LLVM bitcode for the
 program from standard input.
 
 The optional *args* specified on the command line are passed to the program as
 arguments.
 
-
 GENERAL OPTIONS
 ---------------
 
-
-
-**-fake-argv0**\ =\ *executable*
+.. option:: -fake-argv0=executable
 
  Override the ``argv[0]`` value passed into the executing program.
 
-
-
-**-force-interpreter**\ =\ *{false,true}*
+.. option:: -force-interpreter={false,true}
 
  If set to true, use the interpreter even if a just-in-time compiler is available
  for this architecture. Defaults to false.
 
-
-
-**-help**
+.. option:: -help
 
  Print a summary of command line options.
 
+.. option:: -load=pluginfilename
 
-
-**-load**\ =\ *pluginfilename*
-
- Causes **lli** to load the plugin (shared object) named *pluginfilename* and use
+ Causes :program:`lli` to load the plugin (shared object) named *pluginfilename* and use
  it for optimization.
 
-
-
-**-stats**
+.. option:: -stats
 
  Print statistics from the code-generation passes. This is only meaningful for
  the just-in-time compiler, at present.
 
-
-
-**-time-passes**
+.. option:: -time-passes
 
  Record the amount of time needed for each code-generation pass and print it to
  standard error.
 
+.. option:: -version
 
-
-**-version**
-
- Print out the version of **lli** and exit without doing anything else.
-
-
-
+ Print out the version of :program:`lli` and exit without doing anything else.
 
 TARGET OPTIONS
 --------------
 
-
-
-**-mtriple**\ =\ *target triple*
+.. option:: -mtriple=target triple
 
  Override the target triple specified in the input bitcode file with the
  specified string.  This may result in a crash if you pick an
  architecture which is not compatible with the current system.
 
-
-
-**-march**\ =\ *arch*
+.. option:: -march=arch
 
  Specify the architecture for which to generate assembly, overriding the target
  encoded in the bitcode file.  See the output of **llc -help** for a list of
  valid architectures.  By default this is inferred from the target triple or
  autodetected to the current architecture.
 
-
-
-**-mcpu**\ =\ *cpuname*
+.. option:: -mcpu=cpuname
 
  Specify a specific chip in the current architecture to generate code for.
  By default this is inferred from the target triple and autodetected to
  the current architecture.  For a list of available CPUs, use:
  **llvm-as < /dev/null | llc -march=xyz -mcpu=help**
 
-
-
-**-mattr**\ =\ *a1,+a2,-a3,...*
+.. option:: -mattr=a1,+a2,-a3,...
 
  Override or control specific attributes of the target, such as whether SIMD
  operations are enabled or not.  The default set of attributes is set by the
  current CPU.  For a list of available attributes, use:
  **llvm-as < /dev/null | llc -march=xyz -mattr=help**
 
-
-
-
 FLOATING POINT OPTIONS
 ----------------------
 
-
-
-**-disable-excess-fp-precision**
+.. option:: -disable-excess-fp-precision
 
  Disable optimizations that may increase floating point precision.
 
-
-
-**-enable-no-infs-fp-math**
+.. option:: -enable-no-infs-fp-math
 
  Enable optimizations that assume no Inf values.
 
-
-
-**-enable-no-nans-fp-math**
+.. option:: -enable-no-nans-fp-math
 
  Enable optimizations that assume no NAN values.
 
+.. option:: -enable-unsafe-fp-math
 
-
-**-enable-unsafe-fp-math**
-
- Causes **lli** to enable optimizations that may decrease floating point
+ Causes :program:`lli` to enable optimizations that may decrease floating point
  precision.
 
+.. option:: -soft-float
 
-
-**-soft-float**
-
- Causes **lli** to generate software floating point library calls instead of
+ Causes :program:`lli` to generate software floating point library calls instead of
  equivalent hardware instructions.
-
-
-
 
 CODE GENERATION OPTIONS
 -----------------------
 
-
-
-**-code-model**\ =\ *model*
+.. option:: -code-model=model
 
  Choose the code model from:
-
 
  .. code-block:: perl
 
@@ -175,41 +130,29 @@ CODE GENERATION OPTIONS
       medium: Medium code model
       large: Large code model
 
-
-
-
-**-disable-post-RA-scheduler**
+.. option:: -disable-post-RA-scheduler
 
  Disable scheduling after register allocation.
 
-
-
-**-disable-spill-fusing**
+.. option:: -disable-spill-fusing
 
  Disable fusing of spill code into instructions.
 
-
-
-**-jit-enable-eh**
+.. option:: -jit-enable-eh
 
  Exception handling should be enabled in the just-in-time compiler.
 
-
-
-**-join-liveintervals**
+.. option:: -join-liveintervals
 
  Coalesce copies (default=true).
 
+.. option:: -nozero-initialized-in-bss
 
+  Don't place zero-initialized symbols into the BSS section.
 
-**-nozero-initialized-in-bss** Don't place zero-initialized symbols into the BSS section.
-
-
-
-**-pre-RA-sched**\ =\ *scheduler*
+.. option:: -pre-RA-sched=scheduler
 
  Instruction schedulers available (before register allocation):
-
 
  .. code-block:: perl
 
@@ -221,13 +164,9 @@ CODE GENERATION OPTIONS
       =list-tdrr: Top-down register reduction list scheduling
       =list-td: Top-down list scheduler -print-machineinstrs - Print generated machine code
 
-
-
-
-**-regalloc**\ =\ *allocator*
+.. option:: -regalloc=allocator
 
  Register allocator to use (default=linearscan)
-
 
  .. code-block:: perl
 
@@ -235,13 +174,9 @@ CODE GENERATION OPTIONS
       =linearscan: linear scan register allocator =local -   local register allocator
       =simple: simple register allocator
 
-
-
-
-**-relocation-model**\ =\ *model*
+.. option:: -relocation-model=model
 
  Choose relocation model from:
-
 
  .. code-block:: perl
 
@@ -249,46 +184,31 @@ CODE GENERATION OPTIONS
       =static: Non-relocatable code =pic -   Fully relocatable, position independent code
       =dynamic-no-pic: Relocatable external references, non-relocatable code
 
-
-
-
-**-spiller**
+.. option:: -spiller
 
  Spiller to use (default=local)
-
 
  .. code-block:: perl
 
       =simple: simple spiller
       =local: local spiller
 
-
-
-
-**-x86-asm-syntax**\ =\ *syntax*
+.. option:: -x86-asm-syntax=syntax
 
  Choose style of code to emit from X86 backend:
-
 
  .. code-block:: perl
 
       =att: Emit AT&T-style assembly
       =intel: Emit Intel-style assembly
 
-
-
-
-
 EXIT STATUS
 -----------
 
-
-If **lli** fails to load the program, it will exit with an exit code of 1.
+If :program:`lli` fails to load the program, it will exit with an exit code of 1.
 Otherwise, it will return the exit code of the program it executes.
-
 
 SEE ALSO
 --------
 
-
-llc|llc
+:program:`llc`
