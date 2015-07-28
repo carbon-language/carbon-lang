@@ -2657,20 +2657,18 @@ public:
   ExprResult RebuildObjCMessageExpr(SourceLocation SuperLoc,
                                     Selector Sel,
                                     ArrayRef<SourceLocation> SelectorLocs,
+                                    QualType SuperType,
                                     ObjCMethodDecl *Method,
                                     SourceLocation LBracLoc,
                                     MultiExprArg Args,
                                     SourceLocation RBracLoc) {
-    ObjCInterfaceDecl *Class = Method->getClassInterface();
-    QualType ReceiverTy = SemaRef.Context.getObjCInterfaceType(Class);
-    
     return Method->isInstanceMethod() ? SemaRef.BuildInstanceMessage(nullptr,
-                                          ReceiverTy,
+                                          SuperType,
                                           SuperLoc,
                                           Sel, Method, LBracLoc, SelectorLocs,
                                           RBracLoc, Args)
                                       : SemaRef.BuildClassMessage(nullptr,
-                                          ReceiverTy,
+                                          SuperType,
                                           SuperLoc,
                                           Sel, Method, LBracLoc, SelectorLocs,
                                           RBracLoc, Args);
@@ -10348,6 +10346,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
     return getDerived().RebuildObjCMessageExpr(E->getSuperLoc(),
                                                E->getSelector(),
                                                SelLocs,
+                                               E->getReceiverType(),
                                                E->getMethodDecl(),
                                                E->getLeftLoc(),
                                                Args,
