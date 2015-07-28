@@ -174,10 +174,8 @@ phases::ID Driver::getFinalPhase(const DerivedArgList &DAL,
   } else if ((PhaseArg = DAL.getLastArg(options::OPT_S))) {
     FinalPhase = phases::Backend;
 
-    // -c and partial CUDA compilations only run up to the assembler.
-  } else if ((PhaseArg = DAL.getLastArg(options::OPT_c)) ||
-             (PhaseArg = DAL.getLastArg(options::OPT_cuda_device_only)) ||
-             (PhaseArg = DAL.getLastArg(options::OPT_cuda_host_only))) {
+    // -c compilation only runs up to the assembler.
+  } else if ((PhaseArg = DAL.getLastArg(options::OPT_c))) {
     FinalPhase = phases::Assemble;
 
     // Otherwise do everything.

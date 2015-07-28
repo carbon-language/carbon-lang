@@ -27,8 +27,8 @@
 // RUN:   | FileCheck -check-prefix CUDA-ND \
 // Then compile host side and make sure we don't attempt to incorporate GPU code.
 // RUN:    -check-prefix CUDA-H -check-prefix CUDA-H-NI \
-// Make sure we don't link anything.
-// RUN:    -check-prefix CUDA-NL %s
+// Linking is allowed to happen, even if we're missing GPU code.
+// RUN:    -check-prefix CUDA-L %s
 
 // Verify that -cuda-no-host disables host-side compilation and linking
 // RUN: %clang -### -target x86_64-linux-gnu --cuda-device-only %s 2>&1 \
