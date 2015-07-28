@@ -69,6 +69,20 @@
 // Make sure we don't link anything.
 // RUN:   -check-prefix CUDA-NL %s
 
+// --cuda-host-only should never trigger unused arg warning.
+// RUN: %clang -### -target x86_64-linux-gnu --cuda-host-only -c %s 2>&1 | \
+// RUN:    FileCheck -check-prefix CUDA-NO-UNUSED-CHO %s
+// RUN: %clang -### -target x86_64-linux-gnu --cuda-host-only -x c -c %s 2>&1 | \
+// RUN:    FileCheck -check-prefix CUDA-NO-UNUSED-CHO %s
+
+// --cuda-device-only should not produce warning compiling CUDA files
+// RUN: %clang -### -target x86_64-linux-gnu --cuda-device-only -c %s 2>&1 | \
+// RUN:    FileCheck -check-prefix CUDA-NO-UNUSED-CDO %s
+
+// --cuda-device-only should warn during non-CUDA compilation.
+// RUN: %clang -### -target x86_64-linux-gnu --cuda-device-only -x c -c %s 2>&1 | \
+// RUN:    FileCheck -check-prefix CUDA-UNUSED-CDO %s
+
 // Match device-side compilation
 // CUDA-D1: "-cc1" "-triple" "nvptx{{(64)?}}-nvidia-cuda"
 // CUDA-D1-SAME: "-fcuda-is-device"
@@ -109,3 +123,7 @@
 
 // Match no linker
 // CUDA-NL-NOT: "{{.*}}{{ld|link}}{{(.exe)?}}"
+
+// CUDA-NO-UNUSED-CHO-NOT: warning: argument unused during compilation: '--cuda-host-only'
+// CUDA-UNUSED-CDO: warning: argument unused during compilation: '--cuda-device-only'
+// CUDA-NO-UNUSED-CDO-NOT: warning: argument unused during compilation: '--cuda-device-only'

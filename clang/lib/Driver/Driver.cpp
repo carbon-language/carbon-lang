@@ -1490,6 +1490,10 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
 
   // Claim ignored clang-cl options.
   Args.ClaimAllArgs(options::OPT_cl_ignored_Group);
+
+  // Claim --cuda-host-only arg which may be passed to non-CUDA
+  // compilations and should not trigger warnings there.
+  Args.ClaimAllArgs(options::OPT_cuda_host_only);
 }
 
 std::unique_ptr<Action>
