@@ -70,10 +70,11 @@ void UnusedParametersCheck::warnOnUnusedParameter(
   };
 
   // Comment out parameter name for non-local functions.
-  if ((Function->isExternallyVisible() &&
-       Function->getStorageClass() != StorageClass::SC_Static) ||
-      UsedByRef()) {
+  if (Function->isExternallyVisible() || UsedByRef()) {
     SourceRange RemovalRange(Param->getLocation(), Param->getLocEnd());
+    // Note: We always add a space before the '/*' to not accidentally create a
+    // '*/*' for pointer types, which doesn't start a comment. clang-format will
+    // clean this up afterwards.
     MyDiag << FixItHint::CreateReplacement(
         RemovalRange, (Twine(" /*") + Param->getName() + "*/").str());
     return;

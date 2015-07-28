@@ -57,6 +57,12 @@ static void someCallSites() {
   staticFunctionE();
 }
 
+class SomeClass {
+  static void f(int i) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:21: warning
+// CHECK-FIXES: static void f(int  /*i*/) {}
+};
+
 namespace {
 class C {
 public:
