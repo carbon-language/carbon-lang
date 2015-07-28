@@ -113,6 +113,7 @@ public:
   bool parseMBBOperand(MachineOperand &Dest);
   bool parseStackObjectOperand(MachineOperand &Dest);
   bool parseFixedStackObjectOperand(MachineOperand &Dest);
+  bool parseGlobalValue(GlobalValue *&GV);
   bool parseGlobalAddressOperand(MachineOperand &Dest);
   bool parseConstantPoolIndexOperand(MachineOperand &Dest);
   bool parseJumpTableIndexOperand(MachineOperand &Dest);
@@ -576,18 +577,17 @@ bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
+bool MIParser::parseGlobalValue(GlobalValue *&GV) {
   switch (Token.kind()) {
   case MIToken::NamedGlobalValue:
   case MIToken::QuotedNamedGlobalValue: {
     StringValueUtility Name(Token);
     const Module *M = MF.getFunction()->getParent();
-    if (const auto *GV = M->getNamedValue(Name)) {
-      Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
-      break;
-    }
-    return error(Twine("use of undefined global value '@") +
-                 Token.rawStringValue() + "'");
+    GV = M->getNamedValue(Name);
+    if (!GV)
+      return error(Twine("use of undefined global value '@") +
+                   Token.rawStringValue() + "'");
+    break;
   }
   case MIToken::GlobalValue: {
     unsigned GVIdx;
@@ -596,13 +596,20 @@ bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
     if (GVIdx >= IRSlots.GlobalValues.size())
       return error(Twine("use of undefined global value '@") + Twine(GVIdx) +
                    "'");
-    Dest = MachineOperand::CreateGA(IRSlots.GlobalValues[GVIdx],
-                                    /*Offset=*/0);
+    GV = IRSlots.GlobalValues[GVIdx];
     break;
   }
   default:
     llvm_unreachable("The current token should be a global value");
   }
+  return false;
+}
+
+bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
+  GlobalValue *GV = nullptr;
+  if (parseGlobalValue(GV))
+    return true;
+  Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
   // TODO: Parse offset and target flags.
   lex();
   return false;
