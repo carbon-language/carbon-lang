@@ -26,7 +26,7 @@ else()
   set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
 endif()
 
-project(LLVM)
+project(LLVM C CXX ASM)
 
 # The following only works with the Ninja generator in CMake >= 3.0.
 set(LLVM_PARALLEL_COMPILE_JOBS "" CACHE STRING
