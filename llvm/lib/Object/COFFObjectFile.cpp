@@ -744,6 +744,8 @@ StringRef COFFObjectFile::getFileFormatName() const {
     return "COFF-x86-64";
   case COFF::IMAGE_FILE_MACHINE_ARMNT:
     return "COFF-ARM";
+  case COFF::IMAGE_FILE_MACHINE_ARM64:
+    return "COFF-ARM64";
   default:
     return "COFF-<unknown arch>";
   }
@@ -757,6 +759,8 @@ unsigned COFFObjectFile::getArch() const {
     return Triple::x86_64;
   case COFF::IMAGE_FILE_MACHINE_ARMNT:
     return Triple::thumb;
+  case COFF::IMAGE_FILE_MACHINE_ARM64:
+    return Triple::aarch64;
   default:
     return Triple::UnknownArch;
   }
