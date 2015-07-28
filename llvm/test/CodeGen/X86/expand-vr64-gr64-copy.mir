@@ -1,0 +1,37 @@
+# RUN: llc -run-pass postrapseudos -mtriple=x86_64-unknown-unknown -mattr=+3dnow -o /dev/null %s | FileCheck %s
+# This test verifies that the ExpandPostRA pass expands the GR64 <-> VR64
+# copies into appropriate MMX_MOV instructions.
+
+--- |
+
+  define <2 x i32> @test_pswapdsi(<2 x i32> %a) nounwind readnone {
+  entry:
+    %0 = bitcast <2 x i32> %a to x86_mmx
+    %1 = tail call x86_mmx @llvm.x86.3dnowa.pswapd(x86_mmx %0)
+    %2 = bitcast x86_mmx %1 to <2 x i32>
+    ret <2 x i32> %2
+  }
+
+  declare x86_mmx @llvm.x86.3dnowa.pswapd(x86_mmx) nounwind readnone
+
+...
+---
+name:            test_pswapdsi
+tracksRegLiveness: true
+body:
+  - id:          0
+    name:        entry
+    liveins:     [ '%xmm0' ]
+    instructions:
+      - '%xmm0 = PSHUFDri killed %xmm0, -24'
+      - 'MOVPQI2QImr %rsp, 1, _, -8, _, killed %xmm0'
+      - '%mm0 = PSWAPDrm %rsp, 1, _, -8, _'
+# CHECK:      %rax = MMX_MOVD64from64rr %mm0
+# CHECK-NEXT: %mm0 = MMX_MOVD64to64rr %rax
+      - '%rax = COPY %mm0'
+      - '%mm0 = COPY %rax'
+      - 'MMX_MOVQ64mr %rsp, 1, _, -16, _, killed %mm0'
+      - '%xmm0 = MOVQI2PQIrm %rsp, 1, _, -16, _'
+      - '%xmm0 = PSHUFDri killed %xmm0, -44'
+      - 'RETQ %xmm0'
+...
