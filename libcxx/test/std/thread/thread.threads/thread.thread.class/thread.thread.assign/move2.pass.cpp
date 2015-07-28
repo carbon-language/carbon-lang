@@ -10,13 +10,6 @@
 // UNSUPPORTED: libcpp-has-no-threads
 // UNSUPPORTED: c++98, c++03
 
-// NOTE: std::terminate is called so the destructors are not invoked and the
-// memory is not freed. This will cause ASAN to fail.
-// XFAIL: asan
-
-// NOTE: TSAN will report this test as leaking a thread.
-// XFAIL: tsan
-
 // <thread>
 
 // class thread
