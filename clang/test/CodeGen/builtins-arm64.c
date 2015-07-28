@@ -5,6 +5,11 @@ void f0(void *a, void *b) {
 // CHECK: call {{.*}} @__clear_cache
 }
 
+void *tp (void) {
+  return __builtin_thread_pointer ();
+// CHECK: call {{.*}} @llvm.aarch64.thread.pointer()
+}
+
 // CHECK: call {{.*}} @llvm.aarch64.rbit.i32(i32 %a)
 unsigned rbit(unsigned a) {
   return __builtin_arm_rbit(a);
