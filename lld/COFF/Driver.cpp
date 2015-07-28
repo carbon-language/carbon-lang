@@ -555,6 +555,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     OwningMBs.push_back(std::move(MB)); // take ownership
   }
 
+  // Handle /largeaddressaware
+  if (Config->is64() || Args.hasArg(OPT_largeaddressaware))
+    Config->LargeAddressAware = true;
+
   // Handle /entry and /dll
   if (auto *Arg = Args.getLastArg(OPT_entry)) {
     Config->Entry = addUndefined(mangle(Arg->getValue()));

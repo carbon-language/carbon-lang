@@ -435,11 +435,10 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   COFF->Machine = Config->Machine;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
-  if (Config->is64()) {
+  if (Config->LargeAddressAware)
     COFF->Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
-  } else {
+  if (!Config->is64())
     COFF->Characteristics |= IMAGE_FILE_32BIT_MACHINE;
-  }
   if (Config->DLL)
     COFF->Characteristics |= IMAGE_FILE_DLL;
   if (!Config->Relocatable)

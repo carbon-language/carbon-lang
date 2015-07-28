@@ -118,6 +118,7 @@ struct Configuration {
   bool NxCompat = true;
   bool AllowIsolation = true;
   bool TerminalServerAware = true;
+  bool LargeAddressAware = false;
 };
 
 extern Configuration *Config;
