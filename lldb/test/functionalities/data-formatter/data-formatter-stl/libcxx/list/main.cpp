@@ -33,6 +33,11 @@ int main()
     (text_list.push_back(std::string("smart")));
     
     (text_list.push_back(std::string("!!!"))); // Set second break point at this line.
-        
+    
+    std::list<int> countingList = {3141, 3142, 3142,3142,3142, 3142, 3142, 3141};
+    countingList.sort();
+    countingList.unique(); // Set third break point at this line.
+    countingList.size(); // Set fourth break point at this line.
+
     return 0;
 }

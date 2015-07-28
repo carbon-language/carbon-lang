@@ -312,6 +312,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::GetChildAtIndex (size_
 bool
 lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
 {
+    m_children.clear();
     m_head = m_tail = NULL;
     m_node_address = 0;
     m_count = UINT32_MAX;

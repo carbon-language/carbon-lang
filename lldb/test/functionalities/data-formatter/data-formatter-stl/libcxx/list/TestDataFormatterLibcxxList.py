@@ -33,6 +33,8 @@ class LibcxxListDataFormatterTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.cpp', '// Set break point at this line.')
         self.line2 = line_number('main.cpp', '// Set second break point at this line.')
+        self.line3 = line_number('main.cpp', '// Set third break point at this line.')
+        self.line4 = line_number('main.cpp', '// Set fourth break point at this line.')
 
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
@@ -40,6 +42,8 @@ class LibcxxListDataFormatterTestCase(TestBase):
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1)
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line2, num_expected_locations=-1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line3, num_expected_locations=-1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line4, num_expected_locations=-1)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -172,6 +176,21 @@ class LibcxxListDataFormatterTestCase(TestBase):
                     substrs = ['goofy']);
         self.expect("frame variable text_list[3]",
                     substrs = ['!!!']);
+                    
+        self.runCmd("continue")
+        
+        # check that the list provider correctly updates if elements move
+        countingList = self.frame().FindVariable("countingList")
+        countingList.SetPreferDynamicValue(True)
+        countingList.SetPreferSyntheticValue(True)
+        
+        self.assertTrue(countingList.GetChildAtIndex(0).GetValueAsUnsigned(0) == 3141, "list[0] == 3141")
+        self.assertTrue(countingList.GetChildAtIndex(1).GetValueAsUnsigned(0) == 3141, "list[1] == 3141")
+        
+        self.runCmd("continue")
+
+        self.assertTrue(countingList.GetChildAtIndex(0).GetValueAsUnsigned(0) == 3141, "uniqued list[0] == 3141")
+        self.assertTrue(countingList.GetChildAtIndex(1).GetValueAsUnsigned(0) == 3142, "uniqued list[1] == 3142")
 
 if __name__ == '__main__':
     import atexit
