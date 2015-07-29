@@ -40,7 +40,7 @@ static opt<std::string> OsoPrependPath(
     desc("Specify a directory to prepend to the paths of object files."),
     value_desc("path"));
 
-static opt<bool> Verbose("v", desc("Verbosity level"), init(false));
+static opt<bool> Verbose("verbose", desc("Verbosity level"), init(false));
 
 static opt<bool>
     NoOutput("no-output",

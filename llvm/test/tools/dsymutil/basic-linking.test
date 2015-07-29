@@ -1,6 +1,6 @@
-RUN: llvm-dsymutil -no-output -v -oso-prepend-path=%p %p/Inputs/basic.macho.x86_64 | FileCheck %s
-RUN: llvm-dsymutil -no-output -v -oso-prepend-path=%p %p/Inputs/basic-lto.macho.x86_64 | FileCheck %s --check-prefix=CHECK-LTO
-RUN: llvm-dsymutil -no-output -v -oso-prepend-path=%p %p/Inputs/basic-archive.macho.x86_64 | FileCheck %s --check-prefix=CHECK-ARCHIVE
+RUN: llvm-dsymutil -no-output -verbose -oso-prepend-path=%p %p/Inputs/basic.macho.x86_64 | FileCheck %s
+RUN: llvm-dsymutil -no-output -verbose -oso-prepend-path=%p %p/Inputs/basic-lto.macho.x86_64 | FileCheck %s --check-prefix=CHECK-LTO
+RUN: llvm-dsymutil -no-output -verbose -oso-prepend-path=%p %p/Inputs/basic-archive.macho.x86_64 | FileCheck %s --check-prefix=CHECK-ARCHIVE
 
 This test check the basic Dwarf linking process through the debug dumps.
 
