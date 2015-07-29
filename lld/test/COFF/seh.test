@@ -1,24 +1,70 @@
-# RUN: yaml2obj %p/Inputs/seh.obj.yaml > %t.obj
-#
-# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /nodefaultlib %t.obj
-# RUN: llvm-objdump -private-headers %t.exe | FileCheck %s
+# RUN: yaml2obj < %s > %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /subsystem:console /entry:main %t.obj
+# RUN: llvm-objdump -s %t.exe | FileCheck %s
 
-CHECK: Load configuration:
-CHECK:   Timestamp: 0
-CHECK:   Major Version: 0
-CHECK:   Minor Version: 0
-CHECK:   GlobalFlags Clear: 0
-CHECK:   GlobalFlags Set: 0
-CHECK:   Critical Section Default Timeout: 0
-CHECK:   Decommit Free Block Threshold: 0
-CHECK:   Decommit Total Free Threshold: 0
-CHECK:   Lock Prefix Table: 0
-CHECK:   Maximum Allocation Size: 0
-CHECK:   Virtual Memory Threshold: 0
-CHECK:   Process Affinity Mask: 0
-CHECK:   Process Heap Flags: 0
-CHECK:   CSD Version: 0
-CHECK:   Security Cookie: 0
-CHECK:   SEH Table: 4206592
-CHECK:   SEH Count: 2
-CHECK: SEH Table: 0x80001b 0x8040ea
+# CHECK: Contents of section .rdata:
+# CHECK:  2000 00100000 02100000
+
+---
+header:
+  Machine:         IMAGE_FILE_MACHINE_I386
+  Characteristics: [  ]
+sections:
+  - Name:            .text
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
+    Alignment:       1
+    SectionData:     0000000000000000
+  - Name:            .sxdata
+    Characteristics: [ IMAGE_SCN_LNK_INFO ]
+    Alignment:       4
+    SectionData:     0600000007000000
+symbols:
+  - Name:            '@comp.id'
+    Value:           14766605
+    SectionNumber:   65535
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '@feat.00'
+    Value:           2147484049
+    SectionNumber:   65535
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .text
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    SectionDefinition:
+      Length:          8
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
+  - Name:            .sxdata
+    Value:           0
+    SectionNumber:   2
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    SectionDefinition:
+      Length:          8
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
+  - Name:            _main
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            _foo
+    Value:           2
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+...
