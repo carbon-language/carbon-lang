@@ -1,0 +1,7 @@
+// This test checks that --section works correctly
+// RUN: llvm-objdump -h %p/Inputs/section-filter.obj -j=.text \
+// RUN: -j=.bss | FileCheck %s
+
+# CHECK: .text
+# CHECK-NOT: .data
+# CHECK: .bss

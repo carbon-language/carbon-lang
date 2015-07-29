@@ -25,6 +25,7 @@ extern cl::opt<std::string> TripleName;
 extern cl::opt<std::string> ArchName;
 extern cl::opt<std::string> MCPU;
 extern cl::list<std::string> MAttrs;
+extern cl::list<std::string> Sections;
 extern cl::list<std::string> DumpSections;
 extern cl::opt<bool> Disassemble;
 extern cl::opt<bool> DisassembleAll;
