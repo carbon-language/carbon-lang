@@ -10303,7 +10303,10 @@ EmulateInstructionARM::EmulateLDRDImmediate (const uint32_t opcode, const ARMEnc
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + n, base_reg);
                   
         EmulateInstruction::Context context;
-        context.type = eContextRegisterLoad;
+        if (n == 13)
+            context.type = eContextPopRegisterOffStack;
+        else
+            context.type = eContextRegisterLoad;
         context.SetRegisterPlusOffset (base_reg, address - Rn);
                   
         const uint32_t addr_byte_size = GetAddressByteSize();
@@ -10430,7 +10433,10 @@ EmulateInstructionARM::EmulateLDRDRegister (const uint32_t opcode, const ARMEnco
             address = Rn;
                   
         EmulateInstruction::Context context;
-        context.type = eContextRegisterLoad;
+        if (n == 13)
+            context.type = eContextPopRegisterOffStack;
+        else
+            context.type = eContextRegisterLoad;
         context.SetRegisterPlusIndirectOffset (base_reg, offset_reg);
                   
         // R[t] = MemA[address,4];
@@ -10581,7 +10587,10 @@ EmulateInstructionARM::EmulateSTRDImm (const uint32_t opcode, const ARMEncoding 
             return false;
                   
         EmulateInstruction::Context context;
-        context.type = eContextRegisterStore;
+        if (n == 13)
+            context.type = eContextPushRegisterOnStack;
+        else
+            context.type = eContextRegisterStore;
         context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
                   
         const uint32_t addr_byte_size = GetAddressByteSize();
@@ -10713,7 +10722,11 @@ EmulateInstructionARM::EmulateSTRDReg (const uint32_t opcode, const ARMEncoding 
             return false;
                   
         EmulateInstruction::Context context;
-        context.type = eContextRegisterStore;
+        if (t == 13)
+            context.type = eContextPushRegisterOnStack;
+        else
+            context.type = eContextRegisterStore;
+        
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + t, data_reg);
         context.SetRegisterToRegisterPlusIndirectOffset (base_reg, offset_reg, data_reg);
                   
