@@ -1294,7 +1294,7 @@ _mm512_maskz_mulhi_epu16 (__mmask32 __U, __m512i __A, __m512i __B)
                (__mmask32) __U);
 }
 
-static __inline__ __m512i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_maddubs_epi16 (__m512i __X, __m512i __Y) {
   return (__m512i) __builtin_ia32_pmaddubsw512_mask ((__v64qi) __X,
                  (__v64qi) __Y,
@@ -1303,7 +1303,7 @@ _mm512_maddubs_epi16 (__m512i __X, __m512i __Y) {
                  (__mmask32) -1);
 }
 
-static __inline__ __m512i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_mask_maddubs_epi16 (__m512i __W, __mmask32 __U, __m512i __X,
          __m512i __Y) {
   return (__m512i) __builtin_ia32_pmaddubsw512_mask ((__v64qi) __X,
@@ -1312,7 +1312,7 @@ _mm512_mask_maddubs_epi16 (__m512i __W, __mmask32 __U, __m512i __X,
                  (__mmask32) __U);
 }
 
-static __inline__ __m512i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_maskz_maddubs_epi16 (__mmask32 __U, __m512i __X, __m512i __Y) {
   return (__m512i) __builtin_ia32_pmaddubsw512_mask ((__v64qi) __X,
                  (__v64qi) __Y,
@@ -1321,7 +1321,7 @@ _mm512_maskz_maddubs_epi16 (__mmask32 __U, __m512i __X, __m512i __Y) {
                  (__mmask32) __U);
 }
 
-static __inline__ __m512i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_madd_epi16 (__m512i __A, __m512i __B) {
   return (__m512i) __builtin_ia32_pmaddwd512_mask ((__v32hi) __A,
                (__v32hi) __B,
@@ -1330,7 +1330,7 @@ _mm512_madd_epi16 (__m512i __A, __m512i __B) {
                (__mmask16) -1);
 }
 
-static __inline__ __m512i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_mask_madd_epi16 (__m512i __W, __mmask16 __U, __m512i __A,
       __m512i __B) {
   return (__m512i) __builtin_ia32_pmaddwd512_mask ((__v32hi) __A,
@@ -1339,7 +1339,7 @@ _mm512_mask_madd_epi16 (__m512i __W, __mmask16 __U, __m512i __A,
                (__mmask16) __U);
 }
 
-static __inline__ __m512i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_maskz_madd_epi16 (__mmask16 __U, __m512i __A, __m512i __B) {
   return (__m512i) __builtin_ia32_pmaddwd512_mask ((__v32hi) __A,
                (__v32hi) __B,
