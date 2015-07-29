@@ -607,13 +607,9 @@ define <2 x i64> @constant_shift_v2i64(<2 x i64> %a) nounwind {
 ;
 ; X32-SSE-LABEL: constant_shift_v2i64:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    movl $7, %eax
-; X32-SSE-NEXT:    movd %eax, %xmm2
 ; X32-SSE-NEXT:    movdqa %xmm0, %xmm1
-; X32-SSE-NEXT:    psllq %xmm2, %xmm1
-; X32-SSE-NEXT:    movl $1, %eax
-; X32-SSE-NEXT:    movd %eax, %xmm2
-; X32-SSE-NEXT:    psllq %xmm2, %xmm0
+; X32-SSE-NEXT:    psllq $7, %xmm1
+; X32-SSE-NEXT:    psllq $1, %xmm0
 ; X32-SSE-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; X32-SSE-NEXT:    movapd %xmm1, %xmm0
 ; X32-SSE-NEXT:    retl

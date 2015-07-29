@@ -877,21 +877,17 @@ define <2 x i64> @constant_shift_v2i64(<2 x i64> %a) nounwind {
 ;
 ; X32-SSE-LABEL: constant_shift_v2i64:
 ; X32-SSE:       # BB#0:
-; X32-SSE-NEXT:    movl $7, %eax
-; X32-SSE-NEXT:    movd %eax, %xmm2
 ; X32-SSE-NEXT:    movdqa {{.*#+}} xmm1 = [0,2147483648,0,2147483648]
-; X32-SSE-NEXT:    movdqa %xmm1, %xmm3
-; X32-SSE-NEXT:    psrlq %xmm2, %xmm3
-; X32-SSE-NEXT:    movl $1, %eax
-; X32-SSE-NEXT:    movd %eax, %xmm4
-; X32-SSE-NEXT:    psrlq %xmm4, %xmm1
-; X32-SSE-NEXT:    movsd {{.*#+}} xmm3 = xmm1[0],xmm3[1]
+; X32-SSE-NEXT:    movdqa %xmm1, %xmm2
+; X32-SSE-NEXT:    psrlq $7, %xmm2
+; X32-SSE-NEXT:    psrlq $1, %xmm1
+; X32-SSE-NEXT:    movsd {{.*#+}} xmm2 = xmm1[0],xmm2[1]
 ; X32-SSE-NEXT:    movdqa %xmm0, %xmm1
-; X32-SSE-NEXT:    psrlq %xmm2, %xmm1
-; X32-SSE-NEXT:    psrlq %xmm4, %xmm0
+; X32-SSE-NEXT:    psrlq $7, %xmm1
+; X32-SSE-NEXT:    psrlq $1, %xmm0
 ; X32-SSE-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; X32-SSE-NEXT:    xorpd %xmm3, %xmm1
-; X32-SSE-NEXT:    psubq %xmm3, %xmm1
+; X32-SSE-NEXT:    xorpd %xmm2, %xmm1
+; X32-SSE-NEXT:    psubq %xmm2, %xmm1
 ; X32-SSE-NEXT:    movdqa %xmm1, %xmm0
 ; X32-SSE-NEXT:    retl
   %shift = ashr <2 x i64> %a, <i64 1, i64 7>

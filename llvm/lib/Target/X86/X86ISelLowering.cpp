@@ -17307,34 +17307,50 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 
   // Special case in 32-bit mode, where i64 is expanded into high and low parts.
   if (!Subtarget->is64Bit() &&
-      (VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64)) &&
-      Amt.getOpcode() == ISD::BITCAST &&
-      Amt.getOperand(0).getOpcode() == ISD::BUILD_VECTOR) {
+      (VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64))) {
+
+    // Peek through any splat that was introduced for i64 shift vectorization.
+    int SplatIndex = -1;
+    if (ShuffleVectorSDNode *SVN = dyn_cast<ShuffleVectorSDNode>(Amt.getNode()))
+      if (SVN->isSplat()) {
+        SplatIndex = SVN->getSplatIndex();
+        Amt = Amt.getOperand(0);
+        assert(SplatIndex < (int)VT.getVectorNumElements() &&
+               "Splat shuffle referencing second operand");
+      }
+
+    if (Amt.getOpcode() != ISD::BITCAST ||
+        Amt.getOperand(0).getOpcode() != ISD::BUILD_VECTOR)
+      return SDValue();
+
     Amt = Amt.getOperand(0);
     unsigned Ratio = Amt.getSimpleValueType().getVectorNumElements() /
                      VT.getVectorNumElements();
     unsigned RatioInLog2 = Log2_32_Ceil(Ratio);
     uint64_t ShiftAmt = 0;
+    unsigned BaseOp = (SplatIndex < 0 ? 0 : SplatIndex * Ratio);
     for (unsigned i = 0; i != Ratio; ++i) {
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Amt.getOperand(i));
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Amt.getOperand(i + BaseOp));
       if (!C)
         return SDValue();
       // 6 == Log2(64)
       ShiftAmt |= C->getZExtValue() << (i * (1 << (6 - RatioInLog2)));
     }
-    // Check remaining shift amounts.
-    for (unsigned i = Ratio; i != Amt.getNumOperands(); i += Ratio) {
-      uint64_t ShAmt = 0;
-      for (unsigned j = 0; j != Ratio; ++j) {
-        ConstantSDNode *C =
-          dyn_cast<ConstantSDNode>(Amt.getOperand(i + j));
-        if (!C)
+
+    // Check remaining shift amounts (if not a splat).
+    if (SplatIndex < 0) {
+      for (unsigned i = Ratio; i != Amt.getNumOperands(); i += Ratio) {
+        uint64_t ShAmt = 0;
+        for (unsigned j = 0; j != Ratio; ++j) {
+          ConstantSDNode *C = dyn_cast<ConstantSDNode>(Amt.getOperand(i + j));
+          if (!C)
+            return SDValue();
+          // 6 == Log2(64)
+          ShAmt |= C->getZExtValue() << (j * (1 << (6 - RatioInLog2)));
+        }
+        if (ShAmt != ShiftAmt)
           return SDValue();
-        // 6 == Log2(64)
-        ShAmt |= C->getZExtValue() << (j * (1 << (6 - RatioInLog2)));
       }
-      if (ShAmt != ShiftAmt)
-        return SDValue();
     }
 
     if (SupportedVectorShiftWithImm(VT, Subtarget, Op.getOpcode()))
