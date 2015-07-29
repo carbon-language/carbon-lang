@@ -340,12 +340,12 @@ static ShadowMapping getShadowMapping(Triple &TargetTriple, int LongSize,
 
   ShadowMapping Mapping;
 
-  if (IsAndroid) {
+  if (LongSize == 32) {
     // Android is always PIE, which means that the beginning of the address
     // space is always available.
-    Mapping.Offset = 0;
-  } else if (LongSize == 32) {
-    if (IsMIPS32)
+    if (IsAndroid)
+      Mapping.Offset = 0;
+    else if (IsMIPS32)
       Mapping.Offset = kMIPS32_ShadowOffset32;
     else if (IsFreeBSD)
       Mapping.Offset = kFreeBSD_ShadowOffset32;

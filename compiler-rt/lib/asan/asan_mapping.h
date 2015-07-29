@@ -113,11 +113,12 @@ static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 static const u64 kWindowsShadowOffset32 = 3ULL << 28;  // 0x30000000
 
 #define SHADOW_SCALE kDefaultShadowScale
-#if SANITIZER_ANDROID
-# define SHADOW_OFFSET (0)
-#else
-# if SANITIZER_WORDSIZE == 32
-#  if defined(__mips__)
+
+
+#if SANITIZER_WORDSIZE == 32
+#  if SANITIZER_ANDROID
+#    define SHADOW_OFFSET (0)
+#  elif defined(__mips__)
 #    define SHADOW_OFFSET kMIPS32_ShadowOffset32
 #  elif SANITIZER_FREEBSD
 #    define SHADOW_OFFSET kFreeBSD_ShadowOffset32
@@ -130,7 +131,7 @@ static const u64 kWindowsShadowOffset32 = 3ULL << 28;  // 0x30000000
 #  else
 #    define SHADOW_OFFSET kDefaultShadowOffset32
 #  endif
-# else
+#else
 #  if defined(__aarch64__)
 #    define SHADOW_OFFSET kAArch64_ShadowOffset64
 #  elif defined(__powerpc64__)
@@ -148,7 +149,6 @@ static const u64 kWindowsShadowOffset32 = 3ULL << 28;  // 0x30000000
 #  else
 #   define SHADOW_OFFSET kDefaultShort64bitShadowOffset
 #  endif
-# endif
 #endif
 
 #define SHADOW_GRANULARITY (1ULL << SHADOW_SCALE)
