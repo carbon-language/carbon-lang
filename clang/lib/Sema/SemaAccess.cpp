@@ -1766,7 +1766,7 @@ Sema::AccessResult Sema::CheckFriendAccess(NamedDecl *target) {
   case AR_inaccessible: return Sema::AR_inaccessible;
   case AR_dependent: return Sema::AR_dependent;
   }
-  llvm_unreachable("falling off end");
+  llvm_unreachable("invalid access result");
 }
 
 Sema::AccessResult Sema::CheckAddressOfMemberAccess(Expr *OvlExpr,
