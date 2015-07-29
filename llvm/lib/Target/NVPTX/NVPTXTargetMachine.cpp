@@ -174,6 +174,7 @@ void NVPTXPassConfig::addIRPasses() {
   // NVPTXPrologEpilog pass (see NVPTXPrologEpilogPass.cpp).
   disablePass(&PrologEpilogCodeInserterID);
   disablePass(&MachineCopyPropagationID);
+  disablePass(&BranchFolderPassID);
   disablePass(&TailDuplicateID);
 
   addPass(createNVPTXImageOptimizerPass());
