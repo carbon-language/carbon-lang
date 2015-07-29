@@ -40,23 +40,6 @@ using namespace llvm;
 STATISTIC(NumTailCalls, "Number of tail calls");
 STATISTIC(NumShiftInserts, "Number of vector shift inserts");
 
-namespace {
-enum AlignMode {
-  StrictAlign,
-  NoStrictAlign
-};
-}
-
-static cl::opt<AlignMode>
-Align(cl::desc("Load/store alignment support"),
-      cl::Hidden, cl::init(NoStrictAlign),
-      cl::values(
-          clEnumValN(StrictAlign,   "aarch64-strict-align",
-                     "Disallow all unaligned memory accesses"),
-          clEnumValN(NoStrictAlign, "aarch64-no-strict-align",
-                     "Allow unaligned memory accesses"),
-          clEnumValEnd));
-
 // Place holder until extr generation is tested fully.
 static cl::opt<bool>
 EnableAArch64ExtrGeneration("aarch64-extr-generation", cl::Hidden,
@@ -515,8 +498,6 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
 
   setMinFunctionAlignment(2);
 
-  RequireStrictAlign = (Align == StrictAlign);
-
   setHasExtractBitsInsn(true);
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
@@ -785,6 +766,18 @@ void AArch64TargetLowering::computeKnownBitsForTargetNode(
 MVT AArch64TargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
                                                   EVT) const {
   return MVT::i64;
+}
+
+bool AArch64TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
+                                                           unsigned AddrSpace,
+                                                           unsigned Align,
+                                                           bool *Fast) const {
+  if (Subtarget->requiresStrictAlign())
+    return false;
+  // FIXME: True for Cyclone, but not necessary others.
+  if (Fast)
+    *Fast = true;
+  return true;
 }
 
 FastISel *

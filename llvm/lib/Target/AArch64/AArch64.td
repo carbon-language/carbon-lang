@@ -40,6 +40,11 @@ def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
 def FeatureZCZeroing : SubtargetFeature<"zcz", "HasZeroCycleZeroing", "true",
                                         "Has zero-cycle zeroing instructions">;
 
+def FeatureStrictAlign : SubtargetFeature<"strict-align",
+                                          "StrictAlign", "true",
+                                          "Disallow all unaligned memory "
+                                          "access">;
+
 def FeatureReserveX18 : SubtargetFeature<"reserve-x18", "ReserveX18", "true",
                                          "Reserve X18, making it unavailable "
                                          "as a GPR">;

@@ -51,6 +51,9 @@ protected:
   // HasZeroCycleZeroing - Has zero-cycle zeroing instructions.
   bool HasZeroCycleZeroing;
 
+  // StrictAlign - Disallow unaligned memory accesses.
+  bool StrictAlign;
+
   // ReserveX18 - X18 is not available as a general purpose register.
   bool ReserveX18;
 
@@ -103,6 +106,8 @@ public:
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }
 
   bool hasZeroCycleZeroing() const { return HasZeroCycleZeroing; }
+
+  bool requiresStrictAlign() const { return StrictAlign; }
 
   bool isX18Reserved() const { return ReserveX18; }
   bool hasFPARMv8() const { return HasFPARMv8; }

@@ -1,7 +1,6 @@
 ; RUN: llc < %s -mtriple=arm64-apple-darwin | FileCheck %s
-; RUN: llc < %s -mtriple=arm64-apple-darwin -aarch64-no-strict-align | FileCheck %s
-; RUN: llc < %s -mtriple=arm64-apple-darwin -aarch64-strict-align | FileCheck %s --check-prefix=CHECK-STRICT
-; RUN: llc < %s -mtriple=arm64-apple-darwin -aarch64-strict-align -fast-isel | FileCheck %s --check-prefix=CHECK-STRICT
+; RUN: llc < %s -mtriple=arm64-apple-darwin -mattr=+strict-align | FileCheck %s --check-prefix=CHECK-STRICT
+; RUN: llc < %s -mtriple=arm64-apple-darwin -mattr=+strict-align -fast-isel | FileCheck %s --check-prefix=CHECK-STRICT
 
 define i32 @f0(i32* nocapture %p) nounwind {
 ; CHECK-STRICT: ldrh [[HIGH:w[0-9]+]], [x0, #2]

@@ -222,8 +222,6 @@ class AArch64Subtarget;
 class AArch64TargetMachine;
 
 class AArch64TargetLowering : public TargetLowering {
-  bool RequireStrictAlign;
-
 public:
   explicit AArch64TargetLowering(const TargetMachine &TM,
                                  const AArch64Subtarget &STI);
@@ -244,14 +242,7 @@ public:
   /// unaligned memory accesses of the specified type.
   bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AddrSpace = 0,
                                       unsigned Align = 1,
-                                      bool *Fast = nullptr) const override {
-    if (RequireStrictAlign)
-      return false;
-    // FIXME: True for Cyclone, but not necessary others.
-    if (Fast)
-      *Fast = true;
-    return true;
-  }
+                                      bool *Fast = nullptr) const override;
 
   /// LowerOperation - Provide custom lowering hooks for some operations.
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
