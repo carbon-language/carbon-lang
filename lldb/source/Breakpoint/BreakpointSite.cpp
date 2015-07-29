@@ -205,6 +205,7 @@ BreakpointSite::ValidForThisThread (Thread *thread)
 void
 BreakpointSite::BumpHitCounts()
 {
+    Mutex::Locker locker(m_owners_mutex);
     for (BreakpointLocationSP loc_sp : m_owners.BreakpointLocations())
     {
         loc_sp->BumpHitCount();
