@@ -48,6 +48,7 @@ void OutputSection::setFileOffset(uint64_t Off) {
     C->setFileOff(C->getFileOff() + Off);
 }
 
+template <class ELFT>
 void OutputSection::addChunk(Chunk *C) {
   Chunks.push_back(C);
   C->setOutputSection(this);
@@ -57,8 +58,10 @@ void OutputSection::addChunk(Chunk *C) {
   C->setFileOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
-  if (auto SC = dyn_cast<SectionChunk<ELF64LE>>(C))
+  if (auto SC = dyn_cast<SectionChunk<ELFT>>(C)) {
     Header.sh_type = SC->getSectionHdr()->sh_type;
+    Header.sh_flags |= SC->getSectionHdr()->sh_flags;
+  }
 }
 
 template <class ELFT>
@@ -84,7 +87,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       Sec = new (CAlloc.Allocate()) OutputSection(C->getSectionName());
       OutputSections.push_back(Sec);
     }
-    Sec->addChunk(C);
+    Sec->addChunk<ELFT>(C);
   }
 }
 
@@ -169,5 +172,10 @@ template class Writer<ELF32LE>;
 template class Writer<ELF32BE>;
 template class Writer<ELF64LE>;
 template class Writer<ELF64BE>;
+
+template void OutputSection::addChunk<ELF32LE>(Chunk *);
+template void OutputSection::addChunk<ELF32BE>(Chunk *);
+template void OutputSection::addChunk<ELF64LE>(Chunk *);
+template void OutputSection::addChunk<ELF64BE>(Chunk *);
 }
 }

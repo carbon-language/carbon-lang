@@ -25,7 +25,7 @@ public:
   OutputSection(StringRef Name) : Name(Name), Header({}) {}
   void setVA(uint64_t);
   void setFileOffset(uint64_t);
-  void addChunk(Chunk *C);
+  template <class ELFT> void addChunk(Chunk *C);
   std::vector<Chunk *> &getChunks() { return Chunks; }
   template <class ELFT>
   void writeHeaderTo(llvm::object::Elf_Shdr_Impl<ELFT> *SHdr);
