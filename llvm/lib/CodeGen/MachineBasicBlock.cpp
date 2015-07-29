@@ -332,6 +332,11 @@ void MachineBasicBlock::removeLiveIn(unsigned Reg) {
     LiveIns.erase(I);
 }
 
+bool MachineBasicBlock::isLiveIn(unsigned Reg) const {
+  livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
+  return I != livein_end();
+}
+
 unsigned
 MachineBasicBlock::addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC) {
   assert(getParent() && "MBB must be inserted in function");
