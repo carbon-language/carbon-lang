@@ -44,6 +44,9 @@
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 
+#include "lldb/Interpreter/OptionValueFileSpecList.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -106,6 +109,59 @@ using namespace lldb_private;
 //    return false;
 //}
 //
+
+namespace {
+
+    PropertyDefinition
+    g_properties[] =
+    {
+        { "comp-dir-symlink-paths" , OptionValue::eTypeFileSpecList, true,  0 ,   nullptr, nullptr, "If the DW_AT_comp_dir matches any of these paths the symbolic links will be resolved at DWARF parse time." },
+        {  nullptr                 , OptionValue::eTypeInvalid     , false, 0,    nullptr, nullptr, nullptr }
+    };
+
+    enum
+    {
+        ePropertySymLinkPaths
+    };
+
+
+    class PluginProperties : public Properties
+    {
+    public:
+        static ConstString
+        GetSettingName()
+        {
+            return SymbolFileDWARF::GetPluginNameStatic();
+        }
+
+        PluginProperties()
+        {
+            m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
+            m_collection_sp->Initialize(g_properties);
+        }
+
+        FileSpecList&
+        GetSymLinkPaths()
+        {
+            OptionValueFileSpecList *option_value = m_collection_sp->GetPropertyAtIndexAsOptionValueFileSpecList(nullptr, true, ePropertySymLinkPaths);
+            assert(option_value);
+            return option_value->GetCurrentValue();
+        }
+
+    };
+
+    typedef std::shared_ptr<PluginProperties> SymbolFileDWARFPropertiesSP;
+
+    static const SymbolFileDWARFPropertiesSP&
+    GetGlobalPluginProperties()
+    {
+        static const auto g_settings_sp(std::make_shared<PluginProperties>());
+        return g_settings_sp;
+    }
+
+}  // anonymous namespace end
+
+
 static AccessType
 DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
 {
@@ -153,11 +209,6 @@ removeHostnameFromPathname(const char* path_from_dwarf)
     return colon_pos + 1;
 }
 
-// DW_AT_comp_dir can be overridden by setting compiler's PWD environment
-// variable - for example, set to "/proc/self/cwd" in order to cope with
-// distributed builds.
-static const char* comp_dir_symlinks[] = {"/proc/self/cwd"};
-
 static const char*
 resolveCompDir(const char* path_from_dwarf)
 {
@@ -171,13 +222,14 @@ resolveCompDir(const char* path_from_dwarf)
         return nullptr;
 
     bool is_symlink = false;
-    for (unsigned long i = 0; i < sizeof(comp_dir_symlinks)/sizeof(comp_dir_symlinks[0]) && !is_symlink; ++i)
-        is_symlink = !strcmp(comp_dir_symlinks[i], local_path);
+    FileSpec local_path_spec(local_path, false);
+    const auto& file_specs = GetGlobalPluginProperties()->GetSymLinkPaths();
+    for (size_t i = 0; i < file_specs.GetSize() && !is_symlink; ++i)
+        is_symlink = FileSpec::Equal(file_specs.GetFileSpecAtIndex(i), local_path_spec, true);
 
     if (!is_symlink)
         return local_path;
 
-    const FileSpec local_path_spec(local_path, true);
     if (!local_path_spec.IsSymbolicLink())
         return local_path;
 
@@ -276,7 +328,21 @@ SymbolFileDWARF::Initialize()
     LogChannelDWARF::Initialize();
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
-                                   CreateInstance);
+                                   CreateInstance,
+                                   DebuggerInitialize);
+}
+
+void
+SymbolFileDWARF::DebuggerInitialize(Debugger &debugger)
+{
+    if (!PluginManager::GetSettingForSymbolFilePlugin(debugger, PluginProperties::GetSettingName()))
+    {
+        const bool is_global_setting = true;
+        PluginManager::CreateSettingForSymbolFilePlugin(debugger,
+                                                        GetGlobalPluginProperties()->GetValueProperties(),
+                                                        ConstString ("Properties for the dwarf symbol-file plug-in."),
+                                                        is_global_setting);
+    }
 }
 
 void

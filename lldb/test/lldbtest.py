@@ -869,6 +869,10 @@ def skipIfLinux(func):
     """Decorate the item to skip tests that should be skipped on Linux."""
     return skipIfPlatform(["linux"])(func)
 
+def skipUnlessHostLinux(func):
+    """Decorate the item to skip tests that should be skipped on any non Linux host."""
+    return skipUnlessHostPlatform(["linux"])(func)
+
 def skipIfWindows(func):
     """Decorate the item to skip tests that should be skipped on Windows."""
     return skipIfPlatform(["windows"])(func)

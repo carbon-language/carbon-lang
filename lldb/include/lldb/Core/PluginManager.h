@@ -301,7 +301,8 @@ public:
     static bool
     RegisterPlugin (const ConstString &name,
                     const char *description,
-                    SymbolFileCreateInstance create_callback);
+                    SymbolFileCreateInstance create_callback,
+                    DebuggerInitializeCallback debugger_init_callback = nullptr);
 
     static bool
     UnregisterPlugin (SymbolFileCreateInstance create_callback);
@@ -419,13 +420,22 @@ public:
     static lldb::OptionValuePropertiesSP
     GetSettingForProcessPlugin (Debugger &debugger,
                                 const ConstString &setting_name);
-    
+
     static bool
     CreateSettingForProcessPlugin (Debugger &debugger,
                                    const lldb::OptionValuePropertiesSP &properties_sp,
                                    const ConstString &description,
                                    bool is_global_property);
 
+    static lldb::OptionValuePropertiesSP
+    GetSettingForSymbolFilePlugin (Debugger &debugger,
+                                   const ConstString &setting_name);
+
+    static bool
+    CreateSettingForSymbolFilePlugin (Debugger &debugger,
+                                      const lldb::OptionValuePropertiesSP &properties_sp,
+                                      const ConstString &description,
+                                      bool is_global_property);
 };
 
 

@@ -76,6 +76,9 @@ public:
     static void
     Terminate();
 
+    static void
+    DebuggerInitialize(lldb_private::Debugger &debugger);
+
     static lldb_private::ConstString
     GetPluginNameStatic();
 

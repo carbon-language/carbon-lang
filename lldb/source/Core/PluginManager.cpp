@@ -1771,13 +1771,15 @@ struct SymbolFileInstance
     SymbolFileInstance() :
         name(),
         description(),
-        create_callback(NULL)
+        create_callback(nullptr),
+        debugger_init_callback(nullptr)
     {
     }
 
     ConstString name;
     std::string description;
     SymbolFileCreateInstance create_callback;
+    DebuggerInitializeCallback debugger_init_callback;
 };
 
 typedef std::vector<SymbolFileInstance> SymbolFileInstances;
@@ -1802,7 +1804,8 @@ PluginManager::RegisterPlugin
 (
     const ConstString &name,
     const char *description,
-    SymbolFileCreateInstance create_callback
+    SymbolFileCreateInstance create_callback,
+    DebuggerInitializeCallback debugger_init_callback
 )
 {
     if (create_callback)
@@ -1813,6 +1816,7 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.debugger_init_callback = debugger_init_callback;
         Mutex::Locker locker (GetSymbolFileMutex ());
         GetSymbolFileInstances ().push_back (instance);
     }
@@ -2343,7 +2347,7 @@ PluginManager::DebuggerInitialize (Debugger &debugger)
                 pos->debugger_init_callback (debugger);
         }
     }
-    
+
     // Initialize the Process plugins
     {
         Mutex::Locker locker (GetProcessMutex());
@@ -2357,6 +2361,15 @@ PluginManager::DebuggerInitialize (Debugger &debugger)
         }
     }
 
+    // Initialize the SymbolFile plugins
+    {
+        Mutex::Locker locker (GetSymbolFileMutex());
+        for (auto& sym_file: GetSymbolFileInstances())
+        {
+            if (sym_file.debugger_init_callback)
+                sym_file.debugger_init_callback (debugger);
+        }
+    }
 }
 
 // This is the preferred new way to register plugin specific settings.  e.g.
@@ -2553,3 +2566,43 @@ PluginManager::CreateSettingForProcessPlugin (Debugger &debugger,
     return false;
 }
 
+
+static const char* kSymbolFilePluginName("symbol-file");
+
+lldb::OptionValuePropertiesSP
+PluginManager::GetSettingForSymbolFilePlugin (Debugger &debugger,
+                                              const ConstString &setting_name)
+{
+    lldb::OptionValuePropertiesSP properties_sp;
+    lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+                                                                                            ConstString(kSymbolFilePluginName),
+                                                                                            ConstString(), // not creating to so we don't need the description
+                                                                                            false));
+    if (plugin_type_properties_sp)
+        properties_sp = plugin_type_properties_sp->GetSubProperty (nullptr, setting_name);
+    return properties_sp;
+}
+
+bool
+PluginManager::CreateSettingForSymbolFilePlugin (Debugger &debugger,
+                                                 const lldb::OptionValuePropertiesSP &properties_sp,
+                                                 const ConstString &description,
+                                                 bool is_global_property)
+{
+    if (properties_sp)
+    {
+        lldb::OptionValuePropertiesSP plugin_type_properties_sp (GetDebuggerPropertyForPlugins (debugger,
+                                                                                                ConstString(kSymbolFilePluginName),
+                                                                                                ConstString("Settings for symbol file plug-ins"),
+                                                                                                true));
+        if (plugin_type_properties_sp)
+        {
+            plugin_type_properties_sp->AppendProperty (properties_sp->GetName(),
+                                                       description,
+                                                       is_global_property,
+                                                       properties_sp);
+            return true;
+        }
+    }
+    return false;
+}
