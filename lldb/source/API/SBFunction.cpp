@@ -258,4 +258,13 @@ SBFunction::GetLanguage ()
     return lldb::eLanguageTypeUnknown;
 }
 
-
+bool
+SBFunction::GetIsOptimized ()
+{
+    if (m_opaque_ptr)
+    {
+        if (m_opaque_ptr->GetCompileUnit())
+            return m_opaque_ptr->GetCompileUnit()->GetIsOptimized();
+    }
+    return false;
+}

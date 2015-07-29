@@ -616,6 +616,24 @@ public:
     size_t
     MemorySize () const;
 
+    //------------------------------------------------------------------
+    /// Get whether compiler optimizations were enabled for this function
+    ///
+    /// The debug information may provide information about whether this
+    /// function was compiled with optimization or not.  In this case,
+    /// "optimized" means that the debug experience may be difficult
+    /// for the user to understand.  Variables may not be available when
+    /// the developer would expect them, stepping through the source lines
+    /// in the function may appear strange, etc.
+    /// 
+    /// @return
+    ///     Returns 'true' if this function was compiled with 
+    ///     optimization.  'false' indicates that either the optimization
+    ///     is unknown, or this function was built without optimization.
+    //------------------------------------------------------------------
+    bool
+    GetIsOptimized ();
+
     lldb::DisassemblerSP
     GetInstructions (const ExecutionContext &exe_ctx,
                      const char *flavor,

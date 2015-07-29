@@ -89,6 +89,16 @@ public:
     lldb::LanguageType
     GetLanguage ();
 
+    %feature("docstring", "
+    Returns true if the function was compiled with optimization.
+    Optimization, in this case, is meant to indicate that the debugger
+    experience may be confusing for the user -- variables optimized away,
+    stepping jumping between source lines -- and the driver may want to 
+    provide some guidance to the user about this.
+    Returns false if unoptimized, or unknown.") GetIsOptimized;
+    bool
+    GetIsOptimized();
+
     bool
     GetDescription (lldb::SBStream &description);
     

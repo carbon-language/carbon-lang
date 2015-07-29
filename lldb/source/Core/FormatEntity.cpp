@@ -98,7 +98,8 @@ static FormatEntity::Entry::Definition g_function_child_entries[] =
     ENTRY ("line-offset"         , FunctionLineOffset     , UInt64),
     ENTRY ("pc-offset"           , FunctionPCOffset       , UInt64),
     ENTRY ("initial-function"    , FunctionInitial        , None),
-    ENTRY ("changed"             , FunctionChanged        , None)
+    ENTRY ("changed"             , FunctionChanged        , None),
+    ENTRY ("is-optimized"        , FunctionIsOptimized    , None)
 };
 
 static FormatEntity::Entry::Definition g_line_child_entries[] =
@@ -343,6 +344,7 @@ FormatEntity::Entry::TypeToCString (Type t)
     ENUM_TO_CSTR(FunctionPCOffset);
     ENUM_TO_CSTR(FunctionInitial);
     ENUM_TO_CSTR(FunctionChanged);
+    ENUM_TO_CSTR(FunctionIsOptimized);
     ENUM_TO_CSTR(LineEntryFile);
     ENUM_TO_CSTR(LineEntryLineNumber);
     ENUM_TO_CSTR(LineEntryStartAddress);
@@ -1869,6 +1871,16 @@ FormatEntity::Format (const Entry &entry,
 
         case Entry::Type::FunctionChanged:
             return function_changed == true;
+
+        case Entry::Type::FunctionIsOptimized:
+            {
+                bool is_optimized = false;
+                if (sc->function && sc->function->GetIsOptimized())
+                {
+                    is_optimized = true;
+                }
+                return is_optimized;
+            }
 
         case Entry::Type::FunctionInitial:
             return initial_function == true;

@@ -66,6 +66,9 @@ public:
     GetLanguage ();
 
     bool
+    GetIsOptimized ();
+
+    bool
     operator == (const lldb::SBFunction &rhs) const;
 
     bool

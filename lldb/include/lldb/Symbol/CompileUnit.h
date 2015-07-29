@@ -66,9 +66,12 @@ public:
     ///     A language enumeration type that describes the main language
     ///     of this compile unit.
     ///
+    /// @param[in] is_optimized
+    ///     true if this compile unit was compiled with optimization.
+    ///
     /// @see lldb::LanguageType
     //------------------------------------------------------------------
-    CompileUnit(const lldb::ModuleSP &module_sp, void *user_data, const char *pathname, lldb::user_id_t uid, lldb::LanguageType language);
+    CompileUnit(const lldb::ModuleSP &module_sp, void *user_data, const char *pathname, lldb::user_id_t uid, lldb::LanguageType language, bool is_optimized);
 
     //------------------------------------------------------------------
     /// Construct with a module, file spec, UID and language.
@@ -98,9 +101,12 @@ public:
     ///     A language enumeration type that describes the main language
     ///     of this compile unit.
     ///
+    /// @param[in] is_optimized
+    ///     true if this compile unit was compiled with optimization.
+    ///
     /// @see lldb::LanguageType
     //------------------------------------------------------------------
-    CompileUnit(const lldb::ModuleSP &module_sp, void *user_data, const FileSpec &file_spec, lldb::user_id_t uid, lldb::LanguageType language);
+    CompileUnit(const lldb::ModuleSP &module_sp, void *user_data, const FileSpec &file_spec, lldb::user_id_t uid, lldb::LanguageType language, bool is_optimized);
 
     //------------------------------------------------------------------
     /// Destructor
@@ -406,6 +412,22 @@ public:
                           SymbolContextList &sc_list);
 
 
+    //------------------------------------------------------------------
+    /// Get whether compiler optimizations were enabled for this compile unit
+    ///
+    /// "optimized" means that the debug experience may be difficult
+    /// for the user to understand.  Variables may not be available when
+    /// the developer would expect them, stepping through the source lines
+    /// in the function may appear strange, etc.
+    /// 
+    /// @return
+    ///     Returns 'true' if this compile unit was compiled with 
+    ///     optimization.  'false' indicates that either the optimization
+    ///     is unknown, or this compile unit was built without optimization.
+    //------------------------------------------------------------------
+    bool
+    GetIsOptimized ();
+
 protected:
     void *m_user_data; ///< User data for the SymbolFile parser to store information into.
     lldb::LanguageType m_language; ///< The programming language enumeration value.
@@ -417,6 +439,7 @@ protected:
     FileSpecList m_support_files; ///< Files associated with this compile unit's line table and declarations.
     std::unique_ptr<LineTable> m_line_table_ap; ///< Line table that will get parsed on demand.
     lldb::VariableListSP m_variables; ///< Global and static variable list that will get parsed on demand.
+    bool       m_is_optimized; /// eLazyBoolYes if this compile unit was compiled with optimization.
 
 private:
     enum

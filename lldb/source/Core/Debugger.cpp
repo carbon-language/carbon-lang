@@ -105,6 +105,7 @@ g_language_enumerators[] =
 
 #define MODULE_WITH_FUNC "{ ${module.file.basename}{`${function.name-with-args}${function.pc-offset}}}"
 #define FILE_AND_LINE "{ at ${line.file.basename}:${line.number}}"
+#define IS_OPTIMIZED "{${function.is-optimized} [opt]}"
 
 #define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id%tid}"\
     "{, ${frame.pc}}"\
@@ -122,6 +123,7 @@ g_language_enumerators[] =
 #define DEFAULT_FRAME_FORMAT "frame #${frame.index}: ${frame.pc}"\
     MODULE_WITH_FUNC\
     FILE_AND_LINE\
+    IS_OPTIMIZED\
     "\\n"
 
 // Three parts to this disassembly format specification:

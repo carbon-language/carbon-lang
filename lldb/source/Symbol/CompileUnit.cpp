@@ -17,7 +17,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
+CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, lldb::LanguageType language, bool is_optimized) :
     ModuleChild(module_sp),
     FileSpec (pathname, false),
     UserID(cu_sym_id),
@@ -27,14 +27,15 @@ CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, cons
     m_functions (),
     m_support_files (),
     m_line_table_ap (),
-    m_variables()
+    m_variables(),
+    m_is_optimized (is_optimized)
 {
     if (language != eLanguageTypeUnknown)
         m_flags.Set(flagsParsedLanguage);
     assert(module_sp);
 }
 
-CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, const FileSpec &fspec, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
+CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, const FileSpec &fspec, const lldb::user_id_t cu_sym_id, lldb::LanguageType language, bool is_optimized) :
     ModuleChild(module_sp),
     FileSpec (fspec),
     UserID(cu_sym_id),
@@ -44,7 +45,8 @@ CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, cons
     m_functions (),
     m_support_files (),
     m_line_table_ap (),
-    m_variables()
+    m_variables(),
+    m_is_optimized (is_optimized)
 {
     if (language != eLanguageTypeUnknown)
         m_flags.Set(flagsParsedLanguage);
@@ -428,6 +430,12 @@ CompileUnit::ResolveSymbolContext
         sc_list.Append(sc);
     }
     return sc_list.GetSize() - prev_size;
+}
+
+bool
+CompileUnit::GetIsOptimized ()
+{
+    return m_is_optimized;
 }
 
 void

@@ -466,6 +466,21 @@ Function::MemorySize () const
     return mem_size;
 }
 
+bool
+Function::GetIsOptimized ()
+{
+    bool result = false;
+
+    // Currently optimization is only indicted by the
+    // vendor extension DW_AT_APPLE_optimized which
+    // is set on a compile unit level.
+    if (m_comp_unit)
+    {
+        result = m_comp_unit->GetIsOptimized();
+    }
+    return result;
+}
+
 ConstString
 Function::GetDisplayName () const
 {

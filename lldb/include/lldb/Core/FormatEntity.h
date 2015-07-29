@@ -81,6 +81,7 @@ namespace lldb_private
                 FunctionPCOffset,
                 FunctionInitial,
                 FunctionChanged,
+                FunctionIsOptimized,
                 LineEntryFile,
                 LineEntryLineNumber,
                 LineEntryStartAddress,

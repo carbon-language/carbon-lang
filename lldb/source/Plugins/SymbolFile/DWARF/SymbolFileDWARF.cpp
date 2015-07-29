@@ -1034,11 +1034,17 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
 
                         LanguageType cu_language = DWARFCompileUnit::LanguageTypeFromDWARF(cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0));
 
+                        bool is_optimized = false;
+                        if (cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_APPLE_optimized, 0) == 1)
+                        {
+                            is_optimized = true;
+                        }
                         cu_sp.reset(new CompileUnit (module_sp,
                                                      dwarf_cu,
                                                      cu_file_spec, 
                                                      MakeUserID(dwarf_cu->GetOffset()),
-                                                     cu_language));
+                                                     cu_language,
+                                                     is_optimized));
                         if (cu_sp)
                         {
                             // If we just created a compile unit with an invalid file spec, try and get the

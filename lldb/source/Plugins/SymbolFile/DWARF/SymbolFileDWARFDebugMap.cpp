@@ -660,7 +660,8 @@ SymbolFileDWARFDebugMap::ParseCompileUnitAtIndex(uint32_t cu_idx)
                                                                                     NULL,
                                                                                     so_file_spec,
                                                                                     cu_id,
-                                                                                    eLanguageTypeUnknown));
+                                                                                    eLanguageTypeUnknown,
+                                                                                    false));
             
                 if (m_compile_unit_infos[cu_idx].compile_unit_sp)
                 {
