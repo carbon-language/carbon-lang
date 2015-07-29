@@ -12,7 +12,8 @@
 // it then removes.
 //
 // Note that this pass must be run after register allocation, it cannot handle
-// SSA form.
+// SSA form. It also must handle virtual registers for targets that emit virtual
+// ISA (e.g. NVPTX).
 //
 //===----------------------------------------------------------------------===//
 
@@ -150,9 +151,13 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
     if (!I->isImplicitDef())
       break;
     unsigned Reg = I->getOperand(0).getReg();
-    for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
-         SubRegs.isValid(); ++SubRegs)
-      ImpDefRegs.insert(*SubRegs);
+    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+           SubRegs.isValid(); ++SubRegs)
+        ImpDefRegs.insert(*SubRegs);
+    } else {
+      ImpDefRegs.insert(Reg);
+    }
     ++I;
   }
   if (ImpDefRegs.empty())
@@ -1573,6 +1578,17 @@ static MachineBasicBlock *findFalseBlock(MachineBasicBlock *BB,
   return nullptr;
 }
 
+template <class Container>
+static void addRegAndItsAliases(unsigned Reg, const TargetRegisterInfo *TRI,
+                                Container &Set) {
+  if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+      Set.insert(*AI);
+  } else {
+    Set.insert(Reg);
+  }
+}
+
 /// findHoistingInsertPosAndDeps - Find the location to move common instructions
 /// in successors to. The location is usually just before the terminator,
 /// however if the terminator is a conditional branch and its previous
@@ -1598,8 +1614,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     if (!Reg)
       continue;
     if (MO.isUse()) {
-      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-        Uses.insert(*AI);
+      addRegAndItsAliases(Reg, TRI, Uses);
     } else {
       if (!MO.isDead())
         // Don't try to hoist code in the rare case the terminator defines a
@@ -1608,8 +1623,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
 
       // If the terminator defines a register, make sure we don't hoist
       // the instruction whose def might be clobbered by the terminator.
-      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-        Defs.insert(*AI);
+      addRegAndItsAliases(Reg, TRI, Defs);
     }
   }
 
@@ -1665,15 +1679,15 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     if (!Reg)
       continue;
     if (MO.isUse()) {
-      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-        Uses.insert(*AI);
+      addRegAndItsAliases(Reg, TRI, Uses);
     } else {
       if (Uses.erase(Reg)) {
-        for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
-          Uses.erase(*SubRegs); // Use sub-registers to be conservative
+        if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+          for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
+            Uses.erase(*SubRegs); // Use sub-registers to be conservative
+        }
       }
-      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-        Defs.insert(*AI);
+      addRegAndItsAliases(Reg, TRI, Defs);
     }
   }
 
@@ -1800,8 +1814,12 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       unsigned Reg = MO.getReg();
       if (!Reg || !LocalDefsSet.count(Reg))
         continue;
-      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-        LocalDefsSet.erase(*AI);
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+          LocalDefsSet.erase(*AI);
+      } else {
+        LocalDefsSet.erase(Reg);
+      }
     }
 
     // Track local defs so we can update liveins.
@@ -1813,8 +1831,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       if (!Reg)
         continue;
       LocalDefs.push_back(Reg);
-      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
-        LocalDefsSet.insert(*AI);
+      addRegAndItsAliases(Reg, TRI, LocalDefsSet);
     }
 
     HasDups = true;
