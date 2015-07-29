@@ -693,6 +693,17 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
   }
 
+  // Handle /safeseh.
+  if (Args.hasArg(OPT_safeseh)) {
+    for (ObjectFile *File : Symtab.ObjectFiles) {
+      if (File->SEHCompat)
+        continue;
+      llvm::errs() << "/safeseh: " << File->getName()
+                   << " is not compatible with SEH\n";
+      return false;
+    }
+  }
+
   // Windows specific -- when we are creating a .dll file, we also
   // need to create a .lib file.
   if (!Config->Exports.empty()) {
