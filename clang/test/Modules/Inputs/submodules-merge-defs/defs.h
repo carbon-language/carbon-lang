@@ -97,3 +97,9 @@ namespace MergeFunctionTemplateSpecializations {
 
 enum ScopedEnum : int;
 enum ScopedEnum : int { a, b, c };
+
+namespace RedeclDifferentDeclKind {
+  struct X {};
+  typedef X X;
+  using RedeclDifferentDeclKind::X;
+}
