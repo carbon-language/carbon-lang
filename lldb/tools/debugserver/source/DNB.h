@@ -51,6 +51,7 @@ nub_process_t   DNBProcessLaunch        (const char *path,
                                          char *err_str, 
                                          size_t err_len);
 
+nub_process_t   DNBProcessGetPIDByName  (const char *name);
 nub_process_t   DNBProcessAttach        (nub_process_t pid, struct timespec *timeout, char *err_str, size_t err_len);
 nub_process_t   DNBProcessAttachByName  (const char *name, struct timespec *timeout, char *err_str, size_t err_len);
 nub_process_t   DNBProcessAttachWait    (const char *wait_name, nub_launch_flavor_t launch_flavor, bool ignore_existing, struct timespec *timeout, useconds_t interval, char *err_str, size_t err_len, DNBShouldCancelCallback should_cancel = NULL, void *callback_data = NULL);

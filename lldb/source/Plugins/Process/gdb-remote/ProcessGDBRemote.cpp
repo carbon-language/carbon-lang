@@ -3804,8 +3804,28 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                             break;
                                         }
                                         case eStateInvalid:
-                                            process->SetExitStatus(-1, "lost connection");
-                                            break;
+                                        {
+                                            // Check to see if we were trying to attach and if we got back
+                                            // the "E87" error code from debugserver -- this indicates that
+                                            // the process is not debuggable.  Return a slightly more helpful
+                                            // error message about why the attach failed.
+                                            if (::strstr (continue_cstr, "vAttach") != NULL
+                                                && response.GetError() == 0x87)
+                                            {
+                                                process->SetExitStatus(-1, "cannot attach to process due to System Integrity Protection");
+                                            }
+                                            // E01 code from vAttach means that the attach failed
+                                            if (::strstr (continue_cstr, "vAttach") != NULL
+                                                && response.GetError() == 0x1)
+                                            {
+                                                process->SetExitStatus(-1, "unable to attach");
+                                            }
+                                            else
+                                            {
+                                                process->SetExitStatus(-1, "lost connection");
+                                            }
+                                                break;
+                                        }
 
                                         default:
                                             process->SetPrivateState (stop_state);

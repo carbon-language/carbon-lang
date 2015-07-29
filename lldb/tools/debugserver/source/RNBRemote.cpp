@@ -141,6 +141,23 @@ decode_uint64 (const char *p, int base, char **end = nullptr, uint64_t fail_valu
 
 extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
 
+#if defined (__APPLE__)
+// from System.framework/Versions/B/PrivateHeaders/sys/codesign.h
+extern "C" {
+#define CS_OPS_STATUS           0       /* return status */
+#define CS_RESTRICT             0x0000800       /* tell dyld to treat restricted */
+int csops(pid_t pid, unsigned int  ops, void * useraddr, size_t usersize);
+
+// from rootless.h
+bool rootless_allows_task_for_pid (pid_t pid);
+
+// from sys/csr.h
+typedef uint32_t csr_config_t;
+#define CSR_ALLOW_TASK_FOR_PID            (1 << 2)
+int csr_check(csr_config_t mask);
+}
+#endif
+
 RNBRemote::RNBRemote () :
     m_ctx (),
     m_comm (),
@@ -3603,13 +3620,14 @@ RNBRemote::HandlePacket_v (const char *p)
     }
     else if (strstr (p, "vAttach") == p)
     {
-        nub_process_t attach_pid = INVALID_NUB_PROCESS;
+        nub_process_t attach_pid = INVALID_NUB_PROCESS;        // attach_pid will be set to 0 if the attach fails
+        nub_process_t pid_attaching_to = INVALID_NUB_PROCESS;  // pid_attaching_to is the original pid specified
         char err_str[1024]={'\0'};
+        std::string attach_name;
         
         if (strstr (p, "vAttachWait;") == p)
         {
             p += strlen("vAttachWait;");
-            std::string attach_name;
             if (!GetProcessNameFrom_vAttach(p, attach_name))
             {
                 return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachWait' pkt");
@@ -3621,7 +3639,6 @@ RNBRemote::HandlePacket_v (const char *p)
         else if (strstr (p, "vAttachOrWait;") == p)
         {
             p += strlen("vAttachOrWait;");
-            std::string attach_name;
             if (!GetProcessNameFrom_vAttach(p, attach_name))
             {
                 return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachOrWait' pkt");
@@ -3632,7 +3649,6 @@ RNBRemote::HandlePacket_v (const char *p)
         else if (strstr (p, "vAttachName;") == p)
         {
             p += strlen("vAttachName;");
-            std::string attach_name;
             if (!GetProcessNameFrom_vAttach(p, attach_name))
             {
                 return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'vAttachName' pkt");
@@ -3645,13 +3661,13 @@ RNBRemote::HandlePacket_v (const char *p)
         {
             p += strlen("vAttach;");
             char *end = NULL;
-            attach_pid = static_cast<int>(strtoul (p, &end, 16));    // PID will be in hex, so use base 16 to decode
+            pid_attaching_to = static_cast<int>(strtoul (p, &end, 16));    // PID will be in hex, so use base 16 to decode
             if (p != end && *end == '\0')
             {
                 // Wait at most 30 second for attach
                 struct timespec attach_timeout_abstime;
                 DNBTimer::OffsetTimeOfDay(&attach_timeout_abstime, 30, 0);
-                attach_pid = DNBProcessAttach(attach_pid, &attach_timeout_abstime, err_str, sizeof(err_str));
+                attach_pid = DNBProcessAttach(pid_attaching_to, &attach_timeout_abstime, err_str, sizeof(err_str));
             }
         }
         else
@@ -3675,6 +3691,44 @@ RNBRemote::HandlePacket_v (const char *p)
                 m_ctx.LaunchStatus().SetErrorString(err_str);
             else
                 m_ctx.LaunchStatus().SetErrorString("attach failed");
+
+#if defined (__APPLE__)
+            if (pid_attaching_to == INVALID_NUB_PROCESS && !attach_name.empty())
+            {
+                pid_attaching_to = DNBProcessGetPIDByName (attach_name.c_str());
+            }
+            if (pid_attaching_to != INVALID_NUB_PROCESS && strcmp (err_str, "No such process") != 0)
+            {
+                // csr_check(CSR_ALLOW_TASK_FOR_PID) will be nonzero if System Integrity Protection is in effect.
+                if (csr_check(CSR_ALLOW_TASK_FOR_PID) != 0)
+                {
+                    bool attach_failed_due_to_sip = false;
+                    
+                    if (rootless_allows_task_for_pid (pid_attaching_to) == 0)
+                    {
+                        attach_failed_due_to_sip = true;
+                    }
+
+                    if (attach_failed_due_to_sip == false)
+                    {
+                        int csops_flags = 0;
+                        int retval = ::csops (pid_attaching_to, CS_OPS_STATUS, &csops_flags, sizeof (csops_flags));
+                        if (retval != -1 && (csops_flags & CS_RESTRICT))
+                        {
+                            attach_failed_due_to_sip = true;
+                        }
+                    }
+                    if (attach_failed_due_to_sip)
+                    {
+                        SendPacket ("E87");  // E87 is the magic value which says that we are not allowed to attach
+                        DNBLogError ("Attach failed because process does not allow attaching: \"%s\".", err_str);
+                        return rnb_err;
+                    }
+                }
+            }
+                
+#endif
+
             SendPacket ("E01");  // E01 is our magic error value for attach failed.
             DNBLogError ("Attach failed: \"%s\".", err_str);
             return rnb_err;
