@@ -127,6 +127,10 @@ public:
                                PerFunctionMIParsingState &PFS);
 
 private:
+  bool parseMBBReference(MachineBasicBlock *&MBB,
+                         const yaml::StringValue &Source, MachineFunction &MF,
+                         const PerFunctionMIParsingState &PFS);
+
   /// Return a MIR diagnostic converted from an MI string diagnostic.
   SMDiagnostic diagFromMIStringDiag(const SMDiagnostic &Error,
                                     SMRange SourceRange);
@@ -352,9 +356,8 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   // Parse the successors.
   for (const auto &MBBSource : YamlMBB.Successors) {
     MachineBasicBlock *SuccMBB = nullptr;
-    if (parseMBBReference(SuccMBB, SM, MF, MBBSource.Value, PFS, IRSlots,
-                          Error))
-      return error(Error, MBBSource.SourceRange);
+    if (parseMBBReference(SuccMBB, MBBSource, MF, PFS))
+      return true;
     // TODO: Report an error when adding the same successor more than once.
     MBB.addSuccessor(SuccMBB);
   }
@@ -544,14 +547,24 @@ bool MIRParserImpl::initializeJumpTableInfo(
     std::vector<MachineBasicBlock *> Blocks;
     for (const auto &MBBSource : Entry.Blocks) {
       MachineBasicBlock *MBB = nullptr;
-      if (parseMBBReference(MBB, SM, MF, MBBSource.Value, PFS, IRSlots, Error))
-        return error(Error, MBBSource.SourceRange);
+      if (parseMBBReference(MBB, MBBSource.Value, MF, PFS))
+        return true;
       Blocks.push_back(MBB);
     }
     unsigned Index = JTI->createJumpTableIndex(Blocks);
     // TODO: Report an error when the same jump table slot ID is redefined.
     PFS.JumpTableSlots.insert(std::make_pair(Entry.ID, Index));
   }
+  return false;
+}
+
+bool MIRParserImpl::parseMBBReference(MachineBasicBlock *&MBB,
+                                      const yaml::StringValue &Source,
+                                      MachineFunction &MF,
+                                      const PerFunctionMIParsingState &PFS) {
+  SMDiagnostic Error;
+  if (llvm::parseMBBReference(MBB, SM, MF, Source.Value, PFS, IRSlots, Error))
+    return error(Error, Source.SourceRange);
   return false;
 }
 
