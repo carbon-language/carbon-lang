@@ -202,7 +202,7 @@ public:
 
 private:
   void ScanPredicate() {
-    while (Iterator != End && Predicate(*Iterator)) {
+    while (Iterator != End && !Predicate(*Iterator)) {
       ++Iterator;
     }
   }
@@ -231,14 +231,14 @@ private:
 SectionFilter ToolSectionFilter(llvm::object::ObjectFile const &O) {
   return SectionFilter([](llvm::object::SectionRef const &S) {
                          if(FilterSections.empty())
-                           return false;
+                           return true;
                          llvm::StringRef String;
                          std::error_code error = S.getName(String);
                          if (error)
-                           return true;
+                           return false;
                          return std::find(FilterSections.begin(),
                                           FilterSections.end(),
-                                          String) == FilterSections.end();
+                                          String) != FilterSections.end();
                        },
                        O);
 }
