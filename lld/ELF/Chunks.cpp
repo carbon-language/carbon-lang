@@ -19,7 +19,7 @@ using namespace lld::elf2;
 template <class ELFT>
 SectionChunk<ELFT>::SectionChunk(object::ELFFile<ELFT> *Obj,
                                  const Elf_Shdr *Header)
-    : Obj(Obj), Header(Header) {
+    : Chunk(SectionKind), Obj(Obj), Header(Header) {
   // Initialize SectionName.
   ErrorOr<StringRef> Name = Obj->getSectionName(Header);
   error(Name);
