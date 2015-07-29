@@ -29,6 +29,7 @@ using namespace llvm::cl;
 
 OptionCategory DsymCategory("Specific Options");
 static opt<bool> Help("h", desc("Alias for -help"), Hidden);
+static opt<bool> Version("v", desc("Alias for -version"), Hidden);
 
 static opt<std::string> InputFile(Positional, desc("<input file>"),
                                   init("a.out"), cat(DsymCategory));
@@ -83,6 +84,11 @@ int main(int argc, char **argv) {
 
   if (Help)
     PrintHelpMessage();
+
+  if (Version) {
+    llvm::cl::PrintVersionMessage();
+    return 0;
+  }
 
   auto DebugMapPtrOrErr =
       parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
