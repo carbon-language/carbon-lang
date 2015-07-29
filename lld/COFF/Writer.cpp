@@ -526,10 +526,10 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
       Dir[TLS_TABLE].Size = 40;
     }
   }
-  if (Symbol *Sym = Symtab->findUnderscore("_load_config_used")) {
+  if (Symbol *Sym = Symtab->find(Config->LoadConfigUsed)) {
     if (Defined *B = dyn_cast<Defined>(Sym->Body)) {
       Dir[LOAD_CONFIG_TABLE].RelativeVirtualAddress = B->getRVA();
-      Dir[LOAD_CONFIG_TABLE].Size = 64;
+      Dir[LOAD_CONFIG_TABLE].Size = Config->is64() ? 112 : 64;
     }
   }
 

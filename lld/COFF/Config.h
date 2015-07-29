@@ -79,6 +79,7 @@ struct Configuration {
   std::vector<Export> Exports;
   std::set<std::string> DelayLoads;
   Undefined *DelayLoadHelper = nullptr;
+  StringRef LoadConfigUsed;
 
   // Used for SafeSEH.
   DefinedRelative *SEHTable = nullptr;
