@@ -200,8 +200,6 @@ A test10() {
 namespace templates {
   struct A {};
   struct B { B(A); };
-  struct C { C(); C(C&&); };
-  struct D { D(C); };
 
   // Warn once here since the type is not dependent.
   template <typename T>
@@ -216,12 +214,9 @@ namespace templates {
   void run_test1() {
     test1<A>();
     test1<B>();
-    test1<C>();
-    test1<D>();
   }
 
-  // Either a pessimizing move, a redundant move, or no warning could be
-  // emitted, given the right types.  So just drop the warning.
+  // T1 and T2 may not be the same, the warning may not always apply.
   template <typename T1, typename T2>
   T1 test2() {
     T2 t;
@@ -230,6 +225,5 @@ namespace templates {
   void run_test2() {
     test2<A, A>();
     test2<B, A>();
-    test2<D, C>();
   }
 }
