@@ -28,6 +28,7 @@ namespace llvm {
 class DataLayout;
 class GlobalVariable;
 class Value;
+class raw_ostream;
 
 struct BitSetInfo {
   // The indices of the set bits in the bitset.
@@ -57,6 +58,8 @@ struct BitSetInfo {
   bool containsValue(const DataLayout &DL,
                      const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout,
                      Value *V, uint64_t COffset = 0) const;
+
+  void print(raw_ostream &OS) const;
 };
 
 struct BitSetBuilder {

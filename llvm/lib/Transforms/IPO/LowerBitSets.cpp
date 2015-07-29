@@ -26,6 +26,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
@@ -88,6 +90,22 @@ bool BitSetInfo::containsValue(
   }
 
   return false;
+}
+
+void BitSetInfo::print(raw_ostream &OS) const {
+  OS << "offset " << ByteOffset << " size " << BitSize << " align "
+     << (1 << AlignLog2);
+
+  if (isAllOnes()) {
+    OS << " all-ones\n";
+    return;
+  }
+
+  OS << " { ";
+  for (uint64_t B : Bits)
+    OS << B << ' ';
+  OS << "}\n";
+  return;
 }
 
 BitSetInfo BitSetBuilder::build() {
@@ -532,6 +550,10 @@ void LowerBitSets::buildBitSetsFromGlobals(
   for (MDString *BS : BitSets) {
     // Build the bitset.
     BitSetInfo BSI = buildBitSet(BS, GlobalLayout);
+    DEBUG({
+      dbgs() << BS->getString() << ": ";
+      BSI.print(dbgs());
+    });
 
     ByteArrayInfo *BAI = 0;
 
