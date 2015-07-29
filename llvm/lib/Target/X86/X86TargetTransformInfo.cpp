@@ -163,7 +163,8 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
 
     { ISD::SRA,  MVT::v32i8,      24 }, // vpblendvb sequence.
     { ISD::SRA,  MVT::v16i16,     10 }, // extend/vpsravd/pack sequence.
-    { ISD::SRA,  MVT::v4i64,    4*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v2i64,       4 }, // srl/xor/sub sequence.
+    { ISD::SRA,  MVT::v4i64,       4 }, // srl/xor/sub sequence.
 
     // Vectorizing division is a bad idea. See the SSE2 table for more comments.
     { ISD::SDIV,  MVT::v32i8,  32*20 },
@@ -270,7 +271,7 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRA,  MVT::v16i8,    54 }, // unpacked cmpgtb sequence.
     { ISD::SRA,  MVT::v8i16,    32 }, // cmpgtb sequence.
     { ISD::SRA,  MVT::v4i32,    16 }, // Shift each lane + blend.
-    { ISD::SRA,  MVT::v2i64,  2*10 }, // Scalarized.
+    { ISD::SRA,  MVT::v2i64,    12 }, // srl/xor/sub sequence.
 
     // It is not a good idea to vectorize division. We have to scalarize it and
     // in the process we will often end up having to spilling regular

@@ -17285,12 +17285,12 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
         }
         if (Op.getOpcode() == ISD::SRA) {
           if (ShiftAmt == 7) {
-            // R s>> 7  ===  R s< 0
+            // ashr(R, 7)  === cmp_slt(R, 0)
             SDValue Zeros = getZeroVector(VT, Subtarget, DAG, dl);
             return DAG.getNode(X86ISD::PCMPGT, dl, VT, Zeros, R);
           }
 
-          // R s>> a === ((R u>> a) ^ m) - m
+          // ashr(R, Amt) === sub(xor(lshr(R, Amt), Mask), Mask)
           SDValue Res = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
           SmallVector<SDValue, 32> V(NumElts,
                                      DAG.getConstant(128 >> ShiftAmt, dl,
@@ -17458,6 +17458,19 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     SDValue R0 = DAG.getNode(Op->getOpcode(), dl, VT, R, Amt0);
     SDValue R1 = DAG.getNode(Op->getOpcode(), dl, VT, R, Amt1);
     return DAG.getVectorShuffle(VT, dl, R0, R1, {0, 3});
+  }
+
+  // i64 vector arithmetic shift can be emulated with the transform:
+  // M = lshr(SIGN_BIT, Amt)
+  // ashr(R, Amt) === sub(xor(lshr(R, Amt), M), M)
+  if ((VT == MVT::v2i64 || (VT == MVT::v4i64 && Subtarget->hasInt256())) &&
+      Op.getOpcode() == ISD::SRA) {
+    SDValue S = DAG.getConstant(APInt::getSignBit(64), dl, VT);
+    SDValue M = DAG.getNode(ISD::SRL, dl, VT, S, Amt);
+    R = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
+    R = DAG.getNode(ISD::XOR, dl, VT, R, M);
+    R = DAG.getNode(ISD::SUB, dl, VT, R, M);
+    return R;
   }
 
   // If possible, lower this packed shift into a vector multiply instead of
