@@ -49,7 +49,7 @@ namespace llvm {
   /// \p KnownZero the set of bits that are known to be zero
   void computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
                                          APInt &KnownZero);
-  /// Returns true if LHS and RHS have no common bits set.
+  /// Return true if LHS and RHS have no common bits set.
   bool haveNoCommonBitsSet(Value *LHS, Value *RHS, const DataLayout &DL,
                            AssumptionCache *AC = nullptr,
                            const Instruction *CxtI = nullptr,
@@ -67,7 +67,7 @@ namespace llvm {
   /// exactly one bit set when defined. For vectors return true if every
   /// element is known to be a power of two when defined.  Supports values with
   /// integer or pointer type and vectors of integers.  If 'OrZero' is set then
-  /// returns true if the given value is either a power of two or zero.
+  /// return true if the given value is either a power of two or zero.
   bool isKnownToBeAPowerOfTwo(Value *V, const DataLayout &DL,
                               bool OrZero = false, unsigned Depth = 0,
                               AssumptionCache *AC = nullptr,
