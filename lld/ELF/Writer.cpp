@@ -57,6 +57,22 @@ void OutputSection::addChunk(Chunk *C) {
   C->setFileOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
+  if (auto SC = dyn_cast<SectionChunk<ELF64LE>>(C))
+    Header.sh_type = SC->getSectionHdr()->sh_type;
+}
+
+template <class ELFT>
+void OutputSection::writeHeaderTo(Elf_Shdr_Impl<ELFT> *SHdr) {
+  SHdr->sh_name = Header.sh_name;
+  SHdr->sh_type = Header.sh_type;
+  SHdr->sh_flags = Header.sh_flags;
+  SHdr->sh_addr = Header.sh_addr;
+  SHdr->sh_offset = Header.sh_offset;
+  SHdr->sh_size = Header.sh_size;
+  SHdr->sh_link = Header.sh_link;
+  SHdr->sh_info = Header.sh_info;
+  SHdr->sh_addralign = Header.sh_addralign;
+  SHdr->sh_entsize = Header.sh_entsize;
 }
 
 // Create output section objects and add them to OutputSections.
@@ -75,10 +91,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr_Impl<ELFT>) +
-                                         sizeof(Elf_Shdr_Impl<ELFT>) *
-                                             OutputSections.size(),
-                                     PageSize);
+  SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr_Impl<ELFT>), PageSize);
   uint64_t VA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
   for (OutputSection *Sec : OutputSections) {
@@ -87,7 +100,9 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     VA += RoundUpToAlignment(Sec->getSize(), PageSize);
     FileOff += RoundUpToAlignment(Sec->getSize(), 8);
   }
-  SizeOfImage = SizeOfHeaders + RoundUpToAlignment(VA - 0x1000, PageSize);
+  // Add space for section headers.
+  SectionHeaderOff = FileOff;
+  FileOff += (OutputSections.size() + 1) * sizeof(Elf_Shdr_Impl<ELFT>);
   FileSize = SizeOfHeaders + RoundUpToAlignment(FileOff - SizeOfHeaders, 8);
 }
 
@@ -108,12 +123,12 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = 0x401000;
   EHdr->e_phoff = sizeof(Elf_Ehdr_Impl<ELFT>);
-  EHdr->e_shoff = 0;
+  EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr_Impl<ELFT>);
   EHdr->e_phentsize = sizeof(Elf_Phdr_Impl<ELFT>);
   EHdr->e_phnum = 1;
   EHdr->e_shentsize = sizeof(Elf_Shdr_Impl<ELFT>);
-  EHdr->e_shnum = 0;
+  EHdr->e_shnum = OutputSections.size() + 1;
   EHdr->e_shstrndx = 0;
 
   auto PHdrs = reinterpret_cast<Elf_Phdr_Impl<ELFT> *>(Buf + EHdr->e_phoff);
@@ -125,6 +140,12 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   PHdrs->p_filesz = FileSize;
   PHdrs->p_memsz = FileSize;
   PHdrs->p_align = 0x4000;
+
+  auto SHdrs = reinterpret_cast<Elf_Shdr_Impl<ELFT> *>(Buf + EHdr->e_shoff);
+  // First entry is null.
+  ++SHdrs;
+  for (OutputSection *Sec : OutputSections)
+    Sec->writeHeaderTo<ELFT>(SHdrs++);
 }
 
 template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {

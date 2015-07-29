@@ -27,6 +27,8 @@ public:
   void setFileOffset(uint64_t);
   void addChunk(Chunk *C);
   std::vector<Chunk *> &getChunks() { return Chunks; }
+  template <class ELFT>
+  void writeHeaderTo(llvm::object::Elf_Shdr_Impl<ELFT> *SHdr);
 
   // Returns the size of the section in the output file.
   uint64_t getSize() { return Header.sh_size; }
@@ -40,6 +42,8 @@ private:
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+
   explicit Writer(SymbolTable<ELFT> *T);
   ~Writer();
   void write(StringRef Path);
@@ -57,8 +61,8 @@ private:
   std::vector<OutputSection *> OutputSections;
 
   uint64_t FileSize;
-  uint64_t SizeOfImage;
   uint64_t SizeOfHeaders;
+  uintX_t SectionHeaderOff;
 
   std::vector<std::unique_ptr<Chunk>> Chunks;
 };
