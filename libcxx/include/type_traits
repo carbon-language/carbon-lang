@@ -474,7 +474,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_function
 // template <class _Tp, class _Up> struct __libcpp_is_member_function_pointer<_Tp _Up::*> : public is_function<_Tp> {};
 // 
 
-template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
+template <class _MP, bool _IsMemberFunctionPtr, bool _IsMemberObjectPtr>
 struct __member_pointer_traits_imp
 {  // forward declaration; specializations later
 };
