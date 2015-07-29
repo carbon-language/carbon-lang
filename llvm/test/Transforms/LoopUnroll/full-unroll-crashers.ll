@@ -57,3 +57,27 @@ for.inc:                                          ; preds = %for.body, %if.then
 for.end:                                          ; preds = %for.inc
   ret void
 }
+
+define void @switch() {
+entry:
+  br label %for.body
+
+for.body:
+  %iv.0 = phi i64 [ 0, %entry ], [ %iv.1, %for.inc ]
+  %arrayidx1 = getelementptr inbounds [10 x i32], [10 x i32]* @known_constant, i64 0, i64 %iv.0
+  %x1 = load i32, i32* %arrayidx1, align 4
+  switch i32 %x1, label %l1 [
+  ]
+
+l1:
+  %x2 = add i32 %x1, 2
+  br label %for.inc
+
+for.inc:
+  %iv.1 = add nuw nsw i64 %iv.0, 1
+  %exitcond = icmp eq i64 %iv.1, 10
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  ret void
+}

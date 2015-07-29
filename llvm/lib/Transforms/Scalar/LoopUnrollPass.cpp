@@ -619,8 +619,8 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
           if (isa<UndefValue>(SimpleCond))
             Succ = SI->getSuccessor(0);
           else
-            Succ =
-                SI->getSuccessor(cast<ConstantInt>(SimpleCond)->getSExtValue());
+            Succ = SI->findCaseValue(cast<ConstantInt>(SimpleCond))
+                       .getCaseSuccessor();
           if (L->contains(Succ))
             BBWorklist.insert(Succ);
           continue;
