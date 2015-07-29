@@ -73,12 +73,28 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that non-pending BP was set correctly
         self.runCmd("-exec-continue")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+        self.expect("\*stopped,reason=\"breakpoint-hit\".*bkptno=\"2\"")
+
+        # Test that we can set a BP using the file:func syntax
+        self.runCmd("-break-insert main.cpp:main")
+        self.expect("\^done,bkpt={number=\"4\"")
+        self.runCmd("-break-insert main.cpp:ns::foo1")
+        self.expect("\^done,bkpt={number=\"5\"")
+        #FIXME: quotes on filenames aren't handled correctly in lldb-mi.
+        #self.runCmd("-break-insert \"main.cpp\":main")
+        #self.expect("\^done,bkpt={number=\"6\"")
+
+        # We should hit BP #5 on 'main.cpp:ns::foo1'
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\".*bkptno=\"5\"")
 
         #FIXME: this test is disabled due to lldb bug llvm.org/pr24271.
         # Test that we can set a BP using the global namespace token
         #self.runCmd("-break-insert ::main")
-        #self.expect("\^done,bkpt={number=\"3\"")
+        #self.expect("\^done,bkpt={number=\"7\"")
+        #self.runCmd("-break-insert main.cpp:::main")
+        #self.expect("\^done,bkpt={number=\"8\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
@@ -105,7 +121,6 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @unittest2.expectedFailure("tests added in r243484 fail")
     def test_lldbmi_break_insert_file_line(self):
         """Test that 'lldb-mi --interpreter' works for file:line breakpoints."""
 
@@ -134,25 +149,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that non-pending BP was set correctly
         self.runCmd("-exec-continue")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"breakpoint-hit\".*bkptno=\"2\"")
-
-        # Test that we can set a BP using the file:func syntax
-        self.runCmd("-break-insert main.cpp:main")
-        self.expect("\^done,bkpt={number=\"4\"")
-        self.runCmd("-break-insert main.cpp:ns::foo1")
-        self.expect("\^done,bkpt={number=\"5\"")
-        #FIXME: quotes on filenames aren't handled correctly in lldb-mi.
-        #self.runCmd("-break-insert \"main.cpp\":main")
-        #self.expect("\^done,bkpt={number=\"6\"")
-        #FIXME: this test is disabled due to lldb bug llvm.org/pr24271.
-        # Test that we can set a BP using the global namespace token
-        #self.runCmd("-break-insert \"main.cpp:::main\"")
-        #self.expect("\^done,bkpt={number=\"7\"")
-
-        # We should hit BP #5 on 'main.cpp:ns::foo1'
-        self.runCmd("-exec-continue")
-        self.expect("\^running")
-        self.expect("\*stopped,reason=\"breakpoint-hit\".*bkptno=\"5\"")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
