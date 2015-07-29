@@ -35,6 +35,9 @@ public:
         File (const FileSpec &file_spec, Target *target);
         ~File();
 
+        void
+        UpdateIfNeeded ();
+
         size_t
         DisplaySourceLines (uint32_t line,
                             uint32_t context_before,

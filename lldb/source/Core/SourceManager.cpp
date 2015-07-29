@@ -83,6 +83,10 @@ SourceManager::GetFile (const FileSpec &file_spec)
     if (target_sp && file_sp && file_sp->GetSourceMapModificationID() != target_sp->GetSourcePathMap().GetModificationID())
         file_sp.reset();
 
+    // Update the file contents if needed if we found a file
+    if (file_sp)
+        file_sp->UpdateIfNeeded();
+
     // If file_sp is no good or it points to a non-existent file, reset it.
     if (!file_sp || !file_sp->GetFileSpec().Exists())
     {
@@ -492,8 +496,8 @@ SourceManager::File::LineIsValid (uint32_t line)
     return false;
 }
 
-size_t
-SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before, uint32_t context_after, Stream *s)
+void
+SourceManager::File::UpdateIfNeeded ()
 {
     // TODO: use host API to sign up for file modifications to anything in our
     // source cache and only update when we determine a file has been updated.
@@ -506,7 +510,11 @@ SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before,
         m_data_sp = m_file_spec.ReadFileContents ();
         m_offsets.clear();
     }
+}
 
+size_t
+SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before, uint32_t context_after, Stream *s)
+{
     // Sanity check m_data_sp before proceeding.
     if (!m_data_sp)
         return 0;
@@ -538,14 +546,6 @@ SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before,
 void
 SourceManager::File::FindLinesMatchingRegex (RegularExpression& regex, uint32_t start_line, uint32_t end_line, std::vector<uint32_t> &match_lines)
 {
-    TimeValue curr_mod_time (m_file_spec.GetModificationTime());
-    if (m_mod_time != curr_mod_time)
-    {
-        m_mod_time = curr_mod_time;
-        m_data_sp = m_file_spec.ReadFileContents ();
-        m_offsets.clear();
-    }
-    
     match_lines.clear();
     
     if (!LineIsValid(start_line) || (end_line != UINT32_MAX && !LineIsValid(end_line)))
