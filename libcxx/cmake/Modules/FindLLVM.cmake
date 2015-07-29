@@ -1,6 +1,5 @@
-
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  # Rely on llvm-config.
+macro(find_llvm_parts)
+# Rely on llvm-config.
   set(CONFIG_OUTPUT)
   find_program(LLVM_CONFIG "llvm-config")
   if(DEFINED LLVM_PATH)
@@ -38,9 +37,8 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
     set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
   else()
-    message(FATAL_ERROR "llvm-config not found and LLVM_MAIN_SRC_DIR not defined. "
-                        "Reconfigure with -DLLVM_CONFIG=path/to/llvm-config "
-                        "or -DLLVM_PATH=path/to/llvm-source-root.")
+    set(LLVM_FOUND OFF)
+    return()
   endif()
 
   if (NOT EXISTS ${LLVM_MAIN_SRC_DIR})
@@ -54,28 +52,29 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
   list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
 
+  set(LLVM_FOUND ON)
+endmacro(find_llvm_parts)
 
-  if(LLVM_LIT)
-    # Define the default arguments to use with 'lit', and an option for the user
-    # to override.
-    set(LIT_ARGS_DEFAULT "-sv --show-xfail --show-unsupported")
-    if (MSVC OR XCODE)
-      set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
-    endif()
-    set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
 
-    # On Win32 hosts, provide an option to specify the path to the GnuWin32 tools.
-    if( WIN32 AND NOT CYGWIN )
-      set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
-    endif()
-  else()
-    set(LLVM_INCLUDE_TESTS OFF)
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(LIBCXX_BUILT_STANDALONE 1)
+  find_llvm_parts()
+
+  if (NOT DEFINED LLVM_INCLUDE_TESTS)
+    set(LLVM_INCLUDE_TESTS ${LLVM_FOUND})
   endif()
 
-  include(AddLLVM) # Include the LLVM CMake functions.
-  include(HandleLLVMOptions)
-  set(LIBCXX_BUILT_STANDALONE 1)
+  # Define the default arguments to use with 'lit', and an option for the user
+  # to override.
+  set(LIT_ARGS_DEFAULT "-sv --show-xfail --show-unsupported")
+  if (MSVC OR XCODE)
+    set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+  endif()
+  set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+
+  include(AddLLVM OPTIONAL) # Include the LLVM CMake functions.
+  include(HandleLLVMOptions OPTIONAL)
 else()
+  set(LLVM_FOUND ON)
   set(LLVM_MAIN_SRC_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Path to LLVM source tree")
-  set(LLVM_LIT "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
 endif()

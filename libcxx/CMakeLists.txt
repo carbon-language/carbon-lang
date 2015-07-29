@@ -35,6 +35,14 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
 
 # Find the required bits of LLVM
 include(FindLLVM)
+# TODO(EricWF) Make this an error by default.
+if (NOT LLVM_FOUND)
+  message(WARNING "UNSUPPORTED LIBCXX CONFIGURATION DETECTED: "
+                  "llvm-config not found and LLVM_MAIN_SRC_DIR not defined. "
+                  "Reconfigure with -DLLVM_CONFIG=path/to/llvm-config "
+                  "or -DLLVM_PATH=path/to/llvm-source-root.")
+endif()
+
 
 #===============================================================================
 # Setup CMake Options
@@ -44,6 +52,7 @@ include(FindLLVM)
 option(LIBCXX_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 
+option(LIBCXX_INCLUDE_TESTS "Build the libc++ tests." ${LLVM_INCLUDE_TESTS})
 set(LIBCXX_LIBDIR_SUFFIX "${LLVM_LIBDIR_SUFFIX}" CACHE STRING
     "Define suffix of library directory name (32/64)")
 option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
@@ -62,7 +71,7 @@ option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
 
 # Target options --------------------------------------------------------------
-option(LIBCXX_BUILD_32_BITS "Build 32 bit libc++." OFF)
+option(LIBCXX_BUILD_32_BITS "Build 32 bit libc++." ${LLVM_BUILD_32_BITS})
 set(LIBCXX_SYSROOT "" CACHE STRING "Use alternate sysroot.")
 set(LIBCXX_GCC_TOOLCHAIN "" CACHE STRING "Use alternate GCC toolchain.")
 
@@ -106,11 +115,8 @@ endif()
 # Set LIBCXX_BUILD_32_BITS to (LIBCXX_BUILD_32_BITS OR LLVM_BUILD_32_BITS)
 # and check that we can build with 32 bits if requested.
 if (CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT WIN32)
-  if (LIBCXX_BUILD_32_BITS OR LLVM_BUILD_32_BITS)
-    if (NOT LLVM_BUILD_32_BITS) # Don't duplicate the output from LLVM
-      message(STATUS "Building 32 bits executables and libraries.")
-    endif()
-    set(LIBCXX_BUILD_32_BITS ON CACHE BOOL "" FORCE)
+  if (LIBCXX_BUILD_32_BITS AND NOT LLVM_BUILD_32_BITS) # Don't duplicate the output from LLVM
+    message(STATUS "Building 32 bits executables and libraries.")
   endif()
 elseif(LIBCXX_BUILD_32_BITS)
   message(FATAL_ERROR "LIBCXX_BUILD_32_BITS=ON is not supported on this platform.")
@@ -243,4 +249,6 @@ define_if_not(LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS -D_LIBCPP_HAS_NO_THREAD_UN
 include_directories(include)
 add_subdirectory(include)
 add_subdirectory(lib)
-add_subdirectory(test)
+if (LIBCXX_INCLUDE_TESTS)
+  add_subdirectory(test)
+endif()
