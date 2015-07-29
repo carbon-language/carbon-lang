@@ -143,11 +143,11 @@ class LoadedObjectInfo {
 public:
   virtual ~LoadedObjectInfo() = default;
 
-  /// Obtain the Load Address of a section by Name.
+  /// Obtain the Load Address of a section by SectionRef.
   ///
   /// Calculate the address of the given section.
   /// The section need not be present in the local address space. The addresses
-  /// needs to be consistent with the addresses used to query the DIContext and
+  /// need to be consistent with the addresses used to query the DIContext and
   /// the output of this function should be deterministic, i.e. repeated calls with
   /// the same Sec should give the same address.
   virtual uint64_t getSectionLoadAddress(const object::SectionRef &Sec) const = 0;
