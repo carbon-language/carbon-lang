@@ -5148,10 +5148,10 @@ def : Pat<(i64 (zext def32:$src)), (SUBREG_TO_REG (i64 0), GPR32:$src, sub_32)>;
 def : Pat<(i64 (anyext GPR32:$src)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32)>;
 
-// When we need to explicitly zero-extend, we use an unsigned bitfield move
-// instruction (UBFM) on the enclosing super-reg.
+// When we need to explicitly zero-extend, we use a 32-bit MOV instruction and
+// then assert the extension has happened.
 def : Pat<(i64 (zext GPR32:$src)),
- (UBFMXri (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$src, sub_32), 0, 31)>;
+          (SUBREG_TO_REG (i32 0), (ORRWrs WZR, GPR32:$src, 0), sub_32)>;
 
 // To sign extend, we use a signed bitfield move instruction (SBFM) on the
 // containing super-reg.

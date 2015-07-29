@@ -252,11 +252,11 @@ entry:
 ; CHECK: ldr	w[[IARG:[0-9]+]], [x29, #24]
 ; CHECK: ldr	d[[DARG:[0-9]+]], [x29, #40]
 ;   Check correct reservation of 16-byte aligned VLA (size in w0) on stack
-; CHECK: ubfx	x9, x0, #0, #32
+; CHECK: mov	w9, w0
+; CHECK: mov	 x10, sp
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
 ; CHECK: and	x9, x9, #0x7fffffff0
-; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
 ;   Check correct access to local variable, through frame pointer
@@ -299,11 +299,11 @@ entry:
 ; CHECK: ldr	w[[IARG:[0-9]+]], [x29, #24]
 ; CHECK: ldr	d[[DARG:[0-9]+]], [x29, #40]
 ;   Check correct reservation of 16-byte aligned VLA (size in w0) on stack
-; CHECK: ubfx	x9, x0, #0, #32
+; CHECK: mov	w9, w0
+; CHECK: mov	 x10, sp
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
 ; CHECK: and	x9, x9, #0x7fffffff0
-; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
 ;   Check correct access to local variable, through frame pointer
@@ -361,11 +361,11 @@ entry:
 ; CHECK: ldr	d[[DARG:[0-9]+]], [x29, #40]
 ;   Check correct reservation of 16-byte aligned VLA (size in w0) on stack
 ;   and set-up of base pointer (x19).
-; CHECK: ubfx	x9, x0, #0, #32
+; CHECK: mov	w9, w0
+; CHECK: mov	 x10, sp
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
 ; CHECK: and	x9, x9, #0x7fffffff0
-; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
 ;   Check correct access to local variable, through base pointer
@@ -414,11 +414,11 @@ entry:
 ; CHECK: ldr	d[[DARG:[0-9]+]], [x29, #40]
 ;   Check correct reservation of 16-byte aligned VLA (size in w0) on stack
 ;   and set-up of base pointer (x19).
-; CHECK: ubfx	x9, x0, #0, #32
+; CHECK: mov	w9, w0
+; CHECK: mov	 x10, sp
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
 ; CHECK: and	x9, x9, #0x7fffffff0
-; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
 ;   Check correct access to local variable, through base pointer
@@ -465,11 +465,11 @@ entry:
 ; CHECK: ldr	d[[DARG:[0-9]+]], [x29, #40]
 ;   Check correct reservation of 16-byte aligned VLA (size in w0) on stack
 ;   and set-up of base pointer (x19).
-; CHECK: ubfx	x9, x0, #0, #32
+; CHECK: mov	w9, w0
+; CHECK: mov	 x10, sp
 ; CHECK: lsl	x9, x9, #2
 ; CHECK: add	x9, x9, #15
 ; CHECK: and	x9, x9, #0x7fffffff0
-; CHECK: mov	 x10, sp
 ; CHECK: sub	 x[[VLASPTMP:[0-9]+]], x10, x9
 ; CHECK: mov	 sp, x[[VLASPTMP]]
 ;   Check correct access to local variable, through base pointer

@@ -4,8 +4,8 @@
 define i32 @cnt32_advsimd(i32 %x) nounwind readnone {
   %cnt = tail call i32 @llvm.ctpop.i32(i32 %x)
   ret i32 %cnt
-; CHECK: ubfx	x{{[0-9]+}}
-; CHECK: fmov	d0, x{{[0-9]+}}
+; CHECK: mov w[[IN64:[0-9]+]], w0
+; CHECK: fmov	d0, x[[IN64]]
 ; CHECK: cnt.8b	v0, v0
 ; CHECK: uaddlv.8b	h0, v0
 ; CHECK: fmov w0, s0

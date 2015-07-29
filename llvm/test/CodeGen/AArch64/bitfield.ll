@@ -60,7 +60,7 @@ define void @test_extendw(i32 %var) {
 
   %uxt64 = zext i32 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK: ubfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #32
+; CHECK: mov {{w[0-9]+}}, w0
   ret void
 }
 
