@@ -512,11 +512,21 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
                             Context.ElementSize[BasePointer]);
 
     if (!AllowNonAffine)
-      for (const SCEV *DelinearizedSize : Shape->DelinearizedSizes)
+      for (const SCEV *DelinearizedSize : Shape->DelinearizedSizes) {
+        if (auto *Unknown = dyn_cast<SCEVUnknown>(DelinearizedSize)) {
+          auto *value = dyn_cast<Value>(Unknown->getValue());
+          if (isa<UndefValue>(value)) {
+            invalid<ReportDifferentArrayElementSize>(
+                Context, /*Assert=*/true,
+                Context.Accesses[BasePointer].front().first, BaseValue);
+            return false;
+          }
+        }
         if (hasScalarDepsInsideRegion(DelinearizedSize, &CurRegion))
           invalid<ReportNonAffineAccess>(
               Context, /*Assert=*/true, DelinearizedSize,
               Context.Accesses[BasePointer].front().first, BaseValue);
+      }
 
     // No array shape derived.
     if (Shape->DelinearizedSizes.empty()) {
