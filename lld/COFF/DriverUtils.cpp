@@ -444,17 +444,16 @@ std::error_code fixupExports() {
   std::map<StringRef, Export *> Map;
   std::vector<Export> V;
   for (Export &E : Config->Exports) {
-    auto Pair = Map.insert(std::make_pair(E.Name, &E));
+    auto Pair = Map.insert(std::make_pair(E.ExtLibName, &E));
     bool Inserted = Pair.second;
     if (Inserted) {
       V.push_back(E);
       continue;
     }
     Export *Existing = Pair.first->second;
-    if (E == *Existing)
+    if (E == *Existing || E.Name != Existing->Name)
       continue;
     llvm::errs() << "warning: duplicate /export option: " << E.Name << "\n";
-    continue;
   }
   Config->Exports = std::move(V);
 
