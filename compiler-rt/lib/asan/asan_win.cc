@@ -16,7 +16,6 @@
 #if SANITIZER_WINDOWS
 #include <windows.h>
 
-#include <dbghelp.h>
 #include <stdlib.h>
 
 #include "asan_interceptors.h"
