@@ -29,7 +29,7 @@
 // RUN: FileCheck --check-prefix=CHECK-UNALIGNED-AARCH64 < %t %s
 
 // CHECK-UNALIGNED-ARM-NOT: "-target-feature" "+strict-align"
-// CHECK-UNALIGNED-AARCH64: "-backend-option" "-aarch64-no-strict-align"
+// CHECK-UNALIGNED-AARCH64-NOT: "-target-feature" "+strict-align"
 
 
 // RUN: %clang -target arm-none-gnueabi -mno-unaligned-access -### %s 2> %t
@@ -75,7 +75,7 @@
 // RUN: FileCheck --check-prefix=CHECK-ALIGNED-AARCH64 < %t %s
 
 // CHECK-ALIGNED-ARM: "-target-feature" "+strict-align"
-// CHECK-ALIGNED-AARCH64: "-backend-option" "-aarch64-strict-align"
+// CHECK-ALIGNED-AARCH64: "-target-feature" "+strict-align"
 
 // Make sure that v6M cores always trigger the unsupported aligned accesses error
 // for all supported architecture triples.

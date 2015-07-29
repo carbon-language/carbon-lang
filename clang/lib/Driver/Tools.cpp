@@ -983,15 +983,6 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
 
-  if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
-                               options::OPT_munaligned_access)) {
-    CmdArgs.push_back("-backend-option");
-    if (A->getOption().matches(options::OPT_mno_unaligned_access))
-      CmdArgs.push_back("-aarch64-strict-align");
-    else
-      CmdArgs.push_back("-aarch64-no-strict-align");
-  }
-
   if (Arg *A = Args.getLastArg(options::OPT_mfix_cortex_a53_835769,
                                options::OPT_mno_fix_cortex_a53_835769)) {
     CmdArgs.push_back("-backend-option");
@@ -2067,6 +2058,11 @@ static void getAArch64TargetFeatures(const Driver &D,
     else
       Features.push_back("-crc");
   }
+
+  if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
+                               options::OPT_munaligned_access))
+    if (A->getOption().matches(options::OPT_mno_unaligned_access))
+      Features.push_back("+strict-align");
 
   if (Args.hasArg(options::OPT_ffixed_x18) || Triple.isOSDarwin())
     Features.push_back("+reserve-x18");
