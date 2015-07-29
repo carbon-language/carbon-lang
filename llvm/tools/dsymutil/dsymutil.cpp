@@ -27,40 +27,44 @@ using namespace llvm::dsymutil;
 namespace {
 using namespace llvm::cl;
 
+OptionCategory DsymCategory("Specific Options");
+static opt<bool> Help("h", desc("Alias for -help"), Hidden);
+
 static opt<std::string> InputFile(Positional, desc("<input file>"),
-                                  init("a.out"));
+                                  init("a.out"), cat(DsymCategory));
 
 static opt<std::string>
     OutputFileOpt("o",
                   desc("Specify the output file. default: <input file>.dwarf"),
-                  value_desc("filename"));
+                  value_desc("filename"), cat(DsymCategory));
 
 static opt<std::string> OsoPrependPath(
     "oso-prepend-path",
     desc("Specify a directory to prepend to the paths of object files."),
-    value_desc("path"));
+    value_desc("path"), cat(DsymCategory));
 
-static opt<bool> Verbose("verbose", desc("Verbosity level"), init(false));
+static opt<bool> Verbose("verbose", desc("Verbosity level"), init(false),
+                         cat(DsymCategory));
 
 static opt<bool>
     NoOutput("no-output",
              desc("Do the link in memory, but do not emit the result file."),
-             init(false));
+             init(false), cat(DsymCategory));
 
 static opt<bool>
     NoODR("no-odr",
           desc("Do not use ODR (One Definition Rule) for type uniquing."),
-          init(false));
+          init(false), cat(DsymCategory));
 
 static opt<bool> DumpDebugMap(
     "dump-debug-map",
     desc("Parse and dump the debug map to standard output. Not DWARF link "
          "will take place."),
-    init(false));
+    init(false), cat(DsymCategory));
 
 static opt<bool> InputIsYAMLDebugMap(
     "y", desc("Treat the input file is a YAML debug map rather than a binary."),
-    init(false));
+    init(false), cat(DsymCategory));
 }
 
 int main(int argc, char **argv) {
@@ -69,7 +73,16 @@ int main(int argc, char **argv) {
   llvm::llvm_shutdown_obj Shutdown;
   LinkOptions Options;
 
-  llvm::cl::ParseCommandLineOptions(argc, argv, "llvm dsymutil\n");
+  HideUnrelatedOptions(DsymCategory);
+  llvm::cl::ParseCommandLineOptions(
+      argc, argv,
+      "manipulate archived DWARF debug symbol files.\n\n"
+      "dsymutil links the DWARF debug information found in the object files\n"
+      "for the executable <input file> by using debug symbols information\n"
+      "contained in its symbol table.\n");
+
+  if (Help)
+    PrintHelpMessage();
 
   auto DebugMapPtrOrErr =
       parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
