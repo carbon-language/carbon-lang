@@ -105,6 +105,7 @@ def ignoreidl : F<"ignoreidl">;
 def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 def nologo : F<"nologo">;
+def thrownew : F<"thrownew">;
 
 def delay : QF<"delay">;
 def errorreport : QF<"errorreport">;
