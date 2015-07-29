@@ -29,6 +29,7 @@
 // RUN:   FileCheck %s --check-prefix=CHECK-HELP --check-prefix=CHECK-FOUND
 
 // XFAIL: arm-linux-gnueabi
+// XFAIL: android
 
 #if !defined(SHARED_LIB)
 #include <assert.h>
