@@ -606,20 +606,6 @@ TSAN_INTERCEPTOR(void*, memcpy, void *dst, const void *src, uptr size) {
   return internal_memcpy(dst, src, size);
 }
 
-TSAN_INTERCEPTOR(int, memcmp, const void *s1, const void *s2, uptr n) {
-  SCOPED_TSAN_INTERCEPTOR(memcmp, s1, s2, n);
-  int res = 0;
-  uptr len = 0;
-  for (; len < n; len++) {
-    if ((res = ((const unsigned char *)s1)[len] -
-               ((const unsigned char *)s2)[len]))
-      break;
-  }
-  MemoryAccessRange(thr, pc, (uptr)s1, len < n ? len + 1 : n, false);
-  MemoryAccessRange(thr, pc, (uptr)s2, len < n ? len + 1 : n, false);
-  return res;
-}
-
 TSAN_INTERCEPTOR(void*, memmove, void *dst, void *src, uptr n) {
   SCOPED_TSAN_INTERCEPTOR(memmove, dst, src, n);
   MemoryAccessRange(thr, pc, (uptr)dst, n, true);
@@ -2469,7 +2455,6 @@ void InitializeInterceptors() {
   // We need to setup it early, because functions like dlsym() can call it.
   REAL(memset) = internal_memset;
   REAL(memcpy) = internal_memcpy;
-  REAL(memcmp) = internal_memcmp;
 
   // Instruct libc malloc to consume less memory.
 #if !SANITIZER_FREEBSD
@@ -2508,7 +2493,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(memset);
   TSAN_INTERCEPT(memcpy);
   TSAN_INTERCEPT(memmove);
-  TSAN_INTERCEPT(memcmp);
   TSAN_INTERCEPT(strchr);
   TSAN_INTERCEPT(strchrnul);
   TSAN_INTERCEPT(strrchr);

@@ -362,6 +362,42 @@ INTERCEPTOR(char *, strpbrk, const char *s1, const char *s2) {
 #define INIT_STRPBRK
 #endif
 
+#if SANITIZER_INTERCEPT_MEMCMP
+INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, memcmp, a1, a2, size);
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_memcmp(a1, a2, size);
+  if (common_flags()->intercept_memcmp) {
+    if (common_flags()->strict_memcmp) {
+      // Check the entire regions even if the first bytes of the buffers are
+      // different.
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, a1, size);
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, a2, size);
+      // Fallthrough to REAL(memcmp) below.
+    } else {
+      unsigned char c1 = 0, c2 = 0;
+      const unsigned char *s1 = (const unsigned char*)a1;
+      const unsigned char *s2 = (const unsigned char*)a2;
+      uptr i;
+      for (i = 0; i < size; i++) {
+        c1 = s1[i];
+        c2 = s2[i];
+        if (c1 != c2) break;
+      }
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, Min(i + 1, size));
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, Min(i + 1, size));
+      return CharCmpX(c1, c2);
+    }
+  }
+  return REAL(memcmp(a1, a2, size));
+}
+
+#define INIT_MEMCMP COMMON_INTERCEPT_FUNCTION(memcmp)
+#else
+#define INIT_MEMCMP
+#endif
+
 #if SANITIZER_INTERCEPT_MEMCHR
 INTERCEPTOR(void*, memchr, const void *s, int c, SIZE_T n) {
   void *ctx;
@@ -5026,6 +5062,7 @@ static void InitializeCommonInterceptors() {
   INIT_STRSPN;
   INIT_STRPBRK;
   INIT_MEMCHR;
+  INIT_MEMCMP;
   INIT_MEMRCHR;
   INIT_READ;
   INIT_PREAD;
