@@ -138,6 +138,10 @@ public:
   // Returns the output section index.
   // Used to implement SECTION relocation type.
   uint64_t getSectionIndex();
+
+  // Returns true if this symbol points to an executable (e.g. .text) section.
+  // Used to implement ARM relocations.
+  bool isExecutable();
 };
 
 // Symbols defined via a COFF object file.

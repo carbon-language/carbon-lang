@@ -690,5 +690,12 @@ uint64_t Defined::getSectionIndex() {
   llvm::report_fatal_error("SECTION relocation points to a non-regular symbol");
 }
 
+bool Defined::isExecutable() {
+  const auto X = IMAGE_SCN_MEM_EXECUTE;
+  if (auto *D = dyn_cast<DefinedRegular>(this))
+    return D->getChunk()->getOutputSection()->getPermissions() & X;
+  return isa<DefinedImportThunk>(this);
+}
+
 } // namespace coff
 } // namespace lld

@@ -105,6 +105,9 @@ static void applyBranchImm(uint8_t *Off, int32_t V) {
 void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym,
                                uint64_t P) {
   uint64_t S = Sym->getRVA();
+  // Pointer to thumb code must have the LSB set.
+  if (Sym->isExecutable())
+    S |= 1;
   switch (Type) {
   case IMAGE_REL_ARM_ADDR32:    add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_ARM_ADDR32NB:  add32(Off, S); break;
