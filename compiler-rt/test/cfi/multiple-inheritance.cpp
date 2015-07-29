@@ -46,26 +46,8 @@ void C::f() {}
 void C::g() {}
 
 int main(int argc, char **argv) {
-#ifdef B32
-  break_optimization(new Deriver<A, 0>);
-  break_optimization(new Deriver<B, 0>);
-#endif
-
-#ifdef B64
-  break_optimization(new Deriver<A, 0>);
-  break_optimization(new Deriver<A, 1>);
-  break_optimization(new Deriver<B, 0>);
-  break_optimization(new Deriver<B, 1>);
-#endif
-
-#ifdef BM
-  break_optimization(new Deriver<A, 0>);
-  break_optimization(new Deriver<A, 1>);
-  break_optimization(new Deriver<A, 2>);
-  break_optimization(new Deriver<B, 0>);
-  break_optimization(new Deriver<B, 1>);
-  break_optimization(new Deriver<B, 2>);
-#endif
+  create_derivers<A>();
+  create_derivers<B>();
 
   C *c = new C;
   break_optimization(c);

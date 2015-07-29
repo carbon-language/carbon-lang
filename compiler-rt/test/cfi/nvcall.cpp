@@ -40,20 +40,7 @@ void B::f() {}
 void B::g() {}
 
 int main() {
-#ifdef B32
-  break_optimization(new Deriver<B, 0>);
-#endif
-
-#ifdef B64
-  break_optimization(new Deriver<B, 0>);
-  break_optimization(new Deriver<B, 1>);
-#endif
-
-#ifdef BM
-  break_optimization(new Deriver<B, 0>);
-  break_optimization(new Deriver<B, 1>);
-  break_optimization(new Deriver<B, 2>);
-#endif
+  create_derivers<B>();
 
   A *a = new A;
   break_optimization(a);

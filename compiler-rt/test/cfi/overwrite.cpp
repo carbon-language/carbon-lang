@@ -39,20 +39,7 @@ void foo() {
 void *fake_vtable[] = { 0, 0, (void *)&foo };
 
 int main() {
-#ifdef B32
-  break_optimization(new Deriver<A, 0>);
-#endif
-
-#ifdef B64
-  break_optimization(new Deriver<A, 0>);
-  break_optimization(new Deriver<A, 1>);
-#endif
-
-#ifdef BM
-  break_optimization(new Deriver<A, 0>);
-  break_optimization(new Deriver<A, 1>);
-  break_optimization(new Deriver<A, 2>);
-#endif
+  create_derivers<A>();
 
   A *a = new A;
   *((void **)a) = fake_vtable + 2; // UB here
