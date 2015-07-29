@@ -11,7 +11,8 @@
 #define LLD_ELF_SYMBOL_TABLE_H
 
 #include "InputFiles.h"
-#include <unordered_map>
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseMapInfo.h"
 
 namespace lld {
 namespace elf2 {
@@ -48,7 +49,7 @@ private:
 
   void resolve(SymbolBody *Body);
 
-  std::unordered_map<StringRef, Symbol *> Symtab;
+  llvm::DenseMap<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;
 };
 
