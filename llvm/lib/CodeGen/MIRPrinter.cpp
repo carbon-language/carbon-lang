@@ -586,6 +586,13 @@ void MIPrinter::print(const MCCFIInstruction &CFI,
       OS << "<mcsymbol> ";
     OS << CFI.getOffset();
     break;
+  case MCCFIInstruction::OpDefCfa:
+    OS << ".cfi_def_cfa ";
+    if (CFI.getLabel())
+      OS << "<mcsymbol> ";
+    printCFIRegister(CFI.getRegister(), OS, TRI);
+    OS << ", " << CFI.getOffset();
+    break;
   default:
     // TODO: Print the other CFI Operations.
     OS << "<unserializable cfi operation>";

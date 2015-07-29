@@ -754,6 +754,14 @@ bool MIParser::parseCFIOperand(MachineOperand &Dest) {
     CFIIndex = MMI.addFrameInst(
         MCCFIInstruction::createDefCfaOffset(nullptr, -Offset));
     break;
+  case MIToken::kw_cfi_def_cfa:
+    if (parseCFIRegister(Reg) || expectAndConsume(MIToken::comma) ||
+        parseCFIOffset(Offset))
+      return true;
+    // NB: MCCFIInstruction::createDefCfa negates the offset.
+    CFIIndex =
+        MMI.addFrameInst(MCCFIInstruction::createDefCfa(nullptr, Reg, -Offset));
+    break;
   default:
     // TODO: Parse the other CFI operands.
     llvm_unreachable("The current token should be a cfi operand");
@@ -874,6 +882,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::kw_cfi_offset:
   case MIToken::kw_cfi_def_cfa_register:
   case MIToken::kw_cfi_def_cfa_offset:
+  case MIToken::kw_cfi_def_cfa:
     return parseCFIOperand(Dest);
   case MIToken::kw_blockaddress:
     return parseBlockAddressOperand(Dest);
