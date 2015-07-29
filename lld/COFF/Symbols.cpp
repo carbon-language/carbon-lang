@@ -200,14 +200,10 @@ DefinedImportThunk::DefinedImportThunk(StringRef Name, DefinedImportData *S,
                                        uint16_t Machine)
     : Defined(DefinedImportThunkKind, Name) {
   switch (Machine) {
-  case AMD64:
-    Data.reset(new ImportThunkChunkX64(S));
-    return;
-  case I386:
-    Data.reset(new ImportThunkChunkX86(S));
-    return;
-  default:
-    llvm_unreachable("unknown machine type");
+  case AMD64: Data.reset(new ImportThunkChunkX64(S)); return;
+  case I386:  Data.reset(new ImportThunkChunkX86(S)); return;
+  case ARMNT: Data.reset(new ImportThunkChunkARM(S)); return;
+  default:    llvm_unreachable("unknown machine type");
   }
 }
 
