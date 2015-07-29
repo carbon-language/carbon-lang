@@ -7,4 +7,4 @@
 // RUN: echo '/I%S\Inputs\cl-response-file\ /DFOO=2' > %t.rsp
 // RUN: %clang_cl /c -### @%t.rsp -- %s 2>&1 | FileCheck %s
 
-// CHECK: "-D" "FOO=2" "-I" "{{.*}}\\Inputs\\cl-response-file\\"
+// CHECK: "-I" "{{.*}}\\Inputs\\cl-response-file\\" "-D" "FOO=2"
