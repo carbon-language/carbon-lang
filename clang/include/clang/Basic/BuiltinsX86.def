@@ -1410,5 +1410,12 @@ BUILTIN(__builtin_ia32_vpermt2varq128_mask, "V2LLiV2LLiV2LLiV2LLiUc", "")
 BUILTIN(__builtin_ia32_vpermt2varq128_maskz, "V2LLiV2LLiV2LLiV2LLiUc", "")
 BUILTIN(__builtin_ia32_vpermt2varq256_mask, "V4LLiV4LLiV4LLiV4LLiUc", "")
 BUILTIN(__builtin_ia32_vpermt2varq256_maskz, "V4LLiV4LLiV4LLiV4LLiUc", "")
+BUILTIN(__builtin_ia32_pmovswb512_mask, "V32cV32sV32cUi", "")
+BUILTIN(__builtin_ia32_pmovuswb512_mask, "V32cV32sV32cUi", "")
+BUILTIN(__builtin_ia32_pmovwb512_mask, "V32cV32sV32cUi", "")
+BUILTIN(__builtin_ia32_punpckhbw512_mask, "V64cV64cV64cV64cULLi", "")
+BUILTIN(__builtin_ia32_punpckhwd512_mask, "V32sV32sV32sV32sUi", "")
+BUILTIN(__builtin_ia32_punpcklbw512_mask, "V64cV64cV64cV64cULLi", "")
+BUILTIN(__builtin_ia32_punpcklwd512_mask, "V32sV32sV32sV32sUi", "")
 
 #undef BUILTIN
