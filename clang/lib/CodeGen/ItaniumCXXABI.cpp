@@ -2837,9 +2837,6 @@ llvm::Constant *ItaniumRTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
       new llvm::GlobalVariable(M, Init->getType(),
                                /*Constant=*/true, Linkage, Init, Name);
 
-  if (CGM.supportsCOMDAT() && GV->isWeakForLinker())
-    GV->setComdat(M.getOrInsertComdat(GV->getName()));
-
   // If there's already an old global variable, replace it with the new one.
   if (OldGV) {
     GV->takeName(OldGV);
@@ -2848,6 +2845,9 @@ llvm::Constant *ItaniumRTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
     OldGV->replaceAllUsesWith(NewPtr);
     OldGV->eraseFromParent();
   }
+
+  if (CGM.supportsCOMDAT() && GV->isWeakForLinker())
+    GV->setComdat(M.getOrInsertComdat(GV->getName()));
 
   // The Itanium ABI specifies that type_info objects must be globally
   // unique, with one exception: if the type is an incomplete class
