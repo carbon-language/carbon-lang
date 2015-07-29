@@ -97,11 +97,6 @@ cl::opt<bool>
                        cl::desc("Print the linker optimization hints for "
                                 "Mach-O objects (requires -macho)"));
 
-cl::list<std::string>
-    llvm::DumpSections("section",
-                       cl::desc("Prints the specified segment,section for "
-                                "Mach-O objects (requires -macho)"));
-
 cl::opt<bool>
     llvm::InfoPlist("info-plist",
                     cl::desc("Print the info plist section as strings for "
@@ -1006,8 +1001,8 @@ static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
   if (verbose)
     CreateSymbolAddressMap(O, &AddrMap);
 
-  for (unsigned i = 0; i < DumpSections.size(); ++i) {
-    StringRef DumpSection = DumpSections[i];
+  for (unsigned i = 0; i < FilterSections.size(); ++i) {
+    StringRef DumpSection = FilterSections[i];
     std::pair<StringRef, StringRef> DumpSegSectName;
     DumpSegSectName = DumpSection.split(',');
     StringRef DumpSegName, DumpSectName;
@@ -1171,7 +1166,7 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
   // UniversalHeaders or ArchiveHeaders.
   if (Disassemble || PrivateHeaders || ExportsTrie || Rebase || Bind ||
       LazyBind || WeakBind || IndirectSymbols || DataInCode || LinkOptHints ||
-      DylibsUsed || DylibId || ObjcMetaData || (DumpSections.size() != 0)) {
+      DylibsUsed || DylibId || ObjcMetaData || (FilterSections.size() != 0)) {
     outs() << Filename;
     if (!ArchiveMemberName.empty())
       outs() << '(' << ArchiveMemberName << ')';
@@ -1194,7 +1189,7 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
     PrintSectionHeaders(MachOOF);
   if (SectionContents)
     PrintSectionContents(MachOOF);
-  if (DumpSections.size() != 0)
+  if (FilterSections.size() != 0)
     DumpSectionContents(Filename, MachOOF, !NonVerbose);
   if (InfoPlist)
     DumpInfoPlistSectionContents(Filename, MachOOF);
@@ -6065,7 +6060,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     diContext.reset(new DWARFContextInMemory(*DbgObj));
   }
 
-  if (DumpSections.size() == 0)
+  if (FilterSections.size() == 0)
     outs() << "(" << DisSegName << "," << DisSectName << ") section\n";
 
   for (unsigned SectIdx = 0; SectIdx != Sections.size(); SectIdx++) {

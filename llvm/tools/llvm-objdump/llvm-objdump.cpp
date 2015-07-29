@@ -135,8 +135,13 @@ SectionHeadersShort("headers", cl::desc("Alias for --section-headers"),
 static cl::alias
 SectionHeadersShorter("h", cl::desc("Alias for --section-headers"),
                       cl::aliasopt(SectionHeaders));
+
 cl::list<std::string>
-llvm::Sections("j", cl::desc("Operate on the specified sections only"));
+llvm::FilterSections("section", cl::desc("Operate on the specified sections only. "
+                                         "With -macho dump segment,section"));
+cl::alias
+static FilterSectionsj("j", cl::desc("Alias for --section"),
+                 cl::aliasopt(llvm::FilterSections));
 
 cl::list<std::string>
 llvm::MAttrs("mattr",
@@ -175,7 +180,7 @@ static StringRef ToolName;
 static int ReturnValue = EXIT_SUCCESS;
 
 namespace {
-typedef std::function<int(llvm::object::SectionRef const &)> FilterPredicate;
+typedef std::function<bool(llvm::object::SectionRef const &)> FilterPredicate;
 
 class SectionFilterIterator {
 public:
@@ -224,20 +229,16 @@ private:
   llvm::object::ObjectFile const &Object;
 };
 SectionFilter ToolSectionFilter(llvm::object::ObjectFile const &O) {
-  if (Sections.empty()) {
-    return SectionFilter([](llvm::object::SectionRef const &) { return 0; }, O);
-  }
   return SectionFilter([](llvm::object::SectionRef const &S) {
+                         if(FilterSections.empty())
+                           return false;
                          llvm::StringRef String;
                          std::error_code error = S.getName(String);
-                         if (error) {
-                           return error.value();
-                         }
-                         if (std::find(Sections.begin(), Sections.end(),
-                                       String) != Sections.end()) {
-                           return 0;
-                         }
-                         return 1;
+                         if (error)
+                           return true;
+                         return std::find(FilterSections.begin(),
+                                          FilterSections.end(),
+                                          String) == FilterSections.end();
                        },
                        O);
 }
@@ -1616,7 +1617,7 @@ int main(int argc, char **argv) {
       && !(DylibsUsed && MachOOpt)
       && !(DylibId && MachOOpt)
       && !(ObjcMetaData && MachOOpt)
-      && !(DumpSections.size() != 0 && MachOOpt)
+      && !(FilterSections.size() != 0 && MachOOpt)
       && !PrintFaultMaps) {
     cl::PrintHelpMessage();
     return 2;
