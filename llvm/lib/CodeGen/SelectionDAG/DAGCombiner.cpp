@@ -10746,17 +10746,6 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
   return true;
 }
 
-static bool allowableAlignment(const SelectionDAG &DAG,
-                               const TargetLowering &TLI, EVT EVTTy,
-                               unsigned AS, unsigned Align) {
-  if (TLI.allowsMisalignedMemoryAccesses(EVTTy, AS, Align))
-    return true;
-
-  Type *Ty = EVTTy.getTypeForEVT(*DAG.getContext());
-  unsigned ABIAlignment = DAG.getDataLayout().getPrefTypeAlignment(Ty);
-  return (Align >= ABIAlignment);
-}
-
 void DAGCombiner::getStoreMergeAndAliasCandidates(
     StoreSDNode* St, SmallVectorImpl<MemOpLink> &StoreNodes,
     SmallVectorImpl<LSBaseSDNode*> &AliasLoadNodes) {
@@ -10922,6 +10911,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   LSBaseSDNode *FirstInChain = StoreNodes[0].MemNode;
   unsigned FirstStoreAS = FirstInChain->getAddressSpace();
   unsigned FirstStoreAlign = FirstInChain->getAlignment();
+  LLVMContext &Context = *DAG.getContext();
+  const DataLayout &DL = DAG.getDataLayout();
 
   // Store the constants into memory as one consecutive store.
   if (IsConstantSrc) {
@@ -10943,27 +10934,28 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
       // Find a legal type for the constant store.
       unsigned SizeInBits = (i+1) * ElementSizeBytes * 8;
-      EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
+      EVT StoreTy = EVT::getIntegerVT(Context, SizeInBits);
       if (TLI.isTypeLegal(StoreTy) &&
-          allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS,
-                             FirstStoreAlign)) {
+          TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstStoreAS,
+                                 FirstStoreAlign)) {
         LastLegalType = i+1;
       // Or check whether a truncstore is legal.
-      } else if (TLI.getTypeAction(*DAG.getContext(), StoreTy) ==
+      } else if (TLI.getTypeAction(Context, StoreTy) ==
                  TargetLowering::TypePromoteInteger) {
         EVT LegalizedStoredValueTy =
-          TLI.getTypeToTransformTo(*DAG.getContext(), StoredVal.getValueType());
+          TLI.getTypeToTransformTo(Context, StoredVal.getValueType());
         if (TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy) &&
-            allowableAlignment(DAG, TLI, LegalizedStoredValueTy, FirstStoreAS,
-                               FirstStoreAlign)) {
+            TLI.allowsMemoryAccess(Context, DL, LegalizedStoredValueTy,
+                                   FirstStoreAS, FirstStoreAlign)) {
           LastLegalType = i + 1;
         }
       }
 
       // Find a legal type for the vector store.
-      EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
+      EVT Ty = EVT::getVectorVT(Context, MemVT, i+1);
       if (TLI.isTypeLegal(Ty) &&
-          allowableAlignment(DAG, TLI, Ty, FirstStoreAS, FirstStoreAlign)) {
+          TLI.allowsMemoryAccess(Context, DL, Ty, FirstStoreAS,
+                                 FirstStoreAlign)) {
         LastLegalVectorType = i + 1;
       }
     }
@@ -11007,9 +10999,10 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
         return false;
 
       // Find a legal type for the vector store.
-      EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
+      EVT Ty = EVT::getVectorVT(Context, MemVT, i+1);
       if (TLI.isTypeLegal(Ty) &&
-          allowableAlignment(DAG, TLI, Ty, FirstStoreAS, FirstStoreAlign))
+          TLI.allowsMemoryAccess(Context, DL, Ty, FirstStoreAS,
+                                 FirstStoreAlign))
         NumElem = i + 1;
     }
 
@@ -11097,33 +11090,37 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     LastConsecutiveLoad = i;
 
     // Find a legal type for the vector store.
-    EVT StoreTy = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
+    EVT StoreTy = EVT::getVectorVT(Context, MemVT, i+1);
     if (TLI.isTypeLegal(StoreTy) &&
-        allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS, FirstStoreAlign) &&
-        allowableAlignment(DAG, TLI, StoreTy, FirstLoadAS, FirstLoadAlign)) {
+        TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstStoreAS,
+                               FirstStoreAlign) &&
+        TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstLoadAS,
+                               FirstLoadAlign)) {
       LastLegalVectorType = i + 1;
     }
 
     // Find a legal type for the integer store.
     unsigned SizeInBits = (i+1) * ElementSizeBytes * 8;
-    StoreTy = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
+    StoreTy = EVT::getIntegerVT(Context, SizeInBits);
     if (TLI.isTypeLegal(StoreTy) &&
-        allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS, FirstStoreAlign) &&
-        allowableAlignment(DAG, TLI, StoreTy, FirstLoadAS, FirstLoadAlign))
+        TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstStoreAS,
+                               FirstStoreAlign) &&
+        TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstLoadAS,
+                               FirstLoadAlign))
       LastLegalIntegerType = i + 1;
     // Or check whether a truncstore and extload is legal.
-    else if (TLI.getTypeAction(*DAG.getContext(), StoreTy) ==
+    else if (TLI.getTypeAction(Context, StoreTy) ==
              TargetLowering::TypePromoteInteger) {
       EVT LegalizedStoredValueTy =
-        TLI.getTypeToTransformTo(*DAG.getContext(), StoreTy);
+        TLI.getTypeToTransformTo(Context, StoreTy);
       if (TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy) &&
           TLI.isLoadExtLegal(ISD::ZEXTLOAD, LegalizedStoredValueTy, StoreTy) &&
           TLI.isLoadExtLegal(ISD::SEXTLOAD, LegalizedStoredValueTy, StoreTy) &&
           TLI.isLoadExtLegal(ISD::EXTLOAD, LegalizedStoredValueTy, StoreTy) &&
-          allowableAlignment(DAG, TLI, LegalizedStoredValueTy, FirstStoreAS,
-                             FirstStoreAlign) &&
-          allowableAlignment(DAG, TLI, LegalizedStoredValueTy, FirstLoadAS,
-                             FirstLoadAlign))
+          TLI.allowsMemoryAccess(Context, DL, LegalizedStoredValueTy,
+                                 FirstStoreAS, FirstStoreAlign) &&
+          TLI.allowsMemoryAccess(Context, DL, LegalizedStoredValueTy,
+                                 FirstLoadAS, FirstLoadAlign))
         LastLegalIntegerType = i+1;
     }
   }
@@ -11158,10 +11155,10 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   // to memory.
   EVT JointMemOpVT;
   if (UseVectorTy) {
-    JointMemOpVT = EVT::getVectorVT(*DAG.getContext(), MemVT, NumElem);
+    JointMemOpVT = EVT::getVectorVT(Context, MemVT, NumElem);
   } else {
     unsigned SizeInBits = NumElem * ElementSizeBytes * 8;
-    JointMemOpVT = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
+    JointMemOpVT = EVT::getIntegerVT(Context, SizeInBits);
   }
 
   SDLoc LoadDL(LoadNodes[0].MemNode);

@@ -727,14 +727,12 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
         case TargetLowering::Legal: {
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
+          EVT MemVT = ST->getMemoryVT();
           unsigned AS = ST->getAddressSpace();
           unsigned Align = ST->getAlignment();
-          if (!TLI.allowsMisalignedMemoryAccesses(ST->getMemoryVT(), AS, Align)) {
-            Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
-            unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
-            if (Align < ABIAlignment)
-              ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
-          }
+          const DataLayout &DL = DAG.getDataLayout();
+          if (!TLI.allowsMemoryAccess(*DAG.getContext(), DL, MemVT, AS, Align))
+            ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
           break;
         }
         case TargetLowering::Custom: {
@@ -842,16 +840,13 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
                                         StVT.getSimpleVT())) {
         default: llvm_unreachable("This action is not supported yet!");
         case TargetLowering::Legal: {
+          EVT MemVT = ST->getMemoryVT();
           unsigned AS = ST->getAddressSpace();
           unsigned Align = ST->getAlignment();
           // If this is an unaligned store and the target doesn't support it,
           // expand it.
-          if (!TLI.allowsMisalignedMemoryAccesses(ST->getMemoryVT(), AS, Align)) {
-            Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
-            unsigned ABIAlignment = DL.getABITypeAlignment(Ty);
-            if (Align < ABIAlignment)
-              ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
-          }
+          if (!TLI.allowsMemoryAccess(*DAG.getContext(), DL, MemVT, AS, Align))
+            ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
           break;
         }
         case TargetLowering::Custom: {
@@ -894,17 +889,14 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: llvm_unreachable("This action is not supported yet!");
     case TargetLowering::Legal: {
+      EVT MemVT = LD->getMemoryVT();
       unsigned AS = LD->getAddressSpace();
       unsigned Align = LD->getAlignment();
+      const DataLayout &DL = DAG.getDataLayout();
       // If this is an unaligned load and the target doesn't support it,
       // expand it.
-      if (!TLI.allowsMisalignedMemoryAccesses(LD->getMemoryVT(), AS, Align)) {
-        Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
-        unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
-        if (Align < ABIAlignment){
-          ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, RVal, RChain);
-        }
-      }
+      if (!TLI.allowsMemoryAccess(*DAG.getContext(), DL, MemVT, AS, Align))
+        ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, RVal, RChain);
       break;
     }
     case TargetLowering::Custom: {
@@ -1091,18 +1083,14 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
           Chain = Res.getValue(1);
         }
       } else {
-        // If this is an unaligned load and the target doesn't support
-        // it, expand it.
+        // If this is an unaligned load and the target doesn't support it,
+        // expand it.
         EVT MemVT = LD->getMemoryVT();
         unsigned AS = LD->getAddressSpace();
         unsigned Align = LD->getAlignment();
-        if (!TLI.allowsMisalignedMemoryAccesses(MemVT, AS, Align)) {
-          Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
-          unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
-          if (Align < ABIAlignment){
-            ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, Value, Chain);
-          }
-        }
+        const DataLayout &DL = DAG.getDataLayout();
+        if (!TLI.allowsMemoryAccess(*DAG.getContext(), DL, MemVT, AS, Align))
+          ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, Value, Chain);
       }
       break;
     }
