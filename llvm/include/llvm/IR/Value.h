@@ -493,7 +493,28 @@ private:
   template <class Compare>
   static Use *mergeUseLists(Use *L, Use *R, Compare Cmp) {
     Use *Merged;
-    mergeUseListsImpl(L, R, &Merged, Cmp);
+    Use **Next = &Merged;
+
+    for (;;) {
+      if (!L) {
+        *Next = R;
+        break;
+      }
+      if (!R) {
+        *Next = L;
+        break;
+      }
+      if (Cmp(*R, *L)) {
+        *Next = R;
+        Next = &R->Next;
+        R = R->Next;
+      } else {
+        *Next = L;
+        Next = &L->Next;
+        L = L->Next;
+      }
+    }
+
     return Merged;
   }
 
@@ -584,25 +605,6 @@ template <class Compare> void Value::sortUseList(Compare Cmp) {
     I->setPrev(Prev);
     Prev = &I->Next;
   }
-}
-
-template <class Compare>
-void Value::mergeUseListsImpl(Use *L, Use *R, Use **Next, Compare Cmp) {
-  if (!L) {
-    *Next = R;
-    return;
-  }
-  if (!R) {
-    *Next = L;
-    return;
-  }
-  if (Cmp(*R, *L)) {
-    *Next = R;
-    mergeUseListsImpl(L, R->Next, &R->Next, Cmp);
-    return;
-  }
-  *Next = L;
-  mergeUseListsImpl(L->Next, R, &L->Next, Cmp);
 }
 
 // isa - Provide some specializations of isa so that we don't have to include
