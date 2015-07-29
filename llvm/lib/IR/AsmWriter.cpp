@@ -1340,10 +1340,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
     Out << " (";
 
     if (const GEPOperator *GEP = dyn_cast<GEPOperator>(CE)) {
-      TypePrinter.print(
-          cast<PointerType>(GEP->getPointerOperandType()->getScalarType())
-              ->getElementType(),
-          Out);
+      TypePrinter.print(GEP->getSourceElementType(), Out);
       Out << ", ";
     }
 
