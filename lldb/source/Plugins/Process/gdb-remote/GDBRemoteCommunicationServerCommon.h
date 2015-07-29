@@ -12,7 +12,6 @@
 
 // C Includes
 // C++ Includes
-#include <set>
 
 // Other libraries and framework includes
 #include "lldb/lldb-private-forward.h"
@@ -40,8 +39,6 @@ public:
     ~GDBRemoteCommunicationServerCommon();
 
 protected:
-    std::set<lldb::pid_t> m_spawned_pids;
-    Mutex m_spawned_pids_mutex;
     ProcessLaunchInfo m_process_launch_info;
     Error m_process_launch_error;
     ProcessInstanceInfoList m_proc_infos;
@@ -72,9 +69,6 @@ protected:
 
     PacketResult
     Handle_qSpeedTest (StringExtractorGDBRemote &packet);
-
-    PacketResult
-    Handle_qKillSpawnedProcess (StringExtractorGDBRemote &packet);
 
     PacketResult
     Handle_vFile_Open (StringExtractorGDBRemote &packet);
@@ -159,9 +153,6 @@ protected:
 
     PacketResult
     Handle_QLaunchArch (StringExtractorGDBRemote &packet);
-
-    bool
-    KillSpawnedProcess (lldb::pid_t pid);
 
     static void
     CreateProcessInfoResponse (const ProcessInstanceInfo &proc_info,

@@ -269,16 +269,6 @@ protected:
     FindModuleFile (const std::string& module_path, const ArchSpec& arch) override;
 
 private:
-    bool
-    DebuggedProcessReaped (lldb::pid_t pid);
-
-    static bool
-    ReapDebuggedProcess (void *callback_baton,
-                         lldb::pid_t pid,
-                         bool exited,
-                         int signal,
-                         int status);
-
     void
     HandleInferiorState_Exited (NativeProcessProtocol *process);
 

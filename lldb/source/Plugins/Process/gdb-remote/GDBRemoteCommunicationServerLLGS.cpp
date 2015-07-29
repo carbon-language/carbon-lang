@@ -264,17 +264,6 @@ GDBRemoteCommunicationServerLLGS::LaunchProcess ()
 
     printf ("Launched '%s' as process %" PRIu64 "...\n", m_process_launch_info.GetArguments ().GetArgumentAtIndex (0), m_process_launch_info.GetProcessID ());
 
-    // Add to list of spawned processes.
-    lldb::pid_t pid;
-    if ((pid = m_process_launch_info.GetProcessID ()) != LLDB_INVALID_PROCESS_ID)
-    {
-        // add to spawned pids
-        Mutex::Locker locker (m_spawned_pids_mutex);
-        // On an lldb-gdbserver, we would expect there to be only one.
-        assert (m_spawned_pids.empty () && "lldb-gdbserver adding tracked process but one already existed");
-        m_spawned_pids.insert (pid);
-    }
-
     return error;
 }
 
@@ -287,48 +276,37 @@ GDBRemoteCommunicationServerLLGS::AttachToProcess (lldb::pid_t pid)
     if (log)
         log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64, __FUNCTION__, pid);
 
-    // Scope for mutex locker.
+    // Before we try to attach, make sure we aren't already monitoring something else.
+    if (m_debugged_process_sp  && m_debugged_process_sp->GetID() != LLDB_INVALID_PROCESS_ID)
+        return Error("cannot attach to a process %" PRIu64 " when another process with pid %" PRIu64 " is being debugged.", pid, m_debugged_process_sp->GetID());
+
+    // Try to attach.
+    error = NativeProcessProtocol::Attach(pid, *this, m_mainloop, m_debugged_process_sp);
+    if (!error.Success ())
     {
-        // Before we try to attach, make sure we aren't already monitoring something else.
-        Mutex::Locker locker (m_spawned_pids_mutex);
-        if (!m_spawned_pids.empty ())
-        {
-            error.SetErrorStringWithFormat ("cannot attach to a process %" PRIu64 " when another process with pid %" PRIu64 " is being debugged.", pid, *m_spawned_pids.begin());
-            return error;
-        }
-
-        // Try to attach.
-        error = NativeProcessProtocol::Attach(pid, *this, m_mainloop, m_debugged_process_sp);
-        if (!error.Success ())
-        {
-            fprintf (stderr, "%s: failed to attach to process %" PRIu64 ": %s", __FUNCTION__, pid, error.AsCString ());
-            return error;
-        }
-
-        // Setup stdout/stderr mapping from inferior.
-        auto terminal_fd = m_debugged_process_sp->GetTerminalFileDescriptor ();
-        if (terminal_fd >= 0)
-        {
-            if (log)
-                log->Printf ("ProcessGDBRemoteCommunicationServerLLGS::%s setting inferior STDIO fd to %d", __FUNCTION__, terminal_fd);
-            error = SetSTDIOFileDescriptor (terminal_fd);
-            if (error.Fail ())
-                return error;
-        }
-        else
-        {
-            if (log)
-                log->Printf ("ProcessGDBRemoteCommunicationServerLLGS::%s ignoring inferior STDIO since terminal fd reported as %d", __FUNCTION__, terminal_fd);
-        }
-
-        printf ("Attached to process %" PRIu64 "...\n", pid);
-
-        // Add to list of spawned processes.
-        assert (m_spawned_pids.empty () && "lldb-gdbserver adding tracked process but one already existed");
-        m_spawned_pids.insert (pid);
-
+        fprintf (stderr, "%s: failed to attach to process %" PRIu64 ": %s", __FUNCTION__, pid, error.AsCString ());
         return error;
     }
+
+    // Setup stdout/stderr mapping from inferior.
+    auto terminal_fd = m_debugged_process_sp->GetTerminalFileDescriptor ();
+    if (terminal_fd >= 0)
+    {
+        if (log)
+            log->Printf ("ProcessGDBRemoteCommunicationServerLLGS::%s setting inferior STDIO fd to %d", __FUNCTION__, terminal_fd);
+        error = SetSTDIOFileDescriptor (terminal_fd);
+        if (error.Fail ())
+            return error;
+    }
+    else
+    {
+        if (log)
+            log->Printf ("ProcessGDBRemoteCommunicationServerLLGS::%s ignoring inferior STDIO since terminal fd reported as %d", __FUNCTION__, terminal_fd);
+    }
+
+    printf ("Attached to process %" PRIu64 "...\n", pid);
+
+    return error;
 }
 
 void
@@ -830,17 +808,6 @@ GDBRemoteCommunicationServerLLGS::HandleInferiorState_Exited (NativeProcessProto
             log->Printf ("GDBRemoteCommunicationServerLLGS::%s failed to send stop notification for PID %" PRIu64 ", state: eStateExited", __FUNCTION__, process->GetID ());
     }
 
-    // Remove the process from the list of spawned pids.
-    {
-        Mutex::Locker locker (m_spawned_pids_mutex);
-        if (m_spawned_pids.erase (process->GetID ()) < 1)
-        {
-            if (log)
-                log->Printf ("GDBRemoteCommunicationServerLLGS::%s failed to remove PID %" PRIu64 " from the spawned pids list", __FUNCTION__, process->GetID ());
-
-        }
-    }
-
     // Close the pipe to the inferior terminal i/o if we launched it
     // and set one up.
     MaybeCloseInferiorTerminalConnection ();
@@ -1117,26 +1084,6 @@ GDBRemoteCommunicationServerLLGS::Handle_qC (StringExtractorGDBRemote &packet)
     response.Printf ("QC%" PRIx64, thread_sp->GetID ());
 
     return SendPacketNoLock (response.GetData(), response.GetSize());
-}
-
-bool
-GDBRemoteCommunicationServerLLGS::DebuggedProcessReaped (lldb::pid_t pid)
-{
-    // reap a process that we were debugging (but not debugserver)
-    Mutex::Locker locker (m_spawned_pids_mutex);
-    return m_spawned_pids.erase(pid) > 0;
-}
-
-bool
-GDBRemoteCommunicationServerLLGS::ReapDebuggedProcess (void *callback_baton,
-                                        lldb::pid_t pid,
-                                        bool exited,
-                                        int signal,    // Zero for no signal
-                                        int status)    // Exit value of process if signal is zero
-{
-    GDBRemoteCommunicationServerLLGS *server = (GDBRemoteCommunicationServerLLGS *)callback_baton;
-    server->DebuggedProcessReaped (pid);
-    return true;
 }
 
 GDBRemoteCommunication::PacketResult
@@ -2737,23 +2684,12 @@ GDBRemoteCommunicationServerLLGS::Handle_D (StringExtractorGDBRemote &packet)
 
     StopSTDIOForwarding();
 
-    // Scope for mutex locker.
-    Mutex::Locker locker (m_spawned_pids_mutex);
-
     // Fail if we don't have a current process.
     if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
     {
         if (log)
             log->Printf ("GDBRemoteCommunicationServerLLGS::%s failed, no process available", __FUNCTION__);
         return SendErrorResponse (0x15);
-    }
-
-    if (m_spawned_pids.find(m_debugged_process_sp->GetID ()) == m_spawned_pids.end())
-    {
-        if (log)
-            log->Printf ("GDBRemoteCommunicationServerLLGS::%s failed to find PID %" PRIu64 " in spawned pids list",
-                         __FUNCTION__, m_debugged_process_sp->GetID ());
-        return SendErrorResponse (0x1);
     }
 
     lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
@@ -2786,7 +2722,6 @@ GDBRemoteCommunicationServerLLGS::Handle_D (StringExtractorGDBRemote &packet)
         return SendErrorResponse (0x01);
     }
 
-    m_spawned_pids.erase (m_debugged_process_sp->GetID ());
     return SendOKResponse ();
 }
 
