@@ -214,6 +214,8 @@ static const char *toString(MIToken::TokenKind TokenKind) {
   switch (TokenKind) {
   case MIToken::comma:
     return "','";
+  case MIToken::equal:
+    return "'='";
   case MIToken::lparen:
     return "'('";
   case MIToken::rparen:
@@ -234,18 +236,19 @@ bool MIParser::parse(MachineInstr *&MI) {
   lex();
 
   // Parse any register operands before '='
-  // TODO: Allow parsing of multiple operands before '='
   MachineOperand MO = MachineOperand::CreateImm(0);
   SmallVector<MachineOperandWithLocation, 8> Operands;
-  if (Token.isRegister() || Token.isRegisterFlag()) {
+  while (Token.isRegister() || Token.isRegisterFlag()) {
     auto Loc = Token.location();
     if (parseRegisterOperand(MO, /*IsDef=*/true))
       return true;
     Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
-    if (Token.isNot(MIToken::equal))
-      return error("expected '='");
+    if (Token.isNot(MIToken::comma))
+      break;
     lex();
   }
+  if (!Operands.empty() && expectAndConsume(MIToken::equal))
+    return true;
 
   unsigned OpCode, Flags = 0;
   if (Token.isError() || parseInstruction(OpCode, Flags))
