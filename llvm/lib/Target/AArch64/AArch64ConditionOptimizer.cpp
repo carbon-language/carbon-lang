@@ -59,6 +59,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64.h"
+#include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -153,12 +154,12 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     case AArch64::SUBSXri:
     // cmn is an alias for adds with a dead destination register.
     case AArch64::ADDSWri:
-    case AArch64::ADDSXri:
+    case AArch64::ADDSXri: {
+      unsigned ShiftAmt = AArch64_AM::getShiftValue(I->getOperand(3).getImm());
       if (!I->getOperand(2).isImm()) {
         DEBUG(dbgs() << "Immediate of cmp is symbolic, " << *I << '\n');
         return nullptr;
-      } else if (I->getOperand(2).getImm() << I->getOperand(3).getImm() >=
-                 0xfff) {
+      } else if (I->getOperand(2).getImm() << ShiftAmt >= 0xfff) {
         DEBUG(dbgs() << "Immediate of cmp may be out of range, " << *I << '\n');
         return nullptr;
       } else if (!MRI->use_empty(I->getOperand(0).getReg())) {
@@ -166,7 +167,7 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
         return nullptr;
       }
       return I;
-
+    }
     // Prevent false positive case like:
     // cmp      w19, #0
     // cinc     w0, w19, gt
