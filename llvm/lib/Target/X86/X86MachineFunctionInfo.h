@@ -1,4 +1,4 @@
-//===-- X86MachineFuctionInfo.h - X86 machine function info -----*- C++ -*-===//
+//===-- X86MachineFunctionInfo.h - X86 machine function info ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

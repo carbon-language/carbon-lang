@@ -1,4 +1,4 @@
-//===-- X86MachineFuctionInfo.cpp - X86 machine function info -------------===//
+//===-- X86MachineFunctionInfo.cpp - X86 machine function info ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

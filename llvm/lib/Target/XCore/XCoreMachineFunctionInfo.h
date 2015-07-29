@@ -1,4 +1,4 @@
-//===-- XCoreMachineFuctionInfo.h - XCore machine function info -*- C++ -*-===//
+//===- XCoreMachineFunctionInfo.h - XCore machine function info -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

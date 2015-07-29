@@ -21,7 +21,7 @@ class Triple;
 
 // If you need to create another MCAsmInfo class, which inherits from MCAsmInfo,
 // you will need to make sure your new class sets PrivateGlobalPrefix to
-// a prefix that won't appeary in a fuction name.  The default value
+// a prefix that won't appear in a function name.  The default value
 // for PrivateGlobalPrefix is 'L', so it will consider any function starting
 // with 'L' as a local symbol.
 class AMDGPUMCAsmInfo : public MCAsmInfoELF {

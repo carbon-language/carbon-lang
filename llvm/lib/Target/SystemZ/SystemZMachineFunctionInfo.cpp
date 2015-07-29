@@ -1,4 +1,4 @@
-//== SystemZMachineFuctionInfo.cpp - SystemZ machine function info-*- C++ -*-=//
+//=== SystemZMachineFunctionInfo.cpp - SystemZ machine function info ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

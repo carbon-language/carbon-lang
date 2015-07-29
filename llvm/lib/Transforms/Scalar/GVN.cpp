@@ -696,7 +696,7 @@ namespace {
     }
 
 
-    // Helper fuctions of redundant load elimination 
+    // Helper functions of redundant load elimination 
     bool processLoad(LoadInst *L);
     bool processNonLocalLoad(LoadInst *L);
     void AnalyzeLoadAvailability(LoadInst *LI, LoadDepVect &Deps, 

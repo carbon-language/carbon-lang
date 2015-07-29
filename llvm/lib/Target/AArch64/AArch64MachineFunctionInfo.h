@@ -1,4 +1,4 @@
-//=- AArch64MachineFuctionInfo.h - AArch64 machine function info --*- C++ -*-=//
+//=- AArch64MachineFunctionInfo.h - AArch64 machine function info -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

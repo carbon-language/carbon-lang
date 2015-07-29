@@ -1,4 +1,4 @@
-// WebAssemblyMachineFuctionInfo.h-WebAssembly machine function info -*- C++ -*-
+// WebAssemblyMachineFunctionInfo.h-WebAssembly machine function info-*- C++ -*-
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- MSP430MachineFuctionInfo.cpp - MSP430 machine function info -------===//
+//===-- MSP430MachineFucntionInfo.cpp - MSP430 machine function info ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

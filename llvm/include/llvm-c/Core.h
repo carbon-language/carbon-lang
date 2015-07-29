@@ -1950,7 +1950,7 @@ void LLVMSetGC(LLVMValueRef Fn, const char *Name);
 void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA);
 
 /**
- * Add a target-dependent attribute to a fuction
+ * Add a target-dependent attribute to a function
  * @see llvm::AttrBuilder::addAttribute()
  */
 void LLVMAddTargetDependentFunctionAttr(LLVMValueRef Fn, const char *A,
