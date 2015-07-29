@@ -44,3 +44,34 @@ entry:
   call void asm sideeffect "mov %%rbx, %%rcx", "~{dirflag},~{fpsr},~{flags}"() nounwind
   ret void
 }
+
+; Test that dynamic alloca is not used when setjmp is present.
+%struct.__jmp_buf_tag = type { [8 x i64], i32, %struct.__sigset_t }
+%struct.__sigset_t = type { [16 x i64] }
+@_ZL3buf = internal global [1 x %struct.__jmp_buf_tag] zeroinitializer, align 16
+
+define void @Func3() uwtable sanitize_address {
+; CHECK-LABEL: define void @Func3
+; CHECK-NOT: __asan_option_detect_stack_use_after_return
+; CHECK-NOT: __asan_stack_malloc
+; CHECK: call void @__asan_handle_no_return
+; CHECK: call void @longjmp
+; CHECK: ret void
+entry:
+  %a = alloca i32, align 4
+  %call = call i32 @_setjmp(%struct.__jmp_buf_tag* getelementptr inbounds ([1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* @_ZL3buf, i32 0, i32 0)) nounwind returns_twice
+  %cmp = icmp eq i32 0, %call
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  call void @longjmp(%struct.__jmp_buf_tag* getelementptr inbounds ([1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* @_ZL3buf, i32 0, i32 0), i32 1) noreturn nounwind
+  unreachable
+
+if.end:                                           ; preds = %entry
+  call void @_Z10escape_ptrPi(i32* %a)
+  ret void
+}
+
+declare i32 @_setjmp(%struct.__jmp_buf_tag*) nounwind returns_twice
+declare void @longjmp(%struct.__jmp_buf_tag*, i32) noreturn nounwind
+declare void @_Z10escape_ptrPi(i32*)
