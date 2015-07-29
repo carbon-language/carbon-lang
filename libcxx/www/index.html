@@ -184,30 +184,26 @@
 
   <p>In-tree build:</p>
   <ul>
-    <li><code>cd where-you-want-to-live</code></li>
     <li>Check out libcxx and <a href="http://libcxxabi.llvm.org/">libcxxabi</a>
       into llvm/projects</li>
-    <li><code>cd where-you-want-to-build</code></li>
+    <li><code>cd llvm</code></li>
     <li><code>mkdir build &amp;&amp; cd build</code></li>
-    <li><code>cmake path/to/llvm # Linux may require -DCMAKE_C_COMPILER=clang
+    <li><code>cmake .. # Linux may require -DCMAKE_C_COMPILER=clang
         -DCMAKE_CXX_COMPILER=clang++</code></li>
     <li><code>make cxx</code></li>
   </ul>
 
-  <p>Out-of-tree buildc:</p>
+  <p>Out-of-tree build:</p>
   <ul>
-    <li><code>cd where-you-want-to-live</code></li>
-    <li>Check out libcxx and llvm</li>
+    <li>Check out libcxx</li>
     <li>If not on a Mac, also check out
       <a href="http://libcxxabi.llvm.org/">libcxxabi</a></li>
-    <li><code>cd where-you-want-to-build</code></li>
+    <li><code>cd libcxx</code></li>
     <li><code>mkdir build &amp;&amp; cd build</code></li>
-    <li><code>cmake -DLLVM_PATH=path/to/llvm
-        -DLIBCXX_CXX_ABI=libcxxabi
+    <li><code>cmake -DLIBCXX_CXX_ABI=libcxxabi
         -DLIBCXX_CXX_ABI_INCLUDE_PATHS=path/to/libcxxabi/include
-        -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-        path/to/libcxx
-    </code></li>
+        -DLIT_EXECUTABLE=path/to/llvm/utils/lit/lit.py .. # Linux may require
+        -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++</code></li>
     <li><code>make</code></li>
   </ul>
 
