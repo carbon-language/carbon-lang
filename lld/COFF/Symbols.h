@@ -130,6 +130,14 @@ public:
   // Returns the file offset of this symbol in the final executable.
   // The writer uses this information to apply relocations.
   uint64_t getFileOff();
+
+  // Returns the RVA relative to the beginning of the output section.
+  // Used to implement SECREL relocation type.
+  uint64_t getSecrel();
+
+  // Returns the output section index.
+  // Used to implement SECTION relocation type.
+  uint64_t getSectionIndex();
 };
 
 // Symbols defined via a COFF object file.

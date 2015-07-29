@@ -50,8 +50,9 @@ static void add32(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
 static void add64(uint8_t *P, int64_t V) { write64le(P, read64le(P) + V); }
 static void or16(uint8_t *P, uint16_t V) { write16le(P, read16le(P) | V); }
 
-void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S,
+void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, Defined *Sym,
                                uint64_t P) {
+  uint64_t S = Sym->getRVA();
   switch (Type) {
   case IMAGE_REL_AMD64_ADDR32:   add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_AMD64_ADDR64:   add64(Off, S + Config->ImageBase); break;
@@ -62,22 +63,23 @@ void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S,
   case IMAGE_REL_AMD64_REL32_3:  add32(Off, S - P - 7); break;
   case IMAGE_REL_AMD64_REL32_4:  add32(Off, S - P - 8); break;
   case IMAGE_REL_AMD64_REL32_5:  add32(Off, S - P - 9); break;
-  case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->SectionIndex); break;
-  case IMAGE_REL_AMD64_SECREL:   add32(Off, S - Out->getRVA()); break;
+  case IMAGE_REL_AMD64_SECTION:  add16(Off, Sym->getSectionIndex()); break;
+  case IMAGE_REL_AMD64_SECREL:   add32(Off, Sym->getSecrel()); break;
   default:
     llvm::report_fatal_error("Unsupported relocation type");
   }
 }
 
-void SectionChunk::applyRelX86(uint8_t *Off, uint16_t Type, uint64_t S,
+void SectionChunk::applyRelX86(uint8_t *Off, uint16_t Type, Defined *Sym,
                                uint64_t P) {
+  uint64_t S = Sym->getRVA();
   switch (Type) {
   case IMAGE_REL_I386_ABSOLUTE: break;
   case IMAGE_REL_I386_DIR32:    add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_I386_DIR32NB:  add32(Off, S); break;
   case IMAGE_REL_I386_REL32:    add32(Off, S - P - 4); break;
-  case IMAGE_REL_I386_SECTION:  add16(Off, Out->SectionIndex); break;
-  case IMAGE_REL_I386_SECREL:   add32(Off, S - Out->getRVA()); break;
+  case IMAGE_REL_I386_SECTION:  add16(Off, Sym->getSectionIndex()); break;
+  case IMAGE_REL_I386_SECREL:   add32(Off, Sym->getSecrel()); break;
   default:
     llvm::report_fatal_error("Unsupported relocation type");
   }
@@ -100,8 +102,9 @@ static void applyBranchImm(uint8_t *Off, int32_t V) {
   or16(Off + 2, ((V >> 1) & 0x7ff) | (J2 << 11) | (J1 << 13));
 }
 
-void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, uint64_t S,
+void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym,
                                uint64_t P) {
+  uint64_t S = Sym->getRVA();
   switch (Type) {
   case IMAGE_REL_ARM_ADDR32:    add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_ARM_ADDR32NB:  add32(Off, S); break;
@@ -124,17 +127,17 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   for (const coff_relocation &Rel : Relocs) {
     uint8_t *Off = Buf + FileOff + Rel.VirtualAddress;
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
-    uint64_t S = cast<Defined>(Body)->getRVA();
+    Defined *Sym = cast<Defined>(Body);
     uint64_t P = RVA + Rel.VirtualAddress;
     switch (Config->Machine) {
     case AMD64:
-      applyRelX64(Off, Rel.Type, S, P);
+      applyRelX64(Off, Rel.Type, Sym, P);
       break;
     case I386:
-      applyRelX86(Off, Rel.Type, S, P);
+      applyRelX86(Off, Rel.Type, Sym, P);
       break;
     case ARMNT:
-      applyRelARM(Off, Rel.Type, S, P);
+      applyRelARM(Off, Rel.Type, Sym, P);
       break;
     default:
       llvm_unreachable("unknown machine type");

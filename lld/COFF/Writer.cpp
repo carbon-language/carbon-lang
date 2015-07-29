@@ -678,5 +678,17 @@ void Writer::addBaserelBlocks(OutputSection *Dest, std::vector<Baserel> &V) {
   Dest->addChunk(new (Buf) BaserelChunk(Page, &V[I], &V[0] + J));
 }
 
+uint64_t Defined::getSecrel() {
+  if (auto *D = dyn_cast<DefinedRegular>(this))
+    return getRVA() - D->getChunk()->getOutputSection()->getRVA();
+  llvm::report_fatal_error("SECREL relocation points to a non-regular symbol");
+}
+
+uint64_t Defined::getSectionIndex() {
+  if (auto *D = dyn_cast<DefinedRegular>(this))
+    return D->getChunk()->getOutputSection()->SectionIndex;
+  llvm::report_fatal_error("SECTION relocation points to a non-regular symbol");
+}
+
 } // namespace coff
 } // namespace lld
