@@ -599,8 +599,13 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
         if (BI->isConditional()) {
           if (Constant *SimpleCond =
                   SimplifiedValues.lookup(BI->getCondition())) {
-            BasicBlock *Succ = BI->getSuccessor(
-                cast<ConstantInt>(SimpleCond)->isZero() ? 1 : 0);
+            BasicBlock *Succ = nullptr;
+            // Just take the first successor if condition is undef
+            if (isa<UndefValue>(SimpleCond))
+              Succ = BI->getSuccessor(0);
+            else
+              Succ = BI->getSuccessor(
+                  cast<ConstantInt>(SimpleCond)->isZero() ? 1 : 0);
             if (L->contains(Succ))
               BBWorklist.insert(Succ);
             continue;
@@ -609,8 +614,13 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
         if (Constant *SimpleCond =
                 SimplifiedValues.lookup(SI->getCondition())) {
-          BasicBlock *Succ =
-              SI->getSuccessor(cast<ConstantInt>(SimpleCond)->getSExtValue());
+          BasicBlock *Succ = nullptr;
+          // Just take the first successor if condition is undef
+          if (isa<UndefValue>(SimpleCond))
+            Succ = SI->getSuccessor(0);
+          else
+            Succ =
+                SI->getSuccessor(cast<ConstantInt>(SimpleCond)->getSExtValue());
           if (L->contains(Succ))
             BBWorklist.insert(Succ);
           continue;
