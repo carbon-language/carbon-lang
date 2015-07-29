@@ -5926,6 +5926,9 @@ static void CheckMoveOnConstruction(Sema &S, const Expr *InitExpr,
   if (!InitExpr)
     return;
 
+  if (!S.ActiveTemplateInstantiations.empty())
+    return;
+
   QualType DestType = InitExpr->getType();
   if (!DestType->isRecordType())
     return;

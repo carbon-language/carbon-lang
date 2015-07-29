@@ -103,6 +103,43 @@ D test5(D d) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:21-[[@LINE-4]]:22}:""
 }
 
+namespace templates {
+  struct A {};
+  struct B { B(A); };
+  struct C { C(); C(C&&); };
+  struct D { D(C); };
+
+  // Warn once here since the type is not dependent.
+  template <typename T>
+  B test1() {
+    A a;
+    return std::move(a);
+    // expected-warning@-1{{redundant move in return statement}}
+    // expected-note@-2{{remove std::move call here}}
+    // CHECK: fix-it:"{{.*}}":{[[@LINE-3]]:12-[[@LINE-3]]:22}:""
+    // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:23-[[@LINE-4]]:24}:""
+  }
+  void run_test1() {
+    test1<A>();
+    test1<B>();
+    test1<C>();
+    test1<D>();
+  }
+
+  // Either a pessimizing move, a redundant move, or no warning could be
+  // emitted, given the right types.  So just drop the warning.
+  template <typename T1, typename T2>
+  T1 test2() {
+    T2 t;
+    return std::move(t);
+  }
+  void run_test2() {
+    test2<A, A>();
+    test2<B, A>();
+    test2<D, C>();
+  }
+}
+
 // No more fix-its past here.
 // CHECK-NOT: fix-it
 
