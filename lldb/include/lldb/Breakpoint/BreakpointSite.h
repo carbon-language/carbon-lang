@@ -187,6 +187,20 @@ public:
     GetOwnerAtIndex (size_t idx);
     
     //------------------------------------------------------------------
+    /// This method copies the breakpoint site's owners into a new collection.
+    /// It does this while the owners mutex is locked.
+    ///
+    /// @param[out] out_collection
+    ///    The BreakpointLocationCollection into which to put the owners
+    ///    of this breakpoint site.
+    ///
+    /// @return
+    ///    The number of elements copied into out_collection.
+    //------------------------------------------------------------------
+    size_t
+    CopyOwnersList (BreakpointLocationCollection &out_collection);
+    
+    //------------------------------------------------------------------
     /// Check whether the owners of this breakpoint site have any
     /// thread specifiers, and if yes, is \a thread contained in any
     /// of these specifiers.
