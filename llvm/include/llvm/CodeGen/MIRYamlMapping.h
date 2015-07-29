@@ -326,7 +326,8 @@ struct MachineFrameInfo {
   bool HasOpaqueSPAdjustment = false;
   bool HasVAStart = false;
   bool HasMustTailInVarArgFunc = false;
-  // TODO: Serialize save and restore MBB references.
+  StringValue SavePoint;
+  StringValue RestorePoint;
 };
 
 template <> struct MappingTraits<MachineFrameInfo> {
@@ -344,6 +345,10 @@ template <> struct MappingTraits<MachineFrameInfo> {
     YamlIO.mapOptional("hasOpaqueSPAdjustment", MFI.HasOpaqueSPAdjustment);
     YamlIO.mapOptional("hasVAStart", MFI.HasVAStart);
     YamlIO.mapOptional("hasMustTailInVarArgFunc", MFI.HasMustTailInVarArgFunc);
+    YamlIO.mapOptional("savePoint", MFI.SavePoint,
+                       StringValue()); // Don't print it out when it's empty.
+    YamlIO.mapOptional("restorePoint", MFI.RestorePoint,
+                       StringValue()); // Don't print it out when it's empty.
   }
 };
 

@@ -282,8 +282,6 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   PerFunctionMIParsingState PFS;
   if (initializeRegisterInfo(MF, YamlMF, PFS))
     return true;
-  if (initializeFrameInfo(MF, YamlMF, PFS))
-    return true;
   if (!YamlMF.Constants.empty()) {
     auto *ConstantPool = MF.getConstantPool();
     assert(ConstantPool && "Constant pool must be created");
@@ -324,6 +322,10 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (YamlMF.BasicBlocks.empty())
     return error(Twine("machine function '") + Twine(MF.getName()) +
                  "' requires at least one machine basic block in its body");
+  // Initialize the frame information after creating all the MBBs so that the
+  // MBB references in the frame information can be resolved.
+  if (initializeFrameInfo(MF, YamlMF, PFS))
+    return true;
   // Initialize the jump table after creating all the MBBs so that the MBB
   // references can be resolved.
   if (!YamlMF.JumpTableInfo.Entries.empty() &&
@@ -450,6 +452,18 @@ bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
   MFI.setHasOpaqueSPAdjustment(YamlMFI.HasOpaqueSPAdjustment);
   MFI.setHasVAStart(YamlMFI.HasVAStart);
   MFI.setHasMustTailInVarArgFunc(YamlMFI.HasMustTailInVarArgFunc);
+  if (!YamlMFI.SavePoint.Value.empty()) {
+    MachineBasicBlock *MBB = nullptr;
+    if (parseMBBReference(MBB, YamlMFI.SavePoint, MF, PFS))
+      return true;
+    MFI.setSavePoint(MBB);
+  }
+  if (!YamlMFI.RestorePoint.Value.empty()) {
+    MachineBasicBlock *MBB = nullptr;
+    if (parseMBBReference(MBB, YamlMFI.RestorePoint, MF, PFS))
+      return true;
+    MFI.setRestorePoint(MBB);
+  }
 
   std::vector<CalleeSavedInfo> CSIInfo;
   // Initialize the fixed frame objects.
