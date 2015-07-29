@@ -19,9 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdio>
-#include <functional>
 #include <map>
-#include <unordered_set>
 #include <utility>
 
 using namespace llvm;
