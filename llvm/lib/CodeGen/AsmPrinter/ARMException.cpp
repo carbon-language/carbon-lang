@@ -115,8 +115,7 @@ void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
     Entry = TypeInfos.size();
   }
 
-  for (const GlobalValue *GV : make_range(TypeInfos.rbegin(),
-                                          TypeInfos.rend())) {
+  for (const GlobalValue *GV : reverse(TypeInfos)) {
     if (VerboseAsm)
       Asm->OutStreamer->AddComment("TypeInfo " + Twine(Entry--));
     Asm->EmitTTypeReference(GV, TTypeEncoding);
