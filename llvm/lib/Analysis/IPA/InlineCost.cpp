@@ -1346,7 +1346,7 @@ static bool attributeMatches(Function *F1, Function *F2, AttrKind Attr) {
 static bool functionsHaveCompatibleAttributes(Function *Caller,
                                               Function *Callee,
                                               TargetTransformInfo &TTI) {
-  return TTI.hasCompatibleFunctionAttributes(Caller, Callee) &&
+  return TTI.areInlineCompatible(Caller, Callee) &&
          attributeMatches(Caller, Callee, Attribute::SanitizeAddress) &&
          attributeMatches(Caller, Callee, Attribute::SanitizeMemory) &&
          attributeMatches(Caller, Callee, Attribute::SanitizeThread);

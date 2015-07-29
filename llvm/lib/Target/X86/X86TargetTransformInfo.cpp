@@ -1135,8 +1135,8 @@ bool X86TTIImpl::isLegalMaskedStore(Type *DataType, int Consecutive) {
   return isLegalMaskedLoad(DataType, Consecutive);
 }
 
-bool X86TTIImpl::hasCompatibleFunctionAttributes(const Function *Caller,
-                                                 const Function *Callee) const {
+bool X86TTIImpl::areInlineCompatible(const Function *Caller,
+                                     const Function *Callee) const {
   const TargetMachine &TM = getTLI()->getTargetMachine();
 
   // Work this as a subsetting of subtarget features.

@@ -527,8 +527,8 @@ public:
 
   /// \returns True if the two functions have compatible attributes for inlining
   /// purposes.
-  bool hasCompatibleFunctionAttributes(const Function *Caller,
-                                       const Function *Callee) const;
+  bool areInlineCompatible(const Function *Caller,
+                           const Function *Callee) const;
 
   /// @}
 
@@ -631,8 +631,8 @@ public:
                                   MemIntrinsicInfo &Info) = 0;
   virtual Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
                                                    Type *ExpectedType) = 0;
-  virtual bool hasCompatibleFunctionAttributes(const Function *Caller,
-                                               const Function *Callee) const = 0;
+  virtual bool areInlineCompatible(const Function *Caller,
+                                   const Function *Callee) const = 0;
 };
 
 template <typename T>
@@ -825,9 +825,9 @@ public:
                                            Type *ExpectedType) override {
     return Impl.getOrCreateResultFromMemIntrinsic(Inst, ExpectedType);
   }
-  bool hasCompatibleFunctionAttributes(const Function *Caller,
-                                       const Function *Callee) const override {
-    return Impl.hasCompatibleFunctionAttributes(Caller, Callee);
+  bool areInlineCompatible(const Function *Caller,
+                           const Function *Callee) const override {
+    return Impl.areInlineCompatible(Caller, Callee);
   }
 };
 

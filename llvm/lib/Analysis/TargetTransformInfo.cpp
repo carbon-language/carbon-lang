@@ -288,9 +288,9 @@ Value *TargetTransformInfo::getOrCreateResultFromMemIntrinsic(
   return TTIImpl->getOrCreateResultFromMemIntrinsic(Inst, ExpectedType);
 }
 
-bool TargetTransformInfo::hasCompatibleFunctionAttributes(
-    const Function *Caller, const Function *Callee) const {
-  return TTIImpl->hasCompatibleFunctionAttributes(Caller, Callee);
+bool TargetTransformInfo::areInlineCompatible(const Function *Caller,
+                                              const Function *Callee) const {
+  return TTIImpl->areInlineCompatible(Caller, Callee);
 }
 
 TargetTransformInfo::Concept::~Concept() {}
