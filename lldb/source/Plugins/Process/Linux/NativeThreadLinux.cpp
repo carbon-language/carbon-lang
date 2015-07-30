@@ -256,17 +256,20 @@ NativeThreadLinux::SetStoppedBySignal(uint32_t signo, const siginfo_t *info)
     m_stop_info.details.signal.signo = signo;
 
     m_stop_description.clear();
-    switch (signo)
+    if (info)
     {
-    case SIGSEGV:
-    case SIGBUS:
-    case SIGFPE:
-    case SIGILL:
-        if (! info)
-            break;
-        const auto reason = GetCrashReason(*info);
-        m_stop_description = GetCrashReasonString(reason, reinterpret_cast<uintptr_t>(info->si_addr));
-        break;
+        switch (signo)
+        {
+        case SIGSEGV:
+        case SIGBUS:
+        case SIGFPE:
+        case SIGILL:
+             //In case of MIPS64 target, SI_KERNEL is generated for invalid 64bit address.
+             const auto reason = (info->si_signo == SIGBUS && info->si_code == SI_KERNEL) ? 
+                                  CrashReason::eInvalidAddress : GetCrashReason(*info);
+             m_stop_description = GetCrashReasonString(reason, reinterpret_cast<uintptr_t>(info->si_addr));
+             break;
+        }
     }
 }
 
