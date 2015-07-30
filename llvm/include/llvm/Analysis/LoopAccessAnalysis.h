@@ -435,7 +435,6 @@ public:
   arePointersInSamePartition(const SmallVectorImpl<int> &PtrToPartition,
                              unsigned PtrIdx1, unsigned PtrIdx2);
 
-private:
   /// \brief Decide whether we need to issue a run-time check for pointer at
   /// index \p I and \p J to prove their independence.
   ///
@@ -443,8 +442,9 @@ private:
   /// pointers (-1 if the pointer belongs to multiple partitions).  In this
   /// case omit checks between pointers belonging to the same partition.
   bool needsChecking(unsigned I, unsigned J,
-                     const SmallVectorImpl<int> *PtrPartition) const;
+                     const SmallVectorImpl<int> *PtrPartition = nullptr) const;
 
+private:
   /// Holds a pointer to the ScalarEvolution analysis.
   ScalarEvolution *SE;
 };
