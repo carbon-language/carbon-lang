@@ -420,6 +420,8 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   bool IsX86_64 = TargetTriple.getArch() == llvm::Triple::x86_64;
   bool IsMIPS64 = TargetTriple.getArch() == llvm::Triple::mips64 ||
                   TargetTriple.getArch() == llvm::Triple::mips64el;
+  bool IsAArch64 = TargetTriple.getArch() == llvm::Triple::aarch64 ||
+                   TargetTriple.getArch() == llvm::Triple::aarch64_be;
 
   const DataLayout &DL = M.getDataLayout();
 
@@ -434,6 +436,8 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
     ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x700000000000LL);
   else if (IsMIPS64)
     ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0xF000000000LL);
+  else if (IsAArch64)
+    ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x7800000000LL);
   else
     report_fatal_error("unsupported triple");
 
