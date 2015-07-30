@@ -20,7 +20,7 @@
 
 #include "test_iterators.h"
 
-#ifndef TEST_STD_VER >= 11
+#if TEST_STD_VER >= 11
 struct S {
 	S() : i_(0) {}
 	S(int i) : i_(i) {}
@@ -100,7 +100,7 @@ int main()
     test<random_access_iterator<int*> >();
     test<int*>();
 
-#ifndef TEST_STD_VER >= 11
+#if TEST_STD_VER >= 11
     test<bidirectional_iterator<S*> >();
     test<random_access_iterator<S*> >();
     test<S*>();
