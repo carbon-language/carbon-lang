@@ -1661,7 +1661,7 @@ namespace {
 
     bool operator()(ModuleFile &M) {
       // If we've already searched this module file, skip it now.
-      if (M.Generation <= this->PriorGeneration)
+      if (M.Generation <= PriorGeneration)
         return true;
 
       ASTIdentifierLookupTable *IdTable
@@ -1670,18 +1670,18 @@ namespace {
         return false;
 
       ASTIdentifierLookupTrait Trait(IdTable->getInfoObj().getReader(), M,
-                                     this->Found);
-      ++this->NumIdentifierLookups;
+                                     Found);
+      ++NumIdentifierLookups;
       ASTIdentifierLookupTable::iterator Pos =
-          IdTable->find_hashed(this->Name, this->NameHash, &Trait);
+          IdTable->find_hashed(Name, NameHash, &Trait);
       if (Pos == IdTable->end())
         return false;
       
       // Dereferencing the iterator has the effect of building the
       // IdentifierInfo node and populating it with the various
       // declarations it needs.
-      ++this->NumIdentifierLookupHits;
-      this->Found = *Pos;
+      ++NumIdentifierLookupHits;
+      Found = *Pos;
       return true;
     }
     
@@ -4871,11 +4871,11 @@ namespace {
         return false;
 
       // Look in the on-disk hash table for an entry for this file name.
-      HeaderFileInfoLookupTable::iterator Pos = Table->find(this->FE);
+      HeaderFileInfoLookupTable::iterator Pos = Table->find(FE);
       if (Pos == Table->end())
         return false;
 
-      this->HFI = *Pos;
+      HFI = *Pos;
       return true;
     }
     
@@ -5349,7 +5349,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
-    const IdentifierInfo *Name = this->GetIdentifierInfo(*Loc.F, Record, Idx);
+    const IdentifierInfo *Name = GetIdentifierInfo(*Loc.F, Record, Idx);
     QualType Canon = readType(*Loc.F, Record, Idx);
     if (!Canon.isNull())
       Canon = Context.getCanonicalType(Canon);
@@ -5360,7 +5360,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     ElaboratedTypeKeyword Keyword = (ElaboratedTypeKeyword)Record[Idx++];
     NestedNameSpecifier *NNS = ReadNestedNameSpecifier(*Loc.F, Record, Idx);
-    const IdentifierInfo *Name = this->GetIdentifierInfo(*Loc.F, Record, Idx);
+    const IdentifierInfo *Name = GetIdentifierInfo(*Loc.F, Record, Idx);
     unsigned NumArgs = Record[Idx++];
     SmallVector<TemplateArgument, 8> Args;
     Args.reserve(NumArgs);
@@ -6376,7 +6376,7 @@ namespace {
       // this context in this module.
       ModuleFile::DeclContextInfosMap::iterator Info;
       bool FoundInfo = false;
-      for (auto *DC : this->Contexts) {
+      for (auto *DC : Contexts) {
         Info = M.DeclContextInfos.find(DC);
         if (Info != M.DeclContextInfos.end() &&
             Info->second.NameLookupTableData) {
@@ -6392,18 +6392,18 @@ namespace {
       ASTDeclContextNameLookupTable *LookupTable =
         Info->second.NameLookupTableData;
       ASTDeclContextNameLookupTable::iterator Pos =
-          LookupTable->find_hashed(this->NameKey, this->NameHash);
+          LookupTable->find_hashed(NameKey, NameHash);
       if (Pos == LookupTable->end())
         return false;
 
       bool FoundAnything = false;
       ASTDeclContextNameLookupTrait::data_type Data = *Pos;
       for (; Data.first != Data.second; ++Data.first) {
-        NamedDecl *ND = this->Reader.GetLocalDeclAs<NamedDecl>(M, *Data.first);
+        NamedDecl *ND = Reader.GetLocalDeclAs<NamedDecl>(M, *Data.first);
         if (!ND)
           continue;
 
-        if (ND->getDeclName() != this->Name) {
+        if (ND->getDeclName() != Name) {
           // A name might be null because the decl's redeclarable part is
           // currently read before reading its name. The lookup is triggered by
           // building that decl (likely indirectly), and so it is later in the
@@ -6415,8 +6415,8 @@ namespace {
 
         // Record this declaration.
         FoundAnything = true;
-        if (this->DeclSet.insert(ND).second)
-          this->Decls.push_back(ND);
+        if (DeclSet.insert(ND).second)
+          Decls.push_back(ND);
       }
 
       return FoundAnything;
@@ -6498,8 +6498,8 @@ namespace {
       // this context in this module.
       ModuleFile::DeclContextInfosMap::iterator Info;
       bool FoundInfo = false;
-      for (unsigned I = 0, N = this->Contexts.size(); I != N; ++I) {
-        Info = M.DeclContextInfos.find(this->Contexts[I]);
+      for (unsigned I = 0, N = Contexts.size(); I != N; ++I) {
+        Info = M.DeclContextInfos.find(Contexts[I]);
         if (Info != M.DeclContextInfos.end() &&
             Info->second.NameLookupTableData) {
           FoundInfo = true;
@@ -6519,19 +6519,18 @@ namespace {
            ++I) {
         ASTDeclContextNameLookupTrait::data_type Data = *I;
         for (; Data.first != Data.second; ++Data.first) {
-          NamedDecl *ND =
-              this->Reader.GetLocalDeclAs<NamedDecl>(M, *Data.first);
+          NamedDecl *ND = Reader.GetLocalDeclAs<NamedDecl>(M, *Data.first);
           if (!ND)
             continue;
 
           // Record this declaration.
           FoundAnything = true;
-          if (this->DeclSet.insert(ND).second)
-            this->Decls[ND->getDeclName()].push_back(ND);
+          if (DeclSet.insert(ND).second)
+            Decls[ND->getDeclName()].push_back(ND);
         }
       }
 
-      return FoundAnything && !this->VisitAll;
+      return FoundAnything && !VisitAll;
     }
   };
 }
@@ -6952,32 +6951,32 @@ namespace clang { namespace serialization {
         return false;
       
       // If we've already searched this module file, skip it now.
-      if (M.Generation <= this->PriorGeneration)
+      if (M.Generation <= PriorGeneration)
         return true;
 
-      ++this->Reader.NumMethodPoolTableLookups;
+      ++Reader.NumMethodPoolTableLookups;
       ASTSelectorLookupTable *PoolTable
         = (ASTSelectorLookupTable*)M.SelectorLookupTable;
-      ASTSelectorLookupTable::iterator Pos = PoolTable->find(this->Sel);
+      ASTSelectorLookupTable::iterator Pos = PoolTable->find(Sel);
       if (Pos == PoolTable->end())
         return false;
 
-      ++this->Reader.NumMethodPoolTableHits;
-      ++this->Reader.NumSelectorsRead;
+      ++Reader.NumMethodPoolTableHits;
+      ++Reader.NumSelectorsRead;
       // FIXME: Not quite happy with the statistics here. We probably should
       // disable this tracking when called via LoadSelector.
       // Also, should entries without methods count as misses?
-      ++this->Reader.NumMethodPoolEntriesRead;
+      ++Reader.NumMethodPoolEntriesRead;
       ASTSelectorLookupTrait::data_type Data = *Pos;
-      if (this->Reader.DeserializationListener)
-        this->Reader.DeserializationListener->SelectorRead(Data.ID, this->Sel);
+      if (Reader.DeserializationListener)
+        Reader.DeserializationListener->SelectorRead(Data.ID, Sel);
 
-      this->InstanceMethods.append(Data.Instance.begin(), Data.Instance.end());
-      this->FactoryMethods.append(Data.Factory.begin(), Data.Factory.end());
-      this->InstanceBits = Data.InstanceBits;
-      this->FactoryBits = Data.FactoryBits;
-      this->InstanceHasMoreThanOneDecl = Data.InstanceHasMoreThanOneDecl;
-      this->FactoryHasMoreThanOneDecl = Data.FactoryHasMoreThanOneDecl;
+      InstanceMethods.append(Data.Instance.begin(), Data.Instance.end());
+      FactoryMethods.append(Data.Factory.begin(), Data.Factory.end());
+      InstanceBits = Data.InstanceBits;
+      FactoryBits = Data.FactoryBits;
+      InstanceHasMoreThanOneDecl = Data.InstanceHasMoreThanOneDecl;
+      FactoryHasMoreThanOneDecl = Data.FactoryHasMoreThanOneDecl;
       return true;
     }
     
