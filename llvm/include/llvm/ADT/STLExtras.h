@@ -225,10 +225,10 @@ template <typename ContainerTy>
 auto reverse(
     ContainerTy &&C,
     typename std::enable_if<!has_rbegin<ContainerTy>::value>::type * = nullptr)
-    -> decltype(make_range(make_reverse_iterator(std::end(C)),
-                           make_reverse_iterator(std::begin(C)))) {
-  return make_range(make_reverse_iterator(std::end(C)),
-                    make_reverse_iterator(std::begin(C)));
+    -> decltype(make_range(llvm::make_reverse_iterator(std::end(C)),
+                           llvm::make_reverse_iterator(std::begin(C)))) {
+  return make_range(llvm::make_reverse_iterator(std::end(C)),
+                    llvm::make_reverse_iterator(std::begin(C)));
 }
 
 //===----------------------------------------------------------------------===//
