@@ -91,16 +91,18 @@ void dfsan_set_write_callback(dfsan_write_callback_t labeled_write_callback);
 /// <label> <parent label 1> <parent label 2> <label description if any>
 void dfsan_dump_labels(int fd);
 
+/// Interceptor hooks.
 /// Whenever a dfsan's custom function is called the corresponding
 /// hook is called it non-zero. The hooks should be defined by the user.
 /// The primary use case is taint-guided fuzzing, where the fuzzer
 /// needs to see the parameters of the function and the labels.
 /// FIXME: implement more hooks.
-
-/// memcmp hook.
 void dfsan_weak_hook_memcmp(void *caller_pc, const void *s1, const void *s2,
                             size_t n, dfsan_label s1_label,
                             dfsan_label s2_label, dfsan_label n_label);
+void dfsan_weak_hook_strncmp(void *caller_pc, const char *s1, const char *s2,
+                             size_t n, dfsan_label s1_label,
+                             dfsan_label s2_label, dfsan_label n_label);
 #ifdef __cplusplus
 }  // extern "C"
 

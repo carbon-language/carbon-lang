@@ -120,6 +120,8 @@ extern "C" {
   // FIXME: implement more hooks.
   void __sanitizer_weak_hook_memcmp(void *called_pc, const void *s1,
                                     const void *s2, size_t n);
+  void __sanitizer_weak_hook_strncmp(void *called_pc, const char *s1,
+                                    const char *s2, size_t n);
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -40,13 +40,19 @@
 #include <stdarg.h>
 
 #if SANITIZER_INTERCEPTOR_HOOKS
-#define CALL_WEAK_INTERCEPTOR_HOOK4(f, ...)                                    \
+#define CALL_WEAK_INTERCEPTOR_HOOK(f, ...)                                     \
   do {                                                                         \
     if (f)                                                                     \
       f(__VA_ARGS__);                                                          \
   } while (false);
+#define DECLARE_WEAK_INTERCEPTOR_HOOK(f, ...)                                  \
+  extern "C" {                                                                 \
+  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE void f(__VA_ARGS__);  \
+  } // extern "C"
 #else
-#define CALL_WEAK_INTERCEPTOR_HOOK4(f, a1, a2, a3, a4)
+#define DECLARE_WEAK_INTERCEPTOR_HOOK(f, ...)
+#define CALL_WEAK_INTERCEPTOR_HOOK(f, a1, a2, a3, a4)
+
 #endif  // SANITIZER_INTERCEPTOR_HOOKS
 
 #if SANITIZER_WINDOWS && !defined(va_copy)
@@ -213,11 +219,16 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
   return CharCmpX(c1, c2);
 }
 
+DECLARE_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_strncmp, uptr called_pc,
+                              const char *s1, const char *s2, uptr n);
+
 INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
   if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
     return internal_strncmp(s1, s2, size);
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, strncmp, s1, s2, size);
+  CALL_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_strncmp, GET_CALLER_PC(), s1,
+                             s2, size);
   unsigned char c1 = 0, c2 = 0;
   uptr i;
   for (i = 0; i < size; i++) {
@@ -374,19 +385,16 @@ INTERCEPTOR(char *, strpbrk, const char *s1, const char *s2) {
 
 #if SANITIZER_INTERCEPT_MEMCMP
 
-extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-void __sanitizer_weak_hook_memcmp(uptr called_pc, const void *s1,
-                                  const void *s2, uptr n);
-}  // extern "C"
+DECLARE_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_memcmp, uptr called_pc,
+                              const void *s1, const void *s2, uptr n);
 
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, memcmp, a1, a2, size);
   if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
     return internal_memcmp(a1, a2, size);
-  CALL_WEAK_INTERCEPTOR_HOOK4(__sanitizer_weak_hook_memcmp, GET_CALLER_PC(), a1,
-                              a2, size);
+  CALL_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_memcmp, GET_CALLER_PC(), a1,
+                             a2, size);
   if (common_flags()->intercept_memcmp) {
     if (common_flags()->strict_memcmp) {
       // Check the entire regions even if the first bytes of the buffers are
