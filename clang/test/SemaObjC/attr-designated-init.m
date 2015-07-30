@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -Wno-incomplete-implementation -verify -fblocks %s
 
 #define NS_DESIGNATED_INITIALIZER __attribute__((objc_designated_initializer))
+#define NS_UNAVAILABLE __attribute__((unavailable))
 
 void fnfoo(void) NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface or class extension declarations}}
 
@@ -253,7 +254,7 @@ __attribute__((objc_root_class))
 __attribute__((objc_root_class))
 @interface MyObject
 - (instancetype)initWithStuff:(id)stuff __attribute__((objc_designated_initializer));
-- (instancetype)init __attribute__((unavailable));
+- (instancetype)init NS_UNAVAILABLE;
 @end
 
 @implementation MyObject
@@ -378,6 +379,15 @@ __attribute__((objc_root_class))
 }
 @end
 
+@interface SubTest1 : Test1
+-(instancetype)init NS_UNAVAILABLE;
+-(instancetype)initWithRequiredParameter:(id)foo NS_DESIGNATED_INITIALIZER;
+@end
+@implementation SubTest1
+-(instancetype)initWithRequiredParameter:(id)foo {
+  return [super init];
+}
+@end
 
 @interface Test2 : NSObject
 @end
