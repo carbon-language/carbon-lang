@@ -636,7 +636,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
           case CodeGenIntrinsic::ReadNone:
             if (addComma)
               OS << ",";
-            OS << "Attributes::ReadNone";
+            OS << "Attribute::ReadNone";
             addComma = true;
             break;
           }
