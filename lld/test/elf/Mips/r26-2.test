@@ -1,82 +1,31 @@
 # REQUIRES: mips
 
 # Check reading addendum for R_MIPS_26 relocation.
-# RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
-# RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
+# RUN: llvm-mc -arch=mipsel -filetype=obj -o=%t.o %s
+# RUN: lld -flavor gnu -target mipsel -o %t.exe %t.o
+# RUN: llvm-objdump -d %t.exe | FileCheck %s
 
 # CHECK: Disassembly of section .text:
 # CHECK-NEXT: __start:
-# CHECK-NEXT:   400110:  00 00 00 00   nop
-# CHECK-NEXT:   400114:  44 70 10 0c  jal  4309264
-#   0x107044 << 2 = 0x41C110 = _start  + (0x7000 << 2)
-# CHECK-NEXT:   400118:  00 00 00 00  nop
+# CHECK-NEXT:   400180:  60 70 10 0c  jal  4309376
+# CHECK-NEXT:   400184:  00 00 00 00  nop
+# CHECK-NEXT:   400188:  68 70 10 0c  jal  4309408
+# CHECK-NEXT:   40018c:  00 00 00 00  nop
+# CHECK-NEXT:   400190:  5f 00 10 0c  jal  4194684
+# CHECK-NEXT:   400194:  00 00 00 00  nop
+# CHECK-NEXT:   400198:  67 00 10 0c  jal  4194716
+# CHECK-NEXT:   40019c:  00 00 00 00  nop
 #
-# CHECK: loc:
-# CHECK-NEXT:   40011c:  47 70 10 0c  jal  4309276
-#   0x107047 << 2 = 0x41C11C = loc  + (0x7000 << 2)
-# CHECK-NEXT:   400120:  00 00 00 00  nop
-# CHECK-NEXT:   400124:  43 00 10 0c  jal  4194572
-#   0x100043 << 2 = 0x40010C = _start - 4
-# CHECK-NEXT:   400128:  00 00 00 00  nop
-# CHECK-NEXT:   40012c:  46 00 10 0c  jal  4194584
-#   0x100046 << 2 = 0x400118 = loc - 4
-# CHECK-NEXT:   400130:  00 00 00 00  nop
+# CHECK:      loc:
+# CHECK-NEXT:   4001a0:  00 00 00 00  nop
 
-# CHECK: SYMBOL TABLE:
-# CHECK: 0040011c l  F .text  00000018 loc
-# CHECK: 00400110 g  F .text  0000000c __start
+  .text
+  .globl  __start
+__start:
+  jal __start + 0x1C000
+  jal loc + 0x1C000
+  jal __start + (-1)
+  jal loc + (-1)
 
-!ELF
-FileHeader: !FileHeader
-  Class: ELFCLASS32
-  Data: ELFDATA2LSB
-  Type: ET_REL
-  Machine: EM_MIPS
-  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
-
-Sections:
-- Name: .text
-  Type: SHT_PROGBITS
-# nop
-# jal __start + 0x1C000
-# nop
-# jal loc + 0x1C000
-# nop
-# jal __start - 1
-# nop
-# jal loc - 1
-# nop
-  Content:  "000000000070000C000000000070000C00000000FFFFFF0F00000000FFFFFF0F00000000"
-  AddressAlign: 16
-  Flags: [SHF_EXECINSTR, SHF_ALLOC]
-
-- Name: .rel.text
-  Type: SHT_REL
-  Info: .text
-  AddressAlign: 4
-  Relocations:
-    - Offset: 0x4
-      Symbol: __start
-      Type: R_MIPS_26
-    - Offset: 0xC
-      Symbol: loc
-      Type: R_MIPS_26
-    - Offset: 0x14
-      Symbol: __start
-      Type: R_MIPS_26
-    - Offset: 0x1C
-      Symbol: loc
-      Type: R_MIPS_26
-
-Symbols:
-  Global:
-    - Name: __start
-      Section: .text
-      Value: 0x0
-      Size: 4
-  Local:
-    - Name: loc
-      Section: .text
-      Value: 0xc
-      Size: 4
+loc:
+  nop

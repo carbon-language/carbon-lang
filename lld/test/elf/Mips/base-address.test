@@ -5,7 +5,7 @@
 # RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t.exe %t.o
 # RUN: llvm-readobj -dynamic-table -program-headers %t.exe | FileCheck %s
 
-# CHECK: DynamicSection [ (13 entries)
+# CHECK: DynamicSection [ (14 entries)
 # CHECK:   Tag        Type                 Name/Value
 # CHECK-NEXT:   0x00000004 HASH                 0x{{[0-9A-F]+}}
 # CHECK-NEXT:   0x00000005 STRTAB               0x{{[0-9A-F]+}}
@@ -13,6 +13,7 @@
 # CHECK-NEXT:   0x0000000A STRSZ                1 (bytes)
 # CHECK-NEXT:   0x0000000B SYMENT               16 (bytes)
 # CHECK-NEXT:   0x70000001 MIPS_RLD_VERSION     1
+# CHECK-NEXT:   0x70000016 MIPS_RLD_MAP         0x402000
 # CHECK-NEXT:   0x70000005 MIPS_FLAGS           NOTPOT
 # CHECK-NEXT:   0x70000006 MIPS_BASE_ADDRESS    0x400000
 # CHECK-NEXT:   0x7000000A MIPS_LOCAL_GOTNO     2

@@ -10,13 +10,13 @@
 
 # GOT:      Symbol {
 # GOT:        Name: T0 (1)
-# GOT-NEXT:   Value: 0x1200001F0
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: LT1 (4)
-# GOT-NEXT:   Value: 0x120000218
+# GOT-NEXT:   Value: 0x[[LT1:[0-9A-F]+]]
 # GOT:      Symbol {
 # GOT:        Name: LT2 (8)
-# GOT-NEXT:   Value: 0x12000021C
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: T1@ (1)
 # GOT-NEXT:   Value: 0x0
@@ -44,7 +44,7 @@
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x120001010
 # GOT-NEXT:       Access: -32736
-# GOT-NEXT:       Initial: 0x120000218
+# GOT-NEXT:       Initial: 0x[[LT1]]
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x120001018
@@ -81,19 +81,19 @@
 # GOT-NEXT: }
 
 # RAW:      Contents of section .text:
-# RAW-NEXT:  1200001f0 38800000 20800000 38800000 40800000  8... ...8...@...
-#                      ^ = -32712 (T1)
-#                               ^ = -32736 (LT1)
-#                                        ^ -32712 (T1)
-#                                                 ^ -32704 (T2)
-# RAW-NEXT:  120000200 28800000 30800000 00000000 00000000  (...0...........
-#                      ^ -32728 (PAGE)
-#                               ^ -32720 (PAGE)
-#                                        ^ T1 OFST
-#                                                 ^ T2 OFST
-# RAW-NEXT:  120000210 18020000 1c020000 00000000 00000000  ................
-#                      ^ LT1 OFST
-#                               ^ LT2 OFST
+# RAW-NEXT:  {{[0-9a-f]+}} 38800000 20800000 38800000 40800000
+#                          ^ = -32712 (T1)
+#                                   ^ = -32736 (LT1)
+#                                            ^ -32712 (T1)
+#                                                     ^ -32704 (T2)
+# RAW-NEXT:  {{[0-9a-f]+}} 28800000 30800000 00000000 00000000
+#                          ^ -32728 (PAGE)
+#                                   ^ -32720 (PAGE)
+#                                            ^ T1 OFST
+#                                                     ^ T2 OFST
+# RAW-NEXT:  {{[0-9a-f]+}} 50020000 54020000 00000000 00000000
+#                          ^ LT1 OFST
+#                                   ^ LT2 OFST
 
 # so.o
 ---

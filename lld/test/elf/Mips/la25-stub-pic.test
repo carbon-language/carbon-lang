@@ -10,17 +10,17 @@
 
 # CHECK-NOT:  Contents of section .plt:
 # CHECK:      Contents of section .text:
-# CHECK-NEXT:  400110 00000000 00000000 44001000 fdff0000
-#                     ^ T1     ^ T2     ^ T1 (0x400110)
-#                                                ^ 0x40011c - 12 = 0x0x400110
-# CHECK-NEXT:  400120 fcff1f00 fbffff03 20008a00 74000000
-#                                       ^ T2 (0x400114)
+# CHECK-NEXT:  400130 00000000 00000000 4c001000 fdff0000
+#                     ^ T1     ^ T2     ^ T1 (0x400130)
+#                                                ^ 0x40013c - 12 = 0x0x400130
+# CHECK-NEXT:  400140 fcff1f00 fbffff03 20009a00 74000000
+#                                       ^ T2 (0x400134)
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400110 g F .text  00000004 T1
-# CHECK: 00400114 g F .text  00000004 T2
-# CHECK: 00400118 g F .text  00000010 T0
-# CHECK: 00400128 g F .text  00000014 T3
+# CHECK: 00400130 g F .text  00000004 T1
+# CHECK: 00400134 g F .text  00000004 T2
+# CHECK: 00400138 g F .text  00000010 T0
+# CHECK: 00400148 g F .text  00000014 T3
 
 # pic.o
 ---

@@ -1,77 +1,40 @@
+# REQUIRES: mips
+
 # Check handling multiple HI16 relocation followed by a single LO16 relocation.
 
-# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: llvm-mc -arch=mipsel -filetype=obj -o=%t.o %s
 # RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o
-# RUN: llvm-objdump -s -t %t.exe | FileCheck %s
+# RUN: llvm-objdump -d -t %t.exe | FileCheck %s
 
-# CHECK: Contents of section .text:
-# CHECK-NEXT: 400110 4000083c 4000083c 4000083c 4000083c
-# CHECK-NEXT: 400120 4200083c 3e00083c 4002083c 40fe083c
-# CHECK-NEXT: 400130 35010885 00000000
+# CHECK: Disassembly of section .text:
+# CHECK-NEXT: T0:
+# CHECK-NEXT:        400180:   40 00 08 3c   lui   $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:   40 00 08 3c   lui   $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:   40 00 08 3c   lui   $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:   40 00 08 3c   lui   $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}:   42 00 08 3c   lui   $8, 66
+# CHECK-NEXT: {{[0-9a-f]+}}:   3e 00 08 3c   lui   $8, 62
+# CHECK-NEXT: {{[0-9a-f]+}}:   40 02 08 3c   lui   $8, 576
+# CHECK-NEXT: {{[0-9a-f]+}}:   40 fe 08 3c   lui   $8, 65088
+# CHECK-NEXT: {{[0-9a-f]+}}:   a5 01 08 25   addiu $8, $8, 421
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400110 g F .text  00000024 T0
-# CHECK: 00400134 g F .text  00000004 T1
+# CHECK: 00400180 g F .text  00000024 T0
+# CHECK: 004001a4 g F .text  00000004 T1
 
-FileHeader:
-  Class:   ELFCLASS32
-  Data:    ELFDATA2LSB
-  Type:    ET_REL
-  Machine: EM_MIPS
-  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2]
+  .text
+  .globl  T0
+T0:
+  lui     $8, %hi(T1+1)
+  lui     $8, %hi(T1-1)
+  lui     $8, %hi(T1+0x1ff)
+  lui     $8, %hi(T1+(-0x1ff))
+  lui     $8, %hi(T1+0x1ffff)
+  lui     $8, %hi(T1+(-0x1ffff))
+  lui     $8, %hi(T1+0x1ffffff)
+  lui     $8, %hi(T1+(-0x1ffffff))
+  addiu   $8, $8, %lo(T1+(-0x1ffffff))
 
-Sections:
-- Name:         .text
-  Type:         SHT_PROGBITS
-  Content:      "0000083c0000083c0000083c0000083c0200083cfeff083c0002083c00fe083c0100088500000000"
-#                ^ %hi(T1+1)     ^ %hi(T1+0x1ff) ^ %hi(T1+0x1ffff)       ^ %hi(T1-0x1ffffff)
-#                        ^ %hi(T1-1)     ^ %hi(T1-0x1ff) ^ %hi(T1-0x1ffff)       ^ %lo(T1-0x1ffffff)
-#                                                                ^ %hi(T1+0x1ffffff)
-  AddressAlign: 16
-  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
-
-- Name:         .rel.text
-  Type:         SHT_REL
-  Info:         .text
-  AddressAlign: 4
-  Relocations:
-    - Offset: 0x0
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x4
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x8
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0xC
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x10
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x14
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x18
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x1C
-      Symbol: T1
-      Type:   R_MIPS_HI16
-    - Offset: 0x20
-      Symbol: T1
-      Type:   R_MIPS_LO16
-
-Symbols:
-  Global:
-    - Name:    T0
-      Section: .text
-      Type:    STT_FUNC
-      Value:   0
-      Size:    36
-    - Name:    T1
-      Section: .text
-      Type:    STT_FUNC
-      Value:   36
-      Size:    4
+  .globl  T1
+T1:
+  nop

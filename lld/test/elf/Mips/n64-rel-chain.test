@@ -15,11 +15,11 @@
 # SYM-NEXT:   Flags [
 # SYM-NEXT:     SHF_ALLOC
 # SYM-NEXT:   ]
-# SYM-NEXT:   Address: 0x1200001F0
+# SYM-NEXT:   Address: 0x120000230
 #
 # SYM:      Symbol {
 # SYM:        Name: LT1
-# SYM-NEXT:   Value: 0x1200001D0
+# SYM-NEXT:   Value: 0x120000210
 # SYM-NEXT:   Size: 16
 # SYM-NEXT:   Binding: Global
 # SYM-NEXT:   Type: Function
@@ -28,7 +28,7 @@
 # SYM-NEXT: }
 # SYM:      Symbol {
 # SYM:        Name: T0
-# SYM-NEXT:   Value: 0x1200001E0
+# SYM-NEXT:   Value: 0x120000220
 # SYM-NEXT:   Size: 16
 # SYM-NEXT:   Binding: Global
 # SYM-NEXT:   Type: Function
@@ -48,14 +48,14 @@
 # SYM:      Canonical gp value: 0x120008FF0
 # SYM:      Local entries [
 # SYM-NEXT:   Entry {
-# SYM-NEXT:     Address: 0x120001010
+# SYM-NEXT:     Address: 0x{{[0-9A-F]+}}
 # SYM-NEXT:     Access: -32736
 # SYM-NEXT:     Initial: 0x120000000
 # SYM-NEXT:   }
 # SYM-NEXT: ]
 # SYM-NEXT: Global entries [
 # SYM-NEXT:   Entry {
-# SYM-NEXT:     Address: 0x120001018
+# SYM-NEXT:     Address: 0x{{[0-9A-F]+}}
 # SYM-NEXT:     Access: -32728
 # SYM-NEXT:     Initial: 0x0
 # SYM-NEXT:     Value: 0x0
@@ -66,21 +66,21 @@
 # SYM-NEXT: ]
 
 # RAW:      Contents of section .text:
-# RAW-NEXT:  1200001d0 01000000 00000000 208e0000 00000000
+# RAW-NEXT:  120000210 01000000 00000000 e08d0000 00000000
 #                      ^
-#                      S - GP = 0x1200001d0 - 0x120008ff0 = -36384
-#                      S - A = 0 - (-36384) = 36384
+#                      S - GP = 0x120000210 - 0x120008ff0 = -36320
+#                      S - A = 0 - (-36320) = 36320
 #                      (AHL + S + 0x8000) >> 16 = 1
 #                                        ^
-#                      S - GP = 0x1200001d0 - 0x120008ff0 = -36384
-#                      S - A = 0 - (-36384) = 36384
-#                      AHL + S = 0x8E20
-# RAW-NEXT:  1200001e0 20800000 f8010000 28800000 00000000
+#                      S - GP = 0x120000210 - 0x120008ff0 = -36320
+#                      S - A = 0 - (-36320) = 36320
+#                      AHL + S = 0x8DE0
+# RAW-NEXT:  120000220 20800000 38020000 28800000 00000000
 #                      ^ 0x8020 = -32736 GOT
-#                               ^ (0x1200001F0 + 8 - page) = 0x1f8
+#                               ^ (0x120000230 + 8 - page) = 0x238
 #                                        ^ 0x8028 = -32728
 # RAW:      Contents of section .pdr:
-# RAW-NEXT:  0000 d0010020 e0010020
+# RAW-NEXT:  0000 10020020 20020020
 
 ---
 FileHeader:

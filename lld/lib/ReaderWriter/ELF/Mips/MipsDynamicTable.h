@@ -30,6 +30,10 @@ public:
     // Version id for the Runtime Linker Interface.
     this->addEntry(DT_MIPS_RLD_VERSION, 1);
 
+    // The .rld_map section address.
+    if (this->_ctx.isDynamic() && this->_ctx.getOutputELFType() == ET_EXEC)
+      _dt_rldmap = this->addEntry(DT_MIPS_RLD_MAP, 0);
+
     // MIPS flags.
     this->addEntry(DT_MIPS_FLAGS, RHF_NOTPOT);
 
@@ -78,6 +82,9 @@ public:
 
     if (const auto *sec = _targetLayout.findOutputSection(".MIPS.options"))
       this->_entries[_dt_options].d_un.d_ptr = sec->virtualAddr();
+
+    if (const auto *sec = _targetLayout.findOutputSection(".rld_map"))
+      this->_entries[_dt_rldmap].d_un.d_ptr = sec->virtualAddr();
   }
 
   int64_t getGotPltTag() override { return DT_MIPS_PLTGOT; }
@@ -99,6 +106,7 @@ private:
   std::size_t _dt_pltgot;
   std::size_t _dt_baseaddr;
   std::size_t _dt_options;
+  std::size_t _dt_rldmap;
   MipsTargetLayout<ELFT> &_targetLayout;
 };
 

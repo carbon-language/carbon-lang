@@ -13,8 +13,8 @@
 # CHECK: Arch: mipsel
 # CHECK: AddressSize: 32bit
 # CHECK: LoadName:
-# CHECK: DynamicSection [ (18 entries)
-# CHECK:   Tag        Type                 Name/Value
+# CHECK: DynamicSection [ (19 entries)
+# CHECK:       Tag        Type                 Name/Value
 # CHECK-NEXT:  0x00000004 HASH                 0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x00000005 STRTAB               0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x00000006 SYMTAB               0x{{[0-9A-F]+}}
@@ -25,6 +25,7 @@
 # CHECK-NEXT:  0x00000014 PLTREL               REL
 # CHECK-NEXT:  0x00000017 JMPREL               0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x70000001 MIPS_RLD_VERSION     1
+# CHECK-NEXT:  0x70000016 MIPS_RLD_MAP         0x40200C
 # CHECK-NEXT:  0x70000005 MIPS_FLAGS           NOTPOT
 # CHECK-NEXT:  0x70000006 MIPS_BASE_ADDRESS    0x400000
 # CHECK-NEXT:  0x7000000A MIPS_LOCAL_GOTNO     2

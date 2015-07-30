@@ -40,7 +40,7 @@
 
 # PLT-SYM:      Relocations [
 # PLT-SYM-NEXT:   Section (5) .rel.dyn {
-# PLT-SYM-NEXT:     0x402018 R_MIPS_COPY D1 0x0
+# PLT-SYM-NEXT:     0x402020 R_MIPS_COPY D1 0x0
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Section (6) .rel.plt {
 # PLT-SYM-NEXT:     0x402008 R_MIPS_JUMP_SLOT T3 0x0
@@ -60,16 +60,16 @@
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {
 # PLT-SYM-NEXT:     Name: D1@ (1)
-# PLT-SYM-NEXT:     Value: 0x402018
+# PLT-SYM-NEXT:     Value: 0x{{[0-9A-F]+}}
 # PLT-SYM-NEXT:     Size: 8
 # PLT-SYM-NEXT:     Binding: Global (0x1)
 # PLT-SYM-NEXT:     Type: Object (0x1)
 # PLT-SYM-NEXT:     Other: 0
-# PLT-SYM-NEXT:     Section: .bss (0xD)
+# PLT-SYM-NEXT:     Section: .bss
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT:   Symbol {
 # PLT-SYM-NEXT:     Name: T1@ (4)
-# PLT-SYM-NEXT:     Value: 0x4001D5
+# PLT-SYM-NEXT:     Value: 0x{{[0-9A-F]+}}
 # PLT-SYM-NEXT:     Size: 0
 # PLT-SYM-NEXT:     Binding: Global (0x1)
 # PLT-SYM-NEXT:     Type: Function (0x2)

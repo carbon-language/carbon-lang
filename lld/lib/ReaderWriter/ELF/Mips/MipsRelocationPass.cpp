@@ -426,6 +426,24 @@ public:
   StringRef customSectionName() const override { return ".got"; }
 };
 
+template <typename ELFT> class MipsRldAtom : public SimpleELFDefinedAtom {
+public:
+  MipsRldAtom(const File &f) : SimpleELFDefinedAtom(f) {}
+
+  Scope scope() const override { return scopeGlobal; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
+  StringRef customSectionName() const override { return ".rld_map"; }
+  ContentType contentType() const override { return typeData; }
+  uint64_t size() const override { return rawContent().size(); }
+  ContentPermissions permissions() const override { return permRW_; }
+  Alignment alignment() const override { return rawContent().size(); }
+  StringRef name() const override { return "__RLD_MAP"; }
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(mipsGot0AtomContent)
+        .slice(ELFT::Is64Bits ? 0 : 4);
+  }
+};
+
 class RelocationPassFile : public SimpleFile {
 public:
   RelocationPassFile(const ELFLinkingContext &ctx)
@@ -597,6 +615,12 @@ std::error_code RelocationPass<ELFT>::perform(SimpleFile &mf) {
   }
 
   uint64_t ordinal = 0;
+
+  if (_ctx.isDynamic() && _ctx.getOutputELFType() == ET_EXEC) {
+    auto rlda = new (_file._alloc) MipsRldAtom<ELFT>(_file);
+    rlda->setOrdinal(ordinal++);
+    mf.addAtom(*rlda);
+  }
 
   if (!_localGotVector.empty() || !_globalGotVector.empty() ||
       !_tlsGotVector.empty()) {

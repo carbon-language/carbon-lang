@@ -10,19 +10,19 @@
 
 # GOT:      Symbol {
 # GOT:        Name: LT3 (12)
-# GOT-NEXT:   Value: 0x400184
+# GOT-NEXT:   Value: 0x[[LT3:[0-9A-F]+]]
 # GOT:      Symbol {
 # GOT:        Name: LT4 (16)
-# GOT-NEXT:   Value: 0x400188
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: T0 (1)
-# GOT-NEXT:   Value: 0x400154
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: LT1 (4)
-# GOT-NEXT:   Value: 0x40017C
+# GOT-NEXT:   Value: 0x[[LT1:[0-9A-F]+]]
 # GOT:      Symbol {
 # GOT:        Name: LT2 (8)
-# GOT-NEXT:   Value: 0x400180
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: T1@ (1)
 # GOT-NEXT:   Value: 0x0
@@ -50,7 +50,7 @@
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401008
 # GOT-NEXT:       Access: -32744
-# GOT-NEXT:       Initial: 0x40017C
+# GOT-NEXT:       Initial: 0x[[LT1]]
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x40100C
@@ -65,7 +65,7 @@
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401014
 # GOT-NEXT:       Access: -32732
-# GOT-NEXT:       Initial: 0x400184
+# GOT-NEXT:       Initial: 0x[[LT3]]
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401018
@@ -97,23 +97,23 @@
 # GOT-NEXT: }
 
 # RAW:      Contents of section .text:
-# RAW-NEXT:  400154 2c800000 18800000 2c800000 30800000
-#                   ^ = -32724 (T1)
-#                            ^ = -32744 (LT1)
-#                                     ^ -32724 (T1)
-#                                              ^ -32720 (T2)
-# RAW-NEXT:  400164 1c800000 20800000 00000000 00000000
-#                   ^ -32740 (PAGE)
-#                            ^ -32736 (PAGE)
-#                                     ^ T1 OFST
-#                                              ^ T2 OFST
-# RAW-NEXT:  400174 7c010000 80010000 24800000 28800000
-#                   ^ LT1 OFST
-#                            ^ LT2 OFST
-#                                     ^ = -32732 (LT3)
-#                                              ^ -32728 (PAGE)
-# RAW-NEXT:  400184 88010000 00000000
-#                   ^ LT4 OFST
+# RAW-NEXT:  {{[0-9a-f]+}} 2c800000 18800000 2c800000 30800000
+#                          ^ = -32724 (T1)
+#                                   ^ = -32744 (LT1)
+#                                            ^ -32724 (T1)
+#                                                     ^ -32720 (T2)
+# RAW-NEXT:  {{[0-9a-f]+}} 1c800000 20800000 00000000 00000000
+#                          ^ -32740 (PAGE)
+#                                   ^ -32736 (PAGE)
+#                                            ^ T1 OFST
+#                                                     ^ T2 OFST
+# RAW-NEXT:  {{[0-9a-f]+}} 9c010000 a0010000 24800000 28800000
+#                          ^ LT1 OFST
+#                                   ^ LT2 OFST
+#                                            ^ = -32732 (LT3)
+#                                                     ^ -32728 (PAGE)
+# RAW-NEXT:  {{[0-9a-f]+}} a8010000 00000000
+#                          ^ LT4 OFST
 
 # so.o
 ---

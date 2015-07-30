@@ -9,10 +9,10 @@
 
 # RUN: llvm-objdump -disassemble %t.exe | FileCheck %s
 
-# CHECK:       400150:   3c 19 00 40     lui     $25, 64
-# CHECK-NEXT:  400154:   08 10 00 48     j       4194592
-# CHECK-NEXT:  400158:   27 39 01 20     addiu   $25, $25, 288
-# CHECK-NEXT:  40015c:   00 00 00 00     nop
+# CHECK:       400170:   3c 19 00 40     lui     $25, 64
+# CHECK-NEXT:  400174:   08 10 00 50     j       4194624
+# CHECK-NEXT:  400178:   27 39 01 40     addiu   $25, $25, 320
+# CHECK-NEXT:  40017c:   00 00 00 00     nop
 
 # npic.o
 ---

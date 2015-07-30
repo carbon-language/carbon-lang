@@ -29,21 +29,21 @@
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: D1@ (1)
-# CHECK-NEXT:     Value: 0x402010
+# CHECK-NEXT:     Value: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:     Size: 4
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: Object (0x1)
 # CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: .bss (0xA)
+# CHECK-NEXT:     Section: .bss
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: D3@ (4)
-# CHECK-NEXT:     Value: 0x402018
+# CHECK-NEXT:     Value: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:     Size: 4
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: Object (0x1)
 # CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: .bss (0xA)
+# CHECK-NEXT:     Section: .bss
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: D2@ (7)

@@ -9,10 +9,10 @@
 
 # RUN: llvm-objdump -disassemble -mattr=micromips %t.exe | FileCheck %s
 
-# CHECK:       400150:   41 be 00 40     lui     $fp, 64
-# CHECK-NEXT:  400154:   d4 20 00 90     j       4194592
-# CHECK-NEXT:  400158:   33 39 01 21     addiu   $25, $25, 289
-# CHECK-NEXT:  40015c:   00 00 00 00     nop
+# CHECK:       400170:   41 be 00 40     lui     $fp, 64
+# CHECK-NEXT:  400174:   d4 20 00 a0     j       4194624
+# CHECK-NEXT:  400178:   33 39 01 41     addiu   $25, $25, 321
+# CHECK-NEXT:  40017c:   00 00 00 00     nop
 
 ---
 FileHeader:

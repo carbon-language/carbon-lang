@@ -11,19 +11,19 @@
 
 # GOT:      Symbol {
 # GOT:        Name: LT3
-# GOT-NEXT:   Value: 0x40018D
+# GOT-NEXT:   Value: 0x[[LT3:[0-9A-F]+]]
 # GOT:      Symbol {
 # GOT:        Name: LT4
-# GOT-NEXT:   Value: 0x400191
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: T0
-# GOT-NEXT:   Value: 0x40015D
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: LT1
-# GOT-NEXT:   Value: 0x400185
+# GOT-NEXT:   Value: 0x[[LT1:[0-9A-F]+]]
 # GOT:      Symbol {
 # GOT:        Name: LT2
-# GOT-NEXT:   Value: 0x400189
+# GOT-NEXT:   Value: 0x{{[0-9A-F]+}}
 # GOT:      Symbol {
 # GOT:        Name: T1@
 # GOT-NEXT:   Value: 0x0
@@ -51,7 +51,7 @@
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401008
 # GOT-NEXT:       Access: -32744
-# GOT-NEXT:       Initial: 0x400185
+# GOT-NEXT:       Initial: 0x[[LT1]]
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x40100C
@@ -66,7 +66,7 @@
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401014
 # GOT-NEXT:       Access: -32732
-# GOT-NEXT:       Initial: 0x40018D
+# GOT-NEXT:       Initial: 0x[[LT3]]
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x401018
@@ -108,12 +108,12 @@
 #                                   ^ -32736 (PAGE)
 #                                            ^ T1 OFST
 #                                                     ^ T2 OFST
-# RAW-NEXT:  {{[0-9a-f]+}} 00008501 00008901 00002480 00002880
+# RAW-NEXT:  {{[0-9a-f]+}} 0000a501 0000a901 00002480 00002880
 #                          ^ LT1 OFST
 #                                   ^ LT2 OFST
 #                                            ^ = -32732 (LT3)
 #                                                     ^ -32728 (PAGE)
-# RAW-NEXT:  {{[0-9a-f]+}} 00009101 00000000
+# RAW-NEXT:  {{[0-9a-f]+}} 0000b101 00000000
 #                          ^ LT4 OFST
 
 # so.o

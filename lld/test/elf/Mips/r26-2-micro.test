@@ -1,88 +1,31 @@
 # REQUIRES: mips
 
 # Check reading addendum for R_MICROMIPS_26_S1 relocation.
-# RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
-# RUN: llvm-objdump -d -mattr=micromips %t-exe | FileCheck -check-prefix=DIS %s
-# RUN: llvm-objdump -t %t-exe | FileCheck %s
+# RUN: llvm-mc -arch=mipsel -filetype=obj -mattr=micromips -o=%t.o %s
+# RUN: lld -flavor gnu -target mipsel -o %t.exe %t.o
+# RUN: llvm-objdump -d -mattr=micromips %t.exe | FileCheck %s
 
-# DIS: Disassembly of section .text:
-# DIS-NEXT: loc0:
-# DIS-NEXT:   400110:  00 00 00 00   nop
+# CHECK:      Disassembly of section .text:
+# CHECK-NEXT: __start:
+# CHECK-NEXT:   400180:   10 f0 60 70   jalx    2154688
+# CHECK-NEXT:   400184:   00 00 00 00   nop
+# CHECK-NEXT:   400188:   10 f0 68 70   jalx    2154704
+# CHECK-NEXT:   40018c:   00 00 00 00   nop
+# CHECK-NEXT:   400190:   10 f0 58 00   jalx    2097328
+# CHECK-NEXT:   400194:   00 00 00 00   nop
+# CHECK-NEXT:   400198:   10 f0 62 00   jalx    2097348
+# CHECK-NEXT:   40019c:   00 00 00 00   nop
+#
+# CHECK:      loc:
+# CHECK-NEXT:   4001a0:   00 00 00 00   nop
 
-# DIS:      __start:
-# DIS-NEXT:   400114:  20 f4 8e e0   jal     4309276
-# DIS-NEXT:   400118:  00 00 00 00   nop
-# DIS-NEXT:   40011c:  20 f4 9a e0   jal     4309300
-# DIS-NEXT:   400120:  00 00 00 00   nop
+  .text
+  .globl  __start
+__start:
+  jal __start + 0x1C000
+  jal loc + 0x1C000
+  jal __start + 0x7ffffe2
+  jal loc + 0x7ffffea
 
-# DIS:      loc1:
-# DIS-NEXT:   400124:  20 f4 89 00   jal     4194578
-# DIS-NEXT:   400128:  00 00 00 00   nop
-# DIS-NEXT:   40012c:  20 f4 91 00   jal     4194594
-# DIS-NEXT:   400130:  00 00 00 00   nop
-
-# CHECK: SYMBOL TABLE:
-# CHECK: 00400124 l  F .text  00000010 loc1
-# CHECK: 00400114 g  F .text  00000010 __start
-
-!ELF
-FileHeader: !FileHeader
-  Class:   ELFCLASS32
-  Data:    ELFDATA2LSB
-  Type:    ET_REL
-  Machine: EM_MIPS
-  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2, EF_MIPS_MICROMIPS]
-
-Sections:
-- Name: .text
-  Type: SHT_PROGBITS
-# nop
-# jal __start + 0x1C000
-# nop
-# jal loc + 0x1C000
-# nop
-# jal __start + 7FFFFE2
-# nop
-# jal loc + 7FFFFEA
-# nop
-  Content:  "0000000000f404e00000000000f408e000000000FFF7FFFF00000000FFF7FFFF00000000"
-  AddressAlign: 16
-  Flags: [SHF_EXECINSTR, SHF_ALLOC]
-
-- Name: .rel.text
-  Type: SHT_REL
-  Info: .text
-  AddressAlign: 4
-  Relocations:
-    - Offset: 0x4
-      Symbol: __start
-      Type: R_MICROMIPS_26_S1
-    - Offset: 0xC
-      Symbol: loc1
-      Type: R_MICROMIPS_26_S1
-    - Offset: 0x14
-      Symbol: __start
-      Type: R_MICROMIPS_26_S1
-    - Offset: 0x1C
-      Symbol: loc1
-      Type: R_MICROMIPS_26_S1
-
-Symbols:
-  Global:
-    - Name:    __start
-      Section: .text
-      Value:   0x4
-      Size:    8
-      Other:   [ STO_MIPS_MICROMIPS ]
-  Local:
-    - Name:    loc0
-      Section: .text
-      Value:   0
-      Size:    4
-      Other:   [ STO_MIPS_MICROMIPS ]
-    - Name:    loc1
-      Section: .text
-      Value:   0x14
-      Size:    8
-      Other:   [ STO_MIPS_MICROMIPS ]
+loc:
+  nop

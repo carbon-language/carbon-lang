@@ -1,159 +1,81 @@
+# REQUIRES: mips
+
 # Check calculation of AHL addendums for R_MICROMIPS_HI16 / R_MICROMIPS_LO16
 # relocations for a regular symbol.
 
-# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: llvm-mc -arch=mipsel -filetype=obj -mattr=micromips -o=%t.o %s
 # RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o
-# RUN: llvm-objdump -s -t %t.exe | FileCheck %s
+# RUN: llvm-objdump -d -mattr=micromips %t.exe | FileCheck %s
 
-# CHECK:      Contents of section .text:
-# CHECK-NEXT:  400110 a8414000 083d5201 a8414100 083d5081
-# CHECK-NEXT:  400120 a8414100 083dd181 a8414200 083d5181
-# CHECK-NEXT:  400130 a8414040 083d5101 a8414080 083d5101
-# CHECK-NEXT:  400140 a841c180 083dd181 00000000 00000000
-# CHECK-NEXT:  400150 a8414000 a8414000 a8414100 a8414200
-# CHECK-NEXT:  400160 a8414040 a8414080 a841c180 083d9181
+# CHECK:      Disassembly of section .text:
+# CHECK-NEXT: T0:
+# CHECK-NEXT:   400180:       a8 41 40 00     lui     $8, 64
+# CHECK-NEXT:   400184:       08 31 c1 01     addiu   $8, $8, 449
+# CHECK-NEXT:   400188:       a8 41 41 00     lui     $8, 65
+# CHECK-NEXT:   40018c:       08 31 bf 81     addiu   $8, $8, -32321
+# CHECK-NEXT:   400190:       a8 41 41 00     lui     $8, 65
+# CHECK-NEXT:   400194:       08 31 40 82     addiu   $8, $8, -32192
+# CHECK-NEXT:   400198:       a8 41 42 00     lui     $8, 66
+# CHECK-NEXT:   40019c:       08 31 c0 81     addiu   $8, $8, -32320
+#
+# CHECK:      T1:
+# CHECK-NEXT:   4001a0:       a8 41 40 40     lui     $8, 16448
+# CHECK-NEXT:   4001a4:       08 31 c0 01     addiu   $8, $8, 448
+# CHECK-NEXT:   4001a8:       a8 41 40 80     lui     $8, 32832
+# CHECK-NEXT:   4001ac:       08 31 c0 01     addiu   $8, $8, 448
+# CHECK-NEXT:   4001b0:       a8 41 c1 80     lui     $8, 32961
+# CHECK-NEXT:   4001b4:       08 31 40 82     addiu   $8, $8, -32192
+# CHECK-NEXT:   4001b8:       00 00 00 00     nop
+# CHECK-NEXT:   4001bc:       00 00 00 00     nop
+#
+# CHECK:      T2:
+# CHECK-NEXT:   4001c0:       00 00 00 00     nop
+# CHECK-NEXT:   4001c4:       a8 41 40 00     lui     $8, 64
+# CHECK-NEXT:   4001c8:       a8 41 40 00     lui     $8, 64
+# CHECK-NEXT:   4001cc:       a8 41 41 00     lui     $8, 65
+# CHECK-NEXT:   4001d0:       a8 41 42 00     lui     $8, 66
+# CHECK-NEXT:   4001d4:       a8 41 40 40     lui     $8, 16448
+# CHECK-NEXT:   4001d8:       a8 41 40 80     lui     $8, 32832
+# CHECK-NEXT:   4001dc:       a8 41 c1 80     lui     $8, 32961
+# CHECK-NEXT:   4001e0:       08 31 00 82     addiu   $8, $8, -32256
 
-# CHECK: SYMBOL TABLE:
-# CHECK: 00400110 g F .text 00000020 T0
-# CHECK: 00400130 g F .text 00000018 T1
-# CHECK: 00400150 g F .text 00000020 T2
+  .section  .text.1,"ax",@progbits
+  .align 4
+  .globl  T0
+T0:
+  lui     $8, %hi(T2+1)
+  addiu   $8, $8, %lo(T2+1)
+  lui     $8, %hi(T2+0x7fff)
+  addiu   $8, $8, %lo(T2+0x7fff)
+  lui     $8, %hi(T2+0x8080)
+  addiu   $8, $8, %lo(T2+0x8080)
+  lui     $8, %hi(T2+0x18000)
+  addiu   $8, $8, %lo(T2+0x18000)
+  .size   T0, .-T0
 
-FileHeader:
-  Class:   ELFCLASS32
-  Data:    ELFDATA2LSB
-  Type:    ET_REL
-  Machine: EM_MIPS
-  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2, EF_MIPS_MICROMIPS]
+  .section  .text.2,"ax",@progbits
+  .align 4
+  .globl  T1
+T1:
+  lui     $8, %hi(T2+0x40000000)
+  addiu   $8, $8, %lo(T2+0x40000000)
+  lui     $8, %hi(T2+0x80000000)
+  addiu   $8, $8, %lo(T2+0x80000000)
+  lui     $8, %hi(T2+0x80808080)
+  addiu   $8, $8, %lo(T2+0x80808080)
+  .size   T1, .-T1
 
-Sections:
-- Name:         .text.1
-  Type:         SHT_PROGBITS
-  Content:      "A8410000083D0100A8410000083DFF7FA8410100083D8080A8410200083D0080"
-#                ^ %hi(T2+1)     ^ %hi(T2+0x7fff)        ^ %lo(T2+0x8080)
-#                        ^ %lo(T2+1)     ^ %lo(T2+0x7fff)        ^ %hi(T2+0x18000)
-#                                                ^ %hi(T2+0x8080)        ^ %lo(T2+0x18000)
-  AddressAlign: 16
-  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
-
-- Name:         .rel.text.1
-  Type:         SHT_REL
-  Info:         .text.1
-  AddressAlign: 4
-  Relocations:
-    - Offset: 0x0
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x4
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-    - Offset: 0x8
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0xC
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-    - Offset: 0x10
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x14
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-    - Offset: 0x18
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x1C
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-
-- Name:         .text.2
-  Type:         SHT_PROGBITS
-  Content:      "A8410040083D0000A8410080083D0000A8418180083D8080"
-#                ^ %hi(T2+0x40000000)    ^ %lo(T2+0x80000000)
-#                        ^ %lo(T2+0x40000000)    ^ %hi(T2+0x80808080)
-#                                ^ %hi(T2+0x80000000)    ^ %lo(T2+0x80808080)
-  AddressAlign: 16
-  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
-
-- Name:         .rel.text.2
-  Type:         SHT_REL
-  Info:         .text.2
-  AddressAlign: 4
-  Relocations:
-    - Offset: 0x0
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x4
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-    - Offset: 0x8
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0xC
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-    - Offset: 0x10
-      Symbol: T2
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x14
-      Symbol: T2
-      Type:   R_MICROMIPS_LO16
-
-- Name:         .text.3
-  Type:         SHT_PROGBITS
-  Content:      "A8410000A8410000A8410100A8410200A8410040A8410080A8418180083D8080"
-#                ^ %hi(T0+0x1)   ^ %hi(T0+0x8080)        ^ %hi(T0+0x80000000)
-#                        ^ %hi(T0+0x7fff)        ^ %hi(T0+0x40000000)    ^ %lo(T0+0x80808080)
-#                                        ^ %hi(T0+0x18000)       ^ %hi(T0+0x80808080)
-  AddressAlign: 16
-  Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
-
-- Name:         .rel.text.3
-  Type:         SHT_REL
-  Info:         .text.3
-  AddressAlign: 4
-  Relocations:
-    - Offset: 0x0
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x4
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x8
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0xC
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x10
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x14
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x18
-      Symbol: T0
-      Type:   R_MICROMIPS_HI16
-    - Offset: 0x1C
-      Symbol: T0
-      Type:   R_MICROMIPS_LO16
-
-Symbols:
-  Global:
-    - Name:    T0
-      Section: .text.1
-      Type:    STT_FUNC
-      Value:   0
-      Size:    32
-      Other:   [STO_MIPS_MICROMIPS]
-    - Name:    T1
-      Section: .text.2
-      Type:    STT_FUNC
-      Value:   0
-      Size:    24
-      Other:   [STO_MIPS_MICROMIPS]
-    - Name:    T2
-      Section: .text.3
-      Type:    STT_FUNC
-      Value:   0
-      Size:    32
-      Other:   [STO_MIPS_MICROMIPS]
+  .section  .text.3,"ax",@progbits
+  .align 4
+  .globl  T2
+T2:
+  nop
+  lui     $8, %hi(T0+0x1)
+  lui     $8, %hi(T0+0x7fff)
+  lui     $8, %hi(T0+0x8080)
+  lui     $8, %hi(T0+0x18000)
+  lui     $8, %hi(T0+0x40000000)
+  lui     $8, %hi(T0+0x80000000)
+  lui     $8, %hi(T0+0x80808080)
+  addiu   $8, $8, %lo(T0+0x80808080)
+  .size   T2, .-T2

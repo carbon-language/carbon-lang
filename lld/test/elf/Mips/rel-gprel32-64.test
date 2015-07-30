@@ -10,10 +10,10 @@
 # REL-EXE-NEXT: ]
 
 # CHECK:      Contents of section .text:
-# CHECK-NEXT:  1200001a0 c871ffff ffffffff c871ffff c871ffff
-# CHECK-NEXT:  1200001b0 c871ffff ffffffff 00000000 00000000
+# CHECK-NEXT:  1200001d0 f871ffff ffffffff f871ffff f871ffff
+# CHECK-NEXT:  1200001e0 f871ffff ffffffff 00000000 00000000
 
-# SYM: 00000001200001b8 t LT1
+# SYM: 00000001200001e8 t LT1
 # SYM: 0000000120001000 N _GLOBAL_OFFSET_TABLE_
 
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
