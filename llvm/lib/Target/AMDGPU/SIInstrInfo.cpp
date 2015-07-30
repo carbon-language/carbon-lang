@@ -1045,18 +1045,6 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
   return false;
 }
 
-bool
-SIInstrInfo::isTriviallyReMaterializable(const MachineInstr *MI,
-                                         AliasAnalysis *AA) const {
-  switch(MI->getOpcode()) {
-  default: return AMDGPUInstrInfo::isTriviallyReMaterializable(MI, AA);
-  case AMDGPU::S_MOV_B32:
-  case AMDGPU::S_MOV_B64:
-  case AMDGPU::V_MOV_B32_e32:
-    return MI->getOperand(1).isImm();
-  }
-}
-
 static bool offsetsDoNotOverlap(int WidthA, int OffsetA,
                                 int WidthB, int OffsetB) {
   int LowOffset = OffsetA < OffsetB ? OffsetA : OffsetB;

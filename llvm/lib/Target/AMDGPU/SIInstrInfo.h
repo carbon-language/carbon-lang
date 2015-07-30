@@ -125,9 +125,6 @@ public:
                              unsigned &SrcOpIdx1,
                              unsigned &SrcOpIdx2) const override;
 
-  bool isTriviallyReMaterializable(const MachineInstr *MI,
-                                   AliasAnalysis *AA = nullptr) const;
-
   bool areMemAccessesTriviallyDisjoint(
     MachineInstr *MIa, MachineInstr *MIb,
     AliasAnalysis *AA = nullptr) const override;
