@@ -842,10 +842,17 @@ private:
   /// group to ensure the SCoP is executed in an alias free environment.
   MinMaxVectorPairVectorTy MinMaxAliasGroups;
 
+  /// @brief Scop constructor; used by static createFromTempScop
+  Scop(Region &R, ScalarEvolution &SE, isl_ctx *ctx, unsigned MaxLoopDepth);
+
+  /// @brief Initialize this ScopInfo using a TempScop object.
+  void initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD);
+
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
-  Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE, ScopDetection &SD,
-       isl_ctx *ctx);
+  static Scop *createFromTempScop(TempScop &TempScop, LoopInfo &LI,
+                                  ScalarEvolution &SE, ScopDetection &SD,
+                                  isl_ctx *ctx);
 
   /// @brief Check if a basic block is trivial.
   ///

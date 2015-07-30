@@ -1664,19 +1664,20 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI,
   return MaxLD - MinLD + 1;
 }
 
-Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
-           ScopDetection &SD, isl_ctx *Context)
-    : SE(&ScalarEvolution), R(tempScop.getMaxRegion()), IsOptimized(false),
-      MaxLoopDepth(getMaxLoopDepthInRegion(tempScop.getMaxRegion(), LI, SD)) {
-  IslCtx = Context;
+Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, isl_ctx *Context,
+           unsigned MaxLoopDepth)
+    : SE(&ScalarEvolution), R(R), IsOptimized(false),
+      MaxLoopDepth(MaxLoopDepth), IslCtx(Context) {}
 
+void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI,
+                            ScopDetection &SD) {
   buildContext();
 
   SmallVector<Loop *, 8> NestLoops;
 
   // Build the iteration domain, access functions and schedule functions
   // traversing the region tree.
-  Schedule = buildScop(tempScop, getRegion(), NestLoops, LI, SD);
+  Schedule = buildScop(TempScop, getRegion(), NestLoops, LI, SD);
   if (!Schedule)
     Schedule = isl_schedule_empty(getParamSpace());
 
@@ -1685,6 +1686,16 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   simplifyAssumedContext();
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
+}
+
+Scop *Scop::createFromTempScop(TempScop &TempScop, LoopInfo &LI,
+                               ScalarEvolution &SE, ScopDetection &SD,
+                               isl_ctx *ctx) {
+  auto &R = TempScop.getMaxRegion();
+  auto MaxLoopDepth = getMaxLoopDepthInRegion(R, LI, SD);
+  auto S = new Scop(R, SE, ctx, MaxLoopDepth);
+  S->initFromTempScop(TempScop, LI, SD);
+  return S;
 }
 
 Scop::~Scop() {
@@ -2165,7 +2176,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  scop = new Scop(*tempScop, LI, SE, SD, ctx);
+  scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, ctx);
 
   DEBUG(scop->print(dbgs()));
 

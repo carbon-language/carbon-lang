@@ -71,8 +71,7 @@ static cl::opt<bool> NoEarlyExit(
 namespace polly {
 class IslAst {
 public:
-  IslAst(Scop *Scop, const Dependences &D);
-
+  static IslAst *create(Scop *Scop, const Dependences &D);
   ~IslAst();
 
   /// Print a source code representation of the program.
@@ -87,6 +86,9 @@ private:
   Scop *S;
   isl_ast_node *Root;
   isl_ast_expr *RunCondition;
+
+  IslAst(Scop *Scop);
+  void init(const Dependences &D);
 
   void buildRunCondition(__isl_keep isl_ast_build *Build);
 };
@@ -372,14 +374,14 @@ static bool benefitsFromPolly(Scop *Scop, bool PerformParallelTest) {
   return true;
 }
 
-IslAst::IslAst(Scop *Scop, const Dependences &D)
-    : S(Scop), Root(nullptr), RunCondition(nullptr) {
+IslAst::IslAst(Scop *Scop) : S(Scop), Root(nullptr), RunCondition(nullptr) {}
 
+void IslAst::init(const Dependences &D) {
   bool PerformParallelTest = PollyParallel || DetectParallel ||
                              PollyVectorizerChoice != VECTORIZER_NONE;
 
   // Skip AST and code generation if there was no benefit achieved.
-  if (!benefitsFromPolly(Scop, PerformParallelTest))
+  if (!benefitsFromPolly(S, PerformParallelTest))
     return;
 
   isl_ctx *Ctx = S->getIslCtx();
@@ -411,6 +413,12 @@ IslAst::IslAst(Scop *Scop, const Dependences &D)
   isl_ast_build_free(Build);
 }
 
+IslAst *IslAst::create(Scop *Scop, const Dependences &D) {
+  auto Ast = new IslAst(Scop);
+  Ast->init(D);
+  return Ast;
+}
+
 IslAst::~IslAst() {
   isl_ast_node_free(Root);
   isl_ast_expr_free(RunCondition);
@@ -436,7 +444,7 @@ bool IslAstInfo::runOnScop(Scop &Scop) {
 
   const Dependences &D = getAnalysis<DependenceInfo>().getDependences();
 
-  Ast = new IslAst(&Scop, D);
+  Ast = IslAst::create(&Scop, D);
 
   DEBUG(printScop(dbgs(), Scop));
   return false;
