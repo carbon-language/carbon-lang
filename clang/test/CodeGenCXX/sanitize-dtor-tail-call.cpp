@@ -15,5 +15,5 @@ Simple s;
 // Simple internal member is poisoned by compiler-generated dtor
 // CHECK-LABEL: define {{.*}}SimpleD2Ev
 // CHECK: {{^ *}}call void @__sanitizer_dtor_callback
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK-NOT: tail call void @__sanitizer_dtor_callback
 // CHECK: ret void
