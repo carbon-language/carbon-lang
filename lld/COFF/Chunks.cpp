@@ -10,8 +10,6 @@
 #include "Chunks.h"
 #include "InputFiles.h"
 #include "Writer.h"
-#include "llvm/ADT/Hashing.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
@@ -209,58 +207,6 @@ void SectionChunk::printDiscardedMessage() const {
 
 StringRef SectionChunk::getDebugName() {
   return Sym->getName();
-}
-
-uint64_t SectionChunk::getHash() const {
-  ArrayRef<uint8_t> A = getContents();
-  return hash_combine(getPermissions(),
-                      llvm::hash_value(SectionName),
-                      NumRelocs,
-                      uint32_t(Header->SizeOfRawData),
-                      std::distance(Relocs.end(), Relocs.begin()),
-                      hash_combine_range(A.data(), A.data() + A.size()));
-}
-
-// Returns true if this and a given chunk are identical COMDAT sections.
-bool SectionChunk::equals(const SectionChunk *X) const {
-  // Compare headers
-  if (getPermissions() != X->getPermissions())
-    return false;
-  if (SectionName != X->SectionName)
-    return false;
-  if (Header->SizeOfRawData != X->Header->SizeOfRawData)
-    return false;
-  if (NumRelocs != X->NumRelocs)
-    return false;
-
-  // Compare data
-  if (getContents() != X->getContents())
-    return false;
-
-  // Compare associative sections
-  if (AssocChildren.size() != X->AssocChildren.size())
-    return false;
-  for (size_t I = 0, E = AssocChildren.size(); I != E; ++I)
-    if (AssocChildren[I]->Ptr != X->AssocChildren[I]->Ptr)
-      return false;
-
-  // Compare relocations
-  auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
-    if (R1.Type != R2.Type)
-      return false;
-    if (R1.VirtualAddress != R2.VirtualAddress)
-      return false;
-    SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex)->repl();
-    SymbolBody *B2 = X->File->getSymbolBody(R2.SymbolTableIndex)->repl();
-    if (B1 == B2)
-      return true;
-    auto *D1 = dyn_cast<DefinedRegular>(B1);
-    auto *D2 = dyn_cast<DefinedRegular>(B2);
-    return (D1 && D2 &&
-            D1->getValue() == D2->getValue() &&
-            D1->getChunk() == D2->getChunk());
-  };
-  return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
 }
 
 ArrayRef<uint8_t> SectionChunk::getContents() const {
