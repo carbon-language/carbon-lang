@@ -13,6 +13,7 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @expectedFlakeyLinux
     def test_lldbmi_break_insert_function_pending(self):
         """Test that 'lldb-mi --interpreter' works for pending function breakpoints."""
 
