@@ -15,6 +15,7 @@ set(Tests
   FourIndependentBranchesTest
   FullCoverageSetTest
   InfiniteTest
+  MemcmpTest
   NullDerefTest
   SimpleCmpTest
   SimpleTest

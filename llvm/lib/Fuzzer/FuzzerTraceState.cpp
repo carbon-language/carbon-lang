@@ -394,6 +394,18 @@ void dfsan_weak_hook_memcmp(void *caller_pc, const void *s1, const void *s2,
   TS->DFSanCmpCallback(PC, n, fuzzer::ICMP_EQ, S1, S2, L1, L2);
 }
 
+void __sanitizer_weak_hook_memcmp(void *caller_pc, const void *s1,
+                                  const void *s2, size_t n) {
+  if (!TS) return;
+  uintptr_t PC = reinterpret_cast<uintptr_t>(caller_pc);
+  uint64_t S1 = 0, S2 = 0;
+  // Simplification: handle only first 8 bytes.
+  memcpy(&S1, s1, std::min(n, sizeof(S1)));
+  memcpy(&S2, s2, std::min(n, sizeof(S2)));
+  TS->TraceCmpCallback(PC, n, fuzzer::ICMP_EQ, S1, S2);
+  // fuzzer::Printf("ZZZ %p %p %zd\n", s1, s2, n);
+}
+
 void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
                                uint64_t Arg2) {
   if (!TS) return;
