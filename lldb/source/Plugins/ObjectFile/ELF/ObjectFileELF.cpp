@@ -905,8 +905,17 @@ ObjectFileELF::GetAddressByteSize() const
 AddressClass
 ObjectFileELF::GetAddressClass (addr_t file_addr)
 {
-    auto res = ObjectFile::GetAddressClass (file_addr);
+    Symtab* symtab = GetSymtab();
+    if (!symtab)
+        return eAddressClassUnknown;
 
+    // The address class is determined based on the symtab. Ask it from the object file what
+    // contains the symtab information.
+    ObjectFile* symtab_objfile = symtab->GetObjectFile();
+    if (symtab_objfile != nullptr && symtab_objfile != this)
+        return symtab_objfile->GetAddressClass(file_addr);
+
+    auto res = ObjectFile::GetAddressClass (file_addr);
     if (res != eAddressClassCode)
         return res;
 
@@ -1976,7 +1985,6 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                             m_address_class_map[symbol.st_value] = eAddressClassData;
                         }
                     }
-
                     continue;
                 }
             }
@@ -2031,9 +2039,13 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             }
         }
 
-        // If the symbol section we've found has no data (SHT_NOBITS), then check the module section
-        // list. This can happen if we're parsing the debug file and it has no .text section, for example.
-        if (symbol_section_sp && (symbol_section_sp->GetFileSize() == 0))
+        // symbol_value_offset may contain 0 for ARM symbols or -1 for
+        // THUMB symbols. See above for more details.
+        uint64_t symbol_value = symbol.st_value + symbol_value_offset;
+        if (symbol_section_sp && CalculateType() != ObjectFile::Type::eTypeObjectFile)
+            symbol_value -= symbol_section_sp->GetFileAddress();
+
+        if (symbol_section_sp)
         {
             ModuleSP module_sp(GetModule());
             if (module_sp)
@@ -2051,11 +2063,6 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             }
         }
 
-        // symbol_value_offset may contain 0 for ARM symbols or -1 for
-        // THUMB symbols. See above for more details.
-        uint64_t symbol_value = symbol.st_value + symbol_value_offset;
-        if (symbol_section_sp && CalculateType() != ObjectFile::Type::eTypeObjectFile)
-            symbol_value -= symbol_section_sp->GetFileAddress();
         bool is_global = symbol.getBinding() == STB_GLOBAL;
         uint32_t flags = symbol.st_other << 8 | symbol.st_info | additional_flags;
         bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
@@ -2563,8 +2570,6 @@ ObjectFileELF::GetSymtab()
         uint64_t symbol_id = 0;
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
 
-        m_symtab_ap.reset(new Symtab(this));
-
         // Sharable objects and dynamic executables usually have 2 distinct symbol
         // tables, one named ".symtab", and the other ".dynsym". The dynsym is a smaller
         // version of the symtab that only contains global symbols. The information found
@@ -2578,7 +2583,10 @@ ObjectFileELF::GetSymtab()
             symtab = section_list->FindSectionByType (eSectionTypeELFDynamicSymbols, true).get();
         }
         if (symtab)
+        {
+            m_symtab_ap.reset(new Symtab(symtab->GetObjectFile()));
             symbol_id += ParseSymbolTable (m_symtab_ap.get(), symbol_id, symtab);
+        }
 
         // DT_JMPREL
         //      If present, this entry's d_ptr member holds the address of relocation
@@ -2598,10 +2606,19 @@ ObjectFileELF::GetSymtab()
                 user_id_t reloc_id = reloc_section->GetID();
                 const ELFSectionHeaderInfo *reloc_header = GetSectionHeaderByIndex(reloc_id);
                 assert(reloc_header);
+                
+                if (m_symtab_ap == nullptr)
+                    m_symtab_ap.reset(new Symtab(reloc_section->GetObjectFile()));
 
                 ParseTrampolineSymbols (m_symtab_ap.get(), symbol_id, reloc_header, reloc_id);
             }
         }
+        
+        // If we still don't have any symtab then create an empty instance to avoid do the section
+        // lookup next time.
+        if (m_symtab_ap == nullptr)
+            m_symtab_ap.reset(new Symtab(this));
+            
         m_symtab_ap->CalculateSymbolSizes();
     }
 

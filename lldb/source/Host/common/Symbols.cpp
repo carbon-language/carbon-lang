@@ -175,7 +175,7 @@ LocateExecutableSymbolFileDsym (const ModuleSpec &module_spec)
                         "LocateExecutableSymbolFileDsym (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
                         arch ? arch->GetArchitectureName() : "<NULL>",
-                        (void*)uuid);
+                        (const void*)uuid);
 
     FileSpec symbol_fspec;
     // First try and find the dSYM in the same directory as the executable or in
@@ -198,7 +198,7 @@ Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
                         "LocateExecutableObjectFile (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
                         arch ? arch->GetArchitectureName() : "<NULL>",
-                        (void*)uuid);
+                        (const void*)uuid);
 
     FileSpec objfile_fspec;
     ModuleSpecList module_specs;
@@ -219,7 +219,11 @@ Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
 FileSpec
 Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
 {
-    const char *symbol_filename = module_spec.GetSymbolFileSpec().GetFilename().AsCString();
+    FileSpec symbol_file_spec = module_spec.GetSymbolFileSpec();
+    if (symbol_file_spec.IsAbsolute() && symbol_file_spec.Exists())
+        return symbol_file_spec;
+
+    const char *symbol_filename = symbol_file_spec.GetFilename().AsCString();
     if (symbol_filename && symbol_filename[0])
     {
         FileSpecList debug_file_search_paths (Target::GetDefaultDebugFileSearchPaths());

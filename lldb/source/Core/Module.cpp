@@ -1500,6 +1500,9 @@ Module::SetSymbolFileFileSpec (const FileSpec &file)
                     // we don't have to do anything.
                     return;
                 }
+                
+                // Cleare the current symtab as we are going to replace it with a new one
+                obj_file->ClearSymtab();
 
                 // The symbol file might be a directory bundle ("/tmp/a.out.dSYM") instead
                 // of a full path to the symbol file within the bundle

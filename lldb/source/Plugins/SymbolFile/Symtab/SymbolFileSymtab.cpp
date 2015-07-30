@@ -115,6 +115,7 @@ SymbolFileSymtab::CalculateAbilities ()
             if (symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, m_code_indexes))
             {
                 symtab->SortSymbolIndexesByValue(m_code_indexes, true);
+                abilities |= Functions;
             }
 
             if (symtab->AppendSymbolIndexesWithType(eSymbolTypeData, m_data_indexes))
