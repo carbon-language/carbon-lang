@@ -4957,7 +4957,7 @@ static void MlockIsUnsupported() {
   static atomic_uint8_t printed;
   if (atomic_exchange(&printed, 1, memory_order_relaxed))
     return;
-  VPrintf(1, "INFO: %s ignores mlock/mlockall/munlock/munlockall\n",
+  VPrintf(1, "%s ignores mlock/mlockall/munlock/munlockall\n",
           SanitizerToolName);
 }
 
