@@ -1592,16 +1592,15 @@ void ASTReader::ReadDefinedMacros() {
   // Note that we are loading defined macros.
   Deserializing Macros(this);
 
-  for (ModuleReverseIterator I = ModuleMgr.rbegin(),
-      E = ModuleMgr.rend(); I != E; ++I) {
-    BitstreamCursor &MacroCursor = (*I)->MacroCursor;
+  for (auto &I : llvm::reverse(ModuleMgr)) {
+    BitstreamCursor &MacroCursor = I->MacroCursor;
 
     // If there was no preprocessor block, skip this file.
     if (!MacroCursor.getBitStreamReader())
       continue;
 
     BitstreamCursor Cursor = MacroCursor;
-    Cursor.JumpToBit((*I)->MacroStartOffset);
+    Cursor.JumpToBit(I->MacroStartOffset);
 
     RecordData Record;
     while (true) {
@@ -1623,7 +1622,7 @@ void ASTReader::ReadDefinedMacros() {
           
         case PP_MACRO_OBJECT_LIKE:
         case PP_MACRO_FUNCTION_LIKE:
-          getLocalIdentifier(**I, Record[0]);
+          getLocalIdentifier(*I, Record[0]);
           break;
           
         case PP_TOKEN:

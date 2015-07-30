@@ -994,9 +994,8 @@ std::unique_ptr<CFG> CFGBuilder::buildCFG(const Decl *D, Stmt *Statement) {
 
   // For C++ constructor add initializers to CFG.
   if (const CXXConstructorDecl *CD = dyn_cast_or_null<CXXConstructorDecl>(D)) {
-    for (CXXConstructorDecl::init_const_reverse_iterator I = CD->init_rbegin(),
-        E = CD->init_rend(); I != E; ++I) {
-      B = addInitializer(*I);
+    for (auto *I : llvm::reverse(CD->inits())) {
+      B = addInitializer(I);
       if (badCFG)
         return nullptr;
     }

@@ -505,11 +505,10 @@ void TransformActionsImpl::commitClearDiagnostic(ArrayRef<unsigned> IDs,
 void TransformActionsImpl::addInsertion(SourceLocation loc, StringRef text) {
   SourceManager &SM = Ctx.getSourceManager();
   loc = SM.getExpansionLoc(loc);
-  for (std::list<CharRange>::reverse_iterator
-         I = Removals.rbegin(), E = Removals.rend(); I != E; ++I) {
-    if (!SM.isBeforeInTranslationUnit(loc, I->End))
+  for (const CharRange &I : llvm::reverse(Removals)) {
+    if (!SM.isBeforeInTranslationUnit(loc, I.End))
       break;
-    if (I->Begin.isBeforeInTranslationUnitThan(loc))
+    if (I.Begin.isBeforeInTranslationUnitThan(loc))
       return;
   }
 

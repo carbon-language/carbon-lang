@@ -8570,9 +8570,8 @@ namespace {
 
       // Convert FieldDecls to their index number.
       llvm::SmallVector<unsigned, 4> UsedFieldIndex;
-      for (auto I = Fields.rbegin(), E = Fields.rend(); I != E; ++I) {
-        UsedFieldIndex.push_back((*I)->getFieldIndex());
-      }
+      for (const FieldDecl *I : llvm::reverse(Fields))
+        UsedFieldIndex.push_back(I->getFieldIndex());
 
       // See if a warning is needed by checking the first difference in index
       // numbers.  If field being used has index less than the field being

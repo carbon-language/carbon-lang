@@ -496,12 +496,12 @@ struct CounterCoverageMappingBuilder
 
     llvm::SmallSet<SourceLocation, 8> StartLocs;
     Optional<Counter> ParentCounter;
-    for (auto I = RegionStack.rbegin(), E = RegionStack.rend(); I != E; ++I) {
-      if (!I->hasStartLoc())
+    for (SourceMappingRegion &I : llvm::reverse(RegionStack)) {
+      if (!I.hasStartLoc())
         continue;
-      SourceLocation Loc = I->getStartLoc();
+      SourceLocation Loc = I.getStartLoc();
       if (!isNestedIn(Loc, ParentFile)) {
-        ParentCounter = I->getCounter();
+        ParentCounter = I.getCounter();
         break;
       }
 
@@ -510,11 +510,11 @@ struct CounterCoverageMappingBuilder
         // correct count. We avoid creating redundant regions by stopping once
         // we've seen this region.
         if (StartLocs.insert(Loc).second)
-          SourceRegions.emplace_back(I->getCounter(), Loc,
+          SourceRegions.emplace_back(I.getCounter(), Loc,
                                      getEndOfFileOrMacro(Loc));
         Loc = getIncludeOrExpansionLoc(Loc);
       }
-      I->setStartLoc(getPreciseTokenLocEnd(Loc));
+      I.setStartLoc(getPreciseTokenLocEnd(Loc));
     }
 
     if (ParentCounter) {

@@ -2174,10 +2174,8 @@ void EnqueueVisitor::VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
   AddTypeLoc(E->getTypeSourceInfo());
 }
 void EnqueueVisitor::VisitCompoundStmt(const CompoundStmt *S) {
-  for (CompoundStmt::const_reverse_body_iterator I = S->body_rbegin(),
-        E = S->body_rend(); I != E; ++I) {
-    AddStmt(*I);
-  }
+  for (auto &I : llvm::reverse(S->body()))
+    AddStmt(I);
 }
 void EnqueueVisitor::
 VisitMSDependentExistsStmt(const MSDependentExistsStmt *S) {

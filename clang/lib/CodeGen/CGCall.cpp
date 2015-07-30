@@ -2614,10 +2614,9 @@ static void deactivateArgCleanupsBeforeCall(CodeGenFunction &CGF,
   ArrayRef<CallArgList::CallArgCleanup> Cleanups =
     CallArgs.getCleanupsToDeactivate();
   // Iterate in reverse to increase the likelihood of popping the cleanup.
-  for (ArrayRef<CallArgList::CallArgCleanup>::reverse_iterator
-         I = Cleanups.rbegin(), E = Cleanups.rend(); I != E; ++I) {
-    CGF.DeactivateCleanupBlock(I->Cleanup, I->IsActiveIP);
-    I->IsActiveIP->eraseFromParent();
+  for (const auto &I : llvm::reverse(Cleanups)) {
+    CGF.DeactivateCleanupBlock(I.Cleanup, I.IsActiveIP);
+    I.IsActiveIP->eraseFromParent();
   }
 }
 

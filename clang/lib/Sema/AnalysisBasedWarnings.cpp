@@ -1098,8 +1098,7 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
 
   FM.fillReachableBlocks(Cfg);
 
-  for (CFG::reverse_iterator I = Cfg->rbegin(), E = Cfg->rend(); I != E; ++I) {
-    const CFGBlock *B = *I;
+  for (const CFGBlock *B : llvm::reverse(*Cfg)) {
     const Stmt *Label = B->getLabel();
 
     if (!Label || !isa<SwitchCase>(Label))
