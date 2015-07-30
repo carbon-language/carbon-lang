@@ -39,6 +39,16 @@
 
 #include <stdarg.h>
 
+#if SANITIZER_INTERCEPTOR_HOOKS
+#define CALL_WEAK_INTERCEPTOR_HOOK4(f, ...)                                    \
+  do {                                                                         \
+    if (f)                                                                     \
+      f(__VA_ARGS__);                                                          \
+  } while (false);
+#else
+#define CALL_WEAK_INTERCEPTOR_HOOK4(f, a1, a2, a3, a4)
+#endif  // SANITIZER_INTERCEPTOR_HOOKS
+
 #if SANITIZER_WINDOWS && !defined(va_copy)
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
@@ -363,11 +373,20 @@ INTERCEPTOR(char *, strpbrk, const char *s1, const char *s2) {
 #endif
 
 #if SANITIZER_INTERCEPT_MEMCMP
+
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+void __sanitizer_weak_hook_memcmp(uptr called_pc, const void *s1,
+                                  const void *s2, uptr n);
+}  // extern "C"
+
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, memcmp, a1, a2, size);
   if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
     return internal_memcmp(a1, a2, size);
+  CALL_WEAK_INTERCEPTOR_HOOK4(__sanitizer_weak_hook_memcmp, GET_CALLER_PC(), a1,
+                              a2, size);
   if (common_flags()->intercept_memcmp) {
     if (common_flags()->strict_memcmp) {
       // Check the entire regions even if the first bytes of the buffers are

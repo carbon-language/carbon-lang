@@ -111,6 +111,15 @@ extern "C" {
   // Sets the callback to be called right before death on error.
   // Passing 0 will unset the callback.
   void __sanitizer_set_death_callback(void (*callback)(void));
+
+  // Interceptor hooks.
+  // Whenever a libc function interceptor is called it checks if the
+  // corresponding weak hook is defined, and it so -- calls it.
+  // The primary use case is data-flow-guided fuzzing, where the fuzzer needs
+  // to know what is being passed to libc functions, e.g. memcmp.
+  // FIXME: implement more hooks.
+  void __sanitizer_weak_hook_memcmp(void *called_pc, const void *s1,
+                                    const void *s2, size_t n);
 #ifdef __cplusplus
 }  // extern "C"
 #endif
