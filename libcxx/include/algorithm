@@ -3037,7 +3037,7 @@ uniform_int_distribution<_IntType>::operator()(_URNG& __g, const param_type& __p
     if (_Rp == 0)
         return static_cast<result_type>(_Eng(__g, _Dt)());
     size_t __w = _Dt - __clz(_Rp) - 1;
-    if ((_Rp & (_UIntType(~0) >> (_Dt - __w))) != 0)
+    if ((_Rp & (std::numeric_limits<_UIntType>::max() >> (_Dt - __w))) != 0)
         ++__w;
     _Eng __e(__g, __w);
     _UIntType __u;
