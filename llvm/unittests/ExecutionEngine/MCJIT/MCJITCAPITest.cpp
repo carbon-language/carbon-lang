@@ -505,6 +505,7 @@ TEST_F(MCJITCAPITest, addGlobalMapping) {
   LLVMPositionBuilderAtEnd(Builder, Entry);
   LLVMValueRef RetVal = LLVMBuildCall(Builder, MappedFn, NULL, 0, "");
   LLVMBuildRet(Builder, RetVal);
+  LLVMDisposeBuilder(Builder);
 
   LLVMVerifyModule(Module, LLVMAbortProcessAction, &Error);
   LLVMDisposeMessage(Error);
