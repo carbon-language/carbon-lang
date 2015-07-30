@@ -354,6 +354,8 @@ TEST(TripleTest, MutateName) {
   EXPECT_EQ(Triple::Darwin, T.getOS());
   EXPECT_EQ("i386-pc-darwin", T.getTriple());
 
+  T.setEnvironmentName("amdopencl");
+  EXPECT_EQ(Triple::AMDOpenCL, T.getEnvironment());
 }
 
 TEST(TripleTest, BitWidthPredicates) {

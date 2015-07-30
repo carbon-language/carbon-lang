@@ -170,7 +170,8 @@ public:
     MSVC,
     Itanium,
     Cygnus,
-    LastEnvironmentType = Cygnus
+    AMDOpenCL,
+    LastEnvironmentType = AMDOpenCL
   };
   enum ObjectFormatType {
     UnknownObjectFormat,
