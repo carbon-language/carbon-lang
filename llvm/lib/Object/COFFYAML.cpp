@@ -211,6 +211,7 @@ void ScalarBitSetTraits<COFF::Characteristics>::bitset(
 
 void ScalarBitSetTraits<COFF::SectionCharacteristics>::bitset(
     IO &IO, COFF::SectionCharacteristics &Value) {
+  BCase(IMAGE_SCN_TYPE_NOLOAD);
   BCase(IMAGE_SCN_TYPE_NO_PAD);
   BCase(IMAGE_SCN_CNT_CODE);
   BCase(IMAGE_SCN_CNT_INITIALIZED_DATA);

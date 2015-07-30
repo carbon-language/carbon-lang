@@ -248,6 +248,7 @@ namespace COFF {
   enum SectionCharacteristics : uint32_t {
     SC_Invalid = 0xffffffff,
 
+    IMAGE_SCN_TYPE_NOLOAD            = 0x00000002,
     IMAGE_SCN_TYPE_NO_PAD            = 0x00000008,
     IMAGE_SCN_CNT_CODE               = 0x00000020,
     IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040,
