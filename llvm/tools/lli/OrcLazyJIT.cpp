@@ -123,6 +123,7 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   EngineBuilder EB;
   EB.setOptLevel(getOptLevel());
   auto TM = std::unique_ptr<TargetMachine>(EB.selectTarget());
+  M->setDataLayout(TM->createDataLayout());
   auto &Context = getGlobalContext();
   auto CallbackMgrBuilder =
     OrcLazyJIT::createCallbackManagerBuilder(Triple(TM->getTargetTriple()));
