@@ -912,6 +912,11 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
   if (RegNo == 0)
     RegNo = MatchRegisterName(Tok.getString().lower());
 
+  // The "flags" register cannot be referenced directly.
+  // Treat it as an identifier instead.
+  if (isParsingInlineAsm() && isParsingIntelSyntax() && RegNo == X86::EFLAGS)
+    RegNo = 0;
+
   if (!is64BitMode()) {
     // FIXME: This should be done using Requires<Not64BitMode> and
     // Requires<In64BitMode> so "eiz" usage in 64-bit instructions can be also
