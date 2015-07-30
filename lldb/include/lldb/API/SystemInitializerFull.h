@@ -33,7 +33,6 @@ class SystemInitializerFull : public SystemInitializerCommon
 
   private:
     void InitializeSWIG();
-    void TerminateSWIG();
 };
 }
 

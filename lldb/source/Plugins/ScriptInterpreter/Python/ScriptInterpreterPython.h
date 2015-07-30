@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef liblldb_ScriptInterpreterPython_h_
-#define liblldb_ScriptInterpreterPython_h_
+#ifndef LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_SCRIPTINTERPRETERPYTHON_H
+#define LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_SCRIPTINTERPRETERPYTHON_H
 
 #ifdef LLDB_DISABLE_PYTHON
 
@@ -17,11 +17,10 @@
 
 #else
 
-#include "lldb/lldb-python.h"
 #include "lldb/lldb-private.h"
+#include "PythonDataObjects.h"
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Host/Terminal.h"
 
 class IOHandlerPythonInterpreter;
@@ -412,6 +411,34 @@ public:
     void
     IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override;
 
+
+    //------------------------------------------------------------------
+    // Static Functions
+    //------------------------------------------------------------------
+    static void
+    Initialize();
+    
+    static void
+    Terminate();
+    
+    static lldb::ScriptInterpreterSP
+    CreateInstance(CommandInterpreter &interpreter);
+    
+    static lldb_private::ConstString
+    GetPluginNameStatic();
+    
+    static const char *
+    GetPluginDescriptionStatic();
+    
+    //------------------------------------------------------------------
+    // PluginInterface protocol
+    //------------------------------------------------------------------
+    virtual lldb_private::ConstString
+    GetPluginName();
+    
+    virtual uint32_t
+    GetPluginVersion();
+
 protected:
 
     bool
@@ -560,4 +587,4 @@ protected:
 
 #endif // #ifdef LLDB_DISABLE_PYTHON
 
-#endif // #ifndef liblldb_ScriptInterpreterPython_h_
+#endif // #ifndef LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_SCRIPTINTERPRETERPYTHON_H

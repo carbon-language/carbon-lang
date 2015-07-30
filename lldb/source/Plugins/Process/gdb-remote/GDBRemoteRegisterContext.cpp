@@ -17,9 +17,6 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
-#ifndef LLDB_DISABLE_PYTHON
-#include "lldb/Interpreter/PythonDataObjects.h"
-#endif
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/Utils.h"

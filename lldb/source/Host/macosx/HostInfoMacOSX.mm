@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
+#if !defined(LLDB_DISABLE_PYTHON)
+#include "Plugins/ScriptInterpreter/Python/lldb-python.h"
+#endif
 
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/macosx/HostInfoMacOSX.h"

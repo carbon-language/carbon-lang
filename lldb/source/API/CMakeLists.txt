@@ -72,6 +72,13 @@ add_lldb_library(liblldb SHARED
   ${LLDB_VERS_GENERATED_FILE}
   )
 
+# This should not be part of LLDBDependencies.cmake, because we don't
+# want every single library taking a dependency on the script interpreters.
+target_link_libraries(liblldb PRIVATE
+  lldbPluginScriptInterpreterNone
+  lldbPluginScriptInterpreterPython
+  )
+
 set_target_properties(liblldb
   PROPERTIES
   VERSION ${LLDB_VERSION}

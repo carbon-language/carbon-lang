@@ -376,6 +376,8 @@ namespace lldb {
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;
 #endif // #ifndef LLDB_DISABLE_PYTHON
+    typedef std::shared_ptr<lldb_private::ScriptInterpreter> ScriptInterpreterSP;
+    typedef std::unique_ptr<lldb_private::ScriptInterpreter> ScriptInterpreterUP;
     typedef std::shared_ptr<lldb_private::Section> SectionSP;
     typedef std::unique_ptr<lldb_private::SectionList> SectionListUP;
     typedef std::weak_ptr<lldb_private::Section> SectionWP;

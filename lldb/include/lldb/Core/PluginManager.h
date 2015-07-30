@@ -296,6 +296,23 @@ public:
     GetProcessPluginDescriptionAtIndex (uint32_t idx);
 
     //------------------------------------------------------------------
+    // ScriptInterpreter
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin(const ConstString &name, const char *description, lldb::ScriptLanguage script_lang,
+                               ScriptInterpreterCreateInstance create_callback);
+
+    static bool
+    UnregisterPlugin(ScriptInterpreterCreateInstance create_callback);
+
+    static ScriptInterpreterCreateInstance
+    GetScriptInterpreterCreateCallbackAtIndex(uint32_t idx);
+
+    static lldb::ScriptInterpreterSP
+    GetScriptInterpreterForLanguage(lldb::ScriptLanguage script_lang,
+                                    CommandInterpreter &interpreter);
+
+    //------------------------------------------------------------------
     // SymbolFile
     //------------------------------------------------------------------
     static bool

@@ -43,8 +43,5 @@ add_lldb_library(lldbInterpreter
   OptionGroupWatchpoint.cpp
   Options.cpp
   Property.cpp
-  PythonDataObjects.cpp
   ScriptInterpreter.cpp
-  ScriptInterpreterNone.cpp
-  ScriptInterpreterPython.cpp
   )

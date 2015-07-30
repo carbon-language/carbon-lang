@@ -13,7 +13,6 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Timer.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
 
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
@@ -141,7 +140,6 @@ SystemInitializerCommon::Initialize()
     ProcessWindowsLog::Initialize();
 #endif
 #ifndef LLDB_DISABLE_PYTHON
-    ScriptInterpreterPython::InitializePrivate();
     OperatingSystemPython::Initialize();
 #endif
 }

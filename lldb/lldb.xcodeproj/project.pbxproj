@@ -426,8 +426,6 @@
 		2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */; };
 		2689008613353E2200698AC0 /* Options.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E8610F1B85900F91463 /* Options.cpp */; };
 		2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */; };
-		2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A2771FC1135A37500E6ADB6 /* ScriptInterpreterNone.cpp */; };
-		2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0C10F1B8DD00F91463 /* ScriptInterpreterPython.cpp */; };
 		2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */; };
 		2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */; };
 		2689009613353E4200698AC0 /* ObjectContainerBSDArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */; };
@@ -644,6 +642,14 @@
 		3F8169311ABB7A6D001DA9DF /* SystemInitializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F81692E1ABB7A6D001DA9DF /* SystemInitializer.cpp */; };
 		3F8169321ABB7A6D001DA9DF /* SystemInitializerCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F81692F1ABB7A6D001DA9DF /* SystemInitializerCommon.cpp */; };
 		3F8169331ABB7A6D001DA9DF /* SystemLifetimeManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F8169301ABB7A6D001DA9DF /* SystemLifetimeManager.cpp */; };
+		3FBA69DF1B6067020008F44A /* ScriptInterpreterNone.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3FBA69DD1B6067020008F44A /* ScriptInterpreterNone.cpp */; };
+		3FBA69E01B6067020008F44A /* ScriptInterpreterNone.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3FBA69DE1B6067020008F44A /* ScriptInterpreterNone.h */; };
+		3FBA69E11B6067120008F44A /* ScriptInterpreterNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FBA69DD1B6067020008F44A /* ScriptInterpreterNone.cpp */; };
+		3FBA69E71B60672A0008F44A /* lldb-python.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3FBA69E21B60672A0008F44A /* lldb-python.h */; };
+		3FBA69E91B60672A0008F44A /* PythonDataObjects.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3FBA69E41B60672A0008F44A /* PythonDataObjects.h */; };
+		3FBA69EB1B60672A0008F44A /* ScriptInterpreterPython.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3FBA69E61B60672A0008F44A /* ScriptInterpreterPython.h */; };
+		3FBA69EC1B6067430008F44A /* PythonDataObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FBA69E31B60672A0008F44A /* PythonDataObjects.cpp */; };
+		3FBA69ED1B60674B0008F44A /* ScriptInterpreterPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FBA69E51B60672A0008F44A /* ScriptInterpreterPython.cpp */; };
 		3FDFDDBD199C3A06009756A7 /* FileAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBC199C3A06009756A7 /* FileAction.cpp */; };
 		3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBE199D345E009756A7 /* FileCache.cpp */; };
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
@@ -772,7 +778,6 @@
 		94D6A0AB16CEB55F00833B6E /* NSDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */; };
 		94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A916CEB55F00833B6E /* NSSet.cpp */; };
 		94E829CA152D33C1006F96A3 /* lldb-server in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-server */; };
-		94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */; };
 		94EA27CE17DE91750070F505 /* LibCxxUnorderedMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */; };
 		94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94F48F241A01C687005C0EC6 /* StringPrinter.cpp */; };
 		94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */; };
@@ -1064,8 +1069,13 @@
 			dstPath = "$(DEVELOPER_DIR)/usr/share/man/man1/";
 			dstSubfolderSpec = 0;
 			files = (
+				3FBA69E91B60672A0008F44A /* PythonDataObjects.h in CopyFiles */,
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
+				3FBA69E71B60672A0008F44A /* lldb-python.h in CopyFiles */,
+				3FBA69DF1B6067020008F44A /* ScriptInterpreterNone.cpp in CopyFiles */,
+				3FBA69E01B6067020008F44A /* ScriptInterpreterNone.h in CopyFiles */,
 				33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */,
+				3FBA69EB1B60672A0008F44A /* ScriptInterpreterPython.h in CopyFiles */,
 				AFC234081AF85CE000CDE8B6 /* CommandObjectLanguage.cpp in CopyFiles */,
 				33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */,
 			);
@@ -1864,7 +1874,6 @@
 		26BC7DE310F1B7F900F91463 /* CommandObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObject.h; path = include/lldb/Interpreter/CommandObject.h; sourceTree = "<group>"; };
 		26BC7DE410F1B7F900F91463 /* CommandReturnObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandReturnObject.h; path = include/lldb/Interpreter/CommandReturnObject.h; sourceTree = "<group>"; };
 		26BC7DE510F1B7F900F91463 /* ScriptInterpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScriptInterpreter.h; path = include/lldb/Interpreter/ScriptInterpreter.h; sourceTree = "<group>"; };
-		26BC7DE610F1B7F900F91463 /* ScriptInterpreterPython.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScriptInterpreterPython.h; path = include/lldb/Interpreter/ScriptInterpreterPython.h; sourceTree = "<group>"; };
 		26BC7DF110F1B81A00F91463 /* DynamicLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DynamicLoader.h; path = include/lldb/Target/DynamicLoader.h; sourceTree = "<group>"; };
 		26BC7DF210F1B81A00F91463 /* ExecutionContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExecutionContext.h; path = include/lldb/Target/ExecutionContext.h; sourceTree = "<group>"; };
 		26BC7DF310F1B81A00F91463 /* Process.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Process.h; path = include/lldb/Target/Process.h; sourceTree = "<group>"; };
@@ -1968,7 +1977,6 @@
 		26BC7F0810F1B8DD00F91463 /* CommandInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandInterpreter.cpp; path = source/Interpreter/CommandInterpreter.cpp; sourceTree = "<group>"; };
 		26BC7F0910F1B8DD00F91463 /* CommandObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObject.cpp; path = source/Interpreter/CommandObject.cpp; sourceTree = "<group>"; };
 		26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandReturnObject.cpp; path = source/Interpreter/CommandReturnObject.cpp; sourceTree = "<group>"; };
-		26BC7F0C10F1B8DD00F91463 /* ScriptInterpreterPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptInterpreterPython.cpp; path = source/Interpreter/ScriptInterpreterPython.cpp; sourceTree = "<group>"; };
 		26BC7F1310F1B8EC00F91463 /* Block.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Block.cpp; path = source/Symbol/Block.cpp; sourceTree = "<group>"; };
 		26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTContext.cpp; path = source/Symbol/ClangASTContext.cpp; sourceTree = "<group>"; };
 		26BC7F1510F1B8EC00F91463 /* CompileUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompileUnit.cpp; path = source/Symbol/CompileUnit.cpp; sourceTree = "<group>"; };
@@ -2141,6 +2149,13 @@
 		3F8169341ABB7A80001DA9DF /* SystemInitializer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemInitializer.h; path = include/lldb/Initialization/SystemInitializer.h; sourceTree = "<group>"; };
 		3F8169351ABB7A80001DA9DF /* SystemInitializerCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemInitializerCommon.h; path = include/lldb/Initialization/SystemInitializerCommon.h; sourceTree = "<group>"; };
 		3F8169361ABB7A80001DA9DF /* SystemLifetimeManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SystemLifetimeManager.h; path = include/lldb/Initialization/SystemLifetimeManager.h; sourceTree = "<group>"; };
+		3FBA69DD1B6067020008F44A /* ScriptInterpreterNone.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptInterpreterNone.cpp; path = ScriptInterpreter/None/ScriptInterpreterNone.cpp; sourceTree = "<group>"; };
+		3FBA69DE1B6067020008F44A /* ScriptInterpreterNone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScriptInterpreterNone.h; path = ScriptInterpreter/None/ScriptInterpreterNone.h; sourceTree = "<group>"; };
+		3FBA69E21B60672A0008F44A /* lldb-python.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-python.h"; path = "ScriptInterpreter/Python/lldb-python.h"; sourceTree = "<group>"; };
+		3FBA69E31B60672A0008F44A /* PythonDataObjects.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonDataObjects.cpp; path = ScriptInterpreter/Python/PythonDataObjects.cpp; sourceTree = "<group>"; };
+		3FBA69E41B60672A0008F44A /* PythonDataObjects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonDataObjects.h; path = ScriptInterpreter/Python/PythonDataObjects.h; sourceTree = "<group>"; };
+		3FBA69E51B60672A0008F44A /* ScriptInterpreterPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptInterpreterPython.cpp; path = ScriptInterpreter/Python/ScriptInterpreterPython.cpp; sourceTree = "<group>"; };
+		3FBA69E61B60672A0008F44A /* ScriptInterpreterPython.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScriptInterpreterPython.h; path = ScriptInterpreter/Python/ScriptInterpreterPython.h; sourceTree = "<group>"; };
 		3FDFD6C3199C396E009756A7 /* FileAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileAction.h; path = include/lldb/Target/FileAction.h; sourceTree = "<group>"; };
 		3FDFDDBC199C3A06009756A7 /* FileAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAction.cpp; path = source/Target/FileAction.cpp; sourceTree = "<group>"; };
 		3FDFDDBE199D345E009756A7 /* FileCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileCache.cpp; path = source/Host/common/FileCache.cpp; sourceTree = "<group>"; };
@@ -2480,8 +2495,6 @@
 		94D6A0A916CEB55F00833B6E /* NSSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NSSet.cpp; path = source/DataFormatters/NSSet.cpp; sourceTree = "<group>"; };
 		94E367CC140C4EC4001C7A5A /* modify-python-lldb.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "modify-python-lldb.py"; sourceTree = "<group>"; };
 		94E367CE140C4EEA001C7A5A /* python-typemaps.swig */ = {isa = PBXFileReference; lastKnownFileType = text; path = "python-typemaps.swig"; sourceTree = "<group>"; };
-		94EA1D5A15E6C99B00D4171A /* PythonDataObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonDataObjects.h; path = include/lldb/Interpreter/PythonDataObjects.h; sourceTree = "<group>"; };
-		94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonDataObjects.cpp; path = source/Interpreter/PythonDataObjects.cpp; sourceTree = "<group>"; };
 		94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LibCxxUnorderedMap.cpp; path = source/DataFormatters/LibCxxUnorderedMap.cpp; sourceTree = "<group>"; };
 		94EBAC8313D9EE26009BA64E /* PythonPointer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PythonPointer.h; path = include/lldb/Utility/PythonPointer.h; sourceTree = "<group>"; };
 		94ED54A119C8A822007BE2EA /* ThreadSafeDenseMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ThreadSafeDenseMap.h; path = include/lldb/Core/ThreadSafeDenseMap.h; sourceTree = "<group>"; };
@@ -2506,8 +2519,6 @@
 		9A22A15E135E30370024DDC3 /* EmulateInstructionARM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulateInstructionARM.h; sourceTree = "<group>"; };
 		9A22A15F135E30370024DDC3 /* EmulationStateARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EmulationStateARM.cpp; sourceTree = "<group>"; };
 		9A22A160135E30370024DDC3 /* EmulationStateARM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulationStateARM.h; sourceTree = "<group>"; };
-		9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ScriptInterpreterNone.h; path = include/lldb/Interpreter/ScriptInterpreterNone.h; sourceTree = "<group>"; };
-		9A2771FC1135A37500E6ADB6 /* ScriptInterpreterNone.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptInterpreterNone.cpp; path = source/Interpreter/ScriptInterpreterNone.cpp; sourceTree = "<group>"; };
 		9A357582116CFDEE00E8ED2F /* SBValueList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBValueList.h; path = include/lldb/API/SBValueList.h; sourceTree = "<group>"; };
 		9A35758D116CFE0F00E8ED2F /* SBValueList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBValueList.cpp; path = source/API/SBValueList.cpp; sourceTree = "<group>"; };
 		9A35765E116E76A700E8ED2F /* StringList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringList.h; path = include/lldb/Core/StringList.h; sourceTree = "<group>"; };
@@ -2937,6 +2948,7 @@
 				266DFE9013FD64D200D0C574 /* OperatingSystem */,
 				26C5577E132575B6008FD8FE /* Platform */,
 				260C898A10F57C5600BB2B04 /* Process */,
+				3FBA69DA1B6066D20008F44A /* ScriptInterpreter */,
 				AF11CB34182CA85A00D9B618 /* SystemRuntime */,
 				260C89B110F57C5600BB2B04 /* SymbolFile */,
 				260C89E010F57C5600BB2B04 /* SymbolVendor */,
@@ -4509,14 +4521,8 @@
 				B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */,
 				26ACEC2715E077AE00E94760 /* Property.h */,
 				2640E19E15DC78FD00F23B50 /* Property.cpp */,
-				94EA1D5A15E6C99B00D4171A /* PythonDataObjects.h */,
-				94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */,
 				26BC7DE510F1B7F900F91463 /* ScriptInterpreter.h */,
 				9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */,
-				9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */,
-				9A2771FC1135A37500E6ADB6 /* ScriptInterpreterNone.cpp */,
-				26BC7DE610F1B7F900F91463 /* ScriptInterpreterPython.h */,
-				26BC7F0C10F1B8DD00F91463 /* ScriptInterpreterPython.cpp */,
 			);
 			name = Interpreter;
 			sourceTree = "<group>";
@@ -4896,6 +4902,36 @@
 				3F8169301ABB7A6D001DA9DF /* SystemLifetimeManager.cpp */,
 			);
 			name = Initialization;
+			sourceTree = "<group>";
+		};
+		3FBA69DA1B6066D20008F44A /* ScriptInterpreter */ = {
+			isa = PBXGroup;
+			children = (
+				3FBA69DC1B6066E90008F44A /* None */,
+				3FBA69DB1B6066E40008F44A /* Python */,
+			);
+			name = ScriptInterpreter;
+			sourceTree = "<group>";
+		};
+		3FBA69DB1B6066E40008F44A /* Python */ = {
+			isa = PBXGroup;
+			children = (
+				3FBA69E21B60672A0008F44A /* lldb-python.h */,
+				3FBA69E31B60672A0008F44A /* PythonDataObjects.cpp */,
+				3FBA69E41B60672A0008F44A /* PythonDataObjects.h */,
+				3FBA69E51B60672A0008F44A /* ScriptInterpreterPython.cpp */,
+				3FBA69E61B60672A0008F44A /* ScriptInterpreterPython.h */,
+			);
+			name = Python;
+			sourceTree = "<group>";
+		};
+		3FBA69DC1B6066E90008F44A /* None */ = {
+			isa = PBXGroup;
+			children = (
+				3FBA69DD1B6067020008F44A /* ScriptInterpreterNone.cpp */,
+				3FBA69DE1B6067020008F44A /* ScriptInterpreterNone.h */,
+			);
+			name = None;
 			sourceTree = "<group>";
 		};
 		3FDFDDC4199D37BE009756A7 /* posix */ = {
@@ -6157,8 +6193,6 @@
 				26474CBE18D0CB2D0073DEBA /* RegisterContextMach_i386.cpp in Sources */,
 				2689008613353E2200698AC0 /* Options.cpp in Sources */,
 				2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */,
-				2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */,
-				2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */,
 				260A63191861009E00FECF8E /* IOHandler.cpp in Sources */,
 				2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */,
 				2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */,
@@ -6338,6 +6372,7 @@
 				26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
 				AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */,
+				3FBA69ED1B60674B0008F44A /* ScriptInterpreterPython.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
 				AF1D88691B575E8D003CB899 /* ValueObjectConstResultCast.cpp in Sources */,
@@ -6401,10 +6436,12 @@
 				94B6E76213D88365005F417F /* ValueObjectSyntheticFilter.cpp in Sources */,
 				267A47FF1B1411D90021A5BC /* NativeWatchpointList.cpp in Sources */,
 				26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */,
+				3FBA69E11B6067120008F44A /* ScriptInterpreterNone.cpp in Sources */,
 				94EA27CE17DE91750070F505 /* LibCxxUnorderedMap.cpp in Sources */,
 				266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */,
 				26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */,
 				255EFF761AFABA950069F277 /* LockFilePosix.cpp in Sources */,
+				3FBA69EC1B6067430008F44A /* PythonDataObjects.cpp in Sources */,
 				26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */,
 				94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */,
 				3FDFED2819BA6D96009756A7 /* HostThread.cpp in Sources */,
@@ -6466,7 +6503,6 @@
 				26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */,
 				2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */,
 				6D55B2921A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp in Sources */,
-				94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */,
 				94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */,
 				94CD704E16F8DDEA00CF1E42 /* Cocoa.cpp in Sources */,
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,

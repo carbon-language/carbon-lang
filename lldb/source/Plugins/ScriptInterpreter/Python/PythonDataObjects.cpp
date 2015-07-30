@@ -7,23 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-// In order to guarantee correct working with Python, Python.h *MUST* be
-// the *FIRST* header file included here.
 #ifdef LLDB_DISABLE_PYTHON
 
 // Python is disabled in this build
 
 #else
 
-#include "lldb/lldb-python.h"
-
-#include <stdio.h>
+#include "lldb-python.h"
+#include "PythonDataObjects.h"
+#include "ScriptInterpreterPython.h"
 
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/File.h"
-#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Interpreter/ScriptInterpreter.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
+
+#include <stdio.h>
 
 using namespace lldb_private;
 using namespace lldb;

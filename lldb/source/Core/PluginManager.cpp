@@ -1764,6 +1764,110 @@ PluginManager::GetProcessCreateCallbackForPluginName (const ConstString &name)
     return NULL;
 }
 
+#pragma mark ScriptInterpreter
+
+struct ScriptInterpreterInstance
+{
+    ScriptInterpreterInstance()
+        : name()
+        , language(lldb::eScriptLanguageNone)
+        , description()
+        , create_callback(NULL)
+    {
+    }
+
+    ConstString name;
+    lldb::ScriptLanguage language;
+    std::string description;
+    ScriptInterpreterCreateInstance create_callback;
+};
+
+typedef std::vector<ScriptInterpreterInstance> ScriptInterpreterInstances;
+
+static Mutex &
+GetScriptInterpreterMutex()
+{
+    static Mutex g_instances_mutex(Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static ScriptInterpreterInstances &
+GetScriptInterpreterInstances()
+{
+    static ScriptInterpreterInstances g_instances;
+    return g_instances;
+}
+
+bool
+PluginManager::RegisterPlugin(const ConstString &name, const char *description, lldb::ScriptLanguage script_language,
+                              ScriptInterpreterCreateInstance create_callback)
+{
+    if (!create_callback)
+        return false;
+    ScriptInterpreterInstance instance;
+    assert((bool)name);
+    instance.name = name;
+    if (description && description[0])
+        instance.description = description;
+    instance.create_callback = create_callback;
+    instance.language = script_language;
+    Mutex::Locker locker(GetScriptInterpreterMutex());
+    GetScriptInterpreterInstances().push_back(instance);
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin(ScriptInterpreterCreateInstance create_callback)
+{
+    if (!create_callback)
+        return false;
+    Mutex::Locker locker(GetScriptInterpreterMutex());
+    ScriptInterpreterInstances &instances = GetScriptInterpreterInstances();
+
+    ScriptInterpreterInstances::iterator pos, end = instances.end();
+    for (pos = instances.begin(); pos != end; ++pos)
+    {
+        if (pos->create_callback != create_callback)
+            continue;
+
+        instances.erase(pos);
+        return true;
+    }
+    return false;
+}
+
+ScriptInterpreterCreateInstance
+PluginManager::GetScriptInterpreterCreateCallbackAtIndex(uint32_t idx)
+{
+    Mutex::Locker locker(GetScriptInterpreterMutex());
+    ScriptInterpreterInstances &instances = GetScriptInterpreterInstances();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return nullptr;
+}
+
+lldb::ScriptInterpreterSP
+PluginManager::GetScriptInterpreterForLanguage(lldb::ScriptLanguage script_lang, CommandInterpreter &interpreter)
+{
+    Mutex::Locker locker(GetScriptInterpreterMutex());
+    ScriptInterpreterInstances &instances = GetScriptInterpreterInstances();
+
+    ScriptInterpreterInstances::iterator pos, end = instances.end();
+    ScriptInterpreterCreateInstance none_instance = nullptr;
+    for (pos = instances.begin(); pos != end; ++pos)
+    {
+        if (pos->language == lldb::eScriptLanguageNone)
+            none_instance = pos->create_callback;
+
+        if (script_lang == pos->language)
+            return pos->create_callback(interpreter);
+    }
+
+    // If we didn't find one, return the ScriptInterpreter for the null language.
+    assert(none_instance != nullptr);
+    return none_instance(interpreter);
+}
+
 #pragma mark SymbolFile
 
 struct SymbolFileInstance

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_PythonDataObjects_h_
-#define liblldb_PythonDataObjects_h_
+#ifndef LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_PYTHONDATAOBJECTS_H
+#define LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_PYTHONDATAOBJECTS_H
 
 // C Includes
 // C++ Includes
@@ -20,7 +20,6 @@
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Interpreter/OptionValue.h"
-#include "lldb/lldb-python.h"
 
 namespace lldb_private {
 class PythonString;
@@ -277,4 +276,4 @@ enum class PyObjectType
     
 } // namespace lldb_private
 
-#endif  // liblldb_PythonDataObjects_h_
+#endif  // LLDB_PLUGINS_SCRIPTINTERPRETER_PYTHON_PYTHONDATAOBJECTS_H

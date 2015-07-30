@@ -7,20 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-// In order to guarantee correct working with Python, Python.h *MUST* be
-// the *FIRST* header file included here.
 #ifdef LLDB_DISABLE_PYTHON
 
 // Python is disabled in this build
 
 #else
 
-#include "lldb/lldb-python.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
+#include "lldb-python.h"
+#include "ScriptInterpreterPython.h"
+#include "PythonDataObjects.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <mutex>
 #include <string>
 
 #include "lldb/API/SBValue.h"
@@ -29,6 +29,7 @@
 #include "lldb/Breakpoint/WatchpointOptions.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/TypeSummary.h"
@@ -37,7 +38,6 @@
 #include "lldb/Host/Pipe.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Interpreter/PythonDataObjects.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlan.h"
 
@@ -178,7 +178,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_lock_count (0),
     m_command_thread_state (nullptr)
 {
-    assert(g_initialized && "ScriptInterpreterPython created but initialize has not been called!");
+    assert(g_initialized && "ScriptInterpreterPython created but InitializePrivate has not been called!");
 
     m_dictionary_name.append("_dict");
     StreamString run_string;
@@ -220,6 +220,59 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
     auto gil_state = PyGILState_Ensure();
     m_session_dict.Reset();
     PyGILState_Release(gil_state);
+}
+
+void
+ScriptInterpreterPython::Initialize()
+{
+    static std::once_flag g_once_flag;
+
+    std::call_once(g_once_flag, []()
+    {
+        InitializePrivate();
+
+        PluginManager::RegisterPlugin(GetPluginNameStatic(),
+                                      GetPluginDescriptionStatic(),
+                                      lldb::eScriptLanguagePython,
+                                      CreateInstance);
+    });
+}
+    
+void
+ScriptInterpreterPython::Terminate()
+{
+
+}
+    
+lldb::ScriptInterpreterSP
+ScriptInterpreterPython::CreateInstance(CommandInterpreter &interpreter)
+{
+    return std::make_shared<ScriptInterpreterPython>(interpreter);
+}
+    
+lldb_private::ConstString
+ScriptInterpreterPython::GetPluginNameStatic()
+{
+    static ConstString g_name("script-python");
+    return g_name;
+}
+
+const char *
+ScriptInterpreterPython::GetPluginDescriptionStatic()
+{
+    return "Embedded Python interpreter";
+}
+    
+lldb_private::ConstString
+ScriptInterpreterPython::GetPluginName()
+{
+    return GetPluginNameStatic();
+}
+    
+uint32_t
+ScriptInterpreterPython::GetPluginVersion()
+{
+    return 1;
 }
 
 void

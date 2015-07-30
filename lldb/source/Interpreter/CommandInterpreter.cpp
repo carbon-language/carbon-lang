@@ -41,9 +41,9 @@
 #include "../Commands/CommandObjectWatchpoint.h"
 #include "../Commands/CommandObjectLanguage.h"
 
-
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
@@ -62,8 +62,6 @@
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/Property.h"
-#include "lldb/Interpreter/ScriptInterpreterNone.h"
-#include "lldb/Interpreter/ScriptInterpreterPython.h"
 
 
 #include "lldb/Target/Process.h"
@@ -104,29 +102,23 @@ CommandInterpreter::GetStaticBroadcasterClass ()
     return class_name;
 }
 
-CommandInterpreter::CommandInterpreter
-(
-    Debugger &debugger,
-    ScriptLanguage script_language,
-    bool synchronous_execution
-) :
-    Broadcaster (&debugger, CommandInterpreter::GetStaticBroadcasterClass().AsCString()),
-    Properties(OptionValuePropertiesSP(new OptionValueProperties(ConstString("interpreter")))),
-    IOHandlerDelegate (IOHandlerDelegate::Completion::LLDBCommand),
-    m_debugger (debugger),
-    m_synchronous_execution (synchronous_execution),
-    m_skip_lldbinit_files (false),
-    m_skip_app_init_files (false),
-    m_script_interpreter_ap (),
-    m_command_io_handler_sp (),
-    m_comment_char ('#'),
-    m_batch_command_mode (false),
-    m_truncation_warning(eNoTruncation),
-    m_command_source_depth (0),
-    m_num_errors(0),
-    m_quit_requested(false),
-    m_stopped_for_crash(false)
-
+CommandInterpreter::CommandInterpreter(Debugger &debugger, ScriptLanguage script_language, bool synchronous_execution)
+    : Broadcaster(&debugger, CommandInterpreter::GetStaticBroadcasterClass().AsCString()),
+      Properties(OptionValuePropertiesSP(new OptionValueProperties(ConstString("interpreter")))),
+      IOHandlerDelegate(IOHandlerDelegate::Completion::LLDBCommand),
+      m_debugger(debugger),
+      m_synchronous_execution(synchronous_execution),
+      m_skip_lldbinit_files(false),
+      m_skip_app_init_files(false),
+      m_script_interpreter_sp(),
+      m_command_io_handler_sp(),
+      m_comment_char('#'),
+      m_batch_command_mode(false),
+      m_truncation_warning(eNoTruncation),
+      m_command_source_depth(0),
+      m_num_errors(0),
+      m_quit_requested(false),
+      m_stopped_for_crash(false)
 {
     debugger.SetScriptLanguage (script_language);
     SetEventName (eBroadcastBitThreadShouldExit, "thread-should-exit");
@@ -392,9 +384,9 @@ void
 CommandInterpreter::Clear()
 {
     m_command_io_handler_sp.reset();
-    
-    if (m_script_interpreter_ap)
-        m_script_interpreter_ap->Clear();
+
+    if (m_script_interpreter_sp)
+        m_script_interpreter_sp->Clear();
 }
 
 const char *
@@ -2708,47 +2700,18 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
 }
 
 ScriptInterpreter *
-CommandInterpreter::GetScriptInterpreter (bool can_create)
+CommandInterpreter::GetScriptInterpreter(bool can_create)
 {
-    if (m_script_interpreter_ap.get() != nullptr)
-        return m_script_interpreter_ap.get();
-    
+    if (m_script_interpreter_sp)
+        return m_script_interpreter_sp.get();
+
     if (!can_create)
         return nullptr;
- 
-    // <rdar://problem/11751427>
-    // we need to protect the initialization of the script interpreter
-    // otherwise we could end up with two threads both trying to create
-    // their instance of it, and for some languages (e.g. Python)
-    // this is a bulletproof recipe for disaster!
-    // this needs to be a function-level static because multiple Debugger instances living in the same process
-    // still need to be isolated and not try to initialize Python concurrently
-    static Mutex g_interpreter_mutex(Mutex::eMutexTypeRecursive);
-    Mutex::Locker interpreter_lock(g_interpreter_mutex);
-    
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
-    if (log)
-        log->Printf("Initializing the ScriptInterpreter now\n");
-    
+
     lldb::ScriptLanguage script_lang = GetDebugger().GetScriptLanguage();
-    switch (script_lang)
-    {
-        case eScriptLanguagePython:
-#ifndef LLDB_DISABLE_PYTHON
-            m_script_interpreter_ap.reset (new ScriptInterpreterPython (*this));
-            break;
-#else
-            // Fall through to the None case when python is disabled
-#endif
-        case eScriptLanguageNone:
-            m_script_interpreter_ap.reset (new ScriptInterpreterNone (*this));
-            break;
-    };
-    
-    return m_script_interpreter_ap.get();
+    m_script_interpreter_sp = PluginManager::GetScriptInterpreterForLanguage(script_lang, *this);
+    return m_script_interpreter_sp.get();
 }
-
-
 
 bool
 CommandInterpreter::GetSynchronous ()

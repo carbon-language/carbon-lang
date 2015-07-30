@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
+#if !defined(LLDB_DISABLE_PYTHON)
+#include "Plugins/ScriptInterpreter/Python/lldb-python.h"
+#endif
+
 #include "lldb/Core/Log.h"
 #include "lldb/Host/posix/HostInfoPosix.h"
 
