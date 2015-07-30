@@ -7,3 +7,5 @@ RUN: LLVMFuzzer-SimpleCmpTest-DFSan -use_traces=1 -seed=1 -runs=100 -timeout=5 -
 RUN: not LLVMFuzzer-MemcmpTest-DFSan -use_traces=1 -seed=1 -runs=1000 -timeout=5 2>&1 | FileCheck %s
 RUN: LLVMFuzzer-MemcmpTest-DFSan -use_traces=1 -seed=1 -runs=2 -timeout=5 -verbosity=3 2>&1 | FileCheck %s  -check-prefix=CHECK_DFSanCmpCallback
 
+RUN: not LLVMFuzzer-StrncmpTest-DFSan -use_traces=1 -seed=1 -runs=1000 -timeout=5 2>&1 | FileCheck %s
+RUN: LLVMFuzzer-StrncmpTest-DFSan -use_traces=1 -seed=1 -runs=2 -timeout=5 -verbosity=3 2>&1 | FileCheck %s  -check-prefix=CHECK_DFSanCmpCallback
