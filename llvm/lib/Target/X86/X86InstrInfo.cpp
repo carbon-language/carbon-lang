@@ -6348,8 +6348,8 @@ static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
 // TODO: There are many more machine instruction opcodes to match:
 //       1. Other data types (integer, vectors)
 //       2. Other math / logic operations (and, or)
-static bool isAssociativeAndCommutative(unsigned Opcode) {
-  switch (Opcode) {
+static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
+  switch (Inst.getOpcode()) {
   case X86::ADDSDrr:
   case X86::ADDSSrr:
   case X86::VADDSDrr:
@@ -6358,7 +6358,7 @@ static bool isAssociativeAndCommutative(unsigned Opcode) {
   case X86::MULSSrr:
   case X86::VMULSDrr:
   case X86::VMULSSrr:
-    return true;
+    return Inst.getParent()->getParent()->getTarget().Options.UnsafeFPMath;
   default:
     return false;
   }
@@ -6374,7 +6374,7 @@ static bool isReassocCandidate(const MachineInstr &Inst, bool &Commuted) {
   // 2. The instruction must have virtual register definitions for its
   //    operands in the same basic block.
   // 3. The instruction must have a reassociable sibling.
-  if (isAssociativeAndCommutative(Inst.getOpcode()) &&
+  if (isAssociativeAndCommutative(Inst) &&
       hasVirtualRegDefsInBasicBlock(Inst, Inst.getParent()) &&
       hasReassocSibling(Inst, Commuted))
     return true;
@@ -6391,9 +6391,6 @@ static bool isReassocCandidate(const MachineInstr &Inst, bool &Commuted) {
 //    that pattern.
 bool X86InstrInfo::getMachineCombinerPatterns(MachineInstr &Root,
         SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns) const {
-  if (!Root.getParent()->getParent()->getTarget().Options.UnsafeFPMath)
-    return false;
-
   // TODO: There is nothing x86-specific here except the instruction type.
   // This logic could be hoisted into the machine combiner pass itself.
 
