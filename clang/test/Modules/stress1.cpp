@@ -4,6 +4,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=m00 -o %t/m00.pcm \
 // RUN:   Inputs/stress1/module.modulemap
@@ -11,6 +12,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=m00 -o %t/m00_check.pcm \
 // RUN:   Inputs/stress1/module.modulemap
@@ -20,6 +22,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 -fdelayed-template-parsing \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=m01 -o %t/m01.pcm \
 // RUN:   Inputs/stress1/module.modulemap
@@ -27,6 +30,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 -fdelayed-template-parsing \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=m01 -o %t/m01_check.pcm \
 // RUN:   Inputs/stress1/module.modulemap
@@ -36,6 +40,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=m02 -o %t/m02.pcm \
 // RUN:   Inputs/stress1/module.modulemap
@@ -43,6 +48,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=m03 -o %t/m03.pcm \
 // RUN:   Inputs/stress1/module.modulemap
@@ -50,6 +56,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-file=%t/m00.pcm \
 // RUN:   -fmodule-file=%t/m01.pcm \
@@ -61,6 +68,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-file=%t/m00.pcm \
 // RUN:   -fmodule-file=%t/m01.pcm \
@@ -74,6 +82,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/stress1/module.modulemap \
 // RUN:   -fmodule-file=%t/m00.pcm \
@@ -86,6 +95,7 @@
 // RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
 // RUN:   -I Inputs/stress1 \
 // RUN:   -fno-implicit-modules \
+// RUN:   -fmodules-cache-path=%t \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/stress1/module.modulemap \
 // RUN:   -fmodule-file=%t/m00.pcm \
