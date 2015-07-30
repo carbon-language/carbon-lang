@@ -3262,15 +3262,26 @@ bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
 
   // Do a quadratic search on all of the given stores and find
   // all of the pairs of stores that follow each other.
+  SmallVector<unsigned, 16> IndexQueue;
   for (unsigned i = 0, e = Stores.size(); i < e; ++i) {
-    for (unsigned j = 0; j < e; ++j) {
-      if (i == j)
-        continue;
-      const DataLayout &DL = Stores[i]->getModule()->getDataLayout();
-      if (R.isConsecutiveAccess(Stores[i], Stores[j], DL)) {
-        Tails.insert(Stores[j]);
+    const DataLayout &DL = Stores[i]->getModule()->getDataLayout();
+    IndexQueue.clear();
+    // If a store has multiple consecutive store candidates, search Stores
+    // array according to the sequence: from i+1 to e, then from i-1 to 0.
+    // This is because usually pairing with immediate succeeding or preceding
+    // candidate create the best chance to find slp vectorization opportunity.
+    unsigned j = 0;
+    for (j = i + 1; j < e; ++j)
+      IndexQueue.push_back(j);
+    for (j = i; j > 0; --j)
+      IndexQueue.push_back(j - 1);
+
+    for (auto &k : IndexQueue) {
+      if (R.isConsecutiveAccess(Stores[i], Stores[k], DL)) {
+        Tails.insert(Stores[k]);
         Heads.insert(Stores[i]);
-        ConsecutiveChain[Stores[i]] = Stores[j];
+        ConsecutiveChain[Stores[i]] = Stores[k];
+        break;
       }
     }
   }
