@@ -3415,8 +3415,8 @@ public:
     }
     LE.write<uint16_t>(KeyLen);
 
-    // 2 bytes for num of decls and 4 for each DeclID.
-    unsigned DataLen = 2 + 4 * Lookup.size();
+    // 4 bytes for each DeclID.
+    unsigned DataLen = 4 * Lookup.size();
     LE.write<uint16_t>(DataLen);
 
     return std::make_pair(KeyLen, DataLen);
@@ -3458,7 +3458,6 @@ public:
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
     uint64_t Start = Out.tell(); (void)Start;
-    LE.write<uint16_t>(Lookup.size());
     for (DeclContext::lookup_iterator I = Lookup.begin(), E = Lookup.end();
          I != E; ++I)
       LE.write<uint32_t>(

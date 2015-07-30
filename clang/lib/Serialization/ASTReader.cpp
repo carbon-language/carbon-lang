@@ -944,12 +944,12 @@ ASTDeclContextNameLookupTrait::ReadKey(const unsigned char* d, unsigned) {
   return Key;
 }
 
-ASTDeclContextNameLookupTrait::data_type 
-ASTDeclContextNameLookupTrait::ReadData(internal_key_type, 
-                                        const unsigned char* d,
+ASTDeclContextNameLookupTrait::data_type
+ASTDeclContextNameLookupTrait::ReadData(internal_key_type,
+                                        const unsigned char *d,
                                         unsigned DataLen) {
   using namespace llvm::support;
-  unsigned NumDecls = endian::readNext<uint16_t, little, unaligned>(d);
+  unsigned NumDecls = DataLen / 4;
   LE32DeclID *Start = reinterpret_cast<LE32DeclID *>(
                         const_cast<unsigned char *>(d));
   return std::make_pair(Start, Start + NumDecls);
