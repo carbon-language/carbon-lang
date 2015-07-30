@@ -39,10 +39,6 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
   unsigned Shift = (Header->Characteristics >> 20) & 0xF;
   if (Shift > 0)
     Align = uint32_t(1) << (Shift - 1);
-
-  // COMDAT sections are not GC root. Non-text sections are not
-  // subject of garbage collection (thus they are root).
-  Root = !isCOMDAT() && !(Header->Characteristics & IMAGE_SCN_CNT_CODE);
 }
 
 static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
@@ -150,9 +146,6 @@ void SectionChunk::writeTo(uint8_t *Buf) {
 
 void SectionChunk::addAssociative(SectionChunk *Child) {
   AssocChildren.push_back(Child);
-  // Associative sections are live if their parent COMDATs are live,
-  // and vice versa, so they are not considered live by themselves.
-  Child->Root = false;
 }
 
 static uint8_t getBaserelType(const coff_relocation &Rel) {

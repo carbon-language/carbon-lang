@@ -132,7 +132,7 @@ void Writer::markLive() {
   }
   for (Chunk *C : Symtab->getChunks()) {
     auto *SC = dyn_cast<SectionChunk>(C);
-    if (!SC || !SC->isRoot() || SC->isLive())
+    if (!SC || SC->isCOMDAT() || SC->isLive())
       continue;
     SC->markLive();
     Worklist.push_back(SC);

@@ -153,7 +153,6 @@ public:
   void setSymbol(DefinedRegular *S) { if (!Sym) Sym = S; }
 
   // Used by the garbage collector.
-  bool isRoot() { return Root; }
   bool isLive() { return Live; }
   void markLive() {
     assert(!Live && "Cannot mark an already live section!");
@@ -194,7 +193,6 @@ private:
 
   // Used by the garbage collector.
   bool Live = false;
-  bool Root;
 
   // Chunks are basically unnamed chunks of bytes.
   // Symbols are associated for debugging and logging purposs only.
