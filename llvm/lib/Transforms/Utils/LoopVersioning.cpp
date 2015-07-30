@@ -27,7 +27,8 @@ LoopVersioning::LoopVersioning(
     const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI, DominatorTree *DT,
     const SmallVector<int, 8> *PtrToPartition)
     : VersionedLoop(L), NonVersionedLoop(nullptr),
-      PtrToPartition(PtrToPartition), Checks(Checks), LAI(LAI), LI(LI), DT(DT) {
+      PtrToPartition(PtrToPartition), Checks(std::move(Checks)), LAI(LAI),
+      LI(LI), DT(DT) {
   assert(L->getExitBlock() && "No single exit block");
   assert(L->getLoopPreheader() && "No preheader");
 }
