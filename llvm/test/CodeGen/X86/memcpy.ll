@@ -59,48 +59,16 @@ entry:
 ; DARWIN: movq
 }
 
-; FIXME: Both Linux and Darwin should lower to a memcpy call; minsize is on.
 define void @test3_minsize(i8* nocapture %A, i8* nocapture %B) nounwind minsize noredzone {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
   ret void
 ; LINUX-LABEL: test3_minsize:
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
-; LINUX: movq
+; LINUX: memcpy
 
 ; DARWIN-LABEL: test3_minsize:
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
+; DARWIN: memcpy
 }
 
-; FIXME: Darwin should lower to a memcpy call; minsize is on.
 define void @test3_minsize_optsize(i8* nocapture %A, i8* nocapture %B) nounwind optsize minsize noredzone {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
   ret void
@@ -108,22 +76,7 @@ define void @test3_minsize_optsize(i8* nocapture %A, i8* nocapture %B) nounwind 
 ; LINUX: memcpy
 
 ; DARWIN-LABEL: test3_minsize_optsize:
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
-; DARWIN: movq
+; DARWIN: memcpy
 }
 
 ; Large constant memcpy's should be inlined when not optimizing for size.

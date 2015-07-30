@@ -1723,14 +1723,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
-  // On Darwin, -Os means optimize for size without hurting performance,
-  // do not reduce the limit.
   MaxStoresPerMemset = 16; // For @llvm.memset -> sequence of stores
-  MaxStoresPerMemsetOptSize = Subtarget->isTargetDarwin() ? 16 : 8;
+  MaxStoresPerMemsetOptSize = 8;
   MaxStoresPerMemcpy = 8; // For @llvm.memcpy -> sequence of stores
-  MaxStoresPerMemcpyOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
+  MaxStoresPerMemcpyOptSize = 4;
   MaxStoresPerMemmove = 8; // For @llvm.memmove -> sequence of stores
-  MaxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
+  MaxStoresPerMemmoveOptSize = 4;
   setPrefLoopAlignment(4); // 2^4 bytes.
 
   // Predictable cmov don't hurt on atom because it's in-order.
