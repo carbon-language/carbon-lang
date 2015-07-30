@@ -559,9 +559,12 @@ bool MIRParserImpl::initializeConstantPool(
         YamlConstant.Alignment
             ? YamlConstant.Alignment
             : M.getDataLayout().getPrefTypeAlignment(Value->getType());
-    // TODO: Report an error when the same constant pool value ID is redefined.
-    ConstantPoolSlots.insert(std::make_pair(
-        YamlConstant.ID, ConstantPool.getConstantPoolIndex(Value, Alignment)));
+    unsigned Index = ConstantPool.getConstantPoolIndex(Value, Alignment);
+    if (!ConstantPoolSlots.insert(std::make_pair(YamlConstant.ID.Value, Index))
+             .second)
+      return error(YamlConstant.ID.SourceRange.Start,
+                   Twine("redefinition of constant pool item '%const.") +
+                       Twine(YamlConstant.ID.Value) + "'");
   }
   return false;
 }

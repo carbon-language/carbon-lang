@@ -285,7 +285,7 @@ template <> struct MappingTraits<FixedMachineStackObject> {
 };
 
 struct MachineConstantPoolValue {
-  unsigned ID;
+  UnsignedValue ID;
   StringValue Value;
   unsigned Alignment = 0;
 };
