@@ -56,6 +56,10 @@ struct FrameIndexOperand {
   }
 };
 
+} // end anonymous namespace
+
+namespace llvm {
+
 /// This class prints out the machine functions using the MIR serialization
 /// format.
 class MIRPrinter {
@@ -87,6 +91,10 @@ public:
 private:
   void initRegisterMaskIds(const MachineFunction &MF);
 };
+
+} // end namespace llvm
+
+namespace {
 
 /// This class prints out the machine instructions using the MIR serialization
 /// format.
@@ -362,6 +370,11 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
     MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
         .printMBBReference(*SuccMBB);
     YamlMBB.Successors.push_back(StrOS.str());
+  }
+  if (MBB.hasSuccessorWeights()) {
+    for (auto I = MBB.succ_begin(), E = MBB.succ_end(); I != E; ++I)
+      YamlMBB.SuccessorWeights.push_back(
+          yaml::UnsignedValue(MBB.getSuccWeight(I)));
   }
   // Print the live in registers.
   const auto *TRI = MBB.getParent()->getSubtarget().getRegisterInfo();

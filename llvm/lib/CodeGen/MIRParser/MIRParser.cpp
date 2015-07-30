@@ -356,12 +356,24 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   MBB.setIsLandingPad(YamlMBB.IsLandingPad);
   SMDiagnostic Error;
   // Parse the successors.
+  const auto &Weights = YamlMBB.SuccessorWeights;
+  bool HasWeights = !Weights.empty();
+  if (HasWeights && Weights.size() != YamlMBB.Successors.size()) {
+    bool IsFew = Weights.size() < YamlMBB.Successors.size();
+    return error(IsFew ? Weights.back().SourceRange.End
+                       : Weights[YamlMBB.Successors.size()].SourceRange.Start,
+                 Twine("too ") + (IsFew ? "few" : "many") +
+                     " successor weights, expected " +
+                     Twine(YamlMBB.Successors.size()) + ", have " +
+                     Twine(Weights.size()));
+  }
+  size_t SuccessorIndex = 0;
   for (const auto &MBBSource : YamlMBB.Successors) {
     MachineBasicBlock *SuccMBB = nullptr;
     if (parseMBBReference(SuccMBB, MBBSource, MF, PFS))
       return true;
     // TODO: Report an error when adding the same successor more than once.
-    MBB.addSuccessor(SuccMBB);
+    MBB.addSuccessor(SuccMBB, HasWeights ? Weights[SuccessorIndex++].Value : 0);
   }
   // Parse the liveins.
   for (const auto &LiveInSource : YamlMBB.LiveIns) {

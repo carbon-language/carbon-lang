@@ -25,6 +25,7 @@ class Pass;
 class BasicBlock;
 class MachineFunction;
 class MCSymbol;
+class MIRPrinter;
 class SlotIndexes;
 class StringRef;
 class raw_ostream;
@@ -424,6 +425,9 @@ public:
   /// which refer to fromMBB to refer to this.
   void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB);
 
+  /// Return true if any of the successors have weights attached to them.
+  bool hasSuccessorWeights() const { return !Weights.empty(); }
+
   /// isPredecessor - Return true if the specified MBB is a predecessor of this
   /// block.
   bool isPredecessor(const MachineBasicBlock *MBB) const;
@@ -685,6 +689,7 @@ private:
   const_weight_iterator getWeightIterator(const_succ_iterator I) const;
 
   friend class MachineBranchProbabilityInfo;
+  friend class MIRPrinter;
 
   /// getSuccWeight - Return weight of the edge from this block to MBB. This
   /// method should NOT be called directly, but by using getEdgeWeight method

@@ -73,6 +73,37 @@ template <> struct ScalarTraits<FlowStringValue> {
   static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
 };
 
+/// A wrapper around unsigned which contains a source range that's being set
+/// during parsing.
+struct UnsignedValue {
+  unsigned Value;
+  SMRange SourceRange;
+
+  UnsignedValue() : Value(0) {}
+  UnsignedValue(unsigned Value) : Value(Value) {}
+
+  bool operator==(const UnsignedValue &Other) const {
+    return Value == Other.Value;
+  }
+};
+
+template <> struct ScalarTraits<UnsignedValue> {
+  static void output(const UnsignedValue &Value, void *Ctx, raw_ostream &OS) {
+    return ScalarTraits<unsigned>::output(Value.Value, Ctx, OS);
+  }
+
+  static StringRef input(StringRef Scalar, void *Ctx, UnsignedValue &Value) {
+    if (const auto *Node =
+            reinterpret_cast<yaml::Input *>(Ctx)->getCurrentNode())
+      Value.SourceRange = Node->getSourceRange();
+    return ScalarTraits<unsigned>::input(Scalar, Ctx, Value.Value);
+  }
+
+  static bool mustQuote(StringRef Scalar) {
+    return ScalarTraits<unsigned>::mustQuote(Scalar);
+  }
+};
+
 template <> struct ScalarEnumerationTraits<MachineJumpTableInfo::JTEntryKind> {
   static void enumeration(yaml::IO &IO,
                           MachineJumpTableInfo::JTEntryKind &EntryKind) {
@@ -94,6 +125,7 @@ template <> struct ScalarEnumerationTraits<MachineJumpTableInfo::JTEntryKind> {
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::StringValue)
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(llvm::yaml::FlowStringValue)
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(llvm::yaml::UnsignedValue)
 
 namespace llvm {
 namespace yaml {
@@ -139,8 +171,8 @@ struct MachineBasicBlock {
   unsigned Alignment = 0;
   bool IsLandingPad = false;
   bool AddressTaken = false;
-  // TODO: Serialize the successor weights.
   std::vector<FlowStringValue> Successors;
+  std::vector<UnsignedValue> SuccessorWeights;
   std::vector<FlowStringValue> LiveIns;
   std::vector<StringValue> Instructions;
 };
@@ -156,6 +188,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
     YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
     YamlIO.mapOptional("addressTaken", MBB.AddressTaken);
     YamlIO.mapOptional("successors", MBB.Successors);
+    YamlIO.mapOptional("weights", MBB.SuccessorWeights);
     YamlIO.mapOptional("liveins", MBB.LiveIns);
     YamlIO.mapOptional("instructions", MBB.Instructions);
   }
