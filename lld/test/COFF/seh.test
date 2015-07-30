@@ -3,7 +3,7 @@
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK: Contents of section .rdata:
-# CHECK:  2000 00100000 02100000
+# CHECK:  1000 00200000 02200000
 
 ---
 header:

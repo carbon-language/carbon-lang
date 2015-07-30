@@ -398,6 +398,12 @@ void Writer::assignAddresses() {
   SizeOfHeaders = RoundUpToAlignment(SizeOfHeaders, PageSize);
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
+  // Move DISCARDABLE (or non-memory-mapped) sections to the end of file because
+  // the loader cannot handle holes.
+  std::stable_partition(
+      OutputSections.begin(), OutputSections.end(), [](OutputSection *S) {
+        return (S->getPermissions() & IMAGE_SCN_MEM_DISCARDABLE) == 0;
+      });
   for (OutputSection *Sec : OutputSections) {
     if (Sec->getName() == ".reloc")
       addBaserels(Sec);
