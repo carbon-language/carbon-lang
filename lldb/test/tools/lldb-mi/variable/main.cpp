@@ -67,11 +67,20 @@ gdb_set_show_print_char_array_as_string_test(void)
     // BP_gdb_set_show_print_char_array_as_string_test
 }
 
+struct not_str
+{
+    not_str(char _c, int _f)
+        : c(_c), f(_f) { }
+    char c;
+    int f;
+};
+
 void
 gdb_set_show_print_expand_aggregates(void)
 {
     complex_type complx = { 3, { 3L }, &complx };
     complex_type complx_array[2] = { { 4, { 4L }, &complx_array[1] }, { 5, { 5 }, &complx_array[0] } };
+    not_str nstr('a', 0), *pnstr = &nstr;
 
     // BP_gdb_set_show_print_expand_aggregates
 }

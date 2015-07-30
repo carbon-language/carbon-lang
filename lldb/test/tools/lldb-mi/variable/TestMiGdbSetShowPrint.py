@@ -132,6 +132,10 @@ class MiGdbSetShowTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-var-create var2 * complx_array")
         self.expect("\^done,name=\"var2\",numchild=\"2\",value=\"\[2\]\",type=\"complex_type \[2\]\",thread-id=\"1\",has_more=\"0\"")
 
+        # Test that a struct with a char first element is not formatted as a string
+        self.runCmd("-var-create - * &nstr")
+        self.expect("\^done,name=\"var\d+\",numchild=\"2\",value=\"0x[0-9a-f]+\",type=\"not_str \*\",thread-id=\"1\",has_more=\"0\"")
+
         # Test that -gdb-set can set print expand-aggregates flag
         self.runCmd("-gdb-set print expand-aggregates on")
         self.expect("\^done")

@@ -136,7 +136,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
     }
     else if (IsPointerType())
     {
-        if (m_bHandleCharType && IsFirstChildCharType())
+        if (m_bHandleCharType && IsPointeeCharType())
         {
             vwrValue = GetSimpleValueCStringPointer();
             return MIstatus::success;
@@ -348,17 +348,15 @@ CMICmnLLDBUtilSBValue::GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIV
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Retrieve the flag stating whether this value object is a char type or some
-//          other type. Char type can be signed or unsigned.
-// Type:    Method.
-// Args:    None.
+// Details: Check that basic type is a char type. Char type can be signed or unsigned.
+// Type:    Static.
+// Args:    eType   - type to check
 // Return:  bool    - True = Yes is a char type, false = some other type.
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsCharType(void) const
+CMICmnLLDBUtilSBValue::IsCharBasicType(lldb::BasicType eType)
 {
-    const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
     switch (eType)
     {
         case lldb::eBasicTypeChar:
@@ -370,6 +368,21 @@ CMICmnLLDBUtilSBValue::IsCharType(void) const
         default:
             return false;
     }
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve the flag stating whether this value object is a char type or some
+//          other type. Char type can be signed or unsigned.
+// Type:    Method.
+// Args:    None.
+// Return:  bool    - True = Yes is a char type, false = some other type.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBUtilSBValue::IsCharType(void) const
+{
+    const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
+    return IsCharBasicType(eType);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -393,6 +406,28 @@ CMICmnLLDBUtilSBValue::IsFirstChildCharType(void) const
     const lldb::SBValue member = m_rValue.GetChildAtIndex(0);
     const CMICmnLLDBUtilSBValue utilValue(member);
     return utilValue.IsCharType();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve the flag stating whether pointee object of *this object is
+//          a char type or some other type. Returns false if there are not children. Char
+//          type can be signed or unsigned.
+// Type:    Method.
+// Args:    None.
+// Return:  bool    - True = Yes is a char type, false = some other type.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBUtilSBValue::IsPointeeCharType(void) const
+{
+    const MIuint nChildren = m_rValue.GetNumChildren();
+
+    // Is it a basic type
+    if (nChildren == 0)
+        return false;
+
+    const lldb::BasicType eType = m_rValue.GetType().GetPointeeType().GetBasicType();
+    return IsCharBasicType(eType);
 }
 
 //++ ------------------------------------------------------------------------------------

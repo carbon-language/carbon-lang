@@ -37,6 +37,7 @@ class CMICmnLLDBUtilSBValue
     CMIUtilString GetTypeNameDisplay(void) const;
     bool IsCharType(void) const;
     bool IsFirstChildCharType(void) const;
+    bool IsPointeeCharType(void) const;
     bool IsIntegerType(void) const;
     bool IsPointerType(void) const;
     bool IsArrayType(void) const;
@@ -54,6 +55,10 @@ class CMICmnLLDBUtilSBValue
     CMIUtilString GetSimpleValueCStringPointer(void) const;
     CMIUtilString GetSimpleValueCStringArray(void) const;
     bool GetCompositeValue(const bool vbPrintFieldNames, CMICmnMIValueTuple &vwrMiValueTuple, const MIuint vnDepth = 1) const;
+
+    // Statics:
+  private:
+    static bool IsCharBasicType(lldb::BasicType eType);
 
     // Attributes:
   private:
