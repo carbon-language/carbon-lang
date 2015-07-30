@@ -517,7 +517,7 @@ void FileManager::modifyFileEntry(FileEntry *File,
 /// Remove '.' and '..' path components from the given absolute path.
 /// \return \c true if any changes were made.
 // FIXME: Move this to llvm::sys::path.
-bool FileManager::removeDotPaths(SmallVectorImpl<char> &Path) {
+bool FileManager::removeDotPaths(SmallVectorImpl<char> &Path, bool RemoveDotDot) {
   using namespace llvm::sys;
 
   SmallVector<StringRef, 16> ComponentStack;
@@ -528,10 +528,12 @@ bool FileManager::removeDotPaths(SmallVectorImpl<char> &Path) {
   for (StringRef C : llvm::make_range(path::begin(Rel), path::end(Rel))) {
     if (C == ".")
       continue;
-    if (C == "..") {
-      if (!ComponentStack.empty())
-        ComponentStack.pop_back();
-      continue;
+    if (RemoveDotDot) {
+      if (C == "..") {
+        if (!ComponentStack.empty())
+          ComponentStack.pop_back();
+        continue;
+      }
     }
     ComponentStack.push_back(C);
   }
@@ -566,7 +568,7 @@ StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
   SmallString<256> CanonicalNameBuf(CanonicalName);
   llvm::sys::fs::make_absolute(CanonicalNameBuf);
   llvm::sys::path::native(CanonicalNameBuf);
-  removeDotPaths(CanonicalNameBuf);
+  removeDotPaths(CanonicalNameBuf, true);
   char *Mem = CanonicalNameStorage.Allocate<char>(CanonicalNameBuf.size());
   memcpy(Mem, CanonicalNameBuf.data(), CanonicalNameBuf.size());
   CanonicalName = StringRef(Mem, CanonicalNameBuf.size());
