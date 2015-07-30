@@ -12,15 +12,15 @@
 
 
 ---
-header:          
+header:
   Machine:         IMAGE_FILE_MACHINE_I386
   Characteristics: [  ]
-sections:        
+sections:
   - Name:            .text
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       16
     SectionData:     508D0500000000C70424000000005AC3
-    Relocations:     
+    Relocations:
       - VirtualAddress:  3
         SymbolName:      '?x@@3HA'
         Type:            IMAGE_REL_I386_DIR32
@@ -36,7 +36,7 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
     SectionData:     04000000F1000000300000002A00471100000000000000000000000010000000000000000000000000000000000000000000006D61696E0002004F11F200000024000000000000000000010010000000000000000100000018000000000000000100000000000000F4000000080000000100000000000000F30000003C000000005C7573725C6C6F63616C5C676F6F676C655C686F6D655C6D616A6E656D65725C6C6C766D5C7372635C746F6F6C735C6C6C645C3C737464696E3E00
-    Relocations:     
+    Relocations:
       - VirtualAddress:  44
         SymbolName:      _main
         Type:            IMAGE_REL_I386_SECREL
@@ -65,7 +65,7 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
     SectionData:     54000000040000000000040100000000040037000000000000003F000000000000001000000002720000003B0000000101050300000000780000000374000000050404000000001000000001548000000001013B00000000
-    Relocations:     
+    Relocations:
       - VirtualAddress:  6
         SymbolName:      .debug_abbrev
         Type:            IMAGE_REL_I386_SECREL
@@ -110,7 +110,7 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
     SectionData:     1D00000002000000000058000000420000006D61696E0026000000780000000000
-    Relocations:     
+    Relocations:
       - VirtualAddress:  6
         SymbolName:      .debug_info
         Type:            IMAGE_REL_I386_SECREL
@@ -118,7 +118,7 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
     SectionData:     16000000020000000000580000003B000000696E740000000000
-    Relocations:     
+    Relocations:
       - VirtualAddress:  6
         SymbolName:      .debug_info
         Type:            IMAGE_REL_I386_SECREL
@@ -126,18 +126,18 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
     SectionData:     3300000002001E0000000101FB0E0D000101010100000001000001003C737464696E3E000000000000050200000000010AD60202000101
-    Relocations:     
+    Relocations:
       - VirtualAddress:  43
         SymbolName:      .text
         Type:            IMAGE_REL_I386_DIR32
-symbols:         
+symbols:
   - Name:            .text
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          16
       NumberOfRelocations: 1
       NumberOfLinenumbers: 0
@@ -149,7 +149,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          0
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
@@ -161,7 +161,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          4
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
@@ -173,7 +173,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          188
       NumberOfRelocations: 4
       NumberOfLinenumbers: 0
@@ -185,7 +185,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          133
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
@@ -197,7 +197,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          0
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
@@ -209,7 +209,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          74
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
@@ -221,7 +221,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          88
       NumberOfRelocations: 12
       NumberOfLinenumbers: 0
@@ -233,7 +233,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          0
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
@@ -245,7 +245,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          33
       NumberOfRelocations: 1
       NumberOfLinenumbers: 0
@@ -257,7 +257,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          26
       NumberOfRelocations: 1
       NumberOfLinenumbers: 0
@@ -269,7 +269,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition: 
+    SectionDefinition:
       Length:          55
       NumberOfRelocations: 1
       NumberOfLinenumbers: 0

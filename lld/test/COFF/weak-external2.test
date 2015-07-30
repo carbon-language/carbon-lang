@@ -3,15 +3,15 @@
 # RUN: lld -flavor link2 /out:%t.exe /entry:g /subsystem:console %t.obj %t.lto.obj
 
 ---
-header:          
+header:
   Machine:         IMAGE_FILE_MACHINE_AMD64
   Characteristics: [  ]
-sections:        
+sections:
   - Name:            '.text'
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       16
     SectionData:     00
-symbols:         
+symbols:
   - Name:            'f'
     Value:           0
     SectionNumber:   0
@@ -24,7 +24,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_WEAK_EXTERNAL
-    WeakExternal:    
+    WeakExternal:
       TagIndex:        0
       Characteristics: IMAGE_WEAK_EXTERN_SEARCH_LIBRARY
 ...
