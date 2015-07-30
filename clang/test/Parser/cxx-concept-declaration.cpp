@@ -25,6 +25,4 @@ template<typename T> concept concept bool C6 = true; // expected-warning {{dupli
 
 template<typename T> concept concept bool C7() { return true; } // expected-warning {{duplicate 'concept' declaration specifier}}
 
-concept D1 = true; // expected-error {{C++ requires a type specifier for all declarations}}
-
-template<concept T> concept bool D2 = true; // expected-error {{unknown type name 'T'}}
+template<concept T> concept bool D1 = true; // expected-error {{unknown type name 'T'}}

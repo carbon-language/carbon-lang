@@ -15,3 +15,7 @@ struct B {
 struct C {
   template<typename T> static concept bool D3 = true; // expected-error {{concept declarations may only appear in namespace scope}}
 };
+
+concept bool D4() { return true; } // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
+
+concept bool D5 = true; // expected-error {{'concept' can only appear on the definition of a function template or variable template}}
