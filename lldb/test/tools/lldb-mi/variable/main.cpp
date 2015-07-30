@@ -80,7 +80,7 @@ gdb_set_show_print_expand_aggregates(void)
 {
     complex_type complx = { 3, { 3L }, &complx };
     complex_type complx_array[2] = { { 4, { 4L }, &complx_array[1] }, { 5, { 5 }, &complx_array[0] } };
-    not_str nstr('a', 0), *pnstr = &nstr;
+    not_str nstr('a', 0);
 
     // BP_gdb_set_show_print_expand_aggregates
 }
