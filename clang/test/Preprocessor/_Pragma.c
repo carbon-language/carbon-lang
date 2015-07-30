@@ -12,4 +12,8 @@ _Pragma("message(\"foo \\\\\\\\ bar\")") // expected-warning {{foo \\ bar}}
 #error #define invalid
 #endif
 
+_Pragma(unroll 1 // expected-error{{_Pragma takes a parenthesized string literal}}
+
+_Pragma(clang diagnostic push) // expected-error{{_Pragma takes a parenthesized string literal}}
+
 _Pragma( // expected-error{{_Pragma takes a parenthesized string literal}}
