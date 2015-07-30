@@ -568,7 +568,13 @@ StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
   SmallString<256> CanonicalNameBuf(CanonicalName);
   llvm::sys::fs::make_absolute(CanonicalNameBuf);
   llvm::sys::path::native(CanonicalNameBuf);
-  removeDotPaths(CanonicalNameBuf, true);
+  // We've run into needing to remove '..' here in the wild though, so
+  // remove it.
+  // On Windows, symlinks are significantly less prevalent, so removing
+  // '..' is pretty safe.
+  // Ideally we'd have an equivalent of `realpath` and could implement
+  // sys::fs::canonical across all the platforms.
+  removeDotPaths(CanonicalNameBuf, /*RemoveDotDot*/true);
   char *Mem = CanonicalNameStorage.Allocate<char>(CanonicalNameBuf.size());
   memcpy(Mem, CanonicalNameBuf.data(), CanonicalNameBuf.size());
   CanonicalName = StringRef(Mem, CanonicalNameBuf.size());
