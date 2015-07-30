@@ -131,7 +131,7 @@ namespace llvm {
 namespace yaml {
 
 struct VirtualRegisterDefinition {
-  unsigned ID;
+  UnsignedValue ID;
   StringValue Class;
   StringValue PreferredRegister;
   // TODO: Serialize the target specific register hints.

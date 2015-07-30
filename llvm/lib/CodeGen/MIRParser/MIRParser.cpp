@@ -414,9 +414,11 @@ bool MIRParserImpl::initializeRegisterInfo(MachineFunction &MF,
                    Twine("use of undefined register class '") +
                        VReg.Class.Value + "'");
     unsigned Reg = RegInfo.createVirtualRegister(RC);
-    // TODO: Report an error when the same virtual register with the same ID is
-    // redefined.
-    PFS.VirtualRegisterSlots.insert(std::make_pair(VReg.ID, Reg));
+    if (!PFS.VirtualRegisterSlots.insert(std::make_pair(VReg.ID.Value, Reg))
+             .second)
+      return error(VReg.ID.SourceRange.Start,
+                   Twine("redefinition of virtual register '%") +
+                       Twine(VReg.ID.Value) + "'");
     if (!VReg.PreferredRegister.Value.empty()) {
       unsigned PreferredReg = 0;
       if (parseNamedRegisterReference(PreferredReg, SM, MF,
