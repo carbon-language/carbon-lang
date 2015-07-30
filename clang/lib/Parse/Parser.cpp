@@ -476,6 +476,9 @@ void Parser::Initialize() {
 
   Ident_super = &PP.getIdentifierTable().get("super");
 
+  Ident_vector = nullptr;
+  Ident_bool = nullptr;
+  Ident_pixel = nullptr;
   if (getLangOpts().AltiVec || getLangOpts().ZVector) {
     Ident_vector = &PP.getIdentifierTable().get("vector");
     Ident_bool = &PP.getIdentifierTable().get("bool");
