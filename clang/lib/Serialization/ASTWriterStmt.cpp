@@ -1763,7 +1763,10 @@ void OMPClauseWriter::VisitOMPScheduleClause(OMPScheduleClause *C) {
   Writer->Writer.AddSourceLocation(C->getCommaLoc(), Record);
 }
 
-void OMPClauseWriter::VisitOMPOrderedClause(OMPOrderedClause *) {}
+void OMPClauseWriter::VisitOMPOrderedClause(OMPOrderedClause *C) {
+  Writer->Writer.AddStmt(C->getNumForLoops());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+}
 
 void OMPClauseWriter::VisitOMPNowaitClause(OMPNowaitClause *) {}
 

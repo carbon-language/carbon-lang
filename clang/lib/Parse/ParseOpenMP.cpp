@@ -415,6 +415,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_num_threads:
   case OMPC_safelen:
   case OMPC_collapse:
+  case OMPC_ordered:
     // OpenMP [2.5, Restrictions]
     //  At most one if clause can appear on the directive.
     //  At most one num_threads clause can appear on the directive.
@@ -430,7 +431,10 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
       ErrorFound = true;
     }
 
-    Clause = ParseOpenMPSingleExprClause(CKind);
+    if (CKind == OMPC_ordered && PP.LookAhead(/*N=*/0).isNot(tok::l_paren))
+      Clause = ParseOpenMPClause(CKind);
+    else
+      Clause = ParseOpenMPSingleExprClause(CKind);
     break;
   case OMPC_default:
   case OMPC_proc_bind:
@@ -458,7 +462,6 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 
     Clause = ParseOpenMPSingleExprWithArgClause(CKind);
     break;
-  case OMPC_ordered:
   case OMPC_nowait:
   case OMPC_untied:
   case OMPC_mergeable:

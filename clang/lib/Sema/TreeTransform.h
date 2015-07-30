@@ -1447,6 +1447,16 @@ public:
         Kind, ChunkSize, StartLoc, LParenLoc, KindLoc, CommaLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'ordered' clause.
+  ///
+  /// By default, performs semantic analysis to build the new OpenMP clause.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPOrderedClause(SourceLocation StartLoc,
+                                     SourceLocation EndLoc,
+                                     SourceLocation LParenLoc, Expr *Num) {
+    return getSema().ActOnOpenMPOrderedClause(StartLoc, EndLoc, LParenLoc, Num);
+  }
+
   /// \brief Build a new OpenMP 'private' clause.
   ///
   /// By default, performs semantic analysis to build the new OpenMP clause.
@@ -7237,8 +7247,14 @@ TreeTransform<Derived>::TransformOMPScheduleClause(OMPScheduleClause *C) {
 template <typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPOrderedClause(OMPOrderedClause *C) {
-  // No need to rebuild this clause, no template-dependent parameters.
-  return C;
+  ExprResult E;
+  if (auto *Num = C->getNumForLoops()) {
+    E = getDerived().TransformExpr(Num);
+    if (E.isInvalid())
+      return nullptr;
+  }
+  return getDerived().RebuildOMPOrderedClause(C->getLocStart(), C->getLocEnd(),
+                                              C->getLParenLoc(), E.get());
 }
 
 template <typename Derived>

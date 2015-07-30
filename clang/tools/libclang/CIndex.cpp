@@ -2033,7 +2033,9 @@ void OMPClauseEnqueue::VisitOMPScheduleClause(const OMPScheduleClause *C) {
   Visitor->AddStmt(C->getHelperChunkSize());
 }
 
-void OMPClauseEnqueue::VisitOMPOrderedClause(const OMPOrderedClause *) {}
+void OMPClauseEnqueue::VisitOMPOrderedClause(const OMPOrderedClause *C) {
+  Visitor->AddStmt(C->getNumForLoops());
+}
 
 void OMPClauseEnqueue::VisitOMPNowaitClause(const OMPNowaitClause *) {}
 

@@ -306,7 +306,10 @@ void OMPClauseProfiler::VisitOMPScheduleClause(const OMPScheduleClause *C) {
   }
 }
 
-void OMPClauseProfiler::VisitOMPOrderedClause(const OMPOrderedClause *) {}
+void OMPClauseProfiler::VisitOMPOrderedClause(const OMPOrderedClause *C) {
+  if (auto *Num = C->getNumForLoops())
+    Profiler->VisitStmt(Num);
+}
 
 void OMPClauseProfiler::VisitOMPNowaitClause(const OMPNowaitClause *) {}
 

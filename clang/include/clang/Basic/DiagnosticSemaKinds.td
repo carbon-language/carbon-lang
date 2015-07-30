@@ -7501,8 +7501,8 @@ def err_omp_loop_var_dsa : Error<
 def err_omp_not_for : Error<
   "%select{statement after '#pragma omp %1' must be a for loop|"
   "expected %2 for loops after '#pragma omp %1'%select{|, but found only %4}3}0">;
-def note_omp_collapse_expr : Note<
-  "as specified in 'collapse' clause">;
+def note_omp_collapse_ordered_expr : Note<
+  "as specified in %select{'collapse'|'ordered'|'collapse' and 'ordered'}0 clause%select{||s}0">;
 def err_omp_negative_expression_in_clause : Error<
   "argument to '%0' clause must be a positive integer value">;
 def err_omp_not_integral : Error<
