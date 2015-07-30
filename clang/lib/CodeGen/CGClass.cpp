@@ -1369,8 +1369,8 @@ static bool CanSkipVTablePointerInitialization(ASTContext &Context,
 
 // Generates function call for handling object poisoning, passing in
 // references to 'this' and its size as arguments.
-// Disables tail call elimination, to save emitted callback from
-// being optimized away.
+// Disables tail call elimination, to prevent the current stack frame from
+// disappearing from the stack trace.
 static void EmitDtorSanitizerCallback(CodeGenFunction &CGF,
                                       const CXXDestructorDecl *Dtor) {
   const ASTRecordLayout &Layout =
