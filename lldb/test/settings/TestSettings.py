@@ -165,8 +165,7 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
             startstr = "auto-confirm (boolean) = false")
 
-    @expectedFailureArch("arm")
-    @expectedFailureArch("aarch64")
+    @skipUnlessArch(['x86-64', 'i386'])
     def test_disassembler_settings(self):
         """Test that user options for the disassembler take effect."""
         self.buildDefault()

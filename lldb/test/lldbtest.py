@@ -664,6 +664,11 @@ def expectedFailureArch(arch, bugnumber=None):
         return arch in self.getArchitecture()
     return expectedFailure(fn, bugnumber)
 
+def skipUnlessArch(arch):
+    def fn(self):
+        return not self.getArchitecture() in arch 
+    return expectedFailure(fn, None)
+
 def expectedFailurei386(bugnumber=None):
     return expectedFailureArch('i386', bugnumber)
 
