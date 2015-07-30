@@ -88,19 +88,25 @@ function adb_pull {
   fi
 }
 
-function get_device_arch { # OUTVAR
+function get_device_arch { # OUT OUT64
     local _outvar=$1
+    local _outvar64=$2
     local _ABI=$(adb_shell getprop ro.product.cpu.abi)
     local _ARCH=
+    local _ARCH64=
     if [[ $_ABI == x86* ]]; then
         _ARCH=i686
     elif [[ $_ABI == armeabi* ]]; then
         _ARCH=arm
+    elif [[ $_ABI == arm64-v8a* ]]; then
+        _ARCH=arm
+        _ARCH64=aarch64
     else
         echo "Unrecognized device ABI: $_ABI"
         exit 1
     fi
     eval $_outvar=\$_ARCH
+    eval $_outvar64=\$_ARCH64
 }
 
 while [[ $# > 0 ]]; do
@@ -167,22 +173,33 @@ adb_wait_for_device
 adb_remount
 adb_wait_for_device
 
-get_device_arch ARCH
+get_device_arch ARCH ARCH64
 echo "Target architecture: $ARCH"
 ASAN_RT="libclang_rt.asan-$ARCH-android.so"
+if [[ -n $ARCH64 ]]; then
+  echo "Target architecture: $ARCH64"
+  ASAN_RT64="libclang_rt.asan-$ARCH64-android.so"
+fi
 
 if [[ x$revert == xyes ]]; then
     echo '>> Uninstalling ASan'
 
     if ! adb_shell ls -l /system/bin/app_process | grep -o '\->.*app_process' >&/dev/null; then
-        echo '>> Pre-L device detected.'
-        adb_shell mv /system/bin/app_process.real /system/bin/app_process
-        adb_shell rm /system/bin/asanwrapper
+      echo '>> Pre-L device detected.'
+      adb_shell mv /system/bin/app_process.real /system/bin/app_process
+      adb_shell rm /system/bin/asanwrapper
+    elif ! adb_shell ls -l /system/bin/app_process64.real | grep -o 'No such file or directory' >&/dev/null; then
+      # 64-bit installation.
+      adb_shell mv /system/bin/app_process32.real /system/bin/app_process32
+      adb_shell mv /system/bin/app_process64.real /system/bin/app_process64
+      adb_shell rm /system/bin/asanwrapper
+      adb_shell rm /system/bin/asanwrapper64
     else
-        adb_shell rm /system/bin/app_process.wrap
-        adb_shell rm /system/bin/asanwrapper
-        adb_shell rm /system/bin/app_process
-        adb_shell ln -s /system/bin/app_process32 /system/bin/app_process
+      # 32-bit installation.
+      adb_shell rm /system/bin/app_process.wrap
+      adb_shell rm /system/bin/asanwrapper
+      adb_shell rm /system/bin/app_process
+      adb_shell ln -s /system/bin/app_process32 /system/bin/app_process
     fi
 
     echo '>> Restarting shell'
@@ -217,6 +234,13 @@ if [[ -z "$ASAN_RT_PATH" || ! -f "$ASAN_RT_PATH/$ASAN_RT" ]]; then
     exit 1
 fi
 
+if [[ -n "$ASAN_RT64" ]]; then
+  if [[ -z "$ASAN_RT_PATH" || ! -f "$ASAN_RT_PATH/$ASAN_RT64" ]]; then
+    echo ">> ASan runtime library not found"
+    exit 1
+  fi
+fi
+
 TMPDIRBASE=$(mktemp -d)
 TMPDIROLD="$TMPDIRBASE/old"
 TMPDIR="$TMPDIRBASE/new"
@@ -241,12 +265,23 @@ if ! adb_shell ls -l /system/bin/app_process | grep -o '\->.*app_process' >&/dev
 fi
 
 echo '>> Copying files from the device'
-adb_pull /system/bin/app_process.wrap "$TMPDIROLD" || true
-adb_pull /system/bin/asanwrapper "$TMPDIROLD" || true
-adb_pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
+if [[ -n "$ASAN_RT64" ]]; then
+  adb_pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
+  adb_pull /system/lib64/"$ASAN_RT64" "$TMPDIROLD" || true
+  adb_pull /system/bin/app_process32 "$TMPDIROLD" || true
+  adb_pull /system/bin/app_process32.real "$TMPDIROLD" || true
+  adb_pull /system/bin/app_process64 "$TMPDIROLD" || true
+  adb_pull /system/bin/app_process64.real "$TMPDIROLD" || true
+  adb_pull /system/bin/asanwrapper "$TMPDIROLD" || true
+  adb_pull /system/bin/asanwrapper64 "$TMPDIROLD" || true
+else
+  adb_pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
+  adb_pull /system/bin/app_process.wrap "$TMPDIROLD" || true
+  adb_pull /system/bin/asanwrapper "$TMPDIROLD" || true
+fi
 cp -r "$TMPDIROLD" "$TMPDIR"
 
-if [[ -f "$TMPDIR/app_process.wrap" ]]; then
+if [[ -f "$TMPDIR/app_process.wrap" || -f "$TMPDIR/app_process64.real" ]]; then
     echo ">> Previous installation detected"
 else
     echo ">> New installation"
@@ -255,10 +290,27 @@ fi
 echo '>> Generating wrappers'
 
 cp "$ASAN_RT_PATH/$ASAN_RT" "$TMPDIR/"
+if [[ -n "$ASAN_RT64" ]]; then
+  cp "$ASAN_RT_PATH/$ASAN_RT64" "$TMPDIR/"
+fi
 
 # FIXME: alloc_dealloc_mismatch=0 prevents a failure in libdvm startup,
 # which may or may not be a real bug (probably not).
-ASAN_OPTIONS=start_deactivated=1,alloc_dealloc_mismatch=0
+ASAN_OPTIONS=start_deactivated=1,alloc_dealloc_mismatch=0,malloc_context_size=0
+
+function generate_zygote_wrapper { # from, to, asan_rt
+  local _from=$1
+  local _to=$2
+  local _asan_rt=$3
+  cat <<EOF >"$TMPDIR/$_from"
+#!/system/bin/sh-from-zygote
+ASAN_OPTIONS=$ASAN_OPTIONS \\
+ASAN_ACTIVATION_OPTIONS=include_if_exists=/data/local/tmp/asan.options.%b \\
+LD_PRELOAD=\$LD_PRELOAD:$_asan_rt \\
+exec $_to \$@
+
+EOF
+}
 
 # On Android-L not allowing user segv handler breaks some applications.
 if [[ PRE_L -eq 0 ]]; then
@@ -270,14 +322,19 @@ if [[ x$extra_options != x ]] ; then
 fi
 
 # Zygote wrapper.
-cat <<EOF >"$TMPDIR/app_process.wrap"
-#!/system/bin/sh-from-zygote
-ASAN_OPTIONS=$ASAN_OPTIONS \\
-ASAN_ACTIVATION_OPTIONS=include_if_exists=/data/local/tmp/asan.options.%b \\
-LD_PRELOAD=\$LD_PRELOAD:$ASAN_RT \\
-exec /system/bin/app_process32 \$@
-
-EOF
+if [[ -f "$TMPDIR/app_process64" ]]; then
+  # A 64-bit device.
+  if [[ ! -f "$TMPDIR/app_process64.real" ]]; then
+    # New installation.
+    mv "$TMPDIR/app_process32" "$TMPDIR/app_process32.real"
+    mv "$TMPDIR/app_process64" "$TMPDIR/app_process64.real"
+  fi
+  generate_zygote_wrapper "app_process32" "/system/bin/app_process32.real" "$ASAN_RT"
+  generate_zygote_wrapper "app_process64" "/system/bin/app_process64.real" "$ASAN_RT64"
+else
+  # A 32-bit device.
+  generate_zygote_wrapper "app_process.wrap" "/system/bin/app_process32" "$ASAN_RT"
+fi
 
 # General command-line tool wrapper (use for anything that's not started as
 # zygote).
@@ -288,25 +345,33 @@ exec \$@
 
 EOF
 
+if [[ -n "$ASAN_RT64" ]]; then
+  cat <<EOF >"$TMPDIR/asanwrapper64"
+#!/system/bin/sh
+LD_PRELOAD=$ASAN_RT64 \\
+exec \$@
+
+EOF
+fi
+
+function install { # from, to, chmod, chcon
+  local _from=$1
+  local _to=$2
+  local _mode=$3
+  local _context=$4
+  local _basename="$(basename "$_from")"
+  echo "Installing $_to/$_basename $_mode $_context"
+  adb_push "$_from" "$_to/$_basename"
+  adb_shell chown root.shell "$_to/$_basename"
+  if [[ -n "$_mode" ]]; then
+    adb_shell chmod "$_mode" "$_to/$_basename"
+  fi
+  if [[ -n "$_context" ]]; then
+    adb_shell chcon "$_context" "$_to/$_basename"
+  fi
+}
+
 if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
-    echo '>> Pushing files to the device'
-    adb_push "$TMPDIR/$ASAN_RT" /system/lib/
-    adb_push "$TMPDIR/app_process.wrap" /system/bin
-    adb_push "$TMPDIR/asanwrapper" /system/bin
-
-    adb_shell rm /system/bin/app_process
-    adb_shell ln -s /system/bin/app_process.wrap /system/bin/app_process
-
-    adb_shell chown root.shell \
-        /system/lib/"$ASAN_RT" \
-        /system/bin/app_process.wrap \
-        /system/bin/asanwrapper
-    adb_shell chmod 644 \
-        /system/lib/"$ASAN_RT"
-    adb_shell chmod 755 \
-        /system/bin/app_process.wrap \
-        /system/bin/asanwrapper
-
     # Make SELinux happy by keeping app_process wrapper and the shell
     # it runs on in zygote domain.
     ENFORCING=0
@@ -317,17 +382,34 @@ if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
         adb_shell setenforce 0
     fi
 
-    adb_shell cp /system/bin/sh /system/bin/sh-from-zygote
-
     if [[ PRE_L -eq 1 ]]; then
         CTX=u:object_r:system_file:s0
     else
         CTX=u:object_r:zygote_exec:s0
     fi
-    adb_shell chcon $CTX \
-        /system/bin/sh-from-zygote \
-        /system/bin/app_process.wrap \
-        /system/bin/app_process32
+
+    echo '>> Pushing files to the device'
+
+    if [[ -n "$ASAN_RT64" ]]; then
+      install "$TMPDIR/$ASAN_RT" /system/lib 644
+      install "$TMPDIR/$ASAN_RT64" /system/lib64 644
+      install "$TMPDIR/app_process32" /system/bin 755 $CTX
+      install "$TMPDIR/app_process32.real" /system/bin 755 $CTX
+      install "$TMPDIR/app_process64" /system/bin 755 $CTX
+      install "$TMPDIR/app_process64.real" /system/bin 755 $CTX
+      install "$TMPDIR/asanwrapper" /system/bin 755
+      install "$TMPDIR/asanwrapper64" /system/bin 755
+    else
+      install "$TMPDIR/$ASAN_RT" /system/lib 644
+      install "$TMPDIR/app_process.wrap" /system/bin 755 $CTX
+      install "$TMPDIR/asanwrapper" /system/bin 755 $CTX
+
+      adb_shell rm /system/bin/app_process
+      adb_shell ln -s /system/bin/app_process.wrap /system/bin/app_process
+    fi
+
+    adb_shell cp /system/bin/sh /system/bin/sh-from-zygote
+    adb_shell chcon $CTX /system/bin/sh-from-zygote
 
     if [ $ENFORCING == 1 ]; then
         adb_shell setenforce 1
