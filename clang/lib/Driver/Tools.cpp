@@ -715,29 +715,6 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     }
   }
 
-  // Honor -mfpu=. ClangAs gives preference to -Wa,-mfpu=.
-  const Arg *FPUArg = Args.getLastArg(options::OPT_mfpu_EQ);
-  if (WaFPU) {
-    if (FPUArg)
-      D.Diag(clang::diag::warn_drv_unused_argument)
-          << FPUArg->getAsString(Args);
-    getARMFPUFeatures(D, WaFPU, Args, StringRef(WaFPU->getValue()).substr(6),
-                      Features);
-  } else if (FPUArg) {
-    getARMFPUFeatures(D, FPUArg, Args, FPUArg->getValue(), Features);
-  }
-
-  // Honor -mhwdiv=. ClangAs gives preference to -Wa,-mhwdiv=.
-  const Arg *HDivArg = Args.getLastArg(options::OPT_mhwdiv_EQ);
-  if (WaHDiv) {
-    if (HDivArg)
-      D.Diag(clang::diag::warn_drv_unused_argument)
-          << HDivArg->getAsString(Args);
-    getARMHWDivFeatures(D, WaHDiv, Args,
-                        StringRef(WaHDiv->getValue()).substr(8), Features);
-  } else if (HDivArg)
-    getARMHWDivFeatures(D, HDivArg, Args, HDivArg->getValue(), Features);
-
   // Check -march. ClangAs gives preference to -Wa,-march=.
   const Arg *ArchArg = Args.getLastArg(options::OPT_march_EQ);
   StringRef ArchName;
@@ -767,6 +744,38 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     CPUName = CPUArg->getValue();
     checkARMCPUName(D, CPUArg, Args, CPUName, ArchName, Triple);
   }
+
+  // Add CPU features for generic CPUs
+  if (CPUName == "native") {
+    llvm::StringMap<bool> HostFeatures;
+    if (llvm::sys::getHostCPUFeatures(HostFeatures))
+      for (auto &F : HostFeatures)
+        Features.push_back(
+            Args.MakeArgString((F.second ? "+" : "-") + F.first()));
+  }
+
+  // Honor -mfpu=. ClangAs gives preference to -Wa,-mfpu=.
+  const Arg *FPUArg = Args.getLastArg(options::OPT_mfpu_EQ);
+  if (WaFPU) {
+    if (FPUArg)
+      D.Diag(clang::diag::warn_drv_unused_argument)
+          << FPUArg->getAsString(Args);
+    getARMFPUFeatures(D, WaFPU, Args, StringRef(WaFPU->getValue()).substr(6),
+                      Features);
+  } else if (FPUArg) {
+    getARMFPUFeatures(D, FPUArg, Args, FPUArg->getValue(), Features);
+  }
+
+  // Honor -mhwdiv=. ClangAs gives preference to -Wa,-mhwdiv=.
+  const Arg *HDivArg = Args.getLastArg(options::OPT_mhwdiv_EQ);
+  if (WaHDiv) {
+    if (HDivArg)
+      D.Diag(clang::diag::warn_drv_unused_argument)
+          << HDivArg->getAsString(Args);
+    getARMHWDivFeatures(D, WaHDiv, Args,
+                        StringRef(WaHDiv->getValue()).substr(8), Features);
+  } else if (HDivArg)
+    getARMHWDivFeatures(D, HDivArg, Args, HDivArg->getValue(), Features);
 
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
