@@ -3644,9 +3644,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Use the last option from "-g" group. "-gline-tables-only" and "-gdwarf-x"
   // are preserved, all other debug options are substituted with "-g".
   Args.ClaimAllArgs(options::OPT_g_Group);
+  Arg *SplitDwarfArg = Args.getLastArg(options::OPT_gsplit_dwarf);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group)) {
-    if (A->getOption().matches(options::OPT_gline_tables_only) ||
-        A->getOption().matches(options::OPT_g1)) {
+    if ((A->getOption().matches(options::OPT_gline_tables_only) ||
+         A->getOption().matches(options::OPT_g1)) &&
+        (!SplitDwarfArg || A->getIndex() > SplitDwarfArg->getIndex())) {
       // FIXME: we should support specifying dwarf version with
       // -gline-tables-only.
       CmdArgs.push_back("-gline-tables-only");
@@ -3656,6 +3658,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           Triple.getOS() == llvm::Triple::FreeBSD ||
           Triple.getOS() == llvm::Triple::Solaris)
         CmdArgs.push_back("-gdwarf-2");
+      SplitDwarfArg = nullptr;
     } else if (A->getOption().matches(options::OPT_gdwarf_2))
       CmdArgs.push_back("-gdwarf-2");
     else if (A->getOption().matches(options::OPT_gdwarf_3))
@@ -3685,8 +3688,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -gsplit-dwarf should turn on -g and enable the backend dwarf
   // splitting and extraction.
   // FIXME: Currently only works on Linux.
-  if (getToolChain().getTriple().isOSLinux() &&
-      Args.hasArg(options::OPT_gsplit_dwarf)) {
+  if (getToolChain().getTriple().isOSLinux() && SplitDwarfArg) {
     CmdArgs.push_back("-g");
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-split-dwarf=Enable");
@@ -4970,8 +4972,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add the split debug info name to the command lines here so we
   // can propagate it to the backend.
-  bool SplitDwarf = Args.hasArg(options::OPT_gsplit_dwarf) &&
-                    getToolChain().getTriple().isOSLinux() &&
+  bool SplitDwarf = SplitDwarfArg && getToolChain().getTriple().isOSLinux() &&
                     (isa<AssembleJobAction>(JA) || isa<CompileJobAction>(JA) ||
                      isa<BackendJobAction>(JA));
   const char *SplitDwarfOut;

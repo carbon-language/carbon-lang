@@ -32,3 +32,20 @@
 // RUN: FileCheck -check-prefix=CHECK-IAS < %t %s
 //
 // CHECK-IAS: objcopy
+
+// RUN: %clang -target x86_64-unknown-linux-gnu -gsplit-dwarf -gmlt -S -### %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-GMLT-OVER-SPLIT < %t %s
+//
+// CHECK-GMLT-OVER-SPLIT: "-gline-tables-only"
+// CHECK-GMLT-OVER-SPLIT-NOT: "-g"
+// CHECK-GMLT-OVER-SPLIT-NOT: "-split-dwarf=Enable"
+// CHECK-GMLT-OVER-SPLIT-NOT: "-split-dwarf-file"
+
+// RUN: %clang -target x86_64-unknown-linux-gnu -gmlt -gsplit-dwarf -S -### %s 2> %t
+// RUN: FileCheck -check-prefix=CHECK-SPLIT-OVER-GMLT < %t %s
+//
+// CHECK-SPLIT-OVER-GMLT-NOT: "-gline-tables-only"
+// CHECK-SPLIT-OVER-GMLT: "-g"
+// CHECK-SPLIT-OVER-GMLT: "-split-dwarf=Enable"
+// CHECK-SPLIT-OVER-GMLT: "-split-dwarf-file"
+// CHECK-SPLIT-OVER-GMLT-NOT: "-gline-tables-only"
