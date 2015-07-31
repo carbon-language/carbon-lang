@@ -93,7 +93,7 @@ SANITIZER_INTERFACE_ATTRIBUTE char *__dfsw_strchr(const char *s, int c,
 DECLARE_WEAK_INTERCEPTOR_HOOK(dfsan_weak_hook_memcmp, uptr caller_pc,
                               const void *s1, const void *s2, size_t n,
                               dfsan_label s1_label, dfsan_label s2_label,
-                              dfsan_label n_label);
+                              dfsan_label n_label)
 
 SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_memcmp(const void *s1, const void *s2,
                                                 size_t n, dfsan_label s1_label,
@@ -162,7 +162,7 @@ __dfsw_strcasecmp(const char *s1, const char *s2, dfsan_label s1_label,
 DECLARE_WEAK_INTERCEPTOR_HOOK(dfsan_weak_hook_strncmp, uptr caller_pc,
                               const char *s1, const char *s2, size_t n,
                               dfsan_label s1_label, dfsan_label s2_label,
-                              dfsan_label n_label);
+                              dfsan_label n_label)
 
 SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_strncmp(const char *s1, const char *s2,
                                                  size_t n, dfsan_label s1_label,

@@ -220,7 +220,7 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
 }
 
 DECLARE_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_strncmp, uptr called_pc,
-                              const char *s1, const char *s2, uptr n);
+                              const char *s1, const char *s2, uptr n)
 
 INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
   if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
@@ -386,7 +386,7 @@ INTERCEPTOR(char *, strpbrk, const char *s1, const char *s2) {
 #if SANITIZER_INTERCEPT_MEMCMP
 
 DECLARE_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_memcmp, uptr called_pc,
-                              const void *s1, const void *s2, uptr n);
+                              const void *s1, const void *s2, uptr n)
 
 INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   void *ctx;
