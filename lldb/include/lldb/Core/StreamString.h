@@ -25,14 +25,13 @@ public:
                   uint32_t addr_size,
                   lldb::ByteOrder byte_order);
 
-    virtual
-    ~StreamString ();
+    ~StreamString () override;
 
-    virtual void
-    Flush ();
+    void
+    Flush () override;
 
-    virtual size_t
-    Write (const void *s, size_t length);
+    size_t
+    Write (const void *s, size_t length) override;
 
     void
     Clear();
@@ -60,8 +59,8 @@ public:
 
 protected:
     std::string m_packet;
-
 };
 
 } // namespace lldb_private
-#endif  // #ifndef liblldb_StreamString_h_
+
+#endif // liblldb_StreamString_h_

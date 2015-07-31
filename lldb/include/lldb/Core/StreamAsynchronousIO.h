@@ -22,14 +22,13 @@ class StreamAsynchronousIO :
 public:
     StreamAsynchronousIO (Debugger &debugger, bool for_stdout);
     
-    virtual ~StreamAsynchronousIO ();
+    ~StreamAsynchronousIO () override;
     
-    virtual void
-    Flush ();
+    void
+    Flush () override;
     
-    virtual size_t
-    Write (const void *src, size_t src_len);
-    
+    size_t
+    Write (const void *src, size_t src_len) override;
     
 private:
     Debugger &m_debugger;
@@ -38,4 +37,5 @@ private:
 };
 
 } // namespace lldb_private
-#endif // #ifndef liblldb_StreamAsynchronousIO_h
+
+#endif // liblldb_StreamAsynchronousIO_h

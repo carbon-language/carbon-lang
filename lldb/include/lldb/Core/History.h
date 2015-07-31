@@ -82,7 +82,6 @@ private:
     collection m_events;
     
     DISALLOW_COPY_AND_ASSIGN (HistorySource);
-
 };
     
 //----------------------------------------------------------------------
@@ -103,8 +102,7 @@ class HistorySourceUInt : public HistorySource
     {
     }
     
-    virtual 
-    ~HistorySourceUInt()
+    ~HistorySourceUInt() override
     {
     }
     
@@ -112,44 +110,44 @@ class HistorySourceUInt : public HistorySource
     // in the subclass of this class to produce a history event and push it
     // onto the end of the history stack.
     
-    virtual HistoryEvent
-    CreateHistoryEvent ()
+    HistoryEvent
+    CreateHistoryEvent () override
     {
         ++m_curr_id;
         return (HistoryEvent)m_curr_id;
     }
     
-    virtual void
-    DeleteHistoryEvent (HistoryEvent event)
+    void
+    DeleteHistoryEvent (HistoryEvent event) override
     {
         // Nothing to delete, the event contains the integer
     }
     
-    virtual void
-    DumpHistoryEvent (Stream &strm, HistoryEvent event);
+    void
+    DumpHistoryEvent (Stream &strm, HistoryEvent event) override;
     
-    virtual size_t
-    GetHistoryEventCount()
+    size_t
+    GetHistoryEventCount() override
     {
         return m_curr_id;
     }
     
-    virtual HistoryEvent
-    GetHistoryEventAtIndex (uint32_t idx)
+    HistoryEvent
+    GetHistoryEventAtIndex (uint32_t idx) override
     {
         return (HistoryEvent)((uintptr_t)idx);
     }
     
-    virtual HistoryEvent
-    GetCurrentHistoryEvent ()
+    HistoryEvent
+    GetCurrentHistoryEvent () override
     {
         return (HistoryEvent)m_curr_id;
     }
     
     // Return 0 when lhs == rhs, 1 if lhs > rhs, or -1 if lhs < rhs.
-    virtual int
+    int
     CompareHistoryEvents (const HistoryEvent lhs, 
-                          const HistoryEvent rhs)
+                          const HistoryEvent rhs) override
     {
         uintptr_t lhs_uint = (uintptr_t)lhs;
         uintptr_t rhs_uint = (uintptr_t)rhs;
@@ -160,8 +158,8 @@ class HistorySourceUInt : public HistorySource
         return 0;
     }
     
-    virtual bool
-    IsCurrentHistoryEvent (const HistoryEvent event)
+    bool
+    IsCurrentHistoryEvent (const HistoryEvent event) override
     {
         return (uintptr_t)event == m_curr_id;
     }
@@ -171,7 +169,6 @@ protected:
     uintptr_t m_curr_id; // The current value of the history unsigned unteger
 };
 
-
 } // namespace lldb_private
 
-#endif	// lldb_History_h_
+#endif // lldb_History_h_

@@ -30,20 +30,19 @@ public:
                              uint32_t line_no,
                              bool check_inlines);
 
-    virtual
-    ~AddressResolverFileLine ();
+    ~AddressResolverFileLine () override;
 
-    virtual Searcher::CallbackReturn
+    Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
                     SymbolContext &context,
                     Address *addr,
-                    bool containing);
+                    bool containing) override;
 
-    virtual Searcher::Depth
-    GetDepth ();
+    Searcher::Depth
+    GetDepth () override;
 
-    virtual void
-    GetDescription (Stream *s);
+    void
+    GetDescription (Stream *s) override;
 
 protected:
     FileSpec m_file_spec; // This is the file spec we are looking for.
@@ -56,4 +55,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_AddressResolverFileLine_h_
+#endif // liblldb_AddressResolverFileLine_h_

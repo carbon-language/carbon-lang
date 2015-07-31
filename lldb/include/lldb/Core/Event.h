@@ -49,7 +49,6 @@ private:
     }
 
     DISALLOW_COPY_AND_ASSIGN (EventData);
-
 };
 
 //----------------------------------------------------------------------
@@ -67,17 +66,16 @@ public:
 
     EventDataBytes (const void *src, size_t src_len);
 
-    virtual
-    ~EventDataBytes();
+    ~EventDataBytes() override;
 
     //------------------------------------------------------------------
     // Member functions
     //------------------------------------------------------------------
-    virtual const ConstString &
-    GetFlavor () const;
+    const ConstString &
+    GetFlavor () const override;
 
-    virtual void
-    Dump (Stream *s) const;
+    void
+    Dump (Stream *s) const override;
 
     const void *
     GetBytes() const;
@@ -113,7 +111,6 @@ private:
     std::string m_bytes;
 
     DISALLOW_COPY_AND_ASSIGN (EventDataBytes);
-
 };
 
 //----------------------------------------------------------------------
@@ -184,7 +181,6 @@ public:
         m_data_ap.reset();
     }
 
-
 private:
     // This is only called by Listener when it pops an event off the queue for
     // the listener.  It calls the Event Data's DoOnRemoval() method, which is
@@ -214,4 +210,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_Event_h_
+#endif // liblldb_Event_h_

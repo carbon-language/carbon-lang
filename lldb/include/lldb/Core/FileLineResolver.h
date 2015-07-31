@@ -38,20 +38,19 @@ public:
                       uint32_t line_no,
                       bool check_inlines);
 
-    virtual
-    ~FileLineResolver ();
+    ~FileLineResolver () override;
 
-    virtual Searcher::CallbackReturn
+    Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
                     SymbolContext &context,
                     Address *addr,
-                    bool containing);
+                    bool containing) override;
 
-    virtual Searcher::Depth
-    GetDepth ();
+    Searcher::Depth
+    GetDepth () override;
 
-    virtual void
-    GetDescription (Stream *s);
+    void
+    GetDescription (Stream *s) override;
 
     const SymbolContextList &
     GetFileLineMatches()
@@ -78,4 +77,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_FileLineResolver_h_
+#endif // liblldb_FileLineResolver_h_

@@ -38,20 +38,19 @@ public:
                          const char *method,
                          AddressResolver::MatchType type);
 
-    virtual
-    ~AddressResolverName ();
+    ~AddressResolverName () override;
 
-    virtual Searcher::CallbackReturn
+    Searcher::CallbackReturn
     SearchCallback (SearchFilter &filter,
                     SymbolContext &context,
                     Address *addr,
-                    bool containing);
+                    bool containing) override;
 
-    virtual Searcher::Depth
-    GetDepth ();
+    Searcher::Depth
+    GetDepth () override;
 
-    virtual void
-    GetDescription (Stream *s);
+    void
+    GetDescription (Stream *s) override;
 
 protected:
     ConstString m_func_name;
@@ -65,4 +64,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_AddressResolverName_h_
+#endif // liblldb_AddressResolverName_h_

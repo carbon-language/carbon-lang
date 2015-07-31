@@ -54,8 +54,7 @@ public:
 
     AddressResolver ();
 
-    virtual
-    ~AddressResolver ();
+    ~AddressResolver () override;
 
     virtual void
     ResolveAddress (SearchFilter &filter);
@@ -64,8 +63,8 @@ public:
     ResolveAddressInModules (SearchFilter &filter,
                              ModuleList &modules);
 
-    virtual void
-    GetDescription (Stream *s) = 0;
+    void
+    GetDescription (Stream *s) override = 0;
 
     std::vector<AddressRange> &
     GetAddressRanges ();
@@ -86,4 +85,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_AddressResolver_h_
+#endif // liblldb_AddressResolver_h_

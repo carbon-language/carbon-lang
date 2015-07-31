@@ -24,14 +24,13 @@ class StreamCallback :
 public:
     StreamCallback (lldb::LogOutputCallback callback, void *baton);
     
-    virtual ~StreamCallback ();
+    ~StreamCallback () override;
     
-    virtual void
-    Flush ();
+    void
+    Flush () override;
     
-    virtual size_t
-    Write (const void *src, size_t src_len);
-    
+    size_t
+    Write (const void *src, size_t src_len) override;
     
 private:
     typedef std::map<lldb::tid_t, StreamString> collection;
@@ -44,4 +43,5 @@ private:
 };
 
 } // namespace lldb_private
-#endif // #ifndef liblldb_StreamCallback_h
+
+#endif // liblldb_StreamCallback_h

@@ -59,8 +59,7 @@ public:
         m_streams = rhs.m_streams;
     }
 
-    virtual
-    ~StreamTee ()
+    ~StreamTee () override
     {
     }
 
@@ -76,8 +75,8 @@ public:
         return *this;
     }
 
-    virtual void
-    Flush ()
+    void
+    Flush () override
     {
         Mutex::Locker locker (m_streams_mutex);
         collection::iterator pos, end;
@@ -93,8 +92,8 @@ public:
         }
     }
 
-    virtual size_t
-    Write (const void *s, size_t length)
+    size_t
+    Write (const void *s, size_t length) override
     {
         Mutex::Locker locker (m_streams_mutex);
         if (m_streams.empty())
@@ -164,7 +163,6 @@ public:
         m_streams[idx] = stream_sp;
     }
     
-
 protected:
     typedef std::vector<lldb::StreamSP> collection;
     mutable Mutex m_streams_mutex;
@@ -172,4 +170,5 @@ protected:
 };
 
 } // namespace lldb_private
-#endif  // #ifndef liblldb_StreamTee_h_
+
+#endif // liblldb_StreamTee_h_
