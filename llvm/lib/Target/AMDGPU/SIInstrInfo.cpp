@@ -2305,7 +2305,7 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       Inst->addOperand(MachineOperand::CreateImm(0));
     }
 
-    addDescImplicitUseDef(NewDesc, Inst);
+    Inst->addImplicitDefUseOperands(*Inst->getParent()->getParent());
 
     if (Opcode == AMDGPU::S_BFE_I32 || Opcode == AMDGPU::S_BFE_U32) {
       const MachineOperand &OffsetWidthOp = Inst->getOperand(2);
@@ -2591,24 +2591,6 @@ void SIInstrInfo::splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
     .addImm(AMDGPU::sub1);
 
   MRI.replaceRegWith(Dest.getReg(), ResultReg);
-}
-
-void SIInstrInfo::addDescImplicitUseDef(const MCInstrDesc &NewDesc,
-                                        MachineInstr *Inst) const {
-  // Add the implict and explicit register definitions.
-  if (NewDesc.ImplicitUses) {
-    for (unsigned i = 0; NewDesc.ImplicitUses[i]; ++i) {
-      unsigned Reg = NewDesc.ImplicitUses[i];
-      Inst->addOperand(MachineOperand::CreateReg(Reg, false, true));
-    }
-  }
-
-  if (NewDesc.ImplicitDefs) {
-    for (unsigned i = 0; NewDesc.ImplicitDefs[i]; ++i) {
-      unsigned Reg = NewDesc.ImplicitDefs[i];
-      Inst->addOperand(MachineOperand::CreateReg(Reg, true, true));
-    }
-  }
 }
 
 unsigned SIInstrInfo::findUsedSGPR(const MachineInstr *MI,

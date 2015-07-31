@@ -58,8 +58,6 @@ private:
   void splitScalar64BitBFE(SmallVectorImpl<MachineInstr *> &Worklist,
                            MachineInstr *Inst) const;
 
-  void addDescImplicitUseDef(const MCInstrDesc &Desc, MachineInstr *MI) const;
-
   bool checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
                                     MachineInstr *MIb) const;
 
