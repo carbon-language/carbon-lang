@@ -202,6 +202,10 @@ add_compile_flags_if_supported(
 if (LIBCXX_ENABLE_WERROR)
   add_compile_flags_if_supported(-Werror)
   add_compile_flags_if_supported(-WX)
+else()
+  # TODO(EricWF) Remove this. We shouldn't be suppressing errors when -Werror is
+  # added elsewhere.
+  add_compile_flags_if_supported(-Wno-error)
 endif()
 if (LIBCXX_ENABLE_PEDANTIC)
   add_compile_flags_if_supported(-pedantic)
