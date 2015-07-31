@@ -191,11 +191,13 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
       fail(DL, DAG, "WebAssembly hasn't implemented split arguments");
     if (In.VT != MVT::i32)
       fail(DL, DAG, "WebAssembly hasn't implemented non-i32 arguments");
-    if (!In.Used)
-      fail(DL, DAG, "WebAssembly hasn't implemented unused arguments");
     // FIXME Do something with In.getOrigAlign()?
-    InVals.push_back(DAG.getNode(WebAssemblyISD::ARGUMENT, DL, In.VT,
-                                 DAG.getTargetConstant(ArgNo++, DL, MVT::i32)));
+    InVals.push_back(
+        In.Used
+            ? DAG.getNode(WebAssemblyISD::ARGUMENT, DL, In.VT,
+                          DAG.getTargetConstant(ArgNo, DL, MVT::i32))
+            : DAG.getNode(ISD::UNDEF, DL, In.VT));
+    ++ArgNo;
   }
 
   return Chain;
