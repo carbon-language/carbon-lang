@@ -76,6 +76,12 @@ int main() {
   auto c = count(s.begin(), s.end(), 43);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: this STL algorithm call should be
   // CHECK-FIXES: {{^  }}auto c = s.count(43);{{$}}
+
+#define SECOND(x, y, z) y
+  SECOND(q,std::count(s.begin(), s.end(), 22),w);
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: this STL algorithm call should be
+  // CHECK-FIXES: {{^  }}SECOND(q,s.count(22),w);{{$}}
+
   it = find_if(s.begin(), s.end(), [](int) { return false; });
 
   std::multiset<int> ms;
