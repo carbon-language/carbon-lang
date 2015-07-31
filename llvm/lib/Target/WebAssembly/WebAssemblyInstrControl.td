@@ -29,5 +29,6 @@ let hasSideEffects = 1, isReturn = 1, isTerminator = 1, hasCtrlDep = 1,
     isBarrier = 1 in {
 //FIXME return more than just int32.
 def RETURN : I<(outs), (ins Int32:$val), [(WebAssemblyreturn Int32:$val)]>;
+def RETURN_VOID : I<(outs), (ins), [(WebAssemblyreturn)]>;
 } // hasSideEffects = 1, isReturn = 1, isTerminator = 1, hasCtrlDep = 1,
   // isBarrier = 1

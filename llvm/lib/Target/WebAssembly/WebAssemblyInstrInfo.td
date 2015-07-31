@@ -26,7 +26,7 @@ def HasSIMD128 : Predicate<"Subtarget->hasSIMD128()">,
 //===----------------------------------------------------------------------===//
 
 def SDT_WebAssemblyArgument : SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>;
-def SDT_WebAssemblyReturn   : SDTypeProfile<0, 1, []>;
+def SDT_WebAssemblyReturn   : SDTypeProfile<0, -1, []>;
 
 //===----------------------------------------------------------------------===//
 // WebAssembly-specific DAG Nodes.

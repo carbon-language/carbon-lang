@@ -146,8 +146,7 @@ SDValue WebAssemblyTargetLowering::LowerReturn(
 
   SmallVector<SDValue, 4> RetOps(1, Chain);
   RetOps.append(OutVals.begin(), OutVals.end());
-  const SDValue Ops[] = {Chain, OutVals.front()};
-  Chain = DAG.getNode(WebAssemblyISD::RETURN, DL, MVT::Other, Ops);
+  Chain = DAG.getNode(WebAssemblyISD::RETURN, DL, MVT::Other, RetOps);
 
   return Chain;
 }
