@@ -224,6 +224,11 @@ namespace llvm {
     FullDependence(Instruction *Src, Instruction *Dst, bool LoopIndependent,
                    unsigned Levels);
 
+    FullDependence(FullDependence &&RHS)
+        : Dependence(RHS), Levels(RHS.Levels),
+          LoopIndependent(RHS.LoopIndependent), Consistent(RHS.Consistent),
+          DV(std::move(RHS.DV)) {}
+
     /// isLoopIndependent - Returns true if this is a loop-independent
     /// dependence.
     bool isLoopIndependent() const override { return LoopIndependent; }
