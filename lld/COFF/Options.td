@@ -59,8 +59,8 @@ def incl : Joined<["/", "-"], "include:">,
 def deffile : Joined<["/", "-"], "def:">,
     HelpText<"Use module-definition file">;
 
-def debug : F<"debug">;
-def dll : F<"dll">;
+def debug : F<"debug">, HelpText<"Embed a symbol table in the image">;
+def dll : F<"dll">, HelpText<"Create a DLL">;
 def nodefaultlib_all : F<"nodefaultlib">;
 def noentry : F<"noentry">;
 def profile : F<"profile">;
