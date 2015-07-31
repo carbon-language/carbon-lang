@@ -263,7 +263,7 @@ DEFINE_REAL_PTHREAD_FUNCTIONS
 
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 
-#if SANITIZER_ANDROID
+#if SANITIZER_ANDROID && !defined(_LP64)
 INTERCEPTOR(void*, bsd_signal, int signum, void *handler) {
   if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(bsd_signal)(signum, handler);
@@ -769,7 +769,7 @@ void InitializeAsanInterceptors() {
   ASAN_INTERCEPT_FUNC(longjmp);
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
   ASAN_INTERCEPT_FUNC(sigaction);
-#if SANITIZER_ANDROID
+#if SANITIZER_ANDROID && !defined(_LP64)
   ASAN_INTERCEPT_FUNC(bsd_signal);
 #else
   ASAN_INTERCEPT_FUNC(signal);
