@@ -233,7 +233,7 @@ class TraceState {
   size_t StopTraceRecording(FuzzerRandomBase &Rand) {
     RecordingTraces = false;
     std::random_shuffle(Mutations.begin(), Mutations.end(), Rand);
-    return Mutations.size();
+    return std::min(Mutations.size(), 128UL);
   }
 
   void ApplyTraceBasedMutation(size_t Idx, fuzzer::Unit *U);
@@ -307,16 +307,23 @@ void TraceState::DFSanSwitchCallback(uint64_t PC, size_t ValSizeInBits,
   if (!L) return;  // Not actionable.
   LabelRange LR = GetLabelRange(L);
   size_t ValSize = ValSizeInBits / 8;
-  for (size_t Pos = LR.Beg; Pos + ValSize <= LR.End; Pos++) {
-    for (size_t i = 0; i < NumCases; i++) {
+  bool TryShort = IsTwoByteData(Val);
+  for (size_t i = 0; i < NumCases; i++)
+    TryShort &= IsTwoByteData(Cases[i]);
+
+  for (size_t Pos = LR.Beg; Pos + ValSize <= LR.End; Pos++)
+    for (size_t i = 0; i < NumCases; i++)
       Mutations.push_back({Pos, ValSize, Cases[i]});
-      Mutations.push_back({Pos, ValSize, Cases[i] + 1});
-      Mutations.push_back({Pos, ValSize, Cases[i] - 1});
-    }
-  }
+
+  if (TryShort)
+    for (size_t Pos = LR.Beg; Pos + 2 <= LR.End; Pos++)
+      for (size_t i = 0; i < NumCases; i++)
+        Mutations.push_back({Pos, 2, Cases[i]});
+
   if (Options.Verbosity >= 3)
-    Printf("DFSanSwitchCallback: PC %lx Val %zd # %zd L %d\n", PC, Val,
-           NumCases, L);
+    Printf("DFSanSwitchCallback: PC %lx Val %zd SZ %zd # %zd L %d: {%d, %d} "
+           "TryShort %d\n",
+           PC, Val, ValSize, NumCases, L, LR.Beg, LR.End, TryShort);
 }
 
 int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
@@ -365,8 +372,21 @@ void TraceState::TraceSwitchCallback(uintptr_t PC, size_t ValSizeInBits,
                                      uint64_t Val, size_t NumCases,
                                      uint64_t *Cases) {
   if (!RecordingTraces) return;
+  size_t ValSize = ValSizeInBits / 8;
+  bool TryShort = IsTwoByteData(Val);
   for (size_t i = 0; i < NumCases; i++)
-    TryToAddDesiredData(Val, Cases[i], ValSizeInBits / 8);
+    TryShort &= IsTwoByteData(Cases[i]);
+
+  if (Options.Verbosity >= 3)
+    Printf("TraceSwitch: %p %zd # %zd; TryShort %d\n", PC, Val, NumCases,
+           TryShort);
+
+  for (size_t i = 0; i < NumCases; i++) {
+    TryToAddDesiredData(Val, Cases[i], ValSize);
+    if (TryShort)
+      TryToAddDesiredData(Val, Cases[i], 2);
+  }
+
 }
 
 static TraceState *TS;

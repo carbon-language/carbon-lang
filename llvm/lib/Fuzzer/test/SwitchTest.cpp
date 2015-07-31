@@ -25,9 +25,28 @@ bool Switch(const uint8_t *Data, size_t Size) {
   return false;
 }
 
+bool ShortSwitch(const uint8_t *Data, size_t Size) {
+  short X;
+  if (Size < sizeof(short)) return false;
+  memcpy(&X, Data, sizeof(short));
+  switch(X) {
+    case 42: Sink = __LINE__; break;
+    case 402: Sink = __LINE__; break;
+    case 4002: Sink = __LINE__; break;
+    case 5002: Sink = __LINE__; break;
+    case 7002: Sink = __LINE__; break;
+    case 9002: Sink = __LINE__; break;
+    case 14002: Sink = __LINE__; break;
+    case 21402: return true;
+  }
+  return false;
+}
+
 extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
-  if (Switch<int>(Data, Size) && Size >= 12 &&
-      Switch<uint64_t>(Data + 4, Size - 4)) {
+  if (Size >= 4  && Switch<int>(Data, Size) &&
+      Size >= 12 && Switch<uint64_t>(Data + 4, Size - 4) &&
+      Size >= 14 && ShortSwitch(Data + 12, 2)
+    ) {
     fprintf(stderr, "BINGO; Found the target, exiting\n");
     exit(1);
   }
