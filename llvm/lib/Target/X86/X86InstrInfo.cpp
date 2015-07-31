@@ -6298,14 +6298,30 @@ hasHighOperandLatency(const TargetSchedModel &SchedModel,
   return isHighLatencyDef(DefMI->getOpcode());
 }
 
-static bool hasVirtualRegDefsInBasicBlock(const MachineInstr &Inst,
-                                          const MachineBasicBlock *MBB) {
-  assert(Inst.getNumOperands() == 3 && "Reassociation needs binary operators");
+static bool hasReassociableOperands(const MachineInstr &Inst,
+                                    const MachineBasicBlock *MBB) {
+  assert((Inst.getNumOperands() == 3 || Inst.getNumOperands() == 4) &&
+         "Reassociation needs binary operators");
   const MachineOperand &Op1 = Inst.getOperand(1);
   const MachineOperand &Op2 = Inst.getOperand(2);
   const MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
 
-  // We need virtual register definitions.
+  // Integer binary math/logic instructions have a third source operand:
+  // the EFLAGS register. That operand must be both defined here and never
+  // used; ie, it must be dead. If the EFLAGS operand is live, then we can
+  // not change anything because rearranging the operands could affect other
+  // instructions that depend on the exact status flags (zero, sign, etc.)
+  // that are set by using these particular operands with this operation.
+  if (Inst.getNumOperands() == 4) {
+    assert(Inst.getOperand(3).isReg() &&
+           Inst.getOperand(3).getReg() == X86::EFLAGS &&
+           "Unexpected operand in reassociable instruction");
+    if (!Inst.getOperand(3).isDead())
+      return false;
+  }
+  
+  // We need virtual register definitions for the operands that we will
+  // reassociate.
   MachineInstr *MI1 = nullptr;
   MachineInstr *MI2 = nullptr;
   if (Op1.isReg() && TargetRegisterInfo::isVirtualRegister(Op1.getReg()))
@@ -6320,7 +6336,7 @@ static bool hasVirtualRegDefsInBasicBlock(const MachineInstr &Inst,
   return false;
 }
 
-static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
+static bool hasReassociableSibling(const MachineInstr &Inst, bool &Commuted) {
   const MachineBasicBlock *MBB = Inst.getParent();
   const MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
   MachineInstr *MI1 = MRI.getUniqueVRegDef(Inst.getOperand(1).getReg());
@@ -6338,7 +6354,7 @@ static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
   //    operands in the same basic block as Inst.
   // 3. The previous instruction's result must only be used by Inst.
   if (MI1->getOpcode() == AssocOpcode &&
-      hasVirtualRegDefsInBasicBlock(*MI1, MBB) &&
+      hasReassociableOperands(*MI1, MBB) &&
       MRI.hasOneNonDBGUse(MI1->getOperand(0).getReg()))
     return true;
 
@@ -6350,6 +6366,10 @@ static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
 //       2. Other math / logic operations (and, or)
 static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   switch (Inst.getOpcode()) {
+  case X86::IMUL16rr:
+  case X86::IMUL32rr:
+  case X86::IMUL64rr:
+    return true;
   case X86::ADDSDrr:
   case X86::ADDSSrr:
   case X86::VADDSDrr:
@@ -6369,14 +6389,14 @@ static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
 /// If the instruction's operands must be commuted to have a previous
 /// instruction of the same type define the first source operand, Commuted will
 /// be set to true.
-static bool isReassocCandidate(const MachineInstr &Inst, bool &Commuted) {
+static bool isReassociationCandidate(const MachineInstr &Inst, bool &Commuted) {
   // 1. The operation must be associative and commutative.
   // 2. The instruction must have virtual register definitions for its
   //    operands in the same basic block.
   // 3. The instruction must have a reassociable sibling.
   if (isAssociativeAndCommutative(Inst) &&
-      hasVirtualRegDefsInBasicBlock(Inst, Inst.getParent()) &&
-      hasReassocSibling(Inst, Commuted))
+      hasReassociableOperands(Inst, Inst.getParent()) &&
+      hasReassociableSibling(Inst, Commuted))
     return true;
 
   return false;
@@ -6399,7 +6419,7 @@ bool X86InstrInfo::getMachineCombinerPatterns(MachineInstr &Root,
   //   C = B op Y (Root)
 
   bool Commute;
-  if (isReassocCandidate(Root, Commute)) {
+  if (isReassociationCandidate(Root, Commute)) {
     // We found a sequence of instructions that may be suitable for a
     // reassociation of operands to increase ILP. Specify each commutation
     // possibility for the Prev instruction in the sequence and let the
