@@ -300,7 +300,7 @@ template <> struct MappingTraits<MachineConstantPoolValue> {
 
 struct MachineJumpTable {
   struct Entry {
-    unsigned ID;
+    UnsignedValue ID;
     std::vector<FlowStringValue> Blocks;
   };
 

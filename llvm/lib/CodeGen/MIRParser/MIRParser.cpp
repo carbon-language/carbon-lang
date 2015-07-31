@@ -582,8 +582,11 @@ bool MIRParserImpl::initializeJumpTableInfo(
       Blocks.push_back(MBB);
     }
     unsigned Index = JTI->createJumpTableIndex(Blocks);
-    // TODO: Report an error when the same jump table slot ID is redefined.
-    PFS.JumpTableSlots.insert(std::make_pair(Entry.ID, Index));
+    if (!PFS.JumpTableSlots.insert(std::make_pair(Entry.ID.Value, Index))
+             .second)
+      return error(Entry.ID.SourceRange.Start,
+                   Twine("redefinition of jump table entry '%jump-table.") +
+                       Twine(Entry.ID.Value) + "'");
   }
   return false;
 }
