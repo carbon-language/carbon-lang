@@ -90,7 +90,7 @@ ErrorOr<MachineTypes> getMachineType(StringRef S) {
                         .Default(IMAGE_FILE_MACHINE_UNKNOWN);
   if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
-  llvm::errs() << "unknown /machine argument" << S << "\n";
+  llvm::errs() << "unknown /machine argument: " << S << "\n";
   return make_error_code(LLDError::InvalidOption);
 }
 
