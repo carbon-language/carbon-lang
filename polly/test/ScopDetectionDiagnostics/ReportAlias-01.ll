@@ -56,12 +56,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !10 = !{i32 2, !"Dwarf Version", i32 4}
 !11 = !{i32 2, !"Debug Info Version", i32 3}
 !12 = !{!"clang version 3.6.0 "}
-!13 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "A", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!13 = !DILocalVariable(name: "A", line: 1, arg: 1, scope: !4, file: !5, type: !8)
 !14 = !DILocation(line: 1, column: 12, scope: !4)
-!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "B", line: 1, arg: 2, scope: !4, file: !5, type: !8)
+!15 = !DILocalVariable(name: "B", line: 1, arg: 2, scope: !4, file: !5, type: !8)
 !16 = !DILocation(line: 1, column: 21, scope: !4)
 !17 = !{i32 0}
-!18 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 2, scope: !19, file: !5, type: !9)
+!18 = !DILocalVariable(name: "i", line: 2, scope: !19, file: !5, type: !9)
 !19 = distinct !DILexicalBlock(line: 2, column: 3, file: !1, scope: !4)
 !20 = !DILocation(line: 2, column: 12, scope: !19)
 !21 = !DILocation(line: 2, column: 8, scope: !19)
