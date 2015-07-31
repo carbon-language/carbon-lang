@@ -193,6 +193,7 @@ ScalarEnumerationTraits<ELFYAML::ELF_EM>::enumeration(IO &IO,
   ECase(EM_VIDEOCORE5)
   ECase(EM_78KOR)
   ECase(EM_56800EX)
+  ECase(EM_AMDGPU)
 #undef ECase
 }
 
