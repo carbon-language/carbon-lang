@@ -171,6 +171,14 @@ ErrorOr<uint64_t> COFFObjectFile::getSymbolAddress(DataRefImpl Ref) const {
   if (std::error_code EC = getSection(SectionNumber, Section))
     return EC;
   Result += Section->VirtualAddress;
+
+  // The section VirtualAddress does not include ImageBase, and we want to
+  // return virtual addresses.
+  if (PE32Header)
+    Result += PE32Header->ImageBase;
+  else if (PE32PlusHeader)
+    Result += PE32Header->ImageBase;
+
   return Result;
 }
 
