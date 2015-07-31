@@ -37,7 +37,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !13 = !DILocation(line: 653, column: 5, scope: !14)
 !14 = distinct !DILexicalBlock(line: 652, column: 35, file: !20, scope: !15)
 !15 = distinct !DILexicalBlock(line: 616, column: 1, file: !20, scope: !1)
-!16 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "do_tab_convert", line: 853, scope: !17, file: !2, type: !6)
+!16 = !DILocalVariable(name: "do_tab_convert", line: 853, scope: !17, file: !2, type: !6)
 !17 = distinct !DILexicalBlock(line: 850, column: 12, file: !20, scope: !14)
 !18 = !DILocation(line: 853, column: 11, scope: !17)
 !19 = !DILocation(line: 853, column: 29, scope: !17)

@@ -40,7 +40,7 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !10 = !DISubroutineType(types: !11)
 !11 = !{null}
 !12 = !{!13}
-!13 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "xyz", line: 8, scope: !9, file: !5, type: !14)
+!13 = !DILocalVariable(name: "xyz", line: 8, scope: !9, file: !5, type: !14)
 !14 = !DICompositeType(tag: DW_TAG_structure_type, name: "X", line: 8, size: 64, align: 32, file: !1, scope: !9, elements: !15)
 !15 = !{!16, !17}
 !16 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 8, size: 32, align: 32, file: !1, scope: !14, baseType: !8)

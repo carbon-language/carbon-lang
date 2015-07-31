@@ -39,7 +39,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!5}
 !llvm.module.flags = !{!28}
 
-!0 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "s1", line: 3, scope: !1, file: !4, type: !9)
+!0 = !DILocalVariable(name: "s1", line: 3, scope: !1, file: !4, type: !9)
 !1 = distinct !DILexicalBlock(line: 3, column: 0, file: !25, scope: !2)
 !2 = distinct !DILexicalBlock(line: 3, column: 0, file: !25, scope: !3)
 !3 = !DISubprogram(name: "bar", linkageName: "_Z3barv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 3, file: !25, scope: !4, type: !6, function: i32 ()* @_Z3barv)
@@ -57,7 +57,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !25, scope: !4, baseType: !9)
 !16 = !DILocation(line: 3, scope: !1)
 !17 = !DILocation(line: 3, scope: !3)
-!18 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 3, arg: 1, scope: !12, file: !10, type: !19)
+!18 = !DILocalVariable(name: "this", line: 3, arg: 1, scope: !12, file: !10, type: !19)
 !19 = !DIDerivedType(tag: DW_TAG_const_type, size: 64, align: 64, flags: DIFlagArtificial, file: !25, scope: !4, baseType: !20)
 !20 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !25, scope: !4, baseType: !9)
 !21 = !DILocation(line: 3, scope: !12)

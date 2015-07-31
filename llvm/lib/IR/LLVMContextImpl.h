@@ -759,7 +759,6 @@ template <> struct MDNodeKeyImpl<DIGlobalVariable> {
 };
 
 template <> struct MDNodeKeyImpl<DILocalVariable> {
-  unsigned Tag;
   Metadata *Scope;
   StringRef Name;
   Metadata *File;
@@ -768,23 +767,23 @@ template <> struct MDNodeKeyImpl<DILocalVariable> {
   unsigned Arg;
   unsigned Flags;
 
-  MDNodeKeyImpl(unsigned Tag, Metadata *Scope, StringRef Name, Metadata *File,
-                unsigned Line, Metadata *Type, unsigned Arg, unsigned Flags)
-      : Tag(Tag), Scope(Scope), Name(Name), File(File), Line(Line), Type(Type),
-        Arg(Arg), Flags(Flags) {}
+  MDNodeKeyImpl(Metadata *Scope, StringRef Name, Metadata *File, unsigned Line,
+                Metadata *Type, unsigned Arg, unsigned Flags)
+      : Scope(Scope), Name(Name), File(File), Line(Line), Type(Type), Arg(Arg),
+        Flags(Flags) {}
   MDNodeKeyImpl(const DILocalVariable *N)
-      : Tag(N->getTag()), Scope(N->getRawScope()), Name(N->getName()),
-        File(N->getRawFile()), Line(N->getLine()), Type(N->getRawType()),
-        Arg(N->getArg()), Flags(N->getFlags()) {}
+      : Scope(N->getRawScope()), Name(N->getName()), File(N->getRawFile()),
+        Line(N->getLine()), Type(N->getRawType()), Arg(N->getArg()),
+        Flags(N->getFlags()) {}
 
   bool isKeyOf(const DILocalVariable *RHS) const {
-    return Tag == RHS->getTag() && Scope == RHS->getRawScope() &&
-           Name == RHS->getName() && File == RHS->getRawFile() &&
-           Line == RHS->getLine() && Type == RHS->getRawType() &&
-           Arg == RHS->getArg() && Flags == RHS->getFlags();
+    return Scope == RHS->getRawScope() && Name == RHS->getName() &&
+           File == RHS->getRawFile() && Line == RHS->getLine() &&
+           Type == RHS->getRawType() && Arg == RHS->getArg() &&
+           Flags == RHS->getFlags();
   }
   unsigned getHashValue() const {
-    return hash_combine(Tag, Scope, Name, File, Line, Type, Arg, Flags);
+    return hash_combine(Scope, Name, File, Line, Type, Arg, Flags);
   }
 };
 

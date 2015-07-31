@@ -85,7 +85,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !26 = !DIDerivedType(tag: DW_TAG_member, name: "d", line: 11, size: 32, align: 32, flags: DIFlagPublic, file: !33, scope: !13, baseType: !9)
 !27 = !DIGlobalVariable(name: "b", linkageName: "_ZN1C1bE", line: 15, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @_ZN1C1bE, declaration: !19)
 !28 = !DIGlobalVariable(name: "c", linkageName: "_ZN1C1cE", line: 16, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @_ZN1C1cE, declaration: !23)
-!29 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "instance_C", line: 20, scope: !5, file: !6, type: !13)
+!29 = !DILocalVariable(name: "instance_C", line: 20, scope: !5, file: !6, type: !13)
 !30 = !DILocation(line: 20, scope: !5)
 !31 = !DILocation(line: 21, scope: !5)
 !32 = !DILocation(line: 22, scope: !5)

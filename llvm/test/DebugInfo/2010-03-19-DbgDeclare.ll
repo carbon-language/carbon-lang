@@ -12,7 +12,7 @@ entry:
 !2 = !DICompileUnit(language: DW_LANG_Mips_Assembler, producer: "clang version 3.3 ", isOptimized: false, emissionKind: 1, file: !4, enums: !3, retainedTypes: !3, subprograms: !3, globals: !3, imports:  !3)
 !3 = !{}
 !0 = !DILocation(line: 662302, column: 26, scope: !1)
-!1 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !6)
+!1 = !DILocalVariable(name: "foo", scope: !6)
 !4 = !DIFile(filename: "scratch.cpp", directory: "/usr/local/google/home/blaikie/dev/scratch")
 !6 = !DISubprogram()
 

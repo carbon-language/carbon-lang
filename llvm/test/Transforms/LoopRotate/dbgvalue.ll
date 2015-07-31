@@ -72,7 +72,7 @@ for.body:
 
 for.inc:
   %dec = add i64 %i.0, -1
-  tail call void @llvm.dbg.value(metadata i64 %dec, i64 0, metadata !DILocalVariable(tag: DW_TAG_auto_variable, scope: !0), metadata !DIExpression()), !dbg !DILocation(scope: !0)
+  tail call void @llvm.dbg.value(metadata i64 %dec, i64 0, metadata !DILocalVariable(scope: !0), metadata !DIExpression()), !dbg !DILocation(scope: !0)
   br label %for.cond
 
 for.end:
@@ -90,11 +90,11 @@ for.end:
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 32, arg: 1, scope: !0, file: !1, type: !5)
+!6 = !DILocalVariable(name: "x", line: 32, arg: 1, scope: !0, file: !1, type: !5)
 !7 = !DILocation(line: 32, column: 13, scope: !0)
-!8 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 32, arg: 2, scope: !0, file: !1, type: !5)
+!8 = !DILocalVariable(name: "y", line: 32, arg: 2, scope: !0, file: !1, type: !5)
 !9 = !DILocation(line: 32, column: 20, scope: !0)
-!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "z", line: 32, arg: 3, scope: !0, file: !1, type: !5)
+!10 = !DILocalVariable(name: "z", line: 32, arg: 3, scope: !0, file: !1, type: !5)
 !11 = !DILocation(line: 32, column: 27, scope: !0)
 !12 = !DILocation(line: 33, column: 3, scope: !13)
 !13 = distinct !DILexicalBlock(line: 32, column: 30, file: !18, scope: !0)

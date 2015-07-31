@@ -56,9 +56,9 @@ attributes #3 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !17 = !DISubroutineType(types: !18)
 !18 = !{!8}
 !19 = !{i32 2, !"Dwarf Version", i32 2}
-!20 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 4, arg: 1, scope: !12, file: !13, type: !8)
+!20 = !DILocalVariable(name: "a", line: 4, arg: 1, scope: !12, file: !13, type: !8)
 !21 = !DILocation(line: 4, scope: !12)
-!22 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "t", line: 5, scope: !12, file: !13, type: !4)
+!22 = !DILocalVariable(name: "t", line: 5, scope: !12, file: !13, type: !4)
 !23 = !DILocation(line: 5, scope: !12)
 !24 = !DILocation(line: 6, scope: !12)
 !25 = !DILocation(line: 8, scope: !16)

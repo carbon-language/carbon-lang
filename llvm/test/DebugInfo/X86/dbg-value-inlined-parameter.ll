@@ -83,7 +83,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !6 = !DISubprogram(name: "foobar", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !1, scope: !1, type: !7, function: void ()* @foobar)
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
-!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "sp", line: 7, arg: 1, scope: !0, file: !1, type: !10)
+!9 = !DILocalVariable(name: "sp", line: 7, arg: 1, scope: !0, file: !1, type: !10)
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !2, baseType: !11)
 !11 = !DIDerivedType(tag: DW_TAG_typedef, name: "S1", line: 4, file: !42, scope: !2, baseType: !12)
 !12 = !DICompositeType(tag: DW_TAG_structure_type, name: "S1", line: 1, size: 128, align: 64, file: !42, scope: !2, elements: !13)
@@ -92,7 +92,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !15 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !2, baseType: !16)
 !16 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
 !17 = !DIDerivedType(tag: DW_TAG_member, name: "nums", line: 3, size: 32, align: 32, offset: 64, file: !42, scope: !1, baseType: !5)
-!18 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "nums", line: 7, arg: 2, scope: !0, file: !1, type: !5)
+!18 = !DILocalVariable(name: "nums", line: 7, arg: 2, scope: !0, file: !1, type: !5)
 !19 = !DIGlobalVariable(name: "p", line: 14, isLocal: false, isDefinition: true, scope: !2, file: !1, type: !11, variable: %struct.S1* @p)
 !20 = !DILocation(line: 7, column: 13, scope: !0)
 !21 = !DILocation(line: 7, column: 21, scope: !0)

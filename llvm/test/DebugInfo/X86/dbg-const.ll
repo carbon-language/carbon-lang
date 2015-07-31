@@ -37,7 +37,7 @@ declare i32 @bar() nounwind readnone
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!6 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "j", line: 15, scope: !7, file: !1, type: !5)
+!6 = !DILocalVariable(name: "j", line: 15, scope: !7, file: !1, type: !5)
 !7 = distinct !DILexicalBlock(line: 12, column: 52, file: !15, scope: !0)
 !8 = !{i32 42}
 !9 = !DILocation(line: 15, column: 12, scope: !7)

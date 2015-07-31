@@ -31,5 +31,5 @@ declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 !1 = !DIFile(filename: "t.c", directory: "")
 !16 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !2 = !DISubprogram()
-!22 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 16, scope: !2, file: !1, type: !16)
+!22 = !DILocalVariable(name: "x", line: 16, scope: !2, file: !1, type: !16)
 !23 = !{i32 1, !"Debug Info Version", i32 3}

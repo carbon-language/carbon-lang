@@ -299,8 +299,6 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
 }
 
 DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const DINode *N) {
-  assert(Tag != dwarf::DW_TAG_auto_variable &&
-         Tag != dwarf::DW_TAG_arg_variable);
   DIE &Die = Parent.addChild(DIE::get(DIEValueAllocator, (dwarf::Tag)Tag));
   if (N)
     insertDIE(N, &Die);

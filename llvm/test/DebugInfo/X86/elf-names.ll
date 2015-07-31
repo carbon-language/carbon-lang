@@ -84,12 +84,12 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !23 = !DIDerivedType(tag: DW_TAG_reference_type, baseType: !24)
 !24 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !10)
 !27 = !{!29}
-!29 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 12, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !5, file: !6, type: !30)
+!29 = !DILocalVariable(name: "this", line: 12, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !5, file: !6, type: !30)
 !30 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
 !31 = !DISubprogram(name: "D", linkageName: "_ZN1DC2ERKS_", line: 19, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 19, file: !6, scope: null, type: !21, function: void (%class.D*, %class.D*)* @_ZN1DC2ERKS_, declaration: !20, variables: !32)
 !32 = !{!34, !35}
-!34 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 19, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !31, file: !6, type: !30)
-!35 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "d", line: 19, arg: 2, scope: !31, file: !6, type: !23)
+!34 = !DILocalVariable(name: "this", line: 19, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !31, file: !6, type: !30)
+!35 = !DILocalVariable(name: "d", line: 19, arg: 2, scope: !31, file: !6, type: !23)
 !36 = !DILocation(line: 12, scope: !5)
 !37 = !DILocation(line: 13, scope: !38)
 !38 = distinct !DILexicalBlock(line: 12, column: 0, file: !6, scope: !5)

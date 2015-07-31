@@ -255,7 +255,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !7 = !{!8}
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", scope: !4, type: !8)
+!10 = !DILocalVariable(name: "x", scope: !4, type: !8)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32* undef}
 

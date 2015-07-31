@@ -4,7 +4,7 @@
 ; not partitioned into multiple allocas.
 ;
 ; CHECK: call void @llvm.dbg.value(metadata float %s.coerce, i64 0, metadata ![[VAR:[0-9]+]], metadata ![[EXPR:[0-9]+]])
-; CHECK: ![[VAR]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s",{{.*}} line: 3,
+; CHECK: ![[VAR]] = !DILocalVariable(name: "s",{{.*}} line: 3,
 ; CHECK: ![[EXPR]] = !DIExpression(
 ; CHECK-NOT:                       DW_OP_bit_piece
 
@@ -57,7 +57,7 @@ attributes #1 = { nounwind readnone }
 !13 = !{i32 2, !"Debug Info Version", i32 3}
 !14 = !{i32 1, !"PIC Level", i32 2}
 !15 = !{!"clang version 3.6.0 "}
-!16 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
+!16 = !DILocalVariable(name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
 !17 = !DIExpression()
 !18 = !DILocation(line: 3, column: 20, scope: !4)
 !19 = !DILocation(line: 4, column: 2, scope: !4)

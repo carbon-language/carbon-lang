@@ -31,16 +31,16 @@ entry:
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!30}
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "__dest", line: 78, arg: 1, scope: !1, file: !2, type: !6)
+!0 = !DILocalVariable(name: "__dest", line: 78, arg: 1, scope: !1, file: !2, type: !6)
 !1 = !DISubprogram(name: "foobar", line: 79, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 79, file: !27, scope: !2, type: !4, function: i8* (i8*, i32, i64)* @foobar, variables: !25)
 !2 = !DIFile(filename: "string.h", directory: "Game")
 !3 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 127710)", isOptimized: true, emissionKind: 0, file: !28, enums: !29, retainedTypes: !29, subprograms: !24)
 !4 = !DISubroutineType(types: !5)
 !5 = !{!6}
 !6 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !3, baseType: null)
-!7 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "__val", line: 78, arg: 2, scope: !1, file: !2, type: !8)
+!7 = !DILocalVariable(name: "__val", line: 78, arg: 2, scope: !1, file: !2, type: !8)
 !8 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!9 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "__len", line: 78, arg: 3, scope: !1, file: !2, type: !10)
+!9 = !DILocalVariable(name: "__len", line: 78, arg: 3, scope: !1, file: !2, type: !10)
 !10 = !DIDerivedType(tag: DW_TAG_typedef, name: "size_t", line: 80, file: !27, scope: !3, baseType: !11)
 !11 = !DIDerivedType(tag: DW_TAG_typedef, name: "__darwin_size_t", line: 90, file: !27, scope: !3, baseType: !12)
 !12 = !DIBasicType(tag: DW_TAG_base_type, name: "long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)

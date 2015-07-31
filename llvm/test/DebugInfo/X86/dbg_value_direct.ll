@@ -168,8 +168,8 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !19 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !8)
 !21 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !22 = !{i32 2, !"Dwarf Version", i32 3}
-!23 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "", line: 6, arg: 1, scope: !4, file: !5, type: !21)
-!24 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 7, scope: !4, file: !5, type: !8)
+!23 = !DILocalVariable(name: "", line: 6, arg: 1, scope: !4, file: !5, type: !21)
+!24 = !DILocalVariable(name: "a", line: 7, scope: !4, file: !5, type: !8)
 !25 = !DILocation(line: 7, scope: !4)
 !26 = !DILocation(line: 8, scope: !4)
 !27 = !{i32 1, !"Debug Info Version", i32 3}

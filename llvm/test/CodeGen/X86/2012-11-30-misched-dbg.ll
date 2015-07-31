@@ -68,7 +68,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 !0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 168918) (llvm/trunk 168920)", isOptimized: true, emissionKind: 0, file: !19, enums: !2, retainedTypes: !2, subprograms: !20, globals: !2)
 !1 = !{!2}
 !2 = !{}
-!4 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "num1", line: 815, scope: !5, file: !14, type: !15)
+!4 = !DILocalVariable(name: "num1", line: 815, scope: !5, file: !14, type: !15)
 !5 = distinct !DILexicalBlock(line: 815, column: 0, file: !14, scope: !6)
 !6 = distinct !DILexicalBlock(line: 812, column: 0, file: !14, scope: !7)
 !7 = distinct !DILexicalBlock(line: 807, column: 0, file: !14, scope: !8)
@@ -135,7 +135,7 @@ declare void @_Znwm()
 !llvm.dbg.cu = !{!30}
 
 !30 = !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 169129) (llvm/trunk 169135)", isOptimized: true, emissionKind: 0, file: !34, enums: !2, retainedTypes: !2, subprograms: !36)
-!31 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "X", line: 29, scope: !37, type: !32)
+!31 = !DILocalVariable(name: "X", line: 29, scope: !37, type: !32)
 !32 = !DIDerivedType(tag: DW_TAG_typedef, name: "HM", line: 28, file: !34, baseType: null)
 !33 = !DIFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")
 !34 = !DIFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")

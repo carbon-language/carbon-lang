@@ -76,7 +76,7 @@ declare i64 @strlen(i8*) nounwind readonly
 
 declare void @llvm.stackrestore(i8*) nounwind
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "s1", line: 2, arg: 1, scope: !1, file: !2, type: !6)
+!0 = !DILocalVariable(name: "s1", line: 2, arg: 1, scope: !1, file: !2, type: !6)
 !1 = !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !2, type: !3)
 !2 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !17, enums: !18, retainedTypes: !18)
 !3 = !DISubroutineType(types: !4)
@@ -84,7 +84,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !6 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, scope: !2, baseType: !5)
 !7 = !DILocation(line: 2, scope: !1)
-!8 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "str.0", line: 3, scope: !1, file: !2, type: !9)
+!8 = !DILocalVariable(name: "str.0", line: 3, scope: !1, file: !2, type: !9)
 !9 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, scope: !2, baseType: !10)
 !10 = !DICompositeType(tag: DW_TAG_array_type, size: 8, align: 8, scope: !2, baseType: !5, elements: !11)
 !11 = !{!12}

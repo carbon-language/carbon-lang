@@ -35,4 +35,4 @@ declare %struct.nsTArrayHeader* @_ZN8nsTArray4Hdr2Ev()
 
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, scope: !DISubprogram())
+!0 = !DILocalVariable(scope: !DISubprogram())

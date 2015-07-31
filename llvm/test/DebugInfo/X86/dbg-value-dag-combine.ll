@@ -31,13 +31,13 @@ entry:
 !4 = !{null, !5}
 !5 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, scope: !2, baseType: !6)
 !6 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
-!7 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "ip", line: 1, arg: 1, scope: !0, file: !1, type: !5)
+!7 = !DILocalVariable(name: "ip", line: 1, arg: 1, scope: !0, file: !1, type: !5)
 !8 = !DILocation(line: 1, column: 42, scope: !0)
-!9 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "gid", line: 3, scope: !10, file: !1, type: !6)
+!9 = !DILocalVariable(name: "gid", line: 3, scope: !10, file: !1, type: !6)
 !10 = distinct !DILexicalBlock(line: 2, column: 1, file: !19, scope: !0)
 !11 = !DILocation(line: 3, column: 41, scope: !10)
 !12 = !{}
-!13 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "idx", line: 4, scope: !10, file: !1, type: !6)
+!13 = !DILocalVariable(name: "idx", line: 4, scope: !10, file: !1, type: !6)
 !14 = !DILocation(line: 4, column: 20, scope: !10)
 !15 = !DILocation(line: 5, column: 15, scope: !10)
 !16 = !DILocation(line: 6, column: 18, scope: !10)

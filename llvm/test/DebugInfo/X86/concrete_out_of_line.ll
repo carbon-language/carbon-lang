@@ -94,13 +94,13 @@ declare void @_Z8moz_freePv(i8*)
 !17 = !{null, !10}
 !18 = !{}
 !20 = !{!22}
-!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 14, arg: 1, flags: DIFlagArtificial, scope: !5, file: !6, type: !10)
+!22 = !DILocalVariable(name: "this", line: 14, arg: 1, flags: DIFlagArtificial, scope: !5, file: !6, type: !10)
 !23 = !DISubprogram(name: "~nsAutoRefCnt", linkageName: "_ZN17nsAutoRefCntD1Ev", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !6, scope: null, type: !16, function: void ()* @_ZN17nsAutoRefCntD1Ev, declaration: !15, variables: !24)
 !24 = !{!26}
-!26 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 18, arg: 1, flags: DIFlagArtificial, scope: !23, file: !6, type: !10)
+!26 = !DILocalVariable(name: "this", line: 18, arg: 1, flags: DIFlagArtificial, scope: !23, file: !6, type: !10)
 !27 = !DISubprogram(name: "~nsAutoRefCnt", linkageName: "_ZN17nsAutoRefCntD2Ev", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !6, scope: null, type: !16, function: i32 ()* null, declaration: !15, variables: !28)
 !28 = !{!30}
-!30 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 18, arg: 1, flags: DIFlagArtificial, scope: !27, file: !6, type: !10)
+!30 = !DILocalVariable(name: "this", line: 18, arg: 1, flags: DIFlagArtificial, scope: !27, file: !6, type: !10)
 !31 = !DISubprogram(name: "operator=", linkageName: "_ZN12nsAutoRefCntaSEi", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !6, scope: null, type: !32, declaration: !36, variables: !43)
 !32 = !DISubroutineType(types: !33)
 !33 = !{!9, !34, !9}
@@ -114,8 +114,8 @@ declare void @_Z8moz_freePv(i8*)
 !41 = !DISubroutineType(types: !42)
 !42 = !{null, !34}
 !43 = !{!45, !46}
-!45 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 4, arg: 1, flags: DIFlagArtificial, scope: !31, file: !6, type: !34)
-!46 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "aValue", line: 4, arg: 2, scope: !31, file: !6, type: !9)
+!45 = !DILocalVariable(name: "this", line: 4, arg: 1, flags: DIFlagArtificial, scope: !31, file: !6, type: !34)
+!46 = !DILocalVariable(name: "aValue", line: 4, arg: 2, scope: !31, file: !6, type: !9)
 !47 = !{!49}
 !49 = !DIGlobalVariable(name: "mRefCnt", line: 9, isLocal: false, isDefinition: true, scope: null, file: !6, type: !37, variable: i32* null)
 !50 = !DILocation(line: 5, column: 5, scope: !51, inlinedAt: !52)

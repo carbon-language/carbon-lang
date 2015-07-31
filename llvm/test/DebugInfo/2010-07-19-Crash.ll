@@ -19,7 +19,7 @@ entry:
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !6 = !DISubprogram(name: "foo", linkageName: "foo", line: 7, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3)
-!7 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "one", line: 8, scope: !8, file: !1, type: !5)
+!7 = !DILocalVariable(name: "one", line: 8, scope: !8, file: !1, type: !5)
 !8 = distinct !DILexicalBlock(line: 7, column: 18, file: !12, scope: !6)
 !9 = !DILocation(line: 4, column: 3, scope: !10)
 !10 = distinct !DILexicalBlock(line: 3, column: 11, file: !12, scope: !0)

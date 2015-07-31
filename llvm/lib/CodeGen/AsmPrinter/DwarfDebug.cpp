@@ -1156,7 +1156,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     // The first mention of a function argument gets the CurrentFnBegin
     // label, so arguments are visible when breaking at function entry.
     const DILocalVariable *DIVar = Ranges.front().first->getDebugVariable();
-    if (DIVar->getTag() == dwarf::DW_TAG_arg_variable &&
+    if (DIVar->isParameter() &&
         getDISubprogram(DIVar->getScope())->describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression()->isBitPiece()) {

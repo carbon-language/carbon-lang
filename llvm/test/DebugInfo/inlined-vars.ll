@@ -31,24 +31,24 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !11 = !DISubroutineType(types: !12)
 !12 = !{!9, !9}
 !13 = !{!15, !16}
-!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argument", line: 3, arg: 1, scope: !10, file: !6, type: !9)
+!15 = !DILocalVariable(name: "argument", line: 3, arg: 1, scope: !10, file: !6, type: !9)
 
 ; Two DW_TAG_formal_parameter: one abstract and one inlined.
 ; ARGUMENT: {{.*Abbrev.*DW_TAG_formal_parameter}}
 ; ARGUMENT: {{.*Abbrev.*DW_TAG_formal_parameter}}
 ; ARGUMENT-NOT: {{.*Abbrev.*DW_TAG_formal_parameter}}
 
-!16 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 4, scope: !10, file: !6, type: !9)
+!16 = !DILocalVariable(name: "local", line: 4, scope: !10, file: !6, type: !9)
 
 ; Two DW_TAG_variable: one abstract and one inlined.
 ; VARIABLE: {{.*Abbrev.*DW_TAG_variable}}
 ; VARIABLE: {{.*Abbrev.*DW_TAG_variable}}
 ; VARIABLE-NOT: {{.*Abbrev.*DW_TAG_variable}}
 
-!18 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argument", line: 3, arg: 1, scope: !10, file: !6, type: !9)
+!18 = !DILocalVariable(name: "argument", line: 3, arg: 1, scope: !10, file: !6, type: !9)
 !19 = !DILocation(line: 11, column: 10, scope: !5)
 !21 = !DILocation(line: 3, column: 25, scope: !10, inlinedAt: !19)
-!22 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 4, scope: !10, file: !6, type: !9)
+!22 = !DILocalVariable(name: "local", line: 4, scope: !10, file: !6, type: !9)
 !23 = !DILocation(line: 4, column: 16, scope: !10, inlinedAt: !19)
 !24 = !DILocation(line: 5, column: 3, scope: !10, inlinedAt: !19)
 !25 = !DILocation(line: 6, column: 3, scope: !10, inlinedAt: !19)

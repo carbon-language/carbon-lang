@@ -137,12 +137,12 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !18 = !{i32 2, !"Dwarf Version", i32 4}
 !19 = !{i32 2, !"Debug Info Version", i32 3}
 !20 = !{!"clang version 3.5.0 (210479)"}
-!21 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!21 = !DILocalVariable(name: "b", line: 1, arg: 1, scope: !4, file: !5, type: !8)
 !22 = !DILocation(line: 1, scope: !4)
 !23 = !DILocation(line: 2, scope: !4)
-!24 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 6, arg: 1, scope: !14, file: !15, type: !"_ZTS1A")
+!24 = !DILocalVariable(name: "a", line: 6, arg: 1, scope: !14, file: !15, type: !"_ZTS1A")
 !25 = !DILocation(line: 6, scope: !14)
-!26 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "z", line: 7, scope: !14, file: !15, type: !8)
+!26 = !DILocalVariable(name: "z", line: 7, scope: !14, file: !15, type: !8)
 !27 = !DILocation(line: 7, scope: !14)
 !28 = !DILocation(line: 8, scope: !29)
 !29 = distinct !DILexicalBlock(line: 8, column: 0, file: !10, scope: !14)

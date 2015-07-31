@@ -70,7 +70,7 @@ entry:
 !llvm.module.flags = !{!40}
 !37 = !{!2, !10, !23}
 
-!0 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 16, scope: !1, file: !3, type: !8)
+!0 = !DILocalVariable(name: "b", line: 16, scope: !1, file: !3, type: !8)
 !1 = distinct !DILexicalBlock(line: 15, column: 12, file: !38, scope: !2)
 !2 = !DISubprogram(name: "main", linkageName: "main", line: 15, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 15, file: !38, scope: !3, type: !5, function: i32 ()* @main)
 !3 = !DIFile(filename: "one.cc", directory: "/tmp")
@@ -87,9 +87,9 @@ entry:
 !14 = !DILocation(line: 16, column: 5, scope: !1)
 !15 = !DILocation(line: 17, column: 3, scope: !1)
 !16 = !DILocation(line: 18, column: 1, scope: !2)
-!17 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 4, arg: 1, scope: !10, file: !3, type: !13)
+!17 = !DILocalVariable(name: "this", line: 4, arg: 1, scope: !10, file: !3, type: !13)
 !18 = !DILocation(line: 4, column: 7, scope: !10)
-!19 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 9, scope: !20, file: !3, type: !21)
+!19 = !DILocalVariable(name: "a", line: 9, scope: !20, file: !3, type: !21)
 !20 = distinct !DILexicalBlock(line: 4, column: 12, file: !38, scope: !10)
 !21 = !DICompositeType(tag: DW_TAG_class_type, name: "A", line: 5, size: 8, align: 8, file: !38, scope: !10, elements: !22)
 !22 = !{!23}
@@ -98,12 +98,12 @@ entry:
 !25 = !{!7, !26}
 !26 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !38, scope: !3, baseType: !21)
 !27 = !DILocation(line: 9, column: 7, scope: !20)
-!28 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 10, scope: !20, file: !3, type: !7)
+!28 = !DILocalVariable(name: "i", line: 10, scope: !20, file: !3, type: !7)
 !29 = !DILocation(line: 10, column: 9, scope: !20)
 !30 = !DILocation(line: 10, column: 5, scope: !20)
 !31 = !DILocation(line: 11, column: 5, scope: !20)
 !32 = !DILocation(line: 12, column: 3, scope: !10)
-!33 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 7, arg: 1, scope: !23, file: !3, type: !26)
+!33 = !DILocalVariable(name: "this", line: 7, arg: 1, scope: !23, file: !3, type: !26)
 !34 = !DILocation(line: 7, column: 11, scope: !23)
 !35 = !DILocation(line: 7, column: 19, scope: !36)
 !36 = distinct !DILexicalBlock(line: 7, column: 17, file: !38, scope: !23)

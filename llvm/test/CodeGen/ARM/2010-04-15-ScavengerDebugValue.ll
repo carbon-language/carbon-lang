@@ -14,7 +14,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!15}
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 93, arg: 2, scope: !1, file: !2, type: !6)
+!0 = !DILocalVariable(name: "b", line: 93, arg: 2, scope: !1, file: !2, type: !6)
 !1 = !DISubprogram(name: "__addvsi3", linkageName: "__addvsi3", line: 94, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !12, scope: null, type: !4)
 !2 = !DIFile(filename: "libgcc2.c", directory: "/Users/bwilson/local/nightly/test-2010-04-14/build/llvmgcc.roots/llvmgcc~obj/src/gcc")
 !12 = !DIFile(filename: "libgcc2.c", directory: "/Users/bwilson/local/nightly/test-2010-04-14/build/llvmgcc.roots/llvmgcc~obj/src/gcc")

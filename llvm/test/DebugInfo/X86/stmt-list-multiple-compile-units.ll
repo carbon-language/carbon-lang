@@ -93,11 +93,11 @@ entry:
 !11 = !{!13}
 !13 = !DISubprogram(name: "fn", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !24, scope: !14, type: !7, function: i32 (i32)* @fn, variables: !1)
 !14 = !DIFile(filename: "simple2.c", directory: "/private/tmp")
-!15 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 2, arg: 1, scope: !5, file: !6, type: !9)
+!15 = !DILocalVariable(name: "a", line: 2, arg: 1, scope: !5, file: !6, type: !9)
 !16 = !DILocation(line: 2, scope: !5)
 !17 = !DILocation(line: 4, scope: !18)
 !18 = distinct !DILexicalBlock(line: 3, column: 0, file: !23, scope: !5)
-!19 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 1, arg: 1, scope: !13, file: !14, type: !9)
+!19 = !DILocalVariable(name: "a", line: 1, arg: 1, scope: !13, file: !14, type: !9)
 !20 = !DILocation(line: 1, scope: !13)
 !21 = !DILocation(line: 2, scope: !22)
 !22 = distinct !DILexicalBlock(line: 1, column: 0, file: !24, scope: !13)

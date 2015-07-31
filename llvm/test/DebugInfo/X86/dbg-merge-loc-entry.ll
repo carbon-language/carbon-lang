@@ -54,10 +54,10 @@ declare %0 @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 !11 = !{!12, !12, !12}
 !12 = !DIDerivedType(tag: DW_TAG_typedef, name: "TItype", line: 160, file: !30, scope: !6, baseType: !13)
 !13 = !DIBasicType(tag: DW_TAG_base_type, size: 128, align: 128, encoding: DW_ATE_signed)
-!14 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "u", line: 1093, arg: 1, scope: !9, file: !1, type: !12)
+!14 = !DILocalVariable(name: "u", line: 1093, arg: 1, scope: !9, file: !1, type: !12)
 !15 = !DILocation(line: 1093, scope: !9)
 !16 = !{i64 0}
-!17 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 1095, scope: !18, file: !1, type: !19)
+!17 = !DILocalVariable(name: "c", line: 1095, scope: !18, file: !1, type: !19)
 !18 = distinct !DILexicalBlock(line: 1094, column: 0, file: !29, scope: !9)
 !19 = !DIDerivedType(tag: DW_TAG_typedef, name: "word_type", line: 424, file: !30, scope: !6, baseType: !20)
 !20 = !DIBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)

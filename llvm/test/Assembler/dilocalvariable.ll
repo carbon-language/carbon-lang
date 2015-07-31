@@ -12,15 +12,15 @@
 !3 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !4 = !DILocation(scope: !0)
 
-; CHECK: !5 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3, scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial)
-; CHECK: !6 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial)
-!5 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3,
+; CHECK: !5 = !DILocalVariable(name: "foo", arg: 3, scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial)
+; CHECK: !6 = !DILocalVariable(name: "foo", scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial)
+!5 = !DILocalVariable(name: "foo", arg: 3,
                       scope: !0, file: !2, line: 7, type: !3,
                       flags: DIFlagArtificial)
-!6 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0,
+!6 = !DILocalVariable(name: "foo", scope: !0,
                       file: !2, line: 7, type: !3, flags: DIFlagArtificial)
 
-; CHECK: !7 = !DILocalVariable(tag: DW_TAG_arg_variable, arg: 1, scope: !0)
-; CHECK: !8 = !DILocalVariable(tag: DW_TAG_auto_variable, scope: !0)
-!7 = !DILocalVariable(tag: DW_TAG_arg_variable, scope: !0, arg: 1)
-!8 = !DILocalVariable(tag: DW_TAG_auto_variable, scope: !0)
+; CHECK: !7 = !DILocalVariable(arg: 1, scope: !0)
+; CHECK: !8 = !DILocalVariable(scope: !0)
+!7 = !DILocalVariable(scope: !0, arg: 1)
+!8 = !DILocalVariable(scope: !0)

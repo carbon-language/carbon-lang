@@ -17,7 +17,7 @@
 ;
 ; CHECK: define i32 @main
 ; CHECK: call void @llvm.dbg.value(metadata i32 42, i64 0, metadata ![[ARRAY:[0-9]+]], metadata ![[EXPR:[0-9]+]])
-; CHECK: ![[ARRAY]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "array",{{.*}} line: 6
+; CHECK: ![[ARRAY]] = !DILocalVariable(name: "array",{{.*}} line: 6
 ; CHECK: ![[EXPR]] = !DIExpression(DW_OP_bit_piece, 0, 32)
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
@@ -91,14 +91,14 @@ attributes #2 = { nounwind }
 !16 = !{i32 2, !"Dwarf Version", i32 2}
 !17 = !{i32 1, !"Debug Info Version", i32 3}
 !18 = !{!"clang version 3.5.0 "}
-!19 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!19 = !DILocalVariable(name: "p", line: 1, arg: 1, scope: !4, file: !5, type: !8)
 !20 = !DILocation(line: 1, scope: !4)
 !21 = !DILocation(line: 2, scope: !4)
 !22 = !DILocation(line: 3, scope: !4)
-!23 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 5, arg: 1, scope: !10, file: !5, type: !9)
+!23 = !DILocalVariable(name: "argc", line: 5, arg: 1, scope: !10, file: !5, type: !9)
 !24 = !DILocation(line: 5, scope: !10)
-!25 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 5, arg: 2, scope: !10, file: !5, type: !13)
-!26 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "array", line: 6, scope: !10, file: !5, type: !27)
+!25 = !DILocalVariable(name: "argv", line: 5, arg: 2, scope: !10, file: !5, type: !13)
+!26 = !DILocalVariable(name: "array", line: 6, scope: !10, file: !5, type: !27)
 !27 = !DICompositeType(tag: DW_TAG_array_type, size: 128, align: 32, baseType: !9, elements: !28)
 !28 = !{!29}
 !29 = !DISubrange(count: 4)

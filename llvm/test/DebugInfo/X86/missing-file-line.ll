@@ -46,7 +46,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 !7 = !{i32 2, !"Dwarf Version", i32 4}
 !8 = !{i32 2, !"Debug Info Version", i32 3}
 !9 = !{!"clang"}
-!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", scope: !4, file: !1, line: 8, type: !11)
+!10 = !DILocalVariable(name: "x", scope: !4, file: !1, line: 8, type: !11)
 !11 = !DIDerivedType(tag: DW_TAG_typedef, name: "SS", baseType: !12)
 !12 = !DICompositeType(tag: DW_TAG_structure_type, name: "S", size: 64, align: 64, elements: !13)
 !13 = !{!14}

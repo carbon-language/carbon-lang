@@ -1077,13 +1077,9 @@ void Verifier::visitDILocalVariable(const DILocalVariable &N) {
   // Checks common to all variables.
   visitDIVariable(N);
 
-  Assert(N.getTag() == dwarf::DW_TAG_auto_variable ||
-             N.getTag() == dwarf::DW_TAG_arg_variable,
-         "invalid tag", &N);
+  Assert(N.getTag() == dwarf::DW_TAG_variable, "invalid tag", &N);
   Assert(N.getRawScope() && isa<DILocalScope>(N.getRawScope()),
          "local variable requires a valid scope", &N, N.getRawScope());
-  Assert(bool(N.getArg()) == (N.getTag() == dwarf::DW_TAG_arg_variable),
-         "local variable should have arg iff it's a DW_TAG_arg_variable", &N);
 }
 
 void Verifier::visitDIExpression(const DIExpression &N) {

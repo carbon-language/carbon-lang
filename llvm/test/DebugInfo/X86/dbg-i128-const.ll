@@ -17,7 +17,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!16}
 
 !0 = !{i128 42 }
-!1 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "MAX", line: 29, scope: !2, file: !4, type: !8)
+!1 = !DILocalVariable(name: "MAX", line: 29, scope: !2, file: !4, type: !8)
 !2 = distinct !DILexicalBlock(line: 26, column: 0, file: !13, scope: !3)
 !3 = !DISubprogram(name: "__foo", linkageName: "__foo", line: 26, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 26, file: !13, scope: !4, type: !6, function: i128 (i128, i128)* @__foo)
 !4 = !DIFile(filename: "foo.c", directory: "/tmp")

@@ -6,7 +6,7 @@
 define void @foo(i32 %a) {
 entry:
   %s = alloca i32
-  call void @llvm.dbg.declare(metadata i32* %s, metadata !DILocalVariable(tag: DW_TAG_arg_variable, scope: !1), metadata !"")
+  call void @llvm.dbg.declare(metadata i32* %s, metadata !DILocalVariable(scope: !1), metadata !"")
   ret void
 }
 

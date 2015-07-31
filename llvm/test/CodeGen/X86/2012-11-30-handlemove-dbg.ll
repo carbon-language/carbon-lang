@@ -40,7 +40,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 168918) (llvm/trunk 168920)", isOptimized: true, emissionKind: 0, file: !11, enums: !2, retainedTypes: !2, subprograms: !13, globals: !2)
 !2 = !{}
-!4 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "hg", line: 725, arg: 4, scope: !14, file: !5, type: !6)
+!4 = !DILocalVariable(name: "hg", line: 725, arg: 4, scope: !14, file: !5, type: !6)
 !5 = !DIFile(filename: "MultiSource/Benchmarks/Olden/bh/newbh.c", directory: "MultiSource/Benchmarks/Olden/bh")
 !6 = !DIDerivedType(tag: DW_TAG_typedef, name: "hgstruct", line: 492, file: !11, baseType: !7)
 !7 = !DICompositeType(tag: DW_TAG_structure_type, line: 487, size: 512, align: 64, file: !11)

@@ -103,13 +103,13 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !19 = !{null, !20, !8}
 !20 = !DIBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)
 !21 = !{i32 2, !"Dwarf Version", i32 3}
-!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "f", line: 6, arg: 1, scope: !4, file: !23, type: !8)
+!22 = !DILocalVariable(name: "f", line: 6, arg: 1, scope: !4, file: !23, type: !8)
 !23 = !DIFile(filename: "pass.cpp", directory: "/tmp")
 !24 = !DILocation(line: 6, scope: !4)
 !25 = !DILocation(line: 7, scope: !4)
-!26 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 12, arg: 1, scope: !17, file: !23, type: !20)
+!26 = !DILocalVariable(name: "b", line: 12, arg: 1, scope: !17, file: !23, type: !20)
 !27 = !DILocation(line: 12, scope: !17)
-!28 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "g", line: 12, arg: 2, scope: !17, file: !23, type: !8)
+!28 = !DILocalVariable(name: "g", line: 12, arg: 2, scope: !17, file: !23, type: !8)
 !29 = !DILocation(line: 13, scope: !30)
 !30 = distinct !DILexicalBlock(line: 13, column: 0, file: !1, scope: !17)
 !31 = !DILocation(line: 14, scope: !30)

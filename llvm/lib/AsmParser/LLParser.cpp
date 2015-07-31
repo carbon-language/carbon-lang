@@ -3773,24 +3773,25 @@ bool LLParser::ParseDIGlobalVariable(MDNode *&Result, bool IsDistinct) {
 }
 
 /// ParseDILocalVariable:
-///   ::= !DILocalVariable(tag: DW_TAG_arg_variable, scope: !0, name: "foo",
+///   ::= !DILocalVariable(arg: 7, scope: !0, name: "foo",
+///                        file: !1, line: 7, type: !2, arg: 2, flags: 7)
+///   ::= !DILocalVariable(scope: !0, name: "foo",
 ///                        file: !1, line: 7, type: !2, arg: 2, flags: 7)
 bool LLParser::ParseDILocalVariable(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(tag, DwarfTagField, );                                              \
   REQUIRED(scope, MDField, (/* AllowNull */ false));                           \
   OPTIONAL(name, MDStringField, );                                             \
+  OPTIONAL(arg, MDUnsignedField, (0, UINT16_MAX));                             \
   OPTIONAL(file, MDField, );                                                   \
   OPTIONAL(line, LineField, );                                                 \
   OPTIONAL(type, MDField, );                                                   \
-  OPTIONAL(arg, MDUnsignedField, (0, UINT16_MAX));                             \
   OPTIONAL(flags, DIFlagField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
   Result = GET_OR_DISTINCT(DILocalVariable,
-                           (Context, tag.Val, scope.Val, name.Val, file.Val,
-                            line.Val, type.Val, arg.Val, flags.Val));
+                           (Context, scope.Val, name.Val, file.Val, line.Val,
+                            type.Val, arg.Val, flags.Val));
   return false;
 }
 

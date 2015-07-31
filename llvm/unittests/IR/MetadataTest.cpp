@@ -1861,7 +1861,6 @@ TEST_F(DIGlobalVariableTest, get) {
 typedef MetadataTest DILocalVariableTest;
 
 TEST_F(DILocalVariableTest, get) {
-  unsigned Tag = dwarf::DW_TAG_arg_variable;
   DILocalScope *Scope = getSubprogram();
   StringRef Name = "name";
   DIFile *File = getFile();
@@ -1870,9 +1869,9 @@ TEST_F(DILocalVariableTest, get) {
   unsigned Arg = 6;
   unsigned Flags = 7;
 
-  auto *N = DILocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                 Arg, Flags);
-  EXPECT_EQ(Tag, N->getTag());
+  auto *N =
+      DILocalVariable::get(Context, Scope, Name, File, Line, Type, Arg, Flags);
+  EXPECT_TRUE(N->isParameter());
   EXPECT_EQ(Scope, N->getScope());
   EXPECT_EQ(Name, N->getName());
   EXPECT_EQ(File, N->getFile());
@@ -1880,47 +1879,44 @@ TEST_F(DILocalVariableTest, get) {
   EXPECT_EQ(Type, N->getType());
   EXPECT_EQ(Arg, N->getArg());
   EXPECT_EQ(Flags, N->getFlags());
-  EXPECT_EQ(N, DILocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                    Arg, Flags));
+  EXPECT_EQ(N, DILocalVariable::get(Context, Scope, Name, File, Line, Type, Arg,
+                                    Flags));
 
-  EXPECT_NE(N, DILocalVariable::get(Context, dwarf::DW_TAG_auto_variable, Scope,
-                                    Name, File, Line, Type, Arg, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, getSubprogram(), Name, File,
-                                    Line, Type, Arg, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, Scope, "other", File, Line,
+  EXPECT_FALSE(
+      DILocalVariable::get(Context, Scope, Name, File, Line, Type, 0, Flags)
+          ->isParameter());
+  EXPECT_NE(N, DILocalVariable::get(Context, getSubprogram(), Name, File, Line,
                                     Type, Arg, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, Scope, Name, getFile(), Line,
-                                    Type, Arg, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, Scope, Name, File, Line + 1,
-                                    Type, Arg, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, Scope, Name, File, Line,
+  EXPECT_NE(N, DILocalVariable::get(Context, Scope, "other", File, Line, Type,
+                                    Arg, Flags));
+  EXPECT_NE(N, DILocalVariable::get(Context, Scope, Name, getFile(), Line, Type,
+                                    Arg, Flags));
+  EXPECT_NE(N, DILocalVariable::get(Context, Scope, Name, File, Line + 1, Type,
+                                    Arg, Flags));
+  EXPECT_NE(N, DILocalVariable::get(Context, Scope, Name, File, Line,
                                     getDerivedType(), Arg, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
+  EXPECT_NE(N, DILocalVariable::get(Context, Scope, Name, File, Line, Type,
                                     Arg + 1, Flags));
-  EXPECT_NE(N, DILocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
-                                    Arg, ~Flags));
+  EXPECT_NE(N, DILocalVariable::get(Context, Scope, Name, File, Line, Type, Arg,
+                                    ~Flags));
 
   TempDILocalVariable Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
 TEST_F(DILocalVariableTest, getArg256) {
-  EXPECT_EQ(255u, DILocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
-                                       getSubprogram(), "", getFile(), 0,
-                                       nullptr, 255, 0)
+  EXPECT_EQ(255u, DILocalVariable::get(Context, getSubprogram(), "", getFile(),
+                                       0, nullptr, 255, 0)
                       ->getArg());
-  EXPECT_EQ(256u, DILocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
-                                       getSubprogram(), "", getFile(), 0,
-                                       nullptr, 256, 0)
+  EXPECT_EQ(256u, DILocalVariable::get(Context, getSubprogram(), "", getFile(),
+                                       0, nullptr, 256, 0)
                       ->getArg());
-  EXPECT_EQ(257u, DILocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
-                                       getSubprogram(), "", getFile(), 0,
-                                       nullptr, 257, 0)
+  EXPECT_EQ(257u, DILocalVariable::get(Context, getSubprogram(), "", getFile(),
+                                       0, nullptr, 257, 0)
                       ->getArg());
   unsigned Max = UINT16_MAX;
-  EXPECT_EQ(Max, DILocalVariable::get(Context, dwarf::DW_TAG_arg_variable,
-                                      getSubprogram(), "", getFile(), 0,
-                                      nullptr, Max, 0)
+  EXPECT_EQ(Max, DILocalVariable::get(Context, getSubprogram(), "", getFile(),
+                                      0, nullptr, Max, 0)
                      ->getArg());
 }
 

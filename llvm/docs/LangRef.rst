@@ -3900,22 +3900,18 @@ mandatory, and points at an :ref:`DILexicalBlockFile`, an
 DILocalVariable
 """""""""""""""
 
-``DILocalVariable`` nodes represent local variables in the source language.
-Instead of ``DW_TAG_variable``, they use LLVM-specific fake tags to
-discriminate between local variables (``DW_TAG_auto_variable``) and subprogram
-arguments (``DW_TAG_arg_variable``).  In the latter case, the ``arg:`` field
-specifies the argument position, and this variable will be included in the
-``variables:`` field of its :ref:`DISubprogram`.
+``DILocalVariable`` nodes represent local variables in the source language.  If
+the ``arg:`` field is set to non-zero, then this variable is a subprogram
+parameter, and it will be included in the ``variables:`` field of its
+:ref:`DISubprogram`.
 
 .. code-block:: llvm
 
-    !0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1,
-                          scope: !3, file: !2, line: 7, type: !3,
-                          flags: DIFlagArtificial)
-    !1 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 2,
-                          scope: !4, file: !2, line: 7, type: !3)
-    !2 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y",
-                          scope: !5, file: !2, line: 7, type: !3)
+    !0 = !DILocalVariable(name: "this", arg: 1, scope: !3, file: !2, line: 7,
+                          type: !3, flags: DIFlagArtificial)
+    !1 = !DILocalVariable(name: "x", arg: 2, scope: !4, file: !2, line: 7,
+                          type: !3)
+    !2 = !DILocalVariable(name: "y", scope: !5, file: !2, line: 7, type: !3)
 
 DIExpression
 """"""""""""

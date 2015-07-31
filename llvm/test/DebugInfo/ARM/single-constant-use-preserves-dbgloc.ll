@@ -58,7 +58,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata)
 !7 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
 !9 = !{i32 2, !"Debug Info Version", i32 3}
-!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", scope: !4, file: !1, line: 3, type: !7)
+!10 = !DILocalVariable(name: "x", scope: !4, file: !1, line: 3, type: !7)
 !11 = !DIExpression()
 !12 = !DILocation(line: 3, column: 9, scope: !4)
 !13 = !DILocation(line: 4, column: 9, scope: !14)

@@ -52,8 +52,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !17 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !18)
 !18 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !19 = !{!21, !22}
-!21 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 11, arg: 1, scope: !12, file: !6, type: !15)
-!22 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 11, arg: 2, scope: !12, file: !6, type: !16)
+!21 = !DILocalVariable(name: "argc", line: 11, arg: 1, scope: !12, file: !6, type: !15)
+!22 = !DILocalVariable(name: "argv", line: 11, arg: 2, scope: !12, file: !6, type: !16)
 !23 = !DILocation(line: 6, column: 3, scope: !24)
 !24 = distinct !DILexicalBlock(line: 5, column: 16, file: !32, scope: !5)
 !25 = !DILocation(line: 7, column: 1, scope: !24)

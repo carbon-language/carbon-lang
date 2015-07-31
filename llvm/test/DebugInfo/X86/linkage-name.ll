@@ -41,10 +41,10 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !13 = !DISubprogram(name: "a", linkageName: "_ZN1A1aEi", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrivate | DIFlagPrototyped, isOptimized: false, file: !6, scope: !11, type: !7)
 !18 = !{!20}
 !20 = !DIGlobalVariable(name: "a", line: 9, isLocal: false, isDefinition: true, scope: null, file: !6, type: !11, variable: %class.A* @a)
-!21 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 5, arg: 1, flags: DIFlagArtificial, scope: !5, file: !6, type: !22)
+!21 = !DILocalVariable(name: "this", line: 5, arg: 1, flags: DIFlagArtificial, scope: !5, file: !6, type: !22)
 !22 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
 !23 = !DILocation(line: 5, column: 8, scope: !5)
-!24 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 2, scope: !5, file: !6, type: !9)
+!24 = !DILocalVariable(name: "b", line: 5, arg: 2, scope: !5, file: !6, type: !9)
 !25 = !DILocation(line: 5, column: 14, scope: !5)
 !26 = !DILocation(line: 6, column: 4, scope: !27)
 !27 = distinct !DILexicalBlock(line: 5, column: 17, file: !6, scope: !5)

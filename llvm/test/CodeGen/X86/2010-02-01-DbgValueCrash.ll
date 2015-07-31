@@ -24,7 +24,7 @@ declare void @"tart.reflect.ComplexType.create->tart.core.Object"(%tart.reflect.
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !6 = !DIDerivedType(tag: DW_TAG_member, name: "y", line: 1, size: 64, align: 64, offset: 64, file: !15, scope: !2, baseType: !5)
 !7 = !DIDerivedType(tag: DW_TAG_member, name: "z", line: 1, size: 64, align: 64, offset: 128, file: !15, scope: !2, baseType: !5)
-!8 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "t", line: 5, scope: !9, file: !0, type: !2)
+!8 = !DILocalVariable(name: "t", line: 5, scope: !9, file: !0, type: !2)
 !9 = distinct !DILexicalBlock(line: 0, column: 0, file: null, scope: !10)
 !10 = !DISubprogram(name: "foo", linkageName: "foo", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !0, type: !11)
 !11 = !DISubroutineType(types: !12)

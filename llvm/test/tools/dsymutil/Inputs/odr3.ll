@@ -85,7 +85,7 @@ attributes #2 = { nounwind ssp uwtable "disable-tail-calls"="false" "less-precis
 !31 = !{i32 2, !"Debug Info Version", i32 3}
 !32 = !{i32 1, !"PIC Level", i32 2}
 !33 = !{!"clang version 3.8.0 (trunk 242534)"}
-!34 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "s", scope: !25, file: !1, line: 4, type: !"_ZTS1S")
+!34 = !DILocalVariable(name: "s", scope: !25, file: !1, line: 4, type: !"_ZTS1S")
 !35 = !DIExpression()
 !36 = !DILocation(line: 4, column: 4, scope: !25)
 !37 = !DILocation(line: 5, column: 2, scope: !25)
@@ -94,13 +94,13 @@ attributes #2 = { nounwind ssp uwtable "disable-tail-calls"="false" "less-precis
 !40 = !DILocation(line: 5, column: 54, scope: !28, inlinedAt: !39)
 !41 = !DILocation(line: 5, column: 56, scope: !28, inlinedAt: !39)
 !42 = !DILocation(line: 6, column: 9, scope: !25)
-!43 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, scope: !28, type: !44, flags: DIFlagArtificial | DIFlagObjectPointer)
+!43 = !DILocalVariable(name: "this", arg: 1, scope: !28, type: !44, flags: DIFlagArtificial | DIFlagObjectPointer)
 !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !"_ZTS1S", size: 64, align: 64)
 !45 = !DILocation(line: 0, scope: !28, inlinedAt: !39)
-!46 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "Add", arg: 2, scope: !28, file: !5, line: 5, type: !8)
+!46 = !DILocalVariable(name: "Add", arg: 2, scope: !28, file: !5, line: 5, type: !8)
 !47 = !DILocation(line: 5, column: 16, scope: !28, inlinedAt: !39)
 !48 = !DILocation(line: 6, column: 2, scope: !25)
-!49 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, scope: !29, type: !44, flags: DIFlagArtificial | DIFlagObjectPointer)
+!49 = !DILocalVariable(name: "this", arg: 1, scope: !29, type: !44, flags: DIFlagArtificial | DIFlagObjectPointer)
 !50 = !DILocation(line: 0, scope: !29)
 !51 = !DILocation(line: 18, column: 21, scope: !29)
 !52 = !DILocation(line: 18, column: 14, scope: !29)

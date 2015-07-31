@@ -26,7 +26,7 @@ declare i32 @foo(i32) ssp
 !1 = distinct !DILexicalBlock(line: 1, column: 1, file: null, scope: !2)
 !2 = !DISubprogram(name: "bar", linkageName: "bar", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !3)
 !3 = !DICompileUnit(language: DW_LANG_C99, producer: "clang 1.1", isOptimized: true, emissionKind: 0, file: !8, retainedTypes: !9)
-!4 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "count_", line: 5, scope: !5, file: !3, type: !6)
+!4 = !DILocalVariable(name: "count_", line: 5, scope: !5, file: !3, type: !6)
 !5 = distinct !DILexicalBlock(line: 1, column: 1, file: null, scope: !1)
 !6 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !7 = !DILocation(line: 6, column: 1, scope: !2)

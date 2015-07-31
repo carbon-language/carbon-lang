@@ -177,6 +177,6 @@ attributes #1 = { nounwind readnone }
 !9 = !{i32 2, !"Dwarf Version", i32 4}
 !10 = !{i32 2, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.5.0 (209308)"}
-!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!12 = !DILocalVariable(name: "y", line: 1, arg: 1, scope: !4, file: !5, type: !8)
 !13 = !DILocation(line: 2, scope: !4)
 !14 = !DIExpression(DW_OP_deref)

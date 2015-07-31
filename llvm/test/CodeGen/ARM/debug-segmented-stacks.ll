@@ -51,9 +51,9 @@ define void @test_basic() #0 {
 !9 = !{i32 2, !"Dwarf Version", i32 4}
 !10 = !{i32 1, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.5 "}
-!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "count", line: 5, arg: 1, scope: !4, file: !5, type: !8)
+!12 = !DILocalVariable(name: "count", line: 5, arg: 1, scope: !4, file: !5, type: !8)
 !13 = !DILocation(line: 5, scope: !4)
-!14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "vl", line: 6, scope: !4, file: !5, type: !15)
+!14 = !DILocalVariable(name: "vl", line: 6, scope: !4, file: !5, type: !15)
 !15 = !DIDerivedType(tag: DW_TAG_typedef, name: "va_list", line: 30, file: !16, baseType: !17)
 !16 = !DIFile(filename: "/linux-x86_64-high/gcc_4.7.2/dbg/llvm/bin/../lib/clang/3.5/include/stdarg.h", directory: "/tmp")
 !17 = !DIDerivedType(tag: DW_TAG_typedef, name: "__builtin_va_list", line: 6, file: !1, baseType: !18)
@@ -63,9 +63,9 @@ define void @test_basic() #0 {
 !21 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: null)
 !22 = !DILocation(line: 6, scope: !4)
 !23 = !DILocation(line: 7, scope: !4)
-!24 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "test_basic", line: 8, scope: !4, file: !5, type: !8)
+!24 = !DILocalVariable(name: "test_basic", line: 8, scope: !4, file: !5, type: !8)
 !25 = !DILocation(line: 8, scope: !4)
-!26 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 9, scope: !27, file: !5, type: !8)
+!26 = !DILocalVariable(name: "i", line: 9, scope: !27, file: !5, type: !8)
 !27 = distinct !DILexicalBlock(line: 9, column: 0, file: !1, scope: !4)
 !28 = !DILocation(line: 9, scope: !27)
 !29 = !DILocation(line: 10, scope: !30)

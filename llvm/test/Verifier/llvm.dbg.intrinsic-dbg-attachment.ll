@@ -4,7 +4,7 @@ entry:
   call void @llvm.dbg.value(
       metadata i8* undef,
       i64 0,
-      metadata !DILocalVariable(tag: DW_TAG_arg_variable, scope: !1),
+      metadata !DILocalVariable(scope: !1),
       metadata !DIExpression())
 ; CHECK-LABEL: llvm.dbg.value intrinsic requires a !dbg attachment
 ; CHECK-NEXT: call void @llvm.dbg.value({{.*}})
@@ -13,7 +13,7 @@ entry:
 
   call void @llvm.dbg.declare(
       metadata i8* undef,
-      metadata !DILocalVariable(tag: DW_TAG_arg_variable, scope: !1),
+      metadata !DILocalVariable(scope: !1),
       metadata !DIExpression())
 ; CHECK-LABEL: llvm.dbg.declare intrinsic requires a !dbg attachment
 ; CHECK-NEXT: call void @llvm.dbg.declare({{.*}})
@@ -23,7 +23,7 @@ entry:
   call void @llvm.dbg.value(
       metadata i8* undef,
       i64 0,
-      metadata !DILocalVariable(tag: DW_TAG_arg_variable, scope: !1),
+      metadata !DILocalVariable(scope: !1),
       metadata !DIExpression()),
     !dbg !DILocation(scope: !2)
 ; CHECK-LABEL: mismatched subprogram between llvm.dbg.value variable and !dbg attachment
@@ -37,7 +37,7 @@ entry:
 
   call void @llvm.dbg.declare(
       metadata i8* undef,
-      metadata !DILocalVariable(tag: DW_TAG_arg_variable, scope: !1),
+      metadata !DILocalVariable(scope: !1),
       metadata !DIExpression()),
     !dbg !DILocation(scope: !2)
 ; CHECK-LABEL: mismatched subprogram between llvm.dbg.declare variable and !dbg attachment

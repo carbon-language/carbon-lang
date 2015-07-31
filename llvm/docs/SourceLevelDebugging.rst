@@ -270,13 +270,13 @@ Compiled to LLVM, this function would be represented like this:
   !8 = !{i32 2, !"Debug Info Version", i32 3}
   !9 = !{i32 1, !"PIC Level", i32 2}
   !10 = !{!"clang version 3.7.0 (trunk 231150) (llvm/trunk 231154)"}
-  !11 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "X", scope: !4, file: !1, line: 2, type: !12)
+  !11 = !DILocalVariable(name: "X", scope: !4, file: !1, line: 2, type: !12)
   !12 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
   !13 = !DIExpression()
   !14 = !DILocation(line: 2, column: 9, scope: !4)
-  !15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "Y", scope: !4, file: !1, line: 3, type: !12)
+  !15 = !DILocalVariable(name: "Y", scope: !4, file: !1, line: 3, type: !12)
   !16 = !DILocation(line: 3, column: 9, scope: !4)
-  !17 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "Z", scope: !18, file: !1, line: 5, type: !12)
+  !17 = !DILocalVariable(name: "Z", scope: !18, file: !1, line: 5, type: !12)
   !18 = distinct !DILexicalBlock(scope: !4, file: !1, line: 4, column: 5)
   !19 = !DILocation(line: 5, column: 11, scope: !18)
   !20 = !DILocation(line: 6, column: 11, scope: !18)

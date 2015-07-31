@@ -25,7 +25,7 @@
 ; CHECK: call void @llvm.dbg.value(metadata i32 %[[A:.*]], i64 0, metadata ![[VAR]], metadata ![[PIECE2:[0-9]+]])
 ; CHECK: ret i32 %[[A]]
 ; Read Var and Piece:
-; CHECK: ![[VAR]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i1",{{.*}} line: 11,
+; CHECK: ![[VAR]] = !DILocalVariable(name: "i1",{{.*}} line: 11,
 ; CHECK: ![[PIECE1]] = !DIExpression(DW_OP_bit_piece, 32, 96)
 ; CHECK: ![[PIECE2]] = !DIExpression(DW_OP_bit_piece, 0, 32)
 
@@ -90,8 +90,8 @@ attributes #2 = { nounwind }
 !22 = !{i32 2, !"Dwarf Version", i32 2}
 !23 = !{i32 1, !"Debug Info Version", i32 3}
 !24 = !{!"clang version 3.5.0 "}
-!25 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
+!25 = !DILocalVariable(name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
 !26 = !DILocation(line: 10, scope: !4)
-!27 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i1", line: 11, scope: !4, file: !5, type: !14)
+!27 = !DILocalVariable(name: "i1", line: 11, scope: !4, file: !5, type: !14)
 !28 = !DILocation(line: 11, scope: !4)
 !29 = !DILocation(line: 12, scope: !4)

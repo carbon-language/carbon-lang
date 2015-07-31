@@ -56,7 +56,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !2 = !{i32 2, !"Debug Info Version", i32 3}
 !3 = !DISubprogram(linkageName: "foo", file: !1, line: 18, isLocal: false, isDefinition: true, scopeLine: 18, function: void (%struct.A*)* @foo)
 !4 = !DIExpression()
-!5 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, scope: !3, flags: DIFlagArtificial | DIFlagObjectPointer)
+!5 = !DILocalVariable(name: "this", arg: 1, scope: !3, flags: DIFlagArtificial | DIFlagObjectPointer)
 !6 = !DILocation(line: 0, scope: !3)
 
 

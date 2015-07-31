@@ -37,9 +37,9 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!12 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 5, arg: 1, scope: !5, file: !6, type: !9)
+!12 = !DILocalVariable(name: "x", line: 5, arg: 1, scope: !5, file: !6, type: !9)
 !13 = !DILocation(line: 5, column: 5, scope: !5)
-!14 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y", line: 8, scope: !15, file: !6, type: !9)
+!14 = !DILocalVariable(name: "y", line: 8, scope: !15, file: !6, type: !9)
 !15 = distinct !DILexicalBlock(line: 7, column: 1, file: !19, scope: !5)
 !16 = !DILocation(line: 8, column: 9, scope: !15)
 !17 = !DILocation(line: 8, column: 18, scope: !15)

@@ -45,10 +45,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !2 = !DIFile(filename: "k.cc", directory: "/private/tmp")
 !3 = !DISubroutineType(types: !4)
 !4 = !{null}
-!5 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "k", line: 6, scope: !6, file: !2, type: !7)
+!5 = !DILocalVariable(name: "k", line: 6, scope: !6, file: !2, type: !7)
 !6 = distinct !DILexicalBlock(line: 5, column: 12, file: !18, scope: !1)
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
-!8 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "y", line: 8, scope: !9, file: !2, type: !7)
+!8 = !DILocalVariable(name: "y", line: 8, scope: !9, file: !2, type: !7)
 !9 = distinct !DILexicalBlock(line: 7, column: 25, file: !18, scope: !10)
 !10 = distinct !DILexicalBlock(line: 7, column: 3, file: !18, scope: !6)
 !11 = !DILocation(line: 6, column: 18, scope: !6)

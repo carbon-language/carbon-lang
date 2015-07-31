@@ -87,9 +87,9 @@ attributes #2 = { nounwind readnone }
 !14 = !{i32 2, !"Debug Info Version", i32 3}
 !15 = !{!"clang version 3.5.0 "}
 !16 = !DILocation(line: 5, scope: !4)
-!17 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
+!17 = !DILocalVariable(name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
 
-!117 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
+!117 = !DILocalVariable(name: "i", line: 6, arg: 1, scope: !9, file: !5, type: !8)
 
 !18 = !DILocation(line: 6, scope: !9, inlinedAt: !16)
 !19 = !DILocation(line: 6, scope: !9)

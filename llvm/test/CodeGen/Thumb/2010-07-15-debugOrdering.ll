@@ -141,7 +141,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !88 = !DISubprogram(name: "indexOfMinAbsComponent", linkageName: "_ZNK9ggVector322indexOfMinAbsComponentEv", line: 137, isLocal: false, isDefinition: false, virtualIndex: 6, isOptimized: false, file: !9, scope: !8, type: !86)
 !89 = !DISubprogram(name: "indexOfMaxComponent", linkageName: "_ZNK9ggVector319indexOfMaxComponentEv", line: 146, isLocal: false, isDefinition: false, virtualIndex: 6, isOptimized: false, file: !9, scope: !8, type: !86)
 !90 = !DISubprogram(name: "indexOfMaxAbsComponent", linkageName: "_ZNK9ggVector322indexOfMaxAbsComponentEv", line: 150, isLocal: false, isDefinition: false, virtualIndex: 6, isOptimized: false, file: !9, scope: !8, type: !86)
-!91 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "vx", line: 46, scope: !1, file: !4, type: !13)
+!91 = !DILocalVariable(name: "vx", line: 46, scope: !1, file: !4, type: !13)
 !92 = !DILocation(line: 48, scope: !1)
 !93 = !DILocation(line: 218, scope: !94, inlinedAt: !96)
 !94 = distinct !DILexicalBlock(line: 217, column: 0, file: !101, scope: !95)

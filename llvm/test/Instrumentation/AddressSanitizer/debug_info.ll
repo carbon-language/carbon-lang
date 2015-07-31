@@ -41,15 +41,15 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9, !9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 1, arg: 1, scope: !5, file: !6, type: !9)
+!10 = !DILocalVariable(name: "p", line: 1, arg: 1, scope: !5, file: !6, type: !9)
 !11 = !DILocation(line: 1, scope: !5)
-!12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "r", line: 2, scope: !13, file: !6, type: !9)
+!12 = !DILocalVariable(name: "r", line: 2, scope: !13, file: !6, type: !9)
 
 ; Verify that debug descriptors for argument and local variable will be replaced
 ; with descriptors that end with OpDeref (encoded as 2).
-;   CHECK: ![[ARG_ID]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: "p", arg: 1,{{.*}} line: 1
+;   CHECK: ![[ARG_ID]] = !DILocalVariable(name: "p", arg: 1,{{.*}} line: 1
 ;   CHECK: ![[OPDEREF]] = !DIExpression(DW_OP_deref)
-;   CHECK: ![[VAR_ID]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "r",{{.*}} line: 2
+;   CHECK: ![[VAR_ID]] = !DILocalVariable(name: "r",{{.*}} line: 2
 ; Verify that there are no more variable descriptors.
 ;   CHECK-NOT: !DILocalVariable(tag: DW_TAG_arg_variable
 ;   CHECK-NOT: !DILocalVariable(tag: DW_TAG_auto_variable

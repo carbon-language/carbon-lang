@@ -1972,15 +1972,19 @@ std::error_code BitcodeReader::parseMetadata() {
     }
     case bitc::METADATA_LOCAL_VAR: {
       // 10th field is for the obseleted 'inlinedAt:' field.
-      if (Record.size() != 9 && Record.size() != 10)
+      if (Record.size() < 8 || Record.size() > 10)
         return error("Invalid record");
 
+      // 2nd field used to be an artificial tag, either DW_TAG_auto_variable or
+      // DW_TAG_arg_variable.
+      bool HasTag = Record.size() > 8;
       MDValueList.assignValue(
           GET_OR_DISTINCT(DILocalVariable, Record[0],
-                          (Context, Record[1], getMDOrNull(Record[2]),
-                           getMDString(Record[3]), getMDOrNull(Record[4]),
-                           Record[5], getMDOrNull(Record[6]), Record[7],
-                           Record[8])),
+                          (Context, getMDOrNull(Record[1 + HasTag]),
+                           getMDString(Record[2 + HasTag]),
+                           getMDOrNull(Record[3 + HasTag]), Record[4 + HasTag],
+                           getMDOrNull(Record[5 + HasTag]), Record[6 + HasTag],
+                           Record[7 + HasTag])),
           NextMDValueNo++);
       break;
     }

@@ -156,7 +156,8 @@ public:
 
   // Translate tag to proper Dwarf tag.
   dwarf::Tag getTag() const {
-    if (Var->getTag() == dwarf::DW_TAG_arg_variable)
+    // FIXME: Why don't we just infer this tag and store it all along?
+    if (Var->isParameter())
       return dwarf::DW_TAG_formal_parameter;
 
     return dwarf::DW_TAG_variable;

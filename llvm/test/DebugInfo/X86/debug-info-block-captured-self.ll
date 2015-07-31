@@ -101,10 +101,10 @@ define internal void @"__24-[Main initWithContext:]_block_invoke_2"(i8* %.block_
 !41 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: null)
 !42 = !DISubprogram(name: "__24-[Main initWithContext:]_block_invoke_2", line: 35, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 35, file: !1, scope: !1, type: !39, function: void (i8*, i8*)* @"__24-[Main initWithContext:]_block_invoke_2", variables: !15)
 !84 = !DILocation(line: 33, scope: !38)
-!86 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "self", line: 41, scope: !38, file: !1, type: !34)
+!86 = !DILocalVariable(name: "self", line: 41, scope: !38, file: !1, type: !34)
 !87 = !DILocation(line: 41, scope: !38)
 !103 = !DILocation(line: 35, scope: !42)
-!105 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "self", line: 40, scope: !42, file: !1, type: !34)
+!105 = !DILocalVariable(name: "self", line: 40, scope: !42, file: !1, type: !34)
 !106 = !DILocation(line: 40, scope: !42)
 !107 = !DIFile(filename: "llvm/tools/clang/test/CodeGenObjC/debug-info-block-captured-self.m", directory: "")
 !108 = !{i32 1, !"Debug Info Version", i32 3}

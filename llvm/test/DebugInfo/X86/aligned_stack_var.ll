@@ -34,7 +34,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !6 = !DIFile(filename: "test.cc", directory: "/home/samsonov/debuginfo")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
-!9 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 2, scope: !10, file: !6, type: !11)
+!9 = !DILocalVariable(name: "x", line: 2, scope: !10, file: !6, type: !11)
 !10 = distinct !DILexicalBlock(line: 1, column: 12, file: !14, scope: !5)
 !11 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !DILocation(line: 2, column: 7, scope: !10)

@@ -55,7 +55,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !16 = !DILocation(line: 284, column: 10, scope: !17)
 !17 = distinct !DILexicalBlock(line: 282, column: 9, file: !25, scope: !12)
 !18 = !{double undef}
-!19 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "temp", line: 268, scope: !14, file: !1, type: !20)
+!19 = !DILocalVariable(name: "temp", line: 268, scope: !14, file: !1, type: !20)
 !20 = !DIBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
 !21 = !DILocation(line: 286, column: 14, scope: !22)
 !22 = distinct !DILexicalBlock(line: 285, column: 13, file: !25, scope: !17)

@@ -41,6 +41,6 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !12 = !DISubprogram(name: "foo", scope: null, file: !3, type: !13, isLocal: false, isDefinition: true, isOptimized: false, function: void ()* @_Z3foov)
 !13 = !DISubroutineType(types: !14)
 !14 = !{null}
-!15 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "v", scope: !12, type: !"_ZT5Class")
+!15 = !DILocalVariable(name: "v", scope: !12, type: !"_ZT5Class")
 !16 = !DIExpression(DW_OP_bit_piece, 32, 32)
 !17 = !DILocation(line: 2755, column: 9, scope: !12)

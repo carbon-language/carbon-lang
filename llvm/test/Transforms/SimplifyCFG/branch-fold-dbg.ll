@@ -48,7 +48,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !4 = !{null}
 !5 = !DILocation(line: 131, column: 2, scope: !0)
 !6 = !DILocation(line: 134, column: 2, scope: !0)
-!7 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "bar", line: 232, scope: !8, file: !1, type: !9)
+!7 = !DILocalVariable(name: "bar", line: 232, scope: !8, file: !1, type: !9)
 !8 = distinct !DILexicalBlock(line: 231, column: 1, file: !15, scope: !0)
 !9 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, scope: !2, baseType: !10)
 !10 = !DIDerivedType(tag: DW_TAG_const_type, scope: !2, baseType: !11)

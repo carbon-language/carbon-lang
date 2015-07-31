@@ -1800,11 +1800,8 @@ static void writeDILocalVariable(raw_ostream &Out, const DILocalVariable *N,
                                  SlotTracker *Machine, const Module *Context) {
   Out << "!DILocalVariable(";
   MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
-  Printer.printTag(N);
   Printer.printString("name", N->getName());
-  Printer.printInt("arg", N->getArg(),
-                   /* ShouldSkipZero */
-                   N->getTag() == dwarf::DW_TAG_auto_variable);
+  Printer.printInt("arg", N->getArg());
   Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
   Printer.printMetadata("file", N->getRawFile());
   Printer.printInt("line", N->getLine());

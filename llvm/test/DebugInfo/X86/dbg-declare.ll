@@ -40,11 +40,11 @@ declare void @llvm.stackrestore(i8*) nounwind
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
 !11 = !DIDerivedType(tag: DW_TAG_const_type, baseType: !9)
-!14 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 5, arg: 1, scope: !5, file: !6, type: !10)
+!14 = !DILocalVariable(name: "x", line: 5, arg: 1, scope: !5, file: !6, type: !10)
 !15 = !DILocation(line: 5, column: 21, scope: !5)
 !16 = !DILocation(line: 7, column: 13, scope: !17)
 !17 = distinct !DILexicalBlock(line: 6, column: 1, file: !26, scope: !5)
-!18 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 7, scope: !17, file: !6, type: !19)
+!18 = !DILocalVariable(name: "a", line: 7, scope: !17, file: !6, type: !19)
 !19 = !DICompositeType(tag: DW_TAG_array_type, align: 8, baseType: !20, elements: !21)
 !20 = !DIBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !21 = !{!22}

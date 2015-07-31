@@ -43,9 +43,9 @@ entry:
 !4 = !{!5}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !6 = !DISubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !19, scope: !2, type: !3, function: i32 ()* @main)
-!7 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 1, arg: 1, scope: !1, file: !2, type: !5)
+!7 = !DILocalVariable(name: "i", line: 1, arg: 1, scope: !1, file: !2, type: !5)
 !8 = !DILocation(line: 1, column: 13, scope: !1)
-!9 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "j", line: 2, scope: !10, file: !2, type: !5)
+!9 = !DILocalVariable(name: "j", line: 2, scope: !10, file: !2, type: !5)
 !10 = distinct !DILexicalBlock(line: 1, column: 16, file: !19, scope: !1)
 !11 = !DILocation(line: 2, column: 6, scope: !10)
 !12 = !DILocation(line: 2, column: 11, scope: !10)

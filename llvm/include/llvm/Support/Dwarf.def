@@ -99,10 +99,6 @@ HANDLE_DW_TAG(0x0041, type_unit)
 HANDLE_DW_TAG(0x0042, rvalue_reference_type)
 HANDLE_DW_TAG(0x0043, template_alias)
 
-// Mock tags we use as discriminators.
-HANDLE_DW_TAG(0x0100, auto_variable) // Tag for local (auto) variables.
-HANDLE_DW_TAG(0x0101, arg_variable)  // Tag for argument variables.
-
 // New in DWARF v5.
 HANDLE_DW_TAG(0x0044, coarray_type)
 HANDLE_DW_TAG(0x0045, generic_subrange)

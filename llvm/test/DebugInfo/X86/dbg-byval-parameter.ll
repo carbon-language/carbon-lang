@@ -28,7 +28,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!21}
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "my_r0", line: 11, arg: 1, scope: !1, file: !2, type: !7)
+!0 = !DILocalVariable(name: "my_r0", line: 11, arg: 1, scope: !1, file: !2, type: !7)
 !1 = !DISubprogram(name: "foo", linkageName: "foo", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !19, scope: !2, type: !4, function: double (%struct.Rect*)* @foo)
 !2 = !DIFile(filename: "b2.c", directory: "/tmp/")
 !3 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 0, file: !19, enums: !20, retainedTypes: !20, subprograms: !18, imports:  null)

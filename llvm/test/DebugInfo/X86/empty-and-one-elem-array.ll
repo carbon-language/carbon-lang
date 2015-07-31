@@ -71,7 +71,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !7 = !DISubroutineType(types: !8)
 !8 = !{!9}
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "my_foo", line: 12, scope: !11, file: !6, type: !12)
+!10 = !DILocalVariable(name: "my_foo", line: 12, scope: !11, file: !6, type: !12)
 !11 = distinct !DILexicalBlock(line: 11, column: 0, file: !6, scope: !5)
 !12 = !DICompositeType(tag: DW_TAG_structure_type, name: "foo", line: 1, size: 64, align: 32, file: !32, elements: !13)
 !13 = !{!14, !15}
@@ -81,7 +81,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !17 = !{!18}
 !18 = !DISubrange(count: 1)
 !19 = !DILocation(line: 12, scope: !11)
-!20 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "my_bar", line: 13, scope: !11, file: !6, type: !21)
+!20 = !DILocalVariable(name: "my_bar", line: 13, scope: !11, file: !6, type: !21)
 !21 = !DICompositeType(tag: DW_TAG_structure_type, name: "bar", line: 6, size: 32, align: 32, file: !32, elements: !22)
 !22 = !{!23, !24}
 !23 = !DIDerivedType(tag: DW_TAG_member, name: "a", line: 7, size: 32, align: 32, file: !32, scope: !21, baseType: !9)

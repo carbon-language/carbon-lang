@@ -613,10 +613,9 @@ static DILocalVariable *createLocalVariable(
   // the only valid scopes)?
   DIScope *Context = getNonCompileUnitScope(Scope);
 
-  dwarf::Tag Tag = ArgNo ? dwarf::DW_TAG_arg_variable : dwarf::DW_TAG_auto_variable;
-  auto *Node = DILocalVariable::get(
-      VMContext, Tag, cast_or_null<DILocalScope>(Context), Name, File, LineNo,
-      DITypeRef::get(Ty), ArgNo, Flags);
+  auto *Node =
+      DILocalVariable::get(VMContext, cast_or_null<DILocalScope>(Context), Name,
+                           File, LineNo, DITypeRef::get(Ty), ArgNo, Flags);
   if (AlwaysPreserve) {
     // The optimizer may remove local variables. If there is an interest
     // to preserve variable info in such situation then stash it in a

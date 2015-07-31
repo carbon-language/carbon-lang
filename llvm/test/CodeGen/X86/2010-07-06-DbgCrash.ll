@@ -12,7 +12,7 @@
 !99 = !{!100}
 !100 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !101 = !{[2 x i8*]* @C.9.2167}
-!102 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "find_strings", line: 75, scope: !103, file: !38, type: !104)
+!102 = !DILocalVariable(name: "find_strings", line: 75, scope: !103, file: !38, type: !104)
 !103 = distinct !DILexicalBlock(line: 73, column: 0, file: null, scope: !97)
 !104 = !DICompositeType(tag: DW_TAG_array_type, size: 85312, align: 64, file: !109, baseType: !46, elements: !105)
 !105 = !{!106}

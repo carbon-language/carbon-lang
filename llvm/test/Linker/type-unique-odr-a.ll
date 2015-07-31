@@ -96,6 +96,6 @@ attributes #1 = { nounwind readnone }
 !21 = !{i32 1, !"Debug Info Version", i32 3}
 !22 = !{!"clang version 3.5.0 "}
 !23 = !DILocation(line: 11, scope: !15)
-!24 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 8, scope: !19, file: !16, type: !"_ZTS1A")
+!24 = !DILocalVariable(name: "a", line: 8, scope: !19, file: !16, type: !"_ZTS1A")
 !25 = !DILocation(line: 8, scope: !19)
 !26 = !DILocation(line: 9, scope: !19)

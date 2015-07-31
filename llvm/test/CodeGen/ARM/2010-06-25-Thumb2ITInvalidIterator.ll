@@ -47,7 +47,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.lv.fn = !{!0, !8, !10, !12}
 !llvm.dbg.gv = !{!14}
 
-!0 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "buf", line: 4, arg: 1, scope: !1, file: !2, type: !6)
+!0 = !DILocalVariable(name: "buf", line: 4, arg: 1, scope: !1, file: !2, type: !6)
 !1 = !DISubprogram(name: "x0", linkageName: "x0", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !26, scope: null, type: !4)
 !2 = !DIFile(filename: "t.c", directory: "/private/tmp")
 !3 = !DICompileUnit(language: DW_LANG_C99, producer: "clang 2.0", isOptimized: true, file: !26)
@@ -55,11 +55,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !5 = !{null}
 !6 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !26, scope: !2, baseType: !7)
 !7 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned char", size: 8, align: 8, encoding: DW_ATE_unsigned_char)
-!8 = !DILocalVariable(tag: DW_TAG_arg_variable, name: "nbytes", line: 4, arg: 2, scope: !1, file: !2, type: !9)
+!8 = !DILocalVariable(name: "nbytes", line: 4, arg: 2, scope: !1, file: !2, type: !9)
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "unsigned long", size: 32, align: 32, encoding: DW_ATE_unsigned)
-!10 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "nread", line: 6, scope: !11, file: !2, type: !9)
+!10 = !DILocalVariable(name: "nread", line: 6, scope: !11, file: !2, type: !9)
 !11 = distinct !DILexicalBlock(line: 5, column: 1, file: !26, scope: !1)
-!12 = !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 7, scope: !11, file: !2, type: !13)
+!12 = !DILocalVariable(name: "c", line: 7, scope: !11, file: !2, type: !13)
 !13 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !14 = !DIGlobalVariable(name: "length", linkageName: "length", line: 1, isLocal: false, isDefinition: true, scope: !2, file: !2, type: !13, variable: i32* @length)
 !15 = !DILocation(line: 4, column: 24, scope: !1)

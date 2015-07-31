@@ -466,21 +466,21 @@ DIGlobalVariable::getImpl(LLVMContext &Context, Metadata *Scope, MDString *Name,
                        Ops);
 }
 
-DILocalVariable *DILocalVariable::getImpl(LLVMContext &Context, unsigned Tag,
-                                          Metadata *Scope, MDString *Name,
-                                          Metadata *File, unsigned Line,
-                                          Metadata *Type, unsigned Arg,
-                                          unsigned Flags, StorageType Storage,
+DILocalVariable *DILocalVariable::getImpl(LLVMContext &Context, Metadata *Scope,
+                                          MDString *Name, Metadata *File,
+                                          unsigned Line, Metadata *Type,
+                                          unsigned Arg, unsigned Flags,
+                                          StorageType Storage,
                                           bool ShouldCreate) {
   // 64K ought to be enough for any frontend.
   assert(Arg <= UINT16_MAX && "Expected argument number to fit in 16-bits");
 
   assert(Scope && "Expected scope");
   assert(isCanonical(Name) && "Expected canonical MDString");
-  DEFINE_GETIMPL_LOOKUP(DILocalVariable, (Tag, Scope, getString(Name), File,
-                                          Line, Type, Arg, Flags));
+  DEFINE_GETIMPL_LOOKUP(DILocalVariable,
+                        (Scope, getString(Name), File, Line, Type, Arg, Flags));
   Metadata *Ops[] = {Scope, Name, File, Type};
-  DEFINE_GETIMPL_STORE(DILocalVariable, (Tag, Line, Arg, Flags), Ops);
+  DEFINE_GETIMPL_STORE(DILocalVariable, (Line, Arg, Flags), Ops);
 }
 
 DIExpression *DIExpression::getImpl(LLVMContext &Context,
