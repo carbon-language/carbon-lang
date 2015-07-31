@@ -30,16 +30,14 @@ COMPILER_RT_ABI fp_t __floatsitf(int a) {
     unsigned aAbs = (unsigned)a;
     if (a < 0) {
         sign = signBit;
-        aAbs += 0x80000000;
+        aAbs = ~(unsigned)a + 1U;
     }
 
     // Exponent of (fp_t)a is the width of abs(a).
-    const int exponent = (aWidth - 1) - __builtin_clz(a);
+    const int exponent = (aWidth - 1) - __builtin_clz(aAbs);
     rep_t result;
 
-    // Shift a into the significand field and clear the implicit bit.  Extra
-    // cast to unsigned int is necessary to get the correct behavior for
-    // the input INT_MIN.
+    // Shift a into the significand field and clear the implicit bit.
     const int shift = significandBits - exponent;
     result = (rep_t)aAbs << shift ^ implicitBit;
 

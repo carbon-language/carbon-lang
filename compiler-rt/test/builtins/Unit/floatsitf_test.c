@@ -40,6 +40,8 @@ char assumption_1[sizeof(long double) * CHAR_BIT == 128] = {0};
 int main()
 {
 #if __LDBL_MANT_DIG__ == 113
+    if (test__floatsitf(0x80000000, UINT64_C(0xc01e000000000000), UINT64_C(0x0)))
+        return 1;
     if (test__floatsitf(0x7fffffff, UINT64_C(0x401dfffffffc0000), UINT64_C(0x0)))
         return 1;
     if (test__floatsitf(0, UINT64_C(0x0), UINT64_C(0x0)))
