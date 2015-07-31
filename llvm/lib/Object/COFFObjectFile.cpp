@@ -177,7 +177,7 @@ ErrorOr<uint64_t> COFFObjectFile::getSymbolAddress(DataRefImpl Ref) const {
   if (PE32Header)
     Result += PE32Header->ImageBase;
   else if (PE32PlusHeader)
-    Result += PE32Header->ImageBase;
+    Result += PE32PlusHeader->ImageBase;
 
   return Result;
 }
@@ -274,7 +274,15 @@ std::error_code COFFObjectFile::getSectionName(DataRefImpl Ref,
 
 uint64_t COFFObjectFile::getSectionAddress(DataRefImpl Ref) const {
   const coff_section *Sec = toSec(Ref);
-  return Sec->VirtualAddress;
+  uint64_t Result = Sec->VirtualAddress;
+
+  // The section VirtualAddress does not include ImageBase, and we want to
+  // return virtual addresses.
+  if (PE32Header)
+    Result += PE32Header->ImageBase;
+  else if (PE32PlusHeader)
+    Result += PE32PlusHeader->ImageBase;
+  return Result;
 }
 
 uint64_t COFFObjectFile::getSectionSize(DataRefImpl Ref) const {
