@@ -14,26 +14,15 @@
 // Test unique_ptr move assignment
 
 #include <memory>
-#include <utility>
-#include <cassert>
 
-// Can't copy from lvalue
-
-struct A
-{
-    static int count;
-    A() {++count;}
-    A(const A&) {++count;}
-    ~A() {--count;}
-};
-
-int A::count = 0;
+#include "test_macros.h"
 
 int main()
 {
-    {
-    std::unique_ptr<A> s(new A);
-    std::unique_ptr<A> s2;
-    s2 = s;
-    }
+    std::unique_ptr<int> s, s2;
+#if TEST_STD_VER >= 11
+    s2 = s; // expected-error {{cannot be assigned because its copy assignment operator is implicitly deleted}}
+#else
+    s2 = s; // expected-error {{'operator=' is a private member of 'std::__1::unique_ptr}}
+#endif
 }
