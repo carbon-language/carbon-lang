@@ -32,22 +32,6 @@ struct A
 
 int A::count = 0;
 
-class NCDeleter
-{
-    int state_;
-
-    NCDeleter(NCDeleter&);
-    NCDeleter& operator=(NCDeleter&);
-public:
-
-    NCDeleter() : state_(5) {}
-
-    int state() const {return state_;}
-    void set_state(int s) {state_ = s;}
-
-    void operator()(A* p) {delete [] p;}
-};
-
 int main()
 {
     {
@@ -71,10 +55,10 @@ int main()
     }
     assert(A::count == 0);
     {
-    NCDeleter d;
-    std::unique_ptr<A[], NCDeleter&> s(new A[3], d);
+    NCDeleter<A[]> d;
+    std::unique_ptr<A[], NCDeleter<A[]>&> s(new A[3], d);
     A* p = s.get();
-    std::unique_ptr<A[], NCDeleter&> s2 = std::move(s);
+    std::unique_ptr<A[], NCDeleter<A[]>&> s2 = std::move(s);
     assert(s2.get() == p);
     assert(s.get() == 0);
     assert(A::count == 3);

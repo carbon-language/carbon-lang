@@ -31,21 +31,6 @@ struct A
 
 int A::count = 0;
 
-class NCDeleter
-{
-    int state_;
-
-    NCDeleter(NCDeleter&);
-    NCDeleter& operator=(NCDeleter&);
-public:
-
-    NCDeleter() : state_(5) {}
-
-    int state() const {return state_;}
-    void set_state(int s) {state_ = s;}
-
-    void operator()(A* p) {delete [] p;}
-};
 
 std::unique_ptr<A[]>
 source1()
@@ -67,14 +52,14 @@ void sink2(std::unique_ptr<A[], Deleter<A[]> > p)
 {
 }
 
-std::unique_ptr<A[], NCDeleter&>
+std::unique_ptr<A[], NCDeleter<A[]>&>
 source3()
 {
-    static NCDeleter d;
-    return std::unique_ptr<A[], NCDeleter&>(new A[3], d);
+    static NCDeleter<A[]> d;
+    return std::unique_ptr<A[], NCDeleter<A[]>&>(new A[3], d);
 }
 
-void sink3(std::unique_ptr<A[], NCDeleter&> p)
+void sink3(std::unique_ptr<A[], NCDeleter<A[]>&> p)
 {
 }
 
