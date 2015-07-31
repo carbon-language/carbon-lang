@@ -433,6 +433,10 @@ void X86RegisterInfo::adjustStackMapLiveOutMask(uint32_t *Mask) const {
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
 
+static bool CantUseSP(const MachineFrameInfo *MFI) {
+  return MFI->hasVarSizedObjects() || MFI->hasOpaqueSPAdjustment();
+}
+
 bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
    const MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -445,9 +449,7 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
    // reference locals while also adjusting the stack pointer.  When we can't
    // use both the SP and the FP, we need a separate base pointer register.
    bool CantUseFP = needsStackRealignment(MF);
-   bool CantUseSP =
-       MFI->hasVarSizedObjects() || MFI->hasOpaqueSPAdjustment();
-   return CantUseFP && CantUseSP;
+   return CantUseFP && CantUseSP(MFI);
 }
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
@@ -464,7 +466,7 @@ bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
 
   // If a base pointer is necessary.  Check that it isn't too late to reserve
   // it.
-  if (MFI->hasVarSizedObjects())
+  if (CantUseSP(MFI))
     return MRI->canReserveReg(BasePtr);
   return true;
 }
