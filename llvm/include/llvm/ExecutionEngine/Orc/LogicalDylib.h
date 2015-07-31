@@ -28,6 +28,10 @@ private:
   typedef std::vector<BaseLayerModuleSetHandleT> BaseLayerHandleList;
 
   struct LogicalModule {
+    // Make this move-only to ensure they don't get duplicated across moves of
+    // LogicalDylib or anything like that.
+    LogicalModule(LogicalModule&&) = default;
+    LogicalModule() = default;
     LogicalModuleResources Resources;
     BaseLayerHandleList BaseLayerHandles;
   };
@@ -45,6 +49,10 @@ public:
       for (auto BLH : LM.BaseLayerHandles)
         BaseLayer.removeModuleSet(BLH);
   }
+
+  // If possible, remove this and ~LogicalDylib once the work in the dtor is
+  // moved to members (eg: self-unregistering base layer handles).
+  LogicalDylib(LogicalDylib&& RHS) = default;
 
   LogicalModuleHandle createLogicalModule() {
     LogicalModules.push_back(LogicalModule());
