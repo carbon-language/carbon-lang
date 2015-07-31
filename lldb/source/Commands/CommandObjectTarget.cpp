@@ -1161,6 +1161,12 @@ protected:
 
                     if (from[0] && to[0])
                     {
+                        Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                        if (log)
+                        {
+                            log->Printf ("target modules search path adding ImageSearchPath pair: '%s' -> '%s'",
+                                         from, to);
+                        }
                         bool last_pair = ((argc - i) == 2);
                         target->GetImageSearchPathList().Append (ConstString(from),
                                                                  ConstString(to),
