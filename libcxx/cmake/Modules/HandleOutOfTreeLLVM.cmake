@@ -58,6 +58,7 @@ endmacro(find_llvm_parts)
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(LIBCXX_BUILT_STANDALONE 1)
+  message(STATUS "Configuring for standalone build.")
 
   find_llvm_parts()
 
