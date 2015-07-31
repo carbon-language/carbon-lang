@@ -662,9 +662,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
 
     // Windows specific -- if __load_config_used can be resolved, resolve it.
-    if (Symbol *Sym = Symtab.find(Config->LoadConfigUsed))
-      if (isa<Lazy>(Sym->Body))
-        Symtab.addUndefined(Config->LoadConfigUsed);
+    if (Symtab.find(Config->LoadConfigUsed))
+      addUndefined(Config->LoadConfigUsed);
 
     if (Symtab.queueEmpty())
       break;
