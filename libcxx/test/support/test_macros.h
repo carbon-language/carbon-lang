@@ -14,6 +14,12 @@
 #define TEST_CONCAT1(X, Y) X##Y
 #define TEST_CONCAT(X, Y) TEST_CONCAT1(X, Y)
 
+#ifdef __has_feature
+#define TEST_HAS_FEATURE(X) __has_feature(X)
+#else
+#define TEST_HAS_FEATURE(X) 0
+#endif
+
 #ifdef __has_extension
 #define TEST_HAS_EXTENSION(X) __has_extension(X)
 #else
@@ -79,5 +85,13 @@ template <unsigned> struct static_assert_check {};
 
 } // end namespace test_detail
 
+
+#if !TEST_HAS_FEATURE(cxx_rtti) && !defined(__cxx_rtti)
+#define TEST_HAS_NO_RTTI
+#endif
+
+#if !TEST_HAS_FEATURE(cxx_exceptions) && !defined(__cxx_exceptions)
+#define TEST_HAS_NO_EXCEPTIONS
+#endif
 
 #endif // SUPPORT_TEST_MACROS_HPP

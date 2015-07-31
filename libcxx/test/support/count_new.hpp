@@ -30,6 +30,10 @@ public:
     // All checks return true when disable_checking is enabled.
     static const bool disable_checking;
 
+    // Disallow any allocations from occurring. Useful for testing that
+    // code doesn't perform any allocations.
+    bool disable_allocations;
+
     int outstanding_new;
     int new_called;
     int delete_called;
@@ -43,6 +47,7 @@ public:
 public:
     void newCalled(std::size_t s)
     {
+        assert(disable_allocations == false);
         assert(s);
         ++new_called;
         ++outstanding_new;
@@ -58,6 +63,7 @@ public:
 
     void newArrayCalled(std::size_t s)
     {
+        assert(disable_allocations == false);
         assert(s);
         ++outstanding_array_new;
         ++new_array_called;
@@ -71,8 +77,20 @@ public:
         ++delete_array_called;
     }
 
+    void disableAllocations()
+    {
+        disable_allocations = true;
+    }
+
+    void enableAllocations()
+    {
+        disable_allocations = false;
+    }
+
     void reset()
     {
+        disable_allocations = false;
+
         outstanding_new = 0;
         new_called = 0;
         delete_called = 0;
@@ -202,5 +220,30 @@ void operator delete[](void* p) throw()
 }
 
 #endif // DISABLE_NEW_COUNT
+
+
+struct DisableAllocationGuard {
+    explicit DisableAllocationGuard(bool disable = true) : m_disabled(disable)
+    {
+        // Don't re-disable if already disabled.
+        if (globalMemCounter.disable_allocations == true) m_disabled = false;
+        if (m_disabled) globalMemCounter.disableAllocations();
+    }
+
+    void release() {
+        if (m_disabled) globalMemCounter.enableAllocations();
+        m_disabled = false;
+    }
+
+    ~DisableAllocationGuard() {
+        release();
+    }
+
+private:
+    bool m_disabled;
+
+    DisableAllocationGuard(DisableAllocationGuard const&);
+    DisableAllocationGuard& operator=(DisableAllocationGuard const&);
+};
 
 #endif /* COUNT_NEW_HPP */
