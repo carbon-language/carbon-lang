@@ -364,6 +364,7 @@ void TraceState::TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType, 
 void TraceState::TraceSwitchCallback(uintptr_t PC, size_t ValSizeInBits,
                                      uint64_t Val, size_t NumCases,
                                      uint64_t *Cases) {
+  if (!RecordingTraces) return;
   for (size_t i = 0; i < NumCases; i++)
     TryToAddDesiredData(Val, Cases[i], ValSizeInBits / 8);
 }
