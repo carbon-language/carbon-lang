@@ -247,6 +247,13 @@ void EHScopeStack::pushTerminate() {
   InnermostEHScope = stable_begin();
 }
 
+void EHScopeStack::pushCatchEnd(llvm::BasicBlock *CatchEndBlockBB) {
+  char *Buffer = allocate(EHCatchEndScope::getSize());
+  auto *CES = new (Buffer) EHCatchEndScope(InnermostEHScope);
+  CES->setCachedEHDispatchBlock(CatchEndBlockBB);
+  InnermostEHScope = stable_begin();
+}
+
 /// Remove any 'null' fixups on the stack.  However, we can't pop more
 /// fixups than the fixup depth on the innermost normal cleanup, or
 /// else fixups that we try to add to that cleanup will end up in the
@@ -896,6 +903,14 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
     CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
 
     EmitBlock(EHEntry);
+    llvm::BasicBlock *NextAction = getEHDispatchBlock(EHParent);
+    if (CGM.getCodeGenOpts().NewMSEH &&
+        EHPersonality::get(*this).isMSVCPersonality()) {
+      if (NextAction)
+        Builder.CreateCleanupPad(VoidTy, NextAction);
+      else
+        Builder.CreateCleanupPad(VoidTy, {});
+    }
 
     // We only actually emit the cleanup code if the cleanup is either
     // active or was used before it was deactivated.
@@ -905,7 +920,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       EmitCleanup(*this, Fn, cleanupFlags, EHActiveFlag);
     }
 
-    Builder.CreateBr(getEHDispatchBlock(EHParent));
+    if (CGM.getCodeGenOpts().NewMSEH && EHPersonality::get(*this).isMSVCPersonality())
+      Builder.CreateCleanupRet(NextAction);
+    else
+      Builder.CreateBr(NextAction);
 
     Builder.restoreIP(SavedIP);
 

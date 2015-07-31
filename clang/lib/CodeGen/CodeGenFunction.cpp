@@ -826,15 +826,11 @@ static void TryMarkNoThrow(llvm::Function *F) {
   // can't do this on functions that can be overwritten.
   if (F->mayBeOverridden()) return;
 
-  for (llvm::Function::iterator FI = F->begin(), FE = F->end(); FI != FE; ++FI)
-    for (llvm::BasicBlock::iterator
-           BI = FI->begin(), BE = FI->end(); BI != BE; ++BI)
-      if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(&*BI)) {
-        if (!Call->doesNotThrow())
-          return;
-      } else if (isa<llvm::ResumeInst>(&*BI)) {
+  for (llvm::BasicBlock &BB : *F)
+    for (llvm::Instruction &I : BB)
+      if (I.mayThrow())
         return;
-      }
+
   F->setDoesNotThrow();
 }
 

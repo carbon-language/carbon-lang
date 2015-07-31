@@ -40,9 +40,9 @@ class EHScope {
 
   class CommonBitFields {
     friend class EHScope;
-    unsigned Kind : 2;
+    unsigned Kind : 3;
   };
-  enum { NumCommonBits = 2 };
+  enum { NumCommonBits = 3 };
 
 protected:
   class CatchBitFields {
@@ -81,7 +81,7 @@ protected:
     /// The number of fixups required by enclosing scopes (not including
     /// this one).  If this is the top cleanup scope, all the fixups
     /// from this index onwards belong to this scope.
-    unsigned FixupDepth : 32 - 18 - NumCommonBits; // currently 13
+    unsigned FixupDepth : 32 - 18 - NumCommonBits; // currently 12
   };
 
   class FilterBitFields {
@@ -99,7 +99,7 @@ protected:
   };
 
 public:
-  enum Kind { Cleanup, Catch, Terminate, Filter };
+  enum Kind { Cleanup, Catch, Terminate, Filter, CatchEnd };
 
   EHScope(Kind kind, EHScopeStack::stable_iterator enclosingEHScope)
     : CachedLandingPad(nullptr), CachedEHDispatchBlock(nullptr),
@@ -466,6 +466,17 @@ public:
   }
 };
 
+class EHCatchEndScope : public EHScope {
+public:
+  EHCatchEndScope(EHScopeStack::stable_iterator enclosingEHScope)
+      : EHScope(CatchEnd, enclosingEHScope) {}
+  static size_t getSize() { return sizeof(EHCatchEndScope); }
+
+  static bool classof(const EHScope *scope) {
+    return scope->getKind() == CatchEnd;
+  }
+};
+
 /// A non-stable pointer into the scope stack.
 class EHScopeStack::iterator {
   char *Ptr;
@@ -502,6 +513,10 @@ public:
 
     case EHScope::Terminate:
       Size = EHTerminateScope::getSize();
+      break;
+
+    case EHScope::CatchEnd:
+      Size = EHCatchEndScope::getSize();
       break;
     }
     Ptr += llvm::RoundUpToAlignment(Size, ScopeStackAlignment);
@@ -551,6 +566,14 @@ inline void EHScopeStack::popTerminate() {
   deallocate(EHTerminateScope::getSize());
 }
 
+inline void EHScopeStack::popCatchEnd() {
+  assert(!empty() && "popping exception stack when not empty");
+
+  EHCatchEndScope &scope = cast<EHCatchEndScope>(*begin());
+  InnermostEHScope = scope.getEnclosingEHScope();
+  deallocate(EHCatchEndScope::getSize());
+}
+
 inline EHScopeStack::iterator EHScopeStack::find(stable_iterator sp) const {
   assert(sp.isValid() && "finding invalid savepoint");
   assert(sp.Size <= stable_begin().Size && "finding savepoint after pop");
@@ -588,6 +611,13 @@ struct EHPersonality {
   static const EHPersonality MSVC_except_handler;
   static const EHPersonality MSVC_C_specific_handler;
   static const EHPersonality MSVC_CxxFrameHandler3;
+
+  bool isMSVCPersonality() const {
+    return this == &MSVC_except_handler || this == &MSVC_C_specific_handler ||
+           this == &MSVC_CxxFrameHandler3;
+  }
+
+  bool isMSVCXXPersonality() const { return this == &MSVC_CxxFrameHandler3; }
 };
 }
 }

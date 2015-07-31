@@ -329,6 +329,10 @@ public:
   /// Pops a terminate handler off the stack.
   void popTerminate();
 
+  void pushCatchEnd(llvm::BasicBlock *CatchEndBlockBB);
+
+  void popCatchEnd();
+
   // Returns true iff the current scope is either empty or contains only
   // lifetime markers, i.e. no real cleanup code
   bool containsOnlyLifetimeMarkers(stable_iterator Old) const;
