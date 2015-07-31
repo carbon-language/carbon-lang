@@ -249,6 +249,33 @@ These counters may also be used for in-process coverage-guided fuzzers. See
     uintptr_t
     __sanitizer_update_counter_bitset_and_clear_counters(uint8_t *bitset);
 
+Tracing data flow
+=================
+
+An *experimental* feature to support data-flow-guided fuzzing.
+With ``-fsanitize-coverage=trace-cmp`` the compiler will insert extra instrumentation
+around comparison instructions and switch statements.
+The fuzzer will need to define the following functions,
+they will be called by the instrumented code.
+
+.. code-block:: c++
+
+  // Called before a comparison instruction.
+  // SizeAndType is a packed value containing
+  //   - [63:32] the Size of the operands of comparison in bits
+  //   - [31:0] the Type of comparison (one of ICMP_EQ, ... ICMP_SLE)
+  // Arg1 and Arg2 are arguments of the comparison.
+  void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1, uint64_t Arg2);
+
+  // Called before a switch statement.
+  // Val is the switch operand.
+  // Cases[0] is the number of case constants.
+  // Cases[1] is the size of Val in bits.
+  // Cases[2:] are the case constants.
+  void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases);
+
+This interface is a subject to change.
+
 Output directory
 ================
 

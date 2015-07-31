@@ -68,6 +68,8 @@ The most important flags are::
   apply_tokens                       	0	Read the given input file, substitute bytes  with tokens and write the result to stdout.
   sync_command                       	0	Execute an external command "<sync_command> <test_corpus>" to synchronize the test corpus.
   sync_timeout                       	600	Minimum timeout between syncs.
+  use_traces                            0       Experimental: use instruction traces
+
 
 For the full list of flags run the fuzzer binary with ``-help=1``.
 
@@ -273,6 +275,18 @@ The fuzzer itself will still be mutating a string of bytes
 but before passing this input to the target library it will replace every byte ``b`` with the ``b``-th token.
 If there are less than ``b`` tokens, a space will be added instead.
 
+Data-flow-guided fuzzing
+------------------------
+
+*EXPERIMENTAL*.
+With an additional compiler flag ``-fsanitize-coverage=trace-cmp`` (see SanitizerCoverageTraceDataFlow_)
+and extra run-time flag ``-use_traces=1`` the fuzzer will try to apply *data-flow-guided fuzzing*.
+That is, the fuzzer will record the inputs to comparison instructions, switch statements,
+and several libc functions (``memcmp``, ``strncmp``, etc).
+It will later use those recorded inputs during mutations.
+
+This mode can be combined with DataFlowSanitizer_ to achieve better sensitivity.
+
 AFL compatibility
 -----------------
 LibFuzzer can be used in parallel with AFL_ on the same test corpus.
@@ -412,6 +426,8 @@ Examples: regular expression matchers, text or binary format parsers.
 .. _AFL: http://lcamtuf.coredump.cx/afl/
 
 .. _SanitizerCoverage: http://clang.llvm.org/docs/SanitizerCoverage.html
+.. _SanitizerCoverageTraceDataFlow: http://clang.llvm.org/docs/SanitizerCoverage.html#tracing-data-flow
+.. _DataFlowSanitizer: http://clang.llvm.org/docs/DataFlowSanitizer.html
 
 .. _Heartbleed: http://en.wikipedia.org/wiki/Heartbleed
 
