@@ -3880,7 +3880,7 @@ protected:
 
 public:
   static TerminatePadInst *Create(LLVMContext &C, BasicBlock *BB = nullptr,
-                                    ArrayRef<Value *> Args = {},
+                                    ArrayRef<Value *> Args = None,
                                     const Twine &NameStr = "",
                                     Instruction *InsertBefore = nullptr) {
     unsigned Values = unsigned(Args.size());
