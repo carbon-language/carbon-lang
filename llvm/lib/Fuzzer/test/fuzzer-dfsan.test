@@ -1,5 +1,6 @@
 CHECK: BINGO
 CHECK_DFSanCmpCallback: DFSanCmpCallback: PC
+CHECK_DFSanSwitchCallback: DFSanSwitchCallback: PC
 
 RUN: not LLVMFuzzer-SimpleCmpTest-DFSan -use_traces=1 -seed=1 -runs=1000000 -timeout=5 2>&1 | FileCheck %s
 RUN: LLVMFuzzer-SimpleCmpTest-DFSan -use_traces=1 -seed=1 -runs=100 -timeout=5 -verbosity=3 2>&1 | FileCheck %s  -check-prefix=CHECK_DFSanCmpCallback
@@ -9,3 +10,6 @@ RUN: LLVMFuzzer-MemcmpTest-DFSan -use_traces=1 -seed=1 -runs=2 -timeout=5 -verbo
 
 RUN: not LLVMFuzzer-StrncmpTest-DFSan -use_traces=1 -seed=1 -runs=10000 -timeout=5 2>&1 | FileCheck %s
 RUN: LLVMFuzzer-StrncmpTest-DFSan -use_traces=1 -seed=1 -runs=2 -timeout=5 -verbosity=3 2>&1 | FileCheck %s  -check-prefix=CHECK_DFSanCmpCallback
+
+RUN: not LLVMFuzzer-SwitchTest-DFSan -use_traces=1 -seed=1 -runs=10000 -timeout=5              2>&1 | FileCheck %s
+RUN:     LLVMFuzzer-SwitchTest-DFSan -use_traces=1 -seed=1 -runs=2     -timeout=5 -verbosity=3 2>&1 | FileCheck %s  -check-prefix=CHECK_DFSanSwitchCallback

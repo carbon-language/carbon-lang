@@ -1,9 +1,9 @@
 // Simple test for a fuzzer. The fuzzer must find the interesting switch value.
 #include <cstdint>
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include <cstddef>
-#include <iostream>
 
 static volatile int Sink;
 
@@ -28,7 +28,7 @@ bool Switch(const uint8_t *Data, size_t Size) {
 extern "C" void LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   if (Switch<int>(Data, Size) && Size >= 12 &&
       Switch<uint64_t>(Data + 4, Size - 4)) {
-    std::cout << "BINGO; Found the target, exiting\n";
+    fprintf(stderr, "BINGO; Found the target, exiting\n");
     exit(1);
   }
 }

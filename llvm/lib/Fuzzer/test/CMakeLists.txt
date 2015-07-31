@@ -8,6 +8,7 @@ set(DFSanTests
   MemcmpTest
   SimpleCmpTest
   StrncmpTest
+  SwitchTest
   )
 
 set(Tests
