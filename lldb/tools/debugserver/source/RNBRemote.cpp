@@ -141,7 +141,7 @@ decode_uint64 (const char *p, int base, char **end = nullptr, uint64_t fail_valu
 
 extern void ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args);
 
-#if defined (__APPLE__)
+#if defined (__APPLE__) && (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 101000)
 // from System.framework/Versions/B/PrivateHeaders/sys/codesign.h
 extern "C" {
 #define CS_OPS_STATUS           0       /* return status */
@@ -3692,7 +3692,7 @@ RNBRemote::HandlePacket_v (const char *p)
             else
                 m_ctx.LaunchStatus().SetErrorString("attach failed");
 
-#if defined (__APPLE__)
+#if defined (__APPLE__) && (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 101000)
             if (pid_attaching_to == INVALID_NUB_PROCESS && !attach_name.empty())
             {
                 pid_attaching_to = DNBProcessGetPIDByName (attach_name.c_str());
