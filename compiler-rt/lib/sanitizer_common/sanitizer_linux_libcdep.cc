@@ -464,7 +464,7 @@ extern "C" __attribute__((weak)) int dl_iterate_phdr(
 
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter) {
-#if SANITIZER_ANDROID && __ANDROID_API__ < 21
+#if SANITIZER_ANDROID && __ANDROID_API__ <= 22
   u32 api_level = AndroidGetApiLevel();
   // Fall back to /proc/maps if dl_iterate_phdr is unavailable or broken.
   // The runtime check allows the same library to work with
