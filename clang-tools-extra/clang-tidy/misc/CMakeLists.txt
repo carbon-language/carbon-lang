@@ -14,6 +14,7 @@ add_clang_library(clangTidyMiscModule
   StaticAssertCheck.cpp
   SwappedArgumentsCheck.cpp
   UndelegatedConstructor.cpp
+  UnusedAliasDeclsCheck.cpp
   UnusedParametersCheck.cpp
   UnusedRAIICheck.cpp
   UniqueptrResetReleaseCheck.cpp

@@ -23,6 +23,7 @@
 #include "SwappedArgumentsCheck.h"
 #include "UndelegatedConstructor.h"
 #include "UniqueptrResetReleaseCheck.h"
+#include "UnusedAliasDeclsCheck.h"
 #include "UnusedParametersCheck.h"
 #include "UnusedRAIICheck.h"
 #include "UseOverrideCheck.h"
@@ -59,6 +60,8 @@ public:
         "misc-undelegated-constructor");
     CheckFactories.registerCheck<UniqueptrResetReleaseCheck>(
         "misc-uniqueptr-reset-release");
+    CheckFactories.registerCheck<UnusedAliasDeclsCheck>(
+        "misc-unused-alias-decls");
     CheckFactories.registerCheck<UnusedParametersCheck>(
         "misc-unused-parameters");
     CheckFactories.registerCheck<UnusedRAIICheck>("misc-unused-raii");
