@@ -505,8 +505,13 @@ for llvm users and not imposing a big burden on llvm developers:
 * The textual format is not backwards compatible. We don't change it too often,
   but there are no specific promises.
 
-* The bitcode format produced by a X.Y release will be readable by all following
-  X.Z releases and the (X+1).0 release.
+* Additions and changes to the IR should be reflected in
+  ``test/Bitcode/compatibility.ll``.
+
+* The bitcode format produced by a X.Y release will be readable by all
+  following X.Z releases and the (X+1).0 release. To help ensure this, an X.Y
+  version of ``test/Bitcode/compatibility.ll`` should be assembled and
+  committed after each release.
 
 * Newer releases can ignore features from older releases, but they cannot
   miscompile them. For example, if nsw is ever replaced with something else,
