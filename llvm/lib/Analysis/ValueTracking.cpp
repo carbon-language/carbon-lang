@@ -3147,10 +3147,16 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   case Instruction::Switch:
   case Instruction::Unreachable:
   case Instruction::Fence:
-  case Instruction::LandingPad:
   case Instruction::AtomicRMW:
   case Instruction::AtomicCmpXchg:
+  case Instruction::LandingPad:
   case Instruction::Resume:
+  case Instruction::CatchPad:
+  case Instruction::CatchEndPad:
+  case Instruction::CatchRet:
+  case Instruction::CleanupPad:
+  case Instruction::CleanupRet:
+  case Instruction::TerminatePad:
     return false; // Misc instructions which have effects
   }
 }

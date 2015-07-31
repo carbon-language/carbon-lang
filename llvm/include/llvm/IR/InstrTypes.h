@@ -75,6 +75,22 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+
+  // \brief Returns true if this terminator relates to exception handling.
+  bool isExceptional() const {
+    switch (getOpcode()) {
+    case Instruction::CatchPad:
+    case Instruction::CatchEndPad:
+    case Instruction::CatchRet:
+    case Instruction::CleanupRet:
+    case Instruction::Invoke:
+    case Instruction::Resume:
+    case Instruction::TerminatePad:
+      return true;
+    default:
+      return false;
+    }
+  }
 };
 
 

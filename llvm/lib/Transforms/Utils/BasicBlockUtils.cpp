@@ -117,8 +117,9 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, DominatorTree *DT,
 
   // Don't break self-loops.
   if (PredBB == BB) return false;
-  // Don't break invokes.
-  if (isa<InvokeInst>(PredBB->getTerminator())) return false;
+  // Don't break unwinding instructions.
+  if (PredBB->getTerminator()->isExceptional())
+    return false;
 
   succ_iterator SI(succ_begin(PredBB)), SE(succ_end(PredBB));
   BasicBlock *OnlySucc = BB;
@@ -283,7 +284,7 @@ llvm::SplitAllCriticalEdges(Function &F,
 BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt,
                              DominatorTree *DT, LoopInfo *LI) {
   BasicBlock::iterator SplitIt = SplitPt;
-  while (isa<PHINode>(SplitIt) || isa<LandingPadInst>(SplitIt))
+  while (isa<PHINode>(SplitIt) || SplitIt->isEHPad())
     ++SplitIt;
   BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
 
@@ -474,6 +475,10 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
                                          ArrayRef<BasicBlock *> Preds,
                                          const char *Suffix, DominatorTree *DT,
                                          LoopInfo *LI, bool PreserveLCSSA) {
+  // Do not attempt to split that which cannot be split.
+  if (!BB->canSplitPredecessors())
+    return nullptr;
+
   // For the landingpads we need to act a bit differently.
   // Delegate this work to the SplitLandingPadPredecessors.
   if (BB->isLandingPad()) {

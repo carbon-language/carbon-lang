@@ -385,6 +385,9 @@ namespace llvm {
                             bool IsMustTailCall = false,
                             bool InVarArgsFunc = false);
 
+    bool ParseExceptionArgs(SmallVectorImpl<Value *> &Args,
+                            PerFunctionState &PFS);
+
     // Constant Parsing.
     bool ParseValID(ValID &ID, PerFunctionState *PFS = nullptr);
     bool ParseGlobalValue(Type *Ty, Constant *&V);
@@ -445,6 +448,12 @@ namespace llvm {
     bool ParseIndirectBr(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseInvoke(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseResume(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseCleanupRet(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseCatchRet(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseCatchPad(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseTerminatePad(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseCleanupPad(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseCatchEndPad(Instruction *&Inst, PerFunctionState &PFS);
 
     bool ParseArithmetic(Instruction *&I, PerFunctionState &PFS, unsigned Opc,
                          unsigned OperandType);

@@ -2861,8 +2861,66 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
 
       writeOperand(LPI->getClause(i), true);
     }
+  } else if (const auto *CPI = dyn_cast<CatchPadInst>(&I)) {
+    Out << ' ';
+    TypePrinter.print(I.getType(), Out);
+
+    Out << " [";
+    for (unsigned Op = 0, NumOps = CPI->getNumArgOperands(); Op < NumOps;
+         ++Op) {
+      if (Op > 0)
+        Out << ", ";
+      writeOperand(CPI->getArgOperand(Op), /*PrintType=*/true);
+    }
+    Out << "] to ";
+    writeOperand(CPI->getNormalDest(), /*PrintType=*/true);
+    Out << " unwind ";
+    writeOperand(CPI->getUnwindDest(), /*PrintType=*/true);
+  } else if (const auto *TPI = dyn_cast<TerminatePadInst>(&I)) {
+    Out << " [";
+    for (unsigned Op = 0, NumOps = TPI->getNumArgOperands(); Op < NumOps;
+         ++Op) {
+      if (Op > 0)
+        Out << ", ";
+      writeOperand(TPI->getArgOperand(Op), /*PrintType=*/true);
+    }
+    Out << "] unwind ";
+    if (TPI->hasUnwindDest())
+      writeOperand(TPI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
+  } else if (const auto *CPI = dyn_cast<CleanupPadInst>(&I)) {
+    Out << ' ';
+    TypePrinter.print(I.getType(), Out);
+
+    Out << " [";
+    for (unsigned Op = 0, NumOps = CPI->getNumOperands(); Op < NumOps; ++Op) {
+      if (Op > 0)
+        Out << ", ";
+      writeOperand(CPI->getOperand(Op), /*PrintType=*/true);
+    }
+    Out << "]";
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
+  } else if (const auto *CRI = dyn_cast<CleanupReturnInst>(&I)) {
+    if (CRI->hasReturnValue()) {
+      Out << ' ';
+      writeOperand(CRI->getReturnValue(), /*PrintType=*/true);
+    } else {
+      Out << " void";
+    }
+
+    Out << " unwind ";
+    if (CRI->hasUnwindDest())
+      writeOperand(CRI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
+  } else if (const auto *CEPI = dyn_cast<CatchEndPadInst>(&I)) {
+    Out << " unwind ";
+    if (CEPI->hasUnwindDest())
+      writeOperand(CEPI->getUnwindDest(), /*PrintType=*/true);
+    else
+      Out << "to caller";
   } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Print the calling convention being used.
     if (CI->getCallingConv() != CallingConv::C) {

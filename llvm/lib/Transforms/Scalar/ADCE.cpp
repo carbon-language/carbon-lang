@@ -58,8 +58,8 @@ bool ADCE::runOnFunction(Function& F) {
 
   // Collect the set of "root" instructions that are known live.
   for (Instruction &I : inst_range(F)) {
-    if (isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) ||
-        isa<LandingPadInst>(I) || I.mayHaveSideEffects()) {
+    if (isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) || I.isEHPad() ||
+        I.mayHaveSideEffects()) {
       Alive.insert(&I);
       Worklist.push_back(&I);
     }

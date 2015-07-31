@@ -3811,6 +3811,134 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       }
       break;
     }
+    // CLEANUPRET: [] or [ty,val] or [bb#] or [ty,val,bb#]
+    case bitc::FUNC_CODE_INST_CLEANUPRET: {
+      if (Record.size() < 2)
+        return error("Invalid record");
+      unsigned Idx = 0;
+      bool HasReturnValue = !!Record[Idx++];
+      bool HasUnwindDest = !!Record[Idx++];
+      Value *RetVal = nullptr;
+      BasicBlock *UnwindDest = nullptr;
+
+      if (HasReturnValue && getValueTypePair(Record, Idx, NextValueNo, RetVal))
+        return error("Invalid record");
+      if (HasUnwindDest) {
+        if (Idx == Record.size())
+          return error("Invalid record");
+        UnwindDest = getBasicBlock(Record[Idx++]);
+        if (!UnwindDest)
+          return error("Invalid record");
+      }
+
+      if (Record.size() != Idx)
+        return error("Invalid record");
+
+      I = CleanupReturnInst::Create(Context, RetVal, UnwindDest);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_CATCHRET: { // CATCHRET: [bb#]
+      if (Record.size() != 1)
+        return error("Invalid record");
+      BasicBlock *BB = getBasicBlock(Record[0]);
+      if (!BB)
+        return error("Invalid record");
+      I = CatchReturnInst::Create(BB);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_CATCHPAD: { // CATCHPAD: [ty,bb#,bb#,num,(ty,val)*]
+      if (Record.size() < 4)
+        return error("Invalid record");
+      unsigned Idx = 0;
+      Type *Ty = getTypeByID(Record[Idx++]);
+      if (!Ty)
+        return error("Invalid record");
+      BasicBlock *NormalBB = getBasicBlock(Record[Idx++]);
+      if (!NormalBB)
+        return error("Invalid record");
+      BasicBlock *UnwindBB = getBasicBlock(Record[Idx++]);
+      if (!UnwindBB)
+        return error("Invalid record");
+      unsigned NumArgOperands = Record[Idx++];
+      SmallVector<Value *, 2> Args;
+      for (unsigned Op = 0; Op != NumArgOperands; ++Op) {
+        Value *Val;
+        if (getValueTypePair(Record, Idx, NextValueNo, Val))
+          return error("Invalid record");
+        Args.push_back(Val);
+      }
+      if (Record.size() != Idx)
+        return error("Invalid record");
+
+      I = CatchPadInst::Create(Ty, NormalBB, UnwindBB, Args);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_TERMINATEPAD: { // TERMINATEPAD: [bb#,num,(ty,val)*]
+      if (Record.size() < 1)
+        return error("Invalid record");
+      unsigned Idx = 0;
+      bool HasUnwindDest = !!Record[Idx++];
+      BasicBlock *UnwindDest = nullptr;
+      if (HasUnwindDest) {
+        if (Idx == Record.size())
+          return error("Invalid record");
+        UnwindDest = getBasicBlock(Record[Idx++]);
+        if (!UnwindDest)
+          return error("Invalid record");
+      }
+      unsigned NumArgOperands = Record[Idx++];
+      SmallVector<Value *, 2> Args;
+      for (unsigned Op = 0; Op != NumArgOperands; ++Op) {
+        Value *Val;
+        if (getValueTypePair(Record, Idx, NextValueNo, Val))
+          return error("Invalid record");
+        Args.push_back(Val);
+      }
+      if (Record.size() != Idx)
+        return error("Invalid record");
+
+      I = TerminatePadInst::Create(Context, UnwindDest, Args);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_CLEANUPPAD: { // CLEANUPPAD: [ty, num,(ty,val)*]
+      if (Record.size() < 2)
+        return error("Invalid record");
+      unsigned Idx = 0;
+      Type *Ty = getTypeByID(Record[Idx++]);
+      if (!Ty)
+        return error("Invalid record");
+      unsigned NumArgOperands = Record[Idx++];
+      SmallVector<Value *, 2> Args;
+      for (unsigned Op = 0; Op != NumArgOperands; ++Op) {
+        Value *Val;
+        if (getValueTypePair(Record, Idx, NextValueNo, Val))
+          return error("Invalid record");
+        Args.push_back(Val);
+      }
+      if (Record.size() != Idx)
+        return error("Invalid record");
+
+      I = CleanupPadInst::Create(Ty, Args);
+      InstructionList.push_back(I);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_CATCHENDPAD: { // CATCHENDPADINST: [bb#] or []
+      if (Record.size() > 1)
+        return error("Invalid record");
+      BasicBlock *BB = nullptr;
+      if (Record.size() == 1) {
+        BB = getBasicBlock(Record[0]);
+        if (!BB)
+          return error("Invalid record");
+      }
+      I = CatchEndPadInst::Create(Context, BB);
+      InstructionList.push_back(I);
+      break;
+    }
     case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, op0, op1, ...]
       // Check magic
       if ((Record[0] >> 16) == SWITCH_INST_MAGIC) {

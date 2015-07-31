@@ -77,8 +77,8 @@ INITIALIZE_PASS_END(BDCE, "bdce", "Bit-Tracking Dead Code Elimination",
                     false, false)
 
 static bool isAlwaysLive(Instruction *I) {
-  return isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) ||
-         isa<LandingPadInst>(I) || I->mayHaveSideEffects();
+  return isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) || I->isEHPad() ||
+         I->mayHaveSideEffects();
 }
 
 void BDCE::determineLiveOperandBits(const Instruction *UserI,

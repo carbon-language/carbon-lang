@@ -63,8 +63,8 @@ bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
 }
 
 namespace {
-  /// A class for recording information about inlining through an invoke.
-  class InvokeInliningInfo {
+  /// A class for recording information about inlining a landing pad.
+  class LandingPadInliningInfo {
     BasicBlock *OuterResumeDest; ///< Destination of the invoke's unwind.
     BasicBlock *InnerResumeDest; ///< Destination for the callee's resume.
     LandingPadInst *CallerLPad;  ///< LandingPadInst associated with the invoke.
@@ -72,7 +72,7 @@ namespace {
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
   public:
-    InvokeInliningInfo(InvokeInst *II)
+    LandingPadInliningInfo(InvokeInst *II)
       : OuterResumeDest(II->getUnwindDest()), InnerResumeDest(nullptr),
         CallerLPad(nullptr), InnerEHValuesPHI(nullptr) {
       // If there are PHI nodes in the unwind destination block, we need to keep
@@ -124,7 +124,7 @@ namespace {
 }
 
 /// Get or create a target for the branch from ResumeInsts.
-BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
+BasicBlock *LandingPadInliningInfo::getInnerResumeDest() {
   if (InnerResumeDest) return InnerResumeDest;
 
   // Split the landing pad.
@@ -162,8 +162,8 @@ BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
 /// When the landing pad block has only one predecessor, this is a simple
 /// branch. When there is more than one predecessor, we need to split the
 /// landing pad block after the landingpad instruction and jump to there.
-void InvokeInliningInfo::forwardResume(ResumeInst *RI,
-                               SmallPtrSetImpl<LandingPadInst*> &InlinedLPads) {
+void LandingPadInliningInfo::forwardResume(
+    ResumeInst *RI, SmallPtrSetImpl<LandingPadInst *> &InlinedLPads) {
   BasicBlock *Dest = getInnerResumeDest();
   BasicBlock *Src = RI->getParent();
 
@@ -182,8 +182,8 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI,
 /// This function analyze BB to see if there are any calls, and if so,
 /// it rewrites them to be invokes that jump to InvokeDest and fills in the PHI
 /// nodes in that block with the values specified in InvokeDestPHIValues.
-static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
-                                                   InvokeInliningInfo &Invoke) {
+static BasicBlock *
+HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB, BasicBlock *UnwindEdge) {
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *I = BBI++;
 
@@ -206,8 +206,7 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     // Create the new invoke instruction.
     ImmutableCallSite CS(CI);
     SmallVector<Value*, 8> InvokeArgs(CS.arg_begin(), CS.arg_end());
-    InvokeInst *II = InvokeInst::Create(CI->getCalledValue(), Split,
-                                        Invoke.getOuterResumeDest(),
+    InvokeInst *II = InvokeInst::Create(CI->getCalledValue(), Split, UnwindEdge,
                                         InvokeArgs, CI->getName(), BB);
     II->setDebugLoc(CI->getDebugLoc());
     II->setCallingConv(CI->getCallingConv());
@@ -219,12 +218,9 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
 
     // Delete the original call
     Split->getInstList().pop_front();
-
-    // Update any PHI nodes in the exceptional block to indicate that there is
-    // now a new entry in them.
-    Invoke.addIncomingPHIValuesFor(BB);
-    return;
+    return BB;
   }
+  return nullptr;
 }
 
 /// If we inlined an invoke site, we need to convert calls
@@ -233,8 +229,8 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
 /// II is the invoke instruction being inlined.  FirstNewBlock is the first
 /// block of the inlined code (the last block is the end of the function),
 /// and InlineCodeInfo is information about the code that got inlined.
-static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
-                                ClonedCodeInfo &InlinedCodeInfo) {
+static void HandleInlinedLandingPad(InvokeInst *II, BasicBlock *FirstNewBlock,
+                                    ClonedCodeInfo &InlinedCodeInfo) {
   BasicBlock *InvokeDest = II->getUnwindDest();
 
   Function *Caller = FirstNewBlock->getParent();
@@ -242,7 +238,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   // The inlined code is currently at the end of the function, scan from the
   // start of the inlined code to its end, checking for stuff we need to
   // rewrite.
-  InvokeInliningInfo Invoke(II);
+  LandingPadInliningInfo Invoke(II);
 
   // Get all of the inlined landing pad instructions.
   SmallPtrSet<LandingPadInst*, 16> InlinedLPads;
@@ -264,7 +260,11 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 
   for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E; ++BB){
     if (InlinedCodeInfo.ContainsCalls)
-      HandleCallsInBlockInlinedThroughInvoke(BB, Invoke);
+      if (BasicBlock *NewBB = HandleCallsInBlockInlinedThroughInvoke(
+              BB, Invoke.getOuterResumeDest()))
+        // Update any PHI nodes in the exceptional block to indicate that there
+        // is now a new entry in them.
+        Invoke.addIncomingPHIValuesFor(NewBB);
 
     // Forward any resumes that are remaining here.
     if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator()))
@@ -276,6 +276,102 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   // invoke instruction. Eliminate these entries (which might even delete the
   // PHI node) now.
   InvokeDest->removePredecessor(II->getParent());
+}
+
+/// If we inlined an invoke site, we need to convert calls
+/// in the body of the inlined function into invokes.
+///
+/// II is the invoke instruction being inlined.  FirstNewBlock is the first
+/// block of the inlined code (the last block is the end of the function),
+/// and InlineCodeInfo is information about the code that got inlined.
+static void HandleInlinedEHPad(InvokeInst *II, BasicBlock *FirstNewBlock,
+                               ClonedCodeInfo &InlinedCodeInfo) {
+  BasicBlock *UnwindDest = II->getUnwindDest();
+  Function *Caller = FirstNewBlock->getParent();
+
+  assert(UnwindDest->getFirstNonPHI()->isEHPad() && "unexpected BasicBlock!");
+
+  // If there are PHI nodes in the unwind destination block, we need to keep
+  // track of which values came into them from the invoke before removing the
+  // edge from this block.
+  SmallVector<Value *, 8> UnwindDestPHIValues;
+  llvm::BasicBlock *InvokeBB = II->getParent();
+  for (Instruction &I : *UnwindDest) {
+    // Save the value to use for this edge.
+    PHINode *PHI = dyn_cast<PHINode>(&I);
+    if (!PHI)
+      break;
+    UnwindDestPHIValues.push_back(PHI->getIncomingValueForBlock(InvokeBB));
+  }
+
+  // Add incoming-PHI values to the unwind destination block for the given basic
+  // block, using the values for the original invoke's source block.
+  auto UpdatePHINodes = [&](BasicBlock *Src) {
+    BasicBlock::iterator I = UnwindDest->begin();
+    for (Value *V : UnwindDestPHIValues) {
+      PHINode *PHI = cast<PHINode>(I);
+      PHI->addIncoming(V, Src);
+      ++I;
+    }
+  };
+
+  // Forward EH terminator instructions to the caller's invoke destination.
+  // This is as simple as connect all the instructions which 'unwind to caller'
+  // to the invoke destination.
+  for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E;
+       ++BB) {
+    Instruction *I = BB->getFirstNonPHI();
+    if (I->isEHPad()) {
+      if (auto *CEPI = dyn_cast<CatchEndPadInst>(I)) {
+        if (CEPI->unwindsToCaller()) {
+          CatchEndPadInst::Create(CEPI->getContext(), UnwindDest, CEPI);
+          CEPI->eraseFromParent();
+          UpdatePHINodes(BB);
+        }
+      } else if (auto *TPI = dyn_cast<TerminatePadInst>(I)) {
+        if (TPI->unwindsToCaller()) {
+          SmallVector<Value *, 3> TerminatePadArgs;
+          for (Value *Operand : TPI->operands())
+            TerminatePadArgs.push_back(Operand);
+          TerminatePadInst::Create(TPI->getContext(), UnwindDest, TPI);
+          TPI->eraseFromParent();
+          UpdatePHINodes(BB);
+        }
+      } else if (auto *CPI = dyn_cast<CleanupPadInst>(I)) {
+        if (CPI->getNumOperands() == 0) {
+          CleanupPadInst::Create(CPI->getType(), {UnwindDest}, CPI->getName(),
+                                 CPI);
+          CPI->eraseFromParent();
+        }
+      } else {
+        assert(isa<CatchPadInst>(I));
+      }
+    }
+
+    if (auto *CRI = dyn_cast<CleanupReturnInst>(BB->getTerminator())) {
+      if (CRI->unwindsToCaller()) {
+        CleanupReturnInst::Create(CRI->getContext(), CRI->getReturnValue(),
+                                  UnwindDest, CRI);
+        CRI->eraseFromParent();
+        UpdatePHINodes(BB);
+      }
+    }
+  }
+
+  if (InlinedCodeInfo.ContainsCalls)
+    for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E;
+         ++BB)
+      if (BasicBlock *NewBB =
+              HandleCallsInBlockInlinedThroughInvoke(BB, UnwindDest))
+        // Update any PHI nodes in the exceptional block to indicate that there
+        // is now a new entry in them.
+        UpdatePHINodes(NewBB);
+
+  // Now that everything is happy, we have one final detail.  The PHI nodes in
+  // the exception destination block still have entries due to the original
+  // invoke instruction. Eliminate these entries (which might even delete the
+  // PHI node) now.
+  UnwindDest->removePredecessor(InvokeBB);
 }
 
 /// When inlining a function that contains noalias scope metadata,
@@ -1204,8 +1300,15 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
   // If we are inlining for an invoke instruction, we must make sure to rewrite
   // any call instructions into invoke instructions.
-  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
-    HandleInlinedInvoke(II, FirstNewBlock, InlinedFunctionInfo);
+  if (auto *II = dyn_cast<InvokeInst>(TheCall)) {
+    BasicBlock *UnwindDest = II->getUnwindDest();
+    Instruction *FirstNonPHI = UnwindDest->getFirstNonPHI();
+    if (isa<LandingPadInst>(FirstNonPHI)) {
+      HandleInlinedLandingPad(II, FirstNewBlock, InlinedFunctionInfo);
+    } else {
+      HandleInlinedEHPad(II, FirstNewBlock, InlinedFunctionInfo);
+    }
+  }
 
   // Handle any inlined musttail call sites.  In order for a new call site to be
   // musttail, the source of the clone and the inlined call site must have been

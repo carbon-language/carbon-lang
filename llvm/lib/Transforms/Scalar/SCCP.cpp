@@ -539,9 +539,9 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     return;
   }
 
-  if (isa<InvokeInst>(TI)) {
-    // Invoke instructions successors are always executable.
-    Succs[0] = Succs[1] = true;
+  // Unwinding instructions successors are always executable.
+  if (TI.isExceptional()) {
+    Succs.assign(TI.getNumSuccessors(), true);
     return;
   }
 
@@ -605,8 +605,8 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     return BI->getSuccessor(CI->isZero()) == To;
   }
 
-  // Invoke instructions successors are always executable.
-  if (isa<InvokeInst>(TI))
+  // Unwinding instructions successors are always executable.
+  if (TI->isExceptional())
     return true;
 
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {

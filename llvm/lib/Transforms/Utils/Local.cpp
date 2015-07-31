@@ -283,8 +283,9 @@ bool llvm::isInstructionTriviallyDead(Instruction *I,
                                       const TargetLibraryInfo *TLI) {
   if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
 
-  // We don't want the landingpad instruction removed by anything this general.
-  if (isa<LandingPadInst>(I))
+  // We don't want the landingpad-like instructions removed by anything this
+  // general.
+  if (I->isEHPad())
     return false;
 
   // We don't want debug info removed by anything this general, unless

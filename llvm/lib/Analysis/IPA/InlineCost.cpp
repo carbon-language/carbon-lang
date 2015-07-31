@@ -156,6 +156,8 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   bool visitSwitchInst(SwitchInst &SI);
   bool visitIndirectBrInst(IndirectBrInst &IBI);
   bool visitResumeInst(ResumeInst &RI);
+  bool visitCleanupReturnInst(CleanupReturnInst &RI);
+  bool visitCatchReturnInst(CatchReturnInst &RI);
   bool visitUnreachableInst(UnreachableInst &I);
 
 public:
@@ -900,6 +902,18 @@ bool CallAnalyzer::visitIndirectBrInst(IndirectBrInst &IBI) {
 bool CallAnalyzer::visitResumeInst(ResumeInst &RI) {
   // FIXME: It's not clear that a single instruction is an accurate model for
   // the inline cost of a resume instruction.
+  return false;
+}
+
+bool CallAnalyzer::visitCleanupReturnInst(CleanupReturnInst &CRI) {
+  // FIXME: It's not clear that a single instruction is an accurate model for
+  // the inline cost of a cleanupret instruction.
+  return false;
+}
+
+bool CallAnalyzer::visitCatchReturnInst(CatchReturnInst &CRI) {
+  // FIXME: It's not clear that a single instruction is an accurate model for
+  // the inline cost of a cleanupret instruction.
   return false;
 }
 

@@ -4741,7 +4741,12 @@ control flow, not values (the one exception being the
 The terminator instructions are: ':ref:`ret <i_ret>`',
 ':ref:`br <i_br>`', ':ref:`switch <i_switch>`',
 ':ref:`indirectbr <i_indirectbr>`', ':ref:`invoke <i_invoke>`',
-':ref:`resume <i_resume>`', and ':ref:`unreachable <i_unreachable>`'.
+':ref:`resume <i_resume>`', ':ref:`catchpad <i_catchpad>`',
+':ref:`catchendpad <i_catchendpad>`',
+':ref:`catchret <i_catchret>`',
+':ref:`cleanupret <i_cleanupret>`',
+':ref:`terminatepad <i_terminatepad>`',
+and ':ref:`unreachable <i_unreachable>`'.
 
 .. _i_ret:
 
@@ -5094,6 +5099,301 @@ Example:
 .. code-block:: llvm
 
       resume { i8*, i32 } %exn
+
+.. _i_catchpad:
+
+'``catchpad``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      <resultval> = catchpad <resultty> [<args>*]
+          to label <normal label> unwind label <exception label>
+
+Overview:
+"""""""""
+
+The '``catchpad``' instruction is used by `LLVM's exception handling
+system <ExceptionHandling.html#overview>`_ to specify that a basic block
+is a catch block --- one where a personality routine attempts to transfer
+control to catch an exception.
+The ``args`` correspond to whatever information the personality
+routine requires to know if this is an appropriate place to catch the
+exception.  Control is tranfered to the ``exception`` label if the
+``catchpad`` is not an appropriate handler for the in-flight exception.
+The ``normal`` label should contain the code found in the ``catch``
+portion of a ``try``/``catch`` sequence. It defines values supplied by
+the :ref:`personality function <personalityfn>` upon re-entry to the
+function. The ``resultval`` has the type ``resultty``.
+
+Arguments:
+""""""""""
+
+The instruction takes a list of arbitrary values which are interpreted
+by the :ref:`personality function <personalityfn>`.
+
+The ``catchpad`` must be provided a ``normal`` label to transfer control
+to if the ``catchpad`` matches the exception and an ``exception``
+label to transfer control to if it doesn't.
+
+Semantics:
+""""""""""
+
+The '``catchpad``' instruction defines the values which are set by the
+:ref:`personality function <personalityfn>` upon re-entry to the function, and
+therefore the "result type" of the ``catchpad`` instruction. As with
+calling conventions, how the personality function results are
+represented in LLVM IR is target specific.
+
+When the call stack is being unwound due to an exception being thrown,
+the exception is compared against the ``args``. If it doesn't match,
+then control is transfered to the ``exception`` basic block.
+
+The ``catchpad`` instruction has several restrictions:
+
+-  A catch block is a basic block which is the unwind destination of
+   an exceptional instruction.
+-  A catch block must have a '``catchpad``' instruction as its
+   first non-PHI instruction.
+-  A catch block's ``exception`` edge must refer to a catch block or a
+   catch-end block.
+-  There can be only one '``catchpad``' instruction within the
+   catch block.
+-  A basic block that is not a catch block may not include a
+   '``catchpad``' instruction.
+-  It is undefined behavior for control to transfer from a ``catchpad`` to a
+   ``cleanupret`` without first executing a ``catchret`` and a subsequent
+   ``cleanuppad``.
+-  It is undefined behavior for control to transfer from a ``catchpad`` to a
+   ``ret`` without first executing a ``catchret``.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+      ;; A catch block which can catch an integer.
+      %res = catchpad { i8*, i32 } [i8** @_ZTIi]
+        to label %int.handler unwind label %terminate
+
+.. _i_catchendpad:
+
+'``catchendpad``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      catchendpad unwind label <nextaction>
+      catchendpad unwind to caller
+
+Overview:
+"""""""""
+
+The '``catchendpad``' instruction is used by `LLVM's exception handling
+system <ExceptionHandling.html#overview>`_ to communicate to the
+:ref:`personality function <personalityfn>` which invokes are associated
+with a chain of :ref:`catchpad <i_catchpad>` instructions.
+
+The ``nextaction`` label indicates where control should transfer to if
+none of the ``catchpad`` instructions are suitable for catching the
+in-flight exception.
+
+If a ``nextaction`` label is not present, the instruction unwinds out of
+its parent function.  The
+:ref:`personality function <personalityfn>` will continue processing
+exception handling actions in the caller.
+
+Arguments:
+""""""""""
+
+The instruction optionally takes a label, ``nextaction``, indicating
+where control should transfer to if none of the preceding
+``catchpad`` instructions are suitable for the in-flight exception.
+
+Semantics:
+""""""""""
+
+When the call stack is being unwound due to an exception being thrown
+and none of the constituent ``catchpad`` instructions match, then
+control is transfered to ``nextaction`` if it is present.  If it is not
+present, control is transfered to the caller.
+
+The ``catchendpad`` instruction has several restrictions:
+
+-  A catch-end block is a basic block which is the unwind destination of
+   an exceptional instruction.
+-  A catch-end block must have a '``catchendpad``' instruction as its
+   first non-PHI instruction.
+-  There can be only one '``catchendpad``' instruction within the
+   catch block.
+-  A basic block that is not a catch-end block may not include a
+   '``catchendpad``' instruction.
+-  Exactly one catch block may unwind to a ``catchendpad``.
+-  The unwind target of invokes between a ``catchpad`` and a
+   corresponding ``catchret`` must be its ``catchendpad``.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+      catchendpad unwind label %terminate
+      catchendpad unwind to caller
+
+.. _i_catchret:
+
+'``catchret``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      catchret label <normal>
+
+Overview:
+"""""""""
+
+The '``catchret``' instruction is a terminator instruction that has a
+single successor.
+
+
+Arguments:
+""""""""""
+
+The '``catchret``' instruction requires one argument which specifies
+where control will transfer to next.
+
+Semantics:
+""""""""""
+
+The '``catchret``' instruction ends the existing (in-flight) exception
+whose unwinding was interrupted with a
+:ref:`catchpad <i_catchpad>` instruction.
+The :ref:`personality function <personalityfn>` gets a chance to execute
+arbitrary code to, for example, run a C++ destructor.
+Control then transfers to ``normal``.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+      catchret label %continue
+
+.. _i_cleanupret:
+
+'``cleanupret``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      cleanupret <type> <value> unwind label <continue>
+      cleanupret <type> <value> unwind to caller
+
+Overview:
+"""""""""
+
+The '``cleanupret``' instruction is a terminator instruction that has
+an optional successor.
+
+
+Arguments:
+""""""""""
+
+The '``cleanupret``' instruction requires one argument, which must have the
+same type as the result of any '``cleanuppad``' instruction in the same
+function.  It also has an optional successor,  ``continue``.
+
+Semantics:
+""""""""""
+
+The '``cleanupret``' instruction indicates to the
+:ref:`personality function <personalityfn>` that one
+:ref:`cleanuppad <i_cleanuppad>` it transferred control to has ended.
+It transfers control to ``continue`` or unwinds out of the function.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+      cleanupret void unwind to caller
+      cleanupret { i8*, i32 } %exn unwind label %continue
+
+.. _i_terminatepad:
+
+'``terminatepad``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      terminatepad [<args>*] unwind label <exception label>
+      terminatepad [<args>*] unwind to caller
+
+Overview:
+"""""""""
+
+The '``terminatepad``' instruction is used by `LLVM's exception handling
+system <ExceptionHandling.html#overview>`_ to specify that a basic block
+is a terminate block --- one where a personality routine may decide to
+terminate the program.
+The ``args`` correspond to whatever information the personality
+routine requires to know if this is an appropriate place to terminate the
+program.  Control is transferred to the ``exception`` label if the
+personality routine decides not to terminate the program for the
+in-flight exception.
+
+Arguments:
+""""""""""
+
+The instruction takes a list of arbitrary values which are interpreted
+by the :ref:`personality function <personalityfn>`.
+
+The ``terminatepad`` may be given an ``exception`` label to
+transfer control to if the in-flight exception matches the ``args``.
+
+Semantics:
+""""""""""
+
+When the call stack is being unwound due to an exception being thrown,
+the exception is compared against the ``args``. If it matches,
+then control is transfered to the ``exception`` basic block.  Otherwise,
+the program is terminated via personality-specific means.  Typically,
+the first argument to ``terminatepad`` specifies what function the
+personality should defer to in order to terminate the program.
+
+The ``terminatepad`` instruction has several restrictions:
+
+-  A terminate block is a basic block which is the unwind destination of
+   an exceptional instruction.
+-  A terminate block must have a '``terminatepad``' instruction as its
+   first non-PHI instruction.
+-  There can be only one '``terminatepad``' instruction within the
+   terminate block.
+-  A basic block that is not a terminate block may not include a
+   '``terminatepad``' instruction.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+      ;; A terminate block which only permits integers.
+      terminatepad [i8** @_ZTIi] unwind label %continue
 
 .. _i_unreachable:
 
@@ -8051,6 +8351,72 @@ Example:
       %res = landingpad { i8*, i32 }
                catch i8** @_ZTIi
                filter [1 x i8**] [@_ZTId]
+
+.. _i_cleanuppad:
+
+'``cleanuppad``' Instruction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      <resultval> = cleanuppad <resultty> [<args>*]
+
+Overview:
+"""""""""
+
+The '``cleanuppad``' instruction is used by `LLVM's exception handling
+system <ExceptionHandling.html#overview>`_ to specify that a basic block
+is a cleanup block --- one where a personality routine attempts to
+transfer control to run cleanup actions.
+The ``args`` correspond to whatever additional
+information the :ref:`personality function <personalityfn>` requires to
+execute the cleanup.
+The ``resultval`` has the type ``resultty``.
+
+Arguments:
+""""""""""
+
+The instruction takes a list of arbitrary values which are interpreted
+by the :ref:`personality function <personalityfn>`.
+
+Semantics:
+""""""""""
+
+The '``cleanuppad``' instruction defines the values which are set by the
+:ref:`personality function <personalityfn>` upon re-entry to the function, and
+therefore the "result type" of the ``cleanuppad`` instruction. As with
+calling conventions, how the personality function results are
+represented in LLVM IR is target specific.
+
+When the call stack is being unwound due to an exception being thrown,
+the :ref:`personality function <personalityfn>` transfers control to the
+``cleanuppad`` with the aid of the personality-specific arguments.
+
+The ``cleanuppad`` instruction has several restrictions:
+
+-  A cleanup block is a basic block which is the unwind destination of
+   an exceptional instruction.
+-  A cleanup block must have a '``cleanuppad``' instruction as its
+   first non-PHI instruction.
+-  There can be only one '``cleanuppad``' instruction within the
+   cleanup block.
+-  A basic block that is not a cleanup block may not include a
+   '``cleanuppad``' instruction.
+-  It is undefined behavior for control to transfer from a ``cleanuppad`` to a
+   ``catchret`` without first executing a ``cleanupret`` and a subsequent
+   ``catchpad``.
+-  It is undefined behavior for control to transfer from a ``cleanuppad`` to a
+   ``ret`` without first executing a ``cleanupret``.
+
+Example:
+""""""""
+
+.. code-block:: llvm
+
+      %res = cleanuppad { i8*, i32 } [label %nextaction]
 
 .. _intrinsics:
 

@@ -388,6 +388,20 @@ public:
     return mayWriteToMemory() || mayThrow() || !mayReturn();
   }
 
+  /// \brief Return true if the instruction is a variety of EH-block.
+  bool isEHPad() const {
+    switch (getOpcode()) {
+    case Instruction::CatchPad:
+    case Instruction::CatchEndPad:
+    case Instruction::CleanupPad:
+    case Instruction::LandingPad:
+    case Instruction::TerminatePad:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   /// clone() - Create a copy of 'this' instruction that is identical in all
   /// ways except the following:
   ///   * The instruction has no parent

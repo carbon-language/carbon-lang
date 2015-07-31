@@ -669,7 +669,8 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // because now the condition in this block can be threaded through
   // predecessors of our predecessor block.
   if (BasicBlock *SinglePred = BB->getSinglePredecessor()) {
-    if (SinglePred->getTerminator()->getNumSuccessors() == 1 &&
+    const TerminatorInst *TI = SinglePred->getTerminator();
+    if (!TI->isExceptional() && TI->getNumSuccessors() == 1 &&
         SinglePred != BB && !hasAddressTakenAndUsed(BB)) {
       // If SinglePred was a loop header, BB becomes one.
       if (LoopHeaders.erase(SinglePred))

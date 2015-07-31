@@ -51,6 +51,7 @@ namespace lltok {
     kw_zeroinitializer,
     kw_undef, kw_null,
     kw_to,
+    kw_caller,
     kw_tail,
     kw_musttail,
     kw_target,
@@ -177,7 +178,8 @@ namespace lltok {
     kw_landingpad, kw_personality, kw_cleanup, kw_catch, kw_filter,
 
     kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_resume,
-    kw_unreachable,
+    kw_unreachable, kw_cleanupret, kw_catchret, kw_catchpad,
+    kw_terminatepad, kw_cleanuppad, kw_catchendpad,
 
     kw_alloca, kw_load, kw_store, kw_fence, kw_cmpxchg, kw_atomicrmw,
     kw_getelementptr,

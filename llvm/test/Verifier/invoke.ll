@@ -2,7 +2,7 @@
 
 ; PR1042
 define i32 @foo() {
-; CHECK: The unwind destination does not have a landingpad instruction
+; CHECK: The unwind destination does not have an exception handling instruction
 	%A = invoke i32 @foo( )
 			to label %L unwind label %L		; <i32> [#uses=1]
 L:		; preds = %0, %0
@@ -18,7 +18,7 @@ L1:		; preds = %0
 L2:		; preds = %0
 	br label %L
 L:		; preds = %L2, %L1, %L1
-; CHECK: The unwind destination does not have a landingpad instruction
+; CHECK: The unwind destination does not have an exception handling instruction
 	ret i32 %A
 }
 

@@ -184,6 +184,15 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// \brief Track unresolved string-based type references.
   SmallDenseMap<const MDString *, const MDNode *, 32> UnresolvedTypeRefs;
 
+  /// \brief The result type for a catchpad.
+  Type *CatchPadResultTy;
+
+  /// \brief The result type for a cleanuppad.
+  Type *CleanupPadResultTy;
+
+  /// \brief The result type for a landingpad.
+  Type *LandingPadResultTy;
+
   /// \brief Whether we've seen a call to @llvm.localescape in this function
   /// already.
   bool SawFrameEscape;
@@ -194,7 +203,9 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
 
 public:
   explicit Verifier(raw_ostream &OS)
-      : VerifierSupport(OS), Context(nullptr), SawFrameEscape(false) {}
+      : VerifierSupport(OS), Context(nullptr), CatchPadResultTy(nullptr),
+        CleanupPadResultTy(nullptr), LandingPadResultTy(nullptr),
+        SawFrameEscape(false) {}
 
   bool verify(const Function &F) {
     M = F.getParent();
@@ -228,6 +239,9 @@ public:
     // FIXME: We strip const here because the inst visitor strips const.
     visit(const_cast<Function &>(F));
     InstsInThisBlock.clear();
+    CatchPadResultTy = nullptr;
+    CleanupPadResultTy = nullptr;
+    LandingPadResultTy = nullptr;
     SawFrameEscape = false;
 
     return !Broken;
@@ -379,6 +393,11 @@ private:
   void visitExtractValueInst(ExtractValueInst &EVI);
   void visitInsertValueInst(InsertValueInst &IVI);
   void visitLandingPadInst(LandingPadInst &LPI);
+  void visitCatchPadInst(CatchPadInst &CPI);
+  void visitCatchEndPadInst(CatchEndPadInst &CEPI);
+  void visitCleanupPadInst(CleanupPadInst &CPI);
+  void visitCleanupReturnInst(CleanupReturnInst &CRI);
+  void visitTerminatePadInst(TerminatePadInst &TPI);
 
   void VerifyCallSite(CallSite CS);
   void verifyMustTailCall(CallInst &CI);
@@ -2385,10 +2404,12 @@ void Verifier::visitCallInst(CallInst &CI) {
 void Verifier::visitInvokeInst(InvokeInst &II) {
   VerifyCallSite(&II);
 
-  // Verify that there is a landingpad instruction as the first non-PHI
-  // instruction of the 'unwind' destination.
-  Assert(II.getUnwindDest()->isLandingPad(),
-         "The unwind destination does not have a landingpad instruction!", &II);
+  // Verify that the first non-PHI instruction of the unwind destination is an
+  // exception handling instruction.
+  Assert(
+      II.getUnwindDest()->isEHPad(),
+      "The unwind destination does not have an exception handling instruction!",
+      &II);
 
   visitTerminatorInst(II);
 }
@@ -2774,6 +2795,14 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
            &LPI);
   }
 
+  if (!LandingPadResultTy)
+    LandingPadResultTy = LPI.getType();
+  else
+    Assert(LandingPadResultTy == LPI.getType(),
+           "The landingpad instruction should have a consistent result type "
+           "inside a function.",
+           &LPI);
+
   Function *F = LPI.getParent()->getParent();
   Assert(F->hasPersonalityFn(),
          "LandingPadInst needs to be in a function with a personality.", &LPI);
@@ -2797,6 +2826,132 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
   }
 
   visitInstruction(LPI);
+}
+
+void Verifier::visitCatchPadInst(CatchPadInst &CPI) {
+  BasicBlock *BB = CPI.getParent();
+
+  if (!CatchPadResultTy)
+    CatchPadResultTy = CPI.getType();
+  else
+    Assert(CatchPadResultTy == CPI.getType(),
+           "The catchpad instruction should have a consistent result type "
+           "inside a function.",
+           &CPI);
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "CatchPadInst needs to be in a function with a personality.", &CPI);
+
+  // The catchpad instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &CPI,
+         "CatchPadInst not the first non-PHI instruction in the block.",
+         &CPI);
+
+  BasicBlock *UnwindDest = CPI.getUnwindDest();
+  Instruction *I = UnwindDest->getFirstNonPHI();
+  Assert(
+      isa<CatchPadInst>(I) || isa<CatchEndPadInst>(I),
+      "CatchPadInst must unwind to a CatchPadInst or a CatchEndPadInst.",
+      &CPI);
+
+  visitTerminatorInst(CPI);
+}
+
+void Verifier::visitCatchEndPadInst(CatchEndPadInst &CEPI) {
+  BasicBlock *BB = CEPI.getParent();
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "CatchEndPadInst needs to be in a function with a personality.",
+         &CEPI);
+
+  // The catchendpad instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &CEPI,
+         "CatchEndPadInst not the first non-PHI instruction in the block.",
+         &CEPI);
+
+  unsigned CatchPadsSeen = 0;
+  for (BasicBlock *PredBB : predecessors(BB))
+    if (isa<CatchPadInst>(PredBB->getTerminator()))
+      ++CatchPadsSeen;
+
+  Assert(CatchPadsSeen <= 1, "CatchEndPadInst must have no more than one "
+                               "CatchPadInst predecessor.",
+         &CEPI);
+
+  if (BasicBlock *UnwindDest = CEPI.getUnwindDest()) {
+    Instruction *I = UnwindDest->getFirstNonPHI();
+    Assert(
+        I->isEHPad() && !isa<LandingPadInst>(I),
+        "CatchEndPad must unwind to an EH block which is not a landingpad.",
+        &CEPI);
+  }
+
+  visitTerminatorInst(CEPI);
+}
+
+void Verifier::visitCleanupPadInst(CleanupPadInst &CPI) {
+  BasicBlock *BB = CPI.getParent();
+
+  if (!CleanupPadResultTy)
+    CleanupPadResultTy = CPI.getType();
+  else
+    Assert(CleanupPadResultTy == CPI.getType(),
+           "The cleanuppad instruction should have a consistent result type "
+           "inside a function.",
+           &CPI);
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "CleanupPadInst needs to be in a function with a personality.", &CPI);
+
+  // The cleanuppad instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &CPI,
+         "CleanupPadInst not the first non-PHI instruction in the block.",
+         &CPI);
+
+  visitInstruction(CPI);
+}
+
+void Verifier::visitCleanupReturnInst(CleanupReturnInst &CRI) {
+  if (BasicBlock *UnwindDest = CRI.getUnwindDest()) {
+    Instruction *I = UnwindDest->getFirstNonPHI();
+    Assert(I->isEHPad() && !isa<LandingPadInst>(I),
+           "CleanupReturnInst must unwind to an EH block which is not a "
+           "landingpad.",
+           &CRI);
+  }
+
+  visitTerminatorInst(CRI);
+}
+
+void Verifier::visitTerminatePadInst(TerminatePadInst &TPI) {
+  BasicBlock *BB = TPI.getParent();
+
+  Function *F = BB->getParent();
+  Assert(F->hasPersonalityFn(),
+         "TerminatePadInst needs to be in a function with a personality.",
+         &TPI);
+
+  // The terminatepad instruction must be the first non-PHI instruction in the
+  // block.
+  Assert(BB->getFirstNonPHI() == &TPI,
+         "TerminatePadInst not the first non-PHI instruction in the block.",
+         &TPI);
+
+  if (BasicBlock *UnwindDest = TPI.getUnwindDest()) {
+    Instruction *I = UnwindDest->getFirstNonPHI();
+    Assert(I->isEHPad() && !isa<LandingPadInst>(I),
+           "TerminatePadInst must unwind to an EH block which is not a "
+           "landingpad.",
+           &TPI);
+  }
+
+  visitTerminatorInst(TPI);
 }
 
 void Verifier::verifyDominatesUse(Instruction &I, unsigned i) {
