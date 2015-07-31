@@ -1100,11 +1100,7 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
 
                         LanguageType cu_language = DWARFCompileUnit::LanguageTypeFromDWARF(cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0));
 
-                        bool is_optimized = false;
-                        if (cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_APPLE_optimized, 0) == 1)
-                        {
-                            is_optimized = true;
-                        }
+                        bool is_optimized = dwarf_cu->GetIsOptimized ();
                         cu_sp.reset(new CompileUnit (module_sp,
                                                      dwarf_cu,
                                                      cu_file_spec, 

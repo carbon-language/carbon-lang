@@ -52,7 +52,8 @@ DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
     m_producer_version_minor (0),
     m_producer_version_update (0),
     m_language_type (eLanguageTypeUnknown),
-    m_is_dwarf64    (false)
+    m_is_dwarf64    (false),
+    m_is_optimized  (eLazyBoolCalculate)
 {
 }
 
@@ -71,6 +72,7 @@ DWARFCompileUnit::Clear()
     m_producer      = eProducerInvalid;
     m_language_type = eLanguageTypeUnknown;
     m_is_dwarf64    = false;
+    m_is_optimized  = eLazyBoolCalculate;
 }
 
 bool
@@ -1108,3 +1110,27 @@ DWARFCompileUnit::IsDWARF64() const
     return m_is_dwarf64;
 }
 
+bool
+DWARFCompileUnit::GetIsOptimized ()
+{
+    if (m_is_optimized == eLazyBoolCalculate)
+    {
+        const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+        if (die)
+        {
+            m_is_optimized = eLazyBoolNo;
+            if (die->GetAttributeValueAsUnsigned (m_dwarf2Data, this, DW_AT_APPLE_optimized, 0) == 1)
+            {
+                m_is_optimized = eLazyBoolYes;
+            }
+        }
+    }
+    if (m_is_optimized == eLazyBoolYes)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}

@@ -196,6 +196,9 @@ public:
     bool
     IsDWARF64() const;
 
+    bool
+    GetIsOptimized ();
+
 protected:
     SymbolFileDWARF*    m_dwarf2Data;
     const DWARFAbbreviationDeclarationSet *m_abbrevs;
@@ -213,6 +216,7 @@ protected:
     uint32_t            m_producer_version_update;
     lldb::LanguageType  m_language_type;
     bool                m_is_dwarf64;
+    lldb_private::LazyBool m_is_optimized;
     
     void
     ParseProducerInfo ();
