@@ -30,7 +30,9 @@ private:
   struct LogicalModule {
     // Make this move-only to ensure they don't get duplicated across moves of
     // LogicalDylib or anything like that.
-    LogicalModule(LogicalModule &&) = default;
+    LogicalModule(LogicalModule &&RHS)
+        : Resources(std::move(RHS.Resources)),
+          BaseLayerHandles(std::move(RHS.BaseLayerHandles)) {}
     LogicalModule() = default;
     LogicalModuleResources Resources;
     BaseLayerHandleList BaseLayerHandles;
