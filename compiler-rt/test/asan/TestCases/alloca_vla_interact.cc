@@ -7,8 +7,8 @@
 // This testcase checks correct interaction between VLAs and allocas.
 
 #include <assert.h>
-#include <alloca.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "sanitizer/asan_interface.h"
 
 #define RZ 32
