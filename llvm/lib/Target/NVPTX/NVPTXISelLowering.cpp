@@ -3747,9 +3747,7 @@ bool NVPTXTargetLowering::isLegalAddressingMode(const DataLayout &DL,
   // - [immAddr]
 
   if (AM.BaseGV) {
-    if (AM.BaseOffs || AM.HasBaseReg || AM.Scale)
-      return false;
-    return true;
+    return !AM.BaseOffs && !AM.HasBaseReg && !AM.Scale;
   }
 
   switch (AM.Scale) {
@@ -4113,25 +4111,16 @@ static bool AreMulWideOperandsDemotable(SDValue LHS, SDValue RHS,
   if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(RHS)) {
     APInt Val = CI->getAPIntValue();
     if (LHSSign == Unsigned) {
-      if (Val.isIntN(OptSize)) {
-        return true;
-      }
-      return false;
+      return Val.isIntN(OptSize);
     } else {
-      if (Val.isSignedIntN(OptSize)) {
-        return true;
-      }
-      return false;
+      return Val.isSignedIntN(OptSize);
     }
   } else {
     OperandSignedness RHSSign;
     if (!IsMulWideOperandDemotable(RHS, OptSize, RHSSign))
       return false;
 
-    if (LHSSign != RHSSign)
-      return false;
-
-    return true;
+    return LHSSign == RHSSign;
   }
 }
 

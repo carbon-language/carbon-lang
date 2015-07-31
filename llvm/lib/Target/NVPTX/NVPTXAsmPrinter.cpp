@@ -635,9 +635,7 @@ static bool usedInGlobalVarDef(const Constant *C) {
     return false;
 
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-    if (GV->getName() == "llvm.used")
-      return false;
-    return true;
+    return GV->getName() != "llvm.used";
   }
 
   for (const User *U : C->users())
@@ -1955,12 +1953,9 @@ bool NVPTXAsmPrinter::isImageType(const Type *Ty) {
 
   std::map<const Type *, std::string>::iterator PI = TypeNameMap.find(Ty);
 
-  if (PI != TypeNameMap.end() && (!PI->second.compare("struct._image1d_t") ||
-                                  !PI->second.compare("struct._image2d_t") ||
-                                  !PI->second.compare("struct._image3d_t")))
-    return true;
-
-  return false;
+  return PI != TypeNameMap.end() && (!PI->second.compare("struct._image1d_t") ||
+                                     !PI->second.compare("struct._image2d_t") ||
+                                     !PI->second.compare("struct._image3d_t"));
 }
 
 

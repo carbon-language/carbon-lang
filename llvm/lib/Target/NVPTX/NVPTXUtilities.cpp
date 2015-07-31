@@ -336,18 +336,16 @@ bool llvm::getAlign(const CallInst &I, unsigned index, unsigned &align) {
 }
 
 bool llvm::isBarrierIntrinsic(Intrinsic::ID id) {
-  if ((id == Intrinsic::nvvm_barrier0) ||
-      (id == Intrinsic::nvvm_barrier0_popc) ||
-      (id == Intrinsic::nvvm_barrier0_and) ||
-      (id == Intrinsic::nvvm_barrier0_or) ||
-      (id == Intrinsic::cuda_syncthreads))
-    return true;
-  return false;
+  return (id == Intrinsic::nvvm_barrier0) ||
+         (id == Intrinsic::nvvm_barrier0_popc) ||
+         (id == Intrinsic::nvvm_barrier0_and) ||
+         (id == Intrinsic::nvvm_barrier0_or) ||
+         (id == Intrinsic::cuda_syncthreads);
 }
 
 // Interface for checking all memory space transfer related intrinsics
 bool llvm::isMemorySpaceTransferIntrinsic(Intrinsic::ID id) {
-  if (id == Intrinsic::nvvm_ptr_local_to_gen ||
+  return id == Intrinsic::nvvm_ptr_local_to_gen ||
       id == Intrinsic::nvvm_ptr_shared_to_gen ||
       id == Intrinsic::nvvm_ptr_global_to_gen ||
       id == Intrinsic::nvvm_ptr_constant_to_gen ||
@@ -355,11 +353,7 @@ bool llvm::isMemorySpaceTransferIntrinsic(Intrinsic::ID id) {
       id == Intrinsic::nvvm_ptr_gen_to_shared ||
       id == Intrinsic::nvvm_ptr_gen_to_local ||
       id == Intrinsic::nvvm_ptr_gen_to_constant ||
-      id == Intrinsic::nvvm_ptr_gen_to_param) {
-    return true;
-  }
-
-  return false;
+      id == Intrinsic::nvvm_ptr_gen_to_param;
 }
 
 // consider several special intrinsics in striping pointer casts, and
