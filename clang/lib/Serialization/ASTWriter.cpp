@@ -1074,14 +1074,7 @@ void ASTWriter::WriteBlockInfoBlock() {
 /// \return \c true if the path was changed.
 static bool cleanPathForOutput(FileManager &FileMgr,
                                SmallVectorImpl<char> &Path) {
-  bool Changed = false;
-
-  if (!llvm::sys::path::is_absolute(StringRef(Path.data(), Path.size()))) {
-    llvm::sys::fs::make_absolute(Path);
-    Changed = true;
-  }
-
-  return Changed | FileMgr.removeDotPaths(Path);
+  return FileMgr.makeAbsolutePath(Path) | FileMgr.removeDotPaths(Path);
 }
 
 /// \brief Adjusts the given filename to only write out the portion of the
@@ -1429,7 +1422,7 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
 
     SmallString<128> OutputPath(OutputFile);
 
-    llvm::sys::fs::make_absolute(OutputPath);
+    SM.getFileManager().makeAbsolutePath(OutputPath);
     StringRef origDir = llvm::sys::path::parent_path(OutputPath);
 
     RecordData Record;

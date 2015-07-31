@@ -254,7 +254,13 @@ public:
   /// \brief If path is not absolute and FileSystemOptions set the working
   /// directory, the path is modified to be relative to the given
   /// working directory.
-  void FixupRelativePath(SmallVectorImpl<char> &path) const;
+  /// \returns true if \c path changed.
+  bool FixupRelativePath(SmallVectorImpl<char> &path) const;
+
+  /// Makes \c Path absolute taking into account FileSystemOptions and the
+  /// working directory option.
+  /// \returns true if \c Path changed to absolute.
+  bool makeAbsolutePath(SmallVectorImpl<char> &Path) const;
 
   /// \brief Produce an array mapping from the unique IDs assigned to each
   /// file to the corresponding FileEntry pointer.

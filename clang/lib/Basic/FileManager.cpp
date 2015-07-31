@@ -389,16 +389,28 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
   return UFE;
 }
 
-void FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
+bool FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
   StringRef pathRef(path.data(), path.size());
 
   if (FileSystemOpts.WorkingDir.empty() 
       || llvm::sys::path::is_absolute(pathRef))
-    return;
+    return false;
 
   SmallString<128> NewPath(FileSystemOpts.WorkingDir);
   llvm::sys::path::append(NewPath, pathRef);
   path = NewPath;
+  return true;
+}
+
+bool FileManager::makeAbsolutePath(SmallVectorImpl<char> &Path) const {
+  bool Changed = FixupRelativePath(Path);
+
+  if (!llvm::sys::path::is_absolute(StringRef(Path.data(), Path.size()))) {
+    llvm::sys::fs::make_absolute(Path);
+    Changed = true;
+  }
+
+  return Changed;
 }
 
 llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
