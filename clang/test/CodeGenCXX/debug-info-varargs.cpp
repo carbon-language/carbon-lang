@@ -20,7 +20,7 @@ void b(int c, ...) {
 
   A a;
 
-  // CHECK: !DILocalVariable(tag: DW_TAG_auto_variable, name: "fptr"
+  // CHECK: !DILocalVariable(name: "fptr"
   // CHECK-SAME:             line: [[@LINE+2]]
   // CHECK-SAME:             type: ![[PST:[0-9]+]]
   void (*fptr)(int, ...) = b;

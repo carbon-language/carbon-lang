@@ -34,8 +34,8 @@ void foo() {
 // CHECK: !DIGlobalVariable(name: "d",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
 // CHECK: !DIGlobalVariable(name: "a",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
 // CHECK: !DIGlobalVariable(name: "b",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
-// CHECK: !DILocalVariable(tag: DW_TAG_auto_variable, name: "i", {{.*}}, flags: DIFlagArtificial
-// CHECK: !DILocalVariable(tag: DW_TAG_auto_variable, name: "c", {{.*}}, flags: DIFlagArtificial
+// CHECK: !DILocalVariable(name: "i", {{.*}}, flags: DIFlagArtificial
+// CHECK: !DILocalVariable(name: "c", {{.*}}, flags: DIFlagArtificial
 // CHECK: !DILocalVariable(
 // CHECK-NOT: name:
 // CHECK: type: ![[UNION:[0-9]+]]

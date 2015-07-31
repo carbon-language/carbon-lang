@@ -9,14 +9,14 @@ int src();
 void f();
 
 void func() {
-  // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+  // CHECK: = !DILocalVariable(name: "i"
   // CHECK-SAME:               scope: [[IF1:![0-9]*]]
   // CHECK-SAME:               line: [[@LINE+2]]
   // CHECK: [[IF1]] = distinct !DILexicalBlock({{.*}}line: [[@LINE+1]])
   if (int i = src())
     f();
 
-  // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+  // CHECK: = !DILocalVariable(name: "i"
   // CHECK-SAME:               scope: [[IF2:![0-9]*]]
   // CHECK-SAME:               line: [[@LINE+2]]
   // CHECK: [[IF2]] = distinct !DILexicalBlock({{.*}}line: [[@LINE+1]])
@@ -25,12 +25,12 @@ void func() {
   } else
     f();
 
-  // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+  // CHECK: = !DILocalVariable(name: "i"
   // CHECK-SAME:               scope: [[FOR:![0-9]*]]
   // CHECK-SAME:               line: [[@LINE+2]]
   // CHECK: [[FOR]] = distinct !DILexicalBlock({{.*}}line: [[@LINE+1]])
   for (int i = 0;
-  // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "b"
+  // CHECK: = !DILocalVariable(name: "b"
   // CHECK-SAME:               scope: [[FOR_BODY:![0-9]*]]
   // CHECK-SAME:               line: [[@LINE+6]]
   // CHECK: [[FOR_BODY]] = distinct !DILexicalBlock({{.*}}line: [[@LINE-4]])
@@ -41,7 +41,7 @@ void func() {
        bool b = i != 10; ++i)
     f();
 
-  // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+  // CHECK: = !DILocalVariable(name: "i"
   // CHECK-SAME:               scope: [[FOR:![0-9]*]]
   // CHECK-SAME:               line: [[@LINE+2]]
   // CHECK: [[FOR]] = distinct !DILexicalBlock({{.*}}line: [[@LINE+1]])
@@ -50,7 +50,7 @@ void func() {
     // or using declarations) as direct children, they just waste
     // space/relocations/etc.
     // CHECK: [[FOR_LOOP_INCLUDING_COND:!.*]] = distinct !DILexicalBlock(scope: [[FOR]],{{.*}} line: [[@LINE-4]])
-    // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "b"
+    // CHECK: = !DILocalVariable(name: "b"
     // CHECK-SAME:               scope: [[FOR_COMPOUND:![0-9]*]]
     // CHECK-SAME:               line: [[@LINE+2]]
     // CHECK: [[FOR_COMPOUND]] = distinct !DILexicalBlock(scope: [[FOR_LOOP_INCLUDING_COND]],{{.*}} line: [[@LINE-8]])
@@ -58,13 +58,13 @@ void func() {
   }
 
   int x[] = {1, 2};
-  // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "__range"
+  // CHECK: = !DILocalVariable(name: "__range"
   // CHECK-SAME:               scope: [[RANGE_FOR:![0-9]*]]
   // CHECK-NOT:                line:
   // CHECK-SAME:               ){{$}}
   // CHECK: [[RANGE_FOR]] = distinct !DILexicalBlock({{.*}}, line: [[@LINE+1]])
   for (int i : x) {
-    // CHECK: = !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+    // CHECK: = !DILocalVariable(name: "i"
     // CHECK-SAME:               scope: [[RANGE_FOR_BODY:![0-9]*]]
     // CHECK-SAME:               line: [[@LINE-3]]
     // CHECK: [[RANGE_FOR_BODY]] = distinct !DILexicalBlock(scope: [[RANGE_FOR]],{{.*}} line: [[@LINE-4]])

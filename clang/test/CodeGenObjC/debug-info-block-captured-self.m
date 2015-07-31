@@ -66,6 +66,7 @@ typedef enum {
 // CHECK: ![[MAIN:.*]] = !DICompositeType(tag: DW_TAG_structure_type, name: "Main"
 // CHECK-SAME:                            line: 23,
 // CHECK: ![[PMAIN:.*]] = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: ![[MAIN]],
-// CHECK: ![[BDMD]] = !DILocalVariable(tag: DW_TAG_arg_variable, name: ".block_descriptor"
-// CHECK: ![[SELF]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "self"
+// CHECK: ![[BDMD]] = !DILocalVariable(name: ".block_descriptor", arg:
+// CHECK: ![[SELF]] = !DILocalVariable(name: "self"
+// CHECK-NOT:                          arg:
 // CHECK-SAME:                         line: 40,

@@ -10,6 +10,6 @@ void f0() {
 // We should have 3 lexical blocks here at the moment, including one
 // for the catch block.
 // CHECK: !DILexicalBlock(
-// CHECK: !DILocalVariable(tag: DW_TAG_auto_variable
+// CHECK: !DILocalVariable(
 // CHECK: !DILexicalBlock(
 // CHECK: !DILexicalBlock(

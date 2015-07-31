@@ -59,22 +59,22 @@ int main() {
 // CHECK-SAME:                                       line: 22
 // CHECK-SAME:                                       baseType: ![[ENUMERATOR3]]
 
-// CHECK: ![[ENUM0]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "e0"
+// CHECK: ![[ENUM0]] = !DILocalVariable(name: "e0"
 // CHECK-SAME:                          type: ![[TYPE0:[0-9]+]]
 // CHECK: ![[TYPE0]] = !DIDerivedType(tag: DW_TAG_typedef, name: "Enum0",
 // CHECK-SAME:                        baseType: ![[ENUMERATOR0]]
 
-// CHECK: ![[ENUM1]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "e1"
+// CHECK: ![[ENUM1]] = !DILocalVariable(name: "e1"
 // CHECK-SAME:                          type: ![[TYPE1:[0-9]+]]
 // CHECK: ![[TYPE1]] = !DIDerivedType(tag: DW_TAG_typedef, name: "Enum1"
 // CHECK-SAME:                        baseType: ![[ENUMERATOR1]]
 
-// CHECK: ![[ENUM2]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "e2"
+// CHECK: ![[ENUM2]] = !DILocalVariable(name: "e2"
 // CHECK-SAME:                          type: ![[TYPE2:[0-9]+]]
 // CHECK: ![[TYPE2]] = !DIDerivedType(tag: DW_TAG_typedef, name: "Enum2"
 // CHECK-SAME:                        baseType: ![[ENUMERATOR2]]
 
-// CHECK: ![[ENUM3]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "e3"
+// CHECK: ![[ENUM3]] = !DILocalVariable(name: "e3"
 // CHECK-SAME:                          type: ![[TYPE3:[0-9]+]]
 // CHECK: ![[TYPE3]] = !DIDerivedType(tag: DW_TAG_typedef, name: "Enum3"
 // CHECK-SAME:                        baseType: ![[ENUMERATOR3]]

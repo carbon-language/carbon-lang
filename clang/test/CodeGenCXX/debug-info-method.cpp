@@ -8,9 +8,10 @@
 // CHECK: !DIDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: ![[MEMFUNTYPE:[0-9]+]]
 // CHECK: ![[MEMFUNTYPE]] = !DISubroutineType(types: ![[MEMFUNARGS:[0-9]+]])
 // CHECK: ![[MEMFUNARGS]] = {{.*}}, ![[THISTYPE]],
-// CHECK: !DILocalVariable(tag: DW_TAG_arg_variable
-// CHECK: !DILocalVariable(tag: DW_TAG_arg_variable
-// CHECK: !DILocalVariable(tag: DW_TAG_arg_variable
+// CHECK: !DILocalVariable(name: "this", arg: 1
+// CHECK: !DILocalVariable(arg: 2
+// CHECK: !DILocalVariable(arg: 3
+// CHECK: !DILocalVariable(arg: 4
 union {
   int a;
   float b;

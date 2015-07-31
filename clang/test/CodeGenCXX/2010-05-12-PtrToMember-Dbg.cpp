@@ -1,5 +1,5 @@
 //RUN: %clang_cc1 -emit-llvm -g -o - %s | FileCheck %s
-//CHECK: DW_TAG_auto_variable
+//CHECK: DILocalVariable(
 class Foo
 {
  public:

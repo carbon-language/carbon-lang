@@ -61,8 +61,8 @@ static void run(void (^block)(void))
 {
     if ((self = [super init])) {
       run(^{
-          // CHECK-DAG: ![[SELF]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "self"{{.*}}, line: [[@LINE+4]],
-          // CHECK-DAG: ![[D]] = !DILocalVariable(tag: DW_TAG_auto_variable, name: "d"{{.*}}, line: [[@LINE+1]],
+          // CHECK-DAG: ![[SELF]] = !DILocalVariable(name: "self", scope:{{.*}}, line: [[@LINE+4]],
+          // CHECK-DAG: ![[D]] = !DILocalVariable(name: "d", scope:{{.*}}, line: [[@LINE+1]],
           NSMutableDictionary *d = [[NSMutableDictionary alloc] init]; 
           ivar = 42 + (int)[d count];
         });

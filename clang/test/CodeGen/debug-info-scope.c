@@ -5,7 +5,7 @@
 int main() {
 	int j = 0;
 	int k = 0;
-// CHECK: !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+// CHECK: !DILocalVariable(name: "i"
 // CHECK-NEXT: !DILexicalBlock(
 
 // FIXME: Looks like we don't actually need both these lexical blocks (disc 2
@@ -19,7 +19,7 @@ int main() {
 // GMLT-NOT: !DILexicalBlock
 	for (int i = 0; i < 10; i++)
 		j++;
-// CHECK: !DILocalVariable(tag: DW_TAG_auto_variable, name: "i"
+// CHECK: !DILocalVariable(name: "i"
 // CHECK-NEXT: !DILexicalBlock(
 // GMLT-NOT: !DILexicalBlock
 	for (int i = 0; i < 10; i++)
