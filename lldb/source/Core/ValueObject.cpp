@@ -3711,9 +3711,9 @@ ValueObject::Dereference (Error &error)
 {
     if (m_deref_valobj)
         return m_deref_valobj->GetSP();
-        
-    const bool is_pointer_type = IsPointerType();
-    if (is_pointer_type)
+
+    const bool is_pointer_or_reference_type = IsPointerOrReferenceType();
+    if (is_pointer_or_reference_type)
     {
         bool omit_empty_base_classes = true;
         bool ignore_array_bounds = false;
@@ -3730,7 +3730,7 @@ ValueObject::Dereference (Error &error)
         ClangASTType child_clang_type;
 
         ExecutionContext exe_ctx (GetExecutionContextRef());
-        
+
         child_clang_type = clang_type.GetChildClangTypeAtIndex (&exe_ctx,
                                                                 0,
                                                                 transparent_pointers,
@@ -3773,10 +3773,10 @@ ValueObject::Dereference (Error &error)
         StreamString strm;
         GetExpressionPath(strm, true);
 
-        if (is_pointer_type)
+        if (is_pointer_or_reference_type)
             error.SetErrorStringWithFormat("dereference failed: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
         else
-            error.SetErrorStringWithFormat("not a pointer type: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
+            error.SetErrorStringWithFormat("not a pointer or reference type: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
         return ValueObjectSP();
     }
 }
