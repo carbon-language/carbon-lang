@@ -27,3 +27,5 @@ int main() {
 // $ cp <output> output2.dwz
 // $ dwz -m output.dwz -r output1.dwz output2.dwz
 // $ rm output2.dwz
+
+// The mach-o version was generated using clang-3.6.2.
