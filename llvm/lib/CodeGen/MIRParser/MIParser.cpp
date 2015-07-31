@@ -14,6 +14,7 @@
 #include "MIParser.h"
 #include "MILexer.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -113,6 +114,7 @@ public:
   bool parseSubRegisterIndex(unsigned &SubReg);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
+  bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
   bool parseStackObjectOperand(MachineOperand &Dest);
@@ -528,6 +530,22 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseFPImmediateOperand(MachineOperand &Dest) {
+  auto Loc = Token.location();
+  lex();
+  if (Token.isNot(MIToken::FloatingPointLiteral))
+    return error("expected a floating point literal");
+  auto Source = StringRef(Loc, Token.stringValue().end() - Loc).str();
+  lex();
+  SMDiagnostic Err;
+  const Constant *C =
+      parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent());
+  if (!C)
+    return error(Loc + Err.getColumnNo(), Err.getMessage());
+  Dest = MachineOperand::CreateFPImm(cast<ConstantFP>(C));
+  return false;
+}
+
 bool MIParser::getUnsigned(unsigned &Result) {
   assert(Token.hasIntegerValue() && "Expected a token with an integer value");
   const uint64_t Limit = uint64_t(std::numeric_limits<unsigned>::max()) + 1;
@@ -860,6 +878,13 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseRegisterOperand(Dest);
   case MIToken::IntegerLiteral:
     return parseImmediateOperand(Dest);
+  case MIToken::kw_half:
+  case MIToken::kw_float:
+  case MIToken::kw_double:
+  case MIToken::kw_x86_fp80:
+  case MIToken::kw_fp128:
+  case MIToken::kw_ppc_fp128:
+    return parseFPImmediateOperand(Dest);
   case MIToken::MachineBasicBlock:
     return parseMBBOperand(Dest);
   case MIToken::StackObject:

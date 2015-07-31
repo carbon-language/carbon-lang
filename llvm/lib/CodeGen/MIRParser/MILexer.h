@@ -54,6 +54,12 @@ struct MIToken {
     kw_cfi_def_cfa,
     kw_blockaddress,
     kw_target_index,
+    kw_half,
+    kw_float,
+    kw_double,
+    kw_x86_fp80,
+    kw_fp128,
+    kw_ppc_fp128,
 
     // Identifier tokens
     Identifier,
@@ -69,6 +75,7 @@ struct MIToken {
 
     // Other tokens
     IntegerLiteral,
+    FloatingPointLiteral,
     VirtualRegister,
     ConstantPoolItem,
     JumpTableIndex,
