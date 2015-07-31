@@ -613,10 +613,12 @@ def : Pat<(sub GPR32:$Rn, arith_shifted_reg32:$Rm),
           (SUBSWrs GPR32:$Rn, arith_shifted_reg32:$Rm)>;
 def : Pat<(sub GPR64:$Rn, arith_shifted_reg64:$Rm),
           (SUBSXrs GPR64:$Rn, arith_shifted_reg64:$Rm)>;
+let AddedComplexity = 1 in {
 def : Pat<(sub GPR32sp:$R2, arith_extended_reg32<i32>:$R3),
           (SUBSWrx GPR32sp:$R2, arith_extended_reg32<i32>:$R3)>;
 def : Pat<(sub GPR64sp:$R2, arith_extended_reg32to64<i64>:$R3),
           (SUBSXrx GPR64sp:$R2, arith_extended_reg32to64<i64>:$R3)>;
+}
 
 // Because of the immediate format for add/sub-imm instructions, the
 // expression (add x, -1) must be transformed to (SUB{W,X}ri x, 1).
