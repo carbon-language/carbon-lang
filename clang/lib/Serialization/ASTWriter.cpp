@@ -1074,7 +1074,8 @@ void ASTWriter::WriteBlockInfoBlock() {
 /// \return \c true if the path was changed.
 static bool cleanPathForOutput(FileManager &FileMgr,
                                SmallVectorImpl<char> &Path) {
-  return FileMgr.makeAbsolutePath(Path) | FileMgr.removeDotPaths(Path);
+  bool Changed = FileMgr.makeAbsolutePath(Path);
+  return Changed | FileMgr.removeDotPaths(Path);
 }
 
 /// \brief Adjusts the given filename to only write out the portion of the
