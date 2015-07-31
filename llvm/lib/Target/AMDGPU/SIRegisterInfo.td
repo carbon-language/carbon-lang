@@ -10,10 +10,13 @@
 //===----------------------------------------------------------------------===//
 //  Declarations that describe the SI registers
 //===----------------------------------------------------------------------===//
-
-class SIReg <string n, bits<16> encoding = 0> : Register<n> {
+class SIReg <string n, bits<16> regIdx = 0> : Register<n>,
+  DwarfRegNum<[!cast<int>(HWEncoding)]> {
   let Namespace = "AMDGPU";
-  let HWEncoding = encoding;
+
+  // This is the not yet the complete register encoding. An additional
+  // bit is set for VGPRs.
+  let HWEncoding = regIdx;
 }
 
 // Special Registers
@@ -21,7 +24,8 @@ def VCC_LO : SIReg<"vcc_lo", 106>;
 def VCC_HI : SIReg<"vcc_hi", 107>;
 
 // VCC for 64-bit instructions
-def VCC : RegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]> {
+def VCC : RegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]>,
+          DwarfRegAlias<VCC_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
   let HWEncoding = 106;
@@ -30,7 +34,8 @@ def VCC : RegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]> {
 def EXEC_LO : SIReg<"exec_lo", 126>;
 def EXEC_HI : SIReg<"exec_hi", 127>;
 
-def EXEC : RegisterWithSubRegs<"EXEC", [EXEC_LO, EXEC_HI]> {
+def EXEC : RegisterWithSubRegs<"EXEC", [EXEC_LO, EXEC_HI]>,
+           DwarfRegAlias<EXEC_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
   let HWEncoding = 126;
@@ -43,7 +48,8 @@ def FLAT_SCR_LO : SIReg<"flat_scr_lo", 104>; // Offset in units of 256-bytes.
 def FLAT_SCR_HI : SIReg<"flat_scr_hi", 105>; // Size is the per-thread scratch size, in bytes.
 
 // Pair to indicate location of scratch space for flat accesses.
-def FLAT_SCR : RegisterWithSubRegs <"flat_scr", [FLAT_SCR_LO, FLAT_SCR_HI]> {
+def FLAT_SCR : RegisterWithSubRegs <"flat_scr", [FLAT_SCR_LO, FLAT_SCR_HI]>,
+               DwarfRegAlias<FLAT_SCR_LO> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
   let HWEncoding = 104;
@@ -64,6 +70,8 @@ foreach Index = 0-255 in {
 //===----------------------------------------------------------------------===//
 //  Groupings using register classes and tuples
 //===----------------------------------------------------------------------===//
+
+// TODO: Do we need to set DwarfRegAlias on register tuples?
 
 // SGPR 32-bit registers
 def SGPR_32 : RegisterClass<"AMDGPU", [i32, f32], 32,
