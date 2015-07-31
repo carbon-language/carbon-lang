@@ -109,11 +109,7 @@ static cl::opt<bool> StressExtLdPromotion(
 
 namespace {
 typedef SmallPtrSet<Instruction *, 16> SetOfInstrs;
-struct TypeIsSExt {
-  Type *Ty;
-  bool IsSExt;
-  TypeIsSExt(Type *Ty, bool IsSExt) : Ty(Ty), IsSExt(IsSExt) {}
-};
+typedef PointerIntPair<Type *, 1, bool> TypeIsSExt;
 typedef DenseMap<Instruction *, TypeIsSExt> InstrToOrigTy;
 class TypePromotionTransaction;
 
@@ -2433,8 +2429,8 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
   // #1 get the type of the operand and check the kind of the extended bits.
   const Type *OpndType;
   InstrToOrigTy::const_iterator It = PromotedInsts.find(Opnd);
-  if (It != PromotedInsts.end() && It->second.IsSExt == IsSExt)
-    OpndType = It->second.Ty;
+  if (It != PromotedInsts.end() && It->second.getInt() == IsSExt)
+    OpndType = It->second.getPointer();
   else if ((IsSExt && isa<SExtInst>(Opnd)) || (!IsSExt && isa<ZExtInst>(Opnd)))
     OpndType = Opnd->getOperand(0)->getType();
   else
