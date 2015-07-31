@@ -55,6 +55,7 @@ class AnalysisUsage;
 class MemTransferInst;
 class MemIntrinsic;
 class DominatorTree;
+class OrderedBasicBlock;
 
 /// The possible results of an alias query.
 ///
@@ -501,16 +502,19 @@ public:
   virtual ModRefInfo getModRefInfo(ImmutableCallSite CS1,
                                    ImmutableCallSite CS2);
 
-  /// Return information about whether a particular call site modifies or reads
-  /// the specified memory location.
+  /// \brief Return information about whether a particular call site modifies
+  /// or reads the specified memory location \p MemLoc before instruction \p I
+  /// in a BasicBlock. A ordered basic block \p OBB can be used to speed up
+  /// instruction ordering queries inside the BasicBlock containing \p I.
   ModRefInfo callCapturesBefore(const Instruction *I,
-                                const MemoryLocation &MemLoc,
-                                DominatorTree *DT);
+                                const MemoryLocation &MemLoc, DominatorTree *DT,
+                                OrderedBasicBlock *OBB = nullptr);
 
-  /// A convenience wrapper to synthesize a memory location.
+  /// \brief A convenience wrapper to synthesize a memory location.
   ModRefInfo callCapturesBefore(const Instruction *I, const Value *P,
-                                uint64_t Size, DominatorTree *DT) {
-    return callCapturesBefore(I, MemoryLocation(P, Size), DT);
+                                uint64_t Size, DominatorTree *DT,
+                                OrderedBasicBlock *OBB = nullptr) {
+    return callCapturesBefore(I, MemoryLocation(P, Size), DT, OBB);
   }
 
   /// @}

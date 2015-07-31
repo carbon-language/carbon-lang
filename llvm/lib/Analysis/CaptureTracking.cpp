@@ -21,6 +21,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/OrderedBasicBlock.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
@@ -52,63 +53,6 @@ namespace {
     bool Captured;
   };
 
-  struct NumberedInstCache {
-    SmallDenseMap<const Instruction *, unsigned, 32> NumberedInsts;
-    BasicBlock::const_iterator LastInstFound;
-    unsigned LastInstPos;
-    const BasicBlock *BB;
-
-    NumberedInstCache(const BasicBlock *BasicB) : LastInstPos(0), BB(BasicB) {
-      LastInstFound = BB->end();
-    }
-
-    /// \brief Find the first instruction 'A' or 'B' in 'BB'. Number out
-    /// instruction while walking 'BB'.
-    const Instruction *find(const Instruction *A, const Instruction *B) {
-      const Instruction *Inst = nullptr;
-      assert(!(LastInstFound == BB->end() && LastInstPos != 0) &&
-             "Instruction supposed to be in NumberedInsts");
-
-      // Start the search with the instruction found in the last lookup round.
-      auto II = BB->begin();
-      auto IE = BB->end();
-      if (LastInstFound != IE)
-        II = std::next(LastInstFound);
-
-      // Number all instructions up to the point where we find 'A' or 'B'.
-      for (++LastInstPos; II != IE; ++II, ++LastInstPos) {
-        Inst = cast<Instruction>(II);
-        NumberedInsts[Inst] = LastInstPos;
-        if (Inst == A || Inst == B)
-          break;
-      }
-
-      assert(II != IE && "Instruction not found?");
-      LastInstFound = II;
-      return Inst;
-    }
-
-    /// \brief Find out whether 'A' dominates 'B', meaning whether 'A'
-    /// comes before 'B' in 'BB'. This is a simplification that considers
-    /// cached instruction positions and ignores other basic blocks, being
-    /// only relevant to compare relative instructions positions inside 'BB'.
-    bool dominates(const Instruction *A, const Instruction *B) {
-      assert(A->getParent() == B->getParent() &&
-             "Instructions must be in the same basic block!");
-
-      unsigned NA = NumberedInsts.lookup(A);
-      unsigned NB = NumberedInsts.lookup(B);
-      if (NA && NB)
-        return NA < NB;
-      if (NA)
-        return true;
-      if (NB)
-        return false;
-
-      return A == find(A, B);
-    }
-  };
-
   /// Only find pointer captures which happen before the given instruction. Uses
   /// the dominator tree to determine whether one instruction is before another.
   /// Only support the case where the Value is defined in the same basic block
@@ -116,8 +60,8 @@ namespace {
   struct CapturesBefore : public CaptureTracker {
 
     CapturesBefore(bool ReturnCaptures, const Instruction *I, DominatorTree *DT,
-                   bool IncludeI)
-      : LocalInstCache(I->getParent()), BeforeHere(I), DT(DT),
+                   bool IncludeI, OrderedBasicBlock *IC)
+      : OrderedBB(IC), BeforeHere(I), DT(DT),
         ReturnCaptures(ReturnCaptures), IncludeI(IncludeI), Captured(false) {}
 
     void tooManyUses() override { Captured = true; }
@@ -131,7 +75,7 @@ namespace {
 
       // Compute the case where both instructions are inside the same basic
       // block. Since instructions in the same BB as BeforeHere are numbered in
-      // 'LocalInstCache', avoid using 'dominates' and 'isPotentiallyReachable'
+      // 'OrderedBB', avoid using 'dominates' and 'isPotentiallyReachable'
       // which are very expensive for large basic blocks.
       if (BB == BeforeHere->getParent()) {
         // 'I' dominates 'BeforeHere' => not safe to prune.
@@ -142,7 +86,7 @@ namespace {
         // UseBB == BB, avoid pruning.
         if (isa<InvokeInst>(BeforeHere) || isa<PHINode>(I) || I == BeforeHere)
           return false;
-        if (!LocalInstCache.dominates(BeforeHere, I))
+        if (!OrderedBB->dominates(BeforeHere, I))
           return false;
 
         // 'BeforeHere' comes before 'I', it's safe to prune if we also
@@ -196,7 +140,7 @@ namespace {
       return true;
     }
 
-    NumberedInstCache LocalInstCache;
+    OrderedBasicBlock *OrderedBB;
     const Instruction *BeforeHere;
     DominatorTree *DT;
 
@@ -238,21 +182,29 @@ bool llvm::PointerMayBeCaptured(const Value *V,
 /// returning the value (or part of it) from the function counts as capturing
 /// it or not.  The boolean StoreCaptures specified whether storing the value
 /// (or part of it) into memory anywhere automatically counts as capturing it
-/// or not.
+/// or not. A ordered basic block \p OBB can be used in order to speed up
+/// queries about relative order among instructions in the same basic block.
 bool llvm::PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
                                       bool StoreCaptures, const Instruction *I,
-                                      DominatorTree *DT, bool IncludeI) {
+                                      DominatorTree *DT, bool IncludeI,
+                                      OrderedBasicBlock *OBB) {
   assert(!isa<GlobalValue>(V) &&
          "It doesn't make sense to ask whether a global is captured.");
+  bool UseNewOBB = OBB == nullptr;
 
   if (!DT)
     return PointerMayBeCaptured(V, ReturnCaptures, StoreCaptures);
+  if (UseNewOBB)
+    OBB = new OrderedBasicBlock(I->getParent());
 
   // TODO: See comment in PointerMayBeCaptured regarding what could be done
   // with StoreCaptures.
 
-  CapturesBefore CB(ReturnCaptures, I, DT, IncludeI);
+  CapturesBefore CB(ReturnCaptures, I, DT, IncludeI, OBB);
   PointerMayBeCaptured(V, &CB);
+
+  if (UseNewOBB)
+    delete OBB;
   return CB.Captured;
 }
 

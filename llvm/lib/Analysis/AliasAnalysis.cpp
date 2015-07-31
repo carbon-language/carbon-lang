@@ -335,13 +335,18 @@ ModRefInfo AliasAnalysis::getModRefInfo(const AtomicRMWInst *RMW,
   return MRI_ModRef;
 }
 
-// FIXME: this is really just shoring-up a deficiency in alias analysis.
-// BasicAA isn't willing to spend linear time determining whether an alloca
-// was captured before or after this particular call, while we are. However,
-// with a smarter AA in place, this test is just wasting compile time.
+/// \brief Return information about whether a particular call site modifies
+/// or reads the specified memory location \p MemLoc before instruction \p I
+/// in a BasicBlock. A ordered basic block \p OBB can be used to speed up
+/// instruction-ordering queries inside the BasicBlock containing \p I.
+/// FIXME: this is really just shoring-up a deficiency in alias analysis.
+/// BasicAA isn't willing to spend linear time determining whether an alloca
+/// was captured before or after this particular call, while we are. However,
+/// with a smarter AA in place, this test is just wasting compile time.
 ModRefInfo AliasAnalysis::callCapturesBefore(const Instruction *I,
                                              const MemoryLocation &MemLoc,
-                                             DominatorTree *DT) {
+                                             DominatorTree *DT,
+                                             OrderedBasicBlock *OBB) {
   if (!DT)
     return MRI_ModRef;
 
@@ -356,7 +361,8 @@ ModRefInfo AliasAnalysis::callCapturesBefore(const Instruction *I,
 
   if (llvm::PointerMayBeCapturedBefore(Object, /* ReturnCaptures */ true,
                                        /* StoreCaptures */ true, I, DT,
-                                       /* include Object */ true))
+                                       /* include Object */ true,
+                                       /* OrderedBasicBlock */ OBB))
     return MRI_ModRef;
 
   unsigned ArgNo = 0;

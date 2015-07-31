@@ -22,6 +22,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/PHITransAddr.h"
+#include "llvm/Analysis/OrderedBasicBlock.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
@@ -420,6 +421,12 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
 
   const DataLayout &DL = BB->getModule()->getDataLayout();
 
+  // Create a numbered basic block to lazily compute and cache instruction
+  // positions inside a BB. This is used to provide fast queries for relative
+  // position between two instructions in a BB and can be used by
+  // AliasAnalysis::callCapturesBefore.
+  OrderedBasicBlock OBB(BB);
+
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -623,7 +630,7 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
     ModRefInfo MR = AA->getModRefInfo(Inst, MemLoc);
     // If necessary, perform additional analysis.
     if (MR == MRI_ModRef)
-      MR = AA->callCapturesBefore(Inst, MemLoc, DT);
+      MR = AA->callCapturesBefore(Inst, MemLoc, DT, &OBB);
     switch (MR) {
     case MRI_NoModRef:
       // If the call has no effect on the queried pointer, just ignore it.
