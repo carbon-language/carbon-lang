@@ -14,12 +14,9 @@
 #include "sanitizer_common/sanitizer_platform.h"
 #include "gtest/gtest.h"
 
-#if SANITIZER_LINUX || SANITIZER_MAC
-# define SANITIZER_TEST_HAS_STAT_H 1
+#if SANITIZER_POSIX
 # include <sys/stat.h>
 # include "sanitizer_common/sanitizer_posix.h"
-#else
-# define SANITIZER_TEST_HAS_STAT_H 0
 #endif
 
 // A regression test for internal_memmove() implementation.
@@ -70,7 +67,7 @@ static void temp_file_name(char *buf, size_t bufsize, const char *prefix) {
 }
 
 // FIXME: File manipulations are not yet supported on Windows
-#if !defined(_WIN32)
+#if SANITIZER_POSIX
 TEST(SanitizerCommon, FileOps) {
   const char *str1 = "qwerty";
   uptr len1 = internal_strlen(str1);
@@ -90,7 +87,6 @@ TEST(SanitizerCommon, FileOps) {
   uptr fsize = internal_filesize(fd);
   EXPECT_EQ(len1 + len2, fsize);
 
-#if SANITIZER_TEST_HAS_STAT_H
   struct stat st1, st2, st3;
   EXPECT_EQ(0u, internal_stat(tmpfile, &st1));
   EXPECT_EQ(0u, internal_lstat(tmpfile, &st2));
@@ -105,7 +101,6 @@ TEST(SanitizerCommon, FileOps) {
   EXPECT_EQ(0xAB, sam.z);
   EXPECT_NE(0xAB, sam.st.st_size);
   EXPECT_NE(0, sam.st.st_size);
-#endif
 
   char buf[64] = {};
   EXPECT_EQ(len1, internal_read(fd, buf, len1));
@@ -128,7 +123,7 @@ TEST(SanitizerCommon, InternalStrFunctions) {
 }
 
 // FIXME: File manipulations are not yet supported on Windows
-#if !defined(_WIN32) && !SANITIZER_MAC
+#if SANITIZER_POSIX && !SANITIZER_MAC
 TEST(SanitizerCommon, InternalMmapWithOffset) {
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile),
