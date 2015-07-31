@@ -395,9 +395,8 @@ argument allocas in ``PrototypeAST::CreateArgumentAllocas``.
   DIScope *Scope = KSDbgInfo.LexicalBlocks.back();
   DIFile *Unit = DBuilder->createFile(KSDbgInfo.TheCU.getFilename(),
                                       KSDbgInfo.TheCU.getDirectory());
-  DILocalVariable D = DBuilder->createLocalVariable(
-      dwarf::DW_TAG_arg_variable, Scope, Args[Idx], Unit, Line,
-      KSDbgInfo.getDoubleTy(), true, 0, Idx + 1);
+  DILocalVariable D = DBuilder->createParameterVariable(
+      Scope, Args[Idx], Idx + 1, Unit, Line, KSDbgInfo.getDoubleTy(), true);
 
   Instruction *Call = DBuilder->insertDeclare(
       Alloca, D, DBuilder->createExpression(), Builder.GetInsertBlock());

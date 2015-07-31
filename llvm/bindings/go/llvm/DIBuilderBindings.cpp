@@ -84,13 +84,18 @@ LLVMMetadataRef LLVMDIBuilderCreateFunction(
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateLocalVariable(
-    LLVMDIBuilderRef Dref, unsigned Tag, LLVMMetadataRef Scope,
+    LLVMDIBuilderRef Dref, unsigned, LLVMMetadataRef Scope,
     const char *Name, LLVMMetadataRef File, unsigned Line, LLVMMetadataRef Ty,
     int AlwaysPreserve, unsigned Flags, unsigned ArgNo) {
   DIBuilder *D = unwrap(Dref);
-  return wrap(D->createLocalVariable(
-      Tag, unwrap<DIScope>(Scope), Name, unwrap<DIFile>(File), Line,
-      unwrap<DIType>(Ty), AlwaysPreserve, Flags, ArgNo));
+  // FIXME: Update the Go bindings to match the DIBuilder API.
+  if (ArgNo)
+    return wrap(D->createParameterVariable(
+        unwrap<DIScope>(Scope), Name, ArgNo, unwrap<DIFile>(File), Line,
+        unwrap<DIType>(Ty), AlwaysPreserve, Flags));
+  return wrap(D->createAutoVariable(unwrap<DIScope>(Scope), Name,
+                                    unwrap<DIFile>(File), Line,
+                                    unwrap<DIType>(Ty), AlwaysPreserve, Flags));
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef Dref,

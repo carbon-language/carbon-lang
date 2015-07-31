@@ -457,26 +457,36 @@ namespace llvm {
         unsigned LineNo, DIType *Ty, bool isLocalToUnit, llvm::Constant *Val,
         MDNode *Decl = nullptr);
 
-    /// Create a new descriptor for the specified
-    /// local variable.
-    /// \param Tag         Dwarf TAG. Usually DW_TAG_auto_variable or
-    ///                    DW_TAG_arg_variable.
-    /// \param Scope       Variable scope.
-    /// \param Name        Variable name.
-    /// \param File        File where this variable is defined.
-    /// \param LineNo      Line number.
-    /// \param Ty          Variable Type
-    /// \param AlwaysPreserve Boolean. Set to true if debug info for this
-    ///                       variable should be preserved in optimized build.
-    /// \param Flags       Flags, e.g. artificial variable.
-    /// \param ArgNo       If this variable is an argument then this argument's
-    ///                    number. 1 indicates 1st argument.
-    DILocalVariable *createLocalVariable(unsigned Tag, DIScope *Scope,
-                                         StringRef Name, DIFile *File,
-                                         unsigned LineNo, DIType *Ty,
+    /// Create a new descriptor for an auto variable.  This is a local variable
+    /// that is not a subprogram parameter.
+    ///
+    /// \c Scope must be a \a DILocalScope, and thus its scope chain eventually
+    /// leads to a \a DISubprogram.
+    ///
+    /// If \c AlwaysPreserve, this variable will be referenced from its
+    /// containing subprogram, and will survive some optimizations.
+    DILocalVariable *createAutoVariable(DIScope *Scope, StringRef Name,
+                                         DIFile *File, unsigned LineNo,
+                                         DIType *Ty,
                                          bool AlwaysPreserve = false,
-                                         unsigned Flags = 0,
-                                         unsigned ArgNo = 0);
+                                         unsigned Flags = 0);
+
+    /// Create a new descriptor for a parameter variable.
+    ///
+    /// \c Scope must be a \a DILocalScope, and thus its scope chain eventually
+    /// leads to a \a DISubprogram.
+    ///
+    /// \c ArgNo is the index (starting from \c 1) of this variable in the
+    /// subprogram parameters.  \c ArgNo should not conflict with other
+    /// parameters of the same subprogram.
+    ///
+    /// If \c AlwaysPreserve, this variable will be referenced from its
+    /// containing subprogram, and will survive some optimizations.
+    DILocalVariable *createParameterVariable(DIScope *Scope, StringRef Name,
+                                             unsigned ArgNo, DIFile *File,
+                                             unsigned LineNo, DIType *Ty,
+                                             bool AlwaysPreserve = false,
+                                             unsigned Flags = 0);
 
     /// Create a new descriptor for the specified
     /// variable which has a complex address expression for its address.
