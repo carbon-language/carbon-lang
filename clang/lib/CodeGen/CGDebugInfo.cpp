@@ -2738,8 +2738,8 @@ llvm::DIType *CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
                                    nullptr, Elements);
 }
 
-void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
-                              llvm::Value *Storage, unsigned ArgNo,
+void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::Value *Storage,
+                              llvm::Optional<unsigned> ArgNo,
                               CGBuilderTy &Builder) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
@@ -2778,7 +2778,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
   // FIXME: There has to be a better way to do this, but for static
   // functions there won't be an implicit param at arg1 and
   // otherwise it is 'self' or 'this'.
-  if (isa<ImplicitParamDecl>(VD) && ArgNo == 1)
+  if (isa<ImplicitParamDecl>(VD) && ArgNo && *ArgNo == 1)
     Flags |= llvm::DINode::FlagObjectPointer;
   if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage))
     if (Arg->getType()->isPointerTy() && !Arg->hasByValAttr() &&
@@ -2803,8 +2803,11 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
       Expr.push_back(offset.getQuantity());
 
       // Create the descriptor for the variable.
-      auto *D = DBuilder.createLocalVariable(Tag, Scope, VD->getName(), Unit,
-                                             Line, Ty, ArgNo);
+      auto *D = ArgNo
+                    ? DBuilder.createParameterVariable(Scope, VD->getName(),
+                                                       *ArgNo, Unit, Line, Ty)
+                    : DBuilder.createAutoVariable(Scope, VD->getName(), Unit,
+                                                  Line, Ty);
 
       // Insert an llvm.dbg.declare into the current block.
       DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
@@ -2834,10 +2837,9 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
           continue;
 
         // Use VarDecl's Tag, Scope and Line number.
-        auto *D = DBuilder.createLocalVariable(
-            Tag, Scope, FieldName, Unit, Line, FieldTy,
-            CGM.getLangOpts().Optimize, Flags | llvm::DINode::FlagArtificial,
-            ArgNo);
+        auto *D = DBuilder.createAutoVariable(
+            Scope, FieldName, Unit, Line, FieldTy, CGM.getLangOpts().Optimize,
+            Flags | llvm::DINode::FlagArtificial);
 
         // Insert an llvm.dbg.declare into the current block.
         DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
@@ -2849,8 +2851,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::Tag Tag,
 
   // Create the descriptor for the variable.
   auto *D =
-      DBuilder.createLocalVariable(Tag, Scope, Name, Unit, Line, Ty,
-                                   CGM.getLangOpts().Optimize, Flags, ArgNo);
+      ArgNo
+          ? DBuilder.createParameterVariable(Scope, Name, *ArgNo, Unit, Line,
+                                             Ty, CGM.getLangOpts().Optimize,
+                                             Flags)
+          : DBuilder.createAutoVariable(Scope, Name, Unit, Line, Ty,
+                                        CGM.getLangOpts().Optimize, Flags);
 
   // Insert an llvm.dbg.declare into the current block.
   DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
@@ -2862,7 +2868,7 @@ void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
                                             llvm::Value *Storage,
                                             CGBuilderTy &Builder) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, 0, Builder);
+  EmitDeclare(VD, Storage, llvm::None, Builder);
 }
 
 llvm::DIType *CGDebugInfo::CreateSelfType(const QualType &QualTy,
@@ -2927,8 +2933,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
   }
 
   // Create the descriptor for the variable.
-  auto *D = DBuilder.createLocalVariable(
-      llvm::dwarf::DW_TAG_auto_variable,
+  auto *D = DBuilder.createAutoVariable(
       cast<llvm::DILocalScope>(LexicalBlockStack.back()), VD->getName(), Unit,
       Line, Ty);
 
@@ -2946,7 +2951,7 @@ void CGDebugInfo::EmitDeclareOfArgVariable(const VarDecl *VD, llvm::Value *AI,
                                            unsigned ArgNo,
                                            CGBuilderTy &Builder) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_arg_variable, AI, ArgNo, Builder);
+  EmitDeclare(VD, AI, ArgNo, Builder);
 }
 
 namespace {
@@ -3088,9 +3093,9 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   auto *scope = cast<llvm::DILocalScope>(LexicalBlockStack.back());
 
   // Create the descriptor for the parameter.
-  auto *debugVar = DBuilder.createLocalVariable(
-      llvm::dwarf::DW_TAG_arg_variable, scope, Arg->getName(), tunit, line,
-      type, CGM.getLangOpts().Optimize, flags, ArgNo);
+  auto *debugVar = DBuilder.createParameterVariable(
+      scope, Arg->getName(), ArgNo, tunit, line, type,
+      CGM.getLangOpts().Optimize, flags);
 
   if (LocalAddr) {
     // Insert an llvm.dbg.value into the current block.
