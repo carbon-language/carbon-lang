@@ -92,8 +92,9 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
 class _LIBCPP_EXCEPTION_ABI bad_any_cast : public bad_cast
 {
 public:
-    bad_any_cast() _NOEXCEPT;
-    virtual ~bad_any_cast() _NOEXCEPT;
+     //TODO(EricWF) Enable or delete these.
+    //bad_any_cast() _NOEXCEPT;
+    //virtual ~bad_any_cast() _NOEXCEPT;
     virtual const char* what() const _NOEXCEPT;
 };
 
