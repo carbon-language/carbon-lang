@@ -31,8 +31,8 @@ OptionCategory DsymCategory("Specific Options");
 static opt<bool> Help("h", desc("Alias for -help"), Hidden);
 static opt<bool> Version("v", desc("Alias for -version"), Hidden);
 
-static opt<std::string> InputFile(Positional, desc("<input file>"),
-                                  init("a.out"), cat(DsymCategory));
+static list<std::string> InputFiles(Positional, OneOrMore,
+                                    desc("<input files>"), cat(DsymCategory));
 
 static opt<std::string>
     OutputFileOpt("o",
@@ -90,9 +90,6 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  auto DebugMapPtrOrErr =
-      parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
-
   Options.Verbose = Verbose;
   Options.NoOutput = NoOutput;
   Options.NoODR = NoODR;
@@ -102,27 +99,40 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
-  if (auto EC = DebugMapPtrOrErr.getError()) {
-    llvm::errs() << "error: cannot parse the debug map for \"" << InputFile
-                 << "\": " << EC.message() << '\n';
+  if (InputFiles.size() > 1 && !OutputFileOpt.empty()) {
+    llvm::errs() << "error: cannot use -o with multiple inputs\n";
     return 1;
   }
 
-  if (Verbose || DumpDebugMap)
-    (*DebugMapPtrOrErr)->print(llvm::outs());
+  for (auto &InputFile : InputFiles) {
+    auto DebugMapPtrOrErr =
+        parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
 
-  if (DumpDebugMap)
-    return 0;
+    if (auto EC = DebugMapPtrOrErr.getError()) {
+      llvm::errs() << "error: cannot parse the debug map for \"" << InputFile
+                   << "\": " << EC.message() << '\n';
+      return 1;
+    }
 
-  std::string OutputFile;
-  if (OutputFileOpt.empty()) {
-    if (InputFile == "-")
-      OutputFile = "a.out.dwarf";
-    else
-      OutputFile = InputFile + ".dwarf";
-  } else {
-    OutputFile = OutputFileOpt;
+    if (Verbose || DumpDebugMap)
+      (*DebugMapPtrOrErr)->print(llvm::outs());
+
+    if (DumpDebugMap)
+      continue;
+
+    std::string OutputFile;
+    if (OutputFileOpt.empty()) {
+      if (InputFile == "-")
+        OutputFile = "a.out.dwarf";
+      else
+        OutputFile = InputFile + ".dwarf";
+    } else {
+      OutputFile = OutputFileOpt;
+    }
+
+    if (!linkDwarf(OutputFile, **DebugMapPtrOrErr, Options))
+      return 1;
   }
 
-  return !linkDwarf(OutputFile, **DebugMapPtrOrErr, Options);
+  return 0;
 }
