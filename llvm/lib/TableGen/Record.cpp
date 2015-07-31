@@ -673,6 +673,14 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         PrintFatalError(CurRec->getLoc(),
                         "Undefined reference:'" + Name + "'\n");
       }
+
+      if (isa<IntRecTy>(getType())) {
+        if (BitsInit *BI = dyn_cast<BitsInit>(LHS)) {
+          if (Init *NewInit = BI->convertInitializerTo(IntRecTy::get()))
+            return NewInit;
+          break;
+        }
+      }
     }
     break;
   }
