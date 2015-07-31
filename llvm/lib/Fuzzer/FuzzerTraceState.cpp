@@ -216,6 +216,9 @@ class TraceState {
                         dfsan_label L2);
   void TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType, uint64_t Arg1,
                         uint64_t Arg2);
+
+  void TraceSwitchCallback(uintptr_t PC, size_t ValSizeInBits, uint64_t Val,
+                           size_t NumCases, uint64_t *Cases);
   int TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
                            size_t DataSize);
 
@@ -305,6 +308,7 @@ int TraceState::TryToAddDesiredData(uint64_t PresentData, uint64_t DesiredData,
       break;
     size_t Pos = Cur - Beg;
     assert(Pos < CurrentUnit.size());
+    if (Mutations.size() > 100000U) return Res;  // Just in case.
     Mutations.push_back({Pos, DataSize, DesiredData});
     Mutations.push_back({Pos, DataSize, DesiredData + 1});
     Mutations.push_back({Pos, DataSize, DesiredData - 1});
@@ -333,6 +337,13 @@ void TraceState::TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType, 
     Added += TryToAddDesiredData(Arg1, Arg2, 2);
     Added += TryToAddDesiredData(Arg2, Arg1, 2);
   }
+}
+
+void TraceState::TraceSwitchCallback(uintptr_t PC, size_t ValSizeInBits,
+                                     uint64_t Val, size_t NumCases,
+                                     uint64_t *Cases) {
+  for (size_t i = 0; i < NumCases; i++)
+    TryToAddDesiredData(Val, Cases[i], ValSizeInBits / 8);
 }
 
 static TraceState *TS;
@@ -449,6 +460,12 @@ void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
   uint64_t CmpSize = (SizeAndType >> 32) / 8;
   uint64_t Type = (SizeAndType << 32) >> 32;
   TS->TraceCmpCallback(PC, CmpSize, Type, Arg1, Arg2);
+}
+
+void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases) {
+  if (!TS) return;
+  uintptr_t PC = reinterpret_cast<uintptr_t>(__builtin_return_address(0));
+  TS->TraceSwitchCallback(PC, Cases[1], Val, Cases[0], Cases + 2);
 }
 
 }  // extern "C"
