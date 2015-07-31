@@ -5,9 +5,6 @@
 
 // Tests custom implementations of various glibc functions.
 
-// AArch64 segfaults in the dl_iterate_phdr test.
-// XFAIL: aarch64
-
 #include <sanitizer/dfsan_interface.h>
 
 #include <arpa/inet.h>
