@@ -112,6 +112,7 @@ struct ThreadData
     lldb_private::DataExtractor gpregset;
     lldb_private::DataExtractor fpregset;
     lldb_private::DataExtractor vregset;
+    lldb::tid_t tid;
     int signo;
     std::string name;
 };
@@ -119,8 +120,7 @@ struct ThreadData
 class ThreadElfCore : public lldb_private::Thread
 {
 public:
-    ThreadElfCore (lldb_private::Process &process, lldb::tid_t tid,
-                   const ThreadData &td);
+    ThreadElfCore (lldb_private::Process &process, const ThreadData &td);
 
     virtual
     ~ThreadElfCore ();

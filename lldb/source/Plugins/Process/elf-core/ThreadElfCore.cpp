@@ -37,9 +37,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Construct a Thread object with given data
 //----------------------------------------------------------------------
-ThreadElfCore::ThreadElfCore (Process &process, tid_t tid,
-                              const ThreadData &td) :
-    Thread(process, tid),
+ThreadElfCore::ThreadElfCore (Process &process, const ThreadData &td) :
+    Thread(process, td.tid),
     m_thread_name(td.name),
     m_thread_reg_ctx_sp (),
     m_signo(td.signo),
