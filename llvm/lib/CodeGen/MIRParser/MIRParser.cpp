@@ -573,7 +573,6 @@ bool MIRParserImpl::initializeJumpTableInfo(
     MachineFunction &MF, const yaml::MachineJumpTable &YamlJTI,
     PerFunctionMIParsingState &PFS) {
   MachineJumpTableInfo *JTI = MF.getOrCreateJumpTableInfo(YamlJTI.Kind);
-  SMDiagnostic Error;
   for (const auto &Entry : YamlJTI.Entries) {
     std::vector<MachineBasicBlock *> Blocks;
     for (const auto &MBBSource : Entry.Blocks) {
