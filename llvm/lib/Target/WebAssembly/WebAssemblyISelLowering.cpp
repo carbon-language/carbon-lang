@@ -141,8 +141,13 @@ SDValue WebAssemblyTargetLowering::LowerReturn(
   assert(Outs.size() <= 1 && "WebAssembly can only return up to one value");
   if (CallConv != CallingConv::C)
     fail(DL, DAG, "WebAssembly doesn't support non-C calling conventions");
+  if (IsVarArg)
+    fail(DL, DAG, "WebAssembly doesn't support varargs yet");
 
-  // FIXME: Implement LowerReturn.
+  SmallVector<SDValue, 4> RetOps(1, Chain);
+  RetOps.append(OutVals.begin(), OutVals.end());
+  const SDValue Ops[] = {Chain, OutVals.front()};
+  Chain = DAG.getNode(WebAssemblyISD::RETURN, DL, MVT::Other, Ops);
 
   return Chain;
 }
@@ -160,9 +165,38 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
   if (MF.getFunction()->hasStructRetAttr())
     fail(DL, DAG, "WebAssembly doesn't support struct return yet");
 
-  // FIXME: Implement LowerFormalArguments.
-  for (const ISD::InputArg &In : Ins)
-    InVals.push_back(DAG.getNode(ISD::UNDEF, DL, In.VT));
+  unsigned ArgNo = 0;
+  for (const ISD::InputArg &In : Ins) {
+    if (In.Flags.isZExt())
+      fail(DL, DAG, "WebAssembly hasn't implemented zext arguments");
+    if (In.Flags.isSExt())
+      fail(DL, DAG, "WebAssembly hasn't implemented sext arguments");
+    if (In.Flags.isInReg())
+      fail(DL, DAG, "WebAssembly hasn't implemented inreg arguments");
+    if (In.Flags.isSRet())
+      fail(DL, DAG, "WebAssembly hasn't implemented sret arguments");
+    if (In.Flags.isByVal())
+      fail(DL, DAG, "WebAssembly hasn't implemented byval arguments");
+    if (In.Flags.isInAlloca())
+      fail(DL, DAG, "WebAssembly hasn't implemented inalloca arguments");
+    if (In.Flags.isNest())
+      fail(DL, DAG, "WebAssembly hasn't implemented nest arguments");
+    if (In.Flags.isReturned())
+      fail(DL, DAG, "WebAssembly hasn't implemented returned arguments");
+    if (In.Flags.isInConsecutiveRegs())
+      fail(DL, DAG, "WebAssembly hasn't implemented cons regs arguments");
+    if (In.Flags.isInConsecutiveRegsLast())
+      fail(DL, DAG, "WebAssembly hasn't implemented cons regs last arguments");
+    if (In.Flags.isSplit())
+      fail(DL, DAG, "WebAssembly hasn't implemented split arguments");
+    if (In.VT != MVT::i32)
+      fail(DL, DAG, "WebAssembly hasn't implemented non-i32 arguments");
+    if (!In.Used)
+      fail(DL, DAG, "WebAssembly hasn't implemented unused arguments");
+    // FIXME Do something with In.getOrigAlign()?
+    InVals.push_back(DAG.getNode(WebAssemblyISD::ARGUMENT, DL, In.VT,
+                                 DAG.getTargetConstant(ArgNo++, DL, MVT::i32)));
+  }
 
   return Chain;
 }

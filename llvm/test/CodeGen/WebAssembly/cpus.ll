@@ -12,6 +12,6 @@
 ; CHECK-NOT: {{.*}}  is not a recognized processor for this target
 ; INVALID: {{.*}}  is not a recognized processor for this target
 
-define void @f(i64 %i_like_the_web) {
-  ret void
+define i32 @f(i32 %i_like_the_web) {
+  ret i32 %i_like_the_web
 }

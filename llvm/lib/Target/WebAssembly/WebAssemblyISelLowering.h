@@ -24,6 +24,8 @@ namespace WebAssemblyISD {
 
 enum {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
+  RETURN,
+  ARGUMENT,
 
   // add memory opcodes starting at ISD::FIRST_TARGET_MEMORY_OPCODE here...
 };

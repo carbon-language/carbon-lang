@@ -38,9 +38,11 @@ using namespace llvm;
 namespace {
 
 class WebAssemblyAsmPrinter final : public AsmPrinter {
+  const WebAssemblyInstrInfo *TII;
+
 public:
   WebAssemblyAsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)) {}
+      : AsmPrinter(TM, std::move(Streamer)), TII(nullptr) {}
 
 private:
   const char *getPassName() const override {
@@ -55,8 +57,10 @@ private:
     AsmPrinter::getAnalysisUsage(AU);
   }
 
-  bool runOnMachineFunction(MachineFunction &F) override {
-    return AsmPrinter::runOnMachineFunction(F);
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    TII = static_cast<const WebAssemblyInstrInfo *>(
+        MF.getSubtarget().getInstrInfo());
+    return AsmPrinter::runOnMachineFunction(MF);
   }
 
   //===------------------------------------------------------------------===//
@@ -74,12 +78,42 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
 
+  unsigned NumDefs = MI->getDesc().getNumDefs();
+  assert(NumDefs <= 1 &&
+         "Instructions with multiple result values not implemented");
+
+  if (NumDefs != 0) {
+    const MachineOperand &MO = MI->getOperand(0);
+    unsigned Reg = MO.getReg();
+    OS << "(setlocal @" << TargetRegisterInfo::virtReg2Index(Reg) << ' ';
+  }
+
+  OS << '(';
+
+  bool PrintOperands = true;
   switch (MI->getOpcode()) {
+  case WebAssembly::ARGUMENT:
+    OS << "argument " << MI->getOperand(1).getImm();
+    PrintOperands = false;
+    break;
   default:
-    DEBUG(MI->print(dbgs()));
-    llvm_unreachable("Unhandled instruction");
+    OS << TII->getName(MI->getOpcode());
     break;
   }
+
+  if (PrintOperands)
+    for (const MachineOperand &MO : MI->uses()) {
+      if (MO.isReg() && MO.isImplicit())
+        continue;
+      unsigned Reg = MO.getReg();
+      OS << " @" << TargetRegisterInfo::virtReg2Index(Reg);
+    }
+  OS << ')';
+
+  if (NumDefs != 0)
+    OS << ')';
+
+  OS << '\n';
 
   OutStreamer->EmitRawText(OS.str());
 }

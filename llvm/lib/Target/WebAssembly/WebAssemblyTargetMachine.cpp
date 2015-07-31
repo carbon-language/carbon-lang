@@ -166,7 +166,15 @@ void WebAssemblyPassConfig::addPreRegAlloc() {}
 
 void WebAssemblyPassConfig::addRegAllocPasses(bool Optimized) {}
 
-void WebAssemblyPassConfig::addPostRegAlloc() {}
+void WebAssemblyPassConfig::addPostRegAlloc() {
+  // FIXME: the following passes dislike virtual registers. Disable them for now
+  //        so that basic tests can pass. Future patches will remedy this.
+  //
+  // Fails with: Regalloc must assign all vregs.
+  disablePass(&PrologEpilogCodeInserterID);
+  // Fails with: should be run after register allocation.
+  disablePass(&MachineCopyPropagationID);
+}
 
 void WebAssemblyPassConfig::addPreSched2() {}
 
