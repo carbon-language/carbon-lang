@@ -49,11 +49,10 @@ public:
   MachineInstrBuilder() : MF(nullptr), MI(nullptr) {}
 
   /// Create a MachineInstrBuilder for manipulating an existing instruction.
-  /// F must be the machine function  that was used to allocate I.
+  /// F must be the machine function that was used to allocate I.
   MachineInstrBuilder(MachineFunction &F, MachineInstr *I) : MF(&F), MI(I) {}
 
   /// Allow automatic conversion to the machine instruction we are working on.
-  ///
   operator MachineInstr*() const { return MI; }
   MachineInstr *operator->() const { return MI; }
   operator MachineBasicBlock::iterator() const { return MI; }
@@ -62,11 +61,9 @@ public:
   /// explicitly.
   MachineInstr *getInstr() const { return MI; }
 
-  /// addReg - Add a new virtual register operand...
-  ///
-  const
-  MachineInstrBuilder &addReg(unsigned RegNo, unsigned flags = 0,
-                              unsigned SubReg = 0) const {
+  /// Add a new virtual register operand.
+  const MachineInstrBuilder &addReg(unsigned RegNo, unsigned flags = 0,
+                                    unsigned SubReg = 0) const {
     assert((flags & 0x1) == 0 &&
            "Passing in 'true' to addReg is forbidden! Use enums instead.");
     MI->addOperand(*MF, MachineOperand::CreateReg(RegNo,
@@ -82,8 +79,7 @@ public:
     return *this;
   }
 
-  /// addImm - Add a new immediate operand.
-  ///
+  /// Add a new immediate operand.
   const MachineInstrBuilder &addImm(int64_t Val) const {
     MI->addOperand(*MF, MachineOperand::CreateImm(Val));
     return *this;
@@ -230,18 +226,15 @@ public:
   }
 };
 
-/// BuildMI - Builder interface.  Specify how to create the initial instruction
-/// itself.
-///
+/// Builder interface. Specify how to create the initial instruction itself.
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
   return MachineInstrBuilder(MF, MF.CreateMachineInstr(MCID, DL));
 }
 
-/// BuildMI - This version of the builder sets up the first operand as a
+/// This version of the builder sets up the first operand as a
 /// destination virtual register.
-///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
@@ -250,10 +243,9 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
            .addReg(DestReg, RegState::Define);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction before the given position in the given MachineBasicBlock, and
-/// sets up the first operand as a destination virtual register.
-///
+/// This version of the builder inserts the newly-built instruction before
+/// the given position in the given MachineBasicBlock, and sets up the first
+/// operand as a destination virtual register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
@@ -290,10 +282,9 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return BuildMI(BB, MII, DL, MCID, DestReg);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction before the given position in the given MachineBasicBlock, and
-/// does NOT take a destination register.
-///
+/// This version of the builder inserts the newly-built instruction before the
+/// given position in the given MachineBasicBlock, and does NOT take a
+/// destination register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
@@ -327,20 +318,17 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return BuildMI(BB, MII, DL, MCID);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction at the end of the given MachineBasicBlock, and does NOT take a
-/// destination register.
-///
+/// This version of the builder inserts the newly-built instruction at the end
+/// of the given MachineBasicBlock, and does NOT take a destination register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
   return BuildMI(*BB, BB->end(), DL, MCID);
 }
 
-/// BuildMI - This version of the builder inserts the newly-built
-/// instruction at the end of the given MachineBasicBlock, and sets up the first
-/// operand as a destination virtual register.
-///
+/// This version of the builder inserts the newly-built instruction at the
+/// end of the given MachineBasicBlock, and sets up the first operand as a
+/// destination virtual register.
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
@@ -348,11 +336,10 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
   return BuildMI(*BB, BB->end(), DL, MCID, DestReg);
 }
 
-/// BuildMI - This version of the builder builds a DBG_VALUE intrinsic
+/// This version of the builder builds a DBG_VALUE intrinsic
 /// for either a value in a register or a register-indirect+offset
 /// address.  The convention is that a DBG_VALUE is indirect iff the
 /// second operand is an immediate.
-///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
                                    unsigned Reg, unsigned Offset,
@@ -377,10 +364,9 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF, DebugLoc DL,
   }
 }
 
-/// BuildMI - This version of the builder builds a DBG_VALUE intrinsic
+/// This version of the builder builds a DBG_VALUE intrinsic
 /// for either a value in a register or a register-indirect+offset
 /// address and inserts it at position I.
-///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I, DebugLoc DL,
                                    const MCInstrDesc &MCID, bool IsIndirect,
