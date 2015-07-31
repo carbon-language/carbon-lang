@@ -255,7 +255,7 @@ CMICmdCmdVarCreate::Acknowledge(void)
     CMIUtilString strErrMsg(m_strValue);
     if (m_strValue.empty())
         strErrMsg = CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_VARIABLE_CREATION_FAILED), m_strExpression.c_str());
-    const CMICmnMIValueConst miValueConst(strErrMsg);
+    const CMICmnMIValueConst miValueConst(strErrMsg.Escape(true /* vbEscapeQuotes */));
     CMICmnMIValueResult miValueResult("msg", miValueConst);
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
     m_miResultRecord = miRecordResult;

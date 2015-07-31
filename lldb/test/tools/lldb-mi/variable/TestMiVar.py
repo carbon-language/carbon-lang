@@ -33,7 +33,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Print non-existant variable
         self.runCmd("-var-create var1 * undef")
-        self.expect("\^error,msg=\"error: error: use of undeclared identifier \'undef\'\s+error: 1 errors parsing expression\"")
+        self.expect("\^error,msg=\"error: error: use of undeclared identifier \'undef\'\\\\nerror: 1 errors parsing expression\\\\n\"")
         self.runCmd("-data-evaluate-expression undef")
         self.expect("\^error,msg=\"Could not evaluate expression\"")
 
