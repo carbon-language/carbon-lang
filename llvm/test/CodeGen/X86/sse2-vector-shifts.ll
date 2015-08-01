@@ -313,6 +313,7 @@ define <4 x i32> @shl_srl_v4i32(<4 x i32> %x) nounwind {
 
 ; CHECK-LABEL: @shl_zext_srl_v4i32
 ; CHECK: andps
+; CHECK: andps
 ; CHECK-NEXT: ret
 define <4 x i32> @shl_zext_srl_v4i32(<4 x i16> %x) nounwind {
   %srl = lshr <4 x i16> %x, <i16 2, i16 2, i16 2, i16 2>

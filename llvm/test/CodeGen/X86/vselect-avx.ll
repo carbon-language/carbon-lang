@@ -62,13 +62,15 @@ bb:
 
 ; CHECK-LABEL: test3:
 ; Compute the mask.
-;	CHECK: vpcmpeqd {{%xmm[0-9]+}}, {{%xmm[0-9]+}}, [[MASK:%xmm[0-9]+]]
+; CHECK: vpcmpeqd {{%xmm[0-9]+}}, {{%xmm[0-9]+}}, [[MASK:%xmm[0-9]+]]
 ; Do not shrink the bit of the mask.
-; CHECK-NOT: vpslld	$31, [[MASK]], {{%xmm[0-9]+}}
+; CHECK-NOT: vpslld $31, [[MASK]], {{%xmm[0-9]+}}
 ; Use the mask in the blend.
-; CHECK-NEXT:	vblendvps	[[MASK]], %xmm{{[0-9]+}}, %xmm{{[0-9]+}}, %xmm{{[0-9]+}}
-; Use the mask in the and.
-; CHECK-NEXT: vpand LCPI2_2(%rip), [[MASK]], {{%xmm[0-9]+}} 
+; CHECK-NEXT: vblendvps [[MASK]], %xmm{{[0-9]+}}, %xmm{{[0-9]+}}, %xmm{{[0-9]+}}
+; Shuffle mask to truncate.
+; CHECK-NEXT: vmovdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; CHECK: vpshufb %xmm{{[0-9]+}}, %xmm{{[0-9]+}}, %xmm{{[0-9]+}}
+; CHECK: vpshufb %xmm{{[0-9]+}}, %xmm{{[0-9]+}}, %xmm{{[0-9]+}}
 ; CHECK: retq
 define void @test3(<4 x i32> %induction30, <4 x i16>* %tmp16, <4 x i16>* %tmp17,  <4 x i16> %tmp3, <4 x i16> %tmp12) {
   %tmp6 = srem <4 x i32> %induction30, <i32 3, i32 3, i32 3, i32 3>

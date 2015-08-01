@@ -191,9 +191,7 @@ define void @rot(%i8vec3pack* nocapture sret %result, %i8vec3pack* %X, %i8vec3pa
 ; CHECK-NEXT:    movd    %[[CONSTANT1]], %e[[R1:[abcd]]]x
 ; CHECK-NEXT:    movw    %[[R1]]x, (%[[PTR1:.*]])
 ; CHECK-NEXT:    movb    $1, 2(%[[PTR1]])
-; CHECK-NEXT:    movl    (%[[PTR0]]), [[TMP1:%e[abcd]+x]]
-; CHECK-NEXT:    movl    [[TMP1]], [[TMP2:.*]]
-; CHECK-NEXT:    pmovzxbd [[TMP2]], %[[X0:xmm[0-9]+]]
+; CHECK-NEXT:    pmovzxbd (%[[PTR0]]), %[[X0:xmm[0-9]+]]
 ; CHECK-NEXT:    movdqa  %[[X0]], %[[X1:xmm[0-9]+]]
 ; CHECK-NEXT:    psrld   $1, %[[X1]]
 ; CHECK-NEXT:    pblendw $192, %[[X0]], %[[X1]]

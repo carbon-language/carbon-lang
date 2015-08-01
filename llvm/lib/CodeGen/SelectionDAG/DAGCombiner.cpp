@@ -13002,34 +13002,76 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
   if (RHS.getOpcode() == ISD::BITCAST)
     RHS = RHS.getOperand(0);
 
-  if (RHS.getOpcode() == ISD::BUILD_VECTOR) {
-    SmallVector<int, 8> Indices;
-    unsigned NumElts = RHS.getNumOperands();
+  if (RHS.getOpcode() != ISD::BUILD_VECTOR)
+    return SDValue();
 
-    for (unsigned i = 0; i != NumElts; ++i) {
-      SDValue Elt = RHS.getOperand(i);
-      if (isAllOnesConstant(Elt))
+  EVT RVT = RHS.getValueType();
+  unsigned NumElts = RHS.getNumOperands();
+
+  // Attempt to create a valid clear mask, splitting the mask into
+  // sub elements and checking to see if each is
+  // all zeros or all ones - suitable for shuffle masking.
+  auto BuildClearMask = [&](int Split) {
+    int NumSubElts = NumElts * Split;
+    int NumSubBits = RVT.getScalarSizeInBits() / Split;
+
+    SmallVector<int, 8> Indices;
+    for (int i = 0; i != NumSubElts; ++i) {
+      int EltIdx = i / Split;
+      int SubIdx = i % Split;
+      SDValue Elt = RHS.getOperand(EltIdx);
+      if (Elt.getOpcode() == ISD::UNDEF) {
+        Indices.push_back(-1);
+        continue;
+      }
+
+      APInt Bits;
+      if (isa<ConstantSDNode>(Elt))
+        Bits = cast<ConstantSDNode>(Elt)->getAPIntValue();
+      else if (isa<ConstantFPSDNode>(Elt))
+        Bits = cast<ConstantFPSDNode>(Elt)->getValueAPF().bitcastToAPInt();
+      else
+        return SDValue();
+
+      // Extract the sub element from the constant bit mask.
+      if (DAG.getDataLayout().isBigEndian()) {
+        Bits = Bits.lshr((Split - SubIdx - 1) * NumSubBits);
+      } else {
+        Bits = Bits.lshr(SubIdx * NumSubBits);
+      }
+
+      if (Split > 1)
+        Bits = Bits.trunc(NumSubBits);
+
+      if (Bits.isAllOnesValue())
         Indices.push_back(i);
-      else if (isNullConstant(Elt))
-        Indices.push_back(NumElts+i);
+      else if (Bits == 0)
+        Indices.push_back(i + NumSubElts);
       else
         return SDValue();
     }
 
     // Let's see if the target supports this vector_shuffle.
-    EVT RVT = RHS.getValueType();
-    if (!TLI.isVectorClearMaskLegal(Indices, RVT))
+    EVT ClearSVT = EVT::getIntegerVT(*DAG.getContext(), NumSubBits);
+    EVT ClearVT = EVT::getVectorVT(*DAG.getContext(), ClearSVT, NumSubElts);
+    if (!TLI.isVectorClearMaskLegal(Indices, ClearVT))
       return SDValue();
 
-    // Return the new VECTOR_SHUFFLE node.
-    EVT EltVT = RVT.getVectorElementType();
-    SmallVector<SDValue,8> ZeroOps(RVT.getVectorNumElements(),
-                                   DAG.getConstant(0, dl, EltVT));
-    SDValue Zero = DAG.getNode(ISD::BUILD_VECTOR, dl, RVT, ZeroOps);
-    LHS = DAG.getNode(ISD::BITCAST, dl, RVT, LHS);
-    SDValue Shuf = DAG.getVectorShuffle(RVT, dl, LHS, Zero, &Indices[0]);
-    return DAG.getNode(ISD::BITCAST, dl, VT, Shuf);
-  }
+    SDValue Zero = DAG.getConstant(0, dl, ClearVT);
+    return DAG.getBitcast(VT, DAG.getVectorShuffle(ClearVT, dl,
+                                                   DAG.getBitcast(ClearVT, LHS),
+                                                   Zero, &Indices[0]));
+  };
+
+  // Determine maximum split level (byte level masking).
+  int MaxSplit = 1;
+  if (RVT.getScalarSizeInBits() % 8 == 0)
+    MaxSplit = RVT.getScalarSizeInBits() / 8;
+
+  for (int Split = 1; Split <= MaxSplit; ++Split)
+    if (RVT.getScalarSizeInBits() % Split == 0)
+      if (SDValue S = BuildClearMask(Split))
+        return S;
 
   return SDValue();
 }
@@ -13041,9 +13083,6 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
 
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
-
-  if (SDValue Shuffle = XformToShuffleWithZero(N))
-    return Shuffle;
 
   // If the LHS and RHS are BUILD_VECTOR nodes, see if we can constant fold
   // this operation.
@@ -13094,6 +13133,10 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
     if (Ops.size() == LHS.getNumOperands())
       return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), LHS.getValueType(), Ops);
   }
+
+  // Try to convert a constant mask AND into a shuffle clear mask.
+  if (SDValue Shuffle = XformToShuffleWithZero(N))
+    return Shuffle;
 
   // Type legalization might introduce new shuffles in the DAG.
   // Fold (VBinOp (shuffle (A, Undef, Mask)), (shuffle (B, Undef, Mask)))

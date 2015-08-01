@@ -192,8 +192,8 @@ define void @test14(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %val) {
 
 ; SKX-LABEL: test15:
 ; SKX:       ## BB#0:
-; SKX-NEXT:    vpandq {{.*}}(%rip), %xmm0, %xmm0
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; SKX-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm2[1],xmm0[2],xmm2[3]
 ; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k1
 ; SKX-NEXT:    vpmovqd %xmm1, (%rdi) {%k1}
 ; SKX-NEXT:    retq
