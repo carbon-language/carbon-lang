@@ -36,7 +36,7 @@ protected:
   // that verbosity, just rely on defaulted copy ops. It's only the Constraint
   // string member that would benefit from movement anyway.
   MCParsedAsmOperand(const MCParsedAsmOperand &RHS) = default;
-  MCParsedAsmOperand &operator=(const MCParsedAsmOperand&) = default;
+  MCParsedAsmOperand &operator=(const MCParsedAsmOperand &) = default;
   MCParsedAsmOperand() = default;
 
 public:
