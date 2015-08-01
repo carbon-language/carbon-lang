@@ -29,5 +29,9 @@ void foo256i(__m256i) {}
 void foov8hi(__v8hi) {}
 // CHECK: define void @"\01?foov8hi@@YAXT__clang_vec8_F@@@Z"
 
+typedef __attribute__((ext_vector_type(4))) int vi4b;
+void foovi4b(vi4b) {}
+// CHECK: define void @"\01?foovi4b@@YAXT__clang_vec4_H@@@Z"
+
 // Clang does not support vectors of complex types, so we can't test the
 // mangling of them.
