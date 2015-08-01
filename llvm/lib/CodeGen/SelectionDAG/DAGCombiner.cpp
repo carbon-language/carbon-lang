@@ -410,7 +410,7 @@ namespace {
     void getStoreMergeAndAliasCandidates(
         StoreSDNode* St, SmallVectorImpl<MemOpLink> &StoreNodes,
         SmallVectorImpl<LSBaseSDNode*> &AliasLoadNodes);
-    
+
     /// Merge consecutive store operations into a wide store.
     /// This optimization uses wide integers or vectors when possible.
     /// \return True if some memory operations were changed.
@@ -5563,7 +5563,7 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
                        SDLoc(N));
 }
 
-/// Try to fold a sext/zext/aext dag node into a ConstantSDNode or 
+/// Try to fold a sext/zext/aext dag node into a ConstantSDNode or
 /// a build_vector of constants.
 /// This function is called by the DAGCombiner when visiting sext/zext/aext
 /// dag nodes (see for example method DAGCombiner::visitSIGN_EXTEND).
@@ -8238,13 +8238,13 @@ SDValue DAGCombiner::visitFMA(SDNode *N) {
 SDValue DAGCombiner::combineRepeatedFPDivisors(SDNode *N) {
   if (!DAG.getTarget().Options.UnsafeFPMath)
     return SDValue();
-  
+
   // Skip if current node is a reciprocal.
   SDValue N0 = N->getOperand(0);
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   if (N0CFP && N0CFP->isExactlyValue(1.0))
     return SDValue();
-  
+
   // Exit early if the target does not want this transform or if there can't
   // possibly be enough uses of the divisor to make the transform worthwhile.
   SDValue N1 = N->getOperand(1);
@@ -8416,7 +8416,7 @@ SDValue DAGCombiner::visitFSQRT(SDNode *N) {
   SDValue RV = BuildRsqrtEstimate(N->getOperand(0));
   if (!RV)
     return SDValue();
-  
+
   EVT VT = RV.getValueType();
   SDLoc DL(N);
   RV = DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
@@ -10851,12 +10851,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   // We need to make sure that these nodes do not interfere with
   // any of the store nodes.
   SmallVector<LSBaseSDNode*, 8> AliasLoadNodes;
-  
+
   // Save the StoreSDNodes that we find in the chain.
   SmallVector<MemOpLink, 8> StoreNodes;
 
   getStoreMergeAndAliasCandidates(St, StoreNodes, AliasLoadNodes);
-  
+
   // Check if there is anything to merge.
   if (StoreNodes.size() < 2)
     return false;
