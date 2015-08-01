@@ -55,8 +55,14 @@ def WebAssemblyreturn   : SDNode<"WebAssemblyISD::RETURN",
 
 include "WebAssemblyInstrFormats.td"
 
-def ARGUMENT : I<(outs Int32:$res), (ins i32imm:$argno),
-                 [(set Int32:$res, (WebAssemblyargument timm:$argno))]>;
+multiclass ARGUMENT<WebAssemblyRegClass vt> {
+  def ARGUMENT_#vt : I<(outs vt:$res), (ins i32imm:$argno),
+                       [(set vt:$res, (WebAssemblyargument timm:$argno))]>;
+}
+defm : ARGUMENT<Int32>;
+defm : ARGUMENT<Int64>;
+defm : ARGUMENT<Float32>;
+defm : ARGUMENT<Float64>;
 
 //===----------------------------------------------------------------------===//
 // Additional sets of instructions.

@@ -92,9 +92,22 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   bool PrintOperands = true;
   switch (MI->getOpcode()) {
-  case WebAssembly::ARGUMENT:
+  case WebAssembly::ARGUMENT_Int32:
+  case WebAssembly::ARGUMENT_Int64:
+  case WebAssembly::ARGUMENT_Float32:
+  case WebAssembly::ARGUMENT_Float64:
     OS << "argument " << MI->getOperand(1).getImm();
     PrintOperands = false;
+    break;
+  case WebAssembly::RETURN_Int32:
+  case WebAssembly::RETURN_Int64:
+  case WebAssembly::RETURN_Float32:
+  case WebAssembly::RETURN_Float64:
+  case WebAssembly::RETURN_VOID:
+    // FIXME This is here only so "return" prints nicely, instead of printing
+    //       the isel name. Other operations have the same problem, fix this in
+    //       a generic way instead.
+    OS << "return";
     break;
   default:
     OS << TII->getName(MI->getOpcode());

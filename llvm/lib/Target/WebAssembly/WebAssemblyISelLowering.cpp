@@ -188,8 +188,6 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
       fail(DL, DAG, "WebAssembly hasn't implemented cons regs last arguments");
     if (In.Flags.isSplit())
       fail(DL, DAG, "WebAssembly hasn't implemented split arguments");
-    if (In.VT != MVT::i32)
-      fail(DL, DAG, "WebAssembly hasn't implemented non-i32 arguments");
     // FIXME Do something with In.getOrigAlign()?
     InVals.push_back(
         In.Used

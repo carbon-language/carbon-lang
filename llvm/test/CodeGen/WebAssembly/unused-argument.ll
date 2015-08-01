@@ -7,14 +7,14 @@ target triple = "wasm32-unknown-unknown"
 
 ; CHECK-LABEL: unused_first:
 ; CHECK-NEXT: (setlocal @0 (argument 1))
-; CHECK-NEXT: (RETURN @0)
+; CHECK-NEXT: (return @0)
 define i32 @unused_first(i32 %x, i32 %y) {
   ret i32 %y
 }
 
 ; CHECK-LABEL: unused_second:
 ; CHECK-NEXT: (setlocal @0 (argument 0))
-; CHECK-NEXT: (RETURN @0)
+; CHECK-NEXT: (return @0)
 define i32 @unused_second(i32 %x, i32 %y) {
   ret i32 %x
 }
