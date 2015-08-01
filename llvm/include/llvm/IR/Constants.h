@@ -590,7 +590,7 @@ public:
   /// formed with a vector or array of the specified element type.
   /// ConstantDataArray only works with normal float and int types that are
   /// stored densely in memory, not with things like i42 or x86_f80.
-  static bool isElementTypeCompatible(const Type *Ty);
+  static bool isElementTypeCompatible(Type *Ty);
 
   /// getElementAsInteger - If this is a sequential container of integers (of
   /// any size), return the specified element in the low bits of a uint64_t.

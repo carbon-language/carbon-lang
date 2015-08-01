@@ -197,8 +197,8 @@ static void findLiveSetAtInst(Instruction *inst, GCPtrLivenessData &Data,
 // TODO: Once we can get to the GCStrategy, this becomes
 // Optional<bool> isGCManagedPointer(const Value *V) const override {
 
-static bool isGCPointerType(const Type *T) {
-  if (const PointerType *PT = dyn_cast<PointerType>(T))
+static bool isGCPointerType(Type *T) {
+  if (auto *PT = dyn_cast<PointerType>(T))
     // For the sake of this example GC, we arbitrarily pick addrspace(1) as our
     // GC managed heap.  We know that a pointer into this heap needs to be
     // updated and that no other pointer does.

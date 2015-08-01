@@ -265,7 +265,7 @@ public:
   /// get the actual size for a particular target, it is reasonable to use the
   /// DataLayout subsystem to do this.
   ///
-  bool isSized(SmallPtrSetImpl<const Type*> *Visited = nullptr) const {
+  bool isSized(SmallPtrSetImpl<Type*> *Visited = nullptr) const {
     // If it's a primitive, it is always sized.
     if (getTypeID() == IntegerTyID || isFloatingPointTy() ||
         getTypeID() == PointerTyID ||
@@ -423,7 +423,7 @@ private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
   /// iff all of the members of the type are sized as well.  Since asking for
   /// their size is relatively uncommon, move this operation out of line.
-  bool isSizedDerivedType(SmallPtrSetImpl<const Type*> *Visited = nullptr) const;
+  bool isSizedDerivedType(SmallPtrSetImpl<Type*> *Visited = nullptr) const;
 };
 
 // Printing of types.

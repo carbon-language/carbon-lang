@@ -250,7 +250,7 @@ public:
   bool isOpaque() const { return (getSubclassData() & SCDB_HasBody) == 0; }
 
   /// isSized - Return true if this is a sized type.
-  bool isSized(SmallPtrSetImpl<const Type*> *Visited = nullptr) const;
+  bool isSized(SmallPtrSetImpl<Type*> *Visited = nullptr) const;
   
   /// hasName - Return true if this is a named struct that has a non-empty name.
   bool hasName() const { return SymbolTableEntry != nullptr; }

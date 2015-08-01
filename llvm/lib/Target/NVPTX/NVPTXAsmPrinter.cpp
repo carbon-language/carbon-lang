@@ -355,7 +355,7 @@ void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
   if (isABI) {
     if (Ty->isFloatingPointTy() || Ty->isIntegerTy()) {
       unsigned size = 0;
-      if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty)) {
+      if (auto *ITy = dyn_cast<IntegerType>(Ty)) {
         size = ITy->getBitWidth();
         if (size < 32)
           size = 32;
@@ -680,7 +680,7 @@ static bool usedInOneFunc(const User *U, Function const *&oneFunc) {
 static bool canDemoteGlobalVar(const GlobalVariable *gv, Function const *&f) {
   if (!gv->hasInternalLinkage())
     return false;
-  const PointerType *Pty = gv->getType();
+  PointerType *Pty = gv->getType();
   if (Pty->getAddressSpace() != llvm::ADDRESS_SPACE_SHARED)
     return false;
 
@@ -1030,7 +1030,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
   const DataLayout &DL = getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
-  const PointerType *PTy = GVar->getType();
+  PointerType *PTy = GVar->getType();
   Type *ETy = PTy->getElementType();
 
   if (GVar->hasExternalLinkage()) {
@@ -1297,7 +1297,7 @@ void NVPTXAsmPrinter::emitPTXAddressSpace(unsigned int AddressSpace,
 }
 
 std::string
-NVPTXAsmPrinter::getPTXFundamentalTypeStr(const Type *Ty, bool useB4PTR) const {
+NVPTXAsmPrinter::getPTXFundamentalTypeStr(Type *Ty, bool useB4PTR) const {
   switch (Ty->getTypeID()) {
   default:
     llvm_unreachable("unexpected type");
@@ -1340,7 +1340,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   const DataLayout &DL = getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
-  const PointerType *PTy = GVar->getType();
+  PointerType *PTy = GVar->getType();
   Type *ETy = PTy->getElementType();
 
   O << ".";
@@ -1387,11 +1387,11 @@ static unsigned int getOpenCLAlignment(const DataLayout &DL, Type *Ty) {
   if (Ty->isSingleValueType())
     return DL.getPrefTypeAlignment(Ty);
 
-  const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
+  auto *ATy = dyn_cast<ArrayType>(Ty);
   if (ATy)
     return getOpenCLAlignment(DL, ATy->getElementType());
 
-  const StructType *STy = dyn_cast<StructType>(Ty);
+  auto *STy = dyn_cast<StructType>(Ty);
   if (STy) {
     unsigned int alignStruct = 1;
     // Go through each element of the struct and find the
@@ -1405,7 +1405,7 @@ static unsigned int getOpenCLAlignment(const DataLayout &DL, Type *Ty) {
     return alignStruct;
   }
 
-  const FunctionType *FTy = dyn_cast<FunctionType>(Ty);
+  auto *FTy = dyn_cast<FunctionType>(Ty);
   if (FTy)
     return DL.getPointerPrefAlignment();
   return DL.getPrefTypeAlignment(Ty);
@@ -1493,7 +1493,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
         continue;
       }
       // Just a scalar
-      const PointerType *PTy = dyn_cast<PointerType>(Ty);
+      auto *PTy = dyn_cast<PointerType>(Ty);
       if (isKernelFunc) {
         if (PTy) {
           // Special handling for pointer arguments to kernel
@@ -1554,7 +1554,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
     }
 
     // param has byVal attribute. So should be a pointer
-    const PointerType *PTy = dyn_cast<PointerType>(Ty);
+    auto *PTy = dyn_cast<PointerType>(Ty);
     assert(PTy && "Param with byval attribute should be a pointer type");
     Type *ETy = PTy->getElementType();
 
@@ -1798,7 +1798,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
   switch (CPV->getType()->getTypeID()) {
 
   case Type::IntegerTyID: {
-    const Type *ETy = CPV->getType();
+    Type *ETy = CPV->getType();
     if (ETy == Type::getInt8Ty(CPV->getContext())) {
       unsigned char c = (unsigned char)cast<ConstantInt>(CPV)->getZExtValue();
       ConvertIntToBytes<>(ptr, c);
@@ -1858,7 +1858,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
   case Type::FloatTyID:
   case Type::DoubleTyID: {
     const ConstantFP *CFP = dyn_cast<ConstantFP>(CPV);
-    const Type *Ty = CFP->getType();
+    Type *Ty = CFP->getType();
     if (Ty == Type::getFloatTy(CPV->getContext())) {
       float float32 = (float) CFP->getValueAPF().convertToFloat();
       ConvertFloatToBytes(ptr, float32);
@@ -1949,9 +1949,9 @@ void NVPTXAsmPrinter::bufferAggregateConstant(const Constant *CPV,
 // buildTypeNameMap - Run through symbol table looking for type names.
 //
 
-bool NVPTXAsmPrinter::isImageType(const Type *Ty) {
+bool NVPTXAsmPrinter::isImageType(Type *Ty) {
 
-  std::map<const Type *, std::string>::iterator PI = TypeNameMap.find(Ty);
+  std::map<Type *, std::string>::iterator PI = TypeNameMap.find(Ty);
 
   return PI != TypeNameMap.end() && (!PI->second.compare("struct._image1d_t") ||
                                      !PI->second.compare("struct._image2d_t") ||

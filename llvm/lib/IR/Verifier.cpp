@@ -1365,7 +1365,7 @@ void Verifier::VerifyParameterAttrs(AttributeSet Attrs, unsigned Idx, Type *Ty,
          V);
 
   if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    SmallPtrSet<const Type*, 4> Visited;
+    SmallPtrSet<Type*, 4> Visited;
     if (!PTy->getElementType()->isSized(&Visited)) {
       Assert(!Attrs.hasAttribute(Idx, Attribute::ByVal) &&
                  !Attrs.hasAttribute(Idx, Attribute::InAlloca),
@@ -1554,7 +1554,7 @@ void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
          &CI);
 
   const Value *Target = CS.getArgument(2);
-  const PointerType *PT = dyn_cast<PointerType>(Target->getType());
+  auto *PT = dyn_cast<PointerType>(Target->getType());
   Assert(PT && PT->getElementType()->isFunctionTy(),
          "gc.statepoint callee must be of function pointer type", &CI, Target);
   FunctionType *TargetFuncType = cast<FunctionType>(PT->getElementType());
@@ -2674,7 +2674,7 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 }
 
 void Verifier::visitAllocaInst(AllocaInst &AI) {
-  SmallPtrSet<const Type*, 4> Visited;
+  SmallPtrSet<Type*, 4> Visited;
   PointerType *PTy = AI.getType();
   Assert(PTy->getAddressSpace() == 0,
          "Allocation instruction pointer not in the generic address space!",
@@ -3469,9 +3469,8 @@ void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
 
     // Assert that result type matches wrapped callee.
     const Value *Target = StatepointCS.getArgument(2);
-    const PointerType *PT = cast<PointerType>(Target->getType());
-    const FunctionType *TargetFuncType =
-      cast<FunctionType>(PT->getElementType());
+    auto *PT = cast<PointerType>(Target->getType());
+    auto *TargetFuncType = cast<FunctionType>(PT->getElementType());
     Assert(CS.getType() == TargetFuncType->getReturnType(),
            "gc.result result type does not match wrapped callee", CS);
     break;

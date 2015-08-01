@@ -17971,7 +17971,7 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
 /// the corresponding cmpxchg8b or cmpxchg16b instruction is available.
 /// Used to know whether to use cmpxchg8/16b when expanding atomic operations
 /// (otherwise we leave them alone to become __sync_fetch_and_... calls).
-bool X86TargetLowering::needsCmpXchgNb(const Type *MemType) const {
+bool X86TargetLowering::needsCmpXchgNb(Type *MemType) const {
   unsigned OpWidth = MemType->getPrimitiveSizeInBits();
 
   if (OpWidth == 64)
@@ -17996,7 +17996,7 @@ bool X86TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
 TargetLoweringBase::AtomicRMWExpansionKind
 X86TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   unsigned NativeWidth = Subtarget->is64Bit() ? 64 : 32;
-  const Type *MemType = AI->getType();
+  Type *MemType = AI->getType();
 
   // If the operand is too big, we must see if cmpxchg8/16b is available
   // and default to library calls otherwise.
@@ -18042,7 +18042,7 @@ static bool hasMFENCE(const X86Subtarget& Subtarget) {
 LoadInst *
 X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
   unsigned NativeWidth = Subtarget->is64Bit() ? 64 : 32;
-  const Type *MemType = AI->getType();
+  Type *MemType = AI->getType();
   // Accesses larger than the native width are turned into cmpxchg/libcalls, so
   // there is no benefit in turning such RMWs into loads, and it is actually
   // harmful as it introduces a mfence.

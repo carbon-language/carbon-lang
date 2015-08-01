@@ -500,9 +500,9 @@ int FunctionComparator::cmpConstants(const Constant *L, const Constant *R) {
     unsigned TyLWidth = 0;
     unsigned TyRWidth = 0;
 
-    if (const VectorType *VecTyL = dyn_cast<VectorType>(TyL))
+    if (auto *VecTyL = dyn_cast<VectorType>(TyL))
       TyLWidth = VecTyL->getBitWidth();
-    if (const VectorType *VecTyR = dyn_cast<VectorType>(TyR))
+    if (auto *VecTyR = dyn_cast<VectorType>(TyR))
       TyRWidth = VecTyR->getBitWidth();
 
     if (TyLWidth != TyRWidth)

@@ -1410,7 +1410,7 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
       const std::string ExpStr = Exp ? "exp_" : "";
       const std::string SuffixStr = CompileKernel ? "N" : "_n";
       const std::string EndingStr = CompileKernel ? "_noabort" : "";
-      const Type *ExpType = Exp ? Type::getInt32Ty(*C) : nullptr;
+      Type *ExpType = Exp ? Type::getInt32Ty(*C) : nullptr;
       // TODO(glider): for KASan builds add _noabort to error reporting
       // functions and make them actually noabort (remove the UnreachableInst).
       AsanErrorCallbackSized[AccessIsWrite][Exp] =

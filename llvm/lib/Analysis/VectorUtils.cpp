@@ -283,7 +283,7 @@ llvm::Value *llvm::getUniqueCastUse(llvm::Value *Ptr, Loop *Lp, Type *Ty) {
 /// strides "a[i*stride]". Returns the symbolic stride, or null otherwise.
 llvm::Value *llvm::getStrideFromPointer(llvm::Value *Ptr, ScalarEvolution *SE,
                                         Loop *Lp) {
-  const PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
+  auto *PtrTy = dyn_cast<PointerType>(Ptr->getType());
   if (!PtrTy || PtrTy->isAggregateType())
     return nullptr;
 

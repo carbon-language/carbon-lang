@@ -1053,7 +1053,7 @@ namespace llvm {
     LoadInst *
     lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const override;
 
-    bool needsCmpXchgNb(const Type *MemType) const;
+    bool needsCmpXchgNb(Type *MemType) const;
 
     /// Utility function to emit atomic-load-arith operations (and, or, xor,
     /// nand, max, min, umax, umin). It takes the corresponding instruction to

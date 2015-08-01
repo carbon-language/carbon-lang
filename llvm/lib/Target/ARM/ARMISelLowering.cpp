@@ -11797,14 +11797,14 @@ enum HABaseType {
 
 static bool isHomogeneousAggregate(Type *Ty, HABaseType &Base,
                                    uint64_t &Members) {
-  if (const StructType *ST = dyn_cast<StructType>(Ty)) {
+  if (auto *ST = dyn_cast<StructType>(Ty)) {
     for (unsigned i = 0; i < ST->getNumElements(); ++i) {
       uint64_t SubMembers = 0;
       if (!isHomogeneousAggregate(ST->getElementType(i), Base, SubMembers))
         return false;
       Members += SubMembers;
     }
-  } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+  } else if (auto *AT = dyn_cast<ArrayType>(Ty)) {
     uint64_t SubMembers = 0;
     if (!isHomogeneousAggregate(AT->getElementType(), Base, SubMembers))
       return false;
@@ -11819,7 +11819,7 @@ static bool isHomogeneousAggregate(Type *Ty, HABaseType &Base,
       return false;
     Members = 1;
     Base = HA_DOUBLE;
-  } else if (const VectorType *VT = dyn_cast<VectorType>(Ty)) {
+  } else if (auto *VT = dyn_cast<VectorType>(Ty)) {
     Members = 1;
     switch (Base) {
     case HA_FLOAT:

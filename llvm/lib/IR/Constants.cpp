@@ -797,10 +797,10 @@ Constant *ConstantAggregateZero::getElementValue(unsigned Idx) const {
 }
 
 unsigned ConstantAggregateZero::getNumElements() const {
-  const Type *Ty = getType();
-  if (const auto *AT = dyn_cast<ArrayType>(Ty))
+  Type *Ty = getType();
+  if (auto *AT = dyn_cast<ArrayType>(Ty))
     return AT->getNumElements();
-  if (const auto *VT = dyn_cast<VectorType>(Ty))
+  if (auto *VT = dyn_cast<VectorType>(Ty))
     return VT->getNumElements();
   return Ty->getStructNumElements();
 }
@@ -838,10 +838,10 @@ UndefValue *UndefValue::getElementValue(unsigned Idx) const {
 }
 
 unsigned UndefValue::getNumElements() const {
-  const Type *Ty = getType();
-  if (const auto *AT = dyn_cast<ArrayType>(Ty))
+  Type *Ty = getType();
+  if (auto *AT = dyn_cast<ArrayType>(Ty))
     return AT->getNumElements();
-  if (const auto *VT = dyn_cast<VectorType>(Ty))
+  if (auto *VT = dyn_cast<VectorType>(Ty))
     return VT->getNumElements();
   return Ty->getStructNumElements();
 }
@@ -2430,9 +2430,9 @@ StringRef ConstantDataSequential::getRawDataValues() const {
 /// formed with a vector or array of the specified element type.
 /// ConstantDataArray only works with normal float and int types that are
 /// stored densely in memory, not with things like i42 or x86_f80.
-bool ConstantDataSequential::isElementTypeCompatible(const Type *Ty) {
+bool ConstantDataSequential::isElementTypeCompatible(Type *Ty) {
   if (Ty->isFloatTy() || Ty->isDoubleTy()) return true;
-  if (const IntegerType *IT = dyn_cast<IntegerType>(Ty)) {
+  if (auto *IT = dyn_cast<IntegerType>(Ty)) {
     switch (IT->getBitWidth()) {
     case 8:
     case 16:

@@ -54,7 +54,7 @@ bool AMDGPUPromoteAlloca::doInitialization(Module &M) {
 
 bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
 
-  const FunctionType *FTy = F.getFunctionType();
+  FunctionType *FTy = F.getFunctionType();
 
   LocalMemAvailable = ST.getLocalMemorySize();
 
@@ -63,7 +63,7 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
   // possible these arguments require the entire local memory space, so
   // we cannot use local memory in the pass.
   for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
-    const Type *ParamTy = FTy->getParamType(i);
+    Type *ParamTy = FTy->getParamType(i);
     if (ParamTy->isPointerTy() &&
         ParamTy->getPointerAddressSpace() == AMDGPUAS::LOCAL_ADDRESS) {
       LocalMemAvailable = 0;
@@ -101,7 +101,7 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
   return false;
 }
 
-static VectorType *arrayTypeToVecType(const Type *ArrayTy) {
+static VectorType *arrayTypeToVecType(Type *ArrayTy) {
   return VectorType::get(ArrayTy->getArrayElementType(),
                          ArrayTy->getArrayNumElements());
 }

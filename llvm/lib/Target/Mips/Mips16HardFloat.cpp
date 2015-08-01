@@ -182,7 +182,7 @@ static bool needsFPReturnHelper(Function &F) {
   return whichFPReturnVariant(RetType) != NoFPRet;
 }
 
-static bool needsFPReturnHelper(const FunctionType &FT) {
+static bool needsFPReturnHelper(FunctionType &FT) {
   Type* RetType = FT.getReturnType();
   return whichFPReturnVariant(RetType) != NoFPRet;
 }
@@ -419,11 +419,11 @@ static bool fixupFPReturnAndCall(Function &F, Module *M,
         CallInst::Create(F, Params, "", &Inst );
       } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {
         const Value* V = CI->getCalledValue();
-        const Type* T = nullptr;
+        Type* T = nullptr;
         if (V) T = V->getType();
-        const PointerType *PFT=nullptr;
+        PointerType *PFT = nullptr;
         if (T) PFT = dyn_cast<PointerType>(T);
-        const FunctionType *FT=nullptr;
+        FunctionType *FT = nullptr;
         if (PFT) FT = dyn_cast<FunctionType>(PFT->getElementType());
         Function *F_ =  CI->getCalledFunction();
         if (FT && needsFPReturnHelper(*FT) &&

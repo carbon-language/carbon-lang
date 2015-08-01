@@ -617,7 +617,7 @@ SDValue SITargetLowering::LowerFormalArguments(
                                    Offset, Ins[i].Flags.isSExt());
       Chains.push_back(Arg.getValue(1));
 
-      const PointerType *ParamTy =
+      auto *ParamTy =
         dyn_cast<PointerType>(FType->getParamType(Ins[i].getOrigArgIndex()));
       if (Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS &&
           ParamTy && ParamTy->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS) {

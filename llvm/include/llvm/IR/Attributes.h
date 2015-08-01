@@ -573,7 +573,7 @@ public:
 namespace AttributeFuncs {
 
 /// \brief Which attributes cannot be applied to a type.
-AttrBuilder typeIncompatible(const Type *Ty);
+AttrBuilder typeIncompatible(Type *Ty);
 
 } // end AttributeFuncs namespace
 

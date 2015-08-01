@@ -630,8 +630,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       break;
     case Type::VectorTyID:
       // if the whole vector is 'undef' just reserve memory for the value.
-      const VectorType* VTy = dyn_cast<VectorType>(C->getType());
-      const Type *ElemTy = VTy->getElementType();
+      auto* VTy = dyn_cast<VectorType>(C->getType());
+      Type *ElemTy = VTy->getElementType();
       unsigned int elemNum = VTy->getNumElements();
       Result.AggregateVal.resize(elemNum);
       if (ElemTy->isIntegerTy())
@@ -1152,8 +1152,8 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     break;
   }
   case Type::VectorTyID: {
-    const VectorType *VT = cast<VectorType>(Ty);
-    const Type *ElemT = VT->getElementType();
+    auto *VT = cast<VectorType>(Ty);
+    Type *ElemT = VT->getElementType();
     const unsigned numElems = VT->getNumElements();
     if (ElemT->isFloatTy()) {
       Result.AggregateVal.resize(numElems);

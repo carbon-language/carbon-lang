@@ -531,7 +531,7 @@ static unsigned int getCodeAddrSpace(MemSDNode *N) {
   if (!Src)
     return NVPTX::PTXLdStInstCode::GENERIC;
 
-  if (const PointerType *PT = dyn_cast<PointerType>(Src->getType())) {
+  if (auto *PT = dyn_cast<PointerType>(Src->getType())) {
     switch (PT->getAddressSpace()) {
     case llvm::ADDRESS_SPACE_LOCAL: return NVPTX::PTXLdStInstCode::LOCAL;
     case llvm::ADDRESS_SPACE_GLOBAL: return NVPTX::PTXLdStInstCode::GLOBAL;
@@ -5075,7 +5075,7 @@ bool NVPTXDAGToDAGISel::ChkMemSDNodeAddressSpace(SDNode *N,
   }
   if (!Src)
     return false;
-  if (const PointerType *PT = dyn_cast<PointerType>(Src->getType()))
+  if (auto *PT = dyn_cast<PointerType>(Src->getType()))
     return (PT->getAddressSpace() == spN);
   return false;
 }

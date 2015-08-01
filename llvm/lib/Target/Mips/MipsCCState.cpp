@@ -44,7 +44,7 @@ static bool isF128SoftLibCall(const char *CallSym) {
 
 /// This function returns true if Ty is fp128, {f128} or i128 which was
 /// originally a fp128.
-static bool originalTypeIsF128(const Type *Ty, const SDNode *CallNode) {
+static bool originalTypeIsF128(Type *Ty, const SDNode *CallNode) {
   if (Ty->isFP128Ty())
     return true;
 
