@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -emit-llvm -o - -fcxx-exceptions -fexceptions | FileCheck %s
 
-typedef typeof(sizeof(0)) size_t;
+typedef __typeof(sizeof(0)) size_t;
 
 // This just shouldn't crash.
 namespace test0 {
