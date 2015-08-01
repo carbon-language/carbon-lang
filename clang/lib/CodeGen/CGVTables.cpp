@@ -502,8 +502,8 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   if (!ThunkInfoVector)
     return;
 
-  for (unsigned I = 0, E = ThunkInfoVector->size(); I != E; ++I)
-    emitThunk(GD, (*ThunkInfoVector)[I], /*ForVTable=*/false);
+  for (const ThunkInfo& Thunk : *ThunkInfoVector)
+    emitThunk(GD, Thunk, /*ForVTable=*/false);
 }
 
 llvm::Constant *CodeGenVTables::CreateVTableInitializer(
