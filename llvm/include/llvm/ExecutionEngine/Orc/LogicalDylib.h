@@ -54,7 +54,10 @@ public:
 
   // If possible, remove this and ~LogicalDylib once the work in the dtor is
   // moved to members (eg: self-unregistering base layer handles).
-  LogicalDylib(LogicalDylib &&RHS) = default;
+  LogicalDylib(LogicalDylib &&RHS)
+      : BaseLayer(std::move(RHS.BaseLayer)),
+        LogicalModules(std::move(RHS.LogicalModules)),
+        DylibResources(std::move(RHS.DylibResources)) {}
 
   LogicalModuleHandle createLogicalModule() {
     LogicalModules.push_back(LogicalModule());
