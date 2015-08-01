@@ -5,7 +5,7 @@
 # RUN: lld -flavor gnu -target mips64el --noinhibit-exec -o %t.exe %t.o
 # RUN: llvm-readobj -dynamic-table -program-headers %t.exe | FileCheck %s
 
-# CHECK: DynamicSection [ (14 entries)
+# CHECK: DynamicSection [ (15 entries)
 # CHECK:        Tag                Type                 Name/Value
 # CHECK-NEXT:   0x0000000000000004 HASH                 0x{{[0-9A-F]+}}
 # CHECK-NEXT:   0x0000000000000005 STRTAB               0x{{[0-9A-F]+}}
@@ -14,6 +14,7 @@
 # CHECK-NEXT:   0x000000000000000B SYMENT               24 (bytes)
 # CHECK-NEXT:   0x0000000070000001 MIPS_RLD_VERSION     1
 # CHECK-NEXT:   0x0000000070000016 MIPS_RLD_MAP         0x120002000
+# CHECK-NEXT:   0x0000000070000035 MIPS_RLD_MAP_REL     0x1DB8
 # CHECK-NEXT:   0x0000000070000005 MIPS_FLAGS           NOTPOT
 # CHECK-NEXT:   0x0000000070000006 MIPS_BASE_ADDRESS    0x120000000
 # CHECK-NEXT:   0x000000007000000A MIPS_LOCAL_GOTNO     2

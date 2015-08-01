@@ -16,7 +16,7 @@
 
 # EXE: Sections:
 # EXE: Idx Name         Size     Address          Type
-# EXE:   6 .dynamic     00000070 00000000[[ADDR:[0-9a-f]+]]
+# EXE:   6 .dynamic     00000078 00000000[[ADDR:[0-9a-f]+]]
 
 # EXE: SYMBOL TABLE:
 # EXE: [[ADDR]]  g  .dynamic  00000000 _DYNAMIC

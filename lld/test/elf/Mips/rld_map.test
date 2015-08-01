@@ -1,6 +1,6 @@
 # REQUIRES: mips
 
-# Check definition of DT_MIPS_RLD_MAP dynamic tag,
+# Check definition of DT_MIPS_RLD_MAP and DT_MIPS_RLD_MAP_REL dynamic tags,
 # .rld_map section, and __RLD_MAP symbol.
 
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %t.o
@@ -25,7 +25,8 @@
 # EXE-DYN-NEXT:     Binding: Global
 # EXE-DYN-NEXT:     Type: Object
 #
-# EXE-DYN: 0x70000016  MIPS_RLD_MAP  0x402000 
+# EXE-DYN: 0x70000016  MIPS_RLD_MAP      0x[[ADDR]]
+# EXE-DYN: 0x70000035  MIPS_RLD_MAP_REL  0x1E48
 
 # RUN: lld -flavor gnu -target mips -static %t.o -o %t.exe
 # RUN: llvm-nm -just-symbol-name %t.exe | FileCheck -check-prefix=EXE-STATIC %s
