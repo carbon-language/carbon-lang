@@ -748,8 +748,8 @@ PointerType::PointerType(Type *E, unsigned AddrSpace)
   assert(oldNCT == NumContainedTys && "bitfield written out of bounds?");
 }
 
-PointerType *Type::getPointerTo(unsigned addrs) {
-  return PointerType::get(this, addrs);
+PointerType *Type::getPointerTo(unsigned addrs) const {
+  return PointerType::get(const_cast<Type*>(this), addrs);
 }
 
 bool PointerType::isValidElementType(Type *ElemTy) {
