@@ -974,7 +974,7 @@ BasicBlock *RegionGenerator::repairDominance(BasicBlock *BB,
 void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
                                LoopToScevMapT &LTS) {
   assert(Stmt.isRegionStmt() &&
-         "Only region statements can be copied by the block generator");
+         "Only region statements can be copied by the region generator");
 
   // Forget all old mappings.
   BlockMap.clear();
