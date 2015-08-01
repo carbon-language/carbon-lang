@@ -42,16 +42,10 @@ Type *Type::getPrimitiveType(LLVMContext &C, TypeID IDNumber) {
 
 /// getScalarType - If this is a vector type, return the element type,
 /// otherwise return this.
-Type *Type::getScalarType() {
-  if (VectorType *VTy = dyn_cast<VectorType>(this))
+Type *Type::getScalarType() const {
+  if (auto *VTy = dyn_cast<VectorType>(this))
     return VTy->getElementType();
-  return this;
-}
-
-const Type *Type::getScalarType() const {
-  if (const VectorType *VTy = dyn_cast<VectorType>(this))
-    return VTy->getElementType();
-  return this;
+  return const_cast<Type*>(this);
 }
 
 /// isIntegerTy - Return true if this is an IntegerType of the specified width.
