@@ -90,19 +90,105 @@ void TestEraseByte(Mutator M, int NumIter) {
   int FoundMask = 0;
   for (int i = 0; i < NumIter; i++) {
     uint8_t T[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
-    size_t NewSize = Mutate_EraseByte(T, sizeof(T), sizeof(T), Rand);
-    EXPECT_EQ(7UL, NewSize);
-    if (!memcmp(REM0, T, 7)) FoundMask |= 1 << 0;
-    if (!memcmp(REM1, T, 7)) FoundMask |= 1 << 1;
-    if (!memcmp(REM2, T, 7)) FoundMask |= 1 << 2;
-    if (!memcmp(REM3, T, 7)) FoundMask |= 1 << 3;
-    if (!memcmp(REM4, T, 7)) FoundMask |= 1 << 4;
-    if (!memcmp(REM5, T, 7)) FoundMask |= 1 << 5;
-    if (!memcmp(REM6, T, 7)) FoundMask |= 1 << 6;
-    if (!memcmp(REM7, T, 7)) FoundMask |= 1 << 7;
+    size_t NewSize = M(T, sizeof(T), sizeof(T), Rand);
+    if (NewSize == 7 && !memcmp(REM0, T, 7)) FoundMask |= 1 << 0;
+    if (NewSize == 7 && !memcmp(REM1, T, 7)) FoundMask |= 1 << 1;
+    if (NewSize == 7 && !memcmp(REM2, T, 7)) FoundMask |= 1 << 2;
+    if (NewSize == 7 && !memcmp(REM3, T, 7)) FoundMask |= 1 << 3;
+    if (NewSize == 7 && !memcmp(REM4, T, 7)) FoundMask |= 1 << 4;
+    if (NewSize == 7 && !memcmp(REM5, T, 7)) FoundMask |= 1 << 5;
+    if (NewSize == 7 && !memcmp(REM6, T, 7)) FoundMask |= 1 << 6;
+    if (NewSize == 7 && !memcmp(REM7, T, 7)) FoundMask |= 1 << 7;
   }
   EXPECT_EQ(FoundMask, 255);
 }
 
-TEST(FuzzerMutate, EraseByte1) { TestEraseByte(Mutate_EraseByte, 50); }
-TEST(FuzzerMutate, EraseByte2) { TestEraseByte(Mutate, 100); }
+TEST(FuzzerMutate, EraseByte1) { TestEraseByte(Mutate_EraseByte, 100); }
+TEST(FuzzerMutate, EraseByte2) { TestEraseByte(Mutate, 1000); }
+
+void TestInsertByte(Mutator M, int NumIter) {
+  FuzzerRandomLibc Rand(0);
+  int FoundMask = 0;
+  uint8_t INS0[8] = {0xF1, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+  uint8_t INS1[8] = {0x00, 0xF2, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+  uint8_t INS2[8] = {0x00, 0x11, 0xF3, 0x22, 0x33, 0x44, 0x55, 0x66};
+  uint8_t INS3[8] = {0x00, 0x11, 0x22, 0xF4, 0x33, 0x44, 0x55, 0x66};
+  uint8_t INS4[8] = {0x00, 0x11, 0x22, 0x33, 0xF5, 0x44, 0x55, 0x66};
+  uint8_t INS5[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0xF6, 0x55, 0x66};
+  uint8_t INS6[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0xF7, 0x66};
+  uint8_t INS7[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0xF8};
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    size_t NewSize = M(T, 7, 8, Rand);
+    if (NewSize == 8 && !memcmp(INS0, T, 8)) FoundMask |= 1 << 0;
+    if (NewSize == 8 && !memcmp(INS1, T, 8)) FoundMask |= 1 << 1;
+    if (NewSize == 8 && !memcmp(INS2, T, 8)) FoundMask |= 1 << 2;
+    if (NewSize == 8 && !memcmp(INS3, T, 8)) FoundMask |= 1 << 3;
+    if (NewSize == 8 && !memcmp(INS4, T, 8)) FoundMask |= 1 << 4;
+    if (NewSize == 8 && !memcmp(INS5, T, 8)) FoundMask |= 1 << 5;
+    if (NewSize == 8 && !memcmp(INS6, T, 8)) FoundMask |= 1 << 6;
+    if (NewSize == 8 && !memcmp(INS7, T, 8)) FoundMask |= 1 << 7;
+  }
+  EXPECT_EQ(FoundMask, 255);
+}
+
+TEST(FuzzerMutate, InsertByte1) { TestInsertByte(Mutate_InsertByte, 1 << 15); }
+TEST(FuzzerMutate, InsertByte2) { TestInsertByte(Mutate, 1 << 17); }
+
+void TestChangeByte(Mutator M, int NumIter) {
+  FuzzerRandomLibc Rand(0);
+  int FoundMask = 0;
+  uint8_t CH0[8] = {0xF0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH1[8] = {0x00, 0xF1, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH2[8] = {0x00, 0x11, 0xF2, 0x33, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH3[8] = {0x00, 0x11, 0x22, 0xF3, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH4[8] = {0x00, 0x11, 0x22, 0x33, 0xF4, 0x55, 0x66, 0x77};
+  uint8_t CH5[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0xF5, 0x66, 0x77};
+  uint8_t CH6[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0xF5, 0x77};
+  uint8_t CH7[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0xF7};
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[9] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+    size_t NewSize = M(T, 8, 9, Rand);
+    if (NewSize == 8 && !memcmp(CH0, T, 8)) FoundMask |= 1 << 0;
+    if (NewSize == 8 && !memcmp(CH1, T, 8)) FoundMask |= 1 << 1;
+    if (NewSize == 8 && !memcmp(CH2, T, 8)) FoundMask |= 1 << 2;
+    if (NewSize == 8 && !memcmp(CH3, T, 8)) FoundMask |= 1 << 3;
+    if (NewSize == 8 && !memcmp(CH4, T, 8)) FoundMask |= 1 << 4;
+    if (NewSize == 8 && !memcmp(CH5, T, 8)) FoundMask |= 1 << 5;
+    if (NewSize == 8 && !memcmp(CH6, T, 8)) FoundMask |= 1 << 6;
+    if (NewSize == 8 && !memcmp(CH7, T, 8)) FoundMask |= 1 << 7;
+  }
+  EXPECT_EQ(FoundMask, 255);
+}
+
+TEST(FuzzerMutate, ChangeByte1) { TestChangeByte(Mutate_ChangeByte, 1 << 15); }
+TEST(FuzzerMutate, ChangeByte2) { TestChangeByte(Mutate, 1 << 17); }
+
+void TestChangeBit(Mutator M, int NumIter) {
+  FuzzerRandomLibc Rand(0);
+  int FoundMask = 0;
+  uint8_t CH0[8] = {0x01, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH1[8] = {0x00, 0x13, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH2[8] = {0x00, 0x11, 0x02, 0x33, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH3[8] = {0x00, 0x11, 0x22, 0x37, 0x44, 0x55, 0x66, 0x77};
+  uint8_t CH4[8] = {0x00, 0x11, 0x22, 0x33, 0x54, 0x55, 0x66, 0x77};
+  uint8_t CH5[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x54, 0x66, 0x77};
+  uint8_t CH6[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x76, 0x77};
+  uint8_t CH7[8] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0xF7};
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[9] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+    size_t NewSize = M(T, 8, 9, Rand);
+    if (NewSize == 8 && !memcmp(CH0, T, 8)) FoundMask |= 1 << 0;
+    if (NewSize == 8 && !memcmp(CH1, T, 8)) FoundMask |= 1 << 1;
+    if (NewSize == 8 && !memcmp(CH2, T, 8)) FoundMask |= 1 << 2;
+    if (NewSize == 8 && !memcmp(CH3, T, 8)) FoundMask |= 1 << 3;
+    if (NewSize == 8 && !memcmp(CH4, T, 8)) FoundMask |= 1 << 4;
+    if (NewSize == 8 && !memcmp(CH5, T, 8)) FoundMask |= 1 << 5;
+    if (NewSize == 8 && !memcmp(CH6, T, 8)) FoundMask |= 1 << 6;
+    if (NewSize == 8 && !memcmp(CH7, T, 8)) FoundMask |= 1 << 7;
+  }
+  EXPECT_EQ(FoundMask, 255);
+}
+
+TEST(FuzzerMutate, ChangeBit1) { TestChangeBit(Mutate_ChangeBit, 1 << 16); }
+TEST(FuzzerMutate, ChangeBit2) { TestChangeBit(Mutate, 1 << 18); }

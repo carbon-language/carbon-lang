@@ -33,8 +33,14 @@ void CopyFileToErr(const std::string &Path);
 std::string DirPlusFile(const std::string &DirPath,
                         const std::string &FileName);
 
-size_t Mutate_EraseByte(uint8_t *Data, size_t size, size_t MaxSize,
+size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
                         FuzzerRandomBase &Rand);
+size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize,
+                         FuzzerRandomBase &Rand);
+size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize,
+                         FuzzerRandomBase &Rand);
+size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize,
+                       FuzzerRandomBase &Rand);
 size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
               FuzzerRandomBase &Rand);
 

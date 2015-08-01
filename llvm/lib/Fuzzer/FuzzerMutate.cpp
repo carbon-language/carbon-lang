@@ -43,6 +43,30 @@ size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
   return Size - 1;
 }
 
+size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize,
+                         FuzzerRandomBase &Rand) {
+  if (Size == MaxSize) return Size;
+  size_t Idx = Rand(Size + 1);
+  // Insert new value at Data[Idx].
+  memmove(Data + Idx + 1, Data + Idx, Size - Idx);
+  Data[Idx] = RandCh(Rand);
+  return Size + 1;
+}
+
+size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize,
+                         FuzzerRandomBase &Rand) {
+  size_t Idx = Rand(Size);
+  Data[Idx] = RandCh(Rand);
+  return Size;
+}
+
+size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize,
+                        FuzzerRandomBase &Rand) {
+  size_t Idx = Rand(Size);
+  Data[Idx] = FlipRandomBit(Data[Idx], Rand);
+  return Size;
+}
+
 // Mutates Data in place, returns new size.
 size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
               FuzzerRandomBase &Rand) {
@@ -54,20 +78,11 @@ size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
     return MaxSize;
   }
   assert(Size > 0);
-  size_t Idx = Rand(Size);
-  switch (Rand(3)) {
+  switch (Rand(4)) {
   case 0: Size = Mutate_EraseByte(Data, Size, MaxSize, Rand); break;
-  case 1:
-    if (Size < MaxSize) {
-      // Insert new value at Data[Idx].
-      memmove(Data + Idx + 1, Data + Idx, Size - Idx);
-      Data[Idx] = RandCh(Rand);
-    }
-    Data[Idx] = RandCh(Rand);
-    break;
-  case 2:
-    Data[Idx] = FlipRandomBit(Data[Idx], Rand);
-    break;
+  case 1: Size = Mutate_InsertByte(Data, Size, MaxSize, Rand); break;
+  case 2: Size = Mutate_ChangeByte(Data, Size, MaxSize, Rand); break;
+  case 3: Size = Mutate_ChangeBit(Data, Size, MaxSize, Rand); break;
   }
   assert(Size > 0);
   return Size;
