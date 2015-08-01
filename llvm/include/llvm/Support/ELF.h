@@ -1139,8 +1139,10 @@ enum {
   DT_MIPS_GP_VALUE          = 0x70000030, // GP value for auxiliary GOTs.
   DT_MIPS_AUX_DYNAMIC       = 0x70000031, // Address of auxiliary .dynamic.
   DT_MIPS_PLTGOT            = 0x70000032, // Address of the base of the PLTGOT.
-  DT_MIPS_RWPLT             = 0x70000034  // Points to the base
+  DT_MIPS_RWPLT             = 0x70000034, // Points to the base
                                           // of a writable PLT.
+  DT_MIPS_RLD_MAP_REL       = 0x70000035  // Relative offset of run time loader
+                                          // map, used for debugging.
 };
 
 // DT_FLAGS values.
