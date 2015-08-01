@@ -40,7 +40,7 @@ protected:
   MCParsedAsmOperand() = default;
 
 public:
-  virtual ~MCParsedAsmOperand() = default;
+  virtual ~MCParsedAsmOperand() {}
 
   void setConstraint(StringRef C) { Constraint = C.str(); }
   StringRef getConstraint() { return Constraint; }
