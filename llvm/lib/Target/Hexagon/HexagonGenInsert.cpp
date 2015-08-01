@@ -77,9 +77,8 @@ namespace {
 namespace {
   // Set of virtual registers, based on BitVector.
   struct RegisterSet : private BitVector {
-    RegisterSet() : BitVector() {}
+    RegisterSet() = default;
     explicit RegisterSet(unsigned s, bool t = false) : BitVector(s, t) {}
-    RegisterSet(const RegisterSet &RS) : BitVector(RS) {}
 
     using BitVector::clear;
 

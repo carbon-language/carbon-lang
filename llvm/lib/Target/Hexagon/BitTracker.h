@@ -77,7 +77,6 @@ private:
 // Abstraction of a reference to bit at position Pos from a register Reg.
 struct BitTracker::BitRef {
   BitRef(unsigned R = 0, uint16_t P = 0) : Reg(R), Pos(P) {}
-  BitRef(const BitRef &BR) : Reg(BR.Reg), Pos(BR.Pos) {}
   bool operator== (const BitRef &BR) const {
     // If Reg is 0, disregard Pos.
     return Reg == BR.Reg && (Reg == 0 || Pos == BR.Pos);
@@ -144,7 +143,6 @@ struct BitTracker::BitValue {
 
   BitValue(ValueType T = Top) : Type(T) {}
   BitValue(bool B) : Type(B ? One : Zero) {}
-  BitValue(const BitValue &V) : Type(V.Type), RefI(V.RefI) {}
   BitValue(unsigned Reg, uint16_t Pos) : Type(Ref), RefI(Reg, Pos) {}
 
   bool operator== (const BitValue &V) const {
@@ -275,11 +273,6 @@ struct BitTracker::RegisterCell {
   bool operator== (const RegisterCell &RC) const;
   bool operator!= (const RegisterCell &RC) const {
     return !operator==(RC);
-  }
-
-  const RegisterCell &operator=(const RegisterCell &RC) {
-    Bits = RC.Bits;
-    return *this;
   }
 
   // Generate a "ref" cell for the corresponding register. In the resulting
