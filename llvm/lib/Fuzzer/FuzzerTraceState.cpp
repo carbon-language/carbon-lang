@@ -140,7 +140,7 @@ static bool ComputeCmp(size_t CmpSize, size_t CmpType, uint64_t Arg1,
   if (CmpSize == 1) return ComputeCmp<uint8_t, int8_t>(CmpType, Arg1, Arg2);
   // Other size, ==
   if (CmpType == ICMP_EQ) return Arg1 == Arg2;
-  assert(0 && "unsupported cmp and type size combination");
+  // assert(0 && "unsupported cmp and type size combination");
   return true;
 }
 

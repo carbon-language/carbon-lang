@@ -33,6 +33,16 @@ static char RandCh(FuzzerRandomBase &Rand) {
   return Special[Rand(sizeof(Special) - 1)];
 }
 
+size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
+                        FuzzerRandomBase &Rand) {
+  assert(Size);
+  if (Size == 1) return Size;
+  size_t Idx = Rand(Size);
+  // Erase Data[Idx].
+  memmove(Data + Idx, Data + Idx + 1, Size - Idx - 1);
+  return Size - 1;
+}
+
 // Mutates Data in place, returns new size.
 size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
               FuzzerRandomBase &Rand) {
@@ -46,13 +56,7 @@ size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
   assert(Size > 0);
   size_t Idx = Rand(Size);
   switch (Rand(3)) {
-  case 0:
-    if (Size > 1) {
-      // Erase Data[Idx].
-      memmove(Data + Idx, Data + Idx + 1, Size - Idx - 1);
-      Size = Size - 1;
-    }
-    [[clang::fallthrough]];
+  case 0: Size = Mutate_EraseByte(Data, Size, MaxSize, Rand); break;
   case 1:
     if (Size < MaxSize) {
       // Insert new value at Data[Idx].
