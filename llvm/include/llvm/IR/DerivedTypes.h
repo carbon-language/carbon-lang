@@ -153,8 +153,8 @@ public:
   /// getTypeAtIndex - Given an index value into the type, return the type of
   /// the element.
   ///
-  Type *getTypeAtIndex(const Value *V);
-  Type *getTypeAtIndex(unsigned Idx);
+  Type *getTypeAtIndex(const Value *V) const;
+  Type *getTypeAtIndex(unsigned Idx) const;
   bool indexValid(const Value *V) const;
   bool indexValid(unsigned Idx) const;
 

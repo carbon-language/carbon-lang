@@ -620,8 +620,8 @@ StructType *Module::getTypeByName(StringRef Name) const {
 //                       CompositeType Implementation
 //===----------------------------------------------------------------------===//
 
-Type *CompositeType::getTypeAtIndex(const Value *V) {
-  if (StructType *STy = dyn_cast<StructType>(this)) {
+Type *CompositeType::getTypeAtIndex(const Value *V) const {
+  if (auto *STy = dyn_cast<StructType>(this)) {
     unsigned Idx =
       (unsigned)cast<Constant>(V)->getUniqueInteger().getZExtValue();
     assert(indexValid(Idx) && "Invalid structure index!");
@@ -630,14 +630,16 @@ Type *CompositeType::getTypeAtIndex(const Value *V) {
 
   return cast<SequentialType>(this)->getElementType();
 }
-Type *CompositeType::getTypeAtIndex(unsigned Idx) {
-  if (StructType *STy = dyn_cast<StructType>(this)) {
+
+Type *CompositeType::getTypeAtIndex(unsigned Idx) const{
+  if (auto *STy = dyn_cast<StructType>(this)) {
     assert(indexValid(Idx) && "Invalid structure index!");
     return STy->getElementType(Idx);
   }
-  
+
   return cast<SequentialType>(this)->getElementType();
 }
+
 bool CompositeType::indexValid(const Value *V) const {
   if (auto *STy = dyn_cast<StructType>(this)) {
     // Structure indexes require (vectors of) 32-bit integer constants.  In the
