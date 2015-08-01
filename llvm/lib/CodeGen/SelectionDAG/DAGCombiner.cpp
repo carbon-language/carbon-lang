@@ -4732,8 +4732,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   // fold (srl x, (trunc (and y, c))) -> (srl x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
       N1.getOperand(0).getOpcode() == ISD::AND) {
-    SDValue NewOp1 = distributeTruncateThroughAnd(N1.getNode());
-    if (NewOp1.getNode())
+    if (SDValue NewOp1 = distributeTruncateThroughAnd(N1.getNode()))
       return DAG.getNode(ISD::SRL, SDLoc(N), VT, N0, NewOp1);
   }
 
@@ -4742,15 +4741,12 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
 
-  if (N1C && !N1C->isOpaque()) {
-    SDValue NewSRL = visitShiftByConstant(N, N1C);
-    if (NewSRL.getNode())
+  if (N1C && !N1C->isOpaque())
+    if (SDValue NewSRL = visitShiftByConstant(N, N1C))
       return NewSRL;
-  }
 
   // Attempt to convert a srl of a load into a narrower zero-extending load.
-  SDValue NarrowLoad = ReduceLoadWidth(N);
-  if (NarrowLoad.getNode())
+  if (SDValue NarrowLoad = ReduceLoadWidth(N))
     return NarrowLoad;
 
   // Here is a common situation. We want to optimize:
@@ -5511,8 +5507,7 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
   if (N1.getOpcode() == ISD::CONCAT_VECTORS &&
       N2.getOpcode() == ISD::CONCAT_VECTORS &&
       ISD::isBuildVectorOfConstantSDNodes(N0.getNode())) {
-    SDValue CV = ConvertSelectToConcatVector(N, DAG);
-    if (CV.getNode())
+    if (SDValue CV = ConvertSelectToConcatVector(N, DAG))
       return CV;
   }
 
@@ -6363,8 +6358,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // fold (aext (truncate (load x))) -> (aext (smaller load x))
   // fold (aext (truncate (srl (load x), c))) -> (aext (small load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
-    SDValue NarrowLoad = ReduceLoadWidth(N0.getNode());
-    if (NarrowLoad.getNode()) {
+    if (SDValue NarrowLoad = ReduceLoadWidth(N0.getNode())) {
       SDNode* oye = N0.getNode()->getOperand(0).getNode();
       if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
@@ -7984,8 +7978,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   } // enable-unsafe-fp-math
 
   // FADD -> FMA combines:
-  SDValue Fused = visitFADDForFMACombine(N);
-  if (Fused) {
+  if (SDValue Fused = visitFADDForFMACombine(N)) {
     AddToWorklist(Fused.getNode());
     return Fused;
   }
@@ -8049,8 +8042,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   }
 
   // FSUB -> FMA combines:
-  SDValue Fused = visitFSUBForFMACombine(N);
-  if (Fused) {
+  if (SDValue Fused = visitFSUBForFMACombine(N)) {
     AddToWorklist(Fused.getNode());
     return Fused;
   }
@@ -9037,8 +9029,7 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
     SDValue Op1 = TheXor->getOperand(1);
     if (Op0.getOpcode() == Op1.getOpcode()) {
       // Avoid missing important xor optimizations.
-      SDValue Tmp = visitXOR(TheXor);
-      if (Tmp.getNode()) {
+      if (SDValue Tmp = visitXOR(TheXor)) {
         if (Tmp.getNode() != TheXor) {
           DEBUG(dbgs() << "\nReplacing.8 ";
                 TheXor->dump(&DAG);
@@ -11319,8 +11310,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
 
   // Try transforming a pair floating point load / store ops to integer
   // load / store ops.
-  SDValue NewST = TransformFPLoadStorePair(N);
-  if (NewST.getNode())
+  if (SDValue NewST = TransformFPLoadStorePair(N))
     return NewST;
 
   bool UseAA = CombinerAA.getNumOccurrences() > 0 ? CombinerAA
