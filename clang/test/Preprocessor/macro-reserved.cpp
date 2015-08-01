@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic -std=c++98 %s
 
 #define for 0    // expected-warning {{keyword is hidden by macro definition}}
 #define final 1

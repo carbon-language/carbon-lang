@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wreserved-user-defined-literal -fms-extensions -fms-compatibility %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wreserved-user-defined-literal -fms-extensions -fms-compatibility -std=c++98 %s
 
 #define bar(x) #x
 const char * f() {
