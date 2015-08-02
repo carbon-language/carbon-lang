@@ -574,15 +574,24 @@ GDBRemoteCommunication::DecompressPacket ()
         return true;
     if (m_bytes[1] != 'C' && m_bytes[1] != 'N')
         return true;
-    if (m_bytes[pkt_size - 3] != '#')
+
+    size_t hash_mark_idx = m_bytes.find ('#');
+    if (hash_mark_idx == std::string::npos)
         return true;
-    if (!::isxdigit (m_bytes[pkt_size - 2]) || !::isxdigit (m_bytes[pkt_size - 1]))
+    if (hash_mark_idx + 2 >= m_bytes.size())
         return true;
 
-    size_t content_length = pkt_size - 5;   // not counting '$', 'C' | 'N', '#', & the two hex checksum chars
-    size_t content_start = 2;               // The first character of the compressed/not-compressed text of the packet
-    size_t hash_mark_idx = pkt_size - 3;    // The '#' character marking the end of the packet
-    size_t checksum_idx = pkt_size - 2;     // The first character of the two hex checksum characters
+    if (!::isxdigit (m_bytes[hash_mark_idx + 1]) || !::isxdigit (m_bytes[hash_mark_idx + 2]))
+        return true;
+
+    size_t content_length = pkt_size - 5;    // not counting '$', 'C' | 'N', '#', & the two hex checksum chars
+    size_t content_start = 2;                // The first character of the compressed/not-compressed text of the packet
+    size_t checksum_idx = hash_mark_idx + 1; // The first character of the two hex checksum characters
+
+    // Normally size_of_first_packet == m_bytes.size() but m_bytes may contain multiple packets.
+    // size_of_first_packet is the size of the initial packet which we'll replace with the decompressed
+    // version of, leaving the rest of m_bytes unmodified.
+    size_t size_of_first_packet = hash_mark_idx + 3; 
 
     // Compressed packets ("$C") start with a base10 number which is the size of the uncompressed payload,
     // then a : and then the compressed data.  e.g. $C1024:<binary>#00
@@ -604,7 +613,7 @@ GDBRemoteCommunication::DecompressPacket ()
             decompressed_bufsize = ::strtoul (bufsize_str.c_str(), NULL, 10);
             if (errno != 0 || decompressed_bufsize == ULONG_MAX)
             {
-                m_bytes.erase (0, pkt_size);
+                m_bytes.erase (0, size_of_first_packet);
                 return false;
             }
         }
@@ -633,7 +642,7 @@ GDBRemoteCommunication::DecompressPacket ()
         if (!success)
         {
             SendNack();
-            m_bytes.erase (0, pkt_size);
+            m_bytes.erase (0, size_of_first_packet);
             return false;
         }
         else
@@ -677,7 +686,7 @@ GDBRemoteCommunication::DecompressPacket ()
         decompressed_buffer = (uint8_t *) malloc (decompressed_bufsize + 1);
         if (decompressed_buffer == nullptr)
         {
-            m_bytes.erase (0, pkt_size);
+            m_bytes.erase (0, size_of_first_packet);
             return false;
         }
 
@@ -751,7 +760,7 @@ GDBRemoteCommunication::DecompressPacket ()
     {
         if (decompressed_buffer)
             free (decompressed_buffer);
-        m_bytes.erase (0, pkt_size);
+        m_bytes.erase (0, size_of_first_packet);
         return false;
     }
 
@@ -773,7 +782,7 @@ GDBRemoteCommunication::DecompressPacket ()
         new_packet.push_back ('0');
     }
 
-    m_bytes = new_packet;
+    m_bytes.replace (0, size_of_first_packet, new_packet.data(), new_packet.size());
 
     free (decompressed_buffer);
     return true;
