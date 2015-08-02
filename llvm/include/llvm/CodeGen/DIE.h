@@ -566,8 +566,6 @@ class DIEValueList {
   ListTy List;
 
 public:
-  bool empty() const { return List.empty(); }
-
   class const_iterator;
   class iterator
       : public iterator_adaptor_base<iterator, ListTy::iterator,
