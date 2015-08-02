@@ -566,59 +566,68 @@ class DIEValueList {
   ListTy List;
 
 public:
-  class const_iterator;
-  class iterator
-      : public iterator_adaptor_base<iterator, ListTy::iterator,
+  class const_value_iterator;
+  class value_iterator
+      : public iterator_adaptor_base<value_iterator, ListTy::iterator,
                                      std::forward_iterator_tag, DIEValue> {
-    friend class const_iterator;
-    typedef iterator_adaptor_base<iterator, ListTy::iterator,
+    friend class const_value_iterator;
+    typedef iterator_adaptor_base<value_iterator, ListTy::iterator,
                                   std::forward_iterator_tag,
                                   DIEValue> iterator_adaptor;
 
   public:
-    iterator() = default;
-    explicit iterator(ListTy::iterator X) : iterator_adaptor(X) {}
+    value_iterator() = default;
+    explicit value_iterator(ListTy::iterator X) : iterator_adaptor(X) {}
 
     explicit operator bool() const { return bool(wrapped()); }
     DIEValue &operator*() const { return wrapped()->V; }
   };
 
-  class const_iterator
-      : public iterator_adaptor_base<const_iterator, ListTy::const_iterator,
-                                     std::forward_iterator_tag,
-                                     const DIEValue> {
-    typedef iterator_adaptor_base<const_iterator, ListTy::const_iterator,
+  class const_value_iterator : public iterator_adaptor_base<
+                                   const_value_iterator, ListTy::const_iterator,
+                                   std::forward_iterator_tag, const DIEValue> {
+    typedef iterator_adaptor_base<const_value_iterator, ListTy::const_iterator,
                                   std::forward_iterator_tag,
                                   const DIEValue> iterator_adaptor;
 
   public:
-    const_iterator() = default;
-    const_iterator(DIEValueList::iterator X) : iterator_adaptor(X.wrapped()) {}
-    explicit const_iterator(ListTy::const_iterator X) : iterator_adaptor(X) {}
+    const_value_iterator() = default;
+    const_value_iterator(DIEValueList::value_iterator X)
+        : iterator_adaptor(X.wrapped()) {}
+    explicit const_value_iterator(ListTy::const_iterator X)
+        : iterator_adaptor(X) {}
 
     explicit operator bool() const { return bool(wrapped()); }
     const DIEValue &operator*() const { return wrapped()->V; }
   };
 
-  iterator insert(BumpPtrAllocator &Alloc, DIEValue V) {
+  typedef iterator_range<value_iterator> value_range;
+  typedef iterator_range<const_value_iterator> const_value_range;
+
+  value_iterator addValue(BumpPtrAllocator &Alloc, DIEValue V) {
     List.push_back(*new (Alloc) Node(V));
-    return iterator(ListTy::toIterator(List.back()));
+    return value_iterator(ListTy::toIterator(List.back()));
   }
-  template <class... Ts>
-  iterator emplace(BumpPtrAllocator &Alloc, Ts &&... Args) {
-    return insert(Alloc, DIEValue(std::forward<Ts>(Args)...));
+  template <class T>
+  value_iterator addValue(BumpPtrAllocator &Alloc, dwarf::Attribute Attribute,
+                    dwarf::Form Form, T &&Value) {
+    return addValue(Alloc, DIEValue(Attribute, Form, std::forward<T>(Value)));
   }
 
-  iterator begin() { return iterator(List.begin()); }
-  iterator end() { return iterator(List.end()); }
-  const_iterator begin() const { return const_iterator(List.begin()); }
-  const_iterator end() const { return const_iterator(List.end()); }
+  value_range values() {
+    return llvm::make_range(value_iterator(List.begin()),
+                            value_iterator(List.end()));
+  }
+  const_value_range values() const {
+    return llvm::make_range(const_value_iterator(List.begin()),
+                            const_value_iterator(List.end()));
+  }
 };
 
 //===--------------------------------------------------------------------===//
 /// DIE - A structured debug information entry.  Has an abbreviation which
 /// describes its organization.
-class DIE : IntrusiveBackListNode {
+class DIE : IntrusiveBackListNode, public DIEValueList {
   friend class IntrusiveBackList<DIE>;
 
 protected:
@@ -640,10 +649,6 @@ protected:
   IntrusiveBackList<DIE> Children;
 
   DIE *Parent = nullptr;
-
-  /// Attribute values.
-  ///
-  DIEValueList Values;
 
 protected:
   DIE() : Offset(0), Size(0) {}
@@ -675,20 +680,6 @@ public:
     return llvm::make_range(Children.begin(), Children.end());
   }
 
-  typedef DIEValueList::iterator value_iterator;
-  typedef iterator_range<value_iterator> value_range;
-
-  value_range values() {
-    return llvm::make_range(Values.begin(), Values.end());
-  }
-
-  typedef DIEValueList::const_iterator const_value_iterator;
-  typedef iterator_range<const_value_iterator> const_value_range;
-
-  const_value_range values() const {
-    return llvm::make_range(Values.begin(), Values.end());
-  }
-
   DIE *getParent() const { return Parent; }
 
   /// Generate the abbreviation for this DIE.
@@ -708,17 +699,6 @@ public:
   const DIE *getUnitOrNull() const;
   void setOffset(unsigned O) { Offset = O; }
   void setSize(unsigned S) { Size = S; }
-
-  /// addValue - Add a value and attributes to a DIE.
-  ///
-  value_iterator addValue(BumpPtrAllocator &Alloc, DIEValue Value) {
-    return Values.insert(Alloc, Value);
-  }
-  template <class T>
-  value_iterator addValue(BumpPtrAllocator &Alloc, dwarf::Attribute Attribute,
-                          dwarf::Form Form, T &&Value) {
-    return Values.emplace(Alloc, Attribute, Form, std::forward<T>(Value));
-  }
 
   /// Add a child to the DIE.
   DIE &addChild(DIE *Child) {

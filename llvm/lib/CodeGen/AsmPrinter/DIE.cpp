@@ -109,7 +109,7 @@ void DIEAbbrev::dump() { print(dbgs()); }
 
 DIEAbbrev DIE::generateAbbrev() const {
   DIEAbbrev Abbrev(Tag, hasChildren());
-  for (const DIEValue &V : Values)
+  for (const DIEValue &V : values())
     Abbrev.AddAttribute(V.getAttribute(), V.getForm());
   return Abbrev;
 }
@@ -166,7 +166,7 @@ void DIE::print(raw_ostream &O, unsigned IndentCount) const {
 
   IndentCount += 2;
   unsigned I = 0;
-  for (const auto &V : Values) {
+  for (const auto &V : values()) {
     O << Indent;
 
     if (!isBlock)
@@ -507,7 +507,7 @@ void DIETypeSignature::print(raw_ostream &O) const {
 ///
 unsigned DIELoc::ComputeSize(const AsmPrinter *AP) const {
   if (!Size) {
-    for (const auto &V : Values)
+    for (const auto &V : values())
       Size += V.SizeOf(AP);
   }
 
@@ -527,7 +527,7 @@ void DIELoc::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
     Asm->EmitULEB128(Size); break;
   }
 
-  for (const auto &V : Values)
+  for (const auto &V : values())
     V.EmitValue(Asm);
 }
 
@@ -560,7 +560,7 @@ void DIELoc::print(raw_ostream &O) const {
 ///
 unsigned DIEBlock::ComputeSize(const AsmPrinter *AP) const {
   if (!Size) {
-    for (const auto &V : Values)
+    for (const auto &V : values())
       Size += V.SizeOf(AP);
   }
 
@@ -578,7 +578,7 @@ void DIEBlock::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_block:  Asm->EmitULEB128(Size); break;
   }
 
-  for (const auto &V : Values)
+  for (const auto &V : values())
     V.EmitValue(Asm);
 }
 
