@@ -2323,7 +2323,7 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
 unsigned DwarfLinker::cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
                                           const DWARFFormValue &Val,
                                           unsigned AttrSize) {
-  DIE *Attr;
+  DIEValueList *Attr;
   DIEValue Value;
   DIELoc *Loc = nullptr;
   DIEBlock *Block = nullptr;
@@ -2335,7 +2335,8 @@ unsigned DwarfLinker::cloneBlockAttribute(DIE &Die, AttributeSpec AttrSpec,
     Block = new (DIEAlloc) DIEBlock;
     DIEBlocks.push_back(Block);
   }
-  Attr = Loc ? static_cast<DIE *>(Loc) : static_cast<DIE *>(Block);
+  Attr = Loc ? static_cast<DIEValueList *>(Loc)
+             : static_cast<DIEValueList *>(Block);
 
   if (Loc)
     Value = DIEValue(dwarf::Attribute(AttrSpec.Attr),
