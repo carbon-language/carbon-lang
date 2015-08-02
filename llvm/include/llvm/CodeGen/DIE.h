@@ -630,7 +630,6 @@ public:
 class DIE : IntrusiveBackListNode, public DIEValueList {
   friend class IntrusiveBackList<DIE>;
 
-protected:
   /// Offset - Offset in debug info section.
   ///
   unsigned Offset;
@@ -650,10 +649,7 @@ protected:
 
   DIE *Parent = nullptr;
 
-protected:
-  DIE() : Offset(0), Size(0) {}
-
-private:
+  DIE() = delete;
   explicit DIE(dwarf::Tag Tag) : Offset(0), Size(0), Tag(Tag) {}
 
 public:
@@ -723,7 +719,7 @@ public:
 //===--------------------------------------------------------------------===//
 /// DIELoc - Represents an expression location.
 //
-class DIELoc : public DIE {
+class DIELoc : public DIEValueList {
   mutable unsigned Size; // Size in bytes excluding size header.
 
 public:
@@ -759,7 +755,7 @@ public:
 //===--------------------------------------------------------------------===//
 /// DIEBlock - Represents a block of values.
 //
-class DIEBlock : public DIE {
+class DIEBlock : public DIEValueList {
   mutable unsigned Size; // Size in bytes excluding size header.
 
 public:
