@@ -192,18 +192,19 @@ void DwarfUnit::addFlag(DIE &Die, dwarf::Attribute Attribute) {
                  DIEInteger(1));
 }
 
-void DwarfUnit::addUInt(DIE &Die, dwarf::Attribute Attribute,
+void DwarfUnit::addUInt(DIEValueList &Die, dwarf::Attribute Attribute,
                         Optional<dwarf::Form> Form, uint64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(false, Integer);
   Die.addValue(DIEValueAllocator, Attribute, *Form, DIEInteger(Integer));
 }
 
-void DwarfUnit::addUInt(DIE &Block, dwarf::Form Form, uint64_t Integer) {
+void DwarfUnit::addUInt(DIEValueList &Block, dwarf::Form Form,
+                        uint64_t Integer) {
   addUInt(Block, (dwarf::Attribute)0, Form, Integer);
 }
 
-void DwarfUnit::addSInt(DIE &Die, dwarf::Attribute Attribute,
+void DwarfUnit::addSInt(DIEValueList &Die, dwarf::Attribute Attribute,
                         Optional<dwarf::Form> Form, int64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(true, Integer);
@@ -222,9 +223,10 @@ void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
                DIEString(DU->getStringPool().getEntry(*Asm, String)));
 }
 
-DIE::value_iterator DwarfUnit::addLabel(DIE &Die, dwarf::Attribute Attribute,
-                                        dwarf::Form Form,
-                                        const MCSymbol *Label) {
+DIEValueList::value_iterator DwarfUnit::addLabel(DIEValueList &Die,
+                                                 dwarf::Attribute Attribute,
+                                                 dwarf::Form Form,
+                                                 const MCSymbol *Label) {
   return Die.addValue(DIEValueAllocator, Attribute, Form, DIELabel(Label));
 }
 

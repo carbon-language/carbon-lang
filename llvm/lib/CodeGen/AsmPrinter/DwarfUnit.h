@@ -186,14 +186,14 @@ public:
   void addFlag(DIE &Die, dwarf::Attribute Attribute);
 
   /// Add an unsigned integer attribute data and value.
-  void addUInt(DIE &Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
-               uint64_t Integer);
+  void addUInt(DIEValueList &Die, dwarf::Attribute Attribute,
+               Optional<dwarf::Form> Form, uint64_t Integer);
 
-  void addUInt(DIE &Block, dwarf::Form Form, uint64_t Integer);
+  void addUInt(DIEValueList &Block, dwarf::Form Form, uint64_t Integer);
 
   /// Add an signed integer attribute data and value.
-  void addSInt(DIE &Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
-               int64_t Integer);
+  void addSInt(DIEValueList &Die, dwarf::Attribute Attribute,
+               Optional<dwarf::Form> Form, int64_t Integer);
 
   void addSInt(DIELoc &Die, Optional<dwarf::Form> Form, int64_t Integer);
 
@@ -206,8 +206,10 @@ public:
   void addString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
 
   /// Add a Dwarf label attribute data and value.
-  DIE::value_iterator addLabel(DIE &Die, dwarf::Attribute Attribute,
-                               dwarf::Form Form, const MCSymbol *Label);
+  DIEValueList::value_iterator addLabel(DIEValueList &Die,
+                                        dwarf::Attribute Attribute,
+                                        dwarf::Form Form,
+                                        const MCSymbol *Label);
 
   void addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label);
 
