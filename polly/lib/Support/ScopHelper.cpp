@@ -67,14 +67,6 @@ Value *polly::getPointerOperand(Instruction &Inst) {
   return 0;
 }
 
-Type *polly::getAccessInstType(Instruction *AccInst) {
-  if (StoreInst *Store = dyn_cast<StoreInst>(AccInst))
-    return Store->getValueOperand()->getType();
-  if (BranchInst *Branch = dyn_cast<BranchInst>(AccInst))
-    return Branch->getCondition()->getType();
-  return AccInst->getType();
-}
-
 bool polly::hasInvokeEdge(const PHINode *PN) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i)
     if (InvokeInst *II = dyn_cast<InvokeInst>(PN->getIncomingValue(i)))

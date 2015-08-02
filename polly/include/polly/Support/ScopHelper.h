@@ -53,9 +53,6 @@ bool hasInvokeEdge(const llvm::PHINode *PN);
 llvm::Value *getPointerOperand(llvm::Instruction &Inst);
 llvm::BasicBlock *createSingleExitEdge(llvm::Region *R, llvm::Pass *P);
 
-/// @brief Return the type of the access.
-llvm::Type *getAccessInstType(llvm::Instruction *AccInst);
-
 /// @brief Simplify the region in a SCoP to have a single unconditional entry
 ///        edge and a single exit edge.
 ///

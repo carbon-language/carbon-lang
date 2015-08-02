@@ -1136,6 +1136,10 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
     Instruction *ScalarInst = MA->getAccessInstruction();
     PHINode *ScalarBasePHI = dyn_cast<PHINode>(ScalarBase);
 
+    // Only generate accesses that belong to this basic block.
+    if (ScalarInst->getParent() != BB)
+      continue;
+
     Value *Val = nullptr;
     AllocaInst *ScalarAddr = nullptr;
 

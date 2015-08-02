@@ -134,10 +134,10 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       }
     }
 
-    // If the operand is a constant, global or argument we need an access
-    // instruction and just choose the PHI.
+    // If the operand is a constant, global or argument we use the terminator
+    // of the incoming basic block as the access instruction.
     if (!OpI)
-      OpI = PHI;
+      OpI = OpBB->getTerminator();
 
     Written = true;
 
