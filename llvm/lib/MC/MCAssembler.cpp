@@ -68,12 +68,12 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
   : Assembler(Asm), LastValidFragment()
  {
   // Compute the section layout order. Virtual sections must go last.
-  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
-    if (!it->isVirtualSection())
-      SectionOrder.push_back(&*it);
-  for (MCAssembler::iterator it = Asm.begin(), ie = Asm.end(); it != ie; ++it)
-    if (it->isVirtualSection())
-      SectionOrder.push_back(&*it);
+  for (MCSection &Sec : Asm)
+    if (!Sec.isVirtualSection())
+      SectionOrder.push_back(&Sec);
+  for (MCSection &Sec : Asm)
+    if (Sec.isVirtualSection())
+      SectionOrder.push_back(&Sec);
 }
 
 bool MCAsmLayout::isFragmentValid(const MCFragment *F) const {
@@ -786,15 +786,14 @@ void MCAssembler::writeSectionData(const MCSection *Sec,
     assert(Layout.getSectionFileSize(Sec) == 0 && "Invalid size for section!");
 
     // Check that contents are only things legal inside a virtual section.
-    for (MCSection::const_iterator it = Sec->begin(), ie = Sec->end(); it != ie;
-         ++it) {
-      switch (it->getKind()) {
+    for (const MCFragment &F : *Sec) {
+      switch (F.getKind()) {
       default: llvm_unreachable("Invalid fragment in virtual section!");
       case MCFragment::FT_Data: {
         // Check that we aren't trying to write a non-zero contents (or fixups)
         // into a virtual section. This is to support clients which use standard
         // directives to fill the contents of virtual sections.
-        const MCDataFragment &DF = cast<MCDataFragment>(*it);
+        const MCDataFragment &DF = cast<MCDataFragment>(F);
         assert(DF.fixup_begin() == DF.fixup_end() &&
                "Cannot have fixups in virtual section!");
         for (unsigned i = 0, e = DF.getContents().size(); i != e; ++i)
@@ -810,13 +809,13 @@ void MCAssembler::writeSectionData(const MCSection *Sec,
       case MCFragment::FT_Align:
         // Check that we aren't trying to write a non-zero value into a virtual
         // section.
-        assert((cast<MCAlignFragment>(it)->getValueSize() == 0 ||
-                cast<MCAlignFragment>(it)->getValue() == 0) &&
+        assert((cast<MCAlignFragment>(F).getValueSize() == 0 ||
+                cast<MCAlignFragment>(F).getValue() == 0) &&
                "Invalid align in virtual section!");
         break;
       case MCFragment::FT_Fill:
-        assert((cast<MCFillFragment>(it)->getValueSize() == 0 ||
-                cast<MCFillFragment>(it)->getValue() == 0) &&
+        assert((cast<MCFillFragment>(F).getValueSize() == 0 ||
+                cast<MCFillFragment>(F).getValue() == 0) &&
                "Invalid fill in virtual section!");
         break;
       }
@@ -828,9 +827,8 @@ void MCAssembler::writeSectionData(const MCSection *Sec,
   uint64_t Start = getWriter().getStream().tell();
   (void)Start;
 
-  for (MCSection::const_iterator it = Sec->begin(), ie = Sec->end(); it != ie;
-       ++it)
-    writeFragment(*this, Layout, *it);
+  for (const MCFragment &F : *Sec)
+    writeFragment(*this, Layout, F);
 
   assert(getWriter().getStream().tell() - Start ==
          Layout.getSectionAddressSize(Sec));
@@ -864,13 +862,13 @@ void MCAssembler::Finish() {
 
   // Create dummy fragments and assign section ordinals.
   unsigned SectionIndex = 0;
-  for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
+  for (MCSection &Sec : *this) {
     // Create dummy fragments to eliminate any empty sections, this simplifies
     // layout.
-    if (it->getFragmentList().empty())
-      new MCDataFragment(&*it);
+    if (Sec.getFragmentList().empty())
+      new MCDataFragment(&Sec);
 
-    it->setOrdinal(SectionIndex++);
+    Sec.setOrdinal(SectionIndex++);
   }
 
   // Assign layout order indices to sections and fragments.
@@ -879,9 +877,8 @@ void MCAssembler::Finish() {
     Sec->setLayoutOrder(i);
 
     unsigned FragmentIndex = 0;
-    for (MCSection::iterator iFrag = Sec->begin(), iFragEnd = Sec->end();
-         iFrag != iFragEnd; ++iFrag)
-      iFrag->setLayoutOrder(FragmentIndex++);
+    for (MCFragment &Frag : *Sec)
+      Frag.setLayoutOrder(FragmentIndex++);
   }
 
   // Layout until everything fits.
@@ -906,10 +903,9 @@ void MCAssembler::Finish() {
   getWriter().executePostLayoutBinding(*this, Layout);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
-  for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
-    for (MCSection::iterator it2 = it->begin(), ie2 = it->end(); it2 != ie2;
-         ++it2) {
-      MCEncodedFragment *F = dyn_cast<MCEncodedFragment>(it2);
+  for (MCSection &Sec : *this) {
+    for (MCFragment &Frag : Sec) {
+      MCEncodedFragment *F = dyn_cast<MCEncodedFragment>(&Frag);
       // Data and relaxable fragments both have fixups.  So only process
       // those here.
       // FIXME: Is there a better way to do this?  MCEncodedFragmentWithFixups
@@ -960,9 +956,8 @@ bool MCAssembler::fragmentNeedsRelaxation(const MCRelaxableFragment *F,
   if (!getBackend().mayNeedRelaxation(F->getInst()))
     return false;
 
-  for (MCRelaxableFragment::const_fixup_iterator it = F->fixup_begin(),
-       ie = F->fixup_end(); it != ie; ++it)
-    if (fixupNeedsRelaxation(*it, F, Layout))
+  for (const MCFixup &Fixup : F->getFixups())
+    if (fixupNeedsRelaxation(Fixup, F, Layout))
       return true;
 
   return false;
