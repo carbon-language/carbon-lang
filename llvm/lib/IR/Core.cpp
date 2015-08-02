@@ -2489,7 +2489,6 @@ LLVMValueRef LLVMBuildFree(LLVMBuilderRef B, LLVMValueRef PointerVal) {
      CallInst::CreateFree(unwrap(PointerVal), unwrap(B)->GetInsertBlock())));
 }
 
-
 LLVMValueRef LLVMBuildLoad(LLVMBuilderRef B, LLVMValueRef PointerVal,
                            const char *Name) {
   return wrap(unwrap(B)->CreateLoad(unwrap(PointerVal), Name));
@@ -2513,6 +2512,21 @@ static AtomicOrdering mapFromLLVMOrdering(LLVMAtomicOrdering Ordering) {
   }
 
   llvm_unreachable("Invalid LLVMAtomicOrdering value!");
+}
+
+static LLVMAtomicOrdering mapToLLVMOrdering(AtomicOrdering Ordering) {
+  switch (Ordering) {
+    case NotAtomic: return LLVMAtomicOrderingNotAtomic;
+    case Unordered: return LLVMAtomicOrderingUnordered;
+    case Monotonic: return LLVMAtomicOrderingMonotonic;
+    case Acquire: return LLVMAtomicOrderingAcquire;
+    case Release: return LLVMAtomicOrderingRelease;
+    case AcquireRelease: return LLVMAtomicOrderingAcquireRelease;
+    case SequentiallyConsistent:
+      return LLVMAtomicOrderingSequentiallyConsistent;
+  }
+
+  llvm_unreachable("Invalid AtomicOrdering value!");
 }
 
 LLVMValueRef LLVMBuildFence(LLVMBuilderRef B, LLVMAtomicOrdering Ordering,
@@ -2565,6 +2579,25 @@ void LLVMSetVolatile(LLVMValueRef MemAccessInst, LLVMBool isVolatile) {
   if (LoadInst *LI = dyn_cast<LoadInst>(P))
     return LI->setVolatile(isVolatile);
   return cast<StoreInst>(P)->setVolatile(isVolatile);
+}
+
+LLVMAtomicOrdering LLVMGetOrdering(LLVMValueRef MemAccessInst) {
+  Value *P = unwrap<Value>(MemAccessInst);
+  AtomicOrdering O;
+  if (LoadInst *LI = dyn_cast<LoadInst>(P))
+    O = LI->getOrdering();
+  else
+    O = cast<StoreInst>(P)->getOrdering();
+  return mapToLLVMOrdering(O);
+}
+
+void LLVMSetOrdering(LLVMValueRef MemAccessInst, LLVMAtomicOrdering Ordering) {
+  Value *P = unwrap<Value>(MemAccessInst);
+  AtomicOrdering O = mapFromLLVMOrdering(Ordering);
+
+  if (LoadInst *LI = dyn_cast<LoadInst>(P))
+    return LI->setOrdering(O);
+  return cast<StoreInst>(P)->setOrdering(O);
 }
 
 /*--.. Casts ...............................................................--*/

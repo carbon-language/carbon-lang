@@ -2792,6 +2792,8 @@ LLVMValueRef LLVMBuildGlobalStringPtr(LLVMBuilderRef B, const char *Str,
                                       const char *Name);
 LLVMBool LLVMGetVolatile(LLVMValueRef MemoryAccessInst);
 void LLVMSetVolatile(LLVMValueRef MemoryAccessInst, LLVMBool IsVolatile);
+LLVMAtomicOrdering LLVMGetOrdering(LLVMValueRef MemoryAccessInst);
+void LLVMSetOrdering(LLVMValueRef MemoryAccessInst, LLVMAtomicOrdering Ordering);
 
 /* Casts */
 LLVMValueRef LLVMBuildTrunc(LLVMBuilderRef, LLVMValueRef Val,
