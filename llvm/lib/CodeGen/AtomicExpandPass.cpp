@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/AtomicExpandUtils.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -50,7 +51,6 @@ namespace {
     bool expandAtomicStore(StoreInst *SI);
     bool tryExpandAtomicRMW(AtomicRMWInst *AI);
     bool expandAtomicRMWToLLSC(AtomicRMWInst *AI);
-    bool expandAtomicRMWToCmpXchg(AtomicRMWInst *AI);
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
     bool isIdempotentRMW(AtomicRMWInst *AI);
     bool simplifyIdempotentRMW(AtomicRMWInst *AI);
@@ -226,6 +226,17 @@ bool AtomicExpand::expandAtomicStore(StoreInst *SI) {
   return tryExpandAtomicRMW(AI);
 }
 
+static void createCmpXchgInstFun(IRBuilder<> &Builder, Value *Addr,
+                                 Value *Loaded, Value *NewVal,
+                                 AtomicOrdering MemOpOrder,
+                                 Value *&Success, Value *&NewLoaded) {
+  Value* Pair = Builder.CreateAtomicCmpXchg(
+      Addr, Loaded, NewVal, MemOpOrder,
+      AtomicCmpXchgInst::getStrongestFailureOrdering(MemOpOrder));
+  Success = Builder.CreateExtractValue(Pair, 1, "success");
+  NewLoaded = Builder.CreateExtractValue(Pair, 0, "newloaded");
+}
+
 bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
   switch (TLI->shouldExpandAtomicRMWInIR(AI)) {
   case TargetLoweringBase::AtomicRMWExpansionKind::None:
@@ -239,7 +250,7 @@ bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
     return expandAtomicRMWToLLSC(AI);
   }
   case TargetLoweringBase::AtomicRMWExpansionKind::CmpXChg: {
-    return expandAtomicRMWToCmpXchg(AI);
+    return expandAtomicRMWToCmpXchg(AI, createCmpXchgInstFun);
   }
   }
   llvm_unreachable("Unhandled case in tryExpandAtomicRMW");
@@ -332,70 +343,6 @@ bool AtomicExpand::expandAtomicRMWToLLSC(AtomicRMWInst *AI) {
   Builder.SetInsertPoint(ExitBB, ExitBB->begin());
 
   AI->replaceAllUsesWith(Loaded);
-  AI->eraseFromParent();
-
-  return true;
-}
-
-bool AtomicExpand::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI) {
-  AtomicOrdering MemOpOrder =
-      AI->getOrdering() == Unordered ? Monotonic : AI->getOrdering();
-  Value *Addr = AI->getPointerOperand();
-  BasicBlock *BB = AI->getParent();
-  Function *F = BB->getParent();
-  LLVMContext &Ctx = F->getContext();
-
-  // Given: atomicrmw some_op iN* %addr, iN %incr ordering
-  //
-  // The standard expansion we produce is:
-  //     [...]
-  //     %init_loaded = load atomic iN* %addr
-  //     br label %loop
-  // loop:
-  //     %loaded = phi iN [ %init_loaded, %entry ], [ %new_loaded, %loop ]
-  //     %new = some_op iN %loaded, %incr
-  //     %pair = cmpxchg iN* %addr, iN %loaded, iN %new
-  //     %new_loaded = extractvalue { iN, i1 } %pair, 0
-  //     %success = extractvalue { iN, i1 } %pair, 1
-  //     br i1 %success, label %atomicrmw.end, label %loop
-  // atomicrmw.end:
-  //     [...]
-  BasicBlock *ExitBB = BB->splitBasicBlock(AI, "atomicrmw.end");
-  BasicBlock *LoopBB = BasicBlock::Create(Ctx, "atomicrmw.start", F, ExitBB);
-
-  // This grabs the DebugLoc from AI.
-  IRBuilder<> Builder(AI);
-
-  // The split call above "helpfully" added a branch at the end of BB (to the
-  // wrong place), but we want a load. It's easiest to just remove
-  // the branch entirely.
-  std::prev(BB->end())->eraseFromParent();
-  Builder.SetInsertPoint(BB);
-  LoadInst *InitLoaded = Builder.CreateLoad(Addr);
-  // Atomics require at least natural alignment.
-  InitLoaded->setAlignment(AI->getType()->getPrimitiveSizeInBits());
-  Builder.CreateBr(LoopBB);
-
-  // Start the main loop block now that we've taken care of the preliminaries.
-  Builder.SetInsertPoint(LoopBB);
-  PHINode *Loaded = Builder.CreatePHI(AI->getType(), 2, "loaded");
-  Loaded->addIncoming(InitLoaded, BB);
-
-  Value *NewVal =
-      performAtomicOp(AI->getOperation(), Builder, Loaded, AI->getValOperand());
-
-  Value *Pair = Builder.CreateAtomicCmpXchg(
-      Addr, Loaded, NewVal, MemOpOrder,
-      AtomicCmpXchgInst::getStrongestFailureOrdering(MemOpOrder));
-  Value *NewLoaded = Builder.CreateExtractValue(Pair, 0, "newloaded");
-  Loaded->addIncoming(NewLoaded, LoopBB);
-
-  Value *Success = Builder.CreateExtractValue(Pair, 1, "success");
-  Builder.CreateCondBr(Success, ExitBB, LoopBB);
-
-  Builder.SetInsertPoint(ExitBB, ExitBB->begin());
-
-  AI->replaceAllUsesWith(NewLoaded);
   AI->eraseFromParent();
 
   return true;
@@ -561,4 +508,73 @@ bool AtomicExpand::simplifyIdempotentRMW(AtomicRMWInst* RMWI) {
     return true;
   }
   return false;
+}
+
+bool llvm::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI,
+                                    CreateCmpXchgInstFun CreateCmpXchg) {
+  assert(AI);
+
+  AtomicOrdering MemOpOrder =
+      AI->getOrdering() == Unordered ? Monotonic : AI->getOrdering();
+  Value *Addr = AI->getPointerOperand();
+  BasicBlock *BB = AI->getParent();
+  Function *F = BB->getParent();
+  LLVMContext &Ctx = F->getContext();
+
+  // Given: atomicrmw some_op iN* %addr, iN %incr ordering
+  //
+  // The standard expansion we produce is:
+  //     [...]
+  //     %init_loaded = load atomic iN* %addr
+  //     br label %loop
+  // loop:
+  //     %loaded = phi iN [ %init_loaded, %entry ], [ %new_loaded, %loop ]
+  //     %new = some_op iN %loaded, %incr
+  //     %pair = cmpxchg iN* %addr, iN %loaded, iN %new
+  //     %new_loaded = extractvalue { iN, i1 } %pair, 0
+  //     %success = extractvalue { iN, i1 } %pair, 1
+  //     br i1 %success, label %atomicrmw.end, label %loop
+  // atomicrmw.end:
+  //     [...]
+  BasicBlock *ExitBB = BB->splitBasicBlock(AI, "atomicrmw.end");
+  BasicBlock *LoopBB = BasicBlock::Create(Ctx, "atomicrmw.start", F, ExitBB);
+
+  // This grabs the DebugLoc from AI.
+  IRBuilder<> Builder(AI);
+
+  // The split call above "helpfully" added a branch at the end of BB (to the
+  // wrong place), but we want a load. It's easiest to just remove
+  // the branch entirely.
+  std::prev(BB->end())->eraseFromParent();
+  Builder.SetInsertPoint(BB);
+  LoadInst *InitLoaded = Builder.CreateLoad(Addr);
+  // Atomics require at least natural alignment.
+  InitLoaded->setAlignment(AI->getType()->getPrimitiveSizeInBits());
+  Builder.CreateBr(LoopBB);
+
+  // Start the main loop block now that we've taken care of the preliminaries.
+  Builder.SetInsertPoint(LoopBB);
+  PHINode *Loaded = Builder.CreatePHI(AI->getType(), 2, "loaded");
+  Loaded->addIncoming(InitLoaded, BB);
+
+  Value *NewVal =
+      performAtomicOp(AI->getOperation(), Builder, Loaded, AI->getValOperand());
+
+  Value *NewLoaded = nullptr;
+  Value *Success = nullptr;
+
+  CreateCmpXchg(Builder, Addr, Loaded, NewVal, MemOpOrder,
+                Success, NewLoaded);
+  assert(Success && NewLoaded);
+
+  Loaded->addIncoming(NewLoaded, LoopBB);
+
+  Builder.CreateCondBr(Success, ExitBB, LoopBB);
+
+  Builder.SetInsertPoint(ExitBB, ExitBB->begin());
+
+  AI->replaceAllUsesWith(NewLoaded);
+  AI->eraseFromParent();
+
+  return true;
 }
