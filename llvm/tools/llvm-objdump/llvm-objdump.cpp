@@ -1521,9 +1521,8 @@ static void DumpObject(const ObjectFile *o) {
 
 /// @brief Dump each object file in \a a;
 static void DumpArchive(const Archive *a) {
-  for (Archive::child_iterator i = a->child_begin(), e = a->child_end(); i != e;
-       ++i) {
-    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = i->getAsBinary();
+  for (const Archive::Child &C : a->children()) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
     if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
