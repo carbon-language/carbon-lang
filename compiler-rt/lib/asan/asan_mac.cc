@@ -99,21 +99,16 @@ void DisableReexec() {
   reexec_disabled = true;
 }
 
+extern "C" double dyldVersionNumber;
+static const double kMinDyldVersionWithAutoInterposition = 360.0;
+
 bool DyldNeedsEnvVariable() {
-// If running on OS X 10.11+ or iOS 9.0+, dyld will interpose even if
-// DYLD_INSERT_LIBRARIES is not set.
-
-#if SANITIZER_IOSSIM
-  // GetMacosVersion will not work for the simulator, whose kernel version
-  // is tied to the host. Use a weak linking hack for the simulator.
-  // This API was introduced in the same version of the OS as the dyld
-  // optimization.
-
-  // Check for presence of a symbol that is available on OS X 10.11+, iOS 9.0+.
-  return (dlsym(RTLD_NEXT, "mach_memory_info") == nullptr);
-#else
-  return (GetMacosVersion() <= MACOS_VERSION_YOSEMITE);
-#endif
+  // If running on OS X 10.11+ or iOS 9.0+, dyld will interpose even if
+  // DYLD_INSERT_LIBRARIES is not set. However, checking OS version via
+  // GetMacosVersion() doesn't work for the simulator. Let's instead check
+  // `dyldVersionNumber`, which is exported by dyld, against a known version
+  // number from the first OS release where this appeared.
+  return dyldVersionNumber < kMinDyldVersionWithAutoInterposition;
 }
 
 void MaybeReexec() {
