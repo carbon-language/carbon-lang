@@ -10,7 +10,7 @@
 
 // RUN: %clang -target shave -c -### %s -Icommon 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=movicompile
-// movicompile: moviCompile" "-DMYRIAD2"
+// movicompile: moviCompile" "-DMYRIAD2" "-mcpu=myriad2" "-S" "-I" "common"
 // movicompile: moviAsm" "-no6thSlotCompression" "-cv:myriad2" "-noSPrefixing" "-a" "-i:common" "-elf"
 
 // RUN: %clang -target shave -c -### %s -DEFINE_ME -UNDEFINE_ME 2>&1 \
@@ -20,3 +20,9 @@
 // RUN: %clang -target shave -c -### %s -Icommon -iquote quotepath -isystem syspath 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=includes
 // includes: "-iquote" "quotepath" "-isystem" "syspath"
+
+// RUN: %clang -target shave -c -### %s -g -fno-inline-functions \
+// RUN: -fno-inline-functions-called-once -Os -Wall \
+// RUN: -ffunction-sections 2>&1 | FileCheck %s -check-prefix=F_G_O_W_OPTIONS
+// F_G_O_W_OPTIONS: "-g" "-fno-inline-functions" "-fno-inline-functions-called-once"
+// F_G_O_W_OPTIONS: "-Os" "-Wall" "-ffunction-sections"

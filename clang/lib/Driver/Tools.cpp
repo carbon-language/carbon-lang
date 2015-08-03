@@ -9482,26 +9482,21 @@ void tools::SHAVE::Compiler::ConstructJob(Compilation &C, const JobAction &JA,
   assert(II.getType() == types::TY_C || II.getType() == types::TY_CXX);
   assert(Output.getType() == types::TY_PP_Asm); // Require preprocessed asm.
 
-  // Append all -I, -iquote, -isystem paths, and defines/undefines.
-  // These are spelled the same way in clang and moviCompile.
-  Args.AddAllArgs(CmdArgs,
-                  {options::OPT_clang_i_Group, options::OPT_D, options::OPT_U});
-
   CmdArgs.push_back("-DMYRIAD2");
   CmdArgs.push_back("-mcpu=myriad2");
   CmdArgs.push_back("-S");
 
-  // Any -O option passes through without translation. What about -Ofast ?
-  if (Arg *A = Args.getLastArg(options::OPT_O_Group))
-    A->render(Args, CmdArgs);
-
-  if (Args.hasFlag(options::OPT_ffunction_sections,
-                   options::OPT_fno_function_sections)) {
-    CmdArgs.push_back("-ffunction-sections");
-  }
-  if (Args.hasArg(options::OPT_fno_inline_functions))
-    CmdArgs.push_back("-fno-inline-functions");
-
+  // Append all -I, -iquote, -isystem paths, defines/undefines,
+  // 'f' flags, optimize flags, and warning options.
+  // These are spelled the same way in clang and moviCompile.
+  Args.AddAllArgs(CmdArgs,
+                  {options::OPT_I_Group, options::OPT_clang_i_Group,
+                   options::OPT_D, options::OPT_U,
+                   options::OPT_f_Group,
+                   options::OPT_f_clang_Group,
+                   options::OPT_g_Group,
+                   options::OPT_O_Group,
+                   options::OPT_W_Group});
   CmdArgs.push_back("-fno-exceptions"); // Always do this even if unspecified.
 
   CmdArgs.push_back(II.getFilename());
