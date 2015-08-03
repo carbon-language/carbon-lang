@@ -446,11 +446,10 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
 
 /// trackRegDefsUses - Remember what registers the specified instruction uses
 /// and modifies.
-static void trackRegDefsUses(MachineInstr *MI, BitVector &ModifiedRegs,
+static void trackRegDefsUses(const MachineInstr *MI, BitVector &ModifiedRegs,
                              BitVector &UsedRegs,
                              const TargetRegisterInfo *TRI) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->operands()) {
     if (MO.isRegMask())
       ModifiedRegs.setBitsNotInMask(MO.getRegMask());
 

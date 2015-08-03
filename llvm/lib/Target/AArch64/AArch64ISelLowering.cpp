@@ -2690,8 +2690,8 @@ bool AArch64TargetLowering::isEligibleForTailCallOptimization(
                    *DAG.getContext());
 
     CCInfo.AnalyzeCallOperands(Outs, CCAssignFnForCall(CalleeCC, true));
-    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i)
-      if (!ArgLocs[i].isRegLoc())
+    for (const CCValAssign &ArgLoc : ArgLocs)
+      if (!ArgLoc.isRegLoc())
         return false;
   }
 
@@ -3039,9 +3039,9 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
   SDValue InFlag;
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, DL, RegsToPass[i].first,
-                             RegsToPass[i].second, InFlag);
+  for (auto &RegToPass : RegsToPass) {
+    Chain = DAG.getCopyToReg(Chain, DL, RegToPass.first,
+                             RegToPass.second, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -3097,9 +3097,9 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Add argument registers to the end of the list so that they are known live
   // into the call.
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
-    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
-                                  RegsToPass[i].second.getValueType()));
+  for (auto &RegToPass : RegsToPass)
+    Ops.push_back(DAG.getRegister(RegToPass.first,
+                                  RegToPass.second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
   const uint32_t *Mask;
@@ -5894,11 +5894,10 @@ static SDValue NormalizeBuildVector(SDValue Op,
     return Op;
 
   SmallVector<SDValue, 16> Ops;
-  for (unsigned I = 0, E = VT.getVectorNumElements(); I != E; ++I) {
-    SDValue Lane = Op.getOperand(I);
-    if (Lane.getOpcode() == ISD::Constant) {
+  for (SDValue Lane : Op->ops()) {
+    if (auto *CstLane = dyn_cast<ConstantSDNode>(Lane)) {
       APInt LowBits(EltTy.getSizeInBits(),
-                    cast<ConstantSDNode>(Lane)->getZExtValue());
+                    CstLane->getZExtValue());
       Lane = DAG.getConstant(LowBits.getZExtValue(), dl, MVT::i32);
     }
     Ops.push_back(Lane);

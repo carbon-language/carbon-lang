@@ -786,13 +786,13 @@ void AArch64ConditionalCompares::updateDomTree(
   // convert() removes CmpBB which was previously dominated by Head.
   // CmpBB children should be transferred to Head.
   MachineDomTreeNode *HeadNode = DomTree->getNode(CmpConv.Head);
-  for (unsigned i = 0, e = Removed.size(); i != e; ++i) {
-    MachineDomTreeNode *Node = DomTree->getNode(Removed[i]);
+  for (MachineBasicBlock *RemovedMBB : Removed) {
+    MachineDomTreeNode *Node = DomTree->getNode(RemovedMBB);
     assert(Node != HeadNode && "Cannot erase the head node");
     assert(Node->getIDom() == HeadNode && "CmpBB should be dominated by Head");
     while (Node->getNumChildren())
       DomTree->changeImmediateDominator(Node->getChildren().back(), HeadNode);
-    DomTree->eraseNode(Removed[i]);
+    DomTree->eraseNode(RemovedMBB);
   }
 }
 
@@ -801,8 +801,8 @@ void
 AArch64ConditionalCompares::updateLoops(ArrayRef<MachineBasicBlock *> Removed) {
   if (!Loops)
     return;
-  for (unsigned i = 0, e = Removed.size(); i != e; ++i)
-    Loops->removeBlock(Removed[i]);
+  for (MachineBasicBlock *RemovedMBB : Removed)
+    Loops->removeBlock(RemovedMBB);
 }
 
 /// Invalidate MachineTraceMetrics before if-conversion.
