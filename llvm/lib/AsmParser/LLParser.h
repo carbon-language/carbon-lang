@@ -67,12 +67,12 @@ namespace llvm {
     std::unique_ptr<Constant *[]> ConstantStructElts;
 
     ValID() = default;
-    ValID(ValID &&RHS)
+    ValID(const ValID &RHS)
         : Kind(RHS.Kind), Loc(RHS.Loc), UIntVal(RHS.UIntVal), FTy(RHS.FTy),
-          StrVal(std::move(RHS.StrVal)), StrVal2(std::move(RHS.StrVal2)),
-          APSIntVal(std::move(RHS.APSIntVal)),
-          APFloatVal(std::move(RHS.APFloatVal)), ConstantVal(RHS.ConstantVal),
-          ConstantStructElts(std::move(RHS.ConstantStructElts)) {}
+          StrVal(RHS.StrVal), StrVal2(RHS.StrVal2), APSIntVal(RHS.APSIntVal),
+          APFloatVal(RHS.APFloatVal), ConstantVal(RHS.ConstantVal) {
+      assert(!RHS.ConstantStructElts);
+    }
 
     bool operator<(const ValID &RHS) const {
       if (Kind == t_LocalID || Kind == t_GlobalID)

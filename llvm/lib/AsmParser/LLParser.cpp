@@ -2609,9 +2609,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     if (!F) {
       // Make a global variable as a placeholder for this reference.
       GlobalValue *&FwdRef =
-          ForwardRefBlockAddresses.emplace(std::piecewise_construct,
-                                           std::forward_as_tuple(std::move(Fn)),
-                                           std::forward_as_tuple())
+          ForwardRefBlockAddresses.insert(std::make_pair, std::move(Fn),
+                                          std::map<ValID, GlobalValue *>())
               .first->second.insert(std::make_pair(std::move(Label), nullptr))
               .first->second;
       if (!FwdRef)
