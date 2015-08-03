@@ -111,6 +111,11 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   // FIXME: setOperationAction...
 }
 
+MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
+                                                      EVT VT) const {
+  return VT.getSimpleVT();
+}
+
 //===----------------------------------------------------------------------===//
 // WebAssembly Lowering private implementation.
 //===----------------------------------------------------------------------===//

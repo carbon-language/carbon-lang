@@ -109,39 +109,35 @@ define i64 @xor64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; FIXME: 64-bit shifts have an extra truncate of the input shift value, which
-;        WebAssembly hasn't taught isel to match yet. Fix with
-;        getScalarShiftAmountTy.
+; CHECK-LABEL: shl64:
+; CHECK-NEXT: (setlocal @0 (argument 1))
+; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (setlocal @2 (SHL_I64 @1 @0))
+; CHECK-NEXT: (return @2)
+define i64 @shl64(i64 %x, i64 %y) {
+  %a = shl i64 %x, %y
+  ret i64 %a
+}
 
-; C;HECK-LABEL: shl64:
-; C;HECK-NEXT: (setlocal @0 (argument 1))
-; C;HECK-NEXT: (setlocal @1 (argument 0))
-; C;HECK-NEXT: (setlocal @2 (SHL_I64 @1 @0))
-; C;HECK-NEXT: (return @2)
-;define i64 @shl64(i64 %x, i64 %y) {
-;  %a = shl i64 %x, %y
-;  ret i64 %a
-;}
+; CHECK-LABEL: shr64:
+; CHECK-NEXT: (setlocal @0 (argument 1))
+; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (setlocal @2 (SHR_I64 @1 @0))
+; CHECK-NEXT: (return @2)
+define i64 @shr64(i64 %x, i64 %y) {
+  %a = lshr i64 %x, %y
+  ret i64 %a
+}
 
-; C;HECK-LABEL: shr64:
-; C;HECK-NEXT: (setlocal @0 (argument 1))
-; C;HECK-NEXT: (setlocal @1 (argument 0))
-; C;HECK-NEXT: (setlocal @2 (SHR_I64 @1 @0))
-; C;HECK-NEXT: (return @2)
-;define i64 @shr64(i64 %x, i64 %y) {
-;  %a = lshr i64 %x, %y
-;  ret i64 %a
-;}
-
-; C;HECK-LABEL: sar64:
-; C;HECK-NEXT: (setlocal @0 (argument 1))
-; C;HECK-NEXT: (setlocal @1 (argument 0))
-; C;HECK-NEXT: (setlocal @2 (SAR_I64 @1 @0))
-; C;HECK-NEXT: (return @2)
-;define i64 @sar64(i64 %x, i64 %y) {
-;  %a = ashr i64 %x, %y
-;  ret i64 %a
-;}
+; CHECK-LABEL: sar64:
+; CHECK-NEXT: (setlocal @0 (argument 1))
+; CHECK-NEXT: (setlocal @1 (argument 0))
+; CHECK-NEXT: (setlocal @2 (SAR_I64 @1 @0))
+; CHECK-NEXT: (return @2)
+define i64 @sar64(i64 %x, i64 %y) {
+  %a = ashr i64 %x, %y
+  ret i64 %a
+}
 
 ; CHECK-LABEL: clz64:
 ; CHECK-NEXT: (setlocal @0 (argument 0))

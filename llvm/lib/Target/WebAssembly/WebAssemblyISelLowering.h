@@ -45,6 +45,8 @@ private:
   /// right decision when generating code for different targets.
   const WebAssemblySubtarget *Subtarget;
 
+  MVT getScalarShiftAmountTy(const DataLayout &DL, EVT) const override;
+
   bool CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
                       bool isVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
