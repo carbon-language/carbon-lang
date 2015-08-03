@@ -60,8 +60,6 @@ define void @check_vfp_fold() minsize {
 ; CHECK: vpush {d6, d7, d8, d9}
 ; CHECK-NOT: sub sp,
 ; ...
-; CHECK: vldmia r[[GLOBREG]], {d8, d9}
-; ...
 ; CHECK-NOT: add sp,
 ; CHECK: vpop {d6, d7, d8, d9}
 ; CHECKL pop {r[[GLOBREG]], pc}
@@ -82,9 +80,8 @@ define void @check_vfp_fold() minsize {
 
   %var = alloca i8, i32 16
 
-  %tmp = load %bigVec, %bigVec* @var
+  call void asm "", "r,~{d8},~{d9}"(i8* %var)
   call void @bar(i8* %var)
-  store %bigVec %tmp, %bigVec* @var
 
   ret void
 }

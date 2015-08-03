@@ -413,6 +413,8 @@ public:
     return isTargetMachO() ? (ReserveR9 || !HasV6Ops) : ReserveR9;
   }
 
+  bool useStride4VFPs(const MachineFunction &MF) const;
+
   bool useMovt(const MachineFunction &MF) const;
 
   bool supportsTailCall() const { return SupportsTailCall; }

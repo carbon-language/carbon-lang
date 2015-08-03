@@ -266,12 +266,19 @@ def CCR : RegisterClass<"ARM", [i32], 32, (add CPSR)> {
 }
 
 // Scalar single precision floating point register class..
-// FIXME: Allocation order changed to s0, s2, s4, ... as a quick hack to
-// avoid partial-write dependencies on D registers (S registers are
-// renamed as portions of D registers).
-def SPR : RegisterClass<"ARM", [f32], 32, (add (decimate
-                                                (sequence "S%u", 0, 31), 2),
-                                               (sequence "S%u", 0, 31))>;
+// FIXME: Allocation order changed to s0, s2, ... or s0, s4, ... as a quick hack
+// to avoid partial-write dependencies on D or Q (depending on platform)
+// registers (S registers are renamed as portions of D/Q registers).
+def SPR : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 31)> {
+  let AltOrders = [(add (decimate SPR, 2), SPR),
+                   (add (decimate SPR, 4),
+                        (decimate SPR, 2),
+                        (decimate (rotl SPR, 1), 4),
+                        (decimate (rotl SPR, 1), 2))];
+  let AltOrderSelect = [{
+    return 1 + MF.getSubtarget<ARMSubtarget>().useStride4VFPs(MF);
+  }];
+}
 
 // Subset of SPR which can be used as a source of NEON scalars for 16-bit
 // operations
@@ -283,9 +290,13 @@ def SPR_8 : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 15)>;
 // is double-word alignment though.
 def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
                         (sequence "D%u", 0, 31)> {
-  // Allocate non-VFP2 registers D16-D31 first.
-  let AltOrders = [(rotl DPR, 16)];
-  let AltOrderSelect = [{ return 1; }];
+  // Allocate non-VFP2 registers D16-D31 first, and prefer even registers on
+  // Darwin platforms.
+  let AltOrders = [(rotl DPR, 16),
+                   (add (decimate (rotl DPR, 16), 2), (rotl DPR, 16))];
+  let AltOrderSelect = [{
+    return 1 + MF.getSubtarget<ARMSubtarget>().useStride4VFPs(MF);
+  }];
 }
 
 // Subset of DPR that are accessible with VFP2 (and so that also have

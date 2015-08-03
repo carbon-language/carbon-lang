@@ -167,6 +167,7 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       ArchFS = FS;
   }
   ParseSubtargetFeatures(CPUString, ArchFS);
+  printf("A-class: %d\n", static_cast<bool>(getFeatureBits()[ARM::ProcSwift]));
 
   // FIXME: This used enable V6T2 support implicitly for Thumb2 mode.
   // Assert this for now to make the change obvious.
@@ -283,6 +284,10 @@ bool ARMSubtarget::enablePostRAScheduler() const {
 
 bool ARMSubtarget::enableAtomicExpand() const {
   return hasAnyDataBarrier() && !isThumb1Only();
+}
+
+bool ARMSubtarget::useStride4VFPs(const MachineFunction &MF) const {
+  return isSwift() && !MF.getFunction()->hasFnAttribute(Attribute::MinSize);
 }
 
 bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
