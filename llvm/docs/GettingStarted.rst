@@ -49,11 +49,19 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``cd llvm/tools``
    * ``svn co http://llvm.org/svn/llvm-project/cfe/trunk clang``
 
-#. Checkout Compiler-RT:
+#. Checkout Compiler-RT (required to build the sanitisers):
 
    * ``cd where-you-want-llvm-to-live``
    * ``cd llvm/projects``
    * ``svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt``
+
+#. Checkout libcxx and libcxxabi (required if you want to use the sanitisers
+   on C++ code):
+
+   * ``cd where-you-want-llvm-to-live``
+   * ``cd llvm/projects``
+   * ``svn co http://llvm.org/svn/llvm-project/libcxx/trunk libcxx``
+   * ``svn co http://llvm.org/svn/llvm-project/libcxxabi/trunk libcxxabi``
 
 #. Get the Test Suite Source Code **[Optional]**
 
@@ -521,12 +529,21 @@ If you want to check out clang too, run:
   % cd llvm/tools
   % git clone http://llvm.org/git/clang.git
 
-If you want to check out compiler-rt too, run:
+If you want to check out compiler-rt (required to build the sanitisers), run:
 
 .. code-block:: console
 
   % cd llvm/projects
   % git clone http://llvm.org/git/compiler-rt.git
+
+If you want to check out libcxx and libcxxabi (required if you want to use the
+sanitisers on C++ code), run:
+
+.. code-block:: console
+
+  % cd llvm/projects
+  % git clone http://llvm.org/git/libcxx.git
+  % git clone http://llvm.org/git/libcxxabi.git
 
 If you want to check out the Test Suite Source Code (optional), run:
 
