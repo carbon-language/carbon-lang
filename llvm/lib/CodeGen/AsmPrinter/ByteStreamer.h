@@ -24,16 +24,19 @@
 
 namespace llvm {
 class ByteStreamer {
- public:
-  virtual ~ByteStreamer() {}
+ protected:
+  ~ByteStreamer() = default;
+  ByteStreamer(const ByteStreamer&) = default;
+  ByteStreamer() = default;
 
+ public:
   // For now we're just handling the calls we need for dwarf emission/hashing.
   virtual void EmitInt8(uint8_t Byte, const Twine &Comment = "") = 0;
   virtual void EmitSLEB128(uint64_t DWord, const Twine &Comment = "") = 0;
   virtual void EmitULEB128(uint64_t DWord, const Twine &Comment = "") = 0;
 };
 
-class APByteStreamer : public ByteStreamer {
+class APByteStreamer final : public ByteStreamer {
 private:
   AsmPrinter &AP;
 
@@ -53,7 +56,7 @@ public:
   }
 };
 
-class HashingByteStreamer : public ByteStreamer {
+class HashingByteStreamer final : public ByteStreamer {
  private:
   DIEHash &Hash;
  public:
@@ -69,7 +72,7 @@ class HashingByteStreamer : public ByteStreamer {
   }
 };
 
-class BufferByteStreamer : public ByteStreamer {
+class BufferByteStreamer final : public ByteStreamer {
 private:
   SmallVectorImpl<char> &Buffer;
   SmallVectorImpl<std::string> &Comments;
