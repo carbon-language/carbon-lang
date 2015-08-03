@@ -30,7 +30,7 @@ void UnusedAliasDeclsCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void UnusedAliasDeclsCheck::check(const MatchFinder::MatchResult &Result) {
-  if (const auto *AliasDecl = Result.Nodes.getNodeAs<Decl>("alias")) {
+  if (const auto *AliasDecl = Result.Nodes.getNodeAs<NamedDecl>("alias")) {
     FoundDecls[AliasDecl] = CharSourceRange::getCharRange(
         AliasDecl->getLocStart(),
         Lexer::findLocationAfterToken(
@@ -52,7 +52,8 @@ void UnusedAliasDeclsCheck::onEndOfTranslationUnit() {
   for (const auto &FoundDecl : FoundDecls) {
     if (!FoundDecl.second.isValid())
       continue;
-    diag(FoundDecl.first->getLocation(), "this namespace alias decl is unused")
+    diag(FoundDecl.first->getLocation(), "namespace alias decl '%0' is unused")
+        << FoundDecl.first->getName()
         << FixItHint::CreateRemoval(FoundDecl.second);
   }
 }

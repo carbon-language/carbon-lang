@@ -25,7 +25,7 @@ public:
   void onEndOfTranslationUnit() override;
 
 private:
-  llvm::DenseMap<const Decl *, CharSourceRange> FoundDecls;
+  llvm::DenseMap<const NamedDecl *, CharSourceRange> FoundDecls;
 };
 
 } // namespace tidy
