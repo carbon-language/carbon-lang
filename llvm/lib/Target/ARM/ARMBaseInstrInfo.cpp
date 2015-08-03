@@ -518,7 +518,7 @@ bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
 
 static bool isCPSRDefined(const MachineInstr *MI) {
   for (const auto &MO : MI->operands())
-    if (MO.isReg() && MO.getReg() == ARM::CPSR && MO.isDef())
+    if (MO.isReg() && MO.getReg() == ARM::CPSR && MO.isDef() && !MO.isDead())
       return true;
   return false;
 }

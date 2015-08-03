@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck -check-prefix CHECK-V7 %s
-; RUN: llc -mtriple=thumbv8 %s -o - | FileCheck %s -check-prefix CHECK-V8
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=thumbv8 %s -o - | FileCheck %s
 ; PR11107
 
 define i32 @test(i32 %a, i32 %b) {
@@ -14,17 +14,13 @@ entry:
  ret i32 %add
 }
 
-; CHECK-V7:        cmp
-; CHECK-V7-NEXT:   it    mi
-; CHECK-V7-NEXT:   rsbmi
-; CHECK-V7-NEXT:   cmp
-; CHECK-V7-NEXT:   it    mi
-; CHECK-V7-NEXT:   rsbmi
+; CHECK:        cmp
+; CHECK-NEXT:   it    mi
+; We shouldn't need to check for the extra 's' here; tRSB should be printed as
+; "rsb" inside an IT block, not "rsbs".
+; CHECK-NEXT:   rsb{{s?}}mi
+; CHECK-NEXT:   cmp
+; CHECK-NEXT:   it    mi
+; CHECK-NEXT:   rsb{{s?}}mi
 
-; CHECK-V8:        cmp
-; CHECK-V8-NEXT:   bpl
-; CHECK-V8:        rsbs
-; CHECK-V8:        cmp
-; CHECK-V8-NEXT:   bpl
-; CHECK-V8:        rsbs
 
