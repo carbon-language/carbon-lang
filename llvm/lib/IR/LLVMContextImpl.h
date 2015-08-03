@@ -458,67 +458,6 @@ template <> struct MDNodeKeyImpl<DIFile> {
   unsigned getHashValue() const { return hash_combine(Filename, Directory); }
 };
 
-template <> struct MDNodeKeyImpl<DICompileUnit> {
-  unsigned SourceLanguage;
-  Metadata *File;
-  StringRef Producer;
-  bool IsOptimized;
-  StringRef Flags;
-  unsigned RuntimeVersion;
-  StringRef SplitDebugFilename;
-  unsigned EmissionKind;
-  Metadata *EnumTypes;
-  Metadata *RetainedTypes;
-  Metadata *Subprograms;
-  Metadata *GlobalVariables;
-  Metadata *ImportedEntities;
-  uint64_t DWOId;
-
-  MDNodeKeyImpl(unsigned SourceLanguage, Metadata *File, StringRef Producer,
-                bool IsOptimized, StringRef Flags, unsigned RuntimeVersion,
-                StringRef SplitDebugFilename, unsigned EmissionKind,
-                Metadata *EnumTypes, Metadata *RetainedTypes,
-                Metadata *Subprograms, Metadata *GlobalVariables,
-                Metadata *ImportedEntities, uint64_t DWOId)
-      : SourceLanguage(SourceLanguage), File(File), Producer(Producer),
-        IsOptimized(IsOptimized), Flags(Flags), RuntimeVersion(RuntimeVersion),
-        SplitDebugFilename(SplitDebugFilename), EmissionKind(EmissionKind),
-        EnumTypes(EnumTypes), RetainedTypes(RetainedTypes),
-        Subprograms(Subprograms), GlobalVariables(GlobalVariables),
-        ImportedEntities(ImportedEntities), DWOId(DWOId) {}
-  MDNodeKeyImpl(const DICompileUnit *N)
-      : SourceLanguage(N->getSourceLanguage()), File(N->getRawFile()),
-        Producer(N->getProducer()), IsOptimized(N->isOptimized()),
-        Flags(N->getFlags()), RuntimeVersion(N->getRuntimeVersion()),
-        SplitDebugFilename(N->getSplitDebugFilename()),
-        EmissionKind(N->getEmissionKind()), EnumTypes(N->getRawEnumTypes()),
-        RetainedTypes(N->getRawRetainedTypes()),
-        Subprograms(N->getRawSubprograms()),
-        GlobalVariables(N->getRawGlobalVariables()),
-        ImportedEntities(N->getRawImportedEntities()), DWOId(N->getDWOId()) {}
-
-  bool isKeyOf(const DICompileUnit *RHS) const {
-    return SourceLanguage == RHS->getSourceLanguage() &&
-           File == RHS->getRawFile() && Producer == RHS->getProducer() &&
-           IsOptimized == RHS->isOptimized() && Flags == RHS->getFlags() &&
-           RuntimeVersion == RHS->getRuntimeVersion() &&
-           SplitDebugFilename == RHS->getSplitDebugFilename() &&
-           EmissionKind == RHS->getEmissionKind() &&
-           EnumTypes == RHS->getRawEnumTypes() &&
-           RetainedTypes == RHS->getRawRetainedTypes() &&
-           Subprograms == RHS->getRawSubprograms() &&
-           GlobalVariables == RHS->getRawGlobalVariables() &&
-           ImportedEntities == RHS->getRawImportedEntities() &&
-           DWOId == RHS->getDWOId();
-  }
-  unsigned getHashValue() const {
-    return hash_combine(SourceLanguage, File, Producer, IsOptimized, Flags,
-                        RuntimeVersion, SplitDebugFilename, EmissionKind,
-                        EnumTypes, RetainedTypes, Subprograms, GlobalVariables,
-                        ImportedEntities, DWOId);
-  }
-};
-
 template <> struct MDNodeKeyImpl<DISubprogram> {
   Metadata *Scope;
   StringRef Name;
@@ -952,7 +891,8 @@ public:
 
   DenseMap<const Value*, ValueName*> ValueNames;
 
-#define HANDLE_MDNODE_LEAF(CLASS) DenseSet<CLASS *, CLASS##Info> CLASS##s;
+#define HANDLE_MDNODE_LEAF_UNIQUABLE(CLASS)                                    \
+  DenseSet<CLASS *, CLASS##Info> CLASS##s;
 #include "llvm/IR/Metadata.def"
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they

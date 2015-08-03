@@ -545,6 +545,18 @@ static bool hasSelfReference(MDNode *N) {
 }
 
 MDNode *MDNode::replaceWithPermanentImpl() {
+  switch (getMetadataID()) {
+  default:
+    // If this type isn't uniquable, replace with a distinct node.
+    return replaceWithDistinctImpl();
+
+#define HANDLE_MDNODE_LEAF_UNIQUABLE(CLASS)                                    \
+  case CLASS##Kind:                                                            \
+    break;
+#include "llvm/IR/Metadata.def"
+  }
+
+  // Even if this type is uniquable, self-references have to be distinct.
   if (hasSelfReference(this))
     return replaceWithDistinctImpl();
   return replaceWithUniquedImpl();
@@ -671,8 +683,8 @@ MDNode *MDNode::uniquify() {
   // Try to insert into uniquing store.
   switch (getMetadataID()) {
   default:
-    llvm_unreachable("Invalid subclass of MDNode");
-#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+    llvm_unreachable("Invalid or non-uniquable subclass of MDNode");
+#define HANDLE_MDNODE_LEAF_UNIQUABLE(CLASS)                                    \
   case CLASS##Kind: {                                                          \
     CLASS *SubclassThis = cast<CLASS>(this);                                   \
     std::integral_constant<bool, HasCachedHash<CLASS>::value>                  \
@@ -687,8 +699,8 @@ MDNode *MDNode::uniquify() {
 void MDNode::eraseFromStore() {
   switch (getMetadataID()) {
   default:
-    llvm_unreachable("Invalid subclass of MDNode");
-#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+    llvm_unreachable("Invalid or non-uniquable subclass of MDNode");
+#define HANDLE_MDNODE_LEAF_UNIQUABLE(CLASS)                                    \
   case CLASS##Kind:                                                            \
     getContext().pImpl->CLASS##s.erase(cast<CLASS>(this));                     \
     break;

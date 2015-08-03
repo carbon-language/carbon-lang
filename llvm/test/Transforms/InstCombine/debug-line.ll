@@ -17,7 +17,7 @@ declare i32 @printf(i8*, ...)
 
 !0 = !DISubprogram(name: "foo", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !8, scope: !1, type: !3, function: void ()* @foo)
 !1 = !DIFile(filename: "m.c", directory: "/private/tmp")
-!2 = !DICompileUnit(language: DW_LANG_C99, producer: "clang", isOptimized: true, emissionKind: 0, file: !8, enums: !{}, retainedTypes: !{}, subprograms: !9)
+!2 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang", isOptimized: true, emissionKind: 0, file: !8, enums: !{}, retainedTypes: !{}, subprograms: !9)
 !3 = !DISubroutineType(types: !4)
 !4 = !{null}
 !5 = !DILocation(line: 5, column: 2, scope: !6)

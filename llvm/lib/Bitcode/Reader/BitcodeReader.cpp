@@ -1872,15 +1872,16 @@ std::error_code BitcodeReader::parseMetadata() {
       if (Record.size() < 14 || Record.size() > 15)
         return error("Invalid record");
 
+      // Ignore Record[1], which indicates whether this compile unit is
+      // distinct.  It's always distinct.
       MDValueList.assignValue(
-          GET_OR_DISTINCT(
-              DICompileUnit, Record[0],
-              (Context, Record[1], getMDOrNull(Record[2]),
-               getMDString(Record[3]), Record[4], getMDString(Record[5]),
-               Record[6], getMDString(Record[7]), Record[8],
-               getMDOrNull(Record[9]), getMDOrNull(Record[10]),
-               getMDOrNull(Record[11]), getMDOrNull(Record[12]),
-               getMDOrNull(Record[13]), Record.size() == 14 ? 0 : Record[14])),
+          DICompileUnit::getDistinct(
+              Context, Record[1], getMDOrNull(Record[2]),
+              getMDString(Record[3]), Record[4], getMDString(Record[5]),
+              Record[6], getMDString(Record[7]), Record[8],
+              getMDOrNull(Record[9]), getMDOrNull(Record[10]),
+              getMDOrNull(Record[11]), getMDOrNull(Record[12]),
+              getMDOrNull(Record[13]), Record.size() == 14 ? 0 : Record[14]),
           NextMDValueNo++);
       break;
     }

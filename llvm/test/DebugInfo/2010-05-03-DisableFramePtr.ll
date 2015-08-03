@@ -21,7 +21,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !0 = !DILocalVariable(name: "userUPP", line: 7, arg: 1, scope: !1, file: !2, type: !6)
 !1 = !DISubprogram(name: "DisposeDMNotificationUPP", linkageName: "DisposeDMNotificationUPP", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !16, scope: null, type: !4)
 !2 = !DIFile(filename: "t.c", directory: "/Users/echeng/LLVM/radars/r7937664/")
-!3 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build 9999)", isOptimized: true, emissionKind: 0, file: !16, enums: !17, retainedTypes: !17, subprograms: !18)
+!3 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build 9999)", isOptimized: true, emissionKind: 0, file: !16, enums: !17, retainedTypes: !17, subprograms: !18)
 !4 = !DISubroutineType(types: !5)
 !5 = !{null, !6}
 !6 = !DIDerivedType(tag: DW_TAG_typedef, name: "DMNotificationUPP", line: 6, file: !16, scope: !2, baseType: !7)

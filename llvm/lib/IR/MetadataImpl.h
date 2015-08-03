@@ -26,6 +26,19 @@ static T *getUniqued(DenseSet<T *, InfoT> &Store,
   return I == Store.end() ? nullptr : *I;
 }
 
+template <class T> T *MDNode::storeImpl(T *N, StorageType Storage) {
+  switch (Storage) {
+  case Uniqued:
+    llvm_unreachable("Cannot unique without a uniquing-store");
+  case Distinct:
+    N->storeDistinctInContext();
+    break;
+  case Temporary:
+    break;
+  }
+  return N;
+}
+
 template <class T, class StoreT>
 T *MDNode::storeImpl(T *N, StorageType Storage, StoreT &Store) {
   switch (Storage) {

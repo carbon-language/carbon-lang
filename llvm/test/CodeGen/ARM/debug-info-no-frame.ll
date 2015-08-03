@@ -21,7 +21,7 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!7, !8}
 
-!0 = !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "", isOptimized: false)
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "", isOptimized: false)
 !1 = !DIFile(filename: "file.c", directory: "/dir")
 !2 = !{}
 !3 = !DISubprogram(name: "need_cfi_def_cfa_offset", scope: !1, file: !1, line: 1, type: !4, isLocal: false, isDefinition: true, scopeLine: 2, isOptimized: false, function: void ()* @need_cfi_def_cfa_offset, variables: !2)

@@ -3602,6 +3602,9 @@ bool LLParser::ParseDIFile(MDNode *&Result, bool IsDistinct) {
 ///                      enums: !1, retainedTypes: !2, subprograms: !3,
 ///                      globals: !4, imports: !5, dwoId: 0x0abcd)
 bool LLParser::ParseDICompileUnit(MDNode *&Result, bool IsDistinct) {
+  if (!IsDistinct)
+    return Lex.Error("missing 'distinct', required for !DICompileUnit");
+
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   REQUIRED(language, DwarfLangField, );                                        \
   REQUIRED(file, MDField, (/* AllowNull */ false));                            \
@@ -3620,12 +3623,10 @@ bool LLParser::ParseDICompileUnit(MDNode *&Result, bool IsDistinct) {
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
-  Result = GET_OR_DISTINCT(DICompileUnit,
-                           (Context, language.Val, file.Val, producer.Val,
-                            isOptimized.Val, flags.Val, runtimeVersion.Val,
-                            splitDebugFilename.Val, emissionKind.Val, enums.Val,
-                            retainedTypes.Val, subprograms.Val, globals.Val,
-                            imports.Val, dwoId.Val));
+  Result = DICompileUnit::getDistinct(
+      Context, language.Val, file.Val, producer.Val, isOptimized.Val, flags.Val,
+      runtimeVersion.Val, splitDebugFilename.Val, emissionKind.Val, enums.Val,
+      retainedTypes.Val, subprograms.Val, globals.Val, imports.Val, dwoId.Val);
   return false;
 }
 

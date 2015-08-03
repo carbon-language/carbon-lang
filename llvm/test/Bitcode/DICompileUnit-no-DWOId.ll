@@ -2,7 +2,7 @@
 ; default to 0, which is not displayed at all in the textual representation.
 ;
 ; RUN: llvm-dis %s.bc -o - | FileCheck %s
-; CHECK: !DICompileUnit
+; CHECK: distinct !DICompileUnit
 ; CHECK-NOT: dwoId:
 !named = !{!0}
 !0 = !DICompileUnit(language: 12, file: !1)

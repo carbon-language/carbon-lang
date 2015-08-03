@@ -1304,7 +1304,7 @@ TEST_F(DICompileUnitTest, get) {
   MDTuple *GlobalVariables = getTuple();
   MDTuple *ImportedEntities = getTuple();
   uint64_t DWOId = 0xc0ffee;
-  auto *N = DICompileUnit::get(
+  auto *N = DICompileUnit::getDistinct(
       Context, SourceLanguage, File, Producer, IsOptimized, Flags,
       RuntimeVersion, SplitDebugFilename, EmissionKind, EnumTypes,
       RetainedTypes, Subprograms, GlobalVariables, ImportedEntities, DWOId);
@@ -1324,85 +1324,28 @@ TEST_F(DICompileUnitTest, get) {
   EXPECT_EQ(GlobalVariables, N->getGlobalVariables().get());
   EXPECT_EQ(ImportedEntities, N->getImportedEntities().get());
   EXPECT_EQ(DWOId, N->getDWOId());
-  EXPECT_EQ(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage + 1, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, getFile(), Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, "other",
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  !IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, "other", RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion + 1,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion, "other",
-                                  EmissionKind, EnumTypes, RetainedTypes,
-                                  Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind + 1,
-                                  EnumTypes, RetainedTypes, Subprograms,
-                                  GlobalVariables, ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, getTuple(),
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  getTuple(), Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, getTuple(), GlobalVariables,
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, getTuple(),
-                                  ImportedEntities, DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  getTuple(), DWOId));
-  EXPECT_NE(N, DICompileUnit::get(Context, SourceLanguage, File, Producer,
-                                  IsOptimized, Flags, RuntimeVersion,
-                                  SplitDebugFilename, EmissionKind, EnumTypes,
-                                  RetainedTypes, Subprograms, GlobalVariables,
-                                  ImportedEntities, DWOId + 1));
 
   TempDICompileUnit Temp = N->clone();
-  EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
+  EXPECT_EQ(dwarf::DW_TAG_compile_unit, Temp->getTag());
+  EXPECT_EQ(SourceLanguage, Temp->getSourceLanguage());
+  EXPECT_EQ(File, Temp->getFile());
+  EXPECT_EQ(Producer, Temp->getProducer());
+  EXPECT_EQ(IsOptimized, Temp->isOptimized());
+  EXPECT_EQ(Flags, Temp->getFlags());
+  EXPECT_EQ(RuntimeVersion, Temp->getRuntimeVersion());
+  EXPECT_EQ(SplitDebugFilename, Temp->getSplitDebugFilename());
+  EXPECT_EQ(EmissionKind, Temp->getEmissionKind());
+  EXPECT_EQ(EnumTypes, Temp->getEnumTypes().get());
+  EXPECT_EQ(RetainedTypes, Temp->getRetainedTypes().get());
+  EXPECT_EQ(Subprograms, Temp->getSubprograms().get());
+  EXPECT_EQ(GlobalVariables, Temp->getGlobalVariables().get());
+  EXPECT_EQ(ImportedEntities, Temp->getImportedEntities().get());
+  EXPECT_EQ(DWOId, Temp->getDWOId());
+
+  auto *TempAddress = Temp.get();
+  auto *Clone = MDNode::replaceWithPermanent(std::move(Temp));
+  EXPECT_TRUE(Clone->isDistinct());
+  EXPECT_EQ(TempAddress, Clone);
 }
 
 TEST_F(DICompileUnitTest, replaceArrays) {
@@ -1418,7 +1361,7 @@ TEST_F(DICompileUnitTest, replaceArrays) {
   MDTuple *RetainedTypes = MDTuple::getDistinct(Context, None);
   MDTuple *ImportedEntities = MDTuple::getDistinct(Context, None);
   uint64_t DWOId = 0xc0ffee;
-  auto *N = DICompileUnit::get(
+  auto *N = DICompileUnit::getDistinct(
       Context, SourceLanguage, File, Producer, IsOptimized, Flags,
       RuntimeVersion, SplitDebugFilename, EmissionKind, EnumTypes,
       RetainedTypes, nullptr, nullptr, ImportedEntities, DWOId);

@@ -14,7 +14,7 @@
 
 ; Add a minimal compile unit to resolve some of the type references.
 !llvm.dbg.cu = !{!5}
-!5 = !DICompileUnit(file: !6, language: DW_LANG_C99, retainedTypes: !7)
+!5 = distinct !DICompileUnit(file: !6, language: DW_LANG_C99, retainedTypes: !7)
 !6 = !DIFile(filename: "file.c", directory: "/path/to/dir")
 !7 = !{!8, !9}
 !8 = !DICompositeType(tag: DW_TAG_structure_type, identifier: "1.good")

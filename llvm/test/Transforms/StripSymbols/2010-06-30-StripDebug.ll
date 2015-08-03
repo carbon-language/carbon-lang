@@ -20,7 +20,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !0 = !DISubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3, function: void ()* @foo)
 !1 = !DIFile(filename: "b.c", directory: "/tmp")
-!2 = !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !4, retainedTypes: !4)
+!2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !4, retainedTypes: !4)
 !3 = !DISubroutineType(types: !4)
 !4 = !{null}
 !5 = !DILocalVariable(name: "y", line: 3, scope: !6, file: !1, type: !7)

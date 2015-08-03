@@ -61,7 +61,7 @@ declare i32 @puts(i8* nocapture) nounwind
 
 !0 = !DISubprogram(name: "printer", linkageName: "printer", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !46, scope: !1, type: !3, function: i32 (i8*, double, i8)* @printer, variables: !43)
 !1 = !DIFile(filename: "a.c", directory: "/tmp/")
-!2 = !DICompileUnit(language: DW_LANG_C89, producer: "(LLVM build 00)", isOptimized: true, emissionKind: 1, file: !46, enums: !47, retainedTypes: !47, subprograms: !42, imports:  null)
+!2 = distinct !DICompileUnit(language: DW_LANG_C89, producer: "(LLVM build 00)", isOptimized: true, emissionKind: 1, file: !46, enums: !47, retainedTypes: !47, subprograms: !42, imports:  null)
 !3 = !DISubroutineType(types: !4)
 !4 = !{!5, !6, !7, !8}
 !5 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

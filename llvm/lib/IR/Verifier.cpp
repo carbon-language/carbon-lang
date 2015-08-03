@@ -887,6 +887,7 @@ void Verifier::visitDIFile(const DIFile &N) {
 }
 
 void Verifier::visitDICompileUnit(const DICompileUnit &N) {
+  Assert(N.isDistinct(), "compile units must be distinct", &N);
   Assert(N.getTag() == dwarf::DW_TAG_compile_unit, "invalid tag", &N);
 
   // Don't bother verifying the compilation directory or producer string

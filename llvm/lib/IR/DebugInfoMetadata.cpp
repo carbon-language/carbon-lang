@@ -317,20 +317,18 @@ DICompileUnit *DICompileUnit::getImpl(
     Metadata *Subprograms, Metadata *GlobalVariables,
     Metadata *ImportedEntities, uint64_t DWOId,
     StorageType Storage, bool ShouldCreate) {
+  assert(Storage != Uniqued && "Cannot unique DICompileUnit");
   assert(isCanonical(Producer) && "Expected canonical MDString");
   assert(isCanonical(Flags) && "Expected canonical MDString");
   assert(isCanonical(SplitDebugFilename) && "Expected canonical MDString");
-  DEFINE_GETIMPL_LOOKUP(
-      DICompileUnit,
-      (SourceLanguage, File, getString(Producer), IsOptimized, getString(Flags),
-       RuntimeVersion, getString(SplitDebugFilename), EmissionKind, EnumTypes,
-       RetainedTypes, Subprograms, GlobalVariables, ImportedEntities, DWOId));
+
   Metadata *Ops[] = {File, Producer, Flags, SplitDebugFilename, EnumTypes,
                      RetainedTypes, Subprograms, GlobalVariables,
                      ImportedEntities};
-  DEFINE_GETIMPL_STORE(
-      DICompileUnit,
-      (SourceLanguage, IsOptimized, RuntimeVersion, EmissionKind, DWOId), Ops);
+  return storeImpl(new (ArrayRef<Metadata *>(Ops).size()) DICompileUnit(
+                       Context, Storage, SourceLanguage, IsOptimized,
+                       RuntimeVersion, EmissionKind, DWOId, Ops),
+                   Storage);
 }
 
 DISubprogram *DILocalScope::getSubprogram() const {

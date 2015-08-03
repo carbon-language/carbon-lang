@@ -52,14 +52,14 @@ entry:
 ; WL-SAME: !{![[WCU:[0-9]+]], ![[LCU:[0-9]+]]}
 !llvm.dbg.cu = !{!1}
 
-; LW: ![[LCU]] = !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
+; LW: ![[LCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
 ; LW: ![[LSPs]] = !{![[BARSP:[0-9]+]], ![[FOOSP:[0-9]+]]}
 ; LW: ![[BARSP]] = !DISubprogram(name: "bar",
 ; LW-SAME: function: i32 (i32, i32)* @bar
 ; LW: ![[FOOSP]] = {{.*}}!DISubprogram(name: "foo",
 ; LW-NOT: function:
 ; LW-SAME: ){{$}}
-; LW: ![[WCU]] = !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
+; LW: ![[WCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
 ; LW: ![[WSPs]] = !{![[WEAKFOOSP:[0-9]+]]}
 ; LW: ![[WEAKFOOSP]] = !DISubprogram(name: "foo",
 ; LW-SAME: function: i32 (i32, i32)* @foo
@@ -70,11 +70,11 @@ entry:
 ; LW: ![[FOORET]] = !DILocation(line: 53, scope: ![[WEAKFOOSP]])
 
 ; Same as above, but reordered.
-; WL: ![[WCU]] = !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
+; WL: ![[WCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[WSPs:[0-9]+]]
 ; WL: ![[WSPs]] = !{![[WEAKFOOSP:[0-9]+]]}
 ; WL: ![[WEAKFOOSP]] = !DISubprogram(name: "foo",
 ; WL-SAME: function: i32 (i32, i32)* @foo
-; WL: ![[LCU]] = !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
+; WL: ![[LCU]] = distinct !DICompileUnit({{.*}} subprograms: ![[LSPs:[0-9]+]]
 ; WL: ![[LSPs]] = !{![[BARSP:[0-9]+]], ![[FOOSP:[0-9]+]]}
 ; WL: ![[BARSP]] = !DISubprogram(name: "bar",
 ; WL-SAME: function: i32 (i32, i32)* @bar
@@ -87,7 +87,7 @@ entry:
 ; WL: ![[BARIA]] = !DILocation(line: 12, scope: ![[BARSP]])
 ; WL: ![[BARRET]] = !DILocation(line: 13, scope: ![[BARSP]])
 
-!1 = !DICompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3, !4}, emissionKind: 1)
+!1 = distinct !DICompileUnit(language: DW_LANG_C99, file: !2, subprograms: !{!3, !4}, emissionKind: 1)
 !2 = !DIFile(filename: "bar.c", directory: "/path/to/dir")
 !3 = !DISubprogram(file: !2, scope: !2, line: 11, name: "bar", function: i32 (i32, i32)* @bar, type: !5)
 !4 = !DISubprogram(file: !2, scope: !2, line: 1, name: "foo", function: i32 (i32, i32)* @foo, type: !5)
