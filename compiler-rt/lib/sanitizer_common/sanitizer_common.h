@@ -224,6 +224,13 @@ bool WriteToFile(fd_t fd, const void *buff, uptr buff_size,
 bool RenameFile(const char *oldpath, const char *newpath,
                 error_t *error_p = nullptr);
 
+// Scoped file handle closer.
+struct FileCloser {
+  explicit FileCloser(fd_t fd) : fd(fd) {}
+  ~FileCloser() { CloseFile(fd); }
+  fd_t fd;
+};
+
 bool SupportsColoredOutput(fd_t fd);
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
