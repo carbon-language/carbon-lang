@@ -137,6 +137,7 @@ namespace {
     ///
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AssumptionCacheTracker>();
+      AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfoWrapperPass>();
       AU.addPreserved<LoopInfoWrapperPass>();
       AU.addRequiredID(LoopSimplifyID);
@@ -235,6 +236,7 @@ char LoopUnroll::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopUnroll, "loop-unroll", "Unroll loops", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -516,8 +518,8 @@ struct EstimatedUnrollCost {
 /// the analysis failed (no benefits expected from the unrolling, or the loop is
 /// too big to analyze), the returned value is None.
 Optional<EstimatedUnrollCost>
-analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
-                      const TargetTransformInfo &TTI,
+analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, DominatorTree &DT,
+                      ScalarEvolution &SE, const TargetTransformInfo &TTI,
                       unsigned MaxUnrolledLoopSize) {
   // We want to be able to scale offsets by the trip count and add more offsets
   // to them without checking for overflows, and we already don't want to
@@ -532,6 +534,7 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
 
   SmallSetVector<BasicBlock *, 16> BBWorklist;
   DenseMap<Value *, Constant *> SimplifiedValues;
+  SmallVector<std::pair<Value *, Constant *>, 4> SimplifiedInputValues;
 
   // The estimated cost of the unrolled form of the loop. We try to estimate
   // this by simplifying as much as we can while computing the estimate.
@@ -543,6 +546,12 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
   // unrolling.
   unsigned RolledDynamicCost = 0;
 
+  // Ensure that we don't violate the loop structure invariants relied on by
+  // this analysis.
+  assert(L->isLoopSimplifyForm() && "Must put loop into normal form first.");
+  assert(L->isLCSSAForm(DT) &&
+         "Must have loops in LCSSA form to track live-out values.");
+
   DEBUG(dbgs() << "Starting LoopUnroll profitability analysis...\n");
 
   // Simulate execution of each iteration of the loop counting instructions,
@@ -551,7 +560,34 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
   // we literally have to go through all loop's iterations.
   for (unsigned Iteration = 0; Iteration < TripCount; ++Iteration) {
     DEBUG(dbgs() << " Analyzing iteration " << Iteration << "\n");
+
+    // Prepare for the iteration by collecting any simplified entry or backedge
+    // inputs.
+    for (Instruction &I : *L->getHeader()) {
+      auto *PHI = dyn_cast<PHINode>(&I);
+      if (!PHI)
+        break;
+
+      // The loop header PHI nodes must have exactly two input: one from the
+      // loop preheader and one from the loop latch.
+      assert(
+          PHI->getNumIncomingValues() == 2 &&
+          "Must have an incoming value only for the preheader and the latch.");
+
+      Value *V = PHI->getIncomingValueForBlock(
+          Iteration == 0 ? L->getLoopPreheader() : L->getLoopLatch());
+      Constant *C = dyn_cast<Constant>(V);
+      if (Iteration != 0 && !C)
+        C = SimplifiedValues.lookup(V);
+      if (C)
+        SimplifiedInputValues.push_back({PHI, C});
+    }
+
+    // Now clear and re-populate the map for the next iteration.
     SimplifiedValues.clear();
+    while (!SimplifiedInputValues.empty())
+      SimplifiedValues.insert(SimplifiedInputValues.pop_back_val());
+
     UnrolledInstAnalyzer Analyzer(Iteration, SimplifiedValues, L, SE);
 
     BBWorklist.clear();
@@ -849,6 +885,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   Function &F = *L->getHeader()->getParent();
 
+  auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
   const TargetTransformInfo &TTI =
@@ -930,8 +967,9 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       // The loop isn't that small, but we still can fully unroll it if that
       // helps to remove a significant number of instructions.
       // To check that, run additional analysis on the loop.
-      if (Optional<EstimatedUnrollCost> Cost = analyzeLoopUnrollCost(
-              L, TripCount, *SE, TTI, Threshold + DynamicCostSavingsDiscount))
+      if (Optional<EstimatedUnrollCost> Cost =
+              analyzeLoopUnrollCost(L, TripCount, DT, *SE, TTI,
+                                    Threshold + DynamicCostSavingsDiscount))
         if (canUnrollCompletely(L, Threshold, PercentDynamicCostSavedThreshold,
                                 DynamicCostSavingsDiscount, Cost->UnrolledCost,
                                 Cost->RolledDynamicCost)) {
