@@ -31,6 +31,7 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting_registers()
 
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
+    @expectedFailureAndroid(api_levels=range(16 + 1)) # b.android.com/179836
     def test_inferior_asserting_register_dwarf(self):
         """Test that lldb reliably reads registers from the inferior after asserting (command)."""
         self.buildDwarf()
