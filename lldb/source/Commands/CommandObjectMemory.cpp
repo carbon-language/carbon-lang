@@ -1119,7 +1119,8 @@ protected:
       {
           StackFrame* frame = m_exe_ctx.GetFramePtr();
           ValueObjectSP result_sp;
-          if (process->GetTarget().EvaluateExpression(m_memory_options.m_expr.GetStringValue(), frame, result_sp) && result_sp.get())
+          if ((eExpressionCompleted == process->GetTarget().EvaluateExpression(m_memory_options.m_expr.GetStringValue(), frame, result_sp)) &&
+              result_sp.get())
           {
               uint64_t value = result_sp->GetValueAsUnsigned(0);
               switch (result_sp->GetClangType().GetByteSize(nullptr))
@@ -1150,13 +1151,13 @@ protected:
                       result.AppendError("unknown type. pass a string instead");
                       return false;
                   default:
-                      result.AppendError("do not know how to deal with larger than 8 byte result types. pass a string instead");
+                      result.AppendError("result size larger than 8 bytes. pass a string instead");
                       return false;
               }
           }
           else
           {
-              result.AppendError("expression evaluation failed. pass a string instead?");
+              result.AppendError("expression evaluation failed. pass a string instead");
               return false;
           }
       }
@@ -1176,14 +1177,14 @@ protected:
           {
               if (!ever_found)
               {
-                  result.AppendMessage("Your data was not found within the range.\n");
+                  result.AppendMessage("data not found within the range.\n");
                   result.SetStatus(lldb::eReturnStatusSuccessFinishNoResult);
               }
               else
-                  result.AppendMessage("No more matches found within the range.\n");
+                  result.AppendMessage("no more matches within the range.\n");
               break;
           }
-          result.AppendMessageWithFormat("Your data was found at location: 0x%" PRIx64 "\n", found_location);
+          result.AppendMessageWithFormat("data found at location: 0x%" PRIx64 "\n", found_location);
 
           DataBufferHeap dumpbuffer(32,0);
           process->ReadMemory(found_location+m_memory_options.m_offset.GetCurrentValue(), dumpbuffer.GetBytes(), dumpbuffer.GetByteSize(), error);
@@ -1211,27 +1212,16 @@ protected:
     {
         Process *process = m_exe_ctx.GetProcessPtr();
         DataBufferHeap heap(buffer_size, 0);
-        lldb::addr_t fictional_ptr = low;
         for (auto ptr = low;
-             low < high;
-             fictional_ptr++)
+             ptr < high;
+             ptr++)
         {
             Error error;
-            if (ptr == low || buffer_size == 1)
-                process->ReadMemory(ptr, heap.GetBytes(), buffer_size, error);
-            else
-            {
-                memmove(heap.GetBytes(), heap.GetBytes()+1, buffer_size-1);
-                process->ReadMemory(ptr, heap.GetBytes()+buffer_size-1, 1, error);
-            }
+            process->ReadMemory(ptr, heap.GetBytes(), buffer_size, error);
             if (error.Fail())
                 return LLDB_INVALID_ADDRESS;
             if (memcmp(heap.GetBytes(), buffer, buffer_size) == 0)
-                return fictional_ptr;
-            if (ptr == low)
-                ptr += buffer_size;
-            else
-                ptr += 1;
+                return ptr;
         }
         return LLDB_INVALID_ADDRESS;
     }
