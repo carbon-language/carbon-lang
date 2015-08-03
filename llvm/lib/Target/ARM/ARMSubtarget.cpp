@@ -167,7 +167,6 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       ArchFS = FS;
   }
   ParseSubtargetFeatures(CPUString, ArchFS);
-  printf("A-class: %d\n", static_cast<bool>(getFeatureBits()[ARM::ProcSwift]));
 
   // FIXME: This used enable V6T2 support implicitly for Thumb2 mode.
   // Assert this for now to make the change obvious.
