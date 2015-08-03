@@ -1042,15 +1042,15 @@ public:
     CommandArgumentData value_arg;
     
     // Define the first (and only) variant of this arg.
-    addr_arg.arg_type = eArgTypeAddress;
+    addr_arg.arg_type = eArgTypeAddressOrExpression;
     addr_arg.arg_repetition = eArgRepeatPlain;
     
     // There is only one variant this argument could be; put it into the argument entry.
     arg1.push_back (addr_arg);
     
     // Define the first (and only) variant of this arg.
-    value_arg.arg_type = eArgTypeValue;
-    value_arg.arg_repetition = eArgRepeatPlus;
+    value_arg.arg_type = eArgTypeAddressOrExpression;
+    value_arg.arg_repetition = eArgRepeatPlain;
     
     // There is only one variant this argument could be; put it into the argument entry.
     arg2.push_back (value_arg);
