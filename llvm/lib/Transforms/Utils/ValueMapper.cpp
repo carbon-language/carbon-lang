@@ -216,9 +216,12 @@ static bool remap(const MDNode *OldNode, MDNode *NewNode,
   return AnyChanged;
 }
 
-/// \brief Map a distinct MDNode.
+/// Map a distinct MDNode.
 ///
-/// Distinct nodes are not uniqued, so they must always recreated.
+/// Whether distinct nodes change is independent of their operands.  If \a
+/// RF_MoveDistinctMDs, then they are reused, and their operands remapped in
+/// place; effectively, they're moved from one graph to another.  Otherwise,
+/// they're cloned/duplicated, and the new copy's operands are remapped.
 static Metadata *mapDistinctNode(const MDNode *Node,
                                  SmallVectorImpl<MDNode *> &Cycles,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
@@ -226,7 +229,11 @@ static Metadata *mapDistinctNode(const MDNode *Node,
                                  ValueMaterializer *Materializer) {
   assert(Node->isDistinct() && "Expected distinct node");
 
-  MDNode *NewMD = MDNode::replaceWithDistinct(Node->clone());
+  MDNode *NewMD;
+  if (Flags & RF_MoveDistinctMDs)
+    NewMD = const_cast<MDNode *>(Node);
+  else
+    NewMD = MDNode::replaceWithDistinct(Node->clone());
 
   // Remap the operands.  If any change, track those that could be involved in
   // uniquing cycles.
@@ -318,19 +325,20 @@ Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
   Metadata *NewMD =
       MapMetadataImpl(MD, Cycles, VM, Flags, TypeMapper, Materializer);
 
-  // Resolve cycles underneath MD.
-  if (NewMD && NewMD != MD) {
-    if (auto *N = dyn_cast<MDNode>(NewMD))
-      if (!N->isResolved())
-        N->resolveCycles();
-
-    for (MDNode *N : Cycles)
-      if (!N->isResolved())
-        N->resolveCycles();
-  } else {
-    // Shouldn't get unresolved cycles if nothing was remapped.
-    assert(Cycles.empty() && "Expected no unresolved cycles");
+  if ((Flags & RF_NoModuleLevelChanges) ||
+      (MD == NewMD && !(Flags & RF_MoveDistinctMDs))) {
+    assert(Cycles.empty() && "Unresolved cycles without remapping anything?");
+    return NewMD;
   }
+
+  if (auto *N = dyn_cast<MDNode>(NewMD))
+    if (!N->isResolved())
+      N->resolveCycles();
+
+  // Resolve cycles underneath MD.
+  for (MDNode *N : Cycles)
+    if (!N->isResolved())
+      N->resolveCycles();
 
   return NewMD;
 }

@@ -1156,7 +1156,7 @@ void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
         continue;
     }
     DstElements.push_back(
-        MapValue(V, ValueMap, RF_None, &TypeMap, &ValMaterializer));
+        MapValue(V, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer));
   }
   if (IsNewStructor) {
     NewType = ArrayType::get(NewType->getElementType(), DstElements.size());
@@ -1170,8 +1170,8 @@ void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
 /// referenced are in Dest.
 void ModuleLinker::linkGlobalInit(GlobalVariable &Dst, GlobalVariable &Src) {
   // Figure out what the initializer looks like in the dest module.
-  Dst.setInitializer(MapValue(Src.getInitializer(), ValueMap, RF_None, &TypeMap,
-                              &ValMaterializer));
+  Dst.setInitializer(MapValue(Src.getInitializer(), ValueMap,
+                              RF_MoveDistinctMDs, &TypeMap, &ValMaterializer));
 }
 
 /// Copy the source function over into the dest function and fix up references
@@ -1186,18 +1186,20 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
 
   // Link in the prefix data.
   if (Src.hasPrefixData())
-    Dst.setPrefixData(MapValue(Src.getPrefixData(), ValueMap, RF_None, &TypeMap,
-                               &ValMaterializer));
+    Dst.setPrefixData(MapValue(Src.getPrefixData(), ValueMap,
+                               RF_MoveDistinctMDs, &TypeMap, &ValMaterializer));
 
   // Link in the prologue data.
   if (Src.hasPrologueData())
-    Dst.setPrologueData(MapValue(Src.getPrologueData(), ValueMap, RF_None,
-                                 &TypeMap, &ValMaterializer));
+    Dst.setPrologueData(MapValue(Src.getPrologueData(), ValueMap,
+                                 RF_MoveDistinctMDs, &TypeMap,
+                                 &ValMaterializer));
 
   // Link in the personality function.
   if (Src.hasPersonalityFn())
-    Dst.setPersonalityFn(MapValue(Src.getPersonalityFn(), ValueMap, RF_None,
-                                  &TypeMap, &ValMaterializer));
+    Dst.setPersonalityFn(MapValue(Src.getPersonalityFn(), ValueMap,
+                                  RF_MoveDistinctMDs, &TypeMap,
+                                  &ValMaterializer));
 
   // Go through and convert function arguments over, remembering the mapping.
   Function::arg_iterator DI = Dst.arg_begin();
@@ -1213,8 +1215,8 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
   SmallVector<std::pair<unsigned, MDNode *>, 8> MDs;
   Src.getAllMetadata(MDs);
   for (const auto &I : MDs)
-    Dst.setMetadata(I.first, MapMetadata(I.second, ValueMap, RF_None, &TypeMap,
-                                         &ValMaterializer));
+    Dst.setMetadata(I.first, MapMetadata(I.second, ValueMap, RF_MoveDistinctMDs,
+                                         &TypeMap, &ValMaterializer));
 
   // Splice the body of the source function into the dest function.
   Dst.getBasicBlockList().splice(Dst.end(), Src.getBasicBlockList());
@@ -1225,7 +1227,8 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
   // functions and patch them up to point to the local versions.
   for (BasicBlock &BB : Dst)
     for (Instruction &I : BB)
-      RemapInstruction(&I, ValueMap, RF_IgnoreMissingEntries, &TypeMap,
+      RemapInstruction(&I, ValueMap,
+                       RF_IgnoreMissingEntries | RF_MoveDistinctMDs, &TypeMap,
                        &ValMaterializer);
 
   // There is no need to map the arguments anymore.
@@ -1238,8 +1241,8 @@ bool ModuleLinker::linkFunctionBody(Function &Dst, Function &Src) {
 
 void ModuleLinker::linkAliasBody(GlobalAlias &Dst, GlobalAlias &Src) {
   Constant *Aliasee = Src.getAliasee();
-  Constant *Val =
-      MapValue(Aliasee, ValueMap, RF_None, &TypeMap, &ValMaterializer);
+  Constant *Val = MapValue(Aliasee, ValueMap, RF_MoveDistinctMDs, &TypeMap,
+                           &ValMaterializer);
   Dst.setAliasee(Val);
 }
 
@@ -1266,8 +1269,8 @@ void ModuleLinker::linkNamedMDNodes() {
     NamedMDNode *DestNMD = DstM->getOrInsertNamedMetadata(NMD.getName());
     // Add Src elements into Dest node.
     for (const MDNode *op : NMD.operands())
-      DestNMD->addOperand(
-          MapMetadata(op, ValueMap, RF_None, &TypeMap, &ValMaterializer));
+      DestNMD->addOperand(MapMetadata(op, ValueMap, RF_MoveDistinctMDs,
+                                      &TypeMap, &ValMaterializer));
   }
 }
 
@@ -1574,7 +1577,7 @@ bool ModuleLinker::run() {
       continue;
     const GlobalValue *GV = SrcM->getNamedValue(C.getName());
     if (GV)
-      MapValue(GV, ValueMap, RF_None, &TypeMap, &ValMaterializer);
+      MapValue(GV, ValueMap, RF_MoveDistinctMDs, &TypeMap, &ValMaterializer);
   }
 
   // Strip replaced subprograms before mapping any metadata -- so that we're
