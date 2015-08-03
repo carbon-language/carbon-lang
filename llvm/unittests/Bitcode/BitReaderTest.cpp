@@ -118,10 +118,12 @@ TEST(BitReaderTest, TestForEofAfterReadFailureOnDataStreamer) {
   // Jump to two bytes before end of stream.
   Cursor.JumpToBit((InputSize - 4) * CHAR_BIT);
   // Try to read 4 bytes when only 2 are present, resulting in error value 0.
-  constexpr size_t ReadErrorValue = 0;
+  const size_t ReadErrorValue = 0;
   EXPECT_EQ(ReadErrorValue, Cursor.Read(32));
   // Should be at eof now.
   EXPECT_TRUE(Cursor.AtEndOfStream());
+
+  delete[] Text;
 }
 
 TEST(BitReaderTest, MateralizeForwardRefWithStream) {
