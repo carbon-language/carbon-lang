@@ -85,7 +85,7 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!11, !12}
 !llvm.ident = !{!13}
 
-!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.7.0  (llvm/trunk 229257)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.7.0  (llvm/trunk 229257)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
 !1 = !DIFile(filename: "/tmp/test.c", directory: "/home/grosser/Projects/polly/git/tools/polly")
 !2 = !{}
 !3 = !{!4, !10}

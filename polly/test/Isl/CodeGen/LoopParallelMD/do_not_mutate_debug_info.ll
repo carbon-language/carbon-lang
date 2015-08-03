@@ -35,7 +35,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata)
 !llvm.module.flags = !{!15, !16}
 !llvm.ident = !{!17}
 
-!0 = !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !12, imports: !2)
+!0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !12, imports: !2)
 !1 = !DIFile(filename: "t2.c", directory: "/local/mnt/workspace/build/tip-Release")
 !2 = !{}
 !3 = !{!4}
