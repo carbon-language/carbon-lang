@@ -36,10 +36,6 @@ public:
                  DominatorTree *DT,
                  const SmallVector<int, 8> *PtrToPartition = nullptr);
 
-  /// \brief Returns true if we need memchecks to disambiguate may-aliasing
-  /// accesses.
-  bool needsRuntimeChecks() const;
-
   /// \brief Performs the CFG manipulation part of versioning the loop including
   /// the DominatorTree and LoopInfo updates.
   ///
@@ -79,13 +75,6 @@ private:
   /// \brief The fall-back loop.  I.e. control flows here if pointers in the
   /// loop may alias (memchecks failed).
   Loop *NonVersionedLoop;
-
-  /// \brief For each memory pointer it contains the partitionId it is used in.
-  /// If nullptr, no partitioning is used.
-  ///
-  /// The I-th entry corresponds to I-th entry in LAI.getRuntimePointerCheck().
-  /// If the pointer is used in multiple partitions the entry is set to -1.
-  const SmallVector<int, 8> *PtrToPartition;
 
   /// \brief This maps the instructions from VersionedLoop to their counterpart
   /// in NonVersionedLoop.
