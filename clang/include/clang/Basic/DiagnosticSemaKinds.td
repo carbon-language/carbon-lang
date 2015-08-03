@@ -6385,9 +6385,9 @@ let CategoryName = "Inline Assembly Issue" in {
     "remove the cast or build with -fheinous-gnu-extensions">;
   def err_invalid_asm_value_for_constraint
       : Error <"value '%0' out of range for constraint '%1'">;
-  def err_asm_bitfield_in_memory_constraint
-      : Error <"reference to a bit-field in asm "
-      "%select{input|output}0 with a memory constraint '%1'">;
+  def err_asm_non_addr_value_in_memory_constraint : Error <
+    "reference to a %select{bit-field|vector element|global register variable}0"
+    " in asm %select{input|output}1 with a memory constraint '%2'">;
 
   def warn_asm_label_on_auto_decl : Warning<
     "ignored asm label '%0' on automatic variable">;

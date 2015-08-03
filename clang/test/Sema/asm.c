@@ -211,13 +211,28 @@ typedef struct test16_foo {
   unsigned int field2 : 2;
   unsigned int field3 : 3;
 } test16_foo;
-test16_foo x;
+typedef __attribute__((vector_size(16))) int test16_bar;
+register int test16_baz asm("rbx");
+
 void test16()
 {
+  test16_foo a;
+  test16_bar b;
+
   __asm__("movl $5, %0"
-          : "=rm" (x.field2)); // expected-error {{reference to a bit-field in asm output with a memory constraint '=rm'}}
+          : "=rm" (a.field2)); // expected-error {{reference to a bit-field in asm input with a memory constraint '=rm'}}
   __asm__("movl $5, %0"
           :
-          : "m" (x.field3)); // expected-error {{reference to a bit-field in asm input with a memory constraint 'm'}}
+          : "m" (a.field3)); // expected-error {{reference to a bit-field in asm output with a memory constraint 'm'}}
+  __asm__("movl $5, %0"
+          : "=rm" (b[2])); // expected-error {{reference to a vector element in asm input with a memory constraint '=rm'}}
+  __asm__("movl $5, %0"
+          :
+          : "m" (b[3])); // expected-error {{reference to a vector element in asm output with a memory constraint 'm'}}
+  __asm__("movl $5, %0"
+          : "=rm" (test16_baz)); // expected-error {{reference to a global register variable in asm input with a memory constraint '=rm'}}
+  __asm__("movl $5, %0"
+          :
+          : "m" (test16_baz)); // expected-error {{reference to a global register variable in asm output with a memory constraint 'm'}}
 }
 

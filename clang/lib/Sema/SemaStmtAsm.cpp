@@ -107,6 +107,37 @@ static bool CheckNakedParmReference(Expr *E, Sema &S) {
   return false;
 }
 
+/// \brief Returns true if given expression is not compatible with inline
+/// assembly's memory constraint; false otherwise.
+static bool checkExprMemoryConstraintCompat(Sema &S, Expr *E,
+                                            TargetInfo::ConstraintInfo &Info,
+                                            bool is_input_expr) {
+  enum {
+    ExprBitfield = 0,
+    ExprVectorElt,
+    ExprGlobalRegVar,
+    ExprSafeType
+  } EType = ExprSafeType;
+
+  // Bitfields, vector elements and global register variables are not
+  // compatible.
+  if (E->refersToBitField())
+    EType = ExprBitfield;
+  else if (E->refersToVectorElement())
+    EType = ExprVectorElt;
+  else if (E->refersToGlobalRegisterVar())
+    EType = ExprGlobalRegVar;
+
+  if (EType != ExprSafeType) {
+    S.Diag(E->getLocStart(), diag::err_asm_non_addr_value_in_memory_constraint)
+        << EType << is_input_expr << Info.getConstraintStr()
+        << E->getSourceRange();
+    return true;
+  }
+
+  return false;
+}
+
 StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                                  bool IsVolatile, unsigned NumOutputs,
                                  unsigned NumInputs, IdentifierInfo **Names,
@@ -154,13 +185,10 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (CheckNakedParmReference(OutputExpr, *this))
       return StmtError();
 
-    // Bitfield can't be referenced with a pointer.
-    if (Info.allowsMemory() && OutputExpr->refersToBitField())
-      return StmtError(Diag(OutputExpr->getLocStart(),
-                            diag::err_asm_bitfield_in_memory_constraint)
-                       << 1
-                       << Info.getConstraintStr()
-                       << OutputExpr->getSourceRange());
+    // Check that the output expression is compatible with memory constraint.
+    if (Info.allowsMemory() &&
+        checkExprMemoryConstraintCompat(*this, OutputExpr, Info, false))
+      return StmtError();
 
     OutputConstraintInfos.push_back(Info);
 
@@ -238,13 +266,10 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (CheckNakedParmReference(InputExpr, *this))
       return StmtError();
 
-    // Bitfield can't be referenced with a pointer.
-    if (Info.allowsMemory() && InputExpr->refersToBitField())
-      return StmtError(Diag(InputExpr->getLocStart(),
-                            diag::err_asm_bitfield_in_memory_constraint)
-                       << 0
-                       << Info.getConstraintStr()
-                       << InputExpr->getSourceRange());
+    // Check that the input expression is compatible with memory constraint.
+    if (Info.allowsMemory() &&
+        checkExprMemoryConstraintCompat(*this, InputExpr, Info, true))
+      return StmtError();
 
     // Only allow void types for memory constraints.
     if (Info.allowsMemory() && !Info.allowsRegister()) {
