@@ -398,10 +398,6 @@ public:
   bool needsChecking(const CheckingPtrGroup &M, const CheckingPtrGroup &N,
                      const SmallVectorImpl<int> *PtrPartition) const;
 
-  /// \brief Return true if any pointer requires run-time checking according
-  /// to needsChecking.
-  bool needsAnyChecking(const SmallVectorImpl<int> *PtrPartition) const;
-
   /// \brief Returns the number of run-time checks required according to
   /// needsChecking.
   unsigned getNumberOfChecks(const SmallVectorImpl<int> *PtrPartition) const;
