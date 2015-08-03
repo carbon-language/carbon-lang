@@ -71,6 +71,7 @@
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
 #include "Plugins/Process/Windows/ProcessWindows.h"
+#include "Plugins/Process/win-minidump/ProcessWinMiniDump.h"
 #endif
 
 #include "llvm/Support/TargetSelect.h"
@@ -262,6 +263,9 @@ SystemInitializerFull::Initialize()
 
     JITLoaderGDB::Initialize();
     ProcessElfCore::Initialize();
+#if defined(_MSC_VER)
+    ProcessWinMiniDump::Initialize();
+#endif
     MemoryHistoryASan::Initialize();
     AddressSanitizerRuntime::Initialize();
 
@@ -363,6 +367,9 @@ SystemInitializerFull::Terminate()
 
     JITLoaderGDB::Terminate();
     ProcessElfCore::Terminate();
+#if defined(_MSC_VER)
+    ProcessWinMiniDump::Terminate();
+#endif
     MemoryHistoryASan::Terminate();
     AddressSanitizerRuntime::Terminate();
     SymbolVendorELF::Terminate();

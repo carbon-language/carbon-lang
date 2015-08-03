@@ -73,7 +73,7 @@ set( LLDB_USED_LIBS
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   list(APPEND LLDB_USED_LIBS
     lldbPluginProcessWindows
-    lldbPluginProcessElfCore
+    lldbPluginProcessWinMiniDump
     lldbPluginJITLoaderGDB
     Ws2_32
     Rpcrt4
