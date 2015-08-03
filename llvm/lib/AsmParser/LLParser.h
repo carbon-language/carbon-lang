@@ -215,6 +215,8 @@ namespace llvm {
       return ParseUInt64(Val);
     }
 
+    bool ParseStringAttribute(AttrBuilder &B);
+
     bool ParseTLSModel(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalThreadLocal(GlobalVariable::ThreadLocalMode &TLM);
     bool parseOptionalUnnamedAddr(bool &UnnamedAddr) {

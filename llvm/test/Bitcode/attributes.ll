@@ -262,6 +262,16 @@ define void @f44() argmemonly
         ret void;
 }
 
+; CHECK: define "string_attribute" void @f45(i32 "string_attribute")
+define "string_attribute" void @f45(i32 "string_attribute") {
+  ret void
+}
+
+; CHECK: define "string_attribute_with_value"="value" void @f46(i32 "string_attribute_with_value"="value")
+define "string_attribute_with_value"="value" void @f46(i32 "string_attribute_with_value"="value") {
+  ret void
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }

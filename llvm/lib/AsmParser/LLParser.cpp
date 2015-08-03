@@ -915,14 +915,8 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
     }
     // Target-dependent attributes:
     case lltok::StringConstant: {
-      std::string Attr = Lex.getStrVal();
-      Lex.Lex();
-      std::string Val;
-      if (EatIfPresent(lltok::equal) &&
-          ParseStringConstant(Val))
+      if (ParseStringAttribute(B))
         return true;
-
-      B.addAttribute(Attr, Val);
       continue;
     }
 
@@ -1229,6 +1223,19 @@ bool LLParser::ParseOptionalAddrSpace(unsigned &AddrSpace) {
          ParseToken(lltok::rparen, "expected ')' in address space");
 }
 
+/// ParseStringAttribute
+///   := StringConstant
+///   := StringConstant '=' StringConstant
+bool LLParser::ParseStringAttribute(AttrBuilder &B) {
+  std::string Attr = Lex.getStrVal();
+  Lex.Lex();
+  std::string Val;
+  if (EatIfPresent(lltok::equal) && ParseStringConstant(Val))
+    return true;
+  B.addAttribute(Attr, Val);
+  return false;
+}
+
 /// ParseOptionalParamAttrs - Parse a potentially empty list of parameter attributes.
 bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
   bool HaveError = false;
@@ -1240,6 +1247,11 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     switch (Token) {
     default:  // End of attributes.
       return HaveError;
+    case lltok::StringConstant: {
+      if (ParseStringAttribute(B))
+        return true;
+      continue;
+    }
     case lltok::kw_align: {
       unsigned Alignment;
       if (ParseOptionalAlignment(Alignment))
@@ -1321,6 +1333,11 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     switch (Token) {
     default:  // End of attributes.
       return HaveError;
+    case lltok::StringConstant: {
+      if (ParseStringAttribute(B))
+        return true;
+      continue;
+    }
     case lltok::kw_dereferenceable: {
       uint64_t Bytes;
       if (ParseOptionalDerefAttrBytes(lltok::kw_dereferenceable, Bytes))
