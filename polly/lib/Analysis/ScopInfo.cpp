@@ -670,7 +670,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
 
   isl_id *BaseAddrId = SAI->getBasePtrId();
 
-  auto IdName = "__polly_array_ref_ " + std::to_string(Identifier);
+  auto IdName = "__polly_array_ref_" + std::to_string(Identifier);
   Id = isl_id_alloc(Ctx, IdName.c_str(), nullptr);
 
   if (!Access.isAffine()) {
