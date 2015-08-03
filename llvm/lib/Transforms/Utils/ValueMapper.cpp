@@ -227,13 +227,14 @@ static Metadata *mapDistinctNode(const MDNode *Node,
   assert(Node->isDistinct() && "Expected distinct node");
 
   MDNode *NewMD = MDNode::replaceWithDistinct(Node->clone());
-  remap(Node, NewMD, Cycles, VM, Flags, TypeMapper, Materializer);
 
-  // Track any cycles beneath this node.
-  for (Metadata *Op : NewMD->operands())
-    if (auto *Node = dyn_cast_or_null<MDNode>(Op))
-      if (!Node->isResolved())
-        Cycles.push_back(Node);
+  // Remap the operands.  If any change, track those that could be involved in
+  // uniquing cycles.
+  if (remap(Node, NewMD, Cycles, VM, Flags, TypeMapper, Materializer))
+    for (Metadata *Op : NewMD->operands())
+      if (auto *Node = dyn_cast_or_null<MDNode>(Op))
+        if (!Node->isResolved())
+          Cycles.push_back(Node);
 
   return NewMD;
 }
