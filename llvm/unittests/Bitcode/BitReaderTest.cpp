@@ -10,6 +10,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/AsmParser/Parser.h"
+#include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Constants.h"
@@ -21,6 +22,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/StreamingMemoryObject.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -87,6 +89,39 @@ getStreamedModuleFromAssembly(LLVMContext &Context, SmallString<1024> &Mem,
   ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
       getStreamedBitcodeModule("test", std::move(Streamer), Context);
   return std::move(ModuleOrErr.get());
+}
+
+// Checks if we correctly detect eof if we try to read N bits when there are not
+// enough bits left on the input stream to read N bits, and we are using a data
+// streamer. In particular, it checks if we properly set the object size when
+// the eof is reached under such conditions.
+TEST(BitReaderTest, TestForEofAfterReadFailureOnDataStreamer) {
+  // Note: Because StreamingMemoryObject does a call to method GetBytes in it's
+  // constructor, using internal constant kChunkSize, we must fill the input
+  // with more characters than that amount.
+  static size_t InputSize = StreamingMemoryObject::kChunkSize + 5;
+  char *Text = new char[InputSize];
+  std::memset(Text, 'a', InputSize);
+  Text[InputSize - 1] = '\0';
+  StringRef Input(Text);
+
+  // Build bitsteam reader using data streamer.
+  auto MemoryBuf = MemoryBuffer::getMemBuffer(Input);
+  std::unique_ptr<DataStreamer> Streamer(
+      new BufferDataStreamer(std::move(MemoryBuf)));
+  auto OwnedBytes =
+      llvm::make_unique<StreamingMemoryObject>(std::move(Streamer));
+  auto Reader = llvm::make_unique<BitstreamReader>(std::move(OwnedBytes));
+  BitstreamCursor Cursor;
+  Cursor.init(Reader.get());
+
+  // Jump to two bytes before end of stream.
+  Cursor.JumpToBit((InputSize - 4) * CHAR_BIT);
+  // Try to read 4 bytes when only 2 are present, resulting in error value 0.
+  constexpr size_t ReadErrorValue = 0;
+  EXPECT_EQ(ReadErrorValue, Cursor.Read(32));
+  // Should be at eof now.
+  EXPECT_TRUE(Cursor.AtEndOfStream());
 }
 
 TEST(BitReaderTest, MateralizeForwardRefWithStream) {

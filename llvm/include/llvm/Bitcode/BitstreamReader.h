@@ -325,6 +325,8 @@ public:
 
     // If we run out of data, stop at the end of the stream.
     if (BytesRead == 0) {
+      CurWord = 0;
+      BitsInCurWord = 0;
       Size = NextChar;
       return;
     }
