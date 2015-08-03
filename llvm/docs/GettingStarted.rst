@@ -49,13 +49,13 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``cd llvm/tools``
    * ``svn co http://llvm.org/svn/llvm-project/cfe/trunk clang``
 
-#. Checkout Compiler-RT (required to build the sanitisers):
+#. Checkout Compiler-RT (required to build the sanitizers):
 
    * ``cd where-you-want-llvm-to-live``
    * ``cd llvm/projects``
    * ``svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt``
 
-#. Checkout libcxx and libcxxabi (required if you want to use the sanitisers
+#. Checkout libcxx and libcxxabi (required if you want to use the sanitizers
    on C++ code):
 
    * ``cd where-you-want-llvm-to-live``
@@ -529,7 +529,7 @@ If you want to check out clang too, run:
   % cd llvm/tools
   % git clone http://llvm.org/git/clang.git
 
-If you want to check out compiler-rt (required to build the sanitisers), run:
+If you want to check out compiler-rt (required to build the sanitizers), run:
 
 .. code-block:: console
 
@@ -537,7 +537,7 @@ If you want to check out compiler-rt (required to build the sanitisers), run:
   % git clone http://llvm.org/git/compiler-rt.git
 
 If you want to check out libcxx and libcxxabi (required if you want to use the
-sanitisers on C++ code), run:
+sanitizers on C++ code), run:
 
 .. code-block:: console
 
