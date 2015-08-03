@@ -22,17 +22,15 @@ const ast_matchers::internal::VariadicDynCastAllOfMatcher<
     Decl, NamespaceAliasDecl> namespaceAliasDecl;
 
 void UnusedAliasDeclsCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(namespaceAliasDecl().bind("alias"), this);
+  // We cannot do anything about headers (yet), as the alias declarations
+  // used in one header could be used by some other translation unit.
+  Finder->addMatcher(namespaceAliasDecl(isExpansionInMainFile()).bind("alias"),
+                     this);
   Finder->addMatcher(nestedNameSpecifier().bind("nns"), this);
 }
 
 void UnusedAliasDeclsCheck::check(const MatchFinder::MatchResult &Result) {
   if (const auto *AliasDecl = Result.Nodes.getNodeAs<Decl>("alias")) {
-    // We cannot do anything about headers (yet), as the alias declarations used
-    // in one header could be used by some other translation unit.
-    if (!Result.SourceManager->isInMainFile(AliasDecl->getLocation()))
-      return;
-
     FoundDecls[AliasDecl] = CharSourceRange::getCharRange(
         AliasDecl->getLocStart(),
         Lexer::findLocationAfterToken(
