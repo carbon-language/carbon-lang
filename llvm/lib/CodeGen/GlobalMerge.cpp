@@ -108,10 +108,9 @@ EnableGlobalMergeOnConst("global-merge-on-const", cl::Hidden,
 
 // FIXME: this could be a transitional option, and we probably need to remove
 // it if only we are sure this optimization could always benefit all targets.
-static cl::opt<bool>
+static cl::opt<cl::boolOrDefault>
 EnableGlobalMergeOnExternal("global-merge-on-external", cl::Hidden,
-     cl::desc("Enable global merge pass on external linkage"),
-     cl::init(false));
+     cl::desc("Enable global merge pass on external linkage"));
 
 STATISTIC(NumMerged, "Number of globals merged");
 namespace {
@@ -128,6 +127,9 @@ namespace {
     /// used in minsize functions for merging.
     /// FIXME: This could learn about optsize, and be used in the cost model.
     bool OnlyOptimizeForSize;
+
+    /// Whether we should merge global variables that have external linkage.
+    bool MergeExternalGlobals;
 
     bool doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                  Module &M, bool isConst, unsigned AddrSpace) const;
@@ -158,9 +160,11 @@ namespace {
     static char ID;             // Pass identification, replacement for typeid.
     explicit GlobalMerge(const TargetMachine *TM = nullptr,
                          unsigned MaximalOffset = 0,
-                         bool OnlyOptimizeForSize = false)
+                         bool OnlyOptimizeForSize = false,
+                         bool MergeExternalGlobals = false)
         : FunctionPass(ID), TM(TM), MaxOffset(MaximalOffset),
-          OnlyOptimizeForSize(OnlyOptimizeForSize) {
+          OnlyOptimizeForSize(OnlyOptimizeForSize),
+          MergeExternalGlobals(MergeExternalGlobals) {
       initializeGlobalMergePass(*PassRegistry::getPassRegistry());
     }
 
@@ -541,7 +545,7 @@ bool GlobalMerge::doInitialization(Module &M) {
     if (I->isDeclaration() || I->isThreadLocal() || I->hasSection())
       continue;
 
-    if (!(EnableGlobalMergeOnExternal && I->hasExternalLinkage()) &&
+    if (!(MergeExternalGlobals && I->hasExternalLinkage()) &&
         !I->hasInternalLinkage())
       continue;
 
@@ -604,6 +608,9 @@ bool GlobalMerge::doFinalization(Module &M) {
 }
 
 Pass *llvm::createGlobalMergePass(const TargetMachine *TM, unsigned Offset,
-                                  bool OnlyOptimizeForSize) {
-  return new GlobalMerge(TM, Offset, OnlyOptimizeForSize);
+                                  bool OnlyOptimizeForSize,
+                                  bool MergeExternalByDefault) {
+  bool MergeExternal = (EnableGlobalMergeOnExternal == cl::BOU_UNSET) ?
+    MergeExternalByDefault : (EnableGlobalMergeOnExternal == cl::BOU_TRUE);
+  return new GlobalMerge(TM, Offset, OnlyOptimizeForSize, MergeExternal);
 }

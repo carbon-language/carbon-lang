@@ -161,7 +161,8 @@ Pass *createLoopStrengthReducePass();
 // It can also be configured to focus on size optimizations only.
 //
 Pass *createGlobalMergePass(const TargetMachine *TM, unsigned MaximalOffset,
-                            bool OnlyOptimizeForSize = false);
+                            bool OnlyOptimizeForSize = false,
+                            bool MergeExternalByDefault = false);
 
 //===----------------------------------------------------------------------===//
 //
