@@ -35,7 +35,7 @@ char MachineModuleInfo::ID = 0;
 MachineModuleInfoImpl::~MachineModuleInfoImpl() {}
 
 namespace llvm {
-class MMIAddrLabelMapCallbackPtr : CallbackVH {
+class MMIAddrLabelMapCallbackPtr final : CallbackVH {
   MMIAddrLabelMap *Map;
 public:
   MMIAddrLabelMapCallbackPtr() : Map(nullptr) {}

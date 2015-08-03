@@ -210,7 +210,7 @@ namespace llvm {
   private:
     /// SCEVCallbackVH - A CallbackVH to arrange for ScalarEvolution to be
     /// notified whenever a Value is deleted.
-    class SCEVCallbackVH : public CallbackVH {
+    class SCEVCallbackVH final : public CallbackVH {
       ScalarEvolution *SE;
       void deleted() override;
       void allUsesReplacedWith(Value *New) override;

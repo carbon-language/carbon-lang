@@ -140,7 +140,7 @@ public:
 class AssumptionCacheTracker : public ImmutablePass {
   /// A callback value handle applied to function objects, which we use to
   /// delete our cache of intrinsics for a function when it is deleted.
-  class FunctionCallbackVH : public CallbackVH {
+  class FunctionCallbackVH final : public CallbackVH {
     AssumptionCacheTracker *ACT;
     void deleted() override;
 

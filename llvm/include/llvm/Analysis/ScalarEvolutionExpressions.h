@@ -404,7 +404,7 @@ namespace llvm {
   /// value, and only represent it as its LLVM Value.  This is the "bottom"
   /// value for the analysis.
   ///
-  class SCEVUnknown : public SCEV, private CallbackVH {
+  class SCEVUnknown final : public SCEV, private CallbackVH {
     friend class ScalarEvolution;
 
     // Implement CallbackVH.

@@ -95,7 +95,7 @@ ExecutionEngine::~ExecutionEngine() {
 namespace {
 /// \brief Helper class which uses a value handler to automatically deletes the
 /// memory block when the GlobalVariable is destroyed.
-class GVMemoryBlock : public CallbackVH {
+class GVMemoryBlock final : public CallbackVH {
   GVMemoryBlock(const GlobalVariable *GV)
     : CallbackVH(const_cast<GlobalVariable*>(GV)) {}
 

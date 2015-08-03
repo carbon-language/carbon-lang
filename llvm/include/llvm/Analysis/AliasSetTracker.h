@@ -286,7 +286,7 @@ inline raw_ostream& operator<<(raw_ostream &OS, const AliasSet &AS) {
 class AliasSetTracker {
   /// CallbackVH - A CallbackVH to arrange for AliasSetTracker to be
   /// notified whenever a Value is deleted.
-  class ASTCallbackVH : public CallbackVH {
+  class ASTCallbackVH final : public CallbackVH {
     AliasSetTracker *AST;
     void deleted() override;
     void allUsesReplacedWith(Value *) override;

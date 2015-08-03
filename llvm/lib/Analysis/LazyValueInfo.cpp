@@ -295,7 +295,7 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 namespace {
   /// A callback value handle updates the cache when values are erased.
   class LazyValueInfoCache;
-  struct LVIValueHandle : public CallbackVH {
+  struct LVIValueHandle final : public CallbackVH {
     LazyValueInfoCache *Parent;
 
     LVIValueHandle(Value *V, LazyValueInfoCache *P)

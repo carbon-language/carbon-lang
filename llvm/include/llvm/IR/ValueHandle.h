@@ -52,13 +52,21 @@ protected:
     Weak
   };
 
+  ValueHandleBase(const ValueHandleBase &RHS)
+      : ValueHandleBase(RHS.PrevPair.getInt(), RHS) {}
+
+  ValueHandleBase(HandleBaseKind Kind, const ValueHandleBase &RHS)
+      : PrevPair(nullptr, Kind), Next(nullptr), V(RHS.V) {
+    if (isValid(V))
+      AddToExistingUseList(RHS.getPrevPtr());
+  }
+
 private:
   PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
   ValueHandleBase *Next;
 
   Value* V;
 
-  ValueHandleBase(const ValueHandleBase&) = delete;
 public:
   explicit ValueHandleBase(HandleBaseKind Kind)
     : PrevPair(nullptr, Kind), Next(nullptr), V(nullptr) {}
@@ -67,11 +75,7 @@ public:
     if (isValid(V))
       AddToUseList();
   }
-  ValueHandleBase(HandleBaseKind Kind, const ValueHandleBase &RHS)
-    : PrevPair(nullptr, Kind), Next(nullptr), V(RHS.V) {
-    if (isValid(V))
-      AddToExistingUseList(RHS.getPrevPtr());
-  }
+
   ~ValueHandleBase() {
     if (isValid(V))
       RemoveFromUseList();
@@ -144,6 +148,8 @@ public:
   WeakVH(Value *P) : ValueHandleBase(Weak, P) {}
   WeakVH(const WeakVH &RHS)
     : ValueHandleBase(Weak, RHS) {}
+
+  WeakVH &operator=(const WeakVH &RHS) = default;
 
   Value *operator=(Value *RHS) {
     return ValueHandleBase::operator=(RHS);
@@ -314,7 +320,6 @@ class TrackingVH : public ValueHandleBase {
 public:
   TrackingVH() : ValueHandleBase(Tracking) {}
   TrackingVH(ValueTy *P) : ValueHandleBase(Tracking, GetAsValue(P)) {}
-  TrackingVH(const TrackingVH &RHS) : ValueHandleBase(Tracking, RHS) {}
 
   operator ValueTy*() const {
     return getValPtr();
@@ -322,10 +327,6 @@ public:
 
   ValueTy *operator=(ValueTy *RHS) {
     setValPtr(RHS);
-    return getValPtr();
-  }
-  ValueTy *operator=(const TrackingVH<ValueTy> &RHS) {
-    setValPtr(RHS.getValPtr());
     return getValPtr();
   }
 
@@ -344,10 +345,9 @@ public:
 class CallbackVH : public ValueHandleBase {
   virtual void anchor();
 protected:
-  CallbackVH(const CallbackVH &RHS)
-    : ValueHandleBase(Callback, RHS) {}
-
-  virtual ~CallbackVH() {}
+  ~CallbackVH() = default;
+  CallbackVH(const CallbackVH &) = default;
+  CallbackVH &operator=(const CallbackVH &) = default;
 
   void setValPtr(Value *P) {
     ValueHandleBase::operator=(P);

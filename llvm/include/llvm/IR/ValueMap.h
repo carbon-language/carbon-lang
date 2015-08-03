@@ -214,8 +214,8 @@ private:
 
 // This CallbackVH updates its ValueMap when the contained Value changes,
 // according to the user's preferences expressed through the Config object.
-template<typename KeyT, typename ValueT, typename Config>
-class ValueMapCallbackVH : public CallbackVH {
+template <typename KeyT, typename ValueT, typename Config>
+class ValueMapCallbackVH final : public CallbackVH {
   friend class ValueMap<KeyT, ValueT, Config>;
   friend struct DenseMapInfo<ValueMapCallbackVH>;
   typedef ValueMap<KeyT, ValueT, Config> ValueMapT;
