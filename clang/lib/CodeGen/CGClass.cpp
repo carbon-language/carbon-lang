@@ -1479,7 +1479,8 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     ExitCXXTryStmt(*cast<CXXTryStmt>(Body), true);
 
   // Insert memory-poisoning instrumentation.
-  if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor)
+  if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor
+      && SanOpts.has(SanitizerKind::Memory))
     EmitDtorSanitizerCallback(*this, Dtor);
 }
 
