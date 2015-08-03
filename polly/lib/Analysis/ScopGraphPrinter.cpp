@@ -20,9 +20,14 @@
 #include "llvm/Analysis/DOTGraphTraitsPass.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace polly;
 using namespace llvm;
+static cl::opt<std::string>
+    ViewFilter("polly-view-only",
+               cl::desc("Only view functions that match this pattern"),
+               cl::Hidden, cl::init(""), cl::ZeroOrMore);
 
 namespace llvm {
 template <>
@@ -173,6 +178,15 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
 struct ScopViewer : public DOTGraphTraitsViewer<ScopDetection, false> {
   static char ID;
   ScopViewer() : DOTGraphTraitsViewer<ScopDetection, false>("scops", ID) {}
+  bool processFunction(Function &F) override {
+    if (ViewFilter == "")
+      return true;
+
+    if (F.getName().count(ViewFilter))
+      return true;
+
+    return false;
+  }
 };
 char ScopViewer::ID = 0;
 
