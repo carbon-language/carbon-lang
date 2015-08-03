@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
@@ -114,8 +115,10 @@ public:
   void print(const MachineInstr &MI);
   void printMBBReference(const MachineBasicBlock &MBB);
   void printIRBlockReference(const BasicBlock &BB);
+  void printIRValueReference(const Value &V);
   void printStackObjectReference(int FrameIndex);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
+  void print(const MachineMemOperand &Op);
 
   void print(const MCCFIInstruction &CFI, const TargetRegisterInfo *TRI);
 };
@@ -426,7 +429,7 @@ void MIPrinter::print(const MachineInstr &MI) {
   if (MI.getFlag(MachineInstr::FrameSetup))
     OS << "frame-setup ";
   OS << TII->getName(MI.getOpcode());
-  // TODO: Print the bundling instruction flags, machine mem operands.
+  // TODO: Print the bundling instruction flags.
   if (I < E)
     OS << ' ';
 
@@ -443,6 +446,17 @@ void MIPrinter::print(const MachineInstr &MI) {
       OS << ',';
     OS << " debug-location ";
     MI.getDebugLoc()->printAsOperand(OS, MST);
+  }
+
+  if (!MI.memoperands_empty()) {
+    OS << " :: ";
+    bool NeedComma = false;
+    for (const auto *Op : MI.memoperands()) {
+      if (NeedComma)
+        OS << ", ";
+      print(*Op);
+      NeedComma = true;
+    }
   }
 }
 
@@ -465,6 +479,16 @@ void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
     OS << "<badref>";
   else
     OS << Slot;
+}
+
+void MIPrinter::printIRValueReference(const Value &V) {
+  OS << "%ir.";
+  if (V.hasName()) {
+    printLLVMNameWithoutPrefix(OS, V.getName());
+    return;
+  }
+  // TODO: Serialize the unnamed IR value references.
+  OS << "<unserializable ir value>";
 }
 
 void MIPrinter::printStackObjectReference(int FrameIndex) {
@@ -579,6 +603,24 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     // TODO: Print the other machine operands.
     llvm_unreachable("Can't print this machine operand at the moment");
   }
+}
+
+void MIPrinter::print(const MachineMemOperand &Op) {
+  OS << '(';
+  // TODO: Print operand's other flags.
+  if (Op.isLoad())
+    OS << "load ";
+  else {
+    assert(Op.isStore() && "Non load machine operand must be a store");
+    OS << "store ";
+  }
+  OS << Op.getSize() << (Op.isLoad() ? " from " : " into ");
+  if (const Value *Val = Op.getValue())
+    printIRValueReference(*Val);
+  // TODO: Print PseudoSourceValue.
+  // TODO: Print the base alignment.
+  // TODO: Print the metadata attributes.
+  OS << ')';
 }
 
 static void printCFIRegister(unsigned DwarfReg, raw_ostream &OS,

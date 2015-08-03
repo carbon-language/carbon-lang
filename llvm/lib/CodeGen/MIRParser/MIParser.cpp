@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
@@ -133,12 +134,19 @@ public:
   bool parseBlockAddressOperand(MachineOperand &Dest);
   bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
+  bool parseIRValue(Value *&V);
+  bool parseMachineMemoryOperand(MachineMemOperand *&Dest);
 
 private:
   /// Convert the integer literal in the current token into an unsigned integer.
   ///
   /// Return true if an error occurred.
   bool getUnsigned(unsigned &Result);
+
+  /// Convert the integer literal in the current token into an uint64.
+  ///
+  /// Return true if an error occurred.
+  bool getUint64(uint64_t &Result);
 
   /// If the current token is of the given kind, consume it and return false.
   /// Otherwise report an error and return true.
@@ -256,15 +264,16 @@ bool MIParser::parse(MachineInstr *&MI) {
   if (Token.isError() || parseInstruction(OpCode, Flags))
     return true;
 
-  // TODO: Parse the bundle instruction flags and memory operands.
+  // TODO: Parse the bundle instruction flags.
 
   // Parse the remaining machine operands.
-  while (Token.isNot(MIToken::Eof) && Token.isNot(MIToken::kw_debug_location)) {
+  while (Token.isNot(MIToken::Eof) && Token.isNot(MIToken::kw_debug_location) &&
+         Token.isNot(MIToken::coloncolon)) {
     auto Loc = Token.location();
     if (parseMachineOperand(MO))
       return true;
     Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
-    if (Token.is(MIToken::Eof))
+    if (Token.is(MIToken::Eof) || Token.is(MIToken::coloncolon))
       break;
     if (Token.isNot(MIToken::comma))
       return error("expected ',' before the next machine operand");
@@ -282,6 +291,23 @@ bool MIParser::parse(MachineInstr *&MI) {
     DebugLocation = DebugLoc(Node);
   }
 
+  // Parse the machine memory operands.
+  SmallVector<MachineMemOperand *, 2> MemOperands;
+  if (Token.is(MIToken::coloncolon)) {
+    lex();
+    while (Token.isNot(MIToken::Eof)) {
+      MachineMemOperand *MemOp = nullptr;
+      if (parseMachineMemoryOperand(MemOp))
+        return true;
+      MemOperands.push_back(MemOp);
+      if (Token.is(MIToken::Eof))
+        break;
+      if (Token.isNot(MIToken::comma))
+        return error("expected ',' before the next machine memory operand");
+      lex();
+    }
+  }
+
   const auto &MCID = MF.getSubtarget().getInstrInfo()->get(OpCode);
   if (!MCID.isVariadic()) {
     // FIXME: Move the implicit operand verification to the machine verifier.
@@ -294,6 +320,12 @@ bool MIParser::parse(MachineInstr *&MI) {
   MI->setFlags(Flags);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand.Operand);
+  if (MemOperands.empty())
+    return false;
+  MachineInstr::mmo_iterator MemRefs =
+      MF.allocateMemRefsArray(MemOperands.size());
+  std::copy(MemOperands.begin(), MemOperands.end(), MemRefs);
+  MI->setMemRefs(MemRefs, MemRefs + MemOperands.size());
   return false;
 }
 
@@ -926,6 +958,77 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     // TODO: parse the other machine operands.
     return error("expected a machine operand");
   }
+  return false;
+}
+
+bool MIParser::parseIRValue(Value *&V) {
+  switch (Token.kind()) {
+  case MIToken::NamedIRValue:
+  case MIToken::QuotedNamedIRValue: {
+    StringValueUtility Name(Token);
+    V = MF.getFunction()->getValueSymbolTable().lookup(Name);
+    if (!V)
+      return error(Twine("use of undefined IR value '%ir.") +
+                   Token.rawStringValue() + "'");
+    break;
+  }
+  // TODO: Parse unnamed IR value references.
+  default:
+    llvm_unreachable("The current token should be an IR block reference");
+  }
+  return false;
+}
+
+bool MIParser::getUint64(uint64_t &Result) {
+  assert(Token.hasIntegerValue());
+  if (Token.integerValue().getActiveBits() > 64)
+    return error("expected 64-bit integer (too large)");
+  Result = Token.integerValue().getZExtValue();
+  return false;
+}
+
+bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
+  if (expectAndConsume(MIToken::lparen))
+    return true;
+  // TODO: Parse the operand's flags.
+  if (Token.isNot(MIToken::Identifier) ||
+      (Token.stringValue() != "load" && Token.stringValue() != "store"))
+    return error("expected 'load' or 'store' memory operation");
+  unsigned Flags = 0;
+  if (Token.stringValue() == "load")
+    Flags |= MachineMemOperand::MOLoad;
+  else
+    Flags |= MachineMemOperand::MOStore;
+  lex();
+
+  if (Token.isNot(MIToken::IntegerLiteral))
+    return error("expected the size integer literal after memory operation");
+  uint64_t Size;
+  if (getUint64(Size))
+    return true;
+  lex();
+
+  const char *Word = Flags & MachineMemOperand::MOLoad ? "from" : "into";
+  if (Token.isNot(MIToken::Identifier) || Token.stringValue() != Word)
+    return error(Twine("expected '") + Word + "'");
+  lex();
+
+  // TODO: Parse pseudo source values.
+  if (Token.isNot(MIToken::NamedIRValue) &&
+      Token.isNot(MIToken::QuotedNamedIRValue))
+    return error("expected an IR value reference");
+  Value *V = nullptr;
+  if (parseIRValue(V))
+    return true;
+  if (!V->getType()->isPointerTy())
+    return error("expected a pointer IR value");
+  lex();
+  // TODO: Parse the base alignment.
+  // TODO: Parse the attached metadata nodes.
+  if (expectAndConsume(MIToken::rparen))
+    return true;
+
+  Dest = MF.getMachineMemOperand(MachinePointerInfo(V), Flags, Size, Size);
   return false;
 }
 

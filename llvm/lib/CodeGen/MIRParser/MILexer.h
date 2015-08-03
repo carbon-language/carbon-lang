@@ -36,6 +36,7 @@ struct MIToken {
     equal,
     underscore,
     colon,
+    coloncolon,
     exclaim,
     lparen,
     rparen,
@@ -82,6 +83,8 @@ struct MIToken {
     NamedIRBlock,
     QuotedNamedIRBlock,
     IRBlock,
+    NamedIRValue,
+    QuotedNamedIRValue,
   };
 
 private:
@@ -120,7 +123,7 @@ public:
 
   bool isStringValueQuoted() const {
     return Kind == QuotedNamedGlobalValue || Kind == QuotedExternalSymbol ||
-           Kind == QuotedNamedIRBlock;
+           Kind == QuotedNamedIRBlock || Kind == QuotedNamedIRValue;
   }
 
   /// Return the token's raw string value.

@@ -1,0 +1,52 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses the machine memory operands
+# correctly.
+
+--- |
+
+  define i32 @test(i32* %a) {
+  entry:
+    %b = load i32, i32* %a
+    store i32 42, i32* %a
+    ret i32 %b
+  }
+
+  define void @test2(i32* %"a value") {
+  entry2:
+    %b = load i32, i32* %"a value"
+    %c = add i32 %b, 1
+    store i32 %c, i32* %"a value"
+    ret void
+  }
+
+...
+---
+name:            test
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body:
+  - id:          0
+    name:        entry
+    liveins:     [ '%rdi' ]
+    instructions:
+# CHECK:      %eax = MOV32rm %rdi, 1, _, 0, _ :: (load 4 from %ir.a)
+# CHECK-NEXT: MOV32mi killed %rdi, 1, _, 0, _, 42 :: (store 4 into %ir.a)
+      - '%eax = MOV32rm %rdi, 1, _, 0, _ :: (load 4 from %ir.a)'
+      - 'MOV32mi killed %rdi, 1, _, 0, _, 42 :: (store 4 into %ir.a)'
+      - 'RETQ %eax'
+...
+---
+name:            test2
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body:
+  - id:          0
+    name:        entry2
+    liveins:     [ '%rdi' ]
+    instructions:
+# CHECK: INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")
+      - 'INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")'
+      - RETQ
+...

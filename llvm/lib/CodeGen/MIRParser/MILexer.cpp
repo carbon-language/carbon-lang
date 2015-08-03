@@ -260,6 +260,16 @@ static Cursor maybeLexIRBlock(
                  Rule.size(), ErrorCallback);
 }
 
+static Cursor maybeLexIRValue(
+    Cursor C, MIToken &Token,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  const StringRef Rule = "%ir.";
+  if (!C.remaining().startswith(Rule))
+    return None;
+  return lexName(C, Token, MIToken::NamedIRValue, MIToken::QuotedNamedIRValue,
+                 Rule.size(), ErrorCallback);
+}
+
 static Cursor lexVirtualRegister(Cursor C, MIToken &Token) {
   auto Range = C;
   C.advance(); // Skip '%'
@@ -381,11 +391,17 @@ static MIToken::TokenKind symbolToken(char C) {
 }
 
 static Cursor maybeLexSymbol(Cursor C, MIToken &Token) {
-  auto Kind = symbolToken(C.peek());
+  MIToken::TokenKind Kind;
+  unsigned Length = 1;
+  if (C.peek() == ':' && C.peek(1) == ':') {
+    Kind = MIToken::coloncolon;
+    Length = 2;
+  } else
+    Kind = symbolToken(C.peek());
   if (Kind == MIToken::Error)
     return None;
   auto Range = C;
-  C.advance();
+  C.advance(Length);
   Token = MIToken(Kind, Range.upto(C));
   return C;
 }
@@ -412,6 +428,8 @@ StringRef llvm::lexMIToken(
   if (Cursor R = maybeLexConstantPoolItem(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexIRBlock(C, Token, ErrorCallback))
+    return R.remaining();
+  if (Cursor R = maybeLexIRValue(C, Token, ErrorCallback))
     return R.remaining();
   if (Cursor R = maybeLexRegister(C, Token))
     return R.remaining();

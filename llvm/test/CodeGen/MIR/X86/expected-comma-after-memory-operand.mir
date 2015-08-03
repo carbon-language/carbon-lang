@@ -1,0 +1,27 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define void @test(i32* %a) {
+  entry2:
+    %b = load i32, i32* %a
+    %c = add i32 %b, 1
+    store i32 %c, i32* %a
+    ret void
+  }
+
+...
+---
+name:            test
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body:
+  - id:          0
+    name:        entry2
+    liveins:     [ '%rdi' ]
+    instructions:
+# CHECK: [[@LINE+1]]:92: expected ',' before the next machine memory operand
+      - 'INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir.a) (load 4 from %ir.a)'
+      - RETQ
+...
