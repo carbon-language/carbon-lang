@@ -205,8 +205,8 @@ static bool remap(const MDNode *OldNode, MDNode *NewNode,
     assert(NewNode->getOperand(I) == Old &&
            "Expected old operands to already be in place");
 
-    Metadata *New = mapMetadataOp(OldNode->getOperand(I), Cycles, VM, Flags,
-                                  TypeMapper, Materializer);
+    Metadata *New =
+        mapMetadataOp(Old, Cycles, VM, Flags, TypeMapper, Materializer);
     if (Old != New) {
       AnyChanged = true;
       NewNode->replaceOperandWith(I, New);
