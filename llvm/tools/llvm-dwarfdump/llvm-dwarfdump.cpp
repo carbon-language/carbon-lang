@@ -76,6 +76,15 @@ static void error(StringRef Filename, std::error_code EC) {
   exit(1);
 }
 
+static void DumpObjectFile(ObjectFile &Obj, StringRef Filename) {
+  std::unique_ptr<DIContext> DICtx(new DWARFContextInMemory(Obj));
+
+  outs() << Filename
+         << ":\tfile format " << Obj.getFileFormatName() << "\n\n";
+  // Dump the complete DWARF structure.
+  DICtx->dump(outs(), DumpType);
+}
+
 static void DumpInput(StringRef Filename) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr =
       MemoryBuffer::getFileOrSTDIN(Filename);
@@ -87,12 +96,7 @@ static void DumpInput(StringRef Filename) {
   error(Filename, ObjOrErr.getError());
   ObjectFile &Obj = *ObjOrErr.get();
 
-  std::unique_ptr<DIContext> DICtx(new DWARFContextInMemory(Obj));
-
-  outs() << Filename
-         << ":\tfile format " << Obj.getFileFormatName() << "\n\n";
-  // Dump the complete DWARF structure.
-  DICtx->dump(outs(), DumpType);
+  DumpObjectFile(Obj, Filename);
 }
 
 int main(int argc, char **argv) {
