@@ -340,8 +340,7 @@ public:
 /// when the underlying Value has RAUW called on it or is destroyed.  This
 /// class can be used as the key of a map, as long as the user takes it out of
 /// the map before calling setValPtr() (since the map has to rearrange itself
-/// when the pointer changes).  Unlike ValueHandleBase, this class has a vtable
-/// and a virtual destructor.
+/// when the pointer changes).  Unlike ValueHandleBase, this class has a vtable.
 class CallbackVH : public ValueHandleBase {
   virtual void anchor();
 protected:
