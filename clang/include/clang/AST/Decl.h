@@ -815,6 +815,9 @@ protected:
     /// \brief Whether this variable is (C++0x) constexpr.
     unsigned IsConstexpr : 1;
 
+    /// \brief Whether this variable is a (C++ Concepts TS) concept.
+    unsigned IsConcept : 1;
+
     /// \brief Whether this variable is the implicit variable for a lambda
     /// init-capture.
     unsigned IsInitCapture : 1;
@@ -1236,6 +1239,15 @@ public:
   void setConstexpr(bool IC) {
     assert(!isa<ParmVarDecl>(this));
     NonParmVarDeclBits.IsConstexpr = IC;
+  }
+
+  /// Whether this variable is (C++ Concepts TS) concept.
+  bool isConcept() const {
+    return isa<ParmVarDecl>(this) ? false : NonParmVarDeclBits.IsConcept;
+  }
+  void setConcept(bool IC) {
+    assert(!isa<ParmVarDecl>(this));
+    NonParmVarDeclBits.IsConcept = IC;
   }
 
   /// Whether this variable is the implicit variable for a lambda init-capture.

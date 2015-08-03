@@ -5855,6 +5855,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     if (D.getDeclSpec().isConstexprSpecified())
       NewVD->setConstexpr(true);
+
+    if (D.getDeclSpec().isConceptSpecified())
+      NewVD->setConcept(true);
   }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
@@ -9403,6 +9406,15 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
           << Var->getDeclName();
       else
         Diag(Var->getLocation(), diag::err_invalid_constexpr_var_decl);
+      Var->setInvalidDecl();
+      return;
+    }
+
+    // C++ Concepts TS [dcl.spec.concept]p1: [...]  A variable template
+    // definition having the concept specifier is called a variable concept. A
+    // concept definition refers to [...] a variable concept and its initializer.
+    if (Var->isConcept()) {
+      Diag(Var->getLocation(), diag::err_var_concept_not_initialized);
       Var->setInvalidDecl();
       return;
     }

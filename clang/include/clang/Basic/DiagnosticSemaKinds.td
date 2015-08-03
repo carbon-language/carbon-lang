@@ -1971,6 +1971,8 @@ def err_concept_decls_may_only_appear_in_namespace_scope : Error<
   "concept declarations may only appear in namespace scope">;
 def err_function_concept_not_defined : Error<
   "function concept declaration must be a definition">;
+def err_var_concept_not_initialized : Error<
+  "variable concept declaration must be initialized">;
 
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<
