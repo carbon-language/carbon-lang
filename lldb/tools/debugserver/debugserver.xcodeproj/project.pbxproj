@@ -517,7 +517,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -556,7 +556,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -597,7 +597,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
@@ -629,7 +629,7 @@
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "source/debugserver-macosx-entitlements.plist";
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
@@ -701,7 +701,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
@@ -772,7 +772,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
@@ -854,7 +854,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -887,7 +887,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 340.99.0;
+				CURRENT_PROJECT_VERSION = 350.99.0;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*][arch=*]" = (
 					"$(SDKROOT)/System/Library/PrivateFrameworks",
