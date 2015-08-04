@@ -685,13 +685,10 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
   // Copy the cleanup emission data out.  Note that SmallVector
   // guarantees maximal alignment for its buffer regardless of its
   // type parameter.
-  SmallVector<char, 8*sizeof(void*)> CleanupBuffer;
-  CleanupBuffer.reserve(Scope.getCleanupSize());
-  memcpy(CleanupBuffer.data(),
-         Scope.getCleanupBuffer(), Scope.getCleanupSize());
-  CleanupBuffer.set_size(Scope.getCleanupSize());
-  EHScopeStack::Cleanup *Fn =
-    reinterpret_cast<EHScopeStack::Cleanup*>(CleanupBuffer.data());
+  auto *CleanupSource = reinterpret_cast<char *>(Scope.getCleanupBuffer());
+  SmallVector<char, 8 * sizeof(void *)> CleanupBuffer(
+      CleanupSource, CleanupSource + Scope.getCleanupSize());
+  auto *Fn = reinterpret_cast<EHScopeStack::Cleanup *>(CleanupBuffer.data());
 
   EHScopeStack::Cleanup::Flags cleanupFlags;
   if (Scope.isNormalCleanup())
