@@ -632,6 +632,9 @@ void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
     setOperationAction(ISD::FLOG10, VT.getSimpleVT(), Expand);
     setOperationAction(ISD::FEXP, VT.getSimpleVT(), Expand);
     setOperationAction(ISD::FEXP2, VT.getSimpleVT(), Expand);
+
+    // But we do support custom-lowering for FCOPYSIGN.
+    setOperationAction(ISD::FCOPYSIGN, VT.getSimpleVT(), Custom);
   }
 
   setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
@@ -3651,7 +3654,7 @@ SDValue AArch64TargetLowering::LowerFCOPYSIGN(SDValue Op,
   SDValue VecVal1, VecVal2;
   if (VT == MVT::f32 || VT == MVT::v2f32 || VT == MVT::v4f32) {
     EltVT = MVT::i32;
-    VecVT = MVT::v4i32;
+    VecVT = (VT == MVT::v2f32 ? MVT::v2i32 : MVT::v4i32);
     EltMask = 0x80000000ULL;
 
     if (!VT.isVector()) {
