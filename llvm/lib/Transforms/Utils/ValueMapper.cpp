@@ -156,12 +156,13 @@ static Metadata *mapToSelf(ValueToValueMapTy &VM, const Metadata *MD) {
 }
 
 static Metadata *MapMetadataImpl(const Metadata *MD,
-                                 SmallVectorImpl<MDNode *> &Cycles,
+                                 SmallVectorImpl<TrackingMDNodeRef> &Cycles,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer);
 
-static Metadata *mapMetadataOp(Metadata *Op, SmallVectorImpl<MDNode *> &Cycles,
+static Metadata *mapMetadataOp(Metadata *Op,
+                               SmallVectorImpl<TrackingMDNodeRef> &Cycles,
                                ValueToValueMapTy &VM, RemapFlags Flags,
                                ValueMapTypeRemapper *TypeMapper,
                                ValueMaterializer *Materializer) {
@@ -189,8 +190,9 @@ static Metadata *mapMetadataOp(Metadata *Op, SmallVectorImpl<MDNode *> &Cycles,
 ///
 /// \pre \c NewNode is a clone of \c OldNode.
 static bool remap(const MDNode *OldNode, MDNode *NewNode,
-                  SmallVectorImpl<MDNode *> &Cycles, ValueToValueMapTy &VM,
-                  RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
+                  SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                  ValueToValueMapTy &VM, RemapFlags Flags,
+                  ValueMapTypeRemapper *TypeMapper,
                   ValueMaterializer *Materializer) {
   assert(OldNode->getNumOperands() == NewNode->getNumOperands() &&
          "Expected nodes to match");
@@ -223,7 +225,7 @@ static bool remap(const MDNode *OldNode, MDNode *NewNode,
 /// place; effectively, they're moved from one graph to another.  Otherwise,
 /// they're cloned/duplicated, and the new copy's operands are remapped.
 static Metadata *mapDistinctNode(const MDNode *Node,
-                                 SmallVectorImpl<MDNode *> &Cycles,
+                                 SmallVectorImpl<TrackingMDNodeRef> &Cycles,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
@@ -241,7 +243,7 @@ static Metadata *mapDistinctNode(const MDNode *Node,
     for (Metadata *Op : NewMD->operands())
       if (auto *Node = dyn_cast_or_null<MDNode>(Op))
         if (!Node->isResolved())
-          Cycles.push_back(Node);
+          Cycles.emplace_back(Node);
 
   return NewMD;
 }
@@ -250,7 +252,7 @@ static Metadata *mapDistinctNode(const MDNode *Node,
 ///
 /// Uniqued nodes may not need to be recreated (they may map to themselves).
 static Metadata *mapUniquedNode(const MDNode *Node,
-                                SmallVectorImpl<MDNode *> &Cycles,
+                                SmallVectorImpl<TrackingMDNodeRef> &Cycles,
                                 ValueToValueMapTy &VM, RemapFlags Flags,
                                 ValueMapTypeRemapper *TypeMapper,
                                 ValueMaterializer *Materializer) {
@@ -270,7 +272,7 @@ static Metadata *mapUniquedNode(const MDNode *Node,
 }
 
 static Metadata *MapMetadataImpl(const Metadata *MD,
-                                 SmallVectorImpl<MDNode *> &Cycles,
+                                 SmallVectorImpl<TrackingMDNodeRef> &Cycles,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
@@ -323,7 +325,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD,
 Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
                             RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
                             ValueMaterializer *Materializer) {
-  SmallVector<MDNode *, 8> Cycles;
+  SmallVector<TrackingMDNodeRef, 8> Cycles;
   Metadata *NewMD =
       MapMetadataImpl(MD, Cycles, VM, Flags, TypeMapper, Materializer);
 
