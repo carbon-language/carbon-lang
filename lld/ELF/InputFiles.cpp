@@ -51,10 +51,8 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   Syms = Elf_Sym_Range(Syms.begin() + 1, Syms.end());
   auto NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
-  for (const Elf_Sym &Sym : Syms) {
-    if (SymbolBody *Body = createSymbolBody(StringTable, &Sym))
-      SymbolBodies.push_back(Body);
-  }
+  for (const Elf_Sym &Sym : Syms)
+    SymbolBodies.push_back(createSymbolBody(StringTable, &Sym));
 }
 
 template <class ELFT>
