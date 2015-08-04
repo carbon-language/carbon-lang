@@ -275,9 +275,6 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MSRMapper::MSRMappings[] = {
   {"icc_sgi1r_el1", ICC_SGI1R_EL1, {}},
   {"icc_asgi1r_el1", ICC_ASGI1R_EL1, {}},
   {"icc_sgi0r_el1", ICC_SGI0R_EL1, {}},
-
-  // v8.1a "Privileged Access Never" extension-specific system registers
-  {"pan", PAN, {AArch64::HasV8_1aOps}},
 };
 
 AArch64SysReg::MSRMapper::MSRMapper() {
