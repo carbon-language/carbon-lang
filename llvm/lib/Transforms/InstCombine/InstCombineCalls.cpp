@@ -197,6 +197,38 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   return nullptr;
 }
 
+static Value *SimplifyX86immshift(const IntrinsicInst &II,
+                                  InstCombiner::BuilderTy &Builder,
+                                  bool ShiftLeft) {
+  // Simplify if count is constant. To 0 if >= BitWidth,
+  // otherwise to shl/lshr.
+  auto CDV = dyn_cast<ConstantDataVector>(II.getArgOperand(1));
+  auto CInt = dyn_cast<ConstantInt>(II.getArgOperand(1));
+  if (!CDV && !CInt)
+    return nullptr;
+  ConstantInt *Count;
+  if (CDV)
+    Count = cast<ConstantInt>(CDV->getElementAsConstant(0));
+  else
+    Count = CInt;
+
+  auto Vec = II.getArgOperand(0);
+  auto VT = cast<VectorType>(Vec->getType());
+  auto SVT = VT->getElementType();
+  if (Count->getZExtValue() > (SVT->getPrimitiveSizeInBits() - 1))
+    return ConstantAggregateZero::get(VT);
+
+  unsigned VWidth = VT->getNumElements();
+
+  // Get a constant vector of the same type as the first operand.
+  auto VTCI = ConstantInt::get(VT->getElementType(), Count->getZExtValue());
+
+  if (ShiftLeft)
+    return Builder.CreateShl(Vec, Builder.CreateVectorSplat(VWidth, VTCI));
+
+  return Builder.CreateLShr(Vec, Builder.CreateVectorSplat(VWidth, VTCI));
+}
+
 static Value *SimplifyX86extend(const IntrinsicInst &II,
                                 InstCombiner::BuilderTy &Builder,
                                 bool SignExtend) {
@@ -721,9 +753,24 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
-  // Constant fold <A x Bi> << Ci.
-  // FIXME: We don't handle _dq because it's a shift of an i128, but is
-  // represented in the IR as <2 x i64>. A per element shift is wrong.
+  // Constant fold lshr( <A x Bi>, Ci ).
+  case Intrinsic::x86_sse2_psrl_d:
+  case Intrinsic::x86_sse2_psrl_q:
+  case Intrinsic::x86_sse2_psrl_w:
+  case Intrinsic::x86_sse2_psrli_d:
+  case Intrinsic::x86_sse2_psrli_q:
+  case Intrinsic::x86_sse2_psrli_w:
+  case Intrinsic::x86_avx2_psrl_d:
+  case Intrinsic::x86_avx2_psrl_q:
+  case Intrinsic::x86_avx2_psrl_w:
+  case Intrinsic::x86_avx2_psrli_d:
+  case Intrinsic::x86_avx2_psrli_q:
+  case Intrinsic::x86_avx2_psrli_w:
+    if (Value *V = SimplifyX86immshift(*II, *Builder, false))
+      return ReplaceInstUsesWith(*II, V);
+    break;
+
+  // Constant fold shl( <A x Bi>, Ci ).
   case Intrinsic::x86_sse2_psll_d:
   case Intrinsic::x86_sse2_psll_q:
   case Intrinsic::x86_sse2_psll_w:
@@ -736,64 +783,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx2_pslli_d:
   case Intrinsic::x86_avx2_pslli_q:
   case Intrinsic::x86_avx2_pslli_w:
-  case Intrinsic::x86_sse2_psrl_d:
-  case Intrinsic::x86_sse2_psrl_q:
-  case Intrinsic::x86_sse2_psrl_w:
-  case Intrinsic::x86_sse2_psrli_d:
-  case Intrinsic::x86_sse2_psrli_q:
-  case Intrinsic::x86_sse2_psrli_w:
-  case Intrinsic::x86_avx2_psrl_d:
-  case Intrinsic::x86_avx2_psrl_q:
-  case Intrinsic::x86_avx2_psrl_w:
-  case Intrinsic::x86_avx2_psrli_d:
-  case Intrinsic::x86_avx2_psrli_q:
-  case Intrinsic::x86_avx2_psrli_w: {
-    // Simplify if count is constant. To 0 if >= BitWidth,
-    // otherwise to shl/lshr.
-    auto CDV = dyn_cast<ConstantDataVector>(II->getArgOperand(1));
-    auto CInt = dyn_cast<ConstantInt>(II->getArgOperand(1));
-    if (!CDV && !CInt)
-      break;
-    ConstantInt *Count;
-    if (CDV)
-      Count = cast<ConstantInt>(CDV->getElementAsConstant(0));
-    else
-      Count = CInt;
-
-    auto Vec = II->getArgOperand(0);
-    auto VT = cast<VectorType>(Vec->getType());
-    if (Count->getZExtValue() >
-        VT->getElementType()->getPrimitiveSizeInBits() - 1)
-      return ReplaceInstUsesWith(
-          CI, ConstantAggregateZero::get(Vec->getType()));
-
-    bool isPackedShiftLeft = true;
-    switch (II->getIntrinsicID()) {
-    default : break;
-    case Intrinsic::x86_sse2_psrl_d:
-    case Intrinsic::x86_sse2_psrl_q:
-    case Intrinsic::x86_sse2_psrl_w:
-    case Intrinsic::x86_sse2_psrli_d:
-    case Intrinsic::x86_sse2_psrli_q:
-    case Intrinsic::x86_sse2_psrli_w:
-    case Intrinsic::x86_avx2_psrl_d:
-    case Intrinsic::x86_avx2_psrl_q:
-    case Intrinsic::x86_avx2_psrl_w:
-    case Intrinsic::x86_avx2_psrli_d:
-    case Intrinsic::x86_avx2_psrli_q:
-    case Intrinsic::x86_avx2_psrli_w: isPackedShiftLeft = false; break;
-    }
-
-    unsigned VWidth = VT->getNumElements();
-    // Get a constant vector of the same type as the first operand.
-    auto VTCI = ConstantInt::get(VT->getElementType(), Count->getZExtValue());
-    if (isPackedShiftLeft)
-      return BinaryOperator::CreateShl(Vec,
-          Builder->CreateVectorSplat(VWidth, VTCI));
-
-    return BinaryOperator::CreateLShr(Vec,
-        Builder->CreateVectorSplat(VWidth, VTCI));
-  }
+    if (Value *V = SimplifyX86immshift(*II, *Builder, true))
+      return ReplaceInstUsesWith(*II, V);
+    break;
 
   case Intrinsic::x86_sse41_pmovsxbd:
   case Intrinsic::x86_sse41_pmovsxbq:
