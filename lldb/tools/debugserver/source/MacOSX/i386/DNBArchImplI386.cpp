@@ -734,10 +734,11 @@ size_and_rw_bits(nub_size_t size, bool read, bool write)
         return (0x3 << 2) | rw;
     case 8:
         return (0x2 << 2) | rw;
-    default:
-        assert(0 && "invalid size, must be one of 1, 2, 4, or 8");
     }    
+    assert(0 && "invalid size, must be one of 1, 2, 4, or 8");
+    return 0;
 }
+
 void
 DNBArchImplI386::SetWatchpoint(DBG &debug_state, uint32_t hw_index, nub_addr_t addr, nub_size_t size, bool read, bool write)
 {
@@ -849,9 +850,9 @@ DNBArchImplI386::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
         return debug_state.__dr2;
     case 3:
         return debug_state.__dr3;
-    default:
-        assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
     }
+    assert(0 && "invalid hardware register index, must be one of 0, 1, 2, or 3");
+    return 0;
 }
 
 bool
