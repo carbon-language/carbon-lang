@@ -261,9 +261,7 @@ static Loop *separateNestedLoop(Loop *L, BasicBlock *Preheader,
 
   // The header is not a landing pad; preheader insertion should ensure this.
   BasicBlock *Header = L->getHeader();
-  assert(!Header->isLandingPad() && "Can't insert backedge to landing pad");
-  if (!Header->canSplitPredecessors())
-    return nullptr;
+  assert(!Header->isEHPad() && "Can't insert backedge to EH pad");
 
   PHINode *PN = findPHIToPartitionLoops(L, DT, AC);
   if (!PN) return nullptr;  // No known way to partition.
@@ -370,8 +368,8 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
   if (!Preheader)
     return nullptr;
 
-  // The header is not a landing pad; preheader insertion should ensure this.
-  assert(!Header->isLandingPad() && "Can't insert backedge to landing pad");
+  // The header is not an EH pad; preheader insertion should ensure this.
+  assert(!Header->isEHPad() && "Can't insert backedge to EH pad");
 
   // Figure out which basic blocks contain back-edges to the loop header.
   std::vector<BasicBlock*> BackedgeBlocks;

@@ -91,7 +91,7 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
   if (!isa<TerminatorInst>(I)) {
     InsertPt = &I;
     ++InsertPt;
-    for (; isa<PHINode>(InsertPt) || isa<LandingPadInst>(InsertPt); ++InsertPt)
+    for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
       /* empty */;   // Don't insert before PHI nodes or landingpad instrs.
   } else {
     InvokeInst &II = cast<InvokeInst>(I);

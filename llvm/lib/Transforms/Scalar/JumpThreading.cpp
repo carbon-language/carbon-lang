@@ -851,10 +851,10 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   if (LoadBB->getSinglePredecessor())
     return false;
 
-  // If the load is defined in a landing pad, it can't be partially redundant,
-  // because the edges between the invoke and the landing pad cannot have other
+  // If the load is defined in an EH pad, it can't be partially redundant,
+  // because the edges between the invoke and the EH pad cannot have other
   // instructions between them.
-  if (LoadBB->isLandingPad())
+  if (LoadBB->isEHPad())
     return false;
 
   Value *LoadedPtr = LI->getOperand(0);

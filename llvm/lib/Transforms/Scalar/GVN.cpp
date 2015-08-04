@@ -1553,9 +1553,9 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
         return false;
       }
 
-      if (LoadBB->isLandingPad()) {
+      if (LoadBB->isEHPad()) {
         DEBUG(dbgs()
-              << "COULD NOT PRE LOAD BECAUSE OF LANDING PAD CRITICAL EDGE '"
+              << "COULD NOT PRE LOAD BECAUSE OF AN EH PAD CRITICAL EDGE '"
               << Pred->getName() << "': " << *LI << '\n');
         return false;
       }
@@ -2588,8 +2588,8 @@ bool GVN::performPRE(Function &F) {
     if (CurrentBlock == &F.getEntryBlock())
       continue;
 
-    // Don't perform PRE on a landing pad.
-    if (CurrentBlock->isLandingPad())
+    // Don't perform PRE on an EH pad.
+    if (CurrentBlock->isEHPad())
       continue;
 
     for (BasicBlock::iterator BI = CurrentBlock->begin(),

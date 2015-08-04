@@ -479,6 +479,11 @@ private:
   void visitExtractValueInst(ExtractValueInst &EVI);
   void visitInsertValueInst(InsertValueInst &IVI);
   void visitLandingPadInst(LandingPadInst &I) { markAnythingOverdefined(&I); }
+  void visitCleanupPadInst(CleanupPadInst &CPI) { markAnythingOverdefined(&CPI); }
+  void visitCatchPadInst(CatchPadInst &CPI) {
+    markAnythingOverdefined(&CPI);
+    visitTerminatorInst(CPI);
+  }
 
   // Instructions that cannot be folded away.
   void visitStoreInst     (StoreInst &I);
@@ -1545,7 +1550,7 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
     Instruction *Inst = --I;
     if (!Inst->use_empty())
       Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
-    if (isa<LandingPadInst>(Inst)) {
+    if (Inst->isEHPad()) {
       EndInst = Inst;
       continue;
     }

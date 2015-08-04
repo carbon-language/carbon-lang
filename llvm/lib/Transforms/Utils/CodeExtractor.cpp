@@ -51,7 +51,7 @@ AggregateArgsOpt("aggregate-extracted-args", cl::Hidden,
 /// \brief Test whether a block is valid for extraction.
 static bool isBlockValidForExtraction(const BasicBlock &BB) {
   // Landing pads must be in the function where they were inserted for cleanup.
-  if (BB.isLandingPad())
+  if (BB.isEHPad())
     return false;
 
   // Don't hoist code containing allocas, invokes, or vastarts.

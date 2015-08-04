@@ -680,6 +680,7 @@ CleanupReturnInst::CleanupReturnInst(const CleanupReturnInst &CRI)
                          CRI.getNumOperands(),
                      CRI.getNumOperands()) {
   SubclassOptionalData = CRI.SubclassOptionalData;
+  setInstructionSubclassData(CRI.getSubclassDataFromInstruction());
   if (Value *RetVal = CRI.getReturnValue())
     setReturnValue(RetVal);
   if (BasicBlock *UnwindDest = CRI.getUnwindDest())
@@ -749,6 +750,7 @@ CatchEndPadInst::CatchEndPadInst(const CatchEndPadInst &CRI)
                          CRI.getNumOperands(),
                      CRI.getNumOperands()) {
   SubclassOptionalData = CRI.SubclassOptionalData;
+  setInstructionSubclassData(CRI.getSubclassDataFromInstruction());
   if (BasicBlock *UnwindDest = CRI.getUnwindDest())
     setUnwindDest(UnwindDest);
 }
@@ -881,7 +883,7 @@ void CatchPadInst::setSuccessorV(unsigned Idx, BasicBlock *B) {
 //                        TerminatePadInst Implementation
 //===----------------------------------------------------------------------===//
 void TerminatePadInst::init(BasicBlock *BB, ArrayRef<Value *> Args,
-                              const Twine &NameStr) {
+                            const Twine &NameStr) {
   SubclassOptionalData = 0;
   if (BB)
     setInstructionSubclassData(getSubclassDataFromInstruction() | 1);
@@ -897,6 +899,7 @@ TerminatePadInst::TerminatePadInst(const TerminatePadInst &TPI)
                          TPI.getNumOperands(),
                      TPI.getNumOperands()) {
   SubclassOptionalData = TPI.SubclassOptionalData;
+  setInstructionSubclassData(TPI.getSubclassDataFromInstruction());
   std::copy(TPI.op_begin(), TPI.op_end(), op_begin());
 }
 
