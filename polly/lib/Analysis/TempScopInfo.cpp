@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/TempScopInfo.h"
+#include "polly/Options.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopDetection.h"
@@ -33,6 +34,11 @@
 
 using namespace llvm;
 using namespace polly;
+
+static cl::opt<bool> ModelReadOnlyScalars(
+    "polly-analyze-read-only-scalars",
+    cl::desc("Model read-only scalar values in the scop description"),
+    cl::Hidden, cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
 
 #define DEBUG_TYPE "polly-analyze-ir"
 
@@ -207,6 +213,21 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     // become the name of the scalar access in the polyhedral form.
     IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true);
     AccFuncMap[UseParent].push_back(std::make_pair(ScalarAccess, UI));
+  }
+
+  if (ModelReadOnlyScalars) {
+    for (Value *Op : Inst->operands()) {
+      if (canSynthesize(Op, LI, SE, R))
+        continue;
+
+      if (Instruction *OpInst = dyn_cast<Instruction>(Op))
+        if (R->contains(OpInst))
+          continue;
+
+      IRAccess ScalarAccess(IRAccess::READ, Op, ZeroOffset, 1, true);
+      AccFuncMap[Inst->getParent()].push_back(
+          std::make_pair(ScalarAccess, Inst));
+    }
   }
 
   return AnyCrossStmtUse;

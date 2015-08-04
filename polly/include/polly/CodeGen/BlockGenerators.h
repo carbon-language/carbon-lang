@@ -39,21 +39,20 @@ class IslExprBuilder;
 typedef DenseMap<const Value *, Value *> ValueMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
 
-/// @brief Check whether an instruction can be synthesized by the code
-///        generator.
+/// @brief Check whether a value an be synthesized by the code generator.
 ///
-/// Some instructions will be recalculated only from information that is code
-/// generated from the polyhedral representation. For such instructions we do
-/// not need to ensure that their operands are available during code generation.
+/// Some value will be recalculated only from information that is code generated
+/// from the polyhedral representation. For such instructions we do not need to
+/// ensure that their operands are available during code generation.
 ///
-/// @param I The instruction to check.
+/// @param V The value to check.
 /// @param LI The LoopInfo analysis.
 /// @param SE The scalar evolution database.
 /// @param R The region out of which SSA names are parameters.
 /// @return If the instruction I can be regenerated from its
 ///         scalar evolution representation, return true,
 ///         otherwise return false.
-bool canSynthesize(const llvm::Instruction *I, const llvm::LoopInfo *LI,
+bool canSynthesize(const llvm::Value *V, const llvm::LoopInfo *LI,
                    llvm::ScalarEvolution *SE, const llvm::Region *R);
 
 /// @brief Return true iff @p V is an intrinsic that we ignore during code

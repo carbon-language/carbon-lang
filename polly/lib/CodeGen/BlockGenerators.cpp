@@ -42,12 +42,12 @@ static cl::opt<bool> Aligned("enable-polly-aligned",
                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
                              cl::cat(PollyCategory));
 
-bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
+bool polly::canSynthesize(const Value *V, const llvm::LoopInfo *LI,
                           ScalarEvolution *SE, const Region *R) {
-  if (!I || !SE->isSCEVable(I->getType()))
+  if (!V || !SE->isSCEVable(V->getType()))
     return false;
 
-  if (const SCEV *Scev = SE->getSCEV(const_cast<Instruction *>(I)))
+  if (const SCEV *Scev = SE->getSCEV(const_cast<Value *>(V)))
     if (!isa<SCEVCouldNotCompute>(Scev))
       if (!hasScalarDepsInsideRegion(Scev, R))
         return true;
