@@ -1726,11 +1726,11 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
 }
 
 std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
-    Instruction *Loc, const SmallVectorImpl<int> *PtrPartition) const {
+    Instruction *Loc) const {
   if (!PtrRtChecking.Need)
     return std::make_pair(nullptr, nullptr);
 
-  return addRuntimeCheck(Loc, PtrRtChecking.generateChecks(PtrPartition));
+  return addRuntimeCheck(Loc, PtrRtChecking.generateChecks());
 }
 
 LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
