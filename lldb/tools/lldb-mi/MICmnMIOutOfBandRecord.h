@@ -9,9 +9,6 @@
 
 #pragma once
 
-// Third party headers:
-#include <map>
-
 // In-house headers:
 #include "MICmnBase.h"
 #include "MIUtilString.h"
@@ -61,21 +58,15 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
         eOutOfBand_ThreadSelected,
         eOutOfBand_TargetModuleLoaded,
         eOutOfBand_TargetModuleUnloaded,
-        eOutOfBand_TargetStreamOutput,
-        eOutOfBand_count // Always the last one
+        eOutOfBand_TargetStreamOutput
     };
-
-    // Typedefs:
-  public:
-    typedef std::map<OutOfBand_e, CMIUtilString> MapOutOfBandToOutOfBandText_t;
-    typedef std::map<OutOfBand_e, CMIUtilString> MapOutOfBandToToken_t;
 
     // Methods:
   public:
     /* ctor */ CMICmnMIOutOfBandRecord();
-    /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType);
-    /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueConst &vConst);
-    /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vResult);
+    /* ctor */ CMICmnMIOutOfBandRecord(OutOfBand_e veType);
+    /* ctor */ CMICmnMIOutOfBandRecord(OutOfBand_e veType, const CMICmnMIValueConst &vConst);
+    /* ctor */ CMICmnMIOutOfBandRecord(OutOfBand_e veType, const CMICmnMIValueResult &vResult);
     //
     const CMIUtilString &GetString() const;
     void Add(const CMICmnMIValueResult &vResult);
@@ -85,16 +76,7 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
     // From CMICmnBase
     /* dtor */ ~CMICmnMIOutOfBandRecord() override;
 
-    // Methods:
-  private:
-    void BuildAsyncRecord();
-
     // Attributes:
   private:
-    static MapOutOfBandToOutOfBandText_t ms_constMapOutOfBandToAsyncRecordText;
-    static MapOutOfBandToToken_t ms_constMapOutOfBandTextToToken;
-    //
-    OutOfBand_e m_eResultAsyncRecordClass;
     CMIUtilString m_strAsyncRecord; // Holds the text version of the result record to date
-    CMICmnMIValueResult m_partResult;
 };
