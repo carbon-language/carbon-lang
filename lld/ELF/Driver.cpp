@@ -61,7 +61,7 @@ MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
 }
 
 static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
-  return std::unique_ptr<InputFile>(new ObjectFile<object::ELF64LE>(MB));
+  return make_unique<ObjectFile<object::ELF64LE>>(MB);
 }
 
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
