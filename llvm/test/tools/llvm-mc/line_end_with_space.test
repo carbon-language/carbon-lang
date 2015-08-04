@@ -1,2 +1,2 @@
 RUN: llvm-mc -disassemble %s
- 
+# REQUIRES: native

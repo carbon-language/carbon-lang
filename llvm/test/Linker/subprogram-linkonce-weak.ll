@@ -1,3 +1,4 @@
+; REQUIRES: native
 ; RUN: llvm-link %s %S/Inputs/subprogram-linkonce-weak.ll -S -o %t1
 ; RUN: FileCheck %s -check-prefix=LW -check-prefix=CHECK <%t1
 ; RUN: llvm-link %S/Inputs/subprogram-linkonce-weak.ll %s -S -o %t2

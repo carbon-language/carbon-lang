@@ -1,5 +1,5 @@
 ; RUN: opt < %s -O3 | llc -no-integrated-as | FileCheck %s
-
+; REQUIRES: X86
 ;; We don't want branch folding to fold asm directives.
 
 ; CHECK: bork_directive
