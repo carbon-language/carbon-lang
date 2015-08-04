@@ -6240,8 +6240,7 @@ FailedModImm:
 
   // Empirical tests suggest this is rarely worth it for vectors of length <= 2.
   if (NumElts >= 4) {
-    SDValue shuffle = ReconstructShuffle(Op, DAG);
-    if (shuffle != SDValue())
+    if (SDValue shuffle = ReconstructShuffle(Op, DAG))
       return shuffle;
   }
 
@@ -7464,8 +7463,7 @@ static SDValue performIntToFpCombine(SDNode *N, SelectionDAG &DAG,
                                      const AArch64Subtarget *Subtarget) {
   // First try to optimize away the conversion when it's conditionally from
   // a constant. Vectors only.
-  SDValue Res = performVectorCompareAndMaskUnaryOpCombine(N, DAG);
-  if (Res != SDValue())
+  if (SDValue Res = performVectorCompareAndMaskUnaryOpCombine(N, DAG))
     return Res;
 
   EVT VT = N->getValueType(0);
@@ -8449,8 +8447,7 @@ static SDValue performSTORECombine(SDNode *N,
   // If we get a splat of a scalar convert this vector store to a store of
   // scalars. They will be merged into store pairs thereby removing two
   // instructions.
-  SDValue ReplacedSplat = replaceSplatVectorStore(DAG, S);
-  if (ReplacedSplat != SDValue())
+  if (SDValue ReplacedSplat = replaceSplatVectorStore(DAG, S))
     return ReplacedSplat;
 
   SDLoc DL(S);
