@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Third Party Headers:
+#include <assert.h>
+
 // In-house headers:
 #include "MICmnMIOutOfBandRecord.h"
 #include "MICmnResources.h"
