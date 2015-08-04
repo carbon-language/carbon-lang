@@ -8204,7 +8204,6 @@ static SDValue performIntrinsicCombine(SDNode *N,
   case Intrinsic::aarch64_neon_vcvtfxs2fp:
   case Intrinsic::aarch64_neon_vcvtfxu2fp:
     return tryCombineFixedPointConvert(N, DCI, DAG);
-    break;
   case Intrinsic::aarch64_neon_saddv:
     return combineAcrossLanesIntrinsic(AArch64ISD::SADDV, N, DAG);
   case Intrinsic::aarch64_neon_uaddv:
