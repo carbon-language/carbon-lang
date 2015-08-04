@@ -6437,6 +6437,44 @@ bool X86InstrInfo::getMachineCombinerPatterns(MachineInstr &Root,
   return false;
 }
 
+/// This is an architecture-specific helper function of reassociateOps.
+/// Set special operand attributes for new instructions after reassociation.
+static void setSpecialOperandAttr(MachineInstr &OldMI1, MachineInstr &OldMI2,
+                                  MachineInstr &NewMI1, MachineInstr &NewMI2) {
+  // Integer instructions define an implicit EFLAGS source register operand as
+  // the third source (fourth total) operand.
+  if (OldMI1.getNumOperands() != 4 || OldMI2.getNumOperands() != 4)
+    return;
+
+  assert(NewMI1.getNumOperands() == 4 && NewMI2.getNumOperands() == 4 &&
+         "Unexpected instruction type for reassociation");
+  
+  MachineOperand &OldOp1 = OldMI1.getOperand(3);
+  MachineOperand &OldOp2 = OldMI2.getOperand(3);
+  MachineOperand &NewOp1 = NewMI1.getOperand(3);
+  MachineOperand &NewOp2 = NewMI2.getOperand(3);
+
+  assert(OldOp1.isReg() && OldOp1.getReg() == X86::EFLAGS && OldOp1.isDead() &&
+         "Must have dead EFLAGS operand in reassociable instruction");
+  assert(OldOp2.isReg() && OldOp2.getReg() == X86::EFLAGS && OldOp2.isDead() &&
+         "Must have dead EFLAGS operand in reassociable instruction");
+
+  (void)OldOp1;
+  (void)OldOp2;
+
+  assert(NewOp1.isReg() && NewOp1.getReg() == X86::EFLAGS &&
+         "Unexpected operand in reassociable instruction");
+  assert(NewOp2.isReg() && NewOp2.getReg() == X86::EFLAGS &&
+         "Unexpected operand in reassociable instruction");
+
+  // Mark the new EFLAGS operands as dead to be helpful to subsequent iterations
+  // of this pass or other passes. The EFLAGS operands must be dead in these new
+  // instructions because the EFLAGS operands in the original instructions must
+  // be dead in order for reassociation to occur.
+  NewOp1.setIsDead();
+  NewOp2.setIsDead();
+}
+
 /// Attempt the following reassociation to reduce critical path length:
 ///   B = A op X (Prev)
 ///   C = B op Y (Root)
@@ -6503,15 +6541,16 @@ static void reassociateOps(MachineInstr &Root, MachineInstr &Prev,
     BuildMI(*MF, Prev.getDebugLoc(), TII->get(Opcode), NewVR)
       .addReg(RegX, getKillRegState(KillX))
       .addReg(RegY, getKillRegState(KillY));
-  InsInstrs.push_back(MIB1);
-
   MachineInstrBuilder MIB2 =
     BuildMI(*MF, Root.getDebugLoc(), TII->get(Opcode), RegC)
       .addReg(RegA, getKillRegState(KillA))
       .addReg(NewVR, getKillRegState(true));
-  InsInstrs.push_back(MIB2);
 
-  // Record old instructions for deletion.
+  setSpecialOperandAttr(Root, Prev, *MIB1, *MIB2);
+
+  // Record new instructions for insertion and old instructions for deletion.
+  InsInstrs.push_back(MIB1);
+  InsInstrs.push_back(MIB2);
   DelInstrs.push_back(&Prev);
   DelInstrs.push_back(&Root);
 }
