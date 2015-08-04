@@ -60,7 +60,8 @@ public:
     MD_mem_parallel_loop_access = 10, // "llvm.mem.parallel_loop_access"
     MD_nonnull = 11, // "nonnull"
     MD_dereferenceable = 12, // "dereferenceable"
-    MD_dereferenceable_or_null = 13 // "dereferenceable_or_null"
+    MD_dereferenceable_or_null = 13, // "dereferenceable_or_null"
+    MD_make_implicit = 14 // "make.implicit"
   };
 
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

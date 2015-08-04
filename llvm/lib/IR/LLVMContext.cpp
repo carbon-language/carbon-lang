@@ -104,6 +104,12 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   assert(DereferenceableOrNullID == MD_dereferenceable_or_null && 
          "dereferenceable_or_null kind id drifted");
   (void)DereferenceableOrNullID;
+
+  // Create the 'make.implicit' metadata kind.
+  unsigned MakeImplicitID = getMDKindID("make.implicit");
+  assert(MakeImplicitID == MD_make_implicit &&
+         "make.implicit kind id drifted");
+  (void)MakeImplicitID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

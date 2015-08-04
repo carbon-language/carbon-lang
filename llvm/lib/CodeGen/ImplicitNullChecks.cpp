@@ -38,6 +38,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -134,7 +135,7 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
 
   MDNode *BranchMD =
       MBB.getBasicBlock()
-          ? MBB.getBasicBlock()->getTerminator()->getMetadata("make.implicit")
+          ? MBB.getBasicBlock()->getTerminator()->getMetadata(LLVMContext::MD_make_implicit)
           : nullptr;
   if (!BranchMD)
     return false;
