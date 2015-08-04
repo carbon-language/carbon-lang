@@ -501,6 +501,9 @@ public:
   void *Allocate(size_t Size, unsigned Align = 8) const {
     return BumpAlloc.Allocate(Size, Align);
   }
+  template <typename T> T *Allocate(size_t Num = 1) const {
+    return static_cast<T *>(Allocate(Num * sizeof(T), llvm::alignOf<T>()));
+  }
   void Deallocate(void *Ptr) const { }
   
   /// Return the total amount of physical memory allocated for representing
