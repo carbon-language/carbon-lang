@@ -2499,7 +2499,8 @@ public:
 /// IndirectFieldDecl - An instance of this class is created to represent a
 /// field injected from an anonymous union/struct into the parent scope.
 /// IndirectFieldDecl are always implicit.
-class IndirectFieldDecl : public ValueDecl {
+class IndirectFieldDecl : public ValueDecl,
+                          public Mergeable<IndirectFieldDecl> {
   void anchor() override;
   NamedDecl **Chaining;
   unsigned ChainingSize;
@@ -2536,6 +2537,9 @@ public:
     assert(ChainingSize >= 2);
     return dyn_cast<VarDecl>(*chain_begin());
   }
+
+  IndirectFieldDecl *getCanonicalDecl() override { return getFirstDecl(); }
+  const IndirectFieldDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

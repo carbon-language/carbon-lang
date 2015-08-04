@@ -103,3 +103,11 @@ namespace RedeclDifferentDeclKind {
   typedef X X;
   using RedeclDifferentDeclKind::X;
 }
+
+namespace Anon {
+  struct X {
+    union {
+      int n;
+    };
+  };
+}

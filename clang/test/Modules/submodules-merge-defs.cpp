@@ -104,6 +104,7 @@ template<typename T, int N, template<typename> class K> struct J;
 J<> post_j2;
 FriendDefArg::Y<int> friend_def_arg;
 FriendDefArg::D<> friend_def_arg_d;
+int post_anon_x_n = Anon::X().n;
 
 MergeFunctionTemplateSpecializations::X<int>::Q<char> xiqc;
 
