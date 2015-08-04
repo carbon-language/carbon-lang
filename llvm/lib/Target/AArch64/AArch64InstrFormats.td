@@ -5584,7 +5584,7 @@ multiclass SIMDCmpTwoScalarD<bit U, bits<5> opc, string asm,
             (!cast<Instruction>(NAME # v1i64rz) FPR64:$Rn)>;
 }
 
-multiclass SIMDCmpTwoScalarSD<bit U, bit S, bits<5> opc, string asm,
+multiclass SIMDFPCmpTwoScalar<bit U, bit S, bits<5> opc, string asm,
                               SDPatternOperator OpNode> {
   def v1i64rz  : BaseSIMDCmpTwoScalar<U, {S,1}, opc, FPR64, asm, "0.0">;
   def v1i32rz  : BaseSIMDCmpTwoScalar<U, {S,0}, opc, FPR32, asm, "0.0">;
@@ -5607,7 +5607,7 @@ multiclass SIMDTwoScalarD<bit U, bits<5> opc, string asm,
             (!cast<Instruction>(NAME # "v1i64") FPR64:$Rn)>;
 }
 
-multiclass SIMDTwoScalarSD<bit U, bit S, bits<5> opc, string asm> {
+multiclass SIMDFPTwoScalar<bit U, bit S, bits<5> opc, string asm> {
   def v1i64       : BaseSIMDTwoScalar<U, {S,1}, opc, FPR64, FPR64, asm,[]>;
   def v1i32       : BaseSIMDTwoScalar<U, {S,0}, opc, FPR32, FPR32, asm,[]>;
 }
@@ -5690,7 +5690,7 @@ multiclass SIMDPairwiseScalarD<bit U, bits<5> opc, string asm> {
                                       asm, ".2d">;
 }
 
-multiclass SIMDPairwiseScalarSD<bit U, bit S, bits<5> opc, string asm> {
+multiclass SIMDFPPairwiseScalar<bit U, bit S, bits<5> opc, string asm> {
   def v2i32p : BaseSIMDPairwiseScalar<U, {S,0}, opc, FPR32Op, V64,
                                       asm, ".2s">;
   def v2i64p : BaseSIMDPairwiseScalar<U, {S,1}, opc, FPR64Op, V128,
@@ -6460,8 +6460,8 @@ class BaseSIMDIndexedTied<bit Q, bit U, bit Scalar, bits<2> size, bits<4> opc,
   let Inst{4-0}   = Rd;
 }
 
-multiclass SIMDFPIndexedSD<bit U, bits<4> opc, string asm,
-                           SDPatternOperator OpNode> {
+multiclass SIMDFPIndexed<bit U, bits<4> opc, string asm,
+                         SDPatternOperator OpNode> {
   def v2i32_indexed : BaseSIMDIndexed<0, U, 0, 0b10, opc,
                                       V64, V64,
                                       V128, VectorIndexS,
@@ -6523,7 +6523,7 @@ multiclass SIMDFPIndexedSD<bit U, bits<4> opc, string asm,
   }
 }
 
-multiclass SIMDFPIndexedSDTiedPatterns<string INST, SDPatternOperator OpNode> {
+multiclass SIMDFPIndexedTiedPatterns<string INST, SDPatternOperator OpNode> {
   // 2 variants for the .2s version: DUPLANE from 128-bit and DUP scalar.
   def : Pat<(v2f32 (OpNode (v2f32 V64:$Rd), (v2f32 V64:$Rn),
                            (AArch64duplane32 (v4f32 V128:$Rm),
@@ -6575,7 +6575,7 @@ multiclass SIMDFPIndexedSDTiedPatterns<string INST, SDPatternOperator OpNode> {
                 V128:$Rm, VectorIndexD:$idx)>;
 }
 
-multiclass SIMDFPIndexedSDTied<bit U, bits<4> opc, string asm> {
+multiclass SIMDFPIndexedTied<bit U, bits<4> opc, string asm> {
   def v2i32_indexed : BaseSIMDIndexedTied<0, U, 0, 0b10, opc, V64, V64,
                                           V128, VectorIndexS,
                                           asm, ".2s", ".2s", ".2s", ".s", []> {
