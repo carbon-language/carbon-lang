@@ -135,6 +135,7 @@ public:
   bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
   bool parseIRValue(Value *&V);
+  bool parseMemoryOperandFlag(unsigned &Flags);
   bool parseMachineMemoryOperand(MachineMemOperand *&Dest);
 
 private:
@@ -987,14 +988,31 @@ bool MIParser::getUint64(uint64_t &Result) {
   return false;
 }
 
+bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
+  switch (Token.kind()) {
+  case MIToken::kw_volatile:
+    Flags |= MachineMemOperand::MOVolatile;
+    break;
+  // TODO: report an error when we specify the same flag more than once.
+  // TODO: parse the other memory operand flags.
+  default:
+    llvm_unreachable("The current token should be a memory operand flag");
+  }
+  lex();
+  return false;
+}
+
 bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   if (expectAndConsume(MIToken::lparen))
     return true;
-  // TODO: Parse the operand's flags.
+  unsigned Flags = 0;
+  while (Token.isMemoryOperandFlag()) {
+    if (parseMemoryOperandFlag(Flags))
+      return true;
+  }
   if (Token.isNot(MIToken::Identifier) ||
       (Token.stringValue() != "load" && Token.stringValue() != "store"))
     return error("expected 'load' or 'store' memory operation");
-  unsigned Flags = 0;
   if (Token.stringValue() == "load")
     Flags |= MachineMemOperand::MOLoad;
   else

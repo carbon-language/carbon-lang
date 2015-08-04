@@ -61,6 +61,7 @@ struct MIToken {
     kw_x86_fp80,
     kw_fp128,
     kw_ppc_fp128,
+    kw_volatile,
 
     // Identifier tokens
     Identifier,
@@ -114,6 +115,8 @@ public:
     return Kind == kw_implicit || Kind == kw_implicit_define ||
            Kind == kw_dead || Kind == kw_killed || Kind == kw_undef;
   }
+
+  bool isMemoryOperandFlag() const { return Kind == kw_volatile; }
 
   bool is(TokenKind K) const { return Kind == K; }
 
