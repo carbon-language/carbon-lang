@@ -79,6 +79,7 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
   Alignment = STI->getTargetLowering()->getMinFunctionAlignment();
 
   // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
+  // FIXME: Use Function::optForSize().
   if (!Fn->hasFnAttribute(Attribute::OptimizeForSize))
     Alignment = std::max(Alignment,
                          STI->getTargetLowering()->getPrefFunctionAlignment());

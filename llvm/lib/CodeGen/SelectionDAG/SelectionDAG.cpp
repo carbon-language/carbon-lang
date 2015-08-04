@@ -4152,15 +4152,11 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
 }
 
 static bool shouldLowerMemFuncForSize(const MachineFunction &MF) {
-  const Function *F = MF.getFunction();
-  bool HasMinSize = F->hasFnAttribute(Attribute::MinSize);
-  bool HasOptSize = F->hasFnAttribute(Attribute::OptimizeForSize);
-
   // On Darwin, -Os means optimize for size without hurting performance, so
   // only really optimize for size when -Oz (MinSize) is used.
   if (MF.getTarget().getTargetTriple().isOSDarwin())
-    return HasMinSize;
-  return HasOptSize || HasMinSize;
+    return MF.getFunction()->optForMinSize();
+  return MF.getFunction()->optForSize();
 }
 
 static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, SDLoc dl,

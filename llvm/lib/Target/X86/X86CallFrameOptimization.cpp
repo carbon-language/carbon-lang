@@ -170,11 +170,7 @@ bool X86CallFrameOptimization::isProfitable(MachineFunction &MF,
     return true;
 
   // Don't do this when not optimizing for size.
-  bool OptForSize =
-      MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) ||
-      MF.getFunction()->hasFnAttribute(Attribute::MinSize);
-
-  if (!OptForSize)
+  if (!MF.getFunction()->optForSize())
     return false;
 
   unsigned StackAlign = TFL->getStackAlignment();

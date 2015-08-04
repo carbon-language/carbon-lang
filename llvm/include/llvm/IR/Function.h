@@ -395,6 +395,16 @@ public:
     addAttribute(n, Attribute::ReadOnly);
   }
 
+  /// Optimize this function for minimum size (-Oz).
+  bool optForMinSize() const {
+    return hasFnAttribute(Attribute::MinSize);
+  };
+  
+  /// Optimize this function for size (-Os) or minimum size (-Oz).
+  bool optForSize() const {
+    return hasFnAttribute(Attribute::OptimizeForSize) || optForMinSize();
+  }
+
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a Function) from the Function Src to this one.
   void copyAttributesFrom(const GlobalValue *Src) override;

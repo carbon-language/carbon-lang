@@ -1652,9 +1652,7 @@ isProfitableToIfCvt(MachineBasicBlock &MBB,
   // If we are optimizing for size, see if the branch in the predecessor can be
   // lowered to cbn?z by the constant island lowering pass, and return false if
   // so. This results in a shorter instruction sequence.
-  const Function *F = MBB.getParent()->getFunction();
-  if (F->hasFnAttribute(Attribute::OptimizeForSize) ||
-      F->hasFnAttribute(Attribute::MinSize)) {
+  if (MBB.getParent()->getFunction()->optForSize()) {
     MachineBasicBlock *Pred = *MBB.pred_begin();
     if (!Pred->empty()) {
       MachineInstr *LastMI = &*Pred->rbegin();
@@ -1989,7 +1987,7 @@ bool llvm::tryFoldSPUpdateIntoPushPop(const ARMSubtarget &Subtarget,
                                       unsigned NumBytes) {
   // This optimisation potentially adds lots of load and store
   // micro-operations, it's only really a great benefit to code-size.
-  if (!MF.getFunction()->hasFnAttribute(Attribute::MinSize))
+  if (!MF.getFunction()->optForMinSize())
     return false;
 
   // If only one register is pushed/popped, LLVM can use an LDR/STR
@@ -3652,6 +3650,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     // instructions).
     if (Latency > 0 && Subtarget.isThumb2()) {
       const MachineFunction *MF = DefMI->getParent()->getParent();
+      // FIXME: Use Function::optForSize().
       if (MF->getFunction()->hasFnAttribute(Attribute::OptimizeForSize))
         --Latency;
     }

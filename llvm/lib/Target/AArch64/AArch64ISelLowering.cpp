@@ -8422,10 +8422,8 @@ static SDValue performSTORECombine(SDNode *N,
   if (!Subtarget->isCyclone())
     return SDValue();
 
-  // Don't split at Oz.
-  MachineFunction &MF = DAG.getMachineFunction();
-  bool IsMinSize = MF.getFunction()->hasFnAttribute(Attribute::MinSize);
-  if (IsMinSize)
+  // Don't split at -Oz.
+  if (DAG.getMachineFunction().getFunction()->optForMinSize())
     return SDValue();
 
   SDValue StVal = S->getValue();

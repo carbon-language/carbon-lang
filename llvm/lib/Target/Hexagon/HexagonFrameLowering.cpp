@@ -1219,6 +1219,7 @@ MachineInstr *HexagonFrameLowering::getAlignaInstr(MachineFunction &MF) const {
 }
 
 
+// FIXME: Use Function::optForSize().
 inline static bool isOptSize(const MachineFunction &MF) {
   AttributeSet AF = MF.getFunction()->getAttributes();
   return AF.hasAttribute(AttributeSet::FunctionIndex,
@@ -1226,8 +1227,7 @@ inline static bool isOptSize(const MachineFunction &MF) {
 }
 
 inline static bool isMinSize(const MachineFunction &MF) {
-  AttributeSet AF = MF.getFunction()->getAttributes();
-  return AF.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+  return MF.getFunction()->optForMinSize();
 }
 
 

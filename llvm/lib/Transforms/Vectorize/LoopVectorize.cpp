@@ -1616,6 +1616,7 @@ struct LoopVectorize : public FunctionPass {
     // Check the function attributes to find out if this function should be
     // optimized for size.
     bool OptForSize = Hints.getForce() != LoopVectorizeHints::FK_Enabled &&
+                      // FIXME: Use Function::optForSize().
                       F->hasFnAttribute(Attribute::OptimizeForSize);
 
     // Compute the weighted frequency of this loop being executed and see if it

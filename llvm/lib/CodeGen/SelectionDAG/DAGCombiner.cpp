@@ -428,9 +428,7 @@ namespace {
     DAGCombiner(SelectionDAG &D, AliasAnalysis &A, CodeGenOpt::Level OL)
         : DAG(D), TLI(D.getTargetLoweringInfo()), Level(BeforeLegalizeTypes),
           OptLevel(OL), LegalOperations(false), LegalTypes(false), AA(A) {
-      auto *F = DAG.getMachineFunction().getFunction();
-      ForCodeSize = F->hasFnAttribute(Attribute::OptimizeForSize) ||
-                    F->hasFnAttribute(Attribute::MinSize);
+      ForCodeSize = DAG.getMachineFunction().getFunction()->optForSize();
     }
 
     /// Runs the dag combiner on all nodes in the work list

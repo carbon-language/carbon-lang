@@ -3968,6 +3968,7 @@ static SDValue ExpandPowI(SDLoc DL, SDValue LHS, SDValue RHS,
       return DAG.getConstantFP(1.0, DL, LHS.getValueType());
 
     const Function *F = DAG.getMachineFunction().getFunction();
+    // FIXME: Use Function::optForSize().
     if (!F->hasFnAttribute(Attribute::OptimizeForSize) ||
         // If optimizing for size, don't insert too many multiplies.  This
         // inserts up to 5 multiplies.

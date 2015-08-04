@@ -600,6 +600,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
   }
 
   // Do not do non-trivial unswitch while optimizing for size.
+  // FIXME: Use Function::optForSize().
   if (OptimizeForSize || F->hasFnAttribute(Attribute::OptimizeForSize))
     return false;
 

@@ -4875,8 +4875,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
   // For CPUs that favor the register form of a call or push,
   // do not fold loads into calls or pushes, unless optimizing for size
   // aggressively.
-  if (isCallRegIndirect && 
-      !MF.getFunction()->hasFnAttribute(Attribute::MinSize) &&
+  if (isCallRegIndirect && !MF.getFunction()->optForMinSize() &&
       (MI->getOpcode() == X86::CALL32r || MI->getOpcode() == X86::CALL64r ||
        MI->getOpcode() == X86::PUSH16r || MI->getOpcode() == X86::PUSH32r ||
        MI->getOpcode() == X86::PUSH64r))
@@ -5242,6 +5241,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
 
   // Unless optimizing for size, don't fold to avoid partial
   // register update stalls
+  // FIXME: Use Function::optForSize().
   if (!MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) &&
       hasPartialRegUpdate(MI->getOpcode()))
     return nullptr;
@@ -5351,6 +5351,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
 
   // Unless optimizing for size, don't fold to avoid partial
   // register update stalls
+  // FIXME: Use Function::optForSize().
   if (!MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) &&
       hasPartialRegUpdate(MI->getOpcode()))
     return nullptr;

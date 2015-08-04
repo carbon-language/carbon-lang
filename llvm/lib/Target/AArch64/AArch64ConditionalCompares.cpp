@@ -899,7 +899,7 @@ bool AArch64ConditionalCompares::runOnMachineFunction(MachineFunction &MF) {
   Loops = getAnalysisIfAvailable<MachineLoopInfo>();
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = nullptr;
-  MinSize = MF.getFunction()->hasFnAttribute(Attribute::MinSize);
+  MinSize = MF.getFunction()->optForMinSize();
 
   bool Changed = false;
   CmpConv.runOnMachineFunction(MF);

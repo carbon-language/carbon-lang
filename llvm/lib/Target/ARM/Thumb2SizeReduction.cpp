@@ -633,10 +633,9 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   if (ReduceLimit2Addr != -1 && ((int)Num2Addrs >= ReduceLimit2Addr))
     return false;
 
-  if (!MinimizeSize && !OptimizeSize && Entry.AvoidMovs &&
-      STI->avoidMOVsShifterOperand())
+  if (!OptimizeSize && Entry.AvoidMovs && STI->avoidMOVsShifterOperand())
     // Don't issue movs with shifter operand for some CPUs unless we
-    // are optimizing / minimizing for size.
+    // are optimizing for size.
     return false;
 
   unsigned Reg0 = MI->getOperand(0).getReg();
@@ -750,10 +749,9 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   if (ReduceLimit != -1 && ((int)NumNarrows >= ReduceLimit))
     return false;
 
-  if (!MinimizeSize && !OptimizeSize && Entry.AvoidMovs &&
-      STI->avoidMOVsShifterOperand())
+  if (!OptimizeSize && Entry.AvoidMovs && STI->avoidMOVsShifterOperand())
     // Don't issue movs with shifter operand for some CPUs unless we
-    // are optimizing / minimizing for size.
+    // are optimizing for size.
     return false;
 
   unsigned Limit = ~0U;
@@ -1012,9 +1010,9 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
 
   TII = static_cast<const Thumb2InstrInfo *>(STI->getInstrInfo());
 
-  // Optimizing / minimizing size?
-  OptimizeSize = MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize);
-  MinimizeSize = MF.getFunction()->hasFnAttribute(Attribute::MinSize);
+  // Optimizing / minimizing size? Minimizing size implies optimizing for size.
+  OptimizeSize = MF.getFunction()->optForSize();
+  MinimizeSize = MF.getFunction()->optForMinSize();
 
   BlockInfo.clear();
   BlockInfo.resize(MF.getNumBlockIDs());

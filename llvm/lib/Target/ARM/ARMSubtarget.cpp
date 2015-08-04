@@ -294,8 +294,7 @@ bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
   // immediates as it is inherently position independent, and may be out of
   // range otherwise.
   return !NoMovt && hasV6T2Ops() &&
-         (isTargetWindows() ||
-          !MF.getFunction()->hasFnAttribute(Attribute::MinSize));
+         (isTargetWindows() || !MF.getFunction()->optForMinSize());
 }
 
 bool ARMSubtarget::useFastISel() const {

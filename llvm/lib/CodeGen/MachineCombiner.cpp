@@ -427,6 +427,7 @@ bool MachineCombiner::runOnMachineFunction(MachineFunction &MF) {
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = 0;
 
+  // FIXME: Use Function::optForSize().
   OptSize = MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize);
 
   DEBUG(dbgs() << getPassName() << ": " << MF.getName() << '\n');
