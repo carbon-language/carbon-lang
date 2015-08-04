@@ -724,12 +724,7 @@ MSAsmStmt::MSAsmStmt(const ASTContext &C, SourceLocation asmloc,
 }
 
 static StringRef copyIntoContext(const ASTContext &C, StringRef str) {
-  if (str.empty())
-    return StringRef();
-  size_t size = str.size();
-  char *buffer = new (C) char[size];
-  memcpy(buffer, str.data(), size);
-  return StringRef(buffer, size);
+  return str.copy(C.getAllocator());
 }
 
 void MSAsmStmt::initialize(const ASTContext &C, StringRef asmstr,
