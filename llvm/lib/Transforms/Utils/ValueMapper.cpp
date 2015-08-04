@@ -260,7 +260,8 @@ static Metadata *mapUniquedNode(const MDNode *Node,
 
   // Create a temporary node upfront in case we have a metadata cycle.
   auto ClonedMD = Node->clone();
-  if (!remap(Node, ClonedMD.get(), Cycles, VM, Flags, TypeMapper, Materializer)) {
+  if (!remap(Node, ClonedMD.get(), Cycles, VM, Flags, TypeMapper,
+             Materializer)) {
     // No operands changed, so use the identity mapping.
     ClonedMD->replaceAllUsesWith(const_cast<MDNode *>(Node));
     return mapToSelf(VM, Node);
