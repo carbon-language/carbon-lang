@@ -570,12 +570,8 @@ StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
 
 #ifdef LLVM_ON_UNIX
   char CanonicalNameBuf[PATH_MAX];
-  if (realpath(Dir->getName(), CanonicalNameBuf)) {
-    unsigned Len = strlen(CanonicalNameBuf);
-    char *Mem = static_cast<char *>(CanonicalNameStorage.Allocate(Len, 1));
-    memcpy(Mem, CanonicalNameBuf, Len);
-    CanonicalName = StringRef(Mem, Len);
-  }
+  if (realpath(Dir->getName(), CanonicalNameBuf))
+    CanonicalName = StringRef(CanonicalNameBuf).copy(CanonicalNameStorage);
 #else
   SmallString<256> CanonicalNameBuf(CanonicalName);
   llvm::sys::fs::make_absolute(CanonicalNameBuf);
@@ -587,9 +583,7 @@ StringRef FileManager::getCanonicalName(const DirectoryEntry *Dir) {
   // Ideally we'd have an equivalent of `realpath` and could implement
   // sys::fs::canonical across all the platforms.
   removeDotPaths(CanonicalNameBuf, /*RemoveDotDot*/true);
-  char *Mem = CanonicalNameStorage.Allocate<char>(CanonicalNameBuf.size());
-  memcpy(Mem, CanonicalNameBuf.data(), CanonicalNameBuf.size());
-  CanonicalName = StringRef(Mem, CanonicalNameBuf.size());
+  CanonicalName = StringRef(CanonicalNameBuf).copy(CanonicalNameStorage);
 #endif
 
   CanonicalDirNames.insert(std::make_pair(Dir, CanonicalName));
