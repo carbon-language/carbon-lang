@@ -61,7 +61,22 @@ MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
 }
 
 static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
-  return make_unique<ObjectFile<object::ELF64LE>>(MB);
+  std::pair<unsigned char, unsigned char> Type =
+      object::getElfArchType(MB.getBuffer());
+  if (Type.second != ELF::ELFDATA2LSB && Type.second != ELF::ELFDATA2MSB)
+    error("Invalid data encoding");
+
+  if (Type.first == ELF::ELFCLASS32) {
+    if (Type.second == ELF::ELFDATA2LSB)
+      return make_unique<ObjectFile<object::ELF32LE>>(MB);
+    return make_unique<ObjectFile<object::ELF32BE>>(MB);
+  }
+  if (Type.first == ELF::ELFCLASS64) {
+    if (Type.second == ELF::ELFDATA2LSB)
+      return make_unique<ObjectFile<object::ELF64LE>>(MB);
+    return make_unique<ObjectFile<object::ELF64BE>>(MB);
+  }
+  error("Invalid file class");
 }
 
 void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {

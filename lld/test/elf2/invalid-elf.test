@@ -1,0 +1,7 @@
+RUN: not lld -flavor gnu2 %p/Inputs/invalid-data-encoding.elf -o %t2 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-DATA-ENC %s
+INVALID-DATA-ENC: Invalid data encoding
+
+RUN: not lld -flavor gnu2 %p/Inputs/invalid-file-class.elf -o %t2 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-FILE-CLASS %s
+INVALID-FILE-CLASS: Invalid file class
