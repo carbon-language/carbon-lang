@@ -62,11 +62,7 @@ public:
   void applyRewrites(EditsReceiver &receiver);
   void clearRewrites();
 
-  StringRef copyString(StringRef str) {
-    char *buf = StrAlloc.Allocate<char>(str.size());
-    std::memcpy(buf, str.data(), str.size());
-    return StringRef(buf, str.size());
-  }
+  StringRef copyString(StringRef str) { return str.copy(StrAlloc); }
   StringRef copyString(const Twine &twine);
 
 private:

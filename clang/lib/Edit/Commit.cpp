@@ -183,7 +183,7 @@ void Commit::addInsert(SourceLocation OrigLoc, FileOffset Offs, StringRef text,
   data.Kind = Act_Insert;
   data.OrigLoc = OrigLoc;
   data.Offset = Offs;
-  data.Text = copyString(text);
+  data.Text = text.copy(StrAlloc);
   data.BeforePrev = beforePreviousInsertions;
   CachedEdits.push_back(data);
 }
