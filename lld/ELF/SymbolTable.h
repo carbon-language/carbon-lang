@@ -38,9 +38,6 @@ public:
   // Print an error message on undefined symbols.
   void reportRemainingUndefines();
 
-  // Returns a list of chunks of selected symbols.
-  std::vector<Chunk *> getChunks();
-
   // The writer needs to infer the machine type from the object files.
   std::vector<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles;
 

@@ -68,15 +68,6 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     error(Twine("duplicate symbol: ") + Name);
 }
 
-template <class ELFT> std::vector<Chunk *> SymbolTable<ELFT>::getChunks() {
-  std::vector<Chunk *> Res;
-  for (std::unique_ptr<ObjectFile<ELFT>> &File : ObjectFiles) {
-    ArrayRef<Chunk *> V = File->getChunks();
-    Res.insert(Res.end(), V.begin(), V.end());
-  }
-  return Res;
-}
-
 namespace lld {
 namespace elf2 {
 template class SymbolTable<object::ELF32LE>;

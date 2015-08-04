@@ -81,13 +81,15 @@ void OutputSection::writeHeaderTo(Elf_Shdr_Impl<ELFT> *SHdr) {
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<StringRef, OutputSection *> Map;
-  for (Chunk *C : Symtab->getChunks()) {
-    OutputSection *&Sec = Map[C->getSectionName()];
-    if (!Sec) {
-      Sec = new (CAlloc.Allocate()) OutputSection(C->getSectionName());
-      OutputSections.push_back(Sec);
+  for (std::unique_ptr<ObjectFile<ELFT>> &File : Symtab->ObjectFiles) {
+    for (Chunk *C : File->getChunks()) {
+      OutputSection *&Sec = Map[C->getSectionName()];
+      if (!Sec) {
+        Sec = new (CAlloc.Allocate()) OutputSection(C->getSectionName());
+        OutputSections.push_back(Sec);
+      }
+      Sec->addChunk<ELFT>(C);
     }
-    Sec->addChunk<ELFT>(C);
   }
 }
 
