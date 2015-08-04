@@ -86,7 +86,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     error("no input files.");
 
   // Create a symbol table.
-  SymbolTable<object::ELF64LE> Symtab;
+  SymbolTable Symtab;
 
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.

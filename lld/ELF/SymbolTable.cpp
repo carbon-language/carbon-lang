@@ -16,27 +16,23 @@ using namespace llvm;
 using namespace lld;
 using namespace lld::elf2;
 
-template <class ELFT> SymbolTable<ELFT>::SymbolTable() {
-  resolve(new (Alloc) Undefined("_start"));
-}
+SymbolTable::SymbolTable() { resolve(new (Alloc) Undefined("_start")); }
 
-template <class ELFT>
-void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
+void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   File->parse();
   InputFile *FileP = File.release();
-  auto *P = cast<ObjectFile<ELFT>>(FileP);
+  auto *P = cast<ObjectFileBase>(FileP);
   addObject(P);
 }
 
-template <class ELFT>
-void SymbolTable<ELFT>::addObject(ObjectFile<ELFT> *File) {
+void SymbolTable::addObject(ObjectFileBase *File) {
   ObjectFiles.emplace_back(File);
   for (SymbolBody *Body : File->getSymbols())
     if (Body->isExternal())
       resolve(Body);
 }
 
-template <class ELFT> void SymbolTable<ELFT>::reportRemainingUndefines() {
+void SymbolTable::reportRemainingUndefines() {
   for (auto &I : Symtab) {
     Symbol *Sym = I.second;
     if (auto *Undef = dyn_cast<Undefined>(Sym->Body))
@@ -46,7 +42,7 @@ template <class ELFT> void SymbolTable<ELFT>::reportRemainingUndefines() {
 
 // This function resolves conflicts if there's an existing symbol with
 // the same name. Decisions are made based on symbol type.
-template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
+void SymbolTable::resolve(SymbolBody *New) {
   // Find an existing Symbol or create and insert a new one.
   StringRef Name = New->getName();
   Symbol *&Sym = Symtab[Name];
@@ -65,13 +61,4 @@ template <class ELFT> void SymbolTable<ELFT>::resolve(SymbolBody *New) {
     Sym->Body = New;
   if (comp == 0)
     error(Twine("duplicate symbol: ") + Name);
-}
-
-namespace lld {
-namespace elf2 {
-template class SymbolTable<object::ELF32LE>;
-template class SymbolTable<object::ELF32BE>;
-template class SymbolTable<object::ELF64LE>;
-template class SymbolTable<object::ELF64BE>;
-}
 }

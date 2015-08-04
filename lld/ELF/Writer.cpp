@@ -21,7 +21,9 @@ using namespace lld::elf2;
 
 static const int PageSize = 4096;
 
-template <class ELFT> Writer<ELFT>::Writer(SymbolTable<ELFT> *T) : Symtab(T) {}
+template <class ELFT>
+Writer<ELFT>::Writer(SymbolTable *Symtab)
+    : Symtab(Symtab) {}
 template <class ELFT> Writer<ELFT>::~Writer() {}
 
 // The main function of the writer.
@@ -81,7 +83,7 @@ void OutputSection::writeHeaderTo(Elf_Shdr_Impl<ELFT> *SHdr) {
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<StringRef, OutputSection *> Map;
-  for (std::unique_ptr<ObjectFile<ELFT>> &File : Symtab->ObjectFiles) {
+  for (std::unique_ptr<ObjectFileBase> &File : Symtab->ObjectFiles) {
     for (Chunk *C : File->getChunks()) {
       OutputSection *&Sec = Map[C->getSectionName()];
       if (!Sec) {

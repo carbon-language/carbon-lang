@@ -29,7 +29,7 @@ struct Symbol;
 // an undefined symbol. Or, if there's a conflict between a lazy and a
 // undefined, it'll read an archive member to read a real definition
 // to replace the lazy symbol. The logic is implemented in resolve().
-template <class ELFT> class SymbolTable {
+class SymbolTable {
 public:
   SymbolTable();
 
@@ -39,10 +39,10 @@ public:
   void reportRemainingUndefines();
 
   // The writer needs to infer the machine type from the object files.
-  std::vector<std::unique_ptr<ObjectFile<ELFT>>> ObjectFiles;
+  std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
 
 private:
-  void addObject(ObjectFile<ELFT> *File);
+  void addObject(ObjectFileBase *File);
 
   void resolve(SymbolBody *Body);
 

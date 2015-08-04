@@ -40,17 +40,33 @@ private:
 };
 
 // .o file.
-template <class ELFT> class ObjectFile : public InputFile {
+class ObjectFileBase : public InputFile {
+public:
+  explicit ObjectFileBase(MemoryBufferRef M) : InputFile(ObjectKind, M) {}
+  static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
+
+  ArrayRef<Chunk *> getChunks() { return Chunks; }
+  ArrayRef<SymbolBody *> getSymbols() override { return SymbolBodies; }
+
+protected:
+  // List of all chunks defined by this file. This includes both section
+  // chunks and non-section chunks for common symbols.
+  std::vector<Chunk *> Chunks;
+
+  // List of all symbols referenced or defined by this file.
+  std::vector<SymbolBody *> SymbolBodies;
+
+  llvm::BumpPtrAllocator Alloc;
+};
+
+template <class ELFT> class ObjectFile : public ObjectFileBase {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
 public:
-  explicit ObjectFile(MemoryBufferRef M) : InputFile(ObjectKind, M) {}
-  static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
+  explicit ObjectFile(MemoryBufferRef M) : ObjectFileBase(M) {}
   void parse() override;
-  ArrayRef<Chunk *> getChunks() { return Chunks; }
-  ArrayRef<SymbolBody *> getSymbols() override { return SymbolBodies; }
 
   // Returns the underying ELF file.
   llvm::object::ELFFile<ELFT> *getObj() { return ELFObj.get(); }
@@ -62,14 +78,6 @@ private:
   SymbolBody *createSymbolBody(StringRef StringTable, const Elf_Sym *Sym);
 
   std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
-  llvm::BumpPtrAllocator Alloc;
-
-  // List of all chunks defined by this file. This includes both section
-  // chunks and non-section chunks for common symbols.
-  std::vector<Chunk *> Chunks;
-
-  // List of all symbols referenced or defined by this file.
-  std::vector<SymbolBody *> SymbolBodies;
 };
 
 } // namespace elf2

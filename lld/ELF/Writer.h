@@ -44,7 +44,7 @@ template <class ELFT> class Writer {
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
-  explicit Writer(SymbolTable<ELFT> *T);
+  explicit Writer(SymbolTable *Symtab);
   ~Writer();
   void write(StringRef Path);
 
@@ -55,7 +55,7 @@ private:
   void writeHeader();
   void writeSections();
 
-  SymbolTable<ELFT> *Symtab;
+  SymbolTable *Symtab;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   std::vector<OutputSection *> OutputSections;
