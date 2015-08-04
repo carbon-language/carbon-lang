@@ -887,6 +887,26 @@ static inline uint16_t applyPPChighesta (uint64_t value) {
   return ((value + 0x8000) >> 48) & 0xffff;
 }
 
+void RuntimeDyldELF::resolvePPC32Relocation(const SectionEntry &Section,
+                                            uint64_t Offset, uint64_t Value,
+                                            uint32_t Type, int64_t Addend) {
+  uint8_t *LocalAddress = Section.Address + Offset;
+  switch (Type) {
+  default:
+    llvm_unreachable("Relocation type not implemented yet!");
+    break;
+  case ELF::R_PPC_ADDR16_LO:
+    writeInt16BE(LocalAddress, applyPPClo(Value + Addend));
+    break;
+  case ELF::R_PPC_ADDR16_HI:
+    writeInt16BE(LocalAddress, applyPPChi(Value + Addend));
+    break;
+  case ELF::R_PPC_ADDR16_HA:
+    writeInt16BE(LocalAddress, applyPPCha(Value + Addend));
+    break;
+  }
+}
+
 void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
                                             uint64_t Offset, uint64_t Value,
                                             uint32_t Type, int64_t Addend) {
@@ -1074,6 +1094,9 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
                               SectionID);
     else
       llvm_unreachable("Mips ABI not handled");
+    break;
+  case Triple::ppc:
+    resolvePPC32Relocation(Section, Offset, Value, Type, Addend);
     break;
   case Triple::ppc64: // Fall through.
   case Triple::ppc64le:
