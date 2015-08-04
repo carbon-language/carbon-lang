@@ -26,7 +26,6 @@ void SymbolTable<ELFT>::addFile(std::unique_ptr<InputFile> File) {
   InputFile *FileP = File.release();
   auto *P = cast<ObjectFile<ELFT>>(FileP);
   addObject(P);
-  return;
 }
 
 template <class ELFT>
