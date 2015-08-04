@@ -81,6 +81,17 @@ define void @truncst64to8(i8** nocapture %out, i8 %index, i64 %spacing) nounwind
 }
 
 
+define void @storef16(half** %out, half %index, half %spacing) nounwind {
+; CHECK-LABEL: storef16:
+; CHECK: str h{{[0-9+]}}, [x{{[0-9+]}}], #2
+; CHECK: ret
+  %tmp = load half*, half** %out, align 2
+  %incdec.ptr = getelementptr inbounds half, half* %tmp, i64 1
+  store half %spacing, half* %tmp, align 2
+  store half* %incdec.ptr, half** %out, align 2
+  ret void
+}
+
 define void @storef32(float** nocapture %out, float %index, float %spacing) nounwind noinline ssp {
 ; CHECK-LABEL: storef32:
 ; CHECK: str s{{[0-9+]}}, [x{{[0-9+]}}], #4
@@ -123,6 +134,17 @@ define float * @pref32(float** nocapture %out, float %spacing) nounwind noinline
   %ptr = getelementptr inbounds float, float* %tmp, i64 3
   store float %spacing, float* %ptr, align 4
   ret float *%ptr
+}
+
+define half* @pref16(half** %out, half %spacing) nounwind {
+; CHECK-LABEL: pref16:
+; CHECK: ldr x0, [x0]
+; CHECK-NEXT: str h0, [x0, #6]!
+; CHECK-NEXT: ret
+  %tmp = load half*, half** %out, align 2
+  %ptr = getelementptr inbounds half, half* %tmp, i64 3
+  store half %spacing, half* %ptr, align 2
+  ret half *%ptr
 }
 
 define i64 * @pre64(i64** nocapture %out, i64 %spacing) nounwind noinline ssp {
@@ -228,6 +250,17 @@ define float* @preidxf32(float* %src, float* %out) {
   %tmp = load float, float* %ptr, align 4
   store float %tmp, float* %out, align 4
   ret float* %ptr
+}
+
+define half* @preidxf16(half* %src, half* %out) {
+; CHECK-LABEL: preidxf16:
+; CHECK: ldr     h0, [x0, #2]!
+; CHECK: str     h0, [x1]
+; CHECK: ret
+  %ptr = getelementptr inbounds half, half* %src, i64 1
+  %tmp = load half, half* %ptr, align 2
+  store half %tmp, half* %out, align 2
+  ret half* %ptr
 }
 
 define i64* @preidx64(i64* %src, i64* %out) {

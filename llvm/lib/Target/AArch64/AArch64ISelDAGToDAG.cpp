@@ -1038,6 +1038,8 @@ SDNode *AArch64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
       // it into an i64.
       DstVT = MVT::i32;
     }
+  } else if (VT == MVT::f16) {
+    Opcode = IsPre ? AArch64::LDRHpre : AArch64::LDRHpost;
   } else if (VT == MVT::f32) {
     Opcode = IsPre ? AArch64::LDRSpre : AArch64::LDRSpost;
   } else if (VT == MVT::f64 || VT.is64BitVector()) {
