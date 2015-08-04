@@ -742,7 +742,7 @@ struct _LIBCPP_TYPE_VIS_ONLY char_traits<char16_t>
     static inline _LIBCPP_CONSTEXPR bool eq_int_type(int_type __c1, int_type __c2) _NOEXCEPT
         {return __c1 == __c2;}
     static inline _LIBCPP_CONSTEXPR int_type eof() _NOEXCEPT
-        {return int_type(0xDFFF);}
+        {return int_type(0xFFFF);}
 };
 
 inline _LIBCPP_INLINE_VISIBILITY
