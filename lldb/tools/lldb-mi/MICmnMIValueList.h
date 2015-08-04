@@ -40,16 +40,16 @@ class CMICmnMIValueList : public CMICmnMIValue
     //
     void Add(const CMICmnMIValueResult &vResult);
     void Add(const CMICmnMIValue &vValue);
-    CMIUtilString ExtractContentNoBrackets(void) const;
+    CMIUtilString ExtractContentNoBrackets() const;
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnMIValueList(void) override;
+    /* dtor */ ~CMICmnMIValueList() override;
 
     // Methods:
   private:
-    void BuildList(void);
+    void BuildList();
     void BuildList(const CMICmnMIValueResult &vResult);
     void BuildList(const CMICmnMIValue &vResult);
 };

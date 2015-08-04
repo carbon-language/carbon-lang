@@ -24,7 +24,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSupportInfoMiCmdQuery::CMICmdCmdSupportInfoMiCmdQuery(void)
+CMICmdCmdSupportInfoMiCmdQuery::CMICmdCmdSupportInfoMiCmdQuery()
     : m_bCmdFound(false)
     , m_constStrArgCmdName("cmd_name")
 {
@@ -42,7 +42,7 @@ CMICmdCmdSupportInfoMiCmdQuery::CMICmdCmdSupportInfoMiCmdQuery(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSupportInfoMiCmdQuery::~CMICmdCmdSupportInfoMiCmdQuery(void)
+CMICmdCmdSupportInfoMiCmdQuery::~CMICmdCmdSupportInfoMiCmdQuery()
 {
 }
 
@@ -56,7 +56,7 @@ CMICmdCmdSupportInfoMiCmdQuery::~CMICmdCmdSupportInfoMiCmdQuery(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSupportInfoMiCmdQuery::ParseArgs(void)
+CMICmdCmdSupportInfoMiCmdQuery::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgCmdName, true, true)));
     return ParseValidateCmdOptions();
@@ -72,7 +72,7 @@ CMICmdCmdSupportInfoMiCmdQuery::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSupportInfoMiCmdQuery::Execute(void)
+CMICmdCmdSupportInfoMiCmdQuery::Execute()
 {
     CMICMDBASE_GETOPTION(pArgNamedCmdName, String, m_constStrArgCmdName);
     const CMIUtilString &rCmdToQuery(pArgNamedCmdName->GetValue());
@@ -96,7 +96,7 @@ CMICmdCmdSupportInfoMiCmdQuery::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSupportInfoMiCmdQuery::Acknowledge(void)
+CMICmdCmdSupportInfoMiCmdQuery::Acknowledge()
 {
     const CMICmnMIValueConst miValueConst(m_bCmdFound ? "true" : "false");
     const CMICmnMIValueResult miValueResult("exists", miValueConst);
@@ -117,7 +117,7 @@ CMICmdCmdSupportInfoMiCmdQuery::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdSupportInfoMiCmdQuery::CreateSelf(void)
+CMICmdCmdSupportInfoMiCmdQuery::CreateSelf()
 {
     return new CMICmdCmdSupportInfoMiCmdQuery();
 }

@@ -286,8 +286,8 @@ class CMICmnResources : public CMICmnBase, public MI::ISingleton<CMICmnResources
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
 
     CMIUtilString GetString(const MIuint vResourceId) const;
     bool HasString(const MIuint vResourceId) const;
@@ -314,17 +314,17 @@ class CMICmnResources : public CMICmnBase, public MI::ISingleton<CMICmnResources
 
     // Methods:
   private:
-    /* ctor */ CMICmnResources(void);
+    /* ctor */ CMICmnResources();
     /* ctor */ CMICmnResources(const CMICmnResources &);
     void operator=(const CMICmnResources &);
 
     bool GetStringFromResource(const MIuint vResourceId, CMIUtilString &vrwResourceString) const;
-    bool ReadResourceStringData(void);
+    bool ReadResourceStringData();
 
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmnResources(void) override;
+    /* dtor */ ~CMICmnResources() override;
 
     // Attributes:
   private:

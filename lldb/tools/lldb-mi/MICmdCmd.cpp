@@ -22,7 +22,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdEnablePrettyPrinting::CMICmdCmdEnablePrettyPrinting(void)
+CMICmdCmdEnablePrettyPrinting::CMICmdCmdEnablePrettyPrinting()
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "enable-pretty-printing";
@@ -38,7 +38,7 @@ CMICmdCmdEnablePrettyPrinting::CMICmdCmdEnablePrettyPrinting(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdEnablePrettyPrinting::~CMICmdCmdEnablePrettyPrinting(void)
+CMICmdCmdEnablePrettyPrinting::~CMICmdCmdEnablePrettyPrinting()
 {
 }
 
@@ -52,7 +52,7 @@ CMICmdCmdEnablePrettyPrinting::~CMICmdCmdEnablePrettyPrinting(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdEnablePrettyPrinting::Execute(void)
+CMICmdCmdEnablePrettyPrinting::Execute()
 {
     // Do nothing
     return MIstatus::success;
@@ -68,7 +68,7 @@ CMICmdCmdEnablePrettyPrinting::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdEnablePrettyPrinting::Acknowledge(void)
+CMICmdCmdEnablePrettyPrinting::Acknowledge()
 {
     const CMICmnMIValueConst miValueConst("0");
     const CMICmnMIValueResult miValueResult("supported", miValueConst);
@@ -87,7 +87,7 @@ CMICmdCmdEnablePrettyPrinting::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdEnablePrettyPrinting::CreateSelf(void)
+CMICmdCmdEnablePrettyPrinting::CreateSelf()
 {
     return new CMICmdCmdEnablePrettyPrinting();
 }
@@ -103,7 +103,7 @@ CMICmdCmdEnablePrettyPrinting::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSource::CMICmdCmdSource(void)
+CMICmdCmdSource::CMICmdCmdSource()
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "source";
@@ -119,7 +119,7 @@ CMICmdCmdSource::CMICmdCmdSource(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSource::~CMICmdCmdSource(void)
+CMICmdCmdSource::~CMICmdCmdSource()
 {
 }
 
@@ -133,7 +133,7 @@ CMICmdCmdSource::~CMICmdCmdSource(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSource::Execute(void)
+CMICmdCmdSource::Execute()
 {
     // Do nothing
     return MIstatus::success;
@@ -149,7 +149,7 @@ CMICmdCmdSource::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSource::Acknowledge(void)
+CMICmdCmdSource::Acknowledge()
 {
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
     m_miResultRecord = miRecordResult;
@@ -166,7 +166,7 @@ CMICmdCmdSource::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdSource::CreateSelf(void)
+CMICmdCmdSource::CreateSelf()
 {
     return new CMICmdCmdSource();
 }

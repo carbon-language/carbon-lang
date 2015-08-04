@@ -24,17 +24,17 @@ class CMIUtilSystemLinux
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilSystemLinux(void);
+    /* ctor */ CMIUtilSystemLinux();
 
     bool GetOSErrorMsg(const MIint vError, CMIUtilString &vrwErrorMsg) const;
-    CMIUtilString GetOSLastError(void) const;
+    CMIUtilString GetOSLastError() const;
     bool GetExecutablesPath(CMIUtilString &vrwFileNamePath) const;
     bool GetLogFilesPath(CMIUtilString &vrwFileNamePath) const;
 
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilSystemLinux(void);
+    /* dtor */ virtual ~CMIUtilSystemLinux();
 };
 
 typedef CMIUtilSystemLinux CMIUtilSystem;

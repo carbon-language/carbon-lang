@@ -32,13 +32,13 @@ class CMICmdInterpreter : public CMICmnBase, public MI::ISingleton<CMICmdInterpr
   public:
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
     bool ValidateIsMi(const CMIUtilString &vTextLine, bool &vwbYesValid, bool &vwbCmdNotInCmdFactor, SMICmdData &rwCmdData);
 
     // Methods:
   private:
-    /* ctor */ CMICmdInterpreter(void);
+    /* ctor */ CMICmdInterpreter();
     /* ctor */ CMICmdInterpreter(const CMICmdInterpreter &);
     void operator=(const CMICmdInterpreter &);
 
@@ -52,7 +52,7 @@ class CMICmdInterpreter : public CMICmnBase, public MI::ISingleton<CMICmdInterpr
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmdInterpreter(void) override;
+    /* dtor */ ~CMICmdInterpreter() override;
 
     // Attributes:
   private:

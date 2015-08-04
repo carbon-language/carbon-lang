@@ -40,7 +40,7 @@ class CMICmdArgValNumber : public CMICmdArgValBaseTemplate<MIint64>
 
     // Methods:
   public:
-    /* ctor */ CMICmdArgValNumber(void);
+    /* ctor */ CMICmdArgValNumber();
     /* ctor */ CMICmdArgValNumber(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
                                   const MIuint vnNumberFormatMask = eArgValNumberFormat_Decimal);
     //
@@ -49,14 +49,14 @@ class CMICmdArgValNumber : public CMICmdArgValBaseTemplate<MIint64>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ ~CMICmdArgValNumber(void) override;
+    /* dtor */ ~CMICmdArgValNumber() override;
     // From CMICmdArgSet::IArg
     bool Validate(CMICmdArgContext &vwArgContext) override;
 
     // Methods:
   private:
     bool ExtractNumber(const CMIUtilString &vrTxt);
-    MIint64 GetNumber(void) const;
+    MIint64 GetNumber() const;
 
     // Attributes:
   private:

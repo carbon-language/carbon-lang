@@ -21,7 +21,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdFactory::CMICmdFactory(void)
+CMICmdFactory::CMICmdFactory()
 {
 }
 
@@ -32,7 +32,7 @@ CMICmdFactory::CMICmdFactory(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdFactory::~CMICmdFactory(void)
+CMICmdFactory::~CMICmdFactory()
 {
     Shutdown();
 }
@@ -46,7 +46,7 @@ CMICmdFactory::~CMICmdFactory(void)
 // Throws:  None.
 //--
 bool
-CMICmdFactory::Initialize(void)
+CMICmdFactory::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -69,7 +69,7 @@ CMICmdFactory::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmdFactory::Shutdown(void)
+CMICmdFactory::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;

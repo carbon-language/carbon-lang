@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValString::CMICmdArgValString(void)
+CMICmdArgValString::CMICmdArgValString()
     : m_bHandleQuotedString(false)
     , m_bAcceptNumbers(false)
     , m_bHandleDirPaths(false)
@@ -91,7 +91,7 @@ CMICmdArgValString::CMICmdArgValString(const CMIUtilString &vrArgName, const boo
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValString::~CMICmdArgValString(void)
+CMICmdArgValString::~CMICmdArgValString()
 {
 }
 

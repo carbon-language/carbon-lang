@@ -64,7 +64,7 @@ class CMICmdArgValListBase : public CMICmdArgValBaseTemplate<std::vector<CMICmdA
 
     // Methods:
   public:
-    /* ctor */ CMICmdArgValListBase(void);
+    /* ctor */ CMICmdArgValListBase();
     /* ctor */ CMICmdArgValListBase(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
     /* ctor */ CMICmdArgValListBase(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
                                     const ArgValType_e veType);
@@ -72,7 +72,7 @@ class CMICmdArgValListBase : public CMICmdArgValBaseTemplate<std::vector<CMICmdA
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ ~CMICmdArgValListBase(void) override;
+    /* dtor */ ~CMICmdArgValListBase() override;
 
     // Methods:
   protected:
@@ -85,5 +85,5 @@ class CMICmdArgValListBase : public CMICmdArgValBaseTemplate<std::vector<CMICmdA
 
     // Methods:
   private:
-    void Destroy(void);
+    void Destroy();
 };

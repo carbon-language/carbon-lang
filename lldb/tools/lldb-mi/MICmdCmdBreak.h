@@ -41,20 +41,20 @@ class CMICmdCmdBreakInsert : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdBreakInsert(void);
+    /* ctor */ CMICmdCmdBreakInsert();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdBreakInsert(void) override;
+    /* dtor */ ~CMICmdCmdBreakInsert() override;
 
     // Enumerations:
   private:
@@ -107,20 +107,20 @@ class CMICmdCmdBreakDelete : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdBreakDelete(void);
+    /* ctor */ CMICmdCmdBreakDelete();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdBreakDelete(void) override;
+    /* dtor */ ~CMICmdCmdBreakDelete() override;
 
     // Attributes:
   private:
@@ -137,20 +137,20 @@ class CMICmdCmdBreakDisable : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdBreakDisable(void);
+    /* ctor */ CMICmdCmdBreakDisable();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdBreakDisable(void) override;
+    /* dtor */ ~CMICmdCmdBreakDisable() override;
 
     // Attributes:
   private:
@@ -169,20 +169,20 @@ class CMICmdCmdBreakEnable : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdBreakEnable(void);
+    /* ctor */ CMICmdCmdBreakEnable();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdBreakEnable(void) override;
+    /* dtor */ ~CMICmdCmdBreakEnable() override;
 
     // Attributes:
   private:
@@ -201,20 +201,20 @@ class CMICmdCmdBreakAfter : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdBreakAfter(void);
+    /* ctor */ CMICmdCmdBreakAfter();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdBreakAfter(void) override;
+    /* dtor */ ~CMICmdCmdBreakAfter() override;
 
     // Attributes:
   private:
@@ -234,24 +234,24 @@ class CMICmdCmdBreakCondition : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdBreakCondition(void);
+    /* ctor */ CMICmdCmdBreakCondition();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdBreakCondition(void) override;
+    /* dtor */ ~CMICmdCmdBreakCondition() override;
 
     // Methods:
   private:
-    CMIUtilString GetRestOfExpressionNotSurroundedInQuotes(void);
+    CMIUtilString GetRestOfExpressionNotSurroundedInQuotes();
 
     // Attributes:
   private:

@@ -33,20 +33,20 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
     //
     bool HandleEvent(const lldb::SBEvent &vEvent, bool &vrbHandledEvent);
 
     // Methods:
   private:
-    /* ctor */ CMICmnLLDBDebuggerHandleEvents(void);
+    /* ctor */ CMICmnLLDBDebuggerHandleEvents();
     /* ctor */ CMICmnLLDBDebuggerHandleEvents(const CMICmnLLDBDebuggerHandleEvents &);
     void operator=(const CMICmnLLDBDebuggerHandleEvents &);
     //
-    bool ChkForStateChanges(void);
-    bool GetProcessStdout(void);
-    bool GetProcessStderr(void);
+    bool ChkForStateChanges();
+    bool GetProcessStdout();
+    bool GetProcessStderr();
     bool HandleEventSBBreakPoint(const lldb::SBEvent &vEvent);
     bool HandleEventSBBreakpointCmn(const lldb::SBEvent &vEvent);
     bool HandleEventSBBreakpointAdded(const lldb::SBEvent &vEvent);
@@ -58,13 +58,13 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool HandleEventSBThreadSuspended(const lldb::SBEvent &vEvent);
     bool HandleEventSBCommandInterpreter(const lldb::SBEvent &vEvent);
     bool HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent);
-    bool HandleProcessEventStateRunning(void);
-    bool HandleProcessEventStateExited(void);
+    bool HandleProcessEventStateRunning();
+    bool HandleProcessEventStateExited();
     bool HandleProcessEventStateStopped(const lldb::SBEvent &vrEvent, bool &vwrbShouldBrk);
-    bool HandleProcessEventStopReasonTrace(void);
-    bool HandleProcessEventStopReasonBreakpoint(void);
+    bool HandleProcessEventStopReasonTrace();
+    bool HandleProcessEventStopReasonBreakpoint();
     bool HandleProcessEventStopSignal(const lldb::SBEvent &vrEvent);
-    bool HandleProcessEventStopException(void);
+    bool HandleProcessEventStopException();
     bool HandleProcessEventStateSuspended(const lldb::SBEvent &vEvent);
     bool HandleTargetEventBroadcastBitModulesLoaded(const lldb::SBEvent &vEvent);
     bool HandleTargetEventBroadcastBitModulesUnloaded(const lldb::SBEvent &vEvent);
@@ -76,12 +76,12 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, const lldb::SBBreakpoint &vBrkPt);
     bool TextToStdout(const CMIUtilString &vrTxt);
     bool TextToStderr(const CMIUtilString &vrTxt);
-    bool UpdateSelectedThread(void);
+    bool UpdateSelectedThread();
 
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmnLLDBDebuggerHandleEvents(void) override;
+    /* dtor */ ~CMICmnLLDBDebuggerHandleEvents() override;
     void InitializeSignals();
     bool m_bSignalsInitialized;
     MIuint64 m_SIGINT;

@@ -30,7 +30,7 @@ class CMICmdArgValPrintValues : public CMICmdArgValBaseTemplate<MIuint>
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgValPrintValues(void);
+    /* ctor */ CMICmdArgValPrintValues();
     /* ctor */ CMICmdArgValPrintValues(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
     //
     bool IsArgPrintValues(const CMIUtilString &vrTxt) const;
@@ -38,14 +38,14 @@ class CMICmdArgValPrintValues : public CMICmdArgValBaseTemplate<MIuint>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ ~CMICmdArgValPrintValues(void) override;
+    /* dtor */ ~CMICmdArgValPrintValues() override;
     // From CMICmdArgSet::IArg
     bool Validate(CMICmdArgContext &vArgContext) override;
 
     // Methods:
   private:
     bool ExtractPrintValues(const CMIUtilString &vrTxt);
-    MIuint GetPrintValues(void) const;
+    MIuint GetPrintValues() const;
 
     // Attributes:
   private:

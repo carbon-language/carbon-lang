@@ -72,22 +72,22 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
 
     // Methods:
   public:
-    /* ctor */ CMICmnMIOutOfBandRecord(void);
+    /* ctor */ CMICmnMIOutOfBandRecord();
     /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType);
     /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueConst &vConst);
     /* ctor */ CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const CMICmnMIValueResult &vResult);
     //
-    const CMIUtilString &GetString(void) const;
+    const CMIUtilString &GetString() const;
     void Add(const CMICmnMIValueResult &vResult);
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnMIOutOfBandRecord(void) override;
+    /* dtor */ ~CMICmnMIOutOfBandRecord() override;
 
     // Methods:
   private:
-    void BuildAsyncRecord(void);
+    void BuildAsyncRecord();
 
     // Attributes:
   private:

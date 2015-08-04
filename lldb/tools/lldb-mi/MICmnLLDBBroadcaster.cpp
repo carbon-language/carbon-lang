@@ -17,7 +17,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBBroadcaster::CMICmnLLDBBroadcaster(void)
+CMICmnLLDBBroadcaster::CMICmnLLDBBroadcaster()
     : lldb::SBBroadcaster("MI driver")
 {
 }
@@ -29,7 +29,7 @@ CMICmnLLDBBroadcaster::CMICmnLLDBBroadcaster(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBBroadcaster::~CMICmnLLDBBroadcaster(void)
+CMICmnLLDBBroadcaster::~CMICmnLLDBBroadcaster()
 {
     Shutdown();
 }
@@ -43,7 +43,7 @@ CMICmnLLDBBroadcaster::~CMICmnLLDBBroadcaster(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBBroadcaster::Initialize(void)
+CMICmnLLDBBroadcaster::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -64,7 +64,7 @@ CMICmnLLDBBroadcaster::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBBroadcaster::Shutdown(void)
+CMICmnLLDBBroadcaster::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;

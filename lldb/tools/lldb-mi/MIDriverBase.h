@@ -36,26 +36,26 @@ class CMIDriverBase
 {
     // Methods:
   public:
-    /* ctor */ CMIDriverBase(void);
+    /* ctor */ CMIDriverBase();
 
-    CMIDriverBase *GetDriverToFallThruTo(void) const;
-    CMIDriverBase *GetDriversParent(void) const;
+    CMIDriverBase *GetDriverToFallThruTo() const;
+    CMIDriverBase *GetDriversParent() const;
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMIDriverBase(void);
+    /* dtor */ virtual ~CMIDriverBase();
 
     virtual bool DoFallThruToAnotherDriver(const CMIUtilString &vCmd, CMIUtilString &vwErrMsg);
     virtual bool SetDriverToFallThruTo(const CMIDriverBase &vrOtherDriver);
     virtual bool SetDriverParent(const CMIDriverBase &vrOtherDriver);
-    virtual const CMIUtilString &GetDriverName(void) const = 0;
-    virtual const CMIUtilString &GetDriverId(void) const = 0;
+    virtual const CMIUtilString &GetDriverName() const = 0;
+    virtual const CMIUtilString &GetDriverId() const = 0;
     virtual void SetExitApplicationFlag(const bool vbForceExit);
 
     // MI provide information for the pass through (child) assigned driver
-    virtual FILE *GetStdin(void) const;
-    virtual FILE *GetStdout(void) const;
-    virtual FILE *GetStderr(void) const;
+    virtual FILE *GetStdin() const;
+    virtual FILE *GetStdout() const;
+    virtual FILE *GetStderr() const;
 
     // Attributes:
   protected:

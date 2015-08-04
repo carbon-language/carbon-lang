@@ -43,20 +43,20 @@ class CMICmdCmdGdbSet : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdGdbSet(void);
+    /* ctor */ CMICmdCmdGdbSet();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdGdbSet(void) override;
+    /* dtor */ ~CMICmdCmdGdbSet() override;
 
     // Typedefs:
   private:

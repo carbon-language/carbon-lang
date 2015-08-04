@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValFile::CMICmdArgValFile(void)
+CMICmdArgValFile::CMICmdArgValFile()
 {
 }
 
@@ -43,7 +43,7 @@ CMICmdArgValFile::CMICmdArgValFile(const CMIUtilString &vrArgName, const bool vb
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValFile::~CMICmdArgValFile(void)
+CMICmdArgValFile::~CMICmdArgValFile()
 {
 }
 

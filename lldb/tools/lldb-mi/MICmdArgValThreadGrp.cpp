@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValThreadGrp::CMICmdArgValThreadGrp(void)
+CMICmdArgValThreadGrp::CMICmdArgValThreadGrp()
     : m_nThreadGrp(0)
 {
 }
@@ -45,7 +45,7 @@ CMICmdArgValThreadGrp::CMICmdArgValThreadGrp(const CMIUtilString &vrArgName, con
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValThreadGrp::~CMICmdArgValThreadGrp(void)
+CMICmdArgValThreadGrp::~CMICmdArgValThreadGrp()
 {
 }
 
@@ -158,7 +158,7 @@ CMICmdArgValThreadGrp::ExtractNumber(const CMIUtilString &vrTxt)
 // Throws:  None.
 //--
 MIuint
-CMICmdArgValThreadGrp::GetNumber(void) const
+CMICmdArgValThreadGrp::GetNumber() const
 {
     return m_nThreadGrp;
 }

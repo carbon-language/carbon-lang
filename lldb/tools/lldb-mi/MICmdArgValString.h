@@ -27,7 +27,7 @@ class CMICmdArgValString : public CMICmdArgValBaseTemplate<CMIUtilString>
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgValString(void);
+    /* ctor */ CMICmdArgValString();
     /* ctor */ CMICmdArgValString(const bool vbAnything);
     /* ctor */ CMICmdArgValString(const bool vbHandleQuotes, const bool vbAcceptNumbers, const bool vbHandleDirPaths);
     /* ctor */ CMICmdArgValString(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
@@ -38,7 +38,7 @@ class CMICmdArgValString : public CMICmdArgValBaseTemplate<CMIUtilString>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ ~CMICmdArgValString(void) override;
+    /* dtor */ ~CMICmdArgValString() override;
     // From CMICmdArgSet::IArg
     bool Validate(CMICmdArgContext &vrwArgContext) override;
 

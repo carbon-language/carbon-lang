@@ -43,20 +43,20 @@ class CMICmdCmdGdbShow : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdGdbShow(void);
+    /* ctor */ CMICmdCmdGdbShow();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdGdbShow(void) override;
+    /* dtor */ ~CMICmdCmdGdbShow() override;
 
     // Typedefs:
   private:

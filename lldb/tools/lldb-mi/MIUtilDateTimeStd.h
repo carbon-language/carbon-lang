@@ -23,16 +23,16 @@ class CMIUtilDateTimeStd
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilDateTimeStd(void);
+    /* ctor */ CMIUtilDateTimeStd();
 
-    CMIUtilString GetDate(void);
-    CMIUtilString GetTime(void);
-    CMIUtilString GetDateTimeLogFilename(void);
+    CMIUtilString GetDate();
+    CMIUtilString GetTime();
+    CMIUtilString GetDateTimeLogFilename();
 
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilDateTimeStd(void);
+    /* dtor */ virtual ~CMIUtilDateTimeStd();
 
     // Attributes:
   private:

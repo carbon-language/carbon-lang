@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValPrintValues::CMICmdArgValPrintValues(void)
+CMICmdArgValPrintValues::CMICmdArgValPrintValues()
     : m_nPrintValues(0)
 {
 }
@@ -45,7 +45,7 @@ CMICmdArgValPrintValues::CMICmdArgValPrintValues(const CMIUtilString &vrArgName,
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValPrintValues::~CMICmdArgValPrintValues(void)
+CMICmdArgValPrintValues::~CMICmdArgValPrintValues()
 {
 }
 
@@ -123,7 +123,7 @@ CMICmdArgValPrintValues::ExtractPrintValues(const CMIUtilString &vrTxt)
 // Throws:  None.
 //--
 MIuint
-CMICmdArgValPrintValues::GetPrintValues(void) const
+CMICmdArgValPrintValues::GetPrintValues() const
 {
     return m_nPrintValues;
 }

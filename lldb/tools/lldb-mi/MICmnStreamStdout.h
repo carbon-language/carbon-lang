@@ -28,21 +28,21 @@ class CMICmnStreamStdout : public CMICmnBase, public MI::ISingleton<CMICmnStream
     // Statics:
   public:
     static bool TextToStdout(const CMIUtilString &vrTxt);
-    static bool WritePrompt(void);
+    static bool WritePrompt();
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
     //
-    bool Lock(void);
-    bool Unlock(void);
+    bool Lock();
+    bool Unlock();
     bool Write(const CMIUtilString &vText, const bool vbSendToLog = true);
     bool WriteMIResponse(const CMIUtilString &vText, const bool vbSendToLog = true);
 
     // Methods:
   private:
-    /* ctor */ CMICmnStreamStdout(void);
+    /* ctor */ CMICmnStreamStdout();
     /* ctor */ CMICmnStreamStdout(const CMICmnStreamStdout &);
     void operator=(const CMICmnStreamStdout &);
     //
@@ -51,7 +51,7 @@ class CMICmnStreamStdout : public CMICmnBase, public MI::ISingleton<CMICmnStream
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmnStreamStdout(void) override;
+    /* dtor */ ~CMICmnStreamStdout() override;
 
     // Attributes:
   private:

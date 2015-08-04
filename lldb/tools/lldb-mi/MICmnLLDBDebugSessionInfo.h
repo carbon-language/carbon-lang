@@ -52,7 +52,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     //--
     struct SBrkPtInfo
     {
-        SBrkPtInfo(void)
+        SBrkPtInfo()
             : m_id(0)
             , m_bDisp(false)
             , m_bEnabled(false)
@@ -137,13 +137,13 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
 
     // Variant type data which can be assigned and retrieved across all command instances
     template <typename T> bool SharedDataAdd(const CMIUtilString &vKey, const T &vData);
     template <typename T> bool SharedDataRetrieve(const CMIUtilString &vKey, T &vwData);
-    bool SharedDataDestroy(void);
+    bool SharedDataDestroy();
 
     //  Common command required functionality
     bool AccessPath(const CMIUtilString &vPath, bool &vwbYesAccessible);
@@ -191,7 +191,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
 
     // Methods:
   private:
-    /* ctor */ CMICmnLLDBDebugSessionInfo(void);
+    /* ctor */ CMICmnLLDBDebugSessionInfo();
     /* ctor */ CMICmnLLDBDebugSessionInfo(const CMICmnLLDBDebugSessionInfo &);
     void operator=(const CMICmnLLDBDebugSessionInfo &);
     //
@@ -206,7 +206,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmnLLDBDebugSessionInfo(void) override;
+    /* dtor */ ~CMICmnLLDBDebugSessionInfo() override;
 
     // Attributes:
   private:

@@ -27,7 +27,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSymbolListLines::CMICmdCmdSymbolListLines(void)
+CMICmdCmdSymbolListLines::CMICmdCmdSymbolListLines()
     : m_constStrArgNameFile("file")
 {
     // Command factory matches this name with that received from the stdin stream
@@ -44,7 +44,7 @@ CMICmdCmdSymbolListLines::CMICmdCmdSymbolListLines(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSymbolListLines::~CMICmdCmdSymbolListLines(void)
+CMICmdCmdSymbolListLines::~CMICmdCmdSymbolListLines()
 {
 }
 
@@ -58,7 +58,7 @@ CMICmdCmdSymbolListLines::~CMICmdCmdSymbolListLines(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSymbolListLines::ParseArgs(void)
+CMICmdCmdSymbolListLines::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNameFile, true, true)));
     return ParseValidateCmdOptions();
@@ -76,7 +76,7 @@ CMICmdCmdSymbolListLines::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSymbolListLines::Execute(void)
+CMICmdCmdSymbolListLines::Execute()
 {
     CMICMDBASE_GETOPTION(pArgFile, File, m_constStrArgNameFile);
 
@@ -100,7 +100,7 @@ CMICmdCmdSymbolListLines::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSymbolListLines::Acknowledge(void)
+CMICmdCmdSymbolListLines::Acknowledge()
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
@@ -165,7 +165,7 @@ CMICmdCmdSymbolListLines::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdSymbolListLines::CreateSelf(void)
+CMICmdCmdSymbolListLines::CreateSelf()
 {
     return new CMICmdCmdSymbolListLines();
 }

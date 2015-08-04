@@ -24,7 +24,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilFileStd::CMIUtilFileStd(void)
+CMIUtilFileStd::CMIUtilFileStd()
     : m_fileNamePath(CMIUtilString())
     , m_pFileHandle(nullptr)
 #if defined(_MSC_VER)
@@ -43,7 +43,7 @@ CMIUtilFileStd::CMIUtilFileStd(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilFileStd::~CMIUtilFileStd(void)
+CMIUtilFileStd::~CMIUtilFileStd()
 {
     Close();
 }
@@ -183,7 +183,7 @@ CMIUtilFileStd::Write(const char *vpData, const MIuint vCharCnt)
 // Throws:  None.
 //--
 void
-CMIUtilFileStd::Close(void)
+CMIUtilFileStd::Close()
 {
     if (m_pFileHandle == nullptr)
         return;
@@ -202,7 +202,7 @@ CMIUtilFileStd::Close(void)
 // Throws:  None.
 //--
 bool
-CMIUtilFileStd::IsOk(void) const
+CMIUtilFileStd::IsOk() const
 {
     return !m_bFileError;
 }
@@ -240,7 +240,7 @@ CMIUtilFileStd::IsFileExist(const CMIUtilString &vFileNamePath) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIUtilFileStd::GetLineReturn(void) const
+CMIUtilFileStd::GetLineReturn() const
 {
     return m_constCharNewLine;
 }
@@ -277,7 +277,7 @@ CMIUtilFileStd::StripOffFileName(const CMIUtilString &vDirectoryPath)
 // Throws:  None.
 //--
 char
-CMIUtilFileStd::GetSlash(void)
+CMIUtilFileStd::GetSlash()
 {
 #if !defined(_MSC_VER)
     return '/';

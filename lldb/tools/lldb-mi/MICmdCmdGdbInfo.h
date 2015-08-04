@@ -43,20 +43,20 @@ class CMICmdCmdGdbInfo : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdGdbInfo(void);
+    /* ctor */ CMICmdCmdGdbInfo();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdGdbInfo(void) override;
+    /* dtor */ ~CMICmdCmdGdbInfo() override;
 
     // Typedefs:
   private:
@@ -66,7 +66,7 @@ class CMICmdCmdGdbInfo : public CMICmdBase
     // Methods:
   private:
     bool GetPrintFn(const CMIUtilString &vrPrintFnName, FnPrintPtr &vrwpFn) const;
-    bool PrintFnSharedLibrary(void);
+    bool PrintFnSharedLibrary();
 
     // Attributes:
   private:

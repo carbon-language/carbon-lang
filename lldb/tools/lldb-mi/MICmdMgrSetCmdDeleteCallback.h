@@ -34,7 +34,7 @@ class ICallback
   public:
     virtual void Delete(SMICmdData &vCmd) = 0;
 
-    /* dtor */ virtual ~ICallback(void){}
+    /* dtor */ virtual ~ICallback(){}
 };
 
 //++ ============================================================================
@@ -49,7 +49,7 @@ class CSetClients : public std::set<class ICallback *>, public CMICmnBase
 {
     // Methods:
   public:
-    /* ctor */ CSetClients(void);
+    /* ctor */ CSetClients();
 
     bool Register(class ICallback &vObject);
     bool Unregister(class ICallback &vObject);
@@ -58,7 +58,7 @@ class CSetClients : public std::set<class ICallback *>, public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CSetClients(void) override;
+    /* dtor */ ~CSetClients() override;
 
     // Attributes:
   private:

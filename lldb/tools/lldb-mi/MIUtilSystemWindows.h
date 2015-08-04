@@ -23,17 +23,17 @@ class CMIUtilSystemWindows
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilSystemWindows(void);
+    /* ctor */ CMIUtilSystemWindows();
 
     bool GetOSErrorMsg(const MIint vError, CMIUtilString &vrwErrorMsg) const;
-    CMIUtilString GetOSLastError(void) const;
+    CMIUtilString GetOSLastError() const;
     bool GetExecutablesPath(CMIUtilString &vrwFileNamePath) const;
     bool GetLogFilesPath(CMIUtilString &vrwFileNamePath) const;
 
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilSystemWindows(void);
+    /* dtor */ virtual ~CMIUtilSystemWindows();
 };
 
 typedef CMIUtilSystemWindows CMIUtilSystem;

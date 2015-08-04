@@ -28,19 +28,19 @@ class CMIUtilThreadMutex
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilThreadMutex(void){}
+    /* ctor */ CMIUtilThreadMutex(){}
     //
     void
-    Lock(void); // Wait until mutex can be obtained
+    Lock(); // Wait until mutex can be obtained
     void
-    Unlock(void); // Release the mutex
+    Unlock(); // Release the mutex
     bool
-    TryLock(void); // Gain the lock if available
+    TryLock(); // Gain the lock if available
 
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilThreadMutex(void){}
+    /* dtor */ virtual ~CMIUtilThreadMutex(){}
 
     // Attributes:
   private:
@@ -58,20 +58,20 @@ class CMIUtilThread
 
     // Methods:
   public:
-    /* ctor */ CMIUtilThread(void);
+    /* ctor */ CMIUtilThread();
     //
     bool
     Start(FnThreadProc vpFn, void *vpArg); // Start execution of this thread
     bool
-    Join(void); // Wait for this thread to stop
+    Join(); // Wait for this thread to stop
     bool
-    IsActive(void); // Returns true if this thread is running
+    IsActive(); // Returns true if this thread is running
     void
-    Finish(void); // Finish this thread
+    Finish(); // Finish this thread
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMIUtilThread(void);
+    /* dtor */ virtual ~CMIUtilThread();
 
     // Methods:
   private:
@@ -88,28 +88,28 @@ class CMIUtilThreadActiveObjBase
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilThreadActiveObjBase(void);
+    /* ctor */ CMIUtilThreadActiveObjBase();
     //
     bool
-    Acquire(void); // Obtain a reference to this object
+    Acquire(); // Obtain a reference to this object
     bool
-    Release(void); // Release a reference to this object
+    Release(); // Release a reference to this object
     bool
-    ThreadIsActive(void); // Return true if this object is running
+    ThreadIsActive(); // Return true if this object is running
     bool
-    ThreadJoin(void); // Wait for this thread to stop running
+    ThreadJoin(); // Wait for this thread to stop running
     bool
-    ThreadKill(void); // Force this thread to stop, regardless of references
+    ThreadKill(); // Force this thread to stop, regardless of references
     bool
-    ThreadExecute(void); // Start this objects execution in another thread
-    void ThreadManage(void);
+    ThreadExecute(); // Start this objects execution in another thread
+    void ThreadManage();
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMIUtilThreadActiveObjBase(void);
+    /* dtor */ virtual ~CMIUtilThreadActiveObjBase();
     //
     // Each thread object must supple a unique name that can be used to locate it
-    virtual const CMIUtilString &ThreadGetName(void) const = 0;
+    virtual const CMIUtilString &ThreadGetName() const = 0;
 
     // Statics:
   protected:
@@ -121,7 +121,7 @@ class CMIUtilThreadActiveObjBase
     virtual bool
     ThreadRun(bool &vrIsAlive) = 0; // Call the main worker method
     virtual bool
-    ThreadFinish(void) = 0; // Finish of what you were doing
+    ThreadFinish() = 0; // Finish of what you were doing
 
     // Attributes:
   protected:
@@ -151,7 +151,7 @@ class CMIUtilThreadLock
     // Overrideable:
   public:
     /* dtor */
-    virtual ~CMIUtilThreadLock(void) { m_rMutex.Unlock(); }
+    virtual ~CMIUtilThreadLock() { m_rMutex.Unlock(); }
 
     // Attributes:
   private:

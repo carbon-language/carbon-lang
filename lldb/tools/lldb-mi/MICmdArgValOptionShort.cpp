@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValOptionShort::CMICmdArgValOptionShort(void)
+CMICmdArgValOptionShort::CMICmdArgValOptionShort()
 {
 }
 
@@ -60,7 +60,7 @@ CMICmdArgValOptionShort::CMICmdArgValOptionShort(const CMIUtilString &vrArgName,
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValOptionShort::~CMICmdArgValOptionShort(void)
+CMICmdArgValOptionShort::~CMICmdArgValOptionShort()
 {
 }
 

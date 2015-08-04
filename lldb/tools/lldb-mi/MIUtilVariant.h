@@ -23,14 +23,14 @@ class CMIUtilVariant
 {
     // Methods:
   public:
-    /* ctor */ CMIUtilVariant(void);
+    /* ctor */ CMIUtilVariant();
     /* ctor */ CMIUtilVariant(const CMIUtilVariant &vrOther);
     /* ctor */ CMIUtilVariant(CMIUtilVariant &vrOther);
     /* ctor */ CMIUtilVariant(CMIUtilVariant &&vrwOther);
-    /* dtor */ ~CMIUtilVariant(void);
+    /* dtor */ ~CMIUtilVariant();
 
     template <typename T> void Set(const T &vArg);
-    template <typename T> T *Get(void) const;
+    template <typename T> T *Get() const;
 
     CMIUtilVariant &operator=(const CMIUtilVariant &vrOther);
     CMIUtilVariant &operator=(CMIUtilVariant &&vrwOther);
@@ -47,7 +47,7 @@ class CMIUtilVariant
     {
         // Methods:
       public:
-        /* ctor */ CDataObjectBase(void);
+        /* ctor */ CDataObjectBase();
         /* ctor */ CDataObjectBase(const CDataObjectBase &vrOther);
         /* ctor */ CDataObjectBase(CDataObjectBase &vrOther);
         /* ctor */ CDataObjectBase(CDataObjectBase &&vrwOther);
@@ -57,14 +57,14 @@ class CMIUtilVariant
 
         // Overrideable:
       public:
-        virtual ~CDataObjectBase(void);
-        virtual CDataObjectBase *CreateCopyOfSelf(void);
-        virtual bool GetIsDerivedClass(void) const;
+        virtual ~CDataObjectBase();
+        virtual CDataObjectBase *CreateCopyOfSelf();
+        virtual bool GetIsDerivedClass() const;
 
         // Overrideable:
       protected:
         virtual void Copy(const CDataObjectBase &vrOther);
-        virtual void Destroy(void);
+        virtual void Destroy();
     };
 
     //++ ----------------------------------------------------------------------
@@ -76,7 +76,7 @@ class CMIUtilVariant
     {
         // Methods:
       public:
-        /* ctor */ CDataObject(void);
+        /* ctor */ CDataObject();
         /* ctor */ CDataObject(const T &vArg);
         /* ctor */ CDataObject(const CDataObject &vrOther);
         /* ctor */ CDataObject(CDataObject &vrOther);
@@ -85,14 +85,14 @@ class CMIUtilVariant
         CDataObject &operator=(const CDataObject &vrOther);
         CDataObject &operator=(CDataObject &&vrwOther);
         //
-        T &GetDataObject(void);
+        T &GetDataObject();
 
         // Overridden:
       public:
         // From CDataObjectBase
-        ~CDataObject(void) override;
-        CDataObjectBase *CreateCopyOfSelf(void) override;
-        bool GetIsDerivedClass(void) const override;
+        ~CDataObject() override;
+        CDataObjectBase *CreateCopyOfSelf() override;
+        bool GetIsDerivedClass() const override;
 
         // Overrideable:
       private:
@@ -101,7 +101,7 @@ class CMIUtilVariant
         // Overridden:
       private:
         // From CDataObjectBase
-        void Destroy(void) override;
+        void Destroy() override;
 
         // Attributes:
       private:
@@ -110,7 +110,7 @@ class CMIUtilVariant
 
     // Methods
   private:
-    void Destroy(void);
+    void Destroy();
     void Copy(const CMIUtilVariant &vrOther);
 
     // Attributes:
@@ -129,7 +129,7 @@ class CMIUtilVariant
 // Return:  None.
 // Throws:  None.
 //--
-template <typename T> CMIUtilVariant::CDataObject<T>::CDataObject(void)
+template <typename T> CMIUtilVariant::CDataObject<T>::CDataObject()
 {
 }
 
@@ -153,7 +153,7 @@ template <typename T> CMIUtilVariant::CDataObject<T>::CDataObject(const T &vArg)
 // Return:  None.
 // Throws:  None.
 //--
-template <typename T> CMIUtilVariant::CDataObject<T>::~CDataObject(void)
+template <typename T> CMIUtilVariant::CDataObject<T>::~CDataObject()
 {
     Destroy();
 }
@@ -167,7 +167,7 @@ template <typename T> CMIUtilVariant::CDataObject<T>::~CDataObject(void)
 //--
 template <typename T>
 T &
-CMIUtilVariant::CDataObject<T>::GetDataObject(void)
+CMIUtilVariant::CDataObject<T>::GetDataObject()
 {
     return m_dataObj;
 }
@@ -181,7 +181,7 @@ CMIUtilVariant::CDataObject<T>::GetDataObject(void)
 //--
 template <typename T>
 CMIUtilVariant::CDataObjectBase *
-CMIUtilVariant::CDataObject<T>::CreateCopyOfSelf(void)
+CMIUtilVariant::CDataObject<T>::CreateCopyOfSelf()
 {
     CDataObject *pCopy = new CDataObject<T>(m_dataObj);
 
@@ -198,7 +198,7 @@ CMIUtilVariant::CDataObject<T>::CreateCopyOfSelf(void)
 //--
 template <typename T>
 bool
-CMIUtilVariant::CDataObject<T>::GetIsDerivedClass(void) const
+CMIUtilVariant::CDataObject<T>::GetIsDerivedClass() const
 {
     return true;
 }
@@ -228,7 +228,7 @@ CMIUtilVariant::CDataObject<T>::Duplicate(const CDataObject &vrOther)
 //--
 template <typename T>
 void
-CMIUtilVariant::CDataObject<T>::Destroy(void)
+CMIUtilVariant::CDataObject<T>::Destroy()
 {
     CDataObjectBase::Destroy();
 }
@@ -261,7 +261,7 @@ CMIUtilVariant::Set(const T &vArg)
 //--
 template <typename T>
 T *
-CMIUtilVariant::Get(void) const
+CMIUtilVariant::Get() const
 {
     if ((m_pDataObject != nullptr) && m_pDataObject->GetIsDerivedClass())
     {

@@ -26,7 +26,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilSystemWindows::CMIUtilSystemWindows(void)
+CMIUtilSystemWindows::CMIUtilSystemWindows()
 {
 }
 
@@ -37,7 +37,7 @@ CMIUtilSystemWindows::CMIUtilSystemWindows(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilSystemWindows::~CMIUtilSystemWindows(void)
+CMIUtilSystemWindows::~CMIUtilSystemWindows()
 {
 }
 
@@ -81,7 +81,7 @@ CMIUtilSystemWindows::GetOSErrorMsg(const MIint vError, CMIUtilString &vrwErrorM
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilSystemWindows::GetOSLastError(void) const
+CMIUtilSystemWindows::GetOSLastError() const
 {
     CMIUtilString errorMsg;
     const DWORD dwLastError = ::GetLastError();

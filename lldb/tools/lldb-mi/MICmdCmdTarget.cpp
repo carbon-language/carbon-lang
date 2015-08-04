@@ -33,7 +33,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTargetSelect::CMICmdCmdTargetSelect(void)
+CMICmdCmdTargetSelect::CMICmdCmdTargetSelect()
     : m_constStrArgNamedType("type")
     , m_constStrArgNamedParameters("parameters")
 {
@@ -51,7 +51,7 @@ CMICmdCmdTargetSelect::CMICmdCmdTargetSelect(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTargetSelect::~CMICmdCmdTargetSelect(void)
+CMICmdCmdTargetSelect::~CMICmdCmdTargetSelect()
 {
 }
 
@@ -65,7 +65,7 @@ CMICmdCmdTargetSelect::~CMICmdCmdTargetSelect(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetSelect::ParseArgs(void)
+CMICmdCmdTargetSelect::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedType, true, true)));
     m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedParameters, true, true)));
@@ -84,7 +84,7 @@ CMICmdCmdTargetSelect::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetSelect::Execute(void)
+CMICmdCmdTargetSelect::Execute()
 {
     CMICMDBASE_GETOPTION(pArgType, String, m_constStrArgNamedType);
     CMICMDBASE_GETOPTION(pArgParameters, String, m_constStrArgNamedParameters);
@@ -172,7 +172,7 @@ CMICmdCmdTargetSelect::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetSelect::Acknowledge(void)
+CMICmdCmdTargetSelect::Acknowledge()
 {
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Connected);
     m_miResultRecord = miRecordResult;
@@ -203,7 +203,7 @@ CMICmdCmdTargetSelect::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdTargetSelect::CreateSelf(void)
+CMICmdCmdTargetSelect::CreateSelf()
 {
     return new CMICmdCmdTargetSelect();
 }
@@ -215,7 +215,7 @@ CMICmdCmdTargetSelect::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTargetAttach::CMICmdCmdTargetAttach(void)
+CMICmdCmdTargetAttach::CMICmdCmdTargetAttach()
 : m_constStrArgPid("pid")
 , m_constStrArgNamedFile("n")
 , m_constStrArgWaitFor("waitfor")
@@ -234,7 +234,7 @@ CMICmdCmdTargetAttach::CMICmdCmdTargetAttach(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTargetAttach::~CMICmdCmdTargetAttach(void)
+CMICmdCmdTargetAttach::~CMICmdCmdTargetAttach()
 {
 }
 
@@ -248,7 +248,7 @@ CMICmdCmdTargetAttach::~CMICmdCmdTargetAttach(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetAttach::ParseArgs(void)
+CMICmdCmdTargetAttach::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPid, false, true)));
     m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgNamedFile, false, true,
@@ -269,7 +269,7 @@ CMICmdCmdTargetAttach::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetAttach::Execute(void)
+CMICmdCmdTargetAttach::Execute()
 {
     CMICMDBASE_GETOPTION(pArgPid, Number, m_constStrArgPid);
     CMICMDBASE_GETOPTION(pArgFile, OptionShort, m_constStrArgNamedFile);
@@ -330,7 +330,7 @@ CMICmdCmdTargetAttach::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetAttach::Acknowledge(void)
+CMICmdCmdTargetAttach::Acknowledge()
 {
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
     m_miResultRecord = miRecordResult;
@@ -361,7 +361,7 @@ CMICmdCmdTargetAttach::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdTargetAttach::CreateSelf(void)
+CMICmdCmdTargetAttach::CreateSelf()
 {
     return new CMICmdCmdTargetAttach();
 }
@@ -389,7 +389,7 @@ CMICmdCmdTargetDetach::CMICmdCmdTargetDetach()
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTargetDetach::~CMICmdCmdTargetDetach(void)
+CMICmdCmdTargetDetach::~CMICmdCmdTargetDetach()
 {
 }
 
@@ -403,7 +403,7 @@ CMICmdCmdTargetDetach::~CMICmdCmdTargetDetach(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetDetach::ParseArgs(void)
+CMICmdCmdTargetDetach::ParseArgs()
 {
     return MIstatus::success;
 }
@@ -420,7 +420,7 @@ CMICmdCmdTargetDetach::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetDetach::Execute(void)
+CMICmdCmdTargetDetach::Execute()
 {
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     
@@ -447,7 +447,7 @@ CMICmdCmdTargetDetach::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTargetDetach::Acknowledge(void)
+CMICmdCmdTargetDetach::Acknowledge()
 {
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
     m_miResultRecord = miRecordResult;
@@ -463,7 +463,7 @@ CMICmdCmdTargetDetach::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdTargetDetach::CreateSelf(void)
+CMICmdCmdTargetDetach::CreateSelf()
 {
     return new CMICmdCmdTargetDetach();
 }

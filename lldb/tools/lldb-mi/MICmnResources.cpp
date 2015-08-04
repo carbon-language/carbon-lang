@@ -265,7 +265,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnResources::CMICmnResources(void)
+CMICmnResources::CMICmnResources()
     : m_nResourceId2TextDataSize(0)
 {
     // Do not use this constructor, use Initialize()
@@ -278,7 +278,7 @@ CMICmnResources::CMICmnResources(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnResources::~CMICmnResources(void)
+CMICmnResources::~CMICmnResources()
 {
     // Do not use this destructor, use Shutdown()
 }
@@ -292,7 +292,7 @@ CMICmnResources::~CMICmnResources(void)
 // Throws:  None.
 //--
 bool
-CMICmnResources::Initialize(void)
+CMICmnResources::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -313,7 +313,7 @@ CMICmnResources::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnResources::Shutdown(void)
+CMICmnResources::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -338,7 +338,7 @@ CMICmnResources::Shutdown(void)
 // Throws:  None.
 //--
 bool
-CMICmnResources::ReadResourceStringData(void)
+CMICmnResources::ReadResourceStringData()
 {
     m_nResourceId2TextDataSize = sizeof ms_pResourceId2TextData / sizeof ms_pResourceId2TextData[0];
     for (MIuint i = 0; i < m_nResourceId2TextDataSize; i++)

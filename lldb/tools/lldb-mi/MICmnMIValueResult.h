@@ -33,7 +33,7 @@ class CMICmnMIValueResult : public CMICmnMIValue
 {
     // Methods:
   public:
-    /* ctor */ CMICmnMIValueResult(void);
+    /* ctor */ CMICmnMIValueResult();
     /* ctor */ CMICmnMIValueResult(const CMIUtilString &vVariable, const CMICmnMIValue &vValue);
     /* ctor */ CMICmnMIValueResult(const CMIUtilString &vVariable, const CMICmnMIValue &vValue, const bool vbUseSpacing);
     //
@@ -42,11 +42,11 @@ class CMICmnMIValueResult : public CMICmnMIValue
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnMIValueResult(void) override;
+    /* dtor */ ~CMICmnMIValueResult() override;
 
     // Methods:
   private:
-    void BuildResult(void);
+    void BuildResult();
     void BuildResult(const CMIUtilString &vVariable, const CMICmnMIValue &vValue);
 
     // Attributes:

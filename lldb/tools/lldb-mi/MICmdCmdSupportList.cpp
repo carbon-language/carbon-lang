@@ -22,7 +22,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSupportListFeatures::CMICmdCmdSupportListFeatures(void)
+CMICmdCmdSupportListFeatures::CMICmdCmdSupportListFeatures()
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "list-features";
@@ -38,7 +38,7 @@ CMICmdCmdSupportListFeatures::CMICmdCmdSupportListFeatures(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdSupportListFeatures::~CMICmdCmdSupportListFeatures(void)
+CMICmdCmdSupportListFeatures::~CMICmdCmdSupportListFeatures()
 {
 }
 
@@ -52,7 +52,7 @@ CMICmdCmdSupportListFeatures::~CMICmdCmdSupportListFeatures(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSupportListFeatures::Execute(void)
+CMICmdCmdSupportListFeatures::Execute()
 {
     // Do nothing
 
@@ -69,7 +69,7 @@ CMICmdCmdSupportListFeatures::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdSupportListFeatures::Acknowledge(void)
+CMICmdCmdSupportListFeatures::Acknowledge()
 {
     const CMICmnMIValueConst miValueConst("data-read-memory-bytes");
     const CMICmnMIValueList miValueList(miValueConst);
@@ -89,7 +89,7 @@ CMICmdCmdSupportListFeatures::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdSupportListFeatures::CreateSelf(void)
+CMICmdCmdSupportListFeatures::CreateSelf()
 {
     return new CMICmdCmdSupportListFeatures();
 }

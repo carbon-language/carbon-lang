@@ -35,23 +35,23 @@ class CMICmnMIValueTuple : public CMICmnMIValue
 {
     // Methods:
   public:
-    /* ctor */ CMICmnMIValueTuple(void);
+    /* ctor */ CMICmnMIValueTuple();
     /* ctor */ CMICmnMIValueTuple(const CMICmnMIValueResult &vResult);
     /* ctor */ CMICmnMIValueTuple(const CMICmnMIValueResult &vResult, const bool vbUseSpacing);
     //
     void Add(const CMICmnMIValueResult &vResult);
     void Add(const CMICmnMIValueResult &vResult, const bool vbUseSpacing);
     void Add(const CMICmnMIValueConst &vValue, const bool vbUseSpacing);
-    CMIUtilString ExtractContentNoBrackets(void) const;
+    CMIUtilString ExtractContentNoBrackets() const;
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnMIValueTuple(void) override;
+    /* dtor */ ~CMICmnMIValueTuple() override;
 
     // Methods:
   private:
-    void BuildTuple(void);
+    void BuildTuple();
     void BuildTuple(const CMICmnMIValueResult &vResult);
     void BuildTuple(const CMIUtilString &vValue);
 

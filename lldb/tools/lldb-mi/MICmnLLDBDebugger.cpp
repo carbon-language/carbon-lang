@@ -30,7 +30,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebugger::CMICmnLLDBDebugger(void)
+CMICmnLLDBDebugger::CMICmnLLDBDebugger()
     : m_constStrThisThreadId("MI debugger event")
 {
 }
@@ -42,7 +42,7 @@ CMICmnLLDBDebugger::CMICmnLLDBDebugger(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebugger::~CMICmnLLDBDebugger(void)
+CMICmnLLDBDebugger::~CMICmnLLDBDebugger()
 {
     Shutdown();
 }
@@ -56,7 +56,7 @@ CMICmnLLDBDebugger::~CMICmnLLDBDebugger(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::Initialize(void)
+CMICmnLLDBDebugger::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -119,7 +119,7 @@ CMICmnLLDBDebugger::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::Shutdown(void)
+CMICmnLLDBDebugger::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -173,7 +173,7 @@ CMICmnLLDBDebugger::Shutdown(void)
 // Throws:  None.
 //--
 lldb::SBDebugger &
-CMICmnLLDBDebugger::GetTheDebugger(void)
+CMICmnLLDBDebugger::GetTheDebugger()
 {
     return m_lldbDebugger;
 }
@@ -186,7 +186,7 @@ CMICmnLLDBDebugger::GetTheDebugger(void)
 // Throws:  None.
 //--
 lldb::SBListener &
-CMICmnLLDBDebugger::GetTheListener(void)
+CMICmnLLDBDebugger::GetTheListener()
 {
     return m_lldbListener;
 }
@@ -216,7 +216,7 @@ CMICmnLLDBDebugger::SetDriver(const CMIDriverBase &vClientDriver)
 // Throws:  None.
 //--
 CMIDriverBase &
-CMICmnLLDBDebugger::GetDriver(void) const
+CMICmnLLDBDebugger::GetDriver() const
 {
     return *m_pClientDriver;
 }
@@ -234,7 +234,7 @@ CMICmnLLDBDebugger::GetDriver(void) const
 // Throws:  None.
 //--
 void
-CMICmnLLDBDebugger::WaitForHandleEvent(void)
+CMICmnLLDBDebugger::WaitForHandleEvent()
 {
     std::unique_lock<std::mutex> lock(m_mutexEventQueue);
 
@@ -254,7 +254,7 @@ CMICmnLLDBDebugger::WaitForHandleEvent(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::CheckIfNeedToRebroadcastStopEvent(void)
+CMICmnLLDBDebugger::CheckIfNeedToRebroadcastStopEvent()
 {
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     if (!rSessionInfo.GetDebugger().GetAsync())
@@ -276,7 +276,7 @@ CMICmnLLDBDebugger::CheckIfNeedToRebroadcastStopEvent(void)
 // Throws:  None.
 //--
 void
-CMICmnLLDBDebugger::RebroadcastStopEvent(void)
+CMICmnLLDBDebugger::RebroadcastStopEvent()
 {
     lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
     const bool include_expression_stops = false;
@@ -297,7 +297,7 @@ CMICmnLLDBDebugger::RebroadcastStopEvent(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::InitSBDebugger(void)
+CMICmnLLDBDebugger::InitSBDebugger()
 {
     m_lldbDebugger = lldb::SBDebugger::Create(false);
     if (!m_lldbDebugger.IsValid())
@@ -321,7 +321,7 @@ CMICmnLLDBDebugger::InitSBDebugger(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::InitStdStreams(void)
+CMICmnLLDBDebugger::InitStdStreams()
 {
     // This is not required when operating the MI driver's code as it has its own
     // streams. Setting the Stdin for the lldbDebugger especially on LINUX will cause
@@ -342,7 +342,7 @@ CMICmnLLDBDebugger::InitStdStreams(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::InitSBListener(void)
+CMICmnLLDBDebugger::InitSBListener()
 {
     m_lldbListener = m_lldbDebugger.GetListener();
     if (!m_lldbListener.IsValid())
@@ -776,7 +776,7 @@ CMICmnLLDBDebugger::ThreadRun(bool &vrbIsAlive)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugger::ThreadFinish(void)
+CMICmnLLDBDebugger::ThreadFinish()
 {
     return MIstatus::success;
 }
@@ -789,7 +789,7 @@ CMICmnLLDBDebugger::ThreadFinish(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLLDBDebugger::ThreadGetName(void) const
+CMICmnLLDBDebugger::ThreadGetName() const
 {
     return m_constStrThisThreadId;
 }

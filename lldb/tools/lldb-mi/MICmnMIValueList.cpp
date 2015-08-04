@@ -61,7 +61,7 @@ CMICmnMIValueList::CMICmnMIValueList(const CMICmnMIValue &vValue)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValueList::~CMICmnMIValueList(void)
+CMICmnMIValueList::~CMICmnMIValueList()
 {
 }
 
@@ -73,7 +73,7 @@ CMICmnMIValueList::~CMICmnMIValueList(void)
 // Throws:  None.
 //--
 void
-CMICmnMIValueList::BuildList(void)
+CMICmnMIValueList::BuildList()
 {
     const char *pFormat = "[%s]";
     m_strValue = CMIUtilString::Format(pFormat, m_strValue.c_str());
@@ -174,7 +174,7 @@ CMICmnMIValueList::BuildList(const CMICmnMIValue &vValue)
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnMIValueList::ExtractContentNoBrackets(void) const
+CMICmnMIValueList::ExtractContentNoBrackets() const
 {
     CMIUtilString data(m_strValue);
 

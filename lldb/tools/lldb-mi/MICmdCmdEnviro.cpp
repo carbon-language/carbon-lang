@@ -24,7 +24,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdEnvironmentCd::CMICmdCmdEnvironmentCd(void)
+CMICmdCmdEnvironmentCd::CMICmdCmdEnvironmentCd()
     : m_constStrArgNamePathDir("pathdir")
 {
     // Command factory matches this name with that received from the stdin stream
@@ -41,7 +41,7 @@ CMICmdCmdEnvironmentCd::CMICmdCmdEnvironmentCd(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdEnvironmentCd::~CMICmdCmdEnvironmentCd(void)
+CMICmdCmdEnvironmentCd::~CMICmdCmdEnvironmentCd()
 {
 }
 
@@ -55,7 +55,7 @@ CMICmdCmdEnvironmentCd::~CMICmdCmdEnvironmentCd(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdEnvironmentCd::ParseArgs(void)
+CMICmdCmdEnvironmentCd::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValFile(m_constStrArgNamePathDir, true, true)));
     CMICmdArgContext argCntxt(m_cmdData.strMiCmdOption);
@@ -72,7 +72,7 @@ CMICmdCmdEnvironmentCd::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdEnvironmentCd::Execute(void)
+CMICmdCmdEnvironmentCd::Execute()
 {
     CMICMDBASE_GETOPTION(pArgPathDir, File, m_constStrArgNamePathDir);
     const CMIUtilString &strWkDir(pArgPathDir->GetValue());
@@ -104,7 +104,7 @@ CMICmdCmdEnvironmentCd::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdEnvironmentCd::Acknowledge(void)
+CMICmdCmdEnvironmentCd::Acknowledge()
 {
     const CMIUtilString &rStrKeyWkDir(m_rLLDBDebugSessionInfo.m_constStrSharedDataKeyWkDir);
     CMIUtilString strWkDir;
@@ -131,7 +131,7 @@ CMICmdCmdEnvironmentCd::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdEnvironmentCd::CreateSelf(void)
+CMICmdCmdEnvironmentCd::CreateSelf()
 {
     return new CMICmdCmdEnvironmentCd();
 }

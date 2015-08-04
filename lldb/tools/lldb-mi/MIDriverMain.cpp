@@ -89,7 +89,7 @@ sigint_handler(int vSigno)
 // Throws:  None.
 //--
 bool
-DriverSystemInit(void)
+DriverSystemInit()
 {
     bool bOk = MIstatus::success;
     CMIDriver &rMIDriver = CMIDriver::Instance();

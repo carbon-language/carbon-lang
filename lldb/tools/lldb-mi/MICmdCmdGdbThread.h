@@ -32,17 +32,17 @@ class CMICmdCmdGdbThread : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdGdbThread(void);
+    /* ctor */ CMICmdCmdGdbThread();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdGdbThread(void) override;
+    /* dtor */ ~CMICmdCmdGdbThread() override;
 };

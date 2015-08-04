@@ -25,7 +25,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilString::CMIUtilString(void)
+CMIUtilString::CMIUtilString()
     : std::string()
 {
 }
@@ -98,7 +98,7 @@ CMIUtilString &CMIUtilString::operator=(const std::string &vrRhs)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilString::~CMIUtilString(void)
+CMIUtilString::~CMIUtilString()
 {
 }
 
@@ -318,7 +318,7 @@ CMIUtilString::SplitLines(VecString_t &vwVecSplits) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::StripCREndOfLine(void) const
+CMIUtilString::StripCREndOfLine() const
 {
     const size_t nPos = rfind('\n');
     if (nPos == std::string::npos)
@@ -338,7 +338,7 @@ CMIUtilString::StripCREndOfLine(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::StripCRAll(void) const
+CMIUtilString::StripCRAll() const
 {
     return FindAndReplace("\n", " ");
 }
@@ -381,7 +381,7 @@ CMIUtilString::FindAndReplace(const CMIUtilString &vFind, const CMIUtilString &v
 // Throws:  None.
 //--
 bool
-CMIUtilString::IsNumber(void) const
+CMIUtilString::IsNumber() const
 {
     if (empty())
         return false;
@@ -404,7 +404,7 @@ CMIUtilString::IsNumber(void) const
 // Throws:  None.
 //--
 bool
-CMIUtilString::IsHexadecimalNumber(void) const
+CMIUtilString::IsHexadecimalNumber() const
 {
     // Compare '0x..' prefix
     if ((strncmp(c_str(), "0x", 2) != 0) && (strncmp(c_str(), "0X", 2) != 0))
@@ -522,7 +522,7 @@ CMIUtilString::Compare(const CMIUtilString &vrLhs, const CMIUtilString &vrRhs)
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::Trim(void) const
+CMIUtilString::Trim() const
 {
     CMIUtilString strNew(*this);
     const char *pWhiteSpace = " \t\n\v\f\r";
@@ -652,7 +652,7 @@ CMIUtilString::RemoveRepeatedCharacters(size_t vnPos, const char vChar)
 // Throws:  None.
 //--
 bool
-CMIUtilString::IsQuoted(void) const
+CMIUtilString::IsQuoted() const
 {
     const char cQuote = '"';
 
@@ -819,7 +819,7 @@ CMIUtilString::Escape(bool vbEscapeQuotes /* = false */) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::AddSlashes(void) const
+CMIUtilString::AddSlashes() const
 {
     const char cBckSlash('\\');
     const size_t nLen(length());
@@ -856,7 +856,7 @@ CMIUtilString::AddSlashes(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::StripSlashes(void) const
+CMIUtilString::StripSlashes() const
 {
     const char cBckSlash('\\');
     const size_t nLen(length());

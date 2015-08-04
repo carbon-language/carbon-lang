@@ -25,7 +25,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLogMediumFile::CMICmnLogMediumFile(void)
+CMICmnLogMediumFile::CMICmnLogMediumFile()
     : m_constThisMediumName(MIRSRC(IDS_MEDIUMFILE_NAME))
     , m_constMediumFileNameFormat("lldb-mi-%s.log")
     , m_strMediumFileName(MIRSRC(IDS_MEDIUMFILE_ERR_INVALID_PATH))
@@ -44,7 +44,7 @@ CMICmnLogMediumFile::CMICmnLogMediumFile(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLogMediumFile::~CMICmnLogMediumFile(void)
+CMICmnLogMediumFile::~CMICmnLogMediumFile()
 {
 }
 
@@ -56,7 +56,7 @@ CMICmnLogMediumFile::~CMICmnLogMediumFile(void)
 // Throws:  None.
 //--
 CMICmnLogMediumFile &
-CMICmnLogMediumFile::Instance(void)
+CMICmnLogMediumFile::Instance()
 {
     static CMICmnLogMediumFile instance;
 
@@ -72,7 +72,7 @@ CMICmnLogMediumFile::Instance(void)
 // Throws:  None.
 //--
 bool
-CMICmnLogMediumFile::Initialize(void)
+CMICmnLogMediumFile::Initialize()
 {
     m_bInitialized = CMIUtilSystem().GetLogFilesPath(m_strMediumFileDirectory);
     m_bInitialized &= FileFormFileNamePath();
@@ -88,7 +88,7 @@ CMICmnLogMediumFile::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnLogMediumFile::Shutdown(void)
+CMICmnLogMediumFile::Shutdown()
 {
     if (m_bInitialized)
     {
@@ -106,7 +106,7 @@ CMICmnLogMediumFile::Shutdown(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLogMediumFile::GetName(void) const
+CMICmnLogMediumFile::GetName() const
 {
     return m_constThisMediumName;
 }
@@ -155,7 +155,7 @@ CMICmnLogMediumFile::Write(const CMIUtilString &vData, const CMICmnLog::ELogVerb
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLogMediumFile::GetError(void) const
+CMICmnLogMediumFile::GetError() const
 {
     return m_strMILastErrorDescription;
 }
@@ -183,7 +183,7 @@ CMICmnLogMediumFile::SetVerbosity(const MIuint veType)
 // Throws:  None.
 //--
 MIuint
-CMICmnLogMediumFile::GetVerbosity(void) const
+CMICmnLogMediumFile::GetVerbosity() const
 {
     return m_eVerbosityType;
 }
@@ -210,7 +210,7 @@ CMICmnLogMediumFile::FileWriteEnglish(const CMIUtilString &vData)
 // Throws:  None.
 //--
 bool
-CMICmnLogMediumFile::FileFormFileNamePath(void)
+CMICmnLogMediumFile::FileFormFileNamePath()
 {
     ClrErrorDescription();
 
@@ -243,7 +243,7 @@ CMICmnLogMediumFile::FileFormFileNamePath(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLogMediumFile::GetFileNamePath(void) const
+CMICmnLogMediumFile::GetFileNamePath() const
 {
     return m_fileNamePath;
 }
@@ -256,7 +256,7 @@ CMICmnLogMediumFile::GetFileNamePath(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLogMediumFile::GetFileName(void) const
+CMICmnLogMediumFile::GetFileName() const
 {
     return m_strMediumFileName;
 }
@@ -332,7 +332,7 @@ CMICmnLogMediumFile::ConvertLogVerbosityTypeToId(const CMICmnLog::ELogVerbosity 
 // Throws:  None.
 //--
 bool
-CMICmnLogMediumFile::IsOk(void) const
+CMICmnLogMediumFile::IsOk() const
 {
     return m_file.IsOk();
 }
@@ -346,7 +346,7 @@ CMICmnLogMediumFile::IsOk(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLogMediumFile::IsFileExist(void) const
+CMICmnLogMediumFile::IsFileExist() const
 {
     return m_file.IsFileExist(GetFileNamePath());
 }
@@ -360,7 +360,7 @@ CMICmnLogMediumFile::IsFileExist(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLogMediumFile::FileWriteHeader(void)
+CMICmnLogMediumFile::FileWriteHeader()
 {
     return FileWriteEnglish(ConvertCr(m_fileHeaderTxt));
 }
@@ -419,7 +419,7 @@ CMICmnLogMediumFile::SetHeaderTxt(const CMIUtilString &vText)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLogMediumFile::GetLineReturn(void) const
+CMICmnLogMediumFile::GetLineReturn() const
 {
     return m_file.GetLineReturn();
 }

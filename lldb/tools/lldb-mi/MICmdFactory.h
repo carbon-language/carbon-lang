@@ -32,7 +32,7 @@ class CMICmdFactory : public CMICmnBase, public MI::ISingleton<CMICmdFactory>
 
     // Typedefs:
   public:
-    typedef CMICmdBase *(*CmdCreatorFnPtr)(void);
+    typedef CMICmdBase *(*CmdCreatorFnPtr)();
 
     // Class:
   public:
@@ -42,25 +42,25 @@ class CMICmdFactory : public CMICmnBase, public MI::ISingleton<CMICmdFactory>
     class ICmd
     {
       public:
-        virtual const CMIUtilString &GetMiCmd(void) const = 0;
-        virtual CmdCreatorFnPtr GetCmdCreatorFn(void) const = 0;
+        virtual const CMIUtilString &GetMiCmd() const = 0;
+        virtual CmdCreatorFnPtr GetCmdCreatorFn() const = 0;
         // virtual CMICmdBase *         CreateSelf( void ) = 0;             // Not possible as require a static creator
         // function in the command class, here for awareness
 
-        /* dtor */ virtual ~ICmd(void){}
+        /* dtor */ virtual ~ICmd(){}
     };
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
     bool CmdRegister(const CMIUtilString &vMiCmd, CmdCreatorFnPtr vCmdCreateFn);
     bool CmdCreate(const CMIUtilString &vMiCmd, const SMICmdData &vCmdData, CMICmdBase *&vpNewCmd);
     bool CmdExist(const CMIUtilString &vMiCmd) const;
 
     // Methods:
   private:
-    /* ctor */ CMICmdFactory(void);
+    /* ctor */ CMICmdFactory();
     /* ctor */ CMICmdFactory(const CMICmdFactory &);
     void operator=(const CMICmdFactory &);
 
@@ -70,7 +70,7 @@ class CMICmdFactory : public CMICmnBase, public MI::ISingleton<CMICmdFactory>
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmdFactory(void) override;
+    /* dtor */ ~CMICmdFactory() override;
 
     // Typedefs:
   private:

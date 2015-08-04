@@ -39,7 +39,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackInfoDepth::CMICmdCmdStackInfoDepth(void)
+CMICmdCmdStackInfoDepth::CMICmdCmdStackInfoDepth()
     : m_nThreadFrames(0)
     , m_constStrArgThread("thread")
     , m_constStrArgMaxDepth("max-depth")
@@ -58,7 +58,7 @@ CMICmdCmdStackInfoDepth::CMICmdCmdStackInfoDepth(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackInfoDepth::~CMICmdCmdStackInfoDepth(void)
+CMICmdCmdStackInfoDepth::~CMICmdCmdStackInfoDepth()
 {
 }
 
@@ -72,7 +72,7 @@ CMICmdCmdStackInfoDepth::~CMICmdCmdStackInfoDepth(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackInfoDepth::ParseArgs(void)
+CMICmdCmdStackInfoDepth::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
     m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgMaxDepth, false, false)));
@@ -89,7 +89,7 @@ CMICmdCmdStackInfoDepth::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackInfoDepth::Execute(void)
+CMICmdCmdStackInfoDepth::Execute()
 {
     CMICMDBASE_GETOPTION(pArgThread, OptionLong, m_constStrArgThread);
     CMICMDBASE_GETOPTION(pArgMaxDepth, Number, m_constStrArgMaxDepth);
@@ -120,7 +120,7 @@ CMICmdCmdStackInfoDepth::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackInfoDepth::Acknowledge(void)
+CMICmdCmdStackInfoDepth::Acknowledge()
 {
     const CMIUtilString strDepth(CMIUtilString::Format("%d", m_nThreadFrames));
     const CMICmnMIValueConst miValueConst(strDepth);
@@ -140,7 +140,7 @@ CMICmdCmdStackInfoDepth::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackInfoDepth::CreateSelf(void)
+CMICmdCmdStackInfoDepth::CreateSelf()
 {
     return new CMICmdCmdStackInfoDepth();
 }
@@ -156,7 +156,7 @@ CMICmdCmdStackInfoDepth::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackInfoFrame::CMICmdCmdStackInfoFrame(void)
+CMICmdCmdStackInfoFrame::CMICmdCmdStackInfoFrame()
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "stack-info-frame";
@@ -172,7 +172,7 @@ CMICmdCmdStackInfoFrame::CMICmdCmdStackInfoFrame(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackInfoFrame::~CMICmdCmdStackInfoFrame(void)
+CMICmdCmdStackInfoFrame::~CMICmdCmdStackInfoFrame()
 {
 }
 
@@ -186,7 +186,7 @@ CMICmdCmdStackInfoFrame::~CMICmdCmdStackInfoFrame(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackInfoFrame::ParseArgs(void)
+CMICmdCmdStackInfoFrame::ParseArgs()
 {
     return ParseValidateCmdOptions();
 }
@@ -201,7 +201,7 @@ CMICmdCmdStackInfoFrame::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackInfoFrame::Execute(void)
+CMICmdCmdStackInfoFrame::Execute()
 {
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
@@ -229,7 +229,7 @@ CMICmdCmdStackInfoFrame::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackInfoFrame::Acknowledge(void)
+CMICmdCmdStackInfoFrame::Acknowledge()
 {
     const CMICmnMIValueResult miValueResult("frame", m_miValueTuple);
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult);
@@ -247,7 +247,7 @@ CMICmdCmdStackInfoFrame::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackInfoFrame::CreateSelf(void)
+CMICmdCmdStackInfoFrame::CreateSelf()
 {
     return new CMICmdCmdStackInfoFrame();
 }
@@ -263,7 +263,7 @@ CMICmdCmdStackInfoFrame::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListFrames::CMICmdCmdStackListFrames(void)
+CMICmdCmdStackListFrames::CMICmdCmdStackListFrames()
     : m_nThreadFrames(0)
     , m_constStrArgThread("thread")
     , m_constStrArgFrameLow("low-frame")
@@ -283,7 +283,7 @@ CMICmdCmdStackListFrames::CMICmdCmdStackListFrames(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListFrames::~CMICmdCmdStackListFrames(void)
+CMICmdCmdStackListFrames::~CMICmdCmdStackListFrames()
 {
     m_vecMIValueResult.clear();
 }
@@ -298,7 +298,7 @@ CMICmdCmdStackListFrames::~CMICmdCmdStackListFrames(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListFrames::ParseArgs(void)
+CMICmdCmdStackListFrames::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
     m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrameLow, false, true)));
@@ -316,7 +316,7 @@ CMICmdCmdStackListFrames::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListFrames::Execute(void)
+CMICmdCmdStackListFrames::Execute()
 {
     CMICMDBASE_GETOPTION(pArgThread, OptionLong, m_constStrArgThread);
     CMICMDBASE_GETOPTION(pArgFrameLow, Number, m_constStrArgFrameLow);
@@ -375,7 +375,7 @@ CMICmdCmdStackListFrames::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListFrames::Acknowledge(void)
+CMICmdCmdStackListFrames::Acknowledge()
 {
     if (m_nThreadFrames == 0)
     {
@@ -427,7 +427,7 @@ CMICmdCmdStackListFrames::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackListFrames::CreateSelf(void)
+CMICmdCmdStackListFrames::CreateSelf()
 {
     return new CMICmdCmdStackListFrames();
 }
@@ -443,7 +443,7 @@ CMICmdCmdStackListFrames::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListArguments::CMICmdCmdStackListArguments(void)
+CMICmdCmdStackListArguments::CMICmdCmdStackListArguments()
     : m_bThreadInvalid(false)
     , m_miValueList(true)
     , m_constStrArgThread("thread")
@@ -465,7 +465,7 @@ CMICmdCmdStackListArguments::CMICmdCmdStackListArguments(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListArguments::~CMICmdCmdStackListArguments(void)
+CMICmdCmdStackListArguments::~CMICmdCmdStackListArguments()
 {
 }
 
@@ -479,7 +479,7 @@ CMICmdCmdStackListArguments::~CMICmdCmdStackListArguments(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListArguments::ParseArgs(void)
+CMICmdCmdStackListArguments::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
     m_setCmdArgs.Add(*(new CMICmdArgValPrintValues(m_constStrArgPrintValues, true, true)));
@@ -498,7 +498,7 @@ CMICmdCmdStackListArguments::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListArguments::Execute(void)
+CMICmdCmdStackListArguments::Execute()
 {
     CMICMDBASE_GETOPTION(pArgThread, OptionLong, m_constStrArgThread);
     CMICMDBASE_GETOPTION(pArgPrintValues, PrintValues, m_constStrArgPrintValues);
@@ -584,7 +584,7 @@ CMICmdCmdStackListArguments::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListArguments::Acknowledge(void)
+CMICmdCmdStackListArguments::Acknowledge()
 {
     if (m_bThreadInvalid)
     {
@@ -613,7 +613,7 @@ CMICmdCmdStackListArguments::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackListArguments::CreateSelf(void)
+CMICmdCmdStackListArguments::CreateSelf()
 {
     return new CMICmdCmdStackListArguments();
 }
@@ -629,7 +629,7 @@ CMICmdCmdStackListArguments::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListLocals::CMICmdCmdStackListLocals(void)
+CMICmdCmdStackListLocals::CMICmdCmdStackListLocals()
     : m_bThreadInvalid(false)
     , m_miValueList(true)
     , m_constStrArgThread("thread")
@@ -650,7 +650,7 @@ CMICmdCmdStackListLocals::CMICmdCmdStackListLocals(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListLocals::~CMICmdCmdStackListLocals(void)
+CMICmdCmdStackListLocals::~CMICmdCmdStackListLocals()
 {
 }
 
@@ -664,7 +664,7 @@ CMICmdCmdStackListLocals::~CMICmdCmdStackListLocals(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListLocals::ParseArgs(void)
+CMICmdCmdStackListLocals::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
@@ -682,7 +682,7 @@ CMICmdCmdStackListLocals::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListLocals::Execute(void)
+CMICmdCmdStackListLocals::Execute()
 {
     CMICMDBASE_GETOPTION(pArgThread, OptionLong, m_constStrArgThread);
     CMICMDBASE_GETOPTION(pArgFrame, OptionLong, m_constStrArgFrame);
@@ -747,7 +747,7 @@ CMICmdCmdStackListLocals::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListLocals::Acknowledge(void)
+CMICmdCmdStackListLocals::Acknowledge()
 {
     if (m_bThreadInvalid)
     {
@@ -776,7 +776,7 @@ CMICmdCmdStackListLocals::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackListLocals::CreateSelf(void)
+CMICmdCmdStackListLocals::CreateSelf()
 {
     return new CMICmdCmdStackListLocals();
 }
@@ -792,7 +792,7 @@ CMICmdCmdStackListLocals::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListVariables::CMICmdCmdStackListVariables(void)
+CMICmdCmdStackListVariables::CMICmdCmdStackListVariables()
     : m_bThreadInvalid(false)
     , m_miValueList(true)
     , m_constStrArgThread("thread")
@@ -813,7 +813,7 @@ CMICmdCmdStackListVariables::CMICmdCmdStackListVariables(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackListVariables::~CMICmdCmdStackListVariables(void)
+CMICmdCmdStackListVariables::~CMICmdCmdStackListVariables()
 {
 }
 
@@ -827,7 +827,7 @@ CMICmdCmdStackListVariables::~CMICmdCmdStackListVariables(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListVariables::ParseArgs(void)
+CMICmdCmdStackListVariables::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
     m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
@@ -845,7 +845,7 @@ CMICmdCmdStackListVariables::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListVariables::Execute(void)
+CMICmdCmdStackListVariables::Execute()
 {
     CMICMDBASE_GETOPTION(pArgThread, OptionLong, m_constStrArgThread);
     CMICMDBASE_GETOPTION(pArgFrame, OptionLong, m_constStrArgFrame);
@@ -909,7 +909,7 @@ CMICmdCmdStackListVariables::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackListVariables::Acknowledge(void)
+CMICmdCmdStackListVariables::Acknowledge()
 {
     if (m_bThreadInvalid)
     {
@@ -938,7 +938,7 @@ CMICmdCmdStackListVariables::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackListVariables::CreateSelf(void)
+CMICmdCmdStackListVariables::CreateSelf()
 {
     return new CMICmdCmdStackListVariables();
 }
@@ -954,7 +954,7 @@ CMICmdCmdStackListVariables::CreateSelf(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackSelectFrame::CMICmdCmdStackSelectFrame(void)
+CMICmdCmdStackSelectFrame::CMICmdCmdStackSelectFrame()
     : m_bFrameInvalid(false)
     , m_constStrArgFrame("frame")
 {
@@ -972,7 +972,7 @@ CMICmdCmdStackSelectFrame::CMICmdCmdStackSelectFrame(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdStackSelectFrame::~CMICmdCmdStackSelectFrame(void)
+CMICmdCmdStackSelectFrame::~CMICmdCmdStackSelectFrame()
 {
 }
 
@@ -986,7 +986,7 @@ CMICmdCmdStackSelectFrame::~CMICmdCmdStackSelectFrame(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackSelectFrame::ParseArgs(void)
+CMICmdCmdStackSelectFrame::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrame, true, false)));
     return ParseValidateCmdOptions();
@@ -1002,7 +1002,7 @@ CMICmdCmdStackSelectFrame::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackSelectFrame::Execute(void)
+CMICmdCmdStackSelectFrame::Execute()
 {
     CMICMDBASE_GETOPTION(pArgFrame, Number, m_constStrArgFrame);
 
@@ -1030,7 +1030,7 @@ CMICmdCmdStackSelectFrame::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdStackSelectFrame::Acknowledge(void)
+CMICmdCmdStackSelectFrame::Acknowledge()
 {
     if (m_bFrameInvalid)
     {
@@ -1059,7 +1059,7 @@ CMICmdCmdStackSelectFrame::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdStackSelectFrame::CreateSelf(void)
+CMICmdCmdStackSelectFrame::CreateSelf()
 {
     return new CMICmdCmdStackSelectFrame();
 }

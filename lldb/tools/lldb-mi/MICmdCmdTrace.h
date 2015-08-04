@@ -32,17 +32,17 @@ class CMICmdCmdTraceStatus : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdTraceStatus(void);
+    /* ctor */ CMICmdCmdTraceStatus();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdTraceStatus(void) override;
+    /* dtor */ ~CMICmdCmdTraceStatus() override;
 };

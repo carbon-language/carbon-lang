@@ -26,7 +26,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIDriverMgr::CMIDriverMgr(void)
+CMIDriverMgr::CMIDriverMgr()
     : m_pDriverCurrent(nullptr)
     , m_bInMi2Mode(false)
 {
@@ -39,7 +39,7 @@ CMIDriverMgr::CMIDriverMgr(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIDriverMgr::~CMIDriverMgr(void)
+CMIDriverMgr::~CMIDriverMgr()
 {
     Shutdown();
 }
@@ -53,7 +53,7 @@ CMIDriverMgr::~CMIDriverMgr(void)
 // Throws:  None.
 //--
 bool
-CMIDriverMgr::Initialize(void)
+CMIDriverMgr::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -91,7 +91,7 @@ CMIDriverMgr::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMIDriverMgr::Shutdown(void)
+CMIDriverMgr::Shutdown()
 {
     // Do not want a ref counter because this function needs to be called how ever this
     // application stops running
@@ -132,7 +132,7 @@ CMIDriverMgr::Shutdown(void)
 // Throws:  None.
 //--
 bool
-CMIDriverMgr::UnregisterDriverAll(void)
+CMIDriverMgr::UnregisterDriverAll()
 {
     MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
     while (it != m_mapDriverIdToDriver.end())
@@ -273,7 +273,7 @@ CMIDriverMgr::SetUseThisDriverToDoWork(const IDriver &vrADriver)
 // Throws:  None.
 //--
 CMIDriverMgr::IDriver *
-CMIDriverMgr::GetUseThisDriverToDoWork(void) const
+CMIDriverMgr::GetUseThisDriverToDoWork() const
 {
     return m_pDriverCurrent;
 }
@@ -287,7 +287,7 @@ CMIDriverMgr::GetUseThisDriverToDoWork(void) const
 // Throws:  None.
 //--
 bool
-CMIDriverMgr::DriverMainLoop(void)
+CMIDriverMgr::DriverMainLoop()
 {
     if (m_pDriverCurrent != nullptr)
     {
@@ -357,7 +357,7 @@ CMIDriverMgr::DriverParseArgs(const int argc, const char *argv[], FILE *vpStdOut
 // Throws:  None.
 //--
 CMIUtilString
-CMIDriverMgr::DriverGetError(void) const
+CMIDriverMgr::DriverGetError() const
 {
     if (m_pDriverCurrent != nullptr)
         return m_pDriverCurrent->GetError();
@@ -379,7 +379,7 @@ CMIDriverMgr::DriverGetError(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIDriverMgr::DriverGetName(void) const
+CMIDriverMgr::DriverGetName() const
 {
     if (m_pDriverCurrent != nullptr)
         return m_pDriverCurrent->GetName();
@@ -401,7 +401,7 @@ CMIDriverMgr::DriverGetName(void) const
 // Throws:  None.
 //--
 lldb::SBDebugger *
-CMIDriverMgr::DriverGetTheDebugger(void)
+CMIDriverMgr::DriverGetTheDebugger()
 {
     lldb::SBDebugger *pDebugger = nullptr;
     if (m_pDriverCurrent != nullptr)
@@ -598,7 +598,7 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
 // Throws:  None.
 //--
 CMIUtilString
-CMIDriverMgr::GetAppVersion(void) const
+CMIDriverMgr::GetAppVersion() const
 {
     const CMIUtilString strProj(MIRSRC(IDS_PROJNAME));
     const CMIUtilString strVsn(CMIDriver::Instance().GetVersionDescription());
@@ -616,7 +616,7 @@ CMIDriverMgr::GetAppVersion(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIDriverMgr::GetHelpOnCmdLineArgOptions(void) const
+CMIDriverMgr::GetHelpOnCmdLineArgOptions() const
 {
     const CMIUtilString pHelp[] = {
         MIRSRC(IDE_MI_APP_DESCRIPTION),
@@ -653,7 +653,7 @@ CMIDriverMgr::GetHelpOnCmdLineArgOptions(void) const
 // Throws:  None.
 //--
 CMIDriverMgr::IDriver *
-CMIDriverMgr::GetFirstMIDriver(void) const
+CMIDriverMgr::GetFirstMIDriver() const
 {
     IDriver *pDriver = nullptr;
     MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();
@@ -684,7 +684,7 @@ CMIDriverMgr::GetFirstMIDriver(void) const
 // Throws:  None.
 //--
 CMIDriverMgr::IDriver *
-CMIDriverMgr::GetFirstNonMIDriver(void) const
+CMIDriverMgr::GetFirstNonMIDriver() const
 {
     IDriver *pDriver = nullptr;
     MapDriverIdToDriver_t::const_iterator it = m_mapDriverIdToDriver.begin();

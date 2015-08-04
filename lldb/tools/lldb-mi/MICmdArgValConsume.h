@@ -34,15 +34,15 @@ class CMICmdArgValConsume : public CMICmdArgValBaseTemplate<CMIUtilString>
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgValConsume(void);
+    /* ctor */ CMICmdArgValConsume();
     /* ctor */ CMICmdArgValConsume(const CMIUtilString &vrArgName, const bool vbMandatory);
     //
-    bool IsOk(void) const;
+    bool IsOk() const;
 
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ ~CMICmdArgValConsume(void) override;
+    /* dtor */ ~CMICmdArgValConsume() override;
     // From CMICmdArgSet::IArg
     bool Validate(CMICmdArgContext &vwArgContext) override;
 };

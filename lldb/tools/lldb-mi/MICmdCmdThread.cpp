@@ -28,7 +28,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdThreadInfo::CMICmdCmdThreadInfo(void)
+CMICmdCmdThreadInfo::CMICmdCmdThreadInfo()
     : m_bSingleThread(false)
     , m_bThreadInvalid(true)
     , m_constStrArgNamedThreadId("thread-id")
@@ -47,7 +47,7 @@ CMICmdCmdThreadInfo::CMICmdCmdThreadInfo(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdThreadInfo::~CMICmdCmdThreadInfo(void)
+CMICmdCmdThreadInfo::~CMICmdCmdThreadInfo()
 {
     m_vecMIValueTuple.clear();
 }
@@ -62,7 +62,7 @@ CMICmdCmdThreadInfo::~CMICmdCmdThreadInfo(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdThreadInfo::ParseArgs(void)
+CMICmdCmdThreadInfo::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNamedThreadId, false, true)));
     return ParseValidateCmdOptions();
@@ -78,7 +78,7 @@ CMICmdCmdThreadInfo::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdThreadInfo::Execute(void)
+CMICmdCmdThreadInfo::Execute()
 {
     CMICMDBASE_GETOPTION(pArgThreadId, Number, m_constStrArgNamedThreadId);
     MIuint nThreadId = 0;
@@ -137,7 +137,7 @@ CMICmdCmdThreadInfo::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdThreadInfo::Acknowledge(void)
+CMICmdCmdThreadInfo::Acknowledge()
 {
     if (m_bSingleThread)
     {
@@ -195,7 +195,7 @@ CMICmdCmdThreadInfo::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdThreadInfo::CreateSelf(void)
+CMICmdCmdThreadInfo::CreateSelf()
 {
     return new CMICmdCmdThreadInfo();
 }

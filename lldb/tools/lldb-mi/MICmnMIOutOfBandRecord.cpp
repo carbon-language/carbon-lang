@@ -52,7 +52,7 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTex
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord(void)
+CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord()
     : m_strAsyncRecord(MIRSRC(IDS_CMD_ERR_EVENT_HANDLED_BUT_NO_ACTION))
 {
 }
@@ -111,7 +111,7 @@ CMICmnMIOutOfBandRecord::CMICmnMIOutOfBandRecord(const OutOfBand_e veType, const
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIOutOfBandRecord::~CMICmnMIOutOfBandRecord(void)
+CMICmnMIOutOfBandRecord::~CMICmnMIOutOfBandRecord()
 {
 }
 
@@ -126,7 +126,7 @@ CMICmnMIOutOfBandRecord::~CMICmnMIOutOfBandRecord(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnMIOutOfBandRecord::GetString(void) const
+CMICmnMIOutOfBandRecord::GetString() const
 {
     return m_strAsyncRecord;
 }
@@ -140,7 +140,7 @@ CMICmnMIOutOfBandRecord::GetString(void) const
 // Throws:  None.
 //--
 void
-CMICmnMIOutOfBandRecord::BuildAsyncRecord(void)
+CMICmnMIOutOfBandRecord::BuildAsyncRecord()
 {
     const char *pFormat = "%s%s";
     const CMIUtilString &rStrAsyncRecord(ms_MapOutOfBandToOutOfBandText[m_eResultAsyncRecordClass]);

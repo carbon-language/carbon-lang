@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValConsume::CMICmdArgValConsume(void)
+CMICmdArgValConsume::CMICmdArgValConsume()
 {
 }
 
@@ -42,7 +42,7 @@ CMICmdArgValConsume::CMICmdArgValConsume(const CMIUtilString &vrArgName, const b
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValConsume::~CMICmdArgValConsume(void)
+CMICmdArgValConsume::~CMICmdArgValConsume()
 {
 }
 
@@ -94,7 +94,7 @@ CMICmdArgValConsume::Validate(CMICmdArgContext &vwArgContext)
 // Throws:  None.
 //--
 bool
-CMICmdArgValConsume::IsOk(void) const
+CMICmdArgValConsume::IsOk() const
 {
     return true;
 }

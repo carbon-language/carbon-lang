@@ -34,7 +34,7 @@ const CMICmdCmdGdbSet::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbSet::ms_ma
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdGdbSet::CMICmdCmdGdbSet(void)
+CMICmdCmdGdbSet::CMICmdCmdGdbSet()
     : m_constStrArgNamedThreadGrp("thread-group")
     , m_constStrArgNamedGdbOption("option")
     , m_bGdbOptionRecognised(true)
@@ -56,7 +56,7 @@ CMICmdCmdGdbSet::CMICmdCmdGdbSet(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdGdbSet::~CMICmdCmdGdbSet(void)
+CMICmdCmdGdbSet::~CMICmdCmdGdbSet()
 {
 }
 
@@ -70,7 +70,7 @@ CMICmdCmdGdbSet::~CMICmdCmdGdbSet(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::ParseArgs(void)
+CMICmdCmdGdbSet::ParseArgs()
 {
     m_setCmdArgs.Add(
         *(new CMICmdArgValOptionLong(m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
@@ -89,7 +89,7 @@ CMICmdCmdGdbSet::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::Execute(void)
+CMICmdCmdGdbSet::Execute()
 {
     CMICMDBASE_GETOPTION(pArgGdbOption, ListOfN, m_constStrArgNamedGdbOption);
     const CMICmdArgValListBase::VecArgObjPtr_t &rVecWords(pArgGdbOption->GetExpectedOptions());
@@ -142,7 +142,7 @@ CMICmdCmdGdbSet::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbSet::Acknowledge(void)
+CMICmdCmdGdbSet::Acknowledge()
 {
     // Print error if option isn't recognized:
     // ^error,msg="The request '%s' was not recognized, not implemented"
@@ -183,7 +183,7 @@ CMICmdCmdGdbSet::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdGdbSet::CreateSelf(void)
+CMICmdCmdGdbSet::CreateSelf()
 {
     return new CMICmdCmdGdbSet();
 }

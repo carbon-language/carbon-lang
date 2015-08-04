@@ -47,23 +47,23 @@ class CMICmdCmdVarCreate : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarCreate(void);
+    /* ctor */ CMICmdCmdVarCreate();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarCreate(void) override;
+    /* dtor */ ~CMICmdCmdVarCreate() override;
 
     // Methods:
   private:
@@ -95,23 +95,23 @@ class CMICmdCmdVarUpdate : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarUpdate(void);
+    /* ctor */ CMICmdCmdVarUpdate();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarUpdate(void) override;
+    /* dtor */ ~CMICmdCmdVarUpdate() override;
 
     // Methods:
   private:
@@ -135,20 +135,20 @@ class CMICmdCmdVarDelete : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarDelete(void);
+    /* ctor */ CMICmdCmdVarDelete();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarDelete(void) override;
+    /* dtor */ ~CMICmdCmdVarDelete() override;
 
     // Attribute:
   private:
@@ -164,20 +164,20 @@ class CMICmdCmdVarAssign : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarAssign(void);
+    /* ctor */ CMICmdCmdVarAssign();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarAssign(void) override;
+    /* dtor */ ~CMICmdCmdVarAssign() override;
 
     // Attributes:
   private:
@@ -196,20 +196,20 @@ class CMICmdCmdVarSetFormat : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarSetFormat(void);
+    /* ctor */ CMICmdCmdVarSetFormat();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarSetFormat(void) override;
+    /* dtor */ ~CMICmdCmdVarSetFormat() override;
 
     // Attributes:
   private:
@@ -227,20 +227,20 @@ class CMICmdCmdVarListChildren : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarListChildren(void);
+    /* ctor */ CMICmdCmdVarListChildren();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarListChildren(void) override;
+    /* dtor */ ~CMICmdCmdVarListChildren() override;
 
     // Attributes:
   private:
@@ -263,20 +263,20 @@ class CMICmdCmdVarEvaluateExpression : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarEvaluateExpression(void);
+    /* ctor */ CMICmdCmdVarEvaluateExpression();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarEvaluateExpression(void) override;
+    /* dtor */ ~CMICmdCmdVarEvaluateExpression() override;
 
     // Attributes:
   private:
@@ -295,20 +295,20 @@ class CMICmdCmdVarInfoPathExpression : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarInfoPathExpression(void);
+    /* ctor */ CMICmdCmdVarInfoPathExpression();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarInfoPathExpression(void) override;
+    /* dtor */ ~CMICmdCmdVarInfoPathExpression() override;
 
     // Attributes:
   private:
@@ -326,20 +326,20 @@ class CMICmdCmdVarShowAttributes : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdVarShowAttributes(void);
+    /* ctor */ CMICmdCmdVarShowAttributes();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdVarShowAttributes(void) override;
+    /* dtor */ ~CMICmdCmdVarShowAttributes() override;
 
     // Attributes:
   private:

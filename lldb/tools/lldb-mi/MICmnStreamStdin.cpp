@@ -28,7 +28,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnStreamStdin::CMICmnStreamStdin(void)
+CMICmnStreamStdin::CMICmnStreamStdin()
     : m_strPromptCurrent("(gdb)")
     , m_bShowPrompt(true)
     , m_pCmdBuffer(nullptr)
@@ -42,7 +42,7 @@ CMICmnStreamStdin::CMICmnStreamStdin(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnStreamStdin::~CMICmnStreamStdin(void)
+CMICmnStreamStdin::~CMICmnStreamStdin()
 {
     Shutdown();
 }
@@ -56,7 +56,7 @@ CMICmnStreamStdin::~CMICmnStreamStdin(void)
 // Throws:  None.
 //--
 bool
-CMICmnStreamStdin::Initialize(void)
+CMICmnStreamStdin::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -95,7 +95,7 @@ CMICmnStreamStdin::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnStreamStdin::Shutdown(void)
+CMICmnStreamStdin::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -158,7 +158,7 @@ CMICmnStreamStdin::SetPrompt(const CMIUtilString &vNewPrompt)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnStreamStdin::GetPrompt(void) const
+CMICmnStreamStdin::GetPrompt() const
 {
     return m_strPromptCurrent;
 }
@@ -189,7 +189,7 @@ CMICmnStreamStdin::SetEnablePrompt(const bool vbYes)
 // Throws:  None.
 //--
 bool
-CMICmnStreamStdin::GetEnablePrompt(void) const
+CMICmnStreamStdin::GetEnablePrompt() const
 {
     return m_bShowPrompt;
 }

@@ -37,8 +37,8 @@ class CMICmdMgr : public CMICmnBase, public MI::ISingleton<CMICmdMgr>
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
 
     bool CmdInterpret(const CMIUtilString &vTextLine, bool &vwbYesValid, bool &vwbCmdNotInCmdFactor, SMICmdData &rwCmdData);
     bool CmdExecute(const SMICmdData &vCmdData);
@@ -48,14 +48,14 @@ class CMICmdMgr : public CMICmnBase, public MI::ISingleton<CMICmdMgr>
 
     // Methods:
   private:
-    /* ctor */ CMICmdMgr(void);
+    /* ctor */ CMICmdMgr();
     /* ctor */ CMICmdMgr(const CMICmdMgr &);
     void operator=(const CMICmdMgr &);
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmdMgr(void) override;
+    /* dtor */ ~CMICmdMgr() override;
 
     // Attributes:
   private:

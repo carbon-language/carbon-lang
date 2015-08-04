@@ -33,14 +33,14 @@ class CMICmnMIValue : public CMICmnBase
 {
     // Methods:
   public:
-    /* ctor */ CMICmnMIValue(void);
+    /* ctor */ CMICmnMIValue();
     //
-    const CMIUtilString &GetString(void) const;
+    const CMIUtilString &GetString() const;
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnMIValue(void) override;
+    /* dtor */ ~CMICmnMIValue() override;
 
     // Attributes:
   protected:

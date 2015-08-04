@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValOptionLong::CMICmdArgValOptionLong(void)
+CMICmdArgValOptionLong::CMICmdArgValOptionLong()
     : m_nExpectingNOptions(0)
     , m_eExpectingOptionType(eArgValType_invalid)
 {
@@ -66,7 +66,7 @@ CMICmdArgValOptionLong::CMICmdArgValOptionLong(const CMIUtilString &vrArgName, c
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValOptionLong::~CMICmdArgValOptionLong(void)
+CMICmdArgValOptionLong::~CMICmdArgValOptionLong()
 {
     // Tidy up
     Destroy();
@@ -80,7 +80,7 @@ CMICmdArgValOptionLong::~CMICmdArgValOptionLong(void)
 // Throws:  None.
 //--
 void
-CMICmdArgValOptionLong::Destroy(void)
+CMICmdArgValOptionLong::Destroy()
 {
     // Tidy up
     VecArgObjPtr_t::const_iterator it = m_vecArgsExpected.begin();
@@ -307,7 +307,7 @@ CMICmdArgValOptionLong::ArgNameMatch(const CMIUtilString &vrTxt) const
 // Throws:  None.
 //--
 const CMICmdArgValListBase::VecArgObjPtr_t &
-CMICmdArgValOptionLong::GetExpectedOptions(void) const
+CMICmdArgValOptionLong::GetExpectedOptions() const
 {
     return m_vecArgsExpected;
 }

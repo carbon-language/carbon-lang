@@ -32,7 +32,7 @@ const CMICmdCmdGdbInfo::MapPrintFnNameToPrintFn_t CMICmdCmdGdbInfo::ms_mapPrintF
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdGdbInfo::CMICmdCmdGdbInfo(void)
+CMICmdCmdGdbInfo::CMICmdCmdGdbInfo()
     : m_constStrArgNamedPrint("print")
     , m_bPrintFnRecognised(true)
     , m_bPrintFnSuccessful(false)
@@ -52,7 +52,7 @@ CMICmdCmdGdbInfo::CMICmdCmdGdbInfo(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdGdbInfo::~CMICmdCmdGdbInfo(void)
+CMICmdCmdGdbInfo::~CMICmdCmdGdbInfo()
 {
 }
 
@@ -66,7 +66,7 @@ CMICmdCmdGdbInfo::~CMICmdCmdGdbInfo(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbInfo::ParseArgs(void)
+CMICmdCmdGdbInfo::ParseArgs()
 {
     m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgNamedPrint, true, true)));
     return ParseValidateCmdOptions();
@@ -82,7 +82,7 @@ CMICmdCmdGdbInfo::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbInfo::Execute(void)
+CMICmdCmdGdbInfo::Execute()
 {
     CMICMDBASE_GETOPTION(pArgPrint, String, m_constStrArgNamedPrint);
     const CMIUtilString &rPrintRequest(pArgPrint->GetValue());
@@ -110,7 +110,7 @@ CMICmdCmdGdbInfo::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbInfo::Acknowledge(void)
+CMICmdCmdGdbInfo::Acknowledge()
 {
     if (!m_bPrintFnRecognised)
     {
@@ -145,7 +145,7 @@ CMICmdCmdGdbInfo::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdGdbInfo::CreateSelf(void)
+CMICmdCmdGdbInfo::CreateSelf()
 {
     return new CMICmdCmdGdbInfo();
 }
@@ -183,7 +183,7 @@ CMICmdCmdGdbInfo::GetPrintFn(const CMIUtilString &vrPrintFnName, FnPrintPtr &vrw
 // Throws:  None.
 //--
 bool
-CMICmdCmdGdbInfo::PrintFnSharedLibrary(void)
+CMICmdCmdGdbInfo::PrintFnSharedLibrary()
 {
     CMICmnStreamStdout &rStdout = CMICmnStreamStdout::Instance();
     bool bOk = rStdout.TextToStdout("~\"From        To          Syms Read   Shared Object Library\"");

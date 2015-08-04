@@ -44,7 +44,7 @@ CMICmnLLDBUtilSBValue::CMICmnLLDBUtilSBValue(const lldb::SBValue &vrValue, const
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBUtilSBValue::~CMICmnLLDBUtilSBValue(void)
+CMICmnLLDBUtilSBValue::~CMICmnLLDBUtilSBValue()
 {
 }
 
@@ -57,7 +57,7 @@ CMICmnLLDBUtilSBValue::~CMICmnLLDBUtilSBValue(void)
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetName(void) const
+CMICmnLLDBUtilSBValue::GetName() const
 {
     const char *pName = m_bValidSBValue ? m_rValue.GetName() : nullptr;
     const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
@@ -178,7 +178,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetSimpleValueChar(void) const
+CMICmnLLDBUtilSBValue::GetSimpleValueChar() const
 {
     const uint64_t value = m_rValue.GetValueAsUnsigned();
     if (value == 0)
@@ -221,7 +221,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValueChar(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer(void) const
+CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer() const
 {
     const char *value = m_rValue.GetValue();
     if (value == nullptr)
@@ -264,7 +264,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetSimpleValueCStringArray(void) const
+CMICmnLLDBUtilSBValue::GetSimpleValueCStringArray() const
 {
     const MIuint nChildren = m_rValue.GetNumChildren();
     lldb::SBValue child = m_rValue.GetChildAtIndex(0);
@@ -379,7 +379,7 @@ CMICmnLLDBUtilSBValue::IsCharBasicType(lldb::BasicType eType)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsCharType(void) const
+CMICmnLLDBUtilSBValue::IsCharType() const
 {
     const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
     return IsCharBasicType(eType);
@@ -395,7 +395,7 @@ CMICmnLLDBUtilSBValue::IsCharType(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsFirstChildCharType(void) const
+CMICmnLLDBUtilSBValue::IsFirstChildCharType() const
 {
     const MIuint nChildren = m_rValue.GetNumChildren();
 
@@ -418,7 +418,7 @@ CMICmnLLDBUtilSBValue::IsFirstChildCharType(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsPointeeCharType(void) const
+CMICmnLLDBUtilSBValue::IsPointeeCharType() const
 {
     const MIuint nChildren = m_rValue.GetNumChildren();
 
@@ -439,7 +439,7 @@ CMICmnLLDBUtilSBValue::IsPointeeCharType(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsIntegerType(void) const
+CMICmnLLDBUtilSBValue::IsIntegerType() const
 {
     const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
     return ((eType == lldb::eBasicTypeShort) || (eType == lldb::eBasicTypeUnsignedShort) ||
@@ -458,7 +458,7 @@ CMICmnLLDBUtilSBValue::IsIntegerType(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsPointerType(void) const
+CMICmnLLDBUtilSBValue::IsPointerType() const
 {
     return m_rValue.GetType().IsPointerType();
 }
@@ -472,7 +472,7 @@ CMICmnLLDBUtilSBValue::IsPointerType(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsArrayType(void) const
+CMICmnLLDBUtilSBValue::IsArrayType() const
 {
     return m_rValue.GetType().IsArrayType();
 }
@@ -516,7 +516,7 @@ CMICmnLLDBUtilSBValue::ReadCStringFromHostMemory(lldb::SBValue &vrValue, const M
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsNameUnknown(void) const
+CMICmnLLDBUtilSBValue::IsNameUnknown() const
 {
     const CMIUtilString name(GetName());
     return (name == m_pUnkwn);
@@ -530,7 +530,7 @@ CMICmnLLDBUtilSBValue::IsNameUnknown(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsValueUnknown(void) const
+CMICmnLLDBUtilSBValue::IsValueUnknown() const
 {
     const CMIUtilString value(GetValue());
     return (value == m_pUnkwn);
@@ -544,7 +544,7 @@ CMICmnLLDBUtilSBValue::IsValueUnknown(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetTypeName(void) const
+CMICmnLLDBUtilSBValue::GetTypeName() const
 {
     const char *pName = m_bValidSBValue ? m_rValue.GetTypeName() : nullptr;
     const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
@@ -560,7 +560,7 @@ CMICmnLLDBUtilSBValue::GetTypeName(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnLLDBUtilSBValue::GetTypeNameDisplay(void) const
+CMICmnLLDBUtilSBValue::GetTypeNameDisplay() const
 {
     const char *pName = m_bValidSBValue ? m_rValue.GetDisplayTypeName() : nullptr;
     const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
@@ -576,7 +576,7 @@ CMICmnLLDBUtilSBValue::GetTypeNameDisplay(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsValid(void) const
+CMICmnLLDBUtilSBValue::IsValid() const
 {
     return m_bValidSBValue;
 }
@@ -590,7 +590,7 @@ CMICmnLLDBUtilSBValue::IsValid(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::HasName(void) const
+CMICmnLLDBUtilSBValue::HasName() const
 {
     bool bHasAName = false;
 
@@ -611,7 +611,7 @@ CMICmnLLDBUtilSBValue::HasName(void) const
 // Throws:  None.
 //--
 bool
-CMICmnLLDBUtilSBValue::IsLLDBVariable(void) const
+CMICmnLLDBUtilSBValue::IsLLDBVariable() const
 {
     return (GetName().at(0) == '$');
 }

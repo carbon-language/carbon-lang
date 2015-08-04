@@ -31,7 +31,7 @@ class CMICmdArgValOptionShort : public CMICmdArgValOptionLong
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgValOptionShort(void);
+    /* ctor */ CMICmdArgValOptionShort();
     /* ctor */ CMICmdArgValOptionShort(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
     /* ctor */ CMICmdArgValOptionShort(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
                                        const ArgValType_e veType, const MIuint vnExpectingNOptions);
@@ -41,7 +41,7 @@ class CMICmdArgValOptionShort : public CMICmdArgValOptionLong
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ ~CMICmdArgValOptionShort(void) override;
+    /* dtor */ ~CMICmdArgValOptionShort() override;
 
     // Overridden:
   private:

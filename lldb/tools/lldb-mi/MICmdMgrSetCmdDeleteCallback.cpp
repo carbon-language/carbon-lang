@@ -20,7 +20,7 @@ namespace CMICmdMgrSetCmdDeleteCallback
 // Return:  None.
 // Throws:  None.
 //--
-CSetClients::CSetClients(void)
+CSetClients::CSetClients()
     : m_bClientUnregistered(false)
 {
 }
@@ -32,7 +32,7 @@ CSetClients::CSetClients(void)
 // Return:  None.
 // Throws:  None.
 //--
-CSetClients::~CSetClients(void)
+CSetClients::~CSetClients()
 {
 }
 

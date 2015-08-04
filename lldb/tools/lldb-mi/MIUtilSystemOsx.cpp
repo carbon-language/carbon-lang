@@ -20,7 +20,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilSystemOsx::CMIUtilSystemOsx(void)
+CMIUtilSystemOsx::CMIUtilSystemOsx()
 {
 }
 
@@ -31,7 +31,7 @@ CMIUtilSystemOsx::CMIUtilSystemOsx(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilSystemOsx::~CMIUtilSystemOsx(void)
+CMIUtilSystemOsx::~CMIUtilSystemOsx()
 {
 }
 
@@ -65,7 +65,7 @@ CMIUtilSystemOsx::GetOSErrorMsg(const MIint vError, CMIUtilString &vrwErrorMsg) 
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilSystemOsx::GetOSLastError(void) const
+CMIUtilSystemOsx::GetOSLastError() const
 {
     CMIUtilString errorMsg("Error fn not implemented");
 

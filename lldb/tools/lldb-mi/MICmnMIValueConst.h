@@ -41,11 +41,11 @@ class CMICmnMIValueConst : public CMICmnMIValue
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnMIValueConst(void) override;
+    /* dtor */ ~CMICmnMIValueConst() override;
 
     // Methods:
   private:
-    bool BuildConst(void);
+    bool BuildConst();
 
     // Attributes:
   private:

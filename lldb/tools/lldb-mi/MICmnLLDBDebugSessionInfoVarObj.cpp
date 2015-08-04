@@ -32,7 +32,7 @@ CMICmnLLDBDebugSessionInfoVarObj::varFormat_e CMICmnLLDBDebugSessionInfoVarObj::
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj(void)
+CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj()
     : m_eVarFormat(eVarFormat_Natural)
     , m_eVarType(eVarType_Internal)
 {
@@ -205,7 +205,7 @@ CMICmnLLDBDebugSessionInfoVarObj::MoveOther(CMICmnLLDBDebugSessionInfoVarObj &vr
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebugSessionInfoVarObj::~CMICmnLLDBDebugSessionInfoVarObj(void)
+CMICmnLLDBDebugSessionInfoVarObj::~CMICmnLLDBDebugSessionInfoVarObj()
 {
 }
 
@@ -340,7 +340,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetStringFormatted(const MIuint64 vnValue, con
 // Throws:  None.
 //--
 void
-CMICmnLLDBDebugSessionInfoVarObj::VarObjClear(void)
+CMICmnLLDBDebugSessionInfoVarObj::VarObjClear()
 {
     ms_mapVarIdToVarObj.clear();
 }
@@ -421,7 +421,7 @@ CMICmnLLDBDebugSessionInfoVarObj::VarObjGet(const CMIUtilString &vrVarName, CMIC
 // Throws:  None.
 //--
 void
-CMICmnLLDBDebugSessionInfoVarObj::VarObjIdResetToZero(void)
+CMICmnLLDBDebugSessionInfoVarObj::VarObjIdResetToZero()
 {
     ms_nVarUniqueId = 0;
 }
@@ -449,7 +449,7 @@ CMICmnLLDBDebugSessionInfoVarObj::VarObjSetFormat(varFormat_e eDefaultFormat)
 // Throws:  None.
 //--
 void
-CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc(void)
+CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc()
 {
     ms_nVarUniqueId++;
 }
@@ -463,7 +463,7 @@ CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc(void)
 // Throws:  None.
 //--
 MIuint
-CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet(void)
+CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet()
 {
     return ms_nVarUniqueId;
 }
@@ -476,7 +476,7 @@ CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLLDBDebugSessionInfoVarObj::GetName(void) const
+CMICmnLLDBDebugSessionInfoVarObj::GetName() const
 {
     return m_strName;
 }
@@ -490,7 +490,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetName(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLLDBDebugSessionInfoVarObj::GetNameReal(void) const
+CMICmnLLDBDebugSessionInfoVarObj::GetNameReal() const
 {
     return m_strNameReal;
 }
@@ -503,7 +503,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetNameReal(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLLDBDebugSessionInfoVarObj::GetValueFormatted(void) const
+CMICmnLLDBDebugSessionInfoVarObj::GetValueFormatted() const
 {
     return m_strFormattedValue;
 }
@@ -516,7 +516,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValueFormatted(void) const
 // Throws:  None.
 //--
 lldb::SBValue &
-CMICmnLLDBDebugSessionInfoVarObj::GetValue(void)
+CMICmnLLDBDebugSessionInfoVarObj::GetValue()
 {
     return m_SBValue;
 }
@@ -529,7 +529,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValue(void)
 // Throws:  None.
 //--
 const lldb::SBValue &
-CMICmnLLDBDebugSessionInfoVarObj::GetValue(void) const
+CMICmnLLDBDebugSessionInfoVarObj::GetValue() const
 {
     return m_SBValue;
 }
@@ -561,7 +561,7 @@ CMICmnLLDBDebugSessionInfoVarObj::SetVarFormat(const varFormat_e veVarFormat)
 // Throws:  None.
 //--
 void
-CMICmnLLDBDebugSessionInfoVarObj::UpdateValue(void)
+CMICmnLLDBDebugSessionInfoVarObj::UpdateValue()
 {
     m_strFormattedValue = GetValueStringFormatted(m_SBValue, m_eVarFormat);
 
@@ -580,7 +580,7 @@ CMICmnLLDBDebugSessionInfoVarObj::UpdateValue(void)
 // Throws:  None.
 //--
 CMICmnLLDBDebugSessionInfoVarObj::varType_e
-CMICmnLLDBDebugSessionInfoVarObj::GetType(void) const
+CMICmnLLDBDebugSessionInfoVarObj::GetType() const
 {
     return m_eVarType;
 }
@@ -595,7 +595,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetType(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnLLDBDebugSessionInfoVarObj::GetVarParentName(void) const
+CMICmnLLDBDebugSessionInfoVarObj::GetVarParentName() const
 {
     return m_strVarObjParentName;
 }

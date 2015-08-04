@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilDateTimeStd::CMIUtilDateTimeStd(void)
+CMIUtilDateTimeStd::CMIUtilDateTimeStd()
 {
 }
 
@@ -29,7 +29,7 @@ CMIUtilDateTimeStd::CMIUtilDateTimeStd(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilDateTimeStd::~CMIUtilDateTimeStd(void)
+CMIUtilDateTimeStd::~CMIUtilDateTimeStd()
 {
 }
 
@@ -41,7 +41,7 @@ CMIUtilDateTimeStd::~CMIUtilDateTimeStd(void)
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilDateTimeStd::GetDate(void)
+CMIUtilDateTimeStd::GetDate()
 {
     CMIUtilString strDate(MIRSRC(IDS_WORD_INVALIDBRKTS));
 
@@ -61,7 +61,7 @@ CMIUtilDateTimeStd::GetDate(void)
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilDateTimeStd::GetTime(void)
+CMIUtilDateTimeStd::GetTime()
 {
     std::time(&m_rawTime);
     const std::tm *pTi = std::localtime(&m_rawTime);
@@ -80,7 +80,7 @@ CMIUtilDateTimeStd::GetTime(void)
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilDateTimeStd::GetDateTimeLogFilename(void)
+CMIUtilDateTimeStd::GetDateTimeLogFilename()
 {
     std::time(&m_rawTime);
     const std::tm *pTi = std::localtime(&m_rawTime);

@@ -40,37 +40,37 @@ class CMIUtilString : public std::string
 
     // Methods:
   public:
-    /* ctor */ CMIUtilString(void);
+    /* ctor */ CMIUtilString();
     /* ctor */ CMIUtilString(const char *vpData);
     /* ctor */ CMIUtilString(const char *const *vpData);
     //
     bool ExtractNumber(MIint64 &vwrNumber) const;
     CMIUtilString FindAndReplace(const CMIUtilString &vFind, const CMIUtilString &vReplaceWith) const;
-    bool IsNumber(void) const;
-    bool IsHexadecimalNumber(void) const;
-    bool IsQuoted(void) const;
+    bool IsNumber() const;
+    bool IsHexadecimalNumber() const;
+    bool IsQuoted() const;
     CMIUtilString RemoveRepeatedCharacters(const char vChar);
     size_t Split(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
     size_t SplitConsiderQuotes(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
     size_t SplitLines(VecString_t &vwVecSplits) const;
-    CMIUtilString StripCREndOfLine(void) const;
-    CMIUtilString StripCRAll(void) const;
-    CMIUtilString Trim(void) const;
+    CMIUtilString StripCREndOfLine() const;
+    CMIUtilString StripCRAll() const;
+    CMIUtilString Trim() const;
     CMIUtilString Trim(const char vChar) const;
     size_t FindFirst(const CMIUtilString &vrPattern, size_t vnPos = 0) const;
     size_t FindFirst(const CMIUtilString &vrPattern, bool vbSkipQuotedText, bool &vrwbNotFoundClosedQuote,
                      size_t vnPos = 0) const;
     size_t FindFirstNot(const CMIUtilString &vrPattern, size_t vnPos = 0) const;
     CMIUtilString Escape(bool vbEscapeQuotes = false) const;
-    CMIUtilString AddSlashes(void) const;
-    CMIUtilString StripSlashes(void) const;
+    CMIUtilString AddSlashes() const;
+    CMIUtilString StripSlashes() const;
     //
     CMIUtilString &operator=(const char *vpRhs);
     CMIUtilString &operator=(const std::string &vrRhs);
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMIUtilString(void);
+    /* dtor */ virtual ~CMIUtilString();
 
     // Static method:
   private:

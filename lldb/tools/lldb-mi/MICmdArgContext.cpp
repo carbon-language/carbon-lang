@@ -17,7 +17,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgContext::CMICmdArgContext(void)
+CMICmdArgContext::CMICmdArgContext()
 {
 }
 
@@ -40,7 +40,7 @@ CMICmdArgContext::CMICmdArgContext(const CMIUtilString &vrCmdLineArgsRaw)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgContext::~CMICmdArgContext(void)
+CMICmdArgContext::~CMICmdArgContext()
 {
 }
 
@@ -52,7 +52,7 @@ CMICmdArgContext::~CMICmdArgContext(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmdArgContext::GetArgsLeftToParse(void) const
+CMICmdArgContext::GetArgsLeftToParse() const
 {
     return m_strCmdArgsAndOptions;
 }
@@ -65,7 +65,7 @@ CMICmdArgContext::GetArgsLeftToParse(void) const
 // Throws:  None.
 //--
 bool
-CMICmdArgContext::IsEmpty(void) const
+CMICmdArgContext::IsEmpty() const
 {
     return m_strCmdArgsAndOptions.empty();
 }
@@ -206,7 +206,7 @@ CMICmdArgContext::RemoveArgAtPos(const CMIUtilString &vArg, size_t nArgIndex)
 // Throws:  None.
 //--
 size_t
-CMICmdArgContext::GetNumberArgsPresent(void) const
+CMICmdArgContext::GetNumberArgsPresent() const
 {
     CMIUtilString::VecString_t vecOptions;
     return m_strCmdArgsAndOptions.SplitConsiderQuotes(" ", vecOptions);
@@ -220,7 +220,7 @@ CMICmdArgContext::GetNumberArgsPresent(void) const
 // Throws:  None.
 //--
 CMIUtilString::VecString_t
-CMICmdArgContext::GetArgs(void) const
+CMICmdArgContext::GetArgs() const
 {
     CMIUtilString::VecString_t vecOptions;
     m_strCmdArgsAndOptions.SplitConsiderQuotes(" ", vecOptions);

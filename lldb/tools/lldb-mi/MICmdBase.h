@@ -47,35 +47,35 @@ class CMICmdBase : public CMICmnBase, public CMICmdInvoker::ICmd, public CMICmdF
 {
     // Methods:
   public:
-    /* ctor */ CMICmdBase(void);
+    /* ctor */ CMICmdBase();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual const SMICmdData &GetCmdData(void) const;
-    virtual const CMIUtilString &GetErrorDescription(void) const;
+    virtual const SMICmdData &GetCmdData() const;
+    virtual const CMIUtilString &GetErrorDescription() const;
     virtual void SetCmdData(const SMICmdData &vCmdData);
-    virtual void CmdFinishedTellInvoker(void) const;
-    virtual const CMIUtilString &GetMIResultRecord(void) const;
-    virtual const CMIUtilString &GetMIResultRecordExtra(void) const;
-    virtual bool HasMIResultRecordExtra(void) const;
-    virtual bool ParseArgs(void);
+    virtual void CmdFinishedTellInvoker() const;
+    virtual const CMIUtilString &GetMIResultRecord() const;
+    virtual const CMIUtilString &GetMIResultRecordExtra() const;
+    virtual bool HasMIResultRecordExtra() const;
+    virtual bool ParseArgs();
     // From CMICmdFactory::ICmd
-    virtual const CMIUtilString &GetMiCmd(void) const;
-    virtual CMICmdFactory::CmdCreatorFnPtr GetCmdCreatorFn(void) const;
+    virtual const CMIUtilString &GetMiCmd() const;
+    virtual CMICmdFactory::CmdCreatorFnPtr GetCmdCreatorFn() const;
 
-    virtual MIuint GetGUID(void);
+    virtual MIuint GetGUID();
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMICmdBase(void);
-    virtual bool GetExitAppOnCommandFailure(void) const;
+    /* dtor */ virtual ~CMICmdBase();
+    virtual bool GetExitAppOnCommandFailure() const;
 
     // Methods:
   protected:
     void SetError(const CMIUtilString &rErrMsg);
     template <class T> T *GetOption(const CMIUtilString &vStrOptionName);
-    bool ParseValidateCmdOptions(void);
+    bool ParseValidateCmdOptions();
 
     // Attributes:
   protected:

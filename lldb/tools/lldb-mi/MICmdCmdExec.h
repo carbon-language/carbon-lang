@@ -44,19 +44,19 @@ class CMICmdCmdExecRun : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecRun(void);
+    /* ctor */ CMICmdCmdExecRun();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecRun(void) override;
+    /* dtor */ ~CMICmdCmdExecRun() override;
 
     // Attributes:
   private:
@@ -72,19 +72,19 @@ class CMICmdCmdExecContinue : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecContinue(void);
+    /* ctor */ CMICmdCmdExecContinue();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecContinue(void) override;
+    /* dtor */ ~CMICmdCmdExecContinue() override;
 
     // Attributes:
   private:
@@ -100,20 +100,20 @@ class CMICmdCmdExecNext : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecNext(void);
+    /* ctor */ CMICmdCmdExecNext();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecNext(void) override;
+    /* dtor */ ~CMICmdCmdExecNext() override;
 
     // Attributes:
   private:
@@ -131,20 +131,20 @@ class CMICmdCmdExecStep : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecStep(void);
+    /* ctor */ CMICmdCmdExecStep();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecStep(void) override;
+    /* dtor */ ~CMICmdCmdExecStep() override;
 
     // Attributes:
   private:
@@ -162,20 +162,20 @@ class CMICmdCmdExecNextInstruction : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecNextInstruction(void);
+    /* ctor */ CMICmdCmdExecNextInstruction();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecNextInstruction(void) override;
+    /* dtor */ ~CMICmdCmdExecNextInstruction() override;
 
     // Attributes:
   private:
@@ -193,20 +193,20 @@ class CMICmdCmdExecStepInstruction : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecStepInstruction(void);
+    /* ctor */ CMICmdCmdExecStepInstruction();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecStepInstruction(void) override;
+    /* dtor */ ~CMICmdCmdExecStepInstruction() override;
 
     // Attributes:
   private:
@@ -224,20 +224,20 @@ class CMICmdCmdExecFinish : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecFinish(void);
+    /* ctor */ CMICmdCmdExecFinish();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecFinish(void) override;
+    /* dtor */ ~CMICmdCmdExecFinish() override;
 
     // Attributes:
   private:
@@ -258,19 +258,19 @@ class CMICmdCmdExecInterrupt : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecInterrupt(void);
+    /* ctor */ CMICmdCmdExecInterrupt();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecInterrupt(void) override;
+    /* dtor */ ~CMICmdCmdExecInterrupt() override;
 
     // Attributes:
   private:
@@ -286,20 +286,20 @@ class CMICmdCmdExecArguments : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecArguments(void);
+    /* ctor */ CMICmdCmdExecArguments();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecArguments(void) override;
+    /* dtor */ ~CMICmdCmdExecArguments() override;
 
     // Attributes:
   private:
@@ -315,17 +315,17 @@ class CMICmdCmdExecAbort : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdExecAbort(void);
+    /* ctor */ CMICmdCmdExecAbort();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdExecAbort(void) override;
+    /* dtor */ ~CMICmdCmdExecAbort() override;
 };

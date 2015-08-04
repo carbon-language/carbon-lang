@@ -21,7 +21,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTraceStatus::CMICmdCmdTraceStatus(void)
+CMICmdCmdTraceStatus::CMICmdCmdTraceStatus()
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "trace-status";
@@ -37,7 +37,7 @@ CMICmdCmdTraceStatus::CMICmdCmdTraceStatus(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdTraceStatus::~CMICmdCmdTraceStatus(void)
+CMICmdCmdTraceStatus::~CMICmdCmdTraceStatus()
 {
 }
 
@@ -51,7 +51,7 @@ CMICmdCmdTraceStatus::~CMICmdCmdTraceStatus(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTraceStatus::Execute(void)
+CMICmdCmdTraceStatus::Execute()
 {
     // Do nothing
     return MIstatus::success;
@@ -67,7 +67,7 @@ CMICmdCmdTraceStatus::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdTraceStatus::Acknowledge(void)
+CMICmdCmdTraceStatus::Acknowledge()
 {
     const CMICmnMIValueConst miValueConst(MIRSRC(IDS_CMD_ERR_NOT_IMPLEMENTED));
     const CMICmnMIValueResult miValueResult("msg", miValueConst);
@@ -86,7 +86,7 @@ CMICmdCmdTraceStatus::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdTraceStatus::CreateSelf(void)
+CMICmdCmdTraceStatus::CreateSelf()
 {
     return new CMICmdCmdTraceStatus();
 }

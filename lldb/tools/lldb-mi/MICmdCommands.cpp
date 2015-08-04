@@ -41,7 +41,7 @@
 
 namespace MICmnCommands
 {
-template <typename T> static bool Register(void);
+template <typename T> static bool Register();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ template <typename T> static bool Register(void);
 //--
 template <typename T>
 static bool
-MICmnCommands::Register(void)
+MICmnCommands::Register()
 {
     static CMICmdFactory &rCmdFactory = CMICmdFactory::Instance();
     const CMIUtilString strMiCmd = T().GetMiCmd();
@@ -70,7 +70,7 @@ MICmnCommands::Register(void)
 // Throws:  None.
 //--
 bool
-MICmnCommands::RegisterAll(void)
+MICmnCommands::RegisterAll()
 {
     bool bOk = MIstatus::success;
 

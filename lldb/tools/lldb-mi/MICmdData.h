@@ -18,7 +18,7 @@
 //--
 struct SMICmdData
 {
-    SMICmdData(void)
+    SMICmdData()
         : id(0)
         , bCmdValid(false)
         , bCmdExecutedSuccessfully(false)
@@ -40,7 +40,7 @@ struct SMICmdData
         bHasResultRecordExtra; // True = Yes command produced additional MI output to its 1 line response, false = no extra MI output formed
 
     void
-    Clear(void)
+    Clear()
     {
         id = 0;
         strMiCmdToken.clear();

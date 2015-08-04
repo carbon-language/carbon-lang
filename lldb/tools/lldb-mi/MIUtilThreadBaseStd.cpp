@@ -21,7 +21,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilThreadActiveObjBase::CMIUtilThreadActiveObjBase(void)
+CMIUtilThreadActiveObjBase::CMIUtilThreadActiveObjBase()
     : m_references(0)
     , m_bHasBeenKilled(false)
 {
@@ -34,7 +34,7 @@ CMIUtilThreadActiveObjBase::CMIUtilThreadActiveObjBase(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilThreadActiveObjBase::~CMIUtilThreadActiveObjBase(void)
+CMIUtilThreadActiveObjBase::~CMIUtilThreadActiveObjBase()
 {
     // Make sure our thread is not alive before we die
     m_thread.Join();
@@ -49,7 +49,7 @@ CMIUtilThreadActiveObjBase::~CMIUtilThreadActiveObjBase(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadActiveObjBase::ThreadIsActive(void)
+CMIUtilThreadActiveObjBase::ThreadIsActive()
 {
     // Create a new thread to occupy this threads Run() function
     return m_thread.IsActive();
@@ -64,7 +64,7 @@ CMIUtilThreadActiveObjBase::ThreadIsActive(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadActiveObjBase::ThreadExecute(void)
+CMIUtilThreadActiveObjBase::ThreadExecute()
 {
     // Create a new thread to occupy this threads Run() function
     return m_thread.Start(ThreadEntry, this);
@@ -79,7 +79,7 @@ CMIUtilThreadActiveObjBase::ThreadExecute(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadActiveObjBase::Acquire(void)
+CMIUtilThreadActiveObjBase::Acquire()
 {
     // Access to this function is serial
     CMIUtilThreadLock serial(m_mutex);
@@ -99,7 +99,7 @@ CMIUtilThreadActiveObjBase::Acquire(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadActiveObjBase::Release(void)
+CMIUtilThreadActiveObjBase::Release()
 {
     // Access to this function is serial
     CMIUtilThreadLock serial(m_mutex);
@@ -119,7 +119,7 @@ CMIUtilThreadActiveObjBase::Release(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadActiveObjBase::ThreadKill(void)
+CMIUtilThreadActiveObjBase::ThreadKill()
 {
     // Access to this function is serial
     CMIUtilThreadLock serial(m_mutex);
@@ -139,7 +139,7 @@ CMIUtilThreadActiveObjBase::ThreadKill(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadActiveObjBase::ThreadJoin(void)
+CMIUtilThreadActiveObjBase::ThreadJoin()
 {
     return m_thread.Join();
 }
@@ -175,7 +175,7 @@ CMIUtilThreadActiveObjBase::ThreadEntry(void *vpThisClass)
 // Throws:  None.
 //--
 void
-CMIUtilThreadActiveObjBase::ThreadManage(void)
+CMIUtilThreadActiveObjBase::ThreadManage()
 {
     bool bAlive = true;
 
@@ -212,7 +212,7 @@ CMIUtilThreadActiveObjBase::ThreadManage(void)
 //---------------------------------------------------------------------------------------
 
 //
-CMIUtilThread::CMIUtilThread(void)
+CMIUtilThread::CMIUtilThread()
     : m_pThread(nullptr)
     , m_bIsActive(false)
 {
@@ -225,7 +225,7 @@ CMIUtilThread::CMIUtilThread(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilThread::~CMIUtilThread(void)
+CMIUtilThread::~CMIUtilThread()
 {
     Join();
 }
@@ -239,7 +239,7 @@ CMIUtilThread::~CMIUtilThread(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThread::Join(void)
+CMIUtilThread::Join()
 {
     if (m_pThread != nullptr)
     {
@@ -265,7 +265,7 @@ CMIUtilThread::Join(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThread::IsActive(void)
+CMIUtilThread::IsActive()
 {
     // Lock while we access the thread status
     CMIUtilThreadLock _lock(m_mutex);
@@ -280,7 +280,7 @@ CMIUtilThread::IsActive(void)
 // Throws:  None.
 //--
 void
-CMIUtilThread::Finish(void)
+CMIUtilThread::Finish()
 {
     // Lock while we access the thread status
     CMIUtilThreadLock _lock(m_mutex);
@@ -324,7 +324,7 @@ CMIUtilThread::Start(FnThreadProc vpFn, void *vpArg)
 // Throws:  None.
 //--
 void
-CMIUtilThreadMutex::Lock(void)
+CMIUtilThreadMutex::Lock()
 {
     m_mutex.lock();
 }
@@ -337,7 +337,7 @@ CMIUtilThreadMutex::Lock(void)
 // Throws:  None.
 //--
 void
-CMIUtilThreadMutex::Unlock(void)
+CMIUtilThreadMutex::Unlock()
 {
     m_mutex.unlock();
 }
@@ -351,7 +351,7 @@ CMIUtilThreadMutex::Unlock(void)
 // Throws:  None.
 //--
 bool
-CMIUtilThreadMutex::TryLock(void)
+CMIUtilThreadMutex::TryLock()
 {
     return m_mutex.try_lock();
 }

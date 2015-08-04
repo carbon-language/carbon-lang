@@ -20,25 +20,25 @@ class CMIUtilFileStd : public CMICmnBase
 {
     // Static:
   public:
-    static char GetSlash(void);
+    static char GetSlash();
 
     // Methods:
   public:
-    /* ctor */ CMIUtilFileStd(void);
+    /* ctor */ CMIUtilFileStd();
     //
     bool CreateWrite(const CMIUtilString &vFileNamePath, bool &vwrbNewCreated);
     bool Write(const CMIUtilString &vData);
     bool Write(const char *vpData, const MIuint vCharCnt);
-    void Close(void);
-    bool IsOk(void) const;
+    void Close();
+    bool IsOk() const;
     bool IsFileExist(const CMIUtilString &vFileNamePath) const;
-    const CMIUtilString &GetLineReturn(void) const;
+    const CMIUtilString &GetLineReturn() const;
     static CMIUtilString StripOffFileName(const CMIUtilString &vDirectoryPath);
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMIUtilFileStd(void) override;
+    /* dtor */ ~CMIUtilFileStd() override;
 
     // Attributes:
   private:

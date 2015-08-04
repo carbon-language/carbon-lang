@@ -28,41 +28,41 @@ class CMICmnLogMediumFile : public CMICmnBase, public CMICmnLog::IMedium
 {
     // Statics:
   public:
-    static CMICmnLogMediumFile &Instance(void);
+    static CMICmnLogMediumFile &Instance();
 
     // Methods:
   public:
     bool SetHeaderTxt(const CMIUtilString &vText);
     bool SetVerbosity(const MIuint veType);
-    MIuint GetVerbosity(void) const;
-    const CMIUtilString &GetFileName(void) const;
-    const CMIUtilString &GetFileNamePath(void) const;
-    bool IsOk(void) const;
-    bool IsFileExist(void) const;
-    const CMIUtilString &GetLineReturn(void) const;
+    MIuint GetVerbosity() const;
+    const CMIUtilString &GetFileName() const;
+    const CMIUtilString &GetFileNamePath() const;
+    bool IsOk() const;
+    bool IsFileExist() const;
+    const CMIUtilString &GetLineReturn() const;
     bool SetDirectory(const CMIUtilString &vPath);
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ ~CMICmnLogMediumFile(void) override;
+    /* dtor */ ~CMICmnLogMediumFile() override;
     // From CMICmnLog::IMedium
-    bool Initialize(void) override;
-    const CMIUtilString &GetName(void) const override;
+    bool Initialize() override;
+    const CMIUtilString &GetName() const override;
     bool Write(const CMIUtilString &vData, const CMICmnLog::ELogVerbosity veType) override;
-    const CMIUtilString &GetError(void) const override;
-    bool Shutdown(void) override;
+    const CMIUtilString &GetError() const override;
+    bool Shutdown() override;
 
     // Methods:
   private:
-    /* ctor */ CMICmnLogMediumFile(void);
+    /* ctor */ CMICmnLogMediumFile();
     /* ctor */ CMICmnLogMediumFile(const CMICmnLogMediumFile &);
     void operator=(const CMICmnLogMediumFile &);
 
     bool FileWriteEnglish(const CMIUtilString &vData);
-    bool FileFormFileNamePath(void);
+    bool FileFormFileNamePath();
     CMIUtilString MassagedData(const CMIUtilString &vData, const CMICmnLog::ELogVerbosity veType);
-    bool FileWriteHeader(void);
+    bool FileWriteHeader();
     char ConvertLogVerbosityTypeToId(const CMICmnLog::ELogVerbosity veType) const;
     CMIUtilString ConvertCr(const CMIUtilString &vData) const;
 

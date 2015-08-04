@@ -25,7 +25,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValListBase::CMICmdArgValListBase(void)
+CMICmdArgValListBase::CMICmdArgValListBase()
     : m_eArgType(eArgValType_invalid)
 {
 }
@@ -69,7 +69,7 @@ CMICmdArgValListBase::CMICmdArgValListBase(const CMIUtilString &vrArgName, const
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValListBase::~CMICmdArgValListBase(void)
+CMICmdArgValListBase::~CMICmdArgValListBase()
 {
     // Tidy up
     Destroy();
@@ -83,7 +83,7 @@ CMICmdArgValListBase::~CMICmdArgValListBase(void)
 // Throws:  None.
 //--
 void
-CMICmdArgValListBase::Destroy(void)
+CMICmdArgValListBase::Destroy()
 {
     // Tidy up
     VecArgObjPtr_t::const_iterator it = m_argValue.begin();

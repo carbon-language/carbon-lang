@@ -21,7 +21,7 @@ const CMIUtilString CMICmnMIValueResult::ms_constStrEqual("=");
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValueResult::CMICmnMIValueResult(void)
+CMICmnMIValueResult::CMICmnMIValueResult()
     : m_bEmptyConstruction(true)
 {
 }
@@ -68,7 +68,7 @@ CMICmnMIValueResult::CMICmnMIValueResult(const CMIUtilString &vrVariable, const 
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValueResult::~CMICmnMIValueResult(void)
+CMICmnMIValueResult::~CMICmnMIValueResult()
 {
 }
 
@@ -80,7 +80,7 @@ CMICmnMIValueResult::~CMICmnMIValueResult(void)
 // Throws:  None.
 //--
 void
-CMICmnMIValueResult::BuildResult(void)
+CMICmnMIValueResult::BuildResult()
 {
     const char *pFormat = m_bUseSpacing ? "%s %s %s" : "%s%s%s";
     m_strValue = CMIUtilString::Format(pFormat, m_strPartVariable.c_str(), ms_constStrEqual.c_str(), m_partMIValue.GetString().c_str());

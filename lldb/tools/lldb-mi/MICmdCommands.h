@@ -16,5 +16,5 @@ namespace MICmnCommands
 // Details: MI Command are instantiated and registered automatically with the
 //          Command Factory
 //--
-bool RegisterAll(void);
+bool RegisterAll();
 }

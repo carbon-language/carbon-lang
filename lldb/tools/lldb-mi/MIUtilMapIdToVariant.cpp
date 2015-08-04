@@ -17,7 +17,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilMapIdToVariant::CMIUtilMapIdToVariant(void)
+CMIUtilMapIdToVariant::CMIUtilMapIdToVariant()
 {
 }
 
@@ -28,7 +28,7 @@ CMIUtilMapIdToVariant::CMIUtilMapIdToVariant(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilMapIdToVariant::~CMIUtilMapIdToVariant(void)
+CMIUtilMapIdToVariant::~CMIUtilMapIdToVariant()
 {
 }
 
@@ -40,7 +40,7 @@ CMIUtilMapIdToVariant::~CMIUtilMapIdToVariant(void)
 // Throws:  None.
 //--
 void
-CMIUtilMapIdToVariant::Clear(void)
+CMIUtilMapIdToVariant::Clear()
 {
     m_mapKeyToVariantValue.clear();
 }
@@ -71,7 +71,7 @@ CMIUtilMapIdToVariant::HaveAlready(const CMIUtilString &vId) const
 // Throws:  None.
 //--
 bool
-CMIUtilMapIdToVariant::IsEmpty(void) const
+CMIUtilMapIdToVariant::IsEmpty() const
 {
     return m_mapKeyToVariantValue.empty();
 }

@@ -21,13 +21,13 @@ class CMICmdArgContext
 {
     // Methods:
   public:
-    /* ctor */ CMICmdArgContext(void);
+    /* ctor */ CMICmdArgContext();
     /* ctor */ CMICmdArgContext(const CMIUtilString &vrCmdLineArgsRaw);
     //
-    const CMIUtilString &GetArgsLeftToParse(void) const;
-    size_t GetNumberArgsPresent(void) const;
-    CMIUtilString::VecString_t GetArgs(void) const;
-    bool IsEmpty(void) const;
+    const CMIUtilString &GetArgsLeftToParse() const;
+    size_t GetNumberArgsPresent() const;
+    CMIUtilString::VecString_t GetArgs() const;
+    bool IsEmpty() const;
     bool RemoveArg(const CMIUtilString &vArg);
     bool RemoveArgAtPos(const CMIUtilString &vArg, size_t nArgIndex);
     //
@@ -36,7 +36,7 @@ class CMICmdArgContext
     // Overridden:
   public:
     // From CMIUtilString
-    /* dtor */ virtual ~CMICmdArgContext(void);
+    /* dtor */ virtual ~CMICmdArgContext();
 
     // Attributes:
   private:

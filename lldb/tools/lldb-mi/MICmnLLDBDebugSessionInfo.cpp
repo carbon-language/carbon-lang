@@ -35,7 +35,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebugSessionInfo::CMICmnLLDBDebugSessionInfo(void)
+CMICmnLLDBDebugSessionInfo::CMICmnLLDBDebugSessionInfo()
     : m_nBrkPointCntMax(INT32_MAX)
     , m_currentSelectedThread(LLDB_INVALID_THREAD_ID)
     , m_constStrSharedDataKeyWkDir("Working Directory")
@@ -53,7 +53,7 @@ CMICmnLLDBDebugSessionInfo::CMICmnLLDBDebugSessionInfo(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebugSessionInfo::~CMICmnLLDBDebugSessionInfo(void)
+CMICmnLLDBDebugSessionInfo::~CMICmnLLDBDebugSessionInfo()
 {
     Shutdown();
 }
@@ -67,7 +67,7 @@ CMICmnLLDBDebugSessionInfo::~CMICmnLLDBDebugSessionInfo(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugSessionInfo::Initialize(void)
+CMICmnLLDBDebugSessionInfo::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -91,7 +91,7 @@ CMICmnLLDBDebugSessionInfo::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugSessionInfo::Shutdown(void)
+CMICmnLLDBDebugSessionInfo::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -130,7 +130,7 @@ CMICmnLLDBDebugSessionInfo::Shutdown(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebugSessionInfo::SharedDataDestroy(void)
+CMICmnLLDBDebugSessionInfo::SharedDataDestroy()
 {
     m_mapIdToSessionData.Clear();
     m_vecVarObj.clear();

@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValue::CMICmnMIValue(void)
+CMICmnMIValue::CMICmnMIValue()
     : m_strValue(MIRSRC(IDS_WORD_INVALIDBRKTS))
     , m_bJustConstructed(true)
 {
@@ -31,7 +31,7 @@ CMICmnMIValue::CMICmnMIValue(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValue::~CMICmnMIValue(void)
+CMICmnMIValue::~CMICmnMIValue()
 {
 }
 
@@ -46,7 +46,7 @@ CMICmnMIValue::~CMICmnMIValue(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmnMIValue::GetString(void) const
+CMICmnMIValue::GetString() const
 {
     return m_strValue;
 }

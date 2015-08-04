@@ -19,7 +19,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValBase::CMICmdArgValBase(void)
+CMICmdArgValBase::CMICmdArgValBase()
     : m_bFound(false)
     , m_bValid(false)
     , m_bMandatory(false)
@@ -54,7 +54,7 @@ CMICmdArgValBase::CMICmdArgValBase(const CMIUtilString &vrArgName, const bool vb
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValBase::~CMICmdArgValBase(void)
+CMICmdArgValBase::~CMICmdArgValBase()
 {
 }
 
@@ -68,7 +68,7 @@ CMICmdArgValBase::~CMICmdArgValBase(void)
 // Throws:  None.
 //--
 bool
-CMICmdArgValBase::GetIsMissingOptions(void) const
+CMICmdArgValBase::GetIsMissingOptions() const
 {
     return m_bIsMissingOptions;
 }
@@ -83,7 +83,7 @@ CMICmdArgValBase::GetIsMissingOptions(void) const
 // Throws:  None.
 //--
 bool
-CMICmdArgValBase::GetIsHandledByCmd(void) const
+CMICmdArgValBase::GetIsHandledByCmd() const
 {
     return m_bHandled;
 }
@@ -96,7 +96,7 @@ CMICmdArgValBase::GetIsHandledByCmd(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmdArgValBase::GetName(void) const
+CMICmdArgValBase::GetName() const
 {
     return m_strArgName;
 }
@@ -111,7 +111,7 @@ CMICmdArgValBase::GetName(void) const
 // Throws:  None.
 //--
 bool
-CMICmdArgValBase::GetFound(void) const
+CMICmdArgValBase::GetFound() const
 {
     return m_bFound;
 }
@@ -126,7 +126,7 @@ CMICmdArgValBase::GetFound(void) const
 // Throws:  None.
 //--
 bool
-CMICmdArgValBase::GetValid(void) const
+CMICmdArgValBase::GetValid() const
 {
     return m_bValid;
 }
@@ -141,7 +141,7 @@ CMICmdArgValBase::GetValid(void) const
 // Throws:  None.
 //--
 bool
-CMICmdArgValBase::GetIsMandatory(void) const
+CMICmdArgValBase::GetIsMandatory() const
 {
     return m_bMandatory;
 }

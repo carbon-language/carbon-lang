@@ -30,7 +30,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdFileExecAndSymbols::CMICmdCmdFileExecAndSymbols(void)
+CMICmdCmdFileExecAndSymbols::CMICmdCmdFileExecAndSymbols()
     : m_constStrArgNameFile("file")
     , m_constStrArgThreadGrp("thread-group")
     , m_constStrArgNamedPlatformName("p")
@@ -50,7 +50,7 @@ CMICmdCmdFileExecAndSymbols::CMICmdCmdFileExecAndSymbols(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdCmdFileExecAndSymbols::~CMICmdCmdFileExecAndSymbols(void)
+CMICmdCmdFileExecAndSymbols::~CMICmdCmdFileExecAndSymbols()
 {
 }
 
@@ -64,7 +64,7 @@ CMICmdCmdFileExecAndSymbols::~CMICmdCmdFileExecAndSymbols(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdFileExecAndSymbols::ParseArgs(void)
+CMICmdCmdFileExecAndSymbols::ParseArgs()
 {
     m_setCmdArgs.Add(
         *(new CMICmdArgValOptionLong(m_constStrArgThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1)));
@@ -88,7 +88,7 @@ CMICmdCmdFileExecAndSymbols::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdFileExecAndSymbols::Execute(void)
+CMICmdCmdFileExecAndSymbols::Execute()
 {
     CMICMDBASE_GETOPTION(pArgNamedFile, File, m_constStrArgNameFile);
     CMICMDBASE_GETOPTION(pArgPlatformName, OptionShort, m_constStrArgNamedPlatformName);
@@ -166,7 +166,7 @@ CMICmdCmdFileExecAndSymbols::Execute(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdFileExecAndSymbols::Acknowledge(void)
+CMICmdCmdFileExecAndSymbols::Acknowledge()
 {
     const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
     m_miResultRecord = miRecordResult;
@@ -183,7 +183,7 @@ CMICmdCmdFileExecAndSymbols::Acknowledge(void)
 // Throws:  None.
 //--
 CMICmdBase *
-CMICmdCmdFileExecAndSymbols::CreateSelf(void)
+CMICmdCmdFileExecAndSymbols::CreateSelf()
 {
     return new CMICmdCmdFileExecAndSymbols();
 }
@@ -200,7 +200,7 @@ CMICmdCmdFileExecAndSymbols::CreateSelf(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdFileExecAndSymbols::GetExitAppOnCommandFailure(void) const
+CMICmdCmdFileExecAndSymbols::GetExitAppOnCommandFailure() const
 {
     return true;
 }

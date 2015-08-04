@@ -20,7 +20,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnStreamStderr::CMICmnStreamStderr(void)
+CMICmnStreamStderr::CMICmnStreamStderr()
 {
 }
 
@@ -31,7 +31,7 @@ CMICmnStreamStderr::CMICmnStreamStderr(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnStreamStderr::~CMICmnStreamStderr(void)
+CMICmnStreamStderr::~CMICmnStreamStderr()
 {
     Shutdown();
 }
@@ -45,7 +45,7 @@ CMICmnStreamStderr::~CMICmnStreamStderr(void)
 // Throws:  None.
 //--
 bool
-CMICmnStreamStderr::Initialize(void)
+CMICmnStreamStderr::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -76,7 +76,7 @@ CMICmnStreamStderr::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnStreamStderr::Shutdown(void)
+CMICmnStreamStderr::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -191,7 +191,7 @@ CMICmnStreamStderr::WritePriv(const CMIUtilString &vText, const CMIUtilString &v
 // Throws:  None.
 //--
 bool
-CMICmnStreamStderr::Lock(void)
+CMICmnStreamStderr::Lock()
 {
     m_mutex.Lock();
     return MIstatus::success;
@@ -206,7 +206,7 @@ CMICmnStreamStderr::Lock(void)
 // Throws:  None.
 //--
 bool
-CMICmnStreamStderr::Unlock(void)
+CMICmnStreamStderr::Unlock()
 {
     m_mutex.Unlock();
     return MIstatus::success;

@@ -22,7 +22,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdInvoker::CMICmdInvoker(void)
+CMICmdInvoker::CMICmdInvoker()
     : m_rStreamOut(CMICmnStreamStdout::Instance())
 {
 }
@@ -34,7 +34,7 @@ CMICmdInvoker::CMICmdInvoker(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdInvoker::~CMICmdInvoker(void)
+CMICmdInvoker::~CMICmdInvoker()
 {
     Shutdown();
 }
@@ -48,7 +48,7 @@ CMICmdInvoker::~CMICmdInvoker(void)
 // Throws:  None.
 //--
 bool
-CMICmdInvoker::Initialize(void)
+CMICmdInvoker::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -69,7 +69,7 @@ CMICmdInvoker::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmdInvoker::Shutdown(void)
+CMICmdInvoker::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -92,7 +92,7 @@ CMICmdInvoker::Shutdown(void)
 // Throws:  None.
 //--
 void
-CMICmdInvoker::CmdDeleteAll(void)
+CMICmdInvoker::CmdDeleteAll()
 {
     CMICmdMgr &rMgr = CMICmdMgr::Instance();
     MapCmdIdToCmd_t::const_iterator it = m_mapCmdIdToCmd.begin();

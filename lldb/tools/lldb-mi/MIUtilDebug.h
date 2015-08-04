@@ -24,17 +24,17 @@ class CMIUtilDebug
 {
     // Statics:
   public:
-    static void ShowDlgWaitForDbgAttach(void);
-    static void WaitForDbgAttachInfinteLoop(void);
+    static void ShowDlgWaitForDbgAttach();
+    static void WaitForDbgAttachInfinteLoop();
 
     // Methods:
   public:
-    /* ctor */ CMIUtilDebug(void);
+    /* ctor */ CMIUtilDebug();
 
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilDebug(void);
+    /* dtor */ virtual ~CMIUtilDebug();
 };
 
 //++ ============================================================================
@@ -55,7 +55,7 @@ class CMIUtilDebugFnTrace
     // Overrideable:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilDebugFnTrace(void);
+    /* dtor */ virtual ~CMIUtilDebugFnTrace();
 
     // Attributes:
   private:

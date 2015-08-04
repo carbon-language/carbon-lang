@@ -18,7 +18,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdInterpreter::CMICmdInterpreter(void)
+CMICmdInterpreter::CMICmdInterpreter()
     : m_rCmdFactory(CMICmdFactory::Instance())
 {
 }
@@ -30,7 +30,7 @@ CMICmdInterpreter::CMICmdInterpreter(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdInterpreter::~CMICmdInterpreter(void)
+CMICmdInterpreter::~CMICmdInterpreter()
 {
     Shutdown();
 }
@@ -44,7 +44,7 @@ CMICmdInterpreter::~CMICmdInterpreter(void)
 // Throws:  None.
 //--
 bool
-CMICmdInterpreter::Initialize(void)
+CMICmdInterpreter::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -65,7 +65,7 @@ CMICmdInterpreter::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmdInterpreter::Shutdown(void)
+CMICmdInterpreter::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -291,7 +291,7 @@ CMICmdInterpreter::MiHasCmd(const CMIUtilString &vTextLine)
 // Throws:  None.
 //--
 const SMICmdData &
-CMICmdInterpreter::MiGetCmdData(void) const
+CMICmdInterpreter::MiGetCmdData() const
 {
     return m_miCmdData;
 }

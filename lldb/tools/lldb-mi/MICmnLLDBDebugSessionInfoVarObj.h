@@ -60,15 +60,15 @@ class CMICmnLLDBDebugSessionInfoVarObj
     static void VarObjDelete(const CMIUtilString &vrVarName);
     static bool VarObjGet(const CMIUtilString &vrVarName, CMICmnLLDBDebugSessionInfoVarObj &vrwVarObj);
     static void VarObjUpdate(const CMICmnLLDBDebugSessionInfoVarObj &vrVarObj);
-    static void VarObjIdInc(void);
-    static MIuint VarObjIdGet(void);
-    static void VarObjIdResetToZero(void);
-    static void VarObjClear(void);
+    static void VarObjIdInc();
+    static MIuint VarObjIdGet();
+    static void VarObjIdResetToZero();
+    static void VarObjClear();
     static void VarObjSetFormat(varFormat_e eDefaultFormat);
 
     // Methods:
   public:
-    /* ctor */ CMICmnLLDBDebugSessionInfoVarObj(void);
+    /* ctor */ CMICmnLLDBDebugSessionInfoVarObj();
     /* ctor */ CMICmnLLDBDebugSessionInfoVarObj(const CMIUtilString &vrStrNameReal, const CMIUtilString &vrStrName,
                                                 const lldb::SBValue &vrValue);
     /* ctor */ CMICmnLLDBDebugSessionInfoVarObj(const CMIUtilString &vrStrNameReal, const CMIUtilString &vrStrName,
@@ -80,20 +80,20 @@ class CMICmnLLDBDebugSessionInfoVarObj
     CMICmnLLDBDebugSessionInfoVarObj &operator=(const CMICmnLLDBDebugSessionInfoVarObj &vrOther);
     CMICmnLLDBDebugSessionInfoVarObj &operator=(CMICmnLLDBDebugSessionInfoVarObj &&vrwOther);
     //
-    const CMIUtilString &GetName(void) const;
-    const CMIUtilString &GetNameReal(void) const;
-    const CMIUtilString &GetValueFormatted(void) const;
-    lldb::SBValue &GetValue(void);
-    const lldb::SBValue &GetValue(void) const;
-    varType_e GetType(void) const;
+    const CMIUtilString &GetName() const;
+    const CMIUtilString &GetNameReal() const;
+    const CMIUtilString &GetValueFormatted() const;
+    lldb::SBValue &GetValue();
+    const lldb::SBValue &GetValue() const;
+    varType_e GetType() const;
     bool SetVarFormat(const varFormat_e veVarFormat);
-    const CMIUtilString &GetVarParentName(void) const;
-    void UpdateValue(void);
+    const CMIUtilString &GetVarParentName() const;
+    void UpdateValue();
 
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnLLDBDebugSessionInfoVarObj(void);
+    /* dtor */ virtual ~CMICmnLLDBDebugSessionInfoVarObj();
 
     // Typedefs:
   private:

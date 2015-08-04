@@ -19,7 +19,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdBase::CMICmdBase(void)
+CMICmdBase::CMICmdBase()
     : m_pSelfCreatorFn(nullptr)
     , m_rLLDBDebugSessionInfo(CMICmnLLDBDebugSessionInfo::Instance())
     , m_bHasResultRecordExtra(false)
@@ -33,7 +33,7 @@ CMICmdBase::CMICmdBase(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdBase::~CMICmdBase(void)
+CMICmdBase::~CMICmdBase()
 {
 }
 
@@ -45,7 +45,7 @@ CMICmdBase::~CMICmdBase(void)
 // Throws:  None.
 //--
 const SMICmdData &
-CMICmdBase::GetCmdData(void) const
+CMICmdBase::GetCmdData() const
 {
     return m_cmdData;
 }
@@ -59,7 +59,7 @@ CMICmdBase::GetCmdData(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmdBase::GetErrorDescription(void) const
+CMICmdBase::GetErrorDescription() const
 {
     return m_strCurrentErrDescription;
 }
@@ -73,7 +73,7 @@ CMICmdBase::GetErrorDescription(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmdBase::GetMiCmd(void) const
+CMICmdBase::GetMiCmd() const
 {
     return m_strMiCmd;
 }
@@ -101,7 +101,7 @@ CMICmdBase::SetCmdData(const SMICmdData &vCmdData)
 // Throws:  None.
 //--
 CMICmdFactory::CmdCreatorFnPtr
-CMICmdBase::GetCmdCreatorFn(void) const
+CMICmdBase::GetCmdCreatorFn() const
 {
     return m_pSelfCreatorFn;
 }
@@ -117,7 +117,7 @@ CMICmdBase::GetCmdCreatorFn(void) const
 // Throws:  None.
 //--
 void
-CMICmdBase::CmdFinishedTellInvoker(void) const
+CMICmdBase::CmdFinishedTellInvoker() const
 {
     CMICmdInvoker::Instance().CmdExecuteFinished(const_cast<CMICmdBase &>(*this));
 }
@@ -131,7 +131,7 @@ CMICmdBase::CmdFinishedTellInvoker(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmdBase::GetMIResultRecord(void) const
+CMICmdBase::GetMIResultRecord() const
 {
     return m_miResultRecord.GetString();
 }
@@ -146,7 +146,7 @@ CMICmdBase::GetMIResultRecord(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMICmdBase::GetMIResultRecordExtra(void) const
+CMICmdBase::GetMIResultRecordExtra() const
 {
     return m_miResultRecordExtra;
 }
@@ -161,7 +161,7 @@ CMICmdBase::GetMIResultRecordExtra(void) const
 // Throws:  None.
 //--
 bool
-CMICmdBase::HasMIResultRecordExtra(void) const
+CMICmdBase::HasMIResultRecordExtra() const
 {
     return m_bHasResultRecordExtra;
 }
@@ -195,7 +195,7 @@ CMICmdBase::SetError(const CMIUtilString &rErrMsg)
 // Throws:  None.
 //--
 MIuint
-CMICmdBase::GetGUID(void)
+CMICmdBase::GetGUID()
 {
     MIuint64 vptr = reinterpret_cast<MIuint64>(this);
     MIuint id = (vptr)&0xFFFFFFFF;
@@ -214,7 +214,7 @@ CMICmdBase::GetGUID(void)
 // Throws:  None.
 //--
 bool
-CMICmdBase::ParseArgs(void)
+CMICmdBase::ParseArgs()
 {
     // Do nothing - override to implement
 
@@ -233,7 +233,7 @@ CMICmdBase::ParseArgs(void)
 // Throws:  None.
 //--
 bool
-CMICmdBase::ParseValidateCmdOptions(void)
+CMICmdBase::ParseValidateCmdOptions()
 {
     CMICmdArgContext argCntxt(m_cmdData.strMiCmdOption);
     if (m_setCmdArgs.Validate(m_cmdData.strMiCmd, argCntxt))
@@ -256,7 +256,7 @@ CMICmdBase::ParseValidateCmdOptions(void)
 // Throws:  None.
 //--
 bool
-CMICmdBase::GetExitAppOnCommandFailure(void) const
+CMICmdBase::GetExitAppOnCommandFailure() const
 {
     return false;
 }

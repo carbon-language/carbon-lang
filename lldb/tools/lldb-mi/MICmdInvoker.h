@@ -49,24 +49,24 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
     class ICmd
     {
       public:
-        virtual bool Acknowledge(void) = 0;
-        virtual bool Execute(void) = 0;
-        virtual bool ParseArgs(void) = 0;
+        virtual bool Acknowledge() = 0;
+        virtual bool Execute() = 0;
+        virtual bool ParseArgs() = 0;
         virtual void SetCmdData(const SMICmdData &vCmdData) = 0;
-        virtual const SMICmdData &GetCmdData(void) const = 0;
-        virtual const CMIUtilString &GetErrorDescription(void) const = 0;
-        virtual void CmdFinishedTellInvoker(void) const = 0;
-        virtual const CMIUtilString &GetMIResultRecord(void) const = 0;
-        virtual const CMIUtilString &GetMIResultRecordExtra(void) const = 0;
-        virtual bool HasMIResultRecordExtra(void) const = 0;
+        virtual const SMICmdData &GetCmdData() const = 0;
+        virtual const CMIUtilString &GetErrorDescription() const = 0;
+        virtual void CmdFinishedTellInvoker() const = 0;
+        virtual const CMIUtilString &GetMIResultRecord() const = 0;
+        virtual const CMIUtilString &GetMIResultRecordExtra() const = 0;
+        virtual bool HasMIResultRecordExtra() const = 0;
 
-        /* dtor */ virtual ~ICmd(void){}
+        /* dtor */ virtual ~ICmd(){}
     };
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
     bool CmdExecute(CMICmdBase &vCmd);
     bool CmdExecuteFinished(CMICmdBase &vCmd);
 
@@ -77,10 +77,10 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
 
     // Methods:
   private:
-    /* ctor */ CMICmdInvoker(void);
+    /* ctor */ CMICmdInvoker();
     /* ctor */ CMICmdInvoker(const CMICmdInvoker &);
     void operator=(const CMICmdInvoker &);
-    void CmdDeleteAll(void);
+    void CmdDeleteAll();
     bool CmdDelete(const MIuint vCmdId, const bool vbYesDeleteCmd = false);
     bool CmdAdd(const CMICmdBase &vCmd);
     bool CmdStdout(const SMICmdData &vCmdData) const;
@@ -89,7 +89,7 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmdInvoker(void) override;
+    /* dtor */ ~CMICmdInvoker() override;
     // From CMICmdMgrSetCmdDeleteCallback::ICallback
     void Delete(SMICmdData &vCmd) override;
 

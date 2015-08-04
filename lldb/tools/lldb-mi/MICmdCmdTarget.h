@@ -35,20 +35,20 @@ class CMICmdCmdTargetSelect : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdTargetSelect(void);
+    /* ctor */ CMICmdCmdTargetSelect();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdTargetSelect(void) override;
+    /* dtor */ ~CMICmdCmdTargetSelect() override;
 
     // Attributes:
   private:
@@ -66,20 +66,20 @@ class CMICmdCmdTargetAttach : public CMICmdBase
     // Statics:
 public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
     
     // Methods:
 public:
-    /* ctor */ CMICmdCmdTargetAttach(void);
+    /* ctor */ CMICmdCmdTargetAttach();
     
     // Overridden:
 public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdTargetAttach(void) override;
+    /* dtor */ ~CMICmdCmdTargetAttach() override;
     
     // Attributes:
 private:
@@ -98,19 +98,19 @@ class CMICmdCmdTargetDetach : public CMICmdBase
     // Statics:
 public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
     
     // Methods:
 public:
-    /* ctor */ CMICmdCmdTargetDetach(void);
+    /* ctor */ CMICmdCmdTargetDetach();
     
     // Overridden:
 public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
-    bool ParseArgs(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
+    bool ParseArgs() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdTargetDetach(void) override;
+    /* dtor */ ~CMICmdCmdTargetDetach() override;
 };
 

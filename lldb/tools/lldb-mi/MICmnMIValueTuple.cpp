@@ -17,7 +17,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValueTuple::CMICmnMIValueTuple(void)
+CMICmnMIValueTuple::CMICmnMIValueTuple()
     : m_bSpaceAfterComma(false)
 {
     m_strValue = "{}";
@@ -61,7 +61,7 @@ CMICmnMIValueTuple::CMICmnMIValueTuple(const CMICmnMIValueResult &vResult, const
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnMIValueTuple::~CMICmnMIValueTuple(void)
+CMICmnMIValueTuple::~CMICmnMIValueTuple()
 {
 }
 
@@ -73,7 +73,7 @@ CMICmnMIValueTuple::~CMICmnMIValueTuple(void)
 // Throws:  None.
 //--
 void
-CMICmnMIValueTuple::BuildTuple(void)
+CMICmnMIValueTuple::BuildTuple()
 {
     const char *pFormat = "{%s}";
     m_strValue = CMIUtilString::Format(pFormat, m_strValue.c_str());
@@ -193,7 +193,7 @@ CMICmnMIValueTuple::Add(const CMICmnMIValueConst &vValue, const bool vbUseSpacin
 // Throws:  None.
 //--
 CMIUtilString
-CMICmnMIValueTuple::ExtractContentNoBrackets(void) const
+CMICmnMIValueTuple::ExtractContentNoBrackets() const
 {
     CMIUtilString data(m_strValue);
 

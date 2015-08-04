@@ -41,15 +41,15 @@ class CMICmdArgSet : public CMICmnBase
     class IArg
     {
       public:
-        virtual bool GetFound(void) const = 0;
-        virtual bool GetIsHandledByCmd(void) const = 0;
-        virtual bool GetIsMandatory(void) const = 0;
-        virtual bool GetIsMissingOptions(void) const = 0;
-        virtual const CMIUtilString &GetName(void) const = 0;
-        virtual bool GetValid(void) const = 0;
+        virtual bool GetFound() const = 0;
+        virtual bool GetIsHandledByCmd() const = 0;
+        virtual bool GetIsMandatory() const = 0;
+        virtual bool GetIsMissingOptions() const = 0;
+        virtual const CMIUtilString &GetName() const = 0;
+        virtual bool GetValid() const = 0;
         virtual bool Validate(CMICmdArgContext &vwArgContext) = 0;
 
-        /* dtor */ virtual ~IArg(void){}
+        /* dtor */ virtual ~IArg(){}
     };
 
     // Typedefs:
@@ -58,27 +58,27 @@ class CMICmdArgSet : public CMICmnBase
 
     // Methods:
   public:
-    /* ctor */ CMICmdArgSet(void);
+    /* ctor */ CMICmdArgSet();
 
     void Add(const CMICmdArgValBase &vArg);
     bool GetArg(const CMIUtilString &vArgName, CMICmdArgValBase *&vpArg) const;
-    const SetCmdArgs_t &GetArgsThatAreMissing(void) const;
-    const SetCmdArgs_t &GetArgsThatInvalid(void) const;
-    size_t GetCount(void) const;
-    bool IsArgContextEmpty(void) const;
-    bool IsArgsPresentButNotHandledByCmd(void) const;
+    const SetCmdArgs_t &GetArgsThatAreMissing() const;
+    const SetCmdArgs_t &GetArgsThatInvalid() const;
+    size_t GetCount() const;
+    bool IsArgContextEmpty() const;
+    bool IsArgsPresentButNotHandledByCmd() const;
     void WarningArgsNotHandledbyCmdLogFile(const CMIUtilString &vrCmdName);
     bool Validate(const CMIUtilString &vStrMiCmd, CMICmdArgContext &vwCmdArgsText);
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMICmdArgSet(void);
+    /* dtor */ virtual ~CMICmdArgSet();
 
     // Methods:
   private:
-    const SetCmdArgs_t &GetArgsNotHandledByCmd(void) const;
+    const SetCmdArgs_t &GetArgsNotHandledByCmd() const;
     void
-    Destroy(void); // Release resources used by *this object
+    Destroy(); // Release resources used by *this object
     bool ValidationFormErrorMessages(const CMICmdArgContext &vwCmdArgsText);
 
     // Attributes:

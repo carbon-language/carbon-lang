@@ -39,16 +39,16 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
 
     // Methods:
   public:
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
 
     bool SetDriver(const CMIDriverBase &vClientDriver);
-    CMIDriverBase &GetDriver(void) const;
-    lldb::SBDebugger &GetTheDebugger(void);
-    lldb::SBListener &GetTheListener(void);
-    void WaitForHandleEvent(void);
-    bool CheckIfNeedToRebroadcastStopEvent(void);
-    void RebroadcastStopEvent(void);
+    CMIDriverBase &GetDriver() const;
+    lldb::SBDebugger &GetTheDebugger();
+    lldb::SBListener &GetTheListener();
+    void WaitForHandleEvent();
+    bool CheckIfNeedToRebroadcastStopEvent();
+    void RebroadcastStopEvent();
 
     // MI Commands can use these functions to listen for events they require
     bool RegisterForEvent(const CMIUtilString &vClientName, const CMIUtilString &vBroadcasterClass, const MIuint vEventMask);
@@ -59,13 +59,13 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     // Overridden:
   public:
     // From CMIUtilThreadActiveObjBase
-    const CMIUtilString &ThreadGetName(void) const override;
+    const CMIUtilString &ThreadGetName() const override;
 
     // Overridden:
   protected:
     // From CMIUtilThreadActiveObjBase
     bool ThreadRun(bool &vrIsAlive) override;
-    bool ThreadFinish(void) override;
+    bool ThreadFinish() override;
 
     // Typedefs:
   private:
@@ -76,13 +76,13 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
 
     // Methods:
   private:
-    /* ctor */ CMICmnLLDBDebugger(void);
+    /* ctor */ CMICmnLLDBDebugger();
     /* ctor */ CMICmnLLDBDebugger(const CMICmnLLDBDebugger &);
     void operator=(const CMICmnLLDBDebugger &);
 
-    bool InitSBDebugger(void);
-    bool InitSBListener(void);
-    bool InitStdStreams(void);
+    bool InitSBDebugger();
+    bool InitSBListener();
+    bool InitStdStreams();
     bool MonitorSBListenerEvents(bool &vrbYesExit);
 
     bool BroadcasterGetMask(const CMIUtilString &vBroadcasterClass, MIuint &vEventMask) const;
@@ -97,7 +97,7 @@ class CMICmnLLDBDebugger : public CMICmnBase, public CMIUtilThreadActiveObjBase,
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmnLLDBDebugger(void) override;
+    /* dtor */ ~CMICmnLLDBDebugger() override;
 
     // Attributes:
   private:

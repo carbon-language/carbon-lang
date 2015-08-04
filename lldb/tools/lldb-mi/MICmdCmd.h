@@ -47,19 +47,19 @@ class CMICmdCmdEnablePrettyPrinting : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdEnablePrettyPrinting(void);
+    /* ctor */ CMICmdCmdEnablePrettyPrinting();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdEnablePrettyPrinting(void) override;
+    /* dtor */ ~CMICmdCmdEnablePrettyPrinting() override;
 };
 
 //++ ============================================================================
@@ -71,17 +71,17 @@ class CMICmdCmdSource : public CMICmdBase
     // Statics:
   public:
     // Required by the CMICmdFactory when registering *this command
-    static CMICmdBase *CreateSelf(void);
+    static CMICmdBase *CreateSelf();
 
     // Methods:
   public:
-    /* ctor */ CMICmdCmdSource(void);
+    /* ctor */ CMICmdCmdSource();
 
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    bool Execute(void) override;
-    bool Acknowledge(void) override;
+    bool Execute() override;
+    bool Acknowledge() override;
     // From CMICmnBase
-    /* dtor */ ~CMICmdCmdSource(void) override;
+    /* dtor */ ~CMICmdCmdSource() override;
 };

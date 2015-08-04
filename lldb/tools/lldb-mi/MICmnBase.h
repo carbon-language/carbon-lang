@@ -23,18 +23,18 @@ class CMICmnBase
 {
     // Methods:
   public:
-    /* ctor */ CMICmnBase(void);
+    /* ctor */ CMICmnBase();
 
-    bool HaveErrorDescription(void) const;
-    const CMIUtilString &GetErrorDescription(void) const;
+    bool HaveErrorDescription() const;
+    const CMIUtilString &GetErrorDescription() const;
     void SetErrorDescription(const CMIUtilString &vrTxt) const;
     void SetErrorDescriptionn(const CMIUtilString vFormat, ...) const;
     void SetErrorDescriptionNoLog(const CMIUtilString &vrTxt) const;
-    void ClrErrorDescription(void) const;
+    void ClrErrorDescription() const;
 
     // Overrideable:
   public:
-    /* dtor */ virtual ~CMICmnBase(void);
+    /* dtor */ virtual ~CMICmnBase();
 
     // Attributes:
   protected:

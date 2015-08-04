@@ -56,17 +56,17 @@ class CMICmnLog : public MI::ISingleton<CMICmnLog>
     class IMedium
     {
       public:
-        virtual bool Initialize(void) = 0;
-        virtual const CMIUtilString &GetName(void) const = 0;
+        virtual bool Initialize() = 0;
+        virtual const CMIUtilString &GetName() const = 0;
         virtual bool Write(const CMIUtilString &vData, const ELogVerbosity veType) = 0;
-        virtual const CMIUtilString &GetError(void) const = 0;
-        virtual bool Shutdown(void) = 0;
+        virtual const CMIUtilString &GetError() const = 0;
+        virtual bool Shutdown() = 0;
 
         // Not part of the interface, ignore
         // AD:  This virtual destructor seems to hit a bug in the stdlib
         //      where vector delete is incorrectly called.  Workaround is
         //      to comment this out while I investigate.
-        /* dtor */ virtual ~IMedium(void) {}
+        /* dtor */ virtual ~IMedium() {}
     };
 
     // Statics:
@@ -79,30 +79,30 @@ class CMICmnLog : public MI::ISingleton<CMICmnLog>
     bool UnregisterMedium(const IMedium &vrMedium);
     bool Write(const CMIUtilString &vData, const ELogVerbosity veType);
     bool SetEnabled(const bool vbYes);
-    bool GetEnabled(void) const;
+    bool GetEnabled() const;
 
     // MI common object handling - duplicate of CMICmnBase functions, necessary for LINUX build
     // Done to stop locking on object construction init circular dependency.
-    const CMIUtilString &GetErrorDescription(void) const;
+    const CMIUtilString &GetErrorDescription() const;
     void SetErrorDescription(const CMIUtilString &vrTxt) const;
-    void ClrErrorDescription(void) const;
+    void ClrErrorDescription() const;
 
     // Overridden:
   public:
     // From MI::ISingleton
-    bool Initialize(void) override;
-    bool Shutdown(void) override;
+    bool Initialize() override;
+    bool Shutdown() override;
 
     // Methods:
   private:
-    /* ctor */ CMICmnLog(void);
+    /* ctor */ CMICmnLog();
     /* ctor */ CMICmnLog(const CMICmnLog &);
     void operator=(const CMICmnLog &);
 
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ ~CMICmnLog(void) override;
+    /* dtor */ ~CMICmnLog() override;
 
     // Typedef:
   private:
@@ -112,7 +112,7 @@ class CMICmnLog : public MI::ISingleton<CMICmnLog>
     // Methods:
   private:
     bool HaveMediumAlready(const IMedium &vrMedium) const;
-    bool UnregisterMediumAll(void);
+    bool UnregisterMediumAll();
 
     // Attributes:
   private:

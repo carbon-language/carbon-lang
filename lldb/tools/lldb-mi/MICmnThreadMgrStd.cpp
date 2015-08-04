@@ -20,7 +20,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnThreadMgrStd::CMICmnThreadMgrStd(void)
+CMICmnThreadMgrStd::CMICmnThreadMgrStd()
 {
 }
 
@@ -31,7 +31,7 @@ CMICmnThreadMgrStd::CMICmnThreadMgrStd(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnThreadMgrStd::~CMICmnThreadMgrStd(void)
+CMICmnThreadMgrStd::~CMICmnThreadMgrStd()
 {
     Shutdown();
 }
@@ -45,7 +45,7 @@ CMICmnThreadMgrStd::~CMICmnThreadMgrStd(void)
 // Throws:  None.
 //--
 bool
-CMICmnThreadMgrStd::Initialize(void)
+CMICmnThreadMgrStd::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -82,7 +82,7 @@ CMICmnThreadMgrStd::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnThreadMgrStd::Shutdown(void)
+CMICmnThreadMgrStd::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -121,7 +121,7 @@ CMICmnThreadMgrStd::Shutdown(void)
 // Throws:  None.
 //--
 bool
-CMICmnThreadMgrStd::ThreadAllTerminate(void)
+CMICmnThreadMgrStd::ThreadAllTerminate()
 {
     ThreadList_t::const_iterator it = m_threadList.begin();
     for (; it != m_threadList.end(); ++it)

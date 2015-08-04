@@ -47,7 +47,7 @@
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebuggerHandleEvents::CMICmnLLDBDebuggerHandleEvents(void)
+CMICmnLLDBDebuggerHandleEvents::CMICmnLLDBDebuggerHandleEvents()
 {
 }
 
@@ -58,7 +58,7 @@ CMICmnLLDBDebuggerHandleEvents::CMICmnLLDBDebuggerHandleEvents(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmnLLDBDebuggerHandleEvents::~CMICmnLLDBDebuggerHandleEvents(void)
+CMICmnLLDBDebuggerHandleEvents::~CMICmnLLDBDebuggerHandleEvents()
 {
     Shutdown();
 }
@@ -72,7 +72,7 @@ CMICmnLLDBDebuggerHandleEvents::~CMICmnLLDBDebuggerHandleEvents(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::Initialize(void)
+CMICmnLLDBDebuggerHandleEvents::Initialize()
 {
     m_clientUsageRefCnt++;
 
@@ -98,7 +98,7 @@ CMICmnLLDBDebuggerHandleEvents::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::Shutdown(void)
+CMICmnLLDBDebuggerHandleEvents::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -1148,7 +1148,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(const lldb::SBEvent
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopException(void)
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopException()
 {
     const lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
     lldb::SBThread sbThread = sbProcess.GetSelectedThread();
@@ -1233,7 +1233,7 @@ CMICmnLLDBDebuggerHandleEvents::MiHelpGetCurrentThreadFrame(CMICmnMIValueTuple &
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonBreakpoint(void)
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonBreakpoint()
 {
     // CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
     if (!CMIDriver::Instance().SetDriverStateRunningNotDebugging())
@@ -1349,7 +1349,7 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace()
 {
     bool bOk = true;
     lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
@@ -1409,7 +1409,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::UpdateSelectedThread(void)
+CMICmnLLDBDebuggerHandleEvents::UpdateSelectedThread()
 {
     lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger().GetSelectedTarget().GetProcess();
     if (!process.IsValid())
@@ -1480,7 +1480,7 @@ CMICmnLLDBDebuggerHandleEvents::UpdateSelectedThread(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateRunning(void)
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateRunning()
 {
     CMICmnMIValueConst miValueConst("all");
     CMICmnMIValueResult miValueResult("thread-id", miValueConst);
@@ -1503,7 +1503,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateRunning(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateExited(void)
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateExited()
 {
     const CMIUtilString strId(CMIUtilString::Format("%ld", 1));
     CMICmnMIValueConst miValueConst(strId);
@@ -1546,7 +1546,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateExited(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::GetProcessStdout(void)
+CMICmnLLDBDebuggerHandleEvents::GetProcessStdout()
 {
     CMIUtilString text;
     std::unique_ptr<char[]> apStdoutBuffer(new char[1024]);
@@ -1599,7 +1599,7 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStdout(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::GetProcessStderr(void)
+CMICmnLLDBDebuggerHandleEvents::GetProcessStderr()
 {
     CMIUtilString text;
     std::unique_ptr<char[]> apStderrBuffer(new char[1024]);
@@ -1649,7 +1649,7 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStderr(void)
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
+CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges()
 {
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();

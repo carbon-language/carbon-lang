@@ -45,7 +45,7 @@ const CMIUtilString CMIDriver::ms_constAppNameLong(MIRSRC(IDS_MI_APPNAME_LONG));
 // Return:  None.
 // Throws:  None.
 //--
-CMIDriver::CMIDriver(void)
+CMIDriver::CMIDriver()
     : m_bFallThruToOtherDriverEnabled(false)
     , m_bDriverIsExiting(false)
     , m_handleMainThread(0)
@@ -66,7 +66,7 @@ CMIDriver::CMIDriver(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIDriver::~CMIDriver(void)
+CMIDriver::~CMIDriver()
 {
 }
 
@@ -97,7 +97,7 @@ CMIDriver::SetEnableFallThru(const bool vbYes)
 // Throws:  None.
 //--
 bool
-CMIDriver::GetEnableFallThru(void) const
+CMIDriver::GetEnableFallThru() const
 {
     return m_bFallThruToOtherDriverEnabled;
 }
@@ -110,7 +110,7 @@ CMIDriver::GetEnableFallThru(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetAppNameShort(void) const
+CMIDriver::GetAppNameShort() const
 {
     return ms_constAppNameShort;
 }
@@ -123,7 +123,7 @@ CMIDriver::GetAppNameShort(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetAppNameLong(void) const
+CMIDriver::GetAppNameLong() const
 {
     return ms_constAppNameLong;
 }
@@ -136,7 +136,7 @@ CMIDriver::GetAppNameLong(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetVersionDescription(void) const
+CMIDriver::GetVersionDescription() const
 {
     return ms_constMIVersion;
 }
@@ -150,7 +150,7 @@ CMIDriver::GetVersionDescription(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::Initialize(void)
+CMIDriver::Initialize()
 {
     m_eCurrentDriverState = eDriverState_Initialising;
     m_clientUsageRefCnt++;
@@ -199,7 +199,7 @@ CMIDriver::Initialize(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::Shutdown(void)
+CMIDriver::Shutdown()
 {
     if (--m_clientUsageRefCnt > 0)
         return MIstatus::success;
@@ -260,7 +260,7 @@ CMIDriver::WriteMessageToLog(const CMIUtilString &vMessage)
 // Throws:  None.
 //--
 bool
-CMIDriver::DoInitialize(void)
+CMIDriver::DoInitialize()
 {
     return CMIDriver::Instance().Initialize();
 }
@@ -275,7 +275,7 @@ CMIDriver::DoInitialize(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::DoShutdown(void)
+CMIDriver::DoShutdown()
 {
     return CMIDriver::Instance().Shutdown();
 }
@@ -288,7 +288,7 @@ CMIDriver::DoShutdown(void)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetName(void) const
+CMIDriver::GetName() const
 {
     const CMIUtilString &rName = GetAppNameLong();
     const CMIUtilString &rVsn = GetVersionDescription();
@@ -305,7 +305,7 @@ CMIDriver::GetName(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIDriver::GetError(void) const
+CMIDriver::GetError() const
 {
     return GetErrorDescription();
 }
@@ -318,7 +318,7 @@ CMIDriver::GetError(void) const
 // Throws:  None.
 //--
 lldb::SBDebugger &
-CMIDriver::GetTheDebugger(void)
+CMIDriver::GetTheDebugger()
 {
     return m_rLldbDebugger.GetTheDebugger();
 }
@@ -465,7 +465,7 @@ CMIDriver::ParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &v
 // Throws:  None.
 //--
 bool
-CMIDriver::GetDriverIsGDBMICompatibleDriver(void) const
+CMIDriver::GetDriverIsGDBMICompatibleDriver() const
 {
     return true;
 }
@@ -479,7 +479,7 @@ CMIDriver::GetDriverIsGDBMICompatibleDriver(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::StartWorkerThreads(void)
+CMIDriver::StartWorkerThreads()
 {
     bool bOk = MIstatus::success;
 
@@ -507,7 +507,7 @@ CMIDriver::StartWorkerThreads(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::StopWorkerThreads(void)
+CMIDriver::StopWorkerThreads()
 {
     CMICmnThreadMgrStd &rThreadMgr = CMICmnThreadMgrStd::Instance();
     return rThreadMgr.ThreadAllTerminate();
@@ -523,7 +523,7 @@ CMIDriver::StopWorkerThreads(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::DoMainLoop(void)
+CMIDriver::DoMainLoop()
 {
     if (!InitClientIDEToMIDriver()) // Init Eclipse IDE
     {
@@ -607,7 +607,7 @@ CMIDriver::DoMainLoop(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::DoAppQuit(void)
+CMIDriver::DoAppQuit()
 {
     bool bYesQuit = true;
 
@@ -675,7 +675,7 @@ CMIDriver::InterpretCommandFallThruDriver(const CMIUtilString &vTextLine, bool &
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetDriverName(void) const
+CMIDriver::GetDriverName() const
 {
     return GetName();
 }
@@ -688,7 +688,7 @@ CMIDriver::GetDriverName(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetDriverId(void) const
+CMIDriver::GetDriverId() const
 {
     return GetId();
 }
@@ -727,7 +727,7 @@ CMIDriver::DoFallThruToAnotherDriver(const CMIUtilString &vCmd, CMIUtilString &v
 // Throws:  None.
 //--
 FILE *
-CMIDriver::GetStdin(void) const
+CMIDriver::GetStdin() const
 {
     // Note this fn is called on CMIDriverMgr register driver so stream has to be
     // available before *this driver has been initialized! Flaw?
@@ -746,7 +746,7 @@ CMIDriver::GetStdin(void) const
 // Throws:  None.
 //--
 FILE *
-CMIDriver::GetStdout(void) const
+CMIDriver::GetStdout() const
 {
     // Note this fn is called on CMIDriverMgr register driver so stream has to be
     // available before *this driver has been initialized! Flaw?
@@ -764,7 +764,7 @@ CMIDriver::GetStdout(void) const
 // Throws:  None.
 //--
 FILE *
-CMIDriver::GetStderr(void) const
+CMIDriver::GetStderr() const
 {
     // Note this fn is called on CMIDriverMgr register driver so stream has to be
     // available before *this driver has been initialized! Flaw?
@@ -803,7 +803,7 @@ CMIDriver::SetId(const CMIUtilString &vId)
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetId(void) const
+CMIDriver::GetId() const
 {
     return m_strDriverId;
 }
@@ -1033,7 +1033,7 @@ CMIDriver::SetExitApplicationFlag(const bool vbForceExit)
 // Throws:  None.
 //--
 bool
-CMIDriver::GetExitApplicationFlag(void) const
+CMIDriver::GetExitApplicationFlag() const
 {
     return m_bExitApp;
 }
@@ -1046,7 +1046,7 @@ CMIDriver::GetExitApplicationFlag(void) const
 // Throws:  None.
 //--
 CMIDriver::DriverState_e
-CMIDriver::GetCurrentDriverState(void) const
+CMIDriver::GetCurrentDriverState() const
 {
     return m_eCurrentDriverState;
 }
@@ -1061,7 +1061,7 @@ CMIDriver::GetCurrentDriverState(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::SetDriverStateRunningNotDebugging(void)
+CMIDriver::SetDriverStateRunningNotDebugging()
 {
     // CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
 
@@ -1110,7 +1110,7 @@ CMIDriver::SetDriverStateRunningNotDebugging(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::SetDriverStateRunningDebugging(void)
+CMIDriver::SetDriverStateRunningDebugging()
 {
     // CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
 
@@ -1157,7 +1157,7 @@ CMIDriver::SetDriverStateRunningDebugging(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::InitClientIDEToMIDriver(void) const
+CMIDriver::InitClientIDEToMIDriver() const
 {
     // Put other IDE init functions here
     return InitClientIDEEclipse();
@@ -1174,7 +1174,7 @@ CMIDriver::InitClientIDEToMIDriver(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::InitClientIDEEclipse(void) const
+CMIDriver::InitClientIDEEclipse() const
 {
     return CMICmnStreamStdout::WritePrompt();
 }
@@ -1191,7 +1191,7 @@ CMIDriver::InitClientIDEEclipse(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::HaveExecutableFileNamePathOnCmdLine(void) const
+CMIDriver::HaveExecutableFileNamePathOnCmdLine() const
 {
     return m_bHaveExecutableFileNamePathOnCmdLine;
 }
@@ -1205,7 +1205,7 @@ CMIDriver::HaveExecutableFileNamePathOnCmdLine(void) const
 // Throws:  None.
 //--
 const CMIUtilString &
-CMIDriver::GetExecutableFileNamePathOnCmdLine(void) const
+CMIDriver::GetExecutableFileNamePathOnCmdLine() const
 {
     return m_strCmdLineArgExecuteableFileNamePath;
 }
@@ -1221,7 +1221,7 @@ CMIDriver::GetExecutableFileNamePathOnCmdLine(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::LocalDebugSessionStartupExecuteCommands(void)
+CMIDriver::LocalDebugSessionStartupExecuteCommands()
 {
     const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.AddSlashes().c_str()));
     bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);
@@ -1239,7 +1239,7 @@ CMIDriver::LocalDebugSessionStartupExecuteCommands(void)
 // Throws:  None.
 //--
 void
-CMIDriver::SetDriverDebuggingArgExecutable(void)
+CMIDriver::SetDriverDebuggingArgExecutable()
 {
     m_bDriverDebuggingArgExecutable = true;
 }
@@ -1254,7 +1254,7 @@ CMIDriver::SetDriverDebuggingArgExecutable(void)
 // Throws:  None.
 //--
 bool
-CMIDriver::IsDriverDebuggingArgExecutable(void) const
+CMIDriver::IsDriverDebuggingArgExecutable() const
 {
     return m_bDriverDebuggingArgExecutable;
 }
