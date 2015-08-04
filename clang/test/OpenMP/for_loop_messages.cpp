@@ -289,7 +289,6 @@ int test_iteration_spaces() {
     c[ii] = a[ii];
 
 #pragma omp parallel
-// expected-error@+3 {{unexpected OpenMP clause 'linear' in directive '#pragma omp for'}}
 // expected-note@+2  {{defined as linear}}
 // expected-error@+2 {{loop iteration variable in the associated loop of 'omp for' directive may not be linear, predetermined as private}}
 #pragma omp for linear(ii)

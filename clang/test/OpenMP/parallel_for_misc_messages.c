@@ -59,11 +59,6 @@ void test_non_identifiers() {
 #pragma omp parallel for;
   for (i = 0; i < 16; ++i)
     ;
-// expected-error@+2 {{unexpected OpenMP clause 'linear' in directive '#pragma omp parallel for'}}
-// expected-warning@+1 {{extra tokens at the end of '#pragma omp parallel for' are ignored}}
-#pragma omp parallel for linear(x);
-  for (i = 0; i < 16; ++i)
-    ;
 
 // expected-warning@+1 {{extra tokens at the end of '#pragma omp parallel for' are ignored}}
 #pragma omp parallel for private(x);

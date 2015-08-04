@@ -102,9 +102,6 @@ int foomain(int argc, char **argv) {
 #pragma omp parallel for firstprivate(h) // expected-error {{threadprivate or thread local variable cannot be firstprivate}}
   for (int k = 0; k < argc; ++k)
     ++k;
-#pragma omp parallel for linear(i) // expected-error {{unexpected OpenMP clause 'linear' in directive '#pragma omp parallel for'}}
-  for (int k = 0; k < argc; ++k)
-    ++k;
 #pragma omp parallel
   {
     int v = 0;

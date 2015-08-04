@@ -13,37 +13,37 @@ T tmain(T argc) {
   T b = argc, c, d, e, f, g;
   static T a;
 // CHECK: static T a;
-#pragma omp for schedule(dynamic)
-  // CHECK-NEXT: #pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic) linear(a)
+  // CHECK-NEXT: #pragma omp for schedule(dynamic) linear(a)
   for (int i = 0; i < 2; ++i)
     a = 2;
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: a = 2;
 #pragma omp parallel
-#pragma omp for private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N) schedule(static, N) ordered(N) nowait
-  for (int i = 0; i < 10; ++i)
-    for (int j = 0; j < 10; ++j)
-      for (int j = 0; j < 10; ++j)
-        for (int j = 0; j < 10; ++j)
-          for (int j = 0; j < 10; ++j)
-  for (int i = 0; i < 10; ++i)
-    for (int j = 0; j < 10; ++j)
-      for (int j = 0; j < 10; ++j)
-        for (int j = 0; j < 10; ++j)
-          for (int j = 0; j < 10; ++j)
+#pragma omp for private(argc, b), firstprivate(c, d), lastprivate(d, f) collapse(N) schedule(static, N) ordered(N) nowait linear(a : N)
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 2; ++j)
+      for (int j = 0; j < 2; ++j)
+        for (int j = 0; j < 2; ++j)
+          for (int j = 0; j < 2; ++j)
+  for (int i = 0; i < 2; ++i)
+    for (int j = 0; j < 2; ++j)
+      for (int j = 0; j < 2; ++j)
+        for (int j = 0; j < 2; ++j)
+          for (int j = 0; j < 2; ++j)
             foo();
   // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N) schedule(static, N) ordered(N) nowait
-  // CHECK-NEXT: for (int i = 0; i < 10; ++i)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int i = 0; i < 10; ++i)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
-  // CHECK-NEXT: for (int j = 0; j < 10; ++j)
+  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(c,d) lastprivate(d,f) collapse(N) schedule(static, N) ordered(N) nowait linear(a: N)
+  // CHECK-NEXT: for (int i = 0; i < 2; ++i)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int i = 0; i < 2; ++i)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
+  // CHECK-NEXT: for (int j = 0; j < 2; ++j)
   // CHECK-NEXT: foo();
   return T();
 }
@@ -59,12 +59,12 @@ int main(int argc, char **argv) {
 // CHECK-NEXT: for (int i = 0; i < 2; ++i)
 // CHECK-NEXT: a = 2;
 #pragma omp parallel
-#pragma omp for private(argc, b), firstprivate(argv, c), lastprivate(d, f) collapse(2) schedule(auto) ordered nowait
+#pragma omp for private(argc, b), firstprivate(argv, c), lastprivate(d, f) collapse(2) schedule(auto) ordered nowait linear(g:-1)
   for (int i = 0; i < 10; ++i)
     for (int j = 0; j < 10; ++j)
       foo();
   // CHECK-NEXT: #pragma omp parallel
-  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(argv,c) lastprivate(d,f) collapse(2) schedule(auto) ordered nowait
+  // CHECK-NEXT: #pragma omp for private(argc,b) firstprivate(argv,c) lastprivate(d,f) collapse(2) schedule(auto) ordered nowait linear(g: -1)
   // CHECK-NEXT: for (int i = 0; i < 10; ++i)
   // CHECK-NEXT: for (int j = 0; j < 10; ++j)
   // CHECK-NEXT: foo();

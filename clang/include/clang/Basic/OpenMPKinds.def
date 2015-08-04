@@ -163,6 +163,7 @@ OPENMP_FOR_CLAUSE(collapse)
 OPENMP_FOR_CLAUSE(schedule)
 OPENMP_FOR_CLAUSE(ordered)
 OPENMP_FOR_CLAUSE(nowait)
+OPENMP_FOR_CLAUSE(linear)
 
 // Clauses allowed for directive 'omp for simd'.
 OPENMP_FOR_SIMD_CLAUSE(private)
@@ -224,6 +225,7 @@ OPENMP_PARALLEL_FOR_CLAUSE(lastprivate)
 OPENMP_PARALLEL_FOR_CLAUSE(collapse)
 OPENMP_PARALLEL_FOR_CLAUSE(schedule)
 OPENMP_PARALLEL_FOR_CLAUSE(ordered)
+OPENMP_PARALLEL_FOR_CLAUSE(linear)
 
 // Clauses allowed for OpenMP directive 'parallel for simd'.
 OPENMP_PARALLEL_FOR_SIMD_CLAUSE(if)

@@ -117,10 +117,6 @@ int foomain(int argc, char **argv) {
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
-#pragma omp for linear(i) // expected-error {{unexpected OpenMP clause 'linear' in directive '#pragma omp for'}}
-  for (int k = 0; k < argc; ++k)
-    ++k;
-#pragma omp parallel
   {
     int v = 0;
     int i;                     // expected-note {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
