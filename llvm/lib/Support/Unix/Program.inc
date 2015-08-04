@@ -323,7 +323,6 @@ namespace llvm {
 
 ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
                       bool WaitUntilTerminates, std::string *ErrMsg) {
-#ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
   assert(PI.Pid && "invalid pid to wait on, process not started?");
 
@@ -417,12 +416,6 @@ ProcessInfo sys::Wait(const ProcessInfo &PI, unsigned SecondsToWait,
     // signal during execution as opposed to failing to execute.
     WaitResult.ReturnCode = -2;
   }
-#else
-  if (ErrMsg)
-    *ErrMsg = "Program::Wait is not implemented on this platform yet!";
-  ProcessInfo WaitResult;
-  WaitResult.ReturnCode = -2;
-#endif
   return WaitResult;
 }
 

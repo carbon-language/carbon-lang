@@ -29,6 +29,7 @@
 #include <cstring>
 #include <string>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -43,20 +44,8 @@
 #endif
 #include <time.h>
 
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
-
 #ifdef HAVE_DLFCN_H
 # include <dlfcn.h>
-#endif
-
-#ifndef WEXITSTATUS
-# define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
-#endif
-
-#ifndef WIFEXITED
-# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
 /// This function builds an error message into \p ErrMsg using the \p prefix
