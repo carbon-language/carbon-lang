@@ -148,7 +148,7 @@ namespace llvm {
     // copy - Allocate copy in Allocator and return ArrayRef<T> to it.
     template <typename Allocator> ArrayRef<T> copy(Allocator &A) {
       T *Buff = A.template Allocate<T>(Length);
-      std::copy(begin(), end(), Buff);
+      std::uninitialized_copy(begin(), end(), Buff);
       return ArrayRef<T>(Buff, Length);
     }
 

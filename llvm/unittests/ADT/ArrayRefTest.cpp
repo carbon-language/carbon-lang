@@ -31,7 +31,7 @@ static_assert(
     !std::is_convertible<ArrayRef<volatile int *>, ArrayRef<int *>>::value,
     "Removing volatile");
 
-namespace llvm {
+namespace {
 
 TEST(ArrayRefTest, AllocatorCopy) {
   BumpPtrAllocator Alloc;
@@ -45,6 +45,18 @@ TEST(ArrayRefTest, AllocatorCopy) {
   EXPECT_NE(Array1.data(), Array1c.data());
   EXPECT_TRUE(Array2.equals(Array2c));
   EXPECT_NE(Array2.data(), Array2c.data());
+
+  // Check that copy can cope with uninitialized memory.
+  struct NonAssignable {
+    const char *Ptr;
+
+    NonAssignable(const NonAssignable &RHS) = default;
+    void operator=(const NonAssignable &RHS) { assert(RHS.Ptr != nullptr); }
+    bool operator==(const NonAssignable &RHS) const { return Ptr == RHS.Ptr; }
+  } Array3Src[] = {{"hello"}, {"world"}};
+  ArrayRef<NonAssignable> Array3Copy = makeArrayRef(Array3Src).copy(Alloc);
+  EXPECT_EQ(makeArrayRef(Array3Src), Array3Copy);
+  EXPECT_NE(makeArrayRef(Array3Src).data(), Array3Copy.data());
 }
 
 TEST(ArrayRefTest, DropBack) {
