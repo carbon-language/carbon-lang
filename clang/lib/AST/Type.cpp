@@ -836,11 +836,8 @@ public:
       }
 
       if (exceptionChanged) {
-        unsigned size = sizeof(QualType) * exceptionTypes.size();
-        void *mem = Ctx.Allocate(size, llvm::alignOf<QualType>());
-        memcpy(mem, exceptionTypes.data(), size);
-        info.ExceptionSpec.Exceptions
-          = llvm::makeArrayRef((QualType *)mem, exceptionTypes.size());
+        info.ExceptionSpec.Exceptions =
+            llvm::makeArrayRef(exceptionTypes).copy(Ctx);
       }
     }
 
@@ -1158,11 +1155,8 @@ QualType QualType::substObjCTypeArgs(
         }
 
         if (exceptionChanged) {
-          unsigned size = sizeof(QualType) * exceptionTypes.size();
-          void *mem = ctx.Allocate(size, llvm::alignOf<QualType>());
-          memcpy(mem, exceptionTypes.data(), size);
-          info.ExceptionSpec.Exceptions
-            = llvm::makeArrayRef((QualType *)mem, exceptionTypes.size());
+          info.ExceptionSpec.Exceptions =
+              llvm::makeArrayRef(exceptionTypes).copy(ctx);
         }
       }
 
