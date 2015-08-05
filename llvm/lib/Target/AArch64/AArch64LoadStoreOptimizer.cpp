@@ -50,6 +50,12 @@ static cl::opt<bool> EnableAArch64UnscaledMemOp(
     "aarch64-unscaled-mem-op", cl::Hidden,
     cl::desc("Allow AArch64 unscaled load/store combining"), cl::init(true));
 
+namespace llvm {
+void initializeAArch64LoadStoreOptPass(PassRegistry &);
+}
+
+#define AARCH64_LOAD_STORE_OPT_NAME "AArch64 load / store optimization pass"
+
 namespace {
 
 typedef struct LdStPairFlags {
@@ -76,7 +82,9 @@ typedef struct LdStPairFlags {
 
 struct AArch64LoadStoreOpt : public MachineFunctionPass {
   static char ID;
-  AArch64LoadStoreOpt() : MachineFunctionPass(ID) {}
+  AArch64LoadStoreOpt() : MachineFunctionPass(ID) {
+    initializeAArch64LoadStoreOptPass(*PassRegistry::getPassRegistry());
+  }
 
   const AArch64InstrInfo *TII;
   const TargetRegisterInfo *TRI;
@@ -124,7 +132,7 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   bool runOnMachineFunction(MachineFunction &Fn) override;
 
   const char *getPassName() const override {
-    return "AArch64 load / store optimization pass";
+    return AARCH64_LOAD_STORE_OPT_NAME;
   }
 
 private:
@@ -132,6 +140,9 @@ private:
 };
 char AArch64LoadStoreOpt::ID = 0;
 } // namespace
+
+INITIALIZE_PASS(AArch64LoadStoreOpt, "aarch64-ldst-opt",
+                AARCH64_LOAD_STORE_OPT_NAME, false, false)
 
 static bool isUnscaledLdst(unsigned Opc) {
   switch (Opc) {
