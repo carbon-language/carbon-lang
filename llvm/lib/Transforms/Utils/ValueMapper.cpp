@@ -156,20 +156,20 @@ static Metadata *mapToSelf(ValueToValueMapTy &VM, const Metadata *MD) {
 }
 
 static Metadata *MapMetadataImpl(const Metadata *MD,
-                                 SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                                 SmallVectorImpl<MDNode *> &DistinctWorklist,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer);
 
 static Metadata *mapMetadataOp(Metadata *Op,
-                               SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                               SmallVectorImpl<MDNode *> &DistinctWorklist,
                                ValueToValueMapTy &VM, RemapFlags Flags,
                                ValueMapTypeRemapper *TypeMapper,
                                ValueMaterializer *Materializer) {
   if (!Op)
     return nullptr;
-  if (Metadata *MappedOp =
-          MapMetadataImpl(Op, Cycles, VM, Flags, TypeMapper, Materializer))
+  if (Metadata *MappedOp = MapMetadataImpl(Op, DistinctWorklist, VM, Flags,
+                                           TypeMapper, Materializer))
     return MappedOp;
   // Use identity map if MappedOp is null and we can ignore missing entries.
   if (Flags & RF_IgnoreMissingEntries)
@@ -185,7 +185,7 @@ static Metadata *mapMetadataOp(Metadata *Op,
 
 /// Remap the operands of an MDNode.
 static bool remapOperands(MDNode &Node,
-                          SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                          SmallVectorImpl<MDNode *> &DistinctWorklist,
                           ValueToValueMapTy &VM, RemapFlags Flags,
                           ValueMapTypeRemapper *TypeMapper,
                           ValueMaterializer *Materializer) {
@@ -194,8 +194,8 @@ static bool remapOperands(MDNode &Node,
   bool AnyChanged = false;
   for (unsigned I = 0, E = Node.getNumOperands(); I != E; ++I) {
     Metadata *Old = Node.getOperand(I);
-    Metadata *New =
-        mapMetadataOp(Old, Cycles, VM, Flags, TypeMapper, Materializer);
+    Metadata *New = mapMetadataOp(Old, DistinctWorklist, VM, Flags, TypeMapper,
+                                  Materializer);
     if (Old != New) {
       AnyChanged = true;
       Node.replaceOperandWith(I, New);
@@ -212,7 +212,7 @@ static bool remapOperands(MDNode &Node,
 /// place; effectively, they're moved from one graph to another.  Otherwise,
 /// they're cloned/duplicated, and the new copy's operands are remapped.
 static Metadata *mapDistinctNode(const MDNode *Node,
-                                 SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                                 SmallVectorImpl<MDNode *> &DistinctWorklist,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
@@ -224,23 +224,16 @@ static Metadata *mapDistinctNode(const MDNode *Node,
   else
     NewMD = MDNode::replaceWithDistinct(Node->clone());
 
-  // Remap the operands.  If any change, track those that could be involved in
-  // uniquing cycles.
-  mapToMetadata(VM, Node, NewMD);
-  if (remapOperands(*NewMD, Cycles, VM, Flags, TypeMapper, Materializer))
-    for (Metadata *Op : NewMD->operands())
-      if (auto *Node = dyn_cast_or_null<MDNode>(Op))
-        if (!Node->isResolved())
-          Cycles.emplace_back(Node);
-
-  return NewMD;
+  // Remap operands later.
+  DistinctWorklist.push_back(NewMD);
+  return mapToMetadata(VM, Node, NewMD);
 }
 
 /// \brief Map a uniqued MDNode.
 ///
 /// Uniqued nodes may not need to be recreated (they may map to themselves).
 static Metadata *mapUniquedNode(const MDNode *Node,
-                                SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                                SmallVectorImpl<MDNode *> &DistinctWorklist,
                                 ValueToValueMapTy &VM, RemapFlags Flags,
                                 ValueMapTypeRemapper *TypeMapper,
                                 ValueMaterializer *Materializer) {
@@ -251,7 +244,8 @@ static Metadata *mapUniquedNode(const MDNode *Node,
   // returning.
   auto ClonedMD = Node->clone();
   mapToMetadata(VM, Node, ClonedMD.get());
-  if (!remapOperands(*ClonedMD, Cycles, VM, Flags, TypeMapper, Materializer)) {
+  if (!remapOperands(*ClonedMD, DistinctWorklist, VM, Flags, TypeMapper,
+                     Materializer)) {
     // No operands changed, so use the original.
     ClonedMD->replaceAllUsesWith(const_cast<MDNode *>(Node));
     return const_cast<MDNode *>(Node);
@@ -262,7 +256,7 @@ static Metadata *mapUniquedNode(const MDNode *Node,
 }
 
 static Metadata *MapMetadataImpl(const Metadata *MD,
-                                 SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                                 SmallVectorImpl<MDNode *> &DistinctWorklist,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
@@ -307,32 +301,44 @@ static Metadata *MapMetadataImpl(const Metadata *MD,
   assert(Node->isResolved() && "Unexpected unresolved node");
 
   if (Node->isDistinct())
-    return mapDistinctNode(Node, Cycles, VM, Flags, TypeMapper, Materializer);
+    return mapDistinctNode(Node, DistinctWorklist, VM, Flags, TypeMapper,
+                           Materializer);
 
-  return mapUniquedNode(Node, Cycles, VM, Flags, TypeMapper, Materializer);
+  return mapUniquedNode(Node, DistinctWorklist, VM, Flags, TypeMapper,
+                        Materializer);
 }
 
 Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
                             RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
                             ValueMaterializer *Materializer) {
-  SmallVector<TrackingMDNodeRef, 8> Cycles;
-  Metadata *NewMD =
-      MapMetadataImpl(MD, Cycles, VM, Flags, TypeMapper, Materializer);
+  SmallVector<MDNode *, 8> DistinctWorklist;
+  Metadata *NewMD = MapMetadataImpl(MD, DistinctWorklist, VM, Flags, TypeMapper,
+                                    Materializer);
 
-  if ((Flags & RF_NoModuleLevelChanges) ||
-      (MD == NewMD && !(Flags & RF_MoveDistinctMDs))) {
-    assert(Cycles.empty() && "Unresolved cycles without remapping anything?");
+  // When there are no module-level changes, it's possible that the metadata
+  // graph has temporaries.  Skip the logic to resolve cycles, since it's
+  // unnecessary (and invalid) in that case.
+  if (Flags & RF_NoModuleLevelChanges)
     return NewMD;
-  }
 
+  // If the top-level metadata was a uniqued MDNode, it could be involved in a
+  // uniquing cycle.
   if (auto *N = dyn_cast<MDNode>(NewMD))
     if (!N->isResolved())
       N->resolveCycles();
 
-  // Resolve cycles underneath MD.
-  for (MDNode *N : Cycles)
-    if (!N->isResolved())
-      N->resolveCycles();
+  // Remap the operands of distinct MDNodes.
+  while (!DistinctWorklist.empty()) {
+    auto *N = DistinctWorklist.pop_back_val();
+
+    // If an operand changes, then it may be involved in a uniquing cycle.
+    if (remapOperands(*N, DistinctWorklist, VM, Flags, TypeMapper,
+                      Materializer))
+      for (Metadata *MD : N->operands())
+        if (auto *Op = dyn_cast_or_null<MDNode>(MD))
+          if (!Op->isResolved())
+            Op->resolveCycles();
+  }
 
   return NewMD;
 }
