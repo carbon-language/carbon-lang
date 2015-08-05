@@ -1017,8 +1017,8 @@ public:
   int InstructionOpcodeToISD(unsigned Opcode) const;
 
   /// Estimate the cost of type-legalization and the legalized type.
-  std::pair<unsigned, MVT> getTypeLegalizationCost(const DataLayout &DL,
-                                                   Type *Ty) const;
+  std::pair<int, MVT> getTypeLegalizationCost(const DataLayout &DL,
+                                              Type *Ty) const;
 
   /// @}
 

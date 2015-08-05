@@ -35,7 +35,7 @@ PPCTTIImpl::getPopcntSupport(unsigned TyWidth) {
   return TTI::PSK_Software;
 }
 
-unsigned PPCTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
+int PPCTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   if (DisablePPCConstHoist)
     return BaseT::getIntImmCost(Imm, Ty);
 
@@ -64,8 +64,8 @@ unsigned PPCTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   return 4 * TTI::TCC_Basic;
 }
 
-unsigned PPCTTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                                   const APInt &Imm, Type *Ty) {
+int PPCTTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                              Type *Ty) {
   if (DisablePPCConstHoist)
     return BaseT::getIntImmCost(IID, Idx, Imm, Ty);
 
@@ -98,8 +98,8 @@ unsigned PPCTTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
   return PPCTTIImpl::getIntImmCost(Imm, Ty);
 }
 
-unsigned PPCTTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
-                                   const APInt &Imm, Type *Ty) {
+int PPCTTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+                              Type *Ty) {
   if (DisablePPCConstHoist)
     return BaseT::getIntImmCost(Opcode, Idx, Imm, Ty);
 
@@ -246,7 +246,7 @@ unsigned PPCTTIImpl::getMaxInterleaveFactor(unsigned VF) {
   return 2;
 }
 
-unsigned PPCTTIImpl::getArithmeticInstrCost(
+int PPCTTIImpl::getArithmeticInstrCost(
     unsigned Opcode, Type *Ty, TTI::OperandValueKind Op1Info,
     TTI::OperandValueKind Op2Info, TTI::OperandValueProperties Opd1PropInfo,
     TTI::OperandValueProperties Opd2PropInfo) {
@@ -257,24 +257,22 @@ unsigned PPCTTIImpl::getArithmeticInstrCost(
                                        Opd1PropInfo, Opd2PropInfo);
 }
 
-unsigned PPCTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
-                                    Type *SubTp) {
+int PPCTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
+                               Type *SubTp) {
   return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 }
 
-unsigned PPCTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
+int PPCTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   assert(TLI->InstructionOpcodeToISD(Opcode) && "Invalid opcode");
 
   return BaseT::getCastInstrCost(Opcode, Dst, Src);
 }
 
-unsigned PPCTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                        Type *CondTy) {
+int PPCTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
   return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
-unsigned PPCTTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
-                                        unsigned Index) {
+int PPCTTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) {
   assert(Val->isVectorTy() && "This must be a vector type");
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
@@ -313,15 +311,14 @@ unsigned PPCTTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
   return BaseT::getVectorInstrCost(Opcode, Val, Index);
 }
 
-unsigned PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
-                                     unsigned Alignment,
-                                     unsigned AddressSpace) {
+int PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                                unsigned AddressSpace) {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
   assert((Opcode == Instruction::Load || Opcode == Instruction::Store) &&
          "Invalid Opcode");
 
-  unsigned Cost = BaseT::getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
+  int Cost = BaseT::getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
 
   // VSX loads/stores support unaligned access.
   if (ST->hasVSX()) {

@@ -52,12 +52,11 @@ public:
   /// @{
 
   using BaseT::getIntImmCost;
-  unsigned getIntImmCost(const APInt &Imm, Type *Ty);
+  int getIntImmCost(const APInt &Imm, Type *Ty);
 
-  unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
-                         Type *Ty);
-  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
-                         Type *Ty);
+  int getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm, Type *Ty);
+  int getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                    Type *Ty);
 
   TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);
   void getUnrollingPreferences(Loop *L, TTI::UnrollingPreferences &UP);
@@ -71,19 +70,18 @@ public:
   unsigned getNumberOfRegisters(bool Vector);
   unsigned getRegisterBitWidth(bool Vector);
   unsigned getMaxInterleaveFactor(unsigned VF);
-  unsigned getArithmeticInstrCost(
+  int getArithmeticInstrCost(
       unsigned Opcode, Type *Ty,
       TTI::OperandValueKind Opd1Info = TTI::OK_AnyValue,
       TTI::OperandValueKind Opd2Info = TTI::OK_AnyValue,
       TTI::OperandValueProperties Opd1PropInfo = TTI::OP_None,
       TTI::OperandValueProperties Opd2PropInfo = TTI::OP_None);
-  unsigned getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
-                          Type *SubTp);
-  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src);
-  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy);
-  unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index);
-  unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                           unsigned AddressSpace);
+  int getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index, Type *SubTp);
+  int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src);
+  int getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy);
+  int getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index);
+  int getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                      unsigned AddressSpace);
 
   /// @}
 };

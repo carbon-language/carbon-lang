@@ -23,7 +23,7 @@ using namespace llvm;
 /// \brief Calculate the cost of materializing a 64-bit value. This helper
 /// method might only calculate a fraction of a larger immediate. Therefore it
 /// is valid to return a cost of ZERO.
-unsigned AArch64TTIImpl::getIntImmCost(int64_t Val) {
+int AArch64TTIImpl::getIntImmCost(int64_t Val) {
   // Check if the immediate can be encoded within an instruction.
   if (Val == 0 || AArch64_AM::isLogicalImmediate(Val, 64))
     return 0;
@@ -37,7 +37,7 @@ unsigned AArch64TTIImpl::getIntImmCost(int64_t Val) {
 }
 
 /// \brief Calculate the cost of materializing the given constant.
-unsigned AArch64TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
+int AArch64TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -51,18 +51,18 @@ unsigned AArch64TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
 
   // Split the constant into 64-bit chunks and calculate the cost for each
   // chunk.
-  unsigned Cost = 0;
+  int Cost = 0;
   for (unsigned ShiftVal = 0; ShiftVal < BitSize; ShiftVal += 64) {
     APInt Tmp = ImmVal.ashr(ShiftVal).sextOrTrunc(64);
     int64_t Val = Tmp.getSExtValue();
     Cost += getIntImmCost(Val);
   }
   // We need at least one instruction to materialze the constant.
-  return std::max(1U, Cost);
+  return std::max(1, Cost);
 }
 
-unsigned AArch64TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
-                                       const APInt &Imm, Type *Ty) {
+int AArch64TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
+                                  const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -118,17 +118,17 @@ unsigned AArch64TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
   }
 
   if (Idx == ImmIdx) {
-    unsigned NumConstants = (BitSize + 63) / 64;
-    unsigned Cost = AArch64TTIImpl::getIntImmCost(Imm, Ty);
+    int NumConstants = (BitSize + 63) / 64;
+    int Cost = AArch64TTIImpl::getIntImmCost(Imm, Ty);
     return (Cost <= NumConstants * TTI::TCC_Basic)
-               ? static_cast<unsigned>(TTI::TCC_Free)
+               ? static_cast<int>(TTI::TCC_Free)
                : Cost;
   }
   return AArch64TTIImpl::getIntImmCost(Imm, Ty);
 }
 
-unsigned AArch64TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                                       const APInt &Imm, Type *Ty) {
+int AArch64TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
+                                  const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -147,10 +147,10 @@ unsigned AArch64TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
   case Intrinsic::smul_with_overflow:
   case Intrinsic::umul_with_overflow:
     if (Idx == 1) {
-      unsigned NumConstants = (BitSize + 63) / 64;
-      unsigned Cost = AArch64TTIImpl::getIntImmCost(Imm, Ty);
+      int NumConstants = (BitSize + 63) / 64;
+      int Cost = AArch64TTIImpl::getIntImmCost(Imm, Ty);
       return (Cost <= NumConstants * TTI::TCC_Basic)
-                 ? static_cast<unsigned>(TTI::TCC_Free)
+                 ? static_cast<int>(TTI::TCC_Free)
                  : Cost;
     }
     break;
@@ -176,8 +176,7 @@ AArch64TTIImpl::getPopcntSupport(unsigned TyWidth) {
   return TTI::PSK_Software;
 }
 
-unsigned AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
-                                          Type *Src) {
+int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -259,13 +258,13 @@ unsigned AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
   return BaseT::getCastInstrCost(Opcode, Dst, Src);
 }
 
-unsigned AArch64TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
-                                            unsigned Index) {
+int AArch64TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
+                                       unsigned Index) {
   assert(Val->isVectorTy() && "This must be a vector type");
 
   if (Index != -1U) {
     // Legalize the type.
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Val);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Val);
 
     // This type is legalized to a scalar type.
     if (!LT.second.isVector())
@@ -284,12 +283,12 @@ unsigned AArch64TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
   return 2;
 }
 
-unsigned AArch64TTIImpl::getArithmeticInstrCost(
+int AArch64TTIImpl::getArithmeticInstrCost(
     unsigned Opcode, Type *Ty, TTI::OperandValueKind Opd1Info,
     TTI::OperandValueKind Opd2Info, TTI::OperandValueProperties Opd1PropInfo,
     TTI::OperandValueProperties Opd2PropInfo) {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
 
@@ -300,10 +299,9 @@ unsigned AArch64TTIImpl::getArithmeticInstrCost(
     // normally expanded to the sequence ADD + CMP + SELECT + SRA.
     // The OperandValue properties many not be same as that of previous
     // operation; conservatively assume OP_None.
-    unsigned Cost =
-      getArithmeticInstrCost(Instruction::Add, Ty, Opd1Info, Opd2Info,
-                             TargetTransformInfo::OP_None,
-                             TargetTransformInfo::OP_None);
+    int Cost = getArithmeticInstrCost(Instruction::Add, Ty, Opd1Info, Opd2Info,
+                                      TargetTransformInfo::OP_None,
+                                      TargetTransformInfo::OP_None);
     Cost += getArithmeticInstrCost(Instruction::Sub, Ty, Opd1Info, Opd2Info,
                                    TargetTransformInfo::OP_None,
                                    TargetTransformInfo::OP_None);
@@ -331,7 +329,7 @@ unsigned AArch64TTIImpl::getArithmeticInstrCost(
   }
 }
 
-unsigned AArch64TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
+int AArch64TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   // Address computations in vectorized code with non-consecutive addresses will
   // likely result in more instructions compared to scalar code where the
   // computation can more often be merged into the index mode. The resulting
@@ -346,14 +344,14 @@ unsigned AArch64TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   return 1;
 }
 
-unsigned AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                            Type *CondTy) {
+int AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                       Type *CondTy) {
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   // We don't lower vector selects well that are wider than the register width.
   if (ValTy->isVectorTy() && ISD == ISD::SELECT) {
     // We would need this many instructions to hide the scalarization happening.
-    const unsigned AmortizationCost = 20;
+    const int AmortizationCost = 20;
     static const TypeConversionCostTblEntry<MVT::SimpleValueType>
     VectorSelectTbl[] = {
       { ISD::SELECT, MVT::v16i1, MVT::v16i16, 16 * AmortizationCost },
@@ -377,10 +375,9 @@ unsigned AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
-unsigned AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
-                                         unsigned Alignment,
-                                         unsigned AddressSpace) {
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
+int AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
+                                    unsigned Alignment, unsigned AddressSpace) {
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
 
   if (Opcode == Instruction::Store && Src->isVectorTy() && Alignment != 16 &&
       Src->getVectorElementType()->isIntegerTy(64)) {
@@ -389,7 +386,7 @@ unsigned AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
     // practice on inlined memcpy code.
     // We make v2i64 stores expensive so that we will only vectorize if there
     // are 6 other instructions getting vectorized.
-    unsigned AmortizationCost = 6;
+    int AmortizationCost = 6;
 
     return LT.first * 2 * AmortizationCost;
   }
@@ -407,9 +404,11 @@ unsigned AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
   return LT.first;
 }
 
-unsigned AArch64TTIImpl::getInterleavedMemoryOpCost(
-    unsigned Opcode, Type *VecTy, unsigned Factor, ArrayRef<unsigned> Indices,
-    unsigned Alignment, unsigned AddressSpace) {
+int AArch64TTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
+                                               unsigned Factor,
+                                               ArrayRef<unsigned> Indices,
+                                               unsigned Alignment,
+                                               unsigned AddressSpace) {
   assert(Factor >= 2 && "Invalid interleave factor");
   assert(isa<VectorType>(VecTy) && "Expect a vector type");
 
@@ -427,8 +426,8 @@ unsigned AArch64TTIImpl::getInterleavedMemoryOpCost(
                                            Alignment, AddressSpace);
 }
 
-unsigned AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
-  unsigned Cost = 0;
+int AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
+  int Cost = 0;
   for (auto *I : Tys) {
     if (!I->isVectorTy())
       continue;

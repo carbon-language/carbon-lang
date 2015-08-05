@@ -42,12 +42,11 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
 
-  unsigned getIntImmCost(const APInt &Imm, Type *Ty);
+  int getIntImmCost(const APInt &Imm, Type *Ty);
 
-  unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
-                         Type *Ty);
-  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
-                         Type *Ty);
+  int getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm, Type *Ty);
+  int getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                    Type *Ty);
 
   TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);
 

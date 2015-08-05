@@ -15,7 +15,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "armtti"
 
-unsigned ARMTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
+int ARMTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned Bits = Ty->getPrimitiveSizeInBits();
@@ -47,7 +47,7 @@ unsigned ARMTTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   return 3;
 }
 
-unsigned ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
+int ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -61,7 +61,7 @@ unsigned ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
 
   if (Src->isVectorTy() && ST->hasNEON() && (ISD == ISD::FP_ROUND ||
                                           ISD == ISD::FP_EXTEND)) {
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
     int Idx = CostTableLookup(NEONFltDblTbl, ISD, LT.second);
     if (Idx != -1)
       return LT.first * NEONFltDblTbl[Idx].Cost;
@@ -245,8 +245,8 @@ unsigned ARMTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   return BaseT::getCastInstrCost(Opcode, Dst, Src);
 }
 
-unsigned ARMTTIImpl::getVectorInstrCost(unsigned Opcode, Type *ValTy,
-                                        unsigned Index) {
+int ARMTTIImpl::getVectorInstrCost(unsigned Opcode, Type *ValTy,
+                                   unsigned Index) {
   // Penalize inserting into an D-subregister. We end up with a three times
   // lower estimated throughput on swift.
   if (ST->isSwift() &&
@@ -265,8 +265,7 @@ unsigned ARMTTIImpl::getVectorInstrCost(unsigned Opcode, Type *ValTy,
   return BaseT::getVectorInstrCost(Opcode, ValTy, Index);
 }
 
-unsigned ARMTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                        Type *CondTy) {
+int ARMTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   // On NEON a a vector select gets lowered to vbsl.
@@ -292,14 +291,14 @@ unsigned ARMTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
         return NEONVectorSelectTbl[Idx].Cost;
     }
 
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
     return LT.first;
   }
 
   return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
-unsigned ARMTTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
+int ARMTTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   // Address computations in vectorized code with non-consecutive addresses will
   // likely result in more instructions compared to scalar code where the
   // computation can more often be merged into the index mode. The resulting
@@ -314,7 +313,7 @@ unsigned ARMTTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   return 1;
 }
 
-unsigned ARMTTIImpl::getFPOpCost(Type *Ty) {
+int ARMTTIImpl::getFPOpCost(Type *Ty) {
   // Use similar logic that's in ARMISelLowering:
   // Any ARM CPU with VFP2 has floating point, but Thumb1 didn't have access
   // to VFP.
@@ -333,8 +332,8 @@ unsigned ARMTTIImpl::getFPOpCost(Type *Ty) {
   return TargetTransformInfo::TCC_Expensive;
 }
 
-unsigned ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
-                                    Type *SubTp) {
+int ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
+                               Type *SubTp) {
   // We only handle costs of reverse and alternate shuffles for now.
   if (Kind != TTI::SK_Reverse && Kind != TTI::SK_Alternate)
     return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
@@ -353,7 +352,7 @@ unsigned ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         {ISD::VECTOR_SHUFFLE, MVT::v8i16, 2},
         {ISD::VECTOR_SHUFFLE, MVT::v16i8, 2}};
 
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
 
     int Idx = CostTableLookup(NEONShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
     if (Idx == -1)
@@ -379,7 +378,7 @@ unsigned ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
 
         {ISD::VECTOR_SHUFFLE, MVT::v16i8, 32}};
 
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
     int Idx =
         CostTableLookup(NEONAltShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second);
     if (Idx == -1)
@@ -389,13 +388,13 @@ unsigned ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
   return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 }
 
-unsigned ARMTTIImpl::getArithmeticInstrCost(
+int ARMTTIImpl::getArithmeticInstrCost(
     unsigned Opcode, Type *Ty, TTI::OperandValueKind Op1Info,
     TTI::OperandValueKind Op2Info, TTI::OperandValueProperties Opd1PropInfo,
     TTI::OperandValueProperties Opd2PropInfo) {
 
   int ISDOpcode = TLI->InstructionOpcodeToISD(Opcode);
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
 
   const unsigned FunctionCallDivCost = 20;
   const unsigned ReciprocalDivCost = 10;
@@ -448,8 +447,8 @@ unsigned ARMTTIImpl::getArithmeticInstrCost(
   if (Idx != -1)
     return LT.first * CostTbl[Idx].Cost;
 
-  unsigned Cost = BaseT::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info,
-                                                Opd1PropInfo, Opd2PropInfo);
+  int Cost = BaseT::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info,
+                                           Opd1PropInfo, Opd2PropInfo);
 
   // This is somewhat of a hack. The problem that we are facing is that SROA
   // creates a sequence of shift, and, or instructions to construct values.
@@ -465,10 +464,9 @@ unsigned ARMTTIImpl::getArithmeticInstrCost(
   return Cost;
 }
 
-unsigned ARMTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
-                                     unsigned Alignment,
-                                     unsigned AddressSpace) {
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
+int ARMTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                                unsigned AddressSpace) {
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
 
   if (Src->isVectorTy() && Alignment != 16 &&
       Src->getVectorElementType()->isDoubleTy()) {
@@ -479,11 +477,11 @@ unsigned ARMTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
   return LT.first;
 }
 
-unsigned ARMTTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
-                                                unsigned Factor,
-                                                ArrayRef<unsigned> Indices,
-                                                unsigned Alignment,
-                                                unsigned AddressSpace) {
+int ARMTTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
+                                           unsigned Factor,
+                                           ArrayRef<unsigned> Indices,
+                                           unsigned Alignment,
+                                           unsigned AddressSpace) {
   assert(Factor >= 2 && "Invalid interleave factor");
   assert(isa<VectorType>(VecTy) && "Expect a vector type");
 

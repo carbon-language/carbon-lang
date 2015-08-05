@@ -84,12 +84,12 @@ unsigned X86TTIImpl::getMaxInterleaveFactor(unsigned VF) {
   return 2;
 }
 
-unsigned X86TTIImpl::getArithmeticInstrCost(
+int X86TTIImpl::getArithmeticInstrCost(
     unsigned Opcode, Type *Ty, TTI::OperandValueKind Op1Info,
     TTI::OperandValueKind Op2Info, TTI::OperandValueProperties Opd1PropInfo,
     TTI::OperandValueProperties Opd2PropInfo) {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
@@ -101,10 +101,9 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
     // normally expanded to the sequence SRA + SRL + ADD + SRA.
     // The OperandValue properties many not be same as that of previous
     // operation;conservatively assume OP_None.
-    unsigned Cost =
-        2 * getArithmeticInstrCost(Instruction::AShr, Ty, Op1Info, Op2Info,
-                                   TargetTransformInfo::OP_None,
-                                   TargetTransformInfo::OP_None);
+    int Cost = 2 * getArithmeticInstrCost(Instruction::AShr, Ty, Op1Info,
+                                          Op2Info, TargetTransformInfo::OP_None,
+                                          TargetTransformInfo::OP_None);
     Cost += getArithmeticInstrCost(Instruction::LShr, Ty, Op1Info, Op2Info,
                                    TargetTransformInfo::OP_None,
                                    TargetTransformInfo::OP_None);
@@ -349,15 +348,15 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
   return BaseT::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info);
 }
 
-unsigned X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
-                                    Type *SubTp) {
+int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
+                               Type *SubTp) {
   // We only estimate the cost of reverse and alternate shuffles.
   if (Kind != TTI::SK_Reverse && Kind != TTI::SK_Alternate)
     return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 
   if (Kind == TTI::SK_Reverse) {
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
-    unsigned Cost = 1;
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+    int Cost = 1;
     if (LT.second.getSizeInBits() > 128)
       Cost = 3; // Extract + insert + copy.
 
@@ -368,7 +367,7 @@ unsigned X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
   if (Kind == TTI::SK_Alternate) {
     // 64-bit packed float vectors (v2f32) are widened to type v4f32.
     // 64-bit packed integer vectors (v2i32) are promoted to type v2i64.
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
 
     // The backend knows how to generate a single VEX.256 version of
     // instruction VPBLENDW if the target supports AVX2.
@@ -464,7 +463,7 @@ unsigned X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
   return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 }
 
-unsigned X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
+int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -628,8 +627,8 @@ unsigned X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
     { ISD::SINT_TO_FP, MVT::v4f32, MVT::v16i8, 8 },
   };
 
-  std::pair<unsigned, MVT> LTSrc = TLI->getTypeLegalizationCost(DL, Src);
-  std::pair<unsigned, MVT> LTDest = TLI->getTypeLegalizationCost(DL, Dst);
+  std::pair<int, MVT> LTSrc = TLI->getTypeLegalizationCost(DL, Src);
+  std::pair<int, MVT> LTDest = TLI->getTypeLegalizationCost(DL, Dst);
 
   if (ST->hasSSE2() && !ST->hasAVX()) {
     int Idx =
@@ -669,10 +668,9 @@ unsigned X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) {
   return BaseT::getCastInstrCost(Opcode, Dst, Src);
 }
 
-unsigned X86TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                        Type *CondTy) {
+int X86TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
 
   MVT MTy = LT.second;
 
@@ -739,13 +737,12 @@ unsigned X86TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
-unsigned X86TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
-                                        unsigned Index) {
+int X86TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) {
   assert(Val->isVectorTy() && "This must be a vector type");
 
   if (Index != -1U) {
     // Legalize the type.
-    std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Val);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Val);
 
     // This type is legalized to a scalar type.
     if (!LT.second.isVector())
@@ -763,10 +760,9 @@ unsigned X86TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
   return BaseT::getVectorInstrCost(Opcode, Val, Index);
 }
 
-unsigned X86TTIImpl::getScalarizationOverhead(Type *Ty, bool Insert,
-                                              bool Extract) {
+int X86TTIImpl::getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) {
   assert (Ty->isVectorTy() && "Can only scalarize vectors");
-  unsigned Cost = 0;
+  int Cost = 0;
 
   for (int i = 0, e = Ty->getVectorNumElements(); i < e; ++i) {
     if (Insert)
@@ -778,9 +774,8 @@ unsigned X86TTIImpl::getScalarizationOverhead(Type *Ty, bool Insert,
   return Cost;
 }
 
-unsigned X86TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
-                                     unsigned Alignment,
-                                     unsigned AddressSpace) {
+int X86TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                                unsigned AddressSpace) {
   // Handle non-power-of-two vectors such as <3 x float>
   if (VectorType *VTy = dyn_cast<VectorType>(Src)) {
     unsigned NumElem = VTy->getVectorNumElements();
@@ -798,22 +793,21 @@ unsigned X86TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
 
     // Assume that all other non-power-of-two numbers are scalarized.
     if (!isPowerOf2_32(NumElem)) {
-      unsigned Cost = BaseT::getMemoryOpCost(Opcode, VTy->getScalarType(),
-                                             Alignment, AddressSpace);
-      unsigned SplitCost = getScalarizationOverhead(Src,
-                                                    Opcode == Instruction::Load,
-                                                    Opcode==Instruction::Store);
+      int Cost = BaseT::getMemoryOpCost(Opcode, VTy->getScalarType(), Alignment,
+                                        AddressSpace);
+      int SplitCost = getScalarizationOverhead(Src, Opcode == Instruction::Load,
+                                               Opcode == Instruction::Store);
       return NumElem * Cost + SplitCost;
     }
   }
 
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
   assert((Opcode == Instruction::Load || Opcode == Instruction::Store) &&
          "Invalid Opcode");
 
   // Each load/store unit costs 1.
-  unsigned Cost = LT.first * 1;
+  int Cost = LT.first * 1;
 
   // On Sandybridge 256bit load/stores are double pumped
   // (but not on Haswell).
@@ -823,9 +817,9 @@ unsigned X86TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
   return Cost;
 }
 
-unsigned X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
-                                           unsigned Alignment,
-                                           unsigned AddressSpace) {
+int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
+                                      unsigned Alignment,
+                                      unsigned AddressSpace) {
   VectorType *SrcVTy = dyn_cast<VectorType>(SrcTy);
   if (!SrcVTy)
     // To calculate scalar take the regular cost, without mask
@@ -838,25 +832,23 @@ unsigned X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
       (Opcode == Instruction::Store && !isLegalMaskedStore(SrcVTy, 1)) ||
       !isPowerOf2_32(NumElem)) {
     // Scalarization
-    unsigned MaskSplitCost = getScalarizationOverhead(MaskTy, false, true);
-    unsigned ScalarCompareCost =
-      getCmpSelInstrCost(Instruction::ICmp,
-                         Type::getInt8Ty(getGlobalContext()), NULL);
-    unsigned BranchCost = getCFInstrCost(Instruction::Br);
-    unsigned MaskCmpCost = NumElem * (BranchCost + ScalarCompareCost);
+    int MaskSplitCost = getScalarizationOverhead(MaskTy, false, true);
+    int ScalarCompareCost = getCmpSelInstrCost(
+        Instruction::ICmp, Type::getInt8Ty(getGlobalContext()), NULL);
+    int BranchCost = getCFInstrCost(Instruction::Br);
+    int MaskCmpCost = NumElem * (BranchCost + ScalarCompareCost);
 
-    unsigned ValueSplitCost =
-      getScalarizationOverhead(SrcVTy, Opcode == Instruction::Load,
-                               Opcode == Instruction::Store);
-    unsigned MemopCost =
+    int ValueSplitCost = getScalarizationOverhead(
+        SrcVTy, Opcode == Instruction::Load, Opcode == Instruction::Store);
+    int MemopCost =
         NumElem * BaseT::getMemoryOpCost(Opcode, SrcVTy->getScalarType(),
                                          Alignment, AddressSpace);
     return MemopCost + ValueSplitCost + MaskSplitCost + MaskCmpCost;
   }
 
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, SrcVTy);
-  unsigned Cost = 0;
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, SrcVTy);
+  int Cost = 0;
   if (LT.second != TLI->getValueType(DL, SrcVTy).getSimpleVT() &&
       LT.second.getVectorNumElements() == NumElem)
     // Promotion requires expand/truncate for data and a shuffle for mask.
@@ -876,7 +868,7 @@ unsigned X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
   return Cost+LT.first;
 }
 
-unsigned X86TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
+int X86TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   // Address computations in vectorized code with non-consecutive addresses will
   // likely result in more instructions compared to scalar code where the
   // computation can more often be merged into the index mode. The resulting
@@ -889,10 +881,10 @@ unsigned X86TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   return BaseT::getAddressComputationCost(Ty, IsComplex);
 }
 
-unsigned X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
-                                      bool IsPairwise) {
+int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
+                                 bool IsPairwise) {
 
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
 
   MVT MTy = LT.second;
 
@@ -972,7 +964,7 @@ unsigned X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
 /// \brief Calculate the cost of materializing a 64-bit value. This helper
 /// method might only calculate a fraction of a larger immediate. Therefore it
 /// is valid to return a cost of ZERO.
-unsigned X86TTIImpl::getIntImmCost(int64_t Val) {
+int X86TTIImpl::getIntImmCost(int64_t Val) {
   if (Val == 0)
     return TTI::TCC_Free;
 
@@ -982,7 +974,7 @@ unsigned X86TTIImpl::getIntImmCost(int64_t Val) {
   return 2 * TTI::TCC_Basic;
 }
 
-unsigned X86TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
+int X86TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -1006,18 +998,18 @@ unsigned X86TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
 
   // Split the constant into 64-bit chunks and calculate the cost for each
   // chunk.
-  unsigned Cost = 0;
+  int Cost = 0;
   for (unsigned ShiftVal = 0; ShiftVal < BitSize; ShiftVal += 64) {
     APInt Tmp = ImmVal.ashr(ShiftVal).sextOrTrunc(64);
     int64_t Val = Tmp.getSExtValue();
     Cost += getIntImmCost(Val);
   }
   // We need at least one instruction to materialze the constant.
-  return std::max(1U, Cost);
+  return std::max(1, Cost);
 }
 
-unsigned X86TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
-                                   const APInt &Imm, Type *Ty) {
+int X86TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+                              Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -1075,18 +1067,18 @@ unsigned X86TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
   }
 
   if (Idx == ImmIdx) {
-    unsigned NumConstants = (BitSize + 63) / 64;
-    unsigned Cost = X86TTIImpl::getIntImmCost(Imm, Ty);
+    int NumConstants = (BitSize + 63) / 64;
+    int Cost = X86TTIImpl::getIntImmCost(Imm, Ty);
     return (Cost <= NumConstants * TTI::TCC_Basic)
-               ? static_cast<unsigned>(TTI::TCC_Free)
+               ? static_cast<int>(TTI::TCC_Free)
                : Cost;
   }
 
   return X86TTIImpl::getIntImmCost(Imm, Ty);
 }
 
-unsigned X86TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                                   const APInt &Imm, Type *Ty) {
+int X86TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                              Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
