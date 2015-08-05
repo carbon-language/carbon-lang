@@ -28,7 +28,6 @@
 ; X86:      calll   _z
 ; X86-NEXT: [[X_RETURN:.*]]:
 ; X86:      ret
-; X86-NEXT: L{{.*}}:
 ; X86-NEXT: [[END_OF_X:.*]]:
 ;
 ; X86-LABEL: _y:
@@ -37,7 +36,6 @@
 ; X86:      calll   _z
 ; X86-NEXT: [[Y_RETURN:.*]]:
 ; X86:      ret
-; X86-NEXT: L{{.*}}:
 ; X86-NEXT: [[END_OF_Y:.*]]:
 ;
 ; X86-LABEL: _f:
@@ -50,7 +48,6 @@
 ; X86:      calll   _z
 ; X86-NEXT: [[F_RETURN:.*]]:
 ; X86:      ret
-; X86-NEXT: L{{.*}}:
 ; X86-NEXT: [[END_OF_F:.*]]:
 ;
 ; X86-LABEL: .section        .debug$S,"dr"
@@ -322,7 +319,6 @@
 ; X64-NEXT: [[X_EPILOG_AND_RET:.*]]:
 ; X64:      addq    $40, %rsp
 ; X64-NEXT: ret
-; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[END_OF_X:.*]]:
 ;
 ; X64-LABEL: y:
@@ -335,7 +331,6 @@
 ; X64-NEXT: [[Y_EPILOG_AND_RET:.*]]:
 ; X64:      addq    $40, %rsp
 ; X64-NEXT: ret
-; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[END_OF_Y:.*]]:
 ;
 ; X64-LABEL: f:
@@ -352,7 +347,6 @@
 ; X64-NEXT: [[F_EPILOG_AND_RET:.*]]:
 ; X64:      addq    $40, %rsp
 ; X64-NEXT: ret
-; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[END_OF_F:.*]]:
 ;
 ; X64-LABEL: .section        .debug$S,"dr"
@@ -678,7 +672,7 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "
 !8 = !{null}
 !9 = !DISubprogram(name: "y", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: void ()* @y, variables: !2)
 !10 = !DISubprogram(name: "f", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 11, file: !5, scope: !6, type: !7, function: void ()* @f, variables: !2)
-!11 = !{i32 2, !"Dwarf Version", i32 4}
+!11 = !{i32 2, !"CodeView", i32 1}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.5 "}
 !14 = !DILocation(line: 4, column: 42, scope: !4)

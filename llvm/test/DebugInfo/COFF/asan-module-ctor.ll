@@ -89,7 +89,7 @@ attributes #0 = { nounwind sanitize_address "less-precise-fpmad"="false" "no-fra
 !4 = !DISubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 ()* @foo, variables: !2)
 !5 = !DIFile(filename: "asan.c", directory: "D:C")
 !6 = !DISubroutineType(types: !2)
-!7 = !{i32 2, !"Dwarf Version", i32 4}
+!7 = !{i32 2, !"CodeView", i32 1}
 !8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.5.0 "}
 !10 = !DILocation(line: 2, scope: !4)

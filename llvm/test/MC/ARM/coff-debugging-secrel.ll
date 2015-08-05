@@ -1,7 +1,8 @@
 ; RUN: llc -mtriple thumbv7--windows-itanium -filetype obj -o - %s \
 ; RUN:     | llvm-readobj -r - | FileCheck %s -check-prefix CHECK-ITANIUM
 
-; RUN: llc -mtriple thumbv7--windows-msvc -filetype obj -o - %s \
+; RUN: sed -e 's/"Dwarf Version"/"CodeView"/' %s \
+; RUN:    | llc -mtriple thumbv7--windows-msvc -filetype obj -o - \
 ; RUN:    | llvm-readobj -r - | FileCheck %s -check-prefix CHECK-MSVC
 
 ; ModuleID = '/Users/compnerd/work/llvm/test/MC/ARM/reduced.c'

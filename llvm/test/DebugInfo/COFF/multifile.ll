@@ -26,7 +26,6 @@
 ; X86:      calll   _g
 ; X86-NEXT: [[RETURN_STMT:.*]]:
 ; X86:      ret
-; X86-NEXT: L{{.*}}:
 ; X86-NEXT: [[END_OF_F:.*]]:
 ;
 ; X86-LABEL: .section        .debug$S,"dr"
@@ -174,7 +173,6 @@
 ; X64-NEXT: [[EPILOG_AND_RET:.*]]:
 ; X64:      addq    $40, %rsp
 ; X64-NEXT: ret
-; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[END_OF_F:.*]]:
 ;
 ; X64-LABEL: .section        .debug$S,"dr"
@@ -355,7 +353,7 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "
 !6 = !DIFile(filename: "input.c", directory: "D:C")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null}
-!9 = !{i32 2, !"Dwarf Version", i32 4}
+!9 = !{i32 2, !"CodeView", i32 1}
 !10 = !{i32 1, !"Debug Info Version", i32 3}
 !11 = !{!"clang version 3.5 "}
 !12 = !DILocation(line: 1, scope: !13)

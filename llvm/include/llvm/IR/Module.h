@@ -666,6 +666,10 @@ public:
   /// \brief Returns the Dwarf Version by checking module flags.
   unsigned getDwarfVersion() const;
 
+  /// \brief Returns the CodeView Version by checking module flags.
+  /// Returns zero if not present in module.
+  unsigned getCodeViewFlag() const;
+
 /// @}
 /// @name Utility functions for querying and setting PIC level
 /// @{
