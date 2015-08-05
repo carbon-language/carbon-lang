@@ -249,13 +249,13 @@ class SOP2 <dag outs, dag ins, string asm, list<dag> pattern> :
 class SOPC <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   InstSI<outs, ins, asm, pattern>, SOPCe <op> {
 
-  let DisableEncoding = "$dst";
   let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
   let SALU = 1;
   let SOPC = 1;
   let isCodeGenOnly = 0;
+  let Defs = [SCC];
 
   let UseNamedOperandTable = 1;
 }

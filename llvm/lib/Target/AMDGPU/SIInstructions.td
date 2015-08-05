@@ -438,16 +438,16 @@ def S_BRANCH : SOPP <
   let isBarrier = 1;
 }
 
-let DisableEncoding = "$scc" in {
+let Uses = [SCC] in {
 def S_CBRANCH_SCC0 : SOPP <
-  0x00000004, (ins sopp_brtarget:$simm16, SCCReg:$scc),
+  0x00000004, (ins sopp_brtarget:$simm16),
   "s_cbranch_scc0 $simm16"
 >;
 def S_CBRANCH_SCC1 : SOPP <
-  0x00000005, (ins sopp_brtarget:$simm16, SCCReg:$scc),
+  0x00000005, (ins sopp_brtarget:$simm16),
   "s_cbranch_scc1 $simm16"
 >;
-} // End DisableEncoding = "$scc"
+} // End Uses = [SCC]
 
 def S_CBRANCH_VCCZ : SOPP <
   0x00000006, (ins sopp_brtarget:$simm16, VCCReg:$vcc),

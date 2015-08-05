@@ -393,7 +393,7 @@ def GDS01MatchClass : GDSBaseMatchClass <"parseDSOff01OptionalOps">;
 class GLCBaseMatchClass <string parser> : AsmOperandClass {
   let Name = "GLC"#parser;
   let PredicateMethod = "isImm";
-  let ParserMethod = parser; 
+  let ParserMethod = parser;
   let RenderMethod = "addImmOperands";
 }
 
@@ -717,19 +717,6 @@ class SOP2_Real_vi<sop2 op, string opName, dag outs, dag ins, string asm> :
   let AssemblerPredicates = [isVI];
 }
 
-multiclass SOP2_SELECT_32 <sop2 op, string opName, list<dag> pattern> {
-  def "" : SOP2_Pseudo <opName, (outs SReg_32:$dst),
-    (ins SSrc_32:$src0, SSrc_32:$src1, SCCReg:$scc), pattern>;
-
-  def _si : SOP2_Real_si <op, opName, (outs SReg_32:$dst),
-    (ins SSrc_32:$src0, SSrc_32:$src1, SCCReg:$scc),
-    opName#" $dst, $src0, $src1 [$scc]">;
-
-  def _vi : SOP2_Real_vi <op, opName, (outs SReg_32:$dst),
-    (ins SSrc_32:$src0, SSrc_32:$src1, SCCReg:$scc),
-    opName#" $dst, $src0, $src1 [$scc]">;
-}
-
 multiclass SOP2_m <sop2 op, string opName, dag outs, dag ins, string asm,
                    list<dag> pattern> {
 
@@ -758,8 +745,10 @@ multiclass SOP2_64_32 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
 
 class SOPC_Helper <bits<7> op, RegisterOperand rc, ValueType vt,
                     string opName, PatLeaf cond> : SOPC <
-  op, (outs SCCReg:$dst), (ins rc:$src0, rc:$src1),
-  opName#" $src0, $src1", []>;
+  op, (outs), (ins rc:$src0, rc:$src1),
+  opName#" $src0, $src1", []> {
+  let Defs = [SCC];
+}
 
 class SOPC_32<bits<7> op, string opName, PatLeaf cond = COND_NULL>
   : SOPC_Helper<op, SSrc_32, i32, opName, cond>;
@@ -812,15 +801,20 @@ multiclass SOPK_32 <sopk op, string opName, list<dag> pattern> {
 }
 
 multiclass SOPK_SCC <sopk op, string opName, list<dag> pattern> {
-  def "" : SOPK_Pseudo <opName, (outs SCCReg:$dst),
-    (ins SReg_32:$src0, u16imm:$src1), pattern>;
+  def "" : SOPK_Pseudo <opName, (outs),
+    (ins SReg_32:$src0, u16imm:$src1), pattern> {
+    let Defs = [SCC];
+  }
 
-  let DisableEncoding = "$dst" in {
-    def _si : SOPK_Real_si <op, opName, (outs SCCReg:$dst),
-      (ins SReg_32:$sdst, u16imm:$simm16), opName#" $sdst, $simm16">;
 
-    def _vi : SOPK_Real_vi <op, opName, (outs SCCReg:$dst),
-      (ins SReg_32:$sdst, u16imm:$simm16), opName#" $sdst, $simm16">;
+  def _si : SOPK_Real_si <op, opName, (outs),
+    (ins SReg_32:$sdst, u16imm:$simm16), opName#" $sdst, $simm16"> {
+    let Defs = [SCC];
+  }
+
+  def _vi : SOPK_Real_vi <op, opName, (outs),
+    (ins SReg_32:$sdst, u16imm:$simm16), opName#" $sdst, $simm16"> {
+    let Defs = [SCC];
   }
 }
 
