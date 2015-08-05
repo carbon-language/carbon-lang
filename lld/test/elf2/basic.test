@@ -16,7 +16,7 @@ _start:
 # CHECK-NEXT:     Class: 64-bit (0x2)
 # CHECK-NEXT:     DataEncoding: LittleEndian (0x1)
 # CHECK-NEXT:     FileVersion: 1
-# CHECK-NEXT:     OS/ABI: GNU/Linux (0x3)
+# CHECK-NEXT:     OS/ABI: SystemV (0x0)
 # CHECK-NEXT:     ABIVersion: 0
 # CHECK-NEXT:     Unused: (00 00 00 00 00 00 00)
 # CHECK-NEXT:   }

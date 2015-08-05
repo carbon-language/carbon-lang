@@ -123,7 +123,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_ident[EI_CLASS] = ELFCLASS64;
   EHdr->e_ident[EI_DATA] = ELFDATA2LSB;
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
-  EHdr->e_ident[EI_OSABI] = ELFOSABI_GNU;
+  EHdr->e_ident[EI_OSABI] = ELFOSABI_NONE;
 
   EHdr->e_type = ET_EXEC;
   EHdr->e_machine = EM_X86_64;
