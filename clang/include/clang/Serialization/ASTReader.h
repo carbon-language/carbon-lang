@@ -1698,16 +1698,17 @@ public:
   /// \param DC The declaration context whose declarations will be
   /// read.
   ///
+  /// \param IsKindWeWant A predicate indicating which declaration kinds
+  /// we are interested in.
+  ///
   /// \param Decls Vector that will contain the declarations loaded
   /// from the external source. The caller is responsible for merging
   /// these declarations with any declarations already stored in the
   /// declaration context.
-  ///
-  /// \returns true if there was an error while reading the
-  /// declarations for this declaration context.
-  ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
-                                bool (*isKindWeWant)(Decl::Kind),
-                                SmallVectorImpl<Decl*> &Decls) override;
+  void
+  FindExternalLexicalDecls(const DeclContext *DC,
+                           llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
+                           SmallVectorImpl<Decl *> &Decls) override;
 
   /// \brief Get the decls that are contained in a file in the Offset/Length
   /// range. \p Length can be 0 to indicate a point at \p Offset instead of

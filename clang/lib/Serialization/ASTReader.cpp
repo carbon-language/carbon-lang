@@ -5910,8 +5910,13 @@ void ASTReader::CompleteRedeclChain(const Decl *D) {
       } else
         DC->lookup(Name);
     } else if (needsAnonymousDeclarationNumber(cast<NamedDecl>(D))) {
-      // FIXME: It'd be nice to do something a bit more targeted here.
-      D->getDeclContext()->decls_begin();
+      // Find all declarations of this kind from the relevant context.
+      for (auto *DCDecl : cast<Decl>(D->getLexicalDeclContext())->redecls()) {
+        auto *DC = cast<DeclContext>(DCDecl);
+        SmallVector<Decl*, 8> Decls;
+        FindExternalLexicalDecls(
+            DC, [&](Decl::Kind K) { return K == D->getKind(); }, Decls);
+      }
     }
   }
 
@@ -6174,47 +6179,48 @@ namespace {
   class FindExternalLexicalDeclsVisitor {
     ASTReader &Reader;
     const DeclContext *DC;
-    bool (*isKindWeWant)(Decl::Kind);
+    llvm::function_ref<bool(Decl::Kind)> IsKindWeWant;
     
     SmallVectorImpl<Decl*> &Decls;
     bool PredefsVisited[NUM_PREDEF_DECL_IDS];
 
   public:
-    FindExternalLexicalDeclsVisitor(ASTReader &Reader, const DeclContext *DC,
-                                    bool (*isKindWeWant)(Decl::Kind),
-                                    SmallVectorImpl<Decl*> &Decls)
-      : Reader(Reader), DC(DC), isKindWeWant(isKindWeWant), Decls(Decls) 
-    {
+    FindExternalLexicalDeclsVisitor(
+        ASTReader &Reader, const DeclContext *DC,
+        llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
+        SmallVectorImpl<Decl *> &Decls)
+        : Reader(Reader), DC(DC), IsKindWeWant(IsKindWeWant), Decls(Decls) {
       for (unsigned I = 0; I != NUM_PREDEF_DECL_IDS; ++I)
         PredefsVisited[I] = false;
     }
 
     static bool visitPostorder(ModuleFile &M, void *UserData) {
-      FindExternalLexicalDeclsVisitor *This
-        = static_cast<FindExternalLexicalDeclsVisitor *>(UserData);
+      return (*static_cast<FindExternalLexicalDeclsVisitor*>(UserData))(M);
+    }
 
-      ModuleFile::DeclContextInfosMap::iterator Info
-        = M.DeclContextInfos.find(This->DC);
+    bool operator()(ModuleFile &M) {
+      ModuleFile::DeclContextInfosMap::iterator Info =
+          M.DeclContextInfos.find(DC);
       if (Info == M.DeclContextInfos.end() || Info->second.LexicalDecls.empty())
         return false;
 
       // Load all of the declaration IDs
       for (const KindDeclIDPair &P : Info->second.LexicalDecls) {
-        if (This->isKindWeWant && !This->isKindWeWant((Decl::Kind)P.first))
+        if (!IsKindWeWant((Decl::Kind)P.first))
           continue;
 
         // Don't add predefined declarations to the lexical context more
         // than once.
         if (P.second < NUM_PREDEF_DECL_IDS) {
-          if (This->PredefsVisited[P.second])
+          if (PredefsVisited[P.second])
             continue;
 
-          This->PredefsVisited[P.second] = true;
+          PredefsVisited[P.second] = true;
         }
 
-        if (Decl *D = This->Reader.GetLocalDecl(M, P.second)) {
-          if (!This->DC->isDeclInLexicalTraversal(D))
-            This->Decls.push_back(D);
+        if (Decl *D = Reader.GetLocalDecl(M, P.second)) {
+          if (!DC->isDeclInLexicalTraversal(D))
+            Decls.push_back(D);
         }
       }
 
@@ -6223,16 +6229,16 @@ namespace {
   };
 }
 
-ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
-                                         bool (*isKindWeWant)(Decl::Kind),
-                                         SmallVectorImpl<Decl*> &Decls) {
+void ASTReader::FindExternalLexicalDecls(
+    const DeclContext *DC, llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
+    SmallVectorImpl<Decl *> &Decls) {
   // There might be lexical decls in multiple modules, for the TU at
-  // least. Walk all of the modules in the order they were loaded.
-  FindExternalLexicalDeclsVisitor Visitor(*this, DC, isKindWeWant, Decls);
+  // least. FIXME: Only look in multiple module files in the very rare
+  // cases where this can actually happen.
+  FindExternalLexicalDeclsVisitor Visitor(*this, DC, IsKindWeWant, Decls);
   ModuleMgr.visitDepthFirst(
       nullptr, &FindExternalLexicalDeclsVisitor::visitPostorder, &Visitor);
   ++NumLexicalDeclContextsRead;
-  return ELR_Success;
 }
 
 namespace {

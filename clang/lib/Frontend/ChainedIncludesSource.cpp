@@ -47,9 +47,9 @@ protected:
   CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset) override;
   bool FindExternalVisibleDeclsByName(const DeclContext *DC,
                                       DeclarationName Name) override;
-  ExternalLoadResult
+  void
   FindExternalLexicalDecls(const DeclContext *DC,
-                           bool (*isKindWeWant)(Decl::Kind),
+                           llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
                            SmallVectorImpl<Decl *> &Result) override;
   void CompleteType(TagDecl *Tag) override;
   void CompleteType(ObjCInterfaceDecl *Class) override;
@@ -246,11 +246,10 @@ ChainedIncludesSource::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                                       DeclarationName Name) {
   return getFinalReader().FindExternalVisibleDeclsByName(DC, Name);
 }
-ExternalLoadResult 
-ChainedIncludesSource::FindExternalLexicalDecls(const DeclContext *DC,
-                                      bool (*isKindWeWant)(Decl::Kind),
-                                      SmallVectorImpl<Decl*> &Result) {
-  return getFinalReader().FindExternalLexicalDecls(DC, isKindWeWant, Result);
+void ChainedIncludesSource::FindExternalLexicalDecls(
+    const DeclContext *DC, llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
+    SmallVectorImpl<Decl *> &Result) {
+  return getFinalReader().FindExternalLexicalDecls(DC, IsKindWeWant, Result);
 }
 void ChainedIncludesSource::CompleteType(TagDecl *Tag) {
   return getFinalReader().CompleteType(Tag);

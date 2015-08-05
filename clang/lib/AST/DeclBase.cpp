@@ -1059,14 +1059,7 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   // Load the external declarations, if any.
   SmallVector<Decl*, 64> Decls;
   ExternalLexicalStorage = false;
-  switch (Source->FindExternalLexicalDecls(this, Decls)) {
-  case ELR_Success:
-    break;
-    
-  case ELR_Failure:
-  case ELR_AlreadyLoaded:
-    return false;
-  }
+  Source->FindExternalLexicalDecls(this, Decls);
 
   if (Decls.empty())
     return false;

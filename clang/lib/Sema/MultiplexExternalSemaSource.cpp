@@ -107,15 +107,11 @@ void MultiplexExternalSemaSource::completeVisibleDeclsMap(const DeclContext *DC)
     Sources[i]->completeVisibleDeclsMap(DC);
 }
 
-ExternalLoadResult MultiplexExternalSemaSource::
-FindExternalLexicalDecls(const DeclContext *DC,
-                         bool (*isKindWeWant)(Decl::Kind),
-                         SmallVectorImpl<Decl*> &Result) {
+void MultiplexExternalSemaSource::FindExternalLexicalDecls(
+    const DeclContext *DC, llvm::function_ref<bool(Decl::Kind)> IsKindWeWant,
+    SmallVectorImpl<Decl *> &Result) {
   for(size_t i = 0; i < Sources.size(); ++i)
-    // FIXME: The semantics of the return result is unclear to me...
-    Sources[i]->FindExternalLexicalDecls(DC, isKindWeWant, Result);
-
-  return ELR_Success;
+    Sources[i]->FindExternalLexicalDecls(DC, IsKindWeWant, Result);
 }
 
 void MultiplexExternalSemaSource::FindFileRegionDecls(FileID File, 

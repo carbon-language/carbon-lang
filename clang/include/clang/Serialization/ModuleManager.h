@@ -126,20 +126,17 @@ public:
                          const PCHContainerReader &PCHContainerRdr);
   ~ModuleManager();
 
-  /// \brief Forward iterator to traverse all loaded modules.  This is reverse
-  /// source-order.
+  /// \brief Forward iterator to traverse all loaded modules.
   ModuleIterator begin() { return Chain.begin(); }
   /// \brief Forward iterator end-point to traverse all loaded modules
   ModuleIterator end() { return Chain.end(); }
   
-  /// \brief Const forward iterator to traverse all loaded modules.  This is 
-  /// in reverse source-order.
+  /// \brief Const forward iterator to traverse all loaded modules.
   ModuleConstIterator begin() const { return Chain.begin(); }
   /// \brief Const forward iterator end-point to traverse all loaded modules
   ModuleConstIterator end() const { return Chain.end(); }
   
-  /// \brief Reverse iterator to traverse all loaded modules.  This is in 
-  /// source order.
+  /// \brief Reverse iterator to traverse all loaded modules.
   ModuleReverseIterator rbegin() { return Chain.rbegin(); }
   /// \brief Reverse iterator end-point to traverse all loaded modules.
   ModuleReverseIterator rend() { return Chain.rend(); }
@@ -148,7 +145,7 @@ public:
   llvm::iterator_range<ModuleConstIterator> pch_modules() const {
     return llvm::make_range(PCHChain.begin(), PCHChain.end());
   }
-  
+
   /// \brief Returns the primary module associated with the manager, that is,
   /// the first module loaded
   ModuleFile &getPrimaryModule() { return *Chain[0]; }

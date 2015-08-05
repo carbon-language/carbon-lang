@@ -3639,10 +3639,6 @@ bool RecordDecl::isMsStruct(const ASTContext &C) const {
   return hasAttr<MSStructAttr>() || C.getLangOpts().MSBitfields == 1;
 }
 
-static bool isFieldOrIndirectField(Decl::Kind K) {
-  return FieldDecl::classofKind(K) || IndirectFieldDecl::classofKind(K);
-}
-
 void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource *Source = getASTContext().getExternalSource();
   assert(hasExternalLexicalStorage() && Source && "No external storage?");
@@ -3651,16 +3647,10 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource::Deserializing TheFields(Source);
 
   SmallVector<Decl*, 64> Decls;
-  LoadedFieldsFromExternalStorage = true;  
-  switch (Source->FindExternalLexicalDecls(this, isFieldOrIndirectField,
-                                           Decls)) {
-  case ELR_Success:
-    break;
-    
-  case ELR_AlreadyLoaded:
-  case ELR_Failure:
-    return;
-  }
+  LoadedFieldsFromExternalStorage = true;
+  Source->FindExternalLexicalDecls(this, [](Decl::Kind K) {
+    return FieldDecl::classofKind(K) || IndirectFieldDecl::classofKind(K);
+  }, Decls);
 
 #ifndef NDEBUG
   // Check that all decls we got were FieldDecls.
