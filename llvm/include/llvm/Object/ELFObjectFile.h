@@ -734,9 +734,7 @@ ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
 template <class ELFT>
 ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
     : ELFObjectFileBase(
-          getELFType(static_cast<endianness>(ELFT::TargetEndianness) ==
-                         support::little,
-                     ELFT::Is64Bits),
+          getELFType(ELFT::TargetEndianness == support::little, ELFT::Is64Bits),
           Object),
       EF(Data.getBuffer(), EC) {}
 
