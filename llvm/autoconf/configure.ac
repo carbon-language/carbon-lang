@@ -1876,7 +1876,6 @@ AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_CHECK_FUNCS([setjmp longjmp sigsetjmp siglongjmp writev])
 AC_CHECK_FUNCS([futimes futimens])
 AC_C_PRINTF_A
-AC_FUNC_RAND48
 
 dnl Check for arc4random accessible via AC_INCLUDES_DEFAULT.
 AC_CHECK_DECLS([arc4random])
