@@ -70,10 +70,8 @@ struct MIToken {
     StackObject,
     FixedStackObject,
     NamedGlobalValue,
-    QuotedNamedGlobalValue,
     GlobalValue,
     ExternalSymbol,
-    QuotedExternalSymbol,
 
     // Other tokens
     IntegerLiteral,
@@ -82,25 +80,32 @@ struct MIToken {
     ConstantPoolItem,
     JumpTableIndex,
     NamedIRBlock,
-    QuotedNamedIRBlock,
     IRBlock,
     NamedIRValue,
-    QuotedNamedIRValue,
   };
 
 private:
   TokenKind Kind;
   unsigned StringOffset;
+  bool HasStringValue;
   StringRef Range;
+  std::string StringValue;
   APSInt IntVal;
 
 public:
   MIToken(TokenKind Kind, StringRef Range, unsigned StringOffset = 0)
-      : Kind(Kind), StringOffset(StringOffset), Range(Range) {}
+      : Kind(Kind), StringOffset(StringOffset), HasStringValue(false),
+        Range(Range) {}
+
+  MIToken(TokenKind Kind, StringRef Range, std::string StringValue,
+          unsigned StringOffset = 0)
+      : Kind(Kind), StringOffset(StringOffset), HasStringValue(true),
+        Range(Range), StringValue(std::move(StringValue)) {}
 
   MIToken(TokenKind Kind, StringRef Range, const APSInt &IntVal,
           unsigned StringOffset = 0)
-      : Kind(Kind), StringOffset(StringOffset), Range(Range), IntVal(IntVal) {}
+      : Kind(Kind), StringOffset(StringOffset), HasStringValue(false),
+        Range(Range), IntVal(IntVal) {}
 
   TokenKind kind() const { return Kind; }
 
@@ -124,29 +129,17 @@ public:
 
   StringRef::iterator location() const { return Range.begin(); }
 
-  bool isStringValueQuoted() const {
-    return Kind == QuotedNamedGlobalValue || Kind == QuotedExternalSymbol ||
-           Kind == QuotedNamedIRBlock || Kind == QuotedNamedIRValue;
-  }
-
   /// Return the token's raw string value.
   ///
   /// If the string value is quoted, this method returns that quoted string as
   /// it is, without unescaping the string value.
   StringRef rawStringValue() const { return Range.drop_front(StringOffset); }
 
-  /// Return token's string value.
-  ///
-  /// Expects the string value to be unquoted.
+  /// Return the token's string value.
   StringRef stringValue() const {
-    assert(!isStringValueQuoted() && "String value is quoted");
-    return Range.drop_front(StringOffset);
+    return HasStringValue ? StringRef(StringValue)
+                          : Range.drop_front(StringOffset);
   }
-
-  /// Unescapes the token's string value.
-  ///
-  /// Expects the string value to be quoted.
-  void unescapeQuotedStringValue(std::string &Str) const;
 
   const APSInt &integerValue() const { return IntVal; }
 

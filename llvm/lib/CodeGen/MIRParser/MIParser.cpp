@@ -37,22 +37,6 @@ using namespace llvm;
 
 namespace {
 
-struct StringValueUtility {
-  StringRef String;
-  std::string UnescapedString;
-
-  StringValueUtility(const MIToken &Token) {
-    if (Token.isStringValueQuoted()) {
-      Token.unescapeQuotedStringValue(UnescapedString);
-      String = UnescapedString;
-      return;
-    }
-    String = Token.stringValue();
-  }
-
-  operator StringRef() const { return String; }
-};
-
 /// A wrapper struct around the 'MachineOperand' struct that includes a source
 /// range.
 struct MachineOperandWithLocation {
@@ -651,11 +635,9 @@ bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
 
 bool MIParser::parseGlobalValue(GlobalValue *&GV) {
   switch (Token.kind()) {
-  case MIToken::NamedGlobalValue:
-  case MIToken::QuotedNamedGlobalValue: {
-    StringValueUtility Name(Token);
+  case MIToken::NamedGlobalValue: {
     const Module *M = MF.getFunction()->getParent();
-    GV = M->getNamedValue(Name);
+    GV = M->getNamedValue(Token.stringValue());
     if (!GV)
       return error(Twine("use of undefined global value '@") +
                    Token.rawStringValue() + "'");
@@ -716,10 +698,8 @@ bool MIParser::parseJumpTableIndexOperand(MachineOperand &Dest) {
 }
 
 bool MIParser::parseExternalSymbolOperand(MachineOperand &Dest) {
-  assert(Token.is(MIToken::ExternalSymbol) ||
-         Token.is(MIToken::QuotedExternalSymbol));
-  StringValueUtility Name(Token);
-  const char *Symbol = MF.createExternalSymbolName(Name);
+  assert(Token.is(MIToken::ExternalSymbol));
+  const char *Symbol = MF.createExternalSymbolName(Token.stringValue());
   lex();
   // TODO: Parse the target flags.
   Dest = MachineOperand::CreateES(Symbol);
@@ -823,10 +803,9 @@ bool MIParser::parseCFIOperand(MachineOperand &Dest) {
 
 bool MIParser::parseIRBlock(BasicBlock *&BB, const Function &F) {
   switch (Token.kind()) {
-  case MIToken::NamedIRBlock:
-  case MIToken::QuotedNamedIRBlock: {
-    StringValueUtility Name(Token);
-    BB = dyn_cast_or_null<BasicBlock>(F.getValueSymbolTable().lookup(Name));
+  case MIToken::NamedIRBlock: {
+    BB = dyn_cast_or_null<BasicBlock>(
+        F.getValueSymbolTable().lookup(Token.stringValue()));
     if (!BB)
       return error(Twine("use of undefined IR block '%ir-block.") +
                    Token.rawStringValue() + "'");
@@ -854,8 +833,7 @@ bool MIParser::parseBlockAddressOperand(MachineOperand &Dest) {
   if (expectAndConsume(MIToken::lparen))
     return true;
   if (Token.isNot(MIToken::GlobalValue) &&
-      Token.isNot(MIToken::NamedGlobalValue) &&
-      Token.isNot(MIToken::QuotedNamedGlobalValue))
+      Token.isNot(MIToken::NamedGlobalValue))
     return error("expected a global value");
   GlobalValue *GV = nullptr;
   if (parseGlobalValue(GV))
@@ -867,8 +845,7 @@ bool MIParser::parseBlockAddressOperand(MachineOperand &Dest) {
   if (expectAndConsume(MIToken::comma))
     return true;
   BasicBlock *BB = nullptr;
-  if (Token.isNot(MIToken::IRBlock) && Token.isNot(MIToken::NamedIRBlock) &&
-      Token.isNot(MIToken::QuotedNamedIRBlock))
+  if (Token.isNot(MIToken::IRBlock) && Token.isNot(MIToken::NamedIRBlock))
     return error("expected an IR block reference");
   if (parseIRBlock(BB, *F))
     return true;
@@ -926,14 +903,12 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseFixedStackObjectOperand(Dest);
   case MIToken::GlobalValue:
   case MIToken::NamedGlobalValue:
-  case MIToken::QuotedNamedGlobalValue:
     return parseGlobalAddressOperand(Dest);
   case MIToken::ConstantPoolItem:
     return parseConstantPoolIndexOperand(Dest);
   case MIToken::JumpTableIndex:
     return parseJumpTableIndexOperand(Dest);
   case MIToken::ExternalSymbol:
-  case MIToken::QuotedExternalSymbol:
     return parseExternalSymbolOperand(Dest);
   case MIToken::exclaim:
     return parseMetadataOperand(Dest);
@@ -964,10 +939,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
 
 bool MIParser::parseIRValue(Value *&V) {
   switch (Token.kind()) {
-  case MIToken::NamedIRValue:
-  case MIToken::QuotedNamedIRValue: {
-    StringValueUtility Name(Token);
-    V = MF.getFunction()->getValueSymbolTable().lookup(Name);
+  case MIToken::NamedIRValue: {
+    V = MF.getFunction()->getValueSymbolTable().lookup(Token.stringValue());
     if (!V)
       return error(Twine("use of undefined IR value '%ir.") +
                    Token.rawStringValue() + "'");
@@ -1032,8 +1005,7 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   lex();
 
   // TODO: Parse pseudo source values.
-  if (Token.isNot(MIToken::NamedIRValue) &&
-      Token.isNot(MIToken::QuotedNamedIRValue))
+  if (Token.isNot(MIToken::NamedIRValue))
     return error("expected an IR value reference");
   Value *V = nullptr;
   if (parseIRValue(V))
