@@ -55,7 +55,7 @@ extern cl::opt<bool> UnwindInfo;
 extern cl::opt<bool> PrintImmHex;
 
 // Various helper functions.
-bool error(std::error_code ec);
+void error(std::error_code ec);
 bool RelocAddressLess(object::RelocationRef a, object::RelocationRef b);
 void ParseInputMachO(StringRef Filename);
 void printCOFFUnwindInfo(const object::COFFObjectFile* o);

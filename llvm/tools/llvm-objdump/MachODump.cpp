@@ -8554,8 +8554,7 @@ SegInfo::SegInfo(const object::MachOObjectFile *Obj) {
   uint64_t CurSegAddress;
   for (const SectionRef &Section : Obj->sections()) {
     SectionInfo Info;
-    if (error(Section.getName(Info.SectionName)))
-      return;
+    error(Section.getName(Info.SectionName));
     Info.Address = Section.getAddress();
     Info.Size = Section.getSize();
     Info.SegmentName =

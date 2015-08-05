@@ -241,12 +241,10 @@ printSEHTable(const COFFObjectFile *Obj, uint32_t TableVA, int Count) {
     return;
 
   const pe32_header *PE32Header;
-  if (error(Obj->getPE32Header(PE32Header)))
-    return;
+  error(Obj->getPE32Header(PE32Header));
   uint32_t ImageBase = PE32Header->ImageBase;
   uintptr_t IntPtr = 0;
-  if (error(Obj->getVaPtr(TableVA, IntPtr)))
-    return;
+  error(Obj->getVaPtr(TableVA, IntPtr));
   const support::ulittle32_t *P = (const support::ulittle32_t *)IntPtr;
   outs() << "SEH Table:";
   for (int I = 0; I < Count; ++I)
@@ -257,8 +255,7 @@ printSEHTable(const COFFObjectFile *Obj, uint32_t TableVA, int Count) {
 static void printLoadConfiguration(const COFFObjectFile *Obj) {
   // Skip if it's not executable.
   const pe32_header *PE32Header;
-  if (error(Obj->getPE32Header(PE32Header)))
-    return;
+  error(Obj->getPE32Header(PE32Header));
   if (!PE32Header)
     return;
 
@@ -267,13 +264,11 @@ static void printLoadConfiguration(const COFFObjectFile *Obj) {
     return;
 
   const data_directory *DataDir;
-  if (error(Obj->getDataDirectory(COFF::LOAD_CONFIG_TABLE, DataDir)))
-    return;
+  error(Obj->getDataDirectory(COFF::LOAD_CONFIG_TABLE, DataDir));
   uintptr_t IntPtr = 0;
   if (DataDir->RelativeVirtualAddress == 0)
     return;
-  if (error(Obj->getRvaPtr(DataDir->RelativeVirtualAddress, IntPtr)))
-    return;
+  error(Obj->getRvaPtr(DataDir->RelativeVirtualAddress, IntPtr));
 
   auto *LoadConf = reinterpret_cast<const coff_load_configuration32 *>(IntPtr);
   outs() << "Load configuration:"
@@ -381,8 +376,7 @@ static bool getPDataSection(const COFFObjectFile *Obj,
                             const RuntimeFunction *&RFStart, int &NumRFs) {
   for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
-    if (error(Section.getName(Name)))
-      continue;
+    error(Section.getName(Name));
     if (Name != ".pdata")
       continue;
 
@@ -394,8 +388,7 @@ static bool getPDataSection(const COFFObjectFile *Obj,
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);
 
     ArrayRef<uint8_t> Contents;
-    if (error(Obj->getSectionContents(Pdata, Contents)))
-      continue;
+    error(Obj->getSectionContents(Pdata, Contents));
     if (Contents.empty())
       continue;
 
@@ -499,11 +492,10 @@ static void printRuntimeFunctionRels(const COFFObjectFile *Obj,
 
   ArrayRef<uint8_t> XContents;
   uint64_t UnwindInfoOffset = 0;
-  if (error(getSectionContents(
+  error(getSectionContents(
           Obj, Rels, SectionOffset +
                          /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
-          XContents, UnwindInfoOffset)))
-    return;
+          XContents, UnwindInfoOffset));
   if (XContents.empty())
     return;
 
