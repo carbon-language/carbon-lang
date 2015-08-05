@@ -11,15 +11,15 @@ After the link of each architecture, check that lipo is correctly invoked to
 generate the fat output binary.
 
 CHECK: triple:          'x86_64-apple-darwin'
-CHECK:   - filename:        [[INPUTS_PATH:.*]]fat-test.o
+CHECK:   - filename:        {{'?}}[[INPUTS_PATH:.*]]fat-test.o
 CHECK:   DW_AT_name{{.*}} "x86_64_var"
 
 CHECK: triple:          'i386-apple-darwin'
-CHECK:   - filename:        [[INPUTS_PATH]]fat-test.o
+CHECK:   - filename:        {{'?}}[[INPUTS_PATH]]fat-test.o
 CHECK:   DW_AT_name{{.*}} "i386_var"
 
 CHECK: triple:          'x86_64h-apple-darwin'
-CHECK:   - filename:        [[INPUTS_PATH]]fat-test.o
+CHECK:   - filename:        {{'?}}[[INPUTS_PATH]]fat-test.o
 CHECK:   DW_AT_name{{.*}} "x86_64h_var"
 
 CHECK: Running lipo
