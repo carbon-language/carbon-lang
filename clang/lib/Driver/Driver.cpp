@@ -762,6 +762,9 @@ void Driver::PrintVersion(const Compilation &C, raw_ostream &OS) const {
   } else
     OS << "Thread model: " << TC.getThreadModel();
   OS << '\n';
+
+  // Print out the install directory.
+  OS << "InstalledDir: " << InstalledDir << '\n';
 }
 
 /// PrintDiagnosticCategories - Implement the --print-diagnostic-categories
