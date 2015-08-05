@@ -13,6 +13,15 @@
     ret i32 %0, !dbg !15
   }
 
+  define i32 @test_typed_immediates(i32 %x) #0 {
+  entry:
+    %x.addr = alloca i32, align 4
+    store i32 %x, i32* %x.addr, align 4
+    call void @llvm.dbg.declare(metadata i32* %x.addr, metadata !12, metadata !13), !dbg !14
+    %0 = load i32, i32* %x.addr, align 4, !dbg !15
+    ret i32 %0, !dbg !15
+  }
+
   declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
   attributes #0 = { nounwind "no-frame-pointer-elim"="false" }
@@ -63,4 +72,30 @@ body:
       - 'MOV32mr %stack.0.x.addr, 1, _, 0, _, %0'
       - '%eax = COPY %0, debug-location !15'
       - 'RETQ %eax, debug-location !15'
+...
+---
+name:            test_typed_immediates
+isSSA:           true
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: gr32 }
+frameInfo:
+  maxAlignment:  4
+stack:
+  - { id: 0, name: x.addr, size: 4, alignment: 4 }
+body:
+  - id:           0
+    name:         entry
+    liveins:      [ '%edi' ]
+    instructions:
+      - '%0 = COPY %edi'
+# CHECK:      DBG_VALUE _, i32 0, !12, !13
+# CHECK-NEXT: DBG_VALUE _, i64 -22, !12, !13
+# CHECK-NEXT: DBG_VALUE _, i128 123492148938512984928424384934328985928, !12, !13
+      - 'DBG_VALUE _, i32 0, !12, !13'
+      - 'DBG_VALUE _, i64 -22, !12, !13'
+      - 'DBG_VALUE _, i128 123492148938512984928424384934328985928, !12, !13'
+      - 'MOV32mr %stack.0.x.addr, 1, _, 0, _, %0'
+      - '%eax = COPY %0'
+      - 'RETQ %eax'
 ...

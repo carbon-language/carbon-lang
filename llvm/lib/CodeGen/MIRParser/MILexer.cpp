@@ -138,6 +138,17 @@ static Cursor lexName(
   return C;
 }
 
+static Cursor maybeLexIntegerType(Cursor C, MIToken &Token) {
+  if (C.peek() != 'i' || !isdigit(C.peek(1)))
+    return None;
+  auto Range = C;
+  C.advance(); // Skip 'i'
+  while (isdigit(C.peek()))
+    C.advance();
+  Token = MIToken(MIToken::IntegerType, Range.upto(C));
+  return C;
+}
+
 static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
   return StringSwitch<MIToken::TokenKind>(Identifier)
       .Case("_", MIToken::underscore)
@@ -418,6 +429,8 @@ StringRef llvm::lexMIToken(
     return C.remaining();
   }
 
+  if (Cursor R = maybeLexIntegerType(C, Token))
+    return R.remaining();
   if (Cursor R = maybeLexIdentifier(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexMachineBasicBlock(C, Token, ErrorCallback))

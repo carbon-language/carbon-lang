@@ -100,6 +100,7 @@ public:
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
   bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
+  bool parseTypedImmediateOperand(MachineOperand &Dest);
   bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
@@ -568,6 +569,19 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
   return false;
 }
 
+bool MIParser::parseTypedImmediateOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::IntegerType));
+  auto Loc = Token.location();
+  lex();
+  if (Token.isNot(MIToken::IntegerLiteral))
+    return error("expected an integer literal");
+  const Constant *C = nullptr;
+  if (parseIRConstant(Loc, C))
+    return true;
+  Dest = MachineOperand::CreateCImm(cast<ConstantInt>(C));
+  return false;
+}
+
 bool MIParser::parseFPImmediateOperand(MachineOperand &Dest) {
   auto Loc = Token.location();
   lex();
@@ -907,6 +921,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseRegisterOperand(Dest);
   case MIToken::IntegerLiteral:
     return parseImmediateOperand(Dest);
+  case MIToken::IntegerType:
+    return parseTypedImmediateOperand(Dest);
   case MIToken::kw_half:
   case MIToken::kw_float:
   case MIToken::kw_double:

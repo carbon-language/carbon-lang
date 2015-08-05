@@ -67,6 +67,7 @@ struct MIToken {
 
     // Identifier tokens
     Identifier,
+    IntegerType,
     NamedRegister,
     MachineBasicBlock,
     StackObject,

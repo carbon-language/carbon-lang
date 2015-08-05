@@ -541,6 +541,9 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   case MachineOperand::MO_Immediate:
     OS << Op.getImm();
     break;
+  case MachineOperand::MO_CImmediate:
+    Op.getCImm()->printAsOperand(OS, /*PrintType=*/true, MST);
+    break;
   case MachineOperand::MO_FPImmediate:
     Op.getFPImm()->printAsOperand(OS, /*PrintType=*/true, MST);
     break;
