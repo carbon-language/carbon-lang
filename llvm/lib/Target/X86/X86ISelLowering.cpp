@@ -20133,6 +20133,45 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 }
 
 MachineBasicBlock *
+X86TargetLowering::EmitLoweredAtomicFP(MachineInstr *MI,
+                                       MachineBasicBlock *BB) const {
+  // Combine the following atomic floating-point modification pattern:
+  //   a.store(reg OP a.load(acquire), release)
+  // Transform them into:
+  //   OPss (%gpr), %xmm
+  //   movss %xmm, (%gpr)
+  // Or sd equivalent for 64-bit operations.
+  unsigned MOp, FOp;
+  switch (MI->getOpcode()) {
+  default: llvm_unreachable("unexpected instr type for EmitLoweredAtomicFP");
+  case X86::RELEASE_FADD32mr: MOp = X86::MOVSSmr; FOp = X86::ADDSSrm; break;
+  case X86::RELEASE_FADD64mr: MOp = X86::MOVSDmr; FOp = X86::ADDSDrm; break;
+  }
+  const X86InstrInfo *TII = Subtarget->getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+  unsigned MSrc = MI->getOperand(0).getReg();
+  unsigned VSrc = MI->getOperand(5).getReg();
+  MachineInstrBuilder MIM = BuildMI(*BB, MI, DL, TII->get(MOp))
+                                .addReg(/*Base=*/MSrc)
+                                .addImm(/*Scale=*/1)
+                                .addReg(/*Index=*/0)
+                                .addImm(0)
+                                .addReg(0);
+  MachineInstr *MIO = BuildMI(*BB, (MachineInstr *)MIM, DL, TII->get(FOp),
+                              MRI.createVirtualRegister(MRI.getRegClass(VSrc)))
+                          .addReg(VSrc)
+                          .addReg(/*Base=*/MSrc)
+                          .addImm(/*Scale=*/1)
+                          .addReg(/*Index=*/0)
+                          .addImm(/*Disp=*/0)
+                          .addReg(/*Segment=*/0);
+  MIM.addReg(MIO->getOperand(0).getReg(), RegState::Kill);
+  MI->eraseFromParent(); // The pseudo instruction is gone now.
+  return BB;
+}
+
+MachineBasicBlock *
 X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
                                         MachineBasicBlock *BB) const {
   MachineFunction *MF = BB->getParent();
@@ -20686,6 +20725,10 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::CMOV_V32I1:
   case X86::CMOV_V64I1:
     return EmitLoweredSelect(MI, BB);
+
+  case X86::RELEASE_FADD32mr:
+  case X86::RELEASE_FADD64mr:
+    return EmitLoweredAtomicFP(MI, BB);
 
   case X86::FP32_TO_INT16_IN_MEM:
   case X86::FP32_TO_INT32_IN_MEM:
