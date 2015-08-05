@@ -204,9 +204,14 @@ static inline int CharCmpX(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
 }
 
+DECLARE_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_strcmp, uptr called_pc,
+                              const char *s1, const char *s2)
+
 INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, strcmp, s1, s2);
+  CALL_WEAK_INTERCEPTOR_HOOK(__sanitizer_weak_hook_strcmp, GET_CALLER_PC(), s1,
+                             s2);
   unsigned char c1, c2;
   uptr i;
   for (i = 0;; i++) {

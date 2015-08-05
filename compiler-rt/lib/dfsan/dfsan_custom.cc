@@ -124,10 +124,16 @@ SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_memcmp(const void *s1, const void *s2,
   return 0;
 }
 
+DECLARE_WEAK_INTERCEPTOR_HOOK(dfsan_weak_hook_strcmp, uptr caller_pc,
+                              const char *s1, const char *s2,
+                              dfsan_label s1_label, dfsan_label s2_label)
+
 SANITIZER_INTERFACE_ATTRIBUTE int __dfsw_strcmp(const char *s1, const char *s2,
                                                 dfsan_label s1_label,
                                                 dfsan_label s2_label,
                                                 dfsan_label *ret_label) {
+  CALL_WEAK_INTERCEPTOR_HOOK(dfsan_weak_hook_strcmp, GET_CALLER_PC(), s1, s2,
+                             s1_label, s2_label);
   for (size_t i = 0;; ++i) {
     if (s1[i] != s2[i] || s1[i] == 0 || s2[i] == 0) {
       if (flags().strict_data_dependencies) {
