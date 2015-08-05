@@ -189,7 +189,60 @@ define void @foo18(float ** noalias readonly %from, float ** %to) {
   ret void
 }
 
-!nvvm.annotations = !{!1 ,!2 ,!3 ,!4 ,!5 ,!6, !7 ,!8 ,!9 ,!10 ,!11 ,!12, !13, !14, !15, !16, !17, !18}
+; Test that we can infer a cached load for a pointer induction variable.
+; SM20-LABEL: .visible .entry foo19(
+; SM20: ld.global.f32
+; SM35-LABEL: .visible .entry foo19(
+; SM35: ld.global.nc.f32
+define void @foo19(float * noalias readonly %from, float * %to, i32 %n) {
+entry:
+  br label %loop
+
+loop:
+  %i = phi i32 [ 0, %entry ], [ %nexti, %loop ]
+  %sum = phi float [ 0.0, %entry ], [ %nextsum, %loop ]
+  %ptr = getelementptr inbounds float, float * %from, i32 %i
+  %value = load float, float * %ptr, align 4
+  %nextsum = fadd float %value, %sum
+  %nexti = add nsw i32 %i, 1
+  %exitcond = icmp eq i32 %nexti, %n
+  br i1 %exitcond, label %exit, label %loop
+
+exit:
+  store float %nextsum, float * %to
+  ret void
+}
+
+; This test captures the case of a non-kernel function. In a
+; non-kernel function, without interprocedural analysis, we do not
+; know that the parameter is global. We also do not know that the
+; pointed-to memory is never written to (for the duration of the
+; kernel). For both reasons, we cannot use a cached load here.
+; SM20-LABEL: notkernel(
+; SM20: ld.f32
+; SM35-LABEL: notkernel(
+; SM35: ld.f32
+define void @notkernel(float * noalias readonly %from, float * %to) {
+  %1 = load float, float * %from
+  store float %1, float * %to
+  ret void
+}
+
+; As @notkernel, but with the parameter explicitly marked as global. We still
+; do not know that the parameter is never written to (for the duration of the
+; kernel). This case does not currently come up normally since we do not infer
+; that pointers are global interprocedurally as of 2015-08-05.
+; SM20-LABEL: notkernel2(
+; SM20: ld.global.f32
+; SM35-LABEL: notkernel2(
+; SM35: ld.global.f32
+define void @notkernel2(float addrspace(1) * noalias readonly %from, float * %to) {
+  %1 = load float, float addrspace(1) * %from
+  store float %1, float * %to
+  ret void
+}
+
+!nvvm.annotations = !{!1 ,!2 ,!3 ,!4 ,!5 ,!6, !7 ,!8 ,!9 ,!10 ,!11 ,!12, !13, !14, !15, !16, !17, !18, !19}
 !1 = !{void (float *, float *)* @foo1, !"kernel", i32 1}
 !2 = !{void (double *, double *)* @foo2, !"kernel", i32 1}
 !3 = !{void (i16 *, i16 *)* @foo3, !"kernel", i32 1}
@@ -208,3 +261,4 @@ define void @foo18(float ** noalias readonly %from, float ** %to) {
 !16 = !{void (<4 x float> *, <4 x float> *)* @foo16, !"kernel", i32 1}
 !17 = !{void (<4 x double> *, <4 x double> *)* @foo17, !"kernel", i32 1}
 !18 = !{void (float **, float **)* @foo18, !"kernel", i32 1}
+!19 = !{void (float *, float *, i32)* @foo19, !"kernel", i32 1}

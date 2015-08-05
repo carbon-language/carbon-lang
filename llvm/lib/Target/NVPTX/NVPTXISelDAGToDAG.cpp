@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXISelDAGToDAG.h"
+#include "NVPTXUtilities.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Instructions.h"
@@ -546,18 +547,36 @@ static unsigned int getCodeAddrSpace(MemSDNode *N) {
 }
 
 static bool canLowerToLDG(MemSDNode *N, const NVPTXSubtarget &Subtarget,
-                          unsigned codeAddrSpace, const DataLayout &DL) {
-  if (!Subtarget.hasLDG() || codeAddrSpace != NVPTX::PTXLdStInstCode::GLOBAL) {
+                          unsigned CodeAddrSpace, MachineFunction *F) {
+  // To use non-coherent caching, the load has to be from global
+  // memory and we have to prove that the memory area is not written
+  // to anywhere for the duration of the kernel call, not even after
+  // the load.
+  //
+  // To ensure that there are no writes to the memory, we require the
+  // underlying pointer to be a noalias (__restrict) kernel parameter
+  // that is never used for a write. We can only do this for kernel
+  // functions since from within a device function, we cannot know if
+  // there were or will be writes to the memory from the caller - or we
+  // could, but then we would have to do inter-procedural analysis.
+  if (!Subtarget.hasLDG() || CodeAddrSpace != NVPTX::PTXLdStInstCode::GLOBAL ||
+      !isKernelFunction(*F->getFunction())) {
     return false;
   }
 
-  // Check whether load operates on a readonly argument.
-  bool canUseLDG = false;
-  if (const Argument *A = dyn_cast<const Argument>(
-          GetUnderlyingObject(N->getMemOperand()->getValue(), DL)))
-    canUseLDG = A->onlyReadsMemory() && A->hasNoAliasAttr();
+  // We use GetUnderlyingObjects() here instead of
+  // GetUnderlyingObject() mainly because the former looks through phi
+  // nodes while the latter does not. We need to look through phi
+  // nodes to handle pointer induction variables.
+  SmallVector<Value *, 8> Objs;
+  GetUnderlyingObjects(const_cast<Value *>(N->getMemOperand()->getValue()),
+                       Objs, F->getDataLayout());
+  for (Value *Obj : Objs) {
+    auto *A = dyn_cast<const Argument>(Obj);
+    if (!A || !A->onlyReadsMemory() || !A->hasNoAliasAttr()) return false;
+  }
 
-  return canUseLDG;
+  return true;
 }
 
 SDNode *NVPTXDAGToDAGISel::SelectIntrinsicNoChain(SDNode *N) {
@@ -654,7 +673,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoad(SDNode *N) {
   // Address Space Setting
   unsigned int codeAddrSpace = getCodeAddrSpace(LD);
 
-  if (canLowerToLDG(LD, *Subtarget, codeAddrSpace, CurDAG->getDataLayout())) {
+  if (canLowerToLDG(LD, *Subtarget, codeAddrSpace, MF)) {
     return SelectLDGLDU(N);
   }
 
@@ -892,7 +911,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoadVector(SDNode *N) {
   // Address Space Setting
   unsigned int CodeAddrSpace = getCodeAddrSpace(MemSD);
 
-  if (canLowerToLDG(MemSD, *Subtarget, CodeAddrSpace, CurDAG->getDataLayout())) {
+  if (canLowerToLDG(MemSD, *Subtarget, CodeAddrSpace, MF)) {
     return SelectLDGLDU(N);
   }
 
