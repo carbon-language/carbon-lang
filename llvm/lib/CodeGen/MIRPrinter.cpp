@@ -529,6 +529,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
       OS << "killed ";
     if (Op.isUndef())
       OS << "undef ";
+    if (Op.isEarlyClobber())
+      OS << "early-clobber ";
     if (Op.isDebug())
       OS << "debug-use ";
     printReg(Op.getReg(), OS, TRI);
