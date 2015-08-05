@@ -2447,8 +2447,8 @@ bool AArch64FastISel::selectIndirectBr(const Instruction *I) {
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II).addReg(AddrReg);
 
   // Make sure the CFG is up-to-date.
-  for (unsigned i = 0, e = BI->getNumSuccessors(); i != e; ++i)
-    FuncInfo.MBB->addSuccessor(FuncInfo.MBBMap[BI->getSuccessor(i)]);
+  for (auto *Succ : BI->successors())
+    FuncInfo.MBB->addSuccessor(FuncInfo.MBBMap[Succ]);
 
   return true;
 }

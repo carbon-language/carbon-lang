@@ -91,6 +91,183 @@ public:
       return false;
     }
   }
+
+  //===--------------------------------------------------------------------===//
+  // succ_iterator definition
+  //===--------------------------------------------------------------------===//
+
+  template <class Term, class BB> // Successor Iterator
+  class SuccIterator : public std::iterator<std::random_access_iterator_tag, BB,
+                                            int, BB *, BB *> {
+    typedef std::iterator<std::random_access_iterator_tag, BB, int, BB *, BB *>
+        super;
+
+  public:
+    typedef typename super::pointer pointer;
+    typedef typename super::reference reference;
+
+  private:
+    Term TermInst;
+    unsigned idx;
+    typedef SuccIterator<Term, BB> Self;
+
+    inline bool index_is_valid(unsigned idx) {
+      return idx >= 0 && idx < TermInst->getNumSuccessors();
+    }
+
+    /// \brief Proxy object to allow write access in operator[]
+    class SuccessorProxy {
+      Self it;
+
+    public:
+      explicit SuccessorProxy(const Self &it) : it(it) {}
+
+      SuccessorProxy(const SuccessorProxy &) = default;
+
+      SuccessorProxy &operator=(SuccessorProxy r) {
+        *this = reference(r);
+        return *this;
+      }
+
+      SuccessorProxy &operator=(reference r) {
+        it.TermInst->setSuccessor(it.idx, r);
+        return *this;
+      }
+
+      operator reference() const { return *it; }
+    };
+
+  public:
+    // begin iterator
+    explicit inline SuccIterator(Term T) : TermInst(T), idx(0) {}
+    // end iterator
+    inline SuccIterator(Term T, bool) : TermInst(T) {
+      if (TermInst)
+        idx = TermInst->getNumSuccessors();
+      else
+        // Term == NULL happens, if a basic block is not fully constructed and
+        // consequently getTerminator() returns NULL. In this case we construct
+        // a SuccIterator which describes a basic block that has zero
+        // successors.
+        // Defining SuccIterator for incomplete and malformed CFGs is especially
+        // useful for debugging.
+        idx = 0;
+    }
+
+    /// This is used to interface between code that wants to
+    /// operate on terminator instructions directly.
+    unsigned getSuccessorIndex() const { return idx; }
+
+    inline bool operator==(const Self &x) const { return idx == x.idx; }
+    inline bool operator!=(const Self &x) const { return !operator==(x); }
+
+    inline reference operator*() const { return TermInst->getSuccessor(idx); }
+    inline pointer operator->() const { return operator*(); }
+
+    inline Self &operator++() {
+      ++idx;
+      return *this;
+    } // Preincrement
+
+    inline Self operator++(int) { // Postincrement
+      Self tmp = *this;
+      ++*this;
+      return tmp;
+    }
+
+    inline Self &operator--() {
+      --idx;
+      return *this;
+    }                             // Predecrement
+    inline Self operator--(int) { // Postdecrement
+      Self tmp = *this;
+      --*this;
+      return tmp;
+    }
+
+    inline bool operator<(const Self &x) const {
+      assert(TermInst == x.TermInst &&
+             "Cannot compare iterators of different blocks!");
+      return idx < x.idx;
+    }
+
+    inline bool operator<=(const Self &x) const {
+      assert(TermInst == x.TermInst &&
+             "Cannot compare iterators of different blocks!");
+      return idx <= x.idx;
+    }
+    inline bool operator>=(const Self &x) const {
+      assert(TermInst == x.TermInst &&
+             "Cannot compare iterators of different blocks!");
+      return idx >= x.idx;
+    }
+
+    inline bool operator>(const Self &x) const {
+      assert(TermInst == x.TermInst &&
+             "Cannot compare iterators of different blocks!");
+      return idx > x.idx;
+    }
+
+    inline Self &operator+=(int Right) {
+      unsigned new_idx = idx + Right;
+      assert(index_is_valid(new_idx) && "Iterator index out of bound");
+      idx = new_idx;
+      return *this;
+    }
+
+    inline Self operator+(int Right) const {
+      Self tmp = *this;
+      tmp += Right;
+      return tmp;
+    }
+
+    inline Self &operator-=(int Right) { return operator+=(-Right); }
+
+    inline Self operator-(int Right) const { return operator+(-Right); }
+
+    inline int operator-(const Self &x) const {
+      assert(TermInst == x.TermInst &&
+             "Cannot work on iterators of different blocks!");
+      int distance = idx - x.idx;
+      return distance;
+    }
+
+    inline SuccessorProxy operator[](int offset) {
+      Self tmp = *this;
+      tmp += offset;
+      return SuccessorProxy(tmp);
+    }
+
+    /// Get the source BB of this iterator.
+    inline BB *getSource() {
+      assert(TermInst && "Source not available, if basic block was malformed");
+      return TermInst->getParent();
+    }
+  };
+
+  typedef SuccIterator<TerminatorInst *, BasicBlock> succ_iterator;
+  typedef SuccIterator<const TerminatorInst *, const BasicBlock>
+      succ_const_iterator;
+  typedef llvm::iterator_range<succ_iterator> succ_range;
+  typedef llvm::iterator_range<succ_const_iterator> succ_const_range;
+
+private:
+  inline succ_iterator succ_begin() { return succ_iterator(this); }
+  inline succ_const_iterator succ_begin() const {
+    return succ_const_iterator(this);
+  }
+  inline succ_iterator succ_end() { return succ_iterator(this, true); }
+  inline succ_const_iterator succ_end() const {
+    return succ_const_iterator(this, true);
+  }
+
+public:
+  inline succ_range successors() {
+    return succ_range(succ_begin(), succ_end());
+  }
+  inline succ_const_range successors() const {
+    return succ_const_range(succ_begin(), succ_end());
+  }
 };
 
 
