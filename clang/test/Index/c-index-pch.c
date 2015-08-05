@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-pch -x c -o %t.pch %S/Inputs/c-index-pch.h
-// RUN: %clang_cc1 -include-pch %t.pch -x c -emit-pch -o %t.ast %s
+// RUN: c-index-test -write-pch %t.pch -x c %S/Inputs/c-index-pch.h
+// RUN: c-index-test -write-pch %t.ast -Xclang -include-pch -Xclang %t.pch -x c %s
 // RUN: c-index-test -test-load-tu %t.ast all | FileCheck -check-prefix=ALL %s
 // ALL: FunctionDecl=foo
 // ALL: VarDecl=bar

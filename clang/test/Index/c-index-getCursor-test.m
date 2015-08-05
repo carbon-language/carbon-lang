@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fblocks -emit-pch -x objective-c %s -detailed-preprocessing-record -o %t.ast
+// RUN: c-index-test -write-pch %t.ast -Xclang -triple -Xclang x86_64-apple-darwin10 -fblocks -x objective-c %s
 // RUN: c-index-test -test-file-scan %t.ast %s > %t 2>&1 && FileCheck --input-file=%t %s
 @interface Foo 
 {

@@ -73,7 +73,7 @@ int trdoxyO;
 // RUN: rm -rf %t
 // RUN: mkdir %t
 
-// RUN: %clang_cc1 -fparse-all-comments -x c++ -std=c++11 -emit-pch -o %t/out.pch %s
+// RUN: c-index-test -write-pch %t/out.pch -fparse-all-comments -x c++ -std=c++11 %s
 
 // RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s -std=c++11 -fparse-all-comments > %t/out.c-index-direct
 // RUN: c-index-test -test-load-tu %t/out.pch all > %t/out.c-index-pch

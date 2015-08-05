@@ -5,6 +5,7 @@
 // RUN: %clang_cc1 -fcomment-block-commands=CustomCommand -x c++ -std=c++11 -emit-pch -o %t/out.pch %s
 // RUN: %clang_cc1 -x c++ -std=c++11 -fcomment-block-commands=CustomCommand -include-pch %t/out.pch -fsyntax-only %s
 
+// RUN: c-index-test -write-pch %t/out.pch -fcomment-block-commands=CustomCommand -x c++ -std=c++11 %s
 // RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s -std=c++11 -fcomment-block-commands=CustomCommand > %t/out.c-index-direct
 // RUN: c-index-test -test-load-tu %t/out.pch all > %t/out.c-index-pch
 

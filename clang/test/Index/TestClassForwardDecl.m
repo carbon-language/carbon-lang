@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fblocks -emit-pch -x objective-c %s -o %t.ast
+// RUN: c-index-test -write-pch %t.ast -Xclang -triple -Xclang x86_64-apple-darwin10 -fblocks -x objective-c %s
 // RUN: c-index-test -test-file-scan %t.ast %s | FileCheck -check-prefix=CHECK-scan %s
 // RUN: c-index-test -test-load-tu %t.ast local | FileCheck -check-prefix=CHECK-load %s
 // REQUIRES: x86-registered-target

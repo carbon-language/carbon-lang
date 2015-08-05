@@ -14,7 +14,7 @@ void msg_id(id x) {
 // REQUIRES: native
 
 // Build the precompiled header
-// RUN: %clang -x objective-c-header -o %t.h.pch %S/Inputs/complete-pch.h
+// RUN: c-index-test -write-pch %t.h.pch -x objective-c-header %S/Inputs/complete-pch.h
 
 // Run the actual tests
 // RUN: c-index-test -code-completion-at=%s:10:7 -include %t.h %s | FileCheck -check-prefix=CHECK-CC1 %s
