@@ -70,16 +70,15 @@ else()
  message( SEND_ERROR "Unknown ANDROID_ABI = \"${ANDROID_ABI}\"." )
 endif()
 
-set( ANDROID_TOOLCHAIN_DIR "${ANDROID_TOOLCHAIN_DIR}" CACHE INTERNAL "Android standalone toolchain directory" FORCE )
-set( ANDROID_SYSROOT "${ANDROID_TOOLCHAIN_DIR}/sysroot" CACHE INTERNAL "Android Sysroot" FORCE )
+set( ANDROID_TOOLCHAIN_DIR "${ANDROID_TOOLCHAIN_DIR}" CACHE PATH "Android standalone toolchain directory" )
+set( ANDROID_SYSROOT "${ANDROID_TOOLCHAIN_DIR}/sysroot" CACHE PATH "Android Sysroot" )
 
 # CMAKE_EXECUTABLE_SUFFIX is undefined in CMAKE_TOOLCHAIN_FILE
 if( WIN32 )
  set( EXECUTABLE_SUFFIX ".exe" )
 endif()
 
-# force python exe to be the one in Android toolchian
-set( PYTHON_EXECUTABLE "${ANDROID_TOOLCHAIN_DIR}/bin/python${EXECUTABLE_SUFFIX}" CACHE INTERNAL "Python exec path" FORCE )
+set( PYTHON_EXECUTABLE "${ANDROID_TOOLCHAIN_DIR}/bin/python${EXECUTABLE_SUFFIX}" CACHE PATH "Python exec path" )
 
 if( NOT CMAKE_C_COMPILER )
  set( CMAKE_C_COMPILER   "${ANDROID_TOOLCHAIN_DIR}/bin/${ANDROID_TOOLCHAIN_NAME}-gcc${EXECUTABLE_SUFFIX}"     CACHE PATH "C compiler" )
@@ -119,27 +118,6 @@ endif()
 set( ANDROID_CXX_FLAGS    "${ANDROID_CXX_FLAGS} -fdata-sections -ffunction-sections" )
 set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -Wl,--gc-sections" )
 
-################# BEGIN EVIL HACK ##################
-# lldb-server links against libdl even though it's not being used and
-# libdl.a is currently missing from the toolchain (b.android.com/178517).
-# Therefore, in order to statically link lldb-server, we need a temporary
-# workaround. This creates a dummy libdl.a stub until the actual
-# libdl.a can be implemented in the toolchain.
-if( LLVM_BUILD_STATIC )
- set( ANDROID_LIBDL_STUB "${CMAKE_BINARY_DIR}/libdl_stub" )
- file( MAKE_DIRECTORY ${ANDROID_LIBDL_STUB} )
- file( WRITE "${ANDROID_LIBDL_STUB}/libdl.c" "
-#include <dlfcn.h>
-void *       dlopen  (const char *filename, int flag)   { return 0; }
-const char * dlerror (void)                             { return 0; }
-void *       dlsym   (void *handle, const char *symbol) { return 0; }
-int          dlclose (void *handle)                     { return 0; }")
- execute_process( COMMAND ${CMAKE_C_COMPILER} -c ${ANDROID_LIBDL_STUB}/libdl.c -o ${ANDROID_LIBDL_STUB}/libdl.o )
- execute_process( COMMAND ${CMAKE_AR} rcs ${ANDROID_LIBDL_STUB}/libdl.a ${ANDROID_LIBDL_STUB}/libdl.o )
- set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -L${ANDROID_LIBDL_STUB}" )
-endif()
-################# END EVIL HACK ##################
-
 # cache flags
 set( CMAKE_CXX_FLAGS           ""                        CACHE STRING "c++ flags" )
 set( CMAKE_C_FLAGS             ""                        CACHE STRING "c flags" )
@@ -164,3 +142,28 @@ set( CMAKE_FIND_ROOT_PATH "${ANDROID_TOOLCHAIN_DIR}/bin" "${ANDROID_TOOLCHAIN_DI
 set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
 set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
+
+################# BEGIN EVIL HACK ##################
+# lldb-server links against libdl even though it's not being used and
+# libdl.a is currently missing from the toolchain (b.android.com/178517).
+# Therefore, in order to statically link lldb-server, we need a temporary
+# workaround. This creates a dummy libdl.a stub until the actual
+# libdl.a can be implemented in the toolchain.
+if( LLVM_BUILD_STATIC )
+ set( ANDROID_LIBDL_STUB "${CMAKE_BINARY_DIR}/libdl_stub" )
+ file( MAKE_DIRECTORY ${ANDROID_LIBDL_STUB} )
+ file( WRITE "${ANDROID_LIBDL_STUB}/libdl.c" "
+#include <dlfcn.h>
+void *       dlopen  (const char *filename, int flag)   { return 0; }
+const char * dlerror (void)                             { return 0; }
+void *       dlsym   (void *handle, const char *symbol) { return 0; }
+int          dlclose (void *handle)                     { return 0; }")
+ set( SEPARATED_C_FLAGS "${CMAKE_C_FLAGS}" )
+ separate_arguments( SEPARATED_C_FLAGS )
+ execute_process( COMMAND ${CMAKE_C_COMPILER} ${SEPARATED_C_FLAGS} -c ${ANDROID_LIBDL_STUB}/libdl.c -o ${ANDROID_LIBDL_STUB}/libdl.o )
+ execute_process( COMMAND ${CMAKE_AR} rcs ${ANDROID_LIBDL_STUB}/libdl.a ${ANDROID_LIBDL_STUB}/libdl.o )
+ set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${ANDROID_LIBDL_STUB}" )
+ unset( ANDROID_LIBDL_STUB )
+ unset( SEPARATED_C_FLAGS )
+endif()
+################# END EVIL HACK ##################
