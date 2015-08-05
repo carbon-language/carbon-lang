@@ -1,4 +1,4 @@
-//===- llvm/Support/Windows/COM.inc - Windows COM Implementation *- C++ -*-===//
+//==- llvm/Support/Windows/COM.inc - Windows COM Implementation -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
