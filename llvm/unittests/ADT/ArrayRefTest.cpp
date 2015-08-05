@@ -46,6 +46,9 @@ TEST(ArrayRefTest, AllocatorCopy) {
   EXPECT_TRUE(Array2.equals(Array2c));
   EXPECT_NE(Array2.data(), Array2c.data());
 
+#if __GNUC__==4 && __GNUC_MINOR__==8
+  // g++-4.8 cannot compile the block below.
+#else
   // Check that copy can cope with uninitialized memory.
   struct NonAssignable {
     const char *Ptr;
@@ -57,6 +60,7 @@ TEST(ArrayRefTest, AllocatorCopy) {
   ArrayRef<NonAssignable> Array3Copy = makeArrayRef(Array3Src).copy(Alloc);
   EXPECT_EQ(makeArrayRef(Array3Src), Array3Copy);
   EXPECT_NE(makeArrayRef(Array3Src).data(), Array3Copy.data());
+#endif
 }
 
 TEST(ArrayRefTest, DropBack) {
