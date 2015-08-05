@@ -168,6 +168,8 @@ namespace llvm {
 void initializeAArch64CollectLOHPass(PassRegistry &);
 }
 
+#define AARCH64_COLLECT_LOH_NAME "AArch64 Collect Linker Optimization Hint (LOH)"
+
 namespace {
 struct AArch64CollectLOH : public MachineFunctionPass {
   static char ID;
@@ -178,7 +180,7 @@ struct AArch64CollectLOH : public MachineFunctionPass {
   bool runOnMachineFunction(MachineFunction &MF) override;
 
   const char *getPassName() const override {
-    return "AArch64 Collect Linker Optimization Hint (LOH)";
+    return AARCH64_COLLECT_LOH_NAME;
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -220,12 +222,10 @@ typedef SmallVector<unsigned, 32> MapIdToReg;
 char AArch64CollectLOH::ID = 0;
 
 INITIALIZE_PASS_BEGIN(AArch64CollectLOH, "aarch64-collect-loh",
-                      "AArch64 Collect Linker Optimization Hint (LOH)", false,
-                      false)
+                      AARCH64_COLLECT_LOH_NAME, false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_END(AArch64CollectLOH, "aarch64-collect-loh",
-                    "AArch64 Collect Linker Optimization Hint (LOH)", false,
-                    false)
+                    AARCH64_COLLECT_LOH_NAME, false, false)
 
 /// Given a couple (MBB, reg) get the corresponding set of instruction from
 /// the given "sets".
