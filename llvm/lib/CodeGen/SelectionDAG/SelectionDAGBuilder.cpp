@@ -79,7 +79,7 @@ LimitFPPrecision("limit-float-precision",
                  cl::init(0));
 
 static cl::opt<bool>
-EnableFMFInDAG("enable-fmf-dag", cl::init(true), cl::Hidden,
+EnableFMFInDAG("enable-fmf-dag", cl::init(false), cl::Hidden,
                 cl::desc("Enable fast-math-flags for DAG nodes"));
 
 // Limit the width of DAG chains. This is important in general to prevent
