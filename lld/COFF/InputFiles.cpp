@@ -10,7 +10,7 @@
 #include "Chunks.h"
 #include "Error.h"
 #include "InputFiles.h"
-#include "Writer.h"
+#include "Symbols.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/LTO/LTOModule.h"
 #include "llvm/Object/COFF.h"

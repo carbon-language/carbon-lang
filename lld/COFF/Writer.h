@@ -21,10 +21,6 @@
 namespace lld {
 namespace coff {
 
-// Mask for section types (code, data, bss, disacardable, etc.)
-// and permissions (writable, readable or executable).
-const uint32_t PermMask = 0xFF0000F0;
-
 // Implemented in ICF.cpp.
 void doICF(const std::vector<Chunk *> &Chunks);
 

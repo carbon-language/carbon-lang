@@ -9,7 +9,7 @@
 
 #include "Chunks.h"
 #include "InputFiles.h"
-#include "Writer.h"
+#include "Symbols.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"

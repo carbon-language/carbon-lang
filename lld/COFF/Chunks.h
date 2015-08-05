@@ -37,6 +37,10 @@ class ObjectFile;
 class OutputSection;
 class SymbolBody;
 
+// Mask for section types (code, data, bss, disacardable, etc.)
+// and permissions (writable, readable or executable).
+const uint32_t PermMask = 0xFF0000F0;
+
 // A Chunk represents a chunk of data that will occupy space in the
 // output (if the resolver chose that). It may or may not be backed by
 // a section of an input file. It could be linker-created data, or
