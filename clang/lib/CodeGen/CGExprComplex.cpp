@@ -83,10 +83,10 @@ public:
   /// specified value pointer.
   void EmitStoreOfComplex(ComplexPairTy Val, LValue LV, bool isInit);
 
-  /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
+  /// Emit a cast from complex value Val to DestType.
   ComplexPairTy EmitComplexToComplexCast(ComplexPairTy Val, QualType SrcType,
                                          QualType DestType);
-  /// EmitComplexToComplexCast - Emit a cast from scalar value Val to DestType.
+  /// Emit a cast from scalar value Val to DestType.
   ComplexPairTy EmitScalarToComplexCast(llvm::Value *Val, QualType SrcType,
                                         QualType DestType);
 
@@ -391,7 +391,7 @@ ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {
                           E->getExprLoc());
 }
 
-/// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
+/// Emit a cast from complex value Val to DestType.
 ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
                                                            QualType SrcType,
                                                            QualType DestType) {
