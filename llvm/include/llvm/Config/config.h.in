@@ -244,14 +244,8 @@
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
 
-/* Define to 1 if you have the `siglongjmp' function. */
-#undef HAVE_SIGLONGJMP
-
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
-
-/* Define to 1 if you have the `sigsetjmp' function. */
-#undef HAVE_SIGSETJMP
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
