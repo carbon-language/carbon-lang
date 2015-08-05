@@ -493,9 +493,16 @@ void CloseFile(fd_t fd) {
 bool ReadFromFile(fd_t fd, void *buff, uptr buff_size, uptr *bytes_read,
                   error_t *error_p) {
   CHECK(fd != kInvalidFd);
-  bool success = ::ReadFile(fd, buff, buff_size, bytes_read, nullptr);
+
+  // bytes_read can't be passed directly to ReadFile:
+  // uptr is unsigned long long on 64-bit Windows.
+  unsigned long num_read_long;
+
+  bool success = ::ReadFile(fd, buff, buff_size, &num_read_long, nullptr);
   if (!success && error_p)
     *error_p = GetLastError();
+  if (bytes_read)
+    *bytes_read = num_read_long;
   return success;
 }
 
