@@ -45,10 +45,6 @@ N: John McCall
 E: rjmccall@apple.com
 D: Clang LLVM IR generation
 
-N: Chad Rosier
-E: mcrosier@codeaurora.org
-D: Compiler driver
-
 N: Richard Smith
 E: richard@metafoo.co.uk
 D: All parts of Clang not covered by someone else
