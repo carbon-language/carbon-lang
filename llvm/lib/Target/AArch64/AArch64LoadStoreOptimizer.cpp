@@ -1098,8 +1098,8 @@ bool AArch64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
 // FIXME: Do we need/want a pre-alloc pass like ARM has to try to keep
 // loads and stores near one another?
 
-/// createARMLoadStoreOptimizationPass - returns an instance of the load / store
-/// optimization pass.
+/// createAArch64LoadStoreOptimizationPass - returns an instance of the
+/// load / store optimization pass.
 FunctionPass *llvm::createAArch64LoadStoreOptimizationPass() {
   return new AArch64LoadStoreOpt();
 }
