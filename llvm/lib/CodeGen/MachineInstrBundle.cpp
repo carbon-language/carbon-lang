@@ -310,7 +310,7 @@ MachineOperandIteratorBase::analyzePhysReg(unsigned Reg,
     if (!MOReg || !TargetRegisterInfo::isPhysicalRegister(MOReg))
       continue;
 
-    bool IsRegOrSuperReg = MOReg == Reg || TRI->isSuperRegister(MOReg, Reg);
+    bool IsRegOrSuperReg = MOReg == Reg || TRI->isSubRegister(MOReg, Reg);
     bool IsRegOrOverlapping = MOReg == Reg || TRI->regsOverlap(MOReg, Reg);
 
     if (IsRegOrSuperReg && MO.readsReg()) {

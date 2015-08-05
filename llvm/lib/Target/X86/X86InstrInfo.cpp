@@ -3903,56 +3903,34 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  bool FromEFLAGS = SrcReg == X86::EFLAGS;
-  bool ToEFLAGS = DestReg == X86::EFLAGS;
-  int Reg = FromEFLAGS ? DestReg : SrcReg;
-  bool is32 = X86::GR32RegClass.contains(Reg);
-  bool is64 = X86::GR64RegClass.contains(Reg);
-  if ((FromEFLAGS || ToEFLAGS) && (is32 || is64)) {
-    // The flags need to be saved, but saving EFLAGS with PUSHF/POPF is
-    // inefficient. Instead:
-    //   - Save the overflow flag OF into AL using SETO, and restore it using a
-    //     signed 8-bit addition of AL and INT8_MAX.
-    //   - Save/restore the bottom 8 EFLAGS bits (CF, PF, AF, ZF, SF) to/from AH
-    //     using LAHF/SAHF.
-    //   - When RAX/EAX is live and isn't the destination register, make sure it
-    //     isn't clobbered by PUSH/POP'ing it before and after saving/restoring
-    //     the flags.
-    // This approach is ~2.25x faster than using PUSHF/POPF.
-    //
-    // This is still somewhat inefficient because we don't know which flags are
-    // actually live inside EFLAGS. Were we able to do a single SETcc instead of
-    // SETO+LAHF / ADDB+SAHF the code could be 1.02x faster.
-    //
-    // Notice that we have to adjust the stack if we don't want to clobber the
-    // first frame index. See X86FrameLowering.cpp - clobbersTheStack.
-
-    int Mov = is64 ? X86::MOV64rr : X86::MOV32rr;
-    int Push = is64 ? X86::PUSH64r : X86::PUSH32r;
-    int Pop = is64 ? X86::POP64r : X86::POP32r;
-    int AX = is64 ? X86::RAX : X86::EAX;
-
-    bool AXDead = (Reg == AX) ||
-                  (MachineBasicBlock::LQR_Dead ==
-                   MBB.computeRegisterLiveness(&getRegisterInfo(), AX, MI));
-
-    if (!AXDead)
-      BuildMI(MBB, MI, DL, get(Push)).addReg(AX, getKillRegState(true));
-    if (FromEFLAGS) {
-      BuildMI(MBB, MI, DL, get(X86::SETOr), X86::AL);
-      BuildMI(MBB, MI, DL, get(X86::LAHF));
-      BuildMI(MBB, MI, DL, get(Mov), Reg).addReg(AX);
+  // Moving EFLAGS to / from another register requires a push and a pop.
+  // Notice that we have to adjust the stack if we don't want to clobber the
+  // first frame index. See X86FrameLowering.cpp - clobbersTheStack.
+  if (SrcReg == X86::EFLAGS) {
+    if (X86::GR64RegClass.contains(DestReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSHF64));
+      BuildMI(MBB, MI, DL, get(X86::POP64r), DestReg);
+      return;
     }
-    if (ToEFLAGS) {
-      BuildMI(MBB, MI, DL, get(Mov), AX).addReg(Reg, getKillRegState(KillSrc));
-      BuildMI(MBB, MI, DL, get(X86::ADD8ri), X86::AL)
-          .addReg(X86::AL)
-          .addImm(INT8_MAX);
-      BuildMI(MBB, MI, DL, get(X86::SAHF));
+    if (X86::GR32RegClass.contains(DestReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSHF32));
+      BuildMI(MBB, MI, DL, get(X86::POP32r), DestReg);
+      return;
     }
-    if (!AXDead)
-      BuildMI(MBB, MI, DL, get(Pop), AX);
-    return;
+  }
+  if (DestReg == X86::EFLAGS) {
+    if (X86::GR64RegClass.contains(SrcReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSH64r))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+      BuildMI(MBB, MI, DL, get(X86::POPF64));
+      return;
+    }
+    if (X86::GR32RegClass.contains(SrcReg)) {
+      BuildMI(MBB, MI, DL, get(X86::PUSH32r))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+      BuildMI(MBB, MI, DL, get(X86::POPF32));
+      return;
+    }
   }
 
   DEBUG(dbgs() << "Cannot copy " << RI.getName(SrcReg)
