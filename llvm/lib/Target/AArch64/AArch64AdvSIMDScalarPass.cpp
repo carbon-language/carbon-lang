@@ -61,6 +61,12 @@ STATISTIC(NumScalarInsnsUsed, "Number of scalar instructions used");
 STATISTIC(NumCopiesDeleted, "Number of cross-class copies deleted");
 STATISTIC(NumCopiesInserted, "Number of cross-class copies inserted");
 
+namespace llvm {
+void initializeAArch64AdvSIMDScalarPass(PassRegistry &);
+}
+
+#define AARCH64_ADVSIMD_NAME "AdvSIMD Scalar Operation Optimization"
+
 namespace {
 class AArch64AdvSIMDScalar : public MachineFunctionPass {
   MachineRegisterInfo *MRI;
@@ -82,12 +88,14 @@ private:
 
 public:
   static char ID; // Pass identification, replacement for typeid.
-  explicit AArch64AdvSIMDScalar() : MachineFunctionPass(ID) {}
+  explicit AArch64AdvSIMDScalar() : MachineFunctionPass(ID) {
+    initializeAArch64AdvSIMDScalarPass(*PassRegistry::getPassRegistry());
+  }
 
   bool runOnMachineFunction(MachineFunction &F) override;
 
   const char *getPassName() const override {
-    return "AdvSIMD Scalar Operation Optimization";
+    return AARCH64_ADVSIMD_NAME;
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -97,6 +105,9 @@ public:
 };
 char AArch64AdvSIMDScalar::ID = 0;
 } // end anonymous namespace
+
+INITIALIZE_PASS(AArch64AdvSIMDScalar, "aarch64-simd-scalar",
+                AARCH64_ADVSIMD_NAME, false, false)
 
 static bool isGPR64(unsigned Reg, unsigned SubReg,
                     const MachineRegisterInfo *MRI) {
