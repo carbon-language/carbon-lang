@@ -25,8 +25,8 @@ L_.str:
 @ CHECK: ('cputype', 12)
 @ CHECK: ('cpusubtype', 9)
 @ CHECK: ('filetype', 1)
-@ CHECK: ('num_load_commands', 3)
-@ CHECK: ('load_commands_size', 296)
+@ CHECK: ('num_load_commands', 4)
+@ CHECK: ('load_commands_size', 312)
 @ CHECK: ('flag', 8192)
 @ CHECK: ('load_commands', [
 @ CHECK:   # Load Command 0
@@ -35,7 +35,7 @@ L_.str:
 @ CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:   ('vm_addr', 0)
 @ CHECK:   ('vm_size', 11)
-@ CHECK:   ('file_offset', 324)
+@ CHECK:   ('file_offset', 340)
 @ CHECK:   ('file_size', 11)
 @ CHECK:   ('maxprot', 7)
 @ CHECK:   ('initprot', 7)
@@ -47,9 +47,9 @@ L_.str:
 @ CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:     ('address', 0)
 @ CHECK:     ('size', 8)
-@ CHECK:     ('offset', 324)
+@ CHECK:     ('offset', 340)
 @ CHECK:     ('alignment', 2)
-@ CHECK:     ('reloc_offset', 336)
+@ CHECK:     ('reloc_offset', 352)
 @ CHECK:     ('num_reloc', 3)
 @ CHECK:     ('flags', 0x80000400)
 @ CHECK:     ('reserved1', 0)
@@ -72,7 +72,7 @@ L_.str:
 @ CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:     ('address', 8)
 @ CHECK:     ('size', 3)
-@ CHECK:     ('offset', 332)
+@ CHECK:     ('offset', 348)
 @ CHECK:     ('alignment', 2)
 @ CHECK:     ('reloc_offset', 0)
 @ CHECK:     ('num_reloc', 0)
@@ -85,12 +85,12 @@ L_.str:
 @ CHECK:   ('_section_data', '733000')
 @ CHECK:   ])
 @ CHECK:  ),
-@ CHECK:   # Load Command 1
+@ CHECK:   # Load Command 2
 @ CHECK:  (('command', 2)
 @ CHECK:   ('size', 24)
-@ CHECK:   ('symoff', 360)
+@ CHECK:   ('symoff', 376)
 @ CHECK:   ('nsyms', 2)
-@ CHECK:   ('stroff', 384)
+@ CHECK:   ('stroff', 400)
 @ CHECK:   ('strsize', 16)
 @ CHECK:   ('_string_data', '\x00_main\x00_printf\x00\x00')
 @ CHECK:   ('_symbols', [
@@ -112,7 +112,7 @@ L_.str:
 @ CHECK:    ),
 @ CHECK:   ])
 @ CHECK:  ),
-@ CHECK:   # Load Command 2
+@ CHECK:   # Load Command 3
 @ CHECK:  (('command', 11)
 @ CHECK:   ('size', 80)
 @ CHECK:   ('ilocalsym', 0)

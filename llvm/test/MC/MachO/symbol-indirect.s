@@ -72,8 +72,8 @@ sym_nlp_G:
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 364)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 380)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -82,7 +82,7 @@ sym_nlp_G:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 40)
-// CHECK:   ('file_offset', 392)
+// CHECK:   ('file_offset', 408)
 // CHECK:   ('file_size', 40)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -93,7 +93,7 @@ sym_nlp_G:
 // CHECK:    (('section_name', '__text\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
-// CHECK:     ('offset', 392)
+// CHECK:     ('offset', 408)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -106,7 +106,7 @@ sym_nlp_G:
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 20)
-// CHECK:     ('offset', 392)
+// CHECK:     ('offset', 408)
 // CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -119,7 +119,7 @@ sym_nlp_G:
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 20)
 // CHECK:     ('size', 20)
-// CHECK:     ('offset', 412)
+// CHECK:     ('offset', 428)
 // CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -130,12 +130,12 @@ sym_nlp_G:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 472)
+// CHECK:   ('symoff', 488)
 // CHECK:   ('nsyms', 10)
-// CHECK:   ('stroff', 592)
+// CHECK:   ('stroff', 608)
 // CHECK:   ('strsize', 104)
 // CHECK:   ('_string_data', '\x00sym_lsp_G\x00sym_nlp_G\x00sym_lsp_E\x00sym_nlp_E\x00sym_lsp_C\x00sym_nlp_C\x00sym_lsp_B\x00sym_nlp_B\x00sym_lsp_A\x00sym_nlp_A\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
@@ -221,7 +221,7 @@ sym_nlp_G:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)
@@ -236,7 +236,7 @@ sym_nlp_G:
 // CHECK:   ('nmodtab', 0)
 // CHECK:   ('extrefsymoff', 0)
 // CHECK:   ('nextrefsyms', 0)
-// CHECK:   ('indirectsymoff', 432)
+// CHECK:   ('indirectsymoff', 448)
 // CHECK:   ('nindirectsyms', 10)
 // CHECK:   ('extreloff', 0)
 // CHECK:   ('nextrel', 0)

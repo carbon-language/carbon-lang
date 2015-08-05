@@ -160,8 +160,8 @@ f0:
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 296)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 312)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -170,7 +170,7 @@ f0:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 372)
-// CHECK:   ('file_offset', 324)
+// CHECK:   ('file_offset', 340)
 // CHECK:   ('file_size', 372)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -182,7 +182,7 @@ f0:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 337)
-// CHECK:     ('offset', 324)
+// CHECK:     ('offset', 340)
 // CHECK:     ('alignment', 4)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -198,7 +198,7 @@ f0:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 352)
 // CHECK:     ('size', 20)
-// CHECK:     ('offset', 676)
+// CHECK:     ('offset', 692)
 // CHECK:     ('alignment', 4)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -211,12 +211,12 @@ f0:
 // CHECK:   ('_section_data', '00909090 90909090 90909090 90909090 00000000')
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 696)
+// CHECK:   ('symoff', 712)
 // CHECK:   ('nsyms', 1)
-// CHECK:   ('stroff', 708)
+// CHECK:   ('stroff', 724)
 // CHECK:   ('strsize', 4)
 // CHECK:   ('_string_data', '\x00f0\x00')
 // CHECK:   ('_symbols', [
@@ -230,7 +230,7 @@ f0:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

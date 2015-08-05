@@ -49,8 +49,8 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386: ('cputype', 7)
 // CHECK-I386: ('cpusubtype', 3)
 // CHECK-I386: ('filetype', 1)
-// CHECK-I386: ('num_load_commands', 3)
-// CHECK-I386: ('load_commands_size', 296)
+// CHECK-I386: ('num_load_commands', 4)
+// CHECK-I386: ('load_commands_size', 312)
 // CHECK-I386: ('flag', 0)
 // CHECK-I386: ('load_commands', [
 // CHECK-I386:   # Load Command 0
@@ -59,7 +59,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-I386:   ('vm_addr', 0)
 // CHECK-I386:   ('vm_size', 57)
-// CHECK-I386:   ('file_offset', 324)
+// CHECK-I386:   ('file_offset', 340)
 // CHECK-I386:   ('file_size', 57)
 // CHECK-I386:   ('maxprot', 7)
 // CHECK-I386:   ('initprot', 7)
@@ -71,7 +71,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-I386:     ('address', 0)
 // CHECK-I386:     ('size', 1)
-// CHECK-I386:     ('offset', 324)
+// CHECK-I386:     ('offset', 340)
 // CHECK-I386:     ('alignment', 0)
 // CHECK-I386:     ('reloc_offset', 0)
 // CHECK-I386:     ('num_reloc', 0)
@@ -87,9 +87,9 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-I386:     ('address', 1)
 // CHECK-I386:     ('size', 56)
-// CHECK-I386:     ('offset', 325)
+// CHECK-I386:     ('offset', 341)
 // CHECK-I386:     ('alignment', 0)
-// CHECK-I386:     ('reloc_offset', 384)
+// CHECK-I386:     ('reloc_offset', 400)
 // CHECK-I386:     ('num_reloc', 9)
 // CHECK-I386:     ('flags', 0x0)
 // CHECK-I386:     ('reserved1', 0)
@@ -127,12 +127,12 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:   ('_section_data', '00000000 00000000 05000000 00000000 05000000 09000000 09000000 00000000 00000000 00000000 0d000000 0d000000 cfffffff ffffffff')
 // CHECK-I386:   ])
 // CHECK-I386:  ),
-// CHECK-I386:   # Load Command 1
+// CHECK-I386:   # Load Command 2
 // CHECK-I386:  (('command', 2)
 // CHECK-I386:   ('size', 24)
-// CHECK-I386:   ('symoff', 456)
+// CHECK-I386:   ('symoff', 472)
 // CHECK-I386:   ('nsyms', 10)
-// CHECK-I386:   ('stroff', 576)
+// CHECK-I386:   ('stroff', 592)
 // CHECK-I386:   ('strsize', 24)
 // CHECK-I386:   ('_string_data', '\x00g\x00f\x00e\x00d\x00c\x00b\x00a\x00d3\x00d2\x00t0\x00')
 // CHECK-I386:   ('_symbols', [
@@ -218,7 +218,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-I386:    ),
 // CHECK-I386:   ])
 // CHECK-I386:  ),
-// CHECK-I386:   # Load Command 2
+// CHECK-I386:   # Load Command 3
 // CHECK-I386:  (('command', 11)
 // CHECK-I386:   ('size', 80)
 // CHECK-I386:   ('ilocalsym', 0)
@@ -247,8 +247,8 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64: ('cputype', 16777223)
 // CHECK-X86_64: ('cpusubtype', 3)
 // CHECK-X86_64: ('filetype', 1)
-// CHECK-X86_64: ('num_load_commands', 3)
-// CHECK-X86_64: ('load_commands_size', 336)
+// CHECK-X86_64: ('num_load_commands', 4)
+// CHECK-X86_64: ('load_commands_size', 352)
 // CHECK-X86_64: ('flag', 0)
 // CHECK-X86_64: ('reserved', 0)
 // CHECK-X86_64: ('load_commands', [
@@ -258,7 +258,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_64:   ('vm_addr', 0)
 // CHECK-X86_64:   ('vm_size', 57)
-// CHECK-X86_64:   ('file_offset', 368)
+// CHECK-X86_64:   ('file_offset', 384)
 // CHECK-X86_64:   ('file_size', 57)
 // CHECK-X86_64:   ('maxprot', 7)
 // CHECK-X86_64:   ('initprot', 7)
@@ -270,7 +270,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_64:     ('address', 0)
 // CHECK-X86_64:     ('size', 1)
-// CHECK-X86_64:     ('offset', 368)
+// CHECK-X86_64:     ('offset', 384)
 // CHECK-X86_64:     ('alignment', 0)
 // CHECK-X86_64:     ('reloc_offset', 0)
 // CHECK-X86_64:     ('num_reloc', 0)
@@ -287,9 +287,9 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_64:     ('address', 1)
 // CHECK-X86_64:     ('size', 56)
-// CHECK-X86_64:     ('offset', 369)
+// CHECK-X86_64:     ('offset', 385)
 // CHECK-X86_64:     ('alignment', 0)
-// CHECK-X86_64:     ('reloc_offset', 428)
+// CHECK-X86_64:     ('reloc_offset', 444)
 // CHECK-X86_64:     ('num_reloc', 9)
 // CHECK-X86_64:     ('flags', 0x0)
 // CHECK-X86_64:     ('reserved1', 0)
@@ -328,12 +328,12 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:   ('_section_data', '00000000 00000000 00000000 00000000 00000000 00000000 04000000 00000000 00000000 00000000 00000000 00000000 cfffffff ffffffff')
 // CHECK-X86_64:   ])
 // CHECK-X86_64:  ),
-// CHECK-X86_64:   # Load Command 1
+// CHECK-X86_64:   # Load Command 2
 // CHECK-X86_64:  (('command', 2)
 // CHECK-X86_64:   ('size', 24)
-// CHECK-X86_64:   ('symoff', 500)
+// CHECK-X86_64:   ('symoff', 516)
 // CHECK-X86_64:   ('nsyms', 10)
-// CHECK-X86_64:   ('stroff', 660)
+// CHECK-X86_64:   ('stroff', 676)
 // CHECK-X86_64:   ('strsize', 24)
 // CHECK-X86_64:   ('_string_data', '\x00g\x00f\x00e\x00d\x00c\x00b\x00a\x00d3\x00d2\x00t0\x00')
 // CHECK-X86_64:   ('_symbols', [
@@ -419,7 +419,7 @@ Lt0_x = Lt0_a - Lt0_b
 // CHECK-X86_64:    ),
 // CHECK-X86_64:   ])
 // CHECK-X86_64:  ),
-// CHECK-X86_64:   # Load Command 2
+// CHECK-X86_64:   # Load Command 3
 // CHECK-X86_64:  (('command', 11)
 // CHECK-X86_64:   ('size', 80)
 // CHECK-X86_64:   ('ilocalsym', 0)

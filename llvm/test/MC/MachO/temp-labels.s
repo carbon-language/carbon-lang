@@ -1,11 +1,11 @@
 // RUN: llvm-mc -triple x86_64-apple-darwin10 %s -filetype=obj -save-temp-labels -o - | macho-dump --dump-section-data | FileCheck %s
 
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 296)
+// CHECK:   ('symoff', 312)
 // CHECK:   ('nsyms', 2)
-// CHECK:   ('stroff', 328)
+// CHECK:   ('stroff', 344)
 // CHECK:   ('strsize', 8)
 // CHECK:   ('_string_data', '\x00_f0\x00L0\x00')
 // CHECK:   ('_symbols', [

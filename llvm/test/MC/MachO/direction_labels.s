@@ -14,8 +14,8 @@ direction_labels:
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 228)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 244)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -24,7 +24,7 @@ direction_labels:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 13)
-// CHECK:   ('file_offset', 256)
+// CHECK:   ('file_offset', 272)
 // CHECK:   ('file_size', 13)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -36,7 +36,7 @@ direction_labels:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 13)
-// CHECK:     ('offset', 256)
+// CHECK:     ('offset', 272)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -49,12 +49,12 @@ direction_labels:
 // CHECK:   ('_section_data', '90ebfd90 75009075 fdeb0090 c3')
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 272)
+// CHECK:   ('symoff', 288)
 // CHECK:   ('nsyms', 1)
-// CHECK:   ('stroff', 284)
+// CHECK:   ('stroff', 300)
 // CHECK:   ('strsize', 20)
 // CHECK:   ('_string_data', '\x00direction_labels\x00\x00\x00')
 // CHECK:   ('_symbols', [
@@ -68,7 +68,7 @@ direction_labels:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

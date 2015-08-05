@@ -62,8 +62,8 @@ sym_desc_flags:
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 296)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 312)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -72,7 +72,7 @@ sym_desc_flags:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 0)
-// CHECK:   ('file_offset', 324)
+// CHECK:   ('file_offset', 340)
 // CHECK:   ('file_size', 0)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -84,7 +84,7 @@ sym_desc_flags:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
-// CHECK:     ('offset', 324)
+// CHECK:     ('offset', 340)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -99,7 +99,7 @@ sym_desc_flags:
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
-// CHECK:     ('offset', 324)
+// CHECK:     ('offset', 340)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -111,12 +111,12 @@ sym_desc_flags:
 // CHECK:   ])
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 324)
+// CHECK:   ('symoff', 340)
 // CHECK:   ('nsyms', 24)
-// CHECK:   ('stroff', 612)
+// CHECK:   ('stroff', 628)
 // CHECK:   ('strsize', 388)
 // CHECK:   ('_string_data', '\x00sym_desc_flags\x00sym_private_ext_E\x00sym_lazy_ref_E\x00sym_ref_def_E\x00sym_private_ext_D\x00sym_lazy_ref_D\x00sym_ref_def_D\x00sym_private_ext_C\x00sym_lazy_ref_C\x00sym_weak_def_C\x00sym_ref_def_C\x00sym_private_ext_B\x00sym_lazy_ref_B\x00sym_weak_def_B\x00sym_weak_ref_def_B\x00sym_private_ext_A\x00sym_symbol_resolver_A\x00sym_no_dead_strip_A\x00sym_lazy_ref_A\x00sym_ref_A\x00sym_weak_ref_A\x00sym_weak_def_A\x00sym_ref_def_A\x00sym_weak_ref_def_A\x00\x00')
 // CHECK:   ('_symbols', [
@@ -314,7 +314,7 @@ sym_desc_flags:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

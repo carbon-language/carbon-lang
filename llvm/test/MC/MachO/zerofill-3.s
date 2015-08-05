@@ -22,8 +22,8 @@
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 296)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 312)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -32,7 +32,7 @@
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 16)
-// CHECK:   ('file_offset', 324)
+// CHECK:   ('file_offset', 340)
 // CHECK:   ('file_size', 0)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -44,7 +44,7 @@
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 0)
-// CHECK:     ('offset', 324)
+// CHECK:     ('offset', 340)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -71,12 +71,12 @@
 // CHECK:   ])
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 324)
+// CHECK:   ('symoff', 340)
 // CHECK:   ('nsyms', 4)
-// CHECK:   ('stroff', 372)
+// CHECK:   ('stroff', 388)
 // CHECK:   ('strsize', 52)
 // CHECK:   ('_string_data', '\x00sym_lcomm_D\x00sym_lcomm_C\x00sym_lcomm_B\x00sym_lcomm_A\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
@@ -114,7 +114,7 @@
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

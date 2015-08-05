@@ -20,8 +20,8 @@ Lsym_asm_temp:
 // CHECK-X86_32: ('cputype', 7)
 // CHECK-X86_32: ('cpusubtype', 3)
 // CHECK-X86_32: ('filetype', 1)
-// CHECK-X86_32: ('num_load_commands', 3)
-// CHECK-X86_32: ('load_commands_size', 228)
+// CHECK-X86_32: ('num_load_commands', 4)
+// CHECK-X86_32: ('load_commands_size', 244)
 // CHECK-X86_32: ('flag', 0)
 // CHECK-X86_32: ('load_commands', [
 // CHECK-X86_32:   # Load Command 0
@@ -30,7 +30,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_32:   ('vm_addr', 0)
 // CHECK-X86_32:   ('vm_size', 4)
-// CHECK-X86_32:   ('file_offset', 256)
+// CHECK-X86_32:   ('file_offset', 272)
 // CHECK-X86_32:   ('file_size', 4)
 // CHECK-X86_32:   ('maxprot', 7)
 // CHECK-X86_32:   ('initprot', 7)
@@ -42,7 +42,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_32:     ('address', 0)
 // CHECK-X86_32:     ('size', 4)
-// CHECK-X86_32:     ('offset', 256)
+// CHECK-X86_32:     ('offset', 272)
 // CHECK-X86_32:     ('alignment', 0)
 // CHECK-X86_32:     ('reloc_offset', 0)
 // CHECK-X86_32:     ('num_reloc', 0)
@@ -52,12 +52,12 @@ Lsym_asm_temp:
 // CHECK-X86_32:    ),
 // CHECK-X86_32:   ])
 // CHECK-X86_32:  ),
-// CHECK-X86_32:   # Load Command 1
+// CHECK-X86_32:   # Load Command 2
 // CHECK-X86_32:  (('command', 2)
 // CHECK-X86_32:   ('size', 24)
-// CHECK-X86_32:   ('symoff', 260)
+// CHECK-X86_32:   ('symoff', 276)
 // CHECK-X86_32:   ('nsyms', 9)
-// CHECK-X86_32:   ('stroff', 368)
+// CHECK-X86_32:   ('stroff', 384)
 // CHECK-X86_32:   ('strsize', 140)
 // CHECK-X86_32:   ('_string_data', '\x00sym_local_C\x00sym_globl_undef_C\x00sym_globl_def_C\x00sym_local_B\x00sym_globl_undef_B\x00sym_globl_def_B\x00sym_local_A\x00sym_globl_undef_A\x00sym_globl_def_A\x00\x00')
 // CHECK-X86_32:   ('_symbols', [
@@ -135,7 +135,7 @@ Lsym_asm_temp:
 // CHECK-X86_32:    ),
 // CHECK-X86_32:   ])
 // CHECK-X86_32:  ),
-// CHECK-X86_32:   # Load Command 2
+// CHECK-X86_32:   # Load Command 3
 // CHECK-X86_32:  (('command', 11)
 // CHECK-X86_32:   ('size', 80)
 // CHECK-X86_32:   ('ilocalsym', 0)
@@ -164,8 +164,8 @@ Lsym_asm_temp:
 // CHECK-X86_64: ('cputype', 16777223)
 // CHECK-X86_64: ('cpusubtype', 3)
 // CHECK-X86_64: ('filetype', 1)
-// CHECK-X86_64: ('num_load_commands', 3)
-// CHECK-X86_64: ('load_commands_size', 256)
+// CHECK-X86_64: ('num_load_commands', 4)
+// CHECK-X86_64: ('load_commands_size', 272)
 // CHECK-X86_64: ('flag', 0)
 // CHECK-X86_64: ('reserved', 0)
 // CHECK-X86_64: ('load_commands', [
@@ -175,7 +175,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_64:   ('vm_addr', 0)
 // CHECK-X86_64:   ('vm_size', 4)
-// CHECK-X86_64:   ('file_offset', 288)
+// CHECK-X86_64:   ('file_offset', 304)
 // CHECK-X86_64:   ('file_size', 4)
 // CHECK-X86_64:   ('maxprot', 7)
 // CHECK-X86_64:   ('initprot', 7)
@@ -187,7 +187,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-X86_64:     ('address', 0)
 // CHECK-X86_64:     ('size', 4)
-// CHECK-X86_64:     ('offset', 288)
+// CHECK-X86_64:     ('offset', 304)
 // CHECK-X86_64:     ('alignment', 0)
 // CHECK-X86_64:     ('reloc_offset', 0)
 // CHECK-X86_64:     ('num_reloc', 0)
@@ -200,12 +200,12 @@ Lsym_asm_temp:
 // CHECK-X86_64:   ])
 // CHECK-X86_64:   ])
 // CHECK-X86_64:  ),
-// CHECK-X86_64:   # Load Command 1
+// CHECK-X86_64:   # Load Command 2
 // CHECK-X86_64:  (('command', 2)
 // CHECK-X86_64:   ('size', 24)
-// CHECK-X86_64:   ('symoff', 292)
+// CHECK-X86_64:   ('symoff', 308)
 // CHECK-X86_64:   ('nsyms', 9)
-// CHECK-X86_64:   ('stroff', 436)
+// CHECK-X86_64:   ('stroff', 452)
 // CHECK-X86_64:   ('strsize', 140)
 // CHECK-X86_64:   ('_string_data', '\x00sym_local_C\x00sym_globl_undef_C\x00sym_globl_def_C\x00sym_local_B\x00sym_globl_undef_B\x00sym_globl_def_B\x00sym_local_A\x00sym_globl_undef_A\x00sym_globl_def_A\x00\x00')
 // CHECK-X86_64:   ('_symbols', [
@@ -283,7 +283,7 @@ Lsym_asm_temp:
 // CHECK-X86_64:    ),
 // CHECK-X86_64:   ])
 // CHECK-X86_64:  ),
-// CHECK-X86_64:   # Load Command 2
+// CHECK-X86_64:   # Load Command 3
 // CHECK-X86_64:  (('command', 11)
 // CHECK-X86_64:   ('size', 80)
 // CHECK-X86_64:   ('ilocalsym', 0)

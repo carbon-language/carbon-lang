@@ -7,8 +7,8 @@ nop
 // CHECK:      ('cputype', 7)
 // CHECK-NEXT: ('cpusubtype', 3)
 // CHECK-NEXT: ('filetype', 1)
-// CHECK-NEXT: ('num_load_commands', 3)
-// CHECK-NEXT: ('load_commands_size', 296)
+// CHECK-NEXT: ('num_load_commands', 4)
+// CHECK-NEXT: ('load_commands_size', 312)
 // CHECK-NEXT: ('flag', 0)
 // CHECK-NEXT: ('load_commands', [
 // CHECK-NEXT:   # Load Command 0
@@ -17,7 +17,7 @@ nop
 // CHECK-NEXT:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:   ('vm_addr', 0)
 // CHECK-NEXT:   ('vm_size', 6)
-// CHECK-NEXT:   ('file_offset', 324)
+// CHECK-NEXT:   ('file_offset', 340)
 // CHECK-NEXT:   ('file_size', 6)
 // CHECK-NEXT:   ('maxprot', 7)
 // CHECK-NEXT:   ('initprot', 7)
@@ -29,7 +29,7 @@ nop
 // CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 0)
 // CHECK-NEXT:     ('size', 1)
-// CHECK-NEXT:     ('offset', 324)
+// CHECK-NEXT:     ('offset', 340)
 // CHECK-NEXT:     ('alignment', 0)
 // CHECK-NEXT:     ('reloc_offset', 0)
 // CHECK-NEXT:     ('num_reloc', 0)
@@ -45,9 +45,9 @@ nop
 // CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 1)
 // CHECK-NEXT:     ('size', 5)
-// CHECK-NEXT:     ('offset', 325)
+// CHECK-NEXT:     ('offset', 341)
 // CHECK-NEXT:     ('alignment', 0)
-// CHECK-NEXT:     ('reloc_offset', 332)
+// CHECK-NEXT:     ('reloc_offset', 348)
 // CHECK-NEXT:     ('num_reloc', 1)
 // CHECK-NEXT:     ('flags', 0x80000400)
 // CHECK-NEXT:     ('reserved1', 0)
@@ -61,12 +61,12 @@ nop
 // CHECK-NEXT:   ('_section_data', 'e8faffff ff')
 // CHECK-NEXT:   ])
 // CHECK-NEXT:  ),
-// CHECK-NEXT:   # Load Command 1
+// CHECK:       # Load Command 2
 // CHECK-NEXT:  (('command', 2)
 // CHECK-NEXT:   ('size', 24)
-// CHECK-NEXT:   ('symoff', 340)
+// CHECK-NEXT:   ('symoff', 356)
 // CHECK-NEXT:   ('nsyms', 1)
-// CHECK-NEXT:   ('stroff', 352)
+// CHECK-NEXT:   ('stroff', 368)
 // CHECK-NEXT:   ('strsize', 8)
 // CHECK-NEXT:   ('_string_data', '\x00foo\x00\x00\x00\x00')
 // CHECK-NEXT:   ('_symbols', [
@@ -80,7 +80,7 @@ nop
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
 // CHECK-NEXT:  ),
-// CHECK-NEXT:   # Load Command 2
+// CHECK-NEXT:   # Load Command 3
 // CHECK-NEXT:  (('command', 11)
 // CHECK-NEXT:   ('size', 80)
 // CHECK-NEXT:   ('ilocalsym', 0)

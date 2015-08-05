@@ -24,8 +24,8 @@ Lsc0_0:
 @ CHECK: ('cputype', 12)
 @ CHECK: ('cpusubtype', 9)
 @ CHECK: ('filetype', 1)
-@ CHECK: ('num_load_commands', 3)
-@ CHECK: ('load_commands_size', 364)
+@ CHECK: ('num_load_commands', 4)
+@ CHECK: ('load_commands_size', 380)
 @ CHECK: ('flag', 8192)
 @ CHECK: ('load_commands', [
 @ CHECK:   # Load Command 0
@@ -34,7 +34,7 @@ Lsc0_0:
 @ CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:   ('vm_addr', 0)
 @ CHECK:   ('vm_size', 16)
-@ CHECK:   ('file_offset', 392)
+@ CHECK:   ('file_offset', 408)
 @ CHECK:   ('file_size', 16)
 @ CHECK:   ('maxprot', 7)
 @ CHECK:   ('initprot', 7)
@@ -46,9 +46,9 @@ Lsc0_0:
 @ CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:     ('address', 0)
 @ CHECK:     ('size', 8)
-@ CHECK:     ('offset', 392)
+@ CHECK:     ('offset', 408)
 @ CHECK:     ('alignment', 0)
-@ CHECK:     ('reloc_offset', 408)
+@ CHECK:     ('reloc_offset', 424)
 @ CHECK:     ('num_reloc', 2)
 @ CHECK:     ('flags', 0x80000400)
 @ CHECK:     ('reserved1', 0)
@@ -68,9 +68,9 @@ Lsc0_0:
 @ CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:     ('address', 8)
 @ CHECK:     ('size', 4)
-@ CHECK:     ('offset', 400)
+@ CHECK:     ('offset', 416)
 @ CHECK:     ('alignment', 0)
-@ CHECK:     ('reloc_offset', 424)
+@ CHECK:     ('reloc_offset', 440)
 @ CHECK:     ('num_reloc', 2)
 @ CHECK:     ('flags', 0x0)
 @ CHECK:     ('reserved1', 0)
@@ -90,7 +90,7 @@ Lsc0_0:
 @ CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 @ CHECK:     ('address', 12)
 @ CHECK:     ('size', 4)
-@ CHECK:     ('offset', 404)
+@ CHECK:     ('offset', 420)
 @ CHECK:     ('alignment', 0)
 @ CHECK:     ('reloc_offset', 0)
 @ CHECK:     ('num_reloc', 0)
@@ -103,12 +103,12 @@ Lsc0_0:
 @ CHECK:   ('_section_data', '00000000')
 @ CHECK:   ])
 @ CHECK:  ),
-@ CHECK:   # Load Command 1
+@ CHECK:   # Load Command 2
 @ CHECK:  (('command', 2)
 @ CHECK:   ('size', 24)
-@ CHECK:   ('symoff', 440)
+@ CHECK:   ('symoff', 456)
 @ CHECK:   ('nsyms', 4)
-@ CHECK:   ('stroff', 488)
+@ CHECK:   ('stroff', 504)
 @ CHECK:   ('strsize', 24)
 @ CHECK:   ('_string_data', '\x00_printf\x00_f1\x00_f0\x00_d0\x00\x00\x00\x00')
 @ CHECK:   ('_symbols', [
@@ -146,7 +146,7 @@ Lsc0_0:
 @ CHECK:    ),
 @ CHECK:   ])
 @ CHECK:  ),
-@ CHECK:   # Load Command 2
+@ CHECK:   # Load Command 3
 @ CHECK:  (('command', 11)
 @ CHECK:   ('size', 80)
 @ CHECK:   ('ilocalsym', 0)

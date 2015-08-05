@@ -120,8 +120,8 @@ L3:
 // CHECK: ('cputype', 16777223)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 336)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 352)
 // CHECK: ('flag', 0)
 // CHECK: ('reserved', 0)
 // CHECK: ('load_commands', [
@@ -131,7 +131,7 @@ L3:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 236)
-// CHECK:   ('file_offset', 368)
+// CHECK:   ('file_offset', 384)
 // CHECK:   ('file_size', 236)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -143,9 +143,9 @@ L3:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 94)
-// CHECK:     ('offset', 368)
+// CHECK:     ('offset', 384)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 604)
+// CHECK:     ('reloc_offset', 620)
 // CHECK:     ('num_reloc', 12)
 // CHECK:     ('flags', 0x80000400)
 // CHECK:     ('reserved1', 0)
@@ -190,9 +190,9 @@ L3:
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 94)
 // CHECK:     ('size', 142)
-// CHECK:     ('offset', 462)
+// CHECK:     ('offset', 478)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 700)
+// CHECK:     ('reloc_offset', 716)
 // CHECK:     ('num_reloc', 16)
 // CHECK:     ('flags', 0x400)
 // CHECK:     ('reserved1', 0)
@@ -251,12 +251,12 @@ L3:
 // CHECK:   ])
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 828)
+// CHECK:   ('symoff', 844)
 // CHECK:   ('nsyms', 5)
-// CHECK:   ('stroff', 908)
+// CHECK:   ('stroff', 924)
 // CHECK:   ('strsize', 24)
 // CHECK:   ('_string_data', '\x00_foo\x00_g3\x00_g2\x00_g1\x00_g0\x00\x00\x00')
 // CHECK:   ('_symbols', [
@@ -302,7 +302,7 @@ L3:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

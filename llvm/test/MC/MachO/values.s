@@ -20,8 +20,8 @@ data_def_ext:
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 296)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 312)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -30,7 +30,7 @@ data_def_ext:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 24)
-// CHECK:   ('file_offset', 324)
+// CHECK:   ('file_offset', 340)
 // CHECK:   ('file_size', 24)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -42,7 +42,7 @@ data_def_ext:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 12)
-// CHECK:     ('offset', 324)
+// CHECK:     ('offset', 340)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -55,7 +55,7 @@ data_def_ext:
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 12)
 // CHECK:     ('size', 12)
-// CHECK:     ('offset', 336)
+// CHECK:     ('offset', 352)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -65,12 +65,12 @@ data_def_ext:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 348)
+// CHECK:   ('symoff', 364)
 // CHECK:   ('nsyms', 4)
-// CHECK:   ('stroff', 396)
+// CHECK:   ('stroff', 412)
 // CHECK:   ('strsize', 56)
 // CHECK:   ('_string_data', '\x00text_def_ext\x00data_def_ext\x00text_def_int\x00data_def_int\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
@@ -108,7 +108,7 @@ data_def_ext:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

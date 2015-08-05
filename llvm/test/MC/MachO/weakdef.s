@@ -17,8 +17,8 @@ __ZTI3optIbE:
 // CHECK:      ('cputype', 7)
 // CHECK-NEXT: ('cpusubtype', 3)
 // CHECK-NEXT: ('filetype', 1)
-// CHECK-NEXT: ('num_load_commands', 3)
-// CHECK-NEXT: ('load_commands_size', 364)
+// CHECK-NEXT: ('num_load_commands', 4)
+// CHECK-NEXT: ('load_commands_size', 380)
 // CHECK-NEXT: ('flag', 0)
 // CHECK-NEXT: ('load_commands', [
 // CHECK-NEXT:   # Load Command 0
@@ -27,7 +27,7 @@ __ZTI3optIbE:
 // CHECK-NEXT:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:   ('vm_addr', 0)
 // CHECK-NEXT:   ('vm_size', 4)
-// CHECK-NEXT:   ('file_offset', 392)
+// CHECK-NEXT:   ('file_offset', 408)
 // CHECK-NEXT:   ('file_size', 4)
 // CHECK-NEXT:   ('maxprot', 7)
 // CHECK-NEXT:   ('initprot', 7)
@@ -39,7 +39,7 @@ __ZTI3optIbE:
 // CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 0)
 // CHECK-NEXT:     ('size', 0)
-// CHECK-NEXT:     ('offset', 392)
+// CHECK-NEXT:     ('offset', 408)
 // CHECK-NEXT:     ('alignment', 0)
 // CHECK-NEXT:     ('reloc_offset', 0)
 // CHECK-NEXT:     ('num_reloc', 0)
@@ -55,9 +55,9 @@ __ZTI3optIbE:
 // CHECK-NEXT:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 0)
 // CHECK-NEXT:     ('size', 4)
-// CHECK-NEXT:     ('offset', 392)
+// CHECK-NEXT:     ('offset', 408)
 // CHECK-NEXT:     ('alignment', 0)
-// CHECK-NEXT:     ('reloc_offset', 396)
+// CHECK-NEXT:     ('reloc_offset', 412)
 // CHECK-NEXT:     ('num_reloc', 1)
 // CHECK-NEXT:     ('flags', 0xb)
 // CHECK-NEXT:     ('reserved1', 0)
@@ -74,7 +74,7 @@ __ZTI3optIbE:
 // CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 4)
 // CHECK-NEXT:     ('size', 0)
-// CHECK-NEXT:     ('offset', 396)
+// CHECK-NEXT:     ('offset', 412)
 // CHECK-NEXT:     ('alignment', 0)
 // CHECK-NEXT:     ('reloc_offset', 0)
 // CHECK-NEXT:     ('num_reloc', 0)
@@ -87,12 +87,12 @@ __ZTI3optIbE:
 // CHECK-NEXT:   ('_section_data', '')
 // CHECK-NEXT:   ])
 // CHECK-NEXT:  ),
-// CHECK-NEXT:   # Load Command 1
+// CHECK:        # Load Command 2
 // CHECK-NEXT:  (('command', 2)
 // CHECK-NEXT:   ('size', 24)
-// CHECK-NEXT:   ('symoff', 404)
+// CHECK-NEXT:   ('symoff', 420)
 // CHECK-NEXT:   ('nsyms', 2)
-// CHECK-NEXT:   ('stroff', 428)
+// CHECK-NEXT:   ('stroff', 444)
 // CHECK-NEXT:   ('strsize', 28)
 // CHECK-NEXT:   ('_string_data', '\x00__ZTS3optIbE\x00__ZTI3optIbE\x00\x00')
 // CHECK-NEXT:   ('_symbols', [
@@ -114,7 +114,7 @@ __ZTI3optIbE:
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
 // CHECK-NEXT:  ),
-// CHECK-NEXT:   # Load Command 2
+// CHECK-NEXT:   # Load Command 3
 // CHECK-NEXT:  (('command', 11)
 // CHECK-NEXT:   ('size', 80)
 // CHECK-NEXT:   ('ilocalsym', 0)

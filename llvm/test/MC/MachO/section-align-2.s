@@ -17,8 +17,8 @@ baz:
 // CHECK: ('cputype', 7)
 // CHECK: ('cpusubtype', 3)
 // CHECK: ('filetype', 1)
-// CHECK: ('num_load_commands', 3)
-// CHECK: ('load_commands_size', 364)
+// CHECK: ('num_load_commands', 4)
+// CHECK: ('load_commands_size', 380)
 // CHECK: ('flag', 0)
 // CHECK: ('load_commands', [
 // CHECK:   # Load Command 0
@@ -27,7 +27,7 @@ baz:
 // CHECK:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:   ('vm_addr', 0)
 // CHECK:   ('vm_size', 13)
-// CHECK:   ('file_offset', 392)
+// CHECK:   ('file_offset', 408)
 // CHECK:   ('file_size', 13)
 // CHECK:   ('maxprot', 7)
 // CHECK:   ('initprot', 7)
@@ -39,7 +39,7 @@ baz:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 0)
 // CHECK:     ('size', 1)
-// CHECK:     ('offset', 392)
+// CHECK:     ('offset', 408)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -52,7 +52,7 @@ baz:
 // CHECK:     ('segment_name', '__DATA\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 4)
 // CHECK:     ('size', 9)
-// CHECK:     ('offset', 396)
+// CHECK:     ('offset', 412)
 // CHECK:     ('alignment', 2)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -65,7 +65,7 @@ baz:
 // CHECK:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK:     ('address', 13)
 // CHECK:     ('size', 0)
-// CHECK:     ('offset', 405)
+// CHECK:     ('offset', 421)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 0)
 // CHECK:     ('num_reloc', 0)
@@ -75,12 +75,12 @@ baz:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 1
+// CHECK:   # Load Command 2
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 408)
+// CHECK:   ('symoff', 424)
 // CHECK:   ('nsyms', 3)
-// CHECK:   ('stroff', 444)
+// CHECK:   ('stroff', 460)
 // CHECK:   ('strsize', 16)
 // CHECK:   ('_string_data', '\x00baz\x00bar\x00foo\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [
@@ -110,7 +110,7 @@ baz:
 // CHECK:    ),
 // CHECK:   ])
 // CHECK:  ),
-// CHECK:   # Load Command 2
+// CHECK:   # Load Command 3
 // CHECK:  (('command', 11)
 // CHECK:   ('size', 80)
 // CHECK:   ('ilocalsym', 0)

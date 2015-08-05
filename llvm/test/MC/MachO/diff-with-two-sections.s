@@ -10,8 +10,8 @@ Ltmp4 = Leh_func_begin0-Ltmp3
 // CHECK:      ('cputype', 7)
 // CHECK-NEXT: ('cpusubtype', 3)
 // CHECK-NEXT: ('filetype', 1)
-// CHECK-NEXT: ('num_load_commands', 1)
-// CHECK-NEXT: ('load_commands_size', 192)
+// CHECK-NEXT: ('num_load_commands', 2)
+// CHECK-NEXT: ('load_commands_size', 208)
 // CHECK-NEXT: ('flag', 0)
 // CHECK-NEXT: ('load_commands', [
 // CHECK-NEXT:   # Load Command 0
@@ -20,7 +20,7 @@ Ltmp4 = Leh_func_begin0-Ltmp3
 // CHECK-NEXT:   ('segment_name', '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:   ('vm_addr', 0)
 // CHECK-NEXT:   ('vm_size', 4)
-// CHECK-NEXT:   ('file_offset', 220)
+// CHECK-NEXT:   ('file_offset', 236)
 // CHECK-NEXT:   ('file_size', 4)
 // CHECK-NEXT:   ('maxprot', 7)
 // CHECK-NEXT:   ('initprot', 7)
@@ -32,7 +32,7 @@ Ltmp4 = Leh_func_begin0-Ltmp3
 // CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 0)
 // CHECK-NEXT:     ('size', 0)
-// CHECK-NEXT:     ('offset', 220)
+// CHECK-NEXT:     ('offset', 236)
 // CHECK-NEXT:     ('alignment', 0)
 // CHECK-NEXT:     ('reloc_offset', 0)
 // CHECK-NEXT:     ('num_reloc', 0)
@@ -48,7 +48,7 @@ Ltmp4 = Leh_func_begin0-Ltmp3
 // CHECK-NEXT:     ('segment_name', '__TEXT\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
 // CHECK-NEXT:     ('address', 0)
 // CHECK-NEXT:     ('size', 4)
-// CHECK-NEXT:     ('offset', 220)
+// CHECK-NEXT:     ('offset', 236)
 // CHECK-NEXT:     ('alignment', 0)
 // CHECK-NEXT:     ('reloc_offset', 0)
 // CHECK-NEXT:     ('num_reloc', 0)
@@ -60,5 +60,11 @@ Ltmp4 = Leh_func_begin0-Ltmp3
 // CHECK-NEXT:   ])
 // CHECK-NEXT:   ('_section_data', '00000000')
 // CHECK-NEXT:   ])
+// CHECK-NEXT:  ),
+// CHECK-NEXT:   # Load Command 1
+// CHECK-NEXT:  (('command', 36)
+// CHECK-NEXT:   ('size', 16)
+// CHECK-NEXT:   ('version, 589824)
+// CHECK-NEXT:   ('sdk, 0)
 // CHECK-NEXT:  ),
 // CHECK-NEXT: ])
