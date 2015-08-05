@@ -1,6 +1,4 @@
-RUN: mkdir %T/Inputs
-RUN: cp %p/Inputs/fat-test.* %T/Inputs
-RUN: llvm-dsymutil -verbose -no-output %T/Inputs/fat-test.dylib -oso-prepend-path %T | FileCheck %s
+RUN: llvm-dsymutil -verbose -no-output %p/Inputs/fat-test.dylib -oso-prepend-path %p | FileCheck %s
 
 This test doesn't produce any filesytstem output, we just look at the verbose
 log output.
