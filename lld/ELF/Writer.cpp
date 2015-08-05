@@ -119,13 +119,16 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_ident[EI_MAG1] = 0x45;
   EHdr->e_ident[EI_MAG2] = 0x4C;
   EHdr->e_ident[EI_MAG3] = 0x46;
-  EHdr->e_ident[EI_CLASS] = ELFCLASS64;
-  EHdr->e_ident[EI_DATA] = ELFDATA2LSB;
+  EHdr->e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
+  EHdr->e_ident[EI_DATA] = ELFT::TargetEndianness == llvm::support::little
+                               ? ELFDATA2LSB
+                               : ELFDATA2MSB;
   EHdr->e_ident[EI_VERSION] = EV_CURRENT;
   EHdr->e_ident[EI_OSABI] = ELFOSABI_NONE;
 
   EHdr->e_type = ET_EXEC;
-  EHdr->e_machine = EM_X86_64;
+  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab->ObjectFiles[0]);
+  EHdr->e_machine = FirstObj.getObj()->getHeader()->e_machine;
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = 0x401000;
   EHdr->e_phoff = sizeof(Elf_Ehdr_Impl<ELFT>);

@@ -114,6 +114,27 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Symtab.reportRemainingUndefines();
 
   // Write the result.
-  Writer<object::ELF64LE> Out(&Symtab);
-  Out.write(Config->OutputFile);
+  ObjectFileBase &FirstObj = *Symtab.ObjectFiles[0];
+  switch (FirstObj.kind()) {
+  case InputFile::Object32LEKind: {
+    Writer<object::ELF32LE> Out(&Symtab);
+    Out.write(Config->OutputFile);
+    return;
+  }
+  case InputFile::Object32BEKind: {
+    Writer<object::ELF32BE> Out(&Symtab);
+    Out.write(Config->OutputFile);
+    return;
+  }
+  case InputFile::Object64LEKind: {
+    Writer<object::ELF64LE> Out(&Symtab);
+    Out.write(Config->OutputFile);
+    return;
+  }
+  case InputFile::Object64BEKind: {
+    Writer<object::ELF64BE> Out(&Symtab);
+    Out.write(Config->OutputFile);
+    return;
+  }
+  }
 }
