@@ -455,9 +455,8 @@ bool AliasAnalysis::canInstructionRangeModRef(const Instruction &I1,
 /// isNoAliasCall - Return true if this pointer is returned by a noalias
 /// function.
 bool llvm::isNoAliasCall(const Value *V) {
-  if (isa<CallInst>(V) || isa<InvokeInst>(V))
-    return ImmutableCallSite(cast<Instruction>(V))
-      .paramHasAttr(0, Attribute::NoAlias);
+  if (auto CS = ImmutableCallSite(V))
+    return CS.paramHasAttr(0, Attribute::NoAlias);
   return false;
 }
 
