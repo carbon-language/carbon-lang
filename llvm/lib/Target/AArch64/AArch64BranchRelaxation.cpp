@@ -45,6 +45,12 @@ BCCDisplacementBits("aarch64-bcc-offset-bits", cl::Hidden, cl::init(19),
 STATISTIC(NumSplit, "Number of basic blocks split");
 STATISTIC(NumRelaxed, "Number of conditional branches relaxed");
 
+namespace llvm {
+void initializeAArch64BranchRelaxationPass(PassRegistry &);
+}
+
+#define AARCH64_BR_RELAX_NAME "AArch64 branch relaxation pass"
+
 namespace {
 class AArch64BranchRelaxation : public MachineFunctionPass {
   /// BasicBlockInfo - Information about the offset and size of a single
@@ -93,16 +99,21 @@ class AArch64BranchRelaxation : public MachineFunctionPass {
 
 public:
   static char ID;
-  AArch64BranchRelaxation() : MachineFunctionPass(ID) {}
+  AArch64BranchRelaxation() : MachineFunctionPass(ID) {
+    initializeAArch64BranchRelaxationPass(*PassRegistry::getPassRegistry());
+  }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
   const char *getPassName() const override {
-    return "AArch64 branch relaxation pass";
+    return AARCH64_BR_RELAX_NAME;
   }
 };
 char AArch64BranchRelaxation::ID = 0;
 }
+
+INITIALIZE_PASS(AArch64BranchRelaxation, "aarch64-branch-relax",
+                AARCH64_BR_RELAX_NAME, false, false)
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void AArch64BranchRelaxation::verify() {
