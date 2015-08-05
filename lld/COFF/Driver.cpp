@@ -710,7 +710,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (!Config->Exports.empty()) {
     if (fixupExports())
       return false;
-    writeImportLibrary();
+    if (writeImportLibrary())
+      return false;
     assignExportOrdinals();
   }
 
