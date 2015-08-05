@@ -41,6 +41,7 @@ add_llvm_unittest(SupportTests
   TargetRegistry.cpp
   ThreadLocalTest.cpp
   TimeValueTest.cpp
+  TrailingObjectsTest.cpp
   UnicodeTest.cpp
   YAMLIOTest.cpp
   YAMLParserTest.cpp

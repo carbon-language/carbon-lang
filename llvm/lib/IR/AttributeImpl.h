@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/IR/Attributes.h"
+#include "llvm/Support/TrailingObjects.h"
 #include <string>
 
 namespace llvm {
@@ -141,13 +142,16 @@ public:
 /// \class
 /// \brief This class represents a group of attributes that apply to one
 /// element: function, return type, or parameter.
-class AttributeSetNode : public FoldingSetNode {
+class AttributeSetNode final
+    : public FoldingSetNode,
+      private TrailingObjects<AttributeSetNode, Attribute> {
+  friend TrailingObjects;
+
   unsigned NumAttrs; ///< Number of attributes in this node.
 
   AttributeSetNode(ArrayRef<Attribute> Attrs) : NumAttrs(Attrs.size()) {
     // There's memory after the node where we can store the entries in.
-    std::copy(Attrs.begin(), Attrs.end(),
-              reinterpret_cast<Attribute *>(this + 1));
+    std::copy(Attrs.begin(), Attrs.end(), getTrailingObjects<Attribute>());
   }
 
   // AttributesSetNode is uniqued, these should not be publicly available.
@@ -170,7 +174,7 @@ public:
   std::string getAsString(bool InAttrGrp) const;
 
   typedef const Attribute *iterator;
-  iterator begin() const { return reinterpret_cast<iterator>(this + 1); }
+  iterator begin() const { return getTrailingObjects<Attribute>(); }
   iterator end() const { return begin() + NumAttrs; }
 
   void Profile(FoldingSetNodeID &ID) const {
@@ -181,27 +185,29 @@ public:
       AttrList[I].Profile(ID);
   }
 };
-static_assert(
-    AlignOf<AttributeSetNode>::Alignment >= AlignOf<Attribute>::Alignment,
-    "Alignment is insufficient for objects appended to AttributeSetNode");
 
 //===----------------------------------------------------------------------===//
 /// \class
 /// \brief This class represents a set of attributes that apply to the function,
 /// return type, and parameters.
-class AttributeSetImpl : public FoldingSetNode {
-  friend class AttributeSet;
+typedef std::pair<unsigned, AttributeSetNode *> IndexAttrPair;
 
-public:
-  typedef std::pair<unsigned, AttributeSetNode*> IndexAttrPair;
+class AttributeSetImpl final
+    : public FoldingSetNode,
+      private TrailingObjects<AttributeSetImpl, IndexAttrPair> {
+  friend class AttributeSet;
+  friend TrailingObjects;
 
 private:
   LLVMContext &Context;
   unsigned NumAttrs; ///< Number of entries in this set.
 
+  // Helper fn for TrailingObjects class.
+  size_t numTrailingObjects(OverloadToken<IndexAttrPair>) { return NumAttrs; }
+
   /// \brief Return a pointer to the IndexAttrPair for the specified slot.
   const IndexAttrPair *getNode(unsigned Slot) const {
-    return reinterpret_cast<const IndexAttrPair *>(this + 1) + Slot;
+    return getTrailingObjects<IndexAttrPair>() + Slot;
   }
 
   // AttributesSet is uniqued, these should not be publicly available.
@@ -222,8 +228,7 @@ public:
     }
 #endif
     // There's memory after the node where we can store the entries in.
-    std::copy(Attrs.begin(), Attrs.end(),
-              reinterpret_cast<IndexAttrPair *>(this + 1));
+    std::copy(Attrs.begin(), Attrs.end(), getTrailingObjects<IndexAttrPair>());
   }
 
   /// \brief Get the context that created this AttributeSetImpl.
@@ -273,10 +278,6 @@ public:
 
   void dump() const;
 };
-static_assert(
-    AlignOf<AttributeSetImpl>::Alignment >=
-        AlignOf<AttributeSetImpl::IndexAttrPair>::Alignment,
-    "Alignment is insufficient for objects appended to AttributeSetImpl");
 
 } // end llvm namespace
 

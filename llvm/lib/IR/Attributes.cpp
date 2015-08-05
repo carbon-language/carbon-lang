@@ -484,8 +484,7 @@ AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
   // new one and insert it.
   if (!PA) {
     // Coallocate entries after the AttributeSetNode itself.
-    void *Mem = ::operator new(sizeof(AttributeSetNode) +
-                               sizeof(Attribute) * SortedAttrs.size());
+    void *Mem = ::operator new(totalSizeToAlloc<Attribute>(SortedAttrs.size()));
     PA = new (Mem) AttributeSetNode(SortedAttrs);
     pImpl->AttrsSetNodes.InsertNode(PA, InsertPoint);
   }
@@ -617,9 +616,8 @@ AttributeSet::getImpl(LLVMContext &C,
   // create a new one and insert it.
   if (!PA) {
     // Coallocate entries after the AttributeSetImpl itself.
-    void *Mem = ::operator new(sizeof(AttributeSetImpl) +
-                               sizeof(std::pair<unsigned, AttributeSetNode *>) *
-                                   Attrs.size());
+    void *Mem = ::operator new(
+        AttributeSetImpl::totalSizeToAlloc<IndexAttrPair>(Attrs.size()));
     PA = new (Mem) AttributeSetImpl(C, Attrs);
     pImpl->AttrsLists.InsertNode(PA, InsertPoint);
   }
@@ -736,9 +734,8 @@ AttributeSet AttributeSet::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
     if (!AS) continue;
     SmallVector<std::pair<unsigned, AttributeSetNode *>, 8>::iterator
       ANVI = AttrNodeVec.begin(), ANVE;
-    for (const AttributeSetImpl::IndexAttrPair
-             *AI = AS->getNode(0),
-             *AE = AS->getNode(AS->getNumAttributes());
+    for (const IndexAttrPair *AI = AS->getNode(0),
+                             *AE = AS->getNode(AS->getNumAttributes());
          AI != AE; ++AI) {
       ANVE = AttrNodeVec.end();
       while (ANVI != ANVE && ANVI->first <= AI->first)

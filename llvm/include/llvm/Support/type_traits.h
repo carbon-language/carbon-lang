@@ -93,6 +93,15 @@ struct add_const_past_pointer<
 
 }
 
+// If the compiler supports detecting whether a class is final, define
+// an LLVM_IS_FINAL macro. If it cannot be defined properly, this
+// macro will be left undefined.
+#if __cplusplus >= 201402L
+#define LLVM_IS_FINAL(Ty) std::is_final<Ty>()
+#elif __has_feature(is_final) || LLVM_GNUC_PREREQ(4, 7, 0)
+#define LLVM_IS_FINAL(Ty) __is_final(Ty)
+#endif
+
 #ifdef LLVM_DEFINED_HAS_FEATURE
 #undef __has_feature
 #endif
