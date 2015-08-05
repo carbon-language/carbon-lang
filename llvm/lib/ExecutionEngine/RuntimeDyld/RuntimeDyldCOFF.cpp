@@ -24,7 +24,7 @@ using namespace llvm::object;
 
 namespace {
 
-class LoadedCOFFObjectInfo
+class LoadedCOFFObjectInfo final
     : public RuntimeDyld::LoadedObjectInfoHelper<LoadedCOFFObjectInfo> {
 public:
   LoadedCOFFObjectInfo(RuntimeDyldImpl &RTDyld, ObjSectionToIDMap ObjSecToIDMap)

@@ -79,6 +79,11 @@ public:
   };
 
   template <typename Derived> struct LoadedObjectInfoHelper : LoadedObjectInfo {
+  protected:
+    LoadedObjectInfoHelper(const LoadedObjectInfoHelper &) = default;
+    LoadedObjectInfoHelper() = default;
+
+  public:
     LoadedObjectInfoHelper(RuntimeDyldImpl &RTDyld,
                            LoadedObjectInfo::ObjSectionToIDMap ObjSecToIDMap)
         : LoadedObjectInfo(RTDyld, std::move(ObjSecToIDMap)) {}

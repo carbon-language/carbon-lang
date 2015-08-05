@@ -140,6 +140,10 @@ private:
 /// to be used by the DIContext implementations when applying relocations
 /// on the fly.
 class LoadedObjectInfo {
+protected:
+  LoadedObjectInfo(const LoadedObjectInfo &) = default;
+  LoadedObjectInfo() = default;
+
 public:
   virtual ~LoadedObjectInfo() = default;
 

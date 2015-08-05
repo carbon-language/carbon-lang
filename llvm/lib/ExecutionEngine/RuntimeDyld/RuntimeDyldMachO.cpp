@@ -26,7 +26,7 @@ using namespace llvm::object;
 
 namespace {
 
-class LoadedMachOObjectInfo
+class LoadedMachOObjectInfo final
     : public RuntimeDyld::LoadedObjectInfoHelper<LoadedMachOObjectInfo> {
 public:
   LoadedMachOObjectInfo(RuntimeDyldImpl &RTDyld,
