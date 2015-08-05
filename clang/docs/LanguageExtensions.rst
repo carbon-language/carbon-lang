@@ -1715,6 +1715,9 @@ The macros ``__ATOMIC_RELAXED``, ``__ATOMIC_CONSUME``, ``__ATOMIC_ACQUIRE``,
 provided, with values corresponding to the enumerators of C11's
 ``memory_order`` enumeration.
 
+(Note that Clang additionally provides GCC-compatible ``__atomic_*``
+builtins)
+
 Low-level ARM exclusive memory builtins
 ---------------------------------------
 

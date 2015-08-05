@@ -699,7 +699,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
 
   switch (E->getOp()) {
   case AtomicExpr::AO__c11_atomic_init:
-    llvm_unreachable("Already handled!");
+    llvm_unreachable("Already handled above with EmitAtomicInit!");
 
   case AtomicExpr::AO__c11_atomic_load:
   case AtomicExpr::AO__atomic_load_n:
@@ -785,20 +785,43 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   if (UseLibcall) {
     bool UseOptimizedLibcall = false;
     switch (E->getOp()) {
+    case AtomicExpr::AO__c11_atomic_init:
+      llvm_unreachable("Already handled above with EmitAtomicInit!");
+
     case AtomicExpr::AO__c11_atomic_fetch_add:
     case AtomicExpr::AO__atomic_fetch_add:
     case AtomicExpr::AO__c11_atomic_fetch_and:
     case AtomicExpr::AO__atomic_fetch_and:
     case AtomicExpr::AO__c11_atomic_fetch_or:
     case AtomicExpr::AO__atomic_fetch_or:
+    case AtomicExpr::AO__atomic_fetch_nand:
     case AtomicExpr::AO__c11_atomic_fetch_sub:
     case AtomicExpr::AO__atomic_fetch_sub:
     case AtomicExpr::AO__c11_atomic_fetch_xor:
     case AtomicExpr::AO__atomic_fetch_xor:
+    case AtomicExpr::AO__atomic_add_fetch:
+    case AtomicExpr::AO__atomic_and_fetch:
+    case AtomicExpr::AO__atomic_nand_fetch:
+    case AtomicExpr::AO__atomic_or_fetch:
+    case AtomicExpr::AO__atomic_sub_fetch:
+    case AtomicExpr::AO__atomic_xor_fetch:
       // For these, only library calls for certain sizes exist.
       UseOptimizedLibcall = true;
       break;
-    default:
+
+    case AtomicExpr::AO__c11_atomic_load:
+    case AtomicExpr::AO__c11_atomic_store:
+    case AtomicExpr::AO__c11_atomic_exchange:
+    case AtomicExpr::AO__c11_atomic_compare_exchange_weak:
+    case AtomicExpr::AO__c11_atomic_compare_exchange_strong:
+    case AtomicExpr::AO__atomic_load_n:
+    case AtomicExpr::AO__atomic_load:
+    case AtomicExpr::AO__atomic_store_n:
+    case AtomicExpr::AO__atomic_store:
+    case AtomicExpr::AO__atomic_exchange_n:
+    case AtomicExpr::AO__atomic_exchange:
+    case AtomicExpr::AO__atomic_compare_exchange_n:
+    case AtomicExpr::AO__atomic_compare_exchange:
       // Only use optimized library calls for sizes for which they exist.
       if (Size == 1 || Size == 2 || Size == 4 || Size == 8)
         UseOptimizedLibcall = true;
@@ -820,6 +843,9 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     QualType RetTy;
     bool HaveRetTy = false;
     switch (E->getOp()) {
+    case AtomicExpr::AO__c11_atomic_init:
+      llvm_unreachable("Already handled!");
+
     // There is only one libcall for compare an exchange, because there is no
     // optimisation benefit possible from a libcall version of a weak compare
     // and exchange.
@@ -903,7 +929,49 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
                         E->getExprLoc(), sizeChars);
       break;
-    default: return EmitUnsupportedRValue(E, "atomic library call");
+    // T __atomic_fetch_nand_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_fetch_nand:
+      LibCallName = "__atomic_fetch_nand";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
+
+    // T __atomic_add_fetch_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_add_fetch:
+      LibCallName = "__atomic_add_fetch";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, LoweredMemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
+    // T __atomic_and_fetch_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_and_fetch:
+      LibCallName = "__atomic_and_fetch";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
+    // T __atomic_or_fetch_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_or_fetch:
+      LibCallName = "__atomic_or_fetch";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
+    // T __atomic_sub_fetch_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_sub_fetch:
+      LibCallName = "__atomic_sub_fetch";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, LoweredMemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
+    // T __atomic_xor_fetch_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_xor_fetch:
+      LibCallName = "__atomic_xor_fetch";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
+    // T __atomic_nand_fetch_N(T *mem, T val, int order)
+    case AtomicExpr::AO__atomic_nand_fetch:
+      LibCallName = "__atomic_nand_fetch";
+      AddDirectArgument(*this, Args, UseOptimizedLibcall, Val1, MemTy,
+                        E->getExprLoc(), sizeChars);
+      break;
     }
 
     // Optimized functions have the size in their name.
