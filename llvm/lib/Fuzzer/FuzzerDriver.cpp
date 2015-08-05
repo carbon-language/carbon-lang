@@ -247,6 +247,7 @@ int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   if (Flags.sync_command)
     Options.SyncCommand = Flags.sync_command;
   Options.SyncTimeout = Flags.sync_timeout;
+  Options.ReportSlowUnits = Flags.report_slow_units;
   Fuzzer F(USF, Options);
 
   if (Flags.apply_tokens)

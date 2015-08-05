@@ -79,6 +79,7 @@ class Fuzzer {
     int PreferSmallDuringInitialShuffle = -1;
     size_t MaxNumberOfRuns = ULONG_MAX;
     int SyncTimeout = 600;
+    int ReportSlowUnits = 10;
     std::string OutputCorpus;
     std::string SyncCommand;
     std::vector<std::string> Tokens;

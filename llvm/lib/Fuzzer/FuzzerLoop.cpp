@@ -159,12 +159,13 @@ size_t Fuzzer::RunOne(const Unit &U) {
   auto UnitStopTime = system_clock::now();
   auto TimeOfUnit =
       duration_cast<seconds>(UnitStopTime - UnitStartTime).count();
-  if (TimeOfUnit > TimeOfLongestUnitInSeconds) {
+  if (TimeOfUnit > TimeOfLongestUnitInSeconds &&
+      TimeOfUnit >= Options.ReportSlowUnits) {
     TimeOfLongestUnitInSeconds = TimeOfUnit;
-    Printf("Longest unit: %zd s:\n", TimeOfLongestUnitInSeconds);
+    Printf("Slowest unit: %zd s:\n", TimeOfLongestUnitInSeconds);
     if (U.size() <= kMaxUnitSizeToPrint)
       Print(U, "\n");
-    WriteUnitToFileWithPrefix(U, "long-running-unit-");
+    WriteUnitToFileWithPrefix(U, "slow-unit-");
   }
   return Res;
 }

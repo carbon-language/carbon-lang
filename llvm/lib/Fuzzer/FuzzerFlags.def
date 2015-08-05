@@ -58,3 +58,5 @@ FUZZER_FLAG_STRING(sync_command, "Execute an external command "
                                  "\"<sync_command> <test_corpus>\" "
                                  "to synchronize the test corpus.")
 FUZZER_FLAG_INT(sync_timeout, 600, "Minimum timeout between syncs.")
+FUZZER_FLAG_INT(report_slow_units, 10,
+    "Report slowest units if they run for more than this number of seconds.")
