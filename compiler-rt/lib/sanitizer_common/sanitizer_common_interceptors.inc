@@ -51,7 +51,7 @@
   } // extern "C"
 #else
 #define DECLARE_WEAK_INTERCEPTOR_HOOK(f, ...)
-#define CALL_WEAK_INTERCEPTOR_HOOK(f, a1, a2, a3, a4)
+#define CALL_WEAK_INTERCEPTOR_HOOK(f, ...)
 
 #endif  // SANITIZER_INTERCEPTOR_HOOKS
 
