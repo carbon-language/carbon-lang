@@ -7668,7 +7668,7 @@ ASTReader::ReadTemplateArgument(ModuleFile &F,
     TemplateArgument *Args = new (Context) TemplateArgument[NumArgs];
     for (unsigned I = 0; I != NumArgs; ++I)
       Args[I] = ReadTemplateArgument(F, Record, Idx);
-    return TemplateArgument(Args, NumArgs);
+    return TemplateArgument(llvm::makeArrayRef(Args, NumArgs));
   }
   }
 

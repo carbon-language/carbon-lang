@@ -88,15 +88,13 @@ TemplateArgument::TemplateArgument(ASTContext &Ctx, const llvm::APSInt &Value,
   Integer.Type = Type.getAsOpaquePtr();
 }
 
-TemplateArgument TemplateArgument::CreatePackCopy(ASTContext &Context,
-                                                  const TemplateArgument *Args,
-                                                  unsigned NumArgs) {
-  if (NumArgs == 0)
+TemplateArgument
+TemplateArgument::CreatePackCopy(ASTContext &Context,
+                                 ArrayRef<TemplateArgument> Args) {
+  if (Args.empty())
     return getEmptyPack();
-  
-  TemplateArgument *Storage = new (Context) TemplateArgument [NumArgs];
-  std::copy(Args, Args + NumArgs, Storage);
-  return TemplateArgument(Storage, NumArgs);
+
+  return TemplateArgument(Args.copy(Context));
 }
 
 bool TemplateArgument::isDependent() const {

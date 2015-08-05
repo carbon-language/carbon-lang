@@ -24,7 +24,7 @@ using namespace llvm;
 
 TemplateArgument 
 SubstTemplateTemplateParmPackStorage::getArgumentPack() const {
-  return TemplateArgument(Arguments, size());
+  return TemplateArgument(llvm::makeArrayRef(Arguments, size()));
 }
 
 void SubstTemplateTemplateParmStorage::Profile(llvm::FoldingSetNodeID &ID) {
@@ -40,7 +40,7 @@ void SubstTemplateTemplateParmStorage::Profile(llvm::FoldingSetNodeID &ID,
 
 void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID,
                                                    ASTContext &Context) {
-  Profile(ID, Context, Parameter, TemplateArgument(Arguments, size()));
+  Profile(ID, Context, Parameter, getArgumentPack());
 }
 
 void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID, 

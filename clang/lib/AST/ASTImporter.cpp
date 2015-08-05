@@ -2210,11 +2210,9 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
     ToPack.reserve(From.pack_size());
     if (ImportTemplateArguments(From.pack_begin(), From.pack_size(), ToPack))
       return TemplateArgument();
-    
-    TemplateArgument *ToArgs 
-      = new (Importer.getToContext()) TemplateArgument[ToPack.size()];
-    std::copy(ToPack.begin(), ToPack.end(), ToArgs);
-    return TemplateArgument(ToArgs, ToPack.size());
+
+    return TemplateArgument(
+        llvm::makeArrayRef(ToPack).copy(Importer.getToContext()));
   }
   }
   

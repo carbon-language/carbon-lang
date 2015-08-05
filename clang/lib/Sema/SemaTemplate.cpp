@@ -3733,9 +3733,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         // We're done with this parameter pack. Pack up its arguments and add
         // them to the list.
         Converted.push_back(
-          TemplateArgument::CreatePackCopy(Context,
-                                           ArgumentPack.data(),
-                                           ArgumentPack.size()));
+            TemplateArgument::CreatePackCopy(Context, ArgumentPack));
         ArgumentPack.clear();
 
         // This argument is assigned to the next parameter.
@@ -3816,10 +3814,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     // If we're checking a partial template argument list, we're done.
     if (PartialTemplateArgs) {
       if ((*Param)->isTemplateParameterPack() && !ArgumentPack.empty())
-        Converted.push_back(TemplateArgument::CreatePackCopy(Context,
-                                                         ArgumentPack.data(),
-                                                         ArgumentPack.size()));
-        
+        Converted.push_back(
+            TemplateArgument::CreatePackCopy(Context, ArgumentPack));
+
       return false;
     }
 
@@ -3835,9 +3832,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       if (Param + 1 != ParamEnd)
         return true;
 
-      Converted.push_back(TemplateArgument::CreatePackCopy(Context,
-                                                       ArgumentPack.data(),
-                                                       ArgumentPack.size()));
+      Converted.push_back(
+          TemplateArgument::CreatePackCopy(Context, ArgumentPack));
       ArgumentPack.clear();
 
       ++Param;

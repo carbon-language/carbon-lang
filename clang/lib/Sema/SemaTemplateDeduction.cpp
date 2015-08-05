@@ -679,7 +679,7 @@ public:
             new (S.Context) TemplateArgument[Pack.New.size()];
         std::copy(Pack.New.begin(), Pack.New.end(), ArgumentPack);
         NewPack = DeducedTemplateArgument(
-            TemplateArgument(ArgumentPack, Pack.New.size()),
+            TemplateArgument(llvm::makeArrayRef(ArgumentPack, Pack.New.size())),
             Pack.New[0].wasDeducedFromArrayBound());
       }
 
@@ -2075,9 +2075,8 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
     }
 
     // Create the resulting argument pack.
-    Output.push_back(TemplateArgument::CreatePackCopy(S.Context,
-                                                      PackedArgsBuilder.data(),
-                                                     PackedArgsBuilder.size()));
+    Output.push_back(
+        TemplateArgument::CreatePackCopy(S.Context, PackedArgsBuilder));
     return false;
   }
 
@@ -2850,7 +2849,8 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
           CurrentInstantiationScope->getPartiallySubstitutedPack(&ExplicitArgs,
                                                              &NumExplicitArgs)
             == Param) {
-        Builder.push_back(TemplateArgument(ExplicitArgs, NumExplicitArgs));
+        Builder.push_back(TemplateArgument(
+            llvm::makeArrayRef(ExplicitArgs, NumExplicitArgs)));
 
         // Forget the partially-substituted pack; it's substitution is now
         // complete.

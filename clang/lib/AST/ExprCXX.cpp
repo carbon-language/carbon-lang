@@ -1443,7 +1443,7 @@ SubstNonTypeTemplateParmPackExpr(QualType T,
     NumArguments(ArgPack.pack_size()), NameLoc(NameLoc) { }
 
 TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
-  return TemplateArgument(Arguments, NumArguments);
+  return TemplateArgument(llvm::makeArrayRef(Arguments, NumArguments));
 }
 
 FunctionParmPackExpr::FunctionParmPackExpr(QualType T, ParmVarDecl *ParamPack,

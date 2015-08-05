@@ -240,8 +240,8 @@ static void GenerateInjectedTemplateArgs(ASTContext &Context,
     }
     
     if ((*Param)->isTemplateParameterPack())
-      Arg = TemplateArgument::CreatePackCopy(Context, &Arg, 1);
-    
+      Arg = TemplateArgument::CreatePackCopy(Context, Arg);
+
     *Args++ = Arg;
   }
 }
