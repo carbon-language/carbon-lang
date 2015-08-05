@@ -8,6 +8,9 @@
 // Tests that interceptors coming from a library specified in called_from_lib
 // suppression are ignored.
 
+// Some aarch64 kernels do not support non executable write pages
+// XFAIL: aarch64
+
 #ifndef LIB
 
 extern "C" void libfunc();

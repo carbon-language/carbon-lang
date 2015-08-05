@@ -14,7 +14,7 @@
 int main() {
 #ifdef __x86_64__
   const size_t kLog2Size = 39;
-#elif defined(__mips64)
+#elif defined(__mips64) || defined(__aarch64__)
   const size_t kLog2Size = 32;
 #endif
   const uintptr_t kLocation = 0x40ULL << kLog2Size;

@@ -86,6 +86,33 @@ const uptr kHiAppMemEnd   = 0xffffffffffull;
 const uptr kAppMemMsk     = 0xfc00000000ull;
 const uptr kAppMemXor     = 0x0400000000ull;
 const uptr kVdsoBeg       = 0xfffff00000ull;
+#elif defined(__aarch64__)
+/*
+C/C++ on linux/aarch64 (39-bit VMA)
+0000 4000 00 - 0200 0000 00: main binary
+2000 0000 00 - 4000 0000 00: shadow memory
+4000 0000 00 - 5000 0000 00: metainfo
+5000 0000 00 - 6000 0000 00: -
+6000 0000 00 - 6200 0000 00: traces
+6200 0000 00 - 7d00 0000 00: -
+7d00 0000 00 - 7e00 0000 00: heap
+7e00 0000 00 - 7fff ffff ff: modules and main thread stack
+*/
+const uptr kLoAppMemBeg   = 0x0000400000ull;
+const uptr kLoAppMemEnd   = 0x0200000000ull;
+const uptr kShadowBeg     = 0x2000000000ull;
+const uptr kShadowEnd     = 0x4000000000ull;
+const uptr kMetaShadowBeg = 0x4000000000ull;
+const uptr kMetaShadowEnd = 0x5000000000ull;
+const uptr kTraceMemBeg   = 0x6000000000ull;
+const uptr kTraceMemEnd   = 0x6200000000ull;
+const uptr kHeapMemBeg    = 0x7d00000000ull;
+const uptr kHeapMemEnd    = 0x7e00000000ull;
+const uptr kHiAppMemBeg   = 0x7e00000000ull;
+const uptr kHiAppMemEnd   = 0x7fffffffffull;
+const uptr kAppMemMsk     = 0x7800000000ull;
+const uptr kAppMemXor     = 0x0800000000ull;
+const uptr kVdsoBeg       = 0x7f00000000ull;
 #endif
 
 ALWAYS_INLINE

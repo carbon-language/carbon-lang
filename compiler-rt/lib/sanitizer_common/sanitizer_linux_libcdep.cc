@@ -194,6 +194,8 @@ static uptr TlsPreTcbSize() {
 
 void InitTlsSize() {
 #if !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_GO
+// all current supported platforms have 16 bytes stack alignment
+  const size_t kStackAlign = 16;
   typedef void (*get_tls_func)(size_t*, size_t*) DL_INTERNAL_FUNCTION;
   get_tls_func get_tls;
   void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
@@ -204,11 +206,14 @@ void InitTlsSize() {
   size_t tls_size = 0;
   size_t tls_align = 0;
   get_tls(&tls_size, &tls_align);
-  g_tls_size = tls_size;
+  if (tls_align < kStackAlign)
+    tls_align = kStackAlign;
+  g_tls_size = RoundUpTo(tls_size, tls_align);
 #endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 }
 
-#if (defined(__x86_64__) || defined(__i386__) || defined(__mips__)) \
+#if (defined(__x86_64__) || defined(__i386__) || defined(__mips__) \
+    || defined(__aarch64__)) \
     && SANITIZER_LINUX
 // sizeof(struct thread) from glibc.
 static atomic_uintptr_t kThreadDescriptorSize;
@@ -256,6 +261,11 @@ uptr ThreadDescriptorSize() {
   if (val)
     atomic_store(&kThreadDescriptorSize, val, memory_order_relaxed);
   return val;
+#elif defined(__aarch64__)
+  // The sizeof (struct pthread) is the same from GLIBC 2.17 to 2.22.
+  val = 1776;
+  atomic_store(&kThreadDescriptorSize, val, memory_order_relaxed);
+  return val;
 #endif
   return 0;
 }
@@ -285,6 +295,8 @@ uptr ThreadSelf() {
                 rdhwr %0,$29;\
                 .set pop" : "=r" (thread_pointer));
   descr_addr = thread_pointer - kTlsTcbOffset - TlsPreTcbSize();
+# elif defined(__aarch64__)
+  descr_addr = reinterpret_cast<uptr>(__builtin_thread_pointer());
 # else
 #  error "unsupported CPU arch"
 # endif
@@ -315,7 +327,7 @@ uptr ThreadSelf() {
 #if !SANITIZER_GO
 static void GetTls(uptr *addr, uptr *size) {
 #if SANITIZER_LINUX
-# if defined(__x86_64__) || defined(__i386__)
+# if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
   *addr = ThreadSelf();
   *size = GetTlsSize();
   *addr -= *size;

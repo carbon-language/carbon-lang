@@ -926,6 +926,57 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                        : "memory", "$29" );
   return res;
 }
+#elif defined(__aarch64__)
+uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
+                    int *parent_tidptr, void *newtls, int *child_tidptr) {
+  long long res;
+  if (!fn || !child_stack)
+    return -EINVAL;
+  CHECK_EQ(0, (uptr)child_stack % 16);
+  child_stack = (char *)child_stack - 2 * sizeof(unsigned long long);
+  ((unsigned long long *)child_stack)[0] = (uptr)fn;
+  ((unsigned long long *)child_stack)[1] = (uptr)arg;
+
+  register int (*__fn)(void *)  __asm__("x0") = fn;
+  register void *__stack __asm__("x1") = child_stack;
+  register int   __flags __asm__("x2") = flags;
+  register void *__arg   __asm__("x3") = arg;
+  register int  *__ptid  __asm__("x4") = parent_tidptr;
+  register void *__tls   __asm__("x5") = newtls;
+  register int  *__ctid  __asm__("x6") = child_tidptr;
+
+  __asm__ __volatile__(
+                       "mov x0,x2\n" /* flags  */
+                       "mov x2,x4\n" /* ptid  */
+                       "mov x3,x5\n" /* tls  */
+                       "mov x4,x6\n" /* ctid  */
+                       "mov x8,%9\n" /* clone  */
+
+                       "svc 0x0\n"
+
+                       /* if (%r0 != 0)
+                        *   return %r0;
+                        */
+                       "cmp x0, #0\n"
+                       "bne 1f\n"
+
+                       /* In the child, now. Call "fn(arg)". */
+                       "ldp x1, x0, [sp], #16\n"
+                       "blr x1\n"
+
+                       /* Call _exit(%r0).  */
+                       "mov x8, %10\n"
+                       "svc 0x0\n"
+                     "1:\n"
+
+                       : "=r" (res)
+                       : "i"(-EINVAL),
+                         "r"(__fn), "r"(__stack), "r"(__flags), "r"(__arg),
+                         "r"(__ptid), "r"(__tls), "r"(__ctid),
+                         "i"(__NR_clone), "i"(__NR_exit)
+                       : "x30", "memory");
+  return res;
+}
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
 #if SANITIZER_ANDROID

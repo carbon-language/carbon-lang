@@ -14,7 +14,8 @@
 
 
 #include "sanitizer_platform.h"
-#if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__))
+#if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__) || \
+                        defined(__aarch64__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -27,6 +28,8 @@
 #include <sys/prctl.h> // for PR_* definitions
 #include <sys/ptrace.h> // for PTRACE_* definitions
 #include <sys/types.h> // for pid_t
+#include <sys/uio.h> // for iovec
+#include <elf.h> // for NT_PRSTATUS
 #if SANITIZER_ANDROID && defined(__arm__)
 # include <linux/user.h>  // for pt_regs
 #else
@@ -469,6 +472,11 @@ typedef pt_regs regs_struct;
 typedef struct user regs_struct;
 #define REG_SP regs[EF_REG29]
 
+#elif defined(__aarch64__)
+typedef struct user_pt_regs regs_struct;
+#define REG_SP sp
+#define ARCH_IOVEC_FOR_GETREGSET
+
 #else
 #error "Unsupported architecture"
 #endif // SANITIZER_ANDROID && defined(__arm__)
@@ -479,8 +487,18 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
   pid_t tid = GetThreadID(index);
   regs_struct regs;
   int pterrno;
-  if (internal_iserror(internal_ptrace(PTRACE_GETREGS, tid, NULL, &regs),
-                       &pterrno)) {
+#ifdef ARCH_IOVEC_FOR_GETREGSET
+  struct iovec regset_io;
+  regset_io.iov_base = &regs;
+  regset_io.iov_len = sizeof(regs_struct);
+  bool isErr = internal_iserror(internal_ptrace(PTRACE_GETREGSET, tid,
+                                (void*)NT_PRSTATUS, (void*)&regset_io),
+                                &pterrno);
+#else
+  bool isErr = internal_iserror(internal_ptrace(PTRACE_GETREGS, tid, NULL,
+                                &regs), &pterrno);
+#endif
+  if (isErr) {
     VReport(1, "Could not get registers from thread %d (errno %d).\n", tid,
             pterrno);
     return -1;
@@ -496,4 +514,5 @@ uptr SuspendedThreadsList::RegisterCount() {
 }
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__))
+#endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
+        // || defined(__aarch64__)

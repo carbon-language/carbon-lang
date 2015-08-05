@@ -54,7 +54,7 @@ namespace __tsan {
 
 #ifndef SANITIZER_GO
 struct MapUnmapCallback;
-#ifdef __mips64
+#if defined(__mips64) || defined(__aarch64__)
 static const uptr kAllocatorSpace = 0;
 static const uptr kAllocatorSize = SANITIZER_MMAP_RANGE_SIZE;
 static const uptr kAllocatorRegionSizeLog = 20;

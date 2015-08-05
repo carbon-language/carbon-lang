@@ -221,6 +221,9 @@ void InitializeShadowMemory() {
 #elif defined(__mips64)
   const uptr kMadviseRangeBeg  = 0xff00000000ull;
   const uptr kMadviseRangeSize = 0x0100000000ull;
+#elif defined(__aarch64__)
+  const uptr kMadviseRangeBeg  = 0x7e00000000ull;
+  const uptr kMadviseRangeSize = 0x0100000000ull;
 #endif
   NoHugePagesInRegion(MemToShadow(kMadviseRangeBeg),
                       kMadviseRangeSize * kShadowMultiplier);

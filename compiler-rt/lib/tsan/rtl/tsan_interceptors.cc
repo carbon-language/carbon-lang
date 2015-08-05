@@ -67,6 +67,12 @@ struct ucontext_t {
 };
 #endif
 
+#if defined(__x86_64__) || defined(__mips__)
+#define PTHREAD_ABI_BASE  "GLIBC_2.3.2"
+#elif defined(__aarch64__)
+#define PTHREAD_ABI_BASE  "GLIBC_2.17"
+#endif
+
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
 DECLARE_REAL(int, pthread_attr_getdetachstate, void *, void *)
@@ -2504,12 +2510,12 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_join);
   TSAN_INTERCEPT(pthread_detach);
 
-  TSAN_INTERCEPT_VER(pthread_cond_init, "GLIBC_2.3.2");
-  TSAN_INTERCEPT_VER(pthread_cond_signal, "GLIBC_2.3.2");
-  TSAN_INTERCEPT_VER(pthread_cond_broadcast, "GLIBC_2.3.2");
-  TSAN_INTERCEPT_VER(pthread_cond_wait, "GLIBC_2.3.2");
-  TSAN_INTERCEPT_VER(pthread_cond_timedwait, "GLIBC_2.3.2");
-  TSAN_INTERCEPT_VER(pthread_cond_destroy, "GLIBC_2.3.2");
+  TSAN_INTERCEPT_VER(pthread_cond_init, PTHREAD_ABI_BASE);
+  TSAN_INTERCEPT_VER(pthread_cond_signal, PTHREAD_ABI_BASE);
+  TSAN_INTERCEPT_VER(pthread_cond_broadcast, PTHREAD_ABI_BASE);
+  TSAN_INTERCEPT_VER(pthread_cond_wait, PTHREAD_ABI_BASE);
+  TSAN_INTERCEPT_VER(pthread_cond_timedwait, PTHREAD_ABI_BASE);
+  TSAN_INTERCEPT_VER(pthread_cond_destroy, PTHREAD_ABI_BASE);
 
   TSAN_INTERCEPT(pthread_mutex_init);
   TSAN_INTERCEPT(pthread_mutex_destroy);

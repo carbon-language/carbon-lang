@@ -40,7 +40,7 @@ void print_address(void *address) {
 // to the format used in the diagnotic message.
 #ifdef __x86_64__
   fprintf(stderr, "0x%012lx", (unsigned long) address);
-#elif defined(__mips64)
+#elif defined(__mips64) || defined(__aarch64__)
   fprintf(stderr, "0x%010lx", (unsigned long) address);
 #endif
 }

@@ -9,6 +9,7 @@
 
 // MAP_32BIT flag for mmap is supported only for x86_64.
 // XFAIL: mips64
+// XFAIL: aarch64
 
 void *Thread(void *ptr) {
   *(int*)ptr = 42;
