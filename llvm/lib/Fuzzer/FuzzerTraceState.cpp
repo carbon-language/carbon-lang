@@ -419,7 +419,10 @@ void Fuzzer::InitializeTraceState() {
   for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++) {
     dfsan_label L = dfsan_create_label("input", (void*)(i + 1));
     // We assume that no one else has called dfsan_create_label before.
-    assert(L == i + 1);
+    if (L != i + 1) {
+      Printf("DFSan labels are not starting from 1, exiting\n");
+      exit(1);
+    }
   }
 }
 
