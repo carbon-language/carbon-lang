@@ -30,6 +30,15 @@
     %f = fmul double %c, %e
     ret double %f
   }
+
+  define double @test4(double %a, float %b) {
+  entry:
+    %c = fadd double %a, 3.250000e+00
+    %d = fadd float %b, 6.250000e+00
+    %e = fpext float %d to double
+    %f = fmul double %c, %e
+    ret double %f
+  }
 ...
 ---
 # CHECK: name: test
@@ -112,6 +121,26 @@ body:
       # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
       - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
       - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
+      - '%xmm1 = CVTSS2SDrr killed %xmm1'
+      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
+      - 'RETQ %xmm0'
+...
+---
+# CHECK:  name:  test4
+name:            test4
+constants:
+  - id:          0
+    value:       'double 3.250000e+00'
+  - id:          1
+    value:       'float 6.250000e+00'
+body:
+  - id: 0
+    name: entry
+    instructions:
+      # CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.1 - 12, _
+      # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.0 + 8, _
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.1 - 12, _'
+      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.0 + 8, _'
       - '%xmm1 = CVTSS2SDrr killed %xmm1'
       - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
       - 'RETQ %xmm0'

@@ -120,6 +120,7 @@ public:
   bool parseBlockAddressOperand(MachineOperand &Dest);
   bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
+  bool parseOperandsOffset(MachineOperand &Op);
   bool parseIRValue(Value *&V);
   bool parseMemoryOperandFlag(unsigned &Flags);
   bool parseMachineMemoryOperand(MachineMemOperand *&Dest);
@@ -693,9 +694,11 @@ bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
   GlobalValue *GV = nullptr;
   if (parseGlobalValue(GV))
     return true;
-  Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
-  // TODO: Parse offset and target flags.
   lex();
+  Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
+  // TODO: Parse the target flags.
+  if (parseOperandsOffset(Dest))
+    return true;
   return false;
 }
 
@@ -708,8 +711,10 @@ bool MIParser::parseConstantPoolIndexOperand(MachineOperand &Dest) {
   if (ConstantInfo == PFS.ConstantPoolSlots.end())
     return error("use of undefined constant '%const." + Twine(ID) + "'");
   lex();
-  // TODO: Parse offset and target flags.
+  // TODO: Parse the target flags.
   Dest = MachineOperand::CreateCPI(ID, /*Offset=*/0);
+  if (parseOperandsOffset(Dest))
+    return true;
   return false;
 }
 
@@ -733,6 +738,8 @@ bool MIParser::parseExternalSymbolOperand(MachineOperand &Dest) {
   lex();
   // TODO: Parse the target flags.
   Dest = MachineOperand::CreateES(Symbol);
+  if (parseOperandsOffset(Dest))
+    return true;
   return false;
 }
 
@@ -882,8 +889,10 @@ bool MIParser::parseBlockAddressOperand(MachineOperand &Dest) {
   lex();
   if (expectAndConsume(MIToken::rparen))
     return true;
-  // TODO: parse offset and target flags.
+  // TODO: parse the target flags.
   Dest = MachineOperand::CreateBA(BlockAddress::get(F, BB), /*Offset=*/0);
+  if (parseOperandsOffset(Dest))
+    return true;
   return false;
 }
 
@@ -900,8 +909,10 @@ bool MIParser::parseTargetIndexOperand(MachineOperand &Dest) {
   lex();
   if (expectAndConsume(MIToken::rparen))
     return true;
-  // TODO: Parse the offset and target flags.
+  // TODO: Parse the target flags.
   Dest = MachineOperand::CreateTargetIndex(unsigned(Index), /*Offset=*/0);
+  if (parseOperandsOffset(Dest))
+    return true;
   return false;
 }
 
@@ -968,6 +979,24 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     // TODO: parse the other machine operands.
     return error("expected a machine operand");
   }
+  return false;
+}
+
+bool MIParser::parseOperandsOffset(MachineOperand &Op) {
+  if (Token.isNot(MIToken::plus) && Token.isNot(MIToken::minus))
+    return false;
+  StringRef Sign = Token.stringValue();
+  bool IsNegative = Token.is(MIToken::minus);
+  lex();
+  if (Token.isNot(MIToken::IntegerLiteral))
+    return error("expected an integer literal after '" + Sign + "'");
+  if (Token.integerValue().getMinSignedBits() > 64)
+    return error("expected 64-bit integer (too large)");
+  int64_t Offset = Token.integerValue().getExtValue();
+  if (IsNegative)
+    Offset = -Offset;
+  lex();
+  Op.setOffset(Offset);
   return false;
 }
 

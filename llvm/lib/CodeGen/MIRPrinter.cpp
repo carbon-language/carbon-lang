@@ -117,6 +117,7 @@ public:
   void printIRBlockReference(const BasicBlock &BB);
   void printIRValueReference(const Value &V);
   void printStackObjectReference(int FrameIndex);
+  void printOffset(int64_t Offset);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
   void print(const MachineMemOperand &Op);
 
@@ -505,6 +506,16 @@ void MIPrinter::printStackObjectReference(int FrameIndex) {
     OS << '.' << Operand.Name;
 }
 
+void MIPrinter::printOffset(int64_t Offset) {
+  if (Offset == 0)
+    return;
+  if (Offset < 0) {
+    OS << " - " << -Offset;
+    return;
+  }
+  OS << " + " << Offset;
+}
+
 static const char *getTargetIndexName(const MachineFunction &MF, int Index) {
   const auto *TII = MF.getSubtarget().getInstrInfo();
   assert(TII && "expected instruction info");
@@ -555,7 +566,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     OS << "%const." << Op.getIndex();
-    // TODO: Print offset and target flags.
+    printOffset(Op.getOffset());
+    // TODO: Print the target flags.
     break;
   case MachineOperand::MO_TargetIndex: {
     OS << "target-index(";
@@ -565,7 +577,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     else
       OS << "<unknown>";
     OS << ')';
-    // TODO: Print the offset and target flags.
+    printOffset(Op.getOffset());
+    // TODO: Print the target flags.
     break;
   }
   case MachineOperand::MO_JumpTableIndex:
@@ -575,11 +588,13 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   case MachineOperand::MO_ExternalSymbol:
     OS << '$';
     printLLVMNameWithoutPrefix(OS, Op.getSymbolName());
+    printOffset(Op.getOffset());
     // TODO: Print the target flags.
     break;
   case MachineOperand::MO_GlobalAddress:
     Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
-    // TODO: Print offset and target flags.
+    printOffset(Op.getOffset());
+    // TODO: Print the target flags.
     break;
   case MachineOperand::MO_BlockAddress:
     OS << "blockaddress(";
@@ -588,7 +603,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     OS << ", ";
     printIRBlockReference(*Op.getBlockAddress()->getBasicBlock());
     OS << ')';
-    // TODO: Print offset and target flags.
+    printOffset(Op.getOffset());
+    // TODO: Print the target flags.
     break;
   case MachineOperand::MO_RegisterMask: {
     auto RegMaskInfo = RegisterMaskIds.find(Op.getRegMask());

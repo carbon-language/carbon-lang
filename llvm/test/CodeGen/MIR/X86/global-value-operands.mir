@@ -42,6 +42,15 @@
     ret i32 %a
   }
 
+  define i32 @test3() {
+  entry:
+    %a = load i32, i32* @.$0
+    store i32 %a, i32* @-_-
+    %b = load i32, i32* @_-_a
+    store i32 %b, i32* @$.-B
+    ret i32 %b
+  }
+
 ...
 ---
 # CHECK: name: inc
@@ -98,5 +107,26 @@ body:
       # CHECK: , @"\01Hello@$%09 \5C World,",
       - '%rax = MOV64rm %rip, 1, _, @"\01Hello@$%09 \\ World,", _'
       - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - 'RETQ %eax'
+...
+---
+# CHECK: name: test3
+name:            test3
+body:
+  - id:              0
+    name:            entry
+    instructions:
+      # CHECK: , @".$0",
+      # CHECK: , @-_-,
+      # CHECK: , @_-_a + 4,
+      # CHECK: , @"$.-B" - 8,
+      - '%rax = MOV64rm %rip, 1, _, @.$0 + 0, _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%rcx = MOV64rm %rip, 1, _, @-_- - 0, _'
+      - 'MOV32mr killed %rcx, 1, _, 0, _, killed %eax'
+      - '%rax = MOV64rm %rip, 1, _, @_-_a + 4, _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%rcx = MOV64rm %rip, 1, _, @$.-B - 8, _'
+      - 'MOV32mr killed %rcx, 1, _, 0, _, %eax'
       - 'RETQ %eax'
 ...

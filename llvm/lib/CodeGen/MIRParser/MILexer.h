@@ -40,6 +40,8 @@ struct MIToken {
     exclaim,
     lparen,
     rparen,
+    plus,
+    minus,
 
     // Keywords
     kw_implicit,

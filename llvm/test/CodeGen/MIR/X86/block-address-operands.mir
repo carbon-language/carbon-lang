@@ -35,6 +35,16 @@
     ret void
   }
 
+  define void @test4() {
+  entry:
+    store volatile i8* blockaddress(@test4, %block), i8** @addr
+    %val = load volatile i8*, i8** @addr
+    indirectbr i8* %val, [label %block]
+
+  block:
+    ret void
+  }
+
 ...
 ---
 name:            test
@@ -83,6 +93,23 @@ body:
       - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
       - 'JMP64m %rip, 1, _, @addr, _'
   - id:              1
+    addressTaken:    true
+    instructions:
+      - RETQ
+...
+---
+name:            test4
+body:
+  - id:              0
+    name:            entry
+    successors:      [ '%bb.1.block' ]
+    instructions:
+    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block) + 2, _
+      - '%rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block) + 2, _'
+      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
+      - 'JMP64m %rip, 1, _, @addr, _'
+  - id:              1
+    name:            block
     addressTaken:    true
     instructions:
       - RETQ
