@@ -18,6 +18,14 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf2;
 
+template <class ELFT>
+bool ObjectFile<ELFT>::isCompatibleWith(const ObjectFileBase &Other) const {
+  if (kind() != Other.kind())
+    return false;
+  return getObj()->getHeader()->e_machine ==
+         cast<ObjectFile<ELFT>>(Other).getObj()->getHeader()->e_machine;
+}
+
 template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
   // Parse a memory buffer as a ELF file.
   std::error_code EC;

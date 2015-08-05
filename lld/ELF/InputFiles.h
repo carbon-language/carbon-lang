@@ -21,7 +21,7 @@ class Chunk;
 // The root class of input files.
 class InputFile {
 public:
-  enum Kind { ObjectKind };
+  enum Kind { Object32LEKind, Object32BEKind, Object64LEKind, Object64BEKind };
   Kind kind() const { return FileKind; }
   virtual ~InputFile() {}
 
@@ -30,6 +30,8 @@ public:
 
   // Reads a file (constructors don't do that).
   virtual void parse() = 0;
+
+  StringRef getName() const { return MB.getBufferIdentifier(); }
 
 protected:
   explicit InputFile(Kind K, MemoryBufferRef M) : MB(M), FileKind(K) {}
@@ -42,11 +44,16 @@ private:
 // .o file.
 class ObjectFileBase : public InputFile {
 public:
-  explicit ObjectFileBase(MemoryBufferRef M) : InputFile(ObjectKind, M) {}
-  static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
+  explicit ObjectFileBase(Kind K, MemoryBufferRef M) : InputFile(K, M) {}
+  static bool classof(const InputFile *F) {
+    Kind K = F->kind();
+    return K >= Object32LEKind && K <= Object64BEKind;
+  }
 
   ArrayRef<Chunk *> getChunks() { return Chunks; }
   ArrayRef<SymbolBody *> getSymbols() override { return SymbolBodies; }
+
+  virtual bool isCompatibleWith(const ObjectFileBase &Other) const = 0;
 
 protected:
   // List of all chunks defined by this file. This includes both section
@@ -65,11 +72,26 @@ template <class ELFT> class ObjectFile : public ObjectFileBase {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
 
 public:
-  explicit ObjectFile(MemoryBufferRef M) : ObjectFileBase(M) {}
+  bool isCompatibleWith(const ObjectFileBase &Other) const override;
+
+  static Kind getKind() {
+    if (!ELFT::Is64Bits) {
+      if (ELFT::TargetEndianness == llvm::support::little)
+        return Object32LEKind;
+      return Object32BEKind;
+    }
+    if (ELFT::TargetEndianness == llvm::support::little)
+      return Object64LEKind;
+    return Object64BEKind;
+  }
+
+  static bool classof(const InputFile *F) { return F->kind() == getKind(); }
+
+  explicit ObjectFile(MemoryBufferRef M) : ObjectFileBase(getKind(), M) {}
   void parse() override;
 
   // Returns the underying ELF file.
-  llvm::object::ELFFile<ELFT> *getObj() { return ELFObj.get(); }
+  llvm::object::ELFFile<ELFT> *getObj() const { return ELFObj.get(); }
 
 private:
   void initializeChunks();

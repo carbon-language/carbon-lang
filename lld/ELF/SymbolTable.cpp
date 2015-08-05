@@ -26,6 +26,12 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
 }
 
 void SymbolTable::addObject(ObjectFileBase *File) {
+  if (!ObjectFiles.empty()) {
+    ObjectFileBase &Old = *ObjectFiles[0];
+    if (!Old.isCompatibleWith(*File))
+      error(Twine(Old.getName() + " is incompatible with " + File->getName()));
+  }
+
   ObjectFiles.emplace_back(File);
   for (SymbolBody *Body : File->getSymbols())
     if (Body->isExternal())
