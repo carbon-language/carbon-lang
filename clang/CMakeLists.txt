@@ -558,12 +558,14 @@ if (CLANG_ENABLE_BOOTSTRAP)
 
   if(CMAKE_VERSION VERSION_LESS 3.3.20150708)
     set(cmake_3_4_USES_TERMINAL_OPTIONS)
+    set(cmake_3_4_USES_TERMINAL)
   else()
     set(cmake_3_4_USES_TERMINAL_OPTIONS
       USES_TERMINAL_CONFIGURE 1
       USES_TERMINAL_BUILD 1
       USES_TERMINAL_INSTALL 1
       )
+    set(cmake_3_4_USES_TERMINAL USES_TERMINAL 1)
   endif()
   
   set(STAMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-stamps/)
@@ -607,6 +609,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target install
     COMMENT "Performing install step for 'bootstrap'"
     DEPENDEES build
+    ${cmake_3_4_USES_TERMINAL}
   )
   ExternalProject_Add_StepTargets(bootstrap really-install)
   add_custom_target(bootstrap-install DEPENDS bootstrap-really-install)
@@ -621,6 +624,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
       COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --target ${target}
       COMMENT "Performing ${target} for 'bootstrap'"
       DEPENDEES configure
+      ${cmake_3_4_USES_TERMINAL}
     )
     ExternalProject_Add_StepTargets(bootstrap ${target})
   endforeach()
