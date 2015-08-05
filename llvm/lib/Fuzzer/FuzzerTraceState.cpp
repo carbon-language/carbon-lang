@@ -394,6 +394,9 @@ static TraceState *TS;
 
 void Fuzzer::StartTraceRecording() {
   if (!TS) return;
+  if (ReallyHaveDFSan())
+    for (size_t i = 0; i < static_cast<size_t>(Options.MaxLen); i++)
+      dfsan_set_label(i + 1, &CurrentUnit[i], 1);
   TS->StartTraceRecording();
 }
 
@@ -417,7 +420,6 @@ void Fuzzer::InitializeTraceState() {
     dfsan_label L = dfsan_create_label("input", (void*)(i + 1));
     // We assume that no one else has called dfsan_create_label before.
     assert(L == i + 1);
-    dfsan_set_label(L, &CurrentUnit[i], 1);
   }
 }
 
