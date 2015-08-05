@@ -684,7 +684,7 @@ __kmp_launch_worker( void *thr )
 #endif /* KMP_BLOCK_SIGNALS */
     void *exit_val;
 #if KMP_OS_LINUX || KMP_OS_FREEBSD
-    void *padding = 0;
+    void * volatile padding = 0;
 #endif
     int gtid;
 
@@ -1012,8 +1012,13 @@ __kmp_create_worker( int gtid, kmp_info_t *th, size_t stack_size )
                           );
             }; // if
 
-            /* Set stack size for this thread now. */
-            stack_size += gtid * __kmp_stkoffset;
+            /* Set stack size for this thread now. 
+             * The multiple of 2 is there because on some machines, requesting an unusual stacksize
+             * causes the thread to have an offset before the dummy alloca() takes place to create the
+             * offset.  Since we want the user to have a sufficient stacksize AND support a stack offset, we 
+             * alloca() twice the offset so that the upcoming alloca() does not eliminate any premade
+             * offset, and also gives the user the stack space they requested for all threads */
+            stack_size += gtid * __kmp_stkoffset * 2;
 
             KA_TRACE( 10, ( "__kmp_create_worker: T#%d, default stacksize = %lu bytes, "
                             "__kmp_stksize = %lu bytes, final stacksize = %lu bytes\n",
