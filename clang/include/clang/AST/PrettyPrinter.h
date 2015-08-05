@@ -109,7 +109,7 @@ struct PrintingPolicy {
   /// \brief Whether we should print the sizes of constant array expressions
   /// as written in the sources.
   ///
-  /// This flag determines whether arrays types declared as
+  /// This flag determines whether array types declared as
   ///
   /// \code
   /// int a[4+10*10];
