@@ -86,6 +86,7 @@ def update_status(name = None, command = None, output = None):
             print >> sys.stderr, "stderr:\n%s" % output[1]
         sys.stderr.write("\r%*d out of %d test suites processed" %
             (len(str(total_tests)), test_counter.value, total_tests))
+        sys.stderr.flush()
         test_counter.value += 1
 
 def parse_test_results(output):
