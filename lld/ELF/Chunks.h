@@ -26,8 +26,6 @@ class OutputSection;
 // doesn't even have actual data (if common or bss).
 class Chunk {
 public:
-  enum Kind { SectionKind, OtherKind };
-  Kind kind() const { return ChunkKind; }
   virtual ~Chunk() = default;
 
   // Returns the size of this chunk (even if this is a common or BSS.)
@@ -56,9 +54,6 @@ public:
   OutputSection *getOutputSection() { return Out; }
 
 protected:
-  Chunk(Kind K = OtherKind) : ChunkKind(K) {}
-  const Kind ChunkKind;
-
   // The VA of this chunk in the output. The writer sets a value.
   uint64_t VA = 0;
 
@@ -84,10 +79,6 @@ public:
   void writeTo(uint8_t *Buf) override;
   StringRef getSectionName() const override { return SectionName; }
   const Elf_Shdr *getSectionHdr() const { return Header; }
-
-  static bool classof(const Chunk *C) {
-    return C->kind() == SectionKind;
-  }
 
 private:
   // A file this chunk was created from.

@@ -10,13 +10,13 @@
 #ifndef LLD_ELF_INPUT_FILES_H
 #define LLD_ELF_INPUT_FILES_H
 
+#include "Chunks.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/Object/ELF.h"
 
 namespace lld {
 namespace elf2 {
 class SymbolBody;
-class Chunk;
 
 // The root class of input files.
 class InputFile {
@@ -50,16 +50,11 @@ public:
     return K >= Object32LEKind && K <= Object64BEKind;
   }
 
-  ArrayRef<Chunk *> getChunks() { return Chunks; }
   ArrayRef<SymbolBody *> getSymbols() override { return SymbolBodies; }
 
   virtual bool isCompatibleWith(const ObjectFileBase &Other) const = 0;
 
 protected:
-  // List of all chunks defined by this file. This includes both section
-  // chunks and non-section chunks for common symbols.
-  std::vector<Chunk *> Chunks;
-
   // List of all symbols referenced or defined by this file.
   std::vector<SymbolBody *> SymbolBodies;
 
@@ -93,6 +88,8 @@ public:
   // Returns the underying ELF file.
   llvm::object::ELFFile<ELFT> *getObj() const { return ELFObj.get(); }
 
+  ArrayRef<SectionChunk<ELFT> *> getChunks() { return Chunks; }
+
 private:
   void initializeChunks();
   void initializeSymbols();
@@ -100,6 +97,9 @@ private:
   SymbolBody *createSymbolBody(StringRef StringTable, const Elf_Sym *Sym);
 
   std::unique_ptr<llvm::object::ELFFile<ELFT>> ELFObj;
+
+  // List of all chunks defined by this file.
+  std::vector<SectionChunk<ELFT> *> Chunks;
 };
 
 } // namespace elf2

@@ -51,7 +51,7 @@ void OutputSection::setFileOffset(uint64_t Off) {
 }
 
 template <class ELFT>
-void OutputSection::addChunk(Chunk *C) {
+void OutputSection::addSectionChunk(SectionChunk<ELFT> *C) {
   Chunks.push_back(C);
   C->setOutputSection(this);
   uint64_t Off = Header.sh_size;
@@ -60,10 +60,8 @@ void OutputSection::addChunk(Chunk *C) {
   C->setFileOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
-  if (auto SC = dyn_cast<SectionChunk<ELFT>>(C)) {
-    Header.sh_type = SC->getSectionHdr()->sh_type;
-    Header.sh_flags |= SC->getSectionHdr()->sh_flags;
-  }
+  Header.sh_type = C->getSectionHdr()->sh_type;
+  Header.sh_flags |= C->getSectionHdr()->sh_flags;
 }
 
 template <class ELFT>
@@ -83,14 +81,15 @@ void OutputSection::writeHeaderTo(Elf_Shdr_Impl<ELFT> *SHdr) {
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<StringRef, OutputSection *> Map;
-  for (std::unique_ptr<ObjectFileBase> &File : Symtab->ObjectFiles) {
-    for (Chunk *C : File->getChunks()) {
+  for (std::unique_ptr<ObjectFileBase> &FileB : Symtab->ObjectFiles) {
+    auto &File = cast<ObjectFile<ELFT>>(*FileB);
+    for (SectionChunk<ELFT> *C : File.getChunks()) {
       OutputSection *&Sec = Map[C->getSectionName()];
       if (!Sec) {
         Sec = new (CAlloc.Allocate()) OutputSection(C->getSectionName());
         OutputSections.push_back(Sec);
       }
-      Sec->addChunk<ELFT>(C);
+      Sec->addSectionChunk<ELFT>(C);
     }
   }
 }
@@ -177,9 +176,9 @@ template class Writer<ELF32BE>;
 template class Writer<ELF64LE>;
 template class Writer<ELF64BE>;
 
-template void OutputSection::addChunk<ELF32LE>(Chunk *);
-template void OutputSection::addChunk<ELF32BE>(Chunk *);
-template void OutputSection::addChunk<ELF64LE>(Chunk *);
-template void OutputSection::addChunk<ELF64BE>(Chunk *);
+template void OutputSection::addSectionChunk<ELF32LE>(SectionChunk<ELF32LE> *);
+template void OutputSection::addSectionChunk<ELF32BE>(SectionChunk<ELF32BE> *);
+template void OutputSection::addSectionChunk<ELF64LE>(SectionChunk<ELF64LE> *);
+template void OutputSection::addSectionChunk<ELF64BE>(SectionChunk<ELF64BE> *);
 }
 }
