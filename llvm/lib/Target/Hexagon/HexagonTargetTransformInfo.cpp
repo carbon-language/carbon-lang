@@ -34,11 +34,5 @@ void HexagonTTIImpl::getUnrollingPreferences(Loop *L,
 }
 
 unsigned HexagonTTIImpl::getNumberOfRegisters(bool vector) const {
-  if (vector) {
-    // While its true that v60 has vector registers,
-    // we do not want to advertise it through this API
-    // as it enables LOOP and SLP vectorization.
-    return 0;
-  }
-  return 32;
+  return vector ? 0 : 32;
 }
