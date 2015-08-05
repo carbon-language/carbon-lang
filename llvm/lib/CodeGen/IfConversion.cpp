@@ -1232,15 +1232,17 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
 
   bool HasEarlyExit = CvtBBI->FalseBB != nullptr;
   uint64_t CvtNext = 0, CvtFalse = 0, BBNext = 0, BBCvt = 0, SumWeight = 0;
-  uint32_t WeightScale = 0;
 
   if (HasEarlyExit) {
     // Get weights before modifying CvtBBI->BB and BBI.BB.
+    // Explictly normalize the weights of all edges from CvtBBI->BB so that we
+    // are aware that the edge weights obtained below are normalized.
+    CvtBBI->BB->normalizeSuccWeights();
     CvtNext = MBPI->getEdgeWeight(CvtBBI->BB, NextBBI->BB);
     CvtFalse = MBPI->getEdgeWeight(CvtBBI->BB, CvtBBI->FalseBB);
     BBNext = MBPI->getEdgeWeight(BBI.BB, NextBBI->BB);
     BBCvt = MBPI->getEdgeWeight(BBI.BB, CvtBBI->BB);
-    SumWeight = MBPI->getSumForBlock(CvtBBI->BB, WeightScale);
+    SumWeight = MBPI->getSumForBlock(CvtBBI->BB);
   }
 
   if (CvtBBI->BB->pred_size() > 1) {
@@ -1277,8 +1279,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     // New_Weight(BBI.BB, CvtBBI->FalseBB) =
     //   Weight(BBI.BB, CvtBBI->BB) * Weight(CvtBBI->BB, CvtBBI->FalseBB)
 
-    uint64_t NewNext = BBNext * SumWeight + (BBCvt * CvtNext) / WeightScale;
-    uint64_t NewFalse = (BBCvt * CvtFalse) / WeightScale;
+    uint64_t NewNext = BBNext * SumWeight + BBCvt * CvtNext;
+    uint64_t NewFalse = BBCvt * CvtFalse;
     // We need to scale down all weights of BBI.BB to fit uint32_t.
     // Here BBI.BB is connected to CvtBBI->FalseBB and will fall through to
     // the next block.

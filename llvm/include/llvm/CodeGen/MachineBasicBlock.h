@@ -65,6 +65,10 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   Instructions Insts;
   const BasicBlock *BB;
   int Number;
+
+  /// A flag tracking whether the weights of all successors are normalized.
+  bool AreSuccWeightsNormalized;
+
   MachineFunction *xParent;
 
   /// Keep track of the predecessor / successor basicblocks.
@@ -128,6 +132,9 @@ public:
   /// Return the MachineFunction containing this basic block.
   const MachineFunction *getParent() const { return xParent; }
   MachineFunction *getParent() { return xParent; }
+
+  /// Return whether all weights of successors are normalized.
+  bool areSuccWeightsNormalized() const { return AreSuccWeightsNormalized; }
 
   /// MachineBasicBlock iterator that automatically skips over MIs that are
   /// inside bundles (i.e. walk top level MIs only).
@@ -383,6 +390,12 @@ public:
 
   /// Set successor weight of a given iterator.
   void setSuccWeight(succ_iterator I, uint32_t weight);
+
+  /// Normalize all succesor weights so that the sum of them does not exceed
+  /// UINT32_MAX. Return true if the weights are modified and false otherwise.
+  /// Note that weights that are modified after calling this function are not
+  /// guaranteed to be normalized.
+  bool normalizeSuccWeights();
 
   /// Remove successor from the successors list of this MachineBasicBlock. The
   /// Predecessors list of succ is automatically updated.
