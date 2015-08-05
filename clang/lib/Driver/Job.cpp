@@ -48,6 +48,7 @@ static int skipArgs(const char *Flag, bool HaveCrashVFS) {
     .Cases("-iwithprefixbefore", "-isystem", "-iquote", true)
     .Cases("-resource-dir", "-serialize-diagnostic-file", true)
     .Cases("-dwarf-debug-flags", "-ivfsoverlay", true)
+    .Cases("-header-include-file", "-diagnostic-log-file", true)
     // Some include flags shouldn't be skipped if we have a crash VFS
     .Case("-isysroot", !HaveCrashVFS)
     .Default(false);
