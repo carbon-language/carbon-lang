@@ -60,12 +60,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 
-// For non-x86 architecture
-#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64)
-# include <stdbool.h>
-# include <ffi.h>
-#endif
-
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
@@ -2620,55 +2614,7 @@ __kmp_get_load_balance( int max )
 
 #endif // USE_LOAD_BALANCE
 
-
-#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64)
-
-int __kmp_invoke_microtask( microtask_t pkfn, int gtid, int tid, int argc,
-        void *p_argv[] 
-#if OMPT_SUPPORT
-        , void **exit_frame_ptr
-#endif
-)
-{
-    int argc_full = argc + 2;
-    int i;
-    ffi_cif cif;
-    ffi_type *types[argc_full];
-    void *args[argc_full];
-    void *idp[2];
-
-#if OMPT_SUPPORT
-    *exit_frame_ptr = __builtin_frame_address(0);
-#endif
-    /* We're only passing pointers to the target. */
-    for (i = 0; i < argc_full; i++)
-        types[i] = &ffi_type_pointer;
-
-    /* Ugly double-indirection, but that's how it goes... */
-    idp[0] = &gtid;
-    idp[1] = &tid;
-    args[0] = &idp[0];
-    args[1] = &idp[1];
-
-    for (i = 0; i < argc; i++)
-        args[2 + i] = &p_argv[i];
-
-    if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argc_full,
-                &ffi_type_void, types) != FFI_OK)
-        abort();
-
-    ffi_call(&cif, (void (*)(void))pkfn, NULL, args);
-
-#if OMPT_SUPPORT
-    *exit_frame_ptr = 0;
-#endif
-
-    return 1;
-}
-
-#endif // KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64)
-
-#if KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
+#if !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_MIC)
 
 // we really only need the case with 1 argument, because CLANG always build
 // a struct of pointers to shared variables referenced in the outlined function
