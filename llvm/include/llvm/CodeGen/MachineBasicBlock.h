@@ -67,33 +67,29 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   int Number;
   MachineFunction *xParent;
 
-  /// Predecessors/Successors - Keep track of the predecessor / successor
-  /// basicblocks.
+  /// Keep track of the predecessor / successor basicblocks.
   std::vector<MachineBasicBlock *> Predecessors;
   std::vector<MachineBasicBlock *> Successors;
 
-  /// Weights - Keep track of the weights to the successors. This vector
-  /// has the same order as Successors, or it is empty if we don't use it
-  /// (disable optimization).
+  /// Keep track of the weights to the successors. This vector has the same
+  /// order as Successors, or it is empty if we don't use it (disable
+  /// optimization).
   std::vector<uint32_t> Weights;
   typedef std::vector<uint32_t>::iterator weight_iterator;
   typedef std::vector<uint32_t>::const_iterator const_weight_iterator;
 
-  /// LiveIns - Keep track of the physical registers that are livein of
-  /// the basicblock.
+  /// Keep track of the physical registers that are livein of the basicblock.
   std::vector<unsigned> LiveIns;
 
-  /// Alignment - Alignment of the basic block. Zero if the basic block does
-  /// not need to be aligned.
-  /// The alignment is specified as log2(bytes).
+  /// Alignment of the basic block. Zero if the basic block does not need to be
+  /// aligned. The alignment is specified as log2(bytes).
   unsigned Alignment;
 
-  /// IsLandingPad - Indicate that this basic block is entered via an
-  /// exception handler.
+  /// Indicate that this basic block is entered via an exception handler.
   bool IsLandingPad;
 
-  /// AddressTaken - Indicate that this basic block is potentially the
-  /// target of an indirect branch.
+  /// Indicate that this basic block is potentially the target of an indirect
+  /// branch.
   bool AddressTaken;
 
   /// \brief since getSymbol is a relatively heavy-weight operation, the symbol
@@ -111,36 +107,30 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   friend class MachineFunction;
 
 public:
-  /// getBasicBlock - Return the LLVM basic block that this instance
-  /// corresponded to originally. Note that this may be NULL if this instance
-  /// does not correspond directly to an LLVM basic block.
-  ///
+  /// Return the LLVM basic block that this instance corresponded to originally.
+  /// Note that this may be NULL if this instance does not correspond directly
+  /// to an LLVM basic block.
   const BasicBlock *getBasicBlock() const { return BB; }
 
-  /// getName - Return the name of the corresponding LLVM basic block, or
-  /// "(null)".
+  /// Return the name of the corresponding LLVM basic block, or "(null)".
   StringRef getName() const;
 
-  /// getFullName - Return a formatted string to identify this block and its
-  /// parent function.
+  /// Return a formatted string to identify this block and its parent function.
   std::string getFullName() const;
 
-  /// hasAddressTaken - Test whether this block is potentially the target
-  /// of an indirect branch.
+  /// Test whether this block is potentially the target of an indirect branch.
   bool hasAddressTaken() const { return AddressTaken; }
 
-  /// setHasAddressTaken - Set this block to reflect that it potentially
-  /// is the target of an indirect branch.
+  /// Set this block to reflect that it potentially is the target of an indirect
+  /// branch.
   void setHasAddressTaken() { AddressTaken = true; }
 
-  /// getParent - Return the MachineFunction containing this basic block.
-  ///
+  /// Return the MachineFunction containing this basic block.
   const MachineFunction *getParent() const { return xParent; }
   MachineFunction *getParent() { return xParent; }
 
-
-  /// bundle_iterator - MachineBasicBlock iterator that automatically skips over
-  /// MIs that are inside bundles (i.e. walk top level MIs only).
+  /// MachineBasicBlock iterator that automatically skips over MIs that are
+  /// inside bundles (i.e. walk top level MIs only).
   template<typename Ty, typename IterTy>
   class bundle_iterator
     : public std::iterator<std::bidirectional_iterator_tag, Ty, ptrdiff_t> {
@@ -334,12 +324,10 @@ public:
   /// that is a copy of the live in PhysReg.
   unsigned addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC);
 
-  /// removeLiveIn - Remove the specified register from the live in set.
-  ///
+  /// Remove the specified register from the live in set.
   void removeLiveIn(unsigned Reg);
 
-  /// isLiveIn - Return true if the specified register is in the live in set.
-  ///
+  /// Return true if the specified register is in the live in set.
   bool isLiveIn(unsigned Reg) const;
 
   // Iteration support for live in sets.  These sets are kept in sorted
@@ -349,104 +337,94 @@ public:
   livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
 
-  /// getAlignment - Return alignment of the basic block.
-  /// The alignment is specified as log2(bytes).
-  ///
+  /// Return alignment of the basic block. The alignment is specified as
+  /// log2(bytes).
   unsigned getAlignment() const { return Alignment; }
 
-  /// setAlignment - Set alignment of the basic block.
-  /// The alignment is specified as log2(bytes).
-  ///
+  /// Set alignment of the basic block. The alignment is specified as
+  /// log2(bytes).
   void setAlignment(unsigned Align) { Alignment = Align; }
 
-  /// isLandingPad - Returns true if the block is a landing pad. That is
-  /// this basic block is entered via an exception handler.
+  /// Returns true if the block is a landing pad. That is this basic block is
+  /// entered via an exception handler.
   bool isLandingPad() const { return IsLandingPad; }
 
-  /// setIsLandingPad - Indicates the block is a landing pad.  That is
-  /// this basic block is entered via an exception handler.
+  /// Indicates the block is a landing pad.  That is this basic block is entered
+  /// via an exception handler.
   void setIsLandingPad(bool V = true) { IsLandingPad = V; }
 
-  /// getLandingPadSuccessor - If this block has a successor that is a landing
-  /// pad, return it. Otherwise return NULL.
+  /// If this block has a successor that is a landing pad, return it. Otherwise
+  /// return NULL.
   const MachineBasicBlock *getLandingPadSuccessor() const;
 
   // Code Layout methods.
 
-  /// moveBefore/moveAfter - move 'this' block before or after the specified
-  /// block.  This only moves the block, it does not modify the CFG or adjust
-  /// potential fall-throughs at the end of the block.
+  /// Move 'this' block before or after the specified block.  This only moves
+  /// the block, it does not modify the CFG or adjust potential fall-throughs at
+  /// the end of the block.
   void moveBefore(MachineBasicBlock *NewAfter);
   void moveAfter(MachineBasicBlock *NewBefore);
 
-  /// updateTerminator - Update the terminator instructions in block to account
-  /// for changes to the layout. If the block previously used a fallthrough,
-  /// it may now need a branch, and if it previously used branching it may now
-  /// be able to use a fallthrough.
+  /// Update the terminator instructions in block to account for changes to the
+  /// layout. If the block previously used a fallthrough, it may now need a
+  /// branch, and if it previously used branching it may now be able to use a
+  /// fallthrough.
   void updateTerminator();
 
   // Machine-CFG mutators
 
-  /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
-  /// The Predecessors list of succ is automatically updated. WEIGHT
-  /// parameter is stored in Weights list and it may be used by
-  /// MachineBranchProbabilityInfo analysis to calculate branch probability.
+  /// Add succ as a successor of this MachineBasicBlock.  The Predecessors list
+  /// of succ is automatically updated. WEIGHT parameter is stored in Weights
+  /// list and it may be used by MachineBranchProbabilityInfo analysis to
+  /// calculate branch probability.
   ///
   /// Note that duplicate Machine CFG edges are not allowed.
-  ///
   void addSuccessor(MachineBasicBlock *succ, uint32_t weight = 0);
 
   /// Set successor weight of a given iterator.
   void setSuccWeight(succ_iterator I, uint32_t weight);
 
-  /// removeSuccessor - Remove successor from the successors list of this
-  /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
-  ///
+  /// Remove successor from the successors list of this MachineBasicBlock. The
+  /// Predecessors list of succ is automatically updated.
   void removeSuccessor(MachineBasicBlock *succ);
 
-  /// removeSuccessor - Remove specified successor from the successors list of
-  /// this MachineBasicBlock. The Predecessors list of succ is automatically
-  /// updated.  Return the iterator to the element after the one removed.
-  ///
+  /// Remove specified successor from the successors list of this
+  /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
+  /// Return the iterator to the element after the one removed.
   succ_iterator removeSuccessor(succ_iterator I);
 
-  /// replaceSuccessor - Replace successor OLD with NEW and update weight info.
-  ///
+  /// Replace successor OLD with NEW and update weight info.
   void replaceSuccessor(MachineBasicBlock *Old, MachineBasicBlock *New);
 
-
-  /// transferSuccessors - Transfers all the successors from MBB to this
-  /// machine basic block (i.e., copies all the successors fromMBB and
-  /// remove all the successors from fromMBB).
+  /// Transfers all the successors from MBB to this machine basic block (i.e.,
+  /// copies all the successors fromMBB and remove all the successors from
+  /// fromMBB).
   void transferSuccessors(MachineBasicBlock *fromMBB);
 
-  /// transferSuccessorsAndUpdatePHIs - Transfers all the successors, as
-  /// in transferSuccessors, and update PHI operands in the successor blocks
-  /// which refer to fromMBB to refer to this.
+  /// Transfers all the successors, as in transferSuccessors, and update PHI
+  /// operands in the successor blocks which refer to fromMBB to refer to this.
   void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB);
 
   /// Return true if any of the successors have weights attached to them.
   bool hasSuccessorWeights() const { return !Weights.empty(); }
 
-  /// isPredecessor - Return true if the specified MBB is a predecessor of this
-  /// block.
+  /// Return true if the specified MBB is a predecessor of this block.
   bool isPredecessor(const MachineBasicBlock *MBB) const;
 
-  /// isSuccessor - Return true if the specified MBB is a successor of this
-  /// block.
+  /// Return true if the specified MBB is a successor of this block.
   bool isSuccessor(const MachineBasicBlock *MBB) const;
 
-  /// isLayoutSuccessor - Return true if the specified MBB will be emitted
-  /// immediately after this block, such that if this block exits by
-  /// falling through, control will transfer to the specified MBB. Note
-  /// that MBB need not be a successor at all, for example if this block
-  /// ends with an unconditional branch to some other block.
+  /// Return true if the specified MBB will be emitted immediately after this
+  /// block, such that if this block exits by falling through, control will
+  /// transfer to the specified MBB. Note that MBB need not be a successor at
+  /// all, for example if this block ends with an unconditional branch to some
+  /// other block.
   bool isLayoutSuccessor(const MachineBasicBlock *MBB) const;
 
-  /// canFallThrough - Return true if the block can implicitly transfer
-  /// control to the block after it by falling off the end of it.  This should
-  /// return false if it can reach the block after it, but it uses an explicit
-  /// branch to do so (e.g., a table jump).  True is a conservative answer.
+  /// Return true if the block can implicitly transfer control to the block
+  /// after it by falling off the end of it.  This should return false if it can
+  /// reach the block after it, but it uses an explicit branch to do so (e.g., a
+  /// table jump).  True is a conservative answer.
   bool canFallThrough();
 
   /// Returns a pointer to the first instruction in this block that is not a
@@ -456,40 +434,38 @@ public:
   /// Returns end() is there's no non-PHI instruction.
   iterator getFirstNonPHI();
 
-  /// SkipPHIsAndLabels - Return the first instruction in MBB after I that is
-  /// not a PHI or a label. This is the correct point to insert copies at the
-  /// beginning of a basic block.
+  /// Return the first instruction in MBB after I that is not a PHI or a label.
+  /// This is the correct point to insert copies at the beginning of a basic
+  /// block.
   iterator SkipPHIsAndLabels(iterator I);
 
-  /// getFirstTerminator - returns an iterator to the first terminator
-  /// instruction of this basic block. If a terminator does not exist,
-  /// it returns end()
+  /// Returns an iterator to the first terminator instruction of this basic
+  /// block. If a terminator does not exist, it returns end().
   iterator getFirstTerminator();
   const_iterator getFirstTerminator() const {
     return const_cast<MachineBasicBlock *>(this)->getFirstTerminator();
   }
 
-  /// getFirstInstrTerminator - Same getFirstTerminator but it ignores bundles
-  /// and return an instr_iterator instead.
+  /// Same getFirstTerminator but it ignores bundles and return an
+  /// instr_iterator instead.
   instr_iterator getFirstInstrTerminator();
 
-  /// getFirstNonDebugInstr - returns an iterator to the first non-debug
-  /// instruction in the basic block, or end()
+  /// Returns an iterator to the first non-debug instruction in the basic block,
+  /// or end().
   iterator getFirstNonDebugInstr();
   const_iterator getFirstNonDebugInstr() const {
     return const_cast<MachineBasicBlock *>(this)->getFirstNonDebugInstr();
   }
 
-  /// getLastNonDebugInstr - returns an iterator to the last non-debug
-  /// instruction in the basic block, or end()
+  /// Returns an iterator to the last non-debug instruction in the basic block,
+  /// or end().
   iterator getLastNonDebugInstr();
   const_iterator getLastNonDebugInstr() const {
     return const_cast<MachineBasicBlock *>(this)->getLastNonDebugInstr();
   }
 
-  /// SplitCriticalEdge - Split the critical edge from this block to the
-  /// given successor block, and return the newly created block, or null
-  /// if splitting is not possible.
+  /// Split the critical edge from this block to the given successor block, and
+  /// return the newly created block, or null if splitting is not possible.
   ///
   /// This function updates LiveVariables, MachineDominatorTree, and
   /// MachineLoopInfo, as applicable.
@@ -609,30 +585,29 @@ public:
                  From.getInstrIterator(), To.getInstrIterator());
   }
 
-  /// removeFromParent - This method unlinks 'this' from the containing
-  /// function, and returns it, but does not delete it.
+  /// This method unlinks 'this' from the containing function, and returns it,
+  /// but does not delete it.
   MachineBasicBlock *removeFromParent();
 
-  /// eraseFromParent - This method unlinks 'this' from the containing
-  /// function and deletes it.
+  /// This method unlinks 'this' from the containing function and deletes it.
   void eraseFromParent();
 
-  /// ReplaceUsesOfBlockWith - Given a machine basic block that branched to
-  /// 'Old', change the code and CFG so that it branches to 'New' instead.
+  /// Given a machine basic block that branched to 'Old', change the code and
+  /// CFG so that it branches to 'New' instead.
   void ReplaceUsesOfBlockWith(MachineBasicBlock *Old, MachineBasicBlock *New);
 
-  /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in
-  /// the CFG to be inserted.  If we have proven that MBB can only branch to
-  /// DestA and DestB, remove any other MBB successors from the CFG. DestA and
-  /// DestB can be null. Besides DestA and DestB, retain other edges leading
-  /// to LandingPads (currently there can be only one; we don't check or require
-  /// that here). Note it is possible that DestA and/or DestB are LandingPads.
+  /// Various pieces of code can cause excess edges in the CFG to be inserted.
+  /// If we have proven that MBB can only branch to DestA and DestB, remove any
+  /// other MBB successors from the CFG. DestA and DestB can be null. Besides
+  /// DestA and DestB, retain other edges leading to LandingPads (currently
+  /// there can be only one; we don't check or require that here). Note it is
+  /// possible that DestA and/or DestB are LandingPads.
   bool CorrectExtraCFGEdges(MachineBasicBlock *DestA,
                             MachineBasicBlock *DestB,
                             bool isCond);
 
-  /// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
-  /// any DBG_VALUE instructions.  Return UnknownLoc if there is none.
+  /// Find the next valid DebugLoc starting at MBBI, skipping any DBG_VALUE
+  /// instructions.  Return UnknownLoc if there is none.
   DebugLoc findDebugLoc(instr_iterator MBBI);
   DebugLoc findDebugLoc(iterator MBBI) {
     return findDebugLoc(MBBI.getInstrIterator());
@@ -670,30 +645,26 @@ public:
   // Printing method used by LoopInfo.
   void printAsOperand(raw_ostream &OS, bool PrintType = true) const;
 
-  /// getNumber - MachineBasicBlocks are uniquely numbered at the function
-  /// level, unless they're not in a MachineFunction yet, in which case this
-  /// will return -1.
-  ///
+  /// MachineBasicBlocks are uniquely numbered at the function level, unless
+  /// they're not in a MachineFunction yet, in which case this will return -1.
   int getNumber() const { return Number; }
   void setNumber(int N) { Number = N; }
 
-  /// getSymbol - Return the MCSymbol for this basic block.
-  ///
+  /// Return the MCSymbol for this basic block.
   MCSymbol *getSymbol() const;
 
 
 private:
-  /// getWeightIterator - Return weight iterator corresponding to the I
-  /// successor iterator.
+  /// Return weight iterator corresponding to the I successor iterator.
   weight_iterator getWeightIterator(succ_iterator I);
   const_weight_iterator getWeightIterator(const_succ_iterator I) const;
 
   friend class MachineBranchProbabilityInfo;
   friend class MIRPrinter;
 
-  /// getSuccWeight - Return weight of the edge from this block to MBB. This
-  /// method should NOT be called directly, but by using getEdgeWeight method
-  /// from MachineBranchProbabilityInfo class.
+  /// Return weight of the edge from this block to MBB. This method should NOT
+  /// be called directly, but by using getEdgeWeight method from
+  /// MachineBranchProbabilityInfo class.
   uint32_t getSuccWeight(const_succ_iterator Succ) const;
 
 
@@ -702,17 +673,14 @@ private:
 
   // Machine-CFG mutators
 
-  /// addPredecessor - Remove pred as a predecessor of this MachineBasicBlock.
-  /// Don't do this unless you know what you're doing, because it doesn't
-  /// update pred's successors list. Use pred->addSuccessor instead.
-  ///
+  /// Remove pred as a predecessor of this MachineBasicBlock. Don't do this
+  /// unless you know what you're doing, because it doesn't update pred's
+  /// successors list. Use pred->addSuccessor instead.
   void addPredecessor(MachineBasicBlock *pred);
 
-  /// removePredecessor - Remove pred as a predecessor of this
-  /// MachineBasicBlock. Don't do this unless you know what you're
-  /// doing, because it doesn't update pred's successors list. Use
-  /// pred->removeSuccessor instead.
-  ///
+  /// Remove pred as a predecessor of this MachineBasicBlock. Don't do this
+  /// unless you know what you're doing, because it doesn't update pred's
+  /// successors list. Use pred->removeSuccessor instead.
   void removePredecessor(MachineBasicBlock *pred);
 };
 
