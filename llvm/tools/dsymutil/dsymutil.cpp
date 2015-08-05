@@ -68,6 +68,15 @@ static opt<bool> InputIsYAMLDebugMap(
     init(false), cat(DsymCategory));
 }
 
+static std::string getOutputFileName(llvm::StringRef InputFile) {
+  if (OutputFileOpt.empty()) {
+    if (InputFile == "-")
+      return "a.out.dwarf";
+    return (InputFile + ".dwarf").str();
+  }
+  return OutputFileOpt;
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram StackPrinter(argc, argv);
@@ -120,16 +129,7 @@ int main(int argc, char **argv) {
     if (DumpDebugMap)
       continue;
 
-    std::string OutputFile;
-    if (OutputFileOpt.empty()) {
-      if (InputFile == "-")
-        OutputFile = "a.out.dwarf";
-      else
-        OutputFile = InputFile + ".dwarf";
-    } else {
-      OutputFile = OutputFileOpt;
-    }
-
+    std::string OutputFile = getOutputFileName(InputFile);
     if (!linkDwarf(OutputFile, **DebugMapPtrOrErr, Options))
       return 1;
   }
