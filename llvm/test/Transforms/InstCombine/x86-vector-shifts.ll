@@ -1,6 +1,470 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
+;
+; LSHR - Immediate
+;
+
+define <8 x i16> @sse2_psrli_w_0(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_w_0
+; CHECK: ret <8 x i16> %v
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psrli.w(<8 x i16> %v, i32 0)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @sse2_psrli_w_15(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_w_15
+; CHECK: %1 = lshr <8 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <8 x i16> %1
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psrli.w(<8 x i16> %v, i32 15)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @sse2_psrli_w_64(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_w_64
+; CHECK: ret <8 x i16> zeroinitializer
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psrli.w(<8 x i16> %v, i32 64)
+  ret <8 x i16> %1
+}
+
+define <4 x i32> @sse2_psrli_d_0(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_d_0
+; CHECK: ret <4 x i32> %v
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psrli.d(<4 x i32> %v, i32 0)
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @sse2_psrli_d_15(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_d_15
+; CHECK: %1 = lshr <4 x i32> %v, <i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <4 x i32> %1
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psrli.d(<4 x i32> %v, i32 15)
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @sse2_psrli_d_64(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_d_64
+; CHECK: ret <4 x i32> zeroinitializer
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psrli.d(<4 x i32> %v, i32 64)
+  ret <4 x i32> %1
+}
+
+define <2 x i64> @sse2_psrli_q_0(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_q_0
+; CHECK: ret <2 x i64> %v
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psrli.q(<2 x i64> %v, i32 0)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @sse2_psrli_q_15(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_q_15
+; CHECK: %1 = lshr <2 x i64> %v, <i64 15, i64 15>
+; CHECK: ret <2 x i64> %1
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psrli.q(<2 x i64> %v, i32 15)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @sse2_psrli_q_64(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrli_q_64
+; CHECK: ret <2 x i64> zeroinitializer
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psrli.q(<2 x i64> %v, i32 64)
+  ret <2 x i64> %1
+}
+
+define <16 x i16> @avx2_psrli_w_0(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_w_0
+; CHECK: ret <16 x i16> %v
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psrli.w(<16 x i16> %v, i32 0)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @avx2_psrli_w_15(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_w_15
+; CHECK: %1 = lshr <16 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <16 x i16> %1
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psrli.w(<16 x i16> %v, i32 15)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @avx2_psrli_w_64(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_w_64
+; CHECK: ret <16 x i16> zeroinitializer
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psrli.w(<16 x i16> %v, i32 64)
+  ret <16 x i16> %1
+}
+
+define <8 x i32> @avx2_psrli_d_0(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_d_0
+; CHECK: ret <8 x i32> %v
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psrli.d(<8 x i32> %v, i32 0)
+  ret <8 x i32> %1
+}
+
+define <8 x i32> @avx2_psrli_d_15(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_d_15
+; CHECK: %1 = lshr <8 x i32> %v, <i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <8 x i32> %1
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psrli.d(<8 x i32> %v, i32 15)
+  ret <8 x i32> %1
+}
+
+define <8 x i32> @avx2_psrli_d_64(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_d_64
+; CHECK: ret <8 x i32> zeroinitializer
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psrli.d(<8 x i32> %v, i32 64)
+  ret <8 x i32> %1
+}
+
+define <4 x i64> @avx2_psrli_q_0(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_q_0
+; CHECK: ret <4 x i64> %v
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psrli.q(<4 x i64> %v, i32 0)
+  ret <4 x i64> %1
+}
+
+define <4 x i64> @avx2_psrli_q_15(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_q_15
+; CHECK: %1 = lshr <4 x i64> %v, <i64 15, i64 15, i64 15, i64 15>
+; CHECK: ret <4 x i64> %1
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psrli.q(<4 x i64> %v, i32 15)
+  ret <4 x i64> %1
+}
+
+define <4 x i64> @avx2_psrli_q_64(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrli_q_64
+; CHECK: ret <4 x i64> zeroinitializer
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psrli.q(<4 x i64> %v, i32 64)
+  ret <4 x i64> %1
+}
+
+;
+; SHL - Immediate
+;
+
+define <8 x i16> @sse2_pslli_w_0(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_w_0
+; CHECK: ret <8 x i16> %v
+  %1 = tail call <8 x i16> @llvm.x86.sse2.pslli.w(<8 x i16> %v, i32 0)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @sse2_pslli_w_15(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_w_15
+; CHECK: %1 = shl <8 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <8 x i16> %1
+  %1 = tail call <8 x i16> @llvm.x86.sse2.pslli.w(<8 x i16> %v, i32 15)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @sse2_pslli_w_64(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_w_64
+; CHECK: ret <8 x i16> zeroinitializer
+  %1 = tail call <8 x i16> @llvm.x86.sse2.pslli.w(<8 x i16> %v, i32 64)
+  ret <8 x i16> %1
+}
+
+define <4 x i32> @sse2_pslli_d_0(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_d_0
+; CHECK: ret <4 x i32> %v
+  %1 = tail call <4 x i32> @llvm.x86.sse2.pslli.d(<4 x i32> %v, i32 0)
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @sse2_pslli_d_15(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_d_15
+; CHECK: %1 = shl <4 x i32> %v, <i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <4 x i32> %1
+  %1 = tail call <4 x i32> @llvm.x86.sse2.pslli.d(<4 x i32> %v, i32 15)
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @sse2_pslli_d_64(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_d_64
+; CHECK: ret <4 x i32> zeroinitializer
+  %1 = tail call <4 x i32> @llvm.x86.sse2.pslli.d(<4 x i32> %v, i32 64)
+  ret <4 x i32> %1
+}
+
+define <2 x i64> @sse2_pslli_q_0(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_q_0
+; CHECK: ret <2 x i64> %v
+  %1 = tail call <2 x i64> @llvm.x86.sse2.pslli.q(<2 x i64> %v, i32 0)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @sse2_pslli_q_15(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_q_15
+; CHECK: %1 = shl <2 x i64> %v, <i64 15, i64 15>
+; CHECK: ret <2 x i64> %1
+  %1 = tail call <2 x i64> @llvm.x86.sse2.pslli.q(<2 x i64> %v, i32 15)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @sse2_pslli_q_64(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_pslli_q_64
+; CHECK: ret <2 x i64> zeroinitializer
+  %1 = tail call <2 x i64> @llvm.x86.sse2.pslli.q(<2 x i64> %v, i32 64)
+  ret <2 x i64> %1
+}
+
+define <16 x i16> @avx2_pslli_w_0(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_w_0
+; CHECK: ret <16 x i16> %v
+  %1 = tail call <16 x i16> @llvm.x86.avx2.pslli.w(<16 x i16> %v, i32 0)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @avx2_pslli_w_15(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_w_15
+; CHECK: %1 = shl <16 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <16 x i16> %1
+  %1 = tail call <16 x i16> @llvm.x86.avx2.pslli.w(<16 x i16> %v, i32 15)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @avx2_pslli_w_64(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_w_64
+; CHECK: ret <16 x i16> zeroinitializer
+  %1 = tail call <16 x i16> @llvm.x86.avx2.pslli.w(<16 x i16> %v, i32 64)
+  ret <16 x i16> %1
+}
+
+define <8 x i32> @avx2_pslli_d_0(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_d_0
+; CHECK: ret <8 x i32> %v
+  %1 = tail call <8 x i32> @llvm.x86.avx2.pslli.d(<8 x i32> %v, i32 0)
+  ret <8 x i32> %1
+}
+
+define <8 x i32> @avx2_pslli_d_15(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_d_15
+; CHECK: %1 = shl <8 x i32> %v, <i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <8 x i32> %1
+  %1 = tail call <8 x i32> @llvm.x86.avx2.pslli.d(<8 x i32> %v, i32 15)
+  ret <8 x i32> %1
+}
+
+define <8 x i32> @avx2_pslli_d_64(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_d_64
+; CHECK: ret <8 x i32> zeroinitializer
+  %1 = tail call <8 x i32> @llvm.x86.avx2.pslli.d(<8 x i32> %v, i32 64)
+  ret <8 x i32> %1
+}
+
+define <4 x i64> @avx2_pslli_q_0(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_q_0
+; CHECK: ret <4 x i64> %v
+  %1 = tail call <4 x i64> @llvm.x86.avx2.pslli.q(<4 x i64> %v, i32 0)
+  ret <4 x i64> %1
+}
+
+define <4 x i64> @avx2_pslli_q_15(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_q_15
+; CHECK: %1 = shl <4 x i64> %v, <i64 15, i64 15, i64 15, i64 15>
+; CHECK: ret <4 x i64> %1
+  %1 = tail call <4 x i64> @llvm.x86.avx2.pslli.q(<4 x i64> %v, i32 15)
+  ret <4 x i64> %1
+}
+
+define <4 x i64> @avx2_pslli_q_64(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_pslli_q_64
+; CHECK: ret <4 x i64> zeroinitializer
+  %1 = tail call <4 x i64> @llvm.x86.avx2.pslli.q(<4 x i64> %v, i32 64)
+  ret <4 x i64> %1
+}
+
+;
+; LSHR - Constant Vector
+;
+
+define <8 x i16> @sse2_psrl_w_15(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_w_15
+; CHECK: %1 = lshr <8 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <8 x i16> %1
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16> %v, <8 x i16> <i16 15, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @sse2_psrl_w_64(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_w_64
+; CHECK: ret <8 x i16> zeroinitializer
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16> %v, <8 x i16> <i16 64, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <8 x i16> %1
+}
+
+define <4 x i32> @sse2_psrl_d_15(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_d_15
+; CHECK: %1 = lshr <4 x i32> %v, <i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <4 x i32> %1
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psrl.d(<4 x i32> %v, <4 x i32> <i32 15, i32 0, i32 9999, i32 9999>)
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @sse2_psrl_d_64(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_d_64
+; CHECK: ret <4 x i32> zeroinitializer
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psrl.d(<4 x i32> %v, <4 x i32> <i32 64, i32 0, i32 9999, i32 9999>)
+  ret <4 x i32> %1
+}
+
+define <2 x i64> @sse2_psrl_q_15(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_q_15
+; CHECK: %1 = lshr <2 x i64> %v, <i64 15, i64 15>
+; CHECK: ret <2 x i64> %1
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psrl.q(<2 x i64> %v, <2 x i64> <i64 15, i64 9999>)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @sse2_psrl_q_64(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_q_64
+; CHECK: ret <2 x i64> zeroinitializer
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psrl.q(<2 x i64> %v, <2 x i64> <i64 64, i64 9999>)
+  ret <2 x i64> %1
+}
+
+define <16 x i16> @avx2_psrl_w_15(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_w_15
+; CHECK: %1 = lshr <16 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <16 x i16> %1
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %v, <8 x i16> <i16 15, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @avx2_psrl_w_64(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_w_64
+; CHECK: ret <16 x i16> zeroinitializer
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %v, <8 x i16> <i16 64, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <16 x i16> %1
+}
+
+define <8 x i32> @avx2_psrl_d_15(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_d_15
+; CHECK: %1 = lshr <8 x i32> %v, <i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <8 x i32> %1
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> <i32 15, i32 0, i32 9999, i32 9999>)
+  ret <8 x i32> %1
+}
+
+define <8 x i32> @avx2_psrl_d_64(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_d_64
+; CHECK: ret <8 x i32> zeroinitializer
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> <i32 64, i32 0, i32 9999, i32 9999>)
+  ret <8 x i32> %1
+}
+
+define <4 x i64> @avx2_psrl_q_15(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_q_15
+; CHECK: %1 = lshr <4 x i64> %v, <i64 15, i64 15, i64 15, i64 15>
+; CHECK: ret <4 x i64> %1
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psrl.q(<4 x i64> %v, <2 x i64> <i64 15, i64 9999>)
+  ret <4 x i64> %1
+}
+
+define <4 x i64> @avx2_psrl_q_64(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_q_64
+; CHECK: ret <4 x i64> zeroinitializer
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psrl.q(<4 x i64> %v, <2 x i64> <i64 64, i64 9999>)
+  ret <4 x i64> %1
+}
+
+;
+; SHL - Constant Vector
+;
+
+define <8 x i16> @sse2_psll_w_15(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_w_15
+; CHECK: %1 = shl <8 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <8 x i16> %1
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psll.w(<8 x i16> %v, <8 x i16> <i16 15, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @sse2_psll_w_64(<8 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_w_64
+; CHECK: ret <8 x i16> zeroinitializer
+  %1 = tail call <8 x i16> @llvm.x86.sse2.psll.w(<8 x i16> %v, <8 x i16> <i16 64, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <8 x i16> %1
+}
+
+define <4 x i32> @sse2_psll_d_15(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_d_15
+; CHECK: %1 = shl <4 x i32> %v, <i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <4 x i32> %1
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psll.d(<4 x i32> %v, <4 x i32> <i32 15, i32 0, i32 9999, i32 9999>)
+  ret <4 x i32> %1
+}
+
+define <4 x i32> @sse2_psll_d_64(<4 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_d_64
+; CHECK: ret <4 x i32> zeroinitializer
+  %1 = tail call <4 x i32> @llvm.x86.sse2.psll.d(<4 x i32> %v, <4 x i32> <i32 64, i32 0, i32 9999, i32 9999>)
+  ret <4 x i32> %1
+}
+
+define <2 x i64> @sse2_psll_q_15(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_q_15
+; CHECK: %1 = shl <2 x i64> %v, <i64 15, i64 15>
+; CHECK: ret <2 x i64> %1
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psll.q(<2 x i64> %v, <2 x i64> <i64 15, i64 9999>)
+  ret <2 x i64> %1
+}
+
+define <2 x i64> @sse2_psll_q_64(<2 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_q_64
+; CHECK: ret <2 x i64> zeroinitializer
+  %1 = tail call <2 x i64> @llvm.x86.sse2.psll.q(<2 x i64> %v, <2 x i64> <i64 64, i64 9999>)
+  ret <2 x i64> %1
+}
+
+define <16 x i16> @avx2_psll_w_15(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_w_15
+; CHECK: %1 = shl <16 x i16> %v, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+; CHECK: ret <16 x i16> %1
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psll.w(<16 x i16> %v, <8 x i16> <i16 15, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @avx2_psll_w_64(<16 x i16> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_w_64
+; CHECK: ret <16 x i16> zeroinitializer
+  %1 = tail call <16 x i16> @llvm.x86.avx2.psll.w(<16 x i16> %v, <8 x i16> <i16 64, i16 0, i16 0, i16 0, i16 9999, i16 9999, i16 9999, i16 9999>)
+  ret <16 x i16> %1
+}
+
+define <8 x i32> @avx2_psll_d_15(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_d_15
+; CHECK: %1 = shl <8 x i32> %v, <i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15, i32 15>
+; CHECK: ret <8 x i32> %1
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psll.d(<8 x i32> %v, <4 x i32> <i32 15, i32 0, i32 9999, i32 9999>)
+  ret <8 x i32> %1
+}
+
+define <8 x i32> @avx2_psll_d_64(<8 x i32> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_d_64
+; CHECK: ret <8 x i32> zeroinitializer
+  %1 = tail call <8 x i32> @llvm.x86.avx2.psll.d(<8 x i32> %v, <4 x i32> <i32 64, i32 0, i32 9999, i32 9999>)
+  ret <8 x i32> %1
+}
+
+define <4 x i64> @avx2_psll_q_15(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_q_15
+; CHECK: %1 = shl <4 x i64> %v, <i64 15, i64 15, i64 15, i64 15>
+; CHECK: ret <4 x i64> %1
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psll.q(<4 x i64> %v, <2 x i64> <i64 15, i64 9999>)
+  ret <4 x i64> %1
+}
+
+define <4 x i64> @avx2_psll_q_64(<4 x i64> %v) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_q_64
+; CHECK: ret <4 x i64> zeroinitializer
+  %1 = tail call <4 x i64> @llvm.x86.avx2.psll.q(<4 x i64> %v, <2 x i64> <i64 64, i64 9999>)
+  ret <4 x i64> %1
+}
+
+;
+; Constant Folding
+;
+
 define <2 x i64> @test_sse2_1() nounwind readnone uwtable {
   %S = bitcast i32 1 to i32
   %1 = zext i32 %S to i64
