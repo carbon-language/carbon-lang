@@ -71,7 +71,7 @@ Contributing
 ------------
 
 Changes to code outside the third_party directory should be contributed in
-the normal way by sending patches to <llvm-commits@cs.uiuc.edu>.
+the normal way by sending patches to <llvm-commits@lists.llvm.org>.
 
 Changes to code in the third_party directory must first be made in the
 respective upstream project, from which they will be mirrored into the llgo
