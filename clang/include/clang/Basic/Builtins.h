@@ -16,7 +16,6 @@
 #ifndef LLVM_CLANG_BASIC_BUILTINS_H
 #define LLVM_CLANG_BASIC_BUILTINS_H
 
-#include "clang/Basic/LLVM.h"
 #include <cstring>
 
 // VC++ defines 'alloca' as an object-like macro, which interferes with our
