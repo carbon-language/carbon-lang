@@ -99,6 +99,7 @@ public:
   bool parseSubRegisterIndex(unsigned &SubReg);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
+  bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
   bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
@@ -557,18 +558,24 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
+  auto Source = StringRef(Loc, Token.stringValue().end() - Loc).str();
+  lex();
+  SMDiagnostic Err;
+  C = parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent());
+  if (!C)
+    return error(Loc + Err.getColumnNo(), Err.getMessage());
+  return false;
+}
+
 bool MIParser::parseFPImmediateOperand(MachineOperand &Dest) {
   auto Loc = Token.location();
   lex();
   if (Token.isNot(MIToken::FloatingPointLiteral))
     return error("expected a floating point literal");
-  auto Source = StringRef(Loc, Token.stringValue().end() - Loc).str();
-  lex();
-  SMDiagnostic Err;
-  const Constant *C =
-      parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent());
-  if (!C)
-    return error(Loc + Err.getColumnNo(), Err.getMessage());
+  const Constant *C = nullptr;
+  if (parseIRConstant(Loc, C))
+    return true;
   Dest = MachineOperand::CreateFPImm(cast<ConstantFP>(C));
   return false;
 }
