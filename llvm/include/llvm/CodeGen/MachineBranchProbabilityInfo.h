@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
 #include <climits>
+#include <numeric>
 
 namespace llvm {
 
