@@ -2905,12 +2905,15 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
       Args.hasArg(options::OPT_coverage))
     CmdArgs.push_back("-femit-coverage-data");
 
-  if (Args.hasArg(options::OPT_fcoverage_mapping) && !ProfileGenerateArg)
+  if (Args.hasFlag(options::OPT_fcoverage_mapping,
+                   options::OPT_fno_coverage_mapping, false) &&
+      !ProfileGenerateArg)
     D.Diag(diag::err_drv_argument_only_allowed_with)
         << "-fcoverage-mapping"
         << "-fprofile-instr-generate";
 
-  if (Args.hasArg(options::OPT_fcoverage_mapping))
+  if (Args.hasFlag(options::OPT_fcoverage_mapping,
+                   options::OPT_fno_coverage_mapping, false))
     CmdArgs.push_back("-fcoverage-mapping");
 
   if (C.getArgs().hasArg(options::OPT_c) ||

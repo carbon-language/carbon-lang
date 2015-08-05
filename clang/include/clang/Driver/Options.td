@@ -436,6 +436,9 @@ def fprofile_instr_use_EQ : Joined<["-"], "fprofile-instr-use=">,
 def fcoverage_mapping : Flag<["-"], "fcoverage-mapping">,
     Group<f_Group>, Flags<[CC1Option]>,
     HelpText<"Generate coverage mapping to enable code coverage analysis">;
+def fno_coverage_mapping : Flag<["-"], "fno-coverage-mapping">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Disable code coverage analysis">;
 def fprofile_generate : Flag<["-"], "fprofile-generate">,
     Alias<fprofile_instr_generate>;
 def fprofile_generate_EQ : Joined<["-"], "fprofile-generate=">,
