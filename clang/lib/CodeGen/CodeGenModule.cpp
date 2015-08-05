@@ -369,11 +369,16 @@ void CodeGenModule::Release() {
       (Context.getLangOpts().Modules || !LinkerOptionsMetadata.empty())) {
     EmitModuleLinkOptions();
   }
-  if (CodeGenOpts.DwarfVersion)
+  if (CodeGenOpts.DwarfVersion) {
     // We actually want the latest version when there are conflicts.
     // We can change from Warning to Latest if such mode is supported.
     getModule().addModuleFlag(llvm::Module::Warning, "Dwarf Version",
                               CodeGenOpts.DwarfVersion);
+  }
+  if (CodeGenOpts.EmitCodeView) {
+    // Indicate that we want CodeView in the metadata.
+    getModule().addModuleFlag(llvm::Module::Warning, "CodeView", 1);
+  }
   if (DebugInfo)
     // We support a single version in the linked module. The LLVM
     // parser will drop debug info with a different version number

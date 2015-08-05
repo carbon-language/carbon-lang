@@ -3678,6 +3678,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  // Forward -gcodeview.
+  Args.AddLastArg(CmdArgs, options::OPT_gcodeview);
+
   // We ignore flags -gstrict-dwarf and -grecord-gcc-switches for now.
   Args.ClaimAllArgs(options::OPT_g_flags_Group);
   if (Args.hasFlag(options::OPT_gcolumn_info, options::OPT_gno_column_info,
@@ -5269,6 +5272,16 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (Args.hasFlag(options::OPT__SLASH_GR_, options::OPT__SLASH_GR,
                    /*default=*/false))
     CmdArgs.push_back("-fno-rtti-data");
+
+  // Emit CodeView if -Z7 is present.
+  bool EmitCodeView = Args.hasArg(options::OPT__SLASH_Z7);
+  bool EmitDwarf = Args.hasArg(options::OPT_gdwarf);
+  // If we are emitting CV but not DWARF, don't build information that LLVM
+  // can't yet process.
+  if (EmitCodeView && !EmitDwarf)
+    CmdArgs.push_back("-gline-tables-only");
+  if (EmitCodeView)
+    CmdArgs.push_back("-gcodeview");
 
   const Driver &D = getToolChain().getDriver();
   EHFlags EH = parseClangCLEHFlags(D, Args);
@@ -8820,7 +8833,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   CmdArgs.push_back("-nologo");
 
-  if (Args.hasArg(options::OPT_g_Group))
+  if (Args.hasArg(options::OPT_g_Group, options::OPT__SLASH_Z7))
     CmdArgs.push_back("-debug");
 
   bool DLL = Args.hasArg(options::OPT__SLASH_LD, options::OPT__SLASH_LDd,
@@ -8976,7 +8989,8 @@ std::unique_ptr<Command> visualstudio::Compiler::GetCommand(
         A->getOption().getID() == options::OPT_fdata_sections ? "/Gw" : "/Gw-");
   if (Args.hasArg(options::OPT_fsyntax_only))
     CmdArgs.push_back("/Zs");
-  if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only))
+  if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only,
+                  options::OPT__SLASH_Z7))
     CmdArgs.push_back("/Z7");
 
   std::vector<std::string> Includes =

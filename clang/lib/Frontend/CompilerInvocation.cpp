@@ -410,15 +410,19 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       Opts.setDebugInfo(CodeGenOptions::LimitedDebugInfo);
   }
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
+  if (Args.hasArg(OPT_gcodeview)) {
+    Opts.EmitCodeView = true;
+    Opts.DwarfVersion = 0;
+  } else if (Opts.getDebugInfo() != CodeGenOptions::NoDebugInfo) {
+    // Default Dwarf version is 4 if we are generating debug information.
+    Opts.DwarfVersion = 4;
+  }
   Opts.SplitDwarfFile = Args.getLastArgValue(OPT_split_dwarf_file);
   if (Args.hasArg(OPT_gdwarf_2))
     Opts.DwarfVersion = 2;
   else if (Args.hasArg(OPT_gdwarf_3))
     Opts.DwarfVersion = 3;
   else if (Args.hasArg(OPT_gdwarf_4))
-    Opts.DwarfVersion = 4;
-  else if (Opts.getDebugInfo() != CodeGenOptions::NoDebugInfo)
-    // Default Dwarf version is 4 if we are generating debug information.
     Opts.DwarfVersion = 4;
 
   if (const Arg *A =

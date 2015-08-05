@@ -157,9 +157,10 @@ def _SLASH_Zc_trigraphs : CLFlag<"Zc:trigraphs">,
   HelpText<"Enable trigraphs">, Alias<ftrigraphs>;
 def _SLASH_Zc_trigraphs_off : CLFlag<"Zc:trigraphs-">,
   HelpText<"Disable trigraphs (default)">, Alias<fno_trigraphs>;
-def _SLASH_Z7 : CLFlag<"Z7">, Alias<gline_tables_only>;
-def _SLASH_Zi : CLFlag<"Zi">, HelpText<"Enable debug information">,
-  Alias<gline_tables_only>;
+def _SLASH_Z7 : CLFlag<"Z7">,
+  HelpText<"Enable CodeView debug information in object files">;
+def _SLASH_Zi : CLFlag<"Zi">, Alias<_SLASH_Z7>,
+  HelpText<"Alias for /Z7. Does not produce PDBs.">;
 def _SLASH_Zp : CLJoined<"Zp">,
   HelpText<"Specify the default maximum struct packing alignment">,
   Alias<fpack_struct_EQ>;
