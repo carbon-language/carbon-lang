@@ -3,7 +3,7 @@
 ; RUN: not llc < %s -mtriple=arm-none-eabi -mcpu=cortex-a8 2>&1 | FileCheck %s --check-prefix=ACORE
 
 ; ACORE: LLVM ERROR: Invalid register name "control".
-; M3CORE: LLVM ERROR: Invalid register name "control".
+; M3CORE: LLVM ERROR: Invalid register name "xpsr_nzcvqg".
 
 define i32 @read_mclass_registers() nounwind {
 entry:
