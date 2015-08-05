@@ -74,7 +74,7 @@ protected:
   unsigned short MaxVectorAlign;
   unsigned short MaxTLSAlign;
   unsigned short SimdDefaultAlign;
-  const char *DescriptionString;
+  const char *DataLayoutString;
   const char *UserLabelPrefix;
   const char *MCountName;
   const llvm::fltSemantics *HalfFormat, *FloatFormat, *DoubleFormat,
@@ -692,9 +692,9 @@ public:
     return Triple;
   }
 
-  const char *getTargetDescription() const {
-    assert(DescriptionString);
-    return DescriptionString;
+  const char *getDataLayoutString() const {
+    assert(DataLayoutString && "Uninitialized DataLayoutString!");
+    return DataLayoutString;
   }
 
   struct GCCRegAlias {

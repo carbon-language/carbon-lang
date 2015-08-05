@@ -3861,7 +3861,7 @@ CXString clang_Cursor_getMangling(CXCursor C) {
 
   // Now apply backend mangling.
   std::unique_ptr<llvm::DataLayout> DL(
-      new llvm::DataLayout(Ctx.getTargetInfo().getTargetDescription()));
+      new llvm::DataLayout(Ctx.getTargetInfo().getDataLayoutString()));
 
   std::string FinalBuf;
   llvm::raw_string_ostream FinalBufOS(FinalBuf);
