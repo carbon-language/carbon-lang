@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86-64 -verify-machineinstrs | FileCheck %s --check-prefix X64
-; RUN: llc < %s -march=x86 -verify-machineinstrs | FileCheck %s --check-prefix X32
-; RUN: llc < %s -march=x86-64 -mattr=slow-incdec -verify-machineinstrs | FileCheck %s --check-prefix SLOW_INC
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -verify-machineinstrs | FileCheck %s --check-prefix X64
+; RUN: llc < %s -mtriple=i686-unknown-unknown -verify-machineinstrs | FileCheck %s --check-prefix X32
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=slow-incdec -verify-machineinstrs | FileCheck %s --check-prefix SLOW_INC
 
 ; This file checks that atomic (non-seq_cst) stores of immediate values are
 ; done in one mov instruction and not 2. More precisely, it makes sure that the
