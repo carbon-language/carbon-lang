@@ -7,10 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Writer.h"
 #include "Chunks.h"
 #include "Driver.h"
+#include "SymbolTable.h"
+#include "Writer.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/FileOutputBuffer.h"
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -21,13 +23,77 @@ using namespace lld::elf2;
 
 static const int PageSize = 4096;
 
+namespace {
+// The writer writes a SymbolTable result to a file.
+template <class ELFT> class Writer {
+public:
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+  Writer(SymbolTable *T, StringRef S) : Symtab(T), OutputPath(S) {}
+  void run();
+
+private:
+  void createSections();
+  void assignAddresses();
+  void openFile(StringRef OutputPath);
+  void writeHeader();
+  void writeSections();
+
+  SymbolTable *Symtab;
+  StringRef OutputPath;
+  std::unique_ptr<llvm::FileOutputBuffer> Buffer;
+  llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
+  std::vector<OutputSection *> OutputSections;
+
+  uint64_t FileSize;
+  uint64_t SizeOfHeaders;
+  uintX_t SectionHeaderOff;
+
+  std::vector<std::unique_ptr<Chunk>> Chunks;
+};
+} // anonymous namespace
+
+namespace lld {
+namespace elf2 {
+
+// OutputSection represents a section in an output file. It's a
+// container of chunks. OutputSection and Chunk are 1:N relationship.
+// Chunks cannot belong to more than one OutputSections. The writer
+// creates multiple OutputSections and assign them unique,
+// non-overlapping file offsets and VAs.
+class OutputSection {
+public:
+  OutputSection(StringRef Name) : Name(Name), Header({}) {}
+  void setVA(uint64_t);
+  void setFileOffset(uint64_t);
+  template <class ELFT> void addSectionChunk(SectionChunk<ELFT> *C);
+  std::vector<Chunk *> &getChunks() { return Chunks; }
+  template <class ELFT>
+  void writeHeaderTo(llvm::object::Elf_Shdr_Impl<ELFT> *SHdr);
+
+  // Returns the size of the section in the output file.
+  uint64_t getSize() { return Header.sh_size; }
+
+private:
+  StringRef Name;
+  llvm::ELF::Elf64_Shdr Header;
+  std::vector<Chunk *> Chunks;
+};
+
 template <class ELFT>
-Writer<ELFT>::Writer(SymbolTable *Symtab)
-    : Symtab(Symtab) {}
-template <class ELFT> Writer<ELFT>::~Writer() {}
+void writeResult(SymbolTable *Symtab, StringRef Path) {
+  Writer<ELFT>(Symtab, Path).run();
+}
+
+template void writeResult<ELF32LE>(SymbolTable *, StringRef);
+template void writeResult<ELF32BE>(SymbolTable *, StringRef);
+template void writeResult<ELF64LE>(SymbolTable *, StringRef);
+template void writeResult<ELF64BE>(SymbolTable *, StringRef);
+
+} // namespace elf2
+} // namespace lld
 
 // The main function of the writer.
-template <class ELFT> void Writer<ELFT>::write(StringRef OutputPath) {
+template <class ELFT> void Writer<ELFT>::run() {
   createSections();
   assignAddresses();
   openFile(OutputPath);
@@ -170,18 +236,4 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
     for (Chunk *C : Sec->getChunks())
       C->writeTo(Buf);
   }
-}
-
-namespace lld {
-namespace elf2 {
-template class Writer<ELF32LE>;
-template class Writer<ELF32BE>;
-template class Writer<ELF64LE>;
-template class Writer<ELF64BE>;
-
-template void OutputSection::addSectionChunk<ELF32LE>(SectionChunk<ELF32LE> *);
-template void OutputSection::addSectionChunk<ELF32BE>(SectionChunk<ELF32BE> *);
-template void OutputSection::addSectionChunk<ELF64LE>(SectionChunk<ELF64LE> *);
-template void OutputSection::addSectionChunk<ELF64BE>(SectionChunk<ELF64BE> *);
-}
 }

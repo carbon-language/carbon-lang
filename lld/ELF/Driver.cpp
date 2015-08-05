@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Driver.h"
 #include "Config.h"
+#include "Driver.h"
+#include "InputFiles.h"
+#include "SymbolTable.h"
 #include "Writer.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -116,25 +118,17 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   // Write the result.
   ObjectFileBase &FirstObj = *Symtab.ObjectFiles[0];
   switch (FirstObj.kind()) {
-  case InputFile::Object32LEKind: {
-    Writer<object::ELF32LE> Out(&Symtab);
-    Out.write(Config->OutputFile);
+  case InputFile::Object32LEKind:
+    writeResult<object::ELF32LE>(&Symtab, Config->OutputFile);
     return;
-  }
-  case InputFile::Object32BEKind: {
-    Writer<object::ELF32BE> Out(&Symtab);
-    Out.write(Config->OutputFile);
+  case InputFile::Object32BEKind:
+    writeResult<object::ELF32BE>(&Symtab, Config->OutputFile);
     return;
-  }
-  case InputFile::Object64LEKind: {
-    Writer<object::ELF64LE> Out(&Symtab);
-    Out.write(Config->OutputFile);
+  case InputFile::Object64LEKind:
+    writeResult<object::ELF64LE>(&Symtab, Config->OutputFile);
     return;
-  }
-  case InputFile::Object64BEKind: {
-    Writer<object::ELF64BE> Out(&Symtab);
-    Out.write(Config->OutputFile);
+  case InputFile::Object64BEKind:
+    writeResult<object::ELF64BE>(&Symtab, Config->OutputFile);
     return;
-  }
   }
 }
