@@ -79,12 +79,8 @@ public:
   /// Returns a copy of array, owned by Sema's allocator.
   template<typename T>
   ArrayRef<T> copyArray(ArrayRef<T> Source) {
-    size_t Size = Source.size();
-    if (Size != 0) {
-      T *Mem = Allocator.Allocate<T>(Size);
-      std::uninitialized_copy(Source.begin(), Source.end(), Mem);
-      return llvm::makeArrayRef(Mem, Size);
-    }
+    if (!Source.empty())
+      return Source.copy(Allocator);
     return None;
   }
 
