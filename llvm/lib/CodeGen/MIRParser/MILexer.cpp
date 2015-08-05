@@ -146,6 +146,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("dead", MIToken::kw_dead)
       .Case("killed", MIToken::kw_killed)
       .Case("undef", MIToken::kw_undef)
+      .Case("debug-use", MIToken::kw_debug_use)
       .Case("frame-setup", MIToken::kw_frame_setup)
       .Case("debug-location", MIToken::kw_debug_location)
       .Case(".cfi_offset", MIToken::kw_cfi_offset)

@@ -55,11 +55,11 @@ body:
     name:         entry
     liveins:      [ '%edi' ]
     instructions:
-      # CHECK: DBG_VALUE _, 0, !12, !13, debug-location !14
+      # CHECK: DBG_VALUE debug-use _, 0, !12, !13, debug-location !14
       # CHECK: %eax = COPY %0, debug-location !15
       # CHECK: RETQ %eax, debug-location !15
       - '%0 = COPY %edi'
-      - 'DBG_VALUE _, 0, !12, !13, debug-location !14'
+      - 'DBG_VALUE debug-use _, 0, !12, !13, debug-location !14'
       - 'MOV32mr %stack.0.x.addr, 1, _, 0, _, %0'
       - '%eax = COPY %0, debug-location !15'
       - 'RETQ %eax, debug-location !15'

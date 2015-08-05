@@ -490,6 +490,9 @@ bool MIParser::parseRegisterFlag(unsigned &Flags) {
   case MIToken::kw_undef:
     Flags |= RegState::Undef;
     break;
+  case MIToken::kw_debug_use:
+    Flags |= RegState::Debug;
+    break;
   // TODO: report an error when we specify the same flag more than once.
   // TODO: parse the other register flags.
   default:
@@ -532,7 +535,7 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
   Dest = MachineOperand::CreateReg(
       Reg, Flags & RegState::Define, Flags & RegState::Implicit,
       Flags & RegState::Kill, Flags & RegState::Dead, Flags & RegState::Undef,
-      /*isEarlyClobber=*/false, SubReg);
+      /*isEarlyClobber=*/false, SubReg, Flags & RegState::Debug);
   return false;
 }
 
@@ -882,6 +885,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::kw_dead:
   case MIToken::kw_killed:
   case MIToken::kw_undef:
+  case MIToken::kw_debug_use:
   case MIToken::underscore:
   case MIToken::NamedRegister:
   case MIToken::VirtualRegister:

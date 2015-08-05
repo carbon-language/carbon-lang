@@ -529,6 +529,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
       OS << "killed ";
     if (Op.isUndef())
       OS << "undef ";
+    if (Op.isDebug())
+      OS << "debug-use ";
     printReg(Op.getReg(), OS, TRI);
     // Print the sub register.
     if (Op.getSubReg() != 0)
