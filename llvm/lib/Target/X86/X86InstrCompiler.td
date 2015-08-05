@@ -759,38 +759,38 @@ defm LXADD : ATOMIC_LOAD_BINOP<0xc0, 0xc1, "xadd", "atomic_load_add",
  * extremely late to prevent them from being accidentally reordered in the backend
  * (see below the RELEASE_MOV* / ACQUIRE_MOV* pseudo-instructions)
  */
-multiclass RELEASE_BINOP_MI<string op> {
+multiclass RELEASE_BINOP_MI<SDNode op> {
     def NAME#8mi : I<0, Pseudo, (outs), (ins i8mem:$dst, i8imm:$src),
         "#BINOP "#NAME#"8mi PSEUDO!",
-        [(atomic_store_8 addr:$dst, (!cast<PatFrag>(op)
+        [(atomic_store_8 addr:$dst, (op
             (atomic_load_8 addr:$dst), (i8 imm:$src)))]>;
     def NAME#8mr : I<0, Pseudo, (outs), (ins i8mem:$dst, GR8:$src),
         "#BINOP "#NAME#"8mr PSEUDO!",
-        [(atomic_store_8 addr:$dst, (!cast<PatFrag>(op)
+        [(atomic_store_8 addr:$dst, (op
             (atomic_load_8 addr:$dst), GR8:$src))]>;
     // NAME#16 is not generated as 16-bit arithmetic instructions are considered
     // costly and avoided as far as possible by this backend anyway
     def NAME#32mi : I<0, Pseudo, (outs), (ins i32mem:$dst, i32imm:$src),
         "#BINOP "#NAME#"32mi PSEUDO!",
-        [(atomic_store_32 addr:$dst, (!cast<PatFrag>(op)
+        [(atomic_store_32 addr:$dst, (op
             (atomic_load_32 addr:$dst), (i32 imm:$src)))]>;
     def NAME#32mr : I<0, Pseudo, (outs), (ins i32mem:$dst, GR32:$src),
         "#BINOP "#NAME#"32mr PSEUDO!",
-        [(atomic_store_32 addr:$dst, (!cast<PatFrag>(op)
+        [(atomic_store_32 addr:$dst, (op
             (atomic_load_32 addr:$dst), GR32:$src))]>;
     def NAME#64mi32 : I<0, Pseudo, (outs), (ins i64mem:$dst, i64i32imm:$src),
         "#BINOP "#NAME#"64mi32 PSEUDO!",
-        [(atomic_store_64 addr:$dst, (!cast<PatFrag>(op)
+        [(atomic_store_64 addr:$dst, (op
             (atomic_load_64 addr:$dst), (i64immSExt32:$src)))]>;
     def NAME#64mr : I<0, Pseudo, (outs), (ins i64mem:$dst, GR64:$src),
         "#BINOP "#NAME#"64mr PSEUDO!",
-        [(atomic_store_64 addr:$dst, (!cast<PatFrag>(op)
+        [(atomic_store_64 addr:$dst, (op
             (atomic_load_64 addr:$dst), GR64:$src))]>;
 }
-defm RELEASE_ADD : RELEASE_BINOP_MI<"add">;
-defm RELEASE_AND : RELEASE_BINOP_MI<"and">;
-defm RELEASE_OR  : RELEASE_BINOP_MI<"or">;
-defm RELEASE_XOR : RELEASE_BINOP_MI<"xor">;
+defm RELEASE_ADD : RELEASE_BINOP_MI<add>;
+defm RELEASE_AND : RELEASE_BINOP_MI<and>;
+defm RELEASE_OR  : RELEASE_BINOP_MI<or>;
+defm RELEASE_XOR : RELEASE_BINOP_MI<xor>;
 // Note: we don't deal with sub, because substractions of constants are
 // optimized into additions before this code can run
 
@@ -799,21 +799,21 @@ defm RELEASE_XOR : RELEASE_BINOP_MI<"xor">;
 // FIXME: Version that doesn't clobber $src, using AVX's VADDSS.
 // FIXME: This could also handle SIMD operations with *ps and *pd instructions.
 let usesCustomInserter = 1 in {
-multiclass RELEASE_FP_BINOP_MI<string op> {
+multiclass RELEASE_FP_BINOP_MI<SDNode op> {
     def NAME#32mr : I<0, Pseudo, (outs), (ins i32mem:$dst, FR32:$src),
         "#BINOP "#NAME#"32mr PSEUDO!",
         [(atomic_store_32 addr:$dst,
-	   (i32 (bitconvert (!cast<PatFrag>(op)
+	   (i32 (bitconvert (op
              (f32 (bitconvert (i32 (atomic_load_32 addr:$dst)))),
 	      FR32:$src))))]>, Requires<[HasSSE1]>;
     def NAME#64mr : I<0, Pseudo, (outs), (ins i64mem:$dst, FR64:$src),
         "#BINOP "#NAME#"64mr PSEUDO!",
         [(atomic_store_64 addr:$dst,
-	   (i64 (bitconvert (!cast<PatFrag>(op)
+	   (i64 (bitconvert (op
              (f64 (bitconvert (i64 (atomic_load_64 addr:$dst)))),
 	      FR64:$src))))]>, Requires<[HasSSE2]>;
 }
-defm RELEASE_FADD : RELEASE_FP_BINOP_MI<"fadd">;
+defm RELEASE_FADD : RELEASE_FP_BINOP_MI<fadd>;
 // FIXME: Add fsub, fmul, fdiv, ...
 }
 
