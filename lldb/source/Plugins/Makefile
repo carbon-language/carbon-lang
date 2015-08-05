@@ -32,7 +32,8 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-i386 A
 	SystemRuntime/MacOSX \
 	SymbolVendor/ELF \
 	MemoryHistory/asan \
-	InstrumentationRuntime/AddressSanitizer
+	InstrumentationRuntime/AddressSanitizer \
+	ScriptInterpreter/Python ScriptInterpreter/None
 
 ifeq ($(HOST_OS),Darwin)
 PARALLEL_DIRS += Process/MacOSX-Kernel
