@@ -79,21 +79,35 @@ static opt<bool> InputIsYAMLDebugMap(
     init(false), cat(DsymCategory));
 }
 
+static std::error_code getUniqueFile(const llvm::Twine &Model, int &ResultFD,
+                                     llvm::SmallVectorImpl<char> &ResultPath) {
+  // If in NoOutput mode, use the createUniqueFile variant that
+  // doesn't open the file but still generates a somewhat unique
+  // name. In the real usage scenario, we'll want to ensure that the
+  // file is trully unique, and creating it is the only way to achieve
+  // that.
+  if (NoOutput)
+    return llvm::sys::fs::createUniqueFile(Model, ResultPath);
+  return llvm::sys::fs::createUniqueFile(Model, ResultFD, ResultPath);
+}
+
 static std::string getOutputFileName(llvm::StringRef InputFile,
                                      bool TempFile = false) {
   if (TempFile) {
-    std::string OutputFile = (InputFile + ".tmp%%%%%%.dwarf").str();
+    llvm::Twine OutputFile = InputFile + ".tmp%%%%%%.dwarf";
     int FD;
     llvm::SmallString<128> UniqueFile;
-    if (auto EC = llvm::sys::fs::createUniqueFile(OutputFile, FD, UniqueFile)) {
+    if (auto EC = getUniqueFile(OutputFile, FD, UniqueFile)) {
       llvm::errs() << "error: failed to create temporary outfile '"
                    << OutputFile << "': " << EC.message() << '\n';
       return "";
     }
     llvm::sys::RemoveFileOnSignal(UniqueFile);
-    // Close the file immediately. We know it is unique. It will be
-    // reopened and written to later.
-    llvm::raw_fd_ostream CloseImmediately(FD, true /* shouldClose */, true);
+    if (!NoOutput) {
+      // Close the file immediately. We know it is unique. It will be
+      // reopened and written to later.
+      llvm::raw_fd_ostream CloseImmediately(FD, true /* shouldClose */, true);
+    }
     return UniqueFile.str();
   }
 
