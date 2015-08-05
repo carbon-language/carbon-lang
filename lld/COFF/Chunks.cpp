@@ -79,21 +79,30 @@ void SectionChunk::applyRelX86(uint8_t *Off, uint16_t Type, Defined *Sym,
   }
 }
 
-static void applyMOV32T(uint8_t *Off, uint32_t V) {
-  uint16_t X = V;
-  or16(Off, ((X & 0x800) >> 1) | ((X >> 12) & 0xf));
-  or16(Off + 2, ((X & 0x700) << 4) | (X & 0xff));
-  X = V >> 16;
-  or16(Off + 4, ((X & 0x800) >> 1) | ((X >> 12) & 0xf));
-  or16(Off + 6, ((X & 0x700) << 4) | (X & 0xff));
+static void applyMOV(uint8_t *Off, uint16_t V) {
+  or16(Off, ((V & 0x800) >> 1) | ((V >> 12) & 0xf));
+  or16(Off + 2, ((V & 0x700) << 4) | (V & 0xff));
 }
 
-static void applyBranchImm(uint8_t *Off, int32_t V) {
+static void applyMOV32T(uint8_t *Off, uint32_t V) {
+  applyMOV(Off, V);           // set MOVW operand
+  applyMOV(Off + 4, V >> 16); // set MOVT operand
+}
+
+static void applyBranch20T(uint8_t *Off, int32_t V) {
+  uint32_t S = V < 0 ? 1 : 0;
+  uint32_t J1 = (V >> 19) & 1;
+  uint32_t J2 = (V >> 18) & 1;
+  or16(Off, (S << 10) | ((V >> 12) & 0x3f));
+  or16(Off + 2, (J1 << 13) | (J2 << 11) | ((V >> 1) & 0x7ff));
+}
+
+static void applyBranch24T(uint8_t *Off, int32_t V) {
   uint32_t S = V < 0 ? 1 : 0;
   uint32_t J1 = ((~V >> 23) & 1) ^ S;
   uint32_t J2 = ((~V >> 22) & 1) ^ S;
-  or16(Off, ((V >> 12) & 0x3ff) | (S << 10));
-  or16(Off + 2, ((V >> 1) & 0x7ff) | (J2 << 11) | (J1 << 13));
+  or16(Off, (S << 10) | ((V >> 12) & 0x3ff));
+  or16(Off + 2, (J1 << 13) | (J2 << 11) | ((V >> 1) & 0x7ff));
 }
 
 void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym,
@@ -106,8 +115,9 @@ void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym,
   case IMAGE_REL_ARM_ADDR32:    add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_ARM_ADDR32NB:  add32(Off, S); break;
   case IMAGE_REL_ARM_MOV32T:    applyMOV32T(Off, S + Config->ImageBase); break;
-  case IMAGE_REL_ARM_BRANCH24T: applyBranchImm(Off, S - P - 4); break;
-  case IMAGE_REL_ARM_BLX23T:    applyBranchImm(Off, S - P - 4); break;
+  case IMAGE_REL_ARM_BRANCH20T: applyBranch20T(Off, S - P - 4); break;
+  case IMAGE_REL_ARM_BRANCH24T: applyBranch24T(Off, S - P - 4); break;
+  case IMAGE_REL_ARM_BLX23T:    applyBranch24T(Off, S - P - 4); break;
   default:
     llvm::report_fatal_error("Unsupported relocation type");
   }
