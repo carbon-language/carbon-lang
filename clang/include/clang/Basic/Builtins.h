@@ -52,13 +52,6 @@ enum ID {
 struct Info {
   const char *Name, *Type, *Attributes, *HeaderName;
   LanguageID builtin_lang;
-
-  bool operator==(const Info &RHS) const {
-    return !strcmp(Name, RHS.Name) &&
-           !strcmp(Type, RHS.Type) &&
-           !strcmp(Attributes, RHS.Attributes);
-  }
-  bool operator!=(const Info &RHS) const { return !(*this == RHS); }
 };
 
 /// \brief Holds information about both target-independent and
