@@ -60,3 +60,36 @@ entry:
   %v = load i32, i32* @g1
   ret i32 %v
 }
+
+define i32 @test4(i32* %param, i32 %n, i1 %c1, i1 %c2) {
+; Ensure that we can fold a store to a load of a global across a store to
+; the pointer loaded from that global even when the load is behind PHIs and
+; selects, and there is a mixture of a load and another global or argument.
+; Note that we can't eliminate the load here because it is used in a PHI and
+; GVN doesn't try to do real DCE. The store is still forwarded by GVN though.
+;
+; CHECK-LABEL: @test4(
+; CHECK: store i32 42, i32* @g1
+; CHECK: store i32 7, i32*
+; CHECK: ret i32 42
+entry:
+  %call = call i32* @f()
+  store i32 42, i32* @g1
+  %ptr1 = load i32*, i32** @g2
+  %ptr2 = select i1 %c1, i32* %ptr1, i32* %param
+  br label %loop
+
+loop:
+  %iv = phi i32 [ 0, %entry ], [ %inc, %loop ]
+  %ptr = phi i32* [ %ptr2, %entry ], [ %ptr4, %loop ]
+  store i32 7, i32* %ptr
+  %ptr3 = load i32*, i32** @g2
+  %ptr4 = select i1 %c2, i32* %ptr3, i32* %call
+  %inc = add i32 %iv, 1
+  %test = icmp slt i32 %inc, %n
+  br i1 %test, label %loop, label %exit
+
+exit:
+  %v = load i32, i32* @g1
+  ret i32 %v
+}

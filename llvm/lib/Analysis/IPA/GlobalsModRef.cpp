@@ -356,6 +356,8 @@ private:
                             SmallPtrSetImpl<Function *> *Writers = nullptr,
                             GlobalValue *OkayStoreDest = nullptr);
   bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
+
+  bool isNonEscapingGlobalNoAlias(const GlobalValue *GV, const Value *V);
 };
 }
 
@@ -668,6 +670,111 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
   }
 }
 
+// There are particular cases where we can conclude no-alias between
+// a non-addr-taken global and some other underlying object. Specifically,
+// a non-addr-taken global is known to not be escaped from any function. It is
+// also incorrect for a transformation to introduce an escape of a global in
+// a way that is observable when it was not there previously. One function
+// being transformed to introduce an escape which could possibly be observed
+// (via loading from a global or the return value for example) within another
+// function is never safe. If the observation is made through non-atomic
+// operations on different threads, it is a data-race and UB. If the
+// observation is well defined, by being observed the transformation would have
+// changed program behavior by introducing the observed escape, making it an
+// invalid transform.
+//
+// This property does require that transformations which *temporarily* escape
+// a global that was not previously escaped, prior to restoring it, cannot rely
+// on the results of GMR::alias. This seems a reasonable restriction, although
+// currently there is no way to enforce it. There is also no realistic
+// optimization pass that would make this mistake. The closest example is
+// a transformation pass which does reg2mem of SSA values but stores them into
+// global variables temporarily before restoring the global variable's value.
+// This could be useful to expose "benign" races for example. However, it seems
+// reasonable to require that a pass which introduces escapes of global
+// variables in this way to either not trust AA results while the escape is
+// active, or to be forced to operate as a module pass that cannot co-exist
+// with an alias analysis such as GMR.
+bool GlobalsModRef::isNonEscapingGlobalNoAlias(const GlobalValue *GV,
+                                               const Value *V) {
+  // In order to know that the underlying object cannot alias the
+  // non-addr-taken global, we must know that it would have to be an escape.
+  // Thus if the underlying object is a function argument, a load from
+  // a global, or the return of a function, it cannot alias. We can also
+  // recurse through PHI nodes and select nodes provided all of their inputs
+  // resolve to one of these known-escaping roots.
+  SmallPtrSet<const Value *, 8> Visited;
+  SmallVector<const Value *, 8> Inputs;
+  Visited.insert(V);
+  Inputs.push_back(V);
+  int Depth = 0;
+  do {
+    const Value *Input = Inputs.pop_back_val();
+
+    if (auto *InputGV = dyn_cast<GlobalValue>(Input)) {
+      // If one input is the very global we're querying against, then we can't
+      // conclude no-alias.
+      if (InputGV == GV)
+        return false;
+
+      // FIXME: It would be good to handle other obvious no-alias cases here, but
+      // it isn't clear how to do so reasonbly without building a small version
+      // of BasicAA into this code. We could recurse into AliasAnalysis::alias
+      // here but that seems likely to go poorly as we're inside the
+      // implementation of such a query. Until then, just conservatievly retun
+      // false.
+      return false;
+    }
+
+    if (isa<Argument>(Input) || isa<CallInst>(Input) ||
+        isa<InvokeInst>(Input)) {
+      // Arguments to functions or returns from functions are inherently
+      // escaping, so we can immediately classify those as not aliasing any
+      // non-addr-taken globals.
+      continue;
+    }
+    if (auto *LI = dyn_cast<LoadInst>(Input)) {
+      // A pointer loaded from a global would have been captured, and we know
+      // that the global is non-escaping, so no alias.
+      if (isa<GlobalValue>(LI->getPointerOperand()))
+        continue;
+
+      // Otherwise, a load could come from anywhere, so bail.
+      return false;
+    }
+
+    // Recurse through a limited number of selects and PHIs. This is an
+    // arbitrary depth of 4, lower numbers could be used to fix compile time
+    // issues if needed, but this is generally expected to be only be important
+    // for small depths.
+    if (++Depth > 4)
+      return false;
+    if (auto *SI = dyn_cast<SelectInst>(Input)) {
+      const Value *LHS = GetUnderlyingObject(SI->getTrueValue(), *DL);
+      const Value *RHS = GetUnderlyingObject(SI->getFalseValue(), *DL);
+      if (Visited.insert(LHS).second)
+        Inputs.push_back(LHS);
+      if (Visited.insert(RHS).second)
+        Inputs.push_back(RHS);
+      continue;
+    }
+    if (auto *PN = dyn_cast<PHINode>(Input)) {
+      for (const Value *Op : PN->incoming_values()) {
+        Op = GetUnderlyingObject(Op, *DL);
+        if (Visited.insert(Op).second)
+          Inputs.push_back(Op);
+      }
+      continue;
+    }
+
+    // Unknown instruction, bail.
+    return false;
+  } while (!Inputs.empty());
+
+  // If all the inputs to V were definitively no-alias, then V is no-alias.
+  return true;
+}
+
 /// alias - If one of the pointers is to a global that we are tracking, and the
 /// other is some random pointer, we know there cannot be an alias, because the
 /// address of the global isn't taken.
@@ -701,50 +808,13 @@ AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
       if ((GV1 || GV2) && GV1 != GV2)
         return NoAlias;
 
-    // There are particular cases where we can conclude no-alias between
-    // a non-addr-taken global and some other underlying object. Specifically,
-    // a non-addr-taken global is known to not be escaped from any function. It
-    // is also incorrect for a transformation to introduce an escape of
-    // a global in a way that is observable when it was not there previously.
-    // One function being transformed to introduce an escape which could
-    // possibly be observed (via loading from a global or the return value for
-    // example) within another function is never safe. If the observation is
-    // made through non-atomic operations on different threads, it is
-    // a data-race and UB. If the observation is well defined, by being
-    // observed the transformation would have changed program behavior by
-    // introducing the observed escape, making it an invalid transform.
-    //
-    // This property does require that transformations which *temporarily*
-    // escape a global that was not previously escaped, prior to restoring
-    // it, cannot rely on the results of GMR::alias. This seems a reasonable
-    // restriction, although currently there is no way to enforce it. There is
-    // also no realistic optimization pass that would make this mistake. The
-    // closest example is a transformation pass which does reg2mem of SSA
-    // values but stores them into global variables temporarily before
-    // restoring the global variable's value. This could be useful to expose
-    // "benign" races for example. However, it seems reasonable to require that
-    // a pass which introduces escapes of global variables in this way to
-    // either not trust AA results while the escape is active, or to be forced
-    // to operate as a module pass that cannot co-exist with an alias analysis
-    // such as GMR.
+    // Check for a special case where a non-escaping global can be used to
+    // conclude no-alias.
     if ((GV1 || GV2) && GV1 != GV2) {
+      const GlobalValue *GV = GV1 ? GV1 : GV2;
       const Value *UV = GV1 ? UV2 : UV1;
-
-      // In order to know that the underlying object cannot alias the
-      // non-addr-taken global, we must know that it would have to be an
-      // escape. Thus if the underlying object is a function argument, a load
-      // from a global, or the return of a function, it cannot alias.
-      if (isa<Argument>(UV) || isa<CallInst>(UV) || isa<InvokeInst>(UV)) {
-        // Arguments to functions or returns from functions are inherently
-        // escaping, so we can immediately classify those as not aliasing any
-        // non-addr-taken globals.
+      if (isNonEscapingGlobalNoAlias(GV, UV))
         return NoAlias;
-      } else if (auto *LI = dyn_cast<LoadInst>(UV)) {
-        // A pointer loaded from a global would have been captured, and we know
-        // that GV is non-addr-taken, so no alias.
-        if (isa<GlobalValue>(LI->getPointerOperand()))
-          return NoAlias;
-      }
     }
 
     // Otherwise if they are both derived from the same addr-taken global, we
