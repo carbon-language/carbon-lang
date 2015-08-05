@@ -420,18 +420,14 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
   if (isPacked)
     setSubclassData(getSubclassData() | SCDB_Packed);
 
+  NumContainedTys = Elements.size();
+
   if (Elements.empty()) {
     ContainedTys = nullptr;
-    NumContainedTys = 0;
     return;
   }
 
-  unsigned NumElements = Elements.size();
-  Type **Elts = getContext().pImpl->TypeAllocator.Allocate<Type*>(NumElements);
-  memcpy(Elts, Elements.data(), sizeof(Elements[0]) * NumElements);
-  
-  ContainedTys = Elts;
-  NumContainedTys = NumElements;
+  ContainedTys = Elements.copy(getContext().pImpl->TypeAllocator).data();
 }
 
 void StructType::setName(StringRef Name) {
