@@ -51,7 +51,7 @@ enum ID {
 
 struct Info {
   const char *Name, *Type, *Attributes, *HeaderName;
-  LanguageID builtin_lang;
+  LanguageID Langs;
 };
 
 /// \brief Holds information about both target-independent and
