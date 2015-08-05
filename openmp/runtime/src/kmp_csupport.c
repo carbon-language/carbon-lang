@@ -2342,7 +2342,7 @@ __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
 static __forceinline void
 __kmp_enter_critical_section_reduce_block( ident_t * loc, kmp_int32 global_tid, kmp_critical_name * crit ) {
 
-    // this lock was visible to a customer and to the thread profiler as a serial overhead span
+    // this lock was visible to a customer and to the threading profile tool as a serial overhead span
     //            (although it's used for an internal purpose only)
     //            why was it visible in previous implementation?
     //            should we keep it visible in new reduce block?
@@ -2538,7 +2538,7 @@ __kmpc_reduce_nowait(
         //        and be more in line with sense of NOWAIT
         //AT: TO DO: do epcc test and compare times
 
-        // this barrier should be invisible to a customer and to the thread profiler
+        // this barrier should be invisible to a customer and to the threading profile tool
         //              (it's neither a terminating barrier nor customer's code, it's used for an internal purpose)
 #if USE_ITT_NOTIFY
         __kmp_threads[global_tid]->th.th_ident = loc;
@@ -2691,7 +2691,7 @@ __kmpc_reduce(
     } else if( TEST_REDUCTION_METHOD( packed_reduction_method, tree_reduce_block ) ) {
 
         //case tree_reduce_block:
-        // this barrier should be visible to a customer and to the thread profiler
+        // this barrier should be visible to a customer and to the threading profile tool
         //              (it's a terminating barrier on constructs if NOWAIT not specified)
 #if USE_ITT_NOTIFY
         __kmp_threads[global_tid]->th.th_ident = loc; // needed for correct notification of frames
@@ -2737,7 +2737,7 @@ __kmpc_end_reduce( ident_t *loc, kmp_int32 global_tid, kmp_critical_name *lck ) 
 
     packed_reduction_method = __KMP_GET_REDUCTION_METHOD( global_tid );
 
-    // this barrier should be visible to a customer and to the thread profiler
+    // this barrier should be visible to a customer and to the threading profile tool
     //              (it's a terminating barrier on constructs if NOWAIT not specified)
 
     if( packed_reduction_method == critical_reduce_block ) {

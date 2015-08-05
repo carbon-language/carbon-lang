@@ -1749,10 +1749,9 @@ static const __itt_id __itt_null = { 0, 0, 0 };
 /**
  * @ingroup ids
  * @brief A convenience function is provided to create an ID without domain control.
- * @brief This is a convenience function to initialize an __itt_id structure. This function
- * does not affect the trace collector runtime in any way. After you make the ID with this
- * function, you still must create it with the __itt_id_create function before using the ID
- * to identify a named entity.
+ * @brief This is a convenience function to initialize an __itt_id structure.
+ * After you make the ID with this function, you still must create it with the
+ * __itt_id_create function before using the ID to identify a named entity.
  * @param[in] addr The address of object; high QWORD of the ID value.
  * @param[in] extra The extra data to unique identify object; low QWORD of the ID value.
  */
