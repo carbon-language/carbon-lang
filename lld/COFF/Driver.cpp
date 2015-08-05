@@ -12,6 +12,7 @@
 #include "Error.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
+#include "Symbols.h"
 #include "Writer.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
@@ -725,8 +726,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     touchFile(Arg->getValue());
 
   // Write the result.
-  Writer Out(&Symtab);
-  if (auto EC = Out.write(Config->OutputFile)) {
+  if (auto EC = writeResult(&Symtab, Config->OutputFile)) {
     llvm::errs() << EC.message() << "\n";
     return false;
   }
