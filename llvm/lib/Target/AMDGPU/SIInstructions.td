@@ -458,16 +458,16 @@ def S_CBRANCH_VCCNZ : SOPP <
   "s_cbranch_vccnz $simm16"
 >;
 
-let DisableEncoding = "$exec" in {
+let Uses = [EXEC] in {
 def S_CBRANCH_EXECZ : SOPP <
-  0x00000008, (ins sopp_brtarget:$simm16, EXECReg:$exec),
+  0x00000008, (ins sopp_brtarget:$simm16),
   "s_cbranch_execz $simm16"
 >;
 def S_CBRANCH_EXECNZ : SOPP <
-  0x00000009, (ins sopp_brtarget:$simm16, EXECReg:$exec),
+  0x00000009, (ins sopp_brtarget:$simm16),
   "s_cbranch_execnz $simm16"
 >;
-} // End DisableEncoding = "$exec"
+} // End Uses = [EXEC]
 
 
 } // End isBranch = 1

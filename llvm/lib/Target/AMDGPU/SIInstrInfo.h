@@ -132,8 +132,6 @@ public:
                               unsigned DstReg, unsigned SrcReg) const override;
   bool isMov(unsigned Opcode) const override;
 
-  bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const override;
-
   bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
                      unsigned Reg, MachineRegisterInfo *MRI) const final;
 

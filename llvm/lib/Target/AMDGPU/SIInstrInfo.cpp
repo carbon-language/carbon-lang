@@ -898,11 +898,6 @@ bool SIInstrInfo::isMov(unsigned Opcode) const {
   }
 }
 
-bool
-SIInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
-  return RC != &AMDGPU::EXECRegRegClass;
-}
-
 static void removeModOperands(MachineInstr &MI) {
   unsigned Opc = MI.getOpcode();
   int Src0ModIdx = AMDGPU::getNamedOperandIdx(Opc,
