@@ -474,6 +474,7 @@ bool MIParser::parseRegister(unsigned &Reg) {
 }
 
 bool MIParser::parseRegisterFlag(unsigned &Flags) {
+  const unsigned OldFlags = Flags;
   switch (Token.kind()) {
   case MIToken::kw_implicit:
     Flags |= RegState::Implicit;
@@ -496,11 +497,14 @@ bool MIParser::parseRegisterFlag(unsigned &Flags) {
   case MIToken::kw_debug_use:
     Flags |= RegState::Debug;
     break;
-  // TODO: report an error when we specify the same flag more than once.
   // TODO: parse the other register flags.
   default:
     llvm_unreachable("The current token should be a register flag");
   }
+  if (OldFlags == Flags)
+    // We know that the same flag is specified more than once when the flags
+    // weren't modified.
+    return error("duplicate '" + Token.stringValue() + "' register flag");
   lex();
   return false;
 }

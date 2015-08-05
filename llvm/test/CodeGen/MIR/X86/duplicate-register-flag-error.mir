@@ -1,0 +1,38 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @foo(i32 %a) {
+  entry:
+    %0 = icmp sle i32 %a, 10
+    br i1 %0, label %less, label %exit
+
+  less:
+    ret i32 0
+
+  exit:
+    ret i32 %a
+  }
+
+...
+---
+name:            foo
+body:
+  - id:          0
+    name:        entry
+    successors:  [ '%bb.1.less', '%bb.2.exit' ]
+    instructions:
+      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
+# CHECK: [[@LINE+1]]:36: duplicate 'implicit' register flag
+      - 'JG_1 %bb.2.exit, implicit implicit %eflags'
+  - id:          1
+    name:        less
+    instructions:
+      - '%eax = MOV32r0 implicit-def %eflags'
+      - 'RETQ %eax'
+  - id:          2
+    name:        exit
+    instructions:
+      - '%eax = COPY %edi'
+      - 'RETQ %eax'
+...
