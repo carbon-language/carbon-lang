@@ -1534,6 +1534,19 @@ with respect to profile creation and use.
   profile file, it reads from that file. If ``pathname`` is a directory name,
   it reads from ``pathname/default.profdata``.
 
+Disabling Instrumentation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In certain situations, it may be useful to disable profile generation or use
+for specific files in a build, without affecting the main compilation flags
+used for the other files in the project.
+
+In these cases, you can use the flag ``-fno-profile-instr-generate`` (or
+``-fno-profile-generate``) to disable profile generation, and
+``-fno-profile-instr-use`` (or ``-fno-profile-use``) to disable profile use.
+
+Note that these flags should appear after the corresponding profile
+flags to have an effect.
 
 Controlling Size of Debug Information
 -------------------------------------

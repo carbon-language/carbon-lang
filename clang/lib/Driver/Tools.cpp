@@ -2848,42 +2848,53 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
   auto *ProfileGenerateArg = Args.getLastArg(
       options::OPT_fprofile_instr_generate,
       options::OPT_fprofile_instr_generate_EQ, options::OPT_fprofile_generate,
-      options::OPT_fprofile_generate_EQ);
+      options::OPT_fprofile_generate_EQ,
+      options::OPT_fno_profile_instr_generate);
+  if (ProfileGenerateArg &&
+      ProfileGenerateArg->getOption().matches(
+          options::OPT_fno_profile_instr_generate))
+    ProfileGenerateArg = nullptr;
 
   auto *ProfileUseArg = Args.getLastArg(
       options::OPT_fprofile_instr_use, options::OPT_fprofile_instr_use_EQ,
-      options::OPT_fprofile_use, options::OPT_fprofile_use_EQ);
+      options::OPT_fprofile_use, options::OPT_fprofile_use_EQ,
+      options::OPT_fno_profile_instr_use);
+  if (ProfileUseArg &&
+      ProfileUseArg->getOption().matches(options::OPT_fno_profile_instr_use))
+    ProfileUseArg = nullptr;
 
   if (ProfileGenerateArg && ProfileUseArg)
     D.Diag(diag::err_drv_argument_not_allowed_with)
         << ProfileGenerateArg->getSpelling() << ProfileUseArg->getSpelling();
 
-  if (ProfileGenerateArg &&
-      ProfileGenerateArg->getOption().matches(
-          options::OPT_fprofile_instr_generate_EQ))
-    ProfileGenerateArg->render(Args, CmdArgs);
-  else if (ProfileGenerateArg &&
-           ProfileGenerateArg->getOption().matches(
-               options::OPT_fprofile_generate_EQ)) {
-    SmallString<128> Path(ProfileGenerateArg->getValue());
-    llvm::sys::path::append(Path, "default.profraw");
-    CmdArgs.push_back(
-        Args.MakeArgString(Twine("-fprofile-instr-generate=") + Path));
-  } else
-    Args.AddAllArgs(CmdArgs, options::OPT_fprofile_instr_generate);
+  if (ProfileGenerateArg) {
+    if (ProfileGenerateArg->getOption().matches(
+            options::OPT_fprofile_instr_generate_EQ))
+      ProfileGenerateArg->render(Args, CmdArgs);
+    else if (ProfileGenerateArg->getOption().matches(
+                 options::OPT_fprofile_generate_EQ)) {
+      SmallString<128> Path(ProfileGenerateArg->getValue());
+      llvm::sys::path::append(Path, "default.profraw");
+      CmdArgs.push_back(
+          Args.MakeArgString(Twine("-fprofile-instr-generate=") + Path));
+    } else
+      Args.AddAllArgs(CmdArgs, options::OPT_fprofile_instr_generate);
+  }
 
-  if (ProfileUseArg &&
-      ProfileUseArg->getOption().matches(options::OPT_fprofile_instr_use_EQ))
-    ProfileUseArg->render(Args, CmdArgs);
-  else if (ProfileUseArg &&
-           (ProfileUseArg->getOption().matches(options::OPT_fprofile_use_EQ) ||
-            ProfileUseArg->getOption().matches(
-                options::OPT_fprofile_instr_use))) {
-    SmallString<128> Path(
-        ProfileUseArg->getNumValues() == 0 ? "" : ProfileUseArg->getValue());
-    if (Path.empty() || llvm::sys::fs::is_directory(Path))
-      llvm::sys::path::append(Path, "default.profdata");
-    CmdArgs.push_back(Args.MakeArgString(Twine("-fprofile-instr-use=") + Path));
+  if (ProfileUseArg) {
+    if (ProfileUseArg->getOption().matches(options::OPT_fprofile_instr_use_EQ))
+      ProfileUseArg->render(Args, CmdArgs);
+    else if ((ProfileUseArg->getOption().matches(
+                  options::OPT_fprofile_use_EQ) ||
+              ProfileUseArg->getOption().matches(
+                  options::OPT_fprofile_instr_use))) {
+      SmallString<128> Path(
+          ProfileUseArg->getNumValues() == 0 ? "" : ProfileUseArg->getValue());
+      if (Path.empty() || llvm::sys::fs::is_directory(Path))
+        llvm::sys::path::append(Path, "default.profdata");
+      CmdArgs.push_back(
+          Args.MakeArgString(Twine("-fprofile-instr-use=") + Path));
+    }
   }
 
   if (Args.hasArg(options::OPT_ftest_coverage) ||

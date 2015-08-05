@@ -446,6 +446,16 @@ def fprofile_use : Flag<["-"], "fprofile-use">, Group<f_Group>,
 def fprofile_use_EQ : Joined<["-"], "fprofile-use=">,
     Group<f_Group>, Flags<[DriverOption]>, MetaVarName<"<pathname>">,
     HelpText<"Use instrumentation data for profile-guided optimization. If pathname is a directory, it reads from <pathname>/default.profdata. Otherwise, it reads from file <pathname>.">;
+def fno_profile_instr_generate : Flag<["-"], "fno-profile-instr-generate">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Disable generation of profile instrumentation.">;
+def fno_profile_generate : Flag<["-"], "fno-profile-generate">,
+    Alias<fno_profile_instr_generate>;
+def fno_profile_instr_use : Flag<["-"], "fno-profile-instr-use">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Disable using instrumentation data for profile-guided optimization">;
+def fno_profile_use : Flag<["-"], "fno-profile-use">,
+    Alias<fno_profile_instr_use>;
 
 def fblocks : Flag<["-"], "fblocks">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the 'blocks' language feature">;
