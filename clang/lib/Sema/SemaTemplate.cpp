@@ -1089,9 +1089,9 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                           /*DelayTypeCreation=*/true);
   SetNestedNameSpecifier(NewClass, SS);
   if (NumOuterTemplateParamLists > 0)
-    NewClass->setTemplateParameterListsInfo(Context,
-                                            NumOuterTemplateParamLists,
-                                            OuterTemplateParamLists);
+    NewClass->setTemplateParameterListsInfo(
+        Context, llvm::makeArrayRef(OuterTemplateParamLists,
+                                    NumOuterTemplateParamLists));
 
   // Add alignment attributes if necessary; these attributes are checked when
   // the ASTContext lays out the structure.
@@ -6307,9 +6307,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                        PrevPartial);
     SetNestedNameSpecifier(Partial, SS);
     if (TemplateParameterLists.size() > 1 && SS.isSet()) {
-      Partial->setTemplateParameterListsInfo(Context,
-                                             TemplateParameterLists.size() - 1,
-                                             TemplateParameterLists.data());
+      Partial->setTemplateParameterListsInfo(
+          Context, TemplateParameterLists.drop_back(1));
     }
 
     if (!PrevPartial)
@@ -6363,8 +6362,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     SetNestedNameSpecifier(Specialization, SS);
     if (TemplateParameterLists.size() > 0) {
       Specialization->setTemplateParameterListsInfo(Context,
-                                              TemplateParameterLists.size(),
-                                              TemplateParameterLists.data());
+                                                    TemplateParameterLists);
     }
 
     if (!PrevDecl)

@@ -1653,11 +1653,9 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
   }
 }
 
-void
-DeclaratorDecl::setTemplateParameterListsInfo(ASTContext &Context,
-                                              unsigned NumTPLists,
-                                              TemplateParameterList **TPLists) {
-  assert(NumTPLists > 0);
+void DeclaratorDecl::setTemplateParameterListsInfo(
+    ASTContext &Context, ArrayRef<TemplateParameterList *> TPLists) {
+  assert(!TPLists.empty());
   // Make sure the extended decl info is allocated.
   if (!hasExtInfo()) {
     // Save (non-extended) type source info pointer.
@@ -1668,7 +1666,7 @@ DeclaratorDecl::setTemplateParameterListsInfo(ASTContext &Context,
     getExtInfo()->TInfo = savedTInfo;
   }
   // Set the template parameter lists info.
-  getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
+  getExtInfo()->setTemplateParameterListsInfo(Context, TPLists);
 }
 
 SourceLocation DeclaratorDecl::getOuterLocStart() const {
@@ -1726,13 +1724,8 @@ SourceRange DeclaratorDecl::getSourceRange() const {
   return SourceRange(getOuterLocStart(), RangeEnd);
 }
 
-void
-QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
-                                             unsigned NumTPLists,
-                                             TemplateParameterList **TPLists) {
-  assert((NumTPLists == 0 || TPLists != nullptr) &&
-         "Empty array of template parameters with positive size!");
-
+void QualifierInfo::setTemplateParameterListsInfo(
+    ASTContext &Context, ArrayRef<TemplateParameterList *> TPLists) {
   // Free previous template parameters (if any).
   if (NumTemplParamLists > 0) {
     Context.Deallocate(TemplParamLists);
@@ -1740,10 +1733,10 @@ QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
     NumTemplParamLists = 0;
   }
   // Set info on matched template parameter lists (if any).
-  if (NumTPLists > 0) {
-    TemplParamLists = new (Context) TemplateParameterList*[NumTPLists];
-    NumTemplParamLists = NumTPLists;
-    std::copy(TPLists, TPLists + NumTPLists, TemplParamLists);
+  if (!TPLists.empty()) {
+    TemplParamLists = new (Context) TemplateParameterList *[TPLists.size()];
+    NumTemplParamLists = TPLists.size();
+    std::copy(TPLists.begin(), TPLists.end(), TemplParamLists);
   }
 }
 
@@ -3482,16 +3475,15 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
   }
 }
 
-void TagDecl::setTemplateParameterListsInfo(ASTContext &Context,
-                                            unsigned NumTPLists,
-                                            TemplateParameterList **TPLists) {
-  assert(NumTPLists > 0);
+void TagDecl::setTemplateParameterListsInfo(
+    ASTContext &Context, ArrayRef<TemplateParameterList *> TPLists) {
+  assert(!TPLists.empty());
   // Make sure the extended decl info is allocated.
   if (!hasExtInfo())
     // Allocate external info struct.
     NamedDeclOrQualifier = new (getASTContext()) ExtInfo;
   // Set the template parameter lists info.
-  getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
+  getExtInfo()->setTemplateParameterListsInfo(Context, TPLists);
 }
 
 //===----------------------------------------------------------------------===//
