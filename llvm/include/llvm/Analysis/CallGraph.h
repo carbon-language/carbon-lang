@@ -106,10 +106,6 @@ class CallGraph {
 
 public:
   CallGraph(Module &M);
-  // Default move ctor is fine, the dtor just does things to CallsExternalNode
-  // (if non-null) and the values in the FunctionMap, all of which should be
-  // null post-move, so no-op the dtor on the moved-from side.
-  CallGraph(CallGraph &&) = default;
   ~CallGraph();
 
   void print(raw_ostream &OS) const;
