@@ -75,7 +75,8 @@ class CallGraphNode;
 class CallGraph {
   Module &M;
 
-  typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
+  typedef std::map<const Function *, std::unique_ptr<CallGraphNode>>
+      FunctionMapTy;
 
   /// \brief A map from \c Function* to \c CallGraphNode*.
   FunctionMapTy FunctionMap;
@@ -90,7 +91,7 @@ class CallGraph {
 
   /// \brief This node has edges to it from all functions making indirect calls
   /// or calling an external function.
-  CallGraphNode *CallsExternalNode;
+  std::unique_ptr<CallGraphNode> CallsExternalNode;
 
   /// \brief Replace the function represented by this node by another.
   ///
@@ -105,6 +106,10 @@ class CallGraph {
 
 public:
   CallGraph(Module &M);
+  // Default move ctor is fine, the dtor just does things to CallsExternalNode
+  // (if non-null) and the values in the FunctionMap, all of which should be
+  // null post-move, so no-op the dtor on the moved-from side.
+  CallGraph(CallGraph &&) = default;
   ~CallGraph();
 
   void print(raw_ostream &OS) const;
@@ -125,21 +130,23 @@ public:
   inline const CallGraphNode *operator[](const Function *F) const {
     const_iterator I = FunctionMap.find(F);
     assert(I != FunctionMap.end() && "Function not in callgraph!");
-    return I->second;
+    return I->second.get();
   }
 
   /// \brief Returns the call graph node for the provided function.
   inline CallGraphNode *operator[](const Function *F) {
     const_iterator I = FunctionMap.find(F);
     assert(I != FunctionMap.end() && "Function not in callgraph!");
-    return I->second;
+    return I->second.get();
   }
 
   /// \brief Returns the \c CallGraphNode which is used to represent
   /// undetermined calls into the callgraph.
   CallGraphNode *getExternalCallingNode() const { return ExternalCallingNode; }
 
-  CallGraphNode *getCallsExternalNode() const { return CallsExternalNode; }
+  CallGraphNode *getCallsExternalNode() const {
+    return CallsExternalNode.get();
+  }
 
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
@@ -444,8 +451,10 @@ struct GraphTraits<CallGraph *> : public GraphTraits<CallGraphNode *> {
   static NodeType *getEntryNode(CallGraph *CGN) {
     return CGN->getExternalCallingNode(); // Start at the external node!
   }
-  typedef std::pair<const Function *, CallGraphNode *> PairTy;
-  typedef std::pointer_to_unary_function<PairTy, CallGraphNode &> DerefFun;
+  typedef std::pair<const Function *const, std::unique_ptr<CallGraphNode>>
+      PairTy;
+  typedef std::pointer_to_unary_function<const PairTy &, CallGraphNode &>
+      DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
   typedef mapped_iterator<CallGraph::iterator, DerefFun> nodes_iterator;
@@ -456,7 +465,7 @@ struct GraphTraits<CallGraph *> : public GraphTraits<CallGraphNode *> {
     return map_iterator(CG->end(), DerefFun(CGdereference));
   }
 
-  static CallGraphNode &CGdereference(PairTy P) { return *P.second; }
+  static CallGraphNode &CGdereference(const PairTy &P) { return *P.second; }
 };
 
 template <>
@@ -465,8 +474,9 @@ struct GraphTraits<const CallGraph *> : public GraphTraits<
   static NodeType *getEntryNode(const CallGraph *CGN) {
     return CGN->getExternalCallingNode(); // Start at the external node!
   }
-  typedef std::pair<const Function *, const CallGraphNode *> PairTy;
-  typedef std::pointer_to_unary_function<PairTy, const CallGraphNode &>
+  typedef std::pair<const Function *const, std::unique_ptr<CallGraphNode>>
+      PairTy;
+  typedef std::pointer_to_unary_function<const PairTy &, const CallGraphNode &>
       DerefFun;
 
   // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
@@ -478,7 +488,9 @@ struct GraphTraits<const CallGraph *> : public GraphTraits<
     return map_iterator(CG->end(), DerefFun(CGdereference));
   }
 
-  static const CallGraphNode &CGdereference(PairTy P) { return *P.second; }
+  static const CallGraphNode &CGdereference(const PairTy &P) {
+    return *P.second;
+  }
 };
 
 } // End llvm namespace
