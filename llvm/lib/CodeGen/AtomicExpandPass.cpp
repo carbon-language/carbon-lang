@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains a pass (at IR level) to replace atomic instructions with
-// either (intrinsic-based) load-linked/store-conditional loops or AtomicCmpXchg.
+// either (intrinsic-based) load-linked/store-conditional loops or
+// AtomicCmpXchg.
 //
 //===----------------------------------------------------------------------===//
 
