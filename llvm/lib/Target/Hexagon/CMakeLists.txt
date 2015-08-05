@@ -42,6 +42,7 @@ add_llvm_target(HexagonCodeGen
   HexagonSubtarget.cpp
   HexagonTargetMachine.cpp
   HexagonTargetObjectFile.cpp
+  HexagonTargetTransformInfo.cpp
   HexagonVLIWPacketizer.cpp
 )
 

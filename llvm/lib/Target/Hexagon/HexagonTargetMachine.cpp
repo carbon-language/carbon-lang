@@ -16,6 +16,7 @@
 #include "HexagonISelLowering.h"
 #include "HexagonMachineScheduler.h"
 #include "HexagonTargetObjectFile.h"
+#include "HexagonTargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
@@ -107,10 +108,42 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, const Triple &TT,
                                            CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, "e-m:e-p:32:32-i1:32-i64:64-a:0-n32", TT, CPU, FS,
                         Options, RM, CM, OL),
-      TLOF(make_unique<HexagonTargetObjectFile>()),
-      Subtarget(TT, CPU, FS, *this) {
-    initAsmInfo();
+      TLOF(make_unique<HexagonTargetObjectFile>()) {
+  initAsmInfo();
 }
+
+const HexagonSubtarget *
+HexagonTargetMachine::getSubtargetImpl(const Function &F) const {
+  AttributeSet FnAttrs = F.getAttributes();
+  Attribute CPUAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
+  Attribute FSAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-features");
+
+  std::string CPU = !CPUAttr.hasAttribute(Attribute::None)
+                        ? CPUAttr.getValueAsString().str()
+                        : TargetCPU;
+  std::string FS = !FSAttr.hasAttribute(Attribute::None)
+                       ? FSAttr.getValueAsString().str()
+                       : TargetFS;
+
+  auto &I = SubtargetMap[CPU + FS];
+  if (!I) {
+    // This needs to be done before we create a new subtarget since any
+    // creation will depend on the TM and the code generation flags on the
+    // function that reside in TargetOptions.
+    resetTargetOptions(F);
+    I = llvm::make_unique<HexagonSubtarget>(TargetTriple, CPU, FS, *this);
+  }
+  return I.get();
+}
+
+TargetIRAnalysis HexagonTargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis([this](Function &F) {
+    return TargetTransformInfo(HexagonTTIImpl(this, F));
+  });
+}
+
 
 HexagonTargetMachine::~HexagonTargetMachine() {}
 
