@@ -2632,6 +2632,26 @@ AST_MATCHER(CXXCtorInitializer, isWritten) {
   return Node.isWritten();
 }
 
+/// \brief Matches a constructor initializer if it is initializing a base, as
+/// opposed to a member.
+///
+/// Given
+/// \code
+///   struct B {};
+///   struct D : B {
+///     int I;
+///     D(int i) : I(i) {}
+///   };
+///   struct E : B {
+///     E() : B() {}
+///   };
+/// \endcode
+/// constructorDecl(hasAnyConstructorInitializer(isBaseInitializer()))
+///   will match E(), but not match D(int).
+AST_MATCHER(CXXCtorInitializer, isBaseInitializer) {
+  return Node.isBaseInitializer();
+}
+
 /// \brief Matches any argument of a call expression or a constructor call
 /// expression.
 ///
@@ -4102,6 +4122,51 @@ AST_MATCHER_P(CXXConstructorDecl, forEachConstructorInitializer,
   }
   *Builder = std::move(Result);
   return Matched;
+}
+
+/// \brief Matches constructor declarations that are copy constructors.
+///
+/// Given
+/// \code
+///   struct S {
+///     S(); // #1
+///     S(const S &); // #2
+///     S(S &&); // #3
+///   };
+/// \endcode
+/// constructorDecl(isCopyConstructor()) will match #2, but not #1 or #3.
+AST_MATCHER(CXXConstructorDecl, isCopyConstructor) {
+  return Node.isCopyConstructor();
+}
+
+/// \brief Matches constructor declarations that are move constructors.
+///
+/// Given
+/// \code
+///   struct S {
+///     S(); // #1
+///     S(const S &); // #2
+///     S(S &&); // #3
+///   };
+/// \endcode
+/// constructorDecl(isMoveConstructor()) will match #3, but not #1 or #2.
+AST_MATCHER(CXXConstructorDecl, isMoveConstructor) {
+  return Node.isMoveConstructor();
+}
+
+/// \brief Matches constructor declarations that are default constructors.
+///
+/// Given
+/// \code
+///   struct S {
+///     S(); // #1
+///     S(const S &); // #2
+///     S(S &&); // #3
+///   };
+/// \endcode
+/// constructorDecl(isDefaultConstructor()) will match #1, but not #2 or #3.
+AST_MATCHER(CXXConstructorDecl, isDefaultConstructor) {
+  return Node.isDefaultConstructor();
 }
 
 /// \brief If the given case statement does not use the GNU case range

@@ -1460,6 +1460,58 @@ Example matches f(0, 0) (matcher = callExpr(argumentCountIs(2)))
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructorDecl.html">CXXConstructorDecl</a>&gt;</td><td class="name" onclick="toggle('isCopyConstructor1')"><a name="isCopyConstructor1Anchor">isCopyConstructor</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isCopyConstructor1"><pre>Matches constructor declarations that are copy constructors.
+
+Example matches #2, but not #1 or #3 (matcher = constructorDecl(isCopyConstructor())
+  struct S {
+    S(); // #1
+    S(const S &); // #2
+    S(S &&); // #3
+  };
+</pre></td></tr>
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructorDecl.html">CXXConstructorDecl</a>&gt;</td><td class="name" onclick="toggle('isDefaultConstructor1')"><a name="isDefaultConstructor1Anchor">isDefaultConstructor</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isDefaultConstructor1"><pre>Matches constructor declarations that are default constructors.
+
+Example matches #1, but not #2 or #3 (matcher = constructorDecl(isDefaultConstructor())
+  struct S {
+    S(); // #1
+    S(const S &); // #2
+    S(S &&); // #3
+  };
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConstructorDecl.html">CXXConstructorDecl</a>&gt;</td><td class="name" onclick="toggle('isMoveConstructor1')"><a name="isMoveConstructor1Anchor">isMoveConstructor</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isMoveConstructor1"><pre>Matches constructor declarations that are move constructors.
+
+Example matches #3, but not #1 or #2 (matcher = constructorDecl(isMoveConstructor())
+  struct S {
+    S(); // #1
+    S(const S &); // #2
+    S(S &&); // #3
+  };
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXCtorInitializer.html">CXXCtorInitializer</a>&gt;</td><td class="name" onclick="toggle('isBaseInitializer0')"><a name="isBaseInitializer0Anchor">isBaseInitializer</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isBaseInitializer0"><pre>Matches a constructor initializer if it is initializing a base, as opposed to a member.
+
+Given
+  struct B {};
+  struct D : B {
+    int I;
+    D(int i) : I(i) {}
+  };
+  struct E : B {
+    E() : B() {}
+  };
+constructorDecl(hasAnyConstructorInitializer(isBaseInitializer()))
+  will match E(), but not match D(int).
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXCtorInitializer.html">CXXCtorInitializer</a>&gt;</td><td class="name" onclick="toggle('isWritten0')"><a name="isWritten0Anchor">isWritten</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isWritten0"><pre>Matches a constructor initializer if it is explicitly written in
 code (as opposed to implicitly added by the compiler).
