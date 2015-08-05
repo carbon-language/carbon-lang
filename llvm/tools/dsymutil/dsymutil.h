@@ -44,6 +44,11 @@ llvm::ErrorOr<std::unique_ptr<DebugMap>> parseDebugMap(StringRef InputFile,
 /// \returns false if the link failed.
 bool linkDwarf(StringRef OutputFilename, const DebugMap &DM,
                const LinkOptions &Options);
+
+/// \brief Exit the dsymutil process, cleaning up every temporary
+/// files that we created.
+LLVM_ATTRIBUTE_NORETURN void exitDsymutil(int ExitStatus);
+
 }
 }
 #endif // LLVM_TOOLS_DSYMUTIL_DSYMUTIL_H

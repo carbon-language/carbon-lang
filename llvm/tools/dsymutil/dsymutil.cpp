@@ -77,6 +77,10 @@ static std::string getOutputFileName(llvm::StringRef InputFile) {
   return OutputFileOpt;
 }
 
+void llvm::dsymutil::exitDsymutil(int ExitStatus) {
+  exit(ExitStatus);
+}
+
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram StackPrinter(argc, argv);
@@ -120,7 +124,7 @@ int main(int argc, char **argv) {
     if (auto EC = DebugMapPtrOrErr.getError()) {
       llvm::errs() << "error: cannot parse the debug map for \"" << InputFile
                    << "\": " << EC.message() << '\n';
-      return 1;
+      exitDsymutil(1);
     }
 
     if (Verbose || DumpDebugMap)
@@ -131,8 +135,8 @@ int main(int argc, char **argv) {
 
     std::string OutputFile = getOutputFileName(InputFile);
     if (!linkDwarf(OutputFile, **DebugMapPtrOrErr, Options))
-      return 1;
+      exitDsymuti(1);
   }
 
-  return 0;
+  exitDsymutil(0);
 }
