@@ -44,7 +44,9 @@ set( __ANDROID_NDK__ True )
 # its symbols, which significantly increases the binary size. Static linking, on
 # the other hand, has little to no effect on the binary size.
 if( NOT DEFINED LLVM_BUILD_STATIC )
- set( LLVM_BUILD_STATIC True )
+ set( LLVM_BUILD_STATIC True  CACHE BOOL "" FORCE )
+ set( LLVM_ENABLE_PIC   FALSE CACHE BOOL "" FORCE )
+ set( BUILD_SHARED_LIBS FALSE CACHE BOOL "" FORCE )
 endif()
 
 set( ANDROID_ABI "${ANDROID_ABI}" CACHE INTERNAL "Android Abi" FORCE )
