@@ -26,6 +26,12 @@ using namespace llvm;
 
 STATISTIC(NumDeadDefsReplaced, "Number of dead definitions replaced");
 
+namespace llvm {
+void initializeAArch64DeadRegisterDefinitionsPass(PassRegistry &);
+}
+
+#define AARCH64_DEAD_REG_DEF_NAME "AArch64 Dead register definitions"
+
 namespace {
 class AArch64DeadRegisterDefinitions : public MachineFunctionPass {
 private:
@@ -35,11 +41,14 @@ private:
   bool usesFrameIndex(const MachineInstr &MI);
 public:
   static char ID; // Pass identification, replacement for typeid.
-  explicit AArch64DeadRegisterDefinitions() : MachineFunctionPass(ID) {}
+  explicit AArch64DeadRegisterDefinitions() : MachineFunctionPass(ID) {
+    initializeAArch64DeadRegisterDefinitionsPass(
+        *PassRegistry::getPassRegistry());
+  }
 
   bool runOnMachineFunction(MachineFunction &F) override;
 
-  const char *getPassName() const override { return "Dead register definitions"; }
+  const char *getPassName() const override { return AARCH64_DEAD_REG_DEF_NAME; }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
@@ -48,6 +57,9 @@ public:
 };
 char AArch64DeadRegisterDefinitions::ID = 0;
 } // end anonymous namespace
+
+INITIALIZE_PASS(AArch64DeadRegisterDefinitions, "aarch64-dead-defs",
+                AARCH64_DEAD_REG_DEF_NAME, false, false)
 
 bool AArch64DeadRegisterDefinitions::implicitlyDefinesOverlappingReg(
     unsigned Reg, const MachineInstr &MI) {
