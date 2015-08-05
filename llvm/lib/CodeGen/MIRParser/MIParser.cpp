@@ -552,8 +552,7 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
   assert(Token.is(MIToken::IntegerLiteral));
   const APSInt &Int = Token.integerValue();
   if (Int.getMinSignedBits() > 64)
-    // TODO: Replace this with an error when we can parse CIMM Machine Operands.
-    llvm_unreachable("Can't parse large integer literals yet!");
+    return error("integer literal is too large to be an immediate operand");
   Dest = MachineOperand::CreateImm(Int.getExtValue());
   lex();
   return false;

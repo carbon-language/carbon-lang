@@ -1,0 +1,20 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @foo() {
+  entry:
+    ret i32 42
+  }
+
+...
+---
+name:            foo
+body:
+ - id:           0
+   name:         entry
+   instructions:
+# CHECK: [[@LINE+1]]:24: integer literal is too large to be an immediate operand
+     - '%eax = MOV32ri 12346127502983478823754212949184914'
+     - 'RETQ %eax'
+...
