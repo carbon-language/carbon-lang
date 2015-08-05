@@ -1,0 +1,4 @@
+# RUN: llvm-mc --disassemble %s -triple=sparcv9-unknown-linux | FileCheck %s
+
+# CHECK: popc %g1, %g2
+0x85 0x70 0x00 0x01

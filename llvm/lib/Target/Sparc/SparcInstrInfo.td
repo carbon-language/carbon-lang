@@ -1221,8 +1221,8 @@ let Predicates = [HasV9] in {
 // the top 32-bits before using it.  To do this clearing, we use a SRLri X,0.
 let rs1 = 0 in
   def POPCrr : F3_1<2, 0b101110,
-                    (outs IntRegs:$dst), (ins IntRegs:$src),
-                    "popc $src, $dst", []>, Requires<[HasV9]>;
+                    (outs IntRegs:$rd), (ins IntRegs:$rs2),
+                    "popc $rs2, $rd", []>, Requires<[HasV9]>;
 def : Pat<(ctpop i32:$src),
           (POPCrr (SRLri $src, 0))>;
 

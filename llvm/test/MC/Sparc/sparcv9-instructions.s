@@ -21,3 +21,8 @@
         ! V9:      subxcc %g1, %g2, %g3         ! encoding: [0x86,0xe0,0x40,0x02]
         subccc %g1, %g2, %g3
 
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: popc %g1, %g2
+        ! V9:      popc %g1, %g2                ! encoding: [0x85,0x70,0x00,0x01]
+        popc %g1, %g2
+
