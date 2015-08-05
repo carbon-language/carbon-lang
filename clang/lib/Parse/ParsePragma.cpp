@@ -745,9 +745,7 @@ bool Parser::HandlePragmaMSInitSeg(StringRef PragmaName,
 struct PragmaLoopHintInfo {
   Token PragmaName;
   Token Option;
-  Token *Toks;
-  size_t TokSize;
-  PragmaLoopHintInfo() : Toks(nullptr), TokSize(0) {}
+  ArrayRef<Token> Toks;
 };
 
 static std::string PragmaLoopHintString(Token PragmaName, Token Option) {
@@ -780,8 +778,8 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
   Hint.OptionLoc = IdentifierLoc::create(
       Actions.Context, Info->Option.getLocation(), OptionInfo);
 
-  Token *Toks = Info->Toks;
-  size_t TokSize = Info->TokSize;
+  const Token *Toks = Info->Toks.data();
+  size_t TokSize = Info->Toks.size();
 
   // Return a valid hint if pragma unroll or nounroll were specified
   // without an argument.
@@ -1928,11 +1926,7 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token &Tok, Token PragmaName,
   EOFTok.setLocation(Tok.getLocation());
   ValueList.push_back(EOFTok); // Terminates expression for parsing.
 
-  Token *TokenArray = (Token *)PP.getPreprocessorAllocator().Allocate(
-      ValueList.size() * sizeof(Token), llvm::alignOf<Token>());
-  std::copy(ValueList.begin(), ValueList.end(), TokenArray);
-  Info.Toks = TokenArray;
-  Info.TokSize = ValueList.size();
+  Info.Toks = llvm::makeArrayRef(ValueList).copy(PP.getPreprocessorAllocator());
 
   Info.PragmaName = PragmaName;
   Info.Option = Option;
