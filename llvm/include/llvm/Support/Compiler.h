@@ -69,7 +69,7 @@
 #if !defined(_MSC_VER) || defined(__clang__) || LLVM_MSC_PREREQ(1900)
 #define LLVM_NOEXCEPT noexcept
 #else
-#define LLVM_NOEXCEPT
+#define LLVM_NOEXCEPT throw()
 #endif
 
 /// \brief Does the compiler support ref-qualifiers for *this?

@@ -145,11 +145,12 @@ public:
   unsigned int getType() const { return TypeID; }
 
   void *operator new(size_t Size, BumpPtrAllocator &Alloc,
-                     size_t Alignment = 16) throw() {
+                     size_t Alignment = 16) LLVM_NOEXCEPT {
     return Alloc.Allocate(Size, Alignment);
   }
 
-  void operator delete(void *Ptr, BumpPtrAllocator &Alloc, size_t Size) throw() {
+  void operator delete(void *Ptr, BumpPtrAllocator &Alloc,
+                       size_t Size) LLVM_NOEXCEPT {
     Alloc.Deallocate(Ptr, Size);
   }
 
@@ -157,7 +158,7 @@ protected:
   std::unique_ptr<Document> &Doc;
   SMRange SourceRange;
 
-  void operator delete(void *) throw() {}
+  void operator delete(void *) LLVM_NOEXCEPT {}
 
   ~Node() = default;
 
