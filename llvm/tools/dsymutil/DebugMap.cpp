@@ -97,7 +97,7 @@ struct YAMLContext {
 };
 }
 
-ErrorOr<std::unique_ptr<DebugMap>>
+ErrorOr<std::vector<std::unique_ptr<DebugMap>>>
 DebugMap::parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath,
                             bool Verbose) {
   auto ErrOrFile = MemoryBuffer::getFileOrSTDIN(InputFile);
@@ -114,8 +114,9 @@ DebugMap::parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath,
 
   if (auto EC = yin.error())
     return EC;
-
-  return std::move(Res);
+  std::vector<std::unique_ptr<DebugMap>> Result;
+  Result.push_back(std::move(Res));
+  return std::move(Result);
 }
 }
 

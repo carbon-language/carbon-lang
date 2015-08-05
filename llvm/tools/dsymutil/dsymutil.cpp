@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebugMap.h"
+#include "MachOUtils.h"
 #include "dsymutil.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Options.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -68,7 +70,24 @@ static opt<bool> InputIsYAMLDebugMap(
     init(false), cat(DsymCategory));
 }
 
-static std::string getOutputFileName(llvm::StringRef InputFile) {
+static std::string getOutputFileName(llvm::StringRef InputFile,
+                                     bool TempFile = false) {
+  if (TempFile) {
+    std::string OutputFile = (InputFile + ".tmp%%%%%%.dwarf").str();
+    int FD;
+    llvm::SmallString<128> UniqueFile;
+    if (auto EC = llvm::sys::fs::createUniqueFile(OutputFile, FD, UniqueFile)) {
+      llvm::errs() << "error: failed to create temporary outfile '"
+                   << OutputFile << "': " << EC.message() << '\n';
+      return "";
+    }
+    llvm::sys::RemoveFileOnSignal(UniqueFile);
+    // Close the file immediately. We know it is unique. It will be
+    // reopened and written to later.
+    llvm::raw_fd_ostream CloseImmediately(FD, true /* shouldClose */, true);
+    return UniqueFile.str();
+  }
+
   if (OutputFileOpt.empty()) {
     if (InputFile == "-")
       return "a.out.dwarf";
@@ -78,6 +97,8 @@ static std::string getOutputFileName(llvm::StringRef InputFile) {
 }
 
 void llvm::dsymutil::exitDsymutil(int ExitStatus) {
+  // Cleanup temporary files.
+  llvm::sys::RunInterruptHandlers();
   exit(ExitStatus);
 }
 
@@ -118,24 +139,39 @@ int main(int argc, char **argv) {
   }
 
   for (auto &InputFile : InputFiles) {
-    auto DebugMapPtrOrErr =
+    auto DebugMapPtrsOrErr =
         parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
 
-    if (auto EC = DebugMapPtrOrErr.getError()) {
+    if (auto EC = DebugMapPtrsOrErr.getError()) {
       llvm::errs() << "error: cannot parse the debug map for \"" << InputFile
                    << "\": " << EC.message() << '\n';
       exitDsymutil(1);
     }
 
-    if (Verbose || DumpDebugMap)
-      (*DebugMapPtrOrErr)->print(llvm::outs());
+    // If there is more than one link to execute, we need to generate
+    // temporary files.
+    bool NeedsTempFiles = !DumpDebugMap && (*DebugMapPtrsOrErr).size() != 1;
+    llvm::SmallVector<MachOUtils::ArchAndFilename, 4> TempFiles;
+    for (auto &Map : *DebugMapPtrsOrErr) {
+      if (Verbose || DumpDebugMap)
+        Map->print(llvm::outs());
 
-    if (DumpDebugMap)
-      continue;
+      if (DumpDebugMap)
+        continue;
 
-    std::string OutputFile = getOutputFileName(InputFile);
-    if (!linkDwarf(OutputFile, **DebugMapPtrOrErr, Options))
-      exitDsymuti(1);
+      std::string OutputFile = getOutputFileName(InputFile, NeedsTempFiles);
+      if (OutputFile.empty() || !linkDwarf(OutputFile, *Map, Options))
+        exitDsymutil(1);
+
+      if (NeedsTempFiles)
+        TempFiles.emplace_back(Map->getTriple().getArchName().str(),
+                               OutputFile);
+    }
+
+    if (NeedsTempFiles &&
+        !MachOUtils::generateUniversalBinary(
+            TempFiles, getOutputFileName(InputFile), Options))
+      exitDsymutil(1);
   }
 
   exitDsymutil(0);

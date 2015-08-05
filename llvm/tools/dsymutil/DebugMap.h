@@ -102,7 +102,7 @@ public:
 #endif
 
   /// Read a debug map for \a InputFile.
-  static ErrorOr<std::unique_ptr<DebugMap>>
+  static ErrorOr<std::vector<std::unique_ptr<DebugMap>>>
   parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose);
 };
 

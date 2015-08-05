@@ -27,10 +27,12 @@ public:
         MainBinaryHolder(Verbose), CurrentObjectHolder(Verbose),
         CurrentDebugMapObject(nullptr) {}
 
-  /// \brief Parses and returns the DebugMap of the input binary.
+  /// \brief Parses and returns the DebugMaps of the input binary.
+  /// The binary contains multiple maps in case it is a universal
+  /// binary.
   /// \returns an error in case the provided BinaryPath doesn't exist
   /// or isn't of a supported type.
-  ErrorOr<std::unique_ptr<DebugMap>> parse();
+  ErrorOr<std::vector<std::unique_ptr<DebugMap>>> parse();
 
 private:
   std::string BinaryPath;
@@ -54,6 +56,9 @@ private:
   /// Holds function info while function scope processing.
   const char *CurrentFunctionName;
   uint64_t CurrentFunctionAddress;
+
+  std::unique_ptr<DebugMap> parseOneBinary(const MachOObjectFile &MainBinary,
+                                           StringRef BinaryPath);
 
   void switchToNewDebugMapObject(StringRef Filename, sys::TimeValue Timestamp);
   void resetParserState();
@@ -110,19 +115,9 @@ void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename,
   loadCurrentObjectFileSymbols(*ErrOrAchObj);
 }
 
-/// This main parsing routine tries to open the main binary and if
-/// successful iterates over the STAB entries. The real parsing is
-/// done in handleStabSymbolTableEntry.
-ErrorOr<std::unique_ptr<DebugMap>> MachODebugMapParser::parse() {
-  auto MainBinOrError =
-      MainBinaryHolder.GetFilesAs<MachOObjectFile>(BinaryPath);
-  if (auto Error = MainBinOrError.getError())
-    return Error;
-
-  if (MainBinOrError->size() != 1)
-    return make_error_code(object::object_error::invalid_file_type);
-
-  const MachOObjectFile &MainBinary = *MainBinOrError->front();
+std::unique_ptr<DebugMap>
+MachODebugMapParser::parseOneBinary(const MachOObjectFile &MainBinary,
+                                    StringRef BinaryPath) {
   loadMainBinarySymbols(MainBinary);
   Result = make_unique<DebugMap>(BinaryHolder::getTriple(MainBinary));
   MainBinaryStrings = MainBinary.getStringTableData();
@@ -136,6 +131,22 @@ ErrorOr<std::unique_ptr<DebugMap>> MachODebugMapParser::parse() {
 
   resetParserState();
   return std::move(Result);
+}
+
+/// This main parsing routine tries to open the main binary and if
+/// successful iterates over the STAB entries. The real parsing is
+/// done in handleStabSymbolTableEntry.
+ErrorOr<std::vector<std::unique_ptr<DebugMap>>> MachODebugMapParser::parse() {
+  auto MainBinOrError =
+      MainBinaryHolder.GetFilesAs<MachOObjectFile>(BinaryPath);
+  if (auto Error = MainBinOrError.getError())
+    return Error;
+
+  std::vector<std::unique_ptr<DebugMap>> Results;
+  for (const auto *Binary : *MainBinOrError)
+    Results.push_back(parseOneBinary(*Binary, BinaryPath));
+
+  return std::move(Results);
 }
 
 /// Interpret the STAB entries to fill the DebugMap.
@@ -254,10 +265,9 @@ void MachODebugMapParser::loadMainBinarySymbols(
 
 namespace llvm {
 namespace dsymutil {
-llvm::ErrorOr<std::unique_ptr<DebugMap>> parseDebugMap(StringRef InputFile,
-                                                       StringRef PrependPath,
-                                                       bool Verbose,
-                                                       bool InputIsYAML) {
+llvm::ErrorOr<std::vector<std::unique_ptr<DebugMap>>>
+parseDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose,
+              bool InputIsYAML) {
   if (!InputIsYAML) {
     MachODebugMapParser Parser(InputFile, PrependPath, Verbose);
     return Parser.parse();
