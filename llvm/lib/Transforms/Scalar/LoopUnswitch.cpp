@@ -657,6 +657,7 @@ static void copyMetadata(Instruction *DstInst, const Instruction *SrcInst,
         }
       }
       // fallthrough.
+    case LLVMContext::MD_make_implicit:
     case LLVMContext::MD_dbg:
       DstInst->setMetadata(MD.first, MD.second);
     }
