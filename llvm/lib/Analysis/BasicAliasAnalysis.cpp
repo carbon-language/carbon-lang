@@ -16,6 +16,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CFG.h"
@@ -45,6 +46,14 @@ using namespace llvm;
 /// Enable analysis of recursive PHI nodes.
 static cl::opt<bool> EnableRecPhiAnalysis("basicaa-recphi",
                                           cl::Hidden, cl::init(false));
+
+/// SearchLimitReached / SearchTimes shows how often the limit of
+/// to decompose GEPs is reached. It will affect the precision
+/// of basic alias analysis.
+#define DEBUG_TYPE "basicaa"
+STATISTIC(SearchLimitReached, "Number of times the limit to "
+                              "decompose GEPs is reached");
+STATISTIC(SearchTimes, "Number of times a GEP is decomposed");
 
 /// Cutoff after which to stop analysing a set of phi nodes potentially involved
 /// in a cycle. Because we are analysing 'through' phi nodes we need to be
@@ -301,6 +310,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
   // Limit recursion depth to limit compile time in crazy cases.
   unsigned MaxLookup = MaxLookupSearchDepth;
   MaxLookupReached = false;
+  SearchTimes++;
 
   BaseOffs = 0;
   do {
@@ -420,6 +430,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
 
   // If the chain of expressions is too deep, just return early.
   MaxLookupReached = true;
+  SearchLimitReached++;
   return V;
 }
 
