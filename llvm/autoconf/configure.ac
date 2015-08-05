@@ -1628,6 +1628,9 @@ dnl===-----------------------------------------------------------------------===
 
 AC_CHECK_LIB(m,sin)
 if test "$llvm_cv_os_type" = "MingW" ; then
+  dnl mingw-gcc's driver doesn't imply -lole32 by default so we may need this
+  dnl when being built with gcc for bootstrapping purposes.
+  AC_CHECK_LIB(ole32, main)
   AC_CHECK_LIB(psapi, main)
   AC_CHECK_LIB(shell32, main)
 fi
