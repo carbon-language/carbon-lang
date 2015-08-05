@@ -20,10 +20,11 @@
 namespace clang {
 
 namespace frontend {
-  /// IncludeDirGroup - Identifiers the group a include entry belongs to, which
-  /// represents its relative positive in the search list.  A \#include of a ""
-  /// path starts at the -iquote group, then searches the Angled group, then
-  /// searches the system group, etc.
+  /// IncludeDirGroup - Identifies the group an include Entry belongs to,
+  /// representing its relative positive in the search list.
+  /// \#include directives whose paths are enclosed by string quotes ("")
+  /// start searching at the Quoted group (specified by '-iquote'),
+  /// then search the Angled group, then the System group, etc.
   enum IncludeDirGroup {
     Quoted = 0,     ///< '\#include ""' paths, added by 'gcc -iquote'.
     Angled,         ///< Paths for '\#include <>' added by '-I'.
