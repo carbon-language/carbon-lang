@@ -412,6 +412,19 @@
 // CHECK-NO-WARNING1-NOT: optimization flag '-finline-limit=1000' is not supported
 // CHECK-NO-WARNING2-NOT: optimization flag '-finline-limit' is not supported
 
+// Test that an ignored optimization argument only prints 1 warning,
+// not both a warning about not claiming the arg, *and* about not supporting
+// the arg; and that adding -Wno-ignored-optimization silences the warning.
+//
+// RUN: %clang -### -fprofile-correction %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-WARNING3 %s
+// CHECK-NO-WARNING3: optimization flag '-fprofile-correction' is not supported
+// CHECK-NO-WARNING3-NOT: argument unused
+// RUN: %clang -### -fprofile-correction -Wno-ignored-optimization-argument %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-WARNING4 %s
+// CHECK-NO-WARNING4-NOT: not supported
+// CHECK-NO-WARNING4-NOT: argument unused
+
 // RUN: %clang -### -S -fsigned-char %s 2>&1 | FileCheck -check-prefix=CHAR-SIGN1 %s
 // CHAR-SIGN1-NOT: -fno-signed-char
 
