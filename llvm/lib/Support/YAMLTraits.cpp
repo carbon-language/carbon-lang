@@ -332,17 +332,12 @@ std::unique_ptr<Input::HNode> Input::createHNodes(Node *N) {
     StringRef KeyStr = SN->getValue(StringStorage);
     if (!StringStorage.empty()) {
       // Copy string to permanent storage
-      unsigned Len = StringStorage.size();
-      char *Buf = StringAllocator.Allocate<char>(Len);
-      memcpy(Buf, &StringStorage[0], Len);
-      KeyStr = StringRef(Buf, Len);
+      KeyStr = StringStorage.str().copy(StringAllocator);
     }
     return llvm::make_unique<ScalarHNode>(N, KeyStr);
   } else if (BlockScalarNode *BSN = dyn_cast<BlockScalarNode>(N)) {
-    StringRef Value = BSN->getValue();
-    char *Buf = StringAllocator.Allocate<char>(Value.size());
-    memcpy(Buf, Value.data(), Value.size());
-    return llvm::make_unique<ScalarHNode>(N, StringRef(Buf, Value.size()));
+    StringRef ValueCopy = BSN->getValue().copy(StringAllocator);
+    return llvm::make_unique<ScalarHNode>(N, ValueCopy);
   } else if (SequenceNode *SQ = dyn_cast<SequenceNode>(N)) {
     auto SQHNode = llvm::make_unique<SequenceHNode>(N);
     for (Node &SN : *SQ) {
@@ -365,10 +360,7 @@ std::unique_ptr<Input::HNode> Input::createHNodes(Node *N) {
       StringRef KeyStr = KeyScalar->getValue(StringStorage);
       if (!StringStorage.empty()) {
         // Copy string to permanent storage
-        unsigned Len = StringStorage.size();
-        char *Buf = StringAllocator.Allocate<char>(Len);
-        memcpy(Buf, &StringStorage[0], Len);
-        KeyStr = StringRef(Buf, Len);
+        KeyStr = StringStorage.str().copy(StringAllocator);
       }
       auto ValueHNode = this->createHNodes(KVN.getValue());
       if (EC)
