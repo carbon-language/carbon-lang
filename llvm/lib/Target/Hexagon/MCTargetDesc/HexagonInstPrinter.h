@@ -18,14 +18,6 @@
 #include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
-class HexagonAsmInstPrinter : public MCInstPrinter {
-public:
-  HexagonAsmInstPrinter(MCInstPrinter *RawPrinter);
-  void printInst(MCInst const *MI, raw_ostream &O, StringRef Annot,
-                 MCSubtargetInfo const &STI) override;
-  void printRegName(raw_ostream &O, unsigned RegNo) const override;
-  std::unique_ptr<MCInstPrinter> RawPrinter;
-};
 /// Prints bundles as a newline separated list of individual instructions
 /// Duplexes are separated by a vertical tab \v character
 /// A trailing line includes bundle properties such as endloop0/1
