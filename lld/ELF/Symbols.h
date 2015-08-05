@@ -43,9 +43,6 @@ public:
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
 
-  // Returns true if this is an external symbol.
-  bool isExternal() const { return true; }
-
   // Returns the symbol name.
   StringRef getName() const { return Name; }
 
@@ -65,11 +62,10 @@ public:
 
 protected:
   SymbolBody(Kind K, StringRef N = "")
-      : SymbolKind(K), IsExternal(true), Name(N) {}
+      : SymbolKind(K), Name(N) {}
 
 protected:
   const unsigned SymbolKind : 8;
-  unsigned IsExternal : 1;
   StringRef Name;
   Symbol *Backref = nullptr;
 };
@@ -99,7 +95,6 @@ public:
 
 private:
   ObjectFile<ELFT> *File;
-  const Elf_Sym *Sym;
 };
 
 // Undefined symbols.

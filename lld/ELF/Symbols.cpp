@@ -28,10 +28,8 @@ getSymbolName(const llvm::object::ELFFile<ELFT> *F,
 
 template <class ELFT>
 DefinedRegular<ELFT>::DefinedRegular(ObjectFile<ELFT> *F, const Elf_Sym *S)
-    : Defined(DefinedRegularKind, getSymbolName<ELFT>(F->getObj(), S)), File(F),
-      Sym(S) {
-  IsExternal = S->isExternal();
-}
+    : Defined(DefinedRegularKind, getSymbolName<ELFT>(F->getObj(), S)),
+      File(F) {}
 
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
