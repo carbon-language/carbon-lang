@@ -1700,8 +1700,7 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
                                     SC_None);
   BlockDecl::Capture Capture(/*Variable=*/CapVar, /*ByRef=*/false,
                              /*Nested=*/false, /*Copy=*/Init.get());
-  Block->setCaptures(Context, &Capture, &Capture + 1, 
-                     /*CapturesCXXThis=*/false);
+  Block->setCaptures(Context, Capture, /*CapturesCXXThis=*/false);
 
   // Add a fake function body to the block. IR generation is responsible
   // for filling in the actual body, which cannot be expressed as an AST.

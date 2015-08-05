@@ -3491,7 +3491,7 @@ private:
   Stmt *Body;
   TypeSourceInfo *SignatureAsWritten;
 
-  Capture *Captures;
+  const Capture *Captures;
   unsigned NumCaptures;
 
   unsigned ManglingNumber;
@@ -3597,10 +3597,8 @@ public:
 
   bool capturesVariable(const VarDecl *var) const;
 
-  void setCaptures(ASTContext &Context,
-                   const Capture *begin,
-                   const Capture *end,
-                   bool capturesCXXThis);
+  void setCaptures(ASTContext &Context, ArrayRef<Capture> Captures,
+                   bool CapturesCXXThis);
 
    unsigned getBlockManglingNumber() const {
      return ManglingNumber;

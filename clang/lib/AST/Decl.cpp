@@ -3757,26 +3757,17 @@ void BlockDecl::setParams(ArrayRef<ParmVarDecl *> NewParamInfo) {
   }
 }
 
-void BlockDecl::setCaptures(ASTContext &Context,
-                            const Capture *begin,
-                            const Capture *end,
-                            bool capturesCXXThis) {
-  CapturesCXXThis = capturesCXXThis;
+void BlockDecl::setCaptures(ASTContext &Context, ArrayRef<Capture> Captures,
+                            bool CapturesCXXThis) {
+  this->CapturesCXXThis = CapturesCXXThis;
+  this->NumCaptures = Captures.size();
 
-  if (begin == end) {
-    NumCaptures = 0;
-    Captures = nullptr;
+  if (Captures.empty()) {
+    this->Captures = nullptr;
     return;
   }
 
-  NumCaptures = end - begin;
-
-  // Avoid new Capture[] because we don't want to provide a default
-  // constructor.
-  size_t allocationSize = NumCaptures * sizeof(Capture);
-  void *buffer = Context.Allocate(allocationSize, /*alignment*/sizeof(void*));
-  memcpy(buffer, begin, allocationSize);
-  Captures = static_cast<Capture*>(buffer);
+  this->Captures = Captures.copy(Context).data();
 }
 
 bool BlockDecl::capturesVariable(const VarDecl *variable) const {

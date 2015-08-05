@@ -11397,8 +11397,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
                               Cap.isNested(), Cap.getInitExpr());
     Captures.push_back(NewCap);
   }
-  BSI->TheDecl->setCaptures(Context, Captures.begin(), Captures.end(),
-                            BSI->CXXThisCaptureIndex != 0);
+  BSI->TheDecl->setCaptures(Context, Captures, BSI->CXXThisCaptureIndex != 0);
 
   // If the user wrote a function type in some form, try to use that.
   if (!BSI->FunctionType.isNull()) {
