@@ -282,7 +282,7 @@ Data-flow-guided fuzzing
 With an additional compiler flag ``-fsanitize-coverage=trace-cmp`` (see SanitizerCoverageTraceDataFlow_)
 and extra run-time flag ``-use_traces=1`` the fuzzer will try to apply *data-flow-guided fuzzing*.
 That is, the fuzzer will record the inputs to comparison instructions, switch statements,
-and several libc functions (``memcmp``, ``strncmp``, etc).
+and several libc functions (``memcmp``, ``strcmp``, ``strncmp``, etc).
 It will later use those recorded inputs during mutations.
 
 This mode can be combined with DataFlowSanitizer_ to achieve better sensitivity.

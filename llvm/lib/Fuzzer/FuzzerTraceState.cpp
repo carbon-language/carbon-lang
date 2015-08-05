@@ -356,8 +356,9 @@ void TraceState::TraceCmpCallback(uintptr_t PC, size_t CmpSize, size_t CmpType, 
   CSP->Counter[ComputeCmp(CmpSize, CmpType, Arg1, Arg2)]++;
   size_t C0 = CSP->Counter[0];
   size_t C1 = CSP->Counter[1];
-  if (!CSP->IsInterestingCmpTarget())
-    return;
+  // FIXME: is this a good idea or a bad?
+  // if (!CSP->IsInterestingCmpTarget())
+  //  return;
   if (Options.Verbosity >= 3)
     Printf("TraceCmp: %p %zd/%zd; %zd %zd\n", CSP->PC, C0, C1, Arg1, Arg2);
   Added += TryToAddDesiredData(Arg1, Arg2, CmpSize);
@@ -479,6 +480,23 @@ void dfsan_weak_hook_strncmp(void *caller_pc, const char *s1, const char *s2,
   TS->DFSanCmpCallback(PC, n, fuzzer::ICMP_EQ, S1, S2, L1, L2);
 }
 
+void dfsan_weak_hook_strcmp(void *caller_pc, const char *s1, const char *s2,
+                            dfsan_label s1_label, dfsan_label s2_label) {
+  if (!TS) return;
+  uintptr_t PC = reinterpret_cast<uintptr_t>(caller_pc);
+  uint64_t S1 = 0, S2 = 0;
+  size_t Len1 = strlen(s1);
+  size_t Len2 = strlen(s2);
+  size_t N = std::min(Len1, Len2);
+  if (N <= 1) return;  // Not interesting.
+  // Simplification: handle only first 8 bytes.
+  memcpy(&S1, s1, std::min(N, sizeof(S1)));
+  memcpy(&S2, s2, std::min(N, sizeof(S2)));
+  dfsan_label L1 = dfsan_read_label(s1, Len1);
+  dfsan_label L2 = dfsan_read_label(s2, Len2);
+  TS->DFSanCmpCallback(PC, N, fuzzer::ICMP_EQ, S1, S2, L1, L2);
+}
+
 void __sanitizer_weak_hook_memcmp(void *caller_pc, const void *s1,
                                   const void *s2, size_t n) {
   if (!TS) return;
@@ -505,6 +523,22 @@ void __sanitizer_weak_hook_strncmp(void *caller_pc, const char *s1,
   memcpy(&S2, s2, std::min(n, sizeof(S2)));
   TS->TraceCmpCallback(PC, n, fuzzer::ICMP_EQ, S1, S2);
 }
+
+void __sanitizer_weak_hook_strcmp(void *caller_pc, const char *s1,
+                                   const char *s2) {
+  if (!TS) return;
+  uintptr_t PC = reinterpret_cast<uintptr_t>(caller_pc);
+  uint64_t S1 = 0, S2 = 0;
+  size_t Len1 = strlen(s1);
+  size_t Len2 = strlen(s2);
+  size_t N = std::min(Len1, Len2);
+  if (N <= 1) return;  // Not interesting.
+  // Simplification: handle only first 8 bytes.
+  memcpy(&S1, s1, std::min(N, sizeof(S1)));
+  memcpy(&S2, s2, std::min(N, sizeof(S2)));
+  TS->TraceCmpCallback(PC, N, fuzzer::ICMP_EQ, S1, S2);
+}
+
 
 void __sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
                                uint64_t Arg2) {
