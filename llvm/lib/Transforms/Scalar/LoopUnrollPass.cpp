@@ -497,11 +497,11 @@ private:
 namespace {
 struct EstimatedUnrollCost {
   /// \brief The estimated cost after unrolling.
-  unsigned UnrolledCost;
+  int UnrolledCost;
 
   /// \brief The estimated dynamic cost of executing the instructions in the
   /// rolled form.
-  unsigned RolledDynamicCost;
+  int RolledDynamicCost;
 };
 }
 
@@ -521,7 +521,7 @@ struct EstimatedUnrollCost {
 Optional<EstimatedUnrollCost>
 analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, DominatorTree &DT,
                       ScalarEvolution &SE, const TargetTransformInfo &TTI,
-                      unsigned MaxUnrolledLoopSize) {
+                      int MaxUnrolledLoopSize) {
   // We want to be able to scale offsets by the trip count and add more offsets
   // to them without checking for overflows, and we already don't want to
   // analyze *massive* trip counts, so we force the max to be reasonably small.
@@ -539,13 +539,13 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, DominatorTree &DT,
 
   // The estimated cost of the unrolled form of the loop. We try to estimate
   // this by simplifying as much as we can while computing the estimate.
-  unsigned UnrolledCost = 0;
+  int UnrolledCost = 0;
   // We also track the estimated dynamic (that is, actually executed) cost in
   // the rolled form. This helps identify cases when the savings from unrolling
   // aren't just exposing dead control flows, but actual reduced dynamic
   // instructions due to the simplifications which we expect to occur after
   // unrolling.
-  unsigned RolledDynamicCost = 0;
+  int RolledDynamicCost = 0;
 
   // Ensure that we don't violate the loop structure invariants relied on by
   // this analysis.
@@ -601,7 +601,7 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, DominatorTree &DT,
       // it.  We don't change the actual IR, just count optimization
       // opportunities.
       for (Instruction &I : *BB) {
-        unsigned InstCost = TTI.getUserCost(&I);
+        int InstCost = TTI.getUserCost(&I);
 
         // Visit the instruction to analyze its loop cost after unrolling,
         // and if the visitor returns false, include this instruction in the
