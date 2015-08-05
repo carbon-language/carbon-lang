@@ -33,6 +33,10 @@
 #if SANITIZER_ANDROID && defined(__arm__)
 # include <linux/user.h>  // for pt_regs
 #else
+# ifdef __aarch64__
+// GLIBC 2.20+ sys/user does not include asm/ptrace.h
+#  include <asm/ptrace.h>
+# endif
 # include <sys/user.h>  // for user_regs_struct
 #endif
 #include <sys/wait.h> // for signal-related stuff
