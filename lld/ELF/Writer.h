@@ -17,7 +17,7 @@ class OutputSection;
 class SymbolTable;
 
 template <class ELFT>
-void writeResult(SymbolTable *Symtab, StringRef Path);
+void writeResult(SymbolTable *Symtab);
 
 }
 }

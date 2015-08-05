@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Chunks.h"
+#include "Config.h"
 #include "Driver.h"
 #include "SymbolTable.h"
 #include "Writer.h"
@@ -28,7 +29,7 @@ namespace {
 template <class ELFT> class Writer {
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
-  Writer(SymbolTable *T, StringRef S) : Symtab(T), OutputPath(S) {}
+  Writer(SymbolTable *T) : Symtab(T) {}
   void run();
 
 private:
@@ -39,7 +40,6 @@ private:
   void writeSections();
 
   SymbolTable *Symtab;
-  StringRef OutputPath;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   std::vector<OutputSection *> OutputSections;
@@ -80,14 +80,12 @@ private:
 };
 
 template <class ELFT>
-void writeResult(SymbolTable *Symtab, StringRef Path) {
-  Writer<ELFT>(Symtab, Path).run();
-}
+void writeResult(SymbolTable *Symtab) { Writer<ELFT>(Symtab).run(); }
 
-template void writeResult<ELF32LE>(SymbolTable *, StringRef);
-template void writeResult<ELF32BE>(SymbolTable *, StringRef);
-template void writeResult<ELF64LE>(SymbolTable *, StringRef);
-template void writeResult<ELF64BE>(SymbolTable *, StringRef);
+template void writeResult<ELF32LE>(SymbolTable *);
+template void writeResult<ELF32BE>(SymbolTable *);
+template void writeResult<ELF64LE>(SymbolTable *);
+template void writeResult<ELF64BE>(SymbolTable *);
 
 } // namespace elf2
 } // namespace lld
@@ -96,7 +94,7 @@ template void writeResult<ELF64BE>(SymbolTable *, StringRef);
 template <class ELFT> void Writer<ELFT>::run() {
   createSections();
   assignAddresses();
-  openFile(OutputPath);
+  openFile(Config->OutputFile);
   writeHeader();
   writeSections();
   error(Buffer->commit());

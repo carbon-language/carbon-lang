@@ -726,7 +726,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     touchFile(Arg->getValue());
 
   // Write the result.
-  if (auto EC = writeResult(&Symtab, Config->OutputFile)) {
+  if (auto EC = writeResult(&Symtab)) {
     llvm::errs() << EC.message() << "\n";
     return false;
   }

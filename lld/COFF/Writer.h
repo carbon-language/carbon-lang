@@ -18,7 +18,7 @@ namespace coff {
 class Chunk;
 class OutputSection;
 
-std::error_code writeResult(SymbolTable *T, StringRef Path);
+std::error_code writeResult(SymbolTable *T);
 
 // Implemented in ICF.cpp.
 void doICF(const std::vector<Chunk *> &Chunks);

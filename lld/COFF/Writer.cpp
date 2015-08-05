@@ -45,7 +45,7 @@ namespace {
 // The writer writes a SymbolTable result to a file.
 class Writer {
 public:
-  Writer(SymbolTable *T, StringRef S) : Symtab(T), OutputPath(S) {}
+  Writer(SymbolTable *T) : Symtab(T) {}
   std::error_code run();
 
 private:
@@ -77,7 +77,6 @@ private:
   std::map<StringRef, std::vector<DefinedImportData *>> binImports();
 
   SymbolTable *Symtab;
-  StringRef OutputPath;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   llvm::SpecificBumpPtrAllocator<BaserelChunk> BAlloc;
@@ -102,9 +101,7 @@ private:
 namespace lld {
 namespace coff {
 
-std::error_code writeResult(SymbolTable *T, StringRef Path) {
-  return Writer(T, Path).run();
-}
+std::error_code writeResult(SymbolTable *T) { return Writer(T).run(); }
 
 // OutputSection represents a section in an output file. It's a
 // container of chunks. OutputSection and Chunk are 1:N relationship.
@@ -233,7 +230,7 @@ std::error_code Writer::run() {
   assignAddresses();
   removeEmptySections();
   createSymbolAndStringTable();
-  if (auto EC = openFile(OutputPath))
+  if (auto EC = openFile(Config->OutputFile))
     return EC;
   if (Config->is64()) {
     writeHeader<pe32plus_header>();
