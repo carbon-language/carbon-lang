@@ -36,8 +36,8 @@ struct LinkOptions {
 /// The file has to be a MachO object file. Multiple debug maps can be
 /// returned when the file is universal (aka fat) binary.
 llvm::ErrorOr<std::vector<std::unique_ptr<DebugMap>>>
-parseDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose,
-              bool InputIsYAML);
+parseDebugMap(StringRef InputFile, ArrayRef<std::string> Archs,
+              StringRef PrependPath, bool Verbose, bool InputIsYAML);
 
 /// \brief Link the Dwarf debuginfo as directed by the passed DebugMap
 /// \p DM into a DwarfFile named \p OutputFilename.

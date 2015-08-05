@@ -21,11 +21,11 @@ using namespace llvm::object;
 
 class MachODebugMapParser {
 public:
-  MachODebugMapParser(StringRef BinaryPath, StringRef PathPrefix = "",
-                      bool Verbose = false)
-      : BinaryPath(BinaryPath), PathPrefix(PathPrefix),
-        MainBinaryHolder(Verbose), CurrentObjectHolder(Verbose),
-        CurrentDebugMapObject(nullptr) {}
+  MachODebugMapParser(StringRef BinaryPath, ArrayRef<std::string> Archs,
+                      StringRef PathPrefix = "", bool Verbose = false)
+      : BinaryPath(BinaryPath), Archs(Archs.begin(), Archs.end()),
+        PathPrefix(PathPrefix), MainBinaryHolder(Verbose),
+        CurrentObjectHolder(Verbose), CurrentDebugMapObject(nullptr) {}
 
   /// \brief Parses and returns the DebugMaps of the input binary.
   /// The binary contains multiple maps in case it is a universal
@@ -36,6 +36,7 @@ public:
 
 private:
   std::string BinaryPath;
+  SmallVector<StringRef, 1> Archs;
   std::string PathPrefix;
 
   /// Owns the MemoryBuffer for the main binary.
@@ -133,6 +134,19 @@ MachODebugMapParser::parseOneBinary(const MachOObjectFile &MainBinary,
   return std::move(Result);
 }
 
+static bool shouldLinkArch(SmallVectorImpl<StringRef> &Archs, StringRef Arch) {
+  if (Archs.empty() ||
+      std::find(Archs.begin(), Archs.end(), "all") != Archs.end() ||
+      std::find(Archs.begin(), Archs.end(), "*") != Archs.end())
+    return true;
+
+  if (Arch.startswith("arm") && Arch != "arm64" &&
+      std::find(Archs.begin(), Archs.end(), "arm") != Archs.end())
+    return true;
+
+  return std::find(Archs.begin(), Archs.end(), Arch) != Archs.end();
+}
+
 /// This main parsing routine tries to open the main binary and if
 /// successful iterates over the STAB entries. The real parsing is
 /// done in handleStabSymbolTableEntry.
@@ -143,8 +157,10 @@ ErrorOr<std::vector<std::unique_ptr<DebugMap>>> MachODebugMapParser::parse() {
     return Error;
 
   std::vector<std::unique_ptr<DebugMap>> Results;
+  Triple T;
   for (const auto *Binary : *MainBinOrError)
-    Results.push_back(parseOneBinary(*Binary, BinaryPath));
+    if (shouldLinkArch(Archs, Binary->getArch(nullptr, &T).getArchName()))
+      Results.push_back(parseOneBinary(*Binary, BinaryPath));
 
   return std::move(Results);
 }
@@ -266,10 +282,10 @@ void MachODebugMapParser::loadMainBinarySymbols(
 namespace llvm {
 namespace dsymutil {
 llvm::ErrorOr<std::vector<std::unique_ptr<DebugMap>>>
-parseDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose,
-              bool InputIsYAML) {
+parseDebugMap(StringRef InputFile, ArrayRef<std::string> Archs,
+              StringRef PrependPath, bool Verbose, bool InputIsYAML) {
   if (!InputIsYAML) {
-    MachODebugMapParser Parser(InputFile, PrependPath, Verbose);
+    MachODebugMapParser Parser(InputFile, Archs, PrependPath, Verbose);
     return Parser.parse();
   } else {
     return DebugMap::parseYAMLDebugMap(InputFile, PrependPath, Verbose);

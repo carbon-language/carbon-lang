@@ -15,6 +15,7 @@
 #include "DebugMap.h"
 #include "MachOUtils.h"
 #include "dsymutil.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Options.h"
@@ -53,6 +54,14 @@ static opt<bool>
     NoOutput("no-output",
              desc("Do the link in memory, but do not emit the result file."),
              init(false), cat(DsymCategory));
+
+static list<std::string> ArchFlags(
+    "arch",
+    desc("Link DWARF debug information only for specified CPU architecture\n"
+         "types. This option can be specified multiple times, once for each\n"
+         "desired architecture.  All cpu architectures will be linked by\n"
+         "default."),
+    ZeroOrMore, cat(DsymCategory));
 
 static opt<bool>
     NoODR("no-odr",
@@ -138,13 +147,25 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  for (const auto &Arch : ArchFlags)
+    if (Arch != "*" && Arch != "all" &&
+        !llvm::object::MachOObjectFile::isValidArch(Arch)) {
+      llvm::errs() << "error: Unsupported cpu architecture: '" << Arch << "'\n";
+      exitDsymutil(1);
+    }
+
   for (auto &InputFile : InputFiles) {
-    auto DebugMapPtrsOrErr =
-        parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
+    auto DebugMapPtrsOrErr = parseDebugMap(InputFile, ArchFlags, OsoPrependPath,
+                                           Verbose, InputIsYAMLDebugMap);
 
     if (auto EC = DebugMapPtrsOrErr.getError()) {
       llvm::errs() << "error: cannot parse the debug map for \"" << InputFile
                    << "\": " << EC.message() << '\n';
+      exitDsymutil(1);
+    }
+
+    if (DebugMapPtrsOrErr->empty()) {
+      llvm::errs() << "error: no architecture to link\n";
       exitDsymutil(1);
     }
 
