@@ -130,7 +130,7 @@
 #define SANITIZER_USES_UID16_SYSCALLS 0
 #endif
 
-#ifdef __mips__
+#if defined(__mips__) || defined(__aarch64__)
 # define SANITIZER_POINTER_FORMAT_LENGTH FIRST_32_SECOND_64(8, 10)
 #else
 # define SANITIZER_POINTER_FORMAT_LENGTH FIRST_32_SECOND_64(8, 12)

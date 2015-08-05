@@ -14,6 +14,10 @@
 #include <linux/filter.h>
 #include <linux/seccomp.h>
 
+#ifndef __NR_readlink
+# define __NR_readlink __NR_readlinkat
+#endif
+
 #define syscall_nr (offsetof(struct seccomp_data, nr))
 
 void corrupt() {
