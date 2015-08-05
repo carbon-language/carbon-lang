@@ -183,35 +183,22 @@ static Metadata *mapMetadataOp(Metadata *Op,
   return nullptr;
 }
 
-/// \brief Remap nodes.
-///
-/// Insert \c NewNode in the value map, and then remap \c OldNode's operands.
-/// Assumes that \c NewNode is already a clone of \c OldNode.
-///
-/// \pre \c NewNode is a clone of \c OldNode.
-static bool remap(const MDNode *OldNode, MDNode *NewNode,
-                  SmallVectorImpl<TrackingMDNodeRef> &Cycles,
-                  ValueToValueMapTy &VM, RemapFlags Flags,
-                  ValueMapTypeRemapper *TypeMapper,
-                  ValueMaterializer *Materializer) {
-  assert(OldNode->getNumOperands() == NewNode->getNumOperands() &&
-         "Expected nodes to match");
-  assert(OldNode->isResolved() && "Expected resolved node");
-  assert(!NewNode->isUniqued() && "Expected non-uniqued node");
+/// Remap the operands of an MDNode.
+static bool remapOperands(MDNode &Node,
+                          SmallVectorImpl<TrackingMDNodeRef> &Cycles,
+                          ValueToValueMapTy &VM, RemapFlags Flags,
+                          ValueMapTypeRemapper *TypeMapper,
+                          ValueMaterializer *Materializer) {
+  assert(!Node.isUniqued() && "Expected temporary or distinct node");
 
-  // Map the node upfront so it's available for cyclic references.
-  mapToMetadata(VM, OldNode, NewNode);
   bool AnyChanged = false;
-  for (unsigned I = 0, E = OldNode->getNumOperands(); I != E; ++I) {
-    Metadata *Old = OldNode->getOperand(I);
-    assert(NewNode->getOperand(I) == Old &&
-           "Expected old operands to already be in place");
-
+  for (unsigned I = 0, E = Node.getNumOperands(); I != E; ++I) {
+    Metadata *Old = Node.getOperand(I);
     Metadata *New =
         mapMetadataOp(Old, Cycles, VM, Flags, TypeMapper, Materializer);
     if (Old != New) {
       AnyChanged = true;
-      NewNode->replaceOperandWith(I, New);
+      Node.replaceOperandWith(I, New);
     }
   }
 
@@ -239,7 +226,8 @@ static Metadata *mapDistinctNode(const MDNode *Node,
 
   // Remap the operands.  If any change, track those that could be involved in
   // uniquing cycles.
-  if (remap(Node, NewMD, Cycles, VM, Flags, TypeMapper, Materializer))
+  mapToMetadata(VM, Node, NewMD);
+  if (remapOperands(*NewMD, Cycles, VM, Flags, TypeMapper, Materializer))
     for (Metadata *Op : NewMD->operands())
       if (auto *Node = dyn_cast_or_null<MDNode>(Op))
         if (!Node->isResolved())
@@ -258,18 +246,19 @@ static Metadata *mapUniquedNode(const MDNode *Node,
                                 ValueMaterializer *Materializer) {
   assert(Node->isUniqued() && "Expected uniqued node");
 
-  // Create a temporary node upfront in case we have a metadata cycle.
+  // Create a temporary node and map it upfront in case we have a uniquing
+  // cycle.  If necessary, this mapping will get updated by RAUW logic before
+  // returning.
   auto ClonedMD = Node->clone();
-  if (!remap(Node, ClonedMD.get(), Cycles, VM, Flags, TypeMapper,
-             Materializer)) {
-    // No operands changed, so use the identity mapping.
+  mapToMetadata(VM, Node, ClonedMD.get());
+  if (!remapOperands(*ClonedMD, Cycles, VM, Flags, TypeMapper, Materializer)) {
+    // No operands changed, so use the original.
     ClonedMD->replaceAllUsesWith(const_cast<MDNode *>(Node));
-    return mapToSelf(VM, Node);
+    return const_cast<MDNode *>(Node);
   }
 
-  // At least one operand has changed, so uniquify the cloned node.
-  return mapToMetadata(VM, Node,
-                       MDNode::replaceWithUniqued(std::move(ClonedMD)));
+  // Uniquify the cloned node.
+  return MDNode::replaceWithUniqued(std::move(ClonedMD));
 }
 
 static Metadata *MapMetadataImpl(const Metadata *MD,
