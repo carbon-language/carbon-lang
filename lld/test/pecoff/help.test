@@ -1,4 +1,0 @@
-# RUN: not lld -flavor link /help | FileCheck %s
-# RUN: not lld -flavor link '/?' | FileCheck %s
-
-CHECK: USAGE

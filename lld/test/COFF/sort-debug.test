@@ -1,5 +1,5 @@
 # RUN: yaml2obj < %s > %t.obj
-# RUN: lld -flavor link2 /debug /out:%t.exe /entry:main %t.obj
+# RUN: lld -flavor link /debug /out:%t.exe /entry:main %t.obj
 # RUN: llvm-readobj -sections %t.exe | FileCheck %s
 
 # CHECK: Name: .text

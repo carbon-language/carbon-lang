@@ -1,5 +1,5 @@
 # RUN: yaml2obj < %s > %t.obj
-# RUN: not lld -flavor link2 /out:%t.exe %t.obj /verbose > %t.log 2>&1
+# RUN: not lld -flavor link /out:%t.exe %t.obj /verbose > %t.log 2>&1
 # RUN: FileCheck %s < %t.log
 
 # CHECK: Entry name inferred: _WinMainCRTStartup

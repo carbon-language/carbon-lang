@@ -1,6 +1,6 @@
 # RUN: yaml2obj %s > %t.obj
 # RUN: llvm-as -o %t.lto.obj %S/Inputs/weak-external2.ll
-# RUN: lld -flavor link2 /out:%t.exe /entry:g /subsystem:console %t.obj %t.lto.obj
+# RUN: lld -flavor link /out:%t.exe /entry:g /subsystem:console %t.obj %t.lto.obj
 
 ---
 header:

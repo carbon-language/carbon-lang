@@ -1,7 +1,0 @@
-# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
-#
-# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start \
-# RUN:   /merge:.text=.longsectionname -- %t.obj
-# RUN: llvm-readobj -sections %t.exe | FileCheck %s
-
-CHECK: Name: .longsectionname (2F 34 00 00 00 00 00 00)

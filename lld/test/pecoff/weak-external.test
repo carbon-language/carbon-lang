@@ -1,9 +1,0 @@
-# RUN: yaml2obj %p/Inputs/weak-externals.obj.yaml > %t.obj
-
-# RUN: lld -flavor link /force /out:%t.exe /subsystem:console \
-# RUN:   /entry:fn -- %t.obj %p/Inputs/static.lib 2> %t2.log
-# RUN: FileCheck %s < %t2.log
-
-CHECK: _no_such_symbol1
-CHECK-NOT: _no_such_symbol2
-CHECK: _no_such_symbol3

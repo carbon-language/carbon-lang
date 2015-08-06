@@ -1,9 +1,0 @@
-# REQUIRES: winlib
-#
-# If argv[1] == "/lib", link.exe morphs into lib.exe.
-#
-# RUN: lld -flavor link /lib >& %t.log
-# RUN: FileCheck %s < %t.log
-
-CHECK-NOT: unrecognized option '/lib'
-CHECK: usage: LIB

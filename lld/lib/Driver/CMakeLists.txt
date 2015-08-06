@@ -6,8 +6,6 @@ set(LLVM_TARGET_DEFINITIONS CoreOptions.td)
 tablegen(LLVM CoreOptions.inc -gen-opt-parser-defs)
 set(LLVM_TARGET_DEFINITIONS DarwinLdOptions.td)
 tablegen(LLVM DarwinLdOptions.inc -gen-opt-parser-defs)
-set(LLVM_TARGET_DEFINITIONS WinLinkOptions.td)
-tablegen(LLVM WinLinkOptions.inc -gen-opt-parser-defs)
 add_public_tablegen_target(DriverOptionsTableGen)
 
 add_llvm_library(lldDriver
@@ -16,13 +14,10 @@ add_llvm_library(lldDriver
   Driver.cpp
   GnuLdDriver.cpp
   UniversalDriver.cpp
-  WinLinkDriver.cpp
-  WinLinkModuleDef.cpp
   LINK_LIBS
     lldConfig
     lldMachO
     lldCOFF
-    lldPECOFF
     lldELF
     lldELF2
     lldAArch64ELFTarget

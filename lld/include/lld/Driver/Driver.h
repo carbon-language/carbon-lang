@@ -117,31 +117,6 @@ private:
 };
 
 /// Driver for Windows 'link.exe' command line options
-class WinLinkDriver : public Driver {
-public:
-  /// Parses command line arguments same as Windows link.exe and performs link.
-  /// Returns true iff there was an error.
-  static bool linkPECOFF(llvm::ArrayRef<const char *> args,
-                         raw_ostream &diag = llvm::errs());
-
-  /// Uses Windows style link command line options to fill in options struct.
-  /// Returns true iff there was an error.
-  static bool parse(llvm::ArrayRef<const char *> args,
-                    PECOFFLinkingContext &info,
-                    raw_ostream &diag = llvm::errs(), bool isDirective = false);
-
-  // Same as parse(), but restricted to the context of directives.
-  static bool parseDirectives(int argc, const char **argv,
-                              PECOFFLinkingContext &info,
-                              raw_ostream &diag = llvm::errs()) {
-    return parse(llvm::makeArrayRef(argv, argc), info, diag, true);
-  }
-
-private:
-  WinLinkDriver() = delete;
-};
-
-/// Driver for Windows 'link.exe' command line options
 namespace coff {
 void link(llvm::ArrayRef<const char *> args);
 }
