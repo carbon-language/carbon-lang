@@ -11,6 +11,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/FormatEntity.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -428,12 +429,12 @@ Thread::FunctionOptimizationWarning (StackFrame *frame)
 {
     if (frame && frame->HasDebugInformation())
     {
-        SymbolContext sc = frame->GetSymbolContext (eSymbolContextFunction | eSymbolContextCompUnit);
-        if (sc.function && sc.function->GetIsOptimized() == true && sc.comp_unit)
+        SymbolContext sc = frame->GetSymbolContext (eSymbolContextFunction | eSymbolContextModule);
+        if (sc.function && sc.function->GetIsOptimized() == true && sc.module_sp.get())
         {
-            if (sc.line_entry.file.GetFilename().IsEmpty() == false)
+            if (sc.module_sp->GetFileSpec().GetFilename().IsEmpty() == false)
             {
-                GetProcess()->PrintWarning (Process::Warnings::eWarningsOptimization, sc.comp_unit, "%s was compiled with optimization - stepping may behave oddly; variables may not be available.\n", sc.line_entry.file.GetFilename().GetCString());
+                GetProcess()->PrintWarning (Process::Warnings::eWarningsOptimization, sc.module_sp.get(), "%s was compiled with optimization - stepping may behave oddly; variables may not be available.\n", sc.module_sp->GetFileSpec().GetFilename().GetCString());
             }
         }
     }
