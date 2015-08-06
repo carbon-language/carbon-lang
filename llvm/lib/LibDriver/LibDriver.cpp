@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Defines an interface to a lib.exe-compatible driver that also understands
-// bitcode files. Used by llvm-lib and lld-link2 /lib.
+// bitcode files. Used by llvm-lib and lld-link /lib.
 //
 //===----------------------------------------------------------------------===//
 
