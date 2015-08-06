@@ -1063,6 +1063,9 @@ bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
   case MIToken::kw_volatile:
     Flags |= MachineMemOperand::MOVolatile;
     break;
+  case MIToken::kw_non_temporal:
+    Flags |= MachineMemOperand::MONonTemporal;
+    break;
   // TODO: report an error when we specify the same flag more than once.
   // TODO: parse the other memory operand flags.
   default:

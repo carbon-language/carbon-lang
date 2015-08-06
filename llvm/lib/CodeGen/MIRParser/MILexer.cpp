@@ -175,6 +175,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("ppc_fp128", MIToken::kw_ppc_fp128)
       .Case("target-flags", MIToken::kw_target_flags)
       .Case("volatile", MIToken::kw_volatile)
+      .Case("non-temporal", MIToken::kw_non_temporal)
       .Default(MIToken::Identifier);
 }
 

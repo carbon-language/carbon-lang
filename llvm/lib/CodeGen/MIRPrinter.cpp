@@ -655,6 +655,8 @@ void MIPrinter::print(const MachineMemOperand &Op) {
   // TODO: Print operand's other flags.
   if (Op.isVolatile())
     OS << "volatile ";
+  if (Op.isNonTemporal())
+    OS << "non-temporal ";
   if (Op.isLoad())
     OS << "load ";
   else {
