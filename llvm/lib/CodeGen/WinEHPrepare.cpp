@@ -2951,6 +2951,7 @@ void WinEHPrepare::numberFunclet(BasicBlock *InitialBB, BasicBlock *FuncletBB) {
 }
 
 bool WinEHPrepare::prepareExplicitEH(Function &F) {
+  LLVMContext &Context = F.getContext();
   // Remove unreachable blocks.  It is not valuable to assign them a color and
   // their existence can trick us into thinking values are alive when they are
   // not.
@@ -2980,24 +2981,97 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
       numberFunclet(CRI->getSuccessor(), EntryBlock);
   }
 
-  // Strip PHI nodes off of EH pads.
+  // Insert cleanuppads before EH blocks with PHI nodes.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
     BasicBlock *BB = FI++;
+    // Skip any BBs which aren't EH pads.
+    if (!BB->isEHPad())
+      continue;
+    // Skip any cleanuppads, they can hold non-PHI instructions.
+    if (isa<CleanupPadInst>(BB->getFirstNonPHI()))
+      continue;
+    // Skip any EH pads without PHIs, we don't need to worry about demoting into
+    // them.
+    if (!isa<PHINode>(BB->begin()))
+      continue;
+
+    // Create our new cleanuppad BB, terminate it with a cleanupret.
+    auto *NewCleanupBB = BasicBlock::Create(
+        Context, Twine(BB->getName(), ".wineh.phibb"), &F, BB);
+    auto *CPI = CleanupPadInst::Create(Type::getVoidTy(Context), {BB}, "",
+                                       NewCleanupBB);
+    CleanupReturnInst::Create(Context, /*RetVal=*/nullptr, BB, NewCleanupBB);
+
+    // Update the funclet data structures to keep them in the loop.
+    BlockColors[NewCleanupBB].insert(NewCleanupBB);
+    FuncletBlocks[NewCleanupBB].insert(NewCleanupBB);
+
+    // Reparent PHIs from the old EH BB into the cleanuppad.
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-      if (!BI->isEHPad())
-        continue;
       Instruction *I = BI++;
       auto *PN = dyn_cast<PHINode>(I);
+      // Stop at the first non-PHI.
       if (!PN)
-        continue;
-      auto *SpillSlot = new AllocaInst(I->getType(), nullptr,
-                                       Twine(I->getName(), ".wineh.phispill"),
-                                       EntryBlock->begin());
+        break;
+      PN->removeFromParent();
+      PN->insertBefore(CPI);
+    }
 
-      // Iterate over each operand inserting a store in each predecessor.
-      for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i)
-        new StoreInst(P->getIncomingValue(i), Slot,
-                      P->getIncomingBlock(i)->getTerminator());
+    // Redirect predecessors from the old EH BB to the cleanuppad.
+    std::set<BasicBlock *> Preds;
+    Preds.insert(pred_begin(BB), pred_end(BB));
+    for (BasicBlock *Pred : Preds) {
+      // Don't redirect the new cleanuppad to itself!
+      if (Pred == NewCleanupBB)
+        continue;
+      TerminatorInst *TI = Pred->getTerminator();
+      for (unsigned TII = 0, TIE = TI->getNumSuccessors(); TII != TIE; ++TII) {
+        BasicBlock *Successor = TI->getSuccessor(TII);
+        if (Successor == BB)
+          TI->setSuccessor(TII, NewCleanupBB);
+      }
+    }
+  }
+
+  // Get rid of polychromatic PHI nodes.
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
+    BasicBlock *BB = FI++;
+    std::set<BasicBlock *> &ColorsForBB = BlockColors[BB];
+    bool IsEHPad = BB->isEHPad();
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+      Instruction *I = BI++;
+      auto *PN = dyn_cast<PHINode>(I);
+      // Stop at the first non-PHI node.
+      if (!PN)
+        break;
+
+      // EH pads cannot be lowered with PHI nodes prefacing them.
+      if (IsEHPad) {
+        // We should have removed PHIs from all non-cleanuppad blocks.
+        if (!isa<CleanupPadInst>(BB->getFirstNonPHI()))
+          report_fatal_error("Unexpected PHI on EH Pad");
+        DemotePHIToStack(PN);
+        continue;
+      }
+
+      // See if *all* the basic blocks involved in this PHI node are in the
+      // same, lone, color.  If so, demotion is not needed.
+      bool SameColor = ColorsForBB.size() == 1;
+      if (SameColor) {
+        for (unsigned PNI = 0, PNE = PN->getNumIncomingValues(); PNI != PNE;
+             ++PNI) {
+          BasicBlock *IncomingBB = PN->getIncomingBlock(PNI);
+          std::set<BasicBlock *> &ColorsForIncomingBB = BlockColors[IncomingBB];
+          // If the colors differ, bail out early and demote.
+          if (ColorsForIncomingBB != ColorsForBB) {
+            SameColor = false;
+            break;
+          }
+        }
+      }
+
+      if (!SameColor)
+        DemotePHIToStack(PN);
     }
   }
 
@@ -3180,9 +3254,9 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
   // branches, etc.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
     BasicBlock *BB = FI++;
-    SimplifyInstructionsInBlock(BB);
-    ConstantFoldTerminator(BB, /*DeleteDeadConditions=*/true);
-    MergeBlockIntoPredecessor(BB);
+    //SimplifyInstructionsInBlock(BB);
+    //ConstantFoldTerminator(BB, /*DeleteDeadConditions=*/true);
+    //MergeBlockIntoPredecessor(BB);
   }
 
   // TODO: Do something about cleanupblocks which branch to implausible
