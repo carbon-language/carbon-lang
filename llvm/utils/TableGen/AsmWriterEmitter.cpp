@@ -1099,6 +1099,14 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   }
 
   O << "#endif // PRINT_ALIAS_INSTR\n";
+
+  // Free allocated memory.
+  for (auto &Aliases : AliasMap)
+    for (auto &Alias : Aliases.second)
+      delete Alias.first;
+  for (auto &P : IAPrinterMap)
+    for (IAPrinter* IAP : P.second)
+      delete IAP;  
 }
 
 AsmWriterEmitter::AsmWriterEmitter(RecordKeeper &R) : Records(R), Target(R) {
