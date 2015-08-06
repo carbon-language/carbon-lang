@@ -494,6 +494,16 @@ private:
   /// \brief Map from a FileID to the file-level declarations that it contains.
   llvm::DenseMap<FileID, FileDeclsInfo> FileDeclIDs;
 
+  /// \brief An array of lexical contents of a declaration context, as a sequence of
+  /// Decl::Kind, DeclID pairs.
+  typedef ArrayRef<llvm::support::unaligned_uint32_t> LexicalContents;
+
+  /// \brief Map from a DeclContext to its lexical contents.
+  llvm::DenseMap<const DeclContext*, LexicalContents> LexicalDecls;
+
+  /// \brief Map from the TU to its lexical contents from each module file.
+  std::vector<std::pair<ModuleFile*, LexicalContents>> TULexicalDecls;
+
   // Updates for visible decls can occur for other contexts than just the
   // TU, and when we read those update records, the actual context may not
   // be available yet, so have this pending map using the ID as a key. It

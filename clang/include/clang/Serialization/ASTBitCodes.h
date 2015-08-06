@@ -61,9 +61,6 @@ namespace clang {
     /// used for the translation unit declaration.
     typedef uint32_t DeclID;
 
-    /// \brief a Decl::Kind/DeclID pair.
-    typedef std::pair<uint32_t, DeclID> KindDeclIDPair;
-
     // FIXME: Turn these into classes so we can have some type safety when
     // we go from local ID to global and vice-versa.
     typedef DeclID LocalDeclID;

@@ -52,12 +52,10 @@ enum ModuleKind {
 
 /// \brief Information about the contents of a DeclContext.
 struct DeclContextInfo {
-  DeclContextInfo()
-    : NameLookupTableData(), LexicalDecls() {}
+  DeclContextInfo() : NameLookupTableData() {}
 
   llvm::OnDiskIterableChainedHashTable<reader::ASTDeclContextNameLookupTrait>
     *NameLookupTableData; // an ASTDeclContextNameLookupTable.
-  ArrayRef<KindDeclIDPair> LexicalDecls;
 };
 
 /// \brief The input file that has been loaded from this AST file, along with
