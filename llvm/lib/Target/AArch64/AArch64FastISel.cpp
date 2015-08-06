@@ -2413,7 +2413,11 @@ bool AArch64FastISel::selectBranch(const Instruction *I) {
   // Regardless, the compare has been done in the predecessor block,
   // and it left a value for us in a virtual register.  Ergo, we test
   // the one-bit value left in the virtual register.
-  emitICmp_ri(MVT::i32, CondReg, CondRegIsKill, 0);
+  //
+  // FIXME: Optimize this with TBZW/TBZNW.
+  unsigned ANDReg = emitAnd_ri(MVT::i32, CondReg, CondRegIsKill, 1);
+  assert(ANDReg && "Unexpected AND instruction emission failure.");
+  emitICmp_ri(MVT::i32, ANDReg, /*IsKill=*/true, 0);
 
   if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
     std::swap(TBB, FBB);
