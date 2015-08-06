@@ -2980,15 +2980,37 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
       numberFunclet(CRI->getSuccessor(), EntryBlock);
   }
 
+  // Strip PHI nodes off of EH pads.
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
+    BasicBlock *BB = FI++;
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+      if (!BI->isEHPad())
+        continue;
+      Instruction *I = BI++;
+      auto *PN = dyn_cast<PHINode>(I);
+      if (!PN)
+        continue;
+      auto *SpillSlot = new AllocaInst(I->getType(), nullptr,
+                                       Twine(I->getName(), ".wineh.phispill"),
+                                       EntryBlock->begin());
+
+      // Iterate over each operand inserting a store in each predecessor.
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i)
+        new StoreInst(P->getIncomingValue(i), Slot,
+                      P->getIncomingBlock(i)->getTerminator());
+    }
+  }
+
   // Turn all inter-funclet uses of a Value into loads and stores.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
     BasicBlock *BB = FI++;
     std::set<BasicBlock *> &ColorsForBB = BlockColors[BB];
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
       Instruction *I = BI++;
-      // Funclets are permitted to use allocas.
-      if (isa<AllocaInst>(I))
-        continue;
+      // Funclets are permitted to use static allocas.
+      if (auto *AI = dyn_cast<AllocaInst>(I))
+        if (AI->isStaticAlloca())
+          continue;
 
       // FIXME: Our spill-placement algorithm is incredibly naive.  We should
       // try to sink+hoist as much as possible to avoid redundant stores and reloads.
@@ -3065,7 +3087,8 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
             BasicBlock *NewBlock = SplitCriticalEdge(II, SuccNum);
             assert(NewBlock && "Unable to split critical edge.");
             // Update the color mapping for the newly split edge.
-            std::set<BasicBlock *> &ColorsForUsingBB = BlockColors[II->getParent()];
+            std::set<BasicBlock *> &ColorsForUsingBB =
+                BlockColors[II->getParent()];
             BlockColors[NewBlock] = ColorsForUsingBB;
             for (BasicBlock *FuncletPad : ColorsForUsingBB)
               FuncletBlocks[FuncletPad].insert(NewBlock);
