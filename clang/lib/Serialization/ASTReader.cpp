@@ -6343,7 +6343,7 @@ namespace {
   /// declaration context.
   class DeclContextNameLookupVisitor {
     ASTReader &Reader;
-    ArrayRef<const DeclContext *> Contexts;
+    const DeclContext *Context;
     DeclarationName Name;
     ASTDeclContextNameLookupTrait::DeclNameKey NameKey;
     unsigned NameHash;
@@ -6352,50 +6352,25 @@ namespace {
 
   public:
     DeclContextNameLookupVisitor(ASTReader &Reader,
+                                 const DeclContext *Context,
                                  DeclarationName Name,
                                  SmallVectorImpl<NamedDecl *> &Decls,
                                  llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet)
-      : Reader(Reader), Name(Name),
+      : Reader(Reader), Context(Context), Name(Name),
         NameKey(ASTDeclContextNameLookupTrait::GetInternalKey(Name)),
         NameHash(ASTDeclContextNameLookupTrait::ComputeHash(NameKey)),
         Decls(Decls), DeclSet(DeclSet) {}
 
-    void visitContexts(ArrayRef<const DeclContext*> Contexts) {
-      if (Contexts.empty())
-        return;
-      this->Contexts = Contexts;
-
-      // If we can definitively determine which module file to look into,
-      // only look there. Otherwise, look in all module files.
-      ModuleFile *Definitive;
-      if (Contexts.size() == 1 &&
-          (Definitive = getDefinitiveModuleFileFor(Contexts[0], Reader))) {
-        (*this)(*Definitive);
-      } else {
-        Reader.getModuleManager().visit(*this);
-      }
-    }
-
     bool operator()(ModuleFile &M) {
       // Check whether we have any visible declaration information for
       // this context in this module.
-      ModuleFile::DeclContextInfosMap::iterator Info;
-      bool FoundInfo = false;
-      for (auto *DC : Contexts) {
-        Info = M.DeclContextInfos.find(DC);
-        if (Info != M.DeclContextInfos.end() &&
-            Info->second.NameLookupTableData) {
-          FoundInfo = true;
-          break;
-        }
-      }
-
-      if (!FoundInfo)
+      auto Info = M.DeclContextInfos.find(Context);
+      if (Info == M.DeclContextInfos.end() || !Info->second.NameLookupTableData)
         return false;
 
       // Look for this name within this module.
       ASTDeclContextNameLookupTable *LookupTable =
-        Info->second.NameLookupTableData;
+          Info->second.NameLookupTableData;
       ASTDeclContextNameLookupTable::iterator Pos =
           LookupTable->find_hashed(NameKey, NameHash);
       if (Pos == LookupTable->end())
@@ -6442,40 +6417,14 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   SmallVector<NamedDecl *, 64> Decls;
   llvm::SmallPtrSet<NamedDecl*, 64> DeclSet;
 
-  // Compute the declaration contexts we need to look into. Multiple such
-  // declaration contexts occur when two declaration contexts from disjoint
-  // modules get merged, e.g., when two namespaces with the same name are 
-  // independently defined in separate modules.
-  SmallVector<const DeclContext *, 2> Contexts;
-  Contexts.push_back(DC);
+  DeclContextNameLookupVisitor Visitor(*this, DC, Name, Decls, DeclSet);
 
-  if (DC->isNamespace()) {
-    auto Key = KeyDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
-    if (Key != KeyDecls.end()) {
-      for (unsigned I = 0, N = Key->second.size(); I != N; ++I)
-        Contexts.push_back(cast<DeclContext>(GetDecl(Key->second[I])));
-    }
-  }
-
-  DeclContextNameLookupVisitor Visitor(*this, Name, Decls, DeclSet);
-  Visitor.visitContexts(Contexts);
-
-  // If this might be an implicit special member function, then also search
-  // all merged definitions of the surrounding class. We need to search them
-  // individually, because finding an entity in one of them doesn't imply that
-  // we can't find a different entity in another one.
-  if (isa<CXXRecordDecl>(DC)) {
-    auto Merged = MergedLookups.find(DC);
-    if (Merged != MergedLookups.end()) {
-      for (unsigned I = 0; I != Merged->second.size(); ++I) {
-        const DeclContext *Context = Merged->second[I];
-        Visitor.visitContexts(Context);
-        // We might have just added some more merged lookups. If so, our
-        // iterator is now invalid, so grab a fresh one before continuing.
-        Merged = MergedLookups.find(DC);
-      }
-    }
-  }
+  // If we can definitively determine which module file to look into,
+  // only look there. Otherwise, look in all module files.
+  if (ModuleFile *Definitive = getDefinitiveModuleFileFor(DC, *this))
+    Visitor(*Definitive);
+  else
+    ModuleMgr.visit(Visitor);
 
   ++NumVisibleDeclContextsRead;
   SetExternalVisibleDeclsForName(DC, Name, Decls);
