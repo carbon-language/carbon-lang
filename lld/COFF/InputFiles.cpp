@@ -50,11 +50,10 @@ std::string InputFile::getShortName() {
   return StringRef(Res).lower();
 }
 
-std::error_code ArchiveFile::parse() {
+void ArchiveFile::parse() {
   // Parse a MemoryBufferRef as an archive file.
   auto ArchiveOrErr = Archive::create(MB);
-  if (auto EC = ArchiveOrErr.getError())
-    return EC;
+  error(ArchiveOrErr, "Failed to parse static library");
   File = std::move(ArchiveOrErr.get());
 
   // Allocate a buffer for Lazy objects.
@@ -77,63 +76,55 @@ std::error_code ArchiveFile::parse() {
   // are not read yet.
   for (const Archive::Child &Child : File->children())
     Seen[Child.getChildOffset()].clear();
-  return std::error_code();
 }
 
 // Returns a buffer pointing to a member file containing a given symbol.
 // This function is thread-safe.
-ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
+MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   auto ItOrErr = Sym->getMember();
-  if (auto EC = ItOrErr.getError())
-    return EC;
+  error(ItOrErr,
+        Twine("Could not get the member for symbol ") + Sym->getName());
   Archive::child_iterator It = ItOrErr.get();
 
   // Return an empty buffer if we have already returned the same buffer.
   if (Seen[It->getChildOffset()].test_and_set())
     return MemoryBufferRef();
-  return It->getMemoryBufferRef();
+  ErrorOr<MemoryBufferRef> Ret = It->getMemoryBufferRef();
+  error(Ret, Twine("Could not get the buffer for the member defining symbol ") +
+                 Sym->getName());
+  return *Ret;
 }
 
-std::error_code ObjectFile::parse() {
+void ObjectFile::parse() {
   // Parse a memory buffer as a COFF file.
   auto BinOrErr = createBinary(MB);
-  if (auto EC = BinOrErr.getError())
-    return EC;
+  error(BinOrErr, "Failed to parse object file");
   std::unique_ptr<Binary> Bin = std::move(BinOrErr.get());
 
   if (auto *Obj = dyn_cast<COFFObjectFile>(Bin.get())) {
     Bin.release();
     COFFObj.reset(Obj);
   } else {
-    llvm::errs() << getName() << " is not a COFF file.\n";
-    return make_error_code(LLDError::InvalidFile);
+    error(Twine(getName()) + " is not a COFF file.");
   }
 
   // Read section and symbol tables.
-  if (auto EC = initializeChunks())
-    return EC;
-  if (auto EC = initializeSymbols())
-    return EC;
-  return initializeSEH();
+  initializeChunks();
+  initializeSymbols();
+  initializeSEH();
 }
 
-std::error_code ObjectFile::initializeChunks() {
+void ObjectFile::initializeChunks() {
   uint32_t NumSections = COFFObj->getNumberOfSections();
   Chunks.reserve(NumSections);
   SparseChunks.resize(NumSections + 1);
   for (uint32_t I = 1; I < NumSections + 1; ++I) {
     const coff_section *Sec;
     StringRef Name;
-    if (auto EC = COFFObj->getSection(I, Sec)) {
-      llvm::errs() << "getSection failed: " << Name << ": "
-                   << EC.message() << "\n";
-      return make_error_code(LLDError::BrokenFile);
-    }
-    if (auto EC = COFFObj->getSectionName(Sec, Name)) {
-      llvm::errs() << "getSectionName failed: " << Name << ": "
-                   << EC.message() << "\n";
-      return make_error_code(LLDError::BrokenFile);
-    }
+    std::error_code EC = COFFObj->getSection(I, Sec);
+    error(EC, Twine("getSection failed: ") + Name);
+    EC = COFFObj->getSectionName(Sec, Name);
+    error(EC, Twine("getSectionName failed: ") + Name);
     if (Name == ".sxdata") {
       SXData = Sec;
       continue;
@@ -157,10 +148,9 @@ std::error_code ObjectFile::initializeChunks() {
     Chunks.push_back(C);
     SparseChunks[I] = C;
   }
-  return std::error_code();
 }
 
-std::error_code ObjectFile::initializeSymbols() {
+void ObjectFile::initializeSymbols() {
   uint32_t NumSymbols = COFFObj->getNumberOfSymbols();
   SymbolBodies.reserve(NumSymbols);
   SparseSymbolBodies.resize(NumSymbols);
@@ -168,11 +158,8 @@ std::error_code ObjectFile::initializeSymbols() {
   for (uint32_t I = 0; I < NumSymbols; ++I) {
     // Get a COFFSymbolRef object.
     auto SymOrErr = COFFObj->getSymbol(I);
-    if (auto EC = SymOrErr.getError()) {
-      llvm::errs() << "broken object file: " << getName() << ": "
-                   << EC.message() << "\n";
-      return make_error_code(LLDError::BrokenFile);
-    }
+    error(SymOrErr, Twine("broken object file: ") + getName());
+
     COFFSymbolRef Sym = SymOrErr.get();
 
     const void *AuxP = nullptr;
@@ -195,7 +182,6 @@ std::error_code ObjectFile::initializeSymbols() {
     I += Sym.getNumberOfAuxSymbols();
     LastSectionNumber = Sym.getSectionNumber();
   }
-  return std::error_code();
 }
 
 Undefined *ObjectFile::createUndefined(COFFSymbolRef Sym) {
@@ -258,20 +244,17 @@ Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
   return B;
 }
 
-std::error_code ObjectFile::initializeSEH() {
+void ObjectFile::initializeSEH() {
   if (!SEHCompat || !SXData)
-    return std::error_code();
+    return;
   ArrayRef<uint8_t> A;
   COFFObj->getSectionContents(SXData, A);
-  if (A.size() % 4 != 0) {
-    llvm::errs() << ".sxdata must be an array of symbol table indices\n";
-    return make_error_code(LLDError::BrokenFile);
-  }
+  if (A.size() % 4 != 0)
+    error(".sxdata must be an array of symbol table indices");
   auto *I = reinterpret_cast<const ulittle32_t *>(A.data());
   auto *E = reinterpret_cast<const ulittle32_t *>(A.data() + A.size());
   for (; I != E; ++I)
     SEHandlers.insert(SparseSymbolBodies[*I]);
-  return std::error_code();
 }
 
 MachineTypes ObjectFile::getMachineType() {
@@ -286,16 +269,14 @@ StringRef ltrim1(StringRef S, const char *Chars) {
   return S;
 }
 
-std::error_code ImportFile::parse() {
+void ImportFile::parse() {
   const char *Buf = MB.getBufferStart();
   const char *End = MB.getBufferEnd();
   const auto *Hdr = reinterpret_cast<const coff_import_header *>(Buf);
 
   // Check if the total size is valid.
-  if ((size_t)(End - Buf) != (sizeof(*Hdr) + Hdr->SizeOfData)) {
-    llvm::errs() << "broken import library\n";
-    return make_error_code(LLDError::BrokenFile);
-  }
+  if ((size_t)(End - Buf) != (sizeof(*Hdr) + Hdr->SizeOfData))
+    error("broken import library");
 
   // Read names and create an __imp_ symbol.
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));
@@ -327,18 +308,15 @@ std::error_code ImportFile::parse() {
     auto *B = new (Alloc) DefinedImportThunk(Name, ImpSym, Hdr->Machine);
     SymbolBodies.push_back(B);
   }
-  return std::error_code();
 }
 
-std::error_code BitcodeFile::parse() {
+void BitcodeFile::parse() {
   std::string Err;
   M.reset(LTOModule::createFromBuffer(MB.getBufferStart(),
                                       MB.getBufferSize(),
                                       llvm::TargetOptions(), Err));
-  if (!Err.empty()) {
-    llvm::errs() << Err << '\n';
-    return make_error_code(LLDError::BrokenFile);
-  }
+  if (!Err.empty())
+    error(Err);
 
   llvm::BumpPtrStringSaver Saver(Alloc);
   for (unsigned I = 0, E = M->getSymbolCount(); I != E; ++I) {
@@ -362,7 +340,6 @@ std::error_code BitcodeFile::parse() {
   }
 
   Directives = M->getLinkerOpts();
-  return std::error_code();
 }
 
 MachineTypes BitcodeFile::getMachineType() {

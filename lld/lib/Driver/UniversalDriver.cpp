@@ -212,7 +212,8 @@ bool UniversalDriver::link(llvm::MutableArrayRef<const char *> args,
   case Flavor::win_link:
     return WinLinkDriver::linkPECOFF(args, diagnostics);
   case Flavor::win_link2:
-    return coff::link(args);
+    coff::link(args);
+    return true;
   case Flavor::core:
     return CoreDriver::link(args, diagnostics);
   case Flavor::invalid:

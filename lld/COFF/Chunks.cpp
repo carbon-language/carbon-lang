@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Chunks.h"
+#include "Error.h"
 #include "InputFiles.h"
 #include "Symbols.h"
 #include "llvm/Object/COFF.h"
@@ -60,7 +61,7 @@ void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, Defined *Sym,
   case IMAGE_REL_AMD64_SECTION:  add16(Off, Sym->getSectionIndex()); break;
   case IMAGE_REL_AMD64_SECREL:   add32(Off, Sym->getSecrel()); break;
   default:
-    llvm::report_fatal_error("Unsupported relocation type");
+    error("Unsupported relocation type");
   }
 }
 
@@ -75,7 +76,7 @@ void SectionChunk::applyRelX86(uint8_t *Off, uint16_t Type, Defined *Sym,
   case IMAGE_REL_I386_SECTION:  add16(Off, Sym->getSectionIndex()); break;
   case IMAGE_REL_I386_SECREL:   add32(Off, Sym->getSecrel()); break;
   default:
-    llvm::report_fatal_error("Unsupported relocation type");
+    error("Unsupported relocation type");
   }
 }
 
@@ -119,7 +120,7 @@ void SectionChunk::applyRelARM(uint8_t *Off, uint16_t Type, Defined *Sym,
   case IMAGE_REL_ARM_BRANCH24T: applyBranch24T(Off, S - P - 4); break;
   case IMAGE_REL_ARM_BLX23T:    applyBranch24T(Off, S - P - 4); break;
   default:
-    llvm::report_fatal_error("Unsupported relocation type");
+    error("Unsupported relocation type");
   }
 }
 

@@ -111,12 +111,10 @@ class Parser {
 public:
   explicit Parser(StringRef S, BumpPtrStringSaver *A) : Lex(S), Alloc(A) {}
 
-  std::error_code parse() {
+  void parse() {
     do {
-      if (auto EC = parseOne())
-        return EC;
+      parseOne();
     } while (Tok.K != Eof);
-    return std::error_code();
   }
 
 private:
@@ -129,80 +127,64 @@ private:
     Stack.pop_back();
   }
 
-  std::error_code readAsInt(uint64_t *I) {
+  void readAsInt(uint64_t *I) {
     read();
-    if (Tok.K != Identifier || Tok.Value.getAsInteger(10, *I)) {
-      llvm::errs() << "integer expected\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
-    return std::error_code();
+    if (Tok.K != Identifier || Tok.Value.getAsInteger(10, *I))
+      error("integer expected");
   }
 
-  std::error_code expect(Kind Expected, StringRef Msg) {
+  void expect(Kind Expected, StringRef Msg) {
     read();
-    if (Tok.K != Expected) {
-      llvm::errs() << Msg << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
-    return std::error_code();
+    if (Tok.K != Expected)
+      error(Msg);
   }
 
   void unget() { Stack.push_back(Tok); }
 
-  std::error_code parseOne() {
+  void parseOne() {
     read();
     switch (Tok.K) {
     case Eof:
-      return std::error_code();
+      return;
     case KwExports:
       for (;;) {
         read();
         if (Tok.K != Identifier) {
           unget();
-          return std::error_code();
+          return;
         }
-        if (auto EC = parseExport())
-          return EC;
+        parseExport();
       }
     case KwHeapsize:
-      if (auto EC = parseNumbers(&Config->HeapReserve, &Config->HeapCommit))
-        return EC;
-      return std::error_code();
+      parseNumbers(&Config->HeapReserve, &Config->HeapCommit);
+      return;
     case KwLibrary:
-      if (auto EC = parseName(&Config->OutputFile, &Config->ImageBase))
-        return EC;
+      parseName(&Config->OutputFile, &Config->ImageBase);
       if (!StringRef(Config->OutputFile).endswith_lower(".dll"))
         Config->OutputFile += ".dll";
-      return std::error_code();
+      return;
     case KwStacksize:
-      if (auto EC = parseNumbers(&Config->StackReserve, &Config->StackCommit))
-        return EC;
-      return std::error_code();
+      parseNumbers(&Config->StackReserve, &Config->StackCommit);
+      return;
     case KwName:
-      if (auto EC = parseName(&Config->OutputFile, &Config->ImageBase))
-        return EC;
-      return std::error_code();
+      parseName(&Config->OutputFile, &Config->ImageBase);
+      return;
     case KwVersion:
-      if (auto EC = parseVersion(&Config->MajorImageVersion,
-                                 &Config->MinorImageVersion))
-        return EC;
-      return std::error_code();
+      parseVersion(&Config->MajorImageVersion, &Config->MinorImageVersion);
+      return;
     default:
-      llvm::errs() << "unknown directive: " << Tok.Value << "\n";
-      return make_error_code(LLDError::InvalidOption);
+      error(Twine("unknown directive: ") + Tok.Value);
     }
   }
 
-  std::error_code parseExport() {
+  void parseExport() {
     Export E;
     E.Name = Tok.Value;
     read();
     if (Tok.K == Equal) {
       read();
-      if (Tok.K != Identifier) {
-        llvm::errs() << "identifier expected, but got " << Tok.Value << "\n";
-        return make_error_code(LLDError::InvalidOption);
-      }
+      if (Tok.K != Identifier)
+        error(Twine("identifier expected, but got ") + Tok.Value);
       E.ExtName = E.Name;
       E.Name = Tok.Value;
     } else {
@@ -234,68 +216,55 @@ private:
       }
       unget();
       Config->Exports.push_back(E);
-      return std::error_code();
+      return;
     }
   }
 
   // HEAPSIZE/STACKSIZE reserve[,commit]
-  std::error_code parseNumbers(uint64_t *Reserve, uint64_t *Commit) {
-    if (auto EC = readAsInt(Reserve))
-      return EC;
+  void parseNumbers(uint64_t *Reserve, uint64_t *Commit) {
+    readAsInt(Reserve);
     read();
     if (Tok.K != Comma) {
       unget();
       Commit = 0;
-      return std::error_code();
+      return;
     }
-    if (auto EC = readAsInt(Commit))
-      return EC;
-    return std::error_code();
+    readAsInt(Commit);
   }
 
   // NAME outputPath [BASE=address]
-  std::error_code parseName(std::string *Out, uint64_t *Baseaddr) {
+  void parseName(std::string *Out, uint64_t *Baseaddr) {
     read();
     if (Tok.K == Identifier) {
       *Out = Tok.Value;
     } else {
       *Out = "";
       unget();
-      return std::error_code();
+      return;
     }
     read();
     if (Tok.K == KwBase) {
-      if (auto EC = expect(Equal, "'=' expected"))
-        return EC;
-      if (auto EC = readAsInt(Baseaddr))
-        return EC;
+      expect(Equal, "'=' expected");
+      readAsInt(Baseaddr);
     } else {
       unget();
       *Baseaddr = 0;
     }
-    return std::error_code();
   }
 
   // VERSION major[.minor]
-  std::error_code parseVersion(uint32_t *Major, uint32_t *Minor) {
+  void parseVersion(uint32_t *Major, uint32_t *Minor) {
     read();
-    if (Tok.K != Identifier) {
-      llvm::errs() << "identifier expected, but got " << Tok.Value << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
+    if (Tok.K != Identifier)
+      error(Twine("identifier expected, but got ") + Tok.Value);
     StringRef V1, V2;
     std::tie(V1, V2) = Tok.Value.split('.');
-    if (V1.getAsInteger(10, *Major)) {
-      llvm::errs() << "integer expected, but got " << Tok.Value << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
-    if (V2.empty()) {
+    if (V1.getAsInteger(10, *Major))
+      error(Twine("integer expected, but got ") + Tok.Value);
+    if (V2.empty())
       *Minor = 0;
-    } else if (V2.getAsInteger(10, *Minor)) {
-      llvm::errs() << "integer expected, but got " << Tok.Value << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
-    return std::error_code();
+    else if (V2.getAsInteger(10, *Minor))
+      error(Twine("integer expected, but got ") + Tok.Value);
   }
 
   Lexer Lex;
@@ -306,8 +275,8 @@ private:
 
 } // anonymous namespace
 
-std::error_code parseModuleDefs(MemoryBufferRef MB, BumpPtrStringSaver *Alloc) {
-  return Parser(MB.getBuffer(), Alloc).parse();
+void parseModuleDefs(MemoryBufferRef MB, BumpPtrStringSaver *Alloc) {
+  Parser(MB.getBuffer(), Alloc).parse();
 }
 
 } // namespace coff

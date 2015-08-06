@@ -43,13 +43,13 @@ class SymbolTable {
 public:
   void addFile(std::unique_ptr<InputFile> File);
   std::vector<std::unique_ptr<InputFile>> &getFiles() { return Files; }
-  std::error_code step();
-  std::error_code run();
+  void step();
+  void run();
   bool queueEmpty();
 
   // Print an error message on undefined symbols. If Resolve is true, try to
   // resolve any undefined symbols and update the symbol table accordingly.
-  bool reportRemainingUndefines(bool Resolve);
+  void reportRemainingUndefines(bool Resolve);
 
   // Returns a list of chunks of selected symbols.
   std::vector<Chunk *> getChunks();
@@ -71,7 +71,7 @@ public:
   // Build a COFF object representing the combined contents of BitcodeFiles
   // and add it to the symbol table. Called after all files are added and
   // before the writer writes results to a file.
-  std::error_code addCombinedLTOObject();
+  void addCombinedLTOObject();
 
   // The writer needs to handle DLL import libraries specially in
   // order to create the import descriptor table.
@@ -89,16 +89,16 @@ public:
   std::vector<Chunk *> LocalImportChunks;
 
 private:
-  std::error_code readArchives();
-  std::error_code readObjects();
+  void readArchives();
+  void readObjects();
 
-  std::error_code addSymbol(SymbolBody *New);
+  void addSymbol(SymbolBody *New);
   void addLazy(Lazy *New, std::vector<Symbol *> *Accum);
   Symbol *insert(SymbolBody *New);
   StringRef findByPrefix(StringRef Prefix);
 
-  std::error_code addMemberFile(Lazy *Body);
-  ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);
+  void addMemberFile(Lazy *Body);
+  ObjectFile *createLTOObject(llvm::LTOCodeGenerator *CG);
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
 

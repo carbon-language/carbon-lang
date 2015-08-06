@@ -50,13 +50,9 @@ public:
   void add(Twine S)        { Args.push_back(Saver.save(S)); }
   void add(const char *S)  { Args.push_back(Saver.save(S)); }
 
-  std::error_code run() {
+  void run() {
     ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
-    if (auto EC = ExeOrErr.getError()) {
-      llvm::errs() << "unable to find " << Prog << " in PATH: "
-                   << EC.message() << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
+    error(ExeOrErr, Twine("unable to find ") + Prog + " in PATH: ");
     const char *Exe = Saver.save(ExeOrErr.get());
     Args.insert(Args.begin(), Exe);
     Args.push_back(nullptr);
@@ -64,10 +60,8 @@ public:
       for (const char *S : Args)
         if (S)
           llvm::errs() << S << " ";
-      llvm::errs() << "failed\n";
-      return make_error_code(LLDError::InvalidOption);
+      error("failed");
     }
-    return std::error_code();
   }
 
 private:
@@ -80,7 +74,7 @@ private:
 } // anonymous namespace
 
 // Returns /machine's value.
-ErrorOr<MachineTypes> getMachineType(StringRef S) {
+MachineTypes getMachineType(StringRef S) {
   MachineTypes MT = StringSwitch<MachineTypes>(S.lower())
                         .Case("x64", AMD64)
                         .Case("amd64", AMD64)
@@ -90,8 +84,7 @@ ErrorOr<MachineTypes> getMachineType(StringRef S) {
                         .Default(IMAGE_FILE_MACHINE_UNKNOWN);
   if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
-  llvm::errs() << "unknown /machine argument: " << S << "\n";
-  return make_error_code(LLDError::InvalidOption);
+  error(Twine("unknown /machine argument: ") + S);
 }
 
 StringRef machineToStr(MachineTypes MT) {
@@ -108,40 +101,30 @@ StringRef machineToStr(MachineTypes MT) {
 }
 
 // Parses a string in the form of "<integer>[,<integer>]".
-std::error_code parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
+void parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split(',');
-  if (S1.getAsInteger(0, *Addr)) {
-    llvm::errs() << "invalid number: " << S1 << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
-  if (Size && !S2.empty() && S2.getAsInteger(0, *Size)) {
-    llvm::errs() << "invalid number: " << S2 << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
-  return std::error_code();
+  if (S1.getAsInteger(0, *Addr))
+    error(Twine("invalid number: ") + S1);
+  if (Size && !S2.empty() && S2.getAsInteger(0, *Size))
+    error(Twine("invalid number: ") + S2);
 }
 
 // Parses a string in the form of "<integer>[.<integer>]".
 // If second number is not present, Minor is set to 0.
-std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
+void parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split('.');
-  if (S1.getAsInteger(0, *Major)) {
-    llvm::errs() << "invalid number: " << S1 << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (S1.getAsInteger(0, *Major))
+    error(Twine("invalid number: ") + S1);
   *Minor = 0;
-  if (!S2.empty() && S2.getAsInteger(0, *Minor)) {
-    llvm::errs() << "invalid number: " << S2 << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
-  return std::error_code();
+  if (!S2.empty() && S2.getAsInteger(0, *Minor))
+    error(Twine("invalid number: ") + S2);
 }
 
 // Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
-std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
-                               uint32_t *Major, uint32_t *Minor) {
+void parseSubsystem(StringRef Arg, WindowsSubsystem *Sys, uint32_t *Major,
+                    uint32_t *Minor) {
   StringRef SysStr, Ver;
   std::tie(SysStr, Ver) = Arg.split(',');
   *Sys = StringSwitch<WindowsSubsystem>(SysStr.lower())
@@ -155,43 +138,32 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
     .Case("posix", IMAGE_SUBSYSTEM_POSIX_CUI)
     .Case("windows", IMAGE_SUBSYSTEM_WINDOWS_GUI)
     .Default(IMAGE_SUBSYSTEM_UNKNOWN);
-  if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN) {
-    llvm::errs() << "unknown subsystem: " << SysStr << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN)
+    error(Twine("unknown subsystem: ") + SysStr);
   if (!Ver.empty())
-    if (auto EC = parseVersion(Ver, Major, Minor))
-      return EC;
-  return std::error_code();
+    parseVersion(Ver, Major, Minor);
 }
 
 // Parse a string of the form of "<from>=<to>".
 // Results are directly written to Config.
-std::error_code parseAlternateName(StringRef S) {
+void parseAlternateName(StringRef S) {
   StringRef From, To;
   std::tie(From, To) = S.split('=');
-  if (From.empty() || To.empty()) {
-    llvm::errs() << "/alternatename: invalid argument: " << S << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (From.empty() || To.empty())
+    error(Twine("/alternatename: invalid argument: ") + S);
   auto It = Config->AlternateNames.find(From);
-  if (It != Config->AlternateNames.end() && It->second != To) {
-    llvm::errs() << "/alternatename: conflicts: " << S << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (It != Config->AlternateNames.end() && It->second != To)
+    error(Twine("/alternatename: conflicts: ") + S);
   Config->AlternateNames.insert(It, std::make_pair(From, To));
-  return std::error_code();
 }
 
 // Parse a string of the form of "<from>=<to>".
 // Results are directly written to Config.
-std::error_code parseMerge(StringRef S) {
+void parseMerge(StringRef S) {
   StringRef From, To;
   std::tie(From, To) = S.split('=');
-  if (From.empty() || To.empty()) {
-    llvm::errs() << "/merge: invalid argument: " << S << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (From.empty() || To.empty())
+    error(Twine("/merge: invalid argument: ") + S);
   auto Pair = Config->Merge.insert(std::make_pair(From, To));
   bool Inserted = Pair.second;
   if (!Inserted) {
@@ -200,41 +172,39 @@ std::error_code parseMerge(StringRef S) {
       llvm::errs() << "warning: " << S << ": already merged into "
                    << Existing << "\n";
   }
-  return std::error_code();
 }
 
 // Parses a string in the form of "EMBED[,=<integer>]|NO".
 // Results are directly written to Config.
-std::error_code parseManifest(StringRef Arg) {
+void parseManifest(StringRef Arg) {
   if (Arg.equals_lower("no")) {
     Config->Manifest = Configuration::No;
-    return std::error_code();
+    return;
   }
   if (!Arg.startswith_lower("embed"))
-    return make_error_code(LLDError::InvalidOption);
+    error(Twine("Invalid option ") + Arg);
   Config->Manifest = Configuration::Embed;
   Arg = Arg.substr(strlen("embed"));
   if (Arg.empty())
-    return std::error_code();
+    return;
   if (!Arg.startswith_lower(",id="))
-    return make_error_code(LLDError::InvalidOption);
+    error(Twine("Invalid option ") + Arg);
   Arg = Arg.substr(strlen(",id="));
   if (Arg.getAsInteger(0, Config->ManifestID))
-    return make_error_code(LLDError::InvalidOption);
-  return std::error_code();
+    error(Twine("Invalid option ") + Arg);
 }
 
 // Parses a string in the form of "level=<string>|uiAccess=<string>|NO".
 // Results are directly written to Config.
-std::error_code parseManifestUAC(StringRef Arg) {
+void parseManifestUAC(StringRef Arg) {
   if (Arg.equals_lower("no")) {
     Config->ManifestUAC = false;
-    return std::error_code();
+    return;
   }
   for (;;) {
     Arg = Arg.ltrim();
     if (Arg.empty())
-      return std::error_code();
+      return;
     if (Arg.startswith_lower("level=")) {
       Arg = Arg.substr(strlen("level="));
       std::tie(Config->ManifestLevel, Arg) = Arg.split(" ");
@@ -245,7 +215,7 @@ std::error_code parseManifestUAC(StringRef Arg) {
       std::tie(Config->ManifestUIAccess, Arg) = Arg.split(" ");
       continue;
     }
-    return make_error_code(LLDError::InvalidOption);
+    error(Twine("Invalid option ") + Arg);
   }
 }
 
@@ -301,22 +271,16 @@ static std::string createManifestXml() {
 }
 
 // Create a resource file containing a manifest XML.
-ErrorOr<std::unique_ptr<MemoryBuffer>> createManifestRes() {
+std::unique_ptr<MemoryBuffer> createManifestRes() {
   // Create a temporary file for the resource script file.
   SmallString<128> RCPath;
-  if (sys::fs::createTemporaryFile("tmp", "rc", RCPath)) {
-    llvm::errs() << "cannot create a temporary file\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  std::error_code EC = sys::fs::createTemporaryFile("tmp", "rc", RCPath);
+  error(EC, "cannot create a temporary file");
   FileRemover RCRemover(RCPath);
 
   // Open the temporary file for writing.
-  std::error_code EC;
   llvm::raw_fd_ostream Out(RCPath, EC, sys::fs::F_Text);
-  if (EC) {
-    llvm::errs() << "failed to open " << RCPath << ": " << EC.message() << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  error(EC, Twine("failed to open ") + RCPath);
 
   // Write resource script to the RC file.
   Out << "#define LANG_ENGLISH 9\n"
@@ -331,39 +295,34 @@ ErrorOr<std::unique_ptr<MemoryBuffer>> createManifestRes() {
 
   // Create output resource file.
   SmallString<128> ResPath;
-  if (sys::fs::createTemporaryFile("tmp", "res", ResPath)) {
-    llvm::errs() << "cannot create a temporary file\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  EC = sys::fs::createTemporaryFile("tmp", "res", ResPath);
+  error(EC, "cannot create a temporary file");
 
   Executor E("rc.exe");
   E.add("/fo");
   E.add(ResPath.str());
   E.add("/nologo");
   E.add(RCPath.str());
-  if (auto EC = E.run())
-    return EC;
-  return MemoryBuffer::getFile(ResPath);
+  E.run();
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(ResPath);
+  error(Ret, Twine("Could not open ") + ResPath);
+  return std::move(*Ret);
 }
 
-std::error_code createSideBySideManifest() {
+void createSideBySideManifest() {
   std::string Path = Config->ManifestFile;
   if (Path == "")
     Path = (Twine(Config->OutputFile) + ".manifest").str();
   std::error_code EC;
   llvm::raw_fd_ostream Out(Path, EC, llvm::sys::fs::F_Text);
-  if (EC) {
-    llvm::errs() << EC.message() << "\n";
-    return EC;
-  }
+  error(EC, "failed to create manifest");
   Out << createManifestXml();
-  return std::error_code();
 }
 
 // Parse a string in the form of
 // "<name>[=<internalname>][,@ordinal[,NONAME]][,DATA][,PRIVATE]".
 // Used for parsing /export arguments.
-ErrorOr<Export> parseExport(StringRef Arg) {
+Export parseExport(StringRef Arg) {
   Export E;
   StringRef Rest;
   std::tie(E.Name, Rest) = Arg.split(",");
@@ -406,22 +365,19 @@ ErrorOr<Export> parseExport(StringRef Arg) {
   return E;
 
 err:
-  llvm::errs() << "invalid /export: " << Arg << "\n";
-  return make_error_code(LLDError::InvalidOption);
+  error(Twine("invalid /export: ") + Arg);
 }
 
 // Performs error checking on all /export arguments.
 // It also sets ordinals.
-std::error_code fixupExports() {
+void fixupExports() {
   // Symbol ordinals must be unique.
   std::set<uint16_t> Ords;
   for (Export &E : Config->Exports) {
     if (E.Ordinal == 0)
       continue;
-    if (!Ords.insert(E.Ordinal).second) {
-      llvm::errs() << "duplicate export ordinal: " << E.Name << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
+    if (!Ords.insert(E.Ordinal).second)
+      error(Twine("duplicate export ordinal: ") + E.Name);
   }
 
   for (Export &E : Config->Exports) {
@@ -462,7 +418,6 @@ std::error_code fixupExports() {
             [](const Export &A, const Export &B) {
               return A.ExtDLLName < B.ExtDLLName;
             });
-  return std::error_code();
 }
 
 void assignExportOrdinals() {
@@ -477,31 +432,26 @@ void assignExportOrdinals() {
 
 // Parses a string in the form of "key=value" and check
 // if value matches previous values for the same key.
-std::error_code checkFailIfMismatch(StringRef Arg) {
+void checkFailIfMismatch(StringRef Arg) {
   StringRef K, V;
   std::tie(K, V) = Arg.split('=');
-  if (K.empty() || V.empty()) {
-    llvm::errs() << "/failifmismatch: invalid argument: " << Arg << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (K.empty() || V.empty())
+    error(Twine("/failifmismatch: invalid argument: ") + Arg);
   StringRef Existing = Config->MustMatch[K];
-  if (!Existing.empty() && V != Existing) {
-    llvm::errs() << "/failifmismatch: mismatch detected: "
-                 << Existing << " and " << V << " for key " << K << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (!Existing.empty() && V != Existing)
+    error(Twine("/failifmismatch: mismatch detected: ") + Existing + " and " +
+          V + " for key " + K);
   Config->MustMatch[K] = V;
-  return std::error_code();
 }
 
 // Convert Windows resource files (.res files) to a .obj file
 // using cvtres.exe.
-ErrorOr<std::unique_ptr<MemoryBuffer>>
+std::unique_ptr<MemoryBuffer>
 convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   // Create an output file path.
   SmallString<128> Path;
   if (llvm::sys::fs::createTemporaryFile("resource", "obj", Path))
-    return make_error_code(LLDError::InvalidOption);
+    error("Could not create temporary file");
 
   // Execute cvtres.exe.
   Executor E("cvtres.exe");
@@ -511,9 +461,10 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
   E.add("/out:" + Path);
   for (MemoryBufferRef MB : MBs)
     E.add(MB.getBufferIdentifier());
-  if (auto EC = E.run())
-    return EC;
-  return MemoryBuffer::getFile(Path);
+  E.run();
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Ret = MemoryBuffer::getFile(Path);
+  error(Ret, Twine("Could not open ") + Path);
+  return std::move(*Ret);
 }
 
 static std::string writeToTempFile(StringRef Contents) {
@@ -551,7 +502,7 @@ static std::string createModuleDefinitionFile() {
 }
 
 // Creates a .def file and runs lib.exe on it to create an import library.
-std::error_code writeImportLibrary() {
+void writeImportLibrary() {
   std::string Contents = createModuleDefinitionFile();
   std::string Def = writeToTempFile(Contents);
   llvm::FileRemover TempFile(Def);
@@ -567,13 +518,13 @@ std::error_code writeImportLibrary() {
   } else {
     E.add("/out:" + Config->Implib);
   }
-  return E.run();
+  E.run();
 }
 
 void touchFile(StringRef Path) {
   int FD;
-  if (sys::fs::openFileForWrite(Path, FD, sys::fs::F_Append))
-    report_fatal_error("failed to create a file");
+  std::error_code EC = sys::fs::openFileForWrite(Path, FD, sys::fs::F_Append);
+  error(EC, "failed to create a file");
   sys::Process::SafelyCloseFileDescriptor(FD);
 }
 
@@ -601,16 +552,9 @@ public:
 };
 
 // Parses a given list of options.
-ErrorOr<llvm::opt::InputArgList>
-ArgParser::parse(ArrayRef<const char *> ArgsArr) {
+llvm::opt::InputArgList ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   // First, replace respnose files (@<file>-style options).
-  auto ArgvOrErr = replaceResponseFiles(ArgsArr);
-  if (auto EC = ArgvOrErr.getError()) {
-    llvm::errs() << "error while reading response file: " << EC.message()
-                 << "\n";
-    return EC;
-  }
-  std::vector<const char *> Argv = std::move(ArgvOrErr.get());
+  std::vector<const char *> Argv = replaceResponseFiles(ArgsArr);
 
   // Make InputArgList from string vectors.
   COFFOptTable Table;
@@ -618,20 +562,16 @@ ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   unsigned MissingCount;
   llvm::opt::InputArgList Args =
       Table.ParseArgs(Argv, MissingIndex, MissingCount);
-  if (MissingCount) {
-    llvm::errs() << "missing arg value for \""
-                 << Args.getArgString(MissingIndex) << "\", expected "
-                 << MissingCount
-                 << (MissingCount == 1 ? " argument.\n" : " arguments.\n");
-    return make_error_code(LLDError::InvalidOption);
-  }
+  if (MissingCount)
+    error(Twine("missing arg value for \"") + Args.getArgString(MissingIndex) +
+          "\", expected " + Twine(MissingCount) +
+          (MissingCount == 1 ? " argument." : " arguments."));
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
     llvm::errs() << "ignoring unknown argument: " << Arg->getSpelling() << "\n";
-  return std::move(Args);
+  return Args;
 }
 
-ErrorOr<llvm::opt::InputArgList>
-ArgParser::parseLINK(ArrayRef<const char *> Args) {
+llvm::opt::InputArgList ArgParser::parseLINK(ArrayRef<const char *> Args) {
   // Concatenate LINK env and given arguments and parse them.
   Optional<std::string> Env = Process::GetEnv("LINK");
   if (!Env)
@@ -650,7 +590,7 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
 
 // Creates a new command line by replacing options starting with '@'
 // character. '@<filename>' is replaced by the file's contents.
-ErrorOr<std::vector<const char *>>
+std::vector<const char *>
 ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
   SmallVector<const char *, 256> Tokens(Argv.data(), Argv.data() + Argv.size());
   BumpPtrStringSaver Saver(AllocAux);

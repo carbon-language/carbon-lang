@@ -9,6 +9,7 @@
 
 #include "Config.h"
 #include "DLL.h"
+#include "Error.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
 #include "Symbols.h"
@@ -46,7 +47,7 @@ namespace {
 class Writer {
 public:
   Writer(SymbolTable *T) : Symtab(T) {}
-  std::error_code run();
+  void run();
 
 private:
   void markLive();
@@ -58,7 +59,7 @@ private:
   void assignAddresses();
   void removeEmptySections();
   void createSymbolAndStringTable();
-  std::error_code openFile(StringRef OutputPath);
+  void openFile(StringRef OutputPath);
   template <typename PEHeaderTy> void writeHeader();
   void fixSafeSEHSymbols();
   void writeSections();
@@ -101,7 +102,7 @@ private:
 namespace lld {
 namespace coff {
 
-std::error_code writeResult(SymbolTable *T) { return Writer(T).run(); }
+void writeResult(SymbolTable *T) { Writer(T).run(); }
 
 // OutputSection represents a section in an output file. It's a
 // container of chunks. OutputSection and Chunk are 1:N relationship.
@@ -198,13 +199,13 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
 uint64_t Defined::getSecrel() {
   if (auto *D = dyn_cast<DefinedRegular>(this))
     return getRVA() - D->getChunk()->getOutputSection()->getRVA();
-  llvm::report_fatal_error("SECREL relocation points to a non-regular symbol");
+  error("SECREL relocation points to a non-regular symbol");
 }
 
 uint64_t Defined::getSectionIndex() {
   if (auto *D = dyn_cast<DefinedRegular>(this))
     return D->getChunk()->getOutputSection()->SectionIndex;
-  llvm::report_fatal_error("SECTION relocation points to a non-regular symbol");
+  error("SECTION relocation points to a non-regular symbol");
 }
 
 bool Defined::isExecutable() {
@@ -218,7 +219,7 @@ bool Defined::isExecutable() {
 } // namespace lld
 
 // The main function of the writer.
-std::error_code Writer::run() {
+void Writer::run() {
   markLive();
   dedupCOMDATs();
   createSections();
@@ -230,8 +231,7 @@ std::error_code Writer::run() {
   assignAddresses();
   removeEmptySections();
   createSymbolAndStringTable();
-  if (auto EC = openFile(Config->OutputFile))
-    return EC;
+  openFile(Config->OutputFile);
   if (Config->is64()) {
     writeHeader<pe32plus_header>();
   } else {
@@ -240,7 +240,7 @@ std::error_code Writer::run() {
   fixSafeSEHSymbols();
   writeSections();
   sortExceptionTable();
-  return Buffer->commit();
+  error(Buffer->commit(), "Failed to write the output file");
 }
 
 // Set live bit on for each reachable chunk. Unmarked (unreachable)
@@ -692,13 +692,10 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   memcpy(Buf + 4, Strtab.data(), Strtab.size());
 }
 
-std::error_code Writer::openFile(StringRef Path) {
-  if (auto EC = FileOutputBuffer::create(Path, FileSize, Buffer,
-                                         FileOutputBuffer::F_executable)) {
-    llvm::errs() << "failed to open " << Path << ": " << EC.message() << "\n";
-    return EC;
-  }
-  return std::error_code();
+void Writer::openFile(StringRef Path) {
+  std::error_code EC = FileOutputBuffer::create(Path, FileSize, Buffer,
+                                                FileOutputBuffer::F_executable);
+  error(EC, Twine("failed to open ") + Path);
 }
 
 void Writer::fixSafeSEHSymbols() {

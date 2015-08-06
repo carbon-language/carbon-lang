@@ -10,42 +10,16 @@
 #ifndef LLD_COFF_ERROR_H
 #define LLD_COFF_ERROR_H
 
-#include <string>
-#include <system_error>
-#include "llvm/Support/ErrorHandling.h"
+#include "lld/Core/LLVM.h"
 
 namespace lld {
 namespace coff {
 
-enum class LLDError {
-  InvalidOption = 1,
-  InvalidFile,
-  BrokenFile,
-  DuplicateSymbols,
-};
+LLVM_ATTRIBUTE_NORETURN void error(const Twine &Msg);
+void error(std::error_code EC, const Twine &Prefix);
 
-class LLDErrorCategory : public std::error_category {
-public:
-  const char *name() const LLVM_NOEXCEPT override { return "lld"; }
-
-  std::string message(int EV) const override {
-    switch (static_cast<LLDError>(EV)) {
-    case LLDError::InvalidOption:
-      return "Invalid option";
-    case LLDError::InvalidFile:
-      return "Invalid file";
-    case LLDError::BrokenFile:
-      return "Broken file";
-    case LLDError::DuplicateSymbols:
-      return "Duplicate symbols";
-    }
-    llvm_unreachable("unknown error");
-  }
-};
-
-inline std::error_code make_error_code(LLDError Err) {
-  static LLDErrorCategory C;
-  return std::error_code(static_cast<int>(Err), C);
+template <typename T> void error(const ErrorOr<T> &V, const Twine &Prefix) {
+  error(V.getError(), Prefix);
 }
 
 } // namespace coff

@@ -36,27 +36,24 @@ using llvm::Optional;
 class InputFile;
 
 // Entry point of the COFF linker.
-bool link(llvm::ArrayRef<const char *> Args);
+void link(llvm::ArrayRef<const char *> Args);
 
 class ArgParser {
 public:
   ArgParser() : Alloc(AllocAux) {}
   // Parses command line options.
-  ErrorOr<llvm::opt::InputArgList> parse(llvm::ArrayRef<const char *> Args);
+  llvm::opt::InputArgList parse(llvm::ArrayRef<const char *> Args);
 
   // Concatenate LINK environment varirable and given arguments and parse them.
-  ErrorOr<llvm::opt::InputArgList> parseLINK(llvm::ArrayRef<const char *> Args);
+  llvm::opt::InputArgList parseLINK(llvm::ArrayRef<const char *> Args);
 
   // Tokenizes a given string and then parses as command line options.
-  ErrorOr<llvm::opt::InputArgList> parse(StringRef S) {
-    return parse(tokenize(S));
-  }
+  llvm::opt::InputArgList parse(StringRef S) { return parse(tokenize(S)); }
 
 private:
   std::vector<const char *> tokenize(StringRef S);
 
-  ErrorOr<std::vector<const char *>>
-  replaceResponseFiles(std::vector<const char *>);
+  std::vector<const char *> replaceResponseFiles(std::vector<const char *>);
 
   llvm::BumpPtrAllocator AllocAux;
   llvm::BumpPtrStringSaver Alloc;
@@ -65,10 +62,10 @@ private:
 class LinkerDriver {
 public:
   LinkerDriver() : Alloc(AllocAux) {}
-  bool link(llvm::ArrayRef<const char *> Args);
+  void link(llvm::ArrayRef<const char *> Args);
 
   // Used by the resolver to parse .drectve section contents.
-  std::error_code parseDirectives(StringRef S);
+  void parseDirectives(StringRef S);
 
 private:
   llvm::BumpPtrAllocator AllocAux;
@@ -77,7 +74,7 @@ private:
   SymbolTable Symtab;
 
   // Opens a file. Path has to be resolved already.
-  ErrorOr<MemoryBufferRef> openFile(StringRef Path);
+  MemoryBufferRef openFile(StringRef Path);
 
   // Searches a file from search paths.
   Optional<StringRef> findFile(StringRef Filename);
@@ -110,57 +107,55 @@ private:
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
-std::error_code parseModuleDefs(MemoryBufferRef MB,
-                                llvm::BumpPtrStringSaver *Alloc);
-std::error_code writeImportLibrary();
+void parseModuleDefs(MemoryBufferRef MB, llvm::BumpPtrStringSaver *Alloc);
+void writeImportLibrary();
 
 // Functions below this line are defined in DriverUtils.cpp.
 
 void printHelp(const char *Argv0);
 
 // For /machine option.
-ErrorOr<MachineTypes> getMachineType(StringRef Arg);
+MachineTypes getMachineType(StringRef Arg);
 StringRef machineToStr(MachineTypes MT);
 
 // Parses a string in the form of "<integer>[,<integer>]".
-std::error_code parseNumbers(StringRef Arg, uint64_t *Addr,
-                             uint64_t *Size = nullptr);
+void parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size = nullptr);
 
 // Parses a string in the form of "<integer>[.<integer>]".
 // Minor's default value is 0.
-std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
+void parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
 
 // Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
-std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
-                               uint32_t *Major, uint32_t *Minor);
+void parseSubsystem(StringRef Arg, WindowsSubsystem *Sys, uint32_t *Major,
+                    uint32_t *Minor);
 
-std::error_code parseAlternateName(StringRef);
-std::error_code parseMerge(StringRef);
+void parseAlternateName(StringRef);
+void parseMerge(StringRef);
 
 // Parses a string in the form of "EMBED[,=<integer>]|NO".
-std::error_code parseManifest(StringRef Arg);
+void parseManifest(StringRef Arg);
 
 // Parses a string in the form of "level=<string>|uiAccess=<string>"
-std::error_code parseManifestUAC(StringRef Arg);
+void parseManifestUAC(StringRef Arg);
 
 // Create a resource file containing a manifest XML.
-ErrorOr<std::unique_ptr<MemoryBuffer>> createManifestRes();
-std::error_code createSideBySideManifest();
+std::unique_ptr<MemoryBuffer> createManifestRes();
+void createSideBySideManifest();
 
 // Used for dllexported symbols.
-ErrorOr<Export> parseExport(StringRef Arg);
-std::error_code fixupExports();
+Export parseExport(StringRef Arg);
+void fixupExports();
 void assignExportOrdinals();
 
 // Parses a string in the form of "key=value" and check
 // if value matches previous values for the key.
 // This feature used in the directive section to reject
 // incompatible objects.
-std::error_code checkFailIfMismatch(StringRef Arg);
+void checkFailIfMismatch(StringRef Arg);
 
 // Convert Windows resource files (.res files) to a .obj file
 // using cvtres.exe.
-ErrorOr<std::unique_ptr<MemoryBuffer>>
+std::unique_ptr<MemoryBuffer>
 convertResToCOFF(const std::vector<MemoryBufferRef> &MBs);
 
 void touchFile(StringRef Path);
