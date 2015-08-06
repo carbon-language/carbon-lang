@@ -39,8 +39,6 @@ class CrashRecoveryContextCleanup;
 ///
 ///      ... no crash was detected ...
 ///    }
-///
-/// Crash recovery contexts may not be nested.
 class CrashRecoveryContext {
   void *Impl;
   CrashRecoveryContextCleanup *head;
