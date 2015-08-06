@@ -23,6 +23,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/TinyPtrVector.h"
+#include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/CodeGen/WinEHFuncInfo.h"
@@ -121,6 +122,9 @@ private:
 
   void processSEHCatchHandler(CatchHandler *Handler, BasicBlock *StartBB);
 
+  bool prepareExplicitEH(Function &F);
+  void numberFunclet(BasicBlock *InitialBB, BasicBlock *FuncletBB);
+
   Triple TheTriple;
 
   // All fields are reset by runOnFunction.
@@ -160,6 +164,9 @@ private:
   DenseMap<Function *, Value *> HandlerToParentFP;
 
   AllocaInst *SEHExceptionCodeSlot = nullptr;
+
+  std::map<BasicBlock *, std::set<BasicBlock *>> BlockColors;
+  std::map<BasicBlock *, std::set<BasicBlock *>> FuncletBlocks;
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
@@ -361,21 +368,11 @@ FunctionPass *llvm::createWinEHPass(const TargetMachine *TM) {
 }
 
 bool WinEHPrepare::runOnFunction(Function &Fn) {
-  // No need to prepare outlined handlers.
-  if (Fn.hasFnAttribute("wineh-parent"))
+  if (!Fn.hasPersonalityFn())
     return false;
 
-  SmallVector<LandingPadInst *, 4> LPads;
-  SmallVector<ResumeInst *, 4> Resumes;
-  for (BasicBlock &BB : Fn) {
-    if (auto *LP = BB.getLandingPadInst())
-      LPads.push_back(LP);
-    if (auto *Resume = dyn_cast<ResumeInst>(BB.getTerminator()))
-      Resumes.push_back(Resume);
-  }
-
-  // No need to prepare functions that lack landing pads.
-  if (LPads.empty())
+  // No need to prepare outlined handlers.
+  if (Fn.hasFnAttribute("wineh-parent"))
     return false;
 
   // Classify the personality to see what kind of preparation we need.
@@ -383,6 +380,27 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
 
   // Do nothing if this is not an MSVC personality.
   if (!isMSVCEHPersonality(Personality))
+    return false;
+
+  SmallVector<LandingPadInst *, 4> LPads;
+  SmallVector<ResumeInst *, 4> Resumes;
+  bool ForExplicitEH = false;
+  for (BasicBlock &BB : Fn) {
+    if (auto *LP = BB.getLandingPadInst()) {
+      LPads.push_back(LP);
+    } else if (BB.getFirstNonPHI()->isEHPad()) {
+      ForExplicitEH = true;
+      break;
+    }
+    if (auto *Resume = dyn_cast<ResumeInst>(BB.getTerminator()))
+      Resumes.push_back(Resume);
+  }
+
+  if (ForExplicitEH)
+    return prepareExplicitEH(Fn);
+
+  // No need to prepare functions that lack landing pads.
+  if (LPads.empty())
     return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -2893,4 +2911,279 @@ void llvm::calculateWinCXXEHStateNumbers(const Function *ParentFn,
   // be pushed on the stack as a result of clearing the stack.
   while (!Num.HandlerStack.empty())
     Num.processCallSite(None, ImmutableCallSite());
+}
+
+void WinEHPrepare::numberFunclet(BasicBlock *InitialBB, BasicBlock *FuncletBB) {
+  Instruction *FirstNonPHI = FuncletBB->getFirstNonPHI();
+  bool IsCatch = isa<CatchPadInst>(FirstNonPHI);
+  bool IsCleanup = isa<CleanupPadInst>(FirstNonPHI);
+
+  // Initialize the worklist with the funclet's entry point.
+  std::vector<BasicBlock *> Worklist;
+  Worklist.push_back(InitialBB);
+
+  while (!Worklist.empty()) {
+    BasicBlock *BB = Worklist.back();
+    Worklist.pop_back();
+
+    // There can be only one "pad" basic block in the funclet: the initial one.
+    if (BB != FuncletBB && BB->isEHPad())
+      continue;
+
+    // Add 'FuncletBB' as a possible color for 'BB'.
+    if (BlockColors[BB].insert(FuncletBB).second == false) {
+      // Skip basic blocks which we have already visited.
+      continue;
+    }
+
+    FuncletBlocks[FuncletBB].insert(BB);
+
+    Instruction *Terminator = BB->getTerminator();
+    // The catchret's successors cannot be part of the funclet.
+    if (IsCatch && isa<CatchReturnInst>(Terminator))
+      continue;
+    // The cleanupret's successors cannot be part of the funclet.
+    if (IsCleanup && isa<CleanupReturnInst>(Terminator))
+      continue;
+
+    Worklist.insert(Worklist.end(), succ_begin(BB), succ_end(BB));
+  }
+}
+
+bool WinEHPrepare::prepareExplicitEH(Function &F) {
+  // Remove unreachable blocks.  It is not valuable to assign them a color and
+  // their existence can trick us into thinking values are alive when they are
+  // not.
+  removeUnreachableBlocks(F);
+
+  BasicBlock *EntryBlock = &F.getEntryBlock();
+
+  // Number everything starting from the entry block.
+  numberFunclet(EntryBlock, EntryBlock);
+
+  for (BasicBlock &BB : F) {
+    // Remove single entry PHIs to simplify preparation.
+    if (auto *PN = dyn_cast<PHINode>(BB.begin()))
+      if (PN->getNumIncomingValues() == 1)
+        FoldSingleEntryPHINodes(&BB);
+
+    // EH pad instructions are always the first non-PHI nodes in a block if they
+    // are at all present.
+    Instruction *I = BB.getFirstNonPHI();
+    if (I->isEHPad())
+      numberFunclet(&BB, &BB);
+
+    // It is possible for a normal basic block to only be reachable via an
+    // exceptional basic block.  The successor of a catchret is the only case
+    // where this is possible.
+    if (auto *CRI = dyn_cast<CatchReturnInst>(BB.getTerminator()))
+      numberFunclet(CRI->getSuccessor(), EntryBlock);
+  }
+
+  // Turn all inter-funclet uses of a Value into loads and stores.
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
+    BasicBlock *BB = FI++;
+    std::set<BasicBlock *> &ColorsForBB = BlockColors[BB];
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+      Instruction *I = BI++;
+      // Funclets are permitted to use allocas.
+      if (isa<AllocaInst>(I))
+        continue;
+
+      // FIXME: Our spill-placement algorithm is incredibly naive.  We should
+      // try to sink+hoist as much as possible to avoid redundant stores and reloads.
+      DenseMap<BasicBlock *, Value *> Loads;
+      AllocaInst *SpillSlot = nullptr;
+      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+           UI != UE;) {
+        Use &U = *UI++;
+        auto *UsingInst = cast<Instruction>(U.getUser());
+        BasicBlock *UsingBB = UsingInst->getParent();
+
+        // Is the Use inside a block which is colored with a subset of the Def?
+        // If so, we don't need to escape the Def because we will clone
+        // ourselves our own private copy.
+        std::set<BasicBlock *> &ColorsForUsingBB = BlockColors[UsingBB];
+        if (std::includes(ColorsForBB.begin(), ColorsForBB.end(),
+                          ColorsForUsingBB.begin(), ColorsForUsingBB.end()))
+          continue;
+
+        // Lazilly create the spill slot.  We spill immediately after the value
+        // in the BasicBlock.
+        // FIXME: This can be improved to spill at the block exit points.
+        if (!SpillSlot)
+          SpillSlot = new AllocaInst(I->getType(), nullptr,
+                                     Twine(I->getName(), ".wineh.spillslot"),
+                                     EntryBlock->begin());
+
+        if (auto *PN = dyn_cast<PHINode>(UsingInst)) {
+          // If this is a PHI node, we can't insert a load of the value before
+          // the use.  Instead insert the load in the predecessor block
+          // corresponding to the incoming value.
+          //
+          // Note that if there are multiple edges from a basic block to this
+          // PHI node that we cannot have multiple loads.  The problem is that
+          // the resulting PHI node will have multiple values (from each load)
+          // coming in from the same block, which is illegal SSA form.
+          // For this reason, we keep track of and reuse loads we insert.
+          BasicBlock *IncomingBlock = PN->getIncomingBlock(U);
+          Value *&V = Loads[IncomingBlock];
+          // Insert the load into the predecessor block
+          if (!V)
+            V = new LoadInst(SpillSlot, Twine(I->getName(), ".wineh.reload"),
+                             /*Volatile=*/false,
+                             IncomingBlock->getTerminator());
+          U.set(V);
+        } else {
+          // Reload right before the old use.
+          // FIXME: This can be improved to reload at a block entry point.
+          Value *V =
+              new LoadInst(SpillSlot, Twine(I->getName(), ".wineh.reload"),
+                           /*Volatile=*/false, UsingInst);
+          U.set(V);
+        }
+      }
+      if (SpillSlot) {
+        // Insert stores of the computed value into the stack slot.
+        // We have to be careful if I is an invoke instruction,
+        // because we can't insert the store AFTER the terminator instruction.
+        BasicBlock::iterator InsertPt;
+        if (!isa<TerminatorInst>(I)) {
+          InsertPt = I;
+          ++InsertPt;
+          // Don't insert before PHI nodes or EH pad instrs.
+          for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
+            ;
+        } else {
+          auto *II = cast<InvokeInst>(I);
+          // We cannot demote invoke instructions to the stack if their normal
+          // edge is critical. Therefore, split the critical edge and create a
+          // basic block into which the store can be inserted.
+          if (!II->getNormalDest()->getSinglePredecessor()) {
+            unsigned SuccNum = GetSuccessorNumber(BB, II->getNormalDest());
+            assert(isCriticalEdge(II, SuccNum) && "Expected a critical edge!");
+            BasicBlock *NewBlock = SplitCriticalEdge(II, SuccNum);
+            assert(NewBlock && "Unable to split critical edge.");
+            // Update the color mapping for the newly split edge.
+            std::set<BasicBlock *> &ColorsForUsingBB = BlockColors[II->getParent()];
+            BlockColors[NewBlock] = ColorsForUsingBB;
+            for (BasicBlock *FuncletPad : ColorsForUsingBB)
+              FuncletBlocks[FuncletPad].insert(NewBlock);
+          }
+          InsertPt = II->getNormalDest()->getFirstInsertionPt();
+        }
+        new StoreInst(I, SpillSlot, InsertPt);
+      }
+    }
+  }
+
+  // We need to clone all blocks which belong to multiple funclets.  Values are
+  // remapped throughout the funclet to propogate both the new instructions
+  // *and* the new basic blocks themselves.
+  for (auto &Funclet : FuncletBlocks) {
+    BasicBlock *FuncletPadBB = Funclet.first;
+    std::set<BasicBlock *> &BlocksInFunclet = Funclet.second;
+
+    std::map<BasicBlock *, BasicBlock *> Orig2Clone;
+    ValueToValueMapTy VMap;
+    for (BasicBlock *BB : BlocksInFunclet) {
+      std::set<BasicBlock *> &ColorsForBB = BlockColors[BB];
+      // We don't need to do anything if the block is monochromatic.
+      size_t NumColorsForBB = ColorsForBB.size();
+      if (NumColorsForBB == 1)
+        continue;
+
+      // Create a new basic block and copy instructions into it!
+      BasicBlock *CBB = CloneBasicBlock(
+          BB, VMap, Twine(".for.", FuncletPadBB->getName()), &F);
+
+      // Add basic block mapping.
+      VMap[BB] = CBB;
+
+      // Record delta operations that we need to perform to our color mappings.
+      Orig2Clone[BB] = CBB;
+    }
+
+    // Update our color mappings to reflect that one block has lost a color and
+    // another has gained a color.
+    for (auto &BBMapping : Orig2Clone) {
+      BasicBlock *OldBlock = BBMapping.first;
+      BasicBlock *NewBlock = BBMapping.second;
+
+      BlocksInFunclet.insert(NewBlock);
+      BlockColors[NewBlock].insert(FuncletPadBB);
+
+      BlocksInFunclet.erase(OldBlock);
+      BlockColors[OldBlock].erase(FuncletPadBB);
+    }
+
+    // Loop over all of the instructions in the function, fixing up operand
+    // references as we go.  This uses VMap to do all the hard work.
+    for (BasicBlock *BB : BlocksInFunclet)
+      // Loop over all instructions, fixing each one as we find it...
+      for (Instruction &I : *BB)
+        RemapInstruction(&I, VMap, RF_IgnoreMissingEntries);
+
+    // Our PHI nodes have stale predecessors after we have cloned our new blocks
+    // into the CFG.  Fix this by removing the stale predecessors.
+    for (BasicBlock *BB : BlocksInFunclet) {
+      for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+        Instruction *I = BI++;
+        auto *PN = dyn_cast<PHINode>(I);
+        // All the PHI nodes are bunched together at the start of the BB.
+        // Stop once we've hit a non-PHI.
+        if (!PN)
+          break;
+
+        // Create a list of all the incoming PHI values we'd like to remove.
+        // This is done in two steps to avoid iterator invalidation issues.
+        std::vector<unsigned> IndicesToRemove;
+        for (unsigned Idx = 0, E = PN->getNumIncomingValues(); Idx != E;
+             ++Idx) {
+          BasicBlock *PredBB = PN->getIncomingBlock(Idx);
+          if (BlockColors[PredBB].count(FuncletPadBB) == 0)
+            IndicesToRemove.push_back(Idx);
+        }
+        // Remove incoming values in the reverse order to prevent invalidating
+        // *successive* index.
+        for (auto I = IndicesToRemove.rbegin(), E = IndicesToRemove.rend();
+             I != E; ++I)
+          PN->removeIncomingValue(*I);
+      }
+    }
+  }
+
+  // Clean-up some of the mess we made by removing useles PHI nodes, trivial
+  // branches, etc.
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
+    BasicBlock *BB = FI++;
+    SimplifyInstructionsInBlock(BB);
+    ConstantFoldTerminator(BB, /*DeleteDeadConditions=*/true);
+    MergeBlockIntoPredecessor(BB);
+  }
+
+  // TODO: Do something about cleanupblocks which branch to implausible
+  // cleanuprets.
+
+  // We might have some unreachable blocks after cleaning up some impossible
+  // control flow.
+  removeUnreachableBlocks(F);
+
+  // Recolor the CFG to verify that all is well.
+  for (BasicBlock &BB : F) {
+    size_t NumColors = BlockColors[&BB].size();
+    assert(NumColors == 1 && "Expected monochromatic BB!");
+    if (NumColors == 0)
+      report_fatal_error("Uncolored BB!");
+    if (NumColors > 1)
+      report_fatal_error("Multicolor BB!");
+    bool EHPadHasPHI = BB.isEHPad() && isa<PHINode>(BB.begin());
+    assert(!EHPadHasPHI && "EH Pad still has a PHI!");
+    if (EHPadHasPHI)
+      report_fatal_error("EH Pad still has a PHI!");
+  }
+
+  BlockColors.clear();
+  FuncletBlocks.clear();
+  return true;
 }
