@@ -693,7 +693,7 @@ TemplateArgumentList::CreateCopy(ASTContext &Context,
     = reinterpret_cast<TemplateArgument *>(
                                 static_cast<TemplateArgumentList *>(Mem) + 1);
   std::uninitialized_copy(Args, Args + NumArgs, StoredArgs);
-  return new (Mem) TemplateArgumentList(StoredArgs, NumArgs, true);
+  return new (Mem) TemplateArgumentList(StoredArgs, NumArgs);
 }
 
 FunctionTemplateSpecializationInfo *

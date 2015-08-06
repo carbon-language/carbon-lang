@@ -149,10 +149,7 @@ public:
 /// \brief A template argument list.
 class TemplateArgumentList {
   /// \brief The template argument list.
-  ///
-  /// The integer value will be non-zero to indicate that this
-  /// template argument list does own the pointer.
-  llvm::PointerIntPair<const TemplateArgument *, 1> Arguments;
+  const TemplateArgument *Arguments;
 
   /// \brief The number of template arguments in this template
   /// argument list.
@@ -161,9 +158,8 @@ class TemplateArgumentList {
   TemplateArgumentList(const TemplateArgumentList &Other) = delete;
   void operator=(const TemplateArgumentList &Other) = delete;
 
-  TemplateArgumentList(const TemplateArgument *Args, unsigned NumArgs,
-                       bool Owned)
-    : Arguments(Args, Owned), NumArguments(NumArgs) { }
+  TemplateArgumentList(const TemplateArgument *Args, unsigned NumArgs)
+    : Arguments(Args), NumArguments(NumArgs) { }
 
 public:
   /// \brief Type used to indicate that the template argument list itself is a
@@ -180,9 +176,9 @@ public:
   ///
   /// The template argument list does not own the template arguments
   /// provided.
-  explicit TemplateArgumentList(OnStackType,
-                                const TemplateArgument *Args, unsigned NumArgs)
-    : Arguments(Args, false), NumArguments(NumArgs) { }
+  explicit TemplateArgumentList(OnStackType, const TemplateArgument *Args,
+                                unsigned NumArgs)
+      : Arguments(Args), NumArguments(NumArgs) {}
 
   /// \brief Produces a shallow copy of the given template argument list.
   ///
@@ -191,7 +187,7 @@ public:
   /// constructor, since this really really isn't safe to use that
   /// way.
   explicit TemplateArgumentList(const TemplateArgumentList *Other)
-    : Arguments(Other->data(), false), NumArguments(Other->size()) { }
+      : Arguments(Other->data()), NumArguments(Other->size()) {}
 
   /// \brief Retrieve the template argument at a given index.
   const TemplateArgument &get(unsigned Idx) const {
@@ -212,9 +208,7 @@ public:
   unsigned size() const { return NumArguments; }
 
   /// \brief Retrieve a pointer to the template argument list.
-  const TemplateArgument *data() const {
-    return Arguments.getPointer();
-  }
+  const TemplateArgument *data() const { return Arguments; }
 };
 
 void *allocateDefaultArgStorageChain(const ASTContext &C);
