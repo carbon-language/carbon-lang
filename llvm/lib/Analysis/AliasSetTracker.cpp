@@ -17,6 +17,7 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
@@ -306,8 +307,9 @@ bool AliasSetTracker::add(LoadInst *LI) {
 
   AliasSet::AccessLattice Access = AliasSet::RefAccess;
   bool NewPtr;
+  const DataLayout &DL = LI->getModule()->getDataLayout();
   AliasSet &AS = addPointer(LI->getOperand(0),
-                            AA.getTypeStoreSize(LI->getType()),
+                            DL.getTypeStoreSize(LI->getType()),
                             AAInfo, Access, NewPtr);
   if (LI->isVolatile()) AS.setVolatile();
   return NewPtr;
@@ -321,9 +323,10 @@ bool AliasSetTracker::add(StoreInst *SI) {
 
   AliasSet::AccessLattice Access = AliasSet::ModAccess;
   bool NewPtr;
+  const DataLayout &DL = SI->getModule()->getDataLayout();
   Value *Val = SI->getOperand(0);
   AliasSet &AS = addPointer(SI->getOperand(1),
-                            AA.getTypeStoreSize(Val->getType()),
+                            DL.getTypeStoreSize(Val->getType()),
                             AAInfo, Access, NewPtr);
   if (SI->isVolatile()) AS.setVolatile();
   return NewPtr;
@@ -440,7 +443,8 @@ AliasSetTracker::remove(Value *Ptr, uint64_t Size, const AAMDNodes &AAInfo) {
 }
 
 bool AliasSetTracker::remove(LoadInst *LI) {
-  uint64_t Size = AA.getTypeStoreSize(LI->getType());
+  const DataLayout &DL = LI->getModule()->getDataLayout();
+  uint64_t Size = DL.getTypeStoreSize(LI->getType());
 
   AAMDNodes AAInfo;
   LI->getAAMetadata(AAInfo);
@@ -452,7 +456,8 @@ bool AliasSetTracker::remove(LoadInst *LI) {
 }
 
 bool AliasSetTracker::remove(StoreInst *SI) {
-  uint64_t Size = AA.getTypeStoreSize(SI->getOperand(0)->getType());
+  const DataLayout &DL = SI->getModule()->getDataLayout();
+  uint64_t Size = DL.getTypeStoreSize(SI->getOperand(0)->getType());
 
   AAMDNodes AAInfo;
   SI->getAAMetadata(AAInfo);

@@ -631,8 +631,8 @@ static AliasResult underlyingObjectsAlias(AliasAnalysis *AA,
                                           const Value *B) {
   const Value *AObj = GetUnderlyingObject(A, DL);
   const Value *BObj = GetUnderlyingObject(B, DL);
-  return AA->alias(AObj, AA->getTypeStoreSize(AObj->getType()),
-                   BObj, AA->getTypeStoreSize(BObj->getType()));
+  return AA->alias(AObj, DL.getTypeStoreSize(AObj->getType()),
+                   BObj, DL.getTypeStoreSize(BObj->getType()));
 }
 
 

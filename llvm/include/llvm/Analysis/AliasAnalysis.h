@@ -186,11 +186,6 @@ public:
   ///
   const TargetLibraryInfo *getTargetLibraryInfo() const { return TLI; }
 
-  /// getTypeStoreSize - Return the DataLayout store size for the given type,
-  /// if known, or a conservative value otherwise.
-  ///
-  uint64_t getTypeStoreSize(Type *Ty);
-
   //===--------------------------------------------------------------------===//
   /// \name Alias Queries
   /// @{

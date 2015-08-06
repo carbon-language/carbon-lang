@@ -445,7 +445,7 @@ bool canSinkOrHoistInst(Instruction &I, AliasAnalysis *AA, DominatorTree *DT,
     // Don't hoist loads which have may-aliased stores in loop.
     uint64_t Size = 0;
     if (LI->getType()->isSized())
-      Size = AA->getTypeStoreSize(LI->getType());
+      Size = I.getModule()->getDataLayout().getTypeStoreSize(LI->getType());
 
     AAMDNodes AAInfo;
     LI->getAAMetadata(AAInfo);

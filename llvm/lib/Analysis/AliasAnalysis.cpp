@@ -416,13 +416,6 @@ void AliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();         // All AA's chain
 }
 
-/// getTypeStoreSize - Return the DataLayout store size for the given type,
-/// if known, or a conservative value otherwise.
-///
-uint64_t AliasAnalysis::getTypeStoreSize(Type *Ty) {
-  return DL ? DL->getTypeStoreSize(Ty) : MemoryLocation::UnknownSize;
-}
-
 /// canBasicBlockModify - Return true if it is possible for execution of the
 /// specified basic block to modify the location Loc.
 ///
