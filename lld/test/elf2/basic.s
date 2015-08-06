@@ -126,6 +126,12 @@ _start:
 # RUN:  FileCheck --check-prefix=NO_INPUT %s
 # NO_INPUT: no input files.
 
+# RUN: mkdir -p %t.dir
+# RUN: not lld -flavor gnu2 %t.dir -o %t2 2>&1 | \
+# RUN:  FileCheck --check-prefix=CANNOT_OPEN %s
+# The message after the : depends on the file system.
+# CANNOT_OPEN: cannot open {{.*}}.dir:
+
 # RUN: not lld -flavor gnu2 %t -o 2>&1 | FileCheck --check-prefix=NO_O_VAL %s
 # NO_O_VAL: missing arg value for "-o", expected 1 argument.
 
