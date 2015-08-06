@@ -550,7 +550,7 @@ bool llvm::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI,
   Builder.SetInsertPoint(BB);
   LoadInst *InitLoaded = Builder.CreateLoad(Addr);
   // Atomics require at least natural alignment.
-  InitLoaded->setAlignment(AI->getType()->getPrimitiveSizeInBits() / 8);
+  InitLoaded->setAlignment(AI->getType()->getPrimitiveSizeInBits());
   Builder.CreateBr(LoopBB);
 
   // Start the main loop block now that we've taken care of the preliminaries.
