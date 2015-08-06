@@ -724,14 +724,25 @@ void Writer::writeSections() {
 
 // Sort .pdata section contents according to PE/COFF spec 5.5.
 void Writer::sortExceptionTable() {
-  if (auto *Sec = findSection(".pdata")) {
-    // We assume .pdata contains function table entries only.
+  OutputSection *Sec = findSection(".pdata");
+  if (!Sec)
+    return;
+  // We assume .pdata contains function table entries only.
+  uint8_t *Begin = Buffer->getBufferStart() + Sec->getFileOff();
+  uint8_t *End = Begin + Sec->getVirtualSize();
+  if (Config->Machine == AMD64) {
     struct Entry { ulittle32_t Begin, End, Unwind; };
-    uint8_t *Buf = Buffer->getBufferStart() + Sec->getFileOff();
-    std::sort(reinterpret_cast<Entry *>(Buf),
-              reinterpret_cast<Entry *>(Buf + Sec->getVirtualSize()),
+    std::sort((Entry *)Begin, (Entry *)End,
               [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
+    return;
   }
+  if (Config->Machine == ARMNT) {
+    struct Entry { ulittle32_t Begin, Unwind; };
+    std::sort((Entry *)Begin, (Entry *)End,
+              [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
+    return;
+  }
+  errs() << "warning: don't know how to handle .pdata.\n";
 }
 
 OutputSection *Writer::findSection(StringRef Name) {
