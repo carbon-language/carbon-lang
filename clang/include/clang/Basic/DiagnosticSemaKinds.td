@@ -7545,8 +7545,8 @@ def err_omp_aligned_twice : Error<
 def err_omp_local_var_in_threadprivate_init : Error<
   "variable with local storage in initial value of threadprivate variable">;
 def err_omp_loop_not_canonical_init : Error<
-  "initialization clause of OpenMP for loop must be of the form "
-  "'var = init' or 'T var = init'">;
+  "initialization clause of OpenMP for loop is not in canonical form "
+  "('var = init' or 'T var = init')">;
 def ext_omp_loop_not_canonical_init : ExtWarn<
   "initialization clause of OpenMP for loop is not in canonical form "
   "('var = init' or 'T var = init')">, InGroup<OpenMPLoopForm>;

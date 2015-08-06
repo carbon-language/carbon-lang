@@ -1957,6 +1957,9 @@ void ASTStmtWriter::VisitOMPLoopDirective(OMPLoopDirective *D) {
   for (auto I : D->counters()) {
     Writer.AddStmt(I);
   }
+  for (auto I : D->private_counters()) {
+    Writer.AddStmt(I);
+  }
   for (auto I : D->updates()) {
     Writer.AddStmt(I);
   }

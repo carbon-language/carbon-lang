@@ -680,15 +680,22 @@ static void emitAlignedClause(CodeGenFunction &CGF,
 
 static void emitPrivateLoopCounters(CodeGenFunction &CGF,
                                     CodeGenFunction::OMPPrivateScope &LoopScope,
-                                    ArrayRef<Expr *> Counters) {
+                                    ArrayRef<Expr *> Counters,
+                                    ArrayRef<Expr *> PrivateCounters) {
+  auto I = PrivateCounters.begin();
   for (auto *E : Counters) {
-    auto VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
-    (void)LoopScope.addPrivate(VD, [&]() -> llvm::Value *{
+    auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+    auto *PrivateVD = cast<VarDecl>(cast<DeclRefExpr>(*I)->getDecl());
+    llvm::Value *Addr;
+    (void)LoopScope.addPrivate(PrivateVD, [&]() -> llvm::Value * {
       // Emit var without initialization.
-      auto VarEmission = CGF.EmitAutoVarAlloca(*VD);
+      auto VarEmission = CGF.EmitAutoVarAlloca(*PrivateVD);
       CGF.EmitAutoVarCleanups(VarEmission);
-      return VarEmission.getAllocatedAddress();
+      Addr = VarEmission.getAllocatedAddress();
+      return Addr;
     });
+    (void)LoopScope.addPrivate(VD, [&]() -> llvm::Value * { return Addr; });
+    ++I;
   }
 }
 
@@ -697,7 +704,8 @@ static void emitPreCond(CodeGenFunction &CGF, const OMPLoopDirective &S,
                         llvm::BasicBlock *FalseBlock, uint64_t TrueCount) {
   {
     CodeGenFunction::OMPPrivateScope PreCondScope(CGF);
-    emitPrivateLoopCounters(CGF, PreCondScope, S.counters());
+    emitPrivateLoopCounters(CGF, PreCondScope, S.counters(),
+                            S.private_counters());
     const VarDecl *IVDecl =
         cast<VarDecl>(cast<DeclRefExpr>(S.getIterationVariable())->getDecl());
     bool IsRegistered = PreCondScope.addPrivate(IVDecl, [&]() -> llvm::Value *{
@@ -835,7 +843,8 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     bool HasLastprivateClause;
     {
       OMPPrivateScope LoopScope(CGF);
-      emitPrivateLoopCounters(CGF, LoopScope, S.counters());
+      emitPrivateLoopCounters(CGF, LoopScope, S.counters(),
+                              S.private_counters());
       emitPrivateLinearVars(CGF, S, LoopScope);
       CGF.EmitOMPPrivateClause(S, LoopScope);
       CGF.EmitOMPReductionClauseInit(S, LoopScope);
@@ -1124,7 +1133,8 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
       EmitOMPPrivateClause(S, LoopScope);
       HasLastprivateClause = EmitOMPLastprivateClauseInit(S, LoopScope);
       EmitOMPReductionClauseInit(S, LoopScope);
-      emitPrivateLoopCounters(*this, LoopScope, S.counters());
+      emitPrivateLoopCounters(*this, LoopScope, S.counters(),
+                              S.private_counters());
       emitPrivateLinearVars(*this, S, LoopScope);
       (void)LoopScope.Privatize();
 

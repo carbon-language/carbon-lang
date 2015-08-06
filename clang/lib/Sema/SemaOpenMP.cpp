@@ -2251,6 +2251,9 @@ public:
   Expr *BuildPreCond(Scope *S, Expr *Cond) const;
   /// \brief Build reference expression to the counter be used for codegen.
   Expr *BuildCounterVar() const;
+  /// \brief Build reference expression to the private counter be used for
+  /// codegen.
+  Expr *BuildPrivateCounterVar() const;
   /// \brief Build initization of the counter be used for codegen.
   Expr *BuildCounterInit() const;
   /// \brief Build step of the counter be used for codegen.
@@ -2414,7 +2417,7 @@ bool OpenMPIterationSpaceChecker::CheckInit(Stmt *S, bool EmitDiags) {
   } else if (auto DS = dyn_cast<DeclStmt>(S)) {
     if (DS->isSingleDecl()) {
       if (auto Var = dyn_cast_or_null<VarDecl>(DS->getSingleDecl())) {
-        if (Var->hasInit()) {
+        if (Var->hasInit() && !Var->getType()->isReferenceType()) {
           // Accept non-canonical init form here but emit ext. warning.
           if (Var->getInitStyle() != VarDecl::CInit && EmitDiags)
             SemaRef.Diag(S->getLocStart(),
@@ -2699,7 +2702,19 @@ Expr *OpenMPIterationSpaceChecker::BuildPreCond(Scope *S, Expr *Cond) const {
 
 /// \brief Build reference expression to the counter be used for codegen.
 Expr *OpenMPIterationSpaceChecker::BuildCounterVar() const {
-  return buildDeclRefExpr(SemaRef, Var, Var->getType(), DefaultLoc);
+  return buildDeclRefExpr(SemaRef, Var, Var->getType().getNonReferenceType(),
+                          DefaultLoc);
+}
+
+Expr *OpenMPIterationSpaceChecker::BuildPrivateCounterVar() const {
+  if (Var && !Var->isInvalidDecl()) {
+    auto Type = Var->getType().getNonReferenceType();
+    auto *PrivateVar = buildVarDecl(SemaRef, DefaultLoc, Type, Var->getName());
+    if (PrivateVar->isInvalidDecl())
+      return nullptr;
+    return buildDeclRefExpr(SemaRef, PrivateVar, Type, DefaultLoc);
+  }
+  return nullptr;
 }
 
 /// \brief Build initization of the counter be used for codegen.
@@ -2717,6 +2732,8 @@ struct LoopIterationSpace {
   Expr *NumIterations;
   /// \brief The loop counter variable.
   Expr *CounterVar;
+  /// \brief Private loop counter variable.
+  Expr *PrivateCounterVar;
   /// \brief This is initializer for the initial value of #CounterVar.
   Expr *CounterInit;
   /// \brief This is step for the #CounterVar used to generate its update:
@@ -2801,7 +2818,7 @@ static bool CheckOpenMPIterationSpace(
   //   A variable of signed or unsigned integer type.
   //   For C++, a variable of a random access iterator type.
   //   For C, a variable of a pointer type.
-  auto VarType = Var->getType();
+  auto VarType = Var->getType().getNonReferenceType();
   if (!VarType->isDependentType() && !VarType->isIntegerType() &&
       !VarType->isPointerType() &&
       !(SemaRef.getLangOpts().CPlusPlus && VarType->isOverloadableType())) {
@@ -2877,6 +2894,7 @@ static bool CheckOpenMPIterationSpace(
   ResultIterSpace.NumIterations = ISC.BuildNumIterations(
       DSA.getCurScope(), /* LimitedType */ isOpenMPWorksharingDirective(DKind));
   ResultIterSpace.CounterVar = ISC.BuildCounterVar();
+  ResultIterSpace.PrivateCounterVar = ISC.BuildPrivateCounterVar();
   ResultIterSpace.CounterInit = ISC.BuildCounterInit();
   ResultIterSpace.CounterStep = ISC.BuildCounterStep();
   ResultIterSpace.InitSrcRange = ISC.GetInitSrcRange();
@@ -2887,6 +2905,7 @@ static bool CheckOpenMPIterationSpace(
   HasErrors |= (ResultIterSpace.PreCond == nullptr ||
                 ResultIterSpace.NumIterations == nullptr ||
                 ResultIterSpace.CounterVar == nullptr ||
+                ResultIterSpace.PrivateCounterVar == nullptr ||
                 ResultIterSpace.CounterInit == nullptr ||
                 ResultIterSpace.CounterStep == nullptr);
 
@@ -3286,6 +3305,7 @@ CheckOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
       }
       // Save results
       Built.Counters[Cnt] = IS.CounterVar;
+      Built.PrivateCounters[Cnt] = IS.PrivateCounterVar;
       Built.Updates[Cnt] = Update.get();
       Built.Finals[Cnt] = Final.get();
     }

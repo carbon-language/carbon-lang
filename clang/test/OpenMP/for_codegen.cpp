@@ -411,6 +411,21 @@ void for_with_global_lcv() {
   }
 }
 
+// CHECK-LABEL: for_with_references
+void for_with_references() {
+// CHECK: [[I:%.+]] = alloca i8,
+// CHECK: [[CNT:%.+]] = alloca i8*,
+// CHECK: [[CNT_PRIV:%.+]] = alloca i8,
+// CHECK: call void @__kmpc_for_static_init_4(
+// CHECK-NOT: load i8, i8* [[CNT]],
+// CHECK: call void @__kmpc_for_static_fini(
+  char i = 0;
+  char &cnt = i;
+#pragma omp for
+  for (cnt = 0; cnt < 2; ++cnt)
+    k = cnt;
+}
+
 struct Bool {
   Bool(bool b) : b(b) {}
   operator bool() const { return b; }
