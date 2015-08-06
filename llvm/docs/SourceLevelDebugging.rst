@@ -368,15 +368,14 @@ C/C++ source file information
 
 ``llvm::Instruction`` provides easy access to metadata attached with an
 instruction.  One can extract line number information encoded in LLVM IR using
-``Instruction::getMetadata()`` and ``DILocation::getLineNumber()``.
+``Instruction::getDebugLoc()`` and ``DILocation::getLine()``.
 
 .. code-block:: c++
 
-  if (MDNode *N = I->getMetadata("dbg")) {  // Here I is an LLVM instruction
-    DILocation Loc(N);                      // DILocation is in DebugInfo.h
-    unsigned Line = Loc.getLineNumber();
-    StringRef File = Loc.getFilename();
-    StringRef Dir = Loc.getDirectory();
+  if (DILocation *Loc = I->getDebugLoc()) { // Here I is an LLVM instruction
+    unsigned Line = Loc->getLine();
+    StringRef File = Loc->getFilename();
+    StringRef Dir = Loc->getDirectory();
   }
 
 C/C++ global variable information
