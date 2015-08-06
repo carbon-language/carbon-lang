@@ -51,6 +51,7 @@ enum ID {
 struct Info {
   const char *Name, *Type, *Attributes, *HeaderName;
   LanguageID Langs;
+  const char *Features;
 };
 
 /// \brief Holds information about both target-independent and
@@ -164,6 +165,10 @@ public:
   /// Such functions can be const when the MathErrno lang option is disabled.
   bool isConstWithoutErrno(unsigned ID) const {
     return strchr(getRecord(ID).Attributes, 'e') != nullptr;
+  }
+
+  const char *getRequiredFeatures(unsigned ID) const {
+    return getRecord(ID).Features;
   }
 
 private:

@@ -2001,8 +2001,10 @@ void AMDGPUTargetInfo::getGCCRegNames(const char * const *&Names,
 // Namespace for x86 abstract base class
 const Builtin::Info BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
-#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
-                                              ALL_LANGUAGES },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER)                                    \
+  { #ID, TYPE, ATTRS, HEADER, ALL_LANGUAGES },
+#define TARGET_BUILTIN(ID, TYPE, ATTRS, FEATURE)                               \
+  { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES, FEATURE },
 #include "clang/Basic/BuiltinsX86.def"
 };
 
