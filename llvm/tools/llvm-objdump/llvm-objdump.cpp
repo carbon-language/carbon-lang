@@ -249,6 +249,7 @@ void llvm::error(std::error_code EC) {
 
   outs() << ToolName << ": error reading file: " << EC.message() << ".\n";
   outs().flush();
+  exit(1);
 }
 
 static void report_error(StringRef File, std::error_code EC) {
