@@ -1,0 +1,29 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @volatile_inc(i32* %x) {
+  entry:
+    %0 = load volatile i32, i32* %x
+    %1 = add i32 %0, 1
+    store volatile i32 %1, i32* %x
+    ret i32 %1
+  }
+
+...
+---
+name:            volatile_inc
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body:
+  - id:          0
+    name:        entry
+    liveins:     [ '%rdi' ]
+    instructions:
+# CHECK: [[@LINE+1]]:55: duplicate 'volatile' memory operand flag
+      - '%eax = MOV32rm %rdi, 1, _, 0, _ :: (volatile volatile load 4 from %ir.x)'
+      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
+      - 'MOV32mr killed %rdi, 1, _, 0, _, %eax :: (volatile store 4 into %ir.x)'
+      - 'RETQ %eax'
+...

@@ -1059,6 +1059,7 @@ bool MIParser::getUint64(uint64_t &Result) {
 }
 
 bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
+  const unsigned OldFlags = Flags;
   switch (Token.kind()) {
   case MIToken::kw_volatile:
     Flags |= MachineMemOperand::MOVolatile;
@@ -1069,11 +1070,14 @@ bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
   case MIToken::kw_invariant:
     Flags |= MachineMemOperand::MOInvariant;
     break;
-  // TODO: report an error when we specify the same flag more than once.
   // TODO: parse the target specific memory operand flags.
   default:
     llvm_unreachable("The current token should be a memory operand flag");
   }
+  if (OldFlags == Flags)
+    // We know that the same flag is specified more than once when the flags
+    // weren't modified.
+    return error("duplicate '" + Token.stringValue() + "' memory operand flag");
   lex();
   return false;
 }
