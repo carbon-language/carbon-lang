@@ -3862,16 +3862,16 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchPadInst, Value)
 
 class TerminatePadInst : public TerminatorInst {
 private:
-  void init(BasicBlock *BB, ArrayRef<Value *> Args, const Twine &NameStr);
+  void init(BasicBlock *BB, ArrayRef<Value *> Args);
 
   TerminatePadInst(const TerminatePadInst &TPI);
 
   explicit TerminatePadInst(LLVMContext &C, BasicBlock *BB,
-                              ArrayRef<Value *> Args, unsigned Values,
-                              const Twine &NameStr, Instruction *InsertBefore);
+                            ArrayRef<Value *> Args, unsigned Values,
+                            Instruction *InsertBefore);
   explicit TerminatePadInst(LLVMContext &C, BasicBlock *BB,
-                              ArrayRef<Value *> Args, unsigned Values,
-                              const Twine &NameStr, BasicBlock *InsertAtEnd);
+                            ArrayRef<Value *> Args, unsigned Values,
+                            BasicBlock *InsertAtEnd);
 
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
@@ -3880,24 +3880,20 @@ protected:
 
 public:
   static TerminatePadInst *Create(LLVMContext &C, BasicBlock *BB = nullptr,
-                                    ArrayRef<Value *> Args = None,
-                                    const Twine &NameStr = "",
-                                    Instruction *InsertBefore = nullptr) {
+                                  ArrayRef<Value *> Args = None,
+                                  Instruction *InsertBefore = nullptr) {
     unsigned Values = unsigned(Args.size());
     if (BB)
       ++Values;
-    return new (Values)
-        TerminatePadInst(C, BB, Args, Values, NameStr, InsertBefore);
+    return new (Values) TerminatePadInst(C, BB, Args, Values, InsertBefore);
   }
   static TerminatePadInst *Create(LLVMContext &C, BasicBlock *BB,
-                                    ArrayRef<Value *> Args,
-                                    const Twine &NameStr,
-                                    BasicBlock *InsertAtEnd) {
+                                  ArrayRef<Value *> Args,
+                                  BasicBlock *InsertAtEnd) {
     unsigned Values = unsigned(Args.size());
     if (BB)
       ++Values;
-    return new (Values)
-        TerminatePadInst(C, BB, Args, Values, NameStr, InsertAtEnd);
+    return new (Values) TerminatePadInst(C, BB, Args, Values, InsertAtEnd);
   }
 
   /// Provide fast operand accessors
