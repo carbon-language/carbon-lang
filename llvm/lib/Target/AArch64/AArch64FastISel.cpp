@@ -3794,33 +3794,40 @@ bool AArch64FastISel::selectTrunc(const Instruction *I) {
     return false;
   bool SrcIsKill = hasTrivialKill(Op);
 
-  // If we're truncating from i64/i32 to a smaller non-legal type then generate
-  // an AND.
-  uint64_t Mask = 0;
-  switch (DestVT.SimpleTy) {
-  default:
-    // Trunc i64 to i32 is handled by the target-independent fast-isel.
-    return false;
-  case MVT::i1:
-    Mask = 0x1;
-    break;
-  case MVT::i8:
-    Mask = 0xff;
-    break;
-  case MVT::i16:
-    Mask = 0xffff;
-    break;
-  }
+  // If we're truncating from i64 to a smaller non-legal type then generate an
+  // AND. Otherwise, we know the high bits are undefined and a truncate only
+  // generate a COPY. We cannot mark the source register also as result
+  // register, because this can incorrectly transfer the kill flag onto the
+  // source register.
+  unsigned ResultReg;
   if (SrcVT == MVT::i64) {
+    uint64_t Mask = 0;
+    switch (DestVT.SimpleTy) {
+    default:
+      // Trunc i64 to i32 is handled by the target-independent fast-isel.
+      return false;
+    case MVT::i1:
+      Mask = 0x1;
+      break;
+    case MVT::i8:
+      Mask = 0xff;
+      break;
+    case MVT::i16:
+      Mask = 0xffff;
+      break;
+    }
     // Issue an extract_subreg to get the lower 32-bits.
-    SrcReg = fastEmitInst_extractsubreg(MVT::i32, SrcReg, SrcIsKill,
-                                        AArch64::sub_32);
-    SrcIsKill = true;
+    unsigned Reg32 = fastEmitInst_extractsubreg(MVT::i32, SrcReg, SrcIsKill,
+                                                AArch64::sub_32);
+    // Create the AND instruction which performs the actual truncation.
+    ResultReg = emitAnd_ri(MVT::i32, Reg32, /*IsKill=*/true, Mask);
+    assert(ResultReg && "Unexpected AND instruction emission failure.");
+  } else {
+    ResultReg = createResultReg(&AArch64::GPR32RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(SrcReg, getKillRegState(SrcIsKill));
   }
-
-  // Create the AND instruction which performs the actual truncation.
-  unsigned ResultReg = emitAnd_ri(MVT::i32, SrcReg, SrcIsKill, Mask);
-  assert(ResultReg && "Unexpected AND instruction emission failure.");
 
   updateValueMap(I, ResultReg);
   return true;

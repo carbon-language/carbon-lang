@@ -363,8 +363,7 @@ entry:
 define i32 @i64_trunc_i32(i64 %a) nounwind ssp {
 entry:
 ; CHECK-LABEL: i64_trunc_i32
-; CHECK:       mov [[REG:x[0-9]+]], x0
-; CHECK-NEXT:  mov x0, [[REG]]
+; CHECK: mov x1, x0
   %conv = trunc i64 %a to i32
   ret i32 %conv
 }
@@ -372,9 +371,9 @@ entry:
 define zeroext i16 @i64_trunc_i16(i64 %a) nounwind ssp {
 entry:
 ; CHECK-LABEL: i64_trunc_i16
-; CHECK:       mov x[[REG:[0-9]+]], x0
-; CHECK-NEXT:  and [[REG2:w[0-9]+]], w[[REG]], #0xffff
-; CHECK-NEXT:  uxth w0, [[REG2]]
+; CHECK: mov x[[REG:[0-9]+]], x0
+; CHECK: and [[REG2:w[0-9]+]], w[[REG]], #0xffff
+; CHECK: uxth w0, [[REG2]]
   %conv = trunc i64 %a to i16
   ret i16 %conv
 }
@@ -382,9 +381,9 @@ entry:
 define zeroext i8 @i64_trunc_i8(i64 %a) nounwind ssp {
 entry:
 ; CHECK-LABEL: i64_trunc_i8
-; CHECK:       mov x[[REG:[0-9]+]], x0
-; CHECK-NEXT:  and [[REG2:w[0-9]+]], w[[REG]], #0xff
-; CHECK-NEXT:  uxtb w0, [[REG2]]
+; CHECK: mov x[[REG:[0-9]+]], x0
+; CHECK: and [[REG2:w[0-9]+]], w[[REG]], #0xff
+; CHECK: uxtb w0, [[REG2]]
   %conv = trunc i64 %a to i8
   ret i8 %conv
 }
@@ -392,64 +391,10 @@ entry:
 define zeroext i1 @i64_trunc_i1(i64 %a) nounwind ssp {
 entry:
 ; CHECK-LABEL: i64_trunc_i1
-; CHECK:       mov x[[REG:[0-9]+]], x0
-; CHECK-NEXT:  and [[REG2:w[0-9]+]], w[[REG]], #0x1
-; CHECK-NEXT:  and w0, [[REG2]], #0x1
+; CHECK: mov x[[REG:[0-9]+]], x0
+; CHECK: and [[REG2:w[0-9]+]], w[[REG]], #0x1
+; CHECK: and w0, [[REG2]], #0x1
   %conv = trunc i64 %a to i1
-  ret i1 %conv
-}
-
-define zeroext i16 @i32_trunc_i16(i32 %a) nounwind ssp {
-entry:
-; CHECK-LABEL: i32_trunc_i16
-; CHECK:       and [[REG:w[0-9]+]], w0, #0xffff
-; CHECK-NEXT:  uxth w0, [[REG]]
-  %conv = trunc i32 %a to i16
-  ret i16 %conv
-}
-
-define zeroext i8 @i32_trunc_i8(i32 %a) nounwind ssp {
-entry:
-; CHECK-LABEL: i32_trunc_i8
-; CHECK:       and [[REG:w[0-9]+]], w0, #0xff
-; CHECK-NEXT:  uxtb w0, [[REG]]
-  %conv = trunc i32 %a to i8
-  ret i8 %conv
-}
-
-define zeroext i1 @i32_trunc_i1(i32 %a) nounwind ssp {
-entry:
-; CHECK-LABEL: i32_trunc_i1
-; CHECK:       and [[REG:w[0-9]+]], w0, #0x1
-; CHECK-NEXT:  and w0, [[REG]], #0x1
-  %conv = trunc i32 %a to i1
-  ret i1 %conv
-}
-
-define zeroext i8 @i16_trunc_i8(i16 zeroext %a) nounwind ssp {
-entry:
-; CHECK-LABEL: i16_trunc_i8
-; CHECK:       and [[REG:w[0-9]+]], w0, #0xff
-; CHECK-NEXT:  uxtb w0, [[REG]]
-  %conv = trunc i16 %a to i8
-  ret i8 %conv
-}
-
-define zeroext i1 @i16_trunc_i1(i16 zeroext %a) nounwind ssp {
-entry:
-; CHECK-LABEL: i16_trunc_i1
-; CHECK:       and [[REG:w[0-9]+]], w0, #0x1
-; CHECK-NEXT:  and w0, [[REG]], #0x1
-  %conv = trunc i16 %a to i1
-  ret i1 %conv
-}
-
-define zeroext i1 @i8_trunc_i1(i8 zeroext %a) nounwind ssp {
-entry:
-; CHECK-LABEL: i8_trunc_i1
-; CHECK:       and [[REG:w[0-9]+]], w0, #0x1
-; CHECK-NEXT:  and w0, [[REG]], #0x1
-  %conv = trunc i8 %a to i1
   ret i1 %conv
 }
 

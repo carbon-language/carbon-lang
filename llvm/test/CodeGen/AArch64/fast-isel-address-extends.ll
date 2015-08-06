@@ -1,4 +1,4 @@
-; RUN: llc %s -o - -O2 -verify-machineinstrs -fast-isel=true | FileCheck %s
+; RUN: llc %s -o - -O0 -verify-machineinstrs -fast-isel=true | FileCheck %s
 
 target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
 target triple = "arm64-apple-ios8.0.0"
@@ -7,7 +7,7 @@ target triple = "arm64-apple-ios8.0.0"
 ; This was incorrect as %.mux isn't available in the last bb.
 
 ; CHECK: sxtw [[REG:x[0-9]+]]
-; CHECK: strh wzr, {{\[}}{{.*}}, [[REG]], lsl #1]
+; CHECK: strh wzr, {{\[}}[[REG]], {{.*}}, lsl #1]
 
 ; Function Attrs: nounwind optsize ssp
 define void @EdgeLoop(i32 %dir, i32 %edge, i32 %width, i16* %tmp89, i32 %tmp136, i16 %tmp144) #0 {
