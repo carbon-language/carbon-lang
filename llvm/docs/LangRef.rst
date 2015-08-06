@@ -491,7 +491,7 @@ more information on under which circumstances the different models may
 be used. The target may choose a different TLS model if the specified
 model is not supported, or if a better choice of model can be made.
 
-A model can also be specified in a alias, but then it only governs how
+A model can also be specified in an alias, but then it only governs how
 the alias is accessed. It will not have any effect in the aliasee.
 
 For platforms without linker support of ELF TLS model, the -femulated-tls
@@ -507,7 +507,7 @@ types <t_struct>`.  Literal types are uniqued structurally, but identified types
 are never uniqued.  An :ref:`opaque structural type <t_opaque>` can also be used
 to forward declare a type that is not yet available.
 
-An example of a identified structure specification is:
+An example of an identified structure specification is:
 
 .. code-block:: llvm
 
@@ -690,8 +690,8 @@ Syntax::
            [align N] [gc] [prefix Constant] [prologue Constant]
            [personality Constant] { ... }
 
-The argument list is a comma seperated sequence of arguments where each
-argument is of the following form
+The argument list is a comma separated sequence of arguments where each
+argument is of the following form:
 
 Syntax::
 
@@ -894,7 +894,7 @@ Currently, only the following parameter attributes are defined:
     the callee (for a return value).
 ``inreg``
     This indicates that this parameter or return value should be treated
-    in a special target-dependent fashion during while emitting code for
+    in a special target-dependent fashion while emitting code for
     a function call or return (usually, by putting it in a register as
     opposed to memory, though some targets use it to distinguish between
     two different kinds of registers). Use of this attribute is
@@ -1433,7 +1433,7 @@ example:
     match the thunk target prototype.
 ``uwtable``
     This attribute indicates that the ABI being targeted requires that
-    an unwind table entry be produce for this function even if we can
+    an unwind table entry be produced for this function even if we can
     show that no exceptions passes by it. This is normally the case for
     the ELF x86-64 abi, but it can be disabled for some compilation
     units.
@@ -1497,7 +1497,7 @@ as follows:
 ``p[n]:<size>:<abi>:<pref>``
     This specifies the *size* of a pointer and its ``<abi>`` and
     ``<pref>``\erred alignments for address space ``n``. All sizes are in
-    bits. The address space, ``n`` is optional, and if not specified,
+    bits. The address space, ``n``, is optional, and if not specified,
     denotes the default address space 0.  The value of ``n`` must be
     in the range [1,2^23).
 ``i<size>:<abi>:<pref>``
@@ -1690,7 +1690,7 @@ target-legal volatile load/store instructions.
  this holds for an l-value of volatile primitive type with native
  hardware support, but not necessarily for aggregate types. The
  frontend upholds these expectations, which are intentionally
- unspecified in the IR. The rules above ensure that IR transformation
+ unspecified in the IR. The rules above ensure that IR transformations
  do not violate the frontend's contract with the language.
 
 .. _memmodel:
@@ -6678,21 +6678,21 @@ to loads of a pointer type.
 
 The optional ``!dereferenceable`` metadata must reference a single
 metadata name ``<index>`` corresponding to a metadata node with one ``i64``
-entry. The existence of the ``!dereferenceable`` metadata on the instruction 
+entry. The existence of the ``!dereferenceable`` metadata on the instruction
 tells the optimizer that the value loaded is known to be dereferenceable.
-The number of bytes known to be dereferenceable is specified by the integer 
-value in the metadata node. This is analogous to the ''dereferenceable'' 
-attribute on parameters and return values.  This metadata can only be applied 
+The number of bytes known to be dereferenceable is specified by the integer
+value in the metadata node. This is analogous to the ''dereferenceable''
+attribute on parameters and return values. This metadata can only be applied
 to loads of a pointer type.
 
 The optional ``!dereferenceable_or_null`` metadata must reference a single
 metadata name ``<index>`` corresponding to a metadata node with one ``i64``
-entry. The existence of the ``!dereferenceable_or_null`` metadata on the 
+entry. The existence of the ``!dereferenceable_or_null`` metadata on the
 instruction tells the optimizer that the value loaded is known to be either
 dereferenceable or null.
-The number of bytes known to be dereferenceable is specified by the integer 
-value in the metadata node. This is analogous to the ''dereferenceable_or_null'' 
-attribute on parameters and return values.  This metadata can only be applied 
+The number of bytes known to be dereferenceable is specified by the integer
+value in the metadata node. This is analogous to the ''dereferenceable_or_null''
+attribute on parameters and return values. This metadata can only be applied
 to loads of a pointer type.
 
 Semantics:
@@ -7168,15 +7168,15 @@ will be effectively broadcast into a vector during address calculation.
      ; All arguments are vectors:
      ;   A[i] = ptrs[i] + offsets[i]*sizeof(i8)
      %A = getelementptr i8, <4 x i8*> %ptrs, <4 x i64> %offsets
-     
+
      ; Add the same scalar offset to each pointer of a vector:
      ;   A[i] = ptrs[i] + offset*sizeof(i8)
      %A = getelementptr i8, <4 x i8*> %ptrs, i64 %offset
-     
+
      ; Add distinct offsets to the same pointer:
      ;   A[i] = ptr + offsets[i]*sizeof(i8)
      %A = getelementptr i8, i8* %ptr, <4 x i64> %offsets
-     
+
      ; In all cases described above the type of the result is <4 x i8*>
 
 The two following instructions are equivalent:
@@ -7188,7 +7188,7 @@ The two following instructions are equivalent:
        <4 x i32> <i32 1, i32 1, i32 1, i32 1>,
        <4 x i32> %ind4,
        <4 x i64> <i64 13, i64 13, i64 13, i64 13>
-     
+
      getelementptr  %struct.ST, <4 x %struct.ST*> %s, <4 x i64> %ind1,
        i32 2, i32 1, <4 x i32> %ind4, i64 13
 
