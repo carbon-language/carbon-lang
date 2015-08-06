@@ -35,6 +35,14 @@
 
   !0 = !{i32 1}
 
+  define i32 @invariant_load(i32* %x) {
+  entry:
+    %v = load i32, i32* %x, !invariant.load !1
+    ret i32 %v
+  }
+
+  !1 = !{}
+
 ...
 ---
 name:            test
@@ -99,4 +107,19 @@ body:
 # CHECK: MOVNTImr killed %rdi, 1, _, 0, _, killed %esi :: (non-temporal store 4 into %ir.a)
       - 'MOVNTImr killed %rdi, 1, _, 0, _, killed %esi :: (non-temporal store 4 into %ir.a)'
       - RETQ
+...
+---
+name:            invariant_load
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body:
+  - id:          0
+    name:        entry
+    liveins:     [ '%rdi' ]
+    instructions:
+# CHECK: name: invariant_load
+# CHECK: %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)
+      - '%eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)'
+      - 'RETQ %eax'
 ...

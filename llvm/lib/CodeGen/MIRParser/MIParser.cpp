@@ -1066,8 +1066,11 @@ bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
   case MIToken::kw_non_temporal:
     Flags |= MachineMemOperand::MONonTemporal;
     break;
+  case MIToken::kw_invariant:
+    Flags |= MachineMemOperand::MOInvariant;
+    break;
   // TODO: report an error when we specify the same flag more than once.
-  // TODO: parse the other memory operand flags.
+  // TODO: parse the target specific memory operand flags.
   default:
     llvm_unreachable("The current token should be a memory operand flag");
   }

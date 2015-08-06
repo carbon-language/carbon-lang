@@ -652,11 +652,13 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
 
 void MIPrinter::print(const MachineMemOperand &Op) {
   OS << '(';
-  // TODO: Print operand's other flags.
+  // TODO: Print operand's target specific flags.
   if (Op.isVolatile())
     OS << "volatile ";
   if (Op.isNonTemporal())
     OS << "non-temporal ";
+  if (Op.isInvariant())
+    OS << "invariant ";
   if (Op.isLoad())
     OS << "load ";
   else {
