@@ -309,12 +309,30 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB) {
     // Fix (C).
     if (Save && Restore && Save != Restore &&
         MLI->getLoopFor(Save) != MLI->getLoopFor(Restore)) {
-      if (MLI->getLoopDepth(Save) > MLI->getLoopDepth(Restore))
-        // Push Save outside of this loop.
-        Save = FindIDom<>(*Save, Save->predecessors(), *MDT);
-      else
-        // Push Restore outside of this loop.
-        Restore = FindIDom<>(*Restore, Restore->successors(), *MPDT);
+      if (MLI->getLoopDepth(Save) > MLI->getLoopDepth(Restore)) {
+        // Push Save outside of this loop if immediate dominator is different
+        // from save block. If immediate dominator is not different, bail out. 
+        MachineBasicBlock *IDom = FindIDom<>(*Save, Save->predecessors(), *MDT);
+        if (IDom != Save)
+          Save = IDom;
+        else {
+          Save = nullptr;
+          break;
+        }
+      }
+      else {
+        // Push Restore outside of this loop if immediate post-dominator is
+        // different from restore block. If immediate post-dominator is not
+        // different, bail out. 
+        MachineBasicBlock *IPdom =
+          FindIDom<>(*Restore, Restore->successors(), *MPDT);
+        if (IPdom != Restore)
+          Restore = IPdom; 
+        else {
+          Restore = nullptr;
+          break;
+        }
+      }      
     }
   }
 }

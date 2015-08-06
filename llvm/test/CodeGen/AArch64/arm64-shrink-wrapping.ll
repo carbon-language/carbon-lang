@@ -539,3 +539,32 @@ if.end:
 declare void @abort() #0
 
 attributes #0 = { noreturn nounwind }
+
+; Make sure that we handle infinite loops properly When checking that the Save
+; and Restore blocks are control flow equivalent, the loop searches for the
+; immediate (post) dominator for the (restore) save blocks. When either the Save
+; or Restore block is located in an infinite loop the only immediate (post)
+; dominator is itself. In this case, we cannot perform shrink wrapping, but we
+; should return gracefully and continue compilation.
+; The only condition for this test is the compilation finishes correctly.
+;
+; CHECK-LABEL: infiniteloop
+; CHECK: ret
+define void @infiniteloop() {
+entry:
+  br i1 undef, label %if.then, label %if.end
+
+if.then:
+  %ptr = alloca i32, i32 4
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %sum.03 = phi i32 [ 0, %if.then ], [ %add, %for.body ]
+  %call = tail call i32 bitcast (i32 (...)* @something to i32 ()*)()
+  %add = add nsw i32 %call, %sum.03
+  store i32 %add, i32* %ptr
+  br label %for.body
+
+if.end:
+  ret void
+}
