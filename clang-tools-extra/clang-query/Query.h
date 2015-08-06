@@ -32,6 +32,7 @@ enum QueryKind {
   QK_Match,
   QK_SetBool,
   QK_SetOutputKind,
+  QK_Quit
 };
 
 class QuerySession;
@@ -74,6 +75,14 @@ struct HelpQuery : Query {
   bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
 
   static bool classof(const Query *Q) { return Q->Kind == QK_Help; }
+};
+
+/// Query for "quit".
+struct QuitQuery : Query {
+  QuitQuery() : Query(QK_Quit) {}
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
+
+  static bool classof(const Query *Q) { return Q->Kind == QK_Quit; }
 };
 
 /// Query for "match MATCHER".

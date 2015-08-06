@@ -44,7 +44,14 @@ bool HelpQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
         "  set output (diag|print|dump)      "
         "Set whether to print bindings as diagnostics,\n"
         "                                    "
-        "AST pretty prints or AST dumps.\n\n";
+        "AST pretty prints or AST dumps.\n"
+        "  quit                              "
+        "Terminates the query session.\n\n";
+  return true;
+}
+
+bool QuitQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
+  QS.Terminate = true;
   return true;
 }
 

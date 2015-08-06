@@ -111,6 +111,8 @@ int main(int argc, const char **argv) {
       QueryRef Q = QueryParser::parse(*Line, QS);
       Q->run(llvm::outs(), QS);
       llvm::outs().flush();
+      if (QS.Terminate)
+        break;
     }
   }
 

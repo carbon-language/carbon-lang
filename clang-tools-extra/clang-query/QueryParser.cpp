@@ -142,6 +142,7 @@ enum ParsedQueryKind {
   PQK_Match,
   PQK_Set,
   PQK_Unlet,
+  PQK_Quit
 };
 
 enum ParsedQueryVariable {
@@ -181,6 +182,7 @@ QueryRef QueryParser::doParse() {
                               .Case("match", PQK_Match)
                               .Case("set", PQK_Set)
                               .Case("unlet", PQK_Unlet)
+                              .Case("quit", PQK_Quit)
                               .Default(PQK_Invalid);
 
   switch (QKind) {
@@ -189,6 +191,9 @@ QueryRef QueryParser::doParse() {
 
   case PQK_Help:
     return endQuery(new HelpQuery);
+
+  case PQK_Quit:
+    return endQuery(new QuitQuery);
 
   case PQK_Let: {
     StringRef Name = lexWord();
