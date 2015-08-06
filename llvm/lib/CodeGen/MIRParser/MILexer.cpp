@@ -55,6 +55,28 @@ public:
 
 } // end anonymous namespace
 
+MIToken &MIToken::reset(TokenKind Kind, StringRef Range) {
+  this->Kind = Kind;
+  this->Range = Range;
+  return *this;
+}
+
+MIToken &MIToken::setStringValue(StringRef StrVal) {
+  StringValue = StrVal;
+  return *this;
+}
+
+MIToken &MIToken::setOwnedStringValue(std::string StrVal) {
+  StringValueStorage = std::move(StrVal);
+  StringValue = StringValueStorage;
+  return *this;
+}
+
+MIToken &MIToken::setIntegerValue(APSInt IntVal) {
+  this->IntVal = std::move(IntVal);
+  return *this;
+}
+
 /// Skip the leading whitespace characters and return the updated cursor.
 static Cursor skipWhitespace(Cursor C) {
   while (isspace(C.peek()))
@@ -124,17 +146,18 @@ static Cursor lexName(
   if (C.peek() == '"') {
     if (Cursor R = lexStringConstant(C, ErrorCallback)) {
       StringRef String = Range.upto(R);
-      Token = MIToken(Type, String,
-                      unescapeQuotedString(String.drop_front(PrefixLength)),
-                      PrefixLength);
+      Token.reset(Type, String)
+          .setOwnedStringValue(
+              unescapeQuotedString(String.drop_front(PrefixLength)));
       return R;
     }
-    Token = MIToken(MIToken::Error, Range.remaining());
+    Token.reset(MIToken::Error, Range.remaining());
     return Range;
   }
   while (isIdentifierChar(C.peek()))
     C.advance();
-  Token = MIToken(Type, Range.upto(C), PrefixLength);
+  Token.reset(Type, Range.upto(C))
+      .setStringValue(Range.upto(C).drop_front(PrefixLength));
   return C;
 }
 
@@ -145,7 +168,7 @@ static Cursor maybeLexIntegerType(Cursor C, MIToken &Token) {
   C.advance(); // Skip 'i'
   while (isdigit(C.peek()))
     C.advance();
-  Token = MIToken(MIToken::IntegerType, Range.upto(C));
+  Token.reset(MIToken::IntegerType, Range.upto(C));
   return C;
 }
 
@@ -187,7 +210,8 @@ static Cursor maybeLexIdentifier(Cursor C, MIToken &Token) {
   while (isIdentifierChar(C.peek()))
     C.advance();
   auto Identifier = Range.upto(C);
-  Token = MIToken(getIdentifierKind(Identifier), Identifier);
+  Token.reset(getIdentifierKind(Identifier), Identifier)
+      .setStringValue(Identifier);
   return C;
 }
 
@@ -199,7 +223,7 @@ static Cursor maybeLexMachineBasicBlock(
   auto Range = C;
   C.advance(4); // Skip '%bb.'
   if (!isdigit(C.peek())) {
-    Token = MIToken(MIToken::Error, C.remaining());
+    Token.reset(MIToken::Error, C.remaining());
     ErrorCallback(C.location(), "expected a number after '%bb.'");
     return C;
   }
@@ -214,8 +238,9 @@ static Cursor maybeLexMachineBasicBlock(
     while (isIdentifierChar(C.peek()))
       C.advance();
   }
-  Token = MIToken(MIToken::MachineBasicBlock, Range.upto(C), APSInt(Number),
-                  StringOffset);
+  Token.reset(MIToken::MachineBasicBlock, Range.upto(C))
+      .setIntegerValue(APSInt(Number))
+      .setStringValue(Range.upto(C).drop_front(StringOffset));
   return C;
 }
 
@@ -228,7 +253,7 @@ static Cursor maybeLexIndex(Cursor C, MIToken &Token, StringRef Rule,
   auto NumberRange = C;
   while (isdigit(C.peek()))
     C.advance();
-  Token = MIToken(Kind, Range.upto(C), APSInt(NumberRange.upto(C)));
+  Token.reset(Kind, Range.upto(C)).setIntegerValue(APSInt(NumberRange.upto(C)));
   return C;
 }
 
@@ -249,7 +274,9 @@ static Cursor maybeLexIndexAndName(Cursor C, MIToken &Token, StringRef Rule,
     while (isIdentifierChar(C.peek()))
       C.advance();
   }
-  Token = MIToken(Kind, Range.upto(C), APSInt(Number), StringOffset);
+  Token.reset(Kind, Range.upto(C))
+      .setIntegerValue(APSInt(Number))
+      .setStringValue(Range.upto(C).drop_front(StringOffset));
   return C;
 }
 
@@ -295,8 +322,8 @@ static Cursor lexVirtualRegister(Cursor C, MIToken &Token) {
   auto NumberRange = C;
   while (isdigit(C.peek()))
     C.advance();
-  Token = MIToken(MIToken::VirtualRegister, Range.upto(C),
-                  APSInt(NumberRange.upto(C)));
+  Token.reset(MIToken::VirtualRegister, Range.upto(C))
+      .setIntegerValue(APSInt(NumberRange.upto(C)));
   return C;
 }
 
@@ -309,8 +336,8 @@ static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
   C.advance(); // Skip '%'
   while (isIdentifierChar(C.peek()))
     C.advance();
-  Token = MIToken(MIToken::NamedRegister, Range.upto(C),
-                  /*StringOffset=*/1); // Drop the '%'
+  Token.reset(MIToken::NamedRegister, Range.upto(C))
+      .setStringValue(Range.upto(C).drop_front(1)); // Drop the '%'
   return C;
 }
 
@@ -327,8 +354,8 @@ static Cursor maybeLexGlobalValue(
   auto NumberRange = C;
   while (isdigit(C.peek()))
     C.advance();
-  Token =
-      MIToken(MIToken::GlobalValue, Range.upto(C), APSInt(NumberRange.upto(C)));
+  Token.reset(MIToken::GlobalValue, Range.upto(C))
+      .setIntegerValue(APSInt(NumberRange.upto(C)));
   return C;
 }
 
@@ -354,7 +381,7 @@ static Cursor maybeLexHexFloatingPointLiteral(Cursor C, MIToken &Token) {
     C.advance();
   while (isxdigit(C.peek()))
     C.advance();
-  Token = MIToken(MIToken::FloatingPointLiteral, Range.upto(C));
+  Token.reset(MIToken::FloatingPointLiteral, Range.upto(C));
   return C;
 }
 
@@ -370,7 +397,7 @@ static Cursor lexFloatingPointLiteral(Cursor Range, Cursor C, MIToken &Token) {
     while (isdigit(C.peek()))
       C.advance();
   }
-  Token = MIToken(MIToken::FloatingPointLiteral, Range.upto(C));
+  Token.reset(MIToken::FloatingPointLiteral, Range.upto(C));
   return C;
 }
 
@@ -384,7 +411,7 @@ static Cursor maybeLexNumericalLiteral(Cursor C, MIToken &Token) {
   if (C.peek() == '.')
     return lexFloatingPointLiteral(Range, C, Token);
   StringRef StrVal = Range.upto(C);
-  Token = MIToken(MIToken::IntegerLiteral, StrVal, APSInt(StrVal));
+  Token.reset(MIToken::IntegerLiteral, StrVal).setIntegerValue(APSInt(StrVal));
   return C;
 }
 
@@ -423,7 +450,7 @@ static Cursor maybeLexSymbol(Cursor C, MIToken &Token) {
     return None;
   auto Range = C;
   C.advance(Length);
-  Token = MIToken(Kind, Range.upto(C));
+  Token.reset(Kind, Range.upto(C));
   return C;
 }
 
@@ -432,7 +459,7 @@ StringRef llvm::lexMIToken(
     function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
   auto C = skipWhitespace(Cursor(Source));
   if (C.isEOF()) {
-    Token = MIToken(MIToken::Eof, C.remaining());
+    Token.reset(MIToken::Eof, C.remaining());
     return C.remaining();
   }
 
@@ -467,7 +494,7 @@ StringRef llvm::lexMIToken(
   if (Cursor R = maybeLexSymbol(C, Token))
     return R.remaining();
 
-  Token = MIToken(MIToken::Error, C.remaining());
+  Token.reset(MIToken::Error, C.remaining());
   ErrorCallback(C.location(),
                 Twine("unexpected character '") + Twine(C.peek()) + "'");
   return C.remaining();

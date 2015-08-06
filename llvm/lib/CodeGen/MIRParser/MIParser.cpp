@@ -200,7 +200,7 @@ MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
                    StringRef Source, const PerFunctionMIParsingState &PFS,
                    const SlotMapping &IRSlots)
     : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
-      Token(MIToken::Error, StringRef()), PFS(PFS), IRSlots(IRSlots) {}
+      PFS(PFS), IRSlots(IRSlots) {}
 
 void MIParser::lex() {
   CurrentSource = lexMIToken(
@@ -571,7 +571,7 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
 }
 
 bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
-  auto Source = StringRef(Loc, Token.stringValue().end() - Loc).str();
+  auto Source = StringRef(Loc, Token.range().end() - Loc).str();
   lex();
   SMDiagnostic Err;
   C = parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent());
@@ -681,8 +681,8 @@ bool MIParser::parseGlobalValue(GlobalValue *&GV) {
     const Module *M = MF.getFunction()->getParent();
     GV = M->getNamedValue(Token.stringValue());
     if (!GV)
-      return error(Twine("use of undefined global value '@") +
-                   Token.rawStringValue() + "'");
+      return error(Twine("use of undefined global value '") + Token.range() +
+                   "'");
     break;
   }
   case MIToken::GlobalValue: {
@@ -851,8 +851,7 @@ bool MIParser::parseIRBlock(BasicBlock *&BB, const Function &F) {
     BB = dyn_cast_or_null<BasicBlock>(
         F.getValueSymbolTable().lookup(Token.stringValue()));
     if (!BB)
-      return error(Twine("use of undefined IR block '%ir-block.") +
-                   Token.rawStringValue() + "'");
+      return error(Twine("use of undefined IR block '") + Token.range() + "'");
     break;
   }
   case MIToken::IRBlock: {
@@ -1019,7 +1018,7 @@ bool MIParser::parseMachineOperandAndTargetFlags(MachineOperand &Dest) {
 bool MIParser::parseOperandsOffset(MachineOperand &Op) {
   if (Token.isNot(MIToken::plus) && Token.isNot(MIToken::minus))
     return false;
-  StringRef Sign = Token.stringValue();
+  StringRef Sign = Token.range();
   bool IsNegative = Token.is(MIToken::minus);
   lex();
   if (Token.isNot(MIToken::IntegerLiteral))
@@ -1039,8 +1038,7 @@ bool MIParser::parseIRValue(Value *&V) {
   case MIToken::NamedIRValue: {
     V = MF.getFunction()->getValueSymbolTable().lookup(Token.stringValue());
     if (!V)
-      return error(Twine("use of undefined IR value '%ir.") +
-                   Token.rawStringValue() + "'");
+      return error(Twine("use of undefined IR value '") + Token.range() + "'");
     break;
   }
   // TODO: Parse unnamed IR value references.
