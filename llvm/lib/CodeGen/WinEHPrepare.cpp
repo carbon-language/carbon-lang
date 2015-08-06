@@ -3190,6 +3190,9 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
       if (NumColorsForBB == 1)
         continue;
 
+      assert(!isa<PHINode>(BB->front()) &&
+             "Polychromatic PHI nodes should have been demoted!");
+
       // Create a new basic block and copy instructions into it!
       BasicBlock *CBB = CloneBasicBlock(
           BB, VMap, Twine(".for.", FuncletPadBB->getName()), &F);
@@ -3220,43 +3223,15 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
       // Loop over all instructions, fixing each one as we find it...
       for (Instruction &I : *BB)
         RemapInstruction(&I, VMap, RF_IgnoreMissingEntries);
-
-    // Our PHI nodes have stale predecessors after we have cloned our new blocks
-    // into the CFG.  Fix this by removing the stale predecessors.
-    for (BasicBlock *BB : BlocksInFunclet) {
-      for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-        Instruction *I = BI++;
-        auto *PN = dyn_cast<PHINode>(I);
-        // All the PHI nodes are bunched together at the start of the BB.
-        // Stop once we've hit a non-PHI.
-        if (!PN)
-          break;
-
-        // Create a list of all the incoming PHI values we'd like to remove.
-        // This is done in two steps to avoid iterator invalidation issues.
-        std::vector<unsigned> IndicesToRemove;
-        for (unsigned Idx = 0, E = PN->getNumIncomingValues(); Idx != E;
-             ++Idx) {
-          BasicBlock *PredBB = PN->getIncomingBlock(Idx);
-          if (BlockColors[PredBB].count(FuncletPadBB) == 0)
-            IndicesToRemove.push_back(Idx);
-        }
-        // Remove incoming values in the reverse order to prevent invalidating
-        // *successive* index.
-        for (auto I = IndicesToRemove.rbegin(), E = IndicesToRemove.rend();
-             I != E; ++I)
-          PN->removeIncomingValue(*I);
-      }
-    }
   }
 
   // Clean-up some of the mess we made by removing useles PHI nodes, trivial
   // branches, etc.
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
     BasicBlock *BB = FI++;
-    //SimplifyInstructionsInBlock(BB);
-    //ConstantFoldTerminator(BB, /*DeleteDeadConditions=*/true);
-    //MergeBlockIntoPredecessor(BB);
+    SimplifyInstructionsInBlock(BB);
+    ConstantFoldTerminator(BB, /*DeleteDeadConditions=*/true);
+    MergeBlockIntoPredecessor(BB);
   }
 
   // TODO: Do something about cleanupblocks which branch to implausible
