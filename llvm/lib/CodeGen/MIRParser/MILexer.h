@@ -65,6 +65,7 @@ struct MIToken {
     kw_x86_fp80,
     kw_fp128,
     kw_ppc_fp128,
+    kw_target_flags,
     kw_volatile,
 
     // Identifier tokens

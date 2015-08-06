@@ -70,6 +70,8 @@ class MIParser {
   DenseMap<unsigned, const BasicBlock *> Slots2BasicBlocks;
   /// Maps from target index names to target indices.
   StringMap<int> Names2TargetIndices;
+  /// Maps from direct target flag names to the direct target flag values.
+  StringMap<unsigned> Names2DirectTargetFlags;
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
@@ -120,6 +122,7 @@ public:
   bool parseBlockAddressOperand(MachineOperand &Dest);
   bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
+  bool parseMachineOperandAndTargetFlags(MachineOperand &Dest);
   bool parseOperandsOffset(MachineOperand &Op);
   bool parseIRValue(Value *&V);
   bool parseMemoryOperandFlag(unsigned &Flags);
@@ -181,6 +184,14 @@ private:
   ///
   /// Return true if the name isn't a name of a target index.
   bool getTargetIndex(StringRef Name, int &Index);
+
+  void initNames2DirectTargetFlags();
+
+  /// Try to convert a name of a direct target flag to the corresponding
+  /// target flag.
+  ///
+  /// Return true if the name isn't a name of a direct flag.
+  bool getDirectTargetFlag(StringRef Name, unsigned &Flag);
 };
 
 } // end anonymous namespace
@@ -258,7 +269,7 @@ bool MIParser::parse(MachineInstr *&MI) {
   while (Token.isNot(MIToken::Eof) && Token.isNot(MIToken::kw_debug_location) &&
          Token.isNot(MIToken::coloncolon)) {
     auto Loc = Token.location();
-    if (parseMachineOperand(MO))
+    if (parseMachineOperandAndTargetFlags(MO))
       return true;
     Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
     if (Token.is(MIToken::Eof) || Token.is(MIToken::coloncolon))
@@ -696,7 +707,6 @@ bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
     return true;
   lex();
   Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
-  // TODO: Parse the target flags.
   if (parseOperandsOffset(Dest))
     return true;
   return false;
@@ -711,7 +721,6 @@ bool MIParser::parseConstantPoolIndexOperand(MachineOperand &Dest) {
   if (ConstantInfo == PFS.ConstantPoolSlots.end())
     return error("use of undefined constant '%const." + Twine(ID) + "'");
   lex();
-  // TODO: Parse the target flags.
   Dest = MachineOperand::CreateCPI(ID, /*Offset=*/0);
   if (parseOperandsOffset(Dest))
     return true;
@@ -727,7 +736,6 @@ bool MIParser::parseJumpTableIndexOperand(MachineOperand &Dest) {
   if (JumpTableEntryInfo == PFS.JumpTableSlots.end())
     return error("use of undefined jump table '%jump-table." + Twine(ID) + "'");
   lex();
-  // TODO: Parse target flags.
   Dest = MachineOperand::CreateJTI(JumpTableEntryInfo->second);
   return false;
 }
@@ -736,7 +744,6 @@ bool MIParser::parseExternalSymbolOperand(MachineOperand &Dest) {
   assert(Token.is(MIToken::ExternalSymbol));
   const char *Symbol = MF.createExternalSymbolName(Token.stringValue());
   lex();
-  // TODO: Parse the target flags.
   Dest = MachineOperand::CreateES(Symbol);
   if (parseOperandsOffset(Dest))
     return true;
@@ -889,7 +896,6 @@ bool MIParser::parseBlockAddressOperand(MachineOperand &Dest) {
   lex();
   if (expectAndConsume(MIToken::rparen))
     return true;
-  // TODO: parse the target flags.
   Dest = MachineOperand::CreateBA(BlockAddress::get(F, BB), /*Offset=*/0);
   if (parseOperandsOffset(Dest))
     return true;
@@ -909,7 +915,6 @@ bool MIParser::parseTargetIndexOperand(MachineOperand &Dest) {
   lex();
   if (expectAndConsume(MIToken::rparen))
     return true;
-  // TODO: Parse the target flags.
   Dest = MachineOperand::CreateTargetIndex(unsigned(Index), /*Offset=*/0);
   if (parseOperandsOffset(Dest))
     return true;
@@ -979,6 +984,35 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     // TODO: parse the other machine operands.
     return error("expected a machine operand");
   }
+  return false;
+}
+
+bool MIParser::parseMachineOperandAndTargetFlags(MachineOperand &Dest) {
+  unsigned TF = 0;
+  bool HasTargetFlags = false;
+  if (Token.is(MIToken::kw_target_flags)) {
+    HasTargetFlags = true;
+    lex();
+    if (expectAndConsume(MIToken::lparen))
+      return true;
+    if (Token.isNot(MIToken::Identifier))
+      return error("expected the name of the target flag");
+    if (getDirectTargetFlag(Token.stringValue(), TF))
+      return error("use of undefined target flag '" + Token.stringValue() +
+                   "'");
+    lex();
+    // TODO: Parse target's bit target flags.
+    if (expectAndConsume(MIToken::rparen))
+      return true;
+  }
+  auto Loc = Token.location();
+  if (parseMachineOperand(Dest))
+    return true;
+  if (!HasTargetFlags)
+    return false;
+  if (Dest.isReg())
+    return error(Loc, "register operands can't have target flags");
+  Dest.setTargetFlags(TF);
   return false;
 }
 
@@ -1206,6 +1240,26 @@ bool MIParser::getTargetIndex(StringRef Name, int &Index) {
   if (IndexInfo == Names2TargetIndices.end())
     return true;
   Index = IndexInfo->second;
+  return false;
+}
+
+void MIParser::initNames2DirectTargetFlags() {
+  if (!Names2DirectTargetFlags.empty())
+    return;
+  const auto *TII = MF.getSubtarget().getInstrInfo();
+  assert(TII && "Expected target instruction info");
+  auto Flags = TII->getSerializableDirectMachineOperandTargetFlags();
+  for (const auto &I : Flags)
+    Names2DirectTargetFlags.insert(
+        std::make_pair(StringRef(I.second), I.first));
+}
+
+bool MIParser::getDirectTargetFlag(StringRef Name, unsigned &Flag) {
+  initNames2DirectTargetFlags();
+  auto FlagInfo = Names2DirectTargetFlags.find(Name);
+  if (FlagInfo == Names2DirectTargetFlags.end())
+    return true;
+  Flag = FlagInfo->second;
   return false;
 }
 

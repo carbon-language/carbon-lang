@@ -1,0 +1,26 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  @G = external global i32
+
+  define i32 @inc() {
+  entry:
+    %a = load i32, i32* @G
+    %b = add i32 %a, 1
+    ret i32 %b
+  }
+
+...
+---
+name: inc
+body:
+  - id: 0
+    name: entry
+    instructions:
+# CHECK: [[@LINE+1]]:47: register operands can't have target flags
+      - '%rax = MOV64rm target-flags(x86-got) %rip, 1, _, @G, _'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
+      - 'RETQ %eax'
+...

@@ -6581,6 +6581,41 @@ void X86InstrInfo::genAlternativeCodeSequence(
   return;
 }
 
+std::pair<unsigned, unsigned>
+X86InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
+  return std::make_pair(TF, 0u);
+}
+
+ArrayRef<std::pair<unsigned, const char *>>
+X86InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
+  using namespace X86II;
+  static std::pair<unsigned, const char *> TargetFlags[] = {
+      {MO_GOT_ABSOLUTE_ADDRESS, "x86-got-absolute-address"},
+      {MO_PIC_BASE_OFFSET, "x86-pic-base-offset"},
+      {MO_GOT, "x86-got"},
+      {MO_GOTOFF, "x86-gotoff"},
+      {MO_GOTPCREL, "x86-gotpcrel"},
+      {MO_PLT, "x86-plt"},
+      {MO_TLSGD, "x86-tlsgd"},
+      {MO_TLSLD, "x86-tlsld"},
+      {MO_TLSLDM, "x86-tlsldm"},
+      {MO_GOTTPOFF, "x86-gottpoff"},
+      {MO_INDNTPOFF, "x86-indntpoff"},
+      {MO_TPOFF, "x86-tpoff"},
+      {MO_DTPOFF, "x86-dtpoff"},
+      {MO_NTPOFF, "x86-ntpoff"},
+      {MO_GOTNTPOFF, "x86-gotntpoff"},
+      {MO_DLLIMPORT, "x86-dllimport"},
+      {MO_DARWIN_STUB, "x86-darwin-stub"},
+      {MO_DARWIN_NONLAZY, "x86-darwin-nonlazy"},
+      {MO_DARWIN_NONLAZY_PIC_BASE, "x86-darwin-nonlazy-pic-base"},
+      {MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE, "x86-darwin-hidden-nonlazy-pic-base"},
+      {MO_TLVP, "x86-tlvp"},
+      {MO_TLVP_PIC_BASE, "x86-tlvp-pic-base"},
+      {MO_SECREL, "x86-secrel"}};
+  return makeArrayRef(TargetFlags);
+}
+
 namespace {
   /// Create Global Base Reg pass. This initializes the PIC
   /// global base register for x86-32.

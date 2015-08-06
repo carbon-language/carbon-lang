@@ -1272,6 +1272,23 @@ public:
     return None;
   }
 
+  /// Decompose the machine operand's target flags into two values - the direct
+  /// target flag value and any of bit flags that are applied.
+  virtual std::pair<unsigned, unsigned>
+  decomposeMachineOperandsTargetFlags(unsigned /*TF*/) const {
+    return std::make_pair(0u, 0u);
+  }
+
+  /// Return an array that contains the direct target flag values and their
+  /// names.
+  ///
+  /// MIR Serialization is able to serialize only the target flags that are
+  /// defined by this method.
+  virtual ArrayRef<std::pair<unsigned, const char *>>
+  getSerializableDirectMachineOperandTargetFlags() const {
+    return None;
+  }
+
 private:
   unsigned CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };

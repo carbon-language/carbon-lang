@@ -51,6 +51,13 @@
     ret i32 %b
   }
 
+  define i32 @tf() {
+  entry:
+    %a = load i32, i32* @G
+    %b = add i32 %a, 1
+    ret i32 %b
+  }
+
 ...
 ---
 # CHECK: name: inc
@@ -128,5 +135,18 @@ body:
       - '%eax = MOV32rm killed %rax, 1, _, 0, _'
       - '%rcx = MOV64rm %rip, 1, _, @$.-B - 8, _'
       - 'MOV32mr killed %rcx, 1, _, 0, _, %eax'
+      - 'RETQ %eax'
+...
+---
+# CHECK: name: tf
+name: tf
+body:
+  - id: 0
+    name: entry
+    instructions:
+# CHECK: %rax = MOV64rm %rip, 1, _, target-flags(x86-gotpcrel) @G, _
+      - '%rax = MOV64rm %rip, 1, _, target-flags(x86-gotpcrel) @G, _'
+      - '%eax = MOV32rm %rax, 1, _, 0, _'
+      - '%eax = INC32r %eax, implicit-def %eflags'
       - 'RETQ %eax'
 ...
