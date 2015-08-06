@@ -6185,7 +6185,7 @@ void ASTReader::FindExternalLexicalDecls(
     SmallVectorImpl<Decl *> &Decls) {
   bool PredefsVisited[NUM_PREDEF_DECL_IDS] = {};
 
-  auto Visit = [&] (ModuleFile *M, const LexicalContents &LexicalDecls) {
+  auto Visit = [&] (ModuleFile *M, LexicalContents LexicalDecls) {
     assert(LexicalDecls.size() % 2 == 0 && "expected an even number of entries");
     for (int I = 0, N = LexicalDecls.size(); I != N; I += 2) {
       auto K = (Decl::Kind)+LexicalDecls[I];
