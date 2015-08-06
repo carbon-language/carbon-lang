@@ -19,6 +19,7 @@
 #include <list>
 #include <iosfwd>
 #include <vector>
+#include <unordered_set>
 
 // Other libraries and framework includes
 // Project includes
@@ -102,6 +103,9 @@ public:
     
     void
     SetDetachKeepsStopped (bool keep_stopped);
+
+    bool
+    GetWarningsOptimization () const;
 
 protected:
 
@@ -765,6 +769,14 @@ public:
         eBroadcastInternalStateControlStop = (1<<0),
         eBroadcastInternalStateControlPause = (1<<1),
         eBroadcastInternalStateControlResume = (1<<2)
+    };
+
+    //------------------------------------------------------------------
+    /// Process warning types.
+    //------------------------------------------------------------------
+    enum Warnings
+    {
+        eWarningsOptimization = 1
     };
     
     typedef Range<lldb::addr_t, lldb::addr_t> LoadRange;
@@ -1938,6 +1950,33 @@ public:
     {
         return StructuredData::ObjectSP();
     }
+
+    //------------------------------------------------------------------
+    /// Print a user-visible warning one time per Process
+    ///
+    /// A facility for printing a warning to the user once per repeat_key.
+    ///
+    /// warning_type is from the Process::Warnings enums.
+    /// repeat_key is a pointer value that will be used to ensure that the
+    /// warning message is not printed multiple times.  For instance, with a
+    /// warning about a function being optimized, you can pass the CompileUnit
+    /// pointer to have the warning issued for only the first function in a
+    /// CU, or the Function pointer to have it issued once for every function,
+    /// or a Module pointer to have it issued once per Module.
+    ///
+    /// @param [in] warning_type
+    ///     One of the types defined in Process::Warnings.
+    ///
+    /// @param [in] repeat_key
+    ///     A pointer value used to ensure that the warning is only printed once.
+    ///     May be nullptr, indicating that the warning is printed unconditionally
+    ///     every time.
+    ///
+    /// @param [in] fmt
+    ///     printf style format string
+    //------------------------------------------------------------------
+    void
+    PrintWarning (uint64_t warning_type, void *repeat_key, const char *fmt, ...) __attribute__((format(printf, 4, 5)));
 
 protected:
     
@@ -3243,6 +3282,8 @@ protected:
     // Type definitions
     //------------------------------------------------------------------
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection;
+    typedef std::unordered_set<void *> WarningsPointerSet;
+    typedef std::map<uint64_t, WarningsPointerSet> WarningsCollection;
 
     struct PreResumeCallbackAndBaton
     {
@@ -3322,6 +3363,7 @@ protected:
     std::map<lldb::addr_t,lldb::addr_t> m_resolved_indirect_addresses;
     bool m_destroy_in_process;
     bool m_can_interpret_function_calls; // Some targets, e.g the OSX kernel, don't support the ability to modify the stack.
+    WarningsCollection          m_warnings_issued;  // A set of object pointers which have already had warnings printed
     
     enum {
         eCanJITDontKnow= 0,

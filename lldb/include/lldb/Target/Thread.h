@@ -495,11 +495,7 @@ public:
     }
 
     lldb::StackFrameSP
-    GetSelectedFrame ()
-    {
-        lldb::StackFrameListSP stack_frame_list_sp(GetStackFrameList());
-        return stack_frame_list_sp->GetFrameAtIndex (stack_frame_list_sp->GetSelectedFrameIndex());
-    }
+    GetSelectedFrame ();
 
     uint32_t
     SetSelectedFrame (lldb_private::StackFrame *frame, bool broadcast = false);
@@ -1327,6 +1323,9 @@ protected:
     lldb::StackFrameListSP
     GetStackFrameList ();
     
+
+    void
+    FunctionOptimizationWarning (lldb_private::StackFrame *frame);
 
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these

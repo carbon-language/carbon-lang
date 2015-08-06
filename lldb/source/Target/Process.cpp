@@ -115,6 +115,7 @@ g_properties[] =
     { "stop-on-sharedlibrary-events" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, stop when a shared library is loaded or unloaded." },
     { "detach-keeps-stopped" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, detach will attempt to keep the process stopped." },
     { "memory-cache-line-size" , OptionValue::eTypeUInt64, false, 512, NULL, NULL, "The memory cache line size" },
+    { "optimization-warnings" , OptionValue::eTypeBoolean, false, true, NULL, NULL, "If true, warn when stopped in code that is optimized where stepping and variable availability may not behave as expected." },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
 };
 
@@ -126,7 +127,8 @@ enum {
     ePropertyPythonOSPluginPath,
     ePropertyStopOnSharedLibraryEvents,
     ePropertyDetachKeepsStopped,
-    ePropertyMemCacheLineSize
+    ePropertyMemCacheLineSize,
+    ePropertyWarningOptimization
 };
 
 ProcessProperties::ProcessProperties (lldb_private::Process *process) :
@@ -261,6 +263,13 @@ ProcessProperties::SetDetachKeepsStopped (bool stop)
 {
     const uint32_t idx = ePropertyDetachKeepsStopped;
     m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, stop);
+}
+
+bool
+ProcessProperties::GetWarningsOptimization () const
+{
+    const uint32_t idx = ePropertyWarningOptimization;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
 }
 
 void
@@ -755,6 +764,7 @@ Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_s
     m_last_broadcast_state (eStateInvalid),
     m_destroy_in_process (false),
     m_can_interpret_function_calls(false),
+    m_warnings_issued (),
     m_can_jit(eCanJITDontKnow)
 {
     CheckInWithManager ();
@@ -6539,6 +6549,50 @@ Process::ModulesDidLoad (ModuleList &module_list)
         LanguageRuntimeSP language_runtime_sp = pair.second;
         if (language_runtime_sp)
             language_runtime_sp->ModulesDidLoad(module_list);
+    }
+}
+
+void
+Process::PrintWarning (uint64_t warning_type, void *repeat_key, const char *fmt, ...)
+{
+    bool print_warning = true;
+
+    StreamSP stream_sp = GetTarget().GetDebugger().GetAsyncOutputStream();
+    if (stream_sp.get() == nullptr)
+        return;
+    if (warning_type == eWarningsOptimization
+        && GetWarningsOptimization() == false)
+    {
+        return;
+    }
+
+    if (repeat_key != nullptr)
+    {
+        WarningsCollection::iterator it = m_warnings_issued.find (warning_type);
+        if (it == m_warnings_issued.end())
+        {
+            m_warnings_issued[warning_type] = WarningsPointerSet();
+            m_warnings_issued[warning_type].insert (repeat_key);
+        }
+        else
+        {
+            if (it->second.find (repeat_key) != it->second.end())
+            {
+                print_warning = false;
+            }
+            else
+            {
+                it->second.insert (repeat_key);
+            }
+        }
+    }
+
+    if (print_warning)
+    {
+        va_list args;
+        va_start (args, fmt);
+        stream_sp->PrintfVarArg (fmt, args);
+        va_end (args);
     }
 }
 
