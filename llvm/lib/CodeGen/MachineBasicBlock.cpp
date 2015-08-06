@@ -16,7 +16,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -40,9 +39,8 @@ using namespace llvm;
 #define DEBUG_TYPE "codegen"
 
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
-    : BB(bb), Number(-1), AreSuccWeightsNormalized(false), xParent(&mf),
-      Alignment(0), IsLandingPad(false), AddressTaken(false),
-      CachedMCSymbol(nullptr) {
+  : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false),
+    AddressTaken(false), CachedMCSymbol(nullptr) {
   Insts.Parent = this;
 }
 
@@ -483,10 +481,8 @@ void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ, uint32_t weight) {
   if (weight != 0 && Weights.empty())
     Weights.resize(Successors.size());
 
-  if (weight != 0 || !Weights.empty()) {
+  if (weight != 0 || !Weights.empty())
     Weights.push_back(weight);
-    AreSuccWeightsNormalized = false;
-  }
 
    Successors.push_back(succ);
    succ->addPredecessor(this);
@@ -1100,25 +1096,7 @@ uint32_t MachineBasicBlock::getSuccWeight(const_succ_iterator Succ) const {
 void MachineBasicBlock::setSuccWeight(succ_iterator I, uint32_t weight) {
   if (Weights.empty())
     return;
-  auto WeightIter = getWeightIterator(I);
-  uint32_t OldWeight = *WeightIter;
-  *WeightIter = weight;
-  if (weight > OldWeight)
-    AreSuccWeightsNormalized = false;
-}
-
-/// Normalize all succesor weights so that the sum of them does not exceed
-/// UINT32_MAX. Return true if the weights are modified and false otherwise.
-/// Note that weights that are modified after calling this function are not
-/// guaranteed to be normalized.
-bool MachineBasicBlock::normalizeSuccWeights() {
-  if (!AreSuccWeightsNormalized) {
-    uint32_t Scale =
-        MachineBranchProbabilityInfo::normalizeEdgeWeights(Weights);
-    AreSuccWeightsNormalized = true;
-    return Scale != 1;
-  }
-  return false;
+  *getWeightIterator(I) = weight;
 }
 
 /// getWeightIterator - Return wight iterator corresonding to the I successor

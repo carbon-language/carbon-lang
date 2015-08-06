@@ -361,7 +361,8 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
   // improve the MBPI interface to efficiently support query patterns such as
   // this.
   uint32_t BestWeight = 0;
-  uint32_t SumWeight = MBPI->getSumForBlock(BB);
+  uint32_t WeightScale = 0;
+  uint32_t SumWeight = MBPI->getSumForBlock(BB, WeightScale);
   DEBUG(dbgs() << "Attempting merge from: " << getBlockName(BB) << "\n");
   for (MachineBasicBlock *Succ : BB->successors()) {
     if (BlockFilter && !BlockFilter->count(Succ))
@@ -377,7 +378,7 @@ MachineBlockPlacement::selectBestSuccessor(MachineBasicBlock *BB,
     }
 
     uint32_t SuccWeight = MBPI->getEdgeWeight(BB, Succ);
-    BranchProbability SuccProb(SuccWeight, SumWeight);
+    BranchProbability SuccProb(SuccWeight / WeightScale, SumWeight);
 
     // If we outline optional branches, look whether Succ is unavoidable, i.e.
     // dominates all terminators of the MachineFunction. If it does, other
@@ -674,7 +675,8 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F, MachineLoop &L,
     // FIXME: Due to the performance of the probability and weight routines in
     // the MBPI analysis, we use the internal weights and manually compute the
     // probabilities to avoid quadratic behavior.
-    uint32_t SumWeight = MBPI->getSumForBlock(MBB);
+    uint32_t WeightScale = 0;
+    uint32_t SumWeight = MBPI->getSumForBlock(MBB, WeightScale);
     for (MachineBasicBlock *Succ : MBB->successors()) {
       if (Succ->isLandingPad())
         continue;
@@ -703,7 +705,7 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F, MachineLoop &L,
           BlocksExitingToOuterLoop.insert(MBB);
       }
 
-      BranchProbability SuccProb(SuccWeight, SumWeight);
+      BranchProbability SuccProb(SuccWeight / WeightScale, SumWeight);
       BlockFrequency ExitEdgeFreq = MBFI->getBlockFreq(MBB) * SuccProb;
       DEBUG(dbgs() << "    exiting: " << getBlockName(MBB) << " -> "
                    << getBlockName(Succ) << " [L:" << SuccLoopDepth << "] (";

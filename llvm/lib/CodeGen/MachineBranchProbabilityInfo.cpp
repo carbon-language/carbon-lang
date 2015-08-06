@@ -28,35 +28,36 @@ char MachineBranchProbabilityInfo::ID = 0;
 
 void MachineBranchProbabilityInfo::anchor() { }
 
-uint32_t
-MachineBranchProbabilityInfo::getSumForBlock(MachineBasicBlock *MBB) const {
-  // Normalize the weights of MBB's all successors so that the sum is guaranteed
-  // to be no greater than UINT32_MAX.
-  MBB->normalizeSuccWeights();
-
-  SmallVector<uint32_t, 8> Weights;
+uint32_t MachineBranchProbabilityInfo::
+getSumForBlock(const MachineBasicBlock *MBB, uint32_t &Scale) const {
+  // First we compute the sum with 64-bits of precision, ensuring that cannot
+  // overflow by bounding the number of weights considered. Hopefully no one
+  // actually needs 2^32 successors.
+  assert(MBB->succ_size() < UINT32_MAX);
+  uint64_t Sum = 0;
+  Scale = 1;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
-                                              E = MBB->succ_end();
-       I != E; ++I)
-    Weights.push_back(getEdgeWeight(MBB, I));
+       E = MBB->succ_end(); I != E; ++I) {
+    uint32_t Weight = getEdgeWeight(MBB, I);
+    Sum += Weight;
+  }
 
-  return std::accumulate(Weights.begin(), Weights.end(), 0u);
-}
+  // If the computed sum fits in 32-bits, we're done.
+  if (Sum <= UINT32_MAX)
+    return Sum;
 
-uint32_t
-MachineBranchProbabilityInfo::getSumForBlock(const MachineBasicBlock *MBB,
-                                             uint32_t &Scale) const {
-  SmallVector<uint32_t, 8> Weights;
+  // Otherwise, compute the scale necessary to cause the weights to fit, and
+  // re-sum with that scale applied.
+  assert((Sum / UINT32_MAX) < UINT32_MAX);
+  Scale = (Sum / UINT32_MAX) + 1;
+  Sum = 0;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
-                                              E = MBB->succ_end();
-       I != E; ++I)
-    Weights.push_back(getEdgeWeight(MBB, I));
-
-  if (MBB->areSuccWeightsNormalized())
-    Scale = 1;
-  else
-    Scale = MachineBranchProbabilityInfo::normalizeEdgeWeights(Weights);
-  return std::accumulate(Weights.begin(), Weights.end(), 0u);
+       E = MBB->succ_end(); I != E; ++I) {
+    uint32_t Weight = getEdgeWeight(MBB, I);
+    Sum += Weight / Scale;
+  }
+  assert(Sum <= UINT32_MAX);
+  return Sum;
 }
 
 uint32_t MachineBranchProbabilityInfo::
