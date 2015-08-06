@@ -28,7 +28,7 @@
 
 namespace llvm {
 
-/// BasicAliasAnalysis - This is the primary alias analysis implementation.
+/// This is the primary alias analysis implementation.
 struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
   static char ID; // Class identification, replacement for typeinfo
 
@@ -86,25 +86,22 @@ struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
   ModRefInfo getModRefInfo(ImmutableCallSite CS1,
                            ImmutableCallSite CS2) override;
 
-  /// pointsToConstantMemory - Chase pointers until we find a (constant
-  /// global) or not.
+  /// Chases pointers until we find a (constant global) or not.
   bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
 
   /// Get the location associated with a pointer argument of a callsite.
   ModRefInfo getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) override;
 
-  /// getModRefBehavior - Return the behavior when calling the given
-  /// call site.
+  /// Returns the behavior when calling the given call site.
   FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
 
-  /// getModRefBehavior - Return the behavior when calling the given function.
-  /// For use when the call site is not known.
+  /// Returns the behavior when calling the given function. For use when the
+  /// call site is not known.
   FunctionModRefBehavior getModRefBehavior(const Function *F) override;
 
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
+  /// This method is used when a pass implements an analysis interface through
+  /// multiple inheritance.  If needed, it should override this to adjust the
+  /// this pointer as needed for the specified pass info.
   void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &AliasAnalysis::ID)
       return (AliasAnalysis *)this;
@@ -129,16 +126,18 @@ private:
     }
   };
 
-  // AliasCache - Track alias queries to guard against recursion.
+  /// Track alias queries to guard against recursion.
   typedef std::pair<MemoryLocation, MemoryLocation> LocPair;
   typedef SmallDenseMap<LocPair, AliasResult, 8> AliasCacheTy;
   AliasCacheTy AliasCache;
 
-  /// \brief Track phi nodes we have visited. When interpret "Value" pointer
-  /// equality as value equality we need to make sure that the "Value" is not
-  /// part of a cycle. Otherwise, two uses could come from different
-  /// "iterations" of a cycle and see different values for the same "Value"
-  /// pointer.
+  /// Tracks phi nodes we have visited.
+  ///
+  /// When interpret "Value" pointer equality as value equality we need to make
+  /// sure that the "Value" is not part of a cycle. Otherwise, two uses could
+  /// come from different "iterations" of a cycle and see different values for
+  /// the same "Value" pointer.
+  ///
   /// The following example shows the problem:
   ///   %p = phi(%alloca1, %addr2)
   ///   %l = load %ptr
@@ -148,7 +147,7 @@ private:
   ///   store %l, ...
   SmallPtrSet<const BasicBlock *, 8> VisitedPhiBBs;
 
-  // Visited - Track instructions visited by pointsToConstantMemory.
+  /// Tracks instructions visited by pointsToConstantMemory.
   SmallPtrSet<const Value *, 16> Visited;
 
   static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
@@ -162,36 +161,20 @@ private:
                          bool &MaxLookupReached, const DataLayout &DL,
                          AssumptionCache *AC, DominatorTree *DT);
 
-  /// \brief Check whether two Values can be considered equivalent.
-  ///
-  /// In addition to pointer equivalence of \p V1 and \p V2 this checks
-  /// whether they can not be part of a cycle in the value graph by looking at
-  /// all visited phi nodes an making sure that the phis cannot reach the
-  /// value. We have to do this because we are looking through phi nodes (That
-  /// is we say noalias(V, phi(VA, VB)) if noalias(V, VA) and noalias(V, VB).
   bool isValueEqualInPotentialCycles(const Value *V1, const Value *V2);
 
-  /// \brief Dest and Src are the variable indices from two decomposed
-  /// GetElementPtr instructions GEP1 and GEP2 which have common base
-  /// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
-  /// difference between the two pointers.
   void GetIndexDifference(SmallVectorImpl<VariableGEPIndex> &Dest,
                           const SmallVectorImpl<VariableGEPIndex> &Src);
 
-  // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
-  // instruction against another.
   AliasResult aliasGEP(const GEPOperator *V1, uint64_t V1Size,
                        const AAMDNodes &V1AAInfo, const Value *V2,
                        uint64_t V2Size, const AAMDNodes &V2AAInfo,
                        const Value *UnderlyingV1, const Value *UnderlyingV2);
 
-  // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI
-  // instruction against another.
   AliasResult aliasPHI(const PHINode *PN, uint64_t PNSize,
                        const AAMDNodes &PNAAInfo, const Value *V2,
                        uint64_t V2Size, const AAMDNodes &V2AAInfo);
 
-  /// aliasSelect - Disambiguate a Select instruction against another value.
   AliasResult aliasSelect(const SelectInst *SI, uint64_t SISize,
                           const AAMDNodes &SIAAInfo, const Value *V2,
                           uint64_t V2Size, const AAMDNodes &V2AAInfo);

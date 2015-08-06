@@ -65,8 +65,8 @@ static const unsigned MaxLookupSearchDepth = 6;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-/// isNonEscapingLocalObject - Return true if the pointer is to a function-local
-/// object that never escapes from the function.
+/// Returns true if the pointer is to a function-local object that never
+/// escapes from the function.
 static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
   if (isa<AllocaInst>(V) || isNoAliasCall(V))
@@ -90,8 +90,8 @@ static bool isNonEscapingLocalObject(const Value *V) {
   return false;
 }
 
-/// isEscapeSource - Return true if the pointer is one which would have
-/// been considered an escape by isNonEscapingLocalObject.
+/// Returns true if the pointer is one which would have been considered an
+/// escape by isNonEscapingLocalObject.
 static bool isEscapeSource(const Value *V) {
   if (isa<CallInst>(V) || isa<InvokeInst>(V) || isa<Argument>(V))
     return true;
@@ -105,8 +105,7 @@ static bool isEscapeSource(const Value *V) {
   return false;
 }
 
-/// getObjectSize - Return the size of the object specified by V, or
-/// UnknownSize if unknown.
+/// Returns the size of the object specified by V, or UnknownSize if unknown.
 static uint64_t getObjectSize(const Value *V, const DataLayout &DL,
                               const TargetLibraryInfo &TLI,
                               bool RoundToAlign = false) {
@@ -116,8 +115,8 @@ static uint64_t getObjectSize(const Value *V, const DataLayout &DL,
   return MemoryLocation::UnknownSize;
 }
 
-/// isObjectSmallerThan - Return true if we can prove that the object specified
-/// by V is smaller than Size.
+/// Returns true if we can prove that the object specified by V is smaller than
+/// Size.
 static bool isObjectSmallerThan(const Value *V, uint64_t Size,
                                 const DataLayout &DL,
                                 const TargetLibraryInfo &TLI) {
@@ -157,8 +156,7 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
   return ObjectSize != MemoryLocation::UnknownSize && ObjectSize < Size;
 }
 
-/// isObjectSize - Return true if we can prove that the object specified
-/// by V has size Size.
+/// Returns true if we can prove that the object specified by V has size Size.
 static bool isObjectSize(const Value *V, uint64_t Size, const DataLayout &DL,
                          const TargetLibraryInfo &TLI) {
   uint64_t ObjectSize = getObjectSize(V, DL, TLI);
@@ -169,11 +167,13 @@ static bool isObjectSize(const Value *V, uint64_t Size, const DataLayout &DL,
 // GetElementPtr Instruction Decomposition and Analysis
 //===----------------------------------------------------------------------===//
 
-/// GetLinearExpression - Analyze the specified value as a linear expression:
-/// "A*V + B", where A and B are constant integers.  Return the scale and offset
-/// values as APInts and return V as a Value*, and return whether we looked
-/// through any sign or zero extends.  The incoming Value is known to have
-/// IntegerType and it may already be sign or zero extended.
+/// Analyzes the specified value as a linear expression: "A*V + B", where A and
+/// B are constant integers.
+///
+/// Returns the scale and offset values as APInts and return V as a Value*, and
+/// return whether we looked through any sign or zero extends.  The incoming
+/// Value is known to have IntegerType and it may already be sign or zero
+/// extended.
 ///
 /// Note that this looks through extends, so the high bits may not be
 /// represented in the result.
@@ -259,21 +259,19 @@ static bool isObjectSize(const Value *V, uint64_t Size, const DataLayout &DL,
   return V;
 }
 
-/// DecomposeGEPExpression - If V is a symbolic pointer expression, decompose it
-/// into a base pointer with a constant offset and a number of scaled symbolic
-/// offsets.
+/// If V is a symbolic pointer expression, decompose it into a base pointer
+/// with a constant offset and a number of scaled symbolic offsets.
 ///
-/// The scaled symbolic offsets (represented by pairs of a Value* and a scale in
-/// the VarIndices vector) are Value*'s that are known to be scaled by the
-/// specified amount, but which may have other unrepresented high bits. As such,
-/// the gep cannot necessarily be reconstructed from its decomposed form.
+/// The scaled symbolic offsets (represented by pairs of a Value* and a scale
+/// in the VarIndices vector) are Value*'s that are known to be scaled by the
+/// specified amount, but which may have other unrepresented high bits. As
+/// such, the gep cannot necessarily be reconstructed from its decomposed form.
 ///
 /// When DataLayout is around, this function is capable of analyzing everything
 /// that GetUnderlyingObject can look through. To be able to do that
 /// GetUnderlyingObject and DecomposeGEPExpression must use the same search
-/// depth (MaxLookupSearchDepth).
-/// When DataLayout not is around, it just looks through pointer casts.
-///
+/// depth (MaxLookupSearchDepth). When DataLayout not is around, it just looks
+/// through pointer casts.
 /*static*/ const Value *BasicAliasAnalysis::DecomposeGEPExpression(
     const Value *V, int64_t &BaseOffs,
     SmallVectorImpl<VariableGEPIndex> &VarIndices, bool &MaxLookupReached,
@@ -425,9 +423,9 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();
 }
 
-/// pointsToConstantMemory - Returns whether the given pointer value
-/// points to memory that is local to the function, with global constants being
-/// considered local to all functions.
+/// Returns whether the given pointer value points to memory that is local to
+/// the function, with global constants being considered local to all
+/// functions.
 bool BasicAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
                                                 bool OrLocal) {
   assert(Visited.empty() && "Visited must be cleared after use!");
@@ -505,7 +503,7 @@ static bool isMemsetPattern16(const Function *MS,
   return false;
 }
 
-/// getModRefBehavior - Return the behavior when calling the given call site.
+/// Returns the behavior when calling the given call site.
 FunctionModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   if (CS.doesNotAccessMemory())
@@ -526,8 +524,8 @@ BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
   return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
 }
 
-/// getModRefBehavior - Return the behavior when calling the given function.
-/// For use when the call site is not known.
+/// Returns the behavior when calling the given function. For use when the call
+/// site is not known.
 FunctionModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   // If the function declares it doesn't access memory, we can't do better.
@@ -601,10 +599,12 @@ bool BasicAliasAnalysis::doInitialization(Module &M) {
   return true;
 }
 
-/// getModRefInfo - Check to see if the specified callsite can clobber the
-/// specified memory object.  Since we only look at local properties of this
-/// function, we really can't say much about this query.  We do, however, use
-/// simple "address taken" analysis on local objects.
+/// Checks to see if the specified callsite can clobber the specified memory
+/// object.
+///
+/// Since we only look at local properties of this function, we really can't
+/// say much about this query.  We do, however, use simple "address taken"
+/// analysis on local objects.
 ModRefInfo BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
                                              const MemoryLocation &Loc) {
   assert(notDifferentParent(CS.getInstruction(), Loc.Ptr) &&
@@ -674,8 +674,8 @@ ModRefInfo BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
 
-/// \brief Provide ad-hoc rules to disambiguate accesses through two GEP
-/// operators, both having the exact same pointer operand.
+/// Provide ad-hoc rules to disambiguate accesses through two GEP operators,
+/// both having the exact same pointer operand.
 static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
                                             uint64_t V1Size,
                                             const GEPOperator *GEP2,
@@ -768,11 +768,12 @@ static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
   return MayAlias;
 }
 
-/// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
-/// against another pointer.  We know that V1 is a GEP, but we don't know
-/// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, DL),
-/// UnderlyingV2 is the same for V2.
+/// Provides a bunch of ad-hoc rules to disambiguate a GEP instruction against
+/// another pointer.
 ///
+/// We know that V1 is a GEP, but we don't know anything about V2.
+/// UnderlyingV1 is GetUnderlyingObject(GEP1, DL), UnderlyingV2 is the same for
+/// V2.
 AliasResult BasicAliasAnalysis::aliasGEP(
     const GEPOperator *GEP1, uint64_t V1Size, const AAMDNodes &V1AAInfo,
     const Value *V2, uint64_t V2Size, const AAMDNodes &V2AAInfo,
@@ -1041,8 +1042,8 @@ static AliasResult MergeAliasResults(AliasResult A, AliasResult B) {
   return MayAlias;
 }
 
-/// aliasSelect - Provide a bunch of ad-hoc rules to disambiguate a Select
-/// instruction against another.
+/// Provides a bunch of ad-hoc rules to disambiguate a Select instruction
+/// against another.
 AliasResult BasicAliasAnalysis::aliasSelect(const SelectInst *SI,
                                             uint64_t SISize,
                                             const AAMDNodes &SIAAInfo,
@@ -1074,8 +1075,8 @@ AliasResult BasicAliasAnalysis::aliasSelect(const SelectInst *SI,
   return MergeAliasResults(ThisAlias, Alias);
 }
 
-// aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
-// against another.
+/// Provide a bunch of ad-hoc rules to disambiguate a PHI instruction against
+/// another.
 AliasResult BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
                                          const AAMDNodes &PNAAInfo,
                                          const Value *V2, uint64_t V2Size,
@@ -1180,9 +1181,8 @@ AliasResult BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
   return Alias;
 }
 
-// aliasCheck - Provide a bunch of ad-hoc rules to disambiguate in common cases,
-// such as array references.
-//
+/// Provideis a bunch of ad-hoc rules to disambiguate in common cases, such as
+/// array references.
 AliasResult BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
                                            AAMDNodes V1AAInfo, const Value *V2,
                                            uint64_t V2Size,
@@ -1336,6 +1336,13 @@ AliasResult BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   return AliasCache[Locs] = Result;
 }
 
+/// Check whether two Values can be considered equivalent.
+///
+/// In addition to pointer equivalence of \p V1 and \p V2 this checks whether
+/// they can not be part of a cycle in the value graph by looking at all
+/// visited phi nodes an making sure that the phis cannot reach the value. We
+/// have to do this because we are looking through phi nodes (That is we say
+/// noalias(V, phi(VA, VB)) if noalias(V, VA) and noalias(V, VB).
 bool BasicAliasAnalysis::isValueEqualInPotentialCycles(const Value *V,
                                                        const Value *V2) {
   if (V != V2)
@@ -1368,10 +1375,10 @@ bool BasicAliasAnalysis::isValueEqualInPotentialCycles(const Value *V,
   return true;
 }
 
-/// GetIndexDifference - Dest and Src are the variable indices from two
-/// decomposed GetElementPtr instructions GEP1 and GEP2 which have common base
-/// pointers.  Subtract the GEP2 indices from GEP1 to find the symbolic
-/// difference between the two pointers.
+/// Computes the symbolic difference between two de-composed GEPs.
+///
+/// Dest and Src are the variable indices from two decomposed GetElementPtr
+/// instructions GEP1 and GEP2 which have common base pointers.
 void BasicAliasAnalysis::GetIndexDifference(
     SmallVectorImpl<VariableGEPIndex> &Dest,
     const SmallVectorImpl<VariableGEPIndex> &Src) {
