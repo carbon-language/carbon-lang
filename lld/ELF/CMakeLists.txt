@@ -6,6 +6,7 @@ add_llvm_library(lldELF2
   Chunks.cpp
   Driver.cpp
   DriverUtils.cpp
+  Error.cpp
   InputFiles.cpp
   SymbolTable.cpp
   Symbols.cpp

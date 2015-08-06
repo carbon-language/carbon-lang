@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Chunks.h"
-#include "Driver.h"
+#include "Error.h"
 
 using namespace llvm;
 using namespace llvm::ELF;

@@ -24,14 +24,6 @@ class InputFile;
 // Entry point of the ELF linker.
 void link(ArrayRef<const char *> Args);
 
-LLVM_ATTRIBUTE_NORETURN void error(Twine Msg);
-void error(std::error_code EC, Twine Prefix);
-void error(std::error_code EC);
-template <typename T> void error(const ErrorOr<T> &V, Twine Prefix) {
-  error(V.getError(), Prefix);
-}
-template <typename T> void error(const ErrorOr<T> &V) { error(V.getError()); }
-
 class ArgParser {
 public:
   // Parses command line options.

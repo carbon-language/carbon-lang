@@ -9,8 +9,8 @@
 
 #include "InputFiles.h"
 #include "Chunks.h"
+#include "Error.h"
 #include "Symbols.h"
-#include "Driver.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace llvm::ELF;

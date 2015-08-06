@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Driver.h"
+#include "Error.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SymbolTable.h"
-#include "Driver.h"
+#include "Error.h"
 #include "Symbols.h"
 
 using namespace llvm;

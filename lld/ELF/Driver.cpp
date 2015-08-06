@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Config.h"
 #include "Driver.h"
+#include "Config.h"
+#include "Error.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
 #include "Writer.h"
@@ -32,22 +33,6 @@ void link(ArrayRef<const char *> Args) {
   Driver->link(Args.slice(1));
 }
 
-void error(Twine Msg) {
-  errs() << Msg << "\n";
-  exit(1);
-}
-
-void error(std::error_code EC, Twine Prefix) {
-  if (!EC)
-    return;
-  error(Prefix + ": " + EC.message());
-}
-
-void error(std::error_code EC) {
-  if (!EC)
-    return;
-  error(EC.message());
-}
 }
 }
 

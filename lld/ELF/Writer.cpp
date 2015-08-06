@@ -9,7 +9,7 @@
 
 #include "Chunks.h"
 #include "Config.h"
-#include "Driver.h"
+#include "Error.h"
 #include "SymbolTable.h"
 #include "Writer.h"
 #include "llvm/ADT/DenseMap.h"
