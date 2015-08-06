@@ -67,17 +67,10 @@ exception handling is generally preferred to SJLJ.
 Windows Runtime Exception Handling
 -----------------------------------
 
-Windows runtime based exception handling uses the same basic IR structure as
-Itanium ABI based exception handling, but it relies on the personality
-functions provided by the native Windows runtime library, ``__CxxFrameHandler3``
-for C++ exceptions: ``__C_specific_handler`` for 64-bit SEH or 
-``_frame_handler3/4`` for 32-bit SEH.  This results in a very different
-execution model and requires some minor modifications to the initial IR
-representation and a significant restructuring just before code generation.
-
-General information about the Windows x64 exception handling mechanism can be
-found at `MSDN Exception Handling (x64)
-<https://msdn.microsoft.com/en-us/library/1eyas8tf(v=vs.80).aspx>`_.
+LLVM supports handling exceptions produced by the Windows runtime, but it
+requires a very different intermediate representation. It is not based on the
+":ref:`landingpad <i_landingpad>`" instruction like the other two models, and is
+described later in this document under :ref:`wineh`.
 
 Overview
 --------
@@ -321,97 +314,6 @@ the selector results they understand and then resume exception propagation with
 the `resume instruction <LangRef.html#i_resume>`_ if none of the conditions
 match.
 
-C++ Exception Handling using the Windows Runtime
-=================================================
-
-(Note: Windows C++ exception handling support is a work in progress and is
- not yet fully implemented.  The text below describes how it will work
- when completed.)
-
-The Windows runtime function for C++ exception handling uses a multi-phase
-approach.  When an exception occurs it searches the current callstack for a
-frame that has a handler for the exception.  If a handler is found, it then
-calls the cleanup handler for each frame above the handler which has a
-cleanup handler before calling the catch handler.  These calls are all made
-from a stack context different from the original frame in which the handler
-is defined.  Therefore, it is necessary to outline these handlers from their
-original context before code generation.
-
-Catch handlers are called with a pointer to the handler itself as the first
-argument and a pointer to the parent function's stack frame as the second
-argument.  The catch handler uses the `llvm.localrecover
-<LangRef.html#llvm-localescape-and-llvm-localrecover-intrinsics>`_ to get a
-pointer to a frame allocation block that is created in the parent frame using
-the `llvm.localescape
-<LangRef.html#llvm-localescape-and-llvm-localrecover-intrinsics>`_ intrinsic.
-The ``WinEHPrepare`` pass will have created a structure definition for the
-contents of this block.  The first two members of the structure will always be
-(1) a 32-bit integer that the runtime uses to track the exception state of the
-parent frame for the purposes of handling chained exceptions and (2) a pointer
-to the object associated with the exception (roughly, the parameter of the
-catch clause). These two members will be followed by any frame variables from
-the parent function which must be accessed in any of the functions unwind or
-catch handlers.  The catch handler returns the address at which execution
-should continue.
-
-Cleanup handlers perform any cleanup necessary as the frame goes out of scope,
-such as calling object destructors.  The runtime handles the actual unwinding
-of the stack.  If an exception occurs in a cleanup handler the runtime manages
-termination of the process. Cleanup handlers are called with the same arguments
-as catch handlers (a pointer to the handler and a pointer to the parent stack
-frame) and use the same mechanism described above to access frame variables
-in the parent function.  Cleanup handlers do not return a value.
-
-The IR generated for Windows runtime based C++ exception handling is initially
-very similar to the ``landingpad`` mechanism described above.  Calls to
-libc++abi functions (such as ``__cxa_begin_catch``/``__cxa_end_catch`` and
-``__cxa_throw_exception`` are replaced with calls to intrinsics or Windows
-runtime functions (such as ``llvm.eh.begincatch``/``llvm.eh.endcatch`` and
-``__CxxThrowException``).
-
-During the WinEHPrepare pass, the handler functions are outlined into handler
-functions and the original landing pad code is replaced with a call to the
-``llvm.eh.actions`` intrinsic that describes the order in which handlers will
-be processed from the logical location of the landing pad and an indirect
-branch to the return value of the ``llvm.eh.actions`` intrinsic. The
-``llvm.eh.actions`` intrinsic is defined as returning the address at which
-execution will continue.  This is a temporary construct which will be removed
-before code generation, but it allows for the accurate tracking of control
-flow until then.
-
-A typical landing pad will look like this after outlining:
-
-.. code-block:: llvm
-
-    lpad:
-      %vals = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
-	      cleanup
-          catch i8* bitcast (i8** @_ZTIi to i8*)
-          catch i8* bitcast (i8** @_ZTIf to i8*)
-      %recover = call i8* (...)* @llvm.eh.actions(
-          i32 3, i8* bitcast (i8** @_ZTIi to i8*), i8* (i8*, i8*)* @_Z4testb.catch.1)
-          i32 2, i8* null, void (i8*, i8*)* @_Z4testb.cleanup.1)
-          i32 1, i8* bitcast (i8** @_ZTIf to i8*), i8* (i8*, i8*)* @_Z4testb.catch.0)
-          i32 0, i8* null, void (i8*, i8*)* @_Z4testb.cleanup.0)
-      indirectbr i8* %recover, [label %try.cont1, label %try.cont2]
-
-In this example, the landing pad represents an exception handling context with
-two catch handlers and a cleanup handler that have been outlined.  If an
-exception is thrown with a type that matches ``_ZTIi``, the ``_Z4testb.catch.1``
-handler will be called an no clean-up is needed.  If an exception is thrown
-with a type that matches ``_ZTIf``, first the ``_Z4testb.cleanup.1`` handler
-will be called to perform unwind-related cleanup, then the ``_Z4testb.catch.1``
-handler will be called.  If an exception is throw which does not match either
-of these types and the exception is handled by another frame further up the
-call stack, first the ``_Z4testb.cleanup.1`` handler will be called, then the
-``_Z4testb.cleanup.0`` handler (which corresponds to a different scope) will be
-called, and exception handling will continue at the next frame in the call
-stack will be called.  One of the catch handlers will return the address of
-``%try.cont1`` in the parent function and the other will return the address of
-``%try.cont2``, meaning that execution continues at one of those blocks after
-an exception is caught.
-
-
 Exception Handling Intrinsics
 =============================
 
@@ -498,51 +400,6 @@ When used in the native Windows C++ exception handling implementation, this
 intrinsic serves as a placeholder to delimit code before a catch handler is
 outlined.  After the handler is outlined, this intrinsic is simply removed.
 
-.. _llvm.eh.actions:
-
-``llvm.eh.actions``
-----------------------
-
-.. code-block:: llvm
-
-  void @llvm.eh.actions()
-
-This intrinsic represents the list of actions to take when an exception is
-thrown. It is typically used by Windows exception handling schemes where cleanup
-outlining is required by the runtime. The arguments are a sequence of ``i32``
-sentinels indicating the action type followed by some pre-determined number of
-arguments required to implement that action.
-
-A code of ``i32 0`` indicates a cleanup action, which expects one additional
-argument. The argument is a pointer to a function that implements the cleanup
-action.
-
-A code of ``i32 1`` indicates a catch action, which expects three additional
-arguments. Different EH schemes give different meanings to the three arguments,
-but the first argument indicates whether the catch should fire, the second is
-the localescape index of the exception object, and the third is the code to run
-to catch the exception.
-
-For Windows C++ exception handling, the first argument for a catch handler is a
-pointer to the RTTI type descriptor for the object to catch. The second
-argument is an index into the argument list of the ``llvm.localescape`` call in
-the main function. The exception object will be copied into the provided stack
-object. If the exception object is not required, this argument should be -1.
-The third argument is a pointer to a function implementing the catch.  This
-function returns the address of the basic block where execution should resume
-after handling the exception.
-
-For Windows SEH, the first argument is a pointer to the filter function, which
-indicates if the exception should be caught or not.  The second argument is
-typically negative one. The third argument is the address of a basic block
-where the exception will be handled. In other words, catch handlers are not
-outlined in SEH. After running cleanups, execution immediately resumes at this
-PC.
-
-In order to preserve the structure of the CFG, a call to '``llvm.eh.actions``'
-must be followed by an ':ref:`indirectbr <i_indirectbr>`' instruction that
-jumps to the result of the intrinsic call.
-
 
 SJLJ Intrinsics
 ---------------
@@ -628,10 +485,208 @@ an exception handling frame for each function in a compile unit, plus a common
 exception handling frame that defines information common to all functions in the
 unit.
 
+The format of this call frame information (CFI) is often platform-dependent,
+however. ARM, for example, defines their own format. Apple has their own compact
+unwind info format.  On Windows, another format is used for all architectures
+since 32-bit x86.  LLVM will emit whatever information is required by the
+target.
+
 Exception Tables
 ----------------
 
 An exception table contains information about what actions to take when an
-exception is thrown in a particular part of a function's code. There is one
-exception table per function, except leaf functions and functions that have
-calls only to non-throwing functions. They do not need an exception table.
+exception is thrown in a particular part of a function's code. This is typically
+referred to as the language-specific data area (LSDA). The format of the LSDA
+table is specific to the personality function, but the majority of personalities
+out there use a variation of the tables consumed by ``__gxx_personality_v0``.
+There is one exception table per function, except leaf functions and functions
+that have calls only to non-throwing functions. They do not need an exception
+table.
+
+.. _wineh:
+
+Exception Handling using the Windows Runtime
+=================================================
+
+(Note: Windows C++ exception handling support is a work in progress and is not
+yet fully implemented.  The text below describes how it will work when
+completed.)
+
+Background on Windows exceptions
+---------------------------------
+
+Interacting with exceptions on Windows is significantly more complicated than on
+Itanium C++ ABI platforms. The fundamental difference between the two models is
+that Itanium EH is designed around the idea of "successive unwinding," while
+Windows EH is not.
+
+Under Itanium, throwing an exception typically involes allocating thread local
+memory to hold the exception, and calling into the EH runtime. The runtime
+identifies frames with appropriate exception handling actions, and successively
+resets the register context of the current thread to the most recently active
+frame with actions to run. In LLVM, execution resumes at a ``landingpad``
+instruction, which produces register values provided by the runtime. If a
+function is only cleaning up allocated resources, the function is responsible
+for calling ``_Unwind_Resume`` to transition to the next most recently active
+frame after it is finished cleaning up. Eventually, the frame responsible for
+handling the exception calls ``__cxa_end_catch`` to destroy the exception,
+release its memory, and resume normal control flow.
+
+The Windows EH model does not use these successive register context resets.
+Instead, the active exception is typically described by a frame on the stack.
+In the case of C++ exceptions, the exception object is allocated in stack memory
+and its address is passed to ``__CxxThrowException``. General purpose structured
+exceptions (SEH) are more analogous to Linux signals, and they are dispatched by
+userspace DLLs provided with Windows. Each frame on the stack has an assigned EH
+personality routine, which decides what actions to take to handle the exception.
+There are a few major personalities for C and C++ code: the C++ personality
+(``__CxxFrameHandler3``) and the SEH personalities (``_except_handler3``,
+``_except_handler4``, and ``__C_specific_handler``). All of them implement
+cleanups by calling back into a "funclet" contained in the parent function.
+
+Funclets, in this context, are regions of the parent function that can be called
+as though they were a function pointer with a very special calling convention.
+The frame pointer of the parent frame is passed into the funclet either using
+the standard EBP register or as the first parameter register, depending on the
+architecture. The funclet implements the EH action by accessing local variables
+in memory through the frame pointer, and returning some appropriate value,
+continuing the EH process.  No variables live in to or out of the funclet can be
+allocated in registers.
+
+The C++ personality also uses funclets to contain the code for catch blocks
+(i.e. all user code between the braces in ``catch (Type obj) { ... }``). The
+runtime must use funclets for catch bodies because the C++ exception object is
+allocated in a child stack frame of the function handling the exception. If the
+runtime rewound the stack back to frame of the catch, the memory holding the
+exception would be overwritten quickly by subsequent function calls.  The use of
+funclets also allows ``__CxxFrameHandler3`` to implement rethrow without
+resorting to TLS. Instead, the runtime throws a special exception, and then uses
+SEH (``__try / __except``) to resume execution with new information in the child
+frame.
+
+In other words, the successive unwinding approach is incompatible with Visual
+C++ exceptions and general purpose Windows exception handling. Because the C++
+exception object lives in stack memory, LLVM cannot provide a custom personality
+function that uses landingpads.  Similarly, SEH does not provide any mechanism
+to rethrow an exception or continue unwinding.  Therefore, LLVM must use the IR
+constructs described later in this document to implement compatible exception
+handling.
+
+SEH filter expressions
+-----------------------
+
+The SEH personality functions also use funclets to implement filter expressions,
+which allow executing arbitrary user code to decide which exceptions to catch.
+Filter expressions should not be confused with the ``filter`` clause of the LLVM
+``landingpad`` instruction.  Typically filter expressions are used to determine
+if the exception came from a particular DLL or code region, or if code faulted
+while accessing a particular memory address range. LLVM does not currently have
+IR to represent filter expressions because it is difficult to represent their
+control dependencies.  Filter expressions run during the first phase of EH,
+before cleanups run, making it very difficult to build a faithful control flow
+graph.  For now, the new EH instructions cannot represent SEH filter
+expressions, and frontends must outline them ahead of time. Local variables of
+the parent function can be escaped and accessed using the ``llvm.localescape``
+and ``llvm.localrecover`` intrinsics.
+
+New exception handling instructions
+------------------------------------
+
+The primary design goal of the new EH instructions is to support funclet
+generation while preserving information about the CFG so that SSA formation
+still works.  As a secondary goal, they are designed to be generic across MSVC
+and Itanium C++ exceptions. They make very few assumptions about the data
+required by the personality, so long as it uses the familiar core EH actions:
+catch, cleanup, and terminate.  However, the new instructions are hard to modify
+without knowing details of the EH personality. While they can be used to
+represent Itanium EH, the landingpad model is strictly better for optimization
+purposes.
+
+The following new instructions are considered "exception handling pads", in that
+they must be the first non-phi instruction of a basic block that may be the
+unwind destination of an invoke: ``catchpad``, ``cleanuppad``, and
+``terminatepad``. As with landingpads, when entering a try scope, if the
+frontend encounters a call site that may throw an exception, it should emit an
+invoke that unwinds to a ``catchpad`` block. Similarly, inside the scope of a
+C++ object with a destructor, invokes should unwind to a ``cleanuppad``. The
+``terminatepad`` instruction exists to represent ``noexcept`` and throw
+specifications with one combined instruction. All potentially throwing calls in
+a ``noexcept`` function should transitively unwind to a terminateblock. Throw
+specifications are not implemented by MSVC, and are not yet supported.
+
+Each of these new EH pad instructions has a label operand that indicates which
+action should be considered after this action. The ``catchpad`` and
+``terminatepad`` instructions are terminators, and this label is considered to
+be an unwind destination analogous to the unwind destination of an invoke. The
+``cleanuppad`` instruction is different from the other two in that it is not a
+terminator, and this label operand is not an edge in the CFG. The code inside a
+cleanuppad runs before transferring control to the next action, so the
+``cleanupret`` instruction is the instruction that unwinds to the next EH pad.
+All of these "unwind edges" may refer to a basic block that contains an EH pad
+instruction, or they may simply unwind to the caller. Unwinding to the caller
+has roughly the same semantics as the ``resume`` instruction in the
+``landingpad`` model. When inlining through an invoke, instructions that unwind
+to the caller are hooked up to unwind to the unwind destination of the call
+site.
+
+Putting things together, here is a hypothetical lowering of some C++ that uses
+all of the new IR instructions:
+
+.. code-block:: c
+
+  struct Cleanup {
+    Cleanup();
+    ~Cleanup();
+    int m;
+  };
+  void may_throw();
+  int f() noexcept {
+    try {
+      Cleanup obj;
+      may_throw();
+    } catch (int e) {
+      return e;
+    }
+    return 0;
+  }
+
+.. code-block:: llvm
+
+  define i32 @f() nounwind personality i32 (...)* @__CxxFrameHandler3 {
+  entry:
+    %obj = alloca %struct.Cleanup, align 4
+    %e = alloca i32, align 4
+    %call = invoke %struct.Cleanup* @"\01??0Cleanup@@QEAA@XZ"(%struct.Cleanup* nonnull %obj)
+            to label %invoke.cont unwind label %lpad.catch
+
+  invoke.cont:                                      ; preds = %entry
+    invoke void @"\01?may_throw@@YAXXZ"()
+            to label %invoke.cont.2 unwind label %lpad.cleanup
+
+  invoke.cont.2:                                    ; preds = %invoke.cont
+    call void @"\01??_DCleanup@@QEAA@XZ"(%struct.Cleanup* nonnull %obj) nounwind
+    br label %return
+
+  return:                                           ; preds = %invoke.cont.2, %catch
+    %retval.0 = phi i32 [ 0, %invoke.cont.2 ], [ %9, %catch ]
+    ret i32 %retval.0
+
+  ; EH scope code, ordered innermost to outermost:
+
+  lpad.cleanup:                                     ; preds = %invoke.cont
+    cleanuppad [label %lpad.catch]
+    call void @"\01??_DCleanup@@QEAA@XZ"(%struct.Cleanup* nonnull %obj) nounwind
+    cleanupret unwind label %lpad.catch
+
+  lpad.catch:                                       ; preds = %entry, %lpad.cleanup
+    catchpad void [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i32* %e]
+            to label %catch unwind label %lpad.terminate
+
+  catch:                                            ; preds = %lpad.catch
+    %9 = load i32, i32* %e, align 4
+    catchret label %return
+
+  lpad.terminate:
+    terminatepad [void ()* @"\01?terminate@@YAXXZ"]
+            unwind to caller
+  }
