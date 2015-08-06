@@ -112,7 +112,7 @@ public:
     typedef SuccIterator<Term, BB> Self;
 
     inline bool index_is_valid(unsigned idx) {
-      return idx >= 0 && idx < TermInst->getNumSuccessors();
+      return idx < TermInst->getNumSuccessors();
     }
 
     /// \brief Proxy object to allow write access in operator[]
