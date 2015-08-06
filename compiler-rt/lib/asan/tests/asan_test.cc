@@ -250,12 +250,12 @@ TEST(AddressSanitizer, BitFieldNegativeTest) {
 #if ASAN_NEEDS_SEGV
 namespace {
 
-const char kUnknownCrash[] = "AddressSanitizer: SEGV on unknown address";
+const char kSEGVCrash[] = "AddressSanitizer: SEGV on unknown address";
 const char kOverriddenHandler[] = "ASan signal handler has been overridden\n";
 
 TEST(AddressSanitizer, WildAddressTest) {
   char *c = (char*)0x123;
-  EXPECT_DEATH(*c = 0, kUnknownCrash);
+  EXPECT_DEATH(*c = 0, kSEGVCrash);
 }
 
 void my_sigaction_sighandler(int, siginfo_t*, void*) {
@@ -279,10 +279,10 @@ TEST(AddressSanitizer, SignalTest) {
   EXPECT_EQ(0, sigaction(SIGBUS, &sigact, 0));
 #endif
   char *c = (char*)0x123;
-  EXPECT_DEATH(*c = 0, kUnknownCrash);
+  EXPECT_DEATH(*c = 0, kSEGVCrash);
   // ... and signal().
   EXPECT_EQ(0, signal(SIGSEGV, my_signal_sighandler));
-  EXPECT_DEATH(*c = 0, kUnknownCrash);
+  EXPECT_DEATH(*c = 0, kSEGVCrash);
 }
 }  // namespace
 #endif
