@@ -21,7 +21,7 @@ click the power icon in the top right. You can register with a GitHub account,
 a Google account, or you can create your own profile.
 
 Make *sure* that the email address registered with Phabricator is subscribed
-to the relevant -commits mailing list. If your are not subscribed to the commit
+to the relevant -commits mailing list. If you are not subscribed to the commit
 list, all mail sent by Phabricator on your behalf will be held for moderation.
 
 Note that if you use your Subversion user name as Phabricator user name,
