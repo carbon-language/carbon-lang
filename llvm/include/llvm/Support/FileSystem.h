@@ -285,7 +285,8 @@ std::error_code make_absolute(SmallVectorImpl<char> &path);
 ///          specific error_code. If IgnoreExisting is false, also returns
 ///          error if the directory already existed.
 std::error_code create_directories(const Twine &path,
-                                   bool IgnoreExisting = true);
+                                   bool IgnoreExisting = true,
+                                   perms Perms = owner_all | group_all);
 
 /// @brief Create the directory in path.
 ///
@@ -293,7 +294,8 @@ std::error_code create_directories(const Twine &path,
 /// @returns errc::success if is_directory(path), otherwise a platform
 ///          specific error_code. If IgnoreExisting is false, also returns
 ///          error if the directory already existed.
-std::error_code create_directory(const Twine &path, bool IgnoreExisting = true);
+std::error_code create_directory(const Twine &path, bool IgnoreExisting = true,
+                                 perms Perms = owner_all | group_all);
 
 /// @brief Create a link from \a from to \a to.
 ///

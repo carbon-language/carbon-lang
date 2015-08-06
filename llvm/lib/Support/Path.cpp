@@ -785,12 +785,13 @@ std::error_code make_absolute(SmallVectorImpl<char> &path) {
                    "occurred above!");
 }
 
-std::error_code create_directories(const Twine &Path, bool IgnoreExisting) {
+std::error_code create_directories(const Twine &Path, bool IgnoreExisting,
+                                   perms Perms) {
   SmallString<128> PathStorage;
   StringRef P = Path.toStringRef(PathStorage);
 
   // Be optimistic and try to create the directory
-  std::error_code EC = create_directory(P, IgnoreExisting);
+  std::error_code EC = create_directory(P, IgnoreExisting, Perms);
   // If we succeeded, or had any error other than the parent not existing, just
   // return it.
   if (EC != errc::no_such_file_or_directory)
@@ -802,10 +803,10 @@ std::error_code create_directories(const Twine &Path, bool IgnoreExisting) {
   if (Parent.empty())
     return EC;
 
-  if ((EC = create_directories(Parent)))
+  if ((EC = create_directories(Parent, IgnoreExisting, Perms)))
       return EC;
 
-  return create_directory(P, IgnoreExisting);
+  return create_directory(P, IgnoreExisting, Perms);
 }
 
 std::error_code copy_file(const Twine &From, const Twine &To) {
