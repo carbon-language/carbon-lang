@@ -476,7 +476,16 @@ void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
     printLLVMNameWithoutPrefix(OS, BB.getName());
     return;
   }
-  int Slot = MST.getLocalSlot(&BB);
+  const Function *F = BB.getParent();
+  int Slot;
+  if (F == MST.getCurrentFunction()) {
+    Slot = MST.getLocalSlot(&BB);
+  } else {
+    ModuleSlotTracker CustomMST(F->getParent(),
+                                /*ShouldInitializeAllMetadata=*/false);
+    CustomMST.incorporateFunction(*F);
+    Slot = CustomMST.getLocalSlot(&BB);
+  }
   if (Slot == -1)
     OS << "<badref>";
   else

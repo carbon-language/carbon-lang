@@ -26,6 +26,12 @@
     ret void
   }
 
+  define void @slot_in_other_function(i8** %addr) {
+  entry:
+    store volatile i8* blockaddress(@test3, %0), i8** %addr
+    ret void
+  }
+
   define void @test3() {
   entry:
     store volatile i8* blockaddress(@test3, %0), i8** @addr
@@ -81,6 +87,20 @@ body:
       - RETQ
 ...
 ---
+name:            slot_in_other_function
+tracksRegLiveness: true
+body:
+  - id:              0
+    name:            entry
+    liveins:         [ '%rdi' ]
+    instructions:
+# CHECK: name: slot_in_other_function
+# CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+      - '%rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _'
+      - 'MOV64mr killed %rdi, 1, _, 0, _, killed %rax'
+      - RETQ
+...
+---
 name:            test3
 tracksRegLiveness: true
 body:
@@ -88,7 +108,8 @@ body:
     name:            entry
     successors:      [ '%bb.1' ]
     instructions:
-    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+# CHECK: name: test3
+# CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
       - '%rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _'
       - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
       - 'JMP64m %rip, 1, _, @addr, _'

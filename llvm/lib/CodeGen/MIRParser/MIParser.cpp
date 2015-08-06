@@ -174,9 +174,8 @@ private:
   /// Return 0 if the name isn't a subregister index class.
   unsigned getSubRegIndex(StringRef Name);
 
-  void initSlots2BasicBlocks();
-
   const BasicBlock *getIRBlock(unsigned Slot);
+  const BasicBlock *getIRBlock(unsigned Slot, const Function &F);
 
   void initNames2TargetIndices();
 
@@ -858,7 +857,7 @@ bool MIParser::parseIRBlock(BasicBlock *&BB, const Function &F) {
     unsigned SlotNumber = 0;
     if (getUnsigned(SlotNumber))
       return true;
-    BB = const_cast<BasicBlock *>(getIRBlock(SlotNumber));
+    BB = const_cast<BasicBlock *>(getIRBlock(SlotNumber, F));
     if (!BB)
       return error(Twine("use of undefined IR block '%ir-block.") +
                    Twine(SlotNumber) + "'");
@@ -1208,11 +1207,10 @@ unsigned MIParser::getSubRegIndex(StringRef Name) {
   return SubRegInfo->getValue();
 }
 
-void MIParser::initSlots2BasicBlocks() {
-  if (!Slots2BasicBlocks.empty())
-    return;
-  const auto &F = *MF.getFunction();
-  ModuleSlotTracker MST(F.getParent());
+static void initSlots2BasicBlocks(
+    const Function &F,
+    DenseMap<unsigned, const BasicBlock *> &Slots2BasicBlocks) {
+  ModuleSlotTracker MST(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
   MST.incorporateFunction(F);
   for (auto &BB : F) {
     if (BB.hasName())
@@ -1224,12 +1222,27 @@ void MIParser::initSlots2BasicBlocks() {
   }
 }
 
-const BasicBlock *MIParser::getIRBlock(unsigned Slot) {
-  initSlots2BasicBlocks();
+static const BasicBlock *getIRBlockFromSlot(
+    unsigned Slot,
+    const DenseMap<unsigned, const BasicBlock *> &Slots2BasicBlocks) {
   auto BlockInfo = Slots2BasicBlocks.find(Slot);
   if (BlockInfo == Slots2BasicBlocks.end())
     return nullptr;
   return BlockInfo->second;
+}
+
+const BasicBlock *MIParser::getIRBlock(unsigned Slot) {
+  if (Slots2BasicBlocks.empty())
+    initSlots2BasicBlocks(*MF.getFunction(), Slots2BasicBlocks);
+  return getIRBlockFromSlot(Slot, Slots2BasicBlocks);
+}
+
+const BasicBlock *MIParser::getIRBlock(unsigned Slot, const Function &F) {
+  if (&F == MF.getFunction())
+    return getIRBlock(Slot);
+  DenseMap<unsigned, const BasicBlock *> CustomSlots2BasicBlocks;
+  initSlots2BasicBlocks(F, CustomSlots2BasicBlocks);
+  return getIRBlockFromSlot(Slot, CustomSlots2BasicBlocks);
 }
 
 void MIParser::initNames2TargetIndices() {
