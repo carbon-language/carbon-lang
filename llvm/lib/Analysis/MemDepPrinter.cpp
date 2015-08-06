@@ -96,7 +96,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
 
   // All this code uses non-const interfaces because MemDep is not
   // const-friendly, though nothing is actually modified.
-  for (auto &I : inst_range(F)) {
+  for (auto &I : instructions(F)) {
     Instruction *Inst = &I;
 
     if (!Inst->mayReadFromMemory() && !Inst->mayWriteToMemory())
@@ -135,7 +135,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
 }
 
 void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
-  for (const auto &I : inst_range(*F)) {
+  for (const auto &I : instructions(*F)) {
     const Instruction *Inst = &I;
 
     DepSetMap::const_iterator DI = Deps.find(Inst);

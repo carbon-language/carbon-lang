@@ -272,7 +272,7 @@ bool BDCE::runOnFunction(Function& F) {
   SmallPtrSet<Instruction*, 128> Visited;
 
   // Collect the set of "root" instructions that are known live.
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     if (!isAlwaysLive(&I))
       continue;
 
@@ -365,7 +365,7 @@ bool BDCE::runOnFunction(Function& F) {
   // which have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
   // NOTE: We reuse the Worklist vector here for memory efficiency.
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     // For live instructions that have all dead bits, first make them dead by
     // replacing all uses with something else. Then, if they don't need to
     // remain live (because they have side effects, etc.) we can remove them.

@@ -466,7 +466,7 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
 static void findCallSafepoints(Function &F,
                                std::vector<CallSite> &Found /*rval*/) {
   assert(Found.empty() && "must be empty!");
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     Instruction *inst = &I;
     if (isa<CallInst>(inst) || isa<InvokeInst>(inst)) {
       CallSite CS(inst);

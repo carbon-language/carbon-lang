@@ -159,7 +159,7 @@ private:
 void DivergencePropagator::populateWithSourcesOfDivergence() {
   Worklist.clear();
   DV.clear();
-  for (auto &I : inst_range(F)) {
+  for (auto &I : instructions(F)) {
     if (TTI.isSourceOfDivergence(&I)) {
       Worklist.push_back(&I);
       DV.insert(&I);
@@ -329,8 +329,8 @@ void DivergenceAnalysis::print(raw_ostream &OS, const Module *) const {
     if (DivergentValues.count(&Arg))
       OS << "DIVERGENT:  " << Arg << "\n";
   }
-  // Iterate instructions using inst_range to ensure a deterministic order.
-  for (auto &I : inst_range(F)) {
+  // Iterate instructions using instructions() to ensure a deterministic order.
+  for (auto &I : instructions(F)) {
     if (DivergentValues.count(&I))
       OS << "DIVERGENT:" << I << "\n";
   }

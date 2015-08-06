@@ -275,7 +275,7 @@ void SafeStack::findInsts(Function &F,
                           SmallVectorImpl<AllocaInst *> &DynamicAllocas,
                           SmallVectorImpl<ReturnInst *> &Returns,
                           SmallVectorImpl<Instruction *> &StackRestorePoints) {
-  for (Instruction &I : inst_range(&F)) {
+  for (Instruction &I : instructions(&F)) {
     if (auto AI = dyn_cast<AllocaInst>(&I)) {
       ++NumAllocas;
 

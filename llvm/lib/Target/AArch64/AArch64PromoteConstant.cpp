@@ -540,7 +540,7 @@ bool AArch64PromoteConstant::runOnFunction(Function &F) {
   bool LocalChange = false;
   SmallPtrSet<Constant *, 8> AlreadyChecked;
 
-  for (Instruction &I : inst_range(&F)) {
+  for (Instruction &I : instructions(&F)) {
     // Traverse the operand, looking for constant vectors. Replace them by a
     // load of a global variable of constant vector type.
     for (Value *Op : I.operand_values()) {

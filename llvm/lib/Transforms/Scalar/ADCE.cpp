@@ -57,7 +57,7 @@ bool ADCE::runOnFunction(Function& F) {
   SmallVector<Instruction*, 128> Worklist;
 
   // Collect the set of "root" instructions that are known live.
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     if (isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) || I.isEHPad() ||
         I.mayHaveSideEffects()) {
       Alive.insert(&I);
@@ -79,7 +79,7 @@ bool ADCE::runOnFunction(Function& F) {
   // which have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
   // NOTE: We reuse the Worklist vector here for memory efficiency.
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     if (!Alive.count(&I)) {
       Worklist.push_back(&I);
       I.dropAllReferences();

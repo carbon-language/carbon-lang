@@ -123,11 +123,13 @@ typedef InstIterator<const iplist<BasicBlock>,
                      Function::const_iterator,
                      BasicBlock::const_iterator,
                      const Instruction> const_inst_iterator;
+typedef iterator_range<inst_iterator> inst_range;
+typedef iterator_range<const_inst_iterator> const_inst_range;
 
 inline inst_iterator inst_begin(Function *F) { return inst_iterator(*F); }
 inline inst_iterator inst_end(Function *F)   { return inst_iterator(*F, true); }
-inline iterator_range<inst_iterator> inst_range(Function *F) {
-  return iterator_range<inst_iterator>(inst_begin(F), inst_end(F));
+inline inst_range instructions(Function *F) {
+  return inst_range(inst_begin(F), inst_end(F));
 }
 inline const_inst_iterator inst_begin(const Function *F) {
   return const_inst_iterator(*F);
@@ -135,13 +137,13 @@ inline const_inst_iterator inst_begin(const Function *F) {
 inline const_inst_iterator inst_end(const Function *F) {
   return const_inst_iterator(*F, true);
 }
-inline iterator_range<const_inst_iterator> inst_range(const Function *F) {
-  return iterator_range<const_inst_iterator>(inst_begin(F), inst_end(F));
+inline const_inst_range instructions(const Function *F) {
+  return const_inst_range(inst_begin(F), inst_end(F));
 }
 inline inst_iterator inst_begin(Function &F) { return inst_iterator(F); }
 inline inst_iterator inst_end(Function &F)   { return inst_iterator(F, true); }
-inline iterator_range<inst_iterator> inst_range(Function &F) {
-  return iterator_range<inst_iterator>(inst_begin(F), inst_end(F));
+inline inst_range instructions(Function &F) {
+  return inst_range(inst_begin(F), inst_end(F));
 }
 inline const_inst_iterator inst_begin(const Function &F) {
   return const_inst_iterator(F);
@@ -149,8 +151,8 @@ inline const_inst_iterator inst_begin(const Function &F) {
 inline const_inst_iterator inst_end(const Function &F) {
   return const_inst_iterator(F, true);
 }
-inline iterator_range<const_inst_iterator> inst_range(const Function &F) {
-  return iterator_range<const_inst_iterator>(inst_begin(F), inst_end(F));
+inline const_inst_range instructions(const Function &F) {
+  return const_inst_range(inst_begin(F), inst_end(F));
 }
 
 } // End llvm namespace

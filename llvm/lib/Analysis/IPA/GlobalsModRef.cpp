@@ -627,7 +627,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
     for (auto *Node : SCC) {
       if (FI.getModRefInfo() == MRI_ModRef)
         break; // The mod/ref lattice saturates here.
-      for (Instruction &I : inst_range(Node->getFunction())) {
+      for (Instruction &I : instructions(Node->getFunction())) {
         if (FI.getModRefInfo() == MRI_ModRef)
           break; // The mod/ref lattice saturates here.
 

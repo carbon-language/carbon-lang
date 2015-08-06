@@ -2310,7 +2310,7 @@ void RewriteStatepointsForGC::stripDereferenceabilityInfoFromBody(Function &F) {
   LLVMContext &Ctx = F.getContext();
   MDBuilder Builder(Ctx);
 
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     if (const MDNode *MD = I.getMetadata(LLVMContext::MD_tbaa)) {
       assert(MD->getNumOperands() < 5 && "unrecognized metadata shape!");
       bool IsImmutableTBAA =
@@ -2384,7 +2384,7 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
   // when rewriting.  We'll delete the unreachable ones in a moment.
   SmallVector<CallSite, 64> ParsePointNeeded;
   bool HasUnreachableStatepoint = false;
-  for (Instruction &I : inst_range(F)) {
+  for (Instruction &I : instructions(F)) {
     // TODO: only the ones with the flag set!
     if (isStatepoint(I)) {
       if (DT.isReachableFromEntry(I.getParent()))

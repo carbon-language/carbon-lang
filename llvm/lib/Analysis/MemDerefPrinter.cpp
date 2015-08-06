@@ -51,7 +51,7 @@ FunctionPass *llvm::createMemDerefPrinter() {
 
 bool MemDerefPrinter::runOnFunction(Function &F) {
   const DataLayout &DL = F.getParent()->getDataLayout();
-  for (auto &I: inst_range(F)) {
+  for (auto &I: instructions(F)) {
     if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
       Value *PO = LI->getPointerOperand();
       if (isDereferenceablePointer(PO, DL))

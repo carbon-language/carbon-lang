@@ -127,7 +127,7 @@ static Instruction::BinaryOps mapBinOpcode(unsigned Opcode) {
 // Find the roots - instructions that convert from the FP domain to
 // integer domain.
 void Float2Int::findRoots(Function &F, SmallPtrSet<Instruction*,8> &Roots) {
-  for (auto &I : inst_range(F)) {
+  for (auto &I : instructions(F)) {
     switch (I.getOpcode()) {
     default: break;
     case Instruction::FPToUI:

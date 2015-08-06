@@ -271,7 +271,7 @@ bool InterleavedAccess::runOnFunction(Function &F) {
   SmallVector<Instruction *, 32> DeadInsts;
   bool Changed = false;
 
-  for (auto &I : inst_range(F)) {
+  for (auto &I : instructions(F)) {
     if (LoadInst *LI = dyn_cast<LoadInst>(&I))
       Changed |= lowerInterleavedLoad(LI, DeadInsts);
 
