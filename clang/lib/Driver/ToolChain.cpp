@@ -313,7 +313,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     std::string CPU = Triple.isOSBinFormatMachO()
       ? tools::arm::getARMCPUForMArch(MArch, Triple)
       : tools::arm::getARMTargetCPU(MCPU, MArch, Triple);
-    StringRef Suffix = 
+    StringRef Suffix =
       tools::arm::getLLVMArchSuffixForARM(CPU,
                                           tools::arm::getARMArch(MArch, Triple));
     bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
@@ -344,7 +344,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
   }
 }
 
-std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args, 
+std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args,
                                                    types::ID InputType) const {
   return ComputeLLVMTriple(Args, InputType);
 }
@@ -424,10 +424,9 @@ void ToolChain::addExternCSystemIncludeIfExists(const ArgList &DriverArgs,
 /*static*/ void ToolChain::addSystemIncludes(const ArgList &DriverArgs,
                                              ArgStringList &CC1Args,
                                              ArrayRef<StringRef> Paths) {
-  for (ArrayRef<StringRef>::iterator I = Paths.begin(), E = Paths.end();
-       I != E; ++I) {
+  for (StringRef Path : Paths) {
     CC1Args.push_back("-internal-isystem");
-    CC1Args.push_back(DriverArgs.MakeArgString(*I));
+    CC1Args.push_back(DriverArgs.MakeArgString(Path));
   }
 }
 
@@ -496,4 +495,3 @@ SanitizerMask ToolChain::getSupportedSanitizers() const {
   return (Undefined & ~Vptr & ~Function) | CFI | CFICastStrict |
          UnsignedIntegerOverflow | LocalBounds;
 }
-
