@@ -26,6 +26,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -255,27 +256,6 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode1,
   return nullptr;
 }
 
-static bool isUnmovableInstruction(Instruction *I) {
-  switch (I->getOpcode()) {
-  case Instruction::PHI:
-  case Instruction::LandingPad:
-  case Instruction::Alloca:
-  case Instruction::Load:
-  case Instruction::Invoke:
-  case Instruction::UDiv:
-  case Instruction::SDiv:
-  case Instruction::FDiv:
-  case Instruction::URem:
-  case Instruction::SRem:
-  case Instruction::FRem:
-    return true;
-  case Instruction::Call:
-    return !isa<DbgInfoIntrinsic>(I);
-  default:
-    return false;
-  }
-}
-
 void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 2;
 
@@ -295,7 +275,7 @@ void Reassociate::BuildRankMap(Function &F) {
     // we cannot move.  This ensures that the ranks for these instructions are
     // all different in the block.
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      if (isUnmovableInstruction(I))
+      if (mayBeMemoryDependent(*I))
         ValueRankMap[&*I] = ++BBRank;
   }
 }

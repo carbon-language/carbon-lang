@@ -258,6 +258,16 @@ namespace llvm {
                                     const DominatorTree *DT = nullptr,
                                     const TargetLibraryInfo *TLI = nullptr);
 
+  /// Returns true if the result or effects of the given instructions \p I
+  /// depend on or influence global memory.
+  /// Memory dependence arises for example if the the instruction reads from
+  /// memory or may produce effects or undefined behaviour. Memory dependent
+  /// instructions generally cannot be reorderd with respect to other memory
+  /// dependent instructions or moved into non-dominated basic blocks.
+  /// Instructions which just compute a value based on the values of their
+  /// operands are not memory dependent.
+  bool mayBeMemoryDependent(const Instruction &I);
+
   /// isKnownNonNull - Return true if this pointer couldn't possibly be null by
   /// its definition.  This returns true for allocas, non-extern-weak globals
   /// and byval arguments.

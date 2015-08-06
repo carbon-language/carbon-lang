@@ -3161,6 +3161,10 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   }
 }
 
+bool llvm::mayBeMemoryDependent(const Instruction &I) {
+  return I.mayReadOrWriteMemory() || !isSafeToSpeculativelyExecute(&I);
+}
+
 /// Return true if we know that the specified value is never null.
 bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
   // Alloca never returns null, malloc might.
