@@ -2,7 +2,7 @@ The executable was generated like so:
 $ cat t.c
 int main() { return 0; }
 $ clang --target=i686-windows -c t.c -o t.o
-$ lld-link2 t.o -out:t.exe -entry:main -debug
+$ lld-link t.o -out:t.exe -entry:main -debug
 
 It has a mingw-style symbol table in the executable, which MSVC-produced images
 don't have.
@@ -19,7 +19,7 @@ The DLL was generated like so:
 $ cat t.c
 int DllMain(void *mod, long reason, void *reserved) { return 1; }
 $ clang --target=i686-windows -c t.c -o t.o
-$ lld-link2 t.o -out:t.exe -entry:DllMain -debug -dll
+$ lld-link t.o -out:t.exe -entry:DllMain -debug -dll
 
 
 RUN: llvm-nm %p/Inputs/main-ret-zero-pe-i386.dll \
