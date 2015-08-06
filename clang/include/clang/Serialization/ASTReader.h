@@ -977,13 +977,6 @@ private:
   /// module is loaded.
   SmallVector<ObjCInterfaceDecl *, 16> ObjCClassesLoaded;
 
-  /// \brief A mapping from a primary context for a declaration chain to the
-  /// other declarations of that entity that also have name lookup tables.
-  /// Used when we merge together two class definitions that have different
-  /// sets of declared special member functions.
-  llvm::DenseMap<const DeclContext*, SmallVector<const DeclContext*, 2>>
-      MergedLookups;
-
   typedef llvm::DenseMap<Decl *, SmallVector<serialization::DeclID, 2> >
     KeyDeclsMap;
     
