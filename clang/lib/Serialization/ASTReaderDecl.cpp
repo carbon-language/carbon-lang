@@ -3339,37 +3339,13 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   // If this declaration is also a declaration context, get the
   // offsets for its tables of lexical and visible declarations.
   if (DeclContext *DC = dyn_cast<DeclContext>(D)) {
-    // FIXME: This should really be
-    //     DeclContext *LookupDC = DC->getPrimaryContext();
-    // but that can walk the redeclaration chain, which might not work yet.
-    DeclContext *LookupDC = DC;
-    if (isa<NamespaceDecl>(DC))
-      LookupDC = DC->getPrimaryContext();
     std::pair<uint64_t, uint64_t> Offsets = Reader.VisitDeclContext(DC);
-    if (Offsets.first || Offsets.second) {
-      if (Offsets.first != 0)
-        DC->setHasExternalLexicalStorage(true);
-      if (Offsets.second != 0)
-        LookupDC->setHasExternalVisibleStorage(true);
-      if (ReadDeclContextStorage(*Loc.F, DeclsCursor, Offsets, 
-                                 Loc.F->DeclContextInfos[DC]))
-        return nullptr;
-    }
-
-    // Now add the pending visible updates for this decl context, if it has any.
-    DeclContextVisibleUpdatesPending::iterator I =
-        PendingVisibleUpdates.find(ID);
-    if (I != PendingVisibleUpdates.end()) {
-      // There are updates. This means the context has external visible
-      // storage, even if the original stored version didn't.
-      LookupDC->setHasExternalVisibleStorage(true);
-      for (const auto &Update : I->second) {
-        DeclContextInfo &Info = Update.second->DeclContextInfos[DC];
-        delete Info.NameLookupTableData;
-        Info.NameLookupTableData = Update.first;
-      }
-      PendingVisibleUpdates.erase(I);
-    }
+    if (Offsets.first &&
+        ReadLexicalDeclContextStorage(*Loc.F, DeclsCursor, Offsets.first, DC))
+      return nullptr;
+    if (Offsets.second &&
+        ReadVisibleDeclContextStorage(*Loc.F, DeclsCursor, Offsets.second, ID))
+      return nullptr;
   }
   assert(Idx == Record.size());
 
@@ -3392,17 +3368,37 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
 }
 
 void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
+  // Load the pending visible updates for this decl context, if it has any.
+  auto I = PendingVisibleUpdates.find(ID);
+  if (I != PendingVisibleUpdates.end()) {
+    auto VisibleUpdates = std::move(I->second);
+    PendingVisibleUpdates.erase(I);
+
+    auto *DC = cast<DeclContext>(D)->getPrimaryContext();
+    for (const PendingVisibleUpdate &Update : VisibleUpdates) {
+      auto *&LookupTable = Update.Mod->DeclContextInfos[DC].NameLookupTableData;
+      assert(!LookupTable && "multiple lookup tables for DC in module");
+      LookupTable = reader::ASTDeclContextNameLookupTable::Create(
+          Update.Data + Update.BucketOffset,
+          Update.Data + sizeof(uint32_t),
+          Update.Data,
+          reader::ASTDeclContextNameLookupTrait(*this, *Update.Mod));
+    }
+    DC->setHasExternalVisibleStorage(true);
+  }
+
   // The declaration may have been modified by files later in the chain.
   // If this is the case, read the record containing the updates from each file
   // and pass it to ASTDeclReader to make the modifications.
   DeclUpdateOffsetsMap::iterator UpdI = DeclUpdateOffsets.find(ID);
   if (UpdI != DeclUpdateOffsets.end()) {
-    FileOffsetsTy &UpdateOffsets = UpdI->second;
+    auto UpdateOffsets = std::move(UpdI->second);
+    DeclUpdateOffsets.erase(UpdI);
+
     bool WasInteresting = isConsumerInterestedIn(D, false);
-    for (FileOffsetsTy::iterator
-         I = UpdateOffsets.begin(), E = UpdateOffsets.end(); I != E; ++I) {
-      ModuleFile *F = I->first;
-      uint64_t Offset = I->second;
+    for (auto &FileAndOffset : UpdateOffsets) {
+      ModuleFile *F = FileAndOffset.first;
+      uint64_t Offset = FileAndOffset.second;
       llvm::BitstreamCursor &Cursor = F->DeclsCursor;
       SavedStreamPosition SavedPosition(Cursor);
       Cursor.JumpToBit(Offset);
@@ -3817,10 +3813,8 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       // Visible update is handled separately.
       uint64_t LexicalOffset = Record[Idx++];
       if (!HadRealDefinition && LexicalOffset) {
-        RD->setHasExternalLexicalStorage(true);
-        Reader.ReadDeclContextStorage(ModuleFile, ModuleFile.DeclsCursor,
-                                      std::make_pair(LexicalOffset, 0),
-                                      ModuleFile.DeclContextInfos[RD]);
+        Reader.ReadLexicalDeclContextStorage(ModuleFile, ModuleFile.DeclsCursor,
+                                             LexicalOffset, RD);
         Reader.PendingFakeDefinitionData.erase(OldDD);
       }
 
