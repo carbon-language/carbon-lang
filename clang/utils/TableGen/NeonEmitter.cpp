@@ -36,6 +36,7 @@
 #include "llvm/TableGen/SetTheory.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
+#include <deque>
 #include <map>
 #include <sstream>
 #include <string>
@@ -393,7 +394,7 @@ public:
 
   /// Return true if the prototype has a scalar argument.
   /// This does not return true for the "splat" code ('a').
-  bool protoHasScalar();
+  bool protoHasScalar() const;
 
   /// Return the index that parameter PIndex will sit at
   /// in a generated function call. This is often just PIndex,
@@ -431,9 +432,9 @@ public:
   /// Return the name, mangled with type information.
   /// If ForceClassS is true, use ClassS (u32/s32) instead
   /// of the intrinsic's own type class.
-  std::string getMangledName(bool ForceClassS = false);
+  std::string getMangledName(bool ForceClassS = false) const;
   /// Return the type code for a builtin function call.
-  std::string getInstTypeCode(Type T, ClassKind CK);
+  std::string getInstTypeCode(Type T, ClassKind CK) const;
   /// Return the type string for a BUILTIN() macro in Builtins.def.
   std::string getBuiltinTypeStr();
 
@@ -444,7 +445,7 @@ public:
   void indexBody();
 
 private:
-  std::string mangleName(std::string Name, ClassKind CK);
+  std::string mangleName(std::string Name, ClassKind CK) const;
 
   void initVariables();
   std::string replaceParamsIn(std::string S);
@@ -494,7 +495,7 @@ private:
 class NeonEmitter {
   RecordKeeper &Records;
   DenseMap<Record *, ClassKind> ClassMap;
-  std::map<std::string, std::vector<Intrinsic *>> IntrinsicMap;
+  std::map<std::string, std::deque<Intrinsic>> IntrinsicMap;
   unsigned UniqueNumber;
 
   void createIntrinsic(Record *R, SmallVectorImpl<Intrinsic *> &Out);
@@ -507,7 +508,7 @@ class NeonEmitter {
 public:
   /// Called by Intrinsic - this attempts to get an intrinsic that takes
   /// the given types as arguments.
-  Intrinsic *getIntrinsic(StringRef Name, ArrayRef<Type> Types);
+  Intrinsic &getIntrinsic(StringRef Name, ArrayRef<Type> Types);
 
   /// Called by Intrinsic - returns a globally-unique number.
   unsigned getUniqueNumber() { return UniqueNumber++; }
@@ -530,12 +531,6 @@ public:
     ClassMap[WOpI] = ClassW;
     ClassMap[LOpI] = ClassL;
     ClassMap[NoTestOpI] = ClassNoTest;
-  }
-
-  ~NeonEmitter() {
-    for (auto &P : IntrinsicMap)
-      for (Intrinsic *I : P.second)
-        delete I;
   }
 
   // run - Emit arm_neon.h.inc
@@ -960,7 +955,7 @@ void Type::applyModifier(char Mod) {
 // Intrinsic implementation
 //===----------------------------------------------------------------------===//
 
-std::string Intrinsic::getInstTypeCode(Type T, ClassKind CK) {
+std::string Intrinsic::getInstTypeCode(Type T, ClassKind CK) const {
   char typeCode = '\0';
   bool printNumber = true;
 
@@ -1055,7 +1050,7 @@ std::string Intrinsic::getBuiltinTypeStr() {
   return S;
 }
 
-std::string Intrinsic::getMangledName(bool ForceClassS) {
+std::string Intrinsic::getMangledName(bool ForceClassS) const {
   // Check if the prototype has a scalar operand with the type of the vector
   // elements.  If not, bitcasting the args will take care of arg checking.
   // The actual signedness etc. will be taken care of with special enums.
@@ -1066,7 +1061,7 @@ std::string Intrinsic::getMangledName(bool ForceClassS) {
   return mangleName(Name, ForceClassS ? ClassS : LocalCK);
 }
 
-std::string Intrinsic::mangleName(std::string Name, ClassKind LocalCK) {
+std::string Intrinsic::mangleName(std::string Name, ClassKind LocalCK) const {
   std::string typeCode = getInstTypeCode(BaseType, LocalCK);
   std::string S = Name;
 
@@ -1284,7 +1279,7 @@ void Intrinsic::emitShadowedArgs() {
 
 // We don't check 'a' in this function, because for builtin function the
 // argument matching to 'a' uses a vector type splatted from a scalar type.
-bool Intrinsic::protoHasScalar() {
+bool Intrinsic::protoHasScalar() const {
   return (Proto.find('s') != std::string::npos ||
           Proto.find('z') != std::string::npos ||
           Proto.find('r') != std::string::npos ||
@@ -1497,15 +1492,14 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagCall(DagInit *DI) {
     N = SI->getAsUnquotedString();
   else
     N = emitDagArg(DI->getArg(0), "").second;
-  Intrinsic *Callee = Intr.Emitter.getIntrinsic(N, Types);
-  assert(Callee && "getIntrinsic should not return us nullptr!");
+  Intrinsic &Callee = Intr.Emitter.getIntrinsic(N, Types);
 
   // Make sure the callee is known as an early def.
-  Callee->setNeededEarly();
-  Intr.Dependencies.insert(Callee);
+  Callee.setNeededEarly();
+  Intr.Dependencies.insert(&Callee);
 
   // Now create the call itself.
-  std::string S = CallPrefix.str() + Callee->getMangledName(true) + "(";
+  std::string S = CallPrefix.str() + Callee.getMangledName(true) + "(";
   for (unsigned I = 0; I < DI->getNumArgs() - 1; ++I) {
     if (I != 0)
       S += ", ";
@@ -1513,7 +1507,7 @@ std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagCall(DagInit *DI) {
   }
   S += ")";
 
-  return std::make_pair(Callee->getReturnType(), S);
+  return std::make_pair(Callee.getReturnType(), S);
 }
 
 std::pair<Type, std::string> Intrinsic::DagEmitter::emitDagCast(DagInit *DI,
@@ -1861,11 +1855,11 @@ void Intrinsic::indexBody() {
 // NeonEmitter implementation
 //===----------------------------------------------------------------------===//
 
-Intrinsic *NeonEmitter::getIntrinsic(StringRef Name, ArrayRef<Type> Types) {
+Intrinsic &NeonEmitter::getIntrinsic(StringRef Name, ArrayRef<Type> Types) {
   // First, look up the name in the intrinsic map.
   assert_with_loc(IntrinsicMap.find(Name.str()) != IntrinsicMap.end(),
                   ("Intrinsic '" + Name + "' not found!").str());
-  std::vector<Intrinsic *> &V = IntrinsicMap[Name.str()];
+  auto &V = IntrinsicMap.find(Name.str())->second;
   std::vector<Intrinsic *> GoodVec;
 
   // Create a string to print if we end up failing.
@@ -1880,35 +1874,35 @@ Intrinsic *NeonEmitter::getIntrinsic(StringRef Name, ArrayRef<Type> Types) {
 
   // Now, look through each intrinsic implementation and see if the types are
   // compatible.
-  for (auto *I : V) {
-    ErrMsg += "  - " + I->getReturnType().str() + " " + I->getMangledName();
+  for (auto &I : V) {
+    ErrMsg += "  - " + I.getReturnType().str() + " " + I.getMangledName();
     ErrMsg += "(";
-    for (unsigned A = 0; A < I->getNumParams(); ++A) {
+    for (unsigned A = 0; A < I.getNumParams(); ++A) {
       if (A != 0)
         ErrMsg += ", ";
-      ErrMsg += I->getParamType(A).str();
+      ErrMsg += I.getParamType(A).str();
     }
     ErrMsg += ")\n";
 
-    if (I->getNumParams() != Types.size())
+    if (I.getNumParams() != Types.size())
       continue;
 
     bool Good = true;
     for (unsigned Arg = 0; Arg < Types.size(); ++Arg) {
-      if (I->getParamType(Arg) != Types[Arg]) {
+      if (I.getParamType(Arg) != Types[Arg]) {
         Good = false;
         break;
       }
     }
     if (Good)
-      GoodVec.push_back(I);
+      GoodVec.push_back(&I);
   }
 
   assert_with_loc(GoodVec.size() > 0,
                   "No compatible intrinsic found - " + ErrMsg);
   assert_with_loc(GoodVec.size() == 1, "Multiple overloads found - " + ErrMsg);
 
-  return GoodVec.front();
+  return *GoodVec.front();
 }
 
 void NeonEmitter::createIntrinsic(Record *R,
@@ -1953,13 +1947,12 @@ void NeonEmitter::createIntrinsic(Record *R,
   std::sort(NewTypeSpecs.begin(), NewTypeSpecs.end());
   NewTypeSpecs.erase(std::unique(NewTypeSpecs.begin(), NewTypeSpecs.end()),
 		     NewTypeSpecs.end());
+  auto &Entry = IntrinsicMap[Name];
 
   for (auto &I : NewTypeSpecs) {
-    Intrinsic *IT = new Intrinsic(R, Name, Proto, I.first, I.second, CK, Body,
-                                  *this, Guard, IsUnavailable, BigEndianSafe);
-
-    IntrinsicMap[Name].push_back(IT);
-    Out.push_back(IT);
+    Entry.emplace_back(R, Name, Proto, I.first, I.second, CK, Body, *this,
+                       Guard, IsUnavailable, BigEndianSafe);
+    Out.push_back(&Entry.back());
   }
 
   CurrentRecord = nullptr;
