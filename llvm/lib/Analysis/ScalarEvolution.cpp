@@ -6721,40 +6721,6 @@ bool ScalarEvolution::isMonotonicPredicate(const SCEVAddRecExpr *LHS,
 bool ScalarEvolution::isMonotonicPredicateImpl(const SCEVAddRecExpr *LHS,
                                                ICmpInst::Predicate Pred,
                                                bool &Increasing) {
-  SCEV::NoWrapFlags FlagsRequired = SCEV::FlagAnyWrap;
-  bool IncreasingOnNonNegativeStep = false;
-
-  switch (Pred) {
-  default:
-    return false; // Conservative answer
-
-  case ICmpInst::ICMP_UGT:
-  case ICmpInst::ICMP_UGE:
-    FlagsRequired = SCEV::FlagNUW;
-    IncreasingOnNonNegativeStep = true;
-    break;
-
-  case ICmpInst::ICMP_ULT:
-  case ICmpInst::ICMP_ULE:
-    FlagsRequired = SCEV::FlagNUW;
-    IncreasingOnNonNegativeStep = false;
-    break;
-
-  case ICmpInst::ICMP_SGT:
-  case ICmpInst::ICMP_SGE:
-    FlagsRequired = SCEV::FlagNSW;
-    IncreasingOnNonNegativeStep = true;
-    break;
-
-  case ICmpInst::ICMP_SLT:
-  case ICmpInst::ICMP_SLE:
-    FlagsRequired = SCEV::FlagNSW;
-    IncreasingOnNonNegativeStep = false;
-    break;
-  }
-
-  if (!LHS->getNoWrapFlags(FlagsRequired))
-    return false;
 
   // A zero step value for LHS means the induction variable is essentially a
   // loop invariant value. We don't really depend on the predicate actually
@@ -6766,17 +6732,45 @@ bool ScalarEvolution::isMonotonicPredicateImpl(const SCEVAddRecExpr *LHS,
   // where SCEV can prove X >= 0 but not prove X > 0, so it is helpful to be
   // as general as possible.
 
-  if (isKnownNonNegative(LHS->getStepRecurrence(*this))) {
-    Increasing = IncreasingOnNonNegativeStep;
+  switch (Pred) {
+  default:
+    return false; // Conservative answer
+
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_ULE:
+    if (!LHS->getNoWrapFlags(SCEV::FlagNUW))
+      return false;
+
+    Increasing = Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_UGE;
     return true;
+
+  case ICmpInst::ICMP_SGT:
+  case ICmpInst::ICMP_SGE:
+  case ICmpInst::ICMP_SLT:
+  case ICmpInst::ICMP_SLE: {
+    if (!LHS->getNoWrapFlags(SCEV::FlagNSW))
+      return false;
+
+    const SCEV *Step = LHS->getStepRecurrence(*this);
+
+    if (isKnownNonNegative(Step)) {
+      Increasing = Pred == ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_SGE;
+      return true;
+    }
+
+    if (isKnownNonPositive(Step)) {
+      Increasing = Pred == ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SLE;
+      return true;
+    }
+
+    return false;
   }
 
-  if (isKnownNonPositive(LHS->getStepRecurrence(*this))) {
-    Increasing = !IncreasingOnNonNegativeStep;
-    return true;
   }
 
-  return false;
+  llvm_unreachable("switch has default clause!");
 }
 
 bool ScalarEvolution::isLoopInvariantPredicate(
