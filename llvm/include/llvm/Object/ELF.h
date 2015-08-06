@@ -560,8 +560,7 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
   // Get string table sections.
   uintX_t StringTableIndex = getStringTableIndex();
   if (StringTableIndex) {
-    ErrorOr<const Elf_Shdr *> StrTabSecOrErr =
-        getSection(getStringTableIndex());
+    ErrorOr<const Elf_Shdr *> StrTabSecOrErr = getSection(StringTableIndex);
     if ((EC = StrTabSecOrErr.getError()))
       return;
 
