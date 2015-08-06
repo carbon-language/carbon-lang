@@ -186,12 +186,12 @@ public:
   }
 };
 
+typedef std::pair<unsigned, AttributeSetNode *> IndexAttrPair;
+
 //===----------------------------------------------------------------------===//
 /// \class
 /// \brief This class represents a set of attributes that apply to the function,
 /// return type, and parameters.
-typedef std::pair<unsigned, AttributeSetNode *> IndexAttrPair;
-
 class AttributeSetImpl final
     : public FoldingSetNode,
       private TrailingObjects<AttributeSetImpl, IndexAttrPair> {
