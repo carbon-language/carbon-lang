@@ -16,7 +16,7 @@ namespace {
 // This class, beyond being used by the test case, a nice
 // demonstration of the intended usage of TrailingObjects, with a
 // single trailing array.
-class Class1 final : private TrailingObjects<Class1, short> {
+class Class1 final : protected TrailingObjects<Class1, short> {
   friend TrailingObjects;
 
   unsigned NumShorts;
@@ -47,7 +47,7 @@ public:
 
 // Here, there are two singular optional object types appended.
 // Note that it fails to compile without the alignment spec.
-class LLVM_ALIGNAS(8) Class2 final : private TrailingObjects<Class2, double, short> {
+class LLVM_ALIGNAS(8) Class2 final : protected TrailingObjects<Class2, double, short> {
   friend TrailingObjects;
 
   bool HasShort, HasDouble;
