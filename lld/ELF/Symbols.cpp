@@ -9,6 +9,7 @@
 
 #include "Symbols.h"
 #include "Chunks.h"
+#include "Error.h"
 #include "InputFiles.h"
 
 using namespace llvm::object;
@@ -17,13 +18,16 @@ using namespace lld;
 using namespace lld::elf2;
 
 template <class ELFT>
-StringRef
+static StringRef
 getSymbolName(const llvm::object::ELFFile<ELFT> *F,
   const typename llvm::object::ELFFile<ELFT>::Elf_Sym *S) {
-  ErrorOr<StringRef> StrTab = F->getStringTableForSymtab(*F->getDotSymtabSec());
-  if (!StrTab || S->st_name >= StrTab->size())
-    llvm::report_fatal_error("Invalid string table.");
-  return StrTab->data() + S->st_name;
+  ErrorOr<StringRef> StrTabOrErr =
+      F->getStringTableForSymtab(*F->getDotSymtabSec());
+  error(StrTabOrErr, "Invalid string table.");
+  StringRef StrTab = *StrTabOrErr;
+  if (S->st_name >= StrTab.size())
+    error("Invalid string table offset");
+  return StrTab.data() + S->st_name;
 }
 
 template <class ELFT>
