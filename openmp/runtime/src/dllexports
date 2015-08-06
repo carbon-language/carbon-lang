@@ -182,10 +182,10 @@
     %endif
 
 
-#if USE_DEBUGGER
+    %ifdef USE_DEBUGGER
         __kmp_debugging                         DATA
         __kmp_omp_debug_struct_info             DATA
-#endif /* USE_DEBUGGER */
+    %endif 
 
         # Symbols for MS mutual detection:
         _You_must_link_with_exactly_one_OpenMP_library    DATA
