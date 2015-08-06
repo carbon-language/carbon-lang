@@ -71,7 +71,7 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
 
   MachineFunction *xParent;
 
-  /// Keep track of the predecessor / successor basicblocks.
+  /// Keep track of the predecessor / successor basic blocks.
   std::vector<MachineBasicBlock *> Predecessors;
   std::vector<MachineBasicBlock *> Successors;
 
@@ -712,7 +712,7 @@ struct MBB2NumberFunctor :
 //===--------------------------------------------------------------------===//
 
 // Provide specializations of GraphTraits to be able to treat a
-// MachineFunction as a graph of MachineBasicBlocks...
+// MachineFunction as a graph of MachineBasicBlocks.
 //
 
 template <> struct GraphTraits<MachineBasicBlock *> {
@@ -742,7 +742,7 @@ template <> struct GraphTraits<const MachineBasicBlock *> {
 };
 
 // Provide specializations of GraphTraits to be able to treat a
-// MachineFunction as a graph of MachineBasicBlocks... and to walk it
+// MachineFunction as a graph of MachineBasicBlocks and to walk it
 // in inverse order.  Inverse order for a function is considered
 // to be when traversing the predecessor edges of a MBB
 // instead of the successor edges.
