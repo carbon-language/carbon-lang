@@ -532,6 +532,12 @@ public:
     ClassMap[NoTestOpI] = ClassNoTest;
   }
 
+  ~NeonEmitter() {
+    for (auto &P : IntrinsicMap)
+      for (Intrinsic *I : P.second)
+        delete I;
+  }
+
   // run - Emit arm_neon.h.inc
   void run(raw_ostream &o);
 
