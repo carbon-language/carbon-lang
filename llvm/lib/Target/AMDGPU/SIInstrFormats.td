@@ -231,7 +231,8 @@ class SMRD_IMMe_ci <bits<5> op> : Enc64 {
   let Inst{8}     = 0;
   let Inst{14-9}  = sbase{6-1};
   let Inst{21-15} = sdst;
-  let Inst{26-22} = 0x18; //encoding
+  let Inst{26-22} = op;
+  let Inst{31-27} = 0x18; //encoding
   let Inst{63-32} = offset;
 }
 

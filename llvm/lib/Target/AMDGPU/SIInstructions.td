@@ -2072,27 +2072,34 @@ def : Pat <
 // SMRD Patterns
 //===----------------------------------------------------------------------===//
 
-multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
+multiclass SMRD_Pattern <string Instr, ValueType vt> {
 
   // 1. IMM offset
   def : Pat <
     (constant_load (SMRDImm i64:$sbase, i32:$offset)),
-    (vt (Instr_IMM $sbase, $offset))
+    (vt (!cast<SMRD>(Instr#"_IMM") $sbase, $offset))
   >;
 
   // 2. SGPR offset
   def : Pat <
     (constant_load (SMRDSgpr i64:$sbase, i32:$offset)),
-    (vt (Instr_SGPR $sbase, $offset))
+    (vt (!cast<SMRD>(Instr#"_SGPR") $sbase, $offset))
   >;
+
+  def : Pat <
+    (constant_load (SMRDImm32 i64:$sbase, i32:$offset)),
+    (vt (!cast<SMRD>(Instr#"_IMM_ci") $sbase, $offset))
+  > {
+    let Predicates = [isCIOnly];
+  }
 }
 
-defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, v2i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v4i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
-defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v8i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX16_IMM, S_LOAD_DWORDX16_SGPR, v16i32>;
+defm : SMRD_Pattern <"S_LOAD_DWORD", i32>;
+defm : SMRD_Pattern <"S_LOAD_DWORDX2", v2i32>;
+defm : SMRD_Pattern <"S_LOAD_DWORDX4", v4i32>;
+defm : SMRD_Pattern <"S_LOAD_DWORDX8", v32i8>;
+defm : SMRD_Pattern <"S_LOAD_DWORDX8", v8i32>;
+defm : SMRD_Pattern <"S_LOAD_DWORDX16", v16i32>;
 
 // 1. Offset as an immediate
 def : Pat <
@@ -2105,6 +2112,15 @@ def : Pat <
   (SIload_constant v4i32:$sbase, (SMRDBufferSgpr i32:$offset)),
   (S_BUFFER_LOAD_DWORD_SGPR $sbase, $offset)
 >;
+
+let Predicates = [isCI] in {
+
+def : Pat <
+  (SIload_constant v4i32:$sbase, (SMRDBufferImm32 i32:$offset)),
+  (S_BUFFER_LOAD_DWORD_IMM_ci $sbase, $offset)
+>;
+
+} // End Predicates = [isCI]
 
 //===----------------------------------------------------------------------===//
 // SOP1 Patterns

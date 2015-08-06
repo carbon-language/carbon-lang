@@ -8,6 +8,9 @@
 //===----------------------------------------------------------------------===//
 def isCI : Predicate<"Subtarget->getGeneration() "
                       ">= AMDGPUSubtarget::SEA_ISLANDS">;
+def isCIOnly : Predicate<"Subtarget->getGeneration() =="
+                         "AMDGPUSubtarget::SEA_ISLANDS">,
+  AssemblerPredicate <"FeatureSeaIslands">;
 def isVI : Predicate <
   "Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS">,
   AssemblerPredicate<"FeatureGCN3Encoding">;
@@ -436,6 +439,17 @@ def ClampMatchClass : AsmOperandClass {
   let RenderMethod = "addImmOperands";
 }
 
+class SMRDOffsetBaseMatchClass <string predicate> : AsmOperandClass {
+  let Name = "SMRDOffset"#predicate;
+  let PredicateMethod = predicate;
+  let RenderMethod = "addImmOperands";
+}
+
+def SMRDOffsetMatchClass : SMRDOffsetBaseMatchClass <"isSMRDOffset">;
+def SMRDLiteralOffsetMatchClass : SMRDOffsetBaseMatchClass <
+  "isSMRDLiteralOffset"
+>;
+
 let OperandType = "OPERAND_IMMEDIATE" in {
 
 def offen : Operand<i1> {
@@ -510,6 +524,16 @@ def ClampMod : Operand <i1> {
   let ParserMatchClass = ClampMatchClass;
 }
 
+def smrd_offset : Operand <i32> {
+  let PrintMethod = "printU32ImmOperand";
+  let ParserMatchClass = SMRDOffsetMatchClass;
+}
+
+def smrd_literal_offset : Operand <i32> {
+  let PrintMethod = "printU32ImmOperand";
+  let ParserMatchClass = SMRDLiteralOffsetMatchClass;
+}
+
 } // End OperandType = "OPERAND_IMMEDIATE"
 
 def VOPDstS64 : VOPDstOperand <SReg_64>;
@@ -529,10 +553,11 @@ def MUBUFOffset : ComplexPattern<i64, 6, "SelectMUBUFOffset">;
 def MUBUFOffsetAtomic : ComplexPattern<i64, 4, "SelectMUBUFOffset">;
 
 def SMRDImm   : ComplexPattern<i64, 2, "SelectSMRDImm">;
+def SMRDImm32 : ComplexPattern<i64, 2, "SelectSMRDImm32">;
 def SMRDSgpr  : ComplexPattern<i64, 2, "SelectSMRDSgpr">;
 def SMRDBufferImm   : ComplexPattern<i32, 1, "SelectSMRDBufferImm">;
+def SMRDBufferImm32 : ComplexPattern<i32, 1, "SelectSMRDBufferImm32">;
 def SMRDBufferSgpr  : ComplexPattern<i32, 1, "SelectSMRDBufferSgpr">;
-
 
 def VOP3Mods0 : ComplexPattern<untyped, 4, "SelectVOP3Mods0">;
 def VOP3NoMods0 : ComplexPattern<untyped, 4, "SelectVOP3NoMods0">;
@@ -893,14 +918,14 @@ multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
                         RegisterClass dstClass> {
   defm _IMM : SMRD_m <
     op, opName#"_IMM", 1, (outs dstClass:$dst),
-    (ins baseClass:$sbase, u32imm:$offset),
+    (ins baseClass:$sbase, smrd_offset:$offset),
     opName#" $dst, $sbase, $offset", []
   >;
 
   def _IMM_ci : SMRD <
-    (outs dstClass:$dst), (ins baseClass:$sbase, u32imm:$offset),
+    (outs dstClass:$dst), (ins baseClass:$sbase, smrd_literal_offset:$offset),
     opName#" $dst, $sbase, $offset", []>, SMRD_IMMe_ci <op> {
-    let AssemblerPredicates = [isCI];
+    let AssemblerPredicates = [isCIOnly];
   }
 
   defm _SGPR : SMRD_m <

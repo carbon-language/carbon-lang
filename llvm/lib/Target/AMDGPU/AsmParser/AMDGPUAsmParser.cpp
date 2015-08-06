@@ -301,6 +301,8 @@ public:
   bool isDSOffset01() const;
   bool isSWaitCnt() const;
   bool isMubufOffset() const;
+  bool isSMRDOffset() const;
+  bool isSMRDLiteralOffset() const;
 };
 
 class AMDGPUAsmParser : public MCTargetAsmParser {
@@ -1568,6 +1570,23 @@ AMDGPUAsmParser::parseUNorm(OperandVector &Operands) {
 AMDGPUAsmParser::OperandMatchResultTy
 AMDGPUAsmParser::parseR128(OperandVector &Operands) {
   return parseNamedBit("r128", Operands);
+}
+
+//===----------------------------------------------------------------------===//
+// smrd
+//===----------------------------------------------------------------------===//
+
+bool AMDGPUOperand::isSMRDOffset() const {
+
+  // FIXME: Support 20-bit offsets on VI.  We need to to pass subtarget
+  // information here.
+  return isImm() && isUInt<8>(getImm());
+}
+
+bool AMDGPUOperand::isSMRDLiteralOffset() const {
+  // 32-bit literals are only supported on CI and we only want to use them
+  // when the offset is > 8-bits.
+  return isImm() && !isUInt<8>(getImm()) && isUInt<32>(getImm());
 }
 
 //===----------------------------------------------------------------------===//
