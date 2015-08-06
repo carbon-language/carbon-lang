@@ -26,6 +26,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TrailingObjects.h"
 
 namespace clang {
 struct ASTTemplateArgumentListInfo;
@@ -3626,7 +3627,15 @@ public:
 
 /// \brief This represents the body of a CapturedStmt, and serves as its
 /// DeclContext.
-class CapturedDecl : public Decl, public DeclContext {
+class CapturedDecl final
+    : public Decl,
+      public DeclContext,
+      private llvm::TrailingObjects<CapturedDecl, ImplicitParamDecl *> {
+protected:
+  size_t numTrailingObjects(OverloadToken<ImplicitParamDecl>) {
+    return NumParams;
+  }
+
 private:
   /// \brief The number of parameters to the outlined function.
   unsigned NumParams;
@@ -3639,9 +3648,12 @@ private:
     : Decl(Captured, DC, SourceLocation()), DeclContext(Captured),
       NumParams(NumParams), ContextParam(0), BodyAndNothrow(nullptr, false) { }
 
-  ImplicitParamDecl **getParams() const {
-    return reinterpret_cast<ImplicitParamDecl **>(
-             const_cast<CapturedDecl *>(this) + 1);
+  ImplicitParamDecl *const *getParams() const {
+    return getTrailingObjects<ImplicitParamDecl *>();
+  }
+
+  ImplicitParamDecl **getParams() {
+    return getTrailingObjects<ImplicitParamDecl *>();
   }
 
 public:
@@ -3679,7 +3691,7 @@ public:
   }
   unsigned getContextParamPosition() const { return ContextParam; }
 
-  typedef ImplicitParamDecl **param_iterator;
+  typedef ImplicitParamDecl *const *param_iterator;
   typedef llvm::iterator_range<param_iterator> param_range;
 
   /// \brief Retrieve an iterator pointing to the first parameter decl.
@@ -3702,6 +3714,7 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
+  friend TrailingObjects;
 };
 
 /// \brief Describes a module import declaration, which makes the contents
@@ -3714,7 +3727,8 @@ public:
 ///
 /// Import declarations can also be implicitly generated from
 /// \#include/\#import directives.
-class ImportDecl : public Decl {
+class ImportDecl final : public Decl,
+                         llvm::TrailingObjects<ImportDecl, SourceLocation> {
   /// \brief The imported module, along with a bit that indicates whether
   /// we have source-location information for each identifier in the module
   /// name. 
@@ -3730,7 +3744,8 @@ class ImportDecl : public Decl {
   friend class ASTReader;
   friend class ASTDeclReader;
   friend class ASTContext;
-  
+  friend TrailingObjects;
+
   ImportDecl(DeclContext *DC, SourceLocation StartLoc, Module *Imported,
              ArrayRef<SourceLocation> IdentifierLocs);
 

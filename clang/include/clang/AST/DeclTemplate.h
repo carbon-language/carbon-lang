@@ -20,6 +20,7 @@
 #include "clang/AST/TemplateBase.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/TrailingObjects.h"
 #include <limits>
 
 namespace clang {
@@ -43,7 +44,9 @@ typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes.
-class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList {
+class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList final
+    : private llvm::TrailingObjects<TemplateParameterList, NamedDecl *> {
+
   /// The location of the 'template' keyword.
   SourceLocation TemplateLoc;
 
@@ -59,6 +62,10 @@ class LLVM_ALIGNAS(/*alignof(void*)*/ LLVM_PTR_SIZE) TemplateParameterList {
   unsigned ContainsUnexpandedParameterPack : 1;
 
 protected:
+  size_t numTrailingObjects(OverloadToken<NamedDecl *>) const {
+    return NumParams;
+  }
+
   TemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
                         NamedDecl **Params, unsigned NumParams,
                         SourceLocation RAngleLoc);
@@ -77,10 +84,8 @@ public:
   /// \brief Iterates through the template parameters in this list.
   typedef NamedDecl* const* const_iterator;
 
-  iterator begin() { return reinterpret_cast<NamedDecl **>(this + 1); }
-  const_iterator begin() const {
-    return reinterpret_cast<NamedDecl * const *>(this + 1);
-  }
+  iterator begin() { return getTrailingObjects<NamedDecl *>(); }
+  const_iterator begin() const { return getTrailingObjects<NamedDecl *>(); }
   iterator end() { return begin() + NumParams; }
   const_iterator end() const { return begin() + NumParams; }
 
@@ -130,24 +135,43 @@ public:
   SourceRange getSourceRange() const LLVM_READONLY {
     return SourceRange(TemplateLoc, RAngleLoc);
   }
+
+  friend TrailingObjects;
+  template <size_t N> friend class FixedSizeTemplateParameterListStorage;
 };
 
 /// \brief Stores a list of template parameters for a TemplateDecl and its
 /// derived classes. Suitable for creating on the stack.
-template<size_t N>
-class FixedSizeTemplateParameterList : public TemplateParameterList {
+template <size_t N> class FixedSizeTemplateParameterListStorage {
+  // This is kinda ugly: TemplateParameterList usually gets allocated
+  // in a block of memory with NamedDecls appended to it. Here, to get
+  // it stack allocated, we include the params as a separate
+  // variable. After allocation, the TemplateParameterList object
+  // treats them as part of itself.
+  TemplateParameterList List;
   NamedDecl *Params[N];
 
 public:
-  FixedSizeTemplateParameterList(SourceLocation TemplateLoc,
-                                 SourceLocation LAngleLoc,
-                                 NamedDecl **Params, SourceLocation RAngleLoc) :
-    TemplateParameterList(TemplateLoc, LAngleLoc, Params, N, RAngleLoc) {
+  FixedSizeTemplateParameterListStorage(SourceLocation TemplateLoc,
+                                        SourceLocation LAngleLoc,
+                                        NamedDecl **Params,
+                                        SourceLocation RAngleLoc)
+      : List(TemplateLoc, LAngleLoc, Params, N, RAngleLoc) {
+    // Because we're doing an evil layout hack above, have some
+    // asserts, just to double-check everything is laid out like
+    // expected.
+    assert(sizeof(*this) ==
+               TemplateParameterList::totalSizeToAlloc<NamedDecl *>(N) &&
+           "Object layout not as expected");
+    assert(this->Params == List.getTrailingObjects<NamedDecl *>() &&
+           "Object layout not as expected");
   }
+  TemplateParameterList *get() { return &List; }
 };
 
 /// \brief A template argument list.
-class TemplateArgumentList {
+class TemplateArgumentList final
+    : private llvm::TrailingObjects<TemplateArgumentList, TemplateArgument> {
   /// \brief The template argument list.
   const TemplateArgument *Arguments;
 
@@ -158,8 +182,9 @@ class TemplateArgumentList {
   TemplateArgumentList(const TemplateArgumentList &Other) = delete;
   void operator=(const TemplateArgumentList &Other) = delete;
 
-  TemplateArgumentList(const TemplateArgument *Args, unsigned NumArgs)
-    : Arguments(Args), NumArguments(NumArgs) { }
+  // Constructs an instance with an internal Argument list, containing
+  // a copy of the Args array. (Called by CreateCopy)
+  TemplateArgumentList(const TemplateArgument *Args, unsigned NumArgs);
 
 public:
   /// \brief Type used to indicate that the template argument list itself is a
@@ -209,6 +234,8 @@ public:
 
   /// \brief Retrieve a pointer to the template argument list.
   const TemplateArgument *data() const { return Arguments; }
+
+  friend TrailingObjects;
 };
 
 void *allocateDefaultArgStorageChain(const ASTContext &C);
@@ -537,7 +564,10 @@ public:
 ///   };
 /// \endcode
 class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8)
-    DependentFunctionTemplateSpecializationInfo {
+    DependentFunctionTemplateSpecializationInfo final
+    : private llvm::TrailingObjects<DependentFunctionTemplateSpecializationInfo,
+                                    TemplateArgumentLoc,
+                                    FunctionTemplateDecl *> {
   /// The number of potential template candidates.
   unsigned NumTemplates;
 
@@ -547,15 +577,21 @@ class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8)
   /// The locations of the left and right angle brackets.
   SourceRange AngleLocs;
 
-  FunctionTemplateDecl * const *getTemplates() const {
-    return reinterpret_cast<FunctionTemplateDecl *const *>(
-        &getTemplateArgs()[NumArgs]);
+  size_t numTrailingObjects(OverloadToken<TemplateArgumentLoc>) const {
+    return NumArgs;
+  }
+  size_t numTrailingObjects(OverloadToken<FunctionTemplateDecl *>) const {
+    return NumTemplates;
   }
 
-public:
   DependentFunctionTemplateSpecializationInfo(
                                  const UnresolvedSetImpl &Templates,
                                  const TemplateArgumentListInfo &TemplateArgs);
+
+public:
+  static DependentFunctionTemplateSpecializationInfo *
+  Create(ASTContext &Context, const UnresolvedSetImpl &Templates,
+         const TemplateArgumentListInfo &TemplateArgs);
 
   /// \brief Returns the number of function templates that this might
   /// be a specialization of.
@@ -564,12 +600,12 @@ public:
   /// \brief Returns the i'th template candidate.
   FunctionTemplateDecl *getTemplate(unsigned I) const {
     assert(I < getNumTemplates() && "template index out of range");
-    return getTemplates()[I];
+    return getTrailingObjects<FunctionTemplateDecl *>()[I];
   }
 
   /// \brief Returns the explicit template arguments that were given.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgumentLoc *>(this + 1);
+    return getTrailingObjects<TemplateArgumentLoc>();
   }
 
   /// \brief Returns the number of explicit template arguments that were given.
@@ -588,6 +624,8 @@ public:
   SourceLocation getRAngleLoc() const {
     return AngleLocs.getEnd();
   }
+
+  friend TrailingObjects;
 };
 
 /// Declaration of a redeclarable template.
@@ -1102,8 +1140,11 @@ public:
 /// @code
 /// template<int Size> class array { };
 /// @endcode
-class NonTypeTemplateParmDecl
-  : public DeclaratorDecl, protected TemplateParmPosition {
+class NonTypeTemplateParmDecl final
+    : public DeclaratorDecl,
+      protected TemplateParmPosition,
+      private llvm::TrailingObjects<NonTypeTemplateParmDecl,
+                                    std::pair<QualType, TypeSourceInfo *>> {
   /// \brief The default template argument, if any, and whether or not
   /// it was inherited.
   typedef DefaultArgStorage<NonTypeTemplateParmDecl, Expr*> DefArgStorage;
@@ -1123,6 +1164,11 @@ class NonTypeTemplateParmDecl
   /// \brief The number of types in an expanded parameter pack.
   unsigned NumExpandedTypes;
 
+  size_t numTrailingObjects(
+      OverloadToken<std::pair<QualType, TypeSourceInfo *>>) const {
+    return NumExpandedTypes;
+  }
+
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation StartLoc,
                           SourceLocation IdLoc, unsigned D, unsigned P,
                           IdentifierInfo *Id, QualType T,
@@ -1141,6 +1187,7 @@ class NonTypeTemplateParmDecl
                           TypeSourceInfo **ExpandedTInfos);
 
   friend class ASTDeclReader;
+  friend TrailingObjects;
 
 public:
   static NonTypeTemplateParmDecl *
@@ -1256,16 +1303,18 @@ public:
   /// pack.
   QualType getExpansionType(unsigned I) const {
     assert(I < NumExpandedTypes && "Out-of-range expansion type index");
-    void * const *TypesAndInfos = reinterpret_cast<void * const*>(this + 1);
-    return QualType::getFromOpaquePtr(TypesAndInfos[2*I]);
+    auto TypesAndInfos =
+        getTrailingObjects<std::pair<QualType, TypeSourceInfo *>>();
+    return TypesAndInfos[I].first;
   }
 
   /// \brief Retrieve a particular expansion type source info within an
   /// expanded parameter pack.
   TypeSourceInfo *getExpansionTypeSourceInfo(unsigned I) const {
     assert(I < NumExpandedTypes && "Out-of-range expansion type index");
-    void * const *TypesAndInfos = reinterpret_cast<void * const*>(this + 1);
-    return static_cast<TypeSourceInfo *>(TypesAndInfos[2*I+1]);
+    auto TypesAndInfos =
+        getTrailingObjects<std::pair<QualType, TypeSourceInfo *>>();
+    return TypesAndInfos[I].second;
   }
 
   // Implement isa/cast/dyncast/etc.
@@ -1280,9 +1329,11 @@ public:
 /// @endcode
 /// A template template parameter is a TemplateDecl because it defines the
 /// name of a template and the template parameters allowable for substitution.
-class TemplateTemplateParmDecl : public TemplateDecl, 
-                                 protected TemplateParmPosition 
-{
+class TemplateTemplateParmDecl final
+    : public TemplateDecl,
+      protected TemplateParmPosition,
+      private llvm::TrailingObjects<TemplateTemplateParmDecl,
+                                    TemplateParameterList *> {
   void anchor() override;
 
   /// \brief The default template argument, if any.
@@ -1386,7 +1437,7 @@ public:
   /// pack.
   TemplateParameterList *getExpansionTemplateParameters(unsigned I) const {
     assert(I < NumExpandedParams && "Out-of-range expansion type index");
-    return reinterpret_cast<TemplateParameterList *const *>(this + 1)[I];
+    return getTrailingObjects<TemplateParameterList *>()[I];
   }
 
   const DefArgStorage &getDefaultArgStorage() const { return DefaultArgument; }
@@ -1436,6 +1487,7 @@ public:
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
+  friend TrailingObjects;
 };
 
 /// \brief Represents a class template specialization, which refers to
