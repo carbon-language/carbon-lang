@@ -50,8 +50,7 @@ public:
   // Returns symbols defined by this file.
   virtual std::vector<SymbolBody *> &getSymbols() = 0;
 
-  // Reads a file (constructors don't do that). Returns an error if a
-  // file is broken.
+  // Reads a file (the constructor doesn't do that).
   virtual void parse() = 0;
 
   // Returns the CPU type this file was compiled to.
