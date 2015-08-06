@@ -100,15 +100,6 @@ public:
         return;
     }
 
-    clang::ExternalLoadResult
-    FindExternalLexicalDecls(const clang::DeclContext *decl_ctx, bool (*isKindWeWant)(clang::Decl::Kind),
-                             llvm::SmallVectorImpl<clang::Decl *> &decls) override
-    {
-        // This is used to support iterating through an entire lexical context,
-        // which isn't something the debugger should ever need to do.
-        return clang::ELR_Failure;
-    }
-
     bool FindExternalVisibleDeclsByName(const clang::DeclContext *decl_ctx, clang::DeclarationName decl_name) override;
 
     void CompleteType(clang::TagDecl *tag_decl) override;

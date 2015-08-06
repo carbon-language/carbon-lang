@@ -111,15 +111,15 @@ public:
     ///     The DeclContext being searched.
     ///
     /// @param[in] isKindWeWant
-    ///     If non-NULL, a callback function that returns true given the
+    ///     A callback function that returns true given the
     ///     DeclKinds of desired Decls, and false otherwise.
     ///
     /// @param[in] Decls
     ///     A vector that is filled in with matching Decls.
     //------------------------------------------------------------------
-    clang::ExternalLoadResult FindExternalLexicalDecls(const clang::DeclContext *DC,
-                                                       bool (*isKindWeWant)(clang::Decl::Kind),
-                                                       llvm::SmallVectorImpl<clang::Decl *> &Decls) override;
+    void FindExternalLexicalDecls(
+        const clang::DeclContext *DC, llvm::function_ref<bool(clang::Decl::Kind)> IsKindWeWant,
+        llvm::SmallVectorImpl<clang::Decl *> &Decls) override;
 
     //------------------------------------------------------------------
     /// Specify the layout of the contents of a RecordDecl.
@@ -249,11 +249,12 @@ public:
             return m_original.FindExternalVisibleDeclsByName(DC, Name);
         }
 
-        clang::ExternalLoadResult
-        FindExternalLexicalDecls(const clang::DeclContext *DC, bool (*isKindWeWant)(clang::Decl::Kind),
+        void
+        FindExternalLexicalDecls(const clang::DeclContext *DC,
+                                 llvm::function_ref<bool(clang::Decl::Kind)> IsKindWeWant,
                                  llvm::SmallVectorImpl<clang::Decl *> &Decls) override
         {
-            return m_original.FindExternalLexicalDecls(DC, isKindWeWant, Decls);
+            return m_original.FindExternalLexicalDecls(DC, IsKindWeWant, Decls);
         }
 
         void

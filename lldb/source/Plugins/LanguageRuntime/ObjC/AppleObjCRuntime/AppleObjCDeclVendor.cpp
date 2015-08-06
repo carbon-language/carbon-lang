@@ -69,13 +69,6 @@ public:
         return false;
     }
 
-    clang::ExternalLoadResult
-    FindExternalLexicalDecls(const clang::DeclContext *DC, bool (*isKindWeWant)(clang::Decl::Kind),
-                             llvm::SmallVectorImpl<clang::Decl *> &Decls) override
-    {
-        return clang::ELR_Success;
-    }
-
     void
     CompleteType(clang::TagDecl *tag_decl) override
     {

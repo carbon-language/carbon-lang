@@ -419,9 +419,9 @@ ClangASTSource::GetCompleteObjCInterface (clang::ObjCInterfaceDecl *interface_de
     return complete_iface_decl;
 }
 
-clang::ExternalLoadResult
+void
 ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
-                                          bool (*predicate)(Decl::Kind),
+                                          llvm::function_ref<bool(Decl::Kind)> predicate,
                                           llvm::SmallVectorImpl<Decl*> &decls)
 {
     ClangASTMetrics::RegisterLexicalQuery();
@@ -431,11 +431,11 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     const Decl *context_decl = dyn_cast<Decl>(decl_context);
 
     if (!context_decl)
-        return ELR_Failure;
+        return;
 
     auto iter = m_active_lexical_decls.find(context_decl);
     if (iter != m_active_lexical_decls.end())
-        return ELR_Failure;
+        return;
     m_active_lexical_decls.insert(context_decl);
     ScopedLexicalDeclEraser eraser(m_active_lexical_decls, context_decl);
 
@@ -445,29 +445,26 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     if (log)
     {
         if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context_decl))
-            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in '%s' (%sDecl*)%p with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in '%s' (%sDecl*)%p",
                         current_id, static_cast<void*>(m_ast_context),
                         context_named_decl->getNameAsString().c_str(),
                         context_decl->getDeclKindName(),
-                        static_cast<const void*>(context_decl),
-                        (predicate ? "non-null" : "null"));
+                        static_cast<const void*>(context_decl));
         else if(context_decl)
-            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in (%sDecl*)%p with %s predicate",
+            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in (%sDecl*)%p",
                         current_id, static_cast<void*>(m_ast_context),
                         context_decl->getDeclKindName(),
-                        static_cast<const void*>(context_decl),
-                        (predicate ? "non-null" : "null"));
+                        static_cast<const void*>(context_decl));
         else
-            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in a NULL context with %s predicate",
-                        current_id, static_cast<const void*>(m_ast_context),
-                        (predicate ? "non-null" : "null"));
+            log->Printf("FindExternalLexicalDecls[%u] on (ASTContext*)%p in a NULL context",
+                        current_id, static_cast<const void*>(m_ast_context));
     }
 
     Decl *original_decl = NULL;
     ASTContext *original_ctx = NULL;
 
     if (!m_ast_importer->ResolveDeclOrigin(context_decl, &original_decl, &original_ctx))
-        return ELR_Failure;
+        return;
 
     if (log)
     {
@@ -501,7 +498,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     const DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
 
     if (!original_decl_context)
-        return ELR_Failure;
+        return;
 
     for (TagDecl::decl_iterator iter = original_decl_context->decls_begin();
          iter != original_decl_context->decls_end();
@@ -509,7 +506,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     {
         Decl *decl = *iter;
 
-        if (!predicate || predicate(decl->getKind()))
+        if (predicate(decl->getKind()))
         {
             if (log)
             {
@@ -532,8 +529,6 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
                 m_ast_importer->RequireCompleteType(copied_field_type);
             }
 
-            decls.push_back(copied_decl);
-
             DeclContext *decl_context_non_const = const_cast<DeclContext *>(decl_context);
 
             if (copied_decl->getDeclContext() != decl_context)
@@ -548,7 +543,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
         }
     }
 
-    return ELR_AlreadyLoaded;
+    return;
 }
 
 void
