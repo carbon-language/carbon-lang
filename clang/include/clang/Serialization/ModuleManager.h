@@ -277,36 +277,6 @@ public:
   void visit(llvm::function_ref<bool(ModuleFile &M)> Visitor,
              llvm::SmallPtrSetImpl<ModuleFile *> *ModuleFilesHit = nullptr);
 
-  /// \brief Control DFS behavior during preorder visitation.
-  enum DFSPreorderControl {
-    Continue,    /// Continue visiting all nodes.
-    Abort,       /// Stop the visitation immediately.
-    SkipImports, /// Do not visit imports of the current node.
-  };
-
-  /// \brief Visit each of the modules with a depth-first traversal.
-  ///
-  /// This routine visits each of the modules known to the module
-  /// manager using a depth-first search, starting with the first
-  /// loaded module. The traversal invokes one callback before
-  /// traversing the imports (preorder traversal) and one after
-  /// traversing the imports (postorder traversal).
-  ///
-  /// \param PreorderVisitor A visitor function that will be invoked with each
-  /// module before visiting its imports. The visitor can control how to
-  /// continue the visitation through its return value.
-  ///
-  /// \param PostorderVisitor A visitor function taht will be invoked with each
-  /// module after visiting its imports. The visitor may return true at any time
-  /// to abort the depth-first visitation.
-  ///
-  /// \param UserData User data ssociated with the visitor object,
-  /// which will be passed along to the user.
-  void visitDepthFirst(DFSPreorderControl (*PreorderVisitor)(ModuleFile &M,
-                                                             void *UserData),
-                       bool (*PostorderVisitor)(ModuleFile &M, void *UserData),
-                       void *UserData);
-
   /// \brief Attempt to resolve the given module file name to a file entry.
   ///
   /// \param FileName The name of the module file.
