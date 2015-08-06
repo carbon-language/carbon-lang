@@ -47,6 +47,11 @@ static opt<std::string> OsoPrependPath(
     desc("Specify a directory to prepend to the paths of object files."),
     value_desc("path"), cat(DsymCategory));
 
+static opt<bool> FlatOut("flat",
+                         desc("Produce a flat dSYM file (not a bundle)."),
+                         init(false), cat(DsymCategory));
+static alias FlatOutA("f", desc("Alias for --flat"), aliasopt(FlatOut));
+
 static opt<bool> Verbose("verbose", desc("Verbosity level"), init(false),
                          cat(DsymCategory));
 
@@ -156,8 +161,13 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
-  if (InputFiles.size() > 1 && !OutputFileOpt.empty()) {
-    llvm::errs() << "error: cannot use -o with multiple inputs\n";
+  if (!FlatOut && OutputFileOpt == "-") {
+    llvm::errs() << "error: cannot emit to standard output without --flat\n";
+    return 1;
+  }
+
+  if (InputFiles.size() > 1 && FlatOut && !OutputFileOpt.empty()) {
+    llvm::errs() << "error: cannot use -o with multiple inputs in flat mode\n";
     return 1;
   }
 

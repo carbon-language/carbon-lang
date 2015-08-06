@@ -3,7 +3,7 @@ RUN: cat %p/../Inputs/basic.macho.x86_64 > %t1
 RUN: cat %p/../Inputs/basic-archive.macho.x86_64 > %t2
 RUN: cat %p/../Inputs/basic-lto.macho.x86_64 > %t3
 RUN: cat %p/../Inputs/basic-lto-dw4.macho.x86_64 > %t4
-RUN: llvm-dsymutil -oso-prepend-path=%p/.. %t1 %t2 %t3 %t4
+RUN: llvm-dsymutil -f -oso-prepend-path=%p/.. %t1 %t2 %t3 %t4
 RUN: llvm-dwarfdump %t1.dwarf \
 RUN:   | FileCheck %S/basic-linking-x86.test --check-prefix=CHECK --check-prefix=BASIC
 RUN: llvm-dwarfdump %t2.dwarf \

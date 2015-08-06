@@ -8,8 +8,8 @@
 # RUN: llc -filetype=obj %p/../Inputs/odr5.ll -o %t/odr5.o
 # RUN: llc -filetype=obj %p/../Inputs/odr6.ll -o %t/odr6.o
 # RUN: llc -filetype=obj %p/../Inputs/odr7.ll -o %t/odr7.o
-# RUN: llvm-dsymutil -oso-prepend-path=%t -y %s -o - | llvm-dwarfdump -debug-dump=info - | FileCheck -check-prefix=ODR -check-prefix=CHECK %s
-# RUN: llvm-dsymutil -oso-prepend-path=%t -y %s -no-odr -o - | llvm-dwarfdump -debug-dump=info - | FileCheck -check-prefix=NOODR -check-prefix=CHECK %s
+# RUN: llvm-dsymutil -f -oso-prepend-path=%t -y %s -o - | llvm-dwarfdump -debug-dump=info - | FileCheck -check-prefix=ODR -check-prefix=CHECK %s
+# RUN: llvm-dsymutil -f -oso-prepend-path=%t -y %s -no-odr -o - | llvm-dwarfdump -debug-dump=info - | FileCheck -check-prefix=NOODR -check-prefix=CHECK %s
 
 # Totally made up debug map to test ODR uniquing
 
