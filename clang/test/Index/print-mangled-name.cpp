@@ -2,7 +2,7 @@
 // RUN: c-index-test -write-pch %t_linux.ast -target i686-pc-linux-gnu %s
 // RUN: c-index-test -test-print-mangle %t_linux.ast | FileCheck %s --check-prefix=ITANIUM
 
-// RUN: c-index-test -write-pch %t_macho.ast -arch x86_64 -mmacosx-version-min=10.6 %s
+// RUN: c-index-test -write-pch %t_macho.ast -target x86_64-apple-darwin %s
 // RUN: c-index-test -test-print-mangle %t_macho.ast | FileCheck %s --check-prefix=MACHO
 
 // RUN: c-index-test -write-pch %t_msft.ast -target i686-pc-win32 %s
