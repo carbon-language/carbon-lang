@@ -108,6 +108,14 @@ private:
                          SDValue &TFE) const;
   bool SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc, SDValue &Soffset,
                          SDValue &Offset, SDValue &GLC) const;
+  bool SelectSMRDOffset(SDValue ByteOffsetNode, SDValue &Offset,
+                        bool &Imm) const;
+  bool SelectSMRD(SDValue Addr, SDValue &SBase, SDValue &Offset,
+                  bool &Imm) const;
+  bool SelectSMRDImm(SDValue Addr, SDValue &SBase, SDValue &Offset) const;
+  bool SelectSMRDSgpr(SDValue Addr, SDValue &SBase, SDValue &Offset) const;
+  bool SelectSMRDBufferImm(SDValue Addr, SDValue &Offset) const;
+  bool SelectSMRDBufferSgpr(SDValue Addr, SDValue &Offset) const;
   SDNode *SelectAddrSpaceCast(SDNode *N);
   bool SelectVOP3Mods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3NoMods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
@@ -1151,6 +1159,89 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc,
   SDValue SLC, TFE;
 
   return SelectMUBUFOffset(Addr, SRsrc, Soffset, Offset, GLC, SLC, TFE);
+}
+
+///
+/// \param EncodedOffset This is the immediate value that will be encoded
+///        directly into the instruction.  On SI/CI the \p EncodedOffset
+///        will be in units of dwords and on VI+ it will be units of bytes.
+static bool isLegalSMRDImmOffset(const AMDGPUSubtarget *ST,
+                                 int64_t EncodedOffset) {
+  return ST->getGeneration() < AMDGPUSubtarget::VOLCANIC_ISLANDS ?
+     isUInt<8>(EncodedOffset) : isUInt<20>(EncodedOffset);
+}
+
+bool AMDGPUDAGToDAGISel::SelectSMRDOffset(SDValue ByteOffsetNode,
+                                          SDValue &Offset, bool &Imm) const {
+
+  // FIXME: Handle non-constant offsets.
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(ByteOffsetNode);
+  if (!C)
+    return false;
+
+  SDLoc SL(ByteOffsetNode);
+  AMDGPUSubtarget::Generation Gen = Subtarget->getGeneration();
+  int64_t ByteOffset = C->getSExtValue();
+  int64_t EncodedOffset = Gen < AMDGPUSubtarget::VOLCANIC_ISLANDS ?
+      ByteOffset >> 2 : ByteOffset;
+
+  if (isLegalSMRDImmOffset(Subtarget, EncodedOffset)) {
+    Offset = CurDAG->getTargetConstant(EncodedOffset, SL, MVT::i32);
+    Imm = true;
+    return true;
+  }
+
+  if (isUInt<32>(ByteOffset)) {
+    SDValue C32Bit = CurDAG->getTargetConstant(ByteOffset, SL, MVT::i32);
+    Offset = SDValue(CurDAG->getMachineNode(AMDGPU::S_MOV_B32, SL, MVT::i32,
+                                            C32Bit), 0);
+    Imm = false;
+    return true;
+  }
+  return false;
+}
+
+bool AMDGPUDAGToDAGISel::SelectSMRD(SDValue Addr, SDValue &SBase,
+                                     SDValue &Offset, bool &Imm) const {
+
+  SDLoc SL(Addr);
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    SDValue N0 = Addr.getOperand(0);
+    SDValue N1 = Addr.getOperand(1);
+
+    if (SelectSMRDOffset(N1, Offset, Imm)) {
+      SBase = N0;
+      return true;
+    }
+  }
+  SBase = Addr;
+  Offset = CurDAG->getTargetConstant(0, SL, MVT::i32);
+  Imm = true;
+  return true;
+}
+
+bool AMDGPUDAGToDAGISel::SelectSMRDImm(SDValue Addr, SDValue &SBase,
+                                       SDValue &Offset) const {
+  bool Imm;
+  return SelectSMRD(Addr, SBase, Offset, Imm) && Imm;
+}
+
+bool AMDGPUDAGToDAGISel::SelectSMRDSgpr(SDValue Addr, SDValue &SBase,
+                                        SDValue &Offset) const {
+  bool Imm;
+  return SelectSMRD(Addr, SBase, Offset, Imm) && !Imm;
+}
+
+bool AMDGPUDAGToDAGISel::SelectSMRDBufferImm(SDValue Addr,
+                                             SDValue &Offset) const {
+  bool Imm;
+  return SelectSMRDOffset(Addr, Offset, Imm) && Imm;
+}
+
+bool AMDGPUDAGToDAGISel::SelectSMRDBufferSgpr(SDValue Addr,
+                                              SDValue &Offset) const {
+  bool Imm;
+  return SelectSMRDOffset(Addr, Offset, Imm) && !Imm;
 }
 
 // FIXME: This is incorrect and only enough to be able to compile.

@@ -528,6 +528,12 @@ def MUBUFScratch : ComplexPattern<i64, 4, "SelectMUBUFScratch">;
 def MUBUFOffset : ComplexPattern<i64, 6, "SelectMUBUFOffset">;
 def MUBUFOffsetAtomic : ComplexPattern<i64, 4, "SelectMUBUFOffset">;
 
+def SMRDImm   : ComplexPattern<i64, 2, "SelectSMRDImm">;
+def SMRDSgpr  : ComplexPattern<i64, 2, "SelectSMRDSgpr">;
+def SMRDBufferImm   : ComplexPattern<i32, 1, "SelectSMRDBufferImm">;
+def SMRDBufferSgpr  : ComplexPattern<i32, 1, "SelectSMRDBufferSgpr">;
+
+
 def VOP3Mods0 : ComplexPattern<untyped, 4, "SelectVOP3Mods0">;
 def VOP3NoMods0 : ComplexPattern<untyped, 4, "SelectVOP3NoMods0">;
 def VOP3Mods0Clamp : ComplexPattern<untyped, 3, "SelectVOP3Mods0Clamp">;
@@ -890,6 +896,12 @@ multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
     (ins baseClass:$sbase, u32imm:$offset),
     opName#" $dst, $sbase, $offset", []
   >;
+
+  def _IMM_ci : SMRD <
+    (outs dstClass:$dst), (ins baseClass:$sbase, u32imm:$offset),
+    opName#" $dst, $sbase, $offset", []>, SMRD_IMMe_ci <op> {
+    let AssemblerPredicates = [isCI];
+  }
 
   defm _SGPR : SMRD_m <
     op, opName#"_SGPR", 0, (outs dstClass:$dst),

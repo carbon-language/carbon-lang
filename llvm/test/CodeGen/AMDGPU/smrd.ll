@@ -54,6 +54,33 @@ entry:
   ret void
 }
 
+; SMRD load with the largest possible immediate offset on VI
+; GCN-LABEL: {{^}}smrd4:
+; SI: s_mov_b32 [[OFFSET:s[0-9]+]], 0xffffc
+; SI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[OFFSET]]
+; VI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xffffc
+define void @smrd4(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
+entry:
+  %0 = getelementptr i32, i32 addrspace(2)* %ptr, i64 262143
+  %1 = load i32, i32 addrspace(2)* %0
+  store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
+; SMRD load with an offset greater than the largest possible immediate on VI
+; GCN-LABEL: {{^}}smrd5:
+; GCN: s_mov_b32 [[OFFSET:s[0-9]+]], 0x100000
+; SI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[OFFSET]]
+; VI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[OFFSET]]
+; GCN: s_endpgm
+define void @smrd5(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
+entry:
+  %0 = getelementptr i32, i32 addrspace(2)* %ptr, i64 262144
+  %1 = load i32, i32 addrspace(2)* %0
+  store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
 ; SMRD load using the load.const intrinsic with an immediate offset
 ; GCN-LABEL: {{^}}smrd_load_const0:
 ; SI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x4 ; encoding: [0x04
@@ -92,6 +119,35 @@ main_body:
   %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
   %21 = load <16 x i8>, <16 x i8> addrspace(2)* %20
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 1024)
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %22, float %22, float %22, float %22)
+  ret void
+}
+
+; SMRD load with the largest possible immediate offset on VI
+; GCN-LABEL: {{^}}smrd_load_const3:
+; SI: s_mov_b32 [[OFFSET:s[0-9]+]], 0xffffc
+; SI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[OFFSET]]
+; VI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xffffc
+define void @smrd_load_const3(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
+main_body:
+  %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
+  %21 = load <16 x i8>, <16 x i8> addrspace(2)* %20
+  %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 1048572)
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %22, float %22, float %22, float %22)
+  ret void
+}
+
+; SMRD load with an offset greater than the largest possible immediate on VI
+; GCN-LABEL: {{^}}smrd_load_const4:
+; GCN: s_mov_b32 [[OFFSET:s[0-9]+]], 0x100000
+; SI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[OFFSET]]
+; VI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[OFFSET]]
+; GCN: s_endpgm
+define void @smrd_load_const4(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
+main_body:
+  %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
+  %21 = load <16 x i8>, <16 x i8> addrspace(2)* %20
+  %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 1048576)
   call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %22, float %22, float %22, float %22)
   ret void
 }
