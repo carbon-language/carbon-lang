@@ -191,7 +191,7 @@ namespace opts {
 namespace llvm {
 
 void reportError(Twine Msg) {
-  outs() << Msg << "\n";
+  outs() << "\nError reading file: " << Msg << ".\n";
   outs().flush();
   exit(1);
 }
@@ -200,7 +200,7 @@ void error(std::error_code EC) {
   if (!EC)
     return;
 
-  reportError(Twine("\nError reading file: ") + EC.message() + ".");
+  reportError(EC.message());
 }
 
 bool relocAddressLess(RelocationRef a, RelocationRef b) {

@@ -23,7 +23,7 @@ SYMNAME: Error reading file: Invalid data was encountered while parsing the file
 RUN: not llvm-readobj %p/Inputs/corrupt-version.elf-x86_64 -dt \
 RUN:     2>&1 | FileCheck --check-prefix=VER %s
 
-VER: Error reading file: Invalid data was encountered while parsing the file.
+VER: Error reading file: Invalid version entry.
 
 
 // The file is missing the dynamic string table but has references to it.

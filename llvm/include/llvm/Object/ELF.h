@@ -105,36 +105,6 @@ private:
   const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
   DenseMap<const Elf_Sym *, ELF::Elf64_Word> ExtendedSymbolTable;
 
-  const Elf_Shdr *dot_gnu_version_sec = nullptr;   // .gnu.version
-  const Elf_Shdr *dot_gnu_version_r_sec = nullptr; // .gnu.version_r
-  const Elf_Shdr *dot_gnu_version_d_sec = nullptr; // .gnu.version_d
-
-  // Records for each version index the corresponding Verdef or Vernaux entry.
-  // This is filled the first time LoadVersionMap() is called.
-  class VersionMapEntry : public PointerIntPair<const void*, 1> {
-    public:
-    // If the integer is 0, this is an Elf_Verdef*.
-    // If the integer is 1, this is an Elf_Vernaux*.
-    VersionMapEntry() : PointerIntPair<const void*, 1>(nullptr, 0) { }
-    VersionMapEntry(const Elf_Verdef *verdef)
-        : PointerIntPair<const void*, 1>(verdef, 0) { }
-    VersionMapEntry(const Elf_Vernaux *vernaux)
-        : PointerIntPair<const void*, 1>(vernaux, 1) { }
-    bool isNull() const { return getPointer() == nullptr; }
-    bool isVerdef() const { return !isNull() && getInt() == 0; }
-    bool isVernaux() const { return !isNull() && getInt() == 1; }
-    const Elf_Verdef *getVerdef() const {
-      return isVerdef() ? (const Elf_Verdef*)getPointer() : nullptr;
-    }
-    const Elf_Vernaux *getVernaux() const {
-      return isVernaux() ? (const Elf_Vernaux*)getPointer() : nullptr;
-    }
-  };
-  mutable SmallVector<VersionMapEntry, 16> VersionMap;
-  void LoadVersionDefs(const Elf_Shdr *sec) const;
-  void LoadVersionNeeds(const Elf_Shdr *ec) const;
-  void LoadVersionMap() const;
-
 public:
   template<typename T>
   const T        *getEntry(uint32_t Section, uint32_t Entry) const;
@@ -147,8 +117,6 @@ public:
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;
 
-  ErrorOr<StringRef> getSymbolVersion(StringRef StrTab, const Elf_Sym *Symb,
-                                      bool &IsDefault) const;
   void VerifyStrTab(const Elf_Shdr *sh) const;
 
   StringRef getRelocationTypeName(uint32_t Type) const;
@@ -281,87 +249,6 @@ typedef ELFFile<ELFType<support::little, false>> ELF32LEFile;
 typedef ELFFile<ELFType<support::little, true>> ELF64LEFile;
 typedef ELFFile<ELFType<support::big, false>> ELF32BEFile;
 typedef ELFFile<ELFType<support::big, true>> ELF64BEFile;
-
-// Iterate through the version definitions, and place each Elf_Verdef
-// in the VersionMap according to its index.
-template <class ELFT>
-void ELFFile<ELFT>::LoadVersionDefs(const Elf_Shdr *sec) const {
-  unsigned vd_size = sec->sh_size;  // Size of section in bytes
-  unsigned vd_count = sec->sh_info; // Number of Verdef entries
-  const char *sec_start = (const char*)base() + sec->sh_offset;
-  const char *sec_end = sec_start + vd_size;
-  // The first Verdef entry is at the start of the section.
-  const char *p = sec_start;
-  for (unsigned i = 0; i < vd_count; i++) {
-    if (p + sizeof(Elf_Verdef) > sec_end)
-      report_fatal_error("Section ended unexpectedly while scanning "
-                         "version definitions.");
-    const Elf_Verdef *vd = reinterpret_cast<const Elf_Verdef *>(p);
-    if (vd->vd_version != ELF::VER_DEF_CURRENT)
-      report_fatal_error("Unexpected verdef version");
-    size_t index = vd->vd_ndx & ELF::VERSYM_VERSION;
-    if (index >= VersionMap.size())
-      VersionMap.resize(index + 1);
-    VersionMap[index] = VersionMapEntry(vd);
-    p += vd->vd_next;
-  }
-}
-
-// Iterate through the versions needed section, and place each Elf_Vernaux
-// in the VersionMap according to its index.
-template <class ELFT>
-void ELFFile<ELFT>::LoadVersionNeeds(const Elf_Shdr *sec) const {
-  unsigned vn_size = sec->sh_size;  // Size of section in bytes
-  unsigned vn_count = sec->sh_info; // Number of Verneed entries
-  const char *sec_start = (const char *)base() + sec->sh_offset;
-  const char *sec_end = sec_start + vn_size;
-  // The first Verneed entry is at the start of the section.
-  const char *p = sec_start;
-  for (unsigned i = 0; i < vn_count; i++) {
-    if (p + sizeof(Elf_Verneed) > sec_end)
-      report_fatal_error("Section ended unexpectedly while scanning "
-                         "version needed records.");
-    const Elf_Verneed *vn = reinterpret_cast<const Elf_Verneed *>(p);
-    if (vn->vn_version != ELF::VER_NEED_CURRENT)
-      report_fatal_error("Unexpected verneed version");
-    // Iterate through the Vernaux entries
-    const char *paux = p + vn->vn_aux;
-    for (unsigned j = 0; j < vn->vn_cnt; j++) {
-      if (paux + sizeof(Elf_Vernaux) > sec_end)
-        report_fatal_error("Section ended unexpected while scanning auxiliary "
-                           "version needed records.");
-      const Elf_Vernaux *vna = reinterpret_cast<const Elf_Vernaux *>(paux);
-      size_t index = vna->vna_other & ELF::VERSYM_VERSION;
-      if (index >= VersionMap.size())
-        VersionMap.resize(index + 1);
-      VersionMap[index] = VersionMapEntry(vna);
-      paux += vna->vna_next;
-    }
-    p += vn->vn_next;
-  }
-}
-
-template <class ELFT>
-void ELFFile<ELFT>::LoadVersionMap() const {
-  // If there is no dynamic symtab or version table, there is nothing to do.
-  if (!DotDynSymSec || !dot_gnu_version_sec)
-    return;
-
-  // Has the VersionMap already been loaded?
-  if (VersionMap.size() > 0)
-    return;
-
-  // The first two version indexes are reserved.
-  // Index 0 is LOCAL, index 1 is GLOBAL.
-  VersionMap.push_back(VersionMapEntry());
-  VersionMap.push_back(VersionMapEntry());
-
-  if (dot_gnu_version_d_sec)
-    LoadVersionDefs(dot_gnu_version_d_sec);
-
-  if (dot_gnu_version_r_sec)
-    LoadVersionNeeds(dot_gnu_version_r_sec);
-}
 
 template <class ELFT>
 ELF::Elf64_Word
@@ -530,30 +417,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
       DotDynSymSec = &Sec;
       break;
     }
-    case ELF::SHT_GNU_versym:
-      if (dot_gnu_version_sec != nullptr) {
-        // More than one .gnu.version section!
-        EC = object_error::parse_failed;
-        return;
-      }
-      dot_gnu_version_sec = &Sec;
-      break;
-    case ELF::SHT_GNU_verdef:
-      if (dot_gnu_version_d_sec != nullptr) {
-        // More than one .gnu.version_d section!
-        EC = object_error::parse_failed;
-        return;
-      }
-      dot_gnu_version_d_sec = &Sec;
-      break;
-    case ELF::SHT_GNU_verneed:
-      if (dot_gnu_version_r_sec != nullptr) {
-        // More than one .gnu.version_r section!
-        EC = object_error::parse_failed;
-        return;
-      }
-      dot_gnu_version_r_sec = &Sec;
-      break;
     }
   }
 
@@ -666,61 +529,6 @@ ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
   if (Offset >= DotShstrtab.size())
     return object_error::parse_failed;
   return StringRef(DotShstrtab.data() + Offset);
-}
-
-template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(StringRef StrTab,
-                                                   const Elf_Sym *symb,
-                                                   bool &IsDefault) const {
-  // This is a dynamic symbol. Look in the GNU symbol version table.
-  if (!dot_gnu_version_sec) {
-    // No version table.
-    IsDefault = false;
-    return StringRef("");
-  }
-
-  // Determine the position in the symbol table of this entry.
-  size_t entry_index =
-      (reinterpret_cast<uintptr_t>(symb) - DotDynSymSec->sh_offset -
-       reinterpret_cast<uintptr_t>(base())) /
-      sizeof(Elf_Sym);
-
-  // Get the corresponding version index entry
-  const Elf_Versym *vs = getEntry<Elf_Versym>(dot_gnu_version_sec, entry_index);
-  size_t version_index = vs->vs_index & ELF::VERSYM_VERSION;
-
-  // Special markers for unversioned symbols.
-  if (version_index == ELF::VER_NDX_LOCAL ||
-      version_index == ELF::VER_NDX_GLOBAL) {
-    IsDefault = false;
-    return StringRef("");
-  }
-
-  // Lookup this symbol in the version table
-  LoadVersionMap();
-  if (version_index >= VersionMap.size() || VersionMap[version_index].isNull())
-    return object_error::parse_failed;
-  const VersionMapEntry &entry = VersionMap[version_index];
-
-  // Get the version name string
-  size_t name_offset;
-  if (entry.isVerdef()) {
-    // The first Verdaux entry holds the name.
-    name_offset = entry.getVerdef()->getAux()->vda_name;
-  } else {
-    name_offset = entry.getVernaux()->vna_name;
-  }
-
-  // Set IsDefault
-  if (entry.isVerdef()) {
-    IsDefault = !(vs->vs_index & ELF::VERSYM_HIDDEN);
-  } else {
-    IsDefault = false;
-  }
-
-  if (name_offset >= StrTab.size())
-    return object_error::parse_failed;
-  return StringRef(StrTab.data() + name_offset);
 }
 
 /// This function returns the hash value for a symbol in the .dynsym section
