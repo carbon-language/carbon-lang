@@ -40,6 +40,14 @@ $comdat.samesize = comdat samesize
 @comdat.samesize = global i32 0, comdat
 ; CHECK: @comdat.samesize = global i32 0, comdat
 
+; Force two globals from different comdats into sections with the same name.
+$comdat1 = comdat any
+$comdat2 = comdat any
+@g.comdat1 = global i32 0, section "SharedSection", comdat($comdat1)
+; CHECK: @g.comdat1 = global i32 0, section "SharedSection", comdat($comdat1)
+@g.comdat2 = global i32 0, section "SharedSection", comdat($comdat2)
+; CHECK: @g.comdat2 = global i32 0, section "SharedSection", comdat($comdat2)
+
 ;; Constants
 @const.true = constant i1 true
 ; CHECK: @const.true = constant i1 true
