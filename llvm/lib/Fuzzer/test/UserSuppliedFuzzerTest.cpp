@@ -37,8 +37,8 @@ class MyFuzzer : public fuzzer::UserSuppliedFuzzer {
       Size = sizeof(kMagic);
     // "Fix" the data, then mutate.
     memcpy(Data, &kMagic, std::min(MaxSize, sizeof(kMagic)));
-    return BasicMutate(Data + sizeof(kMagic), Size - sizeof(kMagic),
-                       MaxSize - sizeof(kMagic));
+    return fuzzer::UserSuppliedFuzzer::Mutate(
+        Data + sizeof(kMagic), Size - sizeof(kMagic), MaxSize - sizeof(kMagic));
   }
   // No need to redefine CrossOver() here.
 };

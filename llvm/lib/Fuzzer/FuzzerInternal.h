@@ -33,23 +33,6 @@ void CopyFileToErr(const std::string &Path);
 std::string DirPlusFile(const std::string &DirPath,
                         const std::string &FileName);
 
-size_t Mutate_ShuffleBytes(uint8_t *Data, size_t Size, size_t MaxSize,
-                           FuzzerRandomBase &Rand);
-size_t Mutate_EraseByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                        FuzzerRandomBase &Rand);
-size_t Mutate_InsertByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                         FuzzerRandomBase &Rand);
-size_t Mutate_ChangeByte(uint8_t *Data, size_t Size, size_t MaxSize,
-                         FuzzerRandomBase &Rand);
-size_t Mutate_ChangeBit(uint8_t *Data, size_t Size, size_t MaxSize,
-                       FuzzerRandomBase &Rand);
-size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize,
-              FuzzerRandomBase &Rand);
-
-size_t CrossOver(const uint8_t *Data1, size_t Size1, const uint8_t *Data2,
-                 size_t Size2, uint8_t *Out, size_t MaxOutSize,
-                 FuzzerRandomBase &Rand);
-
 void Printf(const char *Fmt, ...);
 void Print(const Unit &U, const char *PrintAfter = "");
 void PrintASCII(const Unit &U, const char *PrintAfter = "");
