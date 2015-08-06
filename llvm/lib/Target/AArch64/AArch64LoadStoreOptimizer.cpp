@@ -134,9 +134,6 @@ struct AArch64LoadStoreOpt : public MachineFunctionPass {
   const char *getPassName() const override {
     return AARCH64_LOAD_STORE_OPT_NAME;
   }
-
-private:
-  int getMemSize(MachineInstr *MemMI);
 };
 char AArch64LoadStoreOpt::ID = 0;
 } // namespace
@@ -144,7 +141,7 @@ char AArch64LoadStoreOpt::ID = 0;
 INITIALIZE_PASS(AArch64LoadStoreOpt, "aarch64-ldst-opt",
                 AARCH64_LOAD_STORE_OPT_NAME, false, false)
 
-static bool isUnscaledLdst(unsigned Opc) {
+static bool isUnscaledLdSt(unsigned Opc) {
   switch (Opc) {
   default:
     return false;
@@ -163,9 +160,13 @@ static bool isUnscaledLdst(unsigned Opc) {
   }
 }
 
+static bool isUnscaledLdSt(MachineInstr *MI) {
+  return isUnscaledLdSt(MI->getOpcode());
+}
+
 // Size in bytes of the data moved by an unscaled load or store
-int AArch64LoadStoreOpt::getMemSize(MachineInstr *MemMI) {
-  switch (MemMI->getOpcode()) {
+static int getMemSize(MachineInstr *MI) {
+  switch (MI->getOpcode()) {
   default:
     llvm_unreachable("Opcode has unknown size!");
   case AArch64::STRSui:
@@ -367,7 +368,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   int SExtIdx = Flags.getSExtIdx();
   unsigned Opc =
       SExtIdx == -1 ? I->getOpcode() : getMatchingNonSExtOpcode(I->getOpcode());
-  bool IsUnscaled = isUnscaledLdst(Opc);
+  bool IsUnscaled = isUnscaledLdSt(Opc);
   int OffsetStride =
       IsUnscaled && EnableAArch64UnscaledMemOp ? getMemSize(I) : 1;
 
@@ -547,7 +548,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
 
   unsigned Opc = FirstMI->getOpcode();
   bool MayLoad = FirstMI->mayLoad();
-  bool IsUnscaled = isUnscaledLdst(Opc);
+  bool IsUnscaled = isUnscaledLdSt(FirstMI);
   unsigned Reg = getLdStRegOp(FirstMI).getReg();
   unsigned BaseReg = getLdStBaseOp(FirstMI).getReg();
   int Offset = getLdStOffsetOp(FirstMI).getImm();
@@ -618,7 +619,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
           return E;
         // If the resultant immediate offset of merging these instructions
         // is out of range for a pairwise instruction, bail and keep looking.
-        bool MIIsUnscaled = isUnscaledLdst(MI->getOpcode());
+        bool MIIsUnscaled = isUnscaledLdSt(MI);
         if (!inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
           if (MI->mayLoadOrStore())
@@ -995,7 +996,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
 
         Modified = true;
         ++NumPairCreated;
-        if (isUnscaledLdst(MI->getOpcode()))
+        if (isUnscaledLdSt(MI))
           ++NumUnscaledPairCreated;
         break;
       }
@@ -1055,7 +1056,7 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
       }
       // Don't know how to handle pre/post-index versions, so move to the next
       // instruction.
-      if (isUnscaledLdst(Opc)) {
+      if (isUnscaledLdSt(Opc)) {
         ++MBBI;
         break;
       }
