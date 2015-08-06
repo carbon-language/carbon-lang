@@ -107,6 +107,9 @@ elseif( ANDROID_ABI STREQUAL "armeabi" )
   # Temporary workaround for static linking with the latest API.
   set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -DANDROID_ARM_BUILD_STATIC" )
  endif()
+elseif( ANDROID_ABI STREQUAL "mips" )
+ # http://b.android.com/182094
+ set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -latomic" )
 endif()
 
 if( NOT LLVM_BUILD_STATIC )
