@@ -87,14 +87,11 @@ template <class ELFT> class DefinedRegular : public Defined {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
 
 public:
-  DefinedRegular(ObjectFile<ELFT> *F, const Elf_Sym *S);
+  DefinedRegular(StringRef Name);
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
   }
-
-private:
-  ObjectFile<ELFT> *File;
 };
 
 // Undefined symbols.

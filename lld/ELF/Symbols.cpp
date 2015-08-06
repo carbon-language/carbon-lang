@@ -18,22 +18,8 @@ using namespace lld;
 using namespace lld::elf2;
 
 template <class ELFT>
-static StringRef
-getSymbolName(const llvm::object::ELFFile<ELFT> *F,
-  const typename llvm::object::ELFFile<ELFT>::Elf_Sym *S) {
-  ErrorOr<StringRef> StrTabOrErr =
-      F->getStringTableForSymtab(*F->getDotSymtabSec());
-  error(StrTabOrErr, "Invalid string table.");
-  StringRef StrTab = *StrTabOrErr;
-  if (S->st_name >= StrTab.size())
-    error("Invalid string table offset");
-  return StrTab.data() + S->st_name;
-}
-
-template <class ELFT>
-DefinedRegular<ELFT>::DefinedRegular(ObjectFile<ELFT> *F, const Elf_Sym *S)
-    : Defined(DefinedRegularKind, getSymbolName<ELFT>(F->getObj(), S)),
-      File(F) {}
+DefinedRegular<ELFT>::DefinedRegular(StringRef Name)
+    : Defined(DefinedRegularKind, Name) {}
 
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
