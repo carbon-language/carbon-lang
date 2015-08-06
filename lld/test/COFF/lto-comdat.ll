@@ -10,24 +10,24 @@
 ; RUN: rm -f %T/comdat.lib
 ; RUN: llvm-ar cru %T/comdat.lib %T/comdat1.obj %T/comdat2.obj
 
-; RUN: lld -flavor link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat1.lto.obj %T/comdat2.lto.obj
+; RUN: lld-link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat1.lto.obj %T/comdat2.lto.obj
 ; RUN: llvm-readobj -file-headers %T/comdat-main.exe | FileCheck -check-prefix=HEADERS-11 %s
 ; RUN: llvm-objdump -d %T/comdat-main.exe | FileCheck -check-prefix=TEXT-11 %s
-; RUN: lld -flavor link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat.lto.lib
+; RUN: lld-link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat.lto.lib
 ; RUN: llvm-readobj -file-headers %T/comdat-main.exe | FileCheck -check-prefix=HEADERS-11 %s
 ; RUN: llvm-objdump -d %T/comdat-main.exe | FileCheck -check-prefix=TEXT-11 %s
 
-; RUN: lld -flavor link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.obj %T/comdat1.lto.obj %T/comdat2.lto.obj
+; RUN: lld-link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.obj %T/comdat1.lto.obj %T/comdat2.lto.obj
 ; RUN: llvm-readobj -file-headers %T/comdat-main.exe | FileCheck -check-prefix=HEADERS-01 %s
 ; RUN: llvm-objdump -d %T/comdat-main.exe | FileCheck -check-prefix=TEXT-01 %s
-; RUN: lld -flavor link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.obj %T/comdat.lto.lib
+; RUN: lld-link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.obj %T/comdat.lto.lib
 ; RUN: llvm-readobj -file-headers %T/comdat-main.exe | FileCheck -check-prefix=HEADERS-01 %s
 ; RUN: llvm-objdump -d %T/comdat-main.exe | FileCheck -check-prefix=TEXT-01 %s
 
-; RUN: lld -flavor link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat1.obj %T/comdat2.obj
+; RUN: lld-link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat1.obj %T/comdat2.obj
 ; RUN: llvm-readobj -file-headers %T/comdat-main.exe | FileCheck -check-prefix=HEADERS-10 %s
 ; RUN: llvm-objdump -d %T/comdat-main.exe | FileCheck -check-prefix=TEXT-10 %s
-; RUN: lld -flavor link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat.lib
+; RUN: lld-link /out:%T/comdat-main.exe /entry:main /subsystem:console %T/comdat-main.lto.obj %T/comdat.lib
 ; RUN: llvm-readobj -file-headers %T/comdat-main.exe | FileCheck -check-prefix=HEADERS-10 %s
 ; RUN: llvm-objdump -d %T/comdat-main.exe | FileCheck -check-prefix=TEXT-10 %s
 

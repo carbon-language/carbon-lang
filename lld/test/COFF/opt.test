@@ -1,12 +1,12 @@
 # RUN: yaml2obj < %s > %t.obj
 
-# RUN: lld -flavor link /out:%t.exe /entry:main %t.obj \
+# RUN: lld-link /out:%t.exe /entry:main %t.obj \
 # RUN:   /verbose >& %t.log
 ### FileCheck doesn't like empty input, so write something.
 # RUN: echo dummy >> %t.log
 # RUN: FileCheck -check-prefix=CHECK1 %s < %t.log
 
-# RUN: lld -flavor link /out:%t.exe /entry:main %t.obj \
+# RUN: lld-link /out:%t.exe /entry:main %t.obj \
 # RUN:   /verbose /opt:noref >& %t.log
 # RUN: echo dummy >> %t.log
 # RUN: FileCheck -check-prefix=CHECK2 %s < %t.log

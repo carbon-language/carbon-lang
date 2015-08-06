@@ -1,5 +1,5 @@
 # RUN: yaml2obj < %s > %t.obj
-# RUN: lld -flavor link /debug /out:%t.exe /entry:main %t.obj %p/Inputs/std64.lib
+# RUN: lld-link /debug /out:%t.exe /entry:main %t.obj %p/Inputs/std64.lib
 # RUN: llvm-readobj -symbols %t.exe | FileCheck %s
 
 # CHECK:      Symbols [
