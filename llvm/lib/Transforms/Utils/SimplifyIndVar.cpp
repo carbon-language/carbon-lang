@@ -169,18 +169,16 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
   ICmpInst::Predicate InvariantPredicate;
   const SCEV *InvariantLHS, *InvariantRHS;
 
-  const char *Verb = nullptr;
-
   // If the condition is always true or always false, replace it with
   // a constant value.
   if (SE->isKnownPredicate(Pred, S, X)) {
     ICmp->replaceAllUsesWith(ConstantInt::getTrue(ICmp->getContext()));
     DeadInsts.emplace_back(ICmp);
-    Verb = "Eliminated";
+    DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
   } else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X)) {
     ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
     DeadInsts.emplace_back(ICmp);
-    Verb = "Eliminated";
+    DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
   } else if (isa<PHINode>(IVOperand) &&
              SE->isLoopInvariantPredicate(Pred, S, X, ICmpLoop,
                                           InvariantPredicate, InvariantLHS,
@@ -218,14 +216,13 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
       // for now.
       return;
 
-    Verb = "Simplified";
+    DEBUG(dbgs() << "INDVARS: Simplified comparison: " << *ICmp << '\n');
     ICmp->setPredicate(InvariantPredicate);
     ICmp->setOperand(0, NewLHS);
     ICmp->setOperand(1, NewRHS);
   } else
     return;
 
-  DEBUG(dbgs() << "INDVARS: " << Verb << " comparison: " << *ICmp << '\n');
   ++NumElimCmp;
   Changed = true;
 }
