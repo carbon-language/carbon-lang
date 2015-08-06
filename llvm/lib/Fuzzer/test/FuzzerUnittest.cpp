@@ -192,3 +192,26 @@ void TestChangeBit(Mutator M, int NumIter) {
 
 TEST(FuzzerMutate, ChangeBit1) { TestChangeBit(Mutate_ChangeBit, 1 << 16); }
 TEST(FuzzerMutate, ChangeBit2) { TestChangeBit(Mutate, 1 << 18); }
+
+void TestShuffleBytes(Mutator M, int NumIter) {
+  FuzzerRandomLibc Rand(0);
+  int FoundMask = 0;
+  uint8_t CH0[7] = {0x00, 0x22, 0x11, 0x33, 0x44, 0x55, 0x66};
+  uint8_t CH1[7] = {0x11, 0x00, 0x33, 0x22, 0x44, 0x55, 0x66};
+  uint8_t CH2[7] = {0x00, 0x33, 0x11, 0x22, 0x44, 0x55, 0x66};
+  uint8_t CH3[7] = {0x00, 0x11, 0x22, 0x44, 0x55, 0x66, 0x33};
+  uint8_t CH4[7] = {0x00, 0x11, 0x22, 0x33, 0x55, 0x44, 0x66};
+  for (int i = 0; i < NumIter; i++) {
+    uint8_t T[7] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    size_t NewSize = M(T, 7, 7, Rand);
+    if (NewSize == 7 && !memcmp(CH0, T, 7)) FoundMask |= 1 << 0;
+    if (NewSize == 7 && !memcmp(CH1, T, 7)) FoundMask |= 1 << 1;
+    if (NewSize == 7 && !memcmp(CH2, T, 7)) FoundMask |= 1 << 2;
+    if (NewSize == 7 && !memcmp(CH3, T, 7)) FoundMask |= 1 << 3;
+    if (NewSize == 7 && !memcmp(CH4, T, 7)) FoundMask |= 1 << 4;
+  }
+  EXPECT_EQ(FoundMask, 31);
+}
+
+TEST(FuzzerMutate, ShuffleBytes1) { TestShuffleBytes(Mutate_ShuffleBytes, 1 << 15); }
+TEST(FuzzerMutate, ShuffleBytes2) { TestShuffleBytes(Mutate, 1 << 16); }

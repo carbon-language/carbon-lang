@@ -50,7 +50,7 @@ class FuzzerRandomBase {
   // Return a random number.
   virtual size_t Rand() = 0;
   // Return a random number in range [0,n).
-  size_t operator()(size_t n) { return Rand() % n; }
+  size_t operator()(size_t n) { return n ? Rand() % n : 0; }
   bool RandBool() { return Rand() % 2; }
 };
 
