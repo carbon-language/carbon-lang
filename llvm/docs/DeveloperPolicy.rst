@@ -509,9 +509,11 @@ for llvm users and not imposing a big burden on llvm developers:
   ``test/Bitcode/compatibility.ll``.
 
 * The bitcode format produced by a X.Y release will be readable by all
-  following X.Z releases and the (X+1).0 release. To help ensure this, an X.Y
-  version of ``test/Bitcode/compatibility.ll`` should be assembled and
-  committed after each release.
+  following X.Z releases and the (X+1).0 release.
+
+* After each X.Y release, ``compatibility.ll`` must be copied to
+  ``compatibility-X.Y.ll``. The corresponding bitcode file should be assembled
+  using the X.Y build and committed as ``compatibility-X.Y.ll.bc``.
 
 * Newer releases can ignore features from older releases, but they cannot
   miscompile them. For example, if nsw is ever replaced with something else,
