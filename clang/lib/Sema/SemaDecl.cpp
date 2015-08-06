@@ -1733,20 +1733,18 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
   if (Error) {
     if (ForRedeclaration)
       Diag(Loc, diag::warn_implicit_decl_requires_sysheader)
-          << getHeaderName(Error)
-          << Context.BuiltinInfo.GetName(ID);
+          << getHeaderName(Error) << Context.BuiltinInfo.getName(ID);
     return nullptr;
   }
 
   if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(ID)) {
     Diag(Loc, diag::ext_implicit_lib_function_decl)
-      << Context.BuiltinInfo.GetName(ID)
-      << R;
+        << Context.BuiltinInfo.getName(ID) << R;
     if (Context.BuiltinInfo.getHeaderName(ID) &&
         !Diags.isIgnored(diag::ext_implicit_lib_function_decl, Loc))
       Diag(Loc, diag::note_include_header_or_declare)
           << Context.BuiltinInfo.getHeaderName(ID)
-          << Context.BuiltinInfo.GetName(ID);
+          << Context.BuiltinInfo.getName(ID);
   }
 
   DeclContext *Parent = Context.getTranslationUnitDecl();
@@ -8290,7 +8288,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       if (!T.isNull() && !Context.hasSameType(T, NewFD->getType())) {
         // The type of this function differs from the type of the builtin,
         // so forget about the builtin entirely.
-        Context.BuiltinInfo.ForgetBuiltin(BuiltinID, Context.Idents);
+        Context.BuiltinInfo.forgetBuiltin(BuiltinID, Context.Idents);
       }
     }
 

@@ -30,7 +30,7 @@ static const Builtin::Info BuiltinInfo[] = {
 #include "clang/Basic/Builtins.def"
 };
 
-const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
+const Builtin::Info &Builtin::Context::getRecord(unsigned ID) const {
   if (ID < Builtin::FirstTSBuiltin)
     return BuiltinInfo[ID];
   assert(ID - Builtin::FirstTSBuiltin < NumTSRecords && "Invalid builtin ID!");
@@ -43,12 +43,12 @@ Builtin::Context::Context() {
   NumTSRecords = 0;
 }
 
-void Builtin::Context::InitializeTarget(const TargetInfo &Target) {
+void Builtin::Context::initializeTarget(const TargetInfo &Target) {
   assert(NumTSRecords == 0 && "Already initialized target?");
   Target.getTargetBuiltins(TSRecords, NumTSRecords);  
 }
 
-bool Builtin::Context::BuiltinIsSupported(const Builtin::Info &BuiltinInfo,
+bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
                                           const LangOptions &LangOpts) {
   bool BuiltinsUnsupported = LangOpts.NoBuiltin &&
                              strchr(BuiltinInfo.Attributes, 'f');
@@ -66,22 +66,22 @@ bool Builtin::Context::BuiltinIsSupported(const Builtin::Info &BuiltinInfo,
 /// InitializeBuiltins - Mark the identifiers for all the builtins with their
 /// appropriate builtin ID # and mark any non-portable builtin identifiers as
 /// such.
-void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
+void Builtin::Context::initializeBuiltins(IdentifierTable &Table,
                                           const LangOptions& LangOpts) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
-    if (BuiltinIsSupported(BuiltinInfo[i], LangOpts)) {
+    if (builtinIsSupported(BuiltinInfo[i], LangOpts)) {
       Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
     }
 
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
-    if (BuiltinIsSupported(TSRecords[i], LangOpts))
+    if (builtinIsSupported(TSRecords[i], LangOpts))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
-void Builtin::Context::ForgetBuiltin(unsigned ID, IdentifierTable &Table) {
-  Table.get(GetRecord(ID).Name).setBuiltinID(0);
+void Builtin::Context::forgetBuiltin(unsigned ID, IdentifierTable &Table) {
+  Table.get(getRecord(ID).Name).setBuiltinID(0);
 }
 
 bool Builtin::Context::isLike(unsigned ID, unsigned &FormatIdx,
@@ -92,7 +92,7 @@ bool Builtin::Context::isLike(unsigned ID, unsigned &FormatIdx,
   assert(::toupper(Fmt[0]) == Fmt[1] &&
          "Format string is not in the form \"xX\"");
 
-  const char *Like = ::strpbrk(GetRecord(ID).Attributes, Fmt);
+  const char *Like = ::strpbrk(getRecord(ID).Attributes, Fmt);
   if (!Like)
     return false;
 

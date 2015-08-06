@@ -2142,7 +2142,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // Get the decl for the concrete builtin from this, we can tell what the
   // concrete integer type we should convert to is.
   unsigned NewBuiltinID = BuiltinIndices[BuiltinIndex][SizeIndex];
-  const char *NewBuiltinName = Context.BuiltinInfo.GetName(NewBuiltinID);
+  const char *NewBuiltinName = Context.BuiltinInfo.getName(NewBuiltinID);
   FunctionDecl *NewBuiltinDecl;
   if (NewBuiltinID == BuiltinID)
     NewBuiltinDecl = FDecl;
@@ -4833,7 +4833,7 @@ static void emitReplacement(Sema &S, SourceLocation Loc, SourceRange Range,
       }
     }
   } else {
-    FunctionName = S.Context.BuiltinInfo.GetName(AbsKind);
+    FunctionName = S.Context.BuiltinInfo.getName(AbsKind);
     HeaderName = S.Context.BuiltinInfo.getHeaderName(AbsKind);
 
     if (HeaderName) {
@@ -4909,7 +4909,7 @@ void Sema::CheckAbsoluteValueFunction(const CallExpr *Call,
   // function call.
   if (ArgType->isUnsignedIntegerType()) {
     const char *FunctionName =
-        IsStdAbs ? "std::abs" : Context.BuiltinInfo.GetName(AbsKind);
+        IsStdAbs ? "std::abs" : Context.BuiltinInfo.getName(AbsKind);
     Diag(Call->getExprLoc(), diag::warn_unsigned_abs) << ArgType << ParamType;
     Diag(Call->getExprLoc(), diag::note_remove_abs)
         << FunctionName

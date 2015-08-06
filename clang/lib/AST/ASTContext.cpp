@@ -8118,7 +8118,7 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
 QualType ASTContext::GetBuiltinType(unsigned Id,
                                     GetBuiltinTypeError &Error,
                                     unsigned *IntegerConstantArgs) const {
-  const char *TypeStr = BuiltinInfo.GetTypeString(Id);
+  const char *TypeStr = BuiltinInfo.getTypeString(Id);
 
   SmallVector<QualType, 8> ArgTypes;
 

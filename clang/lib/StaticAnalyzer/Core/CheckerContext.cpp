@@ -45,7 +45,7 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
   if (BId != 0) {
     if (Name.empty())
       return true;
-    StringRef BName = FD->getASTContext().BuiltinInfo.GetName(BId);
+    StringRef BName = FD->getASTContext().BuiltinInfo.getName(BId);
     if (BName.find(Name) != StringRef::npos)
       return true;
   }

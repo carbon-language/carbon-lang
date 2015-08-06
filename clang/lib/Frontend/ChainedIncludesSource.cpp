@@ -169,7 +169,7 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
 
     if (firstInclude) {
       Preprocessor &PP = Clang->getPreprocessor();
-      PP.getBuiltinInfo().InitializeBuiltins(PP.getIdentifierTable(),
+      PP.getBuiltinInfo().initializeBuiltins(PP.getIdentifierTable(),
                                              PP.getLangOpts());
     } else {
       assert(!SerialBufs.empty());
