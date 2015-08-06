@@ -197,7 +197,7 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
 }
 
-void AsanOnDeadlySignal(int, void *siginfo, void *context) {
+void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   UNIMPLEMENTED();
 }
 
@@ -214,7 +214,7 @@ static long WINAPI SEHHandler(EXCEPTION_POINTERS *info) {
             ? "access-violation"
             : "in-page-error";
     SignalContext sig = SignalContext::Create(exception_record, context);
-    ReportDeadlySignal(description, sig);
+    ReportSIGSEGV(description, sig);
   }
 
   // FIXME: Handle EXCEPTION_STACK_OVERFLOW here.

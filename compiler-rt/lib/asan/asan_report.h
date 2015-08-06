@@ -50,8 +50,7 @@ void DescribeThread(AsanThreadContext *context);
 
 // Different kinds of error reports.
 void NORETURN ReportStackOverflow(const SignalContext &sig);
-void NORETURN ReportDeadlySignal(const char* description,
-                                 const SignalContext &sig);
+void NORETURN ReportSIGSEGV(const char *description, const SignalContext &sig);
 void NORETURN ReportNewDeleteSizeMismatch(uptr addr, uptr delete_size,
                                           BufferedStackTrace *free_stack);
 void NORETURN ReportDoubleFree(uptr addr, BufferedStackTrace *free_stack);

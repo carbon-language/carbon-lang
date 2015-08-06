@@ -457,7 +457,7 @@ static void AsanInitInternal() {
   }
 
   AsanTSDInit(PlatformTSDDtor);
-  InstallDeadlySignalHandlers(AsanOnDeadlySignal);
+  InstallDeadlySignalHandlers(AsanOnSIGSEGV);
 
   AllocatorOptions allocator_options;
   allocator_options.SetFrom(flags(), common_flags());

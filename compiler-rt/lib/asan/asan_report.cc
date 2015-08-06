@@ -686,7 +686,7 @@ void ReportStackOverflow(const SignalContext &sig) {
   ReportErrorSummary("stack-overflow", &stack);
 }
 
-void ReportDeadlySignal(const char *description, const SignalContext &sig) {
+void ReportSIGSEGV(const char *description, const SignalContext &sig) {
   ScopedInErrorReport in_report;
   Decorator d;
   Printf("%s", d.Warning());
@@ -703,7 +703,7 @@ void ReportDeadlySignal(const char *description, const SignalContext &sig) {
   stack.Print();
   MaybeDumpInstructionBytes(sig.pc);
   Printf("AddressSanitizer can not provide additional info.\n");
-  ReportErrorSummary(description, &stack);
+  ReportErrorSummary("SEGV", &stack);
 }
 
 void ReportDoubleFree(uptr addr, BufferedStackTrace *free_stack) {

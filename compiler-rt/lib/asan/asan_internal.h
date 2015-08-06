@@ -75,7 +75,7 @@ void *AsanDoesNotSupportStaticLinkage();
 void AsanCheckDynamicRTPrereqs();
 void AsanCheckIncompatibleRT();
 
-void AsanOnDeadlySignal(int, void *siginfo, void *context);
+void AsanOnSIGSEGV(int, void *siginfo, void *context);
 
 void DisableReexec();
 void MaybeReexec();

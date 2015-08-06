@@ -55,5 +55,5 @@ int main() {
 
 // CHECK: User sigaction installed
 // CHECK-NEXT: User sigaction called
-// CHECK-NEXT: ASAN:DEADLYSIGNAL
+// CHECK-NEXT: ASAN:SIGSEGV
 // CHECK: AddressSanitizer: SEGV on unknown address
