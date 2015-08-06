@@ -59,13 +59,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createBasicAliasAnalysisPass - This pass implements the stateless alias
-  // analysis.
-  //
-  ImmutablePass *createBasicAliasAnalysisPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   // createCFLAliasAnalysisPass - This pass implements a set-based approach to
   // alias analysis.
   //
