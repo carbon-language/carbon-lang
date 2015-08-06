@@ -170,7 +170,7 @@ public:
 };
 
 /// \brief A template argument list.
-class TemplateArgumentList final
+class LLVM_ALIGNAS(/*alignof(uint64_t)*/ 8) TemplateArgumentList final
     : private llvm::TrailingObjects<TemplateArgumentList, TemplateArgument> {
   /// \brief The template argument list.
   const TemplateArgument *Arguments;
