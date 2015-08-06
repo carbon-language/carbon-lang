@@ -5034,8 +5034,7 @@ ScalarEvolution::ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock) {
       if (!Pred)
         return getCouldNotCompute();
       TerminatorInst *PredTerm = Pred->getTerminator();
-      for (unsigned i = 0, e = PredTerm->getNumSuccessors(); i != e; ++i) {
-        BasicBlock *PredSucc = PredTerm->getSuccessor(i);
+      for (const BasicBlock *PredSucc : PredTerm->successors()) {
         if (PredSucc == BB)
           continue;
         // If the predecessor has a successor that isn't BB and isn't

@@ -358,13 +358,9 @@ void StructurizeCFG::analyzeLoops(RegionNode *N) {
     BasicBlock *BB = N->getNodeAs<BasicBlock>();
     BranchInst *Term = cast<BranchInst>(BB->getTerminator());
 
-    for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
-      BasicBlock *Succ = Term->getSuccessor(i);
-
-      if (Visited.count(Succ)) {
+    for (BasicBlock *Succ : Term->successors())
+      if (Visited.count(Succ))
         Loops[Succ] = BB;
-      }
-    }
   }
 }
 

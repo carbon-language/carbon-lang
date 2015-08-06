@@ -1796,10 +1796,9 @@ bool IPSCCP::runOnModule(Module &M) {
         MadeChanges = true;
 
         TerminatorInst *TI = BB->getTerminator();
-        for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
-          BasicBlock *Succ = TI->getSuccessor(i);
+        for (BasicBlock *Succ : TI->successors()) {
           if (!Succ->empty() && isa<PHINode>(Succ->begin()))
-            TI->getSuccessor(i)->removePredecessor(BB);
+            Succ->removePredecessor(BB);
         }
         if (!TI->use_empty())
           TI->replaceAllUsesWith(UndefValue::get(TI->getType()));

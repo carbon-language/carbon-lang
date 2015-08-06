@@ -41,8 +41,8 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
 
   // Loop through all of our successors and make sure they know that one
   // of their predecessors is going away.
-  for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i)
-    BBTerm->getSuccessor(i)->removePredecessor(BB);
+  for (BasicBlock *Succ : BBTerm->successors())
+    Succ->removePredecessor(BB);
 
   // Zap all the instructions in the block.
   while (!BB->empty()) {

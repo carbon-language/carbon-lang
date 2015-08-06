@@ -2927,8 +2927,8 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB, const DataLayout &DL,
       }
     }
 
-    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-      Worklist.push_back(TI->getSuccessor(i));
+    for (BasicBlock *SuccBB : TI->successors())
+      Worklist.push_back(SuccBB);
   } while (!Worklist.empty());
 
   // Once we've found all of the instructions to add to instcombine's worklist,

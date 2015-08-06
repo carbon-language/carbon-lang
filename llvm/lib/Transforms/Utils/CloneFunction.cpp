@@ -400,8 +400,8 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       // If the director says to skip with a terminate instruction, we still
       // need to clone this block's successors.
       const TerminatorInst *TI = NewBB->getTerminator();
-      for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-        ToClone.push_back(TI->getSuccessor(i));
+      for (const BasicBlock *Succ : TI->successors())
+        ToClone.push_back(Succ);
       return;
     }
     assert(Action != CloningDirector::SkipInstruction && 
@@ -450,8 +450,8 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
     
     // Recursively clone any reachable successor blocks.
     const TerminatorInst *TI = BB->getTerminator();
-    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-      ToClone.push_back(TI->getSuccessor(i));
+    for (const BasicBlock *Succ : TI->successors())
+      ToClone.push_back(Succ);
   }
   
   if (CodeInfo) {

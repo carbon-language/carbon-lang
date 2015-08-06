@@ -188,9 +188,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
       BasicBlock *BB = SI->getParent();
 
       // Remove entries from PHI nodes which we no longer branch to...
-      for (unsigned i = 0, e = SI->getNumSuccessors(); i != e; ++i) {
+      for (BasicBlock *Succ : SI->successors()) {
         // Found case matching a constant operand?
-        BasicBlock *Succ = SI->getSuccessor(i);
         if (Succ == TheOnlyDest)
           TheOnlyDest = nullptr; // Don't modify the first branch to TheOnlyDest
         else
