@@ -1,0 +1,33 @@
+REQUIRES: shell
+RUN: rm -rf %T/basic-linking-bundle
+RUN: mkdir -p %T/basic-linking-bundle/dsymdest
+RUN: cat %p/../Inputs/basic.macho.x86_64 > %T/basic-linking-bundle/basic.macho.x86_64
+
+RUN: llvm-dsymutil -oso-prepend-path=%p/.. %T/basic-linking-bundle/basic.macho.x86_64
+RUN: llvm-dwarfdump %T/basic-linking-bundle/basic.macho.x86_64.dSYM/Contents/Resources/DWARF/basic.macho.x86_64 | FileCheck %S/basic-linking-x86.test
+RUN: FileCheck %s --input-file %T/basic-linking-bundle/basic.macho.x86_64.dSYM/Contents/Info.plist
+
+RUN: llvm-dsymutil -oso-prepend-path=%p/.. %T/basic-linking-bundle/basic.macho.x86_64 -o %T/basic-linking-bundle/dsymdest/basic.macho.x86_64.dSYM
+RUN: llvm-dwarfdump %T/basic-linking-bundle/dsymdest/basic.macho.x86_64.dSYM/Contents/Resources/DWARF/basic.macho.x86_64 | FileCheck %S/basic-linking-x86.test
+RUN: FileCheck %s --input-file %T/basic-linking-bundle/dsymdest/basic.macho.x86_64.dSYM/Contents/Info.plist
+
+CHECK: <?xml version="1.0" encoding="UTF-8"?>
+CHECK-NEXT: <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+CHECK-NEXT: <plist version="1.0">
+CHECK-NEXT:         <dict>
+CHECK-NEXT:                 <key>CFBundleDevelopmentRegion</key>
+CHECK-NEXT:                 <string>English</string>
+CHECK-NEXT:                 <key>CFBundleIdentifier</key>
+CHECK-NEXT:                 <string>com.apple.xcode.dsym.basic.macho.x86_64</string>
+CHECK-NEXT:                 <key>CFBundleInfoDictionaryVersion</key>
+CHECK-NEXT:                 <string>6.0</string>
+CHECK-NEXT:                 <key>CFBundlePackageType</key>
+CHECK-NEXT:                 <string>dSYM</string>
+CHECK-NEXT:                 <key>CFBundleSignature</key>
+CHECK-NEXT:                 <string>????</string>
+CHECK-NEXT:                 <key>CFBundleShortVersionString</key>
+CHECK-NEXT:                 <string>1.0</string>
+CHECK-NEXT:                 <key>CFBundleVersion</key>
+CHECK-NEXT:                 <string>1</string>
+CHECK-NEXT:         </dict>
+CHECK-NEXT: </plist>

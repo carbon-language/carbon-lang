@@ -16,6 +16,7 @@
 #include "MachOUtils.h"
 #include "dsymutil.h"
 #include "llvm/Object/MachO.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Options.h"
@@ -84,6 +85,74 @@ static opt<bool> InputIsYAMLDebugMap(
     init(false), cat(DsymCategory));
 }
 
+static bool createPlistFile(llvm::StringRef BundleRoot) {
+  if (NoOutput)
+    return true;
+
+  // Create plist file to write to.
+  llvm::SmallString<128> InfoPlist(BundleRoot);
+  llvm::sys::path::append(InfoPlist, "Contents/Info.plist");
+  std::error_code EC;
+  llvm::raw_fd_ostream PL(InfoPlist, EC, llvm::sys::fs::F_Text);
+  if (EC) {
+    llvm::errs() << "error: cannot create plist file " << InfoPlist << ": "
+                 << EC.message() << '\n';
+    return false;
+  }
+
+  // FIXME: Use CoreFoundation to get executable bundle info. Use
+  // dummy values for now.
+  std::string bundleVersionStr = "1", bundleShortVersionStr = "1.0",
+              bundleIDStr;
+
+  llvm::StringRef BundleID = *llvm::sys::path::rbegin(BundleRoot);
+  if (llvm::sys::path::extension(BundleRoot) == ".dSYM")
+    bundleIDStr = llvm::sys::path::stem(BundleID);
+  else
+    bundleIDStr = BundleID;
+
+  // Print out information to the plist file.
+  PL << "<?xml version=\"1.0\" encoding=\"UTF-8\"\?>\n"
+     << "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
+     << "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+     << "<plist version=\"1.0\">\n"
+     << "\t<dict>\n"
+     << "\t\t<key>CFBundleDevelopmentRegion</key>\n"
+     << "\t\t<string>English</string>\n"
+     << "\t\t<key>CFBundleIdentifier</key>\n"
+     << "\t\t<string>com.apple.xcode.dsym." << bundleIDStr << "</string>\n"
+     << "\t\t<key>CFBundleInfoDictionaryVersion</key>\n"
+     << "\t\t<string>6.0</string>\n"
+     << "\t\t<key>CFBundlePackageType</key>\n"
+     << "\t\t<string>dSYM</string>\n"
+     << "\t\t<key>CFBundleSignature</key>\n"
+     << "\t\t<string>\?\?\?\?</string>\n"
+     << "\t\t<key>CFBundleShortVersionString</key>\n"
+     << "\t\t<string>" << bundleShortVersionStr << "</string>\n"
+     << "\t\t<key>CFBundleVersion</key>\n"
+     << "\t\t<string>" << bundleVersionStr << "</string>\n"
+     << "\t</dict>\n"
+     << "</plist>\n";
+
+  PL.close();
+  return true;
+}
+
+static bool createBundleDir(llvm::StringRef BundleBase) {
+  if (NoOutput)
+    return true;
+
+  llvm::SmallString<128> Bundle(BundleBase);
+  llvm::sys::path::append(Bundle, "Contents", "Resources", "DWARF");
+  if (std::error_code EC = create_directories(Bundle.str(), true,
+                                              llvm::sys::fs::perms::all_all)) {
+    llvm::errs() << "error: cannot create directory " << Bundle << ": "
+                 << EC.message() << "\n";
+    return false;
+  }
+  return true;
+}
+
 static std::error_code getUniqueFile(const llvm::Twine &Model, int &ResultFD,
                                      llvm::SmallVectorImpl<char> &ResultPath) {
   // If in NoOutput mode, use the createUniqueFile variant that
@@ -99,7 +168,9 @@ static std::error_code getUniqueFile(const llvm::Twine &Model, int &ResultFD,
 static std::string getOutputFileName(llvm::StringRef InputFile,
                                      bool TempFile = false) {
   if (TempFile) {
-    llvm::Twine OutputFile = InputFile + ".tmp%%%%%%.dwarf";
+    llvm::StringRef Basename =
+        OutputFileOpt.empty() ? InputFile : llvm::StringRef(OutputFileOpt);
+    llvm::Twine OutputFile = Basename + ".tmp%%%%%%.dwarf";
     int FD;
     llvm::SmallString<128> UniqueFile;
     if (auto EC = getUniqueFile(OutputFile, FD, UniqueFile)) {
@@ -116,12 +187,36 @@ static std::string getOutputFileName(llvm::StringRef InputFile,
     return UniqueFile.str();
   }
 
-  if (OutputFileOpt.empty()) {
-    if (InputFile == "-")
-      return "a.out.dwarf";
-    return (InputFile + ".dwarf").str();
+  if (FlatOut) {
+    // If a flat dSYM has been requested, things are pretty simple.
+    if (OutputFileOpt.empty()) {
+      if (InputFile == "-")
+        return "a.out.dwarf";
+      return (InputFile + ".dwarf").str();
+    }
+
+    return OutputFileOpt;
   }
-  return OutputFileOpt;
+
+  // We need to create/update a dSYM bundle.
+  // A bundle hierarchy looks like this:
+  //   <bundle name>.dSYM/
+  //       Contents/
+  //          Info.plist
+  //          Resources/
+  //             DWARF/
+  //                <DWARF file(s)>
+  std::string DwarfFile =
+      InputFile == "-" ? llvm::StringRef("a.out") : InputFile;
+  llvm::SmallString<128> BundleDir(OutputFileOpt);
+  if (BundleDir.empty())
+    BundleDir = DwarfFile + ".dSYM";
+  if (!createBundleDir(BundleDir) || !createPlistFile(BundleDir))
+    return "";
+
+  llvm::sys::path::append(BundleDir, "Contents", "Resources", "DWARF",
+                          llvm::sys::path::filename(DwarfFile));
+  return BundleDir.str();
 }
 
 void llvm::dsymutil::exitDsymutil(int ExitStatus) {
