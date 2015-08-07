@@ -159,20 +159,18 @@ set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 # workaround. This creates a dummy libdl.a stub until the actual
 # libdl.a can be implemented in the toolchain.
 if( LLVM_BUILD_STATIC )
- set( ANDROID_LIBDL_STUB "${CMAKE_BINARY_DIR}/libdl_stub" )
- file( MAKE_DIRECTORY ${ANDROID_LIBDL_STUB} )
- file( WRITE "${ANDROID_LIBDL_STUB}/libdl.c" "
+ set( libdl "${CMAKE_BINARY_DIR}/libdl_stub" )
+ file( MAKE_DIRECTORY ${libdl} )
+ file( WRITE "${libdl}/libdl.c" "
 #include <dlfcn.h>
 void *       dlopen  (const char *filename, int flag)   { return 0; }
 const char * dlerror (void)                             { return 0; }
 void *       dlsym   (void *handle, const char *symbol) { return 0; }
 int          dlclose (void *handle)                     { return 0; }")
- set( SEPARATED_C_FLAGS "${CMAKE_C_FLAGS}" )
- separate_arguments( SEPARATED_C_FLAGS )
- execute_process( COMMAND ${CMAKE_C_COMPILER} ${SEPARATED_C_FLAGS} -c ${ANDROID_LIBDL_STUB}/libdl.c -o ${ANDROID_LIBDL_STUB}/libdl.o )
- execute_process( COMMAND ${CMAKE_AR} rcs ${ANDROID_LIBDL_STUB}/libdl.a ${ANDROID_LIBDL_STUB}/libdl.o )
- set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${ANDROID_LIBDL_STUB}" )
- unset( ANDROID_LIBDL_STUB )
- unset( SEPARATED_C_FLAGS )
+ set( flags "${CMAKE_C_FLAGS}" )
+ separate_arguments( flags )
+ execute_process( COMMAND ${CMAKE_C_COMPILER} ${flags} -c ${libdl}/libdl.c -o ${libdl}/libdl.o )
+ execute_process( COMMAND ${CMAKE_AR} rcs ${libdl}/libdl.a ${libdl}/libdl.o )
+ set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${libdl}" )
 endif()
 ################# END EVIL HACK ##################
