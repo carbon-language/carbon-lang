@@ -68,8 +68,11 @@ template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
   const char *base = _mb->getBuffer().data();
   const Elf_Dyn *dynStart = nullptr;
   const Elf_Dyn *dynEnd = nullptr;
+
+  const Elf_Shdr *dynSymSec = nullptr;
   for (const Elf_Shdr &sec : obj.sections()) {
-    if (sec.sh_type == llvm::ELF::SHT_DYNAMIC) {
+    switch (sec.sh_type) {
+    case llvm::ELF::SHT_DYNAMIC: {
       dynStart = reinterpret_cast<const Elf_Dyn *>(base + sec.sh_offset);
       uint64_t size = sec.sh_size;
       if (size % sizeof(Elf_Dyn))
@@ -77,9 +80,12 @@ template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
       dynEnd = dynStart + size / sizeof(Elf_Dyn);
       break;
     }
+    case llvm::ELF::SHT_DYNSYM:
+      dynSymSec = &sec;
+      break;
+    }
   }
 
-  const Elf_Shdr *dynSymSec = obj.getDotDynSymSec();
   ErrorOr<StringRef> strTableOrErr = obj.getStringTableForSymtab(*dynSymSec);
   if (std::error_code ec = strTableOrErr.getError())
     return ec;
