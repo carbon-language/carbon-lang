@@ -191,12 +191,18 @@ static void resolveCycles(Metadata *MD) {
 }
 
 /// Remap the operands of an MDNode.
+///
+/// If \c Node is temporary, uniquing cycles are ignored.  If \c Node is
+/// distinct, uniquing cycles are resolved as they're found.
+///
+/// \pre \c Node.isDistinct() or \c Node.isTemporary().
 static bool remapOperands(MDNode &Node,
                           SmallVectorImpl<MDNode *> &DistinctWorklist,
                           ValueToValueMapTy &VM, RemapFlags Flags,
                           ValueMapTypeRemapper *TypeMapper,
                           ValueMaterializer *Materializer) {
   assert(!Node.isUniqued() && "Expected temporary or distinct node");
+  const bool IsDistinct = Node.isDistinct();
 
   bool AnyChanged = false;
   for (unsigned I = 0, E = Node.getNumOperands(); I != E; ++I) {
@@ -206,6 +212,11 @@ static bool remapOperands(MDNode &Node,
     if (Old != New) {
       AnyChanged = true;
       Node.replaceOperandWith(I, New);
+
+      // Resolve uniquing cycles underneath distinct nodes on the fly so they
+      // don't infect later operands.
+      if (IsDistinct)
+        resolveCycles(New);
     }
   }
 
@@ -332,15 +343,9 @@ Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
   resolveCycles(NewMD);
 
   // Remap the operands of distinct MDNodes.
-  while (!DistinctWorklist.empty()) {
-    auto *N = DistinctWorklist.pop_back_val();
-
-    // If an operand changes, then it may be involved in a uniquing cycle.
-    if (remapOperands(*N, DistinctWorklist, VM, Flags, TypeMapper,
-                      Materializer))
-      for (Metadata *MD : N->operands())
-        resolveCycles(MD);
-  }
+  while (!DistinctWorklist.empty())
+    remapOperands(*DistinctWorklist.pop_back_val(), DistinctWorklist, VM, Flags,
+                  TypeMapper, Materializer);
 
   return NewMD;
 }
