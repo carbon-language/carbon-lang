@@ -91,7 +91,6 @@ public:
 
 private:
   typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
-  typedef DenseMap<unsigned, unsigned> IndexMap_t;
 
   StringRef Buf;
 
