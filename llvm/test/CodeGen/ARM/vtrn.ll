@@ -335,3 +335,39 @@ entry:
   %0 = shufflevector <4 x i16> %tmp1, <4 x i16> %tmp2, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 5, i32 3, i32 7>
   ret <8 x i16> %0
 }
+
+; Here we get a build_vector node, where all the incoming extract_element
+; values do modify the type. However, we get different input types, as some of
+; them get truncated from i32 to i8 (from comparing cmp0 with cmp1) and some of
+; them get truncated from i16 to i8 (from comparing cmp2 with cmp3).
+define <8 x i8> @vtrn_mismatched_builvector0(<8 x i8> %tr0, <8 x i8> %tr1,
+                                             <4 x i32> %cmp0, <4 x i32> %cmp1,
+                                             <4 x i16> %cmp2, <4 x i16> %cmp3) {
+  ; CHECK-LABEL: vtrn_mismatched_builvector0
+  ; CHECK: vmovn.i32
+  ; CHECK: vtrn
+  ; CHECK: vbsl
+  %c0 = icmp ult <4 x i32> %cmp0, %cmp1
+  %c1 = icmp ult <4 x i16> %cmp2, %cmp3
+  %c = shufflevector <4 x i1> %c0, <4 x i1> %c1, <8 x i32> <i32 0, i32 4, i32 1, i32 5, i32 2, i32 6, i32 3, i32 7>
+  %rv = select <8 x i1> %c, <8 x i8> %tr0, <8 x i8> %tr1
+  ret <8 x i8> %rv
+}
+
+; Here we get a build_vector node, where half the incoming extract_element
+; values do not modify the type (the values form cmp2), but half of them do
+; (from the icmp operation).
+define <8 x i8> @vtrn_mismatched_builvector1(<8 x i8> %tr0, <8 x i8> %tr1,
+                           <4 x i32> %cmp0, <4 x i32> %cmp1, <4 x i8> *%cmp2_ptr) {
+  ; CHECK-LABEL: vtrn_mismatched_builvector1
+  ; We need to extend the 4 x i8 to 4 x i16 in order to perform the vtrn
+  ; CHECK: vmovl
+  ; CHECK: vtrn.8
+  ; CHECK: vbsl
+  %cmp2_load = load <4 x i8>, <4 x i8> * %cmp2_ptr, align 4
+  %cmp2 = trunc <4 x i8> %cmp2_load to <4 x i1>
+  %c0 = icmp ult <4 x i32> %cmp0, %cmp1
+  %c = shufflevector <4 x i1> %c0, <4 x i1> %cmp2, <8 x i32> <i32 0, i32 4, i32 1, i32 5, i32 2, i32 6, i32 3, i32 7>
+  %rv = select <8 x i1> %c, <8 x i8> %tr0, <8 x i8> %tr1
+  ret <8 x i8> %rv
+}

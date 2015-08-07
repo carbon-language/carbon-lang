@@ -285,3 +285,76 @@ entry:
   %0 = shufflevector <2 x i32> %tmp1, <2 x i32> %tmp2, <4 x i32> <i32 0, i32 0, i32 1, i32 3>
   ret <4 x i32> %0
 }
+
+define <8 x i8> @vuzp_trunc(<8 x i8> %in0, <8 x i8> %in1, <8 x i32> %cmp0, <8 x i32> %cmp1) {
+; In order to create the select we need to truncate the vcgt result from a vector of i32 to a vector of i8.
+; This results in a build_vector with mismatched types. We will generate two vmovn.i32 instructions to
+; truncate from i32 to i16 and one vuzp to perform the final truncation for i8.
+; CHECK-LABEL: vuzp_trunc
+; CHECK: vmovn.i32
+; CHECK: vmovn.i32
+; CHECK: vuzp
+; CHECK: vbsl
+  %c = icmp ult <8 x i32> %cmp0, %cmp1
+  %res = select <8 x i1> %c, <8 x i8> %in0, <8 x i8> %in1
+  ret <8 x i8> %res
+}
+
+; Shuffle the result from the compare with a <4 x i8>.
+; We need to extend the loaded <4 x i8> to <4 x i16>. Otherwise we wouldn't be able
+; to perform the vuzp and get the vbsl mask.
+define <8 x i8> @vuzp_trunc_and_shuffle(<8 x i8> %tr0, <8 x i8> %tr1,
+                         <4 x i32> %cmp0, <4 x i32> %cmp1, <4 x i8> *%cmp2_ptr) {
+; CHECK-LABEL: vuzp_trunc_and_shuffle
+; CHECK: vmovl
+; CHECK: vuzp
+; CHECK: vbsl
+  %cmp2_load = load <4 x i8>, <4 x i8> * %cmp2_ptr, align 4
+  %cmp2 = trunc <4 x i8> %cmp2_load to <4 x i1>
+  %c0 = icmp ult <4 x i32> %cmp0, %cmp1
+  %c = shufflevector <4 x i1> %c0, <4 x i1> %cmp2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %rv = select <8 x i1> %c, <8 x i8> %tr0, <8 x i8> %tr1
+  ret <8 x i8> %rv
+}
+
+; Use an undef value for the <4 x i8> that is being shuffled with the compare result.
+; This produces a build_vector with some of the operands undefs.
+define <8 x i8> @vuzp_trunc_and_shuffle_undef_right(<8 x i8> %tr0, <8 x i8> %tr1,
+                         <4 x i32> %cmp0, <4 x i32> %cmp1, <4 x i8> *%cmp2_ptr) {
+; CHECK-LABEL: vuzp_trunc_and_shuffle_undef_right
+; CHECK: vuzp
+; CHECK: vbsl
+  %cmp2_load = load <4 x i8>, <4 x i8> * %cmp2_ptr, align 4
+  %cmp2 = trunc <4 x i8> %cmp2_load to <4 x i1>
+  %c0 = icmp ult <4 x i32> %cmp0, %cmp1
+  %c = shufflevector <4 x i1> %c0, <4 x i1> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %rv = select <8 x i1> %c, <8 x i8> %tr0, <8 x i8> %tr1
+  ret <8 x i8> %rv
+}
+
+define <8 x i8> @vuzp_trunc_and_shuffle_undef_left(<8 x i8> %tr0, <8 x i8> %tr1,
+                         <4 x i32> %cmp0, <4 x i32> %cmp1, <4 x i8> *%cmp2_ptr) {
+; CHECK-LABEL: vuzp_trunc_and_shuffle_undef_left
+; CHECK: vuzp
+; CHECK: vbsl
+  %cmp2_load = load <4 x i8>, <4 x i8> * %cmp2_ptr, align 4
+  %cmp2 = trunc <4 x i8> %cmp2_load to <4 x i1>
+  %c0 = icmp ult <4 x i32> %cmp0, %cmp1
+  %c = shufflevector <4 x i1> undef, <4 x i1> %c0, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %rv = select <8 x i1> %c, <8 x i8> %tr0, <8 x i8> %tr1
+  ret <8 x i8> %rv
+}
+
+; We're using large data types here, and we have to fill with undef values until we
+; get some vector size that we can represent.
+define <10 x i8> @vuzp_wide_type(<10 x i8> %tr0, <10 x i8> %tr1,
+                            <5 x i32> %cmp0, <5 x i32> %cmp1, <5 x i8> *%cmp2_ptr) {
+; CHECK-LABEL: vuzp_wide_type
+; CHECK: vbsl
+  %cmp2_load = load <5 x i8>, <5 x i8> * %cmp2_ptr, align 4
+  %cmp2 = trunc <5 x i8> %cmp2_load to <5 x i1>
+  %c0 = icmp ult <5 x i32> %cmp0, %cmp1
+  %c = shufflevector <5 x i1> %c0, <5 x i1> %cmp2, <10 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
+  %rv = select <10 x i1> %c, <10 x i8> %tr0, <10 x i8> %tr1
+  ret <10 x i8> %rv
+}
