@@ -347,3 +347,16 @@ module RequiresWithMissingHeader {
     header "RequiresWithMissingHeader-Missing2.h"
   }
 }
+
+module TargetFeatures {
+  module arm {
+    requires arm
+    module aarch32 { requires aarch32 }
+    module aarch64 { requires aarch64 }
+  }
+  module x86 {
+    requires x86
+    module x86_32 { requires x86_32 }
+    module x86_64 { requires x86_64 }
+  }
+}

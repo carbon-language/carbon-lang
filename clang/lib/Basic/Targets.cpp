@@ -4551,6 +4551,7 @@ public:
   bool hasFeature(StringRef Feature) const override {
     return llvm::StringSwitch<bool>(Feature)
         .Case("arm", true)
+        .Case("aarch32", true)
         .Case("softfloat", SoftFloat)
         .Case("thumb", isThumb())
         .Case("neon", (FPU & NeonFPU) && !SoftFloat)
@@ -5198,6 +5199,7 @@ public:
   bool hasFeature(StringRef Feature) const override {
     return Feature == "aarch64" ||
       Feature == "arm64" ||
+      Feature == "arm" ||
       (Feature == "neon" && FPU == NeonMode);
   }
 
