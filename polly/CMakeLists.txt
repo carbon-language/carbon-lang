@@ -93,7 +93,9 @@ endif ()
 #
 # We also disable all warnings, as these should be fixed upstream. There is
 # no value in reporting them here.
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -w")
+if (NOT MSVC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -w")
+endif ()
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${POLLY_SOURCE_DIR}/cmake")
