@@ -535,7 +535,6 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Config->SEHTable = Symtab.addRelative("___safe_se_handler_table", 0);
     Config->SEHCount = Symtab.addAbsolute("___safe_se_handler_count", 0);
   }
-  Config->LoadConfigUsed = mangle("_load_config_used");
 
   // Read as much files as we can from directives sections.
   Symtab.run();
@@ -570,8 +569,8 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
 
     // Windows specific -- if __load_config_used can be resolved, resolve it.
-    if (Symtab.find(Config->LoadConfigUsed))
-      addUndefined(Config->LoadConfigUsed);
+    if (Symtab.findUnderscore("_load_config_used"))
+      addUndefined(mangle("_load_config_used"));
 
     if (Symtab.queueEmpty())
       break;
