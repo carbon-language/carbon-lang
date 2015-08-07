@@ -133,6 +133,7 @@ private:
   const Elf_Sym *DynSymStart = nullptr;
   StringRef SOName;
   const Elf_Hash *HashTable = nullptr;
+  const Elf_Shdr *DotDynSymSec = nullptr;
 
   const Elf_Shdr *dot_gnu_version_sec = nullptr;   // .gnu.version
   const Elf_Shdr *dot_gnu_version_r_sec = nullptr; // .gnu.version_r
@@ -164,6 +165,7 @@ private:
 public:
   std::string getFullSymbolName(const Elf_Sym *Symbol, StringRef StrTable,
                                 bool IsDynamic);
+  const Elf_Shdr *getDotDynSymSec() const { return DotDynSymSec; }
 };
 
 template <class T> T errorOrDefault(ErrorOr<T> Val, T Default = T()) {
@@ -884,6 +886,11 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
         reportError("Multilpe SHT_GNU_verneed");
       dot_gnu_version_r_sec = &Sec;
       break;
+    case ELF::SHT_DYNSYM:
+      if (DotDynSymSec != nullptr)
+        reportError("Multilpe SHT_DYNSYM");
+      DotDynSymSec = &Sec;
+      break;
     }
   }
 }
@@ -1134,7 +1141,7 @@ template<class ELFT>
 void ELFDumper<ELFT>::printDynamicSymbols() {
   ListScope Group(W, "DynamicSymbols");
 
-  const Elf_Shdr *Symtab = Obj->getDotDynSymSec();
+  const Elf_Shdr *Symtab = DotDynSymSec;
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
@@ -1643,7 +1650,7 @@ template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
     return;
   }
 
-  const Elf_Shdr *DynSymSec = Obj->getDotDynSymSec();
+  const Elf_Shdr *DynSymSec = Dumper->getDotDynSymSec();
   ErrorOr<StringRef> StrTable = Obj->getStringTableForSymtab(*DynSymSec);
   error(StrTable.getError());
   const Elf_Sym *DynSymBegin = Obj->symbol_begin(DynSymSec);

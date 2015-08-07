@@ -70,7 +70,6 @@ private:
   StringRef DotShstrtab;                    // Section header string table.
   StringRef DotStrtab;                      // Symbol header string table.
   const Elf_Shdr *dot_symtab_sec = nullptr; // Symbol table section.
-  const Elf_Shdr *DotDynSymSec = nullptr;   // Dynamic symbol table section.
 
   const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
 
@@ -81,7 +80,6 @@ public:
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
 
   const Elf_Shdr *getDotSymtabSec() const { return dot_symtab_sec; }
-  const Elf_Shdr *getDotDynSymSec() const { return DotDynSymSec; }
 
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;
@@ -384,15 +382,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
         return;
       DotStrtab = *SymtabOrErr;
     } break;
-    case ELF::SHT_DYNSYM: {
-      if (DotDynSymSec) {
-        // More than one .dynsym!
-        EC = object_error::parse_failed;
-        return;
-      }
-      DotDynSymSec = &Sec;
-      break;
-    }
     }
   }
 
