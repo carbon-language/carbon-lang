@@ -19,14 +19,13 @@
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
-  { "not a builtin function", nullptr, nullptr, nullptr, ALL_LANGUAGES},
-#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+  { "not a builtin function", nullptr, nullptr, nullptr, ALL_LANGUAGES,nullptr},
+#define BUILTIN(ID, TYPE, ATTRS)                                               \
+  { #ID, TYPE, ATTRS, nullptr, ALL_LANGUAGES, nullptr },
 #define LANGBUILTIN(ID, TYPE, ATTRS, LANGS)                                    \
-  { #ID, TYPE, ATTRS, 0, LANGS }                                               \
-  ,
+  { #ID, TYPE, ATTRS, nullptr, LANGS, nullptr },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER, LANGS)                             \
-  { #ID, TYPE, ATTRS, HEADER, LANGS }                                          \
-  ,
+  { #ID, TYPE, ATTRS, HEADER, LANGS, nullptr },
 #include "clang/Basic/Builtins.def"
 };
 
