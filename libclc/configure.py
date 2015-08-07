@@ -5,7 +5,7 @@ def c_compiler_rule(b, name, description, compiler, flags):
   b.rule(name, command, description + " $out", depfile="$out.d")
 
 version_major = 0;
-version_minor = 1;
+version_minor = 2;
 version_patch = 0;
 
 from optparse import OptionParser
@@ -66,11 +66,12 @@ def llvm_config(args):
     sys.exit(1)
 
 llvm_version = string.split(string.replace(llvm_config(['--version']), 'svn', ''), '.')
-if (int(llvm_version[0]) != 3 and int(llvm_version[1]) != 6):
-    print "libclc requires LLVM 3.6"
-    sys.exit(1)
-
+llvm_int_version = int(llvm_version[0]) * 100 + int(llvm_version[1]) * 10
 llvm_string_version = 'LLVM' + llvm_version[0] + '.' + llvm_version[1]
+
+if llvm_int_version < 370:
+    print "libclc requires LLVM >= 3.7"
+    sys.exit(1)
 
 llvm_system_libs = llvm_config(['--system-libs'])
 llvm_bindir = llvm_config(['--bindir'])

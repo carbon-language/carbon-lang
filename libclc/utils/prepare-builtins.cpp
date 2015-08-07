@@ -14,10 +14,6 @@
 
 #include <system_error>
 
-#define LLVM_360 \
-  (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 6)
-
-
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -43,20 +39,12 @@ int main(int argc, char **argv) {
     if (std::error_code  ec = BufferOrErr.getError())
       ErrorMessage = ec.message();
     else {
-#if LLVM_360
-      ErrorOr<Module *>
-#else
-      ErrorOr<std::unique_ptr<Module>>
-#endif
-      ModuleOrErr =
+      ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
           parseBitcodeFile(BufferPtr.get()->getMemBufferRef(), Context);
       if (std::error_code ec = ModuleOrErr.getError())
         ErrorMessage = ec.message();
-#if LLVM_360
-      M = ModuleOrErr.get();
-#else
+
       M = ModuleOrErr.get().release();
-#endif
     }
   }
 
