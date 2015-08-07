@@ -187,8 +187,8 @@ private:
   ///
   /// This function will be run at the beginning of shrink wrapping and
   /// determine whether shrink wrapping should run on the given MachineFunction.
-  /// \param[in] MF The MachineFunction to run shrink wrapping on.
-  /// \return true if shrink wrapping should be run, false otherwise.
+  /// \arg MF The MachineFunction to run shrink wrapping on.
+  /// It returns true if shrink wrapping should be run, false otherwise.
   std::function<bool(const MachineFunction &MF)> PredicateFtor;
 };
 } // End anonymous namespace.
