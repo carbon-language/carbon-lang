@@ -129,7 +129,7 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
   StringRef StrTable = *StrTableOrErr;
 
   bool IsFirstSym = true;
-  for (const Elf_Sym &Sym : Obj.symbols()) {
+  for (const Elf_Sym &Sym : Obj.symbols(Obj.getDotSymtabSec())) {
     if (IsFirstSym) {
       IsFirstSym = false;
       continue;

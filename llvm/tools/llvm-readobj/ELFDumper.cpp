@@ -995,7 +995,7 @@ void ELFDumper<ELFT>::printSections() {
       error(StrTableOrErr.getError());
       StringRef StrTable = *StrTableOrErr;
 
-      for (const Elf_Sym &Sym : Obj->symbols()) {
+      for (const Elf_Sym &Sym : Obj->symbols(Symtab)) {
         ErrorOr<const Elf_Shdr *> SymSec = Obj->getSection(&Sym);
         if (!SymSec)
           continue;
@@ -1126,7 +1126,7 @@ void ELFDumper<ELFT>::printSymbols() {
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
-  for (const Elf_Sym &Sym : Obj->symbols())
+  for (const Elf_Sym &Sym : Obj->symbols(Symtab))
     printSymbol(&Sym, StrTable, false);
 }
 

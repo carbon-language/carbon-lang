@@ -147,16 +147,6 @@ public:
     return make_range(symbol_begin(Sec), symbol_end(Sec));
   }
 
-  const Elf_Sym *symbol_begin() const { return symbol_begin(dot_symtab_sec); }
-  const Elf_Sym *symbol_end() const { return symbol_end(dot_symtab_sec); }
-  Elf_Sym_Range symbols() const { return symbols(dot_symtab_sec); }
-
-  const Elf_Sym *dynamic_symbol_begin() const {
-    return symbol_begin(DotDynSymSec);
-  }
-  const Elf_Sym *dynamic_symbol_end() const { return symbol_end(DotDynSymSec); }
-  Elf_Sym_Range dynamic_symbols() const { return symbols(DotDynSymSec); }
-
   typedef iterator_range<const Elf_Rela *> Elf_Rela_Range;
 
   const Elf_Rela *rela_begin(const Elf_Shdr *sec) const {
@@ -235,7 +225,7 @@ template <class ELFT>
 ELF::Elf64_Word
 ELFFile<ELFT>::getExtendedSymbolTableIndex(const Elf_Sym *Sym) const {
   assert(Sym->st_shndx == ELF::SHN_XINDEX);
-  unsigned Index = Sym - symbol_begin();
+  unsigned Index = Sym - symbol_begin(dot_symtab_sec);
 
   // FIXME: error checking
   const Elf_Word *ShndxTable = reinterpret_cast<const Elf_Word *>(
