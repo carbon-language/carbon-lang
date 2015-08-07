@@ -89,7 +89,6 @@ private:
   EdataContents Edata;
   std::unique_ptr<SEHTableChunk> SEHTable;
 
-  bool Is64;
   uint64_t FileSize;
   uint32_t PointerToSymbolTable = 0;
   uint64_t SizeOfImage;
