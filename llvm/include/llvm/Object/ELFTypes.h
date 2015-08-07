@@ -12,7 +12,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/Error.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorOr.h"

@@ -14,23 +14,9 @@
 #ifndef LLVM_OBJECT_ELF_H
 #define LLVM_OBJECT_ELF_H
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Object/ELFTypes.h"
-#include "llvm/Object/Error.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ELF.h"
-#include "llvm/Support/Endian.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <limits>
-#include <utility>
 
 namespace llvm {
 namespace object {
@@ -69,19 +55,6 @@ public:
   typedef Elf_Hash_Impl<ELFT> Elf_Hash;
   typedef iterator_range<const Elf_Dyn *> Elf_Dyn_Range;
   typedef iterator_range<const Elf_Shdr *> Elf_Shdr_Range;
-
-  /// \brief Archive files are 2 byte aligned, so we need this for
-  ///     PointerIntPair to work.
-  template <typename T>
-  class ArchivePointerTypeTraits {
-  public:
-    static inline const void *getAsVoidPointer(T *P) { return P; }
-    static inline T *getFromVoidPointer(const void *P) {
-      return static_cast<T *>(P);
-    }
-    enum { NumLowBitsAvailable = 1 };
-  };
-
   typedef iterator_range<const Elf_Sym *> Elf_Sym_Range;
 
   const uint8_t *base() const {
@@ -89,7 +62,6 @@ public:
   }
 
 private:
-  typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
 
   StringRef Buf;
 
