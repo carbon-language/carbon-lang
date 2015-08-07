@@ -71,8 +71,13 @@ DefinedAtom::ContentType ELFDefinedAtom<ELFT>::doContentType() const {
     return typeGnuLinkOnce;
 
   uint64_t flags = _section->sh_flags;
-  if (!(flags & SHF_ALLOC))
+
+  if (!(flags & SHF_ALLOC)) {
+    if (_section->sh_type == SHT_NOTE)
+      return (flags == SHF_WRITE) ? typeRWNote : typeRONote;
     return _contentType = typeNoAlloc;
+  }
+
   if (_section->sh_flags == (SHF_ALLOC | SHF_WRITE | SHF_TLS))
     return _section->sh_type == SHT_NOBITS ? typeThreadZeroFill
                                            : typeThreadData;
