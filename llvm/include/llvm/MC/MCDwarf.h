@@ -187,12 +187,12 @@ struct MCDwarfLineTableParams {
   /// Note: If you want to change this, you'll have to update the
   /// "StandardOpcodeLengths" table that is emitted in
   /// \c Emit().
-  unsigned char DWARF2LineOpcodeBase = 13;
+  uint8_t DWARF2LineOpcodeBase = 13;
   /// Minimum line offset in a special line info. opcode.  The value
   /// -5 was chosen to give a reasonable range of values.
-  signed char DWARF2LineBase = -5;
+  int8_t DWARF2LineBase = -5;
   /// Range of line offsets in a special line info. opcode.
-  unsigned char DWARF2LineRange = 14;
+  uint8_t DWARF2LineRange = 14;
 };
 
 struct MCDwarfLineTableHeader {
