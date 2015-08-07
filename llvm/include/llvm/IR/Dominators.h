@@ -125,55 +125,34 @@ public:
 // DominatorTree GraphTraits specializations so the DominatorTree can be
 // iterable by generic graph iterators.
 
-template <> struct GraphTraits<DomTreeNode*> {
-  typedef DomTreeNode NodeType;
-  typedef NodeType::iterator  ChildIteratorType;
+template <class Node, class ChildIterator> struct DomTreeGraphTraitsBase {
+  typedef Node NodeType;
+  typedef ChildIterator ChildIteratorType;
+  typedef df_iterator<Node *, SmallPtrSet<NodeType *, 8>> nodes_iterator;
 
-  static NodeType *getEntryNode(NodeType *N) {
-    return N;
-  }
+  static NodeType *getEntryNode(NodeType *N) { return N; }
   static inline ChildIteratorType child_begin(NodeType *N) {
     return N->begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->end();
-  }
+  static inline ChildIteratorType child_end(NodeType *N) { return N->end(); }
 
-  typedef df_iterator<DomTreeNode*> nodes_iterator;
-
-  static nodes_iterator nodes_begin(DomTreeNode *N) {
+  static nodes_iterator nodes_begin(NodeType *N) {
     return df_begin(getEntryNode(N));
   }
 
-  static nodes_iterator nodes_end(DomTreeNode *N) {
+  static nodes_iterator nodes_end(NodeType *N) {
     return df_end(getEntryNode(N));
   }
 };
 
-template <> struct GraphTraits<const DomTreeNode *> {
-  typedef const DomTreeNode NodeType;
-  typedef NodeType::const_iterator ChildIteratorType;
+template <>
+struct GraphTraits<DomTreeNode *>
+    : public DomTreeGraphTraitsBase<DomTreeNode, DomTreeNode::iterator> {};
 
-  static NodeType *getEntryNode(NodeType *N) {
-    return N;
-  }
-  static inline ChildIteratorType child_begin(NodeType *N) {
-    return N->begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->end();
-  }
-
-  typedef df_iterator<const DomTreeNode *> nodes_iterator;
-
-  static nodes_iterator nodes_begin(const DomTreeNode *N) {
-    return df_begin(getEntryNode(N));
-  }
-
-  static nodes_iterator nodes_end(const DomTreeNode *N) {
-    return df_end(getEntryNode(N));
-  }
-};
+template <>
+struct GraphTraits<const DomTreeNode *>
+    : public DomTreeGraphTraitsBase<const DomTreeNode,
+                                    DomTreeNode::const_iterator> {};
 
 template <> struct GraphTraits<DominatorTree*>
   : public GraphTraits<DomTreeNode*> {
