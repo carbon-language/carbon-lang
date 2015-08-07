@@ -7503,7 +7503,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 }
 
 /// CreateTargetInfo - Return the target info object for the specified target
-/// triple.
+/// options.
 TargetInfo *
 TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
                              const std::shared_ptr<TargetOptions> &Opts) {
