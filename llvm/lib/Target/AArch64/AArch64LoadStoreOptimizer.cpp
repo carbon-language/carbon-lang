@@ -589,8 +589,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
     if (!CanMergeOpc) {
       bool IsValidLdStrOpc;
       unsigned NonSExtOpc = getMatchingNonSExtOpcode(Opc, &IsValidLdStrOpc);
-      if (!IsValidLdStrOpc)
-        continue;
+      assert(IsValidLdStrOpc &&
+             "Given Opc should be a Load or Store with an immediate");
       // Opc will be the first instruction in the pair.
       Flags.setSExtIdx(NonSExtOpc == (unsigned)Opc ? 1 : 0);
       CanMergeOpc = NonSExtOpc == getMatchingNonSExtOpcode(MI->getOpcode());
