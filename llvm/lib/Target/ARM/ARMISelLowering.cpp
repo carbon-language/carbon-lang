@@ -5685,8 +5685,10 @@ SDValue ARMTargetLowering::ReconstructShuffle(SDValue Op,
   }
 
   // Final sanity check before we try to actually produce a shuffle.
-  for (auto Src : Sources)
-    assert(Src.ShuffleVec.getValueType() == ShuffleVT);
+  DEBUG(
+    for (auto Src : Sources)
+      assert(Src.ShuffleVec.getValueType() == ShuffleVT);
+  );
 
   // The stars all align, our next step is to produce the mask for the shuffle.
   SmallVector<int, 8> Mask(ShuffleVT.getVectorNumElements(), -1);
