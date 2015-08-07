@@ -24,8 +24,3 @@ endif()
 set(dst "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld-link${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET lld POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E ${command} ${src} ${dst})
-
-# FIXME: Remove once the lld-link2 alias is gone.
-set(dst2 "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld-link2${CMAKE_EXECUTABLE_SUFFIX}")
-add_custom_command(TARGET lld POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E ${command} ${src} ${dst2})

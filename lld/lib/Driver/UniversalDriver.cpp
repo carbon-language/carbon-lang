@@ -88,8 +88,6 @@ static Flavor strToFlavor(StringRef str) {
       .Case("gnu2", Flavor::gnu_ld2)
       .Case("link", Flavor::win_link)
       .Case("lld-link", Flavor::win_link)
-      .Case("link2", Flavor::win_link)
-      .Case("lld-link2", Flavor::win_link)
       .Case("darwin", Flavor::darwin_ld)
       .Case("core", Flavor::core)
       .Case("ld", Flavor::gnu_ld)
