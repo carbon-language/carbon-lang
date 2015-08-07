@@ -229,6 +229,11 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions,
                                             SIDef->getValue().getZExtValue()));
       }
 
+      // Update make.implicit metadata to the newly-created conditional branch.
+      MDNode *MakeImplicitMD = SI->getMetadata(LLVMContext::MD_make_implicit);
+      if (MakeImplicitMD)
+        NewBr->setMetadata(LLVMContext::MD_make_implicit, MakeImplicitMD);
+
       // Delete the old switch.
       SI->eraseFromParent();
       return true;
