@@ -1026,7 +1026,8 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
   SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
-  MCDwarfLineAddr::Encode(Context, LineDelta, AddrDelta, OSE);
+  MCDwarfLineAddr::Encode(Context, getDWARFLinetableParams(), LineDelta,
+                          AddrDelta, OSE);
   OSE.flush();
   return OldSize != Data.size();
 }

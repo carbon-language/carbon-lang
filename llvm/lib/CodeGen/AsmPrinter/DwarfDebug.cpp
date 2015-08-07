@@ -33,6 +33,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -1894,7 +1895,7 @@ void DwarfDebug::emitDebugLineDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
   Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfLineDWOSection());
-  SplitTypeUnitFileTable.Emit(*Asm->OutStreamer);
+  SplitTypeUnitFileTable.Emit(*Asm->OutStreamer, MCDwarfLineTableParams());
 }
 
 // Emit the .debug_str.dwo section for separated dwarf. This contains the

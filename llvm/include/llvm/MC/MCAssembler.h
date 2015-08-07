@@ -18,6 +18,7 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/MC/MCDirectives.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
@@ -591,6 +592,8 @@ private:
   /// List of declared file names
   std::vector<std::string> FileNames;
 
+  MCDwarfLineTableParams LTParams;
+
   /// The set of function symbols for which a .thumb_func directive has
   /// been seen.
   //
@@ -735,6 +738,9 @@ public:
   MCCodeEmitter &getEmitter() const { return Emitter; }
 
   MCObjectWriter &getWriter() const { return Writer; }
+
+  MCDwarfLineTableParams getDWARFLinetableParams() const { return LTParams; }
+  void setDWARFLinetableParams(MCDwarfLineTableParams P) { LTParams = P; }
 
   /// Finish - Do final processing and write the object to the output stream.
   /// \p Writer is used for custom object writer (as the MCJIT does),
