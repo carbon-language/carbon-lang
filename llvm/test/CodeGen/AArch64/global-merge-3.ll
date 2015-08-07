@@ -42,10 +42,8 @@ define void @f1(i32 %a1, i32 %a2, i32 %a3) {
 
 ;CHECK:	.globl	x
 ;CHECK: x = _MergedGlobals_x+4
-;CHECK: .size x, 4000
 ;CHECK:	.globl	y
 ;CHECK: y = _MergedGlobals_y
-;CHECK: .size y, 4000
 
 ;CHECK-APPLE-IOS:.globl	_x
 ;CHECK-APPLE-IOS: _x = __MergedGlobals_x+4

@@ -1184,16 +1184,6 @@ bool AsmPrinter::doFinalization(Module &M) {
 
     // Emit the directives as assignments aka .set:
     OutStreamer->EmitAssignment(Name, lowerConstant(Alias.getAliasee()));
-
-    // Set the size of the alias symbol if we can, as otherwise the alias gets
-    // the size of the aliasee which may not be correct e.g. if the alias is of
-    // a member of a struct.
-    if (MAI->hasDotTypeDotSizeDirective() && Alias.getValueType()->isSized()) {
-      const DataLayout &DL = M.getDataLayout();
-      uint64_t Size = DL.getTypeAllocSize(Alias.getValueType());
-      OutStreamer->emitELFSize(cast<MCSymbolELF>(Name),
-                               MCConstantExpr::create(Size, OutContext));
-    }
   }
 
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
