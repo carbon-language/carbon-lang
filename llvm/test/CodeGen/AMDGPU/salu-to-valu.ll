@@ -75,15 +75,43 @@ endif:
   ret void
 }
 
-; Test moving ann SMRD with an immediate offset to the VALU
+; Test moving an SMRD with an immediate offset to the VALU
 
 ; CHECK-LABEL: {{^}}smrd_valu2:
-; CHECK: buffer_load_dword
+; CHECK: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:16{{$}}
 define void @smrd_valu2(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in) {
 entry:
   %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %1 = add i32 %0, 4
   %2 = getelementptr [8 x i32], [8 x i32] addrspace(2)* %in, i32 %0, i32 4
+  %3 = load i32, i32 addrspace(2)* %2
+  store i32 %3, i32 addrspace(1)* %out
+  ret void
+}
+
+; CHECK-LABEL: {{^}}smrd_valu2_max_smrd_offset:
+; CHECK: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:1020{{$}}
+define void @smrd_valu2_max_smrd_offset(i32 addrspace(1)* %out, [1024 x i32] addrspace(2)* %in) {
+entry:
+  %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %1 = add i32 %0, 4
+  %2 = getelementptr [1024 x i32], [1024 x i32] addrspace(2)* %in, i32 %0, i32 255
+  %3 = load i32, i32 addrspace(2)* %2
+  store i32 %3, i32 addrspace(1)* %out
+  ret void
+}
+
+; Offset is too big to fit in SMRD 8-bit offset, but small enough to
+; fit in MUBUF offset.
+; FIXME: We should be using the offset but we don't
+
+; CHECK-LABEL: {{^}}smrd_valu2_mubuf_offset:
+; CHECK: buffer_load_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
+define void @smrd_valu2_mubuf_offset(i32 addrspace(1)* %out, [1024 x i32] addrspace(2)* %in) {
+entry:
+  %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %1 = add i32 %0, 4
+  %2 = getelementptr [1024 x i32], [1024 x i32] addrspace(2)* %in, i32 %0, i32 256
   %3 = load i32, i32 addrspace(2)* %2
   store i32 %3, i32 addrspace(1)* %out
   ret void

@@ -261,6 +261,41 @@ bool SITargetLowering::isLegalFlatAddressingMode(const AddrMode &AM) const {
   return AM.BaseOffs == 0 && (AM.Scale == 0 || AM.Scale == 1);
 }
 
+bool SITargetLowering::isLegalMUBUFAddressingMode(const AddrMode &AM) const {
+  // MUBUF / MTBUF instructions have a 12-bit unsigned byte offset, and
+  // additionally can do r + r + i with addr64. 32-bit has more addressing
+  // mode options. Depending on the resource constant, it can also do
+  // (i64 r0) + (i32 r1) * (i14 i).
+  //
+  // Private arrays end up using a scratch buffer most of the time, so also
+  // assume those use MUBUF instructions. Scratch loads / stores are currently
+  // implemented as mubuf instructions with offen bit set, so slightly
+  // different than the normal addr64.
+  if (!isUInt<12>(AM.BaseOffs))
+    return false;
+
+  // FIXME: Since we can split immediate into soffset and immediate offset,
+  // would it make sense to allow any immediate?
+
+  switch (AM.Scale) {
+  case 0: // r + i or just i, depending on HasBaseReg.
+    return true;
+  case 1:
+    return true; // We have r + r or r + i.
+  case 2:
+    if (AM.HasBaseReg) {
+      // Reject 2 * r + r.
+      return false;
+    }
+
+    // Allow 2 * r as r + r
+    // Or  2 * r + i is allowed as r + r + i.
+    return true;
+  default: // Don't allow n * r
+    return false;
+  }
+}
+
 bool SITargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                              const AddrMode &AM, Type *Ty,
                                              unsigned AS) const {
@@ -269,7 +304,7 @@ bool SITargetLowering::isLegalAddressingMode(const DataLayout &DL,
     return false;
 
   switch (AS) {
-  case AMDGPUAS::GLOBAL_ADDRESS:
+  case AMDGPUAS::GLOBAL_ADDRESS: {
     if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
       // Assume the we will use FLAT for all global memory accesses
       // on VI.
@@ -282,51 +317,51 @@ bool SITargetLowering::isLegalAddressingMode(const DataLayout &DL,
       // because it has never been validated.
       return isLegalFlatAddressingMode(AM);
     }
-    // fall-through
-  case AMDGPUAS::PRIVATE_ADDRESS:
-  case AMDGPUAS::CONSTANT_ADDRESS: // XXX - Should we assume SMRD instructions?
-  case AMDGPUAS::UNKNOWN_ADDRESS_SPACE: {
-    // MUBUF / MTBUF instructions have a 12-bit unsigned byte offset, and
-    // additionally can do r + r + i with addr64. 32-bit has more addressing
-    // mode options. Depending on the resource constant, it can also do
-    // (i64 r0) + (i32 r1) * (i14 i).
-    //
-    // SMRD instructions have an 8-bit, dword offset.
-    //
-    // Assume nonunifom access, since the address space isn't enough to know
-    // what instruction we will use, and since we don't know if this is a load
-    // or store and scalar stores are only available on VI.
-    //
-    // We also know if we are doing an extload, we can't do a scalar load.
-    //
-    // Private arrays end up using a scratch buffer most of the time, so also
-    // assume those use MUBUF instructions. Scratch loads / stores are currently
-    // implemented as mubuf instructions with offen bit set, so slightly
-    // different than the normal addr64.
-    if (!isUInt<12>(AM.BaseOffs))
-      return false;
 
-    // FIXME: Since we can split immediate into soffset and immediate offset,
-    // would it make sense to allow any immediate?
-
-    switch (AM.Scale) {
-    case 0: // r + i or just i, depending on HasBaseReg.
-      return true;
-    case 1:
-      return true; // We have r + r or r + i.
-    case 2:
-      if (AM.HasBaseReg) {
-        // Reject 2 * r + r.
-        return false;
-      }
-
-      // Allow 2 * r as r + r
-      // Or  2 * r + i is allowed as r + r + i.
-      return true;
-    default: // Don't allow n * r
-      return false;
-    }
+    return isLegalMUBUFAddressingMode(AM);
   }
+  case AMDGPUAS::CONSTANT_ADDRESS: {
+    // If the offset isn't a multiple of 4, it probably isn't going to be
+    // correctly aligned.
+    if (AM.BaseOffs % 4 != 0)
+      return isLegalMUBUFAddressingMode(AM);
+
+    // There are no SMRD extloads, so if we have to do a small type access we
+    // will use a MUBUF load.
+    // FIXME?: We also need to do this if unaligned, but we don't know the
+    // alignment here.
+    if (DL.getTypeStoreSize(Ty) < 4)
+      return isLegalMUBUFAddressingMode(AM);
+
+    if (Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+      // SMRD instructions have an 8-bit, dword offset on SI.
+      if (!isUInt<8>(AM.BaseOffs / 4))
+        return false;
+    } else if (Subtarget->getGeneration() == AMDGPUSubtarget::SEA_ISLANDS) {
+      // On CI+, this can also be a 32-bit literal constant offset. If it fits
+      // in 8-bits, it can use a smaller encoding.
+      if (!isUInt<32>(AM.BaseOffs / 4))
+        return false;
+    } else if (Subtarget->getGeneration() == AMDGPUSubtarget::VOLCANIC_ISLANDS) {
+      // On VI, these use the SMEM format and the offset is 20-bit in bytes.
+      if (!isUInt<20>(AM.BaseOffs))
+        return false;
+    } else
+      llvm_unreachable("unhandled generation");
+
+    if (AM.Scale == 0) // r + i or just i, depending on HasBaseReg.
+      return true;
+
+    if (AM.Scale == 1 && AM.HasBaseReg)
+      return true;
+
+    return false;
+  }
+
+  case AMDGPUAS::PRIVATE_ADDRESS:
+  case AMDGPUAS::UNKNOWN_ADDRESS_SPACE:
+    return isLegalMUBUFAddressingMode(AM);
+
   case AMDGPUAS::LOCAL_ADDRESS:
   case AMDGPUAS::REGION_ADDRESS: {
     // Basic, single offset DS instructions allow a 16-bit unsigned immediate
