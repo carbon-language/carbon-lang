@@ -396,8 +396,8 @@ endif
 BINUTILS_INCDIR := @BINUTILS_INCDIR@
 
 # Optional flags supported by the compiler
-# -Wno-missing-field-initializers
-NO_MISSING_FIELD_INITIALIZERS = @NO_MISSING_FIELD_INITIALIZERS@
+# -Wmissing-field-initializers
+MISSING_FIELD_INITIALIZERS = @MISSING_FIELD_INITIALIZERS@
 # -Wno-variadic-macros
 NO_VARIADIC_MACROS = @NO_VARIADIC_MACROS@
 # -Wcovered-switch-default

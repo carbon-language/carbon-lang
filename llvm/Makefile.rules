@@ -686,7 +686,7 @@ endif
 CompileCommonOpts += -Wall -W -Wno-unused-parameter -Wwrite-strings \
                      $(EXTRA_OPTIONS) $(COVERED_SWITCH_DEFAULT) \
                      $(NO_UNINITIALIZED) $(NO_MAYBE_UNINITIALIZED) \
-                     $(NO_MISSING_FIELD_INITIALIZERS) $(NO_COMMENT)
+                     $(MISSING_FIELD_INITIALIZERS) $(NO_COMMENT)
 # Enable cast-qual for C++; the workaround is to use const_cast.
 CXX.Flags += -Wcast-qual
 

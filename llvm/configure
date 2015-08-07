@@ -777,7 +777,7 @@ GAS
 HAVE_LINK_VERSION_SCRIPT
 EGREP
 NO_VARIADIC_MACROS
-NO_MISSING_FIELD_INITIALIZERS
+MISSING_FIELD_INITIALIZERS
 COVERED_SWITCH_DEFAULT
 NO_MAYBE_UNINITIALIZED
 NO_UNINITIALIZED
@@ -8379,25 +8379,33 @@ echo "${ECHO_T}ok" >&6; }
 
 { echo "$as_me:$LINENO: checking optional compiler flags" >&5
 echo $ECHO_N "checking optional compiler flags... $ECHO_C" >&6; }
-NO_VARIADIC_MACROS=`$CXX -Werror -Wvariadic-macros -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-variadic-macros`
+case "$llvm_cv_cxx_compiler" in
+  clang)
+    NO_VARIADIC_MACROS=`$CXX -Werror -Wvariadic-macros -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-variadic-macros`
 
-NO_MISSING_FIELD_INITIALIZERS=`$CXX -Werror -Wmissing-field-initializers -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-missing-field-initializers`
+    MISSING_FIELD_INITIALIZERS=`$CXX -Werror -Wmissing-field-initializers -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wmissing-field-initializers`
 
-COVERED_SWITCH_DEFAULT=`$CXX -Werror -Wcovered-switch-default -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wcovered-switch-default`
+    COVERED_SWITCH_DEFAULT=`$CXX -Werror -Wcovered-switch-default -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wcovered-switch-default`
 
+    ;;
+  gcc)
+                MISSING_FIELD_INITIALIZERS=`$CXX -Werror -Wmissing-field-initializers -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-missing-field-initializers`
 
-NO_UNINITIALIZED=
-NO_MAYBE_UNINITIALIZED=
-if test "$GXX" = "yes"
-then
-  NO_MAYBE_UNINITIALIZED=`$CXX -Werror -Wmaybe-uninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-maybe-uninitialized`
+    NO_VARIADIC_MACROS=`$CXX -Werror -Wvariadic-macros -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-variadic-macros`
 
-        if test -z "$NO_MAYBE_UNINITIALIZED"
-  then
-    NO_UNINITIALIZED=`$CXX -Werror -Wuninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-uninitialized`
+    COVERED_SWITCH_DEFAULT=`$CXX -Werror -Wcovered-switch-default -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wcovered-switch-default`
 
-  fi
-fi
+    NO_MAYBE_UNINITIALIZED=`$CXX -Werror -Wmaybe-uninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-maybe-uninitialized`
+
+                if test -z "$NO_MAYBE_UNINITIALIZED"
+    then
+      NO_UNINITIALIZED=`$CXX -Werror -Wuninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-uninitialized`
+
+    fi
+    ;;
+  unknown)
+    ;;
+esac
 
 no_comment=
 llvm_cv_old_cxxflags="$CXXFLAGS"
@@ -8464,8 +8472,8 @@ NO_COMMENT=$no_comment
 
 CXXFLAGS="$llvm_cv_old_cxxflags"
 
-{ echo "$as_me:$LINENO: result: $NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT" >&5
-echo "${ECHO_T}$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT" >&6; }
+{ echo "$as_me:$LINENO: result: $NO_VARIADIC_MACROS $MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT" >&5
+echo "${ECHO_T}$NO_VARIADIC_MACROS $MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT" >&6; }
 
 
 # Check whether --with-python was given.
@@ -18653,7 +18661,7 @@ GAS!$GAS$ac_delim
 HAVE_LINK_VERSION_SCRIPT!$HAVE_LINK_VERSION_SCRIPT$ac_delim
 EGREP!$EGREP$ac_delim
 NO_VARIADIC_MACROS!$NO_VARIADIC_MACROS$ac_delim
-NO_MISSING_FIELD_INITIALIZERS!$NO_MISSING_FIELD_INITIALIZERS$ac_delim
+MISSING_FIELD_INITIALIZERS!$MISSING_FIELD_INITIALIZERS$ac_delim
 COVERED_SWITCH_DEFAULT!$COVERED_SWITCH_DEFAULT$ac_delim
 NO_MAYBE_UNINITIALIZED!$NO_MAYBE_UNINITIALIZED$ac_delim
 NO_UNINITIALIZED!$NO_UNINITIALIZED$ac_delim

@@ -1548,25 +1548,31 @@ AC_MSG_RESULT([ok])
 
 dnl Check optional compiler flags.
 AC_MSG_CHECKING([optional compiler flags])
-CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
-CXX_FLAG_CHECK(NO_MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
-CXX_FLAG_CHECK(COVERED_SWITCH_DEFAULT, [-Wcovered-switch-default])
-
-dnl GCC's potential uninitialized use analysis is weak and presents lots of
-dnl false positives, so disable it.
-NO_UNINITIALIZED=
-NO_MAYBE_UNINITIALIZED=
-if test "$GXX" = "yes"
-then
-  CXX_FLAG_CHECK(NO_MAYBE_UNINITIALIZED, [-Wno-maybe-uninitialized])
-  dnl gcc 4.7 introduced -Wmaybe-uninitialized to distinguish cases which are
-  dnl known to be uninitialized from cases which might be uninitialized.  We
-  dnl still want to catch the first kind of errors.
-  if test -z "$NO_MAYBE_UNINITIALIZED"
-  then
-    CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
-  fi
-fi
+case "$llvm_cv_cxx_compiler" in
+  clang)
+    CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
+    CXX_FLAG_CHECK(MISSING_FIELD_INITIALIZERS, [-Wmissing-field-initializers])
+    CXX_FLAG_CHECK(COVERED_SWITCH_DEFAULT, [-Wcovered-switch-default])
+    ;;
+  gcc)
+    dnl If we're using gcc check for -Wno-missing-field-initializers as gcc will warn
+    dnl on plain open brace initializations. clang won't so use -Wmissing-field-initializers
+    dnl there.
+    CXX_FLAG_CHECK(MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
+    CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
+    CXX_FLAG_CHECK(COVERED_SWITCH_DEFAULT, [-Wcovered-switch-default])
+    CXX_FLAG_CHECK(NO_MAYBE_UNINITIALIZED, [-Wno-maybe-uninitialized])
+    dnl gcc 4.7 introduced -Wmaybe-uninitialized to distinguish cases which are
+    dnl known to be uninitialized from cases which might be uninitialized.  We
+    dnl still want to catch the first kind of errors.
+    if test -z "$NO_MAYBE_UNINITIALIZED"
+    then
+      CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
+    fi
+    ;;
+  unknown)
+    ;;
+esac
 
 dnl Check for misbehaving -Wcomment (gcc-4.7 has this) and maybe add
 dnl -Wno-comment to the flags.
@@ -1587,7 +1593,7 @@ int main() { return 0; }
 AC_SUBST(NO_COMMENT, [$no_comment])
 CXXFLAGS="$llvm_cv_old_cxxflags"
 
-AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT])
+AC_MSG_RESULT([$NO_VARIADIC_MACROS $MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED $NO_COMMENT])
 
 AC_ARG_WITH([python],
             [AS_HELP_STRING([--with-python], [path to python])],
