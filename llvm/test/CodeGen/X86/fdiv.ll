@@ -51,3 +51,18 @@ define double @denormal2(double %x) {
   ret double %div
 }
 
+; Deleting the negates does not require unsafe-fp-math.
+
+define float @double_negative(float %x, float %y) #0 {
+; CHECK-LABEL: double_negative:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    divss %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %neg1 = fsub float -0.0, %x
+  %neg2 = fsub float -0.0, %y
+  %div = fdiv float %neg1, %neg2
+  ret float %div
+}
+
+attributes #0 = { "unsafe-fp-math"="false" }
+
