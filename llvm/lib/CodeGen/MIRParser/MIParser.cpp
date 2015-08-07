@@ -123,6 +123,7 @@ public:
   bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
   bool parseMachineOperandAndTargetFlags(MachineOperand &Dest);
+  bool parseOffset(int64_t &Offset);
   bool parseOperandsOffset(MachineOperand &Op);
   bool parseIRValue(Value *&V);
   bool parseMemoryOperandFlag(unsigned &Flags);
@@ -1014,7 +1015,7 @@ bool MIParser::parseMachineOperandAndTargetFlags(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseOperandsOffset(MachineOperand &Op) {
+bool MIParser::parseOffset(int64_t &Offset) {
   if (Token.isNot(MIToken::plus) && Token.isNot(MIToken::minus))
     return false;
   StringRef Sign = Token.range();
@@ -1024,10 +1025,17 @@ bool MIParser::parseOperandsOffset(MachineOperand &Op) {
     return error("expected an integer literal after '" + Sign + "'");
   if (Token.integerValue().getMinSignedBits() > 64)
     return error("expected 64-bit integer (too large)");
-  int64_t Offset = Token.integerValue().getExtValue();
+  Offset = Token.integerValue().getExtValue();
   if (IsNegative)
     Offset = -Offset;
   lex();
+  return false;
+}
+
+bool MIParser::parseOperandsOffset(MachineOperand &Op) {
+  int64_t Offset = 0;
+  if (parseOffset(Offset))
+    return true;
   Op.setOffset(Offset);
   return false;
 }
