@@ -109,7 +109,11 @@ elseif( ANDROID_ABI STREQUAL "armeabi" )
  endif()
 elseif( ANDROID_ABI STREQUAL "mips" )
  # http://b.android.com/182094
- set( ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS} -latomic" )
+ list( FIND LLDB_SYSTEM_LIBS atomic index )
+ if( index EQUAL -1 )
+  list( APPEND LLDB_SYSTEM_LIBS atomic )
+  set( LLDB_SYSTEM_LIBS ${LLDB_SYSTEM_LIBS} CACHE INTERNAL "" FORCE )
+ endif()
 endif()
 
 if( NOT LLVM_BUILD_STATIC )
