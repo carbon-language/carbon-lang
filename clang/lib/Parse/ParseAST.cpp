@@ -30,6 +30,21 @@ using namespace clang;
 
 namespace {
 
+/// Resets LLVM's pretty stack state so that stack traces are printed correctly
+/// when there are nested CrashRecoveryContexts and the inner one recovers from
+/// a crash.
+class ResetStackCleanup
+    : public llvm::CrashRecoveryContextCleanupBase<ResetStackCleanup,
+                                                   const void> {
+public:
+  ResetStackCleanup(llvm::CrashRecoveryContext *Context, const void *Top)
+      : llvm::CrashRecoveryContextCleanupBase<ResetStackCleanup, const void>(
+            Context, Top) {}
+  void recoverResources() override {
+    llvm::RestorePrettyStackState(resource);
+  }
+};
+
 /// If a crash happens while the parser is active, an entry is printed for it.
 class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
   const Parser &P;
@@ -113,6 +128,8 @@ void clang::ParseAST(Sema &S, bool PrintStats, bool SkipFunctionBodies) {
       new Parser(S.getPreprocessor(), S, SkipFunctionBodies));
   Parser &P = *ParseOP.get();
 
+  llvm::CrashRecoveryContextCleanupRegistrar<const void, ResetStackCleanup>
+      CleanupPrettyStack(llvm::SavePrettyStackState());
   PrettyStackTraceParserEntry CrashInfo(P);
 
   // Recover resources if we crash before exiting this method.
