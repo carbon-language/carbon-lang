@@ -335,6 +335,8 @@ void *ManyThreadsWorker(void *a) {
   return 0;
 }
 
+#if !defined(__aarch64__)
+// FIXME: Infinite loop in AArch64 (PR24389).
 TEST(AddressSanitizer, ManyThreadsTest) {
   const size_t kNumThreads =
       (SANITIZER_WORDSIZE == 32 || ASAN_AVOID_EXPENSIVE_TESTS) ? 30 : 1000;
@@ -346,6 +348,7 @@ TEST(AddressSanitizer, ManyThreadsTest) {
     PTHREAD_JOIN(t[i], 0);
   }
 }
+#endif
 
 TEST(AddressSanitizer, ReallocTest) {
   const int kMinElem = 5;
