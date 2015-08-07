@@ -381,6 +381,7 @@ StringRef sys::getHostCPUName() {
       case 55:
       case 74:
       case 77:
+      case 90:
         return "silvermont";
 
       default: // Unknown family 6 CPU, try to guess.
