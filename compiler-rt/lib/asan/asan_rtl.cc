@@ -301,6 +301,20 @@ static void ProtectGap(uptr addr, uptr size) {
   void *res = MmapNoAccess(addr, size, "shadow gap");
   if (addr == (uptr)res)
     return;
+  // A few pages at the start of the address space can not be protected.
+  // But we really want to protect as much as possible, to prevent this memory
+  // being returned as a result of a non-FIXED mmap().
+  if (addr == kZeroBaseShadowStart) {
+    uptr step = GetPageSizeCached();
+    while (size > step && addr < kZeroBaseMaxShadowStart) {
+      addr += step;
+      size -= step;
+      void *res = MmapNoAccess(addr, size, "shadow gap");
+      if (addr == (uptr)res)
+        return;
+    }
+  }
+
   Report("ERROR: Failed to protect the shadow gap. "
          "ASan cannot proceed correctly. ABORTING.\n");
   DumpProcessMap();

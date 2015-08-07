@@ -178,7 +178,8 @@ static const u64 kWindowsShadowOffset32 = 3ULL << 28;  // 0x30000000
 
 // With the zero shadow base we can not actually map pages starting from 0.
 // This constant is somewhat arbitrary.
-#define kZeroBaseShadowStart 4096
+#define kZeroBaseShadowStart 0
+#define kZeroBaseMaxShadowStart (1 << 18)
 
 #define kShadowGapBeg   (kLowShadowEnd ? kLowShadowEnd + 1 \
                                        : kZeroBaseShadowStart)
