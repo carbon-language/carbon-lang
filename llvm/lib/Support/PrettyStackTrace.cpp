@@ -154,6 +154,20 @@ void llvm::EnablePrettyStackTrace() {
 #endif
 }
 
+const void* llvm::SavePrettyStackState() {
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
+  return PrettyStackTraceHead;
+#else
+  return nullptr;
+#endif
+}
+
+void llvm::RestorePrettyStackState(const void* Top) {
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
+  PrettyStackTraceHead = (const PrettyStackTraceEntry*)Top;
+#endif
+}
+
 void LLVMEnablePrettyStackTrace() {
   EnablePrettyStackTrace();
 }
