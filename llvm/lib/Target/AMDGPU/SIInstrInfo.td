@@ -1614,7 +1614,7 @@ let isCodeGenOnly = 0 in {
 } // End isCodeGenOnly = 0
 }
 
-class VOPC_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
+class VOPC_Pseudo <dag ins, list<dag> pattern, string opName> :
   VOPCCommon <ins, "", pattern>,
   VOP <opName>,
   SIMCInstr<opName#"_e32", SISubtarget.NONE>,
@@ -1623,9 +1623,9 @@ class VOPC_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   let isCodeGenOnly = 1;
 }
 
-multiclass VOPC_m <vopc op, dag outs, dag ins, string asm, list<dag> pattern,
+multiclass VOPC_m <vopc op, dag ins, string asm, list<dag> pattern,
                    string opName, bit DefExec, string revOpName = ""> {
-  def "" : VOPC_Pseudo <outs, ins, pattern, opName>;
+  def "" : VOPC_Pseudo <ins, pattern, opName>;
 
   def _si : VOPC<op.SI, ins, asm, []>,
             SIMCInstr <opName#"_e32", SISubtarget.SI> {
@@ -1644,7 +1644,7 @@ multiclass VOPC_Helper <vopc op, string opName,
                         dag ins32, string asm32, list<dag> pat32,
                         dag out64, dag ins64, string asm64, list<dag> pat64,
                         bit HasMods, bit DefExec, string revOp> {
-  defm _e32 : VOPC_m <op, (outs), ins32, opName#asm32, pat32, opName, DefExec>;
+  defm _e32 : VOPC_m <op, ins32, opName#asm32, pat32, opName, DefExec>;
 
   defm _e64 : VOP3_C_m <op, out64, ins64, opName#asm64, pat64,
                         opName, HasMods, DefExec, revOp>;
@@ -1656,7 +1656,7 @@ multiclass VOPC_Class_Helper <vopc op, string opName,
                              dag ins32, string asm32, list<dag> pat32,
                              dag out64, dag ins64, string asm64, list<dag> pat64,
                              bit HasMods, bit DefExec, string revOp> {
-  defm _e32 : VOPC_m <op, (outs), ins32, opName#asm32, pat32, opName, DefExec>;
+  defm _e32 : VOPC_m <op, ins32, opName#asm32, pat32, opName, DefExec>;
 
   defm _e64 : VOP3_C_m <op, out64, ins64, opName#asm64, pat64,
                         opName, HasMods, DefExec, revOp>,
