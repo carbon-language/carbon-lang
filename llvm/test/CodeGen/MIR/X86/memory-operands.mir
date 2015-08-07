@@ -43,6 +43,14 @@
 
   !1 = !{}
 
+  define void @memory_offset(<8 x float>* %vec) {
+  entry:
+    %v = load <8 x float>, <8 x float>* %vec
+    %v2 = insertelement <8 x float> %v, float 0.0, i32 4
+    store <8 x float> %v2, <8 x float>* %vec
+    ret void
+  }
+
 ...
 ---
 name:            test
@@ -122,4 +130,27 @@ body:
 # CHECK: %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)
       - '%eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)'
       - 'RETQ %eax'
+...
+---
+name:            memory_offset
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body:
+  - id:          0
+    name:        entry
+    liveins:     [ '%rdi' ]
+    instructions:
+# CHECK: name: memory_offset
+# CHECK:      %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec)
+# CHECK-NEXT: %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16)
+# CHECK:      MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec)
+# CHECK-NEXT: MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16)
+      - '%xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec)'
+      - '%xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16)'
+      - '%xmm2 = FsFLD0SS'
+      - '%xmm1 = MOVSSrr killed %xmm1, killed %xmm2'
+      - 'MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec)'
+      - 'MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16)'
+      - RETQ
 ...

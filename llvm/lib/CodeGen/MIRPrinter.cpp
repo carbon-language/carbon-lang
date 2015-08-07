@@ -678,6 +678,7 @@ void MIPrinter::print(const MachineMemOperand &Op) {
   if (const Value *Val = Op.getValue())
     printIRValueReference(*Val);
   // TODO: Print PseudoSourceValue.
+  printOffset(Op.getOffset());
   // TODO: Print the base alignment.
   // TODO: Print the metadata attributes.
   OS << ')';

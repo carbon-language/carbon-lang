@@ -1125,12 +1125,16 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   if (!V->getType()->isPointerTy())
     return error("expected a pointer IR value");
   lex();
+  int64_t Offset = 0;
+  if (parseOffset(Offset))
+    return true;
   // TODO: Parse the base alignment.
   // TODO: Parse the attached metadata nodes.
   if (expectAndConsume(MIToken::rparen))
     return true;
 
-  Dest = MF.getMachineMemOperand(MachinePointerInfo(V), Flags, Size, Size);
+  Dest =
+      MF.getMachineMemOperand(MachinePointerInfo(V, Offset), Flags, Size, Size);
   return false;
 }
 
