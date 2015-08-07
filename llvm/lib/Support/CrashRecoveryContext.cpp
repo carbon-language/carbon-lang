@@ -24,6 +24,10 @@ static ManagedStatic<
     sys::ThreadLocal<const CrashRecoveryContextImpl> > CurrentContext;
 
 struct CrashRecoveryContextImpl {
+  // When threads are disabled, this links up all active
+  // CrashRecoveryContextImpls.  When threads are enabled there's one thread
+  // per CrashRecoveryContext and CurrentContext is a thread-local, so only one
+  // CrashRecoveryContextImpl is active per thread and this is always null.
   const CrashRecoveryContextImpl *Next;
 
   CrashRecoveryContext *CRC;
