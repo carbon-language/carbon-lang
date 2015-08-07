@@ -1,4 +1,5 @@
-// XFAIL: hexagon
+// XFAIL: hexagon,sparc
+//        (due to not having native load atomic support)
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -triple mips-linux-gnu -emit-llvm %s -o - | FileCheck %s
 
