@@ -618,6 +618,12 @@ static const EnumEntry<unsigned> ElfSymbolTypes[] = {
   { "GNU_IFunc", ELF::STT_GNU_IFUNC }
 };
 
+static const EnumEntry<unsigned> AMDGPUSymbolTypes[] = {
+  { "AMDGPU_HSA_KERNEL",            ELF::STT_AMDGPU_HSA_KERNEL },
+  { "AMDGPU_HSA_INDIRECT_FUNCTION", ELF::STT_AMDGPU_HSA_INDIRECT_FUNCTION },
+  { "AMDGPU_HSA_METADATA",          ELF::STT_AMDGPU_HSA_METADATA }
+};
+
 static const char *getElfSectionType(unsigned Arch, unsigned Type) {
   switch (Arch) {
   case ELF::EM_ARM:
@@ -682,13 +688,24 @@ static const EnumEntry<unsigned> ElfSectionFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, SHF_TLS             ),
   LLVM_READOBJ_ENUM_ENT(ELF, XCORE_SHF_CP_SECTION),
   LLVM_READOBJ_ENUM_ENT(ELF, XCORE_SHF_DP_SECTION),
-  LLVM_READOBJ_ENUM_ENT(ELF, SHF_MIPS_NOSTRIP    )
+  LLVM_READOBJ_ENUM_ENT(ELF, SHF_MIPS_NOSTRIP    ),
+  LLVM_READOBJ_ENUM_ENT(ELF, SHF_AMDGPU_HSA_GLOBAL),
+  LLVM_READOBJ_ENUM_ENT(ELF, SHF_AMDGPU_HSA_READONLY),
+  LLVM_READOBJ_ENUM_ENT(ELF, SHF_AMDGPU_HSA_CODE),
+  LLVM_READOBJ_ENUM_ENT(ELF, SHF_AMDGPU_HSA_AGENT)
 };
 
 static const char *getElfSegmentType(unsigned Arch, unsigned Type) {
   // Check potentially overlapped processor-specific
   // program header type.
   switch (Arch) {
+  case ELF::EM_AMDGPU:
+    switch (Type) {
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_AMDGPU_HSA_LOAD_GLOBAL_PROGRAM);
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_AMDGPU_HSA_LOAD_GLOBAL_AGENT);
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_AMDGPU_HSA_LOAD_READONLY_AGENT);
+    LLVM_READOBJ_ENUM_CASE(ELF, PT_AMDGPU_HSA_LOAD_CODE_AGENT);
+    }
   case ELF::EM_ARM:
     switch (Type) {
     LLVM_READOBJ_ENUM_CASE(ELF, PT_ARM_EXIDX);
@@ -1139,6 +1156,7 @@ void ELFDumper<ELFT>::printSymbol(const Elf_Sym *Symbol, StringRef StrTable,
   StringRef SectionName;
   getSectionNameIndex(*Obj, Symbol, SectionName, SectionIndex);
   std::string FullSymbolName = getFullSymbolName(Symbol, StrTable, IsDynamic);
+  unsigned char SymbolType = Symbol->getType();
 
   DictScope D(W, "Symbol");
   W.printNumber("Name", FullSymbolName, Symbol->st_name);
@@ -1146,7 +1164,11 @@ void ELFDumper<ELFT>::printSymbol(const Elf_Sym *Symbol, StringRef StrTable,
   W.printNumber("Size", Symbol->st_size);
   W.printEnum  ("Binding", Symbol->getBinding(),
                   makeArrayRef(ElfSymbolBindings));
-  W.printEnum  ("Type", Symbol->getType(), makeArrayRef(ElfSymbolTypes));
+  if (Obj->getHeader()->e_machine == ELF::EM_AMDGPU &&
+      SymbolType >= ELF::STT_LOOS && SymbolType < ELF::STT_HIOS)
+    W.printEnum  ("Type", SymbolType, makeArrayRef(AMDGPUSymbolTypes));
+  else
+    W.printEnum  ("Type", SymbolType, makeArrayRef(ElfSymbolTypes));
   W.printNumber("Other", Symbol->st_other);
   W.printHex("Section", SectionName, SectionIndex);
 }
