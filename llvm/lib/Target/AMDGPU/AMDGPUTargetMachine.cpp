@@ -172,6 +172,8 @@ void AMDGPUPassConfig::addIRPasses() {
   // functions, then we will generate code for the first function
   // without ever running any passes on the second.
   addPass(createBarrierNoopPass());
+  // Handle uses of OpenCL image2d_t, image3d_t and sampler_t arguments.
+  addPass(createAMDGPUOpenCLImageTypeLoweringPass());
   TargetPassConfig::addIRPasses();
 }
 
