@@ -393,7 +393,7 @@ public:
 
   /// \brief Returns the number of run-time checks required according to
   /// needsChecking.
-  unsigned getNumberOfChecks(const SmallVectorImpl<int> *PtrPartition) const;
+  unsigned getNumberOfChecks() const { return Checks.size(); }
 
   /// \brief Print the list run-time memory checks necessary.
   void print(raw_ostream &OS, unsigned Depth = 0) const;
@@ -484,9 +484,8 @@ public:
 
   /// \brief Number of memchecks required to prove independence of otherwise
   /// may-alias pointers.
-  unsigned getNumRuntimePointerChecks(
-    const SmallVectorImpl<int> *PtrPartition = nullptr) const {
-    return PtrRtChecking.getNumberOfChecks(PtrPartition);
+  unsigned getNumRuntimePointerChecks() const {
+    return PtrRtChecking.getNumberOfChecks();
   }
 
   /// Return true if the block BB needs to be predicated in order for the loop

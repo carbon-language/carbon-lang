@@ -412,19 +412,6 @@ void RuntimePointerChecking::print(raw_ostream &OS, unsigned Depth) const {
   }
 }
 
-unsigned RuntimePointerChecking::getNumberOfChecks(
-    const SmallVectorImpl<int> *PtrPartition) const {
-
-  unsigned NumPartitions = CheckingGroups.size();
-  unsigned CheckCount = 0;
-
-  for (unsigned I = 0; I < NumPartitions; ++I)
-    for (unsigned J = I + 1; J < NumPartitions; ++J)
-      if (needsChecking(CheckingGroups[I], CheckingGroups[J], PtrPartition))
-        CheckCount++;
-  return CheckCount;
-}
-
 namespace {
 /// \brief Analyses memory accesses in a loop.
 ///
@@ -648,7 +635,7 @@ bool AccessAnalysis::canCheckPtrAtRT(RuntimePointerChecking &RtCheck,
   if (NeedRTCheck && CanDoRT)
     RtCheck.generateChecks(DepCands, IsDepCheckNeeded);
 
-  DEBUG(dbgs() << "LAA: We need to do " << RtCheck.getNumberOfChecks(nullptr)
+  DEBUG(dbgs() << "LAA: We need to do " << RtCheck.getNumberOfChecks()
                << " pointer comparisons.\n");
 
   RtCheck.Need = NeedRTCheck;
