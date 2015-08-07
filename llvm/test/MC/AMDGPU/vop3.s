@@ -14,6 +14,11 @@ v_cmp_lt_f32_e64 s[2:3], v4, -v6
 // SICI: v_cmp_lt_f32_e64 s[2:3], v4, -v6 ; encoding: [0x02,0x00,0x02,0xd0,0x04,0x0d,0x02,0x40]
 // VI:   v_cmp_lt_f32_e64 s[2:3], v4, -v6 ; encoding: [0x02,0x00,0x41,0xd0,0x04,0x0d,0x02,0x40]
 
+// Test forcing e64 with vcc dst
+
+v_cmp_lt_f32_e64 vcc, v4, v6
+// SICI: v_cmp_lt_f32_e64 vcc, v4, v6 ; encoding: [0x6a,0x00,0x02,0xd0,0x04,0x0d,0x02,0x00]
+// VI: v_cmp_lt_f32_e64 vcc, v4, v6 ; encoding: [0x6a,0x00,0x41,0xd0,0x04,0x0d,0x02,0x00]
 
 //
 // Modifier tests:
@@ -87,7 +92,27 @@ v_cmp_ge_f32 s[2:3], v4, v6
 // SICI: v_cmp_ge_f32_e64 s[2:3], v4, v6 ; encoding: [0x02,0x00,0x0c,0xd0,0x04,0x0d,0x02,0x00]
 // VI:   v_cmp_ge_f32_e64 s[2:3], v4, v6 ; encoding: [0x02,0x00,0x46,0xd0,0x04,0x0d,0x02,0x00]
 
-// TODO: Finish VOPC
+// TODO: Add tests for the rest of v_cmp_*_f32
+// TODO: Add tests for v_cmpx_*_f32
+
+v_cmp_f_f64 s[2:3], v[4:5], v[6:7]
+// SICI: v_cmp_f_f64_e64 s[2:3], v[4:5], v[6:7] ; encoding: [0x02,0x00,0x40,0xd0,0x04,0x0d,0x02,0x00]
+// VI:   v_cmp_f_f64_e64 s[2:3], v[4:5], v[6:7] ; encoding: [0x02,0x00,0x60,0xd0,0x04,0x0d,0x02,0x00]
+
+// TODO: Add tests for the rest of v_cmp_*_f64
+// TODO: Add tests for the rest of the floating-point comparision instructions.
+
+v_cmp_f_i32 s[2:3], v4, v6
+// SICI: v_cmp_f_i32_e64 s[2:3], v4, v6 ; encoding: [0x02,0x00,0x00,0xd1,0x04,0x0d,0x02,0x00]
+// VI:   v_cmp_f_i32_e64 s[2:3], v4, v6 ; encoding: [0x02,0x00,0xc0,0xd0,0x04,0x0d,0x02,0x00]
+
+// TODO: Add test for the rest of v_cmp_*_i32
+
+v_cmp_f_i64 s[2:3], v[4:5], v[6:7]
+// SICI: v_cmp_f_i64_e64 s[2:3], v[4:5], v[6:7] ; encoding: [0x02,0x00,0x40,0xd1,0x04,0x0d,0x02,0x00]
+// VI:   v_cmp_f_i64_e64 s[2:3], v[4:5], v[6:7] ; encoding: [0x02,0x00,0xe0,0xd0,0x04,0x0d,0x02,0x00]
+
+// TODO: Add tests for the rest of the instructions.
 
 //===----------------------------------------------------------------------===//
 // VOP1 Instructions

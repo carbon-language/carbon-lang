@@ -1157,6 +1157,11 @@ def VOP_F64_F64_F64_F64 : VOPProfile <[f64, f64, f64, f64]>;
 def VOP_I32_I32_I32_I32 : VOPProfile <[i32, i32, i32, i32]>;
 def VOP_I64_I32_I32_I64 : VOPProfile <[i64, i32, i32, i64]>;
 
+class SIInstAlias <string asm, dag result> : InstAlias <asm, result>,
+                                             PredicateControl {
+  field bit isCompare;
+  field bit isCommutable;
+}
 
 class VOP <string opName> {
   string OpName = opName;
@@ -1617,36 +1622,55 @@ let isCodeGenOnly = 0 in {
 class VOPC_Pseudo <dag ins, list<dag> pattern, string opName> :
   VOPCCommon <ins, "", pattern>,
   VOP <opName>,
-  SIMCInstr<opName#"_e32", SISubtarget.NONE>,
-  MnemonicAlias<opName#"_e32", opName> {
+  SIMCInstr<opName#"_e32", SISubtarget.NONE> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
 }
 
-multiclass VOPC_m <vopc op, dag ins, string asm, list<dag> pattern,
-                   string opName, bit DefExec, string revOpName = ""> {
+multiclass VOPC_m <vopc op, dag ins, string op_asm, list<dag> pattern,
+                   string opName, bit DefExec, VOPProfile p,
+                   string revOpName = "", string asm = opName#"_e32 "#op_asm,
+                   string alias_asm = opName#" "#op_asm> {
   def "" : VOPC_Pseudo <ins, pattern, opName>;
+
+  let AssemblerPredicates = [isSICI] in {
 
   def _si : VOPC<op.SI, ins, asm, []>,
             SIMCInstr <opName#"_e32", SISubtarget.SI> {
     let Defs = !if(DefExec, [EXEC], []);
     let hasSideEffects = DefExec;
-    let AssemblerPredicates = [isSICI];
   }
+
+  def : SIInstAlias <
+    alias_asm,
+    (!cast<Instruction>(NAME#"_e32_si") VCCReg:$dst, p.Src0RC32:$src0, p.Src1RC32:$src1)
+  >;
+
+  } // End AssemblerPredicates = [isSICI]
+
+
+  let AssemblerPredicates = [isVI] in {
 
   def _vi : VOPC<op.VI, ins, asm, []>,
             SIMCInstr <opName#"_e32", SISubtarget.VI> {
     let Defs = !if(DefExec, [EXEC], []);
     let hasSideEffects = DefExec;
-    let AssemblerPredicates = [isVI];
   }
+
+  def : SIInstAlias <
+    alias_asm,
+    (!cast<Instruction>(NAME#"_e32_vi") VCCReg:$dst, p.Src0RC32:$src0, p.Src1RC32:$src1)
+  >;
+
+  } // End AssemblerPredicates = [isVI]
 }
 
 multiclass VOPC_Helper <vopc op, string opName,
                         dag ins32, string asm32, list<dag> pat32,
                         dag out64, dag ins64, string asm64, list<dag> pat64,
-                        bit HasMods, bit DefExec, string revOp> {
-  defm _e32 : VOPC_m <op, ins32, opName#asm32, pat32, opName, DefExec>;
+                        bit HasMods, bit DefExec, string revOp,
+                        VOPProfile p> {
+  defm _e32 : VOPC_m <op, ins32, asm32, pat32, opName, DefExec, p>;
 
   defm _e64 : VOP3_C_m <op, out64, ins64, opName#asm64, pat64,
                         opName, HasMods, DefExec, revOp>;
@@ -1657,8 +1681,9 @@ multiclass VOPC_Helper <vopc op, string opName,
 multiclass VOPC_Class_Helper <vopc op, string opName,
                              dag ins32, string asm32, list<dag> pat32,
                              dag out64, dag ins64, string asm64, list<dag> pat64,
-                             bit HasMods, bit DefExec, string revOp> {
-  defm _e32 : VOPC_m <op, ins32, opName#asm32, pat32, opName, DefExec>;
+                             bit HasMods, bit DefExec, string revOp,
+                             VOPProfile p> {
+  defm _e32 : VOPC_m <op, ins32, asm32, pat32, opName, DefExec, p>;
 
   defm _e64 : VOP3_C_m <op, out64, ins64, opName#asm64, pat64,
                         opName, HasMods, DefExec, revOp>,
@@ -1679,7 +1704,7 @@ multiclass VOPCInst <vopc op, string opName,
                  (P.Src1VT (VOP3Mods P.Src1VT:$src1, i32:$src1_modifiers)),
                  cond))],
       [(set i1:$dst, (setcc P.Src0VT:$src0, P.Src1VT:$src1, cond))]),
-  P.HasModifiers, DefExec, revOp
+  P.HasModifiers, DefExec, revOp, P
 >;
 
 multiclass VOPCClassInst <vopc op, string opName, VOPProfile P,
@@ -1691,7 +1716,7 @@ multiclass VOPCClassInst <vopc op, string opName, VOPProfile P,
       [(set i1:$dst,
           (AMDGPUfp_class (P.Src0VT (VOP3Mods0Clamp0OMod P.Src0VT:$src0, i32:$src0_modifiers)), P.Src1VT:$src1))],
       [(set i1:$dst, (AMDGPUfp_class P.Src0VT:$src0, P.Src1VT:$src1))]),
-  P.HasModifiers, DefExec, opName
+  P.HasModifiers, DefExec, opName, P
 >;
 
 

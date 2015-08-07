@@ -86,7 +86,6 @@ class Enc64 {
 }
 
 class VOPDstOperand <RegisterClass rc> : RegisterOperand <rc, "printVOPDst">;
-def VOPDstVCC : VOPDstOperand <VCCReg>;
 
 let Uses = [EXEC] in {
 
@@ -101,7 +100,7 @@ class VOPAnyCommon <dag outs, dag ins, string asm, list<dag> pattern> :
 }
 
 class VOPCCommon <dag ins, string asm, list<dag> pattern> :
-    VOPAnyCommon <(outs VOPDstVCC:$dst), ins, asm, pattern> {
+    VOPAnyCommon <(outs VCCReg:$dst), ins, asm, pattern> {
 
   let DisableEncoding = "$dst";
   let VOPC = 1;
