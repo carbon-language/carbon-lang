@@ -314,8 +314,7 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
     outs() << "(indirect) ";
     break;
   case MachO::N_SECT: {
-    section_iterator Sec = MachO->section_end();
-    MachO->getSymbolSection(I->Sym.getRawDataRefImpl(), Sec);
+    section_iterator Sec = *MachO->getSymbolSection(I->Sym.getRawDataRefImpl());
     DataRefImpl Ref = Sec->getRawDataRefImpl();
     StringRef SectionName;
     MachO->getSectionName(Ref, SectionName);
@@ -594,10 +593,11 @@ static char getSymbolNMTypeChar(ELFObjectFileBase &Obj,
   // OK, this is ELF
   elf_symbol_iterator SymI(I);
 
-  elf_section_iterator SecI = Obj.section_end();
-  if (error(SymI->getSection(SecI)))
+  ErrorOr<elf_section_iterator> SecIOrErr = SymI->getSection();
+  if (error(SecIOrErr.getError()))
     return '?';
 
+  elf_section_iterator SecI = *SecIOrErr;
   if (SecI != Obj.section_end()) {
     switch (SecI->getType()) {
     case ELF::SHT_PROGBITS:
@@ -651,9 +651,10 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
 
   uint32_t Characteristics = 0;
   if (!COFF::isReservedSectionNumber(Symb.getSectionNumber())) {
-    section_iterator SecI = Obj.section_end();
-    if (error(SymI->getSection(SecI)))
+    ErrorOr<section_iterator> SecIOrErr = SymI->getSection();
+    if (error(SecIOrErr.getError()))
       return '?';
+    section_iterator SecI = *SecIOrErr;
     const coff_section *Section = Obj.getCOFFSection(*SecI);
     Characteristics = Section->Characteristics;
   }
@@ -701,8 +702,7 @@ static char getSymbolNMTypeChar(MachOObjectFile &Obj, basic_symbol_iterator I) {
   case MachO::N_INDR:
     return 'i';
   case MachO::N_SECT: {
-    section_iterator Sec = Obj.section_end();
-    Obj.getSymbolSection(Symb, Sec);
+    section_iterator Sec = *Obj.getSymbolSection(Symb);
     DataRefImpl Ref = Sec->getRawDataRefImpl();
     StringRef SectionName;
     Obj.getSectionName(Ref, SectionName);

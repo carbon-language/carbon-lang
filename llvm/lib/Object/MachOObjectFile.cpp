@@ -445,22 +445,18 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
   return Result;
 }
 
-std::error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
-                                                  section_iterator &Res) const {
+ErrorOr<section_iterator>
+MachOObjectFile::getSymbolSection(DataRefImpl Symb) const {
   MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   uint8_t index = Entry.n_sect;
 
-  if (index == 0) {
-    Res = section_end();
-  } else {
-    DataRefImpl DRI;
-    DRI.d.a = index - 1;
-    if (DRI.d.a >= Sections.size())
-      report_fatal_error("getSymbolSection: Invalid section index.");
-    Res = section_iterator(SectionRef(DRI, this));
-  }
-
-  return std::error_code();
+  if (index == 0)
+    return section_end();
+  DataRefImpl DRI;
+  DRI.d.a = index - 1;
+  if (DRI.d.a >= Sections.size())
+    report_fatal_error("getSymbolSection: Invalid section index.");
+  return section_iterator(SectionRef(DRI, this));
 }
 
 unsigned MachOObjectFile::getSymbolSectionID(SymbolRef Sym) const {

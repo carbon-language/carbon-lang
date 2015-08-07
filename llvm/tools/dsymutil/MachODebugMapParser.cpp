@@ -265,8 +265,13 @@ void MachODebugMapParser::loadMainBinarySymbols(
     // are the only ones that need to be queried because the address
     // of common data won't be described in the debug map. All other
     // addresses should be fetched for the debug map.
-    if (!(Sym.getFlags() & SymbolRef::SF_Global) || Sym.getSection(Section) ||
-        Section == MainBinary.section_end() || Section->isText())
+    if (!(Sym.getFlags() & SymbolRef::SF_Global))
+      continue;
+    ErrorOr<section_iterator> SectionOrErr = Sym.getSection();
+    if (!SectionOrErr)
+      continue;
+    Section = *SectionOrErr;
+    if (Section == MainBinary.section_end() || Section->isText())
       continue;
     uint64_t Addr = Sym.getValue();
     ErrorOr<StringRef> NameOrErr = Sym.getName();

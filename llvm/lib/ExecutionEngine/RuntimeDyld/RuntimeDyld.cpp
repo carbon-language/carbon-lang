@@ -164,8 +164,9 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
         ErrorOr<StringRef> NameOrErr = I->getName();
         Check(NameOrErr.getError());
         StringRef Name = *NameOrErr;
-        section_iterator SI = Obj.section_end();
-        Check(I->getSection(SI));
+        ErrorOr<section_iterator> SIOrErr = I->getSection();
+        Check(SIOrErr.getError());
+        section_iterator SI = *SIOrErr;
         if (SI == Obj.section_end())
           continue;
         uint64_t SectOffset;

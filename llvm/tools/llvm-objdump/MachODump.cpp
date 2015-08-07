@@ -6436,8 +6436,7 @@ static void findUnwindRelocNameAddend(const MachOObjectFile *Obj,
   // Go back one so that SymbolAddress <= Addr.
   --Sym;
 
-  section_iterator SymSection = Obj->section_end();
-  Sym->second.getSection(SymSection);
+  section_iterator SymSection = *Sym->second.getSection();
   if (RelocSection == *SymSection) {
     // There's a valid symbol in the same section before this reference.
     ErrorOr<StringRef> NameOrErr = Sym->second.getName();
@@ -6780,8 +6779,7 @@ void llvm::printMachOUnwindInfo(const MachOObjectFile *Obj) {
   for (const SymbolRef &SymRef : Obj->symbols()) {
     // Discard any undefined or absolute symbols. They're not going to take part
     // in the convenience lookup for unwind info and just take up resources.
-    section_iterator Section = Obj->section_end();
-    SymRef.getSection(Section);
+    section_iterator Section = *SymRef.getSection();
     if (Section == Obj->section_end())
       continue;
 

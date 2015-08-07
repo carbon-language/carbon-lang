@@ -304,8 +304,7 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
         // symbol in memory (rather than that in the unrelocated object file)
         // and use that to query the DWARFContext.
         if (!UseDebugObj && LoadObjects) {
-          object::section_iterator Sec(SymbolObj->section_end());
-          Sym.getSection(Sec);
+          object::section_iterator Sec = *Sym.getSection();
           StringRef SecName;
           Sec->getName(SecName);
           uint64_t SectionLoadAddress =

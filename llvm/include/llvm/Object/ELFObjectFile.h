@@ -204,9 +204,8 @@ protected:
   uint8_t getSymbolOther(DataRefImpl Symb) const override;
   uint8_t getSymbolELFType(DataRefImpl Symb) const override;
   SymbolRef::Type getSymbolType(DataRefImpl Symb) const override;
-  section_iterator getSymbolSection(const Elf_Sym *Symb) const;
-  std::error_code getSymbolSection(DataRefImpl Symb,
-                                   section_iterator &Res) const override;
+  ErrorOr<section_iterator> getSymbolSection(const Elf_Sym *Symb) const;
+  ErrorOr<section_iterator> getSymbolSection(DataRefImpl Symb) const override;
 
   void moveSectionNext(DataRefImpl &Sec) const override;
   std::error_code getSectionName(DataRefImpl Sec,
@@ -505,11 +504,11 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Sym) const {
 }
 
 template <class ELFT>
-section_iterator
+ErrorOr<section_iterator>
 ELFObjectFile<ELFT>::getSymbolSection(const Elf_Sym *ESym) const {
   ErrorOr<const Elf_Shdr *> ESecOrErr = EF.getSection(ESym);
   if (std::error_code EC = ESecOrErr.getError())
-    report_fatal_error(EC.message());
+    return EC;
 
   const Elf_Shdr *ESec = *ESecOrErr;
   if (!ESec)
@@ -521,11 +520,9 @@ ELFObjectFile<ELFT>::getSymbolSection(const Elf_Sym *ESym) const {
 }
 
 template <class ELFT>
-std::error_code
-ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb,
-                                      section_iterator &Res) const {
-  Res = getSymbolSection(getSymbol(Symb));
-  return std::error_code();
+ErrorOr<section_iterator>
+ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb) const {
+  return getSymbolSection(getSymbol(Symb));
 }
 
 template <class ELFT>

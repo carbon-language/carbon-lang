@@ -1225,8 +1225,9 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     uint64_t Address = *AddressOrError;
     SymbolRef::Type Type = Symbol.getType();
     uint32_t Flags = Symbol.getFlags();
-    section_iterator Section = o->section_end();
-    error(Symbol.getSection(Section));
+    ErrorOr<section_iterator> SectionOrErr = Symbol.getSection();
+    error(SectionOrErr.getError());
+    section_iterator Section = *SectionOrErr;
     StringRef Name;
     if (Type == SymbolRef::ST_Debug && Section != o->section_end()) {
       Section->getName(Name);

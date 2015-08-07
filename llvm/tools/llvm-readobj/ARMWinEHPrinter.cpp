@@ -630,9 +630,10 @@ bool Decoder::dumpUnpackedEntry(const COFFObjectFile &COFF,
 
     SW.printString("ExceptionRecord", formatSymbol(*Name, Address));
 
-    section_iterator SI = COFF.section_end();
-    if (XDataRecord->getSection(SI))
+    ErrorOr<section_iterator> SIOrErr = XDataRecord->getSection();
+    if (!SIOrErr)
       return false;
+    section_iterator SI = *SIOrErr;
 
     return dumpXDataRecord(COFF, *SI, FunctionAddress, Address);
   } else {

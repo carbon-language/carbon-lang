@@ -238,21 +238,17 @@ uint64_t COFFObjectFile::getCommonSymbolSizeImpl(DataRefImpl Ref) const {
   return Symb.getValue();
 }
 
-std::error_code
-COFFObjectFile::getSymbolSection(DataRefImpl Ref,
-                                 section_iterator &Result) const {
+ErrorOr<section_iterator>
+COFFObjectFile::getSymbolSection(DataRefImpl Ref) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
-  if (COFF::isReservedSectionNumber(Symb.getSectionNumber())) {
-    Result = section_end();
-  } else {
-    const coff_section *Sec = nullptr;
-    if (std::error_code EC = getSection(Symb.getSectionNumber(), Sec))
-      return EC;
-    DataRefImpl Ref;
-    Ref.p = reinterpret_cast<uintptr_t>(Sec);
-    Result = section_iterator(SectionRef(Ref, this));
-  }
-  return std::error_code();
+  if (COFF::isReservedSectionNumber(Symb.getSectionNumber()))
+    return section_end();
+  const coff_section *Sec = nullptr;
+  if (std::error_code EC = getSection(Symb.getSectionNumber(), Sec))
+    return EC;
+  DataRefImpl Ret;
+  Ret.p = reinterpret_cast<uintptr_t>(Sec);
+  return section_iterator(SectionRef(Ret, this));
 }
 
 unsigned COFFObjectFile::getSymbolSectionID(SymbolRef Sym) const {
