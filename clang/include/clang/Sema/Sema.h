@@ -8024,7 +8024,11 @@ public:
                           SourceLocation ColonLoc, ArrayRef<Expr *> VarList,
                           SourceLocation StartLoc, SourceLocation LParenLoc,
                           SourceLocation EndLoc);
-
+  /// \brief Called on well-formed 'device' clause.
+  OMPClause *ActOnOpenMPDeviceClause(Expr *Device, SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation EndLoc);
+ 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {
     /// \brief An implicit conversion.

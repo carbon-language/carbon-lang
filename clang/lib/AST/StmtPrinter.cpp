@@ -688,6 +688,12 @@ void OMPClausePrinter::VisitOMPSeqCstClause(OMPSeqCstClause *) {
   OS << "seq_cst";
 }
 
+void OMPClausePrinter::VisitOMPDeviceClause(OMPDeviceClause *Node) {
+  OS << "device(";
+  Node->getDevice()->printPretty(OS, nullptr, Policy, 0);
+  OS << ")";
+}
+
 template<typename T>
 void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
   for (typename T::varlist_iterator I = Node->varlist_begin(),

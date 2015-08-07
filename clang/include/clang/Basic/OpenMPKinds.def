@@ -133,6 +133,7 @@ OPENMP_CLAUSE(update, OMPUpdateClause)
 OPENMP_CLAUSE(capture, OMPCaptureClause)
 OPENMP_CLAUSE(seq_cst, OMPSeqCstClause)
 OPENMP_CLAUSE(depend, OMPDependClause)
+OPENMP_CLAUSE(device, OMPDeviceClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -277,10 +278,12 @@ OPENMP_ATOMIC_CLAUSE(seq_cst)
 // Clauses allowed for OpenMP directive 'target'.
 // TODO More clauses for 'target' directive.
 OPENMP_TARGET_CLAUSE(if)
+OPENMP_TARGET_CLAUSE(device)
 
 // Clauses allowed for OpenMP directive 'target data'.
 // TODO More clauses for 'target data' directive.
 OPENMP_TARGET_DATA_CLAUSE(if)
+OPENMP_TARGET_DATA_CLAUSE(device)
 
 // Clauses allowed for OpenMP directive 'teams'.
 // TODO More clauses for 'teams' directive.

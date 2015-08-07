@@ -4511,6 +4511,9 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_ordered:
     Res = ActOnOpenMPOrderedClause(StartLoc, EndLoc, LParenLoc, Expr);
     break;
+  case OMPC_device:
+    Res = ActOnOpenMPDeviceClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_default:
   case OMPC_proc_bind:
   case OMPC_schedule:
@@ -4774,6 +4777,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_capture:
   case OMPC_seq_cst:
   case OMPC_depend:
+  case OMPC_device:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -4895,6 +4899,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_capture:
   case OMPC_seq_cst:
   case OMPC_depend:
+  case OMPC_device:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5018,6 +5023,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_threadprivate:
   case OMPC_flush:
   case OMPC_depend:
+  case OMPC_device:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -5128,6 +5134,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_update:
   case OMPC_capture:
   case OMPC_seq_cst:
+  case OMPC_device:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -6721,4 +6728,29 @@ Sema::ActOnOpenMPDependClause(OpenMPDependClauseKind DepKind,
 
   return OMPDependClause::Create(Context, StartLoc, LParenLoc, EndLoc, DepKind,
                                  DepLoc, ColonLoc, Vars);
+}
+
+OMPClause *Sema::ActOnOpenMPDeviceClause(Expr *Device, SourceLocation StartLoc,
+                                         SourceLocation LParenLoc,
+                                         SourceLocation EndLoc) {
+  Expr *ValExpr = Device;
+  if (!ValExpr->isTypeDependent() && !ValExpr->isValueDependent() &&
+      !ValExpr->isInstantiationDependent()) {
+    SourceLocation Loc = ValExpr->getExprLoc();
+    ExprResult Value = PerformOpenMPImplicitIntegerConversion(Loc, ValExpr);
+    if (Value.isInvalid())
+      return nullptr;
+
+    // OpenMP [2.9.1, Restrictions]
+    // The device expression must evaluate to a non-negative integer value.
+    llvm::APSInt Result;
+    if (Value.get()->isIntegerConstantExpr(Result, Context) && 
+        Result.isSigned() && !Result.isStrictlyPositive()) {
+      Diag(Loc, diag::err_omp_negative_expression_in_clause)
+          << "device" << ValExpr->getSourceRange();
+      return nullptr;
+    }
+  }
+
+  return new (Context) OMPDeviceClause(ValExpr, StartLoc, LParenLoc, EndLoc);
 }

@@ -2052,6 +2052,10 @@ void OMPClauseEnqueue::VisitOMPCaptureClause(const OMPCaptureClause *) {}
 
 void OMPClauseEnqueue::VisitOMPSeqCstClause(const OMPSeqCstClause *) {}
 
+void OMPClauseEnqueue::VisitOMPDeviceClause(const OMPDeviceClause *C) {
+  Visitor->AddStmt(C->getDevice());
+}
+
 template<typename T>
 void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
   for (const auto *I : Node->varlists()) {

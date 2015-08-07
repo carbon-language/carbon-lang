@@ -1788,6 +1788,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_depend:
     C = OMPDependClause::CreateEmpty(Context, Record[Idx++]);
     break;
+  case OMPC_device:
+    C = new (Context) OMPDeviceClause();
+    break;
   }
   Visit(C);
   C->setLocStart(Reader->ReadSourceLocation(Record, Idx));
@@ -2066,6 +2069,11 @@ void OMPClauseReader::VisitOMPDependClause(OMPDependClause *C) {
   for (unsigned i = 0; i != NumVars; ++i)
     Vars.push_back(Reader->Reader.ReadSubExpr());
   C->setVarRefs(Vars);
+}
+
+void OMPClauseReader::VisitOMPDeviceClause(OMPDeviceClause *C) {
+  C->setDevice(Reader->Reader.ReadSubExpr());
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
 }
 
 //===----------------------------------------------------------------------===//

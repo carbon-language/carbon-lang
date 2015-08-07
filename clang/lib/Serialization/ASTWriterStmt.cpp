@@ -1919,6 +1919,11 @@ void OMPClauseWriter::VisitOMPDependClause(OMPDependClause *C) {
     Writer->Writer.AddStmt(VE);
 }
 
+void OMPClauseWriter::VisitOMPDeviceClause(OMPDeviceClause *C) {
+  Writer->Writer.AddStmt(C->getDevice());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+}
+
 //===----------------------------------------------------------------------===//
 // OpenMP Directives.
 //===----------------------------------------------------------------------===//

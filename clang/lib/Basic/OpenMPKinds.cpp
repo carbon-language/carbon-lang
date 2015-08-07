@@ -122,6 +122,7 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
   case OMPC_update:
   case OMPC_capture:
   case OMPC_seq_cst:
+  case OMPC_device:
     break;
   }
   llvm_unreachable("Invalid OpenMP simple clause kind");
@@ -195,6 +196,7 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
   case OMPC_update:
   case OMPC_capture:
   case OMPC_seq_cst:
+  case OMPC_device:
     break;
   }
   llvm_unreachable("Invalid OpenMP simple clause kind");
