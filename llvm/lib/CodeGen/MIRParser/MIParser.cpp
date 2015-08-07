@@ -1128,13 +1128,24 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   int64_t Offset = 0;
   if (parseOffset(Offset))
     return true;
-  // TODO: Parse the base alignment.
+  unsigned BaseAlignment = Size;
+  if (Token.is(MIToken::comma)) {
+    lex();
+    if (Token.isNot(MIToken::kw_align))
+      return error("expected 'align'");
+    lex();
+    if (Token.isNot(MIToken::IntegerLiteral))
+      return error("expected an integer literal after 'align'");
+    if (getUnsigned(BaseAlignment))
+      return true;
+    lex();
+  }
   // TODO: Parse the attached metadata nodes.
   if (expectAndConsume(MIToken::rparen))
     return true;
 
-  Dest =
-      MF.getMachineMemOperand(MachinePointerInfo(V, Offset), Flags, Size, Size);
+  Dest = MF.getMachineMemOperand(MachinePointerInfo(V, Offset), Flags, Size,
+                                 BaseAlignment);
   return false;
 }
 
