@@ -183,6 +183,13 @@ static Metadata *mapMetadataOp(Metadata *Op,
   return nullptr;
 }
 
+/// Resolve uniquing cycles involving the given metadata.
+static void resolveCycles(Metadata *MD) {
+  if (auto *N = dyn_cast_or_null<MDNode>(MD))
+    if (!N->isResolved())
+      N->resolveCycles();
+}
+
 /// Remap the operands of an MDNode.
 static bool remapOperands(MDNode &Node,
                           SmallVectorImpl<MDNode *> &DistinctWorklist,
@@ -321,11 +328,8 @@ Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
   if (Flags & RF_NoModuleLevelChanges)
     return NewMD;
 
-  // If the top-level metadata was a uniqued MDNode, it could be involved in a
-  // uniquing cycle.
-  if (auto *N = dyn_cast<MDNode>(NewMD))
-    if (!N->isResolved())
-      N->resolveCycles();
+  // Resolve cycles involving the entry metadata.
+  resolveCycles(NewMD);
 
   // Remap the operands of distinct MDNodes.
   while (!DistinctWorklist.empty()) {
@@ -335,9 +339,7 @@ Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
     if (remapOperands(*N, DistinctWorklist, VM, Flags, TypeMapper,
                       Materializer))
       for (Metadata *MD : N->operands())
-        if (auto *Op = dyn_cast_or_null<MDNode>(MD))
-          if (!Op->isResolved())
-            Op->resolveCycles();
+        resolveCycles(MD);
   }
 
   return NewMD;
