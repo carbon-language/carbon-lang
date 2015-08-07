@@ -15,7 +15,6 @@
 #define LLVM_OBJECT_ELF_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -102,7 +101,6 @@ private:
   const Elf_Shdr *DotDynSymSec = nullptr;   // Dynamic symbol table section.
 
   const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
-  DenseMap<const Elf_Sym *, ELF::Elf64_Word> ExtendedSymbolTable;
 
 public:
   template<typename T>
@@ -263,9 +261,14 @@ typedef ELFFile<ELFType<support::big, true>> ELF64BEFile;
 
 template <class ELFT>
 ELF::Elf64_Word
-ELFFile<ELFT>::getExtendedSymbolTableIndex(const Elf_Sym *symb) const {
-  assert(symb->st_shndx == ELF::SHN_XINDEX);
-  return ExtendedSymbolTable.lookup(symb);
+ELFFile<ELFT>::getExtendedSymbolTableIndex(const Elf_Sym *Sym) const {
+  assert(Sym->st_shndx == ELF::SHN_XINDEX);
+  unsigned Index = Sym - symbol_begin();
+
+  // FIXME: error checking
+  const Elf_Word *ShndxTable = reinterpret_cast<const Elf_Word *>(
+      base() + SymbolTableSectionHeaderIndex->sh_offset);
+  return ShndxTable[Index];
 }
 
 template <class ELFT>
@@ -273,7 +276,7 @@ ErrorOr<const typename ELFFile<ELFT>::Elf_Shdr *>
 ELFFile<ELFT>::getSection(const Elf_Sym *symb) const {
   uint32_t Index = symb->st_shndx;
   if (Index == ELF::SHN_XINDEX)
-    return getSection(ExtendedSymbolTable.lookup(symb));
+    return getSection(getExtendedSymbolTableIndex(symb));
   if (Index == ELF::SHN_UNDEF || Index >= ELF::SHN_LORESERVE)
     return nullptr;
   return getSection(symb->st_shndx);
@@ -442,17 +445,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
     if ((EC = SymtabOrErr.getError()))
       return;
     DotShstrtab = *SymtabOrErr;
-  }
-
-  // Build symbol name side-mapping if there is one.
-  if (SymbolTableSectionHeaderIndex) {
-    const Elf_Word *ShndxTable = reinterpret_cast<const Elf_Word*>(base() +
-                                      SymbolTableSectionHeaderIndex->sh_offset);
-    for (const Elf_Sym &S : symbols()) {
-      if (*ShndxTable != ELF::SHN_UNDEF)
-        ExtendedSymbolTable[&S] = *ShndxTable;
-      ++ShndxTable;
-    }
   }
 
   EC = std::error_code();
