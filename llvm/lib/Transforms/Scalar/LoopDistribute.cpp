@@ -787,7 +787,7 @@ private:
     // the loop now.
     auto PtrToPartition = Partitions.computePartitionSetForPointers(LAI);
     const auto *RtPtrChecking = LAI.getRuntimePointerChecking();
-    auto AllChecks = RtPtrChecking->generateChecks();
+    const auto &AllChecks = RtPtrChecking->getChecks();
     auto Checks = includeOnlyCrossPartitionChecks(AllChecks, PtrToPartition,
                                                   RtPtrChecking);
     if (!Checks.empty()) {

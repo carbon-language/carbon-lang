@@ -165,6 +165,13 @@ RuntimePointerChecking::generateChecks(
   return Checks;
 }
 
+void RuntimePointerChecking::generateChecks(
+    MemoryDepChecker::DepCandidates &DepCands, bool UseDependencies) {
+  assert(Checks.empty() && "Checks is not empty");
+  groupChecks(DepCands, UseDependencies);
+  Checks = generateChecks();
+}
+
 bool RuntimePointerChecking::needsChecking(
     const CheckingPtrGroup &M, const CheckingPtrGroup &N,
     const SmallVectorImpl<int> *PtrPartition) const {
@@ -389,7 +396,7 @@ void RuntimePointerChecking::printChecks(
 void RuntimePointerChecking::print(raw_ostream &OS, unsigned Depth) const {
 
   OS.indent(Depth) << "Run-time memory checks:\n";
-  printChecks(OS, generateChecks(), Depth);
+  printChecks(OS, Checks, Depth);
 
   OS.indent(Depth) << "Grouped accesses:\n";
   for (unsigned I = 0; I < CheckingGroups.size(); ++I) {
@@ -639,7 +646,7 @@ bool AccessAnalysis::canCheckPtrAtRT(RuntimePointerChecking &RtCheck,
   }
 
   if (NeedRTCheck && CanDoRT)
-    RtCheck.groupChecks(DepCands, IsDepCheckNeeded);
+    RtCheck.generateChecks(DepCands, IsDepCheckNeeded);
 
   DEBUG(dbgs() << "LAA: We need to do " << RtCheck.getNumberOfChecks(nullptr)
                << " pointer comparisons.\n");
@@ -1728,7 +1735,7 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
   if (!PtrRtChecking.Need)
     return std::make_pair(nullptr, nullptr);
 
-  return addRuntimeCheck(Loc, PtrRtChecking.generateChecks());
+  return addRuntimeCheck(Loc, PtrRtChecking.getChecks());
 }
 
 LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,

@@ -327,6 +327,7 @@ public:
   void reset() {
     Need = false;
     Pointers.clear();
+    Checks.clear();
   }
 
   /// Insert a pointer and calculate the start and end SCEVs.
@@ -377,21 +378,13 @@ public:
   typedef std::pair<const CheckingPtrGroup *, const CheckingPtrGroup *>
       PointerCheck;
 
-  /// \brief Groups pointers such that a single memcheck is required
-  /// between two different groups. This will clear the CheckingGroups vector
-  /// and re-compute it. We will only group dependecies if \p UseDependencies
-  /// is true, otherwise we will create a separate group for each pointer.
-  void groupChecks(MemoryDepChecker::DepCandidates &DepCands,
-                   bool UseDependencies);
+  /// \brief Generate the checks and store it.  This also performs the grouping
+  /// of pointers to reduce the number of memchecks necessary.
+  void generateChecks(MemoryDepChecker::DepCandidates &DepCands,
+                      bool UseDependencies);
 
-  /// Generate the checks and return them.
-  ///
-  /// \p PtrToPartition contains the partition number for pointers.  If passed,
-  /// omit checks between pointers belonging to the same partition.  Partition
-  /// number -1 means that the pointer is used in multiple partitions.  In this
-  /// case we can't safely omit the check.
-  SmallVector<PointerCheck, 4>
-  generateChecks(const SmallVectorImpl<int> *PtrPartition = nullptr) const;
+  /// \brief \return the checks that generateChecks created.
+  const SmallVectorImpl<PointerCheck> &getChecks() const { return Checks; }
 
   /// \brief Decide if we need to add a check between two groups of pointers,
   /// according to needsChecking.
@@ -436,8 +429,28 @@ public:
                      const SmallVectorImpl<int> *PtrPartition = nullptr) const;
 
 private:
+  /// \brief Groups pointers such that a single memcheck is required
+  /// between two different groups. This will clear the CheckingGroups vector
+  /// and re-compute it. We will only group dependecies if \p UseDependencies
+  /// is true, otherwise we will create a separate group for each pointer.
+  void groupChecks(MemoryDepChecker::DepCandidates &DepCands,
+                   bool UseDependencies);
+
+  /// Generate the checks and return them.
+  ///
+  /// \p PtrToPartition contains the partition number for pointers.  If passed,
+  /// omit checks between pointers belonging to the same partition.  Partition
+  /// number -1 means that the pointer is used in multiple partitions.  In this
+  /// case we can't safely omit the check.
+  SmallVector<PointerCheck, 4>
+  generateChecks(const SmallVectorImpl<int> *PtrPartition = nullptr) const;
+
   /// Holds a pointer to the ScalarEvolution analysis.
   ScalarEvolution *SE;
+
+  /// \brief Set of run-time checks required to establish independence of
+  /// otherwise may-aliasing pointers in the loop.
+  SmallVector<PointerCheck, 4> Checks;
 };
 
 /// \brief Drive the analysis of memory accesses in the loop
