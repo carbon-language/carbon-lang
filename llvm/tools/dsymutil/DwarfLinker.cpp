@@ -618,7 +618,8 @@ public:
 
   /// \brief Emit the line table described in \p Rows into the
   /// debug_line section.
-  void emitLineTableForUnit(StringRef PrologueBytes, unsigned MinInstLength,
+  void emitLineTableForUnit(MCDwarfLineTableParams Params,
+                            StringRef PrologueBytes, unsigned MinInstLength,
                             std::vector<DWARFDebugLine::Row> &Rows,
                             unsigned AdddressSize);
 
@@ -942,7 +943,8 @@ void DwarfStreamer::emitLocationsForUnit(const CompileUnit &Unit,
   }
 }
 
-void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
+void DwarfStreamer::emitLineTableForUnit(MCDwarfLineTableParams Params,
+                                         StringRef PrologueBytes,
                                          unsigned MinInstLength,
                                          std::vector<DWARFDebugLine::Row> &Rows,
                                          unsigned PointerSize) {
@@ -965,7 +967,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
   if (Rows.empty()) {
     // We only have the dummy entry, dsymutil emits an entry with a 0
     // address in that case.
-    MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
+    MCDwarfLineAddr::Encode(*MC, Params, INT64_MAX, 0, EncodingOS);
     MS->EmitBytes(EncodingOS.str());
     LineSectionSize += EncodingBuffer.size();
     MS->EmitLabel(LineEndSym);
@@ -1047,7 +1049,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
 
     int64_t LineDelta = int64_t(Row.Line) - LastLine;
     if (!Row.EndSequence) {
-      MCDwarfLineAddr::Encode(*MC, LineDelta, AddressDelta, EncodingOS);
+      MCDwarfLineAddr::Encode(*MC, Params, LineDelta, AddressDelta, EncodingOS);
       MS->EmitBytes(EncodingOS.str());
       LineSectionSize += EncodingBuffer.size();
       EncodingBuffer.resize(0);
@@ -1066,7 +1068,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
         MS->EmitULEB128IntValue(AddressDelta);
         LineSectionSize += 1 + getULEB128Size(AddressDelta);
       }
-      MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
+      MCDwarfLineAddr::Encode(*MC, Params, INT64_MAX, 0, EncodingOS);
       MS->EmitBytes(EncodingOS.str());
       LineSectionSize += EncodingBuffer.size();
       EncodingBuffer.resize(0);
@@ -1078,7 +1080,7 @@ void DwarfStreamer::emitLineTableForUnit(StringRef PrologueBytes,
   }
 
   if (RowsSinceLastSequence) {
-    MCDwarfLineAddr::Encode(*MC, INT64_MAX, 0, EncodingOS);
+    MCDwarfLineAddr::Encode(*MC, Params, INT64_MAX, 0, EncodingOS);
     MS->EmitBytes(EncodingOS.str());
     LineSectionSize += EncodingBuffer.size();
     EncodingBuffer.resize(0);
@@ -2915,13 +2917,18 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
   // table emitter.
   if (LineTable.Prologue.Version != 2 ||
       LineTable.Prologue.DefaultIsStmt != DWARF2_LINE_DEFAULT_IS_STMT ||
-      LineTable.Prologue.LineBase != -5 || LineTable.Prologue.LineRange != 14 ||
-      LineTable.Prologue.OpcodeBase != 13)
+      LineTable.Prologue.OpcodeBase > 13)
     reportWarning("line table paramters mismatch. Cannot emit.");
-  else
-    Streamer->emitLineTableForUnit(LineData.slice(StmtList + 4, PrologueEnd),
+  else {
+    MCDwarfLineTableParams Params;
+    Params.DWARF2LineOpcodeBase = LineTable.Prologue.OpcodeBase;
+    Params.DWARF2LineBase = LineTable.Prologue.LineBase;
+    Params.DWARF2LineRange = LineTable.Prologue.LineRange;
+    Streamer->emitLineTableForUnit(Params,
+                                   LineData.slice(StmtList + 4, PrologueEnd),
                                    LineTable.Prologue.MinInstLength, NewRows,
                                    Unit.getOrigUnit().getAddressByteSize());
+  }
 }
 
 void DwarfLinker::emitAcceleratorEntriesForUnit(CompileUnit &Unit) {
