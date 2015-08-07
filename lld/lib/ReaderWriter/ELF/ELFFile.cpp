@@ -217,7 +217,8 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
     return ec;
   StringRef strTable = *strTableOrErr;
 
-  auto SymI = _objFile->symbol_begin(), SymE = _objFile->symbol_end();
+  auto SymI = _objFile->symbol_begin(symtab),
+       SymE = _objFile->symbol_end(symtab);
   // Skip over dummy sym.
   ++SymI;
 

@@ -55,7 +55,7 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   error(StringTableOrErr.getError());
   StringRef StringTable = *StringTableOrErr;
 
-  Elf_Sym_Range Syms = ELFObj->symbols();
+  Elf_Sym_Range Syms = ELFObj->symbols(Symtab);
   Syms = Elf_Sym_Range(Syms.begin() + 1, Syms.end());
   auto NumSymbols = std::distance(Syms.begin(), Syms.end());
   SymbolBodies.reserve(NumSymbols);
