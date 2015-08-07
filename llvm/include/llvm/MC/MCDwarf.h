@@ -190,7 +190,7 @@ struct MCDwarfLineTableParams {
   unsigned char DWARF2LineOpcodeBase = 13;
   /// Minimum line offset in a special line info. opcode.  The value
   /// -5 was chosen to give a reasonable range of values.
-  char DWARF2LineBase = -5;
+  signed char DWARF2LineBase = -5;
   /// Range of line offsets in a special line info. opcode.
   unsigned char DWARF2LineRange = 14;
 };
