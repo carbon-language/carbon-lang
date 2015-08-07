@@ -1451,8 +1451,8 @@ void ELFDumper<ELFT>::printNeededLibraries() {
 
   std::stable_sort(Libs.begin(), Libs.end());
 
-  for (LibsTy::const_iterator I = Libs.begin(), E = Libs.end(); I != E; ++I) {
-    outs() << "  " << *I << "\n";
+  for (const auto &L : Libs) {
+    outs() << "  " << L << "\n";
   }
 }
 

@@ -318,10 +318,8 @@ static void dumpObject(const ObjectFile *Obj) {
 
 /// @brief Dumps each object file in \a Arc;
 static void dumpArchive(const Archive *Arc) {
-  for (Archive::child_iterator ArcI = Arc->child_begin(),
-                               ArcE = Arc->child_end();
-                               ArcI != ArcE; ++ArcI) {
-    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = ArcI->getAsBinary();
+  for (const auto &Child : Arc->children()) {
+    ErrorOr<std::unique_ptr<Binary>> ChildOrErr = Child.getAsBinary();
     if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
