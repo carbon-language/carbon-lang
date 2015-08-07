@@ -386,12 +386,10 @@ void RuntimePointerChecking::printChecks(
   }
 }
 
-void RuntimePointerChecking::print(
-    raw_ostream &OS, unsigned Depth,
-    const SmallVectorImpl<int> *PtrPartition) const {
+void RuntimePointerChecking::print(raw_ostream &OS, unsigned Depth) const {
 
   OS.indent(Depth) << "Run-time memory checks:\n";
-  printChecks(OS, generateChecks(PtrPartition), Depth);
+  printChecks(OS, generateChecks(), Depth);
 
   OS.indent(Depth) << "Grouped accesses:\n";
   for (unsigned I = 0; I < CheckingGroups.size(); ++I) {

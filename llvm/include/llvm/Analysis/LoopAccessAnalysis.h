@@ -403,12 +403,7 @@ public:
   unsigned getNumberOfChecks(const SmallVectorImpl<int> *PtrPartition) const;
 
   /// \brief Print the list run-time memory checks necessary.
-  ///
-  /// If \p PtrPartition is set, it contains the partition number for
-  /// pointers (-1 if the pointer belongs to multiple partitions).  In this
-  /// case omit checks between pointers belonging to the same partition.
-  void print(raw_ostream &OS, unsigned Depth = 0,
-             const SmallVectorImpl<int> *PtrPartition = nullptr) const;
+  void print(raw_ostream &OS, unsigned Depth = 0) const;
 
   /// Print \p Checks.
   void printChecks(raw_ostream &OS, const SmallVectorImpl<PointerCheck> &Checks,
