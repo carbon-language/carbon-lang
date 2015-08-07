@@ -56,3 +56,17 @@ RUN:   %p/Inputs/corrupt-invalid-dynamic-table-size.elf.x86-64 2>&1 | \
 RUN:   FileCheck --check-prefix=DYN-TABLE-SIZE %s
 
 DYN-TABLE-SIZE:  Invalid dynamic table size
+
+
+RUN: not llvm-readobj -dyn-relocations \
+RUN:   %p/Inputs/corrupt-invalid-dynamic-table-offset.elf.x86-64 2>&1 | \
+RUN:   FileCheck --check-prefix=DYN-TABLE-OFFSET %s
+
+DYN-TABLE-OFFSET: Invalid data was encountered while parsing the file.
+
+
+RUN: not llvm-readobj -dyn-relocations \
+RUN:   %p/Inputs/corrupt-invalid-dynamic-table-too-large.elf.x86-64 2>&1 | \
+RUN:   FileCheck --check-prefix=DYN-TABLE-TOO-LARGE %s
+
+DYN-TABLE-TOO-LARGE: Invalid data was encountered while parsing the file.

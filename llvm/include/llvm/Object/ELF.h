@@ -141,6 +141,18 @@ public:
       Header->getDataEncoding() == ELF::ELFDATA2LSB;
   }
 
+  ErrorOr<const Elf_Dyn *> dynamic_table_begin(const Elf_Phdr *Phdr) const;
+  ErrorOr<const Elf_Dyn *> dynamic_table_end(const Elf_Phdr *Phdr) const;
+  ErrorOr<Elf_Dyn_Range> dynamic_table(const Elf_Phdr *Phdr) const {
+    ErrorOr<const Elf_Dyn *> Begin = dynamic_table_begin(Phdr);
+    if (std::error_code EC = Begin.getError())
+      return EC;
+    ErrorOr<const Elf_Dyn *> End = dynamic_table_end(Phdr);
+    if (std::error_code EC = End.getError())
+      return EC;
+    return make_range(*Begin, *End);
+  }
+
   const Elf_Shdr *section_begin() const;
   const Elf_Shdr *section_end() const;
   Elf_Shdr_Range sections() const {
@@ -463,6 +475,34 @@ const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_begin() const {
 template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_end() const {
   return section_begin() + getNumSections();
+}
+
+template <class ELFT>
+ErrorOr<const typename ELFFile<ELFT>::Elf_Dyn *>
+ELFFile<ELFT>::dynamic_table_begin(const Elf_Phdr *Phdr) const {
+  if (!Phdr)
+    return nullptr;
+  assert(Phdr->p_type == ELF::PT_DYNAMIC && "Got the wrong program header");
+  uintX_t Offset = Phdr->p_offset;
+  if (Offset > Buf.size())
+    return object_error::parse_failed;
+  return reinterpret_cast<const Elf_Dyn *>(base() + Offset);
+}
+
+template <class ELFT>
+ErrorOr<const typename ELFFile<ELFT>::Elf_Dyn *>
+ELFFile<ELFT>::dynamic_table_end(const Elf_Phdr *Phdr) const {
+  if (!Phdr)
+    return nullptr;
+  assert(Phdr->p_type == ELF::PT_DYNAMIC && "Got the wrong program header");
+  uintX_t Size = Phdr->p_filesz;
+  if (Size % sizeof(Elf_Dyn))
+    return object_error::elf_invalid_dynamic_table_size;
+  // FIKME: Check for overflow?
+  uintX_t End = Phdr->p_offset + Size;
+  if (End > Buf.size())
+    return object_error::parse_failed;
+  return reinterpret_cast<const Elf_Dyn *>(base() + End);
 }
 
 template <class ELFT>
