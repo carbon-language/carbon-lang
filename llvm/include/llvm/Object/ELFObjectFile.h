@@ -737,6 +737,8 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
           getELFType(ELFT::TargetEndianness == support::little, ELFT::Is64Bits),
           Object),
       EF(Data.getBuffer(), EC) {
+  if (EC)
+    return;
   for (const Elf_Shdr &Sec : EF.sections()) {
     switch (Sec.sh_type) {
     case ELF::SHT_DYNSYM: {
