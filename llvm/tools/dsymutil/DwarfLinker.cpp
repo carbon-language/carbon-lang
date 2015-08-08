@@ -2884,6 +2884,7 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
       if (StopAddress != -1ULL && !Seq.empty()) {
         // Insert end sequence row with the computed end address, but
         // the same line as the previous one.
+        Seq.reserve(Seq.size() + 1);
         Seq.emplace_back(Seq.back());
         Seq.back().Address = StopAddress;
         Seq.back().EndSequence = 1;
