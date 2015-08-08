@@ -68,7 +68,6 @@ private:
   const Elf_Ehdr *Header;
   const Elf_Shdr *SectionHeaderTable = nullptr;
   StringRef DotShstrtab;                    // Section header string table.
-  StringRef DotStrtab;                      // Symbol header string table.
   const Elf_Shdr *dot_symtab_sec = nullptr; // Symbol table section.
 
   const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
@@ -377,10 +376,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
         return;
       }
       dot_symtab_sec = &Sec;
-      ErrorOr<StringRef> SymtabOrErr = getStringTableForSymtab(Sec);
-      if ((EC = SymtabOrErr.getError()))
-        return;
-      DotStrtab = *SymtabOrErr;
     } break;
     }
   }
