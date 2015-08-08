@@ -398,7 +398,8 @@ class SkylakeProc<string Name> : ProcessorModel<Name, HaswellModel,
                       FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
                       FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
                       FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
-                      FeatureHLE, FeatureSlowIncDec, FeatureMPX]>;
+                      FeatureHLE, FeatureADX, FeatureRDSEED, FeatureSlowIncDec,
+                      FeatureMPX]>;
 def : SkylakeProc<"skylake">;
 def : SkylakeProc<"skx">; // Legacy alias.
 
