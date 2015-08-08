@@ -307,6 +307,7 @@ def : WestmereProc<"westmere">;
 class SandyBridgeProc<string Name> : ProcessorModel<Name, SandyBridgeModel, [
                                        FeatureAVX,
                                        FeatureCMPXCHG16B,
+                                       FeatureSlowBTMem,
                                        FeatureFastUAMem,
                                        FeatureSlowUAMem32,
                                        FeaturePOPCNT,
@@ -319,6 +320,7 @@ def : SandyBridgeProc<"corei7-avx">; // Legacy alias.
 class IvyBridgeProc<string Name> : ProcessorModel<Name, SandyBridgeModel, [
                                      FeatureAVX,
                                      FeatureCMPXCHG16B,
+                                     FeatureSlowBTMem,
                                      FeatureFastUAMem,
                                      FeatureSlowUAMem32,
                                      FeaturePOPCNT,
@@ -334,6 +336,7 @@ def : IvyBridgeProc<"core-avx-i">; // Legacy alias.
 class HaswellProc<string Name> : ProcessorModel<Name, HaswellModel, [
                                    FeatureAVX2,
                                    FeatureCMPXCHG16B,
+                                   FeatureSlowBTMem,
                                    FeatureFastUAMem,
                                    FeaturePOPCNT,
                                    FeatureAES,
@@ -356,6 +359,7 @@ def : HaswellProc<"core-avx2">; // Legacy alias.
 class BroadwellProc<string Name> : ProcessorModel<Name, HaswellModel, [
                                      FeatureAVX2,
                                      FeatureCMPXCHG16B,
+                                     FeatureSlowBTMem,
                                      FeatureFastUAMem,
                                      FeaturePOPCNT,
                                      FeatureAES,
@@ -390,11 +394,11 @@ def : KnightsLandingProc<"knl">;
 class SkylakeProc<string Name> : ProcessorModel<Name, HaswellModel,
                      [FeatureAVX512, FeatureCDI,
                       FeatureDQI, FeatureBWI, FeatureVLX,
-                      FeatureCMPXCHG16B, FeatureFastUAMem, FeaturePOPCNT,
-                      FeatureAES, FeaturePCLMUL, FeatureRDRAND, FeatureF16C,
-                      FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT, FeatureBMI,
-                      FeatureBMI2, FeatureFMA, FeatureRTM, FeatureHLE,
-                      FeatureSlowIncDec, FeatureMPX]>;
+                      FeatureCMPXCHG16B, FeatureSlowBTMem, FeatureFastUAMem,
+                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
+                      FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
+                      FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
+                      FeatureHLE, FeatureSlowIncDec, FeatureMPX]>;
 def : SkylakeProc<"skylake">;
 def : SkylakeProc<"skx">; // Legacy alias.
 
