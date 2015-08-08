@@ -54,7 +54,7 @@ StringRef KernelArgMDNodeNames[] = {
   "kernel_arg_type",
   "kernel_arg_base_type",
   "kernel_arg_type_qual"};
-const unsigned NumKernelArgMDNodes = array_lengthof(KernelArgMDNodeNames);
+const unsigned NumKernelArgMDNodes = 5;
 
 typedef SmallVector<Metadata *, 8> MDVector;
 struct KernelArgMD {
