@@ -78,30 +78,20 @@ private:
   /// Context - This refers to the LLVMContext in which this type was uniqued.
   LLVMContext &Context;
 
-  // Due to Ubuntu GCC bug 910363:
-  // https://bugs.launchpad.net/ubuntu/+source/gcc-4.5/+bug/910363
-  // Bitpack ID and SubclassData manually.
-  // Note: TypeID : low 8 bit; SubclassData : high 24 bit.
-  uint32_t IDAndSubclassData;
+  TypeID   ID : 8;            // The current base type of this type.
+  unsigned SubclassData : 24; // Space for subclasses to store data.
 
 protected:
   friend class LLVMContextImpl;
   explicit Type(LLVMContext &C, TypeID tid)
-    : Context(C), IDAndSubclassData(0),
-      NumContainedTys(0), ContainedTys(nullptr) {
-    setTypeID(tid);
-  }
+    : Context(C), ID(tid), SubclassData(0),
+      NumContainedTys(0), ContainedTys(nullptr) {}
   ~Type() = default;
 
-  void setTypeID(TypeID ID) {
-    IDAndSubclassData = (ID & 0xFF) | (IDAndSubclassData & 0xFFFFFF00);
-    assert(getTypeID() == ID && "TypeID data too large for field");
-  }
-  
-  unsigned getSubclassData() const { return IDAndSubclassData >> 8; }
-  
+  unsigned getSubclassData() const { return SubclassData; }
+
   void setSubclassData(unsigned val) {
-    IDAndSubclassData = (IDAndSubclassData & 0xFF) | (val << 8);
+    SubclassData = val;
     // Ensure we don't have any accidental truncation.
     assert(getSubclassData() == val && "Subclass data too large for field");
   }
@@ -131,7 +121,7 @@ public:
   /// getTypeID - Return the type id for the type.  This will return one
   /// of the TypeID enum elements defined above.
   ///
-  TypeID getTypeID() const { return (TypeID)(IDAndSubclassData & 0xFF); }
+  TypeID getTypeID() const { return ID; }
 
   /// isVoidTy - Return true if this is 'void'.
   bool isVoidTy() const { return getTypeID() == VoidTyID; }
