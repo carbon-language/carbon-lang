@@ -68,6 +68,7 @@ my $Clang;
 my $DefaultCCompiler;
 my $DefaultCXXCompiler;
 my $IsCXX;
+my $AnalyzerTarget;
 
 # If on OSX, use xcrun to determine the SDK root.
 my $UseXCRUN = 0;
@@ -103,6 +104,8 @@ else {
 
   $IsCXX = 0
 }
+
+$AnalyzerTarget = $ENV{'CLANG_ANALYZER_TARGET'};
 
 ##===----------------------------------------------------------------------===##
 # Cleanup.
@@ -243,6 +246,10 @@ sub Analyze {
     # Display Ubiviz graph?
     if (defined $ENV{'CCC_UBI'}) {
       push @Args, "-Xclang", "-analyzer-viz-egraph-ubigraph";
+    }
+
+    if (defined $AnalyzerTarget) {
+      push @Args, "-target", $AnalyzerTarget;
     }
 
     my $AnalysisArgs = GetCCArgs($HtmlDir, "--analyze", \@Args);

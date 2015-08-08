@@ -1145,10 +1145,21 @@ OPTIONS:
    scan-build to use a specific compiler for *compilation* then you can use
    this option to specify a path to that compiler.
 
+   If the given compiler is a cross compiler, you may also need to provide
+   --analyzer-target option to properly analyze the source code because static
+   analyzer runs as if the code is compiled for the host machine by default.
+
  --use-c++ [compiler path]
  --use-c++=[compiler path]
 
-   This is the same as "-use-cc" but for C++ code.
+   This is the same as "--use-cc" but for C++ code.
+
+ --analyzer-target [target triple name for analysis]
+ --analyzer-target=[target triple name for analysis]
+
+   This provides target triple information to clang static analyzer.
+   It only changes the target for analysis but doesn't change the target of a
+   real compiler given by --use-cc and --use-c++ options.
 
  -v
 
@@ -1459,6 +1470,24 @@ while (@ARGV) {
     }
 
     $ENV{"CCC_CXX"} = $cxx;
+    next;
+  }
+
+  if ($arg =~ /^--analyzer-target(=(.+))?$/) {
+    shift @ARGV;
+    my $AnalyzerTarget;
+
+    if (!defined $2 || $2 eq "") {
+      if (!@ARGV) {
+        DieDiag("'--analyzer-target' option requires a target triple name.\n");
+      }
+      $AnalyzerTarget = shift @ARGV;
+    }
+    else {
+      $AnalyzerTarget = $2;
+    }
+
+    $ENV{"CLANG_ANALYZER_TARGET"} = $AnalyzerTarget;
     next;
   }
 
