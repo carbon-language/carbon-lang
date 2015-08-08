@@ -43,7 +43,7 @@ const unsigned MaxDepth = 6;
 
 /// Enable an experimental feature to leverage information about dominating
 /// conditions to compute known bits.  The individual options below control how
-/// hard we search.  The defaults are choosen to be fairly aggressive.  If you
+/// hard we search.  The defaults are chosen to be fairly aggressive.  If you
 /// run into compile time problems when testing, scale them back and report
 /// your findings.
 static cl::opt<bool> EnableDomConditions("value-tracking-dom-conditions",
@@ -2545,7 +2545,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
       }
 
       // This insert value inserts something else than what we are looking for.
-      // See if the (aggregrate) value inserted into has the value we are
+      // See if the (aggregate) value inserted into has the value we are
       // looking for, then.
       if (*req_idx != *i)
         return FindInsertedValue(I->getAggregateOperand(), idx_range,
@@ -2560,7 +2560,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
   }
 
   if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
-    // If we're extracting a value from an aggregrate that was extracted from
+    // If we're extracting a value from an aggregate that was extracted from
     // something else, we can extract from that something else directly instead.
     // However, we will need to chain I's indices with the requested indices.
 

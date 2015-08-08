@@ -3023,7 +3023,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
         // We ought to be able to use LocVT directly but O32 sets it to i32
         // when allocating floating point values to integer registers.
         // This shouldn't influence how we load the value into registers unless
-        // we are targetting softfloat.
+        // we are targeting softfloat.
         if (VA.getValVT().isFloatingPoint() && !Subtarget.useSoftFloat())
           LocVT = VA.getValVT();
       }

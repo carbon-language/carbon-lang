@@ -104,7 +104,7 @@ struct CounterExpression {
 };
 
 /// \brief A Counter expression builder is used to construct the
-/// counter expressions. It avoids unecessary duplication
+/// counter expressions. It avoids unnecessary duplication
 /// and simplifies algebraic expressions.
 class CounterExpressionBuilder {
   /// \brief A list of all the counter expressions
@@ -443,7 +443,7 @@ public:
 
   /// \brief Get the list of function instantiations in the file.
   ///
-  /// Fucntions that are instantiated more than once, such as C++ template
+  /// Functions that are instantiated more than once, such as C++ template
   /// specializations, have distinct coverage records for each instantiation.
   std::vector<const FunctionRecord *> getInstantiations(StringRef Filename);
 

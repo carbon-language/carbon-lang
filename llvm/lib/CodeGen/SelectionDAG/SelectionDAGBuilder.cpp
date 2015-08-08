@@ -3069,7 +3069,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
 void SelectionDAGBuilder::visitMaskedStore(const CallInst &I) {
   SDLoc sdl = getCurSDLoc();
 
-  // llvm.masked.store.*(Src0, Ptr, alignemt, Mask)
+  // llvm.masked.store.*(Src0, Ptr, alignment, Mask)
   Value  *PtrOperand = I.getArgOperand(1);
   SDValue Ptr = getValue(PtrOperand);
   SDValue Src0 = getValue(I.getArgOperand(0));
@@ -3094,13 +3094,13 @@ void SelectionDAGBuilder::visitMaskedStore(const CallInst &I) {
 }
 
 // Gather/scatter receive a vector of pointers.
-// This vector of pointers may be represented as a base pointer + vector of 
-// indices, it depends on GEP and instruction preceeding GEP
+// This vector of pointers may be represented as a base pointer + vector of
+// indices, it depends on GEP and instruction preceding GEP
 // that calculates indices
 static bool getUniformBase(Value *& Ptr, SDValue& Base, SDValue& Index,
                            SelectionDAGBuilder* SDB) {
 
-  assert (Ptr->getType()->isVectorTy() && "Uexpected pointer type");
+  assert(Ptr->getType()->isVectorTy() && "Unexpected pointer type");
   GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
   if (!Gep || Gep->getNumOperands() > 2)
     return false;

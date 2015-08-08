@@ -37,7 +37,7 @@ struct EVT;
 /// Given an LLVM IR aggregate type and a sequence of insertvalue or
 /// extractvalue indices that identify a member, return the linearized index of
 /// the start of the member, i.e the number of element in memory before the
-/// seeked one. This is disconnected from the number of bytes.
+/// sought one. This is disconnected from the number of bytes.
 ///
 /// \param Ty is the type indexed by \p Indices.
 /// \param Indices is an optional pointer in the indices list to the current

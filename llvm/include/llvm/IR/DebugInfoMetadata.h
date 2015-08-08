@@ -1389,7 +1389,7 @@ public:
   void replaceFunction(std::nullptr_t) { replaceOperandWith(7, nullptr); }
   /// @}
 
-  /// \brief Check if this subprogram decribes the given function.
+  /// \brief Check if this subprogram describes the given function.
   ///
   /// FIXME: Should this be looking through bitcasts?
   bool describes(const Function *F) const;
@@ -1943,7 +1943,7 @@ public:
   /// \brief Check that a location is valid for this variable.
   ///
   /// Check that \c DL exists, is in the same subprogram, and has the same
-  /// inlined-at location as \c this.  (Otherwise, it's not a valid attachemnt
+  /// inlined-at location as \c this.  (Otherwise, it's not a valid attachment
   /// to a \a DbgInfoIntrinsic.)
   bool isValidLocationForIntrinsic(const DILocation *DL) const {
     return DL && getScope()->getSubprogram() == DL->getScope()->getSubprogram();

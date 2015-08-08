@@ -138,7 +138,7 @@ INITIALIZE_PASS(NVPTXLowerKernelArgs, "nvptx-lower-kernel-args",
 //
 // The above code allocates some space in the stack and copies the incoming
 // struct from param space to local space.
-// Then replace all occurences of %d by %temp.
+// Then replace all occurrences of %d by %temp.
 // =============================================================================
 void NVPTXLowerKernelArgs::handleByValParam(Argument *Arg) {
   Function *Func = Arg->getParent();

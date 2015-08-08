@@ -211,7 +211,7 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
 
   // If we want to be smarter, look at all uses of each global, to try to
   // discover all sets of globals used together, and how many times each of
-  // these sets occured.
+  // these sets occurred.
   //
   // Keep this reasonably efficient, by having an append-only list of all sets
   // discovered so far (UsedGlobalSet), and mapping each "together-ness" unit of

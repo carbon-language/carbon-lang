@@ -162,7 +162,7 @@ static bool canCombineAsAltInst(unsigned Op) {
   return false;
 }
 
-/// \returns ShuffleVector instruction if intructions in \p VL have
+/// \returns ShuffleVector instruction if instructions in \p VL have
 ///  alternate fadd,fsub / fsub,fadd/add,sub/sub,add sequence.
 /// (i.e. e.g. opcodes of fadd,fsub,fadd,fsub...)
 static unsigned isAltInst(ArrayRef<Value *> VL) {
@@ -393,7 +393,7 @@ public:
   /// \brief Perform LICM and CSE on the newly generated gather sequences.
   void optimizeGatherSequence();
 
-  /// \returns true if it is benefitial to reverse the vector order.
+  /// \returns true if it is beneficial to reverse the vector order.
   bool shouldReorder() const {
     return NumLoadsWantToChangeOrder > NumLoadsWantToKeepOrder;
   }
@@ -441,7 +441,7 @@ private:
   /// \returns a vector from a collection of scalars in \p VL.
   Value *Gather(ArrayRef<Value *> VL, VectorType *Ty);
 
-  /// \returns whether the VectorizableTree is fully vectoriable and will
+  /// \returns whether the VectorizableTree is fully vectorizable and will
   /// be beneficial even the tree height is tiny.
   bool isFullyVectorizableTinyTree();
 
@@ -2898,8 +2898,8 @@ void BoUpSLP::BlockScheduling::calculateDependencies(ScheduleData *SD,
             }
           } else {
             // I'm not sure if this can ever happen. But we need to be safe.
-            // This lets the instruction/bundle never be scheduled and eventally
-            // disable vectorization.
+            // This lets the instruction/bundle never be scheduled and
+            // eventually disable vectorization.
             BundleMember->Dependencies++;
             BundleMember->incrementUnscheduledDeps(1);
           }
@@ -3005,7 +3005,7 @@ void BoUpSLP::scheduleBlock(BlockScheduling *BS) {
   };
   std::set<ScheduleData *, ScheduleDataCompare> ReadyInsts;
 
-  // Ensure that all depencency data is updated and fill the ready-list with
+  // Ensure that all dependency data is updated and fill the ready-list with
   // initial instructions.
   int Idx = 0;
   int NumToSchedule = 0;
@@ -3732,7 +3732,7 @@ public:
 
 private:
 
-  /// \brief Calcuate the cost of a reduction.
+  /// \brief Calculate the cost of a reduction.
   int getReductionCost(TargetTransformInfo *TTI, Value *FirstReducedVal) {
     Type *ScalarTy = FirstReducedVal->getType();
     Type *VecTy = VectorType::get(ScalarTy, ReduxWidth);

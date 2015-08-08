@@ -373,7 +373,7 @@ private:
 
   /// Try to simplify binary operator I.
   ///
-  /// TODO: Probaly it's worth to hoist the code for estimating the
+  /// TODO: Probably it's worth to hoist the code for estimating the
   /// simplifications effects to a separate class, since we have a very similar
   /// code in InlineCost already.
   bool visitBinaryOperator(BinaryOperator &I) {
@@ -851,7 +851,7 @@ unsigned LoopUnroll::selectUnrollCount(
   unsigned Count = UserCount ? CurrentCount : 0;
 
   // If there is no user-specified count, unroll pragmas have the next
-  // highest precendence.
+  // highest precedence.
   if (Count == 0) {
     if (PragmaCount) {
       Count = PragmaCount;

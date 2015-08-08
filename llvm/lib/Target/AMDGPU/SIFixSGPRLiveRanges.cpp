@@ -42,7 +42,7 @@
 /// ENDIF
 /// %use
 ///
-/// Adding this use will make the def live thoughout the IF branch, which is
+/// Adding this use will make the def live throughout the IF branch, which is
 /// what we want.
 
 #include "AMDGPU.h"
@@ -138,7 +138,7 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
     if (MBB.succ_size() < 2)
       continue;
 
-    // We have structured control flow, so number of succesors should be two.
+    // We have structured control flow, so number of successors should be two.
     assert(MBB.succ_size() == 2);
     MachineBasicBlock *SuccA = *MBB.succ_begin();
     MachineBasicBlock *SuccB = *(++MBB.succ_begin());

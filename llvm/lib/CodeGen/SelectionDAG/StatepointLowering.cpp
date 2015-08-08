@@ -105,8 +105,8 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
       return Builder.DAG.getFrameIndex(FI, ValueType);
     }
     // Note: We deliberately choose to advance this only on the failing path.
-    // Doing so on the suceeding path involes a bit of complexity that caused a
-    // minor bug previously.  Unless performance shows this matters, please
+    // Doing so on the succeeding path involves a bit of complexity that caused
+    // a minor bug previously.  Unless performance shows this matters, please
     // keep this code as simple as possible.
     NextSlotToAllocate++;
   }
@@ -119,7 +119,7 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
 static Optional<int> findPreviousSpillSlot(const Value *Val,
                                            SelectionDAGBuilder &Builder,
                                            int LookUpDepth) {
-  // Can not look any futher - give up now
+  // Can not look any further - give up now
   if (LookUpDepth <= 0)
     return Optional<int>();
 
@@ -196,7 +196,7 @@ static Optional<int> findPreviousSpillSlot(const Value *Val,
 /// Try to find existing copies of the incoming values in stack slots used for
 /// statepoint spilling.  If we can find a spill slot for the incoming value,
 /// mark that slot as allocated, and reuse the same slot for this safepoint.
-/// This helps to avoid series of loads and stores that only serve to resuffle
+/// This helps to avoid series of loads and stores that only serve to reshuffle
 /// values on the stack between calls.
 static void reservePreviousStackSlotForValue(const Value *IncomingValue,
                                              SelectionDAGBuilder &Builder) {
@@ -255,7 +255,7 @@ static void removeDuplicatesGCPtrs(SmallVectorImpl<const Value *> &Bases,
                                    SmallVectorImpl<const Value *> &Relocs,
                                    SelectionDAGBuilder &Builder) {
 
-  // This is horribly ineffecient, but I don't care right now
+  // This is horribly inefficient, but I don't care right now
   SmallSet<SDValue, 64> Seen;
 
   SmallVector<const Value *, 64> NewBases, NewPtrs, NewRelocs;
@@ -347,11 +347,11 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
     if (CS.isInvoke()) {
       // Result value will be used in different basic block for invokes
       // so we need to export it now. But statepoint call has a different type
-      // than the actuall call. It means that standart exporting mechanism will
+      // than the actual call. It means that standard exporting mechanism will
       // create register of the wrong type. So instead we need to create
       // register with correct type and save value into it manually.
       // TODO: To eliminate this problem we can remove gc.result intrinsics
-      //       completelly and make statepoint call to return a tuple.
+      //       completely and make statepoint call to return a tuple.
       unsigned Reg = Builder.FuncInfo.CreateRegs(ISP.getActualReturnType());
       RegsForValue RFV(
           *Builder.DAG.getContext(), Builder.DAG.getTargetLoweringInfo(),
@@ -597,16 +597,17 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
       SpillMap[V] = cast<FrameIndexSDNode>(Loc)->getIndex();
     } else {
       // Record value as visited, but not spilled. This is case for allocas
-      // and constants. For this values we can avoid emiting spill load while
+      // and constants. For this values we can avoid emitting spill load while
       // visiting corresponding gc_relocate.
       // Actually we do not need to record them in this map at all.
-      // We do this only to check that we are not relocating any unvisited value.
+      // We do this only to check that we are not relocating any unvisited
+      // value.
       SpillMap[V] = None;
 
       // Default llvm mechanisms for exporting values which are used in
       // different basic blocks does not work for gc relocates.
       // Note that it would be incorrect to teach llvm that all relocates are
-      // uses of the corresponging values so that it would automatically
+      // uses of the corresponding values so that it would automatically
       // export them. Relocates of the spilled values does not use original
       // value.
       if (StatepointSite.getCallSite().isInvoke())
@@ -806,7 +807,7 @@ void SelectionDAGBuilder::LowerStatepoint(
 
   // Replace original call
   DAG.ReplaceAllUsesWith(CallNode, SinkNode); // This may update Root
-  // Remove originall call node
+  // Remove original call node
   DAG.DeleteNode(CallNode);
 
   // DON'T set the root - under the assumption that it's already set past the
@@ -878,7 +879,7 @@ void SelectionDAGBuilder::visitGCRelocate(const CallInst &CI) {
 
   // Be conservative: flush all pending loads
   // TODO: Probably we can be less restrictive on this,
-  // it may allow more scheduling opprtunities
+  // it may allow more scheduling opportunities.
   SDValue Chain = getRoot();
 
   SDValue SpillLoad =

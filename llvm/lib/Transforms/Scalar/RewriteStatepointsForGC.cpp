@@ -164,7 +164,7 @@ typedef DenseSet<llvm::Value *> StatepointLiveSetTy;
 typedef DenseMap<Instruction *, Value *> RematerializedValueMapTy;
 
 struct PartiallyConstructedSafepointRecord {
-  /// The set of values known to be live accross this safepoint
+  /// The set of values known to be live across this safepoint
   StatepointLiveSetTy liveset;
 
   /// Mapping from live pointers to a base-defining-value
@@ -274,7 +274,7 @@ static void analyzeParsePointLiveness(
 
   if (PrintLiveSet) {
     // Note: This output is used by several of the test cases
-    // The order of elemtns in a set is not stable, put them in a vec and sort
+    // The order of elements in a set is not stable, put them in a vec and sort
     // by name
     SmallVector<Value *, 64> temp;
     temp.insert(temp.end(), liveset.begin(), liveset.end());
@@ -509,7 +509,7 @@ static Value *findBaseDefiningValue(Value *I) {
     return I;
 
   // I have absolutely no idea how to implement this part yet.  It's not
-  // neccessarily hard, I just haven't really looked at it yet.
+  // necessarily hard, I just haven't really looked at it yet.
   assert(!isa<LandingPadInst>(I) && "Landing Pad is unimplemented");
 
   if (isa<AtomicCmpXchgInst>(I))
@@ -533,7 +533,7 @@ static Value *findBaseDefiningValue(Value *I) {
          "Base pointer for a struct is meaningless");
 
   // The last two cases here don't return a base pointer.  Instead, they
-  // return a value which dynamically selects from amoung several base
+  // return a value which dynamically selects from among several base
   // derived pointers (each with it's own base potentially).  It's the job of
   // the caller to resolve these.
   assert((isa<SelectInst>(I) || isa<PHINode>(I)) &&
@@ -717,7 +717,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
   //
   // Note: A simpler form of this would be to add the conflict form of all
   // PHIs without running the optimistic algorithm.  This would be
-  // analougous to pessimistic data flow and would likely lead to an
+  // analogous to pessimistic data flow and would likely lead to an
   // overall worse solution.
 
 #ifndef NDEBUG
@@ -915,7 +915,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache) {
             assert(base != nullptr && "unknown BDVState!");
           }
 
-          // In essense this assert states: the only way two
+          // In essence this assert states: the only way two
           // values incoming from the same basic block may be
           // different is by being different bitcasts of the same
           // value.  A cleanup that remains TODO is changing
@@ -1043,7 +1043,7 @@ findBasePointers(const StatepointLiveSetTy &live,
 
     // If you see this trip and like to live really dangerously, the code should
     // be correct, just with idioms the verifier can't handle.  You can try
-    // disabling the verifier at your own substaintial risk.
+    // disabling the verifier at your own substantial risk.
     assert(!isa<ConstantPointerNull>(base) &&
            "the relocation code needs adjustment to handle the relocation of "
            "a null pointer constant without causing false positives in the "
@@ -1089,7 +1089,7 @@ static void recomputeLiveInValues(
     Function &F, DominatorTree &DT, Pass *P, ArrayRef<CallSite> toUpdate,
     MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
   // TODO-PERF: reuse the original liveness, then simply run the dataflow
-  // again.  The old values are still live and will help it stablize quickly.
+  // again.  The old values are still live and will help it stabilize quickly.
   GCPtrLivenessData RevisedLivenessData;
   computeLiveInValues(DT, F, RevisedLivenessData);
   for (size_t i = 0; i < records.size(); i++) {
@@ -1131,7 +1131,7 @@ static int find_index(ArrayRef<Value *> livevec, Value *val) {
   return index;
 }
 
-// Create new attribute set containing only attributes which can be transfered
+// Create new attribute set containing only attributes which can be transferred
 // from original call to the safepoint.
 static AttributeSet legalizeCallAttributes(AttributeSet AS) {
   AttributeSet ret;
@@ -1263,7 +1263,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     // Currently we will fail on parameter attributes and on certain
     // function attributes.
     AttributeSet new_attrs = legalizeCallAttributes(toReplace->getAttributes());
-    // In case if we can handle this set of sttributes - set up function attrs
+    // In case if we can handle this set of attributes - set up function attrs
     // directly on statepoint and return attrs later for gc_result intrinsic.
     call->setAttributes(new_attrs.getFnAttributes());
     return_attributes = new_attrs.getRetAttributes();
@@ -1293,7 +1293,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     // Currently we will fail on parameter attributes and on certain
     // function attributes.
     AttributeSet new_attrs = legalizeCallAttributes(toReplace->getAttributes());
-    // In case if we can handle this set of sttributes - set up function attrs
+    // In case if we can handle this set of attributes - set up function attrs
     // directly on statepoint and return attrs later for gc_result intrinsic.
     invoke->setAttributes(new_attrs.getFnAttributes());
     return_attributes = new_attrs.getRetAttributes();
@@ -1571,7 +1571,7 @@ static void relocationViaAlloca(
                                   VisitedLiveValues);
 
     if (ClobberNonLive) {
-      // As a debuging aid, pretend that an unrelocated pointer becomes null at
+      // As a debugging aid, pretend that an unrelocated pointer becomes null at
       // the gc.statepoint.  This will turn some subtle GC problems into
       // slightly easier to debug SEGVs.  Note that on large IR files with
       // lots of gc.statepoints this is extremely costly both memory and time
@@ -1742,10 +1742,10 @@ static void findLiveReferences(
 
 /// Remove any vector of pointers from the liveset by scalarizing them over the
 /// statepoint instruction.  Adds the scalarized pieces to the liveset.  It
-/// would be preferrable to include the vector in the statepoint itself, but
+/// would be preferable to include the vector in the statepoint itself, but
 /// the lowering code currently does not handle that.  Extending it would be
 /// slightly non-trivial since it requires a format change.  Given how rare
-/// such cases are (for the moment?) scalarizing is an acceptable comprimise.
+/// such cases are (for the moment?) scalarizing is an acceptable compromise.
 static void splitVectorValues(Instruction *StatepointInst,
                               StatepointLiveSetTy &LiveSet,
                               DenseMap<Value *, Value *>& PointerToBase,
@@ -1876,7 +1876,7 @@ static void splitVectorValues(Instruction *StatepointInst,
 // Helper function for the "rematerializeLiveValues". It walks use chain
 // starting from the "CurrentValue" until it meets "BaseValue". Only "simple"
 // values are visited (currently it is GEP's and casts). Returns true if it
-// sucessfully reached "BaseValue" and false otherwise.
+// successfully reached "BaseValue" and false otherwise.
 // Fills "ChainToBase" array with all visited values. "BaseValue" is not
 // recorded.
 static bool findRematerializableChainToBasePointer(
@@ -2128,7 +2128,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   }
   assert(records.size() == toUpdate.size());
 
-  // A) Identify all gc pointers which are staticly live at the given call
+  // A) Identify all gc pointers which are statically live at the given call
   // site.
   findLiveReferences(F, DT, P, toUpdate, records);
 
@@ -2205,7 +2205,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   }
 
   // In order to reduce live set of statepoint we might choose to rematerialize
-  // some values instead of relocating them. This is purelly an optimization and
+  // some values instead of relocating them. This is purely an optimization and
   // does not influence correctness.
   TargetTransformInfo &TTI =
     P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
@@ -2450,7 +2450,7 @@ static void computeLiveInValues(BasicBlock::reverse_iterator rbegin,
              "support for FCA unimplemented");
       if (isHandledGCPointerType(V->getType()) && !isa<Constant>(V)) {
         // The choice to exclude all things constant here is slightly subtle.
-        // There are two idependent reasons:
+        // There are two independent reasons:
         // - We assume that things which are constant (from LLVM's definition)
         // do not move at runtime.  For example, the address of a global
         // variable is fixed, even though it's contents may not be.
@@ -2588,7 +2588,7 @@ static void computeLiveInValues(DominatorTree &DT, Function &F,
   } // while( !worklist.empty() )
 
 #ifndef NDEBUG
-  // Sanity check our ouput against SSA properties.  This helps catch any
+  // Sanity check our output against SSA properties.  This helps catch any
   // missing kills during the above iteration.
   for (BasicBlock &BB : F) {
     checkBasicSSA(DT, Data, BB);

@@ -2058,7 +2058,7 @@ bool ARMConstantIslands::preserveBaseRegister(MachineInstr *JumpMI,
 /// \brief Returns whether CPEMI is the first instruction in the block
 /// immediately following JTMI (assumed to be a TBB or TBH terminator). If so,
 /// we can switch the first register to PC and usually remove the address
-/// calculation that preceeded it.
+/// calculation that preceded it.
 static bool jumpTableFollowsTB(MachineInstr *JTMI, MachineInstr *CPEMI) {
   MachineFunction::iterator MBB = JTMI->getParent();
   MachineFunction *MF = MBB->getParent();

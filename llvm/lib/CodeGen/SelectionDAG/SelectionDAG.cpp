@@ -2677,7 +2677,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     const int rIndex = Items - 1 -
       cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
 
-    // If the sign portion ends in our element the substraction gives correct
+    // If the sign portion ends in our element the subtraction gives correct
     // result. Otherwise it gives either negative or > bitwidth result
     return std::max(std::min(KnownSign - rIndex * BitWidth, BitWidth), 0);
   }

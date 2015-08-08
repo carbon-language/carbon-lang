@@ -125,7 +125,7 @@ public:
   static InstDesc isRecurrenceInstr(Instruction *I, RecurrenceKind Kind,
                                     InstDesc &Prev, bool HasFunNoNaNAttr);
 
-  /// Returns true if instuction I has multiple uses in Insts
+  /// Returns true if instruction I has multiple uses in Insts
   static bool hasMultipleUsesOf(Instruction *I,
                                 SmallPtrSetImpl<Instruction *> &Insts);
 
@@ -253,7 +253,7 @@ bool promoteLoopAccessesToScalars(AliasSet &, SmallVectorImpl<BasicBlock*> &,
                                   LICMSafetyInfo *);
 
 /// \brief Computes safety information for a loop
-/// checks loop body & header for the possiblity of may throw
+/// checks loop body & header for the possibility of may throw
 /// exception, it takes LICMSafetyInfo and loop as argument.
 /// Updates safety information in LICMSafetyInfo argument.
 void computeLICMSafetyInfo(LICMSafetyInfo *, Loop *);

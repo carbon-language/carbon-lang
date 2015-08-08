@@ -126,7 +126,7 @@ enum {
   /// Loading instruction that may page fault, bundled with associated
   /// information on how to handle such a page fault.  It is intended to support
   /// "zero cost" null checks in managed languages by allowing LLVM to fold
-  /// comparisions into existing memory operations.
+  /// comparisons into existing memory operations.
   FAULTING_LOAD_OP = 22,
 };
 } // end namespace TargetOpcode

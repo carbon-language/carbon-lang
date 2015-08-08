@@ -96,7 +96,7 @@ struct RRInfo {
 };
 
 /// \brief This class summarizes several per-pointer runtime properties which
-/// are propogated through the flow graph.
+/// are propagated through the flow graph.
 class PtrState {
 protected:
   /// True if the reference count is known to be incremented.
@@ -172,7 +172,7 @@ struct BottomUpPtrState : PtrState {
   bool InitBottomUp(ARCMDKindCache &Cache, Instruction *I);
 
   /// Return true if this set of releases can be paired with a release. Modifies
-  /// state appropriately to reflect that the matching occured if it is
+  /// state appropriately to reflect that the matching occurred if it is
   /// successful.
   ///
   /// It is assumed that one has already checked that the RCIdentity of the
@@ -194,7 +194,7 @@ struct TopDownPtrState : PtrState {
 
   /// Return true if this set of retains can be paired with the given
   /// release. Modifies state appropriately to reflect that the matching
-  /// occured.
+  /// occurred.
   bool MatchWithRelease(ARCMDKindCache &Cache, Instruction *Release);
 
   void HandlePotentialUse(Instruction *Inst, const Value *Ptr,

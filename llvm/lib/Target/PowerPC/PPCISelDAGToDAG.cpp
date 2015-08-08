@@ -1028,7 +1028,7 @@ class BitPermutationSelector {
           BitGroups[BitGroups.size()-1].EndIdx == Bits.size()-1 &&
           BitGroups[0].V == BitGroups[BitGroups.size()-1].V &&
           BitGroups[0].RLAmt == BitGroups[BitGroups.size()-1].RLAmt) {
-        DEBUG(dbgs() << "\tcombining final bit group with inital one\n");
+        DEBUG(dbgs() << "\tcombining final bit group with initial one\n");
         BitGroups[BitGroups.size()-1].EndIdx = BitGroups[0].EndIdx;
         BitGroups.erase(BitGroups.begin());
       }

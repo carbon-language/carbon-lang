@@ -27,7 +27,7 @@
 // well defined state for inspection by the collector.  In the current
 // implementation, this is done via the insertion of poll sites at method entry
 // and the backedge of most loops.  We try to avoid inserting more polls than
-// are neccessary to ensure a finite period between poll sites.  This is not
+// are necessary to ensure a finite period between poll sites.  This is not
 // because the poll itself is expensive in the generated code; it's not.  Polls
 // do tend to impact the optimizer itself in negative ways; we'd like to avoid
 // perturbing the optimization of the method as much as we can.
@@ -91,7 +91,7 @@ STATISTIC(FiniteExecution, "Number of loops w/o safepoints finite execution");
 
 using namespace llvm;
 
-// Ignore oppurtunities to avoid placing safepoints on backedges, useful for
+// Ignore opportunities to avoid placing safepoints on backedges, useful for
 // validation
 static cl::opt<bool> AllBackedges("spp-all-backedges", cl::Hidden,
                                   cl::init(false));
@@ -121,7 +121,7 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
   std::vector<TerminatorInst *> PollLocations;
 
   /// True unless we're running spp-no-calls in which case we need to disable
-  /// the call dependend placement opts.
+  /// the call-dependent placement opts.
   bool CallSafepointsEnabled;
 
   ScalarEvolution *SE = nullptr;
@@ -220,7 +220,7 @@ static bool containsUnconditionalCallSafepoint(Loop *L, BasicBlock *Header,
   // For the moment, we look only for the 'cuts' that consist of a single call
   // instruction in a block which is dominated by the Header and dominates the
   // loop latch (Pred) block.  Somewhat surprisingly, walking the entire chain
-  // of such dominating blocks gets substaintially more occurences than just
+  // of such dominating blocks gets substantially more occurrences than just
   // checking the Pred and Header blocks themselves.  This may be due to the
   // density of loop exit conditions caused by range and null checks.
   // TODO: structure this as an analysis pass, cache the result for subloops,
@@ -765,7 +765,7 @@ static bool isGCLeafFunction(const CallSite &CS) {
     // Most LLVM intrinsics are things which can never take a safepoint.
     // As a result, we don't need to have the stack parsable at the
     // callsite.  This is a highly useful optimization since intrinsic
-    // calls are fairly prevelent, particularly in debug builds.
+    // calls are fairly prevalent, particularly in debug builds.
     return true;
   }
 
@@ -933,7 +933,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
 
     Token = Call;
 
-    // Put the following gc_result and gc_relocate calls immediately after the
+    // Put the following gc_result and gc_relocate calls immediately after
     // the old call (which we're about to delete).
     assert(ToReplace->getNextNode() && "not a terminator, must have next");
     Builder.SetInsertPoint(ToReplace->getNextNode());
@@ -962,7 +962,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     // We'll insert the gc.result into the normal block
     BasicBlock *NormalDest = ToReplace->getNormalDest();
     // Can not insert gc.result in case of phi nodes preset.
-    // Should have removed this cases prior to runnning this function
+    // Should have removed this cases prior to running this function
     assert(!isa<PHINode>(NormalDest->begin()));
     Instruction *IP = &*(NormalDest->getFirstInsertionPt());
     Builder.SetInsertPoint(IP);

@@ -163,7 +163,7 @@ static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB,
        I != IE; ++I) {
     PHINode *PN = cast<PHINode>(I);
 
-    // Only update the first occurence.
+    // Only update the first occurrence.
     unsigned Idx = 0, E = PN->getNumIncomingValues();
     unsigned LocalNumMergedCases = NumMergedCases;
     for (; Idx != E; ++Idx) {
@@ -173,7 +173,7 @@ static void fixPhis(BasicBlock *SuccBB, BasicBlock *OrigBB, BasicBlock *NewBB,
       }
     }
 
-    // Remove additional occurences coming from condensed cases and keep the
+    // Remove additional occurrences coming from condensed cases and keep the
     // number of incoming values equal to the number of branches to SuccBB.
     SmallVector<unsigned, 8> Indices;
     for (++Idx; LocalNumMergedCases > 0 && Idx < E; ++Idx)
@@ -424,7 +424,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   std::vector<IntRange> UnreachableRanges;
 
   if (isa<UnreachableInst>(Default->getFirstNonPHIOrDbg())) {
-    // Make the bounds tightly fitted around the case value range, becase we
+    // Make the bounds tightly fitted around the case value range, because we
     // know that the value passed to the switch must be exactly one of the case
     // values.
     assert(!Cases.empty());

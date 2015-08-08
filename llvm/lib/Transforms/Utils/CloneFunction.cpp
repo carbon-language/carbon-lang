@@ -484,7 +484,7 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
   }
 
 #ifndef NDEBUG
-  // If the cloning starts at the begining of the function, verify that
+  // If the cloning starts at the beginning of the function, verify that
   // the function arguments are mapped.
   if (!StartingInst)
     for (Function::const_arg_iterator II = OldFunc->arg_begin(),

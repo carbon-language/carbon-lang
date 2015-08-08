@@ -548,7 +548,7 @@ SDValue SITargetLowering::LowerFormalArguments(
       assert((PSInputNum <= 15) && "Too many PS inputs!");
 
       if (!Arg.Used) {
-        // We can savely skip PS inputs
+        // We can safely skip PS inputs
         Skipped.set(i);
         ++PSInputNum;
         continue;
@@ -565,7 +565,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
       // We REALLY want the ORIGINAL number of vertex elements here, e.g. a
       // three or five element vertex only needs three or five registers,
-      // NOT four or eigth.
+      // NOT four or eight.
       Type *ParamType = FType->getParamType(Arg.getOrigArgIndex());
       unsigned NumElements = ParamType->getVectorNumElements();
 
@@ -2248,9 +2248,9 @@ MachineSDNode *SITargetLowering::wrapAddr64Rsrc(SelectionDAG &DAG,
 }
 
 /// \brief Return a resource descriptor with the 'Add TID' bit enabled
-///        The TID (Thread ID) is multipled by the stride value (bits [61:48]
-///        of the resource descriptor) to create an offset, which is added to the
-///        resource ponter.
+///        The TID (Thread ID) is multiplied by the stride value (bits [61:48]
+///        of the resource descriptor) to create an offset, which is added to
+///        the resource pointer.
 MachineSDNode *SITargetLowering::buildRSRC(SelectionDAG &DAG,
                                            SDLoc DL,
                                            SDValue Ptr,

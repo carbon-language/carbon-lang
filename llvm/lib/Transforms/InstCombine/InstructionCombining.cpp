@@ -519,7 +519,7 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
           if (isa<OverflowingBinaryOperator>(Op1))
             HasNSW &= Op1->hasNoSignedWrap();
 
-        // We can propogate 'nsw' if we know that
+        // We can propagate 'nsw' if we know that
         //  %Y = mul nsw i16 %X, C
         //  %Z = add nsw i16 %Y, %X
         // =>

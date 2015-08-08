@@ -1088,7 +1088,7 @@ bool SIInstrInfo::areMemAccessesTriviallyDisjoint(MachineInstr *MIa,
 
   // TODO: Should we check the address space from the MachineMemOperand? That
   // would allow us to distinguish objects we know don't alias based on the
-  // underlying addres space, even if it was lowered to a different one,
+  // underlying address space, even if it was lowered to a different one,
   // e.g. private accesses lowered to use MUBUF instructions on a scratch
   // buffer.
   if (isDS(Opc0)) {

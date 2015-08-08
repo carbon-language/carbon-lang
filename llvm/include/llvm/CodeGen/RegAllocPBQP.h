@@ -134,7 +134,7 @@ inline hash_code hash_value(const AllowedRegVector &OptRegs) {
                       hash_combine_range(OStart, OEnd));
 }
 
-/// \brief Holds graph-level metadata relevent to PBQP RA problems.
+/// \brief Holds graph-level metadata relevant to PBQP RA problems.
 class GraphMetadata {
 private:
   typedef ValuePool<AllowedRegVector> AllowedRegVecPool;

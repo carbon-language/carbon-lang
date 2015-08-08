@@ -134,7 +134,7 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   llvm_unreachable("invalid assembler flag!");
 }
 
-// If bundle aligment is used and there are any instructions in the section, it
+// If bundle alignment is used and there are any instructions in the section, it
 // needs to be aligned to at least the bundle size.
 static void setSectionAlignmentForBundling(const MCAssembler &Assembler,
                                            MCSection *Section) {
@@ -603,7 +603,7 @@ void MCELFStreamer::EmitBundleUnlock() {
     report_fatal_error("Empty bundle-locked group is forbidden");
 
   // When the -mc-relax-all flag is used, we emit instructions to fragments
-  // stored on a stack. When the bundle unlock is emited, we pop a fragment
+  // stored on a stack. When the bundle unlock is emitted, we pop a fragment
   // from the stack a merge it to the one below.
   if (getAssembler().getRelaxAll()) {
     assert(!BundleGroups.empty() && "There are no bundle groups");

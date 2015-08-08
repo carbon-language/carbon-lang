@@ -1002,7 +1002,7 @@ static void hoistBeforePos(DominatorTree *DT, Instruction *InstToHoist,
 }
 
 /// \brief Check whether we can cheaply express the requested SCEV in terms of
-/// the available PHI SCEV by truncation and/or invertion of the step.
+/// the available PHI SCEV by truncation and/or inversion of the step.
 static bool canBeCheaplyTransformed(ScalarEvolution &SE,
                                     const SCEVAddRecExpr *Phi,
                                     const SCEVAddRecExpr *Requested,
@@ -1836,7 +1836,7 @@ bool SCEVExpander::isHighCostExpansionHelper(
 
   if (auto *UDivExpr = dyn_cast<SCEVUDivExpr>(S)) {
     // If the divisor is a power of two and the SCEV type fits in a native
-    // integer, consider the divison cheap irrespective of whether it occurs in
+    // integer, consider the division cheap irrespective of whether it occurs in
     // the user code since it can be lowered into a right shift.
     if (auto *SC = dyn_cast<SCEVConstant>(UDivExpr->getRHS()))
       if (SC->getValue()->getValue().isPowerOf2()) {

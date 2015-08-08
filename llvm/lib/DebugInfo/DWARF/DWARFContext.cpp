@@ -705,8 +705,8 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
         //           (Address of Section in File) +
         //           (Load Address of Section)
         if (L != nullptr && RSec != Obj.section_end()) {
-          // RSec is now either the section being targetted or the section
-          // containing the symbol being targetted. In either case,
+          // RSec is now either the section being targeted or the section
+          // containing the symbol being targeted. In either case,
           // we need to perform the same computation.
           StringRef SecName;
           RSec->getName(SecName);

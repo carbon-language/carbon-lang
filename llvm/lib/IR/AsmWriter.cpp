@@ -3327,7 +3327,7 @@ void Value::print(raw_ostream &ROS, ModuleSlotTracker &MST) const {
 
 /// Print without a type, skipping the TypePrinting object.
 ///
-/// \return \c true iff printing was succesful.
+/// \return \c true iff printing was successful.
 static bool printWithoutType(const Value &V, raw_ostream &O,
                              SlotTracker *Machine, const Module *M) {
   if (V.hasName() || isa<GlobalValue>(V) ||

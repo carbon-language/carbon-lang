@@ -966,7 +966,7 @@ void RegPressureTracker::bumpDownwardPressure(const MachineInstr *MI) {
 /// This is expensive for an on-the-fly query because it calls
 /// bumpDownwardPressure to recompute the pressure sets based on current
 /// liveness. We don't yet have a fast version of downward pressure tracking
-/// analagous to getUpwardPressureDelta.
+/// analogous to getUpwardPressureDelta.
 void RegPressureTracker::
 getMaxDownwardPressureDelta(const MachineInstr *MI, RegPressureDelta &Delta,
                             ArrayRef<PressureChange> CriticalPSets,

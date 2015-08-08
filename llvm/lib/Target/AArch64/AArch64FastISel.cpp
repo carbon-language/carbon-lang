@@ -969,7 +969,7 @@ bool AArch64FastISel::simplifyAddress(Address &Addr, MVT VT) {
 
   // Cannot encode an offset register and an immediate offset in the same
   // instruction. Fold the immediate offset into the load/store instruction and
-  // emit an additonal add to take care of the offset register.
+  // emit an additional add to take care of the offset register.
   if (!ImmediateOffsetNeedsLowering && Addr.getOffset() && Addr.getOffsetReg())
     RegisterOffsetNeedsLowering = true;
 

@@ -508,7 +508,7 @@ static inline bool isUnsafeMemoryObject(MachineInstr *MI,
   return false;
 }
 
-/// This returns true if the two MIs need a chain edge betwee them.
+/// This returns true if the two MIs need a chain edge between them.
 /// If these are not even memory operations, we still may need
 /// chain deps between them. The question really is - could
 /// these two MIs be reordered during scheduling from memory dependency
@@ -670,7 +670,7 @@ static inline void addChainDependency(AliasAnalysis *AA,
                                       unsigned TrueMemOrderLatency = 0,
                                       bool isNormalMemory = false) {
   // If this is a false dependency,
-  // do not add the edge, but rememeber the rejected node.
+  // do not add the edge, but remember the rejected node.
   if (MIsNeedChainEdge(AA, MFI, DL, SUa->getInstr(), SUb->getInstr())) {
     SDep Dep(SUa, isNormalMemory ? SDep::MayAliasMem : SDep::Barrier);
     Dep.setLatency(TrueMemOrderLatency);
@@ -685,7 +685,7 @@ static inline void addChainDependency(AliasAnalysis *AA,
   }
 }
 
-/// Create an SUnit for each real instruction, numbered in top-down toplological
+/// Create an SUnit for each real instruction, numbered in top-down topological
 /// order. The instruction order A < B, implies that no edge exists from B to A.
 ///
 /// Map each real instruction to its SUnit.
@@ -766,7 +766,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   // We build scheduling units by walking a block's instruction list from bottom
   // to top.
 
-  // Remember where a generic side-effecting instruction is as we procede.
+  // Remember where a generic side-effecting instruction is as we proceed.
   SUnit *BarrierChain = nullptr, *AliasChain = nullptr;
 
   // Memory references to specific known memory locations are tracked

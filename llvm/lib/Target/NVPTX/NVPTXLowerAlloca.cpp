@@ -81,7 +81,7 @@ bool NVPTXLowerAlloca::runOnBasicBlock(BasicBlock &BB) {
         // Check Load, Store, GEP, and BitCast Uses on alloca and make them
         // use the converted generic address, in order to expose non-generic
         // addrspacecast to NVPTXFavorNonGenericAddrSpace. For other types
-        // of instructions this is unecessary and may introduce redudant
+        // of instructions this is unnecessary and may introduce redundant
         // address cast.
         const auto &AllocaUse = *UI++;
         auto LI = dyn_cast<LoadInst>(AllocaUse.getUser());

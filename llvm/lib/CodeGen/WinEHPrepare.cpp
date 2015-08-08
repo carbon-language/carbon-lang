@@ -2146,7 +2146,7 @@ void WinEHPrepare::mapLandingPadBlocks(LandingPadInst *LPad,
       // Under some circumstances optimized IR will flow unconditionally into a
       // handler block without checking the selector.  This can only happen if
       // the landing pad has a catch-all handler and the handler for the
-      // preceeding catch clause is identical to the catch-call handler
+      // preceding catch clause is identical to the catch-call handler
       // (typically an empty catch).  In this case, the handler must be shared
       // by all remaining clauses.
       if (isa<ConstantPointerNull>(

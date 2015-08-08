@@ -216,8 +216,8 @@ AArch64A53Fix835769::runOnBasicBlock(MachineBasicBlock &MBB) {
     ++Idx;
   }
 
-  DEBUG(dbgs() << "Scan complete, "<< Sequences.size()
-               << " occurences of pattern found.\n");
+  DEBUG(dbgs() << "Scan complete, " << Sequences.size()
+               << " occurrences of pattern found.\n");
 
   // Then update the basic block, inserting nops between the detected sequences.
   for (auto &MI : Sequences) {

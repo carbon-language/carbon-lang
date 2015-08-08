@@ -63,7 +63,7 @@ namespace {
 
     /// Iteratively perform simplification on a worklist of users of the
     /// specified induction variable. This is the top-level driver that applies
-    /// all simplicitions to users of an IV.
+    /// all simplifications to users of an IV.
     void simplifyUsers(PHINode *CurrIV, IVVisitor *V = nullptr);
 
     Value *foldIVUser(Instruction *UseInst, Instruction *IVOperand);
@@ -184,7 +184,7 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
                                           InvariantPredicate, InvariantLHS,
                                           InvariantRHS)) {
 
-    // Rewrite the comparision to a loop invariant comparision if it can be done
+    // Rewrite the comparison to a loop invariant comparison if it can be done
     // cheaply, where cheaply means "we don't need to emit any new
     // instructions".
 
@@ -482,8 +482,8 @@ static bool isSimpleIVUser(Instruction *I, const Loop *L, ScalarEvolution *SE) {
 /// This algorithm does not require IVUsers analysis. Instead, it simplifies
 /// instructions in-place during analysis. Rather than rewriting induction
 /// variables bottom-up from their users, it transforms a chain of IVUsers
-/// top-down, updating the IR only when it encouters a clear optimization
-/// opportunitiy.
+/// top-down, updating the IR only when it encounters a clear optimization
+/// opportunity.
 ///
 /// Once DisableIVRewrite is default, LSR will be the only client of IVUsers.
 ///

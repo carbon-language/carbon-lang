@@ -282,7 +282,7 @@ int compare(DigitsT LDigits, int16_t LScale, DigitsT RDigits, int16_t RScale) {
 ///
 /// As a convenience, returns the matching scale.  If the output value of one
 /// number is zero, returns the scale of the other.  If both are zero, which
-/// scale is returned is unspecifed.
+/// scale is returned is unspecified.
 template <class DigitsT>
 int16_t matchScales(DigitsT &LDigits, int16_t &LScale, DigitsT &RDigits,
                     int16_t &RScale) {
@@ -334,7 +334,7 @@ std::pair<DigitsT, int16_t> getSum(DigitsT LDigits, int16_t LScale,
                                    DigitsT RDigits, int16_t RScale) {
   static_assert(!std::numeric_limits<DigitsT>::is_signed, "expected unsigned");
 
-  // Check inputs up front.  This is only relevent if addition overflows, but
+  // Check inputs up front.  This is only relevant if addition overflows, but
   // testing here should catch more bugs.
   assert(LScale < INT16_MAX && "scale too large");
   assert(RScale < INT16_MAX && "scale too large");

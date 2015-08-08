@@ -402,7 +402,7 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
 }
 
 /// Computes loop safety information, checks loop body & header
-/// for the possiblity of may throw exception.
+/// for the possibility of may throw exception.
 ///
 void llvm::computeLICMSafetyInfo(LICMSafetyInfo * SafetyInfo, Loop * CurLoop) {
   assert(CurLoop != nullptr && "CurLoop cant be null");
@@ -410,7 +410,7 @@ void llvm::computeLICMSafetyInfo(LICMSafetyInfo * SafetyInfo, Loop * CurLoop) {
   // Setting default safety values.
   SafetyInfo->MayThrow = false;
   SafetyInfo->HeaderMayThrow = false;
-  // Iterate over header and compute dafety info.
+  // Iterate over header and compute safety info.
   for (BasicBlock::iterator I = Header->begin(), E = Header->end();
        (I != E) && !SafetyInfo->HeaderMayThrow; ++I)
     SafetyInfo->HeaderMayThrow |= I->mayThrow();

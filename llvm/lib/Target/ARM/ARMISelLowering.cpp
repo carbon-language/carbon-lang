@@ -609,7 +609,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setTargetDAGCombine(ISD::ADDC);
 
   if (Subtarget->isFPOnlySP()) {
-    // When targetting a floating-point unit with only single-precision
+    // When targeting a floating-point unit with only single-precision
     // operations, f64 is legal for the few double-precision instructions which
     // are present However, no double-precision operations other than moves,
     // loads and stores are provided by the hardware.
@@ -11597,7 +11597,7 @@ bool ARMTargetLowering::canCombineStoreAndExtract(Type *VectorTy, Value *Idx,
     return false;
 
   // Floating point values and vector values map to the same register file.
-  // Therefore, althought we could do a store extract of a vector type, this is
+  // Therefore, although we could do a store extract of a vector type, this is
   // better to leave at float as we have more freedom in the addressing mode for
   // those.
   if (VectorTy->isFPOrFPVectorTy())

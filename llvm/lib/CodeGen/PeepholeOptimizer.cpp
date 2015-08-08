@@ -327,7 +327,7 @@ namespace {
 
     /// \brief Following the use-def chain, get the next available source
     /// for the tracked value.
-    /// \return A ValueTrackerResult containing the a set of registers
+    /// \return A ValueTrackerResult containing a set of registers
     /// and sub registers with tracked values. A ValueTrackerResult with
     /// an empty set of registers means no source was found.
     ValueTrackerResult getNextSource();
@@ -1567,7 +1567,7 @@ ValueTrackerResult ValueTracker::getNextSource() {
     Res.setInst(Def);
 
     // If we can still move up in the use-def chain, move to the next
-    // defintion.
+    // definition.
     if (!TargetRegisterInfo::isPhysicalRegister(Reg) && OneRegSrc) {
       Def = MRI.getVRegDef(Reg);
       DefIdx = MRI.def_begin(Reg).getOperandNo();

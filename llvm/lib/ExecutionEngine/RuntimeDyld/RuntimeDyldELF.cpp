@@ -1476,11 +1476,11 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
       // These relocations are supposed to subtract the TOC address from
       // the final value.  This does not fit cleanly into the RuntimeDyld
       // scheme, since there may be *two* sections involved in determining
-      // the relocation value (the section of the symbol refered to by the
+      // the relocation value (the section of the symbol referred to by the
       // relocation, and the TOC section associated with the current module).
       //
       // Fortunately, these relocations are currently only ever generated
-      // refering to symbols that themselves reside in the TOC, which means
+      // referring to symbols that themselves reside in the TOC, which means
       // that the two sections are actually the same.  Thus they cancel out
       // and we can immediately resolve the relocation right now.
       switch (RelType) {

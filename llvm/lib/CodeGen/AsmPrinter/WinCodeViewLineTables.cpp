@@ -253,7 +253,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   }
   FilenameSegmentLengths[LastSegmentEnd] = FI.Instrs.size() - LastSegmentEnd;
 
-  // Emit a line table subsection, requred to do PC-to-file:line lookup.
+  // Emit a line table subsection, required to do PC-to-file:line lookup.
   Asm->OutStreamer->AddComment("Line table subsection for " + Twine(FuncName));
   Asm->EmitInt32(COFF::DEBUG_LINE_TABLE_SUBSECTION);
   MCSymbol *LineTableBegin = Asm->MMI->getContext().createTempSymbol(),

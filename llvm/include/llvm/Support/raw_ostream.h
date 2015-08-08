@@ -246,7 +246,7 @@ public:
   /// outputting colored text, or before program exit.
   virtual raw_ostream &resetColor() { return *this; }
 
-  /// Reverses the forground and background colors.
+  /// Reverses the foreground and background colors.
   virtual raw_ostream &reverseColor() { return *this; }
 
   /// This function determines if this stream is connected to a "tty" or
@@ -316,7 +316,7 @@ private:
 };
 
 /// An abstract base class for streams implementations that also support a
-/// pwrite operation. This is usefull for code that can mostly stream out data,
+/// pwrite operation. This is useful for code that can mostly stream out data,
 /// but needs to patch in a header that needs to know the output size.
 class raw_pwrite_stream : public raw_ostream {
   virtual void pwrite_impl(const char *Ptr, size_t Size, uint64_t Offset) = 0;

@@ -1771,7 +1771,7 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
   if (Instruction *ReplInst = dyn_cast<Instruction>(Repl)) {
     // FIXME: If both the original and replacement value are part of the
     // same control-flow region (meaning that the execution of one
-    // guarentees the executation of the other), then we can combine the
+    // guarantees the execution of the other), then we can combine the
     // noalias scopes here and do better than the general conservative
     // answer used in combineMetadata().
 
@@ -2766,7 +2766,7 @@ void GVN::addDeadBlock(BasicBlock *BB) {
 //     R be the target of the dead out-coming edge.
 //  1) Identify the set of dead blocks implied by the branch's dead outcoming
 //     edge. The result of this step will be {X| X is dominated by R}
-//  2) Identify those blocks which haves at least one dead prodecessor. The
+//  2) Identify those blocks which haves at least one dead predecessor. The
 //     result of this step will be dominance-frontier(R).
 //  3) Update the PHIs in DF(R) by replacing the operands corresponding to 
 //     dead blocks with "UndefVal" in an hope these PHIs will optimized away.

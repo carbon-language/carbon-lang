@@ -261,7 +261,7 @@ void SIInsertWaits::pushInstruction(MachineBasicBlock &MBB,
 
   if (MBB.getParent()->getSubtarget<AMDGPUSubtarget>().getGeneration() >=
       AMDGPUSubtarget::VOLCANIC_ISLANDS) {
-    // Any occurence of consecutive VMEM or SMEM instructions forms a VMEM
+    // Any occurrence of consecutive VMEM or SMEM instructions forms a VMEM
     // or SMEM clause, respectively.
     //
     // The temporary workaround is to break the clauses with S_NOP.

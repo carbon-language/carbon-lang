@@ -1089,7 +1089,7 @@ static bool OptimizeExtractBits(BinaryOperator *ShiftI, ConstantInt *CI,
 //  ScalarizeMaskedLoad() translates masked load intrinsic, like 
 // <16 x i32 > @llvm.masked.load( <16 x i32>* %addr, i32 align,
 //                               <16 x i1> %mask, <16 x i32> %passthru)
-// to a chain of basic blocks, whith loading element one-by-one if
+// to a chain of basic blocks, with loading element one-by-one if
 // the appropriate mask bit is set
 // 
 //  %1 = bitcast i8* %addr to i32*
@@ -4135,7 +4135,7 @@ class VectorPromoteHelper {
   /// \brief Generate a constant vector with \p Val with the same
   /// number of elements as the transition.
   /// \p UseSplat defines whether or not \p Val should be replicated
-  /// accross the whole vector.
+  /// across the whole vector.
   /// In other words, if UseSplat == true, we generate <Val, Val, ..., Val>,
   /// otherwise we generate a vector with as many undef as possible:
   /// <undef, ..., undef, Val, undef, ..., undef> where \p Val is only

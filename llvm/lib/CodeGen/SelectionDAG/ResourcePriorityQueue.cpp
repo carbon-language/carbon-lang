@@ -49,7 +49,7 @@ ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS)
   TII = STI.getInstrInfo();
   ResourcesModel.reset(TII->CreateTargetScheduleState(STI));
   // This hard requirement could be relaxed, but for now
-  // do not let it procede.
+  // do not let it proceed.
   assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
 
   unsigned NumRC = TRI->getNumRegClasses();
@@ -269,12 +269,12 @@ bool ResourcePriorityQueue::isResourceAvailable(SUnit *SU) {
     }
 
   // Now see if there are no other dependencies
-  // to instructions alredy in the packet.
+  // to instructions already in the packet.
   for (unsigned i = 0, e = Packet.size(); i != e; ++i)
     for (SUnit::const_succ_iterator I = Packet[i]->Succs.begin(),
          E = Packet[i]->Succs.end(); I != E; ++I) {
       // Since we do not add pseudos to packets, might as well
-      // ignor order deps.
+      // ignore order deps.
       if (I->isCtrl())
         continue;
 

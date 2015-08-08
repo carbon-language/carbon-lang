@@ -1466,7 +1466,7 @@ static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     // cmn w0, #1
     // Fundamental, we're relying on the property that (zext LHS) == (zext RHS)
     // if and only if (sext LHS) == (sext RHS). The checks are in place to
-    // ensure both the LHS and RHS are truely zero extended and to make sure the
+    // ensure both the LHS and RHS are truly zero extended and to make sure the
     // transformation is profitable.
     if ((RHSC->getZExtValue() >> 16 == 0) && isa<LoadSDNode>(LHS) &&
         cast<LoadSDNode>(LHS)->getExtensionType() == ISD::ZEXTLOAD &&
@@ -8385,7 +8385,7 @@ static SDValue replaceSplatVectorStore(SelectionDAG &DAG, StoreSDNode *St) {
   unsigned Alignment = std::min(OrigAlignment, EltOffset);
 
   // Create scalar stores. This is at least as good as the code sequence for a
-  // split unaligned store wich is a dup.s, ext.b, and two stores.
+  // split unaligned store which is a dup.s, ext.b, and two stores.
   // Most of the time the three stores should be replaced by store pair
   // instructions (stp).
   SDLoc DL(St);

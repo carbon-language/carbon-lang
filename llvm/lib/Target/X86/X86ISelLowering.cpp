@@ -15308,11 +15308,11 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
 
 /// \brief Creates an SDNode for a predicated scalar operation.
 /// \returns (X86vselect \p Mask, \p Op, \p PreservedSrc).
-/// The mask is comming as MVT::i8 and it should be truncated
+/// The mask is coming as MVT::i8 and it should be truncated
 /// to MVT::i1 while lowering masking intrinsics.
 /// The main difference between ScalarMaskingNode and VectorMaskingNode is using
-/// "X86select" instead of "vselect". We just can't create the "vselect" node for
-/// a scalar instruction.
+/// "X86select" instead of "vselect". We just can't create the "vselect" node
+/// for a scalar instruction.
 static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
                                     SDValue PreservedSrc,
                                     const X86Subtarget *Subtarget,
@@ -15454,7 +15454,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue Src0 = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
       // There are 2 kinds of intrinsics in this group:
-      // (1) With supress-all-exceptions (sae) or rounding mode- 6 operands
+      // (1) With suppress-all-exceptions (sae) or rounding mode- 6 operands
       // (2) With rounding mode and sae - 7 operands.
       if (Op.getNumOperands() == 6) {
         SDValue Sae  = Op.getOperand(5);
@@ -18069,7 +18069,7 @@ X86TargetLowering::lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const {
   // lowered to just a load without a fence. A mfence flushes the store buffer,
   // making the optimization clearly correct.
   // FIXME: it is required if isAtLeastRelease(Order) but it is not clear
-  // otherwise, we might be able to be more agressive on relaxed idempotent
+  // otherwise, we might be able to be more aggressive on relaxed idempotent
   // rmw. In practice, they do not look useful, so we don't try to be
   // especially clever.
   if (SynchScope == SingleThread)
@@ -25690,7 +25690,7 @@ static SDValue performVZEXTCombine(SDNode *N, SelectionDAG &DAG,
   }
 
   // Check if we can bypass extracting and re-inserting an element of an input
-  // vector. Essentialy:
+  // vector. Essentially:
   // (bitcast (sclr2vec (ext_vec_elt x))) -> (bitcast x)
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR &&
       V.getOperand(0).getOpcode() == ISD::EXTRACT_VECTOR_ELT &&

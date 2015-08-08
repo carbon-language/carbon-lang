@@ -98,7 +98,7 @@ private:
   /// This reordering exposes to optimizeMemoryInstruction more
   /// optimization opportunities on loads and stores.
   ///
-  /// If this function succesfully hoists an eliminable addrspacecast or V is
+  /// If this function successfully hoists an eliminable addrspacecast or V is
   /// already such an addrspacecast, it returns the transformed value (which is
   /// guaranteed to be an addrspacecast); otherwise, it returns nullptr.
   Value *hoistAddrSpaceCastFrom(Value *V, int Depth = 0);

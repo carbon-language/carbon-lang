@@ -42,7 +42,7 @@ class PreservedAnalyses;
 ///
 /// This class constructs tables that hold the target library information and
 /// make it available. However, it is somewhat expensive to compute and only
-/// depends on the triple. So users typicaly interact with the \c
+/// depends on the triple. So users typically interact with the \c
 /// TargetLibraryInfo wrapper below.
 class TargetLibraryInfoImpl {
   friend class TargetLibraryInfo;

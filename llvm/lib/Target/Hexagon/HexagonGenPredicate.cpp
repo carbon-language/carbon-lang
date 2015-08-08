@@ -250,7 +250,7 @@ Register HexagonGenPredicate::getPredRegFor(const Register &Reg) {
   unsigned NewPR = MRI->createVirtualRegister(PredRC);
 
   // For convertible instructions, do not modify them, so that they can
-  // be coverted later.  Generate a copy from Reg to NewPR.
+  // be converted later.  Generate a copy from Reg to NewPR.
   if (isConvertibleToPredForm(DefI)) {
     MachineBasicBlock::iterator DefIt = DefI;
     BuildMI(B, std::next(DefIt), DL, TII->get(TargetOpcode::COPY), NewPR)
