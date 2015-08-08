@@ -251,7 +251,22 @@ public:
     return EndLoc;
   }
 
-  void print(raw_ostream &OS) const override { }
+  void print(raw_ostream &OS) const override {
+    switch (Kind) {
+    case Register:
+      OS << "<register " << getReg() << '>';
+      break;
+    case Immediate:
+      OS << getImm();
+      break;
+    case Token:
+      OS << '\'' << getToken() << '\'';
+      break;
+    case Expression:
+      OS << "<expr " << *Expr << '>';
+      break;
+    }
+  }
 
   static std::unique_ptr<AMDGPUOperand> CreateImm(int64_t Val, SMLoc Loc,
                                                   enum ImmTy Type = ImmTyNone,
