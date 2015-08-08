@@ -673,16 +673,14 @@ public:
   }
 
   CleanupReturnInst *CreateCleanupRet(BasicBlock *UnwindBB = nullptr,
-                               Value *RetVal = nullptr) {
+                                      Value *RetVal = nullptr) {
     return Insert(CleanupReturnInst::Create(Context, RetVal, UnwindBB));
   }
 
   CatchPadInst *CreateCatchPad(Type *Ty, BasicBlock *NormalDest,
-                                   BasicBlock *UnwindDest,
-                                   ArrayRef<Value *> Args,
-                                   const Twine &Name = "") {
-    return Insert(CatchPadInst::Create(Ty, NormalDest, UnwindDest, Args),
-                  Name);
+                               BasicBlock *UnwindDest, ArrayRef<Value *> Args,
+                               const Twine &Name = "") {
+    return Insert(CatchPadInst::Create(Ty, NormalDest, UnwindDest, Args), Name);
   }
 
   CatchEndPadInst *CreateCatchEndPad(BasicBlock *UnwindBB = nullptr) {
@@ -690,13 +688,13 @@ public:
   }
 
   TerminatePadInst *CreateTerminatePad(BasicBlock *UnwindBB = nullptr,
-                                           ArrayRef<Value *> Args = {},
-                                           const Twine &Name = "") {
+                                       ArrayRef<Value *> Args = {},
+                                       const Twine &Name = "") {
     return Insert(TerminatePadInst::Create(Context, UnwindBB, Args), Name);
   }
 
   CleanupPadInst *CreateCleanupPad(Type *Ty, ArrayRef<Value *> Args,
-                                       const Twine &Name = "") {
+                                   const Twine &Name = "") {
     return Insert(CleanupPadInst::Create(Ty, Args), Name);
   }
 
