@@ -226,9 +226,9 @@ StringRef LinkerDriver::findDefaultEntry() {
 WindowsSubsystem LinkerDriver::inferSubsystem() {
   if (Config->DLL)
     return IMAGE_SUBSYSTEM_WINDOWS_GUI;
-  if (Symtab.find(mangle("main")) || Symtab.find(mangle("wmain")))
+  if (Symtab.findUnderscore("main") || Symtab.findUnderscore("wmain"))
     return IMAGE_SUBSYSTEM_WINDOWS_CUI;
-  if (Symtab.find(mangle("WinMain")) || Symtab.find(mangle("wWinMain")))
+  if (Symtab.findUnderscore("WinMain") || Symtab.findUnderscore("wWinMain"))
     return IMAGE_SUBSYSTEM_WINDOWS_GUI;
   return IMAGE_SUBSYSTEM_UNKNOWN;
 }
