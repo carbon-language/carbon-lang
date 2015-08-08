@@ -288,8 +288,17 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
       MachineInstrBuilder Inst32 =
           BuildMI(MBB, I, MI.getDebugLoc(), TII->get(Op32));
 
-      // dst
-      Inst32.addOperand(MI.getOperand(0));
+      // Add the dst operand if the 32-bit encoding also has an explicit $dst.
+      // For VOPC instructions, this is replaced by an implicit def of vcc.
+      int Op32DstIdx = AMDGPU::getNamedOperandIdx(Op32, AMDGPU::OpName::dst);
+      if (Op32DstIdx != -1) {
+        // dst
+        Inst32.addOperand(MI.getOperand(0));
+      } else {
+        assert(MI.getOperand(0).getReg() == AMDGPU::VCC &&
+               "Unexpected case");
+      }
+
 
       Inst32.addOperand(*TII->getNamedOperand(MI, AMDGPU::OpName::src0));
 

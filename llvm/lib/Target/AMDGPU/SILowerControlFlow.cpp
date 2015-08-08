@@ -313,7 +313,7 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
               .addImm(0);
     }
   } else {
-    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMPX_LE_F32_e32), AMDGPU::VCC)
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMPX_LE_F32_e32))
            .addImm(0)
            .addOperand(Op);
   }
@@ -359,9 +359,9 @@ void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel, int 
             .addReg(AMDGPU::VCC_LO);
 
     // Compare the just read M0 value to all possible Idx values
-    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMP_EQ_U32_e32), AMDGPU::VCC)
-            .addReg(AMDGPU::M0)
-            .addReg(Idx);
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMP_EQ_U32_e32))
+      .addReg(AMDGPU::M0)
+      .addReg(Idx);
 
     // Update EXEC, save the original EXEC value to VCC
     BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_AND_SAVEEXEC_B64), AMDGPU::VCC)
