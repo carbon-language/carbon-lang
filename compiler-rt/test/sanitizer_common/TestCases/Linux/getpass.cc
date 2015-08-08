@@ -1,4 +1,5 @@
 // RUN: %clangxx -O0 -g %s -lutil -o %t && %run %t | FileCheck %s
+// REQUIRES: stable-runtime
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
