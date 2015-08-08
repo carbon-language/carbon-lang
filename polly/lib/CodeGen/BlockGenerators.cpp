@@ -514,6 +514,7 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
     if (MA->getScopArrayInfo()->isPHI()) {
       PHINode *BasePHI = dyn_cast<PHINode>(Base);
       int PHIIdx = BasePHI->getBasicBlockIndex(BB);
+      assert(PHIIdx >= 0);
       Address = getOrCreateAlloca(Base, PHIOpMap, ".phiops");
       Val = BasePHI->getIncomingValue(PHIIdx);
     } else {
