@@ -123,7 +123,7 @@ void NonLocalizedStringChecker::initUIMethods(ASTContext &Ctx) const {
                {"UIAlertController",
                 {{"alertControllerWithTitle:message:preferredStyle:", 1}}},
                {"NSAttributedString",
-                {{"initWithString:", 0}, {"initWithString:attributes:", 0}}}};
+                {{"initWithString:", 0}}}};
 }
 
 /// Initializes a list of methods and C functions that return a localized string
