@@ -30,7 +30,7 @@ typedef enum UIViewAnimationOptions {
 - (void)didReceiveMemoryWarning;
 - (void)removeFromParentViewController;
 - (void)transitionFromViewController:(UIViewController *)fromViewController
-  toViewController:(UIViewController *)toViewController 
+  toViewController:(UIViewController *)toViewController
   duration:(NSTimeInterval)duration options:(UIViewAnimationOptions)options
   animations:(void (^)(void))animations
   completion:(void (^)(BOOL finished))completion;
@@ -67,6 +67,25 @@ typedef enum UIViewAnimationOptions {
 - (BOOL)resignFirstResponder { return 0; }
 - (void)restoreStateWithCoder:(NSCoder *)coder {}
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {}
+@end
+
+// Do not warn for the implementation in the superclass itself.
+@implementation UIViewController
+- (void)addChildViewController:(UIViewController *)childController {}
+- (void)viewDidAppear:(BOOL)animated {}
+- (void)viewDidDisappear:(BOOL)animated {}
+- (void)viewDidUnload {}
+- (void)viewDidLoad {}
+- (void)viewWillUnload {}
+- (void)viewWillAppear:(BOOL)animated {}
+- (void)viewWillDisappear:(BOOL)animated {}
+- (void)didReceiveMemoryWarning {}
+- (void)removeFromParentViewController {}
+- (void)transitionFromViewController:(UIViewController *)fromViewController
+  toViewController:(UIViewController *)toViewController
+  duration:(NSTimeInterval)duration options:(UIViewAnimationOptions)options
+  animations:(void (^)(void))animations
+  completion:(void (^)(BOOL finished))completion {}
 @end
 
 // Warn if UIViewController is our superclass and we do not call super

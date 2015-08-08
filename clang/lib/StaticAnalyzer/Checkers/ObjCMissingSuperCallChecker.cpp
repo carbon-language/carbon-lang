@@ -88,7 +88,7 @@ private:
 /// \param[out] SuperclassName On return, the found superclass name.
 bool ObjCSuperCallChecker::isCheckableClass(const ObjCImplementationDecl *D,
                                             StringRef &SuperclassName) const {
-  const ObjCInterfaceDecl *ID = D->getClassInterface();
+  const ObjCInterfaceDecl *ID = D->getClassInterface()->getSuperClass();
   for ( ; ID ; ID = ID->getSuperClass())
   {
     SuperclassName = ID->getIdentifier()->getName();
