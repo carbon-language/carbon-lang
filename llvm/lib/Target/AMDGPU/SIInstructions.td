@@ -449,14 +449,16 @@ def S_CBRANCH_SCC1 : SOPP <
 >;
 } // End Uses = [SCC]
 
+let Uses = [VCC] in {
 def S_CBRANCH_VCCZ : SOPP <
-  0x00000006, (ins sopp_brtarget:$simm16, VCCReg:$vcc),
+  0x00000006, (ins sopp_brtarget:$simm16),
   "s_cbranch_vccz $simm16"
 >;
 def S_CBRANCH_VCCNZ : SOPP <
-  0x00000007, (ins sopp_brtarget:$simm16, VCCReg:$vcc),
+  0x00000007, (ins sopp_brtarget:$simm16),
   "s_cbranch_vccnz $simm16"
 >;
+} // End Uses = [VCC]
 
 let Uses = [EXEC] in {
 def S_CBRANCH_EXECZ : SOPP <

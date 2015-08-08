@@ -1136,7 +1136,7 @@ def VOP_I64_I64_I32 : VOPProfile <[i64, i64, i32, untyped]>;
 def VOP_I64_I32_I64 : VOPProfile <[i64, i32, i64, untyped]>;
 def VOP_I64_I64_I64 : VOPProfile <[i64, i64, i64, untyped]>;
 def VOP_CNDMASK : VOPProfile <[i32, i32, i32, untyped]> {
-  let Ins32 = (ins Src0RC32:$src0, Src1RC32:$src1, VCCReg:$src2);
+  let Ins32 = (ins Src0RC32:$src0, Src1RC32:$src1);
   let Ins64 = (ins Src0RC64:$src0, Src1RC64:$src1, SSrc_64:$src2);
   let Asm64 = "$dst, $src0, $src1, $src2";
 }
