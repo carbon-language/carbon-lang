@@ -383,7 +383,7 @@ public:
   void generateChecks(MemoryDepChecker::DepCandidates &DepCands,
                       bool UseDependencies);
 
-  /// \brief \return the checks that generateChecks created.
+  /// \brief Returns the checks that generateChecks created.
   const SmallVectorImpl<PointerCheck> &getChecks() const { return Checks; }
 
   /// \brief Decide if we need to add a check between two groups of pointers,
