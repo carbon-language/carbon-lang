@@ -210,3 +210,47 @@ define double @reassociate_muls_double(double %x0, double %x1, double %x2, doubl
   ret double %t2
 }
 
+; Verify that SSE and AVX 128-bit vector single-precison adds are reassociated.
+
+define <4 x float> @reassociate_adds_v4f32(<4 x float> %x0, <4 x float> %x1, <4 x float> %x2, <4 x float> %x3) {
+; SSE-LABEL: reassociate_adds_v4f32:
+; SSE:       # BB#0:
+; SSE-NEXT:    mulps %xmm1, %xmm0
+; SSE-NEXT:    addps %xmm3, %xmm2
+; SSE-NEXT:    addps %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_adds_v4f32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmulps %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vaddps %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vaddps %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fmul <4 x float> %x0, %x1
+  %t1 = fadd <4 x float> %x2, %t0
+  %t2 = fadd <4 x float> %x3, %t1
+  ret <4 x float> %t2
+}
+
+; Verify that SSE and AVX 128-bit vector double-precison adds are reassociated.
+
+define <2 x double> @reassociate_adds_v2f64(<2 x double> %x0, <2 x double> %x1, <2 x double> %x2, <2 x double> %x3) {
+; SSE-LABEL: reassociate_adds_v2f64:
+; SSE:       # BB#0:
+; SSE-NEXT:    mulpd %xmm1, %xmm0
+; SSE-NEXT:    addpd %xmm3, %xmm2
+; SSE-NEXT:    addpd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_adds_v2f64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmulpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vaddpd %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vaddpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fmul <2 x double> %x0, %x1
+  %t1 = fadd <2 x double> %x2, %t0
+  %t2 = fadd <2 x double> %x3, %t1
+  ret <2 x double> %t2
+}
+
