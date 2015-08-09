@@ -240,6 +240,14 @@ static uint64_t getDefaultImageBase() {
 }
 
 void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
+  // If the first command line argument is "/lib", link.exe acts like lib.exe.
+  // We call our own implementation of lib.exe that understands bitcode files.
+  if (ArgsArr.size() > 1 && StringRef(ArgsArr[1]).equals_lower("/lib")) {
+    if (llvm::libDriverMain(ArgsArr.slice(1)) != 0)
+      error("lib failed");
+    return;
+  }
+
   // Needed for LTO.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -247,12 +255,6 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllDisassemblers();
-
-  // If the first command line argument is "/lib", link.exe acts like lib.exe.
-  // We call our own implementation of lib.exe that understands bitcode files.
-  if (ArgsArr.size() > 1 && StringRef(ArgsArr[1]).equals_lower("/lib"))
-    if (llvm::libDriverMain(ArgsArr.slice(1)) != 0)
-      error("lib failed");
 
   // Parse command line options.
   llvm::opt::InputArgList Args = Parser.parseLINK(ArgsArr.slice(1));
