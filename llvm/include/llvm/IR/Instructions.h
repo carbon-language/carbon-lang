@@ -4037,7 +4037,6 @@ class CatchReturnInst : public TerminatorInst {
   CatchReturnInst(const CatchReturnInst &RI);
 
 private:
-  void init(Value *RetVal, BasicBlock *UnwindBB);
   CatchReturnInst(BasicBlock *BB, Instruction *InsertBefore = nullptr);
   CatchReturnInst(BasicBlock *BB, BasicBlock *InsertAtEnd);
 
