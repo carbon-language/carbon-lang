@@ -27,8 +27,6 @@ using llvm::object::Archive;
 using llvm::object::COFFSymbolRef;
 using llvm::object::coff_import_header;
 using llvm::object::coff_symbol_generic;
-using llvm::object::coff_symbol16;
-using llvm::object::coff_symbol32;
 
 class ArchiveFile;
 class BitcodeFile;
