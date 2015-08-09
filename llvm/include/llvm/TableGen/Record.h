@@ -547,7 +547,7 @@ public:
 class StringInit : public TypedInit {
   std::string Value;
 
-  explicit StringInit(const std::string &V)
+  explicit StringInit(StringRef V)
     : TypedInit(IK_StringInit, StringRecTy::get()), Value(V) {}
 
   StringInit(const StringInit &Other) = delete;
