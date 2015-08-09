@@ -107,6 +107,18 @@
 //
 // RUN: diff -u %t/stress1.ll %t/stress1_check.ll
 //
+// RUN: %clang_cc1 -fmodules -x c++ -std=c++11 \
+// RUN:   -I Inputs/stress1 \
+// RUN:   -fmodules-cache-path=%t \
+// RUN:   -fmodule-map-file-home-is-cwd \
+// RUN:   -fmodule-file=%t/m00.pcm \
+// RUN:   -fmodule-file=%t/m01.pcm \
+// RUN:   -fmodule-file=%t/m02.pcm \
+// RUN:   -fmodule-file=%t/m03.pcm \
+// RUN:   -emit-module -fmodule-name=merge00 -o /dev/null \
+// RUN:   -DMERGE_NO_REEXPORT \
+// RUN:   Inputs/stress1/module.modulemap
+//
 // expected-no-diagnostics
 
 #include "m00.h"

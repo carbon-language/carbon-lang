@@ -9,6 +9,10 @@
 //#pragma weak pragma_weak01 // expected-warning {{weak identifier 'pragma_weak01' never declared}}
 //#pragma weak pragma_weak04 // expected-warning {{weak identifier 'pragma_waek04' never declared}}
 
+#ifdef MERGE_NO_REEXPORT
+#include "merge_no_reexport.h"
+#endif
+
 #include "common.h"
 #include "m00.h"
 #include "m01.h"
