@@ -304,7 +304,6 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   // transformation.
   const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
                                        MF.getSubtarget().getRegisterInfo());
-  unsigned StackPtr = RegInfo.getStackRegister();
   unsigned FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
 
   // We expect to enter this at the beginning of a call sequence
@@ -334,7 +333,8 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   if (!I->isCopy() || !I->getOperand(0).isReg())
     return;
   Context.SPCopy = I++;
-  StackPtr = Context.SPCopy->getOperand(0).getReg();
+
+  unsigned StackPtr = Context.SPCopy->getOperand(0).getReg();
 
   // Scan the call setup sequence for the pattern we're looking for.
   // We only handle a simple case - a sequence of MOV32mi or MOV32mr
