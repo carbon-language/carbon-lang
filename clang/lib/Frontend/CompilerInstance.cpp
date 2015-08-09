@@ -1261,6 +1261,13 @@ void CompilerInstance::createModuleManager() {
       ModuleManager->InitializeSema(getSema());
     if (hasASTConsumer())
       ModuleManager->StartTranslationUnit(&getASTConsumer());
+
+    if (TheDependencyFileGenerator)
+      TheDependencyFileGenerator->AttachToASTReader(*ModuleManager);
+    if (ModuleDepCollector)
+      ModuleDepCollector->attachToASTReader(*ModuleManager);
+    for (auto &Listener : DependencyCollectors)
+      Listener->attachToASTReader(*ModuleManager);
   }
 }
 
@@ -1419,15 +1426,6 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     // If we don't already have an ASTReader, create one now.
     if (!ModuleManager)
       createModuleManager();
-
-    if (TheDependencyFileGenerator)
-      TheDependencyFileGenerator->AttachToASTReader(*ModuleManager);
-
-    if (ModuleDepCollector)
-      ModuleDepCollector->attachToASTReader(*ModuleManager);
-
-    for (auto &Listener : DependencyCollectors)
-      Listener->attachToASTReader(*ModuleManager);
 
     llvm::Timer Timer;
     if (FrontendTimerGroup)
