@@ -39,5 +39,5 @@ extern module "test-base" "Inputs/dependency-gen-base.modulemap"
 // EXPLICIT-FIXME: {{.*}}/base.pcm
 //
 // EXPLICIT: {{^}}explicit.pcm:
-// EXPLICIT: {{.*}}/dependency-gen.modulemap
+// EXPLICIT: {{.*[/\\]}}dependency-gen.modulemap
 // EXPLICIT: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen.h

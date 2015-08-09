@@ -27,4 +27,4 @@
 // CHECK-USE: use.o:
 // CHECK-USE-DAG:   Inputs/relative-dep-gen{{(-cwd)?}}.modulemap
 // CHECK-USE-DAG:   relative-dep-gen.cpp
-// CHECK-USE-DAG:   Inputs/relative-dep-gen-1.h
+// CHECK-USE-DAG:   Inputs{{[/\\]}}relative-dep-gen-1.h
