@@ -171,7 +171,7 @@ namespace process_linux {
             const ProcessLaunchInfo &m_launch_info;
         };
 
-        typedef std::function<::pid_t(Error &)> InitialOperation;
+        typedef std::function< ::pid_t(Error &)> InitialOperation;
 
         // ---------------------------------------------------------------------
         // Private Instance Methods
