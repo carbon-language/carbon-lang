@@ -538,6 +538,12 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Config->SEHCount = Symtab.addAbsolute("___safe_se_handler_count", 0);
   }
 
+  // We do not support /guard:cf (control flow protection) yet.
+  // Define CFG symbols anyway so that we can link MSVC 2015 CRT.
+  Symtab.addAbsolute(mangle("__guard_fids_table"), 0);
+  Symtab.addAbsolute(mangle("__guard_fids_count"), 0);
+  Symtab.addAbsolute(mangle("__guard_flags"), 0x100);
+
   // Read as much files as we can from directives sections.
   Symtab.run();
 
