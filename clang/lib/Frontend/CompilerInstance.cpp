@@ -944,8 +944,10 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
     FullSourceLoc(ImportLoc, ImportingInstance.getSourceManager()));
 
   // If we're collecting module dependencies, we need to share a collector
-  // between all of the module CompilerInstances.
+  // between all of the module CompilerInstances. Other than that, we don't
+  // want to produce any dependency output from the module build.
   Instance.setModuleDepCollector(ImportingInstance.getModuleDepCollector());
+  Invocation->getDependencyOutputOpts() = DependencyOutputOptions();
 
   // Get or create the module map that we'll use to build this module.
   std::string InferredModuleMapContent;
