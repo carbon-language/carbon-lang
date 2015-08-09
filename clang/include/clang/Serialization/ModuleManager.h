@@ -46,12 +46,6 @@ class ModuleManager {
   /// \brief All loaded modules, indexed by name.
   llvm::DenseMap<const FileEntry *, ModuleFile *> Modules;
 
-  typedef llvm::SetVector<const FileEntry *> AdditionalKnownModuleFileSet;
-
-  /// \brief Additional module files that are known but not loaded. Tracked
-  /// here so that we can re-export them if necessary.
-  AdditionalKnownModuleFileSet AdditionalKnownModuleFiles;
-
   /// \brief FileManager that handles translating between filenames and
   /// FileEntry *.
   FileManager &FileMgr;
@@ -241,19 +235,6 @@ public:
   /// \brief Notification from the AST reader that the given module file
   /// has been "accepted", and will not (can not) be unloaded.
   void moduleFileAccepted(ModuleFile *MF);
-
-  /// \brief Notification from the frontend that the given module file is
-  /// part of this compilation (even if not imported) and, if this compilation
-  /// is exported, should be made available to importers of it.
-  bool addKnownModuleFile(StringRef FileName);
-
-  /// \brief Get a list of additional module files that are not currently
-  /// loaded but are considered to be part of the current compilation.
-  llvm::iterator_range<AdditionalKnownModuleFileSet::const_iterator>
-  getAdditionalKnownModuleFiles() {
-    return llvm::make_range(AdditionalKnownModuleFiles.begin(),
-                            AdditionalKnownModuleFiles.end());
-  }
 
   /// \brief Visit each of the modules.
   ///

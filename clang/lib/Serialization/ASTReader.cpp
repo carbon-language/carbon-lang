@@ -2227,9 +2227,6 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
     }
 
-    case KNOWN_MODULE_FILES:
-      break;
-
     case LANGUAGE_OPTIONS: {
       bool Complain = (ClientLoadCapabilities & ARR_ConfigurationMismatch) == 0;
       // FIXME: The &F == *ModuleMgr.begin() check is wrong for modules.
@@ -4208,20 +4205,6 @@ bool ASTReader::readASTFileControlBlock(
       while (Idx < N) {
         // Read information about the AST file.
         Idx += 5; // ImportLoc, Size, ModTime, Signature
-        std::string Filename = ReadString(Record, Idx);
-        ResolveImportedPath(Filename, ModuleDir);
-        Listener.visitImport(Filename);
-      }
-      break;
-    }
-
-    case KNOWN_MODULE_FILES: {
-      // Known-but-not-technically-used module files are treated as imports.
-      if (!NeedsImports)
-        break;
-
-      unsigned Idx = 0, N = Record.size();
-      while (Idx < N) {
         std::string Filename = ReadString(Record, Idx);
         ResolveImportedPath(Filename, ModuleDir);
         Listener.visitImport(Filename);

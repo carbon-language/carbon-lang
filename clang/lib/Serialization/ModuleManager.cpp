@@ -249,15 +249,6 @@ ModuleManager::addInMemoryBuffer(StringRef FileName,
   InMemoryBuffers[Entry] = std::move(Buffer);
 }
 
-bool ModuleManager::addKnownModuleFile(StringRef FileName) {
-  const FileEntry *File;
-  if (lookupModuleFile(FileName, 0, 0, File))
-    return true;
-  if (!Modules.count(File))
-    AdditionalKnownModuleFiles.insert(File);
-  return false;
-}
-
 ModuleManager::VisitState *ModuleManager::allocateVisitState() {
   // Fast path: if we have a cached state, use it.
   if (FirstVisitState) {
@@ -294,8 +285,6 @@ void ModuleManager::setGlobalIndex(GlobalModuleIndex *Index) {
 }
 
 void ModuleManager::moduleFileAccepted(ModuleFile *MF) {
-  AdditionalKnownModuleFiles.remove(MF->File);
-
   if (!GlobalIndex || GlobalIndex->loadedModuleFile(MF))
     return;
 

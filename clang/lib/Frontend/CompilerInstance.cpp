@@ -1372,13 +1372,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       return ModuleLoadResult();
     }
 
-    // FIXME: Rmove ModuleFileOverrides
-    auto Override = ModuleFileOverrides.find(ModuleName);
-    bool Explicit = Override != ModuleFileOverrides.end();
-
     std::string ModuleFileName =
-        Explicit ? Override->second
-                 : PP->getHeaderSearchInfo().getModuleFileName(Module);
+        PP->getHeaderSearchInfo().getModuleFileName(Module);
     if (ModuleFileName.empty()) {
       getDiagnostics().Report(ModuleNameLoc, diag::err_module_build_disabled)
           << ModuleName;
@@ -1396,24 +1391,15 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     llvm::TimeRegion TimeLoading(FrontendTimerGroup ? &Timer : nullptr);
 
     // Try to load the module file.
-    unsigned ARRFlags =
-        Explicit ? 0 : ASTReader::ARR_OutOfDate | ASTReader::ARR_Missing;
+    unsigned ARRFlags = ASTReader::ARR_OutOfDate | ASTReader::ARR_Missing;
     switch (ModuleManager->ReadAST(ModuleFileName,
-                                   Explicit ? serialization::MK_ExplicitModule
-                                            : serialization::MK_ImplicitModule,
+                                   serialization::MK_ImplicitModule,
                                    ImportLoc, ARRFlags)) {
     case ASTReader::Success:
       break;
 
     case ASTReader::OutOfDate:
     case ASTReader::Missing: {
-      if (Explicit) {
-        // ReadAST has already complained for us.
-        ModuleLoader::HadFatalFailure = true;
-        KnownModules[Path[0].first] = nullptr;
-        return ModuleLoadResult();
-      }
-
       // The module file is missing or out-of-date. Build it.
       assert(Module && "missing module file");
       // Check whether there is a cycle in the module graph.

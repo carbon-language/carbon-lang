@@ -877,7 +877,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(MODULE_NAME);
   RECORD(MODULE_MAP_FILE);
   RECORD(IMPORTS);
-  RECORD(KNOWN_MODULE_FILES);
   RECORD(LANGUAGE_OPTIONS);
   RECORD(TARGET_OPTIONS);
   RECORD(ORIGINAL_FILE);
@@ -1245,15 +1244,6 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
       AddPath(M->FileName, Record);
     }
     Stream.EmitRecord(IMPORTS, Record);
-
-    // Also emit a list of known module files that were not imported,
-    // but are made available by this module.
-    // FIXME: Should we also include a signature here?
-    Record.clear();
-    for (auto *E : Mgr.getAdditionalKnownModuleFiles())
-      AddPath(E->getName(), Record);
-    if (!Record.empty())
-      Stream.EmitRecord(KNOWN_MODULE_FILES, Record);
   }
 
   // Language options.
