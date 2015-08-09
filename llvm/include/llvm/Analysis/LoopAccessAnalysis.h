@@ -437,13 +437,8 @@ private:
                    bool UseDependencies);
 
   /// Generate the checks and return them.
-  ///
-  /// \p PtrToPartition contains the partition number for pointers.  If passed,
-  /// omit checks between pointers belonging to the same partition.  Partition
-  /// number -1 means that the pointer is used in multiple partitions.  In this
-  /// case we can't safely omit the check.
   SmallVector<PointerCheck, 4>
-  generateChecks(const SmallVectorImpl<int> *PtrPartition = nullptr) const;
+  generateChecks() const;
 
   /// Holds a pointer to the ScalarEvolution analysis.
   ScalarEvolution *SE;

@@ -149,8 +149,7 @@ void RuntimePointerChecking::insert(Loop *Lp, Value *Ptr, bool WritePtr,
 }
 
 SmallVector<RuntimePointerChecking::PointerCheck, 4>
-RuntimePointerChecking::generateChecks(
-    const SmallVectorImpl<int> *PtrPartition) const {
+RuntimePointerChecking::generateChecks() const {
   SmallVector<PointerCheck, 4> Checks;
 
   for (unsigned I = 0; I < CheckingGroups.size(); ++I) {
@@ -158,7 +157,7 @@ RuntimePointerChecking::generateChecks(
       const RuntimePointerChecking::CheckingPtrGroup &CGI = CheckingGroups[I];
       const RuntimePointerChecking::CheckingPtrGroup &CGJ = CheckingGroups[J];
 
-      if (needsChecking(CGI, CGJ, PtrPartition))
+      if (needsChecking(CGI, CGJ))
         Checks.push_back(std::make_pair(&CGI, &CGJ));
     }
   }
