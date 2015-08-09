@@ -15,5 +15,10 @@ module "test" {
 extern module "test-base2" "Inputs/dependency-gen-base2.modulemap"
 extern module "test-base" "Inputs/dependency-gen-base.modulemap"
 
-// CHECK: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included2.h
-// CHECK: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base.modulemap
+// CHECK-DAG: {{[/\\]}}dependency-gen.modulemap
+// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base.modulemap
+// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base2.modulemap
+
+// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen.h
+// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included.h
+// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included2.h

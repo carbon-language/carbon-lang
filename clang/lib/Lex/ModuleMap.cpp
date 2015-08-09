@@ -2335,9 +2335,14 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File, bool IsSystem,
 
   // Parse this module map file.
   Lexer L(ID, SourceMgr.getBuffer(ID), SourceMgr, MMapLangOpts);
+  SourceLocation Start = L.getSourceLocation();
   ModuleMapParser Parser(L, SourceMgr, Target, Diags, *this, File, Dir,
                          BuiltinIncludeDir, IsSystem);
   bool Result = Parser.parseModuleMapFile();
   ParsedModuleMap[File] = Result;
+
+  // Notify callbacks that we parsed it.
+  for (const auto &Cb : Callbacks)
+    Cb->moduleMapFileRead(Start, *File, IsSystem);
   return Result;
 }

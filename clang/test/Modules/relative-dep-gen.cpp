@@ -20,5 +20,11 @@
 
 #include "Inputs/relative-dep-gen-1.h"
 
-// CHECK-BUILD: mod.pcm: Inputs/relative-dep-gen-1.h Inputs/relative-dep-gen-2.h
-// CHECK-USE: use.o: relative-dep-gen.cpp Inputs/relative-dep-gen-1.h
+// CHECK-BUILD: mod.pcm:
+// CHECK-BUILD:   Inputs/relative-dep-gen{{(-cwd)?}}.modulemap
+// CHECK-BUILD:   Inputs/relative-dep-gen-1.h
+// CHECK-BUILD:   Inputs/relative-dep-gen-2.h
+// CHECK-USE: use.o:
+// CHECK-USE:   Inputs/relative-dep-gen{{(-cwd)?}}.modulemap
+// CHECK-USE:   relative-dep-gen.cpp
+// CHECK-USE:   Inputs/relative-dep-gen-1.h

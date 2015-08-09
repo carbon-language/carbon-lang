@@ -18,6 +18,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/ModuleMap.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Serialization/ASTReader.h"
@@ -82,6 +83,20 @@ struct DepCollectorPPCallbacks : public PPCallbacks {
   }
 };
 
+struct DepCollectorMMCallbacks : public ModuleMapCallbacks {
+  DependencyCollector &DepCollector;
+  DepCollectorMMCallbacks(DependencyCollector &DC) : DepCollector(DC) {}
+
+  void moduleMapFileRead(SourceLocation Loc, const FileEntry &Entry,
+                         bool IsSystem) override {
+    StringRef Filename = Entry.getName();
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/false,
+                                    /*IsSystem*/IsSystem,
+                                    /*IsModuleFile*/false,
+                                    /*IsMissing*/false);
+  }
+};
+
 struct DepCollectorASTListener : public ASTReaderListener {
   DependencyCollector &DepCollector;
   DepCollectorASTListener(DependencyCollector &L) : DepCollector(L) { }
@@ -132,6 +147,8 @@ DependencyCollector::~DependencyCollector() { }
 void DependencyCollector::attachToPreprocessor(Preprocessor &PP) {
   PP.addPPCallbacks(
       llvm::make_unique<DepCollectorPPCallbacks>(*this, PP.getSourceManager()));
+  PP.getHeaderSearchInfo().getModuleMap().addModuleMapCallbacks(
+      llvm::make_unique<DepCollectorMMCallbacks>(*this));
 }
 void DependencyCollector::attachToASTReader(ASTReader &R) {
   R.addListener(llvm::make_unique<DepCollectorASTListener>(*this));
@@ -185,6 +202,17 @@ public:
   bool includeModuleFiles() const { return IncludeModuleFiles; }
 };
 
+class DFGMMCallback : public ModuleMapCallbacks {
+  DFGImpl &Parent;
+public:
+  DFGMMCallback(DFGImpl &Parent) : Parent(Parent) {}
+  void moduleMapFileRead(SourceLocation Loc, const FileEntry &Entry,
+                         bool IsSystem) override {
+    if (!IsSystem || Parent.includeSystemHeaders())
+      Parent.AddFilename(Entry.getName());
+  }
+};
+
 class DFGASTReaderListener : public ASTReaderListener {
   DFGImpl &Parent;
 public:
@@ -217,6 +245,8 @@ DependencyFileGenerator *DependencyFileGenerator::CreateAndAttachToPreprocessor(
 
   DFGImpl *Callback = new DFGImpl(&PP, Opts);
   PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Callback));
+  PP.getHeaderSearchInfo().getModuleMap().addModuleMapCallbacks(
+      llvm::make_unique<DFGMMCallback>(*Callback));
   return new DependencyFileGenerator(Callback);
 }
 
