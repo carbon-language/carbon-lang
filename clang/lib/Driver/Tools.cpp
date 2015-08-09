@@ -9083,8 +9083,24 @@ void MinGW::Linker::AddLibGCC(const ArgList &Args,
     CmdArgs.push_back("-lmingwthrd");
   CmdArgs.push_back("-lmingw32");
 
-  // Add libgcc or compiler-rt.
-  AddRunTimeLibs(getToolChain(), getToolChain().getDriver(), CmdArgs, Args);
+  // Make use of compiler-rt if --rtlib option is used
+  ToolChain::RuntimeLibType RLT = getToolChain().GetRuntimeLibType(Args);
+  if (RLT == ToolChain::RLT_Libgcc) {
+    bool Static = Args.hasArg(options::OPT_static_libgcc) ||
+                  Args.hasArg(options::OPT_static);
+    bool Shared = Args.hasArg(options::OPT_shared);
+    bool CXX = getToolChain().getDriver().CCCIsCXX();
+
+    if (Static || (!CXX && !Shared)) {
+      CmdArgs.push_back("-lgcc");
+      CmdArgs.push_back("-lgcc_eh");
+    } else {
+      CmdArgs.push_back("-lgcc_s");
+      CmdArgs.push_back("-lgcc");
+    }
+  } else {
+    AddRunTimeLibs(getToolChain(), getToolChain().getDriver(), CmdArgs, Args);
+  }
 
   CmdArgs.push_back("-lmoldname");
   CmdArgs.push_back("-lmingwex");
