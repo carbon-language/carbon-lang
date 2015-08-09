@@ -1,10 +1,10 @@
 // RUN: cd %S
 // RUN: rm -rf %t
 //
-// RUN: %clang_cc1 -I. -x c++ -fmodule-name=test -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse %s -dependency-file - -MT implicit.pcm -o %t/implicit.pcm -fmodules-cache-path=%t -fmodule-map-file-home-is-cwd | FileCheck %s
+// RUN: %clang_cc1 -I. -x c++ -fmodule-name=test -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse %s -dependency-file - -MT implicit.pcm -o %t/implicit.pcm -fmodules-cache-path=%t -fmodule-map-file-home-is-cwd | FileCheck %s --check-prefix=IMPLICIT
 //
 // RUN: %clang_cc1 -I. -x c++ -fmodule-name=test-base -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse Inputs/dependency-gen-base.modulemap -o %t/base.pcm -fmodule-map-file-home-is-cwd
-// RUN: %clang_cc1 -I. -x c++ -fmodule-name=test -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse -fmodule-file=%t/base.pcm %s -dependency-file - -MT explicit.pcm -o %t/explicit.pcm -fmodules-cache-path=%t -fmodule-map-file-home-is-cwd | FileCheck %s
+// RUN: %clang_cc1 -I. -x c++ -fmodule-name=test -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse -fmodule-file=%t/base.pcm %s -dependency-file - -MT explicit.pcm -o %t/explicit.pcm -fmodules-cache-path=%t -fmodule-map-file-home-is-cwd | FileCheck %s --check-prefix=EXPLICIT
 module "test" {
   export *
   header "Inputs/dependency-gen.h"
@@ -14,10 +14,30 @@ module "test" {
 extern module "test-base2" "Inputs/dependency-gen-base2.modulemap"
 extern module "test-base" "Inputs/dependency-gen-base.modulemap"
 
-// CHECK-DAG: {{[/\\]}}dependency-gen.modulemap
-// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base.modulemap
-// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base2.modulemap
+// For implicit use of a module via the module cache, the input files
+// referenced by the .pcm are also dependencies of this build.
+//
+// IMPLICIT-DAG: {{[/\\]}}dependency-gen.modulemap
+// IMPLICIT-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base.modulemap
+// IMPLICIT-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-base2.modulemap
+// IMPLICIT-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen.h
+// IMPLICIT-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included.h
+// IMPLICIT-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included2.h
 
-// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen.h
-// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included.h
-// CHECK-DAG: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen-included2.h
+// For an explicit use of a module via -fmodule-file=, the other module maps
+// and included headers are not dependencies of this target (they are instead
+// dependencies of the explicitly-specified .pcm input).
+//
+// FIXME: We should avoid loading the other referenced module maps (we already
+// have a parsed copy of their contents from the .pcm file) and thus not list
+// them here.
+//
+// FIXME: We should list a dependency on the explicitly specified .pcm files
+// (whether or not -module-file-deps is specified on the command line).
+//
+// EXPLICIT-FIXME-NOT: dependency-gen-
+// EXPLICIT-FIXME: {{.*}}/base.pcm
+//
+// EXPLICIT: {{^}}explicit.pcm:
+// EXPLICIT: {{.*}}/dependency-gen.modulemap
+// EXPLICIT: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen.h

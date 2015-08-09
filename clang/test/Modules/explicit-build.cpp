@@ -179,6 +179,7 @@
 // CHECK-NO-FILE-INDIRECT:      error: module file '{{.*}}a.pcm' not found
 // CHECK-NO-FILE-INDIRECT-NEXT: note: imported by module 'b' in '{{.*}}b.pcm'
 // CHECK-NO-FILE-INDIRECT-NEXT: note: imported by module 'c' in '{{.*}}c.pcm'
+// CHECK-NO-FILE-INDIRECT-NOT:  note:
 
 // -------------------------------
 // Check that we don't get upset if B's timestamp is newer than C's.
@@ -198,4 +199,6 @@
 // RUN:            -fmodule-file=%t/c.pcm \
 // RUN:            %s -DHAVE_A -DHAVE_B -DHAVE_C 2>&1 | FileCheck --check-prefix=CHECK-MISMATCHED-B %s
 //
-// CHECK-MISMATCHED-B: fatal error: malformed or corrupted AST file: {{.*}}b.pcm": module file out of date
+// CHECK-MISMATCHED-B:      fatal error: module file '{{.*}}b.pcm' is out of date and needs to be rebuilt
+// CHECK-MISMATCHED-B-NEXT: note: imported by module 'c'
+// CHECK-MISMATCHED-B-NOT:  note:

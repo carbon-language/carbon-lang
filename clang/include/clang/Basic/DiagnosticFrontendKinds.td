@@ -194,16 +194,6 @@ def remark_module_build_done : Remark<"finished building module '%0'">,
 def err_conflicting_module_names : Error<
   "conflicting module names specified: '-fmodule-name=%0' and "
   "'-fmodule-implementation-of %1'">;
-def err_conflicting_module_files : Error<
-  "module '%0' is defined in both '%1' and '%2'">;
-def err_module_file_not_found : Error<
-  "module file '%0' not found">, DefaultFatal;
-def err_module_file_invalid : Error<
-  "file '%0' is not a valid precompiled module file">, DefaultFatal;
-def note_module_file_imported_by : Note<
-  "imported by %select{|module '%2' in }1'%0'">;
-def err_module_file_not_module : Error<
-  "AST file '%0' was not built as a module">, DefaultFatal;
 
 def err_missing_vfs_overlay_file : Error<
   "virtual filesystem overlay file '%0' not found">, DefaultFatal;

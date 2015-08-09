@@ -194,9 +194,8 @@ def err_unable_to_make_temp : Error<
   "unable to make temporary file: %0">;
   
 // Modules
-def err_module_file_conflict : Error<"module '%0' found in both '%1' and '%2'">;
 def err_module_format_unhandled : Error<
-  "no handler registered for module format '%0'">;
+  "no handler registered for module format '%0'">, DefaultFatal;
 
 // TransformActions
 // TODO: Use a custom category name to distinguish rewriter errors.

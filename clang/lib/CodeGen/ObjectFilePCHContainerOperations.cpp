@@ -58,7 +58,7 @@ public:
                         const std::string &OutputFileName,
                         raw_pwrite_stream *OS,
                         std::shared_ptr<PCHBuffer> Buffer)
-      : Diags(diags), HeaderSearchOpts(HSO), PreprocessorOpts(PPO),
+      : Diags(diags), Ctx(nullptr), HeaderSearchOpts(HSO), PreprocessorOpts(PPO),
         TargetOpts(TO), LangOpts(LO), OS(OS), Buffer(Buffer) {
     // The debug info output isn't affected by CodeModel and
     // ThreadModel, but the backend expects them to be nonempty.
@@ -71,6 +71,11 @@ public:
   virtual ~PCHContainerGenerator() {}
 
   void Initialize(ASTContext &Context) override {
+    if (Ctx) {
+      assert(Ctx == &Context);
+      return;
+    }
+
     Ctx = &Context;
     VMContext.reset(new llvm::LLVMContext());
     M.reset(new llvm::Module(MainFileName, *VMContext));

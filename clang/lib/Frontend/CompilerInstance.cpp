@@ -1261,8 +1261,10 @@ void CompilerInstance::createModuleManager() {
     getASTContext().setExternalSource(ModuleManager);
     if (hasSema())
       ModuleManager->InitializeSema(getSema());
-    if (hasASTConsumer())
+    if (hasASTConsumer()) {
+      getASTConsumer().Initialize(getASTContext());
       ModuleManager->StartTranslationUnit(&getASTConsumer());
+    }
 
     if (TheDependencyFileGenerator)
       TheDependencyFileGenerator->AttachToASTReader(*ModuleManager);
@@ -1284,86 +1286,44 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
   // the files we were handed.
   struct ReadModuleNames : ASTReaderListener {
     CompilerInstance &CI;
-    std::vector<StringRef> ModuleFileStack;
-    std::vector<StringRef> ModuleNameStack;
-    bool Failed;
-    bool TopFileIsModule;
+    llvm::SmallVector<IdentifierInfo*, 8> LoadedModules;
 
-    ReadModuleNames(CompilerInstance &CI)
-        : CI(CI), Failed(false), TopFileIsModule(false) {}
-
-    bool needsImportVisitation() const override { return true; }
-
-    void visitImport(StringRef FileName) override {
-      if (!CI.ExplicitlyLoadedModuleFiles.insert(FileName).second) {
-        if (ModuleFileStack.size() == 0)
-          TopFileIsModule = true;
-        return;
-      }
-
-      ModuleFileStack.push_back(FileName);
-      ModuleNameStack.push_back(StringRef());
-      if (ASTReader::readASTFileControlBlock(FileName, CI.getFileManager(),
-                                             CI.getPCHContainerReader(),
-                                             *this)) {
-        CI.getDiagnostics().Report(
-            SourceLocation(), CI.getFileManager().getBufferForFile(FileName)
-                                  ? diag::err_module_file_invalid
-                                  : diag::err_module_file_not_found)
-            << FileName;
-        for (int I = ModuleFileStack.size() - 2; I >= 0; --I)
-          CI.getDiagnostics().Report(SourceLocation(),
-                                     diag::note_module_file_imported_by)
-              << ModuleFileStack[I]
-              << !ModuleNameStack[I].empty() << ModuleNameStack[I];
-        Failed = true;
-      }
-      ModuleNameStack.pop_back();
-      ModuleFileStack.pop_back();
-    }
+    ReadModuleNames(CompilerInstance &CI) : CI(CI) {}
 
     void ReadModuleName(StringRef ModuleName) override {
-      if (ModuleFileStack.size() == 1)
-        TopFileIsModule = true;
-      ModuleNameStack.back() = ModuleName;
-
-      auto &ModuleFile = CI.ModuleFileOverrides[ModuleName];
-      if (!ModuleFile.empty() &&
-          CI.getFileManager().getFile(ModuleFile) !=
-              CI.getFileManager().getFile(ModuleFileStack.back()))
-        CI.getDiagnostics().Report(SourceLocation(),
-                                   diag::err_conflicting_module_files)
-            << ModuleName << ModuleFile << ModuleFileStack.back();
-      ModuleFile = ModuleFileStack.back();
+      LoadedModules.push_back(
+          CI.getPreprocessor().getIdentifierInfo(ModuleName));
     }
-  } RMN(*this);
+
+    void registerAll() {
+      for (auto *II : LoadedModules) {
+        CI.KnownModules[II] = CI.getPreprocessor()
+                                  .getHeaderSearchInfo()
+                                  .getModuleMap()
+                                  .findModule(II->getName());
+      }
+      LoadedModules.clear();
+    }
+  };
 
   // If we don't already have an ASTReader, create one now.
   if (!ModuleManager)
     createModuleManager();
 
-  // Tell the module manager about this module file.
-  if (getModuleManager()->getModuleManager().addKnownModuleFile(FileName)) {
-    getDiagnostics().Report(SourceLocation(), diag::err_module_file_not_found)
-      << FileName;
-    return false;
-  }
+  auto Listener = llvm::make_unique<ReadModuleNames>(*this);
+  auto &ListenerRef = *Listener;
+  ASTReader::ListenerScope ReadModuleNamesListener(*ModuleManager,
+                                                   std::move(Listener));
 
-  // Build our mapping of module names to module files from this file
-  // and its imports.
-  RMN.visitImport(FileName);
-
-  if (RMN.Failed)
+  // Try to load the module file.
+  if (ModuleManager->ReadAST(FileName, serialization::MK_ExplicitModule,
+                             SourceLocation(), ASTReader::ARR_None)
+          != ASTReader::Success)
     return false;
 
-  // If we never found a module name for the top file, then it's not a module,
-  // it's a PCH or preamble or something.
-  if (!RMN.TopFileIsModule) {
-    getDiagnostics().Report(SourceLocation(), diag::err_module_file_not_module)
-      << FileName;
-    return false;
-  }
-
+  // We successfully loaded the module file; remember the set of provided
+  // modules so that we don't try to load implicit modules for them.
+  ListenerRef.registerAll();
   return true;
 }
 
@@ -1412,6 +1372,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       return ModuleLoadResult();
     }
 
+    // FIXME: Rmove ModuleFileOverrides
     auto Override = ModuleFileOverrides.find(ModuleName);
     bool Explicit = Override != ModuleFileOverrides.end();
 
@@ -1507,7 +1468,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
     case ASTReader::ConfigurationMismatch:
     case ASTReader::HadErrors:
       ModuleLoader::HadFatalFailure = true;
-      // FIXME: The ASTReader will already have complained, but can we showhorn
+      // FIXME: The ASTReader will already have complained, but can we shoehorn
       // that diagnostic information into a more useful form?
       KnownModules[Path[0].first] = nullptr;
       return ModuleLoadResult();
