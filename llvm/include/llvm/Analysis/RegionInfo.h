@@ -853,7 +853,7 @@ public:
   /// Useful during debugging as an alternative to dump().
   void view();
 
-  /// @brief Opens a viewer to show the GraphViz visalization of this region
+  /// @brief Opens a viewer to show the GraphViz visualization of this region
   /// without instructions in the BasicBlocks.
   ///
   /// Useful during debugging as an alternative to dump().
