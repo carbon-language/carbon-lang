@@ -236,7 +236,7 @@ std::string RegionBase<Tr>::getNameStr() const {
 template <class Tr>
 void RegionBase<Tr>::verifyBBInRegion(BlockT *BB) const {
   if (!contains(BB))
-    llvm_unreachable("Broken region found!");
+    llvm_unreachable("Broken region found: enumerated BB not in region!");
 
   BlockT *entry = getEntry(), *exit = getExit();
 
@@ -244,7 +244,8 @@ void RegionBase<Tr>::verifyBBInRegion(BlockT *BB) const {
                   SE = BlockTraits::child_end(BB);
        SI != SE; ++SI) {
     if (!contains(*SI) && exit != *SI)
-      llvm_unreachable("Broken region found!");
+      llvm_unreachable("Broken region found: edges leaving the region must go "
+                       "to the exit node!");
   }
 
   if (entry != BB) {
@@ -252,7 +253,8 @@ void RegionBase<Tr>::verifyBBInRegion(BlockT *BB) const {
                     SE = InvBlockTraits::child_end(BB);
          SI != SE; ++SI) {
       if (!contains(*SI))
-        llvm_unreachable("Broken region found!");
+        llvm_unreachable("Broken region found: edges entering the region must "
+                         "go to the entry node!");
     }
   }
 }
