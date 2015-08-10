@@ -33,8 +33,7 @@ class LoopVersioning {
 public:
   LoopVersioning(SmallVector<RuntimePointerChecking::PointerCheck, 4> Checks,
                  const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
-                 DominatorTree *DT,
-                 const SmallVector<int, 8> *PtrToPartition = nullptr);
+                 DominatorTree *DT);
 
   /// \brief Performs the CFG manipulation part of versioning the loop including
   /// the DominatorTree and LoopInfo updates.
