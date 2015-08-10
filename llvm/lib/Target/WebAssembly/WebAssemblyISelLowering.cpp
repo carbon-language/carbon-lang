@@ -108,7 +108,11 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   // Compute derived properties from the register classes.
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
-  // FIXME: setOperationAction...
+  // FIXME: many setOperationAction are missing...
+
+  // Don't expand the following types to constant pools.
+  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
+  setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
 }
 
 MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,

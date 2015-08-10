@@ -99,28 +99,36 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OS << "(setlocal @" << TargetRegisterInfo::virtReg2Index(Reg) << ' ';
   }
 
-  OS << '(';
-
-  bool PrintOperands = true;
-  switch (MI->getOpcode()) {
-  case WebAssembly::ARGUMENT_Int32:
-  case WebAssembly::ARGUMENT_Int64:
-  case WebAssembly::ARGUMENT_Float32:
-  case WebAssembly::ARGUMENT_Float64:
-    OS << Name(TII, MI) << ' ' << MI->getOperand(1).getImm();
-    PrintOperands = false;
-    break;
-  default:
-    OS << Name(TII, MI);
-    break;
-  }
-
-  if (PrintOperands)
-    for (const MachineOperand &MO : MI->uses()) {
-      if (MO.isReg() && MO.isImplicit())
+  OS << '(' << Name(TII, MI);
+  for (const MachineOperand &MO : MI->uses())
+    switch (MO.getType()) {
+    default:
+      llvm_unreachable("unexpected machine operand type");
+    case MachineOperand::MO_Register: {
+      if (MO.isImplicit())
         continue;
       unsigned Reg = MO.getReg();
       OS << " @" << TargetRegisterInfo::virtReg2Index(Reg);
+    } break;
+    case MachineOperand::MO_Immediate: {
+      OS << ' ' << MO.getImm();
+    } break;
+    case MachineOperand::MO_FPImmediate: {
+      static const size_t BufBytes = 128;
+      char buf[BufBytes];
+      APFloat FP = MO.getFPImm()->getValueAPF();
+      const APFloat CanonicalNaN = APFloat::getQNaN(FP.getSemantics());
+      if (FP.isNaN() && !FP.bitwiseIsEqual(CanonicalNaN))
+        // WebAssembly only has NaNs that are positive, quiet, without payload.
+        FP = CanonicalNaN;
+      // Use C99's hexadecimal floating-point representation.
+      auto Written =
+          FP.convertToHexString(buf, /*hexDigits=*/0, /*upperCase=*/false,
+                                APFloat::rmNearestTiesToEven);
+      assert(Written != 0);
+      assert(Written < BufBytes);
+      OS << ' ' << buf;
+    } break;
     }
   OS << ')';
 

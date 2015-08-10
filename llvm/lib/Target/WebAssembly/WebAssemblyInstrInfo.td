@@ -64,6 +64,16 @@ defm : ARGUMENT<Int64>;
 defm : ARGUMENT<Float32>;
 defm : ARGUMENT<Float64>;
 
+
+def Immediate_I32 : I<(outs Int32:$res), (ins i32imm:$imm),
+                      [(set Int32:$res, imm:$imm)]>;
+def Immediate_I64 : I<(outs Int64:$res), (ins i64imm:$imm),
+                      [(set Int64:$res, imm:$imm)]>;
+def Immediate_F32 : I<(outs Float32:$res), (ins f32imm:$imm),
+                      [(set Float32:$res, fpimm:$imm)]>;
+def Immediate_F64 : I<(outs Float64:$res), (ins f64imm:$imm),
+                      [(set Float64:$res, fpimm:$imm)]>;
+
 //===----------------------------------------------------------------------===//
 // Additional sets of instructions.
 //===----------------------------------------------------------------------===//
