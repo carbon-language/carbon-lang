@@ -583,24 +583,24 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
   unsigned InstrCount = 0;
-  for (MachineBasicBlock::iterator I = TailBB.begin(); I != TailBB.end(); ++I) {
+  for (MachineInstr &MI : TailBB) {
     // Non-duplicable things shouldn't be tail-duplicated.
-    if (I->isNotDuplicable())
+    if (MI.isNotDuplicable())
       return false;
 
     // Do not duplicate 'return' instructions if this is a pre-regalloc run.
     // A return may expand into a lot more instructions (e.g. reload of callee
     // saved registers) after PEI.
-    if (PreRegAlloc && I->isReturn())
+    if (PreRegAlloc && MI.isReturn())
       return false;
 
     // Avoid duplicating calls before register allocation. Calls presents a
     // barrier to register allocation so duplicating them may end up increasing
     // spills.
-    if (PreRegAlloc && I->isCall())
+    if (PreRegAlloc && MI.isCall())
       return false;
 
-    if (!I->isPHI() && !I->isDebugValue())
+    if (!MI.isPHI() && !MI.isDebugValue())
       InstrCount += 1;
 
     if (InstrCount > MaxDuplicateCount)
