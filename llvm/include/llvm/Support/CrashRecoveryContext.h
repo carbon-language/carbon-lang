@@ -111,7 +111,7 @@ protected:
 
 public:
   bool cleanupFired;
-  
+
   virtual ~CrashRecoveryContextCleanup();
   virtual void recoverResources() = 0;
 
@@ -146,7 +146,7 @@ class CrashRecoveryContextDestructorCleanup : public
   CrashRecoveryContextCleanupBase<CrashRecoveryContextDestructorCleanup<T>, T> {
 public:
   CrashRecoveryContextDestructorCleanup(CrashRecoveryContext *context,
-                                        T *resource) 
+                                        T *resource)
     : CrashRecoveryContextCleanupBase<
         CrashRecoveryContextDestructorCleanup<T>, T>(context, resource) {}
 
@@ -171,7 +171,7 @@ class CrashRecoveryContextReleaseRefCleanup : public
   CrashRecoveryContextCleanupBase<CrashRecoveryContextReleaseRefCleanup<T>, T>
 {
 public:
-  CrashRecoveryContextReleaseRefCleanup(CrashRecoveryContext *context, 
+  CrashRecoveryContextReleaseRefCleanup(CrashRecoveryContext *context,
                                         T *resource)
     : CrashRecoveryContextCleanupBase<CrashRecoveryContextReleaseRefCleanup<T>,
           T>(context, resource) {}
@@ -193,7 +193,7 @@ public:
   ~CrashRecoveryContextCleanupRegistrar() {
     unregister();
   }
-  
+
   void unregister() {
     if (cleanup && !cleanup->cleanupFired)
       cleanup->getContext()->unregisterCleanup(cleanup);

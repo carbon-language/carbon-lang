@@ -100,7 +100,7 @@ public:
   public:
     Factory(bool canonicalize = true)
       : Canonicalize(canonicalize) {}
-    
+
     Factory(BumpPtrAllocator& Alloc, bool canonicalize = true)
       : F(Alloc), Canonicalize(canonicalize) {}
 
@@ -145,11 +145,11 @@ public:
   TreeTy *getRootWithoutRetain() const {
     return Root;
   }
-  
+
   void manualRetain() {
     if (Root) Root->retain();
   }
-  
+
   void manualRelease() {
     if (Root) Root->release();
   }
@@ -223,7 +223,7 @@ public:
 
     return nullptr;
   }
-  
+
   /// getMaxElement - Returns the <key,value> pair in the ImmutableMap for
   ///  which key is the highest in the ordering of keys in the map.  This
   ///  method returns NULL if the map is empty.
@@ -259,17 +259,17 @@ public:
   typedef typename ValInfo::data_type_ref   data_type_ref;
   typedef ImutAVLTree<ValInfo>              TreeTy;
   typedef typename TreeTy::Factory          FactoryTy;
-  
+
 protected:
   TreeTy *Root;
   FactoryTy *Factory;
-  
+
 public:
   /// Constructs a map from a pointer to a tree root.  In general one
   /// should use a Factory object to create maps instead of directly
   /// invoking the constructor, but there are cases where make this
   /// constructor public is useful.
-  explicit ImmutableMapRef(const TreeTy* R, FactoryTy *F) 
+  explicit ImmutableMapRef(const TreeTy* R, FactoryTy *F)
     : Root(const_cast<TreeTy*>(R)),
       Factory(F) {
     if (Root) { Root->retain(); }
@@ -281,7 +281,7 @@ public:
       Factory(F.getTreeFactory()) {
     if (Root) { Root->retain(); }
   }
-  
+
   ImmutableMapRef(const ImmutableMapRef &X)
     : Root(X.Root),
       Factory(X.Factory) {
@@ -292,10 +292,10 @@ public:
     if (Root != X.Root) {
       if (X.Root)
         X.Root->retain();
-      
+
       if (Root)
         Root->release();
-      
+
       Root = X.Root;
       Factory = X.Factory;
     }
@@ -306,7 +306,7 @@ public:
     if (Root)
       Root->release();
   }
-  
+
   static inline ImmutableMapRef getEmptyMap(FactoryTy *F) {
     return ImmutableMapRef(0, F);
   }
@@ -328,31 +328,31 @@ public:
     TreeTy *NewT = Factory->remove(Root, K);
     return ImmutableMapRef(NewT, Factory);
   }
-  
+
   bool contains(key_type_ref K) const {
     return Root ? Root->contains(K) : false;
   }
-  
+
   ImmutableMap<KeyT, ValT> asImmutableMap() const {
     return ImmutableMap<KeyT, ValT>(Factory->getCanonicalTree(Root));
   }
-  
+
   bool operator==(const ImmutableMapRef &RHS) const {
     return Root && RHS.Root ? Root->isEqual(*RHS.Root) : Root == RHS.Root;
   }
-  
+
   bool operator!=(const ImmutableMapRef &RHS) const {
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
-    
+
   bool isEmpty() const { return !Root; }
-    
+
   //===--------------------------------------------------===//
   // For testing.
   //===--------------------------------------------------===//
-  
+
   void verify() const { if (Root) Root->verify(); }
-  
+
   //===--------------------------------------------------===//
   // Iterators.
   //===--------------------------------------------------===//
@@ -369,38 +369,38 @@ public:
 
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }
-  
+
   data_type* lookup(key_type_ref K) const {
     if (Root) {
       TreeTy* T = Root->find(K);
       if (T) return &T->getValue().second;
     }
-    
+
     return 0;
   }
-  
+
   /// getMaxElement - Returns the <key,value> pair in the ImmutableMap for
   ///  which key is the highest in the ordering of keys in the map.  This
   ///  method returns NULL if the map is empty.
   value_type* getMaxElement() const {
     return Root ? &(Root->getMaxElement()->getValue()) : 0;
   }
-  
+
   //===--------------------------------------------------===//
   // Utility methods.
   //===--------------------------------------------------===//
-  
+
   unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
-  
+
   static inline void Profile(FoldingSetNodeID& ID, const ImmutableMapRef &M) {
     ID.AddPointer(M.Root);
   }
-  
+
   inline void Profile(FoldingSetNodeID& ID) const {
     return Profile(ID, *this);
   }
 };
-  
+
 } // end namespace llvm
 
 #endif

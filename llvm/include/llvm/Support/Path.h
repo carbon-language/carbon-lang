@@ -216,7 +216,7 @@ StringRef root_name(StringRef path);
 /// @result The root directory of \a path if it has one, otherwise
 ///               "".
 StringRef root_directory(StringRef path);
-  
+
 /// @brief Get root path.
 ///
 /// Equivalent to root_name + root_directory.
@@ -308,7 +308,7 @@ bool is_separator(char value);
 /// @result StringRef of the preferred separator, null-terminated.
 StringRef get_separator();
 
-/// @brief Get the typical temporary directory for the system, e.g., 
+/// @brief Get the typical temporary directory for the system, e.g.,
 /// "/var/tmp" or "C:/TEMP"
 ///
 /// @param erasedOnReboot Whether to favor a path that is erased on reboot

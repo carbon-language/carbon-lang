@@ -552,7 +552,7 @@ inline uint32_t FloatToBits(float Float) {
 inline uint64_t MinAlign(uint64_t A, uint64_t B) {
   // The largest power of 2 that divides both A and B.
   //
-  // Replace "-Value" by "1+~Value" in the following commented code to avoid 
+  // Replace "-Value" by "1+~Value" in the following commented code to avoid
   // MSVC warning C4146
   //    return (A | B) & -(A | B);
   return (A | B) & (1 + ~(A | B));

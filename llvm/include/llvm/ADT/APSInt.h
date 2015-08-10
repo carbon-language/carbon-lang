@@ -286,7 +286,7 @@ public:
   }
 
   /// \brief Determine if two APSInts have the same value, zero- or
-  /// sign-extending as needed.  
+  /// sign-extending as needed.
   static bool isSameValue(const APSInt &I1, const APSInt &I2) {
     return !compareValues(I1, I2);
   }

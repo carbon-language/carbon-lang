@@ -1528,7 +1528,7 @@ public:
   /// \returns the nearest log base 2 of this APInt. Ties round up.
   ///
   /// NOTE: When we have a BitWidth of 1, we define:
-  /// 
+  ///
   ///   log2(0) = UINT32_MAX
   ///   log2(1) = 0
   ///

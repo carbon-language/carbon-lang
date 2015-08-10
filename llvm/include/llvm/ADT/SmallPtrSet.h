@@ -181,14 +181,14 @@ protected:
 template<typename PtrTy>
 class SmallPtrSetIterator : public SmallPtrSetIteratorImpl {
   typedef PointerLikeTypeTraits<PtrTy> PtrTraits;
-  
+
 public:
   typedef PtrTy                     value_type;
   typedef PtrTy                     reference;
   typedef PtrTy                     pointer;
   typedef std::ptrdiff_t            difference_type;
   typedef std::forward_iterator_tag iterator_category;
-  
+
   explicit SmallPtrSetIterator(const void *const *BP, const void *const *E)
     : SmallPtrSetIteratorImpl(BP, E) {}
 

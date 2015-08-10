@@ -97,19 +97,19 @@ enum perms {
 // Helper functions so that you can use & and | to manipulate perms bits:
 inline perms operator|(perms l , perms r) {
   return static_cast<perms>(
-             static_cast<unsigned short>(l) | static_cast<unsigned short>(r)); 
+             static_cast<unsigned short>(l) | static_cast<unsigned short>(r));
 }
 inline perms operator&(perms l , perms r) {
   return static_cast<perms>(
-             static_cast<unsigned short>(l) & static_cast<unsigned short>(r)); 
+             static_cast<unsigned short>(l) & static_cast<unsigned short>(r));
 }
 inline perms &operator|=(perms &l, perms r) {
-  l = l | r; 
-  return l; 
+  l = l | r;
+  return l;
 }
 inline perms &operator&=(perms &l, perms r) {
-  l = l & r; 
-  return l; 
+  l = l & r;
+  return l;
 }
 inline perms operator~(perms x) {
   return static_cast<perms>(~static_cast<unsigned short>(x));

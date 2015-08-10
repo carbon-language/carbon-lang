@@ -56,7 +56,7 @@ public:
   ScopedHashTableVal *getNextForKey() { return NextForKey; }
   const ScopedHashTableVal *getNextForKey() const { return NextForKey; }
   ScopedHashTableVal *getNextInScope() { return NextInScope; }
-  
+
   template <typename AllocatorTy>
   static ScopedHashTableVal *Create(ScopedHashTableVal *nextInScope,
                                     ScopedHashTableVal *nextForKey,
@@ -66,10 +66,10 @@ public:
     // Set up the value.
     new (New) ScopedHashTableVal(key, val);
     New->NextInScope = nextInScope;
-    New->NextForKey = nextForKey; 
+    New->NextForKey = nextForKey;
     return New;
   }
-  
+
   template <typename AllocatorTy>
   void Destroy(AllocatorTy &Allocator) {
     // Free memory referenced by the item.
@@ -99,7 +99,7 @@ public:
 
   ScopedHashTableScope *getParentScope() { return PrevScope; }
   const ScopedHashTableScope *getParentScope() const { return PrevScope; }
-  
+
 private:
   friend class ScopedHashTable<K, V, KInfo, AllocatorTy>;
   ScopedHashTableVal<K, V> *getLastValInScope() {
@@ -154,9 +154,9 @@ private:
   typedef ScopedHashTableVal<K, V> ValTy;
   DenseMap<K, ValTy*, KInfo> TopLevelMap;
   ScopeTy *CurScope;
-  
+
   AllocatorTy Allocator;
-  
+
   ScopedHashTable(const ScopedHashTable&); // NOT YET IMPLEMENTED
   void operator=(const ScopedHashTable&);  // NOT YET IMPLEMENTED
   friend class ScopedHashTableScope<K, V, KInfo, AllocatorTy>;
@@ -181,7 +181,7 @@ public:
     typename DenseMap<K, ValTy*, KInfo>::iterator I = TopLevelMap.find(Key);
     if (I != TopLevelMap.end())
       return I->second->getValue();
-      
+
     return V();
   }
 
@@ -199,7 +199,7 @@ public:
     if (I == TopLevelMap.end()) return end();
     return iterator(I->second);
   }
-  
+
   ScopeTy *getCurScope() { return CurScope; }
   const ScopeTy *getCurScope() const { return CurScope; }
 

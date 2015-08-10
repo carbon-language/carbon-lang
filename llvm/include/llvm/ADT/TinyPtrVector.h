@@ -15,7 +15,7 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
-  
+
 /// TinyPtrVector - This class is specialized for cases where there are
 /// normally 0 or 1 element in a vector, but is general enough to go beyond that
 /// when required.

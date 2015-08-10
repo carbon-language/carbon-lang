@@ -25,11 +25,11 @@ extern "C" {
 
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
-  
+
   // Declare all of the target-MC-initialization functions that are available.
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetMC();
 #include "llvm/Config/Targets.def"
-  
+
   // Declare all of the available assembly printer initialization functions.
 #define LLVM_ASM_PRINTER(TargetName) void LLVMInitialize##TargetName##AsmPrinter();
 #include "llvm/Config/AsmPrinters.def"
@@ -54,7 +54,7 @@ namespace llvm {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
 #include "llvm/Config/Targets.def"
   }
-  
+
   /// InitializeAllTargets - The main program should call this function if it
   /// wants access to all available target machines that LLVM is configured to
   /// support, to make them available via the TargetRegistry.
@@ -67,7 +67,7 @@ namespace llvm {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
   }
-  
+
   /// InitializeAllTargetMCs - The main program should call this function if it
   /// wants access to all available target MC that LLVM is configured to
   /// support, to make them available via the TargetRegistry.
@@ -77,7 +77,7 @@ namespace llvm {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetMC();
 #include "llvm/Config/Targets.def"
   }
-  
+
   /// InitializeAllAsmPrinters - The main program should call this function if
   /// it wants all asm printers that LLVM is configured to support, to make them
   /// available via the TargetRegistry.
@@ -87,7 +87,7 @@ namespace llvm {
 #define LLVM_ASM_PRINTER(TargetName) LLVMInitialize##TargetName##AsmPrinter();
 #include "llvm/Config/AsmPrinters.def"
   }
-  
+
   /// InitializeAllAsmParsers - The main program should call this function if it
   /// wants all asm parsers that LLVM is configured to support, to make them
   /// available via the TargetRegistry.
@@ -97,7 +97,7 @@ namespace llvm {
 #define LLVM_ASM_PARSER(TargetName) LLVMInitialize##TargetName##AsmParser();
 #include "llvm/Config/AsmParsers.def"
   }
-  
+
   /// InitializeAllDisassemblers - The main program should call this function if
   /// it wants all disassemblers that LLVM is configured to support, to make
   /// them available via the TargetRegistry.
@@ -107,9 +107,9 @@ namespace llvm {
 #define LLVM_DISASSEMBLER(TargetName) LLVMInitialize##TargetName##Disassembler();
 #include "llvm/Config/Disassemblers.def"
   }
-  
+
   /// InitializeNativeTarget - The main program should call this function to
-  /// initialize the native target corresponding to the host.  This is useful 
+  /// initialize the native target corresponding to the host.  This is useful
   /// for JIT applications to ensure that the target gets linked in correctly.
   ///
   /// It is legal for a client to make multiple calls to this function.
@@ -123,7 +123,7 @@ namespace llvm {
 #else
     return true;
 #endif
-  }  
+  }
 
   /// InitializeNativeTargetAsmPrinter - The main program should call
   /// this function to initialize the native target asm printer.
@@ -135,7 +135,7 @@ namespace llvm {
 #else
     return true;
 #endif
-  }  
+  }
 
   /// InitializeNativeTargetAsmParser - The main program should call
   /// this function to initialize the native target asm parser.
@@ -147,7 +147,7 @@ namespace llvm {
 #else
     return true;
 #endif
-  }  
+  }
 
   /// InitializeNativeTargetDisassembler - The main program should call
   /// this function to initialize the native target disassembler.

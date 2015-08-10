@@ -383,7 +383,7 @@ namespace llvm {
       SELF_LIBRARY_ORDINAL   = 0x0,
       MAX_LIBRARY_ORDINAL    = 0xfd,
       DYNAMIC_LOOKUP_ORDINAL = 0xfe,
-      EXECUTABLE_ORDINAL     = 0xff 
+      EXECUTABLE_ORDINAL     = 0xff
     };
 
     enum StabType {

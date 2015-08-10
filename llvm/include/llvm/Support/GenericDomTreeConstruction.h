@@ -87,7 +87,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 
     // Increment the successor number for the next time we get to it.
     ++Worklist.back().second;
-    
+
     // Visit the successor next, if it isn't already visited.
     typename GraphT::NodeType* Succ = *NextSucc;
 
@@ -103,7 +103,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
 }
 
 template<class GraphT>
-typename GraphT::NodeType* 
+typename GraphT::NodeType*
 Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
      typename GraphT::NodeType *VIn, unsigned LastLinked) {
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInInfo =
@@ -116,7 +116,7 @@ Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
 
   if (VInInfo.Parent >= LastLinked)
     Work.push_back(VIn);
-  
+
   while (!Work.empty()) {
     typename GraphT::NodeType* V = Work.back();
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
@@ -127,8 +127,8 @@ Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
     if (Visited.insert(VAncestor).second && VInfo.Parent >= LastLinked) {
       Work.push_back(VAncestor);
       continue;
-    } 
-    Work.pop_back(); 
+    }
+    Work.pop_back();
 
     // Update VInfo based on Ancestor info
     if (VInfo.Parent < LastLinked)
@@ -168,7 +168,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
        i != e; ++i)
     N = DFSPass<GraphT>(DT, DT.Roots[i], N);
 
-  // it might be that some blocks did not get a DFS number (e.g., blocks of 
+  // it might be that some blocks did not get a DFS number (e.g., blocks of
   // infinite loops). In these cases an artificial exit node is required.
   MultipleRoots |= (DT.isPostDominator() && N != GraphTraits<FuncT*>::size(&F));
 

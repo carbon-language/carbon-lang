@@ -218,10 +218,10 @@ public:
 
   // Formatted output, see the leftJustify() function in Support/Format.h.
   raw_ostream &operator<<(const FormattedString &);
-  
+
   // Formatted output, see the formatHex() function in Support/Format.h.
   raw_ostream &operator<<(const FormattedNumber &);
-  
+
   /// indent - Insert 'NumSpaces' spaces.
   raw_ostream &indent(unsigned NumSpaces);
 

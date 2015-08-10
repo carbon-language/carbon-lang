@@ -68,7 +68,7 @@ private:
   /// \return - True on success.
   bool Search(const changeset_ty &Changes, const changesetlist_ty &Sets,
               changeset_ty &Res);
-              
+
 protected:
   /// UpdatedSearchState - Callback used when the search state changes.
   virtual void UpdatedSearchState(const changeset_ty &Changes,

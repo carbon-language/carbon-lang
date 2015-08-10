@@ -55,10 +55,10 @@ class PointerIntPair {
     /// IntShift - The number of low bits that we reserve for other uses, and
     /// keep zero.
     IntShift = (uintptr_t)PtrTraits::NumLowBitsAvailable-IntBits,
-    
+
     /// IntMask - This is the unshifted mask for valid bits of the int type.
     IntMask = (uintptr_t)(((intptr_t)1 << IntBits)-1),
-    
+
     // ShiftedIntMask - This is the bits for the integer shifted in place.
     ShiftedIntMask = (uintptr_t)(IntMask << IntShift)
   };
@@ -93,7 +93,7 @@ public:
   void setInt(IntType IntVal) {
     intptr_t IntWord = static_cast<intptr_t>(IntVal);
     assert((IntWord & ~IntMask) == 0 && "Integer too large for field");
-    
+
     // Preserve all bits other than the ones we are updating.
     Value &= ~ShiftedIntMask;     // Remove integer field.
     Value |= IntWord << IntShift;  // Set new integer.
@@ -133,7 +133,7 @@ public:
   void setFromOpaqueValue(void *Val) { Value = reinterpret_cast<intptr_t>(Val);}
 
   static PointerIntPair getFromOpaqueValue(void *V) {
-    PointerIntPair P; P.setFromOpaqueValue(V); return P; 
+    PointerIntPair P; P.setFromOpaqueValue(V); return P;
   }
 
   // Allow PointerIntPairs to be created from const void * if and only if the
@@ -156,7 +156,7 @@ template<typename PointerTy, unsigned IntBits, typename IntType>
 struct isPodLike<PointerIntPair<PointerTy, IntBits, IntType> > {
    static const bool value = true;
 };
-  
+
 // Provide specialization of DenseMapInfo for PointerIntPair.
 template<typename PointerTy, unsigned IntBits, typename IntType>
 struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {

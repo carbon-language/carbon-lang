@@ -80,16 +80,16 @@ class df_iterator : public std::iterator<std::forward_iterator_tag,
 private:
   inline df_iterator(NodeType *Node) {
     this->Visited.insert(Node);
-    VisitStack.push_back(std::make_pair(PointerIntTy(Node, 0), 
+    VisitStack.push_back(std::make_pair(PointerIntTy(Node, 0),
                                         GT::child_begin(Node)));
   }
-  inline df_iterator() { 
-    // End is when stack is empty 
+  inline df_iterator() {
+    // End is when stack is empty
   }
   inline df_iterator(NodeType *Node, SetType &S)
     : df_iterator_storage<SetType, ExtStorage>(S) {
     if (!S.count(Node)) {
-      VisitStack.push_back(std::make_pair(PointerIntTy(Node, 0), 
+      VisitStack.push_back(std::make_pair(PointerIntTy(Node, 0),
                                           GT::child_begin(Node)));
       this->Visited.insert(Node);
     }
@@ -115,7 +115,7 @@ private:
         // Has our next sibling been visited?
         if (Next && this->Visited.insert(Next).second) {
           // No, do it now.
-          VisitStack.push_back(std::make_pair(PointerIntTy(Next, 0), 
+          VisitStack.push_back(std::make_pair(PointerIntTy(Next, 0),
                                               GT::child_begin(Next)));
           return;
         }

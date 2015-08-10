@@ -180,7 +180,7 @@ inline FormattedNumber format_hex_no_prefix(uint64_t N, unsigned Width,
   return FormattedNumber(N, 0, Width, true, Upper, false);
 }
 
-/// format_decimal - Output \p N as a right justified, fixed-width decimal. If 
+/// format_decimal - Output \p N as a right justified, fixed-width decimal. If
 /// number will not fit in width, full number is still printed.  Examples:
 ///   OS << format_decimal(0, 5)     => "    0"
 ///   OS << format_decimal(255, 5)   => "  255"

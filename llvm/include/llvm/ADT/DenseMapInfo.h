@@ -58,7 +58,7 @@ template<> struct DenseMapInfo<char> {
     return LHS == RHS;
   }
 };
-  
+
 // Provide DenseMapInfo for unsigned ints.
 template<> struct DenseMapInfo<unsigned> {
   static inline unsigned getEmptyKey() { return ~0U; }

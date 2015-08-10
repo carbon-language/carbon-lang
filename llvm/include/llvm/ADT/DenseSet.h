@@ -151,7 +151,7 @@ public:
     detail::DenseSetEmpty Empty;
     return TheMap.insert(std::make_pair(V, Empty));
   }
-  
+
   // Range insertion of values.
   template<typename InputIt>
   void insert(InputIt I, InputIt E) {
