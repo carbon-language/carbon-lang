@@ -51,7 +51,7 @@ define i32 @test5(i32 %a) nounwind {
 define i32 @test6(i32 %a) nounwind {
 ; CHECK-LABEL: @test6
 ; CHECK-NEXT:  %tmp2 = lshr i32 %a, 24
-; CHECK-NEXT   ret i32 %tmp4
+; CHECK-NEXT:  ret i32 %tmp2
 	%tmp2 = tail call i32 @llvm.bswap.i32( i32 %a )
 	%tmp4 = and i32 %tmp2, 255
 	ret i32 %tmp4
@@ -62,7 +62,7 @@ define i16 @test7(i32 %A) {
 ; CHECK-LABEL: @test7
 ; CHECK-NEXT:  %1 = lshr i32 %A, 16
 ; CHECK-NEXT:  %D = trunc i32 %1 to i16
-; CHECK-NEXT   ret i16 %D
+; CHECK-NEXT:  ret i16 %D
   %B = tail call i32 @llvm.bswap.i32(i32 %A) nounwind
   %C = trunc i32 %B to i16
   %D = tail call i16 @llvm.bswap.i16(i16 %C) nounwind
@@ -73,7 +73,7 @@ define i16 @test8(i64 %A) {
 ; CHECK-LABEL: @test8
 ; CHECK-NEXT:  %1 = lshr i64 %A, 48
 ; CHECK-NEXT:  %D = trunc i64 %1 to i16
-; CHECK-NEXT   ret i16 %D
+; CHECK-NEXT:  ret i16 %D
   %B = tail call i64 @llvm.bswap.i64(i64 %A) nounwind 
   %C = trunc i64 %B to i16
   %D = tail call i16 @llvm.bswap.i16(i16 %C) nounwind

@@ -8,8 +8,8 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: tail_memset
-; CHECK; jmp memmove
+; CHECK-LABEL: tail_memmove
+; CHECK: jmp memmove
 define void @tail_memmove(i8* nocapture %p, i8* nocapture readonly %q, i32 %n) #0 {
 entry:
   tail call void @llvm.memmove.p0i8.p0i8.i32(i8* %p, i8* %q, i32 %n, i32 1, i1 false)
