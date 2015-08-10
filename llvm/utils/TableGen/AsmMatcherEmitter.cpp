@@ -884,12 +884,13 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
         InTok = false;
       }
 
-      // If this isn't "${", treat like a normal token.
+      // If this isn't "${", start new identifier looking like "$xxx"
       if (i + 1 == String.size() || String[i + 1] != '{') {
         Prev = i;
         break;
       }
 
+      // If this is "${" find the next "}" and make an identifier like "${xxx}"
       StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
       assert(End != String.end() && "Missing brace in operand reference!");
       size_t EndPos = End - String.begin();
