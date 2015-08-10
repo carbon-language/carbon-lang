@@ -555,11 +555,12 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
 
   // Early exit if the first instruction modifies the base register.
   // e.g., ldr x0, [x0]
-  // Early exit if the offset if not possible to match. (6 bits of positive
-  // range, plus allow an extra one in case we find a later insn that matches
-  // with Offset-1
   if (FirstMI->modifiesRegister(BaseReg, TRI))
     return E;
+
+  // Early exit if the offset if not possible to match. (6 bits of positive
+  // range, plus allow an extra one in case we find a later insn that matches
+  // with Offset-1)
   int OffsetStride =
       IsUnscaled && EnableAArch64UnscaledMemOp ? getMemSize(FirstMI) : 1;
   if (!inBoundsForPair(IsUnscaled, Offset, OffsetStride))
