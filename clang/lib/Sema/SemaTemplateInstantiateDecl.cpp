@@ -1143,6 +1143,7 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
   VarDecl *VarInst =
       cast_or_null<VarDecl>(VisitVarDecl(Pattern,
                                          /*InstantiatingVarTemplate=*/true));
+  if (!VarInst) return nullptr;
 
   DeclContext *DC = Owner;
 

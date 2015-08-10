@@ -327,3 +327,14 @@ struct S {
   static int f : I; // expected-error {{static member 'f' cannot be a bit-field}}
 };
 }
+
+namespace b20896909 {
+  // This used to crash.
+  template<typename T> struct helper {};
+  template<typename T> class A {
+    template <typename> static helper<typename T::error> x;  // expected-error {{type 'int' cannot be used prior to '::' because it has no members}}
+  };
+  void test() {
+    A<int> ai;  // expected-note {{in instantiation of}}
+  }
+}
