@@ -76,6 +76,20 @@ static cl::opt<unsigned> RunTimeChecksMaxArraysPerGroup(
     cl::desc("The maximal number of arrays to compare in each alias group."),
     cl::Hidden, cl::ZeroOrMore, cl::init(20), cl::cat(PollyCategory));
 
+// Create a sequence of two schedules. Either argument may be null and is
+// interpreted as the empty schedule. Can also return null if both schedules are
+// empty.
+static __isl_give isl_schedule *
+combineInSequence(__isl_take isl_schedule *Prev,
+                  __isl_take isl_schedule *Succ) {
+  if (!Prev)
+    return Succ;
+  if (!Succ)
+    return Prev;
+
+  return isl_schedule_sequence(Prev, Succ);
+}
+
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
 public:
@@ -2088,6 +2102,18 @@ ScopStmt *Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
   return Stmt;
 }
 
+__isl_give isl_schedule *
+Scop::buildBBScopStmt(BasicBlock *BB, TempScop &tempScop,
+                      const Region &CurRegion,
+                      SmallVectorImpl<Loop *> &NestLoops) {
+  if (isTrivialBB(BB, tempScop))
+    return nullptr;
+
+  auto *Stmt = addScopStmt(BB, nullptr, tempScop, CurRegion, NestLoops);
+  auto *Domain = Stmt->getDomain();
+  return isl_schedule_from_domain(isl_union_set_from_set(Domain));
+}
+
 __isl_give isl_schedule *Scop::buildScop(TempScop &tempScop,
                                          const Region &CurRegion,
                                          SmallVectorImpl<Loop *> &NestLoops,
@@ -2115,21 +2141,10 @@ __isl_give isl_schedule *Scop::buildScop(TempScop &tempScop,
       StmtSchedule =
           buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, LI, SD);
     } else {
-      BasicBlock *BB = I->getNodeAs<BasicBlock>();
-
-      if (isTrivialBB(BB, tempScop)) {
-        continue;
-      } else {
-        auto *Stmt = addScopStmt(BB, nullptr, tempScop, CurRegion, NestLoops);
-        auto *Domain = Stmt->getDomain();
-        StmtSchedule = isl_schedule_from_domain(isl_union_set_from_set(Domain));
-      }
+      StmtSchedule = buildBBScopStmt(I->getNodeAs<BasicBlock>(), tempScop,
+                                     CurRegion, NestLoops);
     }
-
-    if (!Schedule)
-      Schedule = StmtSchedule;
-    else if (StmtSchedule)
-      Schedule = isl_schedule_sequence(Schedule, StmtSchedule);
+    Schedule = combineInSequence(Schedule, StmtSchedule);
   }
 
   if (!L)
