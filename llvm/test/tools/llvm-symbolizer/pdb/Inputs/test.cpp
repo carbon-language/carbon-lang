@@ -16,3 +16,10 @@ int main() {
   NS::Foo f;
   f.bar();
 }
+
+extern "C" {
+void __cdecl foo_cdecl() {}
+void __stdcall foo_stdcall() {}
+void __fastcall foo_fastcall() {}
+void __vectorcall foo_vectorcall() {}
+}

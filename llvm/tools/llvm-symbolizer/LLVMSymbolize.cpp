@@ -20,6 +20,7 @@
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/SymbolSize.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/DataExtractor.h"
@@ -34,6 +35,11 @@
 #include <Windows.h>
 #include <DbgHelp.h>
 #pragma comment(lib, "dbghelp.lib")
+
+// Windows.h conflicts with our COFF header definitions.
+#ifdef IMAGE_FILE_MACHINE_I386
+#undef IMAGE_FILE_MACHINE_I386
+#endif
 #endif
 
 namespace llvm {
@@ -112,6 +118,12 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
   auto &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
   SymbolDesc SD = { SymbolAddress, SymbolSize };
   M.insert(std::make_pair(SD, SymbolName));
+}
+
+// Return true if this is a 32-bit x86 PE COFF module.
+bool ModuleInfo::isWin32Module() const {
+  auto *CoffObject = dyn_cast<COFFObjectFile>(Module);
+  return CoffObject && CoffObject->getMachine() == COFF::IMAGE_FILE_MACHINE_I386;
 }
 
 bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
@@ -197,7 +209,7 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
                                           uint64_t ModuleOffset) {
   ModuleInfo *Info = getOrCreateModuleInfo(ModuleName);
   if (!Info)
-    return printDILineInfo(DILineInfo());
+    return printDILineInfo(DILineInfo(), Info);
   if (Opts.PrintInlining) {
     DIInliningInfo InlinedContext =
         Info->symbolizeInlinedCode(ModuleOffset, Opts);
@@ -206,12 +218,12 @@ std::string LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
     std::string Result;
     for (uint32_t i = 0; i < FramesNum; i++) {
       DILineInfo LineInfo = InlinedContext.getFrame(i);
-      Result += printDILineInfo(LineInfo);
+      Result += printDILineInfo(LineInfo, Info);
     }
     return Result;
   }
   DILineInfo LineInfo = Info->symbolizeCode(ModuleOffset, Opts);
-  return printDILineInfo(LineInfo);
+  return printDILineInfo(LineInfo, Info);
 }
 
 std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
@@ -222,7 +234,7 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
   if (Opts.UseSymbolTable) {
     if (ModuleInfo *Info = getOrCreateModuleInfo(ModuleName)) {
       if (Info->symbolizeData(ModuleOffset, Name, Start, Size) && Opts.Demangle)
-        Name = DemangleName(Name);
+        Name = DemangleName(Name, Info);
     }
   }
   std::stringstream ss;
@@ -474,7 +486,8 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   return Info;
 }
 
-std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
+std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo,
+                                            ModuleInfo *ModInfo) const {
   // By default, DILineInfo contains "<invalid>" for function/filename it
   // cannot fetch. We replace it to "??" to make our output closer to addr2line.
   static const std::string kDILineInfoBadString = "<invalid>";
@@ -484,7 +497,7 @@ std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kBadString;
     else if (Opts.Demangle)
-      FunctionName = DemangleName(FunctionName);
+      FunctionName = DemangleName(FunctionName, ModInfo);
     Result << FunctionName << "\n";
   }
   std::string Filename = LineInfo.FileName;
@@ -494,38 +507,73 @@ std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
   return Result.str();
 }
 
+// Undo these various manglings for Win32 extern "C" functions:
+// cdecl       - _foo
+// stdcall     - _foo@12
+// fastcall    - @foo@12
+// vectorcall  - foo@@12
+// These are all different linkage names for 'foo'.
+static StringRef demanglePE32ExternCFunc(StringRef SymbolName) {
+  // Remove any '_' or '@' prefix.
+  char Front = SymbolName.empty() ? '\0' : SymbolName[0];
+  if (Front == '_' || Front == '@')
+    SymbolName = SymbolName.drop_front();
+
+  // Remove any '@[0-9]+' suffix.
+  if (Front != '?') {
+    size_t AtPos = SymbolName.rfind('@');
+    if (AtPos != StringRef::npos &&
+        std::all_of(SymbolName.begin() + AtPos + 1, SymbolName.end(),
+                    [](char C) { return C >= '0' && C <= '9'; })) {
+      SymbolName = SymbolName.substr(0, AtPos);
+    }
+  }
+
+  // Remove any ending '@' for vectorcall.
+  if (SymbolName.endswith("@"))
+    SymbolName = SymbolName.drop_back();
+
+  return SymbolName;
+}
+
 #if !defined(_MSC_VER)
 // Assume that __cxa_demangle is provided by libcxxabi (except for Windows).
 extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
                                 size_t *length, int *status);
 #endif
 
-std::string LLVMSymbolizer::DemangleName(const std::string &Name) {
+std::string LLVMSymbolizer::DemangleName(const std::string &Name,
+                                         ModuleInfo *ModInfo) {
 #if !defined(_MSC_VER)
   // We can spoil names of symbols with C linkage, so use an heuristic
   // approach to check if the name should be demangled.
-  if (Name.substr(0, 2) != "_Z")
-    return Name;
-  int status = 0;
-  char *DemangledName = __cxa_demangle(Name.c_str(), nullptr, nullptr, &status);
-  if (status != 0)
-    return Name;
-  std::string Result = DemangledName;
-  free(DemangledName);
-  return Result;
+  if (Name.substr(0, 2) == "_Z") {
+    int status = 0;
+    char *DemangledName = __cxa_demangle(Name.c_str(), nullptr, nullptr, &status);
+    if (status != 0)
+      return Name;
+    std::string Result = DemangledName;
+    free(DemangledName);
+    return Result;
+  }
 #else
-  char DemangledName[1024] = {0};
-  DWORD result = ::UnDecorateSymbolName(
-      Name.c_str(), DemangledName, 1023,
-      UNDNAME_NO_ACCESS_SPECIFIERS |       // Strip public, private, protected
-          UNDNAME_NO_ALLOCATION_LANGUAGE | // Strip __thiscall, __stdcall, etc
-          UNDNAME_NO_THROW_SIGNATURES |    // Strip throw() specifications
-          UNDNAME_NO_MEMBER_TYPE |      // Strip virtual, static, etc specifiers
-          UNDNAME_NO_MS_KEYWORDS |      // Strip all MS extension keywords
-          UNDNAME_NO_FUNCTION_RETURNS); // Strip function return types
-
-  return (result == 0) ? Name : std::string(DemangledName);
+  if (!Name.empty() && Name.front() == '?') {
+    // Only do MSVC C++ demangling on symbols starting with '?'.
+    char DemangledName[1024] = {0};
+    DWORD result = ::UnDecorateSymbolName(
+        Name.c_str(), DemangledName, 1023,
+        UNDNAME_NO_ACCESS_SPECIFIERS |       // Strip public, private, protected
+            UNDNAME_NO_ALLOCATION_LANGUAGE | // Strip __thiscall, __stdcall, etc
+            UNDNAME_NO_THROW_SIGNATURES |    // Strip throw() specifications
+            UNDNAME_NO_MEMBER_TYPE | // Strip virtual, static, etc specifiers
+            UNDNAME_NO_MS_KEYWORDS | // Strip all MS extension keywords
+            UNDNAME_NO_FUNCTION_RETURNS); // Strip function return types
+    return (result == 0) ? Name : std::string(DemangledName);
+  }
 #endif
+  if (ModInfo->isWin32Module())
+    return std::string(demanglePE32ExternCFunc(Name));
+  return Name;
 }
 
 } // namespace symbolize

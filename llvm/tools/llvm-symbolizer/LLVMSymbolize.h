@@ -63,7 +63,8 @@ public:
   std::string
   symbolizeData(const std::string &ModuleName, uint64_t ModuleOffset);
   void flush();
-  static std::string DemangleName(const std::string &Name);
+  static std::string DemangleName(const std::string &Name, ModuleInfo *ModInfo);
+
 private:
   typedef std::pair<ObjectFile*, ObjectFile*> ObjectPair;
 
@@ -78,7 +79,7 @@ private:
   /// universal binary (or the binary itself if it is an object file).
   ObjectFile *getObjectFileFromBinary(Binary *Bin, const std::string &ArchName);
 
-  std::string printDILineInfo(DILineInfo LineInfo) const;
+  std::string printDILineInfo(DILineInfo LineInfo, ModuleInfo *ModInfo) const;
 
   // Owns all the parsed binaries and object files.
   SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;
@@ -112,6 +113,9 @@ public:
       uint64_t ModuleOffset, const LLVMSymbolizer::Options &Opts) const;
   bool symbolizeData(uint64_t ModuleOffset, std::string &Name, uint64_t &Start,
                      uint64_t &Size) const;
+
+  // Return true if this is a 32-bit x86 PE COFF module.
+  bool isWin32Module() const;
 
 private:
   bool getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
