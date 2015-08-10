@@ -29,10 +29,10 @@ using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::support::endian;
 using namespace llvm::COFF;
-using llvm::RoundUpToAlignment;
 
 namespace lld {
 namespace coff {
+namespace {
 
 // Import table
 
@@ -124,36 +124,6 @@ private:
   size_t Size;
 };
 
-uint64_t IdataContents::getDirSize() {
-  return Dirs.size() * sizeof(ImportDirectoryTableEntry);
-}
-
-uint64_t IdataContents::getIATSize() {
-  return Addresses.size() * ptrSize();
-}
-
-// Returns a list of .idata contents.
-// See Microsoft PE/COFF spec 5.4 for details.
-std::vector<Chunk *> IdataContents::getChunks() {
-  create();
-  std::vector<Chunk *> V;
-  // The loader assumes a specific order of data.
-  // Add each type in the correct order.
-  for (std::unique_ptr<Chunk> &C : Dirs)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Lookups)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Addresses)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Hints)
-    V.push_back(C.get());
-  for (auto &P : DLLNames) {
-    std::unique_ptr<Chunk> &C = P.second;
-    V.push_back(C.get());
-  }
-  return V;
-}
-
 static std::map<StringRef, std::vector<DefinedImportData *>>
 binImports(const std::vector<DefinedImportData *> &Imports) {
   // Group DLL-imported symbols by DLL name because that's how
@@ -171,51 +141,6 @@ binImports(const std::vector<DefinedImportData *> &Imports) {
               });
   }
   return M;
-}
-
-void IdataContents::create() {
-  std::map<StringRef, std::vector<DefinedImportData *>> Map =
-      binImports(Imports);
-
-  // Create .idata contents for each DLL.
-  for (auto &P : Map) {
-    StringRef Name = P.first;
-    std::vector<DefinedImportData *> &Syms = P.second;
-
-    // Create lookup and address tables. If they have external names,
-    // we need to create HintName chunks to store the names.
-    // If they don't (if they are import-by-ordinals), we store only
-    // ordinal values to the table.
-    size_t Base = Lookups.size();
-    for (DefinedImportData *S : Syms) {
-      uint16_t Ord = S->getOrdinal();
-      if (S->getExternalName().empty()) {
-        Lookups.push_back(make_unique<OrdinalOnlyChunk>(Ord));
-        Addresses.push_back(make_unique<OrdinalOnlyChunk>(Ord));
-        continue;
-      }
-      auto C = make_unique<HintNameChunk>(S->getExternalName(), Ord);
-      Lookups.push_back(make_unique<LookupChunk>(C.get()));
-      Addresses.push_back(make_unique<LookupChunk>(C.get()));
-      Hints.push_back(std::move(C));
-    }
-    // Terminate with null values.
-    Lookups.push_back(make_unique<NullChunk>(ptrSize()));
-    Addresses.push_back(make_unique<NullChunk>(ptrSize()));
-
-    for (int I = 0, E = Syms.size(); I < E; ++I)
-      Syms[I]->setLocation(Addresses[Base + I].get());
-
-    // Create the import table header.
-    if (!DLLNames.count(Name))
-      DLLNames[Name] = make_unique<StringChunk>(Name);
-    auto Dir = make_unique<ImportDirectoryChunk>(DLLNames[Name].get());
-    Dir->LookupTab = Lookups[Base].get();
-    Dir->AddressTab = Addresses[Base].get();
-    Dirs.push_back(std::move(Dir));
-  }
-  // Add null terminator.
-  Dirs.push_back(make_unique<NullChunk>(sizeof(ImportDirectoryTableEntry)));
 }
 
 // Export table
@@ -329,34 +254,6 @@ public:
   Defined *Helper = nullptr;
 };
 
-std::vector<Chunk *> DelayLoadContents::getChunks() {
-  std::vector<Chunk *> V;
-  for (std::unique_ptr<Chunk> &C : Dirs)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Names)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : HintNames)
-    V.push_back(C.get());
-  for (auto &P : DLLNames) {
-    std::unique_ptr<Chunk> &C = P.second;
-    V.push_back(C.get());
-  }
-  return V;
-}
-
-std::vector<Chunk *> DelayLoadContents::getDataChunks() {
-  std::vector<Chunk *> V;
-  for (std::unique_ptr<Chunk> &C : ModuleHandles)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Addresses)
-    V.push_back(C.get());
-  return V;
-}
-
-uint64_t DelayLoadContents::getDirSize() {
-  return Dirs.size() * sizeof(delay_import_directory_table_entry);
-}
-
 // A chunk for the import descriptor table.
 class DelayAddressChunk : public Chunk {
 public:
@@ -377,68 +274,6 @@ public:
 
   Chunk *Thunk;
 };
-
-void DelayLoadContents::create(Defined *H) {
-  Helper = H;
-  std::map<StringRef, std::vector<DefinedImportData *>> Map =
-      binImports(Imports);
-
-  // Create .didat contents for each DLL.
-  for (auto &P : Map) {
-    StringRef Name = P.first;
-    std::vector<DefinedImportData *> &Syms = P.second;
-
-    // Create the delay import table header.
-    if (!DLLNames.count(Name))
-      DLLNames[Name] = make_unique<StringChunk>(Name);
-    auto Dir = make_unique<DelayDirectoryChunk>(DLLNames[Name].get());
-
-    size_t Base = Addresses.size();
-    for (DefinedImportData *S : Syms) {
-      Chunk *T = newThunkChunk(S, Dir.get());
-      auto A = make_unique<DelayAddressChunk>(T);
-      Addresses.push_back(std::move(A));
-      Thunks.push_back(std::unique_ptr<Chunk>(T));
-      StringRef ExtName = S->getExternalName();
-      if (ExtName.empty()) {
-        Names.push_back(make_unique<OrdinalOnlyChunk>(S->getOrdinal()));
-      } else {
-        auto C = make_unique<HintNameChunk>(ExtName, 0);
-        Names.push_back(make_unique<LookupChunk>(C.get()));
-        HintNames.push_back(std::move(C));
-      }
-    }
-    // Terminate with null values.
-    Addresses.push_back(make_unique<NullChunk>(8));
-    Names.push_back(make_unique<NullChunk>(8));
-
-    for (int I = 0, E = Syms.size(); I < E; ++I)
-      Syms[I]->setLocation(Addresses[Base + I].get());
-    auto *MH = new NullChunk(8);
-    MH->setAlign(8);
-    ModuleHandles.push_back(std::unique_ptr<Chunk>(MH));
-
-    // Fill the delay import table header fields.
-    Dir->ModuleHandle = MH;
-    Dir->AddressTab = Addresses[Base].get();
-    Dir->NameTab = Names[Base].get();
-    Dirs.push_back(std::move(Dir));
-  }
-  // Add null terminator.
-  Dirs.push_back(
-      make_unique<NullChunk>(sizeof(delay_import_directory_table_entry)));
-}
-
-Chunk *DelayLoadContents::newThunkChunk(DefinedImportData *S, Chunk *Dir) {
-  switch (Config->Machine) {
-  case AMD64:
-    return new ThunkChunkX64(S, Dir, Helper);
-  case I386:
-    return new ThunkChunkX86(S, Dir, Helper);
-  default:
-    llvm_unreachable("unsupported machine type");
-  }
-}
 
 // Export table
 // Read Microsoft PE/COFF spec 5.3 for details.
@@ -524,6 +359,173 @@ public:
 private:
   size_t Size;
 };
+
+} // anonymous namespace
+
+uint64_t IdataContents::getDirSize() {
+  return Dirs.size() * sizeof(ImportDirectoryTableEntry);
+}
+
+uint64_t IdataContents::getIATSize() {
+  return Addresses.size() * ptrSize();
+}
+
+// Returns a list of .idata contents.
+// See Microsoft PE/COFF spec 5.4 for details.
+std::vector<Chunk *> IdataContents::getChunks() {
+  create();
+  std::vector<Chunk *> V;
+  // The loader assumes a specific order of data.
+  // Add each type in the correct order.
+  for (std::unique_ptr<Chunk> &C : Dirs)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Lookups)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Addresses)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Hints)
+    V.push_back(C.get());
+  for (auto &P : DLLNames) {
+    std::unique_ptr<Chunk> &C = P.second;
+    V.push_back(C.get());
+  }
+  return V;
+}
+
+void IdataContents::create() {
+  std::map<StringRef, std::vector<DefinedImportData *>> Map =
+      binImports(Imports);
+
+  // Create .idata contents for each DLL.
+  for (auto &P : Map) {
+    StringRef Name = P.first;
+    std::vector<DefinedImportData *> &Syms = P.second;
+
+    // Create lookup and address tables. If they have external names,
+    // we need to create HintName chunks to store the names.
+    // If they don't (if they are import-by-ordinals), we store only
+    // ordinal values to the table.
+    size_t Base = Lookups.size();
+    for (DefinedImportData *S : Syms) {
+      uint16_t Ord = S->getOrdinal();
+      if (S->getExternalName().empty()) {
+        Lookups.push_back(make_unique<OrdinalOnlyChunk>(Ord));
+        Addresses.push_back(make_unique<OrdinalOnlyChunk>(Ord));
+        continue;
+      }
+      auto C = make_unique<HintNameChunk>(S->getExternalName(), Ord);
+      Lookups.push_back(make_unique<LookupChunk>(C.get()));
+      Addresses.push_back(make_unique<LookupChunk>(C.get()));
+      Hints.push_back(std::move(C));
+    }
+    // Terminate with null values.
+    Lookups.push_back(make_unique<NullChunk>(ptrSize()));
+    Addresses.push_back(make_unique<NullChunk>(ptrSize()));
+
+    for (int I = 0, E = Syms.size(); I < E; ++I)
+      Syms[I]->setLocation(Addresses[Base + I].get());
+
+    // Create the import table header.
+    if (!DLLNames.count(Name))
+      DLLNames[Name] = make_unique<StringChunk>(Name);
+    auto Dir = make_unique<ImportDirectoryChunk>(DLLNames[Name].get());
+    Dir->LookupTab = Lookups[Base].get();
+    Dir->AddressTab = Addresses[Base].get();
+    Dirs.push_back(std::move(Dir));
+  }
+  // Add null terminator.
+  Dirs.push_back(make_unique<NullChunk>(sizeof(ImportDirectoryTableEntry)));
+}
+
+std::vector<Chunk *> DelayLoadContents::getChunks() {
+  std::vector<Chunk *> V;
+  for (std::unique_ptr<Chunk> &C : Dirs)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Names)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : HintNames)
+    V.push_back(C.get());
+  for (auto &P : DLLNames) {
+    std::unique_ptr<Chunk> &C = P.second;
+    V.push_back(C.get());
+  }
+  return V;
+}
+
+std::vector<Chunk *> DelayLoadContents::getDataChunks() {
+  std::vector<Chunk *> V;
+  for (std::unique_ptr<Chunk> &C : ModuleHandles)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Addresses)
+    V.push_back(C.get());
+  return V;
+}
+
+uint64_t DelayLoadContents::getDirSize() {
+  return Dirs.size() * sizeof(delay_import_directory_table_entry);
+}
+
+void DelayLoadContents::create(Defined *H) {
+  Helper = H;
+  std::map<StringRef, std::vector<DefinedImportData *>> Map =
+      binImports(Imports);
+
+  // Create .didat contents for each DLL.
+  for (auto &P : Map) {
+    StringRef Name = P.first;
+    std::vector<DefinedImportData *> &Syms = P.second;
+
+    // Create the delay import table header.
+    if (!DLLNames.count(Name))
+      DLLNames[Name] = make_unique<StringChunk>(Name);
+    auto Dir = make_unique<DelayDirectoryChunk>(DLLNames[Name].get());
+
+    size_t Base = Addresses.size();
+    for (DefinedImportData *S : Syms) {
+      Chunk *T = newThunkChunk(S, Dir.get());
+      auto A = make_unique<DelayAddressChunk>(T);
+      Addresses.push_back(std::move(A));
+      Thunks.push_back(std::unique_ptr<Chunk>(T));
+      StringRef ExtName = S->getExternalName();
+      if (ExtName.empty()) {
+        Names.push_back(make_unique<OrdinalOnlyChunk>(S->getOrdinal()));
+      } else {
+        auto C = make_unique<HintNameChunk>(ExtName, 0);
+        Names.push_back(make_unique<LookupChunk>(C.get()));
+        HintNames.push_back(std::move(C));
+      }
+    }
+    // Terminate with null values.
+    Addresses.push_back(make_unique<NullChunk>(8));
+    Names.push_back(make_unique<NullChunk>(8));
+
+    for (int I = 0, E = Syms.size(); I < E; ++I)
+      Syms[I]->setLocation(Addresses[Base + I].get());
+    auto *MH = new NullChunk(8);
+    MH->setAlign(8);
+    ModuleHandles.push_back(std::unique_ptr<Chunk>(MH));
+
+    // Fill the delay import table header fields.
+    Dir->ModuleHandle = MH;
+    Dir->AddressTab = Addresses[Base].get();
+    Dir->NameTab = Names[Base].get();
+    Dirs.push_back(std::move(Dir));
+  }
+  // Add null terminator.
+  Dirs.push_back(
+      make_unique<NullChunk>(sizeof(delay_import_directory_table_entry)));
+}
+
+Chunk *DelayLoadContents::newThunkChunk(DefinedImportData *S, Chunk *Dir) {
+  switch (Config->Machine) {
+  case AMD64:
+    return new ThunkChunkX64(S, Dir, Helper);
+  case I386:
+    return new ThunkChunkX86(S, Dir, Helper);
+  default:
+    llvm_unreachable("unsupported machine type");
+  }
+}
 
 EdataContents::EdataContents() {
   uint16_t MaxOrdinal = 0;
