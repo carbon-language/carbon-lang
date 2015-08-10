@@ -1056,8 +1056,6 @@ private:
 
   /// \brief Reads the stored information about an input file.
   InputFileInfo readInputFileInfo(ModuleFile &F, unsigned ID);
-  /// \brief A convenience method to read the filename from an input file.
-  std::string getInputFileName(ModuleFile &F, unsigned ID);
 
   /// \brief Retrieve the file entry and 'overridden' bit for an input
   /// file in the given module file.
@@ -2088,12 +2086,8 @@ public:
   SmallVector<std::pair<llvm::BitstreamCursor,
                         serialization::ModuleFile *>, 8> CommentsCursors;
 
-  //RIDErief Loads comments ranges.
+  /// \brief Loads comments ranges.
   void ReadComments() override;
-
-  /// Return all input files for the given module file.
-  void getInputFiles(ModuleFile &F,
-                     SmallVectorImpl<serialization::InputFile> &Files);
 };
 
 /// \brief Helper class that saves the current stream position and

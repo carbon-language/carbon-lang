@@ -1878,10 +1878,6 @@ ASTReader::readInputFileInfo(ModuleFile &F, unsigned ID) {
   return R;
 }
 
-std::string ASTReader::getInputFileName(ModuleFile &F, unsigned int ID) {
-  return readInputFileInfo(F, ID).Filename;
-}
-
 InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   // If this ID is bogus, just return an empty input file.
   if (ID == 0 || ID > F.InputFilesLoaded.size())
@@ -8066,14 +8062,6 @@ void ASTReader::ReadComments() {
     }
   NextCursor:
     Context.Comments.addDeserializedComments(Comments);
-  }
-}
-
-void ASTReader::getInputFiles(ModuleFile &F,
-                             SmallVectorImpl<serialization::InputFile> &Files) {
-  for (unsigned I = 0, E = F.InputFilesLoaded.size(); I != E; ++I) {
-    unsigned ID = I+1;
-    Files.push_back(getInputFile(F, ID));
   }
 }
 
