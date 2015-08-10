@@ -21,7 +21,11 @@ def CC_Sparc32 : CallingConv<[
   // i32 f32 arguments get passed in integer registers if there is space.
   CCIfType<[i32, f32], CCAssignToReg<[I0, I1, I2, I3, I4, I5]>>,
   // f64 arguments are split and passed through registers or through stack.
-  CCIfType<[f64], CCCustom<"CC_Sparc_Assign_f64">>,
+  CCIfType<[f64], CCCustom<"CC_Sparc_Assign_Split_64">>,
+  // As are v2i32 arguments (this would be the default behavior for
+  // v2i32 if it wasn't allocated to the IntPair register-class)
+  CCIfType<[v2i32], CCCustom<"CC_Sparc_Assign_Split_64">>,
+
 
   // Alternatively, they are assigned to the stack in 4-byte aligned units.
   CCAssignToStack<4, 4>
@@ -30,7 +34,8 @@ def CC_Sparc32 : CallingConv<[
 def RetCC_Sparc32 : CallingConv<[
   CCIfType<[i32], CCAssignToReg<[I0, I1, I2, I3, I4, I5]>>,
   CCIfType<[f32], CCAssignToReg<[F0, F1, F2, F3]>>,
-  CCIfType<[f64], CCAssignToReg<[D0, D1]>>
+  CCIfType<[f64], CCAssignToReg<[D0, D1]>>,
+  CCIfType<[v2i32], CCCustom<"CC_Sparc_Assign_Ret_Split_64">>
 ]>;
 
 

@@ -117,6 +117,13 @@ static const unsigned ASRRegDecoderTable[] = {
   SP::ASR24, SP::ASR25, SP::ASR26, SP::ASR27,
   SP::ASR28, SP::ASR29, SP::ASR30, SP::ASR31};
 
+static const uint16_t IntPairDecoderTable[] = {
+  SP::G0_G1, SP::G2_G3, SP::G4_G5, SP::G6_G7,
+  SP::O0_O1, SP::O2_O3, SP::O4_O5, SP::O6_O7,
+  SP::L0_L1, SP::L2_L3, SP::L4_L5, SP::L6_L7,
+  SP::I0_I1, SP::I2_I3, SP::I4_I5, SP::I6_I7,
+};
+
 static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
                                                uint64_t Address,
@@ -196,8 +203,24 @@ static DecodeStatus DecodeASRRegsRegisterClass(MCInst &Inst, unsigned RegNo,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeIntPairRegisterClass(MCInst &Inst, unsigned RegNo,
+                                   uint64_t Address, const void *Decoder) {
+  DecodeStatus S = MCDisassembler::Success;
+
+  if (RegNo > 31)
+    return MCDisassembler::Fail;
+
+  if ((RegNo & 1))
+    S = MCDisassembler::SoftFail;
+
+  unsigned RegisterPair = IntPairDecoderTable[RegNo/2];
+  Inst.addOperand(MCOperand::createReg(RegisterPair));
+  return S;
+}
 
 static DecodeStatus DecodeLoadInt(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder);
+static DecodeStatus DecodeLoadIntPair(MCInst &Inst, unsigned insn, uint64_t Address,
                                   const void *Decoder);
 static DecodeStatus DecodeLoadFP(MCInst &Inst, unsigned insn, uint64_t Address,
                                  const void *Decoder);
@@ -206,6 +229,8 @@ static DecodeStatus DecodeLoadDFP(MCInst &Inst, unsigned insn, uint64_t Address,
 static DecodeStatus DecodeLoadQFP(MCInst &Inst, unsigned insn, uint64_t Address,
                                   const void *Decoder);
 static DecodeStatus DecodeStoreInt(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeStoreIntPair(MCInst &Inst, unsigned insn,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeStoreFP(MCInst &Inst, unsigned insn,
                                   uint64_t Address, const void *Decoder);
@@ -326,6 +351,12 @@ static DecodeStatus DecodeLoadInt(MCInst &Inst, unsigned insn, uint64_t Address,
                    DecodeIntRegsRegisterClass);
 }
 
+static DecodeStatus DecodeLoadIntPair(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, true,
+                   DecodeIntPairRegisterClass);
+}
+
 static DecodeStatus DecodeLoadFP(MCInst &Inst, unsigned insn, uint64_t Address,
                                  const void *Decoder) {
   return DecodeMem(Inst, insn, Address, Decoder, true,
@@ -348,6 +379,12 @@ static DecodeStatus DecodeStoreInt(MCInst &Inst, unsigned insn,
                                    uint64_t Address, const void *Decoder) {
   return DecodeMem(Inst, insn, Address, Decoder, false,
                    DecodeIntRegsRegisterClass);
+}
+
+static DecodeStatus DecodeStoreIntPair(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, false,
+                   DecodeIntPairRegisterClass);
 }
 
 static DecodeStatus DecodeStoreFP(MCInst &Inst, unsigned insn, uint64_t Address,

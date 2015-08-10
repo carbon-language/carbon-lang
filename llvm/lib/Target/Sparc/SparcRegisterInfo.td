@@ -32,6 +32,12 @@ def sub_odd64  : SubRegIndex<64, 64>;
 // Ri - 32-bit integer registers
 class Ri<bits<16> Enc, string n> : SparcReg<Enc, n>;
 
+// Rdi - pairs of 32-bit integer registers
+class Rdi<bits<16> Enc, string n, list<Register> subregs> : SparcReg<Enc, n> {
+  let SubRegs = subregs;
+  let SubRegIndices = [sub_even, sub_odd];
+  let CoveredBySubRegs = 1;
+}
 // Rf - 32-bit floating-point registers
 class Rf<bits<16> Enc, string n> : SparcReg<Enc, n>;
 
@@ -217,6 +223,24 @@ def Q13 : Rq<21, "F52", [D26, D27]>;
 def Q14 : Rq<25, "F56", [D28, D29]>;
 def Q15 : Rq<29, "F60", [D30, D31]>;
 
+// Aliases of the integer registers used for LDD/STD double-word operations
+def G0_G1 : Rdi<0, "G0", [G0, G1]>;
+def G2_G3 : Rdi<2, "G2", [G2, G3]>;
+def G4_G5 : Rdi<4, "G4", [G4, G5]>;
+def G6_G7 : Rdi<6, "G6", [G6, G7]>;
+def O0_O1 : Rdi<8, "O0", [O0, O1]>;
+def O2_O3 : Rdi<10, "O2", [O2, O3]>;
+def O4_O5 : Rdi<12, "O4", [O4, O5]>;
+def O6_O7 : Rdi<14, "O6", [O6, O7]>;
+def L0_L1 : Rdi<16, "L0", [L0, L1]>;
+def L2_L3 : Rdi<18, "L2", [L2, L3]>;
+def L4_L5 : Rdi<20, "L4", [L4, L5]>;
+def L6_L7 : Rdi<22, "L6", [L6, L7]>;
+def I0_I1 : Rdi<24, "I0", [I0, I1]>;
+def I2_I3 : Rdi<26, "I2", [I2, I3]>;
+def I4_I5 : Rdi<28, "I4", [I4, I5]>;
+def I6_I7 : Rdi<30, "I6", [I6, I7]>;
+
 // Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred
@@ -230,6 +254,13 @@ def IntRegs : RegisterClass<"SP", [i32, i64], 32,
                                  (sequence "G%u", 0, 7),
                                  (sequence "L%u", 0, 7),
                                  (sequence "O%u", 0, 7))>;
+
+// Should be in the same order as IntRegs.
+def IntPair : RegisterClass<"SP", [v2i32], 64,
+    (add I0_I1, I2_I3, I4_I5, I6_I7,
+         G0_G1, G2_G3, G4_G5, G6_G7,
+         L0_L1, L2_L3, L4_L5, L6_L7,
+         O0_O1, O2_O3, O4_O5, O6_O7)>;
 
 // Register class for 64-bit mode, with a 64-bit spill slot size.
 // These are the same as the 32-bit registers, so TableGen will consider this

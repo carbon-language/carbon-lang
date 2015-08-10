@@ -284,7 +284,9 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   unsigned numSubRegs = 0;
   unsigned movOpc     = 0;
   const unsigned *subRegIdx = nullptr;
+  bool ExtraG0 = false;
 
+  const unsigned DW_SubRegsIdx[]  = { SP::sub_even, SP::sub_odd };
   const unsigned DFP_FP_SubRegsIdx[]  = { SP::sub_even, SP::sub_odd };
   const unsigned QFP_DFP_SubRegsIdx[] = { SP::sub_even64, SP::sub_odd64 };
   const unsigned QFP_FP_SubRegsIdx[]  = { SP::sub_even, SP::sub_odd,
@@ -294,7 +296,12 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (SP::IntRegsRegClass.contains(DestReg, SrcReg))
     BuildMI(MBB, I, DL, get(SP::ORrr), DestReg).addReg(SP::G0)
       .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (SP::FPRegsRegClass.contains(DestReg, SrcReg))
+  else if (SP::IntPairRegClass.contains(DestReg, SrcReg)) {
+    subRegIdx  = DW_SubRegsIdx;
+    numSubRegs = 2;
+    movOpc     = SP::ORrr;
+    ExtraG0 = true;
+  } else if (SP::FPRegsRegClass.contains(DestReg, SrcReg))
     BuildMI(MBB, I, DL, get(SP::FMOVS), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
   else if (SP::DFPRegsRegClass.contains(DestReg, SrcReg)) {
@@ -347,7 +354,11 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     unsigned Src = TRI->getSubReg(SrcReg,  subRegIdx[i]);
     assert(Dst && Src && "Bad sub-register");
 
-    MovMI = BuildMI(MBB, I, DL, get(movOpc), Dst).addReg(Src);
+    MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(movOpc), Dst);
+    if (ExtraG0)
+      MIB.addReg(SP::G0);
+    MIB.addReg(Src);
+    MovMI = MIB.getInstr();
   }
   // Add implicit super-register defs and kills to the last MovMI.
   MovMI->addRegisterDefined(DestReg, TRI);
@@ -372,11 +383,14 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                              MFI.getObjectAlignment(FI));
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
- if (RC == &SP::I64RegsRegClass)
+  if (RC == &SP::I64RegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STXri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   else if (RC == &SP::IntRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STri)).addFrameIndex(FI).addImm(0)
+      .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
+  else if (RC == &SP::IntPairRegClass)
+    BuildMI(MBB, I, DL, get(SP::STDri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::STFri)).addFrameIndex(FI).addImm(0)
@@ -414,6 +428,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       .addMemOperand(MMO);
   else if (RC == &SP::IntRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDri), DestReg).addFrameIndex(FI).addImm(0)
+      .addMemOperand(MMO);
+  else if (RC == &SP::IntPairRegClass)
+    BuildMI(MBB, I, DL, get(SP::LDDri), DestReg).addFrameIndex(FI).addImm(0)
       .addMemOperand(MMO);
   else if (RC == &SP::FPRegsRegClass)
     BuildMI(MBB, I, DL, get(SP::LDFri), DestReg).addFrameIndex(FI).addImm(0)

@@ -408,6 +408,9 @@ let DecoderMethod = "DecodeLoadInt" in {
   defm LD   : LoadA<"ld",   0b000000, 0b010000, load,        IntRegs, i32>;
 }
 
+let DecoderMethod = "DecodeLoadIntPair" in
+  defm LDD : LoadA<"ldd", 0b000011, 0b010011, load, IntPair, v2i32>;
+
 // Section B.2 - Load Floating-point Instructions, p. 92
 let DecoderMethod = "DecodeLoadFP" in
   defm LDF   : Load<"ld",  0b100000, load, FPRegs,  f32>;
@@ -423,6 +426,9 @@ let DecoderMethod = "DecodeStoreInt" in {
   defm STH   : StoreA<"sth", 0b000110, 0b010110, truncstorei16, IntRegs, i32>;
   defm ST    : StoreA<"st",  0b000100, 0b010100, store,         IntRegs, i32>;
 }
+
+let DecoderMethod = "DecodeStoreIntPair" in
+  defm STD   : StoreA<"std", 0b000111, 0b010111, store, IntPair, v2i32>;
 
 // Section B.5 - Store Floating-point Instructions, p. 97
 let DecoderMethod = "DecodeStoreFP" in
@@ -1326,6 +1332,18 @@ def : Pat<(i32 (atomic_load ADDRri:$src)), (LDri ADDRri:$src)>;
 // atomic_store_32 val, addr -> store val, addr
 def : Pat<(atomic_store ADDRrr:$dst, i32:$val), (STrr ADDRrr:$dst, $val)>;
 def : Pat<(atomic_store ADDRri:$dst, i32:$val), (STri ADDRri:$dst, $val)>;
+
+// extract_vector
+def : Pat<(vector_extract (v2i32 IntPair:$Rn), 0),
+          (i32 (EXTRACT_SUBREG IntPair:$Rn, sub_even))>;
+def : Pat<(vector_extract (v2i32 IntPair:$Rn), 1),
+          (i32 (EXTRACT_SUBREG IntPair:$Rn, sub_odd))>;
+
+// build_vector
+def : Pat<(build_vector (i32 IntRegs:$a1), (i32 IntRegs:$a2)),
+          (INSERT_SUBREG
+	    (INSERT_SUBREG (v2i32 (IMPLICIT_DEF)), (i32 IntRegs:$a1), sub_even),
+            (i32 IntRegs:$a2), sub_odd)>;
 
 
 include "SparcInstr64Bit.td"

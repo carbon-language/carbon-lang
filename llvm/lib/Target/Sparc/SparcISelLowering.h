@@ -167,8 +167,8 @@ namespace llvm {
     }
 
     void ReplaceNodeResults(SDNode *N,
-                                    SmallVectorImpl<SDValue>& Results,
-                                    SelectionDAG &DAG) const override;
+                            SmallVectorImpl<SDValue>& Results,
+                            SelectionDAG &DAG) const override;
 
     MachineBasicBlock *expandSelectCC(MachineInstr *MI, MachineBasicBlock *BB,
                                       unsigned BROpcode) const;

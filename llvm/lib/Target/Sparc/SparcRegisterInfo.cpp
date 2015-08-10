@@ -75,6 +75,18 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(SP::G6);
   Reserved.set(SP::G7);
 
+  // Also reserve the register pair aliases covering the above
+  // registers, with the same conditions.
+  Reserved.set(SP::G0_G1);
+  if (ReserveAppRegisters)
+    Reserved.set(SP::G2_G3);
+  if (ReserveAppRegisters || !Subtarget.is64Bit())
+    Reserved.set(SP::G4_G5);
+
+  Reserved.set(SP::O6_O7);
+  Reserved.set(SP::I6_I7);
+  Reserved.set(SP::G6_G7);
+
   // Unaliased double registers are not available in non-V9 targets.
   if (!Subtarget.isV9()) {
     for (unsigned n = 0; n != 16; ++n) {
@@ -210,4 +222,3 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 unsigned SparcRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return SP::I6;
 }
-

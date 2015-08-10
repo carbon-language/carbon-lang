@@ -140,6 +140,12 @@ public:
     SP::ASR24, SP::ASR25, SP::ASR26, SP::ASR27,
     SP::ASR28, SP::ASR29, SP::ASR30, SP::ASR31};
 
+  static unsigned IntPairRegs[] = {
+    Sparc::G0_G1, Sparc::G2_G3, Sparc::G4_G5, Sparc::G6_G7,
+    Sparc::O0_O1, Sparc::O2_O3, Sparc::O4_O5, Sparc::O6_O7,
+    Sparc::L0_L1, Sparc::L2_L3, Sparc::L4_L5, Sparc::L6_L7,
+    Sparc::I0_I1, Sparc::I2_I3, Sparc::I4_I5, Sparc::I6_I7};
+
 /// SparcOperand - Instances of this class represent a parsed Sparc machine
 /// instruction.
 class SparcOperand : public MCParsedAsmOperand {
@@ -147,6 +153,7 @@ public:
   enum RegisterKind {
     rk_None,
     rk_IntReg,
+    rk_IntPairReg,
     rk_FloatReg,
     rk_DoubleReg,
     rk_QuadReg,
@@ -199,6 +206,10 @@ public:
   bool isMem() const override { return isMEMrr() || isMEMri(); }
   bool isMEMrr() const { return Kind == k_MemoryReg; }
   bool isMEMri() const { return Kind == k_MemoryImm; }
+
+  bool isIntReg() const {
+    return (Kind == k_Register && Reg.Kind == rk_IntReg);
+  }
 
   bool isFloatReg() const {
     return (Kind == k_Register && Reg.Kind == rk_FloatReg);
@@ -328,6 +339,25 @@ public:
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
+  }
+
+  static bool MorphToIntPairReg(SparcOperand &Op) {
+    unsigned Reg = Op.getReg();
+    assert(Op.Reg.Kind == rk_IntReg);
+    unsigned regIdx = 32;
+    if (Reg >= Sparc::G0 && Reg <= Sparc::G7)
+      regIdx = Reg - Sparc::G0;
+    else if (Reg >= Sparc::O0 && Reg <= Sparc::O7)
+      regIdx = Reg - Sparc::O0 + 8;
+    else if (Reg >= Sparc::L0 && Reg <= Sparc::L7)
+      regIdx = Reg - Sparc::L0 + 16;
+    else if (Reg >= Sparc::I0 && Reg <= Sparc::I7)
+      regIdx = Reg - Sparc::I0 + 24;
+    if (regIdx % 2 || regIdx > 31)
+      return false;
+    Op.Reg.RegNum = IntPairRegs[regIdx / 2];
+    Op.Reg.Kind = rk_IntPairReg;
+    return true;
   }
 
   static bool MorphToDoubleReg(SparcOperand &Op) {
@@ -1050,6 +1080,10 @@ unsigned SparcAsmParser::validateTargetOperandClass(MCParsedAsmOperand &GOp,
         return MCTargetAsmParser::Match_Success;
       break;
     }
+  }
+  if (Op.isIntReg() && Kind == MCK_IntPair) {
+    if (SparcOperand::MorphToIntPairReg(Op))
+      return MCTargetAsmParser::Match_Success;
   }
   return Match_InvalidOperand;
 }

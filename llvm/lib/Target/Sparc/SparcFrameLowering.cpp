@@ -213,23 +213,35 @@ bool SparcFrameLowering::isLeafProc(MachineFunction &MF) const
 }
 
 void SparcFrameLowering::remapRegsForLeafProc(MachineFunction &MF) const {
-
   MachineRegisterInfo &MRI = MF.getRegInfo();
-
   // Remap %i[0-7] to %o[0-7].
   for (unsigned reg = SP::I0; reg <= SP::I7; ++reg) {
     if (MRI.reg_nodbg_empty(reg))
       continue;
-    unsigned mapped_reg = (reg - SP::I0 + SP::O0);
+
+    unsigned mapped_reg = reg - SP::I0 + SP::O0;
     assert(MRI.reg_nodbg_empty(mapped_reg));
 
     // Replace I register with O register.
     MRI.replaceRegWith(reg, mapped_reg);
+
+    // Also replace register pair super-registers.
+    if ((reg - SP::I0) % 2 == 0) {
+      unsigned preg = (reg - SP::I0) / 2 + SP::I0_I1;
+      unsigned mapped_preg = preg - SP::I0_I1 + SP::O0_O1;
+      MRI.replaceRegWith(preg, mapped_preg);
+    }
   }
 
   // Rewrite MBB's Live-ins.
   for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
        MBB != E; ++MBB) {
+    for (unsigned reg = SP::I0_I1; reg <= SP::I6_I7; ++reg) {
+      if (!MBB->isLiveIn(reg))
+        continue;
+      MBB->removeLiveIn(reg);
+      MBB->addLiveIn(reg - SP::I0_I1 + SP::O0_O1);
+    }
     for (unsigned reg = SP::I0; reg <= SP::I7; ++reg) {
       if (!MBB->isLiveIn(reg))
         continue;

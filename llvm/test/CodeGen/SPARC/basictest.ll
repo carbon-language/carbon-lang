@@ -84,3 +84,16 @@ define i64 @unsigned_multiply_32x32_64(i32 %a, i32 %b) {
   ret i64 %r
 }
 
+; CHECK-LABEL: load_store_64bit:
+; CHECK: ldd [%o0], %o2
+; CHECK: addcc %o3, 3, %o5
+; CHECK: addxcc %o2, 0, %o4
+; CHECK: retl
+; CHECK: std %o4, [%o1]
+define void @load_store_64bit(i64* %x, i64* %y) {
+entry:
+  %0 = load i64, i64* %x
+  %add = add nsw i64 %0, 3
+  store i64 %add, i64* %y
+  ret void
+}
