@@ -142,4 +142,15 @@
 # define HAVE_TIRPC_RPC_XDR_H 0
 #endif
 
+/// \macro MSC_PREREQ
+/// \brief Is the compiler MSVC of at least the specified version?
+/// The common \param version values to check for are:
+///  * 1800: Microsoft Visual Studio 2013 / 12.0
+///  * 1900: Microsoft Visual Studio 2015 / 14.0
+#ifdef _MSC_VER
+# define MSC_PREREQ(version) (_MSC_VER >= (version))
+#else
+# define MSC_PREREQ(version) 0
+#endif
+
 #endif // SANITIZER_PLATFORM_H
