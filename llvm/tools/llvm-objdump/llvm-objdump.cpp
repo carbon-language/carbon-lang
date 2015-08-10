@@ -378,11 +378,12 @@ PrettyPrinter &selectPrettyPrinter(Triple const &Triple) {
 
 template <class ELFT>
 static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
-                                                DataRefImpl Rel,
+                                                const RelocationRef &RelRef,
                                                 SmallVectorImpl<char> &Result) {
+  DataRefImpl Rel = RelRef.getRawDataRefImpl();
+
   typedef typename ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
-  typedef typename ELFObjectFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFObjectFile<ELFT>::Elf_Rela Elf_Rela;
 
   const ELFFile<ELFT> &EF = *Obj->getELFFile();
@@ -404,36 +405,31 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   if (std::error_code EC = StrTabOrErr.getError())
     return EC;
   StringRef StrTab = *StrTabOrErr;
-  uint8_t type;
+  uint8_t type = RelRef.getType();
   StringRef res;
   int64_t addend = 0;
-  uint16_t symbol_index = 0;
   switch (Sec->sh_type) {
   default:
     return object_error::parse_failed;
   case ELF::SHT_REL: {
-    const Elf_Rel *ERel = Obj->getRel(Rel);
-    type = ERel->getType(EF.isMips64EL());
-    symbol_index = ERel->getSymbol(EF.isMips64EL());
     // TODO: Read implicit addend from section data.
     break;
   }
   case ELF::SHT_RELA: {
     const Elf_Rela *ERela = Obj->getRela(Rel);
-    type = ERela->getType(EF.isMips64EL());
-    symbol_index = ERela->getSymbol(EF.isMips64EL());
     addend = ERela->r_addend;
     break;
   }
   }
-  const Elf_Sym *symb =
-      EF.template getEntry<Elf_Sym>(Sec->sh_link, symbol_index);
+  symbol_iterator SI = RelRef.getSymbol();
+  const Elf_Sym *symb = Obj->getSymbol(SI->getRawDataRefImpl());
   StringRef Target;
-  ErrorOr<const Elf_Shdr *> SymSec = EF.getSection(symb);
-  if (std::error_code EC = SymSec.getError())
-    return EC;
   if (symb->getType() == ELF::STT_SECTION) {
-    ErrorOr<StringRef> SecName = EF.getSectionName(*SymSec);
+    ErrorOr<section_iterator> SymSI = SI->getSection();
+    if (std::error_code EC = SymSI.getError())
+      return EC;
+    const Elf_Shdr *SymSec = Obj->getSection((*SymSI)->getRawDataRefImpl());
+    ErrorOr<StringRef> SecName = EF.getSectionName(SymSec);
     if (std::error_code EC = SecName.getError())
       return EC;
     Target = *SecName;
@@ -495,9 +491,8 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
 }
 
 static std::error_code getRelocationValueString(const ELFObjectFileBase *Obj,
-                                                const RelocationRef &RelRef,
+                                                const RelocationRef &Rel,
                                                 SmallVectorImpl<char> &Result) {
-  DataRefImpl Rel = RelRef.getRawDataRefImpl();
   if (auto *ELF32LE = dyn_cast<ELF32LEObjectFile>(Obj))
     return getRelocationValueString(ELF32LE, Rel, Result);
   if (auto *ELF64LE = dyn_cast<ELF64LEObjectFile>(Obj))
