@@ -4279,6 +4279,18 @@ operand which is the string ``llvm.loop.unroll.runtime.disable``. For example:
 
    !0 = !{!"llvm.loop.unroll.runtime.disable"}
 
+'``llvm.loop.unroll.enable``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This metadata suggests that the loop should be fully unrolled if the trip count
+is known at compile time and partially unrolled if the trip count is not known
+at compile time. The metadata has a single operand which is the string
+``llvm.loop.unroll.enable``.  For example:
+
+.. code-block:: llvm
+
+   !0 = !{!"llvm.loop.unroll.enable"}
+
 '``llvm.loop.unroll.full``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

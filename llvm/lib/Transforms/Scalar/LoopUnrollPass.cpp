@@ -187,7 +187,7 @@ namespace {
     // total unrolled size.  Parameters Threshold and PartialThreshold
     // are set to the maximum unrolled size for fully and partially
     // unrolled loops respectively.
-    void selectThresholds(const Loop *L, bool HasPragma,
+    void selectThresholds(const Loop *L, bool UsePragmaThreshold,
                           const TargetTransformInfo::UnrollingPreferences &UP,
                           unsigned &Threshold, unsigned &PartialThreshold,
                           unsigned &PercentDynamicCostSavedThreshold,
@@ -214,7 +214,7 @@ namespace {
         Threshold = UP.OptSizeThreshold;
         PartialThreshold = UP.PartialOptSizeThreshold;
       }
-      if (HasPragma) {
+      if (UsePragmaThreshold) {
         // If the loop has an unrolling pragma, we want to be more
         // aggressive with unrolling limits.  Set thresholds to at
         // least the PragmaTheshold value which is larger than the
@@ -726,6 +726,12 @@ static bool HasUnrollFullPragma(const Loop *L) {
   return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.full");
 }
 
+// Returns true if the loop has an unroll(enable) pragma. This metadata is used
+// for both "#pragma unroll" and "#pragma clang loop unroll(enable)" directives.
+static bool HasUnrollEnablePragma(const Loop *L) {
+  return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.enable");
+}
+
 // Returns true if the loop has an unroll(disable) pragma.
 static bool HasUnrollDisablePragma(const Loop *L) {
   return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.disable");
@@ -901,8 +907,9 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
   }
   bool PragmaFullUnroll = HasUnrollFullPragma(L);
+  bool PragmaEnableUnroll = HasUnrollEnablePragma(L);
   unsigned PragmaCount = UnrollCountPragmaValue(L);
-  bool HasPragma = PragmaFullUnroll || PragmaCount > 0;
+  bool HasPragma = PragmaFullUnroll || PragmaEnableUnroll || PragmaCount > 0;
 
   TargetTransformInfo::UnrollingPreferences UP;
   getUnrollingPreferences(L, TTI, UP);
@@ -950,7 +957,15 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   unsigned Threshold, PartialThreshold;
   unsigned PercentDynamicCostSavedThreshold;
   unsigned DynamicCostSavingsDiscount;
-  selectThresholds(L, HasPragma, UP, Threshold, PartialThreshold,
+  // Only use the high pragma threshold when we have a target unroll factor such
+  // as with "#pragma unroll N" or a pragma indicating full unrolling and the
+  // trip count is known. Otherwise we rely on the standard threshold to
+  // heuristically select a reasonable unroll count.
+  bool UsePragmaThreshold =
+      PragmaCount > 0 ||
+      ((PragmaFullUnroll || PragmaEnableUnroll) && TripCount != 0);
+
+  selectThresholds(L, UsePragmaThreshold, UP, Threshold, PartialThreshold,
                    PercentDynamicCostSavedThreshold,
                    DynamicCostSavingsDiscount);
 
@@ -985,14 +1000,15 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Reduce count based on the type of unrolling and the threshold values.
   unsigned OriginalCount = Count;
-  bool AllowRuntime =
-      (PragmaCount > 0) || (UserRuntime ? CurrentRuntime : UP.Runtime);
+  bool AllowRuntime = PragmaEnableUnroll || (PragmaCount > 0) ||
+                      (UserRuntime ? CurrentRuntime : UP.Runtime);
   // Don't unroll a runtime trip count loop with unroll full pragma.
   if (HasRuntimeUnrollDisablePragma(L) || PragmaFullUnroll) {
     AllowRuntime = false;
   }
   if (Unrolling == Partial) {
-    bool AllowPartial = UserAllowPartial ? CurrentAllowPartial : UP.Partial;
+    bool AllowPartial = PragmaEnableUnroll ||
+                        (UserAllowPartial ? CurrentAllowPartial : UP.Partial);
     if (!AllowPartial && !CountSetExplicitly) {
       DEBUG(dbgs() << "  will not try to unroll partially because "
                    << "-unroll-allow-partial not given\n");
@@ -1032,23 +1048,27 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     DebugLoc LoopLoc = L->getStartLoc();
     Function *F = Header->getParent();
     LLVMContext &Ctx = F->getContext();
-    if (PragmaFullUnroll && PragmaCount == 0) {
-      if (TripCount && Count != TripCount) {
-        emitOptimizationRemarkMissed(
-            Ctx, DEBUG_TYPE, *F, LoopLoc,
-            "Unable to fully unroll loop as directed by unroll(full) pragma "
-            "because unrolled size is too large.");
-      } else if (!TripCount) {
-        emitOptimizationRemarkMissed(
-            Ctx, DEBUG_TYPE, *F, LoopLoc,
-            "Unable to fully unroll loop as directed by unroll(full) pragma "
-            "because loop has a runtime trip count.");
-      }
-    } else if (PragmaCount > 0 && Count != OriginalCount) {
+    if ((PragmaCount > 0) && Count != OriginalCount) {
       emitOptimizationRemarkMissed(
           Ctx, DEBUG_TYPE, *F, LoopLoc,
           "Unable to unroll loop the number of times directed by "
           "unroll_count pragma because unrolled size is too large.");
+    } else if (PragmaFullUnroll && !TripCount) {
+      emitOptimizationRemarkMissed(
+          Ctx, DEBUG_TYPE, *F, LoopLoc,
+          "Unable to fully unroll loop as directed by unroll(full) pragma "
+          "because loop has a runtime trip count.");
+    } else if (PragmaEnableUnroll && Count != TripCount && Count < 2) {
+      emitOptimizationRemarkMissed(
+          Ctx, DEBUG_TYPE, *F, LoopLoc,
+          "Unable to unroll loop as directed by unroll(enable) pragma because "
+          "unrolled size is too large.");
+    } else if ((PragmaFullUnroll || PragmaEnableUnroll) && TripCount &&
+               Count != TripCount) {
+      emitOptimizationRemarkMissed(
+          Ctx, DEBUG_TYPE, *F, LoopLoc,
+          "Unable to fully unroll loop as directed by unroll pragma because "
+          "unrolled size is too large.");
     }
   }
 

@@ -256,3 +256,69 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 !12 = !{!12, !4}
+
+; #pragma clang loop unroll(enable)
+; Loop should be fully unrolled.
+;
+; CHECK-LABEL: @loop64_with_enable(
+; CHECK-NOT: br i1
+define void @loop64_with_enable(i32* nocapture %a) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
+  %0 = load i32, i32* %arrayidx, align 4
+  %inc = add nsw i32 %0, 1
+  store i32 %inc, i32* %arrayidx, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 64
+  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !13
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+!13 = !{!13, !14}
+!14 = !{!"llvm.loop.unroll.enable"}
+
+; #pragma clang loop unroll(enable)
+; Loop has a runtime trip count and should be runtime unrolled and duplicated
+; (original and 8x).
+;
+; CHECK-LABEL: @runtime_loop_with_enable(
+; CHECK: for.body.prol:
+; CHECK: store
+; CHECK-NOT: store
+; CHECK: br i1
+; CHECK: for.body:
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: store i32
+; CHECK-NOT: store i32
+; CHECK: br i1
+define void @runtime_loop_with_enable(i32* nocapture %a, i32 %b) {
+entry:
+  %cmp3 = icmp sgt i32 %b, 0
+  br i1 %cmp3, label %for.body, label %for.end, !llvm.loop !8
+
+for.body:                                         ; preds = %entry, %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
+  %0 = load i32, i32* %arrayidx, align 4
+  %inc = add nsw i32 %0, 1
+  store i32 %inc, i32* %arrayidx, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %b
+  br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !15
+
+for.end:                                          ; preds = %for.body, %entry
+  ret void
+}
+!15 = !{!15, !14}
