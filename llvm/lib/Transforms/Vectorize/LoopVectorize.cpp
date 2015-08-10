@@ -220,6 +220,7 @@ namespace {
 class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
 class LoopVectorizeHints;
+class LoopVectorizationRequirements;
 
 /// \brief This modifies LoopAccessReport to initialize message with
 /// loop-vectorizer-specific part.
@@ -796,10 +797,12 @@ public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DominatorTree *DT,
                             TargetLibraryInfo *TLI, AliasAnalysis *AA,
                             Function *F, const TargetTransformInfo *TTI,
-                            LoopAccessAnalysis *LAA)
+                            LoopAccessAnalysis *LAA,
+                            LoopVectorizationRequirements *R)
       : NumPredStores(0), TheLoop(L), SE(SE), TLI(TLI), TheFunction(F),
         TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr), InterleaveInfo(SE, L, DT),
-        Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
+        Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false),
+        Requirements(R) {}
 
   /// This enum represents the kinds of inductions that we support.
   enum InductionKind {
@@ -1064,6 +1067,9 @@ private:
 
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
+
+  /// Vectorization requirements that will go through late-evaluation.
+  LoopVectorizationRequirements *Requirements;
 
   ValueToValueMap Strides;
   SmallPtrSet<Value *, 8> StrideSet;
@@ -1415,6 +1421,47 @@ static void emitMissedWarning(Function *F, Loop *L,
   }
 }
 
+/// \brief This holds vectorization requirements that must be verified late in
+/// the process. The requirements are set by legalize and costmodel. Once
+/// vectorization has been determined to be possible and profitable the
+/// requirements can be verified by looking for metadata or compiler options.
+/// For example, some loops require FP commutativity which is only allowed if
+/// vectorization is explicitly specified or if the fast-math compiler option
+/// has been provided.
+/// Late evaluation of these requirements allows helpful diagnostics to be
+/// composed that tells the user what need to be done to vectorize the loop. For
+/// example, by specifying #pragma clang loop vectorize or -ffast-math. Late
+/// evaluation should be used only when diagnostics can generated that can be
+/// followed by a non-expert user.
+class LoopVectorizationRequirements {
+public:
+  LoopVectorizationRequirements() : UnsafeAlgebraInst(nullptr) {}
+
+  void addUnsafeAlgebraInst(Instruction *I) {
+    // First unsafe algebra instruction.
+    if (!UnsafeAlgebraInst)
+      UnsafeAlgebraInst = I;
+  }
+
+  bool doesNotMeet(Function *F, const LoopVectorizeHints &Hints) {
+    if (UnsafeAlgebraInst &&
+        Hints.getForce() == LoopVectorizeHints::FK_Undefined &&
+        Hints.getWidth() == 0) {
+      emitOptimizationRemarkAnalysisFPCommute(
+          F->getContext(), DEBUG_TYPE, *F, UnsafeAlgebraInst->getDebugLoc(),
+          VectorizationReport() << "vectorization requires changes in the "
+                                   "order of operations, however IEEE 754 "
+                                   "floating-point operations are not "
+                                   "commutative");
+      return true;
+    }
+    return false;
+  }
+
+private:
+  Instruction *UnsafeAlgebraInst;
+};
+
 static void addInnerLoop(Loop &L, SmallVectorImpl<Loop *> &V) {
   if (L.empty())
     return V.push_back(&L);
@@ -1609,7 +1656,9 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DT, TLI, AA, F, TTI, LAA);
+    LoopVectorizationRequirements Requirements;
+    LoopVectorizationLegality LVL(L, SE, DT, TLI, AA, F, TTI, LAA,
+                                  &Requirements);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1664,6 +1713,13 @@ struct LoopVectorize : public FunctionPass {
     // Identify the diagnostic messages that should be produced.
     std::string VecDiagMsg, IntDiagMsg;
     bool VectorizeLoop = true, InterleaveLoop = true;
+
+    if (Requirements.doesNotMeet(F, Hints)) {
+      DEBUG(dbgs() << "LV: Not vectorizing: loop did not meet vectorization "
+                      "requirements.\n");
+      emitMissedWarning(F, L, Hints);
+      return false;
+    }
 
     if (VF.Width == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
@@ -4079,6 +4135,9 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
         if (RecurrenceDescriptor::isReductionPHI(Phi, TheLoop,
                                                  Reductions[Phi])) {
+          if (Reductions[Phi].hasUnsafeAlgebra())
+            Requirements->addUnsafeAlgebraInst(
+                Reductions[Phi].getUnsafeAlgebraInst());
           AllowedExit.insert(Reductions[Phi].getLoopExitInstr());
           continue;
         }

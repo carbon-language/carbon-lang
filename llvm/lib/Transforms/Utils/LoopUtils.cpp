@@ -201,7 +201,8 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurrenceKind Kind,
 
   // Save the description of this reduction variable.
   RecurrenceDescriptor RD(RdxStart, ExitInstruction, Kind,
-                          ReduxDesc.getMinMaxKind());
+                          ReduxDesc.getMinMaxKind(),
+                          ReduxDesc.getUnsafeAlgebraInst());
 
   RedDes = RD;
 
@@ -263,7 +264,10 @@ RecurrenceDescriptor::InstDesc
 RecurrenceDescriptor::isRecurrenceInstr(Instruction *I, RecurrenceKind Kind,
                                         InstDesc &Prev, bool HasFunNoNaNAttr) {
   bool FP = I->getType()->isFloatingPointTy();
-  bool FastMath = FP && I->hasUnsafeAlgebra();
+  Instruction *UAI = Prev.getUnsafeAlgebraInst();
+  if (!UAI && FP && !I->hasUnsafeAlgebra())
+    UAI = I; // Found an unsafe (unvectorizable) algebra instruction.
+
   switch (I->getOpcode()) {
   default:
     return InstDesc(false, I);
@@ -284,10 +288,10 @@ RecurrenceDescriptor::isRecurrenceInstr(Instruction *I, RecurrenceKind Kind,
   case Instruction::Xor:
     return InstDesc(Kind == RK_IntegerXor, I);
   case Instruction::FMul:
-    return InstDesc(Kind == RK_FloatMult && FastMath, I);
+    return InstDesc(Kind == RK_FloatMult, I, UAI);
   case Instruction::FSub:
   case Instruction::FAdd:
-    return InstDesc(Kind == RK_FloatAdd && FastMath, I);
+    return InstDesc(Kind == RK_FloatAdd, I, UAI);
   case Instruction::FCmp:
   case Instruction::ICmp:
   case Instruction::Select:

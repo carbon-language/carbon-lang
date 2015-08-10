@@ -85,23 +85,31 @@ public:
 
   RecurrenceDescriptor()
       : StartValue(nullptr), LoopExitInstr(nullptr), Kind(RK_NoRecurrence),
-        MinMaxKind(MRK_Invalid) {}
+        MinMaxKind(MRK_Invalid), UnsafeAlgebraInst(nullptr) {}
 
   RecurrenceDescriptor(Value *Start, Instruction *Exit, RecurrenceKind K,
-                       MinMaxRecurrenceKind MK)
-      : StartValue(Start), LoopExitInstr(Exit), Kind(K), MinMaxKind(MK) {}
+                       MinMaxRecurrenceKind MK,
+                       Instruction *UAI /*Unsafe Algebra Inst*/)
+      : StartValue(Start), LoopExitInstr(Exit), Kind(K), MinMaxKind(MK),
+        UnsafeAlgebraInst(UAI) {}
 
   /// This POD struct holds information about a potential recurrence operation.
   class InstDesc {
 
   public:
-    InstDesc(bool IsRecur, Instruction *I)
-        : IsRecurrence(IsRecur), PatternLastInst(I), MinMaxKind(MRK_Invalid) {}
+    InstDesc(bool IsRecur, Instruction *I, Instruction *UAI = nullptr)
+        : IsRecurrence(IsRecur), PatternLastInst(I), MinMaxKind(MRK_Invalid),
+          UnsafeAlgebraInst(UAI) {}
 
-    InstDesc(Instruction *I, MinMaxRecurrenceKind K)
-        : IsRecurrence(true), PatternLastInst(I), MinMaxKind(K) {}
+    InstDesc(Instruction *I, MinMaxRecurrenceKind K, Instruction *UAI = nullptr)
+        : IsRecurrence(true), PatternLastInst(I), MinMaxKind(K),
+          UnsafeAlgebraInst(UAI) {}
 
     bool isRecurrence() { return IsRecurrence; }
+
+    bool hasUnsafeAlgebra() { return UnsafeAlgebraInst != nullptr; }
+
+    Instruction *getUnsafeAlgebraInst() { return UnsafeAlgebraInst; }
 
     MinMaxRecurrenceKind getMinMaxKind() { return MinMaxKind; }
 
@@ -115,6 +123,8 @@ public:
     Instruction *PatternLastInst;
     // If this is a min/max pattern the comparison predicate.
     MinMaxRecurrenceKind MinMaxKind;
+    // Recurrence has unsafe algebra.
+    Instruction *UnsafeAlgebraInst;
   };
 
   /// Returns a struct describing if the instruction 'I' can be a recurrence
@@ -167,6 +177,13 @@ public:
 
   Instruction *getLoopExitInstr() { return LoopExitInstr; }
 
+  /// Returns true if the recurrence has unsafe algebra which requires a relaxed
+  /// floating-point model.
+  bool hasUnsafeAlgebra() { return UnsafeAlgebraInst != nullptr; }
+
+  /// Returns first unsafe algebra instruction in the PHI node's use-chain.
+  Instruction *getUnsafeAlgebraInst() { return UnsafeAlgebraInst; }
+
 private:
   // The starting value of the recurrence.
   // It does not have to be zero!
@@ -177,6 +194,8 @@ private:
   RecurrenceKind Kind;
   // If this a min/max recurrence the kind of recurrence.
   MinMaxRecurrenceKind MinMaxKind;
+  // First occurance of unasfe algebra in the PHI's use-chain.
+  Instruction *UnsafeAlgebraInst;
 };
 
 BasicBlock *InsertPreheaderForLoop(Loop *L, Pass *P);

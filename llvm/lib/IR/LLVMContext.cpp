@@ -199,6 +199,11 @@ static bool isDiagnosticEnabled(const DiagnosticInfo &DI) {
     if (!cast<DiagnosticInfoOptimizationRemarkAnalysis>(DI).isEnabled())
       return false;
     break;
+  case llvm::DK_OptimizationRemarkAnalysisFPCommute:
+    if (!cast<DiagnosticInfoOptimizationRemarkAnalysisFPCommute>(DI)
+             .isEnabled())
+      return false;
+    break;
   default:
     break;
   }
