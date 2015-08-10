@@ -108,6 +108,24 @@ bool FindIdenticalExprVisitor::VisitIfStmt(const IfStmt *I) {
   const Stmt *Stmt1 = I->getThen();
   const Stmt *Stmt2 = I->getElse();
 
+  // Check for identical inner condition:
+  //
+  // if (x<10) {
+  //   if (x<10) {
+  //   ..
+  if (const CompoundStmt *CS = dyn_cast<CompoundStmt>(Stmt1)) {
+    if (!CS->body_empty()) {
+      const IfStmt *InnerIf = dyn_cast<IfStmt>(*CS->body_begin());
+      if (InnerIf && isIdenticalStmt(AC->getASTContext(), I->getCond(), InnerIf->getCond(), /*ignoreSideEffects=*/ false)) {
+        PathDiagnosticLocation ELoc(InnerIf->getCond(), BR.getSourceManager(), AC);
+        BR.EmitBasicReport(AC->getDecl(), Checker, "Identical conditions",
+          categories::LogicError,
+          "conditions of the inner and outer statements are identical",
+          ELoc);
+      }
+    }
+  }
+
   // Check for identical conditions:
   //
   // if (b) {
