@@ -205,6 +205,15 @@ void llvm::emitOptimizationRemarkAnalysisFPCommute(LLVMContext &Ctx,
                                                                  DLoc, Msg));
 }
 
+void llvm::emitOptimizationRemarkAnalysisAliasing(LLVMContext &Ctx,
+                                                  const char *PassName,
+                                                  const Function &Fn,
+                                                  const DebugLoc &DLoc,
+                                                  const Twine &Msg) {
+  Ctx.diagnose(DiagnosticInfoOptimizationRemarkAnalysisAliasing(PassName, Fn,
+                                                                DLoc, Msg));
+}
+
 bool DiagnosticInfoOptimizationFailure::isEnabled() const {
   // Only print warnings.
   return getSeverity() == DS_Warning;

@@ -1435,7 +1435,8 @@ static void emitMissedWarning(Function *F, Loop *L,
 /// followed by a non-expert user.
 class LoopVectorizationRequirements {
 public:
-  LoopVectorizationRequirements() : UnsafeAlgebraInst(nullptr) {}
+  LoopVectorizationRequirements()
+      : NumRuntimePointerChecks(0), UnsafeAlgebraInst(nullptr) {}
 
   void addUnsafeAlgebraInst(Instruction *I) {
     // First unsafe algebra instruction.
@@ -1443,7 +1444,11 @@ public:
       UnsafeAlgebraInst = I;
   }
 
-  bool doesNotMeet(Function *F, const LoopVectorizeHints &Hints) {
+  void addRuntimePointerChecks(unsigned Num) { NumRuntimePointerChecks = Num; }
+
+  bool doesNotMeet(Function *F, Loop *L, const LoopVectorizeHints &Hints) {
+    bool failed = false;
+
     if (UnsafeAlgebraInst &&
         Hints.getForce() == LoopVectorizeHints::FK_Undefined &&
         Hints.getWidth() == 0) {
@@ -1453,12 +1458,29 @@ public:
                                    "order of operations, however IEEE 754 "
                                    "floating-point operations are not "
                                    "commutative");
-      return true;
+      failed = true;
     }
-    return false;
+
+    if (NumRuntimePointerChecks >
+        VectorizerParams::RuntimeMemoryCheckThreshold) {
+      emitOptimizationRemarkAnalysisAliasing(
+          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+          VectorizationReport()
+              << "cannot prove pointers refer to independent arrays in memory. "
+                 "The loop requires "
+              << NumRuntimePointerChecks
+              << " runtime independence checks to vectorize the loop, but that "
+                 "would exceed the limit of "
+              << VectorizerParams::RuntimeMemoryCheckThreshold << " checks");
+      DEBUG(dbgs() << "LV: Too many memory checks needed.\n");
+      failed = true;
+    }
+
+    return failed;
   }
 
 private:
+  unsigned NumRuntimePointerChecks;
   Instruction *UnsafeAlgebraInst;
 };
 
@@ -1714,7 +1736,7 @@ struct LoopVectorize : public FunctionPass {
     std::string VecDiagMsg, IntDiagMsg;
     bool VectorizeLoop = true, InterleaveLoop = true;
 
-    if (Requirements.doesNotMeet(F, Hints)) {
+    if (Requirements.doesNotMeet(F, L, Hints)) {
       DEBUG(dbgs() << "LV: Not vectorizing: loop did not meet vectorization "
                       "requirements.\n");
       emitMissedWarning(F, L, Hints);
@@ -4297,15 +4319,8 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     return false;
   }
 
-  if (LAI->getNumRuntimePointerChecks() >
-      VectorizerParams::RuntimeMemoryCheckThreshold) {
-    emitAnalysis(VectorizationReport()
-                 << LAI->getNumRuntimePointerChecks() << " exceeds limit of "
-                 << VectorizerParams::RuntimeMemoryCheckThreshold
-                 << " dependent memory operations checked at runtime");
-    DEBUG(dbgs() << "LV: Too many memory checks needed.\n");
-    return false;
-  }
+  Requirements->addRuntimePointerChecks(LAI->getNumRuntimePointerChecks());
+
   return true;
 }
 
