@@ -371,6 +371,44 @@ return:
   ret void
 }
 
+; two_minsize - Same as two, but with minsize instead of optsize.
+
+; CHECK-LABEL: two_minsize:
+; CHECK-NOT: XYZ
+; CHECK: ret
+; CHECK: movl $0, XYZ(%rip)
+; CHECK: movl $1, XYZ(%rip)
+; CHECK-NOT: XYZ
+
+define void @two_minsize() nounwind minsize {
+entry:
+  %0 = icmp eq i32 undef, 0
+  br i1 %0, label %bbx, label %bby
+
+bby:
+  switch i32 undef, label %bb7 [
+    i32 16, label %return
+  ]
+
+bb7:
+  store volatile i32 0, i32* @XYZ
+  store volatile i32 1, i32* @XYZ
+  unreachable
+
+bbx:
+  switch i32 undef, label %bb12 [
+    i32 128, label %return
+  ]
+
+bb12:
+  store volatile i32 0, i32* @XYZ
+  store volatile i32 1, i32* @XYZ
+  unreachable
+
+return:
+  ret void
+}
+
 ; two_nosize - Same as two, but without the optsize attribute.
 ; Now two instructions are enough to be tail-duplicated.
 
