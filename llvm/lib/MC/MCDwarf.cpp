@@ -220,7 +220,7 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
       1  // DW_LNS_set_isa
   };
   assert(array_lengthof(StandardOpcodeLengths) >=
-         (Params.DWARF2LineOpcodeBase - 1));
+         (Params.DWARF2LineOpcodeBase - 1U));
   return Emit(MCOS, Params, ArrayRef<char>(StandardOpcodeLengths,
                                            Params.DWARF2LineOpcodeBase - 1));
 }
