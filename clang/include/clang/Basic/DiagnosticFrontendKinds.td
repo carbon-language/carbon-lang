@@ -46,8 +46,8 @@ def remark_fe_backend_optimization_remark_missed : Remark<"%0">, BackendInfo,
 def remark_fe_backend_optimization_remark_analysis : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemarkAnalysis>;
 def remark_fe_backend_optimization_remark_analysis_fpcommute : Remark<"%0; "
-    "allow commutativity by specifying ‘#pragma clang loop vectorize(enable)’ "
-    "before the loop or by providing the compiler option ‘-ffast-math’">,
+    "allow commutativity by specifying '#pragma clang loop vectorize(enable)' "
+    "before the loop or by providing the compiler option '-ffast-math'">,
     BackendInfo, InGroup<BackendOptimizationRemarkAnalysis>;
 def warn_fe_backend_optimization_failure : Warning<"%0">, BackendInfo,
     InGroup<BackendOptimizationFailure>, DefaultWarn;
