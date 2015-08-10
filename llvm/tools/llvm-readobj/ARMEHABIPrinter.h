@@ -369,23 +369,25 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
   /// table.
 
   for (const Elf_Shdr &Sec : ELF->sections()) {
-    if (Sec.sh_type == ELF::SHT_REL && Sec.sh_info == IndexSectionIndex) {
-      for (const Elf_Rel &R : ELF->rels(&Sec)) {
-        if (R.r_offset == static_cast<unsigned>(IndexTableOffset)) {
-          typename object::ELFFile<ET>::Elf_Rela RelA;
-          RelA.r_offset = R.r_offset;
-          RelA.r_info = R.r_info;
-          RelA.r_addend = 0;
+    if (Sec.sh_type != ELF::SHT_REL || Sec.sh_info != IndexSectionIndex)
+      continue;
 
-          std::pair<const Elf_Shdr *, const Elf_Sym *> Symbol =
-              ELF->getRelocationSymbol(&Sec, &RelA);
+    for (const Elf_Rel &R : ELF->rels(&Sec)) {
+      if (R.r_offset != static_cast<unsigned>(IndexTableOffset))
+        continue;
 
-          ErrorOr<const Elf_Shdr *> Ret = ELF->getSection(Symbol.second);
-          if (std::error_code EC = Ret.getError())
-            report_fatal_error(EC.message());
-          return *Ret;
-        }
-      }
+      typename object::ELFFile<ET>::Elf_Rela RelA;
+      RelA.r_offset = R.r_offset;
+      RelA.r_info = R.r_info;
+      RelA.r_addend = 0;
+
+      std::pair<const Elf_Shdr *, const Elf_Sym *> Symbol =
+        ELF->getRelocationSymbol(&Sec, &RelA);
+
+      ErrorOr<const Elf_Shdr *> Ret = ELF->getSection(Symbol.second);
+      if (std::error_code EC = Ret.getError())
+        report_fatal_error(EC.message());
+      return *Ret;
     }
   }
   return nullptr;
