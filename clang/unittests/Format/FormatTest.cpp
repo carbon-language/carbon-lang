@@ -2329,13 +2329,16 @@ TEST_F(FormatTest, IncompleteTryCatchBlocks) {
 
 TEST_F(FormatTest, FormatTryCatchBraceStyles) {
   FormatStyle Style = getLLVMStyle();
-  Style.BreakBeforeBraces = FormatStyle::BS_Attach;
-  verifyFormat("try {\n"
-               "  // something\n"
-               "} catch (...) {\n"
-               "  // something\n"
-               "}",
-               Style);
+  for (auto BraceStyle :
+       {FormatStyle::BS_Attach, FormatStyle::BS_Mozilla, FormatStyle::BS_WebKit}) {
+    Style.BreakBeforeBraces = BraceStyle;
+    verifyFormat("try {\n"
+                 "  // something\n"
+                 "} catch (...) {\n"
+                 "  // something\n"
+                 "}",
+                 Style);
+  }
   Style.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
   verifyFormat("try {\n"
                "  // something\n"
@@ -9060,6 +9063,45 @@ TEST_F(FormatTest, GNUBraceBreaking) {
                "#endif",
                GNUBraceStyle);
 }
+
+TEST_F(FormatTest, WebKitBraceBreaking) {
+  FormatStyle WebKitBraceStyle = getLLVMStyle();
+  WebKitBraceStyle.BreakBeforeBraces = FormatStyle::BS_WebKit;
+  verifyFormat("namespace a {\n"
+               "class A {\n"
+               "  void f()\n"
+               "  {\n"
+               "    if (true) {\n"
+               "      a();\n"
+               "      b();\n"
+               "    }\n"
+               "  }\n"
+               "  void g() { return; }\n"
+               "};\n"
+               "enum E {\n"
+               "  A,\n"
+               "  // foo\n"
+               "  B,\n"
+               "  C\n"
+               "};\n"
+               "struct B {\n"
+               "  int x;\n"
+               "};\n"
+               "}\n",
+               WebKitBraceStyle);
+  verifyFormat("struct S {\n"
+               "  int Type;\n"
+               "  union {\n"
+               "    int x;\n"
+               "    double y;\n"
+               "  } Value;\n"
+               "  class C {\n"
+               "    MyFavoriteType Value;\n"
+               "  } Class;\n"
+               "};\n",
+               WebKitBraceStyle);
+}
+
 TEST_F(FormatTest, CatchExceptionReferenceBinding) {
   verifyFormat("void f() {\n"
                "  try {\n"
@@ -9336,6 +9378,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("BreakBeforeBraces: Allman", BreakBeforeBraces,
               FormatStyle::BS_Allman);
   CHECK_PARSE("BreakBeforeBraces: GNU", BreakBeforeBraces, FormatStyle::BS_GNU);
+  CHECK_PARSE("BreakBeforeBraces: WebKit", BreakBeforeBraces, FormatStyle::BS_WebKit);
 
   Style.AlwaysBreakAfterDefinitionReturnType = FormatStyle::DRTBS_All;
   CHECK_PARSE("AlwaysBreakAfterDefinitionReturnType: None",

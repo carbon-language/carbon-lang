@@ -279,13 +279,15 @@ the configuration (without a prefix: ``Auto``).
     Like ``Attach``, but break before braces on enum, function, and record
     definitions.
   * ``BS_Stroustrup`` (in configuration: ``Stroustrup``)
-    Like ``Attach``, but break before function definitions, and 'else'.
+    Like ``Attach``, but break before function definitions, 'catch', and 'else'.
   * ``BS_Allman`` (in configuration: ``Allman``)
     Always break before braces.
   * ``BS_GNU`` (in configuration: ``GNU``)
     Always break before braces and add an extra level of indentation to
     braces of control statements, not to those of class, function
     or other definitions.
+  * ``BS_WebKit`` (in configuration: ``WebKit``)
+    Like ``Attach``, but break before functions.
 
 
 **BreakBeforeTernaryOperators** (``bool``)

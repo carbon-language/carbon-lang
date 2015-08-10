@@ -98,6 +98,7 @@ template <> struct ScalarEnumerationTraits<FormatStyle::BraceBreakingStyle> {
     IO.enumCase(Value, "Stroustrup", FormatStyle::BS_Stroustrup);
     IO.enumCase(Value, "Allman", FormatStyle::BS_Allman);
     IO.enumCase(Value, "GNU", FormatStyle::BS_GNU);
+    IO.enumCase(Value, "WebKit", FormatStyle::BS_WebKit);
   }
 };
 
@@ -504,7 +505,7 @@ FormatStyle getWebKitStyle() {
   Style.AlignOperands = false;
   Style.AlignTrailingComments = false;
   Style.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
-  Style.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
+  Style.BreakBeforeBraces = FormatStyle::BS_WebKit;
   Style.BreakConstructorInitializersBeforeComma = true;
   Style.Cpp11BracedListStyle = false;
   Style.ColumnLimit = 0;
