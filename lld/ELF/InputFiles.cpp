@@ -41,6 +41,10 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
   uint64_t Size = ELFObj->getNumSections();
   Chunks.reserve(Size);
   for (const Elf_Shdr &Sec : ELFObj->sections()) {
+    if (Sec.sh_type == SHT_SYMTAB) {
+      Symtab = &Sec;
+      continue;
+    }
     if (Sec.sh_flags & SHF_ALLOC) {
       auto *C = new (Alloc) SectionChunk<ELFT>(this->getObj(), &Sec);
       Chunks.push_back(C);
@@ -49,7 +53,6 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
 }
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
-  const Elf_Shdr *Symtab = ELFObj->getDotSymtabSec();
   ErrorOr<StringRef> StringTableOrErr =
       ELFObj->getStringTableForSymtab(*Symtab);
   error(StringTableOrErr.getError());

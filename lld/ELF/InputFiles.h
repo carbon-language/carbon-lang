@@ -100,6 +100,8 @@ private:
 
   // List of all chunks defined by this file.
   std::vector<SectionChunk<ELFT> *> Chunks;
+
+  const Elf_Shdr *Symtab = nullptr;
 };
 
 } // namespace elf2

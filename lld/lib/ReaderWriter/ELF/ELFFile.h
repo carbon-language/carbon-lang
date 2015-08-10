@@ -320,6 +320,7 @@ protected:
 
   llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFFile<ELFT> > _objFile;
+  const Elf_Shdr *_symtab = nullptr;
 
   /// \brief _relocationAddendReferences and _relocationReferences contain the
   /// list of relocations references.  In ELF, if a section named, ".text" has
