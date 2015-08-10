@@ -8,6 +8,10 @@
 //===----------------------------------------------------------------------===//
 // Define the main class fuzzer::Fuzzer and most functions.
 //===----------------------------------------------------------------------===//
+
+#ifndef LLVM_FUZZER_INTERNAL_H
+#define LLVM_FUZZER_INTERNAL_H
+
 #include <cassert>
 #include <climits>
 #include <chrono>
@@ -162,3 +166,5 @@ class SimpleUserSuppliedFuzzer: public UserSuppliedFuzzer {
 };
 
 };  // namespace fuzzer
+
+#endif // LLVM_FUZZER_INTERNAL_H
