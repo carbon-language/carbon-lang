@@ -413,11 +413,11 @@ let DecoderMethod = "DecodeLoadIntPair" in
 
 // Section B.2 - Load Floating-point Instructions, p. 92
 let DecoderMethod = "DecodeLoadFP" in
-  defm LDF   : Load<"ld",  0b100000, load, FPRegs,  f32>;
+  defm LDF   : LoadA<"ld",  0b100000, 0b110000, load, FPRegs,  f32>;
 let DecoderMethod = "DecodeLoadDFP" in
-  defm LDDF  : Load<"ldd", 0b100011, load, DFPRegs, f64>;
+  defm LDDF  : LoadA<"ldd", 0b100011, 0b110011, load, DFPRegs, f64>;
 let DecoderMethod = "DecodeLoadQFP" in
-  defm LDQF  : Load<"ldq", 0b100010, load, QFPRegs, f128>,
+  defm LDQF  : LoadA<"ldq", 0b100010, 0b110010, load, QFPRegs, f128>,
                Requires<[HasV9, HasHardQuad]>;
 
 // Section B.4 - Store Integer Instructions, p. 95
@@ -432,11 +432,11 @@ let DecoderMethod = "DecodeStoreIntPair" in
 
 // Section B.5 - Store Floating-point Instructions, p. 97
 let DecoderMethod = "DecodeStoreFP" in
-  defm STF   : Store<"st",  0b100100, store,         FPRegs,  f32>;
+  defm STF   : StoreA<"st",  0b100100, 0b110100, store,         FPRegs,  f32>;
 let DecoderMethod = "DecodeStoreDFP" in
-  defm STDF  : Store<"std", 0b100111, store,         DFPRegs, f64>;
+  defm STDF  : StoreA<"std", 0b100111, 0b110111, store,         DFPRegs, f64>;
 let DecoderMethod = "DecodeStoreQFP" in
-  defm STQF  : Store<"stq", 0b100110, store,         QFPRegs, f128>,
+  defm STQF  : StoreA<"stq", 0b100110, 0b110110, store,         QFPRegs, f128>,
                Requires<[HasV9, HasHardQuad]>;
 
 // Section B.8 - SWAP Register with Memory Instruction

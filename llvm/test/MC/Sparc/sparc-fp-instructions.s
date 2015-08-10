@@ -138,3 +138,32 @@
         fdtox %f0, %f4
         fqtox %f0, %f4
 
+        ! CHECK: lda [%l0] 240, %f29             ! encoding: [0xfb,0x84,0x1e,0x00]
+        ! CHECK: ld [%l0], %f29                  ! encoding: [0xfb,0x04,0x00,0x00]
+        lda [%l0] 0xf0, %f29
+        ld [%l0], %f29
+
+        ! CHECK: ldda [%l0] 240, %f48            ! encoding: [0xe3,0x9c,0x1e,0x00]
+        ! CHECK: ldd [%l0], %f48                 ! encoding: [0xe3,0x1c,0x00,0x00]
+        ldda [%l0] 0xf0, %f48
+        ldd [%l0], %f48
+
+        ! CHECK: ldqa [%l0] 240, %f48            ! encoding: [0xe3,0x94,0x1e,0x00]
+        ! CHECK: ldq [%l0], %f48                 ! encoding: [0xe3,0x14,0x00,0x00]
+        ldqa [%l0] 0xf0, %f48
+        ldq [%l0], %f48
+
+        ! CHECK: sta %f29, [%l0] 240             ! encoding: [0xfb,0xa4,0x1e,0x00]
+        ! CHECK: st %f29, [%l0]                  ! encoding: [0xfb,0x24,0x00,0x00]
+        sta %f29, [%l0] 0xf0
+        st %f29, [%l0]
+
+        ! CHECK: stda %f48, [%l0] 240            ! encoding: [0xe3,0xbc,0x1e,0x00]
+        ! CHECK: std %f48, [%l0]                 ! encoding: [0xe3,0x3c,0x00,0x00]
+        stda %f48, [%l0] 0xf0
+        std %f48, [%l0]
+
+        ! CHECK: stqa %f48, [%l0] 240            ! encoding: [0xe3,0xb4,0x1e,0x00]
+        ! CHECK: stq %f48, [%l0]                 ! encoding: [0xe3,0x34,0x00,0x00]
+        stqa %f48, [%l0] 0xf0
+        stq %f48, [%l0]
