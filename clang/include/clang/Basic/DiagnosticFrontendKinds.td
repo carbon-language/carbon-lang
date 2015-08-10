@@ -49,6 +49,12 @@ def remark_fe_backend_optimization_remark_analysis_fpcommute : Remark<"%0; "
     "allow commutativity by specifying '#pragma clang loop vectorize(enable)' "
     "before the loop or by providing the compiler option '-ffast-math'">,
     BackendInfo, InGroup<BackendOptimizationRemarkAnalysis>;
+def remark_fe_backend_optimization_remark_analysis_aliasing : Remark<"%0; "
+    "avoid runtime pointer checking when you know the arrays will always be "
+    "independent by specifying '#pragma clang loop vectorize(assume_safety)' "
+    "before the loop or by specifying 'restrict' on the array arguments. "
+    "Erroneous results will occur if these options are incorrectly applied!">,
+    BackendInfo, InGroup<BackendOptimizationRemarkAnalysis>;
 def warn_fe_backend_optimization_failure : Warning<"%0">, BackendInfo,
     InGroup<BackendOptimizationFailure>, DefaultWarn;
 def note_fe_backend_optimization_remark_invalid_loc : Note<"could "
