@@ -125,9 +125,17 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
   // Record the number of relocs to guess at preallocating the buffer.
   uint64_t totalRelocs = 0;
   for (const Elf_Shdr &section : _objFile->sections()) {
-    if (section.sh_type == llvm::ELF::SHT_SYMTAB) {
+    switch (section.sh_type) {
+    case llvm::ELF::SHT_SYMTAB:
       _symtab = &section;
       continue;
+    case llvm::ELF::SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> tableOrErr = _objFile->getSHNDXTable(section);
+      if (std::error_code ec = tableOrErr.getError())
+        return ec;
+      _shndxTable = *tableOrErr;
+      continue;
+    }
     }
 
     if (isIgnoredSection(&section))
@@ -228,7 +236,8 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
   ++SymI;
 
   for (; SymI != SymE; ++SymI) {
-    ErrorOr<const Elf_Shdr *> section = _objFile->getSection(SymI);
+    ErrorOr<const Elf_Shdr *> section =
+        _objFile->getSection(SymI, _symtab, _shndxTable);
     if (std::error_code ec = section.getError())
       return ec;
 
@@ -673,7 +682,8 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
       continue;
     const Elf_Sym *symbol =
         _objFile->getSymbol(_symtab, ri->targetSymbolIndex());
-    ErrorOr<const Elf_Shdr *> shdr = _objFile->getSection(symbol);
+    ErrorOr<const Elf_Shdr *> shdr =
+        _objFile->getSection(symbol, _symtab, _shndxTable);
 
     // If the atom is not in mergeable string section, the target atom is
     // simply that atom.
