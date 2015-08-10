@@ -321,7 +321,8 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
   }
 }
 
-void MachineBasicBlock::printAsOperand(raw_ostream &OS, bool /*PrintType*/) const {
+void MachineBasicBlock::printAsOperand(raw_ostream &OS,
+                                       bool /*PrintType*/) const {
   OS << "BB#" << getNumber();
 }
 
@@ -445,8 +446,8 @@ void MachineBasicBlock::updateTerminator() {
         // We fallthrough to the same basic block as the conditional jump
         // targets. Remove the conditional jump, leaving unconditional
         // fallthrough.
-        // FIXME: This does not seem like a reasonable pattern to support, but it
-        // has been seen in the wild coming out of degenerate ARM test cases.
+        // FIXME: This does not seem like a reasonable pattern to support, but
+        // it has been seen in the wild coming out of degenerate ARM test cases.
         TII->RemoveBranch(*this);
 
         // Finally update the unconditional successor to be reached via a branch
@@ -484,9 +485,9 @@ void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ, uint32_t weight) {
   if (weight != 0 || !Weights.empty())
     Weights.push_back(weight);
 
-   Successors.push_back(succ);
-   succ->addPredecessor(this);
- }
+  Successors.push_back(succ);
+  succ->addPredecessor(this);
+}
 
 void MachineBasicBlock::removeSuccessor(MachineBasicBlock *succ) {
   succ->removePredecessor(this);
@@ -834,10 +835,10 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   if (LIS) {
     // After splitting the edge and updating SlotIndexes, live intervals may be
     // in one of two situations, depending on whether this block was the last in
-    // the function. If the original block was the last in the function, all live
-    // intervals will end prior to the beginning of the new split block. If the
-    // original block was not at the end of the function, all live intervals will
-    // extend to the end of the new split block.
+    // the function. If the original block was the last in the function, all
+    // live intervals will end prior to the beginning of the new split block. If
+    // the original block was not at the end of the function, all live intervals
+    // will extend to the end of the new split block.
 
     bool isLastMBB =
       std::next(MachineFunction::iterator(NMBB)) == getParent()->end();
@@ -861,7 +862,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
 
           LiveInterval &LI = LIS->getInterval(Reg);
           VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
-          assert(VNI && "PHI sources should be live out of their predecessors.");
+          assert(VNI &&
+                 "PHI sources should be live out of their predecessors.");
           LI.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
         }
       }
