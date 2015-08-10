@@ -344,6 +344,32 @@ bool TemplateMatch(const char *templ, const char *str) {
   return true;
 }
 
+static const char kPathSeparator = SANITIZER_WINDOWS ? ';' : ':';
+
+char *FindPathToBinary(const char *name) {
+  const char *path = GetEnv("PATH");
+  if (!path)
+    return 0;
+  uptr name_len = internal_strlen(name);
+  InternalScopedBuffer<char> buffer(kMaxPathLength);
+  const char *beg = path;
+  while (true) {
+    const char *end = internal_strchrnul(beg, kPathSeparator);
+    uptr prefix_len = end - beg;
+    if (prefix_len + name_len + 2 <= kMaxPathLength) {
+      internal_memcpy(buffer.data(), beg, prefix_len);
+      buffer[prefix_len] = '/';
+      internal_memcpy(&buffer[prefix_len + 1], name, name_len);
+      buffer[prefix_len + 1 + name_len] = '\0';
+      if (FileExists(buffer.data()))
+        return internal_strdup(buffer.data());
+    }
+    if (*end == '\0') break;
+    beg = end + 1;
+  }
+  return nullptr;
+}
+
 static char binary_name_cache_str[kMaxPathLength];
 static char process_name_cache_str[kMaxPathLength];
 

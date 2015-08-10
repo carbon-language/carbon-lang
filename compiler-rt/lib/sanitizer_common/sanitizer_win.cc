@@ -51,7 +51,7 @@ uptr GetMaxVirtualAddress() {
 }
 
 bool FileExists(const char *filename) {
-  UNIMPLEMENTED();
+  return ::GetFileAttributesA(filename) != INVALID_FILE_ATTRIBUTES;
 }
 
 uptr internal_getpid() {
@@ -292,11 +292,6 @@ void SetAddressSpaceUnlimited() {
   UNIMPLEMENTED();
 }
 
-char *FindPathToBinary(const char *name) {
-  // Nothing here for now.
-  return 0;
-}
-
 bool IsPathSeparator(const char c) {
   return c == '\\' || c == '/';
 }
@@ -515,21 +510,32 @@ bool WriteToFile(fd_t fd, const void *buff, uptr buff_size, uptr *bytes_written,
                  error_t *error_p) {
   CHECK(fd != kInvalidFd);
 
-  if (fd == kStdoutFd) {
-    fd = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (fd == 0) fd = kInvalidFd;
-  } else if (fd == kStderrFd) {
-    fd = GetStdHandle(STD_ERROR_HANDLE);
-    if (fd == 0) fd = kInvalidFd;
+  // Handle null optional parameters.
+  error_t dummy_error;
+  error_p = error_p ? error_p : &dummy_error;
+  uptr dummy_bytes_written;
+  bytes_written = bytes_written ? bytes_written : &dummy_bytes_written;
+
+  // Initialize output parameters in case we fail.
+  *error_p = 0;
+  *bytes_written = 0;
+
+  // Map the conventional Unix fds 1 and 2 to Windows handles. They might be
+  // closed, in which case this will fail.
+  if (fd == kStdoutFd || fd == kStderrFd) {
+    fd = GetStdHandle(fd == kStdoutFd ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
+    if (fd == 0) {
+      *error_p = ERROR_INVALID_HANDLE;
+      return false;
+    }
   }
 
-  DWORD internal_bytes_written;
-  if (fd == kInvalidFd ||
-      WriteFile(fd, buff, buff_size, &internal_bytes_written, 0)) {
-    if (error_p) *error_p = GetLastError();
+  DWORD bytes_written_32;
+  if (!WriteFile(fd, buff, buff_size, &bytes_written_32, 0)) {
+    *error_p = GetLastError();
     return false;
   } else {
-    if (bytes_written) *bytes_written = internal_bytes_written;
+    *bytes_written = bytes_written_32;
     return true;
   }
 }

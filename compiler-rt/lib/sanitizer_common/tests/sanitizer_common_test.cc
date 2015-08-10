@@ -188,6 +188,15 @@ TEST(SanitizerCommon, FindPathToBinary) {
   InternalFree(true_path);
   EXPECT_EQ(0, FindPathToBinary("unexisting_binary.ergjeorj"));
 }
+#elif SANITIZER_WINDOWS
+TEST(SanitizerCommon, FindPathToBinary) {
+  // ntdll.dll should be on PATH in all supported test environments on all
+  // supported Windows versions.
+  char *ntdll_path = FindPathToBinary("ntdll.dll");
+  EXPECT_NE((char*)0, internal_strstr(ntdll_path, "ntdll.dll"));
+  InternalFree(ntdll_path);
+  EXPECT_EQ(0, FindPathToBinary("unexisting_binary.ergjeorj"));
+}
 #endif
 
 TEST(SanitizerCommon, StripPathPrefix) {
