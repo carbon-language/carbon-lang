@@ -521,8 +521,11 @@ bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
           Object.Size, Object.Alignment,
           Object.Type == yaml::MachineStackObject::SpillSlot, Alloca);
     MFI.setObjectOffset(ObjectIdx, Object.Offset);
-    // TODO: Report an error when objects are redefined.
-    PFS.StackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
+    if (!PFS.StackObjectSlots.insert(std::make_pair(Object.ID.Value, ObjectIdx))
+             .second)
+      return error(Object.ID.SourceRange.Start,
+                   Twine("redefinition of stack object '%stack.") +
+                       Twine(Object.ID.Value) + "'");
     if (parseCalleeSavedRegister(MF, PFS, CSIInfo, Object.CalleeSavedRegister,
                                  ObjectIdx))
       return true;

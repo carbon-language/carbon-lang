@@ -204,7 +204,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
 /// objects (Serialize local objects).
 struct MachineStackObject {
   enum ObjectType { DefaultType, SpillSlot, VariableSized };
-  unsigned ID;
+  UnsignedValue ID;
   StringValue Name;
   // TODO: Serialize unnamed LLVM alloca reference.
   ObjectType Type = DefaultType;
