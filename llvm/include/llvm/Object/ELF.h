@@ -385,10 +385,10 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
     if ((EC = StrTabSecOrErr.getError()))
       return;
 
-    ErrorOr<StringRef> SymtabOrErr = getStringTable(*StrTabSecOrErr);
-    if ((EC = SymtabOrErr.getError()))
+    ErrorOr<StringRef> StringTableOrErr = getStringTable(*StrTabSecOrErr);
+    if ((EC = StringTableOrErr.getError()))
       return;
-    DotShstrtab = *SymtabOrErr;
+    DotShstrtab = *StringTableOrErr;
   }
 
   EC = std::error_code();
