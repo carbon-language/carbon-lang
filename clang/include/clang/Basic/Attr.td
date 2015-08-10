@@ -557,11 +557,31 @@ def CUDAConstant : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def CUDACudartBuiltin : IgnoredAttr {
+  let Spellings = [GNU<"cudart_builtin">];
+  let LangOpts = [CUDA];
+}
+
 def CUDADevice : InheritableAttr {
   let Spellings = [GNU<"device">];
   let Subjects = SubjectList<[Function, Var]>;
   let LangOpts = [CUDA];
   let Documentation = [Undocumented];
+}
+
+def CUDADeviceBuiltin : IgnoredAttr {
+  let Spellings = [GNU<"device_builtin">];
+  let LangOpts = [CUDA];
+}
+
+def CUDADeviceBuiltinSurfaceType : IgnoredAttr {
+  let Spellings = [GNU<"device_builtin_surface_type">];
+  let LangOpts = [CUDA];
+}
+
+def CUDADeviceBuiltinTextureType : IgnoredAttr {
+  let Spellings = [GNU<"device_builtin_texture_type">];
+  let LangOpts = [CUDA];
 }
 
 def CUDAGlobal : InheritableAttr {
@@ -1013,6 +1033,11 @@ def NoInstrumentFunction : InheritableAttr {
 def NoThrow : InheritableAttr {
   let Spellings = [GCC<"nothrow">, Declspec<"nothrow">];
   let Documentation = [Undocumented];
+}
+
+def NvWeak : IgnoredAttr {
+  let Spellings = [GNU<"nv_weak">];
+  let LangOpts = [CUDA];
 }
 
 def ObjCBridge : InheritableAttr {
