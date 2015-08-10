@@ -127,7 +127,6 @@ struct IndependentBlocks : public FunctionPass {
   bool isIndependentBlock(const Region *R, BasicBlock *BB) const;
   bool areAllBlocksIndependent(const Region *R) const;
 
-  // Split the exit block to hold load instructions.
   bool onlyUsedInRegion(Instruction *Inst, const Region *R);
   bool translateScalarToArray(BasicBlock *BB, const Region *R);
   bool translateScalarToArray(Instruction *Inst, const Region *R);
