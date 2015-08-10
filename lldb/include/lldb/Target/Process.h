@@ -1952,31 +1952,18 @@ public:
     }
 
     //------------------------------------------------------------------
-    /// Print a user-visible warning one time per Process
+    /// Print a user-visible warning about a module being built with optimization
     ///
-    /// A facility for printing a warning to the user once per repeat_key.
+    /// Prints a async warning message to the user one time per Module
+    /// where a function is found that was compiled with optimization, per
+    /// Process.
     ///
-    /// warning_type is from the Process::Warnings enums.
-    /// repeat_key is a pointer value that will be used to ensure that the
-    /// warning message is not printed multiple times.  For instance, with a
-    /// warning about a function being optimized, you can pass the CompileUnit
-    /// pointer to have the warning issued for only the first function in a
-    /// CU, or the Function pointer to have it issued once for every function,
-    /// or a Module pointer to have it issued once per Module.
-    ///
-    /// @param [in] warning_type
-    ///     One of the types defined in Process::Warnings.
-    ///
-    /// @param [in] repeat_key
-    ///     A pointer value used to ensure that the warning is only printed once.
-    ///     May be nullptr, indicating that the warning is printed unconditionally
-    ///     every time.
-    ///
-    /// @param [in] fmt
-    ///     printf style format string
+    /// @param [in] sc
+    ///     A SymbolContext with eSymbolContextFunction and eSymbolContextModule
+    ///     pre-computed.
     //------------------------------------------------------------------
     void
-    PrintWarning (uint64_t warning_type, void *repeat_key, const char *fmt, ...) __attribute__((format(printf, 4, 5)));
+    PrintWarningOptimization (const SymbolContext &sc);
 
 protected:
     
@@ -2001,6 +1988,37 @@ protected:
     //------------------------------------------------------------------
     void
     CompleteAttach ();
+
+    //------------------------------------------------------------------
+    /// Print a user-visible warning one time per Process
+    ///
+    /// A facility for printing a warning to the user once per repeat_key.
+    ///
+    /// warning_type is from the Process::Warnings enums.
+    /// repeat_key is a pointer value that will be used to ensure that the
+    /// warning message is not printed multiple times.  For instance, with a
+    /// warning about a function being optimized, you can pass the CompileUnit
+    /// pointer to have the warning issued for only the first function in a
+    /// CU, or the Function pointer to have it issued once for every function,
+    /// or a Module pointer to have it issued once per Module.
+    ///
+    /// Classes outside Process should call a specific PrintWarning method
+    /// so that the warning strings are all centralized in Process, instead of
+    /// calling PrintWarning() directly.
+    ///
+    /// @param [in] warning_type
+    ///     One of the types defined in Process::Warnings.
+    ///
+    /// @param [in] repeat_key
+    ///     A pointer value used to ensure that the warning is only printed once.
+    ///     May be nullptr, indicating that the warning is printed unconditionally
+    ///     every time.
+    ///
+    /// @param [in] fmt
+    ///     printf style format string
+    //------------------------------------------------------------------
+    void
+    PrintWarning (uint64_t warning_type, void *repeat_key, const char *fmt, ...) __attribute__((format(printf, 4, 5)));
     
 public:
     //------------------------------------------------------------------

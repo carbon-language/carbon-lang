@@ -28,6 +28,7 @@
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -6593,6 +6594,19 @@ Process::PrintWarning (uint64_t warning_type, void *repeat_key, const char *fmt,
         va_start (args, fmt);
         stream_sp->PrintfVarArg (fmt, args);
         va_end (args);
+    }
+}
+
+void
+Process::PrintWarningOptimization (const SymbolContext &sc)
+{
+    if (GetWarningsOptimization() == true
+        && sc.module_sp.get() 
+        && sc.module_sp->GetFileSpec().GetFilename().IsEmpty() == false
+        && sc.function
+        && sc.function->GetIsOptimized() == true)
+    {
+        PrintWarning (Process::Warnings::eWarningsOptimization, sc.module_sp.get(), "%s was compiled with optimization - stepping may behave oddly; variables may not be available.\n", sc.module_sp->GetFileSpec().GetFilename().GetCString());
     }
 }
 

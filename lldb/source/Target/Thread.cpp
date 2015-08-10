@@ -427,16 +427,10 @@ Thread::SetSelectedFrameByIndexNoisily (uint32_t frame_idx, Stream &output_strea
 void
 Thread::FunctionOptimizationWarning (StackFrame *frame)
 {
-    if (frame && frame->HasDebugInformation())
+    if (frame && frame->HasDebugInformation() && GetProcess()->GetWarningsOptimization() == true)
     {
         SymbolContext sc = frame->GetSymbolContext (eSymbolContextFunction | eSymbolContextModule);
-        if (sc.function && sc.function->GetIsOptimized() == true && sc.module_sp.get())
-        {
-            if (sc.module_sp->GetFileSpec().GetFilename().IsEmpty() == false)
-            {
-                GetProcess()->PrintWarning (Process::Warnings::eWarningsOptimization, sc.module_sp.get(), "%s was compiled with optimization - stepping may behave oddly; variables may not be available.\n", sc.module_sp->GetFileSpec().GetFilename().GetCString());
-            }
-        }
+        GetProcess()->PrintWarningOptimization (sc);
     }
 }
 
