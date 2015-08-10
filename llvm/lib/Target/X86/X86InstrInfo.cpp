@@ -5347,11 +5347,8 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
   // Check switch flag
   if (NoFusing) return nullptr;
 
-  // Unless optimizing for size, don't fold to avoid partial
-  // register update stalls
-  // FIXME: Use Function::optForSize().
-  if (!MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) &&
-      hasPartialRegUpdate(MI->getOpcode()))
+  // Avoid partial register update stalls unless optimizing for size.
+  if (!MF.getFunction()->optForSize() && hasPartialRegUpdate(MI->getOpcode()))
     return nullptr;
 
   // Determine the alignment of the load.
