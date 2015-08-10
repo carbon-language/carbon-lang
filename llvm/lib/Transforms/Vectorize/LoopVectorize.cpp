@@ -1577,11 +1577,17 @@ struct LoopVectorize : public FunctionPass {
     }
 
     if (Hints.getWidth() == 1 && Hints.getInterleave() == 1) {
+      // FIXME: Add a separate metadata to indicate when the loop has already
+      // been vectorized instead of setting width and count to 1.
       DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
+      // FIXME: Add interleave.disable metadata. This will allow
+      // vectorize.disable to be used without disabling the pass and errors
+      // to differentiate between disabled vectorization and a width of 1.
       emitOptimizationRemarkAnalysis(
           F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-          "loop not vectorized: vector width and interleave count are "
-          "explicitly set to 1");
+          "loop not vectorized: vectorization and interleaving are explicitly "
+          "disabled, or vectorize width and interleave count are both set to "
+          "1");
       return false;
     }
 
@@ -1652,28 +1658,74 @@ struct LoopVectorize : public FunctionPass {
     // Select the interleave count.
     unsigned IC = CM.selectInterleaveCount(OptForSize, VF.Width, VF.Cost);
 
-    DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
-                 << DebugLocStr << '\n');
-    DEBUG(dbgs() << "LV: Interleave Count is " << IC << '\n');
+    // Get user interleave count.
+    unsigned UserIC = Hints.getInterleave();
+
+    // Identify the diagnostic messages that should be produced.
+    std::string VecDiagMsg, IntDiagMsg;
+    bool VectorizeLoop = true, InterleaveLoop = true;
 
     if (VF.Width == 1) {
-      DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial\n");
+      DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
+      VecDiagMsg =
+          "the cost-model indicates that vectorization is not beneficial";
+      VectorizeLoop = false;
+    }
 
-      if (IC == 1) {
-        emitOptimizationRemarkAnalysis(
-            F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-            "not beneficial to vectorize and user disabled interleaving");
-        return false;
-      }
-      DEBUG(dbgs() << "LV: Trying to at least unroll the loops.\n");
+    if (IC == 1 && UserIC <= 1) {
+      // Tell the user interleaving is not beneficial.
+      DEBUG(dbgs() << "LV: Interleaving is not beneficial.\n");
+      IntDiagMsg =
+          "the cost-model indicates that interleaving is not beneficial";
+      InterleaveLoop = false;
+      if (UserIC == 1)
+        IntDiagMsg +=
+            " and is explicitly disabled or interleave count is set to 1";
+    } else if (IC > 1 && UserIC == 1) {
+      // Tell the user interleaving is beneficial, but it explicitly disabled.
+      DEBUG(dbgs()
+            << "LV: Interleaving is beneficial but is explicitly disabled.");
+      IntDiagMsg = "the cost-model indicates that interleaving is beneficial "
+                   "but is explicitly disabled or interleave count is set to 1";
+      InterleaveLoop = false;
+    }
 
-      // Report the unrolling decision.
-      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-                             Twine("interleaved by " + Twine(IC) +
-                                   " (vectorization not beneficial)"));
+    // Override IC if user provided an interleave count.
+    IC = UserIC > 0 ? UserIC : IC;
 
+    // Emit diagnostic messages, if any.
+    if (!VectorizeLoop && !InterleaveLoop) {
+      // Do not vectorize or interleaving the loop.
+      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+                                     L->getStartLoc(), VecDiagMsg);
+      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+                                     L->getStartLoc(), IntDiagMsg);
+      return false;
+    } else if (!VectorizeLoop && InterleaveLoop) {
+      DEBUG(dbgs() << "LV: Interleave Count is " << IC << '\n');
+      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+                                     L->getStartLoc(), VecDiagMsg);
+    } else if (VectorizeLoop && !InterleaveLoop) {
+      DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
+                   << DebugLocStr << '\n');
+      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+                                     L->getStartLoc(), IntDiagMsg);
+    } else if (VectorizeLoop && InterleaveLoop) {
+      DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
+                   << DebugLocStr << '\n');
+      DEBUG(dbgs() << "LV: Interleave Count is " << IC << '\n');
+    }
+
+    if (!VectorizeLoop) {
+      assert(IC > 1 && "interleave count should not be 1 or 0");
+      // If we decided that it is not legal to vectorize the loop then
+      // interleave it.
       InnerLoopUnroller Unroller(L, SE, LI, DT, TLI, TTI, IC);
       Unroller.vectorize(&LVL);
+
+      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+                             Twine("interleaved loop (interleaved count: ") +
+                                 Twine(IC) + ")");
     } else {
       // If we decided that it is *legal* to vectorize the loop then do it.
       InnerLoopVectorizer LB(L, SE, LI, DT, TLI, TTI, VF.Width, IC);
@@ -4634,11 +4686,6 @@ unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
   // overhead.
   // 3. We don't interleave if we think that we will spill registers to memory
   // due to the increased register pressure.
-
-  // Use the user preference, unless 'auto' is selected.
-  int UserUF = Hints->getInterleave();
-  if (UserUF != 0)
-    return UserUF;
 
   // When we optimize for size, we don't interleave.
   if (OptForSize)

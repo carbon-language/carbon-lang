@@ -9,9 +9,9 @@
 ; DEBUG-OUTPUT-NOT: .loc
 ; DEBUG-OUTPUT-NOT: {{.*}}.debug_info
 
-; NONE: remark: vectorization-remarks.c:17:8: loop not vectorized: vector width and interleave count are explicitly set to 1
 ; VECTORIZED: remark: vectorization-remarks.c:17:8: vectorized loop (vectorization width: 4, interleaved count: 1)
-; UNROLLED: remark: vectorization-remarks.c:17:8: interleaved by 4 (vectorization not beneficial)
+; UNROLLED: remark: vectorization-remarks.c:17:8: interleaved loop (interleaved count: 4)
+; NONE: remark: vectorization-remarks.c:17:8: loop not vectorized: vectorization and interleaving are explicitly disabled, or vectorize width and interleave count are both set to 1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
