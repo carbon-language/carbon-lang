@@ -20,6 +20,9 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#ifndef NDEBUG
+#include "llvm/IR/LegacyPassManager.h"
+#endif
 
 using namespace llvm;
 
@@ -224,3 +227,41 @@ FunctionPass* llvm::createRegionOnlyViewerPass() {
   return new RegionOnlyViewer();
 }
 
+#ifndef NDEBUG
+static void viewRegionInfo(RegionInfo *RI, bool ShortNames) {
+  assert(RI && "Argument must be non-null");
+
+  llvm::Function *F = RI->getTopLevelRegion()->getEntry()->getParent();
+  std::string GraphName = DOTGraphTraits<RegionInfo *>::getGraphName(RI);
+
+  llvm::ViewGraph(RI, "reg", ShortNames,
+                  Twine(GraphName) + " for '" + F->getName() + "' function");
+}
+
+static void invokeFunctionPass(const Function *F, FunctionPass *ViewerPass) {
+  assert(F && "Argument must be non-null");
+  assert(!F->isDeclaration() && "Function must have an implementation");
+
+  // The viewer and analysis passes do not modify anything, so we can safely
+  // remove the const qualifier
+  auto NonConstF = const_cast<Function *>(F);
+
+  llvm::legacy::FunctionPassManager FPM(NonConstF->getParent());
+  FPM.add(ViewerPass);
+  FPM.doInitialization();
+  FPM.run(*NonConstF);
+  FPM.doFinalization();
+}
+
+void llvm::viewRegion(RegionInfo *RI) { viewRegionInfo(RI, false); }
+
+void llvm::viewRegion(const Function *F) {
+  invokeFunctionPass(F, createRegionViewerPass());
+}
+
+void llvm::viewRegionOnly(RegionInfo *RI) { viewRegionInfo(RI, true); }
+
+void llvm::viewRegionOnly(const Function *F) {
+  invokeFunctionPass(F, createRegionOnlyViewerPass());
+}
+#endif
