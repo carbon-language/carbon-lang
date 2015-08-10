@@ -303,6 +303,10 @@ public:
     return EF.template getEntry<Elf_Sym>(Sym.d.a, Sym.d.b);
   }
 
+  const Elf_Shdr *getSection(DataRefImpl Sec) const {
+    return reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  }
+
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
 
@@ -357,12 +361,12 @@ ErrorOr<StringRef> ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Sym) const {
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSectionFlags(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_flags;
+  return getSection(Sec)->sh_flags;
 }
 
 template <class ELFT>
 uint32_t ELFObjectFile<ELFT>::getSectionType(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_type;
+  return getSection(Sec)->sh_type;
 }
 
 template <class ELFT>
@@ -525,14 +529,14 @@ ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb) const {
 
 template <class ELFT>
 void ELFObjectFile<ELFT>::moveSectionNext(DataRefImpl &Sec) const {
-  const Elf_Shdr *ESec = toELFShdrIter(Sec);
+  const Elf_Shdr *ESec = getSection(Sec);
   Sec = toDRI(++ESec);
 }
 
 template <class ELFT>
 std::error_code ELFObjectFile<ELFT>::getSectionName(DataRefImpl Sec,
                                                     StringRef &Result) const {
-  ErrorOr<StringRef> Name = EF.getSectionName(&*toELFShdrIter(Sec));
+  ErrorOr<StringRef> Name = EF.getSectionName(&*getSection(Sec));
   if (!Name)
     return Name.getError();
   Result = *Name;
@@ -541,50 +545,50 @@ std::error_code ELFObjectFile<ELFT>::getSectionName(DataRefImpl Sec,
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSectionAddress(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_addr;
+  return getSection(Sec)->sh_addr;
 }
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSectionSize(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_size;
+  return getSection(Sec)->sh_size;
 }
 
 template <class ELFT>
 std::error_code
 ELFObjectFile<ELFT>::getSectionContents(DataRefImpl Sec,
                                         StringRef &Result) const {
-  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = getSection(Sec);
   Result = StringRef((const char *)base() + EShdr->sh_offset, EShdr->sh_size);
   return std::error_code();
 }
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSectionAlignment(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_addralign;
+  return getSection(Sec)->sh_addralign;
 }
 
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionText(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_flags & ELF::SHF_EXECINSTR;
+  return getSection(Sec)->sh_flags & ELF::SHF_EXECINSTR;
 }
 
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionData(DataRefImpl Sec) const {
-  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = getSection(Sec);
   return EShdr->sh_flags & (ELF::SHF_ALLOC | ELF::SHF_WRITE) &&
          EShdr->sh_type == ELF::SHT_PROGBITS;
 }
 
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionBSS(DataRefImpl Sec) const {
-  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = getSection(Sec);
   return EShdr->sh_flags & (ELF::SHF_ALLOC | ELF::SHF_WRITE) &&
          EShdr->sh_type == ELF::SHT_NOBITS;
 }
 
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
-  return toELFShdrIter(Sec)->sh_type == ELF::SHT_NOBITS;
+  return getSection(Sec)->sh_type == ELF::SHT_NOBITS;
 }
 
 template <class ELFT>
@@ -631,7 +635,7 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
   if (EF.getHeader()->e_type != ELF::ET_REL)
     return section_end();
 
-  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = getSection(Sec);
   uintX_t Type = EShdr->sh_type;
   if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
     return section_end();
