@@ -1397,6 +1397,8 @@ TryStaticMemberPointerUpcast(Sema &Self, ExprResult &SrcExpr, QualType SrcType,
     msg = diag::err_bad_static_cast_member_pointer_nonmp;
     return TC_NotApplicable;
   }
+  if (Self.Context.getTargetInfo().getCXXABI().isMicrosoft())
+    Self.RequireCompleteType(OpRange.getBegin(), SrcType, 0);
 
   // T == T, modulo cv
   if (!Self.Context.hasSameUnqualifiedType(SrcMemPtr->getPointeeType(),

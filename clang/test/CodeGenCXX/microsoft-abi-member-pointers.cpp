@@ -729,3 +729,20 @@ typedef void (D::*DMemPtrTy)();
 // CHECK: @"\01??_9C@pr23878@@$BA@AE" to i8*), i32 0, i32 4
 DMemPtrTy get_memptr() { return &D::f; }
 }
+
+class C {};
+
+typedef void (C::*f)();
+
+class CA : public C {
+public:
+  void OnHelp(void);
+  int OnHelp(int);
+};
+
+// CHECK-LABEL: foo_fun
+void foo_fun() {
+  // CHECK: store i8* bitcast (void (%class.CA*)* @"\01?OnHelp@CA@@QAEXXZ" to i8*), i8**
+  f func = (f)&CA::OnHelp;
+}
+
