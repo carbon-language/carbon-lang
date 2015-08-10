@@ -193,6 +193,7 @@ protected:
   ELFFile<ELFT> EF;
 
   const Elf_Shdr *DotDynSymSec = nullptr; // Dynamic symbol table section.
+  const Elf_Shdr *DotSymtabSec = nullptr; // Symbol table section.
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
@@ -477,7 +478,7 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Sym) const {
     Result |= SymbolRef::SF_Absolute;
 
   if (ESym->getType() == ELF::STT_FILE || ESym->getType() == ELF::STT_SECTION ||
-      ESym == EF.symbol_begin(EF.getDotSymtabSec()) ||
+      ESym == EF.symbol_begin(DotSymtabSec) ||
       ESym == EF.symbol_begin(DotDynSymSec))
     Result |= SymbolRef::SF_FormatSpecific;
 
@@ -669,7 +670,7 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   if (IsDyn)
     SymbolData = toDRI(DotDynSymSec, symbolIdx);
   else
-    SymbolData = toDRI(EF.getDotSymtabSec(), symbolIdx);
+    SymbolData = toDRI(DotSymtabSec, symbolIdx);
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
@@ -746,19 +747,28 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
       DotDynSymSec = &Sec;
       break;
     }
+    case ELF::SHT_SYMTAB: {
+      if (DotSymtabSec) {
+        // More than one .dynsym!
+        EC = object_error::parse_failed;
+        return;
+      }
+      DotSymtabSec = &Sec;
+      break;
+    }
     }
   }
 }
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin_impl() const {
-  DataRefImpl Sym = toDRI(EF.getDotSymtabSec(), 0);
+  DataRefImpl Sym = toDRI(DotSymtabSec, 0);
   return basic_symbol_iterator(SymbolRef(Sym, this));
 }
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_end_impl() const {
-  const Elf_Shdr *SymTab = EF.getDotSymtabSec();
+  const Elf_Shdr *SymTab = DotSymtabSec;
   if (!SymTab)
     return symbol_begin_impl();
   DataRefImpl Sym = toDRI(SymTab, SymTab->sh_size / sizeof(Elf_Sym));

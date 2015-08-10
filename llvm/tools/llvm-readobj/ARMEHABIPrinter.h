@@ -305,12 +305,13 @@ void OpcodeDecoder::Decode(const uint8_t *Opcodes, off_t Offset, size_t Length) 
 
 template <typename ET>
 class PrinterContext {
-  StreamWriter &SW;
-  const object::ELFFile<ET> *ELF;
-
   typedef typename object::ELFFile<ET>::Elf_Sym Elf_Sym;
   typedef typename object::ELFFile<ET>::Elf_Shdr Elf_Shdr;
   typedef typename object::ELFFile<ET>::Elf_Rel Elf_Rel;
+
+  StreamWriter &SW;
+  const object::ELFFile<ET> *ELF;
+  const Elf_Shdr *Symtab;
 
   static const size_t IndexTableEntrySize;
 
@@ -331,8 +332,9 @@ class PrinterContext {
   void PrintOpcodes(const uint8_t *Entry, size_t Length, off_t Offset) const;
 
 public:
-  PrinterContext(StreamWriter &Writer, const object::ELFFile<ET> *File)
-    : SW(Writer), ELF(File) {}
+  PrinterContext(StreamWriter &SW, const object::ELFFile<ET> *ELF,
+                 const Elf_Shdr *Symtab)
+      : SW(SW), ELF(ELF), Symtab(Symtab) {}
 
   void PrintUnwindInformation() const;
 };
@@ -344,12 +346,11 @@ template <typename ET>
 ErrorOr<StringRef>
 PrinterContext<ET>::FunctionAtAddress(unsigned Section,
                                       uint64_t Address) const {
-  const Elf_Shdr *Symtab = ELF->getDotSymtabSec();
   ErrorOr<StringRef> StrTableOrErr = ELF->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
 
-  for (const Elf_Sym &Sym : ELF->symbols(ELF->getDotSymtabSec()))
+  for (const Elf_Sym &Sym : ELF->symbols(Symtab))
     if (Sym.st_shndx == Section && Sym.st_value == Address &&
         Sym.getType() == ELF::STT_FUNC)
       return Sym.getName(StrTable);

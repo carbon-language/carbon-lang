@@ -134,6 +134,7 @@ private:
   StringRef SOName;
   const Elf_Hash *HashTable = nullptr;
   const Elf_Shdr *DotDynSymSec = nullptr;
+  const Elf_Shdr *DotSymtabSec = nullptr;
 
   const Elf_Shdr *dot_gnu_version_sec = nullptr;   // .gnu.version
   const Elf_Shdr *dot_gnu_version_r_sec = nullptr; // .gnu.version_r
@@ -383,7 +384,7 @@ getSectionNameIndex(const ELFO &Obj, const typename ELFO::Elf_Sym *Symbol,
     SectionName = "Reserved";
   else {
     if (SectionIndex == SHN_XINDEX)
-      SectionIndex = Obj.getExtendedSymbolTableIndex(&*Symbol);
+      SectionIndex = Obj.getExtendedSymbolTableIndex(Symbol);
     ErrorOr<const typename ELFO::Elf_Shdr *> Sec = Obj.getSection(SectionIndex);
     error(Sec.getError());
     SectionName = errorOrDefault(Obj.getSectionName(*Sec));
@@ -891,6 +892,11 @@ ELFDumper<ELFT>::ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
         reportError("Multilpe SHT_DYNSYM");
       DotDynSymSec = &Sec;
       break;
+    case ELF::SHT_SYMTAB:
+      if (DotSymtabSec != nullptr)
+        reportError("Multilpe SHT_SYMTAB");
+      DotSymtabSec = &Sec;
+      break;
     }
   }
 }
@@ -997,7 +1003,7 @@ void ELFDumper<ELFT>::printSections() {
 
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
-      const Elf_Shdr *Symtab = Obj->getDotSymtabSec();
+      const Elf_Shdr *Symtab = DotSymtabSec;
       ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
       error(StrTableOrErr.getError());
       StringRef StrTable = *StrTableOrErr;
@@ -1129,7 +1135,7 @@ template<class ELFT>
 void ELFDumper<ELFT>::printSymbols() {
   ListScope Group(W, "Symbols");
 
-  const Elf_Shdr *Symtab = Obj->getDotSymtabSec();
+  const Elf_Shdr *Symtab = DotSymtabSec;
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
@@ -1412,7 +1418,8 @@ namespace {
 template <> void ELFDumper<ELFType<support::little, false>>::printUnwindInfo() {
   const unsigned Machine = Obj->getHeader()->e_machine;
   if (Machine == EM_ARM) {
-    ARM::EHABI::PrinterContext<ELFType<support::little, false>> Ctx(W, Obj);
+    ARM::EHABI::PrinterContext<ELFType<support::little, false>> Ctx(
+        W, Obj, DotSymtabSec);
     return Ctx.PrintUnwindInformation();
   }
   W.startLine() << "UnwindInfo not implemented.\n";

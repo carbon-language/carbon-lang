@@ -78,8 +78,6 @@ public:
   template <typename T>
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
 
-  const Elf_Shdr *getDotSymtabSec() const { return dot_symtab_sec; }
-
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   ErrorOr<StringRef> getStringTableForSymtab(const Elf_Shdr &Section) const;
 
