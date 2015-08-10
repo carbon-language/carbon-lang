@@ -154,6 +154,7 @@ private:
       // Push the new operator.
       InfixOperatorStack.push_back(Op);
     }
+
     int64_t execute() {
       // Push any remaining operators onto the postfix stack.
       while (!InfixOperatorStack.empty()) {
