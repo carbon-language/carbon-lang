@@ -5241,9 +5241,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
 
   // Unless optimizing for size, don't fold to avoid partial
   // register update stalls
-  // FIXME: Use Function::optForSize().
-  if (!MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) &&
-      hasPartialRegUpdate(MI->getOpcode()))
+  if (!MF.getFunction()->optForSize() && hasPartialRegUpdate(MI->getOpcode()))
     return nullptr;
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
