@@ -2586,7 +2586,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   initializeCSRCost();
 
-  calculateSpillWeightsAndHints(*LIS, mf, *Loops, *MBFI);
+  calculateSpillWeightsAndHints(*LIS, mf, VRM, *Loops, *MBFI);
 
   DEBUG(LIS->dump());
 
