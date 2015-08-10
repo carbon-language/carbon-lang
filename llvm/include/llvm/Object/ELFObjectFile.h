@@ -239,10 +239,6 @@ protected:
     return *EF.getSection(Rel.d.a);
   }
 
-  const Elf_Sym *toELFSymIter(DataRefImpl Sym) const {
-    return EF.template getEntry<Elf_Sym>(Sym.d.a, Sym.d.b);
-  }
-
   DataRefImpl toDRI(const Elf_Shdr *SymTable, unsigned SymbolNum) const {
     DataRefImpl DRI;
     if (!SymTable) {
@@ -303,7 +299,9 @@ public:
   const Elf_Rel *getRel(DataRefImpl Rel) const;
   const Elf_Rela *getRela(DataRefImpl Rela) const;
 
-  const Elf_Sym *getSymbol(DataRefImpl Symb) const;
+  const Elf_Sym *getSymbol(DataRefImpl Sym) const {
+    return EF.template getEntry<Elf_Sym>(Sym.d.a, Sym.d.b);
+  }
 
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
@@ -350,7 +348,7 @@ void ELFObjectFile<ELFT>::moveSymbolNext(DataRefImpl &Sym) const {
 
 template <class ELFT>
 ErrorOr<StringRef> ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Sym) const {
-  const Elf_Sym *ESym = toELFSymIter(Sym);
+  const Elf_Sym *ESym = getSymbol(Sym);
   const Elf_Shdr *SymTableSec = *EF.getSection(Sym.d.a);
   const Elf_Shdr *StringTableSec = *EF.getSection(SymTableSec->sh_link);
   StringRef SymTable = *EF.getStringTable(StringTableSec);
@@ -411,7 +409,7 @@ ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb) const {
 
 template <class ELFT>
 uint32_t ELFObjectFile<ELFT>::getSymbolAlignment(DataRefImpl Symb) const {
-  const Elf_Sym *Sym = toELFSymIter(Symb);
+  const Elf_Sym *Sym = getSymbol(Symb);
   if (Sym->st_shndx == ELF::SHN_COMMON)
     return Sym->st_value;
   return 0;
@@ -419,22 +417,22 @@ uint32_t ELFObjectFile<ELFT>::getSymbolAlignment(DataRefImpl Symb) const {
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSymbolSize(DataRefImpl Sym) const {
-  return toELFSymIter(Sym)->st_size;
+  return getSymbol(Sym)->st_size;
 }
 
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getCommonSymbolSizeImpl(DataRefImpl Symb) const {
-  return toELFSymIter(Symb)->st_size;
+  return getSymbol(Symb)->st_size;
 }
 
 template <class ELFT>
 uint8_t ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb) const {
-  return toELFSymIter(Symb)->st_other;
+  return getSymbol(Symb)->st_other;
 }
 
 template <class ELFT>
 uint8_t ELFObjectFile<ELFT>::getSymbolELFType(DataRefImpl Symb) const {
-  return toELFSymIter(Symb)->getType();
+  return getSymbol(Symb)->getType();
 }
 
 template <class ELFT>
@@ -461,7 +459,7 @@ SymbolRef::Type ELFObjectFile<ELFT>::getSymbolType(DataRefImpl Symb) const {
 
 template <class ELFT>
 uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Sym) const {
-  const Elf_Sym *ESym = toELFSymIter(Sym);
+  const Elf_Sym *ESym = getSymbol(Sym);
 
   uint32_t Result = SymbolRef::SF_None;
 
@@ -709,12 +707,6 @@ ELFObjectFile<ELFT>::getRelocationAddend(DataRefImpl Rel) const {
   if (getRelSection(Rel)->sh_type != ELF::SHT_RELA)
     return object_error::parse_failed;
   return (int64_t)getRela(Rel)->r_addend;
-}
-
-template <class ELFT>
-const typename ELFFile<ELFT>::Elf_Sym *
-ELFObjectFile<ELFT>::getSymbol(DataRefImpl Symb) const {
-  return &*toELFSymIter(Symb);
 }
 
 template <class ELFT>
