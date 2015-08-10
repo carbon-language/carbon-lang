@@ -27,9 +27,6 @@ public:
 
     uint32_t
     GetRegisterCount () const override;
-
-    uint32_t
-    GetUserRegisterCount () const override;
 };
 
 #endif

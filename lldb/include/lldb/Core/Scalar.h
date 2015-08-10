@@ -11,11 +11,6 @@
 #define liblldb_Scalar_h_
 
 #include "lldb/lldb-private.h"
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/APFloat.h"
-
-#define NUM_OF_WORDS_INT128 2
-#define BITWIDTH_INT128 128
 
 namespace lldb_private {
 
@@ -31,10 +26,6 @@ public:
     enum Type
     {
         e_void = 0,
-        e_schar,
-        e_uchar,
-        e_sshort,
-        e_ushort,
         e_sint,
         e_uint,
         e_slong,
@@ -43,74 +34,22 @@ public:
         e_ulonglong,
         e_float,
         e_double,
-        e_long_double,
-        e_uint128,
-        e_sint128
+        e_long_double
     };
 
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
     Scalar();
-    Scalar(char v)              : m_type(e_schar),       m_float((float)0) { m_integer = llvm::APInt(sizeof(char) * 8, v, true);}
-    Scalar(unsigned char v)     : m_type(e_uchar),       m_float((float)0) { m_integer = llvm::APInt(sizeof(char) * 8, v);}
-    Scalar(short v)             : m_type(e_sshort),      m_float((float)0) { m_integer = llvm::APInt(sizeof(short) * 8, v, true);}
-    Scalar(unsigned short v)    : m_type(e_ushort),      m_float((float)0) { m_integer = llvm::APInt(sizeof(short) * 8, v);}
-    Scalar(int v)               : m_type(e_sint),        m_float((float)0) { m_integer = llvm::APInt(sizeof(int) * 8, v, true);}
-    Scalar(unsigned int v)      : m_type(e_uint),        m_float((float)0) { m_integer = llvm::APInt(sizeof(int) * 8, v);}
-    Scalar(long v)              : m_type(e_slong),       m_float((float)0) { m_integer = llvm::APInt(sizeof(long) * 8, v, true);}
-    Scalar(unsigned long v)     : m_type(e_ulong),       m_float((float)0) { m_integer = llvm::APInt(sizeof(long) * 8, v);}
-    Scalar(long long v)         : m_type(e_slonglong),   m_float((float)0) { m_integer = llvm::APInt(sizeof(long long) * 8, v, true);}
-    Scalar(unsigned long long v): m_type(e_ulonglong),   m_float((float)0) { m_integer = llvm::APInt(sizeof(long long) * 8, v);}
-    Scalar(float v)             : m_type(e_float),       m_float(v) { m_float   = llvm::APFloat(v); }
-    Scalar(double v)            : m_type(e_double),      m_float(v) { m_float   = llvm::APFloat(v); }
-    Scalar(long double v, bool ieee_quad) 
-        : m_type(e_long_double), m_float((float)0), m_ieee_quad(ieee_quad)
-        {
-            if(ieee_quad)
-                m_float = llvm::APFloat(llvm::APFloat::IEEEquad, llvm::APInt(BITWIDTH_INT128, NUM_OF_WORDS_INT128, ((type128 *)&v)->x));
-            else
-                m_float = llvm::APFloat(llvm::APFloat::x87DoubleExtended, llvm::APInt(BITWIDTH_INT128, NUM_OF_WORDS_INT128, ((type128 *)&v)->x));
-        }
-    Scalar(llvm::APInt v) : 
-        m_type(),
-        m_float((float)0)
-        {
-            m_integer = llvm::APInt(v);
-            switch(m_integer.getBitWidth())
-            {
-            case 8:
-                if(m_integer.isSignedIntN(sizeof(schar_t) * 8))
-                    m_type = e_schar;
-                else
-                    m_type = e_uchar;
-                break;
-            case 16:
-                if(m_integer.isSignedIntN(sizeof(sshort_t) * 8))
-                    m_type = e_sshort;
-                else
-                    m_type = e_ushort;
-                break;
-            case 32:
-                if(m_integer.isSignedIntN(sizeof(sint_t) * 8))
-                    m_type = e_sint;
-                else
-                    m_type = e_uint;
-                break;
-            case 64:
-                if(m_integer.isSignedIntN(sizeof(slonglong_t) * 8))
-                    m_type = e_slonglong;
-                else
-                    m_type = e_ulonglong;
-                break;
-            case 128:
-                if(m_integer.isSignedIntN(BITWIDTH_INT128))
-                    m_type = e_sint128;
-                else
-                    m_type = e_uint128;
-                break;
-            }
-        }
+    Scalar(int v)               : m_type(e_sint),           m_data() { m_data.sint      = v; }
+    Scalar(unsigned int v)      : m_type(e_uint),           m_data() { m_data.uint      = v; }
+    Scalar(long v)              : m_type(e_slong),          m_data() { m_data.slong     = v; }
+    Scalar(unsigned long v)     : m_type(e_ulong),          m_data() { m_data.ulong     = v; }
+    Scalar(long long v)         : m_type(e_slonglong),      m_data() { m_data.slonglong = v; }
+    Scalar(unsigned long long v): m_type(e_ulonglong),      m_data() { m_data.ulonglong = v; }
+    Scalar(float v)             : m_type(e_float),          m_data() { m_data.flt       = v; }
+    Scalar(double v)            : m_type(e_double),         m_data() { m_data.dbl       = v; }
+    Scalar(long double v)       : m_type(e_long_double),    m_data() { m_data.ldbl      = v; }
     Scalar(const Scalar& rhs);
     //Scalar(const RegisterValue& reg_value);
     virtual ~Scalar();
@@ -122,17 +61,14 @@ public:
     ExtractBitfield (uint32_t bit_size, 
                      uint32_t bit_offset);
 
-    bool
-    SetBit(uint32_t bit);
-
-    bool
-    ClearBit(uint32_t bit);
-
-    void *
-    GetBytes() const;
-
     size_t
     GetByteSize() const;
+
+    static size_t
+    GetMaxByteSize()
+    {
+        return sizeof(ValueData);
+    }
 
     bool
     GetData (DataExtractor &data, size_t limit_byte_size = UINT32_MAX) const;
@@ -147,7 +83,7 @@ public:
     IsZero() const;
 
     void
-    Clear() { m_type = e_void; m_integer.clearAllBits(); }
+    Clear() { m_type = e_void; m_data.ulonglong = 0; }
 
     const char *
     GetTypeAsCString() const;
@@ -158,7 +94,7 @@ public:
     bool
     IsValid() const
     {
-        return (m_type >= e_schar) && (m_type <= e_long_double);
+        return (m_type >= e_sint) && (m_type <= e_long_double);
     }
 
     bool
@@ -188,10 +124,6 @@ public:
     // need to be created. As a result, we currently don't need a variety of
     // overloaded set value accessors.
     //----------------------------------------------------------------------
-    Scalar& operator= (char v);
-    Scalar& operator= (unsigned char v);
-    Scalar& operator= (short v);
-    Scalar& operator= (unsigned short v);
     Scalar& operator= (const int i);
     Scalar& operator= (unsigned int v);
     Scalar& operator= (long v);
@@ -201,7 +133,6 @@ public:
     Scalar& operator= (float v);
     Scalar& operator= (double v);
     Scalar& operator= (long double v);
-    Scalar& operator= (llvm::APInt v);
     Scalar& operator= (const Scalar& rhs);      // Assignment operator
     Scalar& operator+= (const Scalar& rhs);
     Scalar& operator<<= (const Scalar& rhs);    // Shift left
@@ -263,18 +194,6 @@ public:
     unsigned long long
     RawULongLong () const;
 
-    unsigned char
-    UChar(unsigned char fail_value = 0) const;
-
-    char
-    SChar(char fail_value = 0) const;
-
-    unsigned short 
-    UShort(unsigned short fail_value = 0) const;
-
-    short
-    SShort(short fail_value = 0) const;
-
     unsigned int
     UInt(unsigned int fail_value = 0) const;
 
@@ -289,12 +208,6 @@ public:
 
     unsigned long long
     ULongLong(unsigned long long fail_value = 0) const;
-
-    llvm::APInt
-    SInt128(llvm::APInt& fail_value) const;
-
-    llvm::APInt 
-    UInt128(llvm::APInt& fail_value) const;
 
     float
     Float(float fail_value = 0.0f) const;
@@ -342,10 +255,6 @@ public:
     }
 
 protected:
-    typedef char                schar_t;
-    typedef unsigned char       uchar_t;
-    typedef short               sshort_t;
-    typedef unsigned short      ushort_t;
     typedef int                 sint_t;
     typedef unsigned int        uint_t;
     typedef long                slong_t;
@@ -356,13 +265,24 @@ protected:
     typedef double              double_t;
     typedef long double         long_double_t;
     
+    union ValueData
+    {
+        int                 sint;
+        unsigned int        uint;
+        long                slong;
+        unsigned long       ulong;
+        long long           slonglong;
+        unsigned long long  ulonglong;
+        float               flt;
+        double              dbl;
+        long double         ldbl;
+    };
+
     //------------------------------------------------------------------
     // Classes that inherit from Scalar can see and modify these
     //------------------------------------------------------------------
     Scalar::Type m_type;
-    llvm::APInt m_integer;
-    llvm::APFloat m_float;
-    bool m_ieee_quad = false;
+    ValueData m_data;
 
 private:
     friend const Scalar operator+   (const Scalar& lhs, const Scalar& rhs);
