@@ -489,8 +489,12 @@ bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
     else
       ObjectIdx = MFI.CreateFixedSpillStackObject(Object.Size, Object.Offset);
     MFI.setObjectAlignment(ObjectIdx, Object.Alignment);
-    // TODO: Report an error when objects are redefined.
-    PFS.FixedStackObjectSlots.insert(std::make_pair(Object.ID, ObjectIdx));
+    if (!PFS.FixedStackObjectSlots.insert(std::make_pair(Object.ID.Value,
+                                                         ObjectIdx))
+             .second)
+      return error(Object.ID.SourceRange.Start,
+                   Twine("redefinition of fixed stack object '%fixed-stack.") +
+                       Twine(Object.ID.Value) + "'");
     if (parseCalleeSavedRegister(MF, PFS, CSIInfo, Object.CalleeSavedRegister,
                                  ObjectIdx))
       return true;

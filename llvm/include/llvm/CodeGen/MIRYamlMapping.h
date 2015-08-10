@@ -245,7 +245,7 @@ template <> struct MappingTraits<MachineStackObject> {
 /// MachineFrameInfo class.
 struct FixedMachineStackObject {
   enum ObjectType { DefaultType, SpillSlot };
-  unsigned ID;
+  UnsignedValue ID;
   ObjectType Type = DefaultType;
   int64_t Offset = 0;
   uint64_t Size = 0;
