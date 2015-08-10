@@ -43,8 +43,8 @@ int main() {
   free(buffer);
   A<char*> a(buffer);
 // CHECK: AddressSanitizer: heap-use-after-free on address [[ADDR:0x[0-9a-f]+]]
-// CHECK: foo::bar<42> {{.*}}demangled_names.cc
-// CHECK: foo::spam {{.*}}demangled_names.cc
-// CHECK: baz<char *,1> {{.*}}demangled_names.cc
-// CHECK: A<char *>::~A<char *> {{.*}}demangled_names.cc
+// CHECK: foo::bar<42>{{.*}}demangled_names.cc
+// CHECK: foo::spam{{.*}}demangled_names.cc
+// CHECK: baz<char *,1>{{.*}}demangled_names.cc
+// CHECK: A<char *>::~A<char *>{{.*}}demangled_names.cc
 }

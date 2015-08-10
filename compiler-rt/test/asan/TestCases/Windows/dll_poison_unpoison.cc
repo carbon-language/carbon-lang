@@ -24,12 +24,12 @@ int test_function() {
   should_crash(&buffer[96]);
 // CHECK: AddressSanitizer: use-after-poison on address [[ADDR:0x[0-9a-f]+]]
 // CHECK-NEXT: WRITE of size 1 at [[ADDR]] thread T0
-// CHECK-NEXT: should_crash {{.*}}\dll_poison_unpoison.cc
-// CHECK-NEXT: test_function {{.*}}\dll_poison_unpoison.cc:[[@LINE-4]]
+// CHECK-NEXT: should_crash{{.*}}\dll_poison_unpoison.cc
+// CHECK-NEXT: test_function{{.*}}\dll_poison_unpoison.cc:[[@LINE-4]]
 // CHECK-NEXT: main
 //
 // CHECK: [[ADDR]] is located in stack of thread T0 at offset [[OFFSET:.*]] in frame
-// CHECK-NEXT: test_function {{.*}}\dll_poison_unpoison.cc
+// CHECK-NEXT: test_function{{.*}}\dll_poison_unpoison.cc
 // CHECK: 'buffer' <== Memory access at offset [[OFFSET]] is inside this variable
   return 0;
 }

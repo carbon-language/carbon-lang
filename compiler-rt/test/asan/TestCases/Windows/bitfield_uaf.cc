@@ -14,7 +14,7 @@ void make_access(S *s) {
   s->bf2 = 2;
 // CHECK: AddressSanitizer: heap-use-after-free on address [[ADDR:0x[0-9a-f]+]]
 // CHECK: READ of size {{[124]}} at [[ADDR]]
-// CHECK:   {{#0 .* make_access .*bitfield_uaf.cc}}:[[@LINE-3]]
+// CHECK:   {{#0 .* make_access.*bitfield_uaf.cc}}:[[@LINE-3]]
 // CHECK:   {{#1 .* main}}
 }
 

@@ -11,7 +11,7 @@ int main() {
 // CHECK:   {{#0 .* main .*operator_new_left_oob.cc}}:[[@LINE-3]]
 // CHECK: [[ADDR]] is located 1 bytes to the left of 1-byte region
 // CHECK: allocated by thread T0 here:
-// CHECK:   {{#0 .* operator new }}
+// CHECK:   {{#0 .* operator new}}
 // CHECK:   {{#1 .* main .*operator_new_left_oob.cc}}:[[@LINE-8]]
   delete buffer;
 }

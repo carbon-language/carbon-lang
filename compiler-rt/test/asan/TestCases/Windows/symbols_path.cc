@@ -16,7 +16,7 @@ int main() {
 // CHECK-NEXT: {{#0 .* main .*symbols_path.cc}}:[[@LINE-3]]
 // CHECK: [[ADDR]] is located 1 bytes to the left of 42-byte region
 // CHECK: allocated by thread T0 here:
-// CHECK-NEXT: {{#0 .* malloc }}
+// CHECK-NEXT: {{#0 .* malloc}}
 // CHECK-NEXT: {{#1 .* main .*symbols_path.cc}}:[[@LINE-8]]
   free(buffer);
 }

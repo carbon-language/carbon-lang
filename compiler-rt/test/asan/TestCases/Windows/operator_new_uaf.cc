@@ -12,10 +12,10 @@ int main() {
 // CHECK:   {{#0 .* main .*operator_new_uaf.cc}}:[[@LINE-3]]
 // CHECK: [[ADDR]] is located 0 bytes inside of 1-byte region
 // CHECK-LABEL: freed by thread T0 here:
-// CHECK:   {{#0 .* operator delete }}
+// CHECK:   {{#0 .* operator delete}}
 // CHECK:   {{#1 .* main .*operator_new_uaf.cc}}:[[@LINE-8]]
 // CHECK-LABEL: previously allocated by thread T0 here:
-// CHECK:   {{#0 .* operator new }}
+// CHECK:   {{#0 .* operator new}}
 // CHECK:   {{#1 .* main .*operator_new_uaf.cc}}:[[@LINE-12]]
   return 0;
 }
