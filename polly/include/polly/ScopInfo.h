@@ -25,6 +25,7 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "isl/ctx.h"
 
+#include <list>
 #include <forward_list>
 #include <deque>
 
@@ -752,7 +753,7 @@ private:
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
-  typedef std::deque<ScopStmt> StmtSet;
+  typedef std::list<ScopStmt> StmtSet;
   /// The statements in this Scop.
   StmtSet Stmts;
 
