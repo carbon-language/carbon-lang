@@ -26,9 +26,10 @@ class ELFDumper {
   typedef typename object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
   const object::ELFFile<ELFT> &Obj;
+  ArrayRef<Elf_Word> ShndxTable;
 
-  std::error_code dumpSymbol(const Elf_Sym *Sym, StringRef StrTable,
-                             ELFYAML::Symbol &S);
+  std::error_code dumpSymbol(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+                             StringRef StrTable, ELFYAML::Symbol &S);
   std::error_code dumpCommonSection(const Elf_Shdr *Shdr, ELFYAML::Section &S);
   std::error_code dumpCommonRelocationSection(const Elf_Shdr *Shdr,
                                               ELFYAML::RelocationSection &S);
@@ -81,6 +82,13 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
     case ELF::SHT_SYMTAB:
       Symtab = &Sec;
       break;
+    case ELF::SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> TableOrErr = Obj.getSHNDXTable(Sec);
+      if (std::error_code EC = TableOrErr.getError())
+        return EC;
+      ShndxTable = *TableOrErr;
+      break;
+    }
     case ELF::SHT_RELA: {
       ErrorOr<ELFYAML::RelocationSection *> S = dumpRelaSection(&Sec);
       if (std::error_code EC = S.getError())
@@ -139,7 +147,8 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
     }
 
     ELFYAML::Symbol S;
-    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(&Sym, StrTable, S))
+    if (std::error_code EC =
+            ELFDumper<ELFT>::dumpSymbol(&Sym, Symtab, StrTable, S))
       return EC;
 
     switch (Sym.getBinding())
@@ -162,9 +171,9 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
 }
 
 template <class ELFT>
-std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym,
-                                            StringRef StrTable,
-                                            ELFYAML::Symbol &S) {
+std::error_code
+ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym, const Elf_Shdr *SymTab,
+                            StringRef StrTable, ELFYAML::Symbol &S) {
   S.Type = Sym->getType();
   S.Value = Sym->st_value;
   S.Size = Sym->st_size;
@@ -175,7 +184,7 @@ std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym,
     return EC;
   S.Name = NameOrErr.get();
 
-  ErrorOr<const Elf_Shdr *> ShdrOrErr = Obj.getSection(Sym);
+  ErrorOr<const Elf_Shdr *> ShdrOrErr = Obj.getSection(Sym, SymTab, ShndxTable);
   if (std::error_code EC = ShdrOrErr.getError())
     return EC;
   const Elf_Shdr *Shdr = *ShdrOrErr;

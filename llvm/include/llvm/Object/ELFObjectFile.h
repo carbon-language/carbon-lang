@@ -194,6 +194,7 @@ protected:
 
   const Elf_Shdr *DotDynSymSec = nullptr; // Dynamic symbol table section.
   const Elf_Shdr *DotSymtabSec = nullptr; // Symbol table section.
+  ArrayRef<Elf_Word> ShndxTable;
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
@@ -205,7 +206,8 @@ protected:
   uint8_t getSymbolOther(DataRefImpl Symb) const override;
   uint8_t getSymbolELFType(DataRefImpl Symb) const override;
   SymbolRef::Type getSymbolType(DataRefImpl Symb) const override;
-  ErrorOr<section_iterator> getSymbolSection(const Elf_Sym *Symb) const;
+  ErrorOr<section_iterator> getSymbolSection(const Elf_Sym *Symb,
+                                             const Elf_Shdr *SymTab) const;
   ErrorOr<section_iterator> getSymbolSection(DataRefImpl Symb) const override;
 
   void moveSectionNext(DataRefImpl &Sec) const override;
@@ -399,9 +401,11 @@ ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb) const {
   }
 
   const Elf_Ehdr *Header = EF.getHeader();
+  const Elf_Shdr *SymTab = *EF.getSection(Symb.d.a);
 
   if (Header->e_type == ELF::ET_REL) {
-    ErrorOr<const Elf_Shdr *> SectionOrErr = EF.getSection(ESym);
+    ErrorOr<const Elf_Shdr *> SectionOrErr =
+        EF.getSection(ESym, SymTab, ShndxTable);
     if (std::error_code EC = SectionOrErr.getError())
       return EC;
     const Elf_Shdr *Section = *SectionOrErr;
@@ -508,8 +512,9 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Sym) const {
 
 template <class ELFT>
 ErrorOr<section_iterator>
-ELFObjectFile<ELFT>::getSymbolSection(const Elf_Sym *ESym) const {
-  ErrorOr<const Elf_Shdr *> ESecOrErr = EF.getSection(ESym);
+ELFObjectFile<ELFT>::getSymbolSection(const Elf_Sym *ESym,
+                                      const Elf_Shdr *SymTab) const {
+  ErrorOr<const Elf_Shdr *> ESecOrErr = EF.getSection(ESym, SymTab, ShndxTable);
   if (std::error_code EC = ESecOrErr.getError())
     return EC;
 
@@ -525,7 +530,9 @@ ELFObjectFile<ELFT>::getSymbolSection(const Elf_Sym *ESym) const {
 template <class ELFT>
 ErrorOr<section_iterator>
 ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb) const {
-  return getSymbolSection(getSymbol(Symb));
+  const Elf_Sym *Sym = getSymbol(Symb);
+  const Elf_Shdr *SymTab = *EF.getSection(Symb.d.a);
+  return getSymbolSection(Sym, SymTab);
 }
 
 template <class ELFT>
@@ -754,6 +761,13 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
         return;
       }
       DotSymtabSec = &Sec;
+      break;
+    }
+    case ELF::SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> TableOrErr = EF.getSHNDXTable(Sec);
+      if ((EC = TableOrErr.getError()))
+        return;
+      ShndxTable = *TableOrErr;
       break;
     }
     }

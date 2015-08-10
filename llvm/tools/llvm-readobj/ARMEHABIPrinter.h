@@ -308,10 +308,12 @@ class PrinterContext {
   typedef typename object::ELFFile<ET>::Elf_Sym Elf_Sym;
   typedef typename object::ELFFile<ET>::Elf_Shdr Elf_Shdr;
   typedef typename object::ELFFile<ET>::Elf_Rel Elf_Rel;
+  typedef typename object::ELFFile<ET>::Elf_Word Elf_Word;
 
   StreamWriter &SW;
   const object::ELFFile<ET> *ELF;
   const Elf_Shdr *Symtab;
+  ArrayRef<Elf_Word> ShndxTable;
 
   static const size_t IndexTableEntrySize;
 
@@ -385,7 +387,8 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
       std::pair<const Elf_Shdr *, const Elf_Sym *> Symbol =
         ELF->getRelocationSymbol(&Sec, &RelA);
 
-      ErrorOr<const Elf_Shdr *> Ret = ELF->getSection(Symbol.second);
+      ErrorOr<const Elf_Shdr *> Ret =
+          ELF->getSection(Symbol.second, Symbol.first, ShndxTable);
       if (std::error_code EC = Ret.getError())
         report_fatal_error(EC.message());
       return *Ret;
