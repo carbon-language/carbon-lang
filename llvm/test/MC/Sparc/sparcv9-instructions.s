@@ -35,3 +35,20 @@
         ! V8-NEXT: signx %g1
         ! V9: sra %g1, %g0, %g1               ! encoding: [0x83,0x38,0x40,0x00]
         signx %g1
+
+        ! V8:      error: invalid instruction mnemonic
+        ! V8-NEXT: lduw [%i0 + %l6], %o2
+        ! V9: ld [%i0+%l6], %o2    ! encoding: [0xd4,0x06,0x00,0x16]
+        lduw [%i0 + %l6], %o2
+        ! V8:      error: invalid instruction mnemonic
+        ! V8-NEXT: lduw [%i0 + 32], %o2
+        ! V9: ld [%i0+32], %o2     ! encoding: [0xd4,0x06,0x20,0x20]
+        lduw [%i0 + 32], %o2
+        ! V8:      error: invalid instruction mnemonic
+        ! V8-NEXT: lduw [%g1], %o2
+        ! V9: ld [%g1], %o2        ! encoding: [0xd4,0x00,0x40,0x00]
+        lduw [%g1], %o2
+        ! V8:      error: invalid instruction mnemonic
+        ! V8-NEXT: lduwa [%i0 + %l6] 131, %o2
+        ! V9: lda [%i0+%l6] 131, %o2 ! encoding: [0xd4,0x86,0x10,0x76]
+        lduwa [%i0 + %l6] 131, %o2

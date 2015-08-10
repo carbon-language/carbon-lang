@@ -429,6 +429,9 @@ def : InstAlias<"wr $simm13, %tbr", (WRTBRri G0, i32imm:$simm13), 0>;
 def : InstAlias<"flush", (FLUSH), 0>;
 
 
+def : MnemonicAlias<"lduw", "ld">, Requires<[HasV9]>;
+def : MnemonicAlias<"lduwa", "lda">, Requires<[HasV9]>;
+
 def : MnemonicAlias<"return", "rett">, Requires<[HasV9]>;
 
 def : MnemonicAlias<"addc", "addx">, Requires<[HasV9]>;
