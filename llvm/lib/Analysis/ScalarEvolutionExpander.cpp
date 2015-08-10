@@ -1812,8 +1812,46 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
   return NumElim;
 }
 
+Value *SCEVExpander::findExistingExpansion(const SCEV *S,
+                                           const Instruction *At, Loop *L) {
+  using namespace llvm::PatternMatch;
+
+  SmallVector<BasicBlock *, 4> Latches;
+  L->getLoopLatches(Latches);
+
+  // Look for suitable value in simple conditions at the loop latches.
+  for (BasicBlock *BB : Latches) {
+    ICmpInst::Predicate Pred;
+    Instruction *LHS, *RHS;
+    BasicBlock *TrueBB, *FalseBB;
+
+    if (!match(BB->getTerminator(),
+               m_Br(m_ICmp(Pred, m_Instruction(LHS), m_Instruction(RHS)),
+                    TrueBB, FalseBB)))
+      continue;
+
+    if (SE.getSCEV(LHS) == S && SE.DT->dominates(LHS, At))
+      return LHS;
+
+    if (SE.getSCEV(RHS) == S && SE.DT->dominates(RHS, At))
+      return RHS;
+  }
+
+  // There is potential to make this significantly smarter, but this simple
+  // heuristic already gets some interesting cases.
+
+  // Can not find suitable value.
+  return nullptr;
+}
+
 bool SCEVExpander::isHighCostExpansionHelper(
-    const SCEV *S, Loop *L, SmallPtrSetImpl<const SCEV *> &Processed) {
+    const SCEV *S, Loop *L, const Instruction *At,
+    SmallPtrSetImpl<const SCEV *> &Processed) {
+
+  // If we can find an existing value for this scev avaliable at the point "At"
+  // then consider the expression cheap.
+  if (At && findExistingExpansion(S, At, L) != nullptr)
+    return false;
 
   // Zero/One operand expressions
   switch (S->getSCEVType()) {
@@ -1821,14 +1859,14 @@ bool SCEVExpander::isHighCostExpansionHelper(
   case scConstant:
     return false;
   case scTruncate:
-    return isHighCostExpansionHelper(cast<SCEVTruncateExpr>(S)->getOperand(), L,
-                                     Processed);
+    return isHighCostExpansionHelper(cast<SCEVTruncateExpr>(S)->getOperand(),
+                                     L, At, Processed);
   case scZeroExtend:
     return isHighCostExpansionHelper(cast<SCEVZeroExtendExpr>(S)->getOperand(),
-                                     L, Processed);
+                                     L, At, Processed);
   case scSignExtend:
     return isHighCostExpansionHelper(cast<SCEVSignExtendExpr>(S)->getOperand(),
-                                     L, Processed);
+                                     L, At, Processed);
   }
 
   if (!Processed.insert(S).second)
@@ -1884,7 +1922,7 @@ bool SCEVExpander::isHighCostExpansionHelper(
   if (const SCEVNAryExpr *NAry = dyn_cast<SCEVNAryExpr>(S)) {
     for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
          I != E; ++I) {
-      if (isHighCostExpansionHelper(*I, L, Processed))
+      if (isHighCostExpansionHelper(*I, L, At, Processed))
         return true;
     }
   }
