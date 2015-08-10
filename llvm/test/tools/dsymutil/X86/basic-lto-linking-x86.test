@@ -117,7 +117,7 @@ CHECK:        DW_AT_type [DW_FORM_ref_addr] (0x0000000000000063)
 CHECK:        DW_AT_location [DW_FORM_data4]        (0x00000025)
 CHECK:      DW_TAG_lexical_block [14] *
 CHECK:        DW_AT_low_pc [DW_FORM_addr]   (0x0000000100000f94)
-CHECK         DW_AT_high_pc [DW_FORM_addr]  (0x0000000100000fa7)
+CHECK:        DW_AT_high_pc [DW_FORM_addr]  (0x0000000100000fa7)
 CHECK:        DW_TAG_inlined_subroutine [15]
 CHECK:          DW_AT_abstract_origin [DW_FORM_ref4]        (cu + 0x009a => {0x000001d4} "inc")
 CHECK:          DW_AT_ranges [DW_FORM_data4]        (0x00000000

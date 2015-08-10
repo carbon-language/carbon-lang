@@ -163,7 +163,7 @@ define i32 @test19(i32 %x) {
 ; CHECK-LABEL: @test19(
 ; CHECK-NEXT: icmp eq i32 %x, 1
 ; CHECK-NEXT: zext i1 %{{.*}} to i32
-; CHECK-NEXT ret i32
+; CHECK-NEXT: ret i32
 }
 
 define i32 @test20(i32 %x) {

@@ -232,7 +232,7 @@ inner-loop:
 ; CHECK: phi i8 addrspace(1)* 
 ; CHECK-DAG: %outer-loop ]
 ; CHECK-DAG: [ %arg2.relocated, %inner-loop ]
-; CHECKL phi i8 addrspace(1)* 
+; CHECK: phi i8 addrspace(1)* 
 ; CHECK-DAG: %outer-loop ]
 ; CHECK-DAG: [ %arg1.relocated, %inner-loop ]
 ; CHECK: gc.statepoint

@@ -10,7 +10,7 @@ define i1 @test1(i32 %X) {
         ; Convert to setne int %X, 12
         %c = icmp ne i32 %A, 12         ; <i1> [#uses=1]
         ret i1 %c
-; CHECK-LABEL @test1(
+; CHECK-LABEL: @test1(
 ; CHECK: %c = icmp ne i32 %X, 12
 ; CHECK: ret i1 %c
 }
@@ -21,7 +21,7 @@ define i1 @test2(i32 %X, i32 %Y) {
         ; Convert to setne int %X, %Y
         %c = icmp ne i32 %A, %B         ; <i1> [#uses=1]
         ret i1 %c
-; CHECK-LABEL @test2(
+; CHECK-LABEL: @test2(
 ; CHECK: %c = icmp ne i32 %X, %Y
 ; CHECK: ret i1 %c
 }

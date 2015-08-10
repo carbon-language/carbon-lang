@@ -14,7 +14,7 @@ define <1 x i128> @increment_by_one(<1 x i128> %x) nounwind {
        %result = add <1 x i128> %x, <i128 1>
        ret <1 x i128> %result
 ; CHECK-LABEL: @increment_by_one
-; CHECK vadduqm 2, 2, 3
+; CHECK: vadduqm 2, 2, 3
 }
 
 define <1 x i128> @increment_by_val(<1 x i128> %x, i128 %val) nounwind {
@@ -37,7 +37,7 @@ define <1 x i128> @decrement_by_one(<1 x i128> %x) nounwind {
        %result = sub <1 x i128> %x, <i128 1>
        ret <1 x i128> %result
 ; CHECK-LABEL: @decrement_by_one
-; CHECK vsubuqm 2, 2, 3
+; CHECK: vsubuqm 2, 2, 3
 }
 
 define <1 x i128> @decrement_by_val(<1 x i128> %x, i128 %val) nounwind {
@@ -46,7 +46,7 @@ define <1 x i128> @decrement_by_val(<1 x i128> %x, i128 %val) nounwind {
        %result = sub <1 x i128> %x, %tmpvec2
        ret <1 x i128> %result
 ; CHECK-LABEL: @decrement_by_val
-; CHECK vsubuqm   2, 2, 3
+; CHECK: vsubuqm   2, 2, 3
 }
 
 declare <1 x i128> @llvm.ppc.altivec.vaddeuqm(<1 x i128> %x, 

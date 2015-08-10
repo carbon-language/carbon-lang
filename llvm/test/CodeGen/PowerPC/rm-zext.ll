@@ -9,7 +9,7 @@ entry:
   %shr2 = lshr i32 %mul, 5
   ret i32 %shr2
 
-; CHECK-LABEL @foo
+; CHECK-LABEL: @foo
 ; CHECK-NOT: rldicl 3, {{[0-9]+}}, 0, 32
 ; CHECK: blr
 }
@@ -23,7 +23,7 @@ entry:
   %or = or i32 %shr, %shl
   ret i32 %or
 
-; CHECK-LABEL @test6
+; CHECK-LABEL: @test6
 ; CHECK-NOT: rldicl 3, {{[0-9]+}}, 0, 32
 ; CHECK: blr
 }
@@ -34,7 +34,7 @@ entry:
   %cond = select i1 %cmp, i32 %a, i32 %b
   ret i32 %cond
 
-; CHECK-LABEL @min
+; CHECK-LABEL: @min
 ; CHECK-NOT: rldicl 3, {{[0-9]+}}, 0, 32
 ; CHECK: blr
 }

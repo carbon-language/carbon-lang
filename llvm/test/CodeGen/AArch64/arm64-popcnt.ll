@@ -59,7 +59,7 @@ define i32 @cnt32(i32 %x) nounwind readnone noimplicitfloat {
   %cnt = tail call i32 @llvm.ctpop.i32(i32 %x)
   ret i32 %cnt
 ; CHECK-LABEL: cnt32:
-; CHECK-NOT 16b
+; CHECK-NOT: 16b
 ; CHECK: ret
 }
 
@@ -67,7 +67,7 @@ define i64 @cnt64(i64 %x) nounwind readnone noimplicitfloat {
   %cnt = tail call i64 @llvm.ctpop.i64(i64 %x)
   ret i64 %cnt
 ; CHECK-LABEL: cnt64:
-; CHECK-NOT 16b
+; CHECK-NOT: 16b
 ; CHECK: ret
 }
 

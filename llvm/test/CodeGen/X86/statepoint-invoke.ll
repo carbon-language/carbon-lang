@@ -113,7 +113,7 @@ right.relocs:
 normal_return:
   ; CHECK-LABEL: %normal_return
   ; CHECK: cmoveq {{.*}}[[REGVAL2]]{{.*}}
-  ; CHECK retq
+  ; CHECK: retq
   %a1 = phi i64 addrspace(1)* [%val1.relocated, %left.relocs], [%val3.relocated, %right.relocs]
   %a2 = phi i64 addrspace(1)* [%val2.relocated_left, %left.relocs], [%val2.relocated_right, %right.relocs]
   %ret = select i1 %cond, i64 addrspace(1)* %a1, i64 addrspace(1)* %a2

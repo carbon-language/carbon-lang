@@ -3,7 +3,7 @@
 ; The two va_arg instructions depend on the memory/context, are therfore not
 ; identical and the sub should not be optimized to 0 by reassociate.
 ;
-; CHECK-LABEL @func(
+; CHECK-LABEL: @func(
 ; ...
 ; CHECK: %v0 = va_arg i8** %varargs, i32
 ; CHECK: %v1 = va_arg i8** %varargs, i32

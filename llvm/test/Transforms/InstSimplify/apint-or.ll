@@ -12,7 +12,7 @@ define i39 @test1(i39 %V, i39 %M) {
     %D = and i39 %V, 274877906943
     %R = or i39 %B, %D
     ret i39 %R
-; CHECK-LABEL @test1
+; CHECK-LABEL: @test1
 ; CHECK-NEXT: and {{.*}}, -274877906944
 ; CHECK-NEXT: add
 ; CHECK-NEXT: ret
@@ -30,7 +30,7 @@ define i399 @test2(i399 %V, i399 %M) {
     %D = and i399 %V, 274877906943
     %R = or i399 %B, %D
     ret i399 %R
-; CHECK-LABEL @test2
+; CHECK-LABEL: @test2
 ; CHECK-NEXT: and {{.*}}, 18446742974197923840
 ; CHECK-NEXT: add
 ; CHECK-NEXT: ret

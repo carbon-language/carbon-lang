@@ -37,7 +37,7 @@
 //CHECK-V8:   vqrdmlsh.f32  q3, q4, q5
 //CHECK-V8:           ^
 //CHECK-V8: error: invalid operand for instruction
-//CHECK-V8   vqrdmlsh.f64  d3, d5, d5
+//CHECK-V8:  vqrdmlsh.f64  d3, d5, d5
 //CHECK-V8:           ^
 
   vqrdmlah.s16    d0, d1, d2

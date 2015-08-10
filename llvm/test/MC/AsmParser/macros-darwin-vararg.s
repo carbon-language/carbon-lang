@@ -54,7 +54,7 @@ abc zed0, zed1, zed2
   ifcc4 %eax, %ecx  ## test
   ifcc4 %ecx, %eax ## test
 
-// CHECK-NOT movl
+// CHECK-NOT: movl
 // CHECK: subl $1, %esp
 .set cc,0
   ifcc  movl,    %esp, %ebp

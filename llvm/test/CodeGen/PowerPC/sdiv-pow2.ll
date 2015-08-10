@@ -9,7 +9,7 @@ entry:
   %div = sdiv i32 %a, 8
   ret i32 %div
 
-; CHECK-LABEL @foo4
+; CHECK-LABEL: @foo4
 ; CHECK: srawi [[REG1:[0-9]+]], 3, 3
 ; CHECK: addze [[REG2:[0-9]+]], [[REG1]]
 ; CHECK: extsw 3, [[REG2]]
@@ -22,12 +22,12 @@ entry:
   %div = sdiv i64 %a, 8
   ret i64 %div
 
-; CHECK-LABEL @foo8
+; CHECK-LABEL: @foo8
 ; CHECK: sradi [[REG1:[0-9]+]], 3, 3
 ; CHECK: addze 3, [[REG1]]
 ; CHECK: blr
 
-; CHECK-32-LABEL @foo8
+; CHECK-32-LABEL: @foo8
 ; CHECK-32-NOT: sradi
 ; CHECK-32: blr
 }
@@ -58,7 +58,7 @@ entry:
 ; CHECK: neg 3, [[REG2]]
 ; CHECK: blr
 
-; CHECK-32-LABEL @foo8n
+; CHECK-32-LABEL: @foo8n
 ; CHECK-32-NOT: sradi
 ; CHECK-32: blr
 }

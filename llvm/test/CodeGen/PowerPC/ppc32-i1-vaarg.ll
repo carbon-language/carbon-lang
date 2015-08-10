@@ -10,7 +10,7 @@ define void @main() {
 }
 
 ; CHECK-LABEL: @main
-; CHECK-DAG li 4, 0
+; CHECK-DAG: li 4, 0
 ; CHECK-DAG: crxor 6, 6, 6
 ; CHECK: bl printf
 

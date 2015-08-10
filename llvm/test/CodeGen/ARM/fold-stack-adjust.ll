@@ -62,7 +62,7 @@ define void @check_vfp_fold() minsize {
 ; ...
 ; CHECK-NOT: add sp,
 ; CHECK: vpop {d6, d7, d8, d9}
-; CHECKL pop {r[[GLOBREG]], pc}
+; CHECK: pop {r[[GLOBREG]], pc}
 
   ; iOS uses aligned NEON stores here, which is convenient since we
   ; want to make sure that works too.

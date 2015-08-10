@@ -83,12 +83,12 @@ while.end:                                        ; preds = %while.body, %entry
 ; CHECK-NOT: , [[CPY1]]
 ; CHECK: punpcklbw [[CPY2]], [[CPY2]]
 ; CHECK-NEXT: punpckhwd [[CPY2]], [[CPY2]]
-; CHECK-NEXT pslld $31, [[CPY2]]
+; CHECK-NEXT: pslld $31, [[CPY2]]
 ; Check that CPY1 is not redefined.
 ; CHECK-NOT: , [[CPY1]]
 ; CHECK: punpcklbw [[CPY1]], [[CPY1]]
 ; CHECK-NEXT: punpcklwd [[CPY1]], [[CPY1]]
-; CHECK-NEXT pslld $31, [[CPY1]]
+; CHECK-NEXT: pslld $31, [[CPY1]]
 define <16 x float> @foo(<16 x float> %x) {
 bb:
   %v3 = icmp slt <16 x i32> undef, zeroinitializer

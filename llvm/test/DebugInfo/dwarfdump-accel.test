@@ -57,7 +57,7 @@ CHECK-NOT: Magic
 Check ObjC specific accelerators.
 CHECK: .apple_objc contents:
 CHECK:     Name{{.*}}"TestInterface"
-CHECK-NOT Name
+CHECK-NOT: Name
 CHECK:     {Atom[0]: [[READONLY]]}
 CHECK:     {Atom[0]: [[ASSIGN]]}
 CHECK:     {Atom[0]: [[SETASSIGN]]}

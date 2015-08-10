@@ -17,12 +17,12 @@ define void @test(i8* %ptr) gc "erlang" {
 ; CHECK: .note.gc
 ; CHECK-NEXT: .align 8
 ; safe point count
-; CHECK .short	1
-; CHECK .long	.Ltmp0
+; CHECK: .short	1
+; CHECK: .long	.Ltmp0
 ; stack frame size (in words)
-; CHECK .short	-1
+; CHECK: .short	-1
 ; stack arity (arguments on the stack)
-; CHECK .short	0
+; CHECK: .short	0
 ; live root count
-; CHECK .short	0
+; CHECK: .short	0
 

@@ -156,7 +156,7 @@ define void @test9(i32* byval %a) {
 
 declare void @ctor(%struct.X*)
 define void @test10(%struct.X* noalias sret %agg.result, i1 zeroext %b) {
-; CHECK-LABEL @test10
+; CHECK-LABEL: @test10
 entry:
   %x = alloca %struct.X, align 8
   br i1 %b, label %if.then, label %if.end
