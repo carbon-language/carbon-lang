@@ -244,7 +244,7 @@ template <typename PtrType>
 class SmallPtrSetImpl : public SmallPtrSetImplBase {
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
 
-  SmallPtrSetImpl(const SmallPtrSetImpl&) = delete;
+  SmallPtrSetImpl(const SmallPtrSetImpl &) = delete;
 
 protected:
   // Constructors that forward to the base.

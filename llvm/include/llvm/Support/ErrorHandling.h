@@ -61,22 +61,22 @@ namespace llvm {
     ~ScopedFatalErrorHandler() { remove_fatal_error_handler(); }
   };
 
-  /// Reports a serious error, calling any installed error handler. These
-  /// functions are intended to be used for error conditions which are outside
-  /// the control of the compiler (I/O errors, invalid user input, etc.)
-  ///
-  /// If no error handler is installed the default is to print the message to
-  /// standard error, followed by a newline.
-  /// After the error handler is called this function will call exit(1), it
-  /// does not return.
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const char *reason,
-                                                  bool gen_crash_diag = true);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const std::string &reason,
-                                                  bool gen_crash_diag = true);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(StringRef reason,
-                                                  bool gen_crash_diag = true);
-  LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const Twine &reason,
-                                                  bool gen_crash_diag = true);
+/// Reports a serious error, calling any installed error handler. These
+/// functions are intended to be used for error conditions which are outside
+/// the control of the compiler (I/O errors, invalid user input, etc.)
+///
+/// If no error handler is installed the default is to print the message to
+/// standard error, followed by a newline.
+/// After the error handler is called this function will call exit(1), it
+/// does not return.
+LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const char *reason,
+                                                bool gen_crash_diag = true);
+LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const std::string &reason,
+                                                bool gen_crash_diag = true);
+LLVM_ATTRIBUTE_NORETURN void report_fatal_error(StringRef reason,
+                                                bool gen_crash_diag = true);
+LLVM_ATTRIBUTE_NORETURN void report_fatal_error(const Twine &reason,
+                                                bool gen_crash_diag = true);
 
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of

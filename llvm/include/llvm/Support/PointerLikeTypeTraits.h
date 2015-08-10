@@ -33,10 +33,8 @@ class PointerLikeTypeTraits {
 template<typename T>
 class PointerLikeTypeTraits<T*> {
 public:
-  static inline void *getAsVoidPointer(T* P) { return P; }
-  static inline T *getFromVoidPointer(void *P) {
-    return static_cast<T*>(P);
-  }
+  static inline void *getAsVoidPointer(T *P) { return P; }
+  static inline T *getFromVoidPointer(void *P) { return static_cast<T *>(P); }
 
   /// Note, we assume here that malloc returns objects at least 4-byte aligned.
   /// However, this may be wrong, or pointers may be from something other than

@@ -70,8 +70,7 @@ public:
     return New;
   }
 
-  template <typename AllocatorTy>
-  void Destroy(AllocatorTy &Allocator) {
+  template <typename AllocatorTy> void Destroy(AllocatorTy &Allocator) {
     // Free memory referenced by the item.
     this->~ScopedHashTableVal();
     Allocator.Deallocate(this);
@@ -90,8 +89,8 @@ class ScopedHashTableScope {
   /// LastValInScope - This is the last value that was inserted for this scope
   /// or null if none have been inserted yet.
   ScopedHashTableVal<K, V> *LastValInScope;
-  void operator=(ScopedHashTableScope&) = delete;
-  ScopedHashTableScope(ScopedHashTableScope&) = delete;
+  void operator=(ScopedHashTableScope &) = delete;
+  ScopedHashTableScope(ScopedHashTableScope &) = delete;
 
 public:
   ScopedHashTableScope(ScopedHashTable<K, V, KInfo, AllocatorTy> &HT);
@@ -110,7 +109,7 @@ private:
   }
 };
 
-template <typename K, typename V, typename KInfo = DenseMapInfo<K> >
+template <typename K, typename V, typename KInfo = DenseMapInfo<K>>
 class ScopedHashTableIterator {
   ScopedHashTableVal<K, V> *Node;
 
@@ -157,8 +156,8 @@ private:
 
   AllocatorTy Allocator;
 
-  ScopedHashTable(const ScopedHashTable&); // NOT YET IMPLEMENTED
-  void operator=(const ScopedHashTable&);  // NOT YET IMPLEMENTED
+  ScopedHashTable(const ScopedHashTable &); // NOT YET IMPLEMENTED
+  void operator=(const ScopedHashTable &);  // NOT YET IMPLEMENTED
   friend class ScopedHashTableScope<K, V, KInfo, AllocatorTy>;
 
 public:

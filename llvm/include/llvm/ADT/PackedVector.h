@@ -83,9 +83,9 @@ public:
     PackedVector &Vec;
     const unsigned Idx;
 
-    reference();  // Undefined
+    reference(); // Undefined
   public:
-    reference(PackedVector &vec, unsigned idx) : Vec(vec), Idx(idx) { }
+    reference(PackedVector &vec, unsigned idx) : Vec(vec), Idx(idx) {}
 
     reference &operator=(T val) {
       Vec.setValue(Vec.Bits, Idx, val);
@@ -101,11 +101,11 @@ public:
 
   bool empty() const { return Bits.empty(); }
 
-  unsigned size() const { return Bits.size() >> (BitNum-1); }
+  unsigned size() const { return Bits.size() >> (BitNum - 1); }
 
   void clear() { Bits.clear(); }
 
-  void resize(unsigned N) { Bits.resize(N << (BitNum-1)); }
+  void resize(unsigned N) { Bits.resize(N << (BitNum - 1)); }
 
   void reserve(unsigned N) { Bits.reserve(N << (BitNum-1)); }
 
@@ -151,8 +151,7 @@ public:
 };
 
 // Leave BitNum=0 undefined.
-template <typename T>
-class PackedVector<T, 0>;
+template <typename T> class PackedVector<T, 0>;
 
 } // end llvm namespace
 

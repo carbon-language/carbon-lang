@@ -102,9 +102,9 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
     return N;
 }
 
-template<class GraphT>
-typename GraphT::NodeType*
-Eval(DominatorTreeBase<typename GraphT::NodeType>& DT,
+template <class GraphT>
+typename GraphT::NodeType *
+Eval(DominatorTreeBase<typename GraphT::NodeType> &DT,
      typename GraphT::NodeType *VIn, unsigned LastLinked) {
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInInfo =
                                                                   DT.Info[VIn];

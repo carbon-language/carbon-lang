@@ -37,7 +37,7 @@ public:
   /// significant and shouldn't be counted as part of a duration.
   static TimeRecord getCurrentTime(bool Start = true);
 
-  double getProcessTime() const { return UserTime+SystemTime; }
+  double getProcessTime() const { return UserTime + SystemTime; }
   double getUserTime() const { return UserTime; }
   double getSystemTime() const { return SystemTime; }
   double getWallTime() const { return WallTime; }
@@ -157,7 +157,7 @@ struct NamedRegionTimer : public TimeRegion {
 class TimerGroup {
   std::string Name;
   Timer *FirstTimer;   // First timer in the group.
-  std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
+  std::vector<std::pair<TimeRecord, std::string>> TimersToPrint;
 
   TimerGroup **Prev, *Next; // Doubly linked list of TimerGroup's.
   TimerGroup(const TimerGroup &TG) = delete;

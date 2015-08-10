@@ -54,10 +54,10 @@ class PointerIntPair {
 
     /// IntShift - The number of low bits that we reserve for other uses, and
     /// keep zero.
-    IntShift = (uintptr_t)PtrTraits::NumLowBitsAvailable-IntBits,
+    IntShift = (uintptr_t)PtrTraits::NumLowBitsAvailable - IntBits,
 
     /// IntMask - This is the unshifted mask for valid bits of the int type.
-    IntMask = (uintptr_t)(((intptr_t)1 << IntBits)-1),
+    IntMask = (uintptr_t)(((intptr_t)1 << IntBits) - 1),
 
     // ShiftedIntMask - This is the bits for the integer shifted in place.
     ShiftedIntMask = (uintptr_t)(IntMask << IntShift)
@@ -133,7 +133,9 @@ public:
   void setFromOpaqueValue(void *Val) { Value = reinterpret_cast<intptr_t>(Val);}
 
   static PointerIntPair getFromOpaqueValue(void *V) {
-    PointerIntPair P; P.setFromOpaqueValue(V); return P;
+    PointerIntPair P;
+    P.setFromOpaqueValue(V);
+    return P;
   }
 
   // Allow PointerIntPairs to be created from const void * if and only if the

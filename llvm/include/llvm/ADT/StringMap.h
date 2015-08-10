@@ -391,8 +391,7 @@ public:
   }
 };
 
-template<typename ValueTy>
-class StringMapConstIterator {
+template <typename ValueTy> class StringMapConstIterator {
 protected:
   StringMapEntryBase **Ptr;
 

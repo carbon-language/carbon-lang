@@ -247,7 +247,7 @@ public:
     return this->operator|(RHS);
   }
 
-  APSInt operator^(const APSInt& RHS) const {
+  APSInt operator^(const APSInt &RHS) const {
     assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
     return APSInt(static_cast<const APInt&>(*this) ^ RHS, IsUnsigned);
   }

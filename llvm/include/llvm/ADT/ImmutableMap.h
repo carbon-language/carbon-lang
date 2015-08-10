@@ -98,11 +98,10 @@ public:
     const bool Canonicalize;
 
   public:
-    Factory(bool canonicalize = true)
-      : Canonicalize(canonicalize) {}
+    Factory(bool canonicalize = true) : Canonicalize(canonicalize) {}
 
-    Factory(BumpPtrAllocator& Alloc, bool canonicalize = true)
-      : F(Alloc), Canonicalize(canonicalize) {}
+    Factory(BumpPtrAllocator &Alloc, bool canonicalize = true)
+        : F(Alloc), Canonicalize(canonicalize) {}
 
     ImmutableMap getEmptyMap() { return ImmutableMap(F.getEmptyTree()); }
 
@@ -142,9 +141,7 @@ public:
     return Root;
   }
 
-  TreeTy *getRootWithoutRetain() const {
-    return Root;
-  }
+  TreeTy *getRootWithoutRetain() const { return Root; }
 
   void manualRetain() {
     if (Root) Root->retain();
@@ -269,10 +266,11 @@ public:
   /// should use a Factory object to create maps instead of directly
   /// invoking the constructor, but there are cases where make this
   /// constructor public is useful.
-  explicit ImmutableMapRef(const TreeTy* R, FactoryTy *F)
-    : Root(const_cast<TreeTy*>(R)),
-      Factory(F) {
-    if (Root) { Root->retain(); }
+  explicit ImmutableMapRef(const TreeTy *R, FactoryTy *F)
+      : Root(const_cast<TreeTy *>(R)), Factory(F) {
+    if (Root) {
+      Root->retain();
+    }
   }
 
   explicit ImmutableMapRef(const ImmutableMap<KeyT, ValT> &X,
@@ -282,10 +280,10 @@ public:
     if (Root) { Root->retain(); }
   }
 
-  ImmutableMapRef(const ImmutableMapRef &X)
-    : Root(X.Root),
-      Factory(X.Factory) {
-    if (Root) { Root->retain(); }
+  ImmutableMapRef(const ImmutableMapRef &X) : Root(X.Root), Factory(X.Factory) {
+    if (Root) {
+      Root->retain();
+    }
   }
 
   ImmutableMapRef &operator=(const ImmutableMapRef &X) {
@@ -351,7 +349,10 @@ public:
   // For testing.
   //===--------------------------------------------------===//
 
-  void verify() const { if (Root) Root->verify(); }
+  void verify() const {
+    if (Root)
+      Root->verify();
+  }
 
   //===--------------------------------------------------===//
   // Iterators.
@@ -370,7 +371,7 @@ public:
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }
 
-  data_type* lookup(key_type_ref K) const {
+  data_type *lookup(key_type_ref K) const {
     if (Root) {
       TreeTy* T = Root->find(K);
       if (T) return &T->getValue().second;
@@ -392,13 +393,11 @@ public:
 
   unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
 
-  static inline void Profile(FoldingSetNodeID& ID, const ImmutableMapRef &M) {
+  static inline void Profile(FoldingSetNodeID &ID, const ImmutableMapRef &M) {
     ID.AddPointer(M.Root);
   }
 
-  inline void Profile(FoldingSetNodeID& ID) const {
-    return Profile(ID, *this);
-  }
+  inline void Profile(FoldingSetNodeID &ID) const { return Profile(ID, *this); }
 };
 
 } // end namespace llvm

@@ -611,8 +611,7 @@ public:
   }
 };
 
-template<class T>
-class FoldingSetIterator : public FoldingSetIteratorImpl {
+template <class T> class FoldingSetIterator : public FoldingSetIteratorImpl {
 public:
   explicit FoldingSetIterator(void **Bucket) : FoldingSetIteratorImpl(Bucket) {}
 
@@ -662,7 +661,7 @@ public:
   }
 };
 
-template<class T>
+template <class T>
 class FoldingSetBucketIterator : public FoldingSetBucketIteratorImpl {
 public:
   explicit FoldingSetBucketIterator(void **Bucket) :
@@ -717,9 +716,7 @@ protected:
   explicit FastFoldingSetNode(const FoldingSetNodeID &ID) : FastID(ID) {}
 
 public:
-  void Profile(FoldingSetNodeID &ID) const {
-    ID.AddNodeID(FastID);
-  }
+  void Profile(FoldingSetNodeID &ID) const { ID.AddNodeID(FastID); }
 };
 
 //===----------------------------------------------------------------------===//

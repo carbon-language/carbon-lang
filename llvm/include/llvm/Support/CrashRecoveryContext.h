@@ -107,7 +107,7 @@ class CrashRecoveryContextCleanup {
 protected:
   CrashRecoveryContext *context;
   CrashRecoveryContextCleanup(CrashRecoveryContext *context)
-    : context(context), cleanupFired(false) {}
+      : context(context), cleanupFired(false) {}
 
 public:
   bool cleanupFired;
@@ -128,8 +128,8 @@ template<typename DERIVED, typename T>
 class CrashRecoveryContextCleanupBase : public CrashRecoveryContextCleanup {
 protected:
   T *resource;
-  CrashRecoveryContextCleanupBase(CrashRecoveryContext *context, T* resource)
-    : CrashRecoveryContextCleanup(context), resource(resource) {}
+  CrashRecoveryContextCleanupBase(CrashRecoveryContext *context, T *resource)
+      : CrashRecoveryContextCleanup(context), resource(resource) {}
 
 public:
   static DERIVED *create(T *x) {
@@ -147,8 +147,8 @@ class CrashRecoveryContextDestructorCleanup : public
 public:
   CrashRecoveryContextDestructorCleanup(CrashRecoveryContext *context,
                                         T *resource)
-    : CrashRecoveryContextCleanupBase<
-        CrashRecoveryContextDestructorCleanup<T>, T>(context, resource) {}
+      : CrashRecoveryContextCleanupBase<
+            CrashRecoveryContextDestructorCleanup<T>, T>(context, resource) {}
 
   virtual void recoverResources() {
     this->resource->~T();
@@ -190,9 +190,7 @@ public:
       cleanup->getContext()->registerCleanup(cleanup);
   }
 
-  ~CrashRecoveryContextCleanupRegistrar() {
-    unregister();
-  }
+  ~CrashRecoveryContextCleanupRegistrar() { unregister(); }
 
   void unregister() {
     if (cleanup && !cleanup->cleanupFired)
