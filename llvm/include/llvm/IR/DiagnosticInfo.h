@@ -268,10 +268,6 @@ public:
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
 
-  static bool classof(const DiagnosticInfo *DI) {
-    return DI->getKind() == DK_OptimizationRemark;
-  }
-
   /// Return true if this optimization remark is enabled by one of
   /// of the LLVM command line flags (-pass-remarks, -pass-remarks-missed,
   /// or -pass-remarks-analysis). Note that this only handles the LLVM
