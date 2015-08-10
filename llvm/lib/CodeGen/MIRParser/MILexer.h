@@ -70,6 +70,7 @@ struct MIToken {
     kw_non_temporal,
     kw_invariant,
     kw_align,
+    kw_liveout,
 
     // Identifier tokens
     Identifier,

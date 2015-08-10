@@ -645,6 +645,21 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
       llvm_unreachable("Can't print this machine register mask yet.");
     break;
   }
+  case MachineOperand::MO_RegisterLiveOut: {
+    const uint32_t *RegMask = Op.getRegLiveOut();
+    OS << "liveout(";
+    bool IsCommaNeeded = false;
+    for (unsigned Reg = 0, E = TRI->getNumRegs(); Reg < E; ++Reg) {
+      if (RegMask[Reg / 32] & (1U << (Reg % 32))) {
+        if (IsCommaNeeded)
+          OS << ", ";
+        printReg(Reg, OS, TRI);
+        IsCommaNeeded = true;
+      }
+    }
+    OS << ")";
+    break;
+  }
   case MachineOperand::MO_Metadata:
     Op.getMetadata()->printAsOperand(OS, MST);
     break;

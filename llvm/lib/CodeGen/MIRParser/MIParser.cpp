@@ -121,6 +121,7 @@ public:
   bool parseIRBlock(BasicBlock *&BB, const Function &F);
   bool parseBlockAddressOperand(MachineOperand &Dest);
   bool parseTargetIndexOperand(MachineOperand &Dest);
+  bool parseLiveoutRegisterMaskOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
   bool parseMachineOperandAndTargetFlags(MachineOperand &Dest);
   bool parseOffset(int64_t &Offset);
@@ -920,6 +921,33 @@ bool MIParser::parseTargetIndexOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseLiveoutRegisterMaskOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::kw_liveout));
+  const auto *TRI = MF.getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  uint32_t *Mask = MF.allocateRegisterMask(TRI->getNumRegs());
+  lex();
+  if (expectAndConsume(MIToken::lparen))
+    return true;
+  while (true) {
+    if (Token.isNot(MIToken::NamedRegister))
+      return error("expected a named register");
+    unsigned Reg = 0;
+    if (parseRegister(Reg))
+      return true;
+    lex();
+    Mask[Reg / 32] |= 1U << (Reg % 32);
+    // TODO: Report an error if the same register is used more than once.
+    if (Token.isNot(MIToken::comma))
+      break;
+    lex();
+  }
+  if (expectAndConsume(MIToken::rparen))
+    return true;
+  Dest = MachineOperand::CreateRegLiveOut(Mask);
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
@@ -970,6 +998,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseBlockAddressOperand(Dest);
   case MIToken::kw_target_index:
     return parseTargetIndexOperand(Dest);
+  case MIToken::kw_liveout:
+    return parseLiveoutRegisterMaskOperand(Dest);
   case MIToken::Error:
     return true;
   case MIToken::Identifier:
