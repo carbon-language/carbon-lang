@@ -67,6 +67,7 @@ output_lock = None
 test_counter = None
 total_tests = None
 dotest_options = None
+output_on_success = False
 
 def setup_global_variables(lock, counter, total, options):
     global output_lock, test_counter, total_tests, dotest_options
@@ -75,19 +76,34 @@ def setup_global_variables(lock, counter, total, options):
     total_tests = total
     dotest_options = options
 
-def update_status(name = None, command = None, output = None):
+def report_test_failure(name, command, output):
+    global output_lock
+    with output_lock:
+        print >> sys.stderr, "\n"
+        print >> sys.stderr, output
+        print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
+        update_progress(name, "FAILED")
+
+def report_test_pass(name, output):
+    global output_lock, output_on_success
+    with output_lock:
+        if output_on_success:
+            print >> sys.stderr, "\n"
+            print >> sys.stderr, output
+        update_progress(name, "PASSED")
+
+def update_progress(test_name, result):
     global output_lock, test_counter, total_tests
     with output_lock:
-        if output is not None:
-            print >> sys.stderr
-            print >> sys.stderr, "Failed test suite: %s" % name
-            print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
-            print >> sys.stderr, "stdout:\n%s" % output[0]
-            print >> sys.stderr, "stderr:\n%s" % output[1]
-        sys.stderr.write("\r%*d out of %d test suites processed" %
-            (len(str(total_tests)), test_counter.value, total_tests))
-        sys.stderr.flush()
+        if test_name != None:
+            sys.stderr.write("\n[%s %s] - %d out of %d test suites processed" %
+                (result, test_name, test_counter.value, total_tests))
+        else:
+            sys.stderr.write("\n%d out of %d test suites processed" %
+                (test_counter.value, total_tests))
         test_counter.value += 1
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 def parse_test_results(output):
     passes = 0
@@ -126,7 +142,11 @@ def call_with_timeout(command, timeout, name):
     output = process.communicate()
     exit_status = process.returncode
     passes, failures = parse_test_results(output)
-    update_status(name, command, output if exit_status != 0 else None)
+    if exit_status == 0:
+        # stdout does not have any useful information from 'dotest.py', only stderr does.
+        report_test_pass(name, output[1])
+    else:
+        report_test_failure(name, command, output[1])
     return exit_status, passes, failures
 
 def process_dir(root, files, test_root, dotest_argv):
@@ -194,11 +214,11 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
         test_work_items.append((root, files, test_directory, dotest_argv))
 
     global output_lock, test_counter, total_tests
-    output_lock = multiprocessing.Lock()
+    output_lock = multiprocessing.RLock()
     total_tests = len(test_work_items)
     test_counter = multiprocessing.Value('i', 0)
     print >> sys.stderr, "Testing: %d tests, %d threads" % (total_tests, num_threads)
-    update_status()
+    update_progress(None, None)
 
     # Run the items, either in a pool (for multicore speedup) or
     # calling each individually.
@@ -327,6 +347,12 @@ Run lldb test suite using a separate process for each test file.
                       dest='dotest_options',
                       help="""The options passed to 'dotest.py' if specified.""")
 
+    parser.add_option('-s', '--output-on-success',
+                      action='store_true',
+                      dest='output_on_success',
+                      default=False,
+                      help="""Print full output of 'dotest.py' even when it succeeds.""")
+
     parser.add_option('-t', '--threads',
                       type='int',
                       dest='num_threads',
@@ -340,6 +366,8 @@ Run lldb test suite using a separate process for each test file.
 
     parser = dotest_args.create_parser()
     global dotest_options
+    global output_on_success
+    output_on_success = opts.output_on_success
     dotest_options = dotest_args.parse_args(parser, dotest_argv)
 
     if not dotest_options.s:
