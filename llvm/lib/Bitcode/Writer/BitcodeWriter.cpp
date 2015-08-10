@@ -2079,10 +2079,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   // FIXME: We know if the type names can use 7-bit ascii.
   SmallVector<unsigned, 64> NameVals;
 
-  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
-       SI != SE; ++SI) {
-
-    const ValueName &Name = *SI;
+  for (const ValueName &Name : VST) {
 
     // Figure out the encoding to use for the name.
     bool is7Bit = true;
@@ -2102,7 +2099,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     // VST_ENTRY:   [valueid, namechar x N]
     // VST_BBENTRY: [bbid, namechar x N]
     unsigned Code;
-    if (isa<BasicBlock>(SI->getValue())) {
+    if (isa<BasicBlock>(Name.getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
       if (isChar6)
         AbbrevToUse = VST_BBENTRY_6_ABBREV;
@@ -2114,7 +2111,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
         AbbrevToUse = VST_ENTRY_7_ABBREV;
     }
 
-    NameVals.push_back(VE.getValueID(SI->getValue()));
+    NameVals.push_back(VE.getValueID(Name.getValue()));
     for (const char *P = Name.getKeyData(),
          *E = Name.getKeyData()+Name.getKeyLength(); P != E; ++P)
       NameVals.push_back((unsigned char)*P);
