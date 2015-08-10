@@ -2884,8 +2884,10 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
       if (StopAddress != -1ULL && !Seq.empty()) {
         // Insert end sequence row with the computed end address, but
         // the same line as the previous one.
+        // Do not collapse the next two statements as the push_back operation
+        // may reallocate the vector and invalidate the iterator Seq.back().
         auto NextLine = Seq.back();
-        Seq.emplace_back(NextLine);
+        Seq.push_back(NextLine);
         Seq.back().Address = StopAddress;
         Seq.back().EndSequence = 1;
         Seq.back().PrologueEnd = 0;
