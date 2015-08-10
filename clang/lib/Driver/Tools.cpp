@@ -4145,7 +4145,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_lax_vector_conversions))
     CmdArgs.push_back("-fno-lax-vector-conversions");
 
-  if (Args.getLastArg(options::OPT_fapple_kext))
+  if (Args.getLastArg(options::OPT_fapple_kext) ||
+      (Args.hasArg(options::OPT_mkernel) && types::isCXX(InputType)))
     CmdArgs.push_back("-fapple-kext");
 
   Args.AddLastArg(CmdArgs, options::OPT_fobjc_sender_dependent_dispatch);
@@ -4279,15 +4280,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
-  if (Args.hasArg(options::OPT_mkernel)) {
-    if (!Args.hasArg(options::OPT_fapple_kext) && types::isCXX(InputType))
-      CmdArgs.push_back("-fapple-kext");
-    if (!Args.hasArg(options::OPT_fbuiltin))
-      CmdArgs.push_back("-fno-builtin");
-    Args.ClaimAllArgs(options::OPT_fno_builtin);
-  }
-  // -fbuiltin is default.
-  else if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin))
+  // -fbuiltin is default unless -mkernel is used
+  if (!Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin,
+                    !Args.hasArg(options::OPT_mkernel)))
     CmdArgs.push_back("-fno-builtin");
 
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
@@ -4687,14 +4682,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  if (KernelOrKext || isNoCommonDefault(getToolChain().getTriple())) {
-    if (!Args.hasArg(options::OPT_fcommon))
-      CmdArgs.push_back("-fno-common");
-    Args.ClaimAllArgs(options::OPT_fno_common);
-  }
-
-  // -fcommon is default, only pass non-default.
-  else if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common))
+  // -fcommon is the default unless compiling kernel code or the target says so
+  bool NoCommonDefault =
+      KernelOrKext || isNoCommonDefault(getToolChain().getTriple());
+  if (!Args.hasFlag(options::OPT_fcommon, options::OPT_fno_common,
+                    !NoCommonDefault))
     CmdArgs.push_back("-fno-common");
 
   // -fsigned-bitfields is default, and clang doesn't yet support
