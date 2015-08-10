@@ -5188,9 +5188,7 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
   // TODO: If multiple splats are generated to load the same constant,
   // it may be detrimental to overall size. There needs to be a way to detect
   // that condition to know if this is truly a size win.
-  const Function *F = DAG.getMachineFunction().getFunction();
-  // FIXME: Use Function::optForSize().
-  bool OptForSize = F->hasFnAttribute(Attribute::OptimizeForSize);
+  bool OptForSize = DAG.getMachineFunction().getFunction()->optForSize();
 
   // Handle broadcasting a single constant scalar from the constant pool
   // into a vector.

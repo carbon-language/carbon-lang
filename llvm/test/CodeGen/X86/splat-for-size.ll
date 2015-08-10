@@ -14,7 +14,7 @@ define <2 x double> @splat_v2f64(<2 x double> %x) #0 {
 ; CHECK-NEXT: retq
 }
 
-define <4 x double> @splat_v4f64(<4 x double> %x) #0 {
+define <4 x double> @splat_v4f64(<4 x double> %x) #1 {
   %add = fadd <4 x double> %x, <double 1.0, double 1.0, double 1.0, double 1.0>
   ret <4 x double> %add
 ; CHECK-LABEL: splat_v4f64
@@ -32,7 +32,7 @@ define <4 x float> @splat_v4f32(<4 x float> %x) #0 {
 ; CHECK-NEXT: retq
 }
 
-define <8 x float> @splat_v8f32(<8 x float> %x) #0 {
+define <8 x float> @splat_v8f32(<8 x float> %x) #1 {
   %add = fadd <8 x float> %x, <float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0>
   ret <8 x float> %add
 ; CHECK-LABEL: splat_v8f32
@@ -67,7 +67,7 @@ define <4 x i64> @splat_v4i64(<4 x i64> %x) #0 {
 }
 
 ; AVX can't do integer splats, so fake it: use vbroadcastss to splat 32-bit value.
-define <4 x i32> @splat_v4i32(<4 x i32> %x) #0 {
+define <4 x i32> @splat_v4i32(<4 x i32> %x) #1 {
   %add = add <4 x i32> %x, <i32 1, i32 1, i32 1, i32 1>
   ret <4 x i32> %add
 ; CHECK-LABEL: splat_v4i32
@@ -91,7 +91,7 @@ define <8 x i32> @splat_v8i32(<8 x i32> %x) #0 {
 }
 
 ; AVX can't do integer splats, and there's no broadcast fakery for 16-bit. Could use pshuflw, etc?
-define <8 x i16> @splat_v8i16(<8 x i16> %x) #0 {
+define <8 x i16> @splat_v8i16(<8 x i16> %x) #1 {
   %add = add <8 x i16> %x, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
   ret <8 x i16> %add
 ; CHECK-LABEL: splat_v8i16
@@ -115,7 +115,7 @@ define <16 x i16> @splat_v16i16(<16 x i16> %x) #0 {
 }
 
 ; AVX can't do integer splats, and there's no broadcast fakery for 8-bit. Could use pshufb, etc?
-define <16 x i8> @splat_v16i8(<16 x i8> %x) #0 {
+define <16 x i8> @splat_v16i8(<16 x i8> %x) #1 {
   %add = add <16 x i8> %x, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
   ret <16 x i8> %add
 ; CHECK-LABEL: splat_v16i8
@@ -144,7 +144,7 @@ define <32 x i8> @splat_v32i8(<32 x i8> %x) #0 {
 
 @A = common global <3 x i64> zeroinitializer, align 32
 
-define <8 x i64> @pr23259() #0 {
+define <8 x i64> @pr23259() #1 {
 entry:
   %0 = load <4 x i64>, <4 x i64>* bitcast (<3 x i64>* @A to <4 x i64>*), align 32
   %1 = shufflevector <4 x i64> %0, <4 x i64> undef, <3 x i32> <i32 undef, i32 undef, i32 2>
@@ -153,3 +153,4 @@ entry:
 }
 
 attributes #0 = { optsize }
+attributes #1 = { minsize }
