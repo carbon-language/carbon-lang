@@ -43,7 +43,7 @@ define <8 x float> @splat_v8f32(<8 x float> %x) #1 {
 
 ; AVX can't do integer splats, so fake it: use vmovddup to splat 64-bit value.
 ; We also generate vmovddup for AVX2 because it's one byte smaller than vpbroadcastq.
-define <2 x i64> @splat_v2i64(<2 x i64> %x) #0 {
+define <2 x i64> @splat_v2i64(<2 x i64> %x) #1 {
   %add = add <2 x i64> %x, <i64 1, i64 1>
   ret <2 x i64> %add
 ; CHECK-LABEL: splat_v2i64
