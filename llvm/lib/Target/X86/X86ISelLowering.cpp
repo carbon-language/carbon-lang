@@ -24127,10 +24127,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // fold (or (x << c) | (y >> (64 - c))) ==> (shld64 x, y, c)
-  MachineFunction &MF = DAG.getMachineFunction();
-  // FIXME: Use Function::optForSize().
-  bool OptForSize =
-      MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize);
+  bool OptForSize = DAG.getMachineFunction().getFunction()->optForSize();
 
   // SHLD/SHRD instructions have lower register pressure, but on some
   // platforms they have higher latency than the equivalent
