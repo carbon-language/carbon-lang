@@ -598,6 +598,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
     }
 
     if (CanMergeOpc && getLdStOffsetOp(MI).isImm()) {
+      assert(MI->mayLoadOrStore() && "Expected memory operation.");
       // If we've found another instruction with the same opcode, check to see
       // if the base and offset are compatible with our starting instruction.
       // These instructions all have scaled immediate operands, so we just
@@ -623,8 +624,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         bool MIIsUnscaled = isUnscaledLdSt(MI);
         if (!inBoundsForPair(MIIsUnscaled, MinOffset, OffsetStride)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
-          if (MI->mayLoadOrStore())
-            MemInsns.push_back(MI);
+          MemInsns.push_back(MI);
           continue;
         }
         // If the alignment requirements of the paired (scaled) instruction
@@ -633,8 +633,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         if (IsUnscaled && EnableAArch64UnscaledMemOp &&
             (alignTo(MinOffset, OffsetStride) != MinOffset)) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
-          if (MI->mayLoadOrStore())
-            MemInsns.push_back(MI);
+          MemInsns.push_back(MI);
           continue;
         }
         // If the destination register of the loads is the same register, bail
@@ -642,8 +641,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // registers the same is UNPREDICTABLE and will result in an exception.
         if (MayLoad && Reg == getLdStRegOp(MI).getReg()) {
           trackRegDefsUses(MI, ModifiedRegs, UsedRegs, TRI);
-          if (MI->mayLoadOrStore())
-            MemInsns.push_back(MI);
+          MemInsns.push_back(MI);
           continue;
         }
 
