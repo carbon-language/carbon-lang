@@ -41,12 +41,12 @@ struct LoopAttributes {
   bool IsParallel;
 
   /// \brief State of loop vectorization or unrolling.
-  enum LVEnableState { Unspecified, Enable, Disable };
+  enum LVEnableState { Unspecified, Enable, Disable, Full };
 
   /// \brief Value for llvm.loop.vectorize.enable metadata.
   LVEnableState VectorizeEnable;
 
-  /// \brief Selects no metadata, llvm.unroll.full, or llvm.unroll.disable.
+  /// \brief Value for llvm.loop.unroll.* metadata (enable, disable, or full).
   LVEnableState UnrollEnable;
 
   /// \brief Value for llvm.loop.vectorize.width metadata.
@@ -127,9 +127,8 @@ public:
   }
 
   /// \brief Set the next pushed loop unroll state.
-  void setUnrollEnable(bool Enable = true) {
-    StagedAttrs.UnrollEnable =
-        Enable ? LoopAttributes::Enable : LoopAttributes::Disable;
+  void setUnrollState(const LoopAttributes::LVEnableState &State) {
+    StagedAttrs.UnrollEnable = State;
   }
 
   /// \brief Set the vectorize width for the next loop pushed.

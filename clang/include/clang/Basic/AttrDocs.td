@@ -1371,7 +1371,9 @@ Loop unrolling optimization hints can be specified with ``#pragma unroll`` and
 do-while, or c++11 range-based for loop.
 
 Specifying ``#pragma unroll`` without a parameter directs the loop unroller to
-attempt to fully unroll the loop if the trip count is known at compile time:
+attempt to fully unroll the loop if the trip count is known at compile time and
+attempt to partially unroll the loop if the trip count is not known at compile
+time:
 
 .. code-block:: c++
 

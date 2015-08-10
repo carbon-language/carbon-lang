@@ -15,11 +15,11 @@ void test(int *List, int Length) {
 /* expected-error {{expected ')'}} */ #pragma clang loop vectorize(assume_safety
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave(assume_safety
 
-/* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(assume_safety)
+/* expected-error {{invalid argument; expected 'enable', 'full' or 'disable'}} */ #pragma clang loop unroll(assume_safety)
 
 /* expected-error {{invalid argument; expected 'enable', 'assume_safety' or 'disable'}} */ #pragma clang loop vectorize(badidentifier)
 /* expected-error {{invalid argument; expected 'enable', 'assume_safety' or 'disable'}} */ #pragma clang loop interleave(badidentifier)
-/* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
+/* expected-error {{invalid argument; expected 'enable', 'full' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
   while (i-7 < Length) {
     List[i] = i;
   }

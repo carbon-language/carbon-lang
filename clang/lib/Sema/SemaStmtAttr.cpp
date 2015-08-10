@@ -65,19 +65,32 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
     return nullptr;
   }
 
-  LoopHintAttr::OptionType Option;
   LoopHintAttr::Spelling Spelling;
-  if (PragmaUnroll) {
-    Option = ValueExpr ? LoopHintAttr::UnrollCount : LoopHintAttr::Unroll;
-    Spelling = LoopHintAttr::Pragma_unroll;
-  } else if (PragmaNoUnroll) {
-    Option = LoopHintAttr::Unroll;
+  LoopHintAttr::OptionType Option;
+  LoopHintAttr::LoopHintState State;
+  if (PragmaNoUnroll) {
+    // #pragma nounroll
     Spelling = LoopHintAttr::Pragma_nounroll;
+    Option = LoopHintAttr::Unroll;
+    State = LoopHintAttr::Disable;
+  } else if (PragmaUnroll) {
+    Spelling = LoopHintAttr::Pragma_unroll;
+    if (ValueExpr) {
+      // #pragma unroll N
+      Option = LoopHintAttr::UnrollCount;
+      State = LoopHintAttr::Numeric;
+    } else {
+      // #pragma unroll
+      Option = LoopHintAttr::Unroll;
+      State = LoopHintAttr::Enable;
+    }
   } else {
+    // #pragma clang loop ...
+    Spelling = LoopHintAttr::Pragma_clang_loop;
     assert(OptionLoc && OptionLoc->Ident &&
            "Attribute must have valid option info.");
-    IdentifierInfo *OptionInfo = OptionLoc->Ident;
-    Option = llvm::StringSwitch<LoopHintAttr::OptionType>(OptionInfo->getName())
+    Option = llvm::StringSwitch<LoopHintAttr::OptionType>(
+                 OptionLoc->Ident->getName())
                  .Case("vectorize", LoopHintAttr::Vectorize)
                  .Case("vectorize_width", LoopHintAttr::VectorizeWidth)
                  .Case("interleave", LoopHintAttr::Interleave)
@@ -85,31 +98,29 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
                  .Case("unroll", LoopHintAttr::Unroll)
                  .Case("unroll_count", LoopHintAttr::UnrollCount)
                  .Default(LoopHintAttr::Vectorize);
-    Spelling = LoopHintAttr::Pragma_clang_loop;
-  }
-
-  LoopHintAttr::LoopHintState State = LoopHintAttr::Default;
-  if (PragmaNoUnroll) {
-    State = LoopHintAttr::Disable;
-  } else if (Option == LoopHintAttr::VectorizeWidth ||
-             Option == LoopHintAttr::InterleaveCount ||
-             Option == LoopHintAttr::UnrollCount) {
-    assert(ValueExpr && "Attribute must have a valid value expression.");
-    if (S.CheckLoopHintExpr(ValueExpr, St->getLocStart()))
-      return nullptr;
-  } else if (Option == LoopHintAttr::Vectorize ||
-             Option == LoopHintAttr::Interleave ||
-             Option == LoopHintAttr::Unroll) {
-    // Default state is assumed if StateLoc is not specified, such as with
-    // '#pragma unroll'.
-    if (StateLoc && StateLoc->Ident) {
+    if (Option == LoopHintAttr::VectorizeWidth ||
+        Option == LoopHintAttr::InterleaveCount ||
+        Option == LoopHintAttr::UnrollCount) {
+      assert(ValueExpr && "Attribute must have a valid value expression.");
+      if (S.CheckLoopHintExpr(ValueExpr, St->getLocStart()))
+        return nullptr;
+      State = LoopHintAttr::Numeric;
+    } else if (Option == LoopHintAttr::Vectorize ||
+               Option == LoopHintAttr::Interleave ||
+               Option == LoopHintAttr::Unroll) {
+      assert(StateLoc && StateLoc->Ident && "Loop hint must have an argument");
       if (StateLoc->Ident->isStr("disable"))
         State = LoopHintAttr::Disable;
       else if (StateLoc->Ident->isStr("assume_safety"))
         State = LoopHintAttr::AssumeSafety;
-      else
+      else if (StateLoc->Ident->isStr("full"))
+        State = LoopHintAttr::Full;
+      else if (StateLoc->Ident->isStr("enable"))
         State = LoopHintAttr::Enable;
-    }
+      else
+        llvm_unreachable("bad loop hint argument");
+    } else
+      llvm_unreachable("bad loop hint");
   }
 
   return LoopHintAttr::CreateImplicit(S.Context, Spelling, Option, State,
@@ -183,7 +194,8 @@ CheckForIncompatibleAttributes(Sema &S,
          CategoryState.StateAttr->getState() == LoopHintAttr::Disable)) {
       // Disable hints are not compatible with numeric hints of the same
       // category.  As a special case, numeric unroll hints are also not
-      // compatible with "enable" form of the unroll pragma, unroll(full).
+      // compatible with enable or full form of the unroll pragma because these
+      // directives indicate full unrolling.
       S.Diag(OptionLoc, diag::err_pragma_loop_compatibility)
           << /*Duplicate=*/false
           << CategoryState.StateAttr->getDiagnosticName(Policy)

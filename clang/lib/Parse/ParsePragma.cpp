@@ -822,10 +822,9 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
     SourceLocation StateLoc = Toks[0].getLocation();
     IdentifierInfo *StateInfo = Toks[0].getIdentifierInfo();
     if (!StateInfo ||
-        ((OptionUnroll ? !StateInfo->isStr("full")
-                       : !StateInfo->isStr("enable") &&
-                             !StateInfo->isStr("assume_safety")) &&
-         !StateInfo->isStr("disable"))) {
+        (!StateInfo->isStr("enable") && !StateInfo->isStr("disable") &&
+         ((OptionUnroll && !StateInfo->isStr("full")) ||
+          (!OptionUnroll && !StateInfo->isStr("assume_safety"))))) {
       Diag(Toks[0].getLocation(), diag::err_pragma_invalid_keyword)
           << /*FullKeyword=*/OptionUnroll;
       return false;
@@ -1953,8 +1952,9 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token &Tok, Token PragmaName,
 ///    'assume_safety'
 ///
 ///  unroll-hint-keyword:
-///    'full'
+///    'enable'
 ///    'disable'
+///    'full'
 ///
 ///  loop-hint-value:
 ///    constant-expression
@@ -1970,10 +1970,13 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token &Tok, Token PragmaName,
 /// only works on inner loops.
 ///
 /// The unroll and unroll_count directives control the concatenation
-/// unroller. Specifying unroll(full) instructs llvm to try to
-/// unroll the loop completely, and unroll(disable) disables unrolling
-/// for the loop. Specifying unroll_count(_value_) instructs llvm to
-/// try to unroll the loop the number of times indicated by the value.
+/// unroller. Specifying unroll(enable) instructs llvm to unroll the loop
+/// completely if the trip count is known at compile time and unroll partially
+/// if the trip count is not known.  Specifying unroll(full) is similar to
+/// unroll(enable) but will unroll the loop only if the trip count is known at
+/// compile time.  Specifying unroll(disable) disables unrolling for the
+/// loop. Specifying unroll_count(_value_) instructs llvm to try to unroll the
+/// loop the number of times indicated by the value.
 void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
                                          PragmaIntroducerKind Introducer,
                                          Token &Tok) {

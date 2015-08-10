@@ -132,7 +132,7 @@ void test(int *List, int Length) {
 
 /* expected-error {{missing argument; expected 'enable', 'assume_safety' or 'disable'}} */ #pragma clang loop vectorize()
 /* expected-error {{missing argument; expected an integer value}} */ #pragma clang loop interleave_count()
-/* expected-error {{missing argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll()
+/* expected-error {{missing argument; expected 'enable', 'full' or 'disable'}} */ #pragma clang loop unroll()
 
 /* expected-error {{missing option; expected vectorize, vectorize_width, interleave, interleave_count, unroll, or unroll_count}} */ #pragma clang loop
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword
@@ -186,7 +186,7 @@ const int VV = 4;
 
 /* expected-error {{invalid argument; expected 'enable', 'assume_safety' or 'disable'}} */ #pragma clang loop vectorize(badidentifier)
 /* expected-error {{invalid argument; expected 'enable', 'assume_safety' or 'disable'}} */ #pragma clang loop interleave(badidentifier)
-/* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
+/* expected-error {{invalid argument; expected 'enable', 'full' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
   while (i-7 < Length) {
     List[i] = i;
   }
@@ -195,7 +195,7 @@ const int VV = 4;
 // constants crash FE.
 /* expected-error {{expected ')'}} */ #pragma clang loop vectorize(()
 /* expected-error {{invalid argument; expected 'enable', 'assume_safety' or 'disable'}} */ #pragma clang loop interleave(*)
-/* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(=)
+/* expected-error {{invalid argument; expected 'enable', 'full' or 'disable'}} */ #pragma clang loop unroll(=)
 /* expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}} */ #pragma clang loop vectorize_width(^)
 /* expected-error {{expected expression}} expected-error {{expected expression}} */ #pragma clang loop interleave_count(/)
 /* expected-error {{expected expression}} expected-error {{expected expression}} */ #pragma clang loop unroll_count(==)

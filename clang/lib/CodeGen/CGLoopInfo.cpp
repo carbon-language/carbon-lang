@@ -67,10 +67,14 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 
   // Setting unroll.full or unroll.disable
   if (Attrs.UnrollEnable != LoopAttributes::Unspecified) {
-    Metadata *Vals[] = {
-        MDString::get(Ctx, (Attrs.UnrollEnable == LoopAttributes::Enable
-                                ? "llvm.loop.unroll.full"
-                                : "llvm.loop.unroll.disable"))};
+    std::string Name;
+    if (Attrs.UnrollEnable == LoopAttributes::Enable)
+      Name = "llvm.loop.unroll.enable";
+    else if (Attrs.UnrollEnable == LoopAttributes::Full)
+      Name = "llvm.loop.unroll.full";
+    else
+      Name = "llvm.loop.unroll.disable";
+    Metadata *Vals[] = {MDString::get(Ctx, Name)};
     Args.push_back(MDNode::get(Ctx, Vals));
   }
 
@@ -137,7 +141,7 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         setInterleaveCount(1);
         break;
       case LoopHintAttr::Unroll:
-        setUnrollEnable(false);
+        setUnrollState(LoopAttributes::Disable);
         break;
       case LoopHintAttr::UnrollCount:
       case LoopHintAttr::VectorizeWidth:
@@ -153,7 +157,7 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         setVectorizeEnable(true);
         break;
       case LoopHintAttr::Unroll:
-        setUnrollEnable(true);
+        setUnrollState(LoopAttributes::Enable);
         break;
       case LoopHintAttr::UnrollCount:
       case LoopHintAttr::VectorizeWidth:
@@ -178,7 +182,21 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         break;
       }
       break;
-    case LoopHintAttr::Default:
+    case LoopHintAttr::Full:
+      switch (Option) {
+      case LoopHintAttr::Unroll:
+        setUnrollState(LoopAttributes::Full);
+        break;
+      case LoopHintAttr::Vectorize:
+      case LoopHintAttr::Interleave:
+      case LoopHintAttr::UnrollCount:
+      case LoopHintAttr::VectorizeWidth:
+      case LoopHintAttr::InterleaveCount:
+        llvm_unreachable("Options cannot be used with 'full' hint.");
+        break;
+      }
+      break;
+    case LoopHintAttr::Numeric:
       switch (Option) {
       case LoopHintAttr::VectorizeWidth:
         setVectorizeWidth(ValueInt);
@@ -190,13 +208,9 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         setUnrollCount(ValueInt);
         break;
       case LoopHintAttr::Unroll:
-        // The default option is used when '#pragma unroll' is specified.
-        setUnrollEnable(true);
-        break;
       case LoopHintAttr::Vectorize:
       case LoopHintAttr::Interleave:
-        llvm_unreachable("Options cannot be assigned a value and do not have a "
-                         "default value.");
+        llvm_unreachable("Options cannot be assigned a value.");
         break;
       }
       break;

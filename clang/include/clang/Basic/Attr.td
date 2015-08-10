@@ -1980,8 +1980,8 @@ def LoopHint : Attr {
                           ["Vectorize", "VectorizeWidth", "Interleave", "InterleaveCount",
                            "Unroll", "UnrollCount"]>,
               EnumArgument<"State", "LoopHintState",
-                           ["default", "enable", "disable", "assume_safety"],
-                           ["Default", "Enable", "Disable", "AssumeSafety"]>,
+                           ["enable", "disable", "numeric", "assume_safety", "full"],
+                           ["Enable", "Disable", "Numeric", "AssumeSafety", "Full"]>,
               ExprArgument<"Value">];
 
   let AdditionalMembers = [{
@@ -2020,13 +2020,12 @@ def LoopHint : Attr {
     std::string ValueName;
     llvm::raw_string_ostream OS(ValueName);
     OS << "(";
-    if (option == VectorizeWidth || option == InterleaveCount ||
-        option == UnrollCount)
+    if (state == Numeric)
       value->printPretty(OS, nullptr, Policy);
-    else if (state == Default)
-      return "";
     else if (state == Enable)
-      OS << (option == Unroll ? "full" : "enable");
+      OS << "enable";
+    else if (state == Full)
+      OS << "full";
     else if (state == AssumeSafety)
       OS << "assume_safety";
     else
@@ -2041,7 +2040,7 @@ def LoopHint : Attr {
     if (SpellingIndex == Pragma_nounroll)
       return "#pragma nounroll";
     else if (SpellingIndex == Pragma_unroll)
-      return "#pragma unroll" + getValueString(Policy);
+      return "#pragma unroll" + (option == UnrollCount ? getValueString(Policy) : "");
 
     assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
     return getOptionName(option) + getValueString(Policy);
