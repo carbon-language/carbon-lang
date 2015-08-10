@@ -230,6 +230,8 @@ public:
 
   bool enableAggressiveInterleaving(bool LoopHasReductions) { return false; }
 
+  bool enableInterleavedAccessVectorization() { return false; }
+
   TTI::PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) {
     return TTI::PSK_Software;
   }

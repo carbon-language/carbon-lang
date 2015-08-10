@@ -3880,9 +3880,15 @@ bool LoopVectorizationLegality::canVectorize() {
                        : "")
                << "!\n");
 
+  bool UseInterleaved = TTI->enableInterleavedAccessVectorization();
+
+  // If an override option has been passed in for interleaved accesses, use it.
+  if (EnableInterleavedMemAccesses.getNumOccurrences() > 0)
+    UseInterleaved = EnableInterleavedMemAccesses;
+
   // Analyze interleaved memory accesses.
-  if (EnableInterleavedMemAccesses)
-    InterleaveInfo.analyzeInterleaving(Strides);
+  if (UseInterleaved)
+     InterleaveInfo.analyzeInterleaving(Strides);
 
   // Okay! We can vectorize. At this point we don't have any other mem analysis
   // which may limit our maximum vectorization factor, so just return true with

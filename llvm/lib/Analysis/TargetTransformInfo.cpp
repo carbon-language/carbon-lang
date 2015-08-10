@@ -166,6 +166,10 @@ bool TargetTransformInfo::enableAggressiveInterleaving(bool LoopHasReductions) c
   return TTIImpl->enableAggressiveInterleaving(LoopHasReductions);
 }
 
+bool TargetTransformInfo::enableInterleavedAccessVectorization() const {
+  return TTIImpl->enableInterleavedAccessVectorization();
+}
+
 TargetTransformInfo::PopcntSupportKind
 TargetTransformInfo::getPopcntSupport(unsigned IntTyWidthInBit) const {
   return TTIImpl->getPopcntSupport(IntTyWidthInBit);
