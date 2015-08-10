@@ -37,6 +37,7 @@ class SmallSet {
   std::set<T, C> Set;
   typedef typename SmallVector<T, N>::const_iterator VIterator;
   typedef typename SmallVector<T, N>::iterator mutable_iterator;
+
 public:
   typedef size_t size_type;
   SmallSet() {}
@@ -108,6 +109,7 @@ public:
     Vector.clear();
     Set.clear();
   }
+
 private:
   bool isSmall() const { return Set.empty(); }
 

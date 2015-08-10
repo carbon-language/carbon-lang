@@ -159,8 +159,7 @@ namespace llvm {
 #else
     return true;
 #endif
-  }  
-
+  }
 }
 
 #endif

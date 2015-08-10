@@ -150,7 +150,6 @@ public:
       return Val.getAddrOfPtr1();
 
     return Val.template get<VecTy *>()->begin();
-
   }
   iterator end() {
     if (Val.template is<EltTy>())

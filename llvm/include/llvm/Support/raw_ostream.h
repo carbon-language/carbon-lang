@@ -225,7 +225,6 @@ public:
   /// indent - Insert 'NumSpaces' spaces.
   raw_ostream &indent(unsigned NumSpaces);
 
-
   /// Changes the foreground color of text that will be output from this point
   /// forward.
   /// @param Color ANSI color to use, the special SAVEDCOLOR can be used to
@@ -471,6 +470,7 @@ class raw_string_ostream : public raw_ostream {
   /// Return the current position within the stream, not counting the bytes
   /// currently in the buffer.
   uint64_t current_pos() const override { return OS.size(); }
+
 public:
   explicit raw_string_ostream(std::string &O) : OS(O) {}
   ~raw_string_ostream() override;
@@ -509,7 +509,6 @@ public:
   /// bytes free to avoid any extraneous memory overhead.
   explicit raw_svector_ostream(SmallVectorImpl<char> &O);
   ~raw_svector_ostream() override;
-
 
   /// This is called when the SmallVector we're appending to is changed outside
   /// of the raw_svector_ostream's control.  It is only safe to do this if the

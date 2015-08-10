@@ -62,6 +62,7 @@ class PointerIntPair {
     // ShiftedIntMask - This is the bits for the integer shifted in place.
     ShiftedIntMask = (uintptr_t)(IntMask << IntShift)
   };
+
 public:
   PointerIntPair() : Value(0) {}
   PointerIntPair(PointerTy PtrVal, IntType IntVal) {

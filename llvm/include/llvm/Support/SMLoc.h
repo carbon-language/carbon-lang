@@ -22,6 +22,7 @@ namespace llvm {
 /// Represents a location in source code.
 class SMLoc {
   const char *Ptr;
+
 public:
   SMLoc() : Ptr(nullptr) {}
 
@@ -60,4 +61,3 @@ public:
 } // end namespace llvm
 
 #endif
-

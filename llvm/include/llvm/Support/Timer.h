@@ -42,8 +42,7 @@ public:
   double getSystemTime() const { return SystemTime; }
   double getWallTime() const { return WallTime; }
   ssize_t getMemUsed() const { return MemUsed; }
-  
-  
+
   // operator< - Allow sorting.
   bool operator<(const TimeRecord &T) const {
     // Sort by Wall Time elapsed, as it is the only thing really accurate
@@ -117,7 +116,6 @@ private:
   friend class TimerGroup;
 };
 
-
 /// The TimeRegion class is used as a helper class to call the startTimer() and
 /// stopTimer() methods of the Timer class.  When the object is constructed, it
 /// starts the timer specified as its argument.  When it is destroyed, it stops
@@ -126,6 +124,7 @@ private:
 class TimeRegion {
   Timer *T;
   TimeRegion(const TimeRegion &) = delete;
+
 public:
   explicit TimeRegion(Timer &t) : T(&t) {
     T->startTimer();
@@ -138,7 +137,6 @@ public:
   }
 };
 
-
 /// NamedRegionTimer - This class is basically a combination of TimeRegion and
 /// Timer.  It allows you to declare a new timer, AND specify the region to
 /// time, all in one statement.  All timers with the same name are merged.  This
@@ -150,7 +148,6 @@ struct NamedRegionTimer : public TimeRegion {
   explicit NamedRegionTimer(StringRef Name, StringRef GroupName,
                             bool Enabled = true);
 };
-
 
 /// The TimerGroup class is used to group together related timers into a single
 /// report that is printed when the TimerGroup is destroyed.  It is illegal to
@@ -165,6 +162,7 @@ class TimerGroup {
   TimerGroup **Prev, *Next; // Doubly linked list of TimerGroup's.
   TimerGroup(const TimerGroup &TG) = delete;
   void operator=(const TimerGroup &TG) = delete;
+
 public:
   explicit TimerGroup(StringRef name);
   ~TimerGroup();

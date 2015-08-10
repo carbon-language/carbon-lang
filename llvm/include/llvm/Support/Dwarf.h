@@ -642,7 +642,6 @@ private:
   };
 };
 
-
 } // End of namespace dwarf
 
 } // End of namespace llvm

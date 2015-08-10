@@ -30,6 +30,7 @@ namespace llvm {
 /// StringMapEntryBase - Shared base class of StringMapEntry instances.
 class StringMapEntryBase {
   unsigned StrLen;
+
 public:
   explicit StringMapEntryBase(unsigned Len) : StrLen(Len) {}
 
@@ -48,6 +49,7 @@ protected:
   unsigned NumItems;
   unsigned NumTombstones;
   unsigned ItemSize;
+
 protected:
   explicit StringMapImpl(unsigned itemSize)
       : TheTable(nullptr),
@@ -85,8 +87,10 @@ protected:
   /// RemoveKey - Remove the StringMapEntry for the specified key from the
   /// table, returning it.  If the key is not in the table, this returns null.
   StringMapEntryBase *RemoveKey(StringRef Key);
+
 private:
   void init(unsigned Size);
+
 public:
   static StringMapEntryBase *getTombstoneVal() {
     return (StringMapEntryBase*)-1;
@@ -112,6 +116,7 @@ public:
 template<typename ValueTy>
 class StringMapEntry : public StringMapEntryBase {
   StringMapEntry(StringMapEntry &E) = delete;
+
 public:
   ValueTy second;
 
@@ -205,7 +210,6 @@ public:
   }
 };
 
-
 /// StringMap - This is an unconventional map that is specialized for handling
 /// keys that are "strings", which are basically ranges of bytes. This does some
 /// funky memory allocation and hashing things to make it extremely efficient,
@@ -213,6 +217,7 @@ public:
 template<typename ValueTy, typename AllocatorTy = MallocAllocator>
 class StringMap : public StringMapImpl {
   AllocatorTy Allocator;
+
 public:
   typedef StringMapEntry<ValueTy> MapEntryTy;
   
@@ -386,11 +391,11 @@ public:
   }
 };
 
-
 template<typename ValueTy>
 class StringMapConstIterator {
 protected:
   StringMapEntryBase **Ptr;
+
 public:
   typedef StringMapEntry<ValueTy> value_type;
 
@@ -447,7 +452,6 @@ public:
     return static_cast<StringMapEntry<ValueTy>*>(*this->Ptr);
   }
 };
-
 }
 
 #endif

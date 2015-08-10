@@ -156,6 +156,7 @@ class file_status
   friend bool equivalent(file_status A, file_status B);
   file_type Type;
   perms Perms;
+
 public:
   #if defined(LLVM_ON_UNIX)
     file_status() : fs_st_dev(0), fs_st_ino(0), fs_st_mtime(0),

@@ -21,7 +21,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-
 #ifndef LLVM_SUPPORT_GENERICDOMTREECONSTRUCTION_H
 #define LLVM_SUPPORT_GENERICDOMTREECONSTRUCTION_H
 
@@ -287,7 +286,6 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
   DT.updateDFSNumbers();
 }
-
 }
 
 #endif

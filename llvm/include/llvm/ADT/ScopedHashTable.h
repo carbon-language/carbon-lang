@@ -47,8 +47,8 @@ class ScopedHashTableVal {
   K Key;
   V Val;
   ScopedHashTableVal(const K &key, const V &val) : Key(key), Val(val) {}
-public:
 
+public:
   const K &getKey() const { return Key; }
   const V &getValue() const { return Val; }
   V &getValue() { return Val; }
@@ -92,6 +92,7 @@ class ScopedHashTableScope {
   ScopedHashTableVal<K, V> *LastValInScope;
   void operator=(ScopedHashTableScope&) = delete;
   ScopedHashTableScope(ScopedHashTableScope&) = delete;
+
 public:
   ScopedHashTableScope(ScopedHashTable<K, V, KInfo, AllocatorTy> &HT);
   ~ScopedHashTableScope();
@@ -109,10 +110,10 @@ private:
   }
 };
 
-
 template <typename K, typename V, typename KInfo = DenseMapInfo<K> >
 class ScopedHashTableIterator {
   ScopedHashTableVal<K, V> *Node;
+
 public:
   ScopedHashTableIterator(ScopedHashTableVal<K, V> *node) : Node(node) {}
 
@@ -141,7 +142,6 @@ public:
   }
 };
 
-
 template <typename K, typename V, typename KInfo, typename AllocatorTy>
 class ScopedHashTable {
 public:
@@ -149,6 +149,7 @@ public:
   /// to the name of the scope for this hash table.
   typedef ScopedHashTableScope<K, V, KInfo, AllocatorTy> ScopeTy;
   typedef unsigned size_type;
+
 private:
   typedef ScopedHashTableVal<K, V> ValTy;
   DenseMap<K, ValTy*, KInfo> TopLevelMap;
@@ -159,13 +160,13 @@ private:
   ScopedHashTable(const ScopedHashTable&); // NOT YET IMPLEMENTED
   void operator=(const ScopedHashTable&);  // NOT YET IMPLEMENTED
   friend class ScopedHashTableScope<K, V, KInfo, AllocatorTy>;
+
 public:
   ScopedHashTable() : CurScope(nullptr) {}
   ScopedHashTable(AllocatorTy A) : CurScope(0), Allocator(A) {}
   ~ScopedHashTable() {
     assert(!CurScope && TopLevelMap.empty() && "Scope imbalance!");
   }
-  
 
   /// Access to the allocator.
   AllocatorTy &getAllocator() { return Allocator; }

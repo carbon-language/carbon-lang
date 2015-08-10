@@ -108,6 +108,7 @@ protected:
   CrashRecoveryContext *context;
   CrashRecoveryContextCleanup(CrashRecoveryContext *context)
     : context(context), cleanupFired(false) {}
+
 public:
   bool cleanupFired;
   
@@ -129,6 +130,7 @@ protected:
   T *resource;
   CrashRecoveryContextCleanupBase(CrashRecoveryContext *context, T* resource)
     : CrashRecoveryContextCleanup(context), resource(resource) {}
+
 public:
   static DERIVED *create(T *x) {
     if (x) {
@@ -180,6 +182,7 @@ public:
 template <typename T, typename Cleanup = CrashRecoveryContextDeleteCleanup<T> >
 class CrashRecoveryContextCleanupRegistrar {
   CrashRecoveryContextCleanup *cleanup;
+
 public:
   CrashRecoveryContextCleanupRegistrar(T *x)
     : cleanup(Cleanup::create(x)) {

@@ -137,7 +137,6 @@ public:
     void *NextInFoldingSetBucket;
 
   public:
-
     Node() : NextInFoldingSetBucket(nullptr) {}
 
     // Accessors
@@ -182,13 +181,11 @@ public:
   bool empty() const { return NumNodes == 0; }
 
 private:
-
   /// GrowHashTable - Double the size of the hash table and rehash everything.
   ///
   void GrowHashTable();
 
 protected:
-
   /// GetNodeProfile - Instantiations of the FoldingSet template implement
   /// this function to gather data bits for the given node.
   virtual void GetNodeProfile(Node *N, FoldingSetNodeID &ID) const = 0;
@@ -269,6 +266,7 @@ template<typename T, typename Ctx> struct ContextualFoldingSetTrait
 class FoldingSetNodeIDRef {
   const unsigned *Data;
   size_t Size;
+
 public:
   FoldingSetNodeIDRef() : Data(nullptr), Size(0) {}
   FoldingSetNodeIDRef(const unsigned *D, size_t S) : Data(D), Size(S) {}
@@ -498,7 +496,6 @@ public:
 
   Ctx getContext() const { return Context; }
 
-
   typedef FoldingSetIterator<T> iterator;
   iterator begin() { return iterator(Buckets); }
   iterator end() { return iterator(Buckets+NumBuckets); }
@@ -614,7 +611,6 @@ public:
   }
 };
 
-
 template<class T>
 class FoldingSetIterator : public FoldingSetIteratorImpl {
 public:
@@ -666,7 +662,6 @@ public:
   }
 };
 
-
 template<class T>
 class FoldingSetBucketIterator : public FoldingSetBucketIteratorImpl {
 public:
@@ -694,6 +689,7 @@ public:
 template <typename T>
 class FoldingSetNodeWrapper : public FoldingSetNode {
   T data;
+
 public:
   template <typename... Ts>
   explicit FoldingSetNodeWrapper(Ts &&... Args)
@@ -716,8 +712,10 @@ public:
 /// information that would otherwise only be required for recomputing an ID.
 class FastFoldingSetNode : public FoldingSetNode {
   FoldingSetNodeID FastID;
+
 protected:
   explicit FastFoldingSetNode(const FoldingSetNodeID &ID) : FastID(ID) {}
+
 public:
   void Profile(FoldingSetNodeID &ID) const { 
     ID.AddNodeID(FastID); 

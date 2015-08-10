@@ -58,7 +58,6 @@ public:
   SetType &Visited;
 };
 
-
 // Generic Depth First Iterator
 template<class GraphT,
 class SetType = llvm::SmallPtrSet<typename GraphTraits<GraphT>::NodeType*, 8>,
@@ -77,6 +76,7 @@ class df_iterator : public std::iterator<std::forward_iterator_tag,
   // First element is node pointer, second is the 'next child' to visit
   // if the int in PointerIntTy is 0, the 'next child' to visit is invalid
   std::vector<std::pair<PointerIntTy, ChildItTy> > VisitStack;
+
 private:
   inline df_iterator(NodeType *Node) {
     this->Visited.insert(Node);
@@ -195,7 +195,6 @@ public:
   }
 };
 
-
 // Provide global constructors that automatically figure out correct types...
 //
 template <class T>
@@ -236,7 +235,6 @@ iterator_range<df_ext_iterator<T, SetTy>> depth_first_ext(const T& G,
                                                           SetTy &S) {
   return make_range(df_ext_begin(G, S), df_ext_end(G, S));
 }
-
 
 // Provide global definitions of inverse depth first iterators...
 template <class T,

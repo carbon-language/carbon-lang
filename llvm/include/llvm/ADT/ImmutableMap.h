@@ -55,7 +55,6 @@ struct ImutKeyValueInfo {
   }
 };
 
-
 template <typename KeyT, typename ValT,
           typename ValInfo = ImutKeyValueInfo<KeyT,ValT> >
 class ImmutableMap {
