@@ -26,3 +26,12 @@
         ! V9:      popc %g1, %g2                ! encoding: [0x85,0x70,0x00,0x01]
         popc %g1, %g2
 
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: signx %g1, %g2
+        ! V9: sra %g1, %g0, %g2               ! encoding: [0x85,0x38,0x40,0x00]
+        signx %g1, %g2
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: signx %g1
+        ! V9: sra %g1, %g0, %g1               ! encoding: [0x83,0x38,0x40,0x00]
+        signx %g1

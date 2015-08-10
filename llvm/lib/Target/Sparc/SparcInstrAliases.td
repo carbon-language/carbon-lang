@@ -450,3 +450,8 @@ def : InstAlias<"fcmpeq $rs1, $rs2", (V9FCMPEQ FCC0, QFPRegs:$rs1,
                                                      QFPRegs:$rs2)>,
                 Requires<[HasHardQuad]>;
 
+// signx rd -> sra rd, %g0, rd
+def : InstAlias<"signx $rd", (SRArr IntRegs:$rd, IntRegs:$rd, G0), 0>, Requires<[HasV9]>;
+
+// signx reg, rd -> sra reg, %g0, rd
+def : InstAlias<"signx $rs1, $rd", (SRArr IntRegs:$rd, IntRegs:$rs1, G0), 0>, Requires<[HasV9]>;
