@@ -245,7 +245,7 @@ void DiagnosticRenderer::emitIncludeStackRecursively(SourceLocation Loc,
   // import stack rather than the 
   // FIXME: We want submodule granularity here.
   std::pair<SourceLocation, StringRef> Imported = SM.getModuleImportLoc(Loc);
-  if (Imported.first.isValid()) {
+  if (!Imported.second.empty()) {
     // This location was imported by a module. Emit the module import stack.
     emitImportStackRecursively(Imported.first, Imported.second, SM);
     return;
@@ -276,13 +276,11 @@ void DiagnosticRenderer::emitImportStack(SourceLocation Loc,
 void DiagnosticRenderer::emitImportStackRecursively(SourceLocation Loc,
                                                     StringRef ModuleName,
                                                     const SourceManager &SM) {
-  if (Loc.isInvalid()) {
+  if (ModuleName.empty()) {
     return;
   }
 
   PresumedLoc PLoc = SM.getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
-  if (PLoc.isInvalid())
-    return;
 
   // Emit the other import frames first.
   std::pair<SourceLocation, StringRef> NextImportLoc
@@ -501,8 +499,11 @@ void DiagnosticNoteRenderer::emitImportLocation(SourceLocation Loc,
   // Generate a note indicating the include location.
   SmallString<200> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
-  Message << "in module '" << ModuleName << "' imported from "
-          << PLoc.getFilename() << ':' << PLoc.getLine() << ":";
+  Message << "in module '" << ModuleName;
+  if (!PLoc.isInvalid())
+    Message << "' imported from " << PLoc.getFilename() << ':'
+            << PLoc.getLine();
+  Message << ":";
   emitNote(Loc, Message.str(), &SM);
 }
 

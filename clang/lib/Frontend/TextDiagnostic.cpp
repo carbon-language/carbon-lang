@@ -875,7 +875,7 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
 void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
                                          PresumedLoc PLoc,
                                          const SourceManager &SM) {
-  if (DiagOpts->ShowLocation)
+  if (DiagOpts->ShowLocation && PLoc.getFilename())
     OS << "In file included from " << PLoc.getFilename() << ':'
        << PLoc.getLine() << ":\n";
   else
@@ -885,11 +885,11 @@ void TextDiagnostic::emitIncludeLocation(SourceLocation Loc,
 void TextDiagnostic::emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
                                         StringRef ModuleName,
                                         const SourceManager &SM) {
-  if (DiagOpts->ShowLocation)
+  if (DiagOpts->ShowLocation && PLoc.getFilename())
     OS << "In module '" << ModuleName << "' imported from "
        << PLoc.getFilename() << ':' << PLoc.getLine() << ":\n";
   else
-    OS << "In module " << ModuleName << "':\n";
+    OS << "In module '" << ModuleName << "':\n";
 }
 
 void TextDiagnostic::emitBuildingModuleLocation(SourceLocation Loc,
