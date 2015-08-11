@@ -90,8 +90,8 @@ class SymbolizerProcess {
   }
 
   const char *path_;
-  int input_fd_;
-  int output_fd_;
+  fd_t input_fd_;
+  fd_t output_fd_;
 
   static const uptr kBufferSize = 16 * 1024;
   char buffer_[kBufferSize];

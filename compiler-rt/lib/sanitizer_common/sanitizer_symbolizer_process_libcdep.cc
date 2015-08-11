@@ -55,9 +55,9 @@ const char *SymbolizerProcess::SendCommand(const char *command) {
 
 bool SymbolizerProcess::Restart() {
   if (input_fd_ != kInvalidFd)
-    internal_close(input_fd_);
+    CloseFile(input_fd_);
   if (output_fd_ != kInvalidFd)
-    internal_close(output_fd_);
+    CloseFile(output_fd_);
   return StartSymbolizerSubprocess();
 }
 
@@ -76,11 +76,12 @@ bool SymbolizerProcess::ReadFromSymbolizer(char *buffer, uptr max_length) {
     return true;
   uptr read_len = 0;
   while (true) {
-    uptr just_read = internal_read(input_fd_, buffer + read_len,
-                                   max_length - read_len - 1);
+    uptr just_read = 0;
+    bool success = ReadFromFile(input_fd_, buffer + read_len,
+                                max_length - read_len - 1, &just_read);
     // We can't read 0 bytes, as we don't expect external symbolizer to close
     // its stdout.
-    if (just_read == 0 || just_read == (uptr)-1) {
+    if (!success || just_read == 0) {
       Report("WARNING: Can't read from symbolizer at fd %d\n", input_fd_);
       return false;
     }
@@ -95,8 +96,9 @@ bool SymbolizerProcess::ReadFromSymbolizer(char *buffer, uptr max_length) {
 bool SymbolizerProcess::WriteToSymbolizer(const char *buffer, uptr length) {
   if (length == 0)
     return true;
-  uptr write_len = internal_write(output_fd_, buffer, length);
-  if (write_len == 0 || write_len == (uptr)-1) {
+  uptr write_len = 0;
+  bool success = WriteToFile(output_fd_, buffer, length, &write_len);
+  if (!success || write_len != length) {
     Report("WARNING: Can't write to symbolizer at fd %d\n", output_fd_);
     return false;
   }
