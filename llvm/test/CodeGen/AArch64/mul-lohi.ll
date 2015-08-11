@@ -33,8 +33,6 @@ define i128 @test_128bitmul_optsize(i128 %lhs, i128 %rhs) optsize {
   ret i128 %prod
 }
 
-; FIXME: This should be the same as the optsize test above.
-
 define i128 @test_128bitmul_minsize(i128 %lhs, i128 %rhs) minsize {
 ; CHECK-LABEL: test_128bitmul_minsize:
 ; CHECK:       umulh [[HI:x[0-9]+]], x0, x2
