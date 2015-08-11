@@ -37,8 +37,7 @@ using namespace lld;
 using namespace lld::coff;
 
 static const int PageSize = 4096;
-static const int FileAlignment = 512;
-static const int SectionAlignment = 4096;
+static const int SectorSize = 512;
 static const int DOSStubSize = 64;
 static const int NumberfOfDataDirectory = 16;
 
@@ -174,7 +173,7 @@ void OutputSection::addChunk(Chunk *C) {
   Off += C->getSize();
   Header.VirtualSize = Off;
   if (C->hasData())
-    Header.SizeOfRawData = RoundUpToAlignment(Off, FileAlignment);
+    Header.SizeOfRawData = RoundUpToAlignment(Off, SectorSize);
 }
 
 void OutputSection::addPermissions(uint32_t C) {
@@ -507,15 +506,14 @@ void Writer::createSymbolAndStringTable() {
   // We position the symbol table to be adjacent to the end of the last section.
   uint64_t FileOff =
       LastSection->getFileOff() +
-      RoundUpToAlignment(LastSection->getRawSize(), FileAlignment);
+      RoundUpToAlignment(LastSection->getRawSize(), SectorSize);
   if (!OutputSymtab.empty()) {
     PointerToSymbolTable = FileOff;
     FileOff += OutputSymtab.size() * sizeof(coff_symbol16);
   }
   if (!Strtab.empty())
     FileOff += Strtab.size() + 4;
-  FileSize = SizeOfHeaders +
-             RoundUpToAlignment(FileOff - SizeOfHeaders, FileAlignment);
+  FileSize = RoundUpToAlignment(FileOff, SectorSize);
 }
 
 // Visits all sections to assign incremental, non-overlapping RVAs and
@@ -526,9 +524,9 @@ void Writer::assignAddresses() {
                   sizeof(coff_section) * OutputSections.size();
   SizeOfHeaders +=
       Config->is64() ? sizeof(pe32plus_header) : sizeof(pe32_header);
-  SizeOfHeaders = RoundUpToAlignment(SizeOfHeaders, PageSize);
+  SizeOfHeaders = RoundUpToAlignment(SizeOfHeaders, SectorSize);
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
-  uint64_t FileOff = SizeOfHeaders;
+  FileSize = SizeOfHeaders;
   // Move DISCARDABLE (or non-memory-mapped) sections to the end of file because
   // the loader cannot handle holes.
   std::stable_partition(
@@ -539,13 +537,11 @@ void Writer::assignAddresses() {
     if (Sec->getName() == ".reloc")
       addBaserels(Sec);
     Sec->setRVA(RVA);
-    Sec->setFileOffset(FileOff);
+    Sec->setFileOffset(FileSize);
     RVA += RoundUpToAlignment(Sec->getVirtualSize(), PageSize);
-    FileOff += RoundUpToAlignment(Sec->getRawSize(), FileAlignment);
+    FileSize += RoundUpToAlignment(Sec->getRawSize(), SectorSize);
   }
   SizeOfImage = SizeOfHeaders + RoundUpToAlignment(RVA - 0x1000, PageSize);
-  FileSize = SizeOfHeaders +
-             RoundUpToAlignment(FileOff - SizeOfHeaders, FileAlignment);
 }
 
 template <typename PEHeaderTy> void Writer::writeHeader() {
@@ -584,8 +580,8 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   Buf += sizeof(*PE);
   PE->Magic = Config->is64() ? PE32Header::PE32_PLUS : PE32Header::PE32;
   PE->ImageBase = Config->ImageBase;
-  PE->SectionAlignment = SectionAlignment;
-  PE->FileAlignment = FileAlignment;
+  PE->SectionAlignment = PageSize;
+  PE->FileAlignment = SectorSize;
   PE->MajorImageVersion = Config->MajorImageVersion;
   PE->MinorImageVersion = Config->MinorImageVersion;
   PE->MajorOperatingSystemVersion = Config->MajorOSVersion;
