@@ -544,6 +544,21 @@ RegionInfoBase<Tr>::~RegionInfoBase() {
 }
 
 template <class Tr>
+void RegionInfoBase<Tr>::verifyBBMap(const RegionT *R) const {
+  assert(R && "Re must be non-null");
+  for (auto I = R->element_begin(), E = R->element_end(); I != E; ++I) {
+    if (I->isSubRegion()) {
+      const RegionT *SR = I->template getNodeAs<RegionT>();
+      verifyBBMap(SR);
+    } else {
+      BlockT *BB = I->template getNodeAs<BlockT>();
+      if (getRegionFor(BB) != R)
+        llvm_unreachable("BB map does not match region nesting");
+    }
+  }
+}
+
+template <class Tr>
 bool RegionInfoBase<Tr>::isCommonDomFrontier(BlockT *BB, BlockT *entry,
                                              BlockT *exit) const {
   for (PredIterTy PI = InvBlockTraits::child_begin(BB),
@@ -788,7 +803,14 @@ void RegionInfoBase<Tr>::releaseMemory() {
 
 template <class Tr>
 void RegionInfoBase<Tr>::verifyAnalysis() const {
+  // Do only verify regions if explicitely activated using XDEBUG or
+  // -verify-region-info
+  if (!RegionInfoBase<Tr>::VerifyRegionInfo)
+    return;
+
   TopLevelRegion->verifyRegionNest();
+
+  verifyBBMap(TopLevelRegion);
 }
 
 // Region pass manager support.
