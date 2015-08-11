@@ -6,7 +6,7 @@
 // FIXME: Test will fail until we add flags for requesting dwarf or cv.
 // RUNX: %clangxx_asan -O2 %s -o %t.exe -fuse-ld=lld -Wl,-debug
 // RUN: %clangxx_asan -c -O2 %s -o %t.o -gdwarf
-// RUN: lld-link2 %t.o -out:%t.exe -debug -defaultlib:libcmt %asan_lib %asan_cxx_lib
+// RUN: lld-link %t.o -out:%t.exe -debug -defaultlib:libcmt %asan_lib %asan_cxx_lib
 // RUN: not %run %t.exe 2>&1 | FileCheck %s
 
 #include <stdlib.h>
