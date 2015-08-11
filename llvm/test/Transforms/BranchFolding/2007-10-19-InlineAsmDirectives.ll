@@ -4,6 +4,7 @@
 
 ; CHECK: bork_directive
 ; CHECK: bork_directive
+; CHECK-NOT: bork_directive
 
 define void @bork(i32 %param) {
 entry:
