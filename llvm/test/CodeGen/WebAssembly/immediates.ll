@@ -97,7 +97,7 @@ define float @nan_f32() {
 }
 
 ; CHECK-LABEL: negnan_f32:
-; CHECK-NEXT: (setlocal @0 (immediate nan))
+; CHECK-NEXT: (setlocal @0 (immediate -nan))
 ; CHECK-NEXT: (return @0)
 define float @negnan_f32() {
   ret float 0xFFF8000000000000
@@ -153,7 +153,7 @@ define double @nan_f64() {
 }
 
 ; CHECK-LABEL: negnan_f64:
-; CHECK-NEXT: (setlocal @0 (immediate nan))
+; CHECK-NEXT: (setlocal @0 (immediate -nan))
 ; CHECK-NEXT: (return @0)
 define double @negnan_f64() {
   ret double 0xFFF8000000000000

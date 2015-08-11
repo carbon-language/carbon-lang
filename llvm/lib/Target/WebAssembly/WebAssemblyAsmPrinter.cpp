@@ -117,10 +117,11 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       static const size_t BufBytes = 128;
       char buf[BufBytes];
       APFloat FP = MO.getFPImm()->getValueAPF();
-      const APFloat CanonicalNaN = APFloat::getQNaN(FP.getSemantics());
-      if (FP.isNaN() && !FP.bitwiseIsEqual(CanonicalNaN))
-        // WebAssembly only has NaNs that are positive, quiet, without payload.
-        FP = CanonicalNaN;
+      if (FP.isNaN())
+        assert((FP.bitwiseIsEqual(APFloat::getQNaN(FP.getSemantics())) ||
+                FP.bitwiseIsEqual(
+                    APFloat::getQNaN(FP.getSemantics(), /*Negative=*/true))) &&
+               "convertToHexString handles neither SNaN nor NaN payloads");
       // Use C99's hexadecimal floating-point representation.
       auto Written =
           FP.convertToHexString(buf, /*hexDigits=*/0, /*upperCase=*/false,
