@@ -26,19 +26,16 @@ defm SHL : BinaryInt<shl>;
 defm SHR : BinaryInt<srl>;
 defm SAR : BinaryInt<sra>;
 
-/*
- * TODO(jfb): Add the following for 32-bit and 64-bit.
- *
- * int32.eq: signed-less compare equal
- * int32.slt: signed less than
- * int32.sle: signed less than or equal
- * int32.ult: unsigned less than
- * int32.ule: unsigned less than or equal
- * int32.sgt: signed greater than
- * int32.sge: signed greater than or equal
- * int32.ugt: unsigned greater than
- * int32.uge: unsigned greater than or equal
- */
+defm EQ : ComparisonInt<SETEQ>;
+defm NE : ComparisonInt<SETNE>;
+defm SLT : ComparisonInt<SETLT>;
+defm SLE : ComparisonInt<SETLE>;
+defm ULT : ComparisonInt<SETULT>;
+defm ULE : ComparisonInt<SETULE>;
+defm SGT : ComparisonInt<SETGT>;
+defm SGE : ComparisonInt<SETGE>;
+defm UGT : ComparisonInt<SETUGT>;
+defm UGE : ComparisonInt<SETUGE>;
 
 defm CLZ : UnaryInt<ctlz>;
 defm CTZ : UnaryInt<cttz>;

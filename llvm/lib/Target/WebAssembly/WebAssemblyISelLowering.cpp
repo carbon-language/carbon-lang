@@ -110,9 +110,14 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
 
   // FIXME: many setOperationAction are missing...
 
-  // Don't expand the following types to constant pools.
-  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
-  setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+  for (auto T : {MVT::f32, MVT::f64}) {
+    // Don't expand the floating-point types to constant pools.
+    setOperationAction(ISD::ConstantFP, T, Legal);
+    // Expand floating-point comparisons.
+    for (auto CC : {ISD::SETO, ISD::SETUO, ISD::SETUEQ, ISD::SETONE,
+                    ISD::SETULT, ISD::SETULE, ISD::SETUGT, ISD::SETUGE})
+      setCondCodeAction(CC, T, Expand);
+  }
 }
 
 MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,

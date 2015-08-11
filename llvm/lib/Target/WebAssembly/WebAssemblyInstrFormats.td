@@ -53,3 +53,15 @@ multiclass BinaryFP<SDNode node> {
   def _F64 : I<(outs Float64:$dst), (ins Float64:$lhs, Float64:$rhs),
                [(set Float64:$dst, (node Float64:$lhs, Float64:$rhs))]>;
 }
+multiclass ComparisonInt<CondCode cond> {
+  def _I32 : I<(outs Int32:$dst), (ins Int32:$lhs, Int32:$rhs),
+               [(set Int32:$dst, (setcc Int32:$lhs, Int32:$rhs, cond))]>;
+  def _I64 : I<(outs Int32:$dst), (ins Int64:$lhs, Int64:$rhs),
+               [(set Int32:$dst, (setcc Int64:$lhs, Int64:$rhs, cond))]>;
+}
+multiclass ComparisonFP<CondCode cond> {
+  def _F32 : I<(outs Int32:$dst), (ins Float32:$lhs, Float32:$rhs),
+               [(set Int32:$dst, (setcc Float32:$lhs, Float32:$rhs, cond))]>;
+  def _F64 : I<(outs Int32:$dst), (ins Float64:$lhs, Float64:$rhs),
+               [(set Int32:$dst, (setcc Float64:$lhs, Float64:$rhs, cond))]>;
+}
