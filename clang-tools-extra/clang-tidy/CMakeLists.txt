@@ -18,6 +18,7 @@ add_clang_library(clangTidy
   clangASTMatchers
   clangBasic
   clangFrontend
+  clangLex
   clangRewrite
   clangSema
   clangStaticAnalyzerCore
