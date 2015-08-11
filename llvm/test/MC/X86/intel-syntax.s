@@ -688,3 +688,16 @@ imul rbx, 123
 // CHECK: imulw $123, %bx
 // CHECK: imull $123, %ebx
 // CHECK: imulq $123, %rbx
+
+repe cmpsb
+repz cmpsb
+repne cmpsb
+repnz cmpsb
+// CHECK: rep
+// CHECK: cmpsb	%es:(%rdi), (%rsi)
+// CHECK: rep
+// CHECK: cmpsb	%es:(%rdi), (%rsi)
+// CHECK: repne
+// CHECK: cmpsb	%es:(%rdi), (%rsi)
+// CHECK: repne
+// CHECK: cmpsb	%es:(%rdi), (%rsi)

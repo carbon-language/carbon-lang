@@ -2540,9 +2540,9 @@ def : MnemonicAlias<"pusha",  "pushaw", "att">, Requires<[In16BitMode]>;
 def : MnemonicAlias<"popa",   "popal",  "att">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"pusha",  "pushal", "att">, Requires<[In32BitMode]>;
 
-def : MnemonicAlias<"repe",  "rep",   "att">;
-def : MnemonicAlias<"repz",  "rep",   "att">;
-def : MnemonicAlias<"repnz", "repne", "att">;
+def : MnemonicAlias<"repe",  "rep">;
+def : MnemonicAlias<"repz",  "rep">;
+def : MnemonicAlias<"repnz", "repne">;
 
 def : MnemonicAlias<"ret", "retw", "att">, Requires<[In16BitMode]>;
 def : MnemonicAlias<"ret", "retl", "att">, Requires<[In32BitMode]>;
