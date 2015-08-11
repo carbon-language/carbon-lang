@@ -1,17 +1,16 @@
 ; This test verifies that the loop vectorizer will NOT produce a tail
 ; loop with Optimize for size attibute.
 ; REQUIRES: asserts
-; RUN: opt < %s -loop-vectorize -Os -debug -debug-only=loop-vectorize -S 2>&1 | FileCheck %s
+; RUN: opt < %s -loop-vectorize -debug -debug-only=loop-vectorize -S 2>&1 | FileCheck %s
 
-;CHECK-NOT: <2 x i8>
-;CHECK-NOT: <4 x i8>
-;CHECK: Aborting. A tail loop is required in Os.
+; CHECK-NOT: <2 x i8>
+; CHECK-NOT: <4 x i8>
+; CHECK: Aborting. A tail loop is required in Os.
 
 target datalayout = "E-m:e-p:32:32-i64:32-f64:32:64-a:0:32-n32-S128"
 
 @tab = common global [32 x i8] zeroinitializer, align 1
 
-; Function Attrs: nounwind optsize
 define i32 @foo() #0 {
 entry:
   br label %for.body
@@ -31,4 +30,5 @@ for.end:                                          ; preds = %for.body
   ret i32 0
 }
 
-attributes #0 = { nounwind optsize "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #0 = { optsize }
+
