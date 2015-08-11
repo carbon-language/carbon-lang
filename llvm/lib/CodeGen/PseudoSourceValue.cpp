@@ -60,7 +60,7 @@ const PseudoSourceValue *PseudoSourceValue::getConstantPool() {
 static const char *const PSVNames[] = {"Stack", "GOT", "JumpTable",
                                        "ConstantPool"};
 
-PseudoSourceValue::PseudoSourceValue(bool isFixed) : isFixed(isFixed) {}
+PseudoSourceValue::PseudoSourceValue(bool IsFixed) : IsFixed(IsFixed) {}
 
 PseudoSourceValue::~PseudoSourceValue() {}
 

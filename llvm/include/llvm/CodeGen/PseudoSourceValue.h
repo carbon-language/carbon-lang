@@ -17,44 +17,42 @@
 #include "llvm/IR/Value.h"
 
 namespace llvm {
+
 class MachineFrameInfo;
 class MachineMemOperand;
 class raw_ostream;
 
 raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MMO);
 
-/// PseudoSourceValue - Special value supplied for machine level alias
-/// analysis. It indicates that a memory access references the functions
-/// stack frame (e.g., a spill slot), below the stack frame (e.g., argument
-/// space), or constant pool.
+/// Special value supplied for machine level alias analysis. It indicates that
+/// a memory access references the functions stack frame (e.g., a spill slot),
+/// below the stack frame (e.g., argument space), or constant pool.
 class PseudoSourceValue {
 private:
   friend class MachineMemOperand; // For printCustom().
 
-  /// printCustom - Implement printing for PseudoSourceValue. This is called
-  /// from Value::print or Value's operator<<.
-  ///
+  /// Implement printing for PseudoSourceValue. This is called from
+  /// Value::print or Value's operator<<.
   virtual void printCustom(raw_ostream &O) const;
 
 public:
-  /// isFixed - Whether this is a FixedStackPseudoSourceValue.
-  bool isFixed;
+  /// Whether this is a FixedStackPseudoSourceValue.
+  bool IsFixed;
 
-  explicit PseudoSourceValue(bool isFixed = false);
+  explicit PseudoSourceValue(bool IsFixed = false);
 
   virtual ~PseudoSourceValue();
 
-  /// isConstant - Test whether the memory pointed to by this
-  /// PseudoSourceValue has a constant value.
-  ///
+  /// Test whether the memory pointed to by this PseudoSourceValue has a
+  /// constant value.
   virtual bool isConstant(const MachineFrameInfo *) const;
 
-  /// isAliased - Test whether the memory pointed to by this
-  /// PseudoSourceValue may also be pointed to by an LLVM IR Value.
+  /// Test whether the memory pointed to by this PseudoSourceValue may also be
+  /// pointed to by an LLVM IR Value.
   virtual bool isAliased(const MachineFrameInfo *) const;
 
-  /// mayAlias - Return true if the memory pointed to by this
-  /// PseudoSourceValue can ever alias an LLVM IR Value.
+  /// Return true if the memory pointed to by this PseudoSourceValue can ever
+  /// alias an LLVM IR Value.
   virtual bool mayAlias(const MachineFrameInfo *) const;
 
   /// A pseudo source value referencing a fixed stack frame entry,
@@ -79,21 +77,17 @@ public:
   static const PseudoSourceValue *getJumpTable();
 };
 
-/// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
-/// for holding FixedStack values, which must include a frame
-/// index.
+/// A specialized PseudoSourceValue for holding FixedStack values, which must
+/// include a frame index.
 class FixedStackPseudoSourceValue : public PseudoSourceValue {
   const int FI;
 
 public:
-  explicit FixedStackPseudoSourceValue(int fi)
-      : PseudoSourceValue(true), FI(fi) {}
+  explicit FixedStackPseudoSourceValue(int FI)
+      : PseudoSourceValue(true), FI(FI) {}
 
-  /// classof - Methods for support type inquiry through isa, cast, and
-  /// dyn_cast:
-  ///
   static inline bool classof(const PseudoSourceValue *V) {
-    return V->isFixed == true;
+    return V->IsFixed == true;
   }
 
   bool isConstant(const MachineFrameInfo *MFI) const override;
@@ -106,6 +100,7 @@ public:
 
   int getFrameIndex() const { return FI; }
 };
-} // End llvm namespace
+
+} // end namespace llvm
 
 #endif
