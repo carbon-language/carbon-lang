@@ -6240,6 +6240,7 @@ void ASTReader::FindExternalLexicalDecls(
       }
 
       if (Decl *D = GetLocalDecl(*M, ID)) {
+        assert(D->getKind() == K && "wrong kind for lexical decl");
         if (!DC->isDeclInLexicalTraversal(D))
           Decls.push_back(D);
       }
