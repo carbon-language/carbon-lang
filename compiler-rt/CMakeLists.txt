@@ -355,7 +355,7 @@ else()
   set(COMPILER_RT_HAS_LIBCXX_SOURCES FALSE)
 endif()
 
-find_llvm_external_project(projects libcxx COMPILER_RT_LLD_PATH)
+set(COMPILER_RT_LLD_PATH ${LLVM_MAIN_SRC_DIR}/tools/lld)
 if(EXISTS ${COMPILER_RT_LLD_PATH}/)
   set(COMPILER_RT_HAS_LLD_SOURCES TRUE)
 else()
