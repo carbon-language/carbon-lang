@@ -679,6 +679,11 @@ void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
                             ISD::SABSDIFF, ISD::UABSDIFF})
       setOperationAction(Opcode, VT.getSimpleVT(), Legal);
 
+  // F[MIN|MAX]NAN are available for all FP NEON types.
+  if (VT.isFloatingPoint())
+    for (unsigned Opcode : {ISD::FMINNAN, ISD::FMAXNAN})
+      setOperationAction(Opcode, VT.getSimpleVT(), Legal);
+
   if (Subtarget->isLittleEndian()) {
     for (unsigned im = (unsigned)ISD::PRE_INC;
          im != (unsigned)ISD::LAST_INDEXED_MODE; ++im) {
@@ -818,8 +823,6 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::CCMN:              return "AArch64ISD::CCMN";
   case AArch64ISD::FCCMP:             return "AArch64ISD::FCCMP";
   case AArch64ISD::FCMP:              return "AArch64ISD::FCMP";
-  case AArch64ISD::FMIN:              return "AArch64ISD::FMIN";
-  case AArch64ISD::FMAX:              return "AArch64ISD::FMAX";
   case AArch64ISD::DUP:               return "AArch64ISD::DUP";
   case AArch64ISD::DUPLANE8:          return "AArch64ISD::DUPLANE8";
   case AArch64ISD::DUPLANE16:         return "AArch64ISD::DUPLANE16";
@@ -8219,10 +8222,10 @@ static SDValue performIntrinsicCombine(SDNode *N,
   case Intrinsic::aarch64_neon_umaxv:
     return combineAcrossLanesIntrinsic(AArch64ISD::UMAXV, N, DAG);
   case Intrinsic::aarch64_neon_fmax:
-    return DAG.getNode(AArch64ISD::FMAX, SDLoc(N), N->getValueType(0),
+    return DAG.getNode(ISD::FMAXNAN, SDLoc(N), N->getValueType(0),
                        N->getOperand(1), N->getOperand(2));
   case Intrinsic::aarch64_neon_fmin:
-    return DAG.getNode(AArch64ISD::FMIN, SDLoc(N), N->getValueType(0),
+    return DAG.getNode(ISD::FMINNAN, SDLoc(N), N->getValueType(0),
                        N->getOperand(1), N->getOperand(2));
   case Intrinsic::aarch64_neon_sabd:
     return DAG.getNode(ISD::SABSDIFF, SDLoc(N), N->getValueType(0),
@@ -9147,7 +9150,7 @@ static SDValue performSelectCCCombine(SDNode *N, SelectionDAG &DAG) {
   case ISD::SETLT:
   case ISD::SETLE:
     IsOrEqual = (CC == ISD::SETLE || CC == ISD::SETOLE || CC == ISD::SETULE);
-    Opcode = IsReversed ? AArch64ISD::FMAX : AArch64ISD::FMIN;
+    Opcode = IsReversed ? ISD::FMAXNAN : ISD::FMINNAN;
     break;
 
   case ISD::SETUGT:
@@ -9158,7 +9161,7 @@ static SDValue performSelectCCCombine(SDNode *N, SelectionDAG &DAG) {
   case ISD::SETGT:
   case ISD::SETGE:
     IsOrEqual = (CC == ISD::SETGE || CC == ISD::SETOGE || CC == ISD::SETUGE);
-    Opcode = IsReversed ? AArch64ISD::FMIN : AArch64ISD::FMAX;
+    Opcode = IsReversed ? ISD::FMINNAN : ISD::FMAXNAN;
     break;
   }
 

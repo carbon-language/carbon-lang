@@ -66,10 +66,6 @@ enum NodeType : unsigned {
   // Floating point comparison
   FCMP,
 
-  // Floating point max and min instructions.
-  FMAX,
-  FMIN,
-
   // Scalar extract
   EXTR,
 

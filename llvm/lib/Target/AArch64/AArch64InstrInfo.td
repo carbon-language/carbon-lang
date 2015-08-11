@@ -182,9 +182,6 @@ def AArch64threadpointer : SDNode<"AArch64ISD::THREAD_POINTER", SDTPtrLeaf>;
 
 def AArch64fcmp      : SDNode<"AArch64ISD::FCMP", SDT_AArch64FCmp>;
 
-def AArch64fmax      : SDNode<"AArch64ISD::FMAX", SDTFPBinOp>;
-def AArch64fmin      : SDNode<"AArch64ISD::FMIN", SDTFPBinOp>;
-
 def AArch64dup       : SDNode<"AArch64ISD::DUP", SDT_AArch64Dup>;
 def AArch64duplane8  : SDNode<"AArch64ISD::DUPLANE8", SDT_AArch64DupLane>;
 def AArch64duplane16 : SDNode<"AArch64ISD::DUPLANE16", SDT_AArch64DupLane>;
@@ -2506,18 +2503,18 @@ let SchedRW = [WriteFDiv] in {
 defm FDIV   : TwoOperandFPData<0b0001, "fdiv", fdiv>;
 }
 defm FMAXNM : TwoOperandFPData<0b0110, "fmaxnm", int_aarch64_neon_fmaxnm>;
-defm FMAX   : TwoOperandFPData<0b0100, "fmax", AArch64fmax>;
+defm FMAX   : TwoOperandFPData<0b0100, "fmax", fmaxnan>;
 defm FMINNM : TwoOperandFPData<0b0111, "fminnm", int_aarch64_neon_fminnm>;
-defm FMIN   : TwoOperandFPData<0b0101, "fmin", AArch64fmin>;
+defm FMIN   : TwoOperandFPData<0b0101, "fmin", fminnan>;
 let SchedRW = [WriteFMul] in {
 defm FMUL   : TwoOperandFPData<0b0000, "fmul", fmul>;
 defm FNMUL  : TwoOperandFPDataNeg<0b1000, "fnmul", fmul>;
 }
 defm FSUB   : TwoOperandFPData<0b0011, "fsub", fsub>;
 
-def : Pat<(v1f64 (AArch64fmax (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+def : Pat<(v1f64 (fmaxnan (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMAXDrr FPR64:$Rn, FPR64:$Rm)>;
-def : Pat<(v1f64 (AArch64fmin (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+def : Pat<(v1f64 (fminnan (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMINDrr FPR64:$Rn, FPR64:$Rm)>;
 def : Pat<(v1f64 (int_aarch64_neon_fmaxnm (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMAXNMDrr FPR64:$Rn, FPR64:$Rm)>;
@@ -2809,11 +2806,11 @@ defm FDIV    : SIMDThreeSameVectorFP<1,0,0b11111,"fdiv", fdiv>;
 defm FMAXNMP : SIMDThreeSameVectorFP<1,0,0b11000,"fmaxnmp", int_aarch64_neon_fmaxnmp>;
 defm FMAXNM  : SIMDThreeSameVectorFP<0,0,0b11000,"fmaxnm", int_aarch64_neon_fmaxnm>;
 defm FMAXP   : SIMDThreeSameVectorFP<1,0,0b11110,"fmaxp", int_aarch64_neon_fmaxp>;
-defm FMAX    : SIMDThreeSameVectorFP<0,0,0b11110,"fmax", AArch64fmax>;
+defm FMAX    : SIMDThreeSameVectorFP<0,0,0b11110,"fmax", fmaxnan>;
 defm FMINNMP : SIMDThreeSameVectorFP<1,1,0b11000,"fminnmp", int_aarch64_neon_fminnmp>;
 defm FMINNM  : SIMDThreeSameVectorFP<0,1,0b11000,"fminnm", int_aarch64_neon_fminnm>;
 defm FMINP   : SIMDThreeSameVectorFP<1,1,0b11110,"fminp", int_aarch64_neon_fminp>;
-defm FMIN    : SIMDThreeSameVectorFP<0,1,0b11110,"fmin", AArch64fmin>;
+defm FMIN    : SIMDThreeSameVectorFP<0,1,0b11110,"fmin", fminnan>;
 
 // NOTE: The operands of the PatFrag are reordered on FMLA/FMLS because the
 // instruction expects the addend first, while the fma intrinsic puts it last.
