@@ -5032,10 +5032,10 @@ defm VMAXu    : N3VInt_QHS<1, 0, 0b0110, 0, N3RegFrm,
                            "vmax", "u", int_arm_neon_vmaxu, 1>;
 def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBIND,
                         "vmax", "f32",
-                        v2f32, v2f32, int_arm_neon_vmaxs, 1>;
+                        v2f32, v2f32, fmaxnan, 1>;
 def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINQ,
                         "vmax", "f32",
-                        v4f32, v4f32, int_arm_neon_vmaxs, 1>;
+                        v4f32, v4f32, fmaxnan, 1>;
 
 // VMAXNM
 let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
@@ -5058,10 +5058,10 @@ defm VMINu    : N3VInt_QHS<1, 0, 0b0110, 1, N3RegFrm,
                            "vmin", "u", int_arm_neon_vminu, 1>;
 def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBIND,
                         "vmin", "f32",
-                        v2f32, v2f32, int_arm_neon_vmins, 1>;
+                        v2f32, v2f32, fminnan, 1>;
 def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINQ,
                         "vmin", "f32",
-                        v4f32, v4f32, int_arm_neon_vmins, 1>;
+                        v4f32, v4f32, fminnan, 1>;
 
 // VMINNM
 let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {

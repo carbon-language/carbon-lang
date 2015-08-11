@@ -957,6 +957,12 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FMINNAN, MVT::f64, Legal);
     setOperationAction(ISD::FMAXNAN, MVT::f64, Legal);
   }
+  if (Subtarget->hasNEON()) {
+    setOperationAction(ISD::FMINNAN, MVT::v2f32, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::v2f32, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::v4f32, Legal);
+  }
 
   // We have target-specific dag combine patterns for the following nodes:
   // ARMISD::VMOVRRD  - No need to call setTargetDAGCombine
@@ -2800,6 +2806,16 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
   case Intrinsic::arm_neon_vmaxnm: {
     unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vminnm)
       ? ISD::FMINNUM : ISD::FMAXNUM;
+    return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  }
+  case Intrinsic::arm_neon_vmins:
+  case Intrinsic::arm_neon_vmaxs: {
+    // v{min,max}s is overloaded between signed integers and floats.
+    if (!Op.getValueType().isFloatingPoint())
+      return SDValue();
+    unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vmins)
+      ? ISD::FMINNAN : ISD::FMAXNAN;
     return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
   }
