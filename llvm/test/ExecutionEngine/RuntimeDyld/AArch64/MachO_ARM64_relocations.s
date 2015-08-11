@@ -55,6 +55,18 @@ ldr2:
     ldr  x0, [x0, _ptr@GOTPAGEOFF]
     ret
 
+# rtdyld-check: decode_operand(add1, 2) = (tgt+8)[11:2] << 2
+    .globl  _test_explicit_addend_reloc
+    .align  4
+_test_explicit_addend_reloc:
+add1:
+    add x0, x0, tgt@PAGEOFF+8
+
+    .align  3
+tgt:
+    .long 0
+    .long 0
+    .long 7
 
 # Test ARM64_RELOC_UNSIGNED relocation. The absolute 64-bit address of the
 # function should be stored at the 8-byte memory location.
