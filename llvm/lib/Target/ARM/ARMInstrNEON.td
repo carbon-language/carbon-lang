@@ -5041,11 +5041,11 @@ def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINQ,
 let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
   def VMAXNMND  : N3VDIntnp<0b00110, 0b00, 0b1111, 0, 1,
                             N3RegFrm, NoItinerary, "vmaxnm", "f32",
-                            v2f32, v2f32, int_arm_neon_vmaxnm, 1>,
+                            v2f32, v2f32, fmaxnum, 1>,
                             Requires<[HasV8, HasNEON]>;
   def VMAXNMNQ  : N3VQIntnp<0b00110, 0b00, 0b1111, 1, 1,
                             N3RegFrm, NoItinerary, "vmaxnm", "f32",
-                            v4f32, v4f32, int_arm_neon_vmaxnm, 1>,
+                            v4f32, v4f32, fmaxnum, 1>,
                             Requires<[HasV8, HasNEON]>;
 }
 
@@ -5067,11 +5067,11 @@ def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINQ,
 let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
   def VMINNMND  : N3VDIntnp<0b00110, 0b10, 0b1111, 0, 1,
                             N3RegFrm, NoItinerary, "vminnm", "f32",
-                            v2f32, v2f32, int_arm_neon_vminnm, 1>,
+                            v2f32, v2f32, fminnum, 1>,
                             Requires<[HasV8, HasNEON]>;
   def VMINNMNQ  : N3VQIntnp<0b00110, 0b10, 0b1111, 1, 1,
                             N3RegFrm, NoItinerary, "vminnm", "f32",
-                            v4f32, v4f32, int_arm_neon_vminnm, 1>,
+                            v4f32, v4f32, fminnum, 1>,
                             Requires<[HasV8, HasNEON]>;
 }
 

@@ -934,6 +934,11 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FRINT, MVT::f32, Legal);
     setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::v2f32, Legal);
+    setOperationAction(ISD::FMAXNUM, MVT::v2f32, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMAXNUM, MVT::v4f32, Legal);
+
     if (!Subtarget->isFPOnlySP()) {
       setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
       setOperationAction(ISD::FCEIL, MVT::f64, Legal);
@@ -2788,6 +2793,13 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
   case Intrinsic::arm_neon_vmullu: {
     unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vmulls)
       ? ARMISD::VMULLs : ARMISD::VMULLu;
+    return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  }
+  case Intrinsic::arm_neon_vminnm:
+  case Intrinsic::arm_neon_vmaxnm: {
+    unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vminnm)
+      ? ISD::FMINNUM : ISD::FMAXNUM;
     return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
   }
