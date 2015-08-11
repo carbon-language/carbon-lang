@@ -1,19 +1,14 @@
-The New PE/COFF Linker
-======================
+The PE/COFF Linker
+==================
 
-This directory contains an experimental linker for the PE/COFF file
-format. Because the fundamental design of this port is different from
+This directory contains a linker for Windows operating system.
+Because the fundamental design of this port is different from
 the other ports of LLD, this port is separated to this directory.
 
-The other ports are based on the Atom model, in which symbols and
-references are represented as vertices and edges of graphs.
-We don't use that model to aim for performance and simplicity.
-Our plan is to implement a linker for the PE/COFF format based on a
-different idea, and then apply the same idea to the ELF if proved to
-be effective.
-
-The linker supports both x86 and x86-64. It's able to link everything
-for LLVM/Clang/LLD.
+The linker is command-line compatible with MSVC linker and is
+generally 2x faster than that. It can be used to link real-world
+programs such as LLD itself or Clang, or even web browsers which
+are probably the largest open-source programs for Windows.
 
 Overall Design
 --------------
