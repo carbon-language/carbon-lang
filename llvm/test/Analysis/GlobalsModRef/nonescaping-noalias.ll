@@ -61,7 +61,9 @@ entry:
   ret i32 %v
 }
 
-define i32 @test4(i32* %param, i32 %n, i1 %c1, i1 %c2) {
+@g3 = internal global i32 1
+
+define i32 @test4(i32* %param, i32 %n, i1 %c1, i1 %c2, i1 %c3) {
 ; Ensure that we can fold a store to a load of a global across a store to
 ; the pointer loaded from that global even when the load is behind PHIs and
 ; selects, and there is a mixture of a load and another global or argument.
@@ -77,14 +79,15 @@ entry:
   store i32 42, i32* @g1
   %ptr1 = load i32*, i32** @g2
   %ptr2 = select i1 %c1, i32* %ptr1, i32* %param
+  %ptr3 = select i1 %c3, i32* %ptr2, i32* @g3
   br label %loop
 
 loop:
   %iv = phi i32 [ 0, %entry ], [ %inc, %loop ]
-  %ptr = phi i32* [ %ptr2, %entry ], [ %ptr4, %loop ]
+  %ptr = phi i32* [ %ptr3, %entry ], [ %ptr5, %loop ]
   store i32 7, i32* %ptr
-  %ptr3 = load i32*, i32** @g2
-  %ptr4 = select i1 %c2, i32* %ptr3, i32* %call
+  %ptr4 = load i32*, i32** @g2
+  %ptr5 = select i1 %c2, i32* %ptr4, i32* %call
   %inc = add i32 %iv, 1
   %test = icmp slt i32 %inc, %n
   br i1 %test, label %loop, label %exit

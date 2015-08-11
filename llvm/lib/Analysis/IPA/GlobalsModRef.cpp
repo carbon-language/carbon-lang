@@ -717,12 +717,23 @@ bool GlobalsModRef::isNonEscapingGlobalNoAlias(const GlobalValue *GV,
       if (InputGV == GV)
         return false;
 
-      // FIXME: It would be good to handle other obvious no-alias cases here, but
-      // it isn't clear how to do so reasonbly without building a small version
-      // of BasicAA into this code. We could recurse into AliasAnalysis::alias
-      // here but that seems likely to go poorly as we're inside the
-      // implementation of such a query. Until then, just conservatievly retun
-      // false.
+      // Distinct GlobalVariables never alias, unless overriden or zero-sized.
+      // FIXME: The condition can be refined, but be conservative for now.
+      auto *GVar = dyn_cast<GlobalVariable>(GV);
+      auto *InputGVar = dyn_cast<GlobalVariable>(InputGV);
+      if (GVar && InputGVar &&
+          !GVar->isDeclaration() && !InputGVar->isDeclaration() &&
+          !GVar->mayBeOverridden() && !InputGVar->mayBeOverridden()) {
+        Type *GVType = GVar->getInitializer()->getType();
+        Type *InputGVType = InputGVar->getInitializer()->getType();
+        if (GVType->isSized() && InputGVType->isSized() &&
+            (DL->getTypeAllocSize(GVType) > 0) &&
+            (DL->getTypeAllocSize(InputGVType) > 0))
+          continue;
+      }
+
+      // Conservatively return false, even though we could be smarter
+      // (e.g. look through GlobalAliases).
       return false;
     }
 
@@ -767,7 +778,12 @@ bool GlobalsModRef::isNonEscapingGlobalNoAlias(const GlobalValue *GV,
       continue;
     }
 
-    // Unknown instruction, bail.
+    // FIXME: It would be good to handle other obvious no-alias cases here, but
+    // it isn't clear how to do so reasonbly without building a small version
+    // of BasicAA into this code. We could recurse into AliasAnalysis::alias
+    // here but that seems likely to go poorly as we're inside the
+    // implementation of such a query. Until then, just conservatievly retun
+    // false.
     return false;
   } while (!Inputs.empty());
 
