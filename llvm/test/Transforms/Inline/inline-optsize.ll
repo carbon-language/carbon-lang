@@ -3,7 +3,7 @@
 
 ; The inline threshold for a function with the optsize attribute is currently
 ; the same as the global inline threshold for -Os. Check that the optsize
-; function attribute don't alter the function specific inline threshold if the
+; function attribute doesn't alter the function-specific inline threshold if the
 ; global inline threshold is lower (as for -Oz).
 
 @a = global i32 4
