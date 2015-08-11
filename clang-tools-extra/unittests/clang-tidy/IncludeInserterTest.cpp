@@ -19,7 +19,8 @@ namespace {
 
 class IncludeInserterCheckBase : public ClangTidyCheck {
 public:
-  using ClangTidyCheck::ClangTidyCheck;
+  IncludeInserterCheckBase(StringRef CheckName, ClangTidyContext *Context)
+      : ClangTidyCheck(CheckName, Context) {}
   void registerPPCallbacks(CompilerInstance &Compiler) override {
     Inserter.reset(new IncludeInserter(Compiler.getSourceManager(),
                                        Compiler.getLangOpts(),
@@ -54,14 +55,16 @@ public:
 
 class NonSystemHeaderInserterCheck : public IncludeInserterCheckBase {
 public:
-  using IncludeInserterCheckBase::IncludeInserterCheckBase;
+  NonSystemHeaderInserterCheck(StringRef CheckName, ClangTidyContext *Context)
+      : IncludeInserterCheckBase(CheckName, Context) {}
   StringRef HeaderToInclude() const override { return "path/to/header.h"; }
   bool IsAngledInclude() const override { return false; }
 };
 
 class CXXSystemIncludeInserterCheck : public IncludeInserterCheckBase {
 public:
-  using IncludeInserterCheckBase::IncludeInserterCheckBase;
+  CXXSystemIncludeInserterCheck(StringRef CheckName, ClangTidyContext *Context)
+      : IncludeInserterCheckBase(CheckName, Context) {}
   StringRef HeaderToInclude() const override { return "set"; }
   bool IsAngledInclude() const override { return true; }
 };
