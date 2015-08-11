@@ -47,6 +47,16 @@ public:
   IteratorT end() const { return end_iterator; }
 };
 
+template <typename IteratorT>
+IteratorT begin(const iterator_range<IteratorT> &R) {
+  return R.begin();
+}
+
+template <typename IteratorT>
+IteratorT end(const iterator_range<IteratorT> &R) {
+  return R.end();
+}
+
 /// \brief Convenience function for iterating over sub-ranges.
 ///
 /// This provides a bit of syntactic sugar to make using sub-ranges
