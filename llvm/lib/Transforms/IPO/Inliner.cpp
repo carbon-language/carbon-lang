@@ -258,8 +258,8 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
 }
 
 unsigned Inliner::getInlineThreshold(CallSite CS) const {
-  int thres = InlineThreshold; // -inline-threshold or else selected by
-                               // overall opt level
+  int Threshold = InlineThreshold; // -inline-threshold or else selected by
+                                   // overall opt level
 
   // If -inline-threshold is not given, listen to the optsize attribute when it
   // would decrease the threshold.
@@ -268,17 +268,17 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
                  // FIXME: Use Function::optForSize().
                  Caller->hasFnAttribute(Attribute::OptimizeForSize);
   if (!(InlineLimit.getNumOccurrences() > 0) && OptSize &&
-      OptSizeThreshold < thres)
-    thres = OptSizeThreshold;
+      OptSizeThreshold < Threshold)
+    Threshold = OptSizeThreshold;
 
   // Listen to the inlinehint attribute when it would increase the threshold
   // and the caller does not need to minimize its size.
   Function *Callee = CS.getCalledFunction();
   bool InlineHint = Callee && !Callee->isDeclaration() &&
                     Callee->hasFnAttribute(Attribute::InlineHint);
-  if (InlineHint && HintThreshold > thres &&
+  if (InlineHint && HintThreshold > Threshold &&
       !Caller->hasFnAttribute(Attribute::MinSize))
-    thres = HintThreshold;
+    Threshold = HintThreshold;
 
   // Listen to the cold attribute when it would decrease the threshold.
   bool ColdCallee = Callee && !Callee->isDeclaration() &&
@@ -288,10 +288,10 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   // do not use the default cold threshold even if it is smaller.
   if ((InlineLimit.getNumOccurrences() == 0 ||
        ColdThreshold.getNumOccurrences() > 0) && ColdCallee &&
-      ColdThreshold < thres)
-    thres = ColdThreshold;
+      ColdThreshold < Threshold)
+    Threshold = ColdThreshold;
 
-  return thres;
+  return Threshold;
 }
 
 static void emitAnalysis(CallSite CS, const Twine &Msg) {
