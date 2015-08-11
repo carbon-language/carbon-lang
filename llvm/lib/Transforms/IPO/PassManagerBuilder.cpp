@@ -556,6 +556,9 @@ void PassManagerBuilder::addLateLTOOptimizationPasses(
   // Delete basic blocks, which optimization passes may have killed.
   PM.add(createCFGSimplificationPass());
 
+  // Drop bodies of available externally objects to improve GlobalDCE.
+  PM.add(createEliminateAvailableExternallyPass());
+
   // Now that we have optimized the program, discard unreachable functions.
   PM.add(createGlobalDCEPass());
 
