@@ -459,21 +459,18 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   // VFP and NEON instructions, similarly, are shared between ARM
   // and Thumb modes.
-  MI.clear();
   Result = decodeInstruction(DecoderTableVFP32, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
     Size = 4;
     return Result;
   }
 
-  MI.clear();
   Result = decodeInstruction(DecoderTableVFPV832, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
     Size = 4;
     return Result;
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTableNEONData32, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -485,7 +482,6 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result = decodeInstruction(DecoderTableNEONLoadStore32, MI, Insn, Address,
                              this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -497,7 +493,6 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTableNEONDup32, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -509,7 +504,6 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTablev8NEON32, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -517,7 +511,6 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTablev8Crypto32, MI, Insn, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -525,7 +518,6 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Size = 0;
   return MCDisassembler::Fail;
 }
@@ -718,7 +710,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result = decodeInstruction(DecoderTableThumbSBit16, MI, Insn16, Address, this,
                              STI);
   if (Result) {
@@ -729,7 +720,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTableThumb216, MI, Insn16, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -763,7 +753,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   uint32_t Insn32 =
       (Bytes[3] << 8) | (Bytes[2] << 0) | (Bytes[1] << 24) | (Bytes[0] << 16);
-  MI.clear();
   Result =
       decodeInstruction(DecoderTableThumb32, MI, Insn32, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -774,7 +763,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     return Result;
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTableThumb232, MI, Insn32, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -784,7 +772,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   if (fieldFromInstruction(Insn32, 28, 4) == 0xE) {
-    MI.clear();
     Result =
         decodeInstruction(DecoderTableVFP32, MI, Insn32, Address, this, STI);
     if (Result != MCDisassembler::Fail) {
@@ -794,7 +781,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     }
   }
 
-  MI.clear();
   Result =
       decodeInstruction(DecoderTableVFPV832, MI, Insn32, Address, this, STI);
   if (Result != MCDisassembler::Fail) {
@@ -803,7 +789,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   if (fieldFromInstruction(Insn32, 28, 4) == 0xE) {
-    MI.clear();
     Result = decodeInstruction(DecoderTableNEONDup32, MI, Insn32, Address, this,
                                STI);
     if (Result != MCDisassembler::Fail) {
@@ -814,7 +799,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   if (fieldFromInstruction(Insn32, 24, 8) == 0xF9) {
-    MI.clear();
     uint32_t NEONLdStInsn = Insn32;
     NEONLdStInsn &= 0xF0FFFFFF;
     NEONLdStInsn |= 0x04000000;
@@ -828,7 +812,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   if (fieldFromInstruction(Insn32, 24, 4) == 0xF) {
-    MI.clear();
     uint32_t NEONDataInsn = Insn32;
     NEONDataInsn &= 0xF0FFFFFF; // Clear bits 27-24
     NEONDataInsn |= (NEONDataInsn & 0x10000000) >> 4; // Move bit 28 to bit 24
@@ -841,7 +824,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       return Result;
     }
 
-    MI.clear();
     uint32_t NEONCryptoInsn = Insn32;
     NEONCryptoInsn &= 0xF0FFFFFF; // Clear bits 27-24
     NEONCryptoInsn |= (NEONCryptoInsn & 0x10000000) >> 4; // Move bit 28 to bit 24
@@ -853,7 +835,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       return Result;
     }
 
-    MI.clear();
     uint32_t NEONv8Insn = Insn32;
     NEONv8Insn &= 0xF3FFFFFF; // Clear bits 27-26
     Result = decodeInstruction(DecoderTablev8NEON32, MI, NEONv8Insn, Address,
@@ -864,7 +845,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     }
   }
 
-  MI.clear();
   Size = 0;
   return MCDisassembler::Fail;
 }

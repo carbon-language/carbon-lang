@@ -962,6 +962,7 @@ static bool translateInstruction(MCInst &mcInst,
     return true;
   }
 
+  mcInst.clear();
   mcInst.setOpcode(insn.instructionID);
   // If when reading the prefix bytes we determined the overlapping 0xf2 or 0xf3
   // prefix bytes should be disassembled as xrelease and xacquire then set the

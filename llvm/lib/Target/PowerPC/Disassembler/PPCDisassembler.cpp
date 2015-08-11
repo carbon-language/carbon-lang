@@ -401,8 +401,6 @@ DecodeStatus PPCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       decodeInstruction(DecoderTableQPX32, MI, Inst, Address, this, STI);
     if (result != MCDisassembler::Fail)
       return result;
-
-    MI.clear();
   }
 
   return decodeInstruction(DecoderTable32, MI, Inst, Address, this, STI);

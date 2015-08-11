@@ -235,6 +235,7 @@ DecodeStatus HexagonDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   Size = 0;
 
   *CurrentBundle = &MI;
+  MI.clear();
   MI.setOpcode(Hexagon::BUNDLE);
   MI.addOperand(MCOperand::createImm(0));
   while (Result == Success && Complete == false) {
