@@ -126,6 +126,7 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       auto Written =
           FP.convertToHexString(buf, /*hexDigits=*/0, /*upperCase=*/false,
                                 APFloat::rmNearestTiesToEven);
+      (void)Written;
       assert(Written != 0);
       assert(Written < BufBytes);
       OS << ' ' << buf;
