@@ -92,6 +92,18 @@ public:
     return true;
   }
 
+  // CodeGeneration adds a lot of BBs without updating the RegionInfo
+  // We make all created BBs belong to the scop's parent region without any
+  // nested structure to keep the RegionInfo verifier happy.
+  void fixRegionInfo(Function *F, Region *ParentRegion) {
+    for (BasicBlock &BB : *F) {
+      if (RI->getRegionFor(&BB))
+        continue;
+
+      RI->setRegionFor(&BB, ParentRegion);
+    }
+  }
+
   bool runOnScop(Scop &S) override {
     AI = &getAnalysis<IslAstInfo>();
 
@@ -136,6 +148,7 @@ public:
     NodeBuilder.create(AstRoot);
 
     NodeBuilder.finalizeSCoP(S);
+    fixRegionInfo(EnteringBB->getParent(), R->getParent());
 
     assert(!verifyGeneratedFunction(S, *EnteringBB->getParent()) &&
            "Verification of generated function failed");
