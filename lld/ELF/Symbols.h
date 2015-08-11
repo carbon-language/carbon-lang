@@ -37,8 +37,9 @@ public:
   enum Kind {
     DefinedFirst = 0,
     DefinedRegularKind = 0,
-    DefinedLast = 0,
-    UndefinedKind = 1,
+    DefinedWeakKind = 1,
+    DefinedLast = 1,
+    UndefinedKind = 2
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
@@ -89,6 +90,15 @@ public:
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
+  }
+};
+
+template <class ELFT> class DefinedWeak : public Defined {
+public:
+  DefinedWeak(StringRef Name);
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedWeakKind;
   }
 };
 

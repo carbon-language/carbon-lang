@@ -75,9 +75,17 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   ErrorOr<StringRef> NameOrErr = Sym->getName(StringTable);
   error(NameOrErr.getError());
   StringRef Name = *NameOrErr;
-  if (Sym->isUndefined())
-    return new (Alloc) Undefined(Name);
-  return new (Alloc) DefinedRegular<ELFT>(Name);
+  switch (Sym->getBinding()) {
+  default:
+    error("unexpected binding");
+  case STB_GLOBAL:
+    if (Sym->isUndefined())
+      return new (Alloc) Undefined(Name);
+    return new (Alloc) DefinedRegular<ELFT>(Name);
+  case STB_WEAK:
+    // FIXME: add support for weak undefined
+    return new (Alloc) DefinedWeak<ELFT>(Name);
+  }
 }
 
 namespace lld {
