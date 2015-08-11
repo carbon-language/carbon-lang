@@ -1088,6 +1088,8 @@ public:
     case ISD::ADDE:
     case ISD::FMINNUM:
     case ISD::FMAXNUM:
+    case ISD::FMINNAN:
+    case ISD::FMAXNAN:
       return true;
     default: return false;
     }

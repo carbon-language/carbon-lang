@@ -514,7 +514,15 @@ namespace ISD {
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     FLOG, FLOG2, FLOG10, FEXP, FEXP2,
     FCEIL, FTRUNC, FRINT, FNEARBYINT, FROUND, FFLOOR,
+    /// FMINNUM/FMAXNUM - Perform floating-point minimum or maximum on two
+    /// values.
+    /// In the case where a single input is NaN, the non-NaN input is returned.
+    ///
+    /// The return value of (FMINNUM 0.0, -0.0) could be either 0.0 or -0.0.
     FMINNUM, FMAXNUM,
+    /// FMINNAN/FMAXNAN - Behave identically to FMINNUM/FMAXNUM, except that
+    /// when a single input is NaN, NaN is returned.
+    FMINNAN, FMAXNAN,
 
     /// FSINCOS - Compute both fsin and fcos as a single operation.
     FSINCOS,
