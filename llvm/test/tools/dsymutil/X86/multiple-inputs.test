@@ -1,4 +1,3 @@
-REQUIRES: shell
 RUN: rm -rf %T/multiple-inputs
 RUN: mkdir -p %T/multiple-inputs
 

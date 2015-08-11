@@ -1,4 +1,3 @@
-REQUIRES: shell
 RUN: rm -rf %T/basic-linking-bundle
 RUN: mkdir -p %T/basic-linking-bundle/dsymdest
 RUN: cat %p/../Inputs/basic.macho.x86_64 > %T/basic-linking-bundle/basic.macho.x86_64
