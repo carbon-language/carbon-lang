@@ -644,13 +644,10 @@ define half @test_fabs(half %a) #0 {
 }
 
 ; CHECK-LABEL: test_minnum:
-; CHECK-NEXT: stp x29, x30, [sp, #-16]!
-; CHECK-NEXT: mov  x29, sp
-; CHECK-NEXT: fcvt s0, h0
 ; CHECK-NEXT: fcvt s1, h1
-; CHECK-NEXT: bl {{_?}}fminf
+; CHECK-NEXT: fcvt s0, h0
+; CHECK-NEXT: fminnm s0, s0, s1
 ; CHECK-NEXT: fcvt h0, s0
-; CHECK-NEXT: ldp x29, x30, [sp], #16
 ; CHECK-NEXT: ret
 define half @test_minnum(half %a, half %b) #0 {
   %r = call half @llvm.minnum.f16(half %a, half %b)
@@ -658,13 +655,10 @@ define half @test_minnum(half %a, half %b) #0 {
 }
 
 ; CHECK-LABEL: test_maxnum:
-; CHECK-NEXT: stp x29, x30, [sp, #-16]!
-; CHECK-NEXT: mov  x29, sp
-; CHECK-NEXT: fcvt s0, h0
 ; CHECK-NEXT: fcvt s1, h1
-; CHECK-NEXT: bl {{_?}}fmaxf
+; CHECK-NEXT: fcvt s0, h0
+; CHECK-NEXT: fmaxnm s0, s0, s1
 ; CHECK-NEXT: fcvt h0, s0
-; CHECK-NEXT: ldp x29, x30, [sp], #16
 ; CHECK-NEXT: ret
 define half @test_maxnum(half %a, half %b) #0 {
   %r = call half @llvm.maxnum.f16(half %a, half %b)

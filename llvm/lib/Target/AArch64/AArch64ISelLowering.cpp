@@ -389,6 +389,8 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FRINT, Ty, Legal);
     setOperationAction(ISD::FTRUNC, Ty, Legal);
     setOperationAction(ISD::FROUND, Ty, Legal);
+    setOperationAction(ISD::FMINNUM, Ty, Legal);
+    setOperationAction(ISD::FMAXNUM, Ty, Legal);
   }
 
   setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
@@ -679,9 +681,10 @@ void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
                             ISD::SABSDIFF, ISD::UABSDIFF})
       setOperationAction(Opcode, VT.getSimpleVT(), Legal);
 
-  // F[MIN|MAX]NAN are available for all FP NEON types.
+  // F[MIN|MAX][NUM|NAN] are available for all FP NEON types.
   if (VT.isFloatingPoint())
-    for (unsigned Opcode : {ISD::FMINNAN, ISD::FMAXNAN})
+    for (unsigned Opcode : {ISD::FMINNAN, ISD::FMAXNAN,
+                            ISD::FMINNUM, ISD::FMAXNUM})
       setOperationAction(Opcode, VT.getSimpleVT(), Legal);
 
   if (Subtarget->isLittleEndian()) {
@@ -8232,6 +8235,12 @@ static SDValue performIntrinsicCombine(SDNode *N,
                        N->getOperand(1), N->getOperand(2));
   case Intrinsic::aarch64_neon_uabd:
     return DAG.getNode(ISD::UABSDIFF, SDLoc(N), N->getValueType(0),
+                       N->getOperand(1), N->getOperand(2));
+  case Intrinsic::aarch64_neon_fmaxnm:
+    return DAG.getNode(ISD::FMAXNUM, SDLoc(N), N->getValueType(0),
+                       N->getOperand(1), N->getOperand(2));
+  case Intrinsic::aarch64_neon_fminnm:
+    return DAG.getNode(ISD::FMINNUM, SDLoc(N), N->getValueType(0),
                        N->getOperand(1), N->getOperand(2));
   case Intrinsic::aarch64_neon_smull:
   case Intrinsic::aarch64_neon_umull:

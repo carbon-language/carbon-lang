@@ -2502,9 +2502,9 @@ defm FADD   : TwoOperandFPData<0b0010, "fadd", fadd>;
 let SchedRW = [WriteFDiv] in {
 defm FDIV   : TwoOperandFPData<0b0001, "fdiv", fdiv>;
 }
-defm FMAXNM : TwoOperandFPData<0b0110, "fmaxnm", int_aarch64_neon_fmaxnm>;
+defm FMAXNM : TwoOperandFPData<0b0110, "fmaxnm", fmaxnum>;
 defm FMAX   : TwoOperandFPData<0b0100, "fmax", fmaxnan>;
-defm FMINNM : TwoOperandFPData<0b0111, "fminnm", int_aarch64_neon_fminnm>;
+defm FMINNM : TwoOperandFPData<0b0111, "fminnm", fminnum>;
 defm FMIN   : TwoOperandFPData<0b0101, "fmin", fminnan>;
 let SchedRW = [WriteFMul] in {
 defm FMUL   : TwoOperandFPData<0b0000, "fmul", fmul>;
@@ -2516,9 +2516,9 @@ def : Pat<(v1f64 (fmaxnan (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMAXDrr FPR64:$Rn, FPR64:$Rm)>;
 def : Pat<(v1f64 (fminnan (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMINDrr FPR64:$Rn, FPR64:$Rm)>;
-def : Pat<(v1f64 (int_aarch64_neon_fmaxnm (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+def : Pat<(v1f64 (fmaxnum (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMAXNMDrr FPR64:$Rn, FPR64:$Rm)>;
-def : Pat<(v1f64 (int_aarch64_neon_fminnm (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
+def : Pat<(v1f64 (fminnum (v1f64 FPR64:$Rn), (v1f64 FPR64:$Rm))),
           (FMINNMDrr FPR64:$Rn, FPR64:$Rm)>;
 
 //===----------------------------------------------------------------------===//
@@ -2804,11 +2804,11 @@ defm FCMGE   : SIMDThreeSameVectorFPCmp<1, 0, 0b11100, "fcmge", AArch64fcmge>;
 defm FCMGT   : SIMDThreeSameVectorFPCmp<1, 1, 0b11100, "fcmgt", AArch64fcmgt>;
 defm FDIV    : SIMDThreeSameVectorFP<1,0,0b11111,"fdiv", fdiv>;
 defm FMAXNMP : SIMDThreeSameVectorFP<1,0,0b11000,"fmaxnmp", int_aarch64_neon_fmaxnmp>;
-defm FMAXNM  : SIMDThreeSameVectorFP<0,0,0b11000,"fmaxnm", int_aarch64_neon_fmaxnm>;
+defm FMAXNM  : SIMDThreeSameVectorFP<0,0,0b11000,"fmaxnm", fmaxnum>;
 defm FMAXP   : SIMDThreeSameVectorFP<1,0,0b11110,"fmaxp", int_aarch64_neon_fmaxp>;
 defm FMAX    : SIMDThreeSameVectorFP<0,0,0b11110,"fmax", fmaxnan>;
 defm FMINNMP : SIMDThreeSameVectorFP<1,1,0b11000,"fminnmp", int_aarch64_neon_fminnmp>;
-defm FMINNM  : SIMDThreeSameVectorFP<0,1,0b11000,"fminnm", int_aarch64_neon_fminnm>;
+defm FMINNM  : SIMDThreeSameVectorFP<0,1,0b11000,"fminnm", fminnum>;
 defm FMINP   : SIMDThreeSameVectorFP<1,1,0b11110,"fminp", int_aarch64_neon_fminp>;
 defm FMIN    : SIMDThreeSameVectorFP<0,1,0b11110,"fmin", fminnan>;
 
