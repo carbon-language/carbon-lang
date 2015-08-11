@@ -124,6 +124,10 @@ NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM,
   // condition branches.
   setJumpIsExpensive(true);
 
+  // Wide divides are _very_ slow. Try to reduce the width of the divide if
+  // possible.
+  addBypassSlowDiv(64, 32);
+
   // By default, use the Source scheduling
   if (sched4reg)
     setSchedulingPreference(Sched::RegPressure);
