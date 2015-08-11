@@ -1420,6 +1420,13 @@ TEST(Callee, MatchesDeclarations) {
                          CallMethodX));
 }
 
+TEST(ConversionDeclaration, IsExplicit) {
+  EXPECT_TRUE(matches("struct S { explicit operator int(); };",
+                      conversionDecl(isExplicit())));
+  EXPECT_TRUE(notMatches("struct S { operator int(); };",
+                         conversionDecl(isExplicit())));
+}
+
 TEST(Callee, MatchesMemberExpressions) {
   EXPECT_TRUE(matches("class Y { void x() { this->x(); } };",
               callExpr(callee(memberExpr()))));
@@ -1990,6 +1997,13 @@ TEST(ConstructorDeclaration, IsImplicit) {
   // The compiler added an implicit assignment operator.
   EXPECT_TRUE(matches("struct A { int x; } a = {0}, b = a; void f() { a = b; }",
                       methodDecl(isImplicit(), hasName("operator="))));
+}
+
+TEST(ConstructorDeclaration, IsExplicit) {
+  EXPECT_TRUE(matches("struct S { explicit S(int); };",
+                      constructorDecl(isExplicit())));
+  EXPECT_TRUE(notMatches("struct S { S(int); };",
+                         constructorDecl(isExplicit())));
 }
 
 TEST(ConstructorDeclaration, Kinds) {

@@ -4189,6 +4189,27 @@ AST_MATCHER(CXXConstructorDecl, isDefaultConstructor) {
   return Node.isDefaultConstructor();
 }
 
+/// \brief Matches constructor and conversion declarations that are marked with
+/// the explicit keyword.
+///
+/// Given
+/// \code
+///   struct S {
+///     S(int); // #1
+///     explicit S(double); // #2
+///     operator int(); // #3
+///     explicit operator bool(); // #4
+///   };
+/// \endcode
+/// constructorDecl(isExplicit()) will match #2, but not #1.
+/// conversionDecl(isExplicit()) will match #4, but not #3.
+AST_POLYMORPHIC_MATCHER(isExplicit,
+                        AST_POLYMORPHIC_SUPPORTED_TYPES(CXXConstructorDecl,
+                                                        CXXConversionDecl)) {
+  return Node.isExplicit();
+
+}
+
 /// \brief If the given case statement does not use the GNU case range
 /// extension, matches the constant given in the statement.
 ///
