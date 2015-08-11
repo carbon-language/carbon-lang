@@ -13,3 +13,6 @@ local:
 foo:
 
 .long bar
+
+.weak zed
+.long zed

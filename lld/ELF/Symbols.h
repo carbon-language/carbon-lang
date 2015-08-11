@@ -39,7 +39,8 @@ public:
     DefinedRegularKind = 0,
     DefinedWeakKind = 1,
     DefinedLast = 1,
-    UndefinedKind = 2
+    UndefinedWeakKind = 2,
+    UndefinedKind = 3
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
@@ -109,6 +110,15 @@ public:
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
+  }
+};
+
+class UndefinedWeak : public SymbolBody {
+public:
+  explicit UndefinedWeak(StringRef N) : SymbolBody(UndefinedWeakKind, N) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == UndefinedWeakKind;
   }
 };
 

@@ -42,6 +42,7 @@ int SymbolBody::compare(SymbolBody *Other) {
     return 0;
   case DefinedWeakKind:
   case UndefinedKind:
+  case UndefinedWeakKind:
     return 1;
   }
   llvm_unreachable("unknown symbol kind");
