@@ -25,4 +25,19 @@ entry:
   ret i64 %div
 }
 
+; Verify that no extra code is generated when optimizing for size.
+
+define i32 @div32_optsize(i32 %a, i32 %b) optsize {
+; DIV32-LABEL: div32_optsize:
+; DIV32-NOT: divb
+  %div = sdiv i32 %a, %b
+  ret i32 %div
+}
+
+define i32 @div32_minsize(i32 %a, i32 %b) minsize {
+; DIV32-LABEL: div32_minsize:
+; DIV32-NOT: divb
+  %div = sdiv i32 %a, %b
+  ret i32 %div
+}
 
