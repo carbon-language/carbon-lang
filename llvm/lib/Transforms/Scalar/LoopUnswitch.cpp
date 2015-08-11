@@ -148,8 +148,8 @@ namespace {
     LPPassManager *LPM;
     AssumptionCache *AC;
 
-    // LoopProcessWorklist - Used to check if second loop needs processing
-    // after RewriteLoopBodyWithConditionConstant rewrites first loop.
+    // Used to check if second loop needs processing after
+    // RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
 
     LUAnalysisCache BranchesInfo;
@@ -367,9 +367,8 @@ Pass *llvm::createLoopUnswitchPass(bool Os) {
   return new LoopUnswitch(Os);
 }
 
-/// FindLIVLoopCondition - Cond is a condition that occurs in L.  If it is
-/// invariant in the loop, or has an invariant piece, return the invariant.
-/// Otherwise, return null.
+/// Cond is a condition that occurs in L. If it is invariant in the loop, or has
+/// an invariant piece, return the invariant. Otherwise, return null.
 static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 
   // We started analyze new instruction, increment scanned instructions counter.
@@ -431,8 +430,7 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   return Changed;
 }
 
-/// processCurrentLoop - Do actual work and unswitch loop if possible
-/// and profitable.
+/// Do actual work and unswitch loop if possible and profitable.
 bool LoopUnswitch::processCurrentLoop() {
   bool Changed = false;
 
@@ -533,8 +531,8 @@ bool LoopUnswitch::processCurrentLoop() {
   return Changed;
 }
 
-/// isTrivialLoopExitBlock - Check to see if all paths from BB exit the
-/// loop with no side effects (including infinite loops).
+/// Check to see if all paths from BB exit the loop with no side effects
+/// (including infinite loops).
 ///
 /// If true, we return true and set ExitBB to the block we
 /// exit through.
@@ -571,9 +569,9 @@ static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
   return true;
 }
 
-/// isTrivialLoopExitBlock - Return true if the specified block unconditionally
-/// leads to an exit from the specified loop, and has no side-effects in the
-/// process.  If so, return the block that is exited to, otherwise return null.
+/// Return true if the specified block unconditionally leads to an exit from
+/// the specified loop, and has no side-effects in the process. If so, return
+/// the block that is exited to, otherwise return null.
 static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
   std::set<BasicBlock*> Visited;
   Visited.insert(L->getHeader());  // Branches to header make infinite loops.
@@ -583,8 +581,8 @@ static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
   return nullptr;
 }
 
-/// UnswitchIfProfitable - We have found that we can unswitch currentLoop when
-/// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
+/// We have found that we can unswitch currentLoop when LoopCond == Val to
+/// simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
                                         TerminatorInst *TI) {
@@ -609,7 +607,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
   return true;
 }
 
-/// CloneLoop - Recursively clone the specified loop and all of its children,
+/// Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
 static Loop *CloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
                        LoopInfo *LI, LPPassManager *LPM) {
@@ -665,9 +663,8 @@ static void copyMetadata(Instruction *DstInst, const Instruction *SrcInst,
   }
 }
 
-/// EmitPreheaderBranchOnCondition - Emit a conditional branch on two values
-/// if LIC == Val, branch to TrueDst, otherwise branch to FalseDest.  Insert the
-/// code immediately before InsertPt.
+/// Emit a conditional branch on two values if LIC == Val, branch to TrueDst,
+/// otherwise branch to FalseDest. Insert the code immediately before InsertPt.
 void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
                                                   BasicBlock *TrueDest,
                                                   BasicBlock *FalseDest,
@@ -697,11 +694,11 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   SplitCriticalEdge(BI, 1, Options);
 }
 
-/// UnswitchTrivialCondition - Given a loop that has a trivial unswitchable
-/// condition in it (a cond branch from its header block to its latch block,
-/// where the path through the loop that doesn't execute its body has no
-/// side-effects), unswitch it.  This doesn't involve any code duplication, just
-/// moving the conditional branch outside of the loop and updating loop info.
+/// Given a loop that has a trivial unswitchable condition in it (a cond branch
+/// from its header block to its latch block, where the path through the loop
+/// that doesn't execute its body has no side-effects), unswitch it. This
+/// doesn't involve any code duplication, just moving the conditional branch
+/// outside of the loop and updating loop info.
 void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
                                             BasicBlock *ExitBlock,
                                             TerminatorInst *TI) {
@@ -891,8 +888,8 @@ bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
   return false;
 }
 
-/// SplitExitEdges - Split all of the edges from inside the loop to their exit
-/// blocks.  Update the appropriate Phi nodes as we do so.
+/// Split all of the edges from inside the loop to their exit blocks.
+/// Update the appropriate Phi nodes as we do so.
 void LoopUnswitch::SplitExitEdges(Loop *L,
                                const SmallVectorImpl<BasicBlock *> &ExitBlocks){
 
@@ -908,9 +905,9 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
   }
 }
 
-/// UnswitchNontrivialCondition - We determined that the loop is profitable
-/// to unswitch when LIC equal Val.  Split it into loop versions and test the
-/// condition outside of either loop.  Return the loops created as Out1/Out2.
+/// We determined that the loop is profitable to unswitch when LIC equal Val.
+/// Split it into loop versions and test the condition outside of either loop.
+/// Return the loops created as Out1/Out2.
 void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
                                                Loop *L, TerminatorInst *TI) {
   Function *F = loopHeader->getParent();
@@ -1055,8 +1052,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     RewriteLoopBodyWithConditionConstant(NewLoop, LICHandle, Val, true);
 }
 
-/// RemoveFromWorklist - Remove all instances of I from the worklist vector
-/// specified.
+/// Remove all instances of I from the worklist vector specified.
 static void RemoveFromWorklist(Instruction *I,
                                std::vector<Instruction*> &Worklist) {
 
@@ -1064,7 +1060,7 @@ static void RemoveFromWorklist(Instruction *I,
                  Worklist.end());
 }
 
-/// ReplaceUsesOfWith - When we find that I really equals V, remove I from the
+/// When we find that I really equals V, remove I from the
 /// program, replacing all uses with V and update the worklist.
 static void ReplaceUsesOfWith(Instruction *I, Value *V,
                               std::vector<Instruction*> &Worklist,
@@ -1086,9 +1082,9 @@ static void ReplaceUsesOfWith(Instruction *I, Value *V,
   ++NumSimplify;
 }
 
-// RewriteLoopBodyWithConditionConstant - We know either that the value LIC has
-// the value specified by Val in the specified loop, or we know it does NOT have
-// that value.  Rewrite any uses of LIC or of properties correlated to it.
+/// We know either that the value LIC has the value specified by Val in the
+/// specified loop, or we know it does NOT have that value.
+/// Rewrite any uses of LIC or of properties correlated to it.
 void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
                                                         Constant *Val,
                                                         bool IsEqual) {
@@ -1206,11 +1202,10 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   SimplifyCode(Worklist, L);
 }
 
-/// SimplifyCode - Okay, now that we have simplified some instructions in the
-/// loop, walk over it and constant prop, dce, and fold control flow where
-/// possible.  Note that this is effectively a very simple loop-structure-aware
-/// optimizer.  During processing of this loop, L could very well be deleted, so
-/// it must not be used.
+/// Now that we have simplified some instructions in the loop, walk over it and
+/// constant prop, dce, and fold control flow where possible. Note that this is
+/// effectively a very simple loop-structure-aware optimizer. During processing
+/// of this loop, L could very well be deleted, so it must not be used.
 ///
 /// FIXME: When the loop optimizer is more mature, separate this out to a new
 /// pass.
