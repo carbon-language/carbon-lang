@@ -14,8 +14,8 @@ namespace tidy {
 
 class IncludeInserterCallback : public PPCallbacks {
 public:
-  explicit IncludeInserterCallback(IncludeInserter *IncludeInserter)
-      : IncludeInserter(IncludeInserter) {}
+  explicit IncludeInserterCallback(IncludeInserter *Inserter)
+      : Inserter(Inserter) {}
   // Implements PPCallbacks::InclusionDerective(). Records the names and source
   // locations of the inclusions in the main source file being processed.
   void InclusionDirective(SourceLocation HashLocation,
@@ -25,12 +25,12 @@ public:
                           const FileEntry * /*IncludedFile*/,
                           StringRef /*SearchPath*/, StringRef /*RelativePath*/,
                           const Module * /*ImportedModule*/) override {
-    IncludeInserter->AddInclude(FileNameRef, IsAngled, HashLocation,
+    Inserter->AddInclude(FileNameRef, IsAngled, HashLocation,
                                 FileNameRange.getEnd());
   }
 
 private:
-  IncludeInserter *IncludeInserter;
+  IncludeInserter *Inserter;
 };
 
 IncludeInserter::IncludeInserter(const SourceManager &SourceMgr,
