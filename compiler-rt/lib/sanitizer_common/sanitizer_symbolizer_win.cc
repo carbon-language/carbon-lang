@@ -18,12 +18,20 @@
 #include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
 
-#include "sanitizer_symbolizer_win.h"
 #include "sanitizer_symbolizer_internal.h"
 
 namespace __sanitizer {
 
 namespace {
+
+class WinSymbolizerTool : public SymbolizerTool {
+ public:
+  bool SymbolizePC(uptr addr, SymbolizedStack *stack) override;
+  bool SymbolizeData(uptr addr, DataInfo *info) override {
+    return false;
+  }
+  const char *Demangle(const char *name) override;
+};
 
 bool is_dbghelp_initialized = false;
 
@@ -115,7 +123,9 @@ bool WinSymbolizerTool::SymbolizePC(uptr addr, SymbolizedStack *frame) {
     frame->info.file = internal_strdup(line_info.FileName);
     frame->info.line = line_info.LineNumber;
   }
-  return true;
+  // Only consider this a successful symbolization attempt if we got file info.
+  // Otherwise, try llvm-symbolizer.
+  return got_fileline;
 }
 
 const char *WinSymbolizerTool::Demangle(const char *name) {
@@ -137,10 +147,128 @@ void Symbolizer::PlatformPrepareForSandboxing() {
   // Do nothing.
 }
 
+namespace {
+struct ScopedHandle {
+  ScopedHandle() : h_(nullptr) {}
+  explicit ScopedHandle(HANDLE h) : h_(h) {}
+  ~ScopedHandle() {
+    if (h_)
+      ::CloseHandle(h_);
+  }
+  HANDLE get() { return h_; }
+  HANDLE *receive() { return &h_; }
+  HANDLE release() {
+    HANDLE h = h_;
+    h_ = nullptr;
+    return h;
+  }
+  HANDLE h_;
+};
+} // namespace
+
+bool SymbolizerProcess::StartSymbolizerSubprocess() {
+  // Create inherited pipes for stdin and stdout.
+  ScopedHandle stdin_read, stdin_write;
+  ScopedHandle stdout_read, stdout_write;
+  SECURITY_ATTRIBUTES attrs;
+  attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+  attrs.bInheritHandle = TRUE;
+  attrs.lpSecurityDescriptor = nullptr;
+  if (!::CreatePipe(stdin_read.receive(), stdin_write.receive(), &attrs, 0) ||
+      !::CreatePipe(stdout_read.receive(), stdout_write.receive(), &attrs, 0))
+    return false;
+
+  // Don't inherit the writing end of stdin or the reading end of stdout.
+  if (!SetHandleInformation(stdin_write.get(), HANDLE_FLAG_INHERIT, 0) ||
+      !SetHandleInformation(stdout_read.get(), HANDLE_FLAG_INHERIT, 0))
+    return false;
+
+  // Compute the command line. Wrap double quotes around everything.
+  const char *argv[kArgVMax];
+  GetArgV(path_, argv);
+  InternalScopedString command_line(kMaxPathLength * 3);
+  for (int i = 0; argv[i]; i++) {
+    const char *arg = argv[i];
+    int arglen = internal_strlen(arg);
+    // Check that tool command lines are simple and that complete escaping is
+    // unnecessary.
+    CHECK(!internal_strchr(arg, '"') && "quotes in args unsupported");
+    CHECK(!internal_strstr(arg, "\\\\") &&
+          "double backslashes in args unsupported");
+    CHECK(arglen > 0 && arg[arglen - 1] != '\\' &&
+          "args ending in backslash and empty args unsupported");
+    command_line.append("\"%s\" ", arg);
+  }
+  VReport(3, "Launching symbolizer command: %s\n", command_line.data());
+
+  // Launch llvm-symbolizer with stdin and stdout redirected.
+  STARTUPINFOA si;
+  memset(&si, 0, sizeof(si));
+  si.cb = sizeof(si);
+  si.dwFlags |= STARTF_USESTDHANDLES;
+  si.hStdInput = stdin_read.get();
+  si.hStdOutput = stdout_write.get();
+  PROCESS_INFORMATION pi;
+  memset(&pi, 0, sizeof(pi));
+  if (!CreateProcessA(path_,               // Executable
+                      command_line.data(), // Command line
+                      nullptr,             // Process handle not inheritable
+                      nullptr,             // Thread handle not inheritable
+                      TRUE,                // Set handle inheritance to TRUE
+                      0,                   // Creation flags
+                      nullptr,             // Use parent's environment block
+                      nullptr,             // Use parent's starting directory
+                      &si, &pi)) {
+    VReport(2, "WARNING: %s failed to create process for %s (error code: %d)\n",
+            SanitizerToolName, path_, GetLastError());
+    return false;
+  }
+
+  // Process creation succeeded, so transfer handle ownership into the fields.
+  input_fd_ = stdout_read.release();
+  output_fd_ = stdin_write.release();
+
+  // The llvm-symbolizer process is responsible for quitting itself when the
+  // stdin pipe is closed, so we don't need these handles. Close them to prevent
+  // leaks. If we ever want to try to kill the symbolizer process from the
+  // parent, we'll want to hang on to these handles.
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  return true;
+}
+
+static void ChooseSymbolizerTools(IntrusiveList<SymbolizerTool> *list,
+                                  LowLevelAllocator *allocator) {
+  if (!common_flags()->symbolize) {
+    VReport(2, "Symbolizer is disabled.\n");
+    return;
+  }
+
+  // Add llvm-symbolizer in case the binary has dwarf.
+  const char *user_path = common_flags()->external_symbolizer_path;
+  const char *path =
+      user_path ? user_path : FindPathToBinary("llvm-symbolizer.exe");
+  if (path) {
+    VReport(2, "Using llvm-symbolizer at %spath: %s\n",
+            user_path ? "user-specified " : "", path);
+    list->push_back(new(*allocator) LLVMSymbolizer(path, allocator));
+  } else {
+    if (user_path && user_path[0] == '\0') {
+      VReport(2, "External symbolizer is explicitly disabled.\n");
+    } else {
+      VReport(2, "External symbolizer is not present.\n");
+    }
+  }
+
+  // Add the dbghelp based symbolizer.
+  list->push_back(new(*allocator) WinSymbolizerTool());
+}
+
 Symbolizer *Symbolizer::PlatformInit() {
   IntrusiveList<SymbolizerTool> list;
   list.clear();
-  list.push_back(new(symbolizer_allocator_) WinSymbolizerTool());
+  ChooseSymbolizerTools(&list, &symbolizer_allocator_);
+
   return new(symbolizer_allocator_) Symbolizer(list);
 }
 

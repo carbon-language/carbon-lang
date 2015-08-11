@@ -44,28 +44,33 @@ bool DlAddrSymbolizer::SymbolizeData(uptr addr, DataInfo *info) {
 class AtosSymbolizerProcess : public SymbolizerProcess {
  public:
   explicit AtosSymbolizerProcess(const char *path, pid_t parent_pid)
-      : SymbolizerProcess(path, /*use_forkpty*/ true),
-        parent_pid_(parent_pid) {}
+      : SymbolizerProcess(path, /*use_forkpty*/ true) {
+    // Put the string command line argument in the object so that it outlives
+    // the call to GetArgV.
+    internal_snprintf(pid_str_, sizeof(pid_str_), "%d", parent_pid_);
+  }
 
  private:
   bool ReachedEndOfOutput(const char *buffer, uptr length) const override {
     return (length >= 1 && buffer[length - 1] == '\n');
   }
 
-  void ExecuteWithDefaultArgs(const char *path_to_binary) const override {
-    char pid_str[16];
-    internal_snprintf(pid_str, sizeof(pid_str), "%d", parent_pid_);
+  void GetArgV(const char *path_to_binary,
+               const char *(&argv)[kArgVMax]) const override {
+    int i = 0;
+    argv[i++] = path_to_binary;
+    argv[i++] = "-p";
+    argv[i++] = &pid_str_[0];
     if (GetMacosVersion() == MACOS_VERSION_MAVERICKS) {
       // On Mavericks atos prints a deprecation warning which we suppress by
       // passing -d. The warning isn't present on other OSX versions, even the
       // newer ones.
-      execl(path_to_binary, path_to_binary, "-p", pid_str, "-d", (char *)0);
-    } else {
-      execl(path_to_binary, path_to_binary, "-p", pid_str, (char *)0);
+      argv[i++] = "-d";
     }
+    argv[i++] = nullptr;
   }
 
-  pid_t parent_pid_;
+  char pid_str_[16];
 };
 
 static const char *kAtosErrorMessages[] = {

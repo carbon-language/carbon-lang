@@ -10,6 +10,6 @@ static void NullDeref(int *ptr) {
 }
 int main() {
   NullDeref((int*)0);
-  // CHECK: {{    #1 0x.* in main.*null_deref.cc:}}[[@LINE-1]]
+  // CHECK: {{    #1 0x.* in main.*null_deref.cc:}}[[@LINE-1]]:3
   // CHECK: AddressSanitizer can not provide additional info.
 }

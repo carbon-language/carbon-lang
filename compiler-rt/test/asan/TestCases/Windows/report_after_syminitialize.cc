@@ -1,4 +1,5 @@
-// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t
+// RUN: env ASAN_OPTIONS=external_symbolizer_path=asdf not %run %t 2>&1 | FileCheck %s
 
 #include <windows.h>
 #include <dbghelp.h>
@@ -13,7 +14,8 @@ int main() {
 
   *(volatile int*)0 = 42;
   // CHECK: ERROR: AddressSanitizer: access-violation on unknown address
+  // CHECK-NEXT: {{WARNING: Failed to use and restart external symbolizer}}
   // CHECK-NEXT: {{WARNING: .*DbgHelp}}
-  // CHECK: {{#0 0x.* in main.*report_after_syminitialize.cc:}}[[@LINE-3]]
+  // CHECK: {{#0 0x.* in main.*report_after_syminitialize.cc:}}[[@LINE-4]]
   // CHECK: AddressSanitizer can not provide additional info.
 }

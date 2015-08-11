@@ -25,7 +25,14 @@
 #include "sanitizer_symbolizer_libbacktrace.h"
 #include "sanitizer_symbolizer_mac.h"
 
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+#if SANITIZER_MAC
+#include <util.h>  // for forkpty()
+#endif  // SANITIZER_MAC
 
 // C++ demangling function, as required by Itanium C++ ABI. This is weak,
 // because we do not require a C++ ABI library to be linked to a program
@@ -53,149 +60,130 @@ const char *DemangleCXXABI(const char *name) {
   return name;
 }
 
-// Parses one or more two-line strings in the following format:
-//   <function_name>
-//   <file_name>:<line_number>[:<column_number>]
-// Used by LLVMSymbolizer, Addr2LinePool and InternalSymbolizer, since all of
-// them use the same output format.
-static void ParseSymbolizePCOutput(const char *str, SymbolizedStack *res) {
-  bool top_frame = true;
-  SymbolizedStack *last = res;
-  while (true) {
-    char *function_name = 0;
-    str = ExtractToken(str, "\n", &function_name);
-    CHECK(function_name);
-    if (function_name[0] == '\0') {
-      // There are no more frames.
-      InternalFree(function_name);
-      break;
-    }
-    SymbolizedStack *cur;
-    if (top_frame) {
-      cur = res;
-      top_frame = false;
-    } else {
-      cur = SymbolizedStack::New(res->info.address);
-      cur->info.FillModuleInfo(res->info.module, res->info.module_offset);
-      last->next = cur;
-      last = cur;
-    }
-
-    AddressInfo *info = &cur->info;
-    info->function = function_name;
-    // Parse <file>:<line>:<column> buffer.
-    char *file_line_info = 0;
-    str = ExtractToken(str, "\n", &file_line_info);
-    CHECK(file_line_info);
-    const char *line_info = ExtractToken(file_line_info, ":", &info->file);
-    line_info = ExtractInt(line_info, ":", &info->line);
-    line_info = ExtractInt(line_info, "", &info->column);
-    InternalFree(file_line_info);
-
-    // Functions and filenames can be "??", in which case we write 0
-    // to address info to mark that names are unknown.
-    if (0 == internal_strcmp(info->function, "??")) {
-      InternalFree(info->function);
-      info->function = 0;
-    }
-    if (0 == internal_strcmp(info->file, "??")) {
-      InternalFree(info->file);
-      info->file = 0;
-    }
-  }
-}
-
-// Parses a two-line string in the following format:
-//   <symbol_name>
-//   <start_address> <size>
-// Used by LLVMSymbolizer and InternalSymbolizer.
-static void ParseSymbolizeDataOutput(const char *str, DataInfo *info) {
-  str = ExtractToken(str, "\n", &info->name);
-  str = ExtractUptr(str, " ", &info->start);
-  str = ExtractUptr(str, "\n", &info->size);
-}
-
-// For now we assume the following protocol:
-// For each request of the form
-//   <module_name> <module_offset>
-// passed to STDIN, external symbolizer prints to STDOUT response:
-//   <function_name>
-//   <file_name>:<line_number>:<column_number>
-//   <function_name>
-//   <file_name>:<line_number>:<column_number>
-//   ...
-//   <empty line>
-class LLVMSymbolizerProcess : public SymbolizerProcess {
- public:
-  explicit LLVMSymbolizerProcess(const char *path) : SymbolizerProcess(path) {}
-
- private:
-  bool ReachedEndOfOutput(const char *buffer, uptr length) const override {
-    // Empty line marks the end of llvm-symbolizer output.
-    return length >= 2 && buffer[length - 1] == '\n' &&
-           buffer[length - 2] == '\n';
-  }
-
-  void ExecuteWithDefaultArgs(const char *path_to_binary) const override {
-#if defined(__x86_64h__)
-    const char* const kSymbolizerArch = "--default-arch=x86_64h";
-#elif defined(__x86_64__)
-    const char* const kSymbolizerArch = "--default-arch=x86_64";
-#elif defined(__i386__)
-    const char* const kSymbolizerArch = "--default-arch=i386";
-#elif defined(__powerpc64__) && defined(__BIG_ENDIAN__)
-    const char* const kSymbolizerArch = "--default-arch=powerpc64";
-#elif defined(__powerpc64__) && defined(__LITTLE_ENDIAN__)
-    const char* const kSymbolizerArch = "--default-arch=powerpc64le";
-#else
-    const char* const kSymbolizerArch = "--default-arch=unknown";
-#endif
-
-    const char *const inline_flag = common_flags()->symbolize_inline_frames
-                                        ? "--inlining=true"
-                                        : "--inlining=false";
-    execl(path_to_binary, path_to_binary, inline_flag, kSymbolizerArch,
-          (char *)0);
-  }
-};
-
-class LLVMSymbolizer : public SymbolizerTool {
- public:
-  explicit LLVMSymbolizer(const char *path, LowLevelAllocator *allocator)
-      : symbolizer_process_(new(*allocator) LLVMSymbolizerProcess(path)) {}
-
-  bool SymbolizePC(uptr addr, SymbolizedStack *stack) override {
-    if (const char *buf = SendCommand(/*is_data*/ false, stack->info.module,
-                                      stack->info.module_offset)) {
-      ParseSymbolizePCOutput(buf, stack);
-      return true;
+bool SymbolizerProcess::StartSymbolizerSubprocess() {
+  if (!FileExists(path_)) {
+    if (!reported_invalid_path_) {
+      Report("WARNING: invalid path to external symbolizer!\n");
+      reported_invalid_path_ = true;
     }
     return false;
   }
 
-  bool SymbolizeData(uptr addr, DataInfo *info) override {
-    if (const char *buf =
-            SendCommand(/*is_data*/ true, info->module, info->module_offset)) {
-      ParseSymbolizeDataOutput(buf, info);
-      info->start += (addr - info->module_offset);  // Add the base address.
-      return true;
+  int pid;
+  if (use_forkpty_) {
+#if SANITIZER_MAC
+    fd_t fd = kInvalidFd;
+    // Use forkpty to disable buffering in the new terminal.
+    pid = forkpty(&fd, 0, 0, 0);
+    if (pid == -1) {
+      // forkpty() failed.
+      Report("WARNING: failed to fork external symbolizer (errno: %d)\n",
+             errno);
+      return false;
+    } else if (pid == 0) {
+      // Child subprocess.
+      const char *argv[kArgVMax];
+      GetArgV(path_, argv);
+      execv(path_, const_cast<char **>(&argv[0]));
+      internal__exit(1);
     }
+
+    // Continue execution in parent process.
+    input_fd_ = output_fd_ = fd;
+
+    // Disable echo in the new terminal, disable CR.
+    struct termios termflags;
+    tcgetattr(fd, &termflags);
+    termflags.c_oflag &= ~ONLCR;
+    termflags.c_lflag &= ~ECHO;
+    tcsetattr(fd, TCSANOW, &termflags);
+#else  // SANITIZER_MAC
+    UNIMPLEMENTED();
+#endif  // SANITIZER_MAC
+  } else {
+    int *infd = NULL;
+    int *outfd = NULL;
+    // The client program may close its stdin and/or stdout and/or stderr
+    // thus allowing socketpair to reuse file descriptors 0, 1 or 2.
+    // In this case the communication between the forked processes may be
+    // broken if either the parent or the child tries to close or duplicate
+    // these descriptors. The loop below produces two pairs of file
+    // descriptors, each greater than 2 (stderr).
+    int sock_pair[5][2];
+    for (int i = 0; i < 5; i++) {
+      if (pipe(sock_pair[i]) == -1) {
+        for (int j = 0; j < i; j++) {
+          internal_close(sock_pair[j][0]);
+          internal_close(sock_pair[j][1]);
+        }
+        Report("WARNING: Can't create a socket pair to start "
+               "external symbolizer (errno: %d)\n", errno);
+        return false;
+      } else if (sock_pair[i][0] > 2 && sock_pair[i][1] > 2) {
+        if (infd == NULL) {
+          infd = sock_pair[i];
+        } else {
+          outfd = sock_pair[i];
+          for (int j = 0; j < i; j++) {
+            if (sock_pair[j] == infd) continue;
+            internal_close(sock_pair[j][0]);
+            internal_close(sock_pair[j][1]);
+          }
+          break;
+        }
+      }
+    }
+    CHECK(infd);
+    CHECK(outfd);
+
+    // Real fork() may call user callbacks registered with pthread_atfork().
+    pid = internal_fork();
+    if (pid == -1) {
+      // Fork() failed.
+      internal_close(infd[0]);
+      internal_close(infd[1]);
+      internal_close(outfd[0]);
+      internal_close(outfd[1]);
+      Report("WARNING: failed to fork external symbolizer "
+             " (errno: %d)\n", errno);
+      return false;
+    } else if (pid == 0) {
+      // Child subprocess.
+      internal_close(STDOUT_FILENO);
+      internal_close(STDIN_FILENO);
+      internal_dup2(outfd[0], STDIN_FILENO);
+      internal_dup2(infd[1], STDOUT_FILENO);
+      internal_close(outfd[0]);
+      internal_close(outfd[1]);
+      internal_close(infd[0]);
+      internal_close(infd[1]);
+      for (int fd = sysconf(_SC_OPEN_MAX); fd > 2; fd--)
+        internal_close(fd);
+      const char *argv[kArgVMax];
+      GetArgV(path_, argv);
+      execv(path_, const_cast<char **>(&argv[0]));
+      internal__exit(1);
+    }
+
+    // Continue execution in parent process.
+    internal_close(outfd[0]);
+    internal_close(infd[1]);
+    input_fd_ = infd[0];
+    output_fd_ = outfd[1];
+  }
+
+  // Check that symbolizer subprocess started successfully.
+  int pid_status;
+  SleepForMillis(kSymbolizerStartupTimeMillis);
+  int exited_pid = waitpid(pid, &pid_status, WNOHANG);
+  if (exited_pid != 0) {
+    // Either waitpid failed, or child has already exited.
+    Report("WARNING: external symbolizer didn't start up correctly!\n");
     return false;
   }
 
- private:
-  const char *SendCommand(bool is_data, const char *module_name,
-                          uptr module_offset) {
-    CHECK(module_name);
-    internal_snprintf(buffer_, kBufferSize, "%s\"%s\" 0x%zx\n",
-                      is_data ? "DATA " : "", module_name, module_offset);
-    return symbolizer_process_->SendCommand(buffer_);
-  }
-
-  LLVMSymbolizerProcess *symbolizer_process_;
-  static const uptr kBufferSize = 16 * 1024;
-  char buffer_[kBufferSize];
-};
+  return true;
+}
 
 class Addr2LineProcess : public SymbolizerProcess {
  public:
@@ -217,8 +205,13 @@ class Addr2LineProcess : public SymbolizerProcess {
     return false;
   }
 
-  void ExecuteWithDefaultArgs(const char *path_to_binary) const override {
-    execl(path_to_binary, path_to_binary, "-Cfe", module_name_, (char *)0);
+  void GetArgV(const char *path_to_binary,
+               const char *(&argv)[kArgVMax]) const override {
+    int i = 0;
+    argv[i++] = path_to_binary;
+    argv[i++] = "-Cfe";
+    argv[i++] = module_name_;
+    argv[i++] = nullptr;
   }
 
   const char *module_name_;  // Owned, leaked.
