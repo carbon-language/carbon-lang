@@ -159,6 +159,17 @@ TEST_F(SmallStringTest, Count) {
   EXPECT_EQ(0U, theString.count("zz"));
 }
 
+TEST_F(SmallStringTest, Realloc) {
+  theString = "abcd";
+  theString.reserve(100);
+  EXPECT_EQ("abcd", theString);
+  unsigned const N = 100000;
+  theString.reserve(N);
+  for (unsigned i = 0; i < N - 4; ++i)
+    theString.push_back('y');
+  EXPECT_EQ("abcdyyy", theString.slice(0, 7));
+}
+
 TEST(StringRefTest, Comparisons) {
   EXPECT_EQ(-1, SmallString<10>("aab").compare("aad"));
   EXPECT_EQ( 0, SmallString<10>("aab").compare("aab"));
