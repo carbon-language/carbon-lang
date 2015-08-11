@@ -914,6 +914,10 @@ public:
   unsigned getWidth() const { return Width.Value; }
   unsigned getInterleave() const { return Interleave.Value; }
   enum ForceKind getForce() const { return (ForceKind)Force.Value; }
+  bool isForced() const {
+    return getForce() == LoopVectorizeHints::FK_Enabled || getWidth() > 1 ||
+           getInterleave() > 1;
+  }
 
 private:
   /// Find hints specified in the loop metadata and update local values.
@@ -1031,6 +1035,14 @@ private:
   const Loop *TheLoop;
 };
 
+static void emitAnalysisDiag(const Function *TheFunction, const Loop *TheLoop,
+                             const LoopVectorizeHints &Hints,
+                             const LoopAccessReport &Message) {
+  // If a loop hint is provided the diagnostic is always produced.
+  const char *Name = Hints.isForced() ? DiagnosticInfo::AlwaysPrint : LV_NAME;
+  LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, Name);
+}
+
 static void emitMissedWarning(Function *F, Loop *L,
                               const LoopVectorizeHints &LH) {
   emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
@@ -1067,11 +1079,12 @@ public:
                             TargetLibraryInfo *TLI, AliasAnalysis *AA,
                             Function *F, const TargetTransformInfo *TTI,
                             LoopAccessAnalysis *LAA,
-                            LoopVectorizationRequirements *R)
+                            LoopVectorizationRequirements *R,
+                            const LoopVectorizeHints *H)
       : NumPredStores(0), TheLoop(L), SE(SE), TLI(TLI), TheFunction(F),
         TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr), InterleaveInfo(SE, L, DT),
         Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false),
-        Requirements(R) {}
+        Requirements(R), Hints(H) {}
 
   /// This enum represents the kinds of inductions that we support.
   enum InductionKind {
@@ -1285,8 +1298,8 @@ private:
   /// not vectorized.  These are handled as LoopAccessReport rather than
   /// VectorizationReport because the << operator of VectorizationReport returns
   /// LoopAccessReport.
-  void emitAnalysis(const LoopAccessReport &Message) {
-    LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
+  void emitAnalysis(const LoopAccessReport &Message) const {
+    emitAnalysisDiag(TheFunction, TheLoop, *Hints, Message);
   }
 
   unsigned NumPredStores;
@@ -1339,6 +1352,9 @@ private:
 
   /// Vectorization requirements that will go through late-evaluation.
   LoopVectorizationRequirements *Requirements;
+
+  /// Used to emit an analysis of any legality issues.
+  const LoopVectorizeHints *Hints;
 
   ValueToValueMap Strides;
   SmallPtrSet<Value *, 8> StrideSet;
@@ -1430,8 +1446,8 @@ private:
   /// not vectorized.  These are handled as LoopAccessReport rather than
   /// VectorizationReport because the << operator of VectorizationReport returns
   /// LoopAccessReport.
-  void emitAnalysis(const LoopAccessReport &Message) {
-    LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
+  void emitAnalysis(const LoopAccessReport &Message) const {
+    emitAnalysisDiag(TheFunction, TheLoop, *Hints, Message);
   }
 
   /// Values used only by @llvm.assume calls.
@@ -1480,13 +1496,14 @@ public:
   void addRuntimePointerChecks(unsigned Num) { NumRuntimePointerChecks = Num; }
 
   bool doesNotMeet(Function *F, Loop *L, const LoopVectorizeHints &Hints) {
+    // If a loop hint is provided the diagnostic is always produced.
+    const char *Name = Hints.isForced() ? DiagnosticInfo::AlwaysPrint : LV_NAME;
     bool failed = false;
-
     if (UnsafeAlgebraInst &&
         Hints.getForce() == LoopVectorizeHints::FK_Undefined &&
         Hints.getWidth() == 0) {
       emitOptimizationRemarkAnalysisFPCommute(
-          F->getContext(), DEBUG_TYPE, *F, UnsafeAlgebraInst->getDebugLoc(),
+          F->getContext(), Name, *F, UnsafeAlgebraInst->getDebugLoc(),
           VectorizationReport() << "vectorization requires changes in the "
                                    "order of operations, however IEEE 754 "
                                    "floating-point operations are not "
@@ -1497,7 +1514,7 @@ public:
     if (NumRuntimePointerChecks >
         VectorizerParams::RuntimeMemoryCheckThreshold) {
       emitOptimizationRemarkAnalysisAliasing(
-          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+          F->getContext(), Name, *F, L->getStartLoc(),
           VectorizationReport()
               << "cannot prove pointers refer to independent arrays in memory. "
                  "The loop requires "
@@ -1679,9 +1696,9 @@ struct LoopVectorize : public FunctionPass {
         DEBUG(dbgs() << " But vectorizing was explicitly forced.\n");
       else {
         DEBUG(dbgs() << "\n");
-        emitOptimizationRemarkAnalysis(
-            F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-            "vectorization is not beneficial and is not explicitly forced");
+        emitAnalysisDiag(F, L, Hints, VectorizationReport()
+                                          << "vectorization is not beneficial "
+                                             "and is not explicitly forced");
         return false;
       }
     }
@@ -1689,7 +1706,7 @@ struct LoopVectorize : public FunctionPass {
     // Check if it is legal to vectorize the loop.
     LoopVectorizationRequirements Requirements;
     LoopVectorizationLegality LVL(L, SE, DT, TLI, AA, F, TTI, LAA,
-                                  &Requirements);
+                                  &Requirements, &Hints);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1724,9 +1741,10 @@ struct LoopVectorize : public FunctionPass {
     if (F->hasFnAttribute(Attribute::NoImplicitFloat)) {
       DEBUG(dbgs() << "LV: Can't vectorize when the NoImplicitFloat"
             "attribute is used.\n");
-      emitOptimizationRemarkAnalysis(
-          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-          "loop not vectorized due to NoImplicitFloat attribute");
+      emitAnalysisDiag(
+          F, L, Hints,
+          VectorizationReport()
+              << "loop not vectorized due to NoImplicitFloat attribute");
       emitMissedWarning(F, L, Hints);
       return false;
     }

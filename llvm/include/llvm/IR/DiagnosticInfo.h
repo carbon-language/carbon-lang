@@ -101,6 +101,8 @@ public:
   /// The printed message must not end with '.' nor start with a severity
   /// keyword.
   virtual void print(DiagnosticPrinter &DP) const = 0;
+
+  static const char *AlwaysPrint;
 };
 
 typedef std::function<void(const DiagnosticInfo &)> DiagnosticHandlerFunction;

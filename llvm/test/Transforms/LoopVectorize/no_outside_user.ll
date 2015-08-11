@@ -1,4 +1,4 @@
-; RUN: opt -S -loop-vectorize -force-vector-interleave=1 -force-vector-width=2 -pass-remarks-analysis=loop-vectorize < %s 2>&1 | FileCheck %s
+; RUN: opt -S -loop-vectorize -force-vector-interleave=1 -force-vector-width=2 < %s 2>&1 | FileCheck %s
 
 ; CHECK: remark: {{.*}}: loop not vectorized: value could not be identified as an induction or reduction variable
 ; CHECK: remark: {{.*}}: loop not vectorized: use of induction value outside of the loop is not handled by vectorizer

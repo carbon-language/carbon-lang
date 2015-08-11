@@ -91,6 +91,8 @@ int llvm::getNextAvailablePluginDiagnosticKind() {
   return ++PluginKindID;
 }
 
+const char *DiagnosticInfo::AlwaysPrint = "";
+
 DiagnosticInfoInlineAsm::DiagnosticInfoInlineAsm(const Instruction &I,
                                                  const Twine &MsgStr,
                                                  DiagnosticSeverity Severity)
@@ -166,8 +168,9 @@ bool DiagnosticInfoOptimizationRemarkMissed::isEnabled() const {
 }
 
 bool DiagnosticInfoOptimizationRemarkAnalysis::isEnabled() const {
-  return PassRemarksAnalysisOptLoc.Pattern &&
-         PassRemarksAnalysisOptLoc.Pattern->match(getPassName());
+  return getPassName() == DiagnosticInfo::AlwaysPrint ||
+         (PassRemarksAnalysisOptLoc.Pattern &&
+          PassRemarksAnalysisOptLoc.Pattern->match(getPassName()));
 }
 
 void DiagnosticInfoMIRParser::print(DiagnosticPrinter &DP) const {
