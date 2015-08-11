@@ -1997,7 +1997,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Right.isOneOf(TT_CtorInitializerColon, TT_ObjCBlockLParen))
     return true;
   if (Right.is(TT_OverloadedOperatorLParen))
-    return false;
+    return Style.SpaceBeforeParens == FormatStyle::SBPO_Always;
   if (Right.is(tok::colon)) {
     if (Line.First->isOneOf(tok::kw_case, tok::kw_default) ||
         !Right.getNextNonComment() || Right.getNextNonComment()->is(tok::semi))
