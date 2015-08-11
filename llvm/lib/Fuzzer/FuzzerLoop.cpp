@@ -253,9 +253,11 @@ void Fuzzer::WriteToOutputCorpus(const Unit &U) {
   WriteToFile(U, Path);
   if (Options.Verbosity >= 2)
     Printf("Written to %s\n", Path.c_str());
+#ifdef DEBUG
   if (Options.OnlyASCII)
     for (auto X : U)
       assert(isprint(X) || isspace(X));
+#endif
 }
 
 void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
