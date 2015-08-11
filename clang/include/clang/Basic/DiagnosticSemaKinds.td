@@ -5436,7 +5436,7 @@ def ext_cast_fn_obj : Extension<
 def ext_ms_cast_fn_obj : ExtWarn<
   "static_cast between pointer-to-function and pointer-to-object is a "
   "Microsoft extension">,
-  InGroup<MicrosoftCast>;
+  InGroup<MicrosoftCast>, DefaultError, SFINAEFailure;
 def warn_cxx98_compat_cast_fn_obj : Warning<
   "cast between pointer-to-function and pointer-to-object is incompatible with C++98">,
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
