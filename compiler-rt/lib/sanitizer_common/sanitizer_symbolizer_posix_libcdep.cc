@@ -20,6 +20,7 @@
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_linux.h"
 #include "sanitizer_placement_new.h"
+#include "sanitizer_posix.h"
 #include "sanitizer_procmaps.h"
 #include "sanitizer_symbolizer_internal.h"
 #include "sanitizer_symbolizer_libbacktrace.h"
