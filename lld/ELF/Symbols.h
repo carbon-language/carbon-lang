@@ -84,8 +84,6 @@ public:
 
 // Regular defined symbols read from object file symbol tables.
 template <class ELFT> class DefinedRegular : public Defined {
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-
 public:
   DefinedRegular(StringRef Name);
 
