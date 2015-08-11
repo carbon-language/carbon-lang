@@ -653,6 +653,10 @@ public:
     UsedPhysRegMask.setBitsNotInMask(RegMask);
   }
 
+  const BitVector &getUsedPhysRegsMask() const { return UsedPhysRegMask; }
+
+  void setUsedPhysRegMask(BitVector &Mask) { UsedPhysRegMask = Mask; }
+
   //===--------------------------------------------------------------------===//
   // Reserved Register Info
   //===--------------------------------------------------------------------===//

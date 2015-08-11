@@ -218,6 +218,20 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
       printReg(I->second, LiveIn.VirtualRegister, TRI);
     MF.LiveIns.push_back(LiveIn);
   }
+  // The used physical register mask is printed as an inverted callee saved
+  // register mask.
+  const BitVector &UsedPhysRegMask = RegInfo.getUsedPhysRegsMask();
+  if (UsedPhysRegMask.none())
+    return;
+  std::vector<yaml::FlowStringValue> CalleeSavedRegisters;
+  for (unsigned I = 0, E = UsedPhysRegMask.size(); I != E; ++I) {
+    if (!UsedPhysRegMask[I]) {
+      yaml::FlowStringValue Reg;
+      printReg(I, Reg, TRI);
+      CalleeSavedRegisters.push_back(Reg);
+    }
+  }
+  MF.CalleeSavedRegisters = CalleeSavedRegisters;
 }
 
 void MIRPrinter::convert(ModuleSlotTracker &MST,

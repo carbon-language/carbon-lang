@@ -396,6 +396,7 @@ struct MachineFunction {
   bool TracksSubRegLiveness = false;
   std::vector<VirtualRegisterDefinition> VirtualRegisters;
   std::vector<MachineFunctionLiveIn> LiveIns;
+  Optional<std::vector<FlowStringValue>> CalleeSavedRegisters;
   // TODO: Serialize the various register masks.
   // Frame information
   MachineFrameInfo FrameInfo;
@@ -418,6 +419,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("tracksSubRegLiveness", MF.TracksSubRegLiveness);
     YamlIO.mapOptional("registers", MF.VirtualRegisters);
     YamlIO.mapOptional("liveins", MF.LiveIns);
+    YamlIO.mapOptional("calleeSavedRegisters", MF.CalleeSavedRegisters);
     YamlIO.mapOptional("frameInfo", MF.FrameInfo);
     YamlIO.mapOptional("fixedStack", MF.FixedStackObjects);
     YamlIO.mapOptional("stack", MF.StackObjects);
