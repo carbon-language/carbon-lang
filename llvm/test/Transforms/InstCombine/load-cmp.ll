@@ -233,7 +233,8 @@ define i1 @test10_struct_arr(i32 %x) {
 
 define i1 @test10_struct_arr_noinbounds(i32 %x) {
 ; CHECK-LABEL: @test10_struct_arr_noinbounds(
-; CHECK-NEXT  %p = getelementptr [4 x %Foo], [4 x %Foo]* @GStructArr, i32 0, i32 %x, i32 2
+; CHECK-NEXT: %r = icmp ne i32 %x, 1
+; CHECK-NEXT: ret i1 %r
   %p = getelementptr [4 x %Foo], [4 x %Foo]* @GStructArr, i32 0, i32 %x, i32 2
   %q = load i32, i32* %p
   %r = icmp eq i32 %q, 9
