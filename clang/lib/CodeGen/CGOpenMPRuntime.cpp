@@ -1284,12 +1284,12 @@ void CGOpenMPRuntime::emitCriticalRegion(CodeGenFunction &CGF,
 }
 
 static void emitIfStmt(CodeGenFunction &CGF, llvm::Value *IfCond,
-                       OpenMPDirectiveKind Kind,
+                       OpenMPDirectiveKind Kind, SourceLocation Loc,
                        const RegionCodeGenTy &BodyOpGen) {
   llvm::Value *CallBool = CGF.EmitScalarConversion(
       IfCond,
       CGF.getContext().getIntTypeForBitwidth(/*DestWidth=*/32, /*Signed=*/true),
-      CGF.getContext().BoolTy);
+      CGF.getContext().BoolTy, Loc);
 
   auto *ThenBlock = CGF.createBasicBlock("omp_if.then");
   auto *ContBlock = CGF.createBasicBlock("omp_if.end");
@@ -1315,13 +1315,14 @@ void CGOpenMPRuntime::emitMasterRegion(CodeGenFunction &CGF,
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_master), Args);
   typedef CallEndCleanup<std::extent<decltype(Args)>::value>
       MasterCallEndCleanup;
-  emitIfStmt(CGF, IsMaster, OMPD_master, [&](CodeGenFunction &CGF) -> void {
-    CodeGenFunction::RunCleanupsScope Scope(CGF);
-    CGF.EHStack.pushCleanup<MasterCallEndCleanup>(
-        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_master),
-        llvm::makeArrayRef(Args));
-    MasterOpGen(CGF);
-  });
+  emitIfStmt(
+      CGF, IsMaster, OMPD_master, Loc, [&](CodeGenFunction &CGF) -> void {
+        CodeGenFunction::RunCleanupsScope Scope(CGF);
+        CGF.EHStack.pushCleanup<MasterCallEndCleanup>(
+            NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_master),
+            llvm::makeArrayRef(Args));
+        MasterOpGen(CGF);
+      });
 }
 
 void CGOpenMPRuntime::emitTaskyieldCall(CodeGenFunction &CGF,
@@ -1444,18 +1445,19 @@ void CGOpenMPRuntime::emitSingleRegion(CodeGenFunction &CGF,
       CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_single), Args);
   typedef CallEndCleanup<std::extent<decltype(Args)>::value>
       SingleCallEndCleanup;
-  emitIfStmt(CGF, IsSingle, OMPD_single, [&](CodeGenFunction &CGF) -> void {
-    CodeGenFunction::RunCleanupsScope Scope(CGF);
-    CGF.EHStack.pushCleanup<SingleCallEndCleanup>(
-        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_single),
-        llvm::makeArrayRef(Args));
-    SingleOpGen(CGF);
-    if (DidIt) {
-      // did_it = 1;
-      CGF.Builder.CreateAlignedStore(CGF.Builder.getInt32(1), DidIt,
-                                     DidIt->getAlignment());
-    }
-  });
+  emitIfStmt(
+      CGF, IsSingle, OMPD_single, Loc, [&](CodeGenFunction &CGF) -> void {
+        CodeGenFunction::RunCleanupsScope Scope(CGF);
+        CGF.EHStack.pushCleanup<SingleCallEndCleanup>(
+            NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_single),
+            llvm::makeArrayRef(Args));
+        SingleOpGen(CGF);
+        if (DidIt) {
+          // did_it = 1;
+          CGF.Builder.CreateAlignedStore(CGF.Builder.getInt32(1), DidIt,
+                                         DidIt->getAlignment());
+        }
+      });
   // call __kmpc_copyprivate(ident_t *, gtid, <buf_size>, <copyprivate list>,
   // <copy_func>, did_it);
   if (DidIt) {
@@ -1719,7 +1721,7 @@ llvm::Value *CGOpenMPRuntime::emitForNext(CodeGenFunction &CGF,
       CGF.EmitRuntimeCall(createDispatchNextFunction(IVSize, IVSigned), Args);
   return CGF.EmitScalarConversion(
       Call, CGF.getContext().getIntTypeForBitwidth(32, /* Signed */ true),
-      CGF.getContext().BoolTy);
+      CGF.getContext().BoolTy, Loc);
 }
 
 void CGOpenMPRuntime::emitNumThreadsClause(CodeGenFunction &CGF,

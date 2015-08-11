@@ -85,10 +85,10 @@ public:
 
   /// Emit a cast from complex value Val to DestType.
   ComplexPairTy EmitComplexToComplexCast(ComplexPairTy Val, QualType SrcType,
-                                         QualType DestType);
+                                         QualType DestType, SourceLocation Loc);
   /// Emit a cast from scalar value Val to DestType.
   ComplexPairTy EmitScalarToComplexCast(llvm::Value *Val, QualType SrcType,
-                                        QualType DestType);
+                                        QualType DestType, SourceLocation Loc);
 
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -394,7 +394,8 @@ ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 /// Emit a cast from complex value Val to DestType.
 ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
                                                            QualType SrcType,
-                                                           QualType DestType) {
+                                                           QualType DestType,
+                                                           SourceLocation Loc) {
   // Get the src/dest element type.
   SrcType = SrcType->castAs<ComplexType>()->getElementType();
   DestType = DestType->castAs<ComplexType>()->getElementType();
@@ -402,17 +403,18 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
   // C99 6.3.1.6: When a value of complex type is converted to another
   // complex type, both the real and imaginary parts follow the conversion
   // rules for the corresponding real types.
-  Val.first = CGF.EmitScalarConversion(Val.first, SrcType, DestType);
-  Val.second = CGF.EmitScalarConversion(Val.second, SrcType, DestType);
+  Val.first = CGF.EmitScalarConversion(Val.first, SrcType, DestType, Loc);
+  Val.second = CGF.EmitScalarConversion(Val.second, SrcType, DestType, Loc);
   return Val;
 }
 
 ComplexPairTy ComplexExprEmitter::EmitScalarToComplexCast(llvm::Value *Val,
                                                           QualType SrcType,
-                                                          QualType DestType) {
+                                                          QualType DestType,
+                                                          SourceLocation Loc) {
   // Convert the input element to the element type of the complex.
   DestType = DestType->castAs<ComplexType>()->getElementType();
-  Val = CGF.EmitScalarConversion(Val, SrcType, DestType);
+  Val = CGF.EmitScalarConversion(Val, SrcType, DestType, Loc);
 
   // Return (realval, 0).
   return ComplexPairTy(Val, llvm::Constant::getNullValue(Val->getType()));
@@ -488,14 +490,15 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastKind CK, Expr *Op,
 
   case CK_FloatingRealToComplex:
   case CK_IntegralRealToComplex:
-    return EmitScalarToComplexCast(CGF.EmitScalarExpr(Op),
-                                   Op->getType(), DestTy);
+    return EmitScalarToComplexCast(CGF.EmitScalarExpr(Op), Op->getType(),
+                                   DestTy, Op->getExprLoc());
 
   case CK_FloatingComplexCast:
   case CK_FloatingComplexToIntegralComplex:
   case CK_IntegralComplexCast:
   case CK_IntegralComplexToFloatingComplex:
-    return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy);
+    return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy,
+                                    Op->getExprLoc());
   }
 
   llvm_unreachable("unknown cast resulting in complex value");
@@ -846,19 +849,20 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // Load from the l-value and convert it.
+  SourceLocation Loc = E->getExprLoc();
   if (LHSTy->isAnyComplexType()) {
-    ComplexPairTy LHSVal = EmitLoadOfLValue(LHS, E->getExprLoc());
-    OpInfo.LHS = EmitComplexToComplexCast(LHSVal, LHSTy, OpInfo.Ty);
+    ComplexPairTy LHSVal = EmitLoadOfLValue(LHS, Loc);
+    OpInfo.LHS = EmitComplexToComplexCast(LHSVal, LHSTy, OpInfo.Ty, Loc);
   } else {
-    llvm::Value *LHSVal = CGF.EmitLoadOfScalar(LHS, E->getExprLoc());
+    llvm::Value *LHSVal = CGF.EmitLoadOfScalar(LHS, Loc);
     // For floating point real operands we can directly pass the scalar form
     // to the binary operator emission and potentially get more efficient code.
     if (LHSTy->isRealFloatingType()) {
       if (!CGF.getContext().hasSameUnqualifiedType(ComplexElementTy, LHSTy))
-        LHSVal = CGF.EmitScalarConversion(LHSVal, LHSTy, ComplexElementTy);
+        LHSVal = CGF.EmitScalarConversion(LHSVal, LHSTy, ComplexElementTy, Loc);
       OpInfo.LHS = ComplexPairTy(LHSVal, nullptr);
     } else {
-      OpInfo.LHS = EmitScalarToComplexCast(LHSVal, LHSTy, OpInfo.Ty);
+      OpInfo.LHS = EmitScalarToComplexCast(LHSVal, LHSTy, OpInfo.Ty, Loc);
     }
   }
 
@@ -867,12 +871,13 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
 
   // Truncate the result and store it into the LHS lvalue.
   if (LHSTy->isAnyComplexType()) {
-    ComplexPairTy ResVal = EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy);
+    ComplexPairTy ResVal =
+        EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy, Loc);
     EmitStoreOfComplex(ResVal, LHS, /*isInit*/ false);
     Val = RValue::getComplex(ResVal);
   } else {
     llvm::Value *ResVal =
-        CGF.EmitComplexToScalarConversion(Result, OpInfo.Ty, LHSTy);
+        CGF.EmitComplexToScalarConversion(Result, OpInfo.Ty, LHSTy, Loc);
     CGF.EmitStoreOfScalar(ResVal, LHS, /*isInit*/ false);
     Val = RValue::get(ResVal);
   }

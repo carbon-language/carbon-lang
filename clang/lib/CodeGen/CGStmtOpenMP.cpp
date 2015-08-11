@@ -1065,7 +1065,8 @@ emitScheduleClause(CodeGenFunction &CGF, const OMPLoopDirective &S,
       if (!C->getHelperChunkSize() || !OuterRegion) {
         Chunk = CGF.EmitScalarExpr(Ch);
         Chunk = CGF.EmitScalarConversion(Chunk, Ch->getType(),
-                                         S.getIterationVariable()->getType());
+                                         S.getIterationVariable()->getType(),
+                                         S.getLocStart());
       }
     }
   }
@@ -1683,27 +1684,29 @@ void CodeGenFunction::EmitOMPOrderedDirective(const OMPOrderedDirective &S) {
 }
 
 static llvm::Value *convertToScalarValue(CodeGenFunction &CGF, RValue Val,
-                                         QualType SrcType, QualType DestType) {
+                                         QualType SrcType, QualType DestType,
+                                         SourceLocation Loc) {
   assert(CGF.hasScalarEvaluationKind(DestType) &&
          "DestType must have scalar evaluation kind.");
   assert(!Val.isAggregate() && "Must be a scalar or complex.");
   return Val.isScalar()
-             ? CGF.EmitScalarConversion(Val.getScalarVal(), SrcType, DestType)
+             ? CGF.EmitScalarConversion(Val.getScalarVal(), SrcType, DestType,
+                                        Loc)
              : CGF.EmitComplexToScalarConversion(Val.getComplexVal(), SrcType,
-                                                 DestType);
+                                                 DestType, Loc);
 }
 
 static CodeGenFunction::ComplexPairTy
 convertToComplexValue(CodeGenFunction &CGF, RValue Val, QualType SrcType,
-                      QualType DestType) {
+                      QualType DestType, SourceLocation Loc) {
   assert(CGF.getEvaluationKind(DestType) == TEK_Complex &&
          "DestType must have complex evaluation kind.");
   CodeGenFunction::ComplexPairTy ComplexVal;
   if (Val.isScalar()) {
     // Convert the input element to the element type of the complex.
     auto DestElementType = DestType->castAs<ComplexType>()->getElementType();
-    auto ScalarVal =
-        CGF.EmitScalarConversion(Val.getScalarVal(), SrcType, DestElementType);
+    auto ScalarVal = CGF.EmitScalarConversion(Val.getScalarVal(), SrcType,
+                                              DestElementType, Loc);
     ComplexVal = CodeGenFunction::ComplexPairTy(
         ScalarVal, llvm::Constant::getNullValue(ScalarVal->getType()));
   } else {
@@ -1711,9 +1714,9 @@ convertToComplexValue(CodeGenFunction &CGF, RValue Val, QualType SrcType,
     auto SrcElementType = SrcType->castAs<ComplexType>()->getElementType();
     auto DestElementType = DestType->castAs<ComplexType>()->getElementType();
     ComplexVal.first = CGF.EmitScalarConversion(
-        Val.getComplexVal().first, SrcElementType, DestElementType);
+        Val.getComplexVal().first, SrcElementType, DestElementType, Loc);
     ComplexVal.second = CGF.EmitScalarConversion(
-        Val.getComplexVal().second, SrcElementType, DestElementType);
+        Val.getComplexVal().second, SrcElementType, DestElementType, Loc);
   }
   return ComplexVal;
 }
@@ -1730,16 +1733,16 @@ static void emitSimpleAtomicStore(CodeGenFunction &CGF, bool IsSeqCst,
 }
 
 static void emitSimpleStore(CodeGenFunction &CGF, LValue LVal, RValue RVal,
-                            QualType RValTy) {
+                            QualType RValTy, SourceLocation Loc) {
   switch (CGF.getEvaluationKind(LVal.getType())) {
   case TEK_Scalar:
-    CGF.EmitStoreThroughLValue(
-        RValue::get(convertToScalarValue(CGF, RVal, RValTy, LVal.getType())),
-        LVal);
+    CGF.EmitStoreThroughLValue(RValue::get(convertToScalarValue(
+                                   CGF, RVal, RValTy, LVal.getType(), Loc)),
+                               LVal);
     break;
   case TEK_Complex:
     CGF.EmitStoreOfComplex(
-        convertToComplexValue(CGF, RVal, RValTy, LVal.getType()), LVal,
+        convertToComplexValue(CGF, RVal, RValTy, LVal.getType(), Loc), LVal,
         /*isInit=*/false);
     break;
   case TEK_Aggregate:
@@ -1767,7 +1770,7 @@ static void EmitOMPAtomicReadExpr(CodeGenFunction &CGF, bool IsSeqCst,
   // list.
   if (IsSeqCst)
     CGF.CGM.getOpenMPRuntime().emitFlush(CGF, llvm::None, Loc);
-  emitSimpleStore(CGF,VLValue, Res, X->getType().getNonReferenceType());
+  emitSimpleStore(CGF, VLValue, Res, X->getType().getNonReferenceType(), Loc);
 }
 
 static void EmitOMPAtomicWriteExpr(CodeGenFunction &CGF, bool IsSeqCst,
@@ -1938,12 +1941,14 @@ static void EmitOMPAtomicUpdateExpr(CodeGenFunction &CGF, bool IsSeqCst,
 }
 
 static RValue convertToType(CodeGenFunction &CGF, RValue Value,
-                            QualType SourceType, QualType ResType) {
+                            QualType SourceType, QualType ResType,
+                            SourceLocation Loc) {
   switch (CGF.getEvaluationKind(ResType)) {
   case TEK_Scalar:
-    return RValue::get(convertToScalarValue(CGF, Value, SourceType, ResType));
+    return RValue::get(
+        convertToScalarValue(CGF, Value, SourceType, ResType, Loc));
   case TEK_Complex: {
-    auto Res = convertToComplexValue(CGF, Value, SourceType, ResType);
+    auto Res = convertToComplexValue(CGF, Value, SourceType, ResType, Loc);
     return RValue::getComplex(Res.first, Res.second);
   }
   case TEK_Aggregate:
@@ -2008,7 +2013,7 @@ static void EmitOMPAtomicCaptureExpr(CodeGenFunction &CGF, bool IsSeqCst,
     // 'x' is simply rewritten with some 'expr'.
     NewVValType = X->getType().getNonReferenceType();
     ExprRValue = convertToType(CGF, ExprRValue, E->getType(),
-                               X->getType().getNonReferenceType());
+                               X->getType().getNonReferenceType(), Loc);
     auto &&Gen = [&CGF, &NewVVal, ExprRValue](RValue XRValue) -> RValue {
       NewVVal = XRValue;
       return ExprRValue;
@@ -2023,7 +2028,7 @@ static void EmitOMPAtomicCaptureExpr(CodeGenFunction &CGF, bool IsSeqCst,
     }
   }
   // Emit post-update store to 'v' of old/new 'x' value.
-  emitSimpleStore(CGF, VLValue, NewVVal, NewVValType);
+  emitSimpleStore(CGF, VLValue, NewVVal, NewVValType, Loc);
   // OpenMP, 2.12.6, atomic Construct
   // Any atomic construct with a seq_cst clause forces the atomically
   // performed operation to include an implicit flush operation without a

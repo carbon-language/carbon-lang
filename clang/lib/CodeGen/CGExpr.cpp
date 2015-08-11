@@ -96,10 +96,12 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   }
 
   QualType BoolTy = getContext().BoolTy;
+  SourceLocation Loc = E->getExprLoc();
   if (!E->getType()->isAnyComplexType())
-    return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy);
+    return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy, Loc);
 
-  return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(),BoolTy);
+  return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(), BoolTy,
+                                       Loc);
 }
 
 /// EmitIgnoredExpr - Emit code to compute the specified expression,

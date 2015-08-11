@@ -19,6 +19,17 @@
 // CHECK-UBSAN: @[[LINE_700:.*]] = {{.*}}, i32 700, i32 14 {{.*}} @[[STRUCT_S]], i64 4, i8 3 }
 // CHECK-UBSAN: @[[LINE_800:.*]] = {{.*}}, i32 800, i32 12 {{.*}} @{{.*}} }
 // CHECK-UBSAN: @[[LINE_900:.*]] = {{.*}}, i32 900, i32 11 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1000:.*]] = {{.*}}, i32 1000, i32 10 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[FP16:.*]] = private unnamed_addr constant { i16, i16, [9 x i8] } { i16 1, i16 16, [9 x i8] c"'__fp16'\00" }
+// CHECK-UBSAN: @[[LINE_1100:.*]] = {{.*}}, i32 1100, i32 8 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1200:.*]] = {{.*}}, i32 1200, i32 10 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1300:.*]] = {{.*}}, i32 1300, i32 10 {{.*}} @{{.*}} }
+// CHECK-UBSAN: @[[LINE_1400:.*]] = {{.*}}, i32 1400, i32 10 {{.*}} @{{.*}} }
+// Make sure we check the fp16 type_mismatch data so we can easily match the signed char float_cast_overflow
+// CHECK-UBSAN: @[[LINE_1500:.*]] = {{.*}}, i32 1500, i32 10 {{.*}} @[[FP16]], {{.*}} }
+// CHECK-UBSAN: @[[SCHAR:.*]] = private unnamed_addr constant { i16, i16, [14 x i8] } { i16 0, i16 7, [14 x i8] c"'signed char'\00" }
+// CHECK-UBSAN: @[[LINE_1500:.*]] = {{.*}}, i32 1500, i32 10 {{.*}} @[[FP16]], {{.*}} }
+// CHECK-UBSAN: @[[LINE_1600:.*]] = {{.*}}, i32 1600, i32 10 {{.*}} @{{.*}} }
 
 // CHECK-NULL: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}}
 
@@ -209,10 +220,11 @@ float int_float_overflow(unsigned __int128 n) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = icmp ule i128 %{{.*}}, -20282409603651670423947251286016
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1000]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1000
   return n;
 }
 
@@ -223,10 +235,11 @@ void int_fp16_overflow(int n, __fp16 *p) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1100]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1100
   *p = n;
 }
 
@@ -239,10 +252,11 @@ int float_int_overflow(float f) {
 
   // CHECK-UBSAN: %[[CAST:.*]] = bitcast float %[[F]] to i32
   // CHECK-UBSAN: %[[ARG:.*]] = zext i32 %[[CAST]] to i64
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow({{.*}}, i64 %[[ARG]]
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1200]] to i8*), i64 %[[ARG]]
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1200
   return f;
 }
 
@@ -257,10 +271,11 @@ int long_double_int_overflow(long double ld) {
 
   // CHECK-UBSAN: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]], !nosanitize
   // CHECK-UBSAN: %[[ARG:.*]] = ptrtoint x86_fp80* %[[ALLOCA]] to i64
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow({{.*}}, i64 %[[ARG]]
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1300]] to i8*), i64 %[[ARG]]
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1300
   return ld;
 }
 
@@ -271,10 +286,11 @@ unsigned float_uint_overflow(float f) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1400]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1400
   return f;
 }
 
@@ -285,10 +301,11 @@ signed char fp16_char_overflow(__fp16 *p) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = and i1 %[[GE]], %[[LE]]
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1500]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1500
   return *p;
 }
 
@@ -301,10 +318,11 @@ float float_float_overflow(double f) {
   // CHECK-COMMON: %[[INBOUNDS:.*]] = xor i1 %[[OUTOFBOUNDS]], true
   // CHECK-COMMON-NEXT: br i1 %[[INBOUNDS]]
 
-  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(
+  // CHECK-UBSAN: call void @__ubsan_handle_float_cast_overflow(i8* bitcast ({{.*}} @[[LINE_1600]] to i8*),
 
   // CHECK-TRAP:      call void @llvm.trap() [[NR_NUW]]
   // CHECK-TRAP-NEXT: unreachable
+#line 1600
   return f;
 }
 
