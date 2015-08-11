@@ -169,6 +169,38 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
   return EnteringBB;
 }
 
+// Split the block into two successive blocks.
+//
+// Like llvm::SplitBlock, but also preserves RegionInfo
+static BasicBlock *splitBlock(BasicBlock *Old, Instruction *SplitPt,
+                              DominatorTree *DT, llvm::LoopInfo *LI,
+                              RegionInfo *RI) {
+  assert(Old && SplitPt);
+
+  // Before:
+  //
+  //  \   /  //
+  //   Old   //
+  //  /   \  //
+
+  BasicBlock *NewBlock = llvm::SplitBlock(Old, SplitPt, DT, LI);
+
+  if (RI) {
+    Region *R = RI->getRegionFor(Old);
+    RI->setRegionFor(NewBlock, R);
+  }
+
+  // After:
+  //
+  //   \   /    //
+  //    Old     //
+  //     |      //
+  //  NewBlock  //
+  //   /   \    //
+
+  return NewBlock;
+}
+
 void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
   // Find first non-alloca instruction. Every basic block has a non-alloc
   // instruction, as every well formed basic block has a terminator.
@@ -180,9 +212,9 @@ void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+  RegionInfoPass *RIP = P->getAnalysisIfAvailable<RegionInfoPass>();
+  RegionInfo *RI = RIP ? &RIP->getRegionInfo() : nullptr;
 
-  // SplitBlock updates DT, DF and LI.
-  BasicBlock *NewEntry = SplitBlock(EntryBlock, I, DT, LI);
-  if (RegionInfoPass *RIP = P->getAnalysisIfAvailable<RegionInfoPass>())
-    RIP->getRegionInfo().splitBlock(NewEntry, EntryBlock);
+  // splitBlock updates DT, LI and RI.
+  splitBlock(EntryBlock, I, DT, LI, RI);
 }
