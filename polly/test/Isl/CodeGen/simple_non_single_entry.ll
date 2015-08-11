@@ -65,6 +65,6 @@ return:
   ret void
 }
 
-; CHECK: Create LLVM-IR from SCoPs' for region: 'next.split => polly.merge_new_and_old'
+; CHECK: Create LLVM-IR from SCoPs' for region: 'next => polly.merge_new_and_old'
 ; CHECK-CODE: polly.split_new_and_old
 ; CHECK-CODE: polly.merge_new_and_old

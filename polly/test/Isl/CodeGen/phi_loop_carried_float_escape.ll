@@ -6,31 +6,31 @@
 ;        tmp += A[i];
 ;      return tmp;
 ;    }
-;
-; CHECK:      polly.merge_new_and_old:
-; CHECK-NEXT:   %tmp.0.merge = phi float [ %tmp.0.final_reload, %polly.merge ], [ %tmp.0, %bb8 ]
-; CHECK-NEXT:   ret float %tmp.0.merge
-;
-; CHECK:      polly.start:
-; CHECK-NEXT:   store float 0.000000e+00, float* %tmp.0.phiops
 
-; CHECK:      polly.merge:
-; CHECK-NEXT:   %tmp.0.final_reload = load float, float* %tmp.0.s2a
-; CHECK-NEXT:   br label %polly.merge_new_and_old
+; CHECK-LABEL: polly.merge_new_and_old:
+; CHECK-NEXT:    %tmp.0.merge = phi float [ %tmp.0.final_reload, %polly.merge ], [ %tmp.0, %bb8 ]
+; CHECK-NEXT:    br label %exit
 
-; CHECK:      polly.stmt.bb1{{[0-9]*}}:
-; CHECK-NEXT:   %tmp.0.phiops.reload[[R1:[0-9]*]] = load float, float* %tmp.0.phiops
-; CHECK-:       store float %tmp.0.phiops.reload[[R1]], float* %tmp.0.s2a
+; CHECK-LABEL: polly.start:
+; CHECK-NEXT:    store float 0.000000e+00, float* %tmp.0.phiops
 
-; CHECK:      polly.stmt.bb1{{[0-9]*}}:
-; CHECK-NEXT:   %tmp.0.phiops.reload[[R2:[0-9]*]] = load float, float* %tmp.0.phiops
-; CHECK:        store float %tmp.0.phiops.reload[[R2]], float* %tmp.0.s2a
+; CHECK-LABEL: polly.merge:
+; CHECK-NEXT:    %tmp.0.final_reload = load float, float* %tmp.0.s2a
+; CHECK-NEXT:    br label %polly.merge_new_and_old
 
-; CHECK: polly.stmt.bb4:                                   ; preds = %polly.then3
-; CHECK:   %tmp[[R5:[0-9]*]]_p_scalar_ = load float, float* %scevgep, align 4, !alias.scope !0, !noalias !2
-; CHECK:   %tmp.0.s2a.reload[[R3:[0-9]*]] = load float, float* %tmp.0.s2a
-; CHECK:   %p_tmp[[R4:[0-9]*]] = fadd float %tmp.0.s2a.reload[[R3]], %tmp[[R5]]_p_scalar_
-; CHECK:   store float %p_tmp[[R4]], float* %tmp.0.phiops
+; CHECK-LABEL: polly.stmt.bb1{{[0-9]*}}:
+; CHECK-NEXT:    %tmp.0.phiops.reload[[R1:[0-9]*]] = load float, float* %tmp.0.phiops
+; CHECK-:        store float %tmp.0.phiops.reload[[R1]], float* %tmp.0.s2a
+
+; CHECK-LABEL: polly.stmt.bb1{{[0-9]*}}:
+; CHECK-NEXT:    %tmp.0.phiops.reload[[R2:[0-9]*]] = load float, float* %tmp.0.phiops
+; CHECK:         store float %tmp.0.phiops.reload[[R2]], float* %tmp.0.s2a
+
+; CHECK-LABEL: polly.stmt.bb4:                                   ; preds = %polly.then3
+; CHECK:         %tmp[[R5:[0-9]*]]_p_scalar_ = load float, float* %scevgep, align 4, !alias.scope !0, !noalias !2
+; CHECK:         %tmp.0.s2a.reload[[R3:[0-9]*]] = load float, float* %tmp.0.s2a
+; CHECK:         %p_tmp[[R4:[0-9]*]] = fadd float %tmp.0.s2a.reload[[R3]], %tmp[[R5]]_p_scalar_
+; CHECK:         store float %p_tmp[[R4]], float* %tmp.0.phiops
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

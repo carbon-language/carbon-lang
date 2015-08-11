@@ -26,6 +26,10 @@ class PHINode;
 class Region;
 class Pass;
 class BasicBlock;
+class StringRef;
+class DominatorTree;
+class RegionInfo;
+class ScalarEvolution;
 }
 
 namespace polly {
@@ -51,16 +55,20 @@ llvm::Loop *castToLoop(const llvm::Region &R, llvm::LoopInfo &LI);
 bool hasInvokeEdge(const llvm::PHINode *PN);
 
 llvm::Value *getPointerOperand(llvm::Instruction &Inst);
-llvm::BasicBlock *createSingleExitEdge(llvm::Region *R, llvm::Pass *P);
 
-/// @brief Simplify the region in a SCoP to have a single unconditional entry
-///        edge and a single exit edge.
+/// @brief Simplify the region to have a single unconditional entry edge and a
+/// single exit edge.
 ///
-/// @param S  The SCoP that is simplified.
-/// @param P  The pass that is currently running.
+/// Although this function allows DT and RI to be null, regions only work
+/// properly if the DominatorTree (for Region::contains) and RegionInfo are kept
+/// up-to-date.
 ///
-/// @return The unique entering block for the region.
-llvm::BasicBlock *simplifyRegion(polly::Scop *S, llvm::Pass *P);
+/// @param R  The region to be simplified
+/// @param DT DominatorTree to be updated.
+/// @param LI LoopInfo to be updated.
+/// @param RI RegionInfo to be updated.
+void simplifyRegion(llvm::Region *R, llvm::DominatorTree *DT,
+                    llvm::LoopInfo *LI, llvm::RegionInfo *RI);
 
 /// @brief Split the entry block of a function to store the newly inserted
 ///        allocations outside of all Scops.

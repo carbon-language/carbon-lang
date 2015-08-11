@@ -76,97 +76,131 @@ bool polly::hasInvokeEdge(const PHINode *PN) {
   return false;
 }
 
-BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
-  BasicBlock *BB = R->getExit();
-
-  SmallVector<BasicBlock *, 4> Preds;
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    if (R->contains(*PI))
-      Preds.push_back(*PI);
-
-  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
-
-  return SplitBlockPredecessors(BB, Preds, ".region", DT, LI);
-}
-
-static void replaceScopAndRegionEntry(polly::Scop *S, BasicBlock *OldEntry,
-                                      BasicBlock *NewEntry) {
-  if (polly::ScopStmt *Stmt = S->getStmtForBasicBlock(OldEntry))
-    Stmt->setBasicBlock(NewEntry);
-
-  S->getRegion().replaceEntryRecursive(NewEntry);
-}
-
-BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
-  Region *R = &S->getRegion();
-
-  // The entering block for the region.
+// Ensures that there is just one predecessor to the entry node from outside the
+// region.
+// The identity of the region entry node is preserved.
+static void simplifyRegionEntry(Region *R, DominatorTree *DT, LoopInfo *LI,
+                                RegionInfo *RI) {
   BasicBlock *EnteringBB = R->getEnteringBlock();
-  BasicBlock *OldEntry = R->getEntry();
-  BasicBlock *NewEntry = nullptr;
+  BasicBlock *Entry = R->getEntry();
 
-  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+  // Before (one of):
+  //
+  //                       \    /            //
+  //                      EnteringBB         //
+  //                        |    \------>    //
+  //   \   /                |                //
+  //   Entry <--\         Entry <--\         //
+  //   /   \    /         /   \    /         //
+  //        ....               ....          //
 
   // Create single entry edge if the region has multiple entry edges.
   if (!EnteringBB) {
-    NewEntry = SplitBlock(OldEntry, OldEntry->begin(), DT, LI);
-    EnteringBB = OldEntry;
-  }
+    SmallVector<BasicBlock *, 4> Preds;
+    for (BasicBlock *P : predecessors(Entry))
+      if (!R->contains(P))
+        Preds.push_back(P);
 
-  // Create an unconditional entry edge.
-  if (EnteringBB->getTerminator()->getNumSuccessors() != 1) {
-    BasicBlock *EntryBB = NewEntry ? NewEntry : OldEntry;
-    BasicBlock *SplitEdgeBB = SplitEdge(EnteringBB, EntryBB, DT, LI);
+    BasicBlock *NewEntering =
+        SplitBlockPredecessors(Entry, Preds, ".region_entering", DT, LI);
 
-    // Once the edge between EnteringBB and EntryBB is split, two cases arise.
-    // The first is simple. The new block is inserted between EnteringBB and
-    // EntryBB. In this case no further action is needed. However it might
-    // happen (if the splitted edge is not critical) that the new block is
-    // inserted __after__ EntryBB causing the following situation:
-    //
-    // EnteringBB
-    //    _|_
-    //    | |
-    //    |  \-> some_other_BB_not_in_R
-    //    V
-    // EntryBB
-    //    |
-    //    V
-    // SplitEdgeBB
-    //
-    // In this case we need to swap the role of EntryBB and SplitEdgeBB.
+    if (RI) {
+      // The exit block of predecessing regions must be changed to NewEntering
+      for (BasicBlock *ExitPred : predecessors(NewEntering)) {
+        Region *RegionOfPred = RI->getRegionFor(ExitPred);
+        if (RegionOfPred->getExit() != Entry)
+          continue;
 
-    // Check which case SplitEdge produced:
-    if (SplitEdgeBB->getTerminator()->getSuccessor(0) == EntryBB) {
-      // First (simple) case.
-      EnteringBB = SplitEdgeBB;
-    } else {
-      // Second (complicated) case.
-      NewEntry = SplitEdgeBB;
-      EnteringBB = EntryBB;
+        while (!RegionOfPred->isTopLevelRegion() &&
+               RegionOfPred->getExit() == Entry) {
+          RegionOfPred->replaceExit(NewEntering);
+          RegionOfPred = RegionOfPred->getParent();
+        }
+      }
+
+      // Make all ancestors use EnteringBB as entry; there might be edges to it
+      Region *AncestorR = R->getParent();
+      RI->setRegionFor(NewEntering, AncestorR);
+      while (!AncestorR->isTopLevelRegion() && AncestorR->getEntry() == Entry) {
+        AncestorR->replaceEntry(NewEntering);
+        AncestorR = AncestorR->getParent();
+      }
     }
 
-    EnteringBB->setName("polly.entering.block");
+    EnteringBB = NewEntering;
   }
+  assert(R->getEnteringBlock() == EnteringBB);
 
-  if (NewEntry)
-    replaceScopAndRegionEntry(S, OldEntry, NewEntry);
+  // After:
+  //
+  //    \    /       //
+  //  EnteringBB     //
+  //      |          //
+  //      |          //
+  //    Entry <--\   //
+  //    /   \    /   //
+  //         ....    //
+}
 
-  // Create single exit edge if the region has multiple exit edges.
-  if (!R->getExitingBlock()) {
-    BasicBlock *NewExiting = createSingleExitEdge(R, P);
-    (void)NewExiting;
-    assert(NewExiting == R->getExitingBlock() &&
-           "Did not create a single exiting block");
+// Ensure that the region has a single block that branches to the exit node.
+static void simplifyRegionExit(Region *R, DominatorTree *DT, LoopInfo *LI,
+                               RegionInfo *RI) {
+  BasicBlock *ExitBB = R->getExit();
+  BasicBlock *ExitingBB = R->getExitingBlock();
+
+  // Before:
+  //
+  //   (Region)   ______/  //
+  //      \  |   /         //
+  //       ExitBB          //
+  //       /    \          //
+
+  if (!ExitingBB) {
+    SmallVector<BasicBlock *, 4> Preds;
+    for (BasicBlock *P : predecessors(ExitBB))
+      if (R->contains(P))
+        Preds.push_back(P);
+
+    //  Preds[0] Preds[1]      otherBB //
+    //         \  |  ________/         //
+    //          \ | /                  //
+    //           BB                    //
+    ExitingBB =
+        SplitBlockPredecessors(ExitBB, Preds, ".region_exiting", DT, LI);
+    // Preds[0] Preds[1]      otherBB  //
+    //        \  /           /         //
+    // BB.region_exiting    /          //
+    //                  \  /           //
+    //                   BB            //
+
+    if (RI)
+      RI->setRegionFor(ExitingBB, R);
+
+    // Change the exit of nested regions, but not the region itself,
+    R->replaceExitRecursive(ExitingBB);
+    R->replaceExit(ExitBB);
   }
+  assert(ExitingBB == R->getExitingBlock());
 
-  return EnteringBB;
+  // After:
+  //
+  //     \   /                //
+  //    ExitingBB     _____/  //
+  //          \      /        //
+  //           ExitBB         //
+  //           /    \         //
+}
+
+void polly::simplifyRegion(Region *R, DominatorTree *DT, LoopInfo *LI,
+                           RegionInfo *RI) {
+  assert(R && !R->isTopLevelRegion());
+  assert(!RI || RI == R->getRegionInfo());
+  assert((!RI || DT) &&
+         "RegionInfo requires DominatorTree to be updated as well");
+
+  simplifyRegionEntry(R, DT, LI, RI);
+  simplifyRegionExit(R, DT, LI, RI);
+  assert(R->isSimple());
 }
 
 // Split the block into two successive blocks.

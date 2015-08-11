@@ -19,22 +19,22 @@ define void @jd(i32 %b, i32* %A) {
 entry:
   br label %while.begin
 
-; CHECK: while.begin:
+; CHECK-LABEL: while.begin.region_exiting:
+; CHECK:         br label %polly.merge_new_and_old
+
+; CHECK-LABEL: while.begin:
 while.begin:
 ; CHECK:  %call = call i32 @f()
   %call = call i32 @f()
 ; CHECK:  %tobool = icmp eq i32 %call, 0
   %tobool = icmp eq i32 %call, 0
-; CHECK:  br i1 %tobool, label %while.end, label %polly.entering.block
+; CHECK:  br i1 %tobool, label %while.end, label %polly.split_new_and_old
   br i1 %tobool, label %while.end, label %if
 
-; CHECK: polly.entering.block:
-; CHECK:   br label %polly.split_new_and_old
-
 ; CHECK: polly.split_new_and_old:
-; CHECK:   br i1 true, label %polly.start, label %if.split
+; CHECK:   br i1 true, label %polly.start, label %if
 
-; CHECK: if.split:
+; CHECK: if:
 if:                                               ; preds = %while.begin
 ; CHECK: %tobool2 = icmp eq i32 %b, 0
   %tobool2 = icmp eq i32 %b, 0
