@@ -2279,14 +2279,14 @@ public:
   }
 
   /// \brief Determine whether this constructor is a move constructor
-  /// (C++0x [class.copy]p3), which can be used to move values of the class.
+  /// (C++11 [class.copy]p3), which can be used to move values of the class.
   ///
   /// \param TypeQuals If this constructor is a move constructor, will be set
   /// to the type qualifiers on the referent of the first parameter's type.
   bool isMoveConstructor(unsigned &TypeQuals) const;
 
   /// \brief Determine whether this constructor is a move constructor
-  /// (C++0x [class.copy]p3), which can be used to move values of the class.
+  /// (C++11 [class.copy]p3), which can be used to move values of the class.
   bool isMoveConstructor() const {
     unsigned TypeQuals = 0;
     return isMoveConstructor(TypeQuals);
@@ -2396,7 +2396,7 @@ class CXXConversionDecl : public CXXMethodDecl {
   void anchor() override;
   /// Whether this conversion function declaration is marked
   /// "explicit", meaning that it can only be applied when the user
-  /// explicitly wrote a cast. This is a C++0x feature.
+  /// explicitly wrote a cast. This is a C++11 feature.
   bool IsExplicitSpecified : 1;
 
   CXXConversionDecl(ASTContext &C, CXXRecordDecl *RD, SourceLocation StartLoc,
