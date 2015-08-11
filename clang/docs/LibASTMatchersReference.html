@@ -157,6 +157,18 @@ Example matches Foo::Foo() and Foo::Foo(int)
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConversionDecl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('conversionDecl0')"><a name="conversionDecl0Anchor">conversionDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXConversionDecl.html">CXXConversionDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="conversionDecl0"><pre>Matches C++ conversion declarations.
+
+Example matches Foo::operator int()
+  struct Foo {
+    Foo();
+    operator int();
+    int DoSomething();
+  };
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('decl0')"><a name="decl0Anchor">decl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="decl0"><pre>Matches declarations.
 
