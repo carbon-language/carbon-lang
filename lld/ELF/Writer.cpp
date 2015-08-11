@@ -119,7 +119,6 @@ void OutputSection::addSectionChunk(SectionChunk<ELFT> *C) {
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
   Chunks.push_back(C);
-  C->setOutputSection(this);
   uintX_t Off = Header.sh_size;
   Off = RoundUpToAlignment(Off, C->getAlign());
   C->setVA(Off);

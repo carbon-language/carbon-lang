@@ -48,20 +48,12 @@ public:
   // It is illegal to call this function on non-section chunks.
   virtual StringRef getSectionName() const = 0;
 
-  // An output section has pointers to chunks in the section, and each
-  // chunk has a back pointer to an output section.
-  void setOutputSection(OutputSection *O) { Out = O; }
-  OutputSection *getOutputSection() { return Out; }
-
 protected:
   // The VA of this chunk in the output. The writer sets a value.
   uint64_t VA = 0;
 
   // The offset from beginning of the output file. The writer sets a value.
   uint64_t FileOff = 0;
-
-  // The output section for this chunk.
-  OutputSection *Out = nullptr;
 
   // The alignment of this chunk. The writer uses the value.
   uint32_t Align = 1;
