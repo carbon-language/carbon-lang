@@ -19,7 +19,7 @@ if(NOT COMPILER_RT_STANDALONE_BUILD)
       LTO
     )
   endif()
-  if(WIN32 AND EXISTS ${CMAKE_SOURCE_DIR}/tools/lld)
+  if(WIN32 AND COMPILER_RT_HAS_LLD_SOURCES)
     list(APPEND CFI_TEST_DEPS
       lld
     )
