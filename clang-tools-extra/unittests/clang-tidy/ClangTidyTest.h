@@ -17,7 +17,6 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "gtest/gtest.h"
 #include <map>
 
 namespace clang {
@@ -77,15 +76,8 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
                               FileContent.second);
   }
   Invocation.setDiagnosticConsumer(&DiagConsumer);
-  bool Result = Invocation.run();
-  if (!Result) {
-    std::string ErrorText;
-    for (const auto &Error : Context.getErrors()) {
-      ErrorText += Error.Message.Message + "\n";
-    }
-    ADD_FAILURE() << ErrorText;
+  if (!Invocation.run())
     return "";
-  }
 
   DiagConsumer.finish();
   tooling::Replacements Fixes;
