@@ -150,6 +150,18 @@ struct VariadicCtor {
   template<typename...T> VariadicCtor(T...);
 };
 
+struct ThrowingDtor {
+  ~ThrowingDtor() throw(int);
+};
+
+struct NoExceptDtor {
+  ~NoExceptDtor() noexcept(true);
+};
+
+struct NoThrowDtor {
+  ~NoThrowDtor() throw();
+};
+
 void is_pod()
 {
   { int arr[T(__is_pod(int))]; }
@@ -2018,4 +2030,35 @@ void array_extent() {
   int t01[T(__array_extent(IntAr, 0) == 10)];
   int t02[T(__array_extent(ConstIntArAr, 0) == 4)];
   int t03[T(__array_extent(ConstIntArAr, 1) == 10)];
+}
+
+void is_destructible_test() {
+  { int arr[T(__is_destructible(int))]; }
+  { int arr[T(__is_destructible(int[2]))]; }
+  { int arr[F(__is_destructible(int[]))]; }
+  { int arr[F(__is_destructible(void))]; }
+  { int arr[T(__is_destructible(int &))]; }
+  { int arr[T(__is_destructible(HasDest))]; }
+  { int arr[F(__is_destructible(AllPrivate))]; }
+  { int arr[T(__is_destructible(SuperNonTrivialStruct))]; }
+  { int arr[T(__is_destructible(AllDefaulted))]; }
+  { int arr[F(__is_destructible(AllDeleted))]; }
+  { int arr[T(__is_destructible(ThrowingDtor))]; }
+  { int arr[T(__is_destructible(NoThrowDtor))]; }
+}
+
+void is_nothrow_destructible_test() {
+  { int arr[T(__is_nothrow_destructible(int))]; }
+  { int arr[T(__is_nothrow_destructible(int[2]))]; }
+  { int arr[F(__is_nothrow_destructible(int[]))]; }
+  { int arr[F(__is_nothrow_destructible(void))]; }
+  { int arr[T(__is_nothrow_destructible(int &))]; }
+  { int arr[T(__is_nothrow_destructible(HasDest))]; }
+  { int arr[F(__is_nothrow_destructible(AllPrivate))]; }
+  { int arr[T(__is_nothrow_destructible(SuperNonTrivialStruct))]; }
+  { int arr[T(__is_nothrow_destructible(AllDefaulted))]; }
+  { int arr[F(__is_nothrow_destructible(AllDeleted))]; }
+  { int arr[F(__is_nothrow_destructible(ThrowingDtor))]; }
+  { int arr[T(__is_nothrow_destructible(NoExceptDtor))]; }
+  { int arr[T(__is_nothrow_destructible(NoThrowDtor))]; }
 }
