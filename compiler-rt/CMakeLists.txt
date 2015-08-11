@@ -22,7 +22,7 @@ endif()
 if (NOT MSVC)
   cmake_minimum_required(VERSION 2.8.8)
 else()
-  # Version 2.8.12.1 is required to build with Visual Studion 2013.
+  # Version 2.8.12.1 is required to build with Visual Studio 2013.
   cmake_minimum_required(VERSION 2.8.12.1)
 endif()
 
