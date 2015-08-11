@@ -381,7 +381,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
   unsigned SP = ABI.GetStackPtr();
   unsigned FP = ABI.GetFramePtr();
   unsigned ZERO = ABI.GetNullPtr();
-  unsigned ADDu = ABI.GetPtrAdduOp();
+  unsigned MOVE = ABI.GetGPRMoveOp();
   unsigned ADDiu = ABI.GetPtrAddiuOp();
   unsigned AND = ABI.IsN64() ? Mips::AND64 : Mips::AND;
 
@@ -491,7 +491,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
   // if framepointer enabled, set it to point to the stack pointer.
   if (hasFP(MF)) {
     // Insert instruction "move $fp, $sp" at this location.
-    BuildMI(MBB, MBBI, dl, TII.get(ADDu), FP).addReg(SP).addReg(ZERO)
+    BuildMI(MBB, MBBI, dl, TII.get(MOVE), FP).addReg(SP).addReg(ZERO)
       .setMIFlag(MachineInstr::FrameSetup);
 
     // emit ".cfi_def_cfa_register $fp"
@@ -514,7 +514,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
       if (hasBP(MF)) {
         // move $s7, $sp
         unsigned BP = STI.isABI_N64() ? Mips::S7_64 : Mips::S7;
-        BuildMI(MBB, MBBI, dl, TII.get(ADDu), BP)
+        BuildMI(MBB, MBBI, dl, TII.get(MOVE), BP)
           .addReg(SP)
           .addReg(ZERO);
       }
@@ -538,7 +538,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned SP = ABI.GetStackPtr();
   unsigned FP = ABI.GetFramePtr();
   unsigned ZERO = ABI.GetNullPtr();
-  unsigned ADDu = ABI.GetPtrAdduOp();
+  unsigned MOVE = ABI.GetGPRMoveOp();
 
   // if framepointer enabled, restore the stack pointer.
   if (hasFP(MF)) {
@@ -549,7 +549,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
       --I;
 
     // Insert instruction "move $sp, $fp" at this location.
-    BuildMI(MBB, I, dl, TII.get(ADDu), SP).addReg(FP).addReg(ZERO);
+    BuildMI(MBB, I, dl, TII.get(MOVE), SP).addReg(FP).addReg(ZERO);
   }
 
   if (MipsFI->callsEhReturn()) {

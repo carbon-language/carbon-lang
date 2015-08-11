@@ -115,6 +115,10 @@ unsigned MipsABIInfo::GetPtrAddiuOp() const {
   return ArePtrs64bit() ? Mips::DADDiu : Mips::ADDiu;
 }
 
+unsigned MipsABIInfo::GetGPRMoveOp() const {
+  return ArePtrs64bit() ? Mips::OR64 : Mips::OR;
+}
+
 unsigned MipsABIInfo::GetEhDataReg(unsigned I) const {
   static const unsigned EhDataReg[] = {
     Mips::A0, Mips::A1, Mips::A2, Mips::A3

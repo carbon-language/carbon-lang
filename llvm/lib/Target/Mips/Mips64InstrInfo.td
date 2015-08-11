@@ -548,6 +548,9 @@ def : MipsPat<(brcond (i32 (setne (and i64:$lhs, PowerOf2HI:$mask), 0)), bb:$dst
 // Instruction aliases
 //===----------------------------------------------------------------------===//
 def : MipsInstAlias<"move $dst, $src",
+                    (OR64 GPR64Opnd:$dst,  GPR64Opnd:$src, ZERO_64), 1>,
+      GPR_64;
+def : MipsInstAlias<"move $dst, $src",
                     (DADDu GPR64Opnd:$dst,  GPR64Opnd:$src, ZERO_64), 1>,
       GPR_64;
 def : MipsInstAlias<"daddu $rs, $rt, $imm",

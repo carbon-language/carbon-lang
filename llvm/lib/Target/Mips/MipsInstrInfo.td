@@ -1570,7 +1570,12 @@ def PREF :  MMRel, CacheOp<"pref", mem>, CACHEOP_FM<0b110011>,
 // Instruction aliases
 //===----------------------------------------------------------------------===//
 def : MipsInstAlias<"move $dst, $src",
-                    (ADDu GPR32Opnd:$dst, GPR32Opnd:$src,ZERO), 1>,
+                    (OR GPR32Opnd:$dst, GPR32Opnd:$src, ZERO), 1>,
+      GPR_32 {
+  let AdditionalPredicates = [NotInMicroMips];
+}
+def : MipsInstAlias<"move $dst, $src",
+                    (ADDu GPR32Opnd:$dst, GPR32Opnd:$src, ZERO), 1>,
       GPR_32 {
   let AdditionalPredicates = [NotInMicroMips];
 }

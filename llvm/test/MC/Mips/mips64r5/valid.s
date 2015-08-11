@@ -180,10 +180,10 @@ a:
         mflo      $s1
         mov.d     $f20,$f14
         mov.s     $f2,$f27
-        move      $a0,$a3
-        move      $s5,$a0
-        move      $s8,$a0
-        move      $25,$a2
+        move      $a0,$a3              # CHECK: move $4, $7              # encoding: [0x00,0xe0,0x20,0x25]
+        move      $s5,$a0              # CHECK: move $21, $4             # encoding: [0x00,0x80,0xa8,0x25]
+        move      $s8,$a0              # CHECK: move $fp, $4             # encoding: [0x00,0x80,0xf0,0x25]
+        move      $25,$a2              # CHECK: move $25, $6             # encoding: [0x00,0xc0,0xc8,0x25]
         movf      $gp,$8,$fcc7
         movf.d    $f6,$f11,$fcc5
         movf.s    $f23,$f5,$fcc6

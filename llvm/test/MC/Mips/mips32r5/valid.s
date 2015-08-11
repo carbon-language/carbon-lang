@@ -112,8 +112,8 @@ a:
         mflo      $s1
         mov.d     $f20,$f14
         mov.s     $f2,$f27
-        move      $s8,$a0
-        move      $25,$a2
+        move      $s8,$a0              # CHECK: move $fp, $4             # encoding: [0x00,0x80,0xf0,0x25]
+        move      $25,$a2              # CHECK: move $25, $6             # encoding: [0x00,0xc0,0xc8,0x25]
         movf      $gp,$8,$fcc7
         movf.d    $f6,$f11,$fcc5
         movf.s    $f23,$f5,$fcc6

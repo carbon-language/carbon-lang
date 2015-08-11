@@ -766,7 +766,7 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
   // Either store the old $gp in a register or on the stack
   if (IsReg) {
     // move $save, $gpreg
-    Inst.setOpcode(Mips::DADDu);
+    Inst.setOpcode(Mips::OR64);
     Inst.addOperand(MCOperand::createReg(RegOrOffset));
     Inst.addOperand(MCOperand::createReg(Mips::GP));
     Inst.addOperand(MCOperand::createReg(Mips::ZERO));

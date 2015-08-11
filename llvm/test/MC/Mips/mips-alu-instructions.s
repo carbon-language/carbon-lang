@@ -91,7 +91,7 @@
 # CHECK:  addiu   $sp, $sp, -40  # encoding: [0xd8,0xff,0xbd,0x27]
 # CHECK:  neg     $6, $7         # encoding: [0x22,0x30,0x07,0x00]
 # CHECK:  negu    $6, $7         # encoding: [0x23,0x30,0x07,0x00]
-# CHECK:  move    $7, $8         # encoding: [0x21,0x38,0x00,0x01]
+# CHECK:  move    $7, $8         # encoding: [0x25,0x38,0x00,0x01]
 # CHECK:  .set    push
 # CHECK:  .set    mips32r2
 # CHECK:  rdhwr   $5, $29
