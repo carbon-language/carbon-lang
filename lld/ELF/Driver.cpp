@@ -23,14 +23,11 @@ using namespace lld::elf2;
 namespace lld {
 namespace elf2 {
 Configuration *Config;
-LinkerDriver *Driver;
 
 void link(ArrayRef<const char *> Args) {
   auto C = make_unique<Configuration>();
   Config = C.get();
-  auto D = make_unique<LinkerDriver>();
-  Driver = D.get();
-  Driver->link(Args.slice(1));
+  LinkerDriver().link(Args.slice(1));
 }
 
 }
