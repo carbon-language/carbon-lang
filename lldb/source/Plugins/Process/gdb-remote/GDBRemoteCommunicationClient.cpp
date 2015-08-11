@@ -4314,100 +4314,97 @@ GDBRemoteCommunicationClient::ServeSymbolLookups(lldb_private::Process *process)
         {
             StreamString packet;
             packet.PutCString ("qSymbol::");
-            while (1)
+            StringExtractorGDBRemote response;
+            while (SendPacketAndWaitForResponseNoLock(packet.GetData(), packet.GetSize(), response) == PacketResult::Success)
             {
-                StringExtractorGDBRemote response;
-                if (SendPacketAndWaitForResponseNoLock(packet.GetData(), packet.GetSize(), response) == PacketResult::Success)
+                if (response.IsOKResponse())
                 {
-                    if (response.IsOKResponse())
-                    {
-                        // We are done serving symbols requests
-                        return;
-                    }
+                    // We are done serving symbols requests
+                    return;
+                }
 
-                    if (response.IsUnsupportedResponse())
+                if (response.IsUnsupportedResponse())
+                {
+                    // qSymbol is not supported by the current GDB server we are connected to
+                    m_supports_qSymbol = false;
+                    return;
+                }
+                else
+                {
+                    llvm::StringRef response_str(response.GetStringRef());
+                    if (response_str.startswith("qSymbol:"))
                     {
-                        // qSymbol is not supported by the current GDB server we are connected to
-                        m_supports_qSymbol = false;
-                        return;
-                    }
-                    else
-                    {
-                        llvm::StringRef response_str(response.GetStringRef());
-                        if (response_str.startswith("qSymbol:"))
+                        response.SetFilePos(strlen("qSymbol:"));
+                        std::string symbol_name;
+                        if (response.GetHexByteString(symbol_name))
                         {
-                            response.SetFilePos(strlen("qSymbol:"));
-                            std::string symbol_name;
-                            if (response.GetHexByteString(symbol_name))
+                            if (symbol_name.empty())
+                                return;
+
+                            addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
+                            lldb_private::SymbolContextList sc_list;
+                            if (process->GetTarget().GetImages().FindSymbolsWithNameAndType(ConstString(symbol_name), eSymbolTypeAny, sc_list))
                             {
-                                if (symbol_name.empty())
-                                    return;
-
-                                addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
-                                lldb_private::SymbolContextList sc_list;
-                                if (process->GetTarget().GetImages().FindSymbolsWithNameAndType(ConstString(symbol_name), eSymbolTypeAny, sc_list))
+                                const size_t num_scs = sc_list.GetSize();
+                                for (size_t sc_idx=0; sc_idx<num_scs && symbol_load_addr == LLDB_INVALID_ADDRESS; ++sc_idx)
                                 {
-                                    const size_t num_scs = sc_list.GetSize();
-                                    for (size_t sc_idx=0; sc_idx<num_scs && symbol_load_addr == LLDB_INVALID_ADDRESS; ++sc_idx)
+                                    SymbolContext sc;
+                                    if (sc_list.GetContextAtIndex(sc_idx, sc))
                                     {
-                                        SymbolContext sc;
-                                        if (sc_list.GetContextAtIndex(sc_idx, sc))
+                                        if (sc.symbol)
                                         {
-                                            if (sc.symbol)
+                                            switch (sc.symbol->GetType())
                                             {
-                                                switch (sc.symbol->GetType())
-                                                {
-                                                case eSymbolTypeInvalid:
-                                                case eSymbolTypeAbsolute:
-                                                case eSymbolTypeUndefined:
-                                                case eSymbolTypeSourceFile:
-                                                case eSymbolTypeHeaderFile:
-                                                case eSymbolTypeObjectFile:
-                                                case eSymbolTypeCommonBlock:
-                                                case eSymbolTypeBlock:
-                                                case eSymbolTypeLocal:
-                                                case eSymbolTypeParam:
-                                                case eSymbolTypeVariable:
-                                                case eSymbolTypeVariableType:
-                                                case eSymbolTypeLineEntry:
-                                                case eSymbolTypeLineHeader:
-                                                case eSymbolTypeScopeBegin:
-                                                case eSymbolTypeScopeEnd:
-                                                case eSymbolTypeAdditional:
-                                                case eSymbolTypeCompiler:
-                                                case eSymbolTypeInstrumentation:
-                                                case eSymbolTypeTrampoline:
-                                                    break;
+                                            case eSymbolTypeInvalid:
+                                            case eSymbolTypeAbsolute:
+                                            case eSymbolTypeUndefined:
+                                            case eSymbolTypeSourceFile:
+                                            case eSymbolTypeHeaderFile:
+                                            case eSymbolTypeObjectFile:
+                                            case eSymbolTypeCommonBlock:
+                                            case eSymbolTypeBlock:
+                                            case eSymbolTypeLocal:
+                                            case eSymbolTypeParam:
+                                            case eSymbolTypeVariable:
+                                            case eSymbolTypeVariableType:
+                                            case eSymbolTypeLineEntry:
+                                            case eSymbolTypeLineHeader:
+                                            case eSymbolTypeScopeBegin:
+                                            case eSymbolTypeScopeEnd:
+                                            case eSymbolTypeAdditional:
+                                            case eSymbolTypeCompiler:
+                                            case eSymbolTypeInstrumentation:
+                                            case eSymbolTypeTrampoline:
+                                                break;
 
-                                                case eSymbolTypeCode:
-                                                case eSymbolTypeResolver:
-                                                case eSymbolTypeData:
-                                                case eSymbolTypeRuntime:
-                                                case eSymbolTypeException:
-                                                case eSymbolTypeObjCClass:
-                                                case eSymbolTypeObjCMetaClass:
-                                                case eSymbolTypeObjCIVar:
-                                                case eSymbolTypeReExported:
-                                                    symbol_load_addr = sc.symbol->GetLoadAddress(&process->GetTarget());
-                                                    break;
-                                                }
+                                            case eSymbolTypeCode:
+                                            case eSymbolTypeResolver:
+                                            case eSymbolTypeData:
+                                            case eSymbolTypeRuntime:
+                                            case eSymbolTypeException:
+                                            case eSymbolTypeObjCClass:
+                                            case eSymbolTypeObjCMetaClass:
+                                            case eSymbolTypeObjCIVar:
+                                            case eSymbolTypeReExported:
+                                                symbol_load_addr = sc.symbol->GetLoadAddress(&process->GetTarget());
+                                                break;
                                             }
                                         }
                                     }
                                 }
-                                // This is the normal path where our symbol lookup was successful and we want
-                                // to send a packet with the new symbol value and see if another lookup needs to be
-                                // done.
-
-                                // Change "packet" to contain the requested symbol value and name
-                                packet.Clear();
-                                packet.PutCString("qSymbol:");
-                                if (symbol_load_addr != LLDB_INVALID_ADDRESS)
-                                    packet.Printf("%" PRIx64, symbol_load_addr);
-                                packet.PutCString(":");
-                                packet.PutBytesAsRawHex8(symbol_name.data(), symbol_name.size());
-                                continue; // go back to the while loop and send "packet" and wait for another response
                             }
+                            // This is the normal path where our symbol lookup was successful and we want
+                            // to send a packet with the new symbol value and see if another lookup needs to be
+                            // done.
+
+                            // Change "packet" to contain the requested symbol value and name
+                            packet.Clear();
+                            packet.PutCString("qSymbol:");
+                            if (symbol_load_addr != LLDB_INVALID_ADDRESS)
+                                packet.Printf("%" PRIx64, symbol_load_addr);
+                            packet.PutCString(":");
+                            packet.PutBytesAsRawHex8(symbol_name.data(), symbol_name.size());
+                            continue; // go back to the while loop and send "packet" and wait for another response
                         }
                     }
                 }
