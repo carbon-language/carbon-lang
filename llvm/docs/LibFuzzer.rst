@@ -435,6 +435,8 @@ Trophies
 
 * PCRE: Search for "LLVM fuzzer" in http://vcs.pcre.org/pcre2/code/trunk/ChangeLog?view=markup
 
+* ICU: http://bugs.icu-project.org/trac/ticket/11838
+
 * LLVM:
 
   * Clang: https://llvm.org/bugs/show_bug.cgi?id=23057
