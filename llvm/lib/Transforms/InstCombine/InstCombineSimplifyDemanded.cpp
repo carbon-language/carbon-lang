@@ -410,7 +410,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     // If this is a select as part of a min/max pattern, don't simplify any
     // further in case we break the structure.
     Value *LHS, *RHS;
-    if (matchSelectPattern(I, LHS, RHS) != SPF_UNKNOWN)
+    if (matchSelectPattern(I, LHS, RHS).Flavor != SPF_UNKNOWN)
       return nullptr;
       
     if (SimplifyDemandedBits(I->getOperandUse(2), DemandedMask, RHSKnownZero,

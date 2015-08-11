@@ -38,7 +38,8 @@ getInverseMinMaxSelectPattern(SelectPatternFlavor SPF) {
   }
 }
 
-static CmpInst::Predicate getICmpPredicateForMinMax(SelectPatternFlavor SPF) {
+static CmpInst::Predicate getCmpPredicateForMinMax(SelectPatternFlavor SPF,
+                                                   bool Ordered=false) {
   switch (SPF) {
   default:
     llvm_unreachable("unhandled!");
@@ -51,13 +52,18 @@ static CmpInst::Predicate getICmpPredicateForMinMax(SelectPatternFlavor SPF) {
     return ICmpInst::ICMP_SGT;
   case SPF_UMAX:
     return ICmpInst::ICMP_UGT;
+  case SPF_FMINNUM:
+    return Ordered ? FCmpInst::FCMP_OLT : FCmpInst::FCMP_ULT;
+  case SPF_FMAXNUM:
+    return Ordered ? FCmpInst::FCMP_OGT : FCmpInst::FCMP_UGT;
   }
 }
 
 static Value *generateMinMaxSelectPattern(InstCombiner::BuilderTy *Builder,
                                           SelectPatternFlavor SPF, Value *A,
                                           Value *B) {
-  CmpInst::Predicate Pred = getICmpPredicateForMinMax(SPF);
+  CmpInst::Predicate Pred = getCmpPredicateForMinMax(SPF);
+  assert(CmpInst::isIntPredicate(Pred));
   return Builder->CreateSelect(Builder->CreateICmp(Pred, A, B), A, B);
 }
 
@@ -926,6 +932,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // (X ugt Y) ? X : Y -> (X ole Y) ? Y : X
       if (FCI->hasOneUse() && FCmpInst::isUnordered(FCI->getPredicate())) {
         FCmpInst::Predicate InvPred = FCI->getInversePredicate();
+        IRBuilder<>::FastMathFlagGuard FMFG(*Builder);
+        Builder->SetFastMathFlags(FCI->getFastMathFlags());
         Value *NewCond = Builder->CreateFCmp(InvPred, TrueVal, FalseVal,
                                              FCI->getName() + ".inv");
 
@@ -967,6 +975,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // (X ugt Y) ? X : Y -> (X ole Y) ? X : Y
       if (FCI->hasOneUse() && FCmpInst::isUnordered(FCI->getPredicate())) {
         FCmpInst::Predicate InvPred = FCI->getInversePredicate();
+        IRBuilder<>::FastMathFlagGuard FMFG(*Builder);
+        Builder->SetFastMathFlags(FCI->getFastMathFlags());
         Value *NewCond = Builder->CreateFCmp(InvPred, FalseVal, TrueVal,
                                              FCI->getName() + ".inv");
 
@@ -1054,20 +1064,31 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       }
 
   // See if we can fold the select into one of our operands.
-  if (SI.getType()->isIntOrIntVectorTy()) {
+  if (SI.getType()->isIntOrIntVectorTy() || SI.getType()->isFPOrFPVectorTy()) {
     if (Instruction *FoldI = FoldSelectIntoOp(SI, TrueVal, FalseVal))
       return FoldI;
 
     Value *LHS, *RHS, *LHS2, *RHS2;
     Instruction::CastOps CastOp;
-    SelectPatternFlavor SPF = matchSelectPattern(&SI, LHS, RHS, &CastOp);
+    SelectPatternResult SPR = matchSelectPattern(&SI, LHS, RHS, &CastOp);
+    auto SPF = SPR.Flavor;
 
     if (SPF) {
       // Canonicalize so that type casts are outside select patterns.
       if (LHS->getType()->getPrimitiveSizeInBits() !=
           SI.getType()->getPrimitiveSizeInBits()) {
-        CmpInst::Predicate Pred = getICmpPredicateForMinMax(SPF);
-        Value *Cmp = Builder->CreateICmp(Pred, LHS, RHS);
+        CmpInst::Predicate Pred = getCmpPredicateForMinMax(SPF, SPR.Ordered);
+
+        Value *Cmp;
+        if (CmpInst::isIntPredicate(Pred)) {
+          Cmp = Builder->CreateICmp(Pred, LHS, RHS);
+        } else {
+          IRBuilder<>::FastMathFlagGuard FMFG(*Builder);
+          auto FMF = cast<FPMathOperator>(SI.getCondition())->getFastMathFlags();
+          Builder->SetFastMathFlags(FMF);
+          Cmp = Builder->CreateFCmp(Pred, LHS, RHS);
+        }
+
         Value *NewSI = Builder->CreateCast(CastOp,
                                            Builder->CreateSelect(Cmp, LHS, RHS),
                                            SI.getType());
@@ -1078,11 +1099,11 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // MIN(MIN(a, b), a) -> MIN(a, b)
       // MAX(MIN(a, b), a) -> a
       // MIN(MAX(a, b), a) -> a
-      if (SelectPatternFlavor SPF2 = matchSelectPattern(LHS, LHS2, RHS2))
+      if (SelectPatternFlavor SPF2 = matchSelectPattern(LHS, LHS2, RHS2).Flavor)
         if (Instruction *R = FoldSPFofSPF(cast<Instruction>(LHS),SPF2,LHS2,RHS2,
                                           SI, SPF, RHS))
           return R;
-      if (SelectPatternFlavor SPF2 = matchSelectPattern(RHS, LHS2, RHS2))
+      if (SelectPatternFlavor SPF2 = matchSelectPattern(RHS, LHS2, RHS2).Flavor)
         if (Instruction *R = FoldSPFofSPF(cast<Instruction>(RHS),SPF2,LHS2,RHS2,
                                           SI, SPF, LHS))
           return R;

@@ -441,7 +441,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   // min/max.
   Value *LHS, *RHS;
   if (SelectInst *SI = dyn_cast<SelectInst>(CI.getOperand(0)))
-    if (matchSelectPattern(SI, LHS, RHS) != SPF_UNKNOWN)
+    if (matchSelectPattern(SI, LHS, RHS).Flavor != SPF_UNKNOWN)
       return nullptr;
   
   // See if we can simplify any instructions used by the input whose sole
@@ -1307,10 +1307,16 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
 
   // (fptrunc (select cond, R1, Cst)) -->
   // (select cond, (fptrunc R1), (fptrunc Cst))
+  //
+  //  - but only if this isn't part of a min/max operation, else we'll
+  // ruin min/max canonical form which is to have the select and
+  // compare's operands be of the same type with no casts to look through.
+  Value *LHS, *RHS;
   SelectInst *SI = dyn_cast<SelectInst>(CI.getOperand(0));
   if (SI &&
       (isa<ConstantFP>(SI->getOperand(1)) ||
-       isa<ConstantFP>(SI->getOperand(2)))) {
+       isa<ConstantFP>(SI->getOperand(2))) &&
+      matchSelectPattern(SI, LHS, RHS).Flavor == SPF_UNKNOWN) {
     Value *LHSTrunc = Builder->CreateFPTrunc(SI->getOperand(1),
                                              CI.getType());
     Value *RHSTrunc = Builder->CreateFPTrunc(SI->getOperand(2),

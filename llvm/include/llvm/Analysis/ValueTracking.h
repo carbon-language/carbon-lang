@@ -349,12 +349,32 @@ namespace llvm {
   /// \brief Specific patterns of select instructions we can match.
   enum SelectPatternFlavor {
     SPF_UNKNOWN = 0,
-    SPF_SMIN,                   // Signed minimum
-    SPF_UMIN,                   // Unsigned minimum
-    SPF_SMAX,                   // Signed maximum
-    SPF_UMAX,                   // Unsigned maximum
-    SPF_ABS,                    // Absolute value
-    SPF_NABS                    // Negated absolute value
+    SPF_SMIN,                   /// Signed minimum
+    SPF_UMIN,                   /// Unsigned minimum
+    SPF_SMAX,                   /// Signed maximum
+    SPF_UMAX,                   /// Unsigned maximum
+    SPF_FMINNUM,                /// Floating point minnum
+    SPF_FMAXNUM,                /// Floating point maxnum
+    SPF_ABS,                    /// Absolute value
+    SPF_NABS                    /// Negated absolute value
+  };
+  /// \brief Behavior when a floating point min/max is given one NaN and one
+  /// non-NaN as input.
+  enum SelectPatternNaNBehavior {
+    SPNB_NA = 0,                /// NaN behavior not applicable.
+    SPNB_RETURNS_NAN,           /// Given one NaN input, returns the NaN.
+    SPNB_RETURNS_OTHER,         /// Given one NaN input, returns the non-NaN.
+    SPNB_RETURNS_ANY            /// Given one NaN input, can return either (or
+                                /// it has been determined that no operands can
+                                /// be NaN).
+  };
+  struct SelectPatternResult {
+    SelectPatternFlavor Flavor;
+    SelectPatternNaNBehavior NaNBehavior; /// Only applicable if Flavor is
+                                          /// SPF_FMINNUM or SPF_FMAXNUM.
+    bool Ordered;               /// When implementing this min/max pattern as
+                                /// fcmp; select, does the fcmp have to be
+                                /// ordered?
   };
   /// Pattern match integer [SU]MIN, [SU]MAX and ABS idioms, returning the kind
   /// and providing the out parameter results if we successfully match.
@@ -371,7 +391,7 @@ namespace llvm {
   ///
   /// -> LHS = %a, RHS = i32 4, *CastOp = Instruction::SExt
   ///
-  SelectPatternFlavor matchSelectPattern(Value *V, Value *&LHS, Value *&RHS,
+  SelectPatternResult matchSelectPattern(Value *V, Value *&LHS, Value *&RHS,
                                          Instruction::CastOps *CastOp = nullptr);
 
 } // end namespace llvm

@@ -2298,7 +2298,8 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
   // Min/max matching is only viable if all output VTs are the same.
   if (std::equal(ValueVTs.begin(), ValueVTs.end(), ValueVTs.begin())) {
     Value *LHS, *RHS;
-    SelectPatternFlavor SPF = matchSelectPattern(const_cast<User*>(&I), LHS, RHS);
+    SelectPatternFlavor SPF =
+      matchSelectPattern(const_cast<User*>(&I), LHS, RHS).Flavor;
     ISD::NodeType Opc = ISD::DELETED_NODE;
     switch (SPF) {
     case SPF_UMAX: Opc = ISD::UMAX; break;

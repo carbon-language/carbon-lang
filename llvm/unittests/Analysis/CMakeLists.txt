@@ -13,4 +13,5 @@ add_llvm_unittest(AnalysisTests
   LazyCallGraphTest.cpp
   ScalarEvolutionTest.cpp
   MixedTBAATest.cpp
+  ValueTrackingTest.cpp
   )

@@ -3487,40 +3487,116 @@ bool llvm::isKnownNotFullPoison(const Instruction *PoisonI) {
   return false;
 }
 
-static SelectPatternFlavor matchSelectPattern(ICmpInst::Predicate Pred,
+static bool isKnownNonNaN(Value *V, FastMathFlags FMF) {
+  if (FMF.noNaNs())
+    return true;
+
+  if (auto *C = dyn_cast<ConstantFP>(V))
+    return !C->isNaN();
+  return false;
+}
+
+static bool isKnownNonZero(Value *V) {
+  if (auto *C = dyn_cast<ConstantFP>(V))
+    return !C->isZero();
+  return false;
+}
+
+static SelectPatternResult matchSelectPattern(CmpInst::Predicate Pred,
+                                              FastMathFlags FMF,
                                               Value *CmpLHS, Value *CmpRHS,
                                               Value *TrueVal, Value *FalseVal,
                                               Value *&LHS, Value *&RHS) {
   LHS = CmpLHS;
   RHS = CmpRHS;
 
-  // (icmp X, Y) ? X : Y
-  if (TrueVal == CmpLHS && FalseVal == CmpRHS) {
-    switch (Pred) {
-    default: return SPF_UNKNOWN; // Equality.
-    case ICmpInst::ICMP_UGT:
-    case ICmpInst::ICMP_UGE: return SPF_UMAX;
-    case ICmpInst::ICMP_SGT:
-    case ICmpInst::ICMP_SGE: return SPF_SMAX;
-    case ICmpInst::ICMP_ULT:
-    case ICmpInst::ICMP_ULE: return SPF_UMIN;
-    case ICmpInst::ICMP_SLT:
-    case ICmpInst::ICMP_SLE: return SPF_SMIN;
+  // If the predicate is an "or-equal"  (FP) predicate, then signed zeroes may
+  // return inconsistent results between implementations.
+  //   (0.0 <= -0.0) ? 0.0 : -0.0 // Returns 0.0
+  //   minNum(0.0, -0.0)          // May return -0.0 or 0.0 (IEEE 754-2008 5.3.1)
+  // Therefore we behave conservatively and only proceed if at least one of the
+  // operands is known to not be zero, or if we don't care about signed zeroes.
+  switch (Pred) {
+  default: break;
+  case CmpInst::FCMP_OGE: case CmpInst::FCMP_OLE:
+  case CmpInst::FCMP_UGE: case CmpInst::FCMP_ULE:
+    if (!FMF.noSignedZeros() && !isKnownNonZero(CmpLHS) &&
+        !isKnownNonZero(CmpRHS))
+      return {SPF_UNKNOWN, SPNB_NA, false};
+  }
+
+  SelectPatternNaNBehavior NaNBehavior = SPNB_NA;
+  bool Ordered = false;
+
+  // When given one NaN and one non-NaN input:
+  //   - maxnum/minnum (C99 fmaxf()/fminf()) return the non-NaN input.
+  //   - A simple C99 (a < b ? a : b) construction will return 'b' (as the
+  //     ordered comparison fails), which could be NaN or non-NaN.
+  // so here we discover exactly what NaN behavior is required/accepted.
+  if (CmpInst::isFPPredicate(Pred)) {
+    bool LHSSafe = isKnownNonNaN(CmpLHS, FMF);
+    bool RHSSafe = isKnownNonNaN(CmpRHS, FMF);
+
+    if (LHSSafe && RHSSafe) {
+      // Both operands are known non-NaN.
+      NaNBehavior = SPNB_RETURNS_ANY;
+    } else if (CmpInst::isOrdered(Pred)) {
+      // An ordered comparison will return false when given a NaN, so it
+      // returns the RHS.
+      Ordered = true;
+      if (LHSSafe)
+        // LHS is non-NaN, so RHS is NaN.
+        NaNBehavior = SPNB_RETURNS_NAN;
+      else if (RHSSafe)
+        NaNBehavior = SPNB_RETURNS_OTHER;
+      else
+        // Completely unsafe.
+        return {SPF_UNKNOWN, SPNB_NA, false};
+    } else {
+      Ordered = false;
+      // An unordered comparison will return true when given a NaN, so it
+      // returns the LHS.
+      if (LHSSafe)
+        // LHS is non-NaN.
+        NaNBehavior = SPNB_RETURNS_OTHER;
+      else if (RHSSafe)
+        NaNBehavior = SPNB_RETURNS_NAN;
+      else
+        // Completely unsafe.
+        return {SPF_UNKNOWN, SPNB_NA, false};
     }
   }
 
-  // (icmp X, Y) ? Y : X
   if (TrueVal == CmpRHS && FalseVal == CmpLHS) {
+    std::swap(CmpLHS, CmpRHS);
+    Pred = CmpInst::getSwappedPredicate(Pred);
+    if (NaNBehavior == SPNB_RETURNS_NAN)
+      NaNBehavior = SPNB_RETURNS_OTHER;
+    else if (NaNBehavior == SPNB_RETURNS_OTHER)
+      NaNBehavior = SPNB_RETURNS_NAN;
+    Ordered = !Ordered;
+  }
+
+  // ([if]cmp X, Y) ? X : Y
+  if (TrueVal == CmpLHS && FalseVal == CmpRHS) {
     switch (Pred) {
-    default: return SPF_UNKNOWN; // Equality.
+    default: return {SPF_UNKNOWN, SPNB_NA, false}; // Equality.
     case ICmpInst::ICMP_UGT:
-    case ICmpInst::ICMP_UGE: return SPF_UMIN;
+    case ICmpInst::ICMP_UGE: return {SPF_UMAX, SPNB_NA, false};
     case ICmpInst::ICMP_SGT:
-    case ICmpInst::ICMP_SGE: return SPF_SMIN;
+    case ICmpInst::ICMP_SGE: return {SPF_SMAX, SPNB_NA, false};
     case ICmpInst::ICMP_ULT:
-    case ICmpInst::ICMP_ULE: return SPF_UMAX;
+    case ICmpInst::ICMP_ULE: return {SPF_UMIN, SPNB_NA, false};
     case ICmpInst::ICMP_SLT:
-    case ICmpInst::ICMP_SLE: return SPF_SMAX;
+    case ICmpInst::ICMP_SLE: return {SPF_SMIN, SPNB_NA, false};
+    case FCmpInst::FCMP_UGT:
+    case FCmpInst::FCMP_UGE:
+    case FCmpInst::FCMP_OGT:
+    case FCmpInst::FCMP_OGE: return {SPF_FMAXNUM, NaNBehavior, Ordered};
+    case FCmpInst::FCMP_ULT:
+    case FCmpInst::FCMP_ULE:
+    case FCmpInst::FCMP_OLT:
+    case FCmpInst::FCMP_OLE: return {SPF_FMINNUM, NaNBehavior, Ordered};
     }
   }
 
@@ -3531,13 +3607,13 @@ static SelectPatternFlavor matchSelectPattern(ICmpInst::Predicate Pred,
       // ABS(X) ==> (X >s 0) ? X : -X and (X >s -1) ? X : -X
       // NABS(X) ==> (X >s 0) ? -X : X and (X >s -1) ? -X : X
       if (Pred == ICmpInst::ICMP_SGT && (C1->isZero() || C1->isMinusOne())) {
-        return (CmpLHS == TrueVal) ? SPF_ABS : SPF_NABS;
+        return {(CmpLHS == TrueVal) ? SPF_ABS : SPF_NABS, SPNB_NA, false};
       }
 
       // ABS(X) ==> (X <s 0) ? -X : X and (X <s 1) ? -X : X
       // NABS(X) ==> (X <s 0) ? X : -X and (X <s 1) ? X : -X
       if (Pred == ICmpInst::ICMP_SLT && (C1->isZero() || C1->isOne())) {
-        return (CmpLHS == FalseVal) ? SPF_ABS : SPF_NABS;
+        return {(CmpLHS == FalseVal) ? SPF_ABS : SPF_NABS, SPNB_NA, false};
       }
     }
     
@@ -3548,17 +3624,17 @@ static SelectPatternFlavor matchSelectPattern(ICmpInst::Predicate Pred,
            match(CmpLHS, m_Not(m_Specific(TrueVal))))) {
         LHS = TrueVal;
         RHS = FalseVal;
-        return SPF_SMIN;
+        return {SPF_SMIN, SPNB_NA, false};
       }
     }
   }
 
   // TODO: (X > 4) ? X : 5   -->  (X >= 5) ? X : 5  -->  MAX(X, 5)
 
-  return SPF_UNKNOWN;
+  return {SPF_UNKNOWN, SPNB_NA, false};
 }
 
-static Constant *lookThroughCast(ICmpInst *CmpI, Value *V1, Value *V2,
+static Constant *lookThroughCast(CmpInst *CmpI, Value *V1, Value *V2,
                                  Instruction::CastOps *CastOp) {
   CastInst *CI = dyn_cast<CastInst>(V1);
   Constant *C = dyn_cast<Constant>(V2);
@@ -3580,39 +3656,60 @@ static Constant *lookThroughCast(ICmpInst *CmpI, Value *V1, Value *V2,
   if (isa<TruncInst>(CI))
     return ConstantExpr::getIntegerCast(C, CI->getSrcTy(), CmpI->isSigned());
 
+  if (isa<FPToUIInst>(CI))
+    return ConstantExpr::getUIToFP(C, CI->getSrcTy(), true);
+
+  if (isa<FPToSIInst>(CI))
+    return ConstantExpr::getSIToFP(C, CI->getSrcTy(), true);
+
+  if (isa<UIToFPInst>(CI))
+    return ConstantExpr::getFPToUI(C, CI->getSrcTy(), true);
+
+  if (isa<SIToFPInst>(CI))
+    return ConstantExpr::getFPToSI(C, CI->getSrcTy(), true);
+
+  if (isa<FPTruncInst>(CI))
+    return ConstantExpr::getFPExtend(C, CI->getSrcTy(), true);
+
+  if (isa<FPExtInst>(CI))
+    return ConstantExpr::getFPTrunc(C, CI->getSrcTy(), true);
+
   return nullptr;
 }
 
-SelectPatternFlavor llvm::matchSelectPattern(Value *V,
+SelectPatternResult llvm::matchSelectPattern(Value *V,
                                              Value *&LHS, Value *&RHS,
                                              Instruction::CastOps *CastOp) {
   SelectInst *SI = dyn_cast<SelectInst>(V);
-  if (!SI) return SPF_UNKNOWN;
+  if (!SI) return {SPF_UNKNOWN, SPNB_NA, false};
 
-  ICmpInst *CmpI = dyn_cast<ICmpInst>(SI->getCondition());
-  if (!CmpI) return SPF_UNKNOWN;
+  CmpInst *CmpI = dyn_cast<CmpInst>(SI->getCondition());
+  if (!CmpI) return {SPF_UNKNOWN, SPNB_NA, false};
 
-  ICmpInst::Predicate Pred = CmpI->getPredicate();
+  CmpInst::Predicate Pred = CmpI->getPredicate();
   Value *CmpLHS = CmpI->getOperand(0);
   Value *CmpRHS = CmpI->getOperand(1);
   Value *TrueVal = SI->getTrueValue();
   Value *FalseVal = SI->getFalseValue();
+  FastMathFlags FMF;
+  if (isa<FPMathOperator>(CmpI))
+    FMF = CmpI->getFastMathFlags();
 
   // Bail out early.
   if (CmpI->isEquality())
-    return SPF_UNKNOWN;
+    return {SPF_UNKNOWN, SPNB_NA, false};
 
   // Deal with type mismatches.
   if (CastOp && CmpLHS->getType() != TrueVal->getType()) {
     if (Constant *C = lookThroughCast(CmpI, TrueVal, FalseVal, CastOp))
-      return ::matchSelectPattern(Pred, CmpLHS, CmpRHS,
+      return ::matchSelectPattern(Pred, FMF, CmpLHS, CmpRHS,
                                   cast<CastInst>(TrueVal)->getOperand(0), C,
                                   LHS, RHS);
     if (Constant *C = lookThroughCast(CmpI, FalseVal, TrueVal, CastOp))
-      return ::matchSelectPattern(Pred, CmpLHS, CmpRHS,
+      return ::matchSelectPattern(Pred, FMF, CmpLHS, CmpRHS,
                                   C, cast<CastInst>(FalseVal)->getOperand(0),
                                   LHS, RHS);
   }
-  return ::matchSelectPattern(Pred, CmpLHS, CmpRHS, TrueVal, FalseVal,
+  return ::matchSelectPattern(Pred, FMF, CmpLHS, CmpRHS, TrueVal, FalseVal,
                               LHS, RHS);
 }
