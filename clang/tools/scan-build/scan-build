@@ -920,7 +920,7 @@ sub SetEnv {
     $ENV{$opt} = $Options->{$opt};
   }
   foreach my $opt ('CCC_ANALYZER_STORE_MODEL',
-                    'CCC_ANALYZER_PLUGINS',
+                    'CCC_ANALYZER_CONSTRAINTS_MODEL',
                     'CCC_ANALYZER_INTERNAL_STATS',
                     'CCC_ANALYZER_OUTPUT_FORMAT') {
     my $x = $Options->{$opt};
