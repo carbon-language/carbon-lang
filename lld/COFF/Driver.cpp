@@ -116,6 +116,7 @@ void LinkerDriver::parseDirectives(StringRef S) {
     case OPT_nodefaultlib:
       Config->NoDefaultLibs.insert(doFindLib(Arg->getValue()));
       break;
+    case OPT_editandcontinue:
     case OPT_throwingnew:
       break;
     default:

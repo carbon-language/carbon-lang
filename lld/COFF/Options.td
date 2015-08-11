@@ -106,6 +106,7 @@ def incremental : F<"incremental">;
 def no_incremental : F<"incremental:no">;
 def nologo : F<"nologo">;
 def throwingnew : F<"throwingnew">;
+def editandcontinue : F<"editandcontinue">;
 
 def delay : QF<"delay">;
 def errorreport : QF<"errorreport">;
