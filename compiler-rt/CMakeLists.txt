@@ -348,14 +348,14 @@ pythonize_bool(SANITIZER_CAN_USE_CXXABI)
 
 add_subdirectory(include)
 
-set(COMPILER_RT_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
+find_llvm_external_project(projects libcxx COMPILER_RT_LIBCXX_PATH)
 if(EXISTS ${COMPILER_RT_LIBCXX_PATH}/)
   set(COMPILER_RT_HAS_LIBCXX_SOURCES TRUE)
 else()
   set(COMPILER_RT_HAS_LIBCXX_SOURCES FALSE)
 endif()
 
-set(COMPILER_RT_LLD_PATH ${LLVM_MAIN_SRC_DIR}/tools/lld)
+find_llvm_external_project(projects libcxx COMPILER_RT_LLD_PATH)
 if(EXISTS ${COMPILER_RT_LLD_PATH}/)
   set(COMPILER_RT_HAS_LLD_SOURCES TRUE)
 else()
