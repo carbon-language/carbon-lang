@@ -22,7 +22,7 @@ namespace llvm {
 
 namespace WebAssemblyISD {
 
-enum {
+enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   RETURN,
   ARGUMENT,
@@ -46,6 +46,8 @@ private:
   const WebAssemblySubtarget *Subtarget;
 
   MVT getScalarShiftAmountTy(const DataLayout &DL, EVT) const override;
+
+  const char *getTargetNodeName(unsigned Opcode) const override;
 
   bool CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
                       bool isVarArg,

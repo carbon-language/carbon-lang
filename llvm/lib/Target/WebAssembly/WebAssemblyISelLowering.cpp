@@ -120,6 +120,16 @@ MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
   return VT.getSimpleVT();
 }
 
+const char *
+WebAssemblyTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (static_cast<WebAssemblyISD::NodeType>(Opcode)) {
+  case WebAssemblyISD::FIRST_NUMBER: break;
+  case WebAssemblyISD::RETURN: return "WebAssemblyISD::RETURN";
+  case WebAssemblyISD::ARGUMENT: return "WebAssemblyISD::ARGUMENT";
+  }
+  return nullptr;
+}
+
 //===----------------------------------------------------------------------===//
 // WebAssembly Lowering private implementation.
 //===----------------------------------------------------------------------===//
