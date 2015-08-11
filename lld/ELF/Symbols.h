@@ -84,7 +84,7 @@ public:
 };
 
 // Regular defined symbols read from object file symbol tables.
-template <class ELFT> class DefinedRegular : public Defined {
+class DefinedRegular : public Defined {
 public:
   DefinedRegular(StringRef Name);
 
@@ -93,7 +93,7 @@ public:
   }
 };
 
-template <class ELFT> class DefinedWeak : public Defined {
+class DefinedWeak : public Defined {
 public:
   DefinedWeak(StringRef Name);
 

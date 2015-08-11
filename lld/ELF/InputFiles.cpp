@@ -81,10 +81,10 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GLOBAL:
     if (Sym->isUndefined())
       return new (Alloc) Undefined(Name);
-    return new (Alloc) DefinedRegular<ELFT>(Name);
+    return new (Alloc) DefinedRegular(Name);
   case STB_WEAK:
     // FIXME: add support for weak undefined
-    return new (Alloc) DefinedWeak<ELFT>(Name);
+    return new (Alloc) DefinedWeak(Name);
   }
 }
 
