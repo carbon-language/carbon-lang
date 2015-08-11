@@ -116,6 +116,14 @@ DwarfPubSections("generate-dwarf-pub-sections", cl::Hidden,
                             clEnumVal(Disable, "Disabled"), clEnumValEnd),
                  cl::init(Default));
 
+static cl::opt<DefaultOnOff>
+DwarfLinkageNames("dwarf-linkage-names", cl::Hidden,
+                  cl::desc("Emit DWARF linkage-name attributes."),
+                  cl::values(clEnumVal(Default, "Default for platform"),
+                             clEnumVal(Enable, "Enabled"),
+                             clEnumVal(Disable, "Disabled"), clEnumValEnd),
+                  cl::init(Default));
+
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
@@ -249,6 +257,12 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     HasDwarfPubSections = tuneForGDB();
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
+
+  // SCE does not use linkage names.
+  if (DwarfLinkageNames == Default)
+    UseLinkageNames = !tuneForSCE();
+  else
+    UseLinkageNames = DwarfLinkageNames == Enable;
 
   unsigned DwarfVersionNumber = Asm->TM.Options.MCOptions.DwarfVersion;
   DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber

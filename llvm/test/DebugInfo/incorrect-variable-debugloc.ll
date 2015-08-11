@@ -38,11 +38,11 @@
 
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: DW_AT_name {{.*}} "C"
-; CHECK:   DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
+; CHECK: [[M_FN3_DECL:.*]]:  DW_TAG_subprogram
+; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_AT_name {{.*}} "m_fn3"
 
-; CHECK: DW_AT_specification {{.*}} "_ZN1C5m_fn3Ev"
+; CHECK: DW_AT_specification {{.*}} {[[M_FN3_DECL]]}
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG

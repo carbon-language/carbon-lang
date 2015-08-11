@@ -18,7 +18,8 @@
 ;     return A().getFoo();
 ; }
 ;
-; CHECK: _ZN1A6setFooEv
+; CHECK: DW_AT_name {{.*}} "setFoo"
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_accessibility [DW_FORM_data1]   (DW_ACCESS_public)
 ; CHECK-NOT: DW_AT_accessibility
 ; CHECK: DW_TAG

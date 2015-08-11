@@ -333,6 +333,9 @@ class DwarfDebug : public AsmPrinterHandler {
   /// Whether to use the GNU TLS opcode (instead of the standard opcode).
   bool UseGNUTLSOpcode;
 
+  /// Whether to emit DW_AT_[MIPS_]linkage_name.
+  bool UseLinkageNames;
+
   /// Version of dwarf we're emitting.
   unsigned DwarfVersion;
 
@@ -587,6 +590,9 @@ public:
   void setSymbolSize(const MCSymbol *Sym, uint64_t Size) override {
     SymSize[Sym] = Size;
   }
+
+  /// Returns whether to emit DW_AT_[MIPS_]linkage_name.
+  bool useLinkageNames() const { return UseLinkageNames; }
 
   /// Returns whether to use DW_OP_GNU_push_tls_address, instead of the
   /// standard DW_OP_form_tls_address opcode

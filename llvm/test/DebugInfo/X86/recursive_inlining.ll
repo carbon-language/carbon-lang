@@ -38,16 +38,16 @@
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK: DW_TAG_member
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: DW_TAG_subprogram
+; CHECK: [[M_FN2_DECL:.*]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
 ; CHECK:     DW_AT_name {{.*}} "m_fn2"
 ; CHECK-NOT: {{DW_TAG|NULL}}
-; CHECK: [[M_FN2_THIS_DECL:.*]]:     DW_TAG_formal_parameter
+; CHECK:     DW_TAG_formal_parameter
 
 ; The abstract definition of C::m_fn2
 ; CHECK: [[M_FN2_ABS_DEF:.*]]: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_specification {{.*}} "_ZN1C5m_fn2Ev"
+; CHECK:   DW_AT_specification {{.*}} {[[M_FN2_DECL]]}
 ; CHECK-NOT: DW_TAG
 ; CHECK:   DW_AT_inline
 ; CHECK-NOT: {{DW_TAG|NULL}}
@@ -63,7 +63,7 @@
 ; The concrete definition of C::m_fn2
 ; CHECK: DW_TAG_subprogram
 ; CHECK-NOT: DW_TAG
-; CHECK:   DW_AT_abstract_origin {{.*}} {[[M_FN2_ABS_DEF]]} "_ZN1C5m_fn2Ev"
+; CHECK:   DW_AT_abstract_origin {{.*}} {[[M_FN2_ABS_DEF]]}
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:   DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
@@ -78,7 +78,7 @@
 ; Inlined C::m_fn2:
 ; CHECK:         DW_TAG_inlined_subroutine
 ; CHECK-NOT: DW_TAG
-; CHECK:           DW_AT_abstract_origin {{.*}} {[[M_FN2_ABS_DEF]]} "_ZN1C5m_fn2Ev"
+; CHECK:           DW_AT_abstract_origin {{.*}} {[[M_FN2_ABS_DEF]]}
 ; CHECK-NOT: {{DW_TAG|NULL}}
 ; CHECK:           DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
