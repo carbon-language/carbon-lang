@@ -1718,9 +1718,9 @@ struct LoopVectorize : public FunctionPass {
 
     // Check the function attributes to find out if this function should be
     // optimized for size.
-    bool OptForSize = Hints.getForce() != LoopVectorizeHints::FK_Enabled &&
+    bool OptForSize = Hints.getForce() != LoopVectorizeHints::FK_Enabled/* &&
                       // FIXME: Use Function::optForSize().
-                      F->hasFnAttribute(Attribute::OptimizeForSize);
+                      F->hasFnAttribute(Attribute::OptimizeForSize)*/;
 
     // Compute the weighted frequency of this loop being executed and see if it
     // is less than 20% of the function entry baseline frequency. Note that we
@@ -1734,7 +1734,7 @@ struct LoopVectorize : public FunctionPass {
         OptForSize = true;
     }
 
-    // Check the function attributes to see if implicit floats are allowed.a
+    // Check the function attributes to see if implicit floats are allowed.
     // FIXME: This check doesn't seem possibly correct -- what if the loop is
     // an integer loop and the vector instructions selected are purely integer
     // vector instructions?
@@ -2402,7 +2402,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
           Builder.CreateGEP(nullptr, Ptr, Builder.getInt32(Part * VF));
 
       if (Reverse) {
-        // If we store to reverse consecutive memory locations then we need
+        // If we store to reverse consecutive memory locations, then we need
         // to reverse the order of elements in the stored value.
         StoredVal[Part] = reverseVector(StoredVal[Part]);
         // If the address is consecutive but reversed, then the
@@ -2476,7 +2476,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
     // Try using previously calculated values.
     Instruction *SrcInst = dyn_cast<Instruction>(SrcOp);
 
-    // If the src is an instruction that appeared earlier in the basic block
+    // If the src is an instruction that appeared earlier in the basic block,
     // then it should already be vectorized.
     if (SrcInst && OrigLoop->contains(SrcInst)) {
       assert(WidenMap.has(SrcInst) && "Source operand is unavailable");
