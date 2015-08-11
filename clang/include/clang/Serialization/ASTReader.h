@@ -499,7 +499,8 @@ private:
   typedef ArrayRef<llvm::support::unaligned_uint32_t> LexicalContents;
 
   /// \brief Map from a DeclContext to its lexical contents.
-  llvm::DenseMap<const DeclContext*, LexicalContents> LexicalDecls;
+  llvm::DenseMap<const DeclContext*, std::pair<ModuleFile*, LexicalContents>>
+      LexicalDecls;
 
   /// \brief Map from the TU to its lexical contents from each module file.
   std::vector<std::pair<ModuleFile*, LexicalContents>> TULexicalDecls;

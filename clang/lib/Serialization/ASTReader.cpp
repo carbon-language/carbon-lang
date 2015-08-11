@@ -975,11 +975,18 @@ bool ASTReader::ReadLexicalDeclContextStorage(ModuleFile &M,
 
   assert(!isa<TranslationUnitDecl>(DC) &&
          "expected a TU_UPDATE_LEXICAL record for TU");
-  // FIXME: Once we remove RewriteDecl, assert that we didn't already have
-  // lexical decls for this context.
-  LexicalDecls[DC] = llvm::makeArrayRef(
-      reinterpret_cast<const llvm::support::unaligned_uint32_t *>(Blob.data()),
-      Blob.size() / 4);
+  // If we are handling a C++ class template instantiation, we can see multiple
+  // lexical updates for the same record. It's important that we select only one
+  // of them, so that field numbering works properly. Just pick the first one we
+  // see.
+  auto &Lex = LexicalDecls[DC];
+  if (!Lex.first) {
+    Lex = std::make_pair(
+        &M, llvm::makeArrayRef(
+                reinterpret_cast<const llvm::support::unaligned_uint32_t *>(
+                    Blob.data()),
+                Blob.size() / 4));
+  }
   DC->setHasExternalLexicalStorage(true);
   return false;
 }
@@ -6253,7 +6260,7 @@ void ASTReader::FindExternalLexicalDecls(
   } else {
     auto I = LexicalDecls.find(DC);
     if (I != LexicalDecls.end())
-      Visit(getOwningModuleFile(cast<Decl>(DC)), I->second);
+      Visit(I->second.first, I->second.second);
   }
 
   ++NumLexicalDeclContextsRead;

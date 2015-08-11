@@ -28,6 +28,8 @@ void testTemplateClasses() {
   N::Set<char> set_char;
   set_char.insert('A');
 
+  static_assert(sizeof(List<long>) == sizeof(List<short>), "");
+
   List<double> list_double;
   list_double.push_back(0.0);
 }

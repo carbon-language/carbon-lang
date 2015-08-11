@@ -38,6 +38,10 @@ int defineListDoubleRight() {
   return ld.size;
 }
 
+inline void defineListLongRight() {
+  List<long> ll;
+}
+
 template<typename T> struct MergePatternDecl;
 
 void outOfLineInlineUseRightF(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::f);
