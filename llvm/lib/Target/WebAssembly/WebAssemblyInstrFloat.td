@@ -19,10 +19,14 @@ defm FDIV : BinaryFP<fdiv>;
 defm FABS : UnaryFP<fabs>;
 defm FNEG : UnaryFP<fneg>;
 defm COPYSIGN : BinaryFP<fcopysign>;
-defm CEIL : UnaryFP<fceil>;
-defm FLOOR : UnaryFP<ffloor>;
-defm TRUNC : UnaryFP<ftrunc>;
-defm NEARESTINT : UnaryFP<fnearbyint>;
+
+/*
+ * TODO(jfb): add and test these:
+ * defm CEIL : UnaryFP<fceil>;
+ * defm FLOOR : UnaryFP<ffloor>;
+ * defm TRUNC : UnaryFP<ftrunc>;
+ * defm NEARESTINT : UnaryFP<fnearbyint>;
+ */
 
 /*
  * TODO(jfb): Add the following for 32-bit and 64-bit.
