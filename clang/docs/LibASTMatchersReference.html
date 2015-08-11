@@ -1512,6 +1512,23 @@ constructorDecl(hasAnyConstructorInitializer(isBaseInitializer()))
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXCtorInitializer.html">CXXCtorInitializer</a>&gt;</td><td class="name" onclick="toggle('isMemberInitializer0')"><a name="isMemberInitializer0Anchor">isMemberInitializer</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isMemberInitializer0"><pre>Matches a constructor initializer if it is initializing a direct member, as opposed to a base.
+
+Given
+  struct B {};
+  struct D : B {
+    int I;
+    D(int i) : I(i) {}
+  };
+  struct E : B {
+    E() : B() {}
+  };
+constructorDecl(hasAnyConstructorInitializer(isMemberInitializer()))
+  will match D(int), but not match E().
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXCtorInitializer.html">CXXCtorInitializer</a>&gt;</td><td class="name" onclick="toggle('isWritten0')"><a name="isWritten0Anchor">isWritten</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isWritten0"><pre>Matches a constructor initializer if it is explicitly written in
 code (as opposed to implicitly added by the compiler).

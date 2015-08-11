@@ -2097,6 +2097,12 @@ TEST(HasAnyConstructorInitializer, IsBaseInitializer) {
   EXPECT_TRUE(notMatches(Code, constructorDecl(allOf(
     hasAnyConstructorInitializer(allOf(isBaseInitializer(), isWritten())),
     hasName("D")))));
+  EXPECT_TRUE(matches(Code, constructorDecl(allOf(
+    hasAnyConstructorInitializer(allOf(isMemberInitializer(), isWritten())),
+    hasName("D")))));
+  EXPECT_TRUE(notMatches(Code, constructorDecl(allOf(
+    hasAnyConstructorInitializer(allOf(isMemberInitializer(), isWritten())),
+    hasName("E")))));
 }
 
 TEST(Matcher, NewExpression) {

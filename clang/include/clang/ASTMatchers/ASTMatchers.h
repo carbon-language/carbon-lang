@@ -2652,6 +2652,26 @@ AST_MATCHER(CXXCtorInitializer, isBaseInitializer) {
   return Node.isBaseInitializer();
 }
 
+/// \brief Matches a constructor initializer if it is initializing a member, as
+/// opposed to a base.
+///
+/// Given
+/// \code
+///   struct B {};
+///   struct D : B {
+///     int I;
+///     D(int i) : I(i) {}
+///   };
+///   struct E : B {
+///     E() : B() {}
+///   };
+/// \endcode
+/// constructorDecl(hasAnyConstructorInitializer(isMemberInitializer()))
+///   will match D(int), but not match E().
+AST_MATCHER(CXXCtorInitializer, isMemberInitializer) {
+  return Node.isMemberInitializer();
+}
+
 /// \brief Matches any argument of a call expression or a constructor call
 /// expression.
 ///
