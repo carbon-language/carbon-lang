@@ -1277,6 +1277,38 @@ struct {
 			"(n >= 1 and a >= 0 and b <= 2148 - n - a and "
 			"b >= 0) }",
 	  "{ [m, n, ku, kl] }" },
+	{ "{ [a, a, b] : a >= 10 }",
+	  "{ [a, b, c] : c >= a and c <= b and c >= 2 }",
+	  "{ [a, a, b] : a >= 10 }" },
+	{ "{ [i, j] : i >= 0 and i + j >= 0 }", "{ [i, j] : i <= 0 }",
+	  "{ [0, j] : j >= 0 }" },
+	/* Check that no constraints on i6 are introduced in the gist */
+	{ "[t1] -> { [i4, i6] : exists (e0 = floor((1530 - 4t1 - 5i4)/20): "
+		"20e0 <= 1530 - 4t1 - 5i4 and 20e0 >= 1511 - 4t1 - 5i4 and "
+		"5e0 <= 381 - t1 and i4 <= 1) }",
+	  "[t1] -> { [i4, i6] : exists (e0 = floor((-t1 + i6)/5): "
+		"5e0 = -t1 + i6 and i6 <= 6 and i6 >= 3) }",
+	  "[t1] -> { [i4, i6] : exists (e0 = floor((1530 - 4t1 - 5i4)/20): "
+		"i4 <= 1 and 5e0 <= 381 - t1 and 20e0 <= 1530 - 4t1 - 5i4 and "
+		"20e0 >= 1511 - 4t1 - 5i4) }" },
+	/* Check that no constraints on i6 are introduced in the gist */
+	{ "[t1, t2] -> { [i4, i5, i6] : exists (e0 = floor((1 + i4)/2), "
+		"e1 = floor((1530 - 4t1 - 5i4)/20), "
+		"e2 = floor((-4t1 - 5i4 + 10*floor((1 + i4)/2))/20), "
+		"e3 = floor((-1 + i4)/2): t2 = 0 and 2e3 = -1 + i4 and "
+			"20e2 >= -19 - 4t1 - 5i4 + 10e0 and 5e2 <= 1 - t1 and "
+			"2e0 <= 1 + i4 and 2e0 >= i4 and "
+			"20e1 <= 1530 - 4t1 - 5i4 and "
+			"20e1 >= 1511 - 4t1 - 5i4 and i4 <= 1 and "
+			"5e1 <= 381 - t1 and 20e2 <= -4t1 - 5i4 + 10e0) }",
+	  "[t1, t2] -> { [i4, i5, i6] : exists (e0 = floor((-17 + i4)/2), "
+		"e1 = floor((-t1 + i6)/5): 5e1 = -t1 + i6 and "
+			"2e0 <= -17 + i4 and 2e0 >= -18 + i4 and "
+			"10e0 <= -91 + 5i4 + 4i6 and "
+			"10e0 >= -105 + 5i4 + 4i6) }",
+	  "[t1, t2] -> { [i4, i5, i6] : exists (e0 = floor((381 - t1)/5), "
+		"e1 = floor((-1 + i4)/2): t2 = 0 and 2e1 = -1 + i4 and "
+		"i4 <= 1 and 5e0 <= 381 - t1 and 20e0 >= 1511 - 4t1 - 5i4) }" },
 };
 
 static int test_gist(struct isl_ctx *ctx)

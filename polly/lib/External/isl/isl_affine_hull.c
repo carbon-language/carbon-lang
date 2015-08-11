@@ -1160,6 +1160,15 @@ __isl_give isl_basic_map *isl_basic_map_plain_affine_hull(
 	return bmap;
 }
 
+/* Return the superset of "bset" described by the equalities
+ * satisfied by "bset" that are already known.
+ */
+__isl_give isl_basic_set *isl_basic_set_plain_affine_hull(
+	__isl_take isl_basic_set *bset)
+{
+	return isl_basic_map_plain_affine_hull(bset);
+}
+
 /* After computing the rational affine hull (by detecting the implicit
  * equalities), we compute the additional equalities satisfied by
  * the integer points (if any) and add the original equalities back in.

@@ -982,31 +982,6 @@ __isl_give isl_ast_build *isl_ast_build_replace_pending_by_guard(
 	return build;
 }
 
-/* Intersect build->pending and build->domain with "set",
- * where "set" is specified in terms of the internal schedule domain.
- */
-__isl_give isl_ast_build *isl_ast_build_restrict_pending(
-	__isl_take isl_ast_build *build, __isl_take isl_set *set)
-{
-	set = isl_set_compute_divs(set);
-	build = isl_ast_build_restrict_internal(build, isl_set_copy(set));
-	build = isl_ast_build_cow(build);
-	if (!build)
-		goto error;
-
-	build->pending = isl_set_intersect(build->pending, set);
-	build->pending = isl_set_coalesce(build->pending);
-
-	if (!build->pending)
-		return isl_ast_build_free(build);
-
-	return build;
-error:
-	isl_ast_build_free(build);
-	isl_set_free(set);
-	return NULL;
-}
-
 /* Intersect build->domain with "set", where "set" is specified
  * in terms of the external schedule domain.
  */

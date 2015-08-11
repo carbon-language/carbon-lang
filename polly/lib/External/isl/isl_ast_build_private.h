@@ -244,8 +244,6 @@ __isl_give isl_ast_build *isl_ast_build_restrict_generated(
 	__isl_take isl_ast_build *build, __isl_take isl_set *set);
 __isl_give isl_ast_build *isl_ast_build_replace_pending_by_guard(
 	__isl_take isl_ast_build *build, __isl_take isl_set *guard);
-__isl_give isl_ast_build *isl_ast_build_restrict_pending(
-	__isl_take isl_ast_build *build, __isl_take isl_set *set);
 __isl_give int isl_ast_build_need_schedule_map(
 	__isl_keep isl_ast_build *build);
 __isl_give isl_multi_aff *isl_ast_build_get_schedule_map_multi_aff(

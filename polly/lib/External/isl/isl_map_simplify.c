@@ -1,7 +1,7 @@
 /*
  * Copyright 2008-2009 Katholieke Universiteit Leuven
  * Copyright 2012-2013 Ecole Normale Superieure
- * Copyright 2014      INRIA Rocquencourt
+ * Copyright 2014-2015 INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
  *
@@ -760,23 +760,127 @@ static unsigned int round_up(unsigned int v)
 	return old_v << 1;
 }
 
-static int hash_index(isl_int ***index, unsigned int size, int bits,
-			struct isl_basic_map *bmap, int k)
+/* Hash table of inequalities in a basic map.
+ * "index" is an array of addresses of inequalities in the basic map, some
+ * of which are NULL.  The inequalities are hashed on the coefficients
+ * except the constant term.
+ * "size" is the number of elements in the array and is always a power of two
+ * "bits" is the number of bits need to represent an index into the array.
+ * "total" is the total dimension of the basic map.
+ */
+struct isl_constraint_index {
+	unsigned int size;
+	int bits;
+	isl_int ***index;
+	unsigned total;
+};
+
+/* Fill in the "ci" data structure for holding the inequalities of "bmap".
+ */
+static isl_stat create_constraint_index(struct isl_constraint_index *ci,
+	__isl_keep isl_basic_map *bmap)
+{
+	isl_ctx *ctx;
+
+	ci->index = NULL;
+	if (!bmap)
+		return isl_stat_error;
+	ci->total = isl_basic_set_total_dim(bmap);
+	if (bmap->n_ineq == 0)
+		return isl_stat_ok;
+	ci->size = round_up(4 * (bmap->n_ineq + 1) / 3 - 1);
+	ci->bits = ffs(ci->size) - 1;
+	ctx = isl_basic_map_get_ctx(bmap);
+	ci->index = isl_calloc_array(ctx, isl_int **, ci->size);
+	if (!ci->index)
+		return isl_stat_error;
+
+	return isl_stat_ok;
+}
+
+/* Free the memory allocated by create_constraint_index.
+ */
+static void constraint_index_free(struct isl_constraint_index *ci)
+{
+	free(ci->index);
+}
+
+/* Return the position in ci->index that contains the address of
+ * an inequality that is equal to *ineq up to the constant term,
+ * provided this address is not identical to "ineq".
+ * If there is no such inequality, then return the position where
+ * such an inequality should be inserted.
+ */
+static int hash_index_ineq(struct isl_constraint_index *ci, isl_int **ineq)
 {
 	int h;
-	unsigned total = isl_basic_map_total_dim(bmap);
-	uint32_t hash = isl_seq_get_hash_bits(bmap->ineq[k]+1, total, bits);
-	for (h = hash; index[h]; h = (h+1) % size)
-		if (&bmap->ineq[k] != index[h] &&
-		    isl_seq_eq(bmap->ineq[k]+1, index[h][0]+1, total))
+	uint32_t hash = isl_seq_get_hash_bits((*ineq) + 1, ci->total, ci->bits);
+	for (h = hash; ci->index[h]; h = (h+1) % ci->size)
+		if (ineq != ci->index[h] &&
+		    isl_seq_eq((*ineq) + 1, ci->index[h][0]+1, ci->total))
 			break;
 	return h;
 }
 
-static int set_hash_index(isl_int ***index, unsigned int size, int bits,
+/* Return the position in ci->index that contains the address of
+ * an inequality that is equal to the k'th inequality of "bmap"
+ * up to the constant term, provided it does not point to the very
+ * same inequality.
+ * If there is no such inequality, then return the position where
+ * such an inequality should be inserted.
+ */
+static int hash_index(struct isl_constraint_index *ci,
+	__isl_keep isl_basic_map *bmap, int k)
+{
+	return hash_index_ineq(ci, &bmap->ineq[k]);
+}
+
+static int set_hash_index(struct isl_constraint_index *ci,
 			  struct isl_basic_set *bset, int k)
 {
-	return hash_index(index, size, bits, (struct isl_basic_map *)bset, k);
+	return hash_index(ci, bset, k);
+}
+
+/* Fill in the "ci" data structure with the inequalities of "bset".
+ */
+static isl_stat setup_constraint_index(struct isl_constraint_index *ci,
+	__isl_keep isl_basic_set *bset)
+{
+	int k, h;
+
+	if (create_constraint_index(ci, bset) < 0)
+		return isl_stat_error;
+
+	for (k = 0; k < bset->n_ineq; ++k) {
+		h = set_hash_index(ci, bset, k);
+		ci->index[h] = &bset->ineq[k];
+	}
+
+	return isl_stat_ok;
+}
+
+/* Is the inequality ineq (obviously) redundant with respect
+ * to the constraints in "ci"?
+ *
+ * Look for an inequality in "ci" with the same coefficients and then
+ * check if the contant term of "ineq" is greater than or equal
+ * to the constant term of that inequality.  If so, "ineq" is clearly
+ * redundant.
+ *
+ * Note that hash_index_ineq ignores a stored constraint if it has
+ * the same address as the passed inequality.  It is ok to pass
+ * the address of a local variable here since it will never be
+ * the same as the address of a constraint in "ci".
+ */
+static isl_bool constraint_index_is_redundant(struct isl_constraint_index *ci,
+	isl_int *ineq)
+{
+	int h;
+
+	h = hash_index_ineq(ci, &ineq);
+	if (!ci->index[h])
+		return isl_bool_false;
+	return isl_int_ge(ineq[0], (*ci->index[h])[0]);
 }
 
 /* If we can eliminate more than one div, then we need to make
@@ -1196,36 +1300,28 @@ static struct isl_basic_map *check_for_div_constraints(
 __isl_give isl_basic_map *isl_basic_map_remove_duplicate_constraints(
 	__isl_take isl_basic_map *bmap, int *progress, int detect_divs)
 {
-	unsigned int size;
-	isl_int ***index;
+	struct isl_constraint_index ci;
 	int k, l, h;
-	int bits;
 	unsigned total = isl_basic_map_total_dim(bmap);
 	isl_int sum;
-	isl_ctx *ctx;
 
 	if (!bmap || bmap->n_ineq <= 1)
 		return bmap;
 
-	size = round_up(4 * (bmap->n_ineq+1) / 3 - 1);
-	if (size == 0)
-		return bmap;
-	bits = ffs(size) - 1;
-	ctx = isl_basic_map_get_ctx(bmap);
-	index = isl_calloc_array(ctx, isl_int **, size);
-	if (!index)
+	if (create_constraint_index(&ci, bmap) < 0)
 		return bmap;
 
-	index[isl_seq_get_hash_bits(bmap->ineq[0]+1, total, bits)] = &bmap->ineq[0];
+	h = isl_seq_get_hash_bits(bmap->ineq[0] + 1, total, ci.bits);
+	ci.index[h] = &bmap->ineq[0];
 	for (k = 1; k < bmap->n_ineq; ++k) {
-		h = hash_index(index, size, bits, bmap, k);
-		if (!index[h]) {
-			index[h] = &bmap->ineq[k];
+		h = hash_index(&ci, bmap, k);
+		if (!ci.index[h]) {
+			ci.index[h] = &bmap->ineq[k];
 			continue;
 		}
 		if (progress)
 			*progress = 1;
-		l = index[h] - &bmap->ineq[0];
+		l = ci.index[h] - &bmap->ineq[0];
 		if (isl_int_lt(bmap->ineq[k][0], bmap->ineq[l][0]))
 			swap_inequality(bmap, k, l);
 		isl_basic_map_drop_inequality(bmap, k);
@@ -1234,11 +1330,11 @@ __isl_give isl_basic_map *isl_basic_map_remove_duplicate_constraints(
 	isl_int_init(sum);
 	for (k = 0; k < bmap->n_ineq-1; ++k) {
 		isl_seq_neg(bmap->ineq[k]+1, bmap->ineq[k]+1, total);
-		h = hash_index(index, size, bits, bmap, k);
+		h = hash_index(&ci, bmap, k);
 		isl_seq_neg(bmap->ineq[k]+1, bmap->ineq[k]+1, total);
-		if (!index[h])
+		if (!ci.index[h])
 			continue;
-		l = index[h] - &bmap->ineq[0];
+		l = ci.index[h] - &bmap->ineq[0];
 		isl_int_add(sum, bmap->ineq[k][0], bmap->ineq[l][0]);
 		if (isl_int_is_pos(sum)) {
 			if (detect_divs)
@@ -1262,7 +1358,7 @@ __isl_give isl_basic_map *isl_basic_map_remove_duplicate_constraints(
 	}
 	isl_int_clear(sum);
 
-	free(index);
+	constraint_index_free(&ci);
 	return bmap;
 }
 
@@ -1828,37 +1924,73 @@ error:
 	return NULL;
 }
 
+/* For each inequality in "ineq" that is a shifted (more relaxed)
+ * copy of an inequality in "context", mark the corresponding entry
+ * in "row" with -1.
+ * If an inequality only has a non-negative constant term, then
+ * mark it as well.
+ */
+static isl_stat mark_shifted_constraints(__isl_keep isl_mat *ineq,
+	__isl_keep isl_basic_set *context, int *row)
+{
+	struct isl_constraint_index ci;
+	int n_ineq;
+	unsigned total;
+	int k;
+
+	if (!ineq || !context)
+		return isl_stat_error;
+	if (context->n_ineq == 0)
+		return isl_stat_ok;
+	if (setup_constraint_index(&ci, context) < 0)
+		return isl_stat_error;
+
+	n_ineq = isl_mat_rows(ineq);
+	total = isl_mat_cols(ineq) - 1;
+	for (k = 0; k < n_ineq; ++k) {
+		int l;
+		isl_bool redundant;
+
+		l = isl_seq_first_non_zero(ineq->row[k] + 1, total);
+		if (l < 0 && isl_int_is_nonneg(ineq->row[k][0])) {
+			row[k] = -1;
+			continue;
+		}
+		redundant = constraint_index_is_redundant(&ci, ineq->row[k]);
+		if (redundant < 0)
+			goto error;
+		if (!redundant)
+			continue;
+		row[k] = -1;
+	}
+	constraint_index_free(&ci);
+	return isl_stat_ok;
+error:
+	constraint_index_free(&ci);
+	return isl_stat_error;
+}
+
 static struct isl_basic_set *remove_shifted_constraints(
 	struct isl_basic_set *bset, struct isl_basic_set *context)
 {
-	unsigned int size;
-	isl_int ***index;
-	int bits;
-	int k, h, l;
-	isl_ctx *ctx;
+	struct isl_constraint_index ci;
+	int k;
 
 	if (!bset || !context)
 		return bset;
 
-	size = round_up(4 * (context->n_ineq+1) / 3 - 1);
-	if (size == 0)
+	if (context->n_ineq == 0)
 		return bset;
-	bits = ffs(size) - 1;
-	ctx = isl_basic_set_get_ctx(bset);
-	index = isl_calloc_array(ctx, isl_int **, size);
-	if (!index)
+	if (setup_constraint_index(&ci, context) < 0)
 		return bset;
 
-	for (k = 0; k < context->n_ineq; ++k) {
-		h = set_hash_index(index, size, bits, context, k);
-		index[h] = &context->ineq[k];
-	}
 	for (k = 0; k < bset->n_ineq; ++k) {
-		h = set_hash_index(index, size, bits, bset, k);
-		if (!index[h])
-			continue;
-		l = index[h] - &context->ineq[0];
-		if (isl_int_lt(bset->ineq[k][0], context->ineq[l][0]))
+		isl_bool redundant;
+
+		redundant = constraint_index_is_redundant(&ci, bset->ineq[k]);
+		if (redundant < 0)
+			goto error;
+		if (!redundant)
 			continue;
 		bset = isl_basic_set_cow(bset);
 		if (!bset)
@@ -1866,10 +1998,10 @@ static struct isl_basic_set *remove_shifted_constraints(
 		isl_basic_set_drop_inequality(bset, k);
 		--k;
 	}
-	free(index);
+	constraint_index_free(&ci);
 	return bset;
 error:
-	free(index);
+	constraint_index_free(&ci);
 	return bset;
 }
 
@@ -1985,23 +2117,31 @@ static void update_groups(int dim, int *group, isl_int *c)
 	}
 }
 
-/* Drop constraints from "context" that are irrelevant for computing
- * the gist of "bset".
- *
- * In particular, drop constraints in variables that are not related
- * to any of the variables involved in the constraints of "bset"
- * in the sense that there is no sequence of constraints that connects them.
+/* Allocate an array of groups of variables, one for each variable
+ * in "context", initialized to zero.
+ */
+static int *alloc_groups(__isl_keep isl_basic_set *context)
+{
+	isl_ctx *ctx;
+	int dim;
+
+	dim = isl_basic_set_dim(context, isl_dim_set);
+	ctx = isl_basic_set_get_ctx(context);
+	return isl_calloc_array(ctx, int, dim);
+}
+
+/* Drop constraints from "context" that only involve variables that are
+ * not related to any of the variables marked with a "-1" in "group".
  *
  * We construct groups of variables that collect variables that
  * (indirectly) appear in some common constraint of "context".
  * Each group is identified by the first variable in the group,
- * except for the special group of variables that appear in "bset"
- * (or are related to those variables), which is identified by -1.
+ * except for the special group of variables that was already identified
+ * in the input as -1 (or are related to those variables).
  * If group[i] is equal to i (or -1), then the group of i is i (or -1),
  * otherwise the group of i is the group of group[i].
  *
- * We first initialize the -1 group with the variables that appear in "bset".
- * Then we initialize groups for the remaining variables.
+ * We first initialize groups for the remaining variables.
  * Then we iterate over the constraints of "context" and update the
  * group of the variables in the constraint by the smallest group.
  * Finally, we resolve indirect references to groups by running over
@@ -2010,39 +2150,14 @@ static void update_groups(int dim, int *group, isl_int *c)
  * After computing the groups, we drop constraints that do not involve
  * any variables in the -1 group.
  */
-static __isl_give isl_basic_set *drop_irrelevant_constraints(
-	__isl_take isl_basic_set *context, __isl_keep isl_basic_set *bset)
+static __isl_give isl_basic_set *group_and_drop_irrelevant_constraints(
+	__isl_take isl_basic_set *context, __isl_take int *group)
 {
-	isl_ctx *ctx;
-	int *group;
 	int dim;
-	int i, j;
+	int i;
 	int last;
 
-	if (!context || !bset)
-		return isl_basic_set_free(context);
-
-	dim = isl_basic_set_dim(bset, isl_dim_set);
-	ctx = isl_basic_set_get_ctx(bset);
-	group = isl_calloc_array(ctx, int, dim);
-
-	if (!group)
-		goto error;
-
-	for (i = 0; i < dim; ++i) {
-		for (j = 0; j < bset->n_eq; ++j)
-			if (!isl_int_is_zero(bset->eq[j][1 + i]))
-				break;
-		if (j < bset->n_eq) {
-			group[i] = -1;
-			continue;
-		}
-		for (j = 0; j < bset->n_ineq; ++j)
-			if (!isl_int_is_zero(bset->ineq[j][1 + i]))
-				break;
-		if (j < bset->n_ineq)
-			group[i] = -1;
-	}
+	dim = isl_basic_set_dim(context, isl_dim_set);
 
 	last = -1;
 	for (i = 0; i < dim; ++i)
@@ -2069,15 +2184,190 @@ static __isl_give isl_basic_set *drop_irrelevant_constraints(
 
 	free(group);
 	return context;
-error:
-	free(group);
-	return isl_basic_set_free(context);
+}
+
+/* Drop constraints from "context" that are irrelevant for computing
+ * the gist of "bset".
+ *
+ * In particular, drop constraints in variables that are not related
+ * to any of the variables involved in the constraints of "bset"
+ * in the sense that there is no sequence of constraints that connects them.
+ *
+ * We first mark all variables that appear in "bset" as belonging
+ * to a "-1" group and then continue with group_and_drop_irrelevant_constraints.
+ */
+static __isl_give isl_basic_set *drop_irrelevant_constraints(
+	__isl_take isl_basic_set *context, __isl_keep isl_basic_set *bset)
+{
+	int *group;
+	int dim;
+	int i, j;
+
+	if (!context || !bset)
+		return isl_basic_set_free(context);
+
+	group = alloc_groups(context);
+
+	if (!group)
+		return isl_basic_set_free(context);
+
+	dim = isl_basic_set_dim(bset, isl_dim_set);
+	for (i = 0; i < dim; ++i) {
+		for (j = 0; j < bset->n_eq; ++j)
+			if (!isl_int_is_zero(bset->eq[j][1 + i]))
+				break;
+		if (j < bset->n_eq) {
+			group[i] = -1;
+			continue;
+		}
+		for (j = 0; j < bset->n_ineq; ++j)
+			if (!isl_int_is_zero(bset->ineq[j][1 + i]))
+				break;
+		if (j < bset->n_ineq)
+			group[i] = -1;
+	}
+
+	return group_and_drop_irrelevant_constraints(context, group);
+}
+
+/* Drop constraints from "context" that are irrelevant for computing
+ * the gist of the inequalities "ineq".
+ * Inequalities in "ineq" for which the corresponding element of row
+ * is set to -1 have already been marked for removal and should be ignored.
+ *
+ * In particular, drop constraints in variables that are not related
+ * to any of the variables involved in "ineq"
+ * in the sense that there is no sequence of constraints that connects them.
+ *
+ * We first mark all variables that appear in "bset" as belonging
+ * to a "-1" group and then continue with group_and_drop_irrelevant_constraints.
+ */
+static __isl_give isl_basic_set *drop_irrelevant_constraints_marked(
+	__isl_take isl_basic_set *context, __isl_keep isl_mat *ineq, int *row)
+{
+	int *group;
+	int dim;
+	int i, j, n;
+
+	if (!context || !ineq)
+		return isl_basic_set_free(context);
+
+	group = alloc_groups(context);
+
+	if (!group)
+		return isl_basic_set_free(context);
+
+	dim = isl_basic_set_dim(context, isl_dim_set);
+	n = isl_mat_rows(ineq);
+	for (i = 0; i < dim; ++i) {
+		for (j = 0; j < n; ++j) {
+			if (row[j] < 0)
+				continue;
+			if (!isl_int_is_zero(ineq->row[j][1 + i]))
+				break;
+		}
+		if (j < n)
+			group[i] = -1;
+	}
+
+	return group_and_drop_irrelevant_constraints(context, group);
+}
+
+/* Do all "n" entries of "row" contain a negative value?
+ */
+static int all_neg(int *row, int n)
+{
+	int i;
+
+	for (i = 0; i < n; ++i)
+		if (row[i] >= 0)
+			return 0;
+
+	return 1;
+}
+
+/* Update the inequalities in "bset" based on the information in "row"
+ * and "tab".
+ *
+ * In particular, the array "row" contains either -1, meaning that
+ * the corresponding inequality of "bset" is redundant, or the index
+ * of an inequality in "tab".
+ *
+ * If the row entry is -1, then drop the inequality.
+ * Otherwise, if the constraint is marked redundant in the tableau,
+ * then drop the inequality.  Similarly, if it is marked as an equality
+ * in the tableau, then turn the inequality into an equality and
+ * perform Gaussian elimination.
+ */
+static __isl_give isl_basic_set *update_ineq(__isl_take isl_basic_set *bset,
+	__isl_keep int *row, struct isl_tab *tab)
+{
+	int i;
+	unsigned n_ineq;
+	unsigned n_eq;
+	int found_equality = 0;
+
+	if (!bset)
+		return NULL;
+	if (tab && tab->empty)
+		return isl_basic_set_set_to_empty(bset);
+
+	n_ineq = bset->n_ineq;
+	for (i = n_ineq - 1; i >= 0; --i) {
+		if (row[i] < 0) {
+			if (isl_basic_set_drop_inequality(bset, i) < 0)
+				return isl_basic_set_free(bset);
+			continue;
+		}
+		if (!tab)
+			continue;
+		n_eq = tab->n_eq;
+		if (isl_tab_is_equality(tab, n_eq + row[i])) {
+			isl_basic_map_inequality_to_equality(bset, i);
+			found_equality = 1;
+		} else if (isl_tab_is_redundant(tab, n_eq + row[i])) {
+			if (isl_basic_set_drop_inequality(bset, i) < 0)
+				return isl_basic_set_free(bset);
+		}
+	}
+
+	if (found_equality)
+		bset = isl_basic_set_gauss(bset, NULL);
+	bset = isl_basic_set_finalize(bset);
+	return bset;
+}
+
+/* Update the inequalities in "bset" based on the information in "row"
+ * and "tab" and free all arguments (other than "bset").
+ */
+static __isl_give isl_basic_set *update_ineq_free(
+	__isl_take isl_basic_set *bset, __isl_take isl_mat *ineq,
+	__isl_take isl_basic_set *context, __isl_take int *row,
+	struct isl_tab *tab)
+{
+	isl_mat_free(ineq);
+	isl_basic_set_free(context);
+
+	bset = update_ineq(bset, row, tab);
+
+	free(row);
+	isl_tab_free(tab);
+	return bset;
 }
 
 /* Remove all information from bset that is redundant in the context
- * of context.  Both bset and context are assumed to be full-dimensional.
+ * of context.
+ * "ineq" contains the (possibly transformed) inequalities of "bset",
+ * in the same order.
+ * The (explicit) equalities of "bset" are assumed to have been taken
+ * into account by the transformation such that only the inequalities
+ * are relevant.
  *
- * We first remove the inequalities from "bset"
+ * "row" keeps track of the constraint index of a "bset" inequality in "tab".
+ * A value of -1 means that the inequality is obviously redundant and may
+ * not even appear in  "tab".
+ *
+ * We first mark the inequalities of "bset"
  * that are obviously redundant with respect to some inequality in "context".
  * Then we remove those constraints from "context" that have become
  * irrelevant for computing the gist of "bset".
@@ -2097,101 +2387,236 @@ error:
  * Finally, we update bset according to the results.
  */
 static __isl_give isl_basic_set *uset_gist_full(__isl_take isl_basic_set *bset,
-	__isl_take isl_basic_set *context)
+	__isl_take isl_mat *ineq, __isl_take isl_basic_set *context)
 {
-	int i, k;
+	int i, r;
+	int *row = NULL;
+	isl_ctx *ctx;
 	isl_basic_set *combined = NULL;
 	struct isl_tab *tab = NULL;
-	unsigned context_ineq;
+	unsigned n_eq, context_ineq;
 	unsigned total;
 
-	if (!bset || !context)
+	if (!bset || !ineq || !context)
 		goto error;
 
-	if (isl_basic_set_is_universe(bset)) {
+	if (bset->n_ineq == 0 || isl_basic_set_is_universe(context)) {
 		isl_basic_set_free(context);
+		isl_mat_free(ineq);
 		return bset;
 	}
 
-	if (isl_basic_set_is_universe(context)) {
-		isl_basic_set_free(context);
-		return bset;
-	}
-
-	bset = remove_shifted_constraints(bset, context);
-	if (!bset)
+	ctx = isl_basic_set_get_ctx(context);
+	row = isl_calloc_array(ctx, int, bset->n_ineq);
+	if (!row)
 		goto error;
-	if (bset->n_ineq == 0)
-		goto done;
 
-	context = drop_irrelevant_constraints(context, bset);
+	if (mark_shifted_constraints(ineq, context, row) < 0)
+		goto error;
+	if (all_neg(row, bset->n_ineq))
+		return update_ineq_free(bset, ineq, context, row, NULL);
+
+	context = drop_irrelevant_constraints_marked(context, ineq, row);
 	if (!context)
 		goto error;
-	if (isl_basic_set_is_universe(context)) {
-		isl_basic_set_free(context);
-		return bset;
-	}
+	if (isl_basic_set_is_universe(context))
+		return update_ineq_free(bset, ineq, context, row, NULL);
 
+	n_eq = context->n_eq;
 	context_ineq = context->n_ineq;
 	combined = isl_basic_set_cow(isl_basic_set_copy(context));
 	combined = isl_basic_set_extend_constraints(combined, 0, bset->n_ineq);
 	tab = isl_tab_from_basic_set(combined, 0);
 	for (i = 0; i < context_ineq; ++i)
-		if (isl_tab_freeze_constraint(tab, i) < 0)
+		if (isl_tab_freeze_constraint(tab, n_eq + i) < 0)
 			goto error;
 	if (isl_tab_extend_cons(tab, bset->n_ineq) < 0)
 		goto error;
-	for (i = 0; i < bset->n_ineq; ++i)
-		if (isl_tab_add_ineq(tab, bset->ineq[i]) < 0)
+	r = context_ineq;
+	for (i = 0; i < bset->n_ineq; ++i) {
+		if (row[i] < 0)
+			continue;
+		combined = isl_basic_set_add_ineq(combined, ineq->row[i]);
+		if (isl_tab_add_ineq(tab, ineq->row[i]) < 0)
 			goto error;
-	bset = isl_basic_set_add_constraints(combined, bset, 0);
-	combined = NULL;
-	if (!bset)
+		row[i] = r++;
+	}
+	if (isl_tab_detect_implicit_equalities(tab) < 0)
 		goto error;
 	if (isl_tab_detect_redundant(tab) < 0)
 		goto error;
 	total = isl_basic_set_total_dim(bset);
-	for (i = context_ineq; i < bset->n_ineq; ++i) {
+	for (i = bset->n_ineq - 1; i >= 0; --i) {
+		isl_basic_set *test;
 		int is_empty;
-		if (tab->con[i].is_redundant)
+
+		if (row[i] < 0)
 			continue;
-		tab->con[i].is_redundant = 1;
-		combined = isl_basic_set_dup(bset);
-		combined = isl_basic_set_update_from_tab(combined, tab);
-		combined = isl_basic_set_extend_constraints(combined, 0, 1);
-		k = isl_basic_set_alloc_inequality(combined);
-		if (k < 0)
-			goto error;
-		isl_seq_neg(combined->ineq[k], bset->ineq[i], 1 + total);
-		isl_int_sub_ui(combined->ineq[k][0], combined->ineq[k][0], 1);
-		is_empty = isl_basic_set_is_empty(combined);
+		r = row[i];
+		if (tab->con[n_eq + r].is_redundant)
+			continue;
+		test = isl_basic_set_dup(combined);
+		if (isl_inequality_negate(test, r) < 0)
+			test = isl_basic_set_free(test);
+		test = isl_basic_set_update_from_tab(test, tab);
+		is_empty = isl_basic_set_is_empty(test);
+		isl_basic_set_free(test);
 		if (is_empty < 0)
 			goto error;
-		isl_basic_set_free(combined);
-		combined = NULL;
-		if (!is_empty)
-			tab->con[i].is_redundant = 0;
+		if (is_empty)
+			tab->con[n_eq + r].is_redundant = 1;
 	}
-	for (i = 0; i < context_ineq; ++i)
-		tab->con[i].is_redundant = 1;
-	bset = isl_basic_set_update_from_tab(bset, tab);
+	bset = update_ineq_free(bset, ineq, context, row, tab);
 	if (bset) {
 		ISL_F_SET(bset, ISL_BASIC_SET_NO_IMPLICIT);
 		ISL_F_SET(bset, ISL_BASIC_SET_NO_REDUNDANT);
 	}
 
-	isl_tab_free(tab);
-done:
-	bset = isl_basic_set_simplify(bset);
-	bset = isl_basic_set_finalize(bset);
-	isl_basic_set_free(context);
+	isl_basic_set_free(combined);
 	return bset;
 error:
+	free(row);
+	isl_mat_free(ineq);
 	isl_tab_free(tab);
 	isl_basic_set_free(combined);
 	isl_basic_set_free(context);
 	isl_basic_set_free(bset);
 	return NULL;
+}
+
+/* Extract the inequalities of "bset" as an isl_mat.
+ */
+static __isl_give isl_mat *extract_ineq(__isl_keep isl_basic_set *bset)
+{
+	unsigned total;
+	isl_ctx *ctx;
+	isl_mat *ineq;
+
+	if (!bset)
+		return NULL;
+
+	ctx = isl_basic_set_get_ctx(bset);
+	total = isl_basic_set_total_dim(bset);
+	ineq = isl_mat_sub_alloc6(ctx, bset->ineq, 0, bset->n_ineq,
+				    0, 1 + total);
+
+	return ineq;
+}
+
+/* Remove all information from "bset" that is redundant in the context
+ * of "context", for the case where both "bset" and "context" are
+ * full-dimensional.
+ */
+static __isl_give isl_basic_set *uset_gist_uncompressed(
+	__isl_take isl_basic_set *bset, __isl_take isl_basic_set *context)
+{
+	isl_mat *ineq;
+
+	ineq = extract_ineq(bset);
+	return uset_gist_full(bset, ineq, context);
+}
+
+/* Remove all information from "bset" that is redundant in the context
+ * of "context", for the case where the combined equalities of
+ * "bset" and "context" allow for a compression that can be obtained
+ * by preapplication of "T".
+ *
+ * "bset" itself is not transformed by "T".  Instead, the inequalities
+ * are extracted from "bset" and those are transformed by "T".
+ * uset_gist_full then determines which of the transformed inequalities
+ * are redundant with respect to the transformed "context" and removes
+ * the corresponding inequalities from "bset".
+ *
+ * After preapplying "T" to the inequalities, any common factor is
+ * removed from the coefficients.  If this results in a tightening
+ * of the constant term, then the same tightening is applied to
+ * the corresponding untransformed inequality in "bset".
+ * That is, if after plugging in T, a constraint f(x) >= 0 is of the form
+ *
+ *	g f'(x) + r >= 0
+ *
+ * with 0 <= r < g, then it is equivalent to
+ *
+ *	f'(x) >= 0
+ *
+ * This means that f(x) >= 0 is equivalent to f(x) - r >= 0 in the affine
+ * subspace compressed by T since the latter would be transformed to
+ *
+ *	g f'(x) >= 0
+ */
+static __isl_give isl_basic_set *uset_gist_compressed(
+	__isl_take isl_basic_set *bset, __isl_take isl_basic_set *context,
+	__isl_take isl_mat *T)
+{
+	isl_ctx *ctx;
+	isl_mat *ineq;
+	int i, n_row, n_col;
+	isl_int rem;
+
+	ineq = extract_ineq(bset);
+	ineq = isl_mat_product(ineq, isl_mat_copy(T));
+	context = isl_basic_set_preimage(context, T);
+
+	if (!ineq)
+		goto error;
+
+	ctx = isl_mat_get_ctx(ineq);
+	n_row = isl_mat_rows(ineq);
+	n_col = isl_mat_cols(ineq);
+	isl_int_init(rem);
+	for (i = 0; i < n_row; ++i) {
+		isl_seq_gcd(ineq->row[i] + 1, n_col - 1, &ctx->normalize_gcd);
+		if (isl_int_is_zero(ctx->normalize_gcd))
+			continue;
+		if (isl_int_is_one(ctx->normalize_gcd))
+			continue;
+		isl_seq_scale_down(ineq->row[i] + 1, ineq->row[i] + 1,
+				    ctx->normalize_gcd, n_col - 1);
+		isl_int_fdiv_r(rem, ineq->row[i][0], ctx->normalize_gcd);
+		isl_int_fdiv_q(ineq->row[i][0],
+				ineq->row[i][0], ctx->normalize_gcd);
+		if (isl_int_is_zero(rem))
+			continue;
+		bset = isl_basic_set_cow(bset);
+		if (!bset)
+			break;
+		isl_int_sub(bset->ineq[i][0], bset->ineq[i][0], rem);
+	}
+	isl_int_clear(rem);
+
+	return uset_gist_full(bset, ineq, context);
+error:
+	isl_mat_free(ineq);
+	isl_basic_set_free(context);
+	isl_basic_set_free(bset);
+	return NULL;
+}
+
+/* Project "bset" onto the variables that are involved in "template".
+ */
+static __isl_give isl_basic_set *project_onto_involved(
+	__isl_take isl_basic_set *bset, __isl_keep isl_basic_set *template)
+{
+	int i, n;
+
+	if (!bset || !template)
+		return isl_basic_set_free(bset);
+
+	n = isl_basic_set_dim(template, isl_dim_set);
+
+	for (i = 0; i < n; ++i) {
+		isl_bool involved;
+
+		involved = isl_basic_set_involves_dims(template,
+							isl_dim_set, i, 1);
+		if (involved < 0)
+			return isl_basic_set_free(bset);
+		if (involved)
+			continue;
+		bset = isl_basic_set_eliminate_vars(bset, i, 1);
+	}
+
+	return bset;
 }
 
 /* Remove all information from bset that is redundant in the context
@@ -2204,9 +2629,11 @@ error:
  * that are irrelevant for computing the gist of "bset".
  * Alternatively, we could factorize the intersection of "context" and "bset".
  *
- * We first compute the integer affine hull of the intersection,
- * compute the gist inside this affine hull and then add back
- * those equalities that are not implied by the context.
+ * We first compute the intersection of the integer affine hulls
+ * of "bset" and "context",
+ * compute the gist inside this intersection and then reduce
+ * the constraints with respect to the equalities of the context
+ * that only involve variables already involved in the input.
  *
  * If two constraints are mutually redundant, then uset_gist_full
  * will remove the second of those constraints.  We therefore first
@@ -2219,7 +2646,7 @@ static __isl_give isl_basic_set *uset_gist(__isl_take isl_basic_set *bset,
 	__isl_take isl_basic_set *context)
 {
 	isl_mat *eq;
-	isl_mat *T, *T2;
+	isl_mat *T;
 	isl_basic_set *aff;
 	isl_basic_set *aff_context;
 	unsigned total;
@@ -2229,9 +2656,13 @@ static __isl_give isl_basic_set *uset_gist(__isl_take isl_basic_set *bset,
 
 	context = drop_irrelevant_constraints(context, bset);
 
+	bset = isl_basic_set_detect_equalities(bset);
 	aff = isl_basic_set_copy(bset);
-	aff = isl_basic_set_intersect(aff, isl_basic_set_copy(context));
-	aff = isl_basic_set_affine_hull(aff);
+	aff = isl_basic_set_plain_affine_hull(aff);
+	context = isl_basic_set_detect_equalities(context);
+	aff_context = isl_basic_set_copy(context);
+	aff_context = isl_basic_set_plain_affine_hull(aff_context);
+	aff = isl_basic_set_intersect(aff, aff_context);
 	if (!aff)
 		goto error;
 	if (isl_basic_set_plain_is_empty(aff)) {
@@ -2242,28 +2673,23 @@ static __isl_give isl_basic_set *uset_gist(__isl_take isl_basic_set *bset,
 	bset = isl_basic_set_sort_constraints(bset);
 	if (aff->n_eq == 0) {
 		isl_basic_set_free(aff);
-		return uset_gist_full(bset, context);
+		return uset_gist_uncompressed(bset, context);
 	}
 	total = isl_basic_set_total_dim(bset);
 	eq = isl_mat_sub_alloc6(bset->ctx, aff->eq, 0, aff->n_eq, 0, 1 + total);
 	eq = isl_mat_cow(eq);
-	T = isl_mat_variable_compression(eq, &T2);
+	T = isl_mat_variable_compression(eq, NULL);
+	isl_basic_set_free(aff);
 	if (T && T->n_col == 0) {
 		isl_mat_free(T);
-		isl_mat_free(T2);
 		isl_basic_set_free(context);
-		isl_basic_set_free(aff);
 		return isl_basic_set_set_to_empty(bset);
 	}
 
 	aff_context = isl_basic_set_affine_hull(isl_basic_set_copy(context));
+	aff_context = project_onto_involved(aff_context, bset);
 
-	bset = isl_basic_set_preimage(bset, isl_mat_copy(T));
-	context = isl_basic_set_preimage(context, T);
-
-	bset = uset_gist_full(bset, context);
-	bset = isl_basic_set_preimage(bset, T2);
-	bset = isl_basic_set_intersect(bset, aff);
+	bset = uset_gist_compressed(bset, context, T);
 	bset = isl_basic_set_reduce_using_equalities(bset, aff_context);
 
 	if (bset) {
@@ -2276,46 +2702,6 @@ error:
 	isl_basic_set_free(bset);
 	isl_basic_set_free(context);
 	return NULL;
-}
-
-/* Normalize the divs in "bmap" in the context of the equalities in "context".
- * We simply add the equalities in context to bmap and then do a regular
- * div normalizations.  Better results can be obtained by normalizing
- * only the divs in bmap than do not also appear in context.
- * We need to be careful to reduce the divs using the equalities
- * so that later calls to isl_basic_map_overlying_set wouldn't introduce
- * spurious constraints.
- */
-static struct isl_basic_map *normalize_divs_in_context(
-	struct isl_basic_map *bmap, struct isl_basic_map *context)
-{
-	int i;
-	unsigned total_context;
-	int div_eq;
-
-	div_eq = n_pure_div_eq(bmap);
-	if (div_eq == 0)
-		return bmap;
-
-	bmap = isl_basic_map_cow(bmap);
-	if (context->n_div > 0)
-		bmap = isl_basic_map_align_divs(bmap, context);
-
-	total_context = isl_basic_map_total_dim(context);
-	bmap = isl_basic_map_extend_constraints(bmap, context->n_eq, 0);
-	for (i = 0; i < context->n_eq; ++i) {
-		int k;
-		k = isl_basic_map_alloc_equality(bmap);
-		if (k < 0)
-			return isl_basic_map_free(bmap);
-		isl_seq_cpy(bmap->eq[k], context->eq[i], 1 + total_context);
-		isl_seq_clr(bmap->eq[k] + 1 + total_context,
-				isl_basic_map_total_dim(bmap) - total_context);
-	}
-	bmap = isl_basic_map_gauss(bmap, NULL);
-	bmap = normalize_divs(bmap, NULL);
-	bmap = isl_basic_map_gauss(bmap, NULL);
-	return bmap;
 }
 
 /* Return a basic map that has the same intersection with "context" as "bmap"
@@ -2339,7 +2725,7 @@ struct isl_basic_map *isl_basic_map_gist(struct isl_basic_map *bmap,
 {
 	isl_basic_set *bset, *eq;
 	isl_basic_map *eq_bmap;
-	unsigned n_div, n_eq, n_ineq;
+	unsigned total, n_div, extra, n_eq, n_ineq;
 
 	if (!bmap || !context)
 		goto error;
@@ -2364,15 +2750,16 @@ struct isl_basic_map *isl_basic_map_gist(struct isl_basic_map *bmap,
 	if (!context)
 		goto error;
 
-	if (context->n_eq)
-		bmap = normalize_divs_in_context(bmap, context);
-
 	context = isl_basic_map_align_divs(context, bmap);
-	bmap = isl_basic_map_align_divs(bmap, context);
-	n_div = isl_basic_map_dim(bmap, isl_dim_div);
+	n_div = isl_basic_map_dim(context, isl_dim_div);
+	total = isl_basic_map_dim(bmap, isl_dim_all);
+	extra = n_div - isl_basic_map_dim(bmap, isl_dim_div);
 
-	bset = uset_gist(isl_basic_map_underlying_set(isl_basic_map_copy(bmap)),
+	bset = isl_basic_map_underlying_set(isl_basic_map_copy(bmap));
+	bset = isl_basic_set_add_dims(bset, isl_dim_set, extra);
+	bset = uset_gist(bset,
 		    isl_basic_map_underlying_set(isl_basic_map_copy(context)));
+	bset = isl_basic_set_project_out(bset, isl_dim_set, total, extra);
 
 	if (!bset || bset->n_eq == 0 || n_div == 0 ||
 	    isl_basic_set_plain_is_empty(bset)) {
@@ -2977,23 +3364,23 @@ static int div_find_coalesce(struct isl_basic_map *bmap, int *pairs,
  *	f_l e_u + f_u e_l + f_l - 1 + f_u - 1 + 1 >= f_u f_l g
  */
 static void construct_test_ineq(struct isl_basic_map *bmap, int i,
-	int l, int u, isl_int *ineq, isl_int g, isl_int fl, isl_int fu)
+	int l, int u, isl_int *ineq, isl_int *g, isl_int *fl, isl_int *fu)
 {
 	unsigned dim;
 	dim = isl_space_dim(bmap->dim, isl_dim_all);
 
-	isl_int_gcd(g, bmap->ineq[l][1 + dim + i], bmap->ineq[u][1 + dim + i]);
-	isl_int_divexact(fl, bmap->ineq[l][1 + dim + i], g);
-	isl_int_divexact(fu, bmap->ineq[u][1 + dim + i], g);
-	isl_int_neg(fu, fu);
-	isl_seq_combine(ineq, fl, bmap->ineq[u], fu, bmap->ineq[l],
+	isl_int_gcd(*g, bmap->ineq[l][1 + dim + i], bmap->ineq[u][1 + dim + i]);
+	isl_int_divexact(*fl, bmap->ineq[l][1 + dim + i], *g);
+	isl_int_divexact(*fu, bmap->ineq[u][1 + dim + i], *g);
+	isl_int_neg(*fu, *fu);
+	isl_seq_combine(ineq, *fl, bmap->ineq[u], *fu, bmap->ineq[l],
 			1 + dim + bmap->n_div);
-	isl_int_add(ineq[0], ineq[0], fl);
-	isl_int_add(ineq[0], ineq[0], fu);
+	isl_int_add(ineq[0], ineq[0], *fl);
+	isl_int_add(ineq[0], ineq[0], *fu);
 	isl_int_sub_ui(ineq[0], ineq[0], 1);
-	isl_int_mul(g, g, fl);
-	isl_int_mul(g, g, fu);
-	isl_int_sub(ineq[0], ineq[0], g);
+	isl_int_mul(*g, *g, *fl);
+	isl_int_mul(*g, *g, *fu);
+	isl_int_sub(ineq[0], ineq[0], *g);
 }
 
 /* Remove more kinds of divs that are not strictly needed.
@@ -3046,7 +3433,7 @@ static struct isl_basic_map *drop_more_redundant_divs(
 				if (!isl_int_is_neg(bmap->ineq[u][1 + dim + i]))
 					continue;
 				construct_test_ineq(bmap, i, l, u,
-						    vec->el, g, fl, fu);
+						    vec->el, &g, &fl, &fu);
 				res = isl_tab_min(tab, vec->el,
 						  bmap->ctx->one, &g, NULL, 0);
 				if (res == isl_lp_error)

@@ -8,9 +8,9 @@
 ;    }
 ;
 ; CHECK: ReadAccess :=	[Reduction Type: NONE] [Scalar: 0]
-; CHECK:     [n] -> { Stmt_for_body_8[i0, i1, i2] -> MemRef_A[o0, i1, i2] : exists (e0 = floor((-i0 + o0)/2): 2e0 = -i0 + o0 and o0 >= 0 and o0 <= 1) };
+; CHECK:     [n] -> { Stmt_for_body_8[i0, i1, i2] -> MemRef_A[o0, i1, i2] : exists (e0 = floor((-i0 + o0)/2): 2e0 = -i0 + o0 and o0 <= 1 and o0 >= 0) };
 ; CHECK: MustWriteAccess :=	[Reduction Type: NONE] [Scalar: 0]
-; CHECK:     [n] -> { Stmt_for_body_8[i0, i1, i2] -> MemRef_A[o0, i1, i2] : exists (e0 = floor((-i0 + o0)/2): 2e0 = -i0 + o0 and o0 >= 0 and o0 <= 1) };
+; CHECK:     [n] -> { Stmt_for_body_8[i0, i1, i2] -> MemRef_A[o0, i1, i2] : exists (e0 = floor((-i0 + o0)/2): 2e0 = -i0 + o0 and o0 <= 1 and o0 >= 0) };
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

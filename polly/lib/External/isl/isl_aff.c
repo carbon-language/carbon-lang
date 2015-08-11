@@ -6005,6 +6005,7 @@ error:
 
 #include <isl_multi_templ.c>
 #include <isl_multi_apply_set.c>
+#include <isl_multi_coalesce.c>
 #include <isl_multi_gist.c>
 #include <isl_multi_intersect.c>
 
@@ -6373,32 +6374,6 @@ isl_bool isl_multi_pw_aff_is_equal(__isl_keep isl_multi_pw_aff *mpa1,
 	}
 
 	return isl_bool_true;
-}
-
-/* Coalesce the elements of "mpa".
- *
- * Note that such coalescing does not change the meaning of "mpa"
- * so there is no need to cow.  We do need to be careful not to
- * destroy any other copies of "mpa" in case of failure.
- */
-__isl_give isl_multi_pw_aff *isl_multi_pw_aff_coalesce(
-	__isl_take isl_multi_pw_aff *mpa)
-{
-	int i;
-
-	if (!mpa)
-		return NULL;
-
-	for (i = 0; i < mpa->n; ++i) {
-		isl_pw_aff *pa = isl_pw_aff_copy(mpa->p[i]);
-		pa = isl_pw_aff_coalesce(pa);
-		if (!pa)
-			return isl_multi_pw_aff_free(mpa);
-		isl_pw_aff_free(mpa->p[i]);
-		mpa->p[i] = pa;
-	}
-
-	return mpa;
 }
 
 /* Compute the pullback of "mpa" by the function represented by "ma".
@@ -7693,6 +7668,7 @@ error:
 #include <isl_multi_templ.c>
 #include <isl_multi_apply_set.c>
 #include <isl_multi_apply_union_set.c>
+#include <isl_multi_coalesce.c>
 #include <isl_multi_floor.c>
 #include <isl_multi_gist.c>
 #include <isl_multi_intersect.c>

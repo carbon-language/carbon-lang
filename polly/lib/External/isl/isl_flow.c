@@ -2079,7 +2079,8 @@ static isl_stat extract_sink_source(__isl_take isl_map *map, void *user)
 }
 
 /* isl_schedule_foreach_schedule_node_top_down callback for collecting
- * individual scheduled source and sink accesses.
+ * individual scheduled source and sink accesses (taking into account
+ * the domain of the schedule).
  *
  * We only collect accesses at the leaves of the schedule tree.
  * We prepend the schedule dimensions at the leaf to the iteration
@@ -2114,7 +2115,7 @@ static isl_bool collect_sink_source(__isl_keep isl_schedule_node *node,
 
 	data->node = node;
 
-	prefix = isl_schedule_node_get_prefix_schedule_union_map(node);
+	prefix = isl_schedule_node_get_prefix_schedule_relation(node);
 	prefix = isl_union_map_reverse(prefix);
 	prefix = isl_union_map_range_map(prefix);
 
@@ -2282,6 +2283,8 @@ static __isl_give isl_union_flow *compute_single_flow(
  * the possible or definite source accesses that last accessed the
  * element accessed by the sink access before this sink access
  * in the sense that there is no intermediate definite source access.
+ * Only consider dependences between statement instances that belong
+ * to the domain of the schedule.
  *
  * The must_no_source and may_no_source elements of the result
  * are subsets of access->sink.  The elements must_dep and may_dep
@@ -2291,7 +2294,8 @@ static __isl_give isl_union_flow *compute_single_flow(
  * This function is used when a schedule tree representation
  * is available.
  *
- * We extract the individual scheduled source and sink access relations and
+ * We extract the individual scheduled source and sink access relations
+ * (taking into account the domain of the schedule) and
  * then compute dependences for each scheduled sink individually.
  */
 static __isl_give isl_union_flow *compute_flow_schedule(

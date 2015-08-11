@@ -4566,9 +4566,10 @@ struct isl_basic_map *isl_basic_map_overlying_set(
 	isl_assert(ctx, isl_basic_set_n_param(bset) == 0, goto error);
 	isl_assert(ctx, bset->dim->n_out == isl_basic_map_total_dim(like),
 			goto error);
-	if (isl_space_is_equal(bset->dim, like->dim) && like->n_div == 0) {
+	if (like->n_div == 0) {
+		isl_space *space = isl_basic_map_get_space(like);
 		isl_basic_map_free(like);
-		return (struct isl_basic_map *)bset;
+		return isl_basic_map_reset_space(bset, space);
 	}
 	bset = isl_basic_set_cow(bset);
 	if (!bset)
@@ -4694,21 +4695,32 @@ struct isl_set *isl_set_to_underlying_set(struct isl_set *set)
 }
 
 __isl_give isl_basic_map *isl_basic_map_reset_space(
-	__isl_take isl_basic_map *bmap, __isl_take isl_space *dim)
+	__isl_take isl_basic_map *bmap, __isl_take isl_space *space)
 {
+	isl_bool equal;
+
+	if (!bmap)
+		goto error;
+	equal = isl_space_is_equal(bmap->dim, space);
+	if (equal < 0)
+		goto error;
+	if (equal) {
+		isl_space_free(space);
+		return bmap;
+	}
 	bmap = isl_basic_map_cow(bmap);
-	if (!bmap || !dim)
+	if (!bmap || !space)
 		goto error;
 
 	isl_space_free(bmap->dim);
-	bmap->dim = dim;
+	bmap->dim = space;
 
 	bmap = isl_basic_map_finalize(bmap);
 
 	return bmap;
 error:
 	isl_basic_map_free(bmap);
-	isl_space_free(dim);
+	isl_space_free(space);
 	return NULL;
 }
 
