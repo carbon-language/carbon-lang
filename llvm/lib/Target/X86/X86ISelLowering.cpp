@@ -2400,9 +2400,10 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
     int FI = MFI->CreateFixedObject(ValVT.getSizeInBits()/8,
                                     VA.getLocMemOffset(), isImmutable);
     SDValue FIN = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
-    SDValue Val =  DAG.getLoad(ValVT, dl, Chain, FIN,
-                               MachinePointerInfo::getFixedStack(FI),
-                               false, false, false, 0);
+    SDValue Val = DAG.getLoad(
+        ValVT, dl, Chain, FIN,
+        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI), false,
+        false, false, 0);
     return ExtendedInMem ?
       DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Val) : Val;
   }
@@ -2674,10 +2675,11 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       SDValue FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(DAG.getDataLayout()),
                                 RSFIN, DAG.getIntPtrConstant(Offset, dl));
       SDValue Store =
-        DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                     MachinePointerInfo::getFixedStack(
-                       FuncInfo->getRegSaveFrameIndex(), Offset),
-                     false, false, 0);
+          DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                       MachinePointerInfo::getFixedStack(
+                           DAG.getMachineFunction(),
+                           FuncInfo->getRegSaveFrameIndex(), Offset),
+                       false, false, 0);
       MemOps.push_back(Store);
       Offset += 8;
     }
@@ -2718,7 +2720,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
     SDValue Val = DAG.getCopyFromReg(Chain, dl, GPR, MVT::i64);
     Chain = DAG.getStore(
         Val.getValue(1), dl, Val, RSFIN,
-        MachinePointerInfo::getFixedStack(FuncInfo->getRegSaveFrameIndex()),
+        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(),
+                                          FuncInfo->getRegSaveFrameIndex()),
         /*isVolatile=*/true, /*isNonTemporal=*/false, /*Alignment=*/0);
   }
 
@@ -2793,7 +2796,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       MMI.getWinEHFuncInfo(MF.getFunction()).UnwindHelpFrameIdx = UnwindHelpFI;
       SDValue Neg2 = DAG.getConstant(-2, dl, MVT::i64);
       Chain = DAG.getStore(Chain, dl, Neg2, StackSlot,
-                           MachinePointerInfo::getFixedStack(UnwindHelpFI),
+                           MachinePointerInfo::getFixedStack(
+                               DAG.getMachineFunction(), UnwindHelpFI),
                            /*isVolatile=*/true,
                            /*isNonTemporal=*/false, /*Alignment=*/0);
     } else {
@@ -2820,9 +2824,10 @@ X86TargetLowering::LowerMemOpCallTo(SDValue Chain,
   if (Flags.isByVal())
     return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
 
-  return DAG.getStore(Chain, dl, Arg, PtrOff,
-                      MachinePointerInfo::getStack(LocMemOffset),
-                      false, false, 0);
+  return DAG.getStore(
+      Chain, dl, Arg, PtrOff,
+      MachinePointerInfo::getStack(DAG.getMachineFunction(), LocMemOffset),
+      false, false, 0);
 }
 
 /// Emit a load of return address if tail call
@@ -2856,7 +2861,8 @@ static SDValue EmitTailCallStoreRetAddr(SelectionDAG &DAG, MachineFunction &MF,
                                          false);
   SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, PtrVT);
   Chain = DAG.getStore(Chain, dl, RetAddrFrIdx, NewRetAddrFrIdx,
-                       MachinePointerInfo::getFixedStack(NewReturnAddrFI),
+                       MachinePointerInfo::getFixedStack(
+                           DAG.getMachineFunction(), NewReturnAddrFI),
                        false, false, 0);
   return Chain;
 }
@@ -3042,9 +3048,10 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       // Store the argument.
       SDValue SpillSlot = DAG.CreateStackTemporary(VA.getValVT());
       int FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
-      Chain = DAG.getStore(Chain, dl, Arg, SpillSlot,
-                           MachinePointerInfo::getFixedStack(FI),
-                           false, false, 0);
+      Chain = DAG.getStore(
+          Chain, dl, Arg, SpillSlot,
+          MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
+          false, false, 0);
       Arg = SpillSlot;
       break;
     }
@@ -3180,10 +3187,10 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                                          Flags, DAG, dl));
       } else {
         // Store relative to framepointer.
-        MemOpChains2.push_back(
-          DAG.getStore(ArgChain, dl, Arg, FIN,
-                       MachinePointerInfo::getFixedStack(FI),
-                       false, false, 0));
+        MemOpChains2.push_back(DAG.getStore(
+            ArgChain, dl, Arg, FIN,
+            MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
+            false, false, 0));
       }
     }
 
@@ -3262,7 +3269,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       if (ExtraLoad)
         Callee = DAG.getLoad(
             getPointerTy(DAG.getDataLayout()), dl, DAG.getEntryNode(), Callee,
-            MachinePointerInfo::getGOT(), false, false, false, 0);
+            MachinePointerInfo::getGOT(DAG.getMachineFunction()), false, false,
+            false, 0);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     unsigned char OpFlags = 0;
@@ -5218,9 +5226,10 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
       SDValue CP =
           DAG.getConstantPool(C, TLI.getPointerTy(DAG.getDataLayout()));
       unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
-      Ld = DAG.getLoad(CVT, dl, DAG.getEntryNode(), CP,
-                       MachinePointerInfo::getConstantPool(),
-                       false, false, false, Alignment);
+      Ld = DAG.getLoad(
+          CVT, dl, DAG.getEntryNode(), CP,
+          MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+          false, false, Alignment);
 
       return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
     }
@@ -11401,7 +11410,8 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const {
   // load.
   if (isGlobalStubReference(OpFlag))
     Result = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), Result,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+                         MachinePointerInfo::getGOT(DAG.getMachineFunction()),
+                         false, false, false, 0);
 
   return Result;
 }
@@ -11468,7 +11478,8 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, SDLoc dl,
   // load.
   if (isGlobalStubReference(OpFlags))
     Result = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Result,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+                         MachinePointerInfo::getGOT(DAG.getMachineFunction()),
+                         false, false, false, 0);
 
   // If there was a non-zero offset that we didn't fold, create an explicit
   // addition for it.
@@ -11625,7 +11636,8 @@ static SDValue LowerToTLSExecModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
     }
 
     Offset = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Offset,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+                         MachinePointerInfo::getGOT(DAG.getMachineFunction()),
+                         false, false, false, 0);
   }
 
   // The address of the thread local variable is the add of the thread
@@ -11870,10 +11882,10 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
   auto PtrVT = getPointerTy(MF.getDataLayout());
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, PtrVT);
-  SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
-                               StackSlot,
-                               MachinePointerInfo::getFixedStack(SSFI),
-                               false, false, 0);
+  SDValue Chain = DAG.getStore(
+      DAG.getEntryNode(), dl, Op.getOperand(0), StackSlot,
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI), false,
+      false, 0);
   return BuildFILD(Op, SrcVT, Chain, StackSlot, DAG);
 }
 
@@ -11895,10 +11907,9 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
   MachineMemOperand *MMO;
   if (FI) {
     int SSFI = FI->getIndex();
-    MMO =
-      DAG.getMachineFunction()
-      .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                            MachineMemOperand::MOLoad, ByteSize, ByteSize);
+    MMO = DAG.getMachineFunction().getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI),
+        MachineMemOperand::MOLoad, ByteSize, ByteSize);
   } else {
     MMO = cast<LoadSDNode>(StackSlot)->getMemOperand();
     StackSlot = StackSlot.getOperand(1);
@@ -11924,16 +11935,16 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     SDValue Ops[] = {
       Chain, Result, StackSlot, DAG.getValueType(Op.getValueType()), InFlag
     };
-    MachineMemOperand *MMO =
-      DAG.getMachineFunction()
-      .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                            MachineMemOperand::MOStore, SSFISize, SSFISize);
+    MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI),
+        MachineMemOperand::MOStore, SSFISize, SSFISize);
 
     Chain = DAG.getMemIntrinsicNode(X86ISD::FST, DL, Tys,
                                     Ops, Op.getValueType(), MMO);
-    Result = DAG.getLoad(Op.getValueType(), DL, Chain, StackSlot,
-                         MachinePointerInfo::getFixedStack(SSFI),
-                         false, false, false, 0);
+    Result = DAG.getLoad(
+        Op.getValueType(), DL, Chain, StackSlot,
+        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI),
+        false, false, false, 0);
   }
 
   return Result;
@@ -11977,15 +11988,17 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   // Load the 64-bit value into an XMM register.
   SDValue XR1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64,
                             Op.getOperand(0));
-  SDValue CLod0 = DAG.getLoad(MVT::v4i32, dl, DAG.getEntryNode(), CPIdx0,
-                              MachinePointerInfo::getConstantPool(),
-                              false, false, false, 16);
+  SDValue CLod0 =
+      DAG.getLoad(MVT::v4i32, dl, DAG.getEntryNode(), CPIdx0,
+                  MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+                  false, false, false, 16);
   SDValue Unpck1 =
       getUnpackl(DAG, dl, MVT::v4i32, DAG.getBitcast(MVT::v4i32, XR1), CLod0);
 
-  SDValue CLod1 = DAG.getLoad(MVT::v2f64, dl, CLod0.getValue(1), CPIdx1,
-                              MachinePointerInfo::getConstantPool(),
-                              false, false, false, 16);
+  SDValue CLod1 =
+      DAG.getLoad(MVT::v2f64, dl, CLod0.getValue(1), CPIdx1,
+                  MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+                  false, false, false, 16);
   SDValue XR2F = DAG.getBitcast(MVT::v2f64, Unpck1);
   SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, XR2F, CLod1);
   SDValue Result;
@@ -12233,10 +12246,9 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   // we must be careful to do the computation in x87 extended precision, not
   // in SSE. (The generic code can't know it's OK to do this, or how to.)
   int SSFI = cast<FrameIndexSDNode>(StackSlot)->getIndex();
-  MachineMemOperand *MMO =
-    DAG.getMachineFunction()
-    .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                          MachineMemOperand::MOLoad, 8, 8);
+  MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI),
+      MachineMemOperand::MOLoad, 8, 8);
 
   SDVTList Tys = DAG.getVTList(MVT::f80, MVT::Other);
   SDValue Ops[] = { Store, StackSlot, DAG.getValueType(MVT::i64) };
@@ -12263,9 +12275,10 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
 
   // Load the value out, extending it from f32 to f80.
   // FIXME: Avoid the extend by constructing the right constant pool?
-  SDValue Fudge = DAG.getExtLoad(ISD::EXTLOAD, dl, MVT::f80, DAG.getEntryNode(),
-                                 FudgePtr, MachinePointerInfo::getConstantPool(),
-                                 MVT::f32, false, false, false, 4);
+  SDValue Fudge = DAG.getExtLoad(
+      ISD::EXTLOAD, dl, MVT::f80, DAG.getEntryNode(), FudgePtr,
+      MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), MVT::f32,
+      false, false, false, 4);
   // Extend everything to 80 bits to force it to be done on x87.
   SDValue Add = DAG.getNode(ISD::FADD, dl, MVT::f80, Fild, Fudge);
   return DAG.getNode(ISD::FP_ROUND, dl, DstVT, Add,
@@ -12324,16 +12337,16 @@ X86TargetLowering:: FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
   if (isScalarFPTypeInSSEReg(TheVT)) {
     assert(DstTy == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, DL, Value, StackSlot,
-                         MachinePointerInfo::getFixedStack(SSFI),
-                         false, false, 0);
+                         MachinePointerInfo::getFixedStack(MF, SSFI), false,
+                         false, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
     SDValue Ops[] = {
       Chain, StackSlot, DAG.getValueType(TheVT)
     };
 
     MachineMemOperand *MMO =
-      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                              MachineMemOperand::MOLoad, MemSize, MemSize);
+        MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, SSFI),
+                                MachineMemOperand::MOLoad, MemSize, MemSize);
     Value = DAG.getMemIntrinsicNode(X86ISD::FLD, DL, Tys, Ops, DstTy, MMO);
     Chain = Value.getValue(1);
     SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize, false);
@@ -12341,8 +12354,8 @@ X86TargetLowering:: FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
   }
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                            MachineMemOperand::MOStore, MemSize, MemSize);
+      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, SSFI),
+                              MachineMemOperand::MOStore, MemSize, MemSize);
 
   if (Opc != X86ISD::WIN_FTOL) {
     // Build the FP_TO_INT*_IN_MEM
@@ -12718,9 +12731,10 @@ static SDValue LowerFABSorFNEG(SDValue Op, SelectionDAG &DAG) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue CPIdx = DAG.getConstantPool(C, TLI.getPointerTy(DAG.getDataLayout()));
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-  SDValue Mask = DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
-                             MachinePointerInfo::getConstantPool(),
-                             false, false, false, Alignment);
+  SDValue Mask =
+      DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
+                  MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+                  false, false, false, Alignment);
 
   SDValue Op0 = Op.getOperand(0);
   bool IsFNABS = !IsFABS && (Op0.getOpcode() == ISD::FABS);
@@ -12781,9 +12795,10 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   // scalar FP logic instructions in SSE. This allows load folding of the
   // constants into the logic instructions.
   MVT LogicVT = (VT == MVT::f64) ? MVT::v2f64 : MVT::v4f32;
-  SDValue Mask1 = DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
-                              MachinePointerInfo::getConstantPool(),
-                              false, false, false, 16);
+  SDValue Mask1 =
+      DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
+                  MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+                  false, false, false, 16);
   Op1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LogicVT, Op1);
   SDValue SignBit = DAG.getNode(X86ISD::FAND, dl, LogicVT, Op1, Mask1);
 
@@ -12804,9 +12819,10 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   }
   C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, PtrVT, 16);
-  SDValue Val = DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
-                            MachinePointerInfo::getConstantPool(),
-                            false, false, false, 16);
+  SDValue Val =
+      DAG.getLoad(LogicVT, dl, DAG.getEntryNode(), CPIdx,
+                  MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+                  false, false, false, 16);
   // If the magnitude operand wasn't a constant, we need to AND out the sign.
   if (!isa<ConstantFPSDNode>(Op0)) {
     Op0 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LogicVT, Op0);
@@ -16700,8 +16716,8 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op,
       DAG.getFrameIndex(SSFI, getPointerTy(DAG.getDataLayout()));
 
   MachineMemOperand *MMO =
-   MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                           MachineMemOperand::MOStore, 2, 2);
+      MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, SSFI),
+                              MachineMemOperand::MOStore, 2, 2);
 
   SDValue Ops[] = { DAG.getEntryNode(), StackSlot };
   SDValue Chain = DAG.getMemIntrinsicNode(X86ISD::FNSTCW16m, DL,
@@ -19889,9 +19905,8 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   // In the XMM save block, save all the XMM argument registers.
   for (int i = 3, e = MI->getNumOperands() - 1; i != e; ++i) {
     int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
-    MachineMemOperand *MMO =
-      F->getMachineMemOperand(
-          MachinePointerInfo::getFixedStack(RegSaveFrameIndex, Offset),
+    MachineMemOperand *MMO = F->getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(*F, RegSaveFrameIndex, Offset),
         MachineMemOperand::MOStore,
         /*Size=*/16, /*Align=*/16);
     BuildMI(XMMSaveMBB, DL, TII->get(MOVOpc))

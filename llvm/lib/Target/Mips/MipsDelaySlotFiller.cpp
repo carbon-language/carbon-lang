@@ -431,7 +431,7 @@ bool LoadFromStackOrConst::hasHazard_(const MachineInstr &MI) {
       (*MI.memoperands_begin())->getPseudoValue()) {
     if (isa<FixedStackPseudoSourceValue>(PSV))
       return false;
-    return !PSV->isConstant(nullptr) && PSV != PseudoSourceValue::getStack();
+    return !PSV->isConstant(nullptr) && !PSV->isStack();
   }
 
   return true;

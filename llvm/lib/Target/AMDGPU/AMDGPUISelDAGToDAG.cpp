@@ -691,7 +691,7 @@ bool AMDGPUDAGToDAGISel::isCPLoad(const LoadSDNode *N) const {
   if (checkPrivateAddress(N->getMemOperand())) {
     if (MMO) {
       const PseudoSourceValue *PSV = MMO->getPseudoValue();
-      if (PSV && PSV == PseudoSourceValue::getConstantPool()) {
+      if (PSV && PSV->isConstantPool()) {
         return true;
       }
     }

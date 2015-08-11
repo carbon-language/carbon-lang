@@ -151,8 +151,9 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
                                             MVT::Other, CPIdx,
                                             CurDAG->getEntryNode());
       MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-      MemOp[0] = MF->getMachineMemOperand(
-        MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad, 4, 4);      
+      MemOp[0] =
+          MF->getMachineMemOperand(MachinePointerInfo::getConstantPool(*MF),
+                                   MachineMemOperand::MOLoad, 4, 4);
       cast<MachineSDNode>(node)->setMemRefs(MemOp, MemOp + 1);
       return node;
     }

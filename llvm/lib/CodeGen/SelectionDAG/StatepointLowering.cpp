@@ -427,7 +427,8 @@ spillIncomingStatepointValue(SDValue Incoming, SDValue Chain,
     //       chaining stores one after another, this may allow
     //       a bit more optimal scheduling for them
     Chain = Builder.DAG.getStore(Chain, Builder.getCurSDLoc(), Incoming, Loc,
-                                 MachinePointerInfo::getFixedStack(Index),
+                                 MachinePointerInfo::getFixedStack(
+                                     Builder.DAG.getMachineFunction(), Index),
                                  false, false, 0);
 
     Builder.StatepointLowering.setLocation(Incoming, Loc);
@@ -883,9 +884,10 @@ void SelectionDAGBuilder::visitGCRelocate(const CallInst &CI) {
   SDValue Chain = getRoot();
 
   SDValue SpillLoad =
-    DAG.getLoad(SpillSlot.getValueType(), getCurSDLoc(), Chain, SpillSlot,
-                MachinePointerInfo::getFixedStack(*DerivedPtrLocation),
-                false, false, false, 0);
+      DAG.getLoad(SpillSlot.getValueType(), getCurSDLoc(), Chain, SpillSlot,
+                  MachinePointerInfo::getFixedStack(DAG.getMachineFunction(),
+                                                    *DerivedPtrLocation),
+                  false, false, false, 0);
 
   // Again, be conservative, don't emit pending loads
   DAG.setRoot(SpillLoad.getValue(1));

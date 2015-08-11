@@ -1810,10 +1810,10 @@ void SelectionDAGBuilder::visitSPDescriptorParent(StackProtectorDescriptor &SPD,
                         GuardPtr, MachinePointerInfo(IRGuard, 0),
                         true, false, false, Align);
 
-  SDValue StackSlot = DAG.getLoad(PtrTy, dl, DAG.getEntryNode(),
-                                  StackSlotPtr,
-                                  MachinePointerInfo::getFixedStack(FI),
-                                  true, false, false, Align);
+  SDValue StackSlot = DAG.getLoad(
+      PtrTy, dl, DAG.getEntryNode(), StackSlotPtr,
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI), true,
+      false, false, Align);
 
   // Perform the comparison via a subtract/getsetcc.
   EVT VT = Guard.getValueType();
@@ -4775,8 +4775,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     SDValue FIN = DAG.getFrameIndex(FI, PtrTy);
 
     // Store the stack protector onto the stack.
-    Res = DAG.getStore(Chain, sdl, Src, FIN,
-                       MachinePointerInfo::getFixedStack(FI),
+    Res = DAG.getStore(Chain, sdl, Src, FIN, MachinePointerInfo::getFixedStack(
+                                                 DAG.getMachineFunction(), FI),
                        true, false, 0);
     setValue(&I, Res);
     DAG.setRoot(Res);
@@ -6069,10 +6069,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align, false);
         SDValue StackSlot =
             DAG.getFrameIndex(SSFI, TLI.getPointerTy(DAG.getDataLayout()));
-        Chain = DAG.getStore(Chain, getCurSDLoc(),
-                             OpInfo.CallOperand, StackSlot,
-                             MachinePointerInfo::getFixedStack(SSFI),
-                             false, false, 0);
+        Chain = DAG.getStore(
+            Chain, getCurSDLoc(), OpInfo.CallOperand, StackSlot,
+            MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI),
+            false, false, 0);
         OpInfo.CallOperand = StackSlot;
       }
 
@@ -7018,8 +7018,9 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
                                                         PtrVT));
       SDValue L = CLI.DAG.getLoad(
           RetTys[i], CLI.DL, CLI.Chain, Add,
-          MachinePointerInfo::getFixedStack(DemoteStackIdx, Offsets[i]), false,
-          false, false, 1);
+          MachinePointerInfo::getFixedStack(CLI.DAG.getMachineFunction(),
+                                            DemoteStackIdx, Offsets[i]),
+          false, false, false, 1);
       ReturnValues[i] = L;
       Chains[i] = L.getValue(1);
     }

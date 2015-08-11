@@ -177,10 +177,9 @@ static MachineMemOperand *
 getFrameIndexMMO(MachineBasicBlock &MBB, int FrameIndex, unsigned flags) {
   MachineFunction *MF = MBB.getParent();
   const MachineFrameInfo &MFI = *MF->getFrameInfo();
-  MachineMemOperand *MMO =
-    MF->getMachineMemOperand(MachinePointerInfo::getFixedStack(FrameIndex),
-                             flags, MFI.getObjectSize(FrameIndex),
-                             MFI.getObjectAlignment(FrameIndex));
+  MachineMemOperand *MMO = MF->getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(*MF, FrameIndex), flags,
+      MFI.getObjectSize(FrameIndex), MFI.getObjectAlignment(FrameIndex));
   return MMO;
 }
 

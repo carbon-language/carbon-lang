@@ -2462,9 +2462,10 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
         break;
       }
 
-      ArgValue = DAG.getExtLoad(ExtType, DL, VA.getLocVT(), Chain, FIN,
-                                MachinePointerInfo::getFixedStack(FI),
-                                MemVT, false, false, false, 0);
+      ArgValue = DAG.getExtLoad(
+          ExtType, DL, VA.getLocVT(), Chain, FIN,
+          MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
+          MemVT, false, false, false, 0);
 
       InVals.push_back(ArgValue);
     }
@@ -2537,9 +2538,10 @@ void AArch64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
     for (unsigned i = FirstVariadicGPR; i < NumGPRArgRegs; ++i) {
       unsigned VReg = MF.addLiveIn(GPRArgRegs[i], &AArch64::GPR64RegClass);
       SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::i64);
-      SDValue Store =
-          DAG.getStore(Val.getValue(1), DL, Val, FIN,
-                       MachinePointerInfo::getStack(i * 8), false, false, 0);
+      SDValue Store = DAG.getStore(
+          Val.getValue(1), DL, Val, FIN,
+          MachinePointerInfo::getStack(DAG.getMachineFunction(), i * 8), false,
+          false, 0);
       MemOps.push_back(Store);
       FIN =
           DAG.getNode(ISD::ADD, DL, PtrVT, FIN, DAG.getConstant(8, DL, PtrVT));
@@ -2566,9 +2568,10 @@ void AArch64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
         unsigned VReg = MF.addLiveIn(FPRArgRegs[i], &AArch64::FPR128RegClass);
         SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::f128);
 
-        SDValue Store =
-            DAG.getStore(Val.getValue(1), DL, Val, FIN,
-                         MachinePointerInfo::getStack(i * 16), false, false, 0);
+        SDValue Store = DAG.getStore(
+            Val.getValue(1), DL, Val, FIN,
+            MachinePointerInfo::getStack(DAG.getMachineFunction(), i * 16),
+            false, false, 0);
         MemOps.push_back(Store);
         FIN = DAG.getNode(ISD::ADD, DL, PtrVT, FIN,
                           DAG.getConstant(16, DL, PtrVT));
@@ -3006,7 +3009,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
         int FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset, true);
 
         DstAddr = DAG.getFrameIndex(FI, PtrVT);
-        DstInfo = MachinePointerInfo::getFixedStack(FI);
+        DstInfo =
+            MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI);
 
         // Make sure any stack arguments overlapping with where we're storing
         // are loaded before this eventual operation. Otherwise they'll be
@@ -3016,7 +3020,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
         SDValue PtrOff = DAG.getIntPtrConstant(Offset, DL);
 
         DstAddr = DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr, PtrOff);
-        DstInfo = MachinePointerInfo::getStack(LocMemOffset);
+        DstInfo = MachinePointerInfo::getStack(DAG.getMachineFunction(),
+                                               LocMemOffset);
       }
 
       if (Outs[i].Flags.isByVal()) {
@@ -3258,11 +3263,12 @@ SDValue AArch64TargetLowering::LowerGlobalAddress(SDValue Op,
     unsigned char LoFlags = AArch64II::MO_PAGEOFF | AArch64II::MO_NC;
     SDValue Lo = DAG.getTargetConstantPool(GV, PtrVT, 0, 0, LoFlags);
     SDValue PoolAddr = DAG.getNode(AArch64ISD::ADDlow, DL, PtrVT, ADRP, Lo);
-    SDValue GlobalAddr = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), PoolAddr,
-                                     MachinePointerInfo::getConstantPool(),
-                                     /*isVolatile=*/ false,
-                                     /*isNonTemporal=*/ true,
-                                     /*isInvariant=*/ true, 8);
+    SDValue GlobalAddr = DAG.getLoad(
+        PtrVT, DL, DAG.getEntryNode(), PoolAddr,
+        MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+        /*isVolatile=*/false,
+        /*isNonTemporal=*/true,
+        /*isInvariant=*/true, 8);
     if (GN->getOffset() != 0)
       return DAG.getNode(ISD::ADD, DL, PtrVT, GlobalAddr,
                          DAG.getConstant(GN->getOffset(), DL, PtrVT));
@@ -3335,8 +3341,9 @@ AArch64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
   // to obtain the address of the variable.
   SDValue Chain = DAG.getEntryNode();
   SDValue FuncTLVGet =
-      DAG.getLoad(MVT::i64, DL, Chain, DescAddr, MachinePointerInfo::getGOT(),
-                  false, true, true, 8);
+      DAG.getLoad(MVT::i64, DL, Chain, DescAddr,
+                  MachinePointerInfo::getGOT(DAG.getMachineFunction()), false,
+                  true, true, 8);
   Chain = FuncTLVGet.getValue(1);
 
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();

@@ -1848,7 +1848,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
 
-  MachinePointerInfo PtrInfo(PseudoSourceValue::getFixedStack(FI));
+  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       PtrInfo, MachineMemOperand::MOStore, MFI.getObjectSize(FI), Align);
   unsigned Opc = 0;
@@ -1945,7 +1945,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
-  MachinePointerInfo PtrInfo(PseudoSourceValue::getFixedStack(FI));
+  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       PtrInfo, MachineMemOperand::MOLoad, MFI.getObjectSize(FI), Align);
 

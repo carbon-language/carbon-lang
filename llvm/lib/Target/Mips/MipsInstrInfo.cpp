@@ -60,8 +60,8 @@ MachineMemOperand *MipsInstrInfo::GetMemOperand(MachineBasicBlock &MBB, int FI,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
 
-  return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FI), Flag,
-                                 MFI.getObjectSize(FI), Align);
+  return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(MF, FI),
+                                 Flag, MFI.getObjectSize(FI), Align);
 }
 
 //===----------------------------------------------------------------------===//

@@ -922,12 +922,9 @@ void ARMFastISel::AddLoadStoreOperands(MVT VT, Address &Addr,
   if (Addr.BaseType == Address::FrameIndexBase) {
     int FI = Addr.Base.FI;
     int Offset = Addr.Offset;
-    MachineMemOperand *MMO =
-          FuncInfo.MF->getMachineMemOperand(
-                                  MachinePointerInfo::getFixedStack(FI, Offset),
-                                  Flags,
-                                  MFI.getObjectSize(FI),
-                                  MFI.getObjectAlignment(FI));
+    MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(*FuncInfo.MF, FI, Offset), Flags,
+        MFI.getObjectSize(FI), MFI.getObjectAlignment(FI));
     // Now add the rest of the operands.
     MIB.addFrameIndex(FI);
 

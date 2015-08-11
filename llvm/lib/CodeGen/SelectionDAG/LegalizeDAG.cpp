@@ -273,17 +273,16 @@ SelectionDAGLegalize::ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP) {
       DAG.getConstantPool(LLVMC, TLI.getPointerTy(DAG.getDataLayout()));
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   if (Extend) {
-    SDValue Result =
-      DAG.getExtLoad(ISD::EXTLOAD, dl, OrigVT,
-                     DAG.getEntryNode(),
-                     CPIdx, MachinePointerInfo::getConstantPool(),
-                     VT, false, false, false, Alignment);
+    SDValue Result = DAG.getExtLoad(
+        ISD::EXTLOAD, dl, OrigVT, DAG.getEntryNode(), CPIdx,
+        MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), VT,
+        false, false, false, Alignment);
     return Result;
   }
   SDValue Result =
-    DAG.getLoad(OrigVT, dl, DAG.getEntryNode(), CPIdx,
-                MachinePointerInfo::getConstantPool(), false, false, false,
-                Alignment);
+      DAG.getLoad(OrigVT, dl, DAG.getEntryNode(), CPIdx,
+                  MachinePointerInfo::getConstantPool(DAG.getMachineFunction()),
+                  false, false, false, Alignment);
   return Result;
 }
 
@@ -594,9 +593,10 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
 
   // Store the vector.
-  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Tmp1, StackPtr,
-                            MachinePointerInfo::getFixedStack(SPFI),
-                            false, false, 0);
+  SDValue Ch = DAG.getStore(
+      DAG.getEntryNode(), dl, Tmp1, StackPtr,
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SPFI), false,
+      false, 0);
 
   // Truncate or zero extend offset to target pointer type.
   Tmp3 = DAG.getZExtOrTrunc(Tmp3, dl, PtrVT);
@@ -609,9 +609,9 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   Ch = DAG.getTruncStore(Ch, dl, Tmp2, StackPtr2, MachinePointerInfo(), EltVT,
                          false, false, 0);
   // Load the updated vector.
-  return DAG.getLoad(VT, dl, Ch, StackPtr,
-                     MachinePointerInfo::getFixedStack(SPFI), false, false,
-                     false, 0);
+  return DAG.getLoad(VT, dl, Ch, StackPtr, MachinePointerInfo::getFixedStack(
+                                               DAG.getMachineFunction(), SPFI),
+                     false, false, false, 0);
 }
 
 
@@ -1478,7 +1478,8 @@ SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
 
   SDValue StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
   int FI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
-  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(FI);
+  MachinePointerInfo PtrInfo =
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI);
 
   // First store the whole vector.
   SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, PtrInfo,
@@ -1516,7 +1517,8 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
   SDLoc dl(Node);
   SDValue FIPtr = DAG.CreateStackTemporary(VT);
   int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
-  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(FI);
+  MachinePointerInfo PtrInfo =
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI);
 
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
@@ -1786,7 +1788,8 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
 
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
   int SPFI = StackPtrFI->getIndex();
-  MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(SPFI);
+  MachinePointerInfo PtrInfo =
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SPFI);
 
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
@@ -1826,14 +1829,14 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr);
   int SPFI = StackPtrFI->getIndex();
 
-  SDValue Ch = DAG.getTruncStore(DAG.getEntryNode(), dl, Node->getOperand(0),
-                                 StackPtr,
-                                 MachinePointerInfo::getFixedStack(SPFI),
-                                 Node->getValueType(0).getVectorElementType(),
-                                 false, false, 0);
-  return DAG.getLoad(Node->getValueType(0), dl, Ch, StackPtr,
-                     MachinePointerInfo::getFixedStack(SPFI),
-                     false, false, false, 0);
+  SDValue Ch = DAG.getTruncStore(
+      DAG.getEntryNode(), dl, Node->getOperand(0), StackPtr,
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SPFI),
+      Node->getValueType(0).getVectorElementType(), false, false, 0);
+  return DAG.getLoad(
+      Node->getValueType(0), dl, Ch, StackPtr,
+      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SPFI), false,
+      false, false, 0);
 }
 
 static bool
@@ -1999,9 +2002,10 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     SDValue CPIdx =
         DAG.getConstantPool(CP, TLI.getPointerTy(DAG.getDataLayout()));
     unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-    return DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                       MachinePointerInfo::getConstantPool(),
-                       false, false, false, Alignment);
+    return DAG.getLoad(
+        VT, dl, DAG.getEntryNode(), CPIdx,
+        MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+        false, false, Alignment);
   }
 
   SmallSet<SDValue, 16> DefinedValues;
@@ -2599,14 +2603,15 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   Alignment = std::min(Alignment, 4u);
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, dl, DAG.getEntryNode(), CPIdx,
-                             MachinePointerInfo::getConstantPool(),
-                             false, false, false, Alignment);
+    FudgeInReg = DAG.getLoad(
+        MVT::f32, dl, DAG.getEntryNode(), CPIdx,
+        MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+        false, false, Alignment);
   else {
-    SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, DestVT,
-                                  DAG.getEntryNode(), CPIdx,
-                                  MachinePointerInfo::getConstantPool(),
-                                  MVT::f32, false, false, false, Alignment);
+    SDValue Load = DAG.getExtLoad(
+        ISD::EXTLOAD, dl, DestVT, DAG.getEntryNode(), CPIdx,
+        MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), MVT::f32,
+        false, false, false, Alignment);
     HandleSDNode Handle(Load);
     LegalizeOp(Load.getNode());
     FudgeInReg = Handle.getValue();
@@ -3855,9 +3860,10 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                Index, Table);
 
     EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), EntrySize * 8);
-    SDValue LD = DAG.getExtLoad(ISD::SEXTLOAD, dl, PTy, Chain, Addr,
-                                MachinePointerInfo::getJumpTable(), MemVT,
-                                false, false, false, 0);
+    SDValue LD = DAG.getExtLoad(
+        ISD::SEXTLOAD, dl, PTy, Chain, Addr,
+        MachinePointerInfo::getJumpTable(DAG.getMachineFunction()), MemVT,
+        false, false, false, 0);
     Addr = LD;
     if (TM.getRelocationModel() == Reloc::PIC_) {
       // For PIC, the sequence is:

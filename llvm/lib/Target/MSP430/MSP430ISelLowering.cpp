@@ -508,9 +508,10 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
         // Create the SelectionDAG nodes corresponding to a load
         //from this parameter
         SDValue FIN = DAG.getFrameIndex(FI, MVT::i16);
-        InVal = DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
-                            MachinePointerInfo::getFixedStack(FI),
-                            false, false, false, 0);
+        InVal = DAG.getLoad(
+            VA.getLocVT(), dl, Chain, FIN,
+            MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
+            false, false, false, 0);
       }
 
       InVals.push_back(InVal);

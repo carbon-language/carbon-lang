@@ -555,7 +555,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         MemOpChains.push_back(CreateCopyOfByValArgument(Arg, MemAddr, Chain,
                                                         Flags, DAG, dl));
       } else {
-        MachinePointerInfo LocPI = MachinePointerInfo::getStack(LocMemOffset);
+        MachinePointerInfo LocPI = MachinePointerInfo::getStack(
+            DAG.getMachineFunction(), LocMemOffset);
         SDValue S = DAG.getStore(Chain, dl, Arg, MemAddr, LocPI, false,
                                  false, 0);
         MemOpChains.push_back(S);

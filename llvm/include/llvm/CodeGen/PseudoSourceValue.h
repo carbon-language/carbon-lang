@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 
 #include "llvm/IR/Value.h"
+#include <map>
 
 namespace llvm {
 
@@ -63,27 +64,6 @@ public:
   /// Return true if the memory pointed to by this PseudoSourceValue can ever
   /// alias an LLVM IR Value.
   virtual bool mayAlias(const MachineFrameInfo *) const;
-
-  /// A pseudo source value referencing a fixed stack frame entry,
-  /// e.g., a spill slot.
-  static const PseudoSourceValue *getFixedStack(int FI);
-
-  /// A pseudo source value referencing the area below the stack frame of
-  /// a function, e.g., the argument space.
-  static const PseudoSourceValue *getStack();
-
-  /// A pseudo source value referencing the global offset table
-  /// (or something the like).
-  static const PseudoSourceValue *getGOT();
-
-  /// A pseudo source value referencing the constant pool. Since constant
-  /// pools are constant, this doesn't need to identify a specific constant
-  /// pool entry.
-  static const PseudoSourceValue *getConstantPool();
-
-  /// A pseudo source value referencing a jump table. Since jump tables are
-  /// constant, this doesn't need to identify a specific jump table.
-  static const PseudoSourceValue *getJumpTable();
 };
 
 /// A specialized PseudoSourceValue for holding FixedStack values, which must
@@ -108,6 +88,36 @@ public:
   void printCustom(raw_ostream &OS) const override;
 
   int getFrameIndex() const { return FI; }
+};
+
+/// Manages creation of pseudo source values.
+class PseudoSourceValueManager {
+  const PseudoSourceValue StackPSV, GOTPSV, JumpTablePSV, ConstantPoolPSV;
+  std::map<int, std::unique_ptr<FixedStackPseudoSourceValue>> FSValues;
+
+public:
+  PseudoSourceValueManager();
+
+  /// Return a pseudo source value referencing the area below the stack frame of
+  /// a function, e.g., the argument space.
+  const PseudoSourceValue *getStack();
+
+  /// Return a pseudo source value referencing the global offset table
+  /// (or something the like).
+  const PseudoSourceValue *getGOT();
+
+  /// Return a pseudo source value referencing the constant pool. Since constant
+  /// pools are constant, this doesn't need to identify a specific constant
+  /// pool entry.
+  const PseudoSourceValue *getConstantPool();
+
+  /// Return a pseudo source value referencing a jump table. Since jump tables
+  /// are constant, this doesn't need to identify a specific jump table.
+  const PseudoSourceValue *getJumpTable();
+
+  /// Return a pseudo source value referencing a fixed stack frame entry,
+  /// e.g., a spill slot.
+  const PseudoSourceValue *getFixedStack(int FI);
 };
 
 } // end namespace llvm

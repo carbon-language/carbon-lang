@@ -3020,8 +3020,8 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
       ISD::ArgFlagsTy Flags = OutFlags[VA.getValNo()];
       unsigned Alignment = DL.getABITypeAlignment(ArgVal->getType());
       MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
-        MachinePointerInfo::getStack(LocMemOffset), MachineMemOperand::MOStore,
-        ArgVT.getStoreSize(), Alignment);
+          MachinePointerInfo::getStack(*FuncInfo.MF, LocMemOffset),
+          MachineMemOperand::MOStore, ArgVT.getStoreSize(), Alignment);
       if (Flags.isByVal()) {
         X86AddressMode SrcAM;
         SrcAM.Base.Reg = ArgReg;
@@ -3384,8 +3384,8 @@ unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
                                       TII.get(Opc), ResultReg);
     addDirectMem(MIB, AddrReg);
     MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
-        MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad,
-        DL.getPointerSize(), Align);
+        MachinePointerInfo::getConstantPool(*FuncInfo.MF),
+        MachineMemOperand::MOLoad, DL.getPointerSize(), Align);
     MIB->addMemOperand(*FuncInfo.MF, MMO);
     return ResultReg;
   }

@@ -938,8 +938,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
         FIN = DAG.getNode(ISD::ADD, DL, PtrVT, FIN,
                           DAG.getIntPtrConstant(4, DL));
       ArgValue = DAG.getLoad(LocVT, DL, Chain, FIN,
-                             MachinePointerInfo::getFixedStack(FI),
-                             false, false, false, 0);
+                             MachinePointerInfo::getFixedStack(MF, FI), false,
+                             false, false, 0);
     }
 
     // Convert the value of the argument register into the value that's
@@ -975,9 +975,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
                                      &SystemZ::FP64BitRegClass);
         SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, MVT::f64);
         MemOps[I] = DAG.getStore(ArgValue.getValue(1), DL, ArgValue, FIN,
-                                 MachinePointerInfo::getFixedStack(FI),
+                                 MachinePointerInfo::getFixedStack(MF, FI),
                                  false, false, 0);
-
       }
       // Join the stores, which are independent of one another.
       Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
@@ -1059,9 +1058,9 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
       // Store the argument in a stack slot and pass its address.
       SDValue SpillSlot = DAG.CreateStackTemporary(VA.getValVT());
       int FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
-      MemOpChains.push_back(DAG.getStore(Chain, DL, ArgValue, SpillSlot,
-                                         MachinePointerInfo::getFixedStack(FI),
-                                         false, false, 0));
+      MemOpChains.push_back(DAG.getStore(
+          Chain, DL, ArgValue, SpillSlot,
+          MachinePointerInfo::getFixedStack(MF, FI), false, false, 0));
       ArgValue = SpillSlot;
     } else
       ArgValue = convertValVTToLocVT(DAG, DL, VA, ArgValue);
@@ -2424,7 +2423,8 @@ SDValue SystemZTargetLowering::lowerGlobalAddress(GlobalAddressSDNode *Node,
     Result = DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0, SystemZII::MO_GOT);
     Result = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Result);
     Result = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), Result,
-                         MachinePointerInfo::getGOT(), false, false, false, 0);
+                         MachinePointerInfo::getGOT(DAG.getMachineFunction()),
+                         false, false, false, 0);
   }
 
   // If there was a non-zero offset that we didn't fold, create an explicit
@@ -2516,9 +2516,10 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
         SystemZConstantPoolValue::Create(GV, SystemZCP::TLSGD);
 
       Offset = DAG.getConstantPool(CPV, PtrVT, 8);
-      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
-                           Offset, MachinePointerInfo::getConstantPool(),
-                           false, false, false, 0);
+      Offset = DAG.getLoad(
+          PtrVT, DL, DAG.getEntryNode(), Offset,
+          MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+          false, false, 0);
 
       // Call __tls_get_offset to retrieve the offset.
       Offset = lowerTLSGetOffset(Node, DAG, SystemZISD::TLS_GDCALL, Offset);
@@ -2531,9 +2532,10 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
         SystemZConstantPoolValue::Create(GV, SystemZCP::TLSLDM);
 
       Offset = DAG.getConstantPool(CPV, PtrVT, 8);
-      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
-                           Offset, MachinePointerInfo::getConstantPool(),
-                           false, false, false, 0);
+      Offset = DAG.getLoad(
+          PtrVT, DL, DAG.getEntryNode(), Offset,
+          MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+          false, false, 0);
 
       // Call __tls_get_offset to retrieve the module base offset.
       Offset = lowerTLSGetOffset(Node, DAG, SystemZISD::TLS_LDCALL, Offset);
@@ -2549,9 +2551,10 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
       CPV = SystemZConstantPoolValue::Create(GV, SystemZCP::DTPOFF);
 
       SDValue DTPOffset = DAG.getConstantPool(CPV, PtrVT, 8);
-      DTPOffset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
-                              DTPOffset, MachinePointerInfo::getConstantPool(),
-                              false, false, false, 0);
+      DTPOffset = DAG.getLoad(
+          PtrVT, DL, DAG.getEntryNode(), DTPOffset,
+          MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+          false, false, 0);
 
       Offset = DAG.getNode(ISD::ADD, DL, PtrVT, Offset, DTPOffset);
       break;
@@ -2562,8 +2565,8 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
       Offset = DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0,
                                           SystemZII::MO_INDNTPOFF);
       Offset = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Offset);
-      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
-                           Offset, MachinePointerInfo::getGOT(),
+      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), Offset,
+                           MachinePointerInfo::getGOT(DAG.getMachineFunction()),
                            false, false, false, 0);
       break;
     }
@@ -2574,9 +2577,10 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
         SystemZConstantPoolValue::Create(GV, SystemZCP::NTPOFF);
 
       Offset = DAG.getConstantPool(CPV, PtrVT, 8);
-      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
-                           Offset, MachinePointerInfo::getConstantPool(),
-                           false, false, false, 0);
+      Offset = DAG.getLoad(
+          PtrVT, DL, DAG.getEntryNode(), Offset,
+          MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), false,
+          false, false, 0);
       break;
     }
   }

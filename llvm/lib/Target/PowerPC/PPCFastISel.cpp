@@ -528,9 +528,9 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
     // VSX only provides an indexed load.
     if (Is32VSXLoad || Is64VSXLoad) return false;
 
-    MachineMemOperand *MMO =
-      FuncInfo.MF->getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(Addr.Base.FI, Addr.Offset),
+    MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(*FuncInfo.MF, Addr.Base.FI,
+                                          Addr.Offset),
         MachineMemOperand::MOLoad, MFI.getObjectSize(Addr.Base.FI),
         MFI.getObjectAlignment(Addr.Base.FI));
 
@@ -661,9 +661,9 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
     // VSX only provides an indexed store.
     if (Is32VSXStore || Is64VSXStore) return false;
 
-    MachineMemOperand *MMO =
-      FuncInfo.MF->getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(Addr.Base.FI, Addr.Offset),
+    MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+        MachinePointerInfo::getFixedStack(*FuncInfo.MF, Addr.Base.FI,
+                                          Addr.Offset),
         MachineMemOperand::MOStore, MFI.getObjectSize(Addr.Base.FI),
         MFI.getObjectAlignment(Addr.Base.FI));
 
@@ -1896,10 +1896,9 @@ unsigned PPCFastISel::PPCMaterializeFP(const ConstantFP *CFP, MVT VT) {
   unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
   CodeModel::Model CModel = TM.getCodeModel();
 
-  MachineMemOperand *MMO =
-    FuncInfo.MF->getMachineMemOperand(
-      MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad,
-      (VT == MVT::f32) ? 4 : 8, Align);
+  MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+      MachinePointerInfo::getConstantPool(*FuncInfo.MF),
+      MachineMemOperand::MOLoad, (VT == MVT::f32) ? 4 : 8, Align);
 
   unsigned Opc = (VT == MVT::f32) ? PPC::LFS : PPC::LFD;
   unsigned TmpReg = createResultReg(&PPC::G8RC_and_G8RC_NOX0RegClass);
