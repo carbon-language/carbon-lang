@@ -78,7 +78,7 @@ namespace {
     typedef std::vector<CaseRange> CaseVector;
     typedef std::vector<CaseRange>::iterator CaseItr;
   private:
-    void processSwitchInst(SwitchInst *SI);
+    void processSwitchInst(SwitchInst *SI, SmallVectorImpl<BasicBlock*> &DeleteList);
 
     BasicBlock *switchConvert(CaseItr Begin, CaseItr End,
                               ConstantInt *LowerBound, ConstantInt *UpperBound,
@@ -116,14 +116,19 @@ FunctionPass *llvm::createLowerSwitchPass() {
 
 bool LowerSwitch::runOnFunction(Function &F) {
   bool Changed = false;
+  SmallVector<BasicBlock*, 8> DeleteList;
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
     BasicBlock *Cur = I++; // Advance over block so we don't traverse new blocks
 
     if (SwitchInst *SI = dyn_cast<SwitchInst>(Cur->getTerminator())) {
       Changed = true;
-      processSwitchInst(SI);
+      processSwitchInst(SI, DeleteList);
     }
+  }
+
+  for (BasicBlock* BB: DeleteList) {
+    DeleteDeadBlock(BB);
   }
 
   return Changed;
@@ -397,7 +402,7 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
 // processSwitchInst - Replace the specified switch instruction with a sequence
 // of chained if-then insts in a balanced binary search.
 //
-void LowerSwitch::processSwitchInst(SwitchInst *SI) {
+void LowerSwitch::processSwitchInst(SwitchInst *SI, SmallVectorImpl<BasicBlock*> &DeleteList) {
   BasicBlock *CurBlock = SI->getParent();
   BasicBlock *OrigBlock = CurBlock;
   Function *F = CurBlock->getParent();
@@ -518,7 +523,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   BasicBlock *OldDefault = SI->getDefaultDest();
   CurBlock->getInstList().erase(SI);
 
-  // If the Default block has no more predecessors just remove it.
+  // If the Default block has no more predecessors just add it to DeleteList.
   if (pred_begin(OldDefault) == pred_end(OldDefault))
-    DeleteDeadBlock(OldDefault);
+    DeleteList.push_back(OldDefault);
 }
