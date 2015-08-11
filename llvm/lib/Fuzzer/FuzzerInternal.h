@@ -50,6 +50,10 @@ static const int kSHA1NumBytes = 20;
 // Computes SHA1 hash of 'Len' bytes in 'Data', writes kSHA1NumBytes to 'Out'.
 void ComputeSHA1(const uint8_t *Data, size_t Len, uint8_t *Out);
 
+// Changes U to contain only ASCII (isprint+isspace) characters.
+// Returns true iff U has been changed.
+bool ToASCII(Unit &U);
+
 int NumberOfCpuCores();
 
 class Fuzzer {
@@ -69,6 +73,7 @@ class Fuzzer {
     size_t MaxNumberOfRuns = ULONG_MAX;
     int SyncTimeout = 600;
     int ReportSlowUnits = 10;
+    bool OnlyASCII = false;
     std::string OutputCorpus;
     std::string SyncCommand;
     std::vector<std::string> Tokens;
@@ -103,7 +108,7 @@ class Fuzzer {
   void MutateAndTestOne(Unit *U);
   void ReportNewCoverage(size_t NewCoverage, const Unit &U);
   size_t RunOne(const Unit &U);
-  void RunOneAndUpdateCorpus(const Unit &U);
+  void RunOneAndUpdateCorpus(Unit &U);
   size_t RunOneMaximizeTotalCoverage(const Unit &U);
   size_t RunOneMaximizeFullCoverageSet(const Unit &U);
   size_t RunOneMaximizeCoveragePairs(const Unit &U);

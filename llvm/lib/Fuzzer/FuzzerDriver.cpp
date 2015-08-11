@@ -240,6 +240,7 @@ int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
       Flags.prefer_small_during_initial_shuffle;
   Options.Tokens = ReadTokensFile(Flags.tokens);
   Options.Reload = Flags.reload;
+  Options.OnlyASCII = Flags.only_ascii;
   if (Flags.runs >= 0)
     Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())

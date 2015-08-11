@@ -73,4 +73,17 @@ void ExecuteCommand(const std::string &Command) {
   system(Command.c_str());
 }
 
+bool ToASCII(Unit &U) {
+  bool Changed = false;
+  for (auto &X : U) {
+    auto NewX = X;
+    NewX &= 127;
+    if (!isspace(NewX) && !isprint(NewX))
+      NewX = ' ';
+    Changed |= NewX != X;
+    X = NewX;
+  }
+  return Changed;
+}
+
 }  // namespace fuzzer

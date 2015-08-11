@@ -69,6 +69,7 @@ The most important flags are::
   sync_command                       	0	Execute an external command "<sync_command> <test_corpus>" to synchronize the test corpus.
   sync_timeout                       	600	Minimum timeout between syncs.
   use_traces                            0       Experimental: use instruction traces
+  only_ascii                            0       If 1, generate only ASCII (isprint+isspace) inputs.
 
 
 For the full list of flags run the fuzzer binary with ``-help=1``.

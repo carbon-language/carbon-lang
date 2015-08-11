@@ -170,9 +170,11 @@ size_t Fuzzer::RunOne(const Unit &U) {
   return Res;
 }
 
-void Fuzzer::RunOneAndUpdateCorpus(const Unit &U) {
+void Fuzzer::RunOneAndUpdateCorpus(Unit &U) {
   if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
     return;
+  if (Options.OnlyASCII)
+    ToASCII(U);
   ReportNewCoverage(RunOne(U), U);
 }
 
@@ -251,6 +253,9 @@ void Fuzzer::WriteToOutputCorpus(const Unit &U) {
   WriteToFile(U, Path);
   if (Options.Verbosity >= 2)
     Printf("Written to %s\n", Path.c_str());
+  if (Options.OnlyASCII)
+    for (auto X : U)
+      assert(isprint(X) || isspace(X));
 }
 
 void Fuzzer::WriteUnitToFileWithPrefix(const Unit &U, const char *Prefix) {
