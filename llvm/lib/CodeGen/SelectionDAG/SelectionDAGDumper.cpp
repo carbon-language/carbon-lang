@@ -325,7 +325,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 
     case ISD::SETO:                     return "seto";
     case ISD::SETUO:                    return "setuo";
-    case ISD::SETUEQ:                   return "setue";
+    case ISD::SETUEQ:                   return "setueq";
     case ISD::SETUGT:                   return "setugt";
     case ISD::SETUGE:                   return "setuge";
     case ISD::SETULT:                   return "setult";
