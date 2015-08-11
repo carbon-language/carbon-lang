@@ -18,7 +18,6 @@ namespace elf2 {
 
 class Defined;
 template <class ELFT> class ObjectFile;
-class OutputSection;
 
 // A Chunk represents a chunk of data that will occupy space in the
 // output (if the resolver chose that). It may or may not be backed by

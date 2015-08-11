@@ -13,7 +13,6 @@
 namespace lld {
 namespace elf2 {
 
-class OutputSection;
 class SymbolTable;
 
 template <class ELFT>

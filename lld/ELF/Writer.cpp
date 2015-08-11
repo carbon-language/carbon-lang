@@ -25,6 +25,30 @@ using namespace lld::elf2;
 static const int PageSize = 4096;
 
 namespace {
+// OutputSection represents a section in an output file. It's a
+// container of chunks. OutputSection and Chunk are 1:N relationship.
+// Chunks cannot belong to more than one OutputSections. The writer
+// creates multiple OutputSections and assign them unique,
+// non-overlapping file offsets and VAs.
+class OutputSection {
+public:
+  OutputSection(StringRef Name) : Name(Name), Header({}) {}
+  void setVA(uint64_t);
+  void setFileOffset(uint64_t);
+  template <class ELFT> void addSectionChunk(SectionChunk<ELFT> *C);
+  std::vector<Chunk *> &getChunks() { return Chunks; }
+  template <class ELFT>
+  void writeHeaderTo(llvm::object::Elf_Shdr_Impl<ELFT> *SHdr);
+
+  // Returns the size of the section in the output file.
+  uint64_t getSize() { return Header.sh_size; }
+
+private:
+  StringRef Name;
+  llvm::ELF::Elf64_Shdr Header;
+  std::vector<Chunk *> Chunks;
+};
+
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
@@ -54,30 +78,6 @@ private:
 
 namespace lld {
 namespace elf2 {
-
-// OutputSection represents a section in an output file. It's a
-// container of chunks. OutputSection and Chunk are 1:N relationship.
-// Chunks cannot belong to more than one OutputSections. The writer
-// creates multiple OutputSections and assign them unique,
-// non-overlapping file offsets and VAs.
-class OutputSection {
-public:
-  OutputSection(StringRef Name) : Name(Name), Header({}) {}
-  void setVA(uint64_t);
-  void setFileOffset(uint64_t);
-  template <class ELFT> void addSectionChunk(SectionChunk<ELFT> *C);
-  std::vector<Chunk *> &getChunks() { return Chunks; }
-  template <class ELFT>
-  void writeHeaderTo(llvm::object::Elf_Shdr_Impl<ELFT> *SHdr);
-
-  // Returns the size of the section in the output file.
-  uint64_t getSize() { return Header.sh_size; }
-
-private:
-  StringRef Name;
-  llvm::ELF::Elf64_Shdr Header;
-  std::vector<Chunk *> Chunks;
-};
 
 template <class ELFT>
 void writeResult(SymbolTable *Symtab) { Writer<ELFT>(Symtab).run(); }
