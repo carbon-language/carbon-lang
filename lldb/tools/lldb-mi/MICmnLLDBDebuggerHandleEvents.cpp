@@ -688,17 +688,17 @@ CMICmnLLDBDebuggerHandleEvents::MiHelpGetModuleInfo(const lldb::SBModule &vModul
     std::unique_ptr<char[]> apPath(new char[PATH_MAX]);
     vModule.GetFileSpec().GetPath(apPath.get(), PATH_MAX);
     const CMIUtilString strTargetPath(apPath.get());
-    const CMICmnMIValueConst miValueConst(strTargetPath);
+    const CMICmnMIValueConst miValueConst(strTargetPath.AddSlashes());
     const CMICmnMIValueResult miValueResult("id", miValueConst);
     vwrMiOutOfBandRecord.Add(miValueResult);
     // Build "target-name" field
-    const CMICmnMIValueConst miValueConst2(strTargetPath);
+    const CMICmnMIValueConst miValueConst2(strTargetPath.AddSlashes());
     const CMICmnMIValueResult miValueResult2("target-name", miValueConst2);
     vwrMiOutOfBandRecord.Add(miValueResult2);
     // Build "host-name" field
     vModule.GetPlatformFileSpec().GetPath(apPath.get(), PATH_MAX);
     const CMIUtilString strHostPath(apPath.get());
-    const CMICmnMIValueConst miValueConst3(strHostPath);
+    const CMICmnMIValueConst miValueConst3(strHostPath.AddSlashes());
     const CMICmnMIValueResult miValueResult3("host-name", miValueConst3);
     vwrMiOutOfBandRecord.Add(miValueResult3);
 
@@ -715,12 +715,12 @@ CMICmnLLDBDebuggerHandleEvents::MiHelpGetModuleInfo(const lldb::SBModule &vModul
         // Build "symbols-path" field
         if (bSymbolsLoaded)
         {
-            const CMICmnMIValueConst miValueConst5(strSymbolsPath);
+            const CMICmnMIValueConst miValueConst5(strSymbolsPath.AddSlashes());
             const CMICmnMIValueResult miValueResult5("symbols-path", miValueConst5);
             vwrMiOutOfBandRecord.Add(miValueResult5);
         }
         // Build "loaded_addr" field
-        const lldb::SBAddress sbAddress(vModule.GetObjectFileHeaderAddress());
+        lldb::SBAddress sbAddress(vModule.GetObjectFileHeaderAddress());
         CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
         const lldb::addr_t nLoadAddress(sbAddress.GetLoadAddress(rSessionInfo.GetTarget()));
         const CMIUtilString strLoadedAddr(nLoadAddress != LLDB_INVALID_ADDRESS ?
@@ -728,6 +728,13 @@ CMICmnLLDBDebuggerHandleEvents::MiHelpGetModuleInfo(const lldb::SBModule &vModul
         const CMICmnMIValueConst miValueConst6(strLoadedAddr);
         const CMICmnMIValueResult miValueResult6("loaded_addr", miValueConst6);
         vwrMiOutOfBandRecord.Add(miValueResult6);
+        
+        // Build "size" field
+        lldb::SBSection sbSection = sbAddress.GetSection();
+        const CMIUtilString strSize(CMIUtilString::Format("%" PRIu64, sbSection.GetByteSize()));
+        const CMICmnMIValueConst miValueConst7(strSize);
+        const CMICmnMIValueResult miValueResult7("size", miValueConst7);
+        vwrMiOutOfBandRecord.Add(miValueResult7);
     }
 
     return bOk;
