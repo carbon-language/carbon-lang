@@ -48,7 +48,8 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
                const Twine &Filename = "input.cc",
                ArrayRef<std::string> ExtraArgs = None,
                const ClangTidyOptions &ExtraOptions = ClangTidyOptions(),
-               std::map<StringRef, StringRef> PathsToContent = {}) {
+               std::map<StringRef, StringRef> PathsToContent =
+                   std::map<StringRef, StringRef>()) {
   ClangTidyOptions Options = ExtraOptions;
   Options.Checks = "*";
   ClangTidyContext Context(llvm::make_unique<DefaultOptionsProvider>(
@@ -70,7 +71,7 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
   tooling::ToolInvocation Invocation(
       ArgCXX11, new TestClangTidyAction(Check, Finder, Context), Files.get());
   Invocation.mapVirtualFile(Filename.str(), Code);
-  for (const auto & FileContent : PathsToContent) {
+  for (const auto &FileContent : PathsToContent) {
     Invocation.mapVirtualFile(Twine("include/" + FileContent.first).str(),
                               FileContent.second);
   }
