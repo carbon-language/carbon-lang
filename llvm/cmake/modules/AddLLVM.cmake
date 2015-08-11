@@ -717,6 +717,23 @@ macro(add_llvm_tool_subdirectory name)
   add_llvm_external_project(${name})
 endmacro(add_llvm_tool_subdirectory)
 
+# Finds a (potentially external) project that normally lives at
+# llvm/${subdir}/${name}. For example, to find clang:
+#   find_llvm_external_project(tools clang CLANG_SRC)
+# Returns nothing if the project is not configured to build.
+function(find_llvm_external_project subdir name path_out)
+  canonicalize_tool_name(${name} nameUPPER)
+  if (NOT LLVM_TOOL_${nameUPPER}_BUILD)
+    set(${path_out} PARENT_SCOPE)
+  elseif (EXISTS LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR)
+    set(${path_out} LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR PARENT_SCOPE)
+  elseif (EXISTS ${LLVM_MAIN_SRC_DIR}/${subdir}/${name})
+    set(${path_out} ${LLVM_MAIN_SRC_DIR}/${subdir}/${name} PARENT_SCOPE)
+  else()
+    set(${path_out} PARENT_SCOPE)
+  endif()
+endfunction(find_llvm_external_project)
+
 function(get_project_name_from_src_var var output)
   string(REGEX MATCH "LLVM_EXTERNAL_(.*)_SOURCE_DIR"
          MACHED_TOOL "${var}")
