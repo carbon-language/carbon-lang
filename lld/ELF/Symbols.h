@@ -76,7 +76,7 @@ protected:
 // etc.
 class Defined : public SymbolBody {
 public:
-  Defined(Kind K, StringRef N = "") : SymbolBody(K, N) {}
+  explicit Defined(Kind K, StringRef N = "") : SymbolBody(K, N) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
@@ -87,7 +87,7 @@ public:
 // Regular defined symbols read from object file symbol tables.
 class DefinedRegular : public Defined {
 public:
-  DefinedRegular(StringRef Name);
+  explicit DefinedRegular(StringRef N) : Defined(DefinedRegularKind, N) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
@@ -96,7 +96,7 @@ public:
 
 class DefinedWeak : public Defined {
 public:
-  DefinedWeak(StringRef Name);
+  explicit DefinedWeak(StringRef N) : Defined(DefinedWeakKind, N) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedWeakKind;

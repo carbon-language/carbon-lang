@@ -17,11 +17,6 @@ using namespace llvm::object;
 using namespace lld;
 using namespace lld::elf2;
 
-DefinedRegular::DefinedRegular(StringRef Name)
-    : Defined(DefinedRegularKind, Name) {}
-
-DefinedWeak::DefinedWeak(StringRef Name) : Defined(DefinedWeakKind, Name) {}
-
 // Returns 1, 0 or -1 if this symbol should take precedence
 // over the Other, tie or lose, respectively.
 int SymbolBody::compare(SymbolBody *Other) {
