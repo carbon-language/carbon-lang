@@ -44,9 +44,8 @@ int SymbolBody::compare(SymbolBody *Other) {
     return 0;
   case UndefinedKind:
     return 1;
-  default:
-    llvm_unreachable("unknown symbol kind");
   }
+  llvm_unreachable("unknown symbol kind");
 }
 
 namespace lld {

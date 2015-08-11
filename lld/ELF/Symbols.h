@@ -35,10 +35,10 @@ struct Symbol {
 class SymbolBody {
 public:
   enum Kind {
-    DefinedFirst,
-    DefinedRegularKind,
-    DefinedLast,
-    UndefinedKind,
+    DefinedFirst = 0,
+    DefinedRegularKind = 0,
+    DefinedLast = 0,
+    UndefinedKind = 1,
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
