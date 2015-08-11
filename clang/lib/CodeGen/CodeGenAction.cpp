@@ -495,33 +495,39 @@ void BackendConsumer::OptimizationRemarkHandler(
 
 void BackendConsumer::OptimizationRemarkHandler(
     const llvm::DiagnosticInfoOptimizationRemarkAnalysis &D) {
-  // Optimization analysis remarks are active only if the -Rpass-analysis
-  // flag has a regular expression that matches the name of the pass
-  // name in \p D.
-  if (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
-      CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName()))
+  // Optimization analysis remarks are active if the pass name is set to
+  // llvm::DiagnosticInfo::AlwasyPrint or if the -Rpass-analysis flag has a
+  // regular expression that matches the name of the pass name in \p D.
+
+  if (D.getPassName() == llvm::DiagnosticInfo::AlwaysPrint ||
+      (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
+       CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName())))
     EmitOptimizationMessage(
         D, diag::remark_fe_backend_optimization_remark_analysis);
 }
 
 void BackendConsumer::OptimizationRemarkHandler(
     const llvm::DiagnosticInfoOptimizationRemarkAnalysisFPCommute &D) {
-  // Optimization analysis remarks are active only if the -Rpass-analysis
-  // flag has a regular expression that matches the name of the pass
-  // name in \p D.
-  if (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
-      CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName()))
+  // Optimization analysis remarks are active if the pass name is set to
+  // llvm::DiagnosticInfo::AlwasyPrint or if the -Rpass-analysis flag has a
+  // regular expression that matches the name of the pass name in \p D.
+
+  if (D.getPassName() == llvm::DiagnosticInfo::AlwaysPrint ||
+      (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
+       CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName())))
     EmitOptimizationMessage(
         D, diag::remark_fe_backend_optimization_remark_analysis_fpcommute);
 }
 
 void BackendConsumer::OptimizationRemarkHandler(
     const llvm::DiagnosticInfoOptimizationRemarkAnalysisAliasing &D) {
-  // Optimization analysis remarks are active only if the -Rpass-analysis
-  // flag has a regular expression that matches the name of the pass
-  // name in \p D.
-  if (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
-      CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName()))
+  // Optimization analysis remarks are active if the pass name is set to
+  // llvm::DiagnosticInfo::AlwasyPrint or if the -Rpass-analysis flag has a
+  // regular expression that matches the name of the pass name in \p D.
+
+  if (D.getPassName() == llvm::DiagnosticInfo::AlwaysPrint ||
+      (CodeGenOpts.OptimizationRemarkAnalysisPattern &&
+       CodeGenOpts.OptimizationRemarkAnalysisPattern->match(D.getPassName())))
     EmitOptimizationMessage(
         D, diag::remark_fe_backend_optimization_remark_analysis_aliasing);
 }
