@@ -1,4 +1,4 @@
-; RUN: llc %s -march=x86 -mcpu=yonah -o - | grep mulsd | count 6
+; RUN: llc %s -mtriple=x86_64-unknown-unknown -mattr=sse2 -o - | grep mulsd | count 6
 ; Ideally this would compile to 5 multiplies.
 
 define double @_Z3f10d(double %a) nounwind readonly ssp noredzone {
