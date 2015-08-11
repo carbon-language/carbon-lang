@@ -4,7 +4,7 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 ; We shouldn't quit the analysis if we encounter a pointer without known
 ; bounds *unless* we actually need to emit a memcheck for it.  (We only
-; compute bounds for SCEVAddRecs so A[i*I] is deemed not having known bounds.)
+; compute bounds for SCEVAddRecs so A[i*i] is deemed not having known bounds.)
 ;
 ; for (i = 0; i < 20; ++i)
 ;   A[i*i] *= 2;
