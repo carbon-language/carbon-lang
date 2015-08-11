@@ -1719,8 +1719,7 @@ struct LoopVectorize : public FunctionPass {
     // Check the function attributes to find out if this function should be
     // optimized for size.
     bool OptForSize = Hints.getForce() != LoopVectorizeHints::FK_Enabled &&
-                      // FIXME: Use Function::optForSize().
-                      F->hasFnAttribute(Attribute::OptimizeForSize);
+                      F->optForSize();
 
     // Compute the weighted frequency of this loop being executed and see if it
     // is less than 20% of the function entry baseline frequency. Note that we
@@ -4614,8 +4613,9 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     emitAnalysis(VectorizationReport() <<
                  "runtime pointer checks needed. Enable vectorization of this "
                  "loop with '#pragma clang loop vectorize(enable)' when "
-                 "compiling with -Os");
-    DEBUG(dbgs() << "LV: Aborting. Runtime ptr check is required in Os.\n");
+                 "compiling with -Os/-Oz");
+    DEBUG(dbgs() <<
+          "LV: Aborting. Runtime ptr check is required with -Os/-Oz.\n");
     return Factor;
   }
 
@@ -4659,7 +4659,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
       emitAnalysis
         (VectorizationReport() <<
          "unable to calculate the loop count due to complex control flow");
-      DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
+      DEBUG(dbgs() << "LV: Aborting. A tail loop is required with -Os/-Oz.\n");
       return Factor;
     }
 
@@ -4675,8 +4675,8 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
                    "cannot optimize for size and vectorize at the "
                    "same time. Enable vectorization of this loop "
                    "with '#pragma clang loop vectorize(enable)' "
-                   "when compiling with -Os");
-      DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
+                   "when compiling with -Os/-Oz");
+      DEBUG(dbgs() << "LV: Aborting. A tail loop is required with -Os/-Oz.\n");
       return Factor;
     }
   }
