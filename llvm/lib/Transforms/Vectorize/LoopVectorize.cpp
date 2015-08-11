@@ -217,9 +217,9 @@ static cl::opt<unsigned> MaxNestedScalarReductionIC(
 namespace {
 
 // Forward declarations.
+class LoopVectorizeHints;
 class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
-class LoopVectorizeHints;
 class LoopVectorizationRequirements;
 
 /// \brief This modifies LoopAccessReport to initialize message with
@@ -779,6 +779,275 @@ private:
       const ValueToValueMap &Strides);
 };
 
+/// Utility class for getting and setting loop vectorizer hints in the form
+/// of loop metadata.
+/// This class keeps a number of loop annotations locally (as member variables)
+/// and can, upon request, write them back as metadata on the loop. It will
+/// initially scan the loop for existing metadata, and will update the local
+/// values based on information in the loop.
+/// We cannot write all values to metadata, as the mere presence of some info,
+/// for example 'force', means a decision has been made. So, we need to be
+/// careful NOT to add them if the user hasn't specifically asked so.
+class LoopVectorizeHints {
+  enum HintKind {
+    HK_WIDTH,
+    HK_UNROLL,
+    HK_FORCE
+  };
+
+  /// Hint - associates name and validation with the hint value.
+  struct Hint {
+    const char * Name;
+    unsigned Value; // This may have to change for non-numeric values.
+    HintKind Kind;
+
+    Hint(const char * Name, unsigned Value, HintKind Kind)
+      : Name(Name), Value(Value), Kind(Kind) { }
+
+    bool validate(unsigned Val) {
+      switch (Kind) {
+      case HK_WIDTH:
+        return isPowerOf2_32(Val) && Val <= VectorizerParams::MaxVectorWidth;
+      case HK_UNROLL:
+        return isPowerOf2_32(Val) && Val <= MaxInterleaveFactor;
+      case HK_FORCE:
+        return (Val <= 1);
+      }
+      return false;
+    }
+  };
+
+  /// Vectorization width.
+  Hint Width;
+  /// Vectorization interleave factor.
+  Hint Interleave;
+  /// Vectorization forced
+  Hint Force;
+
+  /// Return the loop metadata prefix.
+  static StringRef Prefix() { return "llvm.loop."; }
+
+public:
+  enum ForceKind {
+    FK_Undefined = -1, ///< Not selected.
+    FK_Disabled = 0,   ///< Forcing disabled.
+    FK_Enabled = 1,    ///< Forcing enabled.
+  };
+
+  LoopVectorizeHints(const Loop *L, bool DisableInterleaving)
+      : Width("vectorize.width", VectorizerParams::VectorizationFactor,
+              HK_WIDTH),
+        Interleave("interleave.count", DisableInterleaving, HK_UNROLL),
+        Force("vectorize.enable", FK_Undefined, HK_FORCE),
+        TheLoop(L) {
+    // Populate values with existing loop metadata.
+    getHintsFromMetadata();
+
+    // force-vector-interleave overrides DisableInterleaving.
+    if (VectorizerParams::isInterleaveForced())
+      Interleave.Value = VectorizerParams::VectorizationInterleave;
+
+    DEBUG(if (DisableInterleaving && Interleave.Value == 1) dbgs()
+          << "LV: Interleaving disabled by the pass manager\n");
+  }
+
+  /// Mark the loop L as already vectorized by setting the width to 1.
+  void setAlreadyVectorized() {
+    Width.Value = Interleave.Value = 1;
+    Hint Hints[] = {Width, Interleave};
+    writeHintsToMetadata(Hints);
+  }
+
+  bool allowVectorization(Function *F, Loop *L, bool AlwaysVectorize) const {
+    if (getForce() == LoopVectorizeHints::FK_Disabled) {
+      DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
+      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+                                     L->getStartLoc(), emitRemark());
+      return false;
+    }
+
+    if (!AlwaysVectorize && getForce() != LoopVectorizeHints::FK_Enabled) {
+      DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
+      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
+                                     L->getStartLoc(), emitRemark());
+      return false;
+    }
+
+    if (getWidth() == 1 && getInterleave() == 1) {
+      // FIXME: Add a separate metadata to indicate when the loop has already
+      // been vectorized instead of setting width and count to 1.
+      DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
+      // FIXME: Add interleave.disable metadata. This will allow
+      // vectorize.disable to be used without disabling the pass and errors
+      // to differentiate between disabled vectorization and a width of 1.
+      emitOptimizationRemarkAnalysis(
+          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
+          "loop not vectorized: vectorization and interleaving are explicitly "
+          "disabled, or vectorize width and interleave count are both set to "
+          "1");
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Dumps all the hint information.
+  std::string emitRemark() const {
+    VectorizationReport R;
+    if (Force.Value == LoopVectorizeHints::FK_Disabled)
+      R << "vectorization is explicitly disabled";
+    else {
+      R << "use -Rpass-analysis=loop-vectorize for more info";
+      if (Force.Value == LoopVectorizeHints::FK_Enabled) {
+        R << " (Force=true";
+        if (Width.Value != 0)
+          R << ", Vector Width=" << Width.Value;
+        if (Interleave.Value != 0)
+          R << ", Interleave Count=" << Interleave.Value;
+        R << ")";
+      }
+    }
+
+    return R.str();
+  }
+
+  unsigned getWidth() const { return Width.Value; }
+  unsigned getInterleave() const { return Interleave.Value; }
+  enum ForceKind getForce() const { return (ForceKind)Force.Value; }
+
+private:
+  /// Find hints specified in the loop metadata and update local values.
+  void getHintsFromMetadata() {
+    MDNode *LoopID = TheLoop->getLoopID();
+    if (!LoopID)
+      return;
+
+    // First operand should refer to the loop id itself.
+    assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+    assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
+
+    for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
+      const MDString *S = nullptr;
+      SmallVector<Metadata *, 4> Args;
+
+      // The expected hint is either a MDString or a MDNode with the first
+      // operand a MDString.
+      if (const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i))) {
+        if (!MD || MD->getNumOperands() == 0)
+          continue;
+        S = dyn_cast<MDString>(MD->getOperand(0));
+        for (unsigned i = 1, ie = MD->getNumOperands(); i < ie; ++i)
+          Args.push_back(MD->getOperand(i));
+      } else {
+        S = dyn_cast<MDString>(LoopID->getOperand(i));
+        assert(Args.size() == 0 && "too many arguments for MDString");
+      }
+
+      if (!S)
+        continue;
+
+      // Check if the hint starts with the loop metadata prefix.
+      StringRef Name = S->getString();
+      if (Args.size() == 1)
+        setHint(Name, Args[0]);
+    }
+  }
+
+  /// Checks string hint with one operand and set value if valid.
+  void setHint(StringRef Name, Metadata *Arg) {
+    if (!Name.startswith(Prefix()))
+      return;
+    Name = Name.substr(Prefix().size(), StringRef::npos);
+
+    const ConstantInt *C = mdconst::dyn_extract<ConstantInt>(Arg);
+    if (!C) return;
+    unsigned Val = C->getZExtValue();
+
+    Hint *Hints[] = {&Width, &Interleave, &Force};
+    for (auto H : Hints) {
+      if (Name == H->Name) {
+        if (H->validate(Val))
+          H->Value = Val;
+        else
+          DEBUG(dbgs() << "LV: ignoring invalid hint '" << Name << "'\n");
+        break;
+      }
+    }
+  }
+
+  /// Create a new hint from name / value pair.
+  MDNode *createHintMetadata(StringRef Name, unsigned V) const {
+    LLVMContext &Context = TheLoop->getHeader()->getContext();
+    Metadata *MDs[] = {MDString::get(Context, Name),
+                       ConstantAsMetadata::get(
+                           ConstantInt::get(Type::getInt32Ty(Context), V))};
+    return MDNode::get(Context, MDs);
+  }
+
+  /// Matches metadata with hint name.
+  bool matchesHintMetadataName(MDNode *Node, ArrayRef<Hint> HintTypes) {
+    MDString* Name = dyn_cast<MDString>(Node->getOperand(0));
+    if (!Name)
+      return false;
+
+    for (auto H : HintTypes)
+      if (Name->getString().endswith(H.Name))
+        return true;
+    return false;
+  }
+
+  /// Sets current hints into loop metadata, keeping other values intact.
+  void writeHintsToMetadata(ArrayRef<Hint> HintTypes) {
+    if (HintTypes.size() == 0)
+      return;
+
+    // Reserve the first element to LoopID (see below).
+    SmallVector<Metadata *, 4> MDs(1);
+    // If the loop already has metadata, then ignore the existing operands.
+    MDNode *LoopID = TheLoop->getLoopID();
+    if (LoopID) {
+      for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
+        MDNode *Node = cast<MDNode>(LoopID->getOperand(i));
+        // If node in update list, ignore old value.
+        if (!matchesHintMetadataName(Node, HintTypes))
+          MDs.push_back(Node);
+      }
+    }
+
+    // Now, add the missing hints.
+    for (auto H : HintTypes)
+      MDs.push_back(createHintMetadata(Twine(Prefix(), H.Name).str(), H.Value));
+
+    // Replace current metadata node with new one.
+    LLVMContext &Context = TheLoop->getHeader()->getContext();
+    MDNode *NewLoopID = MDNode::get(Context, MDs);
+    // Set operand 0 to refer to the loop id itself.
+    NewLoopID->replaceOperandWith(0, NewLoopID);
+
+    TheLoop->setLoopID(NewLoopID);
+  }
+
+  /// The loop these hints belong to.
+  const Loop *TheLoop;
+};
+
+static void emitMissedWarning(Function *F, Loop *L,
+                              const LoopVectorizeHints &LH) {
+  emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
+                               L->getStartLoc(), LH.emitRemark());
+
+  if (LH.getForce() == LoopVectorizeHints::FK_Enabled) {
+    if (LH.getWidth() != 1)
+      emitLoopVectorizeWarning(
+          F->getContext(), *F, L->getStartLoc(),
+          "failed explicitly specified loop vectorization");
+    else if (LH.getInterleave() != 1)
+      emitLoopInterleaveWarning(
+          F->getContext(), *F, L->getStartLoc(),
+          "failed explicitly specified loop interleaving");
+  }
+}
+
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -1184,275 +1453,6 @@ private:
   // Loop Vectorize Hint.
   const LoopVectorizeHints *Hints;
 };
-
-/// Utility class for getting and setting loop vectorizer hints in the form
-/// of loop metadata.
-/// This class keeps a number of loop annotations locally (as member variables)
-/// and can, upon request, write them back as metadata on the loop. It will
-/// initially scan the loop for existing metadata, and will update the local
-/// values based on information in the loop.
-/// We cannot write all values to metadata, as the mere presence of some info,
-/// for example 'force', means a decision has been made. So, we need to be
-/// careful NOT to add them if the user hasn't specifically asked so.
-class LoopVectorizeHints {
-  enum HintKind {
-    HK_WIDTH,
-    HK_UNROLL,
-    HK_FORCE
-  };
-
-  /// Hint - associates name and validation with the hint value.
-  struct Hint {
-    const char * Name;
-    unsigned Value; // This may have to change for non-numeric values.
-    HintKind Kind;
-
-    Hint(const char * Name, unsigned Value, HintKind Kind)
-      : Name(Name), Value(Value), Kind(Kind) { }
-
-    bool validate(unsigned Val) {
-      switch (Kind) {
-      case HK_WIDTH:
-        return isPowerOf2_32(Val) && Val <= VectorizerParams::MaxVectorWidth;
-      case HK_UNROLL:
-        return isPowerOf2_32(Val) && Val <= MaxInterleaveFactor;
-      case HK_FORCE:
-        return (Val <= 1);
-      }
-      return false;
-    }
-  };
-
-  /// Vectorization width.
-  Hint Width;
-  /// Vectorization interleave factor.
-  Hint Interleave;
-  /// Vectorization forced
-  Hint Force;
-
-  /// Return the loop metadata prefix.
-  static StringRef Prefix() { return "llvm.loop."; }
-
-public:
-  enum ForceKind {
-    FK_Undefined = -1, ///< Not selected.
-    FK_Disabled = 0,   ///< Forcing disabled.
-    FK_Enabled = 1,    ///< Forcing enabled.
-  };
-
-  LoopVectorizeHints(const Loop *L, bool DisableInterleaving)
-      : Width("vectorize.width", VectorizerParams::VectorizationFactor,
-              HK_WIDTH),
-        Interleave("interleave.count", DisableInterleaving, HK_UNROLL),
-        Force("vectorize.enable", FK_Undefined, HK_FORCE),
-        TheLoop(L) {
-    // Populate values with existing loop metadata.
-    getHintsFromMetadata();
-
-    // force-vector-interleave overrides DisableInterleaving.
-    if (VectorizerParams::isInterleaveForced())
-      Interleave.Value = VectorizerParams::VectorizationInterleave;
-
-    DEBUG(if (DisableInterleaving && Interleave.Value == 1) dbgs()
-          << "LV: Interleaving disabled by the pass manager\n");
-  }
-
-  /// Mark the loop L as already vectorized by setting the width to 1.
-  void setAlreadyVectorized() {
-    Width.Value = Interleave.Value = 1;
-    Hint Hints[] = {Width, Interleave};
-    writeHintsToMetadata(Hints);
-  }
-
-  bool allowVectorization(Function *F, Loop *L, bool AlwaysVectorize) const {
-    if (getForce() == LoopVectorizeHints::FK_Disabled) {
-      DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
-                                     L->getStartLoc(), emitRemark());
-      return false;
-    }
-
-    if (!AlwaysVectorize && getForce() != LoopVectorizeHints::FK_Enabled) {
-      DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
-      emitOptimizationRemarkAnalysis(F->getContext(), DEBUG_TYPE, *F,
-                                     L->getStartLoc(), emitRemark());
-      return false;
-    }
-
-    if (getWidth() == 1 && getInterleave() == 1) {
-      // FIXME: Add a separate metadata to indicate when the loop has already
-      // been vectorized instead of setting width and count to 1.
-      DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
-      // FIXME: Add interleave.disable metadata. This will allow
-      // vectorize.disable to be used without disabling the pass and errors
-      // to differentiate between disabled vectorization and a width of 1.
-      emitOptimizationRemarkAnalysis(
-          F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
-          "loop not vectorized: vectorization and interleaving are explicitly "
-          "disabled, or vectorize width and interleave count are both set to "
-          "1");
-      return false;
-    }
-
-    return true;
-  }
-
-  /// Dumps all the hint information.
-  std::string emitRemark() const {
-    VectorizationReport R;
-    if (Force.Value == LoopVectorizeHints::FK_Disabled)
-      R << "vectorization is explicitly disabled";
-    else {
-      R << "use -Rpass-analysis=loop-vectorize for more info";
-      if (Force.Value == LoopVectorizeHints::FK_Enabled) {
-        R << " (Force=true";
-        if (Width.Value != 0)
-          R << ", Vector Width=" << Width.Value;
-        if (Interleave.Value != 0)
-          R << ", Interleave Count=" << Interleave.Value;
-        R << ")";
-      }
-    }
-
-    return R.str();
-  }
-
-  unsigned getWidth() const { return Width.Value; }
-  unsigned getInterleave() const { return Interleave.Value; }
-  enum ForceKind getForce() const { return (ForceKind)Force.Value; }
-
-private:
-  /// Find hints specified in the loop metadata and update local values.
-  void getHintsFromMetadata() {
-    MDNode *LoopID = TheLoop->getLoopID();
-    if (!LoopID)
-      return;
-
-    // First operand should refer to the loop id itself.
-    assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
-    assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
-
-    for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
-      const MDString *S = nullptr;
-      SmallVector<Metadata *, 4> Args;
-
-      // The expected hint is either a MDString or a MDNode with the first
-      // operand a MDString.
-      if (const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i))) {
-        if (!MD || MD->getNumOperands() == 0)
-          continue;
-        S = dyn_cast<MDString>(MD->getOperand(0));
-        for (unsigned i = 1, ie = MD->getNumOperands(); i < ie; ++i)
-          Args.push_back(MD->getOperand(i));
-      } else {
-        S = dyn_cast<MDString>(LoopID->getOperand(i));
-        assert(Args.size() == 0 && "too many arguments for MDString");
-      }
-
-      if (!S)
-        continue;
-
-      // Check if the hint starts with the loop metadata prefix.
-      StringRef Name = S->getString();
-      if (Args.size() == 1)
-        setHint(Name, Args[0]);
-    }
-  }
-
-  /// Checks string hint with one operand and set value if valid.
-  void setHint(StringRef Name, Metadata *Arg) {
-    if (!Name.startswith(Prefix()))
-      return;
-    Name = Name.substr(Prefix().size(), StringRef::npos);
-
-    const ConstantInt *C = mdconst::dyn_extract<ConstantInt>(Arg);
-    if (!C) return;
-    unsigned Val = C->getZExtValue();
-
-    Hint *Hints[] = {&Width, &Interleave, &Force};
-    for (auto H : Hints) {
-      if (Name == H->Name) {
-        if (H->validate(Val))
-          H->Value = Val;
-        else
-          DEBUG(dbgs() << "LV: ignoring invalid hint '" << Name << "'\n");
-        break;
-      }
-    }
-  }
-
-  /// Create a new hint from name / value pair.
-  MDNode *createHintMetadata(StringRef Name, unsigned V) const {
-    LLVMContext &Context = TheLoop->getHeader()->getContext();
-    Metadata *MDs[] = {MDString::get(Context, Name),
-                       ConstantAsMetadata::get(
-                           ConstantInt::get(Type::getInt32Ty(Context), V))};
-    return MDNode::get(Context, MDs);
-  }
-
-  /// Matches metadata with hint name.
-  bool matchesHintMetadataName(MDNode *Node, ArrayRef<Hint> HintTypes) {
-    MDString* Name = dyn_cast<MDString>(Node->getOperand(0));
-    if (!Name)
-      return false;
-
-    for (auto H : HintTypes)
-      if (Name->getString().endswith(H.Name))
-        return true;
-    return false;
-  }
-
-  /// Sets current hints into loop metadata, keeping other values intact.
-  void writeHintsToMetadata(ArrayRef<Hint> HintTypes) {
-    if (HintTypes.size() == 0)
-      return;
-
-    // Reserve the first element to LoopID (see below).
-    SmallVector<Metadata *, 4> MDs(1);
-    // If the loop already has metadata, then ignore the existing operands.
-    MDNode *LoopID = TheLoop->getLoopID();
-    if (LoopID) {
-      for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
-        MDNode *Node = cast<MDNode>(LoopID->getOperand(i));
-        // If node in update list, ignore old value.
-        if (!matchesHintMetadataName(Node, HintTypes))
-          MDs.push_back(Node);
-      }
-    }
-
-    // Now, add the missing hints.
-    for (auto H : HintTypes)
-      MDs.push_back(createHintMetadata(Twine(Prefix(), H.Name).str(), H.Value));
-
-    // Replace current metadata node with new one.
-    LLVMContext &Context = TheLoop->getHeader()->getContext();
-    MDNode *NewLoopID = MDNode::get(Context, MDs);
-    // Set operand 0 to refer to the loop id itself.
-    NewLoopID->replaceOperandWith(0, NewLoopID);
-
-    TheLoop->setLoopID(NewLoopID);
-  }
-
-  /// The loop these hints belong to.
-  const Loop *TheLoop;
-};
-
-static void emitMissedWarning(Function *F, Loop *L,
-                              const LoopVectorizeHints &LH) {
-  emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
-                               L->getStartLoc(), LH.emitRemark());
-
-  if (LH.getForce() == LoopVectorizeHints::FK_Enabled) {
-    if (LH.getWidth() != 1)
-      emitLoopVectorizeWarning(
-          F->getContext(), *F, L->getStartLoc(),
-          "failed explicitly specified loop vectorization");
-    else if (LH.getInterleave() != 1)
-      emitLoopInterleaveWarning(
-          F->getContext(), *F, L->getStartLoc(),
-          "failed explicitly specified loop interleaving");
-  }
-}
 
 /// \brief This holds vectorization requirements that must be verified late in
 /// the process. The requirements are set by legalize and costmodel. Once
