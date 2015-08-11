@@ -1522,22 +1522,22 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         // Grab the various features and prepend a "+" to turn on the feature to
         // the backend and add them to our existing set of features.
         for (auto &Feature : AttrFeatures) {
-	  // Go ahead and trim whitespace rather than either erroring or
-	  // accepting it weirdly.
-	  Feature = Feature.trim();
+          // Go ahead and trim whitespace rather than either erroring or
+          // accepting it weirdly.
+          Feature = Feature.trim();
 
           // While we're here iterating check for a different target cpu.
           if (Feature.startswith("arch="))
             TargetCPU = Feature.split("=").second.trim();
-	  else if (Feature.startswith("tune="))
-	    // We don't support cpu tuning this way currently.
-	    ;
-	  else if (Feature.startswith("fpmath="))
-	    // TODO: Support the fpmath option this way. It will require checking
-	    // overall feature validity for the function with the rest of the
-	    // attributes on the function.
-	    ;
-	  else if (Feature.startswith("mno-"))
+          else if (Feature.startswith("tune="))
+            // We don't support cpu tuning this way currently.
+            ;
+          else if (Feature.startswith("fpmath="))
+            // TODO: Support the fpmath option this way. It will require checking
+            // overall feature validity for the function with the rest of the
+            // attributes on the function.
+            ;
+          else if (Feature.startswith("mno-"))
             getTarget().setFeatureEnabled(FeatureMap, Feature.split("-").second,
                                           false);
           else
