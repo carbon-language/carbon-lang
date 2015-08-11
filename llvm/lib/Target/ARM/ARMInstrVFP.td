@@ -393,8 +393,8 @@ multiclass vmaxmin_inst<string op, bit opc, SDNode SD> {
   }
 }
 
-defm VMAXNM : vmaxmin_inst<"vmaxnm", 0, ARMvmaxnm>;
-defm VMINNM : vmaxmin_inst<"vminnm", 1, ARMvminnm>;
+defm VMAXNM : vmaxmin_inst<"vmaxnm", 0, fmaxnum>;
+defm VMINNM : vmaxmin_inst<"vminnm", 1, fminnum>;
 
 // Match reassociated forms only if not sign dependent rounding.
 def : Pat<(fmul (fneg DPR:$a), (f64 DPR:$b)),
