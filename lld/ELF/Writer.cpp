@@ -44,8 +44,8 @@ private:
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   std::vector<OutputSection *> OutputSections;
 
-  uint64_t FileSize;
-  uint64_t SizeOfHeaders;
+  uintX_t FileSize;
+  uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
 
   std::vector<std::unique_ptr<Chunk>> Chunks;
@@ -116,9 +116,11 @@ void OutputSection::setFileOffset(uint64_t Off) {
 
 template <class ELFT>
 void OutputSection::addSectionChunk(SectionChunk<ELFT> *C) {
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+
   Chunks.push_back(C);
   C->setOutputSection(this);
-  uint64_t Off = Header.sh_size;
+  uintX_t Off = Header.sh_size;
   Off = RoundUpToAlignment(Off, C->getAlign());
   C->setVA(Off);
   C->setFileOff(Off);
@@ -162,8 +164,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
   SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr_Impl<ELFT>), PageSize);
-  uint64_t VA = 0x1000; // The first page is kept unmapped.
-  uint64_t FileOff = SizeOfHeaders;
+  uintX_t VA = 0x1000; // The first page is kept unmapped.
+  uintX_t FileOff = SizeOfHeaders;
   for (OutputSection *Sec : OutputSections) {
     Sec->setVA(VA);
     Sec->setFileOffset(FileOff);
