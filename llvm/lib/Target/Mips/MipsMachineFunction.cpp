@@ -24,43 +24,6 @@ static cl::opt<bool>
 FixGlobalBaseReg("mips-fix-global-base-reg", cl::Hidden, cl::init(true),
                  cl::desc("Always use $gp as the global base register."));
 
-// class MipsCallEntry.
-MipsCallEntry::MipsCallEntry(StringRef N) : PseudoSourceValue(MipsPSV) {
-#ifndef NDEBUG
-  Name = N;
-  Val = nullptr;
-#endif
-}
-
-MipsCallEntry::MipsCallEntry(const GlobalValue *V)
-    : PseudoSourceValue(MipsPSV) {
-#ifndef NDEBUG
-  Val = V;
-#endif
-}
-
-bool MipsCallEntry::isConstant(const MachineFrameInfo *) const {
-  return false;
-}
-
-bool MipsCallEntry::isAliased(const MachineFrameInfo *) const {
-  return false;
-}
-
-bool MipsCallEntry::mayAlias(const MachineFrameInfo *) const {
-  return false;
-}
-
-void MipsCallEntry::printCustom(raw_ostream &O) const {
-  O << "MipsCallEntry: ";
-#ifndef NDEBUG
-  if (Val)
-    O << Val->getName();
-  else
-    O << Name;
-#endif
-}
-
 MipsFunctionInfo::~MipsFunctionInfo() {}
 
 bool MipsFunctionInfo::globalBaseRegSet() const {
@@ -117,22 +80,12 @@ bool MipsFunctionInfo::isEhDataRegFI(int FI) const {
                         || FI == EhDataRegFI[2] || FI == EhDataRegFI[3]);
 }
 
-MachinePointerInfo MipsFunctionInfo::callPtrInfo(StringRef Name) {
-  std::unique_ptr<const MipsCallEntry> &E = ExternalCallEntries[Name];
-
-  if (!E)
-    E = llvm::make_unique<MipsCallEntry>(Name);
-
-  return MachinePointerInfo(E.get());
+MachinePointerInfo MipsFunctionInfo::callPtrInfo(const char *ES) {
+  return MachinePointerInfo(MF.getPSVManager().getExternalSymbolCallEntry(ES));
 }
 
-MachinePointerInfo MipsFunctionInfo::callPtrInfo(const GlobalValue *Val) {
-  std::unique_ptr<const MipsCallEntry> &E = GlobalCallEntries[Val];
-
-  if (!E)
-    E = llvm::make_unique<MipsCallEntry>(Val);
-
-  return MachinePointerInfo(E.get());
+MachinePointerInfo MipsFunctionInfo::callPtrInfo(const GlobalValue *GV) {
+  return MachinePointerInfo(MF.getPSVManager().getGlobalValueCallEntry(GV));
 }
 
 int MipsFunctionInfo::getMoveF64ViaSpillFI(const TargetRegisterClass *RC) {

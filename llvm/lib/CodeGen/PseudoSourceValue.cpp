@@ -24,7 +24,8 @@
 using namespace llvm;
 
 static const char *const PSVNames[] = {
-    "Stack", "GOT", "JumpTable", "ConstantPool", "FixedStack", "MipsCallEntry"};
+    "Stack", "GOT", "JumpTable", "ConstantPool", "FixedStack",
+    "GlobalValueCallEntry", "ExternalSymbolCallEntry"};
 
 PseudoSourceValue::PseudoSourceValue(PSVKind Kind) : Kind(Kind) {}
 
@@ -76,6 +77,28 @@ void FixedStackPseudoSourceValue::printCustom(raw_ostream &OS) const {
   OS << "FixedStack" << FI;
 }
 
+CallEntryPseudoSourceValue::CallEntryPseudoSourceValue(PSVKind Kind)
+    : PseudoSourceValue(Kind) {}
+
+bool CallEntryPseudoSourceValue::isConstant(const MachineFrameInfo *) const {
+  return false;
+}
+
+bool CallEntryPseudoSourceValue::isAliased(const MachineFrameInfo *) const {
+  return false;
+}
+
+bool CallEntryPseudoSourceValue::mayAlias(const MachineFrameInfo *) const {
+  return false;
+}
+
+GlobalValuePseudoSourceValue::GlobalValuePseudoSourceValue(
+    const GlobalValue *GV)
+    : CallEntryPseudoSourceValue(GlobalValueCallEntry), GV(GV) {}
+
+ExternalSymbolPseudoSourceValue::ExternalSymbolPseudoSourceValue(const char *ES)
+    : CallEntryPseudoSourceValue(ExternalSymbolCallEntry), ES(ES) {}
+
 PseudoSourceValueManager::PseudoSourceValueManager()
     : StackPSV(PseudoSourceValue::Stack), GOTPSV(PseudoSourceValue::GOT),
       JumpTablePSV(PseudoSourceValue::JumpTable),
@@ -100,4 +123,22 @@ const PseudoSourceValue *PseudoSourceValueManager::getFixedStack(int FI) {
   if (!V)
     V = llvm::make_unique<FixedStackPseudoSourceValue>(FI);
   return V.get();
+}
+
+const PseudoSourceValue *
+PseudoSourceValueManager::getGlobalValueCallEntry(const GlobalValue *GV) {
+  std::unique_ptr<const GlobalValuePseudoSourceValue> &E =
+      GlobalCallEntries[GV];
+  if (!E)
+    E = llvm::make_unique<GlobalValuePseudoSourceValue>(GV);
+  return E.get();
+}
+
+const PseudoSourceValue *
+PseudoSourceValueManager::getExternalSymbolCallEntry(const char *ES) {
+  std::unique_ptr<const ExternalSymbolPseudoSourceValue> &E =
+      ExternalCallEntries[ES];
+  if (!E)
+    E = llvm::make_unique<ExternalSymbolPseudoSourceValue>(ES);
+  return E.get();
 }

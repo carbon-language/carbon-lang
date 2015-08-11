@@ -14,7 +14,10 @@
 #ifndef LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 #define LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 
+#include "llvm/ADT/StringMap.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Value.h"
+#include "llvm/IR/ValueMap.h"
 #include <map>
 
 namespace llvm {
@@ -30,7 +33,15 @@ raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MMO);
 /// below the stack frame (e.g., argument space), or constant pool.
 class PseudoSourceValue {
 public:
-  enum PSVKind { Stack, GOT, JumpTable, ConstantPool, FixedStack, MipsPSV };
+  enum PSVKind {
+    Stack,
+    GOT,
+    JumpTable,
+    ConstantPool,
+    FixedStack,
+    GlobalValueCallEntry,
+    ExternalSymbolCallEntry
+  };
 
 private:
   PSVKind Kind;
@@ -90,10 +101,45 @@ public:
   int getFrameIndex() const { return FI; }
 };
 
+class CallEntryPseudoSourceValue : public PseudoSourceValue {
+protected:
+  CallEntryPseudoSourceValue(PSVKind Kind);
+
+public:
+  bool isConstant(const MachineFrameInfo *) const override;
+  bool isAliased(const MachineFrameInfo *) const override;
+  bool mayAlias(const MachineFrameInfo *) const override;
+};
+
+/// A specialized pseudo soruce value for holding GlobalValue values.
+class GlobalValuePseudoSourceValue : public CallEntryPseudoSourceValue {
+  const GlobalValue *GV;
+
+public:
+  GlobalValuePseudoSourceValue(const GlobalValue *GV);
+
+  const GlobalValue *getValue() const { return GV; }
+};
+
+/// A specialized pseudo source value for holding external symbol values.
+class ExternalSymbolPseudoSourceValue : public CallEntryPseudoSourceValue {
+  const char *ES;
+
+public:
+  ExternalSymbolPseudoSourceValue(const char *ES);
+
+  const char *getSymbol() const { return ES; }
+};
+
 /// Manages creation of pseudo source values.
 class PseudoSourceValueManager {
   const PseudoSourceValue StackPSV, GOTPSV, JumpTablePSV, ConstantPoolPSV;
   std::map<int, std::unique_ptr<FixedStackPseudoSourceValue>> FSValues;
+  StringMap<std::unique_ptr<const ExternalSymbolPseudoSourceValue>>
+      ExternalCallEntries;
+  ValueMap<const GlobalValue *,
+           std::unique_ptr<const GlobalValuePseudoSourceValue>>
+      GlobalCallEntries;
 
 public:
   PseudoSourceValueManager();
@@ -118,6 +164,10 @@ public:
   /// Return a pseudo source value referencing a fixed stack frame entry,
   /// e.g., a spill slot.
   const PseudoSourceValue *getFixedStack(int FI);
+
+  const PseudoSourceValue *getGlobalValueCallEntry(const GlobalValue *GV);
+
+  const PseudoSourceValue *getExternalSymbolCallEntry(const char *ES);
 };
 
 } // end namespace llvm
