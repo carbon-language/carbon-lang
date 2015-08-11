@@ -19,7 +19,7 @@ using namespace lldb_private;
 ValueObjectConstResultCast::ValueObjectConstResultCast(
     ValueObject &parent,
     const ConstString &name,
-    const ClangASTType &cast_type,
+    const CompilerType &cast_type,
     lldb::addr_t live_address) :
     ValueObjectCast (parent, name, cast_type),
     m_impl(this, live_address)
@@ -39,7 +39,7 @@ ValueObjectConstResultCast::Dereference (Error &error)
 
 lldb::ValueObjectSP
 ValueObjectConstResultCast::GetSyntheticChildAtOffset(uint32_t offset,
-                                                      const ClangASTType& type,
+                                                      const CompilerType& type,
                                                       bool can_create)
 {
     return m_impl.GetSyntheticChildAtOffset(offset, type, can_create);
@@ -69,7 +69,7 @@ ValueObjectConstResultCast::GetPointeeData (DataExtractor& data,
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultCast::Cast (const ClangASTType &clang_ast_type)
+ValueObjectConstResultCast::Cast (const CompilerType &clang_ast_type)
 {
     return m_impl.Cast(clang_ast_type);
 }

@@ -16,7 +16,7 @@
 #include "lldb/Core/ValueObjectDynamicValue.h"
 #include "lldb/Core/ValueObjectList.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -61,7 +61,7 @@ ValueObjectSP
 ValueObjectConstResult::Create
 (
     ExecutionContextScope *exe_scope,
-    const ClangASTType &clang_type,
+    const CompilerType &clang_type,
     const ConstString &name,
     const DataExtractor &data,
     lldb::addr_t address
@@ -75,7 +75,7 @@ ValueObjectConstResult::Create
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                                                const ClangASTType &clang_type,
+                                                const CompilerType &clang_type,
                                                 const ConstString &name,
                                                 const DataExtractor &data,
                                                 lldb::addr_t address) :
@@ -103,7 +103,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
 
 ValueObjectSP
 ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
-                                const ClangASTType &clang_type,
+                                const CompilerType &clang_type,
                                 const ConstString &name,
                                 const lldb::DataBufferSP &data_sp,
                                 lldb::ByteOrder data_byte_order,
@@ -129,7 +129,7 @@ ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                                                const ClangASTType &clang_type,
+                                                const CompilerType &clang_type,
                                                 const ConstString &name,
                                                 const lldb::DataBufferSP &data_sp,
                                                 lldb::ByteOrder data_byte_order, 
@@ -155,7 +155,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
 
 ValueObjectSP
 ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
-                                const ClangASTType &clang_type,
+                                const CompilerType &clang_type,
                                 const ConstString &name,
                                 lldb::addr_t address,
                                 AddressType address_type,
@@ -170,7 +170,7 @@ ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
 }
 
 ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                                                const ClangASTType &clang_type,
+                                                const CompilerType &clang_type,
                                                 const ConstString &name,
                                                 lldb::addr_t address,
                                                 AddressType address_type,
@@ -241,7 +241,7 @@ ValueObjectConstResult::~ValueObjectConstResult()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectConstResult::GetClangTypeImpl()
 {
     return m_value.GetClangType();
@@ -313,7 +313,7 @@ ValueObjectConstResult::Dereference (Error &error)
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResult::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create)
+ValueObjectConstResult::GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create)
 {
     return m_impl.GetSyntheticChildAtOffset(offset, type, can_create);
 }
@@ -366,7 +366,7 @@ ValueObjectConstResult::GetDynamicValue (lldb::DynamicValueType use_dynamic)
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResult::Cast (const ClangASTType &clang_ast_type)
+ValueObjectConstResult::Cast (const CompilerType &clang_ast_type)
 {
     return m_impl.Cast(clang_ast_type);
 }

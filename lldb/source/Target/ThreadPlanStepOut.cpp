@@ -533,7 +533,7 @@ ThreadPlanStepOut::CalculateReturnValue ()
         
     if (m_immediate_step_from_function != NULL)
     {
-        ClangASTType return_clang_type = m_immediate_step_from_function->GetClangType().GetFunctionReturnType();
+        CompilerType return_clang_type = m_immediate_step_from_function->GetClangType().GetFunctionReturnType();
         if (return_clang_type)
         {
             lldb::ABISP abi_sp = m_thread.GetProcess()->GetABI();

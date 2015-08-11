@@ -1,4 +1,4 @@
-//===-- ClangASTType.cpp ----------------------------------------*- C++ -*-===//
+//===-- CompilerType.cpp ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,31 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Symbol/ClangASTType.h"
-
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/Attr.h"
-#include "clang/AST/CXXInheritance.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/DeclObjC.h"
-#include "clang/AST/DeclGroup.h"
-#include "clang/AST/DeclTemplate.h"
-#include "clang/AST/RecordLayout.h"
-#include "clang/AST/Type.h"
-#include "clang/AST/VTableBuilder.h"
-
-#include "clang/Basic/Builtins.h"
-#include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/TargetInfo.h"
-
-#include "llvm/Support/Format.h"
-#include "llvm/Support/Signals.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/raw_ostream.h"
+#include "lldb/Symbol/CompilerType.h"
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -55,21 +31,21 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ClangASTType::ClangASTType (TypeSystem *type_system,
+CompilerType::CompilerType (TypeSystem *type_system,
                             void* type) :
     m_type (type),
     m_type_system (type_system)
 {
 }
 
-ClangASTType::ClangASTType (clang::ASTContext *ast,
+CompilerType::CompilerType (clang::ASTContext *ast,
                             clang::QualType qual_type) :
     m_type (qual_type.getAsOpaquePtr()),
     m_type_system (ClangASTContext::GetASTContext(ast))
 {
 }
 
-ClangASTType::~ClangASTType()
+CompilerType::~CompilerType()
 {
 }
 
@@ -78,7 +54,7 @@ ClangASTType::~ClangASTType()
 //----------------------------------------------------------------------
 
 bool
-ClangASTType::IsAggregateType () const
+CompilerType::IsAggregateType () const
 {
     if (IsValid())
         return m_type_system->IsAggregateType(m_type);
@@ -86,7 +62,7 @@ ClangASTType::IsAggregateType () const
 }
 
 bool
-ClangASTType::IsArrayType (ClangASTType *element_type_ptr,
+CompilerType::IsArrayType (CompilerType *element_type_ptr,
                            uint64_t *size,
                            bool *is_incomplete) const
 {
@@ -103,7 +79,7 @@ ClangASTType::IsArrayType (ClangASTType *element_type_ptr,
 }
 
 bool
-ClangASTType::IsVectorType (ClangASTType *element_type,
+CompilerType::IsVectorType (CompilerType *element_type,
                             uint64_t *size) const
 {
     if (IsValid())
@@ -112,7 +88,7 @@ ClangASTType::IsVectorType (ClangASTType *element_type,
 }
 
 bool
-ClangASTType::IsRuntimeGeneratedType () const
+CompilerType::IsRuntimeGeneratedType () const
 {
     if (IsValid())
         return m_type_system->IsRuntimeGeneratedType(m_type);
@@ -120,7 +96,7 @@ ClangASTType::IsRuntimeGeneratedType () const
 }
 
 bool
-ClangASTType::IsCharType () const
+CompilerType::IsCharType () const
 {
     if (IsValid())
         return m_type_system->IsCharType(m_type);
@@ -129,7 +105,7 @@ ClangASTType::IsCharType () const
 
 
 bool
-ClangASTType::IsCompleteType () const
+CompilerType::IsCompleteType () const
 {
     if (IsValid())
         return m_type_system->IsCompleteType(m_type);
@@ -137,7 +113,7 @@ ClangASTType::IsCompleteType () const
 }
 
 bool
-ClangASTType::IsConst() const
+CompilerType::IsConst() const
 {
     if (IsValid())
         return m_type_system->IsConst(m_type);
@@ -145,7 +121,7 @@ ClangASTType::IsConst() const
 }
 
 bool
-ClangASTType::IsCStringType (uint32_t &length) const
+CompilerType::IsCStringType (uint32_t &length) const
 {
     if (IsValid())
         return m_type_system->IsCStringType(m_type, length);
@@ -153,7 +129,7 @@ ClangASTType::IsCStringType (uint32_t &length) const
 }
 
 bool
-ClangASTType::IsFunctionType (bool *is_variadic_ptr) const
+CompilerType::IsFunctionType (bool *is_variadic_ptr) const
 {
     if (IsValid())
         return m_type_system->IsFunctionType(m_type, is_variadic_ptr);
@@ -162,7 +138,7 @@ ClangASTType::IsFunctionType (bool *is_variadic_ptr) const
 
 // Used to detect "Homogeneous Floating-point Aggregates"
 uint32_t
-ClangASTType::IsHomogeneousAggregate (ClangASTType* base_type_ptr) const
+CompilerType::IsHomogeneousAggregate (CompilerType* base_type_ptr) const
 {
     if (IsValid())
         return m_type_system->IsHomogeneousAggregate(m_type, base_type_ptr);
@@ -170,23 +146,23 @@ ClangASTType::IsHomogeneousAggregate (ClangASTType* base_type_ptr) const
 }
 
 size_t
-ClangASTType::GetNumberOfFunctionArguments () const
+CompilerType::GetNumberOfFunctionArguments () const
 {
     if (IsValid())
         return m_type_system->GetNumberOfFunctionArguments(m_type);
     return 0;
 }
 
-ClangASTType
-ClangASTType::GetFunctionArgumentAtIndex (const size_t index) const
+CompilerType
+CompilerType::GetFunctionArgumentAtIndex (const size_t index) const
 {
     if (IsValid())
         return m_type_system->GetFunctionArgumentAtIndex(m_type, index);
-    return ClangASTType();
+    return CompilerType();
 }
 
 bool
-ClangASTType::IsFunctionPointerType () const
+CompilerType::IsFunctionPointerType () const
 {
     if (IsValid())
         return m_type_system->IsFunctionPointerType(m_type);
@@ -195,7 +171,7 @@ ClangASTType::IsFunctionPointerType () const
 }
 
 bool
-ClangASTType::IsIntegerType (bool &is_signed) const
+CompilerType::IsIntegerType (bool &is_signed) const
 {
     if (IsValid())
         return m_type_system->IsIntegerType(m_type, is_signed);
@@ -203,7 +179,7 @@ ClangASTType::IsIntegerType (bool &is_signed) const
 }
 
 bool
-ClangASTType::IsPointerType (ClangASTType *pointee_type) const
+CompilerType::IsPointerType (CompilerType *pointee_type) const
 {
     if (IsValid())
     {
@@ -216,7 +192,7 @@ ClangASTType::IsPointerType (ClangASTType *pointee_type) const
 
 
 bool
-ClangASTType::IsPointerOrReferenceType (ClangASTType *pointee_type) const
+CompilerType::IsPointerOrReferenceType (CompilerType *pointee_type) const
 {
     if (IsValid())
     {
@@ -229,7 +205,7 @@ ClangASTType::IsPointerOrReferenceType (ClangASTType *pointee_type) const
 
 
 bool
-ClangASTType::IsReferenceType (ClangASTType *pointee_type, bool* is_rvalue) const
+CompilerType::IsReferenceType (CompilerType *pointee_type, bool* is_rvalue) const
 {
     if (IsValid())
     {
@@ -241,7 +217,7 @@ ClangASTType::IsReferenceType (ClangASTType *pointee_type, bool* is_rvalue) cons
 }
 
 bool
-ClangASTType::IsFloatingPointType (uint32_t &count, bool &is_complex) const
+CompilerType::IsFloatingPointType (uint32_t &count, bool &is_complex) const
 {
     if (IsValid())
     {
@@ -254,7 +230,7 @@ ClangASTType::IsFloatingPointType (uint32_t &count, bool &is_complex) const
 
 
 bool
-ClangASTType::IsDefined() const
+CompilerType::IsDefined() const
 {
     if (IsValid())
         return m_type_system->IsDefined(m_type);
@@ -262,7 +238,7 @@ ClangASTType::IsDefined() const
 }
 
 bool
-ClangASTType::IsPolymorphicClass () const
+CompilerType::IsPolymorphicClass () const
 {
     if (IsValid())
     {
@@ -272,7 +248,7 @@ ClangASTType::IsPolymorphicClass () const
 }
 
 bool
-ClangASTType::IsPossibleDynamicType (ClangASTType *dynamic_pointee_type,
+CompilerType::IsPossibleDynamicType (CompilerType *dynamic_pointee_type,
                                      bool check_cplusplus,
                                      bool check_objc) const
 {
@@ -283,7 +259,7 @@ ClangASTType::IsPossibleDynamicType (ClangASTType *dynamic_pointee_type,
 
 
 bool
-ClangASTType::IsScalarType () const
+CompilerType::IsScalarType () const
 {
     if (!IsValid())
         return false;
@@ -292,7 +268,7 @@ ClangASTType::IsScalarType () const
 }
 
 bool
-ClangASTType::IsTypedefType () const
+CompilerType::IsTypedefType () const
 {
     if (!IsValid())
         return false;
@@ -300,7 +276,7 @@ ClangASTType::IsTypedefType () const
 }
 
 bool
-ClangASTType::IsVoidType () const
+CompilerType::IsVoidType () const
 {
     if (!IsValid())
         return false;
@@ -308,7 +284,7 @@ ClangASTType::IsVoidType () const
 }
 
 bool
-ClangASTType::IsPointerToScalarType () const
+CompilerType::IsPointerToScalarType () const
 {
     if (!IsValid())
         return false;
@@ -317,16 +293,16 @@ ClangASTType::IsPointerToScalarType () const
 }
 
 bool
-ClangASTType::IsArrayOfScalarType () const
+CompilerType::IsArrayOfScalarType () const
 {
-    ClangASTType element_type;
+    CompilerType element_type;
     if (IsArrayType(&element_type, nullptr, nullptr))
         return element_type.IsScalarType();
     return false;
 }
 
 bool
-ClangASTType::IsBeingDefined () const
+CompilerType::IsBeingDefined () const
 {
     if (!IsValid())
         return false;
@@ -338,7 +314,7 @@ ClangASTType::IsBeingDefined () const
 //----------------------------------------------------------------------
 
 bool
-ClangASTType::GetCompleteType () const
+CompilerType::GetCompleteType () const
 {
     if (!IsValid())
         return false;
@@ -349,7 +325,7 @@ ClangASTType::GetCompleteType () const
 // AST related queries
 //----------------------------------------------------------------------
 size_t
-ClangASTType::GetPointerByteSize () const
+CompilerType::GetPointerByteSize () const
 {
     if (m_type_system)
         return m_type_system->GetPointerByteSize();
@@ -357,13 +333,13 @@ ClangASTType::GetPointerByteSize () const
 }
 
 ConstString
-ClangASTType::GetConstQualifiedTypeName () const
+CompilerType::GetConstQualifiedTypeName () const
 {
     return GetConstTypeName ();
 }
 
 ConstString
-ClangASTType::GetConstTypeName () const
+CompilerType::GetConstTypeName () const
 {
     if (IsValid())
     {
@@ -375,7 +351,7 @@ ClangASTType::GetConstTypeName () const
 }
 
 ConstString
-ClangASTType::GetTypeName () const
+CompilerType::GetTypeName () const
 {
     if (IsValid())
     {
@@ -385,13 +361,13 @@ ClangASTType::GetTypeName () const
 }
 
 ConstString
-ClangASTType::GetDisplayTypeName () const
+CompilerType::GetDisplayTypeName () const
 {
     return GetTypeName();
 }
 
 uint32_t
-ClangASTType::GetTypeInfo (ClangASTType *pointee_or_element_clang_type) const
+CompilerType::GetTypeInfo (CompilerType *pointee_or_element_clang_type) const
 {
     if (!IsValid())
         return 0;
@@ -402,7 +378,7 @@ ClangASTType::GetTypeInfo (ClangASTType *pointee_or_element_clang_type) const
 
 
 lldb::LanguageType
-ClangASTType::GetMinimumLanguage ()
+CompilerType::GetMinimumLanguage ()
 {
     if (!IsValid())
         return lldb::eLanguageTypeC;
@@ -411,7 +387,7 @@ ClangASTType::GetMinimumLanguage ()
 }
 
 lldb::TypeClass
-ClangASTType::GetTypeClass () const
+CompilerType::GetTypeClass () const
 {
     if (!IsValid())
         return lldb::eTypeClassInvalid;
@@ -421,21 +397,21 @@ ClangASTType::GetTypeClass () const
 }
 
 void
-ClangASTType::SetClangType (TypeSystem* type_system, void*  type)
+CompilerType::SetClangType (TypeSystem* type_system, void*  type)
 {
     m_type_system = type_system;
     m_type = type;
 }
 
 void
-ClangASTType::SetClangType (clang::ASTContext *ast, clang::QualType qual_type)
+CompilerType::SetClangType (clang::ASTContext *ast, clang::QualType qual_type)
 {
     m_type_system = ClangASTContext::GetASTContext(ast);
     m_type = qual_type.getAsOpaquePtr();
 }
 
 unsigned
-ClangASTType::GetTypeQualifiers() const
+CompilerType::GetTypeQualifiers() const
 {
     if (IsValid())
         return m_type_system->GetTypeQualifiers(m_type);
@@ -446,36 +422,36 @@ ClangASTType::GetTypeQualifiers() const
 // Creating related types
 //----------------------------------------------------------------------
 
-ClangASTType
-ClangASTType::GetArrayElementType (uint64_t *stride) const
+CompilerType
+CompilerType::GetArrayElementType (uint64_t *stride) const
 {
     if (IsValid())
     {
         return m_type_system->GetArrayElementType(m_type, stride);
         
     }
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
-ClangASTType::GetCanonicalType () const
+CompilerType
+CompilerType::GetCanonicalType () const
 {
     if (IsValid())
         return m_type_system->GetCanonicalType(m_type);
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
-ClangASTType::GetFullyUnqualifiedType () const
+CompilerType
+CompilerType::GetFullyUnqualifiedType () const
 {
     if (IsValid())
         return m_type_system->GetFullyUnqualifiedType(m_type);
-    return ClangASTType();
+    return CompilerType();
 }
 
 
 int
-ClangASTType::GetFunctionArgumentCount () const
+CompilerType::GetFunctionArgumentCount () const
 {
     if (IsValid())
     {
@@ -484,28 +460,28 @@ ClangASTType::GetFunctionArgumentCount () const
     return -1;
 }
 
-ClangASTType
-ClangASTType::GetFunctionArgumentTypeAtIndex (size_t idx) const
+CompilerType
+CompilerType::GetFunctionArgumentTypeAtIndex (size_t idx) const
 {
     if (IsValid())
     {
         return m_type_system->GetFunctionArgumentTypeAtIndex(m_type, idx);
     }
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
-ClangASTType::GetFunctionReturnType () const
+CompilerType
+CompilerType::GetFunctionReturnType () const
 {
     if (IsValid())
     {
         return m_type_system->GetFunctionReturnType(m_type);
     }
-    return ClangASTType();
+    return CompilerType();
 }
 
 size_t
-ClangASTType::GetNumMemberFunctions () const
+CompilerType::GetNumMemberFunctions () const
 {
     if (IsValid())
     {
@@ -515,7 +491,7 @@ ClangASTType::GetNumMemberFunctions () const
 }
 
 TypeMemberFunctionImpl
-ClangASTType::GetMemberFunctionAtIndex (size_t idx)
+CompilerType::GetMemberFunctionAtIndex (size_t idx)
 {
     if (IsValid())
     {
@@ -524,48 +500,48 @@ ClangASTType::GetMemberFunctionAtIndex (size_t idx)
     return TypeMemberFunctionImpl();
 }
 
-ClangASTType
-ClangASTType::GetNonReferenceType () const
+CompilerType
+CompilerType::GetNonReferenceType () const
 {
     if (IsValid())
         return m_type_system->GetNonReferenceType(m_type);
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
-ClangASTType::GetPointeeType () const
+CompilerType
+CompilerType::GetPointeeType () const
 {
     if (IsValid())
     {
         return m_type_system->GetPointeeType(m_type);
     }
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
-ClangASTType::GetPointerType () const
+CompilerType
+CompilerType::GetPointerType () const
 {
     if (IsValid())
     {
         return m_type_system->GetPointerType(m_type);
     }
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
-ClangASTType::GetTypedefedType () const
+CompilerType
+CompilerType::GetTypedefedType () const
 {
     if (IsValid())
         return m_type_system->GetTypedefedType(m_type);
-    return ClangASTType();
+    return CompilerType();
 }
 
-//ClangASTType
-//ClangASTType::RemoveFastQualifiers () const
+//CompilerType
+//CompilerType::RemoveFastQualifiers () const
 //{
 //    if (IsValid())
 //        return m_type_system->RemoveFastQualifiers(m_type);
-//    return ClangASTType();
+//    return CompilerType();
 //}
 
 
@@ -573,19 +549,19 @@ ClangASTType::GetTypedefedType () const
 // Create related types using the current type's AST
 //----------------------------------------------------------------------
 
-ClangASTType
-ClangASTType::GetBasicTypeFromAST (lldb::BasicType basic_type) const
+CompilerType
+CompilerType::GetBasicTypeFromAST (lldb::BasicType basic_type) const
 {
     if (IsValid())
         return m_type_system->GetBasicTypeFromAST(m_type, basic_type);
-    return ClangASTType();
+    return CompilerType();
 }
 //----------------------------------------------------------------------
 // Exploring the type
 //----------------------------------------------------------------------
 
 uint64_t
-ClangASTType::GetBitSize (ExecutionContextScope *exe_scope) const
+CompilerType::GetBitSize (ExecutionContextScope *exe_scope) const
 {
     if (IsValid())
     {
@@ -595,14 +571,14 @@ ClangASTType::GetBitSize (ExecutionContextScope *exe_scope) const
 }
 
 uint64_t
-ClangASTType::GetByteSize (ExecutionContextScope *exe_scope) const
+CompilerType::GetByteSize (ExecutionContextScope *exe_scope) const
 {
     return (GetBitSize (exe_scope) + 7) / 8;
 }
 
 
 size_t
-ClangASTType::GetTypeBitAlign () const
+CompilerType::GetTypeBitAlign () const
 {
     if (IsValid())
         return m_type_system->GetTypeBitAlign(m_type);
@@ -611,7 +587,7 @@ ClangASTType::GetTypeBitAlign () const
 
 
 lldb::Encoding
-ClangASTType::GetEncoding (uint64_t &count) const
+CompilerType::GetEncoding (uint64_t &count) const
 {
     if (!IsValid())
         return lldb::eEncodingInvalid;
@@ -620,7 +596,7 @@ ClangASTType::GetEncoding (uint64_t &count) const
 }
 
 lldb::Format
-ClangASTType::GetFormat () const
+CompilerType::GetFormat () const
 {
     if (!IsValid())
         return lldb::eFormatDefault;
@@ -629,7 +605,7 @@ ClangASTType::GetFormat () const
 }
 
 uint32_t
-ClangASTType::GetNumChildren (bool omit_empty_base_classes) const
+CompilerType::GetNumChildren (bool omit_empty_base_classes) const
 {
     if (!IsValid())
         return 0;
@@ -637,7 +613,7 @@ ClangASTType::GetNumChildren (bool omit_empty_base_classes) const
 }
 
 lldb::BasicType
-ClangASTType::GetBasicTypeEnumeration () const
+CompilerType::GetBasicTypeEnumeration () const
 {
     if (IsValid())
         return m_type_system->GetBasicTypeEnumeration(m_type);
@@ -647,28 +623,28 @@ ClangASTType::GetBasicTypeEnumeration () const
 
 
 uint32_t
-ClangASTType::GetNumFields () const
+CompilerType::GetNumFields () const
 {
     if (!IsValid())
         return 0;
     return m_type_system->GetNumFields(m_type);
 }
 
-ClangASTType
-ClangASTType::GetFieldAtIndex (size_t idx,
+CompilerType
+CompilerType::GetFieldAtIndex (size_t idx,
                                std::string& name,
                                uint64_t *bit_offset_ptr,
                                uint32_t *bitfield_bit_size_ptr,
                                bool *is_bitfield_ptr) const
 {
     if (!IsValid())
-        return ClangASTType();
+        return CompilerType();
     return m_type_system->GetFieldAtIndex(m_type, idx, name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr);
 }
 
 uint32_t
-ClangASTType::GetIndexOfFieldWithName (const char* name,
-                                       ClangASTType* field_clang_type_ptr,
+CompilerType::GetIndexOfFieldWithName (const char* name,
+                                       CompilerType* field_clang_type_ptr,
                                        uint64_t *bit_offset_ptr,
                                        uint32_t *bitfield_bit_size_ptr,
                                        bool *is_bitfield_ptr) const
@@ -677,7 +653,7 @@ ClangASTType::GetIndexOfFieldWithName (const char* name,
     std::string field_name;
     for (unsigned index = 0; index < count; index++)
     {
-        ClangASTType field_clang_type (GetFieldAtIndex(index, field_name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr));
+        CompilerType field_clang_type (GetFieldAtIndex(index, field_name, bit_offset_ptr, bitfield_bit_size_ptr, is_bitfield_ptr));
         if (strcmp(field_name.c_str(), name) == 0)
         {
             if (field_clang_type_ptr)
@@ -689,8 +665,8 @@ ClangASTType::GetIndexOfFieldWithName (const char* name,
 }
 
 
-ClangASTType
-ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
+CompilerType
+CompilerType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                         size_t idx,
                                         bool transparent_pointers,
                                         bool omit_empty_base_classes,
@@ -705,7 +681,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                         ValueObject *valobj) const
 {
     if (!IsValid())
-        return ClangASTType();
+        return CompilerType();
     return m_type_system->GetChildClangTypeAtIndex(m_type,
                                                    exe_ctx,
                                                    idx,
@@ -757,7 +733,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
 // The second index 1 is the child index for "m_b" within class A
 
 size_t
-ClangASTType::GetIndexOfChildMemberWithName (const char *name,
+CompilerType::GetIndexOfChildMemberWithName (const char *name,
                                              bool omit_empty_base_classes,
                                              std::vector<uint32_t>& child_indexes) const
 {
@@ -774,7 +750,7 @@ ClangASTType::GetIndexOfChildMemberWithName (const char *name,
 // matches can include base class names.
 
 uint32_t
-ClangASTType::GetIndexOfChildWithName (const char *name, bool omit_empty_base_classes) const
+CompilerType::GetIndexOfChildWithName (const char *name, bool omit_empty_base_classes) const
 {
     if (IsValid() && name && name[0])
     {
@@ -784,7 +760,7 @@ ClangASTType::GetIndexOfChildWithName (const char *name, bool omit_empty_base_cl
 }
 
 size_t
-ClangASTType::ConvertStringToFloatValue (const char *s, uint8_t *dst, size_t dst_size) const
+CompilerType::ConvertStringToFloatValue (const char *s, uint8_t *dst, size_t dst_size) const
 {
     if (IsValid())
         return m_type_system->ConvertStringToFloatValue(m_type, s, dst, dst_size);
@@ -799,7 +775,7 @@ ClangASTType::ConvertStringToFloatValue (const char *s, uint8_t *dst, size_t dst
 #define DEPTH_INCREMENT 2
 
 void
-ClangASTType::DumpValue (ExecutionContext *exe_ctx,
+CompilerType::DumpValue (ExecutionContext *exe_ctx,
                          Stream *s,
                          lldb::Format format,
                          const lldb_private::DataExtractor &data,
@@ -821,7 +797,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
 
 
 bool
-ClangASTType::DumpTypeValue (Stream *s,
+CompilerType::DumpTypeValue (Stream *s,
                              lldb::Format format,
                              const lldb_private::DataExtractor &data,
                              lldb::offset_t byte_offset,
@@ -838,7 +814,7 @@ ClangASTType::DumpTypeValue (Stream *s,
 
 
 void
-ClangASTType::DumpSummary (ExecutionContext *exe_ctx,
+CompilerType::DumpSummary (ExecutionContext *exe_ctx,
                            Stream *s,
                            const lldb_private::DataExtractor &data,
                            lldb::offset_t data_byte_offset,
@@ -849,14 +825,14 @@ ClangASTType::DumpSummary (ExecutionContext *exe_ctx,
 }
 
 void
-ClangASTType::DumpTypeDescription () const
+CompilerType::DumpTypeDescription () const
 {
     if (IsValid())
         m_type_system->DumpTypeDescription(m_type);
 }
 
 void
-ClangASTType::DumpTypeDescription (Stream *s) const
+CompilerType::DumpTypeDescription (Stream *s) const
 {
     if (IsValid())
     {
@@ -865,7 +841,7 @@ ClangASTType::DumpTypeDescription (Stream *s) const
 }
 
 bool
-ClangASTType::GetValueAsScalar (const lldb_private::DataExtractor &data,
+CompilerType::GetValueAsScalar (const lldb_private::DataExtractor &data,
                                 lldb::offset_t data_byte_offset,
                                 size_t data_byte_size,
                                 Scalar &value) const
@@ -1001,7 +977,7 @@ ClangASTType::GetValueAsScalar (const lldb_private::DataExtractor &data,
 }
 
 bool
-ClangASTType::SetValueFromScalar (const Scalar &value, Stream &strm)
+CompilerType::SetValueFromScalar (const Scalar &value, Stream &strm)
 {
     if (!IsValid())
         return false;
@@ -1080,7 +1056,7 @@ ClangASTType::SetValueFromScalar (const Scalar &value, Stream &strm)
 }
 
 bool
-ClangASTType::ReadFromMemory (lldb_private::ExecutionContext *exe_ctx,
+CompilerType::ReadFromMemory (lldb_private::ExecutionContext *exe_ctx,
                               lldb::addr_t addr,
                               AddressType address_type,
                               lldb_private::DataExtractor &data)
@@ -1130,7 +1106,7 @@ ClangASTType::ReadFromMemory (lldb_private::ExecutionContext *exe_ctx,
 }
 
 bool
-ClangASTType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
+CompilerType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
                              lldb::addr_t addr,
                              AddressType address_type,
                              StreamString &new_value)
@@ -1172,7 +1148,7 @@ ClangASTType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
 }
 
 //clang::CXXRecordDecl *
-//ClangASTType::GetAsCXXRecordDecl (lldb::clang_type_t opaque_clang_qual_type)
+//CompilerType::GetAsCXXRecordDecl (lldb::clang_type_t opaque_clang_qual_type)
 //{
 //    if (opaque_clang_qual_type)
 //        return clang::QualType::getFromOpaquePtr(opaque_clang_qual_type)->getAsCXXRecordDecl();
@@ -1180,14 +1156,14 @@ ClangASTType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
 //}
 
 bool
-lldb_private::operator == (const lldb_private::ClangASTType &lhs, const lldb_private::ClangASTType &rhs)
+lldb_private::operator == (const lldb_private::CompilerType &lhs, const lldb_private::CompilerType &rhs)
 {
     return lhs.GetTypeSystem() == rhs.GetTypeSystem() && lhs.GetOpaqueQualType() == rhs.GetOpaqueQualType();
 }
 
 
 bool
-lldb_private::operator != (const lldb_private::ClangASTType &lhs, const lldb_private::ClangASTType &rhs)
+lldb_private::operator != (const lldb_private::CompilerType &lhs, const lldb_private::CompilerType &rhs)
 {
     return lhs.GetTypeSystem() != rhs.GetTypeSystem() || lhs.GetOpaqueQualType() != rhs.GetOpaqueQualType();
 }

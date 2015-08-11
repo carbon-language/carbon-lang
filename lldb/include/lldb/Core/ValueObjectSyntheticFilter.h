@@ -162,7 +162,7 @@ protected:
         return eLazyBoolYes;
     }
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
     
     virtual void

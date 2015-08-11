@@ -573,7 +573,7 @@ public:
     const Type*
     GetType() const;
     
-    ClangASTType
+    CompilerType
     GetClangType ();
 
     uint32_t

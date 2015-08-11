@@ -32,7 +32,7 @@
 #include "lldb/DataFormatters/TypeValidator.h"
 
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -268,7 +268,7 @@ public:
         uint32_t* why = NULL)
     {
         uint32_t value = lldb_private::eFormatterChoiceCriterionDirectChoice;
-        ClangASTType ast_type(valobj.GetClangType());
+        CompilerType ast_type(valobj.GetClangType());
         bool ret = Get(valobj, ast_type, entry, use_dynamic, value);
         if (ret)
             entry = MapValueType(entry);

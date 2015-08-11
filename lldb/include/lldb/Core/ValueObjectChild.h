@@ -89,13 +89,13 @@ protected:
     virtual LazyBool
     CanUpdateWithInvalidExecutionContext ();
 
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ()
     {
         return m_clang_type;
     }
     
-    ClangASTType m_clang_type;
+    CompilerType m_clang_type;
     ConstString m_type_name;
     uint64_t m_byte_size;
     int32_t m_byte_offset;
@@ -114,7 +114,7 @@ protected:
     friend class ValueObjectConstResult;
     friend class ValueObjectConstResultImpl;
     ValueObjectChild (ValueObject &parent,
-                      const ClangASTType &clang_type,
+                      const CompilerType &clang_type,
                       const ConstString &name,
                       uint64_t byte_size,
                       int32_t byte_offset,

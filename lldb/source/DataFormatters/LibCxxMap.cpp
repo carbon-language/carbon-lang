@@ -56,7 +56,7 @@ namespace lldb_private {
             
             ValueObject* m_tree;
             ValueObject* m_root_node;
-            ClangASTType m_element_type;
+            CompilerType m_element_type;
             uint32_t m_skip_size;
             size_t m_count;
             std::map<size_t,lldb::ValueObjectSP> m_children;
@@ -301,7 +301,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetValueOffset (const l
         return;
     if (!node)
         return;
-    ClangASTType node_type(node->GetClangType());
+    CompilerType node_type(node->GetClangType());
     uint64_t bit_offset;
     if (node_type.GetIndexOfFieldWithName("__value_", NULL, &bit_offset) == UINT32_MAX)
         return;

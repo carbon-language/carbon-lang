@@ -290,7 +290,7 @@ protected:
     friend class SBTypeList;
     friend class SBValue;
         
-    SBType (const lldb_private::ClangASTType &);
+    SBType (const lldb_private::CompilerType &);
     SBType (const lldb::TypeSP &);
     SBType (const lldb::TypeImplSP &);
     

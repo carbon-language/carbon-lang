@@ -162,7 +162,7 @@ FormatManager::GetFormatAsCString (Format format)
 
 void
 FormatManager::GetPossibleMatches (ValueObject& valobj,
-                                   ClangASTType clang_type,
+                                   CompilerType clang_type,
                                    uint32_t reason,
                                    lldb::DynamicValueType use_dynamic,
                                    FormattersMatchVector& entries,
@@ -189,7 +189,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
 
     for (bool is_rvalue_ref = true, j = true; j && clang_type.IsReferenceType(nullptr, &is_rvalue_ref); j = false)
     {
-        ClangASTType non_ref_type = clang_type.GetNonReferenceType();
+        CompilerType non_ref_type = clang_type.GetNonReferenceType();
         GetPossibleMatches(valobj,
                            non_ref_type,
                            reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
@@ -200,7 +200,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                            did_strip_typedef);
         if (non_ref_type.IsTypedefType())
         {
-            ClangASTType deffed_referenced_type = non_ref_type.GetTypedefedType();
+            CompilerType deffed_referenced_type = non_ref_type.GetTypedefedType();
             deffed_referenced_type = is_rvalue_ref ? ClangASTContext::GetRValueReferenceType(deffed_referenced_type) : ClangASTContext::GetLValueReferenceType(deffed_referenced_type);
             GetPossibleMatches(valobj,
                                deffed_referenced_type,
@@ -215,7 +215,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
     
     if (clang_type.IsPointerType())
     {
-        ClangASTType non_ptr_type = clang_type.GetPointeeType();
+        CompilerType non_ptr_type = clang_type.GetPointeeType();
         GetPossibleMatches(valobj,
                            non_ptr_type,
                            reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
@@ -226,7 +226,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                            did_strip_typedef);
         if (non_ptr_type.IsTypedefType())
         {
-            ClangASTType deffed_pointed_type = non_ptr_type.GetTypedefedType().GetPointerType();
+            CompilerType deffed_pointed_type = non_ptr_type.GetTypedefedType().GetPointerType();
             GetPossibleMatches(valobj,
                                deffed_pointed_type,
                                reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,
@@ -261,7 +261,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
             } while (false);
         }
         
-        ClangASTType non_ptr_type = clang_type.GetPointeeType();
+        CompilerType non_ptr_type = clang_type.GetPointeeType();
         GetPossibleMatches(valobj,
                            non_ptr_type,
                            reason | lldb_private::eFormatterChoiceCriterionStrippedPointerReference,
@@ -275,7 +275,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
     // try to strip typedef chains
     if (clang_type.IsTypedefType())
     {
-        ClangASTType deffed_type = clang_type.GetTypedefedType();
+        CompilerType deffed_type = clang_type.GetTypedefedType();
         GetPossibleMatches(valobj,
                            deffed_type,
                            reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,
@@ -292,7 +292,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
             if (!clang_type.IsValid())
                 break;
             
-            ClangASTType unqual_clang_ast_type = clang_type.GetFullyUnqualifiedType();
+            CompilerType unqual_clang_ast_type = clang_type.GetFullyUnqualifiedType();
             if (!unqual_clang_ast_type.IsValid())
                 break;
             if (unqual_clang_ast_type.GetOpaqueQualType() != clang_type.GetOpaqueQualType())

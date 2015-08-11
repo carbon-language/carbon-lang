@@ -18,7 +18,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -275,7 +275,7 @@ Value::GetValueByteSize (Error *error_ptr)
     case eContextTypeLLDBType:         // Type *
     case eContextTypeVariable:         // Variable *
         {
-            const ClangASTType &ast_type = GetClangType();
+            const CompilerType &ast_type = GetClangType();
             if (ast_type.IsValid())
                 byte_size = ast_type.GetByteSize(nullptr);
         }
@@ -297,7 +297,7 @@ Value::GetValueByteSize (Error *error_ptr)
     return byte_size;
 }
 
-const ClangASTType &
+const CompilerType &
 Value::GetClangType ()
 {
     if (!m_clang_type.IsValid())
@@ -336,7 +336,7 @@ Value::GetClangType ()
 }
 
 void
-Value::SetClangType (const ClangASTType &clang_type)
+Value::SetClangType (const CompilerType &clang_type)
 {
     m_clang_type = clang_type;
 }
@@ -355,7 +355,7 @@ Value::GetValueDefaultFormat ()
     case eContextTypeLLDBType:
     case eContextTypeVariable:
         {
-            const ClangASTType &ast_type = GetClangType();
+            const CompilerType &ast_type = GetClangType();
             if (ast_type.IsValid())
                 return ast_type.GetFormat();
         }
@@ -407,7 +407,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     AddressType address_type = eAddressTypeFile;
     Address file_so_addr;
-    const ClangASTType &ast_type = GetClangType();
+    const CompilerType &ast_type = GetClangType();
     switch (m_value_type)
     {
     case eValueTypeVector:
@@ -721,7 +721,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
 Scalar &
 Value::ResolveValue(ExecutionContext *exe_ctx)
 {
-    const ClangASTType &clang_type = GetClangType();
+    const CompilerType &clang_type = GetClangType();
     if (clang_type.IsValid())
     {
         switch (m_value_type)

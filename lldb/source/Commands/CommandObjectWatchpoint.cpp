@@ -1048,7 +1048,7 @@ protected:
                 valobj_sp = valobj_list.GetValueObjectAtIndex(0);
         }
         
-        ClangASTType clang_type;
+        CompilerType clang_type;
         
         if (valobj_sp)
         {
@@ -1295,7 +1295,7 @@ protected:
         
         // Fetch the type from the value object, the type of the watched object is the pointee type
         /// of the expression, so convert to that if we  found a valid type.
-        ClangASTType clang_type(valobj_sp->GetClangType());
+        CompilerType clang_type(valobj_sp->GetClangType());
         
         Error error;
         Watchpoint *wp = target->CreateWatchpoint(addr, size, &clang_type, watch_type, error).get();

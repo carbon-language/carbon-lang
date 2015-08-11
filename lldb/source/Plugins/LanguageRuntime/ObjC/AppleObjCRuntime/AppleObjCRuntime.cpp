@@ -51,7 +51,7 @@ AppleObjCRuntime::AppleObjCRuntime(Process *process) :
 bool
 AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &valobj)
 {
-    ClangASTType clang_type(valobj.GetClangType());
+    CompilerType clang_type(valobj.GetClangType());
     bool is_signed;
     // ObjC objects can only be pointers (or numbers that actually represents pointers
     // but haven't been typecast, because reasons..)
@@ -89,7 +89,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
         return false;
     
     Target *target = exe_ctx.GetTargetPtr();
-    ClangASTType clang_type = value.GetClangType();
+    CompilerType clang_type = value.GetClangType();
     if (clang_type)
     {
         if (!ClangASTContext::IsObjCObjectPointerType(clang_type))
@@ -102,7 +102,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     {
         // If it is not a pointer, see if we can make it into a pointer.
         ClangASTContext *ast_context = target->GetScratchClangASTContext();
-        ClangASTType opaque_type = ast_context->GetBasicType(eBasicTypeObjCID);
+        CompilerType opaque_type = ast_context->GetBasicType(eBasicTypeObjCID);
         if (!opaque_type)
             opaque_type = ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
         //value.SetContext(Value::eContextTypeClangType, opaque_type_ptr);
@@ -115,7 +115,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     // This is the return value:
     ClangASTContext *ast_context = target->GetScratchClangASTContext();
     
-    ClangASTType return_clang_type = ast_context->GetCStringType(true);
+    CompilerType return_clang_type = ast_context->GetCStringType(true);
     Value ret;
 //    ret.SetContext(Value::eContextTypeClangType, return_clang_type);
     ret.SetClangType (return_clang_type);

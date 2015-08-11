@@ -313,7 +313,7 @@ ABISysV_arm64::GetArgumentValues (Thread &thread, ValueList &values) const
         if (!value)
             return false;
         
-        ClangASTType value_type = value->GetClangType();
+        CompilerType value_type = value->GetClangType();
         if (value_type)
         {
             bool is_signed = false;
@@ -397,7 +397,7 @@ ABISysV_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
         return error;
     }
     
-    ClangASTType return_value_type = new_value_sp->GetClangType();
+    CompilerType return_value_type = new_value_sp->GetClangType();
     if (!return_value_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -686,7 +686,7 @@ ABISysV_arm64::RegisterIsVolatile (const RegisterInfo *reg_info)
 static bool
 LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
                                       RegisterContext *reg_ctx,
-                                      const ClangASTType &value_type,
+                                      const CompilerType &value_type,
                                       bool is_return_value, // false => parameter, true => return value
                                       uint32_t &NGRN,       // NGRN (see ABI documentation)
                                       uint32_t &NSRN,       // NSRN (see ABI documentation)
@@ -701,7 +701,7 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
     const ByteOrder byte_order = exe_ctx.GetProcessRef().GetByteOrder();
     Error error;
 
-    ClangASTType base_type;
+    CompilerType base_type;
     const uint32_t homogeneous_count = value_type.IsHomogeneousAggregate (&base_type);
     if (homogeneous_count > 0 && homogeneous_count <= 8)
     {
@@ -831,7 +831,7 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
 }
 
 ValueObjectSP
-ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_clang_type) const
+ABISysV_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;

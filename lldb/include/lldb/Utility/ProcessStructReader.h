@@ -16,7 +16,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/Process.h"
 
 #include <initializer_list>
@@ -29,7 +29,7 @@ namespace lldb_private {
     protected:
         struct FieldImpl
         {
-            ClangASTType type;
+            CompilerType type;
             size_t offset;
             size_t size;
         };
@@ -40,7 +40,7 @@ namespace lldb_private {
         size_t m_addr_byte_size;
         
     public:
-        ProcessStructReader (Process *process, lldb::addr_t base_addr, ClangASTType struct_type)
+        ProcessStructReader (Process *process, lldb::addr_t base_addr, CompilerType struct_type)
         {
             if (!process)
                 return;
@@ -55,7 +55,7 @@ namespace lldb_private {
                 uint64_t bit_offset;
                 uint32_t bitfield_bit_size;
                 bool is_bitfield;
-                ClangASTType field_type = struct_type.GetFieldAtIndex(idx,name,&bit_offset,&bitfield_bit_size,&is_bitfield);
+                CompilerType field_type = struct_type.GetFieldAtIndex(idx,name,&bit_offset,&bitfield_bit_size,&is_bitfield);
                 // no support for bitfields in here (yet)
                 if (is_bitfield)
                     return;

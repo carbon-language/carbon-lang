@@ -42,7 +42,7 @@ namespace lldb_private {
             ~LibcxxInitializerListSyntheticFrontEnd ();
         private:
             ValueObject* m_start;
-            ClangASTType m_element_type;
+            CompilerType m_element_type;
             uint32_t m_element_size;
             size_t m_num_elements;
             std::map<size_t,lldb::ValueObjectSP> m_children;

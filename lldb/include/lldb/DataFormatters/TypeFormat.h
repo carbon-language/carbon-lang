@@ -329,7 +329,7 @@ namespace lldb_private {
         
     protected:
         ConstString m_enum_type;
-        mutable std::unordered_map<void*,ClangASTType> m_types;
+        mutable std::unordered_map<void*,CompilerType> m_types;
         
     private:
         DISALLOW_COPY_AND_ASSIGN(TypeFormatImpl_EnumType);

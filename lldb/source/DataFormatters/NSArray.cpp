@@ -66,7 +66,7 @@ namespace  lldb_private {
             
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
-            ClangASTType m_id_type;
+            CompilerType m_id_type;
             std::vector<lldb::ValueObjectSP> m_children;
         };
         
@@ -195,7 +195,7 @@ namespace  lldb_private {
             uint8_t m_ptr_size;
             uint64_t m_items;
             lldb::addr_t m_data_ptr;
-            ClangASTType m_id_type;
+            CompilerType m_id_type;
             std::vector<lldb::ValueObjectSP> m_children;
         };
         
@@ -300,7 +300,7 @@ m_children()
     {
         clang::ASTContext *ast = valobj_sp->GetExecutionContextRef().GetTargetSP()->GetScratchClangASTContext()->getASTContext();
         if (ast)
-            m_id_type = ClangASTType(ast, ast->ObjCBuiltinIdTy);
+            m_id_type = CompilerType(ast, ast->ObjCBuiltinIdTy);
         if (valobj_sp->GetProcessSP())
             m_ptr_size = valobj_sp->GetProcessSP()->GetAddressByteSize();
     }
@@ -532,7 +532,7 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::NSArrayISyntheticFrontEnd (
     {
         ClangASTContext *ast = valobj_sp->GetClangType().GetTypeSystem()->AsClangASTContext();
         if (ast)
-            m_id_type = ClangASTType(ast->getASTContext(), ast->getASTContext()->ObjCBuiltinIdTy);
+            m_id_type = CompilerType(ast->getASTContext(), ast->getASTContext()->ObjCBuiltinIdTy);
     }
 }
 
@@ -622,7 +622,7 @@ SyntheticChildrenFrontEnd* lldb_private::formatters::NSArraySyntheticFrontEndCre
     if (!runtime)
         return NULL;
     
-    ClangASTType valobj_type(valobj_sp->GetClangType());
+    CompilerType valobj_type(valobj_sp->GetClangType());
     Flags flags(valobj_type.GetTypeInfo());
     
     if (flags.IsClear(eTypeIsPointer))

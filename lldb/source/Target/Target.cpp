@@ -621,7 +621,7 @@ CheckIfWatchpointsExhausted(Target *target, Error &error)
 // See also Watchpoint::SetWatchpointType(uint32_t type) and
 // the OptionGroupWatchpoint::WatchType enum type.
 WatchpointSP
-Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *type, uint32_t kind, Error &error)
+Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const CompilerType *type, uint32_t kind, Error &error)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
     if (log)

@@ -305,7 +305,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                         return;
                     }
 
-                    ClangASTType self_clang_type = self_type->GetClangForwardType();
+                    CompilerType self_clang_type = self_type->GetClangForwardType();
 
                     if (!self_clang_type)
                     {

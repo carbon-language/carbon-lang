@@ -15,7 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Module.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -42,10 +42,10 @@ ValueObjectRegisterContext::~ValueObjectRegisterContext()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectRegisterContext::GetClangTypeImpl ()
 {
-    return ClangASTType();
+    return CompilerType();
 }
 
 ConstString
@@ -144,10 +144,10 @@ ValueObjectRegisterSet::~ValueObjectRegisterSet()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectRegisterSet::GetClangTypeImpl ()
 {
-    return ClangASTType();
+    return CompilerType();
 }
 
 ConstString
@@ -307,7 +307,7 @@ ValueObjectRegister::~ValueObjectRegister()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectRegister::GetClangTypeImpl ()
 {
     if (!m_clang_type.IsValid())

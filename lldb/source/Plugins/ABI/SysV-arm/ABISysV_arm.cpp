@@ -333,7 +333,7 @@ ABISysV_arm::GetArgumentValues (Thread &thread,
         if (!value)
             return false;
         
-        ClangASTType clang_type = value->GetClangType();
+        CompilerType clang_type = value->GetClangType();
         if (clang_type)
         {
             bool is_signed = false;
@@ -417,7 +417,7 @@ GetReturnValuePassedInMemory(Thread &thread, RegisterContext* reg_ctx, size_t by
 
 ValueObjectSP
 ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
-                                       lldb_private::ClangASTType &clang_type) const
+                                       lldb_private::CompilerType &clang_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;
@@ -579,7 +579,7 @@ ABISysV_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjec
         return error;
     }
     
-    ClangASTType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetClangType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");

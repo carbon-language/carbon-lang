@@ -46,7 +46,7 @@ ValueObjectSP
 ValueObjectMemory::Create (ExecutionContextScope *exe_scope, 
                            const char *name,
                            const Address &address, 
-                           const ClangASTType &ast_type)
+                           const CompilerType &ast_type)
 {
     return (new ValueObjectMemory (exe_scope, name, address, ast_type))->GetSP();
 }
@@ -90,7 +90,7 @@ ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
 ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
                                       const char *name, 
                                       const Address &address,
-                                      const ClangASTType &ast_type) :
+                                      const CompilerType &ast_type) :
     ValueObject(exe_scope),
     m_address (address),
     m_type_sp(),
@@ -131,7 +131,7 @@ ValueObjectMemory::~ValueObjectMemory()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectMemory::GetClangTypeImpl ()
 {
     if (m_type_sp)

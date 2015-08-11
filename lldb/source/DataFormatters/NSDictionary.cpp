@@ -25,10 +25,10 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::formatters;
 
-static ClangASTType
+static CompilerType
 GetLLDBNSPairType (TargetSP target_sp)
 {
-    ClangASTType clang_type;
+    CompilerType clang_type;
 
     ClangASTContext *target_ast_context = target_sp->GetScratchClangASTContext();
 
@@ -45,7 +45,7 @@ GetLLDBNSPairType (TargetSP target_sp)
             if (clang_type)
             {
                 ClangASTContext::StartTagDeclarationDefinition(clang_type);
-                ClangASTType id_clang_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
+                CompilerType id_clang_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
                 ClangASTContext::AddFieldToRecordType(clang_type, "key", id_clang_type, lldb::eAccessPublic, 0);
                 ClangASTContext::AddFieldToRecordType(clang_type, "value", id_clang_type, lldb::eAccessPublic, 0);
                 ClangASTContext::CompleteTagDeclarationDefinition(clang_type);
@@ -105,7 +105,7 @@ namespace lldb_private {
             DataDescriptor_32 *m_data_32;
             DataDescriptor_64 *m_data_64;
             lldb::addr_t m_data_ptr;
-            ClangASTType m_pair_type;
+            CompilerType m_pair_type;
             std::vector<DictionaryItemDescriptor> m_children;
         };
         
@@ -162,7 +162,7 @@ namespace lldb_private {
             lldb::ByteOrder m_order;
             DataDescriptor_32 *m_data_32;
             DataDescriptor_64 *m_data_64;
-            ClangASTType m_pair_type;
+            CompilerType m_pair_type;
             std::vector<DictionaryItemDescriptor> m_children;
         };
         

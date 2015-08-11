@@ -48,7 +48,7 @@ Materializer::AddStructMember (Entity &entity)
 }
 
 void
-Materializer::Entity::SetSizeAndAlignmentFromType (ClangASTType &type)
+Materializer::Entity::SetSizeAndAlignmentFromType (CompilerType &type)
 {
     m_size = type.GetByteSize(nullptr);
     

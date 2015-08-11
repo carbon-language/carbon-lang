@@ -49,7 +49,7 @@ public:
 protected:
     lldb::ValueObjectSP
     GetReturnValueObjectSimple (lldb_private::Thread &thread,
-                                lldb_private::ClangASTType &ast_type) const;
+                                lldb_private::CompilerType &ast_type) const;
 
     bool
     RegisterIsCalleeSaved (const lldb_private::RegisterInfo *reg_info);
@@ -57,7 +57,7 @@ protected:
 public:
     lldb::ValueObjectSP
     GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                          lldb_private::ClangASTType &type) const override;
+                          lldb_private::CompilerType &type) const override;
 
     bool
     CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan) override;

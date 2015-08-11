@@ -436,7 +436,7 @@ ABISysV_ppc::GetArgumentValues (Thread &thread,
 
         // We currently only support extracting values with Clang QualTypes.
         // Do we care about others?
-        ClangASTType clang_type = value->GetClangType();
+        CompilerType clang_type = value->GetClangType();
         if (!clang_type)
             return false;
         bool is_signed;
@@ -476,7 +476,7 @@ ABISysV_ppc::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjec
         return error;
     }
 
-    ClangASTType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetClangType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -563,7 +563,7 @@ ABISysV_ppc::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjec
 
 ValueObjectSP
 ABISysV_ppc::GetReturnValueObjectSimple (Thread &thread,
-                                            ClangASTType &return_clang_type) const
+                                            CompilerType &return_clang_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;
@@ -724,7 +724,7 @@ ABISysV_ppc::GetReturnValueObjectSimple (Thread &thread,
 }
 
 ValueObjectSP
-ABISysV_ppc::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_clang_type) const
+ABISysV_ppc::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
 {
     ValueObjectSP return_valobj_sp;
 
@@ -781,7 +781,7 @@ ABISysV_ppc::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_clan
                 bool is_complex;
                 uint32_t count;
 
-                ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
                 const size_t field_bit_width = field_clang_type.GetBitSize(&thread);
 
                 // If there are any unaligned fields, this is stored in memory.
@@ -858,7 +858,7 @@ ABISysV_ppc::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_clan
                             else
                             {
                                 uint64_t next_field_bit_offset = 0;
-                                ClangASTType next_field_clang_type = return_clang_type.GetFieldAtIndex (idx + 1,
+                                CompilerType next_field_clang_type = return_clang_type.GetFieldAtIndex (idx + 1,
                                                                                                         name,
                                                                                                         &next_field_bit_offset,
                                                                                                         NULL,
@@ -882,7 +882,7 @@ ABISysV_ppc::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_clan
                             else
                             {
                                 uint64_t prev_field_bit_offset = 0;
-                                ClangASTType prev_field_clang_type = return_clang_type.GetFieldAtIndex (idx - 1,
+                                CompilerType prev_field_clang_type = return_clang_type.GetFieldAtIndex (idx - 1,
                                                                                                         name,
                                                                                                         &prev_field_bit_offset,
                                                                                                         NULL,

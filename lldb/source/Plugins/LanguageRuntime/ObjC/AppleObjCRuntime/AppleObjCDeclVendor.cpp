@@ -496,7 +496,7 @@ AppleObjCDeclVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         if (log)
             log->Printf("[  AOTV::FD] Instance variable [%s] [%s], offset at %" PRIx64, name, type, offset_ptr);
         
-        ClangASTType ivar_type = m_runtime.GetEncodingToType()->RealizeType(m_ast_ctx, type, for_expression);
+        CompilerType ivar_type = m_runtime.GetEncodingToType()->RealizeType(m_ast_ctx, type, for_expression);
         
         if (ivar_type.IsValid())
         {

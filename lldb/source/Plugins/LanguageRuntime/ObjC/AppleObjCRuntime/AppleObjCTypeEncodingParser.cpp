@@ -10,7 +10,7 @@
 #include "AppleObjCTypeEncodingParser.h"
 
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/StringLexer.h"
@@ -136,7 +136,7 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
     ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
     if (!lldb_ctx)
         return clang::QualType();
-    ClangASTType union_type(lldb_ctx->CreateRecordType(nullptr, lldb::eAccessPublic, name.c_str(), kind, lldb::eLanguageTypeC));
+    CompilerType union_type(lldb_ctx->CreateRecordType(nullptr, lldb::eAccessPublic, name.c_str(), kind, lldb::eLanguageTypeC));
     if (union_type)
     {
         ClangASTContext::StartTagDeclarationDefinition(union_type);
@@ -150,7 +150,7 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
                 elem_name.Printf("__unnamed_%u",count);
                 element.name = std::string(elem_name.GetData());
             }
-            ClangASTContext::AddFieldToRecordType(union_type, element.name.c_str(), ClangASTType(&ast_ctx, element.type), lldb::eAccessPublic, element.bitfield);
+            ClangASTContext::AddFieldToRecordType(union_type, element.name.c_str(), CompilerType(&ast_ctx, element.type), lldb::eAccessPublic, element.bitfield);
             ++count;
         }
         ClangASTContext::CompleteTagDeclarationDefinition(union_type);
@@ -170,7 +170,7 @@ AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utilit
     ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
     if (!lldb_ctx)
         return clang::QualType();
-    ClangASTType array_type(lldb_ctx->CreateArrayType(ClangASTType(&ast_ctx, element_type), size, false));
+    CompilerType array_type(lldb_ctx->CreateArrayType(CompilerType(&ast_ctx, element_type), size, false));
     return ClangASTContext::GetQualType(array_type);
 }
 
@@ -384,15 +384,15 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     }
 }
 
-ClangASTType
+CompilerType
 AppleObjCTypeEncodingParser::RealizeType (clang::ASTContext &ast_ctx, const char* name, bool for_expression)
 {
     if (name && name[0])
     {
         StringLexer lexer(name);
         clang::QualType qual_type = BuildType(ast_ctx, lexer, for_expression);
-        return ClangASTType(&ast_ctx, qual_type);
+        return CompilerType(&ast_ctx, qual_type);
     }
-    return ClangASTType();
+    return CompilerType();
 }
 

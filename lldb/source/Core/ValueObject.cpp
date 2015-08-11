@@ -42,7 +42,7 @@
 
 #include "lldb/Interpreter/CommandInterpreter.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Type.h"
@@ -316,16 +316,16 @@ ValueObject::ClearDynamicTypeInformation ()
     m_children_count_valid = false;
     m_did_calculate_complete_objc_class_type = false;
     m_last_format_mgr_revision = 0;
-    m_override_type = ClangASTType();
+    m_override_type = CompilerType();
     SetValueFormat(lldb::TypeFormatImplSP());
     SetSummaryFormat(lldb::TypeSummaryImplSP());
     SetSyntheticChildren(lldb::SyntheticChildrenSP());
 }
 
-ClangASTType
+CompilerType
 ValueObject::MaybeCalculateCompleteType ()
 {
-    ClangASTType clang_type(GetClangTypeImpl());
+    CompilerType clang_type(GetClangTypeImpl());
         
     if (m_did_calculate_complete_objc_class_type)
     {
@@ -335,7 +335,7 @@ ValueObject::MaybeCalculateCompleteType ()
             return clang_type;
     }
     
-    ClangASTType class_type;
+    CompilerType class_type;
     bool is_pointer_type = false;
     
     if (ClangASTContext::IsObjCObjectPointerType(clang_type, &class_type))
@@ -371,7 +371,7 @@ ValueObject::MaybeCalculateCompleteType ()
                     
                     if (complete_objc_class_type_sp)
                     {
-                        ClangASTType complete_class(complete_objc_class_type_sp->GetClangFullType());
+                        CompilerType complete_class(complete_objc_class_type_sp->GetClangFullType());
                         
                         if (complete_class.GetCompleteType())
                         {
@@ -395,7 +395,7 @@ ValueObject::MaybeCalculateCompleteType ()
     return clang_type;
 }
 
-ClangASTType
+CompilerType
 ValueObject::GetClangType ()
 {
     return MaybeCalculateCompleteType();
@@ -830,7 +830,7 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
     bool child_is_deref_of_parent = false;
 
     const bool transparent_pointers = synthetic_array_member == false;
-    ClangASTType child_clang_type;
+    CompilerType child_clang_type;
     
     ExecutionContext exe_ctx (GetExecutionContextRef());
     
@@ -937,7 +937,7 @@ ValueObject::GetSummaryAsCString (std::string& destination,
 bool
 ValueObject::IsCStringContainer(bool check_pointer)
 {
-    ClangASTType pointee_or_element_clang_type;
+    CompilerType pointee_or_element_clang_type;
     const Flags type_flags (GetTypeInfo (&pointee_or_element_clang_type));
     bool is_char_arr_ptr (type_flags.AnySet (eTypeIsArray | eTypeIsPointer) &&
                           pointee_or_element_clang_type.IsCharType ());
@@ -958,7 +958,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                              uint32_t item_idx,
                              uint32_t item_count)
 {
-    ClangASTType pointee_or_element_clang_type;
+    CompilerType pointee_or_element_clang_type;
     const uint32_t type_info = GetTypeInfo (&pointee_or_element_clang_type);
     const bool is_pointer_type = type_info & eTypeIsPointer;
     const bool is_array_type = type_info & eTypeIsArray;
@@ -1226,8 +1226,8 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
     size_t bytes_read = 0;
     size_t total_bytes_read = 0;
     
-    ClangASTType clang_type = GetClangType();
-    ClangASTType elem_or_pointee_clang_type;
+    CompilerType clang_type = GetClangType();
+    CompilerType elem_or_pointee_clang_type;
     const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
     if (type_flags.AnySet (eTypeIsArray | eTypeIsPointer) &&
         elem_or_pointee_clang_type.IsCharType ())
@@ -1385,7 +1385,7 @@ ValueObject::GetObjectDescription ()
     if (runtime == NULL)
     {
         // Aw, hell, if the things a pointer, or even just an integer, let's try ObjC anyway...
-        ClangASTType clang_type = GetClangType();
+        CompilerType clang_type = GetClangType();
         if (clang_type)
         {
             bool is_signed;
@@ -2023,7 +2023,7 @@ ValueObject::GetSyntheticChild (const ConstString &key) const
 }
 
 uint32_t
-ValueObject::GetTypeInfo (ClangASTType *pointee_or_element_clang_type)
+ValueObject::GetTypeInfo (CompilerType *pointee_or_element_clang_type)
 {
     return GetClangType().GetTypeInfo (pointee_or_element_clang_type);
 }
@@ -2180,7 +2180,7 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
 }
 
 ValueObjectSP
-ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create)
+ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create)
 {
     
     ValueObjectSP synthetic_child_sp;
@@ -2222,7 +2222,7 @@ ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type
 }
 
 ValueObjectSP
-ValueObject::GetSyntheticBase (uint32_t offset, const ClangASTType& type, bool can_create)
+ValueObject::GetSyntheticBase (uint32_t offset, const CompilerType& type, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
     
@@ -2417,7 +2417,7 @@ ValueObject::GetBaseClassPath (Stream &s)
     if (IsBaseClass())
     {
         bool parent_had_base_class = GetParent() && GetParent()->GetBaseClassPath (s);
-        ClangASTType clang_type = GetClangType();
+        CompilerType clang_type = GetClangType();
         std::string cxx_class_name;
         bool this_had_base_class = ClangASTContext::GetCXXClassName (clang_type, cxx_class_name);
         if (this_had_base_class)
@@ -2536,7 +2536,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
             ValueObject *non_base_class_parent = GetNonBaseClassParent();
             if (non_base_class_parent)
             {
-                ClangASTType non_base_class_parent_clang_type = non_base_class_parent->GetClangType();
+                CompilerType non_base_class_parent_clang_type = non_base_class_parent->GetClangType();
                 if (non_base_class_parent_clang_type)
                 {
                     if (parent && parent->IsDereferenceOfParent() && epformat == eGetExpressionPathFormatHonorPointers)
@@ -2757,8 +2757,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        ClangASTType root_clang_type = root->GetClangType();
-        ClangASTType pointee_clang_type;
+        CompilerType root_clang_type = root->GetClangType();
+        CompilerType pointee_clang_type;
         Flags pointee_clang_type_info;
         
         Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
@@ -3281,8 +3281,8 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        ClangASTType root_clang_type = root->GetClangType();
-        ClangASTType pointee_clang_type;
+        CompilerType root_clang_type = root->GetClangType();
+        CompilerType pointee_clang_type;
         Flags pointee_clang_type_info;
         Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
         if (pointee_clang_type)
@@ -3677,8 +3677,8 @@ ValueObject::GetQualifiedRepresentationIfAvailable (lldb::DynamicValueType dynVa
 lldb::addr_t
 ValueObject::GetCPPVTableAddress (AddressType &address_type)
 {
-    ClangASTType pointee_type;
-    ClangASTType this_type(GetClangType());
+    CompilerType pointee_type;
+    CompilerType this_type(GetClangType());
     uint32_t type_info = this_type.GetTypeInfo(&pointee_type);
     if (type_info)
     {
@@ -3726,8 +3726,8 @@ ValueObject::Dereference (Error &error)
         bool child_is_base_class = false;
         bool child_is_deref_of_parent = false;
         const bool transparent_pointers = false;
-        ClangASTType clang_type = GetClangType();
-        ClangASTType child_clang_type;
+        CompilerType clang_type = GetClangType();
+        CompilerType child_clang_type;
 
         ExecutionContext exe_ctx (GetExecutionContextRef());
 
@@ -3806,7 +3806,7 @@ ValueObject::AddressOf (Error &error)
         case eAddressTypeFile:
         case eAddressTypeLoad:
             {
-                ClangASTType clang_type = GetClangType();
+                CompilerType clang_type = GetClangType();
                 if (clang_type)
                 {
                     std::string name (1, '&');
@@ -3836,13 +3836,13 @@ ValueObject::AddressOf (Error &error)
 }
 
 ValueObjectSP
-ValueObject::Cast (const ClangASTType &clang_ast_type)
+ValueObject::Cast (const CompilerType &clang_ast_type)
 {
     return ValueObjectCast::Create (*this, GetName(), clang_ast_type);
 }
 
 ValueObjectSP
-ValueObject::CastPointerType (const char *name, ClangASTType &clang_ast_type)
+ValueObject::CastPointerType (const char *name, CompilerType &clang_ast_type)
 {
     ValueObjectSP valobj_sp;
     AddressType address_type;
@@ -4104,11 +4104,11 @@ lldb::ValueObjectSP
 ValueObject::CreateValueObjectFromAddress (const char* name,
                                            uint64_t address,
                                            const ExecutionContext& exe_ctx,
-                                           ClangASTType type)
+                                           CompilerType type)
 {
     if (type)
     {
-        ClangASTType pointer_type(type.GetPointerType());
+        CompilerType pointer_type(type.GetPointerType());
         if (pointer_type)
         {
             lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
@@ -4136,7 +4136,7 @@ lldb::ValueObjectSP
 ValueObject::CreateValueObjectFromData (const char* name,
                                         const DataExtractor& data,
                                         const ExecutionContext& exe_ctx,
-                                        ClangASTType type)
+                                        CompilerType type)
 {
     lldb::ValueObjectSP new_value_sp;
     new_value_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
@@ -4258,7 +4258,7 @@ ValueObject::CanProvideValue ()
     // we need to support invalid types as providers of values because some bare-board
     // debugging scenarios have no notion of types, but still manage to have raw numeric
     // values for things like registers. sigh.
-    const ClangASTType &type(GetClangType());
+    const CompilerType &type(GetClangType());
     return (false == type.IsValid()) || (0 != (type.GetTypeInfo() & eTypeHasValue));
 }
 

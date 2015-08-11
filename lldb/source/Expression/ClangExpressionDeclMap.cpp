@@ -1103,7 +1103,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     if (!this_type)
                         return;
 
-                    ClangASTType pointee_type = this_type->GetClangForwardType().GetPointeeType();
+                    CompilerType pointee_type = this_type->GetClangForwardType().GetPointeeType();
 
                     if (pointee_type.IsValid())
                     {
@@ -1220,7 +1220,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     if (!self_type)
                         return;
 
-                    ClangASTType self_clang_type = self_type->GetClangFullType();
+                    CompilerType self_clang_type = self_type->GetClangFullType();
 
                     if (ClangASTContext::IsObjCClassType(self_clang_type))
                     {
@@ -1632,7 +1632,7 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         return false;
     }
 
-    ClangASTType var_clang_type = var_type->GetClangFullType();
+    CompilerType var_clang_type = var_type->GetClangFullType();
 
     if (!var_clang_type)
     {
@@ -1673,7 +1673,7 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         }
     }
 
-    ClangASTType type_to_use = GuardedCopyType(var_clang_type);
+    CompilerType type_to_use = GuardedCopyType(var_clang_type);
 
     if (!type_to_use)
     {
@@ -1930,7 +1930,7 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    ClangASTType clang_type = ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (m_ast_context,
+    CompilerType clang_type = ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (m_ast_context,
                                                                                     reg_info->encoding,
                                                                                     reg_info->byte_size * 8);
 
@@ -1980,7 +1980,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
 
     NamedDecl *function_decl = NULL;
     Address fun_address;
-    ClangASTType function_clang_type;
+    CompilerType function_clang_type;
 
     bool is_indirect_function = false;
 
@@ -2006,7 +2006,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
 
         fun_address = function->GetAddressRange().GetBaseAddress();
 
-        ClangASTType copied_function_type = GuardedCopyType(function_clang_type);
+        CompilerType copied_function_type = GuardedCopyType(function_clang_type);
         if (copied_function_type)
         {
             function_decl = context.AddFunDecl(copied_function_type);
@@ -2105,7 +2105,7 @@ TypeFromParser
 ClangExpressionDeclMap::CopyClassType(TypeFromUser &ut,
                                       unsigned int current_id)
 {
-    ClangASTType copied_clang_type = GuardedCopyType(ut);
+    CompilerType copied_clang_type = GuardedCopyType(ut);
 
     if (!copied_clang_type)
     {
@@ -2119,10 +2119,10 @@ ClangExpressionDeclMap::CopyClassType(TypeFromUser &ut,
 
     if (copied_clang_type.IsAggregateType() && copied_clang_type.GetCompleteType ())
     {
-        ClangASTType void_clang_type = ClangASTContext::GetBasicType(m_ast_context, eBasicTypeVoid);
-        ClangASTType void_ptr_clang_type = void_clang_type.GetPointerType();
+        CompilerType void_clang_type = ClangASTContext::GetBasicType(m_ast_context, eBasicTypeVoid);
+        CompilerType void_ptr_clang_type = void_clang_type.GetPointerType();
 
-        ClangASTType method_type = ClangASTContext::CreateFunctionType (m_ast_context,
+        CompilerType method_type = ClangASTContext::CreateFunctionType (m_ast_context,
                                                                         void_clang_type,
                                                                         &void_ptr_clang_type,
                                                                         1,
@@ -2157,7 +2157,7 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
                                    TypeFromUser &ut,
                                    unsigned int current_id)
 {
-    ClangASTType copied_clang_type = GuardedCopyType(ut);
+    CompilerType copied_clang_type = GuardedCopyType(ut);
 
     if (!copied_clang_type)
     {

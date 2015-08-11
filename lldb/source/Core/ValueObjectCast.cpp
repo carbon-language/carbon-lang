@@ -20,7 +20,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObject.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -38,7 +38,7 @@ using namespace lldb_private;
 lldb::ValueObjectSP
 ValueObjectCast::Create (ValueObject &parent, 
                          const ConstString &name, 
-                         const ClangASTType &cast_type)
+                         const CompilerType &cast_type)
 {
     ValueObjectCast *cast_valobj_ptr = new ValueObjectCast (parent, name, cast_type);
     return cast_valobj_ptr->GetSP();
@@ -48,7 +48,7 @@ ValueObjectCast::ValueObjectCast
 (
     ValueObject &parent, 
     const ConstString &name, 
-    const ClangASTType &cast_type
+    const CompilerType &cast_type
 ) :
     ValueObject(parent),
     m_cast_type (cast_type)
@@ -62,7 +62,7 @@ ValueObjectCast::~ValueObjectCast()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectCast::GetClangTypeImpl ()
 {
     return m_cast_type;
@@ -98,7 +98,7 @@ ValueObjectCast::UpdateValue ()
         Value old_value(m_value);
         m_update_point.SetUpdated();
         m_value = m_parent->GetValue();
-        ClangASTType clang_type (GetClangType());
+        CompilerType clang_type (GetClangType());
         //m_value.SetContext (Value::eContextTypeClangType, clang_type);
         m_value.SetClangType (clang_type);
         SetAddressTypeOfChildren(m_parent->GetAddressTypeOfChildren());

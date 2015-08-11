@@ -20,7 +20,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
@@ -130,7 +130,7 @@ public:
         }
     }
 
-    TypeNameSpecifierImpl (ClangASTType type) :
+    TypeNameSpecifierImpl (CompilerType type) :
     m_is_regex(false),
     m_type()
     {
@@ -157,12 +157,12 @@ public:
         return lldb::TypeSP();
     }
     
-    ClangASTType
-    GetClangASTType ()
+    CompilerType
+    GetCompilerType ()
     {
         if (m_type.m_type_pair.IsValid())
-            return m_type.m_type_pair.GetClangASTType();
-        return ClangASTType();
+            return m_type.m_type_pair.GetCompilerType();
+        return CompilerType();
     }
     
     bool
@@ -174,7 +174,7 @@ public:
 private:
     bool m_is_regex;
     // this works better than TypeAndOrName because the latter only wraps a TypeSP
-    // whereas TypePair can also be backed by a ClangASTType
+    // whereas TypePair can also be backed by a CompilerType
     struct TypeOrName
     {
         std::string m_type_name;

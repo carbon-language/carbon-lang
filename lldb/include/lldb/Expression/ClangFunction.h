@@ -22,7 +22,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Expression/ClangExpression.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/Process.h"
 
 namespace lldb_private
@@ -114,7 +114,7 @@ public:
     ///     be overridden using WriteFunctionArguments().
     //------------------------------------------------------------------
     ClangFunction (ExecutionContextScope &exe_scope,
-                   const ClangASTType &return_type,
+                   const CompilerType &return_type,
                    const Address& function_address, 
                    const ValueList &arg_value_list,
                    const char *name);
@@ -421,7 +421,7 @@ private:
     
     Function                       *m_function_ptr;                 ///< The function we're going to call.  May be NULL if we don't have debug info for the function.
     Address                         m_function_addr;                ///< If we don't have the FunctionSP, we at least need the address & return type.
-    ClangASTType                    m_function_return_type;         ///< The opaque clang qual type for the function return type.
+    CompilerType                    m_function_return_type;         ///< The opaque clang qual type for the function return type.
 
     std::string                     m_wrapper_function_name;        ///< The name of the wrapper function.
     std::string                     m_wrapper_function_text;        ///< The contents of the wrapper function.

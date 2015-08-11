@@ -18,7 +18,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectList.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -71,8 +71,8 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
     bool child_is_deref_of_parent = false;
     
     const bool transparent_pointers = synthetic_array_member == false;
-    ClangASTType clang_type = m_impl_backend->GetClangType();
-    ClangASTType child_clang_type;
+    CompilerType clang_type = m_impl_backend->GetClangType();
+    CompilerType child_clang_type;
     
     ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
     
@@ -114,7 +114,7 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultImpl::GetSyntheticChildAtOffset (uint32_t offset, const ClangASTType& type, bool can_create)
+ValueObjectConstResultImpl::GetSyntheticChildAtOffset (uint32_t offset, const CompilerType& type, bool can_create)
 {
     if (m_impl_backend == NULL)
         return lldb::ValueObjectSP();
@@ -132,7 +132,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         return lldb::ValueObjectSP();
     if (m_live_address != LLDB_INVALID_ADDRESS)
     {
-        ClangASTType clang_type(m_impl_backend->GetClangType());
+        CompilerType clang_type(m_impl_backend->GetClangType());
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&m_live_address,sizeof(lldb::addr_t)));
         
@@ -156,7 +156,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
 }
 
 lldb::ValueObjectSP
-ValueObjectConstResultImpl::Cast (const ClangASTType &clang_ast_type)
+ValueObjectConstResultImpl::Cast (const CompilerType &clang_ast_type)
 {
     if (m_impl_backend == NULL)
         return lldb::ValueObjectSP();

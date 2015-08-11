@@ -15,7 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ValueObject.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 namespace lldb_private {
 
@@ -36,7 +36,7 @@ public:
     Create (ExecutionContextScope *exe_scope, 
             const char *name,
             const Address &address, 
-            const ClangASTType &ast_type);
+            const CompilerType &ast_type);
 
     virtual
     ~ValueObjectMemory();
@@ -66,12 +66,12 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
 
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;
-    ClangASTType m_clang_type;
+    CompilerType m_clang_type;
 
 private:
     ValueObjectMemory (ExecutionContextScope *exe_scope, 
@@ -82,7 +82,7 @@ private:
     ValueObjectMemory (ExecutionContextScope *exe_scope,
                        const char *name, 
                        const Address &address,
-                       const ClangASTType &ast_type);
+                       const CompilerType &ast_type);
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

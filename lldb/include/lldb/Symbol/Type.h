@@ -15,7 +15,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/Declaration.h"
 
 #include "llvm/ADT/APSInt.h"
@@ -93,7 +93,7 @@ public:
           lldb::user_id_t encoding_uid,
           EncodingDataType encoding_uid_type,
           const Declaration& decl,
-          const ClangASTType &clang_qual_type,
+          const CompilerType &clang_qual_type,
           ResolveState clang_type_resolve_state);
     
     // This makes an invalid type.  Used for functions that return a Type when they
@@ -240,18 +240,18 @@ public:
 
     // Get the clang type, and resolve definitions for any 
     // class/struct/union/enum types completely.
-    ClangASTType
+    CompilerType
     GetClangFullType ();
 
     // Get the clang type, and resolve definitions enough so that the type could
     // have layout performed. This allows ptrs and refs to class/struct/union/enum 
     // types remain forward declarations.
-    ClangASTType
+    CompilerType
     GetClangLayoutType ();
 
     // Get the clang type and leave class/struct/union/enum types as forward
     // declarations if they haven't already been fully defined.
-    ClangASTType 
+    CompilerType 
     GetClangForwardType ();
 
     ClangASTContext &
@@ -276,7 +276,7 @@ public:
     uint32_t
     GetEncodingMask ();
     
-    ClangASTType
+    CompilerType
     CreateClangTypedefType (Type *typedef_type, Type *base_type);
 
     bool
@@ -303,7 +303,7 @@ protected:
     EncodingDataType m_encoding_uid_type;
     uint64_t m_byte_size;
     Declaration m_decl;
-    ClangASTType m_clang_type;
+    CompilerType m_clang_type;
     
     struct Flags {
 #ifdef __GNUC__
@@ -333,7 +333,7 @@ public:
     {
     }
 
-    TypePair (ClangASTType type) :
+    TypePair (CompilerType type) :
         clang_type(type),
         type_sp()
     {
@@ -399,7 +399,7 @@ public:
     }
     
     void
-    SetType (ClangASTType type)
+    SetType (CompilerType type)
     {
         type_sp.reset();
         clang_type = type;
@@ -418,13 +418,13 @@ public:
         return type_sp;
     }
     
-    ClangASTType
-    GetClangASTType () const
+    CompilerType
+    GetCompilerType () const
     {
         return clang_type;
     }
     
-    ClangASTType
+    CompilerType
     GetPointerType () const
     {
         if (type_sp)
@@ -432,7 +432,7 @@ public:
         return clang_type.GetPointerType();
     }
     
-    ClangASTType
+    CompilerType
     GetPointeeType () const
     {
         if (type_sp)
@@ -440,7 +440,7 @@ public:
         return clang_type.GetPointeeType();
     }
     
-    ClangASTType
+    CompilerType
     GetReferenceType () const
     {
         if (type_sp)
@@ -448,7 +448,7 @@ public:
         return ClangASTContext::GetLValueReferenceType(clang_type);
     }
 
-    ClangASTType
+    CompilerType
     GetTypedefedType () const
     {
         if (type_sp)
@@ -456,7 +456,7 @@ public:
         return clang_type.GetTypedefedType();
     }
 
-    ClangASTType
+    CompilerType
     GetDereferencedType () const
     {
         if (type_sp)
@@ -464,7 +464,7 @@ public:
         return clang_type.GetNonReferenceType();
     }
     
-    ClangASTType
+    CompilerType
     GetUnqualifiedType () const
     {
         if (type_sp)
@@ -472,7 +472,7 @@ public:
         return clang_type.GetFullyUnqualifiedType();
     }
     
-    ClangASTType
+    CompilerType
     GetCanonicalType () const
     {
         if (type_sp)
@@ -494,7 +494,7 @@ public:
         return lldb::ModuleSP();
     }
 protected:
-    ClangASTType clang_type;
+    CompilerType clang_type;
     lldb::TypeSP type_sp;
 };
     
@@ -510,28 +510,28 @@ public:
     
     TypeImpl (const lldb::TypeSP &type_sp);
     
-    TypeImpl (const ClangASTType &clang_type);
+    TypeImpl (const CompilerType &clang_type);
     
-    TypeImpl (const lldb::TypeSP &type_sp, const ClangASTType &dynamic);
+    TypeImpl (const lldb::TypeSP &type_sp, const CompilerType &dynamic);
     
-    TypeImpl (const ClangASTType &clang_type, const ClangASTType &dynamic);
+    TypeImpl (const CompilerType &clang_type, const CompilerType &dynamic);
     
-    TypeImpl (const TypePair &pair, const ClangASTType &dynamic);
+    TypeImpl (const TypePair &pair, const CompilerType &dynamic);
 
     void
     SetType (const lldb::TypeSP &type_sp);
     
     void
-    SetType (const ClangASTType &clang_type);
+    SetType (const CompilerType &clang_type);
     
     void
-    SetType (const lldb::TypeSP &type_sp, const ClangASTType &dynamic);
+    SetType (const lldb::TypeSP &type_sp, const CompilerType &dynamic);
     
     void
-    SetType (const ClangASTType &clang_type, const ClangASTType &dynamic);
+    SetType (const CompilerType &clang_type, const CompilerType &dynamic);
     
     void
-    SetType (const TypePair &pair, const ClangASTType &dynamic);
+    SetType (const TypePair &pair, const CompilerType &dynamic);
     
     TypeImpl&
     operator = (const TypeImpl& rhs);
@@ -576,8 +576,8 @@ public:
     TypeImpl
     GetCanonicalType() const;
     
-    ClangASTType
-    GetClangASTType (bool prefer_dynamic);
+    CompilerType
+    GetCompilerType (bool prefer_dynamic);
     
     TypeSystem *
     GetTypeSystem (bool prefer_dynamic);
@@ -593,7 +593,7 @@ private:
 
     lldb::ModuleWP m_module_wp;
     TypePair m_static_type;
-    ClangASTType m_dynamic_type;
+    CompilerType m_dynamic_type;
 };
 
 class TypeListImpl
@@ -751,7 +751,7 @@ class TypeAndOrName
 public:
     TypeAndOrName ();
     TypeAndOrName (lldb::TypeSP &type_sp);
-    TypeAndOrName (const ClangASTType &clang_type);
+    TypeAndOrName (const CompilerType &clang_type);
     TypeAndOrName (const char *type_str);
     TypeAndOrName (const TypeAndOrName &rhs);
     TypeAndOrName (ConstString &type_const_string);
@@ -773,10 +773,10 @@ public:
         return m_type_pair.GetTypeSP();
     }
     
-    ClangASTType
-    GetClangASTType () const
+    CompilerType
+    GetCompilerType () const
     {
-        return m_type_pair.GetClangASTType();
+        return m_type_pair.GetCompilerType();
     }
     
     void
@@ -789,7 +789,7 @@ public:
     SetTypeSP (lldb::TypeSP type_sp);
     
     void
-    SetClangASTType (ClangASTType clang_type);
+    SetCompilerType (CompilerType clang_type);
     
     bool
     IsEmpty () const;
@@ -801,12 +801,12 @@ public:
     HasTypeSP () const;
     
     bool
-    HasClangASTType () const;
+    HasCompilerType () const;
     
     bool
     HasType () const
     {
-        return HasTypeSP() || HasClangASTType();
+        return HasTypeSP() || HasCompilerType();
     }
     
     void
@@ -833,7 +833,7 @@ public:
     {
     }
     
-    TypeMemberFunctionImpl (const ClangASTType& type,
+    TypeMemberFunctionImpl (const CompilerType& type,
                             const std::string& name,
                             const lldb::MemberFunctionKind& kind) :
         m_type(type),
@@ -870,16 +870,16 @@ public:
     ConstString
     GetName () const;
     
-    ClangASTType
+    CompilerType
     GetType () const;
     
-    ClangASTType
+    CompilerType
     GetReturnType () const;
     
     size_t
     GetNumArguments () const;
     
-    ClangASTType
+    CompilerType
     GetArgumentAtIndex (size_t idx) const;
     
     lldb::MemberFunctionKind
@@ -893,7 +893,7 @@ protected:
     GetPrintableTypeName ();
 
 private:
-    ClangASTType m_type;
+    CompilerType m_type;
     clang::ObjCMethodDecl *m_objc_method_decl;
     ConstString m_name;
     lldb::MemberFunctionKind m_kind;
@@ -911,7 +911,7 @@ public:
     }
 
     TypeEnumMemberImpl (const clang::EnumConstantDecl* enum_member_decl,
-                        const lldb_private::ClangASTType& integer_type);
+                        const lldb_private::CompilerType& integer_type);
 
     TypeEnumMemberImpl (const TypeEnumMemberImpl& rhs) :
         m_integer_type_sp(rhs.m_integer_type_sp),

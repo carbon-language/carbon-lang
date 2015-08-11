@@ -80,14 +80,14 @@ ClangExpressionVariable::SetRegisterInfo (const RegisterInfo *reg_info)
     return m_frozen_sp->GetValue().SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_info));
 }
 
-ClangASTType
+CompilerType
 ClangExpressionVariable::GetClangType()
 {
     return m_frozen_sp->GetClangType();
 }
 
 void
-ClangExpressionVariable::SetClangType(const ClangASTType &clang_type)
+ClangExpressionVariable::SetClangType(const CompilerType &clang_type)
 {
     m_frozen_sp->GetValue().SetClangType(clang_type);
 }

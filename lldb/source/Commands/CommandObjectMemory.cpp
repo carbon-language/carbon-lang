@@ -400,7 +400,7 @@ protected:
             return false;
         }
 
-        ClangASTType clang_ast_type;        
+        CompilerType clang_ast_type;        
         Error error;
 
         const char *view_as_type_cstr = m_memory_options.m_view_as_type.GetCurrentValue();
@@ -556,7 +556,7 @@ protected:
             
             while (pointer_count > 0)
             {
-                ClangASTType pointer_type = clang_ast_type.GetPointerType();
+                CompilerType pointer_type = clang_ast_type.GetPointerType();
                 if (pointer_type.IsValid())
                     clang_ast_type = pointer_type;
                 else
@@ -933,7 +933,7 @@ protected:
     OptionGroupReadMemory m_prev_memory_options;
     OptionGroupOutputFile m_prev_outfile_options;
     OptionGroupValueObjectDisplay m_prev_varobj_options;
-    ClangASTType m_prev_clang_ast_type;
+    CompilerType m_prev_clang_ast_type;
 };
 
 OptionDefinition

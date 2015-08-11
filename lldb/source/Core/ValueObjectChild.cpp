@@ -12,7 +12,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ValueObjectList.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -27,7 +27,7 @@ using namespace lldb_private;
 ValueObjectChild::ValueObjectChild
 (
     ValueObject &parent,
-    const ClangASTType &clang_type,
+    const CompilerType &clang_type,
     const ConstString &name,
     uint64_t byte_size,
     int32_t byte_offset,

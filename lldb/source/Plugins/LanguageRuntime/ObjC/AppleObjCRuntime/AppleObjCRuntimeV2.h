@@ -74,7 +74,7 @@ public:
     }
 
     virtual size_t
-    GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
+    GetByteOffsetForIvar (CompilerType &parent_qual_type, const char *ivar_name);
 
     virtual void
     UpdateISAToDescriptorMapIfNeeded();

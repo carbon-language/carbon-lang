@@ -418,7 +418,7 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
             break;
         case Value::eValueTypeHostAddress:
             {
-                ClangASTType clang_type (val->GetClangType());
+                CompilerType clang_type (val->GetClangType());
                 if (clang_type)
                 {
                     uint32_t cstr_length = 0;
@@ -545,7 +545,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
         
         // We currently only support extracting values with Clang QualTypes.
         // Do we care about others?
-        ClangASTType clang_type (value->GetClangType());
+        CompilerType clang_type (value->GetClangType());
         if (clang_type)
         {
             bool is_signed;
@@ -582,7 +582,7 @@ ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
     
-    ClangASTType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetClangType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -654,7 +654,7 @@ ABIMacOSX_i386::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
 ValueObjectSP
 ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
-                                          ClangASTType &clang_type) const
+                                          CompilerType &clang_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;

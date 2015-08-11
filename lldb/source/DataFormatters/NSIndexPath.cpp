@@ -179,7 +179,7 @@ protected:
         }
         
         lldb::ValueObjectSP
-        GetIndexAtIndex (size_t idx, const ClangASTType& desired_type)
+        GetIndexAtIndex (size_t idx, const CompilerType& desired_type)
         {
             if (idx >= GetNumIndexes())
                 return nullptr;
@@ -209,7 +209,7 @@ protected:
           }
 
           lldb::ValueObjectSP
-          GetIndexAtIndex (size_t idx, const ClangASTType& desired_type)
+          GetIndexAtIndex (size_t idx, const CompilerType& desired_type)
           {
               std::pair<uint64_t, bool> value(_indexAtPositionForInlinePayload(idx));
               if (!value.second)
@@ -325,7 +325,7 @@ protected:
     
     uint32_t m_ptr_size;
     ClangASTContext* m_ast_ctx;
-    ClangASTType m_uint_star_type;
+    CompilerType m_uint_star_type;
 };
 
 namespace lldb_private {

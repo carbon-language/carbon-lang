@@ -12,7 +12,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -105,7 +105,7 @@ ABI::GetRegisterInfoByKind (RegisterKind reg_kind, uint32_t reg_num, RegisterInf
 
 ValueObjectSP
 ABI::GetReturnValueObject (Thread &thread,
-                           ClangASTType &ast_type,
+                           CompilerType &ast_type,
                            bool persistent) const
 {
     if (!ast_type.IsValid())

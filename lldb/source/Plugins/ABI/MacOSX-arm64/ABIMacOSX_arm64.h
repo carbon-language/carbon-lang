@@ -118,7 +118,7 @@ public:
 protected:
     virtual lldb::ValueObjectSP
     GetReturnValueObjectImpl (lldb_private::Thread &thread,
-                    lldb_private::ClangASTType &ast_type) const;
+                    lldb_private::CompilerType &ast_type) const;
 
 private:
     ABIMacOSX_arm64() : 

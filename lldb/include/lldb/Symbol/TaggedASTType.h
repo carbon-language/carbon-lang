@@ -10,33 +10,33 @@
 #ifndef liblldb_TaggedASTType_h_
 #define liblldb_TaggedASTType_h_
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 namespace lldb_private
 {
 
 // For cases in which there are multiple classes of types that are not
 // interchangeable, to allow static type checking.
-template <unsigned int C> class TaggedASTType : public ClangASTType
+template <unsigned int C> class TaggedASTType : public CompilerType
 {
 public:
-    TaggedASTType (const ClangASTType &clang_type) :
-        ClangASTType(clang_type)
+    TaggedASTType (const CompilerType &clang_type) :
+        CompilerType(clang_type)
     {
     }
 
     TaggedASTType (void *type, TypeSystem * type_system) :
-        ClangASTType(type_system, type)
+        CompilerType(type_system, type)
     {
     }
     
     TaggedASTType (const TaggedASTType<C> &tw) :
-        ClangASTType(tw)
+        CompilerType(tw)
     {
     }
     
     TaggedASTType () :
-        ClangASTType()
+        CompilerType()
     {
     }
     
@@ -47,7 +47,7 @@ public:
     
     TaggedASTType<C> &operator= (const TaggedASTType<C> &tw)
     {
-        ClangASTType::operator= (tw);
+        CompilerType::operator= (tw);
         return *this;
     }
 };

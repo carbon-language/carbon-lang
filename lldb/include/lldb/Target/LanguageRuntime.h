@@ -127,7 +127,7 @@ public:
     CreateExceptionSearchFilter ();
     
     virtual bool
-    GetTypeBitSize (const ClangASTType& clang_type,
+    GetTypeBitSize (const CompilerType& clang_type,
                     uint64_t &size)
     {
         return false;

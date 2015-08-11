@@ -52,7 +52,7 @@ using namespace lldb_private;
 ClangFunction::ClangFunction 
 (
     ExecutionContextScope &exe_scope,
-    const ClangASTType &return_type, 
+    const CompilerType &return_type, 
     const Address& functionAddress, 
     const ValueList &arg_value_list,
     const char *name
@@ -151,7 +151,7 @@ ClangFunction::CompileFunction (Stream &errors)
     uint32_t num_args = UINT32_MAX;
     bool trust_function = false;
     // GetArgumentCount returns -1 for an unprototyped function.
-    ClangASTType function_clang_type;
+    CompilerType function_clang_type;
     if (m_function_ptr)
     {
         function_clang_type = m_function_ptr->GetClangType();
@@ -181,7 +181,7 @@ ClangFunction::CompileFunction (Stream &errors)
         }
         else
         {
-            ClangASTType clang_qual_type = m_arg_values.GetValueAtIndex(i)->GetClangType ();
+            CompilerType clang_qual_type = m_arg_values.GetValueAtIndex(i)->GetClangType ();
             if (clang_qual_type)
             {
                 type_name = clang_qual_type.GetTypeName().AsCString("");
@@ -449,7 +449,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
     
     lldb::ThreadPlanSP new_plan_sp (new ThreadPlanCallFunction (*thread,
                                                        wrapper_address,
-                                                       ClangASTType(),
+                                                       CompilerType(),
                                                        args,
                                                        options));
     new_plan_sp->SetIsMasterPlan(true);
@@ -462,7 +462,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
 {
     // Read the return value - it is the last field in the struct:
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
-    // FIXME: Create our ThreadPlanCallFunction with the return ClangASTType, and then use GetReturnValueObject
+    // FIXME: Create our ThreadPlanCallFunction with the return CompilerType, and then use GetReturnValueObject
     // to fetch the value.  That way we can fetch any values we need.
     
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));

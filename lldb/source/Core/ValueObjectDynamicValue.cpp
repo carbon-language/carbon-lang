@@ -20,7 +20,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObject.h"
 
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -49,7 +49,7 @@ ValueObjectDynamicValue::~ValueObjectDynamicValue()
     m_owning_valobj_sp.reset();
 }
 
-ClangASTType
+CompilerType
 ValueObjectDynamicValue::GetClangTypeImpl ()
 {
     const bool success = UpdateValueIfNeeded(false);
@@ -149,13 +149,13 @@ FixupTypeAndOrName (const TypeAndOrName& type_andor_name,
         // The type will always be the type of the dynamic object.  If our parent's type was a pointer,
         // then our type should be a pointer to the type of the dynamic object.  If a reference, then the original type
         // should be okay...
-        ClangASTType orig_type = type_andor_name.GetClangASTType();
-        ClangASTType corrected_type = orig_type;
+        CompilerType orig_type = type_andor_name.GetCompilerType();
+        CompilerType corrected_type = orig_type;
         if (parent.IsPointerType())
             corrected_type = orig_type.GetPointerType ();
         else if (parent.IsPointerOrReferenceType())
             corrected_type = ClangASTContext::GetLValueReferenceType(orig_type);
-        ret.SetClangASTType(corrected_type);
+        ret.SetCompilerType(corrected_type);
     }
     else /*if (m_dynamic_type_info.HasName())*/
     {
@@ -166,7 +166,7 @@ FixupTypeAndOrName (const TypeAndOrName& type_andor_name,
         else if (parent.IsPointerOrReferenceType())
             corrected_name.append(" &");
         // the parent type should be a correctly pointer'ed or referenc'ed type
-        ret.SetClangASTType(parent.GetClangType());
+        ret.SetCompilerType(parent.GetClangType());
         ret.SetName(corrected_name.c_str());
     }
     return ret;
@@ -241,7 +241,7 @@ ValueObjectDynamicValue::UpdateValue ()
     {
         if (class_type_or_name.HasType())
         {
-            m_type_impl = TypeImpl(m_parent->GetClangType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetClangASTType());
+            m_type_impl = TypeImpl(m_parent->GetClangType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetCompilerType());
         }
         else
         {
@@ -303,7 +303,7 @@ ValueObjectDynamicValue::UpdateValue ()
     m_dynamic_type_info = FixupTypeAndOrName(m_dynamic_type_info, *m_parent);
 
     //m_value.SetContext (Value::eContextTypeClangType, corrected_type);
-    m_value.SetClangType (m_dynamic_type_info.GetClangASTType());
+    m_value.SetClangType (m_dynamic_type_info.GetCompilerType());
 
     // Our address is the location of the dynamic type stored in memory.  It isn't a load address,
     // because we aren't pointing to the LOCATION that stores the pointer to us, we're pointing to us...

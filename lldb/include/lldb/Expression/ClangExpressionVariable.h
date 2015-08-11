@@ -221,11 +221,11 @@ public:
     void
     SetRegisterInfo (const RegisterInfo *reg_info);
 
-    ClangASTType
+    CompilerType
     GetClangType ();
     
     void
-    SetClangType (const ClangASTType &clang_type);
+    SetClangType (const CompilerType &clang_type);
 
     TypeFromUser
     GetTypeFromUser ();

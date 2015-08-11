@@ -43,7 +43,7 @@ namespace lldb_private {
         private:
             ValueObject* m_start;
             ValueObject* m_finish;
-            ClangASTType m_element_type;
+            CompilerType m_element_type;
             uint32_t m_element_size;
             std::map<size_t,lldb::ValueObjectSP> m_children;
         };

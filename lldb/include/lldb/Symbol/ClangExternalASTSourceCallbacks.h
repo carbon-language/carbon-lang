@@ -22,7 +22,7 @@
 // Project includes
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 
 namespace lldb_private {

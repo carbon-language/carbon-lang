@@ -443,7 +443,7 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
     {
         uint64_t offset_text = ptr_size + ptr_size + 8; // ISA + pointer + 8 bytes of data (even on 32bit)
         uint64_t offset_base = offset_text + ptr_size;
-        ClangASTType type(valobj.GetClangType());
+        CompilerType type(valobj.GetClangType());
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset_text, type, true));
         ValueObjectSP base(valobj.GetSyntheticChildAtOffset(offset_base, type, true));
         if (!text)

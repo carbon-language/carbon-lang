@@ -59,7 +59,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
@@ -113,7 +113,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
@@ -170,14 +170,14 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
     RegisterInfo m_reg_info;
     RegisterValue m_reg_value;
     ConstString m_type_name;
-    ClangASTType m_clang_type;
+    CompilerType m_clang_type;
 
 private:
     void

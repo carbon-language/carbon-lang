@@ -27,7 +27,7 @@ public:
     static lldb::ValueObjectSP
     Create (ValueObject &parent, 
             const ConstString &name, 
-            const ClangASTType &cast_type);
+            const CompilerType &cast_type);
 
     virtual
     ~ValueObjectCast();
@@ -66,14 +66,14 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
     
-    ClangASTType m_cast_type;
+    CompilerType m_cast_type;
     
     ValueObjectCast (ValueObject &parent, 
                      const ConstString &name, 
-                     const ClangASTType &cast_type);
+                     const CompilerType &cast_type);
     
 private:
     //------------------------------------------------------------------

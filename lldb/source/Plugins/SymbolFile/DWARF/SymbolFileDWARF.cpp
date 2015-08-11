@@ -553,11 +553,11 @@ SymbolFileDWARF::GetTypes (SymbolContextScope *sc_scope,
 //        });
 //    }
     
-    std::set<ClangASTType> clang_type_set;
+    std::set<CompilerType> clang_type_set;
     size_t num_types_added = 0;
     for (Type *type : type_set)
     {
-        ClangASTType clang_type = type->GetClangForwardType();
+        CompilerType clang_type = type->GetClangForwardType();
         if (clang_type_set.find(clang_type) == clang_type_set.end())
         {
             clang_type_set.insert(clang_type);
@@ -1221,7 +1221,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
                 bool is_static = false;
                 bool is_variadic = false;
                 unsigned type_quals = 0;
-                std::vector<ClangASTType> param_types;
+                std::vector<CompilerType> param_types;
                 std::vector<clang::ParmVarDecl*> param_decls;
                 const DWARFDebugInfoEntry *decl_ctx_die = NULL;
                 DWARFDeclContext decl_ctx;
@@ -1648,7 +1648,7 @@ SymbolFileDWARF::ParseTemplateDIE (DWARFCompileUnit* dwarf_cu,
                                                               attributes);
             const char *name = NULL;
             Type *lldb_type = NULL;
-            ClangASTType clang_type;
+            CompilerType clang_type;
             uint64_t uval64 = 0;
             bool uval64_valid = false;
             if (num_attributes > 0)
@@ -1788,9 +1788,9 @@ class SymbolFileDWARF::DelayedAddObjCClassProperty
 public:
     DelayedAddObjCClassProperty
     (
-        const ClangASTType     &class_opaque_type,
+        const CompilerType     &class_opaque_type,
         const char             *property_name,
-        const ClangASTType     &property_opaque_type,  // The property type is only required if you don't have an ivar decl
+        const CompilerType     &property_opaque_type,  // The property type is only required if you don't have an ivar decl
         clang::ObjCIvarDecl    *ivar_decl,   
         const char             *property_setter_name,
         const char             *property_getter_name,
@@ -1850,9 +1850,9 @@ public:
                                           m_metadata_ap.get());
     }
 private:
-    ClangASTType            m_class_opaque_type;
+    CompilerType            m_class_opaque_type;
     const char             *m_property_name;
-    ClangASTType            m_property_opaque_type;
+    CompilerType            m_property_opaque_type;
     clang::ObjCIvarDecl    *m_ivar_decl;
     const char             *m_property_setter_name;
     const char             *m_property_getter_name;
@@ -1921,7 +1921,7 @@ SymbolFileDWARF::ParseChildMembers
     const SymbolContext& sc,
     DWARFCompileUnit* dwarf_cu,
     const DWARFDebugInfoEntry *parent_die,
-    ClangASTType &class_clang_type,
+    CompilerType &class_clang_type,
     const LanguageType class_language,
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
@@ -2268,14 +2268,14 @@ SymbolFileDWARF::ParseChildMembers
                                     last_field_info.Clear();
                                 }
                                 
-                                ClangASTType member_clang_type = member_type->GetClangLayoutType();
+                                CompilerType member_clang_type = member_type->GetClangLayoutType();
                                 
                                 {
                                     // Older versions of clang emit array[0] and array[1] in the same way (<rdar://problem/12566646>).
                                     // If the current field is at the end of the structure, then there is definitely no room for extra
                                     // elements and we override the type to array[0].
                                     
-                                    ClangASTType member_array_element_type;
+                                    CompilerType member_array_element_type;
                                     uint64_t member_array_size;
                                     bool member_array_is_incomplete;
                                     
@@ -2454,7 +2454,7 @@ SymbolFileDWARF::ParseChildMembers
                         break;
                     }
 
-                    ClangASTType base_class_clang_type = base_class_type->GetClangFullType();
+                    CompilerType base_class_clang_type = base_class_type->GetClangFullType();
                     assert (base_class_clang_type);
                     if (class_language == eLanguageTypeObjC)
                     {
@@ -2599,19 +2599,19 @@ SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry
 // SymbolFileDWARF objects to detect if this DWARF file is the one that
 // can resolve a clang_type.
 bool
-SymbolFileDWARF::HasForwardDeclForClangType (const ClangASTType &clang_type)
+SymbolFileDWARF::HasForwardDeclForClangType (const CompilerType &clang_type)
 {
-    ClangASTType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
+    CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
     const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers.GetOpaqueQualType());
     return die != NULL;
 }
 
 
 bool
-SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
+SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (CompilerType &clang_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
-    ClangASTType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
+    CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
     const DWARFDebugInfoEntry* die = m_forward_decl_clang_type_to_die.lookup (clang_type_no_qualifiers.GetOpaqueQualType());
     if (die == NULL)
     {
@@ -2810,7 +2810,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
                             clang::TypeSourceInfo *type_source_info = base_class->getTypeSourceInfo();
                             if (type_source_info)
                             {
-                                ClangASTType base_class_type (GetClangASTContext().getASTContext(), type_source_info->getType());
+                                CompilerType base_class_type (GetClangASTContext().getASTContext(), type_source_info->getType());
                                 if (base_class_type.GetCompleteType() == false)
                                 {
                                     if (!base_class_error)
@@ -4566,7 +4566,7 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                                        bool skip_artificial,
                                        bool &is_static,
                                        bool &is_variadic,
-                                       std::vector<ClangASTType>& function_param_types,
+                                       std::vector<CompilerType>& function_param_types,
                                        std::vector<clang::ParmVarDecl*>& function_param_decls,
                                        unsigned &type_quals) // ,
                                        // ClangASTContext::TemplateParameterInfos &template_param_infos))
@@ -4740,7 +4740,7 @@ size_t
 SymbolFileDWARF::ParseChildEnumerators
 (
     const SymbolContext& sc,
-    lldb_private::ClangASTType &clang_type,
+    lldb_private::CompilerType &clang_type,
     bool is_signed,
     uint32_t enumerator_byte_size,
     DWARFCompileUnit* dwarf_cu,
@@ -5941,7 +5941,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             Declaration decl;
 
             Type::EncodingDataType encoding_data_type = Type::eEncodingIsUID;
-            ClangASTType clang_type;
+            CompilerType clang_type;
             DWARFFormValue form_value;
             
             dw_attr_t attr;
@@ -6590,7 +6590,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         DEBUG_PRINTF ("0x%8.8" PRIx64 ": %s (\"%s\")\n", MakeUserID(die->GetOffset()), DW_TAG_value_to_name(tag), type_name_cstr);
 
-                        ClangASTType enumerator_clang_type;
+                        CompilerType enumerator_clang_type;
                         clang_type.SetClangType (&ast, m_forward_decl_die_to_clang_type.lookup (die));
                         if (!clang_type)
                         {
@@ -6759,7 +6759,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     DEBUG_PRINTF ("0x%8.8" PRIx64 ": %s (\"%s\")\n", MakeUserID(die->GetOffset()), DW_TAG_value_to_name(tag), type_name_cstr);
 
-                    ClangASTType return_clang_type;
+                    CompilerType return_clang_type;
                     Type *func_type = NULL;
 
                     if (type_die_offset != DW_INVALID_OFFSET)
@@ -6771,7 +6771,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         return_clang_type = ast.GetBasicType(eBasicTypeVoid);
 
 
-                    std::vector<ClangASTType> function_param_types;
+                    std::vector<CompilerType> function_param_types;
                     std::vector<clang::ParmVarDecl*> function_param_decls;
 
                     // Parse the function children for the parameters
@@ -6818,7 +6818,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             ObjCLanguageRuntime::MethodName objc_method (type_name_cstr, true);
                             if (objc_method.IsValid(true))
                             {
-                                ClangASTType class_opaque_type;
+                                CompilerType class_opaque_type;
                                 ConstString class_name(objc_method.GetClassName());
                                 if (class_name)
                                 {
@@ -6826,7 +6826,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                                     if (complete_objc_class_type_sp)
                                     {
-                                        ClangASTType type_clang_forward_type = complete_objc_class_type_sp->GetClangForwardType();
+                                        CompilerType type_clang_forward_type = complete_objc_class_type_sp->GetClangForwardType();
                                         if (ClangASTContext::IsObjCObjectOrInterfaceType(type_clang_forward_type))
                                             class_opaque_type = type_clang_forward_type;
                                     }
@@ -6962,7 +6962,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     }
                                     else
                                     {
-                                        ClangASTType class_opaque_type = class_type->GetClangForwardType();
+                                        CompilerType class_opaque_type = class_type->GetClangForwardType();
                                         if (ClangASTContext::IsCXXClassType(class_opaque_type))
                                         {
                                             if (class_opaque_type.IsBeingDefined ())
@@ -7183,7 +7183,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             ParseChildArrayInfo(sc, dwarf_cu, die, first_index, element_orders, byte_stride, bit_stride);
                             if (byte_stride == 0 && bit_stride == 0)
                                 byte_stride = element_type->GetByteSize();
-                            ClangASTType array_element_type = element_type->GetClangForwardType();
+                            CompilerType array_element_type = element_type->GetClangForwardType();
                             uint64_t array_element_bit_stride = byte_stride * 8 + bit_stride;
                             if (element_orders.size() > 0)
                             {
@@ -7250,8 +7250,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         Type *pointee_type = ResolveTypeUID(type_die_offset);
                         Type *class_type = ResolveTypeUID(containing_type_die_offset);
 
-                        ClangASTType pointee_clang_type = pointee_type->GetClangForwardType();
-                        ClangASTType class_clang_type = class_type->GetClangLayoutType();
+                        CompilerType pointee_clang_type = pointee_type->GetClangForwardType();
+                        CompilerType class_clang_type = class_type->GetClangLayoutType();
 
                         clang_type = ClangASTContext::CreateMemberPointerType(pointee_clang_type, class_clang_type);
 
@@ -8087,7 +8087,7 @@ void
 SymbolFileDWARF::CompleteTagDecl (void *baton, clang::TagDecl *decl)
 {
     SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-    ClangASTType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
+    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
     if (clang_type)
         symbol_file_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
 }
@@ -8096,7 +8096,7 @@ void
 SymbolFileDWARF::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *decl)
 {
     SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-    ClangASTType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
+    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
     if (clang_type)
         symbol_file_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
 }

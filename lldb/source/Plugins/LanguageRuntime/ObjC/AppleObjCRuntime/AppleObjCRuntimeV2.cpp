@@ -13,7 +13,7 @@
 
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
@@ -411,13 +411,13 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                 }
                 else
                 {
-                    // try to go for a ClangASTType at least
+                    // try to go for a CompilerType at least
                     DeclVendor* vendor = GetDeclVendor();
                     if (vendor)
                     {
                         std::vector<clang::NamedDecl*> decls;
                         if (vendor->FindDecls(class_name, false, 1, decls) && decls.size())
-                            class_type_or_name.SetClangASTType(ClangASTContext::GetTypeForDecl(decls[0]));
+                            class_type_or_name.SetCompilerType(ClangASTContext::GetTypeForDecl(decls[0]));
                     }
                 }
             }
@@ -784,7 +784,7 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 }
 
 size_t
-AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const char *ivar_name)
+AppleObjCRuntimeV2::GetByteOffsetForIvar (CompilerType &parent_ast_type, const char *ivar_name)
 {
     uint32_t ivar_offset = LLDB_INVALID_IVAR_OFFSET;
 
@@ -1245,8 +1245,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     }
     
     // Make some types for our arguments
-    ClangASTType clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
-    ClangASTType clang_void_pointer_type = ast->GetBasicType(eBasicTypeVoid).GetPointerType();
+    CompilerType clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
+    CompilerType clang_void_pointer_type = ast->GetBasicType(eBasicTypeVoid).GetPointerType();
     
     if (!m_get_class_info_code.get())
     {
@@ -1499,8 +1499,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     }
     
     // Make some types for our arguments
-    ClangASTType clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
-    ClangASTType clang_void_pointer_type = ast->GetBasicType(eBasicTypeVoid).GetPointerType();
+    CompilerType clang_uint32_t_type = ast->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 32);
+    CompilerType clang_void_pointer_type = ast->GetBasicType(eBasicTypeVoid).GetPointerType();
     
     if (!m_get_shared_cache_class_info_code.get())
     {

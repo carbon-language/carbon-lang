@@ -42,7 +42,7 @@ ThreadPlanCallUserExpression::ThreadPlanCallUserExpression (Thread &thread,
                                                 llvm::ArrayRef<lldb::addr_t> args,
                                                 const EvaluateExpressionOptions &options,
                                                 lldb::ClangUserExpressionSP &user_expression_sp) :
-    ThreadPlanCallFunction (thread, function, ClangASTType(), args, options),
+    ThreadPlanCallFunction (thread, function, CompilerType(), args, options),
     m_user_expression_sp (user_expression_sp)
 {
     // User expressions are generally "User generated" so we should set them up to stop when done.

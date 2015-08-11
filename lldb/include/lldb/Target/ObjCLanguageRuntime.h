@@ -21,7 +21,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/ThreadSafeDenseMap.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/DeclVendor.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/LanguageRuntime.h"
@@ -247,7 +247,7 @@ public:
         
         struct iVarDescriptor {
             ConstString m_name;
-            ClangASTType m_type;
+            CompilerType m_type;
             uint64_t m_size;
             int32_t m_offset;
         };
@@ -281,10 +281,10 @@ public:
     class EncodingToType
     {
     public:
-        virtual ClangASTType RealizeType (ClangASTContext& ast_ctx, const char* name, bool for_expression);
-        virtual ClangASTType RealizeType (const char* name, bool for_expression);
+        virtual CompilerType RealizeType (ClangASTContext& ast_ctx, const char* name, bool for_expression);
+        virtual CompilerType RealizeType (const char* name, bool for_expression);
         
-        virtual ClangASTType RealizeType (clang::ASTContext& ast_ctx, const char* name, bool for_expression) = 0;
+        virtual CompilerType RealizeType (clang::ASTContext& ast_ctx, const char* name, bool for_expression) = 0;
         
         virtual ~EncodingToType();
         
@@ -440,7 +440,7 @@ public:
     // offset, returns LLDB_INVALID_IVAR_OFFSET.
     
     virtual size_t
-    GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
+    GetByteOffsetForIvar (CompilerType &parent_qual_type, const char *ivar_name);
     
     // Given the name of an Objective-C runtime symbol (e.g., ivar offset symbol),
     // try to determine from the runtime what the value of that symbol would be.
@@ -560,7 +560,7 @@ public:
     }
     
     bool
-    GetTypeBitSize (const ClangASTType& clang_type,
+    GetTypeBitSize (const CompilerType& clang_type,
                     uint64_t &size) override;
 
 protected:

@@ -57,7 +57,7 @@ namespace lldb_private {
             lldb::addr_t m_node_address;
             ValueObject* m_head;
             ValueObject* m_tail;
-            ClangASTType m_element_type;
+            CompilerType m_element_type;
             size_t m_count;
             std::map<size_t,lldb::ValueObjectSP> m_children;
         };
@@ -332,7 +332,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
     ValueObjectSP impl_sp(m_backend.GetChildMemberWithName(ConstString("__end_"),true));
     if (!impl_sp)
         return false;
-    ClangASTType list_type = m_backend.GetClangType();
+    CompilerType list_type = m_backend.GetClangType();
     if (list_type.IsReferenceType())
         list_type = list_type.GetNonReferenceType();
 

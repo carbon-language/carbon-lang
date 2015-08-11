@@ -831,7 +831,7 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
         TypeImplSP type_sp (type.GetSP());
         if (type.IsValid())
         {
-            sb_value.SetSP(value_sp->GetSyntheticChildAtOffset(offset, type_sp->GetClangASTType(false), true),GetPreferDynamicValue(),GetPreferSyntheticValue(), name);
+            sb_value.SetSP(value_sp->GetSyntheticChildAtOffset(offset, type_sp->GetCompilerType(false), true),GetPreferDynamicValue(),GetPreferSyntheticValue(), name);
         }
     }
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -856,7 +856,7 @@ SBValue::Cast (SBType type)
     lldb::ValueObjectSP value_sp(GetSP(locker));
     TypeImplSP type_sp (type.GetSP());
     if (value_sp && type_sp)
-        sb_value.SetSP(value_sp->Cast(type_sp->GetClangASTType(false)),GetPreferDynamicValue(),GetPreferSyntheticValue());
+        sb_value.SetSP(value_sp->Cast(type_sp->GetCompilerType(false)),GetPreferDynamicValue(),GetPreferSyntheticValue());
     return sb_value;
 }
 
@@ -907,7 +907,7 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType s
     lldb::TypeImplSP type_impl_sp (sb_type.GetSP());
     if (value_sp && type_impl_sp)
     {
-        ClangASTType ast_type(type_impl_sp->GetClangASTType(true));
+        CompilerType ast_type(type_impl_sp->GetCompilerType(true));
         ExecutionContext exe_ctx (value_sp->GetExecutionContextRef());
         new_value_sp = ValueObject::CreateValueObjectFromAddress(name, address, exe_ctx, ast_type);
     }
@@ -936,7 +936,7 @@ SBValue::CreateValueFromData (const char* name, SBData data, SBType type)
     if (value_sp)
     {
         ExecutionContext exe_ctx (value_sp->GetExecutionContextRef());
-        new_value_sp = ValueObject::CreateValueObjectFromData(name, **data, exe_ctx, type.GetSP()->GetClangASTType(true));
+        new_value_sp = ValueObject::CreateValueObjectFromData(name, **data, exe_ctx, type.GetSP()->GetCompilerType(true));
         new_value_sp->SetAddressTypeOfChildren(eAddressTypeLoad);
     }
     sb_value.SetSP(new_value_sp);
@@ -1812,7 +1812,7 @@ SBValue::Watch (bool resolve_location, bool read, bool write, SBError &error)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
 
         Error rc;
-        ClangASTType type (value_sp->GetClangType());
+        CompilerType type (value_sp->GetClangType());
         WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, &type, watch_type, rc);
         error.SetError(rc);
 

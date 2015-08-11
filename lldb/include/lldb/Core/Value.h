@@ -21,7 +21,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Scalar.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 namespace lldb_private {
 
@@ -136,11 +136,11 @@ public:
     Value &
     operator=(const Value &rhs);
 
-    const ClangASTType &
+    const CompilerType &
     GetClangType();
     
     void
-    SetClangType (const ClangASTType &clang_type);
+    SetClangType (const CompilerType &clang_type);
 
     ValueType
     GetValueType() const;
@@ -292,7 +292,7 @@ public:
 protected:
     Scalar          m_value;
     Vector          m_vector;
-    ClangASTType    m_clang_type;
+    CompilerType    m_clang_type;
     void *          m_context;
     ValueType       m_value_type;
     ContextType     m_context_type;

@@ -12,7 +12,7 @@
 #include "lldb/API/SBTypeEnumMember.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/Type.h"
 
 using namespace lldb;

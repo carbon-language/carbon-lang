@@ -98,13 +98,13 @@ namespace lldb_private {
         CreateValueObjectFromAddress (const char* name,
                                       uint64_t address,
                                       const ExecutionContext& exe_ctx,
-                                      ClangASTType type);
+                                      CompilerType type);
         
         lldb::ValueObjectSP
         CreateValueObjectFromData (const char* name,
                                    const DataExtractor& data,
                                    const ExecutionContext& exe_ctx,
-                                   ClangASTType type);
+                                   CompilerType type);
         
     private:
         bool m_valid;

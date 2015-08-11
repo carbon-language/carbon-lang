@@ -290,7 +290,7 @@ ABISysV_mips64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
 
-    ClangASTType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetClangType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -368,14 +368,14 @@ ABISysV_mips64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
 
 
 ValueObjectSP
-ABISysV_mips64::GetReturnValueObjectSimple (Thread &thread, ClangASTType &return_clang_type) const
+ABISysV_mips64::GetReturnValueObjectSimple (Thread &thread, CompilerType &return_clang_type) const
 {
     ValueObjectSP return_valobj_sp;
     return return_valobj_sp;
 }
 
 ValueObjectSP
-ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_clang_type) const
+ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_clang_type) const
 {
     ValueObjectSP return_valobj_sp;
     Value value;

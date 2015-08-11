@@ -135,7 +135,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
 
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 const Address &function,
-                                                const ClangASTType &return_type,
+                                                const CompilerType &return_type,
                                                 llvm::ArrayRef<addr_t> args,
                                                 const EvaluateExpressionOptions &options) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
@@ -188,7 +188,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction(Thread &thread,
     m_should_clear_objc_exception_bp(false),
     m_should_clear_cxx_exception_bp(false),
     m_stop_address(LLDB_INVALID_ADDRESS),
-    m_return_type(ClangASTType())
+    m_return_type(CompilerType())
 {
 
 }

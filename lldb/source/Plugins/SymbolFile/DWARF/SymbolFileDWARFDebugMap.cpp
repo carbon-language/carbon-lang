@@ -788,7 +788,7 @@ SymbolFileDWARFDebugMap::ResolveTypeUID(lldb::user_id_t type_uid)
 }
 
 bool
-SymbolFileDWARFDebugMap::ResolveClangOpaqueTypeDefinition (ClangASTType& clang_type)
+SymbolFileDWARFDebugMap::ResolveClangOpaqueTypeDefinition (CompilerType& clang_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
     return false;
@@ -1433,7 +1433,7 @@ void
 SymbolFileDWARFDebugMap::CompleteTagDecl (void *baton, clang::TagDecl *decl)
 {
     SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
-    ClangASTType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
+    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
     if (clang_type)
     {
         symbol_file_dwarf->ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
@@ -1451,7 +1451,7 @@ void
 SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *decl)
 {
     SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
-    ClangASTType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
+    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
     if (clang_type)
     {
         symbol_file_dwarf->ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {

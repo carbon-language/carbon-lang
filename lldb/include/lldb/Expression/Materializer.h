@@ -148,7 +148,7 @@ public:
             m_offset = offset;
         }
     protected:
-        void SetSizeAndAlignmentFromType (ClangASTType &type);
+        void SetSizeAndAlignmentFromType (CompilerType &type);
         
         uint32_t    m_alignment;
         uint32_t    m_size;

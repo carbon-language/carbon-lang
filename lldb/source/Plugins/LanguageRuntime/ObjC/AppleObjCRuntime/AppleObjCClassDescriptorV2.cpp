@@ -529,7 +529,7 @@ ClassDescriptorV2::iVarsStorage::fill (AppleObjCRuntimeV2& runtime, ClassDescrip
                         [this,process,encoding_to_type_sp](const char * name, const char * type, lldb::addr_t offset_ptr, uint64_t size) -> bool {
                  const bool for_expression = false;
                  const bool stop_loop = false;
-                 ClangASTType ivar_type = encoding_to_type_sp->RealizeType(type, for_expression);
+                 CompilerType ivar_type = encoding_to_type_sp->RealizeType(type, for_expression);
                  if (ivar_type)
                  {
                      Scalar offset_scalar;

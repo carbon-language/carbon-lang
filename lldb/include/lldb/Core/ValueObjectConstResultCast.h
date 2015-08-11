@@ -25,7 +25,7 @@ public:
     ValueObjectConstResultCast (
         ValueObject &parent,
         const ConstString &name,
-        const ClangASTType &cast_type,
+        const CompilerType &cast_type,
         lldb::addr_t live_address = LLDB_INVALID_ADDRESS);
 
     virtual
@@ -39,7 +39,7 @@ public:
                         bool synthetic_array_member,
                         int32_t synthetic_index);
 
-    virtual ClangASTType
+    virtual CompilerType
     GetClangType ()
     {
         return ValueObjectCast::GetClangType();
@@ -47,7 +47,7 @@ public:
 
     virtual lldb::ValueObjectSP
     GetSyntheticChildAtOffset(uint32_t offset,
-                              const ClangASTType& type,
+                              const CompilerType& type,
                               bool can_create);
 
     virtual lldb::ValueObjectSP
@@ -59,7 +59,7 @@ public:
                     uint32_t item_count = 1);
 
     virtual lldb::ValueObjectSP
-    Cast (const ClangASTType &clang_ast_type);
+    Cast (const CompilerType &clang_ast_type);
 
 protected:
     ValueObjectConstResultImpl m_impl;

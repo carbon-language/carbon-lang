@@ -27,7 +27,7 @@ class ValueObjectConstResultChild : public ValueObjectChild
 public:
     
     ValueObjectConstResultChild (ValueObject &parent,
-                                 const ClangASTType &clang_type,
+                                 const CompilerType &clang_type,
                                  const ConstString &name,
                                  uint32_t byte_size,
                                  int32_t byte_offset,
@@ -45,14 +45,14 @@ public:
     virtual ValueObject *
     CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
-    virtual ClangASTType
+    virtual CompilerType
     GetClangType ()
     {
         return ValueObjectChild::GetClangType();
     }
     
     virtual lldb::ValueObjectSP
-    GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type, bool can_create);
+    GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create);
     
     virtual lldb::ValueObjectSP
     AddressOf (Error &error);
@@ -63,7 +63,7 @@ public:
 					uint32_t item_count = 1);
 
     virtual lldb::ValueObjectSP
-    Cast (const ClangASTType &clang_ast_type);
+    Cast (const CompilerType &clang_ast_type);
     
 protected:
     ValueObjectConstResultImpl m_impl;

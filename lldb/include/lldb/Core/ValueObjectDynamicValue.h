@@ -127,7 +127,7 @@ protected:
         return true;
     }
     
-    virtual ClangASTType
+    virtual CompilerType
     GetClangTypeImpl ();
 
     Address  m_address;  ///< The variable that this value object is based upon

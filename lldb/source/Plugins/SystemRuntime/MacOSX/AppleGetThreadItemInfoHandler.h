@@ -20,7 +20,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 // This class will insert a ClangUtilityFunction into the inferior process for
 // calling libBacktraceRecording's __introspection_dispatch_thread_get_item_info()

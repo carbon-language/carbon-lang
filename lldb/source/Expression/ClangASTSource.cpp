@@ -272,7 +272,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                     if (!type)
                         continue;
 
-                    ClangASTType clang_type (type->GetClangFullType());
+                    CompilerType clang_type (type->GetClangFullType());
 
                     if (!clang_type)
                         continue;
@@ -311,7 +311,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                 if (!type)
                     continue;
 
-                ClangASTType clang_type (type->GetClangFullType());
+                CompilerType clang_type (type->GetClangFullType());
 
                 if (!clang_type)
                     continue;
@@ -761,9 +761,9 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
                             (name_string ? name_string : "<anonymous>"));
             }
 
-            ClangASTType full_type = type_sp->GetClangFullType();
+            CompilerType full_type = type_sp->GetClangFullType();
 
-            ClangASTType copied_clang_type (GuardedCopyType(full_type));
+            CompilerType copied_clang_type (GuardedCopyType(full_type));
 
             if (!copied_clang_type)
             {
@@ -1876,14 +1876,14 @@ ClangASTSource::AddNamespace (NameSearchContext &context, ClangASTImporter::Name
     return dyn_cast<NamespaceDecl>(copied_decl);
 }
 
-ClangASTType
-ClangASTSource::GuardedCopyType (const ClangASTType &src_type)
+CompilerType
+ClangASTSource::GuardedCopyType (const CompilerType &src_type)
 {
     ClangASTMetrics::RegisterLLDBImport();
 
     ClangASTContext* src_ast = src_type.GetTypeSystem()->AsClangASTContext();
     if (!src_ast)
-        return ClangASTType();
+        return CompilerType();
     
     SetImportInProgress(true);
 
@@ -1894,13 +1894,13 @@ ClangASTSource::GuardedCopyType (const ClangASTType &src_type)
     if (copied_qual_type.getAsOpaquePtr() && copied_qual_type->getCanonicalTypeInternal().isNull())
         // this shouldn't happen, but we're hardening because the AST importer seems to be generating bad types
         // on occasion.
-        return ClangASTType();
+        return CompilerType();
 
-    return ClangASTType(m_ast_context, copied_qual_type);
+    return CompilerType(m_ast_context, copied_qual_type);
 }
 
 clang::NamedDecl *
-NameSearchContext::AddVarDecl(const ClangASTType &type)
+NameSearchContext::AddVarDecl(const CompilerType &type)
 {
     assert (type && "Type for variable must be valid!");
 
@@ -1929,7 +1929,7 @@ NameSearchContext::AddVarDecl(const ClangASTType &type)
 }
 
 clang::NamedDecl *
-NameSearchContext::AddFunDecl (const ClangASTType &type, bool extern_c)
+NameSearchContext::AddFunDecl (const CompilerType &type, bool extern_c)
 {
     assert (type && "Type for variable must be valid!");
 
@@ -2030,11 +2030,11 @@ NameSearchContext::AddGenericFunDecl()
                                                                                 ArrayRef<QualType>(),                                        // argument types
                                                                                 proto_info));
 
-    return AddFunDecl(ClangASTType (m_ast_source.m_ast_context, generic_function_type), true);
+    return AddFunDecl(CompilerType (m_ast_source.m_ast_context, generic_function_type), true);
 }
 
 clang::NamedDecl *
-NameSearchContext::AddTypeDecl(const ClangASTType &clang_type)
+NameSearchContext::AddTypeDecl(const CompilerType &clang_type)
 {
     if (clang_type)
     {

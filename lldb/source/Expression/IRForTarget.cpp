@@ -34,7 +34,7 @@
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 
 #include <map>
@@ -1509,7 +1509,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         if (value_decl == NULL)
             return false;
 
-        lldb_private::ClangASTType clang_type(&value_decl->getASTContext(), value_decl->getType());
+        lldb_private::CompilerType clang_type(&value_decl->getASTContext(), value_decl->getType());
 
         const Type *value_type = NULL;
 

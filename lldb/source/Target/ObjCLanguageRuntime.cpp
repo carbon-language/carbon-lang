@@ -152,7 +152,7 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
 }
 
 size_t
-ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name)
+ObjCLanguageRuntime::GetByteOffsetForIvar (CompilerType &parent_qual_type, const char *ivar_name)
 {
     return LLDB_INVALID_IVAR_OFFSET;
 }
@@ -619,20 +619,20 @@ ObjCLanguageRuntime::GetNonKVOClassDescriptor (ObjCISA isa)
 }
 
 
-ClangASTType
+CompilerType
 ObjCLanguageRuntime::EncodingToType::RealizeType (const char* name, bool for_expression)
 {
     if (m_scratch_ast_ctx_ap)
         return RealizeType(*m_scratch_ast_ctx_ap, name, for_expression);
-    return ClangASTType();
+    return CompilerType();
 }
 
-ClangASTType
+CompilerType
 ObjCLanguageRuntime::EncodingToType::RealizeType (ClangASTContext& ast_ctx, const char* name, bool for_expression)
 {
     clang::ASTContext *clang_ast = ast_ctx.getASTContext();
     if (!clang_ast)
-        return ClangASTType();
+        return CompilerType();
     return RealizeType(*clang_ast, name, for_expression);
 }
 
@@ -645,7 +645,7 @@ ObjCLanguageRuntime::GetEncodingToType ()
 }
 
 bool
-ObjCLanguageRuntime::GetTypeBitSize (const ClangASTType& clang_type,
+ObjCLanguageRuntime::GetTypeBitSize (const CompilerType& clang_type,
                                      uint64_t &size)
 {
     void *opaque_ptr = clang_type.GetOpaqueQualType();

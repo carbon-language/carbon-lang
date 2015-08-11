@@ -17,7 +17,7 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 
 namespace lldb_private {
 

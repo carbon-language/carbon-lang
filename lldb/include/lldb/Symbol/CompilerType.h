@@ -1,4 +1,4 @@
-//===-- ClangASTType.h ------------------------------------------*- C++ -*-===//
+//===-- CompilerType.h ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ClangASTType_h_
-#define liblldb_ClangASTType_h_
+#ifndef liblldb_CompilerType_h_
+#define liblldb_CompilerType_h_
 
 #include <string>
+#include <vector>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
-#include "clang/AST/Type.h"
 
 namespace lldb_private {
 
@@ -27,35 +28,35 @@ namespace lldb_private {
 // and the opaque clang QualType to be specified for ease of use and
 // to avoid code duplication.
 //----------------------------------------------------------------------
-class ClangASTType
+class CompilerType
 {
 public:
     //----------------------------------------------------------------------
     // Constructors and Destructors
     //----------------------------------------------------------------------
-    ClangASTType (TypeSystem *type_system, void *type);
-    ClangASTType (clang::ASTContext *ast_context, clang::QualType qual_type);
+    CompilerType (TypeSystem *type_system, void *type);
+    CompilerType (clang::ASTContext *ast_context, clang::QualType qual_type);
 
-    ClangASTType (const ClangASTType &rhs) :
+    CompilerType (const CompilerType &rhs) :
         m_type (rhs.m_type),
         m_type_system  (rhs.m_type_system)
     {
     }
     
-    ClangASTType () :
+    CompilerType () :
         m_type (0),
         m_type_system  (0)
     {
     }
     
-    ~ClangASTType();
+    ~CompilerType();
     
     //----------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------
 
-    const ClangASTType &
-    operator= (const ClangASTType &rhs)
+    const CompilerType &
+    operator= (const CompilerType &rhs)
     {
         m_type = rhs.m_type;
         m_type_system = rhs.m_type_system;
@@ -73,7 +74,7 @@ public:
     }
     
     bool
-    operator < (const ClangASTType &rhs) const
+    operator < (const CompilerType &rhs) const
     {
         if (m_type_system == rhs.m_type_system)
             return m_type < rhs.m_type;
@@ -87,12 +88,12 @@ public:
     }
     
     bool
-    IsArrayType (ClangASTType *element_type,
+    IsArrayType (CompilerType *element_type,
                  uint64_t *size,
                  bool *is_incomplete) const;
 
     bool
-    IsVectorType (ClangASTType *element_type,
+    IsVectorType (CompilerType *element_type,
                   uint64_t *size) const;
     
     bool
@@ -126,12 +127,12 @@ public:
     IsFunctionType (bool *is_variadic_ptr = NULL) const;
 
     uint32_t
-    IsHomogeneousAggregate (ClangASTType* base_type_ptr) const;
+    IsHomogeneousAggregate (CompilerType* base_type_ptr) const;
 
     size_t
     GetNumberOfFunctionArguments () const;
     
-    ClangASTType
+    CompilerType
     GetFunctionArgumentAtIndex (const size_t index) const;
     
     bool
@@ -147,13 +148,13 @@ public:
     IsPolymorphicClass () const;
 
     bool
-    IsPossibleCPlusPlusDynamicType (ClangASTType *target_type = NULL) const
+    IsPossibleCPlusPlusDynamicType (CompilerType *target_type = NULL) const
     {
         return IsPossibleDynamicType (target_type, true, false);
     }
     
     bool
-    IsPossibleDynamicType (ClangASTType *target_type, // Can pass NULL
+    IsPossibleDynamicType (CompilerType *target_type, // Can pass NULL
                            bool check_cplusplus,
                            bool check_objc) const;
 
@@ -165,13 +166,13 @@ public:
     IsRuntimeGeneratedType () const;
     
     bool
-    IsPointerType (ClangASTType *pointee_type = NULL) const;
+    IsPointerType (CompilerType *pointee_type = NULL) const;
     
     bool
-    IsPointerOrReferenceType (ClangASTType *pointee_type = NULL) const;
+    IsPointerOrReferenceType (CompilerType *pointee_type = NULL) const;
     
     bool
-    IsReferenceType (ClangASTType *pointee_type = nullptr, bool* is_rvalue = nullptr) const;
+    IsReferenceType (CompilerType *pointee_type = nullptr, bool* is_rvalue = nullptr) const;
     
     bool
     IsScalarType () const;
@@ -219,7 +220,7 @@ public:
     GetDisplayTypeName () const;
 
     uint32_t
-    GetTypeInfo (ClangASTType *pointee_or_element_clang_type = NULL) const;
+    GetTypeInfo (CompilerType *pointee_or_element_clang_type = NULL) const;
     
     lldb::LanguageType
     GetMinimumLanguage ();
@@ -245,13 +246,13 @@ public:
     // Creating related types
     //----------------------------------------------------------------------
     
-    ClangASTType
+    CompilerType
     GetArrayElementType (uint64_t *stride = nullptr) const;
     
-    ClangASTType
+    CompilerType
     GetCanonicalType () const;
     
-    ClangASTType
+    CompilerType
     GetFullyUnqualifiedType () const;
     
     // Returns -1 if this isn't a function of if the function doesn't have a prototype
@@ -259,10 +260,10 @@ public:
     int
     GetFunctionArgumentCount () const;
 
-    ClangASTType
+    CompilerType
     GetFunctionArgumentTypeAtIndex (size_t idx) const;
 
-    ClangASTType
+    CompilerType
     GetFunctionReturnType () const;
     
     size_t
@@ -271,26 +272,26 @@ public:
     TypeMemberFunctionImpl
     GetMemberFunctionAtIndex (size_t idx);
     
-    ClangASTType
+    CompilerType
     GetNonReferenceType () const;
 
-    ClangASTType
+    CompilerType
     GetPointeeType () const;
     
-    ClangASTType
+    CompilerType
     GetPointerType () const;
 
     // If the current object represents a typedef type, get the underlying type
-    ClangASTType
+    CompilerType
     GetTypedefedType () const;
 
-    ClangASTType
+    CompilerType
     RemoveFastQualifiers () const;
     
     //----------------------------------------------------------------------
     // Create related types using the current type's AST
     //----------------------------------------------------------------------
-    ClangASTType
+    CompilerType
     GetBasicTypeFromAST (lldb::BasicType basic_type) const;
 
     //----------------------------------------------------------------------
@@ -324,7 +325,7 @@ public:
     uint32_t
     GetNumFields () const;
     
-    ClangASTType
+    CompilerType
     GetFieldAtIndex (size_t idx,
                      std::string& name,
                      uint64_t *bit_offset_ptr,
@@ -333,12 +334,12 @@ public:
     
     uint32_t
     GetIndexOfFieldWithName (const char* name,
-                             ClangASTType* field_clang_type = NULL,
+                             CompilerType* field_clang_type = NULL,
                              uint64_t *bit_offset_ptr = NULL,
                              uint32_t *bitfield_bit_size_ptr = NULL,
                              bool *is_bitfield_ptr = NULL) const;
     
-    ClangASTType
+    CompilerType
     GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                               size_t idx,
                               bool transparent_pointers,
@@ -453,10 +454,10 @@ private:
     
 };
     
-bool operator == (const ClangASTType &lhs, const ClangASTType &rhs);
-bool operator != (const ClangASTType &lhs, const ClangASTType &rhs);
+bool operator == (const CompilerType &lhs, const CompilerType &rhs);
+bool operator != (const CompilerType &lhs, const CompilerType &rhs);
 
     
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_ClangASTType_h_
+#endif // #ifndef liblldb_CompilerType_h_

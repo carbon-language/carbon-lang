@@ -413,7 +413,7 @@ private:
     Stream *m_stream;
     DumpValueObjectOptions options;
     Flags m_type_flags;
-    ClangASTType m_clang_type;
+    CompilerType m_clang_type;
     DumpValueObjectOptions::PointerDepth m_ptr_depth;
     uint32_t m_curr_depth;
     LazyBool m_should_print;

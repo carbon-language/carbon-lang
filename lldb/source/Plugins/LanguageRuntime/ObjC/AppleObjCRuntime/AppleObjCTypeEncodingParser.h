@@ -31,7 +31,7 @@ namespace lldb_private {
     {
     public:
         AppleObjCTypeEncodingParser (ObjCLanguageRuntime& runtime);
-        virtual ClangASTType RealizeType (clang::ASTContext &ast_ctx, const char* name, bool for_expression);
+        virtual CompilerType RealizeType (clang::ASTContext &ast_ctx, const char* name, bool for_expression);
         virtual ~AppleObjCTypeEncodingParser() {}
         
     private:

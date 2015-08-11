@@ -359,14 +359,14 @@ ABISysV_hexagon::SetReturnValueObject ( lldb::StackFrameSP &frame_sp, lldb::Valu
 }
 
 ValueObjectSP
-ABISysV_hexagon::GetReturnValueObjectSimple ( Thread &thread, ClangASTType &return_clang_type ) const
+ABISysV_hexagon::GetReturnValueObjectSimple ( Thread &thread, CompilerType &return_clang_type ) const
 {
     ValueObjectSP return_valobj_sp;
     return return_valobj_sp;
 }
 
 ValueObjectSP
-ABISysV_hexagon::GetReturnValueObjectImpl ( Thread &thread, ClangASTType &return_clang_type ) const
+ABISysV_hexagon::GetReturnValueObjectImpl ( Thread &thread, CompilerType &return_clang_type ) const
 {
     ValueObjectSP return_valobj_sp;
     return return_valobj_sp;

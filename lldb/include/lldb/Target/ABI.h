@@ -78,7 +78,7 @@ public:
     
     lldb::ValueObjectSP
     GetReturnValueObject (Thread &thread,
-                          ClangASTType &type,
+                          CompilerType &type,
                           bool persistent = true) const;
     
     // specialized to work with llvm IR types
@@ -95,7 +95,7 @@ protected:
     // This is the method the ABI will call to actually calculate the return value.
     // Don't put it in a persistent value object, that will be done by the ABI::GetReturnValueObject.
     virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type) const = 0;
+    GetReturnValueObjectImpl (Thread &thread, CompilerType &ast_type) const = 0;
     
     // specialized to work with llvm IR types
     virtual lldb::ValueObjectSP

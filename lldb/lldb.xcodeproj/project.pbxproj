@@ -472,7 +472,7 @@
 		268900CF13353E5F00698AC0 /* SymbolVendorMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C89E210F57C5600BB2B04 /* SymbolVendorMacOSX.cpp */; };
 		268900D013353E6F00698AC0 /* Block.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1310F1B8EC00F91463 /* Block.cpp */; };
 		268900D113353E6F00698AC0 /* ClangASTContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */; };
-		268900D213353E6F00698AC0 /* ClangASTType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */; };
+		268900D213353E6F00698AC0 /* CompilerType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E45FAD11F660FE008F7B28 /* CompilerType.cpp */; };
 		268900D313353E6F00698AC0 /* ClangExternalASTSourceCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */; };
 		268900D413353E6F00698AC0 /* ClangNamespaceDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */; };
 		268900D513353E6F00698AC0 /* CompileUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1510F1B8EC00F91463 /* CompileUnit.cpp */; };
@@ -2270,8 +2270,8 @@
 		49DCF6FD170E6B4A0092F75E /* IRMemoryMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRMemoryMap.cpp; path = source/Expression/IRMemoryMap.cpp; sourceTree = "<group>"; };
 		49DCF6FF170E6FD90092F75E /* Materializer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Materializer.h; path = include/lldb/Expression/Materializer.h; sourceTree = "<group>"; };
 		49DCF700170E70120092F75E /* Materializer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Materializer.cpp; path = source/Expression/Materializer.cpp; sourceTree = "<group>"; };
-		49E45FA911F660DC008F7B28 /* ClangASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTType.h; path = include/lldb/Symbol/ClangASTType.h; sourceTree = "<group>"; };
-		49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTType.cpp; path = source/Symbol/ClangASTType.cpp; sourceTree = "<group>"; };
+		49E45FA911F660DC008F7B28 /* CompilerType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompilerType.h; path = include/lldb/Symbol/CompilerType.h; sourceTree = "<group>"; };
+		49E45FAD11F660FE008F7B28 /* CompilerType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompilerType.cpp; path = source/Symbol/CompilerType.cpp; sourceTree = "<group>"; };
 		49EC3E98118F90AC00B1265E /* ThreadPlanCallFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallFunction.cpp; path = source/Target/ThreadPlanCallFunction.cpp; sourceTree = "<group>"; };
 		49EC3E9C118F90D400B1265E /* ThreadPlanCallFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallFunction.h; path = include/lldb/Target/ThreadPlanCallFunction.h; sourceTree = "<group>"; };
 		49F1A74511B3388F003ED505 /* ClangExpressionDeclMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionDeclMap.cpp; path = source/Expression/ClangExpressionDeclMap.cpp; sourceTree = "<group>"; };
@@ -4146,8 +4146,8 @@
 				26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */,
 				49D8FB3713B5594900411094 /* ClangASTImporter.h */,
 				49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */,
-				49E45FA911F660DC008F7B28 /* ClangASTType.h */,
-				49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */,
+				49E45FA911F660DC008F7B28 /* CompilerType.h */,
+				49E45FAD11F660FE008F7B28 /* CompilerType.cpp */,
 				495B38431489714C002708C5 /* ClangExternalASTSourceCommon.h */,
 				4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */,
 				26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */,
@@ -6262,7 +6262,7 @@
 				268900D013353E6F00698AC0 /* Block.cpp in Sources */,
 				268900D113353E6F00698AC0 /* ClangASTContext.cpp in Sources */,
 				2613F6C81B17B82F00D4DB85 /* CxaDemangle.cpp in Sources */,
-				268900D213353E6F00698AC0 /* ClangASTType.cpp in Sources */,
+				268900D213353E6F00698AC0 /* CompilerType.cpp in Sources */,
 				268900D313353E6F00698AC0 /* ClangExternalASTSourceCallbacks.cpp in Sources */,
 				268900D413353E6F00698AC0 /* ClangNamespaceDecl.cpp in Sources */,
 				268900D513353E6F00698AC0 /* CompileUnit.cpp in Sources */,

@@ -221,7 +221,7 @@ namespace lldb_private {
             virtual
             ~LibcxxVectorBoolSyntheticFrontEnd ();
         private:
-            ClangASTType m_bool_type;
+            CompilerType m_bool_type;
             ExecutionContextRef m_exe_ctx_ref;
             uint64_t m_count;
             lldb::addr_t m_base_data_address;
@@ -258,7 +258,7 @@ namespace lldb_private {
         private:
             ExecutionContextRef m_exe_ctx_ref;
             lldb::addr_t m_pair_address;
-            ClangASTType m_pair_type;
+            CompilerType m_pair_type;
             EvaluateExpressionOptions m_options;
             lldb::ValueObjectSP m_pair_sp;
         };

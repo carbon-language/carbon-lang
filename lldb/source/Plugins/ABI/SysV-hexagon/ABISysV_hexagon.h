@@ -56,12 +56,12 @@ public:
 protected:
     lldb::ValueObjectSP
     GetReturnValueObjectSimple ( lldb_private::Thread &thread,
-                                 lldb_private::ClangASTType &ast_type ) const;
+                                 lldb_private::CompilerType &ast_type ) const;
     
 public:    
     virtual lldb::ValueObjectSP
     GetReturnValueObjectImpl ( lldb_private::Thread &thread,
-                               lldb_private::ClangASTType &type ) const;
+                               lldb_private::CompilerType &type ) const;
         
     // specialized to work with llvm IR types
     virtual lldb::ValueObjectSP

@@ -26,11 +26,11 @@ class ThreadPlanCallFunction : public ThreadPlan
 {
     // Create a thread plan to call a function at the address passed in the "function"
     // argument.  If you plan to call GetReturnValueObject, then pass in the 
-    // return type, otherwise just pass in an invalid ClangASTType.
+    // return type, otherwise just pass in an invalid CompilerType.
 public:
     ThreadPlanCallFunction (Thread &thread,
                             const Address &function,
-                            const ClangASTType &return_type,
+                            const CompilerType &return_type,
                             llvm::ArrayRef<lldb::addr_t> args,
                             const EvaluateExpressionOptions &options);
 
@@ -184,7 +184,7 @@ protected:
     lldb::addr_t                                    m_stop_address;     // This is the address we stopped at.  Also set in DoTakedown;
 
 private:
-    ClangASTType                                    m_return_type;
+    CompilerType                                    m_return_type;
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };
 

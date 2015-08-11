@@ -216,7 +216,7 @@ AppleGetThreadItemInfoHandler::SetupGetThreadItemInfoFunction (Thread &thread, V
         if (!m_get_thread_item_info_function.get())
         {
             ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
-            ClangASTType get_thread_item_info_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+            CompilerType get_thread_item_info_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
             m_get_thread_item_info_function.reset(new ClangFunction (thread,
                                                                      get_thread_item_info_return_type,
                                                                      impl_code_address,
@@ -298,17 +298,17 @@ AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, tid_t thread_i
     // Where the return_buffer argument points to a 24 byte region of memory already allocated by lldb in
     // the inferior process.
 
-    ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+    CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
     Value return_buffer_ptr_value;
     return_buffer_ptr_value.SetValueType (Value::eValueTypeScalar);
     return_buffer_ptr_value.SetClangType (clang_void_ptr_type);
 
-    ClangASTType clang_int_type = clang_ast_context->GetBasicType(eBasicTypeInt);
+    CompilerType clang_int_type = clang_ast_context->GetBasicType(eBasicTypeInt);
     Value debug_value;
     debug_value.SetValueType (Value::eValueTypeScalar);
     debug_value.SetClangType (clang_int_type);
 
-    ClangASTType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
+    CompilerType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
     Value thread_id_value;
     thread_id_value.SetValueType (Value::eValueTypeScalar);
     thread_id_value.SetClangType (clang_uint64_type);

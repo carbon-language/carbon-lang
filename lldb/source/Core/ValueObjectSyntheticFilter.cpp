@@ -82,7 +82,7 @@ ValueObjectSynthetic::~ValueObjectSynthetic()
 {
 }
 
-ClangASTType
+CompilerType
 ValueObjectSynthetic::GetClangTypeImpl ()
 {
     return m_parent->GetClangType();

@@ -23,7 +23,7 @@
 #include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
-#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Symbol/CompilerType.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 

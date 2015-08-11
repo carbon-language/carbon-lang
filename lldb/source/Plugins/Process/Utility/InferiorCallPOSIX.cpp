@@ -93,7 +93,7 @@ lldb_private::InferiorCallMmap (Process *process,
             if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
             {
                 ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-                ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+                CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
                 lldb::addr_t args[] = { addr, length, prot_arg, flags_arg, fd, offset };
                 lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
                                                                              mmap_range.GetBaseAddress(),
@@ -182,7 +182,7 @@ lldb_private::InferiorCallMunmap (Process *process,
                 lldb::addr_t args[] = { addr, length };
                 lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
                                                                             munmap_range.GetBaseAddress(),
-                                                                            ClangASTType(),
+                                                                            CompilerType(),
                                                                             args,
                                                                             options));
                 if (call_plan_sp)
@@ -235,7 +235,7 @@ lldb_private::InferiorCall (Process *process,
     options.SetTimeoutUsec(500000);
 
     ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-    ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+    CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
     lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
                                                                  *address,
                                                                  clang_void_ptr_type,

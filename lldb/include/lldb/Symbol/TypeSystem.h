@@ -39,7 +39,7 @@ public:
     
     virtual bool
     IsArrayType (void * type,
-                 ClangASTType *element_type,
+                 CompilerType *element_type,
                  uint64_t *size,
                  bool *is_incomplete) = 0;
     
@@ -64,7 +64,7 @@ public:
     virtual size_t
     GetNumberOfFunctionArguments (void * type) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetFunctionArgumentAtIndex (void * type, const size_t index) = 0;
     
     virtual bool
@@ -75,12 +75,12 @@ public:
     
     virtual bool
     IsPossibleDynamicType (void * type,
-                           ClangASTType *target_type, // Can pass NULL
+                           CompilerType *target_type, // Can pass NULL
                            bool check_cplusplus,
                            bool check_objc) = 0;
     
     virtual bool
-    IsPointerType (void * type, ClangASTType *pointee_type) = 0;
+    IsPointerType (void * type, CompilerType *pointee_type) = 0;
     
     virtual bool
     IsScalarType (void * type) = 0;
@@ -110,7 +110,7 @@ public:
     GetTypeName (void * type) = 0;
     
     virtual uint32_t
-    GetTypeInfo (void * type, ClangASTType *pointee_or_element_clang_type) = 0;
+    GetTypeInfo (void * type, CompilerType *pointee_or_element_clang_type) = 0;
     
     virtual lldb::LanguageType
     GetMinimumLanguage (void * type) = 0;
@@ -122,10 +122,10 @@ public:
     // Creating related types
     //----------------------------------------------------------------------
     
-    virtual ClangASTType
+    virtual CompilerType
     GetArrayElementType (void * type, uint64_t *stride) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetCanonicalType (void * type) = 0;
     
     // Returns -1 if this isn't a function of if the function doesn't have a prototype
@@ -133,10 +133,10 @@ public:
     virtual int
     GetFunctionArgumentCount (void * type) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetFunctionArgumentTypeAtIndex (void * type, size_t idx) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetFunctionReturnType (void * type) = 0;
     
     virtual size_t
@@ -145,10 +145,10 @@ public:
     virtual TypeMemberFunctionImpl
     GetMemberFunctionAtIndex (void * type, size_t idx) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetPointeeType (void * type) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetPointerType (void * type) = 0;
     
     //----------------------------------------------------------------------
@@ -173,7 +173,7 @@ public:
     virtual uint32_t
     GetNumFields (void * type) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetFieldAtIndex (void * type,
                      size_t idx,
                      std::string& name,
@@ -181,7 +181,7 @@ public:
                      uint32_t *bitfield_bit_size_ptr,
                      bool *is_bitfield_ptr) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetChildClangTypeAtIndex (void * type,
                               ExecutionContext *exe_ctx,
                               size_t idx,
@@ -278,7 +278,7 @@ public:
     //----------------------------------------------------------------------
 
     virtual bool
-    IsPointerOrReferenceType (void * type, ClangASTType *pointee_type) = 0;
+    IsPointerOrReferenceType (void * type, CompilerType *pointee_type) = 0;
 
     virtual unsigned
     GetTypeQualifiers(void * type) = 0;
@@ -289,7 +289,7 @@ public:
     virtual size_t
     GetTypeBitAlign (void * type) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetBasicTypeFromAST (void * type, lldb::BasicType basic_type) = 0;
     
     virtual bool
@@ -299,7 +299,7 @@ public:
     IsConst(void * type) = 0;
     
     virtual uint32_t
-    IsHomogeneousAggregate (void * type, ClangASTType* base_type_ptr) = 0;
+    IsHomogeneousAggregate (void * type, CompilerType* base_type_ptr) = 0;
     
     virtual bool
     IsPolymorphicClass (void * type) = 0;
@@ -308,22 +308,22 @@ public:
     IsTypedefType (void * type) = 0;
     
     // If the current object represents a typedef type, get the underlying type
-    virtual ClangASTType
+    virtual CompilerType
     GetTypedefedType (void * type) = 0;
 
     virtual bool
     IsVectorType (void * type,
-                  ClangASTType *element_type,
+                  CompilerType *element_type,
                   uint64_t *size) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetFullyUnqualifiedType (void * type) = 0;
     
-    virtual ClangASTType
+    virtual CompilerType
     GetNonReferenceType (void * type) = 0;
     
     virtual bool
-    IsReferenceType (void * type, ClangASTType *pointee_type, bool* is_rvalue) = 0;
+    IsReferenceType (void * type, CompilerType *pointee_type, bool* is_rvalue) = 0;
 };
     
 } // namespace lldb_private

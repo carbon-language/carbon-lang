@@ -125,7 +125,7 @@ AppleGetQueuesHandler::Detach ()
     }
 }
 
-// Construct a ClangASTType for the structure that g_get_current_queues_function_code will return by value
+// Construct a CompilerType for the structure that g_get_current_queues_function_code will return by value
 // so we can extract the fields after performing the function call.
 // i.e. we are getting this struct returned to us:
 //
@@ -224,7 +224,7 @@ AppleGetQueuesHandler::SetupGetQueuesFunction (Thread &thread, ValueList &get_qu
         if (!m_get_queues_function.get())
         {
             ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
-            ClangASTType get_queues_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+            CompilerType get_queues_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
             m_get_queues_function.reset(new ClangFunction (thread,
                                                      get_queues_return_type,
                                                      impl_code_address,
@@ -308,12 +308,12 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
     // Where the return_buffer argument points to a 24 byte region of memory already allocated by lldb in
     // the inferior process.
 
-    ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+    CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
     Value return_buffer_ptr_value;
     return_buffer_ptr_value.SetValueType (Value::eValueTypeScalar);
     return_buffer_ptr_value.SetClangType (clang_void_ptr_type);
 
-    ClangASTType clang_int_type = clang_ast_context->GetBasicType(eBasicTypeInt);
+    CompilerType clang_int_type = clang_ast_context->GetBasicType(eBasicTypeInt);
     Value debug_value;
     debug_value.SetValueType (Value::eValueTypeScalar);
     debug_value.SetClangType (clang_int_type);
@@ -322,7 +322,7 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
     page_to_free_value.SetValueType (Value::eValueTypeScalar);
     page_to_free_value.SetClangType (clang_void_ptr_type);
 
-    ClangASTType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
+    CompilerType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
     Value page_to_free_size_value;
     page_to_free_size_value.SetValueType (Value::eValueTypeScalar);
     page_to_free_size_value.SetClangType (clang_uint64_type);
