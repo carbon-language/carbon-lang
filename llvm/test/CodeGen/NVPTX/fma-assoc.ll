@@ -23,3 +23,16 @@ define ptx_device double @t1_f64(double %x, double %y, double %z,
   %d = fadd double %c, %z
   ret double %d
 }
+
+define double @two_choices(double %val1, double %val2) {
+; CHECK-LABEL: two_choices(
+; CHECK: mul.f64
+; CHECK-NOT: mul.f64
+; CHECK: fma.rn.f64
+  %1 = fmul double %val1, %val2
+  %2 = fmul double %1, %1
+  %3 = fadd double %1, %2
+
+  ret double %3
+}
+

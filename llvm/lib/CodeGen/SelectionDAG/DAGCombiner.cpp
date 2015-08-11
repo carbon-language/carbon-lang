@@ -7426,6 +7426,14 @@ SDValue DAGCombiner::visitFADDForFMACombine(SDNode *N) {
   bool Aggressive = TLI.enableAggressiveFMAFusion(VT);
   bool LookThroughFPExt = TLI.isFPExtFree(VT);
 
+  // If we have two choices trying to fold (fadd (fmul u, v), (fmul x, y)),
+  // prefer to fold the multiply with fewer uses.
+  if (Aggressive && N0.getOpcode() == ISD::FMUL &&
+      N1.getOpcode() == ISD::FMUL) {
+    if (N0.getNode()->use_size() > N1.getNode()->use_size())
+      std::swap(N0, N1);
+  }
+
   // fold (fadd (fmul x, y), z) -> (fma x, y, z)
   if (N0.getOpcode() == ISD::FMUL &&
       (Aggressive || N0->hasOneUse())) {
