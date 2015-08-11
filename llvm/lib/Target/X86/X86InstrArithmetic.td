@@ -615,14 +615,14 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
 def invalid_node : SDNode<"<<invalid_node>>", SDTIntLeaf,[],"<<invalid_node>>">;
 
 
-def Xi8  : X86TypeInfo<i8 , "b", GR8 , loadi8 , i8mem ,
-                       Imm8 , i8imm ,    imm,          i8imm   , invalid_node,
+def Xi8  : X86TypeInfo<i8, "b", GR8, loadi8, i8mem,
+                       Imm8, i8imm, imm8_su, i8imm, invalid_node,
                        0, OpSizeFixed, 0>;
 def Xi16 : X86TypeInfo<i16, "w", GR16, loadi16, i16mem,
-                       Imm16, i16imm,    imm,          i16i8imm, i16immSExt8,
+                       Imm16, i16imm, imm16_su, i16i8imm, i16immSExt8_su,
                        1, OpSize16, 0>;
 def Xi32 : X86TypeInfo<i32, "l", GR32, loadi32, i32mem,
-                       Imm32, i32imm,    imm,          i32i8imm, i32immSExt8,
+                       Imm32, i32imm, imm32_su, i32i8imm, i32immSExt8_su,
                        1, OpSize32, 0>;
 def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem,
                        Imm32S, i64i32imm, i64immSExt32, i64i8imm, i64immSExt8,

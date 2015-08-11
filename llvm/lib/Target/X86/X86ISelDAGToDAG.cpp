@@ -283,6 +283,82 @@ namespace {
         Segment = CurDAG->getRegister(0, MVT::i32);
     }
 
+    // Utility function to determine whether we should avoid selecting
+    // immediate forms of instructions for better code size or not.
+    // At a high level, we'd like to avoid such instructions when
+    // we have similar constants used within the same basic block
+    // that can be kept in a register.
+    //
+    bool shouldAvoidImmediateInstFormsForSize(SDNode *N) const {
+      uint32_t UseCount = 0;
+
+      // Do not want to hoist if we're not optimizing for size.
+      // TODO: We'd like to remove this restriction.
+      // See the comment in X86InstrInfo.td for more info.
+      if (!OptForSize)
+        return false;
+
+      // Walk all the users of the immediate.
+      for (SDNode::use_iterator UI = N->use_begin(),
+           UE = N->use_end(); (UI != UE) && (UseCount < 2); ++UI) {
+
+        SDNode *User = *UI;
+
+        // This user is already selected. Count it as a legitimate use and
+        // move on.
+        if (User->isMachineOpcode()) {
+          UseCount++;
+          continue;
+        }
+
+        // We want to count stores of immediates as real uses.
+        if (User->getOpcode() == ISD::STORE &&
+            User->getOperand(1).getNode() == N) {
+          UseCount++;
+          continue;
+        }
+
+        // We don't currently match users that have > 2 operands (except
+        // for stores, which are handled above)
+        // Those instruction won't match in ISEL, for now, and would
+        // be counted incorrectly.
+        // This may change in the future as we add additional instruction
+        // types.
+        if (User->getNumOperands() != 2)
+          continue;
+        
+        // Immediates that are used for offsets as part of stack
+        // manipulation should be left alone. These are typically
+        // used to indicate SP offsets for argument passing and
+        // will get pulled into stores/pushes (implicitly).
+        if (User->getOpcode() == X86ISD::ADD ||
+            User->getOpcode() == ISD::ADD    ||
+            User->getOpcode() == X86ISD::SUB ||
+            User->getOpcode() == ISD::SUB) {
+
+          // Find the other operand of the add/sub.
+          SDValue OtherOp = User->getOperand(0);
+          if (OtherOp.getNode() == N)
+            OtherOp = User->getOperand(1);
+
+          // Don't count if the other operand is SP.
+          RegisterSDNode *RegNode;
+          if (OtherOp->getOpcode() == ISD::CopyFromReg &&
+              (RegNode = dyn_cast_or_null<RegisterSDNode>(
+                 OtherOp->getOperand(1).getNode())))
+            if ((RegNode->getReg() == X86::ESP) ||
+                (RegNode->getReg() == X86::RSP))
+              continue;
+        }
+
+        // ... otherwise, count this and move on.
+        UseCount++;
+      }
+
+      // If we have more than 1 use, then recommend for hoisting.
+      return (UseCount > 1);
+    }
+
     /// getI8Imm - Return a target constant with the specified value, of type
     /// i8.
     inline SDValue getI8Imm(unsigned Imm, SDLoc DL) {
