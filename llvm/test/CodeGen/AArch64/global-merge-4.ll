@@ -64,9 +64,9 @@ define internal i32* @returnFoo() #1 {
   ret i32* getelementptr inbounds ([5 x i32], [5 x i32]* @foo, i64 0, i64 0)
 }
 
-;CHECK:	.type	_MergedGlobals,@object  // @_MergedGlobals
-;CHECK:	.local	_MergedGlobals
-;CHECK:	.comm	_MergedGlobals,60,16
+;CHECK:	.type	.L_MergedGlobals,@object  // @_MergedGlobals
+;CHECK:	.local	.L_MergedGlobals
+;CHECK:	.comm	.L_MergedGlobals,60,16
 
 attributes #0 = { nounwind ssp }
 attributes #1 = { nounwind readnone ssp }

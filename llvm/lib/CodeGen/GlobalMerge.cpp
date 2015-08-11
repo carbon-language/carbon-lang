@@ -429,8 +429,6 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
     std::vector<Type*> Tys;
     std::vector<Constant*> Inits;
 
-    bool HasExternal = false;
-    GlobalVariable *TheFirstExternal = 0;
     for (j = i; j != -1; j = GlobalSet.find_next(j)) {
       Type *Ty = Globals[j]->getType()->getElementType();
       MergedSize += DL.getTypeAllocSize(Ty);
@@ -439,30 +437,14 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
       }
       Tys.push_back(Ty);
       Inits.push_back(Globals[j]->getInitializer());
-
-      if (Globals[j]->hasExternalLinkage() && !HasExternal) {
-        HasExternal = true;
-        TheFirstExternal = Globals[j];
-      }
     }
-
-    // If merged variables doesn't have external linkage, we needn't to expose
-    // the symbol after merging.
-    GlobalValue::LinkageTypes Linkage = HasExternal
-                                            ? GlobalValue::ExternalLinkage
-                                            : GlobalValue::InternalLinkage;
 
     StructType *MergedTy = StructType::get(M.getContext(), Tys);
     Constant *MergedInit = ConstantStruct::get(MergedTy, Inits);
 
-    // If merged variables have external linkage, we use symbol name of the
-    // first variable merged as the suffix of global symbol name. This would
-    // be able to avoid the link-time naming conflict for globalm symbols.
     GlobalVariable *MergedGV = new GlobalVariable(
-        M, MergedTy, isConst, Linkage, MergedInit,
-        HasExternal ? "_MergedGlobals_" + TheFirstExternal->getName()
-                    : "_MergedGlobals",
-        nullptr, GlobalVariable::NotThreadLocal, AddrSpace);
+        M, MergedTy, isConst, GlobalValue::PrivateLinkage, MergedInit,
+        "_MergedGlobals", nullptr, GlobalVariable::NotThreadLocal, AddrSpace);
 
     for (ssize_t k = i, idx = 0; k != j; k = GlobalSet.find_next(k)) {
       GlobalValue::LinkageTypes Linkage = Globals[k]->getLinkage();
@@ -477,11 +459,9 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
       Globals[k]->replaceAllUsesWith(GEP);
       Globals[k]->eraseFromParent();
 
-      if (Linkage != GlobalValue::InternalLinkage) {
-        // Generate a new alias...
-        auto *PTy = cast<PointerType>(GEP->getType());
-        GlobalAlias::create(PTy, Linkage, Name, GEP, &M);
-      }
+      // Generate a new alias...
+      auto *PTy = cast<PointerType>(GEP->getType());
+      GlobalAlias::create(PTy, Linkage, Name, GEP, &M);
 
       NumMerged++;
     }
