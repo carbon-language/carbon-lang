@@ -210,7 +210,8 @@ namespace {
 
     /// Split all of the edges from inside the loop to their exit blocks.
     /// Update the appropriate Phi nodes as we do so.
-    void SplitExitEdges(Loop *L, const SmallVectorImpl<BasicBlock *> &ExitBlocks);
+    void SplitExitEdges(Loop *L,
+                        const SmallVectorImpl<BasicBlock *> &ExitBlocks);
 
     bool TryTrivialLoopUnswitch(bool &Changed);
 
@@ -743,12 +744,12 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
   ++NumTrivial;
 }
 
-/// TryTrivialLoopUnswitch - Check if the first non-constant condition starting from the
-/// loop header is a trivial unswitch condition: that is, a condition controls whether
-/// or not the loop does anything at all. If it is a trivial condition, unswitching
-/// produces no code duplications (equivalently, it produces a simpler loop and a new
-/// empty loop, which gets deleted). Therefore always unswitch trivial condition.
-///
+/// Check if the first non-constant condition starting from the loop header is
+/// a trivial unswitch condition: that is, a condition controls whether or not
+/// the loop does anything at all. If it is a trivial condition, unswitching
+/// produces no code duplications (equivalently, it produces a simpler loop and
+/// a new empty loop, which gets deleted). Therefore always unswitch trivial
+/// condition.
 bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
   BasicBlock *CurrentBB = currentLoop->getHeader();
   TerminatorInst *CurrentTerm = CurrentBB->getTerminator();
@@ -763,11 +764,11 @@ bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
   // terminator). The reason for not doing this in LoopUnswitch pass is that
   // it could potentially break LoopPassManager's invariants. Folding dead
   // branches could either eliminate the current loop or make other loops
-  // unreachable. LCSSA form might also not be preserved after deleting branches.
-  // The following code keeps traversing loop header's successors until it finds
-  // the trivial condition candidate (condition that is not a constant).
-  // Since unswitching generates branches with constant conditions, this
-  // scenario could be very common in practice.
+  // unreachable. LCSSA form might also not be preserved after deleting
+  // branches. The following code keeps traversing loop header's successors
+  // until it finds the trivial condition candidate (condition that is not a
+  // constant). Since unswitching generates branches with constant conditions,
+  // this scenario could be very common in practice.
   SmallSet<BasicBlock*, 8> Visited;
 
   while (true) {
@@ -794,7 +795,7 @@ bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
       } else if (BI->getCondition() == ConstantInt::getFalse(Context)) {
         CurrentBB = BI->getSuccessor(1);
       } else {
-        // Found a trivial condition candidate (non-foldable conditional branch).
+        // Found a trivial condition candidate: non-foldable conditional branch.
         break;
       }
     } else {
@@ -834,12 +835,13 @@ bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
       CondVal = ConstantInt::getFalse(Context);
     }
 
-    // If we didn't find a single unique LoopExit block, or if the loop exit block
-    // contains phi nodes, this isn't trivial.
+    // If we didn't find a single unique LoopExit block, or if the loop exit
+    // block contains phi nodes, this isn't trivial.
     if (!LoopExitBB || isa<PHINode>(LoopExitBB->begin()))
       return false;   // Can't handle this.
 
-    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, LoopExitBB, CurrentTerm);
+    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, LoopExitBB,
+                             CurrentTerm);
     ++NumBranches;
     return true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurrentTerm)) {
@@ -876,12 +878,13 @@ bool LoopUnswitch::TryTrivialLoopUnswitch(bool &Changed) {
       }
     }
 
-    // If we didn't find a single unique LoopExit block, or if the loop exit block
-    // contains phi nodes, this isn't trivial.
+    // If we didn't find a single unique LoopExit block, or if the loop exit
+    // block contains phi nodes, this isn't trivial.
     if (!LoopExitBB || isa<PHINode>(LoopExitBB->begin()))
       return false;   // Can't handle this.
 
-    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, LoopExitBB, nullptr);
+    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, LoopExitBB,
+                             nullptr);
     ++NumSwitches;
     return true;
   }
