@@ -30,3 +30,27 @@ sw.bb.2:                                          ; preds = %entry
 sw.epilog:                                        ; preds = %entry, %sw.bb.2, %sw.bb.1, %sw.bb
   ret void
 }
+
+define void @fooi72(i72 %x) {
+entry:
+  switch i72 %x, label %sw.epilog [
+    i72 1, label %sw.bb
+    i72 101, label %sw.bb.1
+    i72 1001, label %sw.bb.2
+  ]
+
+sw.bb:                                            ; preds = %entry
+  tail call void @_Z3bari(i32 4)
+  br label %sw.epilog
+
+sw.bb.1:                                          ; preds = %entry
+  tail call void @_Z3bari(i32 5)
+  br label %sw.epilog
+
+sw.bb.2:                                          ; preds = %entry
+  tail call void @_Z3bari(i32 6)
+  br label %sw.epilog
+
+sw.epilog:                                        ; preds = %entry, %sw.bb.2, %sw.bb.1, %sw.bb
+  ret void
+}

@@ -375,6 +375,9 @@ void SanitizerCoverageModule::InjectTraceForSwitch(
       IRBuilder<> IRB(I);
       SmallVector<Constant *, 16> Initializers;
       Value *Cond = SI->getCondition();
+      if (Cond->getType()->getScalarSizeInBits() >
+          Int64Ty->getScalarSizeInBits())
+        continue;
       Initializers.push_back(ConstantInt::get(Int64Ty, SI->getNumCases()));
       Initializers.push_back(
           ConstantInt::get(Int64Ty, Cond->getType()->getScalarSizeInBits()));
