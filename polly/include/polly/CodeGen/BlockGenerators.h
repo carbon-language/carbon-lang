@@ -406,9 +406,9 @@ protected:
                             ValueMapT &BBMap, ValueMapT &GlobalMap,
                             LoopToScevMapT &LTS);
 
-  Value *generateScalarStore(ScopStmt &Stmt, const StoreInst *store,
-                             ValueMapT &BBMap, ValueMapT &GlobalMap,
-                             LoopToScevMapT &LTS);
+  void generateScalarStore(ScopStmt &Stmt, const StoreInst *store,
+                           ValueMapT &BBMap, ValueMapT &GlobalMap,
+                           LoopToScevMapT &LTS);
 
   /// @brief Copy a single PHI instruction.
   ///

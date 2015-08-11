@@ -230,20 +230,16 @@ Value *BlockGenerator::generateScalarLoad(ScopStmt &Stmt, const LoadInst *Load,
   return ScalarLoad;
 }
 
-Value *BlockGenerator::generateScalarStore(ScopStmt &Stmt,
-                                           const StoreInst *Store,
-                                           ValueMapT &BBMap,
-                                           ValueMapT &GlobalMap,
-                                           LoopToScevMapT &LTS) {
+void BlockGenerator::generateScalarStore(ScopStmt &Stmt, const StoreInst *Store,
+                                         ValueMapT &BBMap, ValueMapT &GlobalMap,
+                                         LoopToScevMapT &LTS) {
   const Value *Pointer = Store->getPointerOperand();
   Value *NewPointer =
       generateLocationAccessed(Stmt, Store, Pointer, BBMap, GlobalMap, LTS);
   Value *ValueOperand = getNewValue(Stmt, Store->getValueOperand(), BBMap,
                                     GlobalMap, LTS, getLoopForInst(Store));
 
-  Value *NewStore = Builder.CreateAlignedStore(ValueOperand, NewPointer,
-                                               Store->getAlignment());
-  return NewStore;
+  Builder.CreateAlignedStore(ValueOperand, NewPointer, Store->getAlignment());
 }
 
 void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
@@ -275,10 +271,7 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
   }
 
   if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
-    Value *NewStore = generateScalarStore(Stmt, Store, BBMap, GlobalMap, LTS);
-    // Compute NewStore before its insertion in BBMap to make the insertion
-    // deterministic.
-    BBMap[Store] = NewStore;
+    generateScalarStore(Stmt, Store, BBMap, GlobalMap, LTS);
     return;
   }
 
