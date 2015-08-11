@@ -305,9 +305,8 @@ def getDefaultTimeout(platform_name):
     else:
         return "4m"
 
-
 def touch(fname, times=None):
-    with open(fname, 'a'):
+    if os.path.exists(fname):
         os.utime(fname, times)
 
 def find(pattern, path):
