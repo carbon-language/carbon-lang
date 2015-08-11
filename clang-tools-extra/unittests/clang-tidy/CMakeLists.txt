@@ -20,6 +20,7 @@ target_link_libraries(ClangTidyTests
   clangASTMatchers
   clangBasic
   clangFrontend
+  clangLex
   clangTidy
   clangTidyGoogleModule
   clangTidyLLVMModule
