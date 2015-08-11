@@ -348,7 +348,7 @@ pythonize_bool(SANITIZER_CAN_USE_CXXABI)
 
 add_subdirectory(include)
 
-find_llvm_external_project(projects libcxx COMPILER_RT_LIBCXX_PATH)
+set(COMPILER_RT_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
 if(EXISTS ${COMPILER_RT_LIBCXX_PATH}/)
   set(COMPILER_RT_HAS_LIBCXX_SOURCES TRUE)
 else()
