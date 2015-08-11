@@ -254,6 +254,10 @@ set(LIBOMP_STATS FALSE CACHE BOOL
 if(LIBOMP_STATS AND (NOT LIBOMP_HAVE_STATS))
   libomp_error_say("Stats-gathering functionality requested but not available")
 endif()
+# The stats functionality requires the std c++ library
+if(LIBOMP_STATS)
+  set(LIBOMP_USE_STDCPPLIB TRUE)
+endif()
 
 # OMPT-support
 # TODO: Make this a real feature check

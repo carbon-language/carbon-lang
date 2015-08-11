@@ -46,7 +46,7 @@ __kmp_linear_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid
                             void (*reduce)(void *, void *)
                             USE_ITT_BUILD_ARG(void * itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_linear_gather);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_linear_gather);
     register kmp_team_t *team = this_thr->th.th_team;
     register kmp_bstate_t *thr_bar = & this_thr->th.th_bar[bt].bb;
     register kmp_info_t **other_threads = team->t.t_threads;
@@ -123,7 +123,7 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
                              int propagate_icvs
                              USE_ITT_BUILD_ARG(void *itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_linear_release);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_linear_release);
     register kmp_bstate_t *thr_bar = &this_thr->th.th_bar[bt].bb;
     register kmp_team_t *team;
 
@@ -141,17 +141,18 @@ __kmp_linear_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gti
 
         if (nproc > 1) {
 #if KMP_BARRIER_ICV_PUSH
-            KMP_START_EXPLICIT_TIMER(USER_icv_copy);
-            if (propagate_icvs) {
-                ngo_load(&team->t.t_implicit_task_taskdata[0].td_icvs);
-                for (i=1; i<nproc; ++i) {
-                    __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[i], team, i, FALSE);
-                    ngo_store_icvs(&team->t.t_implicit_task_taskdata[i].td_icvs,
-                                   &team->t.t_implicit_task_taskdata[0].td_icvs);
+            {
+                KMP_TIME_DEVELOPER_BLOCK(USER_icv_copy);
+                if (propagate_icvs) {
+                    ngo_load(&team->t.t_implicit_task_taskdata[0].td_icvs);
+                    for (i=1; i<nproc; ++i) {
+                        __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[i], team, i, FALSE);
+                        ngo_store_icvs(&team->t.t_implicit_task_taskdata[i].td_icvs,
+                                       &team->t.t_implicit_task_taskdata[0].td_icvs);
+                    }
+                    ngo_sync();
                 }
-                ngo_sync();
             }
-            KMP_STOP_EXPLICIT_TIMER(USER_icv_copy);
 #endif // KMP_BARRIER_ICV_PUSH
 
             // Now, release all of the worker threads
@@ -217,7 +218,7 @@ __kmp_tree_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid, 
                           void (*reduce)(void *, void *)
                           USE_ITT_BUILD_ARG(void *itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_tree_gather);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_tree_gather);
     register kmp_team_t *team = this_thr->th.th_team;
     register kmp_bstate_t *thr_bar = &this_thr->th.th_bar[bt].bb;
     register kmp_info_t **other_threads = team->t.t_threads;
@@ -312,7 +313,7 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                            int propagate_icvs
                            USE_ITT_BUILD_ARG(void *itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_tree_release);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_tree_release);
     register kmp_team_t *team;
     register kmp_bstate_t *thr_bar = &this_thr->th.th_bar[bt].bb;
     register kmp_uint32 nproc;
@@ -381,14 +382,15 @@ __kmp_tree_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
 #endif /* KMP_CACHE_MANAGE */
 
 #if KMP_BARRIER_ICV_PUSH
-            KMP_START_EXPLICIT_TIMER(USER_icv_copy);
-            if (propagate_icvs) {
-                __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[child_tid],
-                                         team, child_tid, FALSE);
-                copy_icvs(&team->t.t_implicit_task_taskdata[child_tid].td_icvs,
-                          &team->t.t_implicit_task_taskdata[0].td_icvs);
+            {
+                KMP_TIME_DEVELOPER_BLOCK(USER_icv_copy);
+                if (propagate_icvs) {
+                    __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[child_tid],
+                                             team, child_tid, FALSE);
+                    copy_icvs(&team->t.t_implicit_task_taskdata[child_tid].td_icvs,
+                              &team->t.t_implicit_task_taskdata[0].td_icvs);
+                }
             }
-            KMP_STOP_EXPLICIT_TIMER(USER_icv_copy);
 #endif // KMP_BARRIER_ICV_PUSH
             KA_TRACE(20, ("__kmp_tree_barrier_release: T#%d(%d:%d) releasing T#%d(%d:%u)"
                           "go(%p): %u => %u\n", gtid, team->t.t_id, tid,
@@ -414,7 +416,7 @@ __kmp_hyper_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr, int gtid,
                            void (*reduce)(void *, void *)
                            USE_ITT_BUILD_ARG(void *itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_hyper_gather);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_hyper_gather);
     register kmp_team_t *team = this_thr->th.th_team;
     register kmp_bstate_t *thr_bar = &this_thr->th.th_bar[bt].bb;
     register kmp_info_t **other_threads = team->t.t_threads;
@@ -520,7 +522,7 @@ __kmp_hyper_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, int gtid
                             int propagate_icvs
                             USE_ITT_BUILD_ARG(void *itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_hyper_release);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_hyper_release);
     register kmp_team_t    *team;
     register kmp_bstate_t  *thr_bar       = & this_thr -> th.th_bar[ bt ].bb;
     register kmp_info_t   **other_threads;
@@ -725,7 +727,7 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
                                   int gtid, int tid, void (*reduce) (void *, void *)
                                   USE_ITT_BUILD_ARG(void * itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_hier_gather);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_hier_gather);
     register kmp_team_t *team = this_thr->th.th_team;
     register kmp_bstate_t *thr_bar = & this_thr->th.th_bar[bt].bb;
     register kmp_uint32 nproc = this_thr->th.th_team_nproc;
@@ -853,7 +855,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
                                    int propagate_icvs
                                    USE_ITT_BUILD_ARG(void * itt_sync_obj) )
 {
-    KMP_TIME_BLOCK(KMP_hier_release);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_hier_release);
     register kmp_team_t *team;
     register kmp_bstate_t *thr_bar = &this_thr->th.th_bar[bt].bb;
     register kmp_uint32 nproc;
@@ -1035,7 +1037,7 @@ int
 __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
               void *reduce_data, void (*reduce)(void *, void *))
 {
-    KMP_TIME_BLOCK(KMP_barrier);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_barrier);
     register int tid = __kmp_tid_from_gtid(gtid);
     register kmp_info_t *this_thr = __kmp_threads[gtid];
     register kmp_team_t *team = this_thr->th.th_team;
@@ -1294,7 +1296,7 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
 void
 __kmp_end_split_barrier(enum barrier_type bt, int gtid)
 {
-    KMP_TIME_BLOCK(KMP_end_split_barrier);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_end_split_barrier);
     int tid = __kmp_tid_from_gtid(gtid);
     kmp_info_t *this_thr = __kmp_threads[gtid];
     kmp_team_t *team = this_thr->th.th_team;
@@ -1335,7 +1337,7 @@ __kmp_end_split_barrier(enum barrier_type bt, int gtid)
 void
 __kmp_join_barrier(int gtid)
 {
-    KMP_TIME_BLOCK(KMP_join_barrier);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_join_barrier);
     register kmp_info_t *this_thr = __kmp_threads[gtid];
     register kmp_team_t *team;
     register kmp_uint nproc;
@@ -1533,7 +1535,7 @@ __kmp_join_barrier(int gtid)
 void
 __kmp_fork_barrier(int gtid, int tid)
 {
-    KMP_TIME_BLOCK(KMP_fork_barrier);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_fork_barrier);
     kmp_info_t *this_thr = __kmp_threads[gtid];
     kmp_team_t *team = (tid == 0) ? this_thr->th.th_team : NULL;
 #if USE_ITT_BUILD
@@ -1648,15 +1650,16 @@ __kmp_fork_barrier(int gtid, int tid)
        this data before this function is called. We cannot modify __kmp_fork_call() to look at
        the fixed ICVs in the master's thread struct, because it is not always the case that the
        threads arrays have been allocated when __kmp_fork_call() is executed. */
-    KMP_START_EXPLICIT_TIMER(USER_icv_copy);
-    if (!KMP_MASTER_TID(tid)) {  // master thread already has ICVs
-        // Copy the initial ICVs from the master's thread struct to the implicit task for this tid.
-        KA_TRACE(10, ("__kmp_fork_barrier: T#%d(%d) is PULLing ICVs\n", gtid, tid));
-        __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[tid], team, tid, FALSE);
-        copy_icvs(&team->t.t_implicit_task_taskdata[tid].td_icvs,
-                  &team->t.t_threads[0]->th.th_bar[bs_forkjoin_barrier].bb.th_fixed_icvs);
+    {
+        KMP_TIME_DEVELOPER_BLOCK(USER_icv_copy);
+        if (!KMP_MASTER_TID(tid)) {  // master thread already has ICVs
+            // Copy the initial ICVs from the master's thread struct to the implicit task for this tid.
+            KA_TRACE(10, ("__kmp_fork_barrier: T#%d(%d) is PULLing ICVs\n", gtid, tid));
+            __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[tid], team, tid, FALSE);
+            copy_icvs(&team->t.t_implicit_task_taskdata[tid].td_icvs,
+                      &team->t.t_threads[0]->th.th_bar[bs_forkjoin_barrier].bb.th_fixed_icvs);
+        }
     }
-    KMP_STOP_EXPLICIT_TIMER(USER_icv_copy);
 #endif // KMP_BARRIER_ICV_PULL
 
     if (__kmp_tasking_mode != tskm_immediate_exec) {
@@ -1702,7 +1705,7 @@ __kmp_fork_barrier(int gtid, int tid)
 void
 __kmp_setup_icv_copy(kmp_team_t *team, int new_nproc, kmp_internal_control_t *new_icvs, ident_t *loc )
 {
-    KMP_TIME_BLOCK(KMP_setup_icv_copy);
+    KMP_TIME_DEVELOPER_BLOCK(KMP_setup_icv_copy);
 
     KMP_DEBUG_ASSERT(team && new_nproc && new_icvs);
     KMP_DEBUG_ASSERT((!TCR_4(__kmp_init_parallel)) || new_icvs->nproc);

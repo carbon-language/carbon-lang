@@ -149,7 +149,10 @@ endif()
 # Remove any cmake-automatic linking of the standard C++ library.
 # We neither need (nor want) the standard C++ library dependency even though we compile c++ files.
 if(NOT ${LIBOMP_USE_STDCPPLIB})
+  set(LIBOMP_LINKER_LANGUAGE C)
   set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES)
+else()
+  set(LIBOMP_LINKER_LANGUAGE CXX)
 endif()
 
 # Add the OpenMP library
@@ -158,7 +161,7 @@ add_library(omp SHARED ${LIBOMP_SOURCE_FILES})
 set_target_properties(omp PROPERTIES
   PREFIX "" SUFFIX "" OUTPUT_NAME "${LIBOMP_LIB_FILE}"
   LINK_FLAGS "${LIBOMP_CONFIGURED_LDFLAGS}"
-  LINKER_LANGUAGE C # use C Compiler for linking step
+  LINKER_LANGUAGE ${LIBOMP_LINKER_LANGUAGE}
   SKIP_BUILD_RPATH true # have Mac linker -install_name just be "-install_name libomp.dylib"
 )
 

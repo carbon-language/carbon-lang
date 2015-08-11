@@ -58,7 +58,7 @@ kmp_int32 __kmpc_cancel(ident_t* loc_ref, kmp_int32 gtid, kmp_int32 cncl_kind) {
                 break;
             }
         case cancel_taskgroup:
-            // cancellation requests for parallel and worksharing constructs
+            // cancellation requests for a task group
             // are handled through the taskgroup structure
             {
                 kmp_taskdata_t*  task; 
@@ -141,7 +141,7 @@ kmp_int32 __kmpc_cancellationpoint(ident_t* loc_ref, kmp_int32 gtid, kmp_int32 c
                 break;
             }
         case cancel_taskgroup:
-            // cancellation requests for parallel and worksharing constructs
+            // cancellation requests for a task group
             // are handled through the taskgroup structure
             {
                 kmp_taskdata_t*  task; 

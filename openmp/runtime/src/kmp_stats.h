@@ -31,6 +31,11 @@
 #include <new> // placement new
 #include "kmp_stats_timing.h"
 
+/*
+ * Enable developer statistics here if you want them. They are more detailed than is useful for application characterisation and
+ * are intended for the runtime library developer.
+ */
+// #define KMP_DEVELOPER_STATS 1
 
 /*!
  * @ingroup STATS_GATHERING
@@ -56,7 +61,7 @@ class stats_flags_e {
  * Each thread accumulates its own count, at the end of execution the counts are aggregated treating each thread
  * as a separate measurement. (Unless onlyInMaster is set, in which case there's only a single measurement).
  * The min,mean,max are therefore the values for the threads.
- * Adding the counter here and then putting in a KMP_BLOCK_COUNTER(name) is all you need to do.
+ * Adding the counter here and then putting a KMP_BLOCK_COUNTER(name) at the point you want to count is all you need to do.
  * All of the tables and printing is generated from this macro.
  * Format is "macro(name, flags, arg)"
  *
@@ -64,20 +69,29 @@ class stats_flags_e {
 */
 #define KMP_FOREACH_COUNTER(macro, arg)                         \
     macro (OMP_PARALLEL, stats_flags_e::onlyInMaster, arg)      \
+    macro (OMP_NESTED_PARALLEL, 0, arg)                         \
     macro (OMP_FOR_static, 0, arg)                              \
     macro (OMP_FOR_dynamic, 0, arg)                             \
-    macro (OMP_DISTR_FOR_static, 0, arg)                        \
-    macro (OMP_DISTR_FOR_dynamic, 0, arg)                       \
+    macro (OMP_DISTRIBUTE, 0, arg)                              \
     macro (OMP_BARRIER, 0, arg)                                 \
     macro (OMP_CRITICAL,0, arg)                                 \
     macro (OMP_SINGLE, 0, arg)                                  \
     macro (OMP_MASTER, 0, arg)                                  \
+    macro (OMP_TEAMS, 0, arg)                                   \
     macro (OMP_set_lock, 0, arg)                                \
     macro (OMP_test_lock, 0, arg)                               \
-    macro (OMP_test_lock_failure, 0, arg)                       \
     macro (REDUCE_wait, 0, arg)                                 \
     macro (REDUCE_nowait, 0, arg)                               \
+    macro (OMP_TASKYIELD, 0, arg)                               \
+    macro (TASK_executed, 0, arg)                               \
+    macro (TASK_cancelled, 0, arg)                              \
+    macro (TASK_stolen, 0, arg)                                 \
     macro (LAST,0,arg)
+
+// OMP_PARALLEL_args      -- the number of arguments passed to a fork
+// FOR_static_iterations  -- Number of available parallel chunks of work in a static for
+// FOR_dynamic_iterations -- Number of available parallel chunks of work in a dynamic for
+//                           Both adjust for any chunking, so if there were an iteration count of 20 but a chunk size of 10, we'd record 2.
 
 /*!
  * \brief Add new timers under KMP_FOREACH_TIMER() macro in kmp_stats.h
@@ -87,72 +101,45 @@ class stats_flags_e {
  *
  * \details A timer collects multiple samples of some count in each thread and then finally aggregates over all the threads.
  * The count is normally a time (in ticks), hence the name "timer". (But can be any value, so we use this for "number of arguments passed to fork"
- * as well, or we could collect "loop iteration count" if we wanted to).
+ * as well).
  * For timers the threads are not significant, it's the individual observations that count, so the statistics are at that level.
  * Format is "macro(name, flags, arg)"
  *
- * @ingroup STATS_GATHERING
+ * @ingroup STATS_GATHERING2
  */
-#define KMP_FOREACH_TIMER(macro, arg)                                       \
-    macro (OMP_PARALLEL_args, stats_flags_e::onlyInMaster | stats_flags_e::noUnits, arg) \
-    macro (FOR_static_iterations, stats_flags_e::onlyInMaster | stats_flags_e::noUnits, arg) \
-    macro (FOR_dynamic_iterations, stats_flags_e::noUnits, arg)         \
+#define KMP_FOREACH_TIMER(macro, arg)                                   \
     macro (OMP_start_end, stats_flags_e::onlyInMaster, arg)             \
     macro (OMP_serial, stats_flags_e::onlyInMaster, arg)                \
     macro (OMP_work, 0, arg)                                            \
     macro (Total_work, stats_flags_e::synthesized, arg)                 \
-    macro (OMP_await_work, stats_flags_e::notInMaster, arg)             \
-    macro (Total_await_work, stats_flags_e::synthesized, arg)           \
     macro (OMP_barrier, 0, arg)                                         \
     macro (Total_barrier, stats_flags_e::synthesized, arg)              \
-    macro (OMP_test_lock, 0, arg)                                       \
+    macro (FOR_static_iterations, stats_flags_e::noUnits, arg)          \
     macro (FOR_static_scheduling, 0, arg)                               \
+    macro (FOR_dynamic_iterations, stats_flags_e::noUnits, arg)         \
     macro (FOR_dynamic_scheduling, 0, arg)                              \
-    macro (KMP_fork_call, 0, arg) \
-    macro (KMP_join_call, 0, arg) \
-    macro (KMP_fork_barrier, stats_flags_e::logEvent, arg)              \
-    macro (KMP_join_barrier, stats_flags_e::logEvent, arg)              \
-    macro (KMP_barrier, 0, arg)                   \
-    macro (KMP_end_split_barrier, 0, arg) \
-    macro (KMP_wait_sleep, 0, arg) \
-    macro (KMP_release, 0, arg)                   \
-    macro (KMP_hier_gather, 0, arg) \
-    macro (KMP_hier_release, 0, arg) \
-    macro (KMP_hyper_gather,  stats_flags_e::logEvent, arg) \
-    macro (KMP_hyper_release,  stats_flags_e::logEvent, arg) \
-    macro (KMP_linear_gather, 0, arg)                                   \
-    macro (KMP_linear_release, 0, arg)                                  \
-    macro (KMP_tree_gather, 0, arg)                                     \
-    macro (KMP_tree_release, 0, arg)                                    \
-    macro (USER_master_invoke, stats_flags_e::logEvent, arg) \
-    macro (USER_worker_invoke, stats_flags_e::logEvent, arg) \
-    macro (USER_resume, stats_flags_e::logEvent, arg) \
-    macro (USER_suspend, stats_flags_e::logEvent, arg) \
-    macro (USER_launch_thread_loop, stats_flags_e::logEvent, arg) \
-    macro (KMP_allocate_team, 0, arg) \
-    macro (KMP_setup_icv_copy, 0, arg) \
-    macro (USER_icv_copy, 0, arg) \
+    macro (TASK_execution, 0, arg)                                      \
+    macro (OMP_set_numthreads, stats_flags_e::noUnits, arg)             \
+    macro (OMP_PARALLEL_args,  stats_flags_e::noUnits, arg)             \
+    macro (OMP_single, 0, arg)                                          \
+    macro (OMP_master, 0, arg)                                          \
+    KMP_FOREACH_DEVELOPER_TIMER(macro, arg)                             \
     macro (LAST,0, arg)
 
 
-
-// OMP_PARALLEL_args      -- the number of arguments passed to a fork
-// FOR_static_iterations  -- Number of available parallel chunks of work in a static for
-// FOR_dynamic_iterations -- Number of available parallel chunks of work in a dynamic for
-//                           Both adjust for any chunking, so if there were an iteration count of 20 but a chunk size of 10, we'd record 2.
-// OMP_serial             -- thread zero time executing serial code
 // OMP_start_end          -- time from when OpenMP is initialized until the stats are printed at exit
+// OMP_serial             -- thread zero time executing serial code
 // OMP_work               -- elapsed time in code dispatched by a fork (measured in the thread)
 // Total_work             -- a synthesized statistic summarizing how much parallel work each thread executed.
 // OMP_barrier            -- time at "real" barriers
 // Total_barrier          -- a synthesized statistic summarizing how much time at real barriers in each thread
-// OMP_set_lock           -- time in lock setting
-// OMP_test_lock          -- time in testing a lock
-// LOCK_WAIT              -- time waiting for a lock
 // FOR_static_scheduling  -- time spent doing scheduling for a static "for"
 // FOR_dynamic_scheduling -- time spent doing scheduling for a dynamic "for"
-// KMP_wait_sleep         -- time in __kmp_wait_sleep
-// KMP_release            -- time in __kmp_release
+
+#if (KMP_DEVELOPER_STATS)
+// Timers which are of interest tio runtime library developers, not end users.
+// THese have to be explicitly enabled in addition to the other stats.
+
 // KMP_fork_barrier       -- time in __kmp_fork_barrier
 // KMP_join_barrier       -- time in __kmp_join_barrier
 // KMP_barrier            -- time in __kmp_barrier
@@ -165,6 +152,32 @@ class stats_flags_e {
 // KMP_tree_release       -- time in __kmp_tree_barrier_release
 // KMP_hyper_gather       -- time in __kmp_hyper_barrier_gather
 // KMP_hyper_release      -- time in __kmp_hyper_barrier_release
+# define KMP_FOREACH_DEVELOPER_TIMER(macro, arg)                        \
+    macro (KMP_fork_call, 0, arg)                                       \
+    macro (KMP_join_call, 0, arg)                                       \
+    macro (KMP_fork_barrier, stats_flags_e::logEvent, arg)              \
+    macro (KMP_join_barrier, stats_flags_e::logEvent, arg)              \
+    macro (KMP_barrier, 0, arg)                                         \
+    macro (KMP_end_split_barrier, 0, arg)                               \
+    macro (KMP_hier_gather, 0, arg)                                     \
+    macro (KMP_hier_release, 0, arg)                                    \
+    macro (KMP_hyper_gather,  stats_flags_e::logEvent, arg)             \
+    macro (KMP_hyper_release,  stats_flags_e::logEvent, arg)            \
+    macro (KMP_linear_gather, 0, arg)                                   \
+    macro (KMP_linear_release, 0, arg)                                  \
+    macro (KMP_tree_gather, 0, arg)                                     \
+    macro (KMP_tree_release, 0, arg)                                    \
+    macro (USER_master_invoke, stats_flags_e::logEvent, arg)            \
+    macro (USER_worker_invoke, stats_flags_e::logEvent, arg)            \
+    macro (USER_resume, stats_flags_e::logEvent, arg)                   \
+    macro (USER_suspend, stats_flags_e::logEvent, arg)                  \
+    macro (USER_launch_thread_loop, stats_flags_e::logEvent, arg)       \
+    macro (KMP_allocate_team, 0, arg)                                   \
+    macro (KMP_setup_icv_copy, 0, arg)                                  \
+    macro (USER_icv_copy, 0, arg)                                       
+#else
+# define KMP_FOREACH_DEVELOPER_TIMER(macro, arg)
+#endif
 
 /*!
  * \brief Add new explicit timers under KMP_FOREACH_EXPLICIT_TIMER() macro.
@@ -182,12 +195,20 @@ class stats_flags_e {
  *
  * @ingroup STATS_GATHERING
 */
-#define KMP_FOREACH_EXPLICIT_TIMER(macro, arg)  \
-    macro(OMP_serial, 0, arg)                   \
-    macro(OMP_start_end, 0, arg)                \
-    macro(USER_icv_copy, 0, arg) \
-    macro(USER_launch_thread_loop, stats_flags_e::logEvent, arg) \
+#define KMP_FOREACH_EXPLICIT_TIMER(macro, arg)          \
+    macro(OMP_serial, 0, arg)                           \
+    macro(OMP_start_end, 0, arg)                        \
+    macro(OMP_single, 0, arg)                           \
+    macro(OMP_master, 0, arg)                           \
+    KMP_FOREACH_EXPLICIT_DEVELOPER_TIMER(macro,arg)     \
     macro(LAST, 0, arg)
+
+#if (KMP_DEVELOPER_STATS)
+# define KMP_FOREACH_EXPLICIT_DEVELOPER_TIMER(macro, arg)               \
+    macro(USER_launch_thread_loop, stats_flags_e::logEvent, arg)
+#else
+# define KMP_FOREACH_EXPLICIT_DEVELOPER_TIMER(macro, arg)               
+#endif
 
 #define ENUMERATE(name,ignore,prefix) prefix##name,
 enum timer_e {
@@ -689,6 +710,21 @@ extern kmp_stats_output_module __kmp_stats_output;
 */
 #define KMP_RESET_STATS()  __kmp_reset_stats()
 
+#if (KMP_DEVELOPER_STATS)
+# define KMP_TIME_DEVELOPER_BLOCK(n)             KMP_TIME_BLOCK(n)
+# define KMP_COUNT_DEVELOPER_VALUE(n,v)          KMP_COUNT_VALUE(n,v)
+# define KMP_COUNT_DEVELOPER_BLOCK(n)            KMP_COUNT_BLOCK(n)
+# define KMP_START_DEVELOPER_EXPLICIT_TIMER(n)   KMP_START_EXPLICIT_TIMER(n)
+# define KMP_STOP_DEVELOPER_EXPLICIT_TIMER(n)    KMP_STOP_EXPLICIT_TIMER(n)
+#else
+// Null definitions
+# define KMP_TIME_DEVELOPER_BLOCK(n)             ((void)0)
+# define KMP_COUNT_DEVELOPER_VALUE(n,v)          ((void)0)
+# define KMP_COUNT_DEVELOPER_BLOCK(n)            ((void)0)
+# define KMP_START_DEVELOPER_EXPLICIT_TIMER(n)   ((void)0)
+# define KMP_STOP_DEVELOPER_EXPLICIT_TIMER(n)    ((void)0)
+#endif
+
 #else // KMP_STATS_ENABLED
 
 // Null definitions
@@ -701,6 +737,11 @@ extern kmp_stats_output_module __kmp_stats_output;
 #define KMP_OUTPUT_STATS(heading_string) ((void)0)
 #define KMP_RESET_STATS()  ((void)0)
 
+#define KMP_TIME_DEVELOPER_BLOCK(n)             ((void)0)
+#define KMP_COUNT_DEVELOPER_VALUE(n,v)          ((void)0)
+#define KMP_COUNT_DEVELOPER_BLOCK(n)            ((void)0)
+#define KMP_START_DEVELOPER_EXPLICIT_TIMER(n)   ((void)0)
+#define KMP_STOP_DEVELOPER_EXPLICIT_TIMER(n)    ((void)0)
 #endif  // KMP_STATS_ENABLED
 
 #endif // KMP_STATS_H

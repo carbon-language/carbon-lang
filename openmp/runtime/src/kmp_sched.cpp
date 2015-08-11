@@ -84,6 +84,8 @@ __kmp_for_static_init(
     typename traits_t< T >::signed_t  chunk
 ) {
     KMP_COUNT_BLOCK(OMP_FOR_static);
+    KMP_TIME_BLOCK (FOR_static_scheduling);
+
     typedef typename traits_t< T >::unsigned_t  UT;
     typedef typename traits_t< T >::signed_t    ST;
     /*  this all has to be changed back to TID and such.. */
@@ -151,6 +153,7 @@ __kmp_for_static_init(
                 team_info->microtask);
         }
 #endif
+        KMP_COUNT_VALUE (FOR_static_iterations, 0);
         return;
     }
 
@@ -246,6 +249,7 @@ __kmp_for_static_init(
             __kmp_error_construct( kmp_i18n_msg_CnsIterationRangeTooLarge, ct_pdo, loc );
         }
     }
+    KMP_COUNT_VALUE (FOR_static_iterations, trip_count);
 
     /* compute remaining parameters */
     switch ( schedtype ) {
@@ -372,7 +376,7 @@ __kmp_dist_for_static_init(
     typename traits_t< T >::signed_t  incr,
     typename traits_t< T >::signed_t  chunk
 ) {
-    KMP_COUNT_BLOCK(OMP_DISTR_FOR_static);
+    KMP_COUNT_BLOCK(OMP_DISTRIBUTE);
     typedef typename traits_t< T >::unsigned_t  UT;
     typedef typename traits_t< T >::signed_t    ST;
     register kmp_uint32  tid;
@@ -437,6 +441,7 @@ __kmp_dist_for_static_init(
     } else {
         trip_count = (ST)(*pupper - *plower) / incr + 1; // cast to signed to cover incr<0 case
     }
+
     *pstride = *pupper - *plower;  // just in case (can be unused)
     if( trip_count <= nteams ) {
         KMP_DEBUG_ASSERT(

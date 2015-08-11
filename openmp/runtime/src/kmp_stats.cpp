@@ -521,15 +521,13 @@ void kmp_stats_output_module::outputStats(const char* heading)
 
         // Special handling for synthesized statistics.
         // These just have to be coded specially here for now. 
-        // At present we only have one: the total parallel work done in each thread.
+        // At present we only have a few: 
+        // The total parallel work done in each thread.
         // The variance here makes it easy to see load imbalance over the whole program (though, of course,
         // it's possible to have a code with awful load balance in every parallel region but perfect load
         // balance oever the whole program.)
+        // The time spent in barriers in each thread.
         allStats[TIMER_Total_work].addSample ((*it)->getTimer(TIMER_OMP_work)->getTotal());
-
-        // Time waiting for work (synthesized)
-        if ((t != 0) || !timeStat::workerOnly(timer_e(TIMER_OMP_await_work)))
-            allStats[TIMER_Total_await_work].addSample ((*it)->getTimer(TIMER_OMP_await_work)->getTotal());
 
         // Time in explicit barriers.
         allStats[TIMER_Total_barrier].addSample ((*it)->getTimer(TIMER_OMP_barrier)->getTotal());

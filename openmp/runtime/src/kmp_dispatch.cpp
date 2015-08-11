@@ -670,6 +670,7 @@ __kmp_dispatch_init(
     } else {
         pr->ordered = FALSE;
     }
+
     if ( schedule == kmp_sch_static ) {
         schedule = __kmp_static;
     } else {
@@ -759,6 +760,19 @@ __kmp_dispatch_init(
         }
     } else if ( ub < lb ) {        // st == 1
         tc = 0;                    // zero-trip
+    }
+
+    // Any half-decent optimizer will remove this test when the blocks are empty since the macros expand to nothing
+    // when statistics are disabled.
+    if (schedule == __kmp_static)
+    {
+        KMP_COUNT_BLOCK(OMP_FOR_static);
+        KMP_COUNT_VALUE(FOR_static_iterations, tc);
+    }
+    else
+    {
+        KMP_COUNT_BLOCK(OMP_FOR_dynamic);
+        KMP_COUNT_VALUE(FOR_dynamic_iterations, tc);
     }
 
     pr->u.p.lb = lb;
@@ -1383,6 +1397,11 @@ __kmp_dispatch_next(
 #if ( KMP_STATIC_STEAL_ENABLED && KMP_ARCH_X86_64 )
     static const int ___kmp_size_type = sizeof( UT );
 #endif
+
+    // This is potentially slightly misleading, schedule(runtime) will appear here even if the actual runtme schedule
+    // is static. (Which points out a disadavantage of schedule(runtime): even when static scheduling is used it costs
+    // more than a compile time choice to use static scheduling would.)
+    KMP_TIME_BLOCK(FOR_dynamic_scheduling);
 
     int                                   status;
     dispatch_private_info_template< T > * pr;
@@ -2164,7 +2183,6 @@ __kmp_dist_get_bounds(
     T                                *pupper,
     typename traits_t< T >::signed_t  incr
 ) {
-    KMP_COUNT_BLOCK(OMP_DISTR_FOR_dynamic);
     typedef typename traits_t< T >::unsigned_t  UT;
     typedef typename traits_t< T >::signed_t    ST;
     register kmp_uint32  team_id;
@@ -2222,6 +2240,7 @@ __kmp_dist_get_bounds(
     } else {
         trip_count = (ST)(*pupper - *plower) / incr + 1; // cast to signed to cover incr<0 case
     }
+
     if( trip_count <= nteams ) {
         KMP_DEBUG_ASSERT(
             __kmp_static == kmp_sch_static_greedy || \
@@ -2297,7 +2316,6 @@ void
 __kmpc_dispatch_init_4( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_int32 lb, kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dispatch_init< kmp_int32 >( loc, gtid, schedule, lb, ub, st, chunk, true );
 }
@@ -2308,7 +2326,6 @@ void
 __kmpc_dispatch_init_4u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_uint32 lb, kmp_uint32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dispatch_init< kmp_uint32 >( loc, gtid, schedule, lb, ub, st, chunk, true );
 }
@@ -2321,7 +2338,6 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_int64 lb, kmp_int64 ub,
                         kmp_int64 st, kmp_int64 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dispatch_init< kmp_int64 >( loc, gtid, schedule, lb, ub, st, chunk, true );
 }
@@ -2334,7 +2350,6 @@ __kmpc_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                          kmp_uint64 lb, kmp_uint64 ub,
                          kmp_int64 st, kmp_int64 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dispatch_init< kmp_uint64 >( loc, gtid, schedule, lb, ub, st, chunk, true );
 }
@@ -2352,7 +2367,6 @@ void
 __kmpc_dist_dispatch_init_4( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 *p_last, kmp_int32 lb, kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dist_get_bounds< kmp_int32 >( loc, gtid, p_last, &lb, &ub, st );
     __kmp_dispatch_init< kmp_int32 >( loc, gtid, schedule, lb, ub, st, chunk, true );
@@ -2362,7 +2376,6 @@ void
 __kmpc_dist_dispatch_init_4u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 *p_last, kmp_uint32 lb, kmp_uint32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dist_get_bounds< kmp_uint32 >( loc, gtid, p_last, &lb, &ub, st );
     __kmp_dispatch_init< kmp_uint32 >( loc, gtid, schedule, lb, ub, st, chunk, true );
@@ -2372,7 +2385,6 @@ void
 __kmpc_dist_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 *p_last, kmp_int64 lb, kmp_int64 ub, kmp_int64 st, kmp_int64 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dist_get_bounds< kmp_int64 >( loc, gtid, p_last, &lb, &ub, st );
     __kmp_dispatch_init< kmp_int64 >( loc, gtid, schedule, lb, ub, st, chunk, true );
@@ -2382,7 +2394,6 @@ void
 __kmpc_dist_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 *p_last, kmp_uint64 lb, kmp_uint64 ub, kmp_int64 st, kmp_int64 chunk )
 {
-    KMP_COUNT_BLOCK(OMP_FOR_dynamic);
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     __kmp_dist_get_bounds< kmp_uint64 >( loc, gtid, p_last, &lb, &ub, st );
     __kmp_dispatch_init< kmp_uint64 >( loc, gtid, schedule, lb, ub, st, chunk, true );
