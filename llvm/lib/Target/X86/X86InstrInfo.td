@@ -2548,6 +2548,7 @@ def : MnemonicAlias<"ret", "retw", "att">, Requires<[In16BitMode]>;
 def : MnemonicAlias<"ret", "retl", "att">, Requires<[In32BitMode]>;
 def : MnemonicAlias<"ret", "retq", "att">, Requires<[In64BitMode]>;
 
+def : MnemonicAlias<"sal", "shl", "intel">;
 def : MnemonicAlias<"salb", "shlb", "att">;
 def : MnemonicAlias<"salw", "shlw", "att">;
 def : MnemonicAlias<"sall", "shll", "att">;

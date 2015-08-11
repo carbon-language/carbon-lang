@@ -701,3 +701,6 @@ repnz cmpsb
 // CHECK: cmpsb	%es:(%rdi), (%rsi)
 // CHECK: repne
 // CHECK: cmpsb	%es:(%rdi), (%rsi)
+
+sal eax, 123
+// CHECK: shll	$123, %eax
