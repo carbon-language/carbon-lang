@@ -37,10 +37,11 @@ define i128 @test_128bitmul_optsize(i128 %lhs, i128 %rhs) optsize {
 
 define i128 @test_128bitmul_minsize(i128 %lhs, i128 %rhs) minsize {
 ; CHECK-LABEL: test_128bitmul_minsize:
-; CHECK-DAG: mul [[PART1:x[0-9]+]], x0, x3
-; CHECK-DAG: umulh [[CARRY:x[0-9]+]], x0, x2
-; CHECK: mul [[PART2:x[0-9]+]], x1, x2
-; CHECK: mul x0, x0, x2
+; CHECK:       umulh [[HI:x[0-9]+]], x0, x2
+; CHECK-NEXT:  madd  [[TEMP1:x[0-9]+]], x0, x3, [[HI]]
+; CHECK-NEXT:  madd  x1, x1, x2, [[TEMP1]]
+; CHECK-NEXT:  mul   x0, x0, x2
+; CHECK-NEXT:  ret
 
   %prod = mul i128 %lhs, %rhs
   ret i128 %prod
