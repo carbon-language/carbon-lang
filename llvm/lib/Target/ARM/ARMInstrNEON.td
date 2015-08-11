@@ -587,11 +587,6 @@ def SDTARMVMULL   : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisInt<1>,
 def NEONvmulls    : SDNode<"ARMISD::VMULLs", SDTARMVMULL>;
 def NEONvmullu    : SDNode<"ARMISD::VMULLu", SDTARMVMULL>;
 
-def SDTARMFMAX    : SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisSameAs<0, 1>,
-                                         SDTCisSameAs<0, 2>]>;
-def NEONfmax      : SDNode<"ARMISD::FMAX", SDTARMFMAX>;
-def NEONfmin      : SDNode<"ARMISD::FMIN", SDTARMFMAX>;
-
 def NEONimmAllZerosV: PatLeaf<(NEONvmovImm (i32 timm)), [{
   ConstantSDNode *ConstVal = cast<ConstantSDNode>(N->getOperand(0));
   unsigned EltBits = 0;
@@ -6343,8 +6338,8 @@ def : N3VSMulOpPat<fmul, fsub, VFMSfd>,
       Requires<[HasVFP4, UseNEONForFP, UseFusedMAC]>;
 def : N2VSPat<fabs, VABSfd>;
 def : N2VSPat<fneg, VNEGfd>;
-def : N3VSPat<NEONfmax, VMAXfd>;
-def : N3VSPat<NEONfmin, VMINfd>;
+def : N3VSPat<fmaxnan, VMAXfd>;
+def : N3VSPat<fminnan, VMINfd>;
 def : NVCVTFIPat<fp_to_sint, VCVTf2sd>;
 def : NVCVTFIPat<fp_to_uint, VCVTf2ud>;
 def : NVCVTIFPat<sint_to_fp, VCVTs2fd>;

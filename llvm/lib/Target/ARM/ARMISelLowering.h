@@ -174,8 +174,6 @@ namespace llvm {
       BUILD_VECTOR,
 
       // Floating-point max and min:
-      FMAX,
-      FMIN,
       VMAXNM,
       VMINNM,
 

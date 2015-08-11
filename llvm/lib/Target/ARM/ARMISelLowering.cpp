@@ -941,6 +941,14 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::FRINT, MVT::f64, Legal);
     }
   }
+
+  if (Subtarget->hasVFP3()) {
+    setOperationAction(ISD::FMINNAN, MVT::f32, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::f32, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::f64, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::f64, Legal);
+  }
+
   // We have target-specific dag combine patterns for the following nodes:
   // ARMISD::VMOVRRD  - No need to call setTargetDAGCombine
   setTargetDAGCombine(ISD::ADD);
@@ -1138,8 +1146,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::UMLAL:         return "ARMISD::UMLAL";
   case ARMISD::SMLAL:         return "ARMISD::SMLAL";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
-  case ARMISD::FMAX:          return "ARMISD::FMAX";
-  case ARMISD::FMIN:          return "ARMISD::FMIN";
   case ARMISD::VMAXNM:        return "ARMISD::VMAX";
   case ARMISD::VMINNM:        return "ARMISD::VMIN";
   case ARMISD::BFI:           return "ARMISD::BFI";
@@ -10170,7 +10176,7 @@ static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
         !DAG.getTarget().Options.UnsafeFPMath &&
         !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
       break;
-    Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
+    Opcode = IsReversed ? ISD::FMAXNAN : ISD::FMINNAN;
     break;
 
   case ISD::SETOGT:
@@ -10192,7 +10198,7 @@ static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
         !DAG.getTarget().Options.UnsafeFPMath &&
         !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
       break;
-    Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;
+    Opcode = IsReversed ? ISD::FMINNAN : ISD::FMAXNAN;
     break;
   }
 
