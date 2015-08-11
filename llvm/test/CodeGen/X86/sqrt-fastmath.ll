@@ -99,8 +99,8 @@ define <4 x float> @reciprocal_square_root_v4f32(<4 x float> %x) #0 {
 ; ESTIMATE-LABEL: reciprocal_square_root_v4f32:
 ; ESTIMATE:       # BB#0:
 ; ESTIMATE-NEXT:    vrsqrtps %xmm0, %xmm1
-; ESTIMATE-NEXT:    vmulps %xmm1, %xmm1, %xmm2
-; ESTIMATE-NEXT:    vmulps %xmm0, %xmm2, %xmm0
+; ESTIMATE-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; ESTIMATE-NEXT:    vmulps %xmm0, %xmm1, %xmm0
 ; ESTIMATE-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
 ; ESTIMATE-NEXT:    vmulps {{.*}}(%rip), %xmm1, %xmm1
 ; ESTIMATE-NEXT:    vmulps %xmm1, %xmm0, %xmm0

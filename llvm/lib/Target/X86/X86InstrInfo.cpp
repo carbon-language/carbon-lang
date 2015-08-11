@@ -6395,12 +6395,16 @@ static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   case X86::ADDPSrr:
   case X86::ADDSDrr:
   case X86::ADDSSrr:
+  case X86::MULPDrr:
+  case X86::MULPSrr:
+  case X86::MULSDrr:
+  case X86::MULSSrr:
   case X86::VADDPDrr:
   case X86::VADDPSrr:
   case X86::VADDSDrr:
   case X86::VADDSSrr:
-  case X86::MULSDrr:
-  case X86::MULSSrr:
+  case X86::VMULPDrr:
+  case X86::VMULPSrr:
   case X86::VMULSDrr:
   case X86::VMULSSrr:
     return Inst.getParent()->getParent()->getTarget().Options.UnsafeFPMath;
