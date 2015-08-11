@@ -25,11 +25,14 @@ using namespace llvm;
 namespace {
 struct PSVGlobalsTy {
   // PseudoSourceValues are immutable so don't need locking.
-  const PseudoSourceValue PSVs[4];
+  const PseudoSourceValue StackPSV, GOTPSV, JumpTablePSV, ConstantPoolPSV;
   sys::Mutex Lock; // Guards FSValues, but not the values inside it.
   std::map<int, const PseudoSourceValue *> FSValues;
 
-  PSVGlobalsTy() : PSVs() {}
+  PSVGlobalsTy()
+      : StackPSV(PseudoSourceValue::Stack), GOTPSV(PseudoSourceValue::GOT),
+        JumpTablePSV(PseudoSourceValue::JumpTable),
+        ConstantPoolPSV(PseudoSourceValue::ConstantPool) {}
   ~PSVGlobalsTy() {
     for (std::map<int, const PseudoSourceValue *>::iterator
              I = FSValues.begin(),
@@ -45,27 +48,27 @@ static ManagedStatic<PSVGlobalsTy> PSVGlobals;
 } // anonymous namespace
 
 const PseudoSourceValue *PseudoSourceValue::getStack() {
-  return &PSVGlobals->PSVs[0];
+  return &PSVGlobals->StackPSV;
 }
 const PseudoSourceValue *PseudoSourceValue::getGOT() {
-  return &PSVGlobals->PSVs[1];
+  return &PSVGlobals->GOTPSV;
 }
 const PseudoSourceValue *PseudoSourceValue::getJumpTable() {
-  return &PSVGlobals->PSVs[2];
+  return &PSVGlobals->JumpTablePSV;
 }
 const PseudoSourceValue *PseudoSourceValue::getConstantPool() {
-  return &PSVGlobals->PSVs[3];
+  return &PSVGlobals->ConstantPoolPSV;
 }
 
-static const char *const PSVNames[] = {"Stack", "GOT", "JumpTable",
-                                       "ConstantPool"};
+static const char *const PSVNames[] = {
+    "Stack", "GOT", "JumpTable", "ConstantPool", "FixedStack", "MipsCallEntry"};
 
-PseudoSourceValue::PseudoSourceValue(bool IsFixed) : IsFixed(IsFixed) {}
+PseudoSourceValue::PseudoSourceValue(PSVKind Kind) : Kind(Kind) {}
 
 PseudoSourceValue::~PseudoSourceValue() {}
 
 void PseudoSourceValue::printCustom(raw_ostream &O) const {
-  O << PSVNames[this - PSVGlobals->PSVs];
+  O << PSVNames[Kind];
 }
 
 const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
@@ -78,22 +81,21 @@ const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
 }
 
 bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
-  if (this == getStack())
+  if (isStack())
     return false;
-  if (this == getGOT() || this == getConstantPool() || this == getJumpTable())
+  if (isGOT() || isConstantPool() || isJumpTable())
     return true;
   llvm_unreachable("Unknown PseudoSourceValue!");
 }
 
-bool PseudoSourceValue::isAliased(const MachineFrameInfo *MFI) const {
-  if (this == getStack() || this == getGOT() || this == getConstantPool() ||
-      this == getJumpTable())
+bool PseudoSourceValue::isAliased(const MachineFrameInfo *) const {
+  if (isStack() || isGOT() || isConstantPool() || isJumpTable())
     return false;
   llvm_unreachable("Unknown PseudoSourceValue!");
 }
 
-bool PseudoSourceValue::mayAlias(const MachineFrameInfo *MFI) const {
-  if (this == getGOT() || this == getConstantPool() || this == getJumpTable())
+bool PseudoSourceValue::mayAlias(const MachineFrameInfo *) const {
+  if (isGOT() || isConstantPool() || isJumpTable())
     return false;
   return true;
 }

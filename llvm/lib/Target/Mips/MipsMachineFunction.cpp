@@ -25,14 +25,15 @@ FixGlobalBaseReg("mips-fix-global-base-reg", cl::Hidden, cl::init(true),
                  cl::desc("Always use $gp as the global base register."));
 
 // class MipsCallEntry.
-MipsCallEntry::MipsCallEntry(StringRef N) {
+MipsCallEntry::MipsCallEntry(StringRef N) : PseudoSourceValue(MipsPSV) {
 #ifndef NDEBUG
   Name = N;
   Val = nullptr;
 #endif
 }
 
-MipsCallEntry::MipsCallEntry(const GlobalValue *V) {
+MipsCallEntry::MipsCallEntry(const GlobalValue *V)
+    : PseudoSourceValue(MipsPSV) {
 #ifndef NDEBUG
   Val = V;
 #endif

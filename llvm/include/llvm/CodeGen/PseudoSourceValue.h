@@ -28,7 +28,12 @@ raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MMO);
 /// a memory access references the functions stack frame (e.g., a spill slot),
 /// below the stack frame (e.g., argument space), or constant pool.
 class PseudoSourceValue {
+public:
+  enum PSVKind { Stack, GOT, JumpTable, ConstantPool, FixedStack, MipsPSV };
+
 private:
+  PSVKind Kind;
+
   friend class MachineMemOperand; // For printCustom().
 
   /// Implement printing for PseudoSourceValue. This is called from
@@ -36,12 +41,16 @@ private:
   virtual void printCustom(raw_ostream &O) const;
 
 public:
-  /// Whether this is a FixedStackPseudoSourceValue.
-  bool IsFixed;
-
-  explicit PseudoSourceValue(bool IsFixed = false);
+  explicit PseudoSourceValue(PSVKind Kind);
 
   virtual ~PseudoSourceValue();
+
+  PSVKind kind() const { return Kind; }
+
+  bool isStack() const { return Kind == Stack; }
+  bool isGOT() const { return Kind == GOT; }
+  bool isConstantPool() const { return Kind == ConstantPool; }
+  bool isJumpTable() const { return Kind == JumpTable; }
 
   /// Test whether the memory pointed to by this PseudoSourceValue has a
   /// constant value.
@@ -84,10 +93,10 @@ class FixedStackPseudoSourceValue : public PseudoSourceValue {
 
 public:
   explicit FixedStackPseudoSourceValue(int FI)
-      : PseudoSourceValue(true), FI(FI) {}
+      : PseudoSourceValue(FixedStack), FI(FI) {}
 
   static inline bool classof(const PseudoSourceValue *V) {
-    return V->IsFixed == true;
+    return V->kind() == FixedStack;
   }
 
   bool isConstant(const MachineFrameInfo *MFI) const override;
