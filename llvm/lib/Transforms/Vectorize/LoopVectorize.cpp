@@ -1724,7 +1724,7 @@ struct LoopVectorize : public FunctionPass {
 
     // Compute the weighted frequency of this loop being executed and see if it
     // is less than 20% of the function entry baseline frequency. Note that we
-    // always have a canonical loop here because we think we *can* vectoriez.
+    // always have a canonical loop here because we think we *can* vectorize.
     // FIXME: This is hidden behind a flag due to pervasive problems with
     // exactly what block frequency models.
     if (LoopVectorizeWithBlockFrequency) {
