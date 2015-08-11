@@ -29,4 +29,5 @@ int y = b2<int>;
 // CHECK-NEXT: b.h:1:45: error:
 
 // MISSING-B: could not find file '{{.*}}b.h'
+// MISSING-B-NOT: please delete the module cache
 #endif
