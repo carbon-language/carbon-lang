@@ -290,26 +290,57 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
   Die();
 }
 
-static void handleFloatCastOverflow(FloatCastOverflowData *Data,
-                                    ValueHandle From, ReportOptions Opts) {
-  // TODO: Add deduplication once a SourceLocation is generated for this check.
-  SymbolizedStackHolder CallerLoc(getCallerLocation(Opts.pc));
-  Location Loc = CallerLoc;
+static bool looksLikeFloatCastOverflowDataV1(void *Data) {
+  // First field is either a pointer to filename or a pointer to a
+  // TypeDescriptor.
+  u8 *FilenameOrTypeDescriptor;
+  internal_memcpy(&FilenameOrTypeDescriptor, Data,
+                  sizeof(FilenameOrTypeDescriptor));
+
+  // Heuristic: For float_cast_overflow, the TypeKind will be either TK_Integer
+  // (0x0) or TK_Float (0x1). Adding both bytes will be 0 or 1 (for BE or LE).
+  // If it were a filename, adding two printable characters will not yield such
+  // a value.
+  u16 MaybeFromTypeKind =
+      FilenameOrTypeDescriptor[0] + FilenameOrTypeDescriptor[1];
+  return MaybeFromTypeKind < 2;
+}
+
+static void handleFloatCastOverflow(void *DataPtr, ValueHandle From,
+                                    ReportOptions Opts) {
+  SymbolizedStackHolder CallerLoc;
+  Location Loc;
+  const TypeDescriptor *FromType, *ToType;
+
+  if (looksLikeFloatCastOverflowDataV1(DataPtr)) {
+    auto Data = reinterpret_cast<FloatCastOverflowData *>(DataPtr);
+    CallerLoc.reset(getCallerLocation(Opts.pc));
+    Loc = CallerLoc;
+    FromType = &Data->FromType;
+    ToType = &Data->ToType;
+  } else {
+    auto Data = reinterpret_cast<FloatCastOverflowDataV2 *>(DataPtr);
+    SourceLocation SLoc = Data->Loc.acquire();
+    if (ignoreReport(SLoc, Opts))
+      return;
+    Loc = SLoc;
+    FromType = &Data->FromType;
+    ToType = &Data->ToType;
+  }
+
   ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error,
        "value %0 is outside the range of representable values of type %2")
-      << Value(Data->FromType, From) << Data->FromType << Data->ToType;
+      << Value(*FromType, From) << *FromType << *ToType;
 }
 
-void __ubsan::__ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
-                                                 ValueHandle From) {
+void __ubsan::__ubsan_handle_float_cast_overflow(void *Data, ValueHandle From) {
   GET_REPORT_OPTIONS(false);
   handleFloatCastOverflow(Data, From, Opts);
 }
-void
-__ubsan::__ubsan_handle_float_cast_overflow_abort(FloatCastOverflowData *Data,
-                                                  ValueHandle From) {
+void __ubsan::__ubsan_handle_float_cast_overflow_abort(void *Data,
+                                                       ValueHandle From) {
   GET_REPORT_OPTIONS(true);
   handleFloatCastOverflow(Data, From, Opts);
   Die();

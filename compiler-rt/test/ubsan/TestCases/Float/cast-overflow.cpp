@@ -1,4 +1,4 @@
-// RUN: %clangxx -fsanitize=float-cast-overflow -g %s -o %t
+// RUN: %clangxx -fsanitize=float-cast-overflow %s -o %t
 // RUN: %run %t _
 // RUN: env UBSAN_OPTIONS=print_summary=1 %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
 // RUN: %run %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
@@ -86,47 +86,49 @@ int main(int argc, char **argv) {
   case '0': {
     // Note that values between 0x7ffffe00 and 0x80000000 may or may not
     // successfully round-trip, depending on the rounding mode.
-    // CHECK-0: runtime error: value 2.14748{{.*}} is outside the range of representable values of type 'int'
+    // CHECK-0: {{.*}}cast-overflow.cpp:[[@LINE+1]]:27: runtime error: value 2.14748{{.*}} is outside the range of representable values of type 'int'
     static int test_int = MaxFloatRepresentableAsInt + 0x80;
     // CHECK-0: SUMMARY: {{.*}}Sanitizer: undefined-behavior {{.*}}cast-overflow.cpp:[[@LINE-1]]
     return 0;
     }
   case '1': {
-    // CHECK-1: runtime error: value -2.14748{{.*}} is outside the range of representable values of type 'int'
+    // CHECK-1: {{.*}}cast-overflow.cpp:[[@LINE+1]]:27: runtime error: value -2.14748{{.*}} is outside the range of representable values of type 'int'
     static int test_int = MinFloatRepresentableAsInt - 0x100;
     return 0;
   }
   case '2': {
-    // CHECK-2: runtime error: value -1 is outside the range of representable values of type 'unsigned int'
+    // CHECK-2: {{.*}}cast-overflow.cpp:[[@LINE+2]]:37: runtime error: value -1 is outside the range of representable values of type 'unsigned int'
     volatile float f = -1.0;
     volatile unsigned u = (unsigned)f;
     return 0;
   }
   case '3': {
-    // CHECK-3: runtime error: value 4.2949{{.*}} is outside the range of representable values of type 'unsigned int'
+    // CHECK-3: {{.*}}cast-overflow.cpp:[[@LINE+1]]:37: runtime error: value 4.2949{{.*}} is outside the range of representable values of type 'unsigned int'
     static int test_int = (unsigned)(MaxFloatRepresentableAsUInt + 0x100);
     return 0;
   }
 
   case '4': {
-    // CHECK-4: runtime error: value {{.*}} is outside the range of representable values of type 'int'
+    // CHECK-4: {{.*}}cast-overflow.cpp:[[@LINE+1]]:27: runtime error: value {{.*}} is outside the range of representable values of type 'int'
     static int test_int = Inf;
     return 0;
   }
   case '5': {
-    // CHECK-5: runtime error: value {{.*}} is outside the range of representable values of type 'int'
+    // CHECK-5: {{.*}}cast-overflow.cpp:[[@LINE+1]]:27: runtime error: value {{.*}} is outside the range of representable values of type 'int'
     static int test_int = NaN;
     return 0;
   }
 
     // Integer -> floating point overflow.
   case '6': {
-    // CHECK-6: {{runtime error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'|__int128 not supported}}
+    // CHECK-6: cast-overflow.cpp:[[@LINE+2]]:{{34: runtime error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'| __int128 not supported}}
 #if defined(__SIZEOF_INT128__) && !defined(_WIN32)
     static int test_int = (float)(FloatMaxAsUInt128 + 1);
     return 0;
 #else
-    puts("__int128 not supported");
+    // Print the same line as the check above. That way the test is robust to
+    // line changes around it
+    printf("%s:%d: __int128 not supported", __FILE__, __LINE__ - 5);
     return 0;
 #endif
   }
@@ -138,11 +140,11 @@ int main(int argc, char **argv) {
 
     // Floating point -> floating point overflow.
   case '8':
-    // CHECK-8: runtime error: value 1e+39 is outside the range of representable values of type 'float'
+    // CHECK-8: {{.*}}cast-overflow.cpp:[[@LINE+1]]:19: runtime error: value 1e+39 is outside the range of representable values of type 'float'
     return (float)1e39;
   case '9':
     volatile long double ld = 300.0;
-    // CHECK-9: runtime error: value 300 is outside the range of representable values of type 'char'
+    // CHECK-9: {{.*}}cast-overflow.cpp:[[@LINE+1]]:14: runtime error: value 300 is outside the range of representable values of type 'char'
     char c = ld;
     return c;
   }

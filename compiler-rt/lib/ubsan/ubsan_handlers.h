@@ -97,14 +97,22 @@ struct VLABoundData {
 /// \brief Handle a VLA with a non-positive bound.
 RECOVERABLE(vla_bound_not_positive, VLABoundData *Data, ValueHandle Bound)
 
+// Keeping this around for binary compatibility with (sanitized) programs
+// compiled with older compilers.
 struct FloatCastOverflowData {
-  // FIXME: SourceLocation Loc;
   const TypeDescriptor &FromType;
   const TypeDescriptor &ToType;
 };
 
-/// \brief Handle overflow in a conversion to or from a floating-point type.
-RECOVERABLE(float_cast_overflow, FloatCastOverflowData *Data, ValueHandle From)
+struct FloatCastOverflowDataV2 {
+  SourceLocation Loc;
+  const TypeDescriptor &FromType;
+  const TypeDescriptor &ToType;
+};
+
+/// Handle overflow in a conversion to or from a floating-point type.
+/// void *Data is one of FloatCastOverflowData* or FloatCastOverflowDataV2*
+RECOVERABLE(float_cast_overflow, void *Data, ValueHandle From)
 
 struct InvalidValueData {
   SourceLocation Loc;
