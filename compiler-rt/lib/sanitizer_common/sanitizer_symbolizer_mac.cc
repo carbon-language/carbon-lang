@@ -47,7 +47,7 @@ class AtosSymbolizerProcess : public SymbolizerProcess {
       : SymbolizerProcess(path, /*use_forkpty*/ true) {
     // Put the string command line argument in the object so that it outlives
     // the call to GetArgV.
-    internal_snprintf(pid_str_, sizeof(pid_str_), "%d", parent_pid_);
+    internal_snprintf(pid_str_, sizeof(pid_str_), "%d", parent_pid);
   }
 
  private:
