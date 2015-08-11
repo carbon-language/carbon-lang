@@ -422,6 +422,21 @@ small inputs, each input takes < 1ms to run, and the library code is not expecte
 to crash on invalid inputs.
 Examples: regular expression matchers, text or binary format parsers.
 
+Trophies
+========
+* GLIBC: https://sourceware.org/glibc/wiki/FuzzingLibc
+* MUSL LIBC:
+ * http://git.musl-libc.org/cgit/musl/commit/?id=39dfd58417ef642307d90306e1c7e50aaec5a35c
+ * http://www.openwall.com/lists/oss-security/2015/03/30/3
+* pugixml: https://github.com/zeux/pugixml/issues/39
+* PCRE: Search for "LLVM fuzzer" in http://vcs.pcre.org/pcre2/code/trunk/ChangeLog?view=markup
+* LLVM:
+ * Clang: https://llvm.org/bugs/show_bug.cgi?id=23057
+ * Clang-format: https://llvm.org/bugs/show_bug.cgi?id=23052
+ * libc++: https://llvm.org/bugs/show_bug.cgi?id=24411
+
+
+
 .. _pcre2: http://www.pcre.org/
 
 .. _AFL: http://lcamtuf.coredump.cx/afl/
