@@ -1236,14 +1236,13 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
 
       // If there exists an instruction which belongs to the following
       // categories, we will discard the load candidates.
+      if (MI->mayStore() || MI->isCall() || MI->hasUnmodeledSideEffects())
+        FoldAsLoadDefCandidates.clear();
+
       if (MI->isPosition() || MI->isPHI() || MI->isImplicitDef() ||
           MI->isKill() || MI->isInlineAsm() ||
-          MI->hasUnmodeledSideEffects()) {
-        FoldAsLoadDefCandidates.clear();
+          MI->hasUnmodeledSideEffects())
         continue;
-      }
-      if (MI->mayStore() || MI->isCall())
-        FoldAsLoadDefCandidates.clear();
 
       if ((isUncoalescableCopy(*MI) &&
            optimizeUncoalescableCopy(MI, LocalMIs)) ||
