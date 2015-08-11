@@ -59,8 +59,11 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeSymbols() {
   StringRef StringTable = *StringTableOrErr;
 
   Elf_Sym_Range Syms = ELFObj->symbols(Symtab);
-  Syms = Elf_Sym_Range(Syms.begin() + 1, Syms.end());
   auto NumSymbols = std::distance(Syms.begin(), Syms.end());
+  uint32_t FirstNonLocal = Symtab->sh_info;
+  if (FirstNonLocal > NumSymbols)
+    error("Invalid sh_info in symbol table");
+  Syms = llvm::make_range(Syms.begin() + FirstNonLocal, Syms.end());
   SymbolBodies.reserve(NumSymbols);
   for (const Elf_Sym &Sym : Syms)
     SymbolBodies.push_back(createSymbolBody(StringTable, &Sym));

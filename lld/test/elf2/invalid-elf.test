@@ -5,3 +5,7 @@ INVALID-DATA-ENC: Invalid data encoding
 RUN: not lld -flavor gnu2 %p/Inputs/invalid-file-class.elf -o %t2 2>&1 | \
 RUN:   FileCheck --check-prefix=INVALID-FILE-CLASS %s
 INVALID-FILE-CLASS: Invalid file class
+
+RUN: not lld -flavor gnu2 %p/Inputs/invalid-symtab-sh_info.elf -o %t2 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-SYMTAB-SHINFO %s
+INVALID-SYMTAB-SHINFO: Invalid sh_info in symbol table
