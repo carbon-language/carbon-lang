@@ -146,6 +146,11 @@ private:
                           MachineBasicBlock::iterator MBBI, DebugLoc DL,
                           uint64_t MaxAlign) const;
 
+  /// Make small positive stack adjustments using POPs.
+  bool adjustStackWithPops(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MBBI, DebugLoc DL,
+                           int Offset) const;
+
   /// Adjusts the stack pointer using LEA, SUB, or ADD.
   MachineInstrBuilder BuildStackAdjustment(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MBBI,

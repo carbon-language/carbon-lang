@@ -1851,6 +1851,69 @@ void X86FrameLowering::adjustForHiPEPrologue(
 #endif
 }
 
+bool X86FrameLowering::adjustStackWithPops(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator MBBI, DebugLoc DL, int Offset) const {
+
+  if (Offset % SlotSize)
+    return false;
+
+  int NumPops = Offset / SlotSize;
+  // This is only worth it if we have at most 2 pops.
+  if (NumPops != 1 && NumPops != 2)
+    return false;
+
+  // Handle only the trivial case where the adjustment directly follows
+  // a call. This is the most common one, anyway.
+  if (MBBI == MBB.begin())
+    return false;
+  MachineBasicBlock::iterator Prev = std::prev(MBBI);
+  if (!Prev->isCall() || !Prev->getOperand(1).isRegMask())
+    return false;
+
+  unsigned Regs[2];
+  unsigned FoundRegs = 0;
+
+  auto RegMask = Prev->getOperand(1);
+  
+  // Try to find up to NumPops free registers. 
+  for (auto Candidate : X86::GR32_NOREX_NOSPRegClass) {
+
+    // Poor man's liveness:
+    // Since we're immediately after a call, any register that is clobbered
+    // by the call and not defined by it can be considered dead.
+    if (!RegMask.clobbersPhysReg(Candidate))
+      continue;
+
+    bool IsDef = false;
+    for (const MachineOperand &MO : Prev->implicit_operands()) {
+      if (MO.isReg() && MO.isDef() && MO.getReg() == Candidate) {
+        IsDef = true;
+        break;
+      }
+    }
+
+    if (IsDef)
+      continue;
+
+    Regs[FoundRegs++] = Candidate;
+    if (FoundRegs == (unsigned)NumPops)
+      break;
+  }
+
+  if (FoundRegs == 0)
+    return false;
+
+  // If we found only one free register, but need two, reuse the same one twice.
+  while (FoundRegs < (unsigned)NumPops)
+    Regs[FoundRegs++] = Regs[0];
+
+  for (int i = 0; i < NumPops; ++i)
+    BuildMI(MBB, MBBI, DL, 
+            TII.get(STI.is64Bit() ? X86::POP64r : X86::POP32r), Regs[i]);
+
+  return true;
+}
+
 void X86FrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
@@ -1882,8 +1945,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     if (Amount) {
       // Add Amount to SP to destroy a frame, and subtract to setup.
       int Offset = isDestroy ? Amount : -Amount;
-      BuildStackAdjustment(MBB, I, DL, Offset, /*InEpilogue=*/false);
+
+      if (!(MF.getFunction()->optForMinSize() && 
+            adjustStackWithPops(MBB, I, DL, Offset)))
+        BuildStackAdjustment(MBB, I, DL, Offset, /*InEpilogue=*/false);
     }
+
     return;
   }
 
