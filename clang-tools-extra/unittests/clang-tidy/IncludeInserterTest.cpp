@@ -13,6 +13,16 @@
 #include "ClangTidyTest.h"
 #include "gtest/gtest.h"
 
+// FIXME: Canonicalize paths correctly on windows.
+// Currently, adding virtual files will canonicalize the paths before
+// storing the virtual entries.
+// When resolving virtual entries in the FileManager, the paths (for
+// example coming from a #include directive) are not canonicalized
+// to native paths; thus, the virtual file is not found.
+// This needs to be fixed in the FileManager before we can make
+// clang-tidy tests work.
+#if !defined(_WIN32)
+
 namespace clang {
 namespace tidy {
 namespace {
@@ -76,7 +86,7 @@ std::string runCheckOnCode(StringRef Code, StringRef Filename,
   return test::runCheckOnCode<Check>(Code, &Errors, Filename, None,
                                      ClangTidyOptions(),
                                      {// Main file include
-                                      {"devtools/cymbal/clang_tidy/tests/"
+                                      {"clang_tidy/tests/"
                                        "insert_includes_test_header.h",
                                        "\n"},
                                       // Non system headers
@@ -95,7 +105,7 @@ std::string runCheckOnCode(StringRef Code, StringRef Filename,
 
 TEST(IncludeInserterTest, InsertAfterLastNonSystemInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -106,7 +116,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -119,14 +129,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<NonSystemHeaderInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_input2.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertBeforeFirstNonSystemInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -137,7 +147,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -150,14 +160,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<NonSystemHeaderInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_input2.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertBetweenNonSystemIncludes) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -169,7 +179,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -183,14 +193,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<NonSystemHeaderInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_input2.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, NonSystemIncludeAlreadyIncluded) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -203,14 +213,14 @@ void foo() {
   int a = 0;
 })";
   EXPECT_EQ(PreCode, runCheckOnCode<NonSystemHeaderInserterCheck>(
-                         PreCode, "devtools/cymbal/clang_tidy/tests/"
+                         PreCode, "clang_tidy/tests/"
                                   "insert_includes_test_input2.cc",
                          0));
 }
 
 TEST(IncludeInserterTest, InsertNonSystemIncludeAfterLastCXXSystemInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -219,7 +229,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -231,20 +241,20 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<NonSystemHeaderInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertNonSystemIncludeAfterMainFileInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include "path/to/header.h"
 
@@ -253,14 +263,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<NonSystemHeaderInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertCXXSystemIncludeAfterLastCXXSystemInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -271,7 +281,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <list>
 #include <map>
@@ -284,14 +294,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertCXXSystemIncludeBeforeFirstCXXSystemInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <vector>
 
@@ -301,7 +311,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <set>
 #include <vector>
@@ -313,14 +323,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertCXXSystemIncludeBetweenCXXSystemIncludes) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <map>
 #include <vector>
@@ -331,7 +341,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <map>
 #include <set>
@@ -344,14 +354,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertCXXSystemIncludeAfterMainFileInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include "path/to/a/header.h"
 
@@ -359,7 +369,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <set>
 
@@ -370,14 +380,14 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
 
 TEST(IncludeInserterTest, InsertCXXSystemIncludeAfterCSystemInclude) {
   const char *PreCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <stdlib.h>
 
@@ -387,7 +397,7 @@ void foo() {
   int a = 0;
 })";
   const char *PostCode = R"(
-#include "devtools/cymbal/clang_tidy/tests/insert_includes_test_header.h"
+#include "clang_tidy/tests/insert_includes_test_header.h"
 
 #include <stdlib.h>
 
@@ -400,7 +410,7 @@ void foo() {
 })";
 
   EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
-                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                          PreCode, "clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
@@ -408,3 +418,5 @@ void foo() {
 } // namespace
 } // namespace tidy
 } // namespace clang
+
+#endif
