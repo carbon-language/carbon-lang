@@ -37,7 +37,7 @@ void LoopVersioning::versionLoop(Pass *P) {
   // Add the memcheck in the original preheader (this is empty initially).
   BasicBlock *MemCheckBB = VersionedLoop->getLoopPreheader();
   std::tie(FirstCheckInst, MemRuntimeCheck) =
-      LAI.addRuntimeCheck(MemCheckBB->getTerminator(), Checks);
+      LAI.addRuntimeChecks(MemCheckBB->getTerminator(), Checks);
   assert(MemRuntimeCheck && "called even though needsAnyChecking = false");
 
   // Rename the block to make the IR more readable.

@@ -2804,7 +2804,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // faster.
   Instruction *MemRuntimeCheck;
   std::tie(FirstCheckInst, MemRuntimeCheck) =
-      Legal->getLAI()->addRuntimeCheck(VectorPH->getTerminator());
+      Legal->getLAI()->addRuntimeChecks(VectorPH->getTerminator());
   if (MemRuntimeCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the memory check.

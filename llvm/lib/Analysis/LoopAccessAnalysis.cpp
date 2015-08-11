@@ -1651,7 +1651,7 @@ static SmallVector<std::pair<PointerBounds, PointerBounds>, 4> expandBounds(
   return ChecksWithBounds;
 }
 
-std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
+std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeChecks(
     Instruction *Loc,
     const SmallVectorImpl<RuntimePointerChecking::PointerCheck> &PointerChecks)
     const {
@@ -1710,12 +1710,12 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
   return std::make_pair(FirstInst, Check);
 }
 
-std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeCheck(
-    Instruction *Loc) const {
+std::pair<Instruction *, Instruction *>
+LoopAccessInfo::addRuntimeChecks(Instruction *Loc) const {
   if (!PtrRtChecking.Need)
     return std::make_pair(nullptr, nullptr);
 
-  return addRuntimeCheck(Loc, PtrRtChecking.getChecks());
+  return addRuntimeChecks(Loc, PtrRtChecking.getChecks());
 }
 
 LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,

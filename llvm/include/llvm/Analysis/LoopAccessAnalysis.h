@@ -372,7 +372,7 @@ public:
   /// \brief A memcheck which made up of a pair of grouped pointers.
   ///
   /// These *have* to be const for now, since checks are generated from
-  /// CheckingPtrGroups in LAI::addRuntimeCheck which is a const member
+  /// CheckingPtrGroups in LAI::addRuntimeChecks which is a const member
   /// function.  FIXME: once check-generation is moved inside this class (after
   /// the PtrPartition hack is removed), we could drop const.
   typedef std::pair<const CheckingPtrGroup *, const CheckingPtrGroup *>
@@ -496,7 +496,7 @@ public:
   /// instruction generated in possibly a sequence of instructions and the
   /// second value is the final comparator value or NULL if no check is needed.
   std::pair<Instruction *, Instruction *>
-  addRuntimeCheck(Instruction *Loc) const;
+  addRuntimeChecks(Instruction *Loc) const;
 
   /// \brief Generete the instructions for the checks in \p PointerChecks.
   ///
@@ -504,9 +504,9 @@ public:
   /// instruction generated in possibly a sequence of instructions and the
   /// second value is the final comparator value or NULL if no check is needed.
   std::pair<Instruction *, Instruction *>
-  addRuntimeCheck(Instruction *Loc,
-                  const SmallVectorImpl<RuntimePointerChecking::PointerCheck>
-                      &PointerChecks) const;
+  addRuntimeChecks(Instruction *Loc,
+                   const SmallVectorImpl<RuntimePointerChecking::PointerCheck>
+                       &PointerChecks) const;
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
