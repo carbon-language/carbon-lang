@@ -392,6 +392,7 @@ private:
   void visitAllocaInst(AllocaInst &AI);
   void visitExtractValueInst(ExtractValueInst &EVI);
   void visitInsertValueInst(InsertValueInst &IVI);
+  void visitEHPadPredecessors(Instruction &I);
   void visitLandingPadInst(LandingPadInst &LPI);
   void visitCatchPadInst(CatchPadInst &CPI);
   void visitCatchEndPadInst(CatchEndPadInst &CEPI);
@@ -2774,23 +2775,54 @@ void Verifier::visitInsertValueInst(InsertValueInst &IVI) {
   visitInstruction(IVI);
 }
 
-void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
-  BasicBlock *BB = LPI.getParent();
+void Verifier::visitEHPadPredecessors(Instruction &I) {
+  assert(I.isEHPad());
 
+  BasicBlock *BB = I.getParent();
+  Function *F = BB->getParent();
+
+  Assert(BB != &F->getEntryBlock(), "EH pad cannot be in entry block.", &I);
+
+  if (auto *LPI = dyn_cast<LandingPadInst>(&I)) {
+    // The landingpad instruction defines its parent as a landing pad block. The
+    // landing pad block may be branched to only by the unwind edge of an
+    // invoke.
+    for (BasicBlock *PredBB : predecessors(BB)) {
+      const auto *II = dyn_cast<InvokeInst>(PredBB->getTerminator());
+      Assert(II && II->getUnwindDest() == BB && II->getNormalDest() != BB,
+             "Block containing LandingPadInst must be jumped to "
+             "only by the unwind edge of an invoke.",
+             LPI);
+    }
+    return;
+  }
+
+  for (BasicBlock *PredBB : predecessors(BB)) {
+    TerminatorInst *TI = PredBB->getTerminator();
+    if (auto *II = dyn_cast<InvokeInst>(TI))
+      Assert(II->getUnwindDest() == BB && II->getNormalDest() != BB,
+             "EH pad must be jumped to via an unwind edge", &I, II);
+    else if (auto *CPI = dyn_cast<CatchPadInst>(TI))
+      Assert(CPI->getUnwindDest() == BB && CPI->getNormalDest() != BB,
+             "EH pad must be jumped to via an unwind edge", &I, CPI);
+    else if (isa<CatchEndPadInst>(TI))
+      ;
+    else if (isa<CleanupReturnInst>(TI))
+      ;
+    else if (isa<TerminatePadInst>(TI))
+      ;
+    else
+      Assert(false, "EH pad must be jumped to via an unwind edge", &I, TI);
+  }
+}
+
+void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
   // The landingpad instruction is ill-formed if it doesn't have any clauses and
   // isn't a cleanup.
   Assert(LPI.getNumClauses() > 0 || LPI.isCleanup(),
          "LandingPadInst needs at least one clause or to be a cleanup.", &LPI);
 
-  // The landingpad instruction defines its parent as a landing pad block. The
-  // landing pad block may be branched to only by the unwind edge of an invoke.
-  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
-    const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator());
-    Assert(II && II->getUnwindDest() == BB && II->getNormalDest() != BB,
-           "Block containing LandingPadInst must be jumped to "
-           "only by the unwind edge of an invoke.",
-           &LPI);
-  }
+  visitEHPadPredecessors(LPI);
 
   if (!LandingPadResultTy)
     LandingPadResultTy = LPI.getType();
@@ -2826,7 +2858,7 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
 }
 
 void Verifier::visitCatchPadInst(CatchPadInst &CPI) {
-  BasicBlock *BB = CPI.getParent();
+  visitEHPadPredecessors(CPI);
 
   if (!CatchPadResultTy)
     CatchPadResultTy = CPI.getType();
@@ -2836,6 +2868,7 @@ void Verifier::visitCatchPadInst(CatchPadInst &CPI) {
            "inside a function.",
            &CPI);
 
+  BasicBlock *BB = CPI.getParent();
   Function *F = BB->getParent();
   Assert(F->hasPersonalityFn(),
          "CatchPadInst needs to be in a function with a personality.", &CPI);
@@ -2857,8 +2890,9 @@ void Verifier::visitCatchPadInst(CatchPadInst &CPI) {
 }
 
 void Verifier::visitCatchEndPadInst(CatchEndPadInst &CEPI) {
-  BasicBlock *BB = CEPI.getParent();
+  visitEHPadPredecessors(CEPI);
 
+  BasicBlock *BB = CEPI.getParent();
   Function *F = BB->getParent();
   Assert(F->hasPersonalityFn(),
          "CatchEndPadInst needs to be in a function with a personality.",
@@ -2891,6 +2925,8 @@ void Verifier::visitCatchEndPadInst(CatchEndPadInst &CEPI) {
 }
 
 void Verifier::visitCleanupPadInst(CleanupPadInst &CPI) {
+  visitEHPadPredecessors(CPI);
+
   BasicBlock *BB = CPI.getParent();
 
   if (!CleanupPadResultTy)
@@ -2927,8 +2963,9 @@ void Verifier::visitCleanupReturnInst(CleanupReturnInst &CRI) {
 }
 
 void Verifier::visitTerminatePadInst(TerminatePadInst &TPI) {
-  BasicBlock *BB = TPI.getParent();
+  visitEHPadPredecessors(TPI);
 
+  BasicBlock *BB = TPI.getParent();
   Function *F = BB->getParent();
   Assert(F->hasPersonalityFn(),
          "TerminatePadInst needs to be in a function with a personality.",
