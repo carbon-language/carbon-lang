@@ -312,7 +312,8 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     if (data_addr == 0 || data_addr == LLDB_INVALID_ADDRESS)
         return false;
 
-    clang::ASTContext* ast = valobj.GetClangType().GetASTContext();
+    ClangASTContext* lldb_ast = valobj.GetClangType().GetTypeSystem()->AsClangASTContext();
+    clang::ASTContext* ast = lldb_ast ? lldb_ast->getASTContext() : nullptr;
     
     if (!ast)
         return false;

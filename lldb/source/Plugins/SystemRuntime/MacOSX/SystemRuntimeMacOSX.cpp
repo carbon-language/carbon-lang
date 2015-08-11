@@ -448,12 +448,13 @@ SystemRuntimeMacOSX::ReadLibdispatchTSDIndexes ()
         {
             ClangASTType uint16 = ast_ctx->GetIntTypeFromBitSize(16, false);
             ClangASTType dispatch_tsd_indexes_s = ast_ctx->CreateRecordType(nullptr, lldb::eAccessPublic, "__lldb_dispatch_tsd_indexes_s", clang::TTK_Struct, lldb::eLanguageTypeC);
-            dispatch_tsd_indexes_s.StartTagDeclarationDefinition();
-            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_version", uint16, lldb::eAccessPublic, 0);
-            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_queue_index", uint16, lldb::eAccessPublic, 0);
-            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_voucher_index", uint16, lldb::eAccessPublic, 0);
-            dispatch_tsd_indexes_s.AddFieldToRecordType ("dti_qos_class_index", uint16, lldb::eAccessPublic, 0);
-            dispatch_tsd_indexes_s.CompleteTagDeclarationDefinition();
+
+            ClangASTContext::StartTagDeclarationDefinition(dispatch_tsd_indexes_s);
+            ClangASTContext::AddFieldToRecordType (dispatch_tsd_indexes_s, "dti_version", uint16, lldb::eAccessPublic, 0);
+            ClangASTContext::AddFieldToRecordType (dispatch_tsd_indexes_s, "dti_queue_index", uint16, lldb::eAccessPublic, 0);
+            ClangASTContext::AddFieldToRecordType (dispatch_tsd_indexes_s, "dti_voucher_index", uint16, lldb::eAccessPublic, 0);
+            ClangASTContext::AddFieldToRecordType (dispatch_tsd_indexes_s, "dti_qos_class_index", uint16, lldb::eAccessPublic, 0);
+            ClangASTContext::CompleteTagDeclarationDefinition(dispatch_tsd_indexes_s);
 
             ProcessStructReader struct_reader (m_process, m_dispatch_tsd_indexes_addr, dispatch_tsd_indexes_s);
 

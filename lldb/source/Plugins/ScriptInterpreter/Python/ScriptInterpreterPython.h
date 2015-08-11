@@ -434,10 +434,10 @@ public:
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual lldb_private::ConstString
-    GetPluginName();
+    GetPluginName() override;
     
     virtual uint32_t
-    GetPluginVersion();
+    GetPluginVersion() override;
 
 protected:
 

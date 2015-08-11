@@ -149,6 +149,7 @@ private:
     
     class LLDBPreprocessorCallbacks;
     LLDBPreprocessorCallbacks               *m_pp_callbacks;         ///< Called when the preprocessor encounters module imports
+    std::unique_ptr<ClangASTContext>         m_ast_context;
 };
     
 }

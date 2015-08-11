@@ -33,6 +33,7 @@
 #include "lldb/Interpreter/OptionGroupOutputFile.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Interpreter/OptionValueString.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/TypeList.h"
 #include "lldb/Target/MemoryHistory.h"
 #include "lldb/Target/Process.h"
@@ -532,7 +533,7 @@ protected:
                 clang::TypeDecl *tdecl = target->GetPersistentVariables().GetPersistentType(ConstString(lookup_type_name));
                 if (tdecl)
                 {
-                    clang_ast_type.SetClangType(&tdecl->getASTContext(),(const lldb::clang_type_t)tdecl->getTypeForDecl());
+                    clang_ast_type.SetClangType(ClangASTContext::GetASTContext(&tdecl->getASTContext()),(const lldb::clang_type_t)tdecl->getTypeForDecl());
                 }
             }
             

@@ -279,7 +279,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::CalculateNumChildren ()
 bool
 lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetDataType()
 {
-    if (m_element_type.GetOpaqueQualType() && m_element_type.GetASTContext())
+    if (m_element_type.GetOpaqueQualType() && m_element_type.GetTypeSystem())
         return true;
     m_element_type.Clear();
     ValueObjectSP deref;

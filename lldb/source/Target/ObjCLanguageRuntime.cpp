@@ -136,7 +136,7 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
             {
                 TypeSP type_sp (types.GetTypeAtIndex(i));
                 
-                if (type_sp->GetClangForwardType().IsObjCObjectOrInterfaceType())
+                if (ClangASTContext::IsObjCObjectOrInterfaceType(type_sp->GetClangForwardType()))
                 {
                     if (type_sp->IsCompleteObjCClass())
                     {
@@ -648,7 +648,7 @@ bool
 ObjCLanguageRuntime::GetTypeBitSize (const ClangASTType& clang_type,
                                      uint64_t &size)
 {
-    void *opaque_ptr = clang_type.GetQualType().getAsOpaquePtr();
+    void *opaque_ptr = clang_type.GetOpaqueQualType();
     size = m_type_size_cache.Lookup(opaque_ptr);
     // an ObjC object will at least have an ISA, so 0 is definitely not OK
     if (size > 0)
