@@ -7,6 +7,8 @@ add_clang_library(clangTidy
   ClangTidyModule.cpp
   ClangTidyDiagnosticConsumer.cpp
   ClangTidyOptions.cpp
+  IncludeInserter.cpp
+  IncludeSorter.cpp
 
   DEPENDS
   ClangSACheckers
