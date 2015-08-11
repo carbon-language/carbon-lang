@@ -635,22 +635,16 @@ TailDuplicatePass::isSimpleBB(MachineBasicBlock *TailBB) {
 static bool
 bothUsedInPHI(const MachineBasicBlock &A,
               SmallPtrSet<MachineBasicBlock*, 8> SuccsB) {
-  for (MachineBasicBlock::const_succ_iterator SI = A.succ_begin(),
-         SE = A.succ_end(); SI != SE; ++SI) {
-    MachineBasicBlock *BB = *SI;
+  for (MachineBasicBlock *BB : A.successors())
     if (SuccsB.count(BB) && !BB->empty() && BB->begin()->isPHI())
       return true;
-  }
 
   return false;
 }
 
 bool
 TailDuplicatePass::canCompletelyDuplicateBB(MachineBasicBlock &BB) {
-  for (MachineBasicBlock::pred_iterator PI = BB.pred_begin(),
-       PE = BB.pred_end(); PI != PE; ++PI) {
-    MachineBasicBlock *PredBB = *PI;
-
+  for (MachineBasicBlock *PredBB : BB.predecessors()) {
     if (PredBB->succ_size() > 1)
       return false;
 
