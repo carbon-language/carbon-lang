@@ -681,3 +681,10 @@ outsd
 // CHECK: outsb (%rsi), %dx
 // CHECK: outsw (%rsi), %dx
 // CHECK: outsl (%rsi), %dx
+
+imul bx, 123
+imul ebx, 123
+imul rbx, 123
+// CHECK: imulw $123, %bx
+// CHECK: imull $123, %ebx
+// CHECK: imulq $123, %rbx
