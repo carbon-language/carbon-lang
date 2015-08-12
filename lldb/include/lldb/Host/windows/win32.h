@@ -65,7 +65,8 @@ int strcasecmp(const char* s1, const char* s2);
 int strncasecmp(const char* s1, const char* s2, size_t n);
 
 #if _MSC_VER < 1900
-int snprintf(char *buffer, size_t count, const char *format, ...);
+int __declspec(dllexport)
+snprintf(char *buffer, size_t count, const char *format, ...);
 #endif
 
 #define STDIN_FILENO  0
