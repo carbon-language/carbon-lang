@@ -79,7 +79,9 @@ public:
     kw_entry,
     kw_exclude_file,
     kw_extern,
+    kw_filehdr,
     kw_fill,
+    kw_flags,
     kw_group,
     kw_hidden,
     kw_input,
@@ -818,6 +820,8 @@ public:
 
   StringRef name() const { return _name; }
   uint64_t type() const { return _type; }
+  bool hasFileHdr() const { return _includeFileHdr; }
+  bool hasPHDRs() const { return _includePHDRs; }
   uint64_t flags() const { return _flags; }
   bool isNone() const;
 
@@ -1284,7 +1288,7 @@ public:
   /// Prepare our data structures according to the linker scripts currently in
   /// our control (control given via addLinkerScript()). Called once all linker
   /// scripts have been parsed.
-  void perform();
+  std::error_code perform();
 
   /// Answer if we have layout commands (section mapping rules). If we don't,
   /// the output file writer can assume there is no linker script special rule
@@ -1326,12 +1330,14 @@ public:
   /// has been performed (by calling evalExpr() for all expressions).
   uint64_t getLinkerScriptExprValue(StringRef name) const;
 
+  /// Check if there are custom headers available.
+  bool hasPHDRs() const;
+
   /// Retrieve all the headers the given output section is assigned to.
-  /// Error is returned if the output section is assigned to headers with
-  /// missing declarations.
-  std::error_code
-  getPHDRsForOutputSection(StringRef name,
-                           std::vector<const PHDR *> &phdrs) const;
+  std::vector<const PHDR *> getPHDRsForOutputSection(StringRef name) const;
+
+  /// Retrieve program header if available.
+  const PHDR *getProgramPHDR() const;
 
   void dump() const;
 
@@ -1374,9 +1380,14 @@ private:
   bool localCompare(int order, const SectionKey &lhs,
                     const SectionKey &rhs) const;
 
+  /// Convert the PHDRS command into map of names to headers.
+  /// Determine program header during processing.
+  std::error_code collectPHDRs(const PHDRS *ph,
+                               llvm::StringMap<const PHDR *> &phdrs);
+
   /// Build map that matches output section names to segments they should be
   /// put into.
-  std::error_code buildSectionToPHDR();
+  std::error_code buildSectionToPHDR(llvm::StringMap<const PHDR *> &phdrs);
 
   /// Our goal with all linearizeAST overloaded functions is to
   /// traverse the linker script AST while putting nodes in a vector and
@@ -1433,8 +1444,6 @@ private:
   void linearizeAST(const InputSectionsCmd *inputSections);
   void linearizeAST(const InputSection *inputSection);
 
-  void perform(const LinkerScript *ls);
-
   std::vector<std::unique_ptr<Parser>> _scripts;
   std::vector<const Command *> _layoutCommands;
   std::unordered_multimap<std::string, int> _memberToLayoutOrder;
@@ -1444,8 +1453,8 @@ private:
   llvm::DenseSet<int> _deliveredExprs;
   mutable llvm::StringSet<> _definedSymbols;
 
-  bool _parsedPHDRS;
   llvm::StringMap<llvm::SmallVector<const PHDR *, 2>> _sectionToPHDR;
+  const PHDR *_programPHDR;
 
   Expression::SymbolTableTy _symbolTable;
 };

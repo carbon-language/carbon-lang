@@ -68,7 +68,9 @@ void Token::dump(raw_ostream &os) const {
     CASE(kw_entry)
     CASE(kw_exclude_file)
     CASE(kw_extern)
+    CASE(kw_filehdr)
     CASE(kw_fill)
+    CASE(kw_flags)
     CASE(kw_group)
     CASE(kw_hidden)
     CASE(kw_input)
@@ -476,7 +478,9 @@ void Lexer::lex(Token &tok) {
             .Case("ENTRY", Token::kw_entry)
             .Case("EXCLUDE_FILE", Token::kw_exclude_file)
             .Case("EXTERN", Token::kw_extern)
+            .Case("FILEHDR", Token::kw_filehdr)
             .Case("FILL", Token::kw_fill)
+            .Case("FLAGS", Token::kw_flags)
             .Case("GROUP", Token::kw_group)
             .Case("HIDDEN", Token::kw_hidden)
             .Case("INPUT", Token::kw_input)
@@ -2126,26 +2130,57 @@ const PHDR *Parser::parsePHDR() {
   }
 
   uint64_t flags = 0;
+  const Expression *flagsExpr = nullptr;
+  bool includeFileHdr = false;
+  bool includePHDRs = false;
 
-  if (_tok._kind == Token::identifier && _tok._range == "FLAGS") {
-    consumeToken();
-    if (!expectAndConsume(Token::l_paren, "Expected ("))
+  while (_tok._kind != Token::semicolon) {
+    switch (_tok._kind) {
+    case Token::kw_filehdr:
+      if (includeFileHdr) {
+        error(_tok, "Duplicate FILEHDR attribute");
+        return nullptr;
+      }
+      includeFileHdr = true;
+      consumeToken();
+      break;
+    case Token::kw_phdrs:
+      if (includePHDRs) {
+        error(_tok, "Duplicate PHDRS attribute");
+        return nullptr;
+      }
+      includePHDRs = true;
+      consumeToken();
+      break;
+    case Token::kw_flags: {
+      if (flagsExpr) {
+        error(_tok, "Duplicate FLAGS attribute");
+        return nullptr;
+      }
+      consumeToken();
+      if (!expectAndConsume(Token::l_paren, "Expected ("))
+        return nullptr;
+      flagsExpr = parseExpression();
+      if (!flagsExpr)
+        return nullptr;
+      auto f = flagsExpr->evalExpr();
+      if (!f)
+        return nullptr;
+      flags = *f;
+      if (!expectAndConsume(Token::r_paren, "Expected )"))
+        return nullptr;
+    } break;
+    default:
+      error(_tok, "Unexpected token");
       return nullptr;
-    const Expression *flagsExpr = parseExpression();
-    if (!flagsExpr)
-      return nullptr;
-    auto f = flagsExpr->evalExpr();
-    if (!f)
-      return nullptr;
-    flags = *f;
-    if (!expectAndConsume(Token::r_paren, "Expected )"))
-      return nullptr;
+    }
   }
   
   if (!expectAndConsume(Token::semicolon, "Expected ;"))
     return nullptr;
 
-  return new (getAllocator()) PHDR(name, type, false, false, nullptr, flags);
+  return new (getAllocator())
+      PHDR(name, type, includeFileHdr, includePHDRs, nullptr, flags);
 }
 
 PHDRS *Parser::parsePHDRS() {
@@ -2360,11 +2395,22 @@ Extern *Parser::parseExtern() {
 }
 
 // Sema member functions
-Sema::Sema() : _parsedPHDRS(false) {}
+Sema::Sema() : _programPHDR(nullptr) {}
 
-void Sema::perform() {
-  for (auto &parser : _scripts)
-    perform(parser->get());
+std::error_code Sema::perform() {
+  llvm::StringMap<const PHDR *> phdrs;
+
+  for (auto &parser : _scripts) {
+    for (const Command *c : parser->get()->_commands) {
+      if (const auto *sec = dyn_cast<Sections>(c)) {
+        linearizeAST(sec);
+      } else if (const auto *ph = dyn_cast<PHDRS>(c)) {
+        if (auto ec = collectPHDRs(ph, phdrs))
+          return ec;
+      }
+    }
+  }
+  return buildSectionToPHDR(phdrs);
 }
 
 bool Sema::less(const SectionKey &lhs, const SectionKey &rhs) const {
@@ -2469,17 +2515,14 @@ uint64_t Sema::getLinkerScriptExprValue(StringRef name) const {
   return it->second;
 }
 
-std::error_code
-Sema::getPHDRsForOutputSection(StringRef name,
-                               std::vector<const PHDR *> &phdrs) const {
-  // Cache results if not done yet.
-  if (auto ec = const_cast<Sema *>(this)->buildSectionToPHDR())
-    return ec;
+bool Sema::hasPHDRs() const { return !_sectionToPHDR.empty(); }
 
+std::vector<const PHDR *> Sema::getPHDRsForOutputSection(StringRef name) const {
   auto vec = _sectionToPHDR.lookup(name);
-  std::copy(std::begin(vec), std::end(vec), std::back_inserter(phdrs));
-  return std::error_code();
+  return std::vector<const PHDR *>(std::begin(vec), std::end(vec));
 }
+
+const PHDR *Sema::getProgramPHDR() const { return _programPHDR; }
 
 void Sema::dump() const {
   raw_ostream &os = llvm::outs();
@@ -2717,25 +2760,35 @@ bool Sema::localCompare(int order, const SectionKey &lhs,
   return false;
 }
 
-std::error_code Sema::buildSectionToPHDR() {
-  if (_parsedPHDRS)
-    return std::error_code();
-  _parsedPHDRS = true;
+std::error_code Sema::collectPHDRs(const PHDRS *ph,
+                                   llvm::StringMap<const PHDR *> &phdrs) {
+  bool loadFound = false;
+  for (auto *p : *ph) {
+    phdrs[p->name()] = p;
 
-  // No scripts - nothing to do.
-  if (_scripts.empty() || _layoutCommands.empty())
-    return std::error_code();
-
-  // Collect all header declarations.
-  llvm::StringMap<const PHDR *> phdrs;
-  for (auto &parser : _scripts) {
-    for (auto *cmd : parser->get()->_commands) {
-      if (auto *ph = dyn_cast<PHDRS>(cmd)) {
-        for (auto *p : *ph)
-          phdrs[p->name()] = p;
-      }
+    switch (p->type()) {
+    case llvm::ELF::PT_PHDR:
+      if (_programPHDR != nullptr)
+        return LinkerScriptReaderError::extra_program_phdr;
+      if (loadFound)
+        return LinkerScriptReaderError::misplaced_program_phdr;
+      if (!p->hasPHDRs())
+        return LinkerScriptReaderError::program_phdr_wrong_phdrs;
+      _programPHDR = p;
+      break;
+    case llvm::ELF::PT_LOAD:
+      // Program header, if available, should have program header table
+      // mapped in the first loadable segment.
+      if (!loadFound && _programPHDR && !p->hasPHDRs())
+        return LinkerScriptReaderError::program_phdr_wrong_phdrs;
+      loadFound = true;
+      break;
     }
   }
+  return std::error_code();
+}
+
+std::error_code Sema::buildSectionToPHDR(llvm::StringMap<const PHDR *> &phdrs) {
   const bool noPhdrs = phdrs.empty();
 
   // Add NONE header to the map provided there's no user-defined
@@ -2835,13 +2888,6 @@ void Sema::linearizeAST(const Sections *sections) {
 
       linearizeAST(dyn_cast<InputSectionsCmd>(outSecCommand));
     }
-  }
-}
-
-void Sema::perform(const LinkerScript *ls) {
-  for (const Command *c : ls->_commands) {
-    if (const Sections *sec = dyn_cast<Sections>(c))
-      linearizeAST(sec);
   }
 }
 

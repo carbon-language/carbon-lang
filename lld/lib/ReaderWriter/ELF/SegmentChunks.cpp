@@ -423,7 +423,7 @@ template <class ELFT> int64_t Segment<ELFT>::flags() const {
 }
 
 template <class ELFT> void Segment<ELFT>::setSegmentFlags(uint64_t flags) {
-  assert(!_segmentFlags && !_flags && "Flags has already been set");
+  assert(!_segmentFlags && "Segment flags have already been set");
   _segmentFlags = true;
   _flags = flags;
   _atomflags = toAtomPermsSegment(flags);

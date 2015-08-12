@@ -38,6 +38,9 @@ enum class LinkerScriptReaderError {
   unknown_symbol_in_expr,
   unrecognized_function_in_expr,
   unknown_phdr_ids,
+  extra_program_phdr,
+  misplaced_program_phdr,
+  program_phdr_wrong_phdrs,
 };
 
 inline std::error_code make_error_code(LinkerScriptReaderError e) {

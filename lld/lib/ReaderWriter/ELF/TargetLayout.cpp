@@ -330,12 +330,7 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
 template <class ELFT>
 std::vector<const script::PHDR *>
 TargetLayout<ELFT>::getCustomSegments(const OutputSection<ELFT> *sec) const {
-  std::vector<const script::PHDR *> phdrs;
-  if (_linkerScriptSema.getPHDRsForOutputSection(sec->name(), phdrs)) {
-    llvm::report_fatal_error(
-        "Linker script has wrong segments set for output sections");
-  }
-  return phdrs;
+  return _linkerScriptSema.getPHDRsForOutputSection(sec->name());
 }
 
 template <class ELFT>
@@ -466,11 +461,36 @@ template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
       }
     }
   }
-  if (_ctx.isDynamic() && !_ctx.isDynamicLibrary()) {
+
+  // Default values if no linker script is available
+  bool hasProgramSegment = _ctx.isDynamic() && !_ctx.isDynamicLibrary();
+  bool hasElfHeader = true;
+  bool hasProgramHeader = true;
+  uint64_t segmentFlags = 0;
+
+  // Check if linker script has PHDRS and program segment defined
+  if (_linkerScriptSema.hasPHDRs()) {
+    if (auto p = _linkerScriptSema.getProgramPHDR()) {
+      hasProgramSegment = true;
+      hasElfHeader = p->hasFileHdr();
+      hasProgramHeader = p->hasPHDRs();
+      segmentFlags = p->flags();
+    } else {
+      hasProgramSegment = false;
+      hasElfHeader = false;
+      hasProgramHeader = false;
+    }
+  }
+
+  if (hasProgramSegment) {
     Segment<ELFT> *segment = new (_allocator) ProgramHeaderSegment<ELFT>(_ctx);
     _segments.push_back(segment);
-    segment->append(_elfHeader);
-    segment->append(_programHeader);
+    if (segmentFlags)
+      segment->setSegmentFlags(segmentFlags);
+    if (hasElfHeader)
+      segment->append(_elfHeader);
+    if (hasProgramHeader)
+      segment->append(_programHeader);
   }
 }
 

@@ -58,6 +58,12 @@ public:
              "expression";
     case LinkerScriptReaderError::unknown_phdr_ids:
       return "Unknown header identifiers (missing in PHDRS command) are used";
+    case LinkerScriptReaderError::extra_program_phdr:
+      return "Extra program header is found";
+    case LinkerScriptReaderError::misplaced_program_phdr:
+      return "Program header must precede load segments";
+    case LinkerScriptReaderError::program_phdr_wrong_phdrs:
+      return "Program header has invalid PHDRS attribute";
     }
     llvm_unreachable("An enumerator of LinkerScriptReaderError does not have a "
                      "message defined.");

@@ -748,7 +748,10 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
     return false;
 
   // Perform linker script semantic actions
-  ctx->linkerScriptSema().perform();
+  if (auto ec = ctx->linkerScriptSema().perform()) {
+    diag << "Error in the linker script's semantics: " << ec.message() << "\n";
+    return false;
+  }
 
   context.swap(ctx);
   return true;
