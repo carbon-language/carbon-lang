@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple x86_64-apple-darwin -filetype=obj %s -o - | macho-dump | FileCheck %s
+// RUN: llvm-mc -triple x86_64-apple-darwin -filetype=obj %s -o - | llvm-readobj -sections | FileCheck %s
 
 // We were trying to generate compact unwind info for assembly like this.
 // The .cfi_def_cfa directive, however, throws a wrench into that and was
@@ -68,6 +68,22 @@ _foo:
   ret
  .cfi_endproc
 
-
-
-// CHECK: 'section_name', '__eh_frame\x00
+// CHECK: Section {
+// CHECK:   Index: 1
+// CHECK:   Name: __eh_frame (5F 5F 65 68 5F 66 72 61 6D 65 00 00 00 00 00 00)
+// CHECK:   Segment: __TEXT (5F 5F 54 45 58 54 00 00 00 00 00 00 00 00 00 00)
+// CHECK:   Address: 0x70
+// CHECK:   Size: 0x40
+// CHECK:   Offset: 480
+// CHECK:   Alignment: 3
+// CHECK:   RelocationOffset: 0x0
+// CHECK:   RelocationCount: 0
+// CHECK:   Type: 0xB
+// CHECK:   Attributes [ (0x680000)
+// CHECK:     LiveSupport (0x80000)
+// CHECK:     NoTOC (0x400000)
+// CHECK:     StripStaticSyms (0x200000)
+// CHECK:   ]
+// CHECK:   Reserved1: 0x0
+// CHECK:   Reserved2: 0x0
+// CHECK: }
