@@ -710,6 +710,9 @@ void MIPrinter::print(const MachineMemOperand &Op) {
     const PseudoSourceValue *PVal = Op.getPseudoValue();
     assert(PVal && "Expected a pseudo source value");
     switch (PVal->kind()) {
+    case PseudoSourceValue::Stack:
+      OS << "stack";
+      break;
     case PseudoSourceValue::ConstantPool:
       OS << "constant-pool";
       break;

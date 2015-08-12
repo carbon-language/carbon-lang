@@ -65,6 +65,16 @@
     ret double %b
   }
 
+  declare x86_fp80 @cosl(x86_fp80) #0
+
+  define x86_fp80 @stack_psv(x86_fp80 %x) {
+  entry:
+    %y = call x86_fp80 @cosl(x86_fp80 %x) #0
+    ret x86_fp80 %y
+  }
+
+  attributes #0 = { readonly }
+
 ...
 ---
 name:            test
@@ -210,4 +220,29 @@ body:
       - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)'
       - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)'
       - 'RETQ %xmm0'
+...
+---
+name:            stack_psv
+tracksRegLiveness: true
+frameInfo:
+  stackSize:       24
+  maxAlignment:    16
+  adjustsStack:    true
+  hasCalls:        true
+  maxCallFrameSize: 16
+fixedStack:
+  - { id: 0, offset: 0, size: 10, alignment: 16, isImmutable: true, isAliased: false }
+body:
+  - id:          0
+    name:        entry
+    instructions:
+      - '%rsp = frame-setup SUB64ri8 %rsp, 24, implicit-def dead %eflags'
+      - CFI_INSTRUCTION .cfi_def_cfa_offset 32
+      - 'LD_F80m %rsp, 1, _, 32, _, implicit-def dead %fpsw'
+# CHECK: name: stack_psv
+# CHECK: ST_FP80m %rsp, 1, _, 0, _, implicit-def dead %fpsw :: (store 10 into stack, align 16)
+      - 'ST_FP80m %rsp, 1, _, 0, _, implicit-def dead %fpsw :: (store 10 into stack, align 16)'
+      - 'CALL64pcrel32 $cosl, csr_64, implicit %rsp, implicit-def %rsp, implicit-def %fp0'
+      - '%rsp = ADD64ri8 %rsp, 24, implicit-def dead %eflags'
+      - RETQ
 ...

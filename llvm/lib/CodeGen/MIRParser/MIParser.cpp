@@ -1121,6 +1121,9 @@ bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
 
 bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
   switch (Token.kind()) {
+  case MIToken::kw_stack:
+    PSV = MF.getPSVManager().getStack();
+    break;
   case MIToken::kw_constant_pool:
     PSV = MF.getPSVManager().getConstantPool();
     break;
@@ -1133,7 +1136,7 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
 }
 
 bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
-  if (Token.is(MIToken::kw_constant_pool)) {
+  if (Token.is(MIToken::kw_constant_pool) || Token.is(MIToken::kw_stack)) {
     const PseudoSourceValue *PSV = nullptr;
     if (parseMemoryPseudoSourceValue(PSV))
       return true;
