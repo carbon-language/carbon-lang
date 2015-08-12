@@ -970,7 +970,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return ReplaceInstUsesWith(CI, Op0);
 
     // Zero Mask - select 1st argument.
-    if (auto C = dyn_cast<ConstantAggregateZero>(Mask))
+    if (isa<ConstantAggregateZero>(Mask))
       return ReplaceInstUsesWith(CI, Op0);
 
     // Constant Mask - select 1st/2nd argument lane based on top bit of mask.
