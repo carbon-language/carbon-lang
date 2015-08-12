@@ -8330,16 +8330,18 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
     assert(AToAInputs.size() + BToAInputs.size() == 4 &&
            "Must call this with either 3:1 or 1:3 inputs (summing to 4).");
 
+    bool ThreeAInputs = AToAInputs.size() == 3;
+
     // Compute the index of dword with only one word among the three inputs in
     // a half by taking the sum of the half with three inputs and subtracting
     // the sum of the actual three inputs. The difference is the remaining
     // slot.
     int ADWord, BDWord;
-    int &TripleDWord = AToAInputs.size() == 3 ? ADWord : BDWord;
-    int &OneInputDWord = AToAInputs.size() == 3 ? BDWord : ADWord;
-    int TripleInputOffset = AToAInputs.size() == 3 ? AOffset : BOffset;
-    ArrayRef<int> TripleInputs = AToAInputs.size() == 3 ? AToAInputs : BToAInputs;
-    int OneInput = AToAInputs.size() == 3 ? BToAInputs[0] : AToAInputs[0];
+    int &TripleDWord = ThreeAInputs ? ADWord : BDWord;
+    int &OneInputDWord = ThreeAInputs ? BDWord : ADWord;
+    int TripleInputOffset = ThreeAInputs ? AOffset : BOffset;
+    ArrayRef<int> TripleInputs = ThreeAInputs ? AToAInputs : BToAInputs;
+    int OneInput = ThreeAInputs ? BToAInputs[0] : AToAInputs[0];
     int TripleInputSum = 0 + 1 + 2 + 3 + (4 * TripleInputOffset);
     int TripleNonInputIdx =
         TripleInputSum - std::accumulate(TripleInputs.begin(), TripleInputs.end(), 0);
@@ -8408,8 +8410,7 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
           FixFlippedInputs(BPinnedIdx, BDWord, BToBInputs);
         } else {
           assert(NumFlippedAToBInputs != 0 && "Impossible given predicates!");
-          int APinnedIdx =
-              AToAInputs.size() == 3 ? TripleNonInputIdx : OneInput;
+          int APinnedIdx = ThreeAInputs ? TripleNonInputIdx : OneInput;
           FixFlippedInputs(APinnedIdx, ADWord, AToBInputs);
         }
       }
