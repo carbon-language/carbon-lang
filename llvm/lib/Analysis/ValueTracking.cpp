@@ -3545,7 +3545,7 @@ static SelectPatternResult matchSelectPattern(CmpInst::Predicate Pred,
       // returns the RHS.
       Ordered = true;
       if (LHSSafe)
-        // LHS is non-NaN, so RHS is NaN.
+        // LHS is non-NaN, so if RHS is NaN then NaN will be returned.
         NaNBehavior = SPNB_RETURNS_NAN;
       else if (RHSSafe)
         NaNBehavior = SPNB_RETURNS_OTHER;
@@ -3557,7 +3557,7 @@ static SelectPatternResult matchSelectPattern(CmpInst::Predicate Pred,
       // An unordered comparison will return true when given a NaN, so it
       // returns the LHS.
       if (LHSSafe)
-        // LHS is non-NaN.
+        // LHS is non-NaN, so if RHS is NaN then non-NaN will be returned.
         NaNBehavior = SPNB_RETURNS_OTHER;
       else if (RHSSafe)
         NaNBehavior = SPNB_RETURNS_NAN;
