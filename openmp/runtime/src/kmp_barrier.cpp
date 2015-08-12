@@ -927,6 +927,7 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
 
 #if KMP_BARRIER_ICV_PUSH
     if (propagate_icvs) {
+        __kmp_init_implicit_task(team->t.t_ident, team->t.t_threads[tid], team, tid, FALSE);
         if (KMP_MASTER_TID(tid)) { // master already has copy in final destination; copy
             copy_icvs(&thr_bar->th_fixed_icvs, &team->t.t_implicit_task_taskdata[tid].td_icvs);
         }
