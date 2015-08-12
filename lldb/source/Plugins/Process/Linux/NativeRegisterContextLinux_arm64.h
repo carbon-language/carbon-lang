@@ -82,6 +82,13 @@ namespace process_linux {
         bool
         WatchpointIsEnabled(uint32_t wp_index);
 
+        // Debug register type select
+        enum DREGType
+        {
+            eDREGTypeWATCH = 0,
+            eDREGTypeBREAK
+        };
+
     protected:
         Error
         DoReadRegisterValue(uint32_t offset,
@@ -172,10 +179,10 @@ namespace process_linux {
         IsFPR(unsigned reg) const;
 
         Error
-        ReadHardwareDebugInfo(unsigned int &watch_count , unsigned int &break_count);
+        ReadHardwareDebugInfo();
 
         Error
-        WriteHardwareDebugRegs(lldb::addr_t *addr_buf, uint32_t *cntrl_buf, int type, int count);
+        WriteHardwareDebugRegs(int hwbType);
     };
 
 } // namespace process_linux
