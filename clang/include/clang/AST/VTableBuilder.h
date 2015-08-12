@@ -51,7 +51,7 @@ public:
     CK_UnusedFunctionPointer
   };
 
-  VTableComponent() { }
+  VTableComponent() = default;
 
   static VTableComponent MakeVCallOffset(CharUnits Offset) {
     return VTableComponent(CK_VCallOffset, Offset);
@@ -383,10 +383,6 @@ struct VPtrInfo {
 
   VPtrInfo(const CXXRecordDecl *RD)
       : ReusingBase(RD), BaseWithVPtr(RD), NextBaseToMangle(RD) {}
-
-  // Copy constructor.
-  // FIXME: Uncomment when we've moved to C++11.
-  // VPtrInfo(const VPtrInfo &) = default;
 
   /// The vtable will hold all of the virtual bases or virtual methods of
   /// ReusingBase.  This may or may not be the same class as VPtrSubobject.Base.
