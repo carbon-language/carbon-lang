@@ -47,8 +47,7 @@ MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
 MachineBasicBlock::~MachineBasicBlock() {
 }
 
-/// getSymbol - Return the MCSymbol for this basic block.
-///
+/// Return the MCSymbol for this basic block.
 MCSymbol *MachineBasicBlock::getSymbol() const {
   if (!CachedMCSymbol) {
     const MachineFunction *MF = getParent();
@@ -68,9 +67,9 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
   return OS;
 }
 
-/// addNodeToList (MBB) - When an MBB is added to an MF, we need to update the
-/// parent pointer of the MBB, the MBB numbering, and any instructions in the
-/// MBB to be on the right operand list for registers.
+/// When an MBB is added to an MF, we need to update the parent pointer of the
+/// MBB, the MBB numbering, and any instructions in the MBB to be on the right
+/// operand list for registers.
 ///
 /// MBBs start out as #-1. When a MBB is added to a MachineFunction, it
 /// gets the next available unique MBB number. If it is removed from a
@@ -91,10 +90,8 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock *N) {
   N->Number = -1;
 }
 
-
-/// addNodeToList (MI) - When we add an instruction to a basic block
-/// list, we update its parent pointer and add its operands from reg use/def
-/// lists if appropriate.
+/// When we add an instruction to a basic block list, we update its parent
+/// pointer and add its operands from reg use/def lists if appropriate.
 void ilist_traits<MachineInstr>::addNodeToList(MachineInstr *N) {
   assert(!N->getParent() && "machine instruction already in a basic block");
   N->setParent(Parent);
@@ -105,9 +102,8 @@ void ilist_traits<MachineInstr>::addNodeToList(MachineInstr *N) {
   N->AddRegOperandsToUseLists(MF->getRegInfo());
 }
 
-/// removeNodeFromList (MI) - When we remove an instruction from a basic block
-/// list, we update its parent pointer and remove its operands from reg use/def
-/// lists if appropriate.
+/// When we remove an instruction from a basic block list, we update its parent
+/// pointer and remove its operands from reg use/def lists if appropriate.
 void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
   assert(N->getParent() && "machine instruction not in a basic block");
 
@@ -118,9 +114,8 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
   N->setParent(nullptr);
 }
 
-/// transferNodesFromList (MI) - When moving a range of instructions from one
-/// MBB list to another, we need to update the parent pointers and the use/def
-/// lists.
+/// When moving a range of instructions from one MBB list to another, we need to
+/// update the parent pointers and the use/def lists.
 void ilist_traits<MachineInstr>::
 transferNodesFromList(ilist_traits<MachineInstr> &fromList,
                       ilist_iterator<MachineInstr> first,
@@ -966,25 +961,22 @@ MachineBasicBlock::insert(instr_iterator I, MachineInstr *MI) {
   return Insts.insert(I, MI);
 }
 
-/// removeFromParent - This method unlinks 'this' from the containing function,
-/// and returns it, but does not delete it.
+/// This method unlinks 'this' from the containing function, and returns it, but
+/// does not delete it.
 MachineBasicBlock *MachineBasicBlock::removeFromParent() {
   assert(getParent() && "Not embedded in a function!");
   getParent()->remove(this);
   return this;
 }
 
-
-/// eraseFromParent - This method unlinks 'this' from the containing function,
-/// and deletes it.
+/// This method unlinks 'this' from the containing function, and deletes it.
 void MachineBasicBlock::eraseFromParent() {
   assert(getParent() && "Not embedded in a function!");
   getParent()->erase(this);
 }
 
-
-/// ReplaceUsesOfBlockWith - Given a machine basic block that branched to
-/// 'Old', change the code and CFG so that it branches to 'New' instead.
+/// Given a machine basic block that branched to 'Old', change the code and CFG
+/// so that it branches to 'New' instead.
 void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
                                                MachineBasicBlock *New) {
   assert(Old != New && "Cannot replace self with self!");
@@ -1006,10 +998,9 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   replaceSuccessor(Old, New);
 }
 
-/// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
-/// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
-/// DestB, remove any other MBB successors from the CFG.  DestA and DestB can be
-/// null.
+/// Various pieces of code can cause excess edges in the CFG to be inserted.  If
+/// we have proven that MBB can only branch to DestA and DestB, remove any other
+/// MBB successors from the CFG.  DestA and DestB can be null.
 ///
 /// Besides DestA and DestB, retain other edges leading to LandingPads
 /// (currently there can be only one; we don't check or require that here).
@@ -1068,8 +1059,8 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   return Changed;
 }
 
-/// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
-/// any DBG_VALUE instructions.  Return UnknownLoc if there is none.
+/// Find the next valid DebugLoc starting at MBBI, skipping any DBG_VALUE
+/// instructions.  Return UnknownLoc if there is none.
 DebugLoc
 MachineBasicBlock::findDebugLoc(instr_iterator MBBI) {
   DebugLoc DL;
@@ -1085,8 +1076,7 @@ MachineBasicBlock::findDebugLoc(instr_iterator MBBI) {
   return DL;
 }
 
-/// getSuccWeight - Return weight of the edge from this block to MBB.
-///
+/// Return weight of the edge from this block to MBB.
 uint32_t MachineBasicBlock::getSuccWeight(const_succ_iterator Succ) const {
   if (Weights.empty())
     return 0;
@@ -1101,8 +1091,7 @@ void MachineBasicBlock::setSuccWeight(succ_iterator I, uint32_t weight) {
   *getWeightIterator(I) = weight;
 }
 
-/// getWeightIterator - Return wight iterator corresonding to the I successor
-/// iterator
+/// Return wight iterator corresonding to the I successor iterator.
 MachineBasicBlock::weight_iterator MachineBasicBlock::
 getWeightIterator(MachineBasicBlock::succ_iterator I) {
   assert(Weights.size() == Successors.size() && "Async weight list!");
@@ -1111,8 +1100,7 @@ getWeightIterator(MachineBasicBlock::succ_iterator I) {
   return Weights.begin() + index;
 }
 
-/// getWeightIterator - Return wight iterator corresonding to the I successor
-/// iterator
+/// Return wight iterator corresonding to the I successor iterator.
 MachineBasicBlock::const_weight_iterator MachineBasicBlock::
 getWeightIterator(MachineBasicBlock::const_succ_iterator I) const {
   assert(Weights.size() == Successors.size() && "Async weight list!");
