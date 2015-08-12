@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -O0 %s -o %t && env ASAN_OPTIONS=$ASAN_OPTIONS:strict_memcmp=0 %run %t
-// RUN: %clangxx_asan -O0 %s -o %t && env ASAN_OPTIONS=$ASAN_OPTIONS:strict_memcmp=1 not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %env_asan_opts=strict_memcmp=0 %run %t
+// RUN: %clangxx_asan -O0 %s -o %t && %env_asan_opts=strict_memcmp=1 not %run %t 2>&1 | FileCheck %s
 // Default to strict_memcmp=1.
 // RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 

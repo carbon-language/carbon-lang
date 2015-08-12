@@ -1,7 +1,7 @@
 // Test __sanitizer_get_total_unique_coverage for caller-callee coverage
 
 // RUN: %clangxx_asan -fsanitize-coverage=edge,indirect-calls %s -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1 %run %t
+// RUN: %env_asan_opts=coverage=1 %run %t
 // RUN: rm -f caller-callee*.sancov
 //
 // REQUIRES: asan-64-bits

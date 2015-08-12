@@ -1,6 +1,6 @@
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:check_printf=1 %run %t 2>&1 | FileCheck %s
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:check_printf=0 %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=check_printf=1 %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=check_printf=0 %run %t 2>&1 | FileCheck %s
 // RUN: %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>

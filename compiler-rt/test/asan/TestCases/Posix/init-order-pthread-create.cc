@@ -4,7 +4,7 @@
 // RUN: %clangxx_asan -c -DCONFIG1 %s -o %t1.o
 // RUN: %clangxx_asan -c           %s -o %t2.o
 // RUN: %clangxx_asan -pthread %t1.o %t2.o -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_init_order=true %run %t
+// RUN: %env_asan_opts=strict_init_order=true %run %t
 
 #ifdef CONFIG1
 

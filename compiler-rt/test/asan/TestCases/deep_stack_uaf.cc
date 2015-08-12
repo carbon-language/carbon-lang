@@ -1,7 +1,7 @@
 // Check that we can store lots of stack frames if asked to.
 
 // RUN: %clangxx_asan -O0 %s -o %t 2>&1
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:malloc_context_size=120:redzone=512 not %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=malloc_context_size=120:redzone=512 not %run %t 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi
 // XFAIL: armv7l-unknown-linux-gnueabihf
 #include <stdlib.h>

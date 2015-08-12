@@ -5,7 +5,7 @@
 // RUN: rm -rf %T/coverage-and-lsan
 //
 // RUN: mkdir -p %T/coverage-and-lsan/normal
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_dir=%T/coverage-and-lsan:verbosity=1 not %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=coverage=1:coverage_dir=%T/coverage-and-lsan:verbosity=1 not %run %t 2>&1 | FileCheck %s
 // RUN: %sancov print %T/coverage-and-lsan/*.sancov 2>&1
 //
 // REQUIRES: leak-detection

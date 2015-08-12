@@ -2,7 +2,7 @@
 // RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 //
 // Check that we can disable it
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:allow_user_poisoning=0 %run %t
+// RUN: %env_asan_opts=allow_user_poisoning=0 %run %t
 
 #include <stdlib.h>
 

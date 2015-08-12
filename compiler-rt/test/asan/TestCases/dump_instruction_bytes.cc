@@ -1,7 +1,7 @@
 // Check that ASan prints the faulting instruction bytes on
 // dump_instruction_bytes=1
 // RUN: %clangxx_asan  %s -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:dump_instruction_bytes=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-DUMP
+// RUN: %env_asan_opts=dump_instruction_bytes=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-DUMP
 // RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-NODUMP
 //
 // REQUIRES: x86_64-supported-target,i386-supported-target

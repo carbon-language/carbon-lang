@@ -1,6 +1,6 @@
 // Checks that the debugging API returns correct shadow scale and offset.
 // RUN: %clangxx_asan -O %s -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=1 %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=verbosity=1 %run %t 2>&1 | FileCheck %s
 
 #include <sanitizer/asan_interface.h>
 #include <stdio.h>

@@ -1,9 +1,9 @@
 // Test needle overflow in strstr function
-// RUN: %clang_asan %s -o %t && env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t 2>&1 | FileCheck %s
+// RUN: %clang_asan %s -o %t && %env_asan_opts=strict_string_checks=true not %run %t 2>&1 | FileCheck %s
 
 // Test intercept_strstr asan option
 // Disable other interceptors because strlen may be called inside strstr
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:intercept_strstr=false:replace_str=false %run %t 2>&1
+// RUN: %env_asan_opts=intercept_strstr=false:replace_str=false %run %t 2>&1
 
 #include <assert.h>
 #include <string.h>
