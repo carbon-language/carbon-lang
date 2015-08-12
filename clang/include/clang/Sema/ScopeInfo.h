@@ -291,6 +291,9 @@ private:
   /// Part of the implementation of -Wrepeated-use-of-weak.
   WeakObjectUseMap WeakObjectUses;
 
+protected:
+  FunctionScopeInfo(const FunctionScopeInfo&) = default;
+
 public:
   /// Record that a weak object was accessed.
   ///
@@ -364,6 +367,9 @@ public:
 };
 
 class CapturingScopeInfo : public FunctionScopeInfo {
+protected:
+  CapturingScopeInfo(const CapturingScopeInfo&) = default;
+
 public:
   enum ImplicitCaptureStyle {
     ImpCap_None, ImpCap_LambdaByval, ImpCap_LambdaByref, ImpCap_Block,
@@ -549,7 +555,7 @@ public:
 };
 
 /// \brief Retains information about a block that is currently being parsed.
-class BlockScopeInfo : public CapturingScopeInfo {
+class BlockScopeInfo final : public CapturingScopeInfo {
 public:
   BlockDecl *TheDecl;
   
@@ -576,7 +582,7 @@ public:
 };
 
 /// \brief Retains information about a captured region.
-class CapturedRegionScopeInfo: public CapturingScopeInfo {
+class CapturedRegionScopeInfo final : public CapturingScopeInfo {
 public:
   /// \brief The CapturedDecl for this statement.
   CapturedDecl *TheCapturedDecl;
@@ -617,7 +623,7 @@ public:
   }
 };
 
-class LambdaScopeInfo : public CapturingScopeInfo {
+class LambdaScopeInfo final : public CapturingScopeInfo {
 public:
   /// \brief The class that describes the lambda.
   CXXRecordDecl *Lambda;
