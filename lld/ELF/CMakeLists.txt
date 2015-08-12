@@ -15,6 +15,7 @@ add_llvm_library(lldELF2
   LINK_COMPONENTS
   Object
   Option
+  MC
   Support
   )
 

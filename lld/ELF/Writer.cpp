@@ -12,7 +12,9 @@
 #include "Error.h"
 #include "SymbolTable.h"
 #include "Writer.h"
+
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
 using namespace llvm;
@@ -41,6 +43,8 @@ public:
   void addSectionChunk(SectionChunk<ELFT> *C);
   std::vector<Chunk *> &getChunks() { return Chunks; }
   void writeHeaderTo(Elf_Shdr *SHdr);
+  StringRef getName() { return Name; }
+  void setNameOffset(uintX_t Offset) { Header.sh_name = Offset; }
 
   // Returns the size of the section in the output file.
   uintX_t getSize() { return Header.sh_size; }
@@ -73,6 +77,10 @@ private:
   uintX_t FileSize;
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
+  uintX_t StringTableOff;
+  unsigned StringTableIndex;
+  StringTableBuilder StrTabBuilder;
+  unsigned NumSections;
 
   std::vector<std::unique_ptr<Chunk>> Chunks;
 };
@@ -160,10 +168,26 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     Sec->setFileOffset(FileOff);
     VA += RoundUpToAlignment(Sec->getSize(), PageSize);
     FileOff += RoundUpToAlignment(Sec->getSize(), 8);
+    StrTabBuilder.add(Sec->getName());
   }
+
+  // Regular sections.
+  NumSections = OutputSections.size();
+
+  // First dummy section.
+  NumSections++;
+
+  // String table.
+  StrTabBuilder.add(".strtab");
+  StringTableIndex = NumSections;
+  StringTableOff = FileOff;
+  StrTabBuilder.finalize(StringTableBuilder::ELF);
+  FileOff += StrTabBuilder.data().size();
+  NumSections++;
+
   // Add space for section headers.
   SectionHeaderOff = FileOff;
-  FileOff += (OutputSections.size() + 1) * sizeof(Elf_Shdr_Impl<ELFT>);
+  FileOff += NumSections * sizeof(Elf_Shdr_Impl<ELFT>);
   FileSize = SizeOfHeaders + RoundUpToAlignment(FileOff - SizeOfHeaders, 8);
 }
 
@@ -192,8 +216,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_phentsize = sizeof(Elf_Phdr_Impl<ELFT>);
   EHdr->e_phnum = 1;
   EHdr->e_shentsize = sizeof(Elf_Shdr_Impl<ELFT>);
-  EHdr->e_shnum = OutputSections.size() + 1;
-  EHdr->e_shstrndx = 0;
+  EHdr->e_shnum = NumSections;
+  EHdr->e_shstrndx = StringTableIndex;
 
   auto PHdrs = reinterpret_cast<Elf_Phdr_Impl<ELFT> *>(Buf + EHdr->e_phoff);
   PHdrs->p_type = PT_LOAD;
@@ -208,8 +232,22 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto SHdrs = reinterpret_cast<Elf_Shdr_Impl<ELFT> *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
-  for (OutputSection<ELFT> *Sec : OutputSections)
+  for (OutputSection<ELFT> *Sec : OutputSections) {
+    Sec->setNameOffset(StrTabBuilder.getOffset(Sec->getName()));
     Sec->writeHeaderTo(SHdrs++);
+  }
+
+  // String table.
+  SHdrs->sh_name = StrTabBuilder.getOffset(".strtab");
+  SHdrs->sh_type = SHT_STRTAB;
+  SHdrs->sh_flags = 0;
+  SHdrs->sh_addr = 0;
+  SHdrs->sh_offset = StringTableOff;
+  SHdrs->sh_size = StrTabBuilder.data().size();
+  SHdrs->sh_link = 0;
+  SHdrs->sh_info = 0;
+  SHdrs->sh_addralign = 1;
+  SHdrs->sh_entsize = 0;
 }
 
 template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
@@ -225,4 +263,8 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
     for (Chunk *C : Sec->getChunks())
       C->writeTo(Buf);
   }
+
+  // String table.
+  StringRef Data = StrTabBuilder.data();
+  memcpy(Buf + StringTableOff, Data.data(), Data.size());
 }
