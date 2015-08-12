@@ -76,8 +76,13 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
                               FileContent.second);
   }
   Invocation.setDiagnosticConsumer(&DiagConsumer);
-  if (!Invocation.run())
-    return "";
+  if (!Invocation.run()) {
+    std::string ErrorText;
+    for (const auto &Error:Context.getErrors()) {
+      ErrorText += Error.Message.Message + "\n";
+    }
+    llvm::report_fatal_error(ErrorText);
+  }
 
   DiagConsumer.finish();
   tooling::Replacements Fixes;
