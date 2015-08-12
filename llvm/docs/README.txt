@@ -44,7 +44,7 @@ viewable online (as noted above) at e.g.
 Checking links
 ==============
 
-The reachibility of external links in the documentation can be checked by
+The reachability of external links in the documentation can be checked by
 running:
 
     cd docs/
