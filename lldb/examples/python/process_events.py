@@ -171,7 +171,13 @@ def main(argv):
             
             # Make sure the launch went ok
             if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
+                
                 pid = process.GetProcessID()
+                print 'Process is %i' % (pid)
+                if attach_info:
+                    # continue process if we attached as we won't get an initial event
+                    process.Continue()
+
                 listener = debugger.GetListener()
                 # sign up for process state change events
                 stop_idx = 0
