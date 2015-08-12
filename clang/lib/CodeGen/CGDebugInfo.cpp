@@ -56,54 +56,63 @@ CGDebugInfo::~CGDebugInfo() {
 
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
                                        SourceLocation TemporaryLocation)
-    : CGF(CGF) {
+    : CGF(&CGF) {
   init(TemporaryLocation);
 }
 
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
                                        bool DefaultToEmpty,
                                        SourceLocation TemporaryLocation)
-    : CGF(CGF) {
+    : CGF(&CGF) {
   init(TemporaryLocation, DefaultToEmpty);
 }
 
 void ApplyDebugLocation::init(SourceLocation TemporaryLocation,
                               bool DefaultToEmpty) {
-  if (auto *DI = CGF.getDebugInfo()) {
-    OriginalLocation = CGF.Builder.getCurrentDebugLocation();
-    if (TemporaryLocation.isInvalid()) {
-      if (DefaultToEmpty)
-        CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-      else {
-        // Construct a location that has a valid scope, but no line info.
-        assert(!DI->LexicalBlockStack.empty());
-        CGF.Builder.SetCurrentDebugLocation(
-            llvm::DebugLoc::get(0, 0, DI->LexicalBlockStack.back()));
-      }
-    } else
-      DI->EmitLocation(CGF.Builder, TemporaryLocation);
+  auto *DI = CGF->getDebugInfo();
+  if (!DI) {
+    CGF = nullptr;
+    return;
   }
+
+  OriginalLocation = CGF->Builder.getCurrentDebugLocation();
+  if (TemporaryLocation.isValid()) {
+    DI->EmitLocation(CGF->Builder, TemporaryLocation);
+    return;
+  }
+
+  if (DefaultToEmpty) {
+    CGF->Builder.SetCurrentDebugLocation(llvm::DebugLoc());
+    return;
+  }
+
+  // Construct a location that has a valid scope, but no line info.
+  assert(!DI->LexicalBlockStack.empty());
+  CGF->Builder.SetCurrentDebugLocation(
+      llvm::DebugLoc::get(0, 0, DI->LexicalBlockStack.back()));
 }
 
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF, const Expr *E)
-    : CGF(CGF) {
+    : CGF(&CGF) {
   init(E->getExprLoc());
 }
 
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc)
-    : CGF(CGF) {
-  if (CGF.getDebugInfo()) {
-    OriginalLocation = CGF.Builder.getCurrentDebugLocation();
-    if (Loc)
-      CGF.Builder.SetCurrentDebugLocation(std::move(Loc));
+    : CGF(&CGF) {
+  if (!CGF.getDebugInfo()) {
+    this->CGF = nullptr;
+    return;
   }
+  OriginalLocation = CGF.Builder.getCurrentDebugLocation();
+  if (Loc)
+    CGF.Builder.SetCurrentDebugLocation(std::move(Loc));
 }
 
 ApplyDebugLocation::~ApplyDebugLocation() {
   // Query CGF so the location isn't overwritten when location updates are
   // temporarily disabled (for C++ default function arguments)
-  if (CGF.getDebugInfo())
-    CGF.Builder.SetCurrentDebugLocation(std::move(OriginalLocation));
+  if (CGF)
+    CGF->Builder.SetCurrentDebugLocation(std::move(OriginalLocation));
 }
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {

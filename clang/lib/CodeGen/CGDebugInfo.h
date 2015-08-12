@@ -502,13 +502,16 @@ private:
                      SourceLocation TemporaryLocation);
 
   llvm::DebugLoc OriginalLocation;
-  CodeGenFunction &CGF;
+  CodeGenFunction *CGF;
 
 public:
   /// Set the location to the (valid) TemporaryLocation.
   ApplyDebugLocation(CodeGenFunction &CGF, SourceLocation TemporaryLocation);
   ApplyDebugLocation(CodeGenFunction &CGF, const Expr *E);
   ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc);
+  ApplyDebugLocation(ApplyDebugLocation &&Other) : CGF(Other.CGF) {
+    Other.CGF = nullptr;
+  }
 
   ~ApplyDebugLocation();
 
