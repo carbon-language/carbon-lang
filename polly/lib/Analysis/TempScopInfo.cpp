@@ -114,16 +114,18 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
   // PHI nodes are modeled as if they had been demoted prior to the SCoP
   // detection. Hence, the PHI is a load of a new memory location in which the
   // incoming value was written at the end of the incoming basic block.
-  bool Written = false;
+  bool OnlyNonAffineSubRegionOperands = true;
   for (unsigned u = 0; u < PHI->getNumIncomingValues(); u++) {
     Value *Op = PHI->getIncomingValue(u);
     BasicBlock *OpBB = PHI->getIncomingBlock(u);
 
-    if (!R.contains(OpBB))
-      continue;
-
     // Do not build scalar dependences inside a non-affine subregion.
     if (NonAffineSubRegion && NonAffineSubRegion->contains(OpBB))
+      continue;
+
+    OnlyNonAffineSubRegionOperands = false;
+
+    if (!R.contains(OpBB))
       continue;
 
     Instruction *OpI = dyn_cast<Instruction>(Op);
@@ -145,14 +147,12 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
     if (!OpI)
       OpI = OpBB->getTerminator();
 
-    Written = true;
-
     IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true,
                           /* IsPHI */ true);
     AccFuncMap[OpBB].push_back(std::make_pair(ScalarAccess, OpI));
   }
 
-  if (Written) {
+  if (!OnlyNonAffineSubRegionOperands) {
     IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true,
                           /* IsPHI */ true);
     Functions.push_back(std::make_pair(ScalarAccess, PHI));

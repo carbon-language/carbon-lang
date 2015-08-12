@@ -4,13 +4,17 @@
 ; PHI node. LCSSA may create such PHI nodes. This is a breakdown of this case in
 ; the function 'Laguerre_With_Deflation' of oggenc from LLVM's test-suite.
 ;
-; XFAIL: *
-;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @test(i64 %n, float* noalias nonnull %A, float %a) {
 entry:
   br label %entry.split
+
+; CHECK-LABEL: %polly.split_new_and_old
+; CHECK-NEXT:    store float %a, float* %b.phiops
+
+; CHECK-LABEL: polly.stmt.entry.split
+; CHECK-NEXT:    %b.phiops.reload = load float, float* %b.phiops
 
 entry.split:
   %b = phi float [ %a, %entry ]
