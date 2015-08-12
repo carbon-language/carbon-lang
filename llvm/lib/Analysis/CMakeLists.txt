@@ -2,7 +2,6 @@ add_llvm_library(LLVMAnalysis
   AliasAnalysis.cpp
   AliasAnalysisCounter.cpp
   AliasAnalysisEvaluator.cpp
-  AliasDebugger.cpp
   AliasSetTracker.cpp
   Analysis.cpp
   AssumptionCache.cpp

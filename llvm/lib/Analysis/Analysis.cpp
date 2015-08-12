@@ -23,7 +23,6 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializeAliasAnalysisAnalysisGroup(Registry);
   initializeAliasAnalysisCounterPass(Registry);
   initializeAAEvalPass(Registry);
-  initializeAliasDebuggerPass(Registry);
   initializeAliasSetPrinterPass(Registry);
   initializeNoAAPass(Registry);
   initializeBasicAliasAnalysisPass(Registry);

@@ -389,11 +389,10 @@ in its ``getAnalysisUsage`` that it does so. Some passes attempt to use
 ``AU.addPreserved<AliasAnalysis>``, however this doesn't actually have any
 effect.
 
-``AliasAnalysisCounter`` (``-count-aa``) and ``AliasDebugger`` (``-debug-aa``)
-are implemented as ``ModulePass`` classes, so if your alias analysis uses
-``FunctionPass``, it won't be able to use these utilities. If you try to use
-them, the pass manager will silently route alias analysis queries directly to
-``BasicAliasAnalysis`` instead.
+``AliasAnalysisCounter`` (``-count-aa``) are implemented as ``ModulePass``
+classes, so if your alias analysis uses ``FunctionPass``, it won't be able to
+use these utilities. If you try to use them, the pass manager will silently
+route alias analysis queries directly to ``BasicAliasAnalysis`` instead.
 
 Similarly, the ``opt -p`` option introduces ``ModulePass`` passes between each
 pass, which prevents the use of ``FunctionPass`` alias analysis passes.
