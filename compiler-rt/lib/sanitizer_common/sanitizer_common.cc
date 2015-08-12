@@ -140,6 +140,23 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   Die();
 }
 
+void NORETURN ReportMmapFailureAndDie(uptr size, const char *mem_type,
+                                      error_t err) {
+  static int recursion_count;
+  if (recursion_count) {
+    // The Report() and CHECK calls below may call mmap recursively and fail.
+    // If we went into recursion, just die.
+    RawWrite("ERROR: Failed to mmap\n");
+    Die();
+  }
+  recursion_count++;
+  Report("ERROR: %s failed to "
+         "allocate 0x%zx (%zd) bytes of %s (error code: %d)\n",
+         SanitizerToolName, size, size, mem_type, err);
+  DumpProcessMap();
+  UNREACHABLE("unable to mmap");
+}
+
 bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
                       uptr *read_len, uptr max_len, error_t *errno_p) {
   uptr PageSize = GetPageSizeCached();

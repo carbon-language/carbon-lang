@@ -117,21 +117,8 @@ void *MmapOrDie(uptr size, const char *mem_type) {
                             PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANON, -1, 0);
   int reserrno;
-  if (internal_iserror(res, &reserrno)) {
-    static int recursion_count;
-    if (recursion_count) {
-      // The Report() and CHECK calls below may call mmap recursively and fail.
-      // If we went into recursion, just die.
-      RawWrite("ERROR: Failed to mmap\n");
-      Die();
-    }
-    recursion_count++;
-    Report("ERROR: %s failed to "
-           "allocate 0x%zx (%zd) bytes of %s (errno: %d)\n",
-           SanitizerToolName, size, size, mem_type, reserrno);
-    DumpProcessMap();
-    CHECK("unable to mmap" && 0);
-  }
+  if (internal_iserror(res, &reserrno))
+    ReportMmapFailureAndDie(size, mem_type, reserrno);
   IncreaseTotalMmap(size);
   return (void *)res;
 }

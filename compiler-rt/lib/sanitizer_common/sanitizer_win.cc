@@ -85,12 +85,8 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 
 void *MmapOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-  if (rv == 0) {
-    Report("ERROR: %s failed to "
-           "allocate 0x%zx (%zd) bytes of %s (error code: %d)\n",
-           SanitizerToolName, size, size, mem_type, GetLastError());
-    CHECK("unable to mmap" && 0);
-  }
+  if (rv == 0)
+    ReportMmapFailureAndDie(size, mem_type, GetLastError());
   return rv;
 }
 
