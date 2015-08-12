@@ -7540,9 +7540,8 @@ TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   Target->getDefaultFeatures(Features);
 
   // Apply the user specified deltas.
-  for (unsigned I = 0, N = Opts->FeaturesAsWritten.size();
-       I < N; ++I) {
-    const char *Name = Opts->FeaturesAsWritten[I].c_str();
+  for (const auto &F : Opts->FeaturesAsWritten) {
+    const char *Name = F.c_str();
     // Apply the feature via the target.
     bool Enabled = Name[0] == '+';
     Target->setFeatureEnabled(Features, Name + 1, Enabled);
@@ -7553,9 +7552,9 @@ TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   // FIXME: If we are completely confident that we have the right set, we only
   // need to pass the minuses.
   Opts->Features.clear();
-  for (llvm::StringMap<bool>::const_iterator it = Features.begin(),
-         ie = Features.end(); it != ie; ++it)
-    Opts->Features.push_back((it->second ? "+" : "-") + it->first().str());
+  for (const auto &F : Features)
+    Opts->Features.push_back((F.getValue() ? "+" : "-") + F.getKey().str());
+
   if (!Target->handleTargetFeatures(Opts->Features, Diags))
     return nullptr;
 
