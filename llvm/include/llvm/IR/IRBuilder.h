@@ -517,10 +517,9 @@ template<bool preserveNames = true, typename T = ConstantFolder,
 class IRBuilder : public IRBuilderBase, public Inserter {
   T Folder;
 public:
-  IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter(),
+  IRBuilder(LLVMContext &C, const T &F, Inserter I = Inserter(),
             MDNode *FPMathTag = nullptr)
-    : IRBuilderBase(C, FPMathTag), Inserter(I), Folder(F) {
-  }
+      : IRBuilderBase(C, FPMathTag), Inserter(std::move(I)), Folder(F) {}
 
   explicit IRBuilder(LLVMContext &C, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(C, FPMathTag), Folder() {
