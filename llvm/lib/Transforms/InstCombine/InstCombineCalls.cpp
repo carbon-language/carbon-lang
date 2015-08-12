@@ -960,7 +960,20 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // This optimization is convoluted because the intrinsic is defined as
     // getting a vector of floats or doubles for the ps and pd versions.
     // FIXME: That should be changed.
+
+    Value *Op0 = II->getArgOperand(0);
+    Value *Op1 = II->getArgOperand(1);
     Value *Mask = II->getArgOperand(2);
+
+    // fold (blend A, A, Mask) -> A
+    if (Op0 == Op1)
+      return ReplaceInstUsesWith(CI, Op0);
+
+    // Zero Mask - select 1st argument.
+    if (auto C = dyn_cast<ConstantAggregateZero>(Mask))
+      return ReplaceInstUsesWith(CI, Op0);
+
+    // Constant Mask - select 1st/2nd argument lane based on top bit of mask.
     if (auto C = dyn_cast<ConstantDataVector>(Mask)) {
       auto Tyi1 = Builder->getInt1Ty();
       auto SelectorType = cast<VectorType>(Mask->getType());
@@ -983,11 +996,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Selectors.push_back(ConstantInt::get(Tyi1, Selector >> (BitWidth - 1)));
       }
       auto NewSelector = ConstantVector::get(Selectors);
-      return SelectInst::Create(NewSelector, II->getArgOperand(1),
-                                II->getArgOperand(0), "blendv");
-    } else {
-      break;
+      return SelectInst::Create(NewSelector, Op1, Op0, "blendv");
     }
+    break;
   }
 
   case Intrinsic::x86_avx_vpermilvar_ps:
