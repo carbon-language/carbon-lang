@@ -1503,6 +1503,10 @@ bool MachineInstr::hasUnmodeledSideEffects() const {
   return false;
 }
 
+bool MachineInstr::isLoadFoldBarrier() const {
+  return mayStore() || isCall() || hasUnmodeledSideEffects();
+}
+
 /// allDefsAreDead - Return true if all the defs of this instruction are dead.
 ///
 bool MachineInstr::allDefsAreDead() const {

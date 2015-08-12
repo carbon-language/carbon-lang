@@ -1100,6 +1100,9 @@ public:
   ///
   bool hasUnmodeledSideEffects() const;
 
+  /// Returns true if it is illegal to fold a load across this instruction.
+  bool isLoadFoldBarrier() const;
+
   /// Return true if all the defs of this instruction are dead.
   bool allDefsAreDead() const;
 

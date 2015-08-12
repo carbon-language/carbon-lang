@@ -528,13 +528,10 @@ MachineInstr *X86CallFrameOptimization::canFoldIntoRegPush(
       DefMI->getParent() != FrameSetup->getParent())
     return nullptr;
 
-  // Now, make sure everything else up until the ADJCALLSTACK is a sequence
-  // of MOVs. To be less conservative would require duplicating a lot of the
-  // logic from PeepholeOptimizer.
-  // FIXME: A possibly better approach would be to teach the PeepholeOptimizer
-  // to be smarter about folding into pushes.
+  // Make sure we don't have any instructions between DefMI and the
+  // push that make folding the load illegal.
   for (auto I = DefMI; I != FrameSetup; ++I)
-    if (I->getOpcode() != X86::MOV32rm)
+    if (I->isLoadFoldBarrier())
       return nullptr;
 
   return DefMI;

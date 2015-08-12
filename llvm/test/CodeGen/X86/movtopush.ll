@@ -357,3 +357,26 @@ entry:
   call void @good(i32 9, i32 10, i32 11, i32 12)
   ret void
 }
+
+; Make sure the add does not prevent folding loads into pushes.
+; val1 and val2 will not be folded into pushes since they have
+; an additional use, but val3 should be.
+; NORMAL-LABEL: test13:
+; NORMAL: movl ([[P1:%e..]]), [[V1:%e..]]
+; NORMAL-NEXT: movl ([[P2:%e..]]), [[V2:%e..]]
+; NORMAL-NEXT: , [[ADD:%e..]]
+; NORMAL-NEXT: pushl [[ADD]]
+; NORMAL-NEXT: pushl ([[P3:%e..]])
+; NORMAL-NEXT: pushl [[V2]]
+; NORMAL-NEXT: pushl [[V1]]
+; NORMAL-NEXT: calll _good
+; NORMAL: movl [[P3]], %eax
+define i32* @test13(i32* inreg %ptr1, i32* inreg %ptr2, i32* inreg %ptr3) optsize {
+entry:
+  %val1 = load i32, i32* %ptr1
+  %val2 = load i32, i32* %ptr2
+  %val3 = load i32, i32* %ptr3
+  %add = add i32 %val1, %val2
+  call void @good(i32 %val1, i32 %val2, i32 %val3, i32 %add)
+  ret i32* %ptr3
+}

@@ -1234,9 +1234,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (MI->isDebugValue())
           continue;
 
-      // If there exists an instruction which belongs to the following
-      // categories, we will discard the load candidates.
-      if (MI->mayStore() || MI->isCall() || MI->hasUnmodeledSideEffects())
+      // If we run into an instruction we can't fold across, discard
+      // the load candidates.
+      if (MI->isLoadFoldBarrier())
         FoldAsLoadDefCandidates.clear();
 
       if (MI->isPosition() || MI->isPHI() || MI->isImplicitDef() ||
