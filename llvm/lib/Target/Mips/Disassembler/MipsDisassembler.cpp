@@ -847,7 +847,7 @@ DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     if (hasMips32r6()) {
       DEBUG(dbgs() << "Trying MicroMips32r632 table (32-bit instructions):\n");
       // Calling the auto-generated decoder function.
-      Result = decodeInstruction(DecoderTableMicroMips32r632, Instr, Insn, Address,
+      Result = decodeInstruction(DecoderTableMicroMipsR632, Instr, Insn, Address,
                                  this, STI);
     } else {
       DEBUG(dbgs() << "Trying MicroMips32 table (32-bit instructions):\n");
@@ -855,6 +855,7 @@ DecodeStatus MipsDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
       Result = decodeInstruction(DecoderTableMicroMips32, Instr, Insn, Address,
                                  this, STI);
     }
+
     if (Result != MCDisassembler::Fail) {
       Size = 4;
       return Result;

@@ -283,7 +283,7 @@ class XORI_MMR6_DESC : ArithLogicI<"xori", simm16, GPR32Opnd>;
 //
 //===----------------------------------------------------------------------===//
 
-let DecoderNamespace = "MicroMips32r6" in {
+let DecoderNamespace = "MicroMipsR6" in {
 def ADD_MMR6 : StdMMR6Rel, ADD_MMR6_DESC, ADD_MMR6_ENC, ISA_MICROMIPS32R6;
 def ADDIU_MMR6 : StdMMR6Rel, ADDIU_MMR6_DESC, ADDIU_MMR6_ENC, ISA_MICROMIPS32R6;
 def ADDU_MMR6 : StdMMR6Rel, ADDU_MMR6_DESC, ADDU_MMR6_ENC, ISA_MICROMIPS32R6;

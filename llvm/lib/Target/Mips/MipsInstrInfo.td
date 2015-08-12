@@ -186,6 +186,8 @@ def NotMips64r6  :    Predicate<"!Subtarget->hasMips64r6()">,
                       AssemblerPredicate<"!FeatureMips64r6">;
 def HasMicroMips32r6 : Predicate<"Subtarget->inMicroMips32r6Mode()">,
                        AssemblerPredicate<"FeatureMicroMips,FeatureMips32r6">;
+def HasMicroMips64r6 : Predicate<"Subtarget->inMicroMips64r6Mode()">,
+                       AssemblerPredicate<"FeatureMicroMips,FeatureMips64r6">;
 def InMips16Mode :    Predicate<"Subtarget->inMips16Mode()">,
                       AssemblerPredicate<"FeatureMips16">;
 def HasCnMips    :    Predicate<"Subtarget->hasCnMips()">,
@@ -254,6 +256,9 @@ class ISA_MIPS32R6 { list<Predicate> InsnPredicates = [HasMips32r6]; }
 class ISA_MIPS64R6 { list<Predicate> InsnPredicates = [HasMips64r6]; }
 class ISA_MICROMIPS32R6 {
   list<Predicate> InsnPredicates = [HasMicroMips32r6];
+}
+class ISA_MICROMIPS64R6 {
+  list<Predicate> InsnPredicates = [HasMicroMips64r6];
 }
 
 // The portions of MIPS-III that were also added to MIPS32
@@ -1981,3 +1986,7 @@ include "MicroMipsInstrFPU.td"
 // Micromips r6
 include "MicroMips32r6InstrFormats.td"
 include "MicroMips32r6InstrInfo.td"
+
+// Micromips64 r6
+include "MicroMips64r6InstrFormats.td"
+include "MicroMips64r6InstrInfo.td"
