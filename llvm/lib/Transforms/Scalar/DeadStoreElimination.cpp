@@ -62,7 +62,7 @@ namespace {
       AA = &getAnalysis<AliasAnalysis>();
       MD = &getAnalysis<MemoryDependenceAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-      TLI = AA->getTargetLibraryInfo();
+      TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
       bool Changed = false;
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
@@ -87,6 +87,7 @@ namespace {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<MemoryDependenceAnalysis>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<MemoryDependenceAnalysis>();
@@ -115,7 +116,7 @@ FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 ///
 static void DeleteDeadInstruction(Instruction *I,
                                MemoryDependenceAnalysis &MD,
-                               const TargetLibraryInfo *TLI,
+                               const TargetLibraryInfo &TLI,
                                SmallSetVector<Value*, 16> *ValueSet = nullptr) {
   SmallVector<Instruction*, 32> NowDeadInsts;
 
@@ -140,7 +141,7 @@ static void DeleteDeadInstruction(Instruction *I,
       if (!Op->use_empty()) continue;
 
       if (Instruction *OpI = dyn_cast<Instruction>(Op))
-        if (isInstructionTriviallyDead(OpI, TLI))
+        if (isInstructionTriviallyDead(OpI, &TLI))
           NowDeadInsts.push_back(OpI);
     }
 
@@ -153,7 +154,7 @@ static void DeleteDeadInstruction(Instruction *I,
 
 /// hasMemoryWrite - Does this instruction write some memory?  This only returns
 /// true for things that we can analyze with other helpers below.
-static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo *TLI) {
+static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo &TLI) {
   if (isa<StoreInst>(I))
     return true;
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
@@ -170,20 +171,20 @@ static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo *TLI) {
   }
   if (auto CS = CallSite(I)) {
     if (Function *F = CS.getCalledFunction()) {
-      if (TLI && TLI->has(LibFunc::strcpy) &&
-          F->getName() == TLI->getName(LibFunc::strcpy)) {
+      if (TLI.has(LibFunc::strcpy) &&
+          F->getName() == TLI.getName(LibFunc::strcpy)) {
         return true;
       }
-      if (TLI && TLI->has(LibFunc::strncpy) &&
-          F->getName() == TLI->getName(LibFunc::strncpy)) {
+      if (TLI.has(LibFunc::strncpy) &&
+          F->getName() == TLI.getName(LibFunc::strncpy)) {
         return true;
       }
-      if (TLI && TLI->has(LibFunc::strcat) &&
-          F->getName() == TLI->getName(LibFunc::strcat)) {
+      if (TLI.has(LibFunc::strcat) &&
+          F->getName() == TLI.getName(LibFunc::strcat)) {
         return true;
       }
-      if (TLI && TLI->has(LibFunc::strncat) &&
-          F->getName() == TLI->getName(LibFunc::strncat)) {
+      if (TLI.has(LibFunc::strncat) &&
+          F->getName() == TLI.getName(LibFunc::strncat)) {
         return true;
       }
     }
@@ -224,9 +225,9 @@ static MemoryLocation getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
 
 /// getLocForRead - Return the location read by the specified "hasMemoryWrite"
 /// instruction if any.
-static MemoryLocation getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
-  assert(hasMemoryWrite(Inst, AA.getTargetLibraryInfo()) &&
-         "Unknown instruction case");
+static MemoryLocation getLocForRead(Instruction *Inst,
+                                    const TargetLibraryInfo &TLI) {
+  assert(hasMemoryWrite(Inst, TLI) && "Unknown instruction case");
 
   // The only instructions that both read and write are the mem transfer
   // instructions (memcpy/memmove).
@@ -313,9 +314,9 @@ static Value *getStoredPointerOperand(Instruction *I) {
 }
 
 static uint64_t getPointerSize(const Value *V, const DataLayout &DL,
-                               const TargetLibraryInfo *TLI) {
+                               const TargetLibraryInfo &TLI) {
   uint64_t Size;
-  if (getObjectSize(V, Size, DL, TLI))
+  if (getObjectSize(V, Size, DL, &TLI))
     return Size;
   return MemoryLocation::UnknownSize;
 }
@@ -336,7 +337,7 @@ namespace {
 static OverwriteResult isOverwrite(const MemoryLocation &Later,
                                    const MemoryLocation &Earlier,
                                    const DataLayout &DL,
-                                   const TargetLibraryInfo *TLI,
+                                   const TargetLibraryInfo &TLI,
                                    int64_t &EarlierOff, int64_t &LaterOff) {
   const Value *P1 = Earlier.Ptr->stripPointerCasts();
   const Value *P2 = Later.Ptr->stripPointerCasts();
@@ -442,10 +443,12 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
 /// because the DSE inducing instruction may be a self-read.
 static bool isPossibleSelfRead(Instruction *Inst,
                                const MemoryLocation &InstStoreLoc,
-                               Instruction *DepWrite, AliasAnalysis &AA) {
+                               Instruction *DepWrite,
+                               const TargetLibraryInfo &TLI,
+                               AliasAnalysis &AA) {
   // Self reads can only happen for instructions that read memory.  Get the
   // location read.
-  MemoryLocation InstReadLoc = getLocForRead(Inst, AA);
+  MemoryLocation InstReadLoc = getLocForRead(Inst, TLI);
   if (!InstReadLoc.Ptr) return false;  // Not a reading instruction.
 
   // If the read and written loc obviously don't alias, it isn't a read.
@@ -459,7 +462,7 @@ static bool isPossibleSelfRead(Instruction *Inst,
   // Here we don't know if A/B may alias, but we do know that B/B are must
   // aliases, so removing the first memcpy is safe (assuming it writes <= #
   // bytes as the second one.
-  MemoryLocation DepReadLoc = getLocForRead(DepWrite, AA);
+  MemoryLocation DepReadLoc = getLocForRead(DepWrite, TLI);
 
   if (DepReadLoc.Ptr && AA.isMustAlias(InstReadLoc.Ptr, DepReadLoc.Ptr))
     return false;
@@ -488,7 +491,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
 
     // If we find something that writes memory, get its memory dependence.
-    if (!hasMemoryWrite(Inst, TLI))
+    if (!hasMemoryWrite(Inst, *TLI))
       continue;
 
     MemDepResult InstDep = MD->getDependency(Inst);
@@ -511,7 +514,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
           // in case we need it.
           WeakVH NextInst(BBI);
 
-          DeleteDeadInstruction(SI, *MD, TLI);
+          DeleteDeadInstruction(SI, *MD, *TLI);
 
           if (!NextInst)  // Next instruction deleted.
             BBI = BB.begin();
@@ -549,18 +552,17 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // completely obliterated by the store to 'Loc', and c) which we know that
       // 'Inst' doesn't load from, then we can remove it.
       if (isRemovable(DepWrite) &&
-          !isPossibleSelfRead(Inst, Loc, DepWrite, *AA)) {
+          !isPossibleSelfRead(Inst, Loc, DepWrite, *TLI, *AA)) {
         int64_t InstWriteOffset, DepWriteOffset;
         const DataLayout &DL = BB.getModule()->getDataLayout();
         OverwriteResult OR =
-            isOverwrite(Loc, DepLoc, DL, AA->getTargetLibraryInfo(),
-                        DepWriteOffset, InstWriteOffset);
+            isOverwrite(Loc, DepLoc, DL, *TLI, DepWriteOffset, InstWriteOffset);
         if (OR == OverwriteComplete) {
           DEBUG(dbgs() << "DSE: Remove Dead Store:\n  DEAD: "
                 << *DepWrite << "\n  KILLER: " << *Inst << '\n');
 
           // Delete the store and now-dead instructions that feed it.
-          DeleteDeadInstruction(DepWrite, *MD, TLI);
+          DeleteDeadInstruction(DepWrite, *MD, *TLI);
           ++NumFastStores;
           MadeChange = true;
 
@@ -658,7 +660,7 @@ bool DSE::HandleFree(CallInst *F) {
     MemDepResult Dep = MD->getPointerDependencyFrom(Loc, false, InstPt, BB);
     while (Dep.isDef() || Dep.isClobber()) {
       Instruction *Dependency = Dep.getInst();
-      if (!hasMemoryWrite(Dependency, TLI) || !isRemovable(Dependency))
+      if (!hasMemoryWrite(Dependency, *TLI) || !isRemovable(Dependency))
         break;
 
       Value *DepPointer =
@@ -671,7 +673,7 @@ bool DSE::HandleFree(CallInst *F) {
       Instruction *Next = std::next(BasicBlock::iterator(Dependency));
 
       // DCE instructions only used to calculate that store
-      DeleteDeadInstruction(Dependency, *MD, TLI);
+      DeleteDeadInstruction(Dependency, *MD, *TLI);
       ++NumFastStores;
       MadeChange = true;
 
@@ -729,7 +731,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     --BBI;
 
     // If we find a store, check to see if it points into a dead stack value.
-    if (hasMemoryWrite(BBI, TLI) && isRemovable(BBI)) {
+    if (hasMemoryWrite(BBI, *TLI) && isRemovable(BBI)) {
       // See through pointer-to-pointer bitcasts
       SmallVector<Value *, 4> Pointers;
       GetUnderlyingObjects(getStoredPointerOperand(BBI), Pointers, DL);
@@ -757,7 +759,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
               dbgs() << '\n');
 
         // DCE instructions only used to calculate that store.
-        DeleteDeadInstruction(Dead, *MD, TLI, &DeadStackObjects);
+        DeleteDeadInstruction(Dead, *MD, *TLI, &DeadStackObjects);
         ++NumFastStores;
         MadeChange = true;
         continue;
@@ -767,7 +769,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     // Remove any dead non-memory-mutating instructions.
     if (isInstructionTriviallyDead(BBI, TLI)) {
       Instruction *Inst = BBI++;
-      DeleteDeadInstruction(Inst, *MD, TLI, &DeadStackObjects);
+      DeleteDeadInstruction(Inst, *MD, *TLI, &DeadStackObjects);
       ++NumFastOther;
       MadeChange = true;
       continue;
@@ -795,8 +797,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       // the call is live.
       DeadStackObjects.remove_if([&](Value *I) {
         // See if the call site touches the value.
-        ModRefInfo A = AA->getModRefInfo(
-            CS, I, getPointerSize(I, DL, AA->getTargetLibraryInfo()));
+        ModRefInfo A = AA->getModRefInfo(CS, I, getPointerSize(I, DL, *TLI));
 
         return A == MRI_ModRef || A == MRI_Ref;
       });
@@ -864,8 +865,7 @@ void DSE::RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
   // Remove objects that could alias LoadedLoc.
   DeadStackObjects.remove_if([&](Value *I) {
     // See if the loaded location could alias the stack location.
-    MemoryLocation StackLoc(I,
-                            getPointerSize(I, DL, AA->getTargetLibraryInfo()));
+    MemoryLocation StackLoc(I, getPointerSize(I, DL, *TLI));
     return !AA->isNoAlias(StackLoc, LoadedLoc);
   });
 }
