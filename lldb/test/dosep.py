@@ -20,7 +20,8 @@ Set to "0" to run without time limit.
 E.g., export LLDB_TEST_TIMEOUT=0
 or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
 
-To collect core files for timed out tests, do the following before running dosep.py
+To collect core files for timed out tests,
+do the following before running dosep.py
 
 OSX
 ulimit -c unlimited
@@ -42,6 +43,7 @@ import subprocess
 import sys
 
 from optparse import OptionParser
+
 
 def get_timeout_command():
     """Search for a suitable timeout command."""
@@ -70,6 +72,7 @@ test_name_len = None
 dotest_options = None
 output_on_success = False
 
+
 def setup_global_variables(lock, counter, total, name_len, options):
     global output_lock, test_counter, total_tests, test_name_len
     global dotest_options
@@ -78,6 +81,7 @@ def setup_global_variables(lock, counter, total, name_len, options):
     total_tests = total
     test_name_len = name_len
     dotest_options = options
+
 
 def report_test_failure(name, command, output):
     global output_lock
@@ -88,6 +92,7 @@ def report_test_failure(name, command, output):
         print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
         update_progress(name)
 
+
 def report_test_pass(name, output):
     global output_lock, output_on_success
     with output_lock:
@@ -96,6 +101,7 @@ def report_test_pass(name, output):
             print >> sys.stderr, output
             print >> sys.stderr, "[%s PASSED]" % name
         update_progress(name)
+
 
 def update_progress(test_name=""):
     global output_lock, test_counter, total_tests, test_name_len
@@ -111,23 +117,28 @@ def update_progress(test_name=""):
         sys.stdout.flush()
         sys.stderr.flush()
 
+
 def parse_test_results(output):
     passes = 0
     failures = 0
     for result in output:
-        pass_count = re.search("^RESULT:.*([0-9]+) passes", result, re.MULTILINE)
-        fail_count = re.search("^RESULT:.*([0-9]+) failures", result, re.MULTILINE)
-        error_count = re.search("^RESULT:.*([0-9]+) errors", result, re.MULTILINE)
+        pass_count = re.search("^RESULT:.*([0-9]+) passes",
+                               result, re.MULTILINE)
+        fail_count = re.search("^RESULT:.*([0-9]+) failures",
+                               result, re.MULTILINE)
+        error_count = re.search("^RESULT:.*([0-9]+) errors",
+                                result, re.MULTILINE)
         this_fail_count = 0
         this_error_count = 0
-        if pass_count != None:
+        if pass_count is not None:
             passes = passes + int(pass_count.group(1))
-        if fail_count != None:
+        if fail_count is not None:
             failures = failures + int(fail_count.group(1))
-        if error_count != None:
+        if error_count is not None:
             failures = failures + int(error_count.group(1))
         pass
     return passes, failures
+
 
 def call_with_timeout(command, timeout, name):
     """Run command with a timeout if possible."""
@@ -135,25 +146,30 @@ def call_with_timeout(command, timeout, name):
     process = None
     if timeout_command and timeout != "0":
         command = [timeout_command, '-s', 'QUIT', timeout] + command
-    # Specifying a value for close_fds is unsupported on Windows when using subprocess.PIPE
+    # Specifying a value for close_fds is unsupported on Windows when using
+    # subprocess.PIPE
     if os.name != "nt":
-        process = subprocess.Popen(command, stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE,
-                                            close_fds=True)
+        process = subprocess.Popen(command,
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   close_fds=True)
     else:
-        process = subprocess.Popen(command, stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE)
+        process = subprocess.Popen(command,
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
     output = process.communicate()
     exit_status = process.returncode
     passes, failures = parse_test_results(output)
     if exit_status == 0:
-        # stdout does not have any useful information from 'dotest.py', only stderr does.
+        # stdout does not have any useful information from 'dotest.py',
+        # only stderr does.
         report_test_pass(name, output[1])
     else:
         report_test_failure(name, command, output[1])
     return name, exit_status, passes, failures
+
 
 def process_dir(root, files, test_root, dotest_argv):
     """Examine a directory for tests, and invoke any found within it."""
@@ -166,7 +182,8 @@ def process_dir(root, files, test_root, dotest_argv):
 
         timeout_name = os.path.basename(os.path.splitext(name)[0]).upper()
 
-        timeout = os.getenv("LLDB_%s_TIMEOUT" % timeout_name) or getDefaultTimeout(dotest_options.lldb_platform_name)
+        timeout = (os.getenv("LLDB_%s_TIMEOUT" % timeout_name) or
+                   getDefaultTimeout(dotest_options.lldb_platform_name))
 
         results.append(call_with_timeout(command, timeout, name))
 
@@ -185,10 +202,12 @@ def process_dir(root, files, test_root, dotest_argv):
 in_q = None
 out_q = None
 
+
 def process_dir_worker(arg_tuple):
     """Worker thread main loop when in multithreaded mode.
     Takes one directory specification at a time and works on it."""
     return process_dir(*arg_tuple)
+
 
 def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     """Look for matched files and invoke test driver on each one.
@@ -197,7 +216,8 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     queue, and then wait for all to complete.
 
     test_directory - lldb/test/ directory
-    test_subdir - lldb/test/ or a subfolder with the tests we're interested in running
+    test_subdir - lldb/test/ or a subfolder with the tests we're interested in
+                  running
     """
 
     # Collect the test files that we'll run.
@@ -244,6 +264,7 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
 
     return (timed_out, passed, failed, pass_count, fail_count)
 
+
 def getExpectedTimeouts(platform_name):
     # returns a set of test filenames that might timeout
     # are we running against a remote target?
@@ -266,9 +287,11 @@ def getExpectedTimeouts(platform_name):
             "TestCreateAfterAttach.py",
             "TestEvents.py",
             "TestExitDuringStep.py",
-            "TestHelloWorld.py", # Times out in ~10% of the times on the build bot
+
+            # Times out in ~10% of the times on the build bot
+            "TestHelloWorld.py",
             "TestMultithreaded.py",
-            "TestRegisters.py", # ~12/600 dosep runs (build 3120-3122)
+            "TestRegisters.py",  # ~12/600 dosep runs (build 3120-3122)
             "TestThreadStepOut.py",
         }
     elif target.startswith("android"):
@@ -285,9 +308,11 @@ def getExpectedTimeouts(platform_name):
         }
     elif target.startswith("darwin"):
         expected_timeout |= {
-            "TestThreadSpecificBreakpoint.py", # times out on MBP Retina, Mid 2012
+            # times out on MBP Retina, Mid 2012
+            "TestThreadSpecificBreakpoint.py",
         }
     return expected_timeout
+
 
 def getDefaultTimeout(platform_name):
     if os.getenv("LLDB_TEST_TIMEOUT"):
@@ -301,9 +326,11 @@ def getDefaultTimeout(platform_name):
     else:
         return "4m"
 
+
 def touch(fname, times=None):
     if os.path.exists(fname):
         os.utime(fname, times)
+
 
 def find(pattern, path):
     result = []
@@ -312,6 +339,7 @@ def find(pattern, path):
             if fnmatch.fnmatch(name, pattern):
                 result.append(os.path.join(root, name))
     return result
+
 
 def main():
     # We can't use sys.path[0] to determine the script directory
@@ -337,27 +365,32 @@ Run lldb test suite using a separate process for each test file.
        E.g., export LLDB_TEST_TIMEOUT=0
        or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
 """)
-    parser.add_option('-o', '--options',
-                      type='string', action='store',
-                      dest='dotest_options',
-                      help="""The options passed to 'dotest.py' if specified.""")
+    parser.add_option(
+        '-o', '--options',
+        type='string', action='store',
+        dest='dotest_options',
+        help="""The options passed to 'dotest.py' if specified.""")
 
-    parser.add_option('-s', '--output-on-success',
-                      action='store_true',
-                      dest='output_on_success',
-                      default=False,
-                      help="""Print full output of 'dotest.py' even when it succeeds.""")
+    parser.add_option(
+        '-s', '--output-on-success',
+        action='store_true',
+        dest='output_on_success',
+        default=False,
+        help="""Print full output of 'dotest.py' even when it succeeds.""")
 
-    parser.add_option('-t', '--threads',
-                      type='int',
-                      dest='num_threads',
-                      help="""The number of threads to use when running tests separately.""")
+    parser.add_option(
+        '-t', '--threads',
+        type='int',
+        dest='num_threads',
+        help="""The number of threads to use when running tests separately.""")
 
     opts, args = parser.parse_args()
     dotest_option_string = opts.dotest_options
 
     is_posix = (os.name == "posix")
-    dotest_argv = shlex.split(dotest_option_string, posix=is_posix) if dotest_option_string else []
+    dotest_argv = (shlex.split(dotest_option_string, posix=is_posix)
+                   if dotest_option_string
+                   else [])
 
     parser = dotest_args.create_parser()
     global dotest_options
@@ -370,7 +403,7 @@ Run lldb test suite using a separate process for each test file.
         # every dotest invocation from creating its own directory
         import datetime
         # The windows platforms don't like ':' in the pathname.
-        timestamp_started = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
+        timestamp_started = datetime.datetime.now().strftime("%F-%H_%M_%S")
         dotest_argv.append('-s')
         dotest_argv.append(timestamp_started)
         dotest_options.s = timestamp_started
