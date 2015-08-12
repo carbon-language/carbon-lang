@@ -49,7 +49,7 @@ FUZZER_FLAG_INT(workers, 0,
             " If zero, \"min(jobs,NumberOfCpuCores()/2)\" is used.")
 FUZZER_FLAG_INT(reload, 1,
                 "Reload the main corpus periodically to get new units"
-                "discovered by other processes.")
+                " discovered by other processes.")
 FUZZER_FLAG_STRING(tokens, "Use the file with tokens (one token per line) to"
                            " fuzz a token based input language.")
 FUZZER_FLAG_STRING(apply_tokens, "Read the given input file, substitute bytes "
