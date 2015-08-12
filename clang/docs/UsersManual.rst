@@ -2005,7 +2005,7 @@ with a warning. For example:
 
   ::
 
-    clang-cl.exe: warning: argument unused during compilation: '/Zi'
+    clang-cl.exe: warning: argument unused during compilation: '/AI'
 
 To suppress warnings about unused arguments, use the ``-Qunused-arguments`` option.
 
@@ -2034,14 +2034,21 @@ Execute ``clang-cl /?`` to see a list of supported options:
       /E                     Preprocess to stdout
       /fallback              Fall back to cl.exe if clang-cl fails to compile
       /FA                    Output assembly code file during compilation
-      /Fa<file or directory> Output assembly code to this file during compilation
+      /Fa<file or directory> Output assembly code to this file during compilation (with /FA)
       /Fe<file or directory> Set output executable file or directory (ends in / or \)
       /FI <value>            Include file before parsing
-      /Fi<file>              Set preprocess output file name
-      /Fo<file or directory> Set output object file, or directory (ends in / or \)
+      /Fi<file>              Set preprocess output file name (with /P)
+      /Fo<file or directory> Set output object file, or directory (ends in / or \) (with /c)
+      /fp:except-
+      /fp:except
+      /fp:fast
+      /fp:precise
+      /fp:strict
+      /GA                    Assume thread-local variables are defined in the executable
       /GF-                   Disable string pooling
       /GR-                   Disable emission of RTTI data
       /GR                    Enable emission of RTTI data
+      /Gs<value>             Set stack probe size
       /Gw-                   Don't put each data item in its own section
       /Gw                    Put each data item in its own section
       /Gy-                   Don't put each function in its own section
@@ -2062,11 +2069,13 @@ Execute ``clang-cl /?`` to see a list of supported options:
       /Oi                    Enable use of builtin functions
       /Os                    Optimize for size
       /Ot                    Optimize for speed
-      /Ox                    Maximum optimization
       /Oy-                   Disable frame pointer omission
       /Oy                    Enable frame pointer omission
-      /O<n>                  Optimization level
+      /O<value>              Optimization level
+      /o <file or directory> Set output file or directory (ends in / or \)
       /P                     Preprocess to file
+      /Qvec-                 Disable the loop vectorization passes
+      /Qvec                  Enable the loop vectorization passes
       /showIncludes          Print info about included files to stderr
       /TC                    Treat all source files as C
       /Tc <filename>         Specify a C source file
@@ -2079,6 +2088,8 @@ Execute ``clang-cl /?`` to see a list of supported options:
       /vmm                   Set the default most-general representation to multiple inheritance
       /vms                   Set the default most-general representation to single inheritance
       /vmv                   Set the default most-general representation to virtual inheritance
+      /volatile:iso          Volatile loads and stores have standard semantics
+      /volatile:ms           Volatile loads and stores have acquire and release semantics
       /W0                    Disable all warnings
       /W1                    Enable -Wall
       /W2                    Enable -Wall
@@ -2088,29 +2099,55 @@ Execute ``clang-cl /?`` to see a list of supported options:
       /WX-                   Do not treat warnings as errors
       /WX                    Treat warnings as errors
       /w                     Disable all warnings
-      /Zi                    Enable debug information
+      /Z7                    Enable CodeView debug information in object files
+      /Zc:sizedDealloc-      Disable C++14 sized global deallocation functions
+      /Zc:sizedDealloc       Enable C++14 sized global deallocation functions
+      /Zc:strictStrings      Treat string literals as const
+      /Zc:threadSafeInit-    Disable thread-safe initialization of static variables
+      /Zc:threadSafeInit     Enable thread-safe initialization of static variables
+      /Zc:trigraphs-         Disable trigraphs (default)
+      /Zc:trigraphs          Enable trigraphs
+      /Zi                    Alias for /Z7. Does not produce PDBs.
+      /Zl                    Don't mention any default libraries in the object file
       /Zp                    Set the default maximum struct packing alignment to 1
       /Zp<value>             Specify the default maximum struct packing alignment
       /Zs                    Syntax-check only
 
     OPTIONS:
-      -###                  Print (but do not run) the commands to run for this compilation
+      -###                    Print (but do not run) the commands to run for this compilation
+      --analyze               Run the static analyzer
+      -fansi-escape-codes     Use ANSI escape codes for diagnostics
+      -fcolor-diagnostics     Use colors in diagnostics
+      -fdiagnostics-parseable-fixits
+                              Print fix-its in machine parseable form
       -fms-compatibility-version=<value>
-                            Dot-separated value representing the Microsoft compiler version
-                            number to report in _MSC_VER (0 = don't define it (default))
-      -fmsc-version=<value> Microsoft compiler version number to report in _MSC_VER (0 = don't
-                            define it (default))
+                              Dot-separated value representing the Microsoft compiler version
+                              number to report in _MSC_VER (0 = don't define it (default))
+      -fmsc-version=<value>   Microsoft compiler version number to report in _MSC_VER (0 = don't
+                              define it (default))
+      -fno-sanitize-coverage=<value>
+                              Disable specified features of coverage instrumentation for Sanitizers
+      -fno-sanitize-recover=<value>
+                              Disable recovery for specified sanitizers
+      -fno-sanitize-trap=<value>
+                              Disable trapping for specified sanitizers
       -fsanitize-blacklist=<value>
-                            Path to blacklist file for sanitizers
-      -fsanitize=<check>    Enable runtime instrumentation for bug detection: address (memory
-                            errors) | thread (race detection) | undefined (miscellaneous
-                            undefined behavior)
-      -mllvm <value>        Additional arguments to forward to LLVM's option processing
-      -Qunused-arguments    Don't emit warning for unused driver arguments
-      --target=<value>      Generate code for the given target
-      -v                    Show commands to run and use verbose output
-      -W<warning>           Enable the specified warning
-      -Xclang <arg>         Pass <arg> to the clang compiler
+                              Path to blacklist file for sanitizers
+      -fsanitize-coverage=<value>
+                              Specify the type of coverage instrumentation for Sanitizers
+      -fsanitize-recover=<value>
+                              Enable recovery for specified sanitizers
+      -fsanitize-trap=<value> Enable trapping for specified sanitizers
+      -fsanitize=<check>      Turn on runtime checks for various forms of undefined or suspicious
+                              behavior. See user manual for available checks
+      -gcodeview              Generate CodeView debug information
+      -mllvm <value>          Additional arguments to forward to LLVM's option processing
+      -Qunused-arguments      Don't emit warning for unused driver arguments
+      -R<remark>              Enable the specified remark
+      --target=<value>        Generate code for the given target
+      -v                      Show commands to run and use verbose output
+      -W<warning>             Enable the specified warning
+      -Xclang <arg>           Pass <arg> to the clang compiler
 
 The /fallback Option
 ^^^^^^^^^^^^^^^^^^^^
