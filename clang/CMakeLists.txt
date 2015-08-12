@@ -168,7 +168,7 @@ else()
   set(BACKEND_PACKAGE_STRING "${PACKAGE_STRING}")
 endif()
 
-find_package(LibXml2)
+find_package(LibXml2 2.5.3 QUIET)
 if (LIBXML2_FOUND)
   set(CLANG_HAVE_LIBXML 1)
 endif()
