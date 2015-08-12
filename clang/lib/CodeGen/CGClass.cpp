@@ -1376,9 +1376,30 @@ static void EmitDtorSanitizerCallback(CodeGenFunction &CGF,
   const ASTRecordLayout &Layout =
       CGF.getContext().getASTRecordLayout(Dtor->getParent());
 
+  // Nothing to poison
+  if(Layout.getFieldCount() == 0)
+    return;
+
+  // Construct pointer to region to begin poisoning, and calculate poison
+  // size, so that only members declared in this class are poisoned.
+  llvm::Value *OffsetPtr;
+  CharUnits::QuantityType PoisonSize;
+  ASTContext &Context = CGF.getContext();
+
+  llvm::ConstantInt *OffsetSizePtr = llvm::ConstantInt::get(
+      CGF.SizeTy, Context.toCharUnitsFromBits(Layout.getFieldOffset(0)).
+      getQuantity());
+
+  OffsetPtr = CGF.Builder.CreateGEP(CGF.Builder.CreateBitCast(
+      CGF.LoadCXXThis(), CGF.Int8PtrTy), OffsetSizePtr);
+
+  PoisonSize = Layout.getSize().getQuantity() -
+      Context.toCharUnitsFromBits(Layout.getFieldOffset(0)).getQuantity();
+
   llvm::Value *Args[] = {
-      CGF.Builder.CreateBitCast(CGF.LoadCXXThis(), CGF.VoidPtrTy),
-      llvm::ConstantInt::get(CGF.SizeTy, Layout.getSize().getQuantity())};
+    CGF.Builder.CreateBitCast(OffsetPtr, CGF.VoidPtrTy),
+    llvm::ConstantInt::get(CGF.SizeTy, PoisonSize)};
+
   llvm::Type *ArgTypes[] = {CGF.VoidPtrTy, CGF.SizeTy};
 
   llvm::FunctionType *FnType =
@@ -1386,6 +1407,8 @@ static void EmitDtorSanitizerCallback(CodeGenFunction &CGF,
   llvm::Value *Fn =
       CGF.CGM.CreateRuntimeFunction(FnType, "__sanitizer_dtor_callback");
 
+  // Disables tail call elimination, to prevent the current stack frame from
+  // disappearing from the stack trace.
   CGF.CurFn->addFnAttr("disable-tail-calls", "true");
   CGF.EmitNounwindRuntimeCall(Fn, Args);
 }
@@ -1468,6 +1491,13 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     // the caller's body.
     if (getLangOpts().AppleKext)
       CurFn->addFnAttr(llvm::Attribute::AlwaysInline);
+
+    // Insert memory-poisoning instrumentation, before final clean ups,
+    // to ensure this class's members are protected from invalid access.
+    if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor
+        && SanOpts.has(SanitizerKind::Memory))
+      EmitDtorSanitizerCallback(*this, Dtor);
+
     break;
   }
 
@@ -1477,11 +1507,6 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   // Exit the try if applicable.
   if (isTryBody)
     ExitCXXTryStmt(*cast<CXXTryStmt>(Body), true);
-
-  // Insert memory-poisoning instrumentation.
-  if (CGM.getCodeGenOpts().SanitizeMemoryUseAfterDtor
-      && SanOpts.has(SanitizerKind::Memory))
-    EmitDtorSanitizerCallback(*this, Dtor);
 }
 
 void CodeGenFunction::emitImplicitAssignmentOperatorBody(FunctionArgList &Args) {
