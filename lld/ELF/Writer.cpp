@@ -185,6 +185,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   FileOff += StrTabBuilder.data().size();
   NumSections++;
 
+  FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
+
   // Add space for section headers.
   SectionHeaderOff = FileOff;
   FileOff += NumSections * sizeof(Elf_Shdr_Impl<ELFT>);
