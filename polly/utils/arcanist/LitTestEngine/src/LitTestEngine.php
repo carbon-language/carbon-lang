@@ -73,14 +73,26 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
         $projectRoot = $this->getWorkingCopy()->getProjectRoot();
         $cwd = getcwd();
         $buildDir = $this->findBuildDirectory($projectRoot, $cwd);
-        print "Using build directory '$buildDir'\n";
-        $makeVars = $this->getMakeVars($buildDir);
-        $lit = $this->findLitExecutable($makeVars);
+        $pollyObjDir = $buildDir;
+        if (is_dir($buildDir.DIRECTORY_SEPARATOR."tools".DIRECTORY_SEPARATOR."polly"))
+          $pollyObjDir = $buildDir.DIRECTORY_SEPARATOR."tools".DIRECTORY_SEPARATOR."polly";
+        $pollyTestDir = $pollyObjDir.DIRECTORY_SEPARATOR."test";
+
+        if (is_dir($buildDir.DIRECTORY_SEPARATOR."bin") &&
+          file_exists($buildDir.DIRECTORY_SEPARATOR."bin".DIRECTORY_SEPARATOR."llvm-lit")) {
+          $lit = $buildDir.DIRECTORY_SEPARATOR."bin".DIRECTORY_SEPARATOR."llvm-lit";
+          $cmd = "ninja -C ".$buildDir;
+          print "Running ninja (".$cmd.")\n";
+          exec($cmd);
+        } else {
+          $makeVars = $this->getMakeVars($buildDir);
+          $lit = $this->findLitExecutable($makeVars);
+        }
         print "Using lit executable '$lit'\n";
 
         // We have to modify the format string, because llvm-lit does not like a '' argument
         $cmd = '%s ' . ($this->getEnableAsyncTests() ? '' : '-j1 ') .'%s 2>&1';
-        $litFuture = new ExecFuture($cmd, $lit, $buildDir."/test");
+        $litFuture = new ExecFuture($cmd, $lit, $pollyTestDir);
         $out = "";
         $results = array();
         $lastTime = microtime(true);
@@ -198,7 +210,6 @@ final class LitTestEngine extends ArcanistUnitTestEngine {
 
         foreach ($tries as $try) {
             if (is_dir($try) &&
-                file_exists($try.DIRECTORY_SEPARATOR."Makefile") &&
                 (file_exists($try.DIRECTORY_SEPARATOR."test".DIRECTORY_SEPARATOR."lit.site.cfg") ||
                 file_exists($try.DIRECTORY_SEPARATOR."test".DIRECTORY_SEPARATOR."lit.cfg")))
                 return Filesystem::resolvePath($try);
