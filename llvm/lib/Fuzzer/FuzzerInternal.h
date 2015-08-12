@@ -74,6 +74,8 @@ class Fuzzer {
     int SyncTimeout = 600;
     int ReportSlowUnits = 10;
     bool OnlyASCII = false;
+    int TBMDepth = 10;
+    int TBMWidth = 10;
     std::string OutputCorpus;
     std::string SyncCommand;
     std::vector<std::string> Tokens;
@@ -136,6 +138,7 @@ class Fuzzer {
   Unit CurrentUnit;
 
   size_t TotalNumberOfRuns = 0;
+  size_t TotalNumberOfExecutedTraceBasedMutations = 0;
 
   std::vector<Unit> Corpus;
   std::unordered_set<std::string> UnitHashesAddedToCorpus;

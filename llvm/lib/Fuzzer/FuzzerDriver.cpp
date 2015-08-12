@@ -241,6 +241,8 @@ int FuzzerDriver(int argc, char **argv, UserSuppliedFuzzer &USF) {
   Options.Tokens = ReadTokensFile(Flags.tokens);
   Options.Reload = Flags.reload;
   Options.OnlyASCII = Flags.only_ascii;
+  Options.TBMDepth = Flags.tbm_depth;
+  Options.TBMWidth = Flags.tbm_width;
   if (Flags.runs >= 0)
     Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())

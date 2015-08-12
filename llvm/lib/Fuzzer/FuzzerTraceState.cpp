@@ -232,8 +232,7 @@ class TraceState {
 
   size_t StopTraceRecording(FuzzerRandomBase &Rand) {
     RecordingTraces = false;
-    std::random_shuffle(Mutations.begin(), Mutations.end(), Rand);
-    return std::min(Mutations.size(), 128UL);
+    return Mutations.size();
   }
 
   void ApplyTraceBasedMutation(size_t Idx, fuzzer::Unit *U);
