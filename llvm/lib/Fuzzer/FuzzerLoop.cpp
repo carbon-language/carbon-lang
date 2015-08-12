@@ -81,8 +81,9 @@ void Fuzzer::PrintStats(const char *Where, size_t Cov, const char *End) {
   if (!Options.Verbosity) return;
   size_t Seconds = secondsSinceProcessStartUp();
   size_t ExecPerSec = (Seconds ? TotalNumberOfRuns / Seconds : 0);
-  Printf("#%zd\t%s cov %zd bits %zd units %zd exec/s %zd %s", TotalNumberOfRuns,
-         Where, Cov, TotalBits(), Corpus.size(), ExecPerSec, End);
+  Printf("#%zd\t%s cov: %zd bits: %zd units: %zd exec/s: %zd %s",
+         TotalNumberOfRuns, Where, Cov, TotalBits(), Corpus.size(), ExecPerSec,
+         End);
 }
 
 void Fuzzer::RereadOutputCorpus() {
