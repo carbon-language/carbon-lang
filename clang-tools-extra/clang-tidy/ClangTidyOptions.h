@@ -189,7 +189,7 @@ public:
 
   ClangTidyOptions getOptions(llvm::StringRef FileName) override;
 
-private:
+protected:
   /// \brief Try to read configuration files from \p Directory using registered
   /// \c ConfigHandlers.
   llvm::Optional<ClangTidyOptions> TryReadConfigFile(llvm::StringRef Directory);
