@@ -1184,6 +1184,20 @@ bool AsmPrinter::doFinalization(Module &M) {
 
     // Emit the directives as assignments aka .set:
     OutStreamer->EmitAssignment(Name, lowerConstant(Alias.getAliasee()));
+
+    // If the aliasee does not correspond to a symbol in the output, i.e. the
+    // alias is not of an object or the aliased object is private, then set the
+    // size of the alias symbol from the type of the alias. We don't do this in
+    // other situations as the alias and aliasee having differing types but same
+    // size may be intentional.
+    const GlobalObject *BaseObject = Alias.getBaseObject();
+    if (MAI->hasDotTypeDotSizeDirective() && Alias.getValueType()->isSized() &&
+        (!BaseObject || BaseObject->hasPrivateLinkage())) {
+      const DataLayout &DL = M.getDataLayout();
+      uint64_t Size = DL.getTypeAllocSize(Alias.getValueType());
+      OutStreamer->emitELFSize(cast<MCSymbolELF>(Name),
+                               MCConstantExpr::create(Size, OutContext));
+    }
   }
 
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();

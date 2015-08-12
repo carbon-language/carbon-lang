@@ -37,7 +37,10 @@ define void @g1(i32 %a1, i32 %a2) {
 
 ;CHECK-MERGE:	.globl	x
 ;CHECK-MERGE: x = .L_MergedGlobals
+;CHECK-MERGE: .size x, 4
 ;CHECK-MERGE:	.globl	y
 ;CHECK-MERGE: y = .L_MergedGlobals+4
+;CHECK-MERGE: .size y, 4
 ;CHECK-MERGE:	.globl	z
 ;CHECK-MERGE: z = .L_MergedGlobals+8
+;CHECK-MERGE: .size z, 4
