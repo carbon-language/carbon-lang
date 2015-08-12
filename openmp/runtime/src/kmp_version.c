@@ -46,6 +46,8 @@
         #define KMP_COMPILER "Intel C++ Compiler 14.1"
     #elif __INTEL_COMPILER == 1500
         #define KMP_COMPILER "Intel C++ Compiler 15.0"
+    #elif __INTEL_COMPILER == 1600
+        #define KMP_COMPILER "Intel C++ Compiler 16.0"
     #elif __INTEL_COMPILER == 9999
         #define KMP_COMPILER "Intel C++ Compiler mainline"
     #endif
