@@ -124,8 +124,8 @@ define <8 x float> @reciprocal_square_root_v8f32(<8 x float> %x) #0 {
 ; ESTIMATE-LABEL: reciprocal_square_root_v8f32:
 ; ESTIMATE:       # BB#0:
 ; ESTIMATE-NEXT:    vrsqrtps %ymm0, %ymm1
-; ESTIMATE-NEXT:    vmulps %ymm1, %ymm1, %ymm2
-; ESTIMATE-NEXT:    vmulps %ymm0, %ymm2, %ymm0
+; ESTIMATE-NEXT:    vmulps %ymm0, %ymm1, %ymm0
+; ESTIMATE-NEXT:    vmulps %ymm0, %ymm1, %ymm0
 ; ESTIMATE-NEXT:    vaddps {{.*}}(%rip), %ymm0, %ymm0
 ; ESTIMATE-NEXT:    vmulps {{.*}}(%rip), %ymm1, %ymm1
 ; ESTIMATE-NEXT:    vmulps %ymm1, %ymm0, %ymm0
