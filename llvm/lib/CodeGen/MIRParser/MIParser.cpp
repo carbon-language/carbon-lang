@@ -1086,6 +1086,9 @@ bool MIParser::parseIRValue(Value *&V) {
   case MIToken::NamedIRValue: {
     V = MF.getFunction()->getValueSymbolTable().lookup(Token.stringValue());
     if (!V)
+      V = MF.getFunction()->getParent()->getValueSymbolTable().lookup(
+          Token.stringValue());
+    if (!V)
       return error(Twine("use of undefined IR value '") + Token.range() + "'");
     break;
   }

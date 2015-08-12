@@ -84,6 +84,13 @@
     ret i32 %b
   }
 
+  define i32 @global_value() {
+  entry:
+    %a = load i32, i32* @G
+    %b = add i32 %a, 1
+    ret i32 %b
+  }
+
   define i32 @jumptable_psv(i32 %in) {
   entry:
     switch i32 %in, label %def [
@@ -286,6 +293,20 @@ body:
 # CHECK: %rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)
       - '%rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)'
       - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
+      - 'RETQ %eax'
+...
+---
+name:            global_value
+tracksRegLiveness: true
+body:
+  - id:          0
+    name:        entry
+    instructions:
+      - '%rax = MOV64rm %rip, 1, _, @G, _'
+# CHECK: name: global_value
+# CHECK: %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.G)
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.G)'
       - '%eax = INC32r killed %eax, implicit-def dead %eflags'
       - 'RETQ %eax'
 ...
