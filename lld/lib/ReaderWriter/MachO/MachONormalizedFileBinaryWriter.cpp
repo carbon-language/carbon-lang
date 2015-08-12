@@ -159,7 +159,6 @@ private:
 
   struct TrieEdge {
     TrieEdge(StringRef s, TrieNode *node) : _subString(s), _child(node) {}
-    ~TrieEdge() {}
 
     StringRef          _subString;
     struct TrieNode   *_child;
