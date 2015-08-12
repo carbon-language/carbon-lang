@@ -15,6 +15,7 @@
 #include "clang/ASTMatchers/Dynamic/Registry.h"
 #include "Marshallers.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -358,8 +359,7 @@ RegistryMaps::RegistryMaps() {
 }
 
 RegistryMaps::~RegistryMaps() {
-  for (auto &E : Constructors)
-    delete E.getValue();
+  llvm::DeleteContainerSeconds(Constructors);
 }
 
 static llvm::ManagedStatic<RegistryMaps> RegistryData;
