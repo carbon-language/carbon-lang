@@ -42,11 +42,15 @@ macro(find_llvm_parts)
   endif()
 
   if (NOT EXISTS ${LLVM_MAIN_SRC_DIR})
-    message(FATAL_ERROR "Not found: ${LLVM_MAIN_SRC_DIR}")
+    set(LLVM_FOUND OFF)
+    message(WARNING "Not found: ${LLVM_MAIN_SRC_DIR}")
+    return()
   endif()
 
   if(NOT EXISTS ${LLVM_CMAKE_PATH})
-    message(FATAL_ERROR "Not found: ${LLVM_CMAKE_PATH}")
+    set(LLVM_FOUND OFF)
+    message(WARNING "Not found: ${LLVM_CMAKE_PATH}")
+    return()
   endif()
 
   list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
