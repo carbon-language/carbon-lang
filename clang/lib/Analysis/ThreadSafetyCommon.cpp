@@ -344,7 +344,8 @@ til::SExpr *SExprBuilder::translateMemberExpr(const MemberExpr *ME,
   til::SExpr *BE = translate(ME->getBase(), Ctx);
   til::SExpr *E  = new (Arena) til::SApply(BE);
 
-  const ValueDecl *D = ME->getMemberDecl();
+  const ValueDecl *D =
+      cast<ValueDecl>(ME->getMemberDecl()->getCanonicalDecl());
   if (auto *VD = dyn_cast<CXXMethodDecl>(D))
     D = getFirstVirtualDecl(VD);
 
