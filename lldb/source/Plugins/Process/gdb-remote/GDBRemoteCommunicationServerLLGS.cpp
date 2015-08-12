@@ -2227,6 +2227,7 @@ GDBRemoteCommunicationServerLLGS::Handle_Z (StringExtractorGDBRemote &packet)
 
     bool want_breakpoint = true;
     bool want_hardware = false;
+    uint32_t watch_flags = 0;
 
     const GDBStoppointType stoppoint_type =
         GDBStoppointType(packet.GetS32 (eStoppointInvalid));
@@ -2237,10 +2238,13 @@ GDBRemoteCommunicationServerLLGS::Handle_Z (StringExtractorGDBRemote &packet)
         case eBreakpointHardware:
             want_hardware = true;  want_breakpoint = true;  break;
         case eWatchpointWrite:
+            watch_flags = 1;
             want_hardware = true;  want_breakpoint = false; break;
         case eWatchpointRead:
+            watch_flags = 2;
             want_hardware = true;  want_breakpoint = false; break;
         case eWatchpointReadWrite:
+            watch_flags = 3;
             want_hardware = true;  want_breakpoint = false; break;
         case eStoppointInvalid:
             return SendIllFormedResponse(packet, "Z packet had invalid software/hardware specifier");
@@ -2280,11 +2284,6 @@ GDBRemoteCommunicationServerLLGS::Handle_Z (StringExtractorGDBRemote &packet)
     }
     else
     {
-        uint32_t watch_flags =
-            stoppoint_type == eWatchpointWrite
-            ? 0x1  // Write
-            : 0x3; // ReadWrite
-
         // Try to set the watchpoint.
         const Error error = m_debugged_process_sp->SetWatchpoint (
                 addr, size, watch_flags, want_hardware);

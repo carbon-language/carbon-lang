@@ -1018,6 +1018,9 @@ NativeRegisterContextLinux_x86_64::SetHardwareWatchpointWithIndex(
     if (wp_index >= NumSupportedHardwareWatchpoints())
         return Error ("Watchpoint index out of range");
 
+    if (watch_flags == 0x2)
+        return Error ("Read watchpoints currently unsupported on x86_64 architecture");
+
     if (watch_flags != 0x1 && watch_flags != 0x3)
         return Error ("Invalid read/write bits for watchpoint");
 
