@@ -285,6 +285,7 @@ add_polly_library(Polly
   ${GPGPU_CODEGEN_FILES}
   Exchange/JSONExporter.cpp
   Support/GICHelper.cpp
+  Support/SCEVAffinator.cpp
   Support/SCEVValidator.cpp
   Support/RegisterPasses.cpp
   Support/ScopHelper.cpp

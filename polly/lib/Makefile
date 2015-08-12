@@ -111,6 +111,7 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
 SOURCES= Polly.cpp \
          Support/GICHelper.cpp \
          Support/SCEVValidator.cpp \
+         Support/SCEVAffinator.cpp \
          Support/RegisterPasses.cpp \
          Support/ScopHelper.cpp \
          Support/ScopLocation.cpp \

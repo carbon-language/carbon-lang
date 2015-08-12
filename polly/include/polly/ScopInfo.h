@@ -21,6 +21,8 @@
 #define POLLY_SCOP_INFO_H
 
 #include "polly/ScopDetection.h"
+#include "polly/Support/SCEVAffinator.h"
+
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "isl/ctx.h"
@@ -51,6 +53,7 @@ struct isl_union_map;
 struct isl_space;
 struct isl_ast_build;
 struct isl_constraint;
+struct isl_pw_aff;
 struct isl_pw_multi_aff;
 struct isl_schedule;
 
@@ -61,8 +64,8 @@ class Scop;
 class ScopStmt;
 class ScopInfo;
 class TempScop;
-class SCEVAffFunc;
 class Comparison;
+class SCEVAffFunc;
 
 /// @brief A class to store information about arrays in the SCoP.
 ///
@@ -680,6 +683,9 @@ public:
   /// @param NewDomain The new statement domain.
   void restrictDomain(__isl_take isl_set *NewDomain);
 
+  /// @brief Compute the isl representation for the SCEV @p E in this stmt.
+  __isl_give isl_pw_aff *getPwAff(const SCEV *E);
+
   /// @brief Get the loop for a dimension.
   ///
   /// @param Dimension The dimension of the induction variable
@@ -773,6 +779,9 @@ private:
 
   /// Constraints on parameters.
   isl_set *Context;
+
+  /// @brief The affinator used to translate SCEVs to isl expressions.
+  SCEVAffinator Affinator;
 
   typedef MapVector<std::pair<const Value *, int>,
                     std::unique_ptr<ScopArrayInfo>> ArrayInfoMapTy;
@@ -1103,6 +1112,9 @@ public:
   ///
   /// @return The isl context of this static control part.
   isl_ctx *getIslCtx() const;
+
+  /// @brief Compute the isl representation for the SCEV @p E in @p Stmt.
+  __isl_give isl_pw_aff *getPwAff(const SCEV *E, ScopStmt *Stmt);
 
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains() const;
