@@ -25,6 +25,7 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/RegionPass.h"
+#include "isl/aff.h"
 #include "isl/ctx.h"
 
 #include <forward_list>
@@ -101,9 +102,9 @@ public:
   }
 
   /// @brief Return the size of dimension @p dim as isl_pw_aff.
-  const isl_pw_aff *getDimensionSizePw(unsigned dim) const {
+  __isl_give isl_pw_aff *getDimensionSizePw(unsigned dim) const {
     assert(dim < getNumberOfDimensions() && "Invalid dimension");
-    return DimensionSizesPw[dim - 1];
+    return isl_pw_aff_copy(DimensionSizesPw[dim - 1]);
   }
 
   /// @brief Get the type of the elements stored in this array.
