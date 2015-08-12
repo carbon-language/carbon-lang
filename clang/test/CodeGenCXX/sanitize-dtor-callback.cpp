@@ -7,8 +7,7 @@ struct Simple {
 Simple s;
 // Simple internal member is poisoned by compiler-generated dtor
 // CHECK-LABEL: define {{.*}}SimpleD1Ev
-// CHECK-NOT: call void @__sanitizer_dtor_callback
-// CHECK: call void {{.*}}SimpleD2Ev
+// CHECK: call void @__sanitizer_dtor_callback
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
@@ -18,8 +17,7 @@ struct Inlined {
 Inlined i;
 // Simple internal member is poisoned by compiler-generated dtor
 // CHECK-LABEL: define {{.*}}InlinedD1Ev
-// CHECK-NOT: call void @__sanitizer_dtor_callback
-// CHECK: call void {{.*}}InlinedD2Ev
+// CHECK: call void @__sanitizer_dtor_callback
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
@@ -46,8 +44,7 @@ Defaulted_Non_Trivial def_non_trivial;
 // By including a Simple member in the struct, the compiler is
 // forced to generate a non-trivial destructor.
 // CHECK-LABEL: define {{.*}}Defaulted_Non_TrivialD1Ev
-// CHECK-NOT: call void @__sanitizer_dtor_callback
-// CHECK: call void {{.*}}Defaulted_Non_TrivialD2
+// CHECK: call void @__sanitizer_dtor_callback
 // CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 

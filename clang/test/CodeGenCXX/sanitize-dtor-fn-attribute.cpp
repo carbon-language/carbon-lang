@@ -26,27 +26,22 @@ int main() {
 // Repressing the sanitization attribute results in no msan
 // instrumentation of the destructor
 // CHECK: define {{.*}}No_SanD1Ev{{.*}} [[ATTRIBUTE:#[0-9]+]]
-// CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: call void {{.*}}No_SanD2Ev
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
 // CHECK-ATTR: define {{.*}}No_SanD1Ev{{.*}} [[ATTRIBUTE:#[0-9]+]]
-// CHECK-ATTR-NOT: call void @__sanitizer_dtor_callback
 // CHECK-ATTR: call void {{.*}}No_SanD2Ev
 // CHECK-ATTR-NOT: call void @__sanitizer_dtor_callback
 // CHECK-ATTR: ret void
 
 
 // CHECK: define {{.*}}No_SanD2Ev{{.*}} [[ATTRIBUTE:#[0-9]+]]
-// CHECK: call void @__sanitizer_dtor_callback
-// CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: call void {{.*}}Vector
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
 // CHECK-ATTR: define {{.*}}No_SanD2Ev{{.*}} [[ATTRIBUTE:#[0-9]+]]
-// CHECK-ATTR-NOT: call void @__sanitizer_dtor_callback
 // CHECK-ATTR: call void {{.*}}Vector
 // CHECK-ATTR-NOT: call void @__sanitizer_dtor_callback
 // CHECK-ATTR: ret void
