@@ -59,6 +59,12 @@
     ret void
   }
 
+  define double @constant_pool_psv(double %a) {
+  entry:
+    %b = fadd double %a, 3.250000e+00
+    ret double %b
+  }
+
 ...
 ---
 name:            test
@@ -184,4 +190,24 @@ body:
       - 'MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec, align 32)'
       - 'MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16, align 32)'
       - RETQ
+...
+---
+name:            constant_pool_psv
+tracksRegLiveness: true
+liveins:
+  - { reg: '%xmm0' }
+constants:
+  - id:          0
+    value:       'double 3.250000e+00'
+body:
+  - id:          0
+    name:        entry
+    liveins:     [ '%xmm0' ]
+    instructions:
+# CHECK: name: constant_pool_psv
+# CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)
+# CHECK-NEXT: %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)'
+      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)'
+      - 'RETQ %xmm0'
 ...

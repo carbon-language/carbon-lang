@@ -704,9 +704,21 @@ void MIPrinter::print(const MachineMemOperand &Op) {
     OS << "store ";
   }
   OS << Op.getSize() << (Op.isLoad() ? " from " : " into ");
-  if (const Value *Val = Op.getValue())
+  if (const Value *Val = Op.getValue()) {
     printIRValueReference(*Val);
-  // TODO: Print PseudoSourceValue.
+  } else {
+    const PseudoSourceValue *PVal = Op.getPseudoValue();
+    assert(PVal && "Expected a pseudo source value");
+    switch (PVal->kind()) {
+    case PseudoSourceValue::ConstantPool:
+      OS << "constant-pool";
+      break;
+    default:
+      // TODO: Print the other pseudo source values.
+      OS << "<unserializable pseudo value>";
+      break;
+    }
+  }
   printOffset(Op.getOffset());
   if (Op.getBaseAlignment() != Op.getSize())
     OS << ", align " << Op.getBaseAlignment();

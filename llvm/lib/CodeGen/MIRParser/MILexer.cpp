@@ -201,6 +201,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("non-temporal", MIToken::kw_non_temporal)
       .Case("invariant", MIToken::kw_invariant)
       .Case("align", MIToken::kw_align)
+      .Case("constant-pool", MIToken::kw_constant_pool)
       .Case("liveout", MIToken::kw_liveout)
       .Default(MIToken::Identifier);
 }

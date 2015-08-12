@@ -128,6 +128,8 @@ public:
   bool parseOperandsOffset(MachineOperand &Op);
   bool parseIRValue(Value *&V);
   bool parseMemoryOperandFlag(unsigned &Flags);
+  bool parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV);
+  bool parseMachinePointerInfo(MachinePointerInfo &Dest);
   bool parseMachineMemoryOperand(MachineMemOperand *&Dest);
 
 private:
@@ -1117,6 +1119,45 @@ bool MIParser::parseMemoryOperandFlag(unsigned &Flags) {
   return false;
 }
 
+bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
+  switch (Token.kind()) {
+  case MIToken::kw_constant_pool:
+    PSV = MF.getPSVManager().getConstantPool();
+    break;
+  // TODO: Parse the other pseudo source values.
+  default:
+    llvm_unreachable("The current token should be pseudo source value");
+  }
+  lex();
+  return false;
+}
+
+bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
+  if (Token.is(MIToken::kw_constant_pool)) {
+    const PseudoSourceValue *PSV = nullptr;
+    if (parseMemoryPseudoSourceValue(PSV))
+      return true;
+    int64_t Offset = 0;
+    if (parseOffset(Offset))
+      return true;
+    Dest = MachinePointerInfo(PSV, Offset);
+    return false;
+  }
+  if (Token.isNot(MIToken::NamedIRValue))
+    return error("expected an IR value reference");
+  Value *V = nullptr;
+  if (parseIRValue(V))
+    return true;
+  if (!V->getType()->isPointerTy())
+    return error("expected a pointer IR value");
+  lex();
+  int64_t Offset = 0;
+  if (parseOffset(Offset))
+    return true;
+  Dest = MachinePointerInfo(V, Offset);
+  return false;
+}
+
 bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   if (expectAndConsume(MIToken::lparen))
     return true;
@@ -1146,17 +1187,8 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
     return error(Twine("expected '") + Word + "'");
   lex();
 
-  // TODO: Parse pseudo source values.
-  if (Token.isNot(MIToken::NamedIRValue))
-    return error("expected an IR value reference");
-  Value *V = nullptr;
-  if (parseIRValue(V))
-    return true;
-  if (!V->getType()->isPointerTy())
-    return error("expected a pointer IR value");
-  lex();
-  int64_t Offset = 0;
-  if (parseOffset(Offset))
+  MachinePointerInfo Ptr = MachinePointerInfo();
+  if (parseMachinePointerInfo(Ptr))
     return true;
   unsigned BaseAlignment = Size;
   if (Token.is(MIToken::comma)) {
@@ -1173,9 +1205,7 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
   // TODO: Parse the attached metadata nodes.
   if (expectAndConsume(MIToken::rparen))
     return true;
-
-  Dest = MF.getMachineMemOperand(MachinePointerInfo(V, Offset), Flags, Size,
-                                 BaseAlignment);
+  Dest = MF.getMachineMemOperand(Ptr, Flags, Size, BaseAlignment);
   return false;
 }
 
