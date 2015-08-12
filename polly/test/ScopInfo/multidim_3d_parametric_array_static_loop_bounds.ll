@@ -10,21 +10,21 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; }
 
 ; CHECK:   Assumed Context:
-; CHECK:   [o, m] -> {  :
+; CHECK:   [m, o] -> {  :
 ; CHECK-DAG:               m >= 150
 ; CHECK-DAG:               and
 ; CHECK-DAG:               o >= 200
 ; CHECK:             }
-; CHECK:   p0: %o
-; CHECK:   p1: %m
+; CHECK:   p0: %m
+; CHECK:   p1: %o
 ; CHECK:   Statements {
 ; CHECK:     Stmt_for_k
 ; CHECK:           Domain :=
-; CHECK:               [o, m] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= 149 and i2 >= 0 and i2 <= 199 };
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= 149 and i2 >= 0 and i2 <= 199 };
 ; CHECK:           Schedule :=
-; CHECK:               [o, m] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> [i0, i1, i2] };
 ; CHECK:           MustWriteAccess := [Reduction Type: NONE]
-; CHECK:               [o, m] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A) {
 entry:

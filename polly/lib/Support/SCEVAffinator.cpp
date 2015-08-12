@@ -37,7 +37,11 @@ SCEVAffinator::~SCEVAffinator() {
 __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
                                                const ScopStmt *Stmt) {
   this->Stmt = Stmt;
-  NumIterators = Stmt->getNumIterators();
+
+  if (Stmt)
+    NumIterators = Stmt->getNumIterators();
+  else
+    NumIterators = 0;
 
   S->addParams(getParamsInAffineExpr(&R, Expr, SE));
 

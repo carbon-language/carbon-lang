@@ -50,10 +50,12 @@ public:
   /// @brief Translate a SCEV to an isl_pw_aff.
   ///
   /// @param E    The expression that is translated.
-  /// @param Stmt The SCoP statement surrounding @p E.
+  /// @param Stmt The SCoP statement surrounding @p E or nullptr, if no
+  ///             loop induction variables inside the scop are referenced.
   ///
   /// @returns The isl representation of the SCEV @p E in @p Stmt.
-  __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E, const ScopStmt *Stmt);
+  __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E,
+                                  const ScopStmt *Stmt = nullptr);
 
 private:
   /// @brief Key to identify cached expressions.

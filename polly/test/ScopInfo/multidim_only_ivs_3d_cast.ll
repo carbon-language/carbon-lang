@@ -14,15 +14,23 @@
 
 ; CHECK: Assumed Context:
 ; CHECK:  [n, m, o, p_3, p_4] -> { :
-; CHECK-DAG: p_3 >= o
-; CHECK-DAG: p_4 >= m
+; CHECK-DAG: p_3 >= m
+; CHECK-DAG: p_4 >= o
 ; CHECK:  }
 ; CHECK: p0: %n
 ; CHECK: p1: %m
 ; CHECK: p2: %o
-; CHECK: p3: (zext i32 %o to i64)
-; CHECK: p4: (zext i32 %m to i64)
+; CHECK: p3: (zext i32 %m to i64)
+; CHECK: p4: (zext i32 %o to i64)
 ; CHECK-NOT: p5
+
+; CHECK: Arrays {
+; CHECK: double MemRef_A[*][(zext i32 %m to i64)][(zext i32 %o to i64)][8] // Element size 8
+; CHECK: }
+; CHECK: Arrays (Bounds as pw_affs) {
+; CHECK: double MemRef_A[*][ [p_3] -> { [] -> [(p_3)] } ][ [p_4] -> { [] -> [(p_4)] } ][ { [] -> [(8)] } ] // Element size 8
+; CHECK: }
+
 
 ; CHECK: Domain
 ; CHECK:   [n, m, o, p_3, p_4] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };

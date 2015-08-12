@@ -116,15 +116,23 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
 
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
                              const SmallVector<const SCEV *, 4> &DimensionSizes,
-                             bool IsPHI)
+                             bool IsPHI, Scop *S)
     : BasePtr(BasePtr), ElementType(ElementType),
       DimensionSizes(DimensionSizes), IsPHI(IsPHI) {
   std::string BasePtrName =
       getIslCompatibleName("MemRef_", BasePtr, IsPHI ? "__phi" : "");
   Id = isl_id_alloc(Ctx, BasePtrName.c_str(), this);
+  for (const SCEV *Expr : DimensionSizes) {
+    isl_pw_aff *Size = S->getPwAff(Expr);
+    DimensionSizesPw.push_back(Size);
+  }
 }
 
-ScopArrayInfo::~ScopArrayInfo() { isl_id_free(Id); }
+ScopArrayInfo::~ScopArrayInfo() {
+  isl_id_free(Id);
+  for (isl_pw_aff *Size : DimensionSizesPw)
+    isl_pw_aff_free(Size);
+}
 
 std::string ScopArrayInfo::getName() const { return isl_id_get_name(Id); }
 
@@ -136,10 +144,19 @@ isl_id *ScopArrayInfo::getBasePtrId() const { return isl_id_copy(Id); }
 
 void ScopArrayInfo::dump() const { print(errs()); }
 
-void ScopArrayInfo::print(raw_ostream &OS) const {
+void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
   OS.indent(8) << *getElementType() << " " << getName() << "[*]";
-  for (unsigned u = 0; u < getNumberOfDimensions(); u++)
-    OS << "[" << *DimensionSizes[u] << "]";
+  for (unsigned u = 0; u < getNumberOfDimensions(); u++) {
+    OS << "[";
+
+    if (SizeAsPwAff)
+      OS << " " << DimensionSizesPw[u] << " ";
+    else
+      OS << *DimensionSizes[u];
+
+    OS << "]";
+  }
+
   OS << " // Element size " << getElemSizeInBytes() << "\n";
 }
 
@@ -1502,8 +1519,8 @@ Scop::getOrCreateScopArrayInfo(Value *BasePtr, Type *AccessType,
                                bool IsPHI) {
   auto &SAI = ScopArrayInfoMap[std::make_pair(BasePtr, IsPHI)];
   if (!SAI)
-    SAI.reset(
-        new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI));
+    SAI.reset(new ScopArrayInfo(BasePtr, AccessType, getIslCtx(), Sizes, IsPHI,
+                                this));
   return SAI.get();
 }
 
@@ -1626,6 +1643,13 @@ void Scop::printArrayInfo(raw_ostream &OS) const {
 
   for (auto &Array : arrays())
     Array.second->print(OS);
+
+  OS.indent(4) << "}\n";
+
+  OS.indent(4) << "Arrays (Bounds as pw_affs) {\n";
+
+  for (auto &Array : arrays())
+    Array.second->print(OS, /* SizeAsPwAff */ true);
 
   OS.indent(4) << "}\n";
 }

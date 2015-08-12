@@ -80,8 +80,10 @@ public:
   /// @param IslCtx         The isl context used to create the base pointer id.
   /// @param DimensionSizes A vector containing the size of each dimension.
   /// @param IsPHI          Is this a PHI node specific array info object.
+  /// @param S              The scop this array object belongs to.
   ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *IslCtx,
-                const SmallVector<const SCEV *, 4> &DimensionSizes, bool IsPHI);
+                const SmallVector<const SCEV *, 4> &DimensionSizes, bool IsPHI,
+                Scop *S);
 
   /// @brief Destructor to free the isl id of the base pointer.
   ~ScopArrayInfo();
@@ -92,10 +94,16 @@ public:
   /// @brief Return the number of dimensions.
   unsigned getNumberOfDimensions() const { return DimensionSizes.size(); }
 
-  /// @brief Return the size of dimension @p dim.
+  /// @brief Return the size of dimension @p dim as SCEV*.
   const SCEV *getDimensionSize(unsigned dim) const {
     assert(dim < getNumberOfDimensions() && "Invalid dimension");
     return DimensionSizes[dim];
+  }
+
+  /// @brief Return the size of dimension @p dim as isl_pw_aff.
+  const isl_pw_aff *getDimensionSizePw(unsigned dim) const {
+    assert(dim < getNumberOfDimensions() && "Invalid dimension");
+    return DimensionSizesPw[dim - 1];
   }
 
   /// @brief Get the type of the elements stored in this array.
@@ -126,7 +134,9 @@ public:
   void dump() const;
 
   /// @brief Print a readable representation to @p OS.
-  void print(raw_ostream &OS) const;
+  ///
+  /// @param SizeAsPwAff Print the size as isl_pw_aff
+  void print(raw_ostream &OS, bool SizeAsPwAff = false) const;
 
   /// @brief Access the ScopArrayInfo associated with an access function.
   static const ScopArrayInfo *
@@ -145,8 +155,11 @@ private:
   /// @brief The isl id for the base pointer.
   isl_id *Id;
 
-  /// @brief The sizes of each dimension.
+  /// @brief The sizes of each dimension as SCEV*.
   SmallVector<const SCEV *, 4> DimensionSizes;
+
+  /// @brief The sizes of each dimension as isl_pw_aff.
+  SmallVector<isl_pw_aff *, 4> DimensionSizesPw;
 
   /// @brief Is this PHI node specific storage?
   bool IsPHI;
@@ -1112,8 +1125,13 @@ public:
   /// @return The isl context of this static control part.
   isl_ctx *getIslCtx() const;
 
-  /// @brief Compute the isl representation for the SCEV @p E in @p Stmt.
-  __isl_give isl_pw_aff *getPwAff(const SCEV *E, ScopStmt *Stmt);
+  /// @brief Compute the isl representation for the SCEV @p
+  ///
+  ///
+  /// @param Stmt An (optional) statement for which the isl_pw_aff is
+  ///             computed. SCEVs known to not reference any loops in the
+  ///             scop can be passed without a statement.
+  __isl_give isl_pw_aff *getPwAff(const SCEV *E, ScopStmt *Stmt = nullptr);
 
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains() const;
