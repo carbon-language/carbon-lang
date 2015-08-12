@@ -37,7 +37,9 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
-  OutputSection(StringRef Name) : Name(Name), Header({}) {}
+  OutputSection(StringRef Name) : Name(Name) {
+    memset(&Header, 0, sizeof(Elf_Shdr));
+  }
   void setVA(uintX_t);
   void setFileOffset(uintX_t);
   void addSectionChunk(SectionChunk<ELFT> *C);
