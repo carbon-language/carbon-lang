@@ -69,22 +69,6 @@ namespace {
 
 class LoopIdiomRecognize;
 
-/// This class defines some utility functions for loop idiom recognization.
-class LIRUtil {
-public:
-  /// Return true iff the block contains nothing but an uncondition branch
-  /// (aka goto instruction).
-  static bool isAlmostEmpty(BasicBlock *);
-
-  static BranchInst *getBranch(BasicBlock *BB) {
-    return dyn_cast<BranchInst>(BB->getTerminator());
-  }
-
-  /// Derive the precondition block (i.e the block that guards the loop
-  /// preheader) from the given preheader.
-  static BasicBlock *getPrecondBb(BasicBlock *PreHead);
-};
-
 /// This class is to recoginize idioms of population-count conducted in
 /// a noncountable loop. Currently it only recognizes this pattern:
 /// \code
@@ -242,32 +226,6 @@ static void deleteDeadInstruction(Instruction *I,
 
 //===----------------------------------------------------------------------===//
 //
-//          Implementation of LIRUtil
-//
-//===----------------------------------------------------------------------===//
-
-// This function will return true iff the given block contains nothing but goto.
-// A typical usage of this function is to check if the preheader function is
-// "almost" empty such that generated intrinsic functions can be moved across
-// the preheader and be placed at the end of the precondition block without
-// the concern of breaking data dependence.
-bool LIRUtil::isAlmostEmpty(BasicBlock *BB) {
-  if (BranchInst *Br = getBranch(BB)) {
-    return Br->isUnconditional() && Br == BB->begin();
-  }
-  return false;
-}
-
-BasicBlock *LIRUtil::getPrecondBb(BasicBlock *PreHead) {
-  if (BasicBlock *BB = PreHead->getSinglePredecessor()) {
-    BranchInst *Br = getBranch(BB);
-    return Br && Br->isConditional() ? BB : nullptr;
-  }
-  return nullptr;
-}
-
-//===----------------------------------------------------------------------===//
-//
 //          Implementation of NclPopcountRecognize
 //
 //===----------------------------------------------------------------------===//
@@ -295,15 +253,23 @@ bool NclPopcountRecognize::preliminaryScreen() {
     return false;
   }
 
-  // It should have a preheader containing nothing but a goto instruction.
-  BasicBlock *PreHead = CurLoop->getLoopPreheader();
-  if (!PreHead || !LIRUtil::isAlmostEmpty(PreHead))
+  // It should have a preheader containing nothing but an unconditional branch.
+  BasicBlock *PH = CurLoop->getLoopPreheader();
+  if (!PH)
+    return false;
+  if (&PH->front() != PH->getTerminator())
+    return false;
+  auto *EntryBI = dyn_cast<BranchInst>(PH->getTerminator());
+  if (!EntryBI || EntryBI->isConditional())
     return false;
 
   // It should have a precondition block where the generated popcount instrinsic
-  // function will be inserted.
-  PreCondBB = LIRUtil::getPrecondBb(PreHead);
+  // function can be inserted.
+  PreCondBB = PH->getSinglePredecessor();
   if (!PreCondBB)
+    return false;
+  auto *PreCondBI = dyn_cast<BranchInst>(PreCondBB->getTerminator());
+  if (!PreCondBI || PreCondBI->isUnconditional())
     return false;
 
   return true;
@@ -364,7 +330,8 @@ bool NclPopcountRecognize::detectIdiom(Instruction *&CntInst, PHINode *&CntPhi,
 
   // step 1: Check if the loop-back branch is in desirable form.
   {
-    if (Value *T = matchCondition(LIRUtil::getBranch(LoopEntry), LoopEntry))
+    if (Value *T = matchCondition(
+            dyn_cast<BranchInst>(LoopEntry->getTerminator()), LoopEntry))
       DefX2 = dyn_cast<Instruction>(T);
     else
       return false;
@@ -446,7 +413,7 @@ bool NclPopcountRecognize::detectIdiom(Instruction *&CntInst, PHINode *&CntPhi,
   // step 5: check if the precondition is in this form:
   //   "if (x != 0) goto loop-head ; else goto somewhere-we-don't-care;"
   {
-    BranchInst *PreCondBr = LIRUtil::getBranch(PreCondBB);
+    auto *PreCondBr = dyn_cast<BranchInst>(PreCondBB->getTerminator());
     Value *T = matchCondition(PreCondBr, CurLoop->getLoopPreheader());
     if (T != PhiX->getOperand(0) && T != PhiX->getOperand(1))
       return false;
@@ -465,7 +432,7 @@ void NclPopcountRecognize::transform(Instruction *CntInst, PHINode *CntPhi,
   ScalarEvolution *SE = LIR.getScalarEvolution();
   TargetLibraryInfo *TLI = LIR.getTargetLibraryInfo();
   BasicBlock *PreHead = CurLoop->getLoopPreheader();
-  BranchInst *PreCondBr = LIRUtil::getBranch(PreCondBB);
+  auto *PreCondBr = dyn_cast<BranchInst>(PreCondBB->getTerminator());
   const DebugLoc DL = CntInst->getDebugLoc();
 
   // Assuming before transformation, the loop is following:
@@ -536,7 +503,7 @@ void NclPopcountRecognize::transform(Instruction *CntInst, PHINode *CntPhi,
   //     do { cnt++; x &= x-1; t--) } while (t > 0);
   BasicBlock *Body = *(CurLoop->block_begin());
   {
-    BranchInst *LbBr = LIRUtil::getBranch(Body);
+    auto *LbBr = dyn_cast<BranchInst>(Body->getTerminator());
     ICmpInst *LbCond = cast<ICmpInst>(LbBr->getCondition());
     Type *Ty = TripCnt->getType();
 
