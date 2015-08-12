@@ -102,7 +102,7 @@ static bool callHasFloatingPointArgument(const CallInst *CI) {
 }
 
 /// \brief Check whether the overloaded unary floating point function
-/// corresponing to \a Ty is available.
+/// corresponding to \a Ty is available.
 static bool hasUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
                             LibFunc::Func DoubleFn, LibFunc::Func FloatFn,
                             LibFunc::Func LongDoubleFn) {
