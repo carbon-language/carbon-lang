@@ -80,7 +80,9 @@ void FakeStack::PoisonAll(u8 magic) {
                magic);
 }
 
+#if !defined(_MSC_VER) || defined(__clang__)
 ALWAYS_INLINE USED
+#endif
 FakeFrame *FakeStack::Allocate(uptr stack_size_log, uptr class_id,
                                uptr real_stack) {
   CHECK_LT(class_id, kNumberOfSizeClasses);
