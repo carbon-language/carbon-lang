@@ -1,8 +1,12 @@
 // Check that init-order checking is properly disabled if pthread_create is
 // called.
 
-// RUN: %clangxx_asan %s %p/../Helpers/init-order-pthread-create-extra.cc -pthread -o %t
+// RUN: %clangxx_asan -c -DCONFIG1 %s -o %t1.o
+// RUN: %clangxx_asan -c           %s -o %t2.o
+// RUN: %clangxx_asan -pthread %t1.o %t2.o -o %t
 // RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_init_order=true %run %t
+
+#ifdef CONFIG1
 
 #include <stdio.h>
 #include <pthread.h>
@@ -41,3 +45,10 @@ int main() {
   printf("%p %p\n", glob, glob2);
   return 0;
 }
+
+#else // CONFIG1
+
+void *bar(void *input, bool sleep_before_init);
+void *glob2 = bar((void*)0x2345, true);
+
+#endif
