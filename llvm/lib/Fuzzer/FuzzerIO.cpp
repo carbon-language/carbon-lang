@@ -66,8 +66,11 @@ void CopyFileToErr(const std::string &Path) {
 }
 
 void WriteToFile(const Unit &U, const std::string &Path) {
-  std::ofstream OF(Path);
-  OF.write((const char*)U.data(), U.size());
+  // Use raw C interface because this function may be called from a sig handler.
+  FILE *Out = fopen(Path.c_str(), "w");
+  if (!Out) return;
+  fwrite(U.data(), sizeof(U[0]), U.size(), Out);
+  fclose(Out);
 }
 
 void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V,
