@@ -23436,6 +23436,10 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
 /// LEA + SHL, LEA + LEA.
 static SDValue PerformMulCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI) {
+  // An imul is usually smaller than the alternative sequence.
+  if (DAG.getMachineFunction().getFunction()->optForMinSize())
+    return SDValue();
+
   if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
     return SDValue();
 

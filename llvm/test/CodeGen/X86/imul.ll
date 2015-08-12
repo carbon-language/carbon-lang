@@ -108,3 +108,21 @@ define i64 @mul40_64(i64 %A) {
     %mul = mul i64 %A, 40
     ret i64 %mul
 }
+
+define i32 @mul4_32_minsize(i32 %A) minsize {
+; X64-LABEL: mul4_32_minsize:
+; X64: leal
+; X86-LABEL: mul4_32_minsize:
+; X86: shll
+    %mul = mul i32 %A, 4
+    ret i32 %mul
+}
+
+define i32 @mul40_32_minsize(i32 %A) minsize {
+; X64-LABEL: mul40_32_minsize:
+; X64: imull
+; X86-LABEL: mul40_32_minsize:
+; X86: imull
+    %mul = mul i32 %A, 40
+    ret i32 %mul
+}
