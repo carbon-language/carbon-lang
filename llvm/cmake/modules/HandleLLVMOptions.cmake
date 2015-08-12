@@ -348,6 +348,8 @@ if( MSVC )
     append("${flag}" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   endforeach(flag)
 
+  append("/Zc:inline" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+
   # Disable sized deallocation if the flag is supported. MSVC fails to compile
   # the operator new overload in User otherwise.
   check_c_compiler_flag("/WX /Zc:sizedDealloc-" SUPPORTS_SIZED_DEALLOC)
