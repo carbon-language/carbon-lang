@@ -107,6 +107,7 @@ public:
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
   bool parseStackObjectOperand(MachineOperand &Dest);
+  bool parseFixedStackFrameIndex(int &FI);
   bool parseFixedStackObjectOperand(MachineOperand &Dest);
   bool parseGlobalValue(GlobalValue *&GV);
   bool parseGlobalAddressOperand(MachineOperand &Dest);
@@ -664,7 +665,7 @@ bool MIParser::parseStackObjectOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
+bool MIParser::parseFixedStackFrameIndex(int &FI) {
   assert(Token.is(MIToken::FixedStackObject));
   unsigned ID;
   if (getUnsigned(ID))
@@ -674,7 +675,15 @@ bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
     return error(Twine("use of undefined fixed stack object '%fixed-stack.") +
                  Twine(ID) + "'");
   lex();
-  Dest = MachineOperand::CreateFI(ObjectInfo->second);
+  FI = ObjectInfo->second;
+  return false;
+}
+
+bool MIParser::parseFixedStackObjectOperand(MachineOperand &Dest) {
+  int FI;
+  if (parseFixedStackFrameIndex(FI))
+    return true;
+  Dest = MachineOperand::CreateFI(FI);
   return false;
 }
 
