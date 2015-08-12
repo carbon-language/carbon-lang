@@ -66,41 +66,47 @@ eTimedOut, ePassed, eFailed = 124, 0, 1
 output_lock = None
 test_counter = None
 total_tests = None
+test_name_len = None
 dotest_options = None
 output_on_success = False
 
-def setup_global_variables(lock, counter, total, options):
-    global output_lock, test_counter, total_tests, dotest_options
+def setup_global_variables(lock, counter, total, name_len, options):
+    global output_lock, test_counter, total_tests, test_name_len
+    global dotest_options
     output_lock = lock
     test_counter = counter
     total_tests = total
+    test_name_len = name_len
     dotest_options = options
 
 def report_test_failure(name, command, output):
     global output_lock
     with output_lock:
-        print >> sys.stderr, "\n"
+        print >> sys.stderr
         print >> sys.stderr, output
+        print >> sys.stderr, "[%s FAILED]" % name
         print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
-        update_progress(name, "FAILED")
+        update_progress(name)
 
 def report_test_pass(name, output):
     global output_lock, output_on_success
     with output_lock:
         if output_on_success:
-            print >> sys.stderr, "\n"
+            print >> sys.stderr
             print >> sys.stderr, output
-        update_progress(name, "PASSED")
+            print >> sys.stderr, "[%s PASSED]" % name
+        update_progress(name)
 
-def update_progress(test_name, result):
-    global output_lock, test_counter, total_tests
+def update_progress(test_name=""):
+    global output_lock, test_counter, total_tests, test_name_len
     with output_lock:
-        if test_name != None:
-            sys.stderr.write("\n[%s %s] - %d out of %d test suites processed" %
-                (result, test_name, test_counter.value, total_tests))
-        else:
-            sys.stderr.write("\n%d out of %d test suites processed" %
-                (test_counter.value, total_tests))
+        counter_len = len(str(total_tests))
+        sys.stderr.write(
+            "\r%*d out of %d test suites processed - %-*s" %
+            (counter_len, test_counter.value, total_tests,
+             test_name_len.value, test_name))
+        if len(test_name) > test_name_len.value:
+            test_name_len.value = len(test_name)
         test_counter.value += 1
         sys.stdout.flush()
         sys.stderr.flush()
@@ -157,16 +163,6 @@ def process_dir(root, files, test_root, dotest_argv):
     pass_sub_count = 0
     fail_sub_count = 0
     for name in files:
-        path = os.path.join(root, name)
-
-        # We're only interested in the test file with the "Test*.py" naming pattern.
-        if not name.startswith("Test") or not name.endswith(".py"):
-            continue
-
-        # Neither a symbolically linked file.
-        if os.path.islink(path):
-            continue
-
         script_file = os.path.join(test_root, "dotest.py")
         command = ([sys.executable, script_file] +
                    dotest_argv +
@@ -211,21 +207,34 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     # Collect the test files that we'll run.
     test_work_items = []
     for root, dirs, files in os.walk(test_subdir, topdown=False):
-        test_work_items.append((root, files, test_directory, dotest_argv))
+        def is_test(name):
+            # Not interested in symbolically linked files.
+            if os.path.islink(os.path.join(root, name)):
+                return False
+            # Only interested in test files with the "Test*.py" naming pattern.
+            return name.startswith("Test") and name.endswith(".py")
 
-    global output_lock, test_counter, total_tests
+        tests = filter(is_test, files)
+        test_work_items.append((root, tests, test_directory, dotest_argv))
+
+    global output_lock, test_counter, total_tests, test_name_len
     output_lock = multiprocessing.RLock()
-    total_tests = len(test_work_items)
+    # item = (root, tests, test_directory, dotest_argv)
+    total_tests = sum([len(item[1]) for item in test_work_items])
     test_counter = multiprocessing.Value('i', 0)
-    print >> sys.stderr, "Testing: %d tests, %d threads" % (total_tests, num_threads)
-    update_progress(None, None)
+    test_name_len = multiprocessing.Value('i', 0)
+    print >> sys.stderr, "Testing: %d test suites, %d thread%s" % (
+        total_tests, num_threads, (num_threads > 1) * "s")
+    update_progress()
 
     # Run the items, either in a pool (for multicore speedup) or
     # calling each individually.
     if num_threads > 1:
-        pool = multiprocessing.Pool(num_threads,
-            initializer = setup_global_variables,
-            initargs = (output_lock, test_counter, total_tests, dotest_options))
+        pool = multiprocessing.Pool(
+            num_threads,
+            initializer=setup_global_variables,
+            initargs=(output_lock, test_counter, total_tests, test_name_len,
+                      dotest_options))
         test_results = pool.map(process_dir_worker, test_work_items)
     else:
         test_results = []
