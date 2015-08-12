@@ -722,6 +722,10 @@ void MIPrinter::print(const MachineMemOperand &Op) {
     case PseudoSourceValue::ConstantPool:
       OS << "constant-pool";
       break;
+    case PseudoSourceValue::FixedStack:
+      printStackObjectReference(
+          cast<FixedStackPseudoSourceValue>(PVal)->getFrameIndex());
+      break;
     default:
       // TODO: Print the other pseudo source values.
       OS << "<unserializable pseudo value>";

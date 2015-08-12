@@ -1142,6 +1142,14 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
   case MIToken::kw_constant_pool:
     PSV = MF.getPSVManager().getConstantPool();
     break;
+  case MIToken::FixedStackObject: {
+    int FI;
+    if (parseFixedStackFrameIndex(FI))
+      return true;
+    PSV = MF.getPSVManager().getFixedStack(FI);
+    // The token was already consumed, so use return here instead of break.
+    return false;
+  }
   // TODO: Parse the other pseudo source values.
   default:
     llvm_unreachable("The current token should be pseudo source value");
@@ -1152,7 +1160,8 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
 
 bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
   if (Token.is(MIToken::kw_constant_pool) || Token.is(MIToken::kw_stack) ||
-      Token.is(MIToken::kw_got) || Token.is(MIToken::kw_jump_table)) {
+      Token.is(MIToken::kw_got) || Token.is(MIToken::kw_jump_table) ||
+      Token.is(MIToken::FixedStackObject)) {
     const PseudoSourceValue *PSV = nullptr;
     if (parseMemoryPseudoSourceValue(PSV))
       return true;
