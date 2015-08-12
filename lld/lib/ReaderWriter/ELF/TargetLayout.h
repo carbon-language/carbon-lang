@@ -202,14 +202,6 @@ public:
   // Output sections with the same name into a OutputSection
   void createOutputSections();
 
-  // Query for custom segments of the given section
-  std::vector<const script::PHDR *>
-  getCustomSegments(const Section<ELFT> *section) const;
-
-  // Query for custom segments of the given output section
-  std::vector<const script::PHDR *>
-  getCustomSegments(const OutputSection<ELFT> *sec) const;
-
   // Query for segments based on output and input sections
   std::vector<SegmentKey> getSegmentsForSection(const OutputSection<ELFT> *os,
                                                 const Section<ELFT> *sec) const;

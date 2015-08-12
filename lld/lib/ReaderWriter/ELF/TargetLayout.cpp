@@ -328,25 +328,11 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
 }
 
 template <class ELFT>
-std::vector<const script::PHDR *>
-TargetLayout<ELFT>::getCustomSegments(const OutputSection<ELFT> *sec) const {
-  return _linkerScriptSema.getPHDRsForOutputSection(sec->name());
-}
-
-template <class ELFT>
-std::vector<const script::PHDR *>
-TargetLayout<ELFT>::getCustomSegments(const Section<ELFT> *section) const {
-  auto sec = section->getOutputSection();
-  assert(sec && "Output section should be already set for input section");
-  return getCustomSegments(sec);
-}
-
-template <class ELFT>
 std::vector<typename TargetLayout<ELFT>::SegmentKey>
 TargetLayout<ELFT>::getSegmentsForSection(const OutputSection<ELFT> *os,
                                           const Section<ELFT> *sec) const {
   std::vector<SegmentKey> segKeys;
-  auto phdrs = getCustomSegments(os);
+  auto phdrs = _linkerScriptSema.getPHDRsForOutputSection(os->name());
   if (!phdrs.empty()) {
     if (phdrs.size() == 1 && phdrs[0]->isNone()) {
       segKeys.emplace_back("NONE", llvm::ELF::PT_NULL, 0, false);
