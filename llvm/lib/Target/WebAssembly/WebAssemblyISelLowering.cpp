@@ -92,6 +92,8 @@ int DiagnosticInfoUnsupported::KindID = 0;
 WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     const TargetMachine &TM, const WebAssemblySubtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
+  // Booleans always contain 0 or 1.
+  setBooleanContents(ZeroOrOneBooleanContent);
   // WebAssembly does not produce floating-point exceptions on normal floating
   // point operations.
   setHasFloatingPointExceptions(false);

@@ -9,9 +9,7 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (eq @1 @0))
-; CHECK-NEXT: (setlocal @3 (immediate 1))
-; CHECK-NEXT: (setlocal @4 (and @2 @3))
-; CHECK-NEXT: (return @4)
+; CHECK-NEXT: (return @2)
 define i32 @eq_i32(i32 %x, i32 %y) {
   %a = icmp eq i32 %x, %y
   %b = zext i1 %a to i32
