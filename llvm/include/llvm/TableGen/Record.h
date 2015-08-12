@@ -836,8 +836,6 @@ public:
 class VarInit : public TypedInit {
   Init *VarName;
 
-  explicit VarInit(const std::string &VN, RecTy *T)
-      : TypedInit(IK_VarInit, T), VarName(StringInit::get(VN)) {}
   explicit VarInit(Init *VN, RecTy *T)
       : TypedInit(IK_VarInit, T), VarName(VN) {}
 
