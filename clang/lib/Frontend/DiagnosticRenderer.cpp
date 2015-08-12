@@ -423,6 +423,38 @@ void DiagnosticRenderer::emitSingleMacroExpansion(
                  SpellingRanges, None, &SM);
 }
 
+static bool checkRangeForMacroArgExpansion(CharSourceRange Range,
+                                           const SourceManager &SM) {
+  SourceLocation BegLoc = Range.getBegin(), EndLoc = Range.getEnd();
+  while (BegLoc != EndLoc) {
+    if (!SM.isMacroArgExpansion(BegLoc))
+      return false;
+    BegLoc.getLocWithOffset(1);
+  }
+
+  return SM.isMacroArgExpansion(BegLoc);
+}
+
+/// A helper function to check if the current ranges are all inside
+/// the macro expansions.
+static bool checkRangesForMacroArgExpansion(SourceLocation Loc,
+                                            ArrayRef<CharSourceRange> Ranges,
+                                            const SourceManager &SM) {
+  assert(Loc.isMacroID() && "Must be a macro expansion!");
+
+  SmallVector<CharSourceRange, 4> SpellingRanges;
+  mapDiagnosticRanges(Loc, Ranges, SpellingRanges, &SM);
+
+  if (!SM.isMacroArgExpansion(Loc))
+    return false;
+
+  for (auto I = SpellingRanges.begin(), E = SpellingRanges.end(); I != E; ++I)
+    if (!checkRangeForMacroArgExpansion(*I, SM))
+      return false;
+
+  return true;
+}
+
 /// \brief Recursively emit notes for each macro expansion and caret
 /// diagnostics where appropriate.
 ///
@@ -443,11 +475,18 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
 
   // Produce a stack of macro backtraces.
   SmallVector<SourceLocation, 8> LocationStack;
+  unsigned IgnoredEnd = 0;
   while (Loc.isMacroID()) {
     LocationStack.push_back(Loc);
+    if (checkRangesForMacroArgExpansion(Loc, Ranges, SM))
+      IgnoredEnd = LocationStack.size();
+
     Loc = SM.getImmediateMacroCallerLoc(Loc);
     assert(!Loc.isInvalid() && "must have a valid source location here");
   }
+
+  LocationStack.erase(LocationStack.begin(),
+                      LocationStack.begin() + IgnoredEnd);
 
   unsigned MacroDepth = LocationStack.size();
   unsigned MacroLimit = DiagOpts->MacroBacktraceLimit;
