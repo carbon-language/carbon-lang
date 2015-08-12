@@ -325,7 +325,8 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
   }
 
   // Skip further flag support on OSes which don't support '-m32' or '-m64'.
-  if (Target.getArchName() == "tce" || Target.getOS() == llvm::Triple::Minix)
+  if (Target.getArch() == llvm::Triple::tce ||
+      Target.getOS() == llvm::Triple::Minix)
     return Target;
 
   // Handle pseudo-target flags '-m64', '-mx32', '-m32' and '-m16'.
@@ -2232,21 +2233,27 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
     default:
       // Of these targets, Hexagon is the only one that might have
       // an OS of Linux, in which case it got handled above already.
-      if (Target.getArchName() == "tce")
+      switch (Target.getArch()) {
+      case llvm::Triple::tce:
         TC = new toolchains::TCEToolChain(*this, Target, Args);
-      else if (Target.getArch() == llvm::Triple::hexagon)
+        break;
+      case llvm::Triple::hexagon:
         TC = new toolchains::HexagonToolChain(*this, Target, Args);
-      else if (Target.getArch() == llvm::Triple::xcore)
+        break;
+      case llvm::Triple::xcore:
         TC = new toolchains::XCoreToolChain(*this, Target, Args);
-      else if (Target.getArch() == llvm::Triple::shave)
+        break;
+      case llvm::Triple::shave:
         TC = new toolchains::SHAVEToolChain(*this, Target, Args);
-      else if (Target.isOSBinFormatELF())
-        TC = new toolchains::Generic_ELF(*this, Target, Args);
-      else if (Target.isOSBinFormatMachO())
-        TC = new toolchains::MachO(*this, Target, Args);
-      else
-        TC = new toolchains::Generic_GCC(*this, Target, Args);
-      break;
+        break;
+      default:
+        if (Target.isOSBinFormatELF())
+          TC = new toolchains::Generic_ELF(*this, Target, Args);
+        else if (Target.isOSBinFormatMachO())
+          TC = new toolchains::MachO(*this, Target, Args);
+        else
+          TC = new toolchains::Generic_GCC(*this, Target, Args);
+      }
     }
   }
   return *TC;
