@@ -326,6 +326,7 @@ namespace llvm {
     AliasAnalysis *AA;
     DominatorTree *DT;
     AssumptionCache *AC;
+    const TargetLibraryInfo *TLI;
     PredIteratorCache PredCache;
 
   public:

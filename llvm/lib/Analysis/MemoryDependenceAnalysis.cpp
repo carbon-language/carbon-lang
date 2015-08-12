@@ -24,6 +24,7 @@
 #include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/Analysis/OrderedBasicBlock.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -93,6 +94,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<AssumptionCacheTracker>();
   AU.addRequiredTransitive<AliasAnalysis>();
+  AU.addRequiredTransitive<TargetLibraryInfoWrapperPass>();
 }
 
 bool MemoryDependenceAnalysis::runOnFunction(Function &F) {
@@ -101,6 +103,7 @@ bool MemoryDependenceAnalysis::runOnFunction(Function &F) {
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   return false;
 }
 
@@ -124,7 +127,7 @@ static void RemoveFromReverseMap(DenseMap<Instruction*,
 /// Return a ModRefInfo value describing the general behavior of the
 /// instruction.
 static ModRefInfo GetLocation(const Instruction *Inst, MemoryLocation &Loc,
-                              AliasAnalysis *AA) {
+                              const TargetLibraryInfo &TLI) {
   if (const LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
     if (LI->isUnordered()) {
       Loc = MemoryLocation::get(LI);
@@ -156,7 +159,7 @@ static ModRefInfo GetLocation(const Instruction *Inst, MemoryLocation &Loc,
     return MRI_ModRef;
   }
 
-  if (const CallInst *CI = isFreeCall(Inst, AA->getTargetLibraryInfo())) {
+  if (const CallInst *CI = isFreeCall(Inst, &TLI)) {
     // calls to free() deallocate the entire structure
     Loc = MemoryLocation(CI->getArgOperand(0));
     return MRI_Mod;
@@ -216,7 +219,7 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 
     // If this inst is a memory op, get the pointer it accessed
     MemoryLocation Loc;
-    ModRefInfo MR = GetLocation(Inst, Loc, AA);
+    ModRefInfo MR = GetLocation(Inst, Loc, *TLI);
     if (Loc.Ptr) {
       // A simple instruction.
       if (AA->getModRefInfo(CS, Loc) != MRI_NoModRef)
@@ -605,7 +608,6 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
     // a subsequent bitcast of the malloc call result.  There can be stores to
     // the malloced memory between the malloc call and its bitcast uses, and we
     // need to continue scanning until the malloc call.
-    const TargetLibraryInfo *TLI = AA->getTargetLibraryInfo();
     if (isa<AllocaInst>(Inst) || isNoAliasFn(Inst, TLI)) {
       const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, DL);
 
@@ -688,7 +690,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       LocalCache = MemDepResult::getNonFuncLocal();
   } else {
     MemoryLocation MemLoc;
-    ModRefInfo MR = GetLocation(QueryInst, MemLoc, AA);
+    ModRefInfo MR = GetLocation(QueryInst, MemLoc, *TLI);
     if (MemLoc.Ptr) {
       // If we can do a pointer scan, make it happen.
       bool isLoad = !(MR & MRI_Mod);
