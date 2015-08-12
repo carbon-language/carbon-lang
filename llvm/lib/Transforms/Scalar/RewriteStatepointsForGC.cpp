@@ -2452,6 +2452,37 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
       FoldSingleEntryPHINodes(&BB);
     }
 
+  // Before we start introducing relocations, we want to tweak the IR a bit to
+  // avoid unfortunate code generation effects.  The main example is that we 
+  // want to try to make sure the comparison feeding a branch is after any
+  // safepoints.  Otherwise, we end up with a comparison of pre-relocation
+  // values feeding a branch after relocation.  This is semantically correct,
+  // but results in extra register pressure since both the pre-relocation and
+  // post-relocation copies must be available in registers.  For code without
+  // relocations this is handled elsewhere, but teaching the scheduler to
+  // reverse the transform we're about to do would be slightly complex.
+  // Note: This may extend the live range of the inputs to the icmp and thus
+  // increase the liveset of any statepoint we move over.  This is profitable
+  // as long as all statepoints are in rare blocks.  If we had in-register
+  // lowering for live values this would be a much safer transform.
+  auto getConditionInst = [](TerminatorInst *TI) -> Instruction* {
+    if (auto *BI = dyn_cast<BranchInst>(TI))
+      if (BI->isConditional())
+        return dyn_cast<Instruction>(BI->getCondition());
+    // TODO: Extend this to handle switches
+    return nullptr;
+  };
+  for (BasicBlock &BB : F) {
+    TerminatorInst *TI = BB.getTerminator();
+    if (auto *Cond = getConditionInst(TI))
+      // TODO: Handle more than just ICmps here.  We should be able to move
+      // most instructions without side effects or memory access.  
+      if (isa<ICmpInst>(Cond) && Cond->hasOneUse()) {
+        MadeChange = true;
+        Cond->moveBefore(TI);
+      }
+  }
+
   MadeChange |= insertParsePoints(F, DT, this, ParsePointNeeded);
   return MadeChange;
 }
