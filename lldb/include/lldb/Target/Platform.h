@@ -1092,6 +1092,10 @@ class ModuleCache;
                              const uint64_t src_offset,
                              const uint64_t src_size,
                              const FileSpec& dst_file_spec);
+        
+        virtual Error
+        DownloadSymbolFile (const lldb::ModuleSP& module_sp,
+                            const FileSpec& dst_file_spec);
 
         virtual const char *
         GetCacheHostname ();

@@ -11,7 +11,9 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/StringConvert.h"
 #include "Utility/UriParser.h"
@@ -301,4 +303,79 @@ PlatformAndroid::GetSdkVersion()
 
     m_sdk_version = StringConvert::ToUInt32(version_string.c_str());
     return m_sdk_version;
+}
+
+Error
+PlatformAndroid::DownloadSymbolFile (const lldb::ModuleSP& module_sp,
+                                     const FileSpec& dst_file_spec)
+{
+    // For oat file we can try to fetch additional debug info from the device
+    if (module_sp->GetFileSpec().GetFileNameExtension() != ConstString("oat"))
+        return Error("Symbol file downloading only supported for oat files");
+
+    // If we have no information about the platform file we can't execute oatdump
+    if (!module_sp->GetPlatformFileSpec())
+        return Error("No platform file specified");
+
+    // Symbolizer isn't available before SDK version 23
+    if (GetSdkVersion() < 23)
+        return Error("Symbol file generation only supported on SDK 23+");
+
+    // If we already have symtab then we don't have to try and generate one
+    if (module_sp->GetSectionList()->FindSectionByName(ConstString(".symtab")) != nullptr)
+        return Error("Symtab already available in the module");
+
+    int status = 0;
+    std::string tmpdir;
+    StreamString command;
+    command.Printf("mktemp --directory --tmpdir %s", GetWorkingDirectory().GetCString());
+    Error error = RunShellCommand(command.GetData(),
+                                  GetWorkingDirectory(),
+                                  &status,
+                                  nullptr,
+                                  &tmpdir,
+                                  5 /* timeout (s) */);
+
+    if (error.Fail() || status != 0 || tmpdir.empty())
+        return Error("Failed to generate temporary directory on the device (%s)", error.AsCString());
+    tmpdir.erase(tmpdir.size() - 1); // Remove trailing new line
+
+    // Create file remover for the temporary directory created on the device
+    std::unique_ptr<std::string, std::function<void(std::string*)>> tmpdir_remover(
+        &tmpdir,
+        [this](std::string* s) {
+            StreamString command;
+            command.Printf("rm -rf %s", s->c_str());
+            Error error = this->RunShellCommand(command.GetData(),
+                                                GetWorkingDirectory(),
+                                                nullptr,
+                                                nullptr,
+                                                nullptr,
+                                                5 /* timeout (s) */);
+
+            Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+            if (error.Fail())
+                log->Printf("Failed to remove temp directory: %s", error.AsCString());
+        }
+    );
+
+    FileSpec symfile_platform_filespec(tmpdir.c_str(), false);
+    symfile_platform_filespec.AppendPathComponent("symbolized.oat");
+
+    // Execute oatdump on the remote device to generate a file with symtab
+    command.Clear();
+    command.Printf("oatdump --symbolize=%s --output=%s",
+                   module_sp->GetPlatformFileSpec().GetCString(false),
+                   symfile_platform_filespec.GetCString(false));
+    error = RunShellCommand(command.GetData(),
+                            GetWorkingDirectory(),
+                            &status,
+                            nullptr,
+                            nullptr,
+                            60 /* timeout (s) */);
+    if (error.Fail() || status != 0)
+        return Error("Oatdump failed: %s", error.AsCString());
+
+    // Download the symbolfile from the remote device
+    return GetFile(symfile_platform_filespec, dst_file_spec);
 }

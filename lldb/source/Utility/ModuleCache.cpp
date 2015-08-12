@@ -29,6 +29,8 @@ namespace {
 const char* kModulesSubdir = ".cache";
 const char* kLockFileName = ".lock";
 const char* kTempFileName = ".temp";
+const char* kTempSymFileName = ".symtemp";
+const char* kSymFileExtension = ".sym";
 
 FileSpec
 JoinPath (const FileSpec &path1, const char* path2)
@@ -74,16 +76,23 @@ CreateHostSysRootModuleLink (const FileSpec &root_dir_spec, const char *hostname
     return FileSystem::Hardlink(sysroot_module_path_spec, local_module_spec);
 }
 
+FileSpec
+GetSymbolFileSpec(const FileSpec& module_file_spec)
+{
+    return FileSpec((module_file_spec.GetPath() + kSymFileExtension).c_str(), false);
+}
+
 }  // namespace
 
 Error
 ModuleCache::Put (const FileSpec &root_dir_spec,
                   const char *hostname,
                   const ModuleSpec &module_spec,
-                  const FileSpec &tmp_file)
+                  const FileSpec &tmp_file,
+                  const FileSpec &target_file)
 {
     const auto module_spec_dir = GetModuleDirectory (root_dir_spec, module_spec.GetUUID ());
-    const auto module_file_path = JoinPath (module_spec_dir, module_spec.GetFileSpec ().GetFilename ().AsCString ());
+    const auto module_file_path = JoinPath (module_spec_dir, target_file.GetFilename ().AsCString ());
 
     const auto tmp_file_path = tmp_file.GetPath ();
     const auto err_code = llvm::sys::fs::rename (tmp_file_path.c_str (), module_file_path.GetPath ().c_str ());
@@ -91,7 +100,7 @@ ModuleCache::Put (const FileSpec &root_dir_spec,
         return Error ("Failed to rename file %s to %s: %s",
                       tmp_file_path.c_str (), module_file_path.GetPath ().c_str (), err_code.message ().c_str ());
 
-    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, module_spec.GetFileSpec(), module_file_path);
+    const auto error = CreateHostSysRootModuleLink(root_dir_spec, hostname, target_file, module_file_path);
     if (error.Fail ())
         return Error ("Failed to create link to %s: %s", module_file_path.GetPath ().c_str (), error.AsCString ());
     return Error ();
@@ -131,6 +140,11 @@ ModuleCache::Get (const FileSpec &root_dir_spec,
     cached_module_spec.GetFileSpec () = module_file_path;
     cached_module_spec.GetPlatformFileSpec () = module_spec.GetFileSpec ();
     cached_module_sp.reset (new Module (cached_module_spec));
+
+    FileSpec symfile_spec = GetSymbolFileSpec(cached_module_sp->GetFileSpec ());
+    if (symfile_spec.Exists ())
+        cached_module_sp->SetSymbolFileFileSpec (symfile_spec);
+
     if (did_create_ptr)
         *did_create_ptr = true;
 
@@ -143,7 +157,8 @@ Error
 ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
                         const char *hostname,
                         const ModuleSpec &module_spec,
-                        const Downloader &downloader,
+                        const ModuleDownloader &module_downloader,
+                        const SymfileDownloader &symfile_downloader,
                         lldb::ModuleSP &cached_module_sp,
                         bool *did_create_ptr)
 {
@@ -171,16 +186,37 @@ ModuleCache::GetAndPut (const FileSpec &root_dir_spec,
         return error;
 
     const auto tmp_download_file_spec = JoinPath (module_spec_dir, kTempFileName);
-    error = downloader (module_spec, tmp_download_file_spec);
+    error = module_downloader (module_spec, tmp_download_file_spec);
     llvm::FileRemover tmp_file_remover (tmp_download_file_spec.GetPath ().c_str ());
     if (error.Fail ())
         return Error("Failed to download module: %s", error.AsCString ());
 
     // Put downloaded file into local module cache.
-    error = Put (root_dir_spec, hostname, module_spec, tmp_download_file_spec);
+    error = Put (root_dir_spec, hostname, module_spec, tmp_download_file_spec, module_spec.GetFileSpec ());
     if (error.Fail ())
         return Error ("Failed to put module into cache: %s", error.AsCString ());
 
     tmp_file_remover.releaseFile ();
-    return Get (root_dir_spec, hostname, module_spec, cached_module_sp, did_create_ptr);
+    error = Get (root_dir_spec, hostname, module_spec, cached_module_sp, did_create_ptr);
+    if (error.Fail ())
+        return error;
+
+    // Fetching a symbol file for the module
+    const auto tmp_download_sym_file_spec = JoinPath (module_spec_dir, kTempSymFileName);
+    error = symfile_downloader (cached_module_sp, tmp_download_sym_file_spec);
+    llvm::FileRemover tmp_symfile_remover (tmp_download_sym_file_spec.GetPath ().c_str ());
+    if (error.Fail ())
+        // Failed to download a symfile but fetching the module was successful. The module might
+        // contain the neccessary symbols and the debugging is also possible without a symfile.
+        return Error ();
+
+    FileSpec symfile_spec = GetSymbolFileSpec (cached_module_sp->GetFileSpec ());
+    error = Put (root_dir_spec, hostname, module_spec, tmp_download_sym_file_spec, symfile_spec);
+    if (error.Fail ())
+        return Error ("Failed to put symbol file into cache: %s", error.AsCString ());
+    
+    tmp_symfile_remover.releaseFile();
+
+    cached_module_sp->SetSymbolFileFileSpec (symfile_spec);
+    return Error ();
 }

@@ -46,13 +46,15 @@ class UUID;
 class ModuleCache
 {
 public:
-    using Downloader = std::function<Error (const ModuleSpec&, const FileSpec&)>;
+    using ModuleDownloader = std::function<Error (const ModuleSpec&, const FileSpec&)>;
+    using SymfileDownloader = std::function<Error (const lldb::ModuleSP&, const FileSpec&)>;
 
     Error
     GetAndPut(const FileSpec &root_dir_spec,
               const char *hostname,
               const ModuleSpec &module_spec,
-              const Downloader &downloader,
+              const ModuleDownloader &module_downloader,
+              const SymfileDownloader &symfile_downloader,
               lldb::ModuleSP &cached_module_sp,
               bool *did_create_ptr);
 
@@ -61,7 +63,8 @@ private:
     Put (const FileSpec &root_dir_spec,
          const char *hostname,
          const ModuleSpec &module_spec,
-         const FileSpec &tmp_file);
+         const FileSpec &tmp_file,
+         const FileSpec &target_file);
 
     Error
     Get (const FileSpec &root_dir_spec,

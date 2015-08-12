@@ -90,6 +90,10 @@ namespace platform_android {
                              const uint64_t src_size,
                              const FileSpec &dst_file_spec) override;
 
+        Error
+        DownloadSymbolFile (const lldb::ModuleSP& module_sp,
+                            const FileSpec& dst_file_spec) override;
+
     private:
         std::string m_device_id;
         uint32_t m_sdk_version;
