@@ -153,15 +153,11 @@ def call_with_timeout(command, timeout, name):
         report_test_pass(name, output[1])
     else:
         report_test_failure(name, command, output[1])
-    return exit_status, passes, failures
+    return name, exit_status, passes, failures
 
 def process_dir(root, files, test_root, dotest_argv):
     """Examine a directory for tests, and invoke any found within it."""
-    timed_out = []
-    failed = []
-    passed = []
-    pass_sub_count = 0
-    fail_sub_count = 0
+    results = []
     for name in files:
         script_file = os.path.join(test_root, "dotest.py")
         command = ([sys.executable, script_file] +
@@ -172,18 +168,19 @@ def process_dir(root, files, test_root, dotest_argv):
 
         timeout = os.getenv("LLDB_%s_TIMEOUT" % timeout_name) or getDefaultTimeout(dotest_options.lldb_platform_name)
 
-        exit_status, pass_count, fail_count = call_with_timeout(command, timeout, name)
+        results.append(call_with_timeout(command, timeout, name))
 
-        pass_sub_count = pass_sub_count + pass_count
-        fail_sub_count = fail_sub_count + fail_count
+    # result = (name, status, passes, failures)
+    timed_out = [name for name, status, _, _ in results
+                 if status == eTimedOut]
+    passed = [name for name, status, _, _ in results
+              if status == ePassed]
+    failed = [name for name, status, _, _ in results
+              if status != ePassed]
+    pass_count = sum([result[2] for result in results])
+    fail_count = sum([result[3] for result in results])
 
-        if exit_status == ePassed:
-            passed.append(name)
-        else:
-            if eTimedOut == exit_status:
-                timed_out.append(name)
-            failed.append(name)
-    return (timed_out, failed, passed, fail_sub_count, pass_sub_count)
+    return (timed_out, passed, failed, pass_count, fail_count)
 
 in_q = None
 out_q = None
@@ -191,8 +188,7 @@ out_q = None
 def process_dir_worker(arg_tuple):
     """Worker thread main loop when in multithreaded mode.
     Takes one directory specification at a time and works on it."""
-    (root, files, test_root, dotest_argv) = arg_tuple
-    return process_dir(root, files, test_root, dotest_argv)
+    return process_dir(*arg_tuple)
 
 def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     """Look for matched files and invoke test driver on each one.
@@ -237,25 +233,16 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
                       dotest_options))
         test_results = pool.map(process_dir_worker, test_work_items)
     else:
-        test_results = []
-        for work_item in test_work_items:
-            test_results.append(process_dir_worker(work_item))
+        test_results = map(process_dir_worker, test_work_items)
 
-    timed_out = []
-    failed = []
-    passed = []
-    fail_sub_count = 0
-    pass_sub_count = 0
+    # result = (timed_out, failed, passed, fail_count, pass_count)
+    timed_out = sum([result[0] for result in test_results], [])
+    passed = sum([result[1] for result in test_results], [])
+    failed = sum([result[2] for result in test_results], [])
+    pass_count = sum([result[3] for result in test_results])
+    fail_count = sum([result[4] for result in test_results])
 
-    for test_result in test_results:
-        (dir_timed_out, dir_failed, dir_passed, dir_fail_sub_count, dir_pass_sub_count) = test_result
-        timed_out += dir_timed_out
-        failed += dir_failed
-        passed += dir_passed
-        fail_sub_count = fail_sub_count + dir_fail_sub_count
-        pass_sub_count = pass_sub_count + dir_pass_sub_count
-
-    return (timed_out, failed, passed, fail_sub_count, pass_sub_count)
+    return (timed_out, passed, failed, pass_count, fail_count)
 
 def getExpectedTimeouts(platform_name):
     # returns a set of test filenames that might timeout
@@ -413,11 +400,12 @@ Run lldb test suite using a separate process for each test file.
         num_threads = 1
 
     system_info = " ".join(platform.uname())
-    (timed_out, failed, passed, all_fails, all_passes) = walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads)
+    (timed_out, passed, failed, pass_count, fail_count) = walk_and_invoke(
+        test_directory, test_subdir, dotest_argv, num_threads)
 
     timed_out = set(timed_out)
-    num_test_files = len(failed) + len(passed)
-    num_tests = all_fails + all_passes
+    num_test_files = len(passed) + len(failed)
+    num_test_cases = pass_count + fail_count
 
     # move core files into session dir
     cores = find('core.*', test_subdir)
@@ -448,10 +436,10 @@ Run lldb test suite using a separate process for each test file.
         sys.stdout.write(" (%d failed) (%f%%)" % (
             len(failed), 100.0 * len(failed) / num_test_files))
     print
-    sys.stdout.write("Ran %d test cases" % num_tests)
-    if num_tests > 0:
+    sys.stdout.write("Ran %d test cases" % num_test_cases)
+    if num_test_cases > 0:
         sys.stdout.write(" (%d failed) (%f%%)" % (
-            all_fails, 100.0 * all_fails / num_tests))
+            fail_count, 100.0 * fail_count / num_test_cases))
     print
     if len(failed) > 0:
         failed.sort()
