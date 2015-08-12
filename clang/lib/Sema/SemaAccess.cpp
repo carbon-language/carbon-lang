@@ -182,15 +182,20 @@ struct AccessTarget : public AccessedEntity {
 
   class SavedInstanceContext {
   public:
+    SavedInstanceContext(SavedInstanceContext &&S)
+        : Target(S.Target), Has(S.Has) {
+      S.Target = nullptr;
+    }
     ~SavedInstanceContext() {
-      Target.HasInstanceContext = Has;
+      if (Target)
+        Target->HasInstanceContext = Has;
     }
 
   private:
     friend struct AccessTarget;
     explicit SavedInstanceContext(AccessTarget &Target)
-      : Target(Target), Has(Target.HasInstanceContext) {}
-    AccessTarget &Target;
+        : Target(&Target), Has(Target.HasInstanceContext) {}
+    AccessTarget *Target;
     bool Has;
   };
 
