@@ -78,14 +78,11 @@ AddressSanitizerRuntime::~AddressSanitizerRuntime()
 
 bool ModuleContainsASanRuntime(Module * module)
 {
-    SymbolContextList sc_list;
-    const bool include_symbols = true;
-    const bool append = true;
-    const bool include_inlines = true;
-    
-    size_t num_matches = module->FindFunctions(ConstString("__asan_get_alloc_stack"), NULL, eFunctionNameTypeAuto, include_symbols, include_inlines, append, sc_list);
-    
-    return num_matches > 0;
+    const Symbol* symbol = module->FindFirstSymbolWithNameAndType(
+            ConstString("__asan_get_alloc_stack"),
+            lldb::eSymbolTypeAny);
+
+    return symbol != nullptr;
 }
 
 void
