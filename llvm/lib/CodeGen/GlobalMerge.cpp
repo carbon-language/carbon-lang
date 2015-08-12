@@ -459,9 +459,16 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
       Globals[k]->replaceAllUsesWith(GEP);
       Globals[k]->eraseFromParent();
 
-      // Generate a new alias...
-      auto *PTy = cast<PointerType>(GEP->getType());
-      GlobalAlias::create(PTy, Linkage, Name, GEP, &M);
+      // When the linkage is not internal we must emit an alias for the original
+      // variable name as it may be accessed from another object. On non-Mach-O
+      // we can also emit an alias for internal linkage as it's safe to do so.
+      // It's not safe on Mach-O as the alias (and thus the portion of the
+      // MergedGlobals variable) may be dead stripped at link time.
+      if (Linkage != GlobalValue::InternalLinkage ||
+          !TM->getTargetTriple().isOSBinFormatMachO()) {
+        auto *PTy = cast<PointerType>(GEP->getType());
+        GlobalAlias::create(PTy, Linkage, Name, GEP, &M);
+      }
 
       NumMerged++;
     }

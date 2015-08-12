@@ -36,11 +36,13 @@ define void @f1(i32 %a1, i32 %a2, i32 %a3) {
 
 ;CHECK-APPLE-IOS: .zerofill __DATA,__bss,l__MergedGlobals.1,4000,4
 
+;CHECK: z = .L_MergedGlobals
 ;CHECK:	.globl	x
 ;CHECK: x = .L_MergedGlobals+4
 ;CHECK:	.globl	y
 ;CHECK: y = .L_MergedGlobals.1
 
+;CHECK-APPLE-IOS-NOT: _z = l__MergedGlobals
 ;CHECK-APPLE-IOS:.globl	_x
 ;CHECK-APPLE-IOS: _x = l__MergedGlobals+4
 ;CHECK-APPLE-IOS:.globl	_y
