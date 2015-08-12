@@ -14,6 +14,7 @@
 #ifndef POLLY_SCEV_AFFINATOR_H
 #define POLLY_SCEV_AFFINATOR_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
 #include "isl/ctx.h"
@@ -44,6 +45,7 @@ class ScopStmt;
 struct SCEVAffinator : public llvm::SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
 public:
   SCEVAffinator(Scop *S);
+  ~SCEVAffinator();
 
   /// @brief Translate a SCEV to an isl_pw_aff.
   ///
@@ -54,11 +56,18 @@ public:
   __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E, const ScopStmt *Stmt);
 
 private:
+  /// @brief Key to identify cached expressions.
+  using CacheKey = std::pair<const llvm::SCEV *, const ScopStmt *>;
+
+  /// @brief Map to remembered cached expressions.
+  llvm::DenseMap<CacheKey, isl_pw_aff *> CachedExpressions;
+
   Scop *S;
   isl_ctx *Ctx;
   unsigned NumIterators;
   const llvm::Region &R;
   llvm::ScalarEvolution &SE;
+  const ScopStmt *Stmt;
 
   int getLoopDepth(const llvm::Loop *L);
 

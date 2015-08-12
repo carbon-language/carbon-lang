@@ -29,8 +29,14 @@ using namespace polly;
 SCEVAffinator::SCEVAffinator(Scop *S)
     : S(S), Ctx(S->getIslCtx()), R(S->getRegion()), SE(*S->getSE()) {}
 
+SCEVAffinator::~SCEVAffinator() {
+  for (const auto &CachedPair : CachedExpressions)
+    isl_pw_aff_free(CachedPair.second);
+}
+
 __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
                                                const ScopStmt *Stmt) {
+  this->Stmt = Stmt;
   NumIterators = Stmt->getNumIterators();
 
   S->addParams(getParamsInAffineExpr(&R, Expr, SE));
@@ -39,6 +45,13 @@ __isl_give isl_pw_aff *SCEVAffinator::getPwAff(const SCEV *Expr,
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
+
+  auto Key = std::make_pair(Expr, Stmt);
+  isl_pw_aff *PWA = CachedExpressions[Key];
+
+  if (PWA)
+    return isl_pw_aff_copy(PWA);
+
   // In case the scev is a valid parameter, we do not further analyze this
   // expression, but create a new parameter in the isl_pw_aff. This allows us
   // to treat subexpressions that we cannot translate into an piecewise affine
@@ -51,10 +64,14 @@ __isl_give isl_pw_aff *SCEVAffinator::visit(const SCEV *Expr) {
     isl_aff *Affine = isl_aff_zero_on_domain(isl_local_space_from_space(Space));
     Affine = isl_aff_add_coefficient_si(Affine, isl_dim_param, 0, 1);
 
-    return isl_pw_aff_alloc(Domain, Affine);
+    PWA = isl_pw_aff_alloc(Domain, Affine);
+    CachedExpressions[Key] = PWA;
+    return isl_pw_aff_copy(PWA);
   }
 
-  return SCEVVisitor<SCEVAffinator, isl_pw_aff *>::visit(Expr);
+  PWA = SCEVVisitor<SCEVAffinator, isl_pw_aff *>::visit(Expr);
+  CachedExpressions[Key] = PWA;
+  return isl_pw_aff_copy(PWA);
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::visitConstant(const SCEVConstant *Expr) {
