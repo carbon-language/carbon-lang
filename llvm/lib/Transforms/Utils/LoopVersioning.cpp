@@ -31,6 +31,15 @@ LoopVersioning::LoopVersioning(
   assert(L->getLoopPreheader() && "No preheader");
 }
 
+LoopVersioning::LoopVersioning(const LoopAccessInfo &LAInfo, Loop *L,
+                               LoopInfo *LI, DominatorTree *DT)
+    : VersionedLoop(L), NonVersionedLoop(nullptr),
+      Checks(LAInfo.getRuntimePointerChecking()->getChecks()), LAI(LAInfo),
+      LI(LI), DT(DT) {
+  assert(L->getExitBlock() && "No single exit block");
+  assert(L->getLoopPreheader() && "No preheader");
+}
+
 void LoopVersioning::versionLoop(Pass *P) {
   Instruction *FirstCheckInst;
   Instruction *MemRuntimeCheck;
