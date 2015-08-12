@@ -1,5 +1,8 @@
 // Test various levels of coverage
 //
+// FIXME: Port the environment variable logic below for the lit shell.
+// REQUIRES: shell
+//
 // RUN: mkdir -p %T/coverage-levels
 // RUN: OPT=coverage=1:verbosity=1:coverage_dir=%T/coverage-levels
 // RUN: %clangxx -fsanitize=shift                        -DGOOD_SHIFT=1 -O1 -fsanitize-coverage=func  %s -o %t
