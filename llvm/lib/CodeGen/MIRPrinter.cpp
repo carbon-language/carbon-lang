@@ -713,6 +713,9 @@ void MIPrinter::print(const MachineMemOperand &Op) {
     case PseudoSourceValue::Stack:
       OS << "stack";
       break;
+    case PseudoSourceValue::GOT:
+      OS << "got";
+      break;
     case PseudoSourceValue::ConstantPool:
       OS << "constant-pool";
       break;

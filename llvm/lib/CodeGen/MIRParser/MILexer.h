@@ -71,6 +71,7 @@ struct MIToken {
     kw_invariant,
     kw_align,
     kw_stack,
+    kw_got,
     kw_constant_pool,
     kw_liveout,
 

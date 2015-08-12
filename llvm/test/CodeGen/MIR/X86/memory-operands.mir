@@ -75,6 +75,15 @@
 
   attributes #0 = { readonly }
 
+  @G = external global i32
+
+  define i32 @got_psv() {
+  entry:
+    %a = load i32, i32* @G
+    %b = add i32 %a, 1
+    ret i32 %b
+  }
+
 ...
 ---
 name:            test
@@ -245,4 +254,18 @@ body:
       - 'CALL64pcrel32 $cosl, csr_64, implicit %rsp, implicit-def %rsp, implicit-def %fp0'
       - '%rsp = ADD64ri8 %rsp, 24, implicit-def dead %eflags'
       - RETQ
+...
+---
+name:            got_psv
+tracksRegLiveness: true
+body:
+  - id:          0
+    name:        entry
+    instructions:
+# CHECK: name: got_psv
+# CHECK: %rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)
+      - '%rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)'
+      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
+      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
+      - 'RETQ %eax'
 ...
