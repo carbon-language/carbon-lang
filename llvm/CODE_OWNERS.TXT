@@ -95,7 +95,7 @@ D: MCJIT, RuntimeDyld and JIT event listeners
 
 N: David Majnemer
 E: david.majnemer@gmail.com
-D: IR Constant Folder
+D: IR Constant Folder, InstCombine
 
 N: Galina Kistanova
 E: gkistanova@gmail.com
