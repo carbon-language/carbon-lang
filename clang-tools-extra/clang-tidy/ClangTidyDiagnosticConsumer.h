@@ -220,15 +220,15 @@ public:
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) override;
 
-  /// \brief Sets \c HeaderFilter to the value configured for this file.
-  void BeginSourceFile(const LangOptions &LangOpts,
-                       const Preprocessor *PP) override;
-
   /// \brief Flushes the internal diagnostics buffer to the ClangTidyContext.
   void finish() override;
 
 private:
   void finalizeLastError();
+
+  /// \brief Returns the \c HeaderFilter constructed for the options set in the
+  /// context.
+  llvm::Regex* getHeaderFilter();
 
   /// \brief Updates \c LastErrorRelatesToUserCode and LastErrorPassesLineFilter
   /// according to the diagnostic \p Location.

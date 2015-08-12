@@ -336,13 +336,6 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   checkFilters(Info.getLocation());
 }
 
-void ClangTidyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
-                                                  const Preprocessor *PP) {
-  // Before the first translation unit we don't need HeaderFilter, as we
-  // shouldn't get valid source locations in diagnostics.
-  HeaderFilter.reset(new llvm::Regex(*Context.getOptions().HeaderFilterRegex));
-}
-
 bool ClangTidyDiagnosticConsumer::passesLineFilter(StringRef FileName,
                                                    unsigned LineNumber) const {
   if (Context.getGlobalOptions().LineFilter.empty())
@@ -389,15 +382,20 @@ void ClangTidyDiagnosticConsumer::checkFilters(SourceLocation Location) {
   }
 
   StringRef FileName(File->getName());
-  assert(LastErrorRelatesToUserCode || Sources.isInMainFile(Location) ||
-         HeaderFilter != nullptr);
   LastErrorRelatesToUserCode = LastErrorRelatesToUserCode ||
                                Sources.isInMainFile(Location) ||
-                               HeaderFilter->match(FileName);
+                               getHeaderFilter()->match(FileName);
 
   unsigned LineNumber = Sources.getExpansionLineNumber(Location);
   LastErrorPassesLineFilter =
       LastErrorPassesLineFilter || passesLineFilter(FileName, LineNumber);
+}
+
+llvm::Regex *ClangTidyDiagnosticConsumer::getHeaderFilter() {
+  if (!HeaderFilter)
+    HeaderFilter.reset(
+        new llvm::Regex(*Context.getOptions().HeaderFilterRegex));
+  return HeaderFilter.get();
 }
 
 namespace {
