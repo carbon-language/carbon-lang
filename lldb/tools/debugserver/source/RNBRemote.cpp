@@ -4628,6 +4628,21 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
 
     strm << "vendor:apple;";
 
+    uint64_t major, minor, patch;
+    if (DNBGetOSVersionNumbers (&major, &minor, &patch))
+    {
+        strm << "osmajor:" << major << ";";
+        strm << "osminor:" << minor << ";";
+        strm << "ospatch:" << patch << ";";
+
+        strm << "version:" << major << "." << minor;
+        if (patch != 0)
+        {
+            strm << "." << patch;
+        }
+        strm << ";";
+    }
+
 #if defined (__LITTLE_ENDIAN__)
     strm << "endian:little;";
 #elif defined (__BIG_ENDIAN__)

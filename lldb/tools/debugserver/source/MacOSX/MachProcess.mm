@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <map>
 
+#import <Foundation/Foundation.h>
+
 #include "DNBDataRef.h"
 #include "DNBLog.h"
 #include "DNBThreadResumeActions.h"
@@ -2018,6 +2020,28 @@ Genealogy::ProcessExecutableInfoSP
 MachProcess::GetGenealogyImageInfo (size_t idx)
 {
     return m_activities.GetProcessExecutableInfosAtIndex (idx);
+}
+
+bool
+MachProcess::GetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *patch)
+{
+    bool success = false;
+
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+    NSOperatingSystemVersion vers = [[NSProcessInfo processInfo] operatingSystemVersion];
+    if (major)
+        *major = vers.majorVersion;
+    if (minor)
+        *minor = vers.minorVersion;
+    if (patch)
+        *patch = vers.patchVersion;
+
+    success = true;
+
+    [pool drain];
+
+    return success;
 }
 
 // Do the process specific setup for attach.  If this returns NULL, then there's no

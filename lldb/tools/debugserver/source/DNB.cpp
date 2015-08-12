@@ -1936,6 +1936,12 @@ DNBResolveExecutablePath (const char *path, char *resolved_path, size_t resolved
     return false;
 }
 
+bool
+DNBGetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *patch)
+{
+    return MachProcess::GetOSVersionNumbers (major, minor, patch);
+}
+
 
 void
 DNBInitialize()

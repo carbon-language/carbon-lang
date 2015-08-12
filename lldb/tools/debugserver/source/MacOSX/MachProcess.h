@@ -80,6 +80,7 @@ public:
     static const void *     PrepareForAttach (const char *path, nub_launch_flavor_t launch_flavor, bool waitfor, DNBError &err_str);
     static void             CleanupAfterAttach (const void *attach_token, bool success, DNBError &err_str);
     static nub_process_t    CheckForProcess (const void *attach_token);
+    static bool             GetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *patch);
 #ifdef WITH_BKS
     pid_t                   BKSLaunchForDebug (const char *app_bundle_path, char const *argv[], char const *envp[], bool no_stdio, bool disable_aslr, const char *event_data, DNBError &launch_err);
     pid_t                   BKSForkChildForPTraceDebugging (const char *path, char const *argv[], char const *envp[], bool no_stdio, bool disable_aslr, const char *event_data, DNBError &launch_err);

@@ -168,5 +168,6 @@ nub_bool_t      DNBGetRegisterInfoByName        (const char *reg_name, DNBRegist
 //----------------------------------------------------------------------
 const char *    DNBStateAsString (nub_state_t state);
 nub_bool_t      DNBResolveExecutablePath (const char *path, char *resolved_path, size_t resolved_path_size);
+bool            DNBGetOSVersionNumbers (uint64_t *major, uint64_t *minor, uint64_t *patch);
 
 #endif
