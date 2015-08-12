@@ -1688,7 +1688,7 @@ UML_LOOK               = NO
 # the class node. If there are many fields or methods and many nodes the
 # graph may become too big to be useful. The UML_LIMIT_NUM_FIELDS
 # threshold limits the number of items for each type to make the size more
-# managable. Set this to 0 for no limit. Note that the threshold may be
+# manageable. Set this to 0 for no limit. Note that the threshold may be
 # exceeded by 50% before the limit is enforced.
 
 UML_LIMIT_NUM_FIELDS   = 10

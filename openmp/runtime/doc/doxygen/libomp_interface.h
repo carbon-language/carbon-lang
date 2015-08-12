@@ -326,7 +326,7 @@ and then use the KMP_* macros to profile (through counts or clock ticks) libomp 
 
 @section sec_stats_env_vars Environment Variables
 
-This section describes the environment variables relevent to stats-gathering in libomp
+This section describes the environment variables relevant to stats-gathering in libomp
 
 @code
 KMP_STATS_FILE
