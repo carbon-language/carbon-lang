@@ -52,18 +52,6 @@ TEST(PackedVectorTest, Operation) {
   EXPECT_FALSE(Vec == Vec2);
   EXPECT_TRUE(Vec != Vec2);
 
-  Vec2.swap(Vec);
-  EXPECT_EQ(3U, Vec.size());
-  EXPECT_FALSE(Vec.empty());
-  EXPECT_EQ(0U, Vec[0]);
-  EXPECT_EQ(0U, Vec[1]);
-  EXPECT_EQ(0U, Vec[2]);
-
-  EXPECT_EQ(2U, Vec2[0]);
-  EXPECT_EQ(0U, Vec2[1]);
-  EXPECT_EQ(1U, Vec2[2]);
-  EXPECT_EQ(3U, Vec2[3]);
-
   Vec = Vec2;
   EXPECT_TRUE(Vec == Vec2);
   EXPECT_FALSE(Vec != Vec2);

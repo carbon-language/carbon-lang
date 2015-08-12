@@ -96,7 +96,7 @@ public:
     }
   };
 
-  PackedVector() { }
+  PackedVector() = default;
   explicit PackedVector(unsigned size) : Bits(size << (BitNum-1)) { }
 
   bool empty() const { return Bits.empty(); }
@@ -135,18 +135,9 @@ public:
     return Bits != RHS.Bits;
   }
 
-  const PackedVector &operator=(const PackedVector &RHS) {
-    Bits = RHS.Bits;
-    return *this;
-  }
-
   PackedVector &operator|=(const PackedVector &RHS) {
     Bits |= RHS.Bits;
     return *this;
-  }
-
-  void swap(PackedVector &RHS) {
-    Bits.swap(RHS.Bits);
   }
 };
 
