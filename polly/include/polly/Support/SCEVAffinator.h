@@ -49,6 +49,8 @@ public:
   ///
   /// @param E    The expression that is translated.
   /// @param Stmt The SCoP statment surrounding @p E.
+  ///
+  /// @returns The isl representation of the SCEV @p E in @p Stmt.
   __isl_give isl_pw_aff *getPwAff(const llvm::SCEV *E, const ScopStmt *Stmt);
 
 private:
