@@ -443,10 +443,16 @@ Run lldb test suite using a separate process for each test file.
             touch(os.path.join(session_dir, "{}-{}".format(result, test_name)))
 
     print
-    print "Ran %d test suites (%d failed) (%f%%)" % (num_test_files, len(failed),
-            (100.0 * len(failed) / num_test_files) if num_test_files > 0 else float('NaN'))
-    print "Ran %d test cases (%d failed) (%f%%)" % (num_tests, all_fails,
-            (100.0 * all_fails / num_tests) if num_tests > 0 else float('NaN'))
+    sys.stdout.write("Ran %d test suites" % num_test_files)
+    if num_test_files > 0:
+        sys.stdout.write(" (%d failed) (%f%%)" % (
+            len(failed), 100.0 * len(failed) / num_test_files))
+    print
+    sys.stdout.write("Ran %d test cases" % num_tests)
+    if num_tests > 0:
+        sys.stdout.write(" (%d failed) (%f%%)" % (
+            all_fails, 100.0 * all_fails / num_tests))
+    print
     if len(failed) > 0:
         failed.sort()
         print "Failing Tests (%d)" % len(failed)
