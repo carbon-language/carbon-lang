@@ -97,9 +97,10 @@ namespace {
 
 char DSE::ID = 0;
 INITIALIZE_PASS_BEGIN(DSE, "dse", "Dead Store Elimination", false, false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(MemoryDependenceAnalysis)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(DSE, "dse", "Dead Store Elimination", false, false)
 
 FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
