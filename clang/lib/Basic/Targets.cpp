@@ -5739,6 +5739,7 @@ public:
       IntPtrType = SignedLong;
       PtrDiffType = SignedLong;
       break;
+    }
   }
 
   void getTargetDefines(const LangOptions &Opts,
