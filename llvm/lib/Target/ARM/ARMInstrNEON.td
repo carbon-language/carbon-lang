@@ -6338,8 +6338,8 @@ def : N3VSMulOpPat<fmul, fsub, VFMSfd>,
       Requires<[HasVFP4, UseNEONForFP, UseFusedMAC]>;
 def : N2VSPat<fabs, VABSfd>;
 def : N2VSPat<fneg, VNEGfd>;
-def : N3VSPat<fmaxnan, VMAXfd>;
-def : N3VSPat<fminnan, VMINfd>;
+def : N3VSPat<fmaxnan, VMAXfd>, Requires<[HasNEON]>;
+def : N3VSPat<fminnan, VMINfd>, Requires<[HasNEON]>;
 def : NVCVTFIPat<fp_to_sint, VCVTf2sd>;
 def : NVCVTFIPat<fp_to_uint, VCVTf2ud>;
 def : NVCVTIFPat<sint_to_fp, VCVTs2fd>;
