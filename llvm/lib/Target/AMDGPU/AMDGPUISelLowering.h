@@ -165,14 +165,6 @@ public:
                                SDValue False,
                                SDValue CC,
                                DAGCombinerInfo &DCI) const;
-  SDValue CombineIMinMax(SDLoc DL,
-                         EVT VT,
-                         SDValue LHS,
-                         SDValue RHS,
-                         SDValue True,
-                         SDValue False,
-                         SDValue CC,
-                         SelectionDAG &DAG) const;
 
   const char* getTargetNodeName(unsigned Opcode) const override;
 

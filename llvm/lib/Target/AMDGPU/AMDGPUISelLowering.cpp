@@ -1167,45 +1167,6 @@ SDValue AMDGPUTargetLowering::CombineFMinMaxLegacy(SDLoc DL,
   return SDValue();
 }
 
-// FIXME: Remove this when combines added to DAGCombiner.
-SDValue AMDGPUTargetLowering::CombineIMinMax(SDLoc DL,
-                                             EVT VT,
-                                             SDValue LHS,
-                                             SDValue RHS,
-                                             SDValue True,
-                                             SDValue False,
-                                             SDValue CC,
-                                             SelectionDAG &DAG) const {
-  if (!(LHS == True && RHS == False) && !(LHS == False && RHS == True))
-    return SDValue();
-
-  ISD::CondCode CCOpcode = cast<CondCodeSDNode>(CC)->get();
-  switch (CCOpcode) {
-  case ISD::SETULE:
-  case ISD::SETULT: {
-    unsigned Opc = (LHS == True) ? ISD::UMIN : ISD::UMAX;
-    return DAG.getNode(Opc, DL, VT, LHS, RHS);
-  }
-  case ISD::SETLE:
-  case ISD::SETLT: {
-    unsigned Opc = (LHS == True) ? ISD::SMIN : ISD::SMAX;
-    return DAG.getNode(Opc, DL, VT, LHS, RHS);
-  }
-  case ISD::SETGT:
-  case ISD::SETGE: {
-    unsigned Opc = (LHS == True) ? ISD::SMAX : ISD::SMIN;
-    return DAG.getNode(Opc, DL, VT, LHS, RHS);
-  }
-  case ISD::SETUGE:
-  case ISD::SETUGT: {
-    unsigned Opc = (LHS == True) ? ISD::UMAX : ISD::UMIN;
-    return DAG.getNode(Opc, DL, VT, LHS, RHS);
-  }
-  default:
-    return SDValue();
-  }
-}
-
 SDValue AMDGPUTargetLowering::ScalarizeVectorLoad(const SDValue Op,
                                                   SelectionDAG &DAG) const {
   LoadSDNode *Load = cast<LoadSDNode>(Op);
@@ -2511,12 +2472,6 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
 
       if (VT == MVT::f32)
         return CombineFMinMaxLegacy(DL, VT, LHS, RHS, True, False, CC, DCI);
-
-      // TODO: Implement min / max Evergreen instructions.
-      if (VT == MVT::i32 &&
-          Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
-        return CombineIMinMax(DL, VT, LHS, RHS, True, False, CC, DAG);
-      }
     }
 
     break;
