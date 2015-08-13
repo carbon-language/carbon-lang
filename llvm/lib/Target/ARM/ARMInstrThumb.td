@@ -591,6 +591,34 @@ def tTRAP : TI<(outs), (ins), IIC_Br,
 //  Load Store Instructions.
 //
 
+// PC-relative loads need to be matched first as constant pool accesses need to
+// always be PC-relative. We do this using AddedComplexity, as the pattern is
+// simpler than the patterns of the other load instructions.
+let canFoldAsLoad = 1, isReMaterializable = 1, AddedComplexity = 10 in
+def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
+                  "ldr", "\t$Rt, $addr",
+                  [(set tGPR:$Rt, (load (ARMWrapper tconstpool:$addr)))]>,
+              T1Encoding<{0,1,0,0,1,?}> {
+  // A6.2 & A8.6.59
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0}  = addr;
+}
+
+// SP-relative loads should be matched before standard immediate-offset loads as
+// it means we avoid having to move SP to another register.
+let canFoldAsLoad = 1 in
+def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
+                    "ldr", "\t$Rt, $addr",
+                    [(set tGPR:$Rt, (load t_addrmode_sp:$addr))]>,
+              T1LdStSP<{1,?,?}> {
+  bits<3> Rt;
+  bits<8> addr;
+  let Inst{10-8} = Rt;
+  let Inst{7-0} = addr;
+}
+
 // Loads: reg/reg and reg/imm5
 let canFoldAsLoad = 1, isReMaterializable = 1 in
 multiclass thumb_ld_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
@@ -598,16 +626,20 @@ multiclass thumb_ld_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
                               AddrMode am, InstrItinClass itin_r,
                               InstrItinClass itin_i, string asm,
                               PatFrag opnode> {
-  def r : // reg/reg
-    T1pILdStEncode<reg_opc,
-                   (outs tGPR:$Rt), (ins AddrMode_r:$addr),
-                   am, itin_r, asm, "\t$Rt, $addr",
-                   [(set tGPR:$Rt, (opnode AddrMode_r:$addr))]>;
+  // Immediate-offset loads should be matched before register-offset loads as
+  // when the offset is a constant it's simpler to first check if it fits in the
+  // immediate offset field then fall back to register-offset if it doesn't.
   def i : // reg/imm5
     T1pILdStEncodeImm<imm_opc, 1 /* Load */,
                       (outs tGPR:$Rt), (ins AddrMode_i:$addr),
                       am, itin_i, asm, "\t$Rt, $addr",
                       [(set tGPR:$Rt, (opnode AddrMode_i:$addr))]>;
+  // Register-offset loads are matched last.
+  def r : // reg/reg
+    T1pILdStEncode<reg_opc,
+                   (outs tGPR:$Rt), (ins AddrMode_r:$addr),
+                   am, itin_r, asm, "\t$Rt, $addr",
+                   [(set tGPR:$Rt, (opnode AddrMode_r:$addr))]>;
 }
 // Stores: reg/reg and reg/imm5
 multiclass thumb_st_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
@@ -615,32 +647,32 @@ multiclass thumb_st_rr_ri_enc<bits<3> reg_opc, bits<4> imm_opc,
                               AddrMode am, InstrItinClass itin_r,
                               InstrItinClass itin_i, string asm,
                               PatFrag opnode> {
-  def r : // reg/reg
-    T1pILdStEncode<reg_opc,
-                   (outs), (ins tGPR:$Rt, AddrMode_r:$addr),
-                   am, itin_r, asm, "\t$Rt, $addr",
-                   [(opnode tGPR:$Rt, AddrMode_r:$addr)]>;
   def i : // reg/imm5
     T1pILdStEncodeImm<imm_opc, 0 /* Store */,
                       (outs), (ins tGPR:$Rt, AddrMode_i:$addr),
                       am, itin_i, asm, "\t$Rt, $addr",
                       [(opnode tGPR:$Rt, AddrMode_i:$addr)]>;
+  def r : // reg/reg
+    T1pILdStEncode<reg_opc,
+                   (outs), (ins tGPR:$Rt, AddrMode_r:$addr),
+                   am, itin_r, asm, "\t$Rt, $addr",
+                   [(opnode tGPR:$Rt, AddrMode_r:$addr)]>;
 }
 
 // A8.6.57 & A8.6.60
-defm tLDR  : thumb_ld_rr_ri_enc<0b100, 0b0110, t_addrmode_rrs4,
+defm tLDR  : thumb_ld_rr_ri_enc<0b100, 0b0110, t_addrmode_rr,
                                 t_addrmode_is4, AddrModeT1_4,
                                 IIC_iLoad_r, IIC_iLoad_i, "ldr",
                                 UnOpFrag<(load node:$Src)>>;
 
 // A8.6.64 & A8.6.61
-defm tLDRB : thumb_ld_rr_ri_enc<0b110, 0b0111, t_addrmode_rrs1,
+defm tLDRB : thumb_ld_rr_ri_enc<0b110, 0b0111, t_addrmode_rr,
                                 t_addrmode_is1, AddrModeT1_1,
                                 IIC_iLoad_bh_r, IIC_iLoad_bh_i, "ldrb",
                                 UnOpFrag<(zextloadi8 node:$Src)>>;
 
 // A8.6.76 & A8.6.73
-defm tLDRH : thumb_ld_rr_ri_enc<0b101, 0b1000, t_addrmode_rrs2,
+defm tLDRH : thumb_ld_rr_ri_enc<0b101, 0b1000, t_addrmode_rr,
                                 t_addrmode_is2, AddrModeT1_2,
                                 IIC_iLoad_bh_r, IIC_iLoad_bh_i, "ldrh",
                                 UnOpFrag<(zextloadi16 node:$Src)>>;
@@ -659,47 +691,6 @@ def tLDRSH :                    // A8.6.84
                  "ldrsh", "\t$Rt, $addr",
                  [(set tGPR:$Rt, (sextloadi16 t_addrmode_rr:$addr))]>;
 
-let canFoldAsLoad = 1 in
-def tLDRspi : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_sp:$addr), IIC_iLoad_i,
-                    "ldr", "\t$Rt, $addr",
-                    [(set tGPR:$Rt, (load t_addrmode_sp:$addr))]>,
-              T1LdStSP<{1,?,?}> {
-  bits<3> Rt;
-  bits<8> addr;
-  let Inst{10-8} = Rt;
-  let Inst{7-0} = addr;
-}
-
-let canFoldAsLoad = 1, isReMaterializable = 1 in
-def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
-                  "ldr", "\t$Rt, $addr",
-                  [(set tGPR:$Rt, (load (ARMWrapper tconstpool:$addr)))]>,
-              T1Encoding<{0,1,0,0,1,?}> {
-  // A6.2 & A8.6.59
-  bits<3> Rt;
-  bits<8> addr;
-  let Inst{10-8} = Rt;
-  let Inst{7-0}  = addr;
-}
-
-// A8.6.194 & A8.6.192
-defm tSTR  : thumb_st_rr_ri_enc<0b000, 0b0110, t_addrmode_rrs4,
-                                t_addrmode_is4, AddrModeT1_4,
-                                IIC_iStore_r, IIC_iStore_i, "str",
-                                BinOpFrag<(store node:$LHS, node:$RHS)>>;
-
-// A8.6.197 & A8.6.195
-defm tSTRB : thumb_st_rr_ri_enc<0b010, 0b0111, t_addrmode_rrs1,
-                                t_addrmode_is1, AddrModeT1_1,
-                                IIC_iStore_bh_r, IIC_iStore_bh_i, "strb",
-                                BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
-
-// A8.6.207 & A8.6.205
-defm tSTRH : thumb_st_rr_ri_enc<0b001, 0b1000, t_addrmode_rrs2,
-                               t_addrmode_is2, AddrModeT1_2,
-                               IIC_iStore_bh_r, IIC_iStore_bh_i, "strh",
-                               BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
-
 
 def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
                     "str", "\t$Rt, $addr",
@@ -710,6 +701,25 @@ def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
   let Inst{10-8} = Rt;
   let Inst{7-0} = addr;
 }
+
+// A8.6.194 & A8.6.192
+defm tSTR  : thumb_st_rr_ri_enc<0b000, 0b0110, t_addrmode_rr,
+                                t_addrmode_is4, AddrModeT1_4,
+                                IIC_iStore_r, IIC_iStore_i, "str",
+                                BinOpFrag<(store node:$LHS, node:$RHS)>>;
+
+// A8.6.197 & A8.6.195
+defm tSTRB : thumb_st_rr_ri_enc<0b010, 0b0111, t_addrmode_rr,
+                                t_addrmode_is1, AddrModeT1_1,
+                                IIC_iStore_bh_r, IIC_iStore_bh_i, "strb",
+                                BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
+
+// A8.6.207 & A8.6.205
+defm tSTRH : thumb_st_rr_ri_enc<0b001, 0b1000, t_addrmode_rr,
+                               t_addrmode_is2, AddrModeT1_2,
+                               IIC_iStore_bh_r, IIC_iStore_bh_i, "strh",
+                               BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
@@ -1328,16 +1338,16 @@ def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
             (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
 
 // Bswap 16 with load/store
-def : T1Pat<(srl (bswap (extloadi16 t_addrmode_rrs2:$addr)), (i32 16)),
-            (tREV16 (tLDRHr t_addrmode_rrs2:$addr))>;
 def : T1Pat<(srl (bswap (extloadi16 t_addrmode_is2:$addr)), (i32 16)),
             (tREV16 (tLDRHi t_addrmode_is2:$addr))>;
-def : T1Pat<(truncstorei16 (srl (bswap tGPR:$Rn), (i32 16)),
-                           t_addrmode_rrs2:$addr),
-            (tSTRHr (tREV16 tGPR:$Rn), t_addrmode_rrs2:$addr)>;
+def : T1Pat<(srl (bswap (extloadi16 t_addrmode_rr:$addr)), (i32 16)),
+            (tREV16 (tLDRHr t_addrmode_rr:$addr))>;
 def : T1Pat<(truncstorei16 (srl (bswap tGPR:$Rn), (i32 16)),
                            t_addrmode_is2:$addr),
             (tSTRHi(tREV16 tGPR:$Rn), t_addrmode_is2:$addr)>;
+def : T1Pat<(truncstorei16 (srl (bswap tGPR:$Rn), (i32 16)),
+                           t_addrmode_rr:$addr),
+            (tSTRHr (tREV16 tGPR:$Rn), t_addrmode_rr:$addr)>;
 
 // ConstantPool
 def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
@@ -1372,10 +1382,10 @@ def : Tv5Pat<(ARMcall GPR:$dst), (tBLXr GPR:$dst)>,
       Requires<[IsThumb, HasV5T]>;
 
 // zextload i1 -> zextload i8
-def : T1Pat<(zextloadi1 t_addrmode_rrs1:$addr),
-            (tLDRBr t_addrmode_rrs1:$addr)>;
 def : T1Pat<(zextloadi1 t_addrmode_is1:$addr),
             (tLDRBi t_addrmode_is1:$addr)>;
+def : T1Pat<(zextloadi1 t_addrmode_rr:$addr),
+            (tLDRBr t_addrmode_rr:$addr)>;
 
 // extload from the stack -> word load from the stack, as it avoids having to
 // materialize the base in a separate register. This only works when a word
@@ -1389,61 +1399,61 @@ def : T1Pat<(extloadi16 t_addrmode_sp:$addr), (tLDRspi t_addrmode_sp:$addr)>,
       Requires<[IsThumb, IsThumb1Only, IsLE]>;
 
 // extload -> zextload
-def : T1Pat<(extloadi1  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
-def : T1Pat<(extloadi1  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
-def : T1Pat<(extloadi8  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
-def : T1Pat<(extloadi8  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
-def : T1Pat<(extloadi16 t_addrmode_rrs2:$addr), (tLDRHr t_addrmode_rrs2:$addr)>;
-def : T1Pat<(extloadi16 t_addrmode_is2:$addr),  (tLDRHi t_addrmode_is2:$addr)>;
+def : T1Pat<(extloadi1  t_addrmode_is1:$addr), (tLDRBi t_addrmode_is1:$addr)>;
+def : T1Pat<(extloadi1  t_addrmode_rr:$addr),  (tLDRBr t_addrmode_rr:$addr)>;
+def : T1Pat<(extloadi8  t_addrmode_is1:$addr), (tLDRBi t_addrmode_is1:$addr)>;
+def : T1Pat<(extloadi8  t_addrmode_rr:$addr),  (tLDRBr t_addrmode_rr:$addr)>;
+def : T1Pat<(extloadi16 t_addrmode_is2:$addr), (tLDRHi t_addrmode_is2:$addr)>;
+def : T1Pat<(extloadi16 t_addrmode_rr:$addr),  (tLDRHr t_addrmode_rr:$addr)>;
 
 // If it's impossible to use [r,r] address mode for sextload, select to
 // ldr{b|h} + sxt{b|h} instead.
 def : T1Pat<(sextloadi8 t_addrmode_is1:$addr),
             (tSXTB (tLDRBi t_addrmode_is1:$addr))>,
       Requires<[IsThumb, IsThumb1Only, HasV6]>;
-def : T1Pat<(sextloadi8 t_addrmode_rrs1:$addr),
-            (tSXTB (tLDRBr t_addrmode_rrs1:$addr))>,
+def : T1Pat<(sextloadi8 t_addrmode_rr:$addr),
+            (tSXTB (tLDRBr t_addrmode_rr:$addr))>,
       Requires<[IsThumb, IsThumb1Only, HasV6]>;
 def : T1Pat<(sextloadi16 t_addrmode_is2:$addr),
             (tSXTH (tLDRHi t_addrmode_is2:$addr))>,
       Requires<[IsThumb, IsThumb1Only, HasV6]>;
-def : T1Pat<(sextloadi16 t_addrmode_rrs2:$addr),
-            (tSXTH (tLDRHr t_addrmode_rrs2:$addr))>,
+def : T1Pat<(sextloadi16 t_addrmode_rr:$addr),
+            (tSXTH (tLDRHr t_addrmode_rr:$addr))>,
       Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
-def : T1Pat<(sextloadi8 t_addrmode_rrs1:$addr),
-            (tASRri (tLSLri (tLDRBr t_addrmode_rrs1:$addr), 24), 24)>;
 def : T1Pat<(sextloadi8 t_addrmode_is1:$addr),
             (tASRri (tLSLri (tLDRBi t_addrmode_is1:$addr), 24), 24)>;
-def : T1Pat<(sextloadi16 t_addrmode_rrs2:$addr),
-            (tASRri (tLSLri (tLDRHr t_addrmode_rrs2:$addr), 16), 16)>;
+def : T1Pat<(sextloadi8 t_addrmode_rr:$addr),
+            (tASRri (tLSLri (tLDRBr t_addrmode_rr:$addr), 24), 24)>;
 def : T1Pat<(sextloadi16 t_addrmode_is2:$addr),
             (tASRri (tLSLri (tLDRHi t_addrmode_is2:$addr), 16), 16)>;
+def : T1Pat<(sextloadi16 t_addrmode_rr:$addr),
+            (tASRri (tLSLri (tLDRHr t_addrmode_rr:$addr), 16), 16)>;
 
 def : T1Pat<(atomic_load_8 t_addrmode_is1:$src),
              (tLDRBi t_addrmode_is1:$src)>;
-def : T1Pat<(atomic_load_8 t_addrmode_rrs1:$src),
-             (tLDRBr t_addrmode_rrs1:$src)>;
+def : T1Pat<(atomic_load_8 t_addrmode_rr:$src),
+             (tLDRBr t_addrmode_rr:$src)>;
 def : T1Pat<(atomic_load_16 t_addrmode_is2:$src),
              (tLDRHi t_addrmode_is2:$src)>;
-def : T1Pat<(atomic_load_16 t_addrmode_rrs2:$src),
-             (tLDRHr t_addrmode_rrs2:$src)>;
+def : T1Pat<(atomic_load_16 t_addrmode_rr:$src),
+             (tLDRHr t_addrmode_rr:$src)>;
 def : T1Pat<(atomic_load_32 t_addrmode_is4:$src),
              (tLDRi t_addrmode_is4:$src)>;
-def : T1Pat<(atomic_load_32 t_addrmode_rrs4:$src),
-             (tLDRr t_addrmode_rrs4:$src)>;
+def : T1Pat<(atomic_load_32 t_addrmode_rr:$src),
+             (tLDRr t_addrmode_rr:$src)>;
 def : T1Pat<(atomic_store_8 t_addrmode_is1:$ptr, tGPR:$val),
              (tSTRBi tGPR:$val, t_addrmode_is1:$ptr)>;
-def : T1Pat<(atomic_store_8 t_addrmode_rrs1:$ptr, tGPR:$val),
-             (tSTRBr tGPR:$val, t_addrmode_rrs1:$ptr)>;
+def : T1Pat<(atomic_store_8 t_addrmode_rr:$ptr, tGPR:$val),
+             (tSTRBr tGPR:$val, t_addrmode_rr:$ptr)>;
 def : T1Pat<(atomic_store_16 t_addrmode_is2:$ptr, tGPR:$val),
              (tSTRHi tGPR:$val, t_addrmode_is2:$ptr)>;
-def : T1Pat<(atomic_store_16 t_addrmode_rrs2:$ptr, tGPR:$val),
-             (tSTRHr tGPR:$val, t_addrmode_rrs2:$ptr)>;
+def : T1Pat<(atomic_store_16 t_addrmode_rr:$ptr, tGPR:$val),
+             (tSTRHr tGPR:$val, t_addrmode_rr:$ptr)>;
 def : T1Pat<(atomic_store_32 t_addrmode_is4:$ptr, tGPR:$val),
              (tSTRi tGPR:$val, t_addrmode_is4:$ptr)>;
-def : T1Pat<(atomic_store_32 t_addrmode_rrs4:$ptr, tGPR:$val),
-             (tSTRr tGPR:$val, t_addrmode_rrs4:$ptr)>;
+def : T1Pat<(atomic_store_32 t_addrmode_rr:$ptr, tGPR:$val),
+             (tSTRr tGPR:$val, t_addrmode_rr:$ptr)>;
 
 // Large immediate handling.
 

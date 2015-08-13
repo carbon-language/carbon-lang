@@ -160,11 +160,6 @@ public:
 
   // Thumb Addressing Modes:
   bool SelectThumbAddrModeRR(SDValue N, SDValue &Base, SDValue &Offset);
-  bool SelectThumbAddrModeRI(SDValue N, SDValue &Base, SDValue &Offset,
-                             unsigned Scale);
-  bool SelectThumbAddrModeRI5S1(SDValue N, SDValue &Base, SDValue &Offset);
-  bool SelectThumbAddrModeRI5S2(SDValue N, SDValue &Base, SDValue &Offset);
-  bool SelectThumbAddrModeRI5S4(SDValue N, SDValue &Base, SDValue &Offset);
   bool SelectThumbAddrModeImm5S(SDValue N, unsigned Scale, SDValue &Base,
                                 SDValue &OffImm);
   bool SelectThumbAddrModeImm5S1(SDValue N, SDValue &Base,
@@ -1086,99 +1081,18 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue N,
 }
 
 bool
-ARMDAGToDAGISel::SelectThumbAddrModeRI(SDValue N, SDValue &Base,
-                                       SDValue &Offset, unsigned Scale) {
-  if (Scale == 4) {
-    SDValue TmpBase, TmpOffImm;
-    if (SelectThumbAddrModeSP(N, TmpBase, TmpOffImm))
-      return false;  // We want to select tLDRspi / tSTRspi instead.
-
-    if (N.getOpcode() == ARMISD::Wrapper &&
-        N.getOperand(0).getOpcode() == ISD::TargetConstantPool)
-      return false;  // We want to select tLDRpci instead.
-  }
-
-  if (!CurDAG->isBaseWithConstantOffset(N))
-    return false;
-
-  // Thumb does not have [sp, r] address mode.
-  RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
-  RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(N.getOperand(1));
-  if ((LHSR && LHSR->getReg() == ARM::SP) ||
-      (RHSR && RHSR->getReg() == ARM::SP))
-    return false;
-
-  // FIXME: Why do we explicitly check for a match here and then return false?
-  // Presumably to allow something else to match, but shouldn't this be
-  // documented?
-  int RHSC;
-  if (isScaledConstantInRange(N.getOperand(1), Scale, 0, 32, RHSC))
-    return false;
-
-  Base = N.getOperand(0);
-  Offset = N.getOperand(1);
-  return true;
-}
-
-bool
-ARMDAGToDAGISel::SelectThumbAddrModeRI5S1(SDValue N,
-                                          SDValue &Base,
-                                          SDValue &Offset) {
-  return SelectThumbAddrModeRI(N, Base, Offset, 1);
-}
-
-bool
-ARMDAGToDAGISel::SelectThumbAddrModeRI5S2(SDValue N,
-                                          SDValue &Base,
-                                          SDValue &Offset) {
-  return SelectThumbAddrModeRI(N, Base, Offset, 2);
-}
-
-bool
-ARMDAGToDAGISel::SelectThumbAddrModeRI5S4(SDValue N,
-                                          SDValue &Base,
-                                          SDValue &Offset) {
-  return SelectThumbAddrModeRI(N, Base, Offset, 4);
-}
-
-bool
 ARMDAGToDAGISel::SelectThumbAddrModeImm5S(SDValue N, unsigned Scale,
                                           SDValue &Base, SDValue &OffImm) {
-  if (Scale == 4) {
-    SDValue TmpBase, TmpOffImm;
-    if (SelectThumbAddrModeSP(N, TmpBase, TmpOffImm))
-      return false;  // We want to select tLDRspi / tSTRspi instead.
-
-    if (N.getOpcode() == ARMISD::Wrapper &&
-        N.getOperand(0).getOpcode() == ISD::TargetConstantPool)
-      return false;  // We want to select tLDRpci instead.
-  }
-
   if (!CurDAG->isBaseWithConstantOffset(N)) {
-    if (N.getOpcode() == ARMISD::Wrapper &&
-        N.getOperand(0).getOpcode() != ISD::TargetGlobalAddress) {
+    if (N.getOpcode() == ISD::ADD) {
+      return false; // We want to select register offset instead
+    } else if (N.getOpcode() == ARMISD::Wrapper &&
+               N.getOperand(0).getOpcode() != ISD::TargetGlobalAddress) {
       Base = N.getOperand(0);
     } else {
       Base = N;
     }
 
-    OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i32);
-    return true;
-  }
-
-  RegisterSDNode *LHSR = dyn_cast<RegisterSDNode>(N.getOperand(0));
-  RegisterSDNode *RHSR = dyn_cast<RegisterSDNode>(N.getOperand(1));
-  if ((LHSR && LHSR->getReg() == ARM::SP) ||
-      (RHSR && RHSR->getReg() == ARM::SP)) {
-    ConstantSDNode *LHS = dyn_cast<ConstantSDNode>(N.getOperand(0));
-    ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1));
-    unsigned LHSC = LHS ? LHS->getZExtValue() : 0;
-    unsigned RHSC = RHS ? RHS->getZExtValue() : 0;
-
-    // Thumb does not have [sp, #imm5] address mode for non-zero imm5.
-    if (LHSC != 0 || RHSC != 0) return false;
-
-    Base = N;
     OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i32);
     return true;
   }
@@ -1191,9 +1105,8 @@ ARMDAGToDAGISel::SelectThumbAddrModeImm5S(SDValue N, unsigned Scale,
     return true;
   }
 
-  Base = N.getOperand(0);
-  OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i32);
-  return true;
+  // Offset is too large, so use register offset instead.
+  return false;
 }
 
 bool
