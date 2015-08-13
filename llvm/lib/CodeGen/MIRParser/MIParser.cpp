@@ -126,6 +126,7 @@ public:
   bool parseMachineOperand(MachineOperand &Dest);
   bool parseMachineOperandAndTargetFlags(MachineOperand &Dest);
   bool parseOffset(int64_t &Offset);
+  bool parseAlignment(unsigned &Alignment);
   bool parseOperandsOffset(MachineOperand &Op);
   bool parseIRValue(Value *&V);
   bool parseMemoryOperandFlag(unsigned &Flags);
@@ -1073,6 +1074,17 @@ bool MIParser::parseOffset(int64_t &Offset) {
   return false;
 }
 
+bool MIParser::parseAlignment(unsigned &Alignment) {
+  assert(Token.is(MIToken::kw_align));
+  lex();
+  if (Token.isNot(MIToken::IntegerLiteral))
+    return error("expected an integer literal after 'align'");
+  if (getUnsigned(Alignment))
+    return true;
+  lex();
+  return false;
+}
+
 bool MIParser::parseOperandsOffset(MachineOperand &Op) {
   int64_t Offset = 0;
   if (parseOffset(Offset))
@@ -1226,12 +1238,8 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
     lex();
     if (Token.isNot(MIToken::kw_align))
       return error("expected 'align'");
-    lex();
-    if (Token.isNot(MIToken::IntegerLiteral))
-      return error("expected an integer literal after 'align'");
-    if (getUnsigned(BaseAlignment))
+    if (parseAlignment(BaseAlignment))
       return true;
-    lex();
   }
   // TODO: Parse the attached metadata nodes.
   if (expectAndConsume(MIToken::rparen))
