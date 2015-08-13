@@ -33,7 +33,6 @@
 
 namespace llvm {
 
-class BumpPtrStringSaver;
 class StringSaver;
 
 /// cl Namespace - This namespace contains all of the command line option

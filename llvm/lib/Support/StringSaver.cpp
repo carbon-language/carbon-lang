@@ -11,7 +11,7 @@
 
 using namespace llvm;
 
-const char *StringSaver::saveImpl(StringRef S) {
+const char *StringSaver::save(StringRef S) {
   char *P = Alloc.Allocate<char>(S.size() + 1);
   memcpy(P, S.data(), S.size());
   P[S.size()] = '\0';

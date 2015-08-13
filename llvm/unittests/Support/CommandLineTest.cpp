@@ -155,7 +155,7 @@ void testCommandLineTokenizer(ParserFunction *parse, const char *Input,
                               const char *const Output[], size_t OutputSize) {
   SmallVector<const char *, 0> Actual;
   BumpPtrAllocator A;
-  BumpPtrStringSaver Saver(A);
+  StringSaver Saver(A);
   parse(Input, Saver, Actual, /*MarkEOLs=*/false);
   EXPECT_EQ(OutputSize, Actual.size());
   for (unsigned I = 0, E = Actual.size(); I != E; ++I) {

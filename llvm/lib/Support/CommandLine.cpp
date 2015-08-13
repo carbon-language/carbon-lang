@@ -799,7 +799,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // telling us.
   SmallVector<const char *, 20> newArgv;
   BumpPtrAllocator A;
-  BumpPtrStringSaver Saver(A);
+  StringSaver Saver(A);
   newArgv.push_back(Saver.save(progName));
 
   // Parse the value of the environment variable into a "command line"
@@ -822,7 +822,7 @@ void CommandLineParser::ParseCommandLineOptions(int argc,
   // Expand response files.
   SmallVector<const char *, 20> newArgv(argv, argv + argc);
   BumpPtrAllocator A;
-  BumpPtrStringSaver Saver(A);
+  StringSaver Saver(A);
   ExpandResponseFiles(Saver, TokenizeGNUCommandLine, newArgv);
   argv = &newArgv[0];
   argc = static_cast<int>(newArgv.size());
