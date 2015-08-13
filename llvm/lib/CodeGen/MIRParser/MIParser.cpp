@@ -1077,7 +1077,7 @@ bool MIParser::parseOffset(int64_t &Offset) {
 bool MIParser::parseAlignment(unsigned &Alignment) {
   assert(Token.is(MIToken::kw_align));
   lex();
-  if (Token.isNot(MIToken::IntegerLiteral))
+  if (Token.isNot(MIToken::IntegerLiteral) || Token.integerValue().isSigned())
     return error("expected an integer literal after 'align'");
   if (getUnsigned(Alignment))
     return true;
