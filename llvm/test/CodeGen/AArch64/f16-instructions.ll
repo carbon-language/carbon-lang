@@ -666,14 +666,45 @@ define half @test_maxnum(half %a, half %b) #0 {
 }
 
 ; CHECK-LABEL: test_copysign:
-; CHECK-NEXT: fcvt s1, h1
+; CHECK-NEXT: sub sp, sp, #16
+; CHECK-NEXT: str h1, [sp, #8]
+; CHECK-NEXT: ldr x8, [sp, #8]
+; CHECK-NEXT: fcvt s0, h0
+; CHECK-NEXT: fabs s0, s0
+; CHECK-NEXT: fneg s1, s0
+; CHECK-NEXT: lsl x8, x8, #48
+; CHECK-NEXT: cmp  x8, #0
+; CHECK-NEXT: fcsel s0, s1, s0, lt
+; CHECK-NEXT: fcvt h0, s0
+; CHECK-NEXT: add sp, sp, #16
+; CHECK-NEXT: ret
+define half @test_copysign(half %a, half %b) #0 {
+  %r = call half @llvm.copysign.f16(half %a, half %b)
+  ret half %r
+}
+
+; CHECK-LABEL: test_copysign_f32:
 ; CHECK-NEXT: fcvt s0, h0
 ; CHECK-NEXT: movi.4s v2, #0x80, lsl #24
 ; CHECK-NEXT: bit.16b v0, v1, v2
 ; CHECK-NEXT: fcvt h0, s0
 ; CHECK-NEXT: ret
-define half @test_copysign(half %a, half %b) #0 {
-  %r = call half @llvm.copysign.f16(half %a, half %b)
+define half @test_copysign_f32(half %a, float %b) #0 {
+  %tb = fptrunc float %b to half
+  %r = call half @llvm.copysign.f16(half %a, half %tb)
+  ret half %r
+}
+
+; CHECK-LABEL: test_copysign_f64:
+; CHECK-NEXT: fcvt s1, d1
+; CHECK-NEXT: fcvt s0, h0
+; CHECK-NEXT: movi.4s v2, #0x80, lsl #24
+; CHECK-NEXT: bit.16b v0, v1, v2
+; CHECK-NEXT: fcvt h0, s0
+; CHECK-NEXT: ret
+define half @test_copysign_f64(half %a, double %b) #0 {
+  %tb = fptrunc double %b to half
+  %r = call half @llvm.copysign.f16(half %a, half %tb)
   ret half %r
 }
 
