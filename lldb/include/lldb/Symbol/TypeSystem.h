@@ -215,6 +215,14 @@ public:
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes) = 0;
     
+    virtual size_t
+    GetNumTemplateArguments (void * type) = 0;
+    
+    virtual CompilerType
+    GetTemplateArgument (void * type,
+                         size_t idx,
+                         lldb::TemplateArgumentKind &kind) = 0;
+    
     //----------------------------------------------------------------------
     // Dumping types
     //----------------------------------------------------------------------

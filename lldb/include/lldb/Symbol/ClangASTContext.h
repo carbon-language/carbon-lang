@@ -805,13 +805,13 @@ public:
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes) override;
     
-    static size_t
-    GetNumTemplateArguments (const CompilerType& type);
+    size_t
+    GetNumTemplateArguments (void* type) override;
     
-    static CompilerType
-    GetTemplateArgument (const CompilerType& type,
+    CompilerType
+    GetTemplateArgument (void* type,
                          size_t idx,
-                         lldb::TemplateArgumentKind &kind);
+                         lldb::TemplateArgumentKind &kind) override;
     
     
     //----------------------------------------------------------------------

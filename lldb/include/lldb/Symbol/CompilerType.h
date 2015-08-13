@@ -370,6 +370,13 @@ public:
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes) const;
     
+    size_t
+    GetNumTemplateArguments () const;
+    
+    CompilerType
+    GetTemplateArgument (size_t idx,
+                         lldb::TemplateArgumentKind &kind) const;
+    
     //------------------------------------------------------------------
     // Pointers & References
     //------------------------------------------------------------------

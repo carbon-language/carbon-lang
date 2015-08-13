@@ -744,6 +744,27 @@ CompilerType::GetIndexOfChildMemberWithName (const char *name,
     return 0;
 }
 
+size_t
+CompilerType::GetNumTemplateArguments () const
+{
+    if (IsValid())
+    {
+        return m_type_system->GetNumTemplateArguments(m_type);
+    }
+    return 0;
+}
+
+CompilerType
+CompilerType::GetTemplateArgument (size_t idx,
+                                   lldb::TemplateArgumentKind &kind) const
+{
+    if (IsValid())
+    {
+        return m_type_system->GetTemplateArgument(m_type, idx, kind);
+    }
+    return CompilerType();
+}
+
 
 // Get the index of the child of "clang_type" whose name matches. This function
 // doesn't descend into the children, but only looks one level deep and name

@@ -6659,125 +6659,118 @@ ClangASTContext::GetIndexOfChildWithName (void* type, const char *name, bool omi
 
 
 size_t
-ClangASTContext::GetNumTemplateArguments (const CompilerType& type)
+ClangASTContext::GetNumTemplateArguments (void* type)
 {
     if (!type)
         return 0;
-    ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
-    if (ast)
+
+    clang::QualType qual_type (GetCanonicalQualType(type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
-        clang::QualType qual_type (GetCanonicalQualType(type));
-        
-        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
-        switch (type_class)
-        {
-            case clang::Type::Record:
-                if (ast->GetCompleteType(type.GetOpaqueQualType()))
+        case clang::Type::Record:
+            if (GetCompleteType(type))
+            {
+                const clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
                 {
-                    const clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
-                    if (cxx_record_decl)
-                    {
-                        const clang::ClassTemplateSpecializationDecl *template_decl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
-                        if (template_decl)
-                            return template_decl->getTemplateArgs().size();
-                    }
+                    const clang::ClassTemplateSpecializationDecl *template_decl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
+                    if (template_decl)
+                        return template_decl->getTemplateArgs().size();
                 }
-                break;
-                
-            case clang::Type::Typedef:
-                return GetNumTemplateArguments(CompilerType (ast, llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr()));
-                
-            case clang::Type::Elaborated:
-                return GetNumTemplateArguments(CompilerType (ast, llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr()));
-                
-            case clang::Type::Paren:
-                return GetNumTemplateArguments(CompilerType (ast, llvm::cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr()));
-                
-            default:
-                break;
-        }
+            }
+            break;
+            
+        case clang::Type::Typedef:
+            return (CompilerType (getASTContext(), llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType())).GetNumTemplateArguments();
+            
+        case clang::Type::Elaborated:
+            return (CompilerType (getASTContext(), llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType())).GetNumTemplateArguments();
+            
+        case clang::Type::Paren:
+            return (CompilerType (getASTContext(), llvm::cast<clang::ParenType>(qual_type)->desugar())).GetNumTemplateArguments();
+            
+        default:
+            break;
     }
+
     return 0;
 }
 
 CompilerType
-ClangASTContext::GetTemplateArgument (const CompilerType& type, size_t arg_idx, lldb::TemplateArgumentKind &kind)
+ClangASTContext::GetTemplateArgument (void* type, size_t arg_idx, lldb::TemplateArgumentKind &kind)
 {
     if (!type)
         return CompilerType();
-    ClangASTContext* ast = type.GetTypeSystem()->AsClangASTContext();
-    if (ast)
+
+    clang::QualType qual_type (GetCanonicalQualType(type));
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
     {
-        clang::QualType qual_type (GetCanonicalQualType(type));
-        
-        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
-        switch (type_class)
-        {
-            case clang::Type::Record:
-                if (ast->GetCompleteType(type.GetOpaqueQualType()))
+        case clang::Type::Record:
+            if (GetCompleteType(type))
+            {
+                const clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
                 {
-                    const clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
-                    if (cxx_record_decl)
+                    const clang::ClassTemplateSpecializationDecl *template_decl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
+                    if (template_decl && arg_idx < template_decl->getTemplateArgs().size())
                     {
-                        const clang::ClassTemplateSpecializationDecl *template_decl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
-                        if (template_decl && arg_idx < template_decl->getTemplateArgs().size())
+                        const clang::TemplateArgument &template_arg = template_decl->getTemplateArgs()[arg_idx];
+                        switch (template_arg.getKind())
                         {
-                            const clang::TemplateArgument &template_arg = template_decl->getTemplateArgs()[arg_idx];
-                            switch (template_arg.getKind())
-                            {
-                                case clang::TemplateArgument::Null:
-                                    kind = eTemplateArgumentKindNull;
-                                    return CompilerType();
-                                    
-                                case clang::TemplateArgument::Type:
-                                    kind = eTemplateArgumentKindType;
-                                    return CompilerType(ast, template_arg.getAsType().getAsOpaquePtr());
-                                    
-                                case clang::TemplateArgument::Declaration:
-                                    kind = eTemplateArgumentKindDeclaration;
-                                    return CompilerType();
-                                    
-                                case clang::TemplateArgument::Integral:
-                                    kind = eTemplateArgumentKindIntegral;
-                                    return CompilerType(ast, template_arg.getIntegralType().getAsOpaquePtr());
-                                    
-                                case clang::TemplateArgument::Template:
-                                    kind = eTemplateArgumentKindTemplate;
-                                    return CompilerType();
-                                    
-                                case clang::TemplateArgument::TemplateExpansion:
-                                    kind = eTemplateArgumentKindTemplateExpansion;
-                                    return CompilerType();
-                                    
-                                case clang::TemplateArgument::Expression:
-                                    kind = eTemplateArgumentKindExpression;
-                                    return CompilerType();
-                                    
-                                case clang::TemplateArgument::Pack:
-                                    kind = eTemplateArgumentKindPack;
-                                    return CompilerType();
-                                    
-                                default:
-                                    assert (!"Unhandled clang::TemplateArgument::ArgKind");
-                                    break;
-                            }
+                            case clang::TemplateArgument::Null:
+                                kind = eTemplateArgumentKindNull;
+                                return CompilerType();
+                                
+                            case clang::TemplateArgument::Type:
+                                kind = eTemplateArgumentKindType;
+                                return CompilerType(getASTContext(), template_arg.getAsType());
+                                
+                            case clang::TemplateArgument::Declaration:
+                                kind = eTemplateArgumentKindDeclaration;
+                                return CompilerType();
+                                
+                            case clang::TemplateArgument::Integral:
+                                kind = eTemplateArgumentKindIntegral;
+                                return CompilerType(getASTContext(), template_arg.getIntegralType());
+                                
+                            case clang::TemplateArgument::Template:
+                                kind = eTemplateArgumentKindTemplate;
+                                return CompilerType();
+                                
+                            case clang::TemplateArgument::TemplateExpansion:
+                                kind = eTemplateArgumentKindTemplateExpansion;
+                                return CompilerType();
+                                
+                            case clang::TemplateArgument::Expression:
+                                kind = eTemplateArgumentKindExpression;
+                                return CompilerType();
+                                
+                            case clang::TemplateArgument::Pack:
+                                kind = eTemplateArgumentKindPack;
+                                return CompilerType();
+                                
+                            default:
+                                assert (!"Unhandled clang::TemplateArgument::ArgKind");
+                                break;
                         }
                     }
                 }
-                break;
-                
-            case clang::Type::Typedef:
-                return GetTemplateArgument(CompilerType (ast, llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr()), arg_idx, kind);
-                
-            case clang::Type::Elaborated:
-                return GetTemplateArgument(CompilerType (ast, llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr()), arg_idx, kind);
-                
-            case clang::Type::Paren:
-                return GetTemplateArgument(CompilerType (ast, llvm::cast<clang::ParenType>(qual_type)->desugar().getAsOpaquePtr()), arg_idx, kind);
-                
-            default:
-                break;
-        }
+            }
+            break;
+            
+        case clang::Type::Typedef:
+            return (CompilerType (getASTContext(), llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType())).GetTemplateArgument(arg_idx, kind);
+            
+        case clang::Type::Elaborated:
+            return (CompilerType (getASTContext(), llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType())).GetTemplateArgument(arg_idx, kind);
+            
+        case clang::Type::Paren:
+            return (CompilerType (getASTContext(), llvm::cast<clang::ParenType>(qual_type)->desugar())).GetTemplateArgument(arg_idx, kind);
+            
+        default:
+            break;
     }
     kind = eTemplateArgumentKindNull;
     return CompilerType ();

@@ -533,7 +533,7 @@ uint32_t
 SBType::GetNumberOfTemplateArguments ()
 {
     if (IsValid())
-        return ClangASTContext::GetNumTemplateArguments(m_opaque_sp->GetCompilerType(false));
+        return m_opaque_sp->GetCompilerType(false).GetNumTemplateArguments();
     return 0;
 }
 
@@ -543,7 +543,7 @@ SBType::GetTemplateArgumentType (uint32_t idx)
     if (IsValid())
     {
         TemplateArgumentKind kind = eTemplateArgumentKindNull;
-        CompilerType template_arg_type = ClangASTContext::GetTemplateArgument(m_opaque_sp->GetCompilerType(false), idx, kind);
+        CompilerType template_arg_type = m_opaque_sp->GetCompilerType(false).GetTemplateArgument(idx, kind);
         if (template_arg_type.IsValid())
             return SBType(template_arg_type);
     }
@@ -556,7 +556,7 @@ SBType::GetTemplateArgumentKind (uint32_t idx)
 {
     TemplateArgumentKind kind = eTemplateArgumentKindNull;
     if (IsValid())
-        ClangASTContext::GetTemplateArgument(m_opaque_sp->GetCompilerType(false), idx, kind);
+        m_opaque_sp->GetCompilerType(false).GetTemplateArgument(idx, kind);
     return kind;
 }
 
