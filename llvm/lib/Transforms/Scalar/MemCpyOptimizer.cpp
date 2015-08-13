@@ -71,9 +71,9 @@ static int64_t GetOffsetFromIndex(const GEPOperator *GEP, unsigned Idx,
   return Offset;
 }
 
-/// IsPointerOffset - Return true if Ptr1 is provably equal to Ptr2 plus a
-/// constant offset, and return that constant offset.  For example, Ptr1 might
-/// be &A[42], and Ptr2 might be &A[40].  In this case offset would be -8.
+/// Return true if Ptr1 is provably equal to Ptr2 plus a constant offset, and
+/// return that constant offset. For example, Ptr1 might be &A[42], and Ptr2
+/// might be &A[40]. In this case offset would be -8.
 static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
                             const DataLayout &DL) {
   Ptr1 = Ptr1->stripPointerCasts();
@@ -125,7 +125,7 @@ static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
 }
 
 
-/// MemsetRange - Represents a range of memset'd bytes with the ByteVal value.
+/// Represents a range of memset'd bytes with the ByteVal value.
 /// This allows us to analyze stores like:
 ///   store 0 -> P+1
 ///   store 0 -> P+0
@@ -200,7 +200,7 @@ bool MemsetRange::isProfitableToUseMemset(const DataLayout &DL) const {
 
 namespace {
 class MemsetRanges {
-  /// Ranges - A sorted list of the memset ranges.
+  /// A sorted list of the memset ranges.
   SmallVector<MemsetRange, 8> Ranges;
   typedef SmallVectorImpl<MemsetRange>::iterator range_iterator;
   const DataLayout &DL;
@@ -239,7 +239,7 @@ public:
 } // end anon namespace
 
 
-/// addRange - Add a new store to the MemsetRanges data structure.  This adds a
+/// Add a new store to the MemsetRanges data structure.  This adds a
 /// new range for the specified store at the specified offset, merging into
 /// existing ranges as appropriate.
 void MemsetRanges::addRange(int64_t Start, int64_t Size, Value *Ptr,
@@ -350,7 +350,7 @@ namespace {
   char MemCpyOpt::ID = 0;
 }
 
-// createMemCpyOptPass - The public interface to this file...
+/// The public interface to this file...
 FunctionPass *llvm::createMemCpyOptPass() { return new MemCpyOpt(); }
 
 INITIALIZE_PASS_BEGIN(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
@@ -363,10 +363,10 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MemCpyOpt, "memcpyopt", "MemCpy Optimization",
                     false, false)
 
-/// tryMergingIntoMemset - When scanning forward over instructions, we look for
-/// some other patterns to fold away.  In particular, this looks for stores to
-/// neighboring locations of memory.  If it sees enough consecutive ones, it
-/// attempts to merge them together into a memcpy/memset.
+/// When scanning forward over instructions, we look for some other patterns to
+/// fold away. In particular, this looks for stores to neighboring locations of
+/// memory. If it sees enough consecutive ones, it attempts to merge them
+/// together into a memcpy/memset.
 Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
                                              Value *StartPtr, Value *ByteVal) {
   const DataLayout &DL = StartInst->getModule()->getDataLayout();
@@ -567,7 +567,7 @@ bool MemCpyOpt::processMemSet(MemSetInst *MSI, BasicBlock::iterator &BBI) {
 }
 
 
-/// performCallSlotOptzn - takes a memcpy and a call that it depends on,
+/// Takes a memcpy and a call that it depends on,
 /// and checks for the possibility of a call slot optimization by having
 /// the call write its result directly into the destination of the memcpy.
 bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
@@ -756,10 +756,8 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   return true;
 }
 
-/// processMemCpyMemCpyDependence - We've found that the (upward scanning)
-/// memory dependence of memcpy 'M' is the memcpy 'MDep'.  Try to simplify M to
-/// copy from MDep's input if we can.
-///
+/// We've found that the (upward scanning) memory dependence of memcpy 'M' is
+/// the memcpy 'MDep'. Try to simplify M to copy from MDep's input if we can.
 bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep) {
   // We can only transforms memcpy's where the dest of one is the source of the
   // other.
@@ -929,7 +927,7 @@ bool MemCpyOpt::performMemCpyToMemSetOptzn(MemCpyInst *MemCpy,
   return true;
 }
 
-/// processMemCpy - perform simplification of memcpy's.  If we have memcpy A
+/// Perform simplification of memcpy's.  If we have memcpy A
 /// which copies X to Y, and memcpy B which copies Y to Z, then we can rewrite
 /// B to be a memcpy from X to Z (or potentially a memmove, depending on
 /// circumstances). This allows later passes to remove the first memcpy
@@ -1030,8 +1028,8 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
   return false;
 }
 
-/// processMemMove - Transforms memmove calls to memcpy calls when the src/dst
-/// are guaranteed not to alias.
+/// Transforms memmove calls to memcpy calls when the src/dst are guaranteed
+/// not to alias.
 bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
@@ -1061,7 +1059,7 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
   return true;
 }
 
-/// processByValArgument - This is called on every byval argument in call sites.
+/// This is called on every byval argument in call sites.
 bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   const DataLayout &DL = CS.getCaller()->getParent()->getDataLayout();
   // Find out what feeds this byval argument.
@@ -1133,7 +1131,7 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   return true;
 }
 
-/// iterateOnFunction - Executes one iteration of MemCpyOpt.
+/// Executes one iteration of MemCpyOpt.
 bool MemCpyOpt::iterateOnFunction(Function &F) {
   bool MadeChange = false;
 
@@ -1170,9 +1168,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
   return MadeChange;
 }
 
-// MemCpyOpt::runOnFunction - This is the main transformation entry point for a
-// function.
-//
+/// This is the main transformation entry point for a function.
 bool MemCpyOpt::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
