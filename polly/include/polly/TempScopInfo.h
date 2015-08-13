@@ -255,10 +255,6 @@ class TempScopInfo : public FunctionPass {
   // Build the affine function of the given condition
   Comparison buildAffineCondition(Value &V, bool inverted);
 
-  // Return the temporary Scop information of Region R, where R must be a valid
-  // part of Scop
-  TempScop *getTempScop(Region &R);
-
   // Build the temprory information of Region R, where R must be a valid part
   // of Scop.
   TempScop *buildTempScop(Region &R);
