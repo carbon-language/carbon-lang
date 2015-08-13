@@ -35,7 +35,12 @@ public:
   /// Construct a new BumpVectorContext that creates a new BumpPtrAllocator
   /// and destroys it when the BumpVectorContext object is destroyed.
   BumpVectorContext() : Alloc(new llvm::BumpPtrAllocator(), 1) {}
-  
+
+  BumpVectorContext(BumpVectorContext &&Other) : Alloc(Other.Alloc) {
+    Other.Alloc.setInt(false);
+    Other.Alloc.setPointer(nullptr);
+  }
+
   /// Construct a new BumpVectorContext that reuses an existing
   /// BumpPtrAllocator.  This BumpPtrAllocator is not destroyed when the
   /// BumpVectorContext object is destroyed.
