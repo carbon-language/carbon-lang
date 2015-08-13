@@ -32,12 +32,12 @@ namespace clang {
 }
 
 /// \brief Allocates memory within a Clang preprocessing record.
-void* operator new(size_t bytes, clang::PreprocessingRecord& PR,
-                   unsigned alignment = 8) throw();
+void *operator new(size_t bytes, clang::PreprocessingRecord &PR,
+                   unsigned alignment = 8) LLVM_NOEXCEPT;
 
 /// \brief Frees memory allocated in a Clang preprocessing record.
 void operator delete(void *ptr, clang::PreprocessingRecord &PR,
-                     unsigned) throw();
+                     unsigned) LLVM_NOEXCEPT;
 
 namespace clang {
   class MacroDefinitionRecord;
@@ -98,27 +98,25 @@ namespace clang {
 
     // Only allow allocation of preprocessed entities using the allocator 
     // in PreprocessingRecord or by doing a placement new.
-    void* operator new(size_t bytes, PreprocessingRecord& PR,
-                       unsigned alignment = 8) throw() {
+    void *operator new(size_t bytes, PreprocessingRecord &PR,
+                       unsigned alignment = 8) LLVM_NOEXCEPT {
       return ::operator new(bytes, PR, alignment);
     }
-    
-    void* operator new(size_t bytes, void* mem) throw() {
-      return mem;
-    }
-    
-    void operator delete(void* ptr, PreprocessingRecord& PR, 
-                         unsigned alignment) throw() {
+
+    void *operator new(size_t bytes, void *mem) LLVM_NOEXCEPT { return mem; }
+
+    void operator delete(void *ptr, PreprocessingRecord &PR,
+                         unsigned alignment) LLVM_NOEXCEPT {
       return ::operator delete(ptr, PR, alignment);
     }
-    
-    void operator delete(void*, std::size_t) throw() { }
-    void operator delete(void*, void*) throw() { }
-    
+
+    void operator delete(void *, std::size_t) LLVM_NOEXCEPT {}
+    void operator delete(void *, void *) LLVM_NOEXCEPT {}
+
   private:
     // Make vanilla 'new' and 'delete' illegal for preprocessed entities.
-    void* operator new(size_t bytes) throw();
-    void operator delete(void* data) throw();
+    void *operator new(size_t bytes) LLVM_NOEXCEPT;
+    void operator delete(void *data) LLVM_NOEXCEPT;
   };
   
   /// \brief Records the presence of a preprocessor directive.
@@ -525,13 +523,13 @@ namespace clang {
   };
 } // end namespace clang
 
-inline void* operator new(size_t bytes, clang::PreprocessingRecord& PR,
-                          unsigned alignment) throw() {
+inline void *operator new(size_t bytes, clang::PreprocessingRecord &PR,
+                          unsigned alignment) LLVM_NOEXCEPT {
   return PR.Allocate(bytes, alignment);
 }
 
-inline void operator delete(void* ptr, clang::PreprocessingRecord& PR,
-                            unsigned) throw() {
+inline void operator delete(void *ptr, clang::PreprocessingRecord &PR,
+                            unsigned) LLVM_NOEXCEPT {
   PR.Deallocate(ptr);
 }
 
