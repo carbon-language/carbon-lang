@@ -426,3 +426,57 @@ tlbi vale2
 ; CHECK-ERRORS: error: specified tlbi op requires a register
 tlbi vale3
 ; CHECK-ERRORS: error: specified tlbi op requires a register
+
+
+; Check that we give the proper "too few operands" diagnostic even when
+; using short-form NEON.
+
+  add.16b v0, v1, v2, v3
+  add.8b v0, v1
+  sub.8h v0, v1
+  fadd.4s v0
+  fmul.2s
+
+; CHECK-ERRORS: error: invalid operand for instruction
+; CHECK-ERRORS:   add.16b v0, v1, v2, v3
+; CHECK-ERRORS:                       ^
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   add.8b v0, v1
+; CHECK-ERRORS:   ^
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   sub.8h v0, v1
+; CHECK-ERRORS:   ^
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   fadd.4s v0
+; CHECK-ERRORS:   ^
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   fmul.2s
+; CHECK-ERRORS:   ^
+
+; Also for 2-operand instructions.
+
+  frsqrte.4s v0, v1, v2
+  frsqrte.2s v0
+  frecpe.2d
+
+; CHECK-ERRORS: error: invalid operand for instruction
+; CHECK-ERRORS:   frsqrte.4s v0, v1, v2
+; CHECK-ERRORS                       ^
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   frsqrte.2s v0
+; CHECK-ERRORS:   ^
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   frecpe.2d
+; CHECK-ERRORS:   ^
+
+; And check that we do the same for non-NEON instructions.
+
+  b.ne
+  b.eq 0, 0
+
+; CHECK-ERRORS: error: too few operands for instruction
+; CHECK-ERRORS:   b.ne
+; CHECK-ERRORS:   ^
+; CHECK-ERRORS: error: invalid operand for instruction
+; CHECK-ERRORS:   b.eq 0, 0
+; CHECK-ERRORS:           ^
