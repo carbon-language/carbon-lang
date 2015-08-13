@@ -723,16 +723,8 @@ NativeRegisterContextLinux_x86_64::ReadAllRegisterValues (lldb::DataBufferSP &da
             if (reg_info == nullptr)
                 reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_rax");
 
-            if (reg_info != nullptr) {
-                NativeProcessProtocolSP process_sp(m_thread.GetProcess());
-                if (!process_sp)
-                    return Error("NativeProcessProtocol is NULL");
-
-                NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
-                return process_p->DoOperation([&] {
-                    return DoWriteRegisterValue(reg_info->byte_offset,reg_info->name,value);
-                });
-            }
+            if (reg_info != nullptr)
+                return DoWriteRegisterValue(reg_info->byte_offset,reg_info->name,value);
         }
 
     return error;
