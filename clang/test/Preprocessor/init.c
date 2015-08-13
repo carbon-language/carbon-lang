@@ -6984,14 +6984,15 @@
 // SPARC:#define __sparcv8 1
 // SPARC:#define sparc 1
 // 
-// RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-netbsd < /dev/null | FileCheck -check-prefix SPARC-NETBSD %s
-// SPARC-NETBSD:#define __INTPTR_FMTd__ "ld"
-// SPARC-NETBSD:#define __INTPTR_FMTi__ "li"
-// SPARC-NETBSD:#define __INTPTR_MAX__ 2147483647L
-// SPARC-NETBSD:#define __INTPTR_TYPE__ long int
-// SPARC-NETBSD:#define __PTRDIFF_TYPE__ long int
-// SPARC-NETBSD:#define __SIZE_TYPE__ long unsigned int
-// SPARC-NETBSD:#define __UINTPTR_TYPE__ long unsigned int
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-netbsd < /dev/null | FileCheck -check-prefix SPARC-NETOPENBSD %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-openbsd < /dev/null | FileCheck -check-prefix SPARC-NETOPENBSD %s
+// SPARC-NETOPENBSD:#define __INTPTR_FMTd__ "ld"
+// SPARC-NETOPENBSD:#define __INTPTR_FMTi__ "li"
+// SPARC-NETOPENBSD:#define __INTPTR_MAX__ 2147483647L
+// SPARC-NETOPENBSD:#define __INTPTR_TYPE__ long int
+// SPARC-NETOPENBSD:#define __PTRDIFF_TYPE__ long int
+// SPARC-NETOPENBSD:#define __SIZE_TYPE__ long unsigned int
+// SPARC-NETOPENBSD:#define __UINTPTR_TYPE__ long unsigned int
 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s
 //
