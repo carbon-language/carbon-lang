@@ -463,6 +463,12 @@ bool LoopUnswitch::processCurrentLoop() {
     return true;
   }
 
+  // Do not do non-trivial unswitch while optimizing for size.
+  // FIXME: Use Function::optForSize().
+  if (OptimizeForSize ||
+      loopHeader->getParent()->hasFnAttribute(Attribute::OptimizeForSize))
+    return false;
+
   // Loop over all of the basic blocks in the loop.  If we find an interior
   // block that is branching on a loop-invariant condition, we can unswitch this
   // loop.
@@ -586,8 +592,6 @@ static BasicBlock *isTrivialLoopExitBlock(Loop *L, BasicBlock *BB) {
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
                                         TerminatorInst *TI) {
-  Function *F = loopHeader->getParent();
-
   // Check to see if it would be profitable to unswitch current loop.
   if (!BranchesInfo.CostAllowsUnswitching()) {
     DEBUG(dbgs() << "NOT unswitching loop %"
@@ -597,11 +601,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
                  << ". Cost too high.\n");
     return false;
   }
-
-  // Do not do non-trivial unswitch while optimizing for size.
-  // FIXME: Use Function::optForSize().
-  if (OptimizeForSize || F->hasFnAttribute(Attribute::OptimizeForSize))
-    return false;
 
   UnswitchNontrivialCondition(LoopCond, Val, currentLoop, TI);
   return true;
