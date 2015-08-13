@@ -3651,17 +3651,11 @@ SDValue AArch64TargetLowering::LowerFCOPYSIGN(SDValue Op,
   SDValue In1 = Op.getOperand(0);
   SDValue In2 = Op.getOperand(1);
   EVT SrcVT = In2.getValueType();
-  if (SrcVT != VT) {
-    if (SrcVT == MVT::f32 && VT == MVT::f64)
-      In2 = DAG.getNode(ISD::FP_EXTEND, DL, VT, In2);
-    else if (SrcVT == MVT::f64 && VT == MVT::f32)
-      In2 = DAG.getNode(ISD::FP_ROUND, DL, VT, In2,
-                        DAG.getIntPtrConstant(0, DL));
-    else
-      // FIXME: Src type is different, bail out for now. Can VT really be a
-      // vector type?
-      return SDValue();
-  }
+
+  if (SrcVT.bitsLT(VT))
+    In2 = DAG.getNode(ISD::FP_EXTEND, DL, VT, In2);
+  else if (SrcVT.bitsGT(VT))
+    In2 = DAG.getNode(ISD::FP_ROUND, DL, VT, In2, DAG.getIntPtrConstant(0, DL));
 
   EVT VecVT;
   EVT EltVT;
