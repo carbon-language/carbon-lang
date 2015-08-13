@@ -32,13 +32,13 @@ namespace {
 // Chunks cannot belong to more than one OutputSections. The writer
 // creates multiple OutputSections and assign them unique,
 // non-overlapping file offsets and VAs.
-template <bool Is64Bits> class OutputSection {
+template <bool Is64Bits> class OutputSectionBase {
 public:
   typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
   typedef
       typename std::conditional<Is64Bits, Elf64_Shdr, Elf32_Shdr>::type HeaderT;
 
-  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
+  OutputSectionBase(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
       : Name(Name) {
     memset(&Header, 0, sizeof(HeaderT));
     Header.sh_type = sh_type;
@@ -46,8 +46,6 @@ public:
   }
   void setVA(uintX_t VA) { Header.sh_addr = VA; }
   void setFileOffset(uintX_t Off) { Header.sh_offset = Off; }
-  void addChunk(Chunk *C);
-  std::vector<Chunk *> &getChunks() { return Chunks; }
   template <endianness E>
   void writeHeaderTo(typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr);
   StringRef getName() { return Name; }
@@ -59,10 +57,47 @@ public:
   uintX_t getOffset() { return Header.sh_offset; }
   uintX_t getAlign() { return Header.sh_addralign; }
 
-private:
+  virtual void finalize() {}
+  virtual void writeTo(uint8_t *Buf) = 0;
+
+protected:
   StringRef Name;
   HeaderT Header;
+  ~OutputSectionBase() = default;
+};
+
+template <bool Is64Bits>
+class OutputSection final : public OutputSectionBase<Is64Bits> {
+public:
+  typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
+  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
+      : OutputSectionBase<Is64Bits>(Name, sh_type, sh_flags) {}
+
+  void addChunk(Chunk *C);
+  void writeTo(uint8_t *Buf) override;
+
+private:
   std::vector<Chunk *> Chunks;
+};
+
+template <bool Is64Bits>
+class StringTableSection final : public OutputSectionBase<Is64Bits> {
+  llvm::StringTableBuilder StrTabBuilder;
+
+public:
+  typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
+  StringTableSection() : OutputSectionBase<Is64Bits>(".strtab", SHT_STRTAB, 0) {
+    this->Header.sh_addralign = 1;
+  }
+
+  void add(StringRef S) { StrTabBuilder.add(S); }
+  size_t getOffset(StringRef S) { return StrTabBuilder.getOffset(S); }
+  void writeTo(uint8_t *Buf) override;
+
+  void finalize() override {
+    StrTabBuilder.finalize(StringTableBuilder::ELF);
+    this->Header.sh_size = StrTabBuilder.data().size();
+  }
 };
 
 // The writer writes a SymbolTable result to a file.
@@ -83,14 +118,15 @@ private:
   SymbolTable *Symtab;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection<ELFT::Is64Bits>> CAlloc;
-  std::vector<OutputSection<ELFT::Is64Bits> *> OutputSections;
+  std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
 
   uintX_t FileSize;
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
-  uintX_t StringTableOff;
+
   unsigned StringTableIndex;
-  StringTableBuilder StrTabBuilder;
+  StringTableSection<ELFT::Is64Bits> StringTable;
+
   unsigned NumSections;
 };
 } // anonymous namespace
@@ -122,19 +158,30 @@ template <class ELFT> void Writer<ELFT>::run() {
 template <bool Is64Bits> void OutputSection<Is64Bits>::addChunk(Chunk *C) {
   Chunks.push_back(C);
   uint32_t Align = C->getAlign();
-  if (Align > Header.sh_addralign)
-    Header.sh_addralign = Align;
+  if (Align > this->Header.sh_addralign)
+    this->Header.sh_addralign = Align;
 
-  uintX_t Off = Header.sh_size;
+  uintX_t Off = this->Header.sh_size;
   Off = RoundUpToAlignment(Off, Align);
   C->setOutputSectionOff(Off);
   Off += C->getSize();
-  Header.sh_size = Off;
+  this->Header.sh_size = Off;
+}
+
+template <bool Is64Bits> void OutputSection<Is64Bits>::writeTo(uint8_t *Buf) {
+  for (Chunk *C : Chunks)
+    C->writeTo(Buf);
+}
+
+template <bool Is64Bits>
+void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
+  StringRef Data = StrTabBuilder.data();
+  memcpy(Buf, Data.data(), Data.size());
 }
 
 template <bool Is64Bits>
 template <endianness E>
-void OutputSection<Is64Bits>::writeHeaderTo(
+void OutputSectionBase<Is64Bits>::writeHeaderTo(
     typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr) {
   SHdr->sh_name = Header.sh_name;
   SHdr->sh_type = Header.sh_type;
@@ -198,7 +245,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
 }
 
 template <bool Is64Bits>
-static bool compSec(OutputSection<Is64Bits> *A, OutputSection<Is64Bits> *B) {
+static bool compSec(OutputSectionBase<Is64Bits> *A,
+                    OutputSectionBase<Is64Bits> *B) {
   // Place SHF_ALLOC sections first.
   return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
 }
@@ -213,7 +261,13 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
 
-  for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
+  OutputSections.push_back(&StringTable);
+  StringTableIndex = OutputSections.size();
+
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+    StringTable.add(Sec->getName());
+    Sec->finalize();
+
     uintX_t Align = Sec->getAlign();
     uintX_t Size = Sec->getSize();
     if (Sec->getFlags() & SHF_ALLOC) {
@@ -222,21 +276,12 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     }
     Sec->setFileOffset(FileOff);
     FileOff += RoundUpToAlignment(Size, Align);
-    StrTabBuilder.add(Sec->getName());
   }
 
   // Regular sections.
   NumSections = OutputSections.size();
 
   // First dummy section.
-  NumSections++;
-
-  // String table.
-  StrTabBuilder.add(".strtab");
-  StringTableIndex = NumSections;
-  StringTableOff = FileOff;
-  StrTabBuilder.finalize(StringTableBuilder::ELF);
-  FileOff += StrTabBuilder.data().size();
   NumSections++;
 
   FileOff += OffsetToAlignment(FileOff, ELFT::Is64Bits ? 8 : 4);
@@ -288,22 +333,10 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto SHdrs = reinterpret_cast<Elf_Shdr_Impl<ELFT> *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
-  for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
-    Sec->setNameOffset(StrTabBuilder.getOffset(Sec->getName()));
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
+    Sec->setNameOffset(StringTable.getOffset(Sec->getName()));
     Sec->template writeHeaderTo<ELFT::TargetEndianness>(SHdrs++);
   }
-
-  // String table.
-  SHdrs->sh_name = StrTabBuilder.getOffset(".strtab");
-  SHdrs->sh_type = SHT_STRTAB;
-  SHdrs->sh_flags = 0;
-  SHdrs->sh_addr = 0;
-  SHdrs->sh_offset = StringTableOff;
-  SHdrs->sh_size = StrTabBuilder.data().size();
-  SHdrs->sh_link = 0;
-  SHdrs->sh_info = 0;
-  SHdrs->sh_addralign = 1;
-  SHdrs->sh_entsize = 0;
 }
 
 template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
@@ -316,13 +349,6 @@ template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
 // Write section contents to a mmap'ed file.
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
-  for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
-    uint8_t *SecBuf = Buf + Sec->getOffset();
-    for (Chunk *C : Sec->getChunks())
-      C->writeTo(SecBuf);
-  }
-
-  // String table.
-  StringRef Data = StrTabBuilder.data();
-  memcpy(Buf + StringTableOff, Data.data(), Data.size());
+  for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
+    Sec->writeTo(Buf + Sec->getOffset());
 }
