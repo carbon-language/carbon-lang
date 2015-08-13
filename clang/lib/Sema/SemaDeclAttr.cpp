@@ -2491,17 +2491,17 @@ static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkFunctionOrMethodParameterIndex(S, D, Attr, 1, IdxExpr, Idx))
     return;
 
-  // make sure the format string is really a string
+  // Make sure the format string is really a string.
   QualType Ty = getFunctionOrMethodParamType(D, Idx);
 
-  bool not_nsstring_type = !isNSStringType(Ty, S.Context);
-  if (not_nsstring_type &&
+  bool NotNSStringTy = !isNSStringType(Ty, S.Context);
+  if (NotNSStringTy &&
       !isCFStringType(Ty, S.Context) &&
       (!Ty->isPointerType() ||
        !Ty->getAs<PointerType>()->getPointeeType()->isCharType())) {
     S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
-        << (not_nsstring_type ? "a string type" : "an NSString")
-        << IdxExpr->getSourceRange() << getFunctionOrMethodParamRange(D, 0);
+        << "a string type" << IdxExpr->getSourceRange()
+        << getFunctionOrMethodParamRange(D, 0);
     return;
   }
   Ty = getFunctionOrMethodResultType(D);
@@ -2510,7 +2510,7 @@ static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       (!Ty->isPointerType() ||
        !Ty->getAs<PointerType>()->getPointeeType()->isCharType())) {
     S.Diag(Attr.getLoc(), diag::err_format_attribute_result_not)
-        << (not_nsstring_type ? "string type" : "NSString")
+        << (NotNSStringTy ? "string type" : "NSString")
         << IdxExpr->getSourceRange() << getFunctionOrMethodParamRange(D, 0);
     return;
   }
