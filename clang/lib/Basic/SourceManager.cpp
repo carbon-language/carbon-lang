@@ -2135,6 +2135,63 @@ void SourceManager::PrintStats() const {
                << NumBinaryProbes << " binary.\n";
 }
 
+LLVM_DUMP_METHOD void SourceManager::dump() const {
+  llvm::raw_ostream &out = llvm::errs();
+
+  auto DumpSLocEntry = [&](int ID, const SrcMgr::SLocEntry &Entry,
+                           llvm::Optional<unsigned> NextStart) {
+    out << "SLocEntry <FileID " << ID << "> " << (Entry.isFile() ? "file" : "expansion")
+        << " <SourceLocation " << Entry.getOffset() << ":";
+    if (NextStart)
+      out << *NextStart << ">\n";
+    else
+      out << "???\?>\n";
+    if (Entry.isFile()) {
+      auto &FI = Entry.getFile();
+      if (FI.NumCreatedFIDs)
+        out << "  covers <FileID " << ID << ":" << int(ID + FI.NumCreatedFIDs)
+            << ">\n";
+      if (FI.getIncludeLoc().isValid())
+        out << "  included from " << FI.getIncludeLoc().getOffset() << "\n";
+      if (auto *CC = FI.getContentCache()) {
+        out << "  for " << (CC->OrigEntry ? CC->OrigEntry->getName() : "<none>")
+            << "\n";
+        if (CC->BufferOverridden)
+          out << "  contents overridden\n";
+        if (CC->ContentsEntry != CC->OrigEntry) {
+          out << "  contents from "
+              << (CC->ContentsEntry ? CC->ContentsEntry->getName() : "<none>")
+              << "\n";
+        }
+      }
+    } else {
+      auto &EI = Entry.getExpansion();
+      out << "  spelling from " << EI.getSpellingLoc().getOffset() << "\n";
+      out << "  macro " << (EI.isMacroArgExpansion() ? "arg" : "body")
+          << " range <" << EI.getExpansionLocStart().getOffset() << ":"
+          << EI.getExpansionLocEnd().getOffset() << ">\n";
+    }
+  };
+
+  // Dump local SLocEntries.
+  for (unsigned ID = 0, NumIDs = LocalSLocEntryTable.size(); ID != NumIDs; ++ID) {
+    DumpSLocEntry(ID, LocalSLocEntryTable[ID],
+                  ID == NumIDs - 1 ? NextLocalOffset
+                                   : LocalSLocEntryTable[ID + 1].getOffset());
+  }
+  // Dump loaded SLocEntries.
+  llvm::Optional<unsigned> NextStart;
+  for (unsigned Index = 0; Index != LoadedSLocEntryTable.size(); ++Index) {
+    int ID = -(int)Index - 2;
+    if (SLocEntryLoaded[Index]) {
+      DumpSLocEntry(ID, LoadedSLocEntryTable[Index], NextStart);
+      NextStart = LoadedSLocEntryTable[Index].getOffset();
+    } else {
+      NextStart = None;
+    }
+  }
+}
+
 ExternalSLocEntrySource::~ExternalSLocEntrySource() { }
 
 /// Return the amount of memory used by memory buffers, breaking down

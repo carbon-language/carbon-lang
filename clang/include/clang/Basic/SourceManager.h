@@ -1463,6 +1463,8 @@ public:
   ///
   void PrintStats() const;
 
+  void dump() const;
+
   /// \brief Get the number of local SLocEntries we have.
   unsigned local_sloc_entry_size() const { return LocalSLocEntryTable.size(); }
 
