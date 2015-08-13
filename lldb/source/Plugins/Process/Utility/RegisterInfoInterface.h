@@ -10,6 +10,8 @@
 #ifndef lldb_RegisterInfoInterface_h
 #define lldb_RegisterInfoInterface_h
 
+#include <vector>
+
 #include "lldb/Core/ArchSpec.h"
 
 namespace lldb_private
