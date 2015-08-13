@@ -136,7 +136,6 @@ private:
 
   public:
     SecKeychainBugVisitor(SymbolRef S) : Sym(S) {}
-    ~SecKeychainBugVisitor() override {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;
