@@ -19,6 +19,7 @@ function(add_compiler_rt_object_libraries name)
       set(libname "${name}.${os}")
       set(libnames ${libnames} ${libname})
       set(extra_cflags_${libname} ${DARWIN_${os}_CFLAGS})
+      list_union(LIB_ARCHS_${libname} DARWIN_${os}_ARCHS LIB_ARCHS)
     endforeach()
   else()
     foreach(arch ${LIB_ARCHS})
@@ -39,7 +40,8 @@ function(add_compiler_rt_object_libraries name)
     set_property(TARGET ${libname} APPEND PROPERTY
       COMPILE_DEFINITIONS ${LIB_DEFS})
     if(APPLE)
-      set_target_properties(${libname} PROPERTIES OSX_ARCHITECTURES "${LIB_ARCHS}")
+      set_target_properties(${libname} PROPERTIES
+        OSX_ARCHITECTURES "${LIB_ARCHS_${libname}}")
     endif()
   endforeach()
 endfunction()
@@ -118,8 +120,9 @@ macro(add_compiler_rt_darwin_dynamic_runtime name os)
   set_target_link_flags(${name} ${LIB_LINKFLAGS} ${DARWIN_${os}_LINKFLAGS})
   set_property(TARGET ${name} APPEND PROPERTY
     COMPILE_DEFINITIONS ${LIB_DEFS})
+  list_union(filtered_arches DARWIN_${os}_ARCHS LIB_ARCHS)
   set_target_properties(${name} PROPERTIES
-    OSX_ARCHITECTURES "${LIB_ARCHS}"
+    OSX_ARCHITECTURES "${filtered_arches}"
     LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
   install(TARGETS ${name}
     LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})

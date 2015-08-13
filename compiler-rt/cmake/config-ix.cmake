@@ -173,7 +173,7 @@ if(ANDROID)
   # Examine compiler output instead.
   detect_target_arch()
   set(COMPILER_RT_OS_SUFFIX "-android")
-else()
+elseif(NOT APPLE) # Supported archs for Apple platforms are generated later
   if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
     if(NOT MSVC)
       test_target_arch(x86_64 "" "-m64")
@@ -220,8 +220,6 @@ else()
   set(COMPILER_RT_OS_SUFFIX "")
 endif()
 
-message(STATUS "Compiler-RT supported architectures: ${COMPILER_RT_SUPPORTED_ARCH}")
-
 # Takes ${ARGN} and puts only supported architectures in @out_var list.
 function(filter_available_targets out_var)
   set(archs ${${out_var}})
@@ -244,26 +242,190 @@ function(get_target_flags_for_arch arch out_var)
   endif()
 endfunction()
 
-# Architectures supported by compiler-rt libraries.
-filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 i686 powerpc64 powerpc64le arm aarch64 mips mips64 mipsel mips64el)
-# LSan and UBSan common files should be available on all architectures supported
-# by other sanitizers (even if they build into dummy object files).
-filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
-  ${SANITIZER_COMMON_SUPPORTED_ARCH})
-filter_available_targets(UBSAN_COMMON_SUPPORTED_ARCH
-  ${SANITIZER_COMMON_SUPPORTED_ARCH})
-filter_available_targets(ASAN_SUPPORTED_ARCH
-  x86_64 i386 i686 powerpc64 powerpc64le arm mips mipsel mips64 mips64el aarch64)
-filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64 mips64 mips64el aarch64)
-filter_available_targets(LSAN_SUPPORTED_ARCH x86_64 mips64 mips64el)
-filter_available_targets(MSAN_SUPPORTED_ARCH x86_64 mips64 mips64el)
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 i686 arm mips mips64
-  mipsel mips64el aarch64 powerpc64 powerpc64le)
-filter_available_targets(TSAN_SUPPORTED_ARCH x86_64 mips64 mips64el)
-filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 i686 arm aarch64 mips
-  mipsel mips64 mips64el powerpc64 powerpc64le)
-filter_available_targets(SAFESTACK_SUPPORTED_ARCH x86_64 i386 i686)
+set(ARM64 aarch64)
+set(ARM32 arm)
+set(X86_64 x86_64)
+if(APPLE)
+  set(ARM64 arm64)
+  set(ARM32 armv7 armv7s)
+  set(X86_64 x86_64 x86_64h)
+endif()
+
+set(ALL_SANITIZER_COMMON_SUPPORTED_ARCH ${X86_64} i386 i686 powerpc64
+  powerpc64le ${ARM32} ${ARM64} mips mips64 mipsel mips64el)
+set(ALL_ASAN_SUPPORTED_ARCH ${X86_64} i386 i686 powerpc64 powerpc64le ${ARM32}
+  ${ARM64} mips mipsel mips64 mips64el)
+set(ALL_DFSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el ${ARM64})
+set(ALL_LSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
+set(ALL_MSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
+set(ALL_PROFILE_SUPPORTED_ARCH ${X86_64} i386 i686 ${ARM32} mips mips64
+    mipsel mips64el ${ARM64} powerpc64 powerpc64le)
+set(ALL_TSAN_SUPPORTED_ARCH ${X86_64} mips64 mips64el)
+set(ALL_UBSAN_SUPPORTED_ARCH ${X86_64} i386 i686 ${ARM32} ${ARM64} mips
+    mipsel mips64 mips64el powerpc64 powerpc64le)
+set(ALL_SAFESTACK_SUPPORTED_ARCH ${X86_64} i386 i686)
+
+if(APPLE)
+  include(CompilerRTDarwinUtils)
+
+  option(COMPILER_RT_ENABLE_IOS "Enable building for iOS - Experimental" Off)
+
+  find_darwin_sdk_dir(OSX_SDK_DIR macosx)
+  find_darwin_sdk_dir(IOSSIM_SDK_DIR iphonesimulator)
+  find_darwin_sdk_dir(IOS_SDK_DIR iphoneos)
+
+  # Note: In order to target x86_64h on OS X the minimum deployment target must
+  # be 10.8 or higher.
+  set(SANITIZER_COMMON_SUPPORTED_OS osx)
+  if(NOT SANITIZER_MIN_OSX_VERSION)
+    string(REGEX MATCH "-mmacosx-version-min=([.0-9]+)"
+           MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
+    if(MACOSX_VERSION_MIN_FLAG)
+      set(SANITIZER_MIN_OSX_VERSION "${CMAKE_MATCH_1}")
+    elseif(CMAKE_OSX_DEPLOYMENT_TARGET)
+      set(SANITIZER_MIN_OSX_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
+    else()
+      set(SANITIZER_MIN_OSX_VERSION 10.9)
+    endif()
+    if(SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.7")
+      message(FATAL_ERROR "Too old OS X version: ${SANITIZER_MIN_OSX_VERSION}")
+    endif()
+  endif()
+
+  # We're setting the flag manually for each target OS
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "")
+  
+  set(DARWIN_COMMON_CFLAGS -stdlib=libc++)
+  set(DARWIN_COMMON_LINKFLAGS
+    -stdlib=libc++
+    -lc++
+    -lc++abi)
+  
+  set(DARWIN_osx_CFLAGS
+    ${DARWIN_COMMON_CFLAGS}
+    -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
+  set(DARWIN_osx_LINKFLAGS
+    ${DARWIN_COMMON_LINKFLAGS}
+    -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
+
+  if(OSX_SDK_DIR)
+    list(APPEND DARWIN_osx_CFLAGS -isysroot ${OSX_SDK_DIR})
+    list(APPEND DARWIN_osx_LINKFLAGS -isysroot ${OSX_SDK_DIR})
+  endif()
+
+  # Figure out which arches to use for each OS
+  darwin_get_toolchain_supported_archs(toolchain_arches)
+  message(STATUS "Toolchain supported arches: ${toolchain_arches}")
+  
+  if(NOT MACOSX_VERSION_MIN_FLAG)
+    darwin_test_archs(osx
+      DARWIN_osx_ARCHS
+      ${toolchain_arches})
+    message(STATUS "OSX supported arches: ${DARWIN_osx_ARCHS}")
+    foreach(arch ${DARWIN_osx_ARCHS})
+      list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
+      set(CAN_TARGET_${arch} 1)
+    endforeach()
+
+    if(IOSSIM_SDK_DIR)
+      set(DARWIN_iossim_CFLAGS
+        ${DARWIN_COMMON_CFLAGS}
+        -mios-simulator-version-min=7.0
+        -isysroot ${IOSSIM_SDK_DIR})
+      set(DARWIN_iossim_LINKFLAGS
+        ${DARWIN_COMMON_LINKFLAGS}
+        -mios-simulator-version-min=7.0
+        -isysroot ${IOSSIM_SDK_DIR})
+
+      list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
+      darwin_test_archs(iossim
+        DARWIN_iossim_ARCHS
+        ${toolchain_arches})
+      message(STATUS "iOS Simulator supported arches: ${DARWIN_iossim_ARCHS}")
+      foreach(arch ${DARWIN_iossim_ARCHS})
+        list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
+        set(CAN_TARGET_${arch} 1)
+      endforeach()
+    endif()
+
+    if(IOS_SDK_DIR AND COMPILER_RT_ENABLE_IOS)
+      set(DARWIN_ios_CFLAGS
+        ${DARWIN_COMMON_CFLAGS}
+        -miphoneos-version-min=7.0
+        -isysroot ${IOS_SDK_DIR})
+      set(DARWIN_ios_LINKFLAGS
+        ${DARWIN_COMMON_LINKFLAGS}
+        -miphoneos-version-min=7.0
+        -isysroot ${IOS_SDK_DIR})
+
+      list(APPEND SANITIZER_COMMON_SUPPORTED_OS ios)
+      darwin_test_archs(ios
+        DARWIN_ios_ARCHS
+        ${toolchain_arches})
+      message(STATUS "iOS supported arches: ${DARWIN_ios_ARCHS}")
+      foreach(arch ${DARWIN_ios_ARCHS})
+        list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
+        set(CAN_TARGET_${arch} 1)
+      endforeach()
+    endif()
+  endif()
+
+  # for list_union
+  include(CompilerRTUtils)
+
+  list_union(SANITIZER_COMMON_SUPPORTED_ARCH
+    ALL_SANITIZER_COMMON_SUPPORTED_ARCH
+    COMPILER_RT_SUPPORTED_ARCH
+    )
+  set(LSAN_COMMON_SUPPORTED_ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH})
+  set(UBSAN_COMMON_SUPPORTED_ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH})
+  list_union(ASAN_SUPPORTED_ARCH
+    ALL_ASAN_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+  list_union(DFSAN_SUPPORTED_ARCH
+    ALL_DFSAN_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+  list_union(LSAN_SUPPORTED_ARCH
+    ALL_LSAN_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+  list_union(MSAN_SUPPORTED_ARCH
+    ALL_MSAN_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+  # Note: profiles is only built for OS X
+  list_union(PROFILE_SUPPORTED_ARCH
+    ALL_PROFILE_SUPPORTED_ARCH
+    DARWIN_osx_ARCHS)
+  list_union(TSAN_SUPPORTED_ARCH
+    ALL_TSAN_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+  list_union(UBSAN_SUPPORTED_ARCH
+    ALL_UBSAN_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+  list_union(SAFESTACK_SUPPORTED_ARCH
+    ALL_SAFESTACK_SUPPORTED_ARCH
+    SANITIZER_COMMON_SUPPORTED_ARCH)
+else()
+  # Architectures supported by compiler-rt libraries.
+  filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
+    ${ALL_SANITIZER_COMMON_SUPPORTED_ARCH})
+  # LSan and UBSan common files should be available on all architectures
+  # supported by other sanitizers (even if they build into dummy object files).
+  filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
+    ${SANITIZER_COMMON_SUPPORTED_ARCH})
+  filter_available_targets(UBSAN_COMMON_SUPPORTED_ARCH
+    ${SANITIZER_COMMON_SUPPORTED_ARCH})
+  filter_available_targets(ASAN_SUPPORTED_ARCH ${ALL_ASAN_SUPPORTED_ARCH})
+  filter_available_targets(DFSAN_SUPPORTED_ARCH ${ALL_DFSAN_SUPPORTED_ARCH})
+  filter_available_targets(LSAN_SUPPORTED_ARCH ${ALL_LSAN_SUPPORTED_ARCH})
+  filter_available_targets(MSAN_SUPPORTED_ARCH ${ALL_MSAN_SUPPORTED_ARCH})
+  filter_available_targets(PROFILE_SUPPORTED_ARCH ${ALL_PROFILE_SUPPORTED_ARCH})
+  filter_available_targets(TSAN_SUPPORTED_ARCH ${ALL_TSAN_SUPPORTED_ARCH})
+  filter_available_targets(UBSAN_SUPPORTED_ARCH ${ALL_UBSAN_SUPPORTED_ARCH})
+  filter_available_targets(SAFESTACK_SUPPORTED_ARCH
+    ${ALL_SAFESTACK_SUPPORTED_ARCH})
+endif()
+
+message(STATUS "Compiler-RT supported architectures: ${COMPILER_RT_SUPPORTED_ARCH}")
 
 if(ANDROID)
   set(OS_NAME "Android")

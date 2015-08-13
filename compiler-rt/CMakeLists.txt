@@ -276,66 +276,6 @@ append_list_if(COMPILER_RT_HAS_WD4291_FLAG /wd4291 SANITIZER_COMMON_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WD4391_FLAG /wd4391 SANITIZER_COMMON_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WD4722_FLAG /wd4722 SANITIZER_COMMON_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WD4800_FLAG /wd4800 SANITIZER_COMMON_CFLAGS)
-if(APPLE)
-  macro(find_darwin_sdk_dir var sdk_name)
-    # Let's first try the internal SDK, otherwise use the public SDK.
-    execute_process(
-      COMMAND xcodebuild -version -sdk ${sdk_name}.internal Path
-      OUTPUT_VARIABLE ${var}
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      ERROR_FILE /dev/null
-    )
-    if(${var} STREQUAL "")
-      execute_process(
-        COMMAND xcodebuild -version -sdk ${sdk_name} Path
-        OUTPUT_VARIABLE ${var}
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_FILE /dev/null
-      )
-    endif()
-  endmacro()
-
-  find_darwin_sdk_dir(OSX_SDK_DIR macosx)
-  find_darwin_sdk_dir(IOSSIM_SDK_DIR iphonesimulator)
-
-  set(SANITIZER_COMMON_SUPPORTED_OS osx)
-  if(NOT SANITIZER_MIN_OSX_VERSION)
-    string(REGEX MATCH "-mmacosx-version-min=([.0-9]+)"
-           MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
-    if(MACOSX_VERSION_MIN_FLAG)
-      set(SANITIZER_MIN_OSX_VERSION "${CMAKE_MATCH_1}")
-    elseif(CMAKE_OSX_DEPLOYMENT_TARGET)
-      set(SANITIZER_MIN_OSX_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
-    else()
-      set(SANITIZER_MIN_OSX_VERSION 10.9)
-      if(IOSSIM_SDK_DIR)
-        list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
-      endif()
-    endif()
-  endif()
-  if(SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.7")
-    message(FATAL_ERROR "Too old OS X version: ${SANITIZER_MIN_OSX_VERSION}")
-  endif()
-
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We evaluate target OS X version above.
-  set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
-    -stdlib=libc++)
-  set(DARWIN_iossim_CFLAGS
-    -stdlib=libc++
-    -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
-  set(DARWIN_osx_LINKFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
-    -stdlib=libc++ -lc++ -lc++abi)
-  set(DARWIN_iossim_LINKFLAGS
-    -stdlib=libc++ -lc++ -lc++abi
-    -Wl,-ios_simulator_version_min,7.0.0
-    -mios-simulator-version-min=7.0
-    -isysroot ${IOSSIM_SDK_DIR})
-
-  if(OSX_SDK_DIR)
-    list(APPEND DARWIN_osx_CFLAGS -isysroot ${OSX_SDK_DIR})
-    list(APPEND DARWIN_osx_LINKFLAGS -isysroot ${OSX_SDK_DIR})
-  endif()
-endif()
 
 if(APPLE AND SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.9")
   # Mac OS X prior to 10.9 had problems with exporting symbols from
