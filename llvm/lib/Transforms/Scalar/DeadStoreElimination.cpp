@@ -40,6 +40,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "dse"
 
+STATISTIC(NumRedundantStores, "Number of redundant stores deleted");
 STATISTIC(NumFastStores, "Number of stores deleted");
 STATISTIC(NumFastOther , "Number of other instrs removed");
 
@@ -76,6 +77,7 @@ namespace {
     }
 
     bool runOnBasicBlock(BasicBlock &BB);
+    bool MemoryIsNotModifiedBetween(LoadInst *LI, StoreInst *SI);
     bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
     void RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
@@ -495,19 +497,14 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (!hasMemoryWrite(Inst, *TLI))
       continue;
 
-    MemDepResult InstDep = MD->getDependency(Inst);
-
-    // Ignore any store where we can't find a local dependence.
-    // FIXME: cross-block DSE would be fun. :)
-    if (!InstDep.isDef() && !InstDep.isClobber())
-      continue;
-
     // If we're storing the same value back to a pointer that we just
     // loaded from, then the store can be removed.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      if (LoadInst *DepLoad = dyn_cast<LoadInst>(InstDep.getInst())) {
+      if (LoadInst *DepLoad = dyn_cast<LoadInst>(SI->getValueOperand())) {
         if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
-            SI->getOperand(0) == DepLoad && isRemovable(SI)) {
+            isRemovable(SI) &&
+            MemoryIsNotModifiedBetween(DepLoad, SI)) {
+
           DEBUG(dbgs() << "DSE: Remove Store Of Load from same pointer:\n  "
                        << "LOAD: " << *DepLoad << "\n  STORE: " << *SI << '\n');
 
@@ -521,12 +518,19 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
             BBI = BB.begin();
           else if (BBI != BB.begin())  // Revisit this instruction if possible.
             --BBI;
-          ++NumFastStores;
+          ++NumRedundantStores;
           MadeChange = true;
           continue;
         }
       }
     }
+
+    MemDepResult InstDep = MD->getDependency(Inst);
+
+    // Ignore any store where we can't find a local dependence.
+    // FIXME: cross-block DSE would be fun. :)
+    if (!InstDep.isDef() && !InstDep.isClobber())
+      continue;
 
     // Figure out what location is being stored to.
     MemoryLocation Loc = getLocForWrite(Inst, *AA);
@@ -625,6 +629,63 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     MadeChange |= handleEndBlock(BB);
 
   return MadeChange;
+}
+
+/// Returns true if the memory which is accessed by the store instruction is not
+/// modified between the load and the store instruction.
+/// Precondition: The store instruction must be dominated by the load
+/// instruction.
+bool DSE::MemoryIsNotModifiedBetween(LoadInst *LI, StoreInst *SI) {
+  SmallVector<BasicBlock *, 16> WorkList;
+  SmallPtrSet<BasicBlock *, 8> Visited;
+  BasicBlock::iterator LoadBBI(LI);
+  ++LoadBBI;
+  BasicBlock::iterator StoreBBI(SI);
+  BasicBlock *LoadBB = LI->getParent();
+  BasicBlock *StoreBB = SI->getParent();
+  MemoryLocation StoreLoc = MemoryLocation::get(SI);
+
+  // Start checking the store-block.
+  WorkList.push_back(StoreBB);
+  bool isFirstBlock = true;
+
+  // Check all blocks going backward until we reach the load-block.
+  while (!WorkList.empty()) {
+    BasicBlock *B = WorkList.pop_back_val();
+
+    // Ignore instructions before LI if this is the LoadBB.
+    BasicBlock::iterator BI = (B == LoadBB ? LoadBBI : B->begin());
+
+    BasicBlock::iterator EI;
+    if (isFirstBlock) {
+      // Ignore instructions after SI if this is the first visit of StoreBB.
+      assert(B == StoreBB && "first block is not the store block");
+      EI = StoreBBI;
+      isFirstBlock = false;
+    } else {
+      // It's not StoreBB or (in case of a loop) the second visit of StoreBB.
+      // In this case we also have to look at instructions after SI.
+      EI = B->end();
+    }
+    for (; BI != EI; ++BI) {
+      Instruction *I = BI;
+      if (I->mayWriteToMemory() && I != SI) {
+        auto Res = AA->getModRefInfo(I, StoreLoc);
+        if (Res != MRI_NoModRef)
+          return false;
+      }
+    }
+    if (B != LoadBB) {
+      assert(B != &LoadBB->getParent()->getEntryBlock() &&
+          "Should not hit the entry block because SI must be dominated by LI");
+      for (auto PredI = pred_begin(B), PE = pred_end(B); PredI != PE; ++PredI) {
+        if (!Visited.insert(*PredI).second)
+          continue;
+        WorkList.push_back(*PredI);
+      }
+    }
+  }
+  return true;
 }
 
 /// Find all blocks that will unconditionally lead to the block BB and append
