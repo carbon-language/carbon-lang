@@ -464,7 +464,6 @@ void StructType::setName(StringRef Name) {
    
     do {
       TempStr.resize(NameSize + 1);
-      TmpStream.resync();
       TmpStream << getContext().pImpl->NamedStructTypesUniqueID++;
 
       IterBool = getContext().pImpl->NamedStructTypes.insert(

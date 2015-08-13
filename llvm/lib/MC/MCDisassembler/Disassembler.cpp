@@ -147,7 +147,6 @@ static void emitComments(LLVMDisasmContext *DC,
 
   // Tell the comment stream that the vector changed underneath it.
   DC->CommentsToEmit.clear();
-  DC->CommentStream.resync();
 }
 
 /// \brief Gets latency information for \p Inst from the itinerary

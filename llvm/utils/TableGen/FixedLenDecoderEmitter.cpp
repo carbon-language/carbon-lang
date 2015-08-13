@@ -1290,14 +1290,12 @@ void FilterChooser::emitSoftFailTableEntry(DecoderTableInfo &TableInfo,
   raw_svector_ostream S(MaskBytes);
   if (NeedPositiveMask) {
     encodeULEB128(PositiveMask.getZExtValue(), S);
-    S.flush();
     for (unsigned i = 0, e = MaskBytes.size(); i != e; ++i)
       TableInfo.Table.push_back(MaskBytes[i]);
   } else
     TableInfo.Table.push_back(0);
   if (NeedNegativeMask) {
     MaskBytes.clear();
-    S.resync();
     encodeULEB128(NegativeMask.getZExtValue(), S);
     S.flush();
     for (unsigned i = 0, e = MaskBytes.size(); i != e; ++i)

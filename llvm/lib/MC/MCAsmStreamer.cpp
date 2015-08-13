@@ -259,9 +259,6 @@ void MCAsmStreamer::AddComment(const Twine &T) {
   T.toVector(CommentToEmit);
   // Each comment goes on its own line.
   CommentToEmit.push_back('\n');
-
-  // Tell the comment stream that the vector changed underneath it.
-  CommentStream.resync();
 }
 
 void MCAsmStreamer::EmitCommentsAndEOL() {
@@ -285,8 +282,6 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
   } while (!Comments.empty());
 
   CommentToEmit.clear();
-  // Tell the comment stream that the vector changed underneath it.
-  CommentStream.resync();
 }
 
 static inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {

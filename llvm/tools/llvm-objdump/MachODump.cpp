@@ -5888,7 +5888,6 @@ static void emitComments(raw_svector_ostream &CommentStream,
 
   // Tell the comment stream that the vector changed underneath it.
   CommentsToEmit.clear();
-  CommentStream.resync();
 }
 
 static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,

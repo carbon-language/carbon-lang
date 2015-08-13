@@ -1053,7 +1053,6 @@ void DwarfStreamer::emitLineTableForUnit(MCDwarfLineTableParams Params,
       MS->EmitBytes(EncodingOS.str());
       LineSectionSize += EncodingBuffer.size();
       EncodingBuffer.resize(0);
-      EncodingOS.resync();
       Address = Row.Address;
       LastLine = Row.Line;
       RowsSinceLastSequence++;
@@ -1072,7 +1071,6 @@ void DwarfStreamer::emitLineTableForUnit(MCDwarfLineTableParams Params,
       MS->EmitBytes(EncodingOS.str());
       LineSectionSize += EncodingBuffer.size();
       EncodingBuffer.resize(0);
-      EncodingOS.resync();
       Address = -1ULL;
       LastLine = FileNum = IsStatement = 1;
       RowsSinceLastSequence = Column = Isa = 0;
@@ -1084,7 +1082,6 @@ void DwarfStreamer::emitLineTableForUnit(MCDwarfLineTableParams Params,
     MS->EmitBytes(EncodingOS.str());
     LineSectionSize += EncodingBuffer.size();
     EncodingBuffer.resize(0);
-    EncodingOS.resync();
   }
 
   MS->EmitLabel(LineEndSym);

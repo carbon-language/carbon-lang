@@ -509,9 +509,6 @@ public:
   }
   ~raw_svector_ostream() override {}
 
-  // FIXME: resync is no-op. Remove it and its users.
-  void resync() {}
-
   /// Return a StringRef for the vector contents.
   StringRef str() { return StringRef(OS.data(), OS.size()); }
 };
