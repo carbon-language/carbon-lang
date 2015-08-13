@@ -64,20 +64,7 @@ static void reportError(StringRef Input, std::error_code EC) {
   reportError(Input, EC.message());
 }
 
-static SmallVectorImpl<SectionRef> &getRelocSections(const ObjectFile *Obj,
-                                                     const SectionRef &Sec) {
-  static bool MappingDone = false;
-  static std::map<SectionRef, SmallVector<SectionRef, 1>> SectionRelocMap;
-  if (!MappingDone) {
-    for (const SectionRef &Section : Obj->sections()) {
-      section_iterator Sec2 = Section.getRelocatedSection();
-      if (Sec2 != Obj->section_end())
-        SectionRelocMap[*Sec2].push_back(Section);
-    }
-    MappingDone = true;
-  }
-  return SectionRelocMap[Sec];
-}
+static std::map<SectionRef, SmallVector<SectionRef, 1>> SectionRelocMap;
 
 static void collectRelocatedSymbols(const ObjectFile *Obj,
                                     const SectionRef &Sec, uint64_t SecAddress,
@@ -85,7 +72,7 @@ static void collectRelocatedSymbols(const ObjectFile *Obj,
                                     StringRef *I, StringRef *E) {
   uint64_t SymOffset = SymAddress - SecAddress;
   uint64_t SymEnd = SymOffset + SymSize;
-  for (const SectionRef &SR : getRelocSections(Obj, Sec)) {
+  for (const SectionRef &SR : SectionRelocMap[Sec]) {
     for (const object::RelocationRef &Reloc : SR.relocations()) {
       if (I == E)
         break;
@@ -109,7 +96,7 @@ static void collectRelocationOffsets(
     std::map<std::pair<StringRef, uint64_t>, StringRef> &Collection) {
   uint64_t SymOffset = SymAddress - SecAddress;
   uint64_t SymEnd = SymOffset + SymSize;
-  for (const SectionRef &SR : getRelocSections(Obj, Sec)) {
+  for (const SectionRef &SR : SectionRelocMap[Sec]) {
     for (const object::RelocationRef &Reloc : SR.relocations()) {
       const object::symbol_iterator RelocSymI = Reloc.getSymbol();
       if (RelocSymI == Obj->symbol_end())
@@ -172,6 +159,13 @@ static void dumpCXXData(const ObjectFile *Obj) {
   std::map<std::pair<StringRef, uint64_t>, int64_t> VTableDataEntries;
   std::map<std::pair<StringRef, uint64_t>, StringRef> VTTEntries;
   std::map<StringRef, StringRef> TINames;
+
+  SectionRelocMap.clear();
+  for (const SectionRef &Section : Obj->sections()) {
+    section_iterator Sec2 = Section.getRelocatedSection();
+    if (Sec2 != Obj->section_end())
+      SectionRelocMap[*Sec2].push_back(Section);
+  }
 
   uint8_t BytesInAddress = Obj->getBytesInAddress();
 
