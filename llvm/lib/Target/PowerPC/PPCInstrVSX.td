@@ -1181,6 +1181,23 @@ let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
   }
+
+  // Single Precision Conversions (FP <-> INT)
+  def XSCVSXDSP : XX2Form<60, 312,
+                      (outs vssrc:$XT), (ins vsfrc:$XB),
+                      "xscvsxdsp $XT, $XB", IIC_VecFP,
+                      [(set f32:$XT, (PPCfcfids f64:$XB))]>;
+  def XSCVUXDSP : XX2Form<60, 296,
+                      (outs vssrc:$XT), (ins vsfrc:$XB),
+                      "xscvuxdsp $XT, $XB", IIC_VecFP,
+                      [(set f32:$XT, (PPCfcfidus f64:$XB))]>;
+
+  // Conversions between vector and scalar single precision
+  def XSCVDPSPN : XX2Form<60, 267, (outs vsrc:$XT), (ins vssrc:$XB),
+                          "xscvdpspn $XT, $XB", IIC_VecFP, []>;
+  def XSCVSPDPN : XX2Form<60, 331, (outs vssrc:$XT), (ins vsrc:$XB),
+                          "xscvspdpn $XT, $XB", IIC_VecFP, []>;
+
 } // AddedComplexity = 400
 } // HasP8Vector
 
@@ -1204,3 +1221,60 @@ let Predicates = [HasDirectMove, HasVSX] in {
                                "mtvsrwz $XT, $rA", IIC_VecGeneral,
                                [(set f64:$XT, (PPCmtvsrz i32:$rA))]>;
 } // HasDirectMove, HasVSX
+
+/*  Direct moves of various size entities from GPR's into VSR's. Each lines
+    the value up into element 0 (both BE and LE). Namely, entities smaller than
+    a doubleword are shifted left and moved for BE. For LE, they're moved, then
+    swapped to go into the least significant element of the VSR.
+*/
+def Moves {
+  dag BE_BYTE_0 = (MTVSRD
+                  (RLDICR
+                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 56, 7));
+  dag BE_HALF_0 = (MTVSRD
+                  (RLDICR
+                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 48, 15));
+  dag BE_WORD_0 = (MTVSRD
+                  (RLDICR
+                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32), 32, 31));
+  dag BE_DWORD_0 = (MTVSRD $A);
+
+  dag LE_MTVSRW = (MTVSRD (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $A, sub_32));
+  dag LE_WORD_1 = (v2i64 (COPY_TO_REGCLASS LE_MTVSRW, VSRC));
+  dag LE_WORD_0 = (XXPERMDI LE_WORD_1, LE_WORD_1, 2);
+  dag LE_DWORD_1 = (v2i64 (COPY_TO_REGCLASS BE_DWORD_0, VSRC));
+  dag LE_DWORD_0 = (XXPERMDI LE_DWORD_1, LE_DWORD_1, 2);
+}
+
+let Predicates = [IsBigEndian, HasP8Vector] in {
+  def : Pat<(v4f32 (scalar_to_vector f32:$A)),
+            (v4f32 (XSCVDPSPN $A))>;
+} // IsBigEndian, HasP8Vector
+
+let Predicates = [IsBigEndian, HasDirectMove] in {
+  def : Pat<(v16i8 (scalar_to_vector i32:$A)),
+            (v16i8 (COPY_TO_REGCLASS Moves.BE_BYTE_0, VSRC))>;
+  def : Pat<(v8i16 (scalar_to_vector i32:$A)),
+            (v8i16 (COPY_TO_REGCLASS Moves.BE_HALF_0, VSRC))>;
+  def : Pat<(v4i32 (scalar_to_vector i32:$A)),
+            (v4i32 (COPY_TO_REGCLASS Moves.BE_WORD_0, VSRC))>;
+  def : Pat<(v2i64 (scalar_to_vector i64:$A)),
+            (v2i64 (COPY_TO_REGCLASS Moves.BE_DWORD_0, VSRC))>;
+} // IsBigEndian, HasDirectMove
+
+let Predicates = [IsLittleEndian, HasP8Vector] in {
+  def : Pat<(v4f32 (scalar_to_vector f32:$A)),
+            (v4f32 (XXSLDWI (XSCVDPSPN $A), (XSCVDPSPN $A), 1))>;
+} // IsLittleEndian, HasP8Vector
+
+let Predicates = [IsLittleEndian, HasDirectMove] in {
+  def : Pat<(v16i8 (scalar_to_vector i32:$A)),
+            (v16i8 (COPY_TO_REGCLASS Moves.LE_WORD_0, VSRC))>;
+  def : Pat<(v8i16 (scalar_to_vector i32:$A)),
+            (v8i16 (COPY_TO_REGCLASS Moves.LE_WORD_0, VSRC))>;
+  def : Pat<(v4i32 (scalar_to_vector i32:$A)),
+            (v4i32 (COPY_TO_REGCLASS Moves.LE_WORD_0, VSRC))>;
+  def : Pat<(v2i64 (scalar_to_vector i64:$A)),
+            (v2i64 Moves.LE_DWORD_0)>;
+} // IsLittleEndian, HasDirectMove
+

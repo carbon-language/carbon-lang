@@ -1226,11 +1226,11 @@ define <2 x i32> @test80(i32 %v) {
 ; CHECK-FISL: blr
 
 ; CHECK-LE-LABEL: @test80
-; CHECK-LE-DAG: addi [[R1:[0-9]+]], 1, -16
+; CHECK-LE-DAG: mtvsrd [[R1:[0-9]+]], 3
 ; CHECK-LE-DAG: addi [[R2:[0-9]+]], {{[0-9]+}}, .LCPI
-; CHECK-LE-DAG: lxvd2x [[V1:[0-9]+]], 0, [[R1]]
+; CHECK-LE-DAG: xxswapd [[V1:[0-9]+]], [[R1]]
 ; CHECK-LE-DAG: lxvd2x [[V2:[0-9]+]], 0, [[R2]]
-; CHECK-LE-DAG: xxswapd 34, [[V1]]
+; CHECK-LE-DAG: xxspltd 34, [[V1]]
 ; CHECK-LE-DAG: xxswapd 35, [[V2]]
 ; CHECK-LE: vaddudm 2, 2, 3
 ; CHECK-LE: blr

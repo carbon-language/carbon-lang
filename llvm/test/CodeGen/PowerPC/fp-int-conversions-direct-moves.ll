@@ -24,8 +24,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z6testfcc
 ; CHECK: mtvsrwz [[MOVEREG01:[0-9]+]], 3
-; FIXME: Once we have XSCVUXDSP implemented, this will change
-; CHECK: fcfidus 1, [[MOVEREG01]]
+; CHECK: xscvuxdsp 1, [[MOVEREG01]]
 }
 
 ; Function Attrs: nounwind
@@ -77,8 +76,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z7testfuch
 ; CHECK: mtvsrwz [[MOVEREG03:[0-9]+]], 3
-; FIXME: Once we have XSCVUXDSP implemented, this will change
-; CHECK: fcfidus 1, [[MOVEREG03]]
+; CHECK: xscvuxdsp 1, [[MOVEREG03]]
 }
 
 ; Function Attrs: nounwind
@@ -130,8 +128,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z6testfss
 ; CHECK: mtvsrwa [[MOVEREG05:[0-9]+]], 3
-; FIXME: Once we have XSCVSXDSP implemented, this will change
-; CHECK: fcfids 1, [[MOVEREG05]]
+; CHECK: xscvsxdsp 1, [[MOVEREG05]]
 }
 
 ; Function Attrs: nounwind
@@ -183,8 +180,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z7testfust
 ; CHECK: mtvsrwz [[MOVEREG07:[0-9]+]], 3
-; FIXME: Once we have XSCVUXDSP implemented, this will change
-; CHECK: fcfidus 1, [[MOVEREG07]]
+; CHECK: xscvuxdsp 1, [[MOVEREG07]]
 }
 
 ; Function Attrs: nounwind
@@ -236,8 +232,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z6testfii
 ; CHECK: mtvsrwa [[MOVEREG09:[0-9]+]], 3
-; FIXME: Once we have XSCVSXDSP implemented, this will change
-; CHECK: fcfids 1, [[MOVEREG09]]
+; CHECK: xscvsxdsp 1, [[MOVEREG09]]
 }
 
 ; Function Attrs: nounwind
@@ -289,8 +284,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z7testfuij
 ; CHECK: mtvsrwz [[MOVEREG11:[0-9]+]], 3
-; FIXME: Once we have XSCVUXDSP implemented, this will change
-; CHECK: fcfidus 1, [[MOVEREG11]]
+; CHECK: xscvuxdsp 1, [[MOVEREG11]]
 }
 
 ; Function Attrs: nounwind
@@ -342,8 +336,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL:@_Z7testfllx
 ; CHECK: mtvsrd [[MOVEREG13:[0-9]+]], 3
-; FIXME: Once we have XSCVSXDSP implemented, this will change
-; CHECK: fcfids 1, [[MOVEREG13]]
+; CHECK: xscvsxdsp 1, [[MOVEREG13]]
 }
 
 ; Function Attrs: nounwind
@@ -395,8 +388,7 @@ entry:
   ret float %conv
 ; CHECK-LABEL: @_Z8testfully
 ; CHECK: mtvsrd [[MOVEREG15:[0-9]+]], 3
-; FIXME: Once we have XSCVUXDSP implemented, this will change
-; CHECK: fcfidus 1, [[MOVEREG15]]
+; CHECK: xscvuxdsp 1, [[MOVEREG15]]
 }
 
 ; Function Attrs: nounwind

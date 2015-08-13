@@ -55,8 +55,7 @@ entry:
   ret void
 ; CHECK-LABEL: @intToFlt
 ; CHECK: lxsiwax [[REGLD2:[0-9]+]],
-; FIXME: the below will change when the VSX form is implemented
-; CHECK: fcfids {{[0-9]}}, [[REGLD2]]
+; CHECK: xscvsxdsp {{[0-9]}}, [[REGLD2]]
 }
 
 ; Function Attrs: nounwind
@@ -108,8 +107,7 @@ entry:
   ret void
 ; CHECK-LABEL: @uIntToFlt
 ; CHECK: lxsiwzx [[REGLD4:[0-9]+]],
-; FIXME: the below will change when the VSX form is implemented
-; CHECK: fcfidus {{[0-9]+}}, [[REGLD4]]
+; CHECK: xscvuxdsp {{[0-9]+}}, [[REGLD4]]
 }
 
 ; Function Attrs: nounwind

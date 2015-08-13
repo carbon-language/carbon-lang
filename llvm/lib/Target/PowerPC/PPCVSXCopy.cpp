@@ -77,6 +77,10 @@ namespace {
       return IsRegInClass(Reg, &PPC::F8RCRegClass, MRI);
     }
 
+    bool IsVSFReg(unsigned Reg, MachineRegisterInfo &MRI) {
+      return IsRegInClass(Reg, &PPC::VSFRCRegClass, MRI);
+    }
+
 protected:
     bool processBlock(MachineBasicBlock &MBB) {
       bool Changed = false;
@@ -100,7 +104,8 @@ protected:
             IsVRReg(SrcMO.getReg(), MRI) ? &PPC::VSHRCRegClass :
                                            &PPC::VSLRCRegClass;
           assert((IsF8Reg(SrcMO.getReg(), MRI) ||
-                  IsVRReg(SrcMO.getReg(), MRI)) &&
+                  IsVRReg(SrcMO.getReg(), MRI) ||
+                  IsVSFReg(SrcMO.getReg(), MRI)) &&
                  "Unknown source for a VSX copy");
 
           unsigned NewVReg = MRI.createVirtualRegister(SrcRC);
