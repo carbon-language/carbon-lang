@@ -105,7 +105,9 @@ ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, lldb::off
     {
         // Strip off any spaces (if the object file name contains spaces it
         // will use the extended format above).
-        str.erase (str.find(' '));
+        const size_t space_pos = str.find(' ');
+        if (space_pos != std::string::npos)
+            str.erase (space_pos);
         ar_name.SetCString(str.c_str());
     }
 
