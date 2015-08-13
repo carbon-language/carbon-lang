@@ -1599,7 +1599,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
 namespace {
 
 /// Emits the copy/dispose helper functions for a __block object of id type.
-class ObjectByrefHelpers : public CodeGenModule::ByrefHelpers {
+class ObjectByrefHelpers final : public CodeGenModule::ByrefHelpers {
   BlockFieldFlags Flags;
 
 public:
@@ -1635,7 +1635,7 @@ public:
 };
 
 /// Emits the copy/dispose helpers for an ARC __block __weak variable.
-class ARCWeakByrefHelpers : public CodeGenModule::ByrefHelpers {
+class ARCWeakByrefHelpers final : public CodeGenModule::ByrefHelpers {
 public:
   ARCWeakByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
 
@@ -1656,7 +1656,7 @@ public:
 
 /// Emits the copy/dispose helpers for an ARC __block __strong variable
 /// that's not of block-pointer type.
-class ARCStrongByrefHelpers : public CodeGenModule::ByrefHelpers {
+class ARCStrongByrefHelpers final : public CodeGenModule::ByrefHelpers {
 public:
   ARCStrongByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
 
@@ -1697,7 +1697,7 @@ public:
 
 /// Emits the copy/dispose helpers for an ARC __block __strong
 /// variable that's of block-pointer type.
-class ARCStrongBlockByrefHelpers : public CodeGenModule::ByrefHelpers {
+class ARCStrongBlockByrefHelpers final : public CodeGenModule::ByrefHelpers {
 public:
   ARCStrongBlockByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
 
@@ -1727,7 +1727,7 @@ public:
 
 /// Emits the copy/dispose helpers for a __block variable with a
 /// nontrivial copy constructor or destructor.
-class CXXByrefHelpers : public CodeGenModule::ByrefHelpers {
+class CXXByrefHelpers final : public CodeGenModule::ByrefHelpers {
   QualType VarType;
   const Expr *CopyExpr;
 
@@ -1894,10 +1894,9 @@ static llvm::Constant *buildByrefDisposeHelper(CodeGenModule &CGM,
 
 /// Lazily build the copy and dispose helpers for a __block variable
 /// with the given information.
-template <class T> static T *buildByrefHelpers(CodeGenModule &CGM,
-                                               llvm::StructType &byrefTy,
-                                               unsigned byrefValueIndex,
-                                               T &byrefInfo) {
+template <class T>
+static T *buildByrefHelpers(CodeGenModule &CGM, llvm::StructType &byrefTy,
+                            unsigned byrefValueIndex, T byrefInfo) {
   // Increase the field's alignment to be at least pointer alignment,
   // since the layout of the byref struct will guarantee at least that.
   byrefInfo.Alignment = std::max(byrefInfo.Alignment,
@@ -1916,7 +1915,7 @@ template <class T> static T *buildByrefHelpers(CodeGenModule &CGM,
   byrefInfo.DisposeHelper =
     buildByrefDisposeHelper(CGM, byrefTy, byrefValueIndex,byrefInfo);
 
-  T *copy = new (CGM.getContext()) T(byrefInfo);
+  T *copy = new (CGM.getContext()) T(std::move(byrefInfo));
   CGM.ByrefHelpersCache.InsertNode(copy, insertPos);
   return copy;
 }
@@ -1936,8 +1935,9 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
     const Expr *copyExpr = CGM.getContext().getBlockVarCopyInits(&var);
     if (!copyExpr && record->hasTrivialDestructor()) return nullptr;
 
-    CXXByrefHelpers byrefInfo(emission.Alignment, type, copyExpr);
-    return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex, byrefInfo);
+    return ::buildByrefHelpers(
+        CGM, byrefType, byrefValueIndex,
+        CXXByrefHelpers(emission.Alignment, type, copyExpr));
   }
 
   // Otherwise, if we don't have a retainable type, there's nothing to do.
@@ -1960,24 +1960,24 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
 
     // Tell the runtime that this is ARC __weak, called by the
     // byref routines.
-    case Qualifiers::OCL_Weak: {
-      ARCWeakByrefHelpers byrefInfo(emission.Alignment);
-      return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex, byrefInfo);
-    }
+    case Qualifiers::OCL_Weak:
+      return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex,
+                                 ARCWeakByrefHelpers(emission.Alignment));
 
     // ARC __strong __block variables need to be retained.
     case Qualifiers::OCL_Strong:
       // Block pointers need to be copied, and there's no direct
       // transfer possible.
       if (type->isBlockPointerType()) {
-        ARCStrongBlockByrefHelpers byrefInfo(emission.Alignment);
-        return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex, byrefInfo);
+        return ::buildByrefHelpers(
+            CGM, byrefType, byrefValueIndex,
+            ARCStrongBlockByrefHelpers(emission.Alignment));
 
       // Otherwise, we transfer ownership of the retain from the stack
       // to the heap.
       } else {
-        ARCStrongByrefHelpers byrefInfo(emission.Alignment);
-        return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex, byrefInfo);
+        return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex,
+                                   ARCStrongByrefHelpers(emission.Alignment));
       }
     }
     llvm_unreachable("fell out of lifetime switch!");
@@ -1996,8 +1996,8 @@ CodeGenFunction::buildByrefHelpers(llvm::StructType &byrefType,
   if (type.isObjCGCWeak())
     flags |= BLOCK_FIELD_IS_WEAK;
 
-  ObjectByrefHelpers byrefInfo(emission.Alignment, flags);
-  return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex, byrefInfo);
+  return ::buildByrefHelpers(CGM, byrefType, byrefValueIndex,
+                             ObjectByrefHelpers(emission.Alignment, flags));
 }
 
 std::pair<llvm::Type *, unsigned>
