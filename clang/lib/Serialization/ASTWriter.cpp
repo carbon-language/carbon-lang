@@ -1185,17 +1185,26 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   }
 
   if (WritingModule && WritingModule->Directory) {
-    // Module directory.
-    BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-    Abbrev->Add(BitCodeAbbrevOp(MODULE_DIRECTORY));
-    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Directory
-    unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
-    RecordData Record;
-    Record.push_back(MODULE_DIRECTORY);
-
     SmallString<128> BaseDir(WritingModule->Directory->getName());
     cleanPathForOutput(Context.getSourceManager().getFileManager(), BaseDir);
-    Stream.EmitRecordWithBlob(AbbrevCode, Record, BaseDir);
+
+    // If the home of the module is the current working directory, then we
+    // want to pick up the cwd of the build process loading the module, not
+    // our cwd, when we load this module.
+    if (!PP.getHeaderSearchInfo()
+             .getHeaderSearchOpts()
+             .ModuleMapFileHomeIsCwd ||
+        WritingModule->Directory->getName() != StringRef(".")) {
+      // Module directory.
+      BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+      Abbrev->Add(BitCodeAbbrevOp(MODULE_DIRECTORY));
+      Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Directory
+      unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
+
+      RecordData Record;
+      Record.push_back(MODULE_DIRECTORY);
+      Stream.EmitRecordWithBlob(AbbrevCode, Record, BaseDir);
+    }
 
     // Write out all other paths relative to the base directory if possible.
     BaseDirectory.assign(BaseDir.begin(), BaseDir.end());

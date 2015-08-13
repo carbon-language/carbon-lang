@@ -17,14 +17,22 @@
 // RUN: FileCheck --check-prefix=CHECK-BUILD %s < %t/build-cwd.d
 // RUN: FileCheck --check-prefix=CHECK-USE %s < %t/use-explicit-cwd.d
 // RUN: FileCheck --check-prefix=CHECK-USE %s < %t/use-implicit-cwd.d
+//
+// Check that the .d file is still correct after relocating the module.
+// RUN: mkdir %t/Inputs
+// RUN: cp %S/Inputs/relative-dep-gen-1.h %t/Inputs
+// RUN: cp %s %t
+// RUN: cd %t
+// RUN: %clang_cc1 -cc1 -fno-implicit-modules -fmodule-file=%t/mod-cwd.pcm -dependency-file %t/use-explicit-no-map-cwd.d -MT use.o relative-dep-gen.cpp -fsyntax-only -fmodule-map-file-home-is-cwd
+// RUN: cat %t/use-explicit-no-map-cwd.d
+// RUN: FileCheck --check-prefix=CHECK-USE %s < %t/use-explicit-no-map-cwd.d
 
 #include "Inputs/relative-dep-gen-1.h"
 
 // CHECK-BUILD: mod.pcm:
-// CHECK-BUILD:   Inputs/relative-dep-gen{{(-cwd)?}}.modulemap
-// CHECK-BUILD:   Inputs/relative-dep-gen-1.h
-// CHECK-BUILD:   Inputs/relative-dep-gen-2.h
+// CHECK-BUILD:   {{[ \t]}}Inputs/relative-dep-gen{{(-cwd)?}}.modulemap
+// CHECK-BUILD:   {{[ \t]}}Inputs/relative-dep-gen-1.h
+// CHECK-BUILD:   {{[ \t]}}Inputs/relative-dep-gen-2.h
 // CHECK-USE: use.o:
-// CHECK-USE-DAG:   Inputs/relative-dep-gen{{(-cwd)?}}.modulemap
-// CHECK-USE-DAG:   relative-dep-gen.cpp
-// CHECK-USE-DAG:   Inputs{{[/\\]}}relative-dep-gen-1.h
+// CHECK-USE-DAG:   {{[ \t]}}relative-dep-gen.cpp
+// CHECK-USE-DAG:   {{[ \t]}}Inputs{{[/\\]}}relative-dep-gen-1.h
