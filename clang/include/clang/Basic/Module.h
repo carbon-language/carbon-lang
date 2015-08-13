@@ -356,6 +356,12 @@ public:
   /// its top-level module.
   std::string getFullModuleName() const;
 
+  /// \brief Whether the full name of this module is equal to joining
+  /// \p nameParts with "."s.
+  ///
+  /// This is more efficient than getFullModuleName().
+  bool fullModuleNameIs(ArrayRef<StringRef> nameParts) const;
+
   /// \brief Retrieve the top-level module for this (sub)module, which may
   /// be this module.
   Module *getTopLevelModule() {

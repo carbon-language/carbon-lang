@@ -30,3 +30,25 @@ module uses_other_constants {
   header "uses_other_constants.h"
   export *
 }
+
+module Darwin {
+  module C {
+    module excluded {
+      requires excluded
+      header "assert.h"
+    }
+  }
+}
+
+module Tcl {
+  module Private {
+    requires excluded
+    umbrella ""
+  }
+}
+
+module IOKit {
+  module avc {
+    requires cplusplus
+  }
+}

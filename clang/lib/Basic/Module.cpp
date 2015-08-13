@@ -139,6 +139,15 @@ std::string Module::getFullModuleName() const {
   return Result;
 }
 
+bool Module::fullModuleNameIs(ArrayRef<StringRef> nameParts) const {
+  for (const Module *M = this; M; M = M->Parent) {
+    if (nameParts.empty() || M->Name != nameParts.back())
+      return false;
+    nameParts = nameParts.drop_back();
+  }
+  return nameParts.empty();
+}
+
 Module::DirectoryName Module::getUmbrellaDir() const {
   if (Header U = getUmbrellaHeader())
     return {"", U.Entry->getDir()};
