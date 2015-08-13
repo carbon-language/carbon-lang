@@ -712,20 +712,14 @@ NativeRegisterContextLinux_x86_64::ReadAllRegisterValues (lldb::DataBufferSP &da
      *  decrement of the instruction pointer which was causing the SIGILL
      *  exception.
      * **/
-    llvm::Triple t_triple = GetRegisterInfoInterface().GetTargetArchitecture().GetTriple();
 
-        if (t_triple.getOS() == llvm::Triple::Linux &&
-           (t_triple.getArch() == llvm::Triple::x86 ||
-            t_triple.getArch() == llvm::Triple::x86_64))
-        {
-            RegisterValue value((uint64_t) -1);
-            const RegisterInfo *reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_eax");
-            if (reg_info == nullptr)
-                reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_rax");
+    RegisterValue value((uint64_t) -1);
+    const RegisterInfo *reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_eax");
+    if (reg_info == nullptr)
+        reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_rax");
 
-            if (reg_info != nullptr)
-                return DoWriteRegisterValue(reg_info->byte_offset,reg_info->name,value);
-        }
+    if (reg_info != nullptr)
+        return DoWriteRegisterValue(reg_info->byte_offset,reg_info->name,value);
 
     return error;
 }
