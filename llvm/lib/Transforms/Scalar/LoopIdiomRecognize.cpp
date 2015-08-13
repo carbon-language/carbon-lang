@@ -70,6 +70,7 @@ namespace {
 class LoopIdiomRecognize : public LoopPass {
   Loop *CurLoop;
   DominatorTree *DT;
+  LoopInfo *LI;
   ScalarEvolution *SE;
   TargetLibraryInfo *TLI;
   const TargetTransformInfo *TTI;
@@ -188,6 +189,7 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
@@ -211,8 +213,6 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
     if (BECst->getValue()->getValue() == 0)
       return false;
 
-  LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-
   SmallVector<BasicBlock *, 8> ExitBlocks;
   CurLoop->getUniqueExitBlocks(ExitBlocks);
 
@@ -224,7 +224,7 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
   // Scan all the blocks in the loop that are not in subloops.
   for (auto *BB : CurLoop->getBlocks()) {
     // Ignore blocks in subloops.
-    if (LI.getLoopFor(BB) != CurLoop)
+    if (LI->getLoopFor(BB) != CurLoop)
       continue;
 
     MadeChange |= runOnLoopBlock(BB, BECount, ExitBlocks);
