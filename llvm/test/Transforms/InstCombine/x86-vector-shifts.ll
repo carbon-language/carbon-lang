@@ -826,6 +826,154 @@ define <4 x i64> @avx2_psll_q_64(<4 x i64> %v) nounwind readnone uwtable {
 }
 
 ;
+; Vector Demanded Bits
+;
+
+define <8 x i16> @sse2_psra_w_var(<8 x i16> %v, <8 x i16> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psra_w_var
+; CHECK-NEXT: %1 = tail call <8 x i16> @llvm.x86.sse2.psra.w(<8 x i16> %v, <8 x i16> %a)
+; CHECK-NEXT: ret <8 x i16> %1
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = tail call <8 x i16> @llvm.x86.sse2.psra.w(<8 x i16> %v, <8 x i16> %1)
+  ret <8 x i16> %2
+}
+
+define <4 x i32> @sse2_psra_d_var(<4 x i32> %v, <4 x i32> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psra_d_var
+; CHECK-NEXT: %1 = tail call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %v, <4 x i32> %a)
+; CHECK-NEXT: ret <4 x i32> %1
+  %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %2 = tail call <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32> %v, <4 x i32> %1)
+  ret <4 x i32> %2
+}
+
+define <16 x i16> @avx2_psra_w_var(<16 x i16> %v, <8 x i16> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psra_w_var
+; CHECK-NEXT: %1 = tail call <16 x i16> @llvm.x86.avx2.psra.w(<16 x i16> %v, <8 x i16> %a)
+; CHECK-NEXT: ret <16 x i16> %1
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = tail call <16 x i16> @llvm.x86.avx2.psra.w(<16 x i16> %v, <8 x i16> %1)
+  ret <16 x i16> %2
+}
+
+define <8 x i32> @avx2_psra_d_var(<8 x i32> %v, <4 x i32> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psra_d_var
+; CHECK-NEXT: %1 = tail call <8 x i32> @llvm.x86.avx2.psra.d(<8 x i32> %v, <4 x i32> %a)
+; CHECK-NEXT: ret <8 x i32> %1
+  %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %2 = tail call <8 x i32> @llvm.x86.avx2.psra.d(<8 x i32> %v, <4 x i32> %1)
+  ret <8 x i32> %2
+}
+
+define <8 x i16> @sse2_psrl_w_var(<8 x i16> %v, <8 x i16> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_w_var
+; CHECK-NEXT: %1 = tail call <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16> %v, <8 x i16> %a)
+; CHECK-NEXT: ret <8 x i16> %1
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = tail call <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16> %v, <8 x i16> %1)
+  ret <8 x i16> %2
+}
+
+define <4 x i32> @sse2_psrl_d_var(<4 x i32> %v, <4 x i32> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_d_var
+; CHECK-NEXT: %1 = tail call <4 x i32> @llvm.x86.sse2.psrl.d(<4 x i32> %v, <4 x i32> %a)
+; CHECK-NEXT: ret <4 x i32> %1
+  %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %2 = tail call <4 x i32> @llvm.x86.sse2.psrl.d(<4 x i32> %v, <4 x i32> %1)
+  ret <4 x i32> %2
+}
+
+define <2 x i64> @sse2_psrl_q_var(<2 x i64> %v, <2 x i64> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psrl_q_var
+; CHECK-NEXT: %1 = tail call <2 x i64> @llvm.x86.sse2.psrl.q(<2 x i64> %v, <2 x i64> %a)
+; CHECK-NEXT: ret <2 x i64> %1
+  %1 = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %2 = tail call <2 x i64> @llvm.x86.sse2.psrl.q(<2 x i64> %v, <2 x i64> %1)
+  ret <2 x i64> %2
+}
+
+define <16 x i16> @avx2_psrl_w_var(<16 x i16> %v, <8 x i16> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_w_var
+; CHECK-NEXT: %1 = tail call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %v, <8 x i16> %a)
+; CHECK-NEXT: ret <16 x i16> %1
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = tail call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %v, <8 x i16> %1)
+  ret <16 x i16> %2
+}
+
+define <8 x i32> @avx2_psrl_d_var(<8 x i32> %v, <4 x i32> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_d_var
+; CHECK-NEXT: %1 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> %a)
+; CHECK-NEXT: ret <8 x i32> %1
+  %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %2 = tail call <8 x i32> @llvm.x86.avx2.psrl.d(<8 x i32> %v, <4 x i32> %1)
+  ret <8 x i32> %2
+}
+
+define <4 x i64> @avx2_psrl_q_var(<4 x i64> %v, <2 x i64> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psrl_q_var
+; CHECK-NEXT: %1 = tail call <4 x i64> @llvm.x86.avx2.psrl.q(<4 x i64> %v, <2 x i64> %a)
+; CHECK-NEXT: ret <4 x i64> %1
+  %1 = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %2 = tail call <4 x i64> @llvm.x86.avx2.psrl.q(<4 x i64> %v, <2 x i64> %1)
+  ret <4 x i64> %2
+}
+
+define <8 x i16> @sse2_psll_w_var(<8 x i16> %v, <8 x i16> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_w_var
+; CHECK-NEXT: %1 = tail call <8 x i16> @llvm.x86.sse2.psll.w(<8 x i16> %v, <8 x i16> %a)
+; CHECK-NEXT: ret <8 x i16> %1
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = tail call <8 x i16> @llvm.x86.sse2.psll.w(<8 x i16> %v, <8 x i16> %1)
+  ret <8 x i16> %2
+}
+
+define <4 x i32> @sse2_psll_d_var(<4 x i32> %v, <4 x i32> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_d_var
+; CHECK-NEXT: %1 = tail call <4 x i32> @llvm.x86.sse2.psll.d(<4 x i32> %v, <4 x i32> %a)
+; CHECK-NEXT: ret <4 x i32> %1
+  %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %2 = tail call <4 x i32> @llvm.x86.sse2.psll.d(<4 x i32> %v, <4 x i32> %1)
+  ret <4 x i32> %2
+}
+
+define <2 x i64> @sse2_psll_q_var(<2 x i64> %v, <2 x i64> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @sse2_psll_q_var
+; CHECK-NEXT: %1 = tail call <2 x i64> @llvm.x86.sse2.psll.q(<2 x i64> %v, <2 x i64> %a)
+; CHECK-NEXT: ret <2 x i64> %1
+  %1 = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %2 = tail call <2 x i64> @llvm.x86.sse2.psll.q(<2 x i64> %v, <2 x i64> %1)
+  ret <2 x i64> %2
+}
+
+define <16 x i16> @avx2_psll_w_var(<16 x i16> %v, <8 x i16> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_w_var
+; CHECK-NEXT: %1 = tail call <16 x i16> @llvm.x86.avx2.psll.w(<16 x i16> %v, <8 x i16> %a)
+; CHECK-NEXT: ret <16 x i16> %1
+  %1 = shufflevector <8 x i16> %a, <8 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3>
+  %2 = tail call <16 x i16> @llvm.x86.avx2.psll.w(<16 x i16> %v, <8 x i16> %1)
+  ret <16 x i16> %2
+}
+
+define <8 x i32> @avx2_psll_d_var(<8 x i32> %v, <4 x i32> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_d_var
+; CHECK-NEXT: %1 = tail call <8 x i32> @llvm.x86.avx2.psll.d(<8 x i32> %v, <4 x i32> %a)
+; CHECK-NEXT: ret <8 x i32> %1
+  %1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  %2 = tail call <8 x i32> @llvm.x86.avx2.psll.d(<8 x i32> %v, <4 x i32> %1)
+  ret <8 x i32> %2
+}
+
+define <4 x i64> @avx2_psll_q_var(<4 x i64> %v, <2 x i64> %a) nounwind readnone uwtable {
+; CHECK-LABEL: @avx2_psll_q_var
+; CHECK-NEXT: %1 = tail call <4 x i64> @llvm.x86.avx2.psll.q(<4 x i64> %v, <2 x i64> %a)
+; CHECK-NEXT: ret <4 x i64> %1
+  %1 = shufflevector <2 x i64> %a, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %2 = tail call <4 x i64> @llvm.x86.avx2.psll.q(<4 x i64> %v, <2 x i64> %1)
+  ret <4 x i64> %2
+}
+
+;
 ; Constant Folding
 ;
 
