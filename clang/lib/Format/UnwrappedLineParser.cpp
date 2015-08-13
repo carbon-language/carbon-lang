@@ -1000,6 +1000,7 @@ bool UnwrappedLineParser::tryToParseLambda() {
     case tok::less:
     case tok::greater:
     case tok::identifier:
+    case tok::numeric_constant:
     case tok::coloncolon:
     case tok::kw_mutable:
       nextToken();
