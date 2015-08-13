@@ -93,14 +93,6 @@ class kmp_stats_list;
 
 #define KMP_HANDLE_SIGNALS (KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN)
 
-#ifdef KMP_SETVERSION
-/*  from factory/Include, to get VERSION_STRING embedded for 'what'  */
-#include "kaiconfig.h"
-#include "eye.h"
-#include "own.h"
-#include "setversion.h"
-#endif
-
 #include "kmp_wrapper_malloc.h"
 #if KMP_OS_UNIX
 # include <unistd.h>

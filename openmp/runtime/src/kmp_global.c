@@ -15,10 +15,6 @@
 
 #include "kmp.h"
 
-#ifdef KMP_SETVERSION
-char __kmp_setversion_string[] = VERSION_STRING;
-#endif
-
 kmp_key_t __kmp_gtid_threadprivate_key;
 
 kmp_cpuinfo_t   __kmp_cpuinfo = { 0 }; // Not initialized
