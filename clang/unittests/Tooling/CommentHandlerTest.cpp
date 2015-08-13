@@ -97,6 +97,10 @@ public:
       : Current(Comments.begin()), End(Comments.end()), PP(PP)
     { }
 
+  CommentVerifier(CommentVerifier &&C) : Current(C.Current), End(C.End), PP(C.PP) {
+    C.Current = C.End;
+  }
+
   ~CommentVerifier() {
     if (Current != End) {
       EXPECT_TRUE(Current == End) << "Unexpected comment \""
