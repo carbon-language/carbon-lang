@@ -57,6 +57,7 @@ public:
   uintX_t getSize() { return Header.sh_size; }
   uintX_t getFlags() { return Header.sh_flags; }
   uintX_t getOffset() { return Header.sh_offset; }
+  uintX_t getAlign() { return Header.sh_addralign; }
 
 private:
   StringRef Name;
@@ -213,12 +214,14 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
                    compSec<ELFT::Is64Bits>);
 
   for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
+    uintX_t Align = Sec->getAlign();
+    uintX_t Size = Sec->getSize();
     if (Sec->getFlags() & SHF_ALLOC) {
       Sec->setVA(VA);
-      VA += RoundUpToAlignment(Sec->getSize(), PageSize);
+      VA += RoundUpToAlignment(Size, Align);
     }
     Sec->setFileOffset(FileOff);
-    FileOff += RoundUpToAlignment(Sec->getSize(), 8);
+    FileOff += RoundUpToAlignment(Size, Align);
     StrTabBuilder.add(Sec->getName());
   }
 
