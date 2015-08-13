@@ -50,8 +50,8 @@ public:
 
   // Returns the size of the section in the output file.
   uintX_t getSize() { return Header.sh_size; }
-
   uintX_t getFlags() { return Header.sh_flags; }
+  uintX_t getOffset() { return Header.sh_offset; }
 
 private:
   StringRef Name;
@@ -122,8 +122,6 @@ template <class ELFT> void OutputSection<ELFT>::setFileOffset(uintX_t Off) {
   if (Header.sh_size == 0)
     return;
   Header.sh_offset = Off;
-  for (Chunk *C : Chunks)
-    C->setFileOff(C->getFileOff() + Off);
 }
 
 template <class ELFT>
@@ -131,7 +129,7 @@ void OutputSection<ELFT>::addSectionChunk(SectionChunk<ELFT> *C) {
   Chunks.push_back(C);
   uintX_t Off = Header.sh_size;
   Off = RoundUpToAlignment(Off, C->getAlign());
-  C->setFileOff(Off);
+  C->setOutputSectionOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
   Header.sh_type = C->getSectionHdr()->sh_type;
@@ -275,8 +273,9 @@ template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
   for (OutputSection<ELFT> *Sec : OutputSections) {
+    uint8_t *SecBuf = Buf + Sec->getOffset();
     for (Chunk *C : Sec->getChunks())
-      C->writeTo(Buf);
+      C->writeTo(SecBuf);
   }
 
   // String table.

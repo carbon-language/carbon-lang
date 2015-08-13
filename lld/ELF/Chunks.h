@@ -37,17 +37,18 @@ public:
   virtual void writeTo(uint8_t *Buf) = 0;
 
   // The writer sets and uses the addresses.
-  uint64_t getFileOff() { return FileOff; }
+  uint64_t getOutputSectionOff() { return OutputSectionOff; }
   uint32_t getAlign() { return Align; }
-  void setFileOff(uint64_t V) { FileOff = V; }
+  void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
   // Returns the section name if this is a section chunk.
   // It is illegal to call this function on non-section chunks.
   virtual StringRef getSectionName() const = 0;
 
 protected:
-  // The offset from beginning of the output file. The writer sets a value.
-  uint64_t FileOff = 0;
+  // The offset from beginning of the output sections this chunk was assigned
+  // to. The writer sets a value.
+  uint64_t OutputSectionOff = 0;
 
   // The alignment of this chunk. The writer uses the value.
   uint32_t Align = 1;

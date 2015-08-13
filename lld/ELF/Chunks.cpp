@@ -33,7 +33,7 @@ template <class ELFT> void SectionChunk<ELFT>::writeTo(uint8_t *Buf) {
     return;
   // Copy section contents from source object file to output file.
   ArrayRef<uint8_t> Data = *Obj->getSectionContents(Header);
-  memcpy(Buf + FileOff, Data.data(), Data.size());
+  memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
 
   // FIXME: Relocations
 }
