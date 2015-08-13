@@ -41,13 +41,19 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
   uint64_t Size = ELFObj->getNumSections();
   Chunks.reserve(Size);
   for (const Elf_Shdr &Sec : ELFObj->sections()) {
-    if (Sec.sh_type == SHT_SYMTAB) {
+    switch (Sec.sh_type) {
+    case SHT_SYMTAB:
       Symtab = &Sec;
-      continue;
-    }
-    if (Sec.sh_flags & SHF_ALLOC) {
+      break;
+    case SHT_STRTAB:
+    case SHT_NULL:
+    case SHT_RELA:
+    case SHT_REL:
+      break;
+    default:
       auto *C = new (Alloc) SectionChunk<ELFT>(this->getObj(), &Sec);
       Chunks.push_back(C);
+      break;
     }
   }
 }

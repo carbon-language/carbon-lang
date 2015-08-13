@@ -6,8 +6,12 @@
 .global _start
 _start:
 
-.section bar, "a"
-.section foobar, "a"
+.section bar
+.section foobar
+
+// Both sections are in the output:
+// CHECK: Name: bar
+// CHECK: Name: foobar
 
 // Test that the sting "bar" is merged into "foobar"
 
