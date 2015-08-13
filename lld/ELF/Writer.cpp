@@ -66,18 +66,18 @@ protected:
   ~OutputSectionBase() = default;
 };
 
-template <bool Is64Bits>
-class OutputSection final : public OutputSectionBase<Is64Bits> {
+template <class ELFT>
+class OutputSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
-  typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
+  typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
-      : OutputSectionBase<Is64Bits>(Name, sh_type, sh_flags) {}
+      : OutputSectionBase<ELFT::Is64Bits>(Name, sh_type, sh_flags) {}
 
-  void addChunk(Chunk *C);
+  void addChunk(SectionChunk<ELFT> *C);
   void writeTo(uint8_t *Buf) override;
 
 private:
-  std::vector<Chunk *> Chunks;
+  std::vector<SectionChunk<ELFT> *> Chunks;
 };
 
 template <bool Is64Bits>
@@ -117,7 +117,7 @@ private:
 
   SymbolTable *Symtab;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
-  llvm::SpecificBumpPtrAllocator<OutputSection<ELFT::Is64Bits>> CAlloc;
+  llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
 
   uintX_t FileSize;
@@ -155,7 +155,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   error(Buffer->commit());
 }
 
-template <bool Is64Bits> void OutputSection<Is64Bits>::addChunk(Chunk *C) {
+template <class ELFT>
+void OutputSection<ELFT>::addChunk(SectionChunk<ELFT> *C) {
   Chunks.push_back(C);
   uint32_t Align = C->getAlign();
   if (Align > this->Header.sh_addralign)
@@ -168,8 +169,8 @@ template <bool Is64Bits> void OutputSection<Is64Bits>::addChunk(Chunk *C) {
   this->Header.sh_size = Off;
 }
 
-template <bool Is64Bits> void OutputSection<Is64Bits>::writeTo(uint8_t *Buf) {
-  for (Chunk *C : Chunks)
+template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
+  for (SectionChunk<ELFT> *C : Chunks)
     C->writeTo(Buf);
 }
 
@@ -225,18 +226,17 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
-  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT::Is64Bits> *>
-      Map;
+  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
   for (std::unique_ptr<ObjectFileBase> &FileB : Symtab->ObjectFiles) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (SectionChunk<ELFT> *C : File.getChunks()) {
       const Elf_Shdr *H = C->getSectionHdr();
       SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type,
                                      H->sh_flags};
-      OutputSection<ELFT::Is64Bits> *&Sec = Map[Key];
+      OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         Sec = new (CAlloc.Allocate())
-            OutputSection<ELFT::Is64Bits>(Key.Name, Key.sh_type, Key.sh_flags);
+            OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
         OutputSections.push_back(Sec);
       }
       Sec->addChunk(C);
