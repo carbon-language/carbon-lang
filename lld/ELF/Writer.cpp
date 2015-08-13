@@ -43,8 +43,8 @@ public:
     Header.sh_type = sh_type;
     Header.sh_flags = sh_flags;
   }
-  void setVA(uintX_t);
-  void setFileOffset(uintX_t);
+  void setVA(uintX_t VA) { Header.sh_addr = VA; }
+  void setFileOffset(uintX_t Off) { Header.sh_offset = Off; }
   void addChunk(Chunk *C);
   std::vector<Chunk *> &getChunks() { return Chunks; }
   void writeHeaderTo(Elf_Shdr *SHdr);
@@ -116,14 +116,6 @@ template <class ELFT> void Writer<ELFT>::run() {
   writeHeader();
   writeSections();
   error(Buffer->commit());
-}
-
-template <class ELFT> void OutputSection<ELFT>::setVA(uintX_t VA) {
-  Header.sh_addr = VA;
-}
-
-template <class ELFT> void OutputSection<ELFT>::setFileOffset(uintX_t Off) {
-  Header.sh_offset = Off;
 }
 
 template <class ELFT> void OutputSection<ELFT>::addChunk(Chunk *C) {
