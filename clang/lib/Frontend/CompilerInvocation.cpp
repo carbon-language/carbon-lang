@@ -709,6 +709,9 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   // They won't be discovered by the regular preprocessor, so
   // we let make / ninja to know about this implicit dependency.
   Opts.ExtraDeps = Args.getAllArgValues(OPT_fsanitize_blacklist);
+  auto ModuleFiles = Args.getAllArgValues(OPT_fmodule_file);
+  Opts.ExtraDeps.insert(Opts.ExtraDeps.end(), ModuleFiles.begin(),
+                        ModuleFiles.end());
 }
 
 bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
