@@ -318,7 +318,7 @@ void BitcodeFile::parse() {
   if (!Err.empty())
     error(Err);
 
-  llvm::BumpPtrStringSaver Saver(Alloc);
+  llvm::StringSaver Saver(Alloc);
   for (unsigned I = 0, E = M->getSymbolCount(); I != E; ++I) {
     lto_symbol_attributes Attrs = M->getSymbolAttributes(I);
     if ((Attrs & LTO_SYMBOL_SCOPE_MASK) == LTO_SYMBOL_SCOPE_INTERNAL)

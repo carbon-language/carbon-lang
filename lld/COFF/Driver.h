@@ -56,7 +56,7 @@ private:
   std::vector<const char *> replaceResponseFiles(std::vector<const char *>);
 
   llvm::BumpPtrAllocator AllocAux;
-  llvm::BumpPtrStringSaver Alloc;
+  llvm::StringSaver Alloc;
 };
 
 class LinkerDriver {
@@ -69,7 +69,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator AllocAux;
-  llvm::BumpPtrStringSaver Alloc;
+  llvm::StringSaver Alloc;
   ArgParser Parser;
   SymbolTable Symtab;
 
@@ -107,7 +107,7 @@ private:
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
-void parseModuleDefs(MemoryBufferRef MB, llvm::BumpPtrStringSaver *Alloc);
+void parseModuleDefs(MemoryBufferRef MB, llvm::StringSaver *Alloc);
 void writeImportLibrary();
 
 // Functions below this line are defined in DriverUtils.cpp.

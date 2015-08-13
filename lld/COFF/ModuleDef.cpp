@@ -109,7 +109,7 @@ private:
 
 class Parser {
 public:
-  explicit Parser(StringRef S, BumpPtrStringSaver *A) : Lex(S), Alloc(A) {}
+  explicit Parser(StringRef S, StringSaver *A) : Lex(S), Alloc(A) {}
 
   void parse() {
     do {
@@ -270,12 +270,12 @@ private:
   Lexer Lex;
   Token Tok;
   std::vector<Token> Stack;
-  BumpPtrStringSaver *Alloc;
+  StringSaver *Alloc;
 };
 
 } // anonymous namespace
 
-void parseModuleDefs(MemoryBufferRef MB, BumpPtrStringSaver *Alloc) {
+void parseModuleDefs(MemoryBufferRef MB, StringSaver *Alloc) {
   Parser(MB.getBuffer(), Alloc).parse();
 }
 

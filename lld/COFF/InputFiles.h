@@ -188,7 +188,7 @@ private:
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
   llvm::BumpPtrAllocator StringAllocAux;
-  llvm::BumpPtrStringSaver StringAlloc;
+  llvm::StringSaver StringAlloc;
 };
 
 // Used for LTO.

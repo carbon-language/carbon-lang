@@ -66,7 +66,7 @@ public:
 
 private:
   llvm::BumpPtrAllocator Alloc;
-  llvm::BumpPtrStringSaver Saver;
+  llvm::StringSaver Saver;
   StringRef Prog;
   std::vector<const char *> Args;
 };
@@ -583,7 +583,7 @@ llvm::opt::InputArgList ArgParser::parseLINK(ArrayRef<const char *> Args) {
 
 std::vector<const char *> ArgParser::tokenize(StringRef S) {
   SmallVector<const char *, 16> Tokens;
-  BumpPtrStringSaver Saver(AllocAux);
+  StringSaver Saver(AllocAux);
   llvm::cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
@@ -593,7 +593,7 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
 std::vector<const char *>
 ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
   SmallVector<const char *, 256> Tokens(Argv.data(), Argv.data() + Argv.size());
-  BumpPtrStringSaver Saver(AllocAux);
+  StringSaver Saver(AllocAux);
   ExpandResponseFiles(Saver, TokenizeWindowsCommandLine, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
