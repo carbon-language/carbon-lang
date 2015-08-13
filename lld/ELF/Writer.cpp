@@ -37,8 +37,11 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
-  OutputSection(StringRef Name) : Name(Name) {
+  OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
+      : Name(Name) {
     memset(&Header, 0, sizeof(Elf_Shdr));
+    Header.sh_type = sh_type;
+    Header.sh_flags = sh_flags;
   }
   void setVA(uintX_t);
   void setFileOffset(uintX_t);
@@ -133,8 +136,6 @@ void OutputSection<ELFT>::addSectionChunk(SectionChunk<ELFT> *C) {
   C->setOutputSectionOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
-  Header.sh_type = C->getSectionHdr()->sh_type;
-  Header.sh_flags |= C->getSectionHdr()->sh_flags;
 }
 
 template <class ELFT> void OutputSection<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
@@ -180,7 +181,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
                                      H->sh_flags};
       OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
-        Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(C->getSectionName());
+        Sec = new (CAlloc.Allocate())
+            OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
         OutputSections.push_back(Sec);
       }
       Sec->addSectionChunk(C);
