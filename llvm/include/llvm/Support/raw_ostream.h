@@ -485,6 +485,9 @@ public:
 
 /// A raw_ostream that writes to an SmallVector or SmallString.  This is a
 /// simple adaptor class. This class does not encounter output errors.
+/// raw_svector_ostream operates without a buffer, delegating all memory
+/// management to the SmallString. Thus the SmallString is always up-to-date,
+/// may be used directly and there is no need to call flush().
 class raw_svector_ostream : public raw_pwrite_stream {
   SmallVectorImpl<char> &OS;
 
@@ -493,31 +496,24 @@ class raw_svector_ostream : public raw_pwrite_stream {
 
   void pwrite_impl(const char *Ptr, size_t Size, uint64_t Offset) override;
 
-  /// Return the current position within the stream, not counting the bytes
-  /// currently in the buffer.
+  /// Return the current position within the stream.
   uint64_t current_pos() const override;
-
-protected:
-  // Like the regular constructor, but doesn't call init.
-  explicit raw_svector_ostream(SmallVectorImpl<char> &O, unsigned);
-  void init();
 
 public:
   /// Construct a new raw_svector_ostream.
   ///
   /// \param O The vector to write to; this should generally have at least 128
   /// bytes free to avoid any extraneous memory overhead.
-  explicit raw_svector_ostream(SmallVectorImpl<char> &O);
-  ~raw_svector_ostream() override;
+  explicit raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
+    SetUnbuffered();
+  }
+  ~raw_svector_ostream() override {}
 
-  /// This is called when the SmallVector we're appending to is changed outside
-  /// of the raw_svector_ostream's control.  It is only safe to do this if the
-  /// raw_svector_ostream has previously been flushed.
-  void resync();
+  // FIXME: resync is no-op. Remove it and its users.
+  void resync() {}
 
-  /// Flushes the stream contents to the target vector and return a StringRef
-  /// for the vector contents.
-  StringRef str();
+  /// Return a StringRef for the vector contents.
+  StringRef str() { return StringRef(OS.data(), OS.size()); }
 };
 
 /// A raw_ostream that discards all output.
@@ -540,9 +536,7 @@ class buffer_ostream : public raw_svector_ostream {
   SmallVector<char, 0> Buffer;
 
 public:
-  buffer_ostream(raw_ostream &OS) : raw_svector_ostream(Buffer, 0), OS(OS) {
-    init();
-  }
+  buffer_ostream(raw_ostream &OS) : raw_svector_ostream(Buffer), OS(OS) {}
   ~buffer_ostream() { OS << str(); }
 };
 

@@ -755,72 +755,15 @@ void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
 //  raw_svector_ostream
 //===----------------------------------------------------------------------===//
 
-// The raw_svector_ostream implementation uses the SmallVector itself as the
-// buffer for the raw_ostream. We guarantee that the raw_ostream buffer is
-// always pointing past the end of the vector, but within the vector
-// capacity. This allows raw_ostream to write directly into the correct place,
-// and we only need to set the vector size when the data is flushed.
+uint64_t raw_svector_ostream::current_pos() const { return OS.size(); }
 
-raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O, unsigned)
-    : OS(O) {}
-
-raw_svector_ostream::raw_svector_ostream(SmallVectorImpl<char> &O) : OS(O) {
-  init();
-}
-
-void raw_svector_ostream::init() {
-  // Set up the initial external buffer. We make sure that the buffer has at
-  // least 128 bytes free; raw_ostream itself only requires 64, but we want to
-  // make sure that we don't grow the buffer unnecessarily on destruction (when
-  // the data is flushed). See the FIXME below.
-  OS.reserve(OS.size() + 128);
-  SetBuffer(OS.end(), OS.capacity() - OS.size());
-}
-
-raw_svector_ostream::~raw_svector_ostream() {
-  // FIXME: Prevent resizing during this flush().
-  flush();
-}
+void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
+  OS.append(Ptr, Ptr + Size);
+};
 
 void raw_svector_ostream::pwrite_impl(const char *Ptr, size_t Size,
                                       uint64_t Offset) {
-  flush();
-  memcpy(OS.begin() + Offset, Ptr, Size);
-}
-
-/// resync - This is called when the SmallVector we're appending to is changed
-/// outside of the raw_svector_ostream's control.  It is only safe to do this
-/// if the raw_svector_ostream has previously been flushed.
-void raw_svector_ostream::resync() {
-  assert(GetNumBytesInBuffer() == 0 && "Didn't flush before mutating vector");
-
-  if (OS.capacity() - OS.size() < 64)
-    OS.reserve(OS.capacity() * 2);
-  SetBuffer(OS.end(), OS.capacity() - OS.size());
-}
-
-void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
-  if (Ptr == OS.end()) {
-    // Grow the buffer to include the scratch area without copying.
-    size_t NewSize = OS.size() + Size;
-    assert(NewSize <= OS.capacity() && "Invalid write_impl() call!");
-    OS.set_size(NewSize);
-  } else {
-    assert(!GetNumBytesInBuffer());
-    OS.append(Ptr, Ptr + Size);
-  }
-
-  OS.reserve(OS.size() + 64);
-  SetBuffer(OS.end(), OS.capacity() - OS.size());
-}
-
-uint64_t raw_svector_ostream::current_pos() const {
-  return OS.size();
-}
-
-StringRef raw_svector_ostream::str() {
-  flush();
-  return StringRef(OS.begin(), OS.size());
+  memcpy(OS.data() + Offset, Ptr, Size);
 }
 
 //===----------------------------------------------------------------------===//
