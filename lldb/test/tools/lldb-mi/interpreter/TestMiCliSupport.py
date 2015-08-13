@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test lldb-mi can interpret CLI commands directly.
 """
 

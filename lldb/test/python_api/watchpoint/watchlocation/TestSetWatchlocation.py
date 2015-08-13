@@ -1,4 +1,4 @@
-﻿"""
+"""
 Use lldb Python SBValue.WatchPointee() API to create a watchpoint for write of '*g_char_ptr'.
 """
 

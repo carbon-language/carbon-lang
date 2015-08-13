@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test that the lldb-mi driver understands MI command syntax.
 """
 

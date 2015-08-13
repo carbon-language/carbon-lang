@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test lldb-mi -interpreter-exec command.
 """
 

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test watchpoint condition API.
 """
 

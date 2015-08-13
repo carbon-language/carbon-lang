@@ -1,4 +1,4 @@
-﻿"""
+"""
 Use lldb Python SBTarget API to iterate on the watchpoint(s) for the target.
 """
 

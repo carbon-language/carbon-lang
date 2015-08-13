@@ -1,4 +1,4 @@
-﻿"""
+"""
 Use lldb Python SBWatchpoint API to set the ignore count.
 """
 

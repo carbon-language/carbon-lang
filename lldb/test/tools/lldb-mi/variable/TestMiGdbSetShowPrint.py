@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test lldb-mi -gdb-set and -gdb-show commands for 'print option-name'.
 """
 

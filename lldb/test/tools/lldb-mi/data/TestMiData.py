@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test lldb-mi -data-xxx commands.
 """
 

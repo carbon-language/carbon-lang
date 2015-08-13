@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test watchpoint list, enable, disable, and delete commands.
 """
 

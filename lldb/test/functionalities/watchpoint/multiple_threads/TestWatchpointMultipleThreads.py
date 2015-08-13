@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test that lldb watchpoint works for multiple threads.
 """
 

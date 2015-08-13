@@ -1,4 +1,4 @@
-﻿"""Test that adding, deleting and modifying watchpoints sends the appropriate events."""
+"""Test that adding, deleting and modifying watchpoints sends the appropriate events."""
 
 import os, time
 import unittest2

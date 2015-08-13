@@ -1,4 +1,4 @@
-﻿"""
+"""
 Test lldb watchpoint that uses '-s size' to watch a pointed location with size.
 """
 
