@@ -129,20 +129,6 @@ public:
   }
 
   bool runOnLoop(Loop *L, LPPassManager &LPM) override;
-  bool runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
-                      SmallVectorImpl<BasicBlock *> &ExitBlocks);
-
-  bool processLoopStore(StoreInst *SI, const SCEV *BECount);
-  bool processLoopMemSet(MemSetInst *MSI, const SCEV *BECount);
-
-  bool processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
-                               unsigned StoreAlignment, Value *SplatValue,
-                               Instruction *TheStore, const SCEVAddRecExpr *Ev,
-                               const SCEV *BECount);
-  bool processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
-                                  const SCEVAddRecExpr *StoreEv,
-                                  const SCEVAddRecExpr *LoadEv,
-                                  const SCEV *BECount);
 
   /// This transformation requires natural loop information & requires that
   /// loop preheaders be inserted into the CFG.
@@ -189,8 +175,32 @@ public:
   Loop *getLoop() const { return CurLoop; }
 
 private:
-  bool runOnNoncountableLoop();
+  /// \name Countable Loop Idiom Handling
+  /// @{
+
   bool runOnCountableLoop();
+  bool runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
+                      SmallVectorImpl<BasicBlock *> &ExitBlocks);
+
+  bool processLoopStore(StoreInst *SI, const SCEV *BECount);
+  bool processLoopMemSet(MemSetInst *MSI, const SCEV *BECount);
+
+  bool processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
+                               unsigned StoreAlignment, Value *SplatValue,
+                               Instruction *TheStore, const SCEVAddRecExpr *Ev,
+                               const SCEV *BECount);
+  bool processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
+                                  const SCEVAddRecExpr *StoreEv,
+                                  const SCEVAddRecExpr *LoadEv,
+                                  const SCEV *BECount);
+
+  /// @}
+  /// \name Noncountable Loop Idiom Handling
+  /// @{
+
+  bool runOnNoncountableLoop();
+
+  /// @}
 };
 
 } // End anonymous namespace.
@@ -552,7 +562,6 @@ CallInst *NclPopcountRecognize::createPopcntIntrinsic(IRBuilderTy &IRBuilder,
 ///   detected, transform the relevant code to popcount intrinsic function
 ///   call, and return true; otherwise, return false.
 bool NclPopcountRecognize::recognize() {
-
   if (!LIR.getTargetTransformInfo())
     return false;
 
@@ -576,6 +585,28 @@ bool NclPopcountRecognize::recognize() {
 //          Implementation of LoopIdiomRecognize
 //
 //===----------------------------------------------------------------------===//
+
+bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
+  if (skipOptnoneFunction(L))
+    return false;
+
+  CurLoop = L;
+
+  // If the loop could not be converted to canonical form, it must have an
+  // indirectbr in it, just give up.
+  if (!L->getLoopPreheader())
+    return false;
+
+  // Disable loop idiom recognition if the function's name is a common idiom.
+  StringRef Name = L->getHeader()->getParent()->getName();
+  if (Name == "memset" || Name == "memcpy")
+    return false;
+
+  SE = &getAnalysis<ScalarEvolution>();
+  if (SE->hasLoopInvariantBackedgeTakenCount(L))
+    return runOnCountableLoop();
+  return runOnNoncountableLoop();
+}
 
 bool LoopIdiomRecognize::runOnCountableLoop() {
   const SCEV *BECount = SE->getBackedgeTakenCount(CurLoop);
@@ -615,36 +646,6 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
     MadeChange |= runOnLoopBlock(BB, BECount, ExitBlocks);
   }
   return MadeChange;
-}
-
-bool LoopIdiomRecognize::runOnNoncountableLoop() {
-  NclPopcountRecognize Popcount(*this);
-  if (Popcount.recognize())
-    return true;
-
-  return false;
-}
-
-bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
-  if (skipOptnoneFunction(L))
-    return false;
-
-  CurLoop = L;
-
-  // If the loop could not be converted to canonical form, it must have an
-  // indirectbr in it, just give up.
-  if (!L->getLoopPreheader())
-    return false;
-
-  // Disable loop idiom recognition if the function's name is a common idiom.
-  StringRef Name = L->getHeader()->getParent()->getName();
-  if (Name == "memset" || Name == "memcpy")
-    return false;
-
-  SE = &getAnalysis<ScalarEvolution>();
-  if (SE->hasLoopInvariantBackedgeTakenCount(L))
-    return runOnCountableLoop();
-  return runOnNoncountableLoop();
 }
 
 /// runOnLoopBlock - Process the specified block, which lives in a counted loop
@@ -1061,4 +1062,12 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
   deleteDeadInstruction(SI, TLI);
   ++NumMemCpy;
   return true;
+}
+
+bool LoopIdiomRecognize::runOnNoncountableLoop() {
+  NclPopcountRecognize Popcount(*this);
+  if (Popcount.recognize())
+    return true;
+
+  return false;
 }
