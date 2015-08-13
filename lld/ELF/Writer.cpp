@@ -63,6 +63,7 @@ private:
 template <class ELFT> class Writer {
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   Writer(SymbolTable *T) : Symtab(T) {}
   void run();
 
@@ -140,13 +141,44 @@ template <class ELFT> void OutputSection<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
   *SHdr = Header;
 }
 
+namespace {
+template <bool Is64Bits> struct SectionKey {
+  typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
+  StringRef Name;
+  uint32_t sh_type;
+  uintX_t sh_flags;
+};
+}
+namespace llvm {
+template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
+  static SectionKey<Is64Bits> getEmptyKey() {
+    return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getEmptyKey(), 0, 0};
+  }
+  static SectionKey<Is64Bits> getTombstoneKey() {
+    return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getTombstoneKey(), 0,
+                                0};
+  }
+  static unsigned getHashValue(const SectionKey<Is64Bits> &Val) {
+    return hash_combine(Val.Name, Val.sh_type, Val.sh_flags);
+  }
+  static bool isEqual(const SectionKey<Is64Bits> &LHS,
+                      const SectionKey<Is64Bits> &RHS) {
+    return DenseMapInfo<StringRef>::isEqual(LHS.Name, RHS.Name) &&
+           LHS.sh_type == RHS.sh_type && LHS.sh_flags == RHS.sh_flags;
+  }
+};
+}
+
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
-  SmallDenseMap<StringRef, OutputSection<ELFT> *> Map;
+  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
   for (std::unique_ptr<ObjectFileBase> &FileB : Symtab->ObjectFiles) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (SectionChunk<ELFT> *C : File.getChunks()) {
-      OutputSection<ELFT> *&Sec = Map[C->getSectionName()];
+      const Elf_Shdr *H = C->getSectionHdr();
+      SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type,
+                                     H->sh_flags};
+      OutputSection<ELFT> *&Sec = Map[Key];
       if (!Sec) {
         Sec = new (CAlloc.Allocate()) OutputSection<ELFT>(C->getSectionName());
         OutputSections.push_back(Sec);
