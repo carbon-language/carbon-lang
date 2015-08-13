@@ -3017,12 +3017,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid SIGN_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType().getScalarType().bitsLT(VT.getScalarType()) &&
-           "Invalid sext node, dst < src!");
     assert((!VT.isVector() ||
             VT.getVectorNumElements() ==
             Operand.getValueType().getVectorNumElements()) &&
            "Vector element count mismatch!");
+    assert(Operand.getValueType().bitsLT(VT) &&
+           "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
       return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
     else if (OpOpcode == ISD::UNDEF)
@@ -3033,12 +3033,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid ZERO_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType().getScalarType().bitsLT(VT.getScalarType()) &&
-           "Invalid zext node, dst < src!");
     assert((!VT.isVector() ||
             VT.getVectorNumElements() ==
             Operand.getValueType().getVectorNumElements()) &&
            "Vector element count mismatch!");
+    assert(Operand.getValueType().bitsLT(VT) &&
+           "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, DL, VT,
                      Operand.getNode()->getOperand(0));
@@ -3050,12 +3050,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid ANY_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType().getScalarType().bitsLT(VT.getScalarType()) &&
-           "Invalid anyext node, dst < src!");
     assert((!VT.isVector() ||
             VT.getVectorNumElements() ==
             Operand.getValueType().getVectorNumElements()) &&
            "Vector element count mismatch!");
+    assert(Operand.getValueType().bitsLT(VT) &&
+           "Invalid anyext node, dst < src!");
 
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
         OpOpcode == ISD::ANY_EXTEND)
@@ -3075,12 +3075,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid TRUNCATE!");
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
-    assert(Operand.getValueType().getScalarType().bitsGT(VT.getScalarType()) &&
-           "Invalid truncate node, src < dst!");
     assert((!VT.isVector() ||
             VT.getVectorNumElements() ==
             Operand.getValueType().getVectorNumElements()) &&
            "Vector element count mismatch!");
+    assert(Operand.getValueType().bitsGT(VT) &&
+           "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, DL, VT, Operand.getNode()->getOperand(0));
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
