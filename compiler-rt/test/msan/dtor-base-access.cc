@@ -4,6 +4,8 @@
 
 // RUN: %clangxx_msan %s -O2 -fsanitize=memory -fsanitize-memory-use-after-dtor -o %t && MSAN_OPTIONS=poison_in_dtor=1 %run %t >%t.out 2>&1
 
+// XFAIL: *
+
 #include <sanitizer/msan_interface.h>
 #include <assert.h>
 
