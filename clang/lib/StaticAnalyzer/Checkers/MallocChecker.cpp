@@ -392,7 +392,8 @@ private:
   /// The bug visitor which allows us to print extra diagnostics along the
   /// BugReport path. For example, showing the allocation site of the leaked
   /// region.
-  class MallocBugVisitor : public BugReporterVisitorImpl<MallocBugVisitor> {
+  class MallocBugVisitor final
+      : public BugReporterVisitorImpl<MallocBugVisitor> {
   protected:
     enum NotificationMode {
       Normal,
@@ -413,8 +414,6 @@ private:
   public:
     MallocBugVisitor(SymbolRef S, bool isLeak = false)
        : Sym(S), Mode(Normal), FailedReallocSymbol(nullptr), IsLeak(isLeak) {}
-
-    ~MallocBugVisitor() override {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;
