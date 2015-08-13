@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test lldb-mi -target-xxx commands.
 """
 
@@ -11,7 +11,7 @@ class MiTargetTestCase(lldbmi_testcase.MiTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # cannot attach to process on linux
     def test_lldbmi_target_attach_wait_for(self):
@@ -53,7 +53,7 @@ class MiTargetTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
         
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # cannot attach to process on linux
     def test_lldbmi_target_attach_name(self):
@@ -89,7 +89,7 @@ class MiTargetTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
         
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # cannot attach to process on linux
     def test_lldbmi_target_attach_pid(self):

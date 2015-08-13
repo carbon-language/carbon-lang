@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test lldb-mi -var-xxx commands.
 """
 
@@ -11,7 +11,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23560", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_lldbmi_eval(self):
@@ -123,7 +123,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,numchild=\"1\",children=\[child=\{name=\"var6\.\*\$[0-9]+\",exp=\"\*\$[0-9]+\",numchild=\"0\",type=\"const char\",thread-id=\"4294967295\",value=\"47 '/'\",has_more=\"0\"\}\],has_more=\"0\"") #FIXME -var-list-children shows invalid thread-id
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_var_update(self):
@@ -188,7 +188,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,changelist=\[\{name=\"var_complx_array\",value=\"\[2\]\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\]")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_var_create_register(self):
         """Test that 'lldb-mi --interpreter' works for -var-create $regname."""
@@ -228,7 +228,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,register-values=\[{number=\"0\",value=\"6\"")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22841: lldb-mi tests fail on all Linux buildbots
     def test_lldbmi_var_list_children(self):

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test lldb-mi -exec-xxx commands.
 """
 
@@ -11,7 +11,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_lldbmi_exec_abort(self):
@@ -62,7 +62,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\*stopped,reason=\"exited-normally\"")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_lldbmi_exec_arguments_set(self):
@@ -106,7 +106,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\"fourth=\\\\\\\"4th arg\\\\\\\"\"")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_lldbmi_exec_arguments_reset(self):
@@ -136,7 +136,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,value=\"1\"")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_next(self):
         """Test that 'lldb-mi --interpreter' works for stepping."""
@@ -188,7 +188,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error: Frame index 10 is out of range")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailurei386 #xfail to get buildbot green, failing config: i386 binary running on ubuntu 14.04 x86_64
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
@@ -244,7 +244,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error: Frame index 10 is out of range")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_step(self):
         """Test that 'lldb-mi --interpreter' works for stepping into."""
@@ -313,7 +313,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error: Frame index 10 is out of range")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_step_instruction(self):
         """Test that 'lldb-mi --interpreter' works for instruction stepping into."""
@@ -375,7 +375,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error: Frame index 10 is out of range")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureAll("llvm.org/pr23139", oslist=["linux"], compiler="gcc", compiler_version=[">=","4.9"], archs=["i386"])
     def test_lldbmi_exec_finish(self):

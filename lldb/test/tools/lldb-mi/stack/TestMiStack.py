@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test lldb-mi -stack-xxx commands.
 """
 
@@ -11,7 +11,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_arguments(self):
         """Test that 'lldb-mi --interpreter' can shows arguments."""
@@ -73,7 +73,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^error,msg=\"Command 'stack-list-arguments'\. Thread frame range invalid\"")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_locals(self):
         """Test that 'lldb-mi --interpreter' can shows local variables."""
@@ -200,7 +200,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,locals=\[{name=\"test_str\",type=\"const char \*\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",type=\"int\",value=\"24\"},{name=\"ptr\",type=\"int \*\",value=\".*?\"}\]")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_variables(self):
         """Test that 'lldb-mi --interpreter' can shows local variables and arguments."""
@@ -327,7 +327,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,variables=\[{arg=\"1\",name=\"arg_str\",type=\"const char \*\",value=\".*?String.*?\"},{arg=\"1\",name=\"arg_ptr\",type=\"int \*\",value=\".*?\"},{name=\"test_str\",type=\"const char \*\",value=\".*?Rakaposhi.*?\"},{name=\"var_e\",type=\"int\",value=\"24\"},{name=\"ptr\",type=\"int \*\",value=\".*?\"}\]")
         
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_info_depth(self):
         """Test that 'lldb-mi --interpreter' can shows depth of the stack."""
@@ -361,7 +361,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipUnlessDarwin
     def test_lldbmi_stack_info_frame(self):
@@ -402,7 +402,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.expect("\^error")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_frames(self):
         """Test that 'lldb-mi --interpreter' can lists the frames on the stack."""
@@ -425,7 +425,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,stack=\[frame=\{level=\"0\",addr=\"0x[0-9a-f]+\",func=\"main\",file=\"main\.cpp\",fullname=\".+?main\.cpp\",line=\"\d+\"\}\]")
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_select_frame(self):
         """Test that 'lldb-mi --interpreter' can choose current frame."""

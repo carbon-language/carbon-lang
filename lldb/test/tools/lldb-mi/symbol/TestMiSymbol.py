@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test lldb-mi -symbol-xxx commands.
 """
 
@@ -11,7 +11,7 @@ class MiSymbolTestCase(lldbmi_testcase.MiTestCaseBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
-    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfWindows #llvm.org/pr24452: Get lldb-mi tests working on Windows
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_symbol_list_lines_file(self):
         """Test that 'lldb-mi --interpreter' works for -symbol-list-lines when file exists."""
