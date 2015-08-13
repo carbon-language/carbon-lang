@@ -78,7 +78,7 @@ runCheckOnCode(StringRef Code, std::vector<ClangTidyError> *Errors = nullptr,
   Invocation.setDiagnosticConsumer(&DiagConsumer);
   if (!Invocation.run()) {
     std::string ErrorText;
-    for (const auto &Error:Context.getErrors()) {
+    for (const auto &Error : Context.getErrors()) {
       ErrorText += Error.Message.Message + "\n";
     }
     llvm::report_fatal_error(ErrorText);
