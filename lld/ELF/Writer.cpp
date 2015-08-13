@@ -123,8 +123,6 @@ template <class ELFT> void OutputSection<ELFT>::setVA(uintX_t VA) {
 }
 
 template <class ELFT> void OutputSection<ELFT>::setFileOffset(uintX_t Off) {
-  if (Header.sh_size == 0)
-    return;
   Header.sh_offset = Off;
 }
 
