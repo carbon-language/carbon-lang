@@ -703,8 +703,6 @@ public:
     Kind = SK_Lambda;
   }
 
-  ~LambdaScopeInfo() override;
-
   /// \brief Note when all explicit captures have been added.
   void finishedExplicitCaptures() {
     NumExplicitCaptures = Captures.size();
