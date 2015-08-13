@@ -41,7 +41,6 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif ()
 
 add_library(lldbDebugserverCommon
-  #${dnbconfig_header}
   debugserver.cpp
   DNBArch.cpp
   DNBBreakpoint.cpp
@@ -62,8 +61,6 @@ add_library(lldbDebugserverCommon
   SysSignal.cpp
   TTYState.cpp
   )
-
-add_dependencies(lldbDebugserverCommon generate_dnbconfig)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   find_library(COCOA_LIBRARY Cocoa)

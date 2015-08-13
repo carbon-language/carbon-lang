@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 LLDB_LEVEL := ../..
 
-DIRS := scripts source
+DIRS := source
 
 include $(LLDB_LEVEL)/Makefile

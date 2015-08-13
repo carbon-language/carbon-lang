@@ -17,7 +17,6 @@
 
 #include <mach/mach.h>
 #include <vector>
-#include "DNBConfig.h"
 
 class MachProcess;
 class PThreadMutex;

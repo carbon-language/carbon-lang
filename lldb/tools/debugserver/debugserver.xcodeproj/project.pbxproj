@@ -83,7 +83,6 @@
 		26ACA3340D3E956300A2120B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		26B67DE00EE9BC30006C8BC0 /* MachTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTask.h; sourceTree = "<group>"; };
 		26B67DE10EE9BC30006C8BC0 /* MachTask.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MachTask.mm; sourceTree = "<group>"; };
-		26C636AD0C71303A0024798E /* dbgnub-config.pl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = "dbgnub-config.pl"; sourceTree = "<group>"; };
 		26C637D60C71334A0024798E /* DNB.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DNB.cpp; sourceTree = "<group>"; };
 		26C637D70C71334A0024798E /* DNB.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNB.h; sourceTree = "<group>"; };
 		26C637D80C71334A0024798E /* DNBArch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNBArch.h; sourceTree = "<group>"; };
@@ -163,7 +162,6 @@
 			children = (
 				26ACA3330D3E94F200A2120B /* Framework */,
 				26C637D50C71334A0024798E /* source */,
-				26C636AC0C71303A0024798E /* scripts */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
 			name = dbgnub;
@@ -257,14 +255,6 @@
 				26ACA3340D3E956300A2120B /* CoreFoundation.framework */,
 			);
 			name = Framework;
-			sourceTree = "<group>";
-		};
-		26C636AC0C71303A0024798E /* scripts */ = {
-			isa = PBXGroup;
-			children = (
-				26C636AD0C71303A0024798E /* dbgnub-config.pl */,
-			);
-			path = scripts;
 			sourceTree = "<group>";
 		};
 		26C637D50C71334A0024798E /* source */ = {
@@ -377,7 +367,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 26CE05A4115C31ED0022F371 /* Build configuration list for PBXNativeTarget "debugserver" */;
 			buildPhases = (
-				26CE05C7115C36870022F371 /* ShellScript */,
 				26CE0591115C31C20022F371 /* Sources */,
 				26CE0592115C31C20022F371 /* Frameworks */,
 				4C3326CB18B2A2F600EB5DD7 /* ShellScript */,
@@ -419,21 +408,6 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		26CE05C7115C36870022F371 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/scripts/dbgnub-config.pl",
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/DNBConfig.h",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "perl -x scripts/dbgnub-config.pl\n";
-		};
 		4C3326CB18B2A2F600EB5DD7 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
