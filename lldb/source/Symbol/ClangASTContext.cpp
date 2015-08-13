@@ -8811,7 +8811,6 @@ ClangASTContext::DumpTypeDescription (void* type, Stream *s)
             }
         }
         
-        llvm_ostrm.flush();
         if (buf.size() > 0)
         {
             s->Write (buf.data(), buf.size());

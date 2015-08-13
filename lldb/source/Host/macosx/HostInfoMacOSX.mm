@@ -198,7 +198,6 @@ HostInfoMacOSX::ComputePythonDirectory(FileSpec &file_spec)
         llvm::SmallString<256> python_version_dir;
         llvm::raw_svector_ostream os(python_version_dir);
         os << "/python" << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION << "/site-packages";
-        os.flush();
 
         // We may get our string truncated. Should we protect this with an assert?
         raw_path.append(python_version_dir.c_str());
