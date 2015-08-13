@@ -67,7 +67,7 @@ public:
   ///@{
 
   /// @see The ScalarMap and PHIOpMap member.
-  using ScalarAllocaMapTy = DenseMap<Instruction *, AllocaInst *>;
+  using ScalarAllocaMapTy = DenseMap<Value *, AllocaInst *>;
 
   /// @brief Simple vector of instructions to store escape users.
   using EscapeUserVectorTy = SmallVector<Instruction *, 4>;
@@ -302,13 +302,13 @@ protected:
   /// If no alloca was mapped to @p ScalarBase in @p Map a new one is created
   /// and named after @p ScalarBase with the suffix @p NameExt.
   ///
-  /// @param ScalarBase The demoted scalar instruction.
-  /// @param Map        The map we should look for a mapped alloca instruction.
+  /// @param ScalarBase The demoted scalar value.
+  /// @param Map        The map we should look for a mapped alloca value.
   /// @param NameExt    The suffix we add to the name of a new created alloca.
   /// @param IsNew      If set it will hold true iff the alloca was created.
   ///
   /// @returns The alloca for @p ScalarBase in @p Map.
-  AllocaInst *getOrCreateAlloca(Instruction *ScalarBase, ScalarAllocaMapTy &Map,
+  AllocaInst *getOrCreateAlloca(Value *ScalarBase, ScalarAllocaMapTy &Map,
                                 const char *NameExt = ".s2a",
                                 bool *IsNew = nullptr);
 

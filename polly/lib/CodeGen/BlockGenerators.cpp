@@ -352,7 +352,7 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
     handleOutsideUsers(R, &Inst, BBMap[&Inst]);
 }
 
-AllocaInst *BlockGenerator::getOrCreateAlloca(Instruction *ScalarBase,
+AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
                                               ScalarAllocaMapTy &Map,
                                               const char *NameExt,
                                               bool *IsNew) {
@@ -433,7 +433,7 @@ void BlockGenerator::generateScalarLoads(ScopStmt &Stmt,
     if (!MA.isScalar() || !MA.isRead())
       continue;
 
-    auto Base = cast<Instruction>(MA.getBaseAddr());
+    auto Base = MA.getBaseAddr();
 
     if (MA.getScopArrayInfo()->isPHI())
       Address = getOrCreateAlloca(Base, PHIOpMap, ".phiops");
