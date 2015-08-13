@@ -1,24 +1,26 @@
 // Test -fsanitize-memory-use-after-dtor
 // RUN: %clang_cc1 -fsanitize=memory -fsanitize-memory-use-after-dtor -std=c++11 -triple=x86_64-pc-linux -emit-llvm -o - %s | FileCheck %s
 
+// Sanitizing dtor is emitted in dtor for every class
+
 struct Simple {
+  int x;
   ~Simple() {}
 };
 Simple s;
 // Simple internal member is poisoned by compiler-generated dtor
 // CHECK-LABEL: define {{.*}}SimpleD1Ev
-// CHECK: call void @__sanitizer_dtor_callback
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK: call void {{.*}}SimpleD2Ev
 // CHECK: ret void
 
 struct Inlined {
+  int y;
   inline ~Inlined() {}
 };
 Inlined i;
 // Simple internal member is poisoned by compiler-generated dtor
 // CHECK-LABEL: define {{.*}}InlinedD1Ev
-// CHECK: call void @__sanitizer_dtor_callback
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK: call void {{.*}}InlinedD2Ev
 // CHECK: ret void
 
 struct Defaulted_Trivial {
@@ -32,7 +34,6 @@ void create_def_trivial() {
 // no destructor defined.
 // CHECK-LABEL: define {{.*}}create_def_trivial
 // CHECK-NOT: call {{.*}}Defaulted_Trivial
-// CHECK-NOT: call void @__sanitizer_dtor_callback
 // CHECK: ret void
 
 struct Defaulted_Non_Trivial {
@@ -44,8 +45,7 @@ Defaulted_Non_Trivial def_non_trivial;
 // By including a Simple member in the struct, the compiler is
 // forced to generate a non-trivial destructor.
 // CHECK-LABEL: define {{.*}}Defaulted_Non_TrivialD1Ev
-// CHECK: call void @__sanitizer_dtor_callback
-// CHECK-NOT: call void @__sanitizer_dtor_callback
+// CHECK: call void {{.*}}Defaulted_Non_TrivialD2
 // CHECK: ret void
 
 
