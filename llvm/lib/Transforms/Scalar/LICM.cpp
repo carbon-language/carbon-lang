@@ -973,7 +973,7 @@ bool llvm::promoteLoopAccessesToScalars(AliasSet &AS,
   return Changed;
 }
 
-/// Simple Analysis hook. Clone alias set info.
+/// Simple analysis hook. Clone alias set info.
 ///
 void LICM::cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L) {
   AliasSetTracker *AST = LoopToAliasSetMap.lookup(L);
