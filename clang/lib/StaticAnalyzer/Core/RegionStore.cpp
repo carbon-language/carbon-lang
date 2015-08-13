@@ -149,7 +149,8 @@ typedef llvm::ImmutableMap<const MemRegion *, ClusterBindings>
 namespace {
 class RegionBindingsRef : public llvm::ImmutableMapRef<const MemRegion *,
                                  ClusterBindings> {
- ClusterBindings::Factory &CBFactory;
+  ClusterBindings::Factory *CBFactory;
+
 public:
   typedef llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>
           ParentTy;
@@ -157,21 +158,21 @@ public:
   RegionBindingsRef(ClusterBindings::Factory &CBFactory,
                     const RegionBindings::TreeTy *T,
                     RegionBindings::TreeTy::Factory *F)
-    : llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>(T, F),
-      CBFactory(CBFactory) {}
+      : llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>(T, F),
+        CBFactory(&CBFactory) {}
 
   RegionBindingsRef(const ParentTy &P, ClusterBindings::Factory &CBFactory)
-    : llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>(P),
-      CBFactory(CBFactory) {}
+      : llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>(P),
+        CBFactory(&CBFactory) {}
 
   RegionBindingsRef add(key_type_ref K, data_type_ref D) const {
-    return RegionBindingsRef(static_cast<const ParentTy*>(this)->add(K, D),
-                             CBFactory);
+    return RegionBindingsRef(static_cast<const ParentTy *>(this)->add(K, D),
+                             *CBFactory);
   }
 
   RegionBindingsRef remove(key_type_ref K) const {
-    return RegionBindingsRef(static_cast<const ParentTy*>(this)->remove(K),
-                             CBFactory);
+    return RegionBindingsRef(static_cast<const ParentTy *>(this)->remove(K),
+                             *CBFactory);
   }
 
   RegionBindingsRef addBinding(BindingKey K, SVal V) const;
@@ -179,16 +180,9 @@ public:
   RegionBindingsRef addBinding(const MemRegion *R,
                                BindingKey::Kind k, SVal V) const;
 
-  RegionBindingsRef &operator=(const RegionBindingsRef &X) {
-    *static_cast<ParentTy*>(this) = X;
-    return *this;
-  }
-
   const SVal *lookup(BindingKey K) const;
   const SVal *lookup(const MemRegion *R, BindingKey::Kind k) const;
-  const ClusterBindings *lookup(const MemRegion *R) const {
-    return static_cast<const ParentTy*>(this)->lookup(R);
-  }
+  using llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>::lookup;
 
   RegionBindingsRef removeBinding(BindingKey K);
 
@@ -245,10 +239,10 @@ RegionBindingsRef RegionBindingsRef::addBinding(BindingKey K, SVal V) const {
   const MemRegion *Base = K.getBaseRegion();
 
   const ClusterBindings *ExistingCluster = lookup(Base);
-  ClusterBindings Cluster = (ExistingCluster ? *ExistingCluster
-                             : CBFactory.getEmptyMap());
+  ClusterBindings Cluster =
+      (ExistingCluster ? *ExistingCluster : CBFactory->getEmptyMap());
 
-  ClusterBindings NewCluster = CBFactory.add(Cluster, K, V);
+  ClusterBindings NewCluster = CBFactory->add(Cluster, K, V);
   return add(Base, NewCluster);
 }
 
@@ -277,7 +271,7 @@ RegionBindingsRef RegionBindingsRef::removeBinding(BindingKey K) {
   if (!Cluster)
     return *this;
 
-  ClusterBindings NewCluster = CBFactory.remove(*Cluster, K);
+  ClusterBindings NewCluster = CBFactory->remove(*Cluster, K);
   if (NewCluster.isEmpty())
     return remove(Base);
   return add(Base, NewCluster);
