@@ -20,11 +20,6 @@ template <class ELFT>
 SectionChunk<ELFT>::SectionChunk(object::ELFFile<ELFT> *Obj,
                                  const Elf_Shdr *Header)
     : Obj(Obj), Header(Header) {
-  // Initialize SectionName.
-  ErrorOr<StringRef> Name = Obj->getSectionName(Header);
-  error(Name);
-  SectionName = *Name;
-
   Align = Header->sh_addralign;
 }
 
@@ -36,6 +31,12 @@ template <class ELFT> void SectionChunk<ELFT>::writeTo(uint8_t *Buf) {
   memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
 
   // FIXME: Relocations
+}
+
+template <class ELFT> StringRef SectionChunk<ELFT>::getSectionName() const {
+  ErrorOr<StringRef> Name = Obj->getSectionName(Header);
+  error(Name);
+  return *Name;
 }
 
 namespace lld {

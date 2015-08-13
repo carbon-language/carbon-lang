@@ -41,10 +41,6 @@ public:
   uint32_t getAlign() { return Align; }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
-  // Returns the section name if this is a section chunk.
-  // It is illegal to call this function on non-section chunks.
-  virtual StringRef getSectionName() const = 0;
-
 protected:
   // The offset from beginning of the output sections this chunk was assigned
   // to. The writer sets a value.
@@ -64,7 +60,7 @@ public:
   SectionChunk(llvm::object::ELFFile<ELFT> *Obj, const Elf_Shdr *Header);
   size_t getSize() const override { return Header->sh_size; }
   void writeTo(uint8_t *Buf) override;
-  StringRef getSectionName() const override { return SectionName; }
+  StringRef getSectionName() const;
   const Elf_Shdr *getSectionHdr() const { return Header; }
 
 private:
@@ -72,7 +68,6 @@ private:
   llvm::object::ELFFile<ELFT> *Obj;
 
   const Elf_Shdr *Header;
-  StringRef SectionName;
 };
 
 } // namespace elf2
