@@ -651,12 +651,13 @@ private:
 
 class SymbolVisitor {
 protected:
-  SymbolVisitor() = default;
-  SymbolVisitor(const SymbolVisitor &) = default;
-  SymbolVisitor(SymbolVisitor &&) {}
   ~SymbolVisitor() = default;
 
 public:
+  SymbolVisitor() = default;
+  SymbolVisitor(const SymbolVisitor &) = default;
+  SymbolVisitor(SymbolVisitor &&) {}
+
   /// \brief A visitor method invoked by ProgramStateManager::scanReachableSymbols.
   ///
   /// The method returns \c true if symbols should continue be scanned and \c
