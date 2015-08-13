@@ -10,7 +10,6 @@
 ;
 ; XFAIL: *
 ;
-; ModuleID = 'bugpoint-reduced-simplified.bc'
 target triple = "x86_64-unknown-linux-gnu"
 
 define void @_vorbis_apply_window(float* %d) {
@@ -18,16 +17,13 @@ entry:
   %0 = load float*, float** undef, align 8
   %div23.neg = sdiv i64 0, -4
   %sub24 = add i64 0, %div23.neg
-  br i1 undef, label %for.body, label %for.cond.30.preheader
+  br label %for.cond.30.preheader
 
 for.cond.30.preheader:                            ; preds = %for.body, %entry
   %sext = shl i64 %sub24, 32
   %conv48.74 = ashr exact i64 %sext, 32
   %cmp49.75 = icmp slt i64 %conv48.74, 0
   br i1 %cmp49.75, label %for.body.51.lr.ph, label %for.cond.60.preheader
-
-for.body:                                         ; preds = %for.body, %entry
-  br i1 false, label %for.body, label %for.cond.30.preheader
 
 for.body.51.lr.ph:                                ; preds = %for.cond.30.preheader
   %div44 = sdiv i64 0, 2
