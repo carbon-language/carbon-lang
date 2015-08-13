@@ -371,12 +371,12 @@ namespace builtins {
 // CHECK-DAG: attributes [[ATTR_NOBUILTIN]] = {{[{].*}} nobuiltin {{.*[}]}}
 // CHECK-DAG: attributes [[ATTR_NOBUILTIN_NOUNWIND]] = {{[{].*}} nobuiltin nounwind {{.*[}]}}
 
+// CHECK-DAG: attributes [[ATTR_BUILTIN_NEW]] = {{[{].*}} builtin {{.*[}]}}
+// CHECK-DAG: attributes [[ATTR_BUILTIN_DELETE]] = {{[{].*}} builtin {{.*[}]}}
+
 // CHECK: attributes [[ATTR_NOUNWIND]] =
 // CHECK-NOT: builtin
 // CHECK-NOT: attributes
 // CHECK: nounwind
 // CHECK-NOT: builtin
-// CHECK: attributes
-
-// CHECK-DAG: attributes [[ATTR_BUILTIN_NEW]] = {{[{].*}} builtin {{.*[}]}}
-// CHECK-DAG: attributes [[ATTR_BUILTIN_DELETE]] = {{[{].*}} builtin {{.*[}]}}
+// CHECK-NOT: attributes
