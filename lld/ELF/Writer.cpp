@@ -114,8 +114,6 @@ template <class ELFT> void Writer<ELFT>::run() {
 
 template <class ELFT> void OutputSection<ELFT>::setVA(uintX_t VA) {
   Header.sh_addr = VA;
-  for (Chunk *C : Chunks)
-    C->setVA(C->getVA() + VA);
 }
 
 template <class ELFT> void OutputSection<ELFT>::setFileOffset(uintX_t Off) {
@@ -131,7 +129,6 @@ void OutputSection<ELFT>::addSectionChunk(SectionChunk<ELFT> *C) {
   Chunks.push_back(C);
   uintX_t Off = Header.sh_size;
   Off = RoundUpToAlignment(Off, C->getAlign());
-  C->setVA(Off);
   C->setFileOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
