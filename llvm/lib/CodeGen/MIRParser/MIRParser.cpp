@@ -138,9 +138,10 @@ private:
   SMDiagnostic diagFromMIStringDiag(const SMDiagnostic &Error,
                                     SMRange SourceRange);
 
-  /// Return a MIR diagnostic converted from an LLVM assembly diagnostic.
-  SMDiagnostic diagFromLLVMAssemblyDiag(const SMDiagnostic &Error,
-                                        SMRange SourceRange);
+  /// Return a MIR diagnostic converted from a diagnostic located in a YAML
+  /// block scalar string.
+  SMDiagnostic diagFromBlockStringDiag(const SMDiagnostic &Error,
+                                       SMRange SourceRange);
 
   /// Create an empty function with the given name.
   void createDummyFunction(StringRef Name, Module &M);
@@ -222,7 +223,7 @@ std::unique_ptr<Module> MIRParserImpl::parse() {
     M = parseAssembly(MemoryBufferRef(BSN->getValue(), Filename), Error,
                       Context, &IRSlots);
     if (!M) {
-      reportDiagnostic(diagFromLLVMAssemblyDiag(Error, BSN->getSourceRange()));
+      reportDiagnostic(diagFromBlockStringDiag(Error, BSN->getSourceRange()));
       return M;
     }
     In.nextDocument();
@@ -656,8 +657,8 @@ SMDiagnostic MIRParserImpl::diagFromMIStringDiag(const SMDiagnostic &Error,
                        Error.getFixIts());
 }
 
-SMDiagnostic MIRParserImpl::diagFromLLVMAssemblyDiag(const SMDiagnostic &Error,
-                                                     SMRange SourceRange) {
+SMDiagnostic MIRParserImpl::diagFromBlockStringDiag(const SMDiagnostic &Error,
+                                                    SMRange SourceRange) {
   assert(SourceRange.isValid());
 
   // Translate the location of the error from the location in the llvm IR string
