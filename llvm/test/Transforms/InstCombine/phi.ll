@@ -247,8 +247,9 @@ end:
   ret i64 %tmp2
 ; CHECK-LABEL: @test12(
 ; CHECK-NOT: zext
+; CHECK: %[[X:.*]] = add i64 %{{.*}}, %Val
 ; CHECK: end:
-; CHECK-NEXT: phi i64 [ 0, %entry ], [ %Val, %two ]
+; CHECK-NEXT: phi i64 [ %tmp41, %entry ], [ %[[X]], %two ]
 ; CHECK-NOT: phi
 ; CHECK: ret i64
 }
@@ -629,4 +630,125 @@ entry:
 done:
   %y = phi i32 [ undef, %entry ]
   ret i32 %y
+}
+
+; CHECK-LABEL: @test28(
+; CHECK add nsw i32 %x, %dfd
+; CHECK: if.end:
+; CHECK-NEXT: phi i32 [ %{{.*}}, %if.else ], [ %x, %entry ]
+; CHECK-NEXT: ret
+define i32 @test28(i1* nocapture readonly %cond, i32* nocapture readonly %a, i32 %x, i32 %v) {
+entry:
+  %0 = load volatile i1, i1* %cond, align 1
+  br i1 %0, label %if.else, label %if.end
+
+if.else:
+  %1 = load volatile i32, i32* %a, align 4
+  br label %if.end
+
+if.end:
+  %v.addr.0 = phi i32 [ %1, %if.else ], [ 0, %entry ]
+  %div = add nsw i32 %x, %v.addr.0
+  ret i32 %div
+}
+
+; CHECK-LABEL: @test29(
+; CHECK: ashr i32 %x, %1
+; CHECK: if.end:
+; CHECK-NEXT: phi i32 [ %{{.*}}, %if.else ], [ %x, %entry ]
+; CHECK-NEXT: ret
+define i32 @test29(i1* nocapture readonly %cond, i32* nocapture readonly %a, i32 %x, i32 %v) {
+entry:
+  %0 = load volatile i1, i1* %cond, align 1
+  br i1 %0, label %if.else, label %if.end
+
+if.else:
+  %1 = load volatile i32, i32* %a, align 4
+  br label %if.end
+
+if.end:
+  %v.addr.0 = phi i32 [ %1, %if.else ], [ 0, %entry ]
+  %div = ashr i32 %x, %v.addr.0
+  ret i32 %div
+}
+
+; CHECK-LABEL: @test30(
+; CHECK: sdiv i32 %x, %1
+; CHECK: if.end:
+; CHECK-NEXT: phi i32 [ %{{.*}}, %if.else ], [ %x, %entry ]
+; CHECK-NEXT: ret
+define i32 @test30(i1* nocapture readonly %cond, i32* nocapture readonly %a, i32 %x, i32 %v) {
+entry:
+  %0 = load volatile i1, i1* %cond, align 1
+  br i1 %0, label %if.else, label %if.end
+
+if.else:
+  %1 = load volatile i32, i32* %a, align 4
+  br label %if.end
+
+if.end:
+  %v.addr.0 = phi i32 [ %1, %if.else ], [ 1, %entry ]
+  %div = sdiv i32 %x, %v.addr.0
+  ret i32 %div
+}
+
+; CHECK-LABEL: @test31(
+; CHECK: mul i32
+; CHECK: if.end:
+; CHECK-NEXT: phi i32 [ %{{.*}}, %if.else ], [ %x, %entry ]
+; CHECK-NEXT: ret
+define i32 @test31(i1* nocapture readonly %cond, i32* nocapture readonly %a, i32 %x, i32 %v) {
+entry:
+  %0 = load volatile i1, i1* %cond, align 1
+  br i1 %0, label %if.else, label %if.end
+
+if.else:
+  %1 = load volatile i32, i32* %a, align 4
+  br label %if.end
+
+if.end:
+  %v.addr.0 = phi i32 [ %1, %if.else ], [ 1, %entry ]
+  %div = mul i32 %x, %v.addr.0
+  ret i32 %div
+}
+
+; CHECK-LABEL: @test32(
+; CHECK: sdiv i32 %x, %1
+; CHECK: if.end:
+; CHECK-NEXT: phi i32 [ %x, %entry ], [ %{{.*}}, %if.else ]
+; CHECK-NEXT: ret
+define i32 @test32(i1* nocapture readonly %cond, i32* nocapture readonly %a, i32 %x, i32 %v) {
+entry:
+  %0 = load volatile i1, i1* %cond, align 1
+  br i1 %0, label %if.else, label %if.end
+
+if.else:
+  %1 = load volatile i32, i32* %a, align 4
+  br label %if.end
+
+if.end:
+  %v.addr.0 = phi i32 [ 1, %entry ], [ %1, %if.else ]
+  %div = sdiv i32 %x, %v.addr.0
+  ret i32 %div
+}
+
+; Constant (0) is on the LHS of shift - should not aplpy the transformation
+; CHECK-LABEL: @test33(
+; CHECK: if.end:
+; CHECK-NEXT: %v.addr.0 = phi i32 [ 0, %entry ], [ %1, %if.else ]
+; CHECK-NEXT: shl
+; CHECK-NEXT: ret
+define i32 @test33(i1* nocapture readonly %cond, i32* nocapture readonly %a, i32 %x, i32 %v) {
+entry:
+  %0 = load volatile i1, i1* %cond, align 1
+  br i1 %0, label %if.else, label %if.end
+
+if.else:
+  %1 = load volatile i32, i32* %a, align 4
+  br label %if.end
+
+if.end:
+  %v.addr.0 = phi i32 [ 0, %entry ], [ %1, %if.else ]
+  %div = shl i32 %v.addr.0, %x
+  ret i32 %div
 }
