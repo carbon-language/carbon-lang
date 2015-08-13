@@ -406,7 +406,7 @@ int main(int argc_, const char **argv_) {
   const DriverSuffix *DS = parseDriverSuffix(ProgName);
 
   llvm::BumpPtrAllocator A;
-  llvm::BumpPtrStringSaver Saver(A);
+  llvm::StringSaver Saver(A);
 
   // Parse response files using the GNU syntax, unless we're in CL mode. There
   // are two ways to put clang in CL compatibility mode: argv[0] is either
