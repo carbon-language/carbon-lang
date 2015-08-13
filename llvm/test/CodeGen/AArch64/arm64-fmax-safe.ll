@@ -1,8 +1,8 @@
-; RUN: llc -march=arm64 -enable-no-nans-fp-math < %s | FileCheck %s
+; RUN: llc -march=arm64 < %s | FileCheck %s
 
 define double @test_direct(float %in) {
 ; CHECK-LABEL: test_direct:
-  %cmp = fcmp nnan olt float %in, 0.000000e+00
+  %cmp = fcmp olt float %in, 0.000000e+00
   %val = select i1 %cmp, float 0.000000e+00, float %in
   %longer = fpext float %val to double
   ret double %longer
@@ -12,7 +12,7 @@ define double @test_direct(float %in) {
 
 define double @test_cross(float %in) {
 ; CHECK-LABEL: test_cross:
-  %cmp = fcmp nnan ult float %in, 0.000000e+00
+  %cmp = fcmp ult float %in, 0.000000e+00
   %val = select i1 %cmp, float %in, float 0.000000e+00
   %longer = fpext float %val to double
   ret double %longer
@@ -24,19 +24,19 @@ define double @test_cross(float %in) {
 ; can't be converted in safe-math mode.
 define double @test_cross_fail_nan(float %in) {
 ; CHECK-LABEL: test_cross_fail_nan:
-  %cmp = fcmp nnan olt float %in, 0.000000e+00
+  %cmp = fcmp olt float %in, 0.000000e+00
   %val = select i1 %cmp, float %in, float 0.000000e+00
   %longer = fpext float %val to double
   ret double %longer
 
-; CHECK: fmin
+; CHECK: fcsel s0, s0, s1, mi
 }
 
 ; This isn't a min or a max, but passes the first condition for swapping the
 ; results. Make sure they're put back before we resort to the normal fcsel.
 define float @test_cross_fail(float %lhs, float %rhs) {
 ; CHECK-LABEL: test_cross_fail:
-  %tst = fcmp nnan une float %lhs, %rhs
+  %tst = fcmp une float %lhs, %rhs
   %res = select i1 %tst, float %rhs, float %lhs
   ret float %res
 
