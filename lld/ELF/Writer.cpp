@@ -32,14 +32,15 @@ namespace {
 // Chunks cannot belong to more than one OutputSections. The writer
 // creates multiple OutputSections and assign them unique,
 // non-overlapping file offsets and VAs.
-template <class ELFT> class OutputSection {
+template <bool Is64Bits> class OutputSection {
 public:
-  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
+  typedef
+      typename std::conditional<Is64Bits, Elf64_Shdr, Elf32_Shdr>::type HeaderT;
 
   OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
       : Name(Name) {
-    memset(&Header, 0, sizeof(Elf_Shdr));
+    memset(&Header, 0, sizeof(HeaderT));
     Header.sh_type = sh_type;
     Header.sh_flags = sh_flags;
   }
@@ -47,7 +48,8 @@ public:
   void setFileOffset(uintX_t Off) { Header.sh_offset = Off; }
   void addChunk(Chunk *C);
   std::vector<Chunk *> &getChunks() { return Chunks; }
-  void writeHeaderTo(Elf_Shdr *SHdr);
+  template <endianness E>
+  void writeHeaderTo(typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr);
   StringRef getName() { return Name; }
   void setNameOffset(uintX_t Offset) { Header.sh_name = Offset; }
 
@@ -58,7 +60,7 @@ public:
 
 private:
   StringRef Name;
-  Elf_Shdr Header;
+  HeaderT Header;
   std::vector<Chunk *> Chunks;
 };
 
@@ -79,8 +81,8 @@ private:
 
   SymbolTable *Symtab;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
-  llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
-  std::vector<OutputSection<ELFT> *> OutputSections;
+  llvm::SpecificBumpPtrAllocator<OutputSection<ELFT::Is64Bits>> CAlloc;
+  std::vector<OutputSection<ELFT::Is64Bits> *> OutputSections;
 
   uintX_t FileSize;
   uintX_t SizeOfHeaders;
@@ -118,7 +120,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   error(Buffer->commit());
 }
 
-template <class ELFT> void OutputSection<ELFT>::addChunk(Chunk *C) {
+template <bool Is64Bits> void OutputSection<Is64Bits>::addChunk(Chunk *C) {
   Chunks.push_back(C);
   uintX_t Off = Header.sh_size;
   Off = RoundUpToAlignment(Off, C->getAlign());
@@ -127,8 +129,20 @@ template <class ELFT> void OutputSection<ELFT>::addChunk(Chunk *C) {
   Header.sh_size = Off;
 }
 
-template <class ELFT> void OutputSection<ELFT>::writeHeaderTo(Elf_Shdr *SHdr) {
-  *SHdr = Header;
+template <bool Is64Bits>
+template <endianness E>
+void OutputSection<Is64Bits>::writeHeaderTo(
+    typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr) {
+  SHdr->sh_name = Header.sh_name;
+  SHdr->sh_type = Header.sh_type;
+  SHdr->sh_flags = Header.sh_flags;
+  SHdr->sh_addr = Header.sh_addr;
+  SHdr->sh_offset = Header.sh_offset;
+  SHdr->sh_size = Header.sh_size;
+  SHdr->sh_link = Header.sh_link;
+  SHdr->sh_info = Header.sh_info;
+  SHdr->sh_addralign = Header.sh_addralign;
+  SHdr->sh_entsize = Header.sh_entsize;
 }
 
 namespace {
@@ -161,17 +175,18 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
-  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
+  SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT::Is64Bits> *>
+      Map;
   for (std::unique_ptr<ObjectFileBase> &FileB : Symtab->ObjectFiles) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (SectionChunk<ELFT> *C : File.getChunks()) {
       const Elf_Shdr *H = C->getSectionHdr();
       SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type,
                                      H->sh_flags};
-      OutputSection<ELFT> *&Sec = Map[Key];
+      OutputSection<ELFT::Is64Bits> *&Sec = Map[Key];
       if (!Sec) {
         Sec = new (CAlloc.Allocate())
-            OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
+            OutputSection<ELFT::Is64Bits>(Key.Name, Key.sh_type, Key.sh_flags);
         OutputSections.push_back(Sec);
       }
       Sec->addChunk(C);
@@ -179,8 +194,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 }
 
-template <class ELFT>
-static bool compSec(OutputSection<ELFT> *A, OutputSection<ELFT> *B) {
+template <bool Is64Bits>
+static bool compSec(OutputSection<Is64Bits> *A, OutputSection<Is64Bits> *B) {
   // Place SHF_ALLOC sections first.
   return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
 }
@@ -192,9 +207,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   uintX_t VA = 0x1000; // The first page is kept unmapped.
   uintX_t FileOff = SizeOfHeaders;
 
-  std::stable_sort(OutputSections.begin(), OutputSections.end(), compSec<ELFT>);
+  std::stable_sort(OutputSections.begin(), OutputSections.end(),
+                   compSec<ELFT::Is64Bits>);
 
-  for (OutputSection<ELFT> *Sec : OutputSections) {
+  for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
     if (Sec->getFlags() & SHF_ALLOC) {
       Sec->setVA(VA);
       VA += RoundUpToAlignment(Sec->getSize(), PageSize);
@@ -267,9 +283,9 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   auto SHdrs = reinterpret_cast<Elf_Shdr_Impl<ELFT> *>(Buf + EHdr->e_shoff);
   // First entry is null.
   ++SHdrs;
-  for (OutputSection<ELFT> *Sec : OutputSections) {
+  for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
     Sec->setNameOffset(StrTabBuilder.getOffset(Sec->getName()));
-    Sec->writeHeaderTo(SHdrs++);
+    Sec->template writeHeaderTo<ELFT::TargetEndianness>(SHdrs++);
   }
 
   // String table.
@@ -295,7 +311,7 @@ template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
 // Write section contents to a mmap'ed file.
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
-  for (OutputSection<ELFT> *Sec : OutputSections) {
+  for (OutputSection<ELFT::Is64Bits> *Sec : OutputSections) {
     uint8_t *SecBuf = Buf + Sec->getOffset();
     for (Chunk *C : Sec->getChunks())
       C->writeTo(SecBuf);
