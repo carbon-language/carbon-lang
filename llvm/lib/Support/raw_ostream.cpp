@@ -759,7 +759,7 @@ uint64_t raw_svector_ostream::current_pos() const { return OS.size(); }
 
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Ptr + Size);
-};
+}
 
 void raw_svector_ostream::pwrite_impl(const char *Ptr, size_t Size,
                                       uint64_t Offset) {
