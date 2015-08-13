@@ -575,6 +575,11 @@ public:
     {}
 
   public:
+    Filter(Filter &&F)
+        : Results(F.Results), I(F.I), Changed(F.Changed),
+          CalledDone(F.CalledDone) {
+      F.CalledDone = true;
+    }
     ~Filter() {
       assert(CalledDone &&
              "LookupResult::Filter destroyed without done() call");
