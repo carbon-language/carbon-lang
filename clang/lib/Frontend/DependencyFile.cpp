@@ -182,7 +182,11 @@ public:
       AddMissingHeaderDeps(Opts.AddMissingHeaderDeps),
       SeenMissingHeader(false),
       IncludeModuleFiles(Opts.IncludeModuleFiles),
-      OutputFormat(Opts.OutputFormat) {}
+      OutputFormat(Opts.OutputFormat) {
+    for (auto ExtraDep : Opts.ExtraDeps) {
+      AddFilename(ExtraDep);
+    }
+  }
 
   void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                    SrcMgr::CharacteristicKind FileType,

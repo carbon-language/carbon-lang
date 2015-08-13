@@ -20,7 +20,16 @@
 // RUN: cd a/b
 // RUN: %clang -MD -MF - %s -fsyntax-only -I ./ | FileCheck -check-prefix=CHECK-SIX %s
 // CHECK-SIX: {{ }}x.h
-
+// RUN: echo "fun:foo" > %t.blacklist
+// RUN: %clang -MD -MF - %s -fsyntax-only -fsanitize=cfi-vcall -flto -fsanitize-blacklist=%t.blacklist -I ./ | FileCheck -check-prefix=CHECK-SEVEN %s
+// CHECK-SEVEN: .blacklist
+// CHECK-SEVEN: {{ }}x.h
+// RUN: %clang -MD -MF - %s -fsyntax-only -fsanitize=address -flto -I . | FileCheck -check-prefix=CHECK-EIGHT %s
+// CHECK-EIGHT: asan_blacklist.txt
+// CHECK-EIGHT: {{ }}x.h
+// RUN: %clang -MD -MF - %s -fsyntax-only -fsanitize=address -flto -I . -fno-sanitize-blacklist | FileCheck -check-prefix=CHECK-NINE %s
+// CHECK-NINE-NOT: asan_blacklist.txt
+// CHECK-NINE: {{ }}x.h
 #ifndef INCLUDE_FLAG_TEST
 #include <x.h>
 #endif

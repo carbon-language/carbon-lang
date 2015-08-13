@@ -705,6 +705,10 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
       Args.getLastArgValue(OPT_module_dependency_dir);
   if (Args.hasArg(OPT_MV))
     Opts.OutputFormat = DependencyOutputFormat::NMake;
+  // Add sanitizer blacklists as extra dependencies.
+  // They won't be discovered by the regular preprocessor, so
+  // we let make / ninja to know about this implicit dependency.
+  Opts.ExtraDeps = Args.getAllArgValues(OPT_fsanitize_blacklist);
 }
 
 bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
