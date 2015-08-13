@@ -45,7 +45,7 @@ public:
   }
   void setVA(uintX_t);
   void setFileOffset(uintX_t);
-  void addSectionChunk(SectionChunk<ELFT> *C);
+  void addChunk(Chunk *C);
   std::vector<Chunk *> &getChunks() { return Chunks; }
   void writeHeaderTo(Elf_Shdr *SHdr);
   StringRef getName() { return Name; }
@@ -128,8 +128,7 @@ template <class ELFT> void OutputSection<ELFT>::setFileOffset(uintX_t Off) {
   Header.sh_offset = Off;
 }
 
-template <class ELFT>
-void OutputSection<ELFT>::addSectionChunk(SectionChunk<ELFT> *C) {
+template <class ELFT> void OutputSection<ELFT>::addChunk(Chunk *C) {
   Chunks.push_back(C);
   uintX_t Off = Header.sh_size;
   Off = RoundUpToAlignment(Off, C->getAlign());
@@ -185,7 +184,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
             OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
         OutputSections.push_back(Sec);
       }
-      Sec->addSectionChunk(C);
+      Sec->addChunk(C);
     }
   }
 }
