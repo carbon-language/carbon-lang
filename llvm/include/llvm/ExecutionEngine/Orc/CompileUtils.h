@@ -40,7 +40,6 @@ public:
     if (TM.addPassesToEmitMC(PM, Ctx, ObjStream))
       llvm_unreachable("Target does not support MC emission.");
     PM.run(M);
-    ObjStream.flush();
     std::unique_ptr<MemoryBuffer> ObjBuffer(
         new ObjectMemoryBuffer(std::move(ObjBufferSV)));
     ErrorOr<std::unique_ptr<object::ObjectFile>> Obj =

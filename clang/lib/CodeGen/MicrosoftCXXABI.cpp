@@ -257,7 +257,6 @@ public:
     SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     getMangleContext().mangleCXXVirtualDisplacementMap(SrcRD, DstRD, Out);
-    Out.flush();
     StringRef MangledName = OutName.str();
 
     if (auto *VDispMap = CGM.getModule().getNamedGlobal(MangledName))
@@ -1854,7 +1853,6 @@ llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
   SmallString<256> ThunkName;
   llvm::raw_svector_ostream Out(ThunkName);
   getMangleContext().mangleVirtualMemPtrThunk(MD, Out);
-  Out.flush();
 
   // If the thunk has been generated previously, just return it.
   if (llvm::GlobalValue *GV = CGM.getModule().getNamedValue(ThunkName))
@@ -1930,7 +1928,6 @@ MicrosoftCXXABI::getAddrOfVBTable(const VPtrInfo &VBT, const CXXRecordDecl *RD,
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   getMangleContext().mangleCXXVBTable(RD, VBT.MangledPath, Out);
-  Out.flush();
   StringRef Name = OutName.str();
 
   llvm::ArrayType *VBTableType =
@@ -2342,7 +2339,6 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                                                                Out);
       else
         getMangleContext().mangleStaticGuardVariable(&D, Out);
-      Out.flush();
     }
 
     // Create the guard variable with a zero-initializer. Just absorb linkage,
@@ -3747,7 +3743,6 @@ MicrosoftCXXABI::getAddrOfCXXCtorClosure(const CXXConstructorDecl *CD,
   SmallString<256> ThunkName;
   llvm::raw_svector_ostream Out(ThunkName);
   getMangleContext().mangleCXXCtor(CD, CT, Out);
-  Out.flush();
 
   // If the thunk has been generated previously, just return it.
   if (llvm::GlobalValue *GV = CGM.getModule().getNamedValue(ThunkName))

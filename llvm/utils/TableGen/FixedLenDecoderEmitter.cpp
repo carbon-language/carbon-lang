@@ -1120,7 +1120,6 @@ unsigned FilterChooser::getDecoderIndex(DecoderSet &Decoders,
   raw_svector_ostream S(Decoder);
   unsigned I = 4;
   emitDecoder(S, I, Opc, HasCompleteDecoder);
-  S.flush();
 
   // Using the full decoder string as the key value here is a bit
   // heavyweight, but is effective. If the string comparisons become a
@@ -1231,7 +1230,6 @@ void FilterChooser::emitPredicateTableEntry(DecoderTableInfo &TableInfo,
   SmallString<16> PBytes;
   raw_svector_ostream S(PBytes);
   encodeULEB128(PIdx, S);
-  S.flush();
 
   TableInfo.Table.push_back(MCD::OPC_CheckPredicate);
   // Predicate index
@@ -1297,7 +1295,6 @@ void FilterChooser::emitSoftFailTableEntry(DecoderTableInfo &TableInfo,
   if (NeedNegativeMask) {
     MaskBytes.clear();
     encodeULEB128(NegativeMask.getZExtValue(), S);
-    S.flush();
     for (unsigned i = 0, e = MaskBytes.size(); i != e; ++i)
       TableInfo.Table.push_back(MaskBytes[i]);
   } else
@@ -1367,7 +1364,6 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
   SmallString<16> Bytes;
   raw_svector_ostream S(Bytes);
   encodeULEB128(DIdx, S);
-  S.flush();
 
   // Decoder index
   for (unsigned i = 0, e = Bytes.size(); i != e; ++i)

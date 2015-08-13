@@ -206,7 +206,6 @@ void MangleContext::mangleCtorBlock(const CXXConstructorDecl *CD,
   SmallString<64> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
   mangleCXXCtor(CD, CT, Out);
-  Out.flush();
   mangleFunctionBlock(*this, Buffer, BD, ResStream);
 }
 
@@ -216,7 +215,6 @@ void MangleContext::mangleDtorBlock(const CXXDestructorDecl *DD,
   SmallString<64> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
   mangleCXXDtor(DD, DT, Out);
-  Out.flush();
   mangleFunctionBlock(*this, Buffer, BD, ResStream);
 }
 
@@ -253,7 +251,6 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
       }
     }
   }
-  Stream.flush();
   mangleFunctionBlock(*this, Buffer, BD, Out);
 }
 

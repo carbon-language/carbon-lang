@@ -136,8 +136,6 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MCCodeEmitter &InstEmitter = ObjStreamer.getAssembler().getEmitter();
       InstEmitter.encodeInstruction(TmpInst, CodeStream, Fixups,
                                     MF->getSubtarget<MCSubtargetInfo>());
-      CodeStream.flush();
-
       HexLines.resize(HexLines.size() + 1);
       std::string &HexLine = HexLines.back();
       raw_string_ostream HexStream(HexLine);

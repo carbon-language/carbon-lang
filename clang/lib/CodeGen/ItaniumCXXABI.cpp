@@ -1439,7 +1439,6 @@ llvm::GlobalVariable *ItaniumCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   getMangleContext().mangleCXXVTable(RD, Out);
-  Out.flush();
 
   ItaniumVTableContext &VTContext = CGM.getItaniumVTableContext();
   llvm::ArrayType *ArrayType = llvm::ArrayType::get(
@@ -1814,7 +1813,6 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     {
       llvm::raw_svector_ostream out(guardName);
       getMangleContext().mangleStaticGuardVariable(&D, out);
-      out.flush();
     }
 
     // Create the guard variable with a zero-initializer.
@@ -2038,7 +2036,6 @@ ItaniumCXXABI::getOrCreateThreadLocalWrapper(const VarDecl *VD,
   {
     llvm::raw_svector_ostream Out(WrapperName);
     getMangleContext().mangleItaniumThreadLocalWrapper(VD, Out);
-    Out.flush();
   }
 
   if (llvm::Value *V = CGM.getModule().getNamedValue(WrapperName))
@@ -2094,7 +2091,6 @@ void ItaniumCXXABI::EmitThreadLocalInitFuncs(
     {
       llvm::raw_svector_ostream Out(InitFnName);
       getMangleContext().mangleItaniumThreadLocalInit(VD, Out);
-      Out.flush();
     }
 
     // If we have a definition for the variable, emit the initialization
@@ -2290,7 +2286,6 @@ llvm::GlobalVariable *ItaniumRTTIBuilder::GetAddrOfTypeName(
   SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(Ty, Out);
-  Out.flush();
 
   // We know that the mangled name of the type starts at index 4 of the
   // mangled name of the typename, so we can just index into it in order to
@@ -2312,7 +2307,6 @@ ItaniumRTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, Out);
-  Out.flush();
 
   // Look for an existing global.
   llvm::GlobalVariable *GV = CGM.getModule().getNamedGlobal(Name);
@@ -2711,7 +2705,6 @@ llvm::Constant *ItaniumRTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty, Out);
-  Out.flush();
 
   llvm::GlobalVariable *OldGV = CGM.getModule().getNamedGlobal(Name);
   if (OldGV && !OldGV->isDeclaration()) {

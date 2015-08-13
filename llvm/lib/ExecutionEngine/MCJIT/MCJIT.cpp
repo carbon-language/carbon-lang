@@ -159,7 +159,6 @@ std::unique_ptr<MemoryBuffer> MCJIT::emitObject(Module *M) {
   // Initialize passes.
   PM.run(*M);
   // Flush the output buffer to get the generated code into memory
-  ObjStream.flush();
 
   std::unique_ptr<MemoryBuffer> CompiledObjBuffer(
                                 new ObjectMemoryBuffer(std::move(ObjBufferSV)));

@@ -92,7 +92,6 @@ namespace llvm {
       SmallVector<MCFixup, 4> Fixups;
       raw_svector_ostream VecOS(Code);
       CodeEmitter->encodeInstruction(Inst, VecOS, Fixups, STI);
-      VecOS.flush();
       CurrentShadowSize += Code.size();
       if (CurrentShadowSize >= RequiredShadowSize)
         InShadow = false; // The shadow is big enough. Stop counting.

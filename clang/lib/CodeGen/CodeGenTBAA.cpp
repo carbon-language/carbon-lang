@@ -155,7 +155,6 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     SmallString<256> OutName;
     llvm::raw_svector_ostream Out(OutName);
     MContext.mangleTypeName(QualType(ETy, 0), Out);
-    Out.flush();
     return MetadataCache[Ty] = createTBAAScalarType(OutName, getChar());
   }
 
@@ -271,7 +270,6 @@ CodeGenTBAA::getTBAAStructTypeInfo(QualType QTy) {
       // Don't use the mangler for C code.
       llvm::raw_svector_ostream Out(OutName);
       MContext.mangleTypeName(QualType(Ty, 0), Out);
-      Out.flush();
     } else {
       OutName = RD->getName();
     }

@@ -156,10 +156,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 bool USRGenerator::EmitDeclName(const NamedDecl *D) {
-  Out.flush();
   const unsigned startSize = Buf.size();
   D->printName(Out);
-  Out.flush();
   const unsigned endSize = Buf.size();
   return startSize == endSize;
 }
@@ -462,7 +460,6 @@ void USRGenerator::VisitTagDecl(const TagDecl *D) {
   }
   
   Out << '@';
-  Out.flush();
   assert(Buf.size() > 0);
   const unsigned off = Buf.size() - 1;
 

@@ -68,7 +68,6 @@ void MCELFStreamer::mergeFragment(MCDataFragment *DF,
       EF->setBundlePadding(static_cast<uint8_t>(RequiredBundlePadding));
 
       Assembler.writeFragmentPadding(*EF, FSize, OW);
-      VecOS.flush();
       delete OW;
 
       DF->getContents().append(Code.begin(), Code.end());
@@ -480,7 +479,6 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst,
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
   Assembler.getEmitter().encodeInstruction(Inst, VecOS, Fixups, STI);
-  VecOS.flush();
 
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
     fixSymbolsInTLSFixups(Fixups[i].getValue());

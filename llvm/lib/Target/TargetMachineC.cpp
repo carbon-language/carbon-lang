@@ -243,7 +243,6 @@ LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T,
   SmallString<0> CodeString;
   raw_svector_ostream OStream(CodeString);
   bool Result = LLVMTargetMachineEmit(T, M, OStream, codegen, ErrorMessage);
-  OStream.flush();
 
   StringRef Data = OStream.str();
   *OutMemBuf =

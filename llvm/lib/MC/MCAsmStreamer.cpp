@@ -253,9 +253,6 @@ public:
 void MCAsmStreamer::AddComment(const Twine &T) {
   if (!IsVerboseAsm) return;
 
-  // Make sure that CommentStream is flushed.
-  CommentStream.flush();
-
   T.toVector(CommentToEmit);
   // Each comment goes on its own line.
   CommentToEmit.push_back('\n');
@@ -267,7 +264,6 @@ void MCAsmStreamer::EmitCommentsAndEOL() {
     return;
   }
 
-  CommentStream.flush();
   StringRef Comments = CommentToEmit;
 
   assert(Comments.back() == '\n' &&
@@ -1223,7 +1219,6 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
   SmallVector<MCFixup, 4> Fixups;
   raw_svector_ostream VecOS(Code);
   Emitter->encodeInstruction(Inst, VecOS, Fixups, STI);
-  VecOS.flush();
 
   // If we are showing fixups, create symbolic markers in the encoded
   // representation. We do this by making a per-bit map to the fixup item index,

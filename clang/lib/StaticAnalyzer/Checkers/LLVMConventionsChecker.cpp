@@ -276,7 +276,6 @@ void ASTFieldVisitor::ReportError(QualType T) {
     }
   }
   os << " (type " << FieldChain.back()->getType().getAsString() << ")";
-  os.flush();
 
   // Note that this will fire for every translation unit that uses this
   // class.  This is suboptimal, but at least scan-build will merge

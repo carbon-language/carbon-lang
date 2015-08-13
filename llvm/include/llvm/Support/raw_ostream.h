@@ -509,6 +509,8 @@ public:
   }
   ~raw_svector_ostream() override {}
 
+  void flush() = delete;
+
   /// Return a StringRef for the vector contents.
   StringRef str() { return StringRef(OS.data(), OS.size()); }
 };

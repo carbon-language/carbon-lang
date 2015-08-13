@@ -108,7 +108,6 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   llvm::raw_svector_ostream Out(OutName);
   cast<ItaniumMangleContext>(CGM.getCXXABI().getMangleContext())
       .mangleCXXVTT(RD, Out);
-  Out.flush();
   StringRef Name = OutName.str();
 
   // This will also defer the definition of the VTT.

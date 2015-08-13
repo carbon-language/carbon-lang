@@ -5867,7 +5867,6 @@ static void emitComments(raw_svector_ostream &CommentStream,
                          formatted_raw_ostream &FormattedOS,
                          const MCAsmInfo &MAI) {
   // Flush the stream before taking its content.
-  CommentStream.flush();
   StringRef Comments = CommentsToEmit.str();
   // Get the default information for printing a comment.
   const char *CommentBegin = MAI.getCommentString();
@@ -6248,7 +6247,6 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
             dumpBytes(ArrayRef<uint8_t>(Bytes.data() + Index, Size), outs());
           }
           formatted_raw_ostream FormattedOS(outs());
-          Annotations.flush();
           StringRef AnnotationsStr = Annotations.str();
           if (isThumb)
             ThumbIP->printInst(&Inst, FormattedOS, AnnotationsStr, *ThumbSTI);

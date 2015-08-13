@@ -11461,7 +11461,6 @@ static FixItHint createFriendTagNNSFixIt(Sema &SemaRef, NamedDecl *ND, Scope *S,
   std::reverse(Namespaces.begin(), Namespaces.end());
   for (auto *II : Namespaces)
     OS << II->getName() << "::";
-  OS.flush();
   return FixItHint::CreateInsertion(NameLoc, Insertion);
 }
 

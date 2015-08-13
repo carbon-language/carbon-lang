@@ -139,7 +139,6 @@ public:
       clang::EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
                                Ctx.getTargetInfo().getDataLayoutString(),
                                M.get(), BackendAction::Backend_EmitLL, &OS);
-      OS.flush();
       llvm::dbgs() << Buffer;
     });
 

@@ -159,7 +159,6 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     break;
   }
 
-  os.flush();
   auto report = llvm::make_unique<BugReport>(
       *BT_null, buf.empty() ? BT_null->getDescription() : StringRef(buf), N);
 

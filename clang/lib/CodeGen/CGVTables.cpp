@@ -44,7 +44,6 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
                                                       Thunk.This, Out);
   else
     getCXXABI().getMangleContext().mangleThunk(MD, Thunk, Out);
-  Out.flush();
 
   llvm::Type *Ty = getTypes().GetFunctionTypeForVTable(GD);
   return GetOrCreateLLVMFunction(Name, Ty, GD, /*ForVTable=*/true,
@@ -644,7 +643,6 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   cast<ItaniumMangleContext>(CGM.getCXXABI().getMangleContext())
       .mangleCXXCtorVTable(RD, Base.getBaseOffset().getQuantity(),
                            Base.getBase(), Out);
-  Out.flush();
   StringRef Name = OutName.str();
 
   llvm::ArrayType *ArrayType = 

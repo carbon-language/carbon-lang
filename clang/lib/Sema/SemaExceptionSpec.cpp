@@ -318,7 +318,6 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   default:
     llvm_unreachable("This spec type is compatible with none.");
   }
-  OS.flush();
 
   SourceLocation FixItLoc;
   if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {

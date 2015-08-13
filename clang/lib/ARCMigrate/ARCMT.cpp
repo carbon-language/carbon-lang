@@ -600,7 +600,6 @@ bool MigrationProcess::applyTransform(TransformFn trans,
     SmallString<512> newText;
     llvm::raw_svector_ostream vecOS(newText);
     buf.write(vecOS);
-    vecOS.flush();
     std::unique_ptr<llvm::MemoryBuffer> memBuf(
         llvm::MemoryBuffer::getMemBufferCopy(
             StringRef(newText.data(), newText.size()), newFname));

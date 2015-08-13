@@ -721,7 +721,6 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     llvm::raw_svector_ostream Stream(TemplateMangling);
     MicrosoftCXXNameMangler Extra(Context, Stream);
     Extra.mangleTemplateInstantiationName(TD, *TemplateArgs);
-    Stream.flush();
 
     mangleSourceName(TemplateMangling);
     return;

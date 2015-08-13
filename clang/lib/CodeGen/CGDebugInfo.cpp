@@ -613,7 +613,6 @@ static SmallString<256> getUniqueTagTypeName(const TagType *Ty,
   // a unique string for a type?
   llvm::raw_svector_ostream Out(FullName);
   CGM.getCXXABI().getMangleContext().mangleCXXRTTIName(QualType(Ty, 0), Out);
-  Out.flush();
   return FullName;
 }
 
