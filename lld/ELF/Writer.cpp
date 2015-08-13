@@ -51,6 +51,8 @@ public:
   // Returns the size of the section in the output file.
   uintX_t getSize() { return Header.sh_size; }
 
+  uintX_t getFlags() { return Header.sh_flags; }
+
 private:
   StringRef Name;
   Elf_Shdr Header;
@@ -156,12 +158,21 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   }
 }
 
+template <class ELFT>
+static bool compSec(OutputSection<ELFT> *A, OutputSection<ELFT> *B) {
+  // Place SHF_ALLOC sections first.
+  return (A->getFlags() & SHF_ALLOC) && !(B->getFlags() & SHF_ALLOC);
+}
+
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
   SizeOfHeaders = RoundUpToAlignment(sizeof(Elf_Ehdr_Impl<ELFT>), PageSize);
   uintX_t VA = 0x1000; // The first page is kept unmapped.
   uintX_t FileOff = SizeOfHeaders;
+
+  std::stable_sort(OutputSections.begin(), OutputSections.end(), compSec<ELFT>);
+
   for (OutputSection<ELFT> *Sec : OutputSections) {
     Sec->setVA(VA);
     Sec->setFileOffset(FileOff);

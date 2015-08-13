@@ -6,12 +6,20 @@
 .global _start
 _start:
 
-.section bar
 .section foobar
+.section bar, "a"
 
-// Both sections are in the output:
-// CHECK: Name: bar
-// CHECK: Name: foobar
+// Both sections are in the output and that the alloc section is first:
+// CHECK:      Name: bar
+// CHECK-NEXT:   Type: SHT_PROGBITS
+// CHECK-NEXT:   Flags [
+// CHECK-NEXT:     SHF_ALLOC
+// CHECK-NEXT:   ]
+
+// CHECK:      Name: foobar
+// CHECK-NEXT:   Type: SHT_PROGBITS
+// CHECK-NEXT:   Flags [
+// CHECK-NEXT:   ]
 
 // Test that the sting "bar" is merged into "foobar"
 
