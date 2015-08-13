@@ -1123,6 +1123,29 @@ void RuntimeDyldELF::processSimpleRelocation(unsigned SectionID, uint64_t Offset
     addRelocationForSection(RE, Value.SectionID);
 }
 
+uint32_t RuntimeDyldELF::getMatchingLoRelocation(uint32_t RelType,
+                                                 bool IsLocal) const {
+  switch (RelType) {
+  case ELF::R_MICROMIPS_GOT16:
+    if (IsLocal)
+      return ELF::R_MICROMIPS_LO16;
+    break;
+  case ELF::R_MICROMIPS_HI16:
+    return ELF::R_MICROMIPS_LO16;
+  case ELF::R_MIPS_GOT16:
+    if (IsLocal)
+      return ELF::R_MIPS_LO16;
+    break;
+  case ELF::R_MIPS_HI16:
+    return ELF::R_MIPS_LO16;
+  case ELF::R_MIPS_PCHI16:
+    return ELF::R_MIPS_PCLO16;
+  default:
+    break;
+  }
+  return ELF::R_MIPS_NONE;
+}
+
 relocation_iterator RuntimeDyldELF::processRelocationRef(
     unsigned SectionID, relocation_iterator RelI, const ObjectFile &O,
     ObjSectionToIDMap &ObjSectionToID, StubMap &Stubs) {
@@ -1331,17 +1354,35 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
         addRelocationForSection(RE, SectionID);
         Section.StubOffset += getMaxStubSize();
       }
+    } else if (RelType == ELF::R_MIPS_HI16 || RelType == ELF::R_MIPS_PCHI16) {
+      int64_t Addend = (Opcode & 0x0000ffff) << 16;
+      RelocationEntry RE(SectionID, Offset, RelType, Addend);
+      PendingRelocs.push_back(std::make_pair(Value, RE));
+    } else if (RelType == ELF::R_MIPS_LO16 || RelType == ELF::R_MIPS_PCLO16) {
+      int64_t Addend = Value.Addend + SignExtend32<16>(Opcode & 0x0000ffff);
+      for (auto I = PendingRelocs.begin(); I != PendingRelocs.end();) {
+        const RelocationValueRef &MatchingValue = I->first;
+        RelocationEntry &Reloc = I->second;
+        if (MatchingValue == Value &&
+            RelType == getMatchingLoRelocation(Reloc.RelType) &&
+            SectionID == Reloc.SectionID) {
+          Reloc.Addend += Addend;
+          if (Value.SymbolName)
+            addRelocationForSymbol(Reloc, Value.SymbolName);
+          else
+            addRelocationForSection(Reloc, Value.SectionID);
+          I = PendingRelocs.erase(I);
+        } else
+          ++I;
+      }
+      RelocationEntry RE(SectionID, Offset, RelType, Addend);
+      if (Value.SymbolName)
+        addRelocationForSymbol(RE, Value.SymbolName);
+      else
+        addRelocationForSection(RE, Value.SectionID);
     } else {
-      // FIXME: Calculate correct addends for R_MIPS_HI16, R_MIPS_LO16,
-      // R_MIPS_PCHI16 and R_MIPS_PCLO16 relocations.
-      if (RelType == ELF::R_MIPS_HI16 || RelType == ELF::R_MIPS_PCHI16)
-        Value.Addend += (Opcode & 0x0000ffff) << 16;
-      else if (RelType == ELF::R_MIPS_LO16)
-        Value.Addend += (Opcode & 0x0000ffff);
-      else if (RelType == ELF::R_MIPS_32)
+      if (RelType == ELF::R_MIPS_32)
         Value.Addend += Opcode;
-      else if (RelType == ELF::R_MIPS_PCLO16)
-        Value.Addend += SignExtend32<16>((Opcode & 0x0000ffff));
       else if (RelType == ELF::R_MIPS_PC16)
         Value.Addend += SignExtend32<18>((Opcode & 0x0000ffff) << 2);
       else if (RelType == ELF::R_MIPS_PC19_S2)
@@ -1719,6 +1760,10 @@ RelocationEntry RuntimeDyldELF::computeGOTOffsetRE(unsigned SectionID, uint64_t 
 
 void RuntimeDyldELF::finalizeLoad(const ObjectFile &Obj,
                                   ObjSectionToIDMap &SectionMap) {
+  if (IsMipsO32ABI)
+    if (!PendingRelocs.empty())
+      report_fatal_error("Can't find matching LO16 reloc");
+
   // If necessary, allocate the global offset table
   if (GOTSectionID != 0) {
     // Allocate memory for the section

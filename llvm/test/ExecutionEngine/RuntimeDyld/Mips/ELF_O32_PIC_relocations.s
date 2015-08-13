@@ -1,10 +1,10 @@
 # RUN: llvm-mc -triple=mipsel-unknown-linux -relocation-model=pic -code-model=small -filetype=obj -o %T/test_ELF_O32.o %s
 # RUN: llc -mtriple=mipsel-unknown-linux -relocation-model=pic -filetype=obj -o %T/test_ELF_ExternalFunction_O32.o %S/Inputs/ExternalFunction.ll
-# RUN: llvm-rtdyld -triple=mipsel-unknown-linux -verify -map-section test_ELF_O32.o,.text=0x1000 -map-section test_ELF_ExternalFunction_O32.o,.text=0x10000 -check=%s %T/test_ELF_O32.o %T/test_ELF_ExternalFunction_O32.o
+# RUN: llvm-rtdyld -triple=mipsel-unknown-linux -verify -map-section test_ELF_O32.o,"<common symbols>"=0x7FF8 -map-section test_ELF_O32.o,.text=0x1000 -map-section test_ELF_ExternalFunction_O32.o,.text=0x10000 -check=%s %T/test_ELF_O32.o %T/test_ELF_ExternalFunction_O32.o
 
 # RUN: llvm-mc -triple=mips-unknown-linux -relocation-model=pic -code-model=small -filetype=obj -o %T/test_ELF_O32.o %s
 # RUN: llc -mtriple=mips-unknown-linux -relocation-model=pic -filetype=obj -o %/T/test_ELF_ExternalFunction_O32.o %S/Inputs/ExternalFunction.ll
-# RUN: llvm-rtdyld -triple=mips-unknown-linux -verify -map-section test_ELF_O32.o,.text=0x1000 -map-section test_ELF_ExternalFunction_O32.o,.text=0x10000 -check=%s %T/test_ELF_O32.o %T/test_ELF_ExternalFunction_O32.o
+# RUN: llvm-rtdyld -triple=mips-unknown-linux -verify -map-section test_ELF_O32.o,"<common symbols>"=0x7FF8 -map-section test_ELF_O32.o,.text=0x1000 -map-section test_ELF_ExternalFunction_O32.o,.text=0x10000 -check=%s %T/test_ELF_O32.o %T/test_ELF_ExternalFunction_O32.o
 
         .data
 # rtdyld-check: *{4}R_MIPS_32 = foo[31:0]
@@ -52,4 +52,13 @@ R_MIPS_HI16:
 R_MIPS_LO16:
 	lui	$1, %lo(foo)
 
+# rtdyld-check:  decode_operand(R_MIPS_HI16_ADDEND, 1)[15:0] = (var+0x8008)[31:16]
+R_MIPS_HI16_ADDEND:
+	lui	$2, %hi(var+8)
+
+# rtdyld-check:  decode_operand(R_MIPS_LO16_ADDEND, 2)[15:0] = (var+0x8)[15:0]
+R_MIPS_LO16_ADDEND:
+	lb	$2, %lo(var+8)($2)
+
 	.size	bar, .-bar
+	.comm	var,9,1

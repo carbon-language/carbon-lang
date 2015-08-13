@@ -123,6 +123,10 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   // no particular advanced processing.
   void processSimpleRelocation(unsigned SectionID, uint64_t Offset, unsigned RelType, RelocationValueRef Value);
 
+  // Return matching *LO16 relocation (Mips specific)
+  uint32_t getMatchingLoRelocation(uint32_t RelType,
+                                   bool IsLocal = false) const;
+
   // The tentative ID for the GOT section
   unsigned GOTSectionID;
 
@@ -137,6 +141,10 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
 
   // A map to avoid duplicate got entries (Mips64 specific)
   StringMap<uint64_t> GOTSymbolOffsets;
+
+  // *HI16 relocations will be added for resolving when we find matching
+  // *LO16 part. (Mips specific)
+  SmallVector<std::pair<RelocationValueRef, RelocationEntry>, 8> PendingRelocs;
 
   // When a module is loaded we save the SectionID of the EH frame section
   // in a table until we receive a request to register all unregistered

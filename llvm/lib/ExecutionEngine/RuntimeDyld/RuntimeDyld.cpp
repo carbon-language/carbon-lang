@@ -522,6 +522,9 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
     Offset += Size;
     Addr += Size;
   }
+
+  if (Checker)
+    Checker->registerSection(Obj.getFileName(), SectionID);
 }
 
 unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
