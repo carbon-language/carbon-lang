@@ -32,8 +32,8 @@ public:
       : Collector(Collector) {}
   bool needsInputFileVisitation() override { return true; }
   bool needsSystemInputFileVisitation() override { return true; }
-  bool visitInputFile(StringRef Filename, bool IsSystem,
-                      bool IsOverridden) override;
+  bool visitInputFile(StringRef Filename, bool IsSystem, bool IsOverridden,
+                      bool IsExplicitModule) override;
 };
 }
 
@@ -85,7 +85,8 @@ std::error_code ModuleDependencyListener::copyToRoot(StringRef Src) {
 }
 
 bool ModuleDependencyListener::visitInputFile(StringRef Filename, bool IsSystem,
-                                              bool IsOverridden) {
+                                              bool IsOverridden,
+                                              bool IsExplicitModule) {
   if (Collector.insertSeen(Filename))
     if (copyToRoot(Filename))
       Collector.setHasErrors();

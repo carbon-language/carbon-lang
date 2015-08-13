@@ -104,14 +104,15 @@ struct DepCollectorASTListener : public ASTReaderListener {
   bool needsSystemInputFileVisitation() override {
     return DepCollector.needSystemDependencies();
   }
-  void visitModuleFile(StringRef Filename) override {
+  void visitModuleFile(StringRef Filename,
+                       serialization::ModuleKind Kind) override {
     DepCollector.maybeAddDependency(Filename, /*FromModule*/true,
                                    /*IsSystem*/false, /*IsModuleFile*/true,
                                    /*IsMissing*/false);
   }
   bool visitInputFile(StringRef Filename, bool IsSystem,
-                      bool IsOverridden) override {
-    if (IsOverridden)
+                      bool IsOverridden, bool IsExplicitModule) override {
+    if (IsOverridden || IsExplicitModule)
       return true;
 
     DepCollector.maybeAddDependency(Filename, /*FromModule*/true, IsSystem,
@@ -226,9 +227,10 @@ public:
   bool needsSystemInputFileVisitation() override {
     return Parent.includeSystemHeaders();
   }
-  void visitModuleFile(StringRef Filename) override;
+  void visitModuleFile(StringRef Filename,
+                       serialization::ModuleKind Kind) override;
   bool visitInputFile(StringRef Filename, bool isSystem,
-                      bool isOverridden) override;
+                      bool isOverridden, bool isExplicitModule) override;
 };
 }
 
@@ -472,16 +474,18 @@ void DFGImpl::OutputDependencyFile() {
 }
 
 bool DFGASTReaderListener::visitInputFile(llvm::StringRef Filename,
-                                          bool IsSystem, bool IsOverridden) {
+                                          bool IsSystem, bool IsOverridden,
+                                          bool IsExplicitModule) {
   assert(!IsSystem || needsSystemInputFileVisitation());
-  if (IsOverridden)
+  if (IsOverridden || IsExplicitModule)
     return true;
 
   Parent.AddFilename(Filename);
   return true;
 }
 
-void DFGASTReaderListener::visitModuleFile(llvm::StringRef Filename) {
-  if (Parent.includeModuleFiles())
+void DFGASTReaderListener::visitModuleFile(llvm::StringRef Filename,
+                                           serialization::ModuleKind Kind) {
+  if (Parent.includeModuleFiles() || Kind == MK_ExplicitModule)
     Parent.AddFilename(Filename);
 }
