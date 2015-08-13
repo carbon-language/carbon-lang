@@ -78,10 +78,6 @@ public:
   static char ID;
   explicit LoopIdiomRecognize() : LoopPass(ID) {
     initializeLoopIdiomRecognizePass(*PassRegistry::getPassRegistry());
-    DT = nullptr;
-    SE = nullptr;
-    TLI = nullptr;
-    TTI = nullptr;
   }
 
   bool runOnLoop(Loop *L, LPPassManager &LPM) override;
@@ -105,30 +101,6 @@ public:
     AU.addRequired<TargetLibraryInfoWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
   }
-
-  DominatorTree *getDominatorTree() {
-    return DT ? DT
-              : (DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree());
-  }
-
-  ScalarEvolution *getScalarEvolution() {
-    return SE ? SE : (SE = &getAnalysis<ScalarEvolution>());
-  }
-
-  TargetLibraryInfo *getTargetLibraryInfo() {
-    if (!TLI)
-      TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-
-    return TLI;
-  }
-
-  const TargetTransformInfo *getTargetTransformInfo() {
-    return TTI ? TTI
-               : (TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
-                      *CurLoop->getHeader()->getParent()));
-  }
-
-  Loop *getLoop() const { return CurLoop; }
 
 private:
   /// \name Countable Loop Idiom Handling
@@ -205,7 +177,6 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   CurLoop = L;
-
   // If the loop could not be converted to canonical form, it must have an
   // indirectbr in it, just give up.
   if (!L->getLoopPreheader())
@@ -216,9 +187,15 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (Name == "memset" || Name == "memcpy")
     return false;
 
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+      *CurLoop->getHeader()->getParent());
+
   if (SE->hasLoopInvariantBackedgeTakenCount(L))
     return runOnCountableLoop();
+
   return runOnNoncountableLoop();
 }
 
@@ -234,14 +211,7 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
     if (BECst->getValue()->getValue() == 0)
       return false;
 
-  // set DT
-  (void)getDominatorTree();
-
   LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-
-  // set TLI
-  (void)getTargetLibraryInfo();
 
   SmallVector<BasicBlock *, 8> ExitBlocks;
   CurLoop->getUniqueExitBlocks(ExitBlocks);
@@ -852,10 +822,6 @@ static bool detectPopcountIdiom(Loop *CurLoop, BasicBlock *PreCondBB,
 /// If detected, transforms the relevant code to issue the popcount intrinsic
 /// function call, and returns true; otherwise, returns false.
 bool LoopIdiomRecognize::recognizePopcount() {
-  (void)getScalarEvolution();
-  (void)getTargetLibraryInfo();
-  (void)getTargetTransformInfo();
-
   if (TTI->getPopcntSupport(32) != TargetTransformInfo::PSK_FastHardware)
     return false;
 
