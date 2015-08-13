@@ -174,9 +174,11 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   std::stable_sort(OutputSections.begin(), OutputSections.end(), compSec<ELFT>);
 
   for (OutputSection<ELFT> *Sec : OutputSections) {
-    Sec->setVA(VA);
+    if (Sec->getFlags() & SHF_ALLOC) {
+      Sec->setVA(VA);
+      VA += RoundUpToAlignment(Sec->getSize(), PageSize);
+    }
     Sec->setFileOffset(FileOff);
-    VA += RoundUpToAlignment(Sec->getSize(), PageSize);
     FileOff += RoundUpToAlignment(Sec->getSize(), 8);
     StrTabBuilder.add(Sec->getName());
   }

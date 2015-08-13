@@ -15,11 +15,13 @@ _start:
 // CHECK-NEXT:   Flags [
 // CHECK-NEXT:     SHF_ALLOC
 // CHECK-NEXT:   ]
+// CHECK-NEXT:   Address: 0x1000
 
 // CHECK:      Name: foobar
 // CHECK-NEXT:   Type: SHT_PROGBITS
 // CHECK-NEXT:   Flags [
 // CHECK-NEXT:   ]
+// CHECK-NEXT:   Address: 0x0
 
 // Test that the sting "bar" is merged into "foobar"
 
