@@ -546,5 +546,3 @@ bool SymbolReaper::isLive(const VarRegion *VR, bool includeStoreBindings) const{
 
   return VarContext->isParentOf(CurrentContext);
 }
-
-SymbolVisitor::~SymbolVisitor() {}

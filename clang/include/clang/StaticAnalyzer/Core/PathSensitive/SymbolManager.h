@@ -650,6 +650,12 @@ private:
 };
 
 class SymbolVisitor {
+protected:
+  SymbolVisitor() = default;
+  SymbolVisitor(const SymbolVisitor &) = default;
+  SymbolVisitor(SymbolVisitor &&) {}
+  ~SymbolVisitor() = default;
+
 public:
   /// \brief A visitor method invoked by ProgramStateManager::scanReachableSymbols.
   ///
@@ -657,7 +663,6 @@ public:
   /// false otherwise.
   virtual bool VisitSymbol(SymbolRef sym) = 0;
   virtual bool VisitMemRegion(const MemRegion *region) { return true; }
-  virtual ~SymbolVisitor();
 };
 
 } // end GR namespace

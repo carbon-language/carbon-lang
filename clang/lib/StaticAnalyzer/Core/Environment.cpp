@@ -120,7 +120,7 @@ Environment EnvironmentManager::bindExpr(Environment Env,
 }
 
 namespace {
-class MarkLiveCallback : public SymbolVisitor {
+class MarkLiveCallback final : public SymbolVisitor {
   SymbolReaper &SymReaper;
 public:
   MarkLiveCallback(SymbolReaper &symreaper) : SymReaper(symreaper) {}

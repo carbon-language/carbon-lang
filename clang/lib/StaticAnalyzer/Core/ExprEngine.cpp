@@ -2006,7 +2006,7 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
 }
 
 namespace {
-class CollectReachableSymbolsCallback : public SymbolVisitor {
+class CollectReachableSymbolsCallback final : public SymbolVisitor {
   InvalidatedSymbols Symbols;
 public:
   CollectReachableSymbolsCallback(ProgramStateRef State) {}
