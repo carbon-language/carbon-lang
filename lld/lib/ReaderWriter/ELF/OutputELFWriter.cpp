@@ -422,11 +422,14 @@ template <class ELFT> uint64_t OutputELFWriter<ELFT>::outputFileSize() const {
 template <class ELFT>
 std::error_code OutputELFWriter<ELFT>::writeOutput(const File &file,
                                                    StringRef path) {
-  std::unique_ptr<FileOutputBuffer> buffer;
+
   ScopedTask createOutputTask(getDefaultDomain(), "ELF Writer Create Output");
-  if (std::error_code ec = FileOutputBuffer::create(
-          path, outputFileSize(), buffer, FileOutputBuffer::F_executable))
+  ErrorOr<std::unique_ptr<FileOutputBuffer>> bufferOrErr =
+      FileOutputBuffer::create(path, outputFileSize(),
+                               FileOutputBuffer::F_executable);
+  if (std::error_code ec = bufferOrErr.getError())
     return ec;
+  std::unique_ptr<FileOutputBuffer> &buffer = *bufferOrErr;
   createOutputTask.end();
 
   ScopedTask writeTask(getDefaultDomain(), "ELF Writer write to memory");

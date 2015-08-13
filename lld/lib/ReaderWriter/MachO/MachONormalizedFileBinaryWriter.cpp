@@ -1309,19 +1309,18 @@ std::error_code MachOFileLayout::writeBinary(StringRef path) {
   if (_ec)
     return _ec;
   // Create FileOutputBuffer with calculated size.
-  std::unique_ptr<llvm::FileOutputBuffer> fob;
   unsigned flags = 0;
   if (_file.fileType != llvm::MachO::MH_OBJECT)
     flags = llvm::FileOutputBuffer::F_executable;
-  std::error_code ec;
-  ec = llvm::FileOutputBuffer::create(path, size(), fob, flags);
-  if (ec)
+  ErrorOr<std::unique_ptr<llvm::FileOutputBuffer>> fobOrErr =
+      llvm::FileOutputBuffer::create(path, size(), flags);
+  if (std::error_code ec = fobOrErr.getError())
     return ec;
-
+  std::unique_ptr<llvm::FileOutputBuffer> &fob = *fobOrErr;
   // Write content.
   _buffer = fob->getBufferStart();
   writeMachHeader();
-  ec = writeLoadCommands();
+  std::error_code ec = writeLoadCommands();
   if (ec)
     return ec;
   writeSectionContent();
