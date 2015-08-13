@@ -954,8 +954,6 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   if (Subtarget->hasVFP3()) {
     setOperationAction(ISD::FMINNAN, MVT::f32, Legal);
     setOperationAction(ISD::FMAXNAN, MVT::f32, Legal);
-    setOperationAction(ISD::FMINNAN, MVT::f64, Legal);
-    setOperationAction(ISD::FMAXNAN, MVT::f64, Legal);
   }
   if (Subtarget->hasNEON()) {
     setOperationAction(ISD::FMINNAN, MVT::v2f32, Legal);
