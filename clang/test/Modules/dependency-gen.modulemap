@@ -28,9 +28,9 @@ module "test" {
 //
 // EXPLICIT: {{^}}explicit.pcm:
 // EXPLICIT-NOT: dependency-gen-
-// EXPLICIT: base.pcm
-// EXPLICIT-NOT: dependency-gen-
 // EXPLICIT: {{.*[/\\]}}dependency-gen.modulemap
+// EXPLICIT-NOT: dependency-gen-
+// EXPLICIT: base.pcm
 // EXPLICIT-NOT: dependency-gen-
 // EXPLICIT: {{ |\.[/\\]}}Inputs{{[/\\]}}dependency-gen.h
 // EXPLICIT-NOT: dependency-gen-
