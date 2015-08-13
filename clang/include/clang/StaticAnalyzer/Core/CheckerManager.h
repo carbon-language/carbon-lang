@@ -89,8 +89,7 @@ class CheckName {
   explicit CheckName(StringRef Name) : Name(Name) {}
 
 public:
-  CheckName() {}
-  CheckName(const CheckName &Other) : Name(Other.Name) {}
+  CheckName() = default;
   StringRef getName() const { return Name; }
 };
 
