@@ -503,28 +503,6 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
 }
 
 namespace {
-enum ModRefKind {
-  MRK_none,
-  MRK_readonly,
-  MRK_readnone
-};
-}
-
-static ModRefKind getModRefKind(const CodeGenIntrinsic &intrinsic) {
-  switch (intrinsic.ModRef) {
-  case CodeGenIntrinsic::NoMem:
-    return MRK_readnone;
-  case CodeGenIntrinsic::ReadArgMem:
-  case CodeGenIntrinsic::ReadMem:
-    return MRK_readonly;
-  case CodeGenIntrinsic::ReadWriteArgMem:
-  case CodeGenIntrinsic::ReadWriteMem:
-    return MRK_none;
-  }
-  llvm_unreachable("bad mod-ref kind");
-}
-
-namespace {
 struct AttributeComparator {
   bool operator()(const CodeGenIntrinsic *L, const CodeGenIntrinsic *R) const {
     // Sort throwing intrinsics after non-throwing intrinsics.
@@ -541,8 +519,8 @@ struct AttributeComparator {
       return R->isConvergent;
 
     // Try to order by readonly/readnone attribute.
-    ModRefKind LK = getModRefKind(*L);
-    ModRefKind RK = getModRefKind(*R);
+    CodeGenIntrinsic::ModRefKind LK = L->ModRef;
+    CodeGenIntrinsic::ModRefKind RK = R->ModRef;
     if (LK != RK) return (LK > RK);
 
     // Order by argument attributes.
@@ -649,10 +627,10 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
       }
     }
 
-    ModRefKind modRef = getModRefKind(intrinsic);
-
-    if (!intrinsic.canThrow || modRef || intrinsic.isNoReturn ||
-        intrinsic.isNoDuplicate || intrinsic.isConvergent) {
+    if (!intrinsic.canThrow ||
+        intrinsic.ModRef != CodeGenIntrinsic::ReadWriteMem ||
+        intrinsic.isNoReturn || intrinsic.isNoDuplicate ||
+        intrinsic.isConvergent) {
       OS << "      const Attribute::AttrKind Atts[] = {";
       bool addComma = false;
       if (!intrinsic.canThrow) {
@@ -678,17 +656,29 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         addComma = true;
       }
 
-      switch (modRef) {
-      case MRK_none: break;
-      case MRK_readonly:
+      switch (intrinsic.ModRef) {
+      case CodeGenIntrinsic::NoMem:
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::ReadNone";
+        break;
+      case CodeGenIntrinsic::ReadArgMem:
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::ReadOnly,";
+        OS << "Attribute::ArgMemOnly";
+        break;
+      case CodeGenIntrinsic::ReadMem:
         if (addComma)
           OS << ",";
         OS << "Attribute::ReadOnly";
         break;
-      case MRK_readnone:
+      case CodeGenIntrinsic::ReadWriteArgMem:
         if (addComma)
           OS << ",";
-        OS << "Attribute::ReadNone";
+        OS << "Attribute::ArgMemOnly";
+        break;
+      case CodeGenIntrinsic::ReadWriteMem:
         break;
       }
       OS << "};\n";

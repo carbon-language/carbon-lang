@@ -981,7 +981,7 @@ exit:
   ; CHECK: select <2 x i1> <i1 true, i1 false>, <2 x i8> <i8 2, i8 3>, <2 x i8> <i8 3, i8 2>
 
   call void @f.nobuiltin() builtin
-  ; CHECK: call void @f.nobuiltin() #31
+  ; CHECK: call void @f.nobuiltin() #33
 
   call fastcc noalias i32* @f.noalias() noinline
   ; CHECK: call fastcc noalias i32* @f.noalias() #11
@@ -1179,7 +1179,11 @@ define void @intrinsics.codegen() {
 ; CHECK: attributes #26 = { sspstrong }
 ; CHECK: attributes #27 = { uwtable }
 ; CHECK: attributes #28 = { "cpu"="cortex-a8" }
-; CHECK: attributes #31 = { builtin }
+; CHECK: attributes #29 = { nounwind readnone }
+; CHECK: attributes #30 = { nounwind readonly argmemonly }
+; CHECK: attributes #31 = { nounwind argmemonly }
+; CHECK: attributes #32 = { nounwind readonly }
+; CHECK: attributes #33 = { builtin }
 
 ;; Metadata
 

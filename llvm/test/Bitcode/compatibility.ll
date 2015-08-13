@@ -1024,7 +1024,7 @@ exit:
   ; CHECK: select <2 x i1> <i1 true, i1 false>, <2 x i8> <i8 2, i8 3>, <2 x i8> <i8 3, i8 2>
 
   call void @f.nobuiltin() builtin
-  ; CHECK: call void @f.nobuiltin() #34
+  ; CHECK: call void @f.nobuiltin() #36
 
   call fastcc noalias i32* @f.noalias() noinline
   ; CHECK: call fastcc noalias i32* @f.noalias() #12
@@ -1245,8 +1245,10 @@ define void @misc.metadata() {
 ; CHECK: attributes #30 = { uwtable }
 ; CHECK: attributes #31 = { "cpu"="cortex-a8" }
 ; CHECK: attributes #32 = { nounwind readnone }
-; CHECK: attributes #33 = { nounwind readonly }
-; CHECK: attributes #34 = { builtin }
+; CHECK: attributes #33 = { nounwind readonly argmemonly }
+; CHECK: attributes #34 = { nounwind argmemonly }
+; CHECK: attributes #35 = { nounwind readonly }
+; CHECK: attributes #36 = { builtin }
 
 ;; Metadata
 

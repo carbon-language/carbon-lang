@@ -22,18 +22,18 @@ entry:
 ; CHECK-LABEL: Function: test1:
 
 ; CHECK: NoAlias:      i8* %p, i8* %q
-; CHECK: Just Ref:  Ptr: i8* %p        <->  %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:  Ptr: i8* %q        <->  %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
+; CHECK: Just Ref:  Ptr: i8* %p        <->  %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:  Ptr: i8* %q        <->  %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
 ; CHECK: NoModRef:  Ptr: i8* %p        <->  call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
 ; CHECK: Both ModRef:  Ptr: i8* %q     <->  call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
-; CHECK: Just Ref:  Ptr: i8* %p        <->  %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:  Ptr: i8* %q        <->  %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1 <->   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
-; CHECK: NoModRef:   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1 <->   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16) <->   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16) <->   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1 <->   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1
-; CHECK: NoModRef:   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #1 <->   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
+; CHECK: Just Ref:  Ptr: i8* %p        <->  %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:  Ptr: i8* %q        <->  %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4 <->   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
+; CHECK: NoModRef:   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4 <->   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16) <->   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16) <->   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4 <->   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4
+; CHECK: NoModRef:   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) #4 <->   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
 }
 
 define void @test2(i8* %P, i8* %Q) nounwind ssp {
@@ -233,7 +233,9 @@ define void @test6(i8* %P) nounwind ssp {
 ; CHECK: Just Ref:   call void @a_readonly_func(i8* %P) <->   call void @llvm.memset.p0i8.i64(i8* %P, i8 -51, i64 32, i32 8, i1 false)
 }
 
-attributes #0 = { nounwind readonly }
-attributes #1 = { nounwind }
+attributes #0 = { nounwind readonly argmemonly }
+attributes #1 = { nounwind argmemonly }
 attributes #2 = { noinline nounwind readonly }
 attributes #3 = { nounwind ssp }
+attributes #4 = { nounwind }
+

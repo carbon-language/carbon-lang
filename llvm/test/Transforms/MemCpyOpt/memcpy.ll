@@ -206,5 +206,6 @@ declare void @f1(%struct.big* nocapture sret)
 declare void @f2(%struct.big*)
 
 ; CHECK: attributes [[NUW]] = { nounwind }
-; CHECK: attributes #1 = { nounwind ssp }
-; CHECK: attributes #2 = { nounwind ssp uwtable }
+; CHECK: attributes #1 = { nounwind argmemonly }
+; CHECK: attributes #2 = { nounwind ssp }
+; CHECK: attributes #3 = { nounwind ssp uwtable }
