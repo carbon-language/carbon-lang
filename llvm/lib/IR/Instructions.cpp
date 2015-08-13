@@ -764,7 +764,7 @@ void CatchEndPadInst::init(BasicBlock *UnwindBB) {
 }
 
 CatchEndPadInst::CatchEndPadInst(LLVMContext &C, BasicBlock *UnwindBB,
-                                     unsigned Values, Instruction *InsertBefore)
+                                 unsigned Values, Instruction *InsertBefore)
     : TerminatorInst(Type::getVoidTy(C), Instruction::CatchEndPad,
                      OperandTraits<CatchEndPadInst>::op_end(this) - Values,
                      Values, InsertBefore) {
@@ -772,7 +772,7 @@ CatchEndPadInst::CatchEndPadInst(LLVMContext &C, BasicBlock *UnwindBB,
 }
 
 CatchEndPadInst::CatchEndPadInst(LLVMContext &C, BasicBlock *UnwindBB,
-                                     unsigned Values, BasicBlock *InsertAtEnd)
+                                 unsigned Values, BasicBlock *InsertAtEnd)
     : TerminatorInst(Type::getVoidTy(C), Instruction::CatchEndPad,
                      OperandTraits<CatchEndPadInst>::op_end(this) - Values,
                      Values, InsertAtEnd) {
@@ -833,7 +833,7 @@ void CatchReturnInst::setSuccessorV(unsigned Idx, BasicBlock *B) {
 //                        CatchPadInst Implementation
 //===----------------------------------------------------------------------===//
 void CatchPadInst::init(BasicBlock *IfNormal, BasicBlock *IfException,
-                          ArrayRef<Value *> Args, const Twine &NameStr) {
+                        ArrayRef<Value *> Args, const Twine &NameStr) {
   assert(getNumOperands() == 2 + Args.size() && "NumOperands not set up?");
   Op<-2>() = IfNormal;
   Op<-1>() = IfException;
@@ -850,22 +850,22 @@ CatchPadInst::CatchPadInst(const CatchPadInst &CPI)
 }
 
 CatchPadInst::CatchPadInst(Type *RetTy, BasicBlock *IfNormal,
-                               BasicBlock *IfException, ArrayRef<Value *> Args,
-                               unsigned Values, const Twine &NameStr,
-                               Instruction *InsertBefore)
+                           BasicBlock *IfException, ArrayRef<Value *> Args,
+                           unsigned Values, const Twine &NameStr,
+                           Instruction *InsertBefore)
     : TerminatorInst(RetTy, Instruction::CatchPad,
-                     OperandTraits<CatchPadInst>::op_end(this) - Values,
-                     Values, InsertBefore) {
+                     OperandTraits<CatchPadInst>::op_end(this) - Values, Values,
+                     InsertBefore) {
   init(IfNormal, IfException, Args, NameStr);
 }
 
 CatchPadInst::CatchPadInst(Type *RetTy, BasicBlock *IfNormal,
-                               BasicBlock *IfException, ArrayRef<Value *> Args,
-                               unsigned Values, const Twine &NameStr,
-                               BasicBlock *InsertAtEnd)
+                           BasicBlock *IfException, ArrayRef<Value *> Args,
+                           unsigned Values, const Twine &NameStr,
+                           BasicBlock *InsertAtEnd)
     : TerminatorInst(RetTy, Instruction::CatchPad,
-                     OperandTraits<CatchPadInst>::op_end(this) - Values,
-                     Values, InsertAtEnd) {
+                     OperandTraits<CatchPadInst>::op_end(this) - Values, Values,
+                     InsertAtEnd) {
   init(IfNormal, IfException, Args, NameStr);
 }
 
@@ -949,8 +949,7 @@ CleanupPadInst::CleanupPadInst(const CleanupPadInst &CPI)
 }
 
 CleanupPadInst::CleanupPadInst(Type *RetTy, ArrayRef<Value *> Args,
-                                   const Twine &NameStr,
-                                   Instruction *InsertBefore)
+                               const Twine &NameStr, Instruction *InsertBefore)
     : Instruction(RetTy, Instruction::CleanupPad,
                   OperandTraits<CleanupPadInst>::op_end(this) - Args.size(),
                   Args.size(), InsertBefore) {
@@ -958,8 +957,7 @@ CleanupPadInst::CleanupPadInst(Type *RetTy, ArrayRef<Value *> Args,
 }
 
 CleanupPadInst::CleanupPadInst(Type *RetTy, ArrayRef<Value *> Args,
-                                   const Twine &NameStr,
-                                   BasicBlock *InsertAtEnd)
+                               const Twine &NameStr, BasicBlock *InsertAtEnd)
     : Instruction(RetTy, Instruction::CleanupPad,
                   OperandTraits<CleanupPadInst>::op_end(this) - Args.size(),
                   Args.size(), InsertAtEnd) {
