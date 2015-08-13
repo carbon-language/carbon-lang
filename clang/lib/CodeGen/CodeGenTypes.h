@@ -158,7 +158,6 @@ class CodeGenTypes {
 
   SmallVector<const RecordDecl *, 8> DeferredRecords;
   
-private:
   /// This map keeps cache of llvm::Types and maps clang::Type to
   /// corresponding llvm::Type.
   llvm::DenseMap<const Type *, llvm::Type *> TypeCache;
