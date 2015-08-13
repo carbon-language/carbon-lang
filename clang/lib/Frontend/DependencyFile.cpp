@@ -486,6 +486,6 @@ bool DFGASTReaderListener::visitInputFile(llvm::StringRef Filename,
 
 void DFGASTReaderListener::visitModuleFile(llvm::StringRef Filename,
                                            serialization::ModuleKind Kind) {
-  if (Parent.includeModuleFiles() || Kind == MK_ExplicitModule)
+  if (Parent.includeModuleFiles() || Kind == serialization::MK_ExplicitModule)
     Parent.AddFilename(Filename);
 }
