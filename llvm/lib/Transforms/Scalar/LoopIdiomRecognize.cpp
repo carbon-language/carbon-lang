@@ -830,29 +830,32 @@ bool LoopIdiomRecognize::recognizePopcount() {
   // non-compact loop. Therefore, recognizing popcount idiom only makes sense
   // in a compact loop.
 
-  // Give up if the loop has multiple blocks or multiple backedges.
-  if (CurLoop->getNumBackEdges() != 1 || CurLoop->getNumBlocks() != 1)
+  assert(CurLoop->isLoopSimplifyForm() &&
+         "Loop passes require simplified form!");
+
+  // Give up if the loop has multiple blocks.
+  if (CurLoop->getNumBlocks() != 1)
     return false;
 
-  BasicBlock *LoopBody = *(CurLoop->block_begin());
-  if (LoopBody->size() >= 20) {
-    // The loop is too big, bail out.
+  // If the loop is too big, bail out.
+  BasicBlock &LoopBB = *CurLoop->getHeader();
+  if (LoopBB.size() >= 20)
     return false;
-  }
 
   // It should have a preheader containing nothing but an unconditional branch.
-  BasicBlock *PH = CurLoop->getLoopPreheader();
-  if (!PH)
+  BasicBlock &PH = *CurLoop->getLoopPreheader();
+  if (&PH.front() != PH.getTerminator())
     return false;
-  if (&PH->front() != PH->getTerminator())
-    return false;
-  auto *EntryBI = dyn_cast<BranchInst>(PH->getTerminator());
+  // FIXME: Technically, it shouldn't matter what instruction we use as
+  // a terminator, the only property needed is the definition of a preheader:
+  // a single loop predecessor whose only successor is the loop header.
+  auto *EntryBI = dyn_cast<BranchInst>(PH.getTerminator());
   if (!EntryBI || EntryBI->isConditional())
     return false;
 
   // It should have a precondition block where the generated popcount instrinsic
   // function can be inserted.
-  auto *PreCondBB = PH->getSinglePredecessor();
+  auto *PreCondBB = PH.getSinglePredecessor();
   if (!PreCondBB)
     return false;
   auto *PreCondBI = dyn_cast<BranchInst>(PreCondBB->getTerminator());
