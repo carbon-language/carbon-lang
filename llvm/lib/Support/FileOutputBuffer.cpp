@@ -34,10 +34,8 @@ FileOutputBuffer::~FileOutputBuffer() {
   sys::fs::remove(Twine(TempPath));
 }
 
-std::error_code
-FileOutputBuffer::create(StringRef FilePath, size_t Size,
-                         std::unique_ptr<FileOutputBuffer> &Result,
-                         unsigned Flags) {
+ErrorOr<std::unique_ptr<FileOutputBuffer>>
+FileOutputBuffer::create(StringRef FilePath, size_t Size, unsigned Flags) {
   // If file already exists, it must be a regular file (to be mappable).
   sys::fs::file_status Stat;
   std::error_code EC = sys::fs::status(FilePath, Stat);
@@ -95,10 +93,9 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
   if (Ret)
     return std::error_code(errno, std::generic_category());
 
-  Result.reset(
+  std::unique_ptr<FileOutputBuffer> Buf(
       new FileOutputBuffer(std::move(MappedFile), FilePath, TempFilePath));
-
-  return std::error_code();
+  return std::move(Buf);
 }
 
 std::error_code FileOutputBuffer::commit() {
