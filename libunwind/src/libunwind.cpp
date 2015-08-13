@@ -58,12 +58,14 @@ _LIBUNWIND_EXPORT int unw_init_local(unw_cursor_t *cursor,
 #elif defined(__ppc__)
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_ppc>(
                                  context, LocalAddressSpace::sThisAddressSpace);
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_arm64>(
                                  context, LocalAddressSpace::sThisAddressSpace);
 #elif _LIBUNWIND_ARM_EHABI
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_arm>(
                                  context, LocalAddressSpace::sThisAddressSpace);
+#else
+#error Architecture not supported
 #endif
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   co->setInfoBasedOnIPRegister();
