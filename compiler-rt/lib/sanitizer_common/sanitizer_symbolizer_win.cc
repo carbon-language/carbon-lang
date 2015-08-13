@@ -175,13 +175,19 @@ bool SymbolizerProcess::StartSymbolizerSubprocess() {
   attrs.bInheritHandle = TRUE;
   attrs.lpSecurityDescriptor = nullptr;
   if (!::CreatePipe(stdin_read.receive(), stdin_write.receive(), &attrs, 0) ||
-      !::CreatePipe(stdout_read.receive(), stdout_write.receive(), &attrs, 0))
+      !::CreatePipe(stdout_read.receive(), stdout_write.receive(), &attrs, 0)) {
+    VReport(2, "WARNING: %s CreatePipe failed (error code: %d)\n",
+            SanitizerToolName, path_, GetLastError());
     return false;
+  }
 
   // Don't inherit the writing end of stdin or the reading end of stdout.
   if (!SetHandleInformation(stdin_write.get(), HANDLE_FLAG_INHERIT, 0) ||
-      !SetHandleInformation(stdout_read.get(), HANDLE_FLAG_INHERIT, 0))
+      !SetHandleInformation(stdout_read.get(), HANDLE_FLAG_INHERIT, 0)) {
+    VReport(2, "WARNING: %s SetHandleInformation failed (error code: %d)\n",
+            SanitizerToolName, path_, GetLastError());
     return false;
+  }
 
   // Compute the command line. Wrap double quotes around everything.
   const char *argv[kArgVMax];
