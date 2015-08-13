@@ -121,7 +121,15 @@ private:
                            BasicBlock *EndBB);
 
   void processSEHCatchHandler(CatchHandler *Handler, BasicBlock *StartBB);
-
+  void insertPHIStores(PHINode *OriginalPHI, AllocaInst *SpillSlot);
+  void
+  insertPHIStore(BasicBlock *PredBlock, Value *PredVal, AllocaInst *SpillSlot,
+                 SmallVectorImpl<std::pair<BasicBlock *, Value *>> &Worklist);
+  AllocaInst *insertPHILoads(PHINode *PN, Function &F);
+  void replaceUseWithLoad(Value *V, Use &U, AllocaInst *&SpillSlot,
+                          DenseMap<BasicBlock *, Value *> &Loads, Function &F);
+  void demoteNonlocalUses(Value *V, std::set<BasicBlock *> &ColorsForBB,
+                          Function &F);
   bool prepareExplicitEH(Function &F);
   void numberFunclet(BasicBlock *InitialBB, BasicBlock *FuncletBB);
 
@@ -2951,7 +2959,6 @@ void WinEHPrepare::numberFunclet(BasicBlock *InitialBB, BasicBlock *FuncletBB) {
 }
 
 bool WinEHPrepare::prepareExplicitEH(Function &F) {
-  LLVMContext &Context = F.getContext();
   // Remove unreachable blocks.  It is not valuable to assign them a color and
   // their existence can trick us into thinking values are alive when they are
   // not.
@@ -2981,98 +2988,31 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
       numberFunclet(CRI->getSuccessor(), EntryBlock);
   }
 
-  // Insert cleanuppads before EH blocks with PHI nodes.
+  // Strip PHI nodes off of EH pads.
+  SmallVector<PHINode *, 16> PHINodes;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
     BasicBlock *BB = FI++;
-    // Skip any BBs which aren't EH pads.
     if (!BB->isEHPad())
       continue;
-    // Skip any cleanuppads, they can hold non-PHI instructions.
-    if (isa<CleanupPadInst>(BB->getFirstNonPHI()))
-      continue;
-    // Skip any EH pads without PHIs, we don't need to worry about demoting into
-    // them.
-    if (!isa<PHINode>(BB->begin()))
-      continue;
-
-    // Create our new cleanuppad BB, terminate it with a cleanupret.
-    auto *NewCleanupBB = BasicBlock::Create(
-        Context, Twine(BB->getName(), ".wineh.phibb"), &F, BB);
-    auto *CPI = CleanupPadInst::Create(Type::getVoidTy(Context), {BB}, "",
-                                       NewCleanupBB);
-    CleanupReturnInst::Create(Context, /*RetVal=*/nullptr, BB, NewCleanupBB);
-
-    // Update the funclet data structures to keep them in the loop.
-    BlockColors[NewCleanupBB].insert(NewCleanupBB);
-    FuncletBlocks[NewCleanupBB].insert(NewCleanupBB);
-
-    // Reparent PHIs from the old EH BB into the cleanuppad.
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
       Instruction *I = BI++;
       auto *PN = dyn_cast<PHINode>(I);
       // Stop at the first non-PHI.
       if (!PN)
         break;
-      PN->removeFromParent();
-      PN->insertBefore(CPI);
-    }
 
-    // Redirect predecessors from the old EH BB to the cleanuppad.
-    std::set<BasicBlock *> Preds;
-    Preds.insert(pred_begin(BB), pred_end(BB));
-    for (BasicBlock *Pred : Preds) {
-      // Don't redirect the new cleanuppad to itself!
-      if (Pred == NewCleanupBB)
-        continue;
-      TerminatorInst *TI = Pred->getTerminator();
-      for (unsigned TII = 0, TIE = TI->getNumSuccessors(); TII != TIE; ++TII) {
-        BasicBlock *Successor = TI->getSuccessor(TII);
-        if (Successor == BB)
-          TI->setSuccessor(TII, NewCleanupBB);
-      }
+      AllocaInst *SpillSlot = insertPHILoads(PN, F);
+      if (SpillSlot)
+        insertPHIStores(PN, SpillSlot);
+
+      PHINodes.push_back(PN);
     }
   }
 
-  // Get rid of polychromatic PHI nodes.
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE;) {
-    BasicBlock *BB = FI++;
-    std::set<BasicBlock *> &ColorsForBB = BlockColors[BB];
-    bool IsEHPad = BB->isEHPad();
-    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
-      Instruction *I = BI++;
-      auto *PN = dyn_cast<PHINode>(I);
-      // Stop at the first non-PHI node.
-      if (!PN)
-        break;
-
-      // EH pads cannot be lowered with PHI nodes prefacing them.
-      if (IsEHPad) {
-        // We should have removed PHIs from all non-cleanuppad blocks.
-        if (!isa<CleanupPadInst>(BB->getFirstNonPHI()))
-          report_fatal_error("Unexpected PHI on EH Pad");
-        DemotePHIToStack(PN);
-        continue;
-      }
-
-      // See if *all* the basic blocks involved in this PHI node are in the
-      // same, lone, color.  If so, demotion is not needed.
-      bool SameColor = ColorsForBB.size() == 1;
-      if (SameColor) {
-        for (unsigned PNI = 0, PNE = PN->getNumIncomingValues(); PNI != PNE;
-             ++PNI) {
-          BasicBlock *IncomingBB = PN->getIncomingBlock(PNI);
-          std::set<BasicBlock *> &ColorsForIncomingBB = BlockColors[IncomingBB];
-          // If the colors differ, bail out early and demote.
-          if (ColorsForIncomingBB != ColorsForBB) {
-            SameColor = false;
-            break;
-          }
-        }
-      }
-
-      if (!SameColor)
-        DemotePHIToStack(PN);
-    }
+  for (auto *PN : PHINodes) {
+    // There may be lingering uses on other EH PHIs being removed
+    PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+    PN->eraseFromParent();
   }
 
   // Turn all inter-funclet uses of a Value into loads and stores.
@@ -3086,93 +3026,13 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
         if (AI->isStaticAlloca())
           continue;
 
-      // FIXME: Our spill-placement algorithm is incredibly naive.  We should
-      // try to sink+hoist as much as possible to avoid redundant stores and reloads.
-      DenseMap<BasicBlock *, Value *> Loads;
-      AllocaInst *SpillSlot = nullptr;
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE;) {
-        Use &U = *UI++;
-        auto *UsingInst = cast<Instruction>(U.getUser());
-        BasicBlock *UsingBB = UsingInst->getParent();
-
-        // Is the Use inside a block which is colored with a subset of the Def?
-        // If so, we don't need to escape the Def because we will clone
-        // ourselves our own private copy.
-        std::set<BasicBlock *> &ColorsForUsingBB = BlockColors[UsingBB];
-        if (std::includes(ColorsForBB.begin(), ColorsForBB.end(),
-                          ColorsForUsingBB.begin(), ColorsForUsingBB.end()))
-          continue;
-
-        // Lazilly create the spill slot.  We spill immediately after the value
-        // in the BasicBlock.
-        // FIXME: This can be improved to spill at the block exit points.
-        if (!SpillSlot)
-          SpillSlot = new AllocaInst(I->getType(), nullptr,
-                                     Twine(I->getName(), ".wineh.spillslot"),
-                                     EntryBlock->begin());
-
-        if (auto *PN = dyn_cast<PHINode>(UsingInst)) {
-          // If this is a PHI node, we can't insert a load of the value before
-          // the use.  Instead insert the load in the predecessor block
-          // corresponding to the incoming value.
-          //
-          // Note that if there are multiple edges from a basic block to this
-          // PHI node that we cannot have multiple loads.  The problem is that
-          // the resulting PHI node will have multiple values (from each load)
-          // coming in from the same block, which is illegal SSA form.
-          // For this reason, we keep track of and reuse loads we insert.
-          BasicBlock *IncomingBlock = PN->getIncomingBlock(U);
-          Value *&V = Loads[IncomingBlock];
-          // Insert the load into the predecessor block
-          if (!V)
-            V = new LoadInst(SpillSlot, Twine(I->getName(), ".wineh.reload"),
-                             /*Volatile=*/false,
-                             IncomingBlock->getTerminator());
-          U.set(V);
-        } else {
-          // Reload right before the old use.
-          // FIXME: This can be improved to reload at a block entry point.
-          Value *V =
-              new LoadInst(SpillSlot, Twine(I->getName(), ".wineh.reload"),
-                           /*Volatile=*/false, UsingInst);
-          U.set(V);
-        }
-      }
-      if (SpillSlot) {
-        // Insert stores of the computed value into the stack slot.
-        // We have to be careful if I is an invoke instruction,
-        // because we can't insert the store AFTER the terminator instruction.
-        BasicBlock::iterator InsertPt;
-        if (!isa<TerminatorInst>(I)) {
-          InsertPt = I;
-          ++InsertPt;
-          // Don't insert before PHI nodes or EH pad instrs.
-          for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
-            ;
-        } else {
-          auto *II = cast<InvokeInst>(I);
-          // We cannot demote invoke instructions to the stack if their normal
-          // edge is critical. Therefore, split the critical edge and create a
-          // basic block into which the store can be inserted.
-          if (!II->getNormalDest()->getSinglePredecessor()) {
-            unsigned SuccNum = GetSuccessorNumber(BB, II->getNormalDest());
-            assert(isCriticalEdge(II, SuccNum) && "Expected a critical edge!");
-            BasicBlock *NewBlock = SplitCriticalEdge(II, SuccNum);
-            assert(NewBlock && "Unable to split critical edge.");
-            // Update the color mapping for the newly split edge.
-            std::set<BasicBlock *> &ColorsForUsingBB =
-                BlockColors[II->getParent()];
-            BlockColors[NewBlock] = ColorsForUsingBB;
-            for (BasicBlock *FuncletPad : ColorsForUsingBB)
-              FuncletBlocks[FuncletPad].insert(NewBlock);
-          }
-          InsertPt = II->getNormalDest()->getFirstInsertionPt();
-        }
-        new StoreInst(I, SpillSlot, InsertPt);
-      }
+      demoteNonlocalUses(I, ColorsForBB, F);
     }
   }
+  // Also demote function parameters used in funclets.
+  std::set<BasicBlock *> &ColorsForEntry = BlockColors[&F.getEntryBlock()];
+  for (Argument &Arg : F.args())
+    demoteNonlocalUses(&Arg, ColorsForEntry, F);
 
   // We need to clone all blocks which belong to multiple funclets.  Values are
   // remapped throughout the funclet to propogate both the new instructions
@@ -3258,4 +3118,188 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
   BlockColors.clear();
   FuncletBlocks.clear();
   return true;
+}
+
+// TODO: Share loads when one use dominates another, or when a catchpad exit
+// dominates uses (needs dominators).
+AllocaInst *WinEHPrepare::insertPHILoads(PHINode *PN, Function &F) {
+  BasicBlock *PHIBlock = PN->getParent();
+  AllocaInst *SpillSlot = nullptr;
+
+  if (isa<CleanupPadInst>(PHIBlock->getFirstNonPHI())) {
+    // Insert a load in place of the PHI and replace all uses.
+    SpillSlot = new AllocaInst(PN->getType(), nullptr,
+                               Twine(PN->getName(), ".wineh.spillslot"),
+                               F.getEntryBlock().begin());
+    Value *V = new LoadInst(SpillSlot, Twine(PN->getName(), ".wineh.reload"),
+                            PHIBlock->getFirstInsertionPt());
+    PN->replaceAllUsesWith(V);
+    return SpillSlot;
+  }
+
+  DenseMap<BasicBlock *, Value *> Loads;
+  for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
+       UI != UE;) {
+    Use &U = *UI++;
+    auto *UsingInst = cast<Instruction>(U.getUser());
+    BasicBlock *UsingBB = UsingInst->getParent();
+    if (UsingBB->isEHPad()) {
+      // Use is on an EH pad phi.  Leave it alone; we'll insert loads and
+      // stores for it separately.
+      assert(isa<PHINode>(UsingInst));
+      continue;
+    }
+    replaceUseWithLoad(PN, U, SpillSlot, Loads, F);
+  }
+  return SpillSlot;
+}
+
+// TODO: improve store placement.  Inserting at def is probably good, but need
+// to be careful not to introduce interfering stores (needs liveness analysis).
+// TODO: identify related phi nodes that can share spill slots, and share them
+// (also needs liveness).
+void WinEHPrepare::insertPHIStores(PHINode *OriginalPHI,
+                                   AllocaInst *SpillSlot) {
+  // Use a worklist of (Block, Value) pairs -- the given Value needs to be
+  // stored to the spill slot by the end of the given Block.
+  SmallVector<std::pair<BasicBlock *, Value *>, 4> Worklist;
+
+  Worklist.push_back({OriginalPHI->getParent(), OriginalPHI});
+
+  while (!Worklist.empty()) {
+    BasicBlock *EHBlock;
+    Value *InVal;
+    std::tie(EHBlock, InVal) = Worklist.pop_back_val();
+
+    PHINode *PN = dyn_cast<PHINode>(InVal);
+    if (PN && PN->getParent() == EHBlock) {
+      // The value is defined by another PHI we need to remove, with no room to
+      // insert a store after the PHI, so each predecessor needs to store its
+      // incoming value.
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i < e; ++i) {
+        Value *PredVal = PN->getIncomingValue(i);
+
+        // Undef can safely be skipped.
+        if (isa<UndefValue>(PredVal))
+          continue;
+
+        insertPHIStore(PN->getIncomingBlock(i), PredVal, SpillSlot, Worklist);
+      }
+    } else {
+      // We need to store InVal, which dominates EHBlock, but can't put a store
+      // in EHBlock, so need to put stores in each predecessor.
+      for (BasicBlock *PredBlock : predecessors(EHBlock)) {
+        insertPHIStore(PredBlock, InVal, SpillSlot, Worklist);
+      }
+    }
+  }
+}
+
+void WinEHPrepare::insertPHIStore(
+    BasicBlock *PredBlock, Value *PredVal, AllocaInst *SpillSlot,
+    SmallVectorImpl<std::pair<BasicBlock *, Value *>> &Worklist) {
+
+  if (PredBlock->isEHPad() &&
+      !isa<CleanupPadInst>(PredBlock->getFirstNonPHI())) {
+    // Pred is unsplittable, so we need to queue it on the worklist.
+    Worklist.push_back({PredBlock, PredVal});
+    return;
+  }
+
+  // Otherwise, insert the store at the end of the basic block.
+  new StoreInst(PredVal, SpillSlot, PredBlock->getTerminator());
+}
+
+// TODO: Share loads for same-funclet uses (requires dominators if funclets
+// aren't properly nested).
+void WinEHPrepare::demoteNonlocalUses(Value *V,
+                                      std::set<BasicBlock *> &ColorsForBB,
+                                      Function &F) {
+  DenseMap<BasicBlock *, Value *> Loads;
+  AllocaInst *SpillSlot = nullptr;
+  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;) {
+    Use &U = *UI++;
+    auto *UsingInst = cast<Instruction>(U.getUser());
+    BasicBlock *UsingBB = UsingInst->getParent();
+
+    // Is the Use inside a block which is colored with a subset of the Def?
+    // If so, we don't need to escape the Def because we will clone
+    // ourselves our own private copy.
+    std::set<BasicBlock *> &ColorsForUsingBB = BlockColors[UsingBB];
+    if (std::includes(ColorsForBB.begin(), ColorsForBB.end(),
+                      ColorsForUsingBB.begin(), ColorsForUsingBB.end()))
+      continue;
+
+    replaceUseWithLoad(V, U, SpillSlot, Loads, F);
+  }
+  if (SpillSlot) {
+    // Insert stores of the computed value into the stack slot.
+    // We have to be careful if I is an invoke instruction,
+    // because we can't insert the store AFTER the terminator instruction.
+    BasicBlock::iterator InsertPt;
+    if (isa<Argument>(V)) {
+      InsertPt = F.getEntryBlock().getTerminator();
+    } else if (isa<TerminatorInst>(V)) {
+      auto *II = cast<InvokeInst>(V);
+      // We cannot demote invoke instructions to the stack if their normal
+      // edge is critical. Therefore, split the critical edge and create a
+      // basic block into which the store can be inserted.
+      if (!II->getNormalDest()->getSinglePredecessor()) {
+        unsigned SuccNum =
+            GetSuccessorNumber(II->getParent(), II->getNormalDest());
+        assert(isCriticalEdge(II, SuccNum) && "Expected a critical edge!");
+        BasicBlock *NewBlock = SplitCriticalEdge(II, SuccNum);
+        assert(NewBlock && "Unable to split critical edge.");
+        // Update the color mapping for the newly split edge.
+        std::set<BasicBlock *> &ColorsForUsingBB = BlockColors[II->getParent()];
+        BlockColors[NewBlock] = ColorsForUsingBB;
+        for (BasicBlock *FuncletPad : ColorsForUsingBB)
+          FuncletBlocks[FuncletPad].insert(NewBlock);
+      }
+      InsertPt = II->getNormalDest()->getFirstInsertionPt();
+    } else {
+      InsertPt = cast<Instruction>(V);
+      ++InsertPt;
+      // Don't insert before PHI nodes or EH pad instrs.
+      for (; isa<PHINode>(InsertPt) || InsertPt->isEHPad(); ++InsertPt)
+        ;
+    }
+    new StoreInst(V, SpillSlot, InsertPt);
+  }
+}
+
+void WinEHPrepare::replaceUseWithLoad(Value *V, Use &U, AllocaInst *&SpillSlot,
+                                      DenseMap<BasicBlock *, Value *> &Loads,
+                                      Function &F) {
+  // Lazilly create the spill slot.
+  if (!SpillSlot)
+    SpillSlot = new AllocaInst(V->getType(), nullptr,
+                               Twine(V->getName(), ".wineh.spillslot"),
+                               F.getEntryBlock().begin());
+
+  auto *UsingInst = cast<Instruction>(U.getUser());
+  if (auto *UsingPHI = dyn_cast<PHINode>(UsingInst)) {
+    // If this is a PHI node, we can't insert a load of the value before
+    // the use.  Instead insert the load in the predecessor block
+    // corresponding to the incoming value.
+    //
+    // Note that if there are multiple edges from a basic block to this
+    // PHI node that we cannot have multiple loads.  The problem is that
+    // the resulting PHI node will have multiple values (from each load)
+    // coming in from the same block, which is illegal SSA form.
+    // For this reason, we keep track of and reuse loads we insert.
+    BasicBlock *IncomingBlock = UsingPHI->getIncomingBlock(U);
+    Value *&Load = Loads[IncomingBlock];
+    // Insert the load into the predecessor block
+    if (!Load)
+      Load = new LoadInst(SpillSlot, Twine(V->getName(), ".wineh.reload"),
+                          /*Volatile=*/false, IncomingBlock->getTerminator());
+
+    U.set(Load);
+  } else {
+    // Reload right before the old use.
+    auto *Load = new LoadInst(SpillSlot, Twine(V->getName(), ".wineh.reload"),
+                              /*Volatile=*/false, UsingInst);
+    U.set(Load);
+  }
 }
