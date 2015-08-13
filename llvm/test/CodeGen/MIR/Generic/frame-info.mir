@@ -44,9 +44,8 @@ tracksRegLiveness: true
 # CHECK: body
 frameInfo:
   maxAlignment:    4
-body:
-  - id:          0
-    name:        entry
+body: |
+  bb.0.entry:
 ...
 ---
 name:            test2
@@ -84,8 +83,7 @@ frameInfo:
   hasOpaqueSPAdjustment: true
   hasVAStart:      true
   hasMustTailInVarArgFunc: true
-body:
-  - id:          0
-    name:        entry
+body: |
+  bb.0.entry:
 ...
 

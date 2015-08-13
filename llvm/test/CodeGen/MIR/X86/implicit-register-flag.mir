@@ -19,24 +19,20 @@
 ...
 ---
 name:            foo
-body:
-  - id:          0
-    name:        entry
-    successors:  [ '%bb.1.less', '%bb.2.exit' ]
-    instructions:
-      # CHECK:      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
-      # CHECK-NEXT: - 'JG_1 %bb.2.exit, implicit %eflags'
-      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
-      - 'JG_1 %bb.2.exit, implicit %eflags'
-  - id:          1
-    name:        less
-    instructions:
-      # CHECK: - '%eax = MOV32r0 implicit-def %eflags'
-      - '%eax = MOV32r0 implicit-def %eflags'
-      - 'RETQ %eax'
-  - id:          2
-    name:        exit
-    instructions:
-      - '%eax = COPY %edi'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    successors: %bb.1.less, %bb.2.exit
+    ; CHECK:      CMP32ri8 %edi, 10, implicit-def %eflags
+    ; CHECK-NEXT: JG_1 %bb.2.exit, implicit %eflags
+    CMP32ri8 %edi, 10, implicit-def %eflags
+    JG_1 %bb.2.exit, implicit %eflags
+
+  bb.1.less:
+    ; CHECK: %eax = MOV32r0 implicit-def %eflags
+    %eax = MOV32r0 implicit-def %eflags
+    RETQ %eax
+
+  bb.2.exit:
+    %eax = COPY %edi
+    RETQ %eax
 ...

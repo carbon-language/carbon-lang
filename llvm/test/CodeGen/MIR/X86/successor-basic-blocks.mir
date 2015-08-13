@@ -30,51 +30,54 @@
 ...
 ---
 name:            foo
-body:
-  # CHECK: name: entry
-  # CHECK: successors: [ '%bb.1.less', '%bb.2.exit' ]
-  # CHECK: name: less
-  - id:          0
-    name:        entry
-    successors:  [ '%bb.1.less', '%bb.2.exit' ]
-    liveins:     [ '%edi' ]
-    instructions:
-      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
-      - 'JG_1 %bb.2.exit, implicit killed %eflags'
-  - id:          1
-    name:        less
-    instructions:
-      - '%eax = MOV32r0 implicit-def dead %eflags'
-      - 'RETQ killed %eax'
-  - id:          2
-    name:        exit
-    liveins:     [ '%edi' ]
-    instructions:
-      - '%eax = COPY killed %edi'
-      - 'RETQ killed %eax'
+body: |
+  ; CHECK-LABEL: bb.0.entry:
+  ; CHECK:         successors: %bb.1.less, %bb.2.exit
+  ; CHECK-LABEL: bb.1.less:
+  bb.0.entry:
+    successors: %bb.1.less, %bb.2.exit
+    liveins: %edi
+
+    CMP32ri8 %edi, 10, implicit-def %eflags
+    JG_1 %bb.2.exit, implicit killed %eflags
+
+  bb.1.less:
+    %eax = MOV32r0 implicit-def dead %eflags
+    RETQ killed %eax
+
+  bb.2.exit:
+    liveins: %edi
+
+    %eax = COPY killed %edi
+    RETQ killed %eax
 ...
 ---
 name:            bar
-body:
-  # CHECK: name: bar
-  # CHECK: name: entry
-  # CHECK: successors: [ '%bb.1', '%bb.2' ]
-  # CHECK: id: 1
-  # CHECK: id: 2
-  - id:           0
-    name:         entry
-    successors:   [ '%bb.1', '%bb.2' ]
-    liveins:      [ '%edi' ]
-    instructions:
-      - 'CMP32ri8 %edi, 10, implicit-def %eflags'
-      - 'JG_1 %bb.2, implicit killed %eflags'
-  - id:           1
-    instructions:
-      - '%eax = MOV32r0 implicit-def dead %eflags'
-      - 'RETQ killed %eax'
-  - id:           2
-    liveins:      [ '%edi' ]
-    instructions:
-      - '%eax = COPY killed %edi'
-      - 'RETQ killed %eax'
+body: |
+  ; CHECK-LABEL: name: bar
+  ; Verify that we can have multiple lists of successors that will be merged
+  ; into one.
+  ; CHECK-LABEL: bb.0.entry:
+  ; CHECK:         successors: %bb.1, %bb.2
+  bb.0.entry:
+    liveins: %edi
+    successors: %bb.1
+    successors: %bb.2
+
+    CMP32ri8 %edi, 10, implicit-def %eflags
+    JG_1 %bb.2, implicit killed %eflags
+
+  ; Verify that we can have an empty list of successors.
+  ; CHECK-LABEL: bb.1:
+  ; CHECK-NEXT:  %eax = MOV32r0 implicit-def dead %eflags
+  bb.1:
+    successors:
+    %eax = MOV32r0 implicit-def dead %eflags
+    RETQ killed %eax
+
+  bb.2:
+    liveins: %edi
+
+    %eax = COPY killed %edi
+    RETQ killed %eax
 ...

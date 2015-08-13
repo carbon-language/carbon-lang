@@ -41,31 +41,27 @@ registers:
   - { id: 0, class: gr32 }
   - { id: 1, class: gr32 }
   - { id: 2, class: gr32 }
-body:
-  - id:          0
-    name:        entry
-    successors:  [ '%bb.2.exit', '%bb.1.less' ]
-    liveins:     [ '%edi' ]
-    # CHECK:      %0 = COPY %edi
-    # CHECK-NEXT: %1 = SUB32ri8 %0, 10
-    instructions:
-      - '%0 = COPY %edi'
-      - '%1 = SUB32ri8 %0, 10, implicit-def %eflags'
-      - 'JG_1 %bb.2.exit, implicit %eflags'
-      - 'JMP_1 %bb.1.less'
-  - id:          1
-    name:        less
-    # CHECK:      %2 = MOV32r0
-    # CHECK-NEXT: %eax = COPY %2
-    instructions:
-      - '%2 = MOV32r0 implicit-def %eflags'
-      - '%eax = COPY %2'
-      - 'RETQ %eax'
-  - id:          2
-    name:        exit
-    instructions:
-      - '%eax = COPY %0'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    successors: %bb.2.exit, %bb.1.less
+    liveins: %edi
+    ; CHECK:      %0 = COPY %edi
+    ; CHECK-NEXT: %1 = SUB32ri8 %0, 10
+    %0 = COPY %edi
+    %1 = SUB32ri8 %0, 10, implicit-def %eflags
+    JG_1 %bb.2.exit, implicit %eflags
+    JMP_1 %bb.1.less
+
+  bb.1.less:
+    ; CHECK:      %2 = MOV32r0
+    ; CHECK-NEXT: %eax = COPY %2
+    %2 = MOV32r0 implicit-def %eflags
+    %eax = COPY %2
+    RETQ %eax
+
+  bb.2.exit:
+    %eax = COPY %0
+    RETQ %eax
 ...
 ---
 name:            foo
@@ -80,30 +76,26 @@ registers:
   - { id: 2, class: gr32 }
   - { id: 0, class: gr32 }
   - { id: 10, class: gr32 }
-body:
-  - id:          0
-    name:        entry
-    successors:  [ '%bb.2.exit', '%bb.1.less' ]
-    liveins:     [ '%edi' ]
-    # CHECK:      %0 = COPY %edi
-    # CHECK-NEXT: %1 = SUB32ri8 %0, 10
-    instructions:
-      - '%2 = COPY %edi'
-      - '%0 = SUB32ri8 %2, 10, implicit-def %eflags'
-      - 'JG_1 %bb.2.exit, implicit %eflags'
-      - 'JMP_1 %bb.1.less'
-  - id:          1
-    name:        less
-    # CHECK:      %2 = MOV32r0
-    # CHECK-NEXT: %eax = COPY %2
-    instructions:
-      - '%10 = MOV32r0 implicit-def %eflags'
-      - '%eax = COPY %10'
-      - 'RETQ %eax'
-  - id:          2
-    name:        exit
-    # CHECK: %eax = COPY %0
-    instructions:
-      - '%eax = COPY %2'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    successors: %bb.2.exit, %bb.1.less
+    liveins: %edi
+    ; CHECK:      %0 = COPY %edi
+    ; CHECK-NEXT: %1 = SUB32ri8 %0, 10
+    %2 = COPY %edi
+    %0 = SUB32ri8 %2, 10, implicit-def %eflags
+    JG_1 %bb.2.exit, implicit %eflags
+    JMP_1 %bb.1.less
+
+  bb.1.less:
+    ; CHECK:      %2 = MOV32r0
+    ; CHECK-NEXT: %eax = COPY %2
+    %10 = MOV32r0 implicit-def %eflags
+    %eax = COPY %10
+    RETQ %eax
+
+  bb.2.exit:
+    ; CHECK: %eax = COPY %0
+    %eax = COPY %2
+    RETQ %eax
 ...

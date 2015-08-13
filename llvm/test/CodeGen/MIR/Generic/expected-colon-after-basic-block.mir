@@ -3,14 +3,14 @@
 --- |
 
   define i32 @foo() {
+  entry:
     ret i32 0
   }
 
 ...
 ---
 name:            foo
-body:
- - id:           0
-# CHECK: [[@LINE+1]]:19: expected an IR block reference
-   ir-block:     '0'
+body: |
+  ; CHECK: [[@LINE+1]]:13: expected ':'
+  bb.0.entry
 ...

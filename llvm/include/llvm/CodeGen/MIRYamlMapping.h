@@ -73,6 +73,20 @@ template <> struct ScalarTraits<FlowStringValue> {
   static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
 };
 
+struct BlockStringValue {
+  StringValue Value;
+};
+
+template <> struct BlockScalarTraits<BlockStringValue> {
+  static void output(const BlockStringValue &S, void *Ctx, raw_ostream &OS) {
+    return ScalarTraits<StringValue>::output(S.Value, Ctx, OS);
+  }
+
+  static StringRef input(StringRef Scalar, void *Ctx, BlockStringValue &S) {
+    return ScalarTraits<StringValue>::input(Scalar, Ctx, S.Value);
+  }
+};
+
 /// A wrapper around unsigned which contains a source range that's being set
 /// during parsing.
 struct UnsignedValue {
@@ -162,36 +176,6 @@ template <> struct MappingTraits<MachineFunctionLiveIn> {
   }
 
   static const bool flow = true;
-};
-
-struct MachineBasicBlock {
-  unsigned ID;
-  StringValue Name;
-  StringValue IRBlock;
-  unsigned Alignment = 0;
-  bool IsLandingPad = false;
-  bool AddressTaken = false;
-  std::vector<FlowStringValue> Successors;
-  std::vector<UnsignedValue> SuccessorWeights;
-  std::vector<FlowStringValue> LiveIns;
-  std::vector<StringValue> Instructions;
-};
-
-template <> struct MappingTraits<MachineBasicBlock> {
-  static void mapping(IO &YamlIO, MachineBasicBlock &MBB) {
-    YamlIO.mapRequired("id", MBB.ID);
-    YamlIO.mapOptional("name", MBB.Name,
-                       StringValue()); // Don't print out an empty name.
-    YamlIO.mapOptional("ir-block", MBB.IRBlock,
-                       StringValue()); // Don't print out an empty BB reference.
-    YamlIO.mapOptional("alignment", MBB.Alignment);
-    YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
-    YamlIO.mapOptional("addressTaken", MBB.AddressTaken);
-    YamlIO.mapOptional("successors", MBB.Successors);
-    YamlIO.mapOptional("weights", MBB.SuccessorWeights);
-    YamlIO.mapOptional("liveins", MBB.LiveIns);
-    YamlIO.mapOptional("instructions", MBB.Instructions);
-  }
 };
 
 /// Serializable representation of stack object from the MachineFrameInfo class.
@@ -320,7 +304,6 @@ template <> struct MappingTraits<MachineJumpTable::Entry> {
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineFunctionLiveIn)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::VirtualRegisterDefinition)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineBasicBlock)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineStackObject)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::FixedMachineStackObject)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineConstantPoolValue)
@@ -404,8 +387,7 @@ struct MachineFunction {
   std::vector<MachineStackObject> StackObjects;
   std::vector<MachineConstantPoolValue> Constants; /// Constant pool.
   MachineJumpTable JumpTableInfo;
-
-  std::vector<MachineBasicBlock> BasicBlocks;
+  BlockStringValue Body;
 };
 
 template <> struct MappingTraits<MachineFunction> {
@@ -426,7 +408,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("constants", MF.Constants);
     if (!YamlIO.outputting() || !MF.JumpTableInfo.Entries.empty())
       YamlIO.mapOptional("jumpTable", MF.JumpTableInfo);
-    YamlIO.mapOptional("body", MF.BasicBlocks);
+    YamlIO.mapOptional("body", MF.Body);
   }
 };
 

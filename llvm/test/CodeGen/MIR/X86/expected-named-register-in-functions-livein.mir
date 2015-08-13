@@ -17,12 +17,11 @@ registers:
 liveins:
   # CHECK: [[@LINE+1]]:13: expected a named register
   - { reg: '%0' }
-body:
-  - id:          0
-    name:        body
-    liveins:     [ '%edi' ]
-    instructions:
-      - '%0 = COPY %edi'
-      - '%eax = COPY %0'
-      - 'RETQ %eax'
+body: |
+  bb.0.body:
+    liveins: %edi
+
+    %0 = COPY %edi
+    %eax = COPY %0
+    RETQ %eax
 ...

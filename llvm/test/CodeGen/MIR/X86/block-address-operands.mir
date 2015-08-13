@@ -54,84 +54,68 @@
 ...
 ---
 name:            test
-body:
-  - id:              0
-    name:            entry
-    successors:      [ '%bb.1.block' ]
-    instructions:
-    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block), _
-      - '%rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block), _'
-      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
-      - 'JMP64m %rip, 1, _, @addr, _'
-  - id:              1
-    name:            block
-    addressTaken:    true
-    instructions:
-      - RETQ
+body: |
+  bb.0.entry:
+    successors: %bb.1.block
+  ; CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block), _
+    %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block), _
+    MOV64mr %rip, 1, _, @addr, _, killed %rax
+    JMP64m %rip, 1, _, @addr, _
+
+  bb.1.block (address-taken):
+    RETQ
 ...
 ---
 name:            test2
 tracksRegLiveness: true
-body:
-  - id:              0
-    name:            entry
-    successors:      [ '%bb.1' ]
-    instructions:
-    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test2, %ir-block."quoted block"), _
-      - '%rax = LEA64r %rip, 1, _, blockaddress(@test2, %ir-block."quoted block"), _'
-      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
-      - 'JMP64m %rip, 1, _, @addr, _'
-  - id:              1
-    addressTaken:    true
-    instructions:
-      - RETQ
+body: |
+  bb.0.entry:
+    successors: %bb.1
+  ; CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test2, %ir-block."quoted block"), _
+    %rax = LEA64r %rip, 1, _, blockaddress(@test2, %ir-block."quoted block"), _
+    MOV64mr %rip, 1, _, @addr, _, killed %rax
+    JMP64m %rip, 1, _, @addr, _
+
+  bb.1 (address-taken):
+    RETQ
 ...
 ---
 name:            slot_in_other_function
 tracksRegLiveness: true
-body:
-  - id:              0
-    name:            entry
-    liveins:         [ '%rdi' ]
-    instructions:
-# CHECK: name: slot_in_other_function
-# CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
-      - '%rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _'
-      - 'MOV64mr killed %rdi, 1, _, 0, _, killed %rax'
-      - RETQ
+body: |
+  bb.0.entry:
+    liveins: %rdi
+  ; CHECK-LABEL: name: slot_in_other_function
+  ; CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+    %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+    MOV64mr killed %rdi, 1, _, 0, _, killed %rax
+    RETQ
 ...
 ---
 name:            test3
 tracksRegLiveness: true
-body:
-  - id:              0
-    name:            entry
-    successors:      [ '%bb.1' ]
-    instructions:
-# CHECK: name: test3
-# CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
-      - '%rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _'
-      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
-      - 'JMP64m %rip, 1, _, @addr, _'
-  - id:              1
-    addressTaken:    true
-    instructions:
-      - RETQ
+body: |
+  bb.0.entry:
+    successors: %bb.1
+  ; CHECK-LABEL: name: test3
+  ; CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+    %rax = LEA64r %rip, 1, _, blockaddress(@test3, %ir-block.0), _
+    MOV64mr %rip, 1, _, @addr, _, killed %rax
+    JMP64m %rip, 1, _, @addr, _
+
+  bb.1 (address-taken):
+    RETQ
 ...
 ---
 name:            test4
-body:
-  - id:              0
-    name:            entry
-    successors:      [ '%bb.1.block' ]
-    instructions:
-    # CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block) + 2, _
-      - '%rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block) + 2, _'
-      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
-      - 'JMP64m %rip, 1, _, @addr, _'
-  - id:              1
-    name:            block
-    addressTaken:    true
-    instructions:
-      - RETQ
+body: |
+  bb.0.entry:
+    successors: %bb.1.block
+  ; CHECK: %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block) + 2, _
+    %rax = LEA64r %rip, 1, _, blockaddress(@test, %ir-block.block) + 2, _
+    MOV64mr %rip, 1, _, @addr, _, killed %rax
+    JMP64m %rip, 1, _, @addr, _
+
+  bb.1.block (address-taken):
+    RETQ
 ...

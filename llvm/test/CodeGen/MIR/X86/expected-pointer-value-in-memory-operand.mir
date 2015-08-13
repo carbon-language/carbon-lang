@@ -14,13 +14,11 @@ name:            test
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%rdi' ]
-    instructions:
-# CHECK: [[@LINE+1]]:65: expected a pointer IR value
-      - '%eax = MOV32rm killed %rdi, 1, _, 0, _ :: (load 4 from %ir.b)'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    liveins: %rdi
+  ; CHECK: [[@LINE+1]]:60: expected a pointer IR value
+    %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (load 4 from %ir.b)
+    RETQ %eax
 ...
 

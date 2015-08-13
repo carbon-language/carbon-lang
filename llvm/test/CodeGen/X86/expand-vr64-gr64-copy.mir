@@ -18,20 +18,19 @@
 ---
 name:            test_pswapdsi
 tracksRegLiveness: true
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%xmm0' ]
-    instructions:
-      - '%xmm0 = PSHUFDri killed %xmm0, -24'
-      - 'MOVPQI2QImr %rsp, 1, _, -8, _, killed %xmm0'
-      - '%mm0 = PSWAPDrm %rsp, 1, _, -8, _'
-# CHECK:      %rax = MMX_MOVD64from64rr %mm0
-# CHECK-NEXT: %mm0 = MMX_MOVD64to64rr %rax
-      - '%rax = COPY %mm0'
-      - '%mm0 = COPY %rax'
-      - 'MMX_MOVQ64mr %rsp, 1, _, -16, _, killed %mm0'
-      - '%xmm0 = MOVQI2PQIrm %rsp, 1, _, -16, _'
-      - '%xmm0 = PSHUFDri killed %xmm0, -44'
-      - 'RETQ %xmm0'
+body: |
+  bb.0.entry:
+    liveins: %xmm0
+
+    %xmm0 = PSHUFDri killed %xmm0, -24
+    MOVPQI2QImr %rsp, 1, _, -8, _, killed %xmm0
+    %mm0 = PSWAPDrm %rsp, 1, _, -8, _
+  ; CHECK:      %rax = MMX_MOVD64from64rr %mm0
+  ; CHECK-NEXT: %mm0 = MMX_MOVD64to64rr %rax
+    %rax = COPY %mm0
+    %mm0 = COPY %rax
+    MMX_MOVQ64mr %rsp, 1, _, -16, _, killed %mm0
+    %xmm0 = MOVQI2PQIrm %rsp, 1, _, -16, _
+    %xmm0 = PSHUFDri killed %xmm0, -44
+    RETQ %xmm0
 ...

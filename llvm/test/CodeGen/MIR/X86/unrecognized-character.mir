@@ -10,10 +10,8 @@
 ...
 ---
 name:            foo
-body:
- - id:           0
-   name:         entry
-   instructions:
-     # CHECK: [[@LINE+1]]:9: unexpected character '`'
-     - '` RETQ'
+body: |
+  bb.0.entry:
+    ; CHECK: [[@LINE+1]]:5: unexpected character '`'
+    ` RETQ
 ...

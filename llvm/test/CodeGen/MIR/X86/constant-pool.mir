@@ -57,17 +57,15 @@ constants:
   - id:          1
     value:       'float 6.250000e+00'
     alignment:   4
-body:
-  - id: 0
-    name: entry
-    instructions:
-      # CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
-      # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
-      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
-      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
-      - '%xmm1 = CVTSS2SDrr killed %xmm1'
-      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
-      - 'RETQ %xmm0'
+body: |
+  bb.0.entry:
+    ; CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+    ; CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+    %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+    %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+    %xmm1 = CVTSS2SDrr killed %xmm1
+    %xmm0 = MULSDrr killed %xmm0, killed %xmm1
+    RETQ %xmm0
 ...
 ---
 # Verify that alignment can be inferred:
@@ -85,15 +83,13 @@ constants:
     value:       'double 3.250000e+00'
   - id:          1
     value:       'float 6.250000e+00'
-body:
-  - id: 0
-    name: entry
-    instructions:
-      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
-      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
-      - '%xmm1 = CVTSS2SDrr killed %xmm1'
-      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
-      - 'RETQ %xmm0'
+body: |
+  bb.0.entry:
+    %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+    %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+    %xmm1 = CVTSS2SDrr killed %xmm1
+    %xmm0 = MULSDrr killed %xmm0, killed %xmm1
+    RETQ %xmm0
 ...
 ---
 # Verify that the non-standard alignments are respected:
@@ -113,17 +109,15 @@ constants:
   - id:          1
     value:       'float 6.250000e+00'
     alignment:   1
-body:
-  - id: 0
-    name: entry
-    instructions:
-      # CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
-      # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
-      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _'
-      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _'
-      - '%xmm1 = CVTSS2SDrr killed %xmm1'
-      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
-      - 'RETQ %xmm0'
+body: |
+  bb.0.entry:
+    ; CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+    ; CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+    %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _
+    %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.1, _
+    %xmm1 = CVTSS2SDrr killed %xmm1
+    %xmm0 = MULSDrr killed %xmm0, killed %xmm1
+    RETQ %xmm0
 ...
 ---
 # CHECK:  name:  test4
@@ -133,15 +127,13 @@ constants:
     value:       'double 3.250000e+00'
   - id:          1
     value:       'float 6.250000e+00'
-body:
-  - id: 0
-    name: entry
-    instructions:
-      # CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.1 - 12, _
-      # CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.0 + 8, _
-      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.1 - 12, _'
-      - '%xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.0 + 8, _'
-      - '%xmm1 = CVTSS2SDrr killed %xmm1'
-      - '%xmm0 = MULSDrr killed %xmm0, killed %xmm1'
-      - 'RETQ %xmm0'
+body: |
+  bb.0.entry:
+    ; CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.1 - 12, _
+    ; CHECK-NEXT: %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.0 + 8, _
+    %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.1 - 12, _
+    %xmm1 = ADDSSrm killed %xmm1, %rip, 1, _, %const.0 + 8, _
+    %xmm1 = CVTSS2SDrr killed %xmm1
+    %xmm0 = MULSDrr killed %xmm0, killed %xmm1
+    RETQ %xmm0
 ...

@@ -17,24 +17,20 @@
 ---
 # CHECK: name: foo
 name:            foo
-body:
- - id:           0
-   name:         entry
-   instructions:
-     # CHECK:      - '%eax = MOV32ri 42'
-     # CHECK-NEXT: - 'RETQ %eax'
-     - '%eax = MOV32ri 42'
-     - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    ; CHECK:      %eax = MOV32ri 42
+    ; CHECK-NEXT: RETQ %eax
+    %eax = MOV32ri 42
+    RETQ %eax
 ...
 ---
 # CHECK: name: bar
 name:            bar
-body:
- - id:           0
-   name:         entry
-   instructions:
-     # CHECK:      - '%eax = MOV32ri -11'
-     # CHECK-NEXT: - 'RETQ %eax'
-     - '%eax = MOV32ri -11'
-     - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    ; CHECK:      %eax = MOV32ri -11
+    ; CHECK-NEXT: RETQ %eax
+    %eax = MOV32ri -11
+    RETQ %eax
 ...

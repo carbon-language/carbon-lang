@@ -36,19 +36,18 @@ jumpTable:
   entries:
     - id:        0
       blocks:    [ '%bb.3.lbl1', '%bb.4.lbl2', '%bb.5.lbl3', '%bb.6.lbl4' ]
-body:
-  - id:          0
-    name:        entry
-  - id:          1
-    name:        entry
-  - id:          2
-    name:        def
-  - id:          3
-    name:        lbl1
-  - id:          4
-    name:        lbl2
-  - id:          5
-    name:        lbl3
-  - id:          6
-    name:        lbl4
+body: |
+  bb.0.entry:
+
+  bb.1.entry:
+
+  bb.2.def:
+
+  bb.3.lbl1:
+
+  bb.4.lbl2:
+
+  bb.5.lbl3:
+
+  bb.6.lbl4:
 ...

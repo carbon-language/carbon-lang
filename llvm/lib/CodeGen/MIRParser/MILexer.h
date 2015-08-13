@@ -30,6 +30,7 @@ struct MIToken {
     // Markers
     Eof,
     Error,
+    Newline,
 
     // Tokens with no info.
     comma,
@@ -75,11 +76,16 @@ struct MIToken {
     kw_jump_table,
     kw_constant_pool,
     kw_liveout,
+    kw_address_taken,
+    kw_landing_pad,
+    kw_liveins,
+    kw_successors,
 
     // Identifier tokens
     Identifier,
     IntegerType,
     NamedRegister,
+    MachineBasicBlockLabel,
     MachineBasicBlock,
     StackObject,
     FixedStackObject,
@@ -118,6 +124,10 @@ public:
 
   bool isError() const { return Kind == Error; }
 
+  bool isNewlineOrEOF() const { return Kind == Newline || Kind == Eof; }
+
+  bool isErrorOrEOF() const { return Kind == Error || Kind == Eof; }
+
   bool isRegister() const {
     return Kind == NamedRegister || Kind == underscore ||
            Kind == VirtualRegister;
@@ -149,10 +159,10 @@ public:
 
   bool hasIntegerValue() const {
     return Kind == IntegerLiteral || Kind == MachineBasicBlock ||
-           Kind == StackObject || Kind == FixedStackObject ||
-           Kind == GlobalValue || Kind == VirtualRegister ||
-           Kind == ConstantPoolItem || Kind == JumpTableIndex ||
-           Kind == IRBlock;
+           Kind == MachineBasicBlockLabel || Kind == StackObject ||
+           Kind == FixedStackObject || Kind == GlobalValue ||
+           Kind == VirtualRegister || Kind == ConstantPoolItem ||
+           Kind == JumpTableIndex || Kind == IRBlock;
   }
 };
 

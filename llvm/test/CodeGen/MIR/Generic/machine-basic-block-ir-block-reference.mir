@@ -11,9 +11,7 @@
 ...
 ---
 name:            foo
-body:
-# CHECK: id: 0
-# CHECK: ir-block: '%ir-block.0'
- - id:           0
-   ir-block:     '%ir-block.0'
+body: |
+  ; CHECK: bb.0 (%ir-block.0):
+  bb.0 (%ir-block.0):
 ...

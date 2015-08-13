@@ -18,17 +18,15 @@ registers:
   - { id: 0, class: gr32 }
   - { id: 1, class: gr8 }
   - { id: 2, class: gr8 }
-body:
-  - name:        entry
-    id:          0
-    liveins:     [ '%edi' ]
-    instructions:
-      # CHECK:      %0 = COPY %edi
-      # CHECK-NEXT: %1 = COPY %0:sub_8bit
-      - '%0 = COPY %edi'
-      - '%1 = COPY %0:sub_8bit'
-      - '%2 = AND8ri %1, 1, implicit-def %eflags'
-      - '%al = COPY %2'
-      - 'RETQ %al'
+body: |
+  bb.0.entry:
+    liveins: %edi
+    ; CHECK:      %0 = COPY %edi
+    ; CHECK-NEXT: %1 = COPY %0:sub_8bit
+    %0 = COPY %edi
+    %1 = COPY %0:sub_8bit
+    %2 = AND8ri %1, 1, implicit-def %eflags
+    %al = COPY %2
+    RETQ %al
 ...
 

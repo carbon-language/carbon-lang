@@ -17,12 +17,11 @@ registers:
 liveins:
   # CHECK: [[@LINE+1]]:34: expected a virtual register
   - { reg: '%edi', virtual-reg: '%edi' }
-body:
-  - id:          0
-    name:        body
-    liveins:     [ '%edi' ]
-    instructions:
-      - '%0 = COPY %edi'
-      - '%eax = COPY %0'
-      - 'RETQ %eax'
+body: |
+  bb.0.body:
+    liveins: %edi
+
+    %0 = COPY %edi
+    %eax = COPY %0
+    RETQ %eax
 ...

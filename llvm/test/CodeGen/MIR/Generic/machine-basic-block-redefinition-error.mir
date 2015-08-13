@@ -10,8 +10,9 @@
 ...
 ---
 name:            foo
-body:
-  # CHECK: redefinition of machine basic block with id #0
-  - id:       0
-  - id:       0
+body: |
+  ; CHECK: [[@LINE+3]]:3: redefinition of machine basic block with id #0
+  bb.0:
+
+  bb.0:
 ...

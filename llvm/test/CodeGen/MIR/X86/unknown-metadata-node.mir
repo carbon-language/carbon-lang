@@ -48,14 +48,12 @@ frameInfo:
   maxAlignment:  4
 stack:
   - { id: 0, name: x.addr, size: 4, alignment: 4 }
-body:
-  - id:          0
-    name:        entry
-    instructions:
-      - '%0 = COPY %edi'
-      # CHECK: [[@LINE+1]]:26: use of undefined metadata '!42'
-      - 'DBG_VALUE _, 0, !42, !13'
-      - 'MOV32mr %stack.0.x.addr, 1, _, 0, _, %0'
-      - '%eax = COPY %0'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    %0 = COPY %edi
+    ; CHECK: [[@LINE+1]]:21: use of undefined metadata '!42'
+    DBG_VALUE _, 0, !42, !13
+    MOV32mr %stack.0.x.addr, 1, _, 0, _, %0
+    %eax = COPY %0
+    RETQ %eax
 ...

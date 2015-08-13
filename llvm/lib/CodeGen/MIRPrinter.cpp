@@ -83,8 +83,6 @@ public:
                const MachineConstantPool &ConstantPool);
   void convert(ModuleSlotTracker &MST, yaml::MachineJumpTable &YamlJTI,
                const MachineJumpTableInfo &JTI);
-  void convert(ModuleSlotTracker &MST, yaml::MachineBasicBlock &YamlMBB,
-               const MachineBasicBlock &MBB);
   void convertStackObjects(yaml::MachineFunction &MF,
                            const MachineFrameInfo &MFI,
                            const TargetRegisterInfo *TRI);
@@ -92,10 +90,6 @@ public:
 private:
   void initRegisterMaskIds(const MachineFunction &MF);
 };
-
-} // end namespace llvm
-
-namespace {
 
 /// This class prints out the machine instructions using the MIR serialization
 /// format.
@@ -112,6 +106,8 @@ public:
       : OS(OS), MST(MST), RegisterMaskIds(RegisterMaskIds),
         StackObjectOperandMapping(StackObjectOperandMapping) {}
 
+  void print(const MachineBasicBlock &MBB);
+
   void print(const MachineInstr &MI);
   void printMBBReference(const MachineBasicBlock &MBB);
   void printIRBlockReference(const BasicBlock &BB);
@@ -125,7 +121,7 @@ public:
   void print(const MCCFIInstruction &CFI, const TargetRegisterInfo *TRI);
 };
 
-} // end anonymous namespace
+} // end namespace llvm
 
 namespace llvm {
 namespace yaml {
@@ -181,11 +177,16 @@ void MIRPrinter::print(const MachineFunction &MF) {
     convert(YamlMF, *ConstantPool);
   if (const auto *JumpTableInfo = MF.getJumpTableInfo())
     convert(MST, YamlMF.JumpTableInfo, *JumpTableInfo);
+  raw_string_ostream StrOS(YamlMF.Body.Value.Value);
+  bool IsNewlineNeeded = false;
   for (const auto &MBB : MF) {
-    yaml::MachineBasicBlock YamlMBB;
-    convert(MST, YamlMBB, MBB);
-    YamlMF.BasicBlocks.push_back(YamlMBB);
+    if (IsNewlineNeeded)
+      StrOS << "\n";
+    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
+        .print(MBB);
+    IsNewlineNeeded = true;
   }
+  StrOS.flush();
   yaml::Output Out(OS);
   Out << YamlMF;
 }
@@ -364,62 +365,85 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
   }
 }
 
-void MIRPrinter::convert(ModuleSlotTracker &MST,
-                         yaml::MachineBasicBlock &YamlMBB,
-                         const MachineBasicBlock &MBB) {
-  assert(MBB.getNumber() >= 0 && "Invalid MBB number");
-  YamlMBB.ID = (unsigned)MBB.getNumber();
-  if (const auto *BB = MBB.getBasicBlock()) {
-    if (BB->hasName()) {
-      YamlMBB.Name.Value = BB->getName();
-    } else {
-      int Slot = MST.getLocalSlot(BB);
-      if (Slot == -1)
-        YamlMBB.IRBlock.Value = "<badref>";
-      else
-        YamlMBB.IRBlock.Value = (Twine("%ir-block.") + Twine(Slot)).str();
-    }
-  }
-  YamlMBB.Alignment = MBB.getAlignment();
-  YamlMBB.AddressTaken = MBB.hasAddressTaken();
-  YamlMBB.IsLandingPad = MBB.isLandingPad();
-  for (const auto *SuccMBB : MBB.successors()) {
-    std::string Str;
-    raw_string_ostream StrOS(Str);
-    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
-        .printMBBReference(*SuccMBB);
-    YamlMBB.Successors.push_back(StrOS.str());
-  }
-  if (MBB.hasSuccessorWeights()) {
-    for (auto I = MBB.succ_begin(), E = MBB.succ_end(); I != E; ++I)
-      YamlMBB.SuccessorWeights.push_back(
-          yaml::UnsignedValue(MBB.getSuccWeight(I)));
-  }
-  // Print the live in registers.
-  const auto *TRI = MBB.getParent()->getSubtarget().getRegisterInfo();
-  assert(TRI && "Expected target register info");
-  for (auto I = MBB.livein_begin(), E = MBB.livein_end(); I != E; ++I) {
-    std::string Str;
-    raw_string_ostream StrOS(Str);
-    printReg(*I, StrOS, TRI);
-    YamlMBB.LiveIns.push_back(StrOS.str());
-  }
-  // Print the machine instructions.
-  YamlMBB.Instructions.reserve(MBB.size());
-  std::string Str;
-  for (const auto &MI : MBB) {
-    raw_string_ostream StrOS(Str);
-    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping).print(MI);
-    YamlMBB.Instructions.push_back(StrOS.str());
-    Str.clear();
-  }
-}
-
 void MIRPrinter::initRegisterMaskIds(const MachineFunction &MF) {
   const auto *TRI = MF.getSubtarget().getRegisterInfo();
   unsigned I = 0;
   for (const uint32_t *Mask : TRI->getRegMasks())
     RegisterMaskIds.insert(std::make_pair(Mask, I++));
+}
+
+void MIPrinter::print(const MachineBasicBlock &MBB) {
+  assert(MBB.getNumber() >= 0 && "Invalid MBB number");
+  OS << "bb." << MBB.getNumber();
+  bool HasAttributes = false;
+  if (const auto *BB = MBB.getBasicBlock()) {
+    if (BB->hasName()) {
+      OS << "." << BB->getName();
+    } else {
+      HasAttributes = true;
+      OS << " (";
+      int Slot = MST.getLocalSlot(BB);
+      if (Slot == -1)
+        OS << "<ir-block badref>";
+      else
+        OS << (Twine("%ir-block.") + Twine(Slot)).str();
+    }
+  }
+  if (MBB.hasAddressTaken()) {
+    OS << (HasAttributes ? ", " : " (");
+    OS << "address-taken";
+    HasAttributes = true;
+  }
+  if (MBB.isLandingPad()) {
+    OS << (HasAttributes ? ", " : " (");
+    OS << "landing-pad";
+    HasAttributes = true;
+  }
+  if (MBB.getAlignment()) {
+    OS << (HasAttributes ? ", " : " (");
+    OS << "align " << MBB.getAlignment();
+    HasAttributes = true;
+  }
+  if (HasAttributes)
+    OS << ")";
+  OS << ":\n";
+
+  bool HasLineAttributes = false;
+  // Print the successors
+  if (!MBB.succ_empty()) {
+    OS.indent(2) << "successors: ";
+    for (auto I = MBB.succ_begin(), E = MBB.succ_end(); I != E; ++I) {
+      if (I != MBB.succ_begin())
+        OS << ", ";
+      printMBBReference(**I);
+      if (MBB.hasSuccessorWeights())
+        OS << '(' << MBB.getSuccWeight(I) << ')';
+    }
+    OS << "\n";
+    HasLineAttributes = true;
+  }
+
+  // Print the live in registers.
+  const auto *TRI = MBB.getParent()->getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  if (!MBB.livein_empty()) {
+    OS.indent(2) << "liveins: ";
+    for (auto I = MBB.livein_begin(), E = MBB.livein_end(); I != E; ++I) {
+      if (I != MBB.livein_begin())
+        OS << ", ";
+      printReg(*I, OS, TRI);
+    }
+    OS << "\n";
+    HasLineAttributes = true;
+  }
+
+  if (HasLineAttributes)
+    OS << "\n";
+  for (const auto &MI : MBB) {
+    OS.indent(2);
+    print(MI);
+    OS << "\n";
+  }
 }
 
 void MIPrinter::print(const MachineInstr &MI) {

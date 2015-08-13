@@ -25,7 +25,7 @@ class Pass;
 class BasicBlock;
 class MachineFunction;
 class MCSymbol;
-class MIRPrinter;
+class MIPrinter;
 class SlotIndexes;
 class StringRef;
 class raw_ostream;
@@ -660,7 +660,7 @@ private:
   const_weight_iterator getWeightIterator(const_succ_iterator I) const;
 
   friend class MachineBranchProbabilityInfo;
-  friend class MIRPrinter;
+  friend class MIPrinter;
 
   /// Return weight of the edge from this block to MBB. This method should NOT
   /// be called directly, but by using getEdgeWeight method from

@@ -9,8 +9,7 @@
 ...
 ---
 name:            foo
-body:
- - id:           0
-# CHECK: [[@LINE+1]]:19: use of undefined IR block '%ir-block.10'
-   ir-block:     '%ir-block.10'
+body: |
+  ; CHECK: [[@LINE+1]]:9: use of undefined IR block '%ir-block.10'
+  bb.0 (%ir-block.10):
 ...

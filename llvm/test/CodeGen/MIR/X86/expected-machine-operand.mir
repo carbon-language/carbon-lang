@@ -10,12 +10,10 @@
 ...
 ---
 name:            foo
-body:
- - id:           0
-   name:         entry
-   instructions:
-     # CHECK: [[@LINE+1]]:24: expected a machine operand
-     - '%eax = XOR32rr ='
-     - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    ; CHECK: [[@LINE+1]]:20: expected a machine operand
+    %eax = XOR32rr =
+    RETQ %eax
 ...
 

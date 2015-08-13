@@ -96,13 +96,6 @@ public:
   /// Return true if error occurred.
   bool initializeMachineFunction(MachineFunction &MF);
 
-  /// Initialize the machine basic block using it's YAML representation.
-  ///
-  /// Return true if an error occurred.
-  bool initializeMachineBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB,
-                                   const yaml::MachineBasicBlock &YamlMBB,
-                                   const PerFunctionMIParsingState &PFS);
-
   bool initializeRegisterInfo(MachineFunction &MF,
                               const yaml::MachineFunction &YamlMF,
                               PerFunctionMIParsingState &PFS);
@@ -294,36 +287,15 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
       return true;
   }
 
-  const auto &F = *MF.getFunction();
-  for (const auto &YamlMBB : YamlMF.BasicBlocks) {
-    const BasicBlock *BB = nullptr;
-    const yaml::StringValue &Name = YamlMBB.Name;
-    const yaml::StringValue &IRBlock = YamlMBB.IRBlock;
-    if (!Name.Value.empty()) {
-      BB = dyn_cast_or_null<BasicBlock>(
-          F.getValueSymbolTable().lookup(Name.Value));
-      if (!BB)
-        return error(Name.SourceRange.Start,
-                     Twine("basic block '") + Name.Value +
-                         "' is not defined in the function '" + MF.getName() +
-                         "'");
-    }
-    if (!IRBlock.Value.empty()) {
-      // TODO: Report an error when both name and ir block are specified.
-      SMDiagnostic Error;
-      if (parseIRBlockReference(BB, SM, MF, IRBlock.Value, PFS, IRSlots, Error))
-        return error(Error, IRBlock.SourceRange);
-    }
-    auto *MBB = MF.CreateMachineBasicBlock(BB);
-    MF.insert(MF.end(), MBB);
-    bool WasInserted =
-        PFS.MBBSlots.insert(std::make_pair(YamlMBB.ID, MBB)).second;
-    if (!WasInserted)
-      return error(Twine("redefinition of machine basic block with id #") +
-                   Twine(YamlMBB.ID));
+  SMDiagnostic Error;
+  if (parseMachineBasicBlockDefinitions(MF, YamlMF.Body.Value.Value, PFS,
+                                        IRSlots, Error)) {
+    reportDiagnostic(
+        diagFromBlockStringDiag(Error, YamlMF.Body.Value.SourceRange));
+    return true;
   }
 
-  if (YamlMF.BasicBlocks.empty())
+  if (MF.empty())
     return error(Twine("machine function '") + Twine(MF.getName()) +
                  "' requires at least one machine basic block in its body");
   // Initialize the frame information after creating all the MBBs so that the
@@ -335,66 +307,19 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (!YamlMF.JumpTableInfo.Entries.empty() &&
       initializeJumpTableInfo(MF, YamlMF.JumpTableInfo, PFS))
     return true;
-  // Initialize the machine basic blocks after creating them all so that the
-  // machine instructions parser can resolve the MBB references.
-  unsigned I = 0;
-  for (const auto &YamlMBB : YamlMF.BasicBlocks) {
-    if (initializeMachineBasicBlock(MF, *MF.getBlockNumbered(I++), YamlMBB,
-                                    PFS))
-      return true;
+  // Parse the machine instructions after creating all of the MBBs so that the
+  // parser can resolve the MBB references.
+  if (parseMachineInstructions(MF, YamlMF.Body.Value.Value, PFS, IRSlots,
+                               Error)) {
+    reportDiagnostic(
+        diagFromBlockStringDiag(Error, YamlMF.Body.Value.SourceRange));
+    return true;
   }
   inferRegisterInfo(MF, YamlMF);
   // FIXME: This is a temporary workaround until the reserved registers can be
   // serialized.
   MF.getRegInfo().freezeReservedRegs(MF);
   MF.verify();
-  return false;
-}
-
-bool MIRParserImpl::initializeMachineBasicBlock(
-    MachineFunction &MF, MachineBasicBlock &MBB,
-    const yaml::MachineBasicBlock &YamlMBB,
-    const PerFunctionMIParsingState &PFS) {
-  MBB.setAlignment(YamlMBB.Alignment);
-  if (YamlMBB.AddressTaken)
-    MBB.setHasAddressTaken();
-  MBB.setIsLandingPad(YamlMBB.IsLandingPad);
-  SMDiagnostic Error;
-  // Parse the successors.
-  const auto &Weights = YamlMBB.SuccessorWeights;
-  bool HasWeights = !Weights.empty();
-  if (HasWeights && Weights.size() != YamlMBB.Successors.size()) {
-    bool IsFew = Weights.size() < YamlMBB.Successors.size();
-    return error(IsFew ? Weights.back().SourceRange.End
-                       : Weights[YamlMBB.Successors.size()].SourceRange.Start,
-                 Twine("too ") + (IsFew ? "few" : "many") +
-                     " successor weights, expected " +
-                     Twine(YamlMBB.Successors.size()) + ", have " +
-                     Twine(Weights.size()));
-  }
-  size_t SuccessorIndex = 0;
-  for (const auto &MBBSource : YamlMBB.Successors) {
-    MachineBasicBlock *SuccMBB = nullptr;
-    if (parseMBBReference(SuccMBB, MBBSource, MF, PFS))
-      return true;
-    // TODO: Report an error when adding the same successor more than once.
-    MBB.addSuccessor(SuccMBB, HasWeights ? Weights[SuccessorIndex++].Value : 0);
-  }
-  // Parse the liveins.
-  for (const auto &LiveInSource : YamlMBB.LiveIns) {
-    unsigned Reg = 0;
-    if (parseNamedRegisterReference(Reg, SM, MF, LiveInSource.Value, PFS,
-                                    IRSlots, Error))
-      return error(Error, LiveInSource.SourceRange);
-    MBB.addLiveIn(Reg);
-  }
-  // Parse the instructions.
-  for (const auto &MISource : YamlMBB.Instructions) {
-    MachineInstr *MI = nullptr;
-    if (parseMachineInstr(MI, SM, MF, MISource.Value, PFS, IRSlots, Error))
-      return error(Error, MISource.SourceRange);
-    MBB.insert(MBB.end(), MI);
-  }
   return false;
 }
 

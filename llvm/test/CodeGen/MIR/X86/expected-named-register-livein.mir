@@ -10,12 +10,11 @@
 ...
 ---
 name:            test
-body:
-  - id:          0
-    name:        body
-    # CHECK: [[@LINE+1]]:21: expected a named register
-    liveins:     [ '%0' ]
-    instructions:
-      - '%eax = COPY %edi'
-      - 'RETQ %eax'
+body: |
+  bb.0.body:
+    ; CHECK: [[@LINE+1]]:14: expected a named register
+    liveins: %0
+
+    %eax = COPY %edi
+    RETQ %eax
 ...

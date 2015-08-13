@@ -17,13 +17,12 @@
 ...
 ---
 name:            foo
-body:
-  - id:          0
-    name:        entry
-    # CHECK: [[@LINE+1]]:35: expected a machine basic block reference
-    successors:  [ '%bb.1.less', '2' ]
-  - id:          1
-    name:        less
-  - id:          2
-    name:        exit
+body: |
+  bb.0.entry:
+    ; CHECK: [[@LINE+1]]:29: expected a machine basic block reference
+    successors: %bb.1.less, 2
+
+  bb.1.less:
+
+  bb.2.exit:
 ...

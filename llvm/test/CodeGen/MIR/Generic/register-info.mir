@@ -22,8 +22,8 @@
 # CHECK-NEXT: tracksSubRegLiveness: false
 # CHECK: ...
 name:            foo
-body:
-  - id: 0
+body: |
+  bb.0:
 ...
 ---
 # CHECK: name: bar
@@ -35,6 +35,6 @@ name: bar
 isSSA: false
 tracksRegLiveness: true
 tracksSubRegLiveness: true
-body:
-  - id: 0
+body: |
+  bb.0:
 ...

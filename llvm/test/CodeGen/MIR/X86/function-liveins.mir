@@ -25,14 +25,13 @@ registers:
 liveins:
   - { reg: '%edi', virtual-reg: '%0' }
   - { reg: '%esi', virtual-reg: '%1' }
-body:
-  - id:              0
-    name:            body
-    liveins:         [ '%edi', '%esi' ]
-    instructions:
-      - '%1 = COPY %esi'
-      - '%0 = COPY %edi'
-      - '%2 = ADD32rr %0, %1, implicit-def dead %eflags'
-      - '%eax = COPY %2'
-      - 'RETQ %eax'
+body: |
+  bb.0.body:
+    liveins: %edi, %esi
+
+    %1 = COPY %esi
+    %0 = COPY %edi
+    %2 = ADD32rr %0, %1, implicit-def dead %eflags
+    %eax = COPY %2
+    RETQ %eax
 ...

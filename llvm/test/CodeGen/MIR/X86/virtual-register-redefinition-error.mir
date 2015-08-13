@@ -16,13 +16,12 @@ registers:
   - { id: 0, class: gr32 }
 # CHECK: [[@LINE+1]]:11: redefinition of virtual register '%0'
   - { id: 0, class: gr32 }
-body:
-  - id:          0
-    name:        body
-    liveins:     [ '%edi' ]
-    instructions:
-      - '%0 = COPY %edi'
-      - '%eax = COPY %0'
-      - 'RETQ %eax'
+body: |
+  bb.0.body:
+    liveins: %edi
+
+    %0 = COPY %edi
+    %eax = COPY %0
+    RETQ %eax
 ...
 

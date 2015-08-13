@@ -16,14 +16,12 @@ frameInfo:
   stackSize:       4040
 stack:
   - { id: 0, name: tmp, offset: -4176, size: 4168, alignment: 4 }
-body:
-  - id:              0
-    name:            entry
-    instructions:
-      - '%rsp = SUB64ri32 %rsp, 4040, implicit-def dead %eflags'
-     # CHECK: [[@LINE+1]]:46: expected a 32 bit integer (the cfi offset is too large)
-      - 'CFI_INSTRUCTION .cfi_def_cfa_offset 123456789123456'
-      - '%rsp = ADD64ri32 %rsp, 4040, implicit-def dead %eflags'
-      - 'RETQ'
+body: |
+  bb.0.entry:
+    %rsp = SUB64ri32 %rsp, 4040, implicit-def dead %eflags
+    ; CHECK: [[@LINE+1]]:41: expected a 32 bit integer (the cfi offset is too large)
+    CFI_INSTRUCTION .cfi_def_cfa_offset 123456789123456
+    %rsp = ADD64ri32 %rsp, 4040, implicit-def dead %eflags
+    RETQ
 ...
 

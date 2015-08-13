@@ -19,20 +19,16 @@
 ...
 ---
 name:            foo
-body:
- - id:              0
-   name:            entry
-   instructions:
-     - '%eax = MOV32rm %rdi, 1, _, 0, _'
-     - 'CMP32ri8 %eax, 10, implicit-def %eflags'
-# CHECK: [[@LINE+1]]:26: expected an implicit register operand 'implicit %eflags'
-     - 'JG_1 %bb.2.exit, implicit %eax'
- - id:              1
-   name:            less
-   instructions:
-     - '%eax = MOV32r0 implicit-def %eflags'
- - id:              2
-   name:            exit
-   instructions:
-     - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    %eax = MOV32rm %rdi, 1, _, 0, _
+    CMP32ri8 %eax, 10, implicit-def %eflags
+  ; CHECK: [[@LINE+1]]:22: expected an implicit register operand 'implicit %eflags'
+    JG_1 %bb.2.exit, implicit %eax
+
+  bb.1.less:
+    %eax = MOV32r0 implicit-def %eflags
+
+  bb.2.exit:
+    RETQ %eax
 ...

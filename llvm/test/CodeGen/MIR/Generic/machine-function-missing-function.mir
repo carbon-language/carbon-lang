@@ -12,12 +12,12 @@
 ...
 ---
 name:            foo
-body:
-  - id: 0
+body: |
+  bb.0:
 ...
 ---
 # CHECK: function 'faa' isn't defined in the provided LLVM IR
 name:            faa
-body:
-  - id: 0
+body: |
+  bb.0:
 ...

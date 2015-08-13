@@ -18,14 +18,12 @@ registers:
   - { id: 0, class: gr32 }
   - { id: 1, class: gr8 }
   - { id: 2, class: gr8 }
-body:
-  - name:        entry
-    id:          0
-    instructions:
-      - '%0 = COPY %edi'
-      # CHECK: [[@LINE+1]]:23: use of unknown subregister index 'bit8'
-      - '%1 = COPY %0:bit8'
-      - '%2 = AND8ri %1, 1, implicit-def %eflags'
-      - '%al = COPY %2'
-      - 'RETQ %al'
+body: |
+  bb.0.entry:
+    %0 = COPY %edi
+    ; CHECK: [[@LINE+1]]:18: use of unknown subregister index 'bit8'
+    %1 = COPY %0:bit8
+    %2 = AND8ri %1, 1, implicit-def %eflags
+    %al = COPY %2
+    RETQ %al
 ...

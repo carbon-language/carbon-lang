@@ -18,14 +18,12 @@ frameInfo:
   stackSize:       4040
 stack:
   - { id: 0, name: tmp, offset: -4176, size: 4168, alignment: 4 }
-body:
-  - id:              0
-    name:            entry
-    instructions:
-      - '%rsp = SUB64ri32 %rsp, 4040, implicit-def dead %eflags'
-     # CHECK: CFI_INSTRUCTION .cfi_def_cfa_offset 4048
-      - 'CFI_INSTRUCTION .cfi_def_cfa_offset 4048'
-      - '%rsp = ADD64ri32 %rsp, 4040, implicit-def dead %eflags'
-      - 'RETQ'
+body: |
+  bb.0.entry:
+    %rsp = SUB64ri32 %rsp, 4040, implicit-def dead %eflags
+    ; CHECK: CFI_INSTRUCTION .cfi_def_cfa_offset 4048
+    CFI_INSTRUCTION .cfi_def_cfa_offset 4048
+    %rsp = ADD64ri32 %rsp, 4040, implicit-def dead %eflags
+    RETQ
 ...
 

@@ -17,18 +17,14 @@
 ...
 ---
 name:            test
-body:
-  - id:              0
-    name:            entry
-    successors:      [ '%bb.1.block' ]
-    instructions:
-      # CHECK: [[@LINE+1]]:49: expected a global value
-      - '%rax = LEA64r %rip, 1, _, blockaddress(0, %ir-block.block), _'
-      - 'MOV64mr %rip, 1, _, @addr, _, killed %rax'
-      - 'JMP64m %rip, 1, _, @addr, _'
-  - id:              1
-    name:            block
-    addressTaken:    true
-    instructions:
-      - RETQ
+body: |
+  bb.0.entry:
+    successors: %bb.1.block
+    ; CHECK: [[@LINE+1]]:44: expected a global value
+    %rax = LEA64r %rip, 1, _, blockaddress(0, %ir-block.block), _
+    MOV64mr %rip, 1, _, @addr, _, killed %rax
+    JMP64m %rip, 1, _, @addr, _
+
+  bb.1.block (address-taken):
+    RETQ
 ...

@@ -40,33 +40,34 @@ frameInfo:
   restorePoint:  '%bb.2.true'
 stack:
   - { id: 0, name: tmp, offset: 0, size: 4, alignment: 4 }
-body:
-  - id:          0
-    successors:  [ '%bb.2.true', '%bb.1' ]
-    liveins:     [ '%edi', '%esi' ]
-    instructions:
-      - '%eax = COPY %edi'
-      - 'CMP32rr %eax, killed %esi, implicit-def %eflags'
-      - 'JL_1 %bb.2.true, implicit killed %eflags'
-  - id:          1
-    successors:  [ '%bb.3.false' ]
-    liveins:     [ '%eax' ]
-    instructions:
-      - 'JMP_1 %bb.3.false'
-  - id:          2
-    name:        'true'
-    successors:  [ '%bb.3.false' ]
-    liveins:     [ '%eax' ]
-    instructions:
-      - 'MOV32mr %stack.0.tmp, 1, _, 0, _, killed %eax'
-      - 'ADJCALLSTACKDOWN64 0, 0, implicit-def %rsp, implicit-def dead %eflags, implicit %rsp'
-      - '%rsi = LEA64r %stack.0.tmp, 1, _, 0, _'
-      - '%edi = MOV32r0 implicit-def dead %eflags'
-      - 'CALL64pcrel32 @doSomething, csr_64, implicit %rsp, implicit %edi, implicit %rsi, implicit-def %rsp, implicit-def %eax'
-      - 'ADJCALLSTACKUP64 0, 0, implicit-def %rsp, implicit-def dead %eflags, implicit %rsp'
-  - id:          3
-    name:        'false'
-    liveins:     [ '%eax' ]
-    instructions:
-      - 'RETQ %eax'
+body: |
+  bb.0:
+    successors: %bb.2.true, %bb.1
+    liveins: %edi, %esi
+
+    %eax = COPY %edi
+    CMP32rr %eax, killed %esi, implicit-def %eflags
+    JL_1 %bb.2.true, implicit killed %eflags
+
+  bb.1:
+    successors: %bb.3.false
+    liveins: %eax
+
+    JMP_1 %bb.3.false
+
+  bb.2.true:
+    successors: %bb.3.false
+    liveins: %eax
+
+    MOV32mr %stack.0.tmp, 1, _, 0, _, killed %eax
+    ADJCALLSTACKDOWN64 0, 0, implicit-def %rsp, implicit-def dead %eflags, implicit %rsp
+    %rsi = LEA64r %stack.0.tmp, 1, _, 0, _
+    %edi = MOV32r0 implicit-def dead %eflags
+    CALL64pcrel32 @doSomething, csr_64, implicit %rsp, implicit %edi, implicit %rsi, implicit-def %rsp, implicit-def %eax
+    ADJCALLSTACKUP64 0, 0, implicit-def %rsp, implicit-def dead %eflags, implicit %rsp
+
+  bb.3.false:
+    liveins: %eax
+
+    RETQ %eax
 ...

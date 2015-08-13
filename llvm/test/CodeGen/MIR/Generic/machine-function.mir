@@ -27,8 +27,8 @@
 # CHECK-NEXT: hasInlineAsm: false
 # CHECK: ...
 name:            foo
-body:
-  - id: 0
+body: |
+  bb.0:
 ...
 ---
 # CHECK: name: bar
@@ -37,8 +37,8 @@ body:
 # CHECK-NEXT: hasInlineAsm: false
 # CHECK: ...
 name:            bar
-body:
-  - id: 0
+body: |
+  bb.0:
 ...
 ---
 # CHECK: name: func
@@ -48,8 +48,8 @@ body:
 # CHECK: ...
 name:            func
 alignment:       8
-body:
-  - id: 0
+body: |
+  bb.0:
 ...
 ---
 # CHECK: name: func2
@@ -61,6 +61,6 @@ name:            func2
 alignment:       16
 exposesReturnsTwice: true
 hasInlineAsm:    true
-body:
-  - id: 0
+body: |
+  bb.0:
 ...

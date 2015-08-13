@@ -14,13 +14,11 @@
 ...
 ---
 name: inc
-body:
-  - id: 0
-    name: entry
-    instructions:
-      # CHECK: [[@LINE+1]]:42: expected 64-bit integer (too large)
-      - '%rax = MOV64rm %rip, 1, _, @G + 123456789123456789123456789, _'
-      - '%eax = MOV32rm %rax, 1, _, 0, _'
-      - '%eax = INC32r %eax implicit-def %eflags'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    ; CHECK: [[@LINE+1]]:37: expected 64-bit integer (too large)
+    %rax = MOV64rm %rip, 1, _, @G + 123456789123456789123456789, _
+    %eax = MOV32rm %rax, 1, _, 0, _
+    %eax = INC32r %eax implicit-def %eflags
+    RETQ %eax
 ...

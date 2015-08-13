@@ -35,46 +35,39 @@ jumpTable:
   entries:
     - id:        0
       blocks:    [ '%bb.3.lbl1', '%bb.4.lbl2', '%bb.5.lbl3', '%bb.6.lbl4' ]
-body:
-  - id:              0
-    name:            entry
-    successors:      [ '%bb.2.def', '%bb.1.entry' ]
-    instructions:
-      - '%eax = MOV32rr %edi, implicit-def %rax'
-      - 'CMP32ri8 %edi, 3, implicit-def %eflags'
-      - 'JA_1 %bb.2.def, implicit %eflags'
-  - id:              1
-    name:            entry
-    successors:      [ '%bb.3.lbl1', '%bb.4.lbl2', '%bb.5.lbl3', '%bb.6.lbl4' ]
-    instructions:
-    # CHECK: [[@LINE+1]]:36: use of undefined jump table '%jump-table.2'
-      - '%rcx = LEA64r %rip, 1, _, %jump-table.2, _'
-      - '%rax = MOVSX64rm32 %rcx, 4, %rax, 0, _'
-      - '%rax = ADD64rr %rax, %rcx, implicit-def %eflags'
-      - 'JMP64r %rax'
-  - id:              2
-    name:            def
-    instructions:
-      - '%eax = MOV32r0 implicit-def %eflags'
-      - 'RETQ %eax'
-  - id:              3
-    name:            lbl1
-    instructions:
-      - '%eax = MOV32ri 1'
-      - 'RETQ %eax'
-  - id:              4
-    name:            lbl2
-    instructions:
-      - '%eax = MOV32ri 2'
-      - 'RETQ %eax'
-  - id:              5
-    name:            lbl3
-    instructions:
-      - '%eax = MOV32ri 4'
-      - 'RETQ %eax'
-  - id:              6
-    name:            lbl4
-    instructions:
-      - '%eax = MOV32ri 8'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    successors: %bb.2.def, %bb.1.entry
+
+    %eax = MOV32rr %edi, implicit-def %rax
+    CMP32ri8 %edi, 3, implicit-def %eflags
+    JA_1 %bb.2.def, implicit %eflags
+
+  bb.1.entry:
+    successors: %bb.3.lbl1, %bb.4.lbl2, %bb.5.lbl3, %bb.6.lbl4
+    ; CHECK: [[@LINE+1]]:31: use of undefined jump table '%jump-table.2'
+    %rcx = LEA64r %rip, 1, _, %jump-table.2, _
+    %rax = MOVSX64rm32 %rcx, 4, %rax, 0, _
+    %rax = ADD64rr %rax, %rcx, implicit-def %eflags
+    JMP64r %rax
+
+  bb.2.def:
+    %eax = MOV32r0 implicit-def %eflags
+    RETQ %eax
+
+  bb.3.lbl1:
+    %eax = MOV32ri 1
+    RETQ %eax
+
+  bb.4.lbl2:
+    %eax = MOV32ri 2
+    RETQ %eax
+
+  bb.5.lbl3:
+    %eax = MOV32ri 4
+    RETQ %eax
+
+  bb.6.lbl4:
+    %eax = MOV32ri 8
+    RETQ %eax
 ...

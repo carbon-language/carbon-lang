@@ -48,14 +48,12 @@ frameInfo:
   maxAlignment:  4
 stack:
   - { id: 0, name: x.addr, size: 4, alignment: 4 }
-body:
-  - id:          0
-    name:        entry
-    instructions:
-      - '%0 = COPY %edi'
-      # CHECK: [[@LINE+1]]:33: expected metadata id after '!'
-      - 'DBG_VALUE _, 0, !12, ! _'
-      - 'MOV32mr %stack.0.x.addr, 1, _, 0, _, %0'
-      - '%eax = COPY %0'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    %0 = COPY %edi
+    ; CHECK: [[@LINE+1]]:28: expected metadata id after '!'
+    DBG_VALUE _, 0, !12, ! _
+    MOV32mr %stack.0.x.addr, 1, _, 0, _, %0
+    %eax = COPY %0
+    RETQ %eax
 ...

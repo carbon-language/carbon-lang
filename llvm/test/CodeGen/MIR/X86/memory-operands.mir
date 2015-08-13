@@ -117,48 +117,42 @@ name:            test
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%rdi' ]
-    instructions:
-# CHECK:      %eax = MOV32rm %rdi, 1, _, 0, _ :: (load 4 from %ir.a)
-# CHECK-NEXT: MOV32mi killed %rdi, 1, _, 0, _, 42 :: (store 4 into %ir.a)
-      - '%eax = MOV32rm %rdi, 1, _, 0, _ :: (load 4 from %ir.a)'
-      - 'MOV32mi killed %rdi, 1, _, 0, _, 42 :: (store 4 into %ir.a)'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    liveins: %rdi
+  ; CHECK:      %eax = MOV32rm %rdi, 1, _, 0, _ :: (load 4 from %ir.a)
+  ; CHECK-NEXT: MOV32mi killed %rdi, 1, _, 0, _, 42 :: (store 4 into %ir.a)
+    %eax = MOV32rm %rdi, 1, _, 0, _ :: (load 4 from %ir.a)
+    MOV32mi killed %rdi, 1, _, 0, _, 42 :: (store 4 into %ir.a)
+    RETQ %eax
 ...
 ---
 name:            test2
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry2
-    liveins:     [ '%rdi' ]
-    instructions:
-# CHECK: INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")
-      - 'INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")'
-      - RETQ
+body: |
+  bb.0.entry2:
+    liveins: %rdi
+  ; CHECK: INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")
+    INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")
+    RETQ
 ...
 ---
 name:            volatile_inc
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%rdi' ]
-    instructions:
-    # CHECK: name: volatile_inc
-    # CHECK: %eax = MOV32rm %rdi, 1, _, 0, _ :: (volatile load 4 from %ir.x)
-    # CHECK: MOV32mr killed %rdi, 1, _, 0, _, %eax :: (volatile store 4 into %ir.x)
-      - '%eax = MOV32rm %rdi, 1, _, 0, _ :: (volatile load 4 from %ir.x)'
-      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
-      - 'MOV32mr killed %rdi, 1, _, 0, _, %eax :: (volatile store 4 into %ir.x)'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    liveins: %rdi
+    ; CHECK: name: volatile_inc
+    ; CHECK: %eax = MOV32rm %rdi, 1, _, 0, _ :: (volatile load 4 from %ir.x)
+    ; CHECK: MOV32mr killed %rdi, 1, _, 0, _, %eax :: (volatile store 4 into %ir.x)
+    %eax = MOV32rm %rdi, 1, _, 0, _ :: (volatile load 4 from %ir.x)
+    %eax = INC32r killed %eax, implicit-def dead %eflags
+    MOV32mr killed %rdi, 1, _, 0, _, %eax :: (volatile store 4 into %ir.x)
+    RETQ %eax
 ...
 ---
 name:            non_temporal_store
@@ -166,76 +160,68 @@ tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
   - { reg: '%esi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%esi', '%rdi' ]
-    instructions:
-# CHECK: name: non_temporal_store
-# CHECK: MOVNTImr killed %rdi, 1, _, 0, _, killed %esi :: (non-temporal store 4 into %ir.a)
-      - 'MOVNTImr killed %rdi, 1, _, 0, _, killed %esi :: (non-temporal store 4 into %ir.a)'
-      - RETQ
+body: |
+  bb.0.entry:
+    liveins: %esi, %rdi
+  ; CHECK: name: non_temporal_store
+  ; CHECK: MOVNTImr killed %rdi, 1, _, 0, _, killed %esi :: (non-temporal store 4 into %ir.a)
+    MOVNTImr killed %rdi, 1, _, 0, _, killed %esi :: (non-temporal store 4 into %ir.a)
+    RETQ
 ...
 ---
 name:            invariant_load
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%rdi' ]
-    instructions:
-# CHECK: name: invariant_load
-# CHECK: %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)
-      - '%eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    liveins: %rdi
+  ; CHECK: name: invariant_load
+  ; CHECK: %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)
+    %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (invariant load 4 from %ir.x)
+    RETQ %eax
 ...
 ---
 name:            memory_offset
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%rdi' ]
-    instructions:
-# CHECK: name: memory_offset
-# CHECK:      %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec)
-# CHECK-NEXT: %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16)
-# CHECK:      MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec)
-# CHECK-NEXT: MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16)
-      - '%xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec)'
-      - '%xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16)'
-      - '%xmm2 = FsFLD0SS'
-      - '%xmm1 = MOVSSrr killed %xmm1, killed %xmm2'
-      - 'MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec)'
-      - 'MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16)'
-      - RETQ
+body: |
+  bb.0.entry:
+    liveins: %rdi
+  ; CHECK: name: memory_offset
+  ; CHECK:      %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec)
+  ; CHECK-NEXT: %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16)
+  ; CHECK:      MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec)
+  ; CHECK-NEXT: MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16)
+    %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec)
+    %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16)
+    %xmm2 = FsFLD0SS
+    %xmm1 = MOVSSrr killed %xmm1, killed %xmm2
+    MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec)
+    MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16)
+    RETQ
 ...
 ---
 name:            memory_alignment
 tracksRegLiveness: true
 liveins:
   - { reg: '%rdi' }
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%rdi' ]
-    instructions:
-# CHECK: name: memory_alignment
-# CHECK:      %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec, align 32)
-# CHECK-NEXT: %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16, align 32)
-# CHECK:      MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec, align 32)
-# CHECK-NEXT: MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16, align 32)
-      - '%xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec, align 32)'
-      - '%xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16, align 32)'
-      - '%xmm2 = FsFLD0SS'
-      - '%xmm1 = MOVSSrr killed %xmm1, killed %xmm2'
-      - 'MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec, align 32)'
-      - 'MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16, align 32)'
-      - RETQ
+body: |
+  bb.0.entry:
+    liveins: %rdi
+  ; CHECK: name: memory_alignment
+  ; CHECK:      %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec, align 32)
+  ; CHECK-NEXT: %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16, align 32)
+  ; CHECK:      MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec, align 32)
+  ; CHECK-NEXT: MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16, align 32)
+    %xmm0 = MOVAPSrm %rdi, 1, _, 0, _ :: (load 16 from %ir.vec, align 32)
+    %xmm1 = MOVAPSrm %rdi, 1, _, 16, _ :: (load 16 from %ir.vec + 16, align 32)
+    %xmm2 = FsFLD0SS
+    %xmm1 = MOVSSrr killed %xmm1, killed %xmm2
+    MOVAPSmr %rdi, 1, _, 0, _, killed %xmm0 :: (store 16 into %ir.vec, align 32)
+    MOVAPSmr killed %rdi, 1, _, 16, _, killed %xmm1 :: (store 16 into %ir.vec + 16, align 32)
+    RETQ
 ...
 ---
 name:            constant_pool_psv
@@ -245,17 +231,15 @@ liveins:
 constants:
   - id:          0
     value:       'double 3.250000e+00'
-body:
-  - id:          0
-    name:        entry
-    liveins:     [ '%xmm0' ]
-    instructions:
-# CHECK: name: constant_pool_psv
-# CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)
-# CHECK-NEXT: %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)
-      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)'
-      - '%xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)'
-      - 'RETQ %xmm0'
+body: |
+  bb.0.entry:
+    liveins: %xmm0
+  ; CHECK: name: constant_pool_psv
+  ; CHECK:      %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)
+  ; CHECK-NEXT: %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)
+    %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool)
+    %xmm0 = ADDSDrm killed %xmm0, %rip, 1, _, %const.0, _ :: (load 8 from constant-pool + 8)
+    RETQ %xmm0
 ...
 ---
 name:            stack_psv
@@ -268,47 +252,41 @@ frameInfo:
   maxCallFrameSize: 16
 fixedStack:
   - { id: 0, offset: 0, size: 10, alignment: 16, isImmutable: true, isAliased: false }
-body:
-  - id:          0
-    name:        entry
-    instructions:
-      - '%rsp = frame-setup SUB64ri8 %rsp, 24, implicit-def dead %eflags'
-      - CFI_INSTRUCTION .cfi_def_cfa_offset 32
-      - 'LD_F80m %rsp, 1, _, 32, _, implicit-def dead %fpsw'
-# CHECK: name: stack_psv
-# CHECK: ST_FP80m %rsp, 1, _, 0, _, implicit-def dead %fpsw :: (store 10 into stack, align 16)
-      - 'ST_FP80m %rsp, 1, _, 0, _, implicit-def dead %fpsw :: (store 10 into stack, align 16)'
-      - 'CALL64pcrel32 $cosl, csr_64, implicit %rsp, implicit-def %rsp, implicit-def %fp0'
-      - '%rsp = ADD64ri8 %rsp, 24, implicit-def dead %eflags'
-      - RETQ
+body: |
+  bb.0.entry:
+    %rsp = frame-setup SUB64ri8 %rsp, 24, implicit-def dead %eflags
+    CFI_INSTRUCTION .cfi_def_cfa_offset 32
+    LD_F80m %rsp, 1, _, 32, _, implicit-def dead %fpsw
+  ; CHECK: name: stack_psv
+  ; CHECK: ST_FP80m %rsp, 1, _, 0, _, implicit-def dead %fpsw :: (store 10 into stack, align 16)
+    ST_FP80m %rsp, 1, _, 0, _, implicit-def dead %fpsw :: (store 10 into stack, align 16)
+    CALL64pcrel32 $cosl, csr_64, implicit %rsp, implicit-def %rsp, implicit-def %fp0
+    %rsp = ADD64ri8 %rsp, 24, implicit-def dead %eflags
+    RETQ
 ...
 ---
 name:            got_psv
 tracksRegLiveness: true
-body:
-  - id:          0
-    name:        entry
-    instructions:
-# CHECK: name: got_psv
-# CHECK: %rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)
-      - '%rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)'
-      - '%eax = MOV32rm killed %rax, 1, _, 0, _'
-      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+  ; CHECK: name: got_psv
+  ; CHECK: %rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)
+    %rax = MOV64rm %rip, 1, _, @G, _ :: (load 8 from got)
+    %eax = MOV32rm killed %rax, 1, _, 0, _
+    %eax = INC32r killed %eax, implicit-def dead %eflags
+    RETQ %eax
 ...
 ---
 name:            global_value
 tracksRegLiveness: true
-body:
-  - id:          0
-    name:        entry
-    instructions:
-      - '%rax = MOV64rm %rip, 1, _, @G, _'
-# CHECK: name: global_value
-# CHECK: %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.G)
-      - '%eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.G)'
-      - '%eax = INC32r killed %eax, implicit-def dead %eflags'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    %rax = MOV64rm %rip, 1, _, @G, _
+  ; CHECK: name: global_value
+  ; CHECK: %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.G)
+    %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.G)
+    %eax = INC32r killed %eax, implicit-def dead %eflags
+    RETQ %eax
 ...
 ---
 name:            jumptable_psv
@@ -320,49 +298,43 @@ jumpTable:
   entries:
     - id:        0
       blocks:    [ '%bb.3.lbl1', '%bb.4.lbl2', '%bb.5.lbl3', '%bb.6.lbl4' ]
-body:
-  - id:          0
-    name:        entry
-    successors:  [ '%bb.2.def', '%bb.1.entry' ]
-    liveins:     [ '%edi' ]
-    instructions:
-      - '%eax = MOV32rr %edi, implicit-def %rax'
-      - 'CMP32ri8 killed %edi, 3, implicit-def %eflags'
-      - 'JA_1 %bb.2.def, implicit killed %eflags'
-  - id:          1
-    name:        entry
-    successors:  [ '%bb.3.lbl1', '%bb.4.lbl2', '%bb.5.lbl3', '%bb.6.lbl4' ]
-    liveins:     [ '%rax' ]
-    instructions:
-      - '%rcx = LEA64r %rip, 1, _, %jump-table.0, _'
-# CHECK: name: jumptable_psv
-# CHECK: %rax = MOVSX64rm32 %rcx, 4, killed %rax, 0, _ :: (load 4 from jump-table, align 8)
-      - '%rax = MOVSX64rm32 %rcx, 4, killed %rax, 0, _ :: (load 4 from jump-table, align 8)'
-      - '%rax = ADD64rr killed %rax, killed %rcx, implicit-def dead %eflags'
-      - 'JMP64r killed %rax'
-  - id:              2
-    name:            def
-    instructions:
-      - '%eax = MOV32r0 implicit-def dead %eflags'
-      - 'RETQ %eax'
-  - id:              3
-    name:            lbl1
-    instructions:
-      - '%eax = MOV32ri 1'
-      - 'RETQ %eax'
-  - id:              4
-    name:            lbl2
-    instructions:
-      - '%eax = MOV32ri 2'
-      - 'RETQ %eax'
-  - id:              5
-    name:            lbl3
-    instructions:
-      - '%eax = MOV32ri 4'
-      - 'RETQ %eax'
-  - id:              6
-    name:            lbl4
-    instructions:
-      - '%eax = MOV32ri 8'
-      - 'RETQ %eax'
+body: |
+  bb.0.entry:
+    successors: %bb.2.def, %bb.1.entry
+    liveins: %edi
+
+    %eax = MOV32rr %edi, implicit-def %rax
+    CMP32ri8 killed %edi, 3, implicit-def %eflags
+    JA_1 %bb.2.def, implicit killed %eflags
+
+  bb.1.entry:
+    successors: %bb.3.lbl1, %bb.4.lbl2, %bb.5.lbl3, %bb.6.lbl4
+    liveins: %rax
+
+    %rcx = LEA64r %rip, 1, _, %jump-table.0, _
+  ; CHECK: name: jumptable_psv
+  ; CHECK: %rax = MOVSX64rm32 %rcx, 4, killed %rax, 0, _ :: (load 4 from jump-table, align 8)
+    %rax = MOVSX64rm32 %rcx, 4, killed %rax, 0, _ :: (load 4 from jump-table, align 8)
+    %rax = ADD64rr killed %rax, killed %rcx, implicit-def dead %eflags
+    JMP64r killed %rax
+
+  bb.2.def:
+    %eax = MOV32r0 implicit-def dead %eflags
+    RETQ %eax
+
+  bb.3.lbl1:
+    %eax = MOV32ri 1
+    RETQ %eax
+
+  bb.4.lbl2:
+    %eax = MOV32ri 2
+    RETQ %eax
+
+  bb.5.lbl3:
+    %eax = MOV32ri 4
+    RETQ %eax
+
+  bb.6.lbl4:
+    %eax = MOV32ri 8
+    RETQ %eax
 ...

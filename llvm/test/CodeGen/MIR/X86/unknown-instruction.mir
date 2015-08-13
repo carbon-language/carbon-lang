@@ -12,10 +12,8 @@
 ...
 ---
 name:            foo
-body:
- - id:           0
-   name:         entry
-   instructions:
-     # CHECK: [[@LINE+1]]:8: unknown machine instruction name 'retJust0'
-     - retJust0
+body: |
+  bb.0.entry:
+    ; CHECK: [[@LINE+1]]:5: unknown machine instruction name 'retJust0'
+    retJust0
 ...
