@@ -68,7 +68,7 @@ _start:
 # CHECK-NEXT:     Size: 12
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
@@ -84,7 +84,7 @@ _start:
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
@@ -100,7 +100,7 @@ _start:
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
@@ -116,7 +116,7 @@ _start:
 # CHECK-NEXT:     Size: 24
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 1
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {

@@ -63,7 +63,7 @@ _start:
 # CHECK-NEXT:     Size: 16
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
@@ -79,7 +79,7 @@ _start:
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
@@ -95,7 +95,7 @@ _start:
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
-# CHECK-NEXT:     AddressAlignment: 0
+# CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {

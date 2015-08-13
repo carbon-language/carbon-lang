@@ -120,8 +120,12 @@ template <class ELFT> void Writer<ELFT>::run() {
 
 template <bool Is64Bits> void OutputSection<Is64Bits>::addChunk(Chunk *C) {
   Chunks.push_back(C);
+  uint32_t Align = C->getAlign();
+  if (Align > Header.sh_addralign)
+    Header.sh_addralign = Align;
+
   uintX_t Off = Header.sh_size;
-  Off = RoundUpToAlignment(Off, C->getAlign());
+  Off = RoundUpToAlignment(Off, Align);
   C->setOutputSectionOff(Off);
   Off += C->getSize();
   Header.sh_size = Off;
