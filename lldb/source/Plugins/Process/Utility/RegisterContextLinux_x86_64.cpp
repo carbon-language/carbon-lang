@@ -32,7 +32,7 @@ typedef struct _GPR
     uint64_t rdx;
     uint64_t rsi;
     uint64_t rdi;
-    uint64_t orig_ax;
+    uint64_t orig_rax;
     uint64_t rip;
     uint64_t cs;
     uint64_t rflags;
@@ -171,12 +171,21 @@ RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(const ArchSpec &target_
     m_register_info_count (GetRegisterInfoCount (target_arch)),
     m_user_register_count (GetUserRegisterInfoCount (target_arch))
 {
+    RegisterInfo orig_ax = { "orig_rax", NULL, sizeof(((GPR*)NULL)->orig_rax), (LLVM_EXTENSION offsetof(GPR, orig_rax)), eEncodingUint, \
+              eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM }, NULL, NULL };
+    d_register_infos.push_back(orig_ax);
 }
 
 size_t
 RegisterContextLinux_x86_64::GetGPRSize() const
 {
     return sizeof(GPR);
+}
+
+const std::vector<lldb_private::RegisterInfo> *
+RegisterContextLinux_x86_64::GetDynamicRegisterInfoP() const
+{
+    return &d_register_infos;
 }
 
 const RegisterInfo *

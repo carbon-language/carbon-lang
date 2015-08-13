@@ -17,7 +17,6 @@ class ExprSyscallTestCase(TestBase):
         self.buildDsym()
         self.expr_syscall()
 
-    @expectedFailureAll("llvm.org/pr23659", oslist=["linux"], archs=["i386", "x86_64"])
     @dwarf_test
     def test_setpgid_with_dwarf(self):
         self.buildDwarf()

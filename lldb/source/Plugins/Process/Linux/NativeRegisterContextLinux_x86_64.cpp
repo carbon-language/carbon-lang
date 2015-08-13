@@ -706,6 +706,34 @@ NativeRegisterContextLinux_x86_64::ReadAllRegisterValues (lldb::DataBufferSP &da
         assert (false && "how do we save the floating point registers?");
         error.SetErrorString ("unsure how to save the floating point registers");
     }
+    /** The following code is specific to Linux x86 based architectures,
+     *  where the register orig_eax (32 bit)/orig_rax (64 bit) is set to
+     *  -1 to solve the bug 23659, such a setting prevents the automatic
+     *  decrement of the instruction pointer which was causing the SIGILL
+     *  exception.
+     * **/
+    llvm::Triple t_triple = GetRegisterInfoInterface().GetTargetArchitecture().GetTriple();
+
+        if (t_triple.getOS() == llvm::Triple::Linux &&
+           (t_triple.getArch() == llvm::Triple::x86 ||
+            t_triple.getArch() == llvm::Triple::x86_64))
+        {
+            RegisterValue value((uint64_t) -1);
+            const RegisterInfo *reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_eax");
+            if (reg_info == nullptr)
+                reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_rax");
+
+            if (reg_info != nullptr) {
+                NativeProcessProtocolSP process_sp(m_thread.GetProcess());
+                if (!process_sp)
+                    return Error("NativeProcessProtocol is NULL");
+
+                NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
+                return process_p->DoOperation([&] {
+                    return DoWriteRegisterValue(reg_info->byte_offset,reg_info->name,value);
+                });
+            }
+        }
 
     return error;
 }
