@@ -69,7 +69,6 @@ namespace {
 
 class LoopIdiomRecognize : public LoopPass {
   Loop *CurLoop;
-  AliasAnalysis *AA;
   DominatorTree *DT;
   LoopInfo *LI;
   ScalarEvolution *SE;
@@ -189,7 +188,6 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (Name == "memset" || Name == "memcpy")
     return false;
 
-  AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
@@ -507,7 +505,7 @@ bool LoopIdiomRecognize::processLoopStridedStore(
                                           Preheader->getTerminator());
 
   if (mayLoopAccessLocation(BasePtr, MRI_ModRef, CurLoop, BECount, StoreSize,
-                            *AA, TheStore)) {
+                            getAnalysis<AliasAnalysis>(), TheStore)) {
     Expander.clear();
     // If we generated new code for the base pointer, clean up.
     RecursivelyDeleteTriviallyDeadInstructions(BasePtr, TLI);
@@ -596,7 +594,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
       Preheader->getTerminator());
 
   if (mayLoopAccessLocation(StoreBasePtr, MRI_ModRef, CurLoop, BECount,
-                            StoreSize, *AA, SI)) {
+                            StoreSize, getAnalysis<AliasAnalysis>(), SI)) {
     Expander.clear();
     // If we generated new code for the base pointer, clean up.
     RecursivelyDeleteTriviallyDeadInstructions(StoreBasePtr, TLI);
@@ -610,7 +608,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
       Preheader->getTerminator());
 
   if (mayLoopAccessLocation(LoadBasePtr, MRI_Mod, CurLoop, BECount, StoreSize,
-                            *AA, SI)) {
+                            getAnalysis<AliasAnalysis>(), SI)) {
     Expander.clear();
     // If we generated new code for the base pointer, clean up.
     RecursivelyDeleteTriviallyDeadInstructions(LoadBasePtr, TLI);
