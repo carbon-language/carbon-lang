@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test watchpoint list, enable, disable, and delete commands.
 """
 
@@ -36,6 +36,7 @@ class WatchpointCommandsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_rw_watchpoint_with_dwarf(self):
         """Test read_write watchpoint and expect to stop two times."""
         self.buildDwarf(dictionary=self.d)
@@ -52,6 +53,7 @@ class WatchpointCommandsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_rw_watchpoint_delete_with_dwarf(self):
         """Test delete watchpoint and expect not to stop for watchpoint."""
         self.buildDwarf(dictionary=self.d)
@@ -68,6 +70,7 @@ class WatchpointCommandsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_rw_watchpoint_set_ignore_count_with_dwarf(self):
         """Test watchpoint ignore count and expect to not to stop at all."""
         self.buildDwarf(dictionary=self.d)
@@ -84,6 +87,7 @@ class WatchpointCommandsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_rw_disable_after_first_stop__with_dwarf(self):
         """Test read_write watchpoint but disable it after the first stop."""
         self.buildDwarf(dictionary=self.d)
@@ -100,6 +104,7 @@ class WatchpointCommandsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_rw_disable_then_enable_with_dwarf(self):
         """Test read_write watchpoint, disable initially, then enable it."""
         self.buildDwarf(dictionary=self.d)

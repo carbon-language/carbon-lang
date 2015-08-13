@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test watchpoint modify command to set condition on a watchpoint.
 """
 
@@ -35,6 +35,7 @@ class WatchpointConditionCmdTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watchpoint_cond_with_dwarf(self):
         """Test watchpoint condition."""
         self.buildDwarf(dictionary=self.d)

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Use lldb Python SBValue API to create a watchpoint for read_write of 'globl' var.
 """
 
@@ -31,6 +31,7 @@ class SetWatchpointAPITestCase(TestBase):
     @python_api_test
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watch_val_with_dwarf(self):
         """Exercise SBValue.Watch() API to set a watchpoint."""
         self.buildDwarf()

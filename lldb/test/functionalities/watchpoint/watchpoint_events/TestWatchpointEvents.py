@@ -1,4 +1,4 @@
-"""Test that adding, deleting and modifying watchpoints sends the appropriate events."""
+﻿"""Test that adding, deleting and modifying watchpoints sends the appropriate events."""
 
 import os, time
 import unittest2
@@ -21,6 +21,7 @@ class TestWatchpointEvents (TestBase):
     @python_api_test
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_with_dwarf_and_python_api(self):
         """Test that adding, deleting and modifying watchpoints sends the appropriate events."""
         self.buildDwarf()

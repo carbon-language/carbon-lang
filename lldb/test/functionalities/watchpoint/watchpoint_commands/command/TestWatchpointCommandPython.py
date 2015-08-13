@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test 'watchpoint command'.
 """
 
@@ -35,6 +35,7 @@ class WatchpointPythonCommandTestCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD # timing out on buildbot
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test that lldb watchpoint works for multiple threads.
 """
 
@@ -23,6 +23,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watchpoint_multiple_threads_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads."""
         self.buildDwarf()
@@ -39,6 +40,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watchpoint_multiple_threads_wp_set_and_then_delete_with_dwarf(self):
         """Test that lldb watchpoint works for multiple threads, and after the watchpoint is deleted, the watchpoint event should no longer fires."""
         self.buildDwarf()

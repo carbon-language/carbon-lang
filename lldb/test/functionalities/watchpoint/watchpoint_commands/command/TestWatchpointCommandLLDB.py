@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test 'watchpoint command'.
 """
 
@@ -35,6 +35,7 @@ class WatchpointLLDBCommandTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watchpoint_command_with_dwarf(self):
         """Test 'watchpoint command'."""
         self.buildDwarf(dictionary=self.d)
@@ -51,6 +52,7 @@ class WatchpointLLDBCommandTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureAndroid(archs=['arm', 'aarch64']) # Watchpoints not supported
+    @expectedFailureWindows("llvm.org/pr24446") # WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows
     def test_watchpoint_command_can_disable_a_watchpoint_with_dwarf(self):
         """Test that 'watchpoint command' action can disable a watchpoint after it is triggered."""
         self.buildDwarf(dictionary=self.d)
