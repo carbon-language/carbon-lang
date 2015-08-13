@@ -454,7 +454,7 @@ static int RunAtexit() {
 }
 
 #pragma section(".CRT$XID", long, read)  // NOLINT
-static __declspec(allocate(".CRT$XID")) int (*__run_atexit)() = RunAtexit;
+__declspec(allocate(".CRT$XID")) int (*__run_atexit)() = RunAtexit;
 #endif
 
 // ------------------ sanitizer_libc.h
