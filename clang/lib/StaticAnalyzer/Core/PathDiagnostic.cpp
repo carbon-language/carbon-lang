@@ -62,8 +62,6 @@ PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
 PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
 
 
-PathPieces::~PathPieces() {}
-
 void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
                            bool ShouldFlattenMacros) const {
   for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I) {

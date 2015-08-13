@@ -422,7 +422,6 @@ class PathPieces : public std::list<IntrusiveRefCntPtr<PathDiagnosticPiece> > {
   void flattenTo(PathPieces &Primary, PathPieces &Current,
                  bool ShouldFlattenMacros) const;
 public:
-  ~PathPieces();
 
   PathPieces flatten(bool ShouldFlattenMacros) const {
     PathPieces Result;
