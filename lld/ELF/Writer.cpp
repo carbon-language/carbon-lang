@@ -91,8 +91,6 @@ private:
   unsigned StringTableIndex;
   StringTableBuilder StrTabBuilder;
   unsigned NumSections;
-
-  std::vector<std::unique_ptr<Chunk>> Chunks;
 };
 } // anonymous namespace
 
