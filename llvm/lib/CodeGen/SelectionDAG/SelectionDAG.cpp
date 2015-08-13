@@ -3010,6 +3010,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
             VT.getVectorNumElements() ==
             Operand.getValueType().getVectorNumElements()) &&
            "Vector element count mismatch!");
+    assert(Operand.getValueType().bitsLT(VT) &&
+           "Invalid fpext node, dst < src!");
     if (Operand.getOpcode() == ISD::UNDEF)
       return getUNDEF(VT);
     break;
