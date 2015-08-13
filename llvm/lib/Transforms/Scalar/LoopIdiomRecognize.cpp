@@ -67,50 +67,6 @@ STATISTIC(NumMemCpy, "Number of memcpy's formed from loop load+stores");
 
 namespace {
 
-class LoopIdiomRecognize;
-
-/// This class is to recoginize idioms of population-count conducted in
-/// a noncountable loop. Currently it only recognizes this pattern:
-/// \code
-///   while(x) {cnt++; ...; x &= x - 1; ...}
-/// \endcode
-class NclPopcountRecognize {
-  LoopIdiomRecognize &LIR;
-  Loop *CurLoop;
-  BasicBlock *PreCondBB;
-
-  typedef IRBuilder<> IRBuilderTy;
-
-public:
-  explicit NclPopcountRecognize(LoopIdiomRecognize &TheLIR);
-  bool recognize();
-
-private:
-  /// Take a glimpse of the loop to see if we need to go ahead recoginizing
-  /// the idiom.
-  bool preliminaryScreen();
-
-  /// Check if the given conditional branch is based on the comparison
-  /// between a variable and zero, and if the variable is non-zero, the
-  /// control yields to the loop entry. If the branch matches the behavior,
-  /// the variable involved in the comparion is returned. This function will
-  /// be called to see if the precondition and postcondition of the loop
-  /// are in desirable form.
-  Value *matchCondition(BranchInst *Br, BasicBlock *NonZeroTarget) const;
-
-  /// Return true iff the idiom is detected in the loop. and 1) \p CntInst
-  /// is set to the instruction counting the population bit. 2) \p CntPhi
-  /// is set to the corresponding phi node. 3) \p Var is set to the value
-  /// whose population bits are being counted.
-  bool detectIdiom(Instruction *&CntInst, PHINode *&CntPhi, Value *&Var) const;
-
-  /// Insert ctpop intrinsic function and some obviously dead instructions.
-  void transform(Instruction *CntInst, PHINode *CntPhi, Value *Var);
-
-  /// Create llvm.ctpop.* intrinsic function.
-  CallInst *createPopcntIntrinsic(IRBuilderTy &IRB, Value *Val, DebugLoc DL);
-};
-
 class LoopIdiomRecognize : public LoopPass {
   Loop *CurLoop;
   DominatorTree *DT;
@@ -200,6 +156,10 @@ private:
 
   bool runOnNoncountableLoop();
 
+  bool recognizePopcount();
+  void transformLoopToPopcount(BasicBlock *PreCondBB, Instruction *CntInst,
+                               PHINode *CntPhi, Value *Var);
+
   /// @}
 };
 
@@ -232,352 +192,6 @@ static void deleteDeadInstruction(Instruction *I,
   I->eraseFromParent();
   for (Value *Op : Operands)
     RecursivelyDeleteTriviallyDeadInstructions(Op, TLI);
-}
-
-//===----------------------------------------------------------------------===//
-//
-//          Implementation of NclPopcountRecognize
-//
-//===----------------------------------------------------------------------===//
-
-NclPopcountRecognize::NclPopcountRecognize(LoopIdiomRecognize &TheLIR)
-    : LIR(TheLIR), CurLoop(TheLIR.getLoop()), PreCondBB(nullptr) {}
-
-bool NclPopcountRecognize::preliminaryScreen() {
-  const TargetTransformInfo *TTI = LIR.getTargetTransformInfo();
-  if (TTI->getPopcntSupport(32) != TargetTransformInfo::PSK_FastHardware)
-    return false;
-
-  // Counting population are usually conducted by few arithmetic instructions.
-  // Such instructions can be easilly "absorbed" by vacant slots in a
-  // non-compact loop. Therefore, recognizing popcount idiom only makes sense
-  // in a compact loop.
-
-  // Give up if the loop has multiple blocks or multiple backedges.
-  if (CurLoop->getNumBackEdges() != 1 || CurLoop->getNumBlocks() != 1)
-    return false;
-
-  BasicBlock *LoopBody = *(CurLoop->block_begin());
-  if (LoopBody->size() >= 20) {
-    // The loop is too big, bail out.
-    return false;
-  }
-
-  // It should have a preheader containing nothing but an unconditional branch.
-  BasicBlock *PH = CurLoop->getLoopPreheader();
-  if (!PH)
-    return false;
-  if (&PH->front() != PH->getTerminator())
-    return false;
-  auto *EntryBI = dyn_cast<BranchInst>(PH->getTerminator());
-  if (!EntryBI || EntryBI->isConditional())
-    return false;
-
-  // It should have a precondition block where the generated popcount instrinsic
-  // function can be inserted.
-  PreCondBB = PH->getSinglePredecessor();
-  if (!PreCondBB)
-    return false;
-  auto *PreCondBI = dyn_cast<BranchInst>(PreCondBB->getTerminator());
-  if (!PreCondBI || PreCondBI->isUnconditional())
-    return false;
-
-  return true;
-}
-
-Value *NclPopcountRecognize::matchCondition(BranchInst *Br,
-                                            BasicBlock *LoopEntry) const {
-  if (!Br || !Br->isConditional())
-    return nullptr;
-
-  ICmpInst *Cond = dyn_cast<ICmpInst>(Br->getCondition());
-  if (!Cond)
-    return nullptr;
-
-  ConstantInt *CmpZero = dyn_cast<ConstantInt>(Cond->getOperand(1));
-  if (!CmpZero || !CmpZero->isZero())
-    return nullptr;
-
-  ICmpInst::Predicate Pred = Cond->getPredicate();
-  if ((Pred == ICmpInst::ICMP_NE && Br->getSuccessor(0) == LoopEntry) ||
-      (Pred == ICmpInst::ICMP_EQ && Br->getSuccessor(1) == LoopEntry))
-    return Cond->getOperand(0);
-
-  return nullptr;
-}
-
-bool NclPopcountRecognize::detectIdiom(Instruction *&CntInst, PHINode *&CntPhi,
-                                       Value *&Var) const {
-  // Following code tries to detect this idiom:
-  //
-  //    if (x0 != 0)
-  //      goto loop-exit // the precondition of the loop
-  //    cnt0 = init-val;
-  //    do {
-  //       x1 = phi (x0, x2);
-  //       cnt1 = phi(cnt0, cnt2);
-  //
-  //       cnt2 = cnt1 + 1;
-  //        ...
-  //       x2 = x1 & (x1 - 1);
-  //        ...
-  //    } while(x != 0);
-  //
-  // loop-exit:
-  //
-
-  // step 1: Check to see if the look-back branch match this pattern:
-  //    "if (a!=0) goto loop-entry".
-  BasicBlock *LoopEntry;
-  Instruction *DefX2, *CountInst;
-  Value *VarX1, *VarX0;
-  PHINode *PhiX, *CountPhi;
-
-  DefX2 = CountInst = nullptr;
-  VarX1 = VarX0 = nullptr;
-  PhiX = CountPhi = nullptr;
-  LoopEntry = *(CurLoop->block_begin());
-
-  // step 1: Check if the loop-back branch is in desirable form.
-  {
-    if (Value *T = matchCondition(
-            dyn_cast<BranchInst>(LoopEntry->getTerminator()), LoopEntry))
-      DefX2 = dyn_cast<Instruction>(T);
-    else
-      return false;
-  }
-
-  // step 2: detect instructions corresponding to "x2 = x1 & (x1 - 1)"
-  {
-    if (!DefX2 || DefX2->getOpcode() != Instruction::And)
-      return false;
-
-    BinaryOperator *SubOneOp;
-
-    if ((SubOneOp = dyn_cast<BinaryOperator>(DefX2->getOperand(0))))
-      VarX1 = DefX2->getOperand(1);
-    else {
-      VarX1 = DefX2->getOperand(0);
-      SubOneOp = dyn_cast<BinaryOperator>(DefX2->getOperand(1));
-    }
-    if (!SubOneOp)
-      return false;
-
-    Instruction *SubInst = cast<Instruction>(SubOneOp);
-    ConstantInt *Dec = dyn_cast<ConstantInt>(SubInst->getOperand(1));
-    if (!Dec ||
-        !((SubInst->getOpcode() == Instruction::Sub && Dec->isOne()) ||
-          (SubInst->getOpcode() == Instruction::Add &&
-           Dec->isAllOnesValue()))) {
-      return false;
-    }
-  }
-
-  // step 3: Check the recurrence of variable X
-  {
-    PhiX = dyn_cast<PHINode>(VarX1);
-    if (!PhiX ||
-        (PhiX->getOperand(0) != DefX2 && PhiX->getOperand(1) != DefX2)) {
-      return false;
-    }
-  }
-
-  // step 4: Find the instruction which count the population: cnt2 = cnt1 + 1
-  {
-    CountInst = nullptr;
-    for (BasicBlock::iterator Iter = LoopEntry->getFirstNonPHI(),
-                              IterE = LoopEntry->end();
-         Iter != IterE; Iter++) {
-      Instruction *Inst = Iter;
-      if (Inst->getOpcode() != Instruction::Add)
-        continue;
-
-      ConstantInt *Inc = dyn_cast<ConstantInt>(Inst->getOperand(1));
-      if (!Inc || !Inc->isOne())
-        continue;
-
-      PHINode *Phi = dyn_cast<PHINode>(Inst->getOperand(0));
-      if (!Phi || Phi->getParent() != LoopEntry)
-        continue;
-
-      // Check if the result of the instruction is live of the loop.
-      bool LiveOutLoop = false;
-      for (User *U : Inst->users()) {
-        if ((cast<Instruction>(U))->getParent() != LoopEntry) {
-          LiveOutLoop = true;
-          break;
-        }
-      }
-
-      if (LiveOutLoop) {
-        CountInst = Inst;
-        CountPhi = Phi;
-        break;
-      }
-    }
-
-    if (!CountInst)
-      return false;
-  }
-
-  // step 5: check if the precondition is in this form:
-  //   "if (x != 0) goto loop-head ; else goto somewhere-we-don't-care;"
-  {
-    auto *PreCondBr = dyn_cast<BranchInst>(PreCondBB->getTerminator());
-    Value *T = matchCondition(PreCondBr, CurLoop->getLoopPreheader());
-    if (T != PhiX->getOperand(0) && T != PhiX->getOperand(1))
-      return false;
-
-    CntInst = CountInst;
-    CntPhi = CountPhi;
-    Var = T;
-  }
-
-  return true;
-}
-
-void NclPopcountRecognize::transform(Instruction *CntInst, PHINode *CntPhi,
-                                     Value *Var) {
-
-  ScalarEvolution *SE = LIR.getScalarEvolution();
-  TargetLibraryInfo *TLI = LIR.getTargetLibraryInfo();
-  BasicBlock *PreHead = CurLoop->getLoopPreheader();
-  auto *PreCondBr = dyn_cast<BranchInst>(PreCondBB->getTerminator());
-  const DebugLoc DL = CntInst->getDebugLoc();
-
-  // Assuming before transformation, the loop is following:
-  //  if (x) // the precondition
-  //     do { cnt++; x &= x - 1; } while(x);
-
-  // Step 1: Insert the ctpop instruction at the end of the precondition block
-  IRBuilderTy Builder(PreCondBr);
-  Value *PopCnt, *PopCntZext, *NewCount, *TripCnt;
-  {
-    PopCnt = createPopcntIntrinsic(Builder, Var, DL);
-    NewCount = PopCntZext =
-        Builder.CreateZExtOrTrunc(PopCnt, cast<IntegerType>(CntPhi->getType()));
-
-    if (NewCount != PopCnt)
-      (cast<Instruction>(NewCount))->setDebugLoc(DL);
-
-    // TripCnt is exactly the number of iterations the loop has
-    TripCnt = NewCount;
-
-    // If the population counter's initial value is not zero, insert Add Inst.
-    Value *CntInitVal = CntPhi->getIncomingValueForBlock(PreHead);
-    ConstantInt *InitConst = dyn_cast<ConstantInt>(CntInitVal);
-    if (!InitConst || !InitConst->isZero()) {
-      NewCount = Builder.CreateAdd(NewCount, CntInitVal);
-      (cast<Instruction>(NewCount))->setDebugLoc(DL);
-    }
-  }
-
-  // Step 2: Replace the precondition from "if(x == 0) goto loop-exit" to
-  //   "if(NewCount == 0) loop-exit". Withtout this change, the intrinsic
-  //   function would be partial dead code, and downstream passes will drag
-  //   it back from the precondition block to the preheader.
-  {
-    ICmpInst *PreCond = cast<ICmpInst>(PreCondBr->getCondition());
-
-    Value *Opnd0 = PopCntZext;
-    Value *Opnd1 = ConstantInt::get(PopCntZext->getType(), 0);
-    if (PreCond->getOperand(0) != Var)
-      std::swap(Opnd0, Opnd1);
-
-    ICmpInst *NewPreCond = cast<ICmpInst>(
-        Builder.CreateICmp(PreCond->getPredicate(), Opnd0, Opnd1));
-    PreCondBr->setCondition(NewPreCond);
-
-    RecursivelyDeleteTriviallyDeadInstructions(PreCond, TLI);
-  }
-
-  // Step 3: Note that the population count is exactly the trip count of the
-  // loop in question, which enble us to to convert the loop from noncountable
-  // loop into a countable one. The benefit is twofold:
-  //
-  //  - If the loop only counts population, the entire loop become dead after
-  //    the transformation. It is lots easier to prove a countable loop dead
-  //    than to prove a noncountable one. (In some C dialects, a infite loop
-  //    isn't dead even if it computes nothing useful. In general, DCE needs
-  //    to prove a noncountable loop finite before safely delete it.)
-  //
-  //  - If the loop also performs something else, it remains alive.
-  //    Since it is transformed to countable form, it can be aggressively
-  //    optimized by some optimizations which are in general not applicable
-  //    to a noncountable loop.
-  //
-  // After this step, this loop (conceptually) would look like following:
-  //   newcnt = __builtin_ctpop(x);
-  //   t = newcnt;
-  //   if (x)
-  //     do { cnt++; x &= x-1; t--) } while (t > 0);
-  BasicBlock *Body = *(CurLoop->block_begin());
-  {
-    auto *LbBr = dyn_cast<BranchInst>(Body->getTerminator());
-    ICmpInst *LbCond = cast<ICmpInst>(LbBr->getCondition());
-    Type *Ty = TripCnt->getType();
-
-    PHINode *TcPhi = PHINode::Create(Ty, 2, "tcphi", Body->begin());
-
-    Builder.SetInsertPoint(LbCond);
-    Value *Opnd1 = cast<Value>(TcPhi);
-    Value *Opnd2 = cast<Value>(ConstantInt::get(Ty, 1));
-    Instruction *TcDec = cast<Instruction>(
-        Builder.CreateSub(Opnd1, Opnd2, "tcdec", false, true));
-
-    TcPhi->addIncoming(TripCnt, PreHead);
-    TcPhi->addIncoming(TcDec, Body);
-
-    CmpInst::Predicate Pred =
-        (LbBr->getSuccessor(0) == Body) ? CmpInst::ICMP_UGT : CmpInst::ICMP_SLE;
-    LbCond->setPredicate(Pred);
-    LbCond->setOperand(0, TcDec);
-    LbCond->setOperand(1, cast<Value>(ConstantInt::get(Ty, 0)));
-  }
-
-  // Step 4: All the references to the original population counter outside
-  //  the loop are replaced with the NewCount -- the value returned from
-  //  __builtin_ctpop().
-  CntInst->replaceUsesOutsideBlock(NewCount, Body);
-
-  // step 5: Forget the "non-computable" trip-count SCEV associated with the
-  //   loop. The loop would otherwise not be deleted even if it becomes empty.
-  SE->forgetLoop(CurLoop);
-}
-
-CallInst *NclPopcountRecognize::createPopcntIntrinsic(IRBuilderTy &IRBuilder,
-                                                      Value *Val, DebugLoc DL) {
-  Value *Ops[] = {Val};
-  Type *Tys[] = {Val->getType()};
-
-  Module *M = (*(CurLoop->block_begin()))->getParent()->getParent();
-  Value *Func = Intrinsic::getDeclaration(M, Intrinsic::ctpop, Tys);
-  CallInst *CI = IRBuilder.CreateCall(Func, Ops);
-  CI->setDebugLoc(DL);
-
-  return CI;
-}
-
-/// recognize - detect population count idiom in a non-countable loop. If
-///   detected, transform the relevant code to popcount intrinsic function
-///   call, and return true; otherwise, return false.
-bool NclPopcountRecognize::recognize() {
-  if (!LIR.getTargetTransformInfo())
-    return false;
-
-  LIR.getScalarEvolution();
-
-  if (!preliminaryScreen())
-    return false;
-
-  Instruction *CntInst;
-  PHINode *CntPhi;
-  Value *Val;
-  if (!detectIdiom(CntInst, CntPhi, Val))
-    return false;
-
-  transform(CntInst, CntPhi, Val);
-  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1065,9 +679,346 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
 }
 
 bool LoopIdiomRecognize::runOnNoncountableLoop() {
-  NclPopcountRecognize Popcount(*this);
-  if (Popcount.recognize())
+  if (recognizePopcount())
     return true;
 
   return false;
+}
+
+/// Check if the given conditional branch is based on the comparison between
+/// a variable and zero, and if the variable is non-zero, the control yields to
+/// the loop entry. If the branch matches the behavior, the variable involved
+/// in the comparion is returned. This function will be called to see if the
+/// precondition and postcondition of the loop are in desirable form.
+static Value *matchCondition(BranchInst *BI, BasicBlock *LoopEntry) {
+  if (!BI || !BI->isConditional())
+    return nullptr;
+
+  ICmpInst *Cond = dyn_cast<ICmpInst>(BI->getCondition());
+  if (!Cond)
+    return nullptr;
+
+  ConstantInt *CmpZero = dyn_cast<ConstantInt>(Cond->getOperand(1));
+  if (!CmpZero || !CmpZero->isZero())
+    return nullptr;
+
+  ICmpInst::Predicate Pred = Cond->getPredicate();
+  if ((Pred == ICmpInst::ICMP_NE && BI->getSuccessor(0) == LoopEntry) ||
+      (Pred == ICmpInst::ICMP_EQ && BI->getSuccessor(1) == LoopEntry))
+    return Cond->getOperand(0);
+
+  return nullptr;
+}
+
+/// Return true iff the idiom is detected in the loop.
+///
+/// Additionally:
+/// 1) \p CntInst is set to the instruction counting the population bit.
+/// 2) \p CntPhi is set to the corresponding phi node.
+/// 3) \p Var is set to the value whose population bits are being counted.
+///
+/// The core idiom we are trying to detect is:
+/// \code
+///    if (x0 != 0)
+///      goto loop-exit // the precondition of the loop
+///    cnt0 = init-val;
+///    do {
+///       x1 = phi (x0, x2);
+///       cnt1 = phi(cnt0, cnt2);
+///
+///       cnt2 = cnt1 + 1;
+///        ...
+///       x2 = x1 & (x1 - 1);
+///        ...
+///    } while(x != 0);
+///
+/// loop-exit:
+/// \endcode
+static bool detectPopcountIdiom(Loop *CurLoop, BasicBlock *PreCondBB,
+                                Instruction *&CntInst, PHINode *&CntPhi,
+                                Value *&Var) {
+  // step 1: Check to see if the look-back branch match this pattern:
+  //    "if (a!=0) goto loop-entry".
+  BasicBlock *LoopEntry;
+  Instruction *DefX2, *CountInst;
+  Value *VarX1, *VarX0;
+  PHINode *PhiX, *CountPhi;
+
+  DefX2 = CountInst = nullptr;
+  VarX1 = VarX0 = nullptr;
+  PhiX = CountPhi = nullptr;
+  LoopEntry = *(CurLoop->block_begin());
+
+  // step 1: Check if the loop-back branch is in desirable form.
+  {
+    if (Value *T = matchCondition(
+            dyn_cast<BranchInst>(LoopEntry->getTerminator()), LoopEntry))
+      DefX2 = dyn_cast<Instruction>(T);
+    else
+      return false;
+  }
+
+  // step 2: detect instructions corresponding to "x2 = x1 & (x1 - 1)"
+  {
+    if (!DefX2 || DefX2->getOpcode() != Instruction::And)
+      return false;
+
+    BinaryOperator *SubOneOp;
+
+    if ((SubOneOp = dyn_cast<BinaryOperator>(DefX2->getOperand(0))))
+      VarX1 = DefX2->getOperand(1);
+    else {
+      VarX1 = DefX2->getOperand(0);
+      SubOneOp = dyn_cast<BinaryOperator>(DefX2->getOperand(1));
+    }
+    if (!SubOneOp)
+      return false;
+
+    Instruction *SubInst = cast<Instruction>(SubOneOp);
+    ConstantInt *Dec = dyn_cast<ConstantInt>(SubInst->getOperand(1));
+    if (!Dec ||
+        !((SubInst->getOpcode() == Instruction::Sub && Dec->isOne()) ||
+          (SubInst->getOpcode() == Instruction::Add &&
+           Dec->isAllOnesValue()))) {
+      return false;
+    }
+  }
+
+  // step 3: Check the recurrence of variable X
+  {
+    PhiX = dyn_cast<PHINode>(VarX1);
+    if (!PhiX ||
+        (PhiX->getOperand(0) != DefX2 && PhiX->getOperand(1) != DefX2)) {
+      return false;
+    }
+  }
+
+  // step 4: Find the instruction which count the population: cnt2 = cnt1 + 1
+  {
+    CountInst = nullptr;
+    for (BasicBlock::iterator Iter = LoopEntry->getFirstNonPHI(),
+                              IterE = LoopEntry->end();
+         Iter != IterE; Iter++) {
+      Instruction *Inst = Iter;
+      if (Inst->getOpcode() != Instruction::Add)
+        continue;
+
+      ConstantInt *Inc = dyn_cast<ConstantInt>(Inst->getOperand(1));
+      if (!Inc || !Inc->isOne())
+        continue;
+
+      PHINode *Phi = dyn_cast<PHINode>(Inst->getOperand(0));
+      if (!Phi || Phi->getParent() != LoopEntry)
+        continue;
+
+      // Check if the result of the instruction is live of the loop.
+      bool LiveOutLoop = false;
+      for (User *U : Inst->users()) {
+        if ((cast<Instruction>(U))->getParent() != LoopEntry) {
+          LiveOutLoop = true;
+          break;
+        }
+      }
+
+      if (LiveOutLoop) {
+        CountInst = Inst;
+        CountPhi = Phi;
+        break;
+      }
+    }
+
+    if (!CountInst)
+      return false;
+  }
+
+  // step 5: check if the precondition is in this form:
+  //   "if (x != 0) goto loop-head ; else goto somewhere-we-don't-care;"
+  {
+    auto *PreCondBr = dyn_cast<BranchInst>(PreCondBB->getTerminator());
+    Value *T = matchCondition(PreCondBr, CurLoop->getLoopPreheader());
+    if (T != PhiX->getOperand(0) && T != PhiX->getOperand(1))
+      return false;
+
+    CntInst = CountInst;
+    CntPhi = CountPhi;
+    Var = T;
+  }
+
+  return true;
+}
+
+/// Recognizes a population count idiom in a non-countable loop.
+///
+/// If detected, transforms the relevant code to issue the popcount intrinsic
+/// function call, and returns true; otherwise, returns false.
+bool LoopIdiomRecognize::recognizePopcount() {
+  (void)getScalarEvolution();
+  (void)getTargetLibraryInfo();
+  (void)getTargetTransformInfo();
+
+  if (TTI->getPopcntSupport(32) != TargetTransformInfo::PSK_FastHardware)
+    return false;
+
+  // Counting population are usually conducted by few arithmetic instructions.
+  // Such instructions can be easilly "absorbed" by vacant slots in a
+  // non-compact loop. Therefore, recognizing popcount idiom only makes sense
+  // in a compact loop.
+
+  // Give up if the loop has multiple blocks or multiple backedges.
+  if (CurLoop->getNumBackEdges() != 1 || CurLoop->getNumBlocks() != 1)
+    return false;
+
+  BasicBlock *LoopBody = *(CurLoop->block_begin());
+  if (LoopBody->size() >= 20) {
+    // The loop is too big, bail out.
+    return false;
+  }
+
+  // It should have a preheader containing nothing but an unconditional branch.
+  BasicBlock *PH = CurLoop->getLoopPreheader();
+  if (!PH)
+    return false;
+  if (&PH->front() != PH->getTerminator())
+    return false;
+  auto *EntryBI = dyn_cast<BranchInst>(PH->getTerminator());
+  if (!EntryBI || EntryBI->isConditional())
+    return false;
+
+  // It should have a precondition block where the generated popcount instrinsic
+  // function can be inserted.
+  auto *PreCondBB = PH->getSinglePredecessor();
+  if (!PreCondBB)
+    return false;
+  auto *PreCondBI = dyn_cast<BranchInst>(PreCondBB->getTerminator());
+  if (!PreCondBI || PreCondBI->isUnconditional())
+    return false;
+
+  Instruction *CntInst;
+  PHINode *CntPhi;
+  Value *Val;
+  if (!detectPopcountIdiom(CurLoop, PreCondBB, CntInst, CntPhi, Val))
+    return false;
+
+  transformLoopToPopcount(PreCondBB, CntInst, CntPhi, Val);
+  return true;
+}
+
+static CallInst *createPopcntIntrinsic(IRBuilder<> &IRBuilder, Value *Val,
+                                       DebugLoc DL) {
+  Value *Ops[] = {Val};
+  Type *Tys[] = {Val->getType()};
+
+  Module *M = IRBuilder.GetInsertBlock()->getParent()->getParent();
+  Value *Func = Intrinsic::getDeclaration(M, Intrinsic::ctpop, Tys);
+  CallInst *CI = IRBuilder.CreateCall(Func, Ops);
+  CI->setDebugLoc(DL);
+
+  return CI;
+}
+
+void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
+                                                 Instruction *CntInst,
+                                                 PHINode *CntPhi, Value *Var) {
+  BasicBlock *PreHead = CurLoop->getLoopPreheader();
+  auto *PreCondBr = dyn_cast<BranchInst>(PreCondBB->getTerminator());
+  const DebugLoc DL = CntInst->getDebugLoc();
+
+  // Assuming before transformation, the loop is following:
+  //  if (x) // the precondition
+  //     do { cnt++; x &= x - 1; } while(x);
+
+  // Step 1: Insert the ctpop instruction at the end of the precondition block
+  IRBuilder<> Builder(PreCondBr);
+  Value *PopCnt, *PopCntZext, *NewCount, *TripCnt;
+  {
+    PopCnt = createPopcntIntrinsic(Builder, Var, DL);
+    NewCount = PopCntZext =
+        Builder.CreateZExtOrTrunc(PopCnt, cast<IntegerType>(CntPhi->getType()));
+
+    if (NewCount != PopCnt)
+      (cast<Instruction>(NewCount))->setDebugLoc(DL);
+
+    // TripCnt is exactly the number of iterations the loop has
+    TripCnt = NewCount;
+
+    // If the population counter's initial value is not zero, insert Add Inst.
+    Value *CntInitVal = CntPhi->getIncomingValueForBlock(PreHead);
+    ConstantInt *InitConst = dyn_cast<ConstantInt>(CntInitVal);
+    if (!InitConst || !InitConst->isZero()) {
+      NewCount = Builder.CreateAdd(NewCount, CntInitVal);
+      (cast<Instruction>(NewCount))->setDebugLoc(DL);
+    }
+  }
+
+  // Step 2: Replace the precondition from "if(x == 0) goto loop-exit" to
+  //   "if(NewCount == 0) loop-exit". Withtout this change, the intrinsic
+  //   function would be partial dead code, and downstream passes will drag
+  //   it back from the precondition block to the preheader.
+  {
+    ICmpInst *PreCond = cast<ICmpInst>(PreCondBr->getCondition());
+
+    Value *Opnd0 = PopCntZext;
+    Value *Opnd1 = ConstantInt::get(PopCntZext->getType(), 0);
+    if (PreCond->getOperand(0) != Var)
+      std::swap(Opnd0, Opnd1);
+
+    ICmpInst *NewPreCond = cast<ICmpInst>(
+        Builder.CreateICmp(PreCond->getPredicate(), Opnd0, Opnd1));
+    PreCondBr->setCondition(NewPreCond);
+
+    RecursivelyDeleteTriviallyDeadInstructions(PreCond, TLI);
+  }
+
+  // Step 3: Note that the population count is exactly the trip count of the
+  // loop in question, which enble us to to convert the loop from noncountable
+  // loop into a countable one. The benefit is twofold:
+  //
+  //  - If the loop only counts population, the entire loop become dead after
+  //    the transformation. It is lots easier to prove a countable loop dead
+  //    than to prove a noncountable one. (In some C dialects, a infite loop
+  //    isn't dead even if it computes nothing useful. In general, DCE needs
+  //    to prove a noncountable loop finite before safely delete it.)
+  //
+  //  - If the loop also performs something else, it remains alive.
+  //    Since it is transformed to countable form, it can be aggressively
+  //    optimized by some optimizations which are in general not applicable
+  //    to a noncountable loop.
+  //
+  // After this step, this loop (conceptually) would look like following:
+  //   newcnt = __builtin_ctpop(x);
+  //   t = newcnt;
+  //   if (x)
+  //     do { cnt++; x &= x-1; t--) } while (t > 0);
+  BasicBlock *Body = *(CurLoop->block_begin());
+  {
+    auto *LbBr = dyn_cast<BranchInst>(Body->getTerminator());
+    ICmpInst *LbCond = cast<ICmpInst>(LbBr->getCondition());
+    Type *Ty = TripCnt->getType();
+
+    PHINode *TcPhi = PHINode::Create(Ty, 2, "tcphi", Body->begin());
+
+    Builder.SetInsertPoint(LbCond);
+    Value *Opnd1 = cast<Value>(TcPhi);
+    Value *Opnd2 = cast<Value>(ConstantInt::get(Ty, 1));
+    Instruction *TcDec = cast<Instruction>(
+        Builder.CreateSub(Opnd1, Opnd2, "tcdec", false, true));
+
+    TcPhi->addIncoming(TripCnt, PreHead);
+    TcPhi->addIncoming(TcDec, Body);
+
+    CmpInst::Predicate Pred =
+        (LbBr->getSuccessor(0) == Body) ? CmpInst::ICMP_UGT : CmpInst::ICMP_SLE;
+    LbCond->setPredicate(Pred);
+    LbCond->setOperand(0, TcDec);
+    LbCond->setOperand(1, cast<Value>(ConstantInt::get(Ty, 0)));
+  }
+
+  // Step 4: All the references to the original population counter outside
+  //  the loop are replaced with the NewCount -- the value returned from
+  //  __builtin_ctpop().
+  CntInst->replaceUsesOutsideBlock(NewCount, Body);
+
+  // step 5: Forget the "non-computable" trip-count SCEV associated with the
+  //   loop. The loop would otherwise not be deleted even if it becomes empty.
+  SE->forgetLoop(CurLoop);
 }
