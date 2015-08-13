@@ -39,7 +39,7 @@ class BugReporterVisitor : public llvm::FoldingSetNode {
 public:
   BugReporterVisitor() = default;
   BugReporterVisitor(const BugReporterVisitor &) = default;
-  BugReporterVisitor(BugReporterVisitor &&) = default;
+  BugReporterVisitor(BugReporterVisitor &&) {}
   virtual ~BugReporterVisitor();
 
   /// \brief Returns a copy of this BugReporter.
