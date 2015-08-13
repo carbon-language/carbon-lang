@@ -1264,7 +1264,7 @@ class StoredDiagnostic {
   std::vector<FixItHint> FixIts;
 
 public:
-  StoredDiagnostic();
+  StoredDiagnostic() = default;
   StoredDiagnostic(DiagnosticsEngine::Level Level, const Diagnostic &Info);
   StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID, 
                    StringRef Message);
@@ -1272,7 +1272,6 @@ public:
                    StringRef Message, FullSourceLoc Loc,
                    ArrayRef<CharSourceRange> Ranges,
                    ArrayRef<FixItHint> Fixits);
-  ~StoredDiagnostic();
 
   /// \brief Evaluates true when this object stores a diagnostic.
   explicit operator bool() const { return Message.size() > 0; }

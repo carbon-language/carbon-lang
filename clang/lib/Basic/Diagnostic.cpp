@@ -945,8 +945,6 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
   OutStr.append(Tree.begin(), Tree.end());
 }
 
-StoredDiagnostic::StoredDiagnostic() { }
-
 StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID,
                                    StringRef Message)
   : ID(ID), Level(Level), Loc(), Message(Message) { }
@@ -974,8 +972,6 @@ StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level, unsigned ID,
     Ranges(Ranges.begin(), Ranges.end()), FixIts(FixIts.begin(), FixIts.end())
 {
 }
-
-StoredDiagnostic::~StoredDiagnostic() { }
 
 /// IncludeInDiagnosticCounts - This method (whose default implementation
 ///  returns true) indicates whether the diagnostics handled by this
