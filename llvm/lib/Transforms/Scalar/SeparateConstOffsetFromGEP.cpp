@@ -891,13 +891,13 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   // Clear the inbounds attribute because the new index may be off-bound.
   // e.g.,
   //
-  // b = add i64 a, 5
-  // addr = gep inbounds float* p, i64 b
+  // b     = add i64 a, 5
+  // addr  = gep inbounds float, float* p, i64 b
   //
   // is transformed to:
   //
-  // addr2 = gep float* p, i64 a
-  // addr = gep float* addr2, i64 5
+  // addr2 = gep float, float* p, i64 a ; inbounds removed
+  // addr  = gep inbounds float, float* addr2, i64 5
   //
   // If a is -4, although the old index b is in bounds, the new index a is
   // off-bound. http://llvm.org/docs/LangRef.html#id181 says "if the
@@ -907,6 +907,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   //
   // TODO(jingyue): do some range analysis to keep as many inbounds as
   // possible. GEPs with inbounds are more friendly to alias analysis.
+  bool GEPWasInBounds = GEP->isInBounds();
   GEP->setIsInBounds(false);
 
   // Lowers a GEP to either GEPs with a single index or arithmetic operations.
@@ -968,6 +969,8 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     NewGEP = GetElementPtrInst::Create(GEP->getResultElementType(), NewGEP,
                                        ConstantInt::get(IntPtrTy, Index, true),
                                        GEP->getName(), GEP);
+    // Inherit the inbounds attribute of the original GEP.
+    cast<GetElementPtrInst>(NewGEP)->setIsInBounds(GEPWasInBounds);
   } else {
     // Unlikely but possible. For example,
     // #pragma pack(1)
@@ -990,6 +993,8 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
         Type::getInt8Ty(GEP->getContext()), NewGEP,
         ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true), "uglygep",
         GEP);
+    // Inherit the inbounds attribute of the original GEP.
+    cast<GetElementPtrInst>(NewGEP)->setIsInBounds(GEPWasInBounds);
     if (GEP->getType() != I8PtrTy)
       NewGEP = new BitCastInst(NewGEP, GEP->getType(), GEP->getName(), GEP);
   }

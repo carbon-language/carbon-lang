@@ -52,9 +52,9 @@ define void @sum_of_array(i32 %x, i32 %y, float* nocapture %output) {
 
 ; IR-LABEL: @sum_of_array(
 ; IR: [[BASE_PTR:%[a-zA-Z0-9]+]] = getelementptr inbounds [32 x [32 x float]], [32 x [32 x float]] addrspace(3)* @array, i64 0, i64 %{{[a-zA-Z0-9]+}}, i64 %{{[a-zA-Z0-9]+}}
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 1
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 32
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 33
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 1
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 32
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 33
 
 ; @sum_of_array2 is very similar to @sum_of_array. The only difference is in
 ; the order of "sext" and "add" when computing the array indices. @sum_of_array
@@ -95,9 +95,9 @@ define void @sum_of_array2(i32 %x, i32 %y, float* nocapture %output) {
 
 ; IR-LABEL: @sum_of_array2(
 ; IR: [[BASE_PTR:%[a-zA-Z0-9]+]] = getelementptr inbounds [32 x [32 x float]], [32 x [32 x float]] addrspace(3)* @array, i64 0, i64 %{{[a-zA-Z0-9]+}}, i64 %{{[a-zA-Z0-9]+}}
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 1
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 32
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 33
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 1
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 32
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 33
 
 
 ; This function loads
@@ -145,9 +145,9 @@ define void @sum_of_array3(i32 %x, i32 %y, float* nocapture %output) {
 
 ; IR-LABEL: @sum_of_array3(
 ; IR: [[BASE_PTR:%[a-zA-Z0-9]+]] = getelementptr inbounds [32 x [32 x float]], [32 x [32 x float]] addrspace(3)* @array, i64 0, i64 %{{[a-zA-Z0-9]+}}, i64 %{{[a-zA-Z0-9]+}}
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 1
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 32
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 33
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 1
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 32
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 33
 
 
 ; This function loads
@@ -191,6 +191,6 @@ define void @sum_of_array4(i32 %x, i32 %y, float* nocapture %output) {
 
 ; IR-LABEL: @sum_of_array4(
 ; IR: [[BASE_PTR:%[a-zA-Z0-9]+]] = getelementptr inbounds [32 x [32 x float]], [32 x [32 x float]] addrspace(3)* @array, i64 0, i64 %{{[a-zA-Z0-9]+}}, i64 %{{[a-zA-Z0-9]+}}
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 1
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 32
-; IR: getelementptr float, float addrspace(3)* [[BASE_PTR]], i64 33
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 1
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 32
+; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 33

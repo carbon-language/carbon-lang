@@ -57,10 +57,10 @@ bb:
 
 ; CHECK-LABEL: @slsr_after_reassociate_lds_geps_ds_max_offset(
 ; CHECK: [[B1:%[0-9]+]] = getelementptr float, float addrspace(3)* %arr, i32 %i
-; CHECK: getelementptr float, float addrspace(3)* [[B1]], i32 16383
+; CHECK: getelementptr inbounds float, float addrspace(3)* [[B1]], i32 16383
 
 ; CHECK: [[B2:%[0-9]+]] = getelementptr float, float addrspace(3)* [[B1]], i32 %i
-; CHECK: getelementptr float, float addrspace(3)* [[B2]], i32 16383
+; CHECK: getelementptr inbounds float, float addrspace(3)* [[B2]], i32 16383
 define void @slsr_after_reassociate_lds_geps_ds_max_offset(float addrspace(1)* %out, float addrspace(3)* noalias %arr, i32 %i) {
 bb:
   %i2 = shl nsw i32 %i, 1

@@ -25,7 +25,7 @@ then:
   %or = or i64 %i, 3
   %p = getelementptr inbounds float, float* %input, i64 %or
 ; CHECK: [[base:[^ ]+]] = getelementptr float, float* %input, i64 %i
-; CHECK: getelementptr float, float* [[base]], i64 3
+; CHECK: getelementptr inbounds float, float* [[base]], i64 3
   ret float* %p
 
 exit:
