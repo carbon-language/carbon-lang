@@ -1093,6 +1093,12 @@ bool MIParser::parseCFIOperand(MachineOperand &Dest) {
   unsigned Reg;
   unsigned CFIIndex;
   switch (Kind) {
+  case MIToken::kw_cfi_same_value:
+    if (parseCFIRegister(Reg))
+      return true;
+    CFIIndex =
+        MMI.addFrameInst(MCCFIInstruction::createSameValue(nullptr, Reg));
+    break;
   case MIToken::kw_cfi_offset:
     if (parseCFIRegister(Reg) || expectAndConsume(MIToken::comma) ||
         parseCFIOffset(Offset))
@@ -1273,6 +1279,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseExternalSymbolOperand(Dest);
   case MIToken::exclaim:
     return parseMetadataOperand(Dest);
+  case MIToken::kw_cfi_same_value:
   case MIToken::kw_cfi_offset:
   case MIToken::kw_cfi_def_cfa_register:
   case MIToken::kw_cfi_def_cfa_offset:

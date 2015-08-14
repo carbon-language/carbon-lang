@@ -794,6 +794,12 @@ static void printCFIRegister(unsigned DwarfReg, raw_ostream &OS,
 void MIPrinter::print(const MCCFIInstruction &CFI,
                       const TargetRegisterInfo *TRI) {
   switch (CFI.getOperation()) {
+  case MCCFIInstruction::OpSameValue:
+    OS << ".cfi_same_value ";
+    if (CFI.getLabel())
+      OS << "<mcsymbol> ";
+    printCFIRegister(CFI.getRegister(), OS, TRI);
+    break;
   case MCCFIInstruction::OpOffset:
     OS << ".cfi_offset ";
     if (CFI.getLabel())
