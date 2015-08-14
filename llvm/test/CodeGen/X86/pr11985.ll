@@ -1,6 +1,34 @@
-; RUN: llc < %s -mtriple=x86_64-pc-linux -mcpu=prescott | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-linux -mcpu=prescott | FileCheck %s --check-prefix=PRESCOTT
+; RUN: llc < %s -mtriple=x86_64-pc-linux -mcpu=nehalem | FileCheck %s --check-prefix=NEHALEM
+
+;;; TODO: The last run line chooses cpu=nehalem to reveal possible bugs in the "foo" test case.
+;;;
+;;; Nehalem has a 'fast unaligned memory' attribute, so (1) some of the loads and stores
+;;; are certainly unaligned and (2) the first load and first store overlap with the second
+;;; load and second store respectively.
+;;;
+;;; Is either of these sequences ideal? 
+;;; Is the ideal code being generated for all CPU models?
 
 define float @foo(i8* nocapture %buf, float %a, float %b) nounwind uwtable {
+; PRESCOTT-LABEL: foo:
+; PRESCOTT:       # BB#0: # %entry
+; PRESCOTT-NEXT:    movw .Ltmp0+20(%rip), %ax
+; PRESCOTT-NEXT:    movw %ax, 20(%rdi)
+; PRESCOTT-NEXT:    movl .Ltmp0+16(%rip), %eax
+; PRESCOTT-NEXT:    movl %eax, 16(%rdi)
+; PRESCOTT-NEXT:    movq .Ltmp0+8(%rip), %rax
+; PRESCOTT-NEXT:    movq %rax, 8(%rdi)
+; PRESCOTT-NEXT:    movq .Ltmp0(%rip), %rax
+; PRESCOTT-NEXT:    movq %rax, (%rdi)
+;
+; NEHALEM-LABEL: foo:
+; NEHALEM:       # BB#0: # %entry
+; NEHALEM-NEXT:    movq .Ltmp0+14(%rip), %rax
+; NEHALEM-NEXT:    movq %rax, 14(%rdi)
+; NEHALEM-NEXT:    movups .Ltmp0(%rip), %xmm2
+; NEHALEM-NEXT:    movups %xmm2, (%rdi)
+
 entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %buf, i8* blockaddress(@foo, %out), i64 22, i32 1, i1 false)
   br label %out
@@ -8,12 +36,6 @@ entry:
 out:                                              ; preds = %entry
   %add = fadd float %a, %b
   ret float %add
-; CHECK: foo
-; CHECK: movw .L{{.*}}+20(%rip), %{{.*}}
-; CHECK: movl .L{{.*}}+16(%rip), %{{.*}}
-; CHECK: movq .L{{.*}}+8(%rip), %{{.*}}
-; CHECK: movq .L{{.*}}(%rip), %{{.*}}
-; CHECK: ret
 }
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
