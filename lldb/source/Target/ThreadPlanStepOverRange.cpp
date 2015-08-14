@@ -303,10 +303,14 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                                         if (next_line_entry.file == m_addr_context.line_entry.file)
                                         {
                                             const bool abort_other_plans = false;
-                                            const bool stop_other_threads = false;
-                                            new_plan_sp = m_thread.QueueThreadPlanForRunToAddress(abort_other_plans,
-                                                                                               next_line_address,
-                                                                                               stop_other_threads);
+                                            const RunMode stop_other_threads = RunMode::eAllThreads;
+                                            lldb::addr_t cur_pc = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
+                                            AddressRange step_range(cur_pc, next_line_address.GetLoadAddress(&GetTarget()) - cur_pc);
+                                            
+                                            new_plan_sp = m_thread.QueueThreadPlanForStepOverRange (abort_other_plans,
+                                                                                                    step_range,
+                                                                                                    sc,
+                                                                                                    stop_other_threads);
                                             break;
                                         }
                                         look_ahead_step++;
