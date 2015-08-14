@@ -94,7 +94,6 @@ struct {
   { "armv7-r",   ARM::AK_ARMV7R,   "7-R",     "v7r",   ARMBuildAttrs::CPUArch::v7 },
   { "armv7-m",   ARM::AK_ARMV7M,   "7-M",     "v7m",   ARMBuildAttrs::CPUArch::v7 },
   { "armv7e-m",  ARM::AK_ARMV7EM,  "7E-M",    "v7em",  ARMBuildAttrs::CPUArch::v7E_M },
-  { "armv7k",    ARM::AK_ARMV7K,   "7-K",     "v7k",   ARMBuildAttrs::CPUArch::v7 },
   { "armv8-a",   ARM::AK_ARMV8A,   "8-A",     "v8",    ARMBuildAttrs::CPUArch::v8 },
   { "armv8.1-a", ARM::AK_ARMV8_1A, "8.1-A",   "v8.1a", ARMBuildAttrs::CPUArch::v8 },
   // Non-standard Arch names.
@@ -663,7 +662,6 @@ unsigned ARMTargetParser::parseArchVersion(StringRef Arch) {
   case ARM::AK_ARMV7HL:
   case ARM::AK_ARMV7S:
   case ARM::AK_ARMV7EM:
-  case ARM::AK_ARMV7K:
     return 7;
   case ARM::AK_ARMV8A:
   case ARM::AK_ARMV8_1A:

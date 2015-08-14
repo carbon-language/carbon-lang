@@ -117,7 +117,6 @@ namespace ARM {
     AK_ARMV7L,
     AK_ARMV7HL,
     AK_ARMV7S,
-    AK_ARMV7K,
     AK_LAST
   };
 

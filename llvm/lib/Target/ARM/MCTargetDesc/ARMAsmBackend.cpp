@@ -32,7 +32,6 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
-#include "llvm/Support/TargetParser.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -744,39 +743,6 @@ void ARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
   }
 }
 
-static MachO::CPUSubTypeARM getMachOSubTypeFromArch(StringRef Arch) {
-  unsigned AK = ARMTargetParser::parseArch(Arch);
-  switch (AK) {
-  default:
-    return MachO::CPU_SUBTYPE_ARM_V7;
-  case ARM::AK_ARMV4T:
-    return MachO::CPU_SUBTYPE_ARM_V4T;
-  case ARM::AK_ARMV6:
-  case ARM::AK_ARMV6K:
-    return MachO::CPU_SUBTYPE_ARM_V6;
-  case ARM::AK_ARMV5:
-    return MachO::CPU_SUBTYPE_ARM_V5;
-  case ARM::AK_ARMV5T:
-  case ARM::AK_ARMV5E:
-  case ARM::AK_ARMV5TE:
-  case ARM::AK_ARMV5TEJ:
-    return MachO::CPU_SUBTYPE_ARM_V5TEJ;
-  case ARM::AK_ARMV7:
-    return MachO::CPU_SUBTYPE_ARM_V7;
-  case ARM::AK_ARMV7S:
-    return MachO::CPU_SUBTYPE_ARM_V7S;
-  case ARM::AK_ARMV7K:
-    return MachO::CPU_SUBTYPE_ARM_V7K;
-  case ARM::AK_ARMV6M:
-  case ARM::AK_ARMV6SM:
-    return MachO::CPU_SUBTYPE_ARM_V6M;
-  case ARM::AK_ARMV7M:
-    return MachO::CPU_SUBTYPE_ARM_V7M;
-  case ARM::AK_ARMV7EM:
-    return MachO::CPU_SUBTYPE_ARM_V7EM;
-  }
-}
-
 MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
                                         const Triple &TheTriple, StringRef CPU,
@@ -785,7 +751,18 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
   default:
     llvm_unreachable("unsupported object format");
   case Triple::MachO: {
-    MachO::CPUSubTypeARM CS = getMachOSubTypeFromArch(TheTriple.getArchName());
+    MachO::CPUSubTypeARM CS =
+        StringSwitch<MachO::CPUSubTypeARM>(TheTriple.getArchName())
+            .Cases("armv4t", "thumbv4t", MachO::CPU_SUBTYPE_ARM_V4T)
+            .Cases("armv5e", "thumbv5e", MachO::CPU_SUBTYPE_ARM_V5TEJ)
+            .Cases("armv6", "thumbv6", MachO::CPU_SUBTYPE_ARM_V6)
+            .Cases("armv6m", "thumbv6m", MachO::CPU_SUBTYPE_ARM_V6M)
+            .Cases("armv7em", "thumbv7em", MachO::CPU_SUBTYPE_ARM_V7EM)
+            .Cases("armv7k", "thumbv7k", MachO::CPU_SUBTYPE_ARM_V7K)
+            .Cases("armv7m", "thumbv7m", MachO::CPU_SUBTYPE_ARM_V7M)
+            .Cases("armv7s", "thumbv7s", MachO::CPU_SUBTYPE_ARM_V7S)
+            .Default(MachO::CPU_SUBTYPE_ARM_V7);
+
     return new ARMAsmBackendDarwin(T, TheTriple, CS);
   }
   case Triple::COFF:
