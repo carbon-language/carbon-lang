@@ -1201,8 +1201,7 @@ void PPCFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // Reserve stack space for the PIC Base register (R30).
   // Only used in SVR4 32-bit.
   if (FI->usesPICBase()) {
-    int PBPSI = FI->getPICBasePointerSaveIndex();
-    PBPSI = MFI->CreateFixedObject(4, -8, true);
+    int PBPSI = MFI->CreateFixedObject(4, -8, true);
     FI->setPICBasePointerSaveIndex(PBPSI);
   }
 
