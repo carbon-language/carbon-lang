@@ -5173,18 +5173,11 @@ bool ARMAsmParser::parsePrefix(ARMMCExpr::VariantKind &RefKind) {
     return true;
   }
 
-  enum {
-    COFF = (1 << MCObjectFileInfo::IsCOFF),
-    ELF = (1 << MCObjectFileInfo::IsELF),
-    MACHO = (1 << MCObjectFileInfo::IsMachO)
-  };
   static const struct PrefixEntry {
     const char *Spelling;
     ARMMCExpr::VariantKind VariantKind;
-    uint8_t SupportedFormats;
   } PrefixEntries[] = {
-    { "lower16", ARMMCExpr::VK_ARM_LO16, COFF | ELF | MACHO },
-    { "upper16", ARMMCExpr::VK_ARM_HI16, COFF | ELF | MACHO },
+      {"lower16", ARMMCExpr::VK_ARM_LO16}, {"upper16", ARMMCExpr::VK_ARM_HI16},
   };
 
   StringRef IDVal = Parser.getTok().getIdentifier();
@@ -5196,25 +5189,6 @@ bool ARMAsmParser::parsePrefix(ARMMCExpr::VariantKind &RefKind) {
                    });
   if (Prefix == std::end(PrefixEntries)) {
     Error(Parser.getTok().getLoc(), "unexpected prefix in operand");
-    return true;
-  }
-
-  uint8_t CurrentFormat;
-  switch (getContext().getObjectFileInfo()->getObjectFileType()) {
-  case MCObjectFileInfo::IsMachO:
-    CurrentFormat = MACHO;
-    break;
-  case MCObjectFileInfo::IsELF:
-    CurrentFormat = ELF;
-    break;
-  case MCObjectFileInfo::IsCOFF:
-    CurrentFormat = COFF;
-    break;
-  }
-
-  if (~Prefix->SupportedFormats & CurrentFormat) {
-    Error(Parser.getTok().getLoc(),
-          "cannot represent relocation in the current file format");
     return true;
   }
 
@@ -8691,10 +8665,10 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 /// parseDirective parses the arm specific directives
 bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
-  const MCObjectFileInfo::Environment Format =
-    getContext().getObjectFileInfo()->getObjectFileType();
-  bool IsMachO = Format == MCObjectFileInfo::IsMachO;
-  bool IsCOFF = Format == MCObjectFileInfo::IsCOFF;
+  Triple::ObjectFormatType Format =
+      getContext().getObjectFileInfo()->getTargetTriple().getObjectFormat();
+  bool IsMachO = Format == Triple::MachO;
+  bool IsCOFF = Format == Triple::COFF;
 
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
@@ -8859,8 +8833,9 @@ void ARMAsmParser::onLabelParsed(MCSymbol *Symbol) {
 ///  ::= .thumbfunc symbol_name
 bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
   MCAsmParser &Parser = getParser();
-  const auto Format = getContext().getObjectFileInfo()->getObjectFileType();
-  bool IsMachO = Format == MCObjectFileInfo::IsMachO;
+  Triple::ObjectFormatType Format =
+      getContext().getObjectFileInfo()->getTargetTriple().getObjectFormat();
+  bool IsMachO = Format == Triple::MachO;
 
   // Darwin asm has (optionally) function name after .thumb_func direction
   // ELF doesn't

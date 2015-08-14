@@ -331,13 +331,9 @@ public:
     return EHFrameSection;
   }
 
-  enum Environment { IsMachO, IsELF, IsCOFF };
-  Environment getObjectFileType() const { return Env; }
-
   Reloc::Model getRelocM() const { return RelocM; }
 
 private:
-  Environment Env;
   Reloc::Model RelocM;
   CodeModel::Model CMModel;
   MCContext *Ctx;
