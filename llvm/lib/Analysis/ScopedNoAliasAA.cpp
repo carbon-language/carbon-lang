@@ -46,8 +46,8 @@ using namespace llvm;
 // A handy option for disabling scoped no-alias functionality. The same effect
 // can also be achieved by stripping the associated metadata tags from IR, but
 // this option is sometimes more convenient.
-static cl::opt<bool>
-EnableScopedNoAlias("enable-scoped-noalias", cl::init(true));
+static cl::opt<bool> EnableScopedNoAlias("enable-scoped-noalias",
+                                         cl::init(true));
 
 namespace {
 /// AliasScopeNode - This is a simple wrapper around an MDNode which provides
@@ -88,7 +88,7 @@ public:
   /// specified pass info.
   void *getAdjustedAnalysisPointer(const void *PI) override {
     if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis*)this;
+      return (AliasAnalysis *)this;
     return this;
   }
 
@@ -109,7 +109,7 @@ private:
   ModRefInfo getModRefInfo(ImmutableCallSite CS1,
                            ImmutableCallSite CS2) override;
 };
-}  // End of anonymous namespace
+} // End of anonymous namespace
 
 // Register this pass...
 char ScopedNoAliasAA::ID = 0;
@@ -125,24 +125,22 @@ bool ScopedNoAliasAA::doInitialization(Module &M) {
   return true;
 }
 
-void
-ScopedNoAliasAA::getAnalysisUsage(AnalysisUsage &AU) const {
+void ScopedNoAliasAA::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AliasAnalysis::getAnalysisUsage(AU);
 }
 
-void
-ScopedNoAliasAA::collectMDInDomain(const MDNode *List, const MDNode *Domain,
-                   SmallPtrSetImpl<const MDNode *> &Nodes) const {
+void ScopedNoAliasAA::collectMDInDomain(
+    const MDNode *List, const MDNode *Domain,
+    SmallPtrSetImpl<const MDNode *> &Nodes) const {
   for (unsigned i = 0, ie = List->getNumOperands(); i != ie; ++i)
     if (const MDNode *MD = dyn_cast<MDNode>(List->getOperand(i)))
       if (AliasScopeNode(MD).getDomain() == Domain)
         Nodes.insert(MD);
 }
 
-bool
-ScopedNoAliasAA::mayAliasInScopes(const MDNode *Scopes,
-                                  const MDNode *NoAlias) const {
+bool ScopedNoAliasAA::mayAliasInScopes(const MDNode *Scopes,
+                                       const MDNode *NoAlias) const {
   if (!Scopes || !NoAlias)
     return true;
 
@@ -183,11 +181,9 @@ AliasResult ScopedNoAliasAA::alias(const MemoryLocation &LocA,
     return AliasAnalysis::alias(LocA, LocB);
 
   // Get the attached MDNodes.
-  const MDNode *AScopes = LocA.AATags.Scope,
-               *BScopes = LocB.AATags.Scope;
+  const MDNode *AScopes = LocA.AATags.Scope, *BScopes = LocB.AATags.Scope;
 
-  const MDNode *ANoAlias = LocA.AATags.NoAlias,
-               *BNoAlias = LocB.AATags.NoAlias;
+  const MDNode *ANoAlias = LocA.AATags.NoAlias, *BNoAlias = LocB.AATags.NoAlias;
 
   if (!mayAliasInScopes(AScopes, BNoAlias))
     return NoAlias;
