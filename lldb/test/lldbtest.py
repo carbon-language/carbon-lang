@@ -664,11 +664,6 @@ def expectedFailureArch(arch, bugnumber=None):
         return arch in self.getArchitecture()
     return expectedFailure(fn, bugnumber)
 
-def skipUnlessArch(arch):
-    def fn(self):
-        return not self.getArchitecture() in arch 
-    return expectedFailure(fn, None)
-
 def expectedFailurei386(bugnumber=None):
     return expectedFailureArch('i386', bugnumber)
 
@@ -944,6 +939,24 @@ def skipUnlessHostPlatform(oslist):
     """Decorate the item to skip tests unless running on one of the listed host platforms."""
     return unittest2.skipUnless(getHostPlatform() in oslist,
                                 "requires on of %s" % (", ".join(oslist)))
+
+def skipUnlessArch(archlist):
+    """Decorate the item to skip tests unless running on one of the listed architectures."""
+    def myImpl(func):
+        if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+            raise Exception("@skipUnlessArch can only be used to decorate a test method")
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            self = args[0]
+            if self.getArchitecture() not in archlist:
+                self.skipTest("skipping for architecture %s (requires one of %s)" % 
+                    (self.getArchitecture(), ", ".join(archlist)))
+            else:
+                func(*args, **kwargs)
+        return wrapper
+
+    return myImpl
 
 def skipIfPlatform(oslist):
     """Decorate the item to skip tests if running on one of the listed platforms."""
