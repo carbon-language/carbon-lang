@@ -16,13 +16,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
@@ -42,6 +45,7 @@ using namespace llvm;
 
 STATISTIC(NumRedundantStores, "Number of redundant stores deleted");
 STATISTIC(NumFastStores, "Number of stores deleted");
+STATISTIC(NumCrossBlockStores, "Number of cross block stores deleted");
 STATISTIC(NumFastOther , "Number of other instrs removed");
 
 namespace {
@@ -49,11 +53,40 @@ namespace {
     AliasAnalysis *AA;
     MemoryDependenceAnalysis *MD;
     DominatorTree *DT;
+    PostDominatorTree *PDT;
     const TargetLibraryInfo *TLI;
-
+    SmallVector<SmallVector<StoreInst *, 8>, 16> Candidates;
+    SetVector<StoreInst *> DeadStores;
+    SmallVector<std::pair<const BasicBlock *, const BasicBlock *>, 32>
+        BackEdges;
+    DenseSet<std::pair<const BasicBlock *, const BasicBlock *>> BackEdgesMap;
     static char ID; // Pass identification, replacement for typeid
-    DSE() : FunctionPass(ID), AA(nullptr), MD(nullptr), DT(nullptr) {
+    DSE()
+        : FunctionPass(ID), AA(nullptr), MD(nullptr), DT(nullptr),
+          PDT(nullptr) {
       initializeDSEPass(*PassRegistry::getPassRegistry());
+    }
+    // Return all stores in a given BasicBlock.
+    SmallVector<StoreInst *, 8> getStores(BasicBlock *BB) {
+      SmallVector<StoreInst *, 8> VecStores;
+      for (auto &BI : *BB) {
+        if (StoreInst *SI = dyn_cast<StoreInst>(&BI))
+          VecStores.push_back(SI);
+      }
+      return VecStores;
+    }
+
+    // Get dfs in/out on the PDT and populate Candidates store list which
+    // is used to find potential dead stores for a given block
+    void populateCandidateStores(Function &F) {
+      for (auto &I : F) {
+        DomTreeNode *DTNode = PDT->getNode(&I);
+        if (!DTNode)
+          continue;
+        int DFSIn = DTNode->getDFSNumIn();
+        SmallVector<StoreInst *, 8> VecStores = getStores(&I);
+        Candidates[DFSIn] = VecStores;
+      }
     }
 
     bool runOnFunction(Function &F) override {
@@ -64,7 +97,21 @@ namespace {
       MD = &getAnalysis<MemoryDependenceAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+      PDT = &getAnalysis<PostDominatorTree>();
+      if (PDT->getRootNode()) {
+        int Count = PDT->getRootNode()->getDFSNumOut();
+        SmallVector<StoreInst *, 8> VecStores;
+        Candidates.resize(Count + 1);
+        Candidates.assign(Count + 1, VecStores);
 
+        // If we have more than 1 block try to populate candidate store.
+        if (Count > 1) {
+          populateCandidateStores(F);
+          FindFunctionBackedges(F, BackEdges);
+          for (auto I : BackEdges)
+            BackEdgesMap.insert(I);
+        }
+      }
       bool Changed = false;
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
         // Only check non-dead blocks.  Dead blocks may have strange pointer
@@ -83,16 +130,23 @@ namespace {
     void RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
                                SmallSetVector<Value *, 16> &DeadStackObjects,
                                const DataLayout &DL);
-
+    void handleNonLocalStoreDeletion(StoreInst *SI);
+    bool isSafeCandidateForDeletion(BasicBlock *SrcBlock, BasicBlock *SinkBlock,
+                                    StoreInst *SI);
+    void DeleteDeadInstruction(Instruction *I, MemoryDependenceAnalysis &MD,
+                               const TargetLibraryInfo &TLI,
+                               SmallSetVector<Value *, 16> *ValueSet = nullptr);
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<MemoryDependenceAnalysis>();
+      AU.addRequired<PostDominatorTree>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<MemoryDependenceAnalysis>();
+      AU.addPreserved<PostDominatorTree>();
     }
   };
 }
@@ -102,6 +156,7 @@ INITIALIZE_PASS_BEGIN(DSE, "dse", "Dead Store Elimination", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(MemoryDependenceAnalysis)
+INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(DSE, "dse", "Dead Store Elimination", false, false)
 
@@ -110,50 +165,6 @@ FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
-
-/// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
-/// and zero out all the operands of this instruction.  If any of them become
-/// dead, delete them and the computation tree that feeds them.
-///
-/// If ValueSet is non-null, remove any deleted instructions from it as well.
-///
-static void DeleteDeadInstruction(Instruction *I,
-                               MemoryDependenceAnalysis &MD,
-                               const TargetLibraryInfo &TLI,
-                               SmallSetVector<Value*, 16> *ValueSet = nullptr) {
-  SmallVector<Instruction*, 32> NowDeadInsts;
-
-  NowDeadInsts.push_back(I);
-  --NumFastOther;
-
-  // Before we touch this instruction, remove it from memdep!
-  do {
-    Instruction *DeadInst = NowDeadInsts.pop_back_val();
-    ++NumFastOther;
-
-    // This instruction is dead, zap it, in stages.  Start by removing it from
-    // MemDep, which needs to know the operands and needs it to be in the
-    // function.
-    MD.removeInstruction(DeadInst);
-
-    for (unsigned op = 0, e = DeadInst->getNumOperands(); op != e; ++op) {
-      Value *Op = DeadInst->getOperand(op);
-      DeadInst->setOperand(op, nullptr);
-
-      // If this operand just became dead, add it to the NowDeadInsts list.
-      if (!Op->use_empty()) continue;
-
-      if (Instruction *OpI = dyn_cast<Instruction>(Op))
-        if (isInstructionTriviallyDead(OpI, &TLI))
-          NowDeadInsts.push_back(OpI);
-    }
-
-    DeadInst->eraseFromParent();
-
-    if (ValueSet) ValueSet->remove(DeadInst);
-  } while (!NowDeadInsts.empty());
-}
-
 
 /// hasMemoryWrite - Does this instruction write some memory?  This only returns
 /// true for things that we can analyze with other helpers below.
@@ -527,10 +538,15 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 
     MemDepResult InstDep = MD->getDependency(Inst);
 
-    // Ignore any store where we can't find a local dependence.
-    // FIXME: cross-block DSE would be fun. :)
-    if (!InstDep.isDef() && !InstDep.isClobber())
+    if (!InstDep.isDef() && !InstDep.isClobber() && !InstDep.isNonLocal())
       continue;
+    if (InstDep.isNonLocal()) {
+      if (!PDT->getRootNode())
+        continue;
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+        handleNonLocalStoreDeletion(SI);
+      continue;
+    }
 
     // Figure out what location is being stored to.
     MemoryLocation Loc = getLocForWrite(Inst, *AA);
@@ -702,6 +718,50 @@ static void FindUnconditionalPreds(SmallVectorImpl<BasicBlock *> &Blocks,
     if (DT->isReachableFromEntry(Pred))
       Blocks.push_back(Pred);
   }
+}
+
+/// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
+/// and zero out all the operands of this instruction.  If any of them become
+/// dead, delete them and the computation tree that feeds them.
+/// If ValueSet is non-null, remove any deleted instructions from it as well.
+void DSE::DeleteDeadInstruction(Instruction *I, MemoryDependenceAnalysis &MD,
+                                const TargetLibraryInfo &TLI,
+                                SmallSetVector<Value *, 16> *ValueSet) {
+  SmallVector<Instruction *, 32> NowDeadInsts;
+
+  NowDeadInsts.push_back(I);
+  --NumFastOther;
+
+  // Before we touch this instruction, remove it from memdep!
+  do {
+    Instruction *DeadInst = NowDeadInsts.pop_back_val();
+    ++NumFastOther;
+    if (StoreInst *SI = dyn_cast<StoreInst>(DeadInst))
+      DeadStores.insert(SI);
+
+    // This instruction is dead, zap it, in stages.  Start by removing it from
+    // MemDep, which needs to know the operands and needs it to be in the
+    // function.
+    MD.removeInstruction(DeadInst);
+
+    for (unsigned op = 0, e = DeadInst->getNumOperands(); op != e; ++op) {
+      Value *Op = DeadInst->getOperand(op);
+      DeadInst->setOperand(op, nullptr);
+
+      // If this operand just became dead, add it to the NowDeadInsts list.
+      if (!Op->use_empty())
+        continue;
+
+      if (Instruction *OpI = dyn_cast<Instruction>(Op))
+        if (isInstructionTriviallyDead(OpI, &TLI))
+          NowDeadInsts.push_back(OpI);
+    }
+
+    DeadInst->eraseFromParent();
+
+    if (ValueSet)
+      ValueSet->remove(DeadInst);
+  } while (!NowDeadInsts.empty());
 }
 
 /// HandleFree - Handle frees of entire structures whose dependency is a store
@@ -930,4 +990,117 @@ void DSE::RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
     MemoryLocation StackLoc(I, getPointerSize(I, DL, *TLI));
     return !AA->isNoAlias(StackLoc, LoadedLoc);
   });
+}
+
+/// isSafeCandidateForDeletion- Check all paths from the SrcBlock till
+/// SinkBlock to see if Store 'SI' is safe to be remove.
+/// Returns true if the candidate store SI is safe to delete
+/// else returns false.
+bool DSE::isSafeCandidateForDeletion(BasicBlock *SrcBlock,
+                                     BasicBlock *SinkBlock, StoreInst *SI) {
+  SmallVector<BasicBlock *, 16> WorkList;
+  SmallPtrSet<BasicBlock *, 8> Visited;
+  BasicBlock::iterator BBI(SI);
+
+  // Check from the store till end of block and make sure we have no references
+  // to memory stored by this Store Instruction.
+  for (auto BI = ++BBI, BE = SrcBlock->end(); BI != BE; ++BI) {
+    Instruction *I = BI;
+    StoreInst *CSI = dyn_cast<StoreInst>(I);
+    if (CSI) {
+      AliasResult R =
+          AA->alias(MemoryLocation::get(SI), MemoryLocation::get(CSI));
+      if (R == MustAlias)
+        return true;
+    } else {
+      ModRefInfo Res = AA->getModRefInfo(I, MemoryLocation::get(SI));
+      if (Res != MRI_NoModRef)
+        return false;
+    }
+  }
+
+  // Add successors of the block to stack and start DFS.
+  for (succ_iterator I = succ_begin(SrcBlock), E = succ_end(SrcBlock); I != E;
+       ++I) {
+    if (!Visited.insert(*I).second)
+      continue;
+    // A path with backedge may not be safe. Conservatively mark
+    // this store unsafe.
+    if (BackEdgesMap.count(std::make_pair(SrcBlock, *I)))
+      return false;
+    WorkList.push_back(*I);
+  }
+
+  while (!WorkList.empty()) {
+    BasicBlock *B = WorkList.pop_back_val();
+    auto BI = B->begin();
+    auto BE = B->end();
+    for (; BI != BE; ++BI) {
+      Instruction *I = BI;
+      StoreInst *CSI = dyn_cast<StoreInst>(I);
+      if (CSI) {
+        AliasResult R =
+            AA->alias(MemoryLocation::get(SI), MemoryLocation::get(CSI));
+        if (R == MustAlias)
+          break;
+      } else {
+        ModRefInfo Res = AA->getModRefInfo(I, MemoryLocation::get(SI));
+        if (Res != MRI_NoModRef)
+          return false;
+      }
+    }
+
+    // If we reached the sink node or we found a block which has a stores that
+    // overwrites the candidate block we need not look at their successors.
+    if (B == SinkBlock || BI != BE)
+      continue;
+
+    for (succ_iterator I = succ_begin(B), E = succ_end(B); I != E; ++I) {
+      if (!Visited.insert(*I).second)
+        continue;
+      // A path with backedge may not be safe.Conservatively mark
+      // this store unsafe.
+      if (BackEdgesMap.count(std::make_pair(B, *I)))
+        return false;
+      WorkList.push_back(*I);
+    }
+  }
+
+  return true;
+}
+
+/// handleNonLocalStoreDeletion - Handle non local dead store elimination.
+/// This works by finding candidate stores using PDT and then running DFS
+/// from candidate store block checking all paths to make sure the store is
+/// safe to delete.
+void DSE::handleNonLocalStoreDeletion(StoreInst *SI) {
+  BasicBlock *BB = SI->getParent();
+  Value *Pointer = SI->getPointerOperand();
+  DomTreeNode *DTNode = PDT->getNode(BB);
+  if (!DTNode)
+    return;
+
+  int DFSNumIn = DTNode->getDFSNumIn();
+  int DFSNumOut = DTNode->getDFSNumOut();
+  for (int i = DFSNumIn + 1; i < DFSNumOut; ++i) {
+    for (auto &I : Candidates[i]) {
+      StoreInst *CandidateSI = I;
+      if (DeadStores.count(CandidateSI))
+        continue;
+      Value *MemPtr = CandidateSI->getPointerOperand();
+      if (!MemPtr)
+        continue;
+      if (Pointer->getType() != MemPtr->getType())
+        continue;
+      AliasResult R =
+          AA->alias(MemoryLocation::get(SI), MemoryLocation::get(CandidateSI));
+      if (R != MustAlias)
+        continue;
+      if (isSafeCandidateForDeletion(CandidateSI->getParent(), BB,
+                                     CandidateSI)) {
+        DeleteDeadInstruction(CandidateSI, *MD, *TLI);
+        ++NumCrossBlockStores;
+      }
+    }
+  }
 }
