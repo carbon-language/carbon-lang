@@ -564,6 +564,12 @@ unsigned RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
   if (!IsVirtual)
     pData = data.data();
 
+  // Code section alignment needs to be at least as high as stub alignment or
+  // padding calculations may by incorrect when the section is remapped to a
+  // higher alignment.
+  if (IsCode)
+    Alignment = std::max(Alignment, getStubAlignment());
+
   // Some sections, such as debug info, don't need to be loaded for execution.
   // Leave those where they are.
   if (IsRequired) {
