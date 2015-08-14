@@ -767,19 +767,25 @@ void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple,
 
   TT = TheTriple;
 
-  Triple::ObjectFormatType Format = TT.getObjectFormat();
-  switch (Format) {
-  case Triple::MachO:
+  Triple::ArchType Arch = TT.getArch();
+  // FIXME: Checking for Arch here to filter out bogus triples such as
+  // cellspu-apple-darwin. Perhaps we should fix in Triple?
+  if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
+       Arch == Triple::arm || Arch == Triple::thumb ||
+       Arch == Triple::aarch64 ||
+       Arch == Triple::ppc || Arch == Triple::ppc64 ||
+       Arch == Triple::UnknownArch) &&
+      TT.isOSBinFormatMachO()) {
+    Env = IsMachO;
     initMachOMCObjectFileInfo(TT);
-    break;
-  case Triple::COFF:
+  } else if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
+              Arch == Triple::arm || Arch == Triple::thumb) &&
+             (TT.isOSWindows() && TT.getObjectFormat() == Triple::COFF)) {
+    Env = IsCOFF;
     initCOFFMCObjectFileInfo(TT);
-    break;
-  case Triple::ELF:
+  } else {
+    Env = IsELF;
     initELFMCObjectFileInfo(TT);
-    break;
-  case Triple::UnknownObjectFormat:
-    break;
   }
 }
 
@@ -795,9 +801,7 @@ MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {
 }
 
 void MCObjectFileInfo::InitEHFrameSection() {
-  Triple::ObjectFormatType Format = TT.getObjectFormat();
-  switch (Format) {
-  case Triple::MachO:
+  if (Env == IsMachO)
     EHFrameSection =
       Ctx->getMachOSection("__TEXT", "__eh_frame",
                            MachO::S_COALESCED |
@@ -805,20 +809,14 @@ void MCObjectFileInfo::InitEHFrameSection() {
                            MachO::S_ATTR_STRIP_STATIC_SYMS |
                            MachO::S_ATTR_LIVE_SUPPORT,
                            SectionKind::getReadOnly());
-    break;
-  case Triple::ELF:
+  else if (Env == IsELF)
     EHFrameSection =
         Ctx->getELFSection(".eh_frame", EHSectionType, EHSectionFlags);
-    break;
-  case Triple::COFF:
+  else
     EHFrameSection =
       Ctx->getCOFFSection(".eh_frame",
                           COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                           COFF::IMAGE_SCN_MEM_READ |
                           COFF::IMAGE_SCN_MEM_WRITE,
                           SectionKind::getDataRel());
-    break;
-  case Triple::UnknownObjectFormat:
-    break;
-  }
 }

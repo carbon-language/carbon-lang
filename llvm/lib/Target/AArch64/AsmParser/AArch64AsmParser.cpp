@@ -4055,10 +4055,10 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 /// ParseDirective parses the arm specific directives
 bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
-  Triple::ObjectFormatType Format =
-      getContext().getObjectFileInfo()->getTargetTriple().getObjectFormat();
-  bool IsMachO = Format == Triple::MachO;
-  bool IsCOFF = Format == Triple::COFF;
+  const MCObjectFileInfo::Environment Format =
+    getContext().getObjectFileInfo()->getObjectFileType();
+  bool IsMachO = Format == MCObjectFileInfo::IsMachO;
+  bool IsCOFF = Format == MCObjectFileInfo::IsCOFF;
 
   StringRef IDVal = DirectiveID.getIdentifier();
   SMLoc Loc = DirectiveID.getLoc();

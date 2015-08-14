@@ -162,15 +162,13 @@ MCSymbol *MCContext::getOrCreateLSDASymbol(StringRef FuncName) {
 MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
                                       bool IsTemporary) {
   if (MOFI) {
-    switch (MOFI->getTargetTriple().getObjectFormat()) {
-    case Triple::COFF:
+    switch (MOFI->getObjectFileType()) {
+    case MCObjectFileInfo::IsCOFF:
       return new (Name, *this) MCSymbolCOFF(Name, IsTemporary);
-    case Triple::ELF:
+    case MCObjectFileInfo::IsELF:
       return new (Name, *this) MCSymbolELF(Name, IsTemporary);
-    case Triple::MachO:
+    case MCObjectFileInfo::IsMachO:
       return new (Name, *this) MCSymbolMachO(Name, IsTemporary);
-    case Triple::UnknownObjectFormat:
-      break;
     }
   }
   return new (Name, *this) MCSymbol(MCSymbol::SymbolKindUnset, Name,

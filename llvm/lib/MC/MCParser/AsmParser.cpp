@@ -513,18 +513,16 @@ AsmParser::AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer());
 
   // Initialize the platform / file format parser.
-  switch (Ctx.getObjectFileInfo()->getTargetTriple().getObjectFormat()) {
-  case Triple::COFF:
+  switch (Ctx.getObjectFileInfo()->getObjectFileType()) {
+  case MCObjectFileInfo::IsCOFF:
     PlatformParser.reset(createCOFFAsmParser());
     break;
-  case Triple::MachO:
+  case MCObjectFileInfo::IsMachO:
     PlatformParser.reset(createDarwinAsmParser());
     IsDarwin = true;
     break;
-  case Triple::ELF:
+  case MCObjectFileInfo::IsELF:
     PlatformParser.reset(createELFAsmParser());
-    break;
-  case Triple::UnknownObjectFormat:
     break;
   }
 
