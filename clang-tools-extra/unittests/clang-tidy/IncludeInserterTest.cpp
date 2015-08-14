@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../clang-tidy/IncludeInserter.h"
+#include "../clang-tidy/utils/IncludeInserter.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "ClangTidyTest.h"
