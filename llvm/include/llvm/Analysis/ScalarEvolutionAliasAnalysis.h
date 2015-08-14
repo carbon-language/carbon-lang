@@ -23,44 +23,43 @@
 
 namespace llvm {
 
-  /// ScalarEvolutionAliasAnalysis - This is a simple alias analysis
-  /// implementation that uses ScalarEvolution to answer queries.
-  class ScalarEvolutionAliasAnalysis : public FunctionPass,
-                                       public AliasAnalysis {
-    ScalarEvolution *SE;
+/// ScalarEvolutionAliasAnalysis - This is a simple alias analysis
+/// implementation that uses ScalarEvolution to answer queries.
+class ScalarEvolutionAliasAnalysis : public FunctionPass, public AliasAnalysis {
+  ScalarEvolution *SE;
 
-  public:
-    static char ID; // Class identification, replacement for typeinfo
-    ScalarEvolutionAliasAnalysis() : FunctionPass(ID), SE(nullptr) {
-      initializeScalarEvolutionAliasAnalysisPass(
+public:
+  static char ID; // Class identification, replacement for typeinfo
+  ScalarEvolutionAliasAnalysis() : FunctionPass(ID), SE(nullptr) {
+    initializeScalarEvolutionAliasAnalysisPass(
         *PassRegistry::getPassRegistry());
-    }
+  }
 
-    /// getAdjustedAnalysisPointer - This method is used when a pass implements
-    /// an analysis interface through multiple inheritance.  If needed, it
-    /// should override this to adjust the this pointer as needed for the
-    /// specified pass info.
-    void *getAdjustedAnalysisPointer(AnalysisID PI) override {
-      if (PI == &AliasAnalysis::ID)
-        return (AliasAnalysis*)this;
-      return this;
-    }
+  /// getAdjustedAnalysisPointer - This method is used when a pass implements
+  /// an analysis interface through multiple inheritance.  If needed, it
+  /// should override this to adjust the this pointer as needed for the
+  /// specified pass info.
+  void *getAdjustedAnalysisPointer(AnalysisID PI) override {
+    if (PI == &AliasAnalysis::ID)
+      return (AliasAnalysis *)this;
+    return this;
+  }
 
-  private:
-    void getAnalysisUsage(AnalysisUsage &AU) const override;
-    bool runOnFunction(Function &F) override;
-    AliasResult alias(const MemoryLocation &LocA,
-                      const MemoryLocation &LocB) override;
+private:
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnFunction(Function &F) override;
+  AliasResult alias(const MemoryLocation &LocA,
+                    const MemoryLocation &LocB) override;
 
-    Value *GetBaseValue(const SCEV *S);
-  };
+  Value *GetBaseValue(const SCEV *S);
+};
 
-  //===--------------------------------------------------------------------===//
-  //
-  // createScalarEvolutionAliasAnalysisPass - This pass implements a simple
-  // alias analysis using ScalarEvolution queries.
-  //
-  FunctionPass *createScalarEvolutionAliasAnalysisPass();
+//===--------------------------------------------------------------------===//
+//
+// createScalarEvolutionAliasAnalysisPass - This pass implements a simple
+// alias analysis using ScalarEvolution queries.
+//
+FunctionPass *createScalarEvolutionAliasAnalysisPass();
 
 }
 
