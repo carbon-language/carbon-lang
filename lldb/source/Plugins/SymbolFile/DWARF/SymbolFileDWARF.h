@@ -69,7 +69,7 @@ public:
     friend class SymbolFileDWARFDebugMap;
     friend class DebugMapModule;
     friend class DWARFCompileUnit;
-    friend class ClangASTContext;
+    friend class lldb_private::ClangASTContext;
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------
@@ -136,8 +136,8 @@ public:
                                       uint32_t type_mask,
                                       lldb_private::TypeList &type_list) override;
 
-    virtual lldb_private::ClangASTContext &
-                    GetClangASTContext ();
+    lldb_private::ClangASTContext &
+                    GetClangASTContext () override;
 
     lldb_private::TypeSystem *
                             GetTypeSystemForLanguage (lldb::LanguageType language) override;
