@@ -33,17 +33,25 @@ namespace tooling {
 /// \brief A JSON based compilation database.
 ///
 /// JSON compilation database files must contain a list of JSON objects which
-/// provide the command lines in the attributes 'directory', 'command' and
-/// 'file':
+/// provide the command lines in the attributes 'directory', 'command',
+/// 'arguments' and 'file':
 /// [
 ///   { "directory": "<working directory of the compile>",
 ///     "command": "<compile command line>",
+///     "file": "<path to source file>"
+///   },
+///   { "directory": "<working directory of the compile>",
+///     "arguments": ["<raw>", "<command>" "<line>" "<parameters>"],
 ///     "file": "<path to source file>"
 ///   },
 ///   ...
 /// ]
 /// Each object entry defines one compile action. The specified file is
 /// considered to be the main source file for the translation unit.
+///
+/// 'command' is a full command line that will be unescaped.
+///
+/// 'arguments' is a list of command line arguments that will not be unescaped.
 ///
 /// JSON compilation databases can for example be generated in CMake projects
 /// by setting the flag -DCMAKE_EXPORT_COMPILE_COMMANDS.
@@ -94,7 +102,7 @@ private:
   // Tuple (directory, commandline) where 'commandline' pointing to the
   // corresponding nodes in the YAML stream.
   typedef std::pair<llvm::yaml::ScalarNode*,
-                    llvm::yaml::ScalarNode*> CompileCommandRef;
+                    std::vector<std::string>> CompileCommandRef;
 
   /// \brief Converts the given array of CompileCommandRefs to CompileCommands.
   void getCommands(ArrayRef<CompileCommandRef> CommandsRef,

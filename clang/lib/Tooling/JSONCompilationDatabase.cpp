@@ -221,9 +221,8 @@ void JSONCompilationDatabase::getCommands(
     SmallString<8> DirectoryStorage;
     SmallString<1024> CommandStorage;
     Commands.emplace_back(
-        // FIXME: Escape correctly:
-        CommandsRef[I].first->getValue(DirectoryStorage),
-        unescapeCommandLine(CommandsRef[I].second->getValue(CommandStorage)));
+      CommandsRef[I].first->getValue(DirectoryStorage),
+      CommandsRef[I].second);
   }
 }
 
@@ -243,43 +242,59 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
     ErrorMessage = "Expected array.";
     return false;
   }
-  for (llvm::yaml::SequenceNode::iterator AI = Array->begin(),
-                                          AE = Array->end();
-       AI != AE; ++AI) {
-    llvm::yaml::MappingNode *Object = dyn_cast<llvm::yaml::MappingNode>(&*AI);
+  for (auto& NextObject : *Array) {
+    llvm::yaml::MappingNode *Object = dyn_cast<llvm::yaml::MappingNode>(&NextObject);
     if (!Object) {
       ErrorMessage = "Expected object.";
       return false;
     }
     llvm::yaml::ScalarNode *Directory = nullptr;
-    llvm::yaml::ScalarNode *Command = nullptr;
+    std::vector<std::string> Arguments;
+    std::vector<std::string> Command;
     llvm::yaml::ScalarNode *File = nullptr;
-    for (llvm::yaml::MappingNode::iterator KVI = Object->begin(),
-                                           KVE = Object->end();
-         KVI != KVE; ++KVI) {
-      llvm::yaml::Node *Value = (*KVI).getValue();
+    bool ArgumentsFound = false;
+    bool CommandFound = false;
+    for (auto& NextKeyValue : *Object) {
+      llvm::yaml::ScalarNode *KeyString =
+          dyn_cast<llvm::yaml::ScalarNode>(NextKeyValue.getKey());
+      if (!KeyString) {
+        ErrorMessage = "Expected strings as key.";
+        return false;
+      }
+      SmallString<10> KeyStorage;
+      StringRef KeyValue = KeyString->getValue(KeyStorage);
+      llvm::yaml::Node *Value = NextKeyValue.getValue();
       if (!Value) {
         ErrorMessage = "Expected value.";
         return false;
       }
       llvm::yaml::ScalarNode *ValueString =
           dyn_cast<llvm::yaml::ScalarNode>(Value);
-      if (!ValueString) {
+      llvm::yaml::SequenceNode *SequenceString =
+          dyn_cast<llvm::yaml::SequenceNode>(Value);
+      if (KeyValue == "arguments" && !SequenceString) {
+        ErrorMessage = "Expected sequence as value.";
+        return false;
+      } else if (KeyValue != "arguments" && !ValueString) {
         ErrorMessage = "Expected string as value.";
         return false;
       }
-      llvm::yaml::ScalarNode *KeyString =
-          dyn_cast<llvm::yaml::ScalarNode>((*KVI).getKey());
-      if (!KeyString) {
-        ErrorMessage = "Expected strings as key.";
-        return false;
-      }
-      SmallString<8> KeyStorage;
-      if (KeyString->getValue(KeyStorage) == "directory") {
+      if (KeyValue == "directory") {
         Directory = ValueString;
-      } else if (KeyString->getValue(KeyStorage) == "command") {
-        Command = ValueString;
-      } else if (KeyString->getValue(KeyStorage) == "file") {
+      } else if (KeyValue == "arguments") {
+        for (auto& NextArgument : *SequenceString) {
+          SmallString<128> CommandStorage;
+          auto ValueString = dyn_cast<llvm::yaml::ScalarNode>(&NextArgument);
+
+          Arguments.push_back(ValueString->getValue(CommandStorage));
+        }
+        ArgumentsFound = true;
+      } else if (KeyValue == "command") {
+        SmallString<1024> CommandStorage;
+        // FIXME: Escape correctly:
+        Command = unescapeCommandLine(ValueString->getValue(CommandStorage));
+        CommandFound = true;
+      } else if (KeyValue == "file") {
         File = ValueString;
       } else {
         ErrorMessage = ("Unknown key: \"" +
@@ -291,8 +306,8 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
       ErrorMessage = "Missing key: \"file\".";
       return false;
     }
-    if (!Command) {
-      ErrorMessage = "Missing key: \"command\".";
+    if (!ArgumentsFound && !CommandFound) {
+      ErrorMessage = "Missing key: \"command\" or \"arguments\".";
       return false;
     }
     if (!Directory) {
@@ -312,7 +327,7 @@ bool JSONCompilationDatabase::parse(std::string &ErrorMessage) {
       llvm::sys::path::native(FileName, NativeFilePath);
     }
     IndexByFile[NativeFilePath].push_back(
-        CompileCommandRef(Directory, Command));
+        CompileCommandRef(Directory, ArgumentsFound ? Arguments : Command));
     MatchTrie.insert(NativeFilePath);
   }
   return true;

@@ -36,8 +36,12 @@ TEST(JSONCompilationDatabase, ErrsOnInvalidFormat) {
   expectFailure("[{[]:\"\"}]", "Incorrectly typed entry");
   expectFailure("[{}]", "Empty entry");
   expectFailure("[{\"directory\":\"\",\"command\":\"\"}]", "Missing file");
-  expectFailure("[{\"directory\":\"\",\"file\":\"\"}]", "Missing command");
+  expectFailure("[{\"directory\":\"\",\"file\":\"\"}]", "Missing command or arguments");
   expectFailure("[{\"command\":\"\",\"file\":\"\"}]", "Missing directory");
+  expectFailure("[{\"directory\":\"\",\"arguments\":[]}]", "Missing file");
+  expectFailure("[{\"arguments\":\"\",\"file\":\"\"}]", "Missing directory");
+  expectFailure("[{\"directory\":\"\",\"arguments\":\"\",\"file\":\"\"}]", "Arguments not array");
+  expectFailure("[{\"directory\":\"\",\"command\":[],\"file\":\"\"}]", "Command not string");
 }
 
 static std::vector<std::string> getAllFiles(StringRef JSONDatabase,
@@ -124,6 +128,25 @@ static CompileCommand findCompileArgsInJsonDatabase(StringRef FileName,
   if (Commands.empty())
     return CompileCommand();
   return Commands[0];
+}
+
+TEST(JSONCompilationDatabase, ArgumentsPreferredOverCommand) {
+   StringRef Directory("//net/dir");
+   StringRef FileName("//net/dir/filename");
+   StringRef Command("command");
+   StringRef Arguments = "arguments";
+   Twine ArgumentsAccumulate;
+   std::string ErrorMessage;
+   CompileCommand FoundCommand = findCompileArgsInJsonDatabase(
+      FileName,
+      ("[{\"directory\":\"" + Directory + "\","
+         "\"command\":\"" + Command + "\","
+         "\"arguments\":[\"" + Arguments + "\"],"
+         "\"file\":\"" + FileName + "\"}]").str(),
+      ErrorMessage);
+   EXPECT_EQ(Directory, FoundCommand.Directory) << ErrorMessage;
+   EXPECT_EQ(1u, FoundCommand.CommandLine.size()) << ErrorMessage;
+   EXPECT_EQ(Arguments, FoundCommand.CommandLine[0]) << ErrorMessage;
 }
 
 struct FakeComparator : public PathComparator {
