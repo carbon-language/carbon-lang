@@ -241,6 +241,9 @@ public:
   /// processing the input.
   std::vector<std::string> ModuleFiles;
 
+  /// \brief The list of files to embed into the compiled module file.
+  std::vector<std::string> ModulesEmbedFiles;
+
   /// \brief The list of AST files to merge.
   std::vector<std::string> ASTMergeFiles;
 

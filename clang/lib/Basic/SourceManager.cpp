@@ -678,6 +678,13 @@ void SourceManager::disableFileContentsOverride(const FileEntry *File) {
   OverriddenFilesInfo->OverriddenFilesWithBuffer.erase(File);
 }
 
+void SourceManager::embedFileContentsInModule(const FileEntry *File) {
+  // We model an embedded file as a file whose buffer has been overridden
+  // by its contents as they are now.
+  const SrcMgr::ContentCache *CC = getOrCreateContentCache(File);
+  const_cast<SrcMgr::ContentCache *>(CC)->BufferOverridden = true;
+}
+
 StringRef SourceManager::getBufferData(FileID FID, bool *Invalid) const {
   bool MyInvalid = false;
   const SLocEntry &SLoc = getSLocEntry(FID, &MyInvalid);

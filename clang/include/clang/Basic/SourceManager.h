@@ -851,6 +851,13 @@ public:
   /// This should be called before parsing has begun.
   void disableFileContentsOverride(const FileEntry *File);
 
+  /// \brief Request that the contents of the given source file are written
+  /// to a created module file if they are used in this compilation. This
+  /// removes the requirement that the file still exist when the module is used
+  /// (but does not make the file visible to header search and the like when
+  /// the module is used).
+  void embedFileContentsInModule(const FileEntry *SourceFile);
+
   //===--------------------------------------------------------------------===//
   // FileID manipulation methods.
   //===--------------------------------------------------------------------===//

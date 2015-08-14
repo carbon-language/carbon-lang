@@ -368,6 +368,10 @@ def fmodule_map_file_home_is_cwd : Flag<["-"], "fmodule-map-file-home-is-cwd">,
 def fmodule_feature : Separate<["-"], "fmodule-feature">,
   MetaVarName<"<feature>">,
   HelpText<"Enable <feature> in module map requires declarations">;
+def fmodules_embed_file_EQ : Joined<["-"], "fmodules-embed-file=">,
+  MetaVarName<"<file>">,
+  HelpText<"Embed the contents of the specified file into the module file "
+           "being compiled.">;
 def fmodules_local_submodule_visibility :
   Flag<["-"], "fmodules-local-submodule-visibility">,
   HelpText<"Enforce name visibility rules across submodules of the same "
