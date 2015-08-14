@@ -51,3 +51,14 @@ define i64 @test_integer(i64  %in) {
   %val = select i1 %cmp, i64 0, i64 %in
   ret i64 %val
 }
+
+define float @test_f16(half %in) {
+; CHECK-LABEL: test_f16:
+  %cmp = fcmp nnan ult half %in, 0.000000e+00
+  %val = select i1 %cmp, half %in, half 0.000000e+00
+  %longer = fpext half %val to float
+  ret float %longer
+; FIXME: It'd be nice for this to create an fmin instruction!
+; CHECK: fcvt
+; CHECK: fcsel
+}

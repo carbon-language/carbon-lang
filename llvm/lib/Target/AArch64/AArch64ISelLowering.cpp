@@ -301,6 +301,8 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FTRUNC,      MVT::f16,  Promote);
   setOperationAction(ISD::FMINNUM,     MVT::f16,  Promote);
   setOperationAction(ISD::FMAXNUM,     MVT::f16,  Promote);
+  setOperationAction(ISD::FMINNAN,     MVT::f16,  Promote);
+  setOperationAction(ISD::FMAXNAN,     MVT::f16,  Promote);
 
   // v4f16 is also a storage-only type, so promote it to v4f32 when that is
   // known to be safe.
@@ -681,8 +683,8 @@ void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
                             ISD::SABSDIFF, ISD::UABSDIFF})
       setOperationAction(Opcode, VT.getSimpleVT(), Legal);
 
-  // F[MIN|MAX][NUM|NAN] are available for all FP NEON types.
-  if (VT.isFloatingPoint())
+  // F[MIN|MAX][NUM|NAN] are available for all FP NEON types (not f16 though!).
+  if (VT.isFloatingPoint() && VT.getVectorElementType() != MVT::f16)
     for (unsigned Opcode : {ISD::FMINNAN, ISD::FMAXNAN,
                             ISD::FMINNUM, ISD::FMAXNUM})
       setOperationAction(Opcode, VT.getSimpleVT(), Legal);
