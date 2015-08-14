@@ -38,7 +38,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
@@ -72,27 +71,6 @@ struct CFLAliasAnalysis::FunctionInfo {
 
   FunctionInfo(StratifiedSets<Value *> &&S, SmallVector<Value *, 4> &&RV)
       : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
-};
-
-struct CFLAliasAnalysis::FunctionHandle final : public CallbackVH {
-  FunctionHandle(Function *Fn, CFLAliasAnalysis *CFLAA)
-      : CallbackVH(Fn), CFLAA(CFLAA) {
-    assert(Fn != nullptr);
-    assert(CFLAA != nullptr);
-  }
-
-  void deleted() override { removeSelfFromCache(); }
-  void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
-
-private:
-  CFLAliasAnalysis *CFLAA;
-
-  void removeSelfFromCache() {
-    assert(CFLAA != nullptr);
-    auto *Val = getValPtr();
-    CFLAA->evict(cast<Function>(Val));
-    setValPtr(nullptr);
-  }
 };
 
 CFLAliasAnalysis::CFLAliasAnalysis() : ImmutablePass(ID) {

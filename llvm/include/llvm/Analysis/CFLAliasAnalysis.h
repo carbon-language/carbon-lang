@@ -20,6 +20,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include <forward_list>
 
@@ -27,7 +28,27 @@ namespace llvm {
 
 class CFLAliasAnalysis : public ImmutablePass, public AliasAnalysis {
   struct FunctionInfo;
-  struct FunctionHandle;
+
+  struct FunctionHandle final : public CallbackVH {
+    FunctionHandle(Function *Fn, CFLAliasAnalysis *CFLAA)
+        : CallbackVH(Fn), CFLAA(CFLAA) {
+      assert(Fn != nullptr);
+      assert(CFLAA != nullptr);
+    }
+
+    void deleted() override { removeSelfFromCache(); }
+    void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
+
+  private:
+    CFLAliasAnalysis *CFLAA;
+
+    void removeSelfFromCache() {
+      assert(CFLAA != nullptr);
+      auto *Val = getValPtr();
+      CFLAA->evict(cast<Function>(Val));
+      setValPtr(nullptr);
+    }
+  };
 
   /// \brief Cached mapping of Functions to their StratifiedSets.
   /// If a function's sets are currently being built, it is marked
