@@ -26,7 +26,7 @@ public:
                           StringRef /*SearchPath*/, StringRef /*RelativePath*/,
                           const Module * /*ImportedModule*/) override {
     Inserter->AddInclude(FileNameRef, IsAngled, HashLocation,
-                                FileNameRange.getEnd());
+                         FileNameRange.getEnd());
   }
 
 private:
@@ -54,7 +54,14 @@ IncludeInserter::CreateIncludeInsertion(FileID FileID, StringRef Header,
     return llvm::None;
   }
   if (IncludeSorterByFile.find(FileID) == IncludeSorterByFile.end()) {
-    return llvm::None;
+    // This may happen if there have been no preprocessor directives in this
+    // file.
+    IncludeSorterByFile.insert(std::make_pair(
+        FileID,
+        llvm::make_unique<IncludeSorter>(
+            &SourceMgr, &LangOpts, FileID,
+            SourceMgr.getFilename(SourceMgr.getLocForStartOfFile(FileID)),
+            Style)));
   }
   return IncludeSorterByFile[FileID]->CreateIncludeInsertion(Header, IsAngled);
 }

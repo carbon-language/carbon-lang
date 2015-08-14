@@ -21,27 +21,23 @@ namespace tidy {
 // the necessary commands to sort the inclusions according to the precedence
 // enocded in IncludeKinds.
 class IncludeSorter {
- public:
+public:
   // Supported include styles.
-  enum IncludeStyle {
-    IS_LLVM = 0,
-    IS_Google = 1
-  };
+  enum IncludeStyle { IS_LLVM = 0, IS_Google = 1 };
 
   // The classifications of inclusions, in the order they should be sorted.
   enum IncludeKinds {
-    IK_MainTUInclude = 0,     // e.g. #include "foo.h" when editing foo.cc
-    IK_CSystemInclude = 1,    // e.g. #include <stdio.h>
-    IK_CXXSystemInclude = 2,  // e.g. #include <vector>
-    IK_NonSystemInclude = 3,  // e.g. #include "bar.h"
-    IK_InvalidInclude = 4     // total number of valid IncludeKinds
+    IK_MainTUInclude = 0,    // e.g. #include "foo.h" when editing foo.cc
+    IK_CSystemInclude = 1,   // e.g. #include <stdio.h>
+    IK_CXXSystemInclude = 2, // e.g. #include <vector>
+    IK_NonSystemInclude = 3, // e.g. #include "bar.h"
+    IK_InvalidInclude = 4    // total number of valid IncludeKinds
   };
 
   // IncludeSorter constructor; takes the FileID and name of the file to be
   // processed by the sorter.
-  IncludeSorter(const SourceManager* SourceMgr,
-                const LangOptions* LangOpts, const FileID FileID,
-                StringRef FileName, IncludeStyle Style);
+  IncludeSorter(const SourceManager *SourceMgr, const LangOptions *LangOpts,
+                const FileID FileID, StringRef FileName, IncludeStyle Style);
 
   // Returns the SourceManager-specific file ID for the file being handled by
   // the sorter.
@@ -58,18 +54,17 @@ class IncludeSorter {
 
   // Creates a quoted inclusion directive in the right sort order. Returns None
   // on error or if header inclusion directive for header already exists.
-  Optional<FixItHint> CreateIncludeInsertion(StringRef FileName,
-                                             bool IsAngled);
+  Optional<FixItHint> CreateIncludeInsertion(StringRef FileName, bool IsAngled);
 
- private:
+private:
   typedef SmallVector<SourceRange, 1> SourceRangeVector;
 
   // Creates a fix-it for the given replacements.
   // Takes the the source location that will be replaced, and the new text.
-  FixItHint CreateFixIt(SourceRange EditRange, const std::string& NewText);
+  FixItHint CreateFixIt(SourceRange EditRange, const std::string &NewText);
 
-  const SourceManager* SourceMgr;
-  const LangOptions* LangOpts;
+  const SourceManager *SourceMgr;
+  const LangOptions *LangOpts;
   const IncludeStyle Style;
   FileID CurrentFileID;
   // The file name stripped of common suffixes.
@@ -82,6 +77,6 @@ class IncludeSorter {
   SmallVector<std::string, 1> IncludeBucket[IK_InvalidInclude];
 };
 
-}  // namespace tidy
-}  // namespace clang
+} // namespace tidy
+} // namespace clang
 #endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_INCLUDESORTER_H

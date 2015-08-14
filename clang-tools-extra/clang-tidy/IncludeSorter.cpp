@@ -111,14 +111,20 @@ void IncludeSorter::AddInclude(StringRef FileName, bool IsAngled,
 
 Optional<FixItHint> IncludeSorter::CreateIncludeInsertion(StringRef FileName,
                                                           bool IsAngled) {
-  if (SourceLocations.empty()) {
-    return None;
-  }
   std::string IncludeStmt =
       IsAngled ? llvm::Twine("#include <" + FileName + ">\n").str()
                : llvm::Twine("#include \"" + FileName + "\"\n").str();
+  if (SourceLocations.empty()) {
+    // If there are no includes in this file, add it in the first line.
+    // FIXME: insert after the file comment or the header guard, if present.
+    IncludeStmt.append("\n");
+    return FixItHint::CreateInsertion(
+        SourceMgr->getLocForStartOfFile(CurrentFileID), IncludeStmt);
+  }
+
   auto IncludeKind =
       DetermineIncludeKind(CanonicalFile, FileName, IsAngled, Style);
+
   if (!IncludeBucket[IncludeKind].empty()) {
     for (const std::string &IncludeEntry : IncludeBucket[IncludeKind]) {
       if (FileName < IncludeEntry) {
@@ -135,21 +141,37 @@ Optional<FixItHint> IncludeSorter::CreateIncludeInsertion(StringRef FileName,
     return FixItHint::CreateInsertion(LastIncludeLocation.getEnd(),
                                       IncludeStmt);
   }
+  // Find the non-empty include bucket to be sorted directly above
+  // 'IncludeKind'. If such a bucket exists, we'll want to sort the include
+  // after that bucket. If no such bucket exists, find the first non-empty
+  // include bucket in the file. In that case, we'll want to sort the include
+  // before that bucket.
   IncludeKinds NonEmptyKind = IK_InvalidInclude;
-  for (int i = IncludeKind - 1; i >= 0; --i) {
+  for (int i = IK_InvalidInclude - 1; i >= 0; --i) {
     if (!IncludeBucket[i].empty()) {
       NonEmptyKind = static_cast<IncludeKinds>(i);
-      break;
+      if (NonEmptyKind < IncludeKind)
+        break;
     }
   }
   if (NonEmptyKind == IK_InvalidInclude) {
     return llvm::None;
   }
-  const std::string &LastInclude = IncludeBucket[NonEmptyKind].back();
-  SourceRange LastIncludeLocation = IncludeLocations[LastInclude].back();
+
+  if (NonEmptyKind < IncludeKind) {
+    // Create a block after.
+    const std::string &LastInclude = IncludeBucket[NonEmptyKind].back();
+    SourceRange LastIncludeLocation = IncludeLocations[LastInclude].back();
+    IncludeStmt = '\n' + IncludeStmt;
+    return FixItHint::CreateInsertion(LastIncludeLocation.getEnd(),
+                                      IncludeStmt);
+  }
+  // Create a block before.
+  const std::string &FirstInclude = IncludeBucket[NonEmptyKind][0];
+  SourceRange FirstIncludeLocation = IncludeLocations[FirstInclude].back();
   IncludeStmt.append("\n");
-  return FixItHint::CreateInsertion(
-      LastIncludeLocation.getEnd().getLocWithOffset(1), IncludeStmt);
+  return FixItHint::CreateInsertion(FirstIncludeLocation.getBegin(),
+                                    IncludeStmt);
 }
 
 std::vector<FixItHint> IncludeSorter::GetEdits() {

@@ -71,6 +71,13 @@ public:
   bool IsAngledInclude() const override { return false; }
 };
 
+class CSystemIncludeInserterCheck : public IncludeInserterCheckBase {
+public:
+  using IncludeInserterCheckBase::IncludeInserterCheckBase;
+  StringRef HeaderToInclude() const override { return "stdlib.h"; }
+  bool IsAngledInclude() const override { return true; }
+};
+
 class CXXSystemIncludeInserterCheck : public IncludeInserterCheckBase {
 public:
   CXXSystemIncludeInserterCheck(StringRef CheckName, ClangTidyContext *Context)
@@ -411,6 +418,72 @@ void foo() {
 
   EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
                           PreCode, "clang_tidy/tests/"
+                                   "insert_includes_test_header.cc",
+                          1));
+}
+
+TEST(IncludeInserterTest, InsertCXXSystemIncludeBeforeNonSystemInclude) {
+  const char *PreCode = R"(
+#include "path/to/a/header.h"
+
+void foo() {
+  int a = 0;
+})";
+  const char *PostCode = R"(
+#include <set>
+
+#include "path/to/a/header.h"
+
+void foo() {
+  int a = 0;
+})";
+
+  EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
+                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                                   "insert_includes_test_header.cc",
+                          1));
+}
+
+TEST(IncludeInserterTest, InsertCSystemIncludeBeforeCXXSystemInclude) {
+  const char *PreCode = R"(
+#include <set>
+
+#include "path/to/a/header.h"
+
+void foo() {
+  int a = 0;
+})";
+  const char *PostCode = R"(
+#include <stdlib.h>
+
+#include <set>
+
+#include "path/to/a/header.h"
+
+void foo() {
+  int a = 0;
+})";
+
+  EXPECT_EQ(PostCode, runCheckOnCode<CSystemIncludeInserterCheck>(
+                          PreCode, "devtools/cymbal/clang_tidy/tests/"
+                                   "insert_includes_test_header.cc",
+                          1));
+}
+
+TEST(IncludeInserterTest, InsertIncludeIfThereWasNoneBefore) {
+  const char *PreCode = R"(
+void foo() {
+  int a = 0;
+})";
+  const char *PostCode = R"(#include <set>
+
+
+void foo() {
+  int a = 0;
+})";
+
+  EXPECT_EQ(PostCode, runCheckOnCode<CXXSystemIncludeInserterCheck>(
+                          PreCode, "devtools/cymbal/clang_tidy/tests/"
                                    "insert_includes_test_header.cc",
                           1));
 }
