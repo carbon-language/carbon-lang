@@ -3,7 +3,7 @@
 ; Please update this file when making any IR changes. Information on the
 ; release process for this file is available here:
 ;
-;     http://llvm.org/docs/DeveloperPolicy.html#ir-backwards-compatibility
+;     http://llvm.org/docs/DeveloperPolicy.html#ir-backwards-compatibility 
 
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
 ; RUN: verify-uselistorder < %s
