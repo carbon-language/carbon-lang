@@ -55,7 +55,7 @@ public:
   ///        analyze L
   ///        if versioning is necessary version L
   ///        transform L
-  void versionLoop(Pass *P);
+  void versionLoop();
 
   /// \brief Adds the necessary PHI nodes for the versioned loops based on the
   /// loop-defined values used outside of the loop.

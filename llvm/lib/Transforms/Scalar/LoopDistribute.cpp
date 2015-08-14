@@ -794,7 +794,7 @@ private:
       DEBUG(dbgs() << "\nPointers:\n");
       DEBUG(LAI.getRuntimePointerChecking()->printChecks(dbgs(), Checks));
       LoopVersioning LVer(std::move(Checks), LAI, L, LI, DT);
-      LVer.versionLoop(this);
+      LVer.versionLoop();
       LVer.addPHINodes(DefsUsedOutside);
     }
 

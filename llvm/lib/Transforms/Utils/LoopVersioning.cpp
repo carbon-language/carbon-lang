@@ -40,7 +40,7 @@ LoopVersioning::LoopVersioning(const LoopAccessInfo &LAInfo, Loop *L,
   assert(L->getLoopPreheader() && "No preheader");
 }
 
-void LoopVersioning::versionLoop(Pass *P) {
+void LoopVersioning::versionLoop() {
   Instruction *FirstCheckInst;
   Instruction *MemRuntimeCheck;
   // Add the memcheck in the original preheader (this is empty initially).
