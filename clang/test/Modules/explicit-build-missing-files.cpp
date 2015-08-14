@@ -27,6 +27,9 @@
 // RUN: rm %t/a.h
 // RUN: %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s -verify
 
+// Oftentimes on Windows there are open handles, and deletion will fail.
+// REQUIRES: can-remove-opened-file
+
 #include "a.h" // expected-error {{file not found}}
 int x = b;
 
