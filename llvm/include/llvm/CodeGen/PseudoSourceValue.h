@@ -118,6 +118,10 @@ class GlobalValuePseudoSourceValue : public CallEntryPseudoSourceValue {
 public:
   GlobalValuePseudoSourceValue(const GlobalValue *GV);
 
+  static inline bool classof(const PseudoSourceValue *V) {
+    return V->kind() == GlobalValueCallEntry;
+  }
+
   const GlobalValue *getValue() const { return GV; }
 };
 

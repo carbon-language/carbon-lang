@@ -763,6 +763,10 @@ void MIPrinter::print(const MachineMemOperand &Op) {
       printStackObjectReference(
           cast<FixedStackPseudoSourceValue>(PVal)->getFrameIndex());
       break;
+    case PseudoSourceValue::GlobalValueCallEntry:
+      cast<GlobalValuePseudoSourceValue>(PVal)->getValue()->printAsOperand(
+          OS, /*PrintType=*/false, MST);
+      break;
     default:
       // TODO: Print the other pseudo source values.
       OS << "<unserializable pseudo value>";

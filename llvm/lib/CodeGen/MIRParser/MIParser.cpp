@@ -1437,6 +1437,14 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
     // The token was already consumed, so use return here instead of break.
     return false;
   }
+  case MIToken::GlobalValue:
+  case MIToken::NamedGlobalValue: {
+    GlobalValue *GV = nullptr;
+    if (parseGlobalValue(GV))
+      return true;
+    PSV = MF.getPSVManager().getGlobalValueCallEntry(GV);
+    break;
+  }
   // TODO: Parse the other pseudo source values.
   default:
     llvm_unreachable("The current token should be pseudo source value");
@@ -1448,7 +1456,8 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
 bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
   if (Token.is(MIToken::kw_constant_pool) || Token.is(MIToken::kw_stack) ||
       Token.is(MIToken::kw_got) || Token.is(MIToken::kw_jump_table) ||
-      Token.is(MIToken::FixedStackObject)) {
+      Token.is(MIToken::FixedStackObject) || Token.is(MIToken::GlobalValue) ||
+      Token.is(MIToken::NamedGlobalValue)) {
     const PseudoSourceValue *PSV = nullptr;
     if (parseMemoryPseudoSourceValue(PSV))
       return true;
