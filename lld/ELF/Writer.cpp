@@ -54,7 +54,7 @@ public:
   // Returns the size of the section in the output file.
   uintX_t getSize() { return Header.sh_size; }
   uintX_t getFlags() { return Header.sh_flags; }
-  uintX_t getOffset() { return Header.sh_offset; }
+  uintX_t getFileOff() { return Header.sh_offset; }
   uintX_t getAlign() { return Header.sh_addralign; }
 
   virtual void finalize() {}
@@ -91,7 +91,7 @@ public:
   }
 
   void add(StringRef S) { StrTabBuilder.add(S); }
-  size_t getOffset(StringRef S) { return StrTabBuilder.getOffset(S); }
+  size_t getFileOff(StringRef S) { return StrTabBuilder.getOffset(S); }
   void writeTo(uint8_t *Buf) override;
 
   void finalize() override {
@@ -359,7 +359,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   // First entry is null.
   ++SHdrs;
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
-    Sec->setNameOffset(StringTable.getOffset(Sec->getName()));
+    Sec->setNameOffset(StringTable.getFileOff(Sec->getName()));
     Sec->template writeHeaderTo<ELFT::TargetEndianness>(SHdrs++);
   }
 }
@@ -375,5 +375,5 @@ template <class ELFT> void Writer<ELFT>::openFile(StringRef Path) {
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections)
-    Sec->writeTo(Buf + Sec->getOffset());
+    Sec->writeTo(Buf + Sec->getFileOff());
 }
