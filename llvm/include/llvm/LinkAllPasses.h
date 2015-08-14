@@ -22,6 +22,7 @@
 #include "llvm/Analysis/CFLAliasAnalysis.h"
 #include "llvm/Analysis/CallPrinter.h"
 #include "llvm/Analysis/DomPrinter.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/LibCallAliasAnalysis.h"
 #include "llvm/Analysis/Lint.h"

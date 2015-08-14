@@ -26,13 +26,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createGlobalsModRefPass - This pass provides alias and mod/ref info for
-  // global values that do not have their addresses taken.
-  //
-  Pass *createGlobalsModRefPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   // createAAEvalPass - This pass implements a simple N^2 alias analysis
   // accuracy evaluator.
   //

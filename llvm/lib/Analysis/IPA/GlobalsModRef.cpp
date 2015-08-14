@@ -14,15 +14,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
@@ -30,7 +27,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include <list>
 using namespace llvm;
 
 #define DEBUG_TYPE "globalsmodref-aa"
@@ -56,14 +52,13 @@ STATISTIC(NumIndirectGlobalVars, "Number of indirect global objects");
 static cl::opt<bool> EnableUnsafeGlobalsModRefAliasResults(
     "enable-unsafe-globalsmodref-alias-results", cl::init(false), cl::Hidden);
 
-namespace {
 /// The mod/ref information collected for a particular function.
 ///
 /// We collect information about mod/ref behavior of a function here, both in
 /// general and as pertains to specific globals. We only have this detailed
 /// information when we know *something* useful about the behavior. If we
 /// saturate to fully general mod/ref, we remove the info for the function.
-class FunctionInfo {
+class GlobalsModRef::FunctionInfo {
   typedef SmallDenseMap<const GlobalValue *, ModRefInfo, 16> GlobalInfoMapType;
 
   /// Build a wrapper struct that has 8-byte alignment. All heap allocations
@@ -196,169 +191,38 @@ private:
   PointerIntPair<AlignedMap *, 3, unsigned, AlignedMapPointerTraits> Info;
 };
 
-/// GlobalsModRef - The actual analysis pass.
-class GlobalsModRef : public ModulePass, public AliasAnalysis {
-  /// The globals that do not have their addresses taken.
-  SmallPtrSet<const GlobalValue *, 8> NonAddressTakenGlobals;
+void GlobalsModRef::DeletionCallbackHandle::deleted() {
+  Value *V = getValPtr();
+  if (auto *F = dyn_cast<Function>(V))
+    GMR.FunctionInfos.erase(F);
 
-  /// IndirectGlobals - The memory pointed to by this global is known to be
-  /// 'owned' by the global.
-  SmallPtrSet<const GlobalValue *, 8> IndirectGlobals;
-
-  /// AllocsForIndirectGlobals - If an instruction allocates memory for an
-  /// indirect global, this map indicates which one.
-  DenseMap<const Value *, const GlobalValue *> AllocsForIndirectGlobals;
-
-  /// For each function, keep track of what globals are modified or read.
-  DenseMap<const Function *, FunctionInfo> FunctionInfos;
-
-  /// Handle to clear this analysis on deletion of values.
-  struct DeletionCallbackHandle final : CallbackVH {
-    GlobalsModRef &GMR;
-    std::list<DeletionCallbackHandle>::iterator I;
-
-    DeletionCallbackHandle(GlobalsModRef &GMR, Value *V)
-        : CallbackVH(V), GMR(GMR) {}
-
-    void deleted() override {
-      Value *V = getValPtr();
-      if (auto *F = dyn_cast<Function>(V))
-        GMR.FunctionInfos.erase(F);
-
-      if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-        if (GMR.NonAddressTakenGlobals.erase(GV)) {
-          // This global might be an indirect global.  If so, remove it and
-          // remove any AllocRelatedValues for it.
-          if (GMR.IndirectGlobals.erase(GV)) {
-            // Remove any entries in AllocsForIndirectGlobals for this global.
-            for (auto I = GMR.AllocsForIndirectGlobals.begin(),
-                      E = GMR.AllocsForIndirectGlobals.end();
-                 I != E; ++I)
-              if (I->second == GV)
-                GMR.AllocsForIndirectGlobals.erase(I);
-          }
-
-          // Scan the function info we have collected and remove this global
-          // from all of them.
-          for (auto &FIPair : GMR.FunctionInfos)
-            FIPair.second.eraseModRefInfoForGlobal(*GV);
-        }
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    if (GMR.NonAddressTakenGlobals.erase(GV)) {
+      // This global might be an indirect global.  If so, remove it and
+      // remove any AllocRelatedValues for it.
+      if (GMR.IndirectGlobals.erase(GV)) {
+        // Remove any entries in AllocsForIndirectGlobals for this global.
+        for (auto I = GMR.AllocsForIndirectGlobals.begin(),
+                  E = GMR.AllocsForIndirectGlobals.end();
+             I != E; ++I)
+          if (I->second == GV)
+            GMR.AllocsForIndirectGlobals.erase(I);
       }
 
-      // If this is an allocation related to an indirect global, remove it.
-      GMR.AllocsForIndirectGlobals.erase(V);
-
-      // And clear out the handle.
-      setValPtr(nullptr);
-      GMR.Handles.erase(I);
-      // This object is now destroyed!
+      // Scan the function info we have collected and remove this global
+      // from all of them.
+      for (auto &FIPair : GMR.FunctionInfos)
+        FIPair.second.eraseModRefInfoForGlobal(*GV);
     }
-  };
-
-  /// List of callbacks for globals being tracked by this analysis. Note that
-  /// these objects are quite large, but we only anticipate having one per
-  /// global tracked by this analysis. There are numerous optimizations we
-  /// could perform to the memory utilization here if this becomes a problem.
-  std::list<DeletionCallbackHandle> Handles;
-
-public:
-  static char ID;
-  GlobalsModRef() : ModulePass(ID) {
-    initializeGlobalsModRefPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnModule(Module &M) override {
-    InitializeAliasAnalysis(this, &M.getDataLayout());
+  // If this is an allocation related to an indirect global, remove it.
+  GMR.AllocsForIndirectGlobals.erase(V);
 
-    // Find non-addr taken globals.
-    AnalyzeGlobals(M);
-
-    // Propagate on CG.
-    AnalyzeCallGraph(getAnalysis<CallGraphWrapperPass>().getCallGraph(), M);
-    return false;
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AliasAnalysis::getAnalysisUsage(AU);
-    AU.addRequired<CallGraphWrapperPass>();
-    AU.setPreservesAll(); // Does not transform code
-  }
-
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
-  void *getAdjustedAnalysisPointer(AnalysisID PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
-
-  //------------------------------------------------
-  // Implement the AliasAnalysis API
-  //
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override {
-    return AliasAnalysis::getModRefInfo(CS1, CS2);
-  }
-
-  /// getModRefBehavior - Return the behavior of the specified function if
-  /// called from the specified call site.  The call site may be null in which
-  /// case the most generic behavior of this function should be returned.
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override {
-    FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
-
-    if (FunctionInfo *FI = getFunctionInfo(F)) {
-      if (FI->getModRefInfo() == MRI_NoModRef)
-        Min = FMRB_DoesNotAccessMemory;
-      else if ((FI->getModRefInfo() & MRI_Mod) == 0)
-        Min = FMRB_OnlyReadsMemory;
-    }
-
-    return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
-  }
-
-  /// getModRefBehavior - Return the behavior of the specified function if
-  /// called from the specified call site.  The call site may be null in which
-  /// case the most generic behavior of this function should be returned.
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override {
-    FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
-
-    if (const Function *F = CS.getCalledFunction())
-      if (FunctionInfo *FI = getFunctionInfo(F)) {
-        if (FI->getModRefInfo() == MRI_NoModRef)
-          Min = FMRB_DoesNotAccessMemory;
-        else if ((FI->getModRefInfo() & MRI_Mod) == 0)
-          Min = FMRB_OnlyReadsMemory;
-      }
-
-    return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
-  }
-
-private:
-  /// Returns the function info for the function, or null if we don't have
-  /// anything useful to say about it.
-  FunctionInfo *getFunctionInfo(const Function *F) {
-    auto I = FunctionInfos.find(F);
-    if (I != FunctionInfos.end())
-      return &I->second;
-    return nullptr;
-  }
-
-  void AnalyzeGlobals(Module &M);
-  void AnalyzeCallGraph(CallGraph &CG, Module &M);
-  bool AnalyzeUsesOfPointer(Value *V,
-                            SmallPtrSetImpl<Function *> *Readers = nullptr,
-                            SmallPtrSetImpl<Function *> *Writers = nullptr,
-                            GlobalValue *OkayStoreDest = nullptr);
-  bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
-
-  bool isNonEscapingGlobalNoAlias(const GlobalValue *GV, const Value *V);
-};
+  // And clear out the handle.
+  setValPtr(nullptr);
+  GMR.Handles.erase(I);
+  // This object is now destroyed!
 }
 
 char GlobalsModRef::ID = 0;
@@ -371,6 +235,46 @@ INITIALIZE_AG_PASS_END(GlobalsModRef, AliasAnalysis, "globalsmodref-aa",
                        false)
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
+
+GlobalsModRef::GlobalsModRef() : ModulePass(ID) {
+  initializeGlobalsModRefPass(*PassRegistry::getPassRegistry());
+}
+
+FunctionModRefBehavior GlobalsModRef::getModRefBehavior(const Function *F) {
+  FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
+
+  if (FunctionInfo *FI = getFunctionInfo(F)) {
+    if (FI->getModRefInfo() == MRI_NoModRef)
+      Min = FMRB_DoesNotAccessMemory;
+    else if ((FI->getModRefInfo() & MRI_Mod) == 0)
+      Min = FMRB_OnlyReadsMemory;
+  }
+
+  return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
+}
+
+FunctionModRefBehavior GlobalsModRef::getModRefBehavior(ImmutableCallSite CS) {
+  FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
+
+  if (const Function *F = CS.getCalledFunction())
+    if (FunctionInfo *FI = getFunctionInfo(F)) {
+      if (FI->getModRefInfo() == MRI_NoModRef)
+        Min = FMRB_DoesNotAccessMemory;
+      else if ((FI->getModRefInfo() & MRI_Mod) == 0)
+        Min = FMRB_OnlyReadsMemory;
+    }
+
+  return FunctionModRefBehavior(AliasAnalysis::getModRefBehavior(CS) & Min);
+}
+
+/// Returns the function info for the function, or null if we don't have
+/// anything useful to say about it.
+GlobalsModRef::FunctionInfo *GlobalsModRef::getFunctionInfo(const Function *F) {
+  auto I = FunctionInfos.find(F);
+  if (I != FunctionInfos.end())
+    return &I->second;
+  return nullptr;
+}
 
 /// AnalyzeGlobals - Scan through the users of all of the internal
 /// GlobalValue's in the program.  If none of them have their "address taken"
