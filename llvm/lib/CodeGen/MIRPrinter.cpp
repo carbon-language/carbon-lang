@@ -767,9 +767,10 @@ void MIPrinter::print(const MachineMemOperand &Op) {
       cast<GlobalValuePseudoSourceValue>(PVal)->getValue()->printAsOperand(
           OS, /*PrintType=*/false, MST);
       break;
-    default:
-      // TODO: Print the other pseudo source values.
-      OS << "<unserializable pseudo value>";
+    case PseudoSourceValue::ExternalSymbolCallEntry:
+      OS << '$';
+      printLLVMNameWithoutPrefix(
+          OS, cast<ExternalSymbolPseudoSourceValue>(PVal)->getSymbol());
       break;
     }
   }

@@ -132,6 +132,10 @@ class ExternalSymbolPseudoSourceValue : public CallEntryPseudoSourceValue {
 public:
   ExternalSymbolPseudoSourceValue(const char *ES);
 
+  static inline bool classof(const PseudoSourceValue *V) {
+    return V->kind() == ExternalSymbolCallEntry;
+  }
+
   const char *getSymbol() const { return ES; }
 };
 

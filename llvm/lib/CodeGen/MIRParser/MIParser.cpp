@@ -1445,7 +1445,10 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
     PSV = MF.getPSVManager().getGlobalValueCallEntry(GV);
     break;
   }
-  // TODO: Parse the other pseudo source values.
+  case MIToken::ExternalSymbol:
+    PSV = MF.getPSVManager().getExternalSymbolCallEntry(
+        MF.createExternalSymbolName(Token.stringValue()));
+    break;
   default:
     llvm_unreachable("The current token should be pseudo source value");
   }
@@ -1457,7 +1460,8 @@ bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
   if (Token.is(MIToken::kw_constant_pool) || Token.is(MIToken::kw_stack) ||
       Token.is(MIToken::kw_got) || Token.is(MIToken::kw_jump_table) ||
       Token.is(MIToken::FixedStackObject) || Token.is(MIToken::GlobalValue) ||
-      Token.is(MIToken::NamedGlobalValue)) {
+      Token.is(MIToken::NamedGlobalValue) ||
+      Token.is(MIToken::ExternalSymbol)) {
     const PseudoSourceValue *PSV = nullptr;
     if (parseMemoryPseudoSourceValue(PSV))
       return true;
