@@ -460,34 +460,30 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
   return TScop;
 }
 
-TempScop *TempScopInfo::getTempScop(const Region *R) const {
-  TempScopMapType::const_iterator at = TempScops.find(R);
-  return at == TempScops.end() ? 0 : at->second;
-}
+TempScop *TempScopInfo::getTempScop() const { return TempScopOfRegion; }
 
 void TempScopInfo::print(raw_ostream &OS, const Module *) const {
-  for (TempScopMapType::const_iterator I = TempScops.begin(),
-                                       E = TempScops.end();
-       I != E; ++I)
-    I->second->print(OS, SE, LI);
+  if (TempScopOfRegion)
+    TempScopOfRegion->print(OS, SE, LI);
 }
 
-bool TempScopInfo::runOnFunction(Function &F) {
+bool TempScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
+  SD = &getAnalysis<ScopDetection>();
+
+  if (!SD->isMaxRegionInScop(*R))
+    return false;
+
+  Function *F = R->getEntry()->getParent();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   PDT = &getAnalysis<PostDominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  SD = &getAnalysis<ScopDetection>();
   AA = &getAnalysis<AliasAnalysis>();
-  TD = &F.getParent()->getDataLayout();
-  ZeroOffset = SE->getConstant(TD->getIntPtrType(F.getContext()), 0);
+  TD = &F->getParent()->getDataLayout();
+  ZeroOffset = SE->getConstant(TD->getIntPtrType(F->getContext()), 0);
 
-  for (ScopDetection::iterator I = SD->begin(), E = SD->end(); I != E; ++I) {
-    if (!SD->isMaxRegionInScop(**I))
-      continue;
-    Region *R = const_cast<Region *>(*I);
-    TempScops.insert(std::make_pair(R, buildTempScop(*R)));
-  }
+  assert(!TempScopOfRegion && "Build the TempScop only once");
+  TempScopOfRegion = buildTempScop(*R);
 
   return false;
 }
@@ -508,8 +504,9 @@ TempScopInfo::~TempScopInfo() { clear(); }
 void TempScopInfo::clear() {
   BBConds.clear();
   AccFuncMap.clear();
-  DeleteContainerSeconds(TempScops);
-  TempScops.clear();
+  if (TempScopOfRegion)
+    delete TempScopOfRegion;
+  TempScopOfRegion = nullptr;
 }
 
 //===----------------------------------------------------------------------===//

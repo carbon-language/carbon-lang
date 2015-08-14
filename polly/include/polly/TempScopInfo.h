@@ -206,7 +206,7 @@ typedef std::map<const Region *, TempScop *> TempScopMapType;
 /// @brief The Function Pass to extract temporary information for Static control
 ///        part in llvm function.
 ///
-class TempScopInfo : public FunctionPass {
+class TempScopInfo : public RegionPass {
   //===-------------------------------------------------------------------===//
   TempScopInfo(const TempScopInfo &) = delete;
   const TempScopInfo &operator=(const TempScopInfo &) = delete;
@@ -240,8 +240,8 @@ class TempScopInfo : public FunctionPass {
   // zero scev every time when we need it.
   const SCEV *ZeroOffset;
 
-  // Mapping regions to the corresponding Scop in current function.
-  TempScopMapType TempScops;
+  // The TempScop for this region.
+  TempScop *TempScopOfRegion;
 
   // Clear the context.
   void clear();
@@ -308,20 +308,19 @@ class TempScopInfo : public FunctionPass {
 
 public:
   static char ID;
-  explicit TempScopInfo() : FunctionPass(ID) {}
+  explicit TempScopInfo() : RegionPass(ID), TempScopOfRegion(nullptr) {}
   ~TempScopInfo();
 
-  /// @brief Get the temporay Scop information in LLVM IR represent
-  ///        for Region R.
+  /// @brief Get the temporay Scop information in LLVM IR for this region.
   ///
   /// @return The Scop information in LLVM IR represent.
-  TempScop *getTempScop(const Region *R) const;
+  TempScop *getTempScop() const;
 
-  /// @name FunctionPass interface
+  /// @name RegionPass interface
   //@{
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   virtual void releaseMemory() { clear(); }
-  virtual bool runOnFunction(Function &F);
+  virtual bool runOnRegion(Region *R, RGPassManager &RGM);
   virtual void print(raw_ostream &OS, const Module *) const;
   //@}
 };

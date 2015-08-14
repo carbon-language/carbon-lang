@@ -30,6 +30,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Analysis/PostDominators.h"
 
 using namespace polly;
 using namespace llvm;
@@ -170,6 +171,7 @@ public:
 
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
+    AU.addPreserved<PostDominatorTree>();
     AU.addPreserved<IslAstInfo>();
     AU.addPreserved<ScopDetection>();
     AU.addPreserved<ScalarEvolution>();
