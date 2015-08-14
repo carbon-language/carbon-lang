@@ -864,6 +864,7 @@ entry:
 ; CHECK: call void (i32, ...) @VAArgStructFn
 ; CHECK: ret void
 
+
 declare i32 @InnerTailCall(i32 %a)
 
 define void @MismatchedReturnTypeTailCall(i32 %a) sanitize_memory {
@@ -877,6 +878,42 @@ define void @MismatchedReturnTypeTailCall(i32 %a) sanitize_memory {
 ; CHECK-LABEL: define void @MismatchedReturnTypeTailCall
 ; CHECK: tail call i32 @InnerTailCall
 ; CHECK: ret void
+
+
+declare i32 @MustTailCall(i32 %a)
+
+define i32 @CallMustTailCall(i32 %a) sanitize_memory {
+  %b = musttail call i32 @MustTailCall(i32 %a)
+  ret i32 %b
+}
+
+; For "musttail" calls we can not insert any shadow manipulating code between
+; call and the return instruction. And we don't need to, because everything is
+; taken care of in the callee.
+
+; CHECK-LABEL: define i32 @CallMustTailCall
+; CHECK: musttail call i32 @MustTailCall
+; No instrumentation between call and ret.
+; CHECK-NEXT: ret i32
+
+declare i32* @MismatchingMustTailCall(i32 %a)
+
+define i8* @MismatchingCallMustTailCall(i32 %a) sanitize_memory {
+  %b = musttail call i32* @MismatchingMustTailCall(i32 %a)
+  %c = bitcast i32* %b to i8*
+  ret i8* %c
+}
+
+; For "musttail" calls we can not insert any shadow manipulating code between
+; call and the return instruction. And we don't need to, because everything is
+; taken care of in the callee.
+
+; CHECK-LABEL: define i8* @MismatchingCallMustTailCall
+; CHECK: musttail call i32* @MismatchingMustTailCall
+; No instrumentation between call and ret.
+; CHECK-NEXT: bitcast i32* {{.*}} to i8*
+; CHECK-NEXT: ret i8*
+
 
 ; CHECK-LABEL: define internal void @msan.module_ctor
 ; CHECK: call void @__msan_init()
