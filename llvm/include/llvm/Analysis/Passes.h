@@ -60,14 +60,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  /// createLibCallAliasAnalysisPass - Create an alias analysis pass that knows
-  /// about the semantics of a set of libcalls specified by LCI.  The newly
-  /// constructed pass takes ownership of the pointer that is provided.
-  ///
-  FunctionPass *createLibCallAliasAnalysisPass(LibCallInfo *LCI);
-
-  //===--------------------------------------------------------------------===//
-  //
   // createScalarEvolutionAliasAnalysisPass - This pass implements a simple
   // alias analysis using ScalarEvolution queries.
   //
