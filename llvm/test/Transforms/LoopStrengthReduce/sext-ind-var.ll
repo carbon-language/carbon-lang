@@ -8,6 +8,11 @@ target triple = "nvptx64-unknown-unknown"
 ; instruction to the SCEV, preventing distributing sext into the
 ; corresponding addrec.
 
+; Test this pattern:
+;
+;   for (int i = 0; i < numIterations; ++i)
+;     sum += ptr[i + offset];
+;
 define float @testadd(float* %input, i32 %offset, i32 %numIterations) {
 ; CHECK-LABEL: @testadd
 ; CHECK: sext i32 %offset to i64
@@ -24,6 +29,105 @@ loop:
   %sum = phi float [ %nextsum, %loop ], [ 0.000000e+00, %entry ]
   %index32 = add nuw nsw i32 %i, %offset
   %index64 = sext i32 %index32 to i64
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %addend = load float, float* %ptr, align 4
+  %nextsum = fadd float %sum, %addend
+  %nexti = add nuw nsw i32 %i, 1
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+
+exit:
+  ret float %nextsum
+}
+
+; Test this pattern:
+;
+;   for (int i = 0; i < numIterations; ++i)
+;     sum += ptr[i - offset];
+;
+define float @testsub(float* %input, i32 %offset, i32 %numIterations) {
+; CHECK-LABEL: @testsub
+; CHECK: sub i32 0, %offset
+; CHECK: sext i32
+; CHECK: loop:
+; CHECK-DAG: phi float*
+; CHECK-DAG: phi i32
+; CHECK-NOT: sext
+
+entry:
+  br label %loop
+
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+  %sum = phi float [ %nextsum, %loop ], [ 0.000000e+00, %entry ]
+  %index32 = sub nuw nsw i32 %i, %offset
+  %index64 = sext i32 %index32 to i64
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %addend = load float, float* %ptr, align 4
+  %nextsum = fadd float %sum, %addend
+  %nexti = add nuw nsw i32 %i, 1
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+
+exit:
+  ret float %nextsum
+}
+
+; Test this pattern:
+;
+;   for (int i = 0; i < numIterations; ++i)
+;     sum += ptr[i * stride];
+;
+define float @testmul(float* %input, i32 %stride, i32 %numIterations) {
+; CHECK-LABEL: @testmul
+; CHECK: sext i32 %stride to i64
+; CHECK: loop:
+; CHECK-DAG: phi float*
+; CHECK-DAG: phi i32
+; CHECK-NOT: sext
+
+entry:
+  br label %loop
+
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+  %sum = phi float [ %nextsum, %loop ], [ 0.000000e+00, %entry ]
+  %index32 = mul nuw nsw i32 %i, %stride
+  %index64 = sext i32 %index32 to i64
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %addend = load float, float* %ptr, align 4
+  %nextsum = fadd float %sum, %addend
+  %nexti = add nuw nsw i32 %i, 1
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+
+exit:
+  ret float %nextsum
+}
+
+; Test this pattern:
+;
+;   for (int i = 0; i < numIterations; ++i)
+;     sum += ptr[3 * (i << 7)];
+;
+; The multiplication by 3 is to make the address calculation expensive
+; enough to force the introduction of a pointer induction variable.
+define float @testshl(float* %input, i32 %numIterations) {
+; CHECK-LABEL: @testshl
+; CHECK: loop:
+; CHECK-DAG: phi float*
+; CHECK-DAG: phi i32
+; CHECK-NOT: sext
+
+entry:
+  br label %loop
+
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+  %sum = phi float [ %nextsum, %loop ], [ 0.000000e+00, %entry ]
+  %index32 = shl nuw nsw i32 %i, 7
+  %index32mul = mul nuw nsw i32 %index32, 3
+  %index64 = sext i32 %index32mul to i64
   %ptr = getelementptr inbounds float, float* %input, i64 %index64
   %addend = load float, float* %ptr, align 4
   %nextsum = fadd float %sum, %addend

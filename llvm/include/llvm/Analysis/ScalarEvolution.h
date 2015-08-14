@@ -712,7 +712,8 @@ namespace llvm {
 
     /// getNegativeSCEV - Return the SCEV object corresponding to -V.
     ///
-    const SCEV *getNegativeSCEV(const SCEV *V);
+    const SCEV *getNegativeSCEV(const SCEV *V,
+                                SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap);
 
     /// getNotSCEV - Return the SCEV object corresponding to ~V.
     ///

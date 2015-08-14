@@ -356,3 +356,237 @@ loop:
 exit:
   ret void
 }
+
+; Example where a mul should get the nsw flag, so that a sext can be
+; distributed over the mul.
+define void @test-mul-nsw(float* %input, i32 %stride, i32 %numIterations) {
+; CHECK-LABEL: @test-mul-nsw
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {0,+,%stride}<nsw>
+  %index32 = mul nsw i32 %i, %stride
+
+; CHECK: %index64 =
+; CHECK: --> {0,+,(sext i32 %stride to i64)}<nsw>
+  %index64 = sext i32 %index32 to i64
+
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %nexti = add nsw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+exit:
+  ret void
+}
+
+; Example where a mul should get the nuw flag.
+define void @test-mul-nuw(float* %input, i32 %stride, i32 %numIterations) {
+; CHECK-LABEL: @test-mul-nuw
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {0,+,%stride}<nuw>
+  %index32 = mul nuw i32 %i, %stride
+
+  %ptr = getelementptr inbounds float, float* %input, i32 %index32
+  %nexti = add nuw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+
+exit:
+  ret void
+}
+
+; Example where a shl should get the nsw flag, so that a sext can be
+; distributed over the shl.
+define void @test-shl-nsw(float* %input, i32 %start, i32 %numIterations) {
+; CHECK-LABEL: @test-shl-nsw
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ %start, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {(256 * %start),+,256}<nsw>
+  %index32 = shl nsw i32 %i, 8
+
+; CHECK: %index64 =
+; CHECK: --> {(sext i32 (256 * %start) to i64),+,256}<nsw>
+  %index64 = sext i32 %index32 to i64
+
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %nexti = add nsw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+exit:
+  ret void
+}
+
+; Example where a shl should get the nuw flag.
+define void @test-shl-nuw(float* %input, i32 %numIterations) {
+; CHECK-LABEL: @test-shl-nuw
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {0,+,512}<nuw>
+  %index32 = shl nuw i32 %i, 9
+
+  %ptr = getelementptr inbounds float, float* %input, i32 %index32
+  %nexti = add nuw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+
+exit:
+  ret void
+}
+
+; Example where a sub should *not* get the nsw flag, because of how
+; scalar evolution represents A - B as A + (-B) and -B can wrap even
+; in cases where A - B does not.
+define void @test-sub-no-nsw(float* %input, i32 %start, i32 %sub, i32 %numIterations) {
+; CHECK-LABEL: @test-sub-no-nsw
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ %start, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {((-1 * %sub) + %start),+,1}<nw>
+  %index32 = sub nsw i32 %i, %sub
+  %index64 = sext i32 %index32 to i64
+
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %nexti = add nsw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+exit:
+  ret void
+}
+
+; Example where a sub should get the nsw flag as the RHS cannot be the
+; minimal signed value.
+define void @test-sub-nsw(float* %input, i32 %start, i32 %sub, i32 %numIterations) {
+; CHECK-LABEL: @test-sub-nsw
+entry:
+  %halfsub = ashr i32 %sub, 1
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ %start, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {((-1 * %halfsub)<nsw> + %start),+,1}<nsw>
+  %index32 = sub nsw i32 %i, %halfsub
+  %index64 = sext i32 %index32 to i64
+
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %nexti = add nsw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+exit:
+  ret void
+}
+
+; Example where a sub should get the nsw flag, since the LHS is non-negative,
+; which implies that the RHS cannot be the minimal signed value.
+define void @test-sub-nsw-lhs-non-negative(float* %input, i32 %sub, i32 %numIterations) {
+; CHECK-LABEL: @test-sub-nsw-lhs-non-negative
+entry:
+  br label %loop
+loop:
+  %i = phi i32 [ %nexti, %loop ], [ 0, %entry ]
+
+; CHECK: %index32 =
+; CHECK: --> {(-1 * %sub),+,1}<nsw>
+  %index32 = sub nsw i32 %i, %sub
+
+; CHECK: %index64 =
+; CHECK: --> {(sext i32 (-1 * %sub) to i64),+,1}<nsw>
+  %index64 = sext i32 %index32 to i64
+
+  %ptr = getelementptr inbounds float, float* %input, i64 %index64
+  %nexti = add nsw i32 %i, 1
+  %f = load float, float* %ptr, align 4
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+exit:
+  ret void
+}
+
+; Two adds with a sub in the middle and the sub should have nsw. There is
+; a special case for sequential adds/subs and this test covers that. We have to
+; put the final add first in the program since otherwise the special case
+; is not triggered, hence the strange basic block ordering.
+define void @test-sub-with-add(float* %input, i32 %offset, i32 %numIterations) {
+; CHECK-LABEL: @test-sub-with-add
+entry:
+  br label %loop
+loop2:
+; CHECK: %seq =
+; CHECK: --> {(2 + (-1 * %offset)),+,1}<nw>
+  %seq = add nsw nuw i32 %index32, 1
+  %exitcond = icmp eq i32 %nexti, %numIterations
+  br i1 %exitcond, label %exit, label %loop
+
+loop:
+  %i = phi i32 [ %nexti, %loop2 ], [ 0, %entry ]
+
+  %j = add nsw i32 %i, 1
+; CHECK: %index32 =
+; CHECK: --> {(1 + (-1 * %offset)),+,1}<nsw>
+  %index32 = sub nsw i32 %j, %offset
+
+  %ptr = getelementptr inbounds float, float* %input, i32 %index32
+  %nexti = add nsw i32 %i, 1
+  store float 1.0, float* %ptr, align 4
+  br label %loop2
+exit:
+  ret void
+}
+
+
+; Subtraction of two recurrences. The addition in the SCEV that this
+; maps to is NSW, but the negation of the RHS does not since that
+; recurrence could be the most negative representable value.
+define void @subrecurrences(i32 %outer_l, i32 %inner_l, i32 %val) {
+; CHECK-LABEL: @subrecurrences
+ entry:
+  br label %outer
+
+outer:
+  %o_idx = phi i32 [ 0, %entry ], [ %o_idx.inc, %outer.be ]
+  %o_idx.inc = add nsw i32 %o_idx, 1
+  %cond = icmp eq i32 %o_idx, %val
+  br i1 %cond, label %inner, label %outer.be
+
+inner:
+  %i_idx = phi i32 [ 0, %outer ], [ %i_idx.inc, %inner ]
+  %i_idx.inc = add nsw i32 %i_idx, 1
+; CHECK: %v =
+; CHECK-NEXT: --> {{[{][{]}}-1,+,-1}<nw><%outer>,+,1}<nsw><%inner>
+  %v = sub nsw i32 %i_idx, %o_idx.inc
+  %forub = udiv i32 1, %v
+  %cond2 = icmp eq i32 %i_idx, %inner_l
+  br i1 %cond2, label %outer.be, label %inner
+
+outer.be:
+  %cond3 = icmp eq i32 %o_idx, %outer_l
+  br i1 %cond3, label %exit, label %outer
+
+exit:
+  ret void
+}
