@@ -559,7 +559,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
                 // Check if this structure contains only floating point fields
                 for (uint32_t idx = 0; idx < num_children; idx++)
                 {
-                    ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                    CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
                     
                     if (field_clang_type.IsFloatingPointType (count, is_complex))
                         use_fp_regs = 1;
@@ -583,7 +583,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
 
                     for (uint32_t idx = 0; idx < num_children; idx++)
                     {
-                        ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                        CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
                         const size_t field_byte_width = field_clang_type.GetByteSize(nullptr);
 
                         DataExtractor *copy_from_extractor = NULL;
@@ -644,7 +644,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
                 bool is_signed;
                 uint32_t padding;
 
-                ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                CompilerType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
                 const size_t field_byte_width = field_clang_type.GetByteSize(nullptr);
 
                 // if we don't know the size of the field (e.g. invalid type), just bail out
