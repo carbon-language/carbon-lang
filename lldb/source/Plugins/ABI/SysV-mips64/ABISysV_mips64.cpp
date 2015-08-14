@@ -379,7 +379,8 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
 {
     ValueObjectSP return_valobj_sp;
     Value value;
-
+    Error error;
+    
     ExecutionContext exe_ctx (thread.shared_from_this());
     if (exe_ctx.GetTargetPtr() == NULL || exe_ctx.GetProcessPtr() == NULL)
         return return_valobj_sp;
@@ -390,20 +391,27 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
     if (!reg_ctx)
         return return_valobj_sp;
 
+    Target *target = exe_ctx.GetTargetPtr();
+    ByteOrder target_byte_order = target->GetArchitecture().GetByteOrder();
     const size_t byte_size = return_clang_type.GetByteSize(nullptr);
     const uint32_t type_flags = return_clang_type.GetTypeInfo (NULL);
+    
+    const RegisterInfo *r2_info = reg_ctx->GetRegisterInfoByName("r2", 0);
+    const RegisterInfo *r3_info = reg_ctx->GetRegisterInfoByName("r3", 0);
 
-    if (type_flags & eTypeIsScalar)
+    if (type_flags & eTypeIsScalar ||
+        type_flags & eTypeIsPointer)
     {
         value.SetValueType(Value::eValueTypeScalar);
 
         bool success = false;
-        if (type_flags & eTypeIsInteger)
+        if (type_flags & eTypeIsInteger ||
+            type_flags & eTypeIsPointer)
         {
             // Extract the register context so we can read arguments from registers
             // In MIPS register "r2" (v0) holds the integer function return values
 
-            uint64_t raw_value = reg_ctx->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("r2", 0), 0);
+            uint64_t raw_value = reg_ctx->ReadRegisterAsUnsigned(r2_info, 0);
 
             const bool is_signed = (type_flags & eTypeIsSigned) != 0;
             switch (byte_size)
@@ -444,25 +452,302 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
                     break;
             }
         }
+        else if (type_flags & eTypeIsFloat)
+        {
+            if (type_flags & eTypeIsComplex)
+            {
+                // Don't handle complex yet.
+            }
+            else
+            {
+                if (byte_size <= sizeof(long double))
+                {
+                    const RegisterInfo *f0_info = reg_ctx->GetRegisterInfoByName("f0", 0);
+                    const RegisterInfo *f2_info = reg_ctx->GetRegisterInfoByName("f2", 0);
+                    RegisterValue f0_value, f2_value;
+                    DataExtractor f0_data, f2_data;
+                    
+                    reg_ctx->ReadRegister (f0_info, f0_value);
+                    reg_ctx->ReadRegister (f2_info, f2_value);
+                    
+                    f0_value.GetData(f0_data);
+                    f2_value.GetData(f2_data);
+
+                    lldb::offset_t offset = 0;
+                    if (byte_size == sizeof(float))
+                    {
+                        value.GetScalar() = (float) f0_data.GetFloat(&offset);
+                        success = true;
+                    }
+                    else if (byte_size == sizeof(double))
+                    {
+                        value.GetScalar() = (double) f0_data.GetDouble(&offset);
+                        success = true;
+                    }
+                    else if (byte_size == sizeof(long double))
+                    {
+                        DataExtractor *copy_from_extractor = NULL;
+                        DataBufferSP data_sp (new DataBufferHeap(16, 0));
+                        DataExtractor return_ext (data_sp, 
+                                                  target_byte_order, 
+                                                  target->GetArchitecture().GetAddressByteSize());
+
+                        if (target_byte_order == eByteOrderLittle)
+                        {
+                             f0_data.Append(f2_data);
+                             copy_from_extractor = &f0_data;
+                        }
+                        else
+                        {
+                            f2_data.Append(f0_data);
+                            copy_from_extractor = &f2_data;
+                        }
+
+                        copy_from_extractor->CopyByteOrderedData (0,
+                                                                  byte_size, 
+                                                                  data_sp->GetBytes(),
+                                                                  byte_size, 
+                                                                  target_byte_order);
+
+                        return_valobj_sp = ValueObjectConstResult::Create (&thread, 
+                                                                           return_clang_type,
+                                                                           ConstString(""),
+                                                                           return_ext);
+                        return return_valobj_sp;
+
+                    }
+                }
+            }
+        }
 
         if (success)
         return_valobj_sp = ValueObjectConstResult::Create (thread.GetStackFrameAtIndex(0).get(),
                                                            value,
                                                            ConstString(""));
     }
-    else if (type_flags & eTypeIsPointer)
+    else if (type_flags & eTypeIsStructUnion ||
+             type_flags & eTypeIsClass ||
+             type_flags & eTypeIsVector)
     {
-        value.SetValueType(Value::eValueTypeScalar);
-        uint64_t raw_value = reg_ctx->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("r2", 0), 0);
-        value.GetScalar() = (uint64_t)(raw_value);
+        // Any structure of up to 16 bytes in size is returned in the registers.
+        if (byte_size <= 16)
+        {
+            DataBufferSP data_sp (new DataBufferHeap(16, 0));
+            DataExtractor return_ext (data_sp, 
+                                      target_byte_order, 
+                                      target->GetArchitecture().GetAddressByteSize());
 
-        return_valobj_sp = ValueObjectConstResult::Create (thread.GetStackFrameAtIndex(0).get(),
-                                                           value,
-                                                           ConstString(""));
-    }
-    else if (type_flags & eTypeIsVector)
-    {
-        // TODO: Handle vector types
+            RegisterValue r2_value, r3_value, f0_value, f1_value, f2_value;
+
+            uint32_t integer_bytes = 0;         // Tracks how much bytes of r2 and r3 registers we've consumed so far
+            bool use_fp_regs = 0;               // True if return values are in FP return registers.
+            bool found_non_fp_field = 0;        // True if we found any non floating point field in structure.
+            bool use_r2 = 0;                    // True if return values are in r2 register.
+            bool use_r3 = 0;                    // True if return values are in r3 register.
+            bool sucess = 0;                    // True if the result is copied into our data buffer
+            std::string name;
+            bool is_complex;
+            uint32_t count;
+            const uint32_t num_children = return_clang_type.GetNumFields ();
+
+            // A structure consisting of one or two FP values (and nothing else) will be
+            // returned in the two FP return-value registers i.e fp0 and fp2.
+            if (num_children <= 2)
+            {
+                uint64_t field_bit_offset = 0;
+
+                // Check if this structure contains only floating point fields
+                for (uint32_t idx = 0; idx < num_children; idx++)
+                {
+                    ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                    
+                    if (field_clang_type.IsFloatingPointType (count, is_complex))
+                        use_fp_regs = 1;
+                    else
+                        found_non_fp_field = 1;
+                }
+
+                if (use_fp_regs && !found_non_fp_field)
+                {
+                    // We have one or two FP-only values in this structure. Get it from f0/f2 registers.
+                    DataExtractor f0_data, f1_data, f2_data;
+                    const RegisterInfo *f0_info = reg_ctx->GetRegisterInfoByName("f0", 0);
+                    const RegisterInfo *f1_info = reg_ctx->GetRegisterInfoByName("f1", 0);
+                    const RegisterInfo *f2_info = reg_ctx->GetRegisterInfoByName("f2", 0);
+
+                    reg_ctx->ReadRegister (f0_info, f0_value);
+                    reg_ctx->ReadRegister (f2_info, f2_value);
+
+                    f0_value.GetData(f0_data);
+                    f2_value.GetData(f2_data);
+
+                    for (uint32_t idx = 0; idx < num_children; idx++)
+                    {
+                        ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                        const size_t field_byte_width = field_clang_type.GetByteSize(nullptr);
+
+                        DataExtractor *copy_from_extractor = NULL;
+
+                        if (idx == 0)
+                        {
+                            if (field_byte_width == 16)                 // This case is for long double type.
+                            {
+                                // If structure contains long double type, then it is returned in fp0/fp1 registers.
+                                reg_ctx->ReadRegister (f1_info, f1_value);
+                                f1_value.GetData(f1_data);
+                                
+                                if (target_byte_order == eByteOrderLittle)
+                                {
+                                    f0_data.Append(f1_data);
+                                    copy_from_extractor = &f0_data;
+                                }
+                                else
+                                {
+                                    f1_data.Append(f0_data);
+                                    copy_from_extractor = &f1_data;
+                                }
+                            }
+                            else
+                                copy_from_extractor = &f0_data;        // This is in f0, copy from register to our result structure
+                        }
+                        else
+                            copy_from_extractor = &f2_data;        // This is in f2, copy from register to our result structure
+
+                        // Sanity check to avoid crash
+                        if (!copy_from_extractor || field_byte_width > copy_from_extractor->GetByteSize())
+                            return return_valobj_sp;
+
+                        // copy the register contents into our data buffer
+                        copy_from_extractor->CopyByteOrderedData (0,
+                                                                  field_byte_width, 
+                                                                  data_sp->GetBytes() + (field_bit_offset/8),
+                                                                  field_byte_width, 
+                                                                  target_byte_order);
+                    }
+
+                    // The result is in our data buffer.  Create a variable object out of it
+                    return_valobj_sp = ValueObjectConstResult::Create (&thread, 
+                                                                       return_clang_type,
+                                                                       ConstString(""),
+                                                                       return_ext);
+
+                    return return_valobj_sp;
+                }
+            }
+
+            // If we reach here, it means this structure either contains more than two fields or 
+            // it contains at least one non floating point type.
+            // In that case, all fields are returned in GP return registers.
+            for (uint32_t idx = 0; idx < num_children; idx++)
+            {
+                uint64_t field_bit_offset = 0;
+                bool is_signed;
+                uint32_t padding;
+
+                ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
+                const size_t field_byte_width = field_clang_type.GetByteSize(nullptr);
+
+                // if we don't know the size of the field (e.g. invalid type), just bail out
+                if (field_byte_width == 0)
+                    break;
+
+                uint32_t field_byte_offset = field_bit_offset/8;
+
+                if (field_clang_type.IsIntegerType (is_signed) 
+                    || field_clang_type.IsPointerType ()
+                    || field_clang_type.IsFloatingPointType (count, is_complex))
+                {
+                    padding = field_byte_offset - integer_bytes;
+
+                    if (integer_bytes < 8)
+                    {
+                        // We have not yet consumed r2 completely.
+                        if (integer_bytes + field_byte_width + padding <= 8)
+                        {
+                            // This field fits in r2, copy its value from r2 to our result structure
+                            integer_bytes = integer_bytes + field_byte_width + padding;  // Increase the consumed bytes.
+                            use_r2 = 1;
+                        }
+                        else
+                        {
+                            // There isn't enough space left in r2 for this field, so this will be in r3.
+                            integer_bytes = integer_bytes + field_byte_width + padding;  // Increase the consumed bytes.
+                            use_r3 = 1;
+                        }
+                    }
+                    // We already have consumed at-least 8 bytes that means r2 is done, and this field will be in r3.
+                    // Check if this field can fit in r3.
+                    else if (integer_bytes + field_byte_width + padding <= 16)
+                    {
+                        integer_bytes = integer_bytes + field_byte_width + padding;
+                        use_r3 = 1;
+                    }
+                    else
+                    {
+                        // There isn't any space left for this field, this should not happen as we have already checked
+                        // the overall size is not greater than 16 bytes. For now, return a NULL return value object.
+                        return return_valobj_sp;
+                    }
+                }
+            }
+            // Vector types upto 16 bytes are returned in GP return registers
+            if (type_flags & eTypeIsVector)
+            {
+                if (byte_size <= 8)
+                    use_r2 = 1;
+                else
+                {
+                    use_r2 = 1;
+                    use_r3 = 1;
+                }    
+            }
+
+            if (use_r2)
+            {
+                reg_ctx->ReadRegister (r2_info, r2_value);
+
+                const size_t bytes_copied = r2_value.GetAsMemoryData (r2_info,
+                                                                      data_sp->GetBytes(),
+                                                                      r2_info->byte_size,
+                                                                      target_byte_order,
+                                                                      error);
+                if (bytes_copied != r2_info->byte_size)
+                    return return_valobj_sp;
+                sucess = 1;
+            }
+            if (use_r3)
+            {
+                reg_ctx->ReadRegister (r3_info, r3_value);
+                const size_t bytes_copied = r3_value.GetAsMemoryData (r3_info,
+                                                                      data_sp->GetBytes() + r2_info->byte_size,
+                                                                      r3_info->byte_size,
+                                                                      target_byte_order,
+                                                                      error);                                                       
+                                                        
+                if (bytes_copied != r3_info->byte_size)
+                    return return_valobj_sp;
+                sucess = 1;
+            }
+            if (sucess)
+            {
+                // The result is in our data buffer.  Create a variable object out of it
+                return_valobj_sp = ValueObjectConstResult::Create (&thread, 
+                                                                   return_clang_type,
+                                                                   ConstString(""),
+                                                                   return_ext);
+            }
+            return return_valobj_sp;
+        }
+
+        // Any structure/vector greater than 16 bytes in size is returned in memory.
+        // The pointer to that memory is returned in r2.
+        uint64_t mem_address = reg_ctx->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("r2", 0), 0);
+
+        // We have got the address. Create a memory object out of it
+        return_valobj_sp = ValueObjectMemory::Create (&thread,
+                                                      "",
+                                                      Address (mem_address, NULL),
+                                                      return_clang_type); 
     }
     return return_valobj_sp;
 }
