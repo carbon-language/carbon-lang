@@ -64,22 +64,21 @@ Machine Functions
 The remaining YAML documents contain the machine functions. This is an example
 of such YAML document:
 
-.. code-block:: yaml
+.. code-block:: llvm
 
      ---
      name:            inc
      tracksRegLiveness: true
      liveins:
        - { reg: '%rdi' }
-     body:
-       - id:              0
-         name:            entry
-         liveins:         [ '%rdi' ]
-         instructions:
-           - '%eax = MOV32rm %rdi, 1, _, 0, _'
-           - '%eax = INC32r killed %eax, implicit-def dead %eflags'
-           - 'MOV32mr killed %rdi, 1, _, 0, _, %eax'
-           - 'RETQ %eax'
+     body: |
+       bb.0.entry:
+         liveins: %rdi
+
+         %eax = MOV32rm %rdi, 1, _, 0, _
+         %eax = INC32r killed %eax, implicit-def dead %eflags
+         MOV32mr killed %rdi, 1, _, 0, _, %eax
+         RETQ %eax
      ...
 
 The document above consists of attributes that represent the various
@@ -88,12 +87,8 @@ properties and data structures in a machine function.
 The attribute ``name`` is required, and its value should be identical to the
 name of a function that this machine function is based on.
 
-The attribute ``body`` contains a list of YAML mappings that represent the
-function's machine basic blocks.
-
-The first machine basic block in the ``body`` list above contains the attribute
-``instructions``. This attribute stores a list of string literals which
-represent the machine instructions for that basic block.
+The attribute ``body`` is a `YAML block literal string`_. Its value represents
+the function's machine basic blocks and their machine instructions.
 
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
