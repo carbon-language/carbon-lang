@@ -84,7 +84,8 @@ void UnusedParametersCheck::warnOnUnusedParameter(
 
   // Fix all redeclarations.
   for (const FunctionDecl *FD : Function->redecls())
-    MyDiag << removeParameter(FD, ParamIndex);
+    if (FD->param_size())
+      MyDiag << removeParameter(FD, ParamIndex);
 
   // Fix all call sites.
   auto CallMatches = ast_matchers::match(
