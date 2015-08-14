@@ -6,10 +6,10 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @Foo = common global %struct.anon zeroinitializer, align 4
 
-;CHECK-LABEL: @foo(
-;CHECK: load <4 x i32>, <4 x i32>*
-;CHECK: sdiv <4 x i32>
-;CHECK: store <4 x i32>
+; CHECK-LABEL: @foo(
+; CHECK: load <4 x i32>, <4 x i32>*
+; CHECK: sdiv <4 x i32>
+; CHECK: store <4 x i32>
 
 define void @foo(){
 entry:
