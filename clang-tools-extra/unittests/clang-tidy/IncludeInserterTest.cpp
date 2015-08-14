@@ -73,7 +73,8 @@ public:
 
 class CSystemIncludeInserterCheck : public IncludeInserterCheckBase {
 public:
-  using IncludeInserterCheckBase::IncludeInserterCheckBase;
+  CSystemIncludeInserterCheck(StringRef CheckName, ClangTidyContext *Context)
+      : IncludeInserterCheckBase(CheckName, Context) {}
   StringRef HeaderToInclude() const override { return "stdlib.h"; }
   bool IsAngledInclude() const override { return true; }
 };
