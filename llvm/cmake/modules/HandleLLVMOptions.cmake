@@ -445,16 +445,30 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
 endif( MSVC )
 
 macro(append_common_sanitizer_flags)
-  # Append -fno-omit-frame-pointer and turn on debug info to get better
-  # stack traces.
-  add_flag_if_supported("-fno-omit-frame-pointer" FNO_OMIT_FRAME_POINTER)
-  if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" AND
-      NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
-    add_flag_if_supported("-gline-tables-only" GLINE_TABLES_ONLY)
-  endif()
-  # Use -O1 even in debug mode, otherwise sanitizers slowdown is too large.
-  if (uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    add_flag_if_supported("-O1" O1)
+  if (NOT MSVC)
+    # Append -fno-omit-frame-pointer and turn on debug info to get better
+    # stack traces.
+    add_flag_if_supported("-fno-omit-frame-pointer" FNO_OMIT_FRAME_POINTER)
+    if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" AND
+	NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
+      add_flag_if_supported("-gline-tables-only" GLINE_TABLES_ONLY)
+    endif()
+    # Use -O1 even in debug mode, otherwise sanitizers slowdown is too large.
+    if (uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+      add_flag_if_supported("-O1" O1)
+    endif()
+  elseif (CLANG_CL)
+    # Keep frame pointers around.
+    append("/Oy-" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    if (CMAKE_LINKER MATCHES "lld-link.exe")
+      # Use DWARF debug info with LLD.
+      append("-gdwarf" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    else()
+      # Enable codeview otherwise.
+      append("/Z7" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    endif()
+    # Always ask the linker to produce symbols with asan.
+    append("-debug" CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
   endif()
 endmacro()
 
@@ -484,6 +498,13 @@ if(LLVM_USE_SANITIZER)
               CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
     else()
       message(WARNING "Unsupported value of LLVM_USE_SANITIZER: ${LLVM_USE_SANITIZER}")
+    endif()
+  elseif(MSVC)
+    if (LLVM_USE_SANITIZER STREQUAL "Address")
+      append_common_sanitizer_flags()
+      append("-fsanitize=address" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    else()
+      message(WARNING "This sanitizer not yet supported in the MSVC environment: ${LLVM_USE_SANITIZER}")
     endif()
   else()
     message(WARNING "LLVM_USE_SANITIZER is not supported on this platform.")
