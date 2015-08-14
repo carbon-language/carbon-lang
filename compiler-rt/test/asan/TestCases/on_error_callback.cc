@@ -5,7 +5,8 @@
 
 extern "C"
 void __asan_on_error() {
-  fprintf(stderr, "__asan_on_error called");
+  fprintf(stderr, "__asan_on_error called\n");
+  fflush(stderr);
 }
 
 int main() {

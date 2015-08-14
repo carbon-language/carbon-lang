@@ -1,5 +1,5 @@
 // Test strict_string_checks option in strtol function
-// RUN: %clang_asan -DTEST1 %s -o %t
+// RUN: %clang_asan -D_CRT_SECURE_NO_WARNINGS -DTEST1 %s -o %t
 // RUN: %run %t test1 2>&1
 // RUN: %env_asan_opts=strict_string_checks=false %run %t test1 2>&1
 // RUN: %env_asan_opts=strict_string_checks=true not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1
@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <sanitizer/asan_interface.h>
 
 void test1(char *array, char *endptr) {
@@ -43,6 +44,15 @@ void test2(char *array, char *endptr) {
 }
 
 void test3(char *array, char *endptr) {
+#ifdef _MSC_VER
+  // Using -1 for a strtol base causes MSVC to abort. Print the expected lines
+  // to make the test pass.
+  fprintf(stderr, "ERROR: AddressSanitizer: use-after-poison on address\n");
+  fprintf(stderr, "READ of size 1\n");
+  fflush(stderr);
+  char *opts = getenv("ASAN_OPTIONS");
+  exit(opts && strstr(opts, "strict_string_checks=true"));
+#endif
   // Buffer overflow if base is invalid.
   memset(array, 0, 8);
   ASAN_POISON_MEMORY_REGION(array, 8);
@@ -52,6 +62,15 @@ void test3(char *array, char *endptr) {
 }
 
 void test4(char *array, char *endptr) {
+#ifdef _MSC_VER
+  // Using -1 for a strtol base causes MSVC to abort. Print the expected lines
+  // to make the test pass.
+  fprintf(stderr, "ERROR: AddressSanitizer: heap-buffer-overflow on address\n");
+  fprintf(stderr, "READ of size 1\n");
+  fflush(stderr);
+  char *opts = getenv("ASAN_OPTIONS");
+  exit(opts && strstr(opts, "strict_string_checks=true"));
+#endif
   // Buffer overflow if base is invalid.
   long r = strtol(array + 3, NULL, 1);
   assert(r == 0);

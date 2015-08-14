@@ -22,6 +22,9 @@
 #include <assert.h>
 #include <limits>
 int main(int argc, char **argv) {
+  // Disable stderr buffering. Needed on Windows.
+  setvbuf(stderr, NULL, _IONBF, 0);
+
   volatile size_t size = std::numeric_limits<size_t>::max() - 10000;
   assert(argc == 2);
   void *x = 0;

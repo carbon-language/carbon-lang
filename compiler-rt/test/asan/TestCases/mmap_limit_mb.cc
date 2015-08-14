@@ -7,7 +7,9 @@
 // RUN: %env_asan_opts=mmap_limit_mb=300 %run %t 20 1000000
 // RUN: %env_asan_opts=mmap_limit_mb=300 not %run %t 500 16 2>&1 | FileCheck %s
 // RUN: %env_asan_opts=mmap_limit_mb=300 not %run %t 500 1000000 2>&1 | FileCheck %s
-// XFAIL: arm-linux-gnueabi
+//
+// FIXME: Windows doesn't implement mmap_limit_mb.
+// XFAIL: arm-linux-gnueabi,win32
 
 #include <assert.h>
 #include <stdlib.h>

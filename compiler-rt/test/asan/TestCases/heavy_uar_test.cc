@@ -1,7 +1,6 @@
-// RUN: export ASAN_OPTIONS=$ASAN_OPTIONS:detect_stack_use_after_return=1
-// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// XFAIL: arm-linux-gnueabi
+// RUN: %env_asan_opts=detect_stack_use_after_return=1 %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=detect_stack_use_after_return=1 %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// XFAIL: arm-linux-gnueabi,win32
 
 // FIXME: Fix this test under GCC.
 // REQUIRES: Clang
@@ -34,6 +33,12 @@ void RecursiveFunctionWithStackFrame(int depth) {
 }
 
 int main(int argc, char **argv) {
+#ifdef _MSC_VER
+  // FIXME: This test crashes on Windows and raises a dialog. Avoid running it
+  // in addition to XFAILing it.
+  return 42;
+#endif
+
   int n_iter = argc >= 2 ? atoi(argv[1]) : 1000;
   int depth  = argc >= 3 ? atoi(argv[2]) : 500;
   for (int i = 0; i < n_iter; i++) {

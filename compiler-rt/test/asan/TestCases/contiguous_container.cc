@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O %s -o %t && %run %t
+// RUN: %clangxx_asan -fexceptions -O %s -o %t && %run %t
 //
 // Test __sanitizer_annotate_contiguous_container.
 

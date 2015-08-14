@@ -1,5 +1,5 @@
 // Test strict_string_checks option in strtoll function
-// RUN: %clang_asan -DTEST1 %s -o %t
+// RUN: %clang_asan %s -o %t
 // RUN: %run %t test1 2>&1
 // RUN: %env_asan_opts=strict_string_checks=false %run %t test1 2>&1
 // RUN: %env_asan_opts=strict_string_checks=true not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1
@@ -21,6 +21,9 @@
 // RUN: %run %t test7 2>&1
 // RUN: %env_asan_opts=strict_string_checks=false %run %t test7 2>&1
 // RUN: %env_asan_opts=strict_string_checks=true not %run %t test7 2>&1 | FileCheck %s --check-prefix=CHECK7
+
+// FIXME: Enable strtoll interceptor.
+// XFAIL: win32
 
 #include <assert.h>
 #include <stdlib.h>

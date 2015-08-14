@@ -4,8 +4,13 @@
 // RUN: %clangxx_asan -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 __attribute__((noinline))
-static void NullDeref(int *ptr) {
-  // CHECK: ERROR: AddressSanitizer: SEGV on unknown address
+// FIXME: Static symbols don't show up in PDBs. We can remove this once we start
+// using DWARF.
+#ifndef _MSC_VER
+static
+#endif
+void NullDeref(int *ptr) {
+  // CHECK: ERROR: AddressSanitizer: {{SEGV|access-violation}} on unknown address
   // CHECK:   {{0x0*000.. .*pc 0x.*}}
   ptr[10]++;  // BOOM
   // atos on Mac cannot extract the symbol name correctly. Also, on FreeBSD 9.2

@@ -6,7 +6,7 @@
 // Do not test with optimization -- the error may be optimized away.
 
 // FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=186
-// XFAIL: darwin
+// XFAIL: darwin,win32
 
 #include <cstdio>
 

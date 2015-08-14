@@ -8,6 +8,10 @@
 
 #include <stdio.h>
 int main() {
+#ifdef _MSC_VER
+  // FIXME: The test raises a dialog even though it's XFAILd.
+  return 42;
+#endif
   volatile char c = '0';
   volatile int x = 12;
   volatile float f = 1.239;

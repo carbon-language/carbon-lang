@@ -1,5 +1,8 @@
 // RUN: %clangxx_asan %s -o %T/verbose-log-path_test-binary
 
+// The glob below requires bash.
+// REQUIRES: shell
+
 // Good log_path.
 // RUN: rm -f %T/asan.log.*
 // RUN: %env_asan_opts=log_path=%T/asan.log:log_exe_name=1 not %run %T/verbose-log-path_test-binary 2> %t.out

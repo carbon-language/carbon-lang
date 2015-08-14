@@ -11,6 +11,11 @@
 #include <stdlib.h>
 #include "sanitizer/asan_interface.h"
 
+// MSVC provides _alloca instead of alloca.
+#if defined(_MSC_VER) && !defined(alloca)
+# define alloca _alloca
+#endif
+
 #define RZ 32
 
 __attribute__((noinline)) void foo(int len) {

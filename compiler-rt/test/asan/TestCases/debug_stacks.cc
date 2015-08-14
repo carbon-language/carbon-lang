@@ -19,6 +19,9 @@ void func2() {
 }
 
 int main() {
+  // Disable stderr buffering. Needed on Windows.
+  setvbuf(stderr, NULL, _IONBF, 0);
+
   func1();
   func2();
 
