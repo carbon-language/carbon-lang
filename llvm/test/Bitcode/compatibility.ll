@@ -1212,6 +1212,9 @@ define void @misc.metadata() {
   ret void
 }
 
+declare void @llvm.tokenfoo(token)
+; CHECK: declare void @llvm.tokenfoo(token)
+
 ; CHECK: attributes #0 = { alignstack=4 }
 ; CHECK: attributes #1 = { alignstack=8 }
 ; CHECK: attributes #2 = { alwaysinline }

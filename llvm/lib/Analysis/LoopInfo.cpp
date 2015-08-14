@@ -220,6 +220,8 @@ bool Loop::isSafeToClone() const {
         if (CI->cannotDuplicate())
           return false;
       }
+      if (BI->getType()->isTokenTy() && BI->isUsedOutsideOfBlock(*I))
+        return false;
     }
   }
   return true;

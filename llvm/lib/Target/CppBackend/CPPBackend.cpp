@@ -551,7 +551,8 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
 void CppWriter::printType(Type* Ty) {
   // We don't print definitions for primitive types
   if (Ty->isFloatingPointTy() || Ty->isX86_MMXTy() || Ty->isIntegerTy() ||
-      Ty->isLabelTy() || Ty->isMetadataTy() || Ty->isVoidTy())
+      Ty->isLabelTy() || Ty->isMetadataTy() || Ty->isVoidTy() ||
+      Ty->isTokenTy())
     return;
 
   // If we already defined this type, we don't need to define it again.

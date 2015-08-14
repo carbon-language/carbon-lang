@@ -337,14 +337,8 @@ static void HandleInlinedEHPad(InvokeInst *II, BasicBlock *FirstNewBlock,
           TPI->eraseFromParent();
           UpdatePHINodes(BB);
         }
-      } else if (auto *CPI = dyn_cast<CleanupPadInst>(I)) {
-        if (CPI->getNumOperands() == 0) {
-          CleanupPadInst::Create(CPI->getType(), {UnwindDest}, CPI->getName(),
-                                 CPI);
-          CPI->eraseFromParent();
-        }
       } else {
-        assert(isa<CatchPadInst>(I));
+        assert(isa<CatchPadInst>(I) || isa<CleanupPadInst>(I));
       }
     }
 

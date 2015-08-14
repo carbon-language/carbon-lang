@@ -35,6 +35,7 @@ Type *Type::getPrimitiveType(LLVMContext &C, TypeID IDNumber) {
   case LabelTyID     : return getLabelTy(C);
   case MetadataTyID  : return getMetadataTy(C);
   case X86_MMXTyID   : return getX86_MMXTy(C);
+  case TokenTyID     : return getTokenTy(C);
   default:
     return nullptr;
   }
@@ -220,6 +221,7 @@ Type *Type::getHalfTy(LLVMContext &C) { return &C.pImpl->HalfTy; }
 Type *Type::getFloatTy(LLVMContext &C) { return &C.pImpl->FloatTy; }
 Type *Type::getDoubleTy(LLVMContext &C) { return &C.pImpl->DoubleTy; }
 Type *Type::getMetadataTy(LLVMContext &C) { return &C.pImpl->MetadataTy; }
+Type *Type::getTokenTy(LLVMContext &C) { return &C.pImpl->TokenTy; }
 Type *Type::getX86_FP80Ty(LLVMContext &C) { return &C.pImpl->X86_FP80Ty; }
 Type *Type::getFP128Ty(LLVMContext &C) { return &C.pImpl->FP128Ty; }
 Type *Type::getPPC_FP128Ty(LLVMContext &C) { return &C.pImpl->PPC_FP128Ty; }
@@ -595,7 +597,8 @@ void StructType::setBody(Type *type, ...) {
 
 bool StructType::isValidElementType(Type *ElemTy) {
   return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
-         !ElemTy->isMetadataTy() && !ElemTy->isFunctionTy();
+         !ElemTy->isMetadataTy() && !ElemTy->isFunctionTy() &&
+         !ElemTy->isTokenTy();
 }
 
 /// isLayoutIdentical - Return true if this is layout identical to the
@@ -690,7 +693,8 @@ ArrayType *ArrayType::get(Type *ElementType, uint64_t NumElements) {
 
 bool ArrayType::isValidElementType(Type *ElemTy) {
   return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
-         !ElemTy->isMetadataTy() && !ElemTy->isFunctionTy();
+         !ElemTy->isMetadataTy() && !ElemTy->isFunctionTy() &&
+         !ElemTy->isTokenTy();
 }
 
 //===----------------------------------------------------------------------===//
@@ -758,7 +762,7 @@ PointerType *Type::getPointerTo(unsigned addrs) const {
 
 bool PointerType::isValidElementType(Type *ElemTy) {
   return !ElemTy->isVoidTy() && !ElemTy->isLabelTy() &&
-         !ElemTy->isMetadataTy();
+         !ElemTy->isMetadataTy() && !ElemTy->isTokenTy();
 }
 
 bool PointerType::isLoadableOrStorableType(Type *ElemTy) {

@@ -63,15 +63,16 @@ public:
     LabelTyID,       ///<  7: Labels
     MetadataTyID,    ///<  8: Metadata
     X86_MMXTyID,     ///<  9: MMX vectors (64 bits, X86 specific)
+    TokenTyID,       ///< 10: Tokens
 
     // Derived types... see DerivedTypes.h file.
     // Make sure FirstDerivedTyID stays up to date!
-    IntegerTyID,     ///< 10: Arbitrary bit width integers
-    FunctionTyID,    ///< 11: Functions
-    StructTyID,      ///< 12: Structures
-    ArrayTyID,       ///< 13: Arrays
-    PointerTyID,     ///< 14: Pointers
-    VectorTyID       ///< 15: SIMD 'packed' format, or other vector type
+    IntegerTyID,     ///< 11: Arbitrary bit width integers
+    FunctionTyID,    ///< 12: Functions
+    StructTyID,      ///< 13: Structures
+    ArrayTyID,       ///< 14: Arrays
+    PointerTyID,     ///< 15: Pointers
+    VectorTyID       ///< 16: SIMD 'packed' format, or other vector type
   };
 
 private:
@@ -177,6 +178,9 @@ public:
 
   /// isMetadataTy - Return true if this is 'metadata'.
   bool isMetadataTy() const { return getTypeID() == MetadataTyID; }
+
+  /// isTokenTy - Return true if this is 'token'.
+  bool isTokenTy() const { return getTypeID() == TokenTyID; }
 
   /// isIntegerTy - True if this is an instance of IntegerType.
   ///
@@ -378,6 +382,7 @@ public:
   static Type *getFP128Ty(LLVMContext &C);
   static Type *getPPC_FP128Ty(LLVMContext &C);
   static Type *getX86_MMXTy(LLVMContext &C);
+  static Type *getTokenTy(LLVMContext &C);
   static IntegerType *getIntNTy(LLVMContext &C, unsigned N);
   static IntegerType *getInt1Ty(LLVMContext &C);
   static IntegerType *getInt8Ty(LLVMContext &C);

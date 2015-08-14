@@ -155,6 +155,9 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
     if (isa<ExtractElementInst>(II) || II->getType()->isVectorTy())
       ++NumVectorInsts;
 
+    if (II->getType()->isTokenTy() && II->isUsedOutsideOfBlock(BB))
+      notDuplicatable = true;
+
     if (const CallInst *CI = dyn_cast<CallInst>(II))
       if (CI->cannotDuplicate())
         notDuplicatable = true;

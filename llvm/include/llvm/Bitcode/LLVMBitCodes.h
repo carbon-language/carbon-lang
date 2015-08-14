@@ -121,7 +121,9 @@ namespace bitc {
     TYPE_CODE_STRUCT_NAME = 19, // STRUCT_NAME: [strchr x N]
     TYPE_CODE_STRUCT_NAMED = 20,// STRUCT_NAMED: [ispacked, eltty x N]
 
-    TYPE_CODE_FUNCTION = 21     // FUNCTION: [vararg, retty, paramty x N]
+    TYPE_CODE_FUNCTION = 21,    // FUNCTION: [vararg, retty, paramty x N]
+
+    TYPE_CODE_TOKEN = 22        // TOKEN
   };
 
   // The type symbol table only has one code (TST_ENTRY_CODE).
