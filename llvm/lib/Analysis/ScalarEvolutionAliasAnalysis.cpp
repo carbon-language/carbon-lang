@@ -48,8 +48,9 @@ bool ScalarEvolutionAliasAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
-/// GetBaseValue - Given an expression, try to find a
-/// base value. Return null is none was found.
+/// Given an expression, try to find a base value.
+///
+/// Returns null if none was found.
 Value *ScalarEvolutionAliasAnalysis::GetBaseValue(const SCEV *S) {
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // In an addrec, assume that the base will be in the start, rather

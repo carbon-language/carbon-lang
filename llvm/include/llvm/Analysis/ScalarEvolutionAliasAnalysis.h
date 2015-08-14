@@ -23,8 +23,8 @@
 
 namespace llvm {
 
-/// ScalarEvolutionAliasAnalysis - This is a simple alias analysis
-/// implementation that uses ScalarEvolution to answer queries.
+/// A simple alias analysis implementation that uses ScalarEvolution to answer
+/// queries.
 class ScalarEvolutionAliasAnalysis : public FunctionPass, public AliasAnalysis {
   ScalarEvolution *SE;
 
@@ -35,10 +35,11 @@ public:
         *PassRegistry::getPassRegistry());
   }
 
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
+  /// This method is used when a pass implements an analysis interface through
+  /// multiple inheritance.
+  ///
+  /// If needed, it should override this to adjust the this pointer as needed
+  /// for the specified pass info.
   void *getAdjustedAnalysisPointer(AnalysisID PI) override {
     if (PI == &AliasAnalysis::ID)
       return (AliasAnalysis *)this;
@@ -54,11 +55,7 @@ private:
   Value *GetBaseValue(const SCEV *S);
 };
 
-//===--------------------------------------------------------------------===//
-//
-// createScalarEvolutionAliasAnalysisPass - This pass implements a simple
-// alias analysis using ScalarEvolution queries.
-//
+/// Creates an instance of \c ScalarEvolutionAliasAnalysis.
 FunctionPass *createScalarEvolutionAliasAnalysisPass();
 
 }
