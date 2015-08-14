@@ -133,7 +133,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   Writer(SymbolTable *T)
-      : Symtab(T), SymbolTable(*T), StringTable(T->getStringBuilder()) {}
+      : Symtab(T), SymTable(*T), StringTable(T->getStringBuilder()) {}
   void run();
 
 private:
@@ -152,7 +152,7 @@ private:
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
 
-  SymbolTableSection<ELFT> SymbolTable;
+  SymbolTableSection<ELFT> SymTable;
 
   unsigned StringTableIndex;
   StringTableSection<ELFT::Is64Bits> StringTable;
@@ -323,10 +323,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
 
-  OutputSections.push_back(&SymbolTable);
+  OutputSections.push_back(&SymTable);
   OutputSections.push_back(&StringTable);
   StringTableIndex = OutputSections.size();
-  SymbolTable.setStringTableIndex(StringTableIndex);
+  SymTable.setStringTableIndex(StringTableIndex);
 
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     StringTable.add(Sec->getName());
