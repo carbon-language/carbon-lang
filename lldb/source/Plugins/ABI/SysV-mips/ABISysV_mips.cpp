@@ -423,15 +423,16 @@ ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cla
     if (!reg_ctx)
         return return_valobj_sp;
     
-    bool is_signed;
+    bool is_signed = false;
+    bool is_complex = false;
+    uint32_t count = 0;
 
     // In MIPS register "r2" (v0) holds the integer function return values
     const RegisterInfo *r2_reg_info = reg_ctx->GetRegisterInfoByName("r2", 0);
+    size_t bit_width = return_clang_type.GetBitSize(&thread);
     
     if (return_clang_type.IsIntegerType (is_signed))
     {
-        size_t bit_width = return_clang_type.GetBitSize(&thread);
-        
         switch (bit_width)
         {
             default:
@@ -472,6 +473,52 @@ ABISysV_mips::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_cla
     {
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r2_reg_info, 0) & UINT32_MAX;
         value.GetScalar() = ptr;
+    }
+    else if (return_clang_type.IsAggregateType ())
+    {
+        // Structure/Vector is always passed in memory and pointer to that memory is passed in r2. 
+        uint64_t mem_address = reg_ctx->ReadRegisterAsUnsigned(reg_ctx->GetRegisterInfoByName("r2", 0), 0);
+        // We have got the address. Create a memory object out of it
+        return_valobj_sp = ValueObjectMemory::Create (&thread,
+                                                      "",
+                                                      Address (mem_address, NULL),
+                                                      return_clang_type);
+        return return_valobj_sp;
+    }
+    else if (return_clang_type.IsFloatingPointType (count, is_complex))
+    {
+        const RegisterInfo *f0_info = reg_ctx->GetRegisterInfoByName("f0", 0);
+        const RegisterInfo *f1_info = reg_ctx->GetRegisterInfoByName("f1", 0);
+
+        if (count == 1 && !is_complex)
+        {
+            switch (bit_width)
+            {
+                default:
+                    return return_valobj_sp;
+                case 64:
+                {
+                    static_assert(sizeof(double) == sizeof(uint64_t), "");
+                    uint64_t raw_value;
+                    raw_value = reg_ctx->ReadRegisterAsUnsigned(f0_info, 0) & UINT32_MAX;
+                    raw_value |= ((uint64_t)(reg_ctx->ReadRegisterAsUnsigned(f1_info, 0) & UINT32_MAX)) << 32;
+                    value.GetScalar() = *reinterpret_cast<double*>(&raw_value);
+                    break;
+                }
+                case 32:
+                {
+                    static_assert(sizeof(float) == sizeof(uint32_t), "");
+                    uint32_t raw_value = reg_ctx->ReadRegisterAsUnsigned(f0_info, 0) & UINT32_MAX;
+                    value.GetScalar() = *reinterpret_cast<float*>(&raw_value);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // not handled yet
+            return return_valobj_sp;
+        }
     }
     else
     {
