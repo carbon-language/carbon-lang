@@ -194,3 +194,41 @@ define void @sum_of_array4(i32 %x, i32 %y, float* nocapture %output) {
 ; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 1
 ; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 32
 ; IR: getelementptr inbounds float, float addrspace(3)* [[BASE_PTR]], i64 33
+
+
+; The source code is:
+;   p0 = &input[sext(x + y)];
+;   p1 = &input[sext(x + (y + 5))];
+;
+; Without reuniting extensions, SeparateConstOffsetFromGEP would emit
+;   p0 = &input[sext(x + y)];
+;   t1 = &input[sext(x) + sext(y)];
+;   p1 = &t1[5];
+;
+; With reuniting extensions, it merges p0 and t1 and thus emits
+;   p0 = &input[sext(x + y)];
+;   p1 = &p0[5];
+define void @reunion(i32 %x, i32 %y, float* %input) {
+; IR-LABEL: @reunion(
+; PTX-LABEL: reunion(
+entry:
+  %xy = add nsw i32 %x, %y
+  %0 = sext i32 %xy to i64
+  %p0 = getelementptr inbounds float, float* %input, i64 %0
+  %v0 = load float, float* %p0, align 4
+; PTX: ld.f32 %f{{[0-9]+}}, {{\[}}[[p0:%rd[0-9]+]]{{\]}}
+  call void @use(float %v0)
+
+  %y5 = add nsw i32 %y, 5
+  %xy5 = add nsw i32 %x, %y5
+  %1 = sext i32 %xy5 to i64
+  %p1 = getelementptr inbounds float, float* %input, i64 %1
+; IR: getelementptr inbounds float, float* %p0, i64 5
+  %v1 = load float, float* %p1, align 4
+; PTX: ld.f32 %f{{[0-9]+}}, {{\[}}[[p0]]+20{{\]}}
+  call void @use(float %v1)
+
+  ret void
+}
+
+declare void @use(float)

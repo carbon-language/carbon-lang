@@ -156,6 +156,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
@@ -164,6 +165,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -174,6 +176,7 @@
 #include "llvm/IR/IRBuilder.h"
 
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 static cl::opt<bool> DisableSeparateConstOffsetFromGEP(
     "disable-separate-const-offset-from-gep", cl::init(false),
@@ -319,6 +322,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
   }
@@ -373,15 +377,32 @@ private:
   ///
   /// Verified in @i32_add in split-gep.ll
   bool canonicalizeArrayIndicesToPointerSize(GetElementPtrInst *GEP);
+  /// Optimize sext(a)+sext(b) to sext(a+b) when a+b can't sign overflow.
+  /// SeparateConstOffsetFromGEP distributes a sext to leaves before extracting
+  /// the constant offset. After extraction, it becomes desirable to reunion the
+  /// distributed sexts. For example,
+  ///
+  ///                              &a[sext(i +nsw (j +nsw 5)]
+  ///   => distribute              &a[sext(i) +nsw (sext(j) +nsw 5)]
+  ///   => constant extraction     &a[sext(i) + sext(j)] + 5
+  ///   => reunion                 &a[sext(i +nsw j)] + 5
+  bool reuniteExts(Function &F);
+  /// A helper that reunites sexts in an instruction.
+  bool reuniteExts(Instruction *I);
+  /// Find the closest dominator of <Dominatee> that is equivalent to <Key>.
+  Instruction *findClosestMatchingDominator(const SCEV *Key,
+                                            Instruction *Dominatee);
   /// Verify F is free of dead code.
   void verifyNoDeadCode(Function &F);
 
   const DataLayout *DL;
-  const DominatorTree *DT;
+  DominatorTree *DT;
+  ScalarEvolution *SE;
   const TargetMachine *TM;
   /// Whether to lower a GEP with multiple indices into arithmetic operations or
   /// multiple GEPs with a single index.
   bool LowerGEP;
+  DenseMap<const SCEV *, SmallVector<Instruction *, 2>> DominatingExprs;
 };
 }  // anonymous namespace
 
@@ -391,6 +412,7 @@ INITIALIZE_PASS_BEGIN(
     "Split GEPs to a variadic base and a constant offset for better CSE", false,
     false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(
     SeparateConstOffsetFromGEP, "separate-const-offset-from-gep",
@@ -891,13 +913,13 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   // Clear the inbounds attribute because the new index may be off-bound.
   // e.g.,
   //
-  // b     = add i64 a, 5
-  // addr  = gep inbounds float, float* p, i64 b
+  //   b     = add i64 a, 5
+  //   addr  = gep inbounds float, float* p, i64 b
   //
   // is transformed to:
   //
-  // addr2 = gep float, float* p, i64 a ; inbounds removed
-  // addr  = gep inbounds float, float* addr2, i64 5
+  //   addr2 = gep float, float* p, i64 a ; inbounds removed
+  //   addr  = gep inbounds float, float* addr2, i64 5
   //
   // If a is -4, although the old index b is in bounds, the new index a is
   // off-bound. http://llvm.org/docs/LangRef.html#id181 says "if the
@@ -1013,6 +1035,7 @@ bool SeparateConstOffsetFromGEP::runOnFunction(Function &F) {
     return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  SE = &getAnalysis<ScalarEvolution>();
 
   bool Changed = false;
   for (Function::iterator B = F.begin(), BE = F.end(); B != BE; ++B) {
@@ -1025,9 +1048,81 @@ bool SeparateConstOffsetFromGEP::runOnFunction(Function &F) {
     }
   }
 
+  Changed |= reuniteExts(F);
+
   if (VerifyNoDeadCode)
     verifyNoDeadCode(F);
 
+  return Changed;
+}
+
+Instruction *SeparateConstOffsetFromGEP::findClosestMatchingDominator(
+    const SCEV *Key, Instruction *Dominatee) {
+  auto Pos = DominatingExprs.find(Key);
+  if (Pos == DominatingExprs.end())
+    return nullptr;
+
+  auto &Candidates = Pos->second;
+  // Because we process the basic blocks in pre-order of the dominator tree, a
+  // candidate that doesn't dominate the current instruction won't dominate any
+  // future instruction either. Therefore, we pop it out of the stack. This
+  // optimization makes the algorithm O(n).
+  while (!Candidates.empty()) {
+    Instruction *Candidate = Candidates.back();
+    if (DT->dominates(Candidate, Dominatee))
+      return Candidate;
+    Candidates.pop_back();
+  }
+  return nullptr;
+}
+
+bool SeparateConstOffsetFromGEP::reuniteExts(Instruction *I) {
+  if (!SE->isSCEVable(I->getType()))
+    return false;
+
+  //   Dom: LHS+RHS
+  //   I: sext(LHS)+sext(RHS)
+  // If Dom can't sign overflow and Dom dominates I, optimize I to sext(Dom).
+  // TODO: handle zext
+  Value *LHS = nullptr, *RHS = nullptr;
+  if (match(I, m_Add(m_SExt(m_Value(LHS)), m_SExt(m_Value(RHS)))) ||
+      match(I, m_Sub(m_SExt(m_Value(LHS)), m_SExt(m_Value(RHS))))) {
+    if (LHS->getType() == RHS->getType()) {
+      const SCEV *Key =
+          SE->getAddExpr(SE->getUnknown(LHS), SE->getUnknown(RHS));
+      if (auto *Dom = findClosestMatchingDominator(Key, I)) {
+        Instruction *NewSExt = new SExtInst(Dom, I->getType(), "", I);
+        NewSExt->takeName(I);
+        I->replaceAllUsesWith(NewSExt);
+        RecursivelyDeleteTriviallyDeadInstructions(I);
+        return true;
+      }
+    }
+  }
+
+  // Add I to DominatingExprs if it's an add/sub that can't sign overflow.
+  if (match(I, m_NSWAdd(m_Value(LHS), m_Value(RHS))) ||
+      match(I, m_NSWSub(m_Value(LHS), m_Value(RHS)))) {
+    if (isKnownNotFullPoison(I)) {
+      const SCEV *Key =
+          SE->getAddExpr(SE->getUnknown(LHS), SE->getUnknown(RHS));
+      DominatingExprs[Key].push_back(I);
+    }
+  }
+  return false;
+}
+
+bool SeparateConstOffsetFromGEP::reuniteExts(Function &F) {
+  bool Changed = false;
+  DominatingExprs.clear();
+  for (auto Node = GraphTraits<DominatorTree *>::nodes_begin(DT);
+       Node != GraphTraits<DominatorTree *>::nodes_end(DT); ++Node) {
+    BasicBlock *BB = Node->getBlock();
+    for (auto I = BB->begin(); I != BB->end(); ) {
+      Instruction *Cur = I++;
+      Changed |= reuniteExts(Cur);
+    }
+  }
   return Changed;
 }
 
