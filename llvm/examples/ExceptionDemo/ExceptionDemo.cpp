@@ -1265,10 +1265,10 @@ static llvm::Function *createCatchWrappedInvokeFunction(
   builder.SetInsertPoint(exceptionBlock);
 
   llvm::Function *personality = module.getFunction("ourPersonality");
+  ret->setPersonalityFn(personality);
 
   llvm::LandingPadInst *caughtResult =
     builder.CreateLandingPad(ourCaughtResultType,
-                             personality,
                              numExceptionsToCatch,
                              "landingPad");
 
