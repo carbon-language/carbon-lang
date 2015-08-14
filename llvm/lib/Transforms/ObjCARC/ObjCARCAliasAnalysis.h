@@ -29,44 +29,42 @@
 namespace llvm {
 namespace objcarc {
 
-  /// \brief This is a simple alias analysis implementation that uses knowledge
-  /// of ARC constructs to answer queries.
-  ///
-  /// TODO: This class could be generalized to know about other ObjC-specific
-  /// tricks. Such as knowing that ivars in the non-fragile ABI are non-aliasing
-  /// even though their offsets are dynamic.
-  class ObjCARCAliasAnalysis : public ImmutablePass,
-                               public AliasAnalysis {
-  public:
-    static char ID; // Class identification, replacement for typeinfo
-    ObjCARCAliasAnalysis() : ImmutablePass(ID) {
-      initializeObjCARCAliasAnalysisPass(*PassRegistry::getPassRegistry());
-    }
+/// \brief This is a simple alias analysis implementation that uses knowledge
+/// of ARC constructs to answer queries.
+///
+/// TODO: This class could be generalized to know about other ObjC-specific
+/// tricks. Such as knowing that ivars in the non-fragile ABI are non-aliasing
+/// even though their offsets are dynamic.
+class ObjCARCAliasAnalysis : public ImmutablePass, public AliasAnalysis {
+public:
+  static char ID; // Class identification, replacement for typeinfo
+  ObjCARCAliasAnalysis() : ImmutablePass(ID) {
+    initializeObjCARCAliasAnalysisPass(*PassRegistry::getPassRegistry());
+  }
 
-  private:
-    bool doInitialization(Module &M) override;
+private:
+  bool doInitialization(Module &M) override;
 
-    /// This method is used when a pass implements an analysis interface through
-    /// multiple inheritance.  If needed, it should override this to adjust the
-    /// this pointer as needed for the specified pass info.
-    void *getAdjustedAnalysisPointer(const void *PI) override {
-      if (PI == &AliasAnalysis::ID)
-        return static_cast<AliasAnalysis *>(this);
-      return this;
-    }
+  /// This method is used when a pass implements an analysis interface through
+  /// multiple inheritance.  If needed, it should override this to adjust the
+  /// this pointer as needed for the specified pass info.
+  void *getAdjustedAnalysisPointer(const void *PI) override {
+    if (PI == &AliasAnalysis::ID)
+      return static_cast<AliasAnalysis *>(this);
+    return this;
+  }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const override;
-    AliasResult alias(const MemoryLocation &LocA,
-                      const MemoryLocation &LocB) override;
-    bool pointsToConstantMemory(const MemoryLocation &Loc,
-                                bool OrLocal) override;
-    FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-    FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-    ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                             const MemoryLocation &Loc) override;
-    ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                             ImmutableCallSite CS2) override;
-  };
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  AliasResult alias(const MemoryLocation &LocA,
+                    const MemoryLocation &LocB) override;
+  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
+  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
+  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
+  ModRefInfo getModRefInfo(ImmutableCallSite CS,
+                           const MemoryLocation &Loc) override;
+  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
+                           ImmutableCallSite CS2) override;
+};
 
 } // namespace objcarc
 } // namespace llvm

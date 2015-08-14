@@ -48,8 +48,7 @@ bool ObjCARCAliasAnalysis::doInitialization(Module &M) {
   return true;
 }
 
-void
-ObjCARCAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+void ObjCARCAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AliasAnalysis::getAnalysisUsage(AU);
 }
