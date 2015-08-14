@@ -1,5 +1,5 @@
-// RUN: %env_asan_opts=detect_stack_use_after_return=1 %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %env_asan_opts=detect_stack_use_after_return=1 %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %env_asan_opts=detect_stack_use_after_return=1 not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -o %t && %env_asan_opts=detect_stack_use_after_return=1 not %run %t 2>&1 | FileCheck %s
 // XFAIL: arm-linux-gnueabi,win32
 
 // FIXME: Fix this test under GCC.
