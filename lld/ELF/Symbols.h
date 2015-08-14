@@ -55,7 +55,6 @@ public:
   // has chosen the object among other objects having the same name,
   // you can access P->Backref->Body to get the resolver's result.
   void setBackref(Symbol *P) { Backref = P; }
-  SymbolBody *getReplacement() { return Backref ? Backref->Body : this; }
 
   // Decides which symbol should "win" in the symbol table, this or
   // the Other. Returns 1 if this wins, -1 if the Other wins, or 0 if
