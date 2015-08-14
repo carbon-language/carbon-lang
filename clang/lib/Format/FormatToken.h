@@ -283,6 +283,10 @@ struct FormatToken {
   bool is(const IdentifierInfo *II) const {
     return II && II == Tok.getIdentifierInfo();
   }
+  bool is(tok::PPKeywordKind Kind) const {
+    return Tok.getIdentifierInfo() &&
+           Tok.getIdentifierInfo()->getPPKeywordID() == Kind;
+  }
   template <typename A, typename B> bool isOneOf(A K1, B K2) const {
     return is(K1) || is(K2);
   }
