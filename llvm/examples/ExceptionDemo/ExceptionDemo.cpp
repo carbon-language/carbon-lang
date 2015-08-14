@@ -77,6 +77,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <inttypes.h>
 
 #ifndef USE_GLOBAL_STR_CONSTS
 #define USE_GLOBAL_STR_CONSTS true
@@ -569,8 +570,8 @@ static bool handleActionValue(int64_t *resultAction,
   fprintf(stderr,
           "handleActionValue(...): exceptionObject = <%p>, "
           "excp = <%p>.\n",
-          exceptionObject,
-          excp);
+          (void*)exceptionObject,
+          (void*)excp);
 #endif
 
   const uint8_t *actionPos = (uint8_t*) actionEntry,
@@ -588,8 +589,8 @@ static bool handleActionValue(int64_t *resultAction,
 
 #ifdef DEBUG
     fprintf(stderr,
-            "handleActionValue(...):typeOffset: <%lld>, "
-            "actionOffset: <%lld>.\n",
+            "handleActionValue(...):typeOffset: <%" PRIi64 ">, "
+            "actionOffset: <%" PRIi64 ">.\n",
             typeOffset,
             actionOffset);
 #endif
@@ -848,7 +849,7 @@ _Unwind_Reason_Code ourPersonality(int version,
 #ifdef DEBUG
   fprintf(stderr,
           "ourPersonality(...):lsda = <%p>.\n",
-          lsda);
+          (void*)lsda);
 #endif
 
   // The real work of the personality function is captured here
@@ -1694,7 +1695,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
 #ifdef DEBUG
   fprintf(stderr,
           "createStandardUtilityFunctions(...):ourBaseFromUnwindOffset "
-          "= %lld, sizeof(struct OurBaseException_t) - "
+          "= %" PRIi64 ", sizeof(struct OurBaseException_t) - "
           "sizeof(struct _Unwind_Exception) = %lu.\n",
           ourBaseFromUnwindOffset,
           sizeof(struct OurBaseException_t) -
