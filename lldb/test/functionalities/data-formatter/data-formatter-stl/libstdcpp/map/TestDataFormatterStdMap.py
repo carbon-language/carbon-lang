@@ -19,8 +19,8 @@ class StdMapDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
-    @expectedFailureIcc   # llvm.org/pr15301: LLDB prints incorrect size of
-                          # libstdc++ containers
+    @expectedFailureIcc   # llvm.org/pr15301: LLDB prints incorrect size of libstdc++ containers
+    @skipIfWindows # libstdcpp not ported to Windows
     @skipIfFreeBSD
     @dwarf_test
     def test_with_dwarf_and_run_command(self):

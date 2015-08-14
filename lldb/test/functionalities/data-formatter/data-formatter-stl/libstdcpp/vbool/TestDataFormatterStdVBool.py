@@ -22,7 +22,7 @@ class StdVBoolDataFormatterTestCase(TestBase):
 
     @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
     @dwarf_test
-    @skipIfWindows # http://llvm.org/pr21800
+    @skipIfWindows # libstdcpp not ported to Windows.
     @skipIfDarwin
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""

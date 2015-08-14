@@ -20,6 +20,7 @@ class StdIteratorDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @dwarf_test
+    @skipIfWindows # libstdcpp not ported to Windows
     @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
     @expectedFailureIcc # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     def test_with_dwarf_and_run_command(self):

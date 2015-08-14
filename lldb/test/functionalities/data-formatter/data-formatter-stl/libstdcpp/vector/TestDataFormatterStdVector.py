@@ -22,6 +22,7 @@ class StdVectorDataFormatterTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @expectedFailureIcc # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
+    @skipIfWindows # libstdcpp not ported to Windows
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
