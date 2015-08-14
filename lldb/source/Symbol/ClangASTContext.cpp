@@ -8831,15 +8831,15 @@ ClangASTContext::DumpTypeDescription (void* type, Stream *s)
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/TypeList.h"
 
-#include "plugins/SymbolFile/DWARF/DWARFCompileUnit.h"
-#include "plugins/SymbolFile/DWARF/DWARFDebugInfo.h"
-#include "plugins/SymbolFile/DWARF/DWARFDebugInfoEntry.h"
-#include "plugins/SymbolFile/DWARF/DWARFDeclContext.h"
-#include "plugins/SymbolFile/DWARF/DWARFDefines.h"
-#include "plugins/SymbolFile/DWARF/DWARFDIECollection.h"
-#include "plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
-#include "plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
-#include "plugins/SymbolFile/DWARF/UniqueDWARFASTType.h"
+#include "Plugins/SymbolFile/DWARF/DWARFCompileUnit.h"
+#include "Plugins/SymbolFile/DWARF/DWARFDebugInfo.h"
+#include "Plugins/SymbolFile/DWARF/DWARFDebugInfoEntry.h"
+#include "Plugins/SymbolFile/DWARF/DWARFDeclContext.h"
+#include "Plugins/SymbolFile/DWARF/DWARFDefines.h"
+#include "Plugins/SymbolFile/DWARF/DWARFDIECollection.h"
+#include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
+#include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
+#include "Plugins/SymbolFile/DWARF/UniqueDWARFASTType.h"
 
 
 class ClangASTContext::DelayedAddObjCClassProperty
