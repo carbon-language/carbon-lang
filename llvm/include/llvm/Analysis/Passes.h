@@ -33,13 +33,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createAliasAnalysisCounterPass - This pass counts alias queries and how the
-  // alias analysis implementation responds.
-  //
-  ModulePass *createAliasAnalysisCounterPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   // createAAEvalPass - This pass implements a simple N^2 alias analysis
   // accuracy evaluator.
   //
