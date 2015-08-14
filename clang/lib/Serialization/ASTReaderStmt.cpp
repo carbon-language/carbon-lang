@@ -2125,6 +2125,10 @@ void ASTStmtReader::VisitOMPLoopDirective(OMPLoopDirective *D) {
   Sub.clear();
   for (unsigned i = 0; i < CollapsedNum; ++i)
     Sub.push_back(Reader.ReadSubExpr());
+  D->setInits(Sub);
+  Sub.clear();
+  for (unsigned i = 0; i < CollapsedNum; ++i)
+    Sub.push_back(Reader.ReadSubExpr());
   D->setUpdates(Sub);
   Sub.clear();
   for (unsigned i = 0; i < CollapsedNum; ++i)
