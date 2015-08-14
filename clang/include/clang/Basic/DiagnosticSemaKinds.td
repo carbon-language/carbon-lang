@@ -1969,7 +1969,7 @@ def note_private_extern : Note<
   "use __attribute__((visibility(\"hidden\"))) attribute instead">;
 
 // C++ Concepts TS
-def err_concept_decl_non_template : Error<
+def err_concept_wrong_decl_kind : Error<
   "'concept' can only appear on the definition of a function template or variable template">;
 def err_concept_decls_may_only_appear_in_namespace_scope : Error<
   "concept declarations may only appear in namespace scope">;

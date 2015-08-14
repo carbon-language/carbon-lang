@@ -3662,6 +3662,14 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
     return TagD;
   }
 
+  if (DS.isConceptSpecified()) {
+    // C++ Concepts TS [dcl.spec.concept]p1: A concept definition refers to
+    // either a function concept and its definition or a variable concept and
+    // its initializer.
+    Diag(DS.getConceptSpecLoc(), diag::err_concept_wrong_decl_kind);
+    return TagD;
+  }
+
   DiagnoseFunctionSpecifiers(DS);
 
   if (DS.isFriendSpecified()) {
@@ -4865,7 +4873,7 @@ NamedDecl *Sema::HandleDeclarator(Scope *S, Declarator &D,
     // template, declared in namespace scope
     if (!TemplateParamLists.size()) {
       Diag(D.getDeclSpec().getConceptSpecLoc(),
-           diag::err_concept_decl_non_template);
+           diag:: err_concept_wrong_decl_kind);
       return nullptr;
     }
 
