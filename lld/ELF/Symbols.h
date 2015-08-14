@@ -63,8 +63,7 @@ public:
   int compare(SymbolBody *Other);
 
 protected:
-  SymbolBody(Kind K, StringRef N = "")
-      : SymbolKind(K), Name(N) {}
+  SymbolBody(Kind K, StringRef Name) : SymbolKind(K), Name(Name) {}
 
 protected:
   const unsigned SymbolKind : 8;
@@ -76,7 +75,7 @@ protected:
 // etc.
 class Defined : public SymbolBody {
 public:
-  explicit Defined(Kind K, StringRef N = "") : SymbolBody(K, N) {}
+  explicit Defined(Kind K, StringRef N) : SymbolBody(K, N) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
