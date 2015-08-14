@@ -438,20 +438,16 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   if (isa<UnreachableInst>(BB.getTerminator()))
     return;
   BasicBlock::iterator IP = BB.getFirstInsertionPt(), BE = BB.end();
-  // Skip static allocas at the top of the entry block so they don't become
-  // dynamic when we split the block.  If we used our optimized stack layout,
-  // then there will only be one alloca and it will come first.
-  for (; IP != BE; ++IP) {
-    AllocaInst *AI = dyn_cast<AllocaInst>(IP);
-    if (!AI || !AI->isStaticAlloca())
-      break;
-  }
 
   bool IsEntryBB = &BB == &F.getEntryBlock();
   DebugLoc EntryLoc;
   if (IsEntryBB) {
     if (auto SP = getDISubprogram(&F))
       EntryLoc = DebugLoc::get(SP->getScopeLine(), 0, SP);
+    // Keep static allocas and llvm.localescape calls in the entry block.  Even
+    // if we aren't splitting the block, it's nice for allocas to be before
+    // calls.
+    IP = PrepareToSplitEntryBlock(BB, IP);
   } else {
     EntryLoc = IP->getDebugLoc();
   }

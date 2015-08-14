@@ -15,6 +15,7 @@
 #define LLVM_TRANSFORMS_INSTRUMENTATION_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/BasicBlock.h"
 #include <vector>
 
 #if defined(__GNUC__) && defined(__linux__) && !defined(ANDROID)
@@ -32,6 +33,14 @@ inline void *getDFSanRetValTLSPtrForJIT() {
 #endif
 
 namespace llvm {
+
+/// Instrumentation passes often insert conditional checks into entry blocks.
+/// Call this function before splitting the entry block to move instructions
+/// that must remain in the entry block up before the split point. Static
+/// allocas and llvm.localescape calls, for example, must remain in the entry
+/// block.
+BasicBlock::iterator PrepareToSplitEntryBlock(BasicBlock &BB,
+                                              BasicBlock::iterator IP);
 
 class ModulePass;
 class FunctionPass;
