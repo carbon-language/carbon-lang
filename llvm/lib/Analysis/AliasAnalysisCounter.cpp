@@ -35,6 +35,65 @@ ModulePass *llvm::createAliasAnalysisCounterPass() {
   return new AliasAnalysisCounter();
 }
 
+AliasAnalysisCounter::AliasAnalysisCounter() : ModulePass(ID) {
+  initializeAliasAnalysisCounterPass(*PassRegistry::getPassRegistry());
+  No = May = Partial = Must = 0;
+  NoMR = JustRef = JustMod = MR = 0;
+}
+
+static void printLine(const char *Desc, unsigned Val, unsigned Sum) {
+  errs() << "  " << Val << " " << Desc << " responses (" << Val * 100 / Sum
+         << "%)\n";
+}
+
+AliasAnalysisCounter::~AliasAnalysisCounter() {
+  unsigned AASum = No + May + Partial + Must;
+  unsigned MRSum = NoMR + JustRef + JustMod + MR;
+  if (AASum + MRSum) { // Print a report if any counted queries occurred...
+    errs() << "\n===== Alias Analysis Counter Report =====\n"
+           << "  Analysis counted:\n"
+           << "  " << AASum << " Total Alias Queries Performed\n";
+    if (AASum) {
+      printLine("no alias", No, AASum);
+      printLine("may alias", May, AASum);
+      printLine("partial alias", Partial, AASum);
+      printLine("must alias", Must, AASum);
+      errs() << "  Alias Analysis Counter Summary: " << No * 100 / AASum << "%/"
+             << May * 100 / AASum << "%/" << Partial * 100 / AASum << "%/"
+             << Must * 100 / AASum << "%\n\n";
+    }
+
+    errs() << "  " << MRSum << " Total MRI_Mod/MRI_Ref Queries Performed\n";
+    if (MRSum) {
+      printLine("no mod/ref", NoMR, MRSum);
+      printLine("ref", JustRef, MRSum);
+      printLine("mod", JustMod, MRSum);
+      printLine("mod/ref", MR, MRSum);
+      errs() << "  MRI_Mod/MRI_Ref Analysis Counter Summary: "
+             << NoMR * 100 / MRSum << "%/" << JustRef * 100 / MRSum << "%/"
+             << JustMod * 100 / MRSum << "%/" << MR * 100 / MRSum << "%\n\n";
+    }
+  }
+}
+
+bool AliasAnalysisCounter::runOnModule(Module &M) {
+  this->M = &M;
+  InitializeAliasAnalysis(this, &M.getDataLayout());
+  return false;
+}
+
+void AliasAnalysisCounter::getAnalysisUsage(AnalysisUsage &AU) const {
+  AliasAnalysis::getAnalysisUsage(AU);
+  AU.addRequired<AliasAnalysis>();
+  AU.setPreservesAll();
+}
+
+void *AliasAnalysisCounter::getAdjustedAnalysisPointer(AnalysisID PI) {
+  if (PI == &AliasAnalysis::ID)
+    return (AliasAnalysis *)this;
+  return this;
+}
+
 AliasResult AliasAnalysisCounter::alias(const MemoryLocation &LocA,
                                         const MemoryLocation &LocB) {
   AliasResult R = getAnalysis<AliasAnalysis>().alias(LocA, LocB);
