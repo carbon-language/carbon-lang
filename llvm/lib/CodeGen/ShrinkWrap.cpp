@@ -68,15 +68,10 @@
 #include "llvm/Target/TargetInstrInfo.h"
 // To access TargetInstrInfo.
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include "llvm/Support/CommandLine.h"
 
 #define DEBUG_TYPE "shrink-wrap"
 
 using namespace llvm;
-
-static cl::opt<cl::boolOrDefault>
-    EnableShrinkWrapOpt("enable-shrink-wrap", cl::Hidden,
-                        cl::desc("enable the shrink-wrapping pass"));
 
 STATISTIC(NumFunc, "Number of functions");
 STATISTIC(NumCandidates, "Number of shrink-wrapping candidates");
@@ -159,11 +154,6 @@ public:
   ShrinkWrap() : MachineFunctionPass(ID) {
     initializeShrinkWrapPass(*PassRegistry::getPassRegistry());
   }
-  
-  ShrinkWrap(std::function<bool(const MachineFunction &)> Ftor) :
-      MachineFunctionPass(ID), PredicateFtor(Ftor) {
-    initializeShrinkWrapPass(*PassRegistry::getPassRegistry());
-  }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -181,15 +171,6 @@ public:
   /// \brief Perform the shrink-wrapping analysis and update
   /// the MachineFrameInfo attached to \p MF with the results.
   bool runOnMachineFunction(MachineFunction &MF) override;
-
-private:
-  /// \brief Predicate function to determine if shrink wrapping should run.
-  ///
-  /// This function will be run at the beginning of shrink wrapping and
-  /// determine whether shrink wrapping should run on the given MachineFunction.
-  /// \arg MF The MachineFunction to run shrink wrapping on.
-  /// It returns true if shrink wrapping should be run, false otherwise.
-  std::function<bool(const MachineFunction &MF)> PredicateFtor;
 };
 } // End anonymous namespace.
 
@@ -338,12 +319,8 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB) {
 }
 
 bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
-  if (PredicateFtor && !PredicateFtor(MF)) 
+  if (MF.empty())
     return false;
-  
-  if (MF.empty() || skipOptnoneFunction(*MF.getFunction()))
-    return false;
-
   DEBUG(dbgs() << "**** Analysing " << MF.getName() << '\n');
 
   init(MF);
@@ -426,27 +403,4 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
   MFI->setRestorePoint(Restore);
   ++NumCandidates;
   return false;
-}
-
-/// If EnableShrinkWrap is set run shrink wrapping on the given Machine
-/// Function. Otherwise, shrink wrapping is disabled.
-/// This function can be overridden in each target-specific TargetPassConfig
-/// class to allow different predicate logic for each target. 
-bool TargetPassConfig::runShrinkWrap(const MachineFunction &Fn) const {
-  switch (EnableShrinkWrapOpt) {
-  case cl::BOU_TRUE:
-    return true;
-  case cl::BOU_UNSET:
-  case cl::BOU_FALSE:
-    return false;
-  }
-  llvm_unreachable("Invalid shrink-wrapping state");
-}
-
-/// Create a ShrinkWrap FunctionPass using the runShrinkWrap predicate
-/// function.
-FunctionPass *TargetPassConfig::createShrinkWrapPass() {
-  std::function<bool(const MachineFunction &Fn)> Ftor =
-    std::bind(&TargetPassConfig::runShrinkWrap, this, std::placeholders::_1);
-  return new ShrinkWrap(Ftor);
 }
