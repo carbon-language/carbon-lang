@@ -4959,6 +4959,19 @@ public:
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::CharPtrBuiltinVaList;
   }
+  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
+    switch (CC) {
+    case CC_X86StdCall:
+    case CC_X86ThisCall:
+    case CC_X86FastCall:
+    case CC_X86VectorCall:
+      return CCCR_Ignore;
+    case CC_C:
+      return CCCR_OK;
+    default:
+      return CCCR_Warning;
+    }
+  }
 };
 
 // Windows ARM + Itanium C++ ABI Target
