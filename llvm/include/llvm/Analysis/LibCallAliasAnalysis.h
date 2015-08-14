@@ -42,12 +42,6 @@ struct LibCallAliasAnalysis : public FunctionPass, public AliasAnalysis {
   ModRefInfo getModRefInfo(ImmutableCallSite CS,
                            const MemoryLocation &Loc) override;
 
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override {
-    // TODO: Could compare two direct calls against each other if we cared to.
-    return AliasAnalysis::getModRefInfo(CS1, CS2);
-  }
-
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   bool runOnFunction(Function &F) override;
