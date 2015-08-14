@@ -16,7 +16,6 @@
 namespace lld {
 namespace elf2 {
 
-class Defined;
 template <class ELFT> class ObjectFile;
 
 // A chunk corresponding a section of an input file.

@@ -17,7 +17,6 @@
 
 namespace lld {
 namespace elf2 {
-class Defined;
 struct Symbol;
 
 // SymbolTable is a bucket of all known symbols, including defined,
