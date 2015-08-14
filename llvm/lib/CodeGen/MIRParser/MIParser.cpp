@@ -777,13 +777,15 @@ bool MIParser::parseRegisterFlag(unsigned &Flags) {
   case MIToken::kw_undef:
     Flags |= RegState::Undef;
     break;
+  case MIToken::kw_internal:
+    Flags |= RegState::InternalRead;
+    break;
   case MIToken::kw_early_clobber:
     Flags |= RegState::EarlyClobber;
     break;
   case MIToken::kw_debug_use:
     Flags |= RegState::Debug;
     break;
-  // TODO: parse the other register flags.
   default:
     llvm_unreachable("The current token should be a register flag");
   }
@@ -828,7 +830,8 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
   Dest = MachineOperand::CreateReg(
       Reg, Flags & RegState::Define, Flags & RegState::Implicit,
       Flags & RegState::Kill, Flags & RegState::Dead, Flags & RegState::Undef,
-      Flags & RegState::EarlyClobber, SubReg, Flags & RegState::Debug);
+      Flags & RegState::EarlyClobber, SubReg, Flags & RegState::Debug,
+      Flags & RegState::InternalRead);
   return false;
 }
 
@@ -1235,6 +1238,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::kw_dead:
   case MIToken::kw_killed:
   case MIToken::kw_undef:
+  case MIToken::kw_internal:
   case MIToken::kw_early_clobber:
   case MIToken::kw_debug_use:
   case MIToken::underscore:

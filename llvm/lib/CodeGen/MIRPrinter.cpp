@@ -617,9 +617,11 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   printTargetFlags(Op);
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
-    // TODO: Print the other register flags.
+    // FIXME: Serialize the tied register.
     if (Op.isImplicit())
       OS << (Op.isDef() ? "implicit-def " : "implicit ");
+    if (Op.isInternalRead())
+      OS << "internal ";
     if (Op.isDead())
       OS << "dead ";
     if (Op.isKill())
