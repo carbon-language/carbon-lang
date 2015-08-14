@@ -800,12 +800,6 @@ public:
 
   RegionT *getTopLevelRegion() const { return TopLevelRegion; }
 
-  /// @brief Update RegionInfo after a basic block was split.
-  ///
-  /// @param NewBB The basic block that was created before OldBB.
-  /// @param OldBB The old basic block.
-  void splitBlock(BlockT *NewBB, BlockT *OldBB);
-
   /// @brief Clear the Node Cache for all Regions.
   ///
   /// @see Region::clearNodeCache()

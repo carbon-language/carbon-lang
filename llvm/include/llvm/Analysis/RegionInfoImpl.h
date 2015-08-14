@@ -911,20 +911,6 @@ RegionInfoBase<Tr>::getCommonRegion(SmallVectorImpl<BlockT *> &BBs) const {
 }
 
 template <class Tr>
-void RegionInfoBase<Tr>::splitBlock(BlockT *NewBB, BlockT *OldBB) {
-  RegionT *R = getRegionFor(OldBB);
-
-  setRegionFor(NewBB, R);
-
-  while (R->getEntry() == OldBB && !R->isTopLevelRegion()) {
-    R->replaceEntry(NewBB);
-    R = R->getParent();
-  }
-
-  setRegionFor(OldBB, R);
-}
-
-template <class Tr>
 void RegionInfoBase<Tr>::calculate(FuncT &F) {
   typedef typename std::add_pointer<FuncT>::type FuncPtrT;
 
