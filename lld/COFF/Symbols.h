@@ -175,8 +175,8 @@ public:
     return S->kind() == DefinedRegularKind;
   }
 
-  uint64_t getFileOff() {
-    return (*Data)->getFileOff() + Sym->Value;
+  uint64_t getOutputSectionOff() {
+    return (*Data)->getOutputSectionOff() + Sym->Value;
   }
 
   uint64_t getRVA() { return (*Data)->getRVA() + Sym->Value; }
@@ -202,7 +202,7 @@ public:
   }
 
   uint64_t getRVA() { return Data->getRVA(); }
-  uint64_t getFileOff() { return Data->getFileOff(); }
+  uint64_t getOutputSectionOff() { return Data->getOutputSectionOff(); }
 
 private:
   friend SymbolBody;
@@ -316,7 +316,7 @@ public:
   }
 
   uint64_t getRVA() { return Location->getRVA(); }
-  uint64_t getFileOff() { return Location->getFileOff(); }
+  uint64_t getOutputSectionOff() { return Location->getOutputSectionOff(); }
 
   StringRef getDLLName() { return DLLName; }
   StringRef getExternalName() { return ExternalName; }
@@ -344,7 +344,7 @@ public:
   }
 
   uint64_t getRVA() { return Data->getRVA(); }
-  uint64_t getFileOff() { return Data->getFileOff(); }
+  uint64_t getOutputSectionOff() { return Data->getOutputSectionOff(); }
   Chunk *getChunk() { return Data.get(); }
 
 private:
@@ -366,7 +366,7 @@ public:
   }
 
   uint64_t getRVA() { return Data.getRVA(); }
-  uint64_t getFileOff() { return Data.getFileOff(); }
+  uint64_t getOutputSectionOff() { return Data.getOutputSectionOff(); }
 
   Chunk *getChunk() { return &Data; }
 

@@ -129,11 +129,11 @@ void SectionChunk::writeTo(uint8_t *Buf) {
     return;
   // Copy section contents from source object file to output file.
   ArrayRef<uint8_t> A = getContents();
-  memcpy(Buf + FileOff, A.data(), A.size());
+  memcpy(Buf + OutputSectionOff, A.data(), A.size());
 
   // Apply relocations.
   for (const coff_relocation &Rel : Relocs) {
-    uint8_t *Off = Buf + FileOff + Rel.VirtualAddress;
+    uint8_t *Off = Buf + OutputSectionOff + Rel.VirtualAddress;
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     Defined *Sym = cast<Defined>(Body);
     uint64_t P = RVA + Rel.VirtualAddress;
@@ -243,7 +243,7 @@ uint32_t CommonChunk::getPermissions() const {
 }
 
 void StringChunk::writeTo(uint8_t *Buf) {
-  memcpy(Buf + FileOff, Str.data(), Str.size());
+  memcpy(Buf + OutputSectionOff, Str.data(), Str.size());
 }
 
 ImportThunkChunkX64::ImportThunkChunkX64(Defined *S) : ImpSymbol(S) {
@@ -253,9 +253,9 @@ ImportThunkChunkX64::ImportThunkChunkX64(Defined *S) : ImpSymbol(S) {
 }
 
 void ImportThunkChunkX64::writeTo(uint8_t *Buf) {
-  memcpy(Buf + FileOff, ImportThunkX86, sizeof(ImportThunkX86));
+  memcpy(Buf + OutputSectionOff, ImportThunkX86, sizeof(ImportThunkX86));
   // The first two bytes is a JMP instruction. Fill its operand.
-  write32le(Buf + FileOff + 2, ImpSymbol->getRVA() - RVA - getSize());
+  write32le(Buf + OutputSectionOff + 2, ImpSymbol->getRVA() - RVA - getSize());
 }
 
 void ImportThunkChunkX86::getBaserels(std::vector<Baserel> *Res) {
@@ -263,9 +263,10 @@ void ImportThunkChunkX86::getBaserels(std::vector<Baserel> *Res) {
 }
 
 void ImportThunkChunkX86::writeTo(uint8_t *Buf) {
-  memcpy(Buf + FileOff, ImportThunkX86, sizeof(ImportThunkX86));
+  memcpy(Buf + OutputSectionOff, ImportThunkX86, sizeof(ImportThunkX86));
   // The first two bytes is a JMP instruction. Fill its operand.
-  write32le(Buf + FileOff + 2, ImpSymbol->getRVA() + Config->ImageBase);
+  write32le(Buf + OutputSectionOff + 2,
+            ImpSymbol->getRVA() + Config->ImageBase);
 }
 
 void ImportThunkChunkARM::getBaserels(std::vector<Baserel> *Res) {
@@ -273,9 +274,9 @@ void ImportThunkChunkARM::getBaserels(std::vector<Baserel> *Res) {
 }
 
 void ImportThunkChunkARM::writeTo(uint8_t *Buf) {
-  memcpy(Buf + FileOff, ImportThunkARM, sizeof(ImportThunkARM));
+  memcpy(Buf + OutputSectionOff, ImportThunkARM, sizeof(ImportThunkARM));
   // Fix mov.w and mov.t operands.
-  applyMOV32T(Buf + FileOff, ImpSymbol->getRVA() + Config->ImageBase);
+  applyMOV32T(Buf + OutputSectionOff, ImpSymbol->getRVA() + Config->ImageBase);
 }
 
 void LocalImportChunk::getBaserels(std::vector<Baserel> *Res) {
@@ -288,14 +289,14 @@ size_t LocalImportChunk::getSize() const {
 
 void LocalImportChunk::writeTo(uint8_t *Buf) {
   if (Config->is64()) {
-    write64le(Buf + FileOff, Sym->getRVA() + Config->ImageBase);
+    write64le(Buf + OutputSectionOff, Sym->getRVA() + Config->ImageBase);
   } else {
-    write32le(Buf + FileOff, Sym->getRVA() + Config->ImageBase);
+    write32le(Buf + OutputSectionOff, Sym->getRVA() + Config->ImageBase);
   }
 }
 
 void SEHTableChunk::writeTo(uint8_t *Buf) {
-  ulittle32_t *Begin = reinterpret_cast<ulittle32_t *>(Buf + FileOff);
+  ulittle32_t *Begin = reinterpret_cast<ulittle32_t *>(Buf + OutputSectionOff);
   size_t Cnt = 0;
   for (Defined *D : Syms)
     Begin[Cnt++] = D->getRVA();
@@ -319,7 +320,7 @@ BaserelChunk::BaserelChunk(uint32_t Page, Baserel *Begin, Baserel *End) {
 }
 
 void BaserelChunk::writeTo(uint8_t *Buf) {
-  memcpy(Buf + FileOff, Data.data(), Data.size());
+  memcpy(Buf + OutputSectionOff, Data.data(), Data.size());
 }
 
 uint8_t Baserel::getDefaultType() {

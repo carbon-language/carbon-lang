@@ -159,8 +159,6 @@ void OutputSection::setFileOffset(uint64_t Off) {
   if (Header.SizeOfRawData == 0)
     return;
   Header.PointerToRawData = Off;
-  for (Chunk *C : Chunks)
-    C->setFileOff(C->getFileOff() + Off);
 }
 
 void OutputSection::addChunk(Chunk *C) {
@@ -169,7 +167,7 @@ void OutputSection::addChunk(Chunk *C) {
   uint64_t Off = Header.VirtualSize;
   Off = RoundUpToAlignment(Off, C->getAlign());
   C->setRVA(Off);
-  C->setFileOff(Off);
+  C->setOutputSectionOff(Off);
   Off += C->getSize();
   Header.VirtualSize = Off;
   if (C->hasData())
@@ -705,13 +703,14 @@ void Writer::fixSafeSEHSymbols() {
 void Writer::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
   for (OutputSection *Sec : OutputSections) {
+    uint8_t *SecBuf = Buf + Sec->getFileOff();
     // Fill gaps between functions in .text with INT3 instructions
     // instead of leaving as NUL bytes (which can be interpreted as
     // ADD instructions).
     if (Sec->getPermissions() & IMAGE_SCN_CNT_CODE)
-      memset(Buf + Sec->getFileOff(), 0xCC, Sec->getRawSize());
+      memset(SecBuf, 0xCC, Sec->getRawSize());
     for (Chunk *C : Sec->getChunks())
-      C->writeTo(Buf);
+      C->writeTo(SecBuf);
   }
 }
 
