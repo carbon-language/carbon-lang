@@ -52,14 +52,14 @@ _start:
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: 0x0
 // CHECK-NEXT:   Offset:
-// CHECK-NEXT:   Size: 41
+// CHECK-NEXT:   Size: 48
 // CHECK-NEXT:   Link: 0
 // CHECK-NEXT:   Info: 0
 // CHECK-NEXT:   AddressAlignment: 1
 // CHECK-NEXT:   EntrySize: 0
 // CHECK-NEXT:   SectionData (
-// CHECK-NEXT:     0000: 002E7465 7874002E 62737300 666F6F62  |..text..bss.foob|
-// CHECK-NEXT:     0010: 6172002E 73747274 6162002E 73796D74  |ar..strtab..symt|
-// CHECK-NEXT:     0020: 6162002E 64617461 00                 |ab..data.|
+// CHECK-NEXT:     0000: 002E7465 7874005F 73746172 74002E62  |..text._start..b|
+// CHECK-NEXT:     0010: 73730066 6F6F6261 72002E73 74727461  |ss.foobar..strta|
+// CHECK-NEXT:     0020: 62002E73 796D7461 62002E64 61746100  |b..symtab..data.|
 // CHECK-NEXT:   )
 // CHECK-NEXT: }

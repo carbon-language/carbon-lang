@@ -25,7 +25,7 @@ _start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: 0x401000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
-# CHECK-NEXT:   SectionHeaderOffset: 0x1038
+# CHECK-NEXT:   SectionHeaderOffset: 0x1070
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 64
@@ -106,7 +106,7 @@ _start:
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x1010
-# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Size: 48
 # CHECK-NEXT:     Link: 5
 # CHECK-NEXT:     Info: 1
 # CHECK-NEXT:     AddressAlignment: 8
@@ -114,13 +114,13 @@ _start:
 # CHECK-NEXT:  }
 # CHECK-NEXT:  Section {
 # CHECK-NEXT:    Index: 5
-# CHECK-NEXT:     Name: .strtab (12)
+# CHECK-NEXT:     Name: .strtab
 # CHECK-NEXT:     Type: SHT_STRTAB (0x3)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x1010
-# CHECK-NEXT:     Size: 34
+# CHECK-NEXT:     Offset: 0x1040
+# CHECK-NEXT:     Size: 41
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
@@ -133,8 +133,8 @@ _start:
 # CHECK-NEXT:     Offset: 0x0
 # CHECK-NEXT:     VirtualAddress: 0x400000
 # CHECK-NEXT:     PhysicalAddress: 0x400000
-# CHECK-NEXT:     FileSize: 4536
-# CHECK-NEXT:     MemSize: 4536
+# CHECK-NEXT:     FileSize: 4592
+# CHECK-NEXT:     MemSize: 4592
 # CHECK-NEXT:     Flags [ (0x5)
 # CHECK-NEXT:       PF_R (0x4)
 # CHECK-NEXT:       PF_X (0x1)

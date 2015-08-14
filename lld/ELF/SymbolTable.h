@@ -13,6 +13,7 @@
 #include "InputFiles.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/MC/StringTableBuilder.h"
 
 namespace lld {
 namespace elf2 {
@@ -41,6 +42,13 @@ public:
   // The writer needs to infer the machine type from the object files.
   std::vector<std::unique_ptr<ObjectFileBase>> ObjectFiles;
 
+  unsigned getNumSymbols() { return Symtab.size(); }
+  llvm::StringTableBuilder &getStringBuilder() { return Builder; };
+
+  const llvm::DenseMap<StringRef, Symbol *> &getSymbols() const {
+    return Symtab;
+  }
+
 private:
   void addObject(ObjectFileBase *File);
 
@@ -48,6 +56,7 @@ private:
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
   llvm::BumpPtrAllocator Alloc;
+  llvm::StringTableBuilder Builder;
 };
 
 } // namespace elf2

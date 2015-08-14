@@ -14,7 +14,6 @@
 #include "Writer.h"
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
 using namespace llvm;
@@ -82,11 +81,13 @@ private:
 
 template <bool Is64Bits>
 class StringTableSection final : public OutputSectionBase<Is64Bits> {
-  llvm::StringTableBuilder StrTabBuilder;
+  llvm::StringTableBuilder &StrTabBuilder;
 
 public:
   typedef typename OutputSectionBase<Is64Bits>::uintX_t uintX_t;
-  StringTableSection() : OutputSectionBase<Is64Bits>(".strtab", SHT_STRTAB, 0) {
+  StringTableSection(llvm::StringTableBuilder &StrTabBuilder)
+      : OutputSectionBase<Is64Bits>(".strtab", SHT_STRTAB, 0),
+        StrTabBuilder(StrTabBuilder) {
     this->Header.sh_addralign = 1;
   }
 
@@ -103,20 +104,26 @@ public:
 template <class ELFT>
 class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
-  SymbolTableSection()
-      : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0) {
+  typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  SymbolTableSection(SymbolTable &Table)
+      : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
+        Table(Table) {
     typedef OutputSectionBase<ELFT::Is64Bits> Base;
     typename Base::HeaderT &Header = this->Header;
 
     // For now the only local symbol is going to be the one at index 0
     Header.sh_info = 1;
 
-    Header.sh_entsize = sizeof(typename ELFFile<ELFT>::Elf_Sym);
+    Header.sh_entsize = sizeof(Elf_Sym);
     Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+    this->Header.sh_size = (Table.getNumSymbols() + 1) * sizeof(Elf_Sym);
   }
   void setStringTableIndex(uint32_t Index) { this->Header.sh_link = Index; }
 
   void writeTo(uint8_t *Buf) override;
+
+private:
+  SymbolTable &Table;
 };
 
 // The writer writes a SymbolTable result to a file.
@@ -124,7 +131,8 @@ template <class ELFT> class Writer {
 public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
-  Writer(SymbolTable *T) : Symtab(T) {}
+  Writer(SymbolTable *T)
+      : Symtab(T), SymbolTable(*T), StringTable(T->getStringBuilder()) {}
   void run();
 
 private:
@@ -201,7 +209,16 @@ void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
   memcpy(Buf, Data.data(), Data.size());
 }
 
-template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {}
+template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
+  Buf += sizeof(Elf_Sym);
+  llvm::StringTableBuilder &Builder = Table.getStringBuilder();
+  for (auto &P : Table.getSymbols()) {
+    StringRef Name = P.first;
+    auto *S = reinterpret_cast<Elf_Sym *>(Buf);
+    S->st_name = Builder.getOffset(Name);
+    Buf += sizeof(Elf_Sym);
+  }
+}
 
 template <bool Is64Bits>
 template <endianness E>
