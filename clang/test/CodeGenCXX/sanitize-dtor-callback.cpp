@@ -1,7 +1,8 @@
 // Test -fsanitize-memory-use-after-dtor
 // RUN: %clang_cc1 -fsanitize=memory -fsanitize-memory-use-after-dtor -std=c++11 -triple=x86_64-pc-linux -emit-llvm -o - %s | FileCheck %s
 
-// Sanitizing dtor is emitted in dtor for every class
+// Sanitizing dtor is emitted in dtor for every class, and only
+// poisons once.
 
 struct Simple {
   int x;
