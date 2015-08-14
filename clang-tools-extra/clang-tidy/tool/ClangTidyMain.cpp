@@ -346,6 +346,10 @@ static int LLVM_ATTRIBUTE_UNUSED GoogleModuleAnchorDestination = GoogleModuleAnc
 extern volatile int MiscModuleAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED MiscModuleAnchorDestination = MiscModuleAnchorSource;
 
+// This anchor is used to force the linker to link the ModernizeModule.
+extern volatile int ModernizeModuleAnchorSource;
+static int ModernizeModuleAnchorDestination = ModernizeModuleAnchorSource;
+
 // This anchor is used to force the linker to link the ReadabilityModule.
 extern volatile int ReadabilityModuleAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED ReadabilityModuleAnchorDestination = ReadabilityModuleAnchorSource;
