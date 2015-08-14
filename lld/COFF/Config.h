@@ -87,6 +87,9 @@ struct Configuration {
   // Used for /opt:icf
   bool ICF = false;
 
+  // Used for /opt:lldlto=N
+  unsigned LTOOptLevel = 2;
+
   // Used for /merge:from=to (e.g. /merge:.rdata=.text)
   std::map<StringRef, StringRef> Merge;
 

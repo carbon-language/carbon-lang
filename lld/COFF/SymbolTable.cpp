@@ -343,6 +343,7 @@ void SymbolTable::addCombinedLTOObject() {
   // Create an object file and add it to the symbol table by replacing any
   // DefinedBitcode symbols with the definitions in the object file.
   LTOCodeGenerator CG;
+  CG.setOptLevel(Config->LTOOptLevel);
   ObjectFile *Obj = createLTOObject(&CG);
 
   for (SymbolBody *Body : Obj->getSymbols()) {

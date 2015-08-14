@@ -369,6 +369,14 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       Config->ICF = true;
       continue;
     }
+    if (StringRef(S).startswith("lldlto=")) {
+      StringRef OptLevel = StringRef(S).substr(7);
+      if (OptLevel.getAsInteger(10, Config->LTOOptLevel) ||
+          Config->LTOOptLevel > 3) {
+        error("/opt:lldlto: invalid optimization level: " + OptLevel);
+      }
+      continue;
+    }
     if (S != "ref" && S != "icf" && S != "noicf" &&
         S != "lbr" && S != "nolbr" &&
         !StringRef(S).startswith("icf=")) {
