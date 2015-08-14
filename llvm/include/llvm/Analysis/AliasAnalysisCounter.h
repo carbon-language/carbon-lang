@@ -43,12 +43,6 @@ public:
   /// specified pass info.
   void *getAdjustedAnalysisPointer(AnalysisID PI) override;
 
-  // FIXME: We could count these too...
-  bool pointsToConstantMemory(const MemoryLocation &Loc,
-                              bool OrLocal) override {
-    return getAnalysis<AliasAnalysis>().pointsToConstantMemory(Loc, OrLocal);
-  }
-
   // Forwarding functions: just delegate to a real AA implementation, counting
   // the number of responses...
   AliasResult alias(const MemoryLocation &LocA,
@@ -56,10 +50,6 @@ public:
 
   ModRefInfo getModRefInfo(ImmutableCallSite CS,
                            const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override {
-    return AliasAnalysis::getModRefInfo(CS1, CS2);
-  }
 };
 
 //===--------------------------------------------------------------------===//
