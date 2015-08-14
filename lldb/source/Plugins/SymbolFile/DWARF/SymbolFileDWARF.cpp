@@ -598,7 +598,7 @@ SymbolFileDWARF::GetTypeSystemForLanguage (LanguageType language)
     {
         TypeSystem *type_system = m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
 
-        if (type_system->AsClangASTContext())
+        if (type_system && type_system->AsClangASTContext())
         {
             // Get the ClangAST so that we register the ClangExternalASTSource callbacks if needed...
             GetClangASTContext();
