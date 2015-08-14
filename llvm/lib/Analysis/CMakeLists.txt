@@ -18,6 +18,7 @@ add_llvm_library(LLVMAnalysis
   CodeMetrics.cpp
   ConstantFolding.cpp
   Delinearization.cpp
+  DemandedBits.cpp
   DependenceAnalysis.cpp
   DivergenceAnalysis.cpp
   DomPrinter.cpp
