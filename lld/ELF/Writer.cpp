@@ -224,16 +224,16 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     uint8_t Type = 0;
     switch (Body->kind()) {
     case SymbolBody::UndefinedKind:
+    case SymbolBody::UndefinedSyntheticKind:
       llvm_unreachable("Should be defined by now");
     case SymbolBody::DefinedRegularKind:
       Binding = STB_GLOBAL;
       Type = cast<DefinedRegular<ELFT>>(Body)->Sym.getType();
       break;
     case SymbolBody::DefinedWeakKind:
-      Type = cast<DefinedWeak<ELFT>>(Body)->Sym.getType();
-    // Fallthrough
     case SymbolBody::UndefinedWeakKind:
       Binding = STB_WEAK;
+      Type = cast<ELFSymbolBody<ELFT>>(Body)->Sym.getType();
       break;
     }
     ESym->setBindingAndType(Binding, Type);

@@ -16,7 +16,9 @@ using namespace llvm;
 using namespace lld;
 using namespace lld::elf2;
 
-SymbolTable::SymbolTable() { resolve(new (Alloc) Undefined("_start")); }
+SymbolTable::SymbolTable() {
+  resolve(new (Alloc) SyntheticUndefined("_start"));
+}
 
 void SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   File->parse();
@@ -39,9 +41,9 @@ void SymbolTable::addObject(ObjectFileBase *File) {
 
 void SymbolTable::reportRemainingUndefines() {
   for (auto &I : Symtab) {
-    Symbol *Sym = I.second;
-    if (auto *Undef = dyn_cast<Undefined>(Sym->Body))
-      error(Twine("undefined symbol: ") + Undef->getName());
+    SymbolBody *Body = I.second->Body;
+    if (Body->isStrongUndefined())
+      error(Twine("undefined symbol: ") + Body->getName());
   }
 }
 

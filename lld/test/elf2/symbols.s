@@ -11,6 +11,10 @@ _start:
 .weak foo
 foo:
 
+.type bar, @object
+.weak bar
+.long bar
+
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name:  (0)
@@ -27,6 +31,15 @@ foo:
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Function
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Weak (0x2)
+// CHECK-NEXT:     Type: Object (0x1)
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }

@@ -40,10 +40,15 @@ public:
     DefinedWeakKind = 1,
     DefinedLast = 1,
     UndefinedWeakKind = 2,
-    UndefinedKind = 3
+    UndefinedKind = 3,
+    UndefinedSyntheticKind = 4
   };
 
   Kind kind() const { return static_cast<Kind>(SymbolKind); }
+
+  bool isStrongUndefined() {
+    return SymbolKind == UndefinedKind || SymbolKind == UndefinedSyntheticKind;
+  }
 
   // Returns the symbol name.
   StringRef getName() const { return Name; }
@@ -70,19 +75,43 @@ protected:
   Symbol *Backref = nullptr;
 };
 
-// The base class for any defined symbols, including absolute symbols,
-// etc.
-template <class ELFT> class Defined : public SymbolBody {
-public:
+// This is for symbols created from elf files and not from the command line.
+// Since they come from object files, they have a Elf_Sym.
+//
+// FIXME: Another alternative is to give every symbol an Elf_Sym. To do that
+// we have to delay creating the symbol table until the output format is
+// known and some of its methods will be templated. We should experiment with
+// that once we have a bit more code.
+template <class ELFT> class ELFSymbolBody : public SymbolBody {
+protected:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  const Elf_Sym &Sym;
+  ELFSymbolBody(Kind K, StringRef Name, const Elf_Sym &Sym)
+      : SymbolBody(K, Name), Sym(Sym) {}
 
-  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
-      : SymbolBody(K, N), Sym(Sym) {}
+public:
+  const Elf_Sym &Sym;
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
-    return DefinedFirst <= K && K <= DefinedLast;
+    return K >= DefinedFirst && K <= UndefinedKind;
+  }
+};
+
+// The base class for any defined symbols, including absolute symbols,
+// etc.
+template <class ELFT> class Defined : public ELFSymbolBody<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
+  typedef typename Base::Kind Kind;
+
+public:
+  typedef typename Base::Elf_Sym Elf_Sym;
+
+  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
+      : ELFSymbolBody<ELFT>(K, N, Sym) {}
+
+  static bool classof(const SymbolBody *S) {
+    Kind K = S->kind();
+    return Base::DefinedFirst <= K && K <= Base::DefinedLast;
   }
 };
 
@@ -114,21 +143,38 @@ public:
 };
 
 // Undefined symbols.
-class Undefined : public SymbolBody {
+class SyntheticUndefined : public SymbolBody {
 public:
-  explicit Undefined(StringRef N) : SymbolBody(UndefinedKind, N) {}
+  explicit SyntheticUndefined(StringRef N) : SymbolBody(UndefinedKind, N) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
   }
 };
 
-class UndefinedWeak : public SymbolBody {
+template <class ELFT> class Undefined : public ELFSymbolBody<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
 public:
-  explicit UndefinedWeak(StringRef N) : SymbolBody(UndefinedWeakKind, N) {}
+  explicit Undefined(StringRef N, const Elf_Sym &Sym)
+      : ELFSymbolBody<ELFT>(Base::UndefinedKind, N, Sym) {}
 
   static bool classof(const SymbolBody *S) {
-    return S->kind() == UndefinedWeakKind;
+    return S->kind() == Base::UndefinedKind;
+  }
+};
+
+template <class ELFT> class UndefinedWeak : public ELFSymbolBody<ELFT> {
+  typedef ELFSymbolBody<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
+public:
+  explicit UndefinedWeak(StringRef N, const Elf_Sym &Sym)
+      : ELFSymbolBody<ELFT>(Base::UndefinedWeakKind, N, Sym) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == Base::UndefinedWeakKind;
   }
 };
 
