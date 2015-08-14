@@ -437,7 +437,7 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   // locations.
   if (isa<UnreachableInst>(BB.getTerminator()))
     return;
-  BasicBlock::iterator IP = BB.getFirstInsertionPt(), BE = BB.end();
+  BasicBlock::iterator IP = BB.getFirstInsertionPt();
 
   bool IsEntryBB = &BB == &F.getEntryBlock();
   DebugLoc EntryLoc;
