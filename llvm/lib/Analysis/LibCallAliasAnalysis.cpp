@@ -17,7 +17,6 @@
 #include "llvm/Pass.h"
 using namespace llvm;
   
-// Register this pass...
 char LibCallAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS(LibCallAliasAnalysis, AliasAnalysis, "libcall-aa",
                    "LibCall Alias Analysis", false, true, false)
@@ -39,9 +38,9 @@ bool LibCallAliasAnalysis::runOnFunction(Function &F) {
   return false;
 }
 
-/// AnalyzeLibCallDetails - Given a call to a function with the specified
-/// LibCallFunctionInfo, see if we can improve the mod/ref footprint of the call
-/// vs the specified pointer/size.
+/// Given a call to a function with the specified LibCallFunctionInfo, see if
+/// we can improve the mod/ref footprint of the call vs the specified
+/// pointer/size.
 ModRefInfo
 LibCallAliasAnalysis::AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
                                             ImmutableCallSite CS,
@@ -117,9 +116,8 @@ LibCallAliasAnalysis::AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
   return MRInfo;
 }
 
-// getModRefInfo - Check to see if the specified callsite can clobber the
-// specified memory object.
-//
+/// Check to see if the specified callsite can clobber the specified memory
+/// object.
 ModRefInfo LibCallAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
                                                const MemoryLocation &Loc) {
   ModRefInfo MRInfo = MRI_ModRef;

@@ -23,7 +23,7 @@ namespace llvm {
 class LibCallInfo;
 struct LibCallFunctionInfo;
 
-/// LibCallAliasAnalysis - Alias analysis driven from LibCallInfo.
+/// Alias analysis driven from LibCallInfo.
 struct LibCallAliasAnalysis : public FunctionPass, public AliasAnalysis {
   static char ID; // Class identification
 
@@ -52,10 +52,11 @@ struct LibCallAliasAnalysis : public FunctionPass, public AliasAnalysis {
 
   bool runOnFunction(Function &F) override;
 
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
+  /// This method is used when a pass implements an analysis interface through
+  /// multiple inheritance.
+  ///
+  /// If needed, it should override this to adjust the this pointer as needed
+  /// for the specified pass info.
   void *getAdjustedAnalysisPointer(const void *PI) override {
     if (PI == &AliasAnalysis::ID)
       return (AliasAnalysis *)this;
@@ -68,10 +69,10 @@ private:
                                    const MemoryLocation &Loc);
 };
 
-/// createLibCallAliasAnalysisPass - Create an alias analysis pass that knows
-/// about the semantics of a set of libcalls specified by LCI.  The newly
-/// constructed pass takes ownership of the pointer that is provided.
+/// Create an alias analysis pass that knows about the semantics of a set of
+/// libcalls specified by LCI.
 ///
+/// The newly constructed pass takes ownership of the pointer that is provided.
 FunctionPass *createLibCallAliasAnalysisPass(LibCallInfo *LCI);
 
 } // End of llvm namespace
