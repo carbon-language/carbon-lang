@@ -27,13 +27,13 @@
 // time.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/CFLAliasAnalysis.h"
 #include "StratifiedSets.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstVisitor.h"
@@ -47,13 +47,69 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
-#include <forward_list>
 #include <memory>
 #include <tuple>
 
 using namespace llvm;
 
 #define DEBUG_TYPE "cfl-aa"
+
+// -- Setting up/registering CFLAA pass -- //
+char CFLAliasAnalysis::ID = 0;
+
+INITIALIZE_AG_PASS(CFLAliasAnalysis, AliasAnalysis, "cfl-aa",
+                   "CFL-Based AA implementation", false, true, false)
+
+ImmutablePass *llvm::createCFLAliasAnalysisPass() {
+  return new CFLAliasAnalysis();
+}
+
+// \brief Information we have about a function and would like to keep around
+struct CFLAliasAnalysis::FunctionInfo {
+  StratifiedSets<Value *> Sets;
+  // Lots of functions have < 4 returns. Adjust as necessary.
+  SmallVector<Value *, 4> ReturnedValues;
+
+  FunctionInfo(StratifiedSets<Value *> &&S, SmallVector<Value *, 4> &&RV)
+      : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
+};
+
+struct CFLAliasAnalysis::FunctionHandle final : public CallbackVH {
+  FunctionHandle(Function *Fn, CFLAliasAnalysis *CFLAA)
+      : CallbackVH(Fn), CFLAA(CFLAA) {
+    assert(Fn != nullptr);
+    assert(CFLAA != nullptr);
+  }
+
+  void deleted() override { removeSelfFromCache(); }
+  void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
+
+private:
+  CFLAliasAnalysis *CFLAA;
+
+  void removeSelfFromCache() {
+    assert(CFLAA != nullptr);
+    auto *Val = getValPtr();
+    CFLAA->evict(cast<Function>(Val));
+    setValPtr(nullptr);
+  }
+};
+
+CFLAliasAnalysis::CFLAliasAnalysis() : ImmutablePass(ID) {
+  initializeCFLAliasAnalysisPass(*PassRegistry::getPassRegistry());
+}
+
+CFLAliasAnalysis::~CFLAliasAnalysis() {}
+
+void CFLAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+  AliasAnalysis::getAnalysisUsage(AU);
+}
+
+void *CFLAliasAnalysis::getAdjustedAnalysisPointer(const void *ID) {
+  if (ID == &AliasAnalysis::ID)
+    return (AliasAnalysis *)this;
+  return this;
+}
 
 // Try to go from a Value* to a Function*. Never returns nullptr.
 static Optional<Function *> parentFunctionOfValue(Value *);
@@ -140,120 +196,6 @@ struct Edge {
   Edge(Value *From, Value *To, EdgeType W, StratifiedAttrs A)
       : From(From), To(To), Weight(W), AdditionalAttrs(A) {}
 };
-
-// \brief Information we have about a function and would like to keep around
-struct FunctionInfo {
-  StratifiedSets<Value *> Sets;
-  // Lots of functions have < 4 returns. Adjust as necessary.
-  SmallVector<Value *, 4> ReturnedValues;
-
-  FunctionInfo(StratifiedSets<Value *> &&S, SmallVector<Value *, 4> &&RV)
-      : Sets(std::move(S)), ReturnedValues(std::move(RV)) {}
-};
-
-struct CFLAliasAnalysis;
-
-struct FunctionHandle final : public CallbackVH {
-  FunctionHandle(Function *Fn, CFLAliasAnalysis *CFLAA)
-      : CallbackVH(Fn), CFLAA(CFLAA) {
-    assert(Fn != nullptr);
-    assert(CFLAA != nullptr);
-  }
-
-  void deleted() override { removeSelfFromCache(); }
-  void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }
-
-private:
-  CFLAliasAnalysis *CFLAA;
-
-  void removeSelfFromCache();
-};
-
-struct CFLAliasAnalysis : public ImmutablePass, public AliasAnalysis {
-private:
-  /// \brief Cached mapping of Functions to their StratifiedSets.
-  /// If a function's sets are currently being built, it is marked
-  /// in the cache as an Optional without a value. This way, if we
-  /// have any kind of recursion, it is discernable from a function
-  /// that simply has empty sets.
-  DenseMap<Function *, Optional<FunctionInfo>> Cache;
-  std::forward_list<FunctionHandle> Handles;
-
-public:
-  static char ID;
-
-  CFLAliasAnalysis() : ImmutablePass(ID) {
-    initializeCFLAliasAnalysisPass(*PassRegistry::getPassRegistry());
-  }
-
-  ~CFLAliasAnalysis() override {}
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AliasAnalysis::getAnalysisUsage(AU);
-  }
-
-  void *getAdjustedAnalysisPointer(const void *ID) override {
-    if (ID == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
-
-  /// \brief Inserts the given Function into the cache.
-  void scan(Function *Fn);
-
-  void evict(Function *Fn) { Cache.erase(Fn); }
-
-  /// \brief Ensures that the given function is available in the cache.
-  /// Returns the appropriate entry from the cache.
-  const Optional<FunctionInfo> &ensureCached(Function *Fn) {
-    auto Iter = Cache.find(Fn);
-    if (Iter == Cache.end()) {
-      scan(Fn);
-      Iter = Cache.find(Fn);
-      assert(Iter != Cache.end());
-      assert(Iter->second.hasValue());
-    }
-    return Iter->second;
-  }
-
-  AliasResult query(const MemoryLocation &LocA, const MemoryLocation &LocB);
-
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override {
-    if (LocA.Ptr == LocB.Ptr) {
-      if (LocA.Size == LocB.Size) {
-        return MustAlias;
-      } else {
-        return PartialAlias;
-      }
-    }
-
-    // Comparisons between global variables and other constants should be
-    // handled by BasicAA.
-    // TODO: ConstantExpr handling -- CFLAA may report NoAlias when comparing
-    // a GlobalValue and ConstantExpr, but every query needs to have at least
-    // one Value tied to a Function, and neither GlobalValues nor ConstantExprs
-    // are.
-    if (isa<Constant>(LocA.Ptr) && isa<Constant>(LocB.Ptr)) {
-      return AliasAnalysis::alias(LocA, LocB);
-    }
-
-    AliasResult QueryResult = query(LocA, LocB);
-    if (QueryResult == MayAlias)
-      return AliasAnalysis::alias(LocA, LocB);
-
-    return QueryResult;
-  }
-
-  bool doInitialization(Module &M) override;
-};
-
-void FunctionHandle::removeSelfFromCache() {
-  assert(CFLAA != nullptr);
-  auto *Val = getValPtr();
-  CFLAA->evict(cast<Function>(Val));
-  setValPtr(nullptr);
-}
 
 // \brief Gets the edges our graph should have, based on an Instruction*
 class GetEdgesVisitor : public InstVisitor<GetEdgesVisitor, void> {
@@ -725,16 +667,6 @@ typedef WeightedBidirectionalGraph<std::pair<EdgeType, StratifiedAttrs>> GraphT;
 typedef DenseMap<Value *, GraphT::Node> NodeMapT;
 }
 
-// -- Setting up/registering CFLAA pass -- //
-char CFLAliasAnalysis::ID = 0;
-
-INITIALIZE_AG_PASS(CFLAliasAnalysis, AliasAnalysis, "cfl-aa",
-                   "CFL-Based AA implementation", false, true, false)
-
-ImmutablePass *llvm::createCFLAliasAnalysisPass() {
-  return new CFLAliasAnalysis();
-}
-
 //===----------------------------------------------------------------------===//
 // Function declarations that require types defined in the namespace above
 //===----------------------------------------------------------------------===//
@@ -783,9 +715,6 @@ static void addInstructionToGraph(CFLAliasAnalysis &, Instruction &,
 
 // Notes whether it would be pointless to add the given Value to our sets.
 static bool canSkipAddingToSets(Value *Val);
-
-// Builds the graph + StratifiedSets for a function.
-static FunctionInfo buildSetsFrom(CFLAliasAnalysis &, Function *);
 
 static Optional<Function *> parentFunctionOfValue(Value *Val) {
   if (auto *Inst = dyn_cast<Instruction>(Val)) {
@@ -1010,12 +939,13 @@ static bool canSkipAddingToSets(Value *Val) {
   return false;
 }
 
-static FunctionInfo buildSetsFrom(CFLAliasAnalysis &Analysis, Function *Fn) {
+// Builds the graph + StratifiedSets for a function.
+CFLAliasAnalysis::FunctionInfo CFLAliasAnalysis::buildSetsFrom(Function *Fn) {
   NodeMapT Map;
   GraphT Graph;
   SmallVector<Value *, 4> ReturnedValues;
 
-  buildGraphFrom(Analysis, Fn, ReturnedValues, Map, Graph);
+  buildGraphFrom(*this, Fn, ReturnedValues, Map, Graph);
 
   DenseMap<GraphT::Node, Value *> NodeValueMap;
   NodeValueMap.resize(Map.size());
@@ -1102,9 +1032,25 @@ void CFLAliasAnalysis::scan(Function *Fn) {
   assert(InsertPair.second &&
          "Trying to scan a function that has already been cached");
 
-  FunctionInfo Info(buildSetsFrom(*this, Fn));
+  FunctionInfo Info(buildSetsFrom(Fn));
   Cache[Fn] = std::move(Info);
   Handles.push_front(FunctionHandle(Fn, this));
+}
+
+void CFLAliasAnalysis::evict(Function *Fn) { Cache.erase(Fn); }
+
+/// \brief Ensures that the given function is available in the cache.
+/// Returns the appropriate entry from the cache.
+const Optional<CFLAliasAnalysis::FunctionInfo> &
+CFLAliasAnalysis::ensureCached(Function *Fn) {
+  auto Iter = Cache.find(Fn);
+  if (Iter == Cache.end()) {
+    scan(Fn);
+    Iter = Cache.find(Fn);
+    assert(Iter != Cache.end());
+    assert(Iter->second.hasValue());
+  }
+  return Iter->second;
 }
 
 AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
