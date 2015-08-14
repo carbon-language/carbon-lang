@@ -146,6 +146,10 @@ public:
                                       lldb_private::TypeList &type_list) = 0;
     virtual ClangASTContext &
                             GetClangASTContext ();
+
+    virtual lldb_private::TypeSystem *
+                            GetTypeSystemForLanguage (lldb::LanguageType language);
+
     virtual ClangNamespaceDecl
                             FindNamespace (const SymbolContext& sc, 
                                            const ConstString &name,

@@ -13,7 +13,12 @@
 #include <string>
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
+
+class SymbolFileDWARF;
+class DWARFCompileUnit;
+class DWARFDebugInfoEntry;
 
 namespace lldb_private {
     
@@ -32,7 +37,71 @@ public:
     
     virtual ClangASTContext *
     AsClangASTContext() = 0;
-    
+
+    //----------------------------------------------------------------------
+    // DWARF type parsing
+    //----------------------------------------------------------------------
+    virtual lldb::TypeSP
+    ParseTypeFromDWARF (const SymbolContext& sc,
+                        SymbolFileDWARF *dwarf,
+                        DWARFCompileUnit* dwarf_cu,
+                        const DWARFDebugInfoEntry *die,
+                        Log *log,
+                        bool *type_is_new_ptr) = 0;
+
+    virtual Function *
+    ParseFunctionFromDWARF (const SymbolContext& sc,
+                            SymbolFileDWARF *dwarf,
+                            DWARFCompileUnit* dwarf_cu,
+                            const DWARFDebugInfoEntry *die) = 0;
+
+    virtual bool
+    ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
+                                      DWARFCompileUnit *dwarf_cu,
+                                      const DWARFDebugInfoEntry* die,
+                                      Type *type,
+                                      CompilerType &clang_type) = 0;
+
+    virtual bool
+    LayoutRecordType (SymbolFileDWARF *dwarf,
+                      const clang::RecordDecl *record_decl,
+                      uint64_t &bit_size,
+                      uint64_t &alignment,
+                      llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
+                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets) = 0;
+
+    virtual bool
+    DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
+                      SymbolFileDWARF *dwarf,
+                      DWARFCompileUnit *cu,
+                      const DWARFDebugInfoEntry *die)
+    {
+        return false;
+    }
+
+    virtual clang::NamespaceDecl *
+    ResolveNamespaceDIE (SymbolFileDWARF *dwarf,
+                         DWARFCompileUnit *dwarf_cu,
+                         const DWARFDebugInfoEntry *die)
+    {
+        return nullptr;
+    }
+
+    virtual clang::DeclContext*
+    GetClangDeclContextForTypeUID (SymbolFileDWARF *dwarf,
+                                   const lldb_private::SymbolContext &sc,
+                                   lldb::user_id_t type_uid)
+    {
+        return nullptr;
+    }
+
+    virtual clang::DeclContext*
+    GetClangDeclContextContainingTypeUID (SymbolFileDWARF *dwarf, lldb::user_id_t type_uid)
+    {
+        return nullptr;
+    }
+
     //----------------------------------------------------------------------
     // Tests
     //----------------------------------------------------------------------

@@ -29,8 +29,16 @@
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/dwarf.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/TypeSystem.h"
+
+
+// Forward definitions for DWARF plug-in for type parsing
+class DWARFCompileUnit;
+class DWARFDebugInfoEntry;
+class DWARFDIECollection;
+class SymbolFileDWARF;
 
 namespace lldb_private {
 
@@ -500,7 +508,60 @@ public:
     {
         return this;
     }
-    
+
+    lldb::TypeSP
+    ParseTypeFromDWARF (const SymbolContext& sc,
+                        SymbolFileDWARF *dwarf,
+                        DWARFCompileUnit* dwarf_cu,
+                        const DWARFDebugInfoEntry *die,
+                        Log *log,
+                        bool *type_is_new_ptr) override;
+
+
+    Function *
+    ParseFunctionFromDWARF (const SymbolContext& sc,
+                            SymbolFileDWARF *dwarf,
+                            DWARFCompileUnit* dwarf_cu,
+                            const DWARFDebugInfoEntry *die) override;
+
+    bool
+    ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
+                                      DWARFCompileUnit *dwarf_cu,
+                                      const DWARFDebugInfoEntry* die,
+                                      Type *type,
+                                      CompilerType &clang_type) override;
+
+    bool
+    LayoutRecordType (SymbolFileDWARF *dwarf,
+                      const clang::RecordDecl *record_decl,
+                      uint64_t &bit_size,
+                      uint64_t &alignment,
+                      llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
+                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets) override;
+
+
+    bool
+    DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
+                      SymbolFileDWARF *dwarf,
+                      DWARFCompileUnit *cu,
+                      const DWARFDebugInfoEntry *die) override;
+
+    clang::NamespaceDecl *
+    ResolveNamespaceDIE (SymbolFileDWARF *dwarf,
+                         DWARFCompileUnit *dwarf_cu,
+                         const DWARFDebugInfoEntry *die) override;
+
+    clang::DeclContext*
+    GetClangDeclContextForTypeUID (SymbolFileDWARF *dwarf,
+                                   const lldb_private::SymbolContext &sc,
+                                   lldb::user_id_t type_uid) override;
+
+    clang::DeclContext*
+    GetClangDeclContextContainingTypeUID (SymbolFileDWARF *dwarf,
+                                          lldb::user_id_t type_uid) override;
+
+
     //----------------------------------------------------------------------
     // Tests
     //----------------------------------------------------------------------
@@ -1021,7 +1082,128 @@ protected:
         return clang::QualType();
     }
 
-    
+    struct LayoutInfo
+    {
+        LayoutInfo () :
+        bit_size(0),
+        alignment(0),
+        field_offsets(),
+        base_offsets(),
+        vbase_offsets()
+        {
+        }
+        uint64_t bit_size;
+        uint64_t alignment;
+        llvm::DenseMap<const clang::FieldDecl *, uint64_t> field_offsets;
+        llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> base_offsets;
+        llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> vbase_offsets;
+    };
+
+    typedef llvm::DenseMap<const clang::RecordDecl *, LayoutInfo> RecordDeclToLayoutMap;
+
+
+    // DWARF parsing functions
+    bool
+    ParseTemplateDIE (SymbolFileDWARF *dwarf,
+                      DWARFCompileUnit* dwarf_cu,
+                      const DWARFDebugInfoEntry *die,
+                      ClangASTContext::TemplateParameterInfos &template_param_infos);
+    bool
+    ParseTemplateParameterInfos (SymbolFileDWARF *dwarf,
+                                 DWARFCompileUnit* dwarf_cu,
+                                 const DWARFDebugInfoEntry *parent_die,
+                                 ClangASTContext::TemplateParameterInfos &template_param_infos);
+
+    clang::ClassTemplateDecl *
+    ParseClassTemplateDecl (SymbolFileDWARF *dwarf,
+                            clang::DeclContext *decl_ctx,
+                            lldb::AccessType access_type,
+                            const char *parent_name,
+                            int tag_decl_kind,
+                            const ClangASTContext::TemplateParameterInfos &template_param_infos);
+
+    class DelayedAddObjCClassProperty;
+    typedef std::vector <DelayedAddObjCClassProperty> DelayedPropertyList;
+
+    size_t
+    ParseChildMembers (const lldb_private::SymbolContext& sc,
+                       SymbolFileDWARF *dwarf,
+                       DWARFCompileUnit* dwarf_cu,
+                       const DWARFDebugInfoEntry *die,
+                       lldb_private::CompilerType &class_clang_type,
+                       const lldb::LanguageType class_language,
+                       std::vector<clang::CXXBaseSpecifier *>& base_classes,
+                       std::vector<int>& member_accessibilities,
+                       DWARFDIECollection& member_function_dies,
+                       DelayedPropertyList& delayed_properties,
+                       lldb::AccessType &default_accessibility,
+                       bool &is_a_class,
+                       LayoutInfo &layout_info);
+
+    size_t
+    ParseChildParameters (const lldb_private::SymbolContext& sc,
+                          clang::DeclContext *containing_decl_ctx,
+                          SymbolFileDWARF *dwarf,
+                          DWARFCompileUnit* dwarf_cu,
+                          const DWARFDebugInfoEntry *parent_die,
+                          bool skip_artificial,
+                          bool &is_static,
+                          bool &is_variadic,
+                          std::vector<lldb_private::CompilerType>& function_args,
+                          std::vector<clang::ParmVarDecl*>& function_param_decls,
+                          unsigned &type_quals);
+
+
+    void
+    ParseChildArrayInfo (const lldb_private::SymbolContext& sc,
+                         SymbolFileDWARF *dwarf,
+                         DWARFCompileUnit* dwarf_cu,
+                         const DWARFDebugInfoEntry *parent_die,
+                         int64_t& first_index,
+                         std::vector<uint64_t>& element_orders,
+                         uint32_t& byte_stride,
+                         uint32_t& bit_stride);
+
+
+    size_t
+    ParseChildEnumerators (const SymbolContext& sc,
+                           lldb_private::CompilerType &clang_type,
+                           bool is_signed,
+                           uint32_t enumerator_byte_size,
+                           SymbolFileDWARF *dwarf,
+                           DWARFCompileUnit* dwarf_cu,
+                           const DWARFDebugInfoEntry *parent_die);
+
+    clang::DeclContext *
+    GetClangDeclContextForDIE (SymbolFileDWARF *dwarf,
+                               const lldb_private::SymbolContext &sc,
+                               DWARFCompileUnit *cu,
+                               const DWARFDebugInfoEntry *die);
+
+    clang::DeclContext *
+    GetClangDeclContextForDIEOffset (SymbolFileDWARF *dwarf,
+                                     const lldb_private::SymbolContext &sc,
+                                     dw_offset_t die_offset);
+
+    clang::DeclContext *
+    GetClangDeclContextContainingDIE (SymbolFileDWARF *dwarf,
+                                      DWARFCompileUnit *cu,
+                                      const DWARFDebugInfoEntry *die,
+                                      const DWARFDebugInfoEntry **decl_ctx_die);
+
+    clang::DeclContext *
+    GetClangDeclContextContainingDIEOffset (SymbolFileDWARF *dwarf,
+                                            dw_offset_t die_offset);
+
+    bool
+    CopyUniqueClassMethodTypes (SymbolFileDWARF *dwarf,
+                                SymbolFileDWARF *src_symfile,
+                                Type *class_type,
+                                DWARFCompileUnit* src_cu,
+                                const DWARFDebugInfoEntry *src_class_die,
+                                DWARFCompileUnit* dst_cu,
+                                const DWARFDebugInfoEntry *dst_class_die,
+                                DWARFDIECollection &failures);
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these
     //------------------------------------------------------------------
@@ -1043,6 +1225,8 @@ protected:
     void *                                          m_callback_baton;
     uint32_t                                        m_pointer_byte_size;
     bool                                            m_ast_owned;
+    RecordDeclToLayoutMap                           m_record_decl_to_layout_map;
+
 private:
     //------------------------------------------------------------------
     // For ClangASTContext only

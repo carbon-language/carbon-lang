@@ -1098,8 +1098,7 @@ DWARFCompileUnit::GetLanguageType()
 
     const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
     if (die)
-        m_language_type = LanguageTypeFromDWARF(
-            die->GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_language, 0));
+        m_language_type = LanguageTypeFromDWARF(die->GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_language, 0));
     return m_language_type;
 }
 

@@ -128,6 +128,7 @@ protected:
     friend class DWARFCompileUnit;
     friend class SymbolFileDWARF;
     friend class DebugMapModule;
+    friend class ClangASTContext;
     struct OSOInfo
     {
         lldb::ModuleSP module_sp;

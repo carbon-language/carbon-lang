@@ -947,6 +947,9 @@ public:
     ClangASTContext &
     GetClangASTContext ();
 
+    TypeSystem *
+    GetTypeSystemForLanguage (lldb::LanguageType language);
+
     // Special error functions that can do printf style formatting that will prepend the message with
     // something appropriate for this module (like the architecture, path and object name (if any)). 
     // This centralizes code so that everyone doesn't need to format their error and log messages on

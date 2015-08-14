@@ -1475,7 +1475,7 @@ SymbolFileDWARFDebugMap::LayoutRecordType(void *baton, const clang::RecordDecl *
     SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
     bool laid_out = false;
     symbol_file_dwarf->ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-        return (laid_out = oso_dwarf->LayoutRecordType (record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets));
+        return (laid_out = SymbolFileDWARF::LayoutRecordType (oso_dwarf, record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets));
     });
     return laid_out;
 }

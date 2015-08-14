@@ -82,8 +82,15 @@ SymbolFile::GetTypeList ()
     return nullptr;
 }
 
-lldb_private::ClangASTContext &       
+ClangASTContext &
 SymbolFile::GetClangASTContext ()
 {
     return m_obj_file->GetModule()->GetClangASTContext();
 }
+
+TypeSystem *
+SymbolFile::GetTypeSystemForLanguage (lldb::LanguageType language)
+{
+    return m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
+}
+
