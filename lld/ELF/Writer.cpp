@@ -12,6 +12,7 @@
 #include "Error.h"
 #include "SymbolTable.h"
 #include "Writer.h"
+#include "Symbols.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/FileOutputBuffer.h"
@@ -214,8 +215,24 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   llvm::StringTableBuilder &Builder = Table.getStringBuilder();
   for (auto &P : Table.getSymbols()) {
     StringRef Name = P.first;
-    auto *S = reinterpret_cast<Elf_Sym *>(Buf);
-    S->st_name = Builder.getOffset(Name);
+    Symbol *Sym = P.second;
+
+    auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
+    ESym->st_name = Builder.getOffset(Name);
+    uint8_t Binding;
+    switch (Sym->Body->kind()) {
+    case SymbolBody::UndefinedKind:
+      llvm_unreachable("Should be defined by now");
+    case SymbolBody::DefinedRegularKind:
+      Binding = STB_GLOBAL;
+      break;
+    case SymbolBody::UndefinedWeakKind:
+    case SymbolBody::DefinedWeakKind:
+      Binding = STB_WEAK;
+      break;
+    }
+    ESym->setBindingAndType(Binding, 0);
+
     Buf += sizeof(Elf_Sym);
   }
 }
