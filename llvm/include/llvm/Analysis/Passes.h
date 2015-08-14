@@ -46,13 +46,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createTypeBasedAliasAnalysisPass - This pass implements metadata-based
-  // type-based alias analysis.
-  //
-  ImmutablePass *createTypeBasedAliasAnalysisPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   // createObjCARCAliasAnalysisPass - This pass implements ObjC-ARC-based
   // alias analysis.
   //

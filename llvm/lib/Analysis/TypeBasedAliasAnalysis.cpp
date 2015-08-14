@@ -121,15 +121,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/Passes.h"
-#include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/TypeBasedAliasAnalysis.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/ADT/SetVector.h"
 using namespace llvm;
 
 // A handy option for disabling TBAA functionality. The same effect can also be
@@ -271,45 +268,6 @@ public:
   }
 };
 }
-
-namespace {
-/// TypeBasedAliasAnalysis - This is a simple alias analysis
-/// implementation that uses TypeBased to answer queries.
-class TypeBasedAliasAnalysis : public ImmutablePass, public AliasAnalysis {
-public:
-  static char ID; // Class identification, replacement for typeinfo
-  TypeBasedAliasAnalysis() : ImmutablePass(ID) {
-    initializeTypeBasedAliasAnalysisPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool doInitialization(Module &M) override;
-
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
-  void *getAdjustedAnalysisPointer(const void *PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
-
-  bool Aliases(const MDNode *A, const MDNode *B) const;
-  bool PathAliases(const MDNode *A, const MDNode *B) const;
-
-private:
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
-  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override;
-};
-} // End of anonymous namespace
 
 // Register this pass...
 char TypeBasedAliasAnalysis::ID = 0;
