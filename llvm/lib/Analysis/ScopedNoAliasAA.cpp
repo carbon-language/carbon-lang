@@ -32,9 +32,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/ScopedNoAliasAA.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
@@ -69,45 +69,6 @@ public:
       return nullptr;
     return dyn_cast_or_null<MDNode>(Node->getOperand(1));
   }
-};
-
-/// ScopedNoAliasAA - This is a simple alias analysis
-/// implementation that uses scoped-noalias metadata to answer queries.
-class ScopedNoAliasAA : public ImmutablePass, public AliasAnalysis {
-public:
-  static char ID; // Class identification, replacement for typeinfo
-  ScopedNoAliasAA() : ImmutablePass(ID) {
-    initializeScopedNoAliasAAPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool doInitialization(Module &M) override;
-
-  /// getAdjustedAnalysisPointer - This method is used when a pass implements
-  /// an analysis interface through multiple inheritance.  If needed, it
-  /// should override this to adjust the this pointer as needed for the
-  /// specified pass info.
-  void *getAdjustedAnalysisPointer(const void *PI) override {
-    if (PI == &AliasAnalysis::ID)
-      return (AliasAnalysis *)this;
-    return this;
-  }
-
-protected:
-  bool mayAliasInScopes(const MDNode *Scopes, const MDNode *NoAlias) const;
-  void collectMDInDomain(const MDNode *List, const MDNode *Domain,
-                         SmallPtrSetImpl<const MDNode *> &Nodes) const;
-
-private:
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  AliasResult alias(const MemoryLocation &LocA,
-                    const MemoryLocation &LocB) override;
-  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
-  FunctionModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
-  FunctionModRefBehavior getModRefBehavior(const Function *F) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS,
-                           const MemoryLocation &Loc) override;
-  ModRefInfo getModRefInfo(ImmutableCallSite CS1,
-                           ImmutableCallSite CS2) override;
 };
 } // End of anonymous namespace
 

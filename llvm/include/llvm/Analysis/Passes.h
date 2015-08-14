@@ -60,13 +60,6 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
-  // createScopedNoAliasAAPass - This pass implements metadata-based
-  // scoped noalias analysis.
-  //
-  ImmutablePass *createScopedNoAliasAAPass();
-
-  //===--------------------------------------------------------------------===//
-  //
   // createObjCARCAliasAnalysisPass - This pass implements ObjC-ARC-based
   // alias analysis.
   //
