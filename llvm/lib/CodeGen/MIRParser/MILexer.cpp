@@ -454,6 +454,10 @@ static MIToken::TokenKind symbolToken(char C) {
     return MIToken::lparen;
   case ')':
     return MIToken::rparen;
+  case '{':
+    return MIToken::lbrace;
+  case '}':
+    return MIToken::rbrace;
   case '+':
     return MIToken::plus;
   case '-':

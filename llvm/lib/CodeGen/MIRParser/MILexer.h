@@ -41,6 +41,8 @@ struct MIToken {
     exclaim,
     lparen,
     rparen,
+    lbrace,
+    rbrace,
     plus,
     minus,
 

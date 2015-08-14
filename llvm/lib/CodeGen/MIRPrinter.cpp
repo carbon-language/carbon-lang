@@ -439,11 +439,23 @@ void MIPrinter::print(const MachineBasicBlock &MBB) {
 
   if (HasLineAttributes)
     OS << "\n";
-  for (const auto &MI : MBB) {
-    OS.indent(2);
+  bool IsInBundle = false;
+  for (auto I = MBB.instr_begin(), E = MBB.instr_end(); I != E; ++I) {
+    const MachineInstr &MI = *I;
+    if (IsInBundle && !MI.isInsideBundle()) {
+      OS.indent(2) << "}\n";
+      IsInBundle = false;
+    }
+    OS.indent(IsInBundle ? 4 : 2);
     print(MI);
+    if (!IsInBundle && MI.getFlag(MachineInstr::BundledSucc)) {
+      OS << " {";
+      IsInBundle = true;
+    }
     OS << "\n";
   }
+  if (IsInBundle)
+    OS.indent(2) << "}\n";
 }
 
 void MIPrinter::print(const MachineInstr &MI) {
@@ -469,7 +481,6 @@ void MIPrinter::print(const MachineInstr &MI) {
   if (MI.getFlag(MachineInstr::FrameSetup))
     OS << "frame-setup ";
   OS << TII->getName(MI.getOpcode());
-  // TODO: Print the bundling instruction flags.
   if (I < E)
     OS << ' ';
 

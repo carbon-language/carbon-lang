@@ -351,6 +351,7 @@ bool MIParser::parseBasicBlockDefinitions(
     return Token.isError();
   if (Token.isNot(MIToken::MachineBasicBlockLabel))
     return error("expected a basic block definition before instructions");
+  unsigned BraceDepth = 0;
   do {
     if (parseBasicBlockDefinition(MBBSlots))
       return true;
@@ -363,12 +364,23 @@ bool MIParser::parseBasicBlockDefinitions(
       else if (Token.is(MIToken::MachineBasicBlockLabel))
         return error("basic block definition should be located at the start of "
                      "the line");
-      if (Token.is(MIToken::Newline))
+      else if (consumeIfPresent(MIToken::Newline)) {
         IsAfterNewline = true;
-      else
-        IsAfterNewline = false;
+        continue;
+      }
+      IsAfterNewline = false;
+      if (Token.is(MIToken::lbrace))
+        ++BraceDepth;
+      if (Token.is(MIToken::rbrace)) {
+        if (!BraceDepth)
+          return error("extraneous closing brace ('}')");
+        --BraceDepth;
+      }
       lex();
     }
+    // Verify that we closed all of the '{' at the end of a file or a block.
+    if (!Token.isError() && BraceDepth)
+      return error("expected '}'"); // FIXME: Report a note that shows '{'.
   } while (!Token.isErrorOrEOF());
   return Token.isError();
 }
@@ -458,15 +470,40 @@ bool MIParser::parseBasicBlock(MachineBasicBlock &MBB) {
   }
 
   // Parse the instructions.
+  bool IsInBundle = false;
+  MachineInstr *PrevMI = nullptr;
   while (true) {
     if (Token.is(MIToken::MachineBasicBlockLabel) || Token.is(MIToken::Eof))
       return false;
     else if (consumeIfPresent(MIToken::Newline))
       continue;
+    if (consumeIfPresent(MIToken::rbrace)) {
+      // The first parsing pass should verify that all closing '}' have an
+      // opening '{'.
+      assert(IsInBundle);
+      IsInBundle = false;
+      continue;
+    }
     MachineInstr *MI = nullptr;
     if (parse(MI))
       return true;
     MBB.insert(MBB.end(), MI);
+    if (IsInBundle) {
+      PrevMI->setFlag(MachineInstr::BundledSucc);
+      MI->setFlag(MachineInstr::BundledPred);
+    }
+    PrevMI = MI;
+    if (Token.is(MIToken::lbrace)) {
+      if (IsInBundle)
+        return error("nested instruction bundles are not allowed");
+      lex();
+      // This instruction is the start of the bundle.
+      MI->setFlag(MachineInstr::BundledSucc);
+      IsInBundle = true;
+      if (!Token.is(MIToken::Newline))
+        // The next instruction can be on the same line.
+        continue;
+    }
     assert(Token.isNewlineOrEOF() && "MI is not fully parsed");
     lex();
   }
@@ -516,16 +553,15 @@ bool MIParser::parse(MachineInstr *&MI) {
   if (Token.isError() || parseInstruction(OpCode, Flags))
     return true;
 
-  // TODO: Parse the bundle instruction flags.
-
   // Parse the remaining machine operands.
   while (!Token.isNewlineOrEOF() && Token.isNot(MIToken::kw_debug_location) &&
-         Token.isNot(MIToken::coloncolon)) {
+         Token.isNot(MIToken::coloncolon) && Token.isNot(MIToken::lbrace)) {
     auto Loc = Token.location();
     if (parseMachineOperandAndTargetFlags(MO))
       return true;
     Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
-    if (Token.isNewlineOrEOF() || Token.is(MIToken::coloncolon))
+    if (Token.isNewlineOrEOF() || Token.is(MIToken::coloncolon) ||
+        Token.is(MIToken::lbrace))
       break;
     if (Token.isNot(MIToken::comma))
       return error("expected ',' before the next machine operand");
