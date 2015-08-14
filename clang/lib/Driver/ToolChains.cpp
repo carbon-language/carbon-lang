@@ -1914,34 +1914,33 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
   // There are various different suffixes involving the triple we
   // check for. We also record what is necessary to walk from each back
-  // up to the lib directory.
-  const std::string LibSuffixes[] = {
-      "/gcc/" + CandidateTriple.str(),
+  // up to the lib directory. Specifically, the number of "up" steps
+  // in the second half of each row is 1 + the number of path separators
+  // in the first half.
+  const std::string LibAndInstallSuffixes[][2] = {
+      {"/gcc/" + CandidateTriple.str(), "/../../.."},
+
       // Debian puts cross-compilers in gcc-cross
-      "/gcc-cross/" + CandidateTriple.str(),
-      "/" + CandidateTriple.str() + "/gcc/" + CandidateTriple.str(),
+      {"/gcc-cross/" + CandidateTriple.str(), "/../../.."},
+
+      {"/" + CandidateTriple.str() + "/gcc/" + CandidateTriple.str(),
+       "/../../../.."},
 
       // The Freescale PPC SDK has the gcc libraries in
       // <sysroot>/usr/lib/<triple>/x.y.z so have a look there as well.
-      "/" + CandidateTriple.str(),
+      {"/" + CandidateTriple.str(), "/../.."},
 
       // Ubuntu has a strange mis-matched pair of triples that this happens to
       // match.
       // FIXME: It may be worthwhile to generalize this and look for a second
       // triple.
-      "/i386-linux-gnu/gcc/" + CandidateTriple.str()};
-  const std::string InstallSuffixes[] = {
-      "/../../..",    // gcc/
-      "/../../..",    // gcc-cross/
-      "/../../../..", // <triple>/gcc/
-      "/../..",       // <triple>/
-      "/../../../.."  // i386-linux-gnu/gcc/<triple>/
-  };
+      {"/i386-linux-gnu/gcc/" + CandidateTriple.str(), "/../../../.."}};
+
   // Only look at the final, weird Ubuntu suffix for i386-linux-gnu.
-  const unsigned NumLibSuffixes =
-      (llvm::array_lengthof(LibSuffixes) - (TargetArch != llvm::Triple::x86));
+  const unsigned NumLibSuffixes = (llvm::array_lengthof(LibAndInstallSuffixes) -
+                                   (TargetArch != llvm::Triple::x86));
   for (unsigned i = 0; i < NumLibSuffixes; ++i) {
-    StringRef LibSuffix = LibSuffixes[i];
+    StringRef LibSuffix = LibAndInstallSuffixes[i][0];
     std::error_code EC;
     for (llvm::sys::fs::directory_iterator LI(LibDir + LibSuffix, EC), LE;
          !EC && LI != LE; LI = LI.increment(EC)) {
@@ -1975,8 +1974,9 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // FIXME: We hack together the directory name here instead of
       // using LI to ensure stable path separators across Windows and
       // Linux.
-      GCCInstallPath = LibDir + LibSuffixes[i] + "/" + VersionText.str();
-      GCCParentLibPath = GCCInstallPath + InstallSuffixes[i];
+      GCCInstallPath =
+          LibDir + LibAndInstallSuffixes[i][0] + "/" + VersionText.str();
+      GCCParentLibPath = GCCInstallPath + LibAndInstallSuffixes[i][1];
       IsValid = true;
     }
   }
