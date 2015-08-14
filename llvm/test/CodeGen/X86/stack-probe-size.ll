@@ -6,10 +6,10 @@
 ; stack probe size equals the page size (4096 bytes for all x86 targets), and
 ; this is unlikely to change in the future.
 ;
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -mtriple=i686-windows-msvc < %s | FileCheck %s
+; RUN: llc -mtriple=i686-windows-coreclr < %s | FileCheck %s
 
 target datalayout = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32"
-target triple = "i686-pc-windows-msvc"
 
 define i32 @test1() "stack-probe-size"="0" {
   %buffer = alloca [4095 x i8]

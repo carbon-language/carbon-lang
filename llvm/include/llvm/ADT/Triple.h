@@ -171,7 +171,8 @@ public:
     Itanium,
     Cygnus,
     AMDOpenCL,
-    LastEnvironmentType = AMDOpenCL
+    CoreCLR,
+    LastEnvironmentType = CoreCLR
   };
   enum ObjectFormatType {
     UnknownObjectFormat,
@@ -436,6 +437,10 @@ public:
 
   bool isKnownWindowsMSVCEnvironment() const {
     return getOS() == Triple::Win32 && getEnvironment() == Triple::MSVC;
+  }
+
+  bool isWindowsCoreCLREnvironment() const {
+    return getOS() == Triple::Win32 && getEnvironment() == Triple::CoreCLR;
   }
 
   bool isWindowsItaniumEnvironment() const {

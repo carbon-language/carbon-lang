@@ -1,4 +1,5 @@
 ; RUN: opt -S -winehprepare -mtriple=x86_64-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-windows-coreclr < %s | FileCheck %s
 
 ; Test case based on this code:
 ;
@@ -26,7 +27,6 @@
 ; is nothing like a std::terminate call in this situation.
 
 target datalayout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc"
 
 @str_outer_finally = linkonce_odr unnamed_addr constant [18 x i8] c"outer finally %d\0A\00", align 1
 @str_inner_finally = linkonce_odr unnamed_addr constant [18 x i8] c"inner finally %d\0A\00", align 1

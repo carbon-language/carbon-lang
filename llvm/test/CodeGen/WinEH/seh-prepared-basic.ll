@@ -1,4 +1,5 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-windows-msvc < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-windows-coreclr < %s | FileCheck %s
 
 ; Test case based on this code:
 ; extern "C" unsigned long _exception_code();
@@ -12,7 +13,6 @@
 ; }
 
 target datalayout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc"
 
 ; Function Attrs: uwtable
 define void @do_except() #0 personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {

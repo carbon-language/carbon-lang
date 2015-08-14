@@ -1,10 +1,10 @@
-; RUN: opt -S -winehprepare < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-pc-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-pc-windows-coreclr < %s | FileCheck %s
 
 ; Check that things work when the mid-level optimizer inlines the finally
 ; block.
 
 target datalayout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc"
 
 %struct._RTL_CRITICAL_SECTION = type { %struct._RTL_CRITICAL_SECTION_DEBUG*, i32, i32, i8*, i8*, i64 }
 %struct._RTL_CRITICAL_SECTION_DEBUG = type { i16, i16, %struct._RTL_CRITICAL_SECTION*, %struct._LIST_ENTRY, i32, i32, i32, i16, i16 }

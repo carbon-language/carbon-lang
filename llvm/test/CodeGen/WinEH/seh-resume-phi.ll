@@ -1,7 +1,7 @@
-; RUN: opt -S -winehprepare < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-pc-windows-msvc < %s | FileCheck %s
+; RUN: opt -S -winehprepare -mtriple=x86_64-pc-windows-coreclr < %s | FileCheck %s
 
 target datalayout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-windows-msvc"
 
 declare void @might_crash(i8* %ehptr)
 declare i32 @filt()

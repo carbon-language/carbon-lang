@@ -122,7 +122,8 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI,
   } else if (TheTriple.isOSBinFormatELF()) {
     // Force the use of an ELF container.
     MAI = new X86ELFMCAsmInfo(TheTriple);
-  } else if (TheTriple.isWindowsMSVCEnvironment()) {
+  } else if (TheTriple.isWindowsMSVCEnvironment() ||
+             TheTriple.isWindowsCoreCLREnvironment()) {
     MAI = new X86MCAsmInfoMicrosoft(TheTriple);
   } else if (TheTriple.isOSCygMing() ||
              TheTriple.isWindowsItaniumEnvironment()) {
