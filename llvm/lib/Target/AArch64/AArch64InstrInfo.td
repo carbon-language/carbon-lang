@@ -4438,7 +4438,9 @@ multiclass FMLSIndexedAfterNegPatterns<SDPatternOperator OpNode> {
             (FMLSv1i32_indexed FPR32:$Rd, FPR32:$Rn,
                 V128:$Rm, VectorIndexS:$idx)>;
   def : Pat<(f32 (OpNode (f32 FPR32:$Rd), (f32 FPR32:$Rn),
-                         (vector_extract (v2f32 (fneg V64:$Rm)),
+                         (vector_extract (v4f32 (insert_subvector undef,
+                                                    (v2f32 (fneg V64:$Rm)),
+                                                    (i32 0))),
                                          VectorIndexS:$idx))),
             (FMLSv1i32_indexed FPR32:$Rd, FPR32:$Rn,
                 (SUBREG_TO_REG (i32 0), V64:$Rm, dsub), VectorIndexS:$idx)>;

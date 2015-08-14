@@ -535,6 +535,17 @@ entry:
 
 declare double @llvm.fma.f64(double, double, double)
 
+define float @test_vfmss_lane_f32(float %a, float %b, <2 x float> %v) {
+; CHECK-LABEL: test_vfmss_lane_f32
+; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[1]
+; CHECK-NEXT: ret
+entry:
+  %extract.rhs = extractelement <2 x float> %v, i32 1
+  %extract = fsub float -0.000000e+00, %extract.rhs
+  %0 = tail call float @llvm.fma.f32(float %b, float %extract, float %a)
+  ret float %0
+}
+
 define float @test_vfmss_laneq_f32(float %a, float %b, <4 x float> %v) {
 ; CHECK-LABEL: test_vfmss_laneq_f32
 ; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
@@ -554,6 +565,50 @@ entry:
   %extract.rhs = extractelement <2 x double> %v, i32 1
   %extract = fsub double -0.000000e+00, %extract.rhs
   %0 = tail call double @llvm.fma.f64(double %b, double %extract, double %a)
+  ret double %0
+}
+
+define double @test_vfmsd_lane_f64_0(double %a, double %b, <1 x double> %v) {
+; CHCK-LABEL: test_vfmsd_lane_f64_0
+; CHCK: fmsub {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}
+; CHCK-NEXT: ret
+entry:
+  %tmp0 = fsub <1 x double> <double -0.000000e+00>, %v
+  %tmp1 = extractelement <1 x double> %tmp0, i32 0
+  %0 = tail call double @llvm.fma.f64(double %b, double %tmp1, double %a)
+  ret double %0
+}
+
+define float @test_vfmss_lane_f32_0(float %a, float %b, <2 x float> %v) {
+; CHECK-LABEL: test_vfmss_lane_f32_0
+; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[1]
+; CHECK-NEXT: ret
+entry:
+  %tmp0 = fsub <2 x float> <float -0.000000e+00, float -0.000000e+00>, %v
+  %tmp1 = extractelement <2 x float> %tmp0, i32 1
+  %0 = tail call float @llvm.fma.f32(float %b, float %tmp1, float %a)
+  ret float %0
+}
+
+define float @test_vfmss_laneq_f32_0(float %a, float %b, <4 x float> %v) {
+; CHECK-LABEL: test_vfmss_laneq_f32_0
+; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
+; CHECK-NEXT: ret
+entry:
+  %tmp0 = fsub <4 x float><float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %v
+  %tmp1 = extractelement <4 x float> %tmp0, i32 3
+  %0 = tail call float @llvm.fma.f32(float %b, float %tmp1, float %a)
+  ret float %0
+}
+
+define double @test_vfmsd_laneq_f64_0(double %a, double %b, <2 x double> %v) {
+; CHECK-LABEL: test_vfmsd_laneq_f64_0
+; CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[1]
+; CHECK-NEXT: ret
+entry:
+  %tmp0 = fsub <2 x double><double -0.000000e+00, double -0.000000e+00>, %v
+  %tmp1 = extractelement <2 x double> %tmp0, i32 1
+  %0 = tail call double @llvm.fma.f64(double %b, double %tmp1, double %a)
   ret double %0
 }
 
