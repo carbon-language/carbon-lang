@@ -971,7 +971,7 @@ void generateIntegerPrint(llvm::LLVMContext &context,
 
   llvm::Value *cast = builder.CreateBitCast(stringVar,
                                             builder.getInt8PtrTy());
-  builder.CreateCall2(&printFunct, &toPrint, cast);
+  builder.CreateCall(&printFunct, {&toPrint, cast});
 }
 
 
@@ -1973,7 +1973,7 @@ int main(int argc, char *argv[]) {
     // Set up the optimizer pipeline.
     // Start with registering info about how the
     // target lays out data structures.
-    module->setDataLayout(*executionEngine->getDataLayout());
+    module->setDataLayout(executionEngine->getDataLayout());
 
     // Optimizations turned on
 #ifdef ADD_OPT_PASSES
