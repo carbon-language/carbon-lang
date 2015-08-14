@@ -22,10 +22,10 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static cl::opt<bool>
-PrintAll("count-aa-print-all-queries", cl::ReallyHidden, cl::init(true));
-static cl::opt<bool>
-PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
+static cl::opt<bool> PrintAll("count-aa-print-all-queries", cl::ReallyHidden,
+                              cl::init(true));
+static cl::opt<bool> PrintAllFailures("count-aa-print-all-failed-queries",
+                                      cl::ReallyHidden);
 
 char AliasAnalysisCounter::ID = 0;
 INITIALIZE_AG_PASS(AliasAnalysisCounter, AliasAnalysis, "count-aa",
@@ -41,10 +41,22 @@ AliasResult AliasAnalysisCounter::alias(const MemoryLocation &LocA,
 
   const char *AliasString = nullptr;
   switch (R) {
-  case NoAlias:   No++;   AliasString = "No alias"; break;
-  case MayAlias:  May++;  AliasString = "May alias"; break;
-  case PartialAlias: Partial++; AliasString = "Partial alias"; break;
-  case MustAlias: Must++; AliasString = "Must alias"; break;
+  case NoAlias:
+    No++;
+    AliasString = "No alias";
+    break;
+  case MayAlias:
+    May++;
+    AliasString = "May alias";
+    break;
+  case PartialAlias:
+    Partial++;
+    AliasString = "Partial alias";
+    break;
+  case MustAlias:
+    Must++;
+    AliasString = "Must alias";
+    break;
   }
 
   if (PrintAll || (PrintAllFailures && R == MayAlias)) {
