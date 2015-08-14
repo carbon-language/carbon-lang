@@ -52,14 +52,14 @@ _start:
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   Address: 0x0
 // CHECK-NEXT:   Offset:
-// CHECK-NEXT:   Size: 33
+// CHECK-NEXT:   Size: 41
 // CHECK-NEXT:   Link: 0
 // CHECK-NEXT:   Info: 0
 // CHECK-NEXT:   AddressAlignment: 1
 // CHECK-NEXT:   EntrySize: 0
 // CHECK-NEXT:   SectionData (
 // CHECK-NEXT:     0000: 002E7465 7874002E 62737300 666F6F62  |..text..bss.foob|
-// CHECK-NEXT:     0010: 6172002E 73747274 6162002E 64617461  |ar..strtab..data|
-// CHECK-NEXT:     0020: 00                                   |.|
+// CHECK-NEXT:     0010: 6172002E 73747274 6162002E 73796D74  |ar..strtab..symt|
+// CHECK-NEXT:     0020: 6162002E 64617461 00                 |ab..data.|
 // CHECK-NEXT:   )
 // CHECK-NEXT: }

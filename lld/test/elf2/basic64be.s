@@ -30,15 +30,15 @@ _start:
 # CHECK-NEXT:   Version: 1
 # CHECK-NEXT:   Entry: 0x401000
 # CHECK-NEXT:   ProgramHeaderOffset: 0x40
-# CHECK-NEXT:   SectionHeaderOffset: 0x1048
+# CHECK-NEXT:   SectionHeaderOffset: 0x1050
 # CHECK-NEXT:   Flags [ (0x0)
 # CHECK-NEXT:   ]
 # CHECK-NEXT:   HeaderSize: 64
 # CHECK-NEXT:   ProgramHeaderEntrySize: 56
 # CHECK-NEXT:   ProgramHeaderCount: 1
 # CHECK-NEXT:   SectionHeaderEntrySize: 64
-# CHECK-NEXT:   SectionHeaderCount: 6
-# CHECK-NEXT:    StringTableSectionIndex: 5
+# CHECK-NEXT:   SectionHeaderCount: 7
+# CHECK-NEXT:    StringTableSectionIndex: 6
 # CHECK-NEXT: }
 # CHECK-NEXT: Sections [
 # CHECK-NEXT:   Section {
@@ -121,13 +121,27 @@ _start:
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 5
+# CHECK-NEXT:     Name: .symtab
+# CHECK-NEXT:     Type: SHT_SYMTAB
+# CHECK-NEXT:     Flags [
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Address: 0x0
+# CHECK-NEXT:     Offset: 0x1024
+# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Link: 6
+# CHECK-NEXT:     Info: 1
+# CHECK-NEXT:     AddressAlignment: 8
+# CHECK-NEXT:     EntrySize: 24
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Section {
+# CHECK-NEXT:     Index: 6
 # CHECK-NEXT:     Name: .strtab
 # CHECK-NEXT:     Type: SHT_STRTAB (0x3)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
 # CHECK-NEXT:     Offset: 0x1024
-# CHECK-NEXT:     Size: 31
+# CHECK-NEXT:     Size: 39
 # CHECK-NEXT:     Link: 0
 # CHECK-NEXT:     Info: 0
 # CHECK-NEXT:     AddressAlignment: 1
@@ -140,8 +154,8 @@ _start:
 # CHECK-NEXT:     Offset: 0x0
 # CHECK-NEXT:     VirtualAddress: 0x400000
 # CHECK-NEXT:     PhysicalAddress: 0x400000
-# CHECK-NEXT:     FileSize: 4552
-# CHECK-NEXT:     MemSize: 4552
+# CHECK-NEXT:     FileSize: 4624
+# CHECK-NEXT:     MemSize: 4624
 # CHECK-NEXT:     Flags [ (0x5)
 # CHECK-NEXT:       PF_R (0x4)
 # CHECK-NEXT:       PF_X (0x1)

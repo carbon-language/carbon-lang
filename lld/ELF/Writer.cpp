@@ -100,6 +100,25 @@ public:
   }
 };
 
+template <class ELFT>
+class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
+public:
+  SymbolTableSection()
+      : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0) {
+    typedef OutputSectionBase<ELFT::Is64Bits> Base;
+    typename Base::HeaderT &Header = this->Header;
+
+    // For now the only local symbol is going to be the one at index 0
+    Header.sh_info = 1;
+
+    Header.sh_entsize = sizeof(typename ELFFile<ELFT>::Elf_Sym);
+    Header.sh_addralign = ELFT::Is64Bits ? 8 : 4;
+  }
+  void setStringTableIndex(uint32_t Index) { this->Header.sh_link = Index; }
+
+  void writeTo(uint8_t *Buf) override;
+};
+
 // The writer writes a SymbolTable result to a file.
 template <class ELFT> class Writer {
 public:
@@ -123,6 +142,8 @@ private:
   uintX_t FileSize;
   uintX_t SizeOfHeaders;
   uintX_t SectionHeaderOff;
+
+  SymbolTableSection<ELFT> SymbolTable;
 
   unsigned StringTableIndex;
   StringTableSection<ELFT::Is64Bits> StringTable;
@@ -179,6 +200,8 @@ void StringTableSection<Is64Bits>::writeTo(uint8_t *Buf) {
   StringRef Data = StrTabBuilder.data();
   memcpy(Buf, Data.data(), Data.size());
 }
+
+template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {}
 
 template <bool Is64Bits>
 template <endianness E>
@@ -261,8 +284,10 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
 
+  OutputSections.push_back(&SymbolTable);
   OutputSections.push_back(&StringTable);
   StringTableIndex = OutputSections.size();
+  SymbolTable.setStringTableIndex(StringTableIndex);
 
   for (OutputSectionBase<ELFT::Is64Bits> *Sec : OutputSections) {
     StringTable.add(Sec->getName());
