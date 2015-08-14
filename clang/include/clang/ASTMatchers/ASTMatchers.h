@@ -2038,7 +2038,8 @@ hasDeclaration(const internal::Matcher<Decl> &InnerMatcher) {
 
 /// \brief Matches on the implicit object argument of a member call expression.
 ///
-/// Example matches y.x() (matcher = callExpr(on(hasType(recordDecl(hasName("Y"))))))
+/// Example matches y.x()
+///   (matcher = memberCallExpr(on(hasType(recordDecl(hasName("Y"))))))
 /// \code
 ///   class Y { public: void x(); };
 ///   void z() { Y y; y.x(); }",
@@ -2250,7 +2251,7 @@ AST_MATCHER_P(DeclaratorDecl, hasTypeLoc, internal::Matcher<TypeLoc>, Inner) {
 ///   class Y { public: void x(); };
 ///   void z() { Y* y; y->x(); }
 /// \endcode
-/// callExpr(on(hasType(asString("class Y *"))))
+/// memberCallExpr(on(hasType(asString("class Y *"))))
 ///   matches y->x()
 AST_MATCHER_P(QualType, asString, std::string, Name) {
   return Name == Node.getAsString();
@@ -2260,7 +2261,8 @@ AST_MATCHER_P(QualType, asString, std::string, Name) {
 /// matches the specified matcher.
 ///
 /// Example matches y->x()
-///     (matcher = callExpr(on(hasType(pointsTo(recordDecl(hasName("Y")))))))
+///   (matcher = memberCallExpr(on(hasType(pointsTo
+///      recordDecl(hasName("Y")))))))
 /// \code
 ///   class Y { public: void x(); };
 ///   void z() { Y *y; y->x(); }
