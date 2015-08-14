@@ -72,9 +72,13 @@ protected:
 
 // The base class for any defined symbols, including absolute symbols,
 // etc.
-class Defined : public SymbolBody {
+template <class ELFT> class Defined : public SymbolBody {
 public:
-  explicit Defined(Kind K, StringRef N) : SymbolBody(K, N) {}
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  const Elf_Sym &Sym;
+
+  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
+      : SymbolBody(K, N), Sym(Sym) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
@@ -83,21 +87,29 @@ public:
 };
 
 // Regular defined symbols read from object file symbol tables.
-class DefinedRegular : public Defined {
+template <class ELFT> class DefinedRegular : public Defined<ELFT> {
+  typedef Defined<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
 public:
-  explicit DefinedRegular(StringRef N) : Defined(DefinedRegularKind, N) {}
+  explicit DefinedRegular(StringRef N, const Elf_Sym &Sym)
+      : Defined<ELFT>(Base::DefinedRegularKind, N, Sym) {}
 
   static bool classof(const SymbolBody *S) {
-    return S->kind() == DefinedRegularKind;
+    return S->kind() == Base::DefinedRegularKind;
   }
 };
 
-class DefinedWeak : public Defined {
+template <class ELFT> class DefinedWeak : public Defined<ELFT> {
+  typedef Defined<ELFT> Base;
+  typedef typename Base::Elf_Sym Elf_Sym;
+
 public:
-  explicit DefinedWeak(StringRef N) : Defined(DefinedWeakKind, N) {}
+  explicit DefinedWeak(StringRef N, const Elf_Sym &Sym)
+      : Defined<ELFT>(Base::DefinedWeakKind, N, Sym) {}
 
   static bool classof(const SymbolBody *S) {
-    return S->kind() == DefinedWeakKind;
+    return S->kind() == Base::DefinedWeakKind;
   }
 };
 

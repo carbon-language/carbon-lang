@@ -220,18 +220,23 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = Builder.getOffset(Name);
     uint8_t Binding;
-    switch (Sym->Body->kind()) {
+    SymbolBody *Body = Sym->Body;
+    uint8_t Type = 0;
+    switch (Body->kind()) {
     case SymbolBody::UndefinedKind:
       llvm_unreachable("Should be defined by now");
     case SymbolBody::DefinedRegularKind:
       Binding = STB_GLOBAL;
+      Type = cast<DefinedRegular<ELFT>>(Body)->Sym.getType();
       break;
-    case SymbolBody::UndefinedWeakKind:
     case SymbolBody::DefinedWeakKind:
+      Type = cast<DefinedWeak<ELFT>>(Body)->Sym.getType();
+    // Fallthrough
+    case SymbolBody::UndefinedWeakKind:
       Binding = STB_WEAK;
       break;
     }
-    ESym->setBindingAndType(Binding, 0);
+    ESym->setBindingAndType(Binding, Type);
 
     Buf += sizeof(Elf_Sym);
   }

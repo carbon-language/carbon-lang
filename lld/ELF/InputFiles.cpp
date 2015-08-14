@@ -87,11 +87,11 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   case STB_GLOBAL:
     if (Sym->isUndefined())
       return new (Alloc) Undefined(Name);
-    return new (Alloc) DefinedRegular(Name);
+    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym);
   case STB_WEAK:
     if (Sym->isUndefined())
       return new (Alloc) UndefinedWeak(Name);
-    return new (Alloc) DefinedWeak(Name);
+    return new (Alloc) DefinedWeak<ELFT>(Name, *Sym);
   }
 }
 

@@ -3,9 +3,11 @@
 // RUN: llvm-readobj -symbols %t2 | FileCheck %s
 // REQUIRES: x86
 
+.type _start, @function
 .globl _start
 _start:
 
+.type foo, @object
 .weak foo
 foo:
 
@@ -24,7 +26,7 @@ foo:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
-// CHECK-NEXT:     Type: None (0x0)
+// CHECK-NEXT:     Type: Function
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
@@ -33,7 +35,7 @@ foo:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Weak (0x2)
-// CHECK-NEXT:     Type: None (0x0)
+// CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
