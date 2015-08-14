@@ -1915,8 +1915,14 @@ X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
                                                   unsigned,
                                                   unsigned,
                                                   bool *Fast) const {
-  if (Fast)
-    *Fast = Subtarget->isUnalignedMemAccessFast();
+  if (Fast) {
+    // FIXME: We should be checking 128-bit accesses separately from smaller
+    // accesses.
+    if (VT.getSizeInBits() == 256)
+      *Fast = !Subtarget->isUnalignedMem32Slow();
+    else
+      *Fast = Subtarget->isUnalignedMemAccessFast();
+  }
   return true;
 }
 
@@ -11259,14 +11265,25 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
   // --> load32 addr
   if ((IdxVal == OpVT.getVectorNumElements() / 2) &&
       Vec.getOpcode() == ISD::INSERT_SUBVECTOR &&
-      OpVT.is256BitVector() && SubVecVT.is128BitVector() &&
-      !Subtarget->isUnalignedMem32Slow()) {
-    SDValue SubVec2 = Vec.getOperand(1);
-    if (auto *Idx2 = dyn_cast<ConstantSDNode>(Vec.getOperand(2))) {
-      if (Idx2->getZExtValue() == 0) {
-        SDValue Ops[] = { SubVec2, SubVec };
-        if (SDValue Ld = EltsFromConsecutiveLoads(OpVT, Ops, dl, DAG, false))
-          return Ld;
+      OpVT.is256BitVector() && SubVecVT.is128BitVector()) {
+    auto *Idx2 = dyn_cast<ConstantSDNode>(Vec.getOperand(2));
+    if (Idx2 && Idx2->getZExtValue() == 0) {
+      SDValue SubVec2 = Vec.getOperand(1);
+      // If needed, look through a bitcast to get to the load.
+      if (SubVec2.getNode() && SubVec2.getOpcode() == ISD::BITCAST)
+        SubVec2 = SubVec2.getOperand(0);
+      
+      if (auto *FirstLd = dyn_cast<LoadSDNode>(SubVec2)) {
+        bool Fast;
+        unsigned Alignment = FirstLd->getAlignment();
+        unsigned AS = FirstLd->getAddressSpace();
+        const X86TargetLowering *TLI = Subtarget->getTargetLowering();
+        if (TLI->allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(),
+                                    OpVT, AS, Alignment, &Fast) && Fast) {
+          SDValue Ops[] = { SubVec2, SubVec };
+          if (SDValue Ld = EltsFromConsecutiveLoads(OpVT, Ops, dl, DAG, false))
+            return Ld;
+        }
       }
     }
   }

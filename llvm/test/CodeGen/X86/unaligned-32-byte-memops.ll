@@ -75,12 +75,12 @@ define <8 x float> @combine_16_byte_loads_no_intrinsic(<4 x float>* %ptr) {
   ret <8 x float> %v3
 }
 
+; If the first load is 32-byte aligned, then the loads should be merged in all cases.
+
 define <8 x float> @combine_16_byte_loads_aligned(<4 x float>* %ptr) {
-;; FIXME: The first load is 32-byte aligned, so the second load should get merged.
 ; AVXSLOW-LABEL: combine_16_byte_loads_aligned:
 ; AVXSLOW:       # BB#0:
-; AVXSLOW-NEXT:    vmovaps 48(%rdi), %xmm0
-; AVXSLOW-NEXT:    vinsertf128 $1, 64(%rdi), %ymm0, %ymm0
+; AVXSLOW-NEXT:    vmovaps 48(%rdi), %ymm0
 ; AVXSLOW-NEXT:    retq
 ;
 ; AVXFAST-LABEL: combine_16_byte_loads_aligned:
