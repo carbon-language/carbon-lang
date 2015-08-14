@@ -121,6 +121,7 @@ def update_progress(test_name=""):
 def parse_test_results(output):
     passes = 0
     failures = 0
+    unexpected_successes = 0
     for result in output:
         pass_count = re.search("^RESULT:.*([0-9]+) passes",
                                result, re.MULTILINE)
@@ -128,16 +129,20 @@ def parse_test_results(output):
                                result, re.MULTILINE)
         error_count = re.search("^RESULT:.*([0-9]+) errors",
                                 result, re.MULTILINE)
+        unexpected_success_count = re.search("^RESULT:.*([0-9]+) unexpected successes",
+                                             result, re.MULTILINE)
         this_fail_count = 0
         this_error_count = 0
         if pass_count is not None:
             passes = passes + int(pass_count.group(1))
         if fail_count is not None:
             failures = failures + int(fail_count.group(1))
+        if unexpected_success_count is not None:
+            unexpected_successes = unexpected_successes + int(unexpected_success_count.group(1))
         if error_count is not None:
             failures = failures + int(error_count.group(1))
         pass
-    return passes, failures
+    return passes, failures, unexpected_successes
 
 
 def call_with_timeout(command, timeout, name):
@@ -161,14 +166,14 @@ def call_with_timeout(command, timeout, name):
                                    stderr=subprocess.PIPE)
     output = process.communicate()
     exit_status = process.returncode
-    passes, failures = parse_test_results(output)
+    passes, failures, unexpected_successes = parse_test_results(output)
     if exit_status == 0:
         # stdout does not have any useful information from 'dotest.py',
         # only stderr does.
         report_test_pass(name, output[1])
     else:
         report_test_failure(name, command, output[1])
-    return name, exit_status, passes, failures
+    return name, exit_status, passes, failures, unexpected_successes
 
 
 def process_dir(root, files, test_root, dotest_argv):
@@ -187,17 +192,20 @@ def process_dir(root, files, test_root, dotest_argv):
 
         results.append(call_with_timeout(command, timeout, name))
 
-    # result = (name, status, passes, failures)
-    timed_out = [name for name, status, _, _ in results
+    # result = (name, status, passes, failures, unexpected_successes)
+    timed_out = [name for name, status, _, _, _ in results
                  if status == eTimedOut]
-    passed = [name for name, status, _, _ in results
+    passed = [name for name, status, _, _, _ in results
               if status == ePassed]
-    failed = [name for name, status, _, _ in results
+    failed = [name for name, status, _, _, _ in results
               if status != ePassed]
+    unexpected_passes = [name for name, _, _, _, unexpected_successes in results
+                         if unexpected_successes > 0]
+    
     pass_count = sum([result[2] for result in results])
     fail_count = sum([result[3] for result in results])
 
-    return (timed_out, passed, failed, pass_count, fail_count)
+    return (timed_out, passed, failed, unexpected_passes, pass_count, fail_count)
 
 in_q = None
 out_q = None
@@ -255,14 +263,15 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     else:
         test_results = map(process_dir_worker, test_work_items)
 
-    # result = (timed_out, failed, passed, fail_count, pass_count)
+    # result = (timed_out, failed, passed, unexpected_successes, fail_count, pass_count)
     timed_out = sum([result[0] for result in test_results], [])
     passed = sum([result[1] for result in test_results], [])
     failed = sum([result[2] for result in test_results], [])
-    pass_count = sum([result[3] for result in test_results])
-    fail_count = sum([result[4] for result in test_results])
+    unexpected_successes = sum([result[3] for result in test_results], [])
+    pass_count = sum([result[4] for result in test_results])
+    fail_count = sum([result[5] for result in test_results])
 
-    return (timed_out, passed, failed, pass_count, fail_count)
+    return (timed_out, passed, failed, unexpected_successes, pass_count, fail_count)
 
 
 def getExpectedTimeouts(platform_name):
@@ -433,7 +442,7 @@ Run lldb test suite using a separate process for each test file.
         num_threads = 1
 
     system_info = " ".join(platform.uname())
-    (timed_out, passed, failed, pass_count, fail_count) = walk_and_invoke(
+    (timed_out, passed, failed, unexpected_successes, pass_count, fail_count) = walk_and_invoke(
         test_directory, test_subdir, dotest_argv, num_threads)
 
     timed_out = set(timed_out)
@@ -474,6 +483,8 @@ Run lldb test suite using a separate process for each test file.
         sys.stdout.write(" (%d failed) (%f%%)" % (
             fail_count, 100.0 * fail_count / num_test_cases))
     print
+    exit_code = 0
+
     if len(failed) > 0:
         failed.sort()
         print "Failing Tests (%d)" % len(failed)
@@ -481,8 +492,15 @@ Run lldb test suite using a separate process for each test file.
             print "%s: LLDB (suite) :: %s (%s)" % (
                 "TIMEOUT" if f in timed_out else "FAIL", f, system_info
             )
-        sys.exit(1)
-    sys.exit(0)
+        exit_code = 1
+
+    if len(unexpected_successes) > 0:
+        unexpected_successes.sort()
+        print "\nUnexpected Successes (%d)" % len(unexpected_successes)
+        for u in unexpected_successes:
+            print "UNEXPECTED SUCCESS: LLDB (suite) :: %s (%s)" % (u, system_info)
+
+    sys.exit(exit_code)
 
 if __name__ == '__main__':
     main()
