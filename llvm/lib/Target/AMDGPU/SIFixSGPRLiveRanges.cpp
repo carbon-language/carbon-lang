@@ -48,6 +48,7 @@
 #include "SIInstrInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachinePostDominators.h"
@@ -94,6 +95,7 @@ public:
 INITIALIZE_PASS_BEGIN(SIFixSGPRLiveRanges, DEBUG_TYPE,
                       "SI Fix SGPR Live Ranges", false, false)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_DEPENDENCY(LiveVariables)
 INITIALIZE_PASS_DEPENDENCY(MachinePostDominatorTree)
 INITIALIZE_PASS_END(SIFixSGPRLiveRanges, DEBUG_TYPE,
                     "SI Fix SGPR Live Ranges", false, false)
@@ -111,9 +113,12 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
       MF.getSubtarget().getRegisterInfo());
-  LiveIntervals *LIS = &getAnalysis<LiveIntervals>();
- MachinePostDominatorTree *PDT = &getAnalysis<MachinePostDominatorTree>();
+
+  MachinePostDominatorTree *PDT = &getAnalysis<MachinePostDominatorTree>();
   std::vector<std::pair<unsigned, LiveRange *>> SGPRLiveRanges;
+
+  LiveIntervals *LIS = &getAnalysis<LiveIntervals>();
+  LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
 
   // First pass, collect all live intervals for SGPRs
   for (const MachineBasicBlock &MBB : MF) {
@@ -183,6 +188,9 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
                       SuccB->getNumber() <<
                       " with NCD = " << NCD->getNumber() << '\n');
 
+      assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
+             "Not expecting to extend live range of physreg");
+
       // FIXME: Need to figure out how to update LiveRange here so this pass
       // will be able to preserve LiveInterval analysis.
       MachineInstr *NCDSGPRUse =
@@ -192,6 +200,11 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
 
       SlotIndex SI = LIS->InsertMachineInstrInMaps(NCDSGPRUse);
       LIS->extendToIndices(*LR, SI.getRegSlot());
+
+      if (LV) {
+        // TODO: This won't work post-SSA
+        LV->HandleVirtRegUse(Reg, NCD, NCDSGPRUse);
+      }
 
       DEBUG(NCDSGPRUse->dump());
     }
