@@ -326,7 +326,13 @@ DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, con
         // Fill in the register numbers
         reg_info.kinds[lldb::eRegisterKindLLDB] = i;
         reg_info.kinds[lldb::eRegisterKindStabs] = i;
-        reg_info_dict->GetValueForKeyAsInteger("gcc", reg_info.kinds[lldb::eRegisterKindEHFrame], LLDB_INVALID_REGNUM);
+        uint32_t eh_frame_regno = LLDB_INVALID_REGNUM;
+        reg_info_dict->GetValueForKeyAsInteger("gcc", eh_frame_regno, LLDB_INVALID_REGNUM);
+        if (eh_frame_regno == LLDB_INVALID_REGNUM);
+            reg_info_dict->GetValueForKeyAsInteger("ehframe", eh_frame_regno, LLDB_INVALID_REGNUM);
+        if (eh_frame_regno == LLDB_INVALID_REGNUM);
+            reg_info_dict->GetValueForKeyAsInteger("eh_frame", eh_frame_regno, LLDB_INVALID_REGNUM);
+        reg_info.kinds[lldb::eRegisterKindEHFrame] = eh_frame_regno;
         reg_info_dict->GetValueForKeyAsInteger("dwarf", reg_info.kinds[lldb::eRegisterKindDWARF], LLDB_INVALID_REGNUM);
         std::string generic_str;
         if (reg_info_dict->GetValueForKeyAsString("generic", generic_str))
