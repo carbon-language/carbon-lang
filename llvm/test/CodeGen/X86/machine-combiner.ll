@@ -144,7 +144,7 @@ define float @reassociate_adds6(float %x0, float %x1, float %x2, float %x3) {
   ret float %t2
 }
 
-; Verify that SSE and AVX scalar single-precison multiplies are reassociated.
+; Verify that SSE and AVX scalar single-precision multiplies are reassociated.
 
 define float @reassociate_muls1(float %x0, float %x1, float %x2, float %x3) {
 ; SSE-LABEL: reassociate_muls1:
@@ -166,7 +166,7 @@ define float @reassociate_muls1(float %x0, float %x1, float %x2, float %x3) {
   ret float %t2
 }
 
-; Verify that SSE and AVX scalar double-precison adds are reassociated.
+; Verify that SSE and AVX scalar double-precision adds are reassociated.
 
 define double @reassociate_adds_double(double %x0, double %x1, double %x2, double %x3) {
 ; SSE-LABEL: reassociate_adds_double:
@@ -188,7 +188,7 @@ define double @reassociate_adds_double(double %x0, double %x1, double %x2, doubl
   ret double %t2
 }
 
-; Verify that SSE and AVX scalar double-precison multiplies are reassociated.
+; Verify that SSE and AVX scalar double-precision multiplies are reassociated.
 
 define double @reassociate_muls_double(double %x0, double %x1, double %x2, double %x3) {
 ; SSE-LABEL: reassociate_muls_double:
@@ -210,7 +210,7 @@ define double @reassociate_muls_double(double %x0, double %x1, double %x2, doubl
   ret double %t2
 }
 
-; Verify that SSE and AVX 128-bit vector single-precison adds are reassociated.
+; Verify that SSE and AVX 128-bit vector single-precision adds are reassociated.
 
 define <4 x float> @reassociate_adds_v4f32(<4 x float> %x0, <4 x float> %x1, <4 x float> %x2, <4 x float> %x3) {
 ; SSE-LABEL: reassociate_adds_v4f32:
@@ -232,7 +232,7 @@ define <4 x float> @reassociate_adds_v4f32(<4 x float> %x0, <4 x float> %x1, <4 
   ret <4 x float> %t2
 }
 
-; Verify that SSE and AVX 128-bit vector double-precison adds are reassociated.
+; Verify that SSE and AVX 128-bit vector double-precision adds are reassociated.
 
 define <2 x double> @reassociate_adds_v2f64(<2 x double> %x0, <2 x double> %x1, <2 x double> %x2, <2 x double> %x3) {
 ; SSE-LABEL: reassociate_adds_v2f64:
@@ -254,7 +254,7 @@ define <2 x double> @reassociate_adds_v2f64(<2 x double> %x0, <2 x double> %x1, 
   ret <2 x double> %t2
 }
 
-; Verify that SSE and AVX 128-bit vector single-precison multiplies are reassociated.
+; Verify that SSE and AVX 128-bit vector single-precision multiplies are reassociated.
 
 define <4 x float> @reassociate_muls_v4f32(<4 x float> %x0, <4 x float> %x1, <4 x float> %x2, <4 x float> %x3) {
 ; SSE-LABEL: reassociate_muls_v4f32:
@@ -276,7 +276,7 @@ define <4 x float> @reassociate_muls_v4f32(<4 x float> %x0, <4 x float> %x1, <4 
   ret <4 x float> %t2
 }
 
-; Verify that SSE and AVX 128-bit vector double-precison multiplies are reassociated.
+; Verify that SSE and AVX 128-bit vector double-precision multiplies are reassociated.
 
 define <2 x double> @reassociate_muls_v2f64(<2 x double> %x0, <2 x double> %x1, <2 x double> %x2, <2 x double> %x3) {
 ; SSE-LABEL: reassociate_muls_v2f64:
@@ -298,7 +298,7 @@ define <2 x double> @reassociate_muls_v2f64(<2 x double> %x0, <2 x double> %x1, 
   ret <2 x double> %t2
 }
 
-; Verify that AVX 256-bit vector single-precison adds are reassociated.
+; Verify that AVX 256-bit vector single-precision adds are reassociated.
 
 define <8 x float> @reassociate_adds_v8f32(<8 x float> %x0, <8 x float> %x1, <8 x float> %x2, <8 x float> %x3) {
 ; AVX-LABEL: reassociate_adds_v8f32:
@@ -313,7 +313,7 @@ define <8 x float> @reassociate_adds_v8f32(<8 x float> %x0, <8 x float> %x1, <8 
   ret <8 x float> %t2
 }
 
-; Verify that AVX 256-bit vector double-precison adds are reassociated.
+; Verify that AVX 256-bit vector double-precision adds are reassociated.
 
 define <4 x double> @reassociate_adds_v4f64(<4 x double> %x0, <4 x double> %x1, <4 x double> %x2, <4 x double> %x3) {
 ; AVX-LABEL: reassociate_adds_v4f64:
@@ -328,7 +328,7 @@ define <4 x double> @reassociate_adds_v4f64(<4 x double> %x0, <4 x double> %x1, 
   ret <4 x double> %t2
 }
 
-; Verify that AVX 256-bit vector single-precison multiplies are reassociated.
+; Verify that AVX 256-bit vector single-precision multiplies are reassociated.
 
 define <8 x float> @reassociate_muls_v8f32(<8 x float> %x0, <8 x float> %x1, <8 x float> %x2, <8 x float> %x3) {
 ; AVX-LABEL: reassociate_muls_v8f32:
@@ -343,7 +343,7 @@ define <8 x float> @reassociate_muls_v8f32(<8 x float> %x0, <8 x float> %x1, <8 
   ret <8 x float> %t2
 }
 
-; Verify that AVX 256-bit vector double-precison multiplies are reassociated.
+; Verify that AVX 256-bit vector double-precision multiplies are reassociated.
 
 define <4 x double> @reassociate_muls_v4f64(<4 x double> %x0, <4 x double> %x1, <4 x double> %x2, <4 x double> %x3) {
 ; AVX-LABEL: reassociate_muls_v4f64:
