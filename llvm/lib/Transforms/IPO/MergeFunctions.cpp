@@ -27,6 +27,14 @@
 // -- We define Function* container class with custom "operator<" (FunctionPtr).
 // -- "FunctionPtr" instances are stored in std::set collection, so every
 //    std::set::insert operation will give you result in log(N) time.
+// 
+// As an optimization, a hash of the function structure is calculated first, and
+// two functions are only compared if they have the same hash. This hash is
+// cheap to compute, and has the property that if function F == G according to
+// the comparison function, then hash(F) == hash(G). This consistency property
+// is critical to ensuring all possible merging opportunities are exploited.
+// Collisions in the hash affect the speed of the pass but not the correctness
+// or determinism of the resulting transformation.
 //
 // When a match is found the functions are folded. If both functions are
 // overridable, we move the functionality into a new internal function and
@@ -87,6 +95,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -132,6 +141,10 @@ public:
 
   /// Test whether the two functions have equivalent behaviour.
   int compare();
+  /// Hash a function. Equivalent functions will have the same hash, and unequal
+  /// functions will have different hashes with high probability.
+  typedef uint64_t FunctionHash;
+  static FunctionHash functionHash(Function &);
 
 private:
   /// Test whether two basic blocks have equivalent behaviour.
@@ -390,9 +403,11 @@ private:
 
 class FunctionNode {
   mutable AssertingVH<Function> F;
+  FunctionComparator::FunctionHash Hash;
 
 public:
-  FunctionNode(Function *F) : F(F) {}
+  // Note the hash is recalculated potentially multiple times, but it is cheap.
+  FunctionNode(Function *F) : F(F), Hash(FunctionComparator::functionHash(*F)){}
   Function *getFunc() const { return F; }
 
   /// Replace the reference to the function F by the function G, assuming their
@@ -406,6 +421,9 @@ public:
 
   void release() { F = 0; }
   bool operator<(const FunctionNode &RHS) const {
+    // Order first by hashes, then full function comparison.
+    if (Hash != RHS.Hash)
+      return Hash < RHS.Hash;
     return (FunctionComparator(F, RHS.getFunc()).compare()) == -1;
   }
 };
@@ -1074,6 +1092,66 @@ int FunctionComparator::compare() {
   return 0;
 }
 
+// Accumulate the hash of a sequence of 64-bit integers. This is similar to a
+// hash of a sequence of 64bit ints, but the entire input does not need to be
+// available at once. This interface is necessary for functionHash because it
+// needs to accumulate the hash as the structure of the function is traversed
+// without saving these values to an intermediate buffer. This form of hashing
+// is not often needed, as usually the object to hash is just read from a
+// buffer.
+class HashAccumulator64 {
+  uint64_t Hash;
+public:
+  // Initialize to random constant, so the state isn't zero.
+  HashAccumulator64() { Hash = 0x6acaa36bef8325c5ULL; }
+  void add(uint64_t V) {
+     Hash = llvm::hashing::detail::hash_16_bytes(Hash, V);
+  }
+  // No finishing is required, because the entire hash value is used.
+  uint64_t getHash() { return Hash; }
+};
+
+// A function hash is calculated by considering only the number of arguments and
+// whether a function is varargs, the order of basic blocks (given by the
+// successors of each basic block in depth first order), and the order of
+// opcodes of each instruction within each of these basic blocks. This mirrors
+// the strategy compare() uses to compare functions by walking the BBs in depth
+// first order and comparing each instruction in sequence. Because this hash
+// does not look at the operands, it is insensitive to things such as the
+// target of calls and the constants used in the function, which makes it useful
+// when possibly merging functions which are the same modulo constants and call
+// targets.
+FunctionComparator::FunctionHash FunctionComparator::functionHash(Function &F) {
+  HashAccumulator64 H;
+  H.add(F.isVarArg());
+  H.add(F.arg_size());
+  
+  SmallVector<const BasicBlock *, 8> BBs;
+  SmallSet<const BasicBlock *, 16> VisitedBBs;
+
+  // Walk the blocks in the same order as FunctionComparator::compare(),
+  // accumulating the hash of the function "structure." (BB and opcode sequence)
+  BBs.push_back(&F.getEntryBlock());
+  VisitedBBs.insert(BBs[0]);
+  while (!BBs.empty()) {
+    const BasicBlock *BB = BBs.pop_back_val();
+    // This random value acts as a block header, as otherwise the partition of
+    // opcodes into BBs wouldn't affect the hash, only the order of the opcodes
+    H.add(45798); 
+    for (auto &Inst : *BB) {
+      H.add(Inst.getOpcode());
+    }
+    const TerminatorInst *Term = BB->getTerminator();
+    for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
+      if (!VisitedBBs.insert(Term->getSuccessor(i)).second)
+        continue;
+      BBs.push_back(Term->getSuccessor(i));
+    }
+  }
+  return H.getHash();
+}
+
+
 namespace {
 
 /// MergeFunctions finds functions which will generate identical machine code,
@@ -1228,11 +1306,28 @@ bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
 
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
-      Deferred.push_back(WeakVH(I));
+  // All functions in the module, ordered by hash. Functions with a unique
+  // hash value are easily eliminated.
+  std::vector<std::pair<FunctionComparator::FunctionHash, Function *>>
+    HashedFuncs;
+  for (Function &Func : M) {
+    if (!Func.isDeclaration() && !Func.hasAvailableExternallyLinkage()) {
+      HashedFuncs.push_back({FunctionComparator::functionHash(Func), &Func});
+    } 
   }
 
+  std::sort(HashedFuncs.begin(), HashedFuncs.end());
+
+  auto S = HashedFuncs.begin();
+  for (auto I = HashedFuncs.begin(), IE = HashedFuncs.end(); I != IE; ++I) {
+    // If the hash value matches the previous value or the next one, we must
+    // consider merging it. Otherwise it is dropped and never considered again.
+    if ((I != S && std::prev(I)->first == I->first) ||
+        (std::next(I) != IE && std::next(I)->first == I->first) ) {
+      Deferred.push_back(WeakVH(I->second));
+    }
+  }
+  
   do {
     std::vector<WeakVH> Worklist;
     Deferred.swap(Worklist);
