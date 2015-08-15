@@ -801,7 +801,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     RxSBG.Input = N.getOperand(0);
     return true;
   }
-      
+
   case ISD::ANY_EXTEND:
     // Bits above the extended operand are don't-care.
     RxSBG.Input = N.getOperand(0);
@@ -818,7 +818,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
       return true;
     }
     // Fall through.
-    
+
   case ISD::SIGN_EXTEND: {
     // Check that the extension bits are don't-care (i.e. are masked out
     // by the final mask).
@@ -938,7 +938,23 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
       }
       return nullptr;
     }
-  }  
+  }
+
+  // If the RISBG operands require no rotation and just masks the bottom
+  // 8/16 bits, attempt to convert this to a LLC zero extension.
+  if (RISBG.Rotate == 0 && (RISBG.Mask == 0xff || RISBG.Mask == 0xffff)) {
+    unsigned OpCode = (RISBG.Mask == 0xff ? SystemZ::LLGCR : SystemZ::LLGHR);
+    if (VT == MVT::i32) {
+      if (Subtarget->hasHighWord())
+        OpCode = (RISBG.Mask == 0xff ? SystemZ::LLCRMux : SystemZ::LLHRMux);
+      else
+        OpCode = (RISBG.Mask == 0xff ? SystemZ::LLCR : SystemZ::LLHR);
+    }
+
+    SDValue In = convertTo(DL, VT, RISBG.Input);
+    N = CurDAG->getMachineNode(OpCode, DL, VT, In);
+    return convertTo(DL, VT, SDValue(N, 0)).getNode();
+  }
 
   unsigned Opcode = SystemZ::RISBG;
   // Prefer RISBGN if available, since it does not clobber CC.

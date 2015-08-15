@@ -3,12 +3,24 @@
 @var32 = global i32 0
 @var64 = global i64 0
 
-define void @test_extendb(i8 %var) {
-; CHECK-LABEL: test_extendb:
+define void @test_extendb32(i8 %var) {
+; CHECK-LABEL: test_extendb32:
 
   %sxt32 = sext i8 %var to i32
   store volatile i32 %sxt32, i32* @var32
 ; CHECK: sxtb {{w[0-9]+}}, {{w[0-9]+}}
+
+; N.b. this doesn't actually produce a bitfield instruction at the
+; moment, but it's still a good test to have and the semantics are
+; correct.
+  %uxt32 = zext i8 %var to i32
+  store volatile i32 %uxt32, i32* @var32
+; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, #0xff
+  ret void
+}
+
+define void @test_extendb64(i8 %var) {
+; CHECK-LABEL: test_extendb64:
 
   %sxt64 = sext i8 %var to i64
   store volatile i64 %sxt64, i64* @var64
@@ -17,22 +29,30 @@ define void @test_extendb(i8 %var) {
 ; N.b. this doesn't actually produce a bitfield instruction at the
 ; moment, but it's still a good test to have and the semantics are
 ; correct.
-  %uxt32 = zext i8 %var to i32
-  store volatile i32 %uxt32, i32* @var32
-; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, #0xff
-
   %uxt64 = zext i8 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK: and {{x[0-9]+}}, {{x[0-9]+}}, #0xff
+; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, #0xff
   ret void
 }
 
-define void @test_extendh(i16 %var) {
-; CHECK-LABEL: test_extendh:
+define void @test_extendh32(i16 %var) {
+; CHECK-LABEL: test_extendh32:
 
   %sxt32 = sext i16 %var to i32
   store volatile i32 %sxt32, i32* @var32
 ; CHECK: sxth {{w[0-9]+}}, {{w[0-9]+}}
+
+; N.b. this doesn't actually produce a bitfield instruction at the
+; moment, but it's still a good test to have and the semantics are
+; correct.
+  %uxt32 = zext i16 %var to i32
+  store volatile i32 %uxt32, i32* @var32
+; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, #0xffff
+  ret void
+}
+
+define void @test_extendh64(i16 %var) {
+; CHECK-LABEL: test_extendh64:
 
   %sxt64 = sext i16 %var to i64
   store volatile i64 %sxt64, i64* @var64
@@ -41,13 +61,9 @@ define void @test_extendh(i16 %var) {
 ; N.b. this doesn't actually produce a bitfield instruction at the
 ; moment, but it's still a good test to have and the semantics are
 ; correct.
-  %uxt32 = zext i16 %var to i32
-  store volatile i32 %uxt32, i32* @var32
-; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, #0xffff
-
   %uxt64 = zext i16 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK: and {{x[0-9]+}}, {{x[0-9]+}}, #0xffff
+; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, #0xffff
   ret void
 }
 

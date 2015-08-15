@@ -6112,31 +6112,45 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   }
 
   // fold (zext (truncate x)) -> (and x, mask)
-  if (N0.getOpcode() == ISD::TRUNCATE &&
-      (!LegalOperations || TLI.isOperationLegal(ISD::AND, VT))) {
-
+  if (N0.getOpcode() == ISD::TRUNCATE) {
     // fold (zext (truncate (load x))) -> (zext (smaller load x))
     // fold (zext (truncate (srl (load x), c))) -> (zext (smaller load (x+c/n)))
     if (SDValue NarrowLoad = ReduceLoadWidth(N0.getNode())) {
-      SDNode* oye = N0.getNode()->getOperand(0).getNode();
+      SDNode *oye = N0.getNode()->getOperand(0).getNode();
       if (NarrowLoad.getNode() != N0.getNode()) {
         CombineTo(N0.getNode(), NarrowLoad);
         // CombineTo deleted the truncate, if needed, but not what's under it.
         AddToWorklist(oye);
       }
-      return SDValue(N, 0);   // Return N so it doesn't get rechecked!
+      return SDValue(N, 0); // Return N so it doesn't get rechecked!
     }
 
-    SDValue Op = N0.getOperand(0);
-    if (Op.getValueType().bitsLT(VT)) {
-      Op = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, Op);
-      AddToWorklist(Op.getNode());
-    } else if (Op.getValueType().bitsGT(VT)) {
-      Op = DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, Op);
-      AddToWorklist(Op.getNode());
+    EVT SrcVT = N0.getOperand(0).getValueType();
+    EVT MinVT = N0.getValueType();
+
+    // Try to mask before the extension to avoid having to generate a larger mask,
+    // possibly over several sub-vectors.
+    if (SrcVT.bitsLT(VT)) {
+      if (!LegalOperations || (TLI.isOperationLegal(ISD::AND, SrcVT) &&
+                               TLI.isOperationLegal(ISD::ZERO_EXTEND, VT))) {
+        SDValue Op = N0.getOperand(0);
+        Op = DAG.getZeroExtendInReg(Op, SDLoc(N), MinVT.getScalarType());
+        AddToWorklist(Op.getNode());
+        return DAG.getZExtOrTrunc(Op, SDLoc(N), VT);
+      }
     }
-    return DAG.getZeroExtendInReg(Op, SDLoc(N),
-                                  N0.getValueType().getScalarType());
+
+    if (!LegalOperations || TLI.isOperationLegal(ISD::AND, VT)) {
+      SDValue Op = N0.getOperand(0);
+      if (SrcVT.bitsLT(VT)) {
+        Op = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, Op);
+        AddToWorklist(Op.getNode());
+      } else if (SrcVT.bitsGT(VT)) {
+        Op = DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, Op);
+        AddToWorklist(Op.getNode());
+      }
+      return DAG.getZeroExtendInReg(Op, SDLoc(N), MinVT.getScalarType());
+    }
   }
 
   // Fold (zext (and (trunc x), cst)) -> (and x, cst),
