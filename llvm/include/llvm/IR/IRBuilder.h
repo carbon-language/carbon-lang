@@ -697,8 +697,8 @@ public:
     return Insert(CleanupPadInst::Create(Ty, Args), Name);
   }
 
-  CatchReturnInst *CreateCatchRet(BasicBlock *BB) {
-    return Insert(CatchReturnInst::Create(BB));
+  CatchReturnInst *CreateCatchRet(BasicBlock *BB, Value *RetVal = nullptr) {
+    return Insert(CatchReturnInst::Create(BB, RetVal));
   }
 
   UnreachableInst *CreateUnreachable() {
