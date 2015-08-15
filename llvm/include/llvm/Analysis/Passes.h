@@ -22,7 +22,6 @@ namespace llvm {
   class ModulePass;
   class Pass;
   class PassInfo;
-  class LibCallInfo;
 
   //===--------------------------------------------------------------------===//
   //

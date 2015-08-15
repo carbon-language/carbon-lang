@@ -31,7 +31,6 @@ add_llvm_library(LLVMAnalysis
   IteratedDominanceFrontier.cpp
   LazyCallGraph.cpp
   LazyValueInfo.cpp
-  LibCallAliasAnalysis.cpp
   LibCallSemantics.cpp
   Lint.cpp
   Loads.cpp
