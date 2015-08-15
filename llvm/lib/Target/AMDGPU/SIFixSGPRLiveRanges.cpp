@@ -128,9 +128,13 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
           continue;
         unsigned Def = MO.getReg();
         if (TargetRegisterInfo::isVirtualRegister(Def)) {
-          if (TRI->isSGPRClass(MRI.getRegClass(Def)))
-            SGPRLiveRanges.push_back(
-                std::make_pair(Def, &LIS->getInterval(Def)));
+          if (TRI->isSGPRClass(MRI.getRegClass(Def))) {
+            // Only consider defs that are live outs. We don't care about def /
+            // use within the same block.
+            LiveRange &LR = LIS->getInterval(Def);
+            if (LIS->isLiveOutOfMBB(LR, &MBB))
+              SGPRLiveRanges.push_back(std::make_pair(Def, &LR));
+          }
         } else if (TRI->isSGPRClass(TRI->getPhysRegClass(Def))) {
             SGPRLiveRanges.push_back(
                 std::make_pair(Def, &LIS->getRegUnit(Def)));
