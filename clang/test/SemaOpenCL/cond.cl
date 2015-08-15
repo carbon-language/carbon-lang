@@ -84,12 +84,12 @@ uchar2 ntest03(int2 C, uchar X, uchar Y)
 
 float2 ntest04(int2 C, int2 X, float2 Y)
 {
-  return C ? X : Y; // expected-error {{can't convert between vector values of different size ('int2' (vector of 2 'int' values) and 'float2' (vector of 2 'float' values))}}
+  return C ? X : Y; // expected-error {{cannot convert between vector values of different size ('int2' (vector of 2 'int' values) and 'float2' (vector of 2 'float' values))}}
 }
 
 float2 ntest05(int2 C, int2 X, float Y)
 {
-  return C ? X : Y; // expected-error {{can't convert between vector values of different size ('int2' (vector of 2 'int' values) and 'float')}}
+  return C ? X : Y; // expected-error {{cannot convert between vector values of different size ('int2' (vector of 2 'int' values) and 'float')}}
 }
 
 char2 ntest06(int2 C, char2 X, char2 Y)
@@ -115,7 +115,7 @@ int2 ntest09(int2 C, global int *X, global int *Y)
 
 char3 ntest10(char C, char3 X, char2 Y)
 {
-  return C ? X : Y; // expected-error {{can't convert between vector values of different size ('char3' (vector of 3 'char' values) and 'char2' (vector of 2 'char' values))}}
+  return C ? X : Y; // expected-error {{cannot convert between vector values of different size ('char3' (vector of 3 'char' values) and 'char2' (vector of 2 'char' values))}}
 }
 
 char3 ntest11(char2 C, char3 X, char Y)

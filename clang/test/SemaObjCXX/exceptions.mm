@@ -5,7 +5,7 @@
 namespace test0 {
   void test() {
     try {
-    } catch (NSException e) { // expected-error {{can't catch an Objective-C object by value}}
+    } catch (NSException e) { // expected-error {{cannot catch an Objective-C object by value}}
     }
   }
 }

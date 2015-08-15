@@ -2083,9 +2083,9 @@ def err_attribute_invalid_size : Error<
 def err_attribute_zero_size : Error<"zero vector size">;
 def err_attribute_size_too_large : Error<"vector size too large">;
 def err_typecheck_vector_not_convertable : Error<
-  "can't convert between vector values of different size (%0 and %1)">;
+  "cannot convert between vector values of different size (%0 and %1)">;
 def err_typecheck_vector_not_convertable_non_scalar : Error<
-  "can't convert between vector and non-scalar values (%0 and %1)">;
+  "cannot convert between vector and non-scalar values (%0 and %1)">;
 def err_typecheck_vector_lengths_not_equal : Error<
   "vector operands do not have the same number of elements (%0 and %1)">;
 def err_ext_vector_component_exceeds_length : Error<
@@ -2888,7 +2888,7 @@ def err_param_default_argument_on_parameter_pack : Error<
   "parameter pack cannot have a default argument">;
 def err_uninitialized_member_for_assign : Error<
   "cannot define the implicit copy assignment operator for %0, because "
-  "non-static %select{reference|const}1 member %2 can't use copy "
+  "non-static %select{reference|const}1 member %2 cannot use copy "
   "assignment operator">;
 def err_uninitialized_member_in_ctor : Error<
   "%select{|implicit default |inheriting }0constructor for %1 must explicitly "
@@ -2972,7 +2972,7 @@ def note_ovl_candidate_instantiation_depth : Note<
     "candidate template ignored: substitution exceeded maximum template "
     "instantiation depth">;
 def note_ovl_candidate_underqualified : Note<
-    "candidate template ignored: can't deduce a type for %0 that would "
+    "candidate template ignored: cannot deduce a type for %0 that would "
     "make %2 equal %1">;
 def note_ovl_candidate_substitution_failure : Note<
     "candidate template ignored: substitution failure%0%1">;
@@ -3262,7 +3262,7 @@ def err_addr_ovl_ambiguous : Error<
 def err_addr_ovl_not_func_ptrref : Error<
   "address of overloaded function %0 cannot be converted to type %1">;
 def err_addr_ovl_no_qualifier : Error<
-  "can't form member pointer of type %0 without '&' and class name">;
+  "cannot form member pointer of type %0 without '&' and class name">;
 
 // C++11 Literal Operators
 def err_ovl_no_viable_literal_operator : Error<
@@ -4556,7 +4556,7 @@ def err_typecheck_arc_assign_self : Error<
 def err_typecheck_arc_assign_self_class_method : Error<
   "cannot assign to 'self' in a class method">;
 def err_typecheck_arr_assign_enumeration : Error<
-  "fast enumeration variables can't be modified in ARC by default; "
+  "fast enumeration variables cannot be modified in ARC by default; "
   "declare the variable __strong to allow this">;
 def warn_arc_retained_assign : Warning<
   "assigning retained object to %select{weak|unsafe_unretained}0 "
@@ -5370,7 +5370,7 @@ def warn_objc_pointer_cxx_catch_fragile : Warning<
   "cannot catch an exception thrown with @throw in C++ in the non-unified "
   "exception model">, InGroup<ObjCNonUnifiedException>;
 def err_objc_object_catch : Error<
-  "can't catch an Objective-C object by value">;
+  "cannot catch an Objective-C object by value">;
 def err_incomplete_type_objc_at_encode : Error<
   "'@encode' of incomplete type %0">;
 def warn_objc_circular_container : Warning<

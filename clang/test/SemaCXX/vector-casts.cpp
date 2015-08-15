@@ -59,10 +59,10 @@ void f() {
 struct testvec {
   __v2si v;
   void madd(const testvec& rhs) {
-    v = v + rhs; // expected-error {{can't convert between vector and non-scalar values}}
+    v = v + rhs; // expected-error {{cannot convert between vector and non-scalar values}}
   }
   void madd2(testvec rhs) {
-    v = v + rhs; // expected-error {{can't convert between vector and non-scalar values}}
+    v = v + rhs; // expected-error {{cannot convert between vector and non-scalar values}}
   }
 };
 

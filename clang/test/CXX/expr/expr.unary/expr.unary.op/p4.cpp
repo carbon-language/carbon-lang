@@ -7,7 +7,7 @@ namespace test0 {
     template<typename T> void g(T);
 
     void test() {
-      foo(&g<int>); // expected-error-re {{can't form member pointer of type 'void (test0::A::*)(int){{( __attribute__\(\(thiscall\)\))?}}' without '&' and class name}}
+      foo(&g<int>); // expected-error-re {{cannot form member pointer of type 'void (test0::A::*)(int){{( __attribute__\(\(thiscall\)\))?}}' without '&' and class name}}
     }
   };
 }

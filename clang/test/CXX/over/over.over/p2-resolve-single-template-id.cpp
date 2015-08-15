@@ -180,12 +180,12 @@ namespace member_pointers {
     { bool b = &s.g<int>; }
 
     { bool b = S::h<42>; }
-    { bool b = S::h<int>; } // expected-error {{can't form member pointer of type 'bool' without '&' and class name}}
+    { bool b = S::h<int>; } // expected-error {{cannot form member pointer of type 'bool' without '&' and class name}}
     { bool b = &S::h<42>; }
     { bool b = &S::h<int>; }
     { bool b = s.h<42>; }
-    { bool b = s.h<int>; } // expected-error {{can't form member pointer of type 'bool' without '&' and class name}}
+    { bool b = s.h<int>; } // expected-error {{cannot form member pointer of type 'bool' without '&' and class name}}
     { bool b = &s.h<42>; }
-    { bool b = &s.h<int>; } // expected-error {{can't form member pointer of type 'bool' without '&' and class name}}
+    { bool b = &s.h<int>; } // expected-error {{cannot form member pointer of type 'bool' without '&' and class name}}
   }
 }

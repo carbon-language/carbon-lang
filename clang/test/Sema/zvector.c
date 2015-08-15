@@ -309,14 +309,14 @@ void foo(void)
   // -------------------------------------------------------------------------
 
   sc = sc + sc2;
-  sc = sc + uc2; // expected-error {{can't convert}}
-  sc = uc + sc2; // expected-error {{can't convert}}
+  sc = sc + uc2; // expected-error {{cannot convert}}
+  sc = uc + sc2; // expected-error {{cannot convert}}
   sc = sc + bc2;
   sc = bc + sc2;
 
   uc = uc + uc2;
-  uc = sc + uc2; // expected-error {{can't convert}}
-  uc = uc + sc2; // expected-error {{can't convert}}
+  uc = sc + uc2; // expected-error {{cannot convert}}
+  uc = uc + sc2; // expected-error {{cannot convert}}
   uc = bc + uc2;
   uc = uc + bc2;
 
@@ -326,14 +326,14 @@ void foo(void)
   bc = bc + sc2; // expected-error {{incompatible type}}
   bc = sc + bc2; // expected-error {{incompatible type}}
 
-  sc = sc + sc_scalar; // expected-error {{can't convert}}
-  sc = sc + uc_scalar; // expected-error {{can't convert}}
-  sc = sc_scalar + sc; // expected-error {{can't convert}}
-  sc = uc_scalar + sc; // expected-error {{can't convert}}
-  uc = uc + sc_scalar; // expected-error {{can't convert}}
-  uc = uc + uc_scalar; // expected-error {{can't convert}}
-  uc = sc_scalar + uc; // expected-error {{can't convert}}
-  uc = uc_scalar + uc; // expected-error {{can't convert}}
+  sc = sc + sc_scalar; // expected-error {{cannot convert}}
+  sc = sc + uc_scalar; // expected-error {{cannot convert}}
+  sc = sc_scalar + sc; // expected-error {{cannot convert}}
+  sc = uc_scalar + sc; // expected-error {{cannot convert}}
+  uc = uc + sc_scalar; // expected-error {{cannot convert}}
+  uc = uc + uc_scalar; // expected-error {{cannot convert}}
+  uc = sc_scalar + uc; // expected-error {{cannot convert}}
+  uc = uc_scalar + uc; // expected-error {{cannot convert}}
 
   ss = ss + ss2;
   us = us + us2;
@@ -348,30 +348,30 @@ void foo(void)
   bl = bl + bl2; // expected-error {{invalid operands}}
 
   fd = fd + fd2;
-  fd = fd + ul2; // expected-error {{can't convert}}
-  fd = sl + fd2; // expected-error {{can't convert}}
+  fd = fd + ul2; // expected-error {{cannot convert}}
+  fd = sl + fd2; // expected-error {{cannot convert}}
 
   sc += sc2;
-  sc += uc2; // expected-error {{can't convert}}
+  sc += uc2; // expected-error {{cannot convert}}
   sc += bc2;
 
   uc += uc2;
-  uc += sc2; // expected-error {{can't convert}}
+  uc += sc2; // expected-error {{cannot convert}}
   uc += bc2;
 
   bc += bc2; // expected-error {{invalid operands}}
-  bc += sc2; // expected-error {{can't convert}}
-  bc += uc2; // expected-error {{can't convert}}
+  bc += sc2; // expected-error {{cannot convert}}
+  bc += uc2; // expected-error {{cannot convert}}
 
-  sc += ss2; // expected-error {{can't convert}}
-  sc += si2; // expected-error {{can't convert}}
-  sc += sl2; // expected-error {{can't convert}}
-  sc += fd2; // expected-error {{can't convert}}
+  sc += ss2; // expected-error {{cannot convert}}
+  sc += si2; // expected-error {{cannot convert}}
+  sc += sl2; // expected-error {{cannot convert}}
+  sc += fd2; // expected-error {{cannot convert}}
 
-  sc += sc_scalar; // expected-error {{can't convert}}
-  sc += uc_scalar; // expected-error {{can't convert}}
-  uc += sc_scalar; // expected-error {{can't convert}}
-  uc += uc_scalar; // expected-error {{can't convert}}
+  sc += sc_scalar; // expected-error {{cannot convert}}
+  sc += uc_scalar; // expected-error {{cannot convert}}
+  uc += sc_scalar; // expected-error {{cannot convert}}
+  uc += uc_scalar; // expected-error {{cannot convert}}
 
   ss += ss2;
   us += us2;
@@ -395,7 +395,7 @@ void foo(void)
   uc = uc - uc2;
   bc = bc - bc2; // expected-error {{invalid operands}}
 
-  sc = uc - sc2; // expected-error {{can't convert}}
+  sc = uc - sc2; // expected-error {{cannot convert}}
   sc = sc - bc2;
   uc = bc - uc2;
 
@@ -403,9 +403,9 @@ void foo(void)
   uc -= uc2;
   bc -= bc2; // expected-error {{invalid operands}}
 
-  sc -= uc2; // expected-error {{can't convert}}
+  sc -= uc2; // expected-error {{cannot convert}}
   uc -= bc2;
-  bc -= sc2; // expected-error {{can't convert}}
+  bc -= sc2; // expected-error {{cannot convert}}
 
   ss -= ss2;
   us -= us2;
@@ -430,17 +430,17 @@ void foo(void)
   uc = uc * uc2;
   bc = bc * bc2; // expected-error {{invalid operands}}
 
-  sc = uc * sc2; // expected-error {{can't convert}}
-  sc = sc * bc2; // expected-error {{can't convert}}
-  uc = bc * uc2; // expected-error {{can't convert}}
+  sc = uc * sc2; // expected-error {{cannot convert}}
+  sc = sc * bc2; // expected-error {{cannot convert}}
+  uc = bc * uc2; // expected-error {{cannot convert}}
 
   sc *= sc2;
   uc *= uc2;
   bc *= bc2; // expected-error {{invalid operands}}
 
-  sc *= uc2; // expected-error {{can't convert}}
-  uc *= bc2; // expected-error {{can't convert}}
-  bc *= sc2; // expected-error {{can't convert}}
+  sc *= uc2; // expected-error {{cannot convert}}
+  uc *= bc2; // expected-error {{cannot convert}}
+  bc *= sc2; // expected-error {{cannot convert}}
 
   ss *= ss2;
   us *= us2;
@@ -464,17 +464,17 @@ void foo(void)
   uc = uc / uc2;
   bc = bc / bc2; // expected-error {{invalid operands}}
 
-  sc = uc / sc2; // expected-error {{can't convert}}
-  sc = sc / bc2; // expected-error {{can't convert}}
-  uc = bc / uc2; // expected-error {{can't convert}}
+  sc = uc / sc2; // expected-error {{cannot convert}}
+  sc = sc / bc2; // expected-error {{cannot convert}}
+  uc = bc / uc2; // expected-error {{cannot convert}}
 
   sc /= sc2;
   uc /= uc2;
   bc /= bc2; // expected-error {{invalid operands}}
 
-  sc /= uc2; // expected-error {{can't convert}}
-  uc /= bc2; // expected-error {{can't convert}}
-  bc /= sc2; // expected-error {{can't convert}}
+  sc /= uc2; // expected-error {{cannot convert}}
+  uc /= bc2; // expected-error {{cannot convert}}
+  bc /= sc2; // expected-error {{cannot convert}}
 
   ss /= ss2;
   us /= us2;
@@ -498,17 +498,17 @@ void foo(void)
   uc = uc % uc2;
   bc = bc % bc2; // expected-error {{invalid operands}}
 
-  sc = uc % sc2; // expected-error {{can't convert}}
-  sc = sc % bc2; // expected-error {{can't convert}}
-  uc = bc % uc2; // expected-error {{can't convert}}
+  sc = uc % sc2; // expected-error {{cannot convert}}
+  sc = sc % bc2; // expected-error {{cannot convert}}
+  uc = bc % uc2; // expected-error {{cannot convert}}
 
   sc %= sc2;
   uc %= uc2;
   bc %= bc2; // expected-error {{invalid operands}}
 
-  sc %= uc2; // expected-error {{can't convert}}
-  uc %= bc2; // expected-error {{can't convert}}
-  bc %= sc2; // expected-error {{can't convert}}
+  sc %= uc2; // expected-error {{cannot convert}}
+  uc %= bc2; // expected-error {{cannot convert}}
+  bc %= sc2; // expected-error {{cannot convert}}
 
   ss %= ss2;
   us %= us2;
@@ -529,14 +529,14 @@ void foo(void)
   // -------------------------------------------------------------------------
 
   sc = sc & sc2;
-  sc = sc & uc2; // expected-error {{can't convert}}
-  sc = uc & sc2; // expected-error {{can't convert}}
+  sc = sc & uc2; // expected-error {{cannot convert}}
+  sc = uc & sc2; // expected-error {{cannot convert}}
   sc = sc & bc2;
   sc = bc & sc2;
 
   uc = uc & uc2;
-  uc = sc & uc2; // expected-error {{can't convert}}
-  uc = uc & sc2; // expected-error {{can't convert}}
+  uc = sc & uc2; // expected-error {{cannot convert}}
+  uc = uc & sc2; // expected-error {{cannot convert}}
   uc = bc & uc2;
   uc = uc & bc2;
 
@@ -553,25 +553,25 @@ void foo(void)
   fd = fd & ul2; // expected-error {{invalid operands}}
 
   sc &= sc2;
-  sc &= uc2; // expected-error {{can't convert}}
+  sc &= uc2; // expected-error {{cannot convert}}
   sc &= bc2;
 
   uc &= uc2;
-  uc &= sc2; // expected-error {{can't convert}}
+  uc &= sc2; // expected-error {{cannot convert}}
   uc &= bc2;
 
   bc &= bc2;
-  bc &= sc2; // expected-error {{can't convert}}
-  bc &= uc2; // expected-error {{can't convert}}
+  bc &= sc2; // expected-error {{cannot convert}}
+  bc &= uc2; // expected-error {{cannot convert}}
 
-  sc &= ss2; // expected-error {{can't convert}}
-  sc &= si2; // expected-error {{can't convert}}
-  sc &= sl2; // expected-error {{can't convert}}
+  sc &= ss2; // expected-error {{cannot convert}}
+  sc &= si2; // expected-error {{cannot convert}}
+  sc &= sl2; // expected-error {{cannot convert}}
   sc &= fd2; // expected-error {{invalid operands}}
 
-  us &= bc2; // expected-error {{can't convert}}
-  ui &= bc2; // expected-error {{can't convert}}
-  ul &= bc2; // expected-error {{can't convert}}
+  us &= bc2; // expected-error {{cannot convert}}
+  ui &= bc2; // expected-error {{cannot convert}}
+  ul &= bc2; // expected-error {{cannot convert}}
   fd &= bc2; // expected-error {{invalid operands}}
 
   ss &= ss2;
@@ -591,11 +591,11 @@ void foo(void)
   // -------------------------------------------------------------------------
 
   sc = sc | sc2;
-  sc = sc | uc2; // expected-error {{can't convert}}
+  sc = sc | uc2; // expected-error {{cannot convert}}
   sc = sc | bc2;
 
   uc = uc | uc2;
-  uc = sc | uc2; // expected-error {{can't convert}}
+  uc = sc | uc2; // expected-error {{cannot convert}}
   uc = bc | uc2;
 
   bc = bc | bc2;
@@ -625,11 +625,11 @@ void foo(void)
   // -------------------------------------------------------------------------
 
   sc = sc ^ sc2;
-  sc = sc ^ uc2; // expected-error {{can't convert}}
+  sc = sc ^ uc2; // expected-error {{cannot convert}}
   sc = sc ^ bc2;
 
   uc = uc ^ uc2;
-  uc = sc ^ uc2; // expected-error {{can't convert}}
+  uc = sc ^ uc2; // expected-error {{cannot convert}}
   uc = bc ^ uc2;
 
   bc = bc ^ bc2;
@@ -862,10 +862,10 @@ void foo(void)
   (void)(uc == uc2);
   (void)(bc == bc2);
 
-  (void)(sc == uc); // expected-error {{can't convert}}
+  (void)(sc == uc); // expected-error {{cannot convert}}
   (void)(sc == bc);
 
-  (void)(uc == sc); // expected-error {{can't convert}}
+  (void)(uc == sc); // expected-error {{cannot convert}}
   (void)(uc == bc);
 
   (void)(bc == sc);
@@ -884,8 +884,8 @@ void foo(void)
   (void)(bl == bl2);
   (void)(fd == fd2);
 
-  (void)(fd == ul); // expected-error {{can't convert}}
-  (void)(ul == fd); // expected-error {{can't convert}}
+  (void)(fd == ul); // expected-error {{cannot convert}}
+  (void)(ul == fd); // expected-error {{cannot convert}}
 
   // -------------------------------------------------------------------------
   // Test that == rules apply to != too.
@@ -895,7 +895,7 @@ void foo(void)
   (void)(uc != uc2);
   (void)(bc != bc2);
 
-  (void)(sc != uc); // expected-error {{can't convert}}
+  (void)(sc != uc); // expected-error {{cannot convert}}
   (void)(sc != bc);
 
   (void)(ss != ss2);
@@ -919,7 +919,7 @@ void foo(void)
   (void)(uc <= uc2);
   (void)(bc <= bc2);
 
-  (void)(sc <= uc); // expected-error {{can't convert}}
+  (void)(sc <= uc); // expected-error {{cannot convert}}
   (void)(sc <= bc);
 
   (void)(ss <= ss2);
@@ -943,7 +943,7 @@ void foo(void)
   (void)(uc >= uc2);
   (void)(bc >= bc2);
 
-  (void)(sc >= uc); // expected-error {{can't convert}}
+  (void)(sc >= uc); // expected-error {{cannot convert}}
   (void)(sc >= bc);
 
   (void)(ss >= ss2);
@@ -967,7 +967,7 @@ void foo(void)
   (void)(uc < uc2);
   (void)(bc < bc2);
 
-  (void)(sc < uc); // expected-error {{can't convert}}
+  (void)(sc < uc); // expected-error {{cannot convert}}
   (void)(sc < bc);
 
   (void)(ss < ss2);
@@ -991,7 +991,7 @@ void foo(void)
   (void)(uc > uc2);
   (void)(bc > bc2);
 
-  (void)(sc > uc); // expected-error {{can't convert}}
+  (void)(sc > uc); // expected-error {{cannot convert}}
   (void)(sc > bc);
 
   (void)(ss > ss2);
