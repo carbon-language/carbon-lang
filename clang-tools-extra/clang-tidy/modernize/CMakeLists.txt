@@ -11,4 +11,5 @@ add_clang_library(clangTidyModernizeModule
   clangLex
   clangTidy
   clangTidyReadabilityModule
+  clangTidyUtils
   )
