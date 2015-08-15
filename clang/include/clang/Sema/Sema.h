@@ -5222,7 +5222,7 @@ public:
                                          SourceLocation RBrac,
                                          AttributeList *AttrList);
   void ActOnFinishCXXMemberDecls();
-  void ActOnFinishCXXMemberDefaultArgs(Decl *D);
+  void ActOnFinishCXXNonNestedClass(Decl *D);
 
   void ActOnReenterCXXMethodParameter(Scope *S, ParmVarDecl *Param);
   unsigned ActOnReenterTemplateScope(Scope *S, Decl *Template);
@@ -9022,6 +9022,10 @@ public:
       return NumArgs + 1 > NumParams; // If so, we view as an extra argument.
     return NumArgs > NumParams;
   }
+
+  // Emitting members of dllexported classes is delayed until the class
+  // (including field initializers) is fully parsed.
+  SmallVector<CXXRecordDecl*, 4> DelayedDllExportClasses;
 };
 
 /// \brief RAII object that enters a new expression evaluation context.

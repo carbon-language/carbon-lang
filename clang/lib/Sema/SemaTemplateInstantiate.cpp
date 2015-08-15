@@ -2050,7 +2050,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   // Default arguments are parsed, if not instantiated. We can go instantiate
   // default arg exprs for default constructors if necessary now.
-  ActOnFinishCXXMemberDefaultArgs(Instantiation);
+  ActOnFinishCXXNonNestedClass(Instantiation);
 
   // Instantiate late parsed attributes, and attach them to their decls.
   // See Sema::InstantiateAttrs

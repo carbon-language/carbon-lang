@@ -691,6 +691,9 @@ void Sema::ActOnEndOfTranslationUnit() {
   assert(DelayedDefaultedMemberExceptionSpecs.empty());
   assert(DelayedExceptionSpecChecks.empty());
 
+  // All dllexport classes should have been processed already.
+  assert(DelayedDllExportClasses.empty());
+
   // Remove file scoped decls that turned out to be used.
   UnusedFileScopedDecls.erase(
       std::remove_if(UnusedFileScopedDecls.begin(nullptr, true),
