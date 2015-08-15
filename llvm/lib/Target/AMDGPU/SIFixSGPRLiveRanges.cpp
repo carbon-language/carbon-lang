@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-/// \file
-/// SALU instructions ignore control flow, so we need to modify the live ranges
-/// of the registers they define in some cases.
+/// \file SALU instructions ignore the execution mask, so we need to modify the
+/// live ranges of the registers they define in some cases.
 ///
 /// The main case we need to handle is when a def is used in one side of a
 /// branch and not another.  For example:
@@ -138,7 +137,8 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
     if (MBB.succ_size() < 2)
       continue;
 
-    // We have structured control flow, so number of successors should be two.
+    // We have structured control flow, so the number of successors should be
+    // two.
     assert(MBB.succ_size() == 2);
     MachineBasicBlock *SuccA = *MBB.succ_begin();
     MachineBasicBlock *SuccB = *(++MBB.succ_begin());
@@ -161,10 +161,10 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
       unsigned Reg = RegLR.first;
       LiveRange *LR = RegLR.second;
 
-      // FIXME: We could be smarter here.  If the register is Live-In to
-      // one block, but the other doesn't have any SGPR defs, then there
-      // won't be a conflict.  Also, if the branch decision is based on
-      // a value in an SGPR, then there will be no conflict.
+      // FIXME: We could be smarter here. If the register is Live-In to one
+      // block, but the other doesn't have any SGPR defs, then there won't be a
+      // conflict. Also, if the branch condition is uniform then there will be
+      // no conflict.
       bool LiveInToA = LIS->isLiveInToMBB(*LR, SuccA);
       bool LiveInToB = LIS->isLiveInToMBB(*LR, SuccB);
 
