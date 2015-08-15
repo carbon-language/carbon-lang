@@ -156,7 +156,7 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
       NCD = PDT->findNearestCommonDominator(*NCD->succ_begin(),
                                             *(++NCD->succ_begin()));
     }
-    assert(SuccA && SuccB);
+
     for (std::pair<unsigned, LiveRange*> RegLR : SGPRLiveRanges) {
       unsigned Reg = RegLR.first;
       LiveRange *LR = RegLR.second;
