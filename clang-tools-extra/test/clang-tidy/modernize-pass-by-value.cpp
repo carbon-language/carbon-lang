@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s modernize-pass-by-value %t
+// RUN: $(dirname %s)/check_clang_tidy.sh %s modernize-pass-by-value %t -- -fno-delayed-template-parsing
 // REQUIRES: shell
 
 // CHECK-FIXES: #include <utility>
