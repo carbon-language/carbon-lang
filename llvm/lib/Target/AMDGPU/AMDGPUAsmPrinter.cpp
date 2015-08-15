@@ -125,8 +125,8 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const AMDGPUSubtarget &STM = MF.getSubtarget<AMDGPUSubtarget>();
   SIProgramInfo KernelInfo;
   if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+    getSIProgramInfo(KernelInfo, MF);
     if (!STM.isAmdHsaOS()) {
-      getSIProgramInfo(KernelInfo, MF);
       EmitProgramInfoSI(MF, KernelInfo);
     }
     // Emit directives
