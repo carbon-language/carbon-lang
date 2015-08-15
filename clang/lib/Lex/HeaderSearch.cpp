@@ -129,10 +129,10 @@ std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
                                             StringRef ModuleMapPath) {
   // If we don't have a module cache path or aren't supposed to use one, we
   // can't do anything.
-  if (ModuleCachePath.empty() || !LangOpts.ImplicitModules) 
+  if (getModuleCachePath().empty())
     return std::string();
 
-  SmallString<256> Result(ModuleCachePath);
+  SmallString<256> Result(getModuleCachePath());
   llvm::sys::fs::make_absolute(Result);
 
   if (HSOpts->DisableModuleHash) {
