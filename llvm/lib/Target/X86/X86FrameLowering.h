@@ -91,11 +91,9 @@ public:
   bool canSimplifyCallFramePseudos(const MachineFunction &MF) const override;
   bool needsFrameIndexResolution(const MachineFunction &MF) const override;
 
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
   int getFrameIndexReference(const MachineFunction &MF, int FI,
                              unsigned &FrameReg) const override;
 
-  int getFrameIndexOffsetFromSP(const MachineFunction &MF, int FI) const;
   int getFrameIndexReferenceFromSP(const MachineFunction &MF, int FI,
                                    unsigned &FrameReg) const override;
 

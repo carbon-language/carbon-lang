@@ -636,14 +636,6 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
                     -(NumRestores - 1) * 16, TII, MachineInstr::NoFlags);
 }
 
-/// getFrameIndexOffset - Returns the displacement from the frame register to
-/// the stack frame of the specified index.
-int AArch64FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
-                                              int FI) const {
-  unsigned FrameReg;
-  return getFrameIndexReference(MF, FI, FrameReg);
-}
-
 /// getFrameIndexReference - Provide a base+offset reference to an FI slot for
 /// debug info.  It's the same as what we use for resolving the code-gen
 /// references for now.  FIXME: This can go wrong when references are

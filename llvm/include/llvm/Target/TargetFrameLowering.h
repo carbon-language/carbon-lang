@@ -207,10 +207,6 @@ public:
   // has any stack objects. However, targets may want to override this.
   virtual bool needsFrameIndexResolution(const MachineFunction &MF) const;
 
-  /// getFrameIndexOffset - Returns the displacement from the frame register to
-  /// the stack frame of the specified index.
-  virtual int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
-
   /// getFrameIndexReference - This method should return the base register
   /// and offset used to reference a frame index location. The offset is
   /// returned directly, and the base register is returned via FrameReg.

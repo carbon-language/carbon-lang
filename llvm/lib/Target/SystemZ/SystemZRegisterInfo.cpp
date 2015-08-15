@@ -69,8 +69,8 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   // Decompose the frame index into a base and offset.
   int FrameIndex = MI->getOperand(FIOperandNum).getIndex();
-  unsigned BasePtr = getFrameRegister(MF);
-  int64_t Offset = (TFI->getFrameIndexOffset(MF, FrameIndex) +
+  unsigned BasePtr;
+  int64_t Offset = (TFI->getFrameIndexReference(MF, FrameIndex, BasePtr) +
                     MI->getOperand(FIOperandNum + 1).getImm());
 
   // Special handling of dbg_value instructions.

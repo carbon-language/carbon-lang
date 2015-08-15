@@ -879,12 +879,6 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
   return Offset;
 }
 
-int ARMFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
-                                          int FI) const {
-  unsigned FrameReg;
-  return getFrameIndexReference(MF, FI, FrameReg);
-}
-
 void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     const std::vector<CalleeSavedInfo> &CSI,

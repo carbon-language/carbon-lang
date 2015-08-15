@@ -905,7 +905,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       int FI;
       if (unsigned Reg = TII.isStoreToStackSlot(FrameInstr, FI)) {
         if (X86::FR64RegClass.contains(Reg)) {
-          int Offset = getFrameIndexOffset(MF, FI);
+          unsigned IgnoredFrameReg;
+          int Offset = getFrameIndexReference(MF, FI, IgnoredFrameReg);
           Offset += SEHFrameOffset;
 
           BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_SaveXMM))
@@ -955,8 +956,10 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       // it recovers the frame pointer from the base pointer rather than the
       // other way around.
       unsigned Opm = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
+      unsigned IgnoredFrameReg;
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opm)), BasePtr, true,
-                   getFrameIndexOffset(MF, X86FI->getSEHFramePtrSaveIndex()))
+                   getFrameIndexReference(MF, X86FI->getSEHFramePtrSaveIndex(),
+                                          IgnoredFrameReg))
           .addReg(FramePtr)
           .setMIFlag(MachineInstr::FrameSetup);
     }
@@ -1107,9 +1110,24 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   }
 }
 
-int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
-                                          int FI) const {
+// NOTE: this only has a subset of the full frame index logic. In
+// particular, the FI < 0 and AfterFPPop logic is handled in
+// X86RegisterInfo::eliminateFrameIndex, but not here. Possibly
+// (probably?) it should be moved into here.
+int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
+                                             unsigned &FrameReg) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+
+  // We can't calculate offset from frame pointer if the stack is realigned,
+  // so enforce usage of stack/base pointer.  The base pointer is used when we
+  // have dynamic allocas in addition to dynamic realignment.
+  if (TRI->hasBasePointer(MF))
+    FrameReg = TRI->getBaseRegister();
+  else if (TRI->needsStackRealignment(MF))
+    FrameReg = TRI->getStackRegister();
+  else
+    FrameReg = TRI->getFrameRegister(MF);
+
   // Offset will hold the offset from the stack pointer at function entry to the
   // object.
   // We need to factor in additional offsets applied during the prologue to the
@@ -1180,22 +1198,10 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
   return Offset + FPDelta;
 }
 
-int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
-                                             unsigned &FrameReg) const {
-  // We can't calculate offset from frame pointer if the stack is realigned,
-  // so enforce usage of stack/base pointer.  The base pointer is used when we
-  // have dynamic allocas in addition to dynamic realignment.
-  if (TRI->hasBasePointer(MF))
-    FrameReg = TRI->getBaseRegister();
-  else if (TRI->needsStackRealignment(MF))
-    FrameReg = TRI->getStackRegister();
-  else
-    FrameReg = TRI->getFrameRegister(MF);
-  return getFrameIndexOffset(MF, FI);
-}
-
-// Simplified from getFrameIndexOffset keeping only StackPointer cases
-int X86FrameLowering::getFrameIndexOffsetFromSP(const MachineFunction &MF, int FI) const {
+// Simplified from getFrameIndexReference keeping only StackPointer cases
+int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
+                                                   int FI,
+                                                   unsigned &FrameReg) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   // Does not include any dynamic realign.
   const uint64_t StackSize = MFI->getStackSize();
@@ -1221,6 +1227,9 @@ int X86FrameLowering::getFrameIndexOffsetFromSP(const MachineFunction &MF, int F
     assert(!(TailCallReturnAddrDelta < 0) && "we don't handle this case!");
 #endif
   }
+
+  // Fill in FrameReg output argument.
+  FrameReg = TRI->getStackRegister();
 
   // This is how the math works out:
   //
@@ -1252,15 +1261,6 @@ int X86FrameLowering::getFrameIndexOffsetFromSP(const MachineFunction &MF, int F
   int Offset = MFI->getObjectOffset(FI) - getOffsetOfLocalArea();
 
   return Offset + StackSize;
-}
-// Simplified from getFrameIndexReference keeping only StackPointer cases
-int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
-                                                   int FI,
-                                                   unsigned &FrameReg) const {
-  assert(!TRI->hasBasePointer(MF) && "we don't handle this case");
-
-  FrameReg = TRI->getStackRegister();
-  return getFrameIndexOffsetFromSP(MF, FI);
 }
 
 bool X86FrameLowering::assignCalleeSavedSpillSlots(

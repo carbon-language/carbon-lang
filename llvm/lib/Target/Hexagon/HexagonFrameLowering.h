@@ -51,7 +51,8 @@ public:
   bool targetHandlesStackFrameRounding() const override {
     return true;
   }
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
+  int getFrameIndexReference(const MachineFunction &MF, int FI,
+                             unsigned &FrameReg) const override;
   bool hasFP(const MachineFunction &MF) const override;
 
   const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries)

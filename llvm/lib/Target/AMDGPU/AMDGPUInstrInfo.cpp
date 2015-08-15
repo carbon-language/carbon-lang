@@ -307,7 +307,9 @@ int AMDGPUInstrInfo::getIndirectIndexEnd(const MachineFunction &MF) const {
     return -1;
   }
 
-  Offset = MF.getSubtarget().getFrameLowering()->getFrameIndexOffset(MF, -1);
+  unsigned IgnoredFrameReg;
+  Offset = MF.getSubtarget().getFrameLowering()->getFrameIndexReference(
+      MF, -1, IgnoredFrameReg);
 
   return getIndirectIndexBegin(MF) + Offset;
 }

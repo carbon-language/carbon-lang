@@ -50,7 +50,6 @@ public:
                              unsigned &FrameReg) const override;
   int ResolveFrameIndexReference(const MachineFunction &MF, int FI,
                                  unsigned &FrameReg, int SPAdj) const;
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
 
   void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
                             RegScavenger *RS) const override;

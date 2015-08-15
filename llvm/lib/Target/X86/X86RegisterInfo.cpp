@@ -491,6 +491,7 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned Opc = MI.getOpcode();
   bool AfterFPPop = Opc == X86::TAILJMPm64 || Opc == X86::TAILJMPm ||
                     Opc == X86::TCRETURNmi || Opc == X86::TCRETURNmi64;
+
   if (hasBasePointer(MF))
     BasePtr = (FrameIndex < 0 ? FramePtr : getBaseRegister());
   else if (needsStackRealignment(MF))
@@ -509,10 +510,12 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MachineOperand &FI = MI.getOperand(FIOperandNum);
     bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
     int Offset;
+    unsigned IgnoredFrameReg;
     if (IsWinEH)
-      Offset = TFI->getFrameIndexOffsetFromSP(MF, FrameIndex);
+      Offset =
+          TFI->getFrameIndexReferenceFromSP(MF, FrameIndex, IgnoredFrameReg);
     else
-      Offset = TFI->getFrameIndexOffset(MF, FrameIndex);
+      Offset = TFI->getFrameIndexReference(MF, FrameIndex, IgnoredFrameReg);
     FI.ChangeToImmediate(Offset);
     return;
   }
@@ -529,12 +532,13 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // Now add the frame object offset to the offset from EBP.
   int FIOffset;
+  unsigned IgnoredFrameReg;
   if (AfterFPPop) {
     // Tail call jmp happens after FP is popped.
     const MachineFrameInfo *MFI = MF.getFrameInfo();
     FIOffset = MFI->getObjectOffset(FrameIndex) - TFI->getOffsetOfLocalArea();
   } else
-    FIOffset = TFI->getFrameIndexOffset(MF, FrameIndex);
+    FIOffset = TFI->getFrameIndexReference(MF, FrameIndex, IgnoredFrameReg);
 
   if (BasePtr == StackPtr)
     FIOffset += SPAdj;

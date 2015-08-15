@@ -394,7 +394,10 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF,
 
       // Add CFI for the this save.
       unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
-      int64_t Offset = getFrameIndexOffset(MF, Save.getFrameIdx());
+      unsigned IgnoredFrameReg;
+      int64_t Offset =
+          getFrameIndexReference(MF, Save.getFrameIdx(), IgnoredFrameReg);
+
       unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
           nullptr, DwarfReg, SPOffsetFromCFA + Offset));
       CFIIndexes.push_back(CFIIndex);
@@ -455,9 +458,14 @@ bool SystemZFrameLowering::hasFP(const MachineFunction &MF) const {
           MF.getInfo<SystemZMachineFunctionInfo>()->getManipulatesSP());
 }
 
-int SystemZFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
-                                              int FI) const {
+int SystemZFrameLowering::getFrameIndexReference(const MachineFunction &MF,
+                                                 int FI,
+                                                 unsigned &FrameReg) const {
   const MachineFrameInfo *MFFrame = MF.getFrameInfo();
+  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
+
+  // Fill in FrameReg output argument.
+  FrameReg = RI->getFrameRegister(MF);
 
   // Start with the offset of FI from the top of the caller-allocated frame
   // (i.e. the top of the 160 bytes allocated by the caller).  This initial
