@@ -358,3 +358,27 @@ define <4 x double> @reassociate_muls_v4f64(<4 x double> %x0, <4 x double> %x1, 
   ret <4 x double> %t2
 }
 
+; TODO: Verify that SSE and AVX scalar single-precision minimum ops are reassociated.
+
+define float @reassociate_mins_single(float %x0, float %x1, float %x2, float %x3) {
+; SSE-LABEL: reassociate_mins_single:
+; SSE:       # BB#0:
+; SSE-NEXT:    divss %xmm1, %xmm0
+; SSE-NEXT:    minss %xmm2, %xmm0
+; SSE-NEXT:    minss %xmm3, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_mins_single:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vminss %xmm0, %xmm2, %xmm0
+; AVX-NEXT:    vminss %xmm0, %xmm3, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fdiv float %x0, %x1
+  %cmp1 = fcmp olt float %x2, %t0
+  %sel1 = select i1 %cmp1, float %x2, float %t0
+  %cmp2 = fcmp olt float %x3, %sel1
+  %sel2 = select i1 %cmp2, float %x3, float %sel1
+  ret float %sel2
+}
+
