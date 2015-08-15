@@ -44,7 +44,7 @@
 
 #define DR_SIZE sizeof(((DBG*)NULL)->dr[0])
 
-// RegisterKind: GCC, DWARF, Generic, GDB, LLDB
+// RegisterKind: EHFrame, DWARF, Generic, Stabs, LLDB
 
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)    \
@@ -100,7 +100,7 @@
 static RegisterInfo
 g_register_infos_x86_64[] =
 {
-    // General purpose registers.                GCC,                   DWARF,                Generic,                  GDB
+    // General purpose registers.           EH_Frame,                   DWARF,                Generic,                Stabs
     DEFINE_GPR(rax,    NULL,    gcc_dwarf_rax_x86_64,    gcc_dwarf_rax_x86_64,    LLDB_INVALID_REGNUM,       gdb_rax_x86_64),
     DEFINE_GPR(rbx,    NULL,    gcc_dwarf_rbx_x86_64,    gcc_dwarf_rbx_x86_64,    LLDB_INVALID_REGNUM,       gdb_rbx_x86_64),
     DEFINE_GPR(rcx,    "arg4",  gcc_dwarf_rcx_x86_64,    gcc_dwarf_rcx_x86_64,    LLDB_REGNUM_GENERIC_ARG4,  gdb_rcx_x86_64),
@@ -179,7 +179,7 @@ g_register_infos_x86_64[] =
     DEFINE_GPR_PSEUDO_8L(r14l, r14),
     DEFINE_GPR_PSEUDO_8L(r15l, r15),
 
-    // i387 Floating point registers.     GCC,                                   DWARF,               Generic,            GDB
+    // i387 Floating point registers. EH_frame,                                  DWARF,               Generic,          Stabs
     DEFINE_FPR(fctrl,     fctrl,          gcc_dwarf_fctrl_x86_64, gcc_dwarf_fctrl_x86_64, LLDB_INVALID_REGNUM, gdb_fctrl_x86_64),
     DEFINE_FPR(fstat,     fstat,          gcc_dwarf_fstat_x86_64, gcc_dwarf_fstat_x86_64, LLDB_INVALID_REGNUM, gdb_fstat_x86_64),
     DEFINE_FPR(ftag,      ftag,           LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_ftag_x86_64),

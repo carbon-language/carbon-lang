@@ -188,11 +188,11 @@ namespace lldb {
     //----------------------------------------------------------------------
     enum RegisterKind
     {
-        eRegisterKindGCC = 0,    // the register numbers seen in eh_frame
-        eRegisterKindDWARF,      // the register numbers seen DWARF
-        eRegisterKindGeneric,    // insn ptr reg, stack ptr reg, etc not specific to any particular target
-        eRegisterKindGDB,        // the register numbers gdb uses (matches stabs numbers)
-        eRegisterKindLLDB,       // lldb's internal register numbers
+        eRegisterKindEHFrame = 0, // the register numbers seen in eh_frame
+        eRegisterKindDWARF,       // the register numbers seen DWARF
+        eRegisterKindGeneric,     // insn ptr reg, stack ptr reg, etc not specific to any particular target
+        eRegisterKindStabs,       // the register numbers used in stabs debug format (referred to as "gcc" or "gdb" numbering)
+        eRegisterKindLLDB,        // lldb's internal register numbers
         kNumRegisterKinds
     };
 

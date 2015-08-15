@@ -14,7 +14,7 @@
 // i386 gcc, dwarf, gdb enums
 //---------------------------------------------------------------------------
 
-// Register numbers seen in eh_frame (eRegisterKindGCC)
+// Register numbers seen in eh_frame (eRegisterKindEHFrame)
 //
 // From Jason Molenda: "gcc registers" is the register numbering used in the eh_frame
 // CFI.  The only registers that are described in eh_frame CFI are those that are
@@ -130,9 +130,8 @@ enum
     //  then differentiate based on size of the register.
 };
 
-// Register numbers GDB uses (eRegisterKindGDB)
+// Register numbers Stabs uses (eRegisterKindStabs)
 //
-// From Jason Molenda: The "gdb numbers" are what you would see in the stabs debug format.
 enum
 {
     gdb_eax_i386,
@@ -198,7 +197,7 @@ enum
 // AMD x86_64, AMD64, Intel EM64T, or Intel 64 gcc, dwarf, gdb enums
 //---------------------------------------------------------------------------
 
-// GCC and DWARF Register numbers (eRegisterKindGCC & eRegisterKindDWARF)
+// EHFrame and DWARF Register numbers (eRegisterKindEHFrame & eRegisterKindDWARF)
 //  This is the spec I used (as opposed to x86-64-abi-0.99.pdf):
 //  http://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf
 enum
@@ -299,7 +298,7 @@ enum
     // gcc_dwarf_k7_x86_64,
 };
 
-// GDB Register numbers (eRegisterKindGDB)
+// Stabs Register numbers (eRegisterKindStabs)
 enum
 {
     // GP Registers

@@ -1,4 +1,4 @@
-//===-- ARM_GCC_Registers.h -------------------------------------*- C++ -*-===//
+//===-- ARM_Stabs_Registers.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef utility_ARM_GCC_Registers_h_
-#define utility_ARM_GCC_Registers_h_
+#ifndef utility_ARM_Stabs_Registers_h_
+#define utility_ARM_Stabs_Registers_h_
+
+// The register numbers used in the stabs debug format (sometimes called "gdb" numbers in lldb sources).
+// lldb can't read stabs and I don't think anyone serious is still generating it;
+// we should remove all of this from our register structures some day.
 
 enum
 {
@@ -141,5 +145,5 @@ enum
     gdb_arm_q14         = 104, // 30    788      16 _vec128
     gdb_arm_q15         = 105  // 31    804      16 _vec128
 };
-#endif // utility_ARM_GCC_Registers_h_
+#endif // utility_ARM_Stabs_Registers_h_
 

@@ -52,7 +52,7 @@
     { #name, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint,   \
       eFormatHex, { kind1, kind2, kind3, kind4, lldb_##name##_i386 }, NULL, NULL }
 
-// RegisterKind: GCC, DWARF, Generic, GDB, LLDB
+// RegisterKind: EHFrame, DWARF, Generic, Stabs, LLDB
 
 #define DEFINE_FP_ST(reg, i)                                       \
     { #reg#i, NULL, FP_SIZE, LLVM_EXTENSION FPR_OFFSET(stmm[i]),    \

@@ -10,7 +10,7 @@
 #ifndef liblldb_RegisterContext_powerpc_H_
 #define liblldb_RegisterContext_powerpc_H_
 
-// GCC and DWARF Register numbers (eRegisterKindGCC & eRegisterKindDWARF)
+// eh_frame and DWARF Register numbers (eRegisterKindEHFrame & eRegisterKindDWARF)
 enum
 {
     gcc_dwarf_r0_powerpc = 0,
@@ -120,7 +120,7 @@ enum
     gcc_dwarf_v31_powerpc,
 };
 
-// GDB Register numbers (eRegisterKindGDB)
+// Stabs Register numbers (eRegisterKindStabs)
 enum
 {
     gdb_r0_powerpc = 0,

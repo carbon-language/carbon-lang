@@ -722,7 +722,7 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
     unwind_plan.SetSourceName ("compact unwind info");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolYes);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
-    unwind_plan.SetRegisterKind (eRegisterKindGCC);
+    unwind_plan.SetRegisterKind (eRegisterKindEHFrame);
 
     unwind_plan.SetLSDAAddress (function_info.lsda_address);
     unwind_plan.SetPersonalityFunctionPtr (function_info.personality_ptr_address);
@@ -1006,7 +1006,7 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
     unwind_plan.SetSourceName ("compact unwind info");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolYes);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolNo);
-    unwind_plan.SetRegisterKind (eRegisterKindGCC);
+    unwind_plan.SetRegisterKind (eRegisterKindEHFrame);
 
     unwind_plan.SetLSDAAddress (function_info.lsda_address);
     unwind_plan.SetPersonalityFunctionPtr (function_info.personality_ptr_address);

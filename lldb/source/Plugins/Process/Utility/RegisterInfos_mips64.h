@@ -20,7 +20,7 @@
 #define FPR_OFFSET(regname) \
      LLVM_EXTENSION offsetof(FPR_mips, regname) \
 
-// RegisterKind: GCC, DWARF, Generic, GDB, LLDB
+// RegisterKind: EHFrame, DWARF, Generic, Stabs, LLDB
 
 // Note that the size and offset will be updated by platform-specific classes.
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)    \
@@ -34,7 +34,7 @@
 static RegisterInfo
 g_register_infos_mips64[] =
 {
-    // General purpose registers.                 GCC,                  DWARF,              Generic,                GDB
+    // General purpose registers.            EH_Frame,                  DWARF,              Generic,                Stabs
     DEFINE_GPR(zero,     "r0",  gcc_dwarf_zero_mips64,  gcc_dwarf_zero_mips64,  LLDB_INVALID_REGNUM,    gdb_zero_mips64),
     DEFINE_GPR(r1,       NULL,  gcc_dwarf_r1_mips64,    gcc_dwarf_r1_mips64,    LLDB_INVALID_REGNUM,    gdb_r1_mips64),
     DEFINE_GPR(r2,       NULL,  gcc_dwarf_r2_mips64,    gcc_dwarf_r2_mips64,    LLDB_INVALID_REGNUM,    gdb_r2_mips64),

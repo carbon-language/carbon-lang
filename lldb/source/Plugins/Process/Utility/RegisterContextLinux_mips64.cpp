@@ -12,7 +12,7 @@
 #include <vector>
 #include <stddef.h>
 
-// For GDB, GCC and DWARF Register numbers
+// For eh_frame, stabs and DWARF Register numbers
 #include "RegisterContextLinux_mips64.h"
 
 // Internal codes for all mips64 registers

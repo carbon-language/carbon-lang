@@ -56,7 +56,7 @@ UnwindTable::Initialize ()
         SectionSP sect = sl->FindSectionByType (eSectionTypeEHFrame, true);
         if (sect.get())
         {
-            m_eh_frame = new DWARFCallFrameInfo(m_object_file, sect, eRegisterKindGCC, true);
+            m_eh_frame = new DWARFCallFrameInfo(m_object_file, sect, eRegisterKindEHFrame, true);
         }
         sect = sl->FindSectionByType (eSectionTypeCompactUnwind, true);
         if (sect.get())

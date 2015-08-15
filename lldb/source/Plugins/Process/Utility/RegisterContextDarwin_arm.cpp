@@ -34,7 +34,7 @@
 #endif
 
 // Project includes
-#include "ARM_GCC_Registers.h"
+#include "ARM_Stabs_Registers.h"
 #include "ARM_DWARF_Registers.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -202,7 +202,7 @@ RegisterContextDarwin_arm::~RegisterContextDarwin_arm()
 
 static RegisterInfo g_register_infos[] = {
 // General purpose registers
-//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          COMPILER                DWARF               GENERIC                     GDB                     LLDB NATIVE   VALUE REGS    INVALIDATE REGS
+//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          EH_FRAME                DWARF               GENERIC                     STABS                   LLDB NATIVE   VALUE REGS    INVALIDATE REGS
 //  ======      ======= ==  =============       =============   ============    ===============         ===============     =========================   =====================   ============= ==========    ===============
 {   "r0",       NULL,   4,  GPR_OFFSET(0),      eEncodingUint,  eFormatHex,     { gcc_r0,               dwarf_r0,           LLDB_INVALID_REGNUM,        gdb_arm_r0,             gpr_r0      },      NULL,              NULL},
 {   "r1",       NULL,   4,  GPR_OFFSET(1),      eEncodingUint,  eFormatHex,     { gcc_r1,               dwarf_r1,           LLDB_INVALID_REGNUM,        gdb_arm_r1,             gpr_r1      },      NULL,              NULL},
@@ -940,7 +940,7 @@ RegisterContextDarwin_arm::ConvertRegisterKindToRegisterNumber (lldb::RegisterKi
             break;
         }
     }
-    else if (kind == eRegisterKindGCC)
+    else if (kind == eRegisterKindEHFrame)
     {
         switch (reg)
         {

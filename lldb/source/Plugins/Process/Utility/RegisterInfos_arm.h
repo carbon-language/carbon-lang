@@ -15,7 +15,7 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "Utility/ARM_GCC_Registers.h"
+#include "Utility/ARM_Stabs_Registers.h"
 #include "Utility/ARM_DWARF_Registers.h"
 
 using namespace lldb;
@@ -173,7 +173,7 @@ enum
 
 static RegisterInfo g_register_infos_arm[] = {
 // General purpose registers
-//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          COMPILER                DWARF               GENERIC                     GDB                     LLDB NATIVE   VALUE REGS    INVALIDATE REGS
+//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          EH_FRAME                DWARF               GENERIC                     STABS                   LLDB NATIVE   VALUE REGS    INVALIDATE REGS
 //  ======      ======= ==  =============       =============   ============    ===============         ===============     =========================   =====================   ============= ==========    ===============
 {   "r0",       NULL,   4,  GPR_OFFSET(0),      eEncodingUint,  eFormatHex,     { gcc_r0,               dwarf_r0,           LLDB_REGNUM_GENERIC_ARG1,   gdb_arm_r0,             gpr_r0      },      NULL,              NULL},
 {   "r1",       NULL,   4,  GPR_OFFSET(1),      eEncodingUint,  eFormatHex,     { gcc_r1,               dwarf_r1,           LLDB_REGNUM_GENERIC_ARG2,   gdb_arm_r1,             gpr_r1      },      NULL,              NULL},

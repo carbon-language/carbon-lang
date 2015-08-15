@@ -84,7 +84,7 @@ ABI::GetRegisterInfoByName (const ConstString &name, RegisterInfo &info)
 bool
 ABI::GetRegisterInfoByKind (RegisterKind reg_kind, uint32_t reg_num, RegisterInfo &info)
 {
-    if (reg_kind < eRegisterKindGCC || reg_kind >= kNumRegisterKinds)
+    if (reg_kind < eRegisterKindEHFrame || reg_kind >= kNumRegisterKinds)
         return false;
         
     uint32_t count = 0;

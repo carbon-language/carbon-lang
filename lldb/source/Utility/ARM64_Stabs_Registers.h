@@ -7,8 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef utility_ARM64_gdb_Registers_h_
-#define utility_ARM64_gdb_Registers_h_
+#ifndef utility_ARM64_Stabs_Registers_h_
+#define utility_ARM64_Stabs_Registers_h_
+
+// The register numbers used in the stabs debug format (sometimes called "gdb" numbers in lldb sources).
+// lldb can't read stabs and I don't think anyone serious is still generating it;
+// we should remove all of this from our register structures some day.
 
 namespace arm64_gcc {
     
@@ -88,5 +92,5 @@ enum
 
 }
 
-#endif // utility_ARM64_gdb_Registers_h_
+#endif // utility_ARM64_Stabs_Registers_h_
 

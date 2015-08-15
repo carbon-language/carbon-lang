@@ -10,7 +10,7 @@
 #ifndef liblldb_RegisterContext_mips64_H_
 #define liblldb_RegisterContext_mips64_H_
 
-// GCC and DWARF Register numbers (eRegisterKindGCC & eRegisterKindDWARF)
+// eh_frame and DWARF Register numbers (eRegisterKindEHFrame & eRegisterKindDWARF)
 enum
 {
     // GP Registers

@@ -36,7 +36,7 @@
 #endif
 
 // Project includes
-#include "ARM64_GCC_Registers.h"
+#include "ARM64_Stabs_Registers.h"
 #include "ARM64_DWARF_Registers.h"
 
 using namespace lldb;
@@ -770,7 +770,7 @@ RegisterContextDarwin_arm64::ConvertRegisterKindToRegisterNumber (RegisterKind k
             break;
         }
     }
-    else if (kind == eRegisterKindGCC)
+    else if (kind == eRegisterKindEHFrame)
     {
         switch (reg)
         {

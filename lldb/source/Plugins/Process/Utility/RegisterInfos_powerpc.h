@@ -32,7 +32,7 @@
     { #reg, NULL, 16, VMX_OFFSET(reg), eEncodingVector, \
       eFormatVectorOfUInt32, { gcc_dwarf_##reg##_powerpc, gcc_dwarf_##reg##_powerpc, lldb_kind, gdb_##reg##_powerpc, vmx_##reg##_powerpc }, NULL, NULL }
 
-    // General purpose registers.                 GCC,                  DWARF,              Generic,                GDB
+    // General purpose registers.            EH_Frame,                  DWARF,              Generic,                Stabs
 #define POWERPC_REGS \
     DEFINE_GPR(r0,       NULL,  LLDB_INVALID_REGNUM), \
     DEFINE_GPR(r1,       "sp",  LLDB_REGNUM_GENERIC_SP), \

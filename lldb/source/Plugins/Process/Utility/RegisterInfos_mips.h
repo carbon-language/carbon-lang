@@ -33,7 +33,7 @@
     { #reg, alt, sizeof(((FPR_mips*)NULL)->member), FPR_OFFSET(member), eEncodingUint,   \
       eFormatHex, { kind1, kind2, kind3, kind4, fpr_##reg##_mips }, NULL, NULL }
 
-// RegisterKind: GCC, DWARF, Generic, GDB, LLDB
+// RegisterKind: EH_Frame, DWARF, Generic, Stabs, LLDB
 
 static RegisterInfo
 g_register_infos_mips[] =

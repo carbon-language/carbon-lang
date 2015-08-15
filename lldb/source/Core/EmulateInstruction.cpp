@@ -635,17 +635,17 @@ EmulateInstruction::GetBestRegisterKindAndNumber (const RegisterInfo *reg_info,
         return true;
     }
 
-    reg_num = reg_info->kinds[eRegisterKindGCC];
+    reg_num = reg_info->kinds[eRegisterKindEHFrame];
     if (reg_num != LLDB_INVALID_REGNUM)
     {
-        reg_kind = eRegisterKindGCC;
+        reg_kind = eRegisterKindEHFrame;
         return true;
     }
 
-    reg_num = reg_info->kinds[eRegisterKindGDB];
+    reg_num = reg_info->kinds[eRegisterKindStabs];
     if (reg_num != LLDB_INVALID_REGNUM)
     {
-        reg_kind = eRegisterKindGDB;
+        reg_kind = eRegisterKindStabs;
         return true;
     }
     return false;

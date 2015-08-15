@@ -15,7 +15,7 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-enumerations.h"
 
-#include "Utility/ARM64_GCC_Registers.h"
+#include "Utility/ARM64_Stabs_Registers.h"
 #include "Utility/ARM64_DWARF_Registers.h"
 
 #ifndef GPR_OFFSET
@@ -196,7 +196,7 @@ enum
 
 static lldb_private::RegisterInfo g_register_infos_arm64[] = {
 // General purpose registers
-//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          COMPILER                DWARF               GENERIC                     GDB                     LLDB NATIVE   VALUE REGS    INVALIDATE REGS
+//  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          EH_FRAME                DWARF               GENERIC                     STABS                   LLDB NATIVE   VALUE REGS    INVALIDATE REGS
 //  ======      ======= ==  =============       =============   ============    ===============         ===============     =========================   =====================   ============= ==========    ===============
 {   "x0",       NULL,   8,  GPR_OFFSET(0),      lldb::eEncodingUint,  lldb::eFormatHex,     { arm64_gcc::x0,               arm64_dwarf::x0,           LLDB_REGNUM_GENERIC_ARG1,   arm64_gcc::x0,             gpr_x0      },      NULL,              NULL},
 {   "x1",       NULL,   8,  GPR_OFFSET(1),      lldb::eEncodingUint,  lldb::eFormatHex,     { arm64_gcc::x1,               arm64_dwarf::x1,           LLDB_REGNUM_GENERIC_ARG2,   arm64_gcc::x1,             gpr_x1      },      NULL,              NULL},

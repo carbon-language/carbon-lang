@@ -255,7 +255,7 @@ RegisterContextDarwin_x86_64::~RegisterContextDarwin_x86_64()
 // General purpose registers for 64 bit
 static RegisterInfo g_register_infos[] =
 {
-//  Macro auto defines most stuff   GCC                    DWARF                GENERIC                    GDB                  LLDB                VALUE REGS    INVALIDATE REGS
+//  Macro auto defines most stuff   EH_FRAME               DWARF                GENERIC                    STABS                LLDB                VALUE REGS    INVALIDATE REGS
 //  =============================== ====================== ===================  ========================== ==================== =================== ==========    ===============
     { DEFINE_GPR (rax   , NULL)     , { gcc_dwarf_gpr_rax  , gcc_dwarf_gpr_rax  , LLDB_INVALID_REGNUM      , gdb_gpr_rax        , gpr_rax       },       NULL,              NULL},
     { DEFINE_GPR (rbx   , NULL)     , { gcc_dwarf_gpr_rbx  , gcc_dwarf_gpr_rbx  , LLDB_INVALID_REGNUM      , gdb_gpr_rbx        , gpr_rbx       },       NULL,              NULL},
@@ -919,7 +919,7 @@ RegisterContextDarwin_x86_64::ConvertRegisterKindToRegisterNumber (lldb::Registe
             break;
         }
     }
-    else if (kind == eRegisterKindGCC || kind == eRegisterKindDWARF)
+    else if (kind == eRegisterKindEHFrame || kind == eRegisterKindDWARF)
     {
         switch (reg)
         {
@@ -968,7 +968,7 @@ RegisterContextDarwin_x86_64::ConvertRegisterKindToRegisterNumber (lldb::Registe
             break;
         }
     }
-    else if (kind == eRegisterKindGDB)
+    else if (kind == eRegisterKindStabs)
     {
         switch (reg)
         {

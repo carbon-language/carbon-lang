@@ -121,7 +121,7 @@ enum gdb_regnums
 static const RegisterInfo
 g_register_infos[] =
 {
-   //  NAME      ALT    SZ OFF ENCODING        FORMAT        COMPILER                DWARF                 GENERIC                   GDB           LLDB NATIVE       VALUE REGS  INVALIDATE REGS
+   //  NAME      ALT    SZ OFF ENCODING        FORMAT        EH_FRAME                DWARF                 GENERIC                   STABS         LLDB NATIVE       VALUE REGS  INVALIDATE REGS
   //  ========  ======  == === =============  =================== ============ ===================== ==================== =================     ====================== ========== ===============
     { "r0"    , "zero", 4,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r0,      gcc_dwarf_r0,           LLDB_INVALID_REGNUM,        gdb_r0,     LLDB_INVALID_REGNUM },  NULL,      NULL},
     { "r1"    , "AT",   4,  0, eEncodingUint, eFormatHex,  { gcc_dwarf_r1,      gcc_dwarf_r1,           LLDB_INVALID_REGNUM,        gdb_r1,     LLDB_INVALID_REGNUM },  NULL,      NULL},

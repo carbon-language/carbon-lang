@@ -42,7 +42,7 @@ static const char *pluginShort = "abi.macosx-arm64";
 
 static RegisterInfo g_register_infos[] = 
 {
-    //  NAME       ALT       SZ OFF ENCODING          FORMAT                   COMPILER             DWARF                  GENERIC                     GDB                     LLDB NATIVE
+    //  NAME       ALT       SZ OFF ENCODING          FORMAT                   EH_FRAME             DWARF                  GENERIC                     STABS                   LLDB NATIVE
     //  ========== =======   == === =============     ===================      ===================  ====================== =========================== ======================= ======================
     {   "x0",      NULL,      8, 0, eEncodingUint   , eFormatHex           , { LLDB_INVALID_REGNUM, arm64_dwarf::x0,       LLDB_REGNUM_GENERIC_ARG1,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }, NULL, NULL },
     {   "x1",      NULL,      8, 0, eEncodingUint   , eFormatHex           , { LLDB_INVALID_REGNUM, arm64_dwarf::x1,       LLDB_REGNUM_GENERIC_ARG2,   LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM }, NULL, NULL },

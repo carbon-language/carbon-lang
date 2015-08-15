@@ -25,7 +25,7 @@
 #include "ProcessGDBRemote.h"
 #include "ProcessGDBRemoteLog.h"
 #include "ThreadGDBRemote.h"
-#include "Utility/ARM_GCC_Registers.h"
+#include "Utility/ARM_Stabs_Registers.h"
 #include "Utility/ARM_DWARF_Registers.h"
 
 using namespace lldb;
@@ -938,7 +938,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch)
     };
 
     static RegisterInfo g_register_infos[] = {
-//   NAME    ALT    SZ  OFF  ENCODING          FORMAT          COMPILER             DWARF                GENERIC                 GDB    LLDB      VALUE REGS    INVALIDATE REGS
+//   NAME    ALT    SZ  OFF  ENCODING          FORMAT          EH_FRAME             DWARF                GENERIC                 STABS  LLDB      VALUE REGS    INVALIDATE REGS
 //   ======  ====== === ===  =============     ============    ===================  ===================  ======================  ===    ====      ==========    ===============
     { "r0", "arg1",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r0,              dwarf_r0,            LLDB_REGNUM_GENERIC_ARG1,0,      0 },        NULL,              NULL},
     { "r1", "arg2",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r1,              dwarf_r1,            LLDB_REGNUM_GENERIC_ARG2,1,      1 },        NULL,              NULL},

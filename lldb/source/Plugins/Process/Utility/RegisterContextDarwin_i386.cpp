@@ -231,7 +231,7 @@ RegisterContextDarwin_i386::~RegisterContextDarwin_i386()
 
 static RegisterInfo g_register_infos[] =
 {
-//  Macro auto defines most stuff   GCC                     DWARF                 GENERIC                    GDB                  LLDB              VALUE REGS    INVALIDATE REGS
+//  Macro auto defines most stuff   eh_frame                DWARF                 GENERIC                    stabs                LLDB              VALUE REGS    INVALIDATE REGS
 //  =============================== ======================= ===================   =========================  ==================   ================= ==========    ===============
     { DEFINE_GPR(eax    , NULL)     , { gcc_eax             , dwarf_eax          , LLDB_INVALID_REGNUM       , gdb_eax            , gpr_eax      },      NULL,              NULL},
     { DEFINE_GPR(ebx    , NULL)     , { gcc_ebx             , dwarf_ebx          , LLDB_INVALID_REGNUM       , gdb_ebx            , gpr_ebx      },      NULL,              NULL},
@@ -859,7 +859,7 @@ RegisterContextDarwin_i386::ConvertRegisterKindToRegisterNumber (lldb::RegisterK
             break;
         }
     }
-    else if (kind == eRegisterKindGCC || kind == eRegisterKindDWARF)
+    else if (kind == eRegisterKindEHFrame || kind == eRegisterKindDWARF)
     {
         switch (reg)
         {
@@ -893,7 +893,7 @@ RegisterContextDarwin_i386::ConvertRegisterKindToRegisterNumber (lldb::RegisterK
             break;
         }
     }
-    else if (kind == eRegisterKindGDB)
+    else if (kind == eRegisterKindStabs)
     {
         switch (reg)
         {
