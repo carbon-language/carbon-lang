@@ -81,6 +81,10 @@ public:
     AU.addRequired<LiveIntervals>();
     AU.addRequired<MachinePostDominatorTree>();
     AU.setPreservesCFG();
+
+    //AU.addPreserved<SlotIndexes>(); // XXX - This might be OK
+    AU.addPreserved<LiveIntervals>();
+
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };
@@ -181,10 +185,15 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
 
       // FIXME: Need to figure out how to update LiveRange here so this pass
       // will be able to preserve LiveInterval analysis.
-      BuildMI(*NCD, NCD->getFirstNonPHI(), DebugLoc(),
-              TII->get(AMDGPU::SGPR_USE))
-              .addReg(Reg, RegState::Implicit);
-      DEBUG(NCD->getFirstNonPHI()->dump());
+      MachineInstr *NCDSGPRUse =
+        BuildMI(*NCD, NCD->getFirstNonPHI(), DebugLoc(),
+                TII->get(AMDGPU::SGPR_USE))
+        .addReg(Reg, RegState::Implicit);
+
+      SlotIndex SI = LIS->InsertMachineInstrInMaps(NCDSGPRUse);
+      LIS->extendToIndices(*LR, SI.getRegSlot());
+
+      DEBUG(NCDSGPRUse->dump());
     }
   }
 
