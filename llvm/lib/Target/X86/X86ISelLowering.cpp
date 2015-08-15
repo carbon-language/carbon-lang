@@ -4981,7 +4981,7 @@ LowerAsSplatVectorLoad(SDValue SrcOp, MVT VT, SDLoc dl, SelectionDAG &DAG) {
       return SDValue();
     if ((Offset % RequiredAlign) & 3)
       return SDValue();
-    int64_t StartOffset = Offset & ~(RequiredAlign-1);
+    int64_t StartOffset = Offset & ~int64_t(RequiredAlign - 1);
     if (StartOffset) {
       SDLoc DL(Ptr);
       Ptr = DAG.getNode(ISD::ADD, DL, Ptr.getValueType(), Ptr,
