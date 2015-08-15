@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// The isl code generator interface takes a Scop and generates a isl_ast. This
+// The isl code generator interface takes a Scop and generates an isl_ast. This
 // ist_ast can either be returned directly or it can be pretty printed to
 // stdout.
 //
@@ -16,6 +16,14 @@
 // for (c2 = max(0, ceild(n + m, 2); c2 <= min(511, floord(5 * n, 3)); c2++) {
 //   bb2(c2);
 // }
+//
+// An in-depth discussion of our AST generation approach can be found in:
+//
+// Polyhedral AST generation is more than scanning polyhedra
+// Tobias Grosser, Sven Verdoolaege, Albert Cohen
+// ACM Transations on Programming Languages and Systems (TOPLAS),
+// 37(4), July 2015
+// http://www.grosser.es/#pub-polyhedral-AST-generation
 //
 //===----------------------------------------------------------------------===//
 
