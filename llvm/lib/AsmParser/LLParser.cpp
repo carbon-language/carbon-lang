@@ -5027,13 +5027,24 @@ bool LLParser::ParseCleanupRet(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseCatchRet
-///   ::= 'catchret' TypeAndValue
+///   ::= 'catchret' ('void' | TypeAndValue) 'to' TypeAndValue
 bool LLParser::ParseCatchRet(Instruction *&Inst, PerFunctionState &PFS) {
-  BasicBlock *BB;
-  if (ParseTypeAndBasicBlock(BB, PFS))
+  Type *RetTy = nullptr;
+  Value *RetVal = nullptr;
+
+  if (ParseType(RetTy, /*AllowVoid=*/true))
+    return true;
+
+  if (!RetTy->isVoidTy())
+    if (ParseValue(RetTy, RetVal, PFS))
       return true;
 
-  Inst = CatchReturnInst::Create(BB);
+  BasicBlock *BB;
+  if (ParseToken(lltok::kw_to, "expected 'to' in catchret") ||
+      ParseTypeAndBasicBlock(BB, PFS))
+      return true;
+
+  Inst = CatchReturnInst::Create(BB, RetVal);
   return false;
 }
 

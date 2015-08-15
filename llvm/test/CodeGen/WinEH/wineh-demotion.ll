@@ -43,7 +43,7 @@ catch:
   ; CHECK: [[Reload:%[^ ]+]] = load i32, i32* [[Slot]]
   ; CHECK-NEXT: call void @h(i32 [[Reload]])
   call void @h(i32 %phi)
-  catchret label %exit
+  catchret void to label %exit
 
 catchend:
   catchendpad unwind to caller
@@ -89,7 +89,7 @@ catch.inner:
           to label %catchret.inner unwind label %merge.outer
 
 catchret.inner:
-  catchret label %exit
+  catchret void to label %exit
 catchend.inner:
   catchendpad unwind label %merge.outer
 
@@ -109,10 +109,10 @@ catch.outer:
   ; CHECK: catch.outer:
   ; CHECK-DAG: load i32, i32* [[Slot1]]
   ; CHECK-DAG: load i32, i32* [[Slot2]]
-  ; CHECK: catchret label
+  ; CHECK: catchret void to label
   call void @h(i32 %x)
   call void @h(i32 %y)
-  catchret label %exit
+  catchret void to label %exit
 
 exit:
   ret void
@@ -152,7 +152,7 @@ merge:
   ; CHECK:   %phi = phi i32 [ [[ReloadX]], %left ]
   %phi = phi i32 [ %x, %left ], [ 42, %right ]
   call void @h(i32 %phi)
-  catchret label %exit
+  catchret void to label %exit
 
 catchend:
   catchendpad unwind to caller
@@ -192,7 +192,7 @@ catchpad.inner:
    %phi.inner = phi i32 [ %l, %left ], [ %r, %right ]
    catchpad void [] to label %catch.inner unwind label %catchend.inner
 catch.inner:
-   catchret label %join
+   catchret void to label %join
 catchend.inner:
    catchendpad unwind label  %catchpad.outer
 join:
@@ -213,7 +213,7 @@ catch.outer:
    ; CHECK:   [[Reload:%[^ ]+]] = load i32, i32* [[Slot]]
    ; CHECK:   call void @h(i32 [[Reload]])
    call void @h(i32 %phi.outer)
-   catchret label %exit
+   catchret void to label %exit
 catchend.outer:
    catchendpad unwind to caller
 exit:
@@ -286,7 +286,7 @@ catch:
   ; CHECK:   [[CatchReload:%[^ ]+]] = load i32, i32* [[CatchSlot]]
   ; CHECK:   call void @h(i32 [[CatchReload]]
   call void @h(i32 %phi.catch)
-  catchret label %exit
+  catchret void to label %exit
 
 catchend:
   catchendpad unwind to caller

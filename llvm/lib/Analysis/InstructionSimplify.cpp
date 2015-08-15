@@ -123,9 +123,9 @@ static bool ValueDominatesPHI(Value *V, PHINode *P, const DominatorTree *DT) {
   }
 
   // Otherwise, if the instruction is in the entry block, and is not an invoke,
-  // then it obviously dominates all phi nodes.
+  // and is not a catchpad, then it obviously dominates all phi nodes.
   if (I->getParent() == &I->getParent()->getParent()->getEntryBlock() &&
-      !isa<InvokeInst>(I))
+      !isa<InvokeInst>(I) && !isa<CatchPadInst>(I))
     return true;
 
   return false;

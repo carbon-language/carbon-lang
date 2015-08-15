@@ -1867,6 +1867,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Code = bitc::FUNC_CODE_INST_CATCHRET;
     const auto &CRI = cast<CatchReturnInst>(I);
     Vals.push_back(VE.getValueID(CRI.getSuccessor()));
+    if (CRI.hasReturnValue())
+      PushValueAndType(CRI.getReturnValue(), InstID, Vals, VE);
     break;
   }
   case Instruction::CatchPad: {

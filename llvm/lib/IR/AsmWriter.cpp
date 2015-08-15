@@ -2900,6 +2900,16 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << "]";
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
+  } else if (const auto *CRI = dyn_cast<CatchReturnInst>(&I)) {
+    if (CRI->hasReturnValue()) {
+      Out << ' ';
+      writeOperand(CRI->getReturnValue(), /*PrintType=*/true);
+    } else {
+      Out << " void";
+    }
+
+    Out << " to ";
+    writeOperand(CRI->getSuccessor(), /*PrintType=*/true);
   } else if (const auto *CRI = dyn_cast<CleanupReturnInst>(&I)) {
     if (CRI->hasReturnValue()) {
       Out << ' ';

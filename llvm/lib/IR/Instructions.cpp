@@ -797,27 +797,38 @@ void CatchEndPadInst::setSuccessorV(unsigned Idx, BasicBlock *B) {
 //===----------------------------------------------------------------------===//
 //                        CatchReturnInst Implementation
 //===----------------------------------------------------------------------===//
+void CatchReturnInst::init(BasicBlock *BB, Value *RetVal) {
+  Op<-1>() = BB;
+  if (RetVal)
+    Op<-2>() = RetVal;
+}
 
 CatchReturnInst::CatchReturnInst(const CatchReturnInst &CRI)
     : TerminatorInst(Type::getVoidTy(CRI.getContext()), Instruction::CatchRet,
                      OperandTraits<CatchReturnInst>::op_end(this) -
                          CRI.getNumOperands(),
                      CRI.getNumOperands()) {
-  Op<0>() = CRI.Op<0>();
+  Op<-1>() = CRI.Op<-1>();
+  if (CRI.getNumOperands() != 1) {
+    assert(CRI.getNumOperands() == 2);
+    Op<-2>() = CRI.Op<-2>();
+  }
 }
 
-CatchReturnInst::CatchReturnInst(BasicBlock *BB, Instruction *InsertBefore)
+CatchReturnInst::CatchReturnInst(BasicBlock *BB, Value *RetVal, unsigned Values,
+                                 Instruction *InsertBefore)
     : TerminatorInst(Type::getVoidTy(BB->getContext()), Instruction::CatchRet,
-                     OperandTraits<CatchReturnInst>::op_begin(this), 1,
-                     InsertBefore) {
-  Op<0>() = BB;
+                     OperandTraits<CatchReturnInst>::op_end(this) - Values,
+                     Values, InsertBefore) {
+  init(BB, RetVal);
 }
 
-CatchReturnInst::CatchReturnInst(BasicBlock *BB, BasicBlock *InsertAtEnd)
+CatchReturnInst::CatchReturnInst(BasicBlock *BB, Value *RetVal, unsigned Values,
+                                 BasicBlock *InsertAtEnd)
     : TerminatorInst(Type::getVoidTy(BB->getContext()), Instruction::CatchRet,
-                     OperandTraits<CatchReturnInst>::op_begin(this), 1,
-                     InsertAtEnd) {
-  Op<0>() = BB;
+                     OperandTraits<CatchReturnInst>::op_end(this) - Values,
+                     Values, InsertAtEnd) {
+  init(BB, RetVal);
 }
 
 BasicBlock *CatchReturnInst::getSuccessorV(unsigned Idx) const {
@@ -3924,7 +3935,7 @@ CatchEndPadInst *CatchEndPadInst::cloneImpl() const {
 }
 
 CatchReturnInst *CatchReturnInst::cloneImpl() const {
-  return new (1) CatchReturnInst(*this);
+  return new (getNumOperands()) CatchReturnInst(*this);
 }
 
 CatchPadInst *CatchPadInst::cloneImpl() const {

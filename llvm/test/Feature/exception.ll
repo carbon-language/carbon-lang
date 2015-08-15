@@ -63,7 +63,7 @@ define void @catchret() personality i32 (...)* @__gxx_personality_v0 {
 entry:
   br label %bb
 bb:
-  catchret label %bb
+  catchret void to label %bb
 }
 
 define i8 @catchpad() personality i32 (...)* @__gxx_personality_v0 {
@@ -72,11 +72,16 @@ entry:
 
 try.cont:
   invoke void @_Z3quxv() optsize
-          to label %bb unwind label %bb2
+          to label %exit unwind label %bb2
 bb:
+  catchret token %cbv to label %exit
+
+exit:
   ret i8 0
 bb2:
-  %cbv = catchpad i8 [i7 4] to label %bb unwind label %bb2
+  %cbv = catchpad token [i7 4] to label %bb unwind label %bb3
+bb3:
+  catchendpad unwind to caller
 }
 
 define void @terminatepad0() personality i32 (...)* @__gxx_personality_v0 {

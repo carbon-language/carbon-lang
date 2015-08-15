@@ -5284,7 +5284,7 @@ Syntax:
 
 ::
 
-      catchret label <normal>
+      catchret <type> <value> to label <normal>
 
 Overview:
 """""""""
@@ -5308,6 +5308,7 @@ whose unwinding was interrupted with a
 The :ref:`personality function <personalityfn>` gets a chance to execute
 arbitrary code to, for example, run a C++ destructor.
 Control then transfers to ``normal``.
+It may be passed an optional, personality specific, value.
 
 Example:
 """"""""

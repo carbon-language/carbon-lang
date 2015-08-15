@@ -146,6 +146,8 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
   BasicBlock::iterator IP = I; ++IP;
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
+  if (CatchPadInst *CPI = dyn_cast<CatchPadInst>(I))
+    IP = CPI->getNormalDest()->begin();
   while (isa<PHINode>(IP) || isa<LandingPadInst>(IP))
     ++IP;
   return ReuseOrCreateCast(I, Ty, Op, IP);

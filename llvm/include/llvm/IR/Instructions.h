@@ -4037,8 +4037,11 @@ class CatchReturnInst : public TerminatorInst {
   CatchReturnInst(const CatchReturnInst &RI);
 
 private:
-  CatchReturnInst(BasicBlock *BB, Instruction *InsertBefore = nullptr);
-  CatchReturnInst(BasicBlock *BB, BasicBlock *InsertAtEnd);
+  void init(BasicBlock *BB, Value *RetVal);
+  CatchReturnInst(BasicBlock *BB, Value *RetVal, unsigned Values,
+                  Instruction *InsertBefore = nullptr);
+  CatchReturnInst(BasicBlock *BB, Value *RetVal, unsigned Values,
+                  BasicBlock *InsertAtEnd);
 
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
@@ -4046,21 +4049,34 @@ protected:
   CatchReturnInst *cloneImpl() const;
 
 public:
-  static CatchReturnInst *Create(BasicBlock *BB,
+  static CatchReturnInst *Create(BasicBlock *BB, Value *RetVal = nullptr,
                                  Instruction *InsertBefore = nullptr) {
-    return new (1) CatchReturnInst(BB, InsertBefore);
+    assert(BB);
+    unsigned Values = 1;
+    if (RetVal)
+      ++Values;
+    return new (Values) CatchReturnInst(BB, RetVal, Values, InsertBefore);
   }
-  static CatchReturnInst *Create(BasicBlock *BB, BasicBlock *InsertAtEnd) {
-    return new (1) CatchReturnInst(BB, InsertAtEnd);
+  static CatchReturnInst *Create(BasicBlock *BB, Value *RetVal,
+                                 BasicBlock *InsertAtEnd) {
+    assert(BB);
+    unsigned Values = 1;
+    if (RetVal)
+      ++Values;
+    return new (Values) CatchReturnInst(BB, RetVal, Values, InsertAtEnd);
   }
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   /// Convenience accessors.
-  BasicBlock *getSuccessor() const { return cast<BasicBlock>(Op<0>()); }
-  void setSuccessor(BasicBlock *NewSucc) { Op<0>() = (Value *)NewSucc; }
+  BasicBlock *getSuccessor() const { return cast<BasicBlock>(Op<-1>()); }
+  void setSuccessor(BasicBlock *NewSucc) { Op<-1>() = (Value *)NewSucc; }
   unsigned getNumSuccessors() const { return 1; }
+
+  bool hasReturnValue() const { return getNumOperands() > 1; }
+  Value *getReturnValue() const { return Op<-2>(); }
+  void setReturnValue(Value *RetVal) { Op<-2>() = RetVal; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
@@ -4078,7 +4094,7 @@ private:
 
 template <>
 struct OperandTraits<CatchReturnInst>
-    : public FixedNumOperandTraits<CatchReturnInst, /*ARITY=*/1> {};
+    : public VariadicOperandTraits<CatchReturnInst> {};
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchReturnInst, Value)
 

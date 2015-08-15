@@ -82,14 +82,15 @@ static bool processInstruction(Loop &L, Instruction &Inst, DominatorTree &DT,
 
   ++NumLCSSA; // We are applying the transformation
 
-  // Invoke instructions are special in that their result value is not available
-  // along their unwind edge. The code below tests to see whether DomBB
-  // dominates
-  // the value, so adjust DomBB to the normal destination block, which is
-  // effectively where the value is first usable.
+  // Invoke/CatchPad instructions are special in that their result value is not
+  // available along their unwind edge. The code below tests to see whether
+  // DomBB dominates the value, so adjust DomBB to the normal destination block,
+  // which is effectively where the value is first usable.
   BasicBlock *DomBB = Inst.getParent();
   if (InvokeInst *Inv = dyn_cast<InvokeInst>(&Inst))
     DomBB = Inv->getNormalDest();
+  if (auto *CPI = dyn_cast<CatchPadInst>(&Inst))
+    DomBB = CPI->getNormalDest();
 
   DomTreeNode *DomNode = DT.getNode(DomBB);
 
