@@ -2941,6 +2941,9 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
+  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
+  const llvm::Triple Triple(TripleStr);
+
   bool KernelOrKext =
       Args.hasArg(options::OPT_mkernel, options::OPT_fapple_kext);
   const Driver &D = getToolChain().getDriver();
@@ -2967,17 +2970,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
-  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
-  const llvm::Triple TT(TripleStr);
-  if (TT.isOSWindows() && (TT.getArch() == llvm::Triple::arm ||
-                           TT.getArch() == llvm::Triple::thumb)) {
-    unsigned Offset = TT.getArch() == llvm::Triple::arm ? 4 : 6;
+  if (Triple.isOSWindows() && (Triple.getArch() == llvm::Triple::arm ||
+                               Triple.getArch() == llvm::Triple::thumb)) {
+    unsigned Offset = Triple.getArch() == llvm::Triple::arm ? 4 : 6;
     unsigned Version;
-    TT.getArchName().substr(Offset).getAsInteger(10, Version);
+    Triple.getArchName().substr(Offset).getAsInteger(10, Version);
     if (Version < 7)
-      D.Diag(diag::err_target_unsupported_arch) << TT.getArchName()
+      D.Diag(diag::err_target_unsupported_arch) << Triple.getArchName()
                                                 << TripleStr;
   }
 
@@ -3226,7 +3227,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Note that these flags are trump-cards. Regardless of the order w.r.t. the
   // PIC or PIE options above, if these show up, PIC is disabled.
-  llvm::Triple Triple(TripleStr);
   if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6)))
     PIC = PIE = false;
   if (Args.hasArg(options::OPT_static))
@@ -4263,8 +4263,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-backend-option");
       CmdArgs.push_back("-arm-no-restrict-it");
     }
-  } else if (TT.isOSWindows() && (TT.getArch() == llvm::Triple::arm ||
-                                  TT.getArch() == llvm::Triple::thumb)) {
+  } else if (Triple.isOSWindows() &&
+             (Triple.getArch() == llvm::Triple::arm ||
+              Triple.getArch() == llvm::Triple::thumb)) {
     // Windows on ARM expects restricted IT blocks
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-arm-restrict-it");
@@ -5380,6 +5381,10 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Inputs.size() == 1 && "Unexpected number of inputs.");
   const InputInfo &Input = Inputs[0];
 
+  std::string TripleStr =
+      getToolChain().ComputeEffectiveClangTriple(Args, Input.getType());
+  const llvm::Triple Triple(TripleStr);
+
   // Don't warn about "clang -w -c foo.s"
   Args.ClaimAllArgs(options::OPT_w);
   // and "clang -emit-llvm -c foo.s"
@@ -5394,8 +5399,6 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add the "effective" target triple.
   CmdArgs.push_back("-triple");
-  std::string TripleStr =
-      getToolChain().ComputeEffectiveClangTriple(Args, Input.getType());
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
   // Set the output mode, we currently only expect to be used as a real
@@ -5409,7 +5412,6 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Clang::getBaseInputName(Args, Input));
 
   // Add the target cpu
-  const llvm::Triple Triple(TripleStr);
   std::string CPU = getCPUName(Args, Triple, /*FromAs*/ true);
   if (!CPU.empty()) {
     CmdArgs.push_back("-target-cpu");
@@ -7756,6 +7758,9 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
                                        const char *LinkingOutput) const {
   claimNoWarnArgs(Args);
 
+  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
+  llvm::Triple Triple = llvm::Triple(TripleStr);
+
   ArgStringList CmdArgs;
   bool NeedsKPIC = false;
 
@@ -7804,8 +7809,8 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb: {
-    const llvm::Triple &Triple = getToolChain().getTriple();
-    switch (Triple.getSubArch()) {
+    const llvm::Triple &Triple2 = getToolChain().getTriple();
+    switch (Triple2.getSubArch()) {
     case llvm::Triple::ARMSubArch_v7:
       CmdArgs.push_back("-mfpu=neon");
       break;
@@ -7816,9 +7821,8 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
       break;
     }
 
-    StringRef ARMFloatABI = tools::arm::getARMFloatABI(
-        getToolChain().getDriver(), Args,
-        llvm::Triple(getToolChain().ComputeEffectiveClangTriple(Args)));
+    StringRef ARMFloatABI =
+        tools::arm::getARMFloatABI(getToolChain().getDriver(), Args, Triple);
     CmdArgs.push_back(Args.MakeArgString("-mfloat-abi=" + ARMFloatABI));
 
     Args.AddLastArg(CmdArgs, options::OPT_march_EQ);
@@ -8142,6 +8146,10 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const toolchains::Linux &ToolChain =
       static_cast<const toolchains::Linux &>(getToolChain());
   const Driver &D = ToolChain.getDriver();
+
+  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
+  llvm::Triple Triple = llvm::Triple(TripleStr);
+
   const llvm::Triple::ArchType Arch = ToolChain.getArch();
   const bool isAndroid =
       ToolChain.getTriple().getEnvironment() == llvm::Triple::Android;
@@ -8172,9 +8180,7 @@ void gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-s");
 
   if (Arch == llvm::Triple::armeb || Arch == llvm::Triple::thumbeb)
-    arm::appendEBLinkFlags(
-        Args, CmdArgs,
-        llvm::Triple(getToolChain().ComputeEffectiveClangTriple(Args)));
+    arm::appendEBLinkFlags(Args, CmdArgs, Triple);
 
   for (const auto &Opt : ToolChain.ExtraOpts)
     CmdArgs.push_back(Opt.c_str());
