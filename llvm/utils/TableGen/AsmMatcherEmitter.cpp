@@ -1974,7 +1974,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
       continue;
 
     // Add the row to the table.
-    ConversionTable.push_back(ConversionRow);
+    ConversionTable.push_back(std::move(ConversionRow));
   }
 
   // Finish up the converter driver function.
