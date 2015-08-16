@@ -1447,6 +1447,23 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           ICI.getPredicate() == ICmpInst::ICMP_EQ ? ICmpInst::ICMP_UGT
                                                   : ICmpInst::ICMP_ULE,
           LHSI->getOperand(0), SubOne(RHS));
+
+    // (icmp eq (and %A, C), 0) -> (icmp sgt (trunc %A), -1)
+    //   iff C is a power of 2
+    if (ICI.isEquality() && LHSI->hasOneUse() && match(RHS, m_Zero())) {
+      if (auto *CI = dyn_cast<ConstantInt>(LHSI->getOperand(1))) {
+        const APInt &AI = CI->getValue();
+        int32_t ExactLogBase2 = AI.exactLogBase2();
+        if (ExactLogBase2 != -1 && DL.isLegalInteger(ExactLogBase2 + 1)) {
+          Type *NTy = IntegerType::get(ICI.getContext(), ExactLogBase2 + 1);
+          Value *Trunc = Builder->CreateTrunc(LHSI->getOperand(0), NTy);
+          return new ICmpInst(ICI.getPredicate() == ICmpInst::ICMP_EQ
+                                  ? ICmpInst::ICMP_SGE
+                                  : ICmpInst::ICMP_SLT,
+                              Trunc, Constant::getNullValue(NTy));
+        }
+      }
+    }
     break;
 
   case Instruction::Or: {
