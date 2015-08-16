@@ -376,8 +376,6 @@ AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
                                         Value *InstCopy) {
-  BasicBlock *ExitBB = R.getExit();
-
   EscapeUserVectorTy EscapeUsers;
   for (User *U : Inst->users()) {
 
@@ -386,7 +384,7 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
     if (!UI)
       continue;
 
-    if (R.contains(UI) && ExitBB != UI->getParent())
+    if (R.contains(UI))
       continue;
 
     EscapeUsers.push_back(UI);
