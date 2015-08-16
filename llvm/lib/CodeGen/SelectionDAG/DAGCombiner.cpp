@@ -4972,10 +4972,9 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
         DAG.isKnownNeverNaN(N1) && DAG.isKnownNeverNaN(N2)) {
       ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
 
-      SDValue FMinMax =
-          combineMinNumMaxNum(SDLoc(N), VT, N0.getOperand(0), N0.getOperand(1),
-                              N1, N2, CC, TLI, DAG);
-      if (FMinMax)
+      if (SDValue FMinMax = combineMinNumMaxNum(SDLoc(N), VT, N0.getOperand(0),
+                                                N0.getOperand(1), N1, N2, CC,
+                                                TLI, DAG))
         return FMinMax;
     }
 
