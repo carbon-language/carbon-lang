@@ -1184,6 +1184,60 @@ Value *LibCallSimplifier::optimizeFabs(CallInst *CI, IRBuilder<> &B) {
   return Ret;
 }
 
+Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
+  // If we can shrink the call to a float function rather than a double
+  // function, do that first.
+  Function *Callee = CI->getCalledFunction();
+  if ((Callee->getName() == "fmin" && TLI->has(LibFunc::fminf)) ||
+      (Callee->getName() == "fmax" && TLI->has(LibFunc::fmaxf))) {
+    Value *Ret = optimizeBinaryDoubleFP(CI, B);
+    if (Ret)
+      return Ret;
+  }
+
+  // Make sure this has 2 arguments of FP type which match the result type.
+  FunctionType *FT = Callee->getFunctionType();
+  if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
+      FT->getParamType(0) != FT->getParamType(1) ||
+      !FT->getParamType(0)->isFloatingPointTy())
+    return nullptr;
+
+  // FIXME: For finer-grain optimization, we need intrinsics to have the same
+  // fast-math flag decorations that are applied to FP instructions. For now,
+  // we have to rely on the function-level attributes to do this optimization
+  // because there's no other way to express that the calls can be relaxed.
+  IRBuilder<true, ConstantFolder,
+    IRBuilderDefaultInserter<true> >::FastMathFlagGuard Guard(B);
+  FastMathFlags FMF;
+  Function *F = CI->getParent()->getParent();
+  Attribute Attr = F->getFnAttribute("unsafe-fp-math");
+  if (Attr.getValueAsString() == "true") {
+    // Unsafe algebra sets all fast-math-flags to true.
+    FMF.setUnsafeAlgebra();
+  } else {
+    // At a minimum, no-nans-fp-math must be true.
+    Attr = F->getFnAttribute("no-nans-fp-math");
+    if (Attr.getValueAsString() != "true")
+      return nullptr;
+    // No-signed-zeros is implied by the definitions of fmax/fmin themselves:
+    // "Ideally, fmax would be sensitive to the sign of zero, for example
+    // fmax(−0. 0, +0. 0) would return +0; however, implementation in software
+    // might be impractical."
+    FMF.setNoSignedZeros();
+    FMF.setNoNaNs();
+  }
+  B.SetFastMathFlags(FMF);
+
+  // We have a relaxed floating-point environment. We can ignore NaN-handling
+  // and transform to a compare and select. We do not have to consider errno or
+  // exceptions, because fmin/fmax do not have those.
+  Value *Op0 = CI->getArgOperand(0);
+  Value *Op1 = CI->getArgOperand(1);
+  Value *Cmp = Callee->getName().startswith("fmin") ?
+    B.CreateFCmpOLT(Op0, Op1) : B.CreateFCmpOGT(Op0, Op1);
+  return B.CreateSelect(Cmp, Op0, Op1);
+}
+
 Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   
@@ -2110,11 +2164,16 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
         return optimizeUnaryDoubleFP(CI, Builder, true);
       return nullptr;
     case LibFunc::copysign:
-    case LibFunc::fmin:
-    case LibFunc::fmax:
       if (hasFloatVersion(FuncName))
         return optimizeBinaryDoubleFP(CI, Builder);
       return nullptr;
+    case LibFunc::fminf:
+    case LibFunc::fmin:
+    case LibFunc::fminl:
+    case LibFunc::fmaxf:
+    case LibFunc::fmax:
+    case LibFunc::fmaxl:
+      return optimizeFMinFMax(CI, Builder);
     default:
       return nullptr;
     }

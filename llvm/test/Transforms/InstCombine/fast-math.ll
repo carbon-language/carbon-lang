@@ -716,3 +716,110 @@ define fp128 @sqrt_call_squared_f128(fp128 %x) #0 {
 ; CHECK-NEXT: ret fp128 %fabs
 }
 
+; =========================================================================
+;
+;   Test-cases for fmin / fmax
+;
+; =========================================================================
+
+declare double @fmax(double, double)
+declare double @fmin(double, double)
+declare float @fmaxf(float, float)
+declare float @fminf(float, float)
+declare fp128 @fmaxl(fp128, fp128)
+declare fp128 @fminl(fp128, fp128)
+
+; No NaNs is the minimum requirement to replace these calls.
+; This should always be set when unsafe-fp-math is true, but
+; alternate the attributes for additional test coverage.
+; 'nsz' is implied by the definition of fmax or fmin itself.
+attributes #1 = { "no-nans-fp-math" = "true" }
+
+; Shrink and remove the call.
+define float @max1(float %a, float %b) #0 {
+  %c = fpext float %a to double
+  %d = fpext float %b to double
+  %e = call double @fmax(double %c, double %d)
+  %f = fptrunc double %e to float
+  ret float %f
+
+; CHECK-LABEL: max1(
+; CHECK-NEXT:  fcmp fast ogt float %a, %b 
+; CHECK-NEXT:  select {{.*}} float %a, float %b 
+; CHECK-NEXT:  ret
+}
+
+define float @max2(float %a, float %b) #1 {
+  %c = call float @fmaxf(float %a, float %b)
+  ret float %c
+
+; CHECK-LABEL: max2(
+; CHECK-NEXT:  fcmp nnan nsz ogt float %a, %b 
+; CHECK-NEXT:  select {{.*}} float %a, float %b 
+; CHECK-NEXT:  ret
+}
+
+
+define double @max3(double %a, double %b) #0 {
+  %c = call double @fmax(double %a, double %b)
+  ret double %c
+
+; CHECK-LABEL: max3(
+; CHECK-NEXT:  fcmp fast ogt double %a, %b 
+; CHECK-NEXT:  select {{.*}} double %a, double %b 
+; CHECK-NEXT:  ret
+}
+
+define fp128 @max4(fp128 %a, fp128 %b) #1 {
+  %c = call fp128 @fmaxl(fp128 %a, fp128 %b)
+  ret fp128 %c
+
+; CHECK-LABEL: max4(
+; CHECK-NEXT:  fcmp nnan nsz ogt fp128 %a, %b 
+; CHECK-NEXT:  select {{.*}} fp128 %a, fp128 %b 
+; CHECK-NEXT:  ret
+}
+
+; Shrink and remove the call.
+define float @min1(float %a, float %b) #1 {
+  %c = fpext float %a to double
+  %d = fpext float %b to double
+  %e = call double @fmin(double %c, double %d)
+  %f = fptrunc double %e to float
+  ret float %f
+
+; CHECK-LABEL: min1(
+; CHECK-NEXT:  fcmp nnan nsz olt float %a, %b 
+; CHECK-NEXT:  select {{.*}} float %a, float %b 
+; CHECK-NEXT:  ret
+}
+
+define float @min2(float %a, float %b) #0 {
+  %c = call float @fminf(float %a, float %b)
+  ret float %c
+
+; CHECK-LABEL: min2(
+; CHECK-NEXT:  fcmp fast olt float %a, %b 
+; CHECK-NEXT:  select {{.*}} float %a, float %b 
+; CHECK-NEXT:  ret
+}
+
+define double @min3(double %a, double %b) #1 {
+  %c = call double @fmin(double %a, double %b)
+  ret double %c
+
+; CHECK-LABEL: min3(
+; CHECK-NEXT:  fcmp nnan nsz olt double %a, %b 
+; CHECK-NEXT:  select {{.*}} double %a, double %b 
+; CHECK-NEXT:  ret
+}
+
+define fp128 @min4(fp128 %a, fp128 %b) #0 {
+  %c = call fp128 @fminl(fp128 %a, fp128 %b)
+  ret fp128 %c
+
+; CHECK-LABEL: min4(
+; CHECK-NEXT:  fcmp fast olt fp128 %a, %b 
+; CHECK-NEXT:  select {{.*}} fp128 %a, fp128 %b 
+; CHECK-NEXT:  ret
+}
