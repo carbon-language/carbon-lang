@@ -891,6 +891,9 @@ private:
   /// @brief Build the Context of the Scop.
   void buildContext();
 
+  /// @brief Add user provided parameter constraints to context.
+  void addUserContext();
+
   /// @brief Add the bounds of the parameters to the context.
   void addParameterBounds();
 

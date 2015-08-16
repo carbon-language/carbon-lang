@@ -75,6 +75,10 @@ static cl::opt<unsigned> RunTimeChecksMaxArraysPerGroup(
     "polly-rtc-max-arrays-per-group",
     cl::desc("The maximal number of arrays to compare in each alias group."),
     cl::Hidden, cl::ZeroOrMore, cl::init(20), cl::cat(PollyCategory));
+static cl::opt<std::string> UserContextStr(
+    "polly-context", cl::value_desc("isl parameter set"),
+    cl::desc("Provide additional constraints on the context parameters"),
+    cl::init(""), cl::cat(PollyCategory));
 
 // Create a sequence of two schedules. Either argument may be null and is
 // interpreted as the empty schedule. Can also return null if both schedules are
@@ -1129,6 +1133,53 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
                       const_cast<void *>((const void *)Parameter));
 }
 
+void Scop::addUserContext() {
+  if (UserContextStr.empty())
+    return;
+
+  isl_set *UserContext = isl_set_read_from_str(IslCtx, UserContextStr.c_str());
+  isl_space *Space = getParamSpace();
+  if (isl_space_dim(Space, isl_dim_param) !=
+      isl_set_dim(UserContext, isl_dim_param)) {
+    auto SpaceStr = isl_space_to_str(Space);
+    errs() << "Error: the context provided in -polly-context has not the same "
+           << "number of dimensions than the computed context. Due to this "
+           << "mismatch, the -polly-context option is ignored. Please provide "
+           << "the context in the parameter space: " << SpaceStr << ".\n";
+    free(SpaceStr);
+    isl_set_free(UserContext);
+    isl_space_free(Space);
+    return;
+  }
+
+  for (unsigned i = 0; i < isl_space_dim(Space, isl_dim_param); i++) {
+    auto NameContext = isl_set_get_dim_name(Context, isl_dim_param, i);
+    auto NameUserContext = isl_set_get_dim_name(UserContext, isl_dim_param, i);
+
+    if (strcmp(NameContext, NameUserContext) != 0) {
+      auto SpaceStr = isl_space_to_str(Space);
+      errs() << "Error: the name of dimension " << i
+             << " provided in -polly-context "
+             << "is '" << NameUserContext << "', but the name in the computed "
+             << "context is '" << NameContext
+             << "'. Due to this name mismatch, "
+             << "the -polly-context option is ignored. Please provide "
+             << "the context in the parameter space: " << SpaceStr << ".\n";
+      free(SpaceStr);
+      isl_set_free(UserContext);
+      isl_space_free(Space);
+      return;
+    }
+
+    UserContext =
+        isl_set_set_dim_id(UserContext, isl_dim_param, i,
+                           isl_space_get_dim_id(Space, isl_dim_param, i));
+  }
+
+  Context = isl_set_intersect(Context, UserContext);
+  isl_space_free(Space);
+}
+
 void Scop::buildContext() {
   isl_space *Space = isl_space_params_alloc(IslCtx, 0);
   Context = isl_set_universe(isl_space_copy(Space));
@@ -1480,6 +1531,7 @@ void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI,
 
   realignParams();
   addParameterBounds();
+  addUserContext();
   simplifyAssumedContext();
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
