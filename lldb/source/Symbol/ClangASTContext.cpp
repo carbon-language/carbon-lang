@@ -9079,7 +9079,7 @@ bool
 ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
                                                    DWARFCompileUnit *dwarf_cu,
                                                    const DWARFDebugInfoEntry* die,
-                                                   Type *type,
+                                                   lldb_private::Type *type,
                                                    CompilerType &clang_type)
 {
     // Disable external storage for this type so we don't get anymore
@@ -12260,7 +12260,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
 bool
 ClangASTContext::CopyUniqueClassMethodTypes (SymbolFileDWARF *dst_symfile,
                                              SymbolFileDWARF *src_symfile,
-                                             Type *class_type,
+                                             lldb_private::Type *class_type,
                                              DWARFCompileUnit* src_cu,
                                              const DWARFDebugInfoEntry *src_class_die,
                                              DWARFCompileUnit* dst_cu,
