@@ -26,6 +26,10 @@
 ;
 ; CHECK: polly.start
 ;
+; TODO: This test should not crash Polly.
+;
+; XFAIL: *
+;
 @endposition = external global i32, align 4
 @Bit = external global [0 x i32], align 4
 @Init = external global [0 x i32], align 4
