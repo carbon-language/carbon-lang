@@ -32,6 +32,15 @@ CallGraph::CallGraph(Module &M)
     Root = ExternalCallingNode;
 }
 
+CallGraph::CallGraph(CallGraph &&Arg)
+    : M(Arg.M), FunctionMap(std::move(Arg.FunctionMap)), Root(Arg.Root),
+      ExternalCallingNode(Arg.ExternalCallingNode),
+      CallsExternalNode(std::move(Arg.CallsExternalNode)) {
+  Arg.FunctionMap.clear();
+  Arg.Root = nullptr;
+  Arg.ExternalCallingNode = nullptr;
+}
+
 CallGraph::~CallGraph() {
   // CallsExternalNode is not in the function map, delete it explicitly.
   if (CallsExternalNode)
@@ -251,6 +260,12 @@ void CallGraphNode::replaceCallEdge(CallSite CS,
     }
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Out-of-line definitions of CallGraphAnalysis class members.
+//
+
+char CallGraphAnalysis::PassID;
 
 //===----------------------------------------------------------------------===//
 // Implementations of the CallGraphWrapperPass class methods.

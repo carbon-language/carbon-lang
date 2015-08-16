@@ -105,7 +105,8 @@ class CallGraph {
   void addToCallGraph(Function *F);
 
 public:
-  CallGraph(Module &M);
+  explicit CallGraph(Module &M);
+  CallGraph(CallGraph &&Arg);
   ~CallGraph();
 
   void print(raw_ostream &OS) const;
@@ -286,6 +287,27 @@ private:
 
   /// \brief A special function that should only be used by the CallGraph class.
   void allReferencesDropped() { NumReferences = 0; }
+};
+
+/// \brief An analysis pass to compute the \c CallGraph for a \c Module.
+///
+/// This class implements the concept of an analysis pass used by the \c
+/// ModuleAnalysisManager to run an analysis over a module and cache the
+/// resulting data.
+class CallGraphAnalysis {
+public:
+  /// \brief A formulaic typedef to inform clients of the result type.
+  typedef CallGraph Result;
+
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Compute the \c CallGraph for the module \c M.
+  ///
+  /// The real work here is done in the \c CallGraph constructor.
+  CallGraph run(Module *M) { return CallGraph(*M); }
+
+private:
+  static char PassID;
 };
 
 /// \brief The \c ModulePass which wraps up a \c CallGraph and the logic to
