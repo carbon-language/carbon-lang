@@ -605,13 +605,11 @@ bool StructType::isValidElementType(Type *ElemTy) {
 /// specified struct.
 bool StructType::isLayoutIdentical(StructType *Other) const {
   if (this == Other) return true;
-  
-  if (isPacked() != Other->isPacked() ||
-      getNumElements() != Other->getNumElements())
+
+  if (isPacked() != Other->isPacked())
     return false;
-  
-  return element_begin() &&
-         std::equal(element_begin(), element_end(), Other->element_begin());
+
+  return elements() == Other->elements();
 }
 
 /// getTypeByName - Return the type with the specified name, or null if there
