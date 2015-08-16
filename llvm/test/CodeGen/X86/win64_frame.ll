@@ -100,9 +100,8 @@ define i32 @f8(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) "no-frame-pointer-elim"="
 
   alloca i32, i32 %a
   ; CHECK:        movl    %ecx, %eax
-  ; CHECK:        leaq    15(,%rax,4), %rcx
-  ; CHECK:        movabsq $34359738352, %rax
-  ; CHECK:        andq    %rcx, %rax
+  ; CHECK:        leaq    15(,%rax,4), %rax
+  ; CHECK:        andq    $-16, %rax
   ; CHECK:        callq   __chkstk
   ; CHECK:        subq    %rax, %rsp
 

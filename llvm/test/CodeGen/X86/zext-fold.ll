@@ -8,7 +8,7 @@ define i32 @test1(i8 %x) nounwind readnone {
 }
 ; CHECK: test1
 ; CHECK: movzbl
-; CHECK-NEXT: andl {{.*}}224
+; CHECK-NEXT: andl {{.*}}-32
 
 ;; Multiple uses of %x but easily extensible.
 define i32 @test2(i8 %x) nounwind readnone {
@@ -21,7 +21,7 @@ define i32 @test2(i8 %x) nounwind readnone {
 }
 ; CHECK: test2
 ; CHECK: movzbl
-; CHECK: andl $224
+; CHECK: andl $-32
 ; CHECK: orl $63
 
 declare void @use(i32, i8)
@@ -36,6 +36,6 @@ define void @test3(i8 %x) nounwind readnone {
 ; CHECK: test3
 ; CHECK: movzbl {{[0-9]+}}(%esp), [[REGISTER:%e[a-z]{2}]]
 ; CHECK-NEXT: movl [[REGISTER]], 4(%esp)
-; CHECK-NEXT: andl $224, [[REGISTER]]
+; CHECK-NEXT: andl $-32, [[REGISTER]]
 ; CHECK-NEXT: movl [[REGISTER]], (%esp)
 ; CHECK-NEXT: call{{.*}}use

@@ -3,7 +3,7 @@
 define i64 @test(i64 %A) {
 ; CHECK: @test
 ; CHECK: shrq $54
-; CHECK: andl $1020
+; CHECK: andq $-4
 ; CHECK: ret
     %B = lshr i64 %A, 56
     %C = shl i64 %B, 2
