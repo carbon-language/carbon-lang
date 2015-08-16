@@ -1206,8 +1206,7 @@ Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
   // fast-math flag decorations that are applied to FP instructions. For now,
   // we have to rely on the function-level attributes to do this optimization
   // because there's no other way to express that the calls can be relaxed.
-  IRBuilder<true, ConstantFolder,
-    IRBuilderDefaultInserter<true> >::FastMathFlagGuard Guard(B);
+  IRBuilder<>::FastMathFlagGuard Guard(B);
   FastMathFlags FMF;
   Function *F = CI->getParent()->getParent();
   Attribute Attr = F->getFnAttribute("unsafe-fp-math");
@@ -1292,8 +1291,7 @@ Value *LibCallSimplifier::optimizeSqrt(CallInst *CI, IRBuilder<> &B) {
         // and multiply.
         // FIXME: We're not checking the sqrt because it doesn't have
         // fast-math-flags (see earlier comment).
-        IRBuilder<true, ConstantFolder,
-          IRBuilderDefaultInserter<true> >::FastMathFlagGuard Guard(B);
+        IRBuilder<>::FastMathFlagGuard Guard(B);
         B.SetFastMathFlags(I->getFastMathFlags());
         // If we found a repeated factor, hoist it out of the square root and
         // replace it with the fabs of that factor.
