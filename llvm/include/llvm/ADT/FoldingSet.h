@@ -122,9 +122,10 @@ protected:
   /// is greater than twice the number of buckets.
   unsigned NumNodes;
 
-  ~FoldingSetImpl();
-
   explicit FoldingSetImpl(unsigned Log2InitSize = 6);
+  FoldingSetImpl(FoldingSetImpl &&Arg);
+  FoldingSetImpl &operator=(FoldingSetImpl &&RHS);
+  ~FoldingSetImpl();
 
 public:
   //===--------------------------------------------------------------------===//
@@ -391,6 +392,10 @@ DefaultContextualFoldingSetTrait<T, Ctx>::ComputeHash(T &X,
 /// implementation of the folding set to the node class T.  T must be a
 /// subclass of FoldingSetNode and implement a Profile function.
 ///
+/// Note that this set type is movable and move-assignable. However, its
+/// moved-from state is not a valid state for anything other than
+/// move-assigning and destroying. This is primarily to enable movable APIs
+/// that incorporate these objects.
 template <class T> class FoldingSet final : public FoldingSetImpl {
 private:
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
@@ -415,8 +420,13 @@ private:
 
 public:
   explicit FoldingSet(unsigned Log2InitSize = 6)
-  : FoldingSetImpl(Log2InitSize)
-  {}
+      : FoldingSetImpl(Log2InitSize) {}
+
+  FoldingSet(FoldingSet &&Arg) : FoldingSetImpl(std::move(Arg)) {}
+  FoldingSet &operator=(FoldingSet &&RHS) {
+    (void)FoldingSetImpl::operator=(std::move(RHS));
+    return *this;
+  }
 
   typedef FoldingSetIterator<T> iterator;
   iterator begin() { return iterator(Buckets); }

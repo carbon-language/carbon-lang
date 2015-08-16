@@ -232,9 +232,29 @@ FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) {
   Buckets = AllocateBuckets(NumBuckets);
   NumNodes = 0;
 }
+
+FoldingSetImpl::FoldingSetImpl(FoldingSetImpl &&Arg)
+    : Buckets(Arg.Buckets), NumBuckets(Arg.NumBuckets), NumNodes(Arg.NumNodes) {
+  Arg.Buckets = nullptr;
+  Arg.NumBuckets = 0;
+  Arg.NumNodes = 0;
+}
+
+FoldingSetImpl &FoldingSetImpl::operator=(FoldingSetImpl &&RHS) {
+  free(Buckets); // This may be null if the set is in a moved-from state.
+  Buckets = RHS.Buckets;
+  NumBuckets = RHS.NumBuckets;
+  NumNodes = RHS.NumNodes;
+  RHS.Buckets = nullptr;
+  RHS.NumBuckets = 0;
+  RHS.NumNodes = 0;
+  return *this;
+}
+
 FoldingSetImpl::~FoldingSetImpl() {
   free(Buckets);
 }
+
 void FoldingSetImpl::clear() {
   // Set all but the last bucket to null pointers.
   memset(Buckets, 0, NumBuckets*sizeof(void*));
