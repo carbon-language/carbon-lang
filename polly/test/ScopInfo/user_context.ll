@@ -10,7 +10,11 @@
 ; }
 
 ; CHECK: Context:
-; CHECK:    [N] -> {  : N >= -9223372036854775808 and N <= 9223372036854775807 }
+; CHECK:    [N] -> {  :
+; CHECK-DAG:     N >= -9223372036854775808
+; CHECK-DAG:   and
+; CHECK-DAG:     N <= 9223372036854775807
+; CHECK:           }
 
 ; CTX: Context:
 ; CTX:    [N] -> {  : N = 1024 }

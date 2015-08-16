@@ -526,12 +526,9 @@ private:
   /// Build the statement.
   //@{
   __isl_give isl_set *buildConditionSet(const Comparison &Cmp);
-  __isl_give isl_set *addConditionsToDomain(__isl_take isl_set *Domain,
-                                            TempScop &tempScop,
-                                            const Region &CurRegion);
-  __isl_give isl_set *addLoopBoundsToDomain(__isl_take isl_set *Domain,
-                                            TempScop &tempScop);
-  __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
+  void addConditionsToDomain(TempScop &tempScop, const Region &CurRegion);
+  void addLoopBoundsToDomain(TempScop &tempScop);
+  void buildDomain(TempScop &tempScop, const Region &CurRegion);
 
   /// @brief Create the accesses for instructions in @p Block.
   ///
