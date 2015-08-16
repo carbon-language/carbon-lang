@@ -162,9 +162,9 @@ class RegUseTracker {
   SmallVector<const SCEV *, 16> RegSequence;
 
 public:
-  void CountRegister(const SCEV *Reg, size_t LUIdx);
-  void DropRegister(const SCEV *Reg, size_t LUIdx);
-  void SwapAndDropUse(size_t LUIdx, size_t LastLUIdx);
+  void countRegister(const SCEV *Reg, size_t LUIdx);
+  void dropRegister(const SCEV *Reg, size_t LUIdx);
+  void swapAndDropUse(size_t LUIdx, size_t LastLUIdx);
 
   bool isRegUsedByUsesOtherThan(const SCEV *Reg, size_t LUIdx) const;
 
@@ -183,7 +183,7 @@ public:
 }
 
 void
-RegUseTracker::CountRegister(const SCEV *Reg, size_t LUIdx) {
+RegUseTracker::countRegister(const SCEV *Reg, size_t LUIdx) {
   std::pair<RegUsesTy::iterator, bool> Pair =
     RegUsesMap.insert(std::make_pair(Reg, RegSortData()));
   RegSortData &RSD = Pair.first->second;
@@ -194,7 +194,7 @@ RegUseTracker::CountRegister(const SCEV *Reg, size_t LUIdx) {
 }
 
 void
-RegUseTracker::DropRegister(const SCEV *Reg, size_t LUIdx) {
+RegUseTracker::dropRegister(const SCEV *Reg, size_t LUIdx) {
   RegUsesTy::iterator It = RegUsesMap.find(Reg);
   assert(It != RegUsesMap.end());
   RegSortData &RSD = It->second;
@@ -203,7 +203,7 @@ RegUseTracker::DropRegister(const SCEV *Reg, size_t LUIdx) {
 }
 
 void
-RegUseTracker::SwapAndDropUse(size_t LUIdx, size_t LastLUIdx) {
+RegUseTracker::swapAndDropUse(size_t LUIdx, size_t LastLUIdx) {
   assert(LUIdx <= LastLUIdx);
 
   // Update RegUses. The data structure is not optimized for this purpose;
@@ -283,18 +283,18 @@ struct Formula {
       : BaseGV(nullptr), BaseOffset(0), HasBaseReg(false), Scale(0),
         ScaledReg(nullptr), UnfoldedOffset(0) {}
 
-  void InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE);
+  void initialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE);
 
   bool isCanonical() const;
 
-  void Canonicalize();
+  void canonicalize();
 
-  bool Unscale();
+  bool unscale();
 
   size_t getNumRegs() const;
   Type *getType() const;
 
-  void DeleteBaseReg(const SCEV *&S);
+  void deleteBaseReg(const SCEV *&S);
 
   bool referencesReg(const SCEV *S) const;
   bool hasRegsUsedByUsesOtherThan(size_t LUIdx,
@@ -306,7 +306,7 @@ struct Formula {
 
 }
 
-/// DoInitialMatch - Recursion helper for InitialMatch.
+/// DoInitialMatch - Recursion helper for initialMatch.
 static void DoInitialMatch(const SCEV *S, Loop *L,
                            SmallVectorImpl<const SCEV *> &Good,
                            SmallVectorImpl<const SCEV *> &Bad,
@@ -359,10 +359,10 @@ static void DoInitialMatch(const SCEV *S, Loop *L,
   Bad.push_back(S);
 }
 
-/// InitialMatch - Incorporate loop-variant parts of S into this Formula,
+/// initialMatch - Incorporate loop-variant parts of S into this Formula,
 /// attempting to keep all loop-invariant and loop-computable values in a
 /// single base register.
-void Formula::InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE) {
+void Formula::initialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE) {
   SmallVector<const SCEV *, 4> Good;
   SmallVector<const SCEV *, 4> Bad;
   DoInitialMatch(S, L, Good, Bad, SE);
@@ -378,7 +378,7 @@ void Formula::InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE) {
       BaseRegs.push_back(Sum);
     HasBaseReg = true;
   }
-  Canonicalize();
+  canonicalize();
 }
 
 /// \brief Check whether or not this formula statisfies the canonical
@@ -396,7 +396,7 @@ bool Formula::isCanonical() const {
 /// field. Otherwise, we would have to do special cases everywhere in LSR
 /// to treat reg1 + reg2 + ... the same way as reg1 + 1*reg2 + ...
 /// On the other hand, 1*reg should be canonicalized into reg.
-void Formula::Canonicalize() {
+void Formula::canonicalize() {
   if (isCanonical())
     return;
   // So far we did not need this case. This is easy to implement but it is
@@ -417,7 +417,7 @@ void Formula::Canonicalize() {
 /// In other words, this method morphes reg1 + 1*reg2 into reg1 + reg2.
 /// \return true if it was possible to get rid of the scale, false otherwise.
 /// \note After this operation the formula may not be in the canonical form.
-bool Formula::Unscale() {
+bool Formula::unscale() {
   if (Scale != 1)
     return false;
   Scale = 0;
@@ -442,8 +442,8 @@ Type *Formula::getType() const {
          nullptr;
 }
 
-/// DeleteBaseReg - Delete the given base reg from the BaseRegs list.
-void Formula::DeleteBaseReg(const SCEV *&S) {
+/// deleteBaseReg - Delete the given base reg from the BaseRegs list.
+void Formula::deleteBaseReg(const SCEV *&S) {
   if (&S != &BaseRegs.back())
     std::swap(S, BaseRegs.back());
   BaseRegs.pop_back();
@@ -1344,7 +1344,7 @@ void LSRUse::RecomputeRegs(size_t LUIdx, RegUseTracker &RegUses) {
   // Update the RegTracker.
   for (const SCEV *S : OldRegs)
     if (!Regs.count(S))
-      RegUses.DropRegister(S, LUIdx);
+      RegUses.dropRegister(S, LUIdx);
 }
 
 void LSRUse::print(raw_ostream &OS) const {
@@ -2337,7 +2337,7 @@ void LSRInstance::DeleteUse(LSRUse &LU, size_t LUIdx) {
   Uses.pop_back();
 
   // Update RegUses.
-  RegUses.SwapAndDropUse(LUIdx, Uses.size());
+  RegUses.swapAndDropUse(LUIdx, Uses.size());
 }
 
 /// FindUseWithFormula - Look for a use distinct from OrigLU which is has
@@ -3067,7 +3067,7 @@ LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
     LU.RigidFormula = true;
 
   Formula F;
-  F.InitialMatch(S, L, SE);
+  F.initialMatch(S, L, SE);
   bool Inserted = InsertFormula(LU, LUIdx, F);
   assert(Inserted && "Initial formula already exists!"); (void)Inserted;
 }
@@ -3088,9 +3088,9 @@ LSRInstance::InsertSupplementalFormula(const SCEV *S,
 /// updating RegUses.
 void LSRInstance::CountRegisters(const Formula &F, size_t LUIdx) {
   if (F.ScaledReg)
-    RegUses.CountRegister(F.ScaledReg, LUIdx);
+    RegUses.countRegister(F.ScaledReg, LUIdx);
   for (const SCEV *BaseReg : F.BaseRegs)
-    RegUses.CountRegister(BaseReg, LUIdx);
+    RegUses.countRegister(BaseReg, LUIdx);
 }
 
 /// InsertFormula - If the given formula has not yet been inserted, add it to
@@ -3331,7 +3331,7 @@ void LSRInstance::GenerateReassociationsImpl(LSRUse &LU, unsigned LUIdx,
       F.BaseRegs.push_back(*J);
     // We may have changed the number of register in base regs, adjust the
     // formula accordingly.
-    F.Canonicalize();
+    F.canonicalize();
 
     if (InsertFormula(LU, LUIdx, F))
       // If that formula hadn't been seen before, recurse to find more like
@@ -3367,7 +3367,7 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
 
   // Flatten the representation, i.e., reg1 + 1*reg2 => reg1 + reg2, before
   // processing the formula.
-  Base.Unscale();
+  Base.unscale();
   Formula F = Base;
   F.BaseRegs.clear();
   SmallVector<const SCEV *, 4> Ops;
@@ -3385,7 +3385,7 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
     // rather than proceed with zero in a register.
     if (!Sum->isZero()) {
       F.BaseRegs.push_back(Sum);
-      F.Canonicalize();
+      F.canonicalize();
       (void)InsertFormula(LU, LUIdx, F);
     }
   }
@@ -3441,8 +3441,8 @@ void LSRInstance::GenerateConstantOffsetsImpl(
           F.Scale = 0;
           F.ScaledReg = nullptr;
         } else
-          F.DeleteBaseReg(F.BaseRegs[Idx]);
-        F.Canonicalize();
+          F.deleteBaseReg(F.BaseRegs[Idx]);
+        F.canonicalize();
       } else if (IsScaledReg)
         F.ScaledReg = NewG;
       else
@@ -3578,10 +3578,10 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx, Formula Base) {
 
   // If this Formula already has a scaled register, we can't add another one.
   // Try to unscale the formula to generate a better scale.
-  if (Base.Scale != 0 && !Base.Unscale())
+  if (Base.Scale != 0 && !Base.unscale())
     return;
 
-  assert(Base.Scale == 0 && "Unscale did not did its job!");
+  assert(Base.Scale == 0 && "unscale did not did its job!");
 
   // Check each interesting stride.
   for (int64_t Factor : Factors) {
@@ -3618,7 +3618,7 @@ void LSRInstance::GenerateScales(LSRUse &LU, unsigned LUIdx, Formula Base) {
           // TODO: This could be optimized to avoid all the copying.
           Formula F = Base;
           F.ScaledReg = Quotient;
-          F.DeleteBaseReg(F.BaseRegs[i]);
+          F.deleteBaseReg(F.BaseRegs[i]);
           // The canonical representation of 1*reg is reg, which is already in
           // Base. In that case, do not try to insert the formula, it will be
           // rejected anyway.
@@ -3782,7 +3782,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
       // very similar but slightly different. Investigate if they
       // could be merged. That way, we would not have to unscale the
       // Formula.
-      F.Unscale();
+      F.unscale();
       // Use the immediate in the scaled register.
       if (F.ScaledReg == OrigReg) {
         int64_t Offset = (uint64_t)F.BaseOffset + Imm * (uint64_t)F.Scale;
@@ -3808,7 +3808,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
             continue;
 
         // OK, looks good.
-        NewF.Canonicalize();
+        NewF.canonicalize();
         (void)InsertFormula(LU, LUIdx, NewF);
       } else {
         // Use the immediate in a base register.
@@ -3840,7 +3840,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
                 goto skip_formula;
 
           // Ok, looks good.
-          NewF.Canonicalize();
+          NewF.canonicalize();
           (void)InsertFormula(LU, LUIdx, NewF);
           break;
         skip_formula:;
