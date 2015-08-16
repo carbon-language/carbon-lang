@@ -1316,7 +1316,12 @@ bool MergeFunctions::runOnModule(Module &M) {
     } 
   }
 
-  std::sort(HashedFuncs.begin(), HashedFuncs.end());
+  std::stable_sort(
+      HashedFuncs.begin(), HashedFuncs.end(),
+      [](const std::pair<FunctionComparator::FunctionHash, Function *> &a,
+         const std::pair<FunctionComparator::FunctionHash, Function *> &b) {
+        return a.first < b.first;
+      });
 
   auto S = HashedFuncs.begin();
   for (auto I = HashedFuncs.begin(), IE = HashedFuncs.end(); I != IE; ++I) {
