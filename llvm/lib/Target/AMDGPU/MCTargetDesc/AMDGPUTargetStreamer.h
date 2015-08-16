@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_LIB_TARGET_R600_MCTARGETDESC_AMDGPUTARGETSTREAMER_H
+#define LLVM_LIB_TARGET_R600_MCTARGETDESC_AMDGPUTARGETSTREAMER_H
+
 #include "AMDKernelCodeT.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
@@ -75,3 +78,4 @@ public:
 };
 
 }
+#endif
