@@ -3789,15 +3789,23 @@ SymbolFileDWARF::FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &
 TypeSP
 SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new_ptr)
 {
+    TypeSP type_sp;
+    
     TypeSystem *type_system = GetTypeSystemForLanguage(dwarf_cu->GetLanguageType());
 
     if (type_system)
     {
         Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
-        return type_system->ParseTypeFromDWARF (sc, this, dwarf_cu, die, log, type_is_new_ptr);
+        type_sp = type_system->ParseTypeFromDWARF (sc, this, dwarf_cu, die, log, type_is_new_ptr);
+        if (type_sp)
+        {
+            TypeList* type_list = GetTypeList();
+            if (type_list)
+                type_list->Insert(type_sp);
+        }
     }
-    else
-        return TypeSP();
+    
+    return type_sp;
 }
 
 size_t
