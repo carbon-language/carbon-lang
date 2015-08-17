@@ -796,6 +796,7 @@ SparcAsmParser::parseSparcAsmOperand(std::unique_ptr<SparcOperand> &Op,
   case AsmToken::Minus:
   case AsmToken::Integer:
   case AsmToken::LParen:
+  case AsmToken::Dot:
     if (!getParser().parseExpression(EVal, E))
       Op = SparcOperand::CreateImm(EVal, S, E);
     break;
