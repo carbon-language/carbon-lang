@@ -2,6 +2,8 @@
 
 # RUN: yaml2obj < %s > %t.obj
 # RUN: mkdir -p %tlib
+# RUN: rm -f %tlib/lib1.lib
+# RUN: rm -f %tlib/lib2.lib
 
 # RUN: echo EXPORTS sym1 > %t1.def
 # RUN: lib /nologo /def:%t1.def /out:%tlib\\lib1.lib > /dev/null
