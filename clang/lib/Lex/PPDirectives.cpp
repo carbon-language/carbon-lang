@@ -1674,6 +1674,29 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
           getLangOpts().CurrentModule &&
       SuggestedModule.getModule()->getTopLevelModuleName() !=
           getLangOpts().ImplementationOfModule) {
+
+    // If this include corresponds to a module but that module is
+    // unavailable, diagnose the situation and bail out.
+    if (!SuggestedModule.getModule()->isAvailable()) {
+      clang::Module::Requirement Requirement;
+      clang::Module::UnresolvedHeaderDirective MissingHeader;
+      Module *M = SuggestedModule.getModule();
+      // Identify the cause.
+      (void)M->isAvailable(getLangOpts(), getTargetInfo(), Requirement,
+                           MissingHeader);
+      if (MissingHeader.FileNameLoc.isValid()) {
+        Diag(MissingHeader.FileNameLoc, diag::err_module_header_missing)
+            << MissingHeader.IsUmbrella << MissingHeader.FileName;
+      } else {
+        Diag(M->DefinitionLoc, diag::err_module_unavailable)
+            << M->getFullModuleName() << Requirement.second << Requirement.first;
+      }
+      Diag(FilenameTok.getLocation(),
+           diag::note_implicit_top_level_module_import_here)
+          << M->getTopLevelModuleName();
+      return;
+    }
+
     // Compute the module access path corresponding to this module.
     // FIXME: Should we have a second loadModule() overload to avoid this
     // extra lookup step?

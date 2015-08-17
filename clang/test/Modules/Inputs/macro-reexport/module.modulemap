@@ -19,5 +19,4 @@ module e {
 }
 module f {
   module f1 { header "f1.h" export * }
-  module f2 { header "f2.h" export * }
 }

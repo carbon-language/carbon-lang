@@ -20,14 +20,12 @@ module XD {
 
 module XE {
   header "e.h"
-  header "unavailable.h"
   use XA
   use XB
 }
 
 module XF {
   header "f.h"
-  header "unavailable.h"
   use XA
   use XB
 }

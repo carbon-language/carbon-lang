@@ -183,10 +183,6 @@ def err_no_submodule_suggest : Error<
   "no submodule named %0 in module '%1'; did you mean '%2'?">;
 def warn_missing_submodule : Warning<"missing submodule '%0'">,
   InGroup<IncompleteUmbrella>;
-def err_module_unavailable : Error<
-  "module '%0' %select{is incompatible with|requires}1 feature '%2'">;
-def err_module_header_missing : Error<
-  "%select{|umbrella }0header '%1' not found">;
 def err_module_cannot_create_includes : Error<
   "cannot create includes file for module %0: %1">;
 def warn_module_config_macro_undef : Warning<

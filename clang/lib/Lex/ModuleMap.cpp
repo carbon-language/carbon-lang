@@ -320,6 +320,10 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
 
 static bool isBetterKnownHeader(const ModuleMap::KnownHeader &New,
                                 const ModuleMap::KnownHeader &Old) {
+  // Prefer available modules.
+  if (New.getModule()->isAvailable() && !Old.getModule()->isAvailable())
+    return true;
+
   // Prefer a public header over a private header.
   if ((New.getRole() & ModuleMap::PrivateHeader) !=
       (Old.getRole() & ModuleMap::PrivateHeader))
@@ -349,9 +353,6 @@ ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
       // Prefer a header from the current module over all others.
       if (H.getModule()->getTopLevelModule() == CompilingModule)
         return MakeResult(H);
-      // Cannot use a module if it is unavailable.
-      if (!H.getModule()->isAvailable())
-        continue;
       if (!Result || isBetterKnownHeader(H, Result))
         Result = H;
     }

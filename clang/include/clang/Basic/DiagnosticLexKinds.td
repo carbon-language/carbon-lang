@@ -623,6 +623,8 @@ def warn_mmap_unknown_attribute : Warning<"unknown attribute '%0'">,
 def warn_auto_module_import : Warning<
   "treating #%select{include|import|include_next|__include_macros}0 as an "
   "import of module '%1'">, InGroup<AutoImport>, DefaultIgnore;
+def note_implicit_top_level_module_import_here : Note<
+  "submodule of top-level module '%0' implicitly imported here">;
 def warn_uncovered_module_header : Warning<
   "umbrella header for module '%0' does not include header '%1'">, 
   InGroup<IncompleteUmbrella>;
