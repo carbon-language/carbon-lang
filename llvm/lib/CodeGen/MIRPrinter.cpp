@@ -324,6 +324,15 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
     else
       MF.StackObjects[StackObject.ID].CalleeSavedRegister = Reg;
   }
+  for (unsigned I = 0, E = MFI.getLocalFrameObjectCount(); I < E; ++I) {
+    auto LocalObject = MFI.getLocalFrameObjectMap(I);
+    auto StackObjectInfo = StackObjectOperandMapping.find(LocalObject.first);
+    assert(StackObjectInfo != StackObjectOperandMapping.end() &&
+           "Invalid stack object index");
+    const FrameIndexOperand &StackObject = StackObjectInfo->second;
+    assert(!StackObject.IsFixed && "Expected a locally mapped stack object");
+    MF.StackObjects[StackObject.ID].LocalOffset = LocalObject.second;
+  }
 }
 
 void MIRPrinter::convert(yaml::MachineFunction &MF,

@@ -487,6 +487,8 @@ bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
     if (parseCalleeSavedRegister(MF, PFS, CSIInfo, Object.CalleeSavedRegister,
                                  ObjectIdx))
       return true;
+    if (Object.LocalOffset)
+      MFI.mapLocalFrameObject(ObjectIdx, Object.LocalOffset.getValue());
   }
   MFI.setCalleeSavedInfo(CSIInfo);
   if (!CSIInfo.empty())

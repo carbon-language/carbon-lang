@@ -184,8 +184,7 @@ template <> struct MappingTraits<MachineFunctionLiveIn> {
 /// determined by the object's type and frame information flags.
 /// Dead stack objects aren't serialized.
 ///
-/// TODO: Determine isPreallocated flag by mapping between objects and local
-/// objects (Serialize local objects).
+/// The 'isPreallocated' flag is determined by the local offset.
 struct MachineStackObject {
   enum ObjectType { DefaultType, SpillSlot, VariableSized };
   UnsignedValue ID;
@@ -196,6 +195,7 @@ struct MachineStackObject {
   uint64_t Size = 0;
   unsigned Alignment = 0;
   StringValue CalleeSavedRegister;
+  Optional<int64_t> LocalOffset;
 };
 
 template <> struct ScalarEnumerationTraits<MachineStackObject::ObjectType> {
@@ -220,6 +220,7 @@ template <> struct MappingTraits<MachineStackObject> {
     YamlIO.mapOptional("alignment", Object.Alignment);
     YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
                        StringValue()); // Don't print it out when it's empty.
+    YamlIO.mapOptional("local-offset", Object.LocalOffset);
   }
 
   static const bool flow = true;
@@ -338,7 +339,6 @@ struct MachineFrameInfo {
   bool HasCalls = false;
   // TODO: Serialize StackProtectorIdx and FunctionContextIdx
   unsigned MaxCallFrameSize = 0;
-  // TODO: Serialize local frame objects.
   bool HasOpaqueSPAdjustment = false;
   bool HasVAStart = false;
   bool HasMustTailInVarArgFunc = false;
