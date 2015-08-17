@@ -22,6 +22,9 @@ template<typename T = int> struct C;
 template<typename T> struct D {};
 template<typename T> struct F {};
 template<typename T> struct G {};
+template<typename T> struct J {};
+template<typename T = int> struct J;
+struct K : J<> {};
 END
 
 #include "c.h"

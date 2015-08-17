@@ -1089,7 +1089,9 @@ Sema::SkippedDefinitionContext Sema::ActOnTagStartSkippedDefinition(Scope *S,
   auto Result = static_cast<SkippedDefinitionContext>(CurContext);
   CurContext = cast<TagDecl>(D)->getDefinition();
   assert(CurContext && "skipping definition of undefined tag");
-  S->setEntity(CurContext);
+  // Start lookups from the parent of the current context; we don't want to look
+  // into the pre-existing complete definition.
+  S->setEntity(CurContext->getLookupParent());
   return Result;
 }
 

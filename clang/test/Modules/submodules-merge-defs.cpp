@@ -26,38 +26,38 @@ int pre_use_a = use_a(pre_a); // expected-error {{'A' must be imported}} expecte
 
 B::Inner2 pre_bi; // expected-error +{{must be imported}}
 // expected-note@defs.h:4 +{{here}}
-// expected-note@defs.h:11 +{{here}}
+// expected-note@defs.h:17 +{{here}}
 void pre_bfi(B b) { // expected-error {{must use 'class'}} expected-error +{{must be imported}}
   b.f<int>(); // expected-error +{{must be imported}} expected-error +{{}}
-  // expected-note@defs.h:12 +{{here}}
+  // expected-note@defs.h:19 +{{here}}
 }
 
 C_Base<1> pre_cb1; // expected-error +{{must be imported}}
-// expected-note@defs.h:16 +{{here}}
+// expected-note@defs.h:23 +{{here}}
 C1 pre_c1; // expected-error +{{must be imported}} expected-error {{must use 'struct'}}
-// expected-note@defs.h:18 +{{here}}
+// expected-note@defs.h:25 +{{here}}
 C2 pre_c2; // expected-error +{{must be imported}} expected-error {{must use 'struct'}}
-// expected-note@defs.h:19 +{{here}}
+// expected-note@defs.h:26 +{{here}}
 
 D::X pre_dx; // expected-error +{{must be imported}}
-// expected-note@defs.h:21 +{{here}}
-// expected-note@defs.h:22 +{{here}}
+// expected-note@defs.h:28 +{{here}}
+// expected-note@defs.h:29 +{{here}}
 // FIXME: We should warn that use_dx is being used without being imported.
 int pre_use_dx = use_dx(pre_dx);
 
 int pre_e = E(0); // expected-error {{must be imported}}
-// expected-note@defs.h:25 +{{here}}
+// expected-note@defs.h:32 +{{here}}
 
 int pre_ff = F<int>().f(); // expected-error +{{must be imported}}
 int pre_fg = F<int>().g<int>(); // expected-error +{{must be imported}}
-// expected-note@defs.h:27 +{{here}}
+// expected-note@defs.h:34 +{{here}}
 
 G::A pre_ga // expected-error +{{must be imported}}
   = G::a; // expected-error +{{must be imported}}
-// expected-note@defs.h:42 +{{here}}
-// expected-note@defs.h:43 +{{here}}
+// expected-note@defs.h:49 +{{here}}
+// expected-note@defs.h:50 +{{here}}
 decltype(G::h) pre_gh = G::h; // expected-error +{{must be imported}}
-// expected-note@defs.h:44 +{{here}}
+// expected-note@defs.h:51 +{{here}}
 
 J<> pre_j; // expected-error {{declaration of 'J' must be imported}}
 #ifdef IMPORT_USE_2
@@ -67,10 +67,10 @@ J<> pre_j; // expected-error {{declaration of 'J' must be imported}}
 #else
 // expected-error@-6 {{default argument of 'J' must be imported from module 'stuff.use'}}
 #endif
-// expected-note@defs.h:51 +{{here}}
+// expected-note@defs.h:58 +{{here}}
 
 ScopedEnum pre_scopedenum; // expected-error {{must be imported}} expected-error {{must use 'enum'}}
-// expected-note@defs.h:99 {{here}}
+// expected-note@defs.h:106 {{here}}
 enum ScopedEnum : int;
 ScopedEnum pre_scopedenum_declared; // ok
 
