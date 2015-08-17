@@ -124,14 +124,19 @@ private:
   size_t Size;
 };
 
-static std::map<StringRef, std::vector<DefinedImportData *>>
+static std::vector<std::vector<DefinedImportData *>>
 binImports(const std::vector<DefinedImportData *> &Imports) {
   // Group DLL-imported symbols by DLL name because that's how
   // symbols are layed out in the import descriptor table.
-  std::map<StringRef, std::vector<DefinedImportData *>> M;
+  auto Less = [](StringRef A, StringRef B) {
+    return Config->DLLOrder[A] < Config->DLLOrder[B];
+  };
+  std::map<StringRef, std::vector<DefinedImportData *>,
+           bool(*)(StringRef, StringRef)> M(Less);
   for (DefinedImportData *Sym : Imports)
     M[Sym->getDLLName()].push_back(Sym);
 
+  std::vector<std::vector<DefinedImportData *>> V;
   for (auto &P : M) {
     // Sort symbols by name for each group.
     std::vector<DefinedImportData *> &Syms = P.second;
@@ -139,8 +144,9 @@ binImports(const std::vector<DefinedImportData *> &Imports) {
               [](DefinedImportData *A, DefinedImportData *B) {
                 return A->getName() < B->getName();
               });
+    V.push_back(std::move(Syms));
   }
-  return M;
+  return V;
 }
 
 // Export table
@@ -393,13 +399,11 @@ std::vector<Chunk *> IdataContents::getChunks() {
 }
 
 void IdataContents::create() {
-  std::map<StringRef, std::vector<DefinedImportData *>> Map =
-      binImports(Imports);
+  std::vector<std::vector<DefinedImportData *>> V = binImports(Imports);
 
   // Create .idata contents for each DLL.
-  for (auto &P : Map) {
-    StringRef Name = P.first;
-    std::vector<DefinedImportData *> &Syms = P.second;
+  for (std::vector<DefinedImportData *> &Syms : V) {
+    StringRef Name = Syms[0]->getDLLName();
 
     // Create lookup and address tables. If they have external names,
     // we need to create HintName chunks to store the names.
@@ -467,13 +471,11 @@ uint64_t DelayLoadContents::getDirSize() {
 
 void DelayLoadContents::create(Defined *H) {
   Helper = H;
-  std::map<StringRef, std::vector<DefinedImportData *>> Map =
-      binImports(Imports);
+  std::vector<std::vector<DefinedImportData *>> V = binImports(Imports);
 
   // Create .didat contents for each DLL.
-  for (auto &P : Map) {
-    StringRef Name = P.first;
-    std::vector<DefinedImportData *> &Syms = P.second;
+  for (std::vector<DefinedImportData *> &Syms : V) {
+    StringRef Name = Syms[0]->getDLLName();
 
     // Create the delay import table header.
     if (!DLLNames.count(Name))

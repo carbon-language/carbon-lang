@@ -186,6 +186,7 @@ public:
 
   DefinedImportData *ImpSym = nullptr;
   DefinedImportThunk *ThunkSym = nullptr;
+  std::string DLLName;
 
 private:
   void parse() override;

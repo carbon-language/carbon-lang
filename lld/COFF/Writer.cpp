@@ -365,15 +365,22 @@ void Writer::createMiscChunks() {
 void Writer::createImportTables() {
   if (Symtab->ImportFiles.empty())
     return;
+
+  // Initialize DLLOrder so that import entries are ordered in
+  // the same order as in the command line. (That affects DLL
+  // initialization order, and this ordering is MSVC-compatible.)
+  for (ImportFile *File : Symtab->ImportFiles)
+    if (Config->DLLOrder.count(File->DLLName) == 0)
+      Config->DLLOrder[File->DLLName] = Config->DLLOrder.size();
+
   OutputSection *Text = createSection(".text");
   for (ImportFile *File : Symtab->ImportFiles) {
     if (DefinedImportThunk *Thunk = File->ThunkSym)
       Text->addChunk(Thunk->getChunk());
-    DefinedImportData *Imp = File->ImpSym;
-    if (Config->DelayLoads.count(Imp->getDLLName().lower())) {
-      DelayIdata.add(Imp);
+    if (Config->DelayLoads.count(File->DLLName)) {
+      DelayIdata.add(File->ImpSym);
     } else {
-      Idata.add(Imp);
+      Idata.add(File->ImpSym);
     }
   }
   if (!Idata.empty()) {
