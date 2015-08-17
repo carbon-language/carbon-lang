@@ -532,13 +532,6 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   if (F->doesNotAccessMemory())
     return FMRB_DoesNotAccessMemory;
 
-  // For intrinsics, we can check the table.
-  if (Intrinsic::ID iid = F->getIntrinsicID()) {
-#define GET_INTRINSIC_MODREF_BEHAVIOR
-#include "llvm/IR/Intrinsics.gen"
-#undef GET_INTRINSIC_MODREF_BEHAVIOR
-  }
-
   FunctionModRefBehavior Min = FMRB_UnknownModRefBehavior;
 
   // If the function declares it only reads memory, go with that.
