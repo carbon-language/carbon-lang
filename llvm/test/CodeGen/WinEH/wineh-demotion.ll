@@ -294,3 +294,89 @@ catchend:
 exit:
   ret void
 }
+
+; CHECK-LABEL: @test6(
+define void @test6() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  ; Since %x needs to be stored but the edge to loop is critical,
+  ; it needs to be split
+  ; CHECK: entry:
+  ; CHECK: invoke i32 @g
+  ; CHECK-NEXT: to label %[[SplitBlock:[^ ]+]] unwind label %to_caller
+  %x = invoke i32 @g()
+          to label %loop unwind label %to_caller
+  ; The store should be in the split block
+  ; CHECK: [[SplitBlock]]:
+  ; CHECK: store i32 %x, i32* [[SpillSlot:%[^ ]+]]
+  ; CHECK: br label %loop
+to_caller:
+  cleanuppad void []
+  cleanupret void unwind to caller
+loop:
+  invoke void @f()
+          to label %loop unwind label %cleanup
+cleanup:
+  ; CHECK: cleanup:
+  ; CHECK:   [[Load:%[^ ]+]] = load i32, i32* [[SpillSlot]]
+  ; CHECK:   call void @h(i32 [[Load]])
+  cleanuppad void []
+  call void @h(i32 %x)
+  cleanupret void unwind to caller
+}
+
+; CHECK-LABEL: @test7(
+define void @test7() personality i32 (...)* @__CxxFrameHandler3 {
+entry:
+  ; %x is an EH pad phi, so gets stored in pred here
+  ; CHECK: entry:
+  ; CHECK:   store i32 1, i32* [[SlotX:%[^ ]+]]
+  ; CHECK:   invoke void @f()
+  invoke void @f()
+     to label %invoke.cont unwind label %catchpad
+invoke.cont:
+  ; %x is an EH pad phi, so gets stored in pred here
+  ; CHECK: invoke.cont:
+  ; CHECK:   store i32 2, i32* [[SlotX]]
+  ; CHECK:   invoke void @f()
+  invoke void @f()
+    to label %exit unwind label %catchpad
+catchpad:
+  ; %x phi should be eliminated
+  ; CHECK: catchpad:
+  ; CHECK-NEXT: catchpad void
+  %x = phi i32 [ 1, %entry ], [ 2, %invoke.cont ]
+  catchpad void [] to label %catch unwind label %catchend
+catch:
+  %b = call i1 @i()
+  br i1 %b, label %left, label %right
+left:
+  ; Edge from %left to %join needs to be split so that
+  ; the load of %x can be inserted *after* the catchret
+  ; CHECK: left:
+  ; CHECK-NEXT: catchret void to label %[[SplitLeft:[^ ]+]]
+  catchret void to label %join
+  ; CHECK: [[SplitLeft]]:
+  ; CHECK:   [[LoadX:%[^ ]+]] = load i32, i32* [[SlotX]]
+  ; CHECK:   br label %join
+right:
+  ; Edge from %right to %join needs to be split so that
+  ; the load of %y can be inserted *after* the catchret
+  ; CHECK: right:
+  ; CHECK:   store i32 %y, i32* [[SlotY:%[^ ]+]]
+  ; CHECK:   catchret void to label %[[SplitRight:[^ ]+]]
+  %y = call i32 @g()
+  catchret void to label %join
+  ; CHECK: [[SplitRight]]:
+  ; CHECK:   [[LoadY:%[^ ]+]] = load i32, i32* [[SlotY]]
+  ; CHECK:   br label %join
+catchend:
+  catchendpad unwind to caller
+join:
+  ; CHECK: join:
+  ; CHECK:   %phi = phi i32 [ [[LoadX]], %[[SplitLeft]] ], [ [[LoadY]], %[[SplitRight]] ]
+  %phi = phi i32 [ %x, %left ], [ %y, %right ]
+  call void @h(i32 %phi)
+  br label %exit
+exit:
+  ret void
+}

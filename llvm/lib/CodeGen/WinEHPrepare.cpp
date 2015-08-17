@@ -3289,6 +3289,42 @@ void WinEHPrepare::replaceUseWithLoad(Value *V, Use &U, AllocaInst *&SpillSlot,
     // coming in from the same block, which is illegal SSA form.
     // For this reason, we keep track of and reuse loads we insert.
     BasicBlock *IncomingBlock = UsingPHI->getIncomingBlock(U);
+    if (auto *CatchRet =
+            dyn_cast<CatchReturnInst>(IncomingBlock->getTerminator())) {
+      // Putting a load above a catchret and use on the phi would still leave
+      // a cross-funclet def/use.  We need to split the edge, change the
+      // catchret to target the new block, and put the load there.
+      BasicBlock *PHIBlock = UsingInst->getParent();
+      BasicBlock *NewBlock = SplitEdge(IncomingBlock, PHIBlock);
+      // SplitEdge gives us:
+      //   IncomingBlock:
+      //     ...
+      //     br label %NewBlock
+      //   NewBlock:
+      //     catchret label %PHIBlock
+      // But we need:
+      //   IncomingBlock:
+      //     ...
+      //     catchret label %NewBlock
+      //   NewBlock:
+      //     br label %PHIBlock
+      // So move the terminators to each others' blocks and swap their
+      // successors.
+      BranchInst *Goto = cast<BranchInst>(IncomingBlock->getTerminator());
+      Goto->removeFromParent();
+      CatchRet->removeFromParent();
+      IncomingBlock->getInstList().push_back(CatchRet);
+      NewBlock->getInstList().push_back(Goto);
+      Goto->setSuccessor(0, PHIBlock);
+      CatchRet->setSuccessor(NewBlock);
+      // Update the color mapping for the newly split edge.
+      std::set<BasicBlock *> &ColorsForPHIBlock = BlockColors[PHIBlock];
+      BlockColors[NewBlock] = ColorsForPHIBlock;
+      for (BasicBlock *FuncletPad : ColorsForPHIBlock)
+        FuncletBlocks[FuncletPad].insert(NewBlock);
+      // Treat the new block as incoming for load insertion.
+      IncomingBlock = NewBlock;
+    }
     Value *&Load = Loads[IncomingBlock];
     // Insert the load into the predecessor block
     if (!Load)
