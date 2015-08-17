@@ -107,6 +107,10 @@ unsigned MipsABIInfo::GetNullPtr() const {
   return ArePtrs64bit() ? Mips::ZERO_64 : Mips::ZERO;
 }
 
+unsigned MipsABIInfo::GetZeroReg() const {
+  return AreGprs64bit() ? Mips::ZERO_64 : Mips::ZERO;
+}
+
 unsigned MipsABIInfo::GetPtrAdduOp() const {
   return ArePtrs64bit() ? Mips::DADDu : Mips::ADDu;
 }

@@ -630,3 +630,8 @@ class LoadImmediate64<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm64),
                      !strconcat(instr_asm, "\t$rt, $imm64")> ;
 def LoadImm64 : LoadImmediate64<"dli", imm64, GPR64Opnd>;
+
+def LoadAddrReg64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rt), (ins mem:$addr),
+                                       "dla\t$rt, $addr">;
+def LoadAddrImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rt), (ins imm64:$imm64),
+                                       "dla\t$rt, $imm64">;

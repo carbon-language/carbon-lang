@@ -1,17 +1,23 @@
 # RUN: not llvm-mc %s -arch=mips -mcpu=mips32r2 2>%t1
-# RUN: FileCheck %s < %t1 --check-prefix=32-BIT
+# RUN: FileCheck %s < %t1 --check-prefix=O32
 # RUN: not llvm-mc %s -arch=mips64 -mcpu=mips64 -target-abi n32 2>&1 | \
-# RUN:   FileCheck %s --check-prefix=64-BIT --check-prefix=N32-ONLY
+# RUN:   FileCheck %s --check-prefix=N32
 # RUN: not llvm-mc %s -arch=mips64 -mcpu=mips64 -target-abi n64 2>&1 | \
-# RUN:   FileCheck %s --check-prefix=64-BIT --check-prefix=N64-ONLY
+# RUN:   FileCheck %s --check-prefix=N64
 
   .text
   la $5, 0x100000000
-  # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
-  # 64-BIT: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
+  # O32: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
+  # N32: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
+  # N64: :[[@LINE-3]]:3: error: la used to load 64-bit address
+
   la $5, 0x100000000($6)
-  # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
-  # 64-BIT: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
+  # O32: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
+  # N32: :[[@LINE-2]]:3: error: instruction requires a 32-bit immediate
+  # N64: :[[@LINE-3]]:3: error: la used to load 64-bit address
+
+  # FIXME: These should be warnings but we lack la -> dla promotion at the
+  #        moment.
   la $5, symbol
-  # N64-ONLY: :[[@LINE-1]]:3: warning: instruction loads the 32-bit address of a 64-bit symbol
-  # N32-ONLY-NOT: :[[@LINE-2]]:3: warning: instruction loads the 32-bit address of a 64-bit symbol
+  # N32-NOT: :[[@LINE-1]]:3: error: la used to load 64-bit address
+  # N64:     :[[@LINE-2]]:3: error: la used to load 64-bit address

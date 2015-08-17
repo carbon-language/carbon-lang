@@ -2,10 +2,12 @@
 # RUN:   FileCheck %s
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips32r6 | \
 # RUN:   FileCheck %s
-# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64r2 | \
+# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64r2 -target-abi=n32 | \
 # RUN:   FileCheck %s
-# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64r6 | \
+# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64r6 -target-abi=n32 | \
 # RUN:   FileCheck %s
+
+# N64 should be acceptable too but we cannot convert la to dla yet.
 
 la $5, 0x00000001 # CHECK: addiu $5, $zero, 1      # encoding: [0x24,0x05,0x00,0x01]
 la $5, 0x00000002 # CHECK: addiu $5, $zero, 2      # encoding: [0x24,0x05,0x00,0x02]
