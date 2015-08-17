@@ -298,16 +298,16 @@ void ImportFile::parse() {
     ExtName = ExtName.substr(0, ExtName.find('@'));
     break;
   }
-  auto *ImpSym = new (Alloc) DefinedImportData(DLLName, ImpName, ExtName, Hdr);
+  ImpSym = new (Alloc) DefinedImportData(DLLName, ImpName, ExtName, Hdr);
   SymbolBodies.push_back(ImpSym);
 
   // If type is function, we need to create a thunk which jump to an
   // address pointed by the __imp_ symbol. (This allows you to call
   // DLL functions just like regular non-DLL functions.)
-  if (Hdr->getType() == llvm::COFF::IMPORT_CODE) {
-    auto *B = new (Alloc) DefinedImportThunk(Name, ImpSym, Hdr->Machine);
-    SymbolBodies.push_back(B);
-  }
+  if (Hdr->getType() != llvm::COFF::IMPORT_CODE)
+    return;
+  ThunkSym = new (Alloc) DefinedImportThunk(Name, ImpSym, Hdr->Machine);
+  SymbolBodies.push_back(ThunkSym);
 }
 
 void BitcodeFile::parse() {

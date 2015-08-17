@@ -367,19 +367,13 @@ void Writer::createImportTables() {
     return;
   OutputSection *Text = createSection(".text");
   for (ImportFile *File : Symtab->ImportFiles) {
-    for (SymbolBody *B : File->getSymbols()) {
-      auto *Import = dyn_cast<DefinedImportData>(B);
-      if (!Import) {
-        // Linker-created function thunks for DLL symbols are added to
-        // .text section.
-        Text->addChunk(cast<DefinedImportThunk>(B)->getChunk());
-        continue;
-      }
-      if (Config->DelayLoads.count(Import->getDLLName().lower())) {
-        DelayIdata.add(Import);
-      } else {
-        Idata.add(Import);
-      }
+    if (DefinedImportThunk *Thunk = File->ThunkSym)
+      Text->addChunk(Thunk->getChunk());
+    DefinedImportData *Imp = File->ImpSym;
+    if (Config->DelayLoads.count(Imp->getDLLName().lower())) {
+      DelayIdata.add(Imp);
+    } else {
+      Idata.add(Imp);
     }
   }
   if (!Idata.empty()) {

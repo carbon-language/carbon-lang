@@ -33,6 +33,8 @@ using llvm::object::coff_section;
 
 class Chunk;
 class Defined;
+class DefinedImportData;
+class DefinedImportThunk;
 class Lazy;
 class SymbolBody;
 class Undefined;
@@ -181,6 +183,9 @@ public:
       : InputFile(ImportKind, M), StringAlloc(StringAllocAux) {}
   static bool classof(const InputFile *F) { return F->kind() == ImportKind; }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
+
+  DefinedImportData *ImpSym = nullptr;
+  DefinedImportThunk *ThunkSym = nullptr;
 
 private:
   void parse() override;
