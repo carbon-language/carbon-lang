@@ -790,7 +790,10 @@ void MIPrinter::print(const MachineMemOperand &Op) {
     OS << ", !noalias ";
     AAInfo.NoAlias->printAsOperand(OS, MST);
   }
-  // TODO: Print the ranges metadata.
+  if (Op.getRanges()) {
+    OS << ", !range ";
+    Op.getRanges()->printAsOperand(OS, MST);
+  }
   OS << ')';
 }
 

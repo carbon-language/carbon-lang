@@ -447,6 +447,7 @@ static MIToken::TokenKind getMetadataKeywordKind(StringRef Identifier) {
       .Case("!tbaa", MIToken::md_tbaa)
       .Case("!alias.scope", MIToken::md_alias_scope)
       .Case("!noalias", MIToken::md_noalias)
+      .Case("!range", MIToken::md_range)
       .Default(MIToken::Error);
 }
 

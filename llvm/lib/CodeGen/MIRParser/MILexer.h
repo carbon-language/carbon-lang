@@ -89,6 +89,7 @@ struct MIToken {
     md_tbaa,
     md_alias_scope,
     md_noalias,
+    md_range,
 
     // Identifier tokens
     Identifier,
