@@ -215,10 +215,10 @@ RegisterValue::SetFromMemoryData (const RegisterInfo *reg_info,
     }
     else if (value_type == eTypeBytes)
     {
-        m_data.buffer.byte_order = src_byte_order;
+        buffer.byte_order = src_byte_order;
         // Make sure to set the buffer length of the destination buffer to avoid
-        // problems due to uninitialized variables.
-        m_data.buffer.length = src_len;
+        // problems due to uninitalized variables.
+        buffer.length = src_len;
     }
 
     const uint32_t bytes_copied = src_data.CopyByteOrderedData (0,               // src offset
@@ -240,25 +240,23 @@ RegisterValue::GetScalarValue (Scalar &scalar) const
         case eTypeInvalid:      break;
         case eTypeBytes:
         {
-            switch (m_data.buffer.length)
+            switch (buffer.length)
             {
             default:    break;
-            case 1:     scalar = m_data.uint8; return true;
-            case 2:     scalar = m_data.uint16; return true;
-            case 4:     scalar = m_data.uint32; return true;
-            case 8:     scalar = m_data.uint64; return true;
+            case 1:     scalar = *(const uint8_t *)buffer.bytes; return true;
+            case 2:     scalar = *(const uint16_t *)buffer.bytes; return true;
+            case 4:     scalar = *(const uint32_t *)buffer.bytes; return true;
+            case 8:     scalar = *(const uint64_t *)buffer.bytes; return true;
             }
         }
-        case eTypeUInt8:        scalar = m_data.uint8; return true;
-        case eTypeUInt16:       scalar = m_data.uint16; return true;
-        case eTypeUInt32:       scalar = m_data.uint32; return true;
-        case eTypeUInt64:       scalar = m_data.uint64; return true;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:      break;
-#endif
-        case eTypeFloat:        scalar = m_data.ieee_float; return true;
-        case eTypeDouble:       scalar = m_data.ieee_double; return true;
-        case eTypeLongDouble:   scalar = m_data.ieee_long_double; return true;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:   scalar = m_scalar; return true;
     }
     return false;
 }
@@ -289,10 +287,8 @@ RegisterValue::SetType (const RegisterInfo *reg_info)
                 m_type = eTypeUInt32;
             else if (byte_size <= 8)
                 m_type = eTypeUInt64;
-#if defined (ENABLE_128_BIT_SUPPORT)
             else if (byte_size <= 16)
                 m_type = eTypeUInt128;
-#endif
             break;
 
         case eEncodingIEEE754:
@@ -308,6 +304,7 @@ RegisterValue::SetType (const RegisterInfo *reg_info)
             m_type = eTypeBytes;
             break;
     }
+    m_scalar.SetType(reg_info);
     return m_type;
 }
 
@@ -342,8 +339,9 @@ RegisterValue::SetValueFromData (const RegisterInfo *reg_info, DataExtractor &sr
         src_len = reg_info->byte_size;
 
     // Zero out the value in case we get partial data...
-    memset (m_data.buffer.bytes, 0, sizeof (m_data.buffer.bytes));
-    
+    memset (buffer.bytes, 0, sizeof (buffer.bytes));
+
+    type128 int128;
     switch (SetType (reg_info))
     {
         case eTypeInvalid:
@@ -353,33 +351,36 @@ RegisterValue::SetValueFromData (const RegisterInfo *reg_info, DataExtractor &sr
         case eTypeUInt16:   SetUInt16 (src.GetMaxU32 (&src_offset, src_len)); break;
         case eTypeUInt32:   SetUInt32 (src.GetMaxU32 (&src_offset, src_len)); break;
         case eTypeUInt64:   SetUInt64 (src.GetMaxU64 (&src_offset, src_len)); break;
-#if defined (ENABLE_128_BIT_SUPPORT)
         case eTypeUInt128:
             {
-                __uint128_t data1 = src.GetU64 (&src_offset);
-                __uint128_t data2 = src.GetU64 (&src_offset);
                 if (src.GetByteSize() == eByteOrderBig)
-                    SetUInt128 (data1 << 64 + data2);
+                {
+                    int128.x[1] = src.GetU64 (&src_offset + 1);
+                    int128.x[0] = src.GetU64 (&src_offset);
+                }
                 else
-                    SetUInt128 (data2 << 64 + data1);
+                {
+                    int128.x[0] = src.GetU64 (&src_offset);
+                    int128.x[1] = src.GetU64 (&src_offset + 1);
+                }
+                SetUInt128 (llvm::APInt(128, 2, int128.x));
             }
             break;
-#endif
         case eTypeFloat:        SetFloat (src.GetFloat (&src_offset));      break;
         case eTypeDouble:       SetDouble(src.GetDouble (&src_offset));     break;
         case eTypeLongDouble:   SetFloat (src.GetLongDouble (&src_offset)); break;
         case eTypeBytes:
         {
-            m_data.buffer.length = reg_info->byte_size;
-            m_data.buffer.byte_order = src.GetByteOrder();
-            assert (m_data.buffer.length <= kMaxRegisterByteSize);
-            if (m_data.buffer.length > kMaxRegisterByteSize)
-                m_data.buffer.length = kMaxRegisterByteSize;
+            buffer.length = reg_info->byte_size;
+            buffer.byte_order = src.GetByteOrder();
+            assert (buffer.length <= kMaxRegisterByteSize);
+            if (buffer.length > kMaxRegisterByteSize)
+                buffer.length = kMaxRegisterByteSize;
             if (src.CopyByteOrderedData (src_offset,                    // offset within "src" to start extracting data
                                          src_len,                       // src length
-                                         m_data.buffer.bytes,           // dst buffer
-                                         m_data.buffer.length,          // dst length
-                                         m_data.buffer.byte_order) == 0)// dst byte order
+                                         buffer.bytes,           // dst buffer
+                                         buffer.length,          // dst length
+                                         buffer.byte_order) == 0)// dst byte order
             {
                 error.SetErrorString ("data copy failed data.");
                 return error;
@@ -459,6 +460,9 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
     }
     bool success = false;
     const uint32_t byte_size = reg_info->byte_size;
+    static float flt_val;
+    static double dbl_val;
+    static long double ldbl_val;
     switch (reg_info->encoding)
     {
         case eEncodingInvalid:
@@ -510,22 +514,31 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
         case eEncodingIEEE754:
             if (byte_size == sizeof (float))
             {
-                if (::sscanf (value_str, "%f", &m_data.ieee_float) == 1)
+                if (::sscanf (value_str, "%f", &flt_val) == 1)
+                {
+                    m_scalar = flt_val;
                     m_type = eTypeFloat;
+                }
                 else
                     error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
             }
             else if (byte_size == sizeof (double))
             {
-                if (::sscanf (value_str, "%lf", &m_data.ieee_double) == 1)
+                if (::sscanf (value_str, "%lf", &dbl_val) == 1)
+                {
+                    m_scalar = dbl_val;
                     m_type = eTypeDouble;
+                }
                 else
                     error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
             }
             else if (byte_size == sizeof (long double))
             {
-                if (::sscanf (value_str, "%Lf", &m_data.ieee_long_double) == 1)
+                if (::sscanf (value_str, "%Lf", &ldbl_val) == 1)
+                {
+                    m_scalar = ldbl_val;
                     m_type = eTypeLongDouble;
+                }
                 else
                     error.SetErrorStringWithFormat ("'%s' is not a valid float string value", value_str);
             }
@@ -557,81 +570,11 @@ RegisterValue::SignExtend (uint32_t sign_bitpos)
             break;
 
         case eTypeUInt8:        
-            if (sign_bitpos == (8-1))
-                return true;
-            else if (sign_bitpos < (8-1))
-            {
-                uint8_t sign_bit = 1u << sign_bitpos;
-                if (m_data.uint8 & sign_bit)
-                {
-                    const uint8_t mask = ~(sign_bit) + 1u;
-                    m_data.uint8 |= mask;
-                }
-                return true;
-            }
-            break;
-
         case eTypeUInt16:
-            if (sign_bitpos == (16-1))
-                return true;
-            else if (sign_bitpos < (16-1))
-            {
-                uint16_t sign_bit = 1u << sign_bitpos;
-                if (m_data.uint16 & sign_bit)
-                {
-                    const uint16_t mask = ~(sign_bit) + 1u;
-                    m_data.uint16 |= mask;
-                }
-                return true;
-            }
-            break;
-        
         case eTypeUInt32:
-            if (sign_bitpos == (32-1))
-                return true;
-            else if (sign_bitpos < (32-1))
-            {
-                uint32_t sign_bit = 1u << sign_bitpos;
-                if (m_data.uint32 & sign_bit)
-                {
-                    const uint32_t mask = ~(sign_bit) + 1u;
-                    m_data.uint32 |= mask;
-                }
-                return true;
-            }
-            break;
-
         case eTypeUInt64:
-            if (sign_bitpos == (64-1))
-                return true;
-            else if (sign_bitpos < (64-1))
-            {
-                uint64_t sign_bit = 1ull << sign_bitpos;
-                if (m_data.uint64 & sign_bit)
-                {
-                    const uint64_t mask = ~(sign_bit) + 1ull;
-                    m_data.uint64 |= mask;
-                }
-                return true;
-            }
-            break;
-
-#if defined (ENABLE_128_BIT_SUPPORT)
         case eTypeUInt128:
-            if (sign_bitpos == (128-1))
-                return true;
-            else if (sign_bitpos < (128-1))
-            {
-                __uint128_t sign_bit = (__uint128_t)1u << sign_bitpos;
-                if (m_data.uint128 & sign_bit)
-                {
-                    const uint128_t mask = ~(sign_bit) + 1u;
-                    m_data.uint128 |= mask;
-                }
-                return true;
-            }
-            break;
-#endif
+            return m_scalar.SignExtend(sign_bitpos);
         case eTypeFloat:
         case eTypeDouble:
         case eTypeLongDouble:
@@ -649,21 +592,19 @@ RegisterValue::CopyValue (const RegisterValue &rhs)
     {
         case eTypeInvalid: 
             return false;
-        case eTypeUInt8:        m_data.uint8 = rhs.m_data.uint8; break;
-        case eTypeUInt16:       m_data.uint16 = rhs.m_data.uint16; break;
-        case eTypeUInt32:       m_data.uint32 = rhs.m_data.uint32; break;
-        case eTypeUInt64:       m_data.uint64 = rhs.m_data.uint64; break;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:      m_data.uint128 = rhs.m_data.uint128; break;
-#endif
-        case eTypeFloat:        m_data.ieee_float = rhs.m_data.ieee_float; break;
-        case eTypeDouble:       m_data.ieee_double = rhs.m_data.ieee_double; break;
-        case eTypeLongDouble:   m_data.ieee_long_double = rhs.m_data.ieee_long_double; break;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:   m_scalar = rhs.m_scalar; break;
         case eTypeBytes:        
-            assert (rhs.m_data.buffer.length <= kMaxRegisterByteSize);
-            ::memcpy (m_data.buffer.bytes, rhs.m_data.buffer.bytes, kMaxRegisterByteSize);
-            m_data.buffer.length = rhs.m_data.buffer.length;
-            m_data.buffer.byte_order = rhs.m_data.buffer.byte_order;
+            assert (rhs.buffer.length <= kMaxRegisterByteSize);
+            ::memcpy (buffer.bytes, rhs.buffer.bytes, kMaxRegisterByteSize);
+            buffer.length = rhs.buffer.length;
+            buffer.byte_order = rhs.buffer.byte_order;
             break;
     }
     return true;
@@ -678,15 +619,15 @@ RegisterValue::GetAsUInt16 (uint16_t fail_value, bool *success_ptr) const
     switch (m_type)
     {
         default:            break;
-        case eTypeUInt8:    return m_data.uint8;
-        case eTypeUInt16:   return m_data.uint16;
+        case eTypeUInt8:
+        case eTypeUInt16:   return m_scalar.UShort(fail_value);
         case eTypeBytes:
         {
-            switch (m_data.buffer.length)
+            switch (buffer.length)
             {
             default:    break;
-            case 1:     return m_data.uint8;
-            case 2:     return m_data.uint16;
+            case 1:
+            case 2:     return *(const uint16_t *)buffer.bytes;
             }
         }
         break;
@@ -704,29 +645,20 @@ RegisterValue::GetAsUInt32 (uint32_t fail_value, bool *success_ptr) const
     switch (m_type)
     {
         default:            break;
-        case eTypeUInt8:    return m_data.uint8;
-        case eTypeUInt16:   return m_data.uint16;
-        case eTypeUInt32:   return m_data.uint32;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
         case eTypeFloat:
-            if (sizeof(float) == sizeof(uint32_t))
-                return m_data.uint32;
-            break;
         case eTypeDouble:
-            if (sizeof(double) == sizeof(uint32_t))
-                return m_data.uint32;
-            break;
-        case eTypeLongDouble:
-            if (sizeof(long double) == sizeof(uint32_t))
-                return m_data.uint32;
-            break;
+        case eTypeLongDouble:   return m_scalar.UInt(fail_value);
         case eTypeBytes:
         {
-            switch (m_data.buffer.length)
+            switch (buffer.length)
             {
             default:    break;
-            case 1:     return m_data.uint8;
-            case 2:     return m_data.uint16;
-            case 4:     return m_data.uint32;
+            case 1:
+            case 2:
+            case 4:     return *(const uint32_t *)buffer.bytes;
             }
         }
         break;
@@ -744,31 +676,22 @@ RegisterValue::GetAsUInt64 (uint64_t fail_value, bool *success_ptr) const
     switch (m_type)
     {
         default:            break;
-        case eTypeUInt8:    return m_data.uint8;
-        case eTypeUInt16:   return m_data.uint16;
-        case eTypeUInt32:   return m_data.uint32;
-        case eTypeUInt64:   return m_data.uint64;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
         case eTypeFloat:
-            if (sizeof(float) == sizeof(uint64_t))
-                return m_data.uint64;
-            break;
         case eTypeDouble:
-            if (sizeof(double) == sizeof(uint64_t))
-                return m_data.uint64;
-            break;
-        case eTypeLongDouble:
-            if (sizeof(long double) == sizeof(uint64_t))
-                return m_data.uint64;
-            break;
+        case eTypeLongDouble: return m_scalar.ULongLong(fail_value);
         case eTypeBytes:
         {
-            switch (m_data.buffer.length)
+            switch (buffer.length)
             {
             default:    break;
-            case 1:     return m_data.uint8;
-            case 2:     return m_data.uint16;
-            case 4:     return m_data.uint32;
-            case 8:     return m_data.uint64;
+            case 1:
+            case 2:
+            case 4:
+            case 8:     return *(const uint64_t *)buffer.bytes;
             }
         }
         break;
@@ -778,43 +701,36 @@ RegisterValue::GetAsUInt64 (uint64_t fail_value, bool *success_ptr) const
     return fail_value;
 }
 
-#if defined (ENABLE_128_BIT_SUPPORT)
-__uint128_t
-RegisterValue::GetAsUInt128 (__uint128_t fail_value, bool *success_ptr) const
+llvm::APInt
+RegisterValue::GetAsUInt128 (llvm::APInt& fail_value, bool *success_ptr) const
 {
     if (success_ptr)
         *success_ptr = true;
     switch (m_type)
     {
         default:            break;
-        case eTypeUInt8:    return m_data.uint8;
-        case eTypeUInt16:   return m_data.uint16;
-        case eTypeUInt32:   return m_data.uint32;
-        case eTypeUInt64:   return m_data.uint64;
-        case eTypeUInt128:  return m_data.uint128;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
         case eTypeFloat:
-            if (sizeof(float) == sizeof(__uint128_t))
-                return m_data.uint128;
-            break;
         case eTypeDouble:
-            if (sizeof(double) == sizeof(__uint128_t))
-                return m_data.uint128;
-            break;
-        case eTypeLongDouble:
-            if (sizeof(long double) == sizeof(__uint128_t))
-                return m_data.uint128;
-            break;
+        case eTypeLongDouble:  return m_scalar.UInt128(fail_value);
         case eTypeBytes:
         {
-            switch (m_data.buffer.length)
+            switch (buffer.length)
             {
-            default:
-                break;
-            case 1:     return m_data.uint8;
-            case 2:     return m_data.uint16;
-            case 4:     return m_data.uint32;
-            case 8:     return m_data.uint64;
-            case 16:    return m_data.uint128;
+                default:
+                    break;
+                case 1:
+                case 2:
+                case 4:
+                case 8:
+                case 16:
+                {
+                    return llvm::APInt(BITWIDTH_INT128, NUM_OF_WORDS_INT128, ((const type128 *)buffer.bytes)->x);
+                }
             }
         }
         break;
@@ -823,7 +739,7 @@ RegisterValue::GetAsUInt128 (__uint128_t fail_value, bool *success_ptr) const
         *success_ptr = false;
     return fail_value;
 }
-#endif
+
 float
 RegisterValue::GetAsFloat (float fail_value, bool *success_ptr) const
 {
@@ -833,28 +749,12 @@ RegisterValue::GetAsFloat (float fail_value, bool *success_ptr) const
     {
         default:            break;
         case eTypeUInt32:
-            if (sizeof(float) == sizeof(m_data.uint32))
-                return m_data.ieee_float;
-            break;
         case eTypeUInt64:
-            if (sizeof(float) == sizeof(m_data.uint64))
-                return m_data.ieee_float;
-            break;
-#if defined (ENABLE_128_BIT_SUPPORT)
         case eTypeUInt128:
-            if (sizeof(float) == sizeof(m_data.uint128))
-                return m_data.ieee_float;
-            break;
-#endif
-        case eTypeFloat:    return m_data.ieee_float;
+        case eTypeFloat:
         case eTypeDouble:
-            if (sizeof(float) == sizeof(double))
-                return m_data.ieee_float;
-            break;
         case eTypeLongDouble:
-            if (sizeof(float) == sizeof(long double))
-                return m_data.ieee_float;
-            break;
+            return m_scalar.Float(fail_value);
     }
     if (success_ptr)
         *success_ptr = false;
@@ -872,27 +772,12 @@ RegisterValue::GetAsDouble (double fail_value, bool *success_ptr) const
             break;
             
         case eTypeUInt32:
-            if (sizeof(double) == sizeof(m_data.uint32))
-                return m_data.ieee_double;
-            break;
-            
         case eTypeUInt64:
-            if (sizeof(double) == sizeof(m_data.uint64))
-                return m_data.ieee_double;
-            break;
-            
-#if defined (ENABLE_128_BIT_SUPPORT)
         case eTypeUInt128:
-            if (sizeof(double) == sizeof(m_data.uint128))
-                return m_data.ieee_double;
-#endif
-        case eTypeFloat:    return m_data.ieee_float;
-        case eTypeDouble:   return m_data.ieee_double;
-            
+        case eTypeFloat:
+        case eTypeDouble:
         case eTypeLongDouble:
-            if (sizeof(double) == sizeof(long double))
-                return m_data.ieee_double;
-            break;
+            return m_scalar.Double(fail_value);
     }
     if (success_ptr)
         *success_ptr = false;
@@ -910,24 +795,12 @@ RegisterValue::GetAsLongDouble (long double fail_value, bool *success_ptr) const
             break;
             
         case eTypeUInt32:
-            if (sizeof(long double) == sizeof(m_data.uint32))
-                return m_data.ieee_long_double;
-            break;
-            
         case eTypeUInt64:
-            if (sizeof(long double) == sizeof(m_data.uint64))
-                return m_data.ieee_long_double;
-            break;
-            
-#if defined (ENABLE_128_BIT_SUPPORT)
         case eTypeUInt128:
-            if (sizeof(long double) == sizeof(m_data.uint128))
-                return m_data.ieee_long_double;
-#endif
-        case eTypeFloat:        return m_data.ieee_float;
-        case eTypeDouble:       return m_data.ieee_double;
-        case eTypeLongDouble:   return m_data.ieee_long_double;
-            break;
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:
+            return m_scalar.LongDouble();
     }
     if (success_ptr)
         *success_ptr = false;
@@ -940,17 +813,15 @@ RegisterValue::GetBytes () const
     switch (m_type)
     {
         case eTypeInvalid:      break;
-        case eTypeUInt8:        return &m_data.uint8;
-        case eTypeUInt16:       return &m_data.uint16;
-        case eTypeUInt32:       return &m_data.uint32;
-        case eTypeUInt64:       return &m_data.uint64;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:      return &m_data.uint128;
-#endif
-        case eTypeFloat:        return &m_data.ieee_float;
-        case eTypeDouble:       return &m_data.ieee_double;
-        case eTypeLongDouble:   return &m_data.ieee_long_double;
-        case eTypeBytes:        return m_data.buffer.bytes;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:   return m_scalar.GetBytes();
+        case eTypeBytes:        return buffer.bytes;
     }
     return NULL;
 }
@@ -961,17 +832,15 @@ RegisterValue::GetBytes ()
     switch (m_type)
     {
         case eTypeInvalid:      break;
-        case eTypeUInt8:        return &m_data.uint8;
-        case eTypeUInt16:       return &m_data.uint16;
-        case eTypeUInt32:       return &m_data.uint32;
-        case eTypeUInt64:       return &m_data.uint64;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:      return &m_data.uint128;
-#endif
-        case eTypeFloat:        return &m_data.ieee_float;
-        case eTypeDouble:       return &m_data.ieee_double;
-        case eTypeLongDouble:   return &m_data.ieee_long_double;
-        case eTypeBytes:        return m_data.buffer.bytes;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:   return m_scalar.GetBytes();
+        case eTypeBytes:        return buffer.bytes;
     }
     return NULL;
 }
@@ -982,17 +851,15 @@ RegisterValue::GetByteSize () const
     switch (m_type)
     {
         case eTypeInvalid: break;
-        case eTypeUInt8:        return sizeof(m_data.uint8);
-        case eTypeUInt16:       return sizeof(m_data.uint16);
-        case eTypeUInt32:       return sizeof(m_data.uint32);
-        case eTypeUInt64:       return sizeof(m_data.uint64);
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:      return sizeof(m_data.uint128);
-#endif
-        case eTypeFloat:        return sizeof(m_data.ieee_float);
-        case eTypeDouble:       return sizeof(m_data.ieee_double);
-        case eTypeLongDouble:   return sizeof(m_data.ieee_long_double);
-        case eTypeBytes: return m_data.buffer.length;
+        case eTypeUInt8:   return 1;
+        case eTypeUInt16:  return 2;
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble: return m_scalar.GetByteSize();
+        case eTypeBytes: return buffer.length;
     }
     return 0;
 }
@@ -1021,12 +888,10 @@ RegisterValue::SetUInt (uint64_t uint, uint32_t byte_size)
     {
         SetUInt64 (uint);
     }
-#if defined (ENABLE_128_BIT_SUPPORT)
     else if (byte_size <= 16)
     {
-        SetUInt128 (uint);
+        SetUInt128 (llvm::APInt(64, uint));
     }
-#endif
     else
         return false;
     return true;
@@ -1036,21 +901,21 @@ void
 RegisterValue::SetBytes (const void *bytes, size_t length, lldb::ByteOrder byte_order)
 {
     // If this assertion fires off we need to increase the size of
-    // m_data.buffer.bytes, or make it something that is allocated on
+    // buffer.bytes, or make it something that is allocated on
     // the heap. Since the data buffer is in a union, we can't make it
     // a collection class like SmallVector...
     if (bytes && length > 0)
     {
-        assert (length <= sizeof (m_data.buffer.bytes) && "Storing too many bytes in a RegisterValue.");
+        assert (length <= sizeof (buffer.bytes) && "Storing too many bytes in a RegisterValue.");
         m_type = eTypeBytes;
-        m_data.buffer.length = length;
-        memcpy (m_data.buffer.bytes, bytes, length);
-        m_data.buffer.byte_order = byte_order;
+        buffer.length = length;
+        memcpy (buffer.bytes, bytes, length);
+        buffer.byte_order = byte_order;
     }
     else
     {
         m_type = eTypeInvalid;
-        m_data.buffer.length = 0;
+        buffer.length = 0;
     }
 }
 
@@ -1063,25 +928,23 @@ RegisterValue::operator == (const RegisterValue &rhs) const
         switch (m_type)
         {
             case eTypeInvalid:      return true;
-            case eTypeUInt8:        return m_data.uint8 == rhs.m_data.uint8;
-            case eTypeUInt16:       return m_data.uint16 == rhs.m_data.uint16;
-            case eTypeUInt32:       return m_data.uint32 == rhs.m_data.uint32;
-            case eTypeUInt64:       return m_data.uint64 == rhs.m_data.uint64;
-#if defined (ENABLE_128_BIT_SUPPORT)
-            case eTypeUInt128:      return m_data.uint128 == rhs.m_data.uint128;
-#endif
-            case eTypeFloat:        return m_data.ieee_float == rhs.m_data.ieee_float;
-            case eTypeDouble:       return m_data.ieee_double == rhs.m_data.ieee_double;
-            case eTypeLongDouble:   return m_data.ieee_long_double == rhs.m_data.ieee_long_double;
+            case eTypeUInt8:
+            case eTypeUInt16:
+            case eTypeUInt32:
+            case eTypeUInt64:
+            case eTypeUInt128:
+            case eTypeFloat:
+            case eTypeDouble:
+            case eTypeLongDouble:   return m_scalar == rhs.m_scalar;
             case eTypeBytes:        
-                if (m_data.buffer.length != rhs.m_data.buffer.length)
+                if (buffer.length != rhs.buffer.length)
                     return false;
                 else
                 {
-                    uint8_t length = m_data.buffer.length;
+                    uint8_t length = buffer.length;
                     if (length > kMaxRegisterByteSize)
                         length = kMaxRegisterByteSize;
-                    return memcmp (m_data.buffer.bytes, rhs.m_data.buffer.bytes, length) == 0;
+                    return memcmp (buffer.bytes, rhs.buffer.bytes, length) == 0;
                 }
                 break;
         }
@@ -1097,27 +960,25 @@ RegisterValue::operator != (const RegisterValue &rhs) const
     switch (m_type)
     {
         case eTypeInvalid:      return false;
-        case eTypeUInt8:        return m_data.uint8 != rhs.m_data.uint8;
-        case eTypeUInt16:       return m_data.uint16 != rhs.m_data.uint16;
-        case eTypeUInt32:       return m_data.uint32 != rhs.m_data.uint32;
-        case eTypeUInt64:       return m_data.uint64 != rhs.m_data.uint64;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:      return m_data.uint128 != rhs.m_data.uint128;
-#endif
-        case eTypeFloat:        return m_data.ieee_float != rhs.m_data.ieee_float;
-        case eTypeDouble:       return m_data.ieee_double != rhs.m_data.ieee_double;
-        case eTypeLongDouble:   return m_data.ieee_long_double != rhs.m_data.ieee_long_double;
+        case eTypeUInt8:
+        case eTypeUInt16:
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:   return m_scalar != rhs.m_scalar;
         case eTypeBytes:        
-            if (m_data.buffer.length != rhs.m_data.buffer.length)
+            if (buffer.length != rhs.buffer.length)
             {
                 return true;
             }
             else
             {
-                uint8_t length = m_data.buffer.length;
+                uint8_t length = buffer.length;
                 if (length > kMaxRegisterByteSize)
                     length = kMaxRegisterByteSize;
-                return memcmp (m_data.buffer.bytes, rhs.m_data.buffer.bytes, length) != 0;
+                return memcmp (buffer.bytes, rhs.buffer.bytes, length) != 0;
             }
             break;
     }
@@ -1132,63 +993,35 @@ RegisterValue::ClearBit (uint32_t bit)
         case eTypeInvalid:
             break;
 
-        case eTypeUInt8:        
-            if (bit < 8)
-            {
-                m_data.uint8 &= ~(1u << bit);
-                return true;
-            }
-            break;
-            
+        case eTypeUInt8:
         case eTypeUInt16:
-            if (bit < 16)
+        case eTypeUInt32:
+        case eTypeUInt64:
+        case eTypeUInt128:
+            if (bit < (GetByteSize() * 8))
             {
-                m_data.uint16 &= ~(1u << bit);
-                return true;
+                return m_scalar.ClearBit(bit);
             }
             break;
 
-        case eTypeUInt32:
-            if (bit < 32)
-            {
-                m_data.uint32 &= ~(1u << bit);
-                return true;
-            }
-            break;
-            
-        case eTypeUInt64:
-            if (bit < 64)
-            {
-                m_data.uint64 &= ~(1ull << (uint64_t)bit);
-                return true;
-            }
-            break;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:
-            if (bit < 64)
-            {
-                m_data.uint128 &= ~((__uint128_t)1ull << (__uint128_t)bit);
-                return true;
-            }
-#endif
         case eTypeFloat:
         case eTypeDouble:
         case eTypeLongDouble:
             break;
 
         case eTypeBytes:
-            if (m_data.buffer.byte_order == eByteOrderBig || m_data.buffer.byte_order == eByteOrderLittle)
+            if (buffer.byte_order == eByteOrderBig || buffer.byte_order == eByteOrderLittle)
             {
                 uint32_t byte_idx;
-                if (m_data.buffer.byte_order == eByteOrderBig)
-                    byte_idx = m_data.buffer.length - (bit / 8) - 1;
+                if (buffer.byte_order == eByteOrderBig)
+                    byte_idx = buffer.length - (bit / 8) - 1;
                 else
                     byte_idx = bit / 8;
 
                 const uint32_t byte_bit = bit % 8;
-                if (byte_idx < m_data.buffer.length)
+                if (byte_idx < buffer.length)
                 {
-                    m_data.buffer.bytes[byte_idx] &= ~(1u << byte_bit);
+                    buffer.bytes[byte_idx] &= ~(1u << byte_bit);
                     return true;
                 }
             }
@@ -1207,62 +1040,34 @@ RegisterValue::SetBit (uint32_t bit)
             break;
             
         case eTypeUInt8:        
-            if (bit < 8)
-            {
-                m_data.uint8 |= (1u << bit);
-                return true;
-            }
-            break;
-            
         case eTypeUInt16:
-            if (bit < 16)
-            {
-                m_data.uint16 |= (1u << bit);
-                return true;
-            }
-            break;
-            
         case eTypeUInt32:
-            if (bit < 32)
-            {
-                m_data.uint32 |= (1u << bit);
-                return true;
-            }
-            break;
-            
         case eTypeUInt64:
-            if (bit < 64)
+        case eTypeUInt128:
+            if (bit < (GetByteSize() * 8))
             {
-                m_data.uint64 |= (1ull << (uint64_t)bit);
-                return true;
+                return m_scalar.SetBit(bit);
             }
             break;
-#if defined (ENABLE_128_BIT_SUPPORT)
-        case eTypeUInt128:
-            if (bit < 64)
-            {
-                m_data.uint128 |= ((__uint128_t)1ull << (__uint128_t)bit);
-                return true;
-            }
-#endif
+
         case eTypeFloat:
         case eTypeDouble:
         case eTypeLongDouble:
             break;
             
         case eTypeBytes:
-            if (m_data.buffer.byte_order == eByteOrderBig || m_data.buffer.byte_order == eByteOrderLittle)
+            if (buffer.byte_order == eByteOrderBig || buffer.byte_order == eByteOrderLittle)
             {
                 uint32_t byte_idx;
-                if (m_data.buffer.byte_order == eByteOrderBig)
-                    byte_idx = m_data.buffer.length - (bit / 8) - 1;
+                if (buffer.byte_order == eByteOrderBig)
+                    byte_idx = buffer.length - (bit / 8) - 1;
                 else
                     byte_idx = bit / 8;
                 
                 const uint32_t byte_bit = bit % 8;
-                if (byte_idx < m_data.buffer.length)
+                if (byte_idx < buffer.length)
                 {
-                    m_data.buffer.bytes[byte_idx] |= (1u << byte_bit);
+                    buffer.bytes[byte_idx] |= (1u << byte_bit);
                     return true;
                 }
             }
