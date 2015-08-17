@@ -651,7 +651,7 @@ bool GlobalsModRef::isNonEscapingGlobalNoAlias(const GlobalValue *GV,
     if (auto *LI = dyn_cast<LoadInst>(Input)) {
       // A pointer loaded from a global would have been captured, and we know
       // that the global is non-escaping, so no alias.
-      if (isa<GlobalValue>(LI->getPointerOperand()))
+      if (isa<GlobalValue>(GetUnderlyingObject(LI->getPointerOperand(), *DL)))
         continue;
 
       // Otherwise, a load could come from anywhere, so bail.

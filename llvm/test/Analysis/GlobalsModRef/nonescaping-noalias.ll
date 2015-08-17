@@ -62,6 +62,7 @@ entry:
 }
 
 @g3 = internal global i32 1
+@g4 = internal global [10 x i32*] zeroinitializer
 
 define i32 @test4(i32* %param, i32 %n, i1 %c1, i1 %c2, i1 %c3) {
 ; Ensure that we can fold a store to a load of a global across a store to
@@ -86,7 +87,7 @@ loop:
   %iv = phi i32 [ 0, %entry ], [ %inc, %loop ]
   %ptr = phi i32* [ %ptr3, %entry ], [ %ptr5, %loop ]
   store i32 7, i32* %ptr
-  %ptr4 = load i32*, i32** @g2
+  %ptr4 = load i32*, i32** getelementptr ([10 x i32*], [10 x i32*]* @g4, i32 0, i32 1)
   %ptr5 = select i1 %c2, i32* %ptr4, i32* %call
   %inc = add i32 %iv, 1
   %test = icmp slt i32 %inc, %n
