@@ -655,6 +655,7 @@ int TargetInstrInfo::getSPAdjust(const MachineInstr *MI) const {
     return 0;
  
   int SPAdj = MI->getOperand(0).getImm();
+  SPAdj = TFI->alignSPAdjust(SPAdj);
 
   if ((!StackGrowsDown && MI->getOpcode() == FrameSetupOpcode) ||
        (StackGrowsDown && MI->getOpcode() == FrameDestroyOpcode))

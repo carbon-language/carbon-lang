@@ -70,6 +70,18 @@ public:
   ///
   unsigned getStackAlignment() const { return StackAlignment; }
 
+  /// alignSPAdjust - This method aligns the stack adjustment to the correct
+  /// alignment.
+  ///
+  int alignSPAdjust(int SPAdj) const {
+    if (SPAdj < 0) {
+      SPAdj = -RoundUpToAlignment(-SPAdj, StackAlignment);
+    } else {
+      SPAdj = RoundUpToAlignment(SPAdj, StackAlignment);
+    }
+    return SPAdj;
+  }
+
   /// getTransientStackAlignment - This method returns the number of bytes to
   /// which the stack pointer must be aligned at all times, even between
   /// calls.
