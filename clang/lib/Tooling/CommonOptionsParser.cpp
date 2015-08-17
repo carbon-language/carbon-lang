@@ -92,16 +92,16 @@ private:
 };
 } // namespace
 
-CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv,
-                                         cl::OptionCategory &Category,
-                                         const char *Overview) {
+CommonOptionsParser::CommonOptionsParser(
+    int &argc, const char **argv, cl::OptionCategory &Category,
+    llvm::cl::NumOccurrencesFlag OccurrencesFlag, const char *Overview) {
   static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
   static cl::opt<std::string> BuildPath("p", cl::desc("Build path"),
                                         cl::Optional, cl::cat(Category));
 
   static cl::list<std::string> SourcePaths(
-      cl::Positional, cl::desc("<source0> [... <sourceN>]"), cl::OneOrMore,
+      cl::Positional, cl::desc("<source0> [... <sourceN>]"), OccurrencesFlag,
       cl::cat(Category));
 
   static cl::list<std::string> ArgsAfter(
@@ -120,6 +120,9 @@ CommonOptionsParser::CommonOptionsParser(int &argc, const char **argv,
                                                                    argv));
   cl::ParseCommandLineOptions(argc, argv, Overview);
   SourcePathList = SourcePaths;
+  if ((OccurrencesFlag == cl::ZeroOrMore || OccurrencesFlag == cl::Optional) &&
+      SourcePathList.empty())
+    return;
   if (!Compilations) {
     std::string ErrorMessage;
     if (!BuildPath.empty()) {

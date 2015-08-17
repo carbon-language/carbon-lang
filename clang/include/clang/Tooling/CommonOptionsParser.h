@@ -72,6 +72,23 @@ public:
   /// This constructor exits program in case of error.
   CommonOptionsParser(int &argc, const char **argv,
                       llvm::cl::OptionCategory &Category,
+                      const char *Overview = nullptr)
+      : CommonOptionsParser(argc, argv, Category, llvm::cl::OneOrMore,
+                            Overview) {}
+
+  /// \brief Parses command-line, initializes a compilation database.
+  ///
+  /// This constructor can change argc and argv contents, e.g. consume
+  /// command-line options used for creating FixedCompilationDatabase.
+  ///
+  /// All options not belonging to \p Category become hidden.
+  ///
+  /// I also allows calls to set the required number of positional parameters.
+  ///
+  /// This constructor exits program in case of error.
+  CommonOptionsParser(int &argc, const char **argv,
+                      llvm::cl::OptionCategory &Category,
+                      llvm::cl::NumOccurrencesFlag OccurrencesFlag,
                       const char *Overview = nullptr);
 
   /// Returns a reference to the loaded compilations database.
