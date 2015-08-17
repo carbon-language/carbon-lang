@@ -82,6 +82,7 @@ inline namespace fundamentals_v1 {
 #include <typeinfo>
 #include <type_traits>
 #include <cstdlib>
+#include <cassert>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -106,7 +107,7 @@ inline void __throw_bad_any_cast()
 #ifndef _LIBCPP_NO_EXCEPTIONS
     throw bad_any_cast();
 #else
-    _VSTD::abort();
+    assert(!"bad_any_cast");
 #endif
 }
 
