@@ -33,6 +33,7 @@ namespace polly {
 class IRAccess {
 public:
   Value *BaseAddress;
+  Value *AccessValue;
 
   const SCEV *Offset;
 
@@ -58,21 +59,24 @@ public:
   ///
   /// @param IsPHI Are we modeling special PHI node accesses?
   explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
-                    unsigned elemBytes, bool Affine, bool IsPHI = false)
-      : BaseAddress(BaseAddress), Offset(Offset), ElemBytes(elemBytes),
-        Type(Type), IsAffine(Affine), IsPHI(IsPHI) {}
+                    unsigned elemBytes, bool Affine, Value *AccessValue,
+                    bool IsPHI = false)
+      : BaseAddress(BaseAddress), AccessValue(AccessValue), Offset(Offset),
+        ElemBytes(elemBytes), Type(Type), IsAffine(Affine), IsPHI(IsPHI) {}
 
   explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
                     unsigned elemBytes, bool Affine,
                     SmallVector<const SCEV *, 4> Subscripts,
-                    SmallVector<const SCEV *, 4> Sizes)
-      : BaseAddress(BaseAddress), Offset(Offset), ElemBytes(elemBytes),
-        Type(Type), IsAffine(Affine), IsPHI(false), Subscripts(Subscripts),
-        Sizes(Sizes) {}
+                    SmallVector<const SCEV *, 4> Sizes, Value *AccessValue)
+      : BaseAddress(BaseAddress), AccessValue(AccessValue), Offset(Offset),
+        ElemBytes(elemBytes), Type(Type), IsAffine(Affine), IsPHI(false),
+        Subscripts(Subscripts), Sizes(Sizes) {}
 
   enum TypeKind getType() const { return Type; }
 
   Value *getBase() const { return BaseAddress; }
+
+  Value *getAccessValue() const { return AccessValue; }
 
   const SCEV *getOffset() const { return Offset; }
 

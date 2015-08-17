@@ -135,9 +135,10 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
       // we have to insert a scalar dependence from the definition of OpI to
       // OpBB if the definition is not in OpBB.
       if (OpIBB != OpBB) {
-        IRAccess ScalarRead(IRAccess::READ, OpI, ZeroOffset, 1, true);
+        IRAccess ScalarRead(IRAccess::READ, OpI, ZeroOffset, 1, true, OpI);
         AccFuncMap[OpBB].push_back(std::make_pair(ScalarRead, PHI));
-        IRAccess ScalarWrite(IRAccess::MUST_WRITE, OpI, ZeroOffset, 1, true);
+        IRAccess ScalarWrite(IRAccess::MUST_WRITE, OpI, ZeroOffset, 1, true,
+                             OpI);
         AccFuncMap[OpIBB].push_back(std::make_pair(ScalarWrite, OpI));
       }
     }
@@ -147,13 +148,13 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
     if (!OpI)
       OpI = OpBB->getTerminator();
 
-    IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true,
+    IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true, Op,
                           /* IsPHI */ true);
     AccFuncMap[OpBB].push_back(std::make_pair(ScalarAccess, OpI));
   }
 
   if (!OnlyNonAffineSubRegionOperands) {
-    IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true,
+    IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true, PHI,
                           /* IsPHI */ true);
     Functions.push_back(std::make_pair(ScalarAccess, PHI));
   }
@@ -211,7 +212,7 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
     // Do not build a read access that is not in the current SCoP
     // Use the def instruction as base address of the IRAccess, so that it will
     // become the name of the scalar access in the polyhedral form.
-    IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true);
+    IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true, Inst);
     AccFuncMap[UseParent].push_back(std::make_pair(ScalarAccess, UI));
   }
 
@@ -224,7 +225,7 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
         if (R->contains(OpInst))
           continue;
 
-      IRAccess ScalarAccess(IRAccess::READ, Op, ZeroOffset, 1, true);
+      IRAccess ScalarAccess(IRAccess::READ, Op, ZeroOffset, 1, true, Op);
       AccFuncMap[Inst->getParent()].push_back(
           std::make_pair(ScalarAccess, Inst));
     }
@@ -240,17 +241,20 @@ TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
                             const ScopDetection::BoxedLoopsSetTy *BoxedLoops) {
   unsigned Size;
   Type *SizeType;
+  Value *Val;
   enum IRAccess::TypeKind Type;
 
   if (LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
     SizeType = Load->getType();
     Size = TD->getTypeStoreSize(SizeType);
     Type = IRAccess::READ;
+    Val = Load;
   } else {
     StoreInst *Store = cast<StoreInst>(Inst);
     SizeType = Store->getValueOperand()->getType();
     Size = TD->getTypeStoreSize(SizeType);
     Type = IRAccess::MUST_WRITE;
+    Val = Store->getValueOperand();
   }
 
   const SCEV *AccessFunction = SE->getSCEVAtScope(getPointerOperand(*Inst), L);
@@ -264,7 +268,7 @@ TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
   if (PollyDelinearize && AccItr != InsnToMemAcc.end())
     return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, true,
                     AccItr->second.DelinearizedSubscripts,
-                    AccItr->second.Shape->DelinearizedSizes);
+                    AccItr->second.Shape->DelinearizedSizes, Val);
 
   // Check if the access depends on a loop contained in a non-affine subregion.
   bool isVariantInNonAffineLoop = false;
@@ -287,7 +291,7 @@ TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
     Type = IRAccess::MAY_WRITE;
 
   return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, IsAffine,
-                  Subscripts, Sizes);
+                  Subscripts, Sizes, Val);
 }
 
 void TempScopInfo::buildAccessFunctions(Region &R, Region &SR) {
@@ -326,7 +330,8 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
         buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       // If the Instruction is used outside the statement, we need to build the
       // write access.
-      IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true);
+      IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true,
+                            Inst);
       Functions.push_back(std::make_pair(ScalarAccess, Inst));
     }
   }

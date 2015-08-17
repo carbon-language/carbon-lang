@@ -495,21 +495,14 @@ void BlockGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
       continue;
 
     Instruction *Base = cast<Instruction>(MA->getBaseAddr());
-    Instruction *Inst = MA->getAccessInstruction();
+    Value *Val = MA->getAccessValue();
 
-    Value *Val = nullptr;
     AllocaInst *Address = nullptr;
-
-    if (MA->getScopArrayInfo()->isPHI()) {
-      PHINode *BasePHI = dyn_cast<PHINode>(Base);
-      int PHIIdx = BasePHI->getBasicBlockIndex(BB);
-      assert(PHIIdx >= 0);
+    if (MA->getScopArrayInfo()->isPHI())
       Address = getOrCreateAlloca(Base, PHIOpMap, ".phiops");
-      Val = BasePHI->getIncomingValue(PHIIdx);
-    } else {
+    else
       Address = getOrCreateAlloca(Base, ScalarMap, ".s2a");
-      Val = Inst;
-    }
+
     Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
     Builder.CreateStore(Val, Address);
   }
@@ -1124,23 +1117,18 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
 
     Instruction *ScalarBase = cast<Instruction>(MA->getBaseAddr());
     Instruction *ScalarInst = MA->getAccessInstruction();
-    PHINode *ScalarBasePHI = dyn_cast<PHINode>(ScalarBase);
 
     // Only generate accesses that belong to this basic block.
     if (ScalarInst->getParent() != BB)
       continue;
 
-    Value *Val = nullptr;
+    Value *Val = MA->getAccessValue();
     AllocaInst *ScalarAddr = nullptr;
 
-    if (MA->getScopArrayInfo()->isPHI()) {
-      int PHIIdx = ScalarBasePHI->getBasicBlockIndex(BB);
+    if (MA->getScopArrayInfo()->isPHI())
       ScalarAddr = getOrCreateAlloca(ScalarBase, PHIOpMap, ".phiops");
-      Val = ScalarBasePHI->getIncomingValue(PHIIdx);
-    } else {
+    else
       ScalarAddr = getOrCreateAlloca(ScalarBase, ScalarMap, ".s2a");
-      Val = ScalarInst;
-    }
 
     Val = getNewScalarValue(Val, R, ScalarMap, BBMap, GlobalMap);
     Builder.CreateStore(Val, ScalarAddr);

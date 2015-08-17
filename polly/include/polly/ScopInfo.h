@@ -244,7 +244,15 @@ private:
   ReductionType RedType = RT_NONE;
 
   /// @brief The access instruction of this memory access.
-  Instruction *Inst;
+  Instruction *AccessInstruction;
+
+  /// @brief The value associated with this memory access.
+  ///
+  ///  - For real memory accesses it is the loaded result or the stored value.
+  ///  - For straigt line scalar accesses it is the access instruction itself.
+  ///  - For PHI operand accesses it is the operand value.
+  ///
+  Value *AccessValue;
 
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
@@ -377,8 +385,11 @@ public:
 
   const std::string &getBaseName() const { return BaseName; }
 
+  /// @brief Return the access value of this memory access.
+  Value *getAccessValue() const { return AccessValue; }
+
   /// @brief Return the access instruction of this memory access.
-  Instruction *getAccessInstruction() const { return Inst; }
+  Instruction *getAccessInstruction() const { return AccessInstruction; }
 
   /// Get the stride of this memory access in the specified Schedule. Schedule
   /// is a map from the statement to a schedule where the innermost dimension is

@@ -447,7 +447,8 @@ __isl_give isl_map *MemoryAccess::foldAccess(const IRAccess &Access,
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            ScopStmt *Statement, const ScopArrayInfo *SAI,
                            int Identifier)
-    : AccType(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
+    : AccType(getMemoryAccessType(Access)), Statement(Statement),
+      AccessInstruction(AccInst), AccessValue(Access.getAccessValue()),
       newAccessRelation(nullptr) {
 
   isl_ctx *Ctx = Statement->getIslCtx();
@@ -669,18 +670,6 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
   Domain = NewDomain;
 }
 
-// @brief Get the data-type of the elements accessed
-static Type *getAccessType(IRAccess &Access, Instruction *AccessInst) {
-  if (Access.isPHI())
-    return Access.getBase()->getType();
-
-  if (StoreInst *Store = dyn_cast<StoreInst>(AccessInst))
-    return Store->getValueOperand()->getType();
-  if (BranchInst *Branch = dyn_cast<BranchInst>(AccessInst))
-    return Branch->getCondition()->getType();
-  return AccessInst->getType();
-}
-
 void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
                              bool isApproximated) {
   AccFuncSetType *AFS = tempScop.getAccessFunctions(Block);
@@ -690,7 +679,7 @@ void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
   for (auto &AccessPair : *AFS) {
     IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
-    Type *ElementType = getAccessType(Access, AccessInst);
+    Type *ElementType = Access.getAccessValue()->getType();
 
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
         Access.getBase(), ElementType, Access.Sizes, Access.isPHI());
