@@ -781,106 +781,6 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
   return ReplaceInstUsesWith(FirstPhi, Undef);
 }
 
-// If a PHI node has two edges and the PHI node is used in instructions like
-// add, sub, mul, div, shifts; if one of incoming values is a constant
-// that makes the instruction and identity operation, we can hoist this
-// instruction into one of the basic blocks.
-// Because of such a transformation, the identity operation won't be
-// executed, since it doesn't contribute to the result.
-//
-static Instruction *PartiallySimplifyIdentityOps(PHINode &PN, const Constant &C,
-                                                 Value &IncomingVal,
-                                                 Instruction &PNUser,
-                                                 InstCombiner &IC) {
-  if (!PNUser.isBinaryOp())
-    return nullptr;
-  if (PN.getParent() != PNUser.getParent())
-    return nullptr;
-
-  //       C                  IncomingVal
-  //        \                     /
-  //         \  0             1  / -- (IncomingValIdx)
-  //          \                 /
-  // PN = phi [C , ...] [ IncomingVal, BB ]
-  // ...
-  //              0  1 -- (OpOperandIdx)
-  // PNUser = op PN, x
-  const unsigned IncomingValIdx =
-      (&IncomingVal == PN.getIncomingValue(0)) ? 0 : 1;
-  const unsigned OpOperandIdx = (&PN == PNUser.getOperand(0)) ? 1 : 0;
-
-  // Exit if not an identity operation.
-  // For everything except add Add and Mul constant must be on the RHS.
-  switch (PNUser.getOpcode()) {
-  default:
-    return nullptr;
-  case Instruction::Add:
-    if (!C.isZeroValue())
-      return nullptr;
-    break;
-
-  case Instruction::Sub:
-  case Instruction::Shl:
-  case Instruction::LShr:
-  case Instruction::AShr:
-    if (!C.isZeroValue() || OpOperandIdx == 1)
-      return nullptr;
-    break;
-
-  case Instruction::Mul:
-    if (!C.isOneValue())
-      return nullptr;
-    break;
-
-  case Instruction::UDiv:
-  case Instruction::SDiv:
-    if (!C.isOneValue() || OpOperandIdx == 1)
-      return nullptr;
-    break;
-  }
-
-  BasicBlock *BB = PN.getIncomingBlock(IncomingValIdx);
-  auto *Terminator = BB->getTerminator();
-
-  if (const auto *Incoming = dyn_cast<Instruction>(&IncomingVal))
-    if (!IC.getDominatorTree()->dominates(Incoming, Terminator))
-      return nullptr;
-
-  // Operand must be available in newly generated instruction and
-  // as an incoming value of the PHI node.
-  if (const auto *Operand =
-          dyn_cast<Instruction>(PNUser.getOperand(OpOperandIdx)))
-    if (!IC.getDominatorTree()->dominates(Operand, Terminator) ||
-        !IC.getDominatorTree()->dominates(Operand, &PN))
-      return nullptr;
-
-  // Ensure that the non-constant value in the PHI node doesn't come
-  // from the same BasicBlock as the PHI node. This prevents errors
-  // that could appear with loops (loop backedge could have this
-  // problem).
-  if (PN.getIncomingBlock(IncomingValIdx) == PN.getParent())
-    return nullptr;
-
-  Value *LHS = &IncomingVal, *RHS = PNUser.getOperand(OpOperandIdx);
-  if (OpOperandIdx == 0)
-    std::swap(LHS, RHS);
-
-  // Add new instruction to one of the edges.
-  IRBuilder<> Builder(Terminator);
-  auto *NewInst =
-      Builder.CreateBinOp(cast<BinaryOperator>(PNUser).getOpcode(), LHS, RHS);
-  cast<BinaryOperator>(NewInst)->copyIRFlags(&PNUser);
-
-  // The new incoming values are:
-  // - result of the newly emmited instruction
-  // - operand of the instruction
-  PN.setIncomingValue(IncomingValIdx, NewInst);
-  PN.setIncomingValue(IncomingValIdx == 0 ? 1 : 0,
-                      PNUser.getOperand(OpOperandIdx));
-  IC.ReplaceInstUsesWith(PNUser, &PN);
-  return &PN;
-}
-
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
@@ -921,21 +821,6 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
         (isa<BinaryOperator>(PHIUser) || isa<GetElementPtrInst>(PHIUser)) &&
         PHIUser->user_back() == &PN) {
       return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
-    }
-
-    // If this phi has one use, exactly 2 edges and one is a constant, we
-    // may be able to apply the PartiallySimplifyIdentityOps optimization.
-    if (PN.getNumIncomingValues() == 2) {
-      const Constant *C = dyn_cast<Constant>(PN.getIncomingValue(0));
-      Value *Val = PN.getIncomingValue(1);
-      if (!C) {
-        C = dyn_cast<Constant>(PN.getIncomingValue(1));
-        Val = PN.getIncomingValue(0);
-      }
-      if (C && !isa<Constant>(Val))
-        if (auto *I =
-                PartiallySimplifyIdentityOps(PN, *C, *Val, *PHIUser, *this))
-          return I;
     }
   }
 
