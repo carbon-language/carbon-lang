@@ -133,6 +133,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#if ! __clang__
                                      llvm_cv_cxx_compiler=gcc, [])])
 AC_LANG_POP([C++])
 AC_MSG_RESULT([${llvm_cv_cxx_compiler}])
+AC_SUBST(CXX_COMPILER,$llvm_cv_cxx_compiler)
 
 dnl Configure all of the projects present in our source tree. While we could
 dnl just AC_CONFIG_SUBDIRS on the set of directories in projects that have a

@@ -655,6 +655,7 @@ CXX
 CXXFLAGS
 ac_ct_CXX
 CPP
+CXX_COMPILER
 subdirs
 ENABLE_POLLY
 LLVM_HAS_POLLY
@@ -3752,6 +3753,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 { echo "$as_me:$LINENO: result: ${llvm_cv_cxx_compiler}" >&5
 echo "${ECHO_T}${llvm_cv_cxx_compiler}" >&6; }
+CXX_COMPILER=$llvm_cv_cxx_compiler
+
 
 
 
@@ -18498,6 +18501,7 @@ CXX!$CXX$ac_delim
 CXXFLAGS!$CXXFLAGS$ac_delim
 ac_ct_CXX!$ac_ct_CXX$ac_delim
 CPP!$CPP$ac_delim
+CXX_COMPILER!$CXX_COMPILER$ac_delim
 subdirs!$subdirs$ac_delim
 ENABLE_POLLY!$ENABLE_POLLY$ac_delim
 LLVM_HAS_POLLY!$LLVM_HAS_POLLY$ac_delim
@@ -18541,7 +18545,6 @@ ENABLE_WERROR!$ENABLE_WERROR$ac_delim
 ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
 ENABLE_ABI_BREAKING_CHECKS!$ENABLE_ABI_BREAKING_CHECKS$ac_delim
-DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -18583,6 +18586,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
 DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
@@ -18679,7 +18683,6 @@ HAVE_LIBZ!$HAVE_LIBZ$ac_delim
 HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
 MMAP_FILE!$MMAP_FILE$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
-LLVM_PREFIX!$LLVM_PREFIX$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -18721,6 +18724,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+LLVM_PREFIX!$LLVM_PREFIX$ac_delim
 LLVM_BINDIR!$LLVM_BINDIR$ac_delim
 LLVM_DATADIR!$LLVM_DATADIR$ac_delim
 LLVM_DOCSDIR!$LLVM_DOCSDIR$ac_delim
@@ -18741,7 +18745,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 18; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 19; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
