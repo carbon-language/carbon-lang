@@ -1934,7 +1934,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       // Traditional behaviour seems to special case this particular value. It's
       // not clear why other masks are handled differently.
       if (ImmValue == 0xffffffff) {
-        emitRI(Mips::LUi, TmpReg, 0xffff, IDLoc, Instructions);
+        emitRI(Mips::LUi, TmpReg, -1, IDLoc, Instructions);
         emitRRI(Mips::DSRL32, TmpReg, TmpReg, 0, IDLoc, Instructions);
         if (UseSrcReg)
           emitRRR(AdduOp, DstReg, TmpReg, SrcReg, IDLoc, Instructions);
