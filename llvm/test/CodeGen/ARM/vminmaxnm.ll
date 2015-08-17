@@ -343,7 +343,7 @@ define float @fp-armv8_vminmaxnm_neg0(float %a) {
 ; CHECK: vmaxnm.f32
   %cmp1 = fcmp fast olt float %a, -0.
   %cond1 = select i1 %cmp1, float %a, float -0.
-  %cmp2 = fcmp fast ogt float %cond1, -0.
+  %cmp2 = fcmp fast ugt float %cond1, -0.
   %cond2 = select i1 %cmp2, float %cond1, float -0.
   ret float %cond2
 }

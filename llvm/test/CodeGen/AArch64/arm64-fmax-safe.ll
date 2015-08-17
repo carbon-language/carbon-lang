@@ -7,7 +7,7 @@ define double @test_direct(float %in) {
   %longer = fpext float %val to double
   ret double %longer
 
-; CHECK: fmax
+; CHECK: fmax s
 }
 
 define double @test_cross(float %in) {
@@ -17,11 +17,11 @@ define double @test_cross(float %in) {
   %longer = fpext float %val to double
   ret double %longer
 
-; CHECK: fmin
+; CHECK: fmin s
 }
 
 ; Same as previous, but with ordered comparison;
-; can't be converted in safe-math mode.
+; must become fminnm, not fmin.
 define double @test_cross_fail_nan(float %in) {
 ; CHECK-LABEL: test_cross_fail_nan:
   %cmp = fcmp olt float %in, 0.000000e+00
@@ -29,7 +29,7 @@ define double @test_cross_fail_nan(float %in) {
   %longer = fpext float %val to double
   ret double %longer
 
-; CHECK: fcsel s0, s0, s1, mi
+; CHECK: fminnm s
 }
 
 ; This isn't a min or a max, but passes the first condition for swapping the
