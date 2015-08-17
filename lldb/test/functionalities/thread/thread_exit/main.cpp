@@ -9,8 +9,8 @@
 
 // This test verifies the correct handling of child thread exits.
 
-#include <pthread.h>
 #include <atomic>
+#include <thread>
 
 // Note that although hogging the CPU while waiting for a variable to change
 // would be terrible in production code, it's great for testing since it
@@ -29,7 +29,7 @@ std::atomic_int g_barrier2;
 std::atomic_int g_barrier3;
 
 void *
-thread1 (void *input)
+thread1 ()
 {
     // Synchronize with the main thread.
     pseudo_barrier_wait(g_barrier1);
@@ -42,7 +42,7 @@ thread1 (void *input)
 }
 
 void *
-thread2 (void *input)
+thread2 ()
 {
     // Synchronize with thread1 and the main thread.
     pseudo_barrier_wait(g_barrier2);
@@ -56,34 +56,30 @@ thread2 (void *input)
 
 int main ()
 {
-    pthread_t thread_1;
-    pthread_t thread_2;
-    pthread_t thread_3;
-
     pseudo_barrier_init(g_barrier1, 2);
     pseudo_barrier_init(g_barrier2, 3);
     pseudo_barrier_init(g_barrier3, 2);
 
     // Create a thread.
-    pthread_create (&thread_1, NULL, thread1, NULL);
+    std::thread thread_1(thread1);
 
     // Wait for thread1 to start.
     pseudo_barrier_wait(g_barrier1);
 
     // Create another thread.
-    pthread_create (&thread_2, NULL, thread2, NULL);  // Set first breakpoint here
+    std::thread thread_2(thread2);  // Set first breakpoint here
 
     // Wait for thread2 to start.
     pseudo_barrier_wait(g_barrier2);
 
     // Wait for the first thread to finish
-    pthread_join(thread_1, NULL);
+    thread_1.join();
 
     // Synchronize with the remaining thread
     pseudo_barrier_wait(g_barrier3);                  // Set third breakpoint here
 
     // Wait for the second thread to finish
-    pthread_join(thread_2, NULL);
+    thread_2.join();
 
     return 0;                                         // Set fourth breakpoint here
 }

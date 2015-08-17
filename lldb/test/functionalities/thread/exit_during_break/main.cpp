@@ -13,9 +13,9 @@
 // breakpoint is hit.  The test case should be flexible enough to treat that
 // as success.
 
-#include <pthread.h>
 #include <unistd.h>
 #include <atomic>
+#include <thread>
 
 volatile int g_test = 0;
 
@@ -42,7 +42,7 @@ std::atomic_int g_barrier2;
 std::atomic_int g_barrier3;
 
 void *
-break_thread_func (void *input)
+break_thread_func ()
 {
     // Wait until the entire first group of threads is running
     pseudo_barrier_wait(g_barrier1);
@@ -61,7 +61,7 @@ break_thread_func (void *input)
 }
 
 void *
-wait_thread_func (void *input)
+wait_thread_func ()
 {
     // Wait until the entire first group of threads is running
     pseudo_barrier_wait(g_barrier1);
@@ -77,7 +77,7 @@ wait_thread_func (void *input)
 }
 
 void *
-exit_thread_func (void *input)
+exit_thread_func ()
 {
     // Sync up with the rest of the threads.
     pseudo_barrier_wait(g_barrier2);
@@ -91,11 +91,6 @@ exit_thread_func (void *input)
 
 int main ()
 {
-    pthread_t thread_1;
-    pthread_t thread_2;
-    pthread_t thread_3;
-    pthread_t thread_4;
-    pthread_t thread_5;
 
     // The first barrier waits for the non-exiting threads to start.
     // This thread will also participate in that barrier.
@@ -111,25 +106,25 @@ int main ()
     pseudo_barrier_init(g_barrier3, 4);
 
     // Create a thread to hit the breakpoint
-    pthread_create (&thread_1, NULL, break_thread_func, NULL);
+    std::thread thread_1(break_thread_func);
 
     // Create more threads to slow the debugger down during processing.
-    pthread_create (&thread_2, NULL, wait_thread_func, NULL);
-    pthread_create (&thread_3, NULL, wait_thread_func, NULL);
-    pthread_create (&thread_4, NULL, wait_thread_func, NULL);
+    std::thread thread_2(wait_thread_func);
+    std::thread thread_3(wait_thread_func);
+    std::thread thread_4(wait_thread_func);
 
     // Wait for all these threads to get started.
     pseudo_barrier_wait(g_barrier1);
 
     // Create a thread to exit during the breakpoint
-    pthread_create (&thread_5, NULL, exit_thread_func, NULL);
+    std::thread thread_5(exit_thread_func);
 
     // Wait for the threads to finish
-    pthread_join(thread_5, NULL);
-    pthread_join(thread_4, NULL);
-    pthread_join(thread_3, NULL);
-    pthread_join(thread_2, NULL);
-    pthread_join(thread_1, NULL);
+    thread_5.join();
+    thread_4.join();
+    thread_3.join();
+    thread_2.join();
+    thread_1.join();
 
     return 0;
 }

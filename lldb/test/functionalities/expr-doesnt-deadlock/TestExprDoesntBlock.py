@@ -44,7 +44,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
 
         # Now create a breakpoint at source line before call_me_to_get_lock gets called.
 
-        main_file_spec = lldb.SBFileSpec ("locking.c")
+        main_file_spec = lldb.SBFileSpec ("locking.cpp")
         breakpoint = target.BreakpointCreateBySourceRegex('Break here', main_file_spec)
         if self.TraceOn():
             print "breakpoint:", breakpoint

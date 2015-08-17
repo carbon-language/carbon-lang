@@ -37,7 +37,7 @@ class ThreadSpecificBreakTestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        main_source_spec = lldb.SBFileSpec ("main.c")
+        main_source_spec = lldb.SBFileSpec ("main.cpp")
 
         # Set a breakpoint in the thread body, and make it active for only the first thread.
         break_thread_body = target.BreakpointCreateBySourceRegex ("Break here in thread body.", main_source_spec)

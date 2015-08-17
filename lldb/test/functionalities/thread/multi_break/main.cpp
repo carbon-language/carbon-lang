@@ -12,8 +12,8 @@
 // the breakpoint in the second thread will be hit while the breakpoint handler
 // in the first thread is trying to stop all threads.
 
-#include <pthread.h>
 #include <atomic>
+#include <thread>
 
 // Note that although hogging the CPU while waiting for a variable to change
 // would be terrible in production code, it's great for testing since it
@@ -32,7 +32,7 @@ std::atomic_int g_barrier;
 volatile int g_test = 0;
 
 void *
-thread_func (void *input)
+thread_func ()
 {
     // Wait until both threads are running
     pseudo_barrier_wait(g_barrier);
@@ -46,19 +46,16 @@ thread_func (void *input)
 
 int main ()
 {
-    pthread_t thread_1;
-    pthread_t thread_2;
-
     // Don't let either thread do anything until they're both ready.
     pseudo_barrier_init(g_barrier, 2);
 
     // Create two threads
-    pthread_create (&thread_1, NULL, thread_func, NULL);
-    pthread_create (&thread_2, NULL, thread_func, NULL);
+    std::thread thread_1(thread_func);
+    std::thread thread_2(thread_func);
 
     // Wait for the threads to finish
-    pthread_join(thread_1, NULL);
-    pthread_join(thread_2, NULL);
+    thread_1.join();
+    thread_2.join();
 
     return 0;
 }

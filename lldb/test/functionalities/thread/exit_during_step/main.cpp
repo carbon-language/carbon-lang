@@ -10,8 +10,9 @@
 // This test is intended to create a situation in which one thread will exit
 // while the debugger is stepping in another thread.
 
-#include <pthread.h>
 #include <unistd.h>
+
+#include <thread>
 
 // Note that although hogging the CPU while waiting for a variable to change
 // would be terrible in production code, it's great for testing since it
@@ -33,7 +34,7 @@ volatile int g_thread_exited = 0;
 volatile int g_test = 0;
 
 void *
-step_thread_func (void *input)
+step_thread_func ()
 {
     // Wait until both threads are started.
     pseudo_barrier_wait(g_barrier);
@@ -51,7 +52,7 @@ step_thread_func (void *input)
 }
 
 void *
-exit_thread_func (void *input)
+exit_thread_func ()
 {
     // Wait until both threads are started.
     pseudo_barrier_wait(g_barrier);
@@ -66,26 +67,23 @@ exit_thread_func (void *input)
 
 int main ()
 {
-    pthread_t thread_1;
-    pthread_t thread_2;
-
     // Synchronize thread start so that doesn't happen during stepping.
     pseudo_barrier_init(g_barrier, 2);
 
     // Create a thread to hit the breakpoint.
-    pthread_create (&thread_1, NULL, step_thread_func, NULL);
+    std::thread thread_1(step_thread_func);
 
     // Create a thread to exit while we're stepping.
-    pthread_create (&thread_2, NULL, exit_thread_func, NULL);
+    std::thread thread_2(exit_thread_func);
 
     // Wait for the exit thread to finish.
-    pthread_join(thread_2, NULL);
+    thread_2.join();
 
     // Let the stepping thread know the other thread is gone.
     g_thread_exited = 1;
 
     // Wait for the stepping thread to finish.
-    pthread_join(thread_1, NULL);
+    thread_1.join();
 
     return 0;
 }
