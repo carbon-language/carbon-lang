@@ -255,12 +255,19 @@ int ARMTTIImpl::getVectorInstrCost(unsigned Opcode, Type *ValTy,
       ValTy->getScalarSizeInBits() <= 32)
     return 3;
 
-  // Cross-class copies are expensive on many microarchitectures,
-  // so assume they are expensive by default.
   if ((Opcode == Instruction::InsertElement ||
-       Opcode == Instruction::ExtractElement) &&
-      ValTy->getVectorElementType()->isIntegerTy())
-    return 3;
+       Opcode == Instruction::ExtractElement)) {
+    // Cross-class copies are expensive on many microarchitectures,
+    // so assume they are expensive by default.
+    if (ValTy->getVectorElementType()->isIntegerTy())
+      return 3;
+
+    // Even if it's not a cross class copy, this likely leads to mixing
+    // of NEON and VFP code and should be therefore penalized.
+    if (ValTy->isVectorTy() &&
+        ValTy->getScalarSizeInBits() <= 32)
+      return std::max(BaseT::getVectorInstrCost(Opcode, ValTy, Index), 2U);
+  }
 
   return BaseT::getVectorInstrCost(Opcode, ValTy, Index);
 }
