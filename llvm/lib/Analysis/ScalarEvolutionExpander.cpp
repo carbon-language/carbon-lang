@@ -1815,11 +1815,11 @@ Value *SCEVExpander::findExistingExpansion(const SCEV *S,
                                            const Instruction *At, Loop *L) {
   using namespace llvm::PatternMatch;
 
-  SmallVector<BasicBlock *, 4> Latches;
-  L->getLoopLatches(Latches);
+  SmallVector<BasicBlock *, 4> ExitingBlocks;
+  L->getExitingBlocks(ExitingBlocks);
 
-  // Look for suitable value in simple conditions at the loop latches.
-  for (BasicBlock *BB : Latches) {
+  // Look for suitable value in simple conditions at the loop exits.
+  for (BasicBlock *BB : ExitingBlocks) {
     ICmpInst::Predicate Pred;
     Instruction *LHS, *RHS;
     BasicBlock *TrueBB, *FalseBB;
@@ -1892,22 +1892,14 @@ bool SCEVExpander::isHighCostExpansionHelper(
     if (!ExitingBB)
       return true;
 
-    BranchInst *ExitingBI = dyn_cast<BranchInst>(ExitingBB->getTerminator());
-    if (!ExitingBI || !ExitingBI->isConditional())
+    // At the beginning of this function we already tried to find existing value
+    // for plain 'S'. Now try to lookup 'S + 1' since it is common pattern
+    // involving division. This is just a simple search heuristic.
+    if (!At)
+      At = &ExitingBB->back();
+    if (!findExistingExpansion(
+            SE.getAddExpr(S, SE.getConstant(S->getType(), 1)), At, L))
       return true;
-
-    ICmpInst *OrigCond = dyn_cast<ICmpInst>(ExitingBI->getCondition());
-    if (!OrigCond)
-      return true;
-
-    const SCEV *RHS = SE.getSCEV(OrigCond->getOperand(1));
-    RHS = SE.getMinusSCEV(RHS, SE.getConstant(RHS->getType(), 1));
-    if (RHS != S) {
-      const SCEV *LHS = SE.getSCEV(OrigCond->getOperand(0));
-      LHS = SE.getMinusSCEV(LHS, SE.getConstant(LHS->getType(), 1));
-      if (LHS != S)
-        return true;
-    }
   }
 
   // HowManyLessThans uses a Max expression whenever the loop is not guarded by
