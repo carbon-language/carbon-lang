@@ -124,8 +124,8 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case spir64:      return "spir";
   case kalimba:     return "kalimba";
   case shave:       return "shave";
-  case wasm32:      return "wasm32";
-  case wasm64:      return "wasm64";
+  case wasm32:
+  case wasm64:      return "wasm";
   }
 }
 
