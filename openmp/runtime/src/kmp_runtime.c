@@ -7641,7 +7641,9 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
 
     // KMP_FORCE_REDUCTION
 
-    if( __kmp_force_reduction_method != reduction_method_not_defined ) {
+    // If the team is serialized (team_size == 1), ignore the forced reduction
+    // method and stay with the unsynchronized method (empty_reduce_block)
+    if( __kmp_force_reduction_method != reduction_method_not_defined && team_size != 1) {
 
         PACKED_REDUCTION_METHOD_T forced_retval;
 
@@ -7651,9 +7653,6 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
         {
             case critical_reduce_block:
                 KMP_ASSERT( lck );              // lck should be != 0
-                if( team_size <= 1 ) {
-                    forced_retval = empty_reduce_block;
-                }
                 break;
 
             case atomic_reduce_block:
