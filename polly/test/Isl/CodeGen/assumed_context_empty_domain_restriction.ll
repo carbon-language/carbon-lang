@@ -1,34 +1,8 @@
-; RUN: opt %loadPolly -S -polly-opt-isl -polly-codegen < %s
+; RUN: opt %loadPolly -S -polly-opt-isl -polly-codegen < %s | FileCheck %s
 ;
-; TODO: This test will crash the scalar code generation. The problem step by step:
-;         1) The assumed context is empty because of the out-of-bounds array access.
-;         2) The dependence analysis will use the assumed context and determine
-;            that there are not iterations executed, hence no dependences.
-;         3) The scheduler will transform the program somehow according to
-;            the orginal domains and empty dependences but not the assumed context.
-;            The new ast is shown below.
-;         4) The code generation will look for the new value of %0 when the
-;            for_body_328_lr_ph statement is copied, however it has not yet seen %0
-;            as the for_end_310 statement has been moved after for_body_328_lr_ph.
-;         5) Crash as no new value of %0 can be found.
-;
-; AST:
-;
-;   if (0)
-;       {
-;         for (int c0 = 0; c0 <= 32; c0 += 1)
-;           Stmt_for_body_328(c0);
-;         Stmt_for_body_328_lr_ph();
-;         Stmt_for_end_310();
-;       }
-;   else
-;       {  /* original code */ }
+; This test used to crash the scalar code generation.
 ;
 ; CHECK: polly.start
-;
-; TODO: This test should not crash Polly.
-;
-; XFAIL: *
 ;
 @endposition = external global i32, align 4
 @Bit = external global [0 x i32], align 4

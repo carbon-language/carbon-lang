@@ -474,9 +474,7 @@ Value *BlockGenerator::getNewScalarValue(Value *ScalarValue, const Region &R,
     return /* Case (3a) */ ScalarValueCopy;
 
   // Case (3b)
-  assert(ReloadMap.count(ScalarValueInst) &&
-         "ScalarInst not mapped in the block and not in the given reload map!");
-  Value *ReloadAddr = ReloadMap[ScalarValueInst];
+  Value *ReloadAddr = getOrCreateAlloca(ScalarValueInst, ReloadMap, ".s2a");
   ScalarValue =
       Builder.CreateLoad(ReloadAddr, ReloadAddr->getName() + ".reload");
 
