@@ -1538,12 +1538,16 @@ bool MIParser::parseMachineMemoryOperand(MachineMemOperand *&Dest) {
       if (parseMDNode(AAInfo.TBAA))
         return true;
       break;
-    // TODO: Parse AA Scope metadata.
+    case MIToken::md_alias_scope:
+      lex();
+      if (parseMDNode(AAInfo.Scope))
+        return true;
+      break;
     // TODO: Parse AA NoAlias metadata.
     // TODO: Parse the ranges metadata.
     // TODO: Report an error on duplicate metadata nodes.
     default:
-      return error("expected 'align' or '!tbaa'");
+      return error("expected 'align' or '!tbaa' or '!alias.scope'");
     }
   }
   if (expectAndConsume(MIToken::rparen))

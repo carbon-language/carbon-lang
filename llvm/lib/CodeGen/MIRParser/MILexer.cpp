@@ -445,6 +445,7 @@ static Cursor maybeLexNumericalLiteral(Cursor C, MIToken &Token) {
 static MIToken::TokenKind getMetadataKeywordKind(StringRef Identifier) {
   return StringSwitch<MIToken::TokenKind>(Identifier)
       .Case("!tbaa", MIToken::md_tbaa)
+      .Case("!alias.scope", MIToken::md_alias_scope)
       .Default(MIToken::Error);
 }
 

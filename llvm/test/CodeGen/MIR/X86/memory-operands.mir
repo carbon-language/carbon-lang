@@ -132,6 +132,22 @@
   !7 = !{!"XXH_state64_t", !3, i64 0, !3, i64 4, !8, i64 8, !8, i64 16, !8, i64 24}
   !8 = !{!"long long", !4, i64 0}
 
+  define void @aa_scope(float* nocapture %a, float* nocapture readonly %c) #1 {
+  entry:
+    %0 = load float, float* %c, align 4, !alias.scope !9
+    %arrayidx.i = getelementptr inbounds float, float* %a, i64 5
+    store float %0, float* %arrayidx.i, align 4, !noalias !9
+    %1 = load float, float* %c, align 4
+    %arrayidx = getelementptr inbounds float, float* %a, i64 7
+    store float %1, float* %arrayidx, align 4
+    ret void
+  }
+
+  attributes #1 = { nounwind uwtable }
+
+  !9 = distinct !{!9, !10, !"some scope"}
+  !10 = distinct !{!10, !"some domain"}
+
 ...
 ---
 name:            test
@@ -371,4 +387,21 @@ body: |
     %eax = MOV32rm killed %rax, 1, _, 0, _, implicit-def %rax :: (load 4 from %ir.a, !tbaa !2)
     %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.total_len2, !tbaa !6)
     RETQ %eax
+...
+---
+name:            aa_scope
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+  - { reg: '%rsi' }
+body: |
+  bb.0.entry:
+    liveins: %rdi, %rsi
+  ; CHECK-LABEL: name: aa_scope
+  ; CHECK: %xmm0 = MOVSSrm %rsi, 1, _, 0, _ :: (load 4 from %ir.c, !alias.scope !9)
+    %xmm0 = MOVSSrm %rsi, 1, _, 0, _ :: (load 4 from %ir.c, !alias.scope !9)
+    MOVSSmr %rdi, 1, _, 20, _, killed %xmm0 :: (store 4 into %ir.arrayidx.i)
+    %xmm0 = MOVSSrm killed %rsi, 1, _, 0, _ :: (load 4 from %ir.c)
+    MOVSSmr killed %rdi, 1, _, 28, _, killed %xmm0 :: (store 4 into %ir.arrayidx)
+    RETQ
 ...
