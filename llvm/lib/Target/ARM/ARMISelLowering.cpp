@@ -583,7 +583,6 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setTargetDAGCombine(ISD::SIGN_EXTEND);
     setTargetDAGCombine(ISD::ZERO_EXTEND);
     setTargetDAGCombine(ISD::ANY_EXTEND);
-    setTargetDAGCombine(ISD::SELECT_CC);
     setTargetDAGCombine(ISD::BUILD_VECTOR);
     setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
     setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
@@ -3624,113 +3623,6 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   // Try to generate VMAXNM/VMINNM on ARMv8.
   if (Subtarget->hasFPARMv8() && (TrueVal.getValueType() == MVT::f32 ||
                                   TrueVal.getValueType() == MVT::f64)) {
-    // We can use VMAXNM/VMINNM for a compare followed by a select with the
-    // same operands, as follows:
-    //   c = fcmp [?gt, ?ge, ?lt, ?le] a, b
-    //   select c, a, b
-    // In NoNaNsFPMath the CC will have been changed from, e.g., 'ogt' to 'gt'.
-    bool swapSides = false;
-    if (!getTargetMachine().Options.NoNaNsFPMath) {
-      // transformability may depend on which way around we compare
-      switch (CC) {
-      default:
-        break;
-      case ISD::SETOGT:
-      case ISD::SETOGE:
-      case ISD::SETOLT:
-      case ISD::SETOLE:
-        // the non-NaN should be RHS
-        swapSides = DAG.isKnownNeverNaN(LHS) && !DAG.isKnownNeverNaN(RHS);
-        break;
-      case ISD::SETUGT:
-      case ISD::SETUGE:
-      case ISD::SETULT:
-      case ISD::SETULE:
-        // the non-NaN should be LHS
-        swapSides = DAG.isKnownNeverNaN(RHS) && !DAG.isKnownNeverNaN(LHS);
-        break;
-      }
-    }
-    swapSides = swapSides || (LHS == FalseVal && RHS == TrueVal);
-    if (swapSides) {
-      CC = ISD::getSetCCSwappedOperands(CC);
-      std::swap(LHS, RHS);
-    }
-    if (LHS == TrueVal && RHS == FalseVal) {
-      bool canTransform = true;
-      // FIXME: FastMathFlags::noSignedZeros() doesn't appear reachable from here
-      if (!getTargetMachine().Options.UnsafeFPMath &&
-          !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS)) {
-        const ConstantFPSDNode *Zero;
-        switch (CC) {
-        default:
-          break;
-        case ISD::SETOGT:
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          // RHS must not be -0
-          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(RHS)) &&
-                         !Zero->isNegative();
-          break;
-        case ISD::SETOGE:
-        case ISD::SETUGE:
-        case ISD::SETGE:
-          // LHS must not be -0
-          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(LHS)) &&
-                         !Zero->isNegative();
-          break;
-        case ISD::SETOLT:
-        case ISD::SETULT:
-        case ISD::SETLT:
-          // RHS must not be +0
-          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(RHS)) &&
-                          Zero->isNegative();
-          break;
-        case ISD::SETOLE:
-        case ISD::SETULE:
-        case ISD::SETLE:
-          // LHS must not be +0
-          canTransform = (Zero = dyn_cast<ConstantFPSDNode>(LHS)) &&
-                          Zero->isNegative();
-          break;
-        }
-      }
-      if (canTransform) {
-        // Note: If one of the elements in a pair is a number and the other
-        // element is NaN, the corresponding result element is the number.
-        // This is consistent with the IEEE 754-2008 standard.
-        // Therefore, a > b ? a : b <=> vmax(a,b), if b is constant and a is NaN
-        switch (CC) {
-        default:
-          break;
-        case ISD::SETOGT:
-        case ISD::SETOGE:
-          if (!DAG.isKnownNeverNaN(RHS))
-            break;
-          return DAG.getNode(ISD::FMAXNUM, dl, VT, LHS, RHS);
-        case ISD::SETUGT:
-        case ISD::SETUGE:
-          if (!DAG.isKnownNeverNaN(LHS))
-            break;
-        case ISD::SETGT:
-        case ISD::SETGE:
-          return DAG.getNode(ISD::FMAXNUM, dl, VT, LHS, RHS);
-        case ISD::SETOLT:
-        case ISD::SETOLE:
-          if (!DAG.isKnownNeverNaN(RHS))
-            break;
-          return DAG.getNode(ISD::FMINNUM, dl, VT, LHS, RHS);
-        case ISD::SETULT:
-        case ISD::SETULE:
-          if (!DAG.isKnownNeverNaN(LHS))
-            break;
-        case ISD::SETLT:
-        case ISD::SETLE:
-          return DAG.getNode(ISD::FMINNUM, dl, VT, LHS, RHS);
-        }
-      }
-    }
-
     bool swpCmpOps = false;
     bool swpVselOps = false;
     checkVSELConstraints(CC, CondCode, swpCmpOps, swpVselOps);
@@ -10167,91 +10059,6 @@ static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformSELECT_CCCombine - Target-specific DAG combining for ISD::SELECT_CC
-/// to match f32 max/min patterns to use NEON vmax/vmin instructions.
-static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
-                                       const ARMSubtarget *ST) {
-  // If the target supports NEON, try to use vmax/vmin instructions for f32
-  // selects like "x < y ? x : y".  Unless the NoNaNsFPMath option is set,
-  // be careful about NaNs:  NEON's vmax/vmin return NaN if either operand is
-  // a NaN; only do the transformation when it matches that behavior.
-
-  // For now only do this when using NEON for FP operations; if using VFP, it
-  // is not obvious that the benefit outweighs the cost of switching to the
-  // NEON pipeline.
-  if (!ST->hasNEON() || !ST->useNEONForSinglePrecisionFP() ||
-      N->getValueType(0) != MVT::f32)
-    return SDValue();
-
-  SDValue CondLHS = N->getOperand(0);
-  SDValue CondRHS = N->getOperand(1);
-  SDValue LHS = N->getOperand(2);
-  SDValue RHS = N->getOperand(3);
-  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
-
-  unsigned Opcode = 0;
-  bool IsReversed;
-  if (DAG.isEqualTo(LHS, CondLHS) && DAG.isEqualTo(RHS, CondRHS)) {
-    IsReversed = false; // x CC y ? x : y
-  } else if (DAG.isEqualTo(LHS, CondRHS) && DAG.isEqualTo(RHS, CondLHS)) {
-    IsReversed = true ; // x CC y ? y : x
-  } else {
-    return SDValue();
-  }
-
-  bool IsUnordered;
-  switch (CC) {
-  default: break;
-  case ISD::SETOLT:
-  case ISD::SETOLE:
-  case ISD::SETLT:
-  case ISD::SETLE:
-  case ISD::SETULT:
-  case ISD::SETULE:
-    // If LHS is NaN, an ordered comparison will be false and the result will
-    // be the RHS, but vmin(NaN, RHS) = NaN.  Avoid this by checking that LHS
-    // != NaN.  Likewise, for unordered comparisons, check for RHS != NaN.
-    IsUnordered = (CC == ISD::SETULT || CC == ISD::SETULE);
-    if (!DAG.isKnownNeverNaN(IsUnordered ? RHS : LHS))
-      break;
-    // For less-than-or-equal comparisons, "+0 <= -0" will be true but vmin
-    // will return -0, so vmin can only be used for unsafe math or if one of
-    // the operands is known to be nonzero.
-    if ((CC == ISD::SETLE || CC == ISD::SETOLE || CC == ISD::SETULE) &&
-        !DAG.getTarget().Options.UnsafeFPMath &&
-        !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
-      break;
-    Opcode = IsReversed ? ISD::FMAXNAN : ISD::FMINNAN;
-    break;
-
-  case ISD::SETOGT:
-  case ISD::SETOGE:
-  case ISD::SETGT:
-  case ISD::SETGE:
-  case ISD::SETUGT:
-  case ISD::SETUGE:
-    // If LHS is NaN, an ordered comparison will be false and the result will
-    // be the RHS, but vmax(NaN, RHS) = NaN.  Avoid this by checking that LHS
-    // != NaN.  Likewise, for unordered comparisons, check for RHS != NaN.
-    IsUnordered = (CC == ISD::SETUGT || CC == ISD::SETUGE);
-    if (!DAG.isKnownNeverNaN(IsUnordered ? RHS : LHS))
-      break;
-    // For greater-than-or-equal comparisons, "-0 >= +0" will be true but vmax
-    // will return +0, so vmax can only be used for unsafe math or if one of
-    // the operands is known to be nonzero.
-    if ((CC == ISD::SETGE || CC == ISD::SETOGE || CC == ISD::SETUGE) &&
-        !DAG.getTarget().Options.UnsafeFPMath &&
-        !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
-      break;
-    Opcode = IsReversed ? ISD::FMINNAN : ISD::FMAXNAN;
-    break;
-  }
-
-  if (!Opcode)
-    return SDValue();
-  return DAG.getNode(Opcode, SDLoc(N), N->getValueType(0), LHS, RHS);
-}
-
 /// PerformCMOVCombine - Target-specific DAG combining for ARMISD::CMOV.
 SDValue
 ARMTargetLowering::PerformCMOVCombine(SDNode *N, SelectionDAG &DAG) const {
@@ -10345,7 +10152,6 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND: return PerformExtendCombine(N, DCI.DAG, Subtarget);
-  case ISD::SELECT_CC:  return PerformSELECT_CCCombine(N, DCI.DAG, Subtarget);
   case ARMISD::CMOV: return PerformCMOVCombine(N, DCI.DAG);
   case ISD::LOAD:       return PerformLOADCombine(N, DCI);
   case ARMISD::VLD2DUP:
