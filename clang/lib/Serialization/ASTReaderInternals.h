@@ -226,7 +226,7 @@ public:
   : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings) { }
   
   static hash_value_type ComputeHash(internal_key_ref ikey);
-  static internal_key_type GetInternalKey(const FileEntry *FE);
+  internal_key_type GetInternalKey(const FileEntry *FE);
   bool EqualKey(internal_key_ref a, internal_key_ref b);
   
   static std::pair<unsigned, unsigned>

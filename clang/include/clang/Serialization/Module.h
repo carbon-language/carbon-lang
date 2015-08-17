@@ -152,6 +152,9 @@ public:
   /// \brief Whether this precompiled header is a relocatable PCH file.
   bool RelocatablePCH;
 
+  /// \brief Whether timestamps are included in this module file.
+  bool HasTimestamps;
+
   /// \brief The file entry for the module file.
   const FileEntry *File;
 

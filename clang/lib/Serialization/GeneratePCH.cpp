@@ -26,9 +26,10 @@ using namespace clang;
 PCHGenerator::PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
                            clang::Module *Module, StringRef isysroot,
                            std::shared_ptr<PCHBuffer> Buffer,
-                           bool AllowASTWithErrors)
+                           bool AllowASTWithErrors, bool IncludeTimestamps)
     : PP(PP), OutputFile(OutputFile), Module(Module), isysroot(isysroot.str()),
-      SemaPtr(nullptr), Buffer(Buffer), Stream(Buffer->Data), Writer(Stream),
+      SemaPtr(nullptr), Buffer(Buffer), Stream(Buffer->Data),
+      Writer(Stream, IncludeTimestamps),
       AllowASTWithErrors(AllowASTWithErrors) {
   Buffer->IsComplete = false;
 }

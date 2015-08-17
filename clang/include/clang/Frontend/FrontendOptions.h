@@ -147,6 +147,8 @@ public:
                                            ///< dumps in AST dumps.
   unsigned ASTDumpLookups : 1;             ///< Whether we include lookup table
                                            ///< dumps in AST dumps.
+  unsigned BuildingImplicitModule : 1;     ///< Whether we are performing an
+                                           ///< implicit module build.
 
   CodeCompleteOptions CodeCompleteOpts;
 
@@ -263,6 +265,7 @@ public:
     FixToTemporaries(false), ARCMTMigrateEmitARCErrors(false),
     SkipFunctionBodies(false), UseGlobalModuleIndex(true),
     GenerateGlobalModuleIndex(true), ASTDumpDecls(false), ASTDumpLookups(false),
+    BuildingImplicitModule(false),
     ARCMTAction(ARCMT_None), ObjCMTAction(ObjCMT_None),
     ProgramAction(frontend::ParseSyntaxOnly)
   {}

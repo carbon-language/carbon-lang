@@ -137,7 +137,9 @@ GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
   auto Buffer = std::make_shared<PCHBuffer>();
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
   Consumers.push_back(llvm::make_unique<PCHGenerator>(
-      CI.getPreprocessor(), OutputFile, Module, Sysroot, Buffer));
+      CI.getPreprocessor(), OutputFile, Module, Sysroot, Buffer,
+      /*AllowASTWithErrors*/false,
+      /*IncludeTimestamps*/+CI.getFrontendOpts().BuildingImplicitModule));
   Consumers.push_back(
       CI.getPCHContainerWriter().CreatePCHContainerGenerator(
           CI.getDiagnostics(), CI.getHeaderSearchOpts(),

@@ -21,6 +21,10 @@
 // RUN: rm %t/other.modulemap
 // RUN: %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s
 // RUN: not %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s -DERRORS 2>&1 | FileCheck %s
+// RUN: sleep 1
+// RUN: touch %t/a.h
+// RUN: %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s
+// RUN: not %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s -DERRORS 2>&1 | FileCheck %s
 // RUN: rm %t/b.h
 // RUN: %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s
 // RUN: not %clang_cc1 -fmodules -I %t -fmodule-file=%t/a.pcm %s -DERRORS 2>&1 | FileCheck %s --check-prefix=MISSING-B

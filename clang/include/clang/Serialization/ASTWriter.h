@@ -119,6 +119,12 @@ private:
   /// \brief The base directory for any relative paths we emit.
   std::string BaseDirectory;
 
+  /// \brief Indicates whether timestamps should be written to the produced
+  /// module file. This is the case for files implicitly written to the
+  /// module cache, where we need the timestamps to determine if the module
+  /// file is up to date, but not otherwise.
+  bool IncludeTimestamps;
+
   /// \brief Indicates when the AST writing is actively performing
   /// serialization, rather than just queueing updates.
   bool WritingAST;
@@ -569,10 +575,15 @@ private:
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
-  ASTWriter(llvm::BitstreamWriter &Stream);
+  ASTWriter(llvm::BitstreamWriter &Stream, bool IncludeTimestamps = true);
   ~ASTWriter() override;
 
   const LangOptions &getLangOpts() const;
+
+  /// \brief Get a timestamp for output into the AST file. The actual timestamp
+  /// of the specified file may be ignored if we have been instructed to not
+  /// include timestamps in the output file.
+  time_t getTimestampForOutput(const FileEntry *E) const;
 
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
@@ -892,7 +903,8 @@ public:
   PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
                clang::Module *Module, StringRef isysroot,
                std::shared_ptr<PCHBuffer> Buffer,
-               bool AllowASTWithErrors = false);
+               bool AllowASTWithErrors = false,
+               bool IncludeTimestamps = true);
   ~PCHGenerator() override;
   void InitializeSema(Sema &S) override { SemaPtr = &S; }
   void HandleTranslationUnit(ASTContext &Ctx) override;
