@@ -442,6 +442,33 @@ static Cursor maybeLexNumericalLiteral(Cursor C, MIToken &Token) {
   return C;
 }
 
+static MIToken::TokenKind getMetadataKeywordKind(StringRef Identifier) {
+  return StringSwitch<MIToken::TokenKind>(Identifier)
+      .Case("!tbaa", MIToken::md_tbaa)
+      .Default(MIToken::Error);
+}
+
+static Cursor maybeLexExlaim(
+    Cursor C, MIToken &Token,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  if (C.peek() != '!')
+    return None;
+  auto Range = C;
+  C.advance(1);
+  if (isdigit(C.peek()) || !isIdentifierChar(C.peek())) {
+    Token.reset(MIToken::exclaim, Range.upto(C));
+    return C;
+  }
+  while (isIdentifierChar(C.peek()))
+    C.advance();
+  StringRef StrVal = Range.upto(C);
+  Token.reset(getMetadataKeywordKind(StrVal), StrVal);
+  if (Token.isError())
+    ErrorCallback(Token.location(),
+                  "use of unknown metadata keyword '" + StrVal + "'");
+  return C;
+}
+
 static MIToken::TokenKind symbolToken(char C) {
   switch (C) {
   case ',':
@@ -450,8 +477,6 @@ static MIToken::TokenKind symbolToken(char C) {
     return MIToken::equal;
   case ':':
     return MIToken::colon;
-  case '!':
-    return MIToken::exclaim;
   case '(':
     return MIToken::lparen;
   case ')':
@@ -530,6 +555,8 @@ StringRef llvm::lexMIToken(
   if (Cursor R = maybeLexHexFloatingPointLiteral(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexNumericalLiteral(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexExlaim(C, Token, ErrorCallback))
     return R.remaining();
   if (Cursor R = maybeLexSymbol(C, Token))
     return R.remaining();

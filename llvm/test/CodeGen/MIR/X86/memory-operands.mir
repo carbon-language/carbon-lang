@@ -111,6 +111,27 @@
     ret i32 8
   }
 
+  %struct.XXH_state64_t = type { i32, i32, i64, i64, i64 }
+
+  @a = common global i32 0, align 4
+
+  define i32 @tbaa_metadata() {
+  entry:
+    %0 = load i32, i32* @a, align 4, !tbaa !2
+    %1 = inttoptr i32 %0 to %struct.XXH_state64_t*
+    %total_len2 = bitcast %struct.XXH_state64_t* %1 to i32*
+    %2 = load i32, i32* %total_len2, align 4, !tbaa !6
+    ret i32 %2
+  }
+
+  !2 = !{!3, !3, i64 0}
+  !3 = !{!"int", !4, i64 0}
+  !4 = !{!"omnipotent char", !5, i64 0}
+  !5 = !{!"Simple C/C++ TBAA"}
+  !6 = !{!7, !3, i64 0}
+  !7 = !{!"XXH_state64_t", !3, i64 0, !3, i64 4, !8, i64 8, !8, i64 16, !8, i64 24}
+  !8 = !{!"long long", !4, i64 0}
+
 ...
 ---
 name:            test
@@ -336,5 +357,18 @@ body: |
 
   bb.6.lbl4:
     %eax = MOV32ri 8
+    RETQ %eax
+...
+---
+name:            tbaa_metadata
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    %rax = MOV64rm %rip, 1, _, @a, _ :: (load 8 from got)
+  ; CHECK-LABEL: name: tbaa_metadata
+  ; CHECK:      %eax = MOV32rm killed %rax, 1, _, 0, _, implicit-def %rax :: (load 4 from %ir.a, !tbaa !2)
+  ; CHECK-NEXT: %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.total_len2, !tbaa !6)
+    %eax = MOV32rm killed %rax, 1, _, 0, _, implicit-def %rax :: (load 4 from %ir.a, !tbaa !2)
+    %eax = MOV32rm killed %rax, 1, _, 0, _ :: (load 4 from %ir.total_len2, !tbaa !6)
     RETQ %eax
 ...

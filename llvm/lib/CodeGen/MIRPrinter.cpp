@@ -777,7 +777,14 @@ void MIPrinter::print(const MachineMemOperand &Op) {
   printOffset(Op.getOffset());
   if (Op.getBaseAlignment() != Op.getSize())
     OS << ", align " << Op.getBaseAlignment();
-  // TODO: Print the metadata attributes.
+  auto AAInfo = Op.getAAInfo();
+  if (AAInfo.TBAA) {
+    OS << ", !tbaa ";
+    AAInfo.TBAA->printAsOperand(OS, MST);
+  }
+  // TODO: Print AA Scope metadata.
+  // TODO: Print AA NoAlias metadata.
+  // TODO: Print the ranges metadata.
   OS << ')';
 }
 
