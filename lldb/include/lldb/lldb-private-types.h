@@ -102,8 +102,6 @@ namespace lldb_private
                                                  // pass it.
     };
 
-    typedef struct type128 { uint64_t x[2]; } type128;
-
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)

@@ -1897,7 +1897,7 @@ ValueObject::SetValueFromCString (const char *value_str, Error& error)
         // If the value is already a scalar, then let the scalar change itself:
         m_value.GetScalar().SetValueFromCString (value_str, encoding, byte_size);
     }
-    else if (byte_size <= 16)
+    else if (byte_size <= Scalar::GetMaxByteSize())
     {
         // If the value fits in a scalar, then make a new scalar and again let the
         // scalar code do the conversion, then figure out where to put the new value.
