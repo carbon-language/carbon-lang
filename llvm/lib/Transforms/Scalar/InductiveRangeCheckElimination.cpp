@@ -214,7 +214,7 @@ public:
     AU.addRequired<LoopInfoWrapperPass>();
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<BranchProbabilityInfoWrapperPass>();
   }
 
@@ -1399,7 +1399,7 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   LLVMContext &Context = Preheader->getContext();
   InductiveRangeCheck::AllocatorTy IRCAlloc;
   SmallVector<InductiveRangeCheck *, 16> RangeChecks;
-  ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
+  ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   BranchProbabilityInfo &BPI =
       getAnalysis<BranchProbabilityInfoWrapperPass>().getBPI();
 

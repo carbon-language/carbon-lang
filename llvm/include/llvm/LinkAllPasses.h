@@ -184,7 +184,7 @@ namespace {
       (void) llvm::createEliminateAvailableExternallyPass();
 
       (void)new llvm::IntervalPartition();
-      (void)new llvm::ScalarEvolution();
+      (void)new llvm::ScalarEvolutionWrapperPass();
       ((llvm::Function*)nullptr)->viewCFGOnly();
       llvm::RGPassManager RGM;
       ((llvm::RegionPass*)nullptr)->runOnRegion((llvm::Region*)nullptr, RGM);

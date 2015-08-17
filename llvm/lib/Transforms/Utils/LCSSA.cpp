@@ -298,7 +298,7 @@ struct LCSSA : public FunctionPass {
     AU.addRequired<LoopInfoWrapperPass>();
     AU.addPreservedID(LoopSimplifyID);
     AU.addPreserved<AliasAnalysis>();
-    AU.addPreserved<ScalarEvolution>();
+    AU.addPreserved<ScalarEvolutionWrapperPass>();
   }
 };
 }
@@ -318,7 +318,8 @@ bool LCSSA::runOnFunction(Function &F) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  SE = getAnalysisIfAvailable<ScalarEvolution>();
+  auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
+  SE = SEWP ? &SEWP->getSE() : nullptr;
 
   // Simplify each loop nest in the function.
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)

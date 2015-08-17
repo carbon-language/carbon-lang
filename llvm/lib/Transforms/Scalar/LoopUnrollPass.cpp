@@ -144,8 +144,8 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
-      AU.addRequired<ScalarEvolution>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addRequired<ScalarEvolutionWrapperPass>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
       // FIXME: Loop unroll requires LCSSA. And LCSSA requires dom info.
       // If loop unroll does not preserve dom info then LCSSA pass on next
@@ -241,7 +241,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(LoopUnroll, "loop-unroll", "Unroll loops", false, false)
 
 Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial,
@@ -894,7 +894,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
+  ScalarEvolution *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   const TargetTransformInfo &TTI =
       getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);

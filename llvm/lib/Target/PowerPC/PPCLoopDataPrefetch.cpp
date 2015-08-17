@@ -71,10 +71,10 @@ namespace {
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfoWrapperPass>();
       AU.addPreserved<LoopInfoWrapperPass>();
-      AU.addRequired<ScalarEvolution>();
+      AU.addRequired<ScalarEvolutionWrapperPass>();
       // FIXME: For some reason, preserving SE here breaks LSR (even if
       // this pass changes nothing).
-      // AU.addPreserved<ScalarEvolution>();
+      // AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
     }
 
@@ -96,7 +96,7 @@ INITIALIZE_PASS_BEGIN(PPCLoopDataPrefetch, "ppc-loop-data-prefetch",
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(PPCLoopDataPrefetch, "ppc-loop-data-prefetch",
                     "PPC Loop Data Prefetch", false, false)
 
@@ -104,7 +104,7 @@ FunctionPass *llvm::createPPCLoopDataPrefetchPass() { return new PPCLoopDataPref
 
 bool PPCLoopDataPrefetch::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   DL = &F.getParent()->getDataLayout();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);

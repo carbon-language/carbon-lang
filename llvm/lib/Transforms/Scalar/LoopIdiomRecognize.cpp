@@ -96,8 +96,8 @@ public:
     AU.addPreservedID(LCSSAID);
     AU.addRequired<AliasAnalysis>();
     AU.addPreserved<AliasAnalysis>();
-    AU.addRequired<ScalarEvolution>();
-    AU.addPreserved<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
+    AU.addPreserved<ScalarEvolutionWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetLibraryInfoWrapperPass>();
@@ -146,7 +146,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
@@ -192,7 +192,7 @@ bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
       *CurLoop->getHeader()->getParent());

@@ -60,12 +60,12 @@ public:
 void Delinearization::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<LoopInfoWrapperPass>();
-  AU.addRequired<ScalarEvolution>();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
 }
 
 bool Delinearization::runOnFunction(Function &F) {
   this->F = &F;
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   return false;
 }

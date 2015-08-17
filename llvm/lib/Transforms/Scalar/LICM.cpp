@@ -120,7 +120,7 @@ namespace {
       AU.addPreservedID(LCSSAID);
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<AliasAnalysis>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
@@ -164,7 +164,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LICM, "licm", "Loop Invariant Code Motion", false, false)
@@ -264,9 +264,10 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
     // FIXME: This is really heavy handed. It would be a bit better to use an
     // SSAUpdater strategy during promotion that was LCSSA aware and reformed
     // it as it went.
-    if (Changed)
-      formLCSSARecursively(*L, *DT, LI,
-                           getAnalysisIfAvailable<ScalarEvolution>());
+    if (Changed) {
+      auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
+      formLCSSARecursively(*L, *DT, LI, SEWP ? &SEWP->getSE() : nullptr);
+    }
   }
 
   // Check that neither this loop nor its parent have had LCSSA broken. LICM is

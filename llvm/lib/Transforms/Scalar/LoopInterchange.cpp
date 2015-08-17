@@ -437,7 +437,7 @@ struct LoopInterchange : public FunctionPass {
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<AliasAnalysis>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
@@ -447,7 +447,7 @@ struct LoopInterchange : public FunctionPass {
   }
 
   bool runOnFunction(Function &F) override {
-    SE = &getAnalysis<ScalarEvolution>();
+    SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DA = &getAnalysis<DependenceAnalysis>();
     auto *DTWP = getAnalysisIfAvailable<DominatorTreeWrapperPass>();
@@ -1289,7 +1289,7 @@ INITIALIZE_PASS_BEGIN(LoopInterchange, "loop-interchange",
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(DependenceAnalysis)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)

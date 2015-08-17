@@ -142,7 +142,7 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
   }
 
   bool runOnFunction(Function &F) override {
-    SE = &getAnalysis<ScalarEvolution>();
+    SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     for (auto I = LI->begin(), E = LI->end(); I != E; I++) {
@@ -153,7 +153,7 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
     // We no longer modify the IR at all in this pass.  Thus all
     // analysis are preserved.
@@ -747,7 +747,7 @@ FunctionPass *llvm::createPlaceSafepointsPass() {
 INITIALIZE_PASS_BEGIN(PlaceBackedgeSafepointsImpl,
                       "place-backedge-safepoints-impl",
                       "Place Backedge Safepoints", false, false)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(PlaceBackedgeSafepointsImpl,

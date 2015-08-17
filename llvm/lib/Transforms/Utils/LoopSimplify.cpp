@@ -760,7 +760,7 @@ namespace {
       AU.addPreserved<LoopInfoWrapperPass>();
 
       AU.addPreserved<AliasAnalysis>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addPreserved<DependenceAnalysis>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
     }
@@ -790,7 +790,8 @@ bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  SE = getAnalysisIfAvailable<ScalarEvolution>();
+  auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
+  SE = SEWP ? &SEWP->getSE() : nullptr;
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
   // Simplify each loop nest in the function.

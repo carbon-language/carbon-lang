@@ -4785,7 +4785,8 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
 }
 
 LSRInstance::LSRInstance(Loop *L, Pass *P)
-    : IU(P->getAnalysis<IVUsers>()), SE(P->getAnalysis<ScalarEvolution>()),
+    : IU(P->getAnalysis<IVUsers>()),
+      SE(P->getAnalysis<ScalarEvolutionWrapperPass>().getSE()),
       DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()),
       LI(P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo()),
       TTI(P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
@@ -4958,7 +4959,7 @@ INITIALIZE_PASS_BEGIN(LoopStrengthReduce, "loop-reduce",
                 "Loop Strength Reduction", false, false)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(IVUsers)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
@@ -4984,8 +4985,8 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredID(LoopSimplifyID);
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-  AU.addRequired<ScalarEvolution>();
-  AU.addPreserved<ScalarEvolution>();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
+  AU.addPreserved<ScalarEvolutionWrapperPass>();
   // Requiring LoopSimplify a second time here prevents IVUsers from running
   // twice, since LoopSimplify was invalidated by running ScalarEvolution.
   AU.addRequiredID(LoopSimplifyID);
@@ -5008,7 +5009,8 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
   if (EnablePhiElim && L->isLoopSimplifyForm()) {
     SmallVector<WeakVH, 16> DeadInsts;
     const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
-    SCEVExpander Rewriter(getAnalysis<ScalarEvolution>(), DL, "lsr");
+    SCEVExpander Rewriter(getAnalysis<ScalarEvolutionWrapperPass>().getSE(), DL,
+                          "lsr");
 #ifndef NDEBUG
     Rewriter.setDebugType(DEBUG_TYPE);
 #endif

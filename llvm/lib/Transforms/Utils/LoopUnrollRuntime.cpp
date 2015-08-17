@@ -293,13 +293,14 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
   // loops to be unrolled than relying on induction var simplification
   if (!LPM)
     return false;
-  ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
-  if (!SE)
+  auto *SEWP = LPM->getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
+  if (!SEWP)
     return false;
+  ScalarEvolution &SE = SEWP->getSE();
 
   // Only unroll loops with a computable trip count and the trip count needs
   // to be an int value (allowing a pointer type is a TODO item)
-  const SCEV *BECountSC = SE->getBackedgeTakenCount(L);
+  const SCEV *BECountSC = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BECountSC) ||
       !BECountSC->getType()->isIntegerTy())
     return false;
@@ -308,13 +309,13 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
 
   // Add 1 since the backedge count doesn't include the first loop iteration
   const SCEV *TripCountSC =
-    SE->getAddExpr(BECountSC, SE->getConstant(BECountSC->getType(), 1));
+      SE.getAddExpr(BECountSC, SE.getConstant(BECountSC->getType(), 1));
   if (isa<SCEVCouldNotCompute>(TripCountSC))
     return false;
 
   BasicBlock *Header = L->getHeader();
   const DataLayout &DL = Header->getModule()->getDataLayout();
-  SCEVExpander Expander(*SE, DL, "loop-unroll");
+  SCEVExpander Expander(SE, DL, "loop-unroll");
   if (!AllowExpensiveTripCount && Expander.isHighCostExpansion(TripCountSC, L))
     return false;
 
@@ -331,7 +332,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
   // If this loop is nested, then the loop unroller changes the code in
   // parent loop, so the Scalar Evolution pass needs to be run again
   if (Loop *ParentLoop = L->getParentLoop())
-    SE->forgetLoop(ParentLoop);
+    SE.forgetLoop(ParentLoop);
 
   // Grab analyses that we preserve.
   auto *DTWP = LPM->getAnalysisIfAvailable<DominatorTreeWrapperPass>();

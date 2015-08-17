@@ -322,7 +322,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
   }
@@ -412,7 +412,7 @@ INITIALIZE_PASS_BEGIN(
     "Split GEPs to a variadic base and a constant offset for better CSE", false,
     false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(
     SeparateConstOffsetFromGEP, "separate-const-offset-from-gep",
@@ -1035,7 +1035,7 @@ bool SeparateConstOffsetFromGEP::runOnFunction(Function &F) {
     return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
   bool Changed = false;
   for (Function::iterator B = F.begin(), BE = F.end(); B != BE; ++B) {

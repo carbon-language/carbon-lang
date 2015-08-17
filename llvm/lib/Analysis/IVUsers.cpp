@@ -39,7 +39,7 @@ INITIALIZE_PASS_BEGIN(IVUsers, "iv-users",
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(IVUsers, "iv-users",
                       "Induction Variable Users", false, true)
 
@@ -255,7 +255,7 @@ void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AssumptionCacheTracker>();
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<ScalarEvolution>();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
   AU.setPreservesAll();
 }
 
@@ -266,7 +266,7 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
       *L->getHeader()->getParent());
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
   // Collect ephemeral values so that AddUsersIfInteresting skips them.
   EphValues.clear();

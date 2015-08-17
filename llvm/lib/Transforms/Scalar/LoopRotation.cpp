@@ -66,7 +66,7 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
     }
 
@@ -384,8 +384,8 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
 
   // Anything ScalarEvolution may know about this loop or the PHI nodes
   // in its header will soon be invalidated.
-  if (ScalarEvolution *SE = getAnalysisIfAvailable<ScalarEvolution>())
-    SE->forgetLoop(L);
+  if (auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>())
+    SEWP->getSE().forgetLoop(L);
 
   DEBUG(dbgs() << "LoopRotation: rotating "; L->dump());
 

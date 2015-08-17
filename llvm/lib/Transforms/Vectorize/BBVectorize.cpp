@@ -207,7 +207,7 @@ namespace {
       : BasicBlockPass(ID), Config(C) {
       AA = &P->getAnalysis<AliasAnalysis>();
       DT = &P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-      SE = &P->getAnalysis<ScalarEvolution>();
+      SE = &P->getAnalysis<ScalarEvolutionWrapperPass>().getSE();
       TLI = &P->getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
       TTI = IgnoreTargetInfo
                 ? nullptr
@@ -442,7 +442,7 @@ namespace {
 
       AA = &getAnalysis<AliasAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-      SE = &getAnalysis<ScalarEvolution>();
+      SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
       TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
       TTI = IgnoreTargetInfo
                 ? nullptr
@@ -456,12 +456,12 @@ namespace {
       BasicBlockPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<DominatorTreeWrapperPass>();
-      AU.addRequired<ScalarEvolution>();
+      AU.addRequired<ScalarEvolutionWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<DominatorTreeWrapperPass>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.setPreservesCFG();
     }
 
@@ -3200,7 +3200,7 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)
 
 BasicBlockPass *llvm::createBBVectorizePass(const VectorizeConfig &C) {

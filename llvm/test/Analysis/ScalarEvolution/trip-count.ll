@@ -1,4 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -scalar-evolution-max-iterations=0 | FileCheck %s
+; RUN: opt < %s -passes='print<scalar-evolution>' -disable-output 2>&1 | FileCheck %s
 ; PR1101
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
@@ -6,7 +7,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @A = weak global [1000 x i32] zeroinitializer, align 32         
 
-; CHECK: Printing analysis 'Scalar Evolution Analysis' for function 'test1':
+; CHECK-LABEL: Determining loop execution counts for: @test1
 ; CHECK: backedge-taken count is 10000
 
 define void @test1(i32 %N) {
@@ -32,7 +33,7 @@ return:         ; preds = %bb5
 }
 
 ; PR22795
-; CHECK: Printing analysis 'Scalar Evolution Analysis' for function 'test2':
+; CHECK-LABEL: Classifying expressions for: @test2
 ; CHECK:   %iv = phi i32 [ -1, %entry ], [ %next.1, %for.inc.1 ]
 ; CHECK-NEXT:  -->  {-1,+,2}<%preheader> U: full-set S: full-set             Exits: 13
 

@@ -114,16 +114,6 @@ static cl::opt<bool>
 VerifySCEV("verify-scev",
            cl::desc("Verify ScalarEvolution's backedge taken counts (slow)"));
 
-INITIALIZE_PASS_BEGIN(ScalarEvolution, "scalar-evolution",
-                "Scalar Evolution Analysis", false, true)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_END(ScalarEvolution, "scalar-evolution",
-                "Scalar Evolution Analysis", false, true)
-char ScalarEvolution::ID = 0;
-
 //===----------------------------------------------------------------------===//
 //                           SCEV class definitions
 //===----------------------------------------------------------------------===//
@@ -1983,7 +1973,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   Flags = StrengthenNoWrapFlags(this, scAddExpr, Ops, Flags);
 
   // Sort by complexity, this groups all similar expression types together.
-  GroupByComplexity(Ops, LI);
+  GroupByComplexity(Ops, &LI);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -2391,7 +2381,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   Flags = StrengthenNoWrapFlags(this, scMulExpr, Ops, Flags);
 
   // Sort by complexity, this groups all similar expression types together.
-  GroupByComplexity(Ops, LI);
+  GroupByComplexity(Ops, &LI);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -2859,10 +2849,10 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   // Canonicalize nested AddRecs in by nesting them in order of loop depth.
   if (const SCEVAddRecExpr *NestedAR = dyn_cast<SCEVAddRecExpr>(Operands[0])) {
     const Loop *NestedLoop = NestedAR->getLoop();
-    if (L->contains(NestedLoop) ?
-        (L->getLoopDepth() < NestedLoop->getLoopDepth()) :
-        (!NestedLoop->contains(L) &&
-         DT->dominates(L->getHeader(), NestedLoop->getHeader()))) {
+    if (L->contains(NestedLoop)
+            ? (L->getLoopDepth() < NestedLoop->getLoopDepth())
+            : (!NestedLoop->contains(L) &&
+               DT.dominates(L->getHeader(), NestedLoop->getHeader()))) {
       SmallVector<const SCEV *, 4> NestedOperands(NestedAR->op_begin(),
                                                   NestedAR->op_end());
       Operands[0] = NestedAR->getStart();
@@ -2997,7 +2987,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
 #endif
 
   // Sort by complexity, this groups all similar expression types together.
-  GroupByComplexity(Ops, LI);
+  GroupByComplexity(Ops, &LI);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -3101,7 +3091,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
 #endif
 
   // Sort by complexity, this groups all similar expression types together.
-  GroupByComplexity(Ops, LI);
+  GroupByComplexity(Ops, &LI);
 
   // If there are any constants, fold them together.
   unsigned Idx = 0;
@@ -3202,7 +3192,7 @@ const SCEV *ScalarEvolution::getSizeOfExpr(Type *IntTy, Type *AllocTy) {
   // constant expression and then folding it back into a ConstantInt.
   // This is just a compile-time optimization.
   return getConstant(IntTy,
-                     F->getParent()->getDataLayout().getTypeAllocSize(AllocTy));
+                     F.getParent()->getDataLayout().getTypeAllocSize(AllocTy));
 }
 
 const SCEV *ScalarEvolution::getOffsetOfExpr(Type *IntTy,
@@ -3213,7 +3203,7 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(Type *IntTy,
   // This is just a compile-time optimization.
   return getConstant(
       IntTy,
-      F->getParent()->getDataLayout().getStructLayout(STy)->getElementOffset(
+      F.getParent()->getDataLayout().getStructLayout(STy)->getElementOffset(
           FieldNo));
 }
 
@@ -3256,7 +3246,7 @@ bool ScalarEvolution::isSCEVable(Type *Ty) const {
 /// for which isSCEVable must return true.
 uint64_t ScalarEvolution::getTypeSizeInBits(Type *Ty) const {
   assert(isSCEVable(Ty) && "Type is not SCEVable!");
-  return F->getParent()->getDataLayout().getTypeSizeInBits(Ty);
+  return F.getParent()->getDataLayout().getTypeSizeInBits(Ty);
 }
 
 /// getEffectiveSCEVType - Return a type with the same bitwidth as
@@ -3272,11 +3262,11 @@ Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
 
   // The only other support type is pointer.
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
-  return F->getParent()->getDataLayout().getIntPtrType(Ty);
+  return F.getParent()->getDataLayout().getIntPtrType(Ty);
 }
 
 const SCEV *ScalarEvolution::getCouldNotCompute() {
-  return &CouldNotCompute;
+  return CouldNotCompute.get();
 }
 
 namespace {
@@ -3621,7 +3611,7 @@ ScalarEvolution::ForgetSymbolicName(Instruction *PN, const SCEV *SymName) {
 /// a loop header, making it a potential recurrence, or it doesn't.
 ///
 const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
-  if (const Loop *L = LI->getLoopFor(PN->getParent()))
+  if (const Loop *L = LI.getLoopFor(PN->getParent()))
     if (L->getHeader() == PN->getParent()) {
       // The loop may have multiple entrances or multiple exits; we can analyze
       // this phi as an addrec if it has a unique entry value and a unique
@@ -3767,9 +3757,9 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   // PHI's incoming blocks are in a different loop, in which case doing so
   // risks breaking LCSSA form. Instcombine would normally zap these, but
   // it doesn't have DominatorTree information, so it may miss cases.
-  if (Value *V =
-          SimplifyInstruction(PN, F->getParent()->getDataLayout(), TLI, DT, AC))
-    if (LI->replacementPreservesLCSSAForm(PN, V))
+  if (Value *V = SimplifyInstruction(PN, F.getParent()->getDataLayout(), &TLI,
+                                     &DT, &AC))
+    if (LI.replacementPreservesLCSSAForm(PN, V))
       return getSCEV(V);
 
   // If it's not a loop phi, we can't handle it yet.
@@ -3864,8 +3854,8 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
     // For a SCEVUnknown, ask ValueTracking.
     unsigned BitWidth = getTypeSizeInBits(U->getType());
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    computeKnownBits(U->getValue(), Zeros, Ones,
-                     F->getParent()->getDataLayout(), 0, AC, nullptr, DT);
+    computeKnownBits(U->getValue(), Zeros, Ones, F.getParent()->getDataLayout(),
+                     0, &AC, nullptr, &DT);
     return Zeros.countTrailingOnes();
   }
 
@@ -4095,18 +4085,18 @@ ScalarEvolution::getRange(const SCEV *S,
     // Split here to avoid paying the compile-time cost of calling both
     // computeKnownBits and ComputeNumSignBits.  This restriction can be lifted
     // if needed.
-    const DataLayout &DL = F->getParent()->getDataLayout();
+    const DataLayout &DL = F.getParent()->getDataLayout();
     if (SignHint == ScalarEvolution::HINT_RANGE_UNSIGNED) {
       // For a SCEVUnknown, ask ValueTracking.
       APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-      computeKnownBits(U->getValue(), Zeros, Ones, DL, 0, AC, nullptr, DT);
+      computeKnownBits(U->getValue(), Zeros, Ones, DL, 0, &AC, nullptr, &DT);
       if (Ones != ~Zeros + 1)
         ConservativeResult =
             ConservativeResult.intersectWith(ConstantRange(Ones, ~Zeros + 1));
     } else {
       assert(SignHint == ScalarEvolution::HINT_RANGE_SIGNED &&
              "generalize as needed!");
-      unsigned NS = ComputeNumSignBits(U->getValue(), DL, 0, AC, nullptr, DT);
+      unsigned NS = ComputeNumSignBits(U->getValue(), DL, 0, &AC, nullptr, &DT);
       if (NS > 1)
         ConservativeResult = ConservativeResult.intersectWith(
             ConstantRange(APInt::getSignedMinValue(BitWidth).ashr(NS - 1),
@@ -4139,7 +4129,7 @@ SCEV::NoWrapFlags ScalarEvolution::getNoWrapFlagsFromUB(const Value *V) {
   // recurrence, but getting that requires computing the SCEV of the operands,
   // which can be expensive. This check we can do cheaply to rule out some
   // cases early.
-  Loop *innermostContainingLoop = LI->getLoopFor(BinOp->getParent());
+  Loop *innermostContainingLoop = LI.getLoopFor(BinOp->getParent());
   if (innermostContainingLoop == nullptr ||
       innermostContainingLoop->getHeader() != BinOp->getParent())
     return SCEV::FlagAnyWrap;
@@ -4190,7 +4180,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // reachable. Such instructions don't matter, and they aren't required
     // to obey basic rules for definitions dominating uses which this
     // analysis depends on.
-    if (!DT->isReachableFromEntry(I->getParent()))
+    if (!DT.isReachableFromEntry(I->getParent()))
       return getUnknown(V);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
     Opcode = CE->getOpcode();
@@ -4304,7 +4294,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       unsigned BitWidth = A.getBitWidth();
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
       computeKnownBits(U->getOperand(0), KnownZero, KnownOne,
-                       F->getParent()->getDataLayout(), 0, AC, nullptr, DT);
+                       F.getParent()->getDataLayout(), 0, &AC, nullptr, &DT);
 
       APInt EffectiveMask =
           APInt::getLowBitsSet(BitWidth, BitWidth - LZ - TZ).shl(TZ);
@@ -5012,7 +5002,7 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
     // MaxBECount is conservatively the maximum EL.Max, where CouldNotCompute is
     // considered greater than any computable EL.Max.
     if (EL.Max != getCouldNotCompute() && Latch &&
-        DT->dominates(ExitBB, Latch)) {
+        DT.dominates(ExitBB, Latch)) {
       if (!MustExitMaxBECount)
         MustExitMaxBECount = EL.Max;
       else {
@@ -5625,7 +5615,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
 
   unsigned NumIterations = BEs.getZExtValue(); // must be in range
   unsigned IterationNum = 0;
-  const DataLayout &DL = F->getParent()->getDataLayout();
+  const DataLayout &DL = F.getParent()->getDataLayout();
   for (; ; ++IterationNum) {
     if (IterationNum == NumIterations)
       return RetVal = CurrentIterVals[PN];  // Got exit value!
@@ -5634,7 +5624,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     // EvaluateExpression adds non-phi values to the CurrentIterVals map.
     DenseMap<Instruction *, Constant *> NextIterVals;
     Constant *NextPHI =
-        EvaluateExpression(BEValue, L, CurrentIterVals, DL, TLI);
+        EvaluateExpression(BEValue, L, CurrentIterVals, DL, &TLI);
     if (!NextPHI)
       return nullptr;        // Couldn't evaluate!
     NextIterVals[PN] = NextPHI;
@@ -5659,7 +5649,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
       Constant *&NextPHI = NextIterVals[PHI];
       if (!NextPHI) {   // Not already computed.
         Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, TLI);
+        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, &TLI);
       }
       if (NextPHI != I->second)
         StoppedEvolving = false;
@@ -5711,10 +5701,10 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // the loop symbolically to determine when the condition gets a value of
   // "ExitWhen".
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
-  const DataLayout &DL = F->getParent()->getDataLayout();
+  const DataLayout &DL = F.getParent()->getDataLayout();
   for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
     ConstantInt *CondVal = dyn_cast_or_null<ConstantInt>(
-        EvaluateExpression(Cond, L, CurrentIterVals, DL, TLI));
+        EvaluateExpression(Cond, L, CurrentIterVals, DL, &TLI));
 
     // Couldn't symbolically evaluate.
     if (!CondVal) return getCouldNotCompute();
@@ -5744,7 +5734,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
       if (NextPHI) continue;    // Already computed!
 
       Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, TLI);
+      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL, &TLI);
     }
     CurrentIterVals.swap(NextIterVals);
   }
@@ -5889,7 +5879,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
   // exit value from the loop without using SCEVs.
   if (const SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V)) {
     if (Instruction *I = dyn_cast<Instruction>(SU->getValue())) {
-      const Loop *LI = (*this->LI)[I->getParent()];
+      const Loop *LI = this->LI[I->getParent()];
       if (LI && LI->getParentLoop() == L)  // Looking for loop exit value.
         if (PHINode *PN = dyn_cast<PHINode>(I))
           if (PN->getParent() == LI->getHeader()) {
@@ -5947,16 +5937,16 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
         // Check to see if getSCEVAtScope actually made an improvement.
         if (MadeImprovement) {
           Constant *C = nullptr;
-          const DataLayout &DL = F->getParent()->getDataLayout();
+          const DataLayout &DL = F.getParent()->getDataLayout();
           if (const CmpInst *CI = dyn_cast<CmpInst>(I))
             C = ConstantFoldCompareInstOperands(CI->getPredicate(), Operands[0],
-                                                Operands[1], DL, TLI);
+                                                Operands[1], DL, &TLI);
           else if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
             if (!LI->isVolatile())
               C = ConstantFoldLoadFromConstPtr(Operands[0], DL);
           } else
             C = ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands,
-                                         DL, TLI);
+                                         DL, &TLI);
           if (!C) return V;
           return getSCEV(C);
         }
@@ -6377,7 +6367,7 @@ ScalarEvolution::getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB) {
   // A loop's header is defined to be a block that dominates the loop.
   // If the header has a unique predecessor outside the loop, it must be
   // a block that has exactly one successor that can reach the loop.
-  if (Loop *L = LI->getLoopFor(BB))
+  if (Loop *L = LI.getLoopFor(BB))
     return std::make_pair(L->getLoopPredecessor(), L->getHeader());
 
   return std::pair<BasicBlock *, BasicBlock *>();
@@ -6969,11 +6959,11 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
     return true;
 
   // Check conditions due to any @llvm.assume intrinsics.
-  for (auto &AssumeVH : AC->assumptions()) {
+  for (auto &AssumeVH : AC.assumptions()) {
     if (!AssumeVH)
       continue;
     auto *CI = cast<CallInst>(AssumeVH);
-    if (!DT->dominates(CI, Latch->getTerminator()))
+    if (!DT.dominates(CI, Latch->getTerminator()))
       continue;
 
     if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
@@ -7002,12 +6992,11 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
   // If the loop is not reachable from the entry block, we risk running into an
   // infinite loop as we walk up into the dom tree.  These loops do not matter
   // anyway, so we just return a conservative answer when we see them.
-  if (!DT->isReachableFromEntry(L->getHeader()))
+  if (!DT.isReachableFromEntry(L->getHeader()))
     return false;
 
-  for (DomTreeNode *DTN = (*DT)[Latch], *HeaderDTN = (*DT)[L->getHeader()];
-       DTN != HeaderDTN;
-       DTN = DTN->getIDom()) {
+  for (DomTreeNode *DTN = DT[Latch], *HeaderDTN = DT[L->getHeader()];
+       DTN != HeaderDTN; DTN = DTN->getIDom()) {
 
     assert(DTN && "should reach the loop header before reaching the root!");
 
@@ -7031,7 +7020,7 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
       // We're constructively (and conservatively) enumerating edges within the
       // loop body that dominate the latch.  The dominator tree better agree
       // with us on this:
-      assert(DT->dominates(DominatingEdge, Latch) && "should be!");
+      assert(DT.dominates(DominatingEdge, Latch) && "should be!");
 
       if (isImpliedCond(Pred, LHS, RHS, Condition,
                         BB != ContinuePredicate->getSuccessor(0)))
@@ -7076,11 +7065,11 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   }
 
   // Check conditions due to any @llvm.assume intrinsics.
-  for (auto &AssumeVH : AC->assumptions()) {
+  for (auto &AssumeVH : AC.assumptions()) {
     if (!AssumeVH)
       continue;
     auto *CI = cast<CallInst>(AssumeVH);
-    if (!DT->dominates(CI, L->getHeader()))
+    if (!DT.dominates(CI, L->getHeader()))
       continue;
 
     if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
@@ -8312,22 +8301,34 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //                   ScalarEvolution Class Implementation
 //===----------------------------------------------------------------------===//
 
-ScalarEvolution::ScalarEvolution()
-    : FunctionPass(ID), WalkingBEDominatingConds(false), ValuesAtScopes(64),
-      LoopDispositions(64), BlockDispositions(64), FirstUnknown(nullptr) {
-  initializeScalarEvolutionPass(*PassRegistry::getPassRegistry());
+ScalarEvolution::ScalarEvolution(Function &F, TargetLibraryInfo &TLI,
+                                 AssumptionCache &AC, DominatorTree &DT,
+                                 LoopInfo &LI)
+    : F(F), TLI(TLI), AC(AC), DT(DT), LI(LI),
+      CouldNotCompute(new SCEVCouldNotCompute()),
+      WalkingBEDominatingConds(false), ValuesAtScopes(64), LoopDispositions(64),
+      BlockDispositions(64), FirstUnknown(nullptr) {}
+
+ScalarEvolution::ScalarEvolution(ScalarEvolution &&Arg)
+    : F(Arg.F), TLI(Arg.TLI), AC(Arg.AC), DT(Arg.DT), LI(Arg.LI),
+      CouldNotCompute(std::move(Arg.CouldNotCompute)),
+      ValueExprMap(std::move(Arg.ValueExprMap)),
+      WalkingBEDominatingConds(false),
+      BackedgeTakenCounts(std::move(Arg.BackedgeTakenCounts)),
+      ConstantEvolutionLoopExitValue(
+          std::move(Arg.ConstantEvolutionLoopExitValue)),
+      ValuesAtScopes(std::move(Arg.ValuesAtScopes)),
+      LoopDispositions(std::move(Arg.LoopDispositions)),
+      BlockDispositions(std::move(Arg.BlockDispositions)),
+      UnsignedRanges(std::move(Arg.UnsignedRanges)),
+      SignedRanges(std::move(Arg.SignedRanges)),
+      UniqueSCEVs(std::move(Arg.UniqueSCEVs)),
+      SCEVAllocator(std::move(Arg.SCEVAllocator)),
+      FirstUnknown(Arg.FirstUnknown) {
+  Arg.FirstUnknown = nullptr;
 }
 
-bool ScalarEvolution::runOnFunction(Function &F) {
-  this->F = &F;
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  return false;
-}
-
-void ScalarEvolution::releaseMemory() {
+ScalarEvolution::~ScalarEvolution() {
   // Iterate through all the SCEVUnknown instances and call their
   // destructors, so that they release their references to their values.
   for (SCEVUnknown *U = FirstUnknown; U; U = U->Next)
@@ -8346,24 +8347,6 @@ void ScalarEvolution::releaseMemory() {
 
   assert(PendingLoopPredicates.empty() && "isImpliedCond garbage");
   assert(!WalkingBEDominatingConds && "isLoopBackedgeGuardedByCond garbage!");
-
-  BackedgeTakenCounts.clear();
-  ConstantEvolutionLoopExitValue.clear();
-  ValuesAtScopes.clear();
-  LoopDispositions.clear();
-  BlockDispositions.clear();
-  UnsignedRanges.clear();
-  SignedRanges.clear();
-  UniqueSCEVs.clear();
-  SCEVAllocator.Reset();
-}
-
-void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-  AU.addRequiredTransitive<AssumptionCacheTracker>();
-  AU.addRequiredTransitive<LoopInfoWrapperPass>();
-  AU.addRequiredTransitive<DominatorTreeWrapperPass>();
-  AU.addRequiredTransitive<TargetLibraryInfoWrapperPass>();
 }
 
 bool ScalarEvolution::hasLoopInvariantBackedgeTakenCount(const Loop *L) {
@@ -8405,7 +8388,7 @@ static void PrintLoopInfo(raw_ostream &OS, ScalarEvolution *SE,
   OS << "\n";
 }
 
-void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
+void ScalarEvolution::print(raw_ostream &OS) const {
   // ScalarEvolution's implementation of the print method is to print
   // out SCEV values of all instructions that are interesting. Doing
   // this potentially causes it to create new SCEV objects though,
@@ -8415,7 +8398,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
 
   OS << "Classifying expressions for: ";
-  F->printAsOperand(OS, /*PrintType=*/false);
+  F.printAsOperand(OS, /*PrintType=*/false);
   OS << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isSCEVable(I->getType()) && !isa<CmpInst>(*I)) {
@@ -8430,7 +8413,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
         SE.getSignedRange(SV).print(OS);
       }
 
-      const Loop *L = LI->getLoopFor((*I).getParent());
+      const Loop *L = LI.getLoopFor((*I).getParent());
 
       const SCEV *AtUse = SE.getSCEVAtScope(SV, L);
       if (AtUse != SV) {
@@ -8458,9 +8441,9 @@ void ScalarEvolution::print(raw_ostream &OS, const Module *) const {
     }
 
   OS << "Determining loop execution counts for: ";
-  F->printAsOperand(OS, /*PrintType=*/false);
+  F.printAsOperand(OS, /*PrintType=*/false);
   OS << "\n";
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
+  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
     PrintLoopInfo(OS, &SE, *I);
 }
 
@@ -8604,7 +8587,7 @@ ScalarEvolution::computeBlockDisposition(const SCEV *S, const BasicBlock *BB) {
     // produces the addrec's value is a PHI, and a PHI effectively properly
     // dominates its entire containing block.
     const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
-    if (!DT->dominates(AR->getLoop()->getHeader(), BB))
+    if (!DT.dominates(AR->getLoop()->getHeader(), BB))
       return DoesNotDominateBlock;
   }
   // FALL THROUGH into SCEVNAryExpr handling.
@@ -8641,7 +8624,7 @@ ScalarEvolution::computeBlockDisposition(const SCEV *S, const BasicBlock *BB) {
           dyn_cast<Instruction>(cast<SCEVUnknown>(S)->getValue())) {
       if (I->getParent() == BB)
         return DominatesBlock;
-      if (DT->properlyDominates(I->getParent(), BB))
+      if (DT.properlyDominates(I->getParent(), BB))
         return ProperlyDominatesBlock;
       return DoesNotDominateBlock;
     }
@@ -8735,24 +8718,21 @@ getLoopBackedgeTakenCounts(Loop *L, VerifyMap &Map, ScalarEvolution &SE) {
   }
 }
 
-void ScalarEvolution::verifyAnalysis() const {
-  if (!VerifySCEV)
-    return;
-
+void ScalarEvolution::verify() const {
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
 
   // Gather stringified backedge taken counts for all loops using SCEV's caches.
   // FIXME: It would be much better to store actual values instead of strings,
   //        but SCEV pointers will change if we drop the caches.
   VerifyMap BackedgeDumpsOld, BackedgeDumpsNew;
-  for (LoopInfo::reverse_iterator I = LI->rbegin(), E = LI->rend(); I != E; ++I)
+  for (LoopInfo::reverse_iterator I = LI.rbegin(), E = LI.rend(); I != E; ++I)
     getLoopBackedgeTakenCounts(*I, BackedgeDumpsOld, SE);
 
-  // Gather stringified backedge taken counts for all loops without using
-  // SCEV's caches.
-  SE.releaseMemory();
-  for (LoopInfo::reverse_iterator I = LI->rbegin(), E = LI->rend(); I != E; ++I)
-    getLoopBackedgeTakenCounts(*I, BackedgeDumpsNew, SE);
+  // Gather stringified backedge taken counts for all loops using a fresh
+  // ScalarEvolution object.
+  ScalarEvolution SE2(F, TLI, AC, DT, LI);
+  for (LoopInfo::reverse_iterator I = LI.rbegin(), E = LI.rend(); I != E; ++I)
+    getLoopBackedgeTakenCounts(*I, BackedgeDumpsNew, SE2);
 
   // Now compare whether they're the same with and without caches. This allows
   // verifying that no pass changed the cache.
@@ -8784,4 +8764,64 @@ void ScalarEvolution::verifyAnalysis() const {
   }
 
   // TODO: Verify more things.
+}
+
+char ScalarEvolutionAnalysis::PassID;
+
+ScalarEvolution ScalarEvolutionAnalysis::run(Function &F,
+                                             AnalysisManager<Function> *AM) {
+  return ScalarEvolution(F, AM->getResult<TargetLibraryAnalysis>(F),
+                         AM->getResult<AssumptionAnalysis>(F),
+                         AM->getResult<DominatorTreeAnalysis>(F),
+                         AM->getResult<LoopAnalysis>(F));
+}
+
+PreservedAnalyses
+ScalarEvolutionPrinterPass::run(Function &F, AnalysisManager<Function> *AM) {
+  AM->getResult<ScalarEvolutionAnalysis>(F).print(OS);
+  return PreservedAnalyses::all();
+}
+
+INITIALIZE_PASS_BEGIN(ScalarEvolutionWrapperPass, "scalar-evolution",
+                      "Scalar Evolution Analysis", false, true)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(ScalarEvolutionWrapperPass, "scalar-evolution",
+                    "Scalar Evolution Analysis", false, true)
+char ScalarEvolutionWrapperPass::ID = 0;
+
+ScalarEvolutionWrapperPass::ScalarEvolutionWrapperPass() : FunctionPass(ID) {
+  initializeScalarEvolutionWrapperPassPass(*PassRegistry::getPassRegistry());
+}
+
+bool ScalarEvolutionWrapperPass::runOnFunction(Function &F) {
+  SE.reset(new ScalarEvolution(
+      F, getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(),
+      getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F),
+      getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
+      getAnalysis<LoopInfoWrapperPass>().getLoopInfo()));
+  return false;
+}
+
+void ScalarEvolutionWrapperPass::releaseMemory() { SE.reset(); }
+
+void ScalarEvolutionWrapperPass::print(raw_ostream &OS, const Module *) const {
+  SE->print(OS);
+}
+
+void ScalarEvolutionWrapperPass::verifyAnalysis() const {
+  if (!VerifySCEV)
+    return;
+
+  SE->verify();
+}
+
+void ScalarEvolutionWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  AU.addRequiredTransitive<AssumptionCacheTracker>();
+  AU.addRequiredTransitive<LoopInfoWrapperPass>();
+  AU.addRequiredTransitive<DominatorTreeWrapperPass>();
+  AU.addRequiredTransitive<TargetLibraryInfoWrapperPass>();
 }

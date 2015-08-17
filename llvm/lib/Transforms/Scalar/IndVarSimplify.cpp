@@ -108,10 +108,10 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfoWrapperPass>();
-      AU.addRequired<ScalarEvolution>();
+      AU.addRequired<ScalarEvolutionWrapperPass>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
       AU.setPreservesCFG();
@@ -147,7 +147,7 @@ INITIALIZE_PASS_BEGIN(IndVarSimplify, "indvars",
                 "Induction Variable Simplification", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_END(IndVarSimplify, "indvars",
@@ -1959,7 +1959,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
   TLI = TLIP ? &TLIP->getTLI() : nullptr;

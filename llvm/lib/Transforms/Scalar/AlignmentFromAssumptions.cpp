@@ -54,13 +54,13 @@ struct AlignmentFromAssumptions : public FunctionPass {
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
 
     AU.setPreservesCFG();
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
-    AU.addPreserved<ScalarEvolution>();
+    AU.addPreserved<ScalarEvolutionWrapperPass>();
   }
 
   // For memory transfers, we need a common alignment for both the source and
@@ -84,7 +84,7 @@ INITIALIZE_PASS_BEGIN(AlignmentFromAssumptions, AA_NAME,
                       aip_name, false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(AlignmentFromAssumptions, AA_NAME,
                     aip_name, false, false)
 
@@ -410,7 +410,7 @@ bool AlignmentFromAssumptions::processAssumption(CallInst *ACall) {
 bool AlignmentFromAssumptions::runOnFunction(Function &F) {
   bool Changed = false;
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   NewDestAlignments.clear();

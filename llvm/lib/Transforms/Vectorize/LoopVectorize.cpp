@@ -1569,7 +1569,7 @@ struct LoopVectorize : public FunctionPass {
   BlockFrequency ColdEntryFreq;
 
   bool runOnFunction(Function &F) override {
-    SE = &getAnalysis<ScalarEvolution>();
+    SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -1863,7 +1863,7 @@ struct LoopVectorize : public FunctionPass {
     AU.addRequired<BlockFrequencyInfoWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.addRequired<AliasAnalysis>();
     AU.addRequired<LoopAccessAnalysis>();
@@ -5399,7 +5399,7 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)

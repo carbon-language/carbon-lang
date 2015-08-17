@@ -27,7 +27,7 @@ char ScalarEvolutionAliasAnalysis::ID = 0;
 INITIALIZE_AG_PASS_BEGIN(ScalarEvolutionAliasAnalysis, AliasAnalysis, "scev-aa",
                          "ScalarEvolution-based Alias Analysis", false, true,
                          false)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_AG_PASS_END(ScalarEvolutionAliasAnalysis, AliasAnalysis, "scev-aa",
                        "ScalarEvolution-based Alias Analysis", false, true,
                        false)
@@ -37,14 +37,14 @@ FunctionPass *llvm::createScalarEvolutionAliasAnalysisPass() {
 }
 
 void ScalarEvolutionAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequiredTransitive<ScalarEvolution>();
+  AU.addRequiredTransitive<ScalarEvolutionWrapperPass>();
   AU.setPreservesAll();
   AliasAnalysis::getAnalysisUsage(AU);
 }
 
 bool ScalarEvolutionAliasAnalysis::runOnFunction(Function &F) {
   InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   return false;
 }
 

@@ -131,7 +131,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     // We do not modify the shape of the CFG.
     AU.setPreservesCFG();
@@ -212,7 +212,7 @@ char StraightLineStrengthReduce::ID = 0;
 INITIALIZE_PASS_BEGIN(StraightLineStrengthReduce, "slsr",
                       "Straight line strength reduction", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(StraightLineStrengthReduce, "slsr",
                     "Straight line strength reduction", false, false)
@@ -690,7 +690,7 @@ bool StraightLineStrengthReduce::runOnFunction(Function &F) {
 
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   // Traverse the dominator tree in the depth-first order. This order makes sure
   // all bases of a candidate are in Candidates when we process it.
   for (auto node = GraphTraits<DominatorTree *>::nodes_begin(DT);

@@ -193,7 +193,7 @@ namespace {
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved<DominatorTreeWrapperPass>();
-      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<ScalarEvolutionWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
     }
 
@@ -915,8 +915,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
         << " blocks] in Function " << F->getName()
         << " when '" << *Val << "' == " << *LIC << "\n");
 
-  if (ScalarEvolution *SE = getAnalysisIfAvailable<ScalarEvolution>())
-    SE->forgetLoop(L);
+  if (auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>())
+    SEWP->getSE().forgetLoop(L);
 
   LoopBlocks.clear();
   NewBlocks.clear();

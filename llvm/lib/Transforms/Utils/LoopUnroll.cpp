@@ -110,10 +110,11 @@ FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI, LPPassManager *LPM,
 
   // ScalarEvolution holds references to loop exit blocks.
   if (LPM) {
-    if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>()) {
+    if (auto *SEWP =
+            LPM->getAnalysisIfAvailable<ScalarEvolutionWrapperPass>()) {
       if (Loop *L = LI->getLoopFor(BB)) {
         if (ForgottenLoops.insert(L).second)
-          SE->forgetLoop(L);
+          SEWP->getSE().forgetLoop(L);
       }
     }
   }
@@ -232,8 +233,9 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
   // Notify ScalarEvolution that the loop will be substantially changed,
   // if not outright eliminated.
-  ScalarEvolution *SE =
-      PP ? PP->getAnalysisIfAvailable<ScalarEvolution>() : nullptr;
+  auto *SEWP =
+      PP ? PP->getAnalysisIfAvailable<ScalarEvolutionWrapperPass>() : nullptr;
+  ScalarEvolution *SE = SEWP ? &SEWP->getSE() : nullptr;
   if (SE)
     SE->forgetLoop(L);
 
