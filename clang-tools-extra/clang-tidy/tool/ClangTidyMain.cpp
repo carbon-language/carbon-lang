@@ -262,17 +262,21 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider() {
 }
 
 static int clangTidyMain(int argc, const char **argv) {
-  CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
+  CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory,
+                                    cl::ZeroOrMore);
 
   auto OptionsProvider = createOptionsProvider();
   if (!OptionsProvider)
     return 1;
 
-  std::string FileName = OptionsParser.getSourcePathList().front();
+  StringRef FileName("dummy");
+  auto PathList = OptionsParser.getSourcePathList();
+  if (!PathList.empty()) {
+    FileName = OptionsParser.getSourcePathList().front();
+  }
   ClangTidyOptions EffectiveOptions = OptionsProvider->getOptions(FileName);
   std::vector<std::string> EnabledChecks = getCheckNames(EffectiveOptions);
 
-  // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {
     llvm::outs() << "Enabled checks:";
     for (auto CheckName : EnabledChecks)
@@ -283,8 +287,9 @@ static int clangTidyMain(int argc, const char **argv) {
 
   if (DumpConfig) {
     EffectiveOptions.CheckOptions = getCheckOptions(EffectiveOptions);
-    llvm::outs() << configurationAsText(ClangTidyOptions::getDefaults()
-                                            .mergeWith(EffectiveOptions))
+    llvm::outs() << configurationAsText(
+                        ClangTidyOptions::getDefaults().mergeWith(
+                            EffectiveOptions))
                  << "\n";
     return 0;
   }
@@ -295,12 +300,18 @@ static int clangTidyMain(int argc, const char **argv) {
     return 1;
   }
 
+  if (PathList.empty()) {
+    llvm::errs() << "Error: no input files specified.\n";
+    llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
+    return 1;
+  }
+
   ProfileData Profile;
 
   std::vector<ClangTidyError> Errors;
   ClangTidyStats Stats =
       runClangTidy(std::move(OptionsProvider), OptionsParser.getCompilations(),
-                   OptionsParser.getSourcePathList(), &Errors,
+                   PathList, &Errors,
                    EnableCheckProfile ? &Profile : nullptr);
   bool FoundErrors =
       std::find_if(Errors.begin(), Errors.end(), [](const ClangTidyError &E) {
