@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=arm-eabi -mcpu=swift %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 -mattr=-neon %s -o -
 
 define float @fmin_ole(float %x) nounwind {
 ;CHECK-LABEL: fmin_ole:

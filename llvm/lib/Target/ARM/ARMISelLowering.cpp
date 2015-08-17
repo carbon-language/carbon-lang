@@ -950,11 +950,11 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     }
   }
 
-  if (Subtarget->hasVFP3()) {
+  if (Subtarget->hasNEON()) {
+    // vmin and vmax aren't available in a scalar form, so we use
+    // a NEON instruction with an undef lane instead.
     setOperationAction(ISD::FMINNAN, MVT::f32, Legal);
     setOperationAction(ISD::FMAXNAN, MVT::f32, Legal);
-  }
-  if (Subtarget->hasNEON()) {
     setOperationAction(ISD::FMINNAN, MVT::v2f32, Legal);
     setOperationAction(ISD::FMAXNAN, MVT::v2f32, Legal);
     setOperationAction(ISD::FMINNAN, MVT::v4f32, Legal);
