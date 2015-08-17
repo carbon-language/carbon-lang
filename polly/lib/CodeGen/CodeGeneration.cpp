@@ -115,7 +115,7 @@ public:
 
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    SE = &getAnalysis<ScalarEvolution>();
+    SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
     DL = &S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
     RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
     Region *R = &S.getRegion();
@@ -162,7 +162,7 @@ public:
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<IslAstInfo>();
     AU.addRequired<RegionInfoPass>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
     AU.addRequired<LoopInfoWrapperPass>();
@@ -174,7 +174,7 @@ public:
     AU.addPreserved<PostDominatorTree>();
     AU.addPreserved<IslAstInfo>();
     AU.addPreserved<ScopDetection>();
-    AU.addPreserved<ScalarEvolution>();
+    AU.addPreserved<ScalarEvolutionWrapperPass>();
 
     // FIXME: We do not yet add regions for the newly generated code to the
     //        region tree.
@@ -196,7 +196,7 @@ INITIALIZE_PASS_DEPENDENCY(DependenceInfo);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
                     "Polly - Create LLVM-IR from SCoPs", false, false)

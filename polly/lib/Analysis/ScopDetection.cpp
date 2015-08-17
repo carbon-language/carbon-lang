@@ -1030,7 +1030,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
     return false;
 
   AA = &getAnalysis<AliasAnalysis>();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   Region *TopRegion = RI->getTopLevelRegion();
 
   releaseMemory();
@@ -1092,7 +1092,7 @@ void polly::ScopDetection::verifyAnalysis() const {
 
 void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
-  AU.addRequired<ScalarEvolution>();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
   // We also need AA and RegionInfo when we are verifying analysis.
   AU.addRequiredTransitive<AliasAnalysis>();
   AU.addRequiredTransitive<RegionInfoPass>();
@@ -1125,6 +1125,6 @@ INITIALIZE_PASS_BEGIN(ScopDetection, "polly-detect",
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass);
 INITIALIZE_PASS_END(ScopDetection, "polly-detect",
                     "Polly - Detect static control parts (SCoPs)", false, false)

@@ -66,7 +66,7 @@ CodePreparation::~CodePreparation() { clear(); }
 
 void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
-  AU.addRequired<ScalarEvolution>();
+  AU.addRequired<ScalarEvolutionWrapperPass>();
 
   AU.addPreserved<LoopInfoWrapperPass>();
   AU.addPreserved<RegionInfoPass>();
@@ -76,7 +76,7 @@ void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool CodePreparation::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  SE = &getAnalysis<ScalarEvolution>();
+  SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 
   splitEntryBlockForAlloca(&F.getEntryBlock(), this);
 
