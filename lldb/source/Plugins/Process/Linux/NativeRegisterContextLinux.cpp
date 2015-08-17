@@ -136,7 +136,7 @@ NativeRegisterContextLinux::ReadFPR()
 {
     void* buf = GetFPRBuffer();
     if (!buf)
-        return Error("GPR buffer is NULL");
+        return Error("FPR buffer is NULL");
     size_t buf_size = GetFPRSize();
 
     return DoReadFPR(buf, buf_size);
@@ -147,7 +147,7 @@ NativeRegisterContextLinux::WriteFPR()
 {
     void* buf = GetFPRBuffer();
     if (!buf)
-        return Error("GPR buffer is NULL");
+        return Error("FPR buffer is NULL");
     size_t buf_size = GetFPRSize();
 
     return DoWriteFPR(buf, buf_size);
