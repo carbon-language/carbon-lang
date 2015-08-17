@@ -400,7 +400,8 @@ body: |
   ; CHECK-LABEL: name: aa_scope
   ; CHECK: %xmm0 = MOVSSrm %rsi, 1, _, 0, _ :: (load 4 from %ir.c, !alias.scope !9)
     %xmm0 = MOVSSrm %rsi, 1, _, 0, _ :: (load 4 from %ir.c, !alias.scope !9)
-    MOVSSmr %rdi, 1, _, 20, _, killed %xmm0 :: (store 4 into %ir.arrayidx.i)
+  ; CHECK-NEXT: MOVSSmr %rdi, 1, _, 20, _, killed %xmm0 :: (store 4 into %ir.arrayidx.i, !noalias !9)
+    MOVSSmr %rdi, 1, _, 20, _, killed %xmm0 :: (store 4 into %ir.arrayidx.i, !noalias !9)
     %xmm0 = MOVSSrm killed %rsi, 1, _, 0, _ :: (load 4 from %ir.c)
     MOVSSmr killed %rdi, 1, _, 28, _, killed %xmm0 :: (store 4 into %ir.arrayidx)
     RETQ

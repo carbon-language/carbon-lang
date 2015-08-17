@@ -786,7 +786,10 @@ void MIPrinter::print(const MachineMemOperand &Op) {
     OS << ", !alias.scope ";
     AAInfo.Scope->printAsOperand(OS, MST);
   }
-  // TODO: Print AA NoAlias metadata.
+  if (AAInfo.NoAlias) {
+    OS << ", !noalias ";
+    AAInfo.NoAlias->printAsOperand(OS, MST);
+  }
   // TODO: Print the ranges metadata.
   OS << ')';
 }

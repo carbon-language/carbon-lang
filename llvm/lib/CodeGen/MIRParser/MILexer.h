@@ -88,6 +88,7 @@ struct MIToken {
     // Named metadata keywords
     md_tbaa,
     md_alias_scope,
+    md_noalias,
 
     // Identifier tokens
     Identifier,
