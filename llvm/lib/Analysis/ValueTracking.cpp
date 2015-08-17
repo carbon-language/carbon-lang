@@ -2935,20 +2935,44 @@ static bool isDereferenceableFromAttribute(const Value *V, const DataLayout &DL,
   return isDereferenceableFromAttribute(V, Offset, Ty, DL, CtxI, DT, TLI);
 }
 
-/// Return true if Value is always a dereferenceable pointer.
-///
+static bool isAligned(const Value *Base, APInt Offset, unsigned Align,
+                      const DataLayout &DL) {
+  APInt BaseAlign(Offset.getBitWidth(), 0);
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base))
+    BaseAlign = AI->getAlignment();
+  else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Base))
+    BaseAlign = GV->getAlignment();
+  else if (const Argument *A = dyn_cast<Argument>(Base))
+    BaseAlign = A->getParamAlignment();
+
+  if (!BaseAlign) {
+    Type *Ty = Base->getType()->getPointerElementType();
+    BaseAlign = DL.getABITypeAlignment(Ty);
+  }
+
+  APInt Alignment(Offset.getBitWidth(), Align);
+
+  assert(Alignment.isPowerOf2() && "must be a power of 2!");
+  return BaseAlign.uge(Alignment) && !(Offset & (Alignment-1));
+}
+
+static bool isAligned(const Value *Base, unsigned Align, const DataLayout &DL) {
+  APInt Offset(DL.getTypeStoreSizeInBits(Base->getType()), 0);
+  return isAligned(Base, Offset, Align, DL);
+}
+
 /// Test if V is always a pointer to allocated and suitably aligned memory for
 /// a simple load or store.
-static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
-                                     const Instruction *CtxI,
-                                     const DominatorTree *DT,
-                                     const TargetLibraryInfo *TLI,
-                                     SmallPtrSetImpl<const Value *> &Visited) {
+static bool isDereferenceableAndAlignedPointer(
+    const Value *V, unsigned Align, const DataLayout &DL,
+    const Instruction *CtxI, const DominatorTree *DT,
+    const TargetLibraryInfo *TLI, SmallPtrSetImpl<const Value *> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
 
-  // These are obviously ok.
-  if (isa<AllocaInst>(V)) return true;
+  // These are obviously ok if aligned.
+  if (isa<AllocaInst>(V))
+    return isAligned(V, Align, DL);
 
   // It's not always safe to follow a bitcast, for example:
   //   bitcast i8* (alloca i8) to i32*
@@ -2963,21 +2987,22 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
     if (STy->isSized() && DTy->isSized() &&
         (DL.getTypeStoreSize(STy) >= DL.getTypeStoreSize(DTy)) &&
         (DL.getABITypeAlignment(STy) >= DL.getABITypeAlignment(DTy)))
-      return isDereferenceablePointer(BC->getOperand(0), DL, CtxI,
-                                      DT, TLI, Visited);
+      return isDereferenceableAndAlignedPointer(BC->getOperand(0), Align, DL,
+                                                CtxI, DT, TLI, Visited);
   }
 
   // Global variables which can't collapse to null are ok.
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return !GV->hasExternalWeakLinkage();
+    if (!GV->hasExternalWeakLinkage())
+      return isAligned(V, Align, DL);
 
   // byval arguments are okay.
   if (const Argument *A = dyn_cast<Argument>(V))
     if (A->hasByValAttr())
-      return true;
-    
+      return isAligned(V, Align, DL);
+
   if (isDereferenceableFromAttribute(V, DL, CtxI, DT, TLI))
-    return true;
+    return isAligned(V, Align, DL);
 
   // For GEPs, determine if the indexing lands within the allocated object.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
@@ -2985,61 +3010,79 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
     Type *Ty = VTy->getPointerElementType();
     const Value *Base = GEP->getPointerOperand();
 
-    // Conservatively require that the base pointer be fully dereferenceable.
+    // Conservatively require that the base pointer be fully dereferenceable
+    // and aligned.
     if (!Visited.insert(Base).second)
       return false;
-    if (!isDereferenceablePointer(Base, DL, CtxI,
-                                  DT, TLI, Visited))
+    if (!isDereferenceableAndAlignedPointer(Base, Align, DL, CtxI, DT, TLI,
+                                            Visited))
       return false;
-    
+
     APInt Offset(DL.getPointerTypeSizeInBits(VTy), 0);
     if (!GEP->accumulateConstantOffset(DL, Offset))
       return false;
-    
-    // Check if the load is within the bounds of the underlying object.
+
+    // Check if the load is within the bounds of the underlying object
+    // and offset is aligned.
     uint64_t LoadSize = DL.getTypeStoreSize(Ty);
     Type *BaseType = Base->getType()->getPointerElementType();
-    return (Offset + LoadSize).ule(DL.getTypeAllocSize(BaseType));
+    assert(isPowerOf2_32(Align) && "must be a power of 2!");
+    return (Offset + LoadSize).ule(DL.getTypeAllocSize(BaseType)) && 
+           !(Offset & APInt(Offset.getBitWidth(), Align-1));
   }
 
   // For gc.relocate, look through relocations
   if (const IntrinsicInst *I = dyn_cast<IntrinsicInst>(V))
     if (I->getIntrinsicID() == Intrinsic::experimental_gc_relocate) {
       GCRelocateOperands RelocateInst(I);
-      return isDereferenceablePointer(RelocateInst.getDerivedPtr(), DL, CtxI,
-                                      DT, TLI, Visited);
+      return isDereferenceableAndAlignedPointer(
+          RelocateInst.getDerivedPtr(), Align, DL, CtxI, DT, TLI, Visited);
     }
 
   if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))
-    return isDereferenceablePointer(ASC->getOperand(0), DL, CtxI,
-                                    DT, TLI, Visited);
+    return isDereferenceableAndAlignedPointer(ASC->getOperand(0), Align, DL,
+                                              CtxI, DT, TLI, Visited);
 
   // If we don't know, assume the worst.
   return false;
 }
 
-bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL,
-                                    const Instruction *CtxI,
-                                    const DominatorTree *DT,
-                                    const TargetLibraryInfo *TLI) {
+bool llvm::isDereferenceableAndAlignedPointer(const Value *V, unsigned Align,
+                                              const DataLayout &DL,
+                                              const Instruction *CtxI,
+                                              const DominatorTree *DT,
+                                              const TargetLibraryInfo *TLI) {
   // When dereferenceability information is provided by a dereferenceable
   // attribute, we know exactly how many bytes are dereferenceable. If we can
   // determine the exact offset to the attributed variable, we can use that
   // information here.
   Type *VTy = V->getType();
   Type *Ty = VTy->getPointerElementType();
+
+  // Require ABI alignment for loads without alignment specification
+  if (Align == 0)
+    Align = DL.getABITypeAlignment(Ty);
+
   if (Ty->isSized()) {
     APInt Offset(DL.getTypeStoreSizeInBits(VTy), 0);
     const Value *BV = V->stripAndAccumulateInBoundsConstantOffsets(DL, Offset);
-    
+
     if (Offset.isNonNegative())
-      if (isDereferenceableFromAttribute(BV, Offset, Ty, DL,
-                                         CtxI, DT, TLI))
+      if (isDereferenceableFromAttribute(BV, Offset, Ty, DL, CtxI, DT, TLI) &&
+          isAligned(BV, Offset, Align, DL))
         return true;
   }
 
   SmallPtrSet<const Value *, 32> Visited;
-  return ::isDereferenceablePointer(V, DL, CtxI, DT, TLI, Visited);
+  return ::isDereferenceableAndAlignedPointer(V, Align, DL, CtxI, DT, TLI,
+                                              Visited);
+}
+
+bool llvm::isDereferenceablePointer(const Value *V, const DataLayout &DL,
+                                    const Instruction *CtxI,
+                                    const DominatorTree *DT,
+                                    const TargetLibraryInfo *TLI) {
+  return isDereferenceableAndAlignedPointer(V, 1, DL, CtxI, DT, TLI);
 }
 
 bool llvm::isSafeToSpeculativelyExecute(const Value *V,
@@ -3092,7 +3135,8 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
         LI->getParent()->getParent()->hasFnAttribute(Attribute::SanitizeThread))
       return false;
     const DataLayout &DL = LI->getModule()->getDataLayout();
-    return isDereferenceablePointer(LI->getPointerOperand(), DL, CtxI, DT, TLI);
+    return isDereferenceableAndAlignedPointer(
+        LI->getPointerOperand(), LI->getAlignment(), DL, CtxI, DT, TLI);
   }
   case Instruction::Call: {
     if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {

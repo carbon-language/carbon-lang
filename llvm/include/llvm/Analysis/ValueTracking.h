@@ -228,6 +228,16 @@ namespace llvm {
                                 const Instruction *CtxI = nullptr,
                                 const DominatorTree *DT = nullptr,
                                 const TargetLibraryInfo *TLI = nullptr);
+
+  /// Returns true if V is always a dereferenceable pointer with alignment
+  /// greater or equal than requested. If the context instruction is specified
+  /// performs context-sensitive analysis and returns true if the pointer is
+  /// dereferenceable at the specified instruction.
+  bool isDereferenceableAndAlignedPointer(const Value *V, unsigned Align,
+                                          const DataLayout &DL,
+                                          const Instruction *CtxI = nullptr,
+                                          const DominatorTree *DT = nullptr,
+                                          const TargetLibraryInfo *TLI = nullptr);
   
   /// isSafeToSpeculativelyExecute - Return true if the instruction does not
   /// have any effects besides calculating the result and does not have

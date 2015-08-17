@@ -22,7 +22,8 @@ using namespace llvm;
 
 namespace {
   struct MemDerefPrinter : public FunctionPass {
-    SmallVector<Value *, 4> Vec;
+    SmallVector<Value *, 4> Deref;
+    SmallPtrSet<Value *, 4> DerefAndAligned;
 
     static char ID; // Pass identification, replacement for typeid
     MemDerefPrinter() : FunctionPass(ID) {
@@ -34,7 +35,8 @@ namespace {
     bool runOnFunction(Function &F) override;
     void print(raw_ostream &OS, const Module * = nullptr) const override;
     void releaseMemory() override {
-      Vec.clear();
+      Deref.clear();
+      DerefAndAligned.clear();
     }
   };
 }
@@ -55,7 +57,9 @@ bool MemDerefPrinter::runOnFunction(Function &F) {
     if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
       Value *PO = LI->getPointerOperand();
       if (isDereferenceablePointer(PO, DL))
-        Vec.push_back(PO);
+        Deref.push_back(PO);
+      if (isDereferenceableAndAlignedPointer(PO, LI->getAlignment(), DL))
+        DerefAndAligned.insert(PO);
     }
   }
   return false;
@@ -63,8 +67,12 @@ bool MemDerefPrinter::runOnFunction(Function &F) {
 
 void MemDerefPrinter::print(raw_ostream &OS, const Module *M) const {
   OS << "The following are dereferenceable:\n";
-  for (auto &V: Vec) {
+  for (Value *V: Deref) {
     V->print(OS);
+    if (DerefAndAligned.count(V))
+      OS << "\t(aligned)";
+    else
+      OS << "\t(unaligned)";
     OS << "\n\n";
   }
 }
