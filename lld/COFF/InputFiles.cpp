@@ -154,6 +154,7 @@ void ObjectFile::initializeSymbols() {
   uint32_t NumSymbols = COFFObj->getNumberOfSymbols();
   SymbolBodies.reserve(NumSymbols);
   SparseSymbolBodies.resize(NumSymbols);
+  llvm::SmallVector<Undefined *, 8> WeakAliases;
   int32_t LastSectionNumber = 0;
   for (uint32_t I = 0; I < NumSymbols; ++I) {
     // Get a COFFSymbolRef object.
@@ -172,6 +173,7 @@ void ObjectFile::initializeSymbols() {
       Body = createUndefined(Sym);
     } else if (Sym.isWeakExternal()) {
       Body = createWeakExternal(Sym, AuxP);
+      WeakAliases.push_back((Undefined *)Body);
     } else {
       Body = createDefined(Sym, AuxP, IsFirst);
     }
@@ -182,6 +184,8 @@ void ObjectFile::initializeSymbols() {
     I += Sym.getNumberOfAuxSymbols();
     LastSectionNumber = Sym.getSectionNumber();
   }
+  for (Undefined *U : WeakAliases)
+    U->WeakAlias = SparseSymbolBodies[(uintptr_t)U->WeakAlias];
 }
 
 Undefined *ObjectFile::createUndefined(COFFSymbolRef Sym) {
@@ -195,7 +199,7 @@ Undefined *ObjectFile::createWeakExternal(COFFSymbolRef Sym, const void *AuxP) {
   COFFObj->getSymbolName(Sym, Name);
   auto *U = new (Alloc) Undefined(Name);
   auto *Aux = (const coff_aux_weak_external *)AuxP;
-  U->WeakAlias = SparseSymbolBodies[Aux->TagIndex];
+  U->WeakAlias = (Undefined *)(uintptr_t)Aux->TagIndex;
   return U;
 }
 

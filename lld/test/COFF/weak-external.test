@@ -18,12 +18,6 @@ sections:
     Alignment:       16
     SectionData:     00
 symbols:
-  - Name:            'f'
-    Value:           0
-    SectionNumber:   1
-    SimpleType:      IMAGE_SYM_TYPE_NULL
-    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
-    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
   - Name:            'g'
     Value:           0
     SectionNumber:   0
@@ -31,6 +25,12 @@ symbols:
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_WEAK_EXTERNAL
     WeakExternal:
-      TagIndex:        0
+      TagIndex:        2
       Characteristics: IMAGE_WEAK_EXTERN_SEARCH_LIBRARY
+  - Name:            'f'
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
 ...

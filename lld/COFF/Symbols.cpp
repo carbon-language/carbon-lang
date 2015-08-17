@@ -132,7 +132,7 @@ int SymbolBody::compare(SymbolBody *Other) {
     auto *RHS = cast<Undefined>(Other);
     // Tie if both undefined symbols have different weak aliases.
     if (LHS->WeakAlias && RHS->WeakAlias) {
-      if (LHS->WeakAlias->repl() != RHS->WeakAlias->repl())
+      if (LHS->WeakAlias->getName() != RHS->WeakAlias->getName())
         return 0;
       return uintptr_t(LHS) < uintptr_t(RHS) ? 1 : -1;
     }
