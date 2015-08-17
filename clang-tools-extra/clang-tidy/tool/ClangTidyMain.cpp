@@ -272,7 +272,7 @@ static int clangTidyMain(int argc, const char **argv) {
   StringRef FileName("dummy");
   auto PathList = OptionsParser.getSourcePathList();
   if (!PathList.empty()) {
-    FileName = OptionsParser.getSourcePathList().front();
+    FileName = PathList.front();
   }
   ClangTidyOptions EffectiveOptions = OptionsProvider->getOptions(FileName);
   std::vector<std::string> EnabledChecks = getCheckNames(EffectiveOptions);
