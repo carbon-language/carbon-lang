@@ -87,11 +87,6 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
 
   FunctionNumber = FunctionNum;
   JumpTableInfo = nullptr;
-
-  assert(TM.isCompatibleDataLayout(getDataLayout()) &&
-         "Can't create a MachineFunction using a Module with a "
-         "Target-incompatible DataLayout attached\n");
-
   PSVManager = llvm::make_unique<PseudoSourceValueManager>();
 }
 

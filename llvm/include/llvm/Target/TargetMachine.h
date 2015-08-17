@@ -133,15 +133,6 @@ public:
   /// Create a DataLayout.
   const DataLayout createDataLayout() const { return DL; }
 
-  /// Test if a DataLayout if compatible with the CodeGen for this target.
-  ///
-  /// The LLVM Module owns a DataLayout that is used for the target independent
-  /// optimizations and code generation. This hook provides a target specific
-  /// check on the validity of this DataLayout.
-  bool isCompatibleDataLayout(const DataLayout &Candidate) const {
-    return DL == Candidate;
-  }
-
   /// Get the pointer size for this target.
   ///
   /// This is the only time the DataLayout in the TargetMachine is used.
