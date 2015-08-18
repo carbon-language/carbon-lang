@@ -147,7 +147,7 @@ public:
 
   public:
     Cleanup(const Cleanup &) = default;
-    Cleanup(Cleanup &&) = default;
+    Cleanup(Cleanup &&) {}
     Cleanup() = default;
 
     /// Generation flags.
