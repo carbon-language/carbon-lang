@@ -1335,6 +1335,28 @@ INTERCEPTOR(int, fork, void) {
   return pid;
 }
 
+INTERCEPTOR(int, openpty, int *amaster, int *aslave, char *name,
+            const void *termp, const void *winp) {
+  ENSURE_MSAN_INITED();
+  InterceptorScope interceptor_scope;
+  int res = REAL(openpty)(amaster, aslave, name, termp, winp);
+  if (!res) {
+    __msan_unpoison(amaster, sizeof(*amaster));
+    __msan_unpoison(aslave, sizeof(*aslave));
+  }
+  return res;
+}
+
+INTERCEPTOR(int, forkpty, int *amaster, char *name, const void *termp,
+            const void *winp) {
+  ENSURE_MSAN_INITED();
+  InterceptorScope interceptor_scope;
+  int res = REAL(forkpty)(amaster, name, termp, winp);
+  if (res != -1)
+    __msan_unpoison(amaster, sizeof(*amaster));
+  return res;
+}
+
 struct MSanInterceptorContext {
   bool in_interceptor_scope;
 };
@@ -1599,6 +1621,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(__cxa_atexit);
   INTERCEPT_FUNCTION(shmat);
   INTERCEPT_FUNCTION(fork);
+  INTERCEPT_FUNCTION(openpty);
+  INTERCEPT_FUNCTION(forkpty);
 
   inited = 1;
 }
