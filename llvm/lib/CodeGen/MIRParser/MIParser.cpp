@@ -647,7 +647,7 @@ bool MIParser::parseStandaloneNamedRegister(unsigned &Reg) {
   if (Token.isNot(MIToken::NamedRegister))
     return error("expected a named register");
   if (parseRegister(Reg))
-    return 0;
+    return true;
   lex();
   if (Token.isNot(MIToken::Eof))
     return error("expected end of string after the register reference");
@@ -659,7 +659,7 @@ bool MIParser::parseStandaloneVirtualRegister(unsigned &Reg) {
   if (Token.isNot(MIToken::VirtualRegister))
     return error("expected a virtual register");
   if (parseRegister(Reg))
-    return 0;
+    return true;
   lex();
   if (Token.isNot(MIToken::Eof))
     return error("expected end of string after the register reference");
