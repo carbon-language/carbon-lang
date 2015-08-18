@@ -51,12 +51,12 @@ public:
     
     static ConstString &GetStaticBroadcasterClass ();
 
-    virtual ConstString &GetBroadcasterClass() const
+    ConstString &GetBroadcasterClass() const override
     {
         return GetStaticBroadcasterClass();
     }
 
-    virtual ~TargetList();
+    ~TargetList() override;
 
     //------------------------------------------------------------------
     /// Create a new Target.
@@ -230,7 +230,9 @@ protected:
     lldb::TargetSP m_dummy_target_sp;
     mutable Mutex m_target_list_mutex;
     uint32_t m_selected_target_idx;
+
 private:
+
     lldb::TargetSP
     GetDummyTarget (lldb_private::Debugger &debugger);
 
@@ -262,4 +264,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_TargetList_h_
+#endif // liblldb_TargetList_h_

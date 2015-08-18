@@ -29,8 +29,8 @@ class LanguageRuntime :
     public PluginInterface
 {
 public:
-    virtual
-    ~LanguageRuntime();
+
+    ~LanguageRuntime() override;
     
     static LanguageRuntime* 
     FindPlugin (Process *process, lldb::LanguageType language);
@@ -142,7 +142,6 @@ public:
     virtual void
     ModulesDidLoad (const ModuleList &module_list)
     {
-        return;
     }
 
 protected:
@@ -153,9 +152,10 @@ protected:
     LanguageRuntime(Process *process);
     Process *m_process;
 private:
+
     DISALLOW_COPY_AND_ASSIGN (LanguageRuntime);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_LanguageRuntime_h_
+#endif // liblldb_LanguageRuntime_h_

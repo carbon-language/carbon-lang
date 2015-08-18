@@ -71,8 +71,8 @@ namespace lldb_private {
         JSONString&
         operator = (const JSONString& s) = delete;
         
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONString> SP;
         
@@ -84,8 +84,7 @@ namespace lldb_private {
             return V->GetKind() == JSONValue::Kind::String;
         }
         
-        virtual
-        ~JSONString () = default;
+        ~JSONString() override = default;
         
     private:
         
@@ -106,8 +105,8 @@ namespace lldb_private {
         JSONNumber&
         operator = (const JSONNumber& s) = delete;
 
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONNumber> SP;
 
@@ -128,8 +127,7 @@ namespace lldb_private {
             return V->GetKind() == JSONValue::Kind::Number;
         }
         
-        virtual
-        ~JSONNumber () = default;
+        ~JSONNumber() override = default;
         
     private:
         bool m_is_integer;
@@ -146,8 +144,8 @@ namespace lldb_private {
         JSONTrue&
         operator = (const JSONTrue& s) = delete;
         
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONTrue> SP;
         
@@ -156,8 +154,7 @@ namespace lldb_private {
             return V->GetKind() == JSONValue::Kind::True;
         }
         
-        virtual
-        ~JSONTrue () = default;
+        ~JSONTrue() override = default;
     };
 
     class JSONFalse : public JSONValue
@@ -169,8 +166,8 @@ namespace lldb_private {
         JSONFalse&
         operator = (const JSONFalse& s) = delete;
         
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONFalse> SP;
         
@@ -179,8 +176,7 @@ namespace lldb_private {
             return V->GetKind() == JSONValue::Kind::False;
         }
         
-        virtual
-        ~JSONFalse () = default;
+        ~JSONFalse() override = default;
     };
 
     class JSONNull : public JSONValue
@@ -192,8 +188,8 @@ namespace lldb_private {
         JSONNull&
         operator = (const JSONNull& s) = delete;
         
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONNull> SP;
         
@@ -202,8 +198,7 @@ namespace lldb_private {
             return V->GetKind() == JSONValue::Kind::Null;
         }
         
-        virtual
-        ~JSONNull () = default;
+        ~JSONNull() override = default;
     };
 
     class JSONObject : public JSONValue
@@ -215,8 +210,8 @@ namespace lldb_private {
         JSONObject&
         operator = (const JSONObject& s) = delete;
 
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONObject> SP;
         
@@ -232,8 +227,7 @@ namespace lldb_private {
         JSONValue::SP
         GetObject (const std::string& key);
         
-        virtual
-        ~JSONObject () = default;
+        ~JSONObject() override = default;
         
     private:
         typedef std::map<std::string, JSONValue::SP> Map;
@@ -250,8 +244,8 @@ namespace lldb_private {
         JSONArray&
         operator = (const JSONArray& s) = delete;
         
-        virtual void
-        Write (Stream& s);
+        void
+        Write(Stream& s) override;
         
         typedef std::shared_ptr<JSONArray> SP;
         
@@ -280,12 +274,10 @@ namespace lldb_private {
         Size
         GetNumElements ();
 
-        virtual
-        ~JSONArray () = default;
+        ~JSONArray() override = default;
         
         Vector m_elements;
     };
-
 
     class JSONParser : public StringExtractor
     {
@@ -327,6 +319,6 @@ namespace lldb_private {
         JSONValue::SP
         ParseJSONArray ();
     };
-}
+} // namespace lldb_private
 
-#endif // utility_ProcessStructReader_h_
+#endif // utility_JSON_h_

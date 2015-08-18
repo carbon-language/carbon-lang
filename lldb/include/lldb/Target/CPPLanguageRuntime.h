@@ -114,11 +114,10 @@ public:
         bool m_parse_error;
     };
 
-    virtual
-    ~CPPLanguageRuntime();
+    ~CPPLanguageRuntime() override;
     
-    virtual lldb::LanguageType
-    GetLanguageType () const
+    lldb::LanguageType
+    GetLanguageType() const override
     {
         return lldb::eLanguageTypeC_plus_plus;
     }
@@ -126,11 +125,11 @@ public:
     virtual bool
     IsVTableName (const char *name) = 0;
     
-    virtual bool
-    GetObjectDescription (Stream &str, ValueObject &object);
+    bool
+    GetObjectDescription(Stream &str, ValueObject &object) override;
     
-    virtual bool
-    GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);
+    bool
+    GetObjectDescription(Stream &str, Value &value, ExecutionContextScope *exe_scope) override;
     
     static bool
     IsCPPMangledName(const char *name);
@@ -157,14 +156,17 @@ public:
     GetAlternateManglings(const ConstString &mangled, std::vector<ConstString> &alternates) = 0;
 
 protected:
+
     //------------------------------------------------------------------
     // Classes that inherit from CPPLanguageRuntime can see and modify these
     //------------------------------------------------------------------
     CPPLanguageRuntime(Process *process);
+
 private:
+
     DISALLOW_COPY_AND_ASSIGN (CPPLanguageRuntime);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_CPPLanguageRuntime_h_
+#endif // liblldb_CPPLanguageRuntime_h_

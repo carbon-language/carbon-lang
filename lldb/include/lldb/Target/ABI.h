@@ -44,8 +44,7 @@ public:
         std::unique_ptr<uint8_t[]> data_ap;     /* host data pointer */
     };
 
-    virtual
-    ~ABI();
+    ~ABI() override;
 
     virtual size_t
     GetRedZoneSize () const = 0;
@@ -148,14 +147,17 @@ public:
     FindPlugin (const ArchSpec &arch);
     
 protected:
+
     //------------------------------------------------------------------
     // Classes that inherit from ABI can see and modify these
     //------------------------------------------------------------------
     ABI();
+
 private:
+
     DISALLOW_COPY_AND_ASSIGN (ABI);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ABI_h_
+#endif // liblldb_ABI_h_

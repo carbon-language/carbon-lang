@@ -71,8 +71,7 @@ public:
     /// The destructor is virtual since this class is designed to be
     /// inherited from by the plug-in instance.
     //------------------------------------------------------------------
-    virtual
-    ~DynamicLoader ();
+    ~DynamicLoader() override;
 
     //------------------------------------------------------------------
     /// Called after attaching a process.
@@ -303,11 +302,12 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     Process* m_process; ///< The process that this dynamic loader plug-in is tracking.
-private:
-    DISALLOW_COPY_AND_ASSIGN (DynamicLoader);
 
+private:
+
+    DISALLOW_COPY_AND_ASSIGN (DynamicLoader);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_DynamicLoader_h_
+#endif // liblldb_DynamicLoader_h_

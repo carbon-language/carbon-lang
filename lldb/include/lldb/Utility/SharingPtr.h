@@ -67,7 +67,7 @@ public:
         :  data_(p) {}
 
 private:
-    virtual void on_zero_shared();
+    void on_zero_shared() override;
 
     // Outlaw copy constructor and assignment operator to keep effective C++
     // warnings down to a minimum
@@ -113,7 +113,8 @@ public:
             :  data_(a0, a1, a2, a3, a4) {}
 
 private:
-    virtual void on_zero_shared();
+    void on_zero_shared() override;
+
 public:
     T* get() {return &data_;}
 };
@@ -638,13 +639,11 @@ public:
     {
     }
     
-    virtual
-    ~ReferenceCountedBaseVirtual ()
+    ~ReferenceCountedBaseVirtual() override
     {
     }
     
-    virtual void on_zero_shared ();
-    
+    void on_zero_shared() override;
 };
 
 template <class T>
@@ -838,4 +837,4 @@ inline bool operator!= (T* lhs, const IntrusiveSharingPtr<U>& rhs)
 
 } // namespace lldb_private
 
-#endif  // utility_SharingPtr_h_
+#endif // utility_SharingPtr_h_

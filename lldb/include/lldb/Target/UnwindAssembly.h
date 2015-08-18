@@ -24,8 +24,7 @@ public:
     static lldb::UnwindAssemblySP
     FindPlugin (const ArchSpec &arch);
 
-    virtual
-    ~UnwindAssembly();
+    ~UnwindAssembly() override;
 
     virtual bool
     GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, 
@@ -59,6 +58,4 @@ private:
 
 } // namespace lldb_private
 
-#endif //utility_UnwindAssembly_h_
-
-
+#endif // utility_UnwindAssembly_h_

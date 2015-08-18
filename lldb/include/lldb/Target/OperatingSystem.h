@@ -32,7 +32,6 @@ namespace lldb_private {
 
 class OperatingSystem :
     public PluginInterface
-
 {
 public:
     //------------------------------------------------------------------
@@ -58,8 +57,7 @@ public:
     //------------------------------------------------------------------
     OperatingSystem (Process *process);
     
-    virtual 
-    ~OperatingSystem();
+    ~OperatingSystem() override;
     
     //------------------------------------------------------------------
     // Plug-in Methods
@@ -98,4 +96,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // #ifndef liblldb_OperatingSystem_h_
+#endif // liblldb_OperatingSystem_h_

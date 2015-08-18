@@ -75,8 +75,7 @@ public:
     /// The destructor is virtual since this class is designed to be
     /// inherited by the plug-in instance.
     //------------------------------------------------------------------
-    virtual
-    ~SystemRuntime();
+    ~SystemRuntime() override;
 
     //------------------------------------------------------------------
     /// Called after attaching to a process.
@@ -354,9 +353,10 @@ protected:
     std::vector<ConstString> m_types;
 
 private:
+
     DISALLOW_COPY_AND_ASSIGN (SystemRuntime);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_SystemRuntime_h_
+#endif // liblldb_SystemRuntime_h_

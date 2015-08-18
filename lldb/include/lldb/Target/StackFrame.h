@@ -135,7 +135,7 @@ public:
                 const Address& pc, 
                 const SymbolContext *sc_ptr);
 
-    virtual ~StackFrame ();
+    ~StackFrame() override;
 
     lldb::ThreadSP
     GetThread () const
@@ -468,20 +468,20 @@ public:
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
-    virtual lldb::TargetSP
-    CalculateTarget ();
+    lldb::TargetSP
+    CalculateTarget() override;
 
-    virtual lldb::ProcessSP
-    CalculateProcess ();
+    lldb::ProcessSP
+    CalculateProcess() override;
 
-    virtual lldb::ThreadSP
-    CalculateThread ();
+    lldb::ThreadSP
+    CalculateThread() override;
 
-    virtual lldb::StackFrameSP
-    CalculateStackFrame ();
+    lldb::StackFrameSP
+    CalculateStackFrame() override;
 
     void
-    CalculateExecutionContext (ExecutionContext &exe_ctx);
+    CalculateExecutionContext(ExecutionContext &exe_ctx) override;
 
 protected:
     friend class StackFrameList;
@@ -525,4 +525,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_StackFrame_h_
+#endif // liblldb_StackFrame_h_

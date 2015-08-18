@@ -30,8 +30,7 @@ class ThreadProperties : public Properties
 public:
     ThreadProperties(bool is_global);
     
-    virtual
-    ~ThreadProperties();
+    ~ThreadProperties() override;
     
     //------------------------------------------------------------------
     /// The regular expression returned determines symbols that this
@@ -82,7 +81,7 @@ public:
 
     static ConstString &GetStaticBroadcasterClass ();
     
-    virtual ConstString &GetBroadcasterClass() const
+    ConstString &GetBroadcasterClass() const override
     {
         return GetStaticBroadcasterClass();
     }
@@ -97,19 +96,19 @@ public:
         
         ThreadEventData();
         
-        virtual ~ThreadEventData();
+        ~ThreadEventData() override;
         
         static const ConstString &
         GetFlavorString ();
 
-        virtual const ConstString &
-        GetFlavor () const
+        const ConstString &
+        GetFlavor() const override
         {
             return ThreadEventData::GetFlavorString ();
         }
         
-        virtual void
-        Dump (Stream *s) const;
+        void
+        Dump(Stream *s) const override;
     
         static const ThreadEventData *
         GetEventDataFromEvent (const Event *event_ptr);
@@ -179,7 +178,7 @@ public:
     //------------------------------------------------------------------
     Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id = false);
 
-    virtual ~Thread();
+    ~Thread() override;
 
     lldb::ProcessSP
     GetProcess() const
@@ -1146,20 +1145,20 @@ public:
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
-    virtual lldb::TargetSP
-    CalculateTarget ();
+    lldb::TargetSP
+    CalculateTarget() override;
     
-    virtual lldb::ProcessSP
-    CalculateProcess ();
+    lldb::ProcessSP
+    CalculateProcess() override;
     
-    virtual lldb::ThreadSP
-    CalculateThread ();
+    lldb::ThreadSP
+    CalculateThread() override;
     
-    virtual lldb::StackFrameSP
-    CalculateStackFrame ();
+    lldb::StackFrameSP
+    CalculateStackFrame() override;
 
-    virtual void
-    CalculateExecutionContext (ExecutionContext &exe_ctx);
+    void
+    CalculateExecutionContext(ExecutionContext &exe_ctx) override;
     
     lldb::StackFrameSP
     GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
@@ -1360,9 +1359,8 @@ private:
     //------------------------------------------------------------------
 
     DISALLOW_COPY_AND_ASSIGN (Thread);
-
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_Thread_h_
+#endif // liblldb_Thread_h_

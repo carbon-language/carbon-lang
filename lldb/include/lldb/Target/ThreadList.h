@@ -32,8 +32,7 @@ public:
 
     ThreadList (const ThreadList &rhs);
 
-    virtual
-    ~ThreadList ();
+    ~ThreadList() override;
 
     const ThreadList&
     operator = (const ThreadList& rhs);
@@ -128,8 +127,8 @@ public:
     void
     SetStopID (uint32_t stop_id);
 
-    virtual Mutex &
-    GetMutex ();
+    Mutex &
+    GetMutex() override;
     
     void
     Update (ThreadList &rhs);
@@ -150,9 +149,10 @@ protected:
     lldb::tid_t m_selected_tid;  ///< For targets that need the notion of a current thread.
 
 private:
+
     ThreadList ();
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ThreadList_h_
+#endif // liblldb_ThreadList_h_

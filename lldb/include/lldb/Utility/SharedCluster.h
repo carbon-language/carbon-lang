@@ -27,14 +27,15 @@ namespace imp
         
         shared_ptr_refcount() : shared_count (0) {}
         
-        virtual ~shared_ptr_refcount ()
+        ~shared_ptr_refcount() override
         {
         }
         
-        virtual void on_zero_shared ()
+        void on_zero_shared() override
         {
             manager->DecrementRefCount();
         }
+
     private:
         T *manager;
     };
@@ -100,4 +101,5 @@ private:
 };
 
 } // namespace lldb_private
+
 #endif // utility_SharedCluster_h_
