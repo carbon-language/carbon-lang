@@ -996,9 +996,7 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
 
   collectRequiredAnalysis(RequiredPasses,
                           ReqAnalysisNotAvailable, P);
-  for (SmallVectorImpl<Pass *>::iterator I = RequiredPasses.begin(),
-         E = RequiredPasses.end(); I != E; ++I) {
-    Pass *PRequired = *I;
+  for (Pass *PRequired : RequiredPasses) {
     unsigned RDepth = 0;
 
     assert(PRequired->getResolver() && "Analysis Resolver is not set");
@@ -1030,10 +1028,8 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
   }
 
   // Now, take care of required analyses that are not available.
-  for (SmallVectorImpl<AnalysisID>::iterator
-         I = ReqAnalysisNotAvailable.begin(),
-         E = ReqAnalysisNotAvailable.end() ;I != E; ++I) {
-    const PassInfo *PI = TPM->findAnalysisPassInfo(*I);
+  for (AnalysisID ID : ReqAnalysisNotAvailable) {
+    const PassInfo *PI = TPM->findAnalysisPassInfo(ID);
     Pass *AnalysisPass = PI->createPass();
     this->addLowerLevelRequiredPass(P, AnalysisPass);
   }
@@ -1055,23 +1051,17 @@ void PMDataManager::collectRequiredAnalysis(SmallVectorImpl<Pass *> &RP,
                                        SmallVectorImpl<AnalysisID> &RP_NotAvail,
                                             Pass *P) {
   AnalysisUsage *AnUsage = TPM->findAnalysisUsage(P);
-  const AnalysisUsage::VectorType &RequiredSet = AnUsage->getRequiredSet();
-  for (AnalysisUsage::VectorType::const_iterator
-         I = RequiredSet.begin(), E = RequiredSet.end(); I != E; ++I) {
-    if (Pass *AnalysisPass = findAnalysisPass(*I, true))
+  for (const auto &RequiredID : AnUsage->getRequiredSet())
+    if (Pass *AnalysisPass = findAnalysisPass(RequiredID, true))
       RP.push_back(AnalysisPass);
     else
-      RP_NotAvail.push_back(*I);
-  }
+      RP_NotAvail.push_back(RequiredID);
 
-  const AnalysisUsage::VectorType &IDs = AnUsage->getRequiredTransitiveSet();
-  for (AnalysisUsage::VectorType::const_iterator I = IDs.begin(),
-         E = IDs.end(); I != E; ++I) {
-    if (Pass *AnalysisPass = findAnalysisPass(*I, true))
+  for (const auto &RequiredID : AnUsage->getRequiredTransitiveSet())
+    if (Pass *AnalysisPass = findAnalysisPass(RequiredID, true))
       RP.push_back(AnalysisPass);
     else
-      RP_NotAvail.push_back(*I);
-  }
+      RP_NotAvail.push_back(RequiredID);
 }
 
 // All Required analyses should be available to the pass as it runs!  Here
