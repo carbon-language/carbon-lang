@@ -32,11 +32,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "polly-independent"
 
-static cl::opt<bool> DisableIntraScopScalarToArray(
-    "disable-polly-intra-scop-scalar-to-array",
-    cl::desc("Do not rewrite scalar to array to generate independent blocks"),
-    cl::Hidden, cl::init(true), cl::cat(PollyCategory));
-
 namespace {
 struct IndependentBlocks : public FunctionPass {
   RegionInfo *RI;
@@ -84,20 +79,6 @@ struct IndependentBlocks : public FunctionPass {
   ///         itself form a non trivial scalar dependence.
   static bool isEscapeUse(const Value *Use, const Region *R);
 
-  /// @brief This function just checks if a Value is either defined in the same
-  ///        basic block or outside the region, such that there are no scalar
-  ///        dependences between basic blocks that are both part of the same
-  ///        region.
-  ///
-  /// @param Operand  The operand of the instruction.
-  /// @param CurBB    The BasicBlock that contains the instruction.
-  /// @param R        The maximum region in the Scop.
-  ///
-  /// @return Return true if the Operand of an instruction and the instruction
-  ///         itself form a non trivial scalar (true) dependence.
-  bool isEscapeOperand(const Value *Operand, const BasicBlock *CurBB,
-                       const Region *R) const;
-
   //===--------------------------------------------------------------------===//
   /// Operand tree moving functions.
   /// Trivial scalar dependences can eliminate by move the def to the same BB
@@ -126,11 +107,6 @@ struct IndependentBlocks : public FunctionPass {
 
   bool isIndependentBlock(const Region *R, BasicBlock *BB) const;
   bool areAllBlocksIndependent(const Region *R) const;
-
-  bool onlyUsedInRegion(Instruction *Inst, const Region *R);
-  bool translateScalarToArray(BasicBlock *BB, const Region *R);
-  bool translateScalarToArray(Instruction *Inst, const Region *R);
-  bool translateScalarToArray(const Region *R);
 
   bool runOnFunction(Function &F);
   void verifyAnalysis() const;
@@ -299,124 +275,6 @@ bool IndependentBlocks::isEscapeUse(const Value *Use, const Region *R) {
   return !R->contains(cast<Instruction>(Use));
 }
 
-bool IndependentBlocks::isEscapeOperand(const Value *Operand,
-                                        const BasicBlock *CurBB,
-                                        const Region *R) const {
-  const Instruction *OpInst = dyn_cast<Instruction>(Operand);
-
-  // Non-instruction operand will never escape.
-  if (OpInst == 0)
-    return false;
-
-  // Induction variables are valid operands.
-  if (canSynthesize(OpInst, LI, SE, R))
-    return false;
-
-  // A value from a different BB is used in the same region.
-  return R->contains(OpInst) && (OpInst->getParent() != CurBB);
-}
-
-bool IndependentBlocks::translateScalarToArray(const Region *R) {
-  bool Changed = false;
-
-  for (BasicBlock *BB : R->blocks())
-    Changed |= translateScalarToArray(BB, R);
-
-  return Changed;
-}
-
-// Returns true when Inst is only used inside region R.
-bool IndependentBlocks::onlyUsedInRegion(Instruction *Inst, const Region *R) {
-  for (User *U : Inst->users())
-    if (Instruction *UI = dyn_cast<Instruction>(U))
-      if (isEscapeUse(UI, R))
-        return false;
-
-  return true;
-}
-
-bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
-                                               const Region *R) {
-  if (canSynthesize(Inst, LI, SE, R) && onlyUsedInRegion(Inst, R))
-    return false;
-  if (isIgnoredIntrinsic(Inst))
-    return false;
-
-  SmallVector<Instruction *, 4> LoadInside, LoadOutside;
-  for (User *U : Inst->users())
-    // Inst is referenced outside or referenced as an escaped operand.
-    if (Instruction *UI = dyn_cast<Instruction>(U)) {
-      if (isEscapeUse(UI, R))
-        LoadOutside.push_back(UI);
-
-      if (DisableIntraScopScalarToArray)
-        continue;
-
-      if (canSynthesize(UI, LI, SE, R))
-        continue;
-
-      BasicBlock *UParent = UI->getParent();
-      if (R->contains(UParent) && isEscapeOperand(Inst, UParent, R))
-        LoadInside.push_back(UI);
-    }
-
-  if (LoadOutside.empty() && LoadInside.empty())
-    return false;
-
-  // Create the alloca.
-  AllocaInst *Slot = new AllocaInst(
-      Inst->getType(), 0, Inst->getName() + ".s2a", AllocaBlock->begin());
-  assert(!isa<InvokeInst>(Inst) && "Unexpect Invoke in Scop!");
-
-  // Store right after Inst, and make sure the position is after all phi nodes.
-  BasicBlock::iterator StorePos;
-  if (isa<PHINode>(Inst)) {
-    StorePos = Inst->getParent()->getFirstNonPHI();
-  } else {
-    StorePos = Inst;
-    StorePos++;
-  }
-  (void)new StoreInst(Inst, Slot, StorePos);
-
-  if (!LoadOutside.empty()) {
-    LoadInst *ExitLoad = new LoadInst(Slot, Inst->getName() + ".loadoutside",
-                                      false, R->getExit()->getFirstNonPHI());
-
-    while (!LoadOutside.empty()) {
-      Instruction *U = LoadOutside.pop_back_val();
-      SE->forgetValue(U);
-      U->replaceUsesOfWith(Inst, ExitLoad);
-    }
-  }
-
-  while (!LoadInside.empty()) {
-    Instruction *U = LoadInside.pop_back_val();
-    assert(!isa<PHINode>(U) && "Can not handle PHI node inside!");
-    SE->forgetValue(U);
-    LoadInst *L = new LoadInst(Slot, Inst->getName() + ".loadarray", false, U);
-    U->replaceUsesOfWith(Inst, L);
-  }
-
-  SE->forgetValue(Inst);
-  return true;
-}
-
-bool IndependentBlocks::translateScalarToArray(BasicBlock *BB,
-                                               const Region *R) {
-  bool changed = false;
-
-  SmallVector<Instruction *, 32> Insts;
-  for (BasicBlock::iterator II = BB->begin(), IE = --BB->end(); II != IE; ++II)
-    Insts.push_back(II);
-
-  while (!Insts.empty()) {
-    Instruction *Inst = Insts.pop_back_val();
-    changed |= translateScalarToArray(Inst, R);
-  }
-
-  return changed;
-}
-
 bool IndependentBlocks::isIndependentBlock(const Region *R,
                                            BasicBlock *BB) const {
   for (Instruction &Inst : *BB) {
@@ -432,25 +290,6 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
         DEBUG(dbgs() << "Instruction used outside the Scop!\n");
         DEBUG(Inst.print(dbgs()));
         DEBUG(dbgs() << "\n");
-        return false;
-      }
-    }
-
-    if (DisableIntraScopScalarToArray)
-      continue;
-
-    for (Value *Op : Inst.operands()) {
-      if (isIgnoredIntrinsic(Op))
-        continue;
-      if (isEscapeOperand(Op, BB, R)) {
-        DEBUG(dbgs() << "Instruction in function '";
-              BB->getParent()->printAsOperand(dbgs(), false);
-              dbgs() << "' not independent:\n");
-        DEBUG(dbgs() << "Uses invalid operator\n");
-        DEBUG(Inst.print(dbgs()));
-        DEBUG(dbgs() << "\n");
-        DEBUG(dbgs() << "Invalid operator is: ";
-              Op->printAsOperand(dbgs(), false); dbgs() << "\n");
         return false;
       }
     }
