@@ -27,4 +27,12 @@ TEST(TypesTest, StructType) {
   EXPECT_FALSE(Struct->hasName());
 }
 
+TEST(TypesTest, LayoutIdenticalEmptyStructs) {
+  LLVMContext C;
+
+  StructType *Foo = StructType::create(C, "Foo");
+  StructType *Bar = StructType::create(C, "Bar");
+  EXPECT_TRUE(Foo->isLayoutIdentical(Bar));
+}
+
 }  // end anonymous namespace
