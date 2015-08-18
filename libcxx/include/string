@@ -115,8 +115,8 @@ public:
     basic_string& operator=(const basic_string& str);
     basic_string& operator=(basic_string&& str)
         noexcept(
-             allocator_type::propagate_on_container_move_assignment::value &&
-             is_nothrow_move_assignable<allocator_type>::value);
+             allocator_type::propagate_on_container_move_assignment::value ||
+             allocator_type::is_always_equal::value ); // C++17
     basic_string& operator=(const value_type* s);
     basic_string& operator=(value_type c);
     basic_string& operator=(initializer_list<value_type>);
@@ -1377,8 +1377,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_string& operator=(basic_string&& __str)
-        _NOEXCEPT_(__alloc_traits::propagate_on_container_move_assignment::value &&
-                   is_nothrow_move_assignable<allocator_type>::value);
+        _NOEXCEPT_((__noexcept_move_assign_container<_Allocator, __alloc_traits>::value));
 #endif
     _LIBCPP_INLINE_VISIBILITY basic_string& operator=(const value_type* __s) {return assign(__s);}
     basic_string& operator=(value_type __c);
@@ -1845,10 +1844,15 @@ private:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign(basic_string& __str, false_type);
+    void __move_assign(basic_string& __str, false_type)
+        _NOEXCEPT_(__alloc_traits::is_always_equal::value);
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign(basic_string& __str, true_type)
+#if _LIBCPP_STD_VER > 14
+        _NOEXCEPT;
+#else
         _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value);
+#endif
 #endif
 
     _LIBCPP_INLINE_VISIBILITY
@@ -2430,6 +2434,7 @@ template <class _CharT, class _Traits, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 basic_string<_CharT, _Traits, _Allocator>::__move_assign(basic_string& __str, false_type)
+    _NOEXCEPT_(__alloc_traits::is_always_equal::value)
 {
     if (__alloc() != __str.__alloc())
         assign(__str);
@@ -2441,7 +2446,11 @@ template <class _CharT, class _Traits, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 basic_string<_CharT, _Traits, _Allocator>::__move_assign(basic_string& __str, true_type)
+#if _LIBCPP_STD_VER > 14
+    _NOEXCEPT
+#else
     _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
+#endif
 {
     clear();
     shrink_to_fit();
@@ -2454,8 +2463,7 @@ template <class _CharT, class _Traits, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 basic_string<_CharT, _Traits, _Allocator>&
 basic_string<_CharT, _Traits, _Allocator>::operator=(basic_string&& __str)
-    _NOEXCEPT_(__alloc_traits::propagate_on_container_move_assignment::value &&
-               is_nothrow_move_assignable<allocator_type>::value)
+    _NOEXCEPT_((__noexcept_move_assign_container<_Allocator, __alloc_traits>::value))
 {
     __move_assign(__str, integral_constant<bool,
           __alloc_traits::propagate_on_container_move_assignment::value>());
