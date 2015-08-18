@@ -191,7 +191,9 @@ set(arm_SOURCES
   arm/addsf3vfp.S
   arm/aeabi_dcmp.S
   arm/aeabi_div0.c
+  arm/aeabi_drsub.c
   arm/aeabi_fcmp.S
+  arm/aeabi_frsub.c
   arm/aeabi_idivmod.S
   arm/aeabi_ldivmod.S
   arm/aeabi_memcmp.S
