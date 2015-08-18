@@ -4209,7 +4209,6 @@ AST_POLYMORPHIC_MATCHER(isExplicit,
                         AST_POLYMORPHIC_SUPPORTED_TYPES(CXXConstructorDecl,
                                                         CXXConversionDecl)) {
   return Node.isExplicit();
-
 }
 
 /// \brief If the given case statement does not use the GNU case range
