@@ -337,6 +337,45 @@
 # define LLVM_ADDRESS_SANITIZER_BUILD 0
 #endif
 
+/// \macro LLVM_THREAD_SANITIZER_BUILD
+/// \brief Whether LLVM itself is built with ThreadSanitizer instrumentation.
+#if __has_feature(thread_sanitizer) || defined(__SANITIZE_THREAD__)
+# define LLVM_THREAD_SANITIZER_BUILD 1
+#else
+# define LLVM_THREAD_SANITIZER_BUILD 0
+#endif
+
+#if LLVM_THREAD_SANITIZER_BUILD
+// Thread Sanitizer is a tool that finds races in code.
+// See http://code.google.com/p/data-race-test/wiki/DynamicAnnotations .
+// tsan detects these exact functions by name.
+extern "C" {
+void AnnotateHappensAfter(const char *file, int line, const volatile void *cv);
+void AnnotateHappensBefore(const char *file, int line, const volatile void *cv);
+void AnnotateIgnoreWritesBegin(const char *file, int line);
+void AnnotateIgnoreWritesEnd(const char *file, int line);
+}
+
+// This marker is used to define a happens-before arc. The race detector will
+// infer an arc from the begin to the end when they share the same pointer
+// argument.
+# define TsanHappensBefore(cv) AnnotateHappensBefore(__FILE__, __LINE__, cv)
+
+// This marker defines the destination of a happens-before arc.
+# define TsanHappensAfter(cv) AnnotateHappensAfter(__FILE__, __LINE__, cv)
+
+// Ignore any races on writes between here and the next TsanIgnoreWritesEnd.
+# define TsanIgnoreWritesBegin() AnnotateIgnoreWritesBegin(__FILE__, __LINE__)
+
+// Resume checking for racy writes.
+# define TsanIgnoreWritesEnd() AnnotateIgnoreWritesEnd(__FILE__, __LINE__)
+#else
+# define TsanHappensBefore(cv)
+# define TsanHappensAfter(cv)
+# define TsanIgnoreWritesBegin()
+# define TsanIgnoreWritesEnd()
+#endif
+
 /// \brief Mark debug helper function definitions like dump() that should not be
 /// stripped from debug builds.
 // FIXME: Move this to a private config.h as it's not usable in public headers.

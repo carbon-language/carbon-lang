@@ -52,23 +52,3 @@ void llvm::sys::ValgrindDiscardTranslations(const void *Addr, size_t Len) {
 }
 
 #endif  // !HAVE_VALGRIND_VALGRIND_H
-
-// These functions require no implementation, tsan just looks at the arguments
-// they're called with. However, they are required to be weak as some other
-// application or library may already be providing these definitions for the
-// same reason we are.
-extern "C" {
-LLVM_ATTRIBUTE_WEAK void AnnotateHappensAfter(const char *file, int line,
-                                              const volatile void *cv);
-void AnnotateHappensAfter(const char *file, int line, const volatile void *cv) {
-}
-LLVM_ATTRIBUTE_WEAK void AnnotateHappensBefore(const char *file, int line,
-                                               const volatile void *cv);
-void AnnotateHappensBefore(const char *file, int line,
-                           const volatile void *cv) {}
-LLVM_ATTRIBUTE_WEAK void AnnotateIgnoreWritesBegin(const char *file, int line);
-void AnnotateIgnoreWritesBegin(const char *file, int line) {}
-LLVM_ATTRIBUTE_WEAK void AnnotateIgnoreWritesEnd(const char *file, int line);
-void AnnotateIgnoreWritesEnd(const char *file, int line) {}
-}
-
