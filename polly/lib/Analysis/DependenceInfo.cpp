@@ -255,13 +255,11 @@ void Dependences::calculateDependences(Scop &S) {
 
   collectInfo(S, &Read, &Write, &MayWrite, &AccessSchedule, &StmtSchedule);
 
-  // TODO: Compute dependences directly on the schedule tree
-  //
-  // We currently don't do this yet, as the compile-time performance
-  // implications are not 100% understood (we see some regressions).
-  if (false && isl_union_map_is_empty(AccessSchedule)) {
+  if (isl_union_map_is_empty(AccessSchedule)) {
     isl_union_map_free(AccessSchedule);
     Schedule = S.getScheduleTree();
+    Schedule = isl_schedule_intersect_domain(
+        Schedule, isl_union_set_from_set(S.getAssumedContext()));
   } else {
     auto *ScheduleMap =
         isl_union_map_union(AccessSchedule, isl_union_map_copy(StmtSchedule));
