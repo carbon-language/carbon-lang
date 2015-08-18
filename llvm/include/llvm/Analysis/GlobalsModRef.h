@@ -96,6 +96,8 @@ public:
   //
   AliasResult alias(const MemoryLocation &LocA,
                     const MemoryLocation &LocB) override;
+
+  using AliasAnalysis::getModRefInfo;
   ModRefInfo getModRefInfo(ImmutableCallSite CS,
                            const MemoryLocation &Loc) override;
 
