@@ -1,6 +1,6 @@
 LEVEL = ../../make
 
-CXX_SOURCES := locking.cpp
+C_SOURCES := locking.c
 ENABLE_THREADS := YES
 
 include $(LEVEL)/Makefile.rules
