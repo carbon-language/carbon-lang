@@ -475,6 +475,13 @@ public:
   submodule_iterator submodule_end()   { return SubModules.end(); }
   submodule_const_iterator submodule_end() const { return SubModules.end(); }
 
+  llvm::iterator_range<submodule_iterator> submodules() {
+    return llvm::make_range(submodule_begin(), submodule_end());
+  }
+  llvm::iterator_range<submodule_const_iterator> submodules() const {
+    return llvm::make_range(submodule_begin(), submodule_end());
+  }
+
   /// \brief Appends this module's list of exported modules to \p Exported.
   ///
   /// This provides a subset of immediately imported modules (the ones that are

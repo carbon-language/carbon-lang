@@ -2284,6 +2284,9 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
 }
 
 unsigned ASTWriter::getSubmoduleID(Module *Mod) {
+  if (!Mod)
+    return 0;
+
   llvm::DenseMap<Module *, unsigned>::iterator Known = SubmoduleIDs.find(Mod);
   if (Known != SubmoduleIDs.end())
     return Known->second;
@@ -2434,12 +2437,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     Stream.EmitRecordWithBlob(DefinitionAbbrev, Record, Mod->Name);
     
     // Emit the requirements.
-    for (unsigned I = 0, N = Mod->Requirements.size(); I != N; ++I) {
+    for (const auto &R : Mod->Requirements) {
       Record.clear();
       Record.push_back(SUBMODULE_REQUIRES);
-      Record.push_back(Mod->Requirements[I].second);
-      Stream.EmitRecordWithBlob(RequiresAbbrev, Record,
-                                Mod->Requirements[I].first);
+      Record.push_back(R.second);
+      Stream.EmitRecordWithBlob(RequiresAbbrev, Record, R.first);
     }
 
     // Emit the umbrella header, if there is one.
@@ -2487,26 +2489,19 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     // Emit the imports. 
     if (!Mod->Imports.empty()) {
       Record.clear();
-      for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
-        unsigned ImportedID = getSubmoduleID(Mod->Imports[I]);
-        assert(ImportedID && "Unknown submodule!");
-        Record.push_back(ImportedID);
-      }
+      for (auto *I : Mod->Imports)
+        Record.push_back(getSubmoduleID(I));
       Stream.EmitRecord(SUBMODULE_IMPORTS, Record);
     }
 
     // Emit the exports. 
     if (!Mod->Exports.empty()) {
       Record.clear();
-      for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
-        if (Module *Exported = Mod->Exports[I].getPointer()) {
-          unsigned ExportedID = getSubmoduleID(Exported);
-          Record.push_back(ExportedID);
-        } else {
-          Record.push_back(0);
-        }
-        
-        Record.push_back(Mod->Exports[I].getInt());
+      for (const auto &E : Mod->Exports) {
+        // FIXME: This may fail; we don't require that all exported modules
+        // are local or imported.
+        Record.push_back(getSubmoduleID(E.getPointer()));
+        Record.push_back(E.getInt());
       }
       Stream.EmitRecord(SUBMODULE_EXPORTS, Record);
     }
@@ -2516,38 +2511,33 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     // module itself.
 
     // Emit the link libraries.
-    for (unsigned I = 0, N = Mod->LinkLibraries.size(); I != N; ++I) {
+    for (const auto &LL : Mod->LinkLibraries) {
       Record.clear();
       Record.push_back(SUBMODULE_LINK_LIBRARY);
-      Record.push_back(Mod->LinkLibraries[I].IsFramework);
-      Stream.EmitRecordWithBlob(LinkLibraryAbbrev, Record,
-                                Mod->LinkLibraries[I].Library);
+      Record.push_back(LL.IsFramework);
+      Stream.EmitRecordWithBlob(LinkLibraryAbbrev, Record, LL.Library);
     }
 
     // Emit the conflicts.
-    for (unsigned I = 0, N = Mod->Conflicts.size(); I != N; ++I) {
+    for (const auto &C : Mod->Conflicts) {
       Record.clear();
       Record.push_back(SUBMODULE_CONFLICT);
-      unsigned OtherID = getSubmoduleID(Mod->Conflicts[I].Other);
-      assert(OtherID && "Unknown submodule!");
-      Record.push_back(OtherID);
-      Stream.EmitRecordWithBlob(ConflictAbbrev, Record,
-                                Mod->Conflicts[I].Message);
+      // FIXME: This may fail; we don't require that all conflicting modules
+      // are local or imported.
+      Record.push_back(getSubmoduleID(C.Other));
+      Stream.EmitRecordWithBlob(ConflictAbbrev, Record, C.Message);
     }
 
     // Emit the configuration macros.
-    for (unsigned I = 0, N =  Mod->ConfigMacros.size(); I != N; ++I) {
+    for (const auto &CM : Mod->ConfigMacros) {
       Record.clear();
       Record.push_back(SUBMODULE_CONFIG_MACRO);
-      Stream.EmitRecordWithBlob(ConfigMacroAbbrev, Record,
-                                Mod->ConfigMacros[I]);
+      Stream.EmitRecordWithBlob(ConfigMacroAbbrev, Record, CM);
     }
 
     // Queue up the submodules of this module.
-    for (Module::submodule_iterator Sub = Mod->submodule_begin(),
-                                 SubEnd = Mod->submodule_end();
-         Sub != SubEnd; ++Sub)
-      Q.push(*Sub);
+    for (auto *M : Mod->submodules())
+      Q.push(M);
   }
   
   Stream.ExitBlock();
