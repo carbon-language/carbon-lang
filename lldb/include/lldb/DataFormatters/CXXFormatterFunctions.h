@@ -203,23 +203,23 @@ namespace lldb_private {
         public:
             LibcxxVectorBoolSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual size_t
-            CalculateNumChildren ();
+            size_t
+            CalculateNumChildren() override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual bool
-            Update();
+            bool
+            Update() override;
             
-            virtual bool
-            MightHaveChildren ();
+            bool
+            MightHaveChildren() override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual
-            ~LibcxxVectorBoolSyntheticFrontEnd ();
+            ~LibcxxVectorBoolSyntheticFrontEnd() override;
+
         private:
             CompilerType m_bool_type;
             ExecutionContextRef m_exe_ctx_ref;
@@ -238,23 +238,23 @@ namespace lldb_private {
         public:
             LibstdcppMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual size_t
-            CalculateNumChildren ();
+            size_t
+            CalculateNumChildren() override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual bool
-            Update();
+            bool
+            Update() override;
             
-            virtual bool
-            MightHaveChildren ();
+            bool
+            MightHaveChildren() override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
+            size_t
+            GetIndexOfChildWithName (const ConstString &name) override;
             
-            virtual
-            ~LibstdcppMapIteratorSyntheticFrontEnd ();
+            ~LibstdcppMapIteratorSyntheticFrontEnd() override;
+
         private:
             ExecutionContextRef m_exe_ctx_ref;
             lldb::addr_t m_pair_address;
@@ -270,23 +270,23 @@ namespace lldb_private {
         public:
             LibCxxMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual size_t
-            CalculateNumChildren ();
+            size_t
+            CalculateNumChildren() override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual bool
-            Update();
+            bool
+            Update() override;
             
-            virtual bool
-            MightHaveChildren ();
+            bool
+            MightHaveChildren() override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual
-            ~LibCxxMapIteratorSyntheticFrontEnd ();
+            ~LibCxxMapIteratorSyntheticFrontEnd() override;
+
         private:
             ValueObject *m_pair_ptr;
         };
@@ -299,23 +299,23 @@ namespace lldb_private {
             VectorIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp,
                                              ConstString item_name);
             
-            virtual size_t
-            CalculateNumChildren ();
+            size_t
+            CalculateNumChildren() override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual bool
-            Update();
+            bool
+            Update() override;
             
-            virtual bool
-            MightHaveChildren ();
+            bool
+            MightHaveChildren() override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual
-            ~VectorIteratorSyntheticFrontEnd ();
+            ~VectorIteratorSyntheticFrontEnd() override;
+
         private:
             ExecutionContextRef m_exe_ctx_ref;
             ConstString m_item_name;
@@ -331,23 +331,23 @@ namespace lldb_private {
         public:
             LibcxxSharedPtrSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp);
             
-            virtual size_t
-            CalculateNumChildren ();
+            size_t
+            CalculateNumChildren() override;
             
-            virtual lldb::ValueObjectSP
-            GetChildAtIndex (size_t idx);
+            lldb::ValueObjectSP
+            GetChildAtIndex(size_t idx) override;
             
-            virtual bool
-            Update();
+            bool
+            Update() override;
             
-            virtual bool
-            MightHaveChildren ();
+            bool
+            MightHaveChildren() override;
             
-            virtual size_t
-            GetIndexOfChildWithName (const ConstString &name);
+            size_t
+            GetIndexOfChildWithName(const ConstString &name) override;
             
-            virtual
-            ~LibcxxSharedPtrSyntheticFrontEnd ();
+            ~LibcxxSharedPtrSyntheticFrontEnd() override;
+
         private:
             ValueObject* m_cntrl;
             lldb::ValueObjectSP m_count_sp;

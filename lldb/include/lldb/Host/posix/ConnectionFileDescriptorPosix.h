@@ -40,7 +40,7 @@ class ConnectionFileDescriptor : public Connection
 
     ConnectionFileDescriptor(Socket* socket);
 
-    virtual ~ConnectionFileDescriptor();
+    ~ConnectionFileDescriptor() override;
 
     bool IsConnected() const override;
 

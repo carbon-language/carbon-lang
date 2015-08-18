@@ -18,7 +18,7 @@ class LockFilePosix : public LockFileBase
 {
 public:
     explicit LockFilePosix (int fd);
-    ~LockFilePosix ();
+    ~LockFilePosix () override;
 
 protected:
     Error
@@ -37,6 +37,6 @@ protected:
     DoUnlock () override;
 };
 
-}  // namespace lldb_private
+} // namespace lldb_private
 
-#endif  // liblldb_Host_posix_LockFilePosix_h_
+#endif // liblldb_Host_posix_LockFilePosix_h_

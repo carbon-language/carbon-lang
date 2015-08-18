@@ -226,19 +226,19 @@ public:
     ShouldPrintAsOneLiner (ValueObject& valobj);
     
     void
-    Changed ()
+    Changed () override
     {
         ++m_last_revision;
         m_format_cache.Clear ();
     }
     
     uint32_t
-    GetCurrentRevision ()
+    GetCurrentRevision () override
     {
         return m_last_revision;
     }
     
-    ~FormatManager ()
+    ~FormatManager () override
     {
     }
     
@@ -337,4 +337,4 @@ private:
     
 } // namespace lldb_private
     
-#endif	// lldb_FormatManager_h_
+#endif // lldb_FormatManager_h_

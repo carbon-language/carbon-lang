@@ -267,7 +267,7 @@ public:
     typedef std::shared_ptr<TypeValidatorImpl_CXX> SharedPointer;
     typedef bool(*ValueCallback)(void*, ConstString, const TypeValidatorImpl_CXX::SharedPointer&);
     
-    virtual ~TypeValidatorImpl_CXX ();
+    ~TypeValidatorImpl_CXX() override;
     
     ValidatorFunction
     GetValidatorFunction () const
@@ -281,17 +281,17 @@ public:
         m_validator_function = f;
     }
     
-    virtual TypeValidatorImpl::Type
-    GetType ()
+    TypeValidatorImpl::Type
+    GetType() override
     {
         return TypeValidatorImpl::Type::eTypeCXX;
     }
     
-    virtual ValidationResult
-    FormatObject (ValueObject *valobj) const;
+    ValidationResult
+    FormatObject(ValueObject *valobj) const override;
     
-    virtual std::string
-    GetDescription();
+    std::string
+    GetDescription() override;
     
 protected:
     std::string m_description;
@@ -304,4 +304,4 @@ private:
     
 } // namespace lldb_private
 
-#endif	// lldb_TypeValidator_h_
+#endif // lldb_TypeValidator_h_

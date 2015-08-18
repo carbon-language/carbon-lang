@@ -9,7 +9,6 @@
 
 #ifndef liblldb_File_h_
 #define liblldb_File_h_
-#if defined(__cplusplus)
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -133,11 +132,10 @@ public:
     ///
     /// The destructor is virtual in case this class is subclassed.
     //------------------------------------------------------------------
-    virtual
-    ~File ();
+    ~File() override;
 
     bool
-    IsValid () const
+    IsValid() const override
     {
         return DescriptorIsValid() || StreamIsValid();
     }
@@ -216,7 +214,7 @@ public:
           uint32_t permissions = lldb::eFilePermissionsFileDefault);
 
     Error
-    Close ();
+    Close() override;
     
     Error
     Duplicate (const File &rhs);
@@ -225,8 +223,7 @@ public:
     GetDescriptor() const;
 
     WaitableHandle
-    GetWaitableHandle();
-
+    GetWaitableHandle() override;
 
     void
     SetDescriptor(int fd, bool transfer_ownership);
@@ -256,7 +253,7 @@ public:
     ///     failure.
     //------------------------------------------------------------------
     Error
-    Read (void *buf, size_t &num_bytes);
+    Read(void *buf, size_t &num_bytes) override;
           
     //------------------------------------------------------------------
     /// Write bytes to a file at the current file position.
@@ -278,7 +275,7 @@ public:
     ///     failure.
     //------------------------------------------------------------------
     Error
-    Write (const void *buf, size_t &num_bytes);
+    Write(const void *buf, size_t &num_bytes) override;
 
     //------------------------------------------------------------------
     /// Seek to an offset relative to the beginning of the file.
@@ -553,5 +550,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_File_h_
+#endif // liblldb_File_h_

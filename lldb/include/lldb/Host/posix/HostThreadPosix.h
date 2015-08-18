@@ -22,13 +22,14 @@ class HostThreadPosix : public HostNativeThreadBase
   public:
     HostThreadPosix();
     HostThreadPosix(lldb::thread_t thread);
-    virtual ~HostThreadPosix();
+    ~HostThreadPosix() override;
 
     Error Join(lldb::thread_result_t *result) override;
     Error Cancel() override;
 
     Error Detach();
 };
-}
 
-#endif
+} // namespace lldb_private
+
+#endif // lldb_Host_posix_HostThreadPosix_h_
