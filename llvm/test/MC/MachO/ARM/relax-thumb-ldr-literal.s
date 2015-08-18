@@ -1,5 +1,5 @@
 @ RUN: llvm-mc -n -triple thumbv7-apple-darwin10 %s -filetype=obj -o %t.obj
-@ RUN: macho-dump --dump-section-data < %t.obj > %t.dump
+@ RUN: llvm-readobj -s -sd < %t.obj > %t.dump
 @ RUN: FileCheck < %t.dump %s
 
 	.syntax unified
@@ -9,5 +9,14 @@
 _foo:
         ldr r2, (_foo - 4)
 
-@ CHECK: ('num_reloc', 0)
-@ CHECK: ('_section_data', '5ff80820')
+@ CHECK:  RelocationCount: 0
+@ CHECK:  Type: 0x0
+@ CHECK:  Attributes [ (0x800004)
+@ CHECK:    PureInstructions (0x800000)
+@ CHECK:    SomeInstructions (0x4)
+@ CHECK:  ]
+@ CHECK:  Reserved1: 0x0
+@ CHECK:  Reserved2: 0x0
+@ CHECK:  SectionData (
+@ CHECK:    0000: 5FF80820                             |_.. |
+@ CHECK:  )

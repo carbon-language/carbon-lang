@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -mcpu=cortex-a8 -triple thumbv7-apple-darwin10 -filetype=obj -o - < %s | macho-dump | FileCheck %s
+@ RUN: llvm-mc -mcpu=cortex-a8 -triple thumbv7-apple-darwin10 -filetype=obj -o - < %s | llvm-readobj -relocations -expand-relocs | FileCheck %s
 
 @ rdar://10038370
 
@@ -17,28 +17,66 @@
 L1: .long 0
 L2: .long 0
 
-@ CHECK:  ('_relocations', [
-@ CHECK:    # Relocation 0
-@ CHECK:    (('word-0', 0xc),
-@ CHECK:     ('word-1', 0x86000002)),
-@ CHECK:    # Relocation 1
-@ CHECK:    (('word-0', 0x1184),
-@ CHECK:     ('word-1', 0x16ffffff)),
-@ CHECK:    # Relocation 2
-@ CHECK:    (('word-0', 0x8),
-@ CHECK:     ('word-1', 0x84000002)),
-@ CHECK:    # Relocation 3
-@ CHECK:    (('word-0', 0x1),
-@ CHECK:     ('word-1', 0x14ffffff)),
-@ CHECK:    # Relocation 4
-@ CHECK:    (('word-0', 0x4),
-@ CHECK:     ('word-1', 0x86000002)),
-@ CHECK:    # Relocation 5
-@ CHECK:    (('word-0', 0x1180),
-@ CHECK:     ('word-1', 0x16ffffff)),
-@ CHECK:    # Relocation 6
-@ CHECK:    (('word-0', 0x0),
-@ CHECK:     ('word-1', 0x84000002)),
-@ CHECK:    # Relocation 7
-@ CHECK:    (('word-0', 0x1),
-@ CHECK:     ('word-1', 0x14ffffff)),
+@ CHECK: Format: Mach-O arm
+@ CHECK: Arch: arm
+@ CHECK: AddressSize: 32bit
+@ CHECK: Relocations [
+@ CHECK:   Section __text {
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0xC
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 3
+@ CHECK:       Type: ARM_RELOC_HALF (8)
+@ CHECK:       Section: __data (2)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x1184
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 3
+@ CHECK:       Type: ARM_RELOC_PAIR (1)
+@ CHECK:       Section: - (16777215)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x8
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 2
+@ CHECK:       Type: ARM_RELOC_HALF (8)
+@ CHECK:       Section: __data (2)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x1
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 2
+@ CHECK:       Type: ARM_RELOC_PAIR (1)
+@ CHECK:       Section: - (16777215)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x4
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 3
+@ CHECK:       Type: ARM_RELOC_HALF (8)
+@ CHECK:       Section: __data (2)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x1180
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 3
+@ CHECK:       Type: ARM_RELOC_PAIR (1)
+@ CHECK:       Section: - (16777215)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x0
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 2
+@ CHECK:       Type: ARM_RELOC_HALF (8)
+@ CHECK:       Section: __data (2)
+@ CHECK:     }
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x1
+@ CHECK:       PCRel: 0
+@ CHECK:       Length: 2
+@ CHECK:       Type: ARM_RELOC_PAIR (1)
+@ CHECK:       Section: - (16777215)
+@ CHECK:     }
+@ CHECK:   }
+@ CHECK: ]

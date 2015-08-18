@@ -1,5 +1,5 @@
 @ RUN: llvm-mc -n -triple armv7-apple-darwin10 %s -filetype=obj -o %t.o
-@ RUN: macho-dump --dump-section-data < %t.o | FileCheck %s
+@ RUN: llvm-readobj -relocations -expand-relocs < %t.o | FileCheck %s
 
 @ rdar://12359919
 
@@ -36,8 +36,18 @@ _foo:
 	pop	{r7, pc}
 
 
-@ CHECK:  ('_relocations', [
-@ CHECK:    # Relocation 0
-@ CHECK:    (('word-0', 0x4),
-@ CHECK:     ('word-1', 0x6d000002)),
-@ CHECK:  ])
+@ CHECK: File: <stdin>
+@ CHECK: Format: Mach-O arm
+@ CHECK: Arch: arm
+@ CHECK: AddressSize: 32bit
+@ CHECK: Relocations [
+@ CHECK:   Section __text {
+@ CHECK:     Relocation {
+@ CHECK:       Offset: 0x4
+@ CHECK:       PCRel: 1
+@ CHECK:       Length: 2
+@ CHECK:       Type: ARM_THUMB_RELOC_BR22 (6)
+@ CHECK:       Symbol: _foo (2)
+@ CHECK:     }
+@ CHECK:   }
+@ CHECK: ]
