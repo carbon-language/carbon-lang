@@ -1124,7 +1124,7 @@ unsigned FilterChooser::getDecoderIndex(DecoderSet &Decoders,
   // Using the full decoder string as the key value here is a bit
   // heavyweight, but is effective. If the string comparisons become a
   // performance concern, we can implement a mangling of the predicate
-  // data easilly enough with a map back to the actual string. That's
+  // data easily enough with a map back to the actual string. That's
   // overkill for now, though.
 
   // Make sure the predicate is in the table.
@@ -1199,7 +1199,7 @@ unsigned FilterChooser::getPredicateIndex(DecoderTableInfo &TableInfo,
   // Using the full predicate string as the key value here is a bit
   // heavyweight, but is effective. If the string comparisons become a
   // performance concern, we can implement a mangling of the predicate
-  // data easilly enough with a map back to the actual string. That's
+  // data easily enough with a map back to the actual string. That's
   // overkill for now, though.
 
   // Make sure the predicate is in the table.

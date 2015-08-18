@@ -828,7 +828,7 @@ bool LoopIdiomRecognize::recognizePopcount() {
     return false;
 
   // Counting population are usually conducted by few arithmetic instructions.
-  // Such instructions can be easilly "absorbed" by vacant slots in a
+  // Such instructions can be easily "absorbed" by vacant slots in a
   // non-compact loop. Therefore, recognizing popcount idiom only makes sense
   // in a compact loop.
 

@@ -998,7 +998,7 @@ void ScheduleDAGMILive::updatePressureDiffs(ArrayRef<unsigned> LiveUses) {
 /// only includes instructions that have DAG nodes, not scheduling boundaries.
 ///
 /// This is a skeletal driver, with all the functionality pushed into helpers,
-/// so that it can be easilly extended by experimental schedulers. Generally,
+/// so that it can be easily extended by experimental schedulers. Generally,
 /// implementing MachineSchedStrategy should be sufficient to implement a new
 /// scheduling algorithm. However, if a scheduler further subclasses
 /// ScheduleDAGMILive then it will want to override this virtual method in order
