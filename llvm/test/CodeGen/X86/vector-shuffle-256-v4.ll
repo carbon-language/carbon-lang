@@ -972,3 +972,29 @@ define <4 x double> @bitcast_v4f64_0426(<4 x double> %a, <4 x double> %b) {
   %bitcast64 = bitcast <16 x i16> %shuffle16 to <4 x double>
   ret <4 x double> %bitcast64
 }
+
+define <4 x i64> @concat_v4i64_0167(<4 x i64> %a0, <4 x i64> %a1) {
+; ALL-LABEL: concat_v4i64_0167:
+; ALL:       # BB#0:
+; ALL-NEXT:    vextractf128 $1, %ymm1, %xmm1
+; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %a0lo = shufflevector <4 x i64> %a0, <4 x i64> %a1, <2 x i32> <i32 0, i32 1>
+  %a1hi = shufflevector <4 x i64> %a0, <4 x i64> %a1, <2 x i32> <i32 6, i32 7>
+  %shuffle64 = shufflevector <2 x i64> %a0lo, <2 x i64> %a1hi, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  ret <4 x i64> %shuffle64
+}
+
+define <4 x i64> @concat_v4i64_0145_bc(<4 x i64> %a0, <4 x i64> %a1) {
+; ALL-LABEL: concat_v4i64_0145_bc:
+; ALL:       # BB#0:
+; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %a0lo = shufflevector <4 x i64> %a0, <4 x i64> %a1, <2 x i32> <i32 0, i32 1>
+  %a1lo = shufflevector <4 x i64> %a0, <4 x i64> %a1, <2 x i32> <i32 4, i32 5>
+  %bc0lo = bitcast <2 x i64> %a0lo to <4 x i32>
+  %bc1lo = bitcast <2 x i64> %a1lo to <4 x i32>
+  %shuffle32 = shufflevector <4 x i32> %bc0lo, <4 x i32> %bc1lo, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %shuffle64 = bitcast <8 x i32> %shuffle32 to <4 x i64>
+  ret <4 x i64> %shuffle64
+}
