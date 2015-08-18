@@ -864,28 +864,27 @@ public:
 /// the common fields to registers, eliminating increments of the NumArgs field,
 /// for example.
 class DiagnosticBuilder {
-  mutable DiagnosticsEngine *DiagObj;
-  mutable unsigned NumArgs;
+  mutable DiagnosticsEngine *DiagObj = nullptr;
+  mutable unsigned NumArgs = 0;
 
   /// \brief Status variable indicating if this diagnostic is still active.
   ///
   // NOTE: This field is redundant with DiagObj (IsActive iff (DiagObj == 0)),
   // but LLVM is not currently smart enough to eliminate the null check that
   // Emit() would end up with if we used that as our status variable.
-  mutable bool IsActive;
+  mutable bool IsActive = false;
 
   /// \brief Flag indicating that this diagnostic is being emitted via a
   /// call to ForceEmit.
-  mutable bool IsForceEmit;
+  mutable bool IsForceEmit = false;
 
   void operator=(const DiagnosticBuilder &) = delete;
   friend class DiagnosticsEngine;
 
-  DiagnosticBuilder()
-      : DiagObj(nullptr), NumArgs(0), IsActive(false), IsForceEmit(false) {}
+  DiagnosticBuilder() = default;
 
   explicit DiagnosticBuilder(DiagnosticsEngine *diagObj)
-      : DiagObj(diagObj), NumArgs(0), IsActive(true), IsForceEmit(false) {
+      : DiagObj(diagObj), IsActive(true) {
     assert(diagObj && "DiagnosticBuilder requires a valid DiagnosticsEngine!");
     diagObj->DiagRanges.clear();
     diagObj->DiagFixItHints.clear();
