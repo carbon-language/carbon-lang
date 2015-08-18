@@ -28,33 +28,32 @@ public:
 
     ConnectionSharedMemory ();
 
-    virtual
-    ~ConnectionSharedMemory ();
+    ~ConnectionSharedMemory () override;
 
-    virtual bool
-    IsConnected () const;
+    bool
+    IsConnected () const override;
 
     virtual lldb::ConnectionStatus
     BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
 
-    virtual lldb::ConnectionStatus
-    Connect (const char *s, Error *error_ptr);
+    lldb::ConnectionStatus
+    Connect (const char *s, Error *error_ptr) override;
 
-    virtual lldb::ConnectionStatus
-    Disconnect (Error *error_ptr);
+    lldb::ConnectionStatus
+    Disconnect (Error *error_ptr) override;
 
-    virtual size_t
+    size_t
     Read (void *dst, 
           size_t dst_len, 
           uint32_t timeout_usec,
           lldb::ConnectionStatus &status, 
-          Error *error_ptr);
+          Error *error_ptr) override;
 
-    virtual size_t
-    Write (const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr);
+    size_t
+    Write (const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr) override;
 
-    virtual std::string
-    GetURI();
+    std::string
+    GetURI() override;
 
     lldb::ConnectionStatus
     Open (bool create, const char *name, size_t size, Error *error_ptr);
@@ -64,10 +63,12 @@ protected:
     std::string m_name;
     int m_fd;    // One buffer that contains all we need
     DataBufferMemoryMap m_mmap;
+
 private:
+
     DISALLOW_COPY_AND_ASSIGN (ConnectionSharedMemory);
 };
 
 } // namespace lldb_private
 
-#endif  // liblldb_ConnectionSharedMemory_h_
+#endif // liblldb_ConnectionSharedMemory_h_

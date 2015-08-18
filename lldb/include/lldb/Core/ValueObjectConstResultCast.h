@@ -28,16 +28,15 @@ public:
         const CompilerType &cast_type,
         lldb::addr_t live_address = LLDB_INVALID_ADDRESS);
 
-    virtual
-    ~ValueObjectConstResultCast ();
+    ~ValueObjectConstResultCast() override;
 
-    virtual lldb::ValueObjectSP
-    Dereference (Error &error);
+    lldb::ValueObjectSP
+    Dereference(Error &error) override;
 
-    virtual ValueObject *
-    CreateChildAtIndex (size_t idx,
-                        bool synthetic_array_member,
-                        int32_t synthetic_index);
+    ValueObject *
+    CreateChildAtIndex(size_t idx,
+		       bool synthetic_array_member,
+		       int32_t synthetic_index) override;
 
     virtual CompilerType
     GetClangType ()

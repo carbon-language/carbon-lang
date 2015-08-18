@@ -9,7 +9,6 @@
 
 #ifndef liblldb_DataBufferHeap_h_
 #define liblldb_DataBufferHeap_h_
-#if defined(__cplusplus)
 
 #include <vector>
 
@@ -69,26 +68,25 @@ public:
     /// Virtual destructor since this class inherits from a pure virtual
     /// base class #DataBuffer.
     //------------------------------------------------------------------
-    virtual
-    ~DataBufferHeap();
+    ~DataBufferHeap() override;
 
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetBytes()
     //------------------------------------------------------------------
-    virtual uint8_t *
-    GetBytes ();
+    uint8_t *
+    GetBytes () override;
 
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetBytes() const
     //------------------------------------------------------------------
-    virtual const uint8_t *
-    GetBytes () const;
+    const uint8_t *
+    GetBytes () const override;
 
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetByteSize() const
     //------------------------------------------------------------------
-    virtual lldb::offset_t
-    GetByteSize () const;
+    lldb::offset_t
+    GetByteSize () const override;
 
     //------------------------------------------------------------------
     /// Set the number of bytes in the data buffer.
@@ -138,5 +136,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_DataBufferHeap_h_
+#endif // liblldb_DataBufferHeap_h_

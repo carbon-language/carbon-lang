@@ -9,8 +9,6 @@
 
 #ifndef liblldb_DataBufferMemoryMap_h_
 #define liblldb_DataBufferMemoryMap_h_
-#if defined(__cplusplus)
-
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/DataBuffer.h"
@@ -45,8 +43,7 @@ public:
     /// Virtual destructor since this class inherits from a pure virtual
     /// base class #DataBuffer.
     //------------------------------------------------------------------
-    virtual
-    ~DataBufferMemoryMap ();
+    ~DataBufferMemoryMap () override;
 
     //------------------------------------------------------------------
     /// Reverts this object to an empty state by unmapping any memory
@@ -58,20 +55,20 @@ public:
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetBytes()
     //------------------------------------------------------------------
-    virtual uint8_t *
-    GetBytes ();
+    uint8_t *
+    GetBytes () override;
 
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetBytes() const
     //------------------------------------------------------------------
-    virtual const uint8_t *
-    GetBytes () const;
+    const uint8_t *
+    GetBytes () const override;
 
     //------------------------------------------------------------------
     /// @copydoc DataBuffer::GetByteSize() const
     //------------------------------------------------------------------
-    virtual lldb::offset_t
-    GetByteSize () const;
+    lldb::offset_t
+    GetByteSize () const override;
 
     //------------------------------------------------------------------
     /// Error get accessor.
@@ -161,5 +158,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // #if defined(__cplusplus)
-#endif  // liblldb_DataBufferMemoryMap_h_
+#endif // liblldb_DataBufferMemoryMap_h_

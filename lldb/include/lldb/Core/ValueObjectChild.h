@@ -129,4 +129,4 @@ protected:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectChild_h_
+#endif // liblldb_ValueObjectChild_h_

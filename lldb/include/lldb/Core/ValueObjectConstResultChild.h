@@ -37,13 +37,13 @@ public:
                                  bool is_deref_of_parent,
                                  lldb::addr_t live_address = LLDB_INVALID_ADDRESS);
     
-    virtual ~ValueObjectConstResultChild();
+    ~ValueObjectConstResultChild() override;
     
-    virtual lldb::ValueObjectSP
-    Dereference (Error &error);
+    lldb::ValueObjectSP
+    Dereference(Error &error) override;
     
-    virtual ValueObject *
-    CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    ValueObject *
+    CreateChildAtIndex(size_t idx, bool synthetic_array_member, int32_t synthetic_index) override;
 
     virtual CompilerType
     GetClangType ()
@@ -78,4 +78,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectConstResultChild_h_
+#endif // liblldb_ValueObjectConstResultChild_h_

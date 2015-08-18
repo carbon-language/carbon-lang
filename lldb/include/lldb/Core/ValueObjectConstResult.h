@@ -187,4 +187,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ValueObjectConstResult_h_
+#endif // liblldb_ValueObjectConstResult_h_
