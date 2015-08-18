@@ -24,6 +24,10 @@ class DEXT_MMR6_ENC : POOL32S_EXTBITS_FM_MMR6<0b101100>;
 class DEXTM_MMR6_ENC : POOL32S_EXTBITS_FM_MMR6<0b100100>;
 class DEXTU_MMR6_ENC : POOL32S_EXTBITS_FM_MMR6<0b010100>;
 class DALIGN_MMR6_ENC : POOL32S_DALIGN_FM_MMR6;
+class DDIV_MM64R6_ENC : POOL32A_DIVMOD_FM_MMR6<"ddiv", 0b100011000>;
+class DMOD_MM64R6_ENC : POOL32A_DIVMOD_FM_MMR6<"dmod", 0b101011000>;
+class DDIVU_MM64R6_ENC : POOL32A_DIVMOD_FM_MMR6<"ddivu", 0b110011000>;
+class DMODU_MM64R6_ENC : POOL32A_DIVMOD_FM_MMR6<"dmodu", 0b111011000>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -77,6 +81,11 @@ class DALIGN_DESC_BASE<string instr_asm, RegisterOperand GPROpnd,
 
 class DALIGN_MMR6_DESC : DALIGN_DESC_BASE<"dalign", GPR64Opnd, uimm3>;
 
+class DDIV_MM64R6_DESC : ArithLogicR<"ddiv", GPR32Opnd>;
+class DMOD_MM64R6_DESC : ArithLogicR<"dmod", GPR32Opnd>;
+class DDIVU_MM64R6_DESC : ArithLogicR<"ddivu", GPR32Opnd>;
+class DMODU_MM64R6_DESC : ArithLogicR<"dmodu", GPR32Opnd>;
+
 //===----------------------------------------------------------------------===//
 //
 // Instruction Definitions
@@ -95,4 +104,12 @@ let DecoderNamespace = "MicroMipsR6" in {
                      ISA_MICROMIPS64R6;
   def DALIGN_MM64R6 : StdMMR6Rel, DALIGN_MMR6_DESC, DALIGN_MMR6_ENC,
                       ISA_MICROMIPS64R6;
+  def DDIV_MM64R6 : R6MMR6Rel, DDIV_MM64R6_DESC, DDIV_MM64R6_ENC,
+                    ISA_MICROMIPS64R6;
+  def DMOD_MM64R6 : R6MMR6Rel, DMOD_MM64R6_DESC, DMOD_MM64R6_ENC,
+                    ISA_MICROMIPS64R6;
+  def DDIVU_MM64R6 : R6MMR6Rel, DDIVU_MM64R6_DESC, DDIVU_MM64R6_ENC,
+                     ISA_MICROMIPS64R6;
+  def DMODU_MM64R6 : R6MMR6Rel, DMODU_MM64R6_DESC, DMODU_MM64R6_ENC,
+                     ISA_MICROMIPS64R6;
 }
