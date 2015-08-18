@@ -23,6 +23,7 @@ class CModulesTestCase(TestBase):
     @dwarf_test
     @skipIfFreeBSD
     @expectedFailureLinux('http://llvm.org/pr23456') # 'fopen' has unknown return type
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     def test_expr_with_dwarf(self):
         self.buildDwarf()
         self.expr()

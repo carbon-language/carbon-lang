@@ -35,6 +35,7 @@ class Rdar12991846TestCase(TestBase):
         self.rdar12991846(expr=1)
 
     @unittest2.expectedFailure("rdar://18684408")
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @dwarf_test
     def test_expr1_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""
@@ -50,6 +51,7 @@ class Rdar12991846TestCase(TestBase):
         self.rdar12991846(expr=2)
 
     @unittest2.expectedFailure("rdar://18684408")
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @dwarf_test
     def test_expr2_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""
@@ -65,6 +67,7 @@ class Rdar12991846TestCase(TestBase):
         self.rdar12991846(expr=3)
 
     @unittest2.expectedFailure("rdar://18684408")
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @dwarf_test
     def test_expr3_with_dwarf(self):
         """Test that the expression parser returns proper Unicode strings."""

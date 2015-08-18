@@ -30,6 +30,7 @@ class ExprCommandCallStopContinueTestCase(TestBase):
 
     @dwarf_test
     @expectedFlakeyDarwin("llvm.org/pr20274")
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     def test_with_dwarf(self):
         """Test gathering result from interrupted function call."""
         self.buildDwarf()

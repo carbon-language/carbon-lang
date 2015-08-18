@@ -21,6 +21,7 @@ class Char1632TestCase(TestBase):
         self.char1632()
 
     @expectedFailureIcc # ICC (13.1) does not emit the DW_TAG_base_type for char16_t and char32_t.
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     @dwarf_test
     def test_with_dwarf(self):
         """Test that the C++11 support for char16_t and char32_t works correctly."""

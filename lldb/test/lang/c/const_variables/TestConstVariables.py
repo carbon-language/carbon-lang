@@ -18,6 +18,8 @@ class ConstVariableTestCase(TestBase):
         self.const_variable()
 
     @expectedFailureClang('13314878') # This test works with gcc, but fails with newer version of clang on Linux due to a clang issue. Fails for icc as well. Bug number TDB.
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
+    @expectedFailureWindows("llvm.org/pr24490: We shouldn't be using platform-specific names like `getpid` in tests")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test interpreted and JITted expressions on constant values."""

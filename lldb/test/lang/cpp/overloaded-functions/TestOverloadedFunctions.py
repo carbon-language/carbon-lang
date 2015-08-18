@@ -18,6 +18,7 @@ class CPPStaticMethodsTestCase(TestBase):
         self.static_method_commands()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     def test_with_dwarf_and_run_command(self):
         """Test that functions with the same name are resolved correctly"""
         self.buildDwarf()
