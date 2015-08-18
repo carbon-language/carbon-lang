@@ -111,7 +111,8 @@ endif()
 add_custom_target(asan)
 if(APPLE)
   foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
-    add_compiler_rt_darwin_dynamic_runtime(clang_rt.asan_${os}_dynamic ${os}
+    add_compiler_rt_darwin_runtime(clang_rt.asan_${os}_dynamic ${os}
+      SHARED
       ARCHS ${ASAN_SUPPORTED_ARCH}
       SOURCES $<TARGET_OBJECTS:RTAsan.${os}>
               $<TARGET_OBJECTS:RTInterception.${os}>

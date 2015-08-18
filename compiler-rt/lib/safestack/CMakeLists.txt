@@ -8,13 +8,16 @@ set(SAFESTACK_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
 if(APPLE)
   # Build universal binary on APPLE.
-  add_compiler_rt_osx_static_runtime(clang_rt.safestack_osx
-    ARCH ${SAFESTACK_SUPPORTED_ARCH}
-    SOURCES ${SAFESTACK_SOURCES}
-            $<TARGET_OBJECTS:RTInterception.osx>
-            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-    CFLAGS ${SAFESTACK_CFLAGS})
-  add_dependencies(safestack clang_rt.safestack_osx)
+  foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
+    add_compiler_rt_darwin_runtime(clang_rt.safestack_${os} ${os}
+      STATIC
+      ARCH ${SAFESTACK_SUPPORTED_ARCH}
+      SOURCES ${SAFESTACK_SOURCES}
+              $<TARGET_OBJECTS:RTInterception.${os}>
+              $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
+      CFLAGS ${SAFESTACK_CFLAGS})
+    add_dependencies(safestack clang_rt.safestack_${os})
+  endforeach()
 else()
   # Otherwise, build separate libraries for each target.
   foreach(arch ${SAFESTACK_SUPPORTED_ARCH})

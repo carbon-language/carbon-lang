@@ -50,7 +50,8 @@ if(APPLE)
       SOURCES ${UBSAN_STANDALONE_SOURCES}
       CFLAGS ${UBSAN_STANDALONE_CFLAGS})
     foreach(os ${SANITIZER_COMMON_SUPPORTED_OS})
-      add_compiler_rt_darwin_dynamic_runtime(clang_rt.ubsan_${os}_dynamic ${os}
+      add_compiler_rt_darwin_runtime(clang_rt.ubsan_${os}_dynamic ${os}
+        SHARED
         ARCHS ${UBSAN_SUPPORTED_ARCH}
         SOURCES $<TARGET_OBJECTS:RTUbsan.${os}>
                 $<TARGET_OBJECTS:RTUbsan_standalone.${os}>
