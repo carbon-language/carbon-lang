@@ -4719,9 +4719,7 @@ QualType TreeTransform<Derived>::TransformFunctionProtoType(
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() || ResultType != T->getReturnType() ||
-      T->getNumParams() != ParamTypes.size() ||
-      !std::equal(T->param_type_begin(), T->param_type_end(),
-                  ParamTypes.begin()) || EPIChanged) {
+      T->getParamTypes() != llvm::makeArrayRef(ParamTypes) || EPIChanged) {
     Result = getDerived().RebuildFunctionProtoType(ResultType, ParamTypes, EPI);
     if (Result.isNull())
       return QualType();
