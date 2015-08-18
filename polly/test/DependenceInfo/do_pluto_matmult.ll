@@ -65,7 +65,7 @@ do.end45:                                         ; preds = %do.cond42
 }
 
 ; VALUE: RAW dependences:
-; VALUE: { Stmt_do_body2[i0, i1, i2] -> Stmt_do_body2[i0, i1, 1 + i2] : i0 >= 0 and i0 <= 35 and i1 >= 0 and i1 <= 35 and i2 >= 0 and i2 <= 34 }
+; VALUE: { Stmt_do_body2[i0, i1, i2] -> Stmt_do_body2[i0, i1, 1 + i2] : i0 <= 35 and i0 >= 0 and i1 <= 35 and i1 >= 0 and i2 <= 34 and i2 >= 0 }
 ; VALUE: WAR dependences:
 ; VALUE: {  }
 ; VALUE: WAW dependences:

@@ -57,9 +57,9 @@ exit.3:
 ; VALUE:     {  }
 ; VALUE:   WAW dependences:
 ; VALUE:     {
-; VALUE:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 >= 0 and i0 <= 9;
-; VALUE:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9;
-; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 10 and i0 <= 99
+; VALUE:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 <= 9 and i0 >= 0;
+; VALUE:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 <= 9 and i0 >= 0;
+; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 10
 ; VALUE:     }
 
 ; TIMEOUT: region: 'S1 => exit.3' in function 'sequential_writes':

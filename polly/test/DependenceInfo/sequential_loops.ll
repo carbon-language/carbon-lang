@@ -57,9 +57,9 @@ exit.3:
 ; VALUE:     {  }
 ; VALUE:   WAW dependences:
 ; VALUE:     {
-; VALUE:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 >= 0 and i0 <= 9;
-; VALUE:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9;
-; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 10 and i0 <= 99
+; VALUE:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 <= 9 and i0 >= 0;
+; VALUE:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 <= 9 and i0 >= 0;
+; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 10
 ; VALUE:     }
 
 ; MEMORY-LABEL: region: 'S1 => exit.3' in function 'sequential_writes':
@@ -128,8 +128,8 @@ exit.3:
 ; VALUE-LABEL: region: 'S1 => exit.3' in function 'read_after_writes':
 ; VALUE:   RAW dependences:
 ; VALUE:     {
-; VALUE:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9;
-; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 10 and i0 <= 99
+; VALUE:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 <= 9 and i0 >= 0;
+; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 10
 ; VALUE:     }
 ; VALUE:   WAR dependences:
 ; VALUE:     {  }
@@ -272,7 +272,7 @@ exit.2:
 ; VALUE:   RAW dependences:
 ; VALUE:     [p] -> {
 ; VALUE:       Stmt_S1[i0] -> Stmt_S2[-p + i0] :
-; VALUE:           p <= 190 and i0 >= p and i0 <= 9 + p and i0 >= 0 and i0 <= 99
+; VALUE:           i0 >= 0 and i0 <= 9 + p and i0 >= p and i0 <= 99 and p <= 190
 ; VALUE:     }
 ; VALUE:   WAR dependences:
 ; VALUE:     [p] -> {
