@@ -182,7 +182,7 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func) {
   return true;
 }
 
-static const void **InterestingDLLsAvailable() {
+static void **InterestingDLLsAvailable() {
   const char *InterestingDLLs[] = {
     "kernel32.dll",
     "msvcr110.dll", // VS2012
@@ -198,14 +198,65 @@ static const void **InterestingDLLsAvailable() {
         result[j++] = (void *)h;
     }
   }
-  return (const void **)&result[0];
+  return &result[0];
+}
+
+namespace {
+// Utility for reading loaded PE images.
+template <typename T> class RVAPtr {
+ public:
+  RVAPtr(void *module, uptr rva)
+      : ptr_(reinterpret_cast<T *>(reinterpret_cast<char *>(module) + rva)) {}
+  operator T *() { return ptr_; }
+  T *operator->() { return ptr_; }
+  T *operator++() { return ++ptr_; }
+
+ private:
+  T *ptr_;
+};
+} // namespace
+
+// Internal implementation of GetProcAddress. At least since Windows 8,
+// GetProcAddress appears to initialize DLLs before returning function pointers
+// into them. This is problematic for the sanitizers, because they typically
+// want to intercept malloc *before* MSVCRT initializes. Our internal
+// implementation walks the export list manually without doing initialization.
+uptr InternalGetProcAddress(void *module, const char *func_name) {
+  // Check that the module header is full and present.
+  RVAPtr<IMAGE_DOS_HEADER> dos_stub(module, 0);
+  RVAPtr<IMAGE_NT_HEADERS> headers(module, dos_stub->e_lfanew);
+  if (!module || dos_stub->e_magic != IMAGE_DOS_SIGNATURE || // "MZ"
+      headers->Signature != IMAGE_NT_SIGNATURE ||           // "PE\0\0"
+      headers->FileHeader.SizeOfOptionalHeader <
+          sizeof(IMAGE_OPTIONAL_HEADER)) {
+    return 0;
+  }
+
+  IMAGE_DATA_DIRECTORY *export_directory =
+      &headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+  RVAPtr<IMAGE_EXPORT_DIRECTORY> exports(module,
+                                         export_directory->VirtualAddress);
+  RVAPtr<DWORD> functions(module, exports->AddressOfFunctions);
+  RVAPtr<DWORD> names(module, exports->AddressOfNames);
+  RVAPtr<WORD> ordinals(module, exports->AddressOfNameOrdinals);
+
+  for (DWORD i = 0; i < exports->NumberOfNames; i++) {
+    RVAPtr<char> name(module, names[i]);
+    if (!strcmp(func_name, name)) {
+      DWORD index = ordinals[i];
+      RVAPtr<char> func(module, functions[index]);
+      return (uptr)(char *)func;
+    }
+  }
+
+  return 0;
 }
 
 static bool GetFunctionAddressInDLLs(const char *func_name, uptr *func_addr) {
   *func_addr = 0;
-  const void **DLLs = InterestingDLLsAvailable();
+  void **DLLs = InterestingDLLsAvailable();
   for (size_t i = 0; *func_addr == 0 && DLLs[i]; ++i)
-    *func_addr = (uptr)GetProcAddress((HMODULE)DLLs[i], func_name);
+    *func_addr = InternalGetProcAddress(DLLs[i], func_name);
   return (*func_addr != 0);
 }
 
