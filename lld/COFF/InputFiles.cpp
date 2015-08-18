@@ -63,13 +63,8 @@ void ArchiveFile::parse() {
   LazySymbols.reserve(NumSyms);
 
   // Read the symbol table to construct Lazy objects.
-  uint32_t I = 0;
-  for (const Archive::Symbol &Sym : File->symbols()) {
-    auto *B = new (&Buf[I++]) Lazy(this, Sym);
-    // Skip special symbol exists in import library files.
-    if (B->getName() != "__NULL_IMPORT_DESCRIPTOR")
-      LazySymbols.push_back(B);
-  }
+  for (const Archive::Symbol &Sym : File->symbols())
+    LazySymbols.push_back(new (Buf++) Lazy(this, Sym));
 
   // Seen is a map from member files to boolean values. Initially
   // all members are mapped to false, which indicates all these files
