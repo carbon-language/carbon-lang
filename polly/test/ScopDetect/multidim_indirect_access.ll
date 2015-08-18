@@ -1,17 +1,17 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s --check-prefix=INDEPENDENT
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze  < %s | FileCheck %s --check-prefix=NON_INDEPENDENT
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
 ;
-; With the IndependentBlocks and PollyPrepare passes this will __correctly__
-; not be recognized as a SCoP and the debug states:
+; The outer loop of this function will correctly not be recognized with the
+; message:
 ;
-;   SCEV of PHI node refers to SSA names in region
+;   Non affine access function: (sext i32 %tmp to i64)
 ;
-; Without IndependentBlocks and PollyPrepare the access A[x] is mistakenly
-; treated as a multidimensional access with dimension size x. This test will
-; check that we correctly invalidate the region and do not detect a outer SCoP.
+; The access A[x] might mistakenly be treated as a multidimensional access with
+; dimension size x. This test will check that we correctly invalidate the
+; region and do not detect an outer SCoP.
 ;
 ; FIXME:
-; We should detect the inner region but the PHI node in the exit blocks that.
+; We should detect the inner region but the PHI node in the exit blocks
+; prohibits that.
 ;
 ;    void f(int *A, long N) {
 ;      int j = 0;
@@ -25,8 +25,7 @@
 ;      }
 ;    }
 ;
-; INDEPENDENT-NOT: Valid
-; NON_INDEPENDENT-NOT: Valid
+; CHECK-NOT: Valid Region for Scop: bb0 => bb13
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
