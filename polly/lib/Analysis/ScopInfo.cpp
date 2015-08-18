@@ -609,7 +609,7 @@ bool MemoryAccess::isStrideX(__isl_take const isl_map *Schedule,
   Stride = getStride(Schedule);
   StrideX = isl_set_universe(isl_set_get_space(Stride));
   StrideX = isl_set_fix_si(StrideX, isl_dim_set, 0, StrideWidth);
-  IsStrideX = isl_set_is_equal(Stride, StrideX);
+  IsStrideX = isl_set_is_subset(Stride, StrideX);
 
   isl_set_free(StrideX);
   isl_set_free(Stride);
