@@ -62,11 +62,11 @@ public:
     }
     
 protected:
-    virtual bool
-    UpdateValue ();
+    bool
+    UpdateValue () override;
     
-    virtual CompilerType
-    GetClangTypeImpl ();
+    CompilerType
+    GetClangTypeImpl () override;
     
     CompilerType m_cast_type;
     

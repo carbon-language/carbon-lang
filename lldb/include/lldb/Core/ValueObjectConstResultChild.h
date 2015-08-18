@@ -51,19 +51,19 @@ public:
         return ValueObjectChild::GetClangType();
     }
     
-    virtual lldb::ValueObjectSP
-    GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create);
+    lldb::ValueObjectSP
+    GetSyntheticChildAtOffset(uint32_t offset, const CompilerType& type, bool can_create) override;
     
-    virtual lldb::ValueObjectSP
-    AddressOf (Error &error);
+    lldb::ValueObjectSP
+    AddressOf (Error &error) override;
     
-    virtual size_t
+    size_t
     GetPointeeData (DataExtractor& data,
                     uint32_t item_idx = 0,
-					uint32_t item_count = 1);
+					uint32_t item_count = 1) override;
 
-    virtual lldb::ValueObjectSP
-    Cast (const CompilerType &clang_ast_type);
+    lldb::ValueObjectSP
+    Cast (const CompilerType &clang_ast_type) override;
     
 protected:
     ValueObjectConstResultImpl m_impl;
