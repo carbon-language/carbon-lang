@@ -1304,6 +1304,8 @@ FormatEntity::Format (const Entry &entry,
                         // Watch for the special "tid" format...
                         if (entry.printf_format == "tid")
                         {
+                            // TODO(zturner): Rather than hardcoding this to be platform specific, it should be controlled by a
+                            // setting and the default value of the setting can be different depending on the platform.
                             Target &target = thread->GetProcess()->GetTarget();
                             ArchSpec arch (target.GetArchitecture ());
                             llvm::Triple::OSType ostype = arch.IsValid() ? arch.GetTriple().getOS() : llvm::Triple::UnknownOS;
