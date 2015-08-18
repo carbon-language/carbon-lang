@@ -72,14 +72,13 @@ public:
     Preserved.push_back(&ID);
     return *this;
   }
-  ///@}
-
   /// Add the specified Pass class to the set of analyses preserved by this pass.
   template<class PassClass>
   AnalysisUsage &addPreserved() {
     Preserved.push_back(&PassClass::ID);
     return *this;
   }
+  ///@}
 
   /// Add the Pass with the specified argument string to the set of analyses
   /// preserved by this pass. If no such Pass exists, do nothing. This can be
