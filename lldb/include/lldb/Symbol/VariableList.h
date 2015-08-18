@@ -48,10 +48,10 @@ public:
     RemoveVariableAtIndex (size_t idx);
     
     lldb::VariableSP
-    FindVariable (const ConstString& name);
+    FindVariable (const ConstString& name, bool include_static_members = true);
     
     lldb::VariableSP
-    FindVariable (const ConstString& name, lldb::ValueType value_type);
+    FindVariable (const ConstString& name, lldb::ValueType value_type, bool include_static_members = true);
 
     uint32_t
     FindVariableIndex (const lldb::VariableSP &var_sp);

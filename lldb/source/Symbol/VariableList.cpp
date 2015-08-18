@@ -100,7 +100,7 @@ VariableList::FindVariableIndex (const VariableSP &var_sp)
 }
 
 VariableSP
-VariableList::FindVariable(const ConstString& name)
+VariableList::FindVariable(const ConstString& name, bool include_static_members)
 {
     VariableSP var_sp;
     iterator pos, end = m_variables.end();
@@ -108,15 +108,18 @@ VariableList::FindVariable(const ConstString& name)
     {
         if ((*pos)->NameMatches(name))
         {
-            var_sp = (*pos);
-            break;
+            if (include_static_members || !(*pos)->IsStaticMember())
+            {
+                var_sp = (*pos);
+                break;
+            }
         }
     }
     return var_sp;
 }
 
 VariableSP
-VariableList::FindVariable (const ConstString& name, lldb::ValueType value_type)
+VariableList::FindVariable (const ConstString& name, lldb::ValueType value_type, bool include_static_members)
 {
     VariableSP var_sp;
     iterator pos, end = m_variables.end();
@@ -124,8 +127,11 @@ VariableList::FindVariable (const ConstString& name, lldb::ValueType value_type)
     {
         if ((*pos)->NameMatches(name) && (*pos)->GetScope() == value_type)
         {
-            var_sp = (*pos);
-            break;
+            if (include_static_members || !(*pos)->IsStaticMember())
+            {
+                var_sp = (*pos);
+                break;
+            }
         }
     }
     return var_sp;

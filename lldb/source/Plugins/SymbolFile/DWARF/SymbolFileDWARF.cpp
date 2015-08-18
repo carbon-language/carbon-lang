@@ -3968,7 +3968,6 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
     return 0;
 }
 
-
 VariableSP
 SymbolFileDWARF::ParseVariableDIE
 (
@@ -4123,6 +4122,9 @@ SymbolFileDWARF::ParseVariableDIE
                     }
                 }
             }
+
+            const DWARFDebugInfoEntry *parent_context_die = GetDeclContextDIEContainingDIE(dwarf_cu, die);
+            bool is_static_member = die->GetParent()->Tag() == DW_TAG_compile_unit && (parent_context_die->Tag() == DW_TAG_class_type || parent_context_die->Tag() == DW_TAG_structure_type);
 
             ValueType scope = eValueTypeInvalid;
 
@@ -4301,7 +4303,8 @@ SymbolFileDWARF::ParseVariableDIE
                                             &decl, 
                                             location, 
                                             is_external, 
-                                            is_artificial));
+                                            is_artificial,
+                                            is_static_member));
                 
                 var_sp->SetLocationIsConstantValueData (location_is_const_value_data);
             }

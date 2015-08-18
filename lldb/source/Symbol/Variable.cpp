@@ -44,7 +44,8 @@ Variable::Variable
     Declaration* decl_ptr,
     const DWARFExpression& location,
     bool external,
-    bool artificial
+    bool artificial,
+    bool static_member
 ) :
     UserID(uid),
     m_name(name),
@@ -55,7 +56,8 @@ Variable::Variable
     m_declaration(decl_ptr),
     m_location(location),
     m_external(external),
-    m_artificial(artificial)
+    m_artificial(artificial),
+    m_static_member(static_member)
 {
 }
 

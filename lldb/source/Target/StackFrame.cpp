@@ -659,7 +659,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
             else
                 name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
 
-            var_sp = variable_list->FindVariable(name_const_string);
+            var_sp = variable_list->FindVariable(name_const_string, false);
             
             bool synthetically_added_instance_object = false;
 
