@@ -15,7 +15,7 @@
 
 #include "__locale"
 #include "algorithm"
-#include "config_elast.h"
+#include "include/config_elast.h"
 #include "istream"
 #include "limits"
 #include "memory"

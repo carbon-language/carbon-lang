@@ -12,7 +12,7 @@
 #include "limits"
 #include "system_error"
 #include "cassert"
-#include "support/atomic_support.h"
+#include "include/atomic_support.h"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 #ifndef _LIBCPP_HAS_NO_THREADS

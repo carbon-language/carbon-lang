@@ -13,7 +13,7 @@
 #include "mutex"
 #include "thread"
 #endif
-#include "support/atomic_support.h"
+#include "include/atomic_support.h"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
