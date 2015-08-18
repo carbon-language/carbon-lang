@@ -114,6 +114,7 @@ public:
   bool parseFPImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
+  bool parseStackFrameIndex(int &FI);
   bool parseStackObjectOperand(MachineOperand &Dest);
   bool parseFixedStackFrameIndex(int &FI);
   bool parseFixedStackObjectOperand(MachineOperand &Dest);
@@ -929,7 +930,7 @@ bool MIParser::parseMBBOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseStackObjectOperand(MachineOperand &Dest) {
+bool MIParser::parseStackFrameIndex(int &FI) {
   assert(Token.is(MIToken::StackObject));
   unsigned ID;
   if (getUnsigned(ID))
@@ -946,7 +947,15 @@ bool MIParser::parseStackObjectOperand(MachineOperand &Dest) {
     return error(Twine("the name of the stack object '%stack.") + Twine(ID) +
                  "' isn't '" + Token.stringValue() + "'");
   lex();
-  Dest = MachineOperand::CreateFI(ObjectInfo->second);
+  FI = ObjectInfo->second;
+  return false;
+}
+
+bool MIParser::parseStackObjectOperand(MachineOperand &Dest) {
+  int FI;
+  if (parseStackFrameIndex(FI))
+    return true;
+  Dest = MachineOperand::CreateFI(FI);
   return false;
 }
 
