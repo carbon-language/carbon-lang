@@ -16,6 +16,16 @@
     ret i32 %a
   }
 
+  define i1 @implicit_subregister1() {
+  entry:
+    ret i1 false
+  }
+
+  define i16 @implicit_subregister2() {
+  entry:
+    ret i16 0
+  }
+
 ...
 ---
 name:            foo
@@ -35,4 +45,24 @@ body: |
   bb.2.exit:
     %eax = COPY %edi
     RETQ %eax
+...
+---
+name:            implicit_subregister1
+body: |
+  bb.0.entry:
+  ; Verify that the implicit register verifier won't report an error on implicit
+  ; subregisters.
+  ; CHECK-LABEL: name: implicit_subregister1
+  ; CHECK: dead %eax = XOR32rr undef %eax, undef %eax, implicit-def dead %eflags, implicit-def %al
+    dead %eax = XOR32rr undef %eax, undef %eax, implicit-def dead %eflags, implicit-def %al
+    RETQ killed %al
+...
+---
+name:            implicit_subregister2
+body: |
+  bb.0.entry:
+  ; CHECK-LABEL: name: implicit_subregister2
+  ; CHECK: dead %r15 = XOR64rr undef %r15, undef %r15, implicit-def dead %eflags, implicit-def %r15w
+    dead %r15 = XOR64rr undef %r15, undef %r15, implicit-def dead %eflags, implicit-def %r15w
+    RETQ killed %r15w
 ...

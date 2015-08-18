@@ -695,6 +695,19 @@ bool MIParser::verifyImplicitOperands(
       if (ImplicitOperand.isIdenticalTo(Operand))
         continue;
       if (Operand.isReg() && Operand.isImplicit()) {
+        // Check if this implicit register is a subregister of an explicit
+        // register operand.
+        bool IsImplicitSubRegister = false;
+        for (size_t K = 0, E = Operands.size(); K < E; ++K) {
+          const auto &Op = Operands[K].Operand;
+          if (Op.isReg() && !Op.isImplicit() &&
+              TRI->isSubRegister(Op.getReg(), Operand.getReg())) {
+            IsImplicitSubRegister = true;
+            break;
+          }
+        }
+        if (IsImplicitSubRegister)
+          continue;
         return error(Operands[J].Begin,
                      Twine("expected an implicit register operand '") +
                          printImplicitRegisterFlag(ImplicitOperand) + " %" +
