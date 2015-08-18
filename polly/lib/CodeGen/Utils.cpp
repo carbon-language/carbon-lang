@@ -103,6 +103,18 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
       splitEdge(EnteringBB, EntryBB, ".split_new_and_old", &DT, &LI, &RI);
   SplitBlock->setName("polly.split_new_and_old");
 
+  // If EntryBB is the exit block of the region that includes Prev, exclude
+  // SplitBlock from that region by making it itself the exit block. This is
+  // trivially possible because there is just one edge to EnteringBB.
+  // This is necessary because we will add an outgoing edge from SplitBlock,
+  // which would violate the single exit block requirement of PrevRegion.
+  Region *PrevRegion = RI.getRegionFor(EnteringBB);
+  while (PrevRegion->getExit() == EntryBB) {
+    PrevRegion->replaceExit(SplitBlock);
+    PrevRegion = PrevRegion->getParent();
+  }
+  RI.setRegionFor(SplitBlock, PrevRegion);
+
   // Create a join block
   BasicBlock *ExitingBB = R.getExitingBlock();
   BasicBlock *ExitBB = R.getExit();
