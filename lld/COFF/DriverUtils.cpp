@@ -53,7 +53,7 @@ public:
   void run() {
     ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
     error(ExeOrErr, Twine("unable to find ") + Prog + " in PATH: ");
-    const char *Exe = Saver.save(ExeOrErr.get());
+    const char *Exe = Saver.save(*ExeOrErr);
     Args.insert(Args.begin(), Exe);
     Args.push_back(nullptr);
     if (llvm::sys::ExecuteAndWait(Args[0], Args.data()) != 0) {

@@ -54,7 +54,7 @@ void ArchiveFile::parse() {
   // Parse a MemoryBufferRef as an archive file.
   auto ArchiveOrErr = Archive::create(MB);
   error(ArchiveOrErr, "Failed to parse static library");
-  File = std::move(ArchiveOrErr.get());
+  File = std::move(*ArchiveOrErr);
 
   // Allocate a buffer for Lazy objects.
   size_t NumSyms = File->getNumberOfSymbols();
@@ -79,7 +79,7 @@ MemoryBufferRef ArchiveFile::getMember(const Archive::Symbol *Sym) {
   auto ItOrErr = Sym->getMember();
   error(ItOrErr,
         Twine("Could not get the member for symbol ") + Sym->getName());
-  Archive::child_iterator It = ItOrErr.get();
+  Archive::child_iterator It = *ItOrErr;
 
   // Return an empty buffer if we have already returned the same buffer.
   if (Seen[It->getChildOffset()].test_and_set())
@@ -94,7 +94,7 @@ void ObjectFile::parse() {
   // Parse a memory buffer as a COFF file.
   auto BinOrErr = createBinary(MB);
   error(BinOrErr, "Failed to parse object file");
-  std::unique_ptr<Binary> Bin = std::move(BinOrErr.get());
+  std::unique_ptr<Binary> Bin = std::move(*BinOrErr);
 
   if (auto *Obj = dyn_cast<COFFObjectFile>(Bin.get())) {
     Bin.release();
@@ -156,7 +156,7 @@ void ObjectFile::initializeSymbols() {
     auto SymOrErr = COFFObj->getSymbol(I);
     error(SymOrErr, Twine("broken object file: ") + getName());
 
-    COFFSymbolRef Sym = SymOrErr.get();
+    COFFSymbolRef Sym = *SymOrErr;
 
     const void *AuxP = nullptr;
     if (Sym.getNumberOfAuxSymbols())
