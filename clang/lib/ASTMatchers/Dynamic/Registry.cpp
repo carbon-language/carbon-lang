@@ -240,6 +240,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(initListExpr);
   REGISTER_MATCHER(innerType);
   REGISTER_MATCHER(integerLiteral);
+  REGISTER_MATCHER(isAnonymous);
   REGISTER_MATCHER(isArrow);
   REGISTER_MATCHER(isBaseInitializer);
   REGISTER_MATCHER(isCatchAll);
@@ -255,6 +256,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isExpr);
   REGISTER_MATCHER(isExternC);
   REGISTER_MATCHER(isFinal);
+  REGISTER_MATCHER(isInline);
   REGISTER_MATCHER(isImplicit);
   REGISTER_MATCHER(isExpansionInFileMatching);
   REGISTER_MATCHER(isExpansionInMainFile);

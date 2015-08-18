@@ -4352,6 +4352,11 @@ TEST(NullStatement, SimpleCases) {
   EXPECT_TRUE(notMatches("void f() {int i;}", nullStmt()));
 }
 
+TEST(NS, Anonymous) {
+  EXPECT_TRUE(notMatches("namespace N {}", namespaceDecl(isAnonymous())));
+  EXPECT_TRUE(matches("namespace {}", namespaceDecl(isAnonymous())));
+}
+
 TEST(NNS, MatchesTypes) {
   NestedNameSpecifierMatcher Matcher = nestedNameSpecifier(
     specifiesType(hasDeclaration(recordDecl(hasName("A")))));
@@ -4769,6 +4774,13 @@ TEST(EqualsBoundNodeMatcher, UnlessDescendantsOfAncestorsMatch) {
 TEST(TypeDefDeclMatcher, Match) {
   EXPECT_TRUE(matches("typedef int typedefDeclTest;",
                       typedefDecl(hasName("typedefDeclTest"))));
+}
+
+TEST(IsInlineMatcher, IsInline) {
+  EXPECT_TRUE(matches("void g(); inline void f();",
+                      functionDecl(isInline(), hasName("f"))));
+  EXPECT_TRUE(matches("namespace n { inline namespace m {} }",
+                      namespaceDecl(isInline(), hasName("m"))));
 }
 
 // FIXME: Figure out how to specify paths so the following tests pass on Windows.

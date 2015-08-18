@@ -4211,6 +4211,44 @@ AST_POLYMORPHIC_MATCHER(isExplicit,
   return Node.isExplicit();
 }
 
+/// \brief Matches function and namespace declarations that are marked with
+/// the inline keyword.
+///
+/// Given
+/// \code
+///   inline void f();
+///   void g();
+///   namespace n {
+///   inline namespace m {}
+///   }
+/// \endcode
+/// functionDecl(isInline()) will match ::f().
+/// namespaceDecl(isInline()) will match n::m.
+AST_POLYMORPHIC_MATCHER(isInline,
+                        AST_POLYMORPHIC_SUPPORTED_TYPES(NamespaceDecl,
+                                                        FunctionDecl)) {
+  // This is required because the spelling of the function used to determine
+  // whether inline is specified or not differs between the polymorphic types.
+  if (const auto *FD = dyn_cast<FunctionDecl>(&Node))
+    return FD->isInlineSpecified();
+  else if (const auto *NSD = dyn_cast<NamespaceDecl>(&Node))
+    return NSD->isInline();
+  llvm_unreachable("Not a valid polymorphic type");
+}
+
+/// \brief Matches anonymous namespace declarations.
+///
+/// Given
+/// \code
+///   namespace n {
+///   namespace {} // #1
+///   }
+/// \endcode
+/// namespaceDecl(isAnonymous()) will match #1 but not ::n.
+AST_MATCHER(NamespaceDecl, isAnonymous) {
+  return Node.isAnonymousNamespace();
+}
+
 /// \brief If the given case statement does not use the GNU case range
 /// extension, matches the constant given in the statement.
 ///
