@@ -18,8 +18,8 @@ int glob;
 
 // CHECK-NOT: [indexDeclaration]
 // CHECK:      [importedASTFile]: {{.*}}.h.pch
-// CHECK-NEXT: [enteredMainFile]: {{.*[/\\]}}index-pch-with-module.m
 // CHECK-NEXT: [startedTranslationUnit]
+// CHECK-NEXT: [enteredMainFile]: {{.*[/\\]}}index-pch-with-module.m
 // CHECK-NEXT: [indexDeclaration]: kind: variable | name: glob | {{.*}} | loc: 10:5
 // CHECK-NOT: [indexDeclaration]
 

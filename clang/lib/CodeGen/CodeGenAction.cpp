@@ -82,11 +82,8 @@ namespace clang {
     }
 
     void Initialize(ASTContext &Ctx) override {
-      if (Context) {
-        assert(Context == &Ctx);
-        return;
-      }
-        
+      assert(!Context && "initialized multiple times");
+
       Context = &Ctx;
 
       if (llvm::TimePassesIsEnabled)

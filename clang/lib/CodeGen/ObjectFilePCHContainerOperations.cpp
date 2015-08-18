@@ -71,10 +71,7 @@ public:
   virtual ~PCHContainerGenerator() {}
 
   void Initialize(ASTContext &Context) override {
-    if (Ctx) {
-      assert(Ctx == &Context);
-      return;
-    }
+    assert(!Ctx && "initialized multiple times");
 
     Ctx = &Context;
     VMContext.reset(new llvm::LLVMContext());

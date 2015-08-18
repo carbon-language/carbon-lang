@@ -96,7 +96,12 @@ void CompilerInstance::setSourceManager(SourceManager *Value) {
 
 void CompilerInstance::setPreprocessor(Preprocessor *Value) { PP = Value; }
 
-void CompilerInstance::setASTContext(ASTContext *Value) { Context = Value; }
+void CompilerInstance::setASTContext(ASTContext *Value) {
+  Context = Value;
+
+  if (Context && Consumer)
+    getASTConsumer().Initialize(getASTContext());
+}
 
 void CompilerInstance::setSema(Sema *S) {
   TheSema.reset(S);
@@ -104,6 +109,9 @@ void CompilerInstance::setSema(Sema *S) {
 
 void CompilerInstance::setASTConsumer(std::unique_ptr<ASTConsumer> Value) {
   Consumer = std::move(Value);
+
+  if (Context && Consumer)
+    getASTConsumer().Initialize(getASTContext());
 }
 
 void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {
@@ -385,10 +393,11 @@ std::string CompilerInstance::getSpecificModuleCachePath() {
 
 void CompilerInstance::createASTContext() {
   Preprocessor &PP = getPreprocessor();
-  Context = new ASTContext(getLangOpts(), PP.getSourceManager(),
-                           PP.getIdentifierTable(), PP.getSelectorTable(),
-                           PP.getBuiltinInfo());
+  auto *Context = new ASTContext(getLangOpts(), PP.getSourceManager(),
+                                 PP.getIdentifierTable(), PP.getSelectorTable(),
+                                 PP.getBuiltinInfo());
   Context->InitBuiltinTypes(getTarget());
+  setASTContext(Context);
 }
 
 // ExternalASTSource
@@ -1249,7 +1258,7 @@ void CompilerInstance::createModuleManager() {
       ReadTimer = llvm::make_unique<llvm::Timer>("Reading modules",
                                                  *FrontendTimerGroup);
     ModuleManager = new ASTReader(
-        getPreprocessor(), *Context, getPCHContainerReader(),
+        getPreprocessor(), getASTContext(), getPCHContainerReader(),
         Sysroot.empty() ? "" : Sysroot.c_str(), PPOpts.DisablePCHValidation,
         /*AllowASTWithCompilerErrors=*/false,
         /*AllowConfigurationMismatch=*/false,
@@ -1265,10 +1274,8 @@ void CompilerInstance::createModuleManager() {
     getASTContext().setExternalSource(ModuleManager);
     if (hasSema())
       ModuleManager->InitializeSema(getSema());
-    if (hasASTConsumer()) {
-      getASTConsumer().Initialize(getASTContext());
+    if (hasASTConsumer())
       ModuleManager->StartTranslationUnit(&getASTConsumer());
-    }
 
     if (TheDependencyFileGenerator)
       TheDependencyFileGenerator->AttachToASTReader(*ModuleManager);
