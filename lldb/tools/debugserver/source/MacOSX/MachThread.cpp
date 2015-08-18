@@ -572,14 +572,14 @@ MachThread::DumpRegisterState(nub_size_t regSet)
     }
     else
     {
-        if (m_arch_ap->RegisterSetStateIsValid(regSet))
+        if (m_arch_ap->RegisterSetStateIsValid((int)regSet))
         {
             const size_t numRegisters = GetNumRegistersInSet(regSet);
             uint32_t regIndex = 0;
             DNBRegisterValueClass reg;
             for (regIndex = 0; regIndex < numRegisters; ++regIndex)
             {
-                if (m_arch_ap->GetRegisterValue(regSet, regIndex, &reg))
+                if (m_arch_ap->GetRegisterValue((uint32_t)regSet, regIndex, &reg))
                 {
                     reg.Dump(NULL, NULL);
                 }
