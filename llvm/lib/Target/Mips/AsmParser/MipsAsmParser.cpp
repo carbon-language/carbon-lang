@@ -951,6 +951,10 @@ public:
   template <unsigned Bits> bool isMemWithSimmOffset() const {
     return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff());
   }
+  template <unsigned Bits> bool isMemWithSimmOffsetGPR() const {
+    return isMem() && isConstantMemOff() && isInt<Bits>(getConstantMemOff())
+      && getMemBase()->isGPRAsmReg();
+  }
   bool isMemWithGRPMM16Base() const {
     return isMem() && getMemBase()->isMM16AsmReg();
   }

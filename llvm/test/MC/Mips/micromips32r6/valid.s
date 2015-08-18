@@ -58,4 +58,6 @@
   subu $3, $4, $5          # CHECK: subu $3, $4, $5     # encoding: [0x00,0xa4,0x19,0xd0]
   xor $3, $4, $5           # CHECK: xor $3, $4, $5      # encoding: [0x00,0xa4,0x1b,0x10]
   xori $3, $4, 1234        # CHECK: xori $3, $4, 1234   # encoding: [0x70,0x64,0x04,0xd2]
+  sw $5, 4($6)             # CHECK: sw $5, 4($6)        # encoding: [0xf8,0xa6,0x00,0x04]
+  swe $5, 8($4)            # CHECK: swe $5, 8($4)       # encoding: [0x60,0xa4,0xae,0x08]
 
