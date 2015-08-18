@@ -27,6 +27,6 @@ class TestSyncMessageFilter : public SyncMessageFilter {
 };
 
 int main() {
-  TestSyncMessageFilter *f = new TestSyncMessageFilter;
+TestSyncMessageFilter*  f = new TestSyncMessageFilter;
   f->Send(new Message);
 }

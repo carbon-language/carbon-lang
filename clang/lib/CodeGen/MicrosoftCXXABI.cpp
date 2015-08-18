@@ -215,22 +215,10 @@ public:
   void emitVTableDefinitions(CodeGenVTables &CGVT,
                              const CXXRecordDecl *RD) override;
 
-  bool isVirtualOffsetNeededForVTableField(CodeGenFunction &CGF,
-                                           CodeGenFunction::VPtr Vptr) override;
-
-  /// Don't initialize vptrs if dynamic class
-  /// is marked with with the 'novtable' attribute.
-  bool doStructorsInitializeVPtrs(const CXXRecordDecl *VTableClass) override {
-    return !VTableClass->hasAttr<MSNoVTableAttr>();
-  }
-
-  llvm::Constant *
-  getVTableAddressPoint(BaseSubobject Base,
-                        const CXXRecordDecl *VTableClass) override;
-
   llvm::Value *getVTableAddressPointInStructor(
       CodeGenFunction &CGF, const CXXRecordDecl *VTableClass,
-      BaseSubobject Base, const CXXRecordDecl *NearestVBase) override;
+      BaseSubobject Base, const CXXRecordDecl *NearestVBase,
+      bool &NeedsVirtualOffset) override;
 
   llvm::Constant *
   getVTableAddressPointForConstExpr(BaseSubobject Base,
@@ -1580,15 +1568,14 @@ void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   }
 }
 
-bool MicrosoftCXXABI::isVirtualOffsetNeededForVTableField(
-    CodeGenFunction &CGF, CodeGenFunction::VPtr Vptr) {
-  return Vptr.NearestVBase != nullptr;
-}
-
 llvm::Value *MicrosoftCXXABI::getVTableAddressPointInStructor(
     CodeGenFunction &CGF, const CXXRecordDecl *VTableClass, BaseSubobject Base,
-    const CXXRecordDecl *NearestVBase) {
-  llvm::Constant *VTableAddressPoint = getVTableAddressPoint(Base, VTableClass);
+    const CXXRecordDecl *NearestVBase, bool &NeedsVirtualOffset) {
+  NeedsVirtualOffset = (NearestVBase != nullptr);
+
+  (void)getAddrOfVTable(VTableClass, Base.getBaseOffset());
+  VFTableIdTy ID(VTableClass, Base.getBaseOffset());
+  llvm::GlobalValue *VTableAddressPoint = VFTablesMap[ID];
   if (!VTableAddressPoint) {
     assert(Base.getBase()->getNumVBases() &&
            !getContext().getASTRecordLayout(Base.getBase()).hasOwnVFPtr());
@@ -1603,17 +1590,11 @@ static void mangleVFTableName(MicrosoftMangleContext &MangleContext,
   MangleContext.mangleCXXVFTable(RD, VFPtr->MangledPath, Out);
 }
 
-llvm::Constant *
-MicrosoftCXXABI::getVTableAddressPoint(BaseSubobject Base,
-                                       const CXXRecordDecl *VTableClass) {
-  (void)getAddrOfVTable(VTableClass, Base.getBaseOffset());
-  VFTableIdTy ID(VTableClass, Base.getBaseOffset());
-  return VFTablesMap[ID];
-}
-
 llvm::Constant *MicrosoftCXXABI::getVTableAddressPointForConstExpr(
     BaseSubobject Base, const CXXRecordDecl *VTableClass) {
-  llvm::Constant *VFTable = getVTableAddressPoint(Base, VTableClass);
+  (void)getAddrOfVTable(VTableClass, Base.getBaseOffset());
+  VFTableIdTy ID(VTableClass, Base.getBaseOffset());
+  llvm::GlobalValue *VFTable = VFTablesMap[ID];
   assert(VFTable && "Couldn't find a vftable for the given base?");
   return VFTable;
 }
@@ -1623,7 +1604,6 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   // getAddrOfVTable may return 0 if asked to get an address of a vtable which
   // shouldn't be used in the given record type. We want to cache this result in
   // VFTablesMap, thus a simple zero check is not sufficient.
-
   VFTableIdTy ID(RD, VPtrOffset);
   VTablesMapTy::iterator I;
   bool Inserted;
@@ -1677,11 +1657,10 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   if (llvm::GlobalValue *VFTable =
           CGM.getModule().getNamedGlobal(VFTableName)) {
     VFTablesMap[ID] = VFTable;
-    VTable = VTableAliasIsRequred
-                 ? cast<llvm::GlobalVariable>(
-                       cast<llvm::GlobalAlias>(VFTable)->getBaseObject())
-                 : cast<llvm::GlobalVariable>(VFTable);
-    return VTable;
+    return VTableAliasIsRequred
+               ? cast<llvm::GlobalVariable>(
+                     cast<llvm::GlobalAlias>(VFTable)->getBaseObject())
+               : cast<llvm::GlobalVariable>(VFTable);
   }
 
   uint64_t NumVTableSlots =
