@@ -31,16 +31,16 @@ void CXXBasePaths::ComputeDeclsFound() {
     Decls.insert(Path->Decls.front());
 
   NumDeclsFound = Decls.size();
-  DeclsFound = new NamedDecl * [NumDeclsFound];
-  std::copy(Decls.begin(), Decls.end(), DeclsFound);
+  DeclsFound = llvm::make_unique<NamedDecl *[]>(NumDeclsFound);
+  std::copy(Decls.begin(), Decls.end(), DeclsFound.get());
 }
 
 CXXBasePaths::decl_range CXXBasePaths::found_decls() {
   if (NumDeclsFound == 0)
     ComputeDeclsFound();
 
-  return decl_range(decl_iterator(DeclsFound),
-                    decl_iterator(DeclsFound + NumDeclsFound));
+  return decl_range(decl_iterator(DeclsFound.get()),
+                    decl_iterator(DeclsFound.get() + NumDeclsFound));
 }
 
 /// isAmbiguous - Determines whether the set of paths provided is

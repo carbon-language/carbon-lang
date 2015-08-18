@@ -155,7 +155,7 @@ class CXXBasePaths {
   /// \brief Array of the declarations that have been found. This
   /// array is constructed only if needed, e.g., to iterate over the
   /// results within LookupResult.
-  NamedDecl **DeclsFound;
+  std::unique_ptr<NamedDecl *[]> DeclsFound;
   unsigned NumDeclsFound;
   
   friend class CXXRecordDecl;
@@ -172,15 +172,12 @@ public:
   
   /// BasePaths - Construct a new BasePaths structure to record the
   /// paths for a derived-to-base search.
-  explicit CXXBasePaths(bool FindAmbiguities = true,
-                        bool RecordPaths = true,
+  explicit CXXBasePaths(bool FindAmbiguities = true, bool RecordPaths = true,
                         bool DetectVirtual = true)
-    : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths),
-      DetectVirtual(DetectVirtual), DetectedVirtual(nullptr),
-      DeclsFound(nullptr), NumDeclsFound(0) { }
-  
-  ~CXXBasePaths() { delete [] DeclsFound; }
-  
+      : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths),
+        DetectVirtual(DetectVirtual), DetectedVirtual(nullptr),
+        NumDeclsFound(0) {}
+
   paths_iterator begin() { return Paths.begin(); }
   paths_iterator end()   { return Paths.end(); }
   const_paths_iterator begin() const { return Paths.begin(); }
