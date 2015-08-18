@@ -1,5 +1,4 @@
 ; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl -polly-no-tiling -polly-vectorizer=polly -polly-ast -analyze < %s | FileCheck %s
-; test
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 @C = common global [1536 x [1536 x float]] zeroinitializer, align 16
