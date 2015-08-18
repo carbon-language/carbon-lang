@@ -16,12 +16,14 @@ class CModulesTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
+    @expectedFailureDarwin('http://llvm.org/pr24302')
     def test_expr_with_dsym(self):
         self.buildDsym()
         self.expr()
 
     @dwarf_test
     @skipIfFreeBSD
+    @expectedFailureDarwin('http://llvm.org/pr24302')
     @expectedFailureLinux('http://llvm.org/pr23456') # 'fopen' has unknown return type
     @expectedFailureWindows("llvm.org/pr24489: Name lookup not working correctly on Windows")
     def test_expr_with_dwarf(self):
