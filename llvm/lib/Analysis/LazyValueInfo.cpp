@@ -324,8 +324,9 @@ namespace {
     /// This tracks, on a per-block basis, the set of values that are
     /// over-defined at the end of that block.  This is required
     /// for cache updating.
-    typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
-    DenseSet<OverDefinedPairTy> OverDefinedCache;
+    typedef DenseMap<AssertingVH<BasicBlock>, SmallPtrSet<Value *, 4>>
+        OverDefinedCacheTy;
+    OverDefinedCacheTy OverDefinedCache;
 
     /// Keep track of all blocks that we have ever seen, so we
     /// don't spend time removing unused blocks from our caches.
@@ -359,7 +360,7 @@ namespace {
       SeenBlocks.insert(BB);
       lookup(Val)[BB] = Result;
       if (Result.isOverdefined())
-        OverDefinedCache.insert(std::make_pair(BB, Val));
+        OverDefinedCache[BB].insert(Val);
     }
 
     LVILatticeVal getBlockValue(Value *Val, BasicBlock *BB);
@@ -425,14 +426,16 @@ namespace {
 } // end anonymous namespace
 
 void LVIValueHandle::deleted() {
-  typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
-
-  SmallVector<OverDefinedPairTy, 4> ToErase;
-  for (const OverDefinedPairTy &P : Parent->OverDefinedCache)
-    if (P.second == getValPtr())
-      ToErase.push_back(P);
-  for (const OverDefinedPairTy &P : ToErase)
-    Parent->OverDefinedCache.erase(P);
+  SmallVector<AssertingVH<BasicBlock>, 4> ToErase;
+  for (auto &I : Parent->OverDefinedCache) {
+    SmallPtrSetImpl<Value *> &ValueSet = I.second;
+    if (ValueSet.count(getValPtr()))
+      ValueSet.erase(getValPtr());
+    if (ValueSet.empty())
+      ToErase.push_back(I.first);
+  }
+  for (auto &BB : ToErase)
+    Parent->OverDefinedCache.erase(BB);
 
   // This erasure deallocates *this, so it MUST happen after we're done
   // using any and all members of *this.
@@ -446,15 +449,11 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
     return;
   SeenBlocks.erase(I);
 
-  SmallVector<OverDefinedPairTy, 4> ToErase;
-  for (const OverDefinedPairTy& P : OverDefinedCache)
-    if (P.first == BB)
-      ToErase.push_back(P);
-  for (const OverDefinedPairTy &P : ToErase)
-    OverDefinedCache.erase(P);
+  auto ODI = OverDefinedCache.find(BB);
+  if (ODI != OverDefinedCache.end())
+    OverDefinedCache.erase(ODI);
 
-  for (std::map<LVIValueHandle, ValueCacheEntryTy>::iterator
-       I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
+  for (auto I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
     I->second.erase(BB);
 }
 
@@ -483,8 +482,7 @@ bool LazyValueInfoCache::hasBlockValue(Value *Val, BasicBlock *BB) {
     return true;
 
   LVIValueHandle ValHandle(Val, this);
-  std::map<LVIValueHandle, ValueCacheEntryTy>::iterator I =
-    ValueCache.find(ValHandle);
+  auto I = ValueCache.find(ValHandle);
   if (I == ValueCache.end()) return false;
   return I->second.count(BB);
 }
@@ -1053,10 +1051,10 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   std::vector<BasicBlock*> worklist;
   worklist.push_back(OldSucc);
 
-  DenseSet<Value*> ClearSet;
-  for (OverDefinedPairTy &P : OverDefinedCache)
-    if (P.first == OldSucc)
-      ClearSet.insert(P.second);
+  auto I = OverDefinedCache.find(OldSucc);
+  if (I == OverDefinedCache.end())
+    return; // Nothing to process here.
+  SmallPtrSetImpl<Value *> &ClearSet = I->second;
 
   // Use a worklist to perform a depth-first search of OldSucc's successors.
   // NOTE: We do not need a visited list since any blocks we have already
@@ -1072,9 +1070,12 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
     bool changed = false;
     for (Value *V : ClearSet) {
       // If a value was marked overdefined in OldSucc, and is here too...
-      DenseSet<OverDefinedPairTy>::iterator OI =
-        OverDefinedCache.find(std::make_pair(ToUpdate, V));
-      if (OI == OverDefinedCache.end()) continue;
+      auto OI = OverDefinedCache.find(ToUpdate);
+      if (OI == OverDefinedCache.end())
+        continue;
+      SmallPtrSetImpl<Value *> &ValueSet = OI->second;
+      if (!ValueSet.count(V))
+        continue;
 
       // Remove it from the caches.
       ValueCacheEntryTy &Entry = ValueCache[LVIValueHandle(V, this)];
@@ -1082,7 +1083,9 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
 
       assert(CI != Entry.end() && "Couldn't find entry to update?");
       Entry.erase(CI);
-      OverDefinedCache.erase(OI);
+      ValueSet.erase(V);
+      if (ValueSet.empty())
+        OverDefinedCache.erase(OI);
 
       // If we removed anything, then we potentially need to update
       // blocks successors too.
