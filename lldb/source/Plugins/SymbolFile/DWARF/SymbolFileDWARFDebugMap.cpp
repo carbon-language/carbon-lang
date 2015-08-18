@@ -24,7 +24,6 @@
 #endif
 #include "lldb/Core/Timer.h"
 
-#include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -298,15 +297,9 @@ SymbolFileDWARFDebugMap::~SymbolFileDWARFDebugMap()
 void
 SymbolFileDWARFDebugMap::InitializeObject()
 {
-    // Install our external AST source callbacks so we can complete Clang types.
-    llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> ast_source_ap (
-        new ClangExternalASTSourceCallbacks (SymbolFileDWARFDebugMap::CompleteTagDecl,
-                                             SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl,
-                                             NULL,
-                                             SymbolFileDWARFDebugMap::LayoutRecordType,
-                                             this));
-
-    GetClangASTContext().SetExternalSource (ast_source_ap);
+    // Set the symbol file to this file. This allows the clang ASTContext to complete
+    // types using this symbol file when it needs to complete classes and structures.
+    GetClangASTContext().SetSymbolFile(this);
 }
 
 void
@@ -788,10 +781,22 @@ SymbolFileDWARFDebugMap::ResolveTypeUID(lldb::user_id_t type_uid)
 }
 
 bool
-SymbolFileDWARFDebugMap::ResolveClangOpaqueTypeDefinition (CompilerType& clang_type)
+SymbolFileDWARFDebugMap::CompleteType (CompilerType& clang_type)
 {
-    // We have a struct/union/class/enum that needs to be fully resolved.
-    return false;
+    bool success = false;
+    if (clang_type)
+    {
+        ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
+            if (oso_dwarf->HasForwardDeclForClangType (clang_type))
+            {
+                oso_dwarf->CompleteType (clang_type);
+                success = true;
+                return true;
+            }
+            return false;
+        });
+    }
+    return success;
 }
 
 uint32_t
@@ -1427,60 +1432,6 @@ SymbolFileDWARFDebugMap::SetCompileUnit (SymbolFileDWARF *oso_dwarf, const CompU
         }
     }
 }
-
-
-void
-SymbolFileDWARFDebugMap::CompleteTagDecl (void *baton, clang::TagDecl *decl)
-{
-    SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
-    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
-    if (clang_type)
-    {
-        symbol_file_dwarf->ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-            if (oso_dwarf->HasForwardDeclForClangType (clang_type))
-            {
-                oso_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
-                return true;
-            }
-            return false;
-        });
-    }
-}
-
-void
-SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *decl)
-{
-    SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
-    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
-    if (clang_type)
-    {
-        symbol_file_dwarf->ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-            if (oso_dwarf->HasForwardDeclForClangType (clang_type))
-            {
-                oso_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
-                return true;
-            }
-            return false;
-        });
-    }
-}
-
-bool
-SymbolFileDWARFDebugMap::LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size,
-                                          uint64_t &alignment,
-                                          llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
-                                          llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                                          llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
-{
-    SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
-    bool laid_out = false;
-    symbol_file_dwarf->ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-        return (laid_out = SymbolFileDWARF::LayoutRecordType (oso_dwarf, record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets));
-    });
-    return laid_out;
-}
-
-
 
 clang::DeclContext*
 SymbolFileDWARFDebugMap::GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid)

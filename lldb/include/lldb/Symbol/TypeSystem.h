@@ -56,20 +56,27 @@ public:
                             const DWARFDebugInfoEntry *die) = 0;
 
     virtual bool
-    ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
-                                      DWARFCompileUnit *dwarf_cu,
-                                      const DWARFDebugInfoEntry* die,
-                                      Type *type,
-                                      CompilerType &clang_type) = 0;
+    CompleteTypeFromDWARF (SymbolFileDWARF *dwarf,
+                           DWARFCompileUnit *dwarf_cu,
+                           const DWARFDebugInfoEntry* die,
+                           lldb_private::Type *type,
+                           CompilerType &clang_type)
+    {
+        return false;
+    }
 
-    virtual bool
-    LayoutRecordType (SymbolFileDWARF *dwarf,
-                      const clang::RecordDecl *record_decl,
-                      uint64_t &bit_size,
-                      uint64_t &alignment,
-                      llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
-                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets) = 0;
+    virtual SymbolFile *
+    GetSymbolFile () const
+    {
+        return m_sym_file;
+    }
+
+    // Returns true if the symbol file changed during the set accessor.
+    virtual void
+    SetSymbolFile (SymbolFile *sym_file)
+    {
+        m_sym_file = sym_file;
+    }
 
     virtual bool
     DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
@@ -401,6 +408,9 @@ public:
     
     virtual bool
     IsReferenceType (void * type, CompilerType *pointee_type, bool* is_rvalue) = 0;
+protected:
+    SymbolFile *m_sym_file;
+
 };
     
 } // namespace lldb_private

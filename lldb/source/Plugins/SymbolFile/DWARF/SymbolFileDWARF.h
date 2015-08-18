@@ -115,7 +115,7 @@ public:
     size_t          ParseVariablesForContext (const lldb_private::SymbolContext& sc) override;
 
     lldb_private::Type* ResolveTypeUID(lldb::user_id_t type_uid) override;
-    bool            ResolveClangOpaqueTypeDefinition (lldb_private::CompilerType& clang_type) override;
+    bool            CompleteType (lldb_private::CompilerType& clang_type) override;
 
     lldb_private::Type* ResolveType (DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry* type_die, bool assert_not_being_parsed = true);
     lldb_private::Type* GetCachedTypeForDIE (const DWARFDebugInfoEntry* type_die) const;
@@ -147,26 +147,6 @@ public:
                            const lldb_private::ConstString &name, 
                            const lldb_private::ClangNamespaceDecl *parent_namespace_decl) override;
 
-
-    //------------------------------------------------------------------
-    // ClangASTContext callbacks for external source lookups.
-    //------------------------------------------------------------------
-    static void
-    CompleteTagDecl (void *baton, clang::TagDecl *);
-    
-    static void
-    CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
-    
-    static void
-    FindExternalVisibleDeclsByName (void *baton,
-                                    const clang::DeclContext *DC,
-                                    clang::DeclarationName Name,
-                                    llvm::SmallVectorImpl <clang::NamedDecl *> *results);
-
-    static bool LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size, uint64_t &alignment,
-                                 llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
-                                 llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                                 llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -208,24 +188,9 @@ public:
     static bool
     SupportedVersion(uint16_t version);
 
-    clang::DeclContext *
-    GetCachedClangDeclContextForDIE (const DWARFDebugInfoEntry *die)
-    {
-        DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
-        if (pos != m_die_to_decl_ctx.end())
-            return pos->second;
-        else
-            return NULL;
-    }
-
     const DWARFDebugInfoEntry *
     GetDeclContextDIEContainingDIE (const DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die);
 
-    void
-    SearchDeclContext (const clang::DeclContext *decl_context, 
-                       const char *name, 
-                       llvm::SmallVectorImpl <clang::NamedDecl *> *results);
-    
     lldb_private::Flags&
     GetFlags ()
     {
@@ -400,14 +365,6 @@ protected:
     
     UniqueDWARFASTTypeMap &
     GetUniqueDWARFASTTypeMap ();
-
-    void                    LinkDeclContextToDIE (clang::DeclContext *decl_ctx,
-                                                  const DWARFDebugInfoEntry *die)
-                            {
-                                m_die_to_decl_ctx[die] = decl_ctx;
-                                // There can be many DIEs for a single decl context
-                                m_decl_ctx_to_die[decl_ctx].insert(die);
-                            }
     
     bool
     UserIDMatches (lldb::user_id_t uid) const
@@ -457,7 +414,6 @@ protected:
 
     lldb::ModuleWP                        m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *             m_debug_map_symfile;
-    clang::TranslationUnitDecl *          m_clang_tu_decl;
     lldb_private::Flags                   m_flags;
     lldb_private::DWARFDataExtractor      m_dwarf_data; 
     lldb_private::DWARFDataExtractor      m_data_debug_abbrev;
@@ -493,22 +449,16 @@ protected:
     NameToDIE                           m_type_index;               // All type DIE offsets
     NameToDIE                           m_namespace_index;          // All type DIE offsets
     bool                                m_indexed:1,
-                                        m_is_external_ast_source:1,
                                         m_using_apple_tables:1,
                                         m_fetched_external_modules:1;
     lldb_private::LazyBool              m_supports_DW_AT_APPLE_objc_complete_type;
 
     std::unique_ptr<DWARFDebugRanges>     m_ranges;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
-    typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
-    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
-    typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
     typedef llvm::DenseMap<lldb::clang_type_t, const DWARFDebugInfoEntry *> ClangTypeToDIE;
-    DIEToDeclContextMap m_die_to_decl_ctx;
-    DeclContextToDIEMap m_decl_ctx_to_die;
     DIEToTypePtr m_die_to_type;
     DIEToVariableSP m_die_to_variable_sp;
     DIEToClangType m_forward_decl_die_to_clang_type;

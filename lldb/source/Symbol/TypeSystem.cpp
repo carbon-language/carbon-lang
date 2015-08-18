@@ -10,7 +10,8 @@
 
 using namespace lldb_private;
 
-TypeSystem::TypeSystem()
+TypeSystem::TypeSystem() :
+    m_sym_file (nullptr)
 {
 }
 

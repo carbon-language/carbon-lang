@@ -71,6 +71,7 @@
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Expression/ASTDumper.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/VerifyDecl.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -293,22 +294,25 @@ ParseLangArgs (LangOptions &Opts, InputKind IK, const char* triple)
 
 
 ClangASTContext::ClangASTContext (const char *target_triple) :   
-    m_target_triple(),
-    m_ast_ap(),
-    m_language_options_ap(),
-    m_source_manager_ap(),
-    m_diagnostics_engine_ap(),
-    m_target_options_rp(),
-    m_target_info_ap(),
-    m_identifier_table_ap(),
-    m_selector_table_ap(),
-    m_builtins_ap(),
+    m_target_triple (),
+    m_ast_ap (),
+    m_language_options_ap (),
+    m_source_manager_ap (),
+    m_diagnostics_engine_ap (),
+    m_target_options_rp (),
+    m_target_info_ap (),
+    m_identifier_table_ap (),
+    m_selector_table_ap (),
+    m_builtins_ap (),
     m_callback_tag_decl (nullptr),
     m_callback_objc_decl (nullptr),
     m_callback_baton (nullptr),
     m_pointer_byte_size (0),
-    m_ast_owned(false)
-
+    m_ast_owned (false),
+    m_record_decl_to_layout_map (),
+    m_die_to_decl_ctx (),
+    m_decl_ctx_to_die (),
+    m_clang_tu_decl (nullptr)
 {
     if (target_triple && target_triple[0])
         SetTargetTriple (target_triple);
@@ -445,6 +449,13 @@ ClangASTContext::getASTContext()
         }
         
         GetASTMap().Insert(m_ast_ap.get(), this);
+
+        llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> ast_source_ap (new ClangExternalASTSourceCallbacks (ClangASTContext::CompleteTagDecl,
+                                                                                                               ClangASTContext::CompleteObjCInterfaceDecl,
+                                                                                                               nullptr,
+                                                                                                               ClangASTContext::LayoutRecordType,
+                                                                                                               this));
+        SetExternalSource (ast_source_ap);
     }
     return m_ast_ap.get();
 }
@@ -9076,11 +9087,11 @@ ClangASTContext::ParseClassTemplateDecl (SymbolFileDWARF *dwarf,
 }
 
 bool
-ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
-                                                   DWARFCompileUnit *dwarf_cu,
-                                                   const DWARFDebugInfoEntry* die,
-                                                   lldb_private::Type *type,
-                                                   CompilerType &clang_type)
+ClangASTContext::CompleteTypeFromDWARF (SymbolFileDWARF *dwarf,
+                                        DWARFCompileUnit *dwarf_cu,
+                                        const DWARFDebugInfoEntry* die,
+                                        lldb_private::Type *type,
+                                        CompilerType &clang_type)
 {
     // Disable external storage for this type so we don't get anymore
     // clang::ExternalASTSource queries for this type.
@@ -9298,7 +9309,7 @@ ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
                         if (module_sp)
                         {
                             module_sp->LogMessage (log,
-                                                   "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) caching layout info for record_decl = %p, bit_size = %" PRIu64 ", alignment = %" PRIu64 ", field_offsets[%u], base_offsets[%u], vbase_offsets[%u])",
+                                                   "ClangASTContext::CompleteTypeFromDWARF (clang_type = %p) caching layout info for record_decl = %p, bit_size = %" PRIu64 ", alignment = %" PRIu64 ", field_offsets[%u], base_offsets[%u], vbase_offsets[%u])",
                                                    static_cast<void*>(clang_type.GetOpaqueQualType()),
                                                    static_cast<void*>(record_decl),
                                                    layout_info.bit_size,
@@ -9314,7 +9325,7 @@ ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
                                 for (idx = 0, pos = layout_info.field_offsets.begin(); pos != end; ++pos, ++idx)
                                 {
                                     module_sp->LogMessage(log,
-                                                          "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) field[%u] = { bit_offset=%u, name='%s' }",
+                                                          "ClangASTContext::CompleteTypeFromDWARF (clang_type = %p) field[%u] = { bit_offset=%u, name='%s' }",
                                                           static_cast<void *>(clang_type.GetOpaqueQualType()),
                                                           idx,
                                                           static_cast<uint32_t>(pos->second),
@@ -9328,7 +9339,7 @@ ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
                                 for (idx = 0, base_pos = layout_info.base_offsets.begin(); base_pos != base_end; ++base_pos, ++idx)
                                 {
                                     module_sp->LogMessage(log,
-                                                          "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) base[%u] = { byte_offset=%u, name='%s' }",
+                                                          "ClangASTContext::CompleteTypeFromDWARF (clang_type = %p) base[%u] = { byte_offset=%u, name='%s' }",
                                                           clang_type.GetOpaqueQualType(), idx, (uint32_t)base_pos->second.getQuantity(),
                                                           base_pos->first->getNameAsString().c_str());
                                 }
@@ -9339,7 +9350,7 @@ ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
                                 for (idx = 0, vbase_pos = layout_info.vbase_offsets.begin(); vbase_pos != vbase_end; ++vbase_pos, ++idx)
                                 {
                                     module_sp->LogMessage(log,
-                                                          "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) vbase[%u] = { byte_offset=%u, name='%s' }",
+                                                          "ClangASTContext::CompleteTypeFromDWARF (clang_type = %p) vbase[%u] = { byte_offset=%u, name='%s' }",
                                                           static_cast<void *>(clang_type.GetOpaqueQualType()), idx,
                                                           static_cast<uint32_t>(vbase_pos->second.getQuantity()),
                                                           vbase_pos->first->getNameAsString().c_str());
@@ -9375,9 +9386,34 @@ ClangASTContext::ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
     return false;
 }
 
+void
+ClangASTContext::CompleteTagDecl (void *baton, clang::TagDecl *decl)
+{
+    ClangASTContext *ast = (ClangASTContext *)baton;
+    SymbolFile *sym_file = ast->GetSymbolFile();
+    if (sym_file)
+    {
+        CompilerType clang_type = GetTypeForDecl (decl);
+        if (clang_type)
+            sym_file->CompleteType (clang_type);
+    }
+}
+
+void
+ClangASTContext::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *decl)
+{
+    ClangASTContext *ast = (ClangASTContext *)baton;
+    SymbolFile *sym_file = ast->GetSymbolFile();
+    if (sym_file)
+    {
+        CompilerType clang_type = GetTypeForDecl (decl);
+        if (clang_type)
+            sym_file->CompleteType (clang_type);
+    }
+}
 
 bool
-ClangASTContext::LayoutRecordType(SymbolFileDWARF *dwarf,
+ClangASTContext::LayoutRecordType(void *baton,
                                   const clang::RecordDecl *record_decl,
                                   uint64_t &bit_size,
                                   uint64_t &alignment,
@@ -9385,18 +9421,19 @@ ClangASTContext::LayoutRecordType(SymbolFileDWARF *dwarf,
                                   llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
                                   llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
 {
-    RecordDeclToLayoutMap::iterator pos = m_record_decl_to_layout_map.find (record_decl);
+    ClangASTContext *ast = (ClangASTContext *)baton;
+    RecordDeclToLayoutMap::iterator pos = ast->m_record_decl_to_layout_map.find (record_decl);
     bool success = false;
     base_offsets.clear();
     vbase_offsets.clear();
-    if (pos != m_record_decl_to_layout_map.end())
+    if (pos != ast->m_record_decl_to_layout_map.end())
     {
         bit_size = pos->second.bit_size;
         alignment = pos->second.alignment;
         field_offsets.swap(pos->second.field_offsets);
         base_offsets.swap (pos->second.base_offsets);
         vbase_offsets.swap (pos->second.vbase_offsets);
-        m_record_decl_to_layout_map.erase(pos);
+        ast->m_record_decl_to_layout_map.erase(pos);
         success = true;
     }
     else
@@ -10642,7 +10679,7 @@ ClangASTContext::GetClangDeclContextForDIE (SymbolFileDWARF *dwarf,
                                             DWARFCompileUnit *cu,
                                             const DWARFDebugInfoEntry *die)
 {
-    clang::DeclContext *clang_decl_ctx = dwarf->GetCachedClangDeclContextForDIE (die);
+    clang::DeclContext *clang_decl_ctx = GetCachedClangDeclContextForDIE (die);
     if (clang_decl_ctx)
         return clang_decl_ctx;
     // If this DIE has a specification, or an abstract origin, then trace to those.
@@ -10662,7 +10699,7 @@ ClangASTContext::GetClangDeclContextForDIE (SymbolFileDWARF *dwarf,
     bool assert_not_being_parsed = true;
     dwarf->ResolveTypeUID (cu, die, assert_not_being_parsed);
 
-    clang_decl_ctx = dwarf->GetCachedClangDeclContextForDIE (die);
+    clang_decl_ctx = GetCachedClangDeclContextForDIE (die);
 
     return clang_decl_ctx;
 }
@@ -10709,7 +10746,7 @@ ClangASTContext::ResolveNamespaceDIE (SymbolFileDWARF *dwarf,
     {
         // See if we already parsed this namespace DIE and associated it with a
         // uniqued namespace declaration
-        clang::NamespaceDecl *namespace_decl = static_cast<clang::NamespaceDecl *>(dwarf->m_die_to_decl_ctx[die]);
+        clang::NamespaceDecl *namespace_decl = static_cast<clang::NamespaceDecl *>(m_die_to_decl_ctx[die]);
         if (namespace_decl)
             return namespace_decl;
         else
@@ -10742,7 +10779,7 @@ ClangASTContext::ResolveNamespaceDIE (SymbolFileDWARF *dwarf,
             }
 
             if (namespace_decl)
-                dwarf->LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
+                LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
             return namespace_decl;
         }
     }
@@ -10755,8 +10792,8 @@ ClangASTContext::GetClangDeclContextContainingDIE (SymbolFileDWARF *dwarf,
                                                    const DWARFDebugInfoEntry *die,
                                                    const DWARFDebugInfoEntry **decl_ctx_die_copy)
 {
-    if (dwarf->m_clang_tu_decl == NULL)
-        dwarf->m_clang_tu_decl = getASTContext()->getTranslationUnitDecl();
+    if (m_clang_tu_decl == NULL)
+        m_clang_tu_decl = getASTContext()->getTranslationUnitDecl();
 
     const DWARFDebugInfoEntry *decl_ctx_die = dwarf->GetDeclContextDIEContainingDIE (cu, die);
 
@@ -10766,14 +10803,14 @@ ClangASTContext::GetClangDeclContextContainingDIE (SymbolFileDWARF *dwarf,
     if (decl_ctx_die)
     {
 
-        SymbolFileDWARF::DIEToDeclContextMap::iterator pos = dwarf->m_die_to_decl_ctx.find (decl_ctx_die);
-        if (pos != dwarf->m_die_to_decl_ctx.end())
+        DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find (decl_ctx_die);
+        if (pos != m_die_to_decl_ctx.end())
             return pos->second;
 
         switch (decl_ctx_die->Tag())
         {
             case DW_TAG_compile_unit:
-                return dwarf->m_clang_tu_decl;
+                return m_clang_tu_decl;
 
             case DW_TAG_namespace:
                 return ResolveNamespaceDIE (dwarf, cu, decl_ctx_die);
@@ -10788,7 +10825,7 @@ ClangASTContext::GetClangDeclContextContainingDIE (SymbolFileDWARF *dwarf,
                     clang::DeclContext *decl_ctx = GetDeclContextForType(type->GetClangForwardType());
                     if (decl_ctx)
                     {
-                        dwarf->LinkDeclContextToDIE (decl_ctx, decl_ctx_die);
+                        LinkDeclContextToDIE (decl_ctx, decl_ctx_die);
                         if (decl_ctx)
                             return decl_ctx;
                     }
@@ -10800,7 +10837,7 @@ ClangASTContext::GetClangDeclContextContainingDIE (SymbolFileDWARF *dwarf,
                 break;
         }
     }
-    return dwarf->m_clang_tu_decl;
+    return m_clang_tu_decl;
 }
 
 
@@ -11377,7 +11414,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                     // Store a forward declaration to this class type in case any
                     // parameters in any class methods need it for the clang
                     // types for function prototypes.
-                    dwarf->LinkDeclContextToDIE(GetDeclContextForType(clang_type), die);
+                    LinkDeclContextToDIE(GetDeclContextForType(clang_type), die);
                     type_sp.reset (new Type (dwarf->MakeUserID(die->GetOffset()),
                                              dwarf,
                                              type_name_const_str,
@@ -11470,7 +11507,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                             // Leave this as a forward declaration until we need
                             // to know the details of the type. lldb_private::Type
                             // will automatically call the SymbolFile virtual function
-                            // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
+                            // "SymbolFileDWARF::CompleteType(Type *)"
                             // When the definition needs to be defined.
                             dwarf->m_forward_decl_die_to_clang_type[die] = clang_type.GetOpaqueQualType();
                             dwarf->m_forward_decl_clang_type_to_die[ClangASTContext::RemoveFastQualifiers(clang_type).GetOpaqueQualType()] = die;
@@ -11555,7 +11592,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                             enumerator_clang_type = GetEnumerationIntegerType (clang_type.GetOpaqueQualType());
                         }
 
-                        dwarf->LinkDeclContextToDIE(ClangASTContext::GetDeclContextForType(clang_type), die);
+                        LinkDeclContextToDIE(ClangASTContext::GetDeclContextForType(clang_type), die);
 
                         type_sp.reset( new Type (dwarf->MakeUserID(die->GetOffset()),
                                                  dwarf,
@@ -11787,7 +11824,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                     type_handled = objc_method_decl != NULL;
                                     if (type_handled)
                                     {
-                                        dwarf->LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(objc_method_decl), die);
+                                        LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(objc_method_decl), die);
                                         SetMetadataAsUserID (objc_method_decl, dwarf->MakeUserID(die->GetOffset()));
                                     }
                                     else
@@ -11868,7 +11905,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                         clang::DeclContext *spec_clang_decl_ctx = GetClangDeclContextForDIE (dwarf, sc, dwarf_cu, spec_die);
                                         if (spec_clang_decl_ctx)
                                         {
-                                            dwarf->LinkDeclContextToDIE(spec_clang_decl_ctx, die);
+                                            LinkDeclContextToDIE(spec_clang_decl_ctx, die);
                                         }
                                         else
                                         {
@@ -11891,7 +11928,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                         clang::DeclContext *abs_clang_decl_ctx = GetClangDeclContextForDIE (dwarf, sc, dwarf_cu, abs_die);
                                         if (abs_clang_decl_ctx)
                                         {
-                                            dwarf->LinkDeclContextToDIE (abs_clang_decl_ctx, die);
+                                            LinkDeclContextToDIE (abs_clang_decl_ctx, die);
                                         }
                                         else
                                         {
@@ -11947,7 +11984,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
 
                                                     if (type_handled)
                                                     {
-                                                        dwarf->LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
+                                                        LinkDeclContextToDIE(ClangASTContext::GetAsDeclContext(cxx_method_decl), die);
 
                                                         Host::SetCrashDescription (NULL);
 
@@ -12028,7 +12065,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                             //                            }
                             // Add the decl to our DIE to decl context map
                             assert (function_decl);
-                            dwarf->LinkDeclContextToDIE(function_decl, die);
+                            LinkDeclContextToDIE(function_decl, die);
                             if (!function_param_decls.empty())
                                 SetFunctionParameters (function_decl,
                                                        &function_param_decls.front(),
@@ -12401,14 +12438,14 @@ ClangASTContext::CopyUniqueClassMethodTypes (SymbolFileDWARF *dst_symfile,
             src_die = src_name_to_die.GetValueAtIndexUnchecked (idx);
             dst_die = dst_name_to_die.GetValueAtIndexUnchecked (idx);
 
-            clang::DeclContext *src_decl_ctx = src_symfile->m_die_to_decl_ctx[src_die];
+            clang::DeclContext *src_decl_ctx = src_symfile->GetClangASTContext().m_die_to_decl_ctx[src_die];
             if (src_decl_ctx)
             {
                 if (log)
                     log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x",
                                  static_cast<void*>(src_decl_ctx),
                                  src_die->GetOffset(), dst_die->GetOffset());
-                dst_symfile->LinkDeclContextToDIE (src_decl_ctx, dst_die);
+                dst_symfile->GetClangASTContext().LinkDeclContextToDIE (src_decl_ctx, dst_die);
             }
             else
             {
@@ -12452,7 +12489,7 @@ ClangASTContext::CopyUniqueClassMethodTypes (SymbolFileDWARF *dst_symfile,
 
                 if (src_die && (src_die->Tag() == dst_die->Tag()))
                 {
-                    clang::DeclContext *src_decl_ctx = src_symfile->m_die_to_decl_ctx[src_die];
+                    clang::DeclContext *src_decl_ctx = src_symfile->GetClangASTContext().m_die_to_decl_ctx[src_die];
                     if (src_decl_ctx)
                     {
                         if (log)
@@ -12460,7 +12497,7 @@ ClangASTContext::CopyUniqueClassMethodTypes (SymbolFileDWARF *dst_symfile,
                                          static_cast<void*>(src_decl_ctx),
                                          src_die->GetOffset(),
                                          dst_die->GetOffset());
-                        dst_symfile->LinkDeclContextToDIE (src_decl_ctx, dst_die);
+                        dst_symfile->GetClangASTContext().LinkDeclContextToDIE (src_decl_ctx, dst_die);
                     }
                     else
                     {
@@ -12514,14 +12551,14 @@ ClangASTContext::CopyUniqueClassMethodTypes (SymbolFileDWARF *dst_symfile,
             if (dst_die)
             {
                 // Both classes have the artificial types, link them
-                clang::DeclContext *src_decl_ctx = dst_symfile->m_die_to_decl_ctx[src_die];
+                clang::DeclContext *src_decl_ctx = dst_symfile->GetClangASTContext().m_die_to_decl_ctx[src_die];
                 if (src_decl_ctx)
                 {
                     if (log)
                         log->Printf ("uniquing decl context %p from 0x%8.8x for 0x%8.8x",
                                      static_cast<void*>(src_decl_ctx),
                                      src_die->GetOffset(), dst_die->GetOffset());
-                    dst_symfile->LinkDeclContextToDIE (src_decl_ctx, dst_die);
+                    dst_symfile->GetClangASTContext().LinkDeclContextToDIE (src_decl_ctx, dst_die);
                 }
                 else
                 {

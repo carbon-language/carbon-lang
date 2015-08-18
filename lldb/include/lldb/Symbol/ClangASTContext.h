@@ -525,21 +525,29 @@ public:
                             const DWARFDebugInfoEntry *die) override;
 
     bool
-    ResolveClangOpaqueTypeDefinition (SymbolFileDWARF *dwarf,
-                                      DWARFCompileUnit *dwarf_cu,
-                                      const DWARFDebugInfoEntry* die,
-                                      Type *type,
-                                      CompilerType &clang_type) override;
+    CompleteTypeFromDWARF (SymbolFileDWARF *dwarf,
+                           DWARFCompileUnit *dwarf_cu,
+                           const DWARFDebugInfoEntry* die,
+                           lldb_private::Type *type,
+                           CompilerType &clang_type) override;
 
-    bool
-    LayoutRecordType (SymbolFileDWARF *dwarf,
-                      const clang::RecordDecl *record_decl,
-                      uint64_t &bit_size,
-                      uint64_t &alignment,
-                      llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
-                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                      llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets) override;
+    //------------------------------------------------------------------
+    // ClangASTContext callbacks for external source lookups.
+    //------------------------------------------------------------------
+    static void
+    CompleteTagDecl (void *baton, clang::TagDecl *);
 
+    static void
+    CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
+
+    static bool
+    LayoutRecordType(void *baton,
+                     const clang::RecordDecl *record_decl,
+                     uint64_t &size,
+                     uint64_t &alignment,
+                     llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
+                     llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                     llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
 
     bool
     DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
@@ -1204,6 +1212,30 @@ protected:
                                 DWARFCompileUnit* dst_cu,
                                 const DWARFDebugInfoEntry *dst_class_die,
                                 DWARFDIECollection &failures);
+
+    clang::DeclContext *
+    GetCachedClangDeclContextForDIE (const DWARFDebugInfoEntry *die)
+    {
+        DIEToDeclContextMap::iterator pos = m_die_to_decl_ctx.find(die);
+        if (pos != m_die_to_decl_ctx.end())
+            return pos->second;
+        else
+            return NULL;
+    }
+
+    void
+    LinkDeclContextToDIE (clang::DeclContext *decl_ctx,
+                          const DWARFDebugInfoEntry *die)
+    {
+        m_die_to_decl_ctx[die] = decl_ctx;
+        // There can be many DIEs for a single decl context
+        m_decl_ctx_to_die[decl_ctx].insert(die);
+    }
+
+    typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
+    typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
+    typedef llvm::DenseMap<const clang::DeclContext *, DIEPointerSet> DeclContextToDIEMap;
+
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these
     //------------------------------------------------------------------
@@ -1225,7 +1257,13 @@ protected:
     void *                                          m_callback_baton;
     uint32_t                                        m_pointer_byte_size;
     bool                                            m_ast_owned;
+    // DWARF Parsing related ivars
     RecordDeclToLayoutMap                           m_record_decl_to_layout_map;
+    DIEToDeclContextMap                             m_die_to_decl_ctx;
+    DeclContextToDIEMap                             m_decl_ctx_to_die;
+    clang::TranslationUnitDecl *                    m_clang_tu_decl;
+
+
 
 private:
     //------------------------------------------------------------------

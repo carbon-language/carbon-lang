@@ -48,7 +48,6 @@
 #include "lldb/Interpreter/OptionValueProperties.h"
 
 #include "lldb/Symbol/Block.h"
-#include "lldb/Symbol/ClangExternalASTSourceCallbacks.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -504,7 +503,6 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     UserID (0),  // Used by SymbolFileDWARFDebugMap to when this class parses .o files to contain the .o file index/ID
     m_debug_map_module_wp (),
     m_debug_map_symfile (NULL),
-    m_clang_tu_decl (NULL),
     m_flags(),
     m_data_debug_abbrev (),
     m_data_debug_aranges (),
@@ -533,7 +531,6 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_type_index(),
     m_namespace_index(),
     m_indexed (false),
-    m_is_external_ast_source (false),
     m_using_apple_tables (false),
     m_fetched_external_modules (false),
     m_supports_DW_AT_APPLE_objc_complete_type (eLazyBoolCalculate),
@@ -544,12 +541,6 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
 
 SymbolFileDWARF::~SymbolFileDWARF()
 {
-    if (m_is_external_ast_source)
-    {
-        ModuleSP module_sp (m_obj_file->GetModule());
-        if (module_sp)
-            module_sp->GetClangASTContext().RemoveExternalSource ();
-    }
 }
 
 static const ConstString &
@@ -572,20 +563,8 @@ SymbolFileDWARF::GetClangASTContext ()
 {
     if (GetDebugMapSymfile ())
         return m_debug_map_symfile->GetClangASTContext ();
-
-    ClangASTContext &ast = m_obj_file->GetModule()->GetClangASTContext();
-    if (!m_is_external_ast_source)
-    {
-        m_is_external_ast_source = true;
-        llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> ast_source_ap (
-            new ClangExternalASTSourceCallbacks (SymbolFileDWARF::CompleteTagDecl,
-                                                 SymbolFileDWARF::CompleteObjCInterfaceDecl,
-                                                 SymbolFileDWARF::FindExternalVisibleDeclsByName,
-                                                 SymbolFileDWARF::LayoutRecordType,
-                                                 this));
-        ast.SetExternalSource (ast_source_ap);
-    }
-    return ast;
+    else
+        return m_obj_file->GetModule()->GetClangASTContext();
 }
 
 TypeSystem *
@@ -595,22 +574,12 @@ SymbolFileDWARF::GetTypeSystemForLanguage (LanguageType language)
     if (debug_map_symfile)
         return debug_map_symfile->GetTypeSystemForLanguage (language);
     else
-    {
-        TypeSystem *type_system = m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
-
-        if (type_system && type_system->AsClangASTContext())
-        {
-            // Get the ClangAST so that we register the ClangExternalASTSource callbacks if needed...
-            GetClangASTContext();
-        }
-        return type_system;
-    }
+        return m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
 }
 
 void
 SymbolFileDWARF::InitializeObject()
 {
-    // Install our external AST source callbacks so we can complete Clang types.
     ModuleSP module_sp (m_obj_file->GetModule());
     if (module_sp)
     {
@@ -661,6 +630,12 @@ SymbolFileDWARF::InitializeObject()
         else
             m_apple_objc_ap.reset();
     }
+
+    // Set the symbol file to this file if we don't have a debug map symbol
+    // file as our main symbol file. This allows the clang ASTContext to complete
+    // types using this symbol file when it needs to complete classes and structures.
+    if (GetDebugMapSymfile () == nullptr)
+        GetClangASTContext().SetSymbolFile(this);
 }
 
 bool
@@ -1588,7 +1563,7 @@ SymbolFileDWARF::HasForwardDeclForClangType (const CompilerType &clang_type)
 
 
 bool
-SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (CompilerType &clang_type)
+SymbolFileDWARF::CompleteType (CompilerType &clang_type)
 {
     // We have a struct/union/class/enum that needs to be fully resolved.
     CompilerType clang_type_no_qualifiers = ClangASTContext::RemoveFastQualifiers(clang_type);
@@ -1604,19 +1579,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (CompilerType &clang_type)
     // are done.
     m_forward_decl_clang_type_to_die.erase (clang_type_no_qualifiers.GetOpaqueQualType());
 
-    ClangASTContext* ast = clang_type.GetTypeSystem()->AsClangASTContext();
-    if (ast == NULL)
-    {
-        // Not a clang type
-        return true;
-    }
-    
-    // Disable external storage for this type so we don't get anymore 
-    // clang::ExternalASTSource queries for this type.
-    ast->SetHasExternalStorage (clang_type.GetOpaqueQualType(), false);
-
     DWARFDebugInfo* debug_info = DebugInfo();
-
     DWARFCompileUnit *dwarf_cu = debug_info->GetCompileUnitContainingDIE (die->GetOffset()).get();
     Type *type = m_die_to_type.lookup (die);
 
@@ -1634,7 +1597,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (CompilerType &clang_type)
     TypeSystem *type_system = GetTypeSystemForLanguage(dwarf_cu->GetLanguageType());
 
     if (type_system)
-        return type_system->ResolveClangOpaqueTypeDefinition(this, dwarf_cu, die, type, clang_type);
+        return type_system->CompleteTypeFromDWARF (this, dwarf_cu, die, type, clang_type);
 
     return false;
 }
@@ -4577,24 +4540,6 @@ SymbolFileDWARF::GetPluginVersion()
 }
 
 void
-SymbolFileDWARF::CompleteTagDecl (void *baton, clang::TagDecl *decl)
-{
-    SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
-    if (clang_type)
-        symbol_file_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
-}
-
-void
-SymbolFileDWARF::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *decl)
-{
-    SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-    CompilerType clang_type = symbol_file_dwarf->GetClangASTContext().GetTypeForDecl (decl);
-    if (clang_type)
-        symbol_file_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
-}
-
-void
 SymbolFileDWARF::DumpIndexes ()
 {
     StreamFile s(stdout, false);
@@ -4612,111 +4557,6 @@ SymbolFileDWARF::DumpIndexes ()
     s.Printf("\nNamespaces:\n");            m_namespace_index.Dump (&s);
 }
 
-void
-SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context, 
-                                    const char *name, 
-                                    llvm::SmallVectorImpl <clang::NamedDecl *> *results)
-{    
-    DeclContextToDIEMap::iterator iter = m_decl_ctx_to_die.find(decl_context);
-    
-    if (iter == m_decl_ctx_to_die.end())
-        return;
-    
-    for (DIEPointerSet::iterator pos = iter->second.begin(), end = iter->second.end(); pos != end; ++pos)
-    {
-        const DWARFDebugInfoEntry *context_die = *pos;
-    
-        if (!results)
-            return;
-        
-        DWARFDebugInfo* info = DebugInfo();
-        
-        DIEArray die_offsets;
-        
-        DWARFCompileUnit* dwarf_cu = NULL;
-        const DWARFDebugInfoEntry* die = NULL;
-        
-        if (m_using_apple_tables)
-        {
-            if (m_apple_types_ap.get())
-                m_apple_types_ap->FindByName (name, die_offsets);
-        }
-        else
-        {
-            if (!m_indexed)
-                Index ();
-            
-            m_type_index.Find (ConstString(name), die_offsets);
-        }
-        
-        const size_t num_matches = die_offsets.size();
-        
-        if (num_matches)
-        {
-            for (size_t i = 0; i < num_matches; ++i)
-            {
-                const dw_offset_t die_offset = die_offsets[i];
-                die = info->GetDIEPtrWithCompileUnitHint (die_offset, &dwarf_cu);
-
-                if (die->GetParent() != context_die)
-                    continue;
-                
-                Type *matching_type = ResolveType (dwarf_cu, die);
-                
-                clang::QualType qual_type = ClangASTContext::GetQualType(matching_type->GetClangForwardType());
-                
-                if (const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr()))
-                {
-                    clang::TagDecl *tag_decl = tag_type->getDecl();
-                    results->push_back(tag_decl);
-                }
-                else if (const clang::TypedefType *typedef_type = llvm::dyn_cast<clang::TypedefType>(qual_type.getTypePtr()))
-                {
-                    clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
-                    results->push_back(typedef_decl); 
-                }
-            }
-        }
-    }
-}
-
-void
-SymbolFileDWARF::FindExternalVisibleDeclsByName (void *baton,
-                                                 const clang::DeclContext *decl_context,
-                                                 clang::DeclarationName decl_name,
-                                                 llvm::SmallVectorImpl <clang::NamedDecl *> *results)
-{
-    
-    switch (decl_context->getDeclKind())
-    {
-    case clang::Decl::Namespace:
-    case clang::Decl::TranslationUnit:
-        {
-            SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-            symbol_file_dwarf->SearchDeclContext (decl_context, decl_name.getAsString().c_str(), results);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
-bool
-SymbolFileDWARF::LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size,
-                                  uint64_t &alignment,
-                                  llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
-                                  llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                                  llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
-{
-    if (baton)
-    {
-        SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
-        TypeSystem *type_system = symbol_file_dwarf->GetTypeSystemForLanguage(eLanguageTypeC_plus_plus);
-        if (type_system)
-            return type_system->LayoutRecordType (symbol_file_dwarf, record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets);
-    }
-    return false;
-}
 
 SymbolFileDWARFDebugMap *
 SymbolFileDWARF::GetDebugMapSymfile ()

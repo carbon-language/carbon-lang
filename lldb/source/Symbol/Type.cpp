@@ -611,7 +611,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
             if (!m_clang_type.IsDefined ())
             {
                 // We have a forward declaration, we need to resolve it to a complete definition.
-                m_symbol_file->ResolveClangOpaqueTypeDefinition (m_clang_type);
+                m_symbol_file->CompleteType (m_clang_type);
             }
         }
     }

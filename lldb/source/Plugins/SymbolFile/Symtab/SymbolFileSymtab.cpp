@@ -300,7 +300,7 @@ SymbolFileSymtab::ResolveTypeUID(lldb::user_id_t type_uid)
 }
 
 bool
-SymbolFileSymtab::ResolveClangOpaqueTypeDefinition (lldb_private::CompilerType& clang_opaque_type)
+SymbolFileSymtab::CompleteType (lldb_private::CompilerType& clang_opaque_type)
 {
     return false;
 }

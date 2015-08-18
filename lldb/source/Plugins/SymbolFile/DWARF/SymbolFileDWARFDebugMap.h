@@ -57,7 +57,6 @@ public:
     ~SymbolFileDWARFDebugMap () override;
 
     uint32_t        CalculateAbilities () override;
-
     void            InitializeObject() override;
 
     //------------------------------------------------------------------
@@ -78,7 +77,7 @@ public:
     lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid) override;
     clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid) override;
     clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid) override;
-    bool            ResolveClangOpaqueTypeDefinition (lldb_private::CompilerType& clang_type) override;
+    bool            CompleteType (lldb_private::CompilerType& clang_type) override;
     uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc) override;
     uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list) override;
     uint32_t        FindGlobalVariables (const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::VariableList& variables) override;
@@ -93,21 +92,6 @@ public:
     size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
                               uint32_t type_mask,
                               lldb_private::TypeList &type_list) override;
-
-
-    //------------------------------------------------------------------
-    // ClangASTContext callbacks for external source lookups.
-    //------------------------------------------------------------------
-    static void
-    CompleteTagDecl (void *baton, clang::TagDecl *);
-    
-    static void
-    CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
-
-    static bool LayoutRecordType(void *baton, const clang::RecordDecl *record_decl, uint64_t &size, uint64_t &alignment,
-                                 llvm::DenseMap<const clang::FieldDecl *, uint64_t> &field_offsets,
-                                 llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
-                                 llvm::DenseMap<const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
