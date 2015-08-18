@@ -84,7 +84,7 @@ public:
   void convert(ModuleSlotTracker &MST, yaml::MachineJumpTable &YamlJTI,
                const MachineJumpTableInfo &JTI);
   void convertStackObjects(yaml::MachineFunction &MF,
-                           const MachineFrameInfo &MFI,
+                           const MachineFrameInfo &MFI, ModuleSlotTracker &MST,
                            const TargetRegisterInfo *TRI);
 
 private:
@@ -171,7 +171,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   ModuleSlotTracker MST(MF.getFunction()->getParent());
   MST.incorporateFunction(*MF.getFunction());
   convert(MST, YamlMF.FrameInfo, *MF.getFrameInfo());
-  convertStackObjects(YamlMF, *MF.getFrameInfo(),
+  convertStackObjects(YamlMF, *MF.getFrameInfo(), MST,
                       MF.getSubtarget().getRegisterInfo());
   if (const auto *ConstantPool = MF.getConstantPool())
     convert(YamlMF, *ConstantPool);
@@ -265,6 +265,7 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
 
 void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
                                      const MachineFrameInfo &MFI,
+                                     ModuleSlotTracker &MST,
                                      const TargetRegisterInfo *TRI) {
   // Process fixed stack objects.
   unsigned ID = 0;
@@ -332,6 +333,14 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
     const FrameIndexOperand &StackObject = StackObjectInfo->second;
     assert(!StackObject.IsFixed && "Expected a locally mapped stack object");
     MF.StackObjects[StackObject.ID].LocalOffset = LocalObject.second;
+  }
+
+  // Print the stack object references in the frame information class after
+  // converting the stack objects.
+  if (MFI.hasStackProtectorIndex()) {
+    raw_string_ostream StrOS(MF.FrameInfo.StackProtector.Value);
+    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
+        .printStackObjectReference(MFI.getStackProtectorIndex());
   }
 }
 

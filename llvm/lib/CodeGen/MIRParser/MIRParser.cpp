@@ -493,6 +493,17 @@ bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
   MFI.setCalleeSavedInfo(CSIInfo);
   if (!CSIInfo.empty())
     MFI.setCalleeSavedInfoValid(true);
+
+  // Initialize the various stack object references after initializing the
+  // stack objects.
+  if (!YamlMFI.StackProtector.Value.empty()) {
+    SMDiagnostic Error;
+    int FI;
+    if (parseStackObjectReference(FI, SM, MF, YamlMFI.StackProtector.Value, PFS,
+                                  IRSlots, Error))
+      return error(Error, YamlMFI.StackProtector.SourceRange);
+    MFI.setStackProtectorIndex(FI);
+  }
   return false;
 }
 

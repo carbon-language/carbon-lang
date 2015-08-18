@@ -337,7 +337,8 @@ struct MachineFrameInfo {
   unsigned MaxAlignment = 0;
   bool AdjustsStack = false;
   bool HasCalls = false;
-  // TODO: Serialize StackProtectorIdx and FunctionContextIdx
+  StringValue StackProtector;
+  // TODO: Serialize FunctionContextIdx
   unsigned MaxCallFrameSize = 0;
   bool HasOpaqueSPAdjustment = false;
   bool HasVAStart = false;
@@ -357,6 +358,8 @@ template <> struct MappingTraits<MachineFrameInfo> {
     YamlIO.mapOptional("maxAlignment", MFI.MaxAlignment);
     YamlIO.mapOptional("adjustsStack", MFI.AdjustsStack);
     YamlIO.mapOptional("hasCalls", MFI.HasCalls);
+    YamlIO.mapOptional("stackProtector", MFI.StackProtector,
+                       StringValue()); // Don't print it out when it's empty.
     YamlIO.mapOptional("maxCallFrameSize", MFI.MaxCallFrameSize);
     YamlIO.mapOptional("hasOpaqueSPAdjustment", MFI.HasOpaqueSPAdjustment);
     YamlIO.mapOptional("hasVAStart", MFI.HasVAStart);

@@ -288,6 +288,7 @@ public:
   /// Return the index for the stack protector object.
   int getStackProtectorIndex() const { return StackProtectorIdx; }
   void setStackProtectorIndex(int I) { StackProtectorIdx = I; }
+  bool hasStackProtectorIndex() const { return StackProtectorIdx != -1; }
 
   /// Return the index for the function context object.
   /// This object is used for SjLj exceptions.

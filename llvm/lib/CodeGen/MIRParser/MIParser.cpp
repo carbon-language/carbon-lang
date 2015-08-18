@@ -97,6 +97,7 @@ public:
   bool parseStandaloneMBB(MachineBasicBlock *&MBB);
   bool parseStandaloneNamedRegister(unsigned &Reg);
   bool parseStandaloneVirtualRegister(unsigned &Reg);
+  bool parseStandaloneStackObject(int &FI);
 
   bool
   parseBasicBlockDefinition(DenseMap<unsigned, MachineBasicBlock *> &MBBSlots);
@@ -652,6 +653,17 @@ bool MIParser::parseStandaloneVirtualRegister(unsigned &Reg) {
   lex();
   if (Token.isNot(MIToken::Eof))
     return error("expected end of string after the register reference");
+  return false;
+}
+
+bool MIParser::parseStandaloneStackObject(int &FI) {
+  lex();
+  if (Token.isNot(MIToken::StackObject))
+    return error("expected a stack object");
+  if (parseStackFrameIndex(FI))
+    return true;
+  if (Token.isNot(MIToken::Eof))
+    return error("expected end of string after the stack object reference");
   return false;
 }
 
@@ -1793,4 +1805,13 @@ bool llvm::parseVirtualRegisterReference(unsigned &Reg, SourceMgr &SM,
                                          SMDiagnostic &Error) {
   return MIParser(SM, MF, Error, Src, PFS, IRSlots)
       .parseStandaloneVirtualRegister(Reg);
+}
+
+bool llvm::parseStackObjectReference(int &FI, SourceMgr &SM,
+                                     MachineFunction &MF, StringRef Src,
+                                     const PerFunctionMIParsingState &PFS,
+                                     const SlotMapping &IRSlots,
+                                     SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, PFS, IRSlots)
+      .parseStandaloneStackObject(FI);
 }
