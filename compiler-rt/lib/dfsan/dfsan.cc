@@ -346,10 +346,16 @@ static void RegisterDfsanFlags(FlagParser *parser, Flags *f) {
 }
 
 static void InitializeFlags() {
-  FlagParser parser;
-  RegisterDfsanFlags(&parser, &flags());
+  SetCommonFlagsDefaults();
   flags().SetDefaults();
+
+  FlagParser parser;
+  RegisterCommonFlags(&parser);
+  RegisterDfsanFlags(&parser, &flags());
   parser.ParseString(GetEnv("DFSAN_OPTIONS"));
+  SetVerbosity(common_flags()->verbosity);
+  if (Verbosity()) ReportUnrecognizedFlags();
+  if (common_flags()->help) parser.PrintFlagDescriptions();
 }
 
 static void dfsan_fini() {
