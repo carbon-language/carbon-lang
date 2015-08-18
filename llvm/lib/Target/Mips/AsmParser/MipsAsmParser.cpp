@@ -11,6 +11,7 @@
 #include "MCTargetDesc/MipsMCExpr.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsRegisterInfo.h"
+#include "MipsTargetObjectFile.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
@@ -114,6 +115,7 @@ class MipsAsmParser : public MCTargetAsmParser {
                        // selected. This usually happens after an '.end func'
                        // directive.
   bool IsLittleEndian;
+  bool IsPicEnabled;
 
   // Print a warning along with its fix-it message at the given range.
   void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
@@ -406,6 +408,9 @@ public:
 
     CurrentFn = nullptr;
 
+    IsPicEnabled =
+        (getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_);
+
     Triple TheTriple(sti.getTargetTriple());
     if ((TheTriple.getArch() == Triple::mips) ||
         (TheTriple.getArch() == Triple::mips64))
@@ -473,6 +478,10 @@ public:
   bool hasMSA() const { return STI.getFeatureBits()[Mips::FeatureMSA]; }
   bool hasCnMips() const {
     return (STI.getFeatureBits()[Mips::FeatureCnMips]);
+  }
+
+  bool inPicMode() {
+    return IsPicEnabled;
   }
 
   bool inMips16Mode() const {
@@ -4714,6 +4723,9 @@ bool MipsAsmParser::parseDirectiveOption() {
   StringRef Option = Tok.getIdentifier();
 
   if (Option == "pic0") {
+    // MipsAsmParser needs to know if the current PIC mode changes.
+    IsPicEnabled = false;
+
     getTargetStreamer().emitDirectiveOptionPic0();
     Parser.Lex();
     if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
@@ -4725,6 +4737,9 @@ bool MipsAsmParser::parseDirectiveOption() {
   }
 
   if (Option == "pic2") {
+    // MipsAsmParser needs to know if the current PIC mode changes.
+    IsPicEnabled = true;
+
     getTargetStreamer().emitDirectiveOptionPic2();
     Parser.Lex();
     if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
