@@ -80,7 +80,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~ClangExpressionDeclMap ();
+    ~ClangExpressionDeclMap() override;
     
     //------------------------------------------------------------------
     /// Enable the state needed for parsing and IR transformation.
@@ -354,7 +354,7 @@ public:
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     void 
-    FindExternalVisibleDecls (NameSearchContext &context);
+    FindExternalVisibleDecls(NameSearchContext &context) override;
     
     //------------------------------------------------------------------
     /// Find all entities matching a given name in a given module/namespace,
@@ -702,4 +702,4 @@ private:
     
 } // namespace lldb_private
 
-#endif  // liblldb_ClangExpressionDeclMap_h_
+#endif // liblldb_ClangExpressionDeclMap_h_

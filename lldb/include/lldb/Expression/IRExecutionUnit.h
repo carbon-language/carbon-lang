@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef lldb_IRExecutionUnit_h_
-#define lldb_IRExecutionUnit_h_
+#ifndef liblldb_IRExecutionUnit_h_
+#define liblldb_IRExecutionUnit_h_
 
 // C Includes
 // C++ Includes
@@ -79,7 +79,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~IRExecutionUnit();
+    ~IRExecutionUnit() override;
         
     llvm::Module *
     GetModule()
@@ -118,22 +118,22 @@ public:
     //------------------------------------------------------------------
     /// ObjectFileJITDelegate overrides
     //------------------------------------------------------------------
-    virtual lldb::ByteOrder
-    GetByteOrder () const;
+    lldb::ByteOrder
+    GetByteOrder() const override;
     
-    virtual uint32_t
-    GetAddressByteSize () const;
+    uint32_t
+    GetAddressByteSize() const override;
     
-    virtual void
-    PopulateSymtab (lldb_private::ObjectFile *obj_file,
-                    lldb_private::Symtab &symtab);
+    void
+    PopulateSymtab(lldb_private::ObjectFile *obj_file,
+		   lldb_private::Symtab &symtab) override;
     
-    virtual void
-    PopulateSectionList (lldb_private::ObjectFile *obj_file,
-                         lldb_private::SectionList &section_list);
+    void
+    PopulateSectionList(lldb_private::ObjectFile *obj_file,
+			lldb_private::SectionList &section_list) override;
     
-    virtual bool
-    GetArchitecture (lldb_private::ArchSpec &arch);
+    bool
+    GetArchitecture(lldb_private::ArchSpec &arch) override;
     
     lldb::ModuleSP
     GetJITModule ();
@@ -215,7 +215,7 @@ private:
     public:
         MemoryManager (IRExecutionUnit &parent);
         
-        virtual ~MemoryManager();
+        ~MemoryManager() override;
         
         //------------------------------------------------------------------
         /// Allocate space for executable code, and add it to the
@@ -233,9 +233,9 @@ private:
         /// @return
         ///     Allocated space.
         //------------------------------------------------------------------
-        virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                             unsigned SectionID,
-                                             llvm::StringRef SectionName);
+        uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+				     unsigned SectionID,
+				     llvm::StringRef SectionName) override;
         
         //------------------------------------------------------------------
         /// Allocate space for data, and add it to the m_spaceBlocks map
@@ -255,10 +255,10 @@ private:
         /// @return
         ///     Allocated space.
         //------------------------------------------------------------------
-        virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                             unsigned SectionID,
-                                             llvm::StringRef SectionName,
-                                             bool IsReadOnly);
+        uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+				     unsigned SectionID,
+				     llvm::StringRef SectionName,
+				     bool IsReadOnly) override;
         
         //------------------------------------------------------------------
         /// Called when object loading is complete and section page
@@ -270,7 +270,7 @@ private:
         /// @return
         ///     True in case of failure, false in case of success.
         //------------------------------------------------------------------
-        virtual bool finalizeMemory(std::string *ErrMsg) {
+        bool finalizeMemory(std::string *ErrMsg) override {
             // TODO: Ensure that the instruction cache is flushed because
             // relocations are updated by dy-load.  See:
             //   sys::Memory::InvalidateInstructionCache
@@ -278,17 +278,17 @@ private:
             return false;
         }
         
-        virtual void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {
-            return;
+        void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) override {
         }
         
         //------------------------------------------------------------------
         /// Passthrough interface stub
         //------------------------------------------------------------------
-        virtual uint64_t getSymbolAddress(const std::string &Name);
+        uint64_t getSymbolAddress(const std::string &Name) override;
 
-        virtual void *getPointerToNamedFunction(const std::string &Name,
-                                                bool AbortOnFailure = true);
+        void *getPointerToNamedFunction(const std::string &Name,
+					bool AbortOnFailure = true) override;
+
     private:
         std::unique_ptr<SectionMemoryManager>    m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
         IRExecutionUnit                    &m_parent;           ///< The execution unit this is a proxy for.
@@ -403,4 +403,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // lldb_IRExecutionUnit_h_
+#endif // liblldb_IRExecutionUnit_h_

@@ -59,7 +59,7 @@ public:
     //----------------------------------------------------------------------
     /// Destructor
     //----------------------------------------------------------------------
-    virtual ~ASTStructExtractor();
+    ~ASTStructExtractor() override;
     
     //----------------------------------------------------------------------
     /// Link this consumer with a particular AST context
@@ -68,7 +68,7 @@ public:
     ///     This AST context will be used for types and identifiers, and also
     ///     forwarded to the passthrough consumer, if one exists.
     //----------------------------------------------------------------------
-    void Initialize(clang::ASTContext &Context);
+    void Initialize(clang::ASTContext &Context) override;
     
     //----------------------------------------------------------------------
     /// Examine a list of Decls to find the function $__lldb_expr and 
@@ -79,32 +79,32 @@ public:
     ///     which need to be searched recursively.  That job falls to
     ///     TransformTopLevelDecl.
     //----------------------------------------------------------------------
-    bool HandleTopLevelDecl(clang::DeclGroupRef D);
+    bool HandleTopLevelDecl(clang::DeclGroupRef D) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleTranslationUnit(clang::ASTContext &Ctx);
+    void HandleTranslationUnit(clang::ASTContext &Ctx) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleTagDeclDefinition(clang::TagDecl *D);
+    void HandleTagDeclDefinition(clang::TagDecl *D) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void CompleteTentativeDefinition(clang::VarDecl *D);
+    void CompleteTentativeDefinition(clang::VarDecl *D) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleVTable(clang::CXXRecordDecl *RD);
+    void HandleVTable(clang::CXXRecordDecl *RD) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void PrintStats();
+    void PrintStats() override;
     
     //----------------------------------------------------------------------
     /// Set the Sema object to use when performing transforms, and pass it on
@@ -113,12 +113,13 @@ public:
     ///     The Sema to use.  Because Sema isn't externally visible, this class
     ///     casts it to an Action for actual use.
     //----------------------------------------------------------------------
-    void InitializeSema(clang::Sema &S);
+    void InitializeSema(clang::Sema &S) override;
     
     //----------------------------------------------------------------------
     /// Reset the Sema to NULL now that transformations are done
     //----------------------------------------------------------------------
-    void ForgetSema();
+    void ForgetSema() override;
+
 private:
     //----------------------------------------------------------------------
     /// Hunt the given FunctionDecl for the argument struct and place
@@ -151,6 +152,6 @@ private:
     std::string                     m_struct_name;          ///< The name of the structure to extract.
 };
     
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_ASTStructExtractor_h_

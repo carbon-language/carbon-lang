@@ -51,7 +51,7 @@ public:
     //----------------------------------------------------------------------
     /// Destructor
     //----------------------------------------------------------------------
-    ~ASTResultSynthesizer();
+    ~ASTResultSynthesizer() override;
     
     //----------------------------------------------------------------------
     /// Link this consumer with a particular AST context
@@ -60,7 +60,7 @@ public:
     ///     This AST context will be used for types and identifiers, and also
     ///     forwarded to the passthrough consumer, if one exists.
     //----------------------------------------------------------------------
-    void Initialize(clang::ASTContext &Context);
+    void Initialize(clang::ASTContext &Context) override;
     
     //----------------------------------------------------------------------
     /// Examine a list of Decls to find the function $__lldb_expr and 
@@ -71,32 +71,32 @@ public:
     ///     which need to be searched recursively.  That job falls to
     ///     TransformTopLevelDecl.
     //----------------------------------------------------------------------
-    bool HandleTopLevelDecl(clang::DeclGroupRef D);
+    bool HandleTopLevelDecl(clang::DeclGroupRef D) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleTranslationUnit(clang::ASTContext &Ctx);
+    void HandleTranslationUnit(clang::ASTContext &Ctx) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleTagDeclDefinition(clang::TagDecl *D);
+    void HandleTagDeclDefinition(clang::TagDecl *D) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void CompleteTentativeDefinition(clang::VarDecl *D);
+    void CompleteTentativeDefinition(clang::VarDecl *D) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleVTable(clang::CXXRecordDecl *RD);
+    void HandleVTable(clang::CXXRecordDecl *RD) override;
     
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void PrintStats();
+    void PrintStats() override;
     
     //----------------------------------------------------------------------
     /// Set the Sema object to use when performing transforms, and pass it on
@@ -105,12 +105,13 @@ public:
     ///     The Sema to use.  Because Sema isn't externally visible, this class
     ///     casts it to an Action for actual use.
     //----------------------------------------------------------------------
-    void InitializeSema(clang::Sema &S);
+    void InitializeSema(clang::Sema &S) override;
     
     //----------------------------------------------------------------------
     /// Reset the Sema to NULL now that transformations are done
     //----------------------------------------------------------------------
-    void ForgetSema();
+    void ForgetSema() override;
+
 private:
     //----------------------------------------------------------------------
     /// Hunt the given Decl for FunctionDecls named $__lldb_expr, recursing
@@ -179,6 +180,6 @@ private:
     clang::Sema *m_sema;                        ///< The Sema to use.
 };
 
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_ASTResultSynthesizer_h_

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef lldb_ClangFunction_h_
-#define lldb_ClangFunction_h_
+#ifndef liblldb_ClangFunction_h_
+#define liblldb_ClangFunction_h_
 
 // C Includes
 // C++ Includes
@@ -122,8 +122,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    virtual 
-    ~ClangFunction();
+    ~ClangFunction() override;
 
     //------------------------------------------------------------------
     /// Compile the wrapper function
@@ -335,7 +334,7 @@ public:
     /// translation unit.
     //------------------------------------------------------------------
     const char *
-    Text ()
+    Text() override
     {
         return m_wrapper_function_text.c_str();
     }
@@ -346,7 +345,7 @@ public:
     /// function.
     //------------------------------------------------------------------
     const char *
-    FunctionName ()
+    FunctionName() override
     {
         return m_wrapper_function_name.c_str();
     }
@@ -356,7 +355,7 @@ public:
     /// values.  May be NULL if everything should be self-contained.
     //------------------------------------------------------------------
     ClangExpressionDeclMap *
-    DeclMap ()
+    DeclMap() override
     {
         return NULL;
     }
@@ -380,14 +379,14 @@ public:
     ///     the ASTs to after transformation.
     //------------------------------------------------------------------
     clang::ASTConsumer *
-    ASTTransformer (clang::ASTConsumer *passthrough);
+    ASTTransformer(clang::ASTConsumer *passthrough) override;
     
     //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
     /// expression.
     //------------------------------------------------------------------
     bool
-    NeedsValidation ()
+    NeedsValidation() override
     {
         return false;
     }
@@ -397,7 +396,7 @@ public:
     /// resolved.
     //------------------------------------------------------------------
     bool
-    NeedsVariableResolution ()
+    NeedsVariableResolution() override
     {
         return false;
     }
@@ -448,4 +447,4 @@ private:
 
 } // Namespace lldb_private
 
-#endif  // lldb_ClangFunction_h_
+#endif // liblldb_ClangFunction_h_

@@ -107,7 +107,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    virtual ~IRForTarget();
+    ~IRForTarget() override;
     
     //------------------------------------------------------------------
     /// Run this IR transformer on a single module
@@ -126,8 +126,8 @@ public:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    virtual bool 
-    runOnModule (llvm::Module &llvm_module);
+    bool 
+    runOnModule(llvm::Module &llvm_module) override;
     
     //------------------------------------------------------------------
     /// Interface stub
@@ -135,9 +135,9 @@ public:
     /// Implementation of the llvm::ModulePass::assignPassManager() 
     /// function.
     //------------------------------------------------------------------
-    virtual void
-    assignPassManager (llvm::PMStack &pass_mgr_stack,
-                       llvm::PassManagerType pass_mgr_type = llvm::PMT_ModulePassManager);
+    void
+    assignPassManager(llvm::PMStack &pass_mgr_stack,
+		      llvm::PassManagerType pass_mgr_type = llvm::PMT_ModulePassManager) override;
     
     //------------------------------------------------------------------
     /// Returns PMT_ModulePassManager
@@ -145,8 +145,8 @@ public:
     /// Implementation of the llvm::ModulePass::getPotentialPassManagerType() 
     /// function.
     //------------------------------------------------------------------
-    virtual llvm::PassManagerType 
-    getPotentialPassManagerType() const;
+    llvm::PassManagerType
+    getPotentialPassManagerType() const override;
 
 private:
     //------------------------------------------------------------------
@@ -742,4 +742,4 @@ private:
 
 };
 
-#endif
+#endif // liblldb_IRForTarget_h_

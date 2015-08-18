@@ -60,7 +60,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    ~ClangASTSource();
+    ~ClangASTSource() override;
     
     //------------------------------------------------------------------
     /// Interface stubs.
@@ -521,6 +521,6 @@ struct NameSearchContext {
     void AddNamedDecl (clang::NamedDecl *decl);
 };
 
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_ClangASTSource_h_

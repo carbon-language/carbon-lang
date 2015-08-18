@@ -24,7 +24,7 @@ namespace llvm {
     class Value;
 }
 
-namespace lldb_private 
+namespace lldb_private
 {
 
 class ClangExpressionDeclMap;
@@ -114,7 +114,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor
     //------------------------------------------------------------------
-    virtual ~IRDynamicChecks();
+    ~IRDynamicChecks() override;
     
     //------------------------------------------------------------------
     /// Run this IR transformer on a single module
@@ -127,18 +127,19 @@ public:
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
-    bool runOnModule(llvm::Module &M);
+    bool runOnModule(llvm::Module &M) override;
     
     //------------------------------------------------------------------
     /// Interface stub
     //------------------------------------------------------------------
     void assignPassManager(llvm::PMStack &PMS,
-                           llvm::PassManagerType T = llvm::PMT_ModulePassManager);
+                           llvm::PassManagerType T = llvm::PMT_ModulePassManager)  override;
     
     //------------------------------------------------------------------
     /// Returns PMT_ModulePassManager
     //------------------------------------------------------------------
-    llvm::PassManagerType getPotentialPassManagerType() const;
+    llvm::PassManagerType getPotentialPassManagerType() const override;
+
 private:
     //------------------------------------------------------------------
     /// A basic block-level pass to find all pointer dereferences and
@@ -164,6 +165,6 @@ private:
     DynamicCheckerFunctions    &m_checker_functions;    ///< The checker functions for the process
 };
     
-}
+} // namespace lldb_private
 
-#endif
+#endif // liblldb_IRDynamicChecks_h_

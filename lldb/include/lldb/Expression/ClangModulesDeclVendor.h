@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _liblldb_ClangModulesDeclVendor_
-#define _liblldb_ClangModulesDeclVendor_
+#ifndef liblldb_ClangModulesDeclVendor_h
+#define liblldb_ClangModulesDeclVendor_h
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ClangForward.h"
@@ -29,8 +29,7 @@ public:
     //------------------------------------------------------------------
     ClangModulesDeclVendor();
     
-    virtual
-    ~ClangModulesDeclVendor();
+    ~ClangModulesDeclVendor() override;
     
     static ClangModulesDeclVendor *
     Create(Target &target);
@@ -122,8 +121,8 @@ public:
     //------------------------------------------------------------------
     static bool
     LanguageSupportsClangModules (lldb::LanguageType language);
-    
 };
     
-}
-#endif /* defined(_lldb_ClangModulesDeclVendor_) */
+} // namespace lldb_private
+
+#endif // liblldb_ClangModulesDeclVendor_h

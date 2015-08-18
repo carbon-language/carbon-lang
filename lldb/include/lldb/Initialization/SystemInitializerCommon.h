@@ -28,11 +28,12 @@ class SystemInitializerCommon : public SystemInitializer
 {
   public:
     SystemInitializerCommon();
-    virtual ~SystemInitializerCommon();
+    ~SystemInitializerCommon() override;
 
     void Initialize() override;
     void Terminate() override;
 };
-}
 
-#endif
+} // namespace lldb_private
+
+#endif // LLDB_INITIALIZATION_SYSTEM_INITIALIZER_COMMON_H

@@ -51,8 +51,7 @@ public:
     ClangUtilityFunction (const char *text, 
                           const char *name);
     
-    virtual 
-    ~ClangUtilityFunction ();
+    ~ClangUtilityFunction() override;
 
     //------------------------------------------------------------------
     /// Install the utility function into a process
@@ -96,7 +95,7 @@ public:
     /// translation unit.
     //------------------------------------------------------------------
     const char *
-    Text ()
+    Text() override
     {
         return m_function_text.c_str();
     }
@@ -107,7 +106,7 @@ public:
     /// function.
     //------------------------------------------------------------------
     const char *
-    FunctionName ()
+    FunctionName() override
     {
         return m_function_name.c_str();
     }
@@ -117,7 +116,7 @@ public:
     /// values.  May be NULL if everything should be self-contained.
     //------------------------------------------------------------------
     ClangExpressionDeclMap *
-    DeclMap ()
+    DeclMap() override
     {
         return m_expr_decl_map.get();
     }
@@ -141,7 +140,7 @@ public:
     ///     the ASTs to after transformation.
     //------------------------------------------------------------------
     clang::ASTConsumer *
-    ASTTransformer (clang::ASTConsumer *passthrough)
+    ASTTransformer(clang::ASTConsumer *passthrough) override
     {
         return NULL;
     }
@@ -151,7 +150,7 @@ public:
     /// expression.
     //------------------------------------------------------------------
     bool
-    NeedsValidation ()
+    NeedsValidation() override
     {
         return false;
     }
@@ -161,7 +160,7 @@ public:
     /// resolved.
     //------------------------------------------------------------------
     bool
-    NeedsVariableResolution ()
+    NeedsVariableResolution() override
     {
         return false;
     }
@@ -176,4 +175,4 @@ private:
 
 } // namespace lldb_private
 
-#endif  // liblldb_ClangUtilityFunction_h_
+#endif // liblldb_ClangUtilityFunction_h_
