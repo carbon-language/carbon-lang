@@ -41,7 +41,9 @@ bar:
 # Test R_MIPS_26 relocation.
 # rtdyld-check:  decode_operand(insn1, 0)[25:0] = foo
 insn1:
+	.option pic0
 	jal   foo
+	.option pic2
 	nop
 
 # Test R_MIPS_PC16 relocation.
