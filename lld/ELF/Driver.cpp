@@ -25,8 +25,8 @@ namespace elf2 {
 Configuration *Config;
 
 void link(ArrayRef<const char *> Args) {
-  auto C = make_unique<Configuration>();
-  Config = C.get();
+  Configuration C;
+  Config = &C;
   LinkerDriver().link(Args.slice(1));
 }
 

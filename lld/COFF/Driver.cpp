@@ -44,10 +44,10 @@ Configuration *Config;
 LinkerDriver *Driver;
 
 void link(llvm::ArrayRef<const char *> Args) {
-  auto C = make_unique<Configuration>();
-  Config = C.get();
-  auto D = make_unique<LinkerDriver>();
-  Driver = D.get();
+  Configuration C;
+  LinkerDriver D;
+  Config = &C;
+  Driver = &D;
   return Driver->link(Args);
 }
 
