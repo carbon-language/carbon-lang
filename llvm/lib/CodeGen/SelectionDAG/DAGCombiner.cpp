@@ -4956,36 +4956,46 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
     return SDValue(N, 0);  // Don't revisit N.
 
   if (VT0 == MVT::i1) {
-    if (TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
-      // select (and Cond0, Cond1), X, Y
-      //   -> select Cond0, (select Cond1, X, Y), Y
-      if (N0->getOpcode() == ISD::AND && N0->hasOneUse()) {
-        SDValue Cond0 = N0->getOperand(0);
-        SDValue Cond1 = N0->getOperand(1);
-        SDValue InnerSelect = DAG.getNode(ISD::SELECT, SDLoc(N),
-                                          N1.getValueType(), Cond1, N1, N2);
+    // The code in this block deals with the following 2 equivalences:
+    //    select(C0|C1, x, y) <=> select(C0, x, select(C1, x, y))
+    //    select(C0&C1, x, y) <=> select(C0, select(C1, x, y), y)
+    // The target can specify its prefered form with the
+    // shouldNormalizeToSelectSequence() callback. However we always transform
+    // to the right anyway if we find the inner select exists in the DAG anyway
+    // and we always transform to the left side if we know that we can further
+    // optimize the combination of the conditions.
+    bool normalizeToSequence
+      = TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT);
+    // select (and Cond0, Cond1), X, Y
+    //   -> select Cond0, (select Cond1, X, Y), Y
+    if (N0->getOpcode() == ISD::AND && N0->hasOneUse()) {
+      SDValue Cond0 = N0->getOperand(0);
+      SDValue Cond1 = N0->getOperand(1);
+      SDValue InnerSelect = DAG.getNode(ISD::SELECT, SDLoc(N),
+                                        N1.getValueType(), Cond1, N1, N2);
+      if (normalizeToSequence || !InnerSelect.use_empty())
         return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Cond0,
                            InnerSelect, N2);
-      }
-      // select (or Cond0, Cond1), X, Y -> select Cond0, X, (select Cond1, X, Y)
-      if (N0->getOpcode() == ISD::OR && N0->hasOneUse()) {
-        SDValue Cond0 = N0->getOperand(0);
-        SDValue Cond1 = N0->getOperand(1);
-        SDValue InnerSelect = DAG.getNode(ISD::SELECT, SDLoc(N),
-                                          N1.getValueType(), Cond1, N1, N2);
+    }
+    // select (or Cond0, Cond1), X, Y -> select Cond0, X, (select Cond1, X, Y)
+    if (N0->getOpcode() == ISD::OR && N0->hasOneUse()) {
+      SDValue Cond0 = N0->getOperand(0);
+      SDValue Cond1 = N0->getOperand(1);
+      SDValue InnerSelect = DAG.getNode(ISD::SELECT, SDLoc(N),
+                                        N1.getValueType(), Cond1, N1, N2);
+      if (normalizeToSequence || !InnerSelect.use_empty())
         return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Cond0, N1,
                            InnerSelect);
-      }
     }
 
     // select Cond0, (select Cond1, X, Y), Y -> select (and Cond0, Cond1), X, Y
-    if (N1->getOpcode() == ISD::SELECT) {
+    if (N1->getOpcode() == ISD::SELECT && N1->hasOneUse()) {
       SDValue N1_0 = N1->getOperand(0);
       SDValue N1_1 = N1->getOperand(1);
       SDValue N1_2 = N1->getOperand(2);
       if (N1_2 == N2 && N0.getValueType() == N1_0.getValueType()) {
         // Create the actual and node if we can generate good code for it.
-        if (!TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
+        if (!normalizeToSequence) {
           SDValue And = DAG.getNode(ISD::AND, SDLoc(N), N0.getValueType(),
                                     N0, N1_0);
           return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), And,
@@ -4998,13 +5008,13 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
       }
     }
     // select Cond0, X, (select Cond1, X, Y) -> select (or Cond0, Cond1), X, Y
-    if (N2->getOpcode() == ISD::SELECT) {
+    if (N2->getOpcode() == ISD::SELECT && N2->hasOneUse()) {
       SDValue N2_0 = N2->getOperand(0);
       SDValue N2_1 = N2->getOperand(1);
       SDValue N2_2 = N2->getOperand(2);
       if (N2_1 == N1 && N0.getValueType() == N2_0.getValueType()) {
         // Create the actual or node if we can generate good code for it.
-        if (!TLI.shouldNormalizeToSelectSequence(*DAG.getContext(), VT)) {
+        if (!normalizeToSequence) {
           SDValue Or = DAG.getNode(ISD::OR, SDLoc(N), N0.getValueType(),
                                    N0, N2_0);
           return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(), Or,
