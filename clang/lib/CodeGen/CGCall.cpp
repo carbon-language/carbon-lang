@@ -2851,7 +2851,7 @@ void CodeGenFunction::EmitCallArgs(
 
 namespace {
 
-struct DestroyUnpassedArg : EHScopeStack::Cleanup {
+struct DestroyUnpassedArg final : EHScopeStack::Cleanup {
   DestroyUnpassedArg(llvm::Value *Addr, QualType Ty)
       : Addr(Addr), Ty(Ty) {}
 

@@ -1104,7 +1104,7 @@ RValue CodeGenFunction::EmitBuiltinNewDeleteCall(const FunctionProtoType *Type,
 namespace {
   /// A cleanup to call the given 'operator delete' function upon
   /// abnormal exit from a new expression.
-  class CallDeleteDuringNew : public EHScopeStack::Cleanup {
+  class CallDeleteDuringNew final : public EHScopeStack::Cleanup {
     size_t NumPlacementArgs;
     const FunctionDecl *OperatorDelete;
     llvm::Value *Ptr;
@@ -1157,7 +1157,7 @@ namespace {
   /// A cleanup to call the given 'operator delete' function upon
   /// abnormal exit from a new expression when the new expression is
   /// conditional.
-  class CallDeleteDuringConditionalNew : public EHScopeStack::Cleanup {
+  class CallDeleteDuringConditionalNew final : public EHScopeStack::Cleanup {
     size_t NumPlacementArgs;
     const FunctionDecl *OperatorDelete;
     DominatingValue<RValue>::saved_type Ptr;
@@ -1422,7 +1422,7 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
 
 namespace {
   /// Calls the given 'operator delete' on a single object.
-  struct CallObjectDelete : EHScopeStack::Cleanup {
+  struct CallObjectDelete final : EHScopeStack::Cleanup {
     llvm::Value *Ptr;
     const FunctionDecl *OperatorDelete;
     QualType ElementType;
@@ -1507,7 +1507,7 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
 
 namespace {
   /// Calls the given 'operator delete' on an array of objects.
-  struct CallArrayDelete : EHScopeStack::Cleanup {
+  struct CallArrayDelete final : EHScopeStack::Cleanup {
     llvm::Value *Ptr;
     const FunctionDecl *OperatorDelete;
     llvm::Value *NumElements;

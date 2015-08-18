@@ -345,7 +345,7 @@ llvm::Value *CodeGenFunction::GetVTTParameter(GlobalDecl GD,
 
 namespace {
   /// Call the destructor for a direct base class.
-  struct CallBaseDtor : EHScopeStack::Cleanup {
+  struct CallBaseDtor final : EHScopeStack::Cleanup {
     const CXXRecordDecl *BaseClass;
     bool BaseIsVirtual;
     CallBaseDtor(const CXXRecordDecl *Base, bool BaseIsVirtual)
@@ -1526,7 +1526,7 @@ void CodeGenFunction::emitImplicitAssignmentOperatorBody(FunctionArgList &Args) 
 
 namespace {
   /// Call the operator delete associated with the current destructor.
-  struct CallDtorDelete : EHScopeStack::Cleanup {
+  struct CallDtorDelete final : EHScopeStack::Cleanup {
     CallDtorDelete() {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) override {
@@ -1537,7 +1537,7 @@ namespace {
     }
   };
 
-  struct CallDtorDeleteConditional : EHScopeStack::Cleanup {
+  struct CallDtorDeleteConditional final : EHScopeStack::Cleanup {
     llvm::Value *ShouldDeleteCondition;
   public:
     CallDtorDeleteConditional(llvm::Value *ShouldDeleteCondition)
@@ -1563,7 +1563,7 @@ namespace {
     }
   };
 
-  class DestroyField  : public EHScopeStack::Cleanup {
+  class DestroyField  final : public EHScopeStack::Cleanup {
     const FieldDecl *field;
     CodeGenFunction::Destroyer *destroyer;
     bool useEHCleanupForArray;
@@ -1933,7 +1933,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
 }
 
 namespace {
-  struct CallDelegatingCtorDtor : EHScopeStack::Cleanup {
+  struct CallDelegatingCtorDtor final : EHScopeStack::Cleanup {
     const CXXDestructorDecl *Dtor;
     llvm::Value *Addr;
     CXXDtorType Type;
@@ -1987,7 +1987,7 @@ void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
 }
 
 namespace {
-  struct CallLocalDtor : EHScopeStack::Cleanup {
+  struct CallLocalDtor final : EHScopeStack::Cleanup {
     const CXXDestructorDecl *Dtor;
     llvm::Value *Addr;
 

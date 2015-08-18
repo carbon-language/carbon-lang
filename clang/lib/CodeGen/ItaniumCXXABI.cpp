@@ -1766,7 +1766,7 @@ static llvm::Constant *getGuardAbortFn(CodeGenModule &CGM,
 }
 
 namespace {
-  struct CallGuardAbort : EHScopeStack::Cleanup {
+  struct CallGuardAbort final : EHScopeStack::Cleanup {
     llvm::GlobalVariable *Guard;
     CallGuardAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
 
@@ -3367,7 +3367,7 @@ namespace {
   ///     of the caught type, so we have to assume the actual thrown
   ///     exception type might have a throwing destructor, even if the
   ///     caught type's destructor is trivial or nothrow.
-  struct CallEndCatch : EHScopeStack::Cleanup {
+  struct CallEndCatch final : EHScopeStack::Cleanup {
     CallEndCatch(bool MightThrow) : MightThrow(MightThrow) {}
     bool MightThrow;
 

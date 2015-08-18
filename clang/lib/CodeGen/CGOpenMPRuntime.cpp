@@ -1246,7 +1246,7 @@ llvm::Value *CGOpenMPRuntime::getCriticalRegionLock(StringRef CriticalName) {
 }
 
 namespace {
-template <size_t N> class CallEndCleanup : public EHScopeStack::Cleanup {
+template <size_t N> class CallEndCleanup final : public EHScopeStack::Cleanup {
   llvm::Value *Callee;
   llvm::Value *Args[N];
 

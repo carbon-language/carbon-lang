@@ -152,7 +152,7 @@ namespace {
     llvm::Constant *TypeInfo;
   };
 
-  struct CallObjCEndCatch : EHScopeStack::Cleanup {
+  struct CallObjCEndCatch final : EHScopeStack::Cleanup {
     CallObjCEndCatch(bool MightThrow, llvm::Value *Fn) :
       MightThrow(MightThrow), Fn(Fn) {}
     bool MightThrow;
@@ -297,7 +297,7 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
 }
 
 namespace {
-  struct CallSyncExit : EHScopeStack::Cleanup {
+  struct CallSyncExit final : EHScopeStack::Cleanup {
     llvm::Value *SyncExitFn;
     llvm::Value *SyncArg;
     CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)

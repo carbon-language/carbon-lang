@@ -851,7 +851,7 @@ void MicrosoftCXXABI::emitRethrow(CodeGenFunction &CGF, bool isNoReturn) {
 }
 
 namespace {
-struct CallEndCatchMSVC : EHScopeStack::Cleanup {
+struct CallEndCatchMSVC final : EHScopeStack::Cleanup {
   llvm::CatchPadInst *CPI;
 
   CallEndCatchMSVC(llvm::CatchPadInst *CPI) : CPI(CPI) {}
@@ -2252,7 +2252,7 @@ static llvm::Constant *getInitThreadAbortFn(CodeGenModule &CGM) {
 }
 
 namespace {
-struct ResetGuardBit : EHScopeStack::Cleanup {
+struct ResetGuardBit final : EHScopeStack::Cleanup {
   llvm::GlobalVariable *Guard;
   unsigned GuardNum;
   ResetGuardBit(llvm::GlobalVariable *Guard, unsigned GuardNum)
@@ -2269,7 +2269,7 @@ struct ResetGuardBit : EHScopeStack::Cleanup {
   }
 };
 
-struct CallInitThreadAbort : EHScopeStack::Cleanup {
+struct CallInitThreadAbort final : EHScopeStack::Cleanup {
   llvm::GlobalVariable *Guard;
   CallInitThreadAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
 

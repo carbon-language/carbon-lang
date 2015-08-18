@@ -3421,7 +3421,7 @@ void CGObjCMac::EmitSynchronizedStmt(CodeGenFunction &CGF,
 }
 
 namespace {
-  struct PerformFragileFinally : EHScopeStack::Cleanup {
+  struct PerformFragileFinally final : EHScopeStack::Cleanup {
     const Stmt &S;
     llvm::Value *SyncArgSlot;
     llvm::Value *CallTryExitVar;
