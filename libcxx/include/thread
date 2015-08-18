@@ -113,10 +113,37 @@ void sleep_for(const chrono::duration<Rep, Period>& rel_time);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _Tp> class __thread_specific_ptr;
+class _LIBCPP_TYPE_VIS __thread_struct;
+class _LIBCPP_HIDDEN __thread_struct_imp;
+class __assoc_sub_state;
+
+_LIBCPP_FUNC_VIS __thread_specific_ptr<__thread_struct>& __thread_local_data();
+
+class _LIBCPP_TYPE_VIS __thread_struct
+{
+    __thread_struct_imp* __p_;
+
+    __thread_struct(const __thread_struct&);
+    __thread_struct& operator=(const __thread_struct&);
+public:
+    __thread_struct();
+    ~__thread_struct();
+
+    void notify_all_at_thread_exit(condition_variable*, mutex*);
+    void __make_ready_at_thread_exit(__assoc_sub_state*);
+};
+
 template <class _Tp>
 class __thread_specific_ptr
 {
     pthread_key_t __key_;
+
+     // Only __thread_local_data() may construct a __thread_specific_ptr
+     // and only with _Tp == __thread_struct.
+    static_assert(is_same<_Tp, __thread_struct>::value, "");
+    __thread_specific_ptr();
+    friend _LIBCPP_FUNC_VIS __thread_specific_ptr<__thread_struct>& __thread_local_data();
 
     __thread_specific_ptr(const __thread_specific_ptr&);
     __thread_specific_ptr& operator=(const __thread_specific_ptr&);
@@ -125,7 +152,6 @@ class __thread_specific_ptr
 public:
     typedef _Tp* pointer;
 
-    __thread_specific_ptr();
     ~__thread_specific_ptr();
 
     _LIBCPP_INLINE_VISIBILITY
@@ -159,7 +185,10 @@ __thread_specific_ptr<_Tp>::__thread_specific_ptr()
 template <class _Tp>
 __thread_specific_ptr<_Tp>::~__thread_specific_ptr()
 {
-    pthread_key_delete(__key_);
+    // __thread_specific_ptr is only created with a static storage duration
+    // so this destructor is only invoked during program termination. Invoking
+    // pthread_key_delete(__key_) may prevent other threads from deleting their
+    // thread local data. For this reason we leak the key.
 }
 
 template <class _Tp>
@@ -306,26 +335,6 @@ public:
 
     static unsigned hardware_concurrency() _NOEXCEPT;
 };
-
-class __assoc_sub_state;
-
-class _LIBCPP_HIDDEN __thread_struct_imp;
-
-class _LIBCPP_TYPE_VIS __thread_struct
-{
-    __thread_struct_imp* __p_;
-
-    __thread_struct(const __thread_struct&);
-    __thread_struct& operator=(const __thread_struct&);
-public:
-    __thread_struct();
-    ~__thread_struct();
-
-    void notify_all_at_thread_exit(condition_variable*, mutex*);
-    void __make_ready_at_thread_exit(__assoc_sub_state*);
-};
-
-_LIBCPP_FUNC_VIS __thread_specific_ptr<__thread_struct>& __thread_local_data();
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
