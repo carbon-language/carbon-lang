@@ -1637,13 +1637,14 @@ namespace {
     std::pair<unsigned,unsigned>
     EmitKeyDataLength(raw_ostream& Out, key_type_ref key, data_type_ref Data) {
       using namespace llvm::support;
-      endian::Writer<little> Writer(Out);
+      endian::Writer<little> LE(Out);
       unsigned KeyLen = strlen(key.Filename) + 1 + 8 + 8;
-      Writer.write<uint16_t>(KeyLen);
+      LE.write<uint16_t>(KeyLen);
       unsigned DataLen = 1 + 2 + 4 + 4;
-      if (Data.isModuleHeader)
-        DataLen += 4;
-      Writer.write<uint8_t>(DataLen);
+      for (auto ModInfo : HS.getModuleMap().findAllModulesForHeader(key.FE))
+        if (Writer.getLocalOrImportedSubmoduleID(ModInfo.getModule()))
+          DataLen += 4;
+      LE.write<uint8_t>(DataLen);
       return std::make_pair(KeyLen, DataLen);
     }
     
@@ -1663,11 +1664,9 @@ namespace {
       endian::Writer<little> LE(Out);
       uint64_t Start = Out.tell(); (void)Start;
       
-      unsigned char Flags = (Data.HeaderRole << 6)
-                          | (Data.isImport << 5)
-                          | (Data.isPragmaOnce << 4)
-                          | (Data.DirInfo << 2)
-                          | (Data.Resolved << 1)
+      unsigned char Flags = (Data.isImport << 4)
+                          | (Data.isPragmaOnce << 3)
+                          | (Data.DirInfo << 1)
                           | Data.IndexHeaderMapHeader;
       LE.write<uint8_t>(Flags);
       LE.write<uint16_t>(Data.NumIncludes);
@@ -1694,9 +1693,15 @@ namespace {
       }
       LE.write<uint32_t>(Offset);
 
-      if (Data.isModuleHeader) {
-        Module *Mod = HS.findModuleForHeader(key.FE).getModule();
-        LE.write<uint32_t>(Writer.getExistingSubmoduleID(Mod));
+      // FIXME: If the header is excluded, we should write out some
+      // record of that fact.
+      for (auto ModInfo : HS.getModuleMap().findAllModulesForHeader(key.FE)) {
+        if (uint32_t ModID =
+                Writer.getLocalOrImportedSubmoduleID(ModInfo.getModule())) {
+          uint32_t Value = (ModID << 2) | (unsigned)ModInfo.getRole();
+          assert((Value >> 2) == ModID && "overflow in header module info");
+          LE.write<uint32_t>(Value);
+        }
       }
 
       assert(Out.tell() - Start == DataLen && "Wrong data length");
@@ -1726,12 +1731,15 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS) {
     if (!File)
       continue;
 
-    // Use HeaderSearch's getFileInfo to make sure we get the HeaderFileInfo
-    // from the external source if it was not provided already.
-    HeaderFileInfo HFI;
-    if (!HS.tryGetFileInfo(File, HFI) ||
-        (HFI.External && Chain) ||
-        (HFI.isModuleHeader && !HFI.isCompilingModuleHeader))
+    // Get the file info. This will load info from the external source if
+    // necessary. Skip emitting this file if we have no information on it
+    // as a header file (in which case HFI will be null) or if it hasn't
+    // changed since it was loaded. Also skip it if it's for a modular header
+    // from a different module; in that case, we rely on the module(s)
+    // containing the header to provide this information.
+    const HeaderFileInfo *HFI = HS.getExistingFileInfo(File);
+    if (!HFI || (HFI->External && Chain) ||
+        (HFI->isModuleHeader && !HFI->isCompilingModuleHeader))
       continue;
 
     // Massage the file path into an appropriate form.
@@ -1745,7 +1753,7 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS) {
     }
 
     HeaderFileInfoTrait::key_type key = { File, Filename };
-    Generator.insert(key, HFI, GeneratorTrait);
+    Generator.insert(key, *HFI, GeneratorTrait);
     ++NumHeaderSearchEntries;
   }
   
@@ -2283,27 +2291,28 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   }
 }
 
-unsigned ASTWriter::getSubmoduleID(Module *Mod) {
+unsigned ASTWriter::getLocalOrImportedSubmoduleID(Module *Mod) {
   if (!Mod)
     return 0;
 
   llvm::DenseMap<Module *, unsigned>::iterator Known = SubmoduleIDs.find(Mod);
   if (Known != SubmoduleIDs.end())
     return Known->second;
-  
+
+  if (Mod->getTopLevelModule() != WritingModule)
+    return 0;
+
   return SubmoduleIDs[Mod] = NextSubmoduleID++;
 }
 
-unsigned ASTWriter::getExistingSubmoduleID(Module *Mod) const {
-  if (!Mod)
-    return 0;
-
-  llvm::DenseMap<Module *, unsigned>::const_iterator
-    Known = SubmoduleIDs.find(Mod);
-  if (Known != SubmoduleIDs.end())
-    return Known->second;
-
-  return 0;
+unsigned ASTWriter::getSubmoduleID(Module *Mod) {
+  // FIXME: This can easily happen, if we have a reference to a submodule that
+  // did not result in us loading a module file for that submodule. For
+  // instance, a cross-top-level-module 'conflict' declaration will hit this.
+  unsigned ID = getLocalOrImportedSubmoduleID(Mod);
+  assert((ID || !Mod) &&
+         "asked for module ID for non-local, non-imported module");
+  return ID;
 }
 
 /// \brief Compute the number of modules within the given tree (including the
@@ -2542,9 +2551,6 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   
   Stream.ExitBlock();
 
-  // FIXME: This can easily happen, if we have a reference to a submodule that
-  // did not result in us loading a module file for that submodule. For
-  // instance, a cross-top-level-module 'conflict' declaration will hit this.
   assert((NextSubmoduleID - FirstSubmoduleID ==
           getNumberOfModules(WritingModule)) &&
          "Wrong # of submodules; found a reference to a non-local, "

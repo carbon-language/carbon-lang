@@ -49,7 +49,8 @@ struct HeaderFileInfo {
   /// SrcMgr::CharacteristicKind.
   unsigned DirInfo : 2;
 
-  /// \brief Whether this header file info was supplied by an external source.
+  /// \brief Whether this header file info was supplied by an external source,
+  /// and has not changed since.
   unsigned External : 1;
 
   /// \brief Whether this header is part of a module.
@@ -58,10 +59,6 @@ struct HeaderFileInfo {
   /// \brief Whether this header is part of the module that we are building.
   unsigned isCompilingModuleHeader : 1;
 
-  /// \brief Whether this header is part of the module that we are building.
-  /// This is an instance of ModuleMap::ModuleHeaderRole.
-  unsigned HeaderRole : 2;
-  
   /// \brief Whether this structure is considered to already have been
   /// "resolved", meaning that it was loaded from the external source.
   unsigned Resolved : 1;
@@ -75,7 +72,7 @@ struct HeaderFileInfo {
   /// those framework headers.
   unsigned IndexHeaderMapHeader : 1;
 
-  /// \brief Whether this file had been looked up as a header.
+  /// \brief Whether this file has been looked up as a header.
   unsigned IsValid : 1;
   
   /// \brief The number of times the file has been included already.
@@ -105,7 +102,6 @@ struct HeaderFileInfo {
   HeaderFileInfo()
     : isImport(false), isPragmaOnce(false), DirInfo(SrcMgr::C_User), 
       External(false), isModuleHeader(false), isCompilingModuleHeader(false),
-      HeaderRole(ModuleMap::NormalHeader),
       Resolved(false), IndexHeaderMapHeader(false), IsValid(0),
       NumIncludes(0), ControllingMacroID(0), ControllingMacro(nullptr)  {}
 
@@ -119,16 +115,6 @@ struct HeaderFileInfo {
   bool isNonDefault() const {
     return isImport || isPragmaOnce || NumIncludes || ControllingMacro || 
       ControllingMacroID;
-  }
-
-  /// \brief Get the HeaderRole properly typed.
-  ModuleMap::ModuleHeaderRole getHeaderRole() const {
-    return static_cast<ModuleMap::ModuleHeaderRole>(HeaderRole);
-  }
-
-  /// \brief Set the HeaderRole properly typed.
-  void setHeaderRole(ModuleMap::ModuleHeaderRole Role) {
-    HeaderRole = Role;
   }
 };
 
@@ -189,7 +175,7 @@ class HeaderSearch {
   
   /// \brief All of the preprocessor-specific data about files that are
   /// included, indexed by the FileEntry's UID.
-  std::vector<HeaderFileInfo> FileInfo;
+  mutable std::vector<HeaderFileInfo> FileInfo;
 
   /// Keeps track of each lookup performed by LookupFile.
   struct LookupFileCacheInfo {
@@ -575,20 +561,20 @@ private:
   /// of the given search directory.
   void loadSubdirectoryModuleMaps(DirectoryLookup &SearchDir);
 
-  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
-  const HeaderFileInfo &getFileInfo(const FileEntry *FE) const {
-    return const_cast<HeaderSearch*>(this)->getFileInfo(FE);
-  }
-
 public:
   /// \brief Retrieve the module map.
   ModuleMap &getModuleMap() { return ModMap; }
   
+  /// \brief Retrieve the module map.
+  const ModuleMap &getModuleMap() const { return ModMap; }
+  
   unsigned header_file_size() const { return FileInfo.size(); }
 
-  /// \brief Get a \c HeaderFileInfo structure for the specified \c FileEntry,
-  /// if one exists.
-  bool tryGetFileInfo(const FileEntry *FE, HeaderFileInfo &Result) const;
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
+  HeaderFileInfo &getFileInfo(const FileEntry *FE);
+
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
+  const HeaderFileInfo *getExistingFileInfo(const FileEntry *FE) const;
 
   // Used by external tools
   typedef std::vector<DirectoryLookup>::const_iterator search_dir_iterator;
@@ -665,9 +651,6 @@ private:
   /// named directory.
   LoadModuleMapResult loadModuleMapFile(const DirectoryEntry *Dir,
                                         bool IsSystem, bool IsFramework);
-
-  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
-  HeaderFileInfo &getFileInfo(const FileEntry *FE);
 };
 
 }  // end namespace clang

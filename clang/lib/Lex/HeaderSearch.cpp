@@ -975,65 +975,72 @@ static void mergeHeaderFileInfo(HeaderFileInfo &HFI,
   
   if (OtherHFI.External) {
     HFI.DirInfo = OtherHFI.DirInfo;
-    HFI.External = OtherHFI.External;
+    HFI.External = OtherHFI.External && (!HFI.IsValid || HFI.External);
     HFI.IndexHeaderMapHeader = OtherHFI.IndexHeaderMapHeader;
   }
 
   if (HFI.Framework.empty())
     HFI.Framework = OtherHFI.Framework;
-  
-  HFI.Resolved = true;
 }
                                 
 /// getFileInfo - Return the HeaderFileInfo structure for the specified
 /// FileEntry.
 HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   if (FE->getUID() >= FileInfo.size())
-    FileInfo.resize(FE->getUID()+1);
-  
+    FileInfo.resize(FE->getUID() + 1);
+
   HeaderFileInfo &HFI = FileInfo[FE->getUID()];
-  if (ExternalSource && !HFI.Resolved)
+  // FIXME: Use a generation count to check whether this is really up to date.
+  if (ExternalSource && !HFI.Resolved) {
+    HFI.Resolved = true;
     mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(FE));
-  HFI.IsValid = 1;
+  }
+
+  HFI.IsValid = true;
+  // We have local information about this header file, so it's no longer
+  // strictly external.
+  HFI.External = false;
   return HFI;
 }
 
-bool HeaderSearch::tryGetFileInfo(const FileEntry *FE,
-                                  HeaderFileInfo &Result) const {
-  if (FE->getUID() >= FileInfo.size())
-    return false;
-  const HeaderFileInfo &HFI = FileInfo[FE->getUID()];
-  if (HFI.IsValid) {
-    Result = HFI;
-    return true;
+const HeaderFileInfo *
+HeaderSearch::getExistingFileInfo(const FileEntry *FE) const {
+  // If we have an external source, ensure we have the latest information.
+  // FIXME: Use a generation count to check whether this is really up to date.
+  if (ExternalSource &&
+      (FE->getUID() >= FileInfo.size() || !FileInfo[FE->getUID()].Resolved)) {
+    auto ExternalHFI = ExternalSource->GetHeaderFileInfo(FE);
+    if (ExternalHFI.External) {
+      if (FE->getUID() >= FileInfo.size())
+        FileInfo.resize(FE->getUID() + 1);
+      mergeHeaderFileInfo(FileInfo[FE->getUID()], ExternalHFI);
+    }
   }
-  return false;
+
+  if (FE->getUID() >= FileInfo.size())
+    return nullptr;
+
+  HeaderFileInfo &HFI = FileInfo[FE->getUID()];
+  if (!HFI.IsValid)
+    return nullptr;
+
+  return &HFI;
 }
 
 bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
   // Check if we've ever seen this file as a header.
-  if (File->getUID() >= FileInfo.size())
-    return false;
-
-  // Resolve header file info from the external source, if needed.
-  HeaderFileInfo &HFI = FileInfo[File->getUID()];
-  if (ExternalSource && !HFI.Resolved)
-    mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(File));
-
-  return HFI.isPragmaOnce || HFI.isImport ||
-      HFI.ControllingMacro || HFI.ControllingMacroID;
+  if (auto *HFI = getExistingFileInfo(File))
+    return HFI->isPragmaOnce || HFI->isImport || HFI->ControllingMacro ||
+           HFI->ControllingMacroID;
+  return false;
 }
 
 void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
                                         ModuleMap::ModuleHeaderRole Role,
                                         bool isCompilingModuleHeader) {
-  if (FE->getUID() >= FileInfo.size())
-    FileInfo.resize(FE->getUID()+1);
-
-  HeaderFileInfo &HFI = FileInfo[FE->getUID()];
-  HFI.isModuleHeader = true;
+  auto &HFI = getFileInfo(FE);
+  HFI.isModuleHeader |= !(Role & ModuleMap::TextualHeader);
   HFI.isCompilingModuleHeader |= isCompilingModuleHeader;
-  HFI.setHeaderRole(Role);
 }
 
 bool HeaderSearch::ShouldEnterIncludeFile(Preprocessor &PP,
@@ -1143,7 +1150,7 @@ HeaderSearch::findModuleForHeader(const FileEntry *File) const {
   if (ExternalSource) {
     // Make sure the external source has handled header info about this file,
     // which includes whether the file is part of a module.
-    (void)getFileInfo(File);
+    (void)getExistingFileInfo(File);
   }
   return ModMap.findModuleForHeader(File);
 }

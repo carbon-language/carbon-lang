@@ -493,7 +493,7 @@ private:
                     
   /// \brief Retrieve or create a submodule ID for this module.
   unsigned getSubmoduleID(Module *Mod);
-                    
+
   /// \brief Write the given subexpression to the bitstream.
   void WriteSubStmt(Stmt *S,
                     llvm::DenseMap<Stmt *, uint64_t> &SubStmtEntries,
@@ -767,9 +767,10 @@ public:
   /// source location.
   serialization::SubmoduleID inferSubmoduleIDFromLocation(SourceLocation Loc);
 
-  /// \brief Retrieve a submodule ID for this module.
-  /// Returns 0 If no ID has been associated with the module.
-  unsigned getExistingSubmoduleID(Module *Mod) const;
+  /// \brief Retrieve or create a submodule ID for this module, or return 0 if
+  /// the submodule is neither local (a submodle of the currently-written module)
+  /// nor from an imported module.
+  unsigned getLocalOrImportedSubmoduleID(Module *Mod);
 
   /// \brief Note that the identifier II occurs at the given offset
   /// within the identifier table.

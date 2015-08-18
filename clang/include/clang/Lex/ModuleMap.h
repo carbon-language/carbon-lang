@@ -112,6 +112,13 @@ public:
     KnownHeader() : Storage(nullptr, NormalHeader) { }
     KnownHeader(Module *M, ModuleHeaderRole Role) : Storage(M, Role) { }
 
+    friend bool operator==(const KnownHeader &A, const KnownHeader &B) {
+      return A.Storage == B.Storage;
+    }
+    friend bool operator!=(const KnownHeader &A, const KnownHeader &B) {
+      return A.Storage != B.Storage;
+    }
+
     /// \brief Retrieve the module the header is stored in.
     Module *getModule() const { return Storage.getPointer(); }
 
@@ -242,6 +249,10 @@ private:
   KnownHeader findHeaderInUmbrellaDirs(const FileEntry *File,
                     SmallVectorImpl<const DirectoryEntry *> &IntermediateDirs);
 
+  /// \brief Given that \p File is not in the Headers map, look it up within
+  /// umbrella directories and find or create a module for it.
+  KnownHeader findOrCreateModuleForHeaderInUmbrellaDir(const FileEntry *File);
+
   /// \brief A convenience method to determine if \p File is (possibly nested)
   /// in an umbrella directory.
   bool isHeaderInUmbrellaDirs(const FileEntry *File) {
@@ -294,6 +305,14 @@ public:
   /// given header file.  The KnownHeader is default constructed to indicate
   /// that no module owns this header file.
   KnownHeader findModuleForHeader(const FileEntry *File);
+
+  /// \brief Retrieve all the modules that contain the given header file. This
+  /// may not include umbrella modules, nor information from external sources,
+  /// if they have not yet been inferred / loaded.
+  ///
+  /// Typically, \ref findModuleForHeader should be used instead, as it picks
+  /// the preferred module for the header.
+  ArrayRef<KnownHeader> findAllModulesForHeader(const FileEntry *File) const;
 
   /// \brief Reports errors if a module must not include a specific file.
   ///
