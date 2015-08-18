@@ -8,7 +8,7 @@ set(SAFESTACK_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
 if(APPLE)
   # Build universal binary on APPLE.
-  foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
+  foreach (os osx)
     add_compiler_rt_darwin_runtime(clang_rt.safestack_${os} ${os}
       STATIC
       ARCH ${SAFESTACK_SUPPORTED_ARCH}

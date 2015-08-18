@@ -11,7 +11,7 @@ set(PROFILE_SOURCES
   InstrProfilingUtil.c)
 
 if(APPLE)
-  foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
+  foreach (os osx)
     add_compiler_rt_darwin_runtime(clang_rt.profile_${os} ${os}
       STATIC
       ARCHS ${PROFILE_SUPPORTED_ARCH}
