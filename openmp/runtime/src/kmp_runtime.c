@@ -875,24 +875,6 @@ __kmp_reserve_threads( kmp_root_t *root, kmp_team_t *parent_team,
     KMP_DEBUG_ASSERT( root && parent_team );
 
     //
-    // Initial check to see if we should use a serialized team.
-    //
-    if ( set_nthreads == 1 ) {
-        KC_TRACE( 10, ( "__kmp_reserve_threads: T#%d reserving 1 thread; requested %d threads\n",
-                        __kmp_get_gtid(), set_nthreads ));
-        return 1;
-    }
-    if ( ( !get__nested_2(parent_team,master_tid) && (root->r.r_in_parallel
-#if OMP_40_ENABLED
-       && !enter_teams
-#endif /* OMP_40_ENABLED */
-       ) ) || ( __kmp_library == library_serial ) ) {
-        KC_TRACE( 10, ( "__kmp_reserve_threads: T#%d serializing team; requested %d threads\n",
-                        __kmp_get_gtid(), set_nthreads ));
-        return 1;
-    }
-
-    //
     // If dyn-var is set, dynamically adjust the number of desired threads,
     // according to the method specified by dynamic_mode.
     //
@@ -1720,23 +1702,47 @@ __kmp_fork_call(
     }
 #endif
 
-    /* determine how many new threads we can use */
-    __kmp_acquire_bootstrap_lock( &__kmp_forkjoin_lock );
-
     if ( parent_team->t.t_active_level >= master_th->th.th_current_task->td_icvs.max_active_levels ) {
         nthreads = 1;
     } else {
+#if OMP_40_ENABLED
+        int enter_teams = ((ap==NULL && active_level==0)||(ap && teams_level>0 && teams_level==level));
+#endif
         nthreads = master_set_numthreads ?
             master_set_numthreads : get__nproc_2( parent_team, master_tid ); // TODO: get nproc directly from current task
-        nthreads = __kmp_reserve_threads(root, parent_team, master_tid, nthreads
+
+        // Check if we need to take forkjoin lock? (no need for serialized parallel out of teams construct).
+        // This code moved here from __kmp_reserve_threads() to speedup nested serialized parallels.
+        if (nthreads > 1) {
+            if ( ( !get__nested(master_th) && (root->r.r_in_parallel
+#if OMP_40_ENABLED
+                && !enter_teams
+#endif /* OMP_40_ENABLED */
+            ) ) || ( __kmp_library == library_serial ) ) {
+                KC_TRACE( 10, ( "__kmp_fork_call: T#%d serializing team; requested %d threads\n",
+                                gtid, nthreads ));
+                nthreads = 1;
+            }
+        }
+        if ( nthreads > 1 ) {
+            /* determine how many new threads we can use */
+            __kmp_acquire_bootstrap_lock( &__kmp_forkjoin_lock );
+
+            nthreads = __kmp_reserve_threads(root, parent_team, master_tid, nthreads
 #if OMP_40_ENABLED
 /* AC: If we execute teams from parallel region (on host), then teams should be created
    but each can only have 1 thread if nesting is disabled. If teams called from serial region,
    then teams and their threads should be created regardless of the nesting setting. */
-                                         , ((ap==NULL && active_level==0) ||
-                                            (ap && teams_level>0 && teams_level==level))
+                                         , enter_teams
 #endif /* OMP_40_ENABLED */
                                          );
+            if ( nthreads == 1 ) {
+                // Free lock for single thread execution here;
+                // for multi-thread execution it will be freed later
+                // after team of threads created and initialized
+                __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
+            }
+        }
     }
     KMP_DEBUG_ASSERT( nthreads > 0 );
 
@@ -1753,7 +1759,6 @@ __kmp_fork_call(
         void * * args = (void**) KMP_ALLOCA( argc * sizeof( void * ) );
 #endif /* KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) */
 
-        __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
         KA_TRACE( 20, ("__kmp_fork_call: T#%d serializing parallel region\n", gtid ));
 
         __kmpc_serialized_parallel(loc, gtid);
