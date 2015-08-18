@@ -398,10 +398,10 @@ Value *llvm::findScalarElement(Value *V, unsigned EltNo) {
 
   // Extract a value from a vector add operation with a constant zero.
   Value *Val = nullptr; Constant *Con = nullptr;
-  if (match(V, m_Add(m_Value(Val), m_Constant(Con)))) {
-    if (Con->getAggregateElement(EltNo)->isNullValue())
-      return findScalarElement(Val, EltNo);
-  }
+  if (match(V, m_Add(m_Value(Val), m_Constant(Con))))
+    if (Constant *Elt = Con->getAggregateElement(EltNo))
+      if (Elt->isNullValue())
+        return findScalarElement(Val, EltNo);
 
   // Otherwise, we don't know.
   return nullptr;

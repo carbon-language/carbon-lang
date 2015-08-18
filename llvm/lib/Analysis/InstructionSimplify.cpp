@@ -3578,11 +3578,6 @@ static Value *SimplifyExtractElementInst(Value *Vec, Value *Idx, const Query &,
     unsigned IndexVal = IdxC->getZExtValue();
     unsigned VectorWidth = Vec->getType()->getVectorNumElements();
 
-    // If this is extracting an invalid index, turn this into undef, to avoid
-    // crashing the code below.
-    if (IndexVal >= VectorWidth)
-      return UndefValue::get(Vec->getType()->getVectorElementType());
-
     if (Value *Elt = findScalarElement(Vec, IndexVal))
       return Elt;
   }
