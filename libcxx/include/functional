@@ -1327,6 +1327,22 @@ struct __maybe_derive_from_binary_function<_Rp(_A1, _A2)>
 {
 };
 
+template <class _Fp>
+_LIBCPP_INLINE_VISIBILITY
+bool __not_null(_Fp const&) { return true; }
+
+template <class _Fp>
+_LIBCPP_INLINE_VISIBILITY
+bool __not_null(_Fp* __ptr) { return __ptr; }
+
+template <class _Ret, class _Class>
+_LIBCPP_INLINE_VISIBILITY
+bool __not_null(_Ret _Class::*__ptr) { return __ptr; }
+
+template <class _Fp>
+_LIBCPP_INLINE_VISIBILITY
+bool __not_null(function<_Fp> const& __f) { return !!__f; }
+
 } // namespace __function
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1467,28 +1483,6 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_ArgTypes...)>
     typedef __function::__base<_Rp(_ArgTypes...)> __base;
     typename aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
-
-    template <class _Fp>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const _Fp&) {return true;}
-    template <class _R2, class ..._Ap>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (*__p)(_Ap...)) {return __p;}
-    template <class _R2, class _Cp, class ..._Ap>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_Cp::*__p)(_Ap...)) {return __p;}
-    template <class _R2, class _Cp, class ..._Ap>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_Cp::*__p)(_Ap...) const) {return __p;}
-    template <class _R2, class _Cp, class ..._Ap>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_Cp::*__p)(_Ap...) volatile) {return __p;}
-    template <class _R2, class _Cp, class ..._Ap>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_Cp::*__p)(_Ap...) const volatile) {return __p;}
-    template <class _R2, class ..._Ap>
-        _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_R2(_Ap...)>& __p) {return !!__p;}
 
     template <class _Fp, bool = !is_same<_Fp, function>::value &&
                                 __invokable<_Fp&, _ArgTypes...>::value>
@@ -1654,7 +1648,7 @@ function<_Rp(_ArgTypes...)>::function(_Fp __f,
                                      >::type*)
     : __f_(0)
 {
-    if (__not_null(__f))
+    if (__function::__not_null(__f))
     {
         typedef __function::__func<_Fp, allocator<_Fp>, _Rp(_ArgTypes...)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_) && is_nothrow_copy_constructible<_Fp>::value)
@@ -1681,7 +1675,7 @@ function<_Rp(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _Fp _
     : __f_(0)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
-    if (__not_null(__f))
+    if (__function::__not_null(__f))
     {
         typedef __function::__func<_Fp, _Alloc, _Rp(_ArgTypes...)> _FF;
         typedef typename __rebind_alloc_helper<__alloc_traits, _FF>::type _Ap;
