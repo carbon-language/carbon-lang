@@ -260,12 +260,12 @@ parses a top-level expression to look like this:
 
     static void HandleTopLevelExpression() {
       // Evaluate a top-level expression into an anonymous function.
-      if (FunctionAST *F = ParseTopLevelExpr()) {
-        if (Function *LF = F->Codegen()) {
-          LF->dump();  // Dump the function for exposition purposes.
+      if (auto FnAST = ParseTopLevelExpr()) {
+        if (auto *FnIR = FnAST->Codegen()) {
+          FnIR->dump();  // Dump the function for exposition purposes.
 
           // JIT the function, returning a function pointer.
-          void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
+          void *FPtr = TheExecutionEngine->getPointerToFunction(FnIR);
 
           // Cast it to the right type (takes no arguments, returns a double) so we
           // can call it as a native function.

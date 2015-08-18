@@ -129,15 +129,16 @@ this:
     class PrototypeAST {
       std::string Name;
       std::vector<std::string> Args;
-      bool isOperator;
+      bool IsOperator;
       unsigned Precedence;  // Precedence if a binary op.
     public:
-      PrototypeAST(const std::string &name, const std::vector<std::string> &args,
-                   bool isoperator = false, unsigned prec = 0)
-      : Name(name), Args(args), isOperator(isoperator), Precedence(prec) {}
+      PrototypeAST(const std::string &name, std::vector<std::string> Args,
+                   bool IsOperator = false, unsigned Prec = 0)
+      : Name(name), Args(std::move(Args)), IsOperator(IsOperator),
+        Precedence(Prec) {}
 
-      bool isUnaryOp() const { return isOperator && Args.size() == 1; }
-      bool isBinaryOp() const { return isOperator && Args.size() == 2; }
+      bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
+      bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
 
       char getOperatorName() const {
         assert(isUnaryOp() || isBinaryOp());
@@ -161,7 +162,7 @@ user-defined operator, we need to parse it:
     /// prototype
     ///   ::= id '(' id* ')'
     ///   ::= binary LETTER number? (id, id)
-    static PrototypeAST *ParsePrototype() {
+    static std::unique_ptr<PrototypeAST> ParsePrototype() {
       std::string FnName;
 
       unsigned Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.
@@ -210,7 +211,8 @@ user-defined operator, we need to parse it:
       if (Kind && ArgNames.size() != Kind)
         return ErrorP("Invalid number of operands for operator");
 
-      return new PrototypeAST(FnName, ArgNames, Kind != 0, BinaryPrecedence);
+      return llvm::make_unique<PrototypeAST>(FnName, std::move(ArgNames),
+                                             Kind != 0, BinaryPrecedence);
     }
 
 This is all fairly straightforward parsing code, and we have already
@@ -305,10 +307,10 @@ that, we need an AST node:
     /// UnaryExprAST - Expression class for a unary operator.
     class UnaryExprAST : public ExprAST {
       char Opcode;
-      ExprAST *Operand;
+      std::unique_ptr<ExprAST> Operand;
     public:
-      UnaryExprAST(char opcode, ExprAST *operand)
-        : Opcode(opcode), Operand(operand) {}
+      UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand)
+        : Opcode(Opcode), Operand(std::move(Operand)) {}
       virtual Value *Codegen();
     };
 
@@ -322,7 +324,7 @@ simple: we'll add a new function to do it:
     /// unary
     ///   ::= primary
     ///   ::= '!' unary
-    static ExprAST *ParseUnary() {
+    static std::unique_ptr<ExprAST> ParseUnary() {
       // If the current token is not an operator, it must be a primary expr.
       if (!isascii(CurTok) || CurTok == '(' || CurTok == ',')
         return ParsePrimary();
@@ -330,9 +332,9 @@ simple: we'll add a new function to do it:
       // If this is a unary operator, read it.
       int Opc = CurTok;
       getNextToken();
-      if (ExprAST *Operand = ParseUnary())
-        return new UnaryExprAST(Opc, Operand);
-      return 0;
+      if (auto Operand = ParseUnary())
+        return llvm::unique_ptr<UnaryExprAST>(Opc, std::move(Operand));
+      return nullptr;
     }
 
 The grammar we add is pretty straightforward here. If we see a unary
@@ -350,21 +352,22 @@ call ParseUnary instead:
 
     /// binoprhs
     ///   ::= ('+' unary)*
-    static ExprAST *ParseBinOpRHS(int ExprPrec, ExprAST *LHS) {
+    static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
+                                                  std::unique_ptr<ExprAST> LHS) {
       ...
         // Parse the unary expression after the binary operator.
-        ExprAST *RHS = ParseUnary();
-        if (!RHS) return 0;
+        auto RHS = ParseUnary();
+        if (!RHS) return nullptr;
       ...
     }
     /// expression
     ///   ::= unary binoprhs
     ///
-    static ExprAST *ParseExpression() {
-      ExprAST *LHS = ParseUnary();
-      if (!LHS) return 0;
+    static std::unique_ptr<ExprAST> ParseExpression() {
+      auto LHS = ParseUnary();
+      if (!LHS) return nullptr;
 
-      return ParseBinOpRHS(0, LHS);
+      return ParseBinOpRHS(0, std::move(LHS));
     }
 
 With these two simple changes, we are now able to parse unary operators
@@ -378,7 +381,7 @@ operator code above with:
     ///   ::= id '(' id* ')'
     ///   ::= binary LETTER number? (id, id)
     ///   ::= unary LETTER (id)
-    static PrototypeAST *ParsePrototype() {
+    static std::unique_ptr<PrototypeAST> ParsePrototype() {
       std::string FnName;
 
       unsigned Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.

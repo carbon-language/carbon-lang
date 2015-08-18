@@ -75,8 +75,8 @@ statement be our "main":
 
 .. code-block:: udiff
 
-  -    PrototypeAST *Proto = new PrototypeAST("", std::vector<std::string>());
-  +    PrototypeAST *Proto = new PrototypeAST("main", std::vector<std::string>());
+  -    auto Proto = llvm::make_unique<PrototypeAST>("", std::vector<std::string>());
+  +    auto Proto = llvm::make_unique<PrototypeAST>("main", std::vector<std::string>());
 
 just with the simple change of giving it a name.
 
@@ -108,12 +108,12 @@ code is that the llvm IR goes to standard error:
   @@ -1108,17 +1108,8 @@ static void HandleExtern() {
    static void HandleTopLevelExpression() {
      // Evaluate a top-level expression into an anonymous function.
-     if (FunctionAST *F = ParseTopLevelExpr()) {
-  -    if (Function *LF = F->Codegen()) {
+     if (auto FnAST = ParseTopLevelExpr()) {
+  -    if (auto *FnIR = FnAST->Codegen()) {
   -      // We're just doing this to make sure it executes.
   -      TheExecutionEngine->finalizeObject();
   -      // JIT the function, returning a function pointer.
-  -      void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
+  -      void *FPtr = TheExecutionEngine->getPointerToFunction(FnIR);
   -
   -      // Cast it to the right type (takes no arguments, returns a double) so we
   -      // can call it as a native function.
@@ -318,7 +318,8 @@ that we pass down through when we create a new expression:
 
 .. code-block:: c++
 
-   LHS = new BinaryExprAST(BinLoc, BinOp, LHS, RHS);
+   LHS = llvm::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS),
+                                          std::move(RHS));
 
 giving us locations for each of our expressions and variables.
 

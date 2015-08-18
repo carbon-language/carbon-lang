@@ -90,10 +90,11 @@ To represent the new expression we add a new AST node for it:
 
     /// IfExprAST - Expression class for if/then/else.
     class IfExprAST : public ExprAST {
-      ExprAST *Cond, *Then, *Else;
+      std::unique<ExprAST> Cond, Then, Else;
     public:
-      IfExprAST(ExprAST *cond, ExprAST *then, ExprAST *_else)
-        : Cond(cond), Then(then), Else(_else) {}
+      IfExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then,
+                std::unique_ptr<ExprAST> Else)
+        : Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
       virtual Value *Codegen();
     };
 
@@ -109,36 +110,37 @@ First we define a new parsing function:
 .. code-block:: c++
 
     /// ifexpr ::= 'if' expression 'then' expression 'else' expression
-    static ExprAST *ParseIfExpr() {
+    static std::unique_ptr<ExprAST> ParseIfExpr() {
       getNextToken();  // eat the if.
 
       // condition.
-      ExprAST *Cond = ParseExpression();
-      if (!Cond) return 0;
+      auto Cond = ParseExpression();
+      if (!Cond) return nullptr;
 
       if (CurTok != tok_then)
         return Error("expected then");
       getNextToken();  // eat the then
 
-      ExprAST *Then = ParseExpression();
-      if (Then == 0) return 0;
+      auto Then = ParseExpression();
+      if (Then) return nullptr;
 
       if (CurTok != tok_else)
         return Error("expected else");
 
       getNextToken();
 
-      ExprAST *Else = ParseExpression();
-      if (!Else) return 0;
+      auto Else = ParseExpression();
+      if (!Else) return nullptr;
 
-      return new IfExprAST(Cond, Then, Else);
+      return llvm::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
+                                          std::move(Else));
     }
 
 Next we hook it up as a primary expression:
 
 .. code-block:: c++
 
-    static ExprAST *ParsePrimary() {
+    static std::unique_ptr<ExprAST> ParsePrimary() {
       switch (CurTok) {
       default: return Error("unknown token when expecting an expression");
       case tok_identifier: return ParseIdentifierExpr();
@@ -269,7 +271,7 @@ for ``IfExprAST``:
 
     Value *IfExprAST::Codegen() {
       Value *CondV = Cond->Codegen();
-      if (CondV == 0) return 0;
+      if (!CondV) return nullptr;
 
       // Convert condition to a bool by comparing equal to 0.0.
       CondV = Builder.CreateFCmpONE(CondV,
@@ -464,11 +466,13 @@ variable name and the constituent expressions in the node.
     /// ForExprAST - Expression class for for/in.
     class ForExprAST : public ExprAST {
       std::string VarName;
-      ExprAST *Start, *End, *Step, *Body;
+      std::unique_ptr<ExprAST> Start, End, Step, Body;
     public:
-      ForExprAST(const std::string &varname, ExprAST *start, ExprAST *end,
-                 ExprAST *step, ExprAST *body)
-        : VarName(varname), Start(start), End(end), Step(step), Body(body) {}
+      ForExprAST(const std::string &VarName, std::unique_ptr<ExprAST> Start,
+                 std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step,
+                 std::unique_ptr<ExprAST> Body)
+        : VarName(VarName), Start(std::move(Start)), End(std::move(End)),
+          Step(std::move(Step)), Body(std::move(Body)) {}
       virtual Value *Codegen();
     };
 
@@ -483,7 +487,7 @@ value to null in the AST node:
 .. code-block:: c++
 
     /// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
-    static ExprAST *ParseForExpr() {
+    static std::unique_ptr<ExprAST> ParseForExpr() {
       getNextToken();  // eat the for.
 
       if (CurTok != tok_identifier)
@@ -497,31 +501,33 @@ value to null in the AST node:
       getNextToken();  // eat '='.
 
 
-      ExprAST *Start = ParseExpression();
-      if (Start == 0) return 0;
+      auto Start = ParseExpression();
+      if (!Start) return nullptr;
       if (CurTok != ',')
         return Error("expected ',' after for start value");
       getNextToken();
 
-      ExprAST *End = ParseExpression();
-      if (End == 0) return 0;
+      auto End = ParseExpression();
+      if (!End) return nullptr;
 
       // The step value is optional.
-      ExprAST *Step = 0;
+      std::unique_ptr<ExprAST> Step;
       if (CurTok == ',') {
         getNextToken();
         Step = ParseExpression();
-        if (Step == 0) return 0;
+        if (!Step) return nullptr;
       }
 
       if (CurTok != tok_in)
         return Error("expected 'in' after for");
       getNextToken();  // eat 'in'.
 
-      ExprAST *Body = ParseExpression();
-      if (Body == 0) return 0;
+      auto Body = ParseExpression();
+      if (!Body) return nullptr;
 
-      return new ForExprAST(IdName, Start, End, Step, Body);
+      return llvm::make_unique<ForExprAST>(IdName, std::move(Start),
+                                           std::move(End), std::move(Step),
+                                           std::move(Body));
     }
 
 LLVM IR for the 'for' Loop

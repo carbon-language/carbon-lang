@@ -573,7 +573,7 @@ implement codegen for the assignment operator. This looks like:
       // Special case '=' because we don't want to emit the LHS as an expression.
       if (Op == '=') {
         // Assignment requires the LHS to be an identifier.
-        VariableExprAST *LHSE = dynamic_cast<VariableExprAST*>(LHS);
+        VariableExprAST *LHSE = dynamic_cast<VariableExprAST*>(LHS.get());
         if (!LHSE)
           return ErrorV("destination of '=' must be a variable");
 
@@ -663,12 +663,12 @@ var/in, it looks like this:
 
     /// VarExprAST - Expression class for var/in
     class VarExprAST : public ExprAST {
-      std::vector<std::pair<std::string, ExprAST*> > VarNames;
-      ExprAST *Body;
+      std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
+      std::unique_ptr<ExprAST> Body;
     public:
-      VarExprAST(const std::vector<std::pair<std::string, ExprAST*> > &varnames,
-                 ExprAST *body)
-      : VarNames(varnames), Body(body) {}
+      VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames,
+                 std::unique_ptr<ExprAST> body)
+      : VarNames(std::move(VarNames)), Body(std::move(Body)) {}
 
       virtual Value *Codegen();
     };
@@ -690,7 +690,7 @@ do is add it as a primary expression:
     ///   ::= ifexpr
     ///   ::= forexpr
     ///   ::= varexpr
-    static ExprAST *ParsePrimary() {
+    static std::unique_ptr<ExprAST> ParsePrimary() {
       switch (CurTok) {
       default: return Error("unknown token when expecting an expression");
       case tok_identifier: return ParseIdentifierExpr();
@@ -708,10 +708,10 @@ Next we define ParseVarExpr:
 
     /// varexpr ::= 'var' identifier ('=' expression)?
     //                    (',' identifier ('=' expression)?)* 'in' expression
-    static ExprAST *ParseVarExpr() {
+    static std::unique_ptr<ExprAST> ParseVarExpr() {
       getNextToken();  // eat the var.
 
-      std::vector<std::pair<std::string, ExprAST*> > VarNames;
+      std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
 
       // At least one variable name is required.
       if (CurTok != tok_identifier)
@@ -727,15 +727,15 @@ into the local ``VarNames`` vector.
         getNextToken();  // eat identifier.
 
         // Read the optional initializer.
-        ExprAST *Init = 0;
+        std::unique_ptr<ExprAST> Init;
         if (CurTok == '=') {
           getNextToken(); // eat the '='.
 
           Init = ParseExpression();
-          if (Init == 0) return 0;
+          if (!Init) return nullptr;
         }
 
-        VarNames.push_back(std::make_pair(Name, Init));
+        VarNames.push_back(std::make_pair(Name, std::move(Init)));
 
         // End of var list, exit loop.
         if (CurTok != ',') break;
@@ -755,10 +755,11 @@ AST node:
         return Error("expected 'in' keyword after 'var'");
       getNextToken();  // eat 'in'.
 
-      ExprAST *Body = ParseExpression();
-      if (Body == 0) return 0;
+      auto Body = ParseExpression();
+      if (!Body) return nullptr;
 
-      return new VarExprAST(VarNames, Body);
+      return llvm::make_unique<VarExprAST>(std::move(VarNames),
+                                           std::move(Body));
     }
 
 Now that we can parse and represent the code, we need to support
@@ -774,7 +775,7 @@ emission of LLVM IR for it. This code starts out with:
       // Register all variables and emit their initializer.
       for (unsigned i = 0, e = VarNames.size(); i != e; ++i) {
         const std::string &VarName = VarNames[i].first;
-        ExprAST *Init = VarNames[i].second;
+        ExprAST *Init = VarNames[i].second.get();
 
 Basically it loops over all the variables, installing them one at a
 time. For each variable we put into the symbol table, we remember the

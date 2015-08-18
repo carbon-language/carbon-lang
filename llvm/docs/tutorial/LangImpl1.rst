@@ -25,7 +25,7 @@ It is useful to point out ahead of time that this tutorial is really
 about teaching compiler techniques and LLVM specifically, *not* about
 teaching modern and sane software engineering principles. In practice,
 this means that we'll take a number of shortcuts to simplify the
-exposition. For example, the code leaks memory, uses global variables
+exposition. For example, the code uses global variables
 all over the place, doesn't use nice design patterns like
 `visitors <http://en.wikipedia.org/wiki/Visitor_pattern>`_, etc... but
 it is very simple. If you dig in and use the code as a basis for future

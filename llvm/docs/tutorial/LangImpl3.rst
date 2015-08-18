@@ -42,7 +42,7 @@ class:
     class NumberExprAST : public ExprAST {
       double Val;
     public:
-      NumberExprAST(double val) : Val(val) {}
+      NumberExprAST(double Val) : Val(Val) {}
       virtual Value *Codegen();
     };
     ...
