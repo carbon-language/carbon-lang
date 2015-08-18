@@ -1888,6 +1888,9 @@ protected:
     virtual const string_type& __r() const;
     virtual const string_type& __x() const;
     virtual const string_type& __X() const;
+
+    _LIBCPP_ALWAYS_INLINE
+    ~__time_get_c_storage() {}
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
