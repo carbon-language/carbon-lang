@@ -492,16 +492,12 @@ static void trackRegDefsUses(const MachineInstr *MI, BitVector &ModifiedRegs,
 }
 
 static bool inBoundsForPair(bool IsUnscaled, int Offset, int OffsetStride) {
-  if (!IsUnscaled && (Offset > 63 || Offset < -64))
-    return false;
-  if (IsUnscaled) {
-    // Convert the byte-offset used by unscaled into an "element" offset used
-    // by the scaled pair load/store instructions.
-    int ElemOffset = Offset / OffsetStride;
-    if (ElemOffset > 63 || ElemOffset < -64)
-      return false;
-  }
-  return true;
+  // Convert the byte-offset used by unscaled into an "element" offset used
+  // by the scaled pair load/store instructions.
+  if (IsUnscaled)
+    Offset /= OffsetStride;
+
+  return Offset <= 63 && Offset >= -64;
 }
 
 // Do alignment, specialized to power of 2 and for signed ints,
