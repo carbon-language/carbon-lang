@@ -715,7 +715,7 @@ void Sema::EndOpenMPDSABlock(Stmt *CurDirective) {
             continue;
           }
           auto *VD = cast<VarDecl>(cast<DeclRefExpr>(DE)->getDecl());
-          QualType Type = VD->getType();
+          QualType Type = VD->getType().getNonReferenceType();
           auto DVar = DSAStack->getTopDSA(VD, false);
           if (DVar.CKind == OMPC_lastprivate) {
             // Generate helper private variable and initialize it with the
@@ -5363,16 +5363,7 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
                             diag::err_omp_private_incomplete_type)) {
       continue;
     }
-    if (Type->isReferenceType()) {
-      Diag(ELoc, diag::err_omp_clause_ref_type_arg)
-          << getOpenMPClauseName(OMPC_private) << Type;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
-      continue;
-    }
+    Type = Type.getNonReferenceType();
 
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct]
@@ -5507,23 +5498,7 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
                             diag::err_omp_firstprivate_incomplete_type)) {
       continue;
     }
-    if (Type->isReferenceType()) {
-      if (IsImplicitClause) {
-        Diag(ImplicitClauseLoc,
-             diag::err_omp_task_predetermined_firstprivate_ref_type_arg)
-            << Type;
-        Diag(RefExpr->getExprLoc(), diag::note_used_here);
-      } else {
-        Diag(ELoc, diag::err_omp_clause_ref_type_arg)
-            << getOpenMPClauseName(OMPC_firstprivate) << Type;
-      }
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
-      continue;
-    }
+    Type = Type.getNonReferenceType();
 
     // OpenMP [2.9.3.4, Restrictions, C/C++, p.1]
     //  A variable of class type (or array thereof) that appears in a private
@@ -5741,16 +5716,7 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
                             diag::err_omp_lastprivate_incomplete_type)) {
       continue;
     }
-    if (Type->isReferenceType()) {
-      Diag(ELoc, diag::err_omp_clause_ref_type_arg)
-          << getOpenMPClauseName(OMPC_lastprivate) << Type;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
-      continue;
-    }
+    Type = Type.getNonReferenceType();
 
     // OpenMP [2.14.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct]
@@ -6353,12 +6319,14 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
                                          SourceLocation ColonLoc,
                                          SourceLocation EndLoc) {
   SmallVector<Expr *, 8> Vars;
+  SmallVector<Expr *, 8> Privates;
   SmallVector<Expr *, 8> Inits;
   for (auto &RefExpr : VarList) {
     assert(RefExpr && "NULL expr in OpenMP linear clause.");
     if (isa<DependentScopeDeclRefExpr>(RefExpr)) {
       // It will be analyzed later.
       Vars.push_back(RefExpr);
+      Privates.push_back(nullptr);
       Inits.push_back(nullptr);
       continue;
     }
@@ -6401,6 +6369,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
     if (QType->isDependentType() || QType->isInstantiationDependentType()) {
       // It will be analyzed later.
       Vars.push_back(DE);
+      Privates.push_back(nullptr);
       Inits.push_back(nullptr);
       continue;
     }
@@ -6410,16 +6379,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
                             diag::err_omp_linear_incomplete_type)) {
       continue;
     }
-    if (QType->isReferenceType()) {
-      Diag(ELoc, diag::err_omp_clause_ref_type_arg)
-          << getOpenMPClauseName(OMPC_linear) << QType;
-      bool IsDecl =
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(VD->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << VD;
-      continue;
-    }
+    QType = QType.getNonReferenceType();
 
     // A list item must not be const-qualified.
     if (QType.isConstant(Context)) {
@@ -6447,6 +6407,10 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
       continue;
     }
 
+    // Build private copy of original var.
+    auto *Private = buildVarDecl(*this, ELoc, QType, VD->getName());
+    auto *PrivateRef = buildDeclRefExpr(
+        *this, Private, DE->getType().getUnqualifiedType(), DE->getExprLoc());
     // Build var to save initial value.
     VarDecl *Init = buildVarDecl(*this, ELoc, QType, ".linear.start");
     AddInitializerToDecl(Init, DefaultLvalueConversion(DE).get(),
@@ -6455,6 +6419,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
         *this, Init, DE->getType().getUnqualifiedType(), DE->getExprLoc());
     DSAStack->addDSA(VD, DE, OMPC_linear);
     Vars.push_back(DE);
+    Privates.push_back(PrivateRef);
     Inits.push_back(InitRef);
   }
 
@@ -6495,7 +6460,7 @@ OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
   }
 
   return OMPLinearClause::Create(Context, StartLoc, LParenLoc, ColonLoc, EndLoc,
-                                 Vars, Inits, StepExpr, CalcStepExpr);
+                                 Vars, Privates, Inits, StepExpr, CalcStepExpr);
 }
 
 static bool FinishOpenMPLinearClause(OMPLinearClause &Clause, DeclRefExpr *IV,
@@ -6514,25 +6479,26 @@ static bool FinishOpenMPLinearClause(OMPLinearClause &Clause, DeclRefExpr *IV,
     Step = cast<BinaryOperator>(CalcStep)->getLHS();
   bool HasErrors = false;
   auto CurInit = Clause.inits().begin();
+  auto CurPrivate = Clause.privates().begin();
   for (auto &RefExpr : Clause.varlists()) {
     Expr *InitExpr = *CurInit;
 
     // Build privatized reference to the current linear var.
     auto DE = cast<DeclRefExpr>(RefExpr);
-    auto PrivateRef =
+    auto CapturedRef =
         buildDeclRefExpr(SemaRef, cast<VarDecl>(DE->getDecl()),
                          DE->getType().getUnqualifiedType(), DE->getExprLoc(),
                          /*RefersToCapture=*/true);
 
     // Build update: Var = InitExpr + IV * Step
     ExprResult Update =
-        BuildCounterUpdate(SemaRef, S, RefExpr->getExprLoc(), PrivateRef,
+        BuildCounterUpdate(SemaRef, S, RefExpr->getExprLoc(), *CurPrivate,
                            InitExpr, IV, Step, /* Subtract */ false);
     Update = SemaRef.ActOnFinishFullExpr(Update.get());
 
     // Build final: Var = InitExpr + NumIterations * Step
     ExprResult Final =
-        BuildCounterUpdate(SemaRef, S, RefExpr->getExprLoc(), PrivateRef,
+        BuildCounterUpdate(SemaRef, S, RefExpr->getExprLoc(), CapturedRef,
                            InitExpr, NumIterations, Step, /* Subtract */ false);
     Final = SemaRef.ActOnFinishFullExpr(Final.get());
     if (!Update.isUsable() || !Final.isUsable()) {
@@ -6543,7 +6509,7 @@ static bool FinishOpenMPLinearClause(OMPLinearClause &Clause, DeclRefExpr *IV,
       Updates.push_back(Update.get());
       Finals.push_back(Final.get());
     }
-    ++CurInit;
+    ++CurInit, ++CurPrivate;
   }
   Clause.setUpdates(Updates);
   Clause.setFinals(Finals);
@@ -6802,7 +6768,8 @@ OMPClause *Sema::ActOnOpenMPCopyprivateClause(ArrayRef<Expr *> VarList,
     //  A variable of class type (or array thereof) that appears in a
     //  copyin clause requires an accessible, unambiguous copy assignment
     //  operator for the class type.
-    Type = Context.getBaseElementType(Type).getUnqualifiedType();
+    Type = Context.getBaseElementType(Type.getNonReferenceType())
+               .getUnqualifiedType();
     auto *SrcVD =
         buildVarDecl(*this, DE->getLocStart(), Type, ".copyprivate.src");
     auto *PseudoSrcExpr =

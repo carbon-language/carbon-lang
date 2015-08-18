@@ -118,7 +118,7 @@ int foomain(I argc, C **argv) {
   I e(4);
   I g(5);
   int i;
-  int &j = i;                   // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel for linear // expected-error {{expected '(' after 'linear'}}
   for (int k = 0; k < argc; ++k)
     ++k;
@@ -170,7 +170,7 @@ int foomain(I argc, C **argv) {
       v += i;
     }
   }
-#pragma omp parallel for linear(j) // expected-error {{arguments of OpenMP clause 'linear' cannot be of reference type}}
+#pragma omp parallel for linear(j)
   for (int k = 0; k < argc; ++k)
     ++k;
   int v = 0;
@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
   S4 e(4); // expected-note {{'e' defined here}}
   S5 g(5); // expected-note {{'g' defined here}}
   int i;
-  int &j = i;                   // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel for linear // expected-error {{expected '(' after 'linear'}}
   for (int k = 0; k < argc; ++k)
     ++k;
@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
       i += 4;
     }
   }
-#pragma omp parallel for linear(j) // expected-error {{arguments of OpenMP clause 'linear' cannot be of reference type 'int &'}}
+#pragma omp parallel for linear(j)
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel for linear(i)

@@ -1685,14 +1685,21 @@ class OMPLinearClause : public OMPVarListClause<OMPLinearClause> {
   /// expressions - linear step and a helper to calculate it before the
   /// loop body (used when the linear step is not constant):
   ///
-  /// { Vars[] /* in OMPVarListClause */; Inits[]; Updates[]; Finals[];
-  ///   Step; CalcStep; }
+  /// { Vars[] /* in OMPVarListClause */; Privates[]; Inits[]; Updates[];
+  /// Finals[]; Step; CalcStep; }
   ///
-  MutableArrayRef<Expr *> getInits() {
+  MutableArrayRef<Expr *> getPrivates() {
     return MutableArrayRef<Expr *>(varlist_end(), varlist_size());
   }
-  ArrayRef<const Expr *> getInits() const {
+  ArrayRef<const Expr *> getPrivates() const {
     return llvm::makeArrayRef(varlist_end(), varlist_size());
+  }
+
+  MutableArrayRef<Expr *> getInits() {
+    return MutableArrayRef<Expr *>(getPrivates().end(), varlist_size());
+  }
+  ArrayRef<const Expr *> getInits() const {
+    return llvm::makeArrayRef(getPrivates().end(), varlist_size());
   }
 
   /// \brief Sets the list of update expressions for linear variables.
@@ -1711,6 +1718,10 @@ class OMPLinearClause : public OMPVarListClause<OMPLinearClause> {
     return llvm::makeArrayRef(getUpdates().end(), varlist_size());
   }
 
+  /// \brief Sets the list of the copies of original linear variables.
+  /// \param PL List of expressions.
+  void setPrivates(ArrayRef<Expr *> PL);
+
   /// \brief Sets the list of the initial values for linear variables.
   /// \param IL List of expressions.
   void setInits(ArrayRef<Expr *> IL);
@@ -1725,14 +1736,14 @@ public:
   /// \param ColonLoc Location of ':'.
   /// \param EndLoc Ending location of the clause.
   /// \param VL List of references to the variables.
+  /// \param PL List of private copies of original variables.
   /// \param IL List of initial values for the variables.
   /// \param Step Linear step.
   /// \param CalcStep Calculation of the linear step.
-  static OMPLinearClause *Create(const ASTContext &C, SourceLocation StartLoc,
-                                 SourceLocation LParenLoc,
-                                 SourceLocation ColonLoc, SourceLocation EndLoc,
-                                 ArrayRef<Expr *> VL, ArrayRef<Expr *> IL,
-                                 Expr *Step, Expr *CalcStep);
+  static OMPLinearClause *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+         SourceLocation ColonLoc, SourceLocation EndLoc, ArrayRef<Expr *> VL,
+         ArrayRef<Expr *> PL, ArrayRef<Expr *> IL, Expr *Step, Expr *CalcStep);
 
   /// \brief Creates an empty clause with the place for \a NumVars variables.
   ///
@@ -1762,6 +1773,18 @@ public:
   /// \brief Sets the list of final update expressions for linear variables.
   /// \param FL List of expressions.
   void setFinals(ArrayRef<Expr *> FL);
+
+  typedef MutableArrayRef<Expr *>::iterator privates_iterator;
+  typedef ArrayRef<const Expr *>::iterator privates_const_iterator;
+  typedef llvm::iterator_range<privates_iterator> privates_range;
+  typedef llvm::iterator_range<privates_const_iterator> privates_const_range;
+
+  privates_range privates() {
+    return privates_range(getPrivates().begin(), getPrivates().end());
+  }
+  privates_const_range privates() const {
+    return privates_const_range(getPrivates().begin(), getPrivates().end());
+  }
 
   typedef MutableArrayRef<Expr *>::iterator inits_iterator;
   typedef ArrayRef<const Expr *>::iterator inits_const_iterator;

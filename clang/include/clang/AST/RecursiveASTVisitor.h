@@ -2619,6 +2619,9 @@ bool RecursiveASTVisitor<Derived>::VisitOMPLinearClause(OMPLinearClause *C) {
   TRY_TO(TraverseStmt(C->getStep()));
   TRY_TO(TraverseStmt(C->getCalcStep()));
   TRY_TO(VisitOMPClauseList(C));
+  for (auto *E : C->privates()) {
+    TRY_TO(TraverseStmt(E));
+  }
   for (auto *E : C->inits()) {
     TRY_TO(TraverseStmt(E));
   }

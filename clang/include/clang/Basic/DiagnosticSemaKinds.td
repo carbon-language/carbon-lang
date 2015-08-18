@@ -7477,8 +7477,6 @@ def err_omp_expected_var_name_or_array_item : Error<
   "expected variable name, array element or array section">;
 def note_omp_task_predetermined_firstprivate_here : Note<
   "predetermined as a firstprivate in a task construct here">;
-def err_omp_clause_ref_type_arg : Error<
-  "arguments of OpenMP clause '%0' cannot be of reference type %1">;
 def err_omp_task_predetermined_firstprivate_ref_type_arg : Error<
   "predetermined as a firstprivate in a task construct variable cannot be of reference type %0">;
 def err_omp_threadprivate_incomplete_type : Error<

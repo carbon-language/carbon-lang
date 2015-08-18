@@ -42,7 +42,7 @@ template<class I, class C> int foomain(I argc, C **argv) {
   I e(4);
   I g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
   #pragma omp simd private // expected-error {{expected '(' after 'private'}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd private ( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -78,7 +78,7 @@ template<class I, class C> int foomain(I argc, C **argv) {
   }
   #pragma omp parallel shared(i)
   #pragma omp parallel private(i)
-  #pragma omp simd private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+  #pragma omp simd private(j)
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd private(i)
   for (int k = 0; k < argc; ++k) ++k;
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
   #pragma omp simd private // expected-error {{expected '(' after 'private'}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd private ( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
   }
   #pragma omp parallel shared(i)
   #pragma omp parallel private(i)
-  #pragma omp simd private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+  #pragma omp simd private(j)
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd private(i)
   for (int k = 0; k < argc; ++k) ++k;

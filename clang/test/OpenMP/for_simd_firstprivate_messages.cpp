@@ -65,7 +65,7 @@ int foomain(int argc, char **argv) {
   I e(4);
   C g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel
 #pragma omp for simd firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (int k = 0; k < argc; ++k)
@@ -130,7 +130,7 @@ int foomain(int argc, char **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp for simd firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp for simd firstprivate(j)
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
   S3 m;
   S6 n(2);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel
 #pragma omp for simd firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (i = 0; i < argc; ++i)
@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel
-#pragma omp for simd firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp for simd firstprivate(j)
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel

@@ -404,6 +404,10 @@ void for_with_global_lcv() {
     k = i;
     k = j;
   }
+  char &cnt = i;
+#pragma omp for
+  for (cnt = 0; cnt < 2; ++cnt)
+    k = cnt;
 }
 
 // CHECK-LABEL: for_with_references

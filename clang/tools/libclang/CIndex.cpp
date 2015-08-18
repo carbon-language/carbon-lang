@@ -2106,6 +2106,9 @@ void OMPClauseEnqueue::VisitOMPReductionClause(const OMPReductionClause *C) {
 }
 void OMPClauseEnqueue::VisitOMPLinearClause(const OMPLinearClause *C) {
   VisitOMPClauseList(C);
+  for (const auto *E : C->privates()) {
+    Visitor->AddStmt(E);
+  }
   for (const auto *E : C->inits()) {
     Visitor->AddStmt(E);
   }

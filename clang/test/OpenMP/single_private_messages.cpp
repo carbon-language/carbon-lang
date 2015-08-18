@@ -47,7 +47,7 @@ int foomain(I argc, C **argv) {
   I e(4);
   I g(5);
   int i;
-  int &j = i;                // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp single private // expected-error {{expected '(' after 'private'}}
   foo();
 #pragma omp single private( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -84,7 +84,7 @@ int foomain(I argc, C **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp single private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+#pragma omp single private(j)
   foo();
 #pragma omp single private(i)
   foo();
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i;                // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp single private // expected-error {{expected '(' after 'private'}}
   foo();
 #pragma omp single private( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp single private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type}}
+#pragma omp single private(j)
   foo();
 #pragma omp single private(i)
   foo();

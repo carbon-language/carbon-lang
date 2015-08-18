@@ -102,7 +102,7 @@ template<class I, class C> int foomain(I argc, C **argv) {
   I e(4);
   I g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
   #pragma omp parallel for simd linear // expected-error {{expected '(' after 'linear'}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp parallel for simd linear ( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -138,7 +138,7 @@ template<class I, class C> int foomain(I argc, C **argv) {
     #pragma omp parallel for simd linear(v:i)
     for (int k = 0; k < argc; ++k) { i = k; v += i; }
   }
-  #pragma omp parallel for simd linear(j) // expected-error {{arguments of OpenMP clause 'linear' cannot be of reference type}}
+  #pragma omp parallel for simd linear(j)
   for (int k = 0; k < argc; ++k) ++k;
   int v = 0;
   #pragma omp parallel for simd linear(v:j)
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
   S4 e(4); // expected-note {{'e' defined here}}
   S5 g(5); // expected-note {{'g' defined here}}
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
   #pragma omp parallel for simd linear // expected-error {{expected '(' after 'linear'}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp parallel for simd linear ( // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
     #pragma omp parallel for simd linear(i : 4)
     for (int k = 0; k < argc; ++k) { ++k; i += 4; }
   }
-  #pragma omp parallel for simd linear(j) // expected-error {{arguments of OpenMP clause 'linear' cannot be of reference type 'int &'}}
+  #pragma omp parallel for simd linear(j)
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp parallel for simd linear(i)
   for (int k = 0; k < argc; ++k) ++k;

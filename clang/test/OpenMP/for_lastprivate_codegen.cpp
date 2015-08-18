@@ -36,7 +36,7 @@ T tmain() {
   T t_var = T();
   T vec[] = {1, 2};
   S<T> s_arr[] = {1, 2};
-  S<T> var(3);
+  S<T> &var = test;
 #pragma omp parallel
 #pragma omp for lastprivate(t_var, vec, s_arr, var)
   for (int i = 0; i < 2; ++i) {

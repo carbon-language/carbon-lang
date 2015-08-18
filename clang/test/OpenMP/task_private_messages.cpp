@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i;                                          // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp task private                               // expected-error {{expected '(' after 'private'}}
 #pragma omp task private(                              // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
 #pragma omp task private()                             // expected-error {{expected expression}}
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 #pragma omp task firstprivate(i) private(i) // expected-error {{firstprivate variable cannot be private}} expected-note {{defined as firstprivate}}
   foo();
 #pragma omp task private(i)
-#pragma omp task private(j) // expected-error {{arguments of OpenMP clause 'private' cannot be of reference type 'int &'}}
+#pragma omp task private(j)
   foo();
 #pragma omp task firstprivate(i)
   for (int k = 0; k < 10; ++k) {

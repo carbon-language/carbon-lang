@@ -65,7 +65,7 @@ int foomain(int argc, char **argv) {
   I e(4);
   C g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel for firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (int k = 0; k < argc; ++k)
     ++k;
@@ -114,7 +114,7 @@ int foomain(int argc, char **argv) {
   }
 #pragma omp parallel shared(i)
 #pragma omp parallel private(i)
-#pragma omp parallel for firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp parallel for firstprivate(j)
   for (int k = 0; k < argc; ++k)
     ++k;
 #pragma omp parallel for firstprivate(i)
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
   S3 m;
   S6 n(2);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp parallel for firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   for (i = 0; i < argc; ++i)
     foo();
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for firstprivate(xa) // OK: may be firstprivate
   for (i = 0; i < argc; ++i)
     foo();
-#pragma omp parallel for firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp parallel for firstprivate(j)
   for (i = 0; i < argc; ++i)
     foo();
 #pragma omp parallel for lastprivate(g) firstprivate(g) // expected-error {{calling a private constructor of class 'S5'}}

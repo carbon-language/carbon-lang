@@ -33,7 +33,7 @@ template <typename T>
 T tmain() {
   S<T> test;
   T *pvar = &test.f;
-  T lvar = T();
+  T &lvar = test.f;
 #pragma omp parallel
 #pragma omp for linear(pvar, lvar)
   for (int i = 0; i < 2; ++i) {

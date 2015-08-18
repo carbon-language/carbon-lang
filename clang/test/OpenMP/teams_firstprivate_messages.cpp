@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i; // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp target
 #pragma omp teams firstprivate // expected-error {{expected '(' after 'firstprivate'}}
   foo();
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
 #pragma omp teams firstprivate(i)
   foo();
 #pragma omp target
-#pragma omp teams firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp teams firstprivate(j)
   foo();
 
   return 0;

@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
   S4 e(4);
   S5 g(5);
   int i;
-  int &j = i;                                               // expected-note {{'j' defined here}}
+  int &j = i;
 #pragma omp task firstprivate                               // expected-error {{expected '(' after 'firstprivate'}}
 #pragma omp task firstprivate(                              // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
 #pragma omp task firstprivate()                             // expected-error {{expected expression}}
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   foo();
 #pragma omp task shared(i)
 #pragma omp task firstprivate(i)
-#pragma omp task firstprivate(j) // expected-error {{arguments of OpenMP clause 'firstprivate' cannot be of reference type}}
+#pragma omp task firstprivate(j)
   foo();
 
   return 0;

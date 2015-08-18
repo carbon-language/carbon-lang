@@ -721,17 +721,20 @@ emitPrivateLinearVars(CodeGenFunction &CGF, const OMPExecutableDirective &D,
                       CodeGenFunction::OMPPrivateScope &PrivateScope) {
   for (auto &&I = D.getClausesOfKind(OMPC_linear); I; ++I) {
     auto *C = cast<OMPLinearClause>(*I);
+    auto CurPrivate = C->privates().begin();
     for (auto *E : C->varlists()) {
-      auto VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
-      bool IsRegistered = PrivateScope.addPrivate(VD, [&]()->llvm::Value * {
-        // Emit var without initialization.
-        auto VarEmission = CGF.EmitAutoVarAlloca(*VD);
-        CGF.EmitAutoVarCleanups(VarEmission);
-        return VarEmission.getAllocatedAddress();
+      auto *VD = cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+      auto *PrivateVD =
+          cast<VarDecl>(cast<DeclRefExpr>(*CurPrivate)->getDecl());
+      bool IsRegistered = PrivateScope.addPrivate(VD, [&]() -> llvm::Value * {
+        // Emit private VarDecl with copy init.
+        CGF.EmitVarDecl(*PrivateVD);
+        return CGF.GetAddrOfLocalVar(PrivateVD);
       });
       assert(IsRegistered && "linear var already registered as private");
       // Silence the warning about unused variable.
       (void)IsRegistered;
+      ++CurPrivate;
     }
   }
 }
