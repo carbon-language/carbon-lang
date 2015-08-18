@@ -315,7 +315,8 @@ namespace {
     /// This is all of the cached block information for exactly one Value*.
     /// The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
-    typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
+    typedef SmallDenseMap<AssertingVH<BasicBlock>, LVILatticeVal, 4>
+        ValueCacheEntryTy;
 
     /// This is all of the cached information for all values,
     /// mapped from Value* to key information.
