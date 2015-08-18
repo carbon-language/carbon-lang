@@ -144,7 +144,12 @@ public:
   class Cleanup {
     // Anchor the construction vtable.
     virtual void anchor();
+
   public:
+    Cleanup(const Cleanup &) = default;
+    Cleanup(Cleanup &&) = default;
+    Cleanup() = default;
+
     /// Generation flags.
     class Flags {
       enum {
