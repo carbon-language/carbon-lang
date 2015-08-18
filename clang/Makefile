@@ -68,7 +68,7 @@ endif
 #   http://gcc.gnu.org/PR41838
 #
 # We don't need to do this if the host compiler is clang.
-ifeq ($(CXX_COMPILER), "clang")
+ifneq ($(CXX_COMPILER), "clang")
 CXX.Flags += -fno-strict-aliasing
 endif
 
