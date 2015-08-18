@@ -181,7 +181,9 @@ GDBRemoteCommunicationServerCommon::Handle_qHostInfo (StringExtractorGDBRemote &
     else
         response.Printf("watchpoint_exceptions_received:after;");
 #else
-    if (host_arch.GetMachine() == llvm::Triple::mips64 ||
+    if (host_arch.GetMachine() == llvm::Triple::aarch64 ||
+        host_arch.GetMachine() == llvm::Triple::aarch64_be ||
+        host_arch.GetMachine() == llvm::Triple::mips64 ||
         host_arch.GetMachine() == llvm::Triple::mips64el)
         response.Printf("watchpoint_exceptions_received:before;");
     else
