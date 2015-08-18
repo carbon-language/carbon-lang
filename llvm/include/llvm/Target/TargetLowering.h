@@ -1512,23 +1512,24 @@ public:
     return false;
   }
 
-  /// Return true if it's free to truncate a value of type Ty1 to type
-  /// Ty2. e.g. On x86 it's free to truncate a i32 value in register EAX to i16
+  /// Return true if it's free to truncate a value of type FromTy to type
+  /// ToTy. e.g. On x86 it's free to truncate a i32 value in register EAX to i16
   /// by referencing its sub-register AX.
-  virtual bool isTruncateFree(Type * /*Ty1*/, Type * /*Ty2*/) const {
+  /// Targets must return false when FromTy <= ToTy.
+  virtual bool isTruncateFree(Type *FromTy, Type *ToTy) const {
     return false;
   }
 
-  /// Return true if a truncation from Ty1 to Ty2 is permitted when deciding
+  /// Return true if a truncation from FromTy to ToTy is permitted when deciding
   /// whether a call is in tail position. Typically this means that both results
   /// would be assigned to the same register or stack slot, but it could mean
   /// the target performs adequate checks of its own before proceeding with the
-  /// tail call.
-  virtual bool allowTruncateForTailCall(Type * /*Ty1*/, Type * /*Ty2*/) const {
+  /// tail call.  Targets must return false when FromTy <= ToTy.
+  virtual bool allowTruncateForTailCall(Type *FromTy, Type *ToTy) const {
     return false;
   }
 
-  virtual bool isTruncateFree(EVT /*VT1*/, EVT /*VT2*/) const {
+  virtual bool isTruncateFree(EVT FromVT, EVT ToVT) const {
     return false;
   }
 
@@ -1561,19 +1562,21 @@ public:
     return isExtFreeImpl(I);
   }
 
-  /// Return true if any actual instruction that defines a value of type Ty1
-  /// implicitly zero-extends the value to Ty2 in the result register.
+  /// Return true if any actual instruction that defines a value of type FromTy
+  /// implicitly zero-extends the value to ToTy in the result register.
   ///
-  /// This does not necessarily include registers defined in unknown ways, such
-  /// as incoming arguments, or copies from unknown virtual registers. Also, if
-  /// isTruncateFree(Ty2, Ty1) is true, this does not necessarily apply to
-  /// truncate instructions. e.g. on x86-64, all instructions that define 32-bit
-  /// values implicit zero-extend the result out to 64 bits.
-  virtual bool isZExtFree(Type * /*Ty1*/, Type * /*Ty2*/) const {
+  /// The function should return true when it is likely that the truncate can
+  /// be freely folded with an instruction defining a value of FromTy. If
+  /// the defining instruction is unknown (because you're looking at a
+  /// function argument, PHI, etc.) then the target may require an
+  /// explicit truncate, which is not necessarily free, but this function
+  /// does not deal with those cases.
+  /// Targets must return false when FromTy >= ToTy.
+  virtual bool isZExtFree(Type *FromTy, Type *ToTy) const {
     return false;
   }
 
-  virtual bool isZExtFree(EVT /*VT1*/, EVT /*VT2*/) const {
+  virtual bool isZExtFree(EVT FromTy, EVT ToTy) const {
     return false;
   }
 
