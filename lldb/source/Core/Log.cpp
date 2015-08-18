@@ -449,7 +449,7 @@ Log::DisableAllLogChannels (Stream *feedback_strm)
 {
     CallbackMap &callback_map = GetCallbackMap ();
     CallbackMapIter pos, end = callback_map.end();
-    const char *categories[1] = {NULL};
+    const char *categories[] = {"all", nullptr};
 
     for (pos = callback_map.begin(); pos != end; ++pos)
         pos->second.disable (categories, feedback_strm);

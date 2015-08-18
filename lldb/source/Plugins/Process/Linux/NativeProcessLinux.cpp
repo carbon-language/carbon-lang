@@ -560,8 +560,11 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
     // Child process.
     if (pid == 0)
     {
+        // First, make sure we disable all logging. If we are logging to stdout, our logs can be
+        // mistaken for inferior output.
+        Log::DisableAllLogChannels(nullptr);
         // FIXME consider opening a pipe between parent/child and have this forked child
-        // send log info to parent re: launch status, in place of the log lines removed here.
+        // send log info to parent re: launch status.
 
         // Start tracing this child that is about to exec.
         error = PtraceWrapper(PTRACE_TRACEME, 0);
