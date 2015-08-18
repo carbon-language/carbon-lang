@@ -52,3 +52,41 @@
         ! V8-NEXT: lduwa [%i0 + %l6] 131, %o2
         ! V9: lda [%i0+%l6] 131, %o2 ! encoding: [0xd4,0x86,0x10,0x76]
         lduwa [%i0 + %l6] 131, %o2
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: lda [%l0] 0xf0, %f29
+        ! V9: lda [%l0] 240, %f29             ! encoding: [0xfb,0x84,0x1e,0x00]
+        lda [%l0] 0xf0, %f29
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: ldda [%l0] 0xf0, %f48
+        ! V9: ldda [%l0] 240, %f48            ! encoding: [0xe3,0x9c,0x1e,0x00]
+        ldda [%l0] 0xf0, %f48
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: ldqa [%l0] 0xf0, %f48
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: ldq [%l0], %f48
+        ! V9: ldqa [%l0] 240, %f48            ! encoding: [0xe3,0x94,0x1e,0x00]
+        ! V9: ldq [%l0], %f48                 ! encoding: [0xe3,0x14,0x00,0x00]
+        ldqa [%l0] 0xf0, %f48
+        ldq [%l0], %f48
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: sta %f29, [%l0] 0xf0
+        ! V9: sta %f29, [%l0] 240             ! encoding: [0xfb,0xa4,0x1e,0x00]
+        sta %f29, [%l0] 0xf0
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: stda %f48, [%l0] 0xf0
+        ! V9: stda %f48, [%l0] 240            ! encoding: [0xe3,0xbc,0x1e,0x00]
+        stda %f48, [%l0] 0xf0
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: stqa %f48, [%l0] 0xf0
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: stq %f48, [%l0]
+        ! V9: stqa %f48, [%l0] 240            ! encoding: [0xe3,0xb4,0x1e,0x00]
+        ! V9: stq %f48, [%l0]                 ! encoding: [0xe3,0x34,0x00,0x00]
+        stqa %f48, [%l0] 0xf0
+        stq %f48, [%l0]
