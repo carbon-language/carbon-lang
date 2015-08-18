@@ -374,6 +374,13 @@ AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
                                         Value *InstCopy) {
+  // If there are escape users we get the alloca for this instruction and put
+  // it in the EscapeMap for later finalization. However, if the alloca was not
+  // created by an already handled scalar dependence we have to initialize it
+  // also. Lastly, if the instruction was copied multiple times we already did
+  // this and can exit.
+  if (EscapeMap.count(Inst))
+    return;
 
   EscapeUserVectorTy EscapeUsers;
   for (User *U : Inst->users()) {
@@ -391,14 +398,6 @@ void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
 
   // Exit if no escape uses were found.
   if (EscapeUsers.empty())
-    return;
-
-  // If there are escape users we get the alloca for this instruction and put
-  // it in the EscapeMap for later finalization. However, if the alloca was not
-  // created by an already handled scalar dependence we have to initialize it
-  // also. Lastly, if the instruction was copied multiple times we already did
-  // this and can exit.
-  if (EscapeMap.count(Inst))
     return;
 
   // Get or create an escape alloca for this instruction.
