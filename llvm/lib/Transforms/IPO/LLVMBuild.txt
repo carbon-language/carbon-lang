@@ -20,4 +20,4 @@ type = Library
 name = IPO
 parent = Transforms
 library_name = ipo
-required_libraries = Analysis Core IPA InstCombine Scalar Support TransformUtils Vectorize
+required_libraries = Analysis Core InstCombine Scalar Support TransformUtils Vectorize

@@ -3,7 +3,6 @@ set(LLVM_LINK_COMPONENTS
   BitWriter
   CodeGen
   Core
-  IPA
   IPO
   IRReader
   InstCombine

@@ -1,5 +1,4 @@
 set(LLVM_LINK_COMPONENTS
-  IPA
   Analysis
   AsmParser
   Core

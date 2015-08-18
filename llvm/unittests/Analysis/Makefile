@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = Analysis
-LINK_COMPONENTS := ipa analysis asmparser
+LINK_COMPONENTS := analysis asmparser
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

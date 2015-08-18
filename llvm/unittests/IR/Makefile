@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = IR
-LINK_COMPONENTS := core ipa asmparser
+LINK_COMPONENTS := core analysis asmparser
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

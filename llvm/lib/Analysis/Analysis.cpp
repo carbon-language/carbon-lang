@@ -28,6 +28,9 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializeBasicAliasAnalysisPass(Registry);
   initializeBlockFrequencyInfoWrapperPassPass(Registry);
   initializeBranchProbabilityInfoWrapperPassPass(Registry);
+  initializeCallGraphWrapperPassPass(Registry);
+  initializeCallGraphPrinterPass(Registry);
+  initializeCallGraphViewerPass(Registry);
   initializeCostModelAnalysisPass(Registry);
   initializeCFGViewerPass(Registry);
   initializeCFGPrinterPass(Registry);
@@ -47,6 +50,7 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
   initializePostDomPrinterPass(Registry);
   initializePostDomOnlyViewerPass(Registry);
   initializePostDomOnlyPrinterPass(Registry);
+  initializeGlobalsModRefPass(Registry);
   initializeIVUsersPass(Registry);
   initializeInstCountPass(Registry);
   initializeIntervalPartitionPass(Registry);
@@ -71,6 +75,10 @@ void llvm::initializeAnalysis(PassRegistry &Registry) {
 }
 
 void LLVMInitializeAnalysis(LLVMPassRegistryRef R) {
+  initializeAnalysis(*unwrap(R));
+}
+
+void LLVMInitializeIPA(LLVMPassRegistryRef R) {
   initializeAnalysis(*unwrap(R));
 }
 

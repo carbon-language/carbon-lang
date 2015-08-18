@@ -25,7 +25,6 @@ required_libraries =
  BitWriter
  CodeGen
  Core
- IPA
  IPO
  InstCombine
  Linker
