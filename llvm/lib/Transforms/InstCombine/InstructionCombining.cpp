@@ -2995,8 +2995,6 @@ combineInstructionsOverFunction(Function &F, InstCombineWorklist &Worklist,
                                 AliasAnalysis *AA, AssumptionCache &AC,
                                 TargetLibraryInfo &TLI, DominatorTree &DT,
                                 LoopInfo *LI = nullptr) {
-  // Minimizing size?
-  bool MinimizeSize = F.hasFnAttribute(Attribute::MinSize);
   auto &DL = F.getParent()->getDataLayout();
 
   /// Builder - This is an IRBuilder that automatically inserts new
@@ -3019,7 +3017,7 @@ combineInstructionsOverFunction(Function &F, InstCombineWorklist &Worklist,
     if (prepareICWorklistFromFunction(F, DL, &TLI, Worklist))
       Changed = true;
 
-    InstCombiner IC(Worklist, &Builder, MinimizeSize,
+    InstCombiner IC(Worklist, &Builder, F.optForMinSize(),
                     AA, &AC, &TLI, &DT, DL, LI);
     if (IC.run())
       Changed = true;

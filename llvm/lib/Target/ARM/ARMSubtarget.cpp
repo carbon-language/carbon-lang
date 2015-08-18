@@ -286,7 +286,7 @@ bool ARMSubtarget::enableAtomicExpand() const {
 }
 
 bool ARMSubtarget::useStride4VFPs(const MachineFunction &MF) const {
-  return isSwift() && !MF.getFunction()->hasFnAttribute(Attribute::MinSize);
+  return isSwift() && !MF.getFunction()->optForMinSize();
 }
 
 bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
