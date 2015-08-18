@@ -2978,3 +2978,34 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr *MI) const {
   MI->eraseFromParent();
   return true;
 }
+
+std::pair<unsigned, unsigned>
+AArch64InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
+  const unsigned Mask = AArch64II::MO_FRAGMENT;
+  return std::make_pair(TF & Mask, TF & ~Mask);
+}
+
+ArrayRef<std::pair<unsigned, const char *>>
+AArch64InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
+  using namespace AArch64II;
+  static std::pair<unsigned, const char *> TargetFlags[] = {
+      {MO_PAGE, "aarch64-page"},
+      {MO_PAGEOFF, "aarch64-pageoff"},
+      {MO_G3, "aarch64-g3"},
+      {MO_G2, "aarch64-g2"},
+      {MO_G1, "aarch64-g1"},
+      {MO_G0, "aarch64-g0"},
+      {MO_HI12, "aarch64-hi12"}};
+  return makeArrayRef(TargetFlags);
+}
+
+ArrayRef<std::pair<unsigned, const char *>>
+AArch64InstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
+  using namespace AArch64II;
+  static std::pair<unsigned, const char *> TargetFlags[] = {
+      {MO_GOT, "aarch64-got"},
+      {MO_NC, "aarch64-nc"},
+      {MO_TLS, "aarch64-tls"},
+      {MO_CONSTPOOL, "aarch64-constant-pool"}};
+  return makeArrayRef(TargetFlags);
+}

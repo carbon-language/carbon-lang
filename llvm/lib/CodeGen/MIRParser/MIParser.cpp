@@ -72,6 +72,8 @@ class MIParser {
   StringMap<int> Names2TargetIndices;
   /// Maps from direct target flag names to the direct target flag values.
   StringMap<unsigned> Names2DirectTargetFlags;
+  /// Maps from direct target flag names to the bitmask target flag values.
+  StringMap<unsigned> Names2BitmaskTargetFlags;
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
@@ -211,6 +213,14 @@ private:
   ///
   /// Return true if the name isn't a name of a direct flag.
   bool getDirectTargetFlag(StringRef Name, unsigned &Flag);
+
+  void initNames2BitmaskTargetFlags();
+
+  /// Try to convert a name of a bitmask target flag to the corresponding
+  /// target flag.
+  ///
+  /// Return true if the name isn't a name of a bitmask target flag.
+  bool getBitmaskTargetFlag(StringRef Name, unsigned &Flag);
 };
 
 } // end anonymous namespace
@@ -1351,11 +1361,24 @@ bool MIParser::parseMachineOperandAndTargetFlags(MachineOperand &Dest) {
       return true;
     if (Token.isNot(MIToken::Identifier))
       return error("expected the name of the target flag");
-    if (getDirectTargetFlag(Token.stringValue(), TF))
-      return error("use of undefined target flag '" + Token.stringValue() +
-                   "'");
+    if (getDirectTargetFlag(Token.stringValue(), TF)) {
+      if (getBitmaskTargetFlag(Token.stringValue(), TF))
+        return error("use of undefined target flag '" + Token.stringValue() +
+                     "'");
+    }
     lex();
-    // TODO: Parse target's bit target flags.
+    while (Token.is(MIToken::comma)) {
+      lex();
+      if (Token.isNot(MIToken::Identifier))
+        return error("expected the name of the target flag");
+      unsigned BitFlag = 0;
+      if (getBitmaskTargetFlag(Token.stringValue(), BitFlag))
+        return error("use of undefined target flag '" + Token.stringValue() +
+                     "'");
+      // TODO: Report an error when using a duplicate bit target flag.
+      TF |= BitFlag;
+      lex();
+    }
     if (expectAndConsume(MIToken::rparen))
       return true;
   }
@@ -1754,6 +1777,26 @@ bool MIParser::getDirectTargetFlag(StringRef Name, unsigned &Flag) {
   initNames2DirectTargetFlags();
   auto FlagInfo = Names2DirectTargetFlags.find(Name);
   if (FlagInfo == Names2DirectTargetFlags.end())
+    return true;
+  Flag = FlagInfo->second;
+  return false;
+}
+
+void MIParser::initNames2BitmaskTargetFlags() {
+  if (!Names2BitmaskTargetFlags.empty())
+    return;
+  const auto *TII = MF.getSubtarget().getInstrInfo();
+  assert(TII && "Expected target instruction info");
+  auto Flags = TII->getSerializableBitmaskMachineOperandTargetFlags();
+  for (const auto &I : Flags)
+    Names2BitmaskTargetFlags.insert(
+        std::make_pair(StringRef(I.second), I.first));
+}
+
+bool MIParser::getBitmaskTargetFlag(StringRef Name, unsigned &Flag) {
+  initNames2BitmaskTargetFlags();
+  auto FlagInfo = Names2BitmaskTargetFlags.find(Name);
+  if (FlagInfo == Names2BitmaskTargetFlags.end())
     return true;
   Flag = FlagInfo->second;
   return false;

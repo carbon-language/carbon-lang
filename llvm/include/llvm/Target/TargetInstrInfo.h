@@ -1289,6 +1289,16 @@ public:
     return None;
   }
 
+  /// Return an array that contains the bitmask target flag values and their
+  /// names.
+  ///
+  /// MIR Serialization is able to serialize only the target flags that are
+  /// defined by this method.
+  virtual ArrayRef<std::pair<unsigned, const char *>>
+  getSerializableBitmaskMachineOperandTargetFlags() const {
+    return None;
+  }
+
 private:
   unsigned CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };

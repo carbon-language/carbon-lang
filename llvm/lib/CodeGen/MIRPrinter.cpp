@@ -611,11 +611,43 @@ void MIPrinter::printTargetFlags(const MachineOperand &Op) {
   assert(TII && "expected instruction info");
   auto Flags = TII->decomposeMachineOperandsTargetFlags(Op.getTargetFlags());
   OS << "target-flags(";
-  if (const auto *Name = getTargetFlagName(TII, Flags.first))
-    OS << Name;
-  else
-    OS << "<unknown target flag>";
-  // TODO: Print the target's bit flags.
+  const bool HasDirectFlags = Flags.first;
+  const bool HasBitmaskFlags = Flags.second;
+  if (!HasDirectFlags && !HasBitmaskFlags) {
+    OS << "<unknown>) ";
+    return;
+  }
+  if (HasDirectFlags) {
+    if (const auto *Name = getTargetFlagName(TII, Flags.first))
+      OS << Name;
+    else
+      OS << "<unknown target flag>";
+  }
+  if (!HasBitmaskFlags) {
+    OS << ") ";
+    return;
+  }
+  bool IsCommaNeeded = HasDirectFlags;
+  unsigned BitMask = Flags.second;
+  auto BitMasks = TII->getSerializableBitmaskMachineOperandTargetFlags();
+  for (const auto &Mask : BitMasks) {
+    // Check if the flag's bitmask has the bits of the current mask set.
+    if ((BitMask & Mask.first) == Mask.first) {
+      if (IsCommaNeeded)
+        OS << ", ";
+      IsCommaNeeded = true;
+      OS << Mask.second;
+      // Clear the bits which were serialized from the flag's bitmask.
+      BitMask &= ~(Mask.first);
+    }
+  }
+  if (BitMask) {
+    // When the resulting flag's bitmask isn't zero, we know that we didn't
+    // serialize all of the bit flags.
+    if (IsCommaNeeded)
+      OS << ", ";
+    OS << "<unknown bitmask target flag>";
+  }
   OS << ") ";
 }
 
