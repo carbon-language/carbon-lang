@@ -283,7 +283,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       Personality == EHPersonality::MSVC_X86SEH) {
     for (const LandingPadInst *LP : LPads) {
       MachineBasicBlock *LPadMBB = MBBMap[LP->getParent()];
-      MMI.addWinEHState(LPadMBB, EHInfo.LandingPadStateMap[LP]);
+      MMI.addWinEHState(LPadMBB, EHInfo.EHPadStateMap[LP]);
     }
   }
 }

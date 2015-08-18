@@ -182,10 +182,10 @@ const MCExpr *WinException::create32bitRef(const MCSymbol *Value) {
                                  Asm->OutContext);
 }
 
-const MCExpr *WinException::create32bitRef(const GlobalValue *GV) {
-  if (!GV)
+const MCExpr *WinException::create32bitRef(const Value *V) {
+  if (!V)
     return MCConstantExpr::create(0, Asm->OutContext);
-  return create32bitRef(Asm->getSymbol(GV));
+  return create32bitRef(Asm->getSymbol(cast<GlobalValue>(V)));
 }
 
 /// Emit the language-specific data that __C_specific_handler expects.  This
@@ -413,7 +413,8 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       int CatchHigh = -1;
       for (WinEHHandlerType &HT : TBME.HandlerArray)
         CatchHigh =
-            std::max(CatchHigh, FuncInfo.CatchHandlerMaxState[HT.Handler]);
+            std::max(CatchHigh,
+                     FuncInfo.CatchHandlerMaxState[cast<Function>(HT.Handler)]);
 
       assert(TBME.TryLow <= TBME.TryHigh);
       OS.EmitIntValue(TBME.TryLow, 4);                    // TryLow

@@ -28,10 +28,17 @@ static cl::opt<bool> EnableMachineCombinerPass("x86-machine-combiner",
                                cl::desc("Enable the machine combiner pass"),
                                cl::init(true), cl::Hidden);
 
+namespace llvm {
+void initializeWinEHStatePassPass(PassRegistry &);
+}
+
 extern "C" void LLVMInitializeX86Target() {
   // Register the target.
   RegisterTargetMachine<X86TargetMachine> X(TheX86_32Target);
   RegisterTargetMachine<X86TargetMachine> Y(TheX86_64Target);
+
+  PassRegistry &PR = *PassRegistry::getPassRegistry();
+  initializeWinEHStatePassPass(PR);
 }
 
 static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {

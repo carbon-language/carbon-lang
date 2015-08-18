@@ -2575,14 +2575,52 @@ struct WinEHNumbering {
 };
 }
 
-void WinEHNumbering::createUnwindMapEntry(int ToState, ActionHandler *AH) {
+static int addUnwindMapEntry(WinEHFuncInfo &FuncInfo, int ToState,
+                             const Value *V) {
   WinEHUnwindMapEntry UME;
   UME.ToState = ToState;
-  if (auto *CH = dyn_cast_or_null<CleanupHandler>(AH))
-    UME.Cleanup = cast<Function>(CH->getHandlerBlockOrFunc());
-  else
-    UME.Cleanup = nullptr;
+  UME.Cleanup = V;
   FuncInfo.UnwindMap.push_back(UME);
+  return FuncInfo.getLastStateNumber();
+}
+
+static void addTryBlockMapEntry(WinEHFuncInfo &FuncInfo, int TryLow,
+                                int TryHigh, int CatchHigh,
+                                ArrayRef<const CatchPadInst *> Handlers) {
+  WinEHTryBlockMapEntry TBME;
+  TBME.TryLow = TryLow;
+  TBME.TryHigh = TryHigh;
+  TBME.CatchHigh = CatchHigh;
+  assert(TBME.TryLow <= TBME.TryHigh);
+  for (const CatchPadInst *CPI : Handlers) {
+    WinEHHandlerType HT;
+    Constant *TypeInfo = cast<Constant>(CPI->getArgOperand(0));
+    if (TypeInfo->isNullValue()) {
+      HT.Adjectives = 0x40;
+      HT.TypeDescriptor = nullptr;
+    } else {
+      auto *GV = cast<GlobalVariable>(TypeInfo->stripPointerCasts());
+      // Selectors are always pointers to GlobalVariables with 'struct' type.
+      // The struct has two fields, adjectives and a type descriptor.
+      auto *CS = cast<ConstantStruct>(GV->getInitializer());
+      HT.Adjectives =
+          cast<ConstantInt>(CS->getAggregateElement(0U))->getZExtValue();
+      HT.TypeDescriptor =
+          cast<GlobalVariable>(CS->getAggregateElement(1)->stripPointerCasts());
+    }
+    HT.Handler = CPI->getParent();
+    // FIXME: Pass CPI->getArgOperand(1).
+    HT.CatchObjRecoverIdx = -1;
+    TBME.HandlerArray.push_back(HT);
+  }
+  FuncInfo.TryBlockMap.push_back(TBME);
+}
+
+void WinEHNumbering::createUnwindMapEntry(int ToState, ActionHandler *AH) {
+  Value *V = nullptr;
+  if (auto *CH = dyn_cast_or_null<CleanupHandler>(AH))
+    V = cast<Function>(CH->getHandlerBlockOrFunc());
+  addUnwindMapEntry(FuncInfo, ToState, V);
 }
 
 void WinEHNumbering::createTryBlockMapEntry(int TryLow, int TryHigh,
@@ -2838,7 +2876,7 @@ void WinEHNumbering::calculateStateNumbers(const Function &F) {
       continue;
     processCallSite(ActionList, II);
     ActionList.clear();
-    FuncInfo.LandingPadStateMap[LPI] = currentEHNumber();
+    FuncInfo.EHPadStateMap[LPI] = currentEHNumber();
     DEBUG(dbgs() << "Assigning state " << currentEHNumber()
                   << " to landing pad at " << LPI->getParent()->getName()
                   << '\n');
@@ -2902,10 +2940,114 @@ void WinEHNumbering::findActionRootLPads(const Function &F) {
   }
 }
 
+static const BasicBlock *getSingleCatchPadPredecessor(const BasicBlock &BB) {
+  for (const BasicBlock *PredBlock : predecessors(&BB))
+    if (isa<CatchPadInst>(PredBlock->getFirstNonPHI()))
+      return PredBlock;
+  return nullptr;
+}
+
+// Given BB which ends in an unwind edge, return the EHPad that this BB belongs
+// to. If the unwind edge came from an invoke, return null.
+static const BasicBlock *getEHPadFromPredecessor(const BasicBlock *BB) {
+  const TerminatorInst *TI = BB->getTerminator();
+  if (isa<InvokeInst>(TI))
+    return nullptr;
+  if (isa<CatchPadInst>(TI) || isa<CatchEndPadInst>(TI) ||
+      isa<TerminatePadInst>(TI))
+    return BB;
+  return cast<CleanupPadInst>(cast<CleanupReturnInst>(TI)->getReturnValue())
+      ->getParent();
+}
+
+static void calculateExplicitStateNumbers(WinEHFuncInfo &FuncInfo,
+                                          const BasicBlock &BB,
+                                          int ParentState) {
+  assert(BB.isEHPad());
+  const Instruction *FirstNonPHI = BB.getFirstNonPHI();
+  // All catchpad instructions will be handled when we process their
+  // respective catchendpad instruction.
+  if (isa<CatchPadInst>(FirstNonPHI))
+    return;
+
+  if (isa<CatchEndPadInst>(FirstNonPHI)) {
+    const BasicBlock *TryPad = &BB;
+    const BasicBlock *LastTryPad = nullptr;
+    SmallVector<const CatchPadInst *, 2> Handlers;
+    do {
+      LastTryPad = TryPad;
+      TryPad = getSingleCatchPadPredecessor(*TryPad);
+      if (TryPad)
+        Handlers.push_back(cast<CatchPadInst>(TryPad->getFirstNonPHI()));
+    } while (TryPad);
+    // We've pushed these back into reverse source order.  Reverse them to get
+    // the list back into source order.
+    std::reverse(Handlers.begin(), Handlers.end());
+    int TryLow = addUnwindMapEntry(FuncInfo, ParentState, nullptr);
+    FuncInfo.EHPadStateMap[Handlers.front()] = TryLow;
+    for (const BasicBlock *PredBlock : predecessors(LastTryPad))
+      if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
+        calculateExplicitStateNumbers(FuncInfo, *PredBlock, TryLow);
+    int CatchLow = addUnwindMapEntry(FuncInfo, ParentState, nullptr);
+    FuncInfo.EHPadStateMap[FirstNonPHI] = CatchLow;
+    int TryHigh = CatchLow - 1;
+    for (const BasicBlock *PredBlock : predecessors(&BB))
+      if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
+        calculateExplicitStateNumbers(FuncInfo, *PredBlock, CatchLow);
+    int CatchHigh = FuncInfo.getLastStateNumber();
+    addTryBlockMapEntry(FuncInfo, TryLow, TryHigh, CatchHigh, Handlers);
+    DEBUG(dbgs() << "TryLow[" << LastTryPad->getName() << "]: " << TryLow
+                 << '\n');
+    DEBUG(dbgs() << "TryHigh[" << LastTryPad->getName() << "]: " << TryHigh
+                 << '\n');
+    DEBUG(dbgs() << "CatchHigh[" << LastTryPad->getName() << "]: " << CatchHigh
+                 << '\n');
+  } else if (isa<CleanupPadInst>(FirstNonPHI)) {
+    int CleanupState = addUnwindMapEntry(FuncInfo, ParentState, &BB);
+    FuncInfo.EHPadStateMap[FirstNonPHI] = CleanupState;
+    DEBUG(dbgs() << "Assigning state #" << CleanupState << " to BB "
+                 << BB.getName() << '\n');
+    for (const BasicBlock *PredBlock : predecessors(&BB))
+      if ((PredBlock = getEHPadFromPredecessor(PredBlock)))
+        calculateExplicitStateNumbers(FuncInfo, *PredBlock, CleanupState);
+  } else if (isa<TerminatePadInst>(FirstNonPHI)) {
+    report_fatal_error("Not yet implemented!");
+  } else {
+    llvm_unreachable("unexpected EH Pad!");
+  }
+}
+
 void llvm::calculateWinCXXEHStateNumbers(const Function *ParentFn,
                                          WinEHFuncInfo &FuncInfo) {
   // Return if it's already been done.
-  if (!FuncInfo.LandingPadStateMap.empty())
+  if (!FuncInfo.EHPadStateMap.empty())
+    return;
+
+  bool IsExplicit = false;
+  for (const BasicBlock &BB : *ParentFn) {
+    if (!BB.isEHPad())
+      continue;
+    // Check if the EH Pad has no exceptional successors (i.e. it unwinds to
+    // caller).  Cleanups are a little bit of a special case because their
+    // control flow cannot be determined by looking at the pad but instead by
+    // the pad's users.
+    bool HasNoSuccessors = false;
+    const Instruction *FirstNonPHI = BB.getFirstNonPHI();
+    if (FirstNonPHI->mayThrow()) {
+      HasNoSuccessors = true;
+    } else if (auto *CPI = dyn_cast<CleanupPadInst>(FirstNonPHI)) {
+      HasNoSuccessors =
+          CPI->use_empty() ||
+          cast<CleanupReturnInst>(CPI->user_back())->unwindsToCaller();
+    }
+
+    if (!HasNoSuccessors)
+      continue;
+    calculateExplicitStateNumbers(FuncInfo, BB, -1);
+    IsExplicit = true;
+  }
+
+  if (IsExplicit)
     return;
 
   WinEHNumbering Num(FuncInfo);
@@ -3141,6 +3283,7 @@ bool WinEHPrepare::prepareExplicitEH(Function &F) {
 
   BlockColors.clear();
   FuncletBlocks.clear();
+
   return true;
 }
 
