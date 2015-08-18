@@ -1054,6 +1054,14 @@ public:
     SemaDiagnosticBuilder(DiagnosticBuilder &DB, Sema &SemaRef, unsigned DiagID)
       : DiagnosticBuilder(DB), SemaRef(SemaRef), DiagID(DiagID) { }
 
+    // This is a cunning lie. DiagnosticBuilder actually performs move
+    // construction in its copy constructor (but due to varied uses, it's not
+    // possible to conveniently express this as actual move construction). So
+    // the default copy ctor here is fine, because the base class disables the
+    // source anyway, so the user-defined ~SemaDiagnosticBuilder is a safe no-op
+    // in that case anwyay.
+    SemaDiagnosticBuilder(const SemaDiagnosticBuilder&) = default;
+
     ~SemaDiagnosticBuilder() {
       // If we aren't active, there is nothing to do.
       if (!isActive()) return;
