@@ -346,13 +346,25 @@ public:
   virtual void emitVTableDefinitions(CodeGenVTables &CGVT,
                                      const CXXRecordDecl *RD) = 0;
 
+  /// Checks if ABI requires extra virtual offset for vtable field.
+  virtual bool
+  isVirtualOffsetNeededForVTableField(CodeGenFunction &CGF,
+                                      CodeGenFunction::VPtr Vptr) = 0;
+
+  /// Checks if ABI requires to initilize vptrs for given dynamic class.
+  virtual bool doStructorsInitializeVPtrs(const CXXRecordDecl *VTableClass) = 0;
+
+  /// Get the address point of the vtable for the given base subobject.
+  virtual llvm::Constant *
+  getVTableAddressPoint(BaseSubobject Base,
+                        const CXXRecordDecl *VTableClass) = 0;
+
   /// Get the address point of the vtable for the given base subobject while
-  /// building a constructor or a destructor. On return, NeedsVirtualOffset
-  /// tells if a virtual base adjustment is needed in order to get the offset
-  /// of the base subobject.
-  virtual llvm::Value *getVTableAddressPointInStructor(
-      CodeGenFunction &CGF, const CXXRecordDecl *RD, BaseSubobject Base,
-      const CXXRecordDecl *NearestVBase, bool &NeedsVirtualOffset) = 0;
+  /// building a constructor or a destructor.
+  virtual llvm::Value *
+  getVTableAddressPointInStructor(CodeGenFunction &CGF, const CXXRecordDecl *RD,
+                                  BaseSubobject Base,
+                                  const CXXRecordDecl *NearestVBase) = 0;
 
   /// Get the address point of the vtable for the given base subobject while
   /// building a constexpr.
