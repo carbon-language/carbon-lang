@@ -495,12 +495,9 @@ unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
 //         AMDGPU::NoRegister.
 unsigned SIRegisterInfo::findUnusedRegister(const MachineRegisterInfo &MRI,
                                            const TargetRegisterClass *RC) const {
-
-  for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
-       I != E; ++I) {
-    if (MRI.reg_nodbg_empty(*I))
-      return *I;
-  }
+  for (unsigned Reg : *RC)
+    if (!MRI.isPhysRegUsed(Reg))
+      return Reg;
   return AMDGPU::NoRegister;
 }
 
