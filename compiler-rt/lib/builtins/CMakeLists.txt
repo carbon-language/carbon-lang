@@ -270,10 +270,29 @@ set(arm_SOURCES
   arm/unordsf2vfp.S
   ${GENERIC_SOURCES})
 
+set(aarch64_SOURCES
+  comparetf2.c
+  extenddftf2.c
+  extendsftf2.c
+  fixtfdi.c
+  fixtfsi.c
+  fixtfti.c
+  fixunstfdi.c
+  fixunstfsi.c
+  fixunstfti.c
+  floatditf.c
+  floatsitf.c
+  floatunditf.c
+  floatunsitf.c
+  multc3.c
+  trunctfdf2.c
+  trunctfsf2.c
+  ${GENERIC_SOURCES})
+
 add_custom_target(builtins)
 
 if (NOT WIN32 OR MINGW)
-  foreach (arch x86_64 i386 i686 arm)
+  foreach (arch x86_64 i386 i686 arm aarch64)
     if (CAN_TARGET_${arch})
       # Filter out generic versions of routines that are re-implemented in
       # architecture specific manner.  This prevents multiple definitions of the
