@@ -24101,10 +24101,13 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   // For chips with slow 32-byte unaligned loads, break the 32-byte operation
   // into two 16-byte operations.
   ISD::LoadExtType Ext = Ld->getExtensionType();
+  bool Fast;
+  unsigned AddressSpace = Ld->getAddressSpace();
   unsigned Alignment = Ld->getAlignment();
-  bool IsAligned = Alignment == 0 || Alignment >= MemVT.getSizeInBits()/8;
-  if (RegVT.is256BitVector() && Subtarget->isUnalignedMem32Slow() &&
-      !DCI.isBeforeLegalizeOps() && !IsAligned && Ext == ISD::NON_EXTLOAD) {
+  if (RegVT.is256BitVector() && !DCI.isBeforeLegalizeOps() &&
+      Ext == ISD::NON_EXTLOAD &&
+      TLI.allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(), RegVT,
+                             AddressSpace, Alignment, &Fast) && !Fast) {
     unsigned NumElems = RegVT.getVectorNumElements();
     if (NumElems < 2)
       return SDValue();
@@ -24318,10 +24321,12 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 
   // If we are saving a concatenation of two XMM registers and 32-byte stores
   // are slow, such as on Sandy Bridge, perform two 16-byte stores.
+  bool Fast;
+  unsigned AddressSpace = St->getAddressSpace();
   unsigned Alignment = St->getAlignment();
-  bool IsAligned = Alignment == 0 || Alignment >= VT.getSizeInBits()/8;
-  if (VT.is256BitVector() && Subtarget->isUnalignedMem32Slow() &&
-      StVT == VT && !IsAligned) {
+  if (VT.is256BitVector() && StVT == VT &&
+      TLI.allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(), VT,
+                             AddressSpace, Alignment, &Fast) && !Fast) {
     unsigned NumElems = VT.getVectorNumElements();
     if (NumElems < 2)
       return SDValue();
