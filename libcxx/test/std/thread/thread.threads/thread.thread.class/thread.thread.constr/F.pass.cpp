@@ -22,6 +22,8 @@
 #include <cstdlib>
 #include <cassert>
 
+#include "test_macros.h"
+
 unsigned throw_one = 0xFFFF;
 
 void* operator new(std::size_t s) throw(std::bad_alloc)
@@ -75,7 +77,7 @@ public:
 int G::n_alive = 0;
 bool G::op_run = false;
 
-#ifndef _LIBCPP_HAS_NO_VARIADICS
+#if TEST_STD_VER >= 11
 
 class MoveOnly
 {
@@ -137,7 +139,7 @@ int main()
             assert(!G::op_run);
         }
     }
-#ifndef _LIBCPP_HAS_NO_VARIADICS
+#if TEST_STD_VER >= 11
     {
         assert(G::n_alive == 0);
         assert(!G::op_run);
@@ -150,5 +152,5 @@ int main()
         std::thread t = std::thread(MoveOnly(), MoveOnly());
         t.join();
     }
-#endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif
 }

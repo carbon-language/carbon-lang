@@ -36,9 +36,10 @@ void func()
 int main()
 {
     std::unique_lock<std::mutex> lk(mut);
-    std::thread(func).detach();
+    std::thread t(func);
     Clock::time_point t0 = Clock::now();
     cv.wait(lk);
     Clock::time_point t1 = Clock::now();
     assert(t1-t0 > ms(250));
+    t.join();
 }
