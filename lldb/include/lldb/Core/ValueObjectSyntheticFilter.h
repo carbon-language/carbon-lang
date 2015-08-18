@@ -152,6 +152,9 @@ public:
     virtual void
     SetFormat (lldb::Format format);
     
+    virtual bool
+    GetDeclaration (Declaration &decl);
+
 protected:
     virtual bool
     UpdateValue ();

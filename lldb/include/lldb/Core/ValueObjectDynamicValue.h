@@ -85,7 +85,7 @@ public:
     {
         return m_parent->GetSP();
     }
-    
+
     void
     SetOwningSP (lldb::ValueObjectSP &owning_sp)
     {
@@ -105,6 +105,9 @@ public:
     virtual TypeImpl
     GetTypeImpl ();
     
+    virtual bool
+    GetDeclaration (Declaration &decl);
+
 protected:
     virtual bool
     UpdateValue ();

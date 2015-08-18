@@ -421,3 +421,12 @@ ValueObjectDynamicValue::SetData (DataExtractor &data, Error &error)
     SetNeedsUpdate();
     return ret_val;
 }
+
+bool
+ValueObjectDynamicValue::GetDeclaration (Declaration &decl)
+{
+    if (m_parent)
+        return m_parent->GetDeclaration(decl);
+
+    return ValueObject::GetDeclaration(decl);
+}

@@ -314,3 +314,12 @@ ValueObjectSynthetic::SetFormat (lldb::Format format)
     this->ValueObject::SetFormat(format);
     this->ClearUserVisibleData(eClearUserVisibleDataItemsAll);
 }
+
+bool
+ValueObjectSynthetic::GetDeclaration (Declaration &decl)
+{
+    if (m_parent)
+        return m_parent->GetDeclaration(decl);
+
+    return ValueObject::GetDeclaration(decl);
+}
