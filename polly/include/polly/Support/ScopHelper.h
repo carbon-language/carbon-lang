@@ -27,6 +27,7 @@ class Region;
 class Pass;
 class BasicBlock;
 class StringRef;
+class DataLayout;
 class DominatorTree;
 class RegionInfo;
 class ScalarEvolution;
@@ -77,5 +78,26 @@ void simplifyRegion(llvm::Region *R, llvm::DominatorTree *DT,
 /// @param P          The pass that currently running.
 ///
 void splitEntryBlockForAlloca(llvm::BasicBlock *EntryBlock, llvm::Pass *P);
+
+/// @brief Wrapper for SCEVExpander extended to all Polly features.
+///
+/// This wrapper will internally call the SCEVExpander but also makes sure that
+/// all additional features not represented in SCEV (e.g., SDiv/SRem are not
+/// black boxes but can be part of the function) will be expanded correctly.
+///
+/// The parameters are the same as for the creation of a SCEVExpander as well
+/// as the call to SCEVExpander::expandCodeFor:
+///
+/// @param S    The current Scop.
+/// @param SE   The Scalar Evolution pass.
+/// @param DL   The module data layout.
+/// @param Name The suffix added to the new instruction names.
+/// @param E    The expression for which code is actually generated.
+/// @param Ty   The type of the resulting code.
+/// @param IP   The insertion point for the new code.
+llvm::Value *expandCodeFor(Scop &S, llvm::ScalarEvolution &SE,
+                           const llvm::DataLayout &DL, const char *Name,
+                           const llvm::SCEV *E, llvm::Type *Ty,
+                           llvm::Instruction *IP);
 }
 #endif

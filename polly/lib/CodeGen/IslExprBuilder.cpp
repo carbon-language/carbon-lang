@@ -12,7 +12,7 @@
 #include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "polly/Support/ScopHelper.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
@@ -148,8 +148,9 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
       break;
 
     const SCEV *DimSCEV = SAI->getDimensionSize(u - 1);
-    Value *DimSize = Expander.expandCodeFor(DimSCEV, DimSCEV->getType(),
-                                            Builder.GetInsertPoint());
+    Value *DimSize =
+        expandCodeFor(S, SE, DL, "polly", DimSCEV, DimSCEV->getType(),
+                      Builder.GetInsertPoint());
 
     Type *Ty = getWidestType(DimSize->getType(), IndexOp->getType());
 

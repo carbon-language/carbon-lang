@@ -8,7 +8,8 @@
 ; computation of the SCEV to before the scop that references %div44, which is
 ; not available then.
 ;
-; XFAIL: *
+; CHECK:      polly.split_new_and_old:
+; CHECK-NEXT:   %div23.neg.polly.copy = sdiv i64 0, -4
 ;
 target triple = "x86_64-unknown-linux-gnu"
 

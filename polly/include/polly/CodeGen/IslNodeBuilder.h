@@ -16,7 +16,6 @@
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/LoopGenerators.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "isl/ctx.h"
 #include "isl/union_map.h"
 
@@ -30,8 +29,8 @@ public:
   IslNodeBuilder(PollyIRBuilder &Builder, ScopAnnotator &Annotator, Pass *P,
                  const DataLayout &DL, LoopInfo &LI, ScalarEvolution &SE,
                  DominatorTree &DT, Scop &S)
-      : S(S), Builder(Builder), Annotator(Annotator), Rewriter(SE, DL, "polly"),
-        ExprBuilder(Builder, IDToValue, Rewriter, DT, LI),
+      : S(S), Builder(Builder), Annotator(Annotator),
+        ExprBuilder(S, Builder, IDToValue, DL, SE, DT, LI),
         BlockGen(Builder, LI, SE, DT, ScalarMap, PHIOpMap, EscapeMap,
                  &ExprBuilder),
         RegionGen(BlockGen), P(P), DL(DL), LI(LI), SE(SE), DT(DT) {}
@@ -52,9 +51,6 @@ private:
   Scop &S;
   PollyIRBuilder &Builder;
   ScopAnnotator &Annotator;
-
-  /// @brief A SCEVExpander to create llvm values from SCEVs.
-  SCEVExpander Rewriter;
 
   IslExprBuilder ExprBuilder;
 

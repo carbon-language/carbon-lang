@@ -24,7 +24,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -116,17 +115,16 @@ Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
         VTV.insert(BBMap.begin(), BBMap.end());
         VTV.insert(GlobalMap.begin(), GlobalMap.end());
         NewScev = SCEVParameterRewriter::rewrite(NewScev, SE, VTV);
-        SCEVExpander Expander(SE, Stmt.getParent()
-                                      ->getRegion()
-                                      .getEntry()
-                                      ->getParent()
-                                      ->getParent()
-                                      ->getDataLayout(),
-                              "polly");
-        assert(Builder.GetInsertPoint() != Builder.GetInsertBlock()->end() &&
+
+        Scop &S = *Stmt.getParent();
+        const DataLayout &DL =
+            S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
+        auto IP = Builder.GetInsertPoint();
+
+        assert(IP != Builder.GetInsertBlock()->end() &&
                "Only instructions can be insert points for SCEVExpander");
-        Value *Expanded = Expander.expandCodeFor(NewScev, Old->getType(),
-                                                 Builder.GetInsertPoint());
+        Value *Expanded =
+            expandCodeFor(S, SE, DL, "polly", NewScev, Old->getType(), IP);
 
         BBMap[Old] = Expanded;
         return Expanded;
@@ -376,6 +374,7 @@ AllocaInst *BlockGenerator::getOrCreateAlloca(Value *ScalarBase,
 
 void BlockGenerator::handleOutsideUsers(const Region &R, Instruction *Inst,
                                         Value *InstCopy) {
+
   EscapeUserVectorTy EscapeUsers;
   for (User *U : Inst->users()) {
 
