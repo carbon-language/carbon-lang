@@ -328,9 +328,9 @@ DynamicRegisterInfo::SetRegisterInfo(const StructuredData::Dictionary &dict, con
         reg_info.kinds[lldb::eRegisterKindStabs] = i;
         uint32_t eh_frame_regno = LLDB_INVALID_REGNUM;
         reg_info_dict->GetValueForKeyAsInteger("gcc", eh_frame_regno, LLDB_INVALID_REGNUM);
-        if (eh_frame_regno == LLDB_INVALID_REGNUM);
+        if (eh_frame_regno == LLDB_INVALID_REGNUM)
             reg_info_dict->GetValueForKeyAsInteger("ehframe", eh_frame_regno, LLDB_INVALID_REGNUM);
-        if (eh_frame_regno == LLDB_INVALID_REGNUM);
+        if (eh_frame_regno == LLDB_INVALID_REGNUM)
             reg_info_dict->GetValueForKeyAsInteger("eh_frame", eh_frame_regno, LLDB_INVALID_REGNUM);
         reg_info.kinds[lldb::eRegisterKindEHFrame] = eh_frame_regno;
         reg_info_dict->GetValueForKeyAsInteger("dwarf", reg_info.kinds[lldb::eRegisterKindDWARF], LLDB_INVALID_REGNUM);
