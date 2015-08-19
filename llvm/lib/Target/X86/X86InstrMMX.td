@@ -249,6 +249,7 @@ def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR64:$src),
                           (MMX_X86movd2w (x86mmx VR64:$src)))],
                           IIC_MMX_MOV_REG_MM>, Sched<[WriteMove]>;
 
+let isBitcast = 1 in
 def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              "movd\t{$src, $dst|$dst, $src}",
                              [(set VR64:$dst, (bitconvert GR64:$src))],
@@ -262,7 +263,7 @@ def MMX_MOVD64to64rm : MMXRI<0x6E, MRMSrcMem, (outs VR64:$dst),
 // These are 64 bit moves, but since the OS X assembler doesn't
 // recognize a register-register movq, we write them as
 // movd.
-let SchedRW = [WriteMove] in {
+let SchedRW = [WriteMove], isBitcast = 1 in {
 def MMX_MOVD64from64rr : MMXRI<0x7E, MRMDestReg,
                                (outs GR64:$dst), (ins VR64:$src),
                                "movd\t{$src, $dst|$dst, $src}",

@@ -1303,6 +1303,33 @@ private:
   unsigned CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
 
+/// \brief Provide DenseMapInfo for TargetInstrInfo::RegSubRegPair.
+template<>
+struct DenseMapInfo<TargetInstrInfo::RegSubRegPair> {
+  typedef DenseMapInfo<unsigned> RegInfo;
+
+  static inline TargetInstrInfo::RegSubRegPair getEmptyKey() {
+    return TargetInstrInfo::RegSubRegPair(RegInfo::getEmptyKey(),
+                         RegInfo::getEmptyKey());
+  }
+  static inline TargetInstrInfo::RegSubRegPair getTombstoneKey() {
+    return TargetInstrInfo::RegSubRegPair(RegInfo::getTombstoneKey(),
+                         RegInfo::getTombstoneKey());
+  }
+  /// \brief Reuse getHashValue implementation from
+  /// std::pair<unsigned, unsigned>.
+  static unsigned getHashValue(const TargetInstrInfo::RegSubRegPair &Val) {
+    std::pair<unsigned, unsigned> PairVal =
+        std::make_pair(Val.Reg, Val.SubReg);
+    return DenseMapInfo<std::pair<unsigned, unsigned>>::getHashValue(PairVal);
+  }
+  static bool isEqual(const TargetInstrInfo::RegSubRegPair &LHS,
+                      const TargetInstrInfo::RegSubRegPair &RHS) {
+    return RegInfo::isEqual(LHS.Reg, RHS.Reg) &&
+           RegInfo::isEqual(LHS.SubReg, RHS.SubReg);
+  }
+};
+
 } // End llvm namespace
 
 #endif
