@@ -919,7 +919,7 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
   }
 
   // Step 2: Replace the precondition from "if (x == 0) goto loop-exit" to
-  //   "if (NewCount == 0) loop-exit". Withtout this change, the intrinsic
+  //   "if (NewCount == 0) loop-exit". Without this change, the intrinsic
   //   function would be partial dead code, and downstream passes will drag
   //   it back from the precondition block to the preheader.
   {
@@ -938,7 +938,7 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
   }
 
   // Step 3: Note that the population count is exactly the trip count of the
-  // loop in question, which enble us to to convert the loop from noncountable
+  // loop in question, which enable us to to convert the loop from noncountable
   // loop into a countable one. The benefit is twofold:
   //
   //  - If the loop only counts population, the entire loop becomes dead after
@@ -966,10 +966,9 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
     PHINode *TcPhi = PHINode::Create(Ty, 2, "tcphi", Body->begin());
 
     Builder.SetInsertPoint(LbCond);
-    Value *Opnd1 = TcPhi;
-    Value *Opnd2 = ConstantInt::get(Ty, 1);
     Instruction *TcDec = cast<Instruction>(
-        Builder.CreateSub(Opnd1, Opnd2, "tcdec", false, true));
+        Builder.CreateSub(TcPhi, ConstantInt::get(Ty, 1),
+                          "tcdec", false, true));
 
     TcPhi->addIncoming(TripCnt, PreHead);
     TcPhi->addIncoming(TcDec, Body);
