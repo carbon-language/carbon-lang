@@ -32,7 +32,7 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/TargetParser.h"
+#include "llvm/Support/CodeGen.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -41,6 +41,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TargetParser.h"
 
 #ifdef LLVM_ON_UNIX
 #include <unistd.h> // For getuid().
@@ -50,21 +51,6 @@ using namespace clang::driver;
 using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
-
-static void addAssemblerKPIC(const ArgList &Args, ArgStringList &CmdArgs) {
-  Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                    options::OPT_fpic, options::OPT_fno_pic,
-                                    options::OPT_fPIE, options::OPT_fno_PIE,
-                                    options::OPT_fpie, options::OPT_fno_pie);
-  if (!LastPICArg)
-    return;
-  if (LastPICArg->getOption().matches(options::OPT_fPIC) ||
-      LastPICArg->getOption().matches(options::OPT_fpic) ||
-      LastPICArg->getOption().matches(options::OPT_fPIE) ||
-      LastPICArg->getOption().matches(options::OPT_fpie)) {
-    CmdArgs.push_back("-KPIC");
-  }
-}
 
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
@@ -2939,6 +2925,159 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
   }
 }
 
+/// Parses the various -fpic/-fPIC/-fpie/-fPIE arguments.  Then,
+/// smooshes them together with platform defaults, to decide whether
+/// this compile should be using PIC mode or not. Returns a tuple of
+/// (RelocationModel, PICLevel, IsPIE).
+static std::tuple<llvm::Reloc::Model, unsigned, bool>
+ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
+             const ArgList &Args) {
+  // FIXME: why does this code...and so much everywhere else, use both
+  // ToolChain.getTriple() and Triple?
+  bool PIE = ToolChain.isPIEDefault();
+  bool PIC = PIE || ToolChain.isPICDefault();
+  bool IsPICLevelTwo = PIC;
+
+  bool KernelOrKext =
+      Args.hasArg(options::OPT_mkernel, options::OPT_fapple_kext);
+
+  // Android-specific defaults for PIC/PIE
+  if (ToolChain.getTriple().getEnvironment() == llvm::Triple::Android) {
+    switch (ToolChain.getArch()) {
+    case llvm::Triple::arm:
+    case llvm::Triple::armeb:
+    case llvm::Triple::thumb:
+    case llvm::Triple::thumbeb:
+    case llvm::Triple::aarch64:
+    case llvm::Triple::mips:
+    case llvm::Triple::mipsel:
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+      PIC = true; // "-fpic"
+      break;
+
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      PIC = true; // "-fPIC"
+      IsPICLevelTwo = true;
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  // OpenBSD-specific defaults for PIE
+  if (ToolChain.getTriple().getOS() == llvm::Triple::OpenBSD) {
+    switch (ToolChain.getArch()) {
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+    case llvm::Triple::sparcel:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      IsPICLevelTwo = false; // "-fpie"
+      break;
+
+    case llvm::Triple::ppc:
+    case llvm::Triple::sparc:
+    case llvm::Triple::sparcv9:
+      IsPICLevelTwo = true; // "-fPIE"
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  // The last argument relating to either PIC or PIE wins, and no
+  // other argument is used. If the last argument is any flavor of the
+  // '-fno-...' arguments, both PIC and PIE are disabled. Any PIE
+  // option implicitly enables PIC at the same level.
+  Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
+                                    options::OPT_fpic, options::OPT_fno_pic,
+                                    options::OPT_fPIE, options::OPT_fno_PIE,
+                                    options::OPT_fpie, options::OPT_fno_pie);
+  // Check whether the tool chain trumps the PIC-ness decision. If the PIC-ness
+  // is forced, then neither PIC nor PIE flags will have no effect.
+  if (!ToolChain.isPICDefaultForced()) {
+    if (LastPICArg) {
+      Option O = LastPICArg->getOption();
+      if (O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic) ||
+          O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie)) {
+        PIE = O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie);
+        PIC =
+            PIE || O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic);
+        IsPICLevelTwo =
+            O.matches(options::OPT_fPIE) || O.matches(options::OPT_fPIC);
+      } else {
+        PIE = PIC = false;
+      }
+    }
+  }
+
+  // Introduce a Darwin-specific hack. If the default is PIC, but the
+  // PIC level would've been set to level 1, force it back to level 2
+  // PIC instead. This matches the behavior of Darwin GCC (based on
+  // chandlerc's informal testing in 2012).
+  if (PIC && ToolChain.getTriple().isOSDarwin())
+    IsPICLevelTwo |= ToolChain.isPICDefault();
+
+  // Note that these flags are trump-cards. Regardless of the order w.r.t. the
+  // PIC or PIE options above, if these show up, PIC is disabled.
+  if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6)))
+    PIC = PIE = false;
+  if (Args.hasArg(options::OPT_static))
+    PIC = PIE = false;
+
+  if (Arg *A = Args.getLastArg(options::OPT_mdynamic_no_pic)) {
+    // This is a very special mode. It trumps the other modes, almost no one
+    // uses it, and it isn't even valid on any OS but Darwin.
+    if (!ToolChain.getTriple().isOSDarwin())
+      ToolChain.getDriver().Diag(diag::err_drv_unsupported_opt_for_target)
+          << A->getSpelling() << ToolChain.getTriple().str();
+
+    // FIXME: Warn when this flag trumps some other PIC or PIE flag.
+
+    // Only a forced PIC mode can cause the actual compile to have PIC defines
+    // etc., no flags are sufficient. This behavior was selected to closely
+    // match that of llvm-gcc and Apple GCC before that.
+    PIC = ToolChain.isPICDefault() && ToolChain.isPICDefaultForced();
+
+    return std::make_tuple(llvm::Reloc::DynamicNoPIC, PIC ? 2 : 0, false);
+  }
+
+  if (PIC)
+    return std::make_tuple(llvm::Reloc::PIC_, IsPICLevelTwo ? 2 : 1, PIE);
+
+  return std::make_tuple(llvm::Reloc::Static, 0, false);
+}
+
+static const char *RelocationModelName(llvm::Reloc::Model Model) {
+  switch (Model) {
+  case llvm::Reloc::Default:
+    return nullptr;
+  case llvm::Reloc::Static:
+    return "static";
+  case llvm::Reloc::PIC_:
+    return "pic";
+  case llvm::Reloc::DynamicNoPIC:
+    return "dynamic-no-pic";
+  }
+  assert(false && "Unknown Reloc::Model kind");
+}
+
+static void AddAssemblerKPIC(const ToolChain &ToolChain, const ArgList &Args,
+                             ArgStringList &CmdArgs) {
+  llvm::Reloc::Model RelocationModel;
+  unsigned PICLevel;
+  bool IsPIE;
+  std::tie(RelocationModel, PICLevel, IsPIE) =
+      ParsePICArgs(ToolChain, ToolChain.getTriple(), Args);
+
+  if (RelocationModel != llvm::Reloc::Static)
+    CmdArgs.push_back("-KPIC");
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output, const InputInfoList &Inputs,
                          const ArgList &Args, const char *LinkingOutput) const {
@@ -3137,134 +3276,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   CheckCodeGenerationOptions(D, Args);
 
-  bool PIE = getToolChain().isPIEDefault();
-  bool PIC = PIE || getToolChain().isPICDefault();
-  bool IsPICLevelTwo = PIC;
+  llvm::Reloc::Model RelocationModel;
+  unsigned PICLevel;
+  bool IsPIE;
+  std::tie(RelocationModel, PICLevel, IsPIE) =
+      ParsePICArgs(getToolChain(), Triple, Args);
 
-  // Android-specific defaults for PIC/PIE
-  if (getToolChain().getTriple().getEnvironment() == llvm::Triple::Android) {
-    switch (getToolChain().getArch()) {
-    case llvm::Triple::arm:
-    case llvm::Triple::armeb:
-    case llvm::Triple::thumb:
-    case llvm::Triple::thumbeb:
-    case llvm::Triple::aarch64:
-    case llvm::Triple::mips:
-    case llvm::Triple::mipsel:
-    case llvm::Triple::mips64:
-    case llvm::Triple::mips64el:
-      PIC = true; // "-fpic"
-      break;
-
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-      PIC = true; // "-fPIC"
-      IsPICLevelTwo = true;
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  // OpenBSD-specific defaults for PIE
-  if (getToolChain().getTriple().getOS() == llvm::Triple::OpenBSD) {
-    switch (getToolChain().getArch()) {
-    case llvm::Triple::mips64:
-    case llvm::Triple::mips64el:
-    case llvm::Triple::sparcel:
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-      IsPICLevelTwo = false; // "-fpie"
-      break;
-
-    case llvm::Triple::ppc:
-    case llvm::Triple::sparc:
-    case llvm::Triple::sparcv9:
-      IsPICLevelTwo = true; // "-fPIE"
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  // For the PIC and PIE flag options, this logic is different from the
-  // legacy logic in very old versions of GCC, as that logic was just
-  // a bug no one had ever fixed. This logic is both more rational and
-  // consistent with GCC's new logic now that the bugs are fixed. The last
-  // argument relating to either PIC or PIE wins, and no other argument is
-  // used. If the last argument is any flavor of the '-fno-...' arguments,
-  // both PIC and PIE are disabled. Any PIE option implicitly enables PIC
-  // at the same level.
-  Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                    options::OPT_fpic, options::OPT_fno_pic,
-                                    options::OPT_fPIE, options::OPT_fno_PIE,
-                                    options::OPT_fpie, options::OPT_fno_pie);
-  // Check whether the tool chain trumps the PIC-ness decision. If the PIC-ness
-  // is forced, then neither PIC nor PIE flags will have no effect.
-  if (!getToolChain().isPICDefaultForced()) {
-    if (LastPICArg) {
-      Option O = LastPICArg->getOption();
-      if (O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic) ||
-          O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie)) {
-        PIE = O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie);
-        PIC =
-            PIE || O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic);
-        IsPICLevelTwo =
-            O.matches(options::OPT_fPIE) || O.matches(options::OPT_fPIC);
-      } else {
-        PIE = PIC = false;
-      }
-    }
-  }
-
-  // Introduce a Darwin-specific hack. If the default is PIC but the flags
-  // specified while enabling PIC enabled level 1 PIC, just force it back to
-  // level 2 PIC instead. This matches the behavior of Darwin GCC (based on my
-  // informal testing).
-  if (PIC && getToolChain().getTriple().isOSDarwin())
-    IsPICLevelTwo |= getToolChain().isPICDefault();
-
-  // Note that these flags are trump-cards. Regardless of the order w.r.t. the
-  // PIC or PIE options above, if these show up, PIC is disabled.
-  if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6)))
-    PIC = PIE = false;
-  if (Args.hasArg(options::OPT_static))
-    PIC = PIE = false;
-
-  if (Arg *A = Args.getLastArg(options::OPT_mdynamic_no_pic)) {
-    // This is a very special mode. It trumps the other modes, almost no one
-    // uses it, and it isn't even valid on any OS but Darwin.
-    if (!getToolChain().getTriple().isOSDarwin())
-      D.Diag(diag::err_drv_unsupported_opt_for_target)
-          << A->getSpelling() << getToolChain().getTriple().str();
-
-    // FIXME: Warn when this flag trumps some other PIC or PIE flag.
-
+  const char *RMName = RelocationModelName(RelocationModel);
+  if (RMName) {
     CmdArgs.push_back("-mrelocation-model");
-    CmdArgs.push_back("dynamic-no-pic");
-
-    // Only a forced PIC mode can cause the actual compile to have PIC defines
-    // etc., no flags are sufficient. This behavior was selected to closely
-    // match that of llvm-gcc and Apple GCC before that.
-    if (getToolChain().isPICDefault() && getToolChain().isPICDefaultForced()) {
-      CmdArgs.push_back("-pic-level");
-      CmdArgs.push_back("2");
-    }
-  } else {
-    // Currently, LLVM only knows about PIC vs. static; the PIE differences are
-    // handled in Clang's IRGen by the -pie-level flag.
-    CmdArgs.push_back("-mrelocation-model");
-    CmdArgs.push_back(PIC ? "pic" : "static");
-
-    if (PIC) {
-      CmdArgs.push_back("-pic-level");
-      CmdArgs.push_back(IsPICLevelTwo ? "2" : "1");
-      if (PIE) {
-        CmdArgs.push_back("-pie-level");
-        CmdArgs.push_back(IsPICLevelTwo ? "2" : "1");
-      }
+    CmdArgs.push_back(RMName);
+  }
+  if (PICLevel > 0) {
+    CmdArgs.push_back("-pic-level");
+    CmdArgs.push_back(PICLevel == 1 ? "1" : "2");
+    if (IsPIE) {
+      CmdArgs.push_back("-pie-level");
+      CmdArgs.push_back(PICLevel == 1 ? "1" : "2");
     }
   }
 
@@ -5464,6 +5492,20 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddAllArgs(CmdArgs, options::OPT_I);
   }
 
+  // Handle -fPIC et al -- the relocation-model affects the assembler
+  // for some targets.
+  llvm::Reloc::Model RelocationModel;
+  unsigned PICLevel;
+  bool IsPIE;
+  std::tie(RelocationModel, PICLevel, IsPIE) =
+      ParsePICArgs(getToolChain(), Triple, Args);
+
+  const char *RMName = RelocationModelName(RelocationModel);
+  if (RMName) {
+    CmdArgs.push_back("-mrelocation-model");
+    CmdArgs.push_back(RMName);
+  }
+
   // Optionally embed the -cc1as level arguments into the debug info, for build
   // analysis.
   if (getToolChain().UseDwarfDebugFlags()) {
@@ -6926,7 +6968,7 @@ void openbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (NeedsKPIC)
-    addAssemblerKPIC(Args, CmdArgs);
+    AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
 
@@ -7233,7 +7275,7 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-EL");
 
-    addAssemblerKPIC(Args, CmdArgs);
+    AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
   } else if (getToolChain().getArch() == llvm::Triple::arm ||
              getToolChain().getArch() == llvm::Triple::armeb ||
              getToolChain().getArch() == llvm::Triple::thumb ||
@@ -7266,7 +7308,7 @@ void freebsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-Av9a");
 
-    addAssemblerKPIC(Args, CmdArgs);
+    AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
@@ -7510,20 +7552,20 @@ void netbsd::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-EL");
 
-    addAssemblerKPIC(Args, CmdArgs);
+    AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
     break;
   }
 
   case llvm::Triple::sparc:
   case llvm::Triple::sparcel:
     CmdArgs.push_back("-32");
-    addAssemblerKPIC(Args, CmdArgs);
+    AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
     break;
 
   case llvm::Triple::sparcv9:
     CmdArgs.push_back("-64");
     CmdArgs.push_back("-Av9");
-    addAssemblerKPIC(Args, CmdArgs);
+    AddAssemblerKPIC(getToolChain(), Args, CmdArgs);
     break;
 
   default:
@@ -7765,6 +7807,12 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
   bool NeedsKPIC = false;
 
+  llvm::Reloc::Model RelocationModel;
+  unsigned PICLevel;
+  bool IsPIE;
+  std::tie(RelocationModel, PICLevel, IsPIE) =
+      ParsePICArgs(getToolChain(), Triple, Args);
+
   switch (getToolChain().getArch()) {
   default:
     break;
@@ -7857,18 +7905,7 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
 
     // -mno-shared should be emitted unless -fpic, -fpie, -fPIC, -fPIE,
     // or -mshared (not implemented) is in effect.
-    bool IsPicOrPie = false;
-    if (Arg *A = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
-                                 options::OPT_fpic, options::OPT_fno_pic,
-                                 options::OPT_fPIE, options::OPT_fno_PIE,
-                                 options::OPT_fpie, options::OPT_fno_pie)) {
-      if (A->getOption().matches(options::OPT_fPIC) ||
-          A->getOption().matches(options::OPT_fpic) ||
-          A->getOption().matches(options::OPT_fPIE) ||
-          A->getOption().matches(options::OPT_fpie))
-        IsPicOrPie = true;
-    }
-    if (!IsPicOrPie)
+    if (RelocationModel == llvm::Reloc::Static)
       CmdArgs.push_back("-mno-shared");
 
     // LLVM doesn't support -mplt yet and acts as if it is always given.
@@ -7942,8 +7979,10 @@ void gnutools::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   }
   }
 
-  if (NeedsKPIC)
-    addAssemblerKPIC(Args, CmdArgs);
+  if (NeedsKPIC) {
+    if (RelocationModel != llvm::Reloc::Static)
+      CmdArgs.push_back("-KPIC");
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_I);
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA, options::OPT_Xassembler);
