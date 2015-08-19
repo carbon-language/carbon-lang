@@ -79,9 +79,6 @@ XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM,
   // Compute derived properties from the register classes
   computeRegisterProperties(Subtarget.getRegisterInfo());
 
-  // Division is expensive
-  setIntDivIsCheap(false);
-
   setStackPointerRegisterToSaveRestore(XCore::SP);
 
   setSchedulingPreference(Sched::Source);

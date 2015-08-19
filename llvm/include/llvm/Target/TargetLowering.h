@@ -226,7 +226,11 @@ public:
 
   /// Return true if integer divide is usually cheaper than a sequence of
   /// several shifts, adds, and multiplies for this target.
-  bool isIntDivCheap() const { return IntDivIsCheap; }
+  /// The definition of "cheaper" may depend on whether we're optimizing
+  /// for speed or for size.
+  virtual bool isIntDivCheap(EVT VT, bool OptSize) const { 
+    return false;
+  }
 
   /// Return true if sqrt(x) is as cheap or cheaper than 1 / rsqrt(x)
   bool isFsqrtCheap() const {
@@ -241,9 +245,6 @@ public:
   const DenseMap<unsigned int, unsigned int> &getBypassSlowDivWidths() const {
     return BypassSlowDivWidths;
   }
-
-  /// Return true if pow2 sdiv is cheaper than a chain of sra/srl/add/sra.
-  bool isPow2SDivCheap() const { return Pow2SDivIsCheap; }
 
   /// Return true if Flow Control is an expensive operation that should be
   /// avoided.
@@ -1252,11 +1253,6 @@ protected:
   /// control.
   void setJumpIsExpensive(bool isExpensive = true);
 
-  /// Tells the code generator that integer divide is expensive, and if
-  /// possible, should be replaced by an alternate sequence of instructions not
-  /// containing an integer divide.
-  void setIntDivIsCheap(bool isCheap = true) { IntDivIsCheap = isCheap; }
-
   /// Tells the code generator that fsqrt is cheap, and should not be replaced
   /// with an alternative sequence of instructions.
   void setFsqrtIsCheap(bool isCheap = true) { FsqrtIsCheap = isCheap; }
@@ -1271,10 +1267,6 @@ protected:
   void addBypassSlowDiv(unsigned int SlowBitWidth, unsigned int FastBitWidth) {
     BypassSlowDivWidths[SlowBitWidth] = FastBitWidth;
   }
-
-  /// Tells the code generator that it shouldn't generate sra/srl/add/sra for a
-  /// signed divide by power of two; let the target handle it.
-  void setPow2SDivIsCheap(bool isCheap = true) { Pow2SDivIsCheap = isCheap; }
 
   /// Add the specified register class as an available regclass for the
   /// specified value type. This indicates the selector can handle values of
@@ -1766,12 +1758,6 @@ private:
   /// combined with "shift" to BitExtract instructions.
   bool HasExtractBitsInsn;
 
-  /// Tells the code generator not to expand integer divides by constants into a
-  /// sequence of muls, adds, and shifts.  This is a hack until a real cost
-  /// model is in place.  If we ever optimize for size, this will be set to true
-  /// unconditionally.
-  bool IntDivIsCheap;
-
   // Don't expand fsqrt with an approximation based on the inverse sqrt.
   bool FsqrtIsCheap;
 
@@ -1780,10 +1766,6 @@ private:
   /// generator to bypass 32-bit integer div/rem with an 8-bit unsigned integer
   /// div/rem when the operands are positive and less than 256.
   DenseMap <unsigned int, unsigned int> BypassSlowDivWidths;
-
-  /// Tells the code generator that it shouldn't generate sra/srl/add/sra for a
-  /// signed divide by power of two; let the target handle it.
-  bool Pow2SDivIsCheap;
 
   /// Tells the code generator that it shouldn't generate extra flow control
   /// instructions and should attempt to combine flow control instructions via

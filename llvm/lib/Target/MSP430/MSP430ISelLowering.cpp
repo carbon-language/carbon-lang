@@ -69,10 +69,6 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM,
   computeRegisterProperties(STI.getRegisterInfo());
 
   // Provide all sorts of operation actions
-
-  // Division is expensive
-  setIntDivIsCheap(false);
-
   setStackPointerRegisterToSaveRestore(MSP430::SP);
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrOneBooleanContent); // FIXME: Is this correct?

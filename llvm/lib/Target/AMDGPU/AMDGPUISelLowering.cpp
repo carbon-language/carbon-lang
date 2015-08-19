@@ -429,10 +429,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setSelectIsExpensive(false);
   PredictableSelectIsExpensive = false;
 
-  // There are no integer divide instructions, and these expand to a pretty
-  // large sequence of instructions.
-  setIntDivIsCheap(false);
-  setPow2SDivIsCheap(false);
   setFsqrtIsCheap(true);
 
   // FIXME: Need to really handle these.

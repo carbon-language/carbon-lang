@@ -2176,6 +2176,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
                          N0, N1);
   }
 
+  bool MinSize = DAG.getMachineFunction().getFunction()->optForMinSize();
   // fold (sdiv X, pow2) -> simple ops after legalize
   // FIXME: We check for the exact bit here because the generic lowering gives
   // better results in that case. The target-specific lowering should learn how
@@ -2184,9 +2185,8 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
       !cast<BinaryWithFlagsSDNode>(N)->Flags.hasExact() &&
       (N1C->getAPIntValue().isPowerOf2() ||
        (-N1C->getAPIntValue()).isPowerOf2())) {
-    // If dividing by powers of two is cheap, then don't perform the following
-    // fold.
-    if (TLI.isPow2SDivCheap())
+    // If integer division is cheap, then don't perform the following fold.
+    if (TLI.isIntDivCheap(N->getValueType(0), MinSize))
       return SDValue();
 
     // Target-specific implementation of sdiv x, pow2.
@@ -2226,7 +2226,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
   // If integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
-  if (N1C && !TLI.isIntDivCheap())
+  if (N1C && !TLI.isIntDivCheap(N->getValueType(0), MinSize))
     if (SDValue Op = BuildSDIV(N))
       return Op;
 
@@ -2280,8 +2280,10 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
       }
     }
   }
+  
   // fold (udiv x, c) -> alternate
-  if (N1C && !TLI.isIntDivCheap())
+  bool MinSize = DAG.getMachineFunction().getFunction()->optForMinSize();
+  if (N1C && !TLI.isIntDivCheap(N->getValueType(0), MinSize))
     if (SDValue Op = BuildUDIV(N))
       return Op;
 
