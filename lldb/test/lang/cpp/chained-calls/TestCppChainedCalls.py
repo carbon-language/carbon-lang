@@ -12,6 +12,7 @@ class TestCppChainedCalls(TestBase):
         self.buildDsym()
         self.check()
 
+    @expectedFailureGcc
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         self.buildDwarf()
