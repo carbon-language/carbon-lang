@@ -7351,13 +7351,9 @@ static bool IsKnownPredicateViaAddRecStart(ScalarEvolution &SE,
   if (LAR->getStepRecurrence(SE) != RAR->getStepRecurrence(SE))
     return false;
 
-  auto CheckWrap = [Pred](const SCEVAddRecExpr *AR) -> bool {
-    if (ICmpInst::isSigned(Pred))
-      return AR->getNoWrapFlags(SCEV::FlagNSW);
-    return AR->getNoWrapFlags(SCEV::FlagNUW);
-  };
-
-  if (!CheckWrap(LAR) || !CheckWrap(RAR))
+  SCEV::NoWrapFlags NW = ICmpInst::isSigned(Pred) ?
+                         SCEV::FlagNSW : SCEV::FlagNUW;
+  if (!LAR->getNoWrapFlags(NW) || !RAR->getNoWrapFlags(NW))
     return false;
 
   return SE.isKnownPredicate(Pred, LAR->getStart(), RAR->getStart());
