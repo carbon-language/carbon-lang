@@ -32,7 +32,7 @@ function(darwin_get_toolchain_supported_archs output_var)
          ARCHES_MATCHED "${LINKER_VERSION}")
   if(ARCHES_MATCHED)
     set(ARCHES "${CMAKE_MATCH_1}")
-    message("Matched ARCHES: ${ARCHES}")
+    message(STATUS "Got ld supported ARCHES: ${ARCHES}")
     string(REPLACE " " ";" ARCHES ${ARCHES})
   else()
     # If auto-detecting fails, fall back to a default set
