@@ -7326,6 +7326,42 @@ static bool IsMinConsistingOf(ScalarEvolution &SE,
   return IsMaxConsistingOf<MaxExprType>(MaybeMaxExpr, SE.getNotSCEV(Candidate));
 }
 
+static bool IsKnownPredicateViaAddRecStart(ScalarEvolution &SE,
+                                           ICmpInst::Predicate Pred,
+                                           const SCEV *LHS, const SCEV *RHS) {
+
+  // If both sides are affine addrecs for the same loop, with equal
+  // steps, and we know the recurrences don't wrap, then we only
+  // need to check the predicate on the starting values.
+
+  if (!ICmpInst::isRelational(Pred))
+    return false;
+
+  const SCEVAddRecExpr *LAR = dyn_cast<SCEVAddRecExpr>(LHS);
+  if (!LAR)
+    return false;
+  const SCEVAddRecExpr *RAR = dyn_cast<SCEVAddRecExpr>(RHS);
+  if (!RAR)
+    return false;
+  if (LAR->getLoop() != RAR->getLoop())
+    return false;
+  if (!LAR->isAffine() || !RAR->isAffine())
+    return false;
+
+  if (LAR->getStepRecurrence(SE) != RAR->getStepRecurrence(SE))
+    return false;
+
+  auto CheckWrap = [Pred](const SCEVAddRecExpr *AR) -> bool {
+    if (ICmpInst::isSigned(Pred))
+      return AR->getNoWrapFlags(SCEV::FlagNSW);
+    return AR->getNoWrapFlags(SCEV::FlagNUW);
+  };
+
+  if (!CheckWrap(LAR) || !CheckWrap(RAR))
+    return false;
+
+  return SE.isKnownPredicate(Pred, LAR->getStart(), RAR->getStart());
+}
 
 /// Is LHS `Pred` RHS true on the virtue of LHS or RHS being a Min or Max
 /// expression?
@@ -7371,7 +7407,8 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
   auto IsKnownPredicateFull =
       [this](ICmpInst::Predicate Pred, const SCEV *LHS, const SCEV *RHS) {
     return isKnownPredicateWithRanges(Pred, LHS, RHS) ||
-        IsKnownPredicateViaMinOrMax(*this, Pred, LHS, RHS);
+        IsKnownPredicateViaMinOrMax(*this, Pred, LHS, RHS) ||
+        IsKnownPredicateViaAddRecStart(*this, Pred, LHS, RHS);
   };
 
   switch (Pred) {
