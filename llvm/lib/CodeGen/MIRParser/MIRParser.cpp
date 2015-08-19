@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
@@ -113,6 +114,11 @@ public:
                                 const yaml::StringValue &RegisterSource,
                                 int FrameIdx);
 
+  bool parseStackObjectsDebugInfo(MachineFunction &MF,
+                                  PerFunctionMIParsingState &PFS,
+                                  const yaml::MachineStackObject &Object,
+                                  int FrameIdx);
+
   bool initializeConstantPool(MachineConstantPool &ConstantPool,
                               const yaml::MachineFunction &YamlMF,
                               const MachineFunction &MF,
@@ -123,6 +129,9 @@ public:
                                PerFunctionMIParsingState &PFS);
 
 private:
+  bool parseMDNode(MDNode *&Node, const yaml::StringValue &Source,
+                   MachineFunction &MF, const PerFunctionMIParsingState &PFS);
+
   bool parseMBBReference(MachineBasicBlock *&MBB,
                          const yaml::StringValue &Source, MachineFunction &MF,
                          const PerFunctionMIParsingState &PFS);
@@ -489,6 +498,8 @@ bool MIRParserImpl::initializeFrameInfo(MachineFunction &MF,
       return true;
     if (Object.LocalOffset)
       MFI.mapLocalFrameObject(ObjectIdx, Object.LocalOffset.getValue());
+    if (parseStackObjectsDebugInfo(MF, PFS, Object, ObjectIdx))
+      return true;
   }
   MFI.setCalleeSavedInfo(CSIInfo);
   if (!CSIInfo.empty())
@@ -519,6 +530,56 @@ bool MIRParserImpl::parseCalleeSavedRegister(
                                   IRSlots, Error))
     return error(Error, RegisterSource.SourceRange);
   CSIInfo.push_back(CalleeSavedInfo(Reg, FrameIdx));
+  return false;
+}
+
+/// Verify that given node is of a certain type. Return true on error.
+template <typename T>
+static bool typecheckMDNode(T *&Result, MDNode *Node,
+                            const yaml::StringValue &Source,
+                            StringRef TypeString, MIRParserImpl &Parser) {
+  if (!Node)
+    return false;
+  Result = dyn_cast<T>(Node);
+  if (!Result)
+    return Parser.error(Source.SourceRange.Start,
+                        "expected a reference to a '" + TypeString +
+                            "' metadata node");
+  return false;
+}
+
+bool MIRParserImpl::parseStackObjectsDebugInfo(
+    MachineFunction &MF, PerFunctionMIParsingState &PFS,
+    const yaml::MachineStackObject &Object, int FrameIdx) {
+  // Debug information can only be attached to stack objects; Fixed stack
+  // objects aren't supported.
+  assert(FrameIdx >= 0 && "Expected a stack object frame index");
+  MDNode *Var = nullptr, *Expr = nullptr, *Loc = nullptr;
+  if (parseMDNode(Var, Object.DebugVar, MF, PFS) ||
+      parseMDNode(Expr, Object.DebugExpr, MF, PFS) ||
+      parseMDNode(Loc, Object.DebugLoc, MF, PFS))
+    return true;
+  if (!Var && !Expr && !Loc)
+    return false;
+  DILocalVariable *DIVar = nullptr;
+  DIExpression *DIExpr = nullptr;
+  DILocation *DILoc = nullptr;
+  if (typecheckMDNode(DIVar, Var, Object.DebugVar, "DILocalVariable", *this) ||
+      typecheckMDNode(DIExpr, Expr, Object.DebugExpr, "DIExpression", *this) ||
+      typecheckMDNode(DILoc, Loc, Object.DebugLoc, "DILocation", *this))
+    return true;
+  MF.getMMI().setVariableDbgInfo(DIVar, DIExpr, unsigned(FrameIdx), DILoc);
+  return false;
+}
+
+bool MIRParserImpl::parseMDNode(MDNode *&Node, const yaml::StringValue &Source,
+                                MachineFunction &MF,
+                                const PerFunctionMIParsingState &PFS) {
+  if (Source.Value.empty())
+    return false;
+  SMDiagnostic Error;
+  if (llvm::parseMDNode(Node, SM, MF, Source.Value, PFS, IRSlots, Error))
+    return error(Error, Source.SourceRange);
   return false;
 }
 

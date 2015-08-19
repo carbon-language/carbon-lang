@@ -196,6 +196,9 @@ struct MachineStackObject {
   unsigned Alignment = 0;
   StringValue CalleeSavedRegister;
   Optional<int64_t> LocalOffset;
+  StringValue DebugVar;
+  StringValue DebugExpr;
+  StringValue DebugLoc;
 };
 
 template <> struct ScalarEnumerationTraits<MachineStackObject::ObjectType> {
@@ -221,6 +224,12 @@ template <> struct MappingTraits<MachineStackObject> {
     YamlIO.mapOptional("callee-saved-register", Object.CalleeSavedRegister,
                        StringValue()); // Don't print it out when it's empty.
     YamlIO.mapOptional("local-offset", Object.LocalOffset);
+    YamlIO.mapOptional("di-variable", Object.DebugVar,
+                       StringValue()); // Don't print it out when it's empty.
+    YamlIO.mapOptional("di-expression", Object.DebugExpr,
+                       StringValue()); // Don't print it out when it's empty.
+    YamlIO.mapOptional("di-location", Object.DebugLoc,
+                       StringValue()); // Don't print it out when it's empty.
   }
 
   static const bool flow = true;

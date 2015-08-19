@@ -84,7 +84,8 @@ public:
   void convert(ModuleSlotTracker &MST, yaml::MachineJumpTable &YamlJTI,
                const MachineJumpTableInfo &JTI);
   void convertStackObjects(yaml::MachineFunction &MF,
-                           const MachineFrameInfo &MFI, ModuleSlotTracker &MST,
+                           const MachineFrameInfo &MFI, MachineModuleInfo &MMI,
+                           ModuleSlotTracker &MST,
                            const TargetRegisterInfo *TRI);
 
 private:
@@ -171,7 +172,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   ModuleSlotTracker MST(MF.getFunction()->getParent());
   MST.incorporateFunction(*MF.getFunction());
   convert(MST, YamlMF.FrameInfo, *MF.getFrameInfo());
-  convertStackObjects(YamlMF, *MF.getFrameInfo(), MST,
+  convertStackObjects(YamlMF, *MF.getFrameInfo(), MF.getMMI(), MST,
                       MF.getSubtarget().getRegisterInfo());
   if (const auto *ConstantPool = MF.getConstantPool())
     convert(YamlMF, *ConstantPool);
@@ -265,6 +266,7 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
 
 void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
                                      const MachineFrameInfo &MFI,
+                                     MachineModuleInfo &MMI,
                                      ModuleSlotTracker &MST,
                                      const TargetRegisterInfo *TRI) {
   // Process fixed stack objects.
@@ -341,6 +343,29 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &MF,
     raw_string_ostream StrOS(MF.FrameInfo.StackProtector.Value);
     MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
         .printStackObjectReference(MFI.getStackProtectorIndex());
+  }
+
+  // Print the debug variable information.
+  for (MachineModuleInfo::VariableDbgInfo &DebugVar :
+       MMI.getVariableDbgInfo()) {
+    auto StackObjectInfo = StackObjectOperandMapping.find(DebugVar.Slot);
+    assert(StackObjectInfo != StackObjectOperandMapping.end() &&
+           "Invalid stack object index");
+    const FrameIndexOperand &StackObject = StackObjectInfo->second;
+    assert(!StackObject.IsFixed && "Expected a non-fixed stack object");
+    auto &Object = MF.StackObjects[StackObject.ID];
+    {
+      raw_string_ostream StrOS(Object.DebugVar.Value);
+      DebugVar.Var->printAsOperand(StrOS, MST);
+    }
+    {
+      raw_string_ostream StrOS(Object.DebugExpr.Value);
+      DebugVar.Expr->printAsOperand(StrOS, MST);
+    }
+    {
+      raw_string_ostream StrOS(Object.DebugLoc.Value);
+      DebugVar.Loc->printAsOperand(StrOS, MST);
+    }
   }
 }
 
