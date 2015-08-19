@@ -31,7 +31,6 @@ class IncludeInserterCheckBase : public ClangTidyCheck {
 public:
   IncludeInserterCheckBase(StringRef CheckName, ClangTidyContext *Context)
       : ClangTidyCheck(CheckName, Context) {}
-  virtual ~IncludeInserterCheckBase() {}
 
   void registerPPCallbacks(CompilerInstance &Compiler) override {
     Inserter.reset(new IncludeInserter(Compiler.getSourceManager(),
@@ -66,7 +65,6 @@ class NonSystemHeaderInserterCheck : public IncludeInserterCheckBase {
 public:
   NonSystemHeaderInserterCheck(StringRef CheckName, ClangTidyContext *Context)
       : IncludeInserterCheckBase(CheckName, Context) {}
-  virtual ~NonSystemHeaderInserterCheck() {}
 
   std::vector<StringRef> HeadersToInclude() const override {
     return {"path/to/header.h"};
@@ -78,7 +76,6 @@ class MultipleHeaderInserterCheck : public IncludeInserterCheckBase {
 public:
   MultipleHeaderInserterCheck(StringRef CheckName, ClangTidyContext *Context)
       : IncludeInserterCheckBase(CheckName, Context) {}
-  virtual ~MultipleHeaderInserterCheck() {}
 
   std::vector<StringRef> HeadersToInclude() const override {
     return {"path/to/header.h", "path/to/header2.h", "path/to/header.h"};
@@ -90,7 +87,6 @@ class CSystemIncludeInserterCheck : public IncludeInserterCheckBase {
 public:
   CSystemIncludeInserterCheck(StringRef CheckName, ClangTidyContext *Context)
       : IncludeInserterCheckBase(CheckName, Context) {}
-  virtual ~CSystemIncludeInserterCheck() {}
 
   std::vector<StringRef> HeadersToInclude() const override {
     return {"stdlib.h"};
