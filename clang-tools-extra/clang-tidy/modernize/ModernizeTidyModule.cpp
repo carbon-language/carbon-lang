@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "LoopConvertCheck.h"
 #include "PassByValueCheck.h"
 
 using namespace clang::ast_matchers;
@@ -21,12 +22,14 @@ namespace modernize {
 class ModernizeModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<LoopConvertCheck>("modernize-loop-convert");
     CheckFactories.registerCheck<PassByValueCheck>("modernize-pass-by-value");
   }
 
   ClangTidyOptions getModuleOptions() override {
     ClangTidyOptions Options;
     auto &Opts = Options.CheckOptions;
+    Opts["modernize-loop-convert.MinConfidence"] = "reasonable";
     Opts["modernize-pass-by-value.IncludeStyle"] = "llvm"; // Also: "google".
     return Options;
   }
