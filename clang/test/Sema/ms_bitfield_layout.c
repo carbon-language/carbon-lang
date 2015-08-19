@@ -13,10 +13,16 @@ typedef struct A {
 	short y;
 } A;
 
-// CHECK: Type: struct A
-// CHECK:   Size:128
-// CHECK:   Alignment:32
-// CHECK:   FieldOffsets: [0, 32, 64, 64, 96, 99, 112]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct A
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT: 4:0-21 |   int a
+// CHECK-NEXT:    8:- |   int
+// CHECK-NEXT:  8:0-9 |   int c
+// CHECK-NEXT: 12:0-2 |   char b
+// CHECK-NEXT: 12:3-6 |   char d
+// CHECK-NEXT:     14 |   short y
+// CHECK-NEXT:        | [sizeof=16, align=4]
 
 typedef struct B {
 	char x;
@@ -25,10 +31,13 @@ typedef struct B {
 	char y;
 } B;
 
-// CHECK: Type: struct B
-// CHECK:   Size:48
-// CHECK:   Alignment:16
-// CHECK:   FieldOffsets: [0, 8, 16, 32]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct B
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:    1:- |   int
+// CHECK-NEXT:  2:0-3 |   short a
+// CHECK-NEXT:      4 |   char y
+// CHECK-NEXT:        | [sizeof=6, align=2]
 
 typedef struct C {
 	char x;
@@ -37,10 +46,13 @@ typedef struct C {
 	char y;
 } C;
 
-// CHECK: Type: struct C
-// CHECK:   Size:64
-// CHECK:   Alignment:32
-// CHECK:   FieldOffsets: [0, 16, 32, 32]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct C
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  2:0-3 |   short a
+// CHECK-NEXT:    4:- |   int
+// CHECK-NEXT:      4 |   char y
+// CHECK-NEXT:        | [sizeof=8, align=4]
 
 typedef struct D {
 	char x;
@@ -49,10 +61,13 @@ typedef struct D {
 	char y;
 } D;
 
-// CHECK: Type: struct D
-// CHECK:   Size:16
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8, 8, 8]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct D
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:    1:- |   short
+// CHECK-NEXT:    1:- |   int
+// CHECK-NEXT:      1 |   char y
+// CHECK-NEXT:        | [sizeof=2, align=1]
 
 typedef union E {
 	char x;
@@ -62,10 +77,15 @@ typedef union E {
 	short y;
 } E;
 
-// CHECK: Type: union E
-// CHECK:   Size:64
-// CHECK:   Alignment:16
-// CHECK:   FieldOffsets: [0, 0, 0, 0, 0]>
+
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | union E
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  0:0-2 |   long long a
+// CHECK-NEXT:  0:0-2 |   int b
+// CHECK-NEXT:    0:- |   long long
+// CHECK-NEXT:      0 |   short
+// CHECK-NEXT:        | [sizeof=8, align=2]
 
 typedef struct F {
 	char x;
@@ -81,10 +101,20 @@ typedef struct F {
 	short y;
 } F;
 
-// CHECK: Type: struct F
-// CHECK:   Size:128
-// CHECK:   Alignment:16
-// CHECK:   FieldOffsets: [0, 8, 11, 16, 32, 38, 48, 64, 80, 96, 112]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct F
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  1:0-2 |   char a
+// CHECK-NEXT:  1:3-5 |   char b
+// CHECK-NEXT:  2:0-2 |   char c
+// CHECK-NEXT:  4:0-5 |   short d
+// CHECK-NEXT: 4:6-11 |   short e
+// CHECK-NEXT:  6:0-5 |   short f
+// CHECK-NEXT: 8:0-10 |   short g
+// CHECK-NEXT:10:0-10 |   short h
+// CHECK-NEXT:12:0-10 |   short i
+// CHECK-NEXT:     14 |   short y
+// CHECK-NEXT:        | [sizeof=16, align=2]
 
 typedef union G {
 	char x;
@@ -94,10 +124,14 @@ typedef union G {
 	short y;
 } G;
 
-// CHECK: Type: union G
-// CHECK:   Size:32
-// CHECK:   Alignment:16
-// CHECK:   FieldOffsets: [0, 0, 0, 0, 0]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | union G
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  0:0-2 |   int a
+// CHECK-NEXT:    0:- |   int
+// CHECK-NEXT:    0:- |   long long
+// CHECK-NEXT:      0 |   short y
+// CHECK-NEXT:        | [sizeof=4, align=2]
 
 typedef struct H {
 	unsigned short a : 1;
@@ -106,20 +140,25 @@ typedef struct H {
 	unsigned short c : 1;
 } H;
 
-// CHECK: Type: struct H
-// CHECK:   Size:32
-// CHECK:   Alignment:16
-// CHECK:   FieldOffsets: [0, 16, 16, 16]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct H
+// CHECK-NEXT:  0:0-0 |   unsigned short a
+// CHECK-NEXT:    2:- |   unsigned char
+// CHECK-NEXT:    2:- |   unsigned long
+// CHECK-NEXT:  2:0-0 |   unsigned short c
+// CHECK-NEXT:        | [sizeof=4, align=2]
 
 typedef struct I {
 	short : 8;
 	__declspec(align(16)) short : 8;
 } I;
 
-// CHECK: Type: struct I
-// CHECK:   Size:16
-// CHECK:   Alignment:16
-// CHECK:   FieldOffsets: [0, 8]
+
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct I
+// CHECK-NEXT:  0:0-7 |   short
+// CHECK-NEXT:  1:0-7 |   short
+// CHECK-NEXT:        | [sizeof=2, align=2]
 
 #pragma pack(push, 1)
 
@@ -133,10 +172,16 @@ typedef struct A1 {
 	short y;
 } A1;
 
-// CHECK: Type: struct A1
-// CHECK:   Size:96
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8, 40, 40, 72, 75, 80]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct A1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT: 1:0-21 |   int a
+// CHECK-NEXT:    5:- |   int
+// CHECK-NEXT:  5:0-9 |   int c
+// CHECK-NEXT:  9:0-2 |   char b
+// CHECK-NEXT:  9:3-6 |   char d
+// CHECK-NEXT:     10 |   short y
+// CHECK-NEXT:        | [sizeof=12, align=1]
 
 typedef struct B1 {
 	char x;
@@ -145,10 +190,13 @@ typedef struct B1 {
 	char y;
 } B1;
 
-// CHECK: Type: struct B1
-// CHECK:   Size:32
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8, 8, 24]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct B1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:    1:- |   int
+// CHECK-NEXT:  1:0-3 |   short
+// CHECK-NEXT:      3 |   char y
+// CHECK-NEXT:        | [sizeof=4, align=1]
 
 typedef struct C1 {
 	char x;
@@ -157,10 +205,13 @@ typedef struct C1 {
 	char y;
 } C1;
 
-// CHECK: Type: struct C1
-// CHECK:   Size:32
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8, 24, 24]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct C1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  1:0-3 |   short
+// CHECK-NEXT:    3:- |   int
+// CHECK-NEXT:      3 |   char y
+// CHECK-NEXT:        | [sizeof=4, align=1]
 
 typedef struct D1 {
 	char x;
@@ -169,10 +220,13 @@ typedef struct D1 {
 	char y;
 } D1;
 
-// CHECK: Type: struct D1
-// CHECK:   Size:16
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8, 8, 8]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct D1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:    1:- |   short
+// CHECK-NEXT:    1:- |   int
+// CHECK-NEXT:      1 |   char y
+// CHECK-NEXT:        | [sizeof=2, align=1]
 
 typedef union E1 {
 	char x;
@@ -182,10 +236,14 @@ typedef union E1 {
 	short y;
 } E1;
 
-// CHECK: Type: union E1
-// CHECK:   Size:64
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 0, 0, 0, 0]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | union E1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  0:0-2 |   long long a
+// CHECK-NEXT:  0:0-2 |   int b
+// CHECK-NEXT:    0:- |   long long
+// CHECK-NEXT:      0 |   short y
+// CHECK-NEXT:        | [sizeof=8, align=1]
 
 typedef struct F1 {
 	char x;
@@ -201,10 +259,20 @@ typedef struct F1 {
 	short y;
 } F1;
 
-// CHECK: Type: struct F1
-// CHECK:   Size:120
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8, 11, 16, 24, 30, 40, 56, 72, 88, 104]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct F1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  1:0-2 |   char a
+// CHECK-NEXT:  1:3-5 |   char b
+// CHECK-NEXT:  2:0-2 |   char c
+// CHECK-NEXT:  3:0-5 |   short d
+// CHECK-NEXT: 3:6-11 |   short e
+// CHECK-NEXT:  5:0-5 |   short f
+// CHECK-NEXT: 7:0-10 |   short g
+// CHECK-NEXT: 9:0-10 |   short h
+// CHECK-NEXT:11:0-10 |   short i
+// CHECK-NEXT:     13 |   short y
+// CHECK-NEXT:        | [sizeof=15, align=1]
 
 typedef union G1 {
 	char x;
@@ -214,10 +282,14 @@ typedef union G1 {
 	short y;
 } G1;
 
-// CHECK: Type: union G1
-// CHECK:   Size:32
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 0, 0, 0, 0]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | union G1
+// CHECK-NEXT:      0 |   char x
+// CHECK-NEXT:  0:0-2 |   int a
+// CHECK-NEXT:    0:- |   int
+// CHECK-NEXT:    0:- |   long long
+// CHECK-NEXT:      0 |   short y
+// CHECK-NEXT:        | [sizeof=4, align=1]
 
 typedef struct H1 {
 	unsigned long a : 1;
@@ -226,20 +298,24 @@ typedef struct H1 {
 	unsigned long c : 1;
 } H1;
 
-// CHECK: Type: struct H1
-// CHECK:   Size:64
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 32, 32, 32]>
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct H1
+// CHECK-NEXT:  0:0-0 |   unsigned long a
+// CHECK-NEXT:    4:- |   unsigned char
+// CHECK-NEXT:    4:- |   unsigned long
+// CHECK-NEXT:  4:0-0 |   unsigned long c
+// CHECK-NEXT:        | [sizeof=8, align=1]
 
 typedef struct I1 {
 	short : 8;
 	__declspec(align(16)) short : 8;
 } I1;
 
-// CHECK: Type: struct I1
-// CHECK:   Size:16
-// CHECK:   Alignment:8
-// CHECK:   FieldOffsets: [0, 8]
+// CHECK:*** Dumping AST Record Layout
+// CHECK-NEXT:      0 | struct I1
+// CHECK-NEXT:  0:0-7 |   short
+// CHECK-NEXT:  1:0-7 |   short
+// CHECK-NEXT:        | [sizeof=2, align=1]
 
 #pragma pack(pop)
 

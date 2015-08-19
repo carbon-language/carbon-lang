@@ -391,8 +391,6 @@ struct RZ3 : RX3, RY {};
 // CHECK-NEXT:    0 |     struct RA (base) (empty)
 // CHECK-NEXT:    0 |     struct RB a
 // CHECK-NEXT:    0 |       char c
-// CHECK-NEXT:      |     [sizeof=1, align=1
-// CHECK-NEXT:      |      nvsize=1, nvalign=1]
 // CHECK-NEXT:    1 |   struct RY (base) (empty)
 // CHECK-NEXT:      | [sizeof=1, align=1
 // CHECK-NEXT:      |  nvsize=1, nvalign=1]
@@ -403,8 +401,6 @@ struct RZ3 : RX3, RY {};
 // CHECK-X64-NEXT:    0 |     struct RA (base) (empty)
 // CHECK-X64-NEXT:    0 |     struct RB a
 // CHECK-X64-NEXT:    0 |       char c
-// CHECK-X64-NEXT:      |     [sizeof=1, align=1
-// CHECK-X64-NEXT:      |      nvsize=1, nvalign=1]
 // CHECK-X64-NEXT:    1 |   struct RY (base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=1, align=1
 // CHECK-X64-NEXT:      |  nvsize=1, nvalign=1]
@@ -415,8 +411,6 @@ struct RZ4 : RX4, RY {};
 // CHECK-NEXT:    0 | struct RZ4
 // CHECK-NEXT:    0 |   struct RX4 (base)
 // CHECK-NEXT:    0 |     struct RA a (empty)
-// CHECK-NEXT:      |     [sizeof=1, align=1
-// CHECK-NEXT:      |      nvsize=0, nvalign=1]
 // CHECK-NEXT:    1 |     char b
 // CHECK-NEXT:    3 |   struct RY (base) (empty)
 // CHECK-NEXT:      | [sizeof=3, align=1
@@ -426,8 +420,6 @@ struct RZ4 : RX4, RY {};
 // CHECK-X64-NEXT:    0 | struct RZ4
 // CHECK-X64-NEXT:    0 |   struct RX4 (base)
 // CHECK-X64-NEXT:    0 |     struct RA a (empty)
-// CHECK-X64-NEXT:      |     [sizeof=1, align=1
-// CHECK-X64-NEXT:      |      nvsize=0, nvalign=1]
 // CHECK-X64-NEXT:    1 |     char b
 // CHECK-X64-NEXT:    3 |   struct RY (base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=3, align=1
@@ -439,12 +431,8 @@ struct RZ5 : RX5, RY {};
 // CHECK-NEXT:    0 | struct RZ5
 // CHECK-NEXT:    0 |   struct RX5 (base)
 // CHECK-NEXT:    0 |     struct RA a (empty)
-// CHECK-NEXT:      |     [sizeof=1, align=1
-// CHECK-NEXT:      |      nvsize=0, nvalign=1]
 // CHECK-NEXT:    1 |     struct RB b
 // CHECK-NEXT:    1 |       char c
-// CHECK-NEXT:      |     [sizeof=1, align=1
-// CHECK-NEXT:      |      nvsize=1, nvalign=1]
 // CHECK-NEXT:    2 |   struct RY (base) (empty)
 // CHECK-NEXT:      | [sizeof=2, align=1
 // CHECK-NEXT:      |  nvsize=2, nvalign=1]
@@ -453,12 +441,8 @@ struct RZ5 : RX5, RY {};
 // CHECK-X64-NEXT:    0 | struct RZ5
 // CHECK-X64-NEXT:    0 |   struct RX5 (base)
 // CHECK-X64-NEXT:    0 |     struct RA a (empty)
-// CHECK-X64-NEXT:      |     [sizeof=1, align=1
-// CHECK-X64-NEXT:      |      nvsize=0, nvalign=1]
 // CHECK-X64-NEXT:    1 |     struct RB b
 // CHECK-X64-NEXT:    1 |       char c
-// CHECK-X64-NEXT:      |     [sizeof=1, align=1
-// CHECK-X64-NEXT:      |      nvsize=1, nvalign=1]
 // CHECK-X64-NEXT:    2 |   struct RY (base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=2, align=1
 // CHECK-X64-NEXT:      |  nvsize=2, nvalign=1]
@@ -472,8 +456,6 @@ struct RZ6 : RX6, RY {};
 // CHECK-NEXT:    0 |     (RX6 vbtable pointer)
 // CHECK-NEXT:    4 |     struct RB a
 // CHECK-NEXT:    4 |       char c
-// CHECK-NEXT:      |     [sizeof=1, align=1
-// CHECK-NEXT:      |      nvsize=1, nvalign=1]
 // CHECK-NEXT:    9 |   struct RY (base) (empty)
 // CHECK-NEXT:   12 |   struct RV (virtual base) (empty)
 // CHECK-NEXT:      | [sizeof=12, align=4
@@ -486,8 +468,6 @@ struct RZ6 : RX6, RY {};
 // CHECK-X64-NEXT:    0 |     (RX6 vbtable pointer)
 // CHECK-X64-NEXT:    8 |     struct RB a
 // CHECK-X64-NEXT:    8 |       char c
-// CHECK-X64-NEXT:      |     [sizeof=1, align=1
-// CHECK-X64-NEXT:      |      nvsize=1, nvalign=1]
 // CHECK-X64-NEXT:   17 |   struct RY (base) (empty)
 // CHECK-X64-NEXT:   24 |   struct RV (virtual base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=24, align=8
@@ -501,8 +481,6 @@ struct RZ7 : RX7, RY {};
 // CHECK-NEXT:    0 |   struct RX7 (base)
 // CHECK-NEXT:    0 |     (RX7 vbtable pointer)
 // CHECK-NEXT:    4 |     struct RA a (empty)
-// CHECK-NEXT:      |     [sizeof=1, align=1
-// CHECK-NEXT:      |      nvsize=0, nvalign=1]
 // CHECK-NEXT:    8 |   struct RY (base) (empty)
 // CHECK-NEXT:    8 |   struct RW (virtual base)
 // CHECK-NEXT:    8 |     char c
@@ -515,8 +493,6 @@ struct RZ7 : RX7, RY {};
 // CHECK-X64-NEXT:    0 |   struct RX7 (base)
 // CHECK-X64-NEXT:    0 |     (RX7 vbtable pointer)
 // CHECK-X64-NEXT:    8 |     struct RA a (empty)
-// CHECK-X64-NEXT:      |     [sizeof=1, align=1
-// CHECK-X64-NEXT:      |      nvsize=0, nvalign=1]
 // CHECK-X64-NEXT:   16 |   struct RY (base) (empty)
 // CHECK-X64-NEXT:   16 |   struct RW (virtual base)
 // CHECK-X64-NEXT:   16 |     char c

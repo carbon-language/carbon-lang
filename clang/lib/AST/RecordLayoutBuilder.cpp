@@ -1565,6 +1565,12 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
   }
 
+  // But, ms_struct just ignores all of that in unions, even explicit
+  // alignment attributes.
+  if (IsMsStruct && IsUnion) {
+    FieldAlign = UnpackedFieldAlign = 1;
+  }
+
   // For purposes of diagnostics, we're going to simultaneously
   // compute the field offsets that we would have used if we weren't
   // adding any alignment padding or if the field weren't packed.
@@ -1631,9 +1637,20 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
 
   // For unions, this is just a max operation, as usual.
   if (IsUnion) {
-    uint64_t RoundedFieldSize = roundUpSizeToCharAlignment(FieldSize,
-                                                           Context);
+    // For ms_struct, allocate the entire storage unit --- unless this
+    // is a zero-width bitfield, in which case just use a size of 1.
+    uint64_t RoundedFieldSize;
+    if (IsMsStruct) {
+      RoundedFieldSize =
+        (FieldSize ? TypeSize : Context.getTargetInfo().getCharWidth());
+
+    // Otherwise, allocate just the number of bytes required to store
+    // the bitfield.
+    } else {
+      RoundedFieldSize = roundUpSizeToCharAlignment(FieldSize, Context);
+    }
     setDataSize(std::max(getDataSizeInBits(), RoundedFieldSize));
+
   // For non-zero-width bitfields in ms_struct structs, allocate a new
   // storage unit if necessary.
   } else if (IsMsStruct && FieldSize) {
@@ -3045,144 +3062,189 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
 
 static void PrintOffset(raw_ostream &OS,
                         CharUnits Offset, unsigned IndentLevel) {
-  OS << llvm::format("%4" PRId64 " | ", (int64_t)Offset.getQuantity());
+  OS << llvm::format("%10" PRId64 " | ", (int64_t)Offset.getQuantity());
+  OS.indent(IndentLevel * 2);
+}
+
+static void PrintBitFieldOffset(raw_ostream &OS, CharUnits Offset,
+                                unsigned Begin, unsigned Width,
+                                unsigned IndentLevel) {
+  llvm::SmallString<10> Buffer;
+  {
+    llvm::raw_svector_ostream BufferOS(Buffer);
+    BufferOS << Offset.getQuantity() << ':';
+    if (Width == 0) {
+      BufferOS << '-';
+    } else {
+      BufferOS << Begin << '-' << (Begin + Width - 1);
+    }
+  }
+  
+  OS << llvm::right_justify(Buffer, 10) << " | ";
   OS.indent(IndentLevel * 2);
 }
 
 static void PrintIndentNoOffset(raw_ostream &OS, unsigned IndentLevel) {
-  OS << "     | ";
+  OS << "           | ";
   OS.indent(IndentLevel * 2);
 }
 
-static void DumpCXXRecordLayout(raw_ostream &OS,
-                                const CXXRecordDecl *RD, const ASTContext &C,
-                                CharUnits Offset,
-                                unsigned IndentLevel,
-                                const char* Description,
-                                bool IncludeVirtualBases) {
+static void DumpRecordLayout(raw_ostream &OS, const RecordDecl *RD,
+                             const ASTContext &C,
+                             CharUnits Offset,
+                             unsigned IndentLevel,
+                             const char* Description,
+                             bool PrintSizeInfo,
+                             bool IncludeVirtualBases) {
   const ASTRecordLayout &Layout = C.getASTRecordLayout(RD);
+  auto CXXRD = dyn_cast<CXXRecordDecl>(RD);
 
   PrintOffset(OS, Offset, IndentLevel);
-  OS << C.getTypeDeclType(const_cast<CXXRecordDecl *>(RD)).getAsString();
+  OS << C.getTypeDeclType(const_cast<RecordDecl*>(RD)).getAsString();
   if (Description)
     OS << ' ' << Description;
-  if (RD->isEmpty())
+  if (CXXRD && CXXRD->isEmpty())
     OS << " (empty)";
   OS << '\n';
 
   IndentLevel++;
 
-  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-  bool HasOwnVFPtr = Layout.hasOwnVFPtr();
-  bool HasOwnVBPtr = Layout.hasOwnVBPtr();
+  // Dump bases.
+  if (CXXRD) {
+    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
+    bool HasOwnVFPtr = Layout.hasOwnVFPtr();
+    bool HasOwnVBPtr = Layout.hasOwnVBPtr();
 
-  // Vtable pointer.
-  if (RD->isDynamicClass() && !PrimaryBase && !isMsLayout(C)) {
-    PrintOffset(OS, Offset, IndentLevel);
-    OS << '(' << *RD << " vtable pointer)\n";
-  } else if (HasOwnVFPtr) {
-    PrintOffset(OS, Offset, IndentLevel);
-    // vfptr (for Microsoft C++ ABI)
-    OS << '(' << *RD << " vftable pointer)\n";
-  }
+    // Vtable pointer.
+    if (CXXRD->isDynamicClass() && !PrimaryBase && !isMsLayout(C)) {
+      PrintOffset(OS, Offset, IndentLevel);
+      OS << '(' << *RD << " vtable pointer)\n";
+    } else if (HasOwnVFPtr) {
+      PrintOffset(OS, Offset, IndentLevel);
+      // vfptr (for Microsoft C++ ABI)
+      OS << '(' << *RD << " vftable pointer)\n";
+    }
 
-  // Collect nvbases.
-  SmallVector<const CXXRecordDecl *, 4> Bases;
-  for (const CXXBaseSpecifier &Base : RD->bases()) {
-    assert(!Base.getType()->isDependentType() &&
-           "Cannot layout class with dependent bases.");
-    if (!Base.isVirtual())
-      Bases.push_back(Base.getType()->getAsCXXRecordDecl());
-  }
+    // Collect nvbases.
+    SmallVector<const CXXRecordDecl *, 4> Bases;
+    for (const CXXBaseSpecifier &Base : CXXRD->bases()) {
+      assert(!Base.getType()->isDependentType() &&
+             "Cannot layout class with dependent bases.");
+      if (!Base.isVirtual())
+        Bases.push_back(Base.getType()->getAsCXXRecordDecl());
+    }
 
-  // Sort nvbases by offset.
-  std::stable_sort(Bases.begin(), Bases.end(),
-                   [&](const CXXRecordDecl *L, const CXXRecordDecl *R) {
-    return Layout.getBaseClassOffset(L) < Layout.getBaseClassOffset(R);
-  });
+    // Sort nvbases by offset.
+    std::stable_sort(Bases.begin(), Bases.end(),
+                     [&](const CXXRecordDecl *L, const CXXRecordDecl *R) {
+      return Layout.getBaseClassOffset(L) < Layout.getBaseClassOffset(R);
+    });
 
-  // Dump (non-virtual) bases
-  for (const CXXRecordDecl *Base : Bases) {
-    CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base);
-    DumpCXXRecordLayout(OS, Base, C, BaseOffset, IndentLevel,
-                        Base == PrimaryBase ? "(primary base)" : "(base)",
-                        /*IncludeVirtualBases=*/false);
-  }
+    // Dump (non-virtual) bases
+    for (const CXXRecordDecl *Base : Bases) {
+      CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base);
+      DumpRecordLayout(OS, Base, C, BaseOffset, IndentLevel,
+                       Base == PrimaryBase ? "(primary base)" : "(base)",
+                       /*PrintSizeInfo=*/false,
+                       /*IncludeVirtualBases=*/false);
+    }
 
-  // vbptr (for Microsoft C++ ABI)
-  if (HasOwnVBPtr) {
-    PrintOffset(OS, Offset + Layout.getVBPtrOffset(), IndentLevel);
-    OS << '(' << *RD << " vbtable pointer)\n";
+    // vbptr (for Microsoft C++ ABI)
+    if (HasOwnVBPtr) {
+      PrintOffset(OS, Offset + Layout.getVBPtrOffset(), IndentLevel);
+      OS << '(' << *RD << " vbtable pointer)\n";
+    }
   }
 
   // Dump fields.
   uint64_t FieldNo = 0;
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(),
+  for (RecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I, ++FieldNo) {
     const FieldDecl &Field = **I;
-    CharUnits FieldOffset = Offset + 
-      C.toCharUnitsFromBits(Layout.getFieldOffset(FieldNo));
+    uint64_t LocalFieldOffsetInBits = Layout.getFieldOffset(FieldNo);
+    CharUnits FieldOffset =
+      Offset + C.toCharUnitsFromBits(LocalFieldOffsetInBits);
 
-    if (const CXXRecordDecl *D = Field.getType()->getAsCXXRecordDecl()) {
-      DumpCXXRecordLayout(OS, D, C, FieldOffset, IndentLevel,
-                          Field.getName().data(),
-                          /*IncludeVirtualBases=*/true);
+    // Recursively dump fields of record type.
+    if (auto RT = Field.getType()->getAs<RecordType>()) {
+      DumpRecordLayout(OS, RT->getDecl(), C, FieldOffset, IndentLevel,
+                       Field.getName().data(),
+                       /*PrintSizeInfo=*/false,
+                       /*IncludeVirtualBases=*/true);
       continue;
     }
 
-    PrintOffset(OS, FieldOffset, IndentLevel);
+    if (Field.isBitField()) {
+      uint64_t LocalFieldByteOffsetInBits = C.toBits(FieldOffset - Offset);
+      unsigned Begin = LocalFieldOffsetInBits - LocalFieldByteOffsetInBits;
+      unsigned Width = Field.getBitWidthValue(C);
+      PrintBitFieldOffset(OS, FieldOffset, Begin, Width, IndentLevel);
+    } else {
+      PrintOffset(OS, FieldOffset, IndentLevel);
+    }
     OS << Field.getType().getAsString() << ' ' << Field << '\n';
   }
 
-  if (!IncludeVirtualBases)
-    return;
-
   // Dump virtual bases.
-  const ASTRecordLayout::VBaseOffsetsMapTy &vtordisps = 
-    Layout.getVBaseOffsetsMap();
-  for (const CXXBaseSpecifier &Base : RD->vbases()) {
-    assert(Base.isVirtual() && "Found non-virtual class!");
-    const CXXRecordDecl *VBase = Base.getType()->getAsCXXRecordDecl();
+  if (CXXRD && IncludeVirtualBases) {
+    const ASTRecordLayout::VBaseOffsetsMapTy &VtorDisps = 
+      Layout.getVBaseOffsetsMap();
 
-    CharUnits VBaseOffset = Offset + Layout.getVBaseClassOffset(VBase);
+    for (const CXXBaseSpecifier &Base : CXXRD->vbases()) {
+      assert(Base.isVirtual() && "Found non-virtual class!");
+      const CXXRecordDecl *VBase = Base.getType()->getAsCXXRecordDecl();
 
-    if (vtordisps.find(VBase)->second.hasVtorDisp()) {
-      PrintOffset(OS, VBaseOffset - CharUnits::fromQuantity(4), IndentLevel);
-      OS << "(vtordisp for vbase " << *VBase << ")\n";
+      CharUnits VBaseOffset = Offset + Layout.getVBaseClassOffset(VBase);
+
+      if (VtorDisps.find(VBase)->second.hasVtorDisp()) {
+        PrintOffset(OS, VBaseOffset - CharUnits::fromQuantity(4), IndentLevel);
+        OS << "(vtordisp for vbase " << *VBase << ")\n";
+      }
+
+      DumpRecordLayout(OS, VBase, C, VBaseOffset, IndentLevel,
+                       VBase == Layout.getPrimaryBase() ?
+                         "(primary virtual base)" : "(virtual base)",
+                       /*PrintSizeInfo=*/false,
+                       /*IncludeVirtualBases=*/false);
     }
-
-    DumpCXXRecordLayout(OS, VBase, C, VBaseOffset, IndentLevel,
-                        VBase == PrimaryBase ?
-                        "(primary virtual base)" : "(virtual base)",
-                        /*IncludeVirtualBases=*/false);
   }
+
+  if (!PrintSizeInfo) return;
 
   PrintIndentNoOffset(OS, IndentLevel - 1);
   OS << "[sizeof=" << Layout.getSize().getQuantity();
-  if (!isMsLayout(C))
+  if (CXXRD && !isMsLayout(C))
     OS << ", dsize=" << Layout.getDataSize().getQuantity();
-  OS << ", align=" << Layout.getAlignment().getQuantity() << '\n';
+  OS << ", align=" << Layout.getAlignment().getQuantity();
 
-  PrintIndentNoOffset(OS, IndentLevel - 1);
-  OS << " nvsize=" << Layout.getNonVirtualSize().getQuantity();
-  OS << ", nvalign=" << Layout.getNonVirtualAlignment().getQuantity() << "]\n";
+  if (CXXRD) {
+    OS << ",\n";
+    PrintIndentNoOffset(OS, IndentLevel - 1);
+    OS << " nvsize=" << Layout.getNonVirtualSize().getQuantity();
+    OS << ", nvalign=" << Layout.getNonVirtualAlignment().getQuantity();
+  }
+  OS << "]\n";
 }
 
 void ASTContext::DumpRecordLayout(const RecordDecl *RD,
                                   raw_ostream &OS,
                                   bool Simple) const {
-  const ASTRecordLayout &Info = getASTRecordLayout(RD);
-
-  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    if (!Simple)
-      return DumpCXXRecordLayout(OS, CXXRD, *this, CharUnits(), 0, nullptr,
-                                 /*IncludeVirtualBases=*/true);
-
-  OS << "Type: " << getTypeDeclType(RD).getAsString() << "\n";
   if (!Simple) {
-    OS << "Record: ";
-    RD->dump();
+    ::DumpRecordLayout(OS, RD, *this, CharUnits(), 0, nullptr,
+                       /*PrintSizeInfo*/true,
+                       /*IncludeVirtualBases=*/true);
+    return;
   }
+
+  // The "simple" format is designed to be parsed by the
+  // layout-override testing code.  There shouldn't be any external
+  // uses of this format --- when LLDB overrides a layout, it sets up
+  // the data structures directly --- so feel free to adjust this as
+  // you like as long as you also update the rudimentary parser for it
+  // in libFrontend.
+
+  const ASTRecordLayout &Info = getASTRecordLayout(RD);
+  OS << "Type: " << getTypeDeclType(RD).getAsString() << "\n";
   OS << "\nLayout: ";
   OS << "<ASTRecordLayout\n";
   OS << "  Size:" << toBits(Info.getSize()) << "\n";

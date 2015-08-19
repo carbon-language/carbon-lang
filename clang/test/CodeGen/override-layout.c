@@ -1,7 +1,6 @@
-// RUN: %clang_cc1 -w -fdump-record-layouts %s > %t.layouts
-// RUN: %clang_cc1 -w -fdump-record-layouts-simple %s > %t.before
+// RUN: %clang_cc1 -w -fdump-record-layouts-simple %s > %t.layouts
 // RUN: %clang_cc1 -w -DPACKED= -DALIGNED16= -fdump-record-layouts-simple -foverride-record-layout=%t.layouts %s > %t.after
-// RUN: diff %t.before %t.after
+// RUN: diff %t.layouts %t.after
 // RUN: FileCheck %s < %t.after
 
 // If not explicitly disabled, set PACKED to the packed attribute.

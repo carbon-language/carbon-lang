@@ -133,12 +133,12 @@ struct test0 {
   unsigned long e : 1;
 } __attribute__((__ms_struct__));
 
-// CHECK:      Type: struct test0
-// CHECK-NEXT: Record:
-// CHECK-NEXT: Layout:
-// CHECK-NEXT:   Size:64
-// CHECK-NEXT:   DataSize:64
-// CHECK-NEXT:   Alignment:16
-// CHECK-NEXT:   FieldOffsets: [0, 8, 16, 32, 42]>
+// CHECK:             0 | struct test0
+// CHECK-NEXT:    0:0-7 |   unsigned long a
+// CHECK-NEXT:    1:0-7 |   unsigned long b
+// CHECK-NEXT:    2:0-7 |   unsigned long c
+// CHECK-NEXT:    4:0-9 |   unsigned long d
+// CHECK-NEXT:    5:2-2 |   unsigned long e
+// CHECK-NEXT:          | [sizeof=8, align=2]
 
 static int test0[(sizeof(struct test0) == 8) ? 1 : -1];
