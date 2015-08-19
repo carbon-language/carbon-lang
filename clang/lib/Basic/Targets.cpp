@@ -3785,7 +3785,8 @@ class MinGWX86_32TargetInfo : public WindowsX86_32TargetInfo {
 public:
   MinGWX86_32TargetInfo(const llvm::Triple &Triple)
       : WindowsX86_32TargetInfo(Triple) {
-    LongDoubleWidth = LongDoubleAlign = 128;
+    LongDoubleWidth = 96;
+    LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   void getTargetDefines(const LangOptions &Opts,
