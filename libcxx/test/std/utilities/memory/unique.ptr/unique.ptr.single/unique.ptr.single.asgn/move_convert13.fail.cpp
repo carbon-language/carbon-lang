@@ -32,5 +32,5 @@ int main()
 {
     std::unique_ptr<A[], Deleter> s;
     std::unique_ptr<A, Deleter> s2;
-    s2 = std::move(s);
+    s2 = std::move(s); // expected-error {{no viable overloaded '='}}
 }

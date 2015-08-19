@@ -112,7 +112,6 @@ public:
 
     ~Deleter() {assert(state_ >= 0); state_ = -1;}
 
-private:
     template <class U>
         Deleter(Deleter<U> d,
             typename std::enable_if<!std::is_same<U, T>::value>::type* = 0)
