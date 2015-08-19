@@ -277,6 +277,7 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
 def getExpectedTimeouts(platform_name):
     # returns a set of test filenames that might timeout
     # are we running against a remote target?
+    host = sys.platform
     if platform_name is None:
         target = sys.platform
         remote = False
@@ -308,6 +309,11 @@ def getExpectedTimeouts(platform_name):
             "TestExitDuringStep.py",
             "TestHelloWorld.py",
         }
+        if host.startswith("win32"):
+            expected_timeout |= {
+                "TestEvents.py",
+                "TestThreadStates.py",
+            }
     elif target.startswith("freebsd"):
         expected_timeout |= {
             "TestBreakpointConditions.py",
