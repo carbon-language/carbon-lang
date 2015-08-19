@@ -11,7 +11,7 @@ if(APPLE)
   foreach (os osx)
     add_compiler_rt_darwin_runtime(clang_rt.safestack_${os} ${os}
       STATIC
-      ARCH ${SAFESTACK_SUPPORTED_ARCH}
+      ARCHS ${SAFESTACK_SUPPORTED_ARCH}
       SOURCES ${SAFESTACK_SOURCES}
               $<TARGET_OBJECTS:RTInterception.${os}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
