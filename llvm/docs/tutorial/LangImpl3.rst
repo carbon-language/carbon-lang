@@ -131,7 +131,9 @@ are all uniqued together and shared. For this reason, the API uses the
     Value *VariableExprAST::Codegen() {
       // Look this variable up in the function.
       Value *V = NamedValues[Name];
-      return V ? V : ErrorV("Unknown variable name");
+      if (!V)
+        ErrorV("Unknown variable name");
+      return V;
     }
 
 References to variables are also quite simple using LLVM. In the simple

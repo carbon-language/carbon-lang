@@ -642,7 +642,9 @@ Value *NumberExprAST::Codegen() {
 Value *VariableExprAST::Codegen() {
   // Look this variable up in the function.
   Value *V = NamedValues[Name];
-  return V ? V : ErrorV("Unknown variable name");
+  if (!V)
+    return ErrorV("Unknown variable name");
+  return V;
 }
 
 Value *BinaryExprAST::Codegen() {

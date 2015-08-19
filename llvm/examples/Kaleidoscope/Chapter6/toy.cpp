@@ -626,7 +626,6 @@ Value *VariableExprAST::Codegen() {
   Value *V = NamedValues[Name];
   if (!V)
     return ErrorV("Unknown variable name");
-
   return V;
 }
 
