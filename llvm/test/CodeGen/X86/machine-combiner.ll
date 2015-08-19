@@ -406,3 +406,51 @@ define float @reassociate_maxs_single(float %x0, float %x1, float %x2, float %x3
   ret float %sel2
 }
 
+; Verify that SSE and AVX scalar double-precision minimum ops are reassociated.
+
+define double @reassociate_mins_double(double %x0, double %x1, double %x2, double %x3) {
+; SSE-LABEL: reassociate_mins_double:
+; SSE:       # BB#0:
+; SSE-NEXT:    divsd %xmm1, %xmm0
+; SSE-NEXT:    minsd %xmm3, %xmm2
+; SSE-NEXT:    minsd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_mins_double:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vminsd %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vminsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fdiv double %x0, %x1
+  %cmp1 = fcmp olt double %x2, %t0
+  %sel1 = select i1 %cmp1, double %x2, double %t0
+  %cmp2 = fcmp olt double %x3, %sel1
+  %sel2 = select i1 %cmp2, double %x3, double %sel1
+  ret double %sel2
+}
+
+; Verify that SSE and AVX scalar double-precision maximum ops are reassociated.
+
+define double @reassociate_maxs_double(double %x0, double %x1, double %x2, double %x3) {
+; SSE-LABEL: reassociate_maxs_double:
+; SSE:       # BB#0:
+; SSE-NEXT:    divsd %xmm1, %xmm0
+; SSE-NEXT:    maxsd %xmm3, %xmm2
+; SSE-NEXT:    maxsd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_maxs_double:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vmaxsd %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vmaxsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fdiv double %x0, %x1
+  %cmp1 = fcmp ogt double %x2, %t0
+  %sel1 = select i1 %cmp1, double %x2, double %t0
+  %cmp2 = fcmp ogt double %x3, %sel1
+  %sel2 = select i1 %cmp2, double %x3, double %sel1
+  ret double %sel2
+}
+
