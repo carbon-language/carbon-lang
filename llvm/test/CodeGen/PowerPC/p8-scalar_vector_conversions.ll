@@ -59,9 +59,9 @@ entry:
   %splat.splatinsert = insertelement <2 x i64> undef, i64 %0, i32 0
   %splat.splat = shufflevector <2 x i64> %splat.splatinsert, <2 x i64> undef, <2 x i32> zeroinitializer
   ret <2 x i64> %splat.splat
-; CHECK: mtvsrd {{[0-9]+}}, 3
-; CHECK-LE: mtvsrd [[REG1:[0-9]+]], 3
-; CHECK-LE: xxswapd {{[0-9]+}}, [[REG1]]
+; FIXME-CHECK: mtvsrd {{[0-9]+}}, 3
+; FIXME-CHECK-LE: mtvsrd [[REG1:[0-9]+]], 3
+; FIXME-CHECK-LE: xxswapd {{[0-9]+}}, [[REG1]]
 }
 
 ; Function Attrs: nounwind

@@ -548,7 +548,8 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v16i8, Legal);
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v8i16, Legal);
         setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v4i32, Legal);
-        setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v2i64, Legal);
+        // FIXME: this is causing bootstrap failures, disable temporarily
+        //setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v2i64, Legal);
       }
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Legal);
 
