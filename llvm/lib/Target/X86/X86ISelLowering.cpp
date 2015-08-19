@@ -24074,12 +24074,60 @@ static SDValue performIntegerAbsCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-// PerformXorCombine - Attempts to turn XOR nodes into BLSMSK nodes
+// Try to turn tests against the signbit in the form of:
+//   XOR(TRUNCATE(SRL(X, size(X)-1)), 1)
+// into:
+//   SETGT(X, -1)
+static SDValue foldXorTruncShiftIntoCmp(SDNode *N, SelectionDAG &DAG) {
+  // This is only worth doing if the output type is i8.
+  if (N->getValueType(0) != MVT::i8)
+    return SDValue();
+
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  // We should be performing an xor against a truncated shift.
+  if (N0.getOpcode() != ISD::TRUNCATE || !N0.hasOneUse())
+    return SDValue();
+
+  // Make sure we are performing an xor against one.
+  if (!isa<ConstantSDNode>(N1) || !cast<ConstantSDNode>(N1)->isOne())
+    return SDValue();
+
+  // SetCC on x86 zero extends so only act on this if it's a logical shift.
+  SDValue Shift = N0.getOperand(0);
+  if (Shift.getOpcode() != ISD::SRL || !Shift.hasOneUse())
+    return SDValue();
+
+  // Make sure we are truncating from one of i16, i32 or i64.
+  EVT ShiftTy = Shift.getValueType();
+  if (ShiftTy != MVT::i16 && ShiftTy != MVT::i32 && ShiftTy != MVT::i64)
+    return SDValue();
+
+  // Make sure the shift amount extracts the sign bit.
+  if (!isa<ConstantSDNode>(Shift.getOperand(1)) ||
+      Shift.getConstantOperandVal(1) != ShiftTy.getSizeInBits() - 1)
+    return SDValue();
+
+  // Create a greater-than comparison against -1.
+  // N.B. Using SETGE against 0 works but we want a canonical looking
+  // comparison, using SETGT matches up with what TranslateX86CC.
+  SDLoc DL(N);
+  SDValue ShiftOp = Shift.getOperand(0);
+  EVT ShiftOpTy = ShiftOp.getValueType();
+  SDValue Cond = DAG.getSetCC(DL, MVT::i8, ShiftOp,
+                              DAG.getConstant(-1, DL, ShiftOpTy), ISD::SETGT);
+  return Cond;
+}
+
 static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const X86Subtarget *Subtarget) {
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
+
+  if (SDValue RV = foldXorTruncShiftIntoCmp(N, DAG))
+    return RV;
 
   if (Subtarget->hasCMov())
     if (SDValue RV = performIntegerAbsCombine(N, DAG))
