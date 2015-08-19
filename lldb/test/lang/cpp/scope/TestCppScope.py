@@ -9,12 +9,14 @@ class TestCppScopes(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureDarwin
     @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
         self.buildDsym()
         self.check()
 
+    @expectedFailureDarwin
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         self.buildDwarf()
