@@ -81,6 +81,8 @@ class ExprCommandThatRestartsTestCase(TestBase):
         self.assertTrue (self.start_sigchld_no != -1, "Got an actual value for sigchld_no")
 
         options = lldb.SBExpressionOptions()
+        # processing 30 signals takes a while, increase the expression timeout a bit
+        options.SetTimeoutInMicroSeconds(3000000) # 3s
         options.SetUnwindOnError(True)
 
         frame = self.thread.GetFrameAtIndex(0)
