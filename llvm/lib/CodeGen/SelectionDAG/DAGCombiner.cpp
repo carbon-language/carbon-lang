@@ -245,6 +245,7 @@ namespace {
     SDValue visitUMULO(SDNode *N);
     SDValue visitSDIVREM(SDNode *N);
     SDValue visitUDIVREM(SDNode *N);
+    SDValue visitIMINMAX(SDNode *N);
     SDValue visitAND(SDNode *N);
     SDValue visitANDLike(SDValue N0, SDValue N1, SDNode *LocReference);
     SDValue visitOR(SDNode *N);
@@ -1341,6 +1342,10 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::UMULO:              return visitUMULO(N);
   case ISD::SDIVREM:            return visitSDIVREM(N);
   case ISD::UDIVREM:            return visitUDIVREM(N);
+  case ISD::SMIN:
+  case ISD::SMAX:
+  case ISD::UMIN:
+  case ISD::UMAX:               return visitIMINMAX(N);
   case ISD::AND:                return visitAND(N);
   case ISD::OR:                 return visitOR(N);
   case ISD::XOR:                return visitXOR(N);
@@ -2620,6 +2625,30 @@ SDValue DAGCombiner::visitSDIVREM(SDNode *N) {
 SDValue DAGCombiner::visitUDIVREM(SDNode *N) {
   if (SDValue Res = SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM))
     return Res;
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitIMINMAX(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N0.getValueType();
+
+  // fold vector ops
+  if (VT.isVector())
+    if (SDValue FoldedVOp = SimplifyVBinOp(N))
+      return FoldedVOp;
+
+  // fold (add c1, c2) -> c1+c2
+  ConstantSDNode *N0C = getAsNonOpaqueConstant(N0);
+  ConstantSDNode *N1C = getAsNonOpaqueConstant(N1);
+  if (N0C && N1C)
+    return DAG.FoldConstantArithmetic(N->getOpcode(), SDLoc(N), VT, N0C, N1C);
+
+  // canonicalize constant to RHS
+  if (isConstantIntBuildVectorOrConstantInt(N0) &&
+     !isConstantIntBuildVectorOrConstantInt(N1))
+    return DAG.getNode(N->getOpcode(), SDLoc(N), VT, N1, N0);
 
   return SDValue();
 }

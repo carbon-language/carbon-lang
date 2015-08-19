@@ -687,7 +687,7 @@ public:
                   SDValue N3, SDValue N4);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1, SDValue N2,
                   SDValue N3, SDValue N4, SDValue N5);
-  
+
   // Specialize again based on number of operands for nodes with a VTList
   // rather than a single VT.
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs);
@@ -1072,6 +1072,10 @@ public:
     // target info.
     switch (Opcode) {
     case ISD::ADD:
+    case ISD::SMIN:
+    case ISD::SMAX:
+    case ISD::UMIN:
+    case ISD::UMAX:
     case ISD::MUL:
     case ISD::MULHU:
     case ISD::MULHS:

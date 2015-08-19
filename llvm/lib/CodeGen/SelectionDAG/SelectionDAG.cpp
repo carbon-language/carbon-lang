@@ -3182,6 +3182,10 @@ static std::pair<APInt, bool> FoldValue(unsigned Opcode, const APInt &C1,
   case ISD::SRA:  return std::make_pair(C1.ashr(C2), true);
   case ISD::ROTL: return std::make_pair(C1.rotl(C2), true);
   case ISD::ROTR: return std::make_pair(C1.rotr(C2), true);
+  case ISD::SMIN: return std::make_pair(C1.sle(C2) ? C1 : C2, true);
+  case ISD::SMAX: return std::make_pair(C1.sge(C2) ? C1 : C2, true);
+  case ISD::UMIN: return std::make_pair(C1.ule(C2) ? C1 : C2, true);
+  case ISD::UMAX: return std::make_pair(C1.uge(C2) ? C1 : C2, true);
   case ISD::UDIV:
     if (!C2.getBoolValue())
       break;
@@ -3356,6 +3360,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
   case ISD::MUL:
   case ISD::SDIV:
   case ISD::SREM:
+  case ISD::SMIN:
+  case ISD::SMAX:
+  case ISD::UMIN:
+  case ISD::UMAX:
     assert(VT.isInteger() && "This operator does not apply to FP types!");
     assert(N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
@@ -5273,7 +5281,7 @@ SelectionDAG::getMaskedGather(SDVTList VTs, EVT VT, SDLoc dl,
     cast<MaskedGatherSDNode>(E)->refineAlignment(MMO);
     return SDValue(E, 0);
   }
-  MaskedGatherSDNode *N = 
+  MaskedGatherSDNode *N =
     new (NodeAllocator) MaskedGatherSDNode(dl.getIROrder(), dl.getDebugLoc(),
                                            Ops, VTs, VT, MMO);
   CSEMap.InsertNode(N, IP);
