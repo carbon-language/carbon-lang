@@ -298,6 +298,17 @@ multiclass LoadA<string OpcStr, bits<6> Op3Val, bits<6> LoadAOp3Val,
   def Arr  : LoadASI<OpcStr, LoadAOp3Val, OpNode, RC, Ty>;
 }
 
+// The LDSTUB instruction is supported for asm only.
+// It is unlikely that general-purpose code could make use of it.
+// CAS is preferred for sparc v9.
+def LDSTUBrr : F3_1<3, 0b001101, (outs IntRegs:$dst), (ins MEMrr:$addr),
+                  "ldstub [$addr], $dst", []>;
+def LDSTUBri : F3_2<3, 0b001101, (outs IntRegs:$dst), (ins MEMri:$addr),
+                  "ldstub [$addr], $dst", []>;
+def LDSTUBArr : F3_1_asi<3, 0b011101, (outs IntRegs:$dst),
+                         (ins MEMrr:$addr, i8imm:$asi),
+                         "ldstuba [$addr] $asi, $dst", []>;
+
 // Store multiclass - Define both Reg+Reg/Reg+Imm patterns in one shot.
 multiclass Store<string OpcStr, bits<6> Op3Val, SDPatternOperator OpNode,
            RegisterClass RC, ValueType Ty> {
