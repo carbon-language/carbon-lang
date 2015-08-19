@@ -27,3 +27,18 @@
 // CHECK-ERROR-NEXT: error: instruction requires: neon
 // CHECK-ERROR-NEXT:    fmls v9.2s, v9.2s, v0.2s
 // CHECK-ERROR-NEXT:    ^
+
+
+        fmls.4s v3, v12, v17
+        fmls.2d v1, v30, v20
+        fmls.2s v9, v9, v0
+
+// CHECK-ERROR: error: instruction requires: neon
+// CHECK-ERROR-NEXT:    fmls.4s v3, v12, v17
+// CHECK-ERROR-NEXT:    ^
+// CHECK-ERROR-NEXT: error: instruction requires: neon
+// CHECK-ERROR-NEXT:    fmls.2d v1, v30, v20
+// CHECK-ERROR-NEXT:    ^
+// CHECK-ERROR-NEXT: error: instruction requires: neon
+// CHECK-ERROR-NEXT:    fmls.2s v9, v9, v0
+// CHECK-ERROR-NEXT:    ^
