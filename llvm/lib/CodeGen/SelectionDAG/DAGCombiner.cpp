@@ -12204,12 +12204,81 @@ static SDValue combineConcatVectorOfScalars(SDNode *N, SelectionDAG &DAG) {
                      DAG.getNode(ISD::BUILD_VECTOR, DL, VecVT, Ops));
 }
 
-SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
-  // TODO: Check to see if this is a CONCAT_VECTORS of a bunch of
-  // EXTRACT_SUBVECTOR operations.  If so, and if the EXTRACT_SUBVECTOR vector
-  // inputs come from at most two distinct vectors, turn this into a shuffle
-  // node.
+// Check to see if this is a CONCAT_VECTORS of a bunch of EXTRACT_SUBVECTOR
+// operations. If so, and if the EXTRACT_SUBVECTOR vector inputs come from at
+// most two distinct vectors the same size as the result, attempt to turn this
+// into a legal shuffle.
+static SDValue combineConcatVectorOfExtracts(SDNode *N, SelectionDAG &DAG) {
+  EVT VT = N->getValueType(0);
+  EVT OpVT = N->getOperand(0).getValueType();
+  int NumElts = VT.getVectorNumElements();
+  int NumOpElts = OpVT.getVectorNumElements();
 
+  SDValue SV0 = DAG.getUNDEF(VT), SV1 = DAG.getUNDEF(VT);
+  SmallVector<int, 8> Mask;
+
+  for (SDValue Op : N->ops()) {
+    // Peek through any bitcast.
+    while (Op.getOpcode() == ISD::BITCAST)
+      Op = Op.getOperand(0);
+
+    // UNDEF nodes convert to UNDEF shuffle mask values.
+    if (Op.getOpcode() == ISD::UNDEF) {
+      Mask.append((unsigned)NumOpElts, -1);
+      continue;
+    }
+
+    if (Op.getOpcode() != ISD::EXTRACT_SUBVECTOR)
+      return SDValue();
+
+    // What vector are we extracting the subvector from and at what index?
+    SDValue ExtVec = Op.getOperand(0);
+    if (ExtVec.getOpcode() == ISD::UNDEF) {
+      Mask.append((unsigned)NumOpElts, -1);
+      continue;
+    }
+
+    EVT ExtVT = ExtVec.getValueType();
+    if (!isa<ConstantSDNode>(Op.getOperand(1)))
+      return SDValue();
+    int ExtIdx = dyn_cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+
+    // Ensure that we are extracting a subvector from a vector the same
+    // size as the result.
+    if (ExtVT.getSizeInBits() != VT.getSizeInBits())
+      return SDValue();
+
+    // Scale the subvector index to account for any bitcast.
+    int NumExtElts = ExtVT.getVectorNumElements();
+    if (0 == (NumExtElts % NumElts))
+      ExtIdx /= (NumExtElts / NumElts);
+    else if (0 == (NumElts % NumExtElts))
+      ExtIdx *= (NumElts / NumExtElts);
+    else
+      return SDValue();
+
+    // At most we can reference 2 inputs in the final shuffle.
+    if (SV0.getOpcode() == ISD::UNDEF || SV0 == ExtVec) {
+      SV0 = ExtVec;
+      for (int i = 0; i != NumOpElts; ++i)
+        Mask.push_back(i + ExtIdx);
+    } else if (SV1.getOpcode() == ISD::UNDEF || SV1 == ExtVec) {
+      SV1 = ExtVec;
+      for (int i = 0; i != NumOpElts; ++i)
+        Mask.push_back(i + ExtIdx + NumElts);
+    } else {
+      return SDValue();
+    }
+  }
+
+  if (!DAG.getTargetLoweringInfo().isShuffleMaskLegal(Mask, VT))
+    return SDValue();
+
+  return DAG.getVectorShuffle(VT, SDLoc(N), DAG.getBitcast(VT, SV0),
+                              DAG.getBitcast(VT, SV1), Mask);
+}
+
+SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   // If we only have one input vector, we don't need to do any concatenation.
   if (N->getNumOperands() == 1)
     return N->getOperand(0);
@@ -12309,6 +12378,11 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
   // Fold CONCAT_VECTORS of only bitcast scalars (or undef) to BUILD_VECTOR.
   if (SDValue V = combineConcatVectorOfScalars(N, DAG))
     return V;
+
+  // Fold CONCAT_VECTORS of EXTRACT_SUBVECTOR (or undef) to VECTOR_SHUFFLE.
+  if (Level < AfterLegalizeVectorOps && TLI.isTypeLegal(VT))
+    if (SDValue V = combineConcatVectorOfExtracts(N, DAG))
+      return V;
 
   // Type legalization of vectors and DAG canonicalization of SHUFFLE_VECTOR
   // nodes often generate nop CONCAT_VECTOR nodes.

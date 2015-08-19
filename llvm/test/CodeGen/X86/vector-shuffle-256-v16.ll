@@ -3262,11 +3262,15 @@ define <16 x i16> @insert_v16i16_0elt_into_zero_vector(i16* %ptr) {
 }
 
 define <16 x i16> @concat_v16i16_0_1_2_3_4_5_6_7_24_25_26_27_28_29_30_31(<16 x i16> %a, <16 x i16> %b) {
-; ALL-LABEL: concat_v16i16_0_1_2_3_4_5_6_7_24_25_26_27_28_29_30_31:
-; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; ALL-NEXT:    retq
+; AVX1-LABEL: concat_v16i16_0_1_2_3_4_5_6_7_24_25_26_27_28_29_30_31:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: concat_v16i16_0_1_2_3_4_5_6_7_24_25_26_27_28_29_30_31:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; AVX2-NEXT:    retq
   %alo = shufflevector <16 x i16> %a, <16 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   %bhi = shufflevector <16 x i16> %b, <16 x i16> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   %shuf = shufflevector <8 x i16> %alo, <8 x i16> %bhi, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
@@ -3276,9 +3280,7 @@ define <16 x i16> @concat_v16i16_0_1_2_3_4_5_6_7_24_25_26_27_28_29_30_31(<16 x i
 define <16 x i16> @concat_v16i16_8_9_10_11_12_13_14_15_24_25_26_27_28_29_30_31_bc(<16 x i16> %a, <16 x i16> %b) {
 ; ALL-LABEL: concat_v16i16_8_9_10_11_12_13_14_15_24_25_26_27_28_29_30_31_bc:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],ymm1[2,3]
 ; ALL-NEXT:    retq
   %ahi = shufflevector <16 x i16> %a, <16 x i16> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   %bhi = shufflevector <16 x i16> %b, <16 x i16> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>

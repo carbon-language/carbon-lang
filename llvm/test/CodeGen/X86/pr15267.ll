@@ -65,11 +65,10 @@ define <4 x i64> @test3(<4 x i1>* %in) nounwind {
 ; CHECK-NEXT:    shlq $60, %rax
 ; CHECK-NEXT:    sarq $63, %rax
 ; CHECK-NEXT:    vpinsrd $3, %eax, %xmm0, %xmm0
+; CHECK-NEXT:    vpmovsxdq %xmm0, %xmm1
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; CHECK-NEXT:    vpmovsxdq %xmm0, %xmm0
-; CHECK-NEXT:    vmovd %ecx, %xmm1
-; CHECK-NEXT:    vpinsrd $1, %eax, %xmm1, %xmm1
-; CHECK-NEXT:    vpmovsxdq %xmm1, %xmm1
-; CHECK-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; CHECK-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %wide.load35 = load <4 x i1>, <4 x i1>* %in, align 1
   %sext = sext <4 x i1> %wide.load35 to <4 x i64>

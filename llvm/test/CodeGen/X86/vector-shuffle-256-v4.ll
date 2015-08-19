@@ -974,11 +974,15 @@ define <4 x double> @bitcast_v4f64_0426(<4 x double> %a, <4 x double> %b) {
 }
 
 define <4 x i64> @concat_v4i64_0167(<4 x i64> %a0, <4 x i64> %a1) {
-; ALL-LABEL: concat_v4i64_0167:
-; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; ALL-NEXT:    retq
+; AVX1-LABEL: concat_v4i64_0167:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: concat_v4i64_0167:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; AVX2-NEXT:    retq
   %a0lo = shufflevector <4 x i64> %a0, <4 x i64> %a1, <2 x i32> <i32 0, i32 1>
   %a1hi = shufflevector <4 x i64> %a0, <4 x i64> %a1, <2 x i32> <i32 6, i32 7>
   %shuffle64 = shufflevector <2 x i64> %a0lo, <2 x i64> %a1hi, <4 x i32> <i32 0, i32 1, i32 2, i32 3>

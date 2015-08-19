@@ -2099,11 +2099,15 @@ define <8 x i32> @insert_mem_and_zero_v8i32(i32* %ptr) {
 }
 
 define <8 x i32> @concat_v8i32_0123CDEF(<8 x i32> %a, <8 x i32> %b) {
-; ALL-LABEL: concat_v8i32_0123CDEF:
-; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; ALL-NEXT:    retq
+; AVX1-LABEL: concat_v8i32_0123CDEF:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: concat_v8i32_0123CDEF:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1,2,3],ymm1[4,5,6,7]
+; AVX2-NEXT:    retq
   %alo = shufflevector <8 x i32> %a, <8 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %bhi = shufflevector <8 x i32> %b, <8 x i32> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %shuf = shufflevector <4 x i32> %alo, <4 x i32> %bhi, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
@@ -2113,9 +2117,7 @@ define <8 x i32> @concat_v8i32_0123CDEF(<8 x i32> %a, <8 x i32> %b) {
 define <8 x i32> @concat_v8i32_4567CDEF_bc(<8 x i32> %a0, <8 x i32> %a1) {
 ; ALL-LABEL: concat_v8i32_4567CDEF_bc:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; ALL-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; ALL-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],ymm1[2,3]
 ; ALL-NEXT:    retq
   %a0hi = shufflevector <8 x i32> %a0, <8 x i32> %a1, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %a1hi = shufflevector <8 x i32> %a0, <8 x i32> %a1, <4 x i32> <i32 12, i32 13, i32 14, i32 15>
