@@ -34,7 +34,7 @@ class TestCppNsImport(TestBase):
         self.assertTrue(src_file_spec.IsValid(), "Main source file")
 
         # Get the path of the executable
-        cwd = os.getcwd()
+        cwd = self.get_process_working_directory()
         exe_file = "a.out"
         exe_path  = os.path.join(cwd, exe_file)
 
@@ -43,13 +43,13 @@ class TestCppNsImport(TestBase):
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
         # Break on main function
-        main_breakpoint = target.BreakpointCreateByName("main")
-        self.assertTrue(main_breakpoint.IsValid() and main_breakpoint.GetNumLocations() >= 1, VALID_BREAKPOINT)
+        break_0 = target.BreakpointCreateBySourceRegex("// break 0", src_file_spec)
+        self.assertTrue(break_0.IsValid() and break_0.GetNumLocations() >= 1, VALID_BREAKPOINT)
 
         # Launch the process
         args = None
         env = None
-        process = target.LaunchSimple(args, env, self.get_process_working_directory())
+        process = target.LaunchSimple(args, env, cwd)
         self.assertTrue(process.IsValid(), PROCESS_IS_VALID)
 
         # Get the thread of the process
@@ -60,14 +60,18 @@ class TestCppNsImport(TestBase):
         frame = thread.GetSelectedFrame()
 
         # Test imported namespaces
-        test_result = frame.EvaluateExpression("x")
-        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 11, "x = 11")
+        test_result = frame.EvaluateExpression("n")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 1, "n = 1")
 
-        test_result = frame.EvaluateExpression("xx")
-        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 22, "xx = 22")
+        test_result = frame.EvaluateExpression("N::n")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 1, "N::n = 1")
 
-        test_result = frame.EvaluateExpression("xxx")
-        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 33, "xxx = 33")
+        test_result = frame.EvaluateExpression("nested")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 3, "nested = 3")
+
+        test_result = frame.EvaluateExpression("anon")
+        self.assertTrue(test_result.IsValid() and test_result.GetValueAsSigned() == 2, "anon = 2")
+
 
 if __name__ == '__main__':
     import atexit

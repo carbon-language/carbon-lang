@@ -1,19 +1,28 @@
-namespace A {
-    int x = 11;
-    namespace {
-        int xx = 22;
+namespace N
+{
+    int n;
+}
+
+namespace
+{
+    int anon;
+}
+
+namespace Nested
+{
+    namespace
+    {
+        int nested;
     }
 }
 
-using namespace A;
+using namespace N;
+using namespace Nested;
 
-namespace {
-    int xxx = 33;
-};
-
-int main() {
-    x;
-    xx;
-    xxx;
-    return 0;
+int main()
+{
+    n = 1;
+    anon = 2;
+    nested = 3;
+    return 0; // break 0
 }

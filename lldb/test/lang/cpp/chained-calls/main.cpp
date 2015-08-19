@@ -1,186 +1,33 @@
-class S
-{
+class Bool {
 public:
-  S () { }
-  S (S &obj);
+    Bool operator&(const Bool other)
+    {
+        Bool result;
+        result.value = value && other.value;
+        return result;
+    }
 
-  S operator+ (const S &s);
-
-  int a;
+    bool value;
 };
 
-S::S (S &obj)
+bool get(Bool object)
 {
-  a = obj.a;
+    return object.value;
 }
 
-S
-S::operator+ (const S &s)
+Bool set(bool value)
 {
-  S res;
-
-  res.a = a + s.a;
-
-  return res;
+    Bool result;
+    result.value = value;
+    return result;
 }
 
-S
-f (int i)
+int main()
 {
-  S s;
-
-  s.a = i;
-
-  return s;
-}
-
-int
-g (const S &s)
-{
-  return s.a;
-}
-
-class A
-{
-public:
-  A operator+ (const A &);
-  int a;
-};
-
-A
-A::operator+ (const A &obj)
-{
-  A n;
-
-  n.a = a + obj.a;
-
-  return n;
-}
-
-A
-p ()
-{
-  A a;
-  a.a = 12345678;
-  return a;
-}
-
-A
-r ()
-{
-  A a;
-  a.a = 10000000;
-  return a;
-}
-
-A
-q (const A &a)
-{
-  return a;
-}
-
-class B
-{
-public:
-  int b[1024];
-};
-
-B
-makeb ()
-{
-  B b;
-  int i;
-
-  for (i = 0; i < 1024; i++)
-    b.b[i] = i;
-
-  return b;
-}
-
-int
-getb (const B &b, int i)
-{
-  return b.b[i];
-}
-
-class C
-{
-public:
-  C ();
-  ~C ();
-
-  A operator* ();
-
-  A *a_ptr;
-};
-
-C::C ()
-{
-  a_ptr = new A;
-  a_ptr->a = 5678;
-}
-
-C::~C ()
-{
-  delete a_ptr;
-}
-
-A
-C::operator* ()
-{
-  return *a_ptr;
-}
-
-#define TYPE_INDEX 1
-
-enum type
-{
-  INT,
-  CHAR
-};
-
-union U
-{
-public:
-  U (type t);
-  type get_type ();
-
-  int a;
-  char c;
-  type tp[2];
-};
-
-U::U (type t)
-{
-  tp[TYPE_INDEX] = t;
-}
-
-U
-make_int ()
-{
-  return U (INT);
-}
-
-U
-make_char ()
-{
-  return U (CHAR);
-}
-
-type
-U::get_type ()
-{
-  return tp[TYPE_INDEX];
-}
-
-int
-main ()
-{
-  int i = g(f(0));
-  A a = q(p() + r());
-
-  B b = makeb ();
-  C c;
-
-  return i + getb(b, 0);  /* Break here */
+    Bool t = set(true);
+    Bool f = set(false);
+    get(t);
+    get(f);
+    get(t & f);
+    return 0; // break here
 }
