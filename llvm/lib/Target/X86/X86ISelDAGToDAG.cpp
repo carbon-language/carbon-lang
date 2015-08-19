@@ -2224,6 +2224,27 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
   switch (Opcode) {
   default: break;
+  case ISD::BRIND: {
+    if (Subtarget->isTargetNaCl())
+      // NaCl has its own pass where jmp %r32 are converted to jmp %r64. We
+      // leave the instruction alone.
+      break;
+    if (Subtarget->isTarget64BitILP32()) {
+      // Converts a 32-bit register to a 64-bit, zero-extended version of
+      // it. This is needed because x86-64 can do many things, but jmp %r32
+      // ain't one of them.
+      const SDValue &Target = Node->getOperand(1);
+      assert(Target.getSimpleValueType() == llvm::MVT::i32);
+      SDValue ZextTarget = CurDAG->getZExtOrTrunc(Target, dl, EVT(MVT::i64));
+      SDValue Brind = CurDAG->getNode(ISD::BRIND, dl, MVT::Other,
+                                      Node->getOperand(0), ZextTarget);
+      ReplaceUses(SDValue(Node, 0), Brind);
+      SelectCode(ZextTarget.getNode());
+      SelectCode(Brind.getNode());
+      return nullptr;
+    }
+    break;
+  }
   case ISD::INTRINSIC_W_CHAIN: {
     unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
     switch (IntNo) {
