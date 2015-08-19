@@ -41,6 +41,7 @@ class:
     /// NumberExprAST - Expression class for numeric literals like "1.0".
     class NumberExprAST : public ExprAST {
       double Val;
+
     public:
       NumberExprAST(double Val) : Val(Val) {}
       virtual Value *Codegen();
@@ -72,7 +73,10 @@ parser, which will be used to report errors found during code generation
 
 .. code-block:: c++
 
-    Value *ErrorV(const char *Str) { Error(Str); return 0; }
+    Value *ErrorV(const char *Str) {
+      Error(Str);
+      return nullptr;
+    }
 
     static Module *TheModule;
     static IRBuilder<> Builder(getGlobalContext());
@@ -145,18 +149,23 @@ variables <LangImpl7.html#localvars>`_.
     Value *BinaryExprAST::Codegen() {
       Value *L = LHS->Codegen();
       Value *R = RHS->Codegen();
-      if (L == 0 || R == 0) return 0;
+      if (!L || !R)
+        return nullptr;
 
       switch (Op) {
-      case '+': return Builder.CreateFAdd(L, R, "addtmp");
-      case '-': return Builder.CreateFSub(L, R, "subtmp");
-      case '*': return Builder.CreateFMul(L, R, "multmp");
+      case '+':
+        return Builder.CreateFAdd(L, R, "addtmp");
+      case '-':
+        return Builder.CreateFSub(L, R, "subtmp");
+      case '*':
+        return Builder.CreateFMul(L, R, "multmp");
       case '<':
         L = Builder.CreateFCmpULT(L, R, "cmptmp");
         // Convert bool 0/1 to double 0.0 or 1.0
         return Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()),
                                     "booltmp");
-      default: return ErrorV("invalid binary operator");
+      default:
+        return ErrorV("invalid binary operator");
       }
     }
 
@@ -201,17 +210,18 @@ would return 0.0 and -1.0, depending on the input value.
     Value *CallExprAST::Codegen() {
       // Look up the name in the global module table.
       Function *CalleeF = TheModule->getFunction(Callee);
-      if (CalleeF == 0)
+      if (!CalleeF)
         return ErrorV("Unknown function referenced");
 
       // If argument mismatch error.
       if (CalleeF->arg_size() != Args.size())
         return ErrorV("Incorrect # arguments passed");
 
-      std::vector<Value*> ArgsV;
+      std::vector<Value *> ArgsV;
       for (unsigned i = 0, e = Args.size(); i != e; ++i) {
         ArgsV.push_back(Args[i]->Codegen());
-        if (ArgsV.back() == 0) return 0;
+        if (!ArgsV.back())
+          return nullptr;
       }
 
       return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
@@ -253,10 +263,11 @@ with:
       // Make the function type:  double(double,double) etc.
       std::vector<Type*> Doubles(Args.size(),
                                  Type::getDoubleTy(getGlobalContext()));
-      FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()),
-                                           Doubles, false);
+      FunctionType *FT =
+        FunctionType::get(Type::getDoubleTy(getGlobalContext()), Doubles, false);
 
-      Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
+      Function *F =
+        Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
 
 This code packs a lot of power into a few lines. Note first that this
 function returns a "Function\*" instead of a "Value\*". Because a
@@ -321,13 +332,13 @@ then deletes it.
         // If F already has a body, reject this.
         if (!F->empty()) {
           ErrorF("redefinition of function");
-          return 0;
+          return nullptr;
         }
 
         // If F took a different number of args, reject.
         if (F->arg_size() != Args.size()) {
           ErrorF("redefinition of function with different # args");
-          return 0;
+          return nullptr;
         }
       }
 
@@ -351,6 +362,7 @@ we emit an error.
         // Add arguments to variable symbol table.
         NamedValues[Args[Idx]] = AI;
       }
+
       return F;
     }
 
@@ -368,8 +380,8 @@ straight-forward with the mechanics we have already used above.
       NamedValues.clear();
 
       Function *TheFunction = Proto->Codegen();
-      if (TheFunction == 0)
-        return 0;
+      if (!TheFunction)
+        return nullptr;
 
 Code generation for function definitions starts out simply enough: we
 just codegen the prototype (Proto) and verify that it is ok. We then
@@ -423,7 +435,7 @@ function is finished and validated, we return it.
 
       // Error reading body, remove function.
       TheFunction->eraseFromParent();
-      return 0;
+      return nullptr;
     }
 
 The only piece left here is handling of the error case. For simplicity,

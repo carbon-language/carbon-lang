@@ -400,8 +400,7 @@ example, if we add:
 .. code-block:: c++
 
     /// putchard - putchar that takes a double and returns 0.
-    extern "C"
-    double putchard(double X) {
+    extern "C" double putchard(double X) {
       putchar((char)X);
       return 0;
     }

@@ -131,6 +131,7 @@ public:
 /// NumberExprAST - Expression class for numeric literals like "1.0".
 class NumberExprAST : public ExprAST {
   double Val;
+
 public:
   NumberExprAST(double Val) : Val(Val) {}
   Value *Codegen() override;
@@ -139,6 +140,7 @@ public:
 /// VariableExprAST - Expression class for referencing a variable, like "a".
 class VariableExprAST : public ExprAST {
   std::string Name;
+
 public:
   VariableExprAST(const std::string &Name) : Name(Name) {}
   Value *Codegen() override;
@@ -159,6 +161,7 @@ public:
 class BinaryExprAST : public ExprAST {
   char Op;
   std::unique_ptr<ExprAST> LHS, RHS;
+
 public:
   BinaryExprAST(char Op, std::unique_ptr<ExprAST> LHS,
                 std::unique_ptr<ExprAST> RHS)
@@ -170,6 +173,7 @@ public:
 class CallExprAST : public ExprAST {
   std::string Callee;
   std::vector<std::unique_ptr<ExprAST>> Args;
+
 public:
   CallExprAST(const std::string &Callee,
               std::vector<std::unique_ptr<ExprAST>> Args)
@@ -180,6 +184,7 @@ public:
 /// IfExprAST - Expression class for if/then/else.
 class IfExprAST : public ExprAST {
   std::unique_ptr<ExprAST> Cond, Then, Else;
+
 public:
   IfExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then,
             std::unique_ptr<ExprAST> Else)
@@ -191,12 +196,13 @@ public:
 class ForExprAST : public ExprAST {
   std::string VarName;
   std::unique_ptr<ExprAST> Start, End, Step, Body;
+
 public:
   ForExprAST(const std::string &VarName, std::unique_ptr<ExprAST> Start,
              std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step,
              std::unique_ptr<ExprAST> Body)
-    : VarName(VarName), Start(std::move(Start)), End(std::move(End)),
-      Step(std::move(Step)), Body(std::move(Body)) {}
+      : VarName(VarName), Start(std::move(Start)), End(std::move(End)),
+        Step(std::move(Step)), Body(std::move(Body)) {}
   Value *Codegen() override;
 };
 
@@ -208,11 +214,12 @@ class PrototypeAST {
   std::vector<std::string> Args;
   bool IsOperator;
   unsigned Precedence; // Precedence if a binary op.
+
 public:
   PrototypeAST(const std::string &Name, std::vector<std::string> Args,
                bool IsOperator = false, unsigned Prec = 0)
-    : Name(Name), Args(std::move(Args)), IsOperator(IsOperator),
-      Precedence(Prec) {}
+      : Name(Name), Args(std::move(Args)), IsOperator(IsOperator),
+        Precedence(Prec) {}
 
   bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
   bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
@@ -231,8 +238,10 @@ public:
 class FunctionAST {
   std::unique_ptr<PrototypeAST> Proto;
   std::unique_ptr<ExprAST> Body;
+
 public:
-  FunctionAST(std::unique_ptr<PrototypeAST> Proto, std::unique_ptr<ExprAST> Body)
+  FunctionAST(std::unique_ptr<PrototypeAST> Proto,
+              std::unique_ptr<ExprAST> Body)
       : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *Codegen();
 };
@@ -280,6 +289,26 @@ std::unique_ptr<FunctionAST> ErrorF(const char *Str) {
 
 static std::unique_ptr<ExprAST> ParseExpression();
 
+/// numberexpr ::= number
+static std::unique_ptr<ExprAST> ParseNumberExpr() {
+  auto Result = llvm::make_unique<NumberExprAST>(NumVal);
+  getNextToken(); // consume the number
+  return std::move(Result);
+}
+
+/// parenexpr ::= '(' expression ')'
+static std::unique_ptr<ExprAST> ParseParenExpr() {
+  getNextToken(); // eat (.
+  auto V = ParseExpression();
+  if (!V)
+    return nullptr;
+
+  if (CurTok != ')')
+    return Error("expected ')'");
+  getNextToken(); // eat ).
+  return V;
+}
+
 /// identifierexpr
 ///   ::= identifier
 ///   ::= identifier '(' expression* ')'
@@ -314,26 +343,6 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   getNextToken();
 
   return llvm::make_unique<CallExprAST>(IdName, std::move(Args));
-}
-
-/// numberexpr ::= number
-static std::unique_ptr<ExprAST> ParseNumberExpr() {
-  auto Result = llvm::make_unique<NumberExprAST>(NumVal);
-  getNextToken(); // consume the number
-  return std::move(Result);
-}
-
-/// parenexpr ::= '(' expression ')'
-static std::unique_ptr<ExprAST> ParseParenExpr() {
-  getNextToken(); // eat (.
-  auto V = ParseExpression();
-  if (!V)
-    return nullptr;
-
-  if (CurTok != ')')
-    return Error("expected ')'");
-  getNextToken(); // eat ).
-  return V;
 }
 
 /// ifexpr ::= 'if' expression 'then' expression 'else' expression
@@ -453,7 +462,8 @@ static std::unique_ptr<ExprAST> ParseUnary() {
 
 /// binoprhs
 ///   ::= ('+' unary)*
-  static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec, std::unique_ptr<ExprAST> LHS) {
+static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
+                                              std::unique_ptr<ExprAST> LHS) {
   // If this is a binop, find its precedence.
   while (1) {
     int TokPrec = GetTokPrecedence();
@@ -482,7 +492,8 @@ static std::unique_ptr<ExprAST> ParseUnary() {
     }
 
     // Merge LHS/RHS.
-    LHS = llvm::make_unique<BinaryExprAST>(BinOp, std::move(LHS), std::move(RHS));
+    LHS =
+        llvm::make_unique<BinaryExprAST>(BinOp, std::move(LHS), std::move(RHS));
   }
 }
 
@@ -579,7 +590,8 @@ static std::unique_ptr<FunctionAST> ParseDefinition() {
 static std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   if (auto E = ParseExpression()) {
     // Make an anonymous proto.
-    auto Proto = llvm::make_unique<PrototypeAST>("", std::vector<std::string>());
+    auto Proto =
+        llvm::make_unique<PrototypeAST>("", std::vector<std::string>());
     return llvm::make_unique<FunctionAST>(std::move(Proto), std::move(E));
   }
   return nullptr;
@@ -612,7 +624,10 @@ Value *NumberExprAST::Codegen() {
 Value *VariableExprAST::Codegen() {
   // Look this variable up in the function.
   Value *V = NamedValues[Name];
-  return V ? V : ErrorV("Unknown variable name");
+  if (!V)
+    return ErrorV("Unknown variable name");
+
+  return V;
 }
 
 Value *UnaryExprAST::Codegen() {
@@ -654,7 +669,7 @@ Value *BinaryExprAST::Codegen() {
   Function *F = TheModule->getFunction(std::string("binary") + Op);
   assert(F && "binary operator not found!");
 
-  Value *Ops[] = { L, R };
+  Value *Ops[] = {L, R};
   return Builder.CreateCall(F, Ops, "binop");
 }
 
@@ -732,23 +747,22 @@ Value *IfExprAST::Codegen() {
   return PN;
 }
 
+// Output for-loop as:
+//   ...
+//   start = startexpr
+//   goto loop
+// loop:
+//   variable = phi [start, loopheader], [nextvariable, loopend]
+//   ...
+//   bodyexpr
+//   ...
+// loopend:
+//   step = stepexpr
+//   nextvariable = variable + step
+//   endcond = endexpr
+//   br endcond, loop, endloop
+// outloop:
 Value *ForExprAST::Codegen() {
-  // Output this as:
-  //   ...
-  //   start = startexpr
-  //   goto loop
-  // loop:
-  //   variable = phi [start, loopheader], [nextvariable, loopend]
-  //   ...
-  //   bodyexpr
-  //   ...
-  // loopend:
-  //   step = stepexpr
-  //   nextvariable = variable + step
-  //   endcond = endexpr
-  //   br endcond, loop, endloop
-  // outloop:
-
   // Emit the start code first, without 'variable' in scope.
   Value *StartVal = Start->Codegen();
   if (!StartVal)
@@ -784,7 +798,7 @@ Value *ForExprAST::Codegen() {
     return nullptr;
 
   // Emit the step value.
-  Value *StepVal;
+  Value *StepVal = nullptr;
   if (Step) {
     StepVal = Step->Codegen();
     if (!StepVal)
@@ -799,7 +813,7 @@ Value *ForExprAST::Codegen() {
   // Compute the end condition.
   Value *EndCond = End->Codegen();
   if (!EndCond)
-    return EndCond;
+    return nullptr;
 
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(
@@ -964,9 +978,9 @@ static void MainLoop() {
     switch (CurTok) {
     case tok_eof:
       return;
-    case ';':
+    case ';': // ignore top-level semicolons.
       getNextToken();
-      break; // ignore top-level semicolons.
+      break;
     case tok_def:
       HandleDefinition();
       break;

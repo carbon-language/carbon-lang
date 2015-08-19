@@ -44,6 +44,7 @@ We'll start with expressions first:
     /// NumberExprAST - Expression class for numeric literals like "1.0".
     class NumberExprAST : public ExprAST {
       double Val;
+
     public:
       NumberExprAST(double Val) : Val(Val) {}
     };
@@ -65,6 +66,7 @@ language:
     /// VariableExprAST - Expression class for referencing a variable, like "a".
     class VariableExprAST : public ExprAST {
       std::string Name;
+
     public:
       VariableExprAST(const std::string &Name) : Name(Name) {}
     };
@@ -73,6 +75,7 @@ language:
     class BinaryExprAST : public ExprAST {
       char Op;
       std::unique_ptr<ExprAST> LHS, RHS;
+
     public:
       BinaryExprAST(char op, std::unique_ptr<ExprAST> LHS,
                     std::unique_ptr<ExprAST> RHS)
@@ -83,6 +86,7 @@ language:
     class CallExprAST : public ExprAST {
       std::string Callee;
       std::vector<ExprAST*> Args;
+
     public:
       CallExprAST(const std::string &Callee,
                   std::vector<std::unique_ptr<ExprAST>> Args)
@@ -111,6 +115,7 @@ way to talk about functions themselves:
     class PrototypeAST {
       std::string Name;
       std::vector<std::string> Args;
+
     public:
       PrototypeAST(const std::string &name, std::vector<std::string> Args)
         : Name(name), Args(std::move(Args)) {}
@@ -120,6 +125,7 @@ way to talk about functions themselves:
     class FunctionAST {
       std::unique_ptr<PrototypeAST> Proto;
       std::unique_ptr<ExprAST> Body;
+
     public:
       FunctionAST(std::unique_ptr<PrototypeAST> Proto,
                   std::unique_ptr<ExprAST> Body)
@@ -171,9 +177,14 @@ be parsed.
 
 
     /// Error* - These are little helper functions for error handling.
-    ExprAST *Error(const char *Str) { fprintf(stderr, "Error: %s\n", Str);return 0;}
-    PrototypeAST *ErrorP(const char *Str) { Error(Str); return 0; }
-    FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
+    std::unique_ptr<ExprAST> Error(const char *Str) {
+      fprintf(stderr, "Error: %s\n", Str);
+      return nullptr;
+    }
+    std::unique_ptr<PrototypeAST> ErrorP(const char *Str) {
+      Error(Str);
+      return nullptr;
+    }
 
 The ``Error`` routines are simple helper routines that our parser will
 use to handle errors. The error recovery in our parser will not be the
@@ -216,13 +227,14 @@ the parenthesis operator is defined like this:
 
     /// parenexpr ::= '(' expression ')'
     static std::unique_ptr<ExprAST> ParseParenExpr() {
-      getNextToken();  // eat (.
+      getNextToken(); // eat (.
       auto V = ParseExpression();
-      if (!V) return nullptr;
+      if (!V)
+        return nullptr;
 
       if (CurTok != ')')
         return Error("expected ')'");
-      getNextToken();  // eat ).
+      getNextToken(); // eat ).
       return V;
     }
 
@@ -267,11 +279,13 @@ function calls:
       std::vector<std::unique_ptr<ExprAST>> Args;
       if (CurTok != ')') {
         while (1) {
-          auto Arg = ParseExpression();
-          if (!Arg) return nullptr;
-          Args.push_back(std::move(Arg));
+          if (auto Arg = ParseExpression())
+            Args.push_back(std::move(Arg));
+          else
+            return nullptr;
 
-          if (CurTok == ')') break;
+          if (CurTok == ')')
+            break;
 
           if (CurTok != ',')
             return Error("Expected ')' or ',' in argument list");
@@ -309,10 +323,14 @@ primary expression, we need to determine what sort of expression it is:
     ///   ::= parenexpr
     static std::unique_ptr<ExprAST> ParsePrimary() {
       switch (CurTok) {
-      default: return Error("unknown token when expecting an expression");
-      case tok_identifier: return ParseIdentifierExpr();
-      case tok_number:     return ParseNumberExpr();
-      case '(':            return ParseParenExpr();
+      default:
+        return Error("unknown token when expecting an expression");
+      case tok_identifier:
+        return ParseIdentifierExpr();
+      case tok_number:
+        return ParseNumberExpr();
+      case '(':
+        return ParseParenExpr();
       }
     }
 
@@ -396,7 +414,8 @@ a sequence of [binop,primaryexpr] pairs:
     ///
     static std::unique_ptr<ExprAST> ParseExpression() {
       auto LHS = ParsePrimary();
-      if (!LHS) return nullptr;
+      if (!LHS)
+        return nullptr;
 
       return ParseBinOpRHS(0, std::move(LHS));
     }
@@ -446,7 +465,8 @@ expression:
 
         // Parse the primary expression after the binary operator.
         auto RHS = ParsePrimary();
-        if (!RHS) return nullptr;
+        if (!RHS)
+          return nullptr;
 
 As such, this code eats (and remembers) the binary operator and then
 parses the primary expression that follows. This builds up the whole
@@ -505,7 +525,8 @@ above two blocks duplicated for context):
         int NextPrec = GetTokPrecedence();
         if (TokPrec < NextPrec) {
           RHS = ParseBinOpRHS(TokPrec+1, std::move(RHS));
-          if (RHS == 0) return 0;
+          if (!RHS)
+            return nullptr;
         }
         // Merge LHS/RHS.
         LHS = llvm::make_unique<BinaryExprAST>(BinOp, std::move(LHS),
@@ -633,11 +654,20 @@ include the top-level loop. See `below <#code>`_ for full code in the
       while (1) {
         fprintf(stderr, "ready> ");
         switch (CurTok) {
-        case tok_eof:    return;
-        case ';':        getNextToken(); break;  // ignore top-level semicolons.
-        case tok_def:    HandleDefinition(); break;
-        case tok_extern: HandleExtern(); break;
-        default:         HandleTopLevelExpression(); break;
+        case tok_eof:
+          return;
+        case ';': // ignore top-level semicolons.
+          getNextToken();
+          break;
+        case tok_def:
+          HandleDefinition();
+          break;
+        case tok_extern:
+          HandleExtern();
+          break;
+        default:
+          HandleTopLevelExpression();
+          break;
         }
       }
     }

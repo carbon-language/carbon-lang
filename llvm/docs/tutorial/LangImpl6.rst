@@ -96,15 +96,20 @@ keywords:
     enum Token {
       ...
       // operators
-      tok_binary = -11, tok_unary = -12
+      tok_binary = -11,
+      tok_unary = -12
     };
     ...
     static int gettok() {
     ...
-        if (IdentifierStr == "for") return tok_for;
-        if (IdentifierStr == "in") return tok_in;
-        if (IdentifierStr == "binary") return tok_binary;
-        if (IdentifierStr == "unary") return tok_unary;
+        if (IdentifierStr == "for")
+          return tok_for;
+        if (IdentifierStr == "in")
+          return tok_in;
+        if (IdentifierStr == "binary")
+          return tok_binary;
+        if (IdentifierStr == "unary")
+          return tok_unary;
         return tok_identifier;
 
 This just adds lexer support for the unary and binary keywords, like we
@@ -131,6 +136,7 @@ this:
       std::vector<std::string> Args;
       bool IsOperator;
       unsigned Precedence;  // Precedence if a binary op.
+
     public:
       PrototypeAST(const std::string &name, std::vector<std::string> Args,
                    bool IsOperator = false, unsigned Prec = 0)
@@ -211,8 +217,8 @@ user-defined operator, we need to parse it:
       if (Kind && ArgNames.size() != Kind)
         return ErrorP("Invalid number of operands for operator");
 
-      return llvm::make_unique<PrototypeAST>(FnName, std::move(ArgNames),
-                                             Kind != 0, BinaryPrecedence);
+      return llvm::make_unique<PrototypeAST>(FnName, std::move(ArgNames), Kind != 0,
+                                             BinaryPrecedence);
     }
 
 This is all fairly straightforward parsing code, and we have already
@@ -232,23 +238,28 @@ default case for our existing binary operator node:
     Value *BinaryExprAST::Codegen() {
       Value *L = LHS->Codegen();
       Value *R = RHS->Codegen();
-      if (L == 0 || R == 0) return 0;
+      if (!L || !R)
+        return nullptr;
 
       switch (Op) {
-      case '+': return Builder.CreateFAdd(L, R, "addtmp");
-      case '-': return Builder.CreateFSub(L, R, "subtmp");
-      case '*': return Builder.CreateFMul(L, R, "multmp");
+      case '+':
+        return Builder.CreateFAdd(L, R, "addtmp");
+      case '-':
+        return Builder.CreateFSub(L, R, "subtmp");
+      case '*':
+        return Builder.CreateFMul(L, R, "multmp");
       case '<':
         L = Builder.CreateFCmpULT(L, R, "cmptmp");
         // Convert bool 0/1 to double 0.0 or 1.0
         return Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()),
                                     "booltmp");
-      default: break;
+      default:
+        break;
       }
 
       // If it wasn't a builtin binary operator, it must be a user defined one. Emit
       // a call to it.
-      Function *F = TheModule->getFunction(std::string("binary")+Op);
+      Function *F = TheModule->getFunction(std::string("binary") + Op);
       assert(F && "binary operator not found!");
 
       Value *Ops[2] = { L, R };
@@ -269,8 +280,8 @@ The final piece of code we are missing, is a bit of top-level magic:
       NamedValues.clear();
 
       Function *TheFunction = Proto->Codegen();
-      if (TheFunction == 0)
-        return 0;
+      if (!TheFunction)
+        return nullptr;
 
       // If this is an operator, install it.
       if (Proto->isBinaryOp())
@@ -308,6 +319,7 @@ that, we need an AST node:
     class UnaryExprAST : public ExprAST {
       char Opcode;
       std::unique_ptr<ExprAST> Operand;
+
     public:
       UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand)
         : Opcode(Opcode), Operand(std::move(Operand)) {}
@@ -357,7 +369,8 @@ call ParseUnary instead:
       ...
         // Parse the unary expression after the binary operator.
         auto RHS = ParseUnary();
-        if (!RHS) return nullptr;
+        if (!RHS)
+          return nullptr;
       ...
     }
     /// expression
@@ -365,7 +378,8 @@ call ParseUnary instead:
     ///
     static std::unique_ptr<ExprAST> ParseExpression() {
       auto LHS = ParseUnary();
-      if (!LHS) return nullptr;
+      if (!LHS)
+        return nullptr;
 
       return ParseBinOpRHS(0, std::move(LHS));
     }
@@ -416,10 +430,11 @@ unary operators. It looks like this:
 
     Value *UnaryExprAST::Codegen() {
       Value *OperandV = Operand->Codegen();
-      if (OperandV == 0) return 0;
+      if (!OperandV)
+        return nullptr;
 
       Function *F = TheModule->getFunction(std::string("unary")+Opcode);
-      if (F == 0)
+      if (!F)
         return ErrorV("Unknown unary operator");
 
       return Builder.CreateCall(F, OperandV, "unop");
