@@ -417,7 +417,7 @@ void LoopConvertCheck::doConversion(
     // First, replace all usages of the array subscript expression with our new
     // variable.
     for (const auto &I : Usages) {
-      StringRef ReplaceText = I.IsArrow ? VarName + "." : VarName;
+      std::string ReplaceText = I.IsArrow ? VarName + "." : VarName;
       TUInfo->getReplacedVars().insert(std::make_pair(TheLoop, IndexVar));
       Diag << FixItHint::CreateReplacement(
           CharSourceRange::getTokenRange(I.Range), ReplaceText);
@@ -446,11 +446,9 @@ void LoopConvertCheck::doConversion(
   }
 
   StringRef MaybeDereference = ContainerNeedsDereference ? "*" : "";
-  StringRef TypeString = AutoRefType.getAsString();
-  StringRef Range = ("(" + TypeString + " " + VarName + " : " +
-                     MaybeDereference + ContainerString + ")")
-                        .str();
-
+  std::string TypeString = AutoRefType.getAsString();
+  std::string Range = ("(" + TypeString + " " + VarName + " : " +
+                       MaybeDereference + ContainerString + ")").str();
   Diag << FixItHint::CreateReplacement(
       CharSourceRange::getTokenRange(ParenRange), Range);
   TUInfo->getGeneratedDecls().insert(make_pair(TheLoop, VarName));

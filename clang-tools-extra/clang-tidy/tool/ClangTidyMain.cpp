@@ -347,23 +347,28 @@ static int clangTidyMain(int argc, const char **argv) {
 
 // This anchor is used to force the linker to link the LLVMModule.
 extern volatile int LLVMModuleAnchorSource;
-static int LLVM_ATTRIBUTE_UNUSED LLVMModuleAnchorDestination = LLVMModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED LLVMModuleAnchorDestination =
+    LLVMModuleAnchorSource;
 
 // This anchor is used to force the linker to link the GoogleModule.
 extern volatile int GoogleModuleAnchorSource;
-static int LLVM_ATTRIBUTE_UNUSED GoogleModuleAnchorDestination = GoogleModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED GoogleModuleAnchorDestination =
+    GoogleModuleAnchorSource;
 
 // This anchor is used to force the linker to link the MiscModule.
 extern volatile int MiscModuleAnchorSource;
-static int LLVM_ATTRIBUTE_UNUSED MiscModuleAnchorDestination = MiscModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED MiscModuleAnchorDestination =
+    MiscModuleAnchorSource;
 
 // This anchor is used to force the linker to link the ModernizeModule.
 extern volatile int ModernizeModuleAnchorSource;
-static int ModernizeModuleAnchorDestination = ModernizeModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED ModernizeModuleAnchorDestination =
+    ModernizeModuleAnchorSource;
 
 // This anchor is used to force the linker to link the ReadabilityModule.
 extern volatile int ReadabilityModuleAnchorSource;
-static int LLVM_ATTRIBUTE_UNUSED ReadabilityModuleAnchorDestination = ReadabilityModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED ReadabilityModuleAnchorDestination =
+    ReadabilityModuleAnchorSource;
 
 } // namespace tidy
 } // namespace clang
