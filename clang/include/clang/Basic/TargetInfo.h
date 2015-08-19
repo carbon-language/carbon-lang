@@ -737,10 +737,11 @@ public:
   /// language options which change the target configuration.
   virtual void adjust(const LangOptions &Opts);
 
-  /// \brief Get the default set of target features for the CPU;
-  /// this should include all legal feature strings on the target.
-  virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const {
-  }
+  /// \brief Initialize the map with the default set of target features for the
+  /// CPU, ABI, and FPMath options - these should have already been set prior
+  /// to calling this function; this should include all legal feature strings on
+  /// the target.
+  virtual void initDefaultFeatures(llvm::StringMap<bool> &Features) const {}
 
   /// \brief Get the ABI currently in use.
   virtual StringRef getABI() const { return StringRef(); }
