@@ -306,17 +306,15 @@ public:
   void emitCXXStructor(const CXXMethodDecl *MD, StructorType Type) override;
 
  private:
-  /// Checks if function has any virtual inline function.
-  bool hasAnyVirtualInlineFunction(const CXXRecordDecl *RD) const {
+   bool hasAnyUsedVirtualInlineFunction(const CXXRecordDecl *RD) const {
     const auto &VtableLayout =
         CGM.getItaniumVTableContext().getVTableLayout(RD);
 
     for (const auto &VtableComponent : VtableLayout.vtable_components()) {
-      if (VtableComponent.getKind() !=
-          VTableComponent::Kind::CK_FunctionPointer)
+      if (!VtableComponent.isUsedFunctionPointerKind())
         continue;
 
-      const auto &Method = VtableComponent.getFunctionDecl();
+      const CXXMethodDecl *Method = VtableComponent.getFunctionDecl();
       if (Method->getCanonicalDecl()->isInlined())
         return true;
     }
@@ -1510,7 +1508,7 @@ bool ItaniumCXXABI::canEmitAvailableExternallyVTable(
   // then we are safe to emit available_externally copy of vtable.
   // FIXME we can still emit a copy of the vtable if we
   // can emit definition of the inline functions.
-  return !hasAnyVirtualInlineFunction(RD);
+  return !hasAnyUsedVirtualInlineFunction(RD);
 }
 static llvm::Value *performTypeAdjustment(CodeGenFunction &CGF,
                                           llvm::Value *Ptr,

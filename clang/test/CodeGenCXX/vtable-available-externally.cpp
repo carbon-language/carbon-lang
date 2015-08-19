@@ -7,6 +7,10 @@
 // RUN: FileCheck --check-prefix=CHECK-TEST9 %s < %t.opt
 // RUN: FileCheck --check-prefix=CHECK-TEST10 %s < %t.opt
 // RUN: FileCheck --check-prefix=CHECK-TEST11 %s < %t.opt
+// RUN: FileCheck --check-prefix=CHECK-TEST12 %s < %t.opt
+// RUN: FileCheck --check-prefix=CHECK-TEST13 %s < %t.opt
+// RUN: FileCheck --check-prefix=CHECK-TEST14 %s < %t.opt
+// RUN: FileCheck --check-prefix=CHECK-TEST15 %s < %t.opt
 
 #include <typeinfo>
 
@@ -289,3 +293,76 @@ void g() {
   g(d);
 }
 }  // Test 11
+
+namespace Test12 {
+
+// CHECK-TEST12: @_ZTVN6Test121AE = external unnamed_addr constant
+struct A {
+  virtual void foo();
+  virtual ~A() {}
+};
+// CHECK-TEST12: @_ZTVN6Test121BE = external unnamed_addr constant
+struct B : A {
+  void foo();
+};
+
+void g() {
+  A a;
+  a.foo();
+  B b;
+  b.foo();
+}
+}
+
+namespace Test13 {
+
+// CHECK-TEST13-DAG: @_ZTVN6Test131AE = available_externally unnamed_addr constant
+// CHECK-TEST13-DAG: @_ZTVN6Test131BE = external unnamed_addr constant
+struct A {
+  virtual ~A();
+};
+struct B : A {
+  virtual void f();
+  void operator delete(void *);
+  ~B() {}
+};
+
+void g() {
+  A *b = new B;
+}
+}
+
+namespace Test14 {
+
+// CHECK-TEST14: @_ZTVN6Test141AE = available_externally unnamed_addr constant
+struct A {
+  virtual void f();
+  void operator delete(void *);
+  ~A();
+};
+
+void g() {
+  A *b = new A;
+  delete b;
+}
+}
+
+namespace Test15 {
+// In this test D's vtable has two slots for function f(), but uses only one,
+// so the second slot is set to null.
+// CHECK-TEST15: @_ZTVN6Test151DE = available_externally unnamed_addr constant
+struct A { virtual void f() {} };
+struct B : virtual A {};
+struct C : virtual A {};
+struct D : B, C {
+  virtual void g();
+  void f();
+};
+
+void test() {
+  D * d = new D;
+  d->f();
+}
+}
+
+
