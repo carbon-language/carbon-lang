@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: clang-3.3, clang-3.4, clang-3.5
+
 // <vector>
 
 // reference operator[](size_type n);
@@ -21,8 +23,11 @@
 #include "test_macros.h"
 
 #ifndef _LIBCPP_HAS_NO_ASAN
-extern "C" void __asan_set_error_exit_code(int);
+extern "C" void __sanitizer_set_death_callback(void (*callback)(void));
 
+void do_exit() {
+  exit(0);
+}
 
 int main()
 {
@@ -48,7 +53,7 @@ int main()
         assert(is_contiguous_container_asan_correct(v));
     }
 
-    __asan_set_error_exit_code(0);
+    __sanitizer_set_death_callback(do_exit);
     {
         typedef int T;
         typedef std::vector<T> C;
