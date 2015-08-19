@@ -12,7 +12,6 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Lex/Lexer.h"
-#include "llvm/ADT/StringExtras.h"
 
 using namespace clang;
 using namespace clang::ast_matchers;
@@ -441,14 +440,13 @@ private:
 };
 
 UseNullptrCheck::UseNullptrCheck(StringRef Name, ClangTidyContext *Context)
-    : ClangTidyCheck(Name, Context) {
-  StringRef MacrosStr = Options.get("NullMacros", "NULL");
-  MacrosStr.split(NullMacros, ",");
+    : ClangTidyCheck(Name, Context),
+      NullMacrosStr(Options.get("NullMacros", "NULL")) {
+  StringRef(NullMacrosStr).split(NullMacros, ",");
 }
 
 void UseNullptrCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
-  Options.store(Opts, "NullMacros",
-                llvm::join(NullMacros.begin(), NullMacros.end(), ","));
+  Options.store(Opts, "NullMacros", NullMacrosStr);
 }
 
 void UseNullptrCheck::registerMatchers(MatchFinder *Finder) {
