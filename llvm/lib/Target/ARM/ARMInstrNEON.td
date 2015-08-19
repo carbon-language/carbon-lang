@@ -5026,10 +5026,10 @@ defm VABALu   : N3VLIntExtOp_QHS<1,1,0b0101,0, IIC_VABAD,
 //   VMAX     : Vector Maximum
 defm VMAXs    : N3VInt_QHS<0, 0, 0b0110, 0, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vmax", "s", int_arm_neon_vmaxs, 1>;
+                           "vmax", "s", smax, 1>;
 defm VMAXu    : N3VInt_QHS<1, 0, 0b0110, 0, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vmax", "u", int_arm_neon_vmaxu, 1>;
+                           "vmax", "u", umax, 1>;
 def  VMAXfd   : N3VDInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBIND,
                         "vmax", "f32",
                         v2f32, v2f32, fmaxnan, 1>;
@@ -5052,10 +5052,10 @@ let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" i
 //   VMIN     : Vector Minimum
 defm VMINs    : N3VInt_QHS<0, 0, 0b0110, 1, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vmin", "s", int_arm_neon_vmins, 1>;
+                           "vmin", "s", smin, 1>;
 defm VMINu    : N3VInt_QHS<1, 0, 0b0110, 1, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
-                           "vmin", "u", int_arm_neon_vminu, 1>;
+                           "vmin", "u", umin, 1>;
 def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBIND,
                         "vmin", "f32",
                         v2f32, v2f32, fminnan, 1>;

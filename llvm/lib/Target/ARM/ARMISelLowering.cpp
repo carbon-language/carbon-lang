@@ -147,6 +147,11 @@ void ARMTargetLowering::addTypeForNEON(MVT VT, MVT PromotedLdStVT,
     setOperationAction(ISD::SABSDIFF, VT, Legal);
     setOperationAction(ISD::UABSDIFF, VT, Legal);
   }
+  if (!VT.isFloatingPoint() &&
+      VT != MVT::v2i64 && VT != MVT::v1i64)
+    for (unsigned Opcode : {ISD::SMIN, ISD::SMAX, ISD::UMIN, ISD::UMAX})
+      setOperationAction(Opcode, VT, Legal);
+
 }
 
 void ARMTargetLowering::addDRTypeForNEON(MVT VT) {
@@ -2821,11 +2826,24 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
     return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
   }
+  case Intrinsic::arm_neon_vminu:
+  case Intrinsic::arm_neon_vmaxu: {
+    if (Op.getValueType().isFloatingPoint())
+      return SDValue();
+    unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vminu)
+      ? ISD::UMIN : ISD::UMAX;
+    return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
+                         Op.getOperand(1), Op.getOperand(2));
+  }
   case Intrinsic::arm_neon_vmins:
   case Intrinsic::arm_neon_vmaxs: {
     // v{min,max}s is overloaded between signed integers and floats.
-    if (!Op.getValueType().isFloatingPoint())
-      return SDValue();
+    if (!Op.getValueType().isFloatingPoint()) {
+      unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vmins)
+        ? ISD::SMIN : ISD::SMAX;
+      return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
+                         Op.getOperand(1), Op.getOperand(2));
+    }
     unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vmins)
       ? ISD::FMINNAN : ISD::FMAXNAN;
     return DAG.getNode(NewOpc, SDLoc(Op), Op.getValueType(),
