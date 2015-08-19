@@ -377,5 +377,18 @@ TEST_F(OptionalTest, MoveGetValueOr) {
 
 #endif // LLVM_HAS_RVALUE_REFERENCE_THIS
 
+TEST_F(OptionalTest, NoneComparison) {
+  Optional<int> o;
+  EXPECT_EQ(o, None);
+  EXPECT_EQ(None, o);
+  EXPECT_FALSE(o != None);
+  EXPECT_FALSE(None != o);
+  o = 3;
+  EXPECT_FALSE(o == None);
+  EXPECT_FALSE(None == o);
+  EXPECT_TRUE(o != None);
+  EXPECT_TRUE(None != o);
+}
+
 } // end anonymous namespace
 

@@ -159,6 +159,25 @@ template <typename T> struct isPodLike<Optional<T> > {
 template<typename T, typename U>
 void operator==(const Optional<T> &X, const Optional<U> &Y);
 
+template<typename T>
+bool operator==(const Optional<T> &X, NoneType) {
+  return !X.hasValue();
+}
+
+template<typename T>
+bool operator==(NoneType, const Optional<T> &X) {
+  return X == None;
+}
+
+template<typename T>
+bool operator!=(const Optional<T> &X, NoneType) {
+  return !(X == None);
+}
+
+template<typename T>
+bool operator!=(NoneType, const Optional<T> &X) {
+  return X != None;
+}
 /// \brief Poison comparison between two \c Optional objects. Clients needs to
 /// explicitly compare the underlying values and account for empty \c Optional
 /// objects.
