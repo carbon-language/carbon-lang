@@ -1,5 +1,11 @@
 ; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl -polly-vectorizer=polly -polly-ast -analyze < %s | FileCheck %s 
 ; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl -polly-vectorizer=stripmine -polly-ast -analyze < %s | FileCheck %s
+
+; RUN: opt -S %loadPolly -polly-detect-unprofitable -basicaa -polly-opt-isl \
+; RUN:                   -polly-vectorizer=polly -polly-ast -analyze \
+; RUN:                   -polly-prevect-width=16 < %s | \
+; RUN:                   FileCheck %s -check-prefix=VEC16
+
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 @C = common global [1536 x [1536 x float]] zeroinitializer, align 16
@@ -72,6 +78,28 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 ; CHECK:             #pragma simd
 ; CHECK:             for (int c6 = 0; c6 <= 3; c6 += 1)
 ; CHECK:               Stmt_for_body8(32 * c0 + c3, 32 * c1 + 4 * c4 + c6, 32 * c2 + c5);
+
+; VEC16: {
+; VEC16:   #pragma known-parallel
+; VEC16:   for (int c0 = 0; c0 <= 47; c0 += 1)
+; VEC16:     for (int c1 = 0; c1 <= 47; c1 += 1)
+; VEC16:       for (int c2 = 0; c2 <= 31; c2 += 1)
+; VEC16:         for (int c3 = 0; c3 <= 1; c3 += 1)
+; VEC16:           #pragma simd
+; VEC16:           for (int c4 = 0; c4 <= 15; c4 += 1)
+; VEC16:             Stmt_for_body3(32 * c0 + c2, 32 * c1 + 16 * c3 + c4);
+; VEC16:   #pragma known-parallel
+; VEC16:   for (int c0 = 0; c0 <= 47; c0 += 1)
+; VEC16:     for (int c1 = 0; c1 <= 47; c1 += 1)
+; VEC16:       for (int c2 = 0; c2 <= 47; c2 += 1)
+; VEC16:         for (int c3 = 0; c3 <= 31; c3 += 1)
+; VEC16:           for (int c4 = 0; c4 <= 1; c4 += 1)
+; VEC16:             for (int c5 = 0; c5 <= 31; c5 += 1)
+; VEC16:               #pragma simd
+; VEC16:               for (int c6 = 0; c6 <= 15; c6 += 1)
+; VEC16:                 Stmt_for_body8(32 * c0 + c3, 32 * c1 + 16 * c4 + c6, 32 * c2 + c5);
+; VEC16: }
+
 
 !llvm.ident = !{!0}
 

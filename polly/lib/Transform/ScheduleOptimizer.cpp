@@ -107,6 +107,12 @@ static cl::opt<std::string>
                       cl::desc("Maximize the band depth (yes/no)"), cl::Hidden,
                       cl::init("yes"), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+static cl::opt<int> PrevectorWidth(
+    "polly-prevect-width",
+    cl::desc(
+        "The number of loop iterations to strip-mine for pre-vectorization"),
+    cl::Hidden, cl::init(4), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 static cl::opt<int> DefaultTileSize(
     "polly-default-tile-size",
     cl::desc("The default tile size (if not enough were provided by"
@@ -176,7 +182,7 @@ private:
   /// reason about parallelism.
   static __isl_give isl_schedule_node *
   prevectSchedBand(__isl_take isl_schedule_node *Node, unsigned DimToVectorize,
-                   int VectorWidth = 4);
+                   int VectorWidth);
 
   /// @brief Apply additional optimizations on the bands in the schedule tree.
   ///
@@ -298,7 +304,7 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
 
   for (int i = Dims - 1; i >= 0; i--)
     if (isl_schedule_node_band_member_get_coincident(Node, i)) {
-      Node = IslScheduleOptimizer::prevectSchedBand(Node, i);
+      Node = IslScheduleOptimizer::prevectSchedBand(Node, i, PrevectorWidth);
       break;
     }
 
