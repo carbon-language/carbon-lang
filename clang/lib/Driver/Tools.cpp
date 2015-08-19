@@ -6002,9 +6002,9 @@ std::string arm::getARMTargetCPU(StringRef CPU, StringRef Arch,
 /// CPU  (or Arch, if CPU is generic).
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
 const char *arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
-  if (CPU == "generic" &&
-      llvm::ARMTargetParser::parseArch(Arch) == llvm::ARM::AK_ARMV8_1A)
-    return "v8.1a";
+  if (CPU == "generic")
+    return llvm::ARMTargetParser::getSubArch(
+        llvm::ARMTargetParser::parseArch(Arch));
 
   unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(CPU);
   if (ArchKind == llvm::ARM::AK_INVALID)
