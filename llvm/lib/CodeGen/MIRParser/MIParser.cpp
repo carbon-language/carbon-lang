@@ -38,16 +38,15 @@ using namespace llvm;
 namespace {
 
 /// A wrapper struct around the 'MachineOperand' struct that includes a source
-/// range.
-struct MachineOperandWithLocation {
+/// range and other attributes.
+struct ParsedMachineOperand {
   MachineOperand Operand;
   StringRef::iterator Begin;
   StringRef::iterator End;
   Optional<unsigned> TiedDefIdx;
 
-  MachineOperandWithLocation(const MachineOperand &Operand,
-                             StringRef::iterator Begin, StringRef::iterator End,
-                             Optional<unsigned> &TiedDefIdx)
+  ParsedMachineOperand(const MachineOperand &Operand, StringRef::iterator Begin,
+                       StringRef::iterator End, Optional<unsigned> &TiedDefIdx)
       : Operand(Operand), Begin(Begin), End(End), TiedDefIdx(TiedDefIdx) {
     if (TiedDefIdx)
       assert(Operand.isReg() && Operand.isUse() &&
@@ -185,9 +184,9 @@ private:
   bool parseInstruction(unsigned &OpCode, unsigned &Flags);
 
   bool assignRegisterTies(MachineInstr &MI,
-                          ArrayRef<MachineOperandWithLocation> Operands);
+                          ArrayRef<ParsedMachineOperand> Operands);
 
-  bool verifyImplicitOperands(ArrayRef<MachineOperandWithLocation> Operands,
+  bool verifyImplicitOperands(ArrayRef<ParsedMachineOperand> Operands,
                               const MCInstrDesc &MCID);
 
   void initNames2Regs();
@@ -562,14 +561,14 @@ bool MIParser::parseBasicBlocks() {
 bool MIParser::parse(MachineInstr *&MI) {
   // Parse any register operands before '='
   MachineOperand MO = MachineOperand::CreateImm(0);
-  SmallVector<MachineOperandWithLocation, 8> Operands;
+  SmallVector<ParsedMachineOperand, 8> Operands;
   while (Token.isRegister() || Token.isRegisterFlag()) {
     auto Loc = Token.location();
     Optional<unsigned> TiedDefIdx;
     if (parseRegisterOperand(MO, TiedDefIdx, /*IsDef=*/true))
       return true;
     Operands.push_back(
-        MachineOperandWithLocation(MO, Loc, Token.location(), TiedDefIdx));
+        ParsedMachineOperand(MO, Loc, Token.location(), TiedDefIdx));
     if (Token.isNot(MIToken::comma))
       break;
     lex();
@@ -589,7 +588,7 @@ bool MIParser::parse(MachineInstr *&MI) {
     if (parseMachineOperandAndTargetFlags(MO, TiedDefIdx))
       return true;
     Operands.push_back(
-        MachineOperandWithLocation(MO, Loc, Token.location(), TiedDefIdx));
+        ParsedMachineOperand(MO, Loc, Token.location(), TiedDefIdx));
     if (Token.isNewlineOrEOF() || Token.is(MIToken::coloncolon) ||
         Token.is(MIToken::lbrace))
       break;
@@ -719,8 +718,8 @@ static std::string getRegisterName(const TargetRegisterInfo *TRI,
   return StringRef(TRI->getName(Reg)).lower();
 }
 
-bool MIParser::verifyImplicitOperands(
-    ArrayRef<MachineOperandWithLocation> Operands, const MCInstrDesc &MCID) {
+bool MIParser::verifyImplicitOperands(ArrayRef<ParsedMachineOperand> Operands,
+                                      const MCInstrDesc &MCID) {
   if (MCID.isCall())
     // We can't verify call instructions as they can contain arbitrary implicit
     // register and register mask operands.
@@ -893,8 +892,8 @@ bool MIParser::parseRegisterTiedDefIndex(unsigned &TiedDefIdx) {
   return false;
 }
 
-bool MIParser::assignRegisterTies(
-    MachineInstr &MI, ArrayRef<MachineOperandWithLocation> Operands) {
+bool MIParser::assignRegisterTies(MachineInstr &MI,
+                                  ArrayRef<ParsedMachineOperand> Operands) {
   SmallVector<std::pair<unsigned, unsigned>, 4> TiedRegisterPairs;
   for (unsigned I = 0, E = Operands.size(); I != E; ++I) {
     if (!Operands[I].TiedDefIdx)
