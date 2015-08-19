@@ -20,7 +20,7 @@
 # DIS-NEXT:   400174:  00 20 99 8f   lw      $25, 8192($gp)
 # DIS-NEXT:   400178:  00 20 9c 27   addiu   $gp, $gp, 8192
 # DIS-NEXT:   40017c:  23 c0 1c 03   subu    $24, $24, $gp
-# DIS-NEXT:   400180:  21 78 e0 03   move     $15, $ra
+# DIS-NEXT:   400180:  25 78 e0 03   move    $15, $ra
 # DIS-NEXT:   400184:  82 c0 18 00   srl     $24, $24, 2
 # DIS-NEXT:   400188:  09 f8 20 03   jalr    $25
 # DIS-NEXT:   40018c:  fe ff 18 27   addiu   $24, $24, -2

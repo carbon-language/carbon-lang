@@ -18,9 +18,9 @@
 #                to support microMIPS instruction encoding.
 
 # CHECK: Contents of section .plt:
-# CHECK-NEXT:  400170 40001c3c 0020998f 00209c27 23c01c03  @..<. ... .'#...
-# CHECK-NEXT:  400180 2178e003 82c01800 09f82003 feff1827  !x........ ....'
-# CHECK-NEXT:  400190 40000f3c 0820f98d 08002003 0820f825  @..<. .... .. .%
+# CHECK-NEXT:  400170 40001c3c 0020998f 00209c27 23c01c03
+# CHECK-NEXT:  400180 2578e003 82c01800 09f82003 feff1827
+# CHECK-NEXT:  400190 40000f3c 0820f98d 08002003 0820f825
 
 # so.o
 ---

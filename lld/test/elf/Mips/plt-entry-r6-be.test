@@ -17,7 +17,7 @@
 # CHECK-NEXT:   400164:   8f 99 20 00   lw      $25, 8192($gp)
 # CHECK-NEXT:   400168:   27 9c 20 00   addiu   $gp, $gp, 8192
 # CHECK-NEXT:   40016c:   03 1c c0 23   subu    $24, $24, $gp
-# CHECK-NEXT:   400170:   03 e0 78 21   move    $15, $ra
+# CHECK-NEXT:   400170:   03 e0 78 25   move    $15, $ra
 # CHECK-NEXT:   400174:   00 18 c0 82   srl     $24, $24, 2
 # CHECK-NEXT:   400178:   03 20 f8 09   jalr    $25
 # CHECK-NEXT:   40017c:   27 18 ff fe   addiu   $24, $24, -2
