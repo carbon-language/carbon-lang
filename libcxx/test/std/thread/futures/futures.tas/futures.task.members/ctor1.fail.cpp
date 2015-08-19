@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 // <future>
 
 // class packaged_task<R(ArgTypes...)>
@@ -25,5 +27,6 @@ typedef volatile std::packaged_task<A(int, char)> VPT;
 
 int main()
 {
-    PT p { VPT{} };
+    PT p { VPT{} }; // expected-error {{no matching constructor for initialization of 'PT' (aka 'packaged_task<A (int, char)>')}}
+    // expected-note@future:* 1 {{candidate template ignored: disabled by 'enable_if'}}
 }

@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 // <future>
 
 // class packaged_task<R(ArgTypes...)>
@@ -18,7 +20,7 @@
 #include <future>
 #include <cassert>
 
-#include "../../test_allocator.h"
+#include "test_allocator.h"
 
 struct A {};
 typedef std::packaged_task<A(int, char)> PT;
@@ -26,5 +28,6 @@ typedef volatile std::packaged_task<A(int, char)> VPT;
 
 int main()
 {
-    PT p { std::allocator_arg_t{}, test_allocator<A>{}, VPT {}};
+    PT p { std::allocator_arg_t{}, test_allocator<A>{}, VPT {}}; // expected-error {{no matching constructor for initialization of 'PT' (aka 'packaged_task<A (int, char)>')}}
+    // expected-note@future:* 1 {{candidate template ignored: disabled by 'enable_if'}}
 }

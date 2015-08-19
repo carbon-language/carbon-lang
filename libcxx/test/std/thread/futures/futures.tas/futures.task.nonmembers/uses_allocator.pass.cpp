@@ -9,6 +9,12 @@
 //
 // UNSUPPORTED: libcpp-has-no-threads
 
+// This test is marked XFAIL and not UNSUPPORTED because the non-variadic
+// declaration of packaged_task is available in C++03. Therefore the test
+// should fail because the static_assert fires and not because std::packaged_task
+// in undefined.
+// XFAIL: c++98, c++03
+
 // <future>
 
 // class packaged_task<R(ArgTypes...)>
@@ -18,7 +24,7 @@
 //      : true_type { };
 
 #include <future>
-#include "../../test_allocator.h"
+#include "test_allocator.h"
 
 int main()
 {
