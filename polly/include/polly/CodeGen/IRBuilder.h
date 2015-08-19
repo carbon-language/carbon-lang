@@ -17,6 +17,7 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/ValueMap.h"
 
 namespace llvm {
 class ScalarEvolution;
@@ -59,6 +60,25 @@ public:
   void annotateLoopLatch(llvm::BranchInst *B, llvm::Loop *L,
                          bool IsParallel) const;
 
+  /// @brief Add alternative alias based pointers
+  ///
+  /// When annotating instructions with alias scope metadata, the right metadata
+  /// is identified through the base pointer of the memory access. In some cases
+  /// (e.g. OpenMP code generation), the base pointer of the memory accesses is
+  /// not the original base pointer, but was changed when passing the original
+  /// base pointer over a function boundary. This function allows to provide a
+  /// map that maps from these new base pointers to the original base pointers
+  /// to allow the ScopAnnotator to still find the right alias scop annotations.
+  ///
+  /// @param NewMap A map from new base pointers to original base pointers.
+  void addAlternativeAliasBases(
+      llvm::ValueMap<llvm::Value *, llvm::Value *> &NewMap) {
+    AlternativeAliasBases.insert(NewMap.begin(), NewMap.end());
+  }
+
+  /// @brief Delete the set of alternative alias bases
+  void resetAlternativeAliasBases() { AlternativeAliasBases.clear(); }
+
 private:
   /// @brief The ScalarEvolution analysis we use to find base pointers.
   llvm::ScalarEvolution *SE;
@@ -77,6 +97,8 @@ private:
 
   /// @brief A map from base pointers to an alias scope list of other pointers.
   llvm::DenseMap<llvm::Value *, llvm::MDNode *> OtherAliasScopeListMap;
+
+  llvm::ValueMap<llvm::Value *, llvm::Value *> AlternativeAliasBases;
 };
 
 /// @brief Add Polly specifics when running IRBuilder.

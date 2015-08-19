@@ -135,8 +135,16 @@ void ScopAnnotator::annotate(Instruction *Inst) {
     }
 
     if (BasePtr) {
-      Inst->setMetadata("alias.scope", AliasScopeMap[BasePtr]);
-      Inst->setMetadata("noalias", OtherAliasScopeListMap[BasePtr]);
+      auto *AliasScope = AliasScopeMap[BasePtr];
+
+      if (!AliasScope)
+        BasePtr = AlternativeAliasBases[BasePtr];
+
+      AliasScope = AliasScopeMap[BasePtr];
+      auto *OtherAliasScopeList = OtherAliasScopeListMap[BasePtr];
+
+      Inst->setMetadata("alias.scope", AliasScope);
+      Inst->setMetadata("noalias", OtherAliasScopeList);
     }
   }
 

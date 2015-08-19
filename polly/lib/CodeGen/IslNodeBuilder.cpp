@@ -519,8 +519,16 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   updateValues(NewValues);
   IDToValue[IteratorID] = IV;
 
+  ParallelLoopGenerator::ValueToValueMapTy NewValuesReverse;
+
+  for (auto P : NewValues)
+    NewValuesReverse[P.second] = P.first;
+
+  Annotator.addAlternativeAliasBases(NewValuesReverse);
+
   create(Body);
 
+  Annotator.resetAlternativeAliasBases();
   // Restore the original values.
   ValueMap = ValueMapCopy;
   IDToValue = IDToValueCopy;
