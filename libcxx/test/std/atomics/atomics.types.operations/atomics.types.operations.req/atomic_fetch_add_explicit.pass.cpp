@@ -32,10 +32,11 @@
 #include <type_traits>
 #include <cassert>
 
+#include "atomic_helpers.h"
+
 template <class T>
-void
-test()
-{
+struct TestFn {
+  void operator()() const {
     {
         typedef std::atomic<T> A;
         A t;
@@ -52,7 +53,8 @@ test()
                                             std::memory_order_seq_cst) == T(1));
         assert(t == T(3));
     }
-}
+  }
+};
 
 template <class T>
 void
@@ -78,38 +80,9 @@ testp()
     }
 }
 
-struct A
-{
-    int i;
-
-    explicit A(int d = 0) noexcept {i=d;}
-    A(const A& a) : i(a.i) {}
-    A(const volatile A& a) : i(a.i) {}
-
-    void operator=(const volatile A& a) volatile {i = a.i;}
-
-    friend bool operator==(const A& x, const A& y)
-        {return x.i == y.i;}
-};
-
 int main()
 {
-    test<char>();
-    test<signed char>();
-    test<unsigned char>();
-    test<short>();
-    test<unsigned short>();
-    test<int>();
-    test<unsigned int>();
-    test<long>();
-    test<unsigned long>();
-    test<long long>();
-    test<unsigned long long>();
-    test<wchar_t>();
-#ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<char16_t>();
-    test<char32_t>();
-#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
+    TestEachIntegralType<TestFn>()();
     testp<int*>();
     testp<const int*>();
 }

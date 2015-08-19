@@ -22,17 +22,19 @@
 #include <atomic>
 #include <cassert>
 
+#include "atomic_helpers.h"
+
 template <class T>
-void
-test()
-{
+struct TestFn {
+  void operator()() const {
     typedef std::atomic<T> A;
     A t;
     bool b1 = std::atomic_is_lock_free(static_cast<const A*>(&t));
     volatile A vt;
     bool b2 = std::atomic_is_lock_free(static_cast<const volatile A*>(&vt));
     assert(b1 == b2);
-}
+  }
+};
 
 struct A
 {
@@ -41,23 +43,6 @@ struct A
 
 int main()
 {
-    test<A>();
-    test<char>();
-    test<signed char>();
-    test<unsigned char>();
-    test<short>();
-    test<unsigned short>();
-    test<int>();
-    test<unsigned int>();
-    test<long>();
-    test<unsigned long>();
-    test<long long>();
-    test<unsigned long long>();
-    test<wchar_t>();
-#ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<char16_t>();
-    test<char32_t>();
-#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<int*>();
-    test<const int*>();
+    TestFn<A>()();
+    TestEachAtomicType<TestFn>()();
 }

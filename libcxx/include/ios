@@ -216,7 +216,7 @@ storage-class-specifier const error_category& iostream_category() noexcept;
 #include <__locale>
 #include <system_error>
 
-#if __has_feature(cxx_atomic) && !defined(_LIBCPP_HAS_NO_THREADS)
+#if !defined(_LIBCPP_HAS_NO_ATOMIC_HEADER)
 #include <atomic>     // for __xindex_
 #endif
 
@@ -367,7 +367,9 @@ private:
     int*            __index_;
     size_t          __event_size_;
     size_t          __event_cap_;
-#if __has_feature(cxx_atomic) && !defined(_LIBCPP_HAS_NO_THREADS)
+// TODO(EricWF): Enable this for both Clang and GCC. Currently it is only
+// enabled with clang.
+#if defined(_LIBCPP_HAS_C_ATOMIC_IMP) && !defined(_LIBCPP_HAS_NO_THREADS)
     static atomic<int> __xindex_;
 #else
     static int      __xindex_;

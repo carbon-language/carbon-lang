@@ -25,11 +25,11 @@
 #include <cassert>
 
 #include <cmpxchg_loop.h>
+#include "atomic_helpers.h"
 
 template <class T>
-void
-test()
-{
+struct TestFn {
+  void operator()() const {
     {
         typedef std::atomic<T> A;
         A a;
@@ -54,37 +54,10 @@ test()
         assert(a == T(2));
         assert(t == T(2));
     }
-}
-
-struct A
-{
-    int i;
-
-    explicit A(int d = 0) noexcept {i=d;}
-
-    friend bool operator==(const A& x, const A& y)
-        {return x.i == y.i;}
+  }
 };
 
 int main()
 {
-    test<A>();
-    test<char>();
-    test<signed char>();
-    test<unsigned char>();
-    test<short>();
-    test<unsigned short>();
-    test<int>();
-    test<unsigned int>();
-    test<long>();
-    test<unsigned long>();
-    test<long long>();
-    test<unsigned long long>();
-    test<wchar_t>();
-#ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<char16_t>();
-    test<char32_t>();
-#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<int*>();
-    test<const int*>();
+    TestEachAtomicType<TestFn>()();
 }

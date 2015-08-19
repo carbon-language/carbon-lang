@@ -13,24 +13,13 @@
 
 // struct atomic_flag
 
-// void atomic_flag_clear(volatile atomic_flag*);
-// void atomic_flag_clear(atomic_flag*);
+// TESTING EXTENSION atomic_flag(bool)
 
 #include <atomic>
 #include <cassert>
 
 int main()
 {
-    {
-        std::atomic_flag f(false);
-        f.test_and_set();
-        atomic_flag_clear(&f);
-        assert(f.test_and_set() == 0);
-    }
-    {
-        volatile std::atomic_flag f(false);
-        f.test_and_set();
-        atomic_flag_clear(&f);
-        assert(f.test_and_set() == 0);
-    }
+    std::atomic_flag f(false);
+    assert(f.test_and_set() == 0);
 }

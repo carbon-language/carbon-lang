@@ -23,10 +23,11 @@
 #include <type_traits>
 #include <cassert>
 
+#include "atomic_helpers.h"
+
 template <class T>
-void
-test()
-{
+struct TestFn {
+  void operator()() const {
     {
         typedef std::atomic<T> A;
         A t;
@@ -41,24 +42,10 @@ test()
         assert(std::atomic_fetch_or(&t, T(2)) == T(3));
         assert(t == T(3));
     }
-}
+  }
+};
 
 int main()
 {
-    test<char>();
-    test<signed char>();
-    test<unsigned char>();
-    test<short>();
-    test<unsigned short>();
-    test<int>();
-    test<unsigned int>();
-    test<long>();
-    test<unsigned long>();
-    test<long long>();
-    test<unsigned long long>();
-    test<wchar_t>();
-#ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<char16_t>();
-    test<char32_t>();
-#endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
+    TestEachIntegralType<TestFn>()();
 }

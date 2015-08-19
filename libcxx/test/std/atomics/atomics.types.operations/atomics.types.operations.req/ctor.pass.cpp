@@ -22,6 +22,8 @@
 #include <type_traits>
 #include <cassert>
 
+#include "atomic_helpers.h"
+
 struct UserType {
     int i;
 
@@ -34,27 +36,29 @@ struct UserType {
 };
 
 template <class Tp>
-void test() {
-    typedef std::atomic<Tp> Atomic;
-    static_assert(std::is_literal_type<Atomic>::value, "");
-    constexpr Tp t(42);
-    {
-        constexpr Atomic a(t);
-        assert(a == t);
+struct TestFunc {
+    void operator()() const {
+        typedef std::atomic<Tp> Atomic;
+        static_assert(std::is_literal_type<Atomic>::value, "");
+        constexpr Tp t(42);
+        {
+            constexpr Atomic a(t);
+            assert(a == t);
+        }
+        {
+            constexpr Atomic a{t};
+            assert(a == t);
+        }
+        {
+            constexpr Atomic a = ATOMIC_VAR_INIT(t);
+            assert(a == t);
+        }
     }
-    {
-        constexpr Atomic a{t};
-        assert(a == t);
-    }
-    {
-        constexpr Atomic a = ATOMIC_VAR_INIT(t);
-        assert(a == t);
-    }
-}
+};
 
 
 int main()
 {
-    test<int>();
-    test<UserType>();
+    TestFunc<UserType>()();
+    TestEachIntegralType<TestFunc>()();
 }

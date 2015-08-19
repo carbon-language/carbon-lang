@@ -37,6 +37,9 @@
 #ifndef __has_builtin
 #define __has_builtin(__x) 0
 #endif
+#ifndef __has_extension
+#define __has_extension(__x) 0
+#endif
 #ifndef __has_feature
 #define __has_feature(__x) 0
 #endif
@@ -773,4 +776,15 @@ extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
 #endif
 
-#endif  // _LIBCPP_CONFIG
+#if __has_extension(c_atomic)
+#define _LIBCPP_HAS_C_ATOMIC_IMP
+#elif _GNUC_VER > 407
+#define _LIBCPP_HAS_GCC_ATOMIC_IMP
+#endif
+
+#if (!defined(_LIBCPP_HAS_C_ATOMIC_IMP) && !defined(_LIBCPP_HAS_GCC_ATOMIC_IMP)) \
+     || defined(_LIBCPP_HAS_NO_THREADS)
+#define _LIBCPP_HAS_NO_ATOMIC_HEADER
+#endif
+
+#endif // _LIBCPP_CONFIG

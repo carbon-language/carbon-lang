@@ -62,8 +62,10 @@
 #endif
 
 #if TEST_STD_VER >= 11
+#define TEST_CONSTEXPR constexpr
 #define TEST_NOEXCEPT noexcept
 #else
+#define TEST_CONSTEXPR
 #define TEST_NOEXCEPT
 #endif
 
