@@ -434,6 +434,22 @@ let DecoderMethod = "DecodeLoadQFP" in
   defm LDQF  : LoadA<"ldq", 0b100010, 0b110010, load, QFPRegs, f128>,
                Requires<[HasV9, HasHardQuad]>;
 
+let DecoderMethod = "DecodeLoadFP" in
+  let Defs = [FSR] in {
+    let rd = 0 in {
+      def LDFSRrr : F3_1<3, 0b100001, (outs), (ins MEMrr:$addr),
+                     "ld [$addr], %fsr", []>;
+      def LDFSRri : F3_2<3, 0b100001, (outs), (ins MEMri:$addr),
+                     "ld [$addr], %fsr", []>;
+    }
+    let rd = 1 in {
+      def LDXFSRrr : F3_1<3, 0b100001, (outs), (ins MEMrr:$addr),
+                     "ldx [$addr], %fsr", []>, Requires<[HasV9]>;
+      def LDXFSRri : F3_2<3, 0b100001, (outs), (ins MEMri:$addr),
+                     "ldx [$addr], %fsr", []>, Requires<[HasV9]>;
+    }
+  }
+
 // Section B.4 - Store Integer Instructions, p. 95
 let DecoderMethod = "DecodeStoreInt" in {
   defm STB   : StoreA<"stb", 0b000101, 0b010101, truncstorei8,  IntRegs, i32>;

@@ -60,6 +60,8 @@ def ICC : SparcCtrlReg<0, "ICC">; // This represents icc and xcc in 64-bit code.
 foreach I = 0-3 in
   def FCC#I : SparcCtrlReg<I, "FCC"#I>;
 
+def FSR : SparcCtrlReg<0, "FSR">; // Floating-point state register.
+
 // Y register
 def Y : SparcCtrlReg<0, "Y">, DwarfRegNum<[64]>;
 // Ancillary state registers (implementation defined)

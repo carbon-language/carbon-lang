@@ -772,6 +772,9 @@ SparcAsmParser::parseSparcAsmOperand(std::unique_ptr<SparcOperand> &Op,
       case Sparc::PSR:
         Op = SparcOperand::CreateToken("%psr", S);
         break;
+      case Sparc::FSR:
+        Op = SparcOperand::CreateToken("%fsr", S);
+        break;
       case Sparc::WIM:
         Op = SparcOperand::CreateToken("%wim", S);
         break;
@@ -894,6 +897,12 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
 
     if (name.equals("psr")) {
       RegNo = Sparc::PSR;
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+
+    if (name.equals("fsr")) {
+      RegNo = Sparc::FSR;
       RegKind = SparcOperand::rk_Special;
       return true;
     }

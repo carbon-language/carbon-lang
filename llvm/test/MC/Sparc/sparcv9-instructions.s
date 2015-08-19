@@ -90,3 +90,13 @@
         ! V9: stq %f48, [%l0]                 ! encoding: [0xe3,0x34,0x00,0x00]
         stqa %f48, [%l0] 0xf0
         stq %f48, [%l0]
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: ldx [%g2 + 20],%fsr
+        ! V9: ldx [%g2+20], %fsr    ! encoding: [0xc3,0x08,0xa0,0x14]
+        ldx [%g2 + 20],%fsr
+
+        ! V8:      error: instruction requires a CPU feature not currently enabled
+        ! V8-NEXT: ldx [%g2 + %i5],%fsr
+        ! V9: ldx [%g2+%i5], %fsr   ! encoding: [0xc3,0x08,0x80,0x1d]
+        ldx [%g2 + %i5],%fsr
