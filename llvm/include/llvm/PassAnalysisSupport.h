@@ -40,7 +40,7 @@ public:
 
 private:
   /// Sets of analyses required and preserved by a pass
-  VectorType Required, RequiredTransitive, Preserved;
+  VectorType Required, RequiredTransitive, Preserved, Used;
   bool PreservesAll;
 
 public:
@@ -80,6 +80,25 @@ public:
   }
   ///@}
 
+  ///@{
+  /// Add the specified ID to the set of analyses used by this pass if they are
+  /// available..
+  AnalysisUsage &addUsedIfAvailableID(const void *ID) {
+    Used.push_back(ID);
+    return *this;
+  }
+  AnalysisUsage &addUsedIfAvailableID(char &ID) {
+    Used.push_back(&ID);
+    return *this;
+  }
+  /// Add the specified Pass class to the set of analyses used by this pass.
+  template<class PassClass>
+  AnalysisUsage &addUsedIfAvailable() {
+    Used.push_back(&PassClass::ID);
+    return *this;
+  }
+  ///@}
+
   /// Add the Pass with the specified argument string to the set of analyses
   /// preserved by this pass. If no such Pass exists, do nothing. This can be
   /// useful when a pass is trivially preserved, but may not be linked in. Be
@@ -107,6 +126,7 @@ public:
     return RequiredTransitive;
   }
   const VectorType &getPreservedSet() const { return Preserved; }
+  const VectorType &getUsedSet() const { return Used; }
 };
 
 //===----------------------------------------------------------------------===//

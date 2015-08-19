@@ -320,12 +320,12 @@ public:
   bool preserveHigherLevelAnalysis(Pass *P);
 
 
-  /// Populate RequiredPasses with analysis pass that are required by
-  /// pass P and are available. Populate ReqPassNotAvailable with analysis
-  /// pass that are required by pass P but are not available.
-  void collectRequiredAnalysis(SmallVectorImpl<Pass *> &RequiredPasses,
-                               SmallVectorImpl<AnalysisID> &ReqPassNotAvailable,
-                               Pass *P);
+  /// Populate UsedPasses with analysis pass that are used or required by pass
+  /// P and are available. Populate ReqPassNotAvailable with analysis pass that
+  /// are required by pass P but are not available.
+  void collectRequiredAndUsedAnalyses(
+      SmallVectorImpl<Pass *> &UsedPasses,
+      SmallVectorImpl<AnalysisID> &ReqPassNotAvailable, Pass *P);
 
   /// All Required analyses should be available to the pass as it runs!  Here
   /// we fill in the AnalysisImpls member of the pass so that it can
@@ -351,6 +351,7 @@ public:
                     enum PassDebuggingString S2, StringRef Msg);
   void dumpRequiredSet(const Pass *P) const;
   void dumpPreservedSet(const Pass *P) const;
+  void dumpUsedSet(const Pass *P) const;
 
   unsigned getNumContainedPasses() const {
     return (unsigned)PassVector.size();
