@@ -1,5 +1,4 @@
 // RUN: %clangxx_msan -O0 -g %s -lutil -o %t && %run %t
-// RUN: %clangxx_msan -O0 -g %s -Wl,-as-needed -lutil -o %t && %run %t
 #include <assert.h>
 #include <pty.h>
 
