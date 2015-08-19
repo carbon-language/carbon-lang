@@ -3363,11 +3363,8 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     auto *Import = cast<ImportDecl>(D);
 
     // Ignore import declarations that come from imported modules.
-    if (clang::Module *Owner = Import->getImportedOwningModule()) {
-      if (getLangOpts().CurrentModule.empty() ||
-          Owner->getTopLevelModule()->Name == getLangOpts().CurrentModule)
-        break;
-    }
+    if (Import->getImportedOwningModule())
+      break;
     if (CGDebugInfo *DI = getModuleDebugInfo())
       DI->EmitImportDecl(*Import);
 

@@ -1994,14 +1994,19 @@ void ASTWriter::WriteDeclAbbrevs() {
 /// clients to use a separate API call to "realize" the decl. This should be
 /// relatively painless since they would presumably only do it for top-level
 /// decls.
-static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
+static bool isRequiredDecl(const Decl *D, ASTContext &Context,
+                           bool WritingModule) {
   // An ObjCMethodDecl is never considered as "required" because its
   // implementation container always is.
 
-  // File scoped assembly or obj-c implementation must be seen. ImportDecl is
-  // used by codegen to determine the set of imported modules to search for
-  // inputs for automatic linking.
-  if (isa<FileScopeAsmDecl>(D) || isa<ObjCImplDecl>(D) || isa<ImportDecl>(D))
+  // File scoped assembly or obj-c implementation must be seen.
+  if (isa<FileScopeAsmDecl>(D) || isa<ObjCImplDecl>(D))
+    return true;
+
+  // ImportDecl is used by codegen to determine the set of imported modules to
+  // search for inputs for automatic linking; include it if it has a semantic
+  // effect.
+  if (isa<ImportDecl>(D) && !WritingModule)
     return true;
 
   return Context.DeclMustBeEmitted(D);
@@ -2090,7 +2095,7 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
 
   // Note declarations that should be deserialized eagerly so that we can add
   // them to a record in the AST file later.
-  if (isRequiredDecl(D, Context))
+  if (isRequiredDecl(D, Context, WritingModule))
     EagerlyDeserializedDecls.push_back(ID);
 }
 
