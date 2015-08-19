@@ -56,13 +56,12 @@
 
 
 #include <condition_variable>
+#include <atomic>
 #include <thread>
 #include <chrono>
 #include <string>
 #include <cstdlib>
 #include <cassert>
-
-#include "test_atomic.h"
 
 void my_terminate() {
   std::_Exit(0); // Use _Exit to prevent cleanup from taking place.
@@ -76,12 +75,14 @@ bool pred_function() {
 
 class ThrowingMutex
 {
-  AtomicBool locked;
+  std::atomic_bool locked;
   unsigned state = 0;
   ThrowingMutex(const ThrowingMutex&) = delete;
   ThrowingMutex& operator=(const ThrowingMutex&) = delete;
 public:
-  ThrowingMutex() = default;
+  ThrowingMutex() {
+    locked = false;
+  }
   ~ThrowingMutex() = default;
 
   void lock() {

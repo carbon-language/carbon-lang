@@ -16,17 +16,17 @@
 // void notify_one();
 
 #include <condition_variable>
+#include <atomic>
 #include <mutex>
 #include <thread>
 #include <cassert>
 
-#include "test_atomic.h"
 
 std::condition_variable cv;
 std::mutex mut;
 
-AtomicInt test1(0);
-AtomicInt test2(0);
+std::atomic_int test1(0);
+std::atomic_int test2(0);
 
 void f1()
 {
