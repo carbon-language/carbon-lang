@@ -6617,7 +6617,8 @@ public:
   /// the stack.
   struct InstantiatingTemplate {
     /// \brief Note that we are instantiating a class template,
-    /// function template, or a member thereof.
+    /// function template, variable template, alias template,
+    /// or a member thereof.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           Decl *Entity,
                           SourceRange InstantiationRange = SourceRange());
@@ -6663,6 +6664,8 @@ public:
                           sema::TemplateDeductionInfo &DeductionInfo,
                           SourceRange InstantiationRange = SourceRange());
 
+    /// \brief Note that we are instantiating a default argument for a function
+    /// parameter.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           ParmVarDecl *Param,
                           ArrayRef<TemplateArgument> TemplateArgs,
