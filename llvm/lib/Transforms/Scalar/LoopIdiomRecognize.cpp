@@ -918,8 +918,8 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
     }
   }
 
-  // Step 2: Replace the precondition from "if(x == 0) goto loop-exit" to
-  //   "if(NewCount == 0) loop-exit". Withtout this change, the intrinsic
+  // Step 2: Replace the precondition from "if (x == 0) goto loop-exit" to
+  //   "if (NewCount == 0) loop-exit". Withtout this change, the intrinsic
   //   function would be partial dead code, and downstream passes will drag
   //   it back from the precondition block to the preheader.
   {
@@ -941,9 +941,9 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
   // loop in question, which enble us to to convert the loop from noncountable
   // loop into a countable one. The benefit is twofold:
   //
-  //  - If the loop only counts population, the entire loop become dead after
-  //    the transformation. It is lots easier to prove a countable loop dead
-  //    than to prove a noncountable one. (In some C dialects, a infite loop
+  //  - If the loop only counts population, the entire loop becomes dead after
+  //    the transformation. It is a lot easier to prove a countable loop dead
+  //    than to prove a noncountable one. (In some C dialects, an infinite loop
   //    isn't dead even if it computes nothing useful. In general, DCE needs
   //    to prove a noncountable loop finite before safely delete it.)
   //
@@ -966,8 +966,8 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
     PHINode *TcPhi = PHINode::Create(Ty, 2, "tcphi", Body->begin());
 
     Builder.SetInsertPoint(LbCond);
-    Value *Opnd1 = cast<Value>(TcPhi);
-    Value *Opnd2 = cast<Value>(ConstantInt::get(Ty, 1));
+    Value *Opnd1 = TcPhi;
+    Value *Opnd2 = ConstantInt::get(Ty, 1);
     Instruction *TcDec = cast<Instruction>(
         Builder.CreateSub(Opnd1, Opnd2, "tcdec", false, true));
 
@@ -978,7 +978,7 @@ void LoopIdiomRecognize::transformLoopToPopcount(BasicBlock *PreCondBB,
         (LbBr->getSuccessor(0) == Body) ? CmpInst::ICMP_UGT : CmpInst::ICMP_SLE;
     LbCond->setPredicate(Pred);
     LbCond->setOperand(0, TcDec);
-    LbCond->setOperand(1, cast<Value>(ConstantInt::get(Ty, 0)));
+    LbCond->setOperand(1, ConstantInt::get(Ty, 0));
   }
 
   // Step 4: All the references to the original population counter outside
