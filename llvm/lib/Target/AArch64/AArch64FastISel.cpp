@@ -1178,7 +1178,7 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
   }
 
   // Check if the mul can be folded into the instruction.
-  if (RHS->hasOneUse() && isValueAvailable(RHS))
+  if (RHS->hasOneUse() && isValueAvailable(RHS)) {
     if (isMulPowOf2(RHS)) {
       const Value *MulLHS = cast<MulOperator>(RHS)->getOperand(0);
       const Value *MulRHS = cast<MulOperator>(RHS)->getOperand(1);
@@ -1193,12 +1193,16 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
       if (!RHSReg)
         return 0;
       bool RHSIsKill = hasTrivialKill(MulLHS);
-      return emitAddSub_rs(UseAdd, RetVT, LHSReg, LHSIsKill, RHSReg, RHSIsKill,
-                           AArch64_AM::LSL, ShiftVal, SetFlags, WantResult);
+      ResultReg = emitAddSub_rs(UseAdd, RetVT, LHSReg, LHSIsKill, RHSReg,
+                                RHSIsKill, AArch64_AM::LSL, ShiftVal, SetFlags,
+                                WantResult);
+      if (ResultReg)
+        return ResultReg;
     }
+  }
 
   // Check if the shift can be folded into the instruction.
-  if (RHS->hasOneUse() && isValueAvailable(RHS))
+  if (RHS->hasOneUse() && isValueAvailable(RHS)) {
     if (const auto *SI = dyn_cast<BinaryOperator>(RHS)) {
       if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1))) {
         AArch64_AM::ShiftExtendType ShiftType = AArch64_AM::InvalidShiftExtend;
@@ -1214,12 +1218,15 @@ unsigned AArch64FastISel::emitAddSub(bool UseAdd, MVT RetVT, const Value *LHS,
           if (!RHSReg)
             return 0;
           bool RHSIsKill = hasTrivialKill(SI->getOperand(0));
-          return emitAddSub_rs(UseAdd, RetVT, LHSReg, LHSIsKill, RHSReg,
-                               RHSIsKill, ShiftType, ShiftVal, SetFlags,
-                               WantResult);
+          ResultReg = emitAddSub_rs(UseAdd, RetVT, LHSReg, LHSIsKill, RHSReg,
+                                    RHSIsKill, ShiftType, ShiftVal, SetFlags,
+                                    WantResult);
+          if (ResultReg)
+            return ResultReg;
         }
       }
     }
+  }
 
   unsigned RHSReg = getRegForValue(RHS);
   if (!RHSReg)
@@ -1323,6 +1330,10 @@ unsigned AArch64FastISel::emitAddSub_rs(bool UseAdd, MVT RetVT, unsigned LHSReg,
   if (RetVT != MVT::i32 && RetVT != MVT::i64)
     return 0;
 
+  // Don't deal with undefined shifts.
+  if (ShiftImm >= RetVT.getSizeInBits())
+    return 0;
+
   static const unsigned OpcTable[2][2][2] = {
     { { AArch64::SUBWrs,  AArch64::SUBXrs  },
       { AArch64::ADDWrs,  AArch64::ADDXrs  }  },
@@ -1358,6 +1369,9 @@ unsigned AArch64FastISel::emitAddSub_rx(bool UseAdd, MVT RetVT, unsigned LHSReg,
   assert(LHSReg && RHSReg && "Invalid register number.");
 
   if (RetVT != MVT::i32 && RetVT != MVT::i64)
+    return 0;
+
+  if (ShiftImm >= 4)
     return 0;
 
   static const unsigned OpcTable[2][2][2] = {
@@ -1542,7 +1556,7 @@ unsigned AArch64FastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
     return ResultReg;
 
   // Check if the mul can be folded into the instruction.
-  if (RHS->hasOneUse() && isValueAvailable(RHS))
+  if (RHS->hasOneUse() && isValueAvailable(RHS)) {
     if (isMulPowOf2(RHS)) {
       const Value *MulLHS = cast<MulOperator>(RHS)->getOperand(0);
       const Value *MulRHS = cast<MulOperator>(RHS)->getOperand(1);
@@ -1558,12 +1572,15 @@ unsigned AArch64FastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
       if (!RHSReg)
         return 0;
       bool RHSIsKill = hasTrivialKill(MulLHS);
-      return emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
-                              RHSIsKill, ShiftVal);
+      ResultReg = emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
+                                   RHSIsKill, ShiftVal);
+      if (ResultReg)
+        return ResultReg;
     }
+  }
 
   // Check if the shift can be folded into the instruction.
-  if (RHS->hasOneUse() && isValueAvailable(RHS))
+  if (RHS->hasOneUse() && isValueAvailable(RHS)) {
     if (const auto *SI = dyn_cast<ShlOperator>(RHS))
       if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1))) {
         uint64_t ShiftVal = C->getZExtValue();
@@ -1571,9 +1588,12 @@ unsigned AArch64FastISel::emitLogicalOp(unsigned ISDOpc, MVT RetVT,
         if (!RHSReg)
           return 0;
         bool RHSIsKill = hasTrivialKill(SI->getOperand(0));
-        return emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
-                                RHSIsKill, ShiftVal);
+        ResultReg = emitLogicalOp_rs(ISDOpc, RetVT, LHSReg, LHSIsKill, RHSReg,
+                                     RHSIsKill, ShiftVal);
+        if (ResultReg)
+          return ResultReg;
       }
+  }
 
   unsigned RHSReg = getRegForValue(RHS);
   if (!RHSReg)
@@ -1646,6 +1666,11 @@ unsigned AArch64FastISel::emitLogicalOp_rs(unsigned ISDOpc, MVT RetVT,
     { AArch64::ORRWrs, AArch64::ORRXrs },
     { AArch64::EORWrs, AArch64::EORXrs }
   };
+
+  // Don't deal with undefined shifts.
+  if (ShiftImm >= RetVT.getSizeInBits())
+    return 0;
+
   const TargetRegisterClass *RC;
   unsigned Opc;
   switch (RetVT.SimpleTy) {

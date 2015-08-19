@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel=0                  -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel=0                    -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel=1 -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 
 ; AND
