@@ -223,10 +223,10 @@ Instruction *ConstantHoisting::findMatInsertPt(Instruction *Inst,
   }
 
   // The simple and common case. This also includes constant expressions.
-  if (!isa<PHINode>(Inst) && !isa<LandingPadInst>(Inst))
+  if (!isa<PHINode>(Inst) && !Inst->isEHPad())
     return Inst;
 
-  // We can't insert directly before a phi node or landing pad. Insert before
+  // We can't insert directly before a phi node or an eh pad. Insert before
   // the terminator of the incoming or dominating block.
   assert(Entry != Inst->getParent() && "PHI or landing pad in entry block!");
   if (Idx != ~0U && isa<PHINode>(Inst))

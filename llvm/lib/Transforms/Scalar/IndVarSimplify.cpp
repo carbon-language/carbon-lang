@@ -1885,8 +1885,8 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     if (isa<DbgInfoIntrinsic>(I))
       continue;
 
-    // Skip landingpad instructions.
-    if (isa<LandingPadInst>(I))
+    // Skip eh pad instructions.
+    if (I->isEHPad())
       continue;
 
     // Don't sink alloca: we never want to sink static alloca's out of the

@@ -1265,7 +1265,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
     // Cannot move control-flow-involving, volatile loads, vaarg, etc.
     if (isa<PHINode>(I1) || isa<PHINode>(I2) ||
         isa<TerminatorInst>(I1) || isa<TerminatorInst>(I2) ||
-        isa<LandingPadInst>(I1) || isa<LandingPadInst>(I2) ||
+        I1->isEHPad() || I2->isEHPad() ||
         isa<AllocaInst>(I1) || isa<AllocaInst>(I2) ||
         I1->mayHaveSideEffects() || I2->mayHaveSideEffects() ||
         I1->mayReadOrWriteMemory() || I2->mayReadOrWriteMemory() ||

@@ -4420,7 +4420,7 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator LowestIP,
     }
   }
 
-  assert(!isa<PHINode>(LowestIP) && !isa<LandingPadInst>(LowestIP)
+  assert(!isa<PHINode>(LowestIP) && !LowestIP->isEHPad()
          && !isa<DbgInfoIntrinsic>(LowestIP) &&
          "Insertion point must be a normal instruction");
 
@@ -4432,7 +4432,7 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator LowestIP,
   while (isa<PHINode>(IP)) ++IP;
 
   // Ignore landingpad instructions.
-  while (isa<LandingPadInst>(IP)) ++IP;
+  while (IP->isEHPad()) ++IP;
 
   // Ignore debug intrinsics.
   while (isa<DbgInfoIntrinsic>(IP)) ++IP;
