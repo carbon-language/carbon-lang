@@ -283,34 +283,30 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
     return Node;
   }
 
-  auto Sizes = isl_multi_val_zero(Space);
-  auto Ctx = isl_schedule_node_get_ctx(Node);
-
-  for (unsigned i = 0; i < Dims; i++) {
-    auto tileSize = TileSizes.size() > i ? TileSizes[i] : DefaultTileSize;
-    Sizes = isl_multi_val_set_val(Sizes, i, isl_val_int_from_si(Ctx, tileSize));
+  if (!DisableTiling) {
+    auto Ctx = isl_schedule_node_get_ctx(Node);
+    auto Sizes = isl_multi_val_zero(isl_space_copy(Space));
+    for (unsigned i = 0; i < Dims; i++) {
+      auto tileSize = TileSizes.size() > i ? TileSizes[i] : DefaultTileSize;
+      Sizes =
+          isl_multi_val_set_val(Sizes, i, isl_val_int_from_si(Ctx, tileSize));
+    }
+    Node = isl_schedule_node_band_tile(Node, Sizes);
+    Node = isl_schedule_node_child(Node, 0);
   }
 
-  isl_schedule_node *Res;
-
-  if (DisableTiling) {
-    isl_multi_val_free(Sizes);
-    Res = Node;
-  } else {
-    Res = isl_schedule_node_band_tile(Node, Sizes);
-    Res = isl_schedule_node_child(Res, 0);
-  }
+  isl_space_free(Space);
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
-    return Res;
+    return Node;
 
   for (int i = Dims - 1; i >= 0; i--)
-    if (isl_schedule_node_band_member_get_coincident(Res, i)) {
-      Res = IslScheduleOptimizer::prevectSchedBand(Res, i);
+    if (isl_schedule_node_band_member_get_coincident(Node, i)) {
+      Node = IslScheduleOptimizer::prevectSchedBand(Node, i);
       break;
     }
 
-  return Res;
+  return Node;
 }
 
 __isl_give isl_schedule *
