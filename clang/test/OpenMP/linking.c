@@ -69,3 +69,21 @@
 // CHECK-LD-OVERRIDE-64: "-lgomp" "-lrt" "-lgcc"
 // CHECK-LD-OVERRIDE-64: "-lpthread" "-lc"
 //
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -fopenmp=libomp -target x86_64-msvc-win32 \
+// RUN:   | FileCheck --check-prefix=CHECK-MSVC-LINK-64 %s
+// CHECK-MSVC-LINK-64: link.exe
+// CHECK-MSVC-LINK-64-SAME: -nodefaultlib:vcomp.lib
+// CHECK-MSVC-LINK-64-SAME: -nodefaultlib:vcompd.lib
+// CHECK-MSVC-LINK-64-SAME: -libpath:{{.+}}/../lib
+// CHECK-MSVC-LINK-64-SAME: -defaultlib:libomp.lib
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -fopenmp=libiomp5 -target x86_64-msvc-win32 \
+// RUN:   | FileCheck --check-prefix=CHECK-MSVC-ILINK-64 %s
+// CHECK-MSVC-ILINK-64: link.exe
+// CHECK-MSVC-ILINK-64-SAME: -nodefaultlib:vcomp.lib
+// CHECK-MSVC-ILINK-64-SAME: -nodefaultlib:vcompd.lib
+// CHECK-MSVC-ILINK-64-SAME: -libpath:{{.+}}/../lib
+// CHECK-MSVC-ILINK-64-SAME: -defaultlib:libiomp5md.lib
+//
