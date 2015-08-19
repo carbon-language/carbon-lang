@@ -348,7 +348,7 @@ Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
                                         "polly.par.hasNextScheduleBlock");
   Builder.CreateCondBr(HasNextSchedule, PreHeaderBB, ExitBB);
 
-  // Add code to to load the iv bounds for this set of iterations.
+  // Add code to load the iv bounds for this set of iterations.
   Builder.SetInsertPoint(PreHeaderBB);
   LB = Builder.CreateLoad(LBPtr, "polly.par.LB");
   UB = Builder.CreateLoad(UBPtr, "polly.par.UB");
