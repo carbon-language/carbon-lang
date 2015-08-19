@@ -62,7 +62,7 @@
 // RUN:     {key: readability-identifier-naming.VirtualMethodCase, value: UPPER_CASE}, \
 // RUN:     {key: readability-identifier-naming.VirtualMethodPrefix, value: 'v_'}, \
 // RUN:     {key: readability-identifier-naming.IgnoreFailedSplit, value: 0} \
-// RUN:   ]}' -- -std=c++11
+// RUN:   ]}' -- -std=c++11 -fno-delayed-template-parsing
 // REQUIRES: shell
 
 // FIXME: There should be more test cases for checking that references to class
