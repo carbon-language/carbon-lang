@@ -581,6 +581,13 @@ void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
   }
 }
 
+static void printIRSlotNumber(raw_ostream &OS, int Slot) {
+  if (Slot == -1)
+    OS << "<badref>";
+  else
+    OS << Slot;
+}
+
 void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
   OS << "%ir-block.";
   if (BB.hasName()) {
@@ -597,10 +604,7 @@ void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
     CustomMST.incorporateFunction(*F);
     Slot = CustomMST.getLocalSlot(&BB);
   }
-  if (Slot == -1)
-    OS << "<badref>";
-  else
-    OS << Slot;
+  printIRSlotNumber(OS, Slot);
 }
 
 void MIPrinter::printIRValueReference(const Value &V) {
