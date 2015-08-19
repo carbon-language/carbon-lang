@@ -27,7 +27,7 @@ class TestCppChainedCalls(TestBase):
         self.assertTrue(src_file_spec.IsValid(), "Main source file")
 
         # Get the path of the executable
-        cwd = self.get_process_working_directory()
+        cwd = os.getcwd() 
         exe_file = "a.out"
         exe_path  = os.path.join(cwd, exe_file)
 
@@ -42,7 +42,7 @@ class TestCppChainedCalls(TestBase):
         # Launch the process
         args = None
         env = None
-        process = target.LaunchSimple(args, env, cwd)
+        process = target.LaunchSimple(args, env, self.get_process_working_directory())
         self.assertTrue(process.IsValid(), PROCESS_IS_VALID)
 
         # Get the thread of the process
