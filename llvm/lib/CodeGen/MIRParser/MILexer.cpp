@@ -342,6 +342,8 @@ static Cursor maybeLexIRValue(
   const StringRef Rule = "%ir.";
   if (!C.remaining().startswith(Rule))
     return None;
+  if (isdigit(C.peek(Rule.size())))
+    return maybeLexIndex(C, Token, Rule, MIToken::IRValue);
   return lexName(C, Token, MIToken::NamedIRValue, Rule.size(), ErrorCallback);
 }
 

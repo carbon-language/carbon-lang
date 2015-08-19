@@ -114,6 +114,7 @@ struct MIToken {
     NamedIRBlock,
     IRBlock,
     NamedIRValue,
+    IRValue
   };
 
 private:
@@ -175,7 +176,7 @@ public:
            Kind == MachineBasicBlockLabel || Kind == StackObject ||
            Kind == FixedStackObject || Kind == GlobalValue ||
            Kind == VirtualRegister || Kind == ConstantPoolItem ||
-           Kind == JumpTableIndex || Kind == IRBlock;
+           Kind == JumpTableIndex || Kind == IRBlock || Kind == IRValue;
   }
 };
 

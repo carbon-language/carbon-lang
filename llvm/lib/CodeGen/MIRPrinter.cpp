@@ -608,13 +608,13 @@ void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
 }
 
 void MIPrinter::printIRValueReference(const Value &V) {
+  // TODO: Global values should use the '@' syntax.
   OS << "%ir.";
   if (V.hasName()) {
     printLLVMNameWithoutPrefix(OS, V.getName());
     return;
   }
-  // TODO: Serialize the unnamed IR value references.
-  OS << "<unserializable ir value>";
+  printIRSlotNumber(OS, MST.getLocalSlot(&V));
 }
 
 void MIPrinter::printStackObjectReference(int FrameIndex) {

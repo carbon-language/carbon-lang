@@ -73,6 +73,8 @@ class MIParser {
   StringMap<unsigned> Names2SubRegIndices;
   /// Maps from slot numbers to function's unnamed basic blocks.
   DenseMap<unsigned, const BasicBlock *> Slots2BasicBlocks;
+  /// Maps from slot numbers to function's unnamed values.
+  DenseMap<unsigned, const Value *> Slots2Values;
   /// Maps from target index names to target indices.
   StringMap<int> Names2TargetIndices;
   /// Maps from direct target flag names to the direct target flag values.
@@ -211,6 +213,8 @@ private:
 
   const BasicBlock *getIRBlock(unsigned Slot);
   const BasicBlock *getIRBlock(unsigned Slot, const Function &F);
+
+  const Value *getIRValue(unsigned Slot);
 
   void initNames2TargetIndices();
 
@@ -1530,14 +1534,20 @@ bool MIParser::parseIRValue(const Value *&V) {
     if (!V)
       V = MF.getFunction()->getParent()->getValueSymbolTable().lookup(
           Token.stringValue());
-    if (!V)
-      return error(Twine("use of undefined IR value '") + Token.range() + "'");
     break;
   }
-  // TODO: Parse unnamed IR value references.
+  case MIToken::IRValue: {
+    unsigned SlotNumber = 0;
+    if (getUnsigned(SlotNumber))
+      return true;
+    V = getIRValue(SlotNumber);
+    break;
+  }
   default:
     llvm_unreachable("The current token should be an IR block reference");
   }
+  if (!V)
+    return error(Twine("use of undefined IR value '") + Token.range() + "'");
   return false;
 }
 
@@ -1629,7 +1639,7 @@ bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
     Dest = MachinePointerInfo(PSV, Offset);
     return false;
   }
-  if (Token.isNot(MIToken::NamedIRValue))
+  if (Token.isNot(MIToken::NamedIRValue) && Token.isNot(MIToken::IRValue))
     return error("expected an IR value reference");
   const Value *V = nullptr;
   if (parseIRValue(V))
@@ -1835,6 +1845,37 @@ const BasicBlock *MIParser::getIRBlock(unsigned Slot, const Function &F) {
   DenseMap<unsigned, const BasicBlock *> CustomSlots2BasicBlocks;
   initSlots2BasicBlocks(F, CustomSlots2BasicBlocks);
   return getIRBlockFromSlot(Slot, CustomSlots2BasicBlocks);
+}
+
+static void mapValueToSlot(const Value *V, ModuleSlotTracker &MST,
+                           DenseMap<unsigned, const Value *> &Slots2Values) {
+  int Slot = MST.getLocalSlot(V);
+  if (Slot == -1)
+    return;
+  Slots2Values.insert(std::make_pair(unsigned(Slot), V));
+}
+
+/// Creates the mapping from slot numbers to function's unnamed IR values.
+static void initSlots2Values(const Function &F,
+                             DenseMap<unsigned, const Value *> &Slots2Values) {
+  ModuleSlotTracker MST(F.getParent(), /*ShouldInitializeAllMetadata=*/false);
+  MST.incorporateFunction(F);
+  for (const auto &Arg : F.args())
+    mapValueToSlot(&Arg, MST, Slots2Values);
+  for (const auto &BB : F) {
+    mapValueToSlot(&BB, MST, Slots2Values);
+    for (const auto &I : BB)
+      mapValueToSlot(&I, MST, Slots2Values);
+  }
+}
+
+const Value *MIParser::getIRValue(unsigned Slot) {
+  if (Slots2Values.empty())
+    initSlots2Values(*MF.getFunction(), Slots2Values);
+  auto ValueInfo = Slots2Values.find(Slot);
+  if (ValueInfo == Slots2Values.end())
+    return nullptr;
+  return ValueInfo->second;
 }
 
 void MIParser::initNames2TargetIndices() {

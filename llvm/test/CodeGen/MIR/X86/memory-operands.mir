@@ -19,6 +19,15 @@
     ret void
   }
 
+  define void @test3(i32*) {
+  entry3:
+    %1 = alloca i32
+    %b = load i32, i32* %0
+    %c = add i32 %b, 1
+    store i32 %c, i32* %1
+    ret void
+  }
+
   define i32 @volatile_inc(i32* %x) {
   entry:
     %0 = load volatile i32, i32* %x
@@ -182,6 +191,27 @@ body: |
     liveins: %rdi
   ; CHECK: INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")
     INC32m killed %rdi, 1, _, 0, _, implicit-def dead %eflags :: (store 4 into %ir."a value"), (load 4 from %ir."a value")
+    RETQ
+...
+---
+name:            test3
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+frameInfo:
+  maxAlignment:    4
+stack:
+  - { id: 0, offset: -12, size: 4, alignment: 4 }
+body: |
+  bb.0.entry3:
+    liveins: %rdi
+  ; Verify that the unnamed local values can be serialized.
+  ; CHECK-LABEL: name: test3
+  ; CHECK: %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (load 4 from %ir.0)
+  ; CHECK: MOV32mr %rsp, 1, _, -4, _, killed %eax :: (store 4 into %ir.1)
+    %eax = MOV32rm killed %rdi, 1, _, 0, _ :: (load 4 from %ir.0)
+    %eax = INC32r killed %eax, implicit-def dead %eflags
+    MOV32mr %rsp, 1, _, -4, _, killed %eax :: (store 4 into %ir.1)
     RETQ
 ...
 ---
