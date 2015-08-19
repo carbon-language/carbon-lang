@@ -45,19 +45,6 @@ AST_MATCHER(CXXRecordDecl, isMoveConstructible) {
   return false;
 }
 
-/// \brief Matches non-deleted copy constructors.
-///
-/// Given
-/// \code
-///   struct Foo { Foo(const Foo &) = default; };
-///   struct Bar { Bar(const Bar &) = deleted; };
-/// \endcode
-/// constructorDecl(isNonDeletedCopyConstructor())
-///   matches "Foo(const Foo &)".
-AST_MATCHER(CXXConstructorDecl, isNonDeletedCopyConstructor) {
-  return Node.isCopyConstructor() && !Node.isDeleted();
-}
-
 static TypeMatcher constRefType() {
   return lValueReferenceType(pointee(isConstQualified()));
 }
@@ -158,7 +145,7 @@ void PassByValueCheck::registerMatchers(MatchFinder *Finder) {
                                   anyOf(constRefType(), nonConstValueType()))))
                               .bind("Param")))),
                       hasDeclaration(constructorDecl(
-                          isNonDeletedCopyConstructor(),
+                          isCopyConstructor(), unless(isDeleted()),
                           hasDeclContext(recordDecl(isMoveConstructible())))))))
                   .bind("Initializer")))
           .bind("Ctor"),
