@@ -8311,6 +8311,9 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
     // Global named register variables (GNU extension) are never emitted.
     if (VD->getStorageClass() == SC_Register)
       return false;
+    if (VD->getDescribedVarTemplate() ||
+        isa<VarTemplatePartialSpecializationDecl>(VD))
+      return false;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // We never need to emit an uninstantiated function template.
     if (FD->getTemplatedKind() == FunctionDecl::TK_FunctionTemplate)
@@ -8383,7 +8386,8 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
     return true;
 
   // Variables that have initialization with side-effects are required.
-  if (VD->getInit() && VD->getInit()->HasSideEffects(*this))
+  if (VD->getInit() && VD->getInit()->HasSideEffects(*this) &&
+      !VD->evaluateValue())
     return true;
 
   return false;

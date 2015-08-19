@@ -14,8 +14,13 @@ static  NSArray *(^ArrayRecurs)(NSArray *addresses, unsigned long level) = ^(NSA
   return (NSArray *)0;
 };
 
+extern NSArray *address;
+extern unsigned long level;
+
 void FUNC()
 {
+ ArrayRecurs(address, level);
+
  static  NSArray *(^ArrayRecurs)(NSArray *addresses, unsigned long level) = ^(NSArray *addresses, unsigned long level) {
 
   for(id rawAddress in addresses)
@@ -25,6 +30,7 @@ void FUNC()
   }
   return (NSArray *)0;
  };
+ ArrayRecurs(address, level);
 
  if (ArrayRecurs) {
    static  NSArray *(^ArrayRecurs)(NSArray *addresses, unsigned long level) = ^(NSArray *addresses, unsigned long level) {
@@ -36,6 +42,7 @@ void FUNC()
      }
      return (NSArray *)0;
    };
+   ArrayRecurs(address, level);
  }
 }
 
@@ -50,8 +57,9 @@ void FUNC1()
   }
   return (NSArray *)0;
  };
+ ArrayRecurs(address, level);
 }
 // CHECK-LP64: @ArrayRecurs = internal global
 // CHECK-LP64: @FUNC.ArrayRecurs = internal global
-// CHECK-LP64: @FUNC.ArrayRecurs.3 = internal global
+// CHECK-LP64: @FUNC.ArrayRecurs.1 = internal global
 // CHECK-LP64: @FUNC1.ArrayRecurs = internal global

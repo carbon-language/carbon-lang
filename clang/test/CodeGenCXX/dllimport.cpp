@@ -581,7 +581,7 @@ struct __declspec(dllimport) KeyFuncClass {
   constexpr KeyFuncClass() {}
   virtual void foo();
 };
-constexpr KeyFuncClass keyFuncClassVar;
+extern constexpr KeyFuncClass keyFuncClassVar = {};
 // G32-DAG: @_ZTV12KeyFuncClass = external dllimport unnamed_addr constant [3 x i8*]
 
 struct __declspec(dllimport) X : public virtual W {};
