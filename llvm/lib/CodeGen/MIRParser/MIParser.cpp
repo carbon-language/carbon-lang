@@ -150,7 +150,7 @@ public:
   bool parseOffset(int64_t &Offset);
   bool parseAlignment(unsigned &Alignment);
   bool parseOperandsOffset(MachineOperand &Op);
-  bool parseIRValue(Value *&V);
+  bool parseIRValue(const Value *&V);
   bool parseMemoryOperandFlag(unsigned &Flags);
   bool parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV);
   bool parseMachinePointerInfo(MachinePointerInfo &Dest);
@@ -1523,7 +1523,7 @@ bool MIParser::parseOperandsOffset(MachineOperand &Op) {
   return false;
 }
 
-bool MIParser::parseIRValue(Value *&V) {
+bool MIParser::parseIRValue(const Value *&V) {
   switch (Token.kind()) {
   case MIToken::NamedIRValue: {
     V = MF.getFunction()->getValueSymbolTable().lookup(Token.stringValue());
@@ -1631,7 +1631,7 @@ bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
   }
   if (Token.isNot(MIToken::NamedIRValue))
     return error("expected an IR value reference");
-  Value *V = nullptr;
+  const Value *V = nullptr;
   if (parseIRValue(V))
     return true;
   if (!V->getType()->isPointerTy())
