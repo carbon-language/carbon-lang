@@ -13,6 +13,19 @@ entry:
   ret <8 x i16> %0
 }
 
+define <8 x i16> @sdiv_vec8x16_minsize(<8 x i16> %var) minsize {
+entry:
+; CHECK: sdiv_vec8x16_minsize
+; CHECK: psraw  $15
+; CHECK: vpsrlw  $11
+; CHECK: vpaddw
+; CHECK: vpsraw  $5
+; CHECK: ret
+  %0 = sdiv <8 x i16> %var, <i16 32, i16 32, i16 32, i16 32, i16 32, i16 32, i16 32, i16 32>
+  ret <8 x i16> %0
+}
+
+
 define <4 x i32> @sdiv_zero(<4 x i32> %var) {
 entry:
 ; CHECK: sdiv_zero

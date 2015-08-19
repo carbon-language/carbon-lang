@@ -94,3 +94,35 @@ define i8 @test9(i8 %x) nounwind {
 ; CHECK: shrl $11
 ; CHECK: ret
 }
+
+define i32 @testsize1(i32 %x) minsize nounwind {
+entry:
+	%div = sdiv i32 %x, 32
+	ret i32 %div
+; CHECK-LABEL: testsize1:
+; CHECK: divl
+}
+
+define i32 @testsize2(i32 %x) minsize nounwind {
+entry:
+	%div = sdiv i32 %x, 33
+	ret i32 %div
+; CHECK-LABEL: testsize2:
+; CHECK: divl
+}
+
+define i32 @testsize3(i32 %x) minsize nounwind {
+entry:
+	%div = udiv i32 %x, 32
+	ret i32 %div
+; CHECK-LABEL: testsize3:
+; CHECK: shrl
+}
+
+define i32 @testsize4(i32 %x) minsize nounwind {
+entry:
+	%div = udiv i32 %x, 33
+	ret i32 %div
+; CHECK-LABEL: testsize4:
+; CHECK: divl
+}

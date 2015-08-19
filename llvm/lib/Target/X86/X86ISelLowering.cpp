@@ -26427,3 +26427,14 @@ int X86TargetLowering::getScalingFactorCost(const DataLayout &DL,
 bool X86TargetLowering::isTargetFTOL() const {
   return Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->is64Bit();
 }
+
+bool X86TargetLowering::isIntDivCheap(EVT VT, bool OptSize) const {
+  // Integer division on x86 is expensive. However, when aggressively optimizing
+  // for code size, we prefer to use a div instruction, as it is usually smaller
+  // than the alternative sequence.
+  // The exception to this is vector division. Since x86 doesn't have vector
+  // integer division, leaving the division as-is is a loss even in terms of
+  // size, because it will have to be scalarized, while the alternative code
+  // sequence can be performed in vector form.
+  return OptSize && !VT.isVector();
+}
