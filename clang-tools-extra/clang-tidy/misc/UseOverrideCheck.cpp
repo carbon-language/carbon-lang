@@ -140,8 +140,20 @@ void UseOverrideCheck::check(const MatchFinder::MatchResult &Result) {
     }
 
     if (InsertLoc.isInvalid() && Method->doesThisDeclarationHaveABody() &&
-        Method->getBody() && !Method->isDefaulted())
-      InsertLoc = Method->getBody()->getLocStart();
+        Method->getBody() && !Method->isDefaulted()) {
+      // For methods with inline definition, add the override keyword at the
+      // end of the declaration of the function, but prefer to put it on the
+      // same line as the declaration if the beginning brace for the start of
+      // the body falls on the next line.
+      Token LastNonCommentToken;
+      for (Token T : Tokens) {
+        if (!T.is(tok::comment)) {
+          LastNonCommentToken = T;
+        }
+      }
+      InsertLoc = LastNonCommentToken.getEndLoc();
+      ReplacementText = " override";
+    }
 
     if (!InsertLoc.isValid()) {
       // For declarations marked with "= 0" or "= [default|delete]", the end

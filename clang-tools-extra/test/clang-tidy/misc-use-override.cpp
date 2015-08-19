@@ -32,6 +32,12 @@ struct Base {
   virtual void m();
   virtual void m2();
   virtual void o() __attribute__((unused));
+
+  virtual void r() &;
+  virtual void rr() &&;
+
+  virtual void cv() const volatile;
+  virtual void cv2() const volatile;
 };
 
 struct SimpleCases : public Base {
@@ -157,17 +163,19 @@ public:
   // CHECK-MESSAGES-NOT: warning:
   // CHECK-FIXES: {{^}}  void b() override {}
 
-  virtual void c() {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
-  // CHECK-FIXES: {{^}}  void c() override {}
+  virtual void c()
+  {}
+  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: prefer using
+  // CHECK-FIXES: {{^}}  void c() override
 
   virtual void d() override {}
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  void d() override {}
 
-  virtual void j() const {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
-  // CHECK-FIXES: {{^}}  void j() const override {}
+  virtual void j() const
+  {}
+  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: prefer using
+  // CHECK-FIXES: {{^}}  void j() const override
 
   virtual MustUseResultObject k() {}  // Has an implicit attribute.
   // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: prefer using
@@ -176,6 +184,26 @@ public:
   virtual bool l() MUST_USE_RESULT UNUSED {}
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  bool l() override MUST_USE_RESULT UNUSED {}
+
+  virtual void r() &
+  {}
+  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: prefer using
+  // CHECK-FIXES: {{^}}  void r() & override
+
+  virtual void rr() &&
+  {}
+  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: prefer using
+  // CHECK-FIXES: {{^}}  void rr() && override
+
+  virtual void cv() const volatile
+  {}
+  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: prefer using
+  // CHECK-FIXES: {{^}}  void cv() const volatile override
+
+  virtual void cv2() const volatile // some comment
+  {}
+  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: prefer using
+  // CHECK-FIXES: {{^}}  void cv2() const volatile override // some comment
 };
 
 struct Macros : public Base {
