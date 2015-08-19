@@ -614,6 +614,12 @@ void MIPrinter::printIRValueReference(const Value &V) {
     printLLVMNameWithoutPrefix(OS, V.getName());
     return;
   }
+  if (isa<Constant>(V)) {
+    // Machine memory operands can load/store to/from constant value pointers.
+    // TODO: Serialize the constant values.
+    OS << "<unserializable ir value>";
+    return;
+  }
   printIRSlotNumber(OS, MST.getLocalSlot(&V));
 }
 
