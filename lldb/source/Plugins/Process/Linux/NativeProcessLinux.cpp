@@ -554,7 +554,8 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
         eDupStderrFailed,
         eChdirFailed,
         eExecFailed,
-        eSetGidFailed
+        eSetGidFailed,
+        eSetSigMaskFailed
     };
 
     // Child process.
@@ -632,6 +633,12 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
             }
         }
 
+        // Clear the signal mask to prevent the child from being affected by
+        // any masking done by the parent.
+        sigset_t set;
+        if (sigemptyset(&set) != 0 || pthread_sigmask(SIG_SETMASK, &set, nullptr) != 0)
+            exit(eSetSigMaskFailed);
+
         // Execute.  We should never return...
         execve(argv[0],
                const_cast<char *const *>(argv),
@@ -688,6 +695,9 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
                 break;
             case eSetGidFailed:
                 error.SetErrorString("Child setgid failed.");
+                break;
+            case eSetSigMaskFailed:
+                error.SetErrorString("Child failed to set signal mask.");
                 break;
             default:
                 error.SetErrorString("Child returned unknown exit status.");
