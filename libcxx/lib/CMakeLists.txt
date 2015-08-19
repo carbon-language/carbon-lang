@@ -134,6 +134,14 @@ set_target_properties(cxx
   )
 
 install(TARGETS cxx
-  LIBRARY DESTINATION lib${LIBCXX_LIBDIR_SUFFIX}
-  ARCHIVE DESTINATION lib${LIBCXX_LIBDIR_SUFFIX}
+  LIBRARY DESTINATION lib${LIBCXX_LIBDIR_SUFFIX} COMPONENT libcxx
+  ARCHIVE DESTINATION lib${LIBCXX_LIBDIR_SUFFIX} COMPONENT libcxx
   )
+
+if (NOT CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(install-libcxx
+                    DEPENDS cxx
+                    COMMAND "${CMAKE_COMMAND}"
+                    -DCMAKE_INSTALL_COMPONENT=libcxx
+                    -P "${LIBCXX_BINARY_DIR}/cmake_install.cmake")
+endif()
