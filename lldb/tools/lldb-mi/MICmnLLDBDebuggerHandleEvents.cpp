@@ -351,7 +351,8 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakpointCmn(const lldb::SBEvent &
 
     const CMICmnMIValueResult miValueResultC("bkpt", miValueTuple);
     const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResultC);
-    const bool bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    bool bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    bOk = bOk && CMICmnStreamStdout::WritePrompt();
 
     return bOk;
 }
@@ -440,6 +441,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakpointAdded(const lldb::SBEvent
         const CMICmnMIValueResult miValueResult("bkpt", miValueTuple);
         const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, miValueResult);
         bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
     }
     else
     {
@@ -462,6 +464,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBBreakpointAdded(const lldb::SBEvent
         const CMICmnMIValueResult miValueResult("bkpt", miValueTuple);
         const CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointCreated, miValueResult);
         bOk = MiOutOfBandRecordToStdout(miOutOfBandRecord);
+        bOk = bOk && CMICmnStreamStdout::WritePrompt();
     }
 
     return bOk;
