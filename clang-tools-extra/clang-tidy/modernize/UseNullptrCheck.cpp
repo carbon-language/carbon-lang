@@ -175,10 +175,10 @@ private:
 class CastSequenceVisitor : public RecursiveASTVisitor<CastSequenceVisitor> {
 public:
   CastSequenceVisitor(ASTContext &Context,
-                      SmallVector<StringRef, 1> UserNullMacros,
+                      ArrayRef<StringRef> UserNullMacros,
                       ClangTidyCheck &check)
       : SM(Context.getSourceManager()), Context(Context),
-        UserNullMacros(std::move(UserNullMacros)), Check(check),
+        UserNullMacros(UserNullMacros), Check(check),
         FirstSubExpr(nullptr), PruneSubtree(false) {}
 
   bool TraverseStmt(Stmt *S) {
@@ -435,7 +435,7 @@ private:
 private:
   SourceManager &SM;
   ASTContext &Context;
-  const SmallVector<StringRef, 1> &UserNullMacros;
+  ArrayRef<StringRef> UserNullMacros;
   ClangTidyCheck &Check;
   Expr *FirstSubExpr;
   bool PruneSubtree;
