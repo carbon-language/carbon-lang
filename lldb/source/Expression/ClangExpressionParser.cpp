@@ -410,6 +410,7 @@ ClangExpressionParser::Parse (Stream &stream)
     diag_buf->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
 
     ASTConsumer *ast_transformer = m_expr.ASTTransformer(m_code_generator.get());
+    ast_transformer->Initialize(m_compiler->getASTContext());
 
     if (ClangExpressionDeclMap *decl_map = m_expr.DeclMap())
         decl_map->InstallCodeGenerator(m_code_generator.get());
