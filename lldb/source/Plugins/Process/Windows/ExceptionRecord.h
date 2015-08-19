@@ -14,6 +14,7 @@
 
 #include "lldb/lldb-forward.h"
 #include "lldb/Host/windows/windows.h"
+#include <DbgHelp.h>
 
 #include <memory>
 #include <vector>
@@ -40,6 +41,24 @@ class ExceptionRecord
         m_thread_id = thread_id;
         m_arguments.assign(record.ExceptionInformation, record.ExceptionInformation + record.NumberParameters);
     }
+
+    // MINIDUMP_EXCEPTIONs are almost identical to EXCEPTION_RECORDs.
+    ExceptionRecord(const MINIDUMP_EXCEPTION &record, lldb::tid_t thread_id) :
+        m_code(record.ExceptionCode),
+        m_continuable(record.ExceptionFlags == 0),
+        m_next_exception(nullptr),
+        m_exception_addr(static_cast<lldb::addr_t>(record.ExceptionAddress)),
+        m_thread_id(thread_id),
+        m_arguments(record.ExceptionInformation, record.ExceptionInformation + record.NumberParameters)
+    {
+        // Set up link to nested exception.
+        if (record.ExceptionRecord)
+        {
+            m_next_exception.reset(new ExceptionRecord(*reinterpret_cast<const MINIDUMP_EXCEPTION *>(record.ExceptionRecord),
+                                                       thread_id));
+        }
+    }
+
     virtual ~ExceptionRecord() {}
 
     DWORD

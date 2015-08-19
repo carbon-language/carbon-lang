@@ -97,6 +97,15 @@ private:
     lldb_private::ArchSpec
     DetermineArchitecture();
 
+    void
+    ReadExceptionRecord();
+
+    // A thin wrapper around WinAPI's MiniDumpReadDumpStream to avoid redundant
+    // checks.  If there's a failure (e.g., if the requested stream doesn't exist),
+    // the function returns nullptr and sets *size_out to 0.
+    void *
+    FindDumpStream(unsigned stream_number, size_t *size_out);
+
     // Isolate the data to keep Windows-specific types out of this header.  Can't
     // use the typical pimpl idiom because the implementation of this class also
     // needs access to public and protected members of the base class.

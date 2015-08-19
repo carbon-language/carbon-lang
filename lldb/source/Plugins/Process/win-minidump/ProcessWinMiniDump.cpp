@@ -24,11 +24,15 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/UnixSignals.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 #include "Plugins/DynamicLoader/Windows-DYLD/DynamicLoaderWindowsDYLD.h"
 
+#include "../windows/ExceptionRecord.h"  // TODO(amccarth):  move this file to a common location
 #include "ThreadWinMiniDump.h"
 
 using namespace lldb_private;
@@ -45,6 +49,7 @@ public:
     HANDLE m_dump_file;  // handle to the open minidump file
     HANDLE m_mapping;  // handle to the file mapping for the minidump file
     void * m_base_addr;  // base memory address of the minidump
+    std::shared_ptr<ExceptionRecord> m_exception_sp;
 };
 
 ConstString
@@ -129,7 +134,8 @@ ProcessWinMiniDump::DoLoadCore()
 
     m_target.SetArchitecture(DetermineArchitecture());
     // TODO(amccarth):  Build the module list.
-    // TODO(amccarth):  Read the exeception record.
+
+    ReadExceptionRecord();
 
     return error;
 
@@ -146,21 +152,12 @@ ProcessWinMiniDump::GetDynamicLoader()
 bool
 ProcessWinMiniDump::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
-    assert(m_data_up != nullptr);
-    assert(m_data_up->m_base_addr != 0);
-
-    MINIDUMP_DIRECTORY *dir = nullptr;
-    void *ptr = nullptr;
-    ULONG size = 0;
-    if (::MiniDumpReadDumpStream(m_data_up->m_base_addr, ThreadListStream, &dir, &ptr, &size))
+    size_t size = 0;
+    auto thread_list_ptr = static_cast<const MINIDUMP_THREAD_LIST *>(FindDumpStream(ThreadListStream, &size));
+    if (thread_list_ptr)
     {
-        assert(dir->StreamType == ThreadListStream);
-        assert(size == dir->Location.DataSize);
-        assert(ptr == static_cast<void*>(static_cast<char*>(m_data_up->m_base_addr) + dir->Location.Rva));
-        auto thread_list_ptr = static_cast<const MINIDUMP_THREAD_LIST *>(ptr);
         const ULONG32 thread_count = thread_list_ptr->NumberOfThreads;
-        assert(thread_count < std::numeric_limits<int>::max());
-        for (int i = 0; i < thread_count; ++i) {
+        for (ULONG32 i = 0; i < thread_count; ++i) {
             std::shared_ptr<ThreadWinMiniDump> thread_sp(new ThreadWinMiniDump(*this, thread_list_ptr->Threads[i].ThreadId));
             new_thread_list.AddThread(thread_sp);
         }
@@ -172,6 +169,20 @@ ProcessWinMiniDump::UpdateThreadList(ThreadList &old_thread_list, ThreadList &ne
 void
 ProcessWinMiniDump::RefreshStateAfterStop()
 {
+    if (!m_data_up) return;
+    if (!m_data_up->m_exception_sp) return;
+
+    auto active_exception = m_data_up->m_exception_sp;
+    std::string desc;
+    llvm::raw_string_ostream desc_stream(desc);
+    desc_stream << "Exception "
+                << llvm::format_hex(active_exception->GetExceptionCode(), 8)
+                << " encountered at address "
+                << llvm::format_hex(active_exception->GetExceptionAddress(), 8);
+    m_thread_list.SetSelectedThreadByID(active_exception->GetThreadID());
+    auto stop_thread = m_thread_list.GetSelectedThread();
+    auto stop_info = StopInfo::CreateStopReasonWithException(*stop_thread, desc_stream.str().c_str());
+    stop_thread->SetStopInfo(stop_info);
 }
 
 Error
@@ -302,18 +313,10 @@ ProcessWinMiniDump::MapMiniDumpIntoMemory(const char *file)
 ArchSpec
 ProcessWinMiniDump::DetermineArchitecture()
 {
-    assert(m_data_up != nullptr);
-    assert(m_data_up->m_base_addr != 0);
-
-    MINIDUMP_DIRECTORY *dir = nullptr;
-    void *ptr = nullptr;
-    ULONG size = 0;
-    if (::MiniDumpReadDumpStream(m_data_up->m_base_addr, SystemInfoStream, &dir, &ptr, &size))
+    size_t size = 0;
+    auto system_info_ptr = static_cast<const MINIDUMP_SYSTEM_INFO *>(FindDumpStream(SystemInfoStream, &size));
+    if (system_info_ptr)
     {
-        assert(dir->StreamType == SystemInfoStream);
-        assert(size == dir->Location.DataSize);
-        assert(ptr == static_cast<void*>(static_cast<char*>(m_data_up->m_base_addr) + dir->Location.Rva));
-        auto system_info_ptr = static_cast<const MINIDUMP_SYSTEM_INFO *>(ptr);
         switch (system_info_ptr->ProcessorArchitecture)
         {
         case PROCESSOR_ARCHITECTURE_INTEL:
@@ -326,4 +329,34 @@ ProcessWinMiniDump::DetermineArchitecture()
     }
 
     return ArchSpec();  // invalid or unknown
+}
+
+void
+ProcessWinMiniDump::ReadExceptionRecord() {
+    size_t size = 0;
+    auto exception_stream_ptr = static_cast<MINIDUMP_EXCEPTION_STREAM*>(FindDumpStream(ExceptionStream, &size));
+    if (exception_stream_ptr)
+    {
+        m_data_up->m_exception_sp.reset(new ExceptionRecord(exception_stream_ptr->ExceptionRecord, exception_stream_ptr->ThreadId));
+    }
+}
+
+void *
+ProcessWinMiniDump::FindDumpStream(unsigned stream_number, size_t *size_out) {
+    void *stream = nullptr;
+    *size_out = 0;
+
+    assert(m_data_up != nullptr);
+    assert(m_data_up->m_base_addr != 0);
+
+    MINIDUMP_DIRECTORY *dir = nullptr;
+    if (::MiniDumpReadDumpStream(m_data_up->m_base_addr, stream_number, &dir, nullptr, nullptr) &&
+        dir != nullptr && dir->Location.DataSize > 0)
+    {
+        assert(dir->StreamType == stream_number);
+        *size_out = dir->Location.DataSize;
+        stream = static_cast<void*>(static_cast<char*>(m_data_up->m_base_addr) + dir->Location.Rva);
+    }
+
+    return stream;
 }
