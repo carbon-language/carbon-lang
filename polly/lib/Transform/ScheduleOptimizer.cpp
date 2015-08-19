@@ -71,14 +71,10 @@ using namespace polly;
 
 #define DEBUG_TYPE "polly-opt-isl"
 
-namespace polly {
-bool DisablePollyTiling;
-}
-static cl::opt<bool, true>
-    DisableTiling("polly-no-tiling",
-                  cl::desc("Disable tiling in the scheduler"),
-                  cl::location(polly::DisablePollyTiling), cl::init(false),
-                  cl::ZeroOrMore, cl::cat(PollyCategory));
+static cl::opt<bool> EnableTiling("polly-tiling",
+                                  cl::desc("Enable loop tiling"),
+                                  cl::init(true), cl::ZeroOrMore,
+                                  cl::cat(PollyCategory));
 
 static cl::opt<std::string>
     OptimizeDeps("polly-opt-optimize-only",
@@ -283,7 +279,7 @@ isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
     return Node;
   }
 
-  if (!DisableTiling) {
+  if (EnableTiling) {
     auto Ctx = isl_schedule_node_get_ctx(Node);
     auto Sizes = isl_multi_val_zero(isl_space_copy(Space));
     for (unsigned i = 0; i < Dims; i++) {

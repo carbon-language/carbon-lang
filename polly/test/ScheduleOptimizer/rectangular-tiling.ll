@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-ast -polly-tile-sizes=256,16 < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling -polly-ast -polly-tile-sizes=256,16 -polly-no-early-exit < %s | FileCheck %s --check-prefix=NOTILING
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-tiling=false -polly-ast -polly-tile-sizes=256,16 -polly-no-early-exit < %s | FileCheck %s --check-prefix=NOTILING
 
 ; CHECK: for (int c0 = 0; c0 <= 3; c0 += 1)
 ; CHECK:   for (int c1 = 0; c1 <= 31; c1 += 1)

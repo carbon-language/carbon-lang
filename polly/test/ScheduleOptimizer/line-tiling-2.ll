@@ -1,4 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze -polly-no-tiling=0 -polly-ast -polly-tile-sizes=1,64 < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze \
+; RUN:                -polly-ast -polly-tile-sizes=1,64 < %s | FileCheck %s
 
 ; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
 ; CHECK:   for (int c1 = 0; c1 <= 7; c1 += 1)
