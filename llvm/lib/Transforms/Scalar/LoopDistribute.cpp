@@ -34,6 +34,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/LoopVersioning.h"
 #include <list>
 
@@ -564,25 +565,6 @@ public:
 private:
   AccessesType Accesses;
 };
-
-/// \brief Returns the instructions that use values defined in the loop.
-static SmallVector<Instruction *, 8> findDefsUsedOutsideOfLoop(Loop *L) {
-  SmallVector<Instruction *, 8> UsedOutside;
-
-  for (auto *Block : L->getBlocks())
-    // FIXME: I believe that this could use copy_if if the Inst reference could
-    // be adapted into a pointer.
-    for (auto &Inst : *Block) {
-      auto Users = Inst.users();
-      if (std::any_of(Users.begin(), Users.end(), [&](User *U) {
-            auto *Use = cast<Instruction>(U);
-            return !L->contains(Use->getParent());
-          }))
-        UsedOutside.push_back(&Inst);
-    }
-
-  return UsedOutside;
-}
 
 /// \brief The pass class.
 class LoopDistribute : public FunctionPass {

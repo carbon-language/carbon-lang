@@ -501,3 +501,22 @@ bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
   StepValue = ConstantInt::getSigned(CV->getType(), CVSize / Size);
   return true;
 }
+
+/// \brief Returns the instructions that use values defined in the loop.
+SmallVector<Instruction *, 8> llvm::findDefsUsedOutsideOfLoop(Loop *L) {
+  SmallVector<Instruction *, 8> UsedOutside;
+
+  for (auto *Block : L->getBlocks())
+    // FIXME: I believe that this could use copy_if if the Inst reference could
+    // be adapted into a pointer.
+    for (auto &Inst : *Block) {
+      auto Users = Inst.users();
+      if (std::any_of(Users.begin(), Users.end(), [&](User *U) {
+            auto *Use = cast<Instruction>(U);
+            return !L->contains(Use->getParent());
+          }))
+        UsedOutside.push_back(&Inst);
+    }
+
+  return UsedOutside;
+}

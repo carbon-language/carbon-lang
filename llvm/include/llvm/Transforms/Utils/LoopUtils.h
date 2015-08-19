@@ -281,6 +281,9 @@ void computeLICMSafetyInfo(LICMSafetyInfo *, Loop *);
 /// variable. Returns true if this is an induction PHI along with the step
 /// value.
 bool isInductionPHI(PHINode *, ScalarEvolution *, ConstantInt *&);
+
+/// \brief Returns the instructions that use values defined in the loop.
+SmallVector<Instruction *, 8> findDefsUsedOutsideOfLoop(Loop *L);
 }
 
 #endif
