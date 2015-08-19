@@ -116,7 +116,8 @@ public:
   void printStackObjectReference(int FrameIndex);
   void printOffset(int64_t Offset);
   void printTargetFlags(const MachineOperand &Op);
-  void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
+  void print(const MachineOperand &Op, const TargetRegisterInfo *TRI,
+             bool IsDef = false);
   void print(const MachineMemOperand &Op);
 
   void print(const MCCFIInstruction &CFI, const TargetRegisterInfo *TRI);
@@ -516,7 +517,7 @@ void MIPrinter::print(const MachineInstr &MI) {
        ++I) {
     if (I)
       OS << ", ";
-    print(MI.getOperand(I), TRI);
+    print(MI.getOperand(I), TRI, /*IsDef=*/true);
   }
 
   if (I)
@@ -688,13 +689,17 @@ static const char *getTargetIndexName(const MachineFunction &MF, int Index) {
   return nullptr;
 }
 
-void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
+void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI,
+                      bool IsDef) {
   printTargetFlags(Op);
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
     // FIXME: Serialize the tied register.
     if (Op.isImplicit())
       OS << (Op.isDef() ? "implicit-def " : "implicit ");
+    else if (!IsDef && Op.isDef())
+      // Print the 'def' flag only when the operand is defined after '='.
+      OS << "def ";
     if (Op.isInternalRead())
       OS << "internal ";
     if (Op.isDead())

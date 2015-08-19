@@ -49,6 +49,7 @@ struct MIToken {
     // Keywords
     kw_implicit,
     kw_implicit_define,
+    kw_def,
     kw_dead,
     kw_killed,
     kw_undef,
@@ -145,9 +146,9 @@ public:
 
   bool isRegisterFlag() const {
     return Kind == kw_implicit || Kind == kw_implicit_define ||
-           Kind == kw_dead || Kind == kw_killed || Kind == kw_undef ||
-           Kind == kw_internal || Kind == kw_early_clobber ||
-           Kind == kw_debug_use;
+           Kind == kw_def || Kind == kw_dead || Kind == kw_killed ||
+           Kind == kw_undef || Kind == kw_internal ||
+           Kind == kw_early_clobber || Kind == kw_debug_use;
   }
 
   bool isMemoryOperandFlag() const {

@@ -816,6 +816,9 @@ bool MIParser::parseRegisterFlag(unsigned &Flags) {
   case MIToken::kw_implicit_define:
     Flags |= RegState::ImplicitDefine;
     break;
+  case MIToken::kw_def:
+    Flags |= RegState::Define;
+    break;
   case MIToken::kw_dead:
     Flags |= RegState::Dead;
     break;
@@ -1297,6 +1300,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
   case MIToken::kw_implicit_define:
+  case MIToken::kw_def:
   case MIToken::kw_dead:
   case MIToken::kw_killed:
   case MIToken::kw_undef:

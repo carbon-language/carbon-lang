@@ -1,0 +1,29 @@
+# RUN: llc -march=x86-64 -start-after block-placement -stop-after block-placement -o /dev/null %s | FileCheck %s
+
+--- |
+  define i64 @test(i64 %x, i64 %y) #0 {
+  entry:
+    %x0 = call { i64, i64 } asm "foo", "=r,=r,1,0,~{dirflag},~{fpsr},~{flags}"(i64 %x, i64 %y) #0
+    %x1 = extractvalue { i64, i64 } %x0, 0
+    ret i64 %x1
+  }
+
+  attributes #0 = { nounwind }
+...
+---
+name:            test
+hasInlineAsm:    true
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+  - { reg: '%rsi' }
+body: |
+  bb.0.entry:
+    liveins: %rdi, %rsi
+
+  ; CHECK-LABEL: name: test
+  ; CHECK: INLINEASM $foo, 0, 2818058, def %rsi, 2818058, def dead %rdi,
+    INLINEASM $foo, 0, 2818058, def %rsi, 2818058, def dead %rdi, 2147549193, killed %rdi, 2147483657, killed %rsi, 12, implicit-def dead early-clobber %eflags
+    %rax = MOV64rr killed %rsi
+    RETQ killed %rax
+...
