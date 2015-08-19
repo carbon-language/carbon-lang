@@ -967,10 +967,6 @@ namespace {
     // Check this LValue refers to an object. If not, set the designator to be
     // invalid and emit a diagnostic.
     bool checkSubobject(EvalInfo &Info, const Expr *E, CheckSubobjectKind CSK) {
-      // Outside C++11, do not build a designator referring to a subobject of
-      // any object: we won't use such a designator for anything.
-      if (!Info.getLangOpts().CPlusPlus11)
-        Designator.setInvalid();
       return (CSK == CSK_ArrayToPointer || checkNullPointer(Info, E, CSK)) &&
              Designator.checkSubobject(Info, E, CSK);
     }
@@ -2713,8 +2709,7 @@ static bool handleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
 
   // Check for special cases where there is no existing APValue to look at.
   const Expr *Base = LVal.Base.dyn_cast<const Expr*>();
-  if (!LVal.Designator.Invalid && Base && !LVal.CallIndex &&
-      !Type.isVolatileQualified()) {
+  if (Base && !LVal.CallIndex && !Type.isVolatileQualified()) {
     if (const CompoundLiteralExpr *CLE = dyn_cast<CompoundLiteralExpr>(Base)) {
       // In C99, a CompoundLiteralExpr is an lvalue, and we defer evaluating the
       // initializer until now for such expressions. Such an expression can't be
@@ -5998,8 +5993,7 @@ public:
   bool VisitSizeOfPackExpr(const SizeOfPackExpr *E);
 
 private:
-  static QualType GetObjectType(APValue::LValueBase B);
-  bool TryEvaluateBuiltinObjectSize(const CallExpr *E);
+  bool TryEvaluateBuiltinObjectSize(const CallExpr *E, unsigned Type);
   // FIXME: Missing: array subscript of vector, member of vector
 };
 } // end anonymous namespace
@@ -6171,7 +6165,7 @@ static bool EvaluateBuiltinConstantP(ASTContext &Ctx, const Expr *Arg) {
 
 /// Retrieves the "underlying object type" of the given expression,
 /// as used by __builtin_object_size.
-QualType IntExprEvaluator::GetObjectType(APValue::LValueBase B) {
+static QualType getObjectType(APValue::LValueBase B) {
   if (const ValueDecl *D = B.dyn_cast<const ValueDecl*>()) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(D))
       return VD->getType();
@@ -6183,49 +6177,94 @@ QualType IntExprEvaluator::GetObjectType(APValue::LValueBase B) {
   return QualType();
 }
 
-bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E) {
+bool IntExprEvaluator::TryEvaluateBuiltinObjectSize(const CallExpr *E,
+                                                    unsigned Type) {
+  // Determine the denoted object.
   LValue Base;
-
   {
     // The operand of __builtin_object_size is never evaluated for side-effects.
     // If there are any, but we can determine the pointed-to object anyway, then
     // ignore the side-effects.
     SpeculativeEvaluationRAII SpeculativeEval(Info);
+    FoldConstant Fold(Info, true);
     if (!EvaluatePointer(E->getArg(0), Base, Info))
       return false;
   }
 
-  if (!Base.getLValueBase()) {
-    // It is not possible to determine which objects ptr points to at compile time,
-    // __builtin_object_size should return (size_t) -1 for type 0 or 1
-    // and (size_t) 0 for type 2 or 3.
-    llvm::APSInt TypeIntVaue;
-    const Expr *ExprType = E->getArg(1);
-    if (!ExprType->EvaluateAsInt(TypeIntVaue, Info.Ctx))
-      return false;
-    if (TypeIntVaue == 0 || TypeIntVaue == 1)
-      return Success(-1, E);
-    if (TypeIntVaue == 2 || TypeIntVaue == 3)
-      return Success(0, E);
+  CharUnits BaseOffset = Base.getLValueOffset();
+
+  // If we point to before the start of the object, there are no
+  // accessible bytes.
+  if (BaseOffset < CharUnits::Zero())
+    return Success(0, E);
+
+  // MostDerivedType is null if we're dealing with a literal such as nullptr or
+  // (char*)0x100000. Lower it to LLVM in either case so it can figure out what
+  // to do with it.
+  // FIXME(gbiv): Try to do a better job with this in clang.
+  if (Base.Designator.MostDerivedType.isNull())
     return Error(E);
+
+  // If Type & 1 is 0, the object in question is the complete object; reset to
+  // a complete object designator in that case.
+  //
+  // If Type is 1 and we've lost track of the subobject, just find the complete
+  // object instead. (If Type is 3, that's not correct behavior and we should
+  // return 0 instead.)
+  LValue End = Base;
+  if (((Type & 1) == 0) || (End.Designator.Invalid && Type == 1)) {
+    QualType T = getObjectType(End.getLValueBase());
+    if (T.isNull())
+      End.Designator.setInvalid();
+    else {
+      End.Designator = SubobjectDesignator(T);
+      End.Offset = CharUnits::Zero();
+    }
   }
 
-  QualType T = GetObjectType(Base.getLValueBase());
-  if (T.isNull() ||
-      T->isIncompleteType() ||
-      T->isFunctionType() ||
-      T->isVariablyModifiedType() ||
-      T->isDependentType())
+  // FIXME: We should produce a valid object size for an unknown object with a
+  // known designator, if Type & 1 is 1. For instance:
+  //
+  //   extern struct X { char buff[32]; int a, b, c; } *p;
+  //   int a = __builtin_object_size(p->buff + 4, 3); // returns 28
+  //   int b = __builtin_object_size(p->buff + 4, 2); // returns 0, not 40
+  //
+  // This is GCC's behavior. We currently don't do this, but (hopefully) will in
+  // the near future.
+
+  // If it is not possible to determine which objects ptr points to at compile
+  // time, __builtin_object_size should return (size_t) -1 for type 0 or 1
+  // and (size_t) 0 for type 2 or 3.
+  if (End.Designator.Invalid)
+    return false;
+
+  // According to the GCC documentation, we want the size of the subobject
+  // denoted by the pointer. But that's not quite right -- what we actually
+  // want is the size of the immediately-enclosing array, if there is one.
+  int64_t AmountToAdd = 1;
+  if (End.Designator.MostDerivedArraySize &&
+      End.Designator.Entries.size() == End.Designator.MostDerivedPathLength) {
+    // We got a pointer to an array. Step to its end.
+    AmountToAdd = End.Designator.MostDerivedArraySize -
+                  End.Designator.Entries.back().ArrayIndex;
+  } else if (End.Designator.IsOnePastTheEnd) {
+    // We're already pointing at the end of the object.
+    AmountToAdd = 0;
+  }
+
+  if (End.Designator.MostDerivedType->isIncompleteType() ||
+      End.Designator.MostDerivedType->isFunctionType())
     return Error(E);
 
-  CharUnits Size = Info.Ctx.getTypeSizeInChars(T);
-  CharUnits Offset = Base.getLValueOffset();
+  if (!HandleLValueArrayAdjustment(Info, E, End, End.Designator.MostDerivedType,
+                                   AmountToAdd))
+    return false;
 
-  if (!Offset.isNegative() && Offset <= Size)
-    Size -= Offset;
-  else
-    Size = CharUnits::Zero();
-  return Success(Size, E);
+  auto EndOffset = End.getLValueOffset();
+  if (BaseOffset > EndOffset)
+    return Success(0, E);
+
+  return Success(EndOffset - BaseOffset, E);
 }
 
 bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
@@ -6234,17 +6273,21 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return ExprEvaluatorBaseTy::VisitCallExpr(E);
 
   case Builtin::BI__builtin_object_size: {
-    if (TryEvaluateBuiltinObjectSize(E))
+    // The type was checked when we built the expression.
+    unsigned Type =
+        E->getArg(1)->EvaluateKnownConstInt(Info.Ctx).getZExtValue();
+    assert(Type <= 3 && "unexpected type");
+
+    if (TryEvaluateBuiltinObjectSize(E, Type))
       return true;
 
     // If evaluating the argument has side-effects, we can't determine the size
     // of the object, and so we lower it to unknown now. CodeGen relies on us to
     // handle all cases where the expression has side-effects.
-    if (E->getArg(0)->HasSideEffects(Info.Ctx)) {
-      if (E->getArg(1)->EvaluateKnownConstInt(Info.Ctx).getZExtValue() <= 1)
-        return Success(-1ULL, E);
-      return Success(0, E);
-    }
+    // Likewise, if Type is 3, we must handle this because CodeGen cannot give a
+    // conservatively correct answer in that case.
+    if (E->getArg(0)->HasSideEffects(Info.Ctx) || Type == 3)
+      return Success((Type & 2) ? 0 : -1, E);
 
     // Expression had no side effects, but we couldn't statically determine the
     // size of the referenced object.
@@ -6254,10 +6297,12 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     case EvalInfo::EM_ConstantFold:
     case EvalInfo::EM_EvaluateForOverflow:
     case EvalInfo::EM_IgnoreSideEffects:
+      // Leave it to IR generation.
       return Error(E);
     case EvalInfo::EM_ConstantExpressionUnevaluated:
     case EvalInfo::EM_PotentialConstantExpressionUnevaluated:
-      return Success(-1ULL, E);
+      // Reduce it to a constant now.
+      return Success((Type & 2) ? 0 : -1, E);
     }
   }
 
