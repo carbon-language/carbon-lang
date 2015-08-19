@@ -33,3 +33,9 @@
 
         ! CHECK: wr %i0, 5, %tbr          ! encoding: [0x81,0x9e,0x20,0x05]
         wr %i0, 5, %tbr
+
+        ! CHECK: rd %asr6, %i0         ! encoding: [0xb1,0x41,0x80,0x00]
+        rd %fprs, %i0
+
+        ! CHECK: wr %i0, 7, %asr6      ! encoding: [0x8d,0x86,0x20,0x07]
+        wr %i0, 7, %fprs

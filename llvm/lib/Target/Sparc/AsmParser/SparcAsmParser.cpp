@@ -879,6 +879,13 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
       return true;
     }
 
+    // %fprs is an alias of %asr6.
+    if (name.equals("fprs")) {
+      RegNo = ASRRegs[6];
+      RegKind = SparcOperand::rk_Special;
+      return true;
+    }
+
     if (name.equals("icc")) {
       RegNo = Sparc::ICC;
       RegKind = SparcOperand::rk_Special;
