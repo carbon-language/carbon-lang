@@ -81,6 +81,11 @@ public:
     return getRecord(ID).Type;
   }
 
+  /// \brief Return true if this function is a target-specific builtin
+  bool isTSBuiltin(unsigned ID) const {
+    return ID >= Builtin::FirstTSBuiltin;
+  }
+
   /// \brief Return true if this function has no side effects and doesn't
   /// read memory.
   bool isConst(unsigned ID) const {
