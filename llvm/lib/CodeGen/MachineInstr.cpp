@@ -33,6 +33,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -42,6 +43,11 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
+
+static cl::opt<bool> PrintWholeRegMask(
+    "print-whole-regmask",
+    cl::desc("Print the full contents of regmask operands in IR dumps"),
+    cl::init(true), cl::Hidden);
 
 //===----------------------------------------------------------------------===//
 // MachineOperand Implementation
@@ -407,9 +413,26 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     if (getOffset()) OS << "+" << getOffset();
     OS << '>';
     break;
-  case MachineOperand::MO_RegisterMask:
-    OS << "<regmask>";
+  case MachineOperand::MO_RegisterMask: {
+    unsigned NumRegsInMask = 0;
+    unsigned NumRegsEmitted = 0;
+    OS << "<regmask";
+    for (unsigned i = 0; i < TRI->getNumRegs(); ++i) {
+      unsigned MaskWord = i / 32;
+      unsigned MaskBit = i % 32;
+      if (getRegMask()[MaskWord] & (1 << MaskBit)) {
+        if (PrintWholeRegMask || NumRegsEmitted <= 10) {
+          OS << " " << PrintReg(i, TRI);
+          NumRegsEmitted++;
+        }
+        NumRegsInMask++;
+      }
+    }
+    if (NumRegsEmitted != NumRegsInMask)
+      OS << " and " << (NumRegsInMask - NumRegsEmitted) << " more...";
+    OS << ">";
     break;
+  }
   case MachineOperand::MO_RegisterLiveOut:
     OS << "<regliveout>";
     break;
