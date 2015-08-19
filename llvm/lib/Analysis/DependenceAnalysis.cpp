@@ -3245,20 +3245,36 @@ void DependenceAnalysis::updateDirection(Dependence::DVEntry &Level,
 /// source and destination array references are recurrences on a nested loop,
 /// this function flattens the nested recurrences into separate recurrences
 /// for each loop level.
-bool DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV,
-                                        const SCEV *DstSCEV,
-                                        SmallVectorImpl<Subscript> &Pair,
-                                        const SCEV *ElementSize) {
+bool DependenceAnalysis::tryDelinearize(Instruction *Src,
+                                        Instruction *Dst,
+                                        SmallVectorImpl<Subscript> &Pair)
+{
+  Value *SrcPtr = getPointerOperand(Src);
+  Value *DstPtr = getPointerOperand(Dst);
+
+  Loop *SrcLoop = LI->getLoopFor(Src->getParent());
+  Loop *DstLoop = LI->getLoopFor(Dst->getParent());
+
+  // Below code mimics the code in Delinearization.cpp
+  const SCEV *SrcAccessFn =
+    SE->getSCEVAtScope(SrcPtr, SrcLoop);
+  const SCEV *DstAccessFn =
+    SE->getSCEVAtScope(DstPtr, DstLoop);
+
   const SCEVUnknown *SrcBase =
-      dyn_cast<SCEVUnknown>(SE->getPointerBase(SrcSCEV));
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(SrcAccessFn));
   const SCEVUnknown *DstBase =
-      dyn_cast<SCEVUnknown>(SE->getPointerBase(DstSCEV));
+      dyn_cast<SCEVUnknown>(SE->getPointerBase(DstAccessFn));
 
   if (!SrcBase || !DstBase || SrcBase != DstBase)
     return false;
 
-  SrcSCEV = SE->getMinusSCEV(SrcSCEV, SrcBase);
-  DstSCEV = SE->getMinusSCEV(DstSCEV, DstBase);
+  const SCEV *ElementSize = SE->getElementSize(Src);
+  if (ElementSize != SE->getElementSize(Dst))
+    return false;
+
+  const SCEV *SrcSCEV = SE->getMinusSCEV(SrcAccessFn, SrcBase);
+  const SCEV *DstSCEV = SE->getMinusSCEV(DstAccessFn, DstBase);
 
   const SCEVAddRecExpr *SrcAR = dyn_cast<SCEVAddRecExpr>(SrcSCEV);
   const SCEVAddRecExpr *DstAR = dyn_cast<SCEVAddRecExpr>(DstSCEV);
@@ -3330,7 +3346,6 @@ static void dumpSmallBitVector(SmallBitVector &BV) {
   dbgs() << "}\n";
 }
 #endif
-
 
 // depends -
 // Returns NULL if there is no dependence.
@@ -3426,10 +3441,11 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
     Pair[0].Dst = DstSCEV;
   }
 
-  if (Delinearize && Pairs == 1 && CommonLevels > 1 &&
-      tryDelinearize(Pair[0].Src, Pair[0].Dst, Pair, SE->getElementSize(Src))) {
-    DEBUG(dbgs() << "    delinerized GEP\n");
-    Pairs = Pair.size();
+  if (Delinearize && CommonLevels > 1) {
+    if (tryDelinearize(Src, Dst, Pair)) {
+      DEBUG(dbgs() << "    delinerized GEP\n");
+      Pairs = Pair.size();
+    }
   }
 
   for (unsigned P = 0; P < Pairs; ++P) {
@@ -3851,10 +3867,11 @@ const  SCEV *DependenceAnalysis::getSplitIteration(const Dependence &Dep,
     Pair[0].Dst = DstSCEV;
   }
 
-  if (Delinearize && Pairs == 1 && CommonLevels > 1 &&
-      tryDelinearize(Pair[0].Src, Pair[0].Dst, Pair, SE->getElementSize(Src))) {
-    DEBUG(dbgs() << "    delinerized GEP\n");
-    Pairs = Pair.size();
+  if (Delinearize && CommonLevels > 1) {
+    if (tryDelinearize(Src, Dst, Pair)) {
+      DEBUG(dbgs() << "    delinerized GEP\n");
+      Pairs = Pair.size();
+    }
   }
 
   for (unsigned P = 0; P < Pairs; ++P) {

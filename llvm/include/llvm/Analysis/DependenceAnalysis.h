@@ -926,9 +926,8 @@ namespace llvm {
     void updateDirection(Dependence::DVEntry &Level,
                          const Constraint &CurConstraint) const;
 
-    bool tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
-                        SmallVectorImpl<Subscript> &Pair,
-                        const SCEV *ElementSize);
+    bool tryDelinearize(Instruction *Src, Instruction *Dst,
+                        SmallVectorImpl<Subscript> &Pair);
 
   public:
     static char ID; // Class identification, replacement for typeinfo
