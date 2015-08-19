@@ -8439,8 +8439,9 @@ void ASTReader::FinishedDeserializing() {
       PendingExceptionSpecUpdates.clear();
       for (auto Update : Updates) {
         auto *FPT = Update.second->getType()->castAs<FunctionProtoType>();
-        SemaObj->UpdateExceptionSpec(Update.second,
-                                     FPT->getExtProtoInfo().ExceptionSpec);
+        auto ESI = FPT->getExtProtoInfo().ExceptionSpec;
+        for (auto *Redecl : Update.second->redecls())
+          Context.adjustExceptionSpec(cast<FunctionDecl>(Redecl), ESI);
       }
     }
 
