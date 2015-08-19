@@ -19,10 +19,10 @@
 ; LINKAGE1: .section .debug_info
 ; LINKAGE1: DW_TAG_variable
 ; LINKAGE1-NOT: DW_TAG
-; LINKAGE1: {{DW_AT_(MIPS_)*linkage_name}}
+; LINKAGE1: {{DW_AT_(MIPS_)?linkage_name}}
 ; LINKAGE1: DW_TAG_subprogram
 ; LINKAGE1-NOT: DW_TAG
-; LINKAGE1: {{DW_AT_(MIPS_)*linkage_name}}
+; LINKAGE1: {{DW_AT_(MIPS_)?linkage_name}}
 ; LINKAGE1: .section
 
 ; Also verify we see the mangled names. We do this as a separate pass to
@@ -34,7 +34,7 @@
 ; Without linkage names, verify there aren't any linkage-name attributes,
 ; and no mangled names.
 
-; NOLINKAGE-NOT: {{DW_AT_(MIPS_)*linkage_name}}
+; NOLINKAGE-NOT: {{DW_AT_(MIPS_)?linkage_name}}
 ; NOLINKAGE-NOT: .asciz   "_ZN4test10global_varE"
 ; NOLINKAGE-NOT: .asciz   "_ZN4test3barEv"
 
