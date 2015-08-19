@@ -3284,7 +3284,7 @@ NativeProcessLinux::SigchldHandler()
         {
             signal = WTERMSIG(status);
             status_cstr = "SIGNALED";
-            if (wait_pid == static_cast<::pid_t>(GetID())) {
+            if (wait_pid == static_cast< ::pid_t>(GetID())) {
                 exited = true;
                 exit_status = -1;
             }
