@@ -56,6 +56,7 @@ struct MIToken {
     kw_internal,
     kw_early_clobber,
     kw_debug_use,
+    kw_tied_def,
     kw_frame_setup,
     kw_debug_location,
     kw_cfi_same_value,

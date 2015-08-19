@@ -43,10 +43,16 @@ struct MachineOperandWithLocation {
   MachineOperand Operand;
   StringRef::iterator Begin;
   StringRef::iterator End;
+  Optional<unsigned> TiedDefIdx;
 
   MachineOperandWithLocation(const MachineOperand &Operand,
-                             StringRef::iterator Begin, StringRef::iterator End)
-      : Operand(Operand), Begin(Begin), End(End) {}
+                             StringRef::iterator Begin, StringRef::iterator End,
+                             Optional<unsigned> &TiedDefIdx)
+      : Operand(Operand), Begin(Begin), End(End), TiedDefIdx(TiedDefIdx) {
+    if (TiedDefIdx)
+      assert(Operand.isReg() && Operand.isUse() &&
+             "Only used register operands can be tied");
+  }
 };
 
 class MIParser {
@@ -111,7 +117,9 @@ public:
   bool parseRegister(unsigned &Reg);
   bool parseRegisterFlag(unsigned &Flags);
   bool parseSubRegisterIndex(unsigned &SubReg);
-  bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
+  bool parseRegisterTiedDefIndex(unsigned &TiedDefIdx);
+  bool parseRegisterOperand(MachineOperand &Dest,
+                            Optional<unsigned> &TiedDefIdx, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
   bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
   bool parseTypedImmediateOperand(MachineOperand &Dest);
@@ -136,8 +144,10 @@ public:
   bool parseBlockAddressOperand(MachineOperand &Dest);
   bool parseTargetIndexOperand(MachineOperand &Dest);
   bool parseLiveoutRegisterMaskOperand(MachineOperand &Dest);
-  bool parseMachineOperand(MachineOperand &Dest);
-  bool parseMachineOperandAndTargetFlags(MachineOperand &Dest);
+  bool parseMachineOperand(MachineOperand &Dest,
+                           Optional<unsigned> &TiedDefIdx);
+  bool parseMachineOperandAndTargetFlags(MachineOperand &Dest,
+                                         Optional<unsigned> &TiedDefIdx);
   bool parseOffset(int64_t &Offset);
   bool parseAlignment(unsigned &Alignment);
   bool parseOperandsOffset(MachineOperand &Op);
@@ -173,6 +183,9 @@ private:
   bool parseInstrName(StringRef InstrName, unsigned &OpCode);
 
   bool parseInstruction(unsigned &OpCode, unsigned &Flags);
+
+  bool assignRegisterTies(MachineInstr &MI,
+                          ArrayRef<MachineOperandWithLocation> Operands);
 
   bool verifyImplicitOperands(ArrayRef<MachineOperandWithLocation> Operands,
                               const MCInstrDesc &MCID);
@@ -552,9 +565,11 @@ bool MIParser::parse(MachineInstr *&MI) {
   SmallVector<MachineOperandWithLocation, 8> Operands;
   while (Token.isRegister() || Token.isRegisterFlag()) {
     auto Loc = Token.location();
-    if (parseRegisterOperand(MO, /*IsDef=*/true))
+    Optional<unsigned> TiedDefIdx;
+    if (parseRegisterOperand(MO, TiedDefIdx, /*IsDef=*/true))
       return true;
-    Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
+    Operands.push_back(
+        MachineOperandWithLocation(MO, Loc, Token.location(), TiedDefIdx));
     if (Token.isNot(MIToken::comma))
       break;
     lex();
@@ -570,9 +585,11 @@ bool MIParser::parse(MachineInstr *&MI) {
   while (!Token.isNewlineOrEOF() && Token.isNot(MIToken::kw_debug_location) &&
          Token.isNot(MIToken::coloncolon) && Token.isNot(MIToken::lbrace)) {
     auto Loc = Token.location();
-    if (parseMachineOperandAndTargetFlags(MO))
+    Optional<unsigned> TiedDefIdx;
+    if (parseMachineOperandAndTargetFlags(MO, TiedDefIdx))
       return true;
-    Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
+    Operands.push_back(
+        MachineOperandWithLocation(MO, Loc, Token.location(), TiedDefIdx));
     if (Token.isNewlineOrEOF() || Token.is(MIToken::coloncolon) ||
         Token.is(MIToken::lbrace))
       break;
@@ -621,6 +638,8 @@ bool MIParser::parse(MachineInstr *&MI) {
   MI->setFlags(Flags);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand.Operand);
+  if (assignRegisterTies(*MI, Operands))
+    return true;
   if (MemOperands.empty())
     return false;
   MachineInstr::mmo_iterator MemRefs =
@@ -861,7 +880,59 @@ bool MIParser::parseSubRegisterIndex(unsigned &SubReg) {
   return false;
 }
 
-bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
+bool MIParser::parseRegisterTiedDefIndex(unsigned &TiedDefIdx) {
+  if (!consumeIfPresent(MIToken::kw_tied_def))
+    return error("expected 'tied-def' after '('");
+  if (Token.isNot(MIToken::IntegerLiteral))
+    return error("expected an integer literal after 'tied-def'");
+  if (getUnsigned(TiedDefIdx))
+    return true;
+  lex();
+  if (expectAndConsume(MIToken::rparen))
+    return true;
+  return false;
+}
+
+bool MIParser::assignRegisterTies(
+    MachineInstr &MI, ArrayRef<MachineOperandWithLocation> Operands) {
+  SmallVector<std::pair<unsigned, unsigned>, 4> TiedRegisterPairs;
+  for (unsigned I = 0, E = Operands.size(); I != E; ++I) {
+    if (!Operands[I].TiedDefIdx)
+      continue;
+    // The parser ensures that this operand is a register use, so we just have
+    // to check the tied-def operand.
+    unsigned DefIdx = Operands[I].TiedDefIdx.getValue();
+    if (DefIdx >= E)
+      return error(Operands[I].Begin,
+                   Twine("use of invalid tied-def operand index '" +
+                         Twine(DefIdx) + "'; instruction has only ") +
+                       Twine(E) + " operands");
+    const auto &DefOperand = Operands[DefIdx].Operand;
+    if (!DefOperand.isReg() || !DefOperand.isDef())
+      // FIXME: add note with the def operand.
+      return error(Operands[I].Begin,
+                   Twine("use of invalid tied-def operand index '") +
+                       Twine(DefIdx) + "'; the operand #" + Twine(DefIdx) +
+                       " isn't a defined register");
+    // Check that the tied-def operand wasn't tied elsewhere.
+    for (const auto &TiedPair : TiedRegisterPairs) {
+      if (TiedPair.first == DefIdx)
+        return error(Operands[I].Begin,
+                     Twine("the tied-def operand #") + Twine(DefIdx) +
+                         " is already tied with another register operand");
+    }
+    TiedRegisterPairs.push_back(std::make_pair(DefIdx, I));
+  }
+  // FIXME: Verify that for non INLINEASM instructions, the def and use tied
+  // indices must be less than tied max.
+  for (const auto &TiedPair : TiedRegisterPairs)
+    MI.tieOperands(TiedPair.first, TiedPair.second);
+  return false;
+}
+
+bool MIParser::parseRegisterOperand(MachineOperand &Dest,
+                                    Optional<unsigned> &TiedDefIdx,
+                                    bool IsDef) {
   unsigned Reg;
   unsigned Flags = IsDef ? RegState::Define : 0;
   while (Token.isRegisterFlag()) {
@@ -877,6 +948,12 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
   if (Token.is(MIToken::colon)) {
     if (parseSubRegisterIndex(SubReg))
       return true;
+  }
+  if ((Flags & RegState::Define) == 0 && consumeIfPresent(MIToken::lparen)) {
+    unsigned Idx;
+    if (parseRegisterTiedDefIndex(Idx))
+      return true;
+    TiedDefIdx = Idx;
   }
   Dest = MachineOperand::CreateReg(
       Reg, Flags & RegState::Define, Flags & RegState::Implicit,
@@ -1296,7 +1373,8 @@ bool MIParser::parseLiveoutRegisterMaskOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseMachineOperand(MachineOperand &Dest) {
+bool MIParser::parseMachineOperand(MachineOperand &Dest,
+                                   Optional<unsigned> &TiedDefIdx) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
   case MIToken::kw_implicit_define:
@@ -1310,7 +1388,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   case MIToken::underscore:
   case MIToken::NamedRegister:
   case MIToken::VirtualRegister:
-    return parseRegisterOperand(Dest);
+    return parseRegisterOperand(Dest, TiedDefIdx);
   case MIToken::IntegerLiteral:
     return parseImmediateOperand(Dest);
   case MIToken::IntegerType:
@@ -1367,7 +1445,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseMachineOperandAndTargetFlags(MachineOperand &Dest) {
+bool MIParser::parseMachineOperandAndTargetFlags(
+    MachineOperand &Dest, Optional<unsigned> &TiedDefIdx) {
   unsigned TF = 0;
   bool HasTargetFlags = false;
   if (Token.is(MIToken::kw_target_flags)) {
@@ -1399,7 +1478,7 @@ bool MIParser::parseMachineOperandAndTargetFlags(MachineOperand &Dest) {
       return true;
   }
   auto Loc = Token.location();
-  if (parseMachineOperand(Dest))
+  if (parseMachineOperand(Dest, TiedDefIdx))
     return true;
   if (!HasTargetFlags)
     return false;
