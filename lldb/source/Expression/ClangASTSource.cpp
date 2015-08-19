@@ -125,11 +125,10 @@ ClangASTSource::FindExternalVisibleDeclsByName
         }
         break;
 
-    // Operator names.  Not important for now.
+    // Operator names.
     case DeclarationName::CXXOperatorName:
     case DeclarationName::CXXLiteralOperatorName:
-      SetNoExternalVisibleDeclsForName(decl_ctx, clang_decl_name);
-      return false;
+        break;
 
     // Using directives found in this context.
     // Tell Sema we didn't find any or we'll end up getting asked a *lot*.
@@ -1964,11 +1963,14 @@ NameSearchContext::AddFunDecl (const CompilerType &type, bool extern_c)
                                           false);
     }
 
+    // Pass the identifier info for functions the decl_name is needed for operators
+    clang::DeclarationName decl_name = m_decl_name.getNameKind() == DeclarationName::Identifier ? m_decl_name.getAsIdentifierInfo() : m_decl_name;
+
     clang::FunctionDecl *func_decl = FunctionDecl::Create (*ast,
                                                            context,
                                                            SourceLocation(),
                                                            SourceLocation(),
-                                                           m_decl_name.getAsIdentifierInfo(),
+                                                           decl_name,
                                                            qual_type,
                                                            NULL,
                                                            SC_Extern,
