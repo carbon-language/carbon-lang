@@ -1423,6 +1423,14 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM,
     : TargetLowering(TM), Subtarget(&STI) {
   MVT PtrVT = MVT::getIntegerVT(8 * TM.getPointerSize());
 
+  // Instructions which use registers as conditionals examine all the
+  // bits (as does the pseudo SELECT_CC expansion). I don't think it
+  // matters much whether it's ZeroOrOneBooleanContent, or
+  // ZeroOrNegativeOneBooleanContent, so, arbitrarily choose the
+  // former.
+  setBooleanContents(ZeroOrOneBooleanContent);
+  setBooleanVectorContents(ZeroOrOneBooleanContent);
+
   // Set up the register classes.
   addRegisterClass(MVT::i32, &SP::IntRegsRegClass);
   addRegisterClass(MVT::f32, &SP::FPRegsRegClass);
