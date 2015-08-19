@@ -16,10 +16,11 @@
 // void detach();
 
 #include <thread>
-#include <atomic>
 #include <cassert>
 
-std::atomic_bool done = ATOMIC_VAR_INIT(false);
+#include "test_atomic.h"
+
+AtomicBool done(false);
 
 class G
 {
