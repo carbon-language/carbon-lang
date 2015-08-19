@@ -1668,6 +1668,8 @@ std::pair<Instruction *, Instruction *> LoopAccessInfo::addRuntimeChecks(
 
   for (const auto &Check : ExpandedChecks) {
     const PointerBounds &A = Check.first, &B = Check.second;
+    // Check if two pointers (A and B) conflict where conflict is computed as:
+    // start(A) <= end(B) && start(B) <= end(A)
     unsigned AS0 = A.Start->getType()->getPointerAddressSpace();
     unsigned AS1 = B.Start->getType()->getPointerAddressSpace();
 
