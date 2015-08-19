@@ -198,7 +198,6 @@ namespace {
     SDNode *Select(SDNode *N) override;
     SDNode *SelectGather(SDNode *N, unsigned Opc);
     SDNode *SelectAtomicLoadArith(SDNode *Node, MVT NVT);
-    SDNode *SelectAndWithSExtImmediate(SDNode *Node, MVT NVT);
 
     bool FoldOffsetIntoAddress(uint64_t Offset, X86ISelAddressMode &AM);
     bool MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM);
@@ -2209,57 +2208,6 @@ SDNode *X86DAGToDAGISel::SelectGather(SDNode *Node, unsigned Opc) {
   return ResNode;
 }
 
-// Try to shrink the encoding of an AND by setting additional bits in the mask.
-// It is only correct to do so if we know a priori that the other operand of the
-// AND already has those bits set to zero.
-SDNode *X86DAGToDAGISel::SelectAndWithSExtImmediate(SDNode *Node, MVT NVT) {
-  SDValue N0 = Node->getOperand(0);
-  SDValue N1 = Node->getOperand(1);
-
-  if (NVT != MVT::i32 && NVT != MVT::i64)
-    return nullptr;
-
-  auto *Cst = dyn_cast<ConstantSDNode>(N1);
-  if (!Cst)
-    return nullptr;
-
-  // As a heuristic, skip over negative constants.  It turns out not to be
-  // productive to widen the mask.
-  int64_t Val = Cst->getSExtValue();
-  if (Val <= 0)
-    return nullptr;
-
-  // Limit ourselves to constants which already have sign bits to save on
-  // compile time.
-  if ((int8_t)Val >= 0)
-    return nullptr;
-
-  unsigned Opc;
-  switch (NVT.SimpleTy) {
-  default:
-    llvm_unreachable("Unsupported VT!");
-  case MVT::i32:
-    Opc = X86::AND32ri8;
-    break;
-  case MVT::i64:
-    Opc = X86::AND64ri8;
-    break;
-  }
-
-  APInt Op0Zero, Op0One;
-  CurDAG->computeKnownBits(N0, Op0Zero, Op0One);
-  // Grow the mask using the known zero bits.
-  Op0Zero |= Val;
-  // See if the mask can be efficiently encoded using at most NumBits.
-  if (!Op0Zero.isSignedIntN(8))
-    return nullptr;
-
-  SDLoc DL(Node);
-  SDValue NewCst =
-      CurDAG->getTargetConstant(Op0Zero.getSExtValue(), DL, MVT::i8);
-  return CurDAG->getMachineNode(Opc, DL, NVT, N0, NewCst);
-}
-
 SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   MVT NVT = Node->getSimpleValueType(0);
   unsigned Opc, MOpc;
@@ -2275,8 +2223,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   }
 
   switch (Opcode) {
-  default:
-    break;
+  default: break;
   case ISD::INTRINSIC_W_CHAIN: {
     unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
     switch (IntNo) {
@@ -2351,13 +2298,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       return RetVal;
     break;
   }
-  case ISD::AND: {
-    if (SDNode *NewNode = SelectAndWithSExtImmediate(Node, NVT)) {
-      ReplaceUses(SDValue(Node, 0), SDValue(NewNode, 0));
-      return nullptr;
-    }
-    // FALLTHROUGH
-  }
+  case ISD::AND:
   case ISD::OR:
   case ISD::XOR: {
     // For operations of the form (x << C1) op C2, check if we can use a smaller
