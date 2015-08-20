@@ -80,6 +80,11 @@ static cl::opt<std::string> UserContextStr(
     cl::desc("Provide additional constraints on the context parameters"),
     cl::init(""), cl::cat(PollyCategory));
 
+static cl::opt<bool> DetectReductions("polly-detect-reductions",
+                                      cl::desc("Detect and exploit reductions"),
+                                      cl::Hidden, cl::ZeroOrMore,
+                                      cl::init(true), cl::cat(PollyCategory));
+
 // Create a sequence of two schedules. Either argument may be null and is
 // interpreted as the empty schedule. Can also return null if both schedules are
 // empty.
@@ -894,7 +899,8 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
     buildAccesses(tempScop, Block, Block != EntryBB);
     deriveAssumptions(Block);
   }
-  checkForReductions();
+  if (DetectReductions)
+    checkForReductions();
 }
 
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
@@ -910,7 +916,8 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   buildDomain(tempScop, CurRegion);
   buildAccesses(tempScop, BB);
   deriveAssumptions(BB);
-  checkForReductions();
+  if (DetectReductions)
+    checkForReductions();
 }
 
 /// @brief Collect loads which might form a reduction chain with @p StoreMA

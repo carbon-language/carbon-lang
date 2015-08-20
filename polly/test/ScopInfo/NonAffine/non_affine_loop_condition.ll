@@ -1,4 +1,11 @@
 ; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
+
+
+; RUN: opt %loadPolly -polly-scops -polly-detect-reductions \
+; RUN:                -polly-allow-nonaffine-branches \
+; RUN:                -polly-allow-nonaffine-loops -analyze < %s \
+; RUN:                -polly-detect-reductions=false \
+; RUN: | FileCheck %s -check-prefix=NO-REDUCTION
 ;
 ;    void f(int *A, int *C) {
 ;      for (int i = 0; i < 1024; i++) {
@@ -23,6 +30,8 @@
 ; CHECK:            MayWriteAccess :=  [Reduction Type: +] [Scalar: 0]
 ; CHECK:                { Stmt_bb3__TO__bb10[i0] -> MemRef_A[i0] };
 ; CHECK:    }
+
+; NO-REDUCTION-NOT: Reduction Type: +
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
