@@ -137,7 +137,7 @@ static bool getSymbolOffsetImpl(const MCAsmLayout &Layout, const MCSymbol &S,
 
   // If SD is a variable, evaluate it.
   MCValue Target;
-  if (!S.getVariableValue()->evaluateAsRelocatable(Target, &Layout, nullptr))
+  if (!S.getVariableValue()->evaluateAsValue(Target, Layout))
     report_fatal_error("unable to evaluate offset for variable '" +
                        S.getName() + "'");
 
