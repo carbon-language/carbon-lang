@@ -25,6 +25,8 @@ class CreateDuringInstructionStepTestCase(TestBase):
         self.create_during_step_inst_test()
 
     @dwarf_test
+    @skipIfTargetAndroid(archs=['aarch64'])
+    @expectedFailureAndroid("llvm.org/pr23944", archs=['aarch64']) # We are unable to step through std::thread::_M_start_thread
     def test_step_inst_with_dwarf(self):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.create_during_step_inst_test()
@@ -62,7 +64,8 @@ class CreateDuringInstructionStepTestCase(TestBase):
             # instruction, which creates the thread.
             if thread.GetFrameAtIndex(0).GetFunctionName() in [
                     '__sync_fetch_and_add_4', # Android arm: unable to set a breakpoint for software single-step
-                    'pthread_mutex_lock'      # Android arm: function contains atomic instruction sequences
+                    'pthread_mutex_lock',     # Android arm: function contains atomic instruction sequences
+                    'pthread_mutex_unlock'    # Android arm: function contains atomic instruction sequences
                     ]:
                 thread.StepOut()
             else:

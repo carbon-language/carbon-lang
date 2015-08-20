@@ -698,6 +698,18 @@ def expectedFailureWindows(bugnumber=None, compilers=None):
 def expectedFailureHostWindows(bugnumber=None, compilers=None):
     return expectedFailureHostOS(['windows'], bugnumber, compilers)
 
+def matchAndroid(api_levels=None, archs=None):
+    def match(self):
+        if not target_is_android():
+            return False
+        if archs is not None and self.getArchitecture() not in archs:
+            return False
+        if api_levels is not None and android_device_api() not in api_levels:
+            return False
+        return True
+    return match
+
+
 def expectedFailureAndroid(bugnumber=None, api_levels=None, archs=None):
     """ Mark a test as xfail for Android.
 
@@ -708,15 +720,7 @@ def expectedFailureAndroid(bugnumber=None, api_levels=None, archs=None):
         arch - A sequence of architecture names specifying the architectures
             for which a test is expected to fail. None means all architectures.
     """
-    def fn(self):
-        if target_is_android():
-            if archs is not None and self.getArchitecture() not in archs:
-                return False
-            if api_levels is not None and android_device_api() not in api_levels:
-                return False
-            return True
-
-    return expectedFailure(fn, bugnumber)
+    return expectedFailure(matchAndroid(api_levels, archs), bugnumber)
 
 # if the test passes on the first try, we're done (success)
 # if the test fails once, then passes on the second try, raise an ExpectedFailure
@@ -1061,12 +1065,14 @@ def skipIfi386(func):
             func(*args, **kwargs)
     return wrapper
 
-def skipIfTargetAndroid(api_levels=None):
+def skipIfTargetAndroid(api_levels=None, archs=None):
     """Decorator to skip tests when the target is Android.
 
     Arguments:
         api_levels - The API levels for which the test should be skipped. If
             it is None, then the test will be skipped for all API levels.
+        arch - A sequence of architecture names specifying the architectures
+            for which a test is skipped. None means all architectures.
     """
     def myImpl(func):
         if isinstance(func, type) and issubclass(func, unittest2.TestCase):
@@ -1076,14 +1082,9 @@ def skipIfTargetAndroid(api_levels=None):
         def wrapper(*args, **kwargs):
             from unittest2 import case
             self = args[0]
-            if target_is_android():
-                if api_levels:
-                    device_api = android_device_api()
-                    if device_api and (device_api in api_levels):
-                        self.skipTest(
-                            "skip on Android target with API %d" % device_api)
-                else:
-                    self.skipTest("skip on Android target")
+            if matchAndroid(api_levels, archs)(self):
+                self.skipTest("skiped on Android target with API %d and architecture %s" %
+                        (android_device_api(), self.getArchitecture()))
             func(*args, **kwargs)
         return wrapper
     return myImpl
