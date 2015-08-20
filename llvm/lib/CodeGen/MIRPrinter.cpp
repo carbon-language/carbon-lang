@@ -608,7 +608,10 @@ void MIPrinter::printIRBlockReference(const BasicBlock &BB) {
 }
 
 void MIPrinter::printIRValueReference(const Value &V) {
-  // TODO: Global values should use the '@' syntax.
+  if (isa<GlobalValue>(V)) {
+    V.printAsOperand(OS, /*PrintType=*/false, MST);
+    return;
+  }
   OS << "%ir.";
   if (V.hasName()) {
     printLLVMNameWithoutPrefix(OS, V.getName());

@@ -1531,9 +1531,6 @@ bool MIParser::parseIRValue(const Value *&V) {
   switch (Token.kind()) {
   case MIToken::NamedIRValue: {
     V = MF.getFunction()->getValueSymbolTable().lookup(Token.stringValue());
-    if (!V)
-      V = MF.getFunction()->getParent()->getValueSymbolTable().lookup(
-          Token.stringValue());
     break;
   }
   case MIToken::IRValue: {
@@ -1541,6 +1538,14 @@ bool MIParser::parseIRValue(const Value *&V) {
     if (getUnsigned(SlotNumber))
       return true;
     V = getIRValue(SlotNumber);
+    break;
+  }
+  case MIToken::NamedGlobalValue:
+  case MIToken::GlobalValue: {
+    GlobalValue *GV = nullptr;
+    if (parseGlobalValue(GV))
+      return true;
+    V = GV;
     break;
   }
   default:
@@ -1646,7 +1651,9 @@ bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
     Dest = MachinePointerInfo(PSV, Offset);
     return false;
   }
-  if (Token.isNot(MIToken::NamedIRValue) && Token.isNot(MIToken::IRValue))
+  if (Token.isNot(MIToken::NamedIRValue) && Token.isNot(MIToken::IRValue) &&
+      Token.isNot(MIToken::GlobalValue) &&
+      Token.isNot(MIToken::NamedGlobalValue))
     return error("expected an IR value reference");
   const Value *V = nullptr;
   if (parseIRValue(V))
