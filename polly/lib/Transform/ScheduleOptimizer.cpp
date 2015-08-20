@@ -149,6 +149,17 @@ private:
   /// @return True, if we believe @p NewSchedule is an improvement for @p S.
   bool isProfitableSchedule(Scop &S, __isl_keep isl_union_map *NewSchedule);
 
+  /// @brief Tile a schedule node.
+  ///
+  /// @param Node            The node to tile.
+  /// @param TileSizes       A vector of tile sizes that should be used for
+  ///                        tiling.
+  /// @param DefaultTileSize A default tile size that is used for dimensions
+  ///                        that are not covered by the TileSizes vector.
+  static __isl_give isl_schedule_node *
+  tileNode(__isl_take isl_schedule_node *Node, ArrayRef<int> TileSizes,
+           int DefaultTileSize);
+
   /// @brief Pre-vectorizes one scheduling dimension of a schedule band.
   ///
   /// prevectSchedBand splits out the dimension DimToVectorize, tiles it and
@@ -258,6 +269,21 @@ IslScheduleOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
 }
 
 __isl_give isl_schedule_node *
+IslScheduleOptimizer::tileNode(__isl_take isl_schedule_node *Node,
+                               ArrayRef<int> TileSizes, int DefaultTileSize) {
+  auto Ctx = isl_schedule_node_get_ctx(Node);
+  auto Space = isl_schedule_node_band_get_space(Node);
+  auto Dims = isl_space_dim(Space, isl_dim_set);
+  auto Sizes = isl_multi_val_zero(Space);
+  for (unsigned i = 0; i < Dims; i++) {
+    auto tileSize = i < TileSizes.size() ? TileSizes[i] : DefaultTileSize;
+    Sizes = isl_multi_val_set_val(Sizes, i, isl_val_int_from_si(Ctx, tileSize));
+  }
+  Node = isl_schedule_node_band_tile(Node, Sizes);
+  return isl_schedule_node_child(Node, 0);
+}
+
+__isl_give isl_schedule_node *
 IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
                                    void *User) {
   if (isl_schedule_node_get_type(Node) != isl_schedule_node_band)
@@ -271,34 +297,20 @@ IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
 
   auto Space = isl_schedule_node_band_get_space(Node);
   auto Dims = isl_space_dim(Space, isl_dim_set);
+  isl_space_free(Space);
 
-  if (Dims <= 1) {
-    isl_space_free(Space);
+  if (Dims <= 1)
     return Node;
-  }
 
   auto Child = isl_schedule_node_get_child(Node, 0);
   auto Type = isl_schedule_node_get_type(Child);
   isl_schedule_node_free(Child);
 
-  if (Type != isl_schedule_node_leaf) {
-    isl_space_free(Space);
+  if (Type != isl_schedule_node_leaf)
     return Node;
-  }
 
-  if (EnableTiling) {
-    auto Ctx = isl_schedule_node_get_ctx(Node);
-    auto Sizes = isl_multi_val_zero(isl_space_copy(Space));
-    for (unsigned i = 0; i < Dims; i++) {
-      auto tileSize = TileSizes.size() > i ? TileSizes[i] : DefaultTileSize;
-      Sizes =
-          isl_multi_val_set_val(Sizes, i, isl_val_int_from_si(Ctx, tileSize));
-    }
-    Node = isl_schedule_node_band_tile(Node, Sizes);
-    Node = isl_schedule_node_child(Node, 0);
-  }
-
-  isl_space_free(Space);
+  if (EnableTiling)
+    Node = tileNode(Node, TileSizes, DefaultTileSize);
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
     return Node;
