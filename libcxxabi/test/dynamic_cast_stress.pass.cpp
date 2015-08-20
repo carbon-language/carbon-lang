@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 #include <cassert>
 #include <tuple>
 #include "support/timer.hpp"

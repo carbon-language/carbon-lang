@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 #include <exception>
 #include <stdlib.h>
 #include <assert.h>

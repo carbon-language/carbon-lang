@@ -7,16 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+// UNSUPPORTED: c++98, c++03
+
 #include <cassert>
 #include <cstdlib>
 
-#ifndef __has_feature
-#define __has_feature(x) 0
-#endif
-
 struct A {};
-
-#if __has_feature(cxx_nullptr)
 
 void test1()
 {
@@ -62,22 +58,6 @@ void catch_nullptr_test() {
   }
 }
 
-#else
-
-void test1()
-{
-}
-
-void test2()
-{
-}
-
-template <class Catch>
-void catch_nullptr_test()
-{
-}
-
-#endif
 
 int main()
 {

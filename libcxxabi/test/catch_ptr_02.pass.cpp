@@ -9,6 +9,10 @@
 
 #include <cassert>
 
+#if __cplusplus < 201103L
+#define DISABLE_NULLPTR_TESTS
+#endif
+
 struct  A {};
 A a;
 const A ca = A();
@@ -99,6 +103,7 @@ void test5 ()
 
 void test6 ()
 {
+#if !defined(DISABLE_NULLPTR_TESTS)
     try
     {
         throw nullptr;
@@ -111,6 +116,7 @@ void test6 ()
     {
         assert (false);
     }
+#endif
 }
 
 void test7 ()
@@ -152,6 +158,7 @@ void test8 ()
 
 void test9 ()
 {
+#if !defined(DISABLE_NULLPTR_TESTS)
     try
     {
         throw nullptr;
@@ -164,6 +171,7 @@ void test9 ()
     {
         assert (false);
     }
+#endif
 }
 
 void test10 ()
