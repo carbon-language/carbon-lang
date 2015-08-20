@@ -1,5 +1,23 @@
 # RUN: llvm-mc --disassemble %s -triple=mips-unknown-linux -mcpu=mips64r6 -mattr=micromips | FileCheck %s
 
+0x6f 0x83 # CHECK: addiur1sp $7, 4
+
+0x6f 0x7e # CHECK: addiur2 $6, $7, -1
+
+0x6f 0x76 # CHECK: addiur2 $6, $7, 12
+
+0x4c 0xfc # CHECK: addius5 $7, -2
+
+0x4f 0xff # CHECK: addiusp -1028
+
+0x4f 0xfd # CHECK: addiusp -1032
+
+0x4c 0x01 # CHECK: addiusp 1024
+
+0x4c 0x03 # CHECK: addiusp 1028
+
+0x4f 0xf9 # CHECK: addiusp -16
+
 0xf0 0x64 0x00 0x05 # CHECK: daui $3, $4, 5
 
 0x42 0x23 0x00 0x04 # CHECK: dahi $3, 4

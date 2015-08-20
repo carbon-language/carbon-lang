@@ -1,6 +1,15 @@
 # RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips64r6 -mattr=micromips | FileCheck %s
 a:
         .set noat
+        addiur1sp $7, 4          # CHECK: addiur1sp $7, 4     # encoding: [0x6f,0x83]
+        addiur2 $6, $7, -1       # CHECK: addiur2 $6, $7, -1  # encoding: [0x6f,0x7e]
+        addiur2 $6, $7, 12       # CHECK: addiur2 $6, $7, 12  # encoding: [0x6f,0x76]
+        addius5 $7, -2           # CHECK: addius5 $7, -2      # encoding: [0x4c,0xfc]
+        addiusp -1028            # CHECK: addiusp -1028       # encoding: [0x4f,0xff]
+        addiusp -1032            # CHECK: addiusp -1032       # encoding: [0x4f,0xfd]
+        addiusp 1024             # CHECK: addiusp 1024        # encoding: [0x4c,0x01]
+        addiusp 1028             # CHECK: addiusp 1028        # encoding: [0x4c,0x03]
+        addiusp -16              # CHECK: addiusp -16         # encoding: [0x4f,0xf9]
         daui $3, $4, 5           # CHECK: daui $3, $4, 5      # encoding: [0xf0,0x64,0x00,0x05]
         dahi $3, 4               # CHECK: dahi $3, 4          # encoding: [0x42,0x23,0x00,0x04]
         dati $3, 4               # CHECK: dati $3, 4          # encoding: [0x42,0x03,0x00,0x04]
