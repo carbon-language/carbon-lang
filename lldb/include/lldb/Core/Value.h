@@ -101,6 +101,7 @@ public:
         // Casts a vector, if valid, to an unsigned int of matching or largest supported size.
         // Truncates to the beginning of the vector if required.
         // Returns a default constructed Scalar if the Vector data is internally inconsistent.
+        llvm::APInt rhs = llvm::APInt(BITWIDTH_INT128, NUM_OF_WORDS_INT128, ((type128 *)bytes)->x);
         Scalar 
 		GetAsScalar() const 
 		{
@@ -111,11 +112,7 @@ public:
                 else if (length == 2) scalar = *(const uint16_t *)bytes;
                 else if (length == 4) scalar = *(const uint32_t *)bytes;
                 else if (length == 8) scalar = *(const uint64_t *)bytes;
-#if defined (ENABLE_128_BIT_SUPPORT)
-                else if (length >= 16) scalar = *(const __uint128_t *)bytes;
-#else
-                else if (length >= 16) scalar = *(const uint64_t *)bytes;
-#endif
+                else if (length >= 16) scalar = rhs;
             }
             return scalar;
         }
