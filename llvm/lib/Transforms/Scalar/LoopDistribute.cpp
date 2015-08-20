@@ -776,8 +776,7 @@ private:
       DEBUG(dbgs() << "\nPointers:\n");
       DEBUG(LAI.getRuntimePointerChecking()->printChecks(dbgs(), Checks));
       LoopVersioning LVer(std::move(Checks), LAI, L, LI, DT);
-      LVer.versionLoop();
-      LVer.addPHINodes(DefsUsedOutside);
+      LVer.versionLoop(DefsUsedOutside);
     }
 
     // Create identical copies of the original loop for each partition and hook
