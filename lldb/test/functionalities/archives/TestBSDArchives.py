@@ -10,7 +10,7 @@ class BSDArchivesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @expectedFailureHostWindows("llvm.org/pr24527") # Makefile.rules doesn't know how to build static libs on Windows.
+    @expectedFailureWindows("llvm.org/pr24527") # Makefile.rules doesn't know how to build static libs on Windows.
     def test_with_dwarf(self):
         """Break inside a() and b() defined within libfoo.a."""
         self.buildDwarf()
