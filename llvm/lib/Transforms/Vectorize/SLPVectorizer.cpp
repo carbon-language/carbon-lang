@@ -242,6 +242,9 @@ static Instruction *propagateMetadata(Instruction *I, ArrayRef<Value *> VL) {
       case LLVMContext::MD_fpmath:
         MD = MDNode::getMostGenericFPMath(MD, IMD);
         break;
+      case LLVMContext::MD_nontemporal:
+        MD = MDNode::intersect(MD, IMD);
+        break;
       }
     }
     I->setMetadata(Kind, MD);
