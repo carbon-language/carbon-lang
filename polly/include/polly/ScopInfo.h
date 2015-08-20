@@ -895,13 +895,14 @@ private:
   Scop(Region &R, ScalarEvolution &SE, isl_ctx *ctx, unsigned MaxLoopDepth);
 
   /// @brief Initialize this ScopInfo using a TempScop object.
-  void initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD);
+  void initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
+                        AliasAnalysis &AA);
 
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
   static Scop *createFromTempScop(TempScop &TempScop, LoopInfo &LI,
                                   ScalarEvolution &SE, ScopDetection &SD,
-                                  isl_ctx *ctx);
+                                  AliasAnalysis &AA, isl_ctx *ctx);
 
   /// @brief Check if a basic block is trivial.
   ///
@@ -1096,6 +1097,9 @@ public:
   /// @param Set A set describing relations between parameters that are assumed
   ///            to hold.
   void addAssumption(__isl_take isl_set *Set);
+
+  /// @brief Build the alias checks for this SCoP.
+  void buildAliasChecks(AliasAnalysis &AA);
 
   /// @brief Build all alias groups for this SCoP.
   ///

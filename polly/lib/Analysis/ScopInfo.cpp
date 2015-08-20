@@ -1346,6 +1346,26 @@ static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
   return Valid;
 }
 
+void Scop::buildAliasChecks(AliasAnalysis &AA) {
+  if (!PollyUseRuntimeAliasChecks)
+    return;
+
+  if (buildAliasGroups(AA))
+    return;
+
+  // If a problem occurs while building the alias groups we need to delete
+  // this SCoP and pretend it wasn't valid in the first place. To this end
+  // we make the assumed context infeasible.
+  addAssumption(isl_set_empty(getParamSpace()));
+
+  DEBUG(dbgs() << "\n\nNOTE: Run time checks for " << getNameStr()
+               << " could not be created as the number of parameters involved "
+                  "is too high. The SCoP will be "
+                  "dismissed.\nUse:\n\t--polly-rtc-max-parameters=X\nto adjust "
+                  "the maximal number of parameters but be advised that the "
+                  "compile time might increase exponentially.\n\n");
+}
+
 bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   // To create sound alias checks we perform the following steps:
   //   o) Use the alias analysis and an alias set tracker to build alias sets
@@ -1532,7 +1552,7 @@ Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, isl_ctx *Context,
       MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this) {}
 
 void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI,
-                            ScopDetection &SD) {
+                            ScopDetection &SD, AliasAnalysis &AA) {
   buildContext();
 
   SmallVector<Loop *, 8> NestLoops;
@@ -1547,17 +1567,19 @@ void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI,
   addParameterBounds();
   addUserContext();
   simplifyAssumedContext();
+  buildAliasChecks(AA);
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
 
 Scop *Scop::createFromTempScop(TempScop &TempScop, LoopInfo &LI,
                                ScalarEvolution &SE, ScopDetection &SD,
-                               isl_ctx *ctx) {
+                               AliasAnalysis &AA, isl_ctx *ctx) {
   auto &R = TempScop.getMaxRegion();
   auto MaxLoopDepth = getMaxLoopDepthInRegion(R, LI, SD);
   auto S = new Scop(R, SE, ctx, MaxLoopDepth);
-  S->initFromTempScop(TempScop, LI, SD);
+  S->initFromTempScop(TempScop, LI, SD, AA);
+
   return S;
 }
 
@@ -2064,7 +2086,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, ctx);
+  scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, AA, ctx);
 
   DEBUG(scop->print(dbgs()));
 
@@ -2074,34 +2096,10 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  if (!PollyUseRuntimeAliasChecks) {
-    // Statistics.
-    ++ScopFound;
-    if (scop->getMaxLoopDepth() > 0)
-      ++RichScopFound;
-    return false;
-  }
-
-  // If a problem occurs while building the alias groups we need to delete
-  // this SCoP and pretend it wasn't valid in the first place.
-  if (scop->buildAliasGroups(AA)) {
-    // Statistics.
-    ++ScopFound;
-    if (scop->getMaxLoopDepth() > 0)
-      ++RichScopFound;
-    return false;
-  }
-
-  DEBUG(dbgs()
-        << "\n\nNOTE: Run time checks for " << scop->getNameStr()
-        << " could not be created as the number of parameters involved is too "
-           "high. The SCoP will be "
-           "dismissed.\nUse:\n\t--polly-rtc-max-parameters=X\nto adjust the "
-           "maximal number of parameters but be advised that the compile time "
-           "might increase exponentially.\n\n");
-
-  delete scop;
-  scop = nullptr;
+  // Statistics.
+  ++ScopFound;
+  if (scop->getMaxLoopDepth() > 0)
+    ++RichScopFound;
   return false;
 }
 
