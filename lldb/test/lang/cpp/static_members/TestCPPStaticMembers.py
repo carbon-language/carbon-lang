@@ -18,6 +18,7 @@ class CPPStaticMembersTestCase(TestBase):
         self.static_member_commands()
 
     @unittest2.expectedFailure # llvm.org/pr15401
+    @expectedFailureWindows("llvm.org/pr21765")
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that member variables have the correct layout, scope and qualifiers when stopped inside and outside C++ methods"""

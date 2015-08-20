@@ -11,6 +11,7 @@ class PersistenttypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureWindows("llvm.org/pr21765")
     def test_persistent_types(self):
         """Test that lldb persistent types works correctly."""
         self.buildDefault()

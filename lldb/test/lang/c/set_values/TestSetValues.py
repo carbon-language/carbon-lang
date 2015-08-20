@@ -18,6 +18,7 @@ class SetValuesTestCase(TestBase):
         self.set_values()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr21765")
     def test_with_dwarf(self):
         """Test settings and readings of program variables."""
         self.buildDwarf()

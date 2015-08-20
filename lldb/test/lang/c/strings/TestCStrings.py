@@ -17,6 +17,7 @@ class CStringsTestCase(TestBase):
         self.static_method_commands()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr21765")
     def test_with_dwarf_and_run_command(self):
         """Tests that C strings work as expected in expressions"""
         self.buildDwarf()

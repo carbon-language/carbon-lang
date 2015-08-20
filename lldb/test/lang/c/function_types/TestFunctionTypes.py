@@ -31,6 +31,7 @@ class FunctionTypesTestCase(TestBase):
         self.function_pointers()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr21765")
     def test_pointers_with_dwarf(self):
         """Test that a function pointer to 'printf' works and can be called."""
         self.buildDwarf()

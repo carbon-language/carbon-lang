@@ -27,6 +27,7 @@ class ExprFormattersTestCase(TestBase):
 
     @expectedFailureFreeBSD('llvm.org/pr19011') # Newer Clang omits C1 complete object constructor
     @expectedFailureLinux('llvm.org/pr19011', ['clang'])
+    @expectedFailureWindows("llvm.org/pr21765")
     @dwarf_test
     def test_with_dwarf(self):
         """Test expr + formatters for good interoperability."""
