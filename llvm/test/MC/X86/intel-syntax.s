@@ -704,3 +704,13 @@ repnz cmpsb
 
 sal eax, 123
 // CHECK: shll	$123, %eax
+
+comisd xmm0, QWORD PTR [eax]
+comiss xmm0, DWORD PTR [eax]
+vcomisd xmm0, QWORD PTR [eax]
+vcomiss xmm0, DWORD PTR [eax]
+
+// CHECK: comisd (%eax), %xmm0
+// CHECK: comiss (%eax), %xmm0
+// CHECK: vcomisd (%eax), %xmm0
+// CHECK: vcomiss (%eax), %xmm0

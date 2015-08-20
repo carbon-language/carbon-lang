@@ -5045,10 +5045,10 @@ let Defs = [EFLAGS], Predicates = [HasAVX512] in {
                                   "ucomisd">, PD, EVEX,
                                   VEX_LIG, VEX_W, EVEX_CD8<64, CD8VT1>;
   let Pattern = []<dag> in {
-    defm VCOMISSZ  : sse12_ord_cmp<0x2F, VR128X, undef, v4f32, f128mem, load,
+    defm VCOMISSZ  : sse12_ord_cmp<0x2F, FR32X, undef, f32, f32mem, loadf32,
                                    "comiss">, PS, EVEX, VEX_LIG,
                                    EVEX_CD8<32, CD8VT1>;
-    defm VCOMISDZ  : sse12_ord_cmp<0x2F, VR128X, undef, v2f64, f128mem, load,
+    defm VCOMISDZ  : sse12_ord_cmp<0x2F, FR64X, undef, f64, f64mem, loadf64,
                                    "comisd">, PD, EVEX,
                                     VEX_LIG, VEX_W, EVEX_CD8<64, CD8VT1>;
   }

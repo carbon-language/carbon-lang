@@ -256,3 +256,11 @@ vaddpd zmm1,zmm1,zmm2,{rz-sae}
 // CHECK:  vfixupimmsd  xmm13 , xmm26, qword ptr [rdx - 1032], 123
 // CHECK:  encoding: [0x62,0x73,0xad,0x00,0x55,0xaa,0xf8,0xfb,0xff,0xff,0x7b]
           vfixupimmsd xmm13,xmm26,QWORD PTR [rdx-0x408],0x7b
+
+// CHECK:  vcomisd xmm23, qword ptr [rcx]
+// CHECK:  encoding: [0x62,0xe1,0xfd,0x08,0x2f,0x39]
+          vcomisd xmm23, QWORD PTR [rcx]
+
+// CHECK:  vcomiss xmm16, dword ptr [rcx]
+// CHECK:  encoding: [0x62,0xe1,0x7c,0x08,0x2f,0x01]
+          vcomiss xmm16, DWORD PTR [rcx]

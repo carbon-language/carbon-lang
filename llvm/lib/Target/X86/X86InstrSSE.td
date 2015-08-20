@@ -2456,9 +2456,9 @@ let Defs = [EFLAGS] in {
   defm VUCOMISD : sse12_ord_cmp<0x2E, FR64, X86cmp, f64, f64mem, loadf64,
                                   "ucomisd">, PD, VEX, VEX_LIG;
   let Pattern = []<dag> in {
-    defm VCOMISS  : sse12_ord_cmp<0x2F, VR128, undef, v4f32, f128mem, load,
+    defm VCOMISS  : sse12_ord_cmp<0x2F, FR32, undef, f32, f32mem, loadf32,
                                     "comiss">, PS, VEX, VEX_LIG;
-    defm VCOMISD  : sse12_ord_cmp<0x2F, VR128, undef, v2f64, f128mem, load,
+    defm VCOMISD  : sse12_ord_cmp<0x2F, FR64, undef, f64, f64mem, loadf64,
                                     "comisd">, PD, VEX, VEX_LIG;
   }
 
@@ -2479,9 +2479,9 @@ let Defs = [EFLAGS] in {
                                   "ucomisd">, PD;
 
   let Pattern = []<dag> in {
-    defm COMISS  : sse12_ord_cmp<0x2F, VR128, undef, v4f32, f128mem, load,
+    defm COMISS  : sse12_ord_cmp<0x2F, FR32, undef, f32, f32mem, loadf32,
                                     "comiss">, PS;
-    defm COMISD  : sse12_ord_cmp<0x2F, VR128, undef, v2f64, f128mem, load,
+    defm COMISD  : sse12_ord_cmp<0x2F, FR64, undef, f64, f64mem, loadf64,
                                     "comisd">, PD;
   }
 
