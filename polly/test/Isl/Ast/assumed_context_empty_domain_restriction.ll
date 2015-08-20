@@ -1,8 +1,18 @@
-; RUN: opt %loadPolly -S -polly-opt-isl -polly-codegen < %s | FileCheck %s
+; RUN: opt %loadPolly -analyze -polly-detect < %s | FileCheck %s --check-prefix=DETECT
+; RUN: opt %loadPolly -analyze -polly-scops < %s | FileCheck %s --check-prefix=INFO
+; RUN: opt %loadPolly -analyze -polly-ast < %s | FileCheck %s
 ;
-; This test used to crash the scalar code generation.
+; This test used to crash the scalar code generation, now we will bail out after
+; ScopInfo and destory the ScoP as the runtime context is empty.
 ;
-; CHECK: polly.start
+; DETECT:  Valid Region for Scop
+;
+; INFO-NOT:  Context:
+; INFO-NOT:  Assumed Context:
+;
+; CHECK-NOT: isl ast
+; CHECK-NOT: if (
+; CHECK-NOT: original code
 ;
 @endposition = external global i32, align 4
 @Bit = external global [0 x i32], align 4

@@ -335,9 +335,10 @@ buildCondition(__isl_keep isl_ast_build *Build, const Scop::MinMaxAccessTy *It0,
 
 void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   // The conditions that need to be checked at run-time for this scop are
-  // available as an isl_set in the AssumedContext from which we can directly
-  // derive a run-time condition.
-  RunCondition = isl_ast_build_expr_from_set(Build, S->getAssumedContext());
+  // available as an isl_set in the runtime check context from which we can
+  // directly derive a run-time condition.
+  RunCondition =
+      isl_ast_build_expr_from_set(Build, S->getRuntimeCheckContext());
 
   // Create the alias checks from the minimal/maximal accesses in each alias
   // group which consists of read only and non read only (read write) accesses.

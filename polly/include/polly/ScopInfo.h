@@ -1045,6 +1045,17 @@ public:
   /// @return The assumed context of this Scop.
   __isl_give isl_set *getAssumedContext() const;
 
+  /// @brief Get the runtime check context for this Scop.
+  ///
+  /// The runtime check context contains all constraints that have to
+  /// hold at runtime for the optimized version to be executed.
+  ///
+  /// @return The runtime check context of this Scop.
+  __isl_give isl_set *getRuntimeCheckContext() const;
+
+  /// @brief Return true if the runtime check context is feasible.
+  bool hasFeasibleRuntimeCheckContext() const;
+
   /// @brief Add assumptions to assumed context.
   ///
   /// The assumptions added will be assumed to hold during the execution of the

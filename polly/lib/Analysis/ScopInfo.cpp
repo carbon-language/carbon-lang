@@ -1593,6 +1593,18 @@ __isl_give isl_set *Scop::getAssumedContext() const {
   return isl_set_copy(AssumedContext);
 }
 
+__isl_give isl_set *Scop::getRuntimeCheckContext() const {
+  isl_set *RuntimeCheckContext = getAssumedContext();
+  return RuntimeCheckContext;
+}
+
+bool Scop::hasFeasibleRuntimeCheckContext() const {
+  isl_set *RuntimeCheckContext = getRuntimeCheckContext();
+  bool IsFeasible = !isl_set_is_empty(RuntimeCheckContext);
+  isl_set_free(RuntimeCheckContext);
+  return IsFeasible;
+}
+
 void Scop::addAssumption(__isl_take isl_set *Set) {
   AssumedContext = isl_set_intersect(AssumedContext, Set);
   AssumedContext = isl_set_coalesce(AssumedContext);
@@ -2020,6 +2032,12 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   scop = Scop::createFromTempScop(*tempScop, LI, SE, SD, ctx);
 
   DEBUG(scop->print(dbgs()));
+
+  if (!scop->hasFeasibleRuntimeCheckContext()) {
+    delete scop;
+    scop = nullptr;
+    return false;
+  }
 
   if (!PollyUseRuntimeAliasChecks) {
     // Statistics.
