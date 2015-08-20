@@ -559,6 +559,10 @@ endif ()
 if (CLANG_ENABLE_BOOTSTRAP)
   include(ExternalProject)
 
+  if(CMAKE_VERSION VERSION_GREATER 3.1.0)
+    set(cmake_3_1_EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL 1)
+  endif()
+
   if(CMAKE_VERSION VERSION_LESS 3.3.20150708)
     set(cmake_3_4_USES_TERMINAL_OPTIONS)
     set(cmake_3_4_USES_TERMINAL)
@@ -594,6 +598,7 @@ if (CLANG_ENABLE_BOOTSTRAP)
     SOURCE_DIR ${CMAKE_SOURCE_DIR}
     STAMP_DIR ${STAMP_DIR}
     BINARY_DIR ${BINARY_DIR}
+    ${cmake_3_1_EXCLUDE_FROM_ALL}
     CMAKE_ARGS
                 # We shouldn't need to set this here, but INSTALL_DIR doesn't
                 # seem to work, so instead I'm passing this through
