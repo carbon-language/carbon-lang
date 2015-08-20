@@ -529,7 +529,14 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     {
         // See if we can get register definitions from a python file
         if (ParsePythonTargetDefinition (target_definition_fspec))
+        {
             return;
+        }
+        else
+        {
+            StreamSP stream_sp = GetTarget().GetDebugger().GetAsyncOutputStream();
+            stream_sp->Printf ("ERROR: target description file %s failed to parse.\n", target_definition_fspec.GetPath().c_str());
+        }
     }
 
     if (GetGDBServerRegisterInfo ())
