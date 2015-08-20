@@ -77,3 +77,25 @@ function(darwin_test_archs os valid_archs)
   endforeach()
   set(${valid_archs} ${working_archs} PARENT_SCOPE)
 endfunction()
+
+# This function checks the host cpusubtype to see if it is post-haswell. Haswell
+# and later machines can run x86_64h binaries. Haswell is cpusubtype 8.
+function(darwin_filter_host_archs input output)
+  list_union(tmp_var DARWIN_osx_ARCHS ${input})
+  execute_process(
+    COMMAND sysctl hw.cpusubtype
+    OUTPUT_VARIABLE SUBTYPE)
+
+  string(REGEX MATCH "hw.cpusubtype: ([0-9]*)"
+         SUBTYPE_MATCHED "${SUBTYPE}")
+  set(HASWELL_SUPPORTED Off)
+  if(ARCHES_MATCHED)
+    if(CMAKE_MATCH_1 GREATER_OR_EQUAL_TO 8)
+      set(HASWELL_SUPPORTED On)
+    endif()
+  endif()
+  if(NOT HASWELL_SUPPORTED)
+    list(REMOVE_ITEM tmp_var x86_64h)
+  endif()
+  set(${output} ${tmp_var} PARENT_SCOPE)
+endfunction()

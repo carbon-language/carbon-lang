@@ -238,7 +238,14 @@ function(get_target_flags_for_arch arch out_var)
   if(ARCH_INDEX EQUAL -1)
     message(FATAL_ERROR "Unsupported architecture: ${arch}")
   else()
-    set(${out_var} ${TARGET_${arch}_CFLAGS} PARENT_SCOPE)
+    if (NOT APPLE)
+      set(${out_var} ${TARGET_${arch}_CFLAGS} PARENT_SCOPE)
+    else()
+      # This is only called in constructing cflags for tests executing on the
+      # host. This will need to all be cleaned up to support building tests
+      # for cross-targeted hardware (i.e. iOS).
+      set(${out_var} -arch ${arch} PARENT_SCOPE)
+    endif()
   endif()
 endfunction()
 
