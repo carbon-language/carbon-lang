@@ -33,7 +33,7 @@ if (APPLE)
        OUTPUT_VARIABLE OSX_SYSROOT
        ERROR_QUIET
        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(OSX_SYSROOT_FLAG "-isysroot ${OSX_SYSROOT}")
+    set(OSX_SYSROOT_FLAG "-isysroot${OSX_SYSROOT}")
   endif()
 endif()
 
