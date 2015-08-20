@@ -914,6 +914,9 @@ private:
   /// @return True if the basic block is trivial, otherwise false.
   static bool isTrivialBB(BasicBlock *BB, TempScop &tempScop);
 
+  /// @brief Add parameter constraints to @p C that imply a non-empty domain.
+  __isl_give isl_set *addNonEmptyDomainConstraints(__isl_take isl_set *C) const;
+
   /// @brief Build the Context of the Scop.
   void buildContext();
 
@@ -1071,8 +1074,13 @@ public:
   /// @return The runtime check context of this Scop.
   __isl_give isl_set *getRuntimeCheckContext() const;
 
-  /// @brief Return true if the runtime check context is feasible.
-  bool hasFeasibleRuntimeCheckContext() const;
+  /// @brief Return true if the optimized SCoP can be executed.
+  ///
+  /// In addition to the runtime check context this will also utilize the domain
+  /// constraints to decide it the optimized version can actually be executed.
+  ///
+  /// @returns True if the optimized SCoP can be executed.
+  bool hasFeasibleRuntimeContext() const;
 
   /// @brief Add assumptions to assumed context.
   ///

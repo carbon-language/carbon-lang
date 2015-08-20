@@ -1142,6 +1142,11 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
                       const_cast<void *>((const void *)Parameter));
 }
 
+isl_set *Scop::addNonEmptyDomainConstraints(isl_set *C) const {
+  isl_set *DomainContext = isl_union_set_params(getDomains());
+  return isl_set_intersect_params(C, DomainContext);
+}
+
 void Scop::addUserContext() {
   if (UserContextStr.empty())
     return;
@@ -1627,8 +1632,9 @@ __isl_give isl_set *Scop::getRuntimeCheckContext() const {
   return RuntimeCheckContext;
 }
 
-bool Scop::hasFeasibleRuntimeCheckContext() const {
+bool Scop::hasFeasibleRuntimeContext() const {
   isl_set *RuntimeCheckContext = getRuntimeCheckContext();
+  RuntimeCheckContext = addNonEmptyDomainConstraints(RuntimeCheckContext);
   bool IsFeasible = !isl_set_is_empty(RuntimeCheckContext);
   isl_set_free(RuntimeCheckContext);
   return IsFeasible;
@@ -2062,7 +2068,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   DEBUG(scop->print(dbgs()));
 
-  if (!scop->hasFeasibleRuntimeCheckContext()) {
+  if (!scop->hasFeasibleRuntimeContext()) {
     delete scop;
     scop = nullptr;
     return false;

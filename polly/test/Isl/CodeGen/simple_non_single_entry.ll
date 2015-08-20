@@ -37,6 +37,8 @@ else1:
   br label %next
 
 next:
+  %sg = getelementptr i64, i64* %A, i64 42
+  store i64 undef, i64* %sg
   br i1 true, label %then, label %else
 
 then:

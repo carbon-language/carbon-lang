@@ -1,8 +1,8 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -analyze -polly-scops < %s | FileCheck %s
 ;
-; Check that RTC generation does not die when accesses are dead.
+; Check that we do not create a SCoP if there is no statement executed.
 ;
-; CHECK: Alias Groups (0):
+; CHECK-NOT: Context
 ;
 ;    void jd(int *A, int *B) {
 ;      for (int i = 0; i < 1024; i++)

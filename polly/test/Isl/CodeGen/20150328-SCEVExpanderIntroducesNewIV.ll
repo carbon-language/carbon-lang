@@ -1,5 +1,7 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -S < %s | FileCheck %s
 
+@A = common global [1536 x float] zeroinitializer
+
 ; CHECK: polly
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
@@ -25,6 +27,8 @@ unreachableA:
 
 for.body121:
   %indvar = phi i32 [ 0, %switchbb ], [ %indvar.next, %for.body121 ]
+  %ptr = getelementptr [1536 x float], [1536 x float]* @A, i64 0, i32 %indvar
+  store float undef, float* %ptr
   %indvar.next = add nsw i32 %indvar, 1
   br i1 false, label %for.body121, label %while.cond.loopexit3
 
