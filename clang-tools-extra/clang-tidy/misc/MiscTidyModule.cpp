@@ -18,6 +18,7 @@
 #include "InefficientAlgorithmCheck.h"
 #include "MacroParenthesesCheck.h"
 #include "MacroRepeatedSideEffectsCheck.h"
+#include "MoveConstructorInitCheck.h"
 #include "NoexceptMoveConstructorCheck.h"
 #include "StaticAssertCheck.h"
 #include "SwappedArgumentsCheck.h"
@@ -50,6 +51,8 @@ public:
         "misc-macro-parentheses");
     CheckFactories.registerCheck<MacroRepeatedSideEffectsCheck>(
         "misc-macro-repeated-side-effects");
+    CheckFactories.registerCheck<MoveConstructorInitCheck>(
+        "misc-move-constructor-init");
     CheckFactories.registerCheck<NoexceptMoveConstructorCheck>(
         "misc-noexcept-move-constructor");
     CheckFactories.registerCheck<StaticAssertCheck>(
