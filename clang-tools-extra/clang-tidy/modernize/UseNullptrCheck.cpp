@@ -20,6 +20,7 @@ using namespace llvm;
 namespace clang {
 namespace tidy {
 namespace modernize {
+namespace {
 
 const char CastSequence[] = "sequence";
 
@@ -438,6 +439,7 @@ private:
   Expr *FirstSubExpr;
   bool PruneSubtree;
 };
+} // namespace
 
 UseNullptrCheck::UseNullptrCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
