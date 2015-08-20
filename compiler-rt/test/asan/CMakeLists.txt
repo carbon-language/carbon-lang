@@ -42,7 +42,7 @@ foreach(arch ${ASAN_TEST_ARCH})
     # Build all tests with host compiler and use host tools.
     set(ASAN_TEST_TARGET_CC ${COMPILER_RT_TEST_COMPILER})
     set(ASAN_TEST_TARGET_CFLAGS ${COMPILER_RT_TEST_COMPILER_CFLAGS})
-  elseif(NOT APPLE)
+  else()
     get_target_flags_for_arch(${arch} ASAN_TEST_TARGET_CFLAGS)
     string(REPLACE ";" " " ASAN_TEST_TARGET_CFLAGS "${ASAN_TEST_TARGET_CFLAGS}")
   endif()

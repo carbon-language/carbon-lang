@@ -31,7 +31,7 @@ foreach(tool ${SUPPORTED_TOOLS})
       # This is only true if we're cross-compiling.
       set(SANITIZER_COMMON_TEST_TARGET_CFLAGS
           ${COMPILER_RT_TEST_COMPILER_CFLAGS})
-    elseif(NOT APPLE)
+    else()
       get_target_flags_for_arch(${arch} SANITIZER_COMMON_TEST_TARGET_CFLAGS)
       string(REPLACE ";" " " SANITIZER_COMMON_TEST_TARGET_CFLAGS "${SANITIZER_COMMON_TEST_TARGET_CFLAGS}")
     endif()
