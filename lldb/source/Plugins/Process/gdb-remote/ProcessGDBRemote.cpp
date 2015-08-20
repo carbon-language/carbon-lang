@@ -525,6 +525,11 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     //     3 - Fall back on the qRegisterInfo packets.
 
     FileSpec target_definition_fspec = GetGlobalPluginProperties()->GetTargetDefinitionFile ();
+    if (!target_definition_fspec.Exists())
+    {
+        // If the filename doesn't exist, it may be a ~ not having been expanded - try to resolve it.
+        target_definition_fspec.ResolvePath();
+    }
     if (target_definition_fspec)
     {
         // See if we can get register definitions from a python file
