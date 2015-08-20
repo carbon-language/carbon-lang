@@ -38,7 +38,7 @@
 #ifndef __GLIBCXX__
 
 // Implement all new and delete operators as weak definitions
-// in this shared library, so that they can be overriden by programs
+// in this shared library, so that they can be overridden by programs
 // that define non-weak copies of the functions.
 
 _LIBCPP_WEAK _LIBCPP_NEW_DELETE_VIS
