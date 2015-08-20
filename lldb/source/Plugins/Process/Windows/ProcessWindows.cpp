@@ -568,6 +568,9 @@ ProcessWindows::RefreshStateAfterStop()
     StopInfoSP stop_info;
     m_thread_list.SetSelectedThreadByID(active_exception->GetThreadID());
     ThreadSP stop_thread = m_thread_list.GetSelectedThread();
+    if (!stop_thread)
+        return;
+
     RegisterContextSP register_context = stop_thread->GetRegisterContext();
 
     // The current EIP is AFTER the BP opcode, which is one byte.
