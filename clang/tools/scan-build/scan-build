@@ -1646,14 +1646,20 @@ if ($ForceDisplayHelp || $RequestDisplayHelp) {
 }
 
 $ClangCXX = $Clang;
-# Determine operating system under which this copy of Perl was built.
-my $IsWinBuild = ($^O =~/msys|cygwin|MSWin32/);
-if($IsWinBuild) {
-  $ClangCXX =~ s/.exe$/++.exe/;
-}
-else {
-  $ClangCXX =~ s/\-\d+\.\d+$//;
-  $ClangCXX .= "++";
+if ($Clang !~ /\+\+(\.exe)?$/) {
+  # If $Clang holds the name of the clang++ executable then we leave
+  # $ClangCXX and $Clang equal, otherwise construct the name of the clang++
+  # executable from the clang executable name.
+
+  # Determine operating system under which this copy of Perl was built.
+  my $IsWinBuild = ($^O =~/msys|cygwin|MSWin32/);
+  if($IsWinBuild) {
+    $ClangCXX =~ s/.exe$/++.exe/;
+  }
+  else {
+    $ClangCXX =~ s/\-\d+\.\d+$//;
+    $ClangCXX .= "++";
+  }
 }
 
 # Make sure to use "" to handle paths with spaces.
