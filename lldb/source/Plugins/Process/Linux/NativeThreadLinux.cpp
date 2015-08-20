@@ -418,8 +418,6 @@ NativeThreadLinux::RequestStop ()
         if (log)
             log->Printf ("NativeThreadLinux::%s tgkill(%" PRIu64 ", %" PRIu64 ", SIGSTOP) failed: %s", __FUNCTION__, pid, tid, err.AsCString ());
     }
-    else
-        m_thread_context.stop_requested = true;
 
     return err;
 }

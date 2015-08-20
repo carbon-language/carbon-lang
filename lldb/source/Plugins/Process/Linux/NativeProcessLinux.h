@@ -140,6 +140,8 @@ namespace process_linux {
         std::vector<MemoryRegionInfo> m_mem_region_cache;
         Mutex m_mem_region_cache_mutex;
 
+        lldb::tid_t m_pending_notification_tid;
+
         // List of thread ids stepping with a breakpoint with the address of
         // the relevan breakpoint
         std::map<lldb::tid_t, lldb::addr_t> m_threads_stepping_with_breakpoint;
@@ -300,55 +302,25 @@ namespace process_linux {
         Detach(lldb::tid_t tid);
 
 
-        // Typedefs.
-        typedef std::unordered_set<lldb::tid_t> ThreadIDSet;
-
         // This method is requests a stop on all threads which are still running. It sets up a
         // deferred delegate notification, which will fire once threads report as stopped. The
         // triggerring_tid will be set as the current thread (main stop reason).
         void
         StopRunningThreads(lldb::tid_t triggering_tid);
 
-        struct PendingNotification
-        {
-            PendingNotification (lldb::tid_t triggering_tid):
-                triggering_tid (triggering_tid),
-                wait_for_stop_tids ()
-            {
-            }
-
-            const lldb::tid_t  triggering_tid;
-            ThreadIDSet        wait_for_stop_tids;
-        };
-        typedef std::unique_ptr<PendingNotification> PendingNotificationUP;
-
         // Notify the delegate if all threads have stopped.
         void SignalIfAllThreadsStopped();
 
-        void
-        RequestStopOnAllRunningThreads();
-
+        // Resume the given thread, optionally passing it the given signal. The type of resume
+        // operation (continue, single-step) depends on the state parameter.
         Error
-        ThreadDidStop(lldb::tid_t tid, bool initiated_by_llgs);
-
-        // Resume the thread with the given thread id using the request_thread_resume_function
-        // called. If error_when_already_running is then then an error is raised if we think this
-        // thread is already running.
-        Error
-        ResumeThread(lldb::tid_t tid, NativeThreadLinux::ResumeThreadFunction request_thread_resume_function,
-                bool error_when_already_running);
-
-        void
-        DoStopThreads(PendingNotificationUP &&notification_up);
+        ResumeThread(const NativeThreadLinuxSP &thread_sp, lldb::StateType state, int signo);
 
         void
         ThreadWasCreated (lldb::tid_t tid);
 
         void
         SigchldHandler();
-
-        // Member variables.
-        PendingNotificationUP m_pending_notification_up;
     };
 
 } // namespace process_linux
