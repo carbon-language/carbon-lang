@@ -142,6 +142,24 @@ static cl::list<int>
                          cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated,
                          cl::cat(PollyCategory));
 
+static cl::opt<bool> RegisterTiling("polly-register-tiling",
+                                    cl::desc("Enable register tiling"),
+                                    cl::init(false), cl::ZeroOrMore,
+                                    cl::cat(PollyCategory));
+
+static cl::opt<int> RegisterDefaultTileSize(
+    "polly-register-tiling-default-tile-size",
+    cl::desc("The default register tile size (if not enough were provided by"
+             " --polly-register-tile-sizes)"),
+    cl::Hidden, cl::init(2), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::list<int>
+    RegisterTileSizes("polly-register-tile-sizes",
+                      cl::desc("A tile size for each loop dimension, filled "
+                               "with --polly-register-tile-size"),
+                      cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated,
+                      cl::cat(PollyCategory));
+
 namespace {
 
 class IslScheduleOptimizer : public ScopPass {
@@ -289,6 +307,11 @@ IslScheduleOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
   Node = isl_schedule_node_band_tile(Node, Sizes);
   Node = isl_schedule_node_child(Node, 0);
   Node = isl_schedule_node_band_sink(Node);
+
+  // Make sure the "trivially vectorizable loop" is not unrolled. Otherwise,
+  // we will have troubles to match it in the backend.
+  Node = isl_schedule_node_band_set_ast_build_options(
+      Node, isl_union_set_read_from_str(Ctx, "{unroll[x]: 1 = 0}"));
   Node = isl_schedule_node_child(Node, 0);
   return Node;
 }
@@ -347,6 +370,13 @@ IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
 
   if (SecondLevelTiling)
     Node = tileNode(Node, SecondLevelTileSizes, SecondLevelDefaultTileSize);
+
+  if (RegisterTiling) {
+    auto *Ctx = isl_schedule_node_get_ctx(Node);
+    Node = tileNode(Node, RegisterTileSizes, RegisterDefaultTileSize);
+    Node = isl_schedule_node_band_set_ast_build_options(
+        Node, isl_union_set_read_from_str(Ctx, "{unroll[x]}"));
+  }
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
     return Node;

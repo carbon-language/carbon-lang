@@ -7,6 +7,13 @@
 ; RUN:                -polly-2nd-level-tile-sizes=16,8 < %s | \
 ; RUN: FileCheck %s --check-prefix=TWOLEVEL
 
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-opt-isl -analyze \
+; RUN:                -polly-2nd-level-tiling -polly-ast \
+; RUN:                -polly-tile-sizes=256,16 -polly-no-early-exit \
+; RUN:                -polly-register-tiling \
+; RUN:                -polly-2nd-level-tile-sizes=16,8 < %s | \
+; RUN: FileCheck %s --check-prefix=TWO-PLUS-REGISTER
+
 ; CHECK: for (int c0 = 0; c0 <= 3; c0 += 1)
 ; CHECK:   for (int c1 = 0; c1 <= 31; c1 += 1)
 ; CHECK:     for (int c2 = 0; c2 <= 255; c2 += 1)
@@ -25,6 +32,20 @@
 ; TWOLEVEL:         for (int c4 = 0; c4 <= 15; c4 += 1)
 ; TWOLEVEL:           for (int c5 = 0; c5 <= 7; c5 += 1)
 ; TWOLEVEL:             Stmt_for_body3(256 * c0 + 16 * c2 + c4, 16 * c1 + 8 * c3 + c5);
+
+
+; TWO-PLUS-REGISTER: for (int c0 = 0; c0 <= 3; c0 += 1)
+; TWO-PLUS-REGISTER:   for (int c1 = 0; c1 <= 31; c1 += 1)
+; TWO-PLUS-REGISTER:     for (int c2 = 0; c2 <= 15; c2 += 1)
+; TWO-PLUS-REGISTER:       for (int c3 = 0; c3 <= 1; c3 += 1)
+; TWO-PLUS-REGISTER:         for (int c4 = 0; c4 <= 7; c4 += 1)
+; TWO-PLUS-REGISTER:           for (int c5 = 0; c5 <= 3; c5 += 1) {
+; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4, 16 * c1 + 8 * c3 + 2 * c5);
+; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4, 16 * c1 + 8 * c3 + 2 * c5 + 1);
+; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4 + 1, 16 * c1 + 8 * c3 + 2 * c5);
+; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4 + 1, 16 * c1 + 8 * c3 + 2 * c5 + 1);
+; TWO-PLUS-REGISTER:           }
+
 
 
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
