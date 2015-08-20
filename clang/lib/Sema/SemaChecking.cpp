@@ -525,7 +525,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
 
   // Since the target specific builtins for each arch overlap, only check those
   // of the arch we are compiling for.
-  if (Context.BuiltinInfo.isTSBuiltin(BuiltinID)) {
+  if (BuiltinID >= Builtin::FirstTSBuiltin) {
     switch (Context.getTargetInfo().getTriple().getArch()) {
       case llvm::Triple::arm:
       case llvm::Triple::armeb:
