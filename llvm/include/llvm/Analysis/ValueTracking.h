@@ -20,17 +20,18 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-  class Value;
-  class Instruction;
   class APInt;
-  class DataLayout;
-  class StringRef;
-  class MDNode;
+  class AddOperator;
   class AssumptionCache;
+  class DataLayout;
   class DominatorTree;
-  class TargetLibraryInfo;
-  class LoopInfo;
+  class Instruction;
   class Loop;
+  class LoopInfo;
+  class MDNode;
+  class StringRef;
+  class TargetLibraryInfo;
+  class Value;
 
   /// Determine which bits of V are known to be either zero or one and return
   /// them in the KnownZero/KnownOne bit sets.
@@ -82,6 +83,12 @@ namespace llvm {
                       AssumptionCache *AC = nullptr,
                       const Instruction *CxtI = nullptr,
                       const DominatorTree *DT = nullptr);
+
+  /// Returns true if the give value is known to be non-negative.
+  bool isKnownNonNegative(Value *V, const DataLayout &DL, unsigned Depth = 0,
+                          AssumptionCache *AC = nullptr,
+                          const Instruction *CxtI = nullptr,
+                          const DominatorTree *DT = nullptr);
 
   /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
   /// this predicate to simplify operations downstream.  Mask is known to be
@@ -309,6 +316,17 @@ namespace llvm {
                                                AssumptionCache *AC,
                                                const Instruction *CxtI,
                                                const DominatorTree *DT);
+  OverflowResult computeOverflowForSignedAdd(Value *LHS, Value *RHS,
+                                             const DataLayout &DL,
+                                             AssumptionCache *AC = nullptr,
+                                             const Instruction *CxtI = nullptr,
+                                             const DominatorTree *DT = nullptr);
+  /// This version also leverages the sign bit of Add if known.
+  OverflowResult computeOverflowForSignedAdd(AddOperator *Add,
+                                             const DataLayout &DL,
+                                             AssumptionCache *AC = nullptr,
+                                             const Instruction *CxtI = nullptr,
+                                             const DominatorTree *DT = nullptr);
 
   /// Return true if this function can prove that the instruction I will
   /// always transfer execution to one of its successors (including the next

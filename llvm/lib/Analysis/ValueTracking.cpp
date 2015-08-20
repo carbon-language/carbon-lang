@@ -185,6 +185,14 @@ bool llvm::isKnownNonZero(Value *V, const DataLayout &DL, unsigned Depth,
   return ::isKnownNonZero(V, DL, Depth, Query(AC, safeCxtI(V, CxtI), DT));
 }
 
+bool llvm::isKnownNonNegative(Value *V, const DataLayout &DL, unsigned Depth,
+                              AssumptionCache *AC, const Instruction *CxtI,
+                              const DominatorTree *DT) {
+  bool NonNegative, Negative;
+  ComputeSignBit(V, NonNegative, Negative, DL, Depth, AC, CxtI, DT);
+  return NonNegative;
+}
+
 static bool MaskedValueIsZero(Value *V, const APInt &Mask, const DataLayout &DL,
                               unsigned Depth, const Query &Q);
 
@@ -3368,6 +3376,67 @@ OverflowResult llvm::computeOverflowForUnsignedAdd(Value *LHS, Value *RHS,
   }
 
   return OverflowResult::MayOverflow;
+}
+
+static OverflowResult computeOverflowForSignedAdd(
+    Value *LHS, Value *RHS, AddOperator *Add, const DataLayout &DL,
+    AssumptionCache *AC, const Instruction *CxtI, const DominatorTree *DT) {
+  if (Add && Add->hasNoSignedWrap()) {
+    return OverflowResult::NeverOverflows;
+  }
+
+  bool LHSKnownNonNegative, LHSKnownNegative;
+  bool RHSKnownNonNegative, RHSKnownNegative;
+  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, DL, /*Depth=*/0,
+                 AC, CxtI, DT);
+  ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, DL, /*Depth=*/0,
+                 AC, CxtI, DT);
+
+  if ((LHSKnownNonNegative && RHSKnownNegative) ||
+      (LHSKnownNegative && RHSKnownNonNegative)) {
+    // The sign bits are opposite: this CANNOT overflow.
+    return OverflowResult::NeverOverflows;
+  }
+
+  // The remaining code needs Add to be available. Early returns if not so.
+  if (!Add)
+    return OverflowResult::MayOverflow;
+
+  // If the sign of Add is the same as at least one of the operands, this add
+  // CANNOT overflow. This is particularly useful when the sum is
+  // @llvm.assume'ed non-negative rather than proved so from analyzing its
+  // operands.
+  bool LHSOrRHSKnownNonNegative =
+      (LHSKnownNonNegative || RHSKnownNonNegative);
+  bool LHSOrRHSKnownNegative = (LHSKnownNegative || RHSKnownNegative);
+  if (LHSOrRHSKnownNonNegative || LHSOrRHSKnownNegative) {
+    bool AddKnownNonNegative, AddKnownNegative;
+    ComputeSignBit(Add, AddKnownNonNegative, AddKnownNegative, DL,
+                   /*Depth=*/0, AC, CxtI, DT);
+    if ((AddKnownNonNegative && LHSOrRHSKnownNonNegative) ||
+        (AddKnownNegative && LHSOrRHSKnownNegative)) {
+      return OverflowResult::NeverOverflows;
+    }
+  }
+
+  return OverflowResult::MayOverflow;
+}
+
+OverflowResult llvm::computeOverflowForSignedAdd(AddOperator *Add,
+                                                 const DataLayout &DL,
+                                                 AssumptionCache *AC,
+                                                 const Instruction *CxtI,
+                                                 const DominatorTree *DT) {
+  return ::computeOverflowForSignedAdd(Add->getOperand(0), Add->getOperand(1),
+                                       Add, DL, AC, CxtI, DT);
+}
+
+OverflowResult llvm::computeOverflowForSignedAdd(Value *LHS, Value *RHS,
+                                                 const DataLayout &DL,
+                                                 AssumptionCache *AC,
+                                                 const Instruction *CxtI,
+                                                 const DominatorTree *DT) {
+  return ::computeOverflowForSignedAdd(LHS, RHS, nullptr, DL, AC, CxtI, DT);
 }
 
 bool llvm::isGuaranteedToTransferExecutionToSuccessor(const Instruction *I) {
