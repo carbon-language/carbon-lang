@@ -1055,7 +1055,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
   auto I = OverDefinedCache.find(OldSucc);
   if (I == OverDefinedCache.end())
     return; // Nothing to process here.
-  SmallPtrSetImpl<Value *> &ClearSet = I->second;
+  SmallPtrSet<Value *, 4> ClearSet(I->second.begin(), I->second.end());
 
   // Use a worklist to perform a depth-first search of OldSucc's successors.
   // NOTE: We do not need a visited list since any blocks we have already
