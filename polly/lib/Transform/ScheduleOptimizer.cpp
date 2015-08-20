@@ -257,8 +257,9 @@ IslScheduleOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
   return Node;
 }
 
-isl_schedule_node *IslScheduleOptimizer::optimizeBand(isl_schedule_node *Node,
-                                                      void *User) {
+__isl_give isl_schedule_node *
+IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
+                                   void *User) {
   if (isl_schedule_node_get_type(Node) != isl_schedule_node_band)
     return Node;
 
