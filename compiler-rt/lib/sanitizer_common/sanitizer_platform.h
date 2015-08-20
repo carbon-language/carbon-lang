@@ -83,12 +83,11 @@
 
 // VMA size definition for architecture that support multiple sizes.
 // AArch64 has 3 VMA sizes: 39, 42 and 48.
-#if SANITIZER_LINUX && defined(__aarch64__)
+#if !defined(SANITIZER_AARCH64_VMA)
+# define SANITIZER_AARCH64_VMA 39
+#else
 # if SANITIZER_AARCH64_VMA != 39 && SANITIZER_AARCH64_VMA != 42
 #  error "invalid SANITIZER_AARCH64_VMA size"
-# endif
-# ifndef SANITIZER_AARCH64_VMA
-#  define SANITIZER_AARCH64_VMA 39
 # endif
 #endif
 
