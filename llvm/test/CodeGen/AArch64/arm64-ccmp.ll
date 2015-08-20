@@ -337,9 +337,9 @@ define i16 @select_complicated(double %v1, double %v2, i16 %a, i16 %b) {
 
 ; CHECK-LABEL: gccbug
 define i64 @gccbug(i64 %x0, i64 %x1) {
-; CHECK: cmp x1, #0
-; CHECK-NEXT: ccmp x0, #2, #0, eq
+; CHECK: cmp x0, #2
 ; CHECK-NEXT: ccmp x0, #4, #4, ne
+; CHECK-NEXT: ccmp x1, #0, #0, eq
 ; CHECK-NEXT: orr w[[REGNUM:[0-9]+]], wzr, #0x1
 ; CHECK-NEXT: cinc x0, x[[REGNUM]], eq
 ; CHECK-NEXT: ret
@@ -370,6 +370,22 @@ define i32 @select_ororand(i32 %w0, i32 %w1, i32 %w2, i32 %w3) {
   %and = and i1 %c2, %c4
   %or1 = or i1 %or, %and
   %sel = select i1 %or1, i32 %w3, i32 0
+  ret i32 %sel
+}
+
+; CHECK-LABEL: select_andor
+define i32 @select_andor(i32 %v1, i32 %v2, i32 %v3) {
+; CHECK: cmp w1, w2
+; CHECK-NEXT: ccmp w0, #0, #4, lt
+; CHECK-NEXT: ccmp w0, w1, #0, eq
+; CHECK-NEXT: csel w0, w0, w1, eq
+; CHECK-NEXT: ret
+  %c0 = icmp eq i32 %v1, %v2
+  %c1 = icmp sge i32 %v2, %v3
+  %c2 = icmp eq i32 %v1, 0
+  %or = or i1 %c2, %c1
+  %and = and i1 %or, %c0
+  %sel = select i1 %and, i32 %v1, i32 %v2
   ret i32 %sel
 }
 

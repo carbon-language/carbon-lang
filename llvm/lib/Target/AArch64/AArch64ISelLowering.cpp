@@ -1374,10 +1374,17 @@ static SDValue emitConjunctionDisjunctionTree(SelectionDAG &DAG, SDValue Val,
     if (!CanPushNegateL && !CanPushNegateR)
       return SDValue();
     // Order the side where we can push the negate through to LHS.
-    if (!CanPushNegateL && CanPushNegateR) {
+    if (!CanPushNegateL && CanPushNegateR)
       std::swap(LHS, RHS);
-      CanPushNegateL = true;
-    }
+  } else {
+    bool NeedsNegOutL = LHS->getOpcode() == ISD::OR;
+    bool NeedsNegOutR = RHS->getOpcode() == ISD::OR;
+    if (NeedsNegOutL && NeedsNegOutR)
+      return SDValue();
+    // Order the side where we need to negate the output flags to RHS so it
+    // gets emitted first.
+    if (NeedsNegOutL)
+      std::swap(LHS, RHS);
   }
 
   // Emit RHS. If we want to negate the tree we only need to push a negate
