@@ -139,6 +139,21 @@
 # define KMP_ARCH_ARM 1
 #endif
 
+#if defined(__MIC__) || defined(__MIC2__)
+# define KMP_MIC  1
+# if __MIC2__ || __KNC__
+#  define KMP_MIC1 0
+#  define KMP_MIC2 1
+# else
+#  define KMP_MIC1 1
+#  define KMP_MIC2 0
+# endif
+#else
+# define KMP_MIC  0
+# define KMP_MIC1 0
+# define KMP_MIC2 0
+#endif
+
 // TODO: Fixme - This is clever, but really fugly
 #if (1 != KMP_ARCH_X86 + KMP_ARCH_X86_64 + KMP_ARCH_ARM + KMP_ARCH_PPC64 + KMP_ARCH_AARCH64)
 # error Unknown or unsupported architecture

@@ -20,7 +20,7 @@
 
 #if KMP_ARCH_X86 || KMP_ARCH_X86_64
 
-# if __MIC__ || __MIC2__
+# if KMP_MIC
 //
 // the 'delay r16/r32/r64' should be used instead of the 'pause'.
 // The delay operation has the effect of removing the current thread from
@@ -43,9 +43,9 @@
 //.endm
 # else
 #  define pause_op   .byte 0xf3,0x90
-# endif // __MIC__ || __MIC2__
+# endif // KMP_MIC
 
-# if defined __APPLE__ && defined __MACH__
+# if KMP_OS_DARWIN
 #  define KMP_PREFIX_UNDERSCORE(x) _##x  // extra underscore for OS X* symbols
 #  define KMP_LABEL(x) L_##x             // form the name of label
 .macro KMP_CFI_DEF_OFFSET
@@ -69,15 +69,15 @@
 	.globl KMP_PREFIX_UNDERSCORE($0)
 KMP_PREFIX_UNDERSCORE($0):
 .endmacro
-# else // defined __APPLE__ && defined __MACH__
+# else // KMP_OS_DARWIN
 #  define KMP_PREFIX_UNDERSCORE(x) x  // no extra underscore for Linux* OS symbols
 // Format labels so that they don't override function names in gdb's backtraces
 // MIC assembler doesn't accept .L syntax, the L works fine there (as well as on OS X*)
-# if __MIC__ || __MIC2__
+# if KMP_MIC
 #  define KMP_LABEL(x) L_##x          // local label
 # else
 #  define KMP_LABEL(x) .L_##x         // local label hidden from backtraces
-# endif // __MIC__ || __MIC2__
+# endif // KMP_MIC
 .macro ALIGN size
 	.align 1<<(\size)
 .endm
@@ -106,7 +106,7 @@ KMP_PREFIX_UNDERSCORE(\proc):
 .macro KMP_CFI_DEF reg, sz
 	.cfi_def_cfa	\reg,\sz
 .endm
-# endif // defined __APPLE__ && defined __MACH__
+# endif // KMP_OS_DARWIN
 #endif // KMP_ARCH_X86 || KMP_ARCH_x86_64
 
 
@@ -124,7 +124,7 @@ KMP_PREFIX_UNDERSCORE(\proc):
 //
 
 # if KMP_ARCH_X86
-#  if defined __APPLE__ && defined __MACH__
+#  if KMP_OS_DARWIN
         .data
         .comm .gomp_critical_user_,32
         .data
@@ -141,11 +141,11 @@ __kmp_unnamed_critical_addr:
         .4byte .gomp_critical_user_
         .type __kmp_unnamed_critical_addr,@object
         .size __kmp_unnamed_critical_addr,4
-#  endif /* defined __APPLE__ && defined __MACH__ */
+#  endif /* KMP_OS_DARWIN */
 # endif /* KMP_ARCH_X86 */
 
 # if KMP_ARCH_X86_64
-#  if defined __APPLE__ && defined __MACH__
+#  if KMP_OS_DARWIN
         .data
         .comm .gomp_critical_user_,32
         .data
@@ -162,7 +162,7 @@ __kmp_unnamed_critical_addr:
         .8byte .gomp_critical_user_
         .type __kmp_unnamed_critical_addr,@object
         .size __kmp_unnamed_critical_addr,8
-#  endif /* defined __APPLE__ && defined __MACH__ */
+#  endif /* KMP_OS_DARWIN */
 # endif /* KMP_ARCH_X86_64 */
 
 #endif /* KMP_GOMP_COMPAT */
@@ -1078,7 +1078,7 @@ KMP_LABEL(invoke_3):
 # endif /* !KMP_ASM_INTRINS */
 
 
-# if ! (__MIC__ || __MIC2__)
+# if !KMP_MIC
 
 # if !KMP_ASM_INTRINS
 
@@ -1137,7 +1137,7 @@ KMP_LABEL(invoke_3):
         DEBUG_INFO __kmp_xchg_real64
 
 
-# endif /* !(__MIC__ || __MIC2__) */
+# endif /* !KMP_MIC */
 
 # endif /* !KMP_ASM_INTRINS */
 
@@ -1194,7 +1194,7 @@ KMP_LABEL(invoke_3):
         .text
         PROC  __kmp_clear_x87_fpu_status_word
 
-#if __MIC__ || __MIC2__
+#if KMP_MIC
 // TODO: remove the workaround for problem with fnclex instruction (no CQ known)
         fstenv  -32(%rsp)              // store FP env
         andw    $~0x80ff, 4-32(%rsp)   // clear 0-7,15 bits of FP SW
@@ -1271,7 +1271,7 @@ __tid = -24
 	movq	%rcx, %rax	// Stack alignment calculation begins; argc -> %rax
 	movq	$0, %rbx	// constant for cmovs later
 	subq	$4, %rax	// subtract four args passed in registers to pkfn
-#if __MIC__ || __MIC2__
+#if KMP_MIC
 	js	KMP_LABEL(kmp_0)	// jump to movq
 	jmp	KMP_LABEL(kmp_0_exit)	// jump ahead
 KMP_LABEL(kmp_0):
@@ -1279,7 +1279,7 @@ KMP_LABEL(kmp_0):
 KMP_LABEL(kmp_0_exit):
 #else
 	cmovsq	%rbx, %rax	// zero negative value in %rax <- max(0, argc-4)
-#endif // __MIC__ || __MIC2__
+#endif // KMP_MIC
 
 	movq	%rax, %rsi	// save max(0, argc-4) -> %rsi for later
 	shlq 	$3, %rax	// Number of bytes used on stack: max(0, argc-4)*8
@@ -1328,7 +1328,7 @@ KMP_LABEL(kmp_invoke_pass_parms):	// put 1st - 6th parms to pkfn in registers.
 
 	movq	%r8, %r11	// p_argv -> %r11
 
-#if __MIC__ || __MIC2__
+#if KMP_MIC
 	cmpq	$4, %rax	// argc >= 4?
 	jns	KMP_LABEL(kmp_4)	// jump to movq
 	jmp	KMP_LABEL(kmp_4_exit)	// jump ahead
@@ -1368,7 +1368,7 @@ KMP_LABEL(kmp_1_exit):
 
 	cmpq	$1, %rax	// argc >= 1?
 	cmovnsq	(%r11), %rdx	// p_argv[0] -> %rdx (store 3rd parm to pkfn)
-#endif // __MIC__ || __MIC2__
+#endif // KMP_MIC
 
 	call	*%rbx		// call (*pkfn)();
 	movq	$1, %rax	// move 1 into return register;
@@ -1436,7 +1436,7 @@ __kmp_unnamed_critical_addr:
     .size __kmp_unnamed_critical_addr,8
 #endif /* KMP_ARCH_PPC64 || KMP_ARCH_AARCH64 */
 
-#if defined(__linux__)
+#if KMP_OS_LINUX
 # if KMP_ARCH_ARM
 .section .note.GNU-stack,"",%progbits
 # else

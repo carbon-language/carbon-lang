@@ -281,22 +281,6 @@ extern "C" {
 # define KMP_ALIGN(bytes)     __declspec( align(bytes) )
 #endif
 
-#if defined(__MIC__) || defined(__MIC2__)
-    #define KMP_MIC  1
-// Intel(R) Composer XE (13.0) defines both __MIC__ and __MIC2__ !
-# if __MIC2__ || __KNC__
-    #define KMP_MIC1 0
-    #define KMP_MIC2 1
-# else
-    #define KMP_MIC1 1
-    #define KMP_MIC2 0
-# endif
-#else
-    #define KMP_MIC  0
-    #define KMP_MIC1 0
-    #define KMP_MIC2 0
-#endif
-
 /* General purpose fence types for memory operations */
 enum kmp_mem_fence_type {
     kmp_no_fence,         /* No memory fence */
