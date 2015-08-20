@@ -442,7 +442,7 @@ with strict checks. `Lit`_ tests allow using partial text matching and regular
 expressions which makes them more suitable for writing compact tests for
 diagnostic messages.
 
-The ``check_clang_tidy.sh`` script provides an easy way to test both
+The ``check_clang_tidy.py`` script provides an easy way to test both
 diagnostic messages and fix-its. It filters out ``CHECK`` lines from the test
 file, runs :program:`clang-tidy` and verifies messages and fixes with two
 separate `FileCheck`_ invocations. To use the script, put a .cpp file with the
@@ -454,12 +454,11 @@ It's advised to make the checks as specific as possible to avoid checks matching
 to incorrect parts of the input. Use ``[[@LINE+X]]``/``[[@LINE-X]]``
 substitutions and distinct function and variable names in the test code.
 
-Here's an example of a test using the ``check_clang_tidy.sh`` script:
+Here's an example of a test using the ``check_clang_tidy.py`` script:
 
 .. code-block:: bash
 
-  // RUN: $(dirname %s)/check_clang_tidy.sh %s google-readability-casting %t
-  // REQUIRES: shell
+  // RUN: %python %S/check_clang_tidy.py %s google-readability-casting %t
 
   void f(int a) {
     int b = (int)a;
