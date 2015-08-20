@@ -36,6 +36,10 @@ Assumptions (TODO: shouldn't need to assume these.):
 For more logging, set the  env variables:
    zaks:TI zaks$ export CCC_ANALYZER_LOG=1
    zaks:TI zaks$ export CCC_ANALYZER_VERBOSE=1
+   
+The list of checkers tested are hardcoded in the Checkers variable.
+For testing additional checkers, use the SA_ADDITIONAL_CHECKERS environment
+variable. It should contain a comma separated list.
 """
 import CmpRuns
 
@@ -592,5 +596,8 @@ if __name__ == '__main__':
     elif Args.update_reference:
         IsReference = True
         UpdateSVN = True
+
+    if os.environ.has_key('SA_ADDITIONAL_CHECKERS'):
+        Checkers = Checkers + ',' + os.environ['SA_ADDITIONAL_CHECKERS']
 
     testAll(IsReference, UpdateSVN, Strictness)
