@@ -4615,7 +4615,7 @@ ProcessGDBRemote::GetLoadedModuleList (GDBLoadedModuleInfoList & list)
                 module.get_base (base);
                 module.get_dynamic (ld);
 
-                log->Printf ("found (link_map:0x08%" PRIx64 ", base:0x08%" PRIx64 ", ld:0x08%" PRIx64 ", name:'%s')", lm, base, ld, name.c_str());
+                log->Printf ("found (link_map:0x%08" PRIx64 ", base:0x%08" PRIx64 ", ld:0x%08" PRIx64 ", name:'%s')", lm, base, ld, name.c_str());
             }
 
             list.add (module);
@@ -4665,7 +4665,7 @@ ProcessGDBRemote::GetLoadedModuleList (GDBLoadedModuleInfoList & list)
                 module.get_name (name);
                 module.get_base (base);
 
-                log->Printf ("found (base:0x%" PRIx64 ", name:'%s')", base, name.c_str());
+                log->Printf ("found (base:0x%08" PRIx64 ", name:'%s')", base, name.c_str());
             }
 
             list.add (module);
