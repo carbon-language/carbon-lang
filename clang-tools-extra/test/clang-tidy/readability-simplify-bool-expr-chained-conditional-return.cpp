@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-simplify-boolean-expr %t -config="{CheckOptions: [{key: "readability-simplify-boolean-expr.ChainedConditionalReturn", value: 1}]}" --
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s readability-simplify-boolean-expr %t -config="{CheckOptions: [{key: "readability-simplify-boolean-expr.ChainedConditionalReturn", value: 1}]}" --
 
 bool chained_conditional_compound_return(int i) {
   if (i < 0) {

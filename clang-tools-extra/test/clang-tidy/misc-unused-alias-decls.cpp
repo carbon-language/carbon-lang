@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-unused-alias-decls %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s misc-unused-alias-decls %t
 
 namespace my_namespace {
 class C {};

@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s google-runtime-operator %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s google-runtime-operator %t
 
 struct Foo {
   void *operator&();

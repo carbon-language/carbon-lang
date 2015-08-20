@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-braces-around-statements %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s readability-braces-around-statements %t
 
 void do_something(const char *) {}
 

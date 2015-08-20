@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-identifier-naming %t \
+// RUN: %python %S/check_clang_tidy.py %s readability-identifier-naming %t \
 // RUN:   -config='{CheckOptions: [ \
 // RUN:     {key: readability-identifier-naming.AbstractClassCase, value: CamelCase}, \
 // RUN:     {key: readability-identifier-naming.AbstractClassPrefix, value: 'A'}, \
@@ -63,7 +63,6 @@
 // RUN:     {key: readability-identifier-naming.VirtualMethodPrefix, value: 'v_'}, \
 // RUN:     {key: readability-identifier-naming.IgnoreFailedSplit, value: 0} \
 // RUN:   ]}' -- -std=c++11 -fno-delayed-template-parsing
-// REQUIRES: shell
 
 // FIXME: There should be more test cases for checking that references to class
 // FIXME: name, declaration contexts, forward declarations, etc, are correctly

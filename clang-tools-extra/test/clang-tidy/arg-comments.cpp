@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-argument-comment %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s misc-argument-comment %t
 
 // FIXME: clang-tidy should provide a -verify mode to make writing these checks
 // easier and more accurate.

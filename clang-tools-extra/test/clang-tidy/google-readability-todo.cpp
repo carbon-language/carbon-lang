@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s google-readability-todo %t -config="{User: 'some user'}" --
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s google-readability-todo %t -config="{User: 'some user'}" --
 
 //   TODOfix this1
 // CHECK-MESSAGES: [[@LINE-1]]:1: warning: missing username/bug in TODO

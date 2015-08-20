@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-named-parameter %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s readability-named-parameter %t
 
 void Method(char *) { /* */ }
 // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: all parameters should be named in a function

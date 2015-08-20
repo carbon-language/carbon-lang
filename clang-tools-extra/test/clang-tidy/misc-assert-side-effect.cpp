@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,assert2,my_assert'}]}" -- -fexceptions
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,assert2,my_assert'}]}" -- -fexceptions
 
 //===--- assert definition block ------------------------------------------===//
 int abort() { return 0; }

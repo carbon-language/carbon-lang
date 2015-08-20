@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-use-override %t -- -std=c++98
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s misc-use-override %t -- -std=c++98
 
 struct Base {
   virtual ~Base() {}

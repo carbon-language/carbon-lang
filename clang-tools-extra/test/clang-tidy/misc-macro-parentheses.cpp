@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-macro-parentheses %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s misc-macro-parentheses %t
 
 #define BAD1              -1
 // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: macro replacement list should be enclosed in parentheses [misc-macro-parentheses]

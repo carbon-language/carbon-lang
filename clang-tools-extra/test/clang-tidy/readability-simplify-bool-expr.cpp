@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-simplify-boolean-expr %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s readability-simplify-boolean-expr %t
 
 bool a1 = false;
 

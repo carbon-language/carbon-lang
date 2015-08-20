@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s llvm-include-order %t -- -isystem %S/Inputs/Headers
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s llvm-include-order %t -- -isystem %S/Inputs/Headers
 
 // FIXME: Investigating.
 // XFAIL: win32

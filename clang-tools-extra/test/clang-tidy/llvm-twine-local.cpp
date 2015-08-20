@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s llvm-twine-local %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s llvm-twine-local %t
 
 namespace llvm {
 class Twine {

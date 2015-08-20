@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s modernize-pass-by-value %t -- -std=c++11 -fno-delayed-template-parsing
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s modernize-pass-by-value %t -- -std=c++11 -fno-delayed-template-parsing
 
 // CHECK-FIXES: #include <utility>
 

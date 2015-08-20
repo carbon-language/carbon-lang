@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s readability-braces-around-statements %t -config="{CheckOptions: [{key: readability-braces-around-statements.ShortStatementLines, value: 4}]}" --
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s readability-braces-around-statements %t -config="{CheckOptions: [{key: readability-braces-around-statements.ShortStatementLines, value: 4}]}" --
 
 void do_something(const char *) {}
 

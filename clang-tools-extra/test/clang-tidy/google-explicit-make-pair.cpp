@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s google-build-explicit-make-pair %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s google-build-explicit-make-pair %t
 
 namespace std {
 template <class T1, class T2>

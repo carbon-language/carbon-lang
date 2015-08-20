@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s modernize-loop-convert %t -- -std=c++11 -I %S/Inputs/modernize-loop-convert
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s modernize-loop-convert %t -- -std=c++11 -I %S/Inputs/modernize-loop-convert
 
 #include "structures.h"
 

@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s google-explicit-constructor %t
-// REQUIRES: shell
+// RUN: %python %S/check_clang_tidy.py %s google-explicit-constructor %t
 
 namespace std {
   typedef decltype(sizeof(int)) size_t;
