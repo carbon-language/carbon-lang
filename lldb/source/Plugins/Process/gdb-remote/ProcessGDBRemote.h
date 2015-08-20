@@ -452,7 +452,7 @@ protected:
     GetLoadedModuleList (GDBLoadedModuleInfoList &);
 
     lldb::ModuleSP
-    LoadModuleAtAddress (const FileSpec &file, lldb::addr_t base_addr);
+    LoadModuleAtAddress (const FileSpec &file, lldb::addr_t base_addr, bool value_is_offset);
 
 private:
     //------------------------------------------------------------------
