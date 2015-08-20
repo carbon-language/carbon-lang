@@ -714,3 +714,8 @@ vcomiss xmm0, DWORD PTR [eax]
 // CHECK: comiss (%eax), %xmm0
 // CHECK: vcomisd (%eax), %xmm0
 // CHECK: vcomiss (%eax), %xmm0
+
+fbld tbyte ptr [eax]
+fbstp tbyte ptr [eax]
+// CHECK: fbld (%eax)
+// CHECK: fbstp (%eax)

@@ -311,8 +311,8 @@ def FNSTSWm  : FPI<0xDD, MRM7m, (outs f32mem:$dst), (ins), "fnstsw\t$dst">;
 def FICOM16m : FPI<0xDE, MRM2m, (outs), (ins i16mem:$src), "ficom{s}\t$src">;
 def FICOMP16m: FPI<0xDE, MRM3m, (outs), (ins i16mem:$src), "ficomp{s}\t$src">;
 
-def FBLDm    : FPI<0xDF, MRM4m, (outs), (ins f32mem:$src), "fbld\t$src">;
-def FBSTPm   : FPI<0xDF, MRM6m, (outs f32mem:$dst), (ins), "fbstp\t$dst">;
+def FBLDm    : FPI<0xDF, MRM4m, (outs), (ins f80mem:$src), "fbld\t$src">;
+def FBSTPm   : FPI<0xDF, MRM6m, (outs f80mem:$dst), (ins), "fbstp\t$dst">;
 
 // Floating point cmovs.
 class FpIf32CMov<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
