@@ -80,6 +80,13 @@
 // || `[0x1000000000, 0x11ffffffff]` || lowshadow  ||
 // || `[0x0000000000, 0x0fffffffff]` || lowmem     ||
 //
+// Default Linux/AArch64 (42-bit VMA) mapping:
+// || `[0x10000000000, 0x3ffffffffff]` || highmem    ||
+// || `[0x0a000000000, 0x0ffffffffff]` || highshadow ||
+// || `[0x09000000000, 0x09fffffffff]` || shadowgap  ||
+// || `[0x08000000000, 0x08fffffffff]` || lowshadow  ||
+// || `[0x00000000000, 0x07fffffffff]` || lowmem     ||
+//
 // Shadow mapping on FreeBSD/x86-64 with SHADOW_OFFSET == 0x400000000000:
 // || `[0x500000000000, 0x7fffffffffff]` || HighMem    ||
 // || `[0x4a0000000000, 0x4fffffffffff]` || HighShadow ||
@@ -111,7 +118,11 @@ static const u64 kIosShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kIosShadowOffset64 = 0x130000000;
 static const u64 kIosSimShadowOffset32 = 1ULL << 30;
 static const u64 kIosSimShadowOffset64 = kDefaultShadowOffset64;
+#if SANITIZER_AARCH64_VMA == 39
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
+#elif SANITIZER_AARCH64_VMA == 42
+static const u64 kAArch64_ShadowOffset64 = 1ULL << 39;
+#endif
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa0000;
 static const u64 kMIPS64_ShadowOffset64 = 1ULL << 37;
 static const u64 kPPC64_ShadowOffset64 = 1ULL << 41;

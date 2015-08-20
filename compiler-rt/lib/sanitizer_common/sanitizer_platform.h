@@ -81,13 +81,24 @@
 # define SANITIZER_X32 0
 #endif
 
+// VMA size definition for architecture that support multiple sizes.
+// AArch64 has 3 VMA sizes: 39, 42 and 48.
+#if SANITIZER_LINUX && defined(__aarch64__)
+# if SANITIZER_AARCH64_VMA != 39 && SANITIZER_AARCH64_VMA != 42
+#  error "invalid SANITIZER_AARCH64_VMA size"
+# endif
+# ifndef SANITIZER_AARCH64_VMA
+#  define SANITIZER_AARCH64_VMA 39
+# endif
+#endif
+
 // By default we allow to use SizeClassAllocator64 on 64-bit platform.
 // But in some cases (e.g. AArch64's 39-bit address space) SizeClassAllocator64
 // does not work well and we need to fallback to SizeClassAllocator32.
 // For such platforms build this code with -DSANITIZER_CAN_USE_ALLOCATOR64=0 or
 // change the definition of SANITIZER_CAN_USE_ALLOCATOR64 here.
 #ifndef SANITIZER_CAN_USE_ALLOCATOR64
-# if defined(__aarch64__) || defined(__mips64)
+# if defined(__mips64) || (defined(__aarch64__) && SANITIZER_AARCH64_VMA == 39)
 #  define SANITIZER_CAN_USE_ALLOCATOR64 0
 # else
 #  define SANITIZER_CAN_USE_ALLOCATOR64 (SANITIZER_WORDSIZE == 64)
@@ -99,7 +110,11 @@
 // e.g. on AArch64 it is most likely (1ULL << 39). Larger values will still work
 // but will consume more memory for TwoLevelByteMap.
 #if defined(__aarch64__)
-# define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 39)
+# if SANITIZER_AARCH64_VMA == 39
+#  define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 39)
+# elif SANITIZER_AARCH64_VMA == 42
+#  define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 42)
+# endif
 #elif defined(__mips__)
 # define SANITIZER_MMAP_RANGE_SIZE FIRST_32_SECOND_64(1ULL << 32, 1ULL << 40)
 #else
@@ -130,7 +145,7 @@
 #define SANITIZER_USES_UID16_SYSCALLS 0
 #endif
 
-#if defined(__mips__) || defined(__aarch64__)
+#if defined(__mips__) || (defined(__aarch64__) && SANITIZER_AARCH64_VMA == 39)
 # define SANITIZER_POINTER_FORMAT_LENGTH FIRST_32_SECOND_64(8, 10)
 #else
 # define SANITIZER_POINTER_FORMAT_LENGTH FIRST_32_SECOND_64(8, 12)

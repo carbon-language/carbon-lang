@@ -114,6 +114,11 @@ struct AsanMapUnmapCallback {
 # if defined(__powerpc64__)
 const uptr kAllocatorSpace =  0xa0000000000ULL;
 const uptr kAllocatorSize  =  0x20000000000ULL;  // 2T.
+# elif defined(__aarch64__)
+// AArch64/SANITIZIER_CAN_USER_ALLOCATOR64 is only for 42-bit VMA
+// so no need to different values for different VMA.
+const uptr kAllocatorSpace =  0x10000000000ULL;
+const uptr kAllocatorSize  =  0x10000000000ULL;  // 3T.
 # else
 const uptr kAllocatorSpace = 0x600000000000ULL;
 const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
