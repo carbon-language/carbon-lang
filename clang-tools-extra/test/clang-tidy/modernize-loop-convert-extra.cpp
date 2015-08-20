@@ -605,4 +605,25 @@ void different_type() {
   }
 }
 
+} // namespace SingleIterator
+
+
+namespace Macros {
+
+const int N = 10;
+int arr[N];
+
+void messing_with_macros() {
+  for (int i = 0; i < N; ++i) {
+    printf("Value: %d\n", arr[i]);
+  }
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : arr) {
+  // CHECK-FIXES-NEXT:  printf("Value: %d\n", elem);
+
+  for (int i = 0; i < N; ++i) {
+    printf("Value: %d\n", CONT arr[i]);
+  }
 }
+
+} // namespace Macros

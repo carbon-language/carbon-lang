@@ -337,8 +337,9 @@ static StringRef getStringFromRange(SourceManager &SourceMgr,
                                     const LangOptions &LangOpts,
                                     SourceRange Range) {
   if (SourceMgr.getFileID(Range.getBegin()) !=
-      SourceMgr.getFileID(Range.getEnd()))
-    return nullptr;
+      SourceMgr.getFileID(Range.getEnd())) {
+    return StringRef(); // Empty string.
+  }
 
   return Lexer::getSourceText(CharSourceRange(Range, true), SourceMgr,
                               LangOpts);

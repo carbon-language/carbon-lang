@@ -176,4 +176,15 @@ struct RValueDerefContainer {
   iterator begin() const;
   iterator end() const;
 };
+
+namespace Macros {
+
+struct MacroStruct {
+  int arr[10];
+};
+static MacroStruct *MacroSt;
+#define CONT MacroSt->
+
+} // namespace Macros
+
 #endif  // STRUCTURES_H
