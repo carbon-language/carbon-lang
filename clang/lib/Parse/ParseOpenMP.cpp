@@ -708,7 +708,7 @@ static bool ParseReductionId(Parser &P, CXXScopeSpec &ReductionIdScopeSpec,
 ///    shared-clause:
 ///       'shared' '(' list ')'
 ///    linear-clause:
-///       'linear' '(' list [ ':' linear-step ] ')'
+///       'linear' '(' linear-list [ ':' linear-step ] ')'
 ///    aligned-clause:
 ///       'aligned' '(' list [ ':' alignment ] ')'
 ///    reduction-clause:
@@ -720,6 +720,10 @@ static bool ParseReductionId(Parser &P, CXXScopeSpec &ReductionIdScopeSpec,
 ///    depend-clause:
 ///       'depend' '(' in | out | inout : list ')'
 ///
+/// For 'linear' clause linear-list may have the following forms:
+///  list
+///  modifier(list)
+/// where modifier is 'val' (C) or 'ref', 'val' or 'uval'(C++).
 OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = Tok.getLocation();
   SourceLocation LOpen = ConsumeToken();
@@ -729,7 +733,10 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   UnqualifiedId ReductionId;
   bool InvalidReductionId = false;
   OpenMPDependClauseKind DepKind = OMPC_DEPEND_unknown;
-  SourceLocation DepLoc;
+  // OpenMP 4.1 [2.15.3.7, linear Clause]
+  //  If no modifier is specified it is assumed to be val.
+  OpenMPLinearClauseKind LinearModifier = OMPC_LINEAR_val;
+  SourceLocation DepLinLoc;
 
   // Parse '('.
   BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
@@ -737,6 +744,9 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
                          getOpenMPClauseName(Kind)))
     return nullptr;
 
+  bool NeedRParenForLinear = false;
+  BalancedDelimiterTracker LinearT(*this, tok::l_paren,
+                                  tok::annot_pragma_openmp_end);
   // Handle reduction-identifier for reduction clause.
   if (Kind == OMPC_reduction) {
     ColonProtectionRAIIObject ColonRAII(*this);
@@ -759,7 +769,7 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
     ColonProtectionRAIIObject ColonRAII(*this);
     DepKind = static_cast<OpenMPDependClauseKind>(getOpenMPSimpleClauseType(
         Kind, Tok.is(tok::identifier) ? PP.getSpelling(Tok) : ""));
-    DepLoc = Tok.getLocation();
+    DepLinLoc = Tok.getLocation();
 
     if (DepKind == OMPC_DEPEND_unknown) {
       SkipUntil(tok::colon, tok::r_paren, tok::annot_pragma_openmp_end,
@@ -771,6 +781,16 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
       ColonLoc = ConsumeToken();
     } else {
       Diag(Tok, diag::warn_pragma_expected_colon) << "dependency type";
+    }
+  } else if (Kind == OMPC_linear) {
+    // Try to parse modifier if any.
+    if (Tok.is(tok::identifier) && PP.LookAhead(0).is(tok::l_paren)) {
+      StringRef TokSpelling = PP.getSpelling(Tok);
+      LinearModifier = static_cast<OpenMPLinearClauseKind>(
+          getOpenMPSimpleClauseType(Kind, TokSpelling));
+      DepLinLoc = ConsumeToken();
+      LinearT.consumeOpen();
+      NeedRParenForLinear = true;
     }
   }
 
@@ -804,6 +824,10 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
           << (Kind == OMPC_flush);
   }
 
+  // Parse ')' for linear clause with modifier.
+  if (NeedRParenForLinear)
+    LinearT.consumeClose();
+
   // Parse ':' linear-step (or ':' alignment).
   Expr *TailExpr = nullptr;
   const bool MustHaveTail = MayHaveTail && Tok.is(tok::colon);
@@ -831,6 +855,6 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
       ReductionIdScopeSpec,
       ReductionId.isValid() ? Actions.GetNameFromUnqualifiedId(ReductionId)
                             : DeclarationNameInfo(),
-      DepKind, DepLoc);
+      DepKind, LinearModifier, DepLinLoc);
 }
 

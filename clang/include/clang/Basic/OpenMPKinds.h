@@ -70,6 +70,14 @@ enum OpenMPDependClauseKind {
   OMPC_DEPEND_unknown
 };
 
+/// \brief OpenMP attributes for 'linear' clause.
+enum OpenMPLinearClauseKind {
+#define OPENMP_LINEAR_KIND(Name) \
+  OMPC_LINEAR_##Name,
+#include "clang/Basic/OpenMPKinds.def"
+  OMPC_LINEAR_unknown
+};
+
 OpenMPDirectiveKind getOpenMPDirectiveKind(llvm::StringRef Str);
 const char *getOpenMPDirectiveName(OpenMPDirectiveKind Kind);
 

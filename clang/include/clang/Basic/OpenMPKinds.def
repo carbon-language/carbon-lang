@@ -75,6 +75,9 @@
 #ifndef OPENMP_DEPEND_KIND
 #define OPENMP_DEPEND_KIND(Name)
 #endif
+#ifndef OPENMP_LINEAR_KIND
+#define OPENMP_LINEAR_KIND(Name)
+#endif
 
 // OpenMP directives.
 OPENMP_DIRECTIVE(threadprivate)
@@ -212,6 +215,11 @@ OPENMP_DEPEND_KIND(in)
 OPENMP_DEPEND_KIND(out)
 OPENMP_DEPEND_KIND(inout)
 
+// Modifiers for 'linear' clause.
+OPENMP_LINEAR_KIND(val)
+OPENMP_LINEAR_KIND(ref)
+OPENMP_LINEAR_KIND(uval)
+
 // Clauses allowed for OpenMP directive 'parallel for'.
 OPENMP_PARALLEL_FOR_CLAUSE(if)
 OPENMP_PARALLEL_FOR_CLAUSE(num_threads)
@@ -293,6 +301,7 @@ OPENMP_TEAMS_CLAUSE(firstprivate)
 OPENMP_TEAMS_CLAUSE(shared)
 OPENMP_TEAMS_CLAUSE(reduction)
 
+#undef OPENMP_LINEAR_KIND
 #undef OPENMP_DEPEND_KIND
 #undef OPENMP_SCHEDULE_KIND
 #undef OPENMP_PROC_BIND_KIND

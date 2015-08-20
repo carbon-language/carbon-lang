@@ -678,3 +678,17 @@ void test_loop_messages() {
   }
 }
 
+void linear_modifiers(int argc) {
+  int f;
+  #pragma omp simd linear(f)
+  for (int k = 0; k < argc; ++k) ++k;
+  #pragma omp simd linear(val(f))
+  for (int k = 0; k < argc; ++k) ++k;
+  #pragma omp simd linear(uval(f)) // expected-error {{expected 'val' modifier}}
+  for (int k = 0; k < argc; ++k) ++k;
+  #pragma omp simd linear(ref(f)) // expected-error {{expected 'val' modifier}}
+  for (int k = 0; k < argc; ++k) ++k;
+  #pragma omp simd linear(foo(f)) // expected-error {{expected 'val' modifier}}
+  for (int k = 0; k < argc; ++k) ++k;
+}
+
