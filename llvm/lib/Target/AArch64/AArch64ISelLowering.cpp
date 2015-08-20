@@ -1349,7 +1349,7 @@ static SDValue emitConjunctionDisjunctionTree(SelectionDAG &DAG, SDValue Val,
     unsigned NZCV = AArch64CC::getNZCVToSatisfyCondCode(InvOutCC);
     return emitConditionalComparison(LHS, RHS, CC, CCOp, ConditionOp, NZCV, DL,
                                      DAG);
-  } else if (Opcode != ISD::AND && Opcode != ISD::OR)
+  } else if ((Opcode != ISD::AND && Opcode != ISD::OR) || !Val->hasOneUse())
     return SDValue();
 
   assert((Opcode == ISD::OR || !PushNegate)

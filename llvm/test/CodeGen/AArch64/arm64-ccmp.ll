@@ -373,8 +373,8 @@ define i32 @select_ororand(i32 %w0, i32 %w1, i32 %w2, i32 %w3) {
   ret i32 %sel
 }
 
-; CHECK-LABEL: select_noccmp
-define i64 @select_noccmp(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
+; CHECK-LABEL: select_noccmp1
+define i64 @select_noccmp1(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
 ; CHECK-NOT: CCMP
   %c0 = icmp slt i64 %v1, 0
   %c1 = icmp sgt i64 %v1, 13
@@ -384,5 +384,21 @@ define i64 @select_noccmp(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
   %and1 = and i1 %c2, %c4
   %or = or i1 %and0, %and1
   %sel = select i1 %or, i64 0, i64 %r
+  ret i64 %sel
+}
+
+@g = global i32 0
+
+; Should not use ccmp if we have to compute the or expression in an integer
+; register anyway because of other users.
+; CHECK-LABEL: select_noccmp2
+define i64 @select_noccmp2(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
+; CHECK-NOT: CCMP
+  %c0 = icmp slt i64 %v1, 0
+  %c1 = icmp sgt i64 %v1, 13
+  %or = or i1 %c0, %c1
+  %sel = select i1 %or, i64 0, i64 %r
+  %ext = sext i1 %or to i32
+  store volatile i32 %ext, i32* @g
   ret i64 %sel
 }
