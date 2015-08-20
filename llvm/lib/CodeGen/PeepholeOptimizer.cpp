@@ -721,7 +721,7 @@ bool PeepholeOptimizer::findNextSource(unsigned Reg, unsigned SubReg,
 /// successfully traverse a PHI instruction and find suitable sources coming
 /// from its edges. By inserting a new PHI, we provide a rewritten PHI def
 /// suitable to be used in a new COPY instruction.
-MachineInstr *
+static MachineInstr *
 insertPHI(MachineRegisterInfo *MRI, const TargetInstrInfo *TII,
           const SmallVectorImpl<TargetInstrInfo::RegSubRegPair> &SrcRegs,
           MachineInstr *OrigPHI) {
