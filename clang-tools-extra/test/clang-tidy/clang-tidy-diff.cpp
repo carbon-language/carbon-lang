@@ -16,6 +16,3 @@ struct B : public A {
 };
 // CHECK-SANITY-NOT: Suppressed
 // CHECK: Suppressed 1 warnings (1 due to line filter).
-
-// FIXME: clang-tidy-diff.py is incompatible to dos path. Excluding win32.
-// REQUIRES: shell

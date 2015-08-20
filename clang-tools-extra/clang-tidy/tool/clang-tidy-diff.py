@@ -99,13 +99,19 @@ def main():
     [{"name" : name, "lines" : lines_by_file[name]} for name in lines_by_file],
     separators = (',', ':'))
 
+  quote = "";
+  if sys.platform == 'win32':
+    line_filter_json=re.sub(r'"', r'"""', line_filter_json)
+  else:
+    quote = "'";
+
   # Run clang-tidy on files containing changes.
   command = [args.clang_tidy_binary]
-  command.append('-line-filter=\'' + line_filter_json + '\'')
+  command.append('-line-filter=' + quote + line_filter_json + quote)
   if args.fix:
     command.append('-fix')
   if args.checks != '':
-    command.append('-checks=\'' + args.checks + '\'')
+    command.append('-checks=' + quote + args.checks + quote)
   command.extend(lines_by_file.keys())
   command.extend(clang_tidy_args)
 
