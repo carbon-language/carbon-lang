@@ -1,4 +1,4 @@
-//===- ObjCARCAliasAnalysis.h - ObjC ARC Optimization -*- C++ -*-----------===//
+//===- ObjCARCAliasAnalysis.h - ObjC ARC Alias Analysis ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,8 +20,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
-#define LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
+#ifndef LLVM_ANALYSIS_OBJCARCALIASANALYSIS_H
+#define LLVM_ANALYSIS_OBJCARCALIASANALYSIS_H
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"

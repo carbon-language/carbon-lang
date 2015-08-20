@@ -3,8 +3,6 @@ add_llvm_library(LLVMObjCARCOpts
   ObjCARCOpts.cpp
   ObjCARCExpand.cpp
   ObjCARCAPElim.cpp
-  ObjCARCAliasAnalysis.cpp
-  ARCInstKind.cpp
   ObjCARCContract.cpp
   DependencyAnalysis.cpp
   ProvenanceAnalysis.cpp

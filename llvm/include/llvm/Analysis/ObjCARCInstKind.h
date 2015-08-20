@@ -1,4 +1,4 @@
-//===--- ARCInstKind.h - ARC instruction equivalence classes -*- C++ -*----===//
+//===- ObjCARCInstKind.h - ARC instruction equivalence classes --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TRANSFORMS_OBJCARC_ARCINSTKIND_H
-#define LLVM_LIB_TRANSFORMS_OBJCARC_ARCINSTKIND_H
+#ifndef LLVM_ANALYSIS_OBJCARCINSTKIND_H
+#define LLVM_ANALYSIS_OBJCARCINSTKIND_H
 
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
@@ -98,7 +98,7 @@ ARCInstKind GetFunctionClass(const Function *F);
 /// This is similar to GetARCInstKind except that it only detects objc
 /// runtime calls. This allows it to be faster.
 ///
-static inline ARCInstKind GetBasicARCInstKind(const Value *V) {
+inline ARCInstKind GetBasicARCInstKind(const Value *V) {
   if (const CallInst *CI = dyn_cast<CallInst>(V)) {
     if (const Function *F = CI->getCalledFunction())
       return GetFunctionClass(F);

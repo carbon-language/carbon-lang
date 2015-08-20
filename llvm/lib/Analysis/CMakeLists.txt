@@ -49,6 +49,9 @@ add_llvm_library(LLVMAnalysis
   MemoryLocation.cpp
   ModuleDebugInfoPrinter.cpp
   NoAliasAnalysis.cpp
+  ObjCARCAliasAnalysis.cpp
+  ObjCARCAnalysisUtils.cpp
+  ObjCARCInstKind.cpp
   OrderedBasicBlock.cpp
   PHITransAddr.cpp
   PostDominators.cpp

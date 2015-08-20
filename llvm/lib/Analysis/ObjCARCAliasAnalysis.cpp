@@ -20,8 +20,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "ObjCARC.h"
-#include "ObjCARCAliasAnalysis.h"
+#include "llvm/Analysis/ObjCARCAliasAnalysis.h"
+#include "llvm/Analysis/ObjCARCAnalysisUtils.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"

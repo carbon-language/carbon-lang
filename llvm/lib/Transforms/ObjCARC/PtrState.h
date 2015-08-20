@@ -17,8 +17,8 @@
 #ifndef LLVM_LIB_TRANSFORMS_OBJCARC_PTRSTATE_H
 #define LLVM_LIB_TRANSFORMS_OBJCARC_PTRSTATE_H
 
-#include "ARCInstKind.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/ObjCARCInstKind.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/raw_ostream.h"
