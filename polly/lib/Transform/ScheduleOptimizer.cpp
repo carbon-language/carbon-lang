@@ -71,11 +71,6 @@ using namespace polly;
 
 #define DEBUG_TYPE "polly-opt-isl"
 
-static cl::opt<bool> EnableTiling("polly-tiling",
-                                  cl::desc("Enable loop tiling"),
-                                  cl::init(true), cl::ZeroOrMore,
-                                  cl::cat(PollyCategory));
-
 static cl::opt<std::string>
     OptimizeDeps("polly-opt-optimize-only",
                  cl::desc("Only a certain kind of dependences (all/raw)"),
@@ -113,18 +108,40 @@ static cl::opt<int> PrevectorWidth(
         "The number of loop iterations to strip-mine for pre-vectorization"),
     cl::Hidden, cl::init(4), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-static cl::opt<int> DefaultTileSize(
+static cl::opt<bool> FirstLevelTiling("polly-tiling",
+                                      cl::desc("Enable loop tiling"),
+                                      cl::init(true), cl::ZeroOrMore,
+                                      cl::cat(PollyCategory));
+
+static cl::opt<int> FirstLevelDefaultTileSize(
     "polly-default-tile-size",
     cl::desc("The default tile size (if not enough were provided by"
              " --polly-tile-sizes)"),
     cl::Hidden, cl::init(32), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-static cl::list<int> TileSizes("polly-tile-sizes",
-                               cl::desc("A tile size"
-                                        " for each loop dimension, filled with"
-                                        " --polly-default-tile-size"),
-                               cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated,
-                               cl::cat(PollyCategory));
+static cl::list<int> FirstLevelTileSizes(
+    "polly-tile-sizes", cl::desc("A tile size for each loop dimension, filled "
+                                 "with --polly-default-tile-size"),
+    cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated, cl::cat(PollyCategory));
+
+static cl::opt<bool>
+    SecondLevelTiling("polly-2nd-level-tiling",
+                      cl::desc("Enable a 2nd level loop of loop tiling"),
+                      cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<int> SecondLevelDefaultTileSize(
+    "polly-2nd-level-default-tile-size",
+    cl::desc("The default 2nd-level tile size (if not enough were provided by"
+             " --polly-2nd-level-tile-sizes)"),
+    cl::Hidden, cl::init(16), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::list<int>
+    SecondLevelTileSizes("polly-2nd-level-tile-sizes",
+                         cl::desc("A tile size for each loop dimension, filled "
+                                  "with --polly-default-tile-size"),
+                         cl::Hidden, cl::ZeroOrMore, cl::CommaSeparated,
+                         cl::cat(PollyCategory));
+
 namespace {
 
 class IslScheduleOptimizer : public ScopPass {
@@ -325,8 +342,11 @@ IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
   if (!isTileableBandNode(Node))
     return Node;
 
-  if (EnableTiling)
-    Node = tileNode(Node, TileSizes, DefaultTileSize);
+  if (FirstLevelTiling)
+    Node = tileNode(Node, FirstLevelTileSizes, FirstLevelDefaultTileSize);
+
+  if (SecondLevelTiling)
+    Node = tileNode(Node, SecondLevelTileSizes, SecondLevelDefaultTileSize);
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
     return Node;
