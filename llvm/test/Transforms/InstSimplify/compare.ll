@@ -1164,3 +1164,11 @@ define i1 @tautological8(i32 %A, i32 %B) {
 ; CHECK-LABEL: @tautological8(
 ; CHECK: ret i1 false
 }
+
+define i1 @tautological9(i32 %x) {
+  %add = add nuw i32 %x, 13
+  %cmp = icmp ne i32 %add, 12
+  ret i1 %cmp
+; CHECK-LABEL: @tautological9(
+; CHECK: ret i1 true
+}
