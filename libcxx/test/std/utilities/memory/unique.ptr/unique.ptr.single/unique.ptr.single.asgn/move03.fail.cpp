@@ -14,43 +14,20 @@
 // Test unique_ptr move assignment
 
 #include <memory>
-#include <cassert>
+
+#include "test_macros.h"
+
+struct Deleter {
+    void operator()(int* p) {delete p;}
+};
 
 // Can't copy from lvalue
-
-struct A
-{
-    static int count;
-    A() {++count;}
-    A(const A&) {++count;}
-    ~A() {--count;}
-};
-
-int A::count = 0;
-
-class Deleter
-{
-    int state_;
-
-public:
-
-    Deleter() : state_(5) {}
-
-    int state() const {return state_;}
-
-    void operator()(A* p) {delete p;}
-};
-
 int main()
 {
-    {
-    std::unique_ptr<A, Deleter> s(new A);
-    A* p = s.get();
-    std::unique_ptr<A, Deleter> s2;
-    s2 = s;
-    assert(s2.get() == p);
-    assert(s.get() == 0);
-    assert(A::count == 1);
-    }
-    assert(A::count == 0);
+    std::unique_ptr<int, Deleter> s, s2;
+#if TEST_STD_VER >= 11
+    s2 = s; // expected-error {{cannot be assigned because its copy assignment operator is implicitly deleted}}
+#else
+    s2 = s; // expected-error {{'operator=' is a private member}}
+#endif
 }

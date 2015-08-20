@@ -16,47 +16,32 @@
 // Can't assign from lvalue
 
 #include <memory>
-#include <utility>
-#include <cassert>
 
+#include "test_macros.h"
 #include "../../deleter.h"
 
 struct A
 {
-    static int count;
-    A() {++count;}
-    A(const A&) {++count;}
-    virtual ~A() {--count;}
+    A() {}
+    virtual ~A() {}
 };
 
-int A::count = 0;
-
-struct B
-    : public A
+struct B : public A
 {
-    static int count;
-    B() {++count;}
-    B(const B&) {++count;}
-    virtual ~B() {--count;}
 };
 
-int B::count = 0;
-
+// Can't assign from lvalue
 int main()
 {
-    {
-    Deleter<B> db(5);
-    std::unique_ptr<B, Deleter<B>&> s(new B, db);
-    A* p = s.get();
-    Deleter<A> da(6);
-    std::unique_ptr<A, Deleter<A>&> s2(new A, da);
-    s2 = s;
-    assert(s2.get() == p);
-    assert(s.get() == 0);
-    assert(A::count == 1);
-    assert(B::count == 1);
-    assert(s2.get_deleter().state() == 5);
-    }
-    assert(A::count == 0);
-    assert(B::count == 0);
+    Deleter<B> db;
+    std::unique_ptr<B, Deleter<B>& > s(new B, db);
+    Deleter<A> da;
+    std::unique_ptr<A, Deleter<A> &> s2(new A, da);
+#if TEST_STD_VER >= 11
+    s2 = s; // expected-error {{no viable overloaded '='}}
+#else
+    // NOTE: The move-semantic emulation creates an ambiguous overload set
+    // so that assignment from an lvalue does not compile
+    s2 = s; // expected-error {{use of overloaded operator '=' is ambiguous}}
+#endif
 }

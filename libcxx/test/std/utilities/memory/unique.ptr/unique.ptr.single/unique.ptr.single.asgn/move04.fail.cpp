@@ -11,46 +11,26 @@
 
 // unique_ptr
 
-// Test unique_ptr move ctor
+// Test unique_ptr move assignment
 
 #include <memory>
-#include <cassert>
 
-// test move ctor.  Can't copy from const lvalue
+#include "test_macros.h"
 
-struct A
-{
-    static int count;
-    A() {++count;}
-    A(const A&) {++count;}
-    ~A() {--count;}
+struct Deleter {
+    void operator()(int* p) {delete p;}
 };
 
-int A::count = 0;
-
-class Deleter
-{
-    int state_;
-
-public:
-
-    Deleter() : state_(5) {}
-
-    int state() const {return state_;}
-
-    void operator()(A* p) {delete p;}
-};
-
+// Can't copy from a const lvalue
 int main()
 {
-    {
-    const std::unique_ptr<A, Deleter> s(new A);
-    A* p = s.get();
-    std::unique_ptr<A, Deleter> s2;
-    s2 = s;
-    assert(s2.get() == p);
-    assert(s.get() == 0);
-    assert(A::count == 1);
-    }
-    assert(A::count == 0);
+    const std::unique_ptr<int, Deleter> s(new int);
+    std::unique_ptr<int, Deleter> s2;
+#if TEST_STD_VER >= 11
+    s2 = s; // expected-error {{cannot be assigned because its copy assignment operator is implicitly deleted}}
+#else
+    // NOTE: The error says "constructor" because the assignment operator takes
+    // 's' by value and attempts to copy construct it.
+    s2 = s; // expected-error {{no matching constructor for initialization}}
+#endif
 }
