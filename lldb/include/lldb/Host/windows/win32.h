@@ -65,8 +65,19 @@ int strcasecmp(const char* s1, const char* s2);
 int strncasecmp(const char* s1, const char* s2, size_t n);
 
 #if _MSC_VER < 1900
-int __declspec(dllexport)
-snprintf(char *buffer, size_t count, const char *format, ...);
+namespace lldb_private {
+int vsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
+}
+
+// inline to avoid linkage conflicts
+int inline snprintf(char *buffer, size_t count, const char *format, ...)
+{
+    va_list argptr;
+    va_start(argptr, format);
+    int r = lldb_private::vsnprintf(buffer, count, format, argptr);
+    va_end(argptr);
+    return r;
+}
 #endif
 
 #define STDIN_FILENO  0
