@@ -40,23 +40,6 @@ using namespace lldb_private::platform_gdb_server;
 
 static bool g_initialized = false;
 
-static std::string MakeGdbServerUrl(
-        const std::string &platform_scheme,
-        const std::string &platform_hostname,
-        uint16_t port)
-{
-    const char *override_scheme = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_SCHEME");
-    const char *override_hostname = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_HOSTNAME");
-    const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
-    int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
-    StreamString result;
-    result.Printf("%s://%s:%u",
-            override_scheme ? override_scheme : platform_scheme.c_str(),
-            override_hostname ? override_hostname : platform_hostname.c_str(),
-            port + port_offset);
-    return result.GetString();
-}
-
 void
 PlatformRemoteGDBServer::Initialize ()
 {
@@ -968,4 +951,29 @@ PlatformRemoteGDBServer::GetRemoteUnixSignals()
         m_remote_signals_sp = std::move(remote_signals_sp);
 
     return m_remote_signals_sp;
+}
+
+std::string
+PlatformRemoteGDBServer::MakeGdbServerUrl(const std::string &platform_scheme,
+                                          const std::string &platform_hostname,
+                                          uint16_t port)
+{
+    const char *override_scheme = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_SCHEME");
+    const char *override_hostname = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_HOSTNAME");
+    const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
+    int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
+
+    return MakeServerUrl(override_scheme ? override_scheme : platform_scheme.c_str(),
+                         override_hostname ? override_hostname : platform_hostname.c_str(),
+                         port + port_offset);
+}
+
+std::string
+PlatformRemoteGDBServer::MakeServerUrl(const char* scheme,
+                                       const char* hostname,
+                                       uint16_t port)
+{
+    StreamString result;
+    result.Printf("%s://%s:%u", scheme, hostname, port);
+    return result.GetString();
 }

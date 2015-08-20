@@ -49,6 +49,11 @@ protected:
     void
     DeleteForwardPort (lldb::pid_t pid);
 
+    std::string
+    MakeServerUrl(const char* scheme,
+                  const char* hostname,
+                  uint16_t port) override;
+
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformAndroidRemoteGDBServer);
 

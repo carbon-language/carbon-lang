@@ -28,12 +28,12 @@ public:
     //
     //   if the url is invalid, function returns false and
     //   output parameters remain unchanged
-    static bool Parse(const char* uri,
-        std::string& scheme,
-        std::string& hostname,
-        int& port,
-        std::string& path
-        );
+    static bool
+    Parse(const std::string& uri,
+          std::string& scheme,
+          std::string& hostname,
+          int& port,
+          std::string& path);
 };
 
 #endif  // utility_UriParser_h_

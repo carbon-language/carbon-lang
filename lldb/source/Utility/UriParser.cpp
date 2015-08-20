@@ -10,10 +10,10 @@
 #include "Utility/UriParser.h"
 
 // C Includes
-#include <stdlib.h>
-#include <stdio.h>
 
 // C++ Includes
+#include <cstring>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Host/StringConvert.h"
@@ -24,43 +24,71 @@ using namespace lldb_private;
 // UriParser::Parse
 //----------------------------------------------------------------------
 bool
-UriParser::Parse(const char* uri,
-    std::string& scheme,
-    std::string& hostname,
-    int& port,
-    std::string& path
-    )
+UriParser::Parse(const std::string& uri,
+                 std::string& scheme,
+                 std::string& hostname,
+                 int& port,
+                 std::string& path)
 {
-    char scheme_buf[100] = {0};
-    char hostname_buf[256] = {0};
-    char port_buf[11] = {0}; // 10==strlen(2^32)
-    char path_buf[2049] = {'/', 0};
-  
-    bool ok = false;
-         if (4==sscanf(uri, "%99[^:/]://%255[^/:]:%10[^/]/%2047s", scheme_buf, hostname_buf, port_buf, path_buf+1)) { ok = true; }
-    else if (3==sscanf(uri, "%99[^:/]://%255[^/:]:%10[^/]", scheme_buf, hostname_buf, port_buf)) { ok = true; }
-    else if (3==sscanf(uri, "%99[^:/]://%255[^/]/%2047s", scheme_buf, hostname_buf, path_buf+1)) { ok = true; }
-    else if (2==sscanf(uri, "%99[^:/]://%255[^/]", scheme_buf, hostname_buf)) { ok = true; }
+    std::string tmp_scheme, tmp_hostname, tmp_port, tmp_path;
 
-    bool success = false;
-    int port_tmp = -1;
-    if (port_buf[0])
+    static const char* kSchemeSep = "://";
+    auto pos = uri.find(kSchemeSep);
+    if (pos == std::string::npos)
+        return false;
+
+    // Extract path.
+    tmp_scheme = uri.substr(0, pos);
+    auto host_pos = pos + strlen(kSchemeSep);
+    auto path_pos = uri.find_first_of("/", host_pos);
+    if (path_pos != std::string::npos)
+        tmp_path = uri.substr(path_pos);
+    else
+        tmp_path = "/";
+
+    auto host_port = uri.substr(
+        host_pos, ((path_pos != std::string::npos) ? path_pos  : uri.size()) - host_pos);
+
+    // Extract hostname
+    if (host_port[0] == '[')
     {
-        port_tmp = StringConvert::ToUInt32(port_buf, UINT32_MAX, 10, &success);
+        // hostname is enclosed with square brackets.
+        pos = host_port.find(']');
+        if (pos == std::string::npos)
+            return false;
+
+        tmp_hostname = host_port.substr(1, pos - 1);
+        host_port.erase(0, pos + 1);
+    }
+    else
+    {
+        pos = host_port.find(':');
+        tmp_hostname = host_port.substr(0, (pos != std::string::npos) ? pos : host_port.size());
+        host_port.erase(0, (pos != std::string::npos) ? pos : host_port.size());
+    }
+
+    // Extract port
+    tmp_port = host_port;
+    if (!tmp_port.empty())
+    {
+        if (tmp_port[0] != ':')
+            return false;
+        tmp_port = tmp_port.substr(1);
+        bool success = false;
+        auto port_tmp = StringConvert::ToUInt32(tmp_port.c_str(), UINT32_MAX, 10, &success);
         if (!success || port_tmp > 65535)
         {
             // there are invalid characters in port_buf
             return false;
         }
-    }
-
-    if (ok)
-    {
-        scheme.assign(scheme_buf);
-        hostname.assign(hostname_buf);
         port = port_tmp;
-        path.assign(path_buf);
     }
-    return ok;
+    else
+        port = -1;
+
+    scheme = tmp_scheme;
+    hostname = tmp_hostname;
+    path = tmp_path;
+    return true;
 }
 

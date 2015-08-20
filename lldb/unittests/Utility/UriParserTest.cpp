@@ -79,9 +79,33 @@ TEST_F (UriParserTest, MinimalPortPath)
     VALIDATE
 }
 
+TEST_F (UriParserTest, LongPath)
+{
+    const UriTestCase testCase("x://y/abc/def/xyz", "x", "y", -1, "/abc/def/xyz");
+    VALIDATE
+}
+
 TEST_F (UriParserTest, TypicalPortPath)
 {
     const UriTestCase testCase("connect://192.168.100.132:5432/", "connect", "192.168.100.132", 5432, "/");
+    VALIDATE
+}
+
+TEST_F (UriParserTest, BracketedHostnamePort)
+{
+    const UriTestCase testCase("connect://[192.168.100.132]:5432/", "connect", "192.168.100.132", 5432, "/");
+    VALIDATE
+}
+
+TEST_F (UriParserTest, BracketedHostname)
+{
+    const UriTestCase testCase("connect://[192.168.100.132]", "connect", "192.168.100.132", -1, "/");
+    VALIDATE
+}
+
+TEST_F (UriParserTest, BracketedHostnameWithColon)
+{
+    const UriTestCase testCase("connect://[192.168.100.132:5555]:1234", "connect", "192.168.100.132:5555", 1234, "/");
     VALIDATE
 }
 

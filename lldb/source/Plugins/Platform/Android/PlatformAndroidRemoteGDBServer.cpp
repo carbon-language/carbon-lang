@@ -16,6 +16,8 @@
 #include "PlatformAndroidRemoteGDBServer.h"
 #include "Utility/UriParser.h"
 
+#include <sstream>
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace platform_android;
@@ -134,4 +136,20 @@ PlatformAndroidRemoteGDBServer::DeleteForwardPort (lldb::pid_t pid)
                          pid, port, m_device_id.c_str(), error.AsCString());
     }
     m_port_forwards.erase(it);
+}
+
+std::string
+PlatformAndroidRemoteGDBServer::MakeServerUrl(const char* scheme,
+                                              const char* hostname,
+                                              uint16_t port)
+{
+    std::ostringstream hostname_str;
+    if (!strcmp(scheme, "adb"))
+        hostname_str << "[" << hostname << "]";
+    else
+        hostname_str << hostname;
+
+    return PlatformRemoteGDBServer::MakeServerUrl(scheme,
+                                                  hostname_str.str().c_str(),
+                                                  port);
 }

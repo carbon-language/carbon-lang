@@ -234,7 +234,17 @@ protected:
     virtual bool
     KillSpawnedProcess (lldb::pid_t pid);
 
+    virtual std::string
+    MakeServerUrl(const char* scheme,
+                  const char* hostname,
+                  uint16_t port);
+
 private:
+    std::string
+    MakeGdbServerUrl(const std::string &platform_scheme,
+                     const std::string &platform_hostname,
+                     uint16_t port);
+
     DISALLOW_COPY_AND_ASSIGN (PlatformRemoteGDBServer);
 
 };

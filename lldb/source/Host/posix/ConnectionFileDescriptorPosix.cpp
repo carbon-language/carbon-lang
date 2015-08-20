@@ -33,6 +33,8 @@
 #endif
 
 // C++ Includes
+#include <sstream>
+
 // Other libraries and framework includes
 #include "llvm/Support/ErrorHandling.h"
 #if defined(__APPLE__)
@@ -46,6 +48,8 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Interpreter/Args.h"
+
+#include "Utility/UriParser.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -169,10 +173,16 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
         else if (strstr(s, "adb://") == s)
         {
             int port = -1;
-            sscanf(s, "adb://%*[^:]:%d", &port);
-            char host_and_port[sizeof("localhost:65535")];
-            snprintf(host_and_port, sizeof(host_and_port), "localhost:%d", port);
-            return ConnectTCP(host_and_port, error_ptr);
+            std::string scheme, host, path;
+            if (!UriParser::Parse(s, scheme, host, port, path))
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorStringWithFormat("Failed to parse URL '%s'", s);
+                return eConnectionStatusError;
+            }
+            std::ostringstream host_and_port;
+            host_and_port << "localhost:" << port;
+            return ConnectTCP(host_and_port.str().c_str(), error_ptr);
         }
         else if (strstr(s, "connect://") == s)
         {
