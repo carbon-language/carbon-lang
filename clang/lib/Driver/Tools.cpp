@@ -3063,7 +3063,7 @@ static const char *RelocationModelName(llvm::Reloc::Model Model) {
   case llvm::Reloc::DynamicNoPIC:
     return "dynamic-no-pic";
   }
-  assert(false && "Unknown Reloc::Model kind");
+  llvm_unreachable("Unknown Reloc::Model kind");
 }
 
 static void AddAssemblerKPIC(const ToolChain &ToolChain, const ArgList &Args,
