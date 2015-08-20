@@ -34,3 +34,9 @@ namespace InstantiationDependent {
     static_assert(a<sizeof(sizeof(f(T())))> == 0, ""); // expected-error {{static_assert failed}}
   }
 }
+
+namespace PR24483 {
+  template<typename> struct A;
+  template<typename... T> A<T...> models;
+  template<> struct B models<>; // expected-error {{incomplete type 'struct B'}} expected-note {{forward declaration}}
+}
