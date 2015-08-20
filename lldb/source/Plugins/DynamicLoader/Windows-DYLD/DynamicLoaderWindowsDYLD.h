@@ -19,25 +19,24 @@ namespace lldb_private
 class DynamicLoaderWindowsDYLD : public DynamicLoader
 {
   public:
-    DynamicLoaderWindowsDYLD(Process *process);
-    virtual ~DynamicLoaderWindowsDYLD();
-
     static void Initialize();
     static void Terminate();
     static ConstString GetPluginNameStatic();
     static const char *GetPluginDescriptionStatic();
 
+    DynamicLoaderWindowsDYLD(Process *process);
+    virtual ~DynamicLoaderWindowsDYLD();
+
     static DynamicLoader *CreateInstance(Process *process, bool force);
 
-    void DidAttach () override;
-    void DidLaunch () override;
-    Error CanLoadImage () override;
+    void DidAttach() override;
+    void DidLaunch() override;
+    Error CanLoadImage() override;
     lldb::ThreadPlanSP GetStepThroughTrampolinePlan(Thread &thread, bool stop) override;
 
     ConstString GetPluginName() override;
     uint32_t GetPluginVersion() override;
 };
-
 }
 
 #endif
