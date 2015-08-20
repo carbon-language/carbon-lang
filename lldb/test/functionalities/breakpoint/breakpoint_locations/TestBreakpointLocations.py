@@ -20,6 +20,7 @@ class BreakpointLocationsTestCase(TestBase):
         self.breakpoint_locations_test()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24528")
     def test_with_dwarf(self):
         """Test breakpoint enable/disable for a breakpoint ID with multiple locations."""
         self.buildDwarf()

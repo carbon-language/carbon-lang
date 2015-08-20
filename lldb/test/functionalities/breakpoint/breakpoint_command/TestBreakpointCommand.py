@@ -27,6 +27,7 @@ class BreakpointCommandTestCase(TestBase):
         self.breakpoint_command_script_parameters ()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24528")
     def test_with_dwarf(self):
         """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDwarf()
