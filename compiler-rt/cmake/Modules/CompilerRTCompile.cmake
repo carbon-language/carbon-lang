@@ -24,6 +24,19 @@ function(translate_msvc_cflags out_flags msvc_flags)
   set(${out_flags} "${clang_flags}" PARENT_SCOPE)
 endfunction()
 
+if (APPLE)
+  # On Darwin if /usr/include doesn't exist, the user probably has Xcode but not
+  # the command line tools. If this is the case, we need to find the OS X
+  # sysroot to pass to clang.
+  if(NOT EXISTS /usr/include)
+    execute_process(COMMAND xcodebuild -version -sdk macosx Path
+       OUTPUT_VARIABLE OSX_SYSROOT
+       ERROR_QUIET
+       OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(OSX_SYSROOT_FLAG "-isysroot ${OSX_SYSROOT}")
+  endif()
+endif()
+
 # Compile a source into an object file with COMPILER_RT_TEST_COMPILER using
 # a provided compile flags and dependenices.
 # clang_compile(<object> <source>
@@ -49,6 +62,10 @@ macro(clang_compile object_file source)
     translate_msvc_cflags(global_flags "${global_flags}")
   endif()
 
+  if (APPLE)
+    set(global_flags ${OSX_SYSROOT_FLAG} ${global_flags})
+  endif()
+
   # Ignore unknown warnings. CMAKE_CXX_FLAGS may contain GCC-specific options
   # which are not supported by Clang.
   list(APPEND global_flags -Wno-unknown-warning-option)
@@ -72,7 +89,7 @@ endmacro()
 macro(clang_compiler_add_cxx_check)
   if (APPLE)
     set(CMD
-      "echo '#include <iostream>' | ${COMPILER_RT_TEST_COMPILER} -E -x c++ - > /dev/null"
+      "echo '#include <iostream>' | ${COMPILER_RT_TEST_COMPILER} ${OSX_SYSROOT_FLAG} -E -x c++ - > /dev/null"
       "if [ $? != 0 ] "
       "  then echo"
       "  echo 'Your just-built clang cannot find C++ headers, which are needed to build and run compiler-rt tests.'"
