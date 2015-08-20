@@ -92,6 +92,14 @@ public:
   /// @brief Return the base pointer.
   Value *getBasePtr() const { return BasePtr; }
 
+  /// @brief For indirect accesses return the origin SAI of the BP, else null.
+  const ScopArrayInfo *getBasePtrOriginSAI() const { return BasePtrOriginSAI; }
+
+  /// @brief The set of derived indirect SAIs for this origin SAI.
+  const SmallPtrSetImpl<ScopArrayInfo *> &getDerivedSAIs() const {
+    return DerivedSAIs;
+  };
+
   /// @brief Return the number of dimensions.
   unsigned getNumberOfDimensions() const { return DimensionSizes.size(); }
 
@@ -147,6 +155,16 @@ public:
   static const ScopArrayInfo *getFromId(__isl_take isl_id *Id);
 
 private:
+  void addDerivedSAI(ScopArrayInfo *DerivedSAI) {
+    DerivedSAIs.insert(DerivedSAI);
+  }
+
+  /// @brief For indirect accesses this is the SAI of the BP origin.
+  const ScopArrayInfo *BasePtrOriginSAI;
+
+  /// @brief For origin SAIs the set of derived indirect SAIs.
+  SmallPtrSet<ScopArrayInfo *, 2> DerivedSAIs;
+
   /// @brief The base pointer.
   Value *BasePtr;
 

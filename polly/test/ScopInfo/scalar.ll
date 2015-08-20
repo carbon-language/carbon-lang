@@ -29,6 +29,16 @@ return:
   ret void
 }
 
+; CHECK: Arrays {
+; CHECK:   i64 MemRef_a[*][8]
+; CHECK:   i64 MemRef_val[*] [BasePtrOrigin: MemRef_a]
+; CHECK: }
+;
+; CHECK: Arrays (Bounds as pw_affs) {
+; CHECK:   i64 MemRef_a[*][ { [] -> [(8)] } ]
+; CHECK:   i64 MemRef_val[*] [BasePtrOrigin: MemRef_a]
+; CHECK: }
+
 ; CHECK: Stmt_S1
 ; CHECK:       Domain :=
 ; CHECK:           [N] -> { Stmt_S1[i0] : i0 >= 0 and i0 <= -1 + N };

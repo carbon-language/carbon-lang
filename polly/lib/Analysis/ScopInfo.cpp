@@ -118,6 +118,28 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
     return isl_set_intersect(SLB, SUB);
 }
 
+static const ScopArrayInfo *identifyBasePtrOriginSAI(Scop *S, Value *BasePtr) {
+  LoadInst *BasePtrLI = dyn_cast<LoadInst>(BasePtr);
+  if (!BasePtrLI)
+    return nullptr;
+
+  if (!S->getRegion().contains(BasePtrLI))
+    return nullptr;
+
+  ScalarEvolution &SE = *S->getSE();
+
+  auto *OriginBaseSCEV =
+      SE.getPointerBase(SE.getSCEV(BasePtrLI->getPointerOperand()));
+  if (!OriginBaseSCEV)
+    return nullptr;
+
+  auto *OriginBaseSCEVUnknown = dyn_cast<SCEVUnknown>(OriginBaseSCEV);
+  if (!OriginBaseSCEVUnknown)
+    return nullptr;
+
+  return S->getScopArrayInfo(OriginBaseSCEVUnknown->getValue());
+}
+
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
                              const SmallVector<const SCEV *, 4> &DimensionSizes,
                              bool IsPHI, Scop *S)
@@ -130,6 +152,10 @@ ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *ElementType, isl_ctx *Ctx,
     isl_pw_aff *Size = S->getPwAff(Expr);
     DimensionSizesPw.push_back(Size);
   }
+
+  BasePtrOriginSAI = identifyBasePtrOriginSAI(S, BasePtr);
+  if (BasePtrOriginSAI)
+    const_cast<ScopArrayInfo *>(BasePtrOriginSAI)->addDerivedSAI(this);
 }
 
 ScopArrayInfo::~ScopArrayInfo() {
@@ -160,6 +186,9 @@ void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
 
     OS << "]";
   }
+
+  if (BasePtrOriginSAI)
+    OS << " [BasePtrOrigin: " << BasePtrOriginSAI->getName() << "]";
 
   OS << " // Element size " << getElemSizeInBytes() << "\n";
 }
