@@ -1875,6 +1875,23 @@ define <4 x float> @shuffle_mem_v4f32_3210(<4 x float>* %ptr) {
   ret <4 x float> %shuffle
 }
 
+define <4 x i32> @insert_dup_mem_v4i32(i32* %ptr) {
+; SSE-LABEL: insert_dup_mem_v4i32:
+; SSE:       # BB#0:
+; SSE-NEXT:    movd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: insert_dup_mem_v4i32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vbroadcastss (%rdi), %xmm0
+; AVX-NEXT:    retq
+  %tmp = load i32, i32* %ptr, align 4
+  %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
+  %tmp2 = shufflevector <4 x i32> %tmp1, <4 x i32> undef, <4 x i32> zeroinitializer
+  ret <4 x i32> %tmp2
+}
+
 ;
 ; Shuffle to logical bit shifts
 ;

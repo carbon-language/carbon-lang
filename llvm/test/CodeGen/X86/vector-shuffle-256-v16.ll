@@ -3290,3 +3290,46 @@ define <16 x i16> @concat_v16i16_8_9_10_11_12_13_14_15_24_25_26_27_28_29_30_31_b
   %shuffle16 = bitcast <32 x i8> %shuffle8 to <16 x i16>
   ret <16 x i16> %shuffle16
 }
+
+define <16 x i16> @insert_dup_mem_v16i16_i32(i32* %ptr) {
+; AVX1-LABEL: insert_dup_mem_v16i16_i32:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_mem_v16i16_i32:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX2-NEXT:    vpbroadcastw %xmm0, %ymm0
+; AVX2-NEXT:    retq
+  %tmp = load i32, i32* %ptr, align 4
+  %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
+  %tmp2 = bitcast <4 x i32> %tmp1 to <8 x i16>
+  %tmp3 = shufflevector <8 x i16> %tmp2, <8 x i16> undef, <16 x i32> zeroinitializer
+  ret <16 x i16> %tmp3
+}
+
+define <16 x i16> @insert_dup_mem_v16i16_sext_i16(i16* %ptr) {
+; AVX1-LABEL: insert_dup_mem_v16i16_sext_i16:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    movswl (%rdi), %eax
+; AVX1-NEXT:    vmovd %eax, %xmm0
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_mem_v16i16_sext_i16:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    movswl (%rdi), %eax
+; AVX2-NEXT:    vmovd %eax, %xmm0
+; AVX2-NEXT:    vpbroadcastw %xmm0, %ymm0
+; AVX2-NEXT:    retq
+  %tmp = load i16, i16* %ptr, align 2
+  %tmp1 = sext i16 %tmp to i32
+  %tmp2 = insertelement <4 x i32> zeroinitializer, i32 %tmp1, i32 0
+  %tmp3 = bitcast <4 x i32> %tmp2 to <8 x i16>
+  %tmp4 = shufflevector <8 x i16> %tmp3, <8 x i16> undef, <16 x i32> zeroinitializer
+  ret <16 x i16> %tmp4
+}

@@ -1002,3 +1002,14 @@ define <4 x i64> @concat_v4i64_0145_bc(<4 x i64> %a0, <4 x i64> %a1) {
   %shuffle64 = bitcast <8 x i32> %shuffle32 to <4 x i64>
   ret <4 x i64> %shuffle64
 }
+
+define <4 x i64> @insert_dup_mem_v4i64(i64* %ptr) {
+; ALL-LABEL: insert_dup_mem_v4i64:
+; ALL:       # BB#0:
+; ALL-NEXT:    vbroadcastsd (%rdi), %ymm0
+; ALL-NEXT:    retq
+  %tmp = load i64, i64* %ptr, align 1
+  %tmp1 = insertelement <2 x i64> undef, i64 %tmp, i32 0
+  %tmp2 = shufflevector <2 x i64> %tmp1, <2 x i64> undef, <4 x i32> zeroinitializer
+  ret <4 x i64> %tmp2
+}

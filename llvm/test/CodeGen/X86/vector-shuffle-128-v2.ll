@@ -1133,6 +1133,29 @@ define <2 x double> @insert_dup_mem_v2f64(double* %ptr) {
   ret <2 x double> %shuffle
 }
 
+define <2 x i64> @insert_dup_mem_v2i64(i64* %ptr) {
+; SSE-LABEL: insert_dup_mem_v2i64:
+; SSE:       # BB#0:
+; SSE-NEXT:    movq {{.*#+}} xmm0 = mem[0],zero
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: insert_dup_mem_v2i64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: insert_dup_mem_v2i64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpbroadcastq (%rdi), %xmm0
+; AVX2-NEXT:    retq
+  %tmp = load i64, i64* %ptr, align 1
+  %tmp1 = insertelement <2 x i64> undef, i64 %tmp, i32 0
+  %tmp2 = shufflevector <2 x i64> %tmp1, <2 x i64> undef, <2 x i32> zeroinitializer
+  ret <2 x i64> %tmp2
+}
+
 define <2 x double> @shuffle_mem_v2f64_10(<2 x double>* %ptr) {
 ; SSE-LABEL: shuffle_mem_v2f64_10:
 ; SSE:       # BB#0:

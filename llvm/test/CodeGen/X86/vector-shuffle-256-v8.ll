@@ -2127,3 +2127,14 @@ define <8 x i32> @concat_v8i32_4567CDEF_bc(<8 x i32> %a0, <8 x i32> %a1) {
   %shuffle32 = bitcast <4 x i64> %shuffle64 to <8 x i32>
   ret <8 x i32> %shuffle32
 }
+
+define <8 x i32> @insert_dup_mem_v8i32(i32* %ptr) {
+; ALL-LABEL: insert_dup_mem_v8i32:
+; ALL:       # BB#0:
+; ALL-NEXT:    vbroadcastss (%rdi), %ymm0
+; ALL-NEXT:    retq
+  %tmp = load i32, i32* %ptr, align 4
+  %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
+  %tmp2 = shufflevector <4 x i32> %tmp1, <4 x i32> undef, <8 x i32> zeroinitializer
+  ret <8 x i32> %tmp2
+}
