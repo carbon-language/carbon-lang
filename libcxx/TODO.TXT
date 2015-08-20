@@ -21,11 +21,11 @@ CXX Runtime Library Tasks
 
 Atomic Related Tasks
 ====================
-* Support <atomic> in C++03 (needed for internal use).
+* Enable mixing of clang and GCC atomics internally. Currently some
+  parts of libc++ use atomics only when clang provides them.
+  (see memory@5380 for an example)
 * Audit use of libatomic builtins in <atomic> with GCC.
 * future should use <atomic> for synchronization.
-* call_once should use <atomic> for synchronization.
-* Audit shared_ptr use of <atomic>
 
 Test Suite Tasks
 ================
@@ -42,8 +42,6 @@ Misc Tasks
 * Look at basic_string's move assignment operator, re LWG 2063 and POCMA
 * libc++ is missing try_emplace
 * Put a static_assert in std::allocator to deny const/volatile types (LWG 2447)
-* Investigate the effect of using __decltype instead of __typeof__ to provide
-  decltype in C++03. What code could be broken by this change?
 * Convert failure tests to use Clang Verify.
 * Document support (or lack of) for C++11 libraries in C++03.
 * Document supported compilers.
