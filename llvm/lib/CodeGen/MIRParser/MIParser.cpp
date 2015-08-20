@@ -1605,18 +1605,27 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
     // The token was already consumed, so use return here instead of break.
     return false;
   }
-  case MIToken::GlobalValue:
-  case MIToken::NamedGlobalValue: {
-    GlobalValue *GV = nullptr;
-    if (parseGlobalValue(GV))
-      return true;
-    PSV = MF.getPSVManager().getGlobalValueCallEntry(GV);
+  case MIToken::kw_call_entry: {
+    lex();
+    switch (Token.kind()) {
+    case MIToken::GlobalValue:
+    case MIToken::NamedGlobalValue: {
+      GlobalValue *GV = nullptr;
+      if (parseGlobalValue(GV))
+        return true;
+      PSV = MF.getPSVManager().getGlobalValueCallEntry(GV);
+      break;
+    }
+    case MIToken::ExternalSymbol:
+      PSV = MF.getPSVManager().getExternalSymbolCallEntry(
+          MF.createExternalSymbolName(Token.stringValue()));
+      break;
+    default:
+      return error(
+          "expected a global value or an external symbol after 'call-entry'");
+    }
     break;
   }
-  case MIToken::ExternalSymbol:
-    PSV = MF.getPSVManager().getExternalSymbolCallEntry(
-        MF.createExternalSymbolName(Token.stringValue()));
-    break;
   default:
     llvm_unreachable("The current token should be pseudo source value");
   }
@@ -1627,9 +1636,7 @@ bool MIParser::parseMemoryPseudoSourceValue(const PseudoSourceValue *&PSV) {
 bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
   if (Token.is(MIToken::kw_constant_pool) || Token.is(MIToken::kw_stack) ||
       Token.is(MIToken::kw_got) || Token.is(MIToken::kw_jump_table) ||
-      Token.is(MIToken::FixedStackObject) || Token.is(MIToken::GlobalValue) ||
-      Token.is(MIToken::NamedGlobalValue) ||
-      Token.is(MIToken::ExternalSymbol)) {
+      Token.is(MIToken::FixedStackObject) || Token.is(MIToken::kw_call_entry)) {
     const PseudoSourceValue *PSV = nullptr;
     if (parseMemoryPseudoSourceValue(PSV))
       return true;

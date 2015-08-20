@@ -220,6 +220,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("got", MIToken::kw_got)
       .Case("jump-table", MIToken::kw_jump_table)
       .Case("constant-pool", MIToken::kw_constant_pool)
+      .Case("call-entry", MIToken::kw_call_entry)
       .Case("liveout", MIToken::kw_liveout)
       .Case("address-taken", MIToken::kw_address_taken)
       .Case("landing-pad", MIToken::kw_landing_pad)

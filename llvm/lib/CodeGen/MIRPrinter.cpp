@@ -873,11 +873,12 @@ void MIPrinter::print(const MachineMemOperand &Op) {
           cast<FixedStackPseudoSourceValue>(PVal)->getFrameIndex());
       break;
     case PseudoSourceValue::GlobalValueCallEntry:
+      OS << "call-entry ";
       cast<GlobalValuePseudoSourceValue>(PVal)->getValue()->printAsOperand(
           OS, /*PrintType=*/false, MST);
       break;
     case PseudoSourceValue::ExternalSymbolCallEntry:
-      OS << '$';
+      OS << "call-entry $";
       printLLVMNameWithoutPrefix(
           OS, cast<ExternalSymbolPseudoSourceValue>(PVal)->getSymbol());
       break;

@@ -81,6 +81,7 @@ struct MIToken {
     kw_got,
     kw_jump_table,
     kw_constant_pool,
+    kw_call_entry,
     kw_liveout,
     kw_address_taken,
     kw_landing_pad,
