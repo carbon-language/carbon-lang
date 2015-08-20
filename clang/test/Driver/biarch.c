@@ -29,7 +29,7 @@
 // RUN: grep '"-cc1" "-triple" "sparcv9--netbsd"' %t
 
 // RUN: %clang -target sparcel -o foo %s -### 2> %t
-// RUN: grep 'gcc" "-EL" "-o" "foo"' %t
+// RUN: grep 'gcc\(\.exe\)\?" "-EL" "-o" "foo"' %t
 
 // RUN: %clang -target mips64--netbsd -m32 %s -### 2> %t
 // RUN: grep '"-cc1" "-triple" "mips--netbsd"' %t
