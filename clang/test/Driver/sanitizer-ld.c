@@ -14,7 +14,6 @@
 // CHECK-ASAN-LINUX-NOT: "-export-dynamic"
 // CHECK-ASAN-LINUX: "-lpthread"
 // CHECK-ASAN-LINUX: "-lrt"
-// CHECK-ASAN-LINUX: "-lutil"
 // CHECK-ASAN-LINUX: "-ldl"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -30,7 +29,6 @@
 // CHECK-SHARED-ASAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.asan-preinit-i386.a" "-no-whole-archive"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-lpthread"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-lrt"
-// CHECK-SHARED-ASAN-LINUX-NOT: "-lutil"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-ldl"
 // CHECK-SHARED-ASAN-LINUX-NOT: "-export-dynamic"
 // CHECK-SHARED-ASAN-LINUX-NOT: "--dynamic-list"
@@ -48,7 +46,6 @@
 // CHECK-DSO-SHARED-ASAN-LINUX: libclang_rt.asan-i386.so"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lpthread"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lrt"
-// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lutil"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-ldl"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-export-dynamic"
 // CHECK-DSO-SHARED-ASAN-LINUX-NOT: "--dynamic-list"
@@ -68,7 +65,6 @@
 // CHECK-ASAN-FREEBSD: "-export-dynamic"
 // CHECK-ASAN-FREEBSD: "-lpthread"
 // CHECK-ASAN-FREEBSD: "-lrt"
-// CHECK-ASAN-FREEBSD: "-lutil"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-freebsd -fsanitize=address \
@@ -94,7 +90,6 @@
 // CHECK-ASAN-LINUX-CXX: stdc++
 // CHECK-ASAN-LINUX-CXX: "-lpthread"
 // CHECK-ASAN-LINUX-CXX: "-lrt"
-// CHECK-ASAN-LINUX-CXX: "-lutil"
 // CHECK-ASAN-LINUX-CXX: "-ldl"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o /dev/null -fsanitize=address \
@@ -172,7 +167,6 @@
 // CHECK-TSAN-LINUX-CXX: stdc++
 // CHECK-TSAN-LINUX-CXX: "-lpthread"
 // CHECK-TSAN-LINUX-CXX: "-lrt"
-// CHECK-TSAN-LINUX-CXX: "-lutil"
 // CHECK-TSAN-LINUX-CXX: "-ldl"
 
 // RUN: %clangxx -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -191,7 +185,6 @@
 // CHECK-MSAN-LINUX-CXX: stdc++
 // CHECK-MSAN-LINUX-CXX: "-lpthread"
 // CHECK-MSAN-LINUX-CXX: "-lrt"
-// CHECK-MSAN-LINUX-CXX: "-lutil"
 // CHECK-MSAN-LINUX-CXX: "-ldl"
 
 // RUN: %clang -fsanitize=undefined %s -### -o %t.o 2>&1 \

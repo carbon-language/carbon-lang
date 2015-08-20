@@ -2484,7 +2484,6 @@ static void linkSanitizerRuntimeDeps(const ToolChain &TC,
   CmdArgs.push_back("--no-as-needed");
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-lrt");
-  CmdArgs.push_back("-lutil");
   CmdArgs.push_back("-lm");
   // There's no libdl on FreeBSD.
   if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
