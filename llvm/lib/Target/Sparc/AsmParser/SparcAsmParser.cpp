@@ -437,7 +437,22 @@ void SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
 
   // the imm operand can be either an expression or an immediate.
   bool IsImm = Inst.getOperand(1).isImm();
-  uint64_t ImmValue = IsImm ? MCValOp.getImm() : 0;
+  int64_t RawImmValue = IsImm ? MCValOp.getImm() : 0;
+
+  // Allow either a signed or unsigned 32-bit immediate.
+  if (RawImmValue < -2147483648 || RawImmValue > 4294967295) {
+    Error(IDLoc, "set: argument must be between -2147483648 and 4294967295");
+    return;
+  }
+
+  // If the value was expressed as a large unsigned number, that's ok.
+  // We want to see if it "looks like" a small signed number.
+  int32_t ImmValue = RawImmValue;
+  // For 'set' you can't use 'or' with a negative operand on V9 because
+  // that would splat the sign bit across the upper half of the destination
+  // register, whereas 'set' is defined to zero the high 32 bits.
+  bool IsEffectivelyImm13 =
+      IsImm && ((is64Bit() ? 0 : -4096) <= ImmValue && ImmValue < 4096);
   const MCExpr *ValExpr;
   if (IsImm)
     ValExpr = MCConstantExpr::create(ImmValue, getContext());
@@ -446,7 +461,10 @@ void SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
 
   MCOperand PrevReg = MCOperand::createReg(Sparc::G0);
 
-  if (!IsImm || (ImmValue & ~0x1fff)) {
+  // If not just a signed imm13 value, then either we use a 'sethi' with a
+  // following 'or', or a 'sethi' by itself if there are no more 1 bits.
+  // In either case, start with the 'sethi'.
+  if (!IsEffectivelyImm13) {
     MCInst TmpInst;
     const MCExpr *Expr =
         SparcMCExpr::create(SparcMCExpr::VK_Sparc_HI, ValExpr, getContext());
@@ -458,10 +476,24 @@ void SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
     PrevReg = MCRegOp;
   }
 
-  if (!IsImm || ((ImmValue & 0x1fff) != 0 || ImmValue == 0)) {
+  // The low bits require touching in 3 cases:
+  // * A non-immediate value will always require both instructions.
+  // * An effectively imm13 value needs only an 'or' instruction.
+  // * Otherwise, an immediate that is not effectively imm13 requires the
+  //   'or' only if bits remain after clearing the 22 bits that 'sethi' set.
+  // If the low bits are known zeros, there's nothing to do.
+  // In the second case, and only in that case, must we NOT clear
+  // bits of the immediate value via the %lo() assembler function.
+  // Note also, the 'or' instruction doesn't mind a large value in the case
+  // where the operand to 'set' was 0xFFFFFzzz - it does exactly what you mean.
+  if (!IsImm || IsEffectivelyImm13 || (ImmValue & 0x3ff)) {
     MCInst TmpInst;
-    const MCExpr *Expr =
-        SparcMCExpr::create(SparcMCExpr::VK_Sparc_LO, ValExpr, getContext());
+    const MCExpr *Expr;
+    if (IsEffectivelyImm13)
+      Expr = ValExpr;
+    else
+      Expr =
+          SparcMCExpr::create(SparcMCExpr::VK_Sparc_LO, ValExpr, getContext());
     TmpInst.setLoc(IDLoc);
     TmpInst.setOpcode(SP::ORri);
     TmpInst.addOperand(MCRegOp);
