@@ -77,3 +77,28 @@ define i1 @test8(i32 %i) {
   %cond = and i1 %cmp1, %cmp2
   ret i1 %cond
 }
+
+; combine -x & 1 into x & 1
+define i64 @test9(i64 %x) {
+; CHECK-LABEL: @test9(
+; CHECK-NOT: %sub = sub nsw i64 0, %x
+; CHECK-NOT: %and = and i64 %sub, 1
+; CHECK-NEXT: %and = and i64 %x, 1
+; CHECK-NEXT: ret i64 %and
+  %sub = sub nsw i64 0, %x
+  %and = and i64 %sub, 1
+  ret i64 %and
+}
+
+define i64 @test10(i64 %x) {
+; CHECK-LABEL: @test10(
+; CHECK-NOT: %sub = sub nsw i64 0, %x
+; CHECK-NEXT: %and = and i64 %x, 1
+; CHECK-NOT: %add = add i64 %sub, %and
+; CHECK-NEXT: %add = sub i64 %and, %x
+; CHECK-NEXT: ret i64 %add
+  %sub = sub nsw i64 0, %x
+  %and = and i64 %sub, 1
+  %add = add i64 %sub, %and
+  ret i64 %add
+}

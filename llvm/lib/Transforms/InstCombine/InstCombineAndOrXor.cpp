@@ -1273,6 +1273,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
           return BinaryOperator::CreateAnd(V, AndRHS);
 
+        // -x & 1 -> x & 1
+        if (AndRHSMask == 1 && match(Op0LHS, m_Zero()))
+          return BinaryOperator::CreateAnd(Op0RHS, AndRHS);
+
         // (A - N) & AndRHS -> -N & AndRHS iff A&AndRHS==0 and AndRHS
         // has 1's for all bits that the subtraction with A might affect.
         if (Op0I->hasOneUse() && !match(Op0LHS, m_Zero())) {
