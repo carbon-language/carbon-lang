@@ -119,7 +119,33 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     for (auto CC : {ISD::SETO, ISD::SETUO, ISD::SETUEQ, ISD::SETONE,
                     ISD::SETULT, ISD::SETULE, ISD::SETUGT, ISD::SETUGE})
       setCondCodeAction(CC, T, Expand);
+    // Expand floating-point library function operators.
+    for (auto Op : {ISD::FSIN, ISD::FCOS, ISD::FSINCOS, ISD::FPOWI, ISD::FPOW,
+                    ISD::FLOG, ISD::FLOG2, ISD::FLOG10, ISD::FEXP, ISD::FEXP2,
+                    ISD::FMINNAN, ISD::FMAXNAN})
+      setOperationAction(Op, T, Expand);
   }
+
+  for (auto T : {MVT::i32, MVT::i64}) {
+    // Expand unavailable integer operations.
+    for (auto Op : {ISD::BSWAP, ISD::ROTL, ISD::ROTR,
+                    ISD::SMUL_LOHI, ISD::UMUL_LOHI,
+                    ISD::MULHS, ISD::MULHU, ISD::SDIVREM, ISD::UDIVREM,
+                    ISD::SHL_PARTS, ISD::SRA_PARTS, ISD::SRL_PARTS,
+                    ISD::ADDC, ISD::ADDE, ISD::SUBC, ISD::SUBE}) {
+      setOperationAction(Op, T, Expand);
+    }
+  }
+
+  // As a special case, these operators use the type to mean the type to
+  // sign-extend from.
+  for (auto T : {MVT::i1, MVT::i8, MVT::i16})
+    setOperationAction(ISD::SIGN_EXTEND_INREG, T, Expand);
+
+  // Dynamic stack allocation: use the default expansion.
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 }
 
 MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
