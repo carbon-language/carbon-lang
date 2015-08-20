@@ -788,15 +788,33 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
   const DataLayout &DL = BB.getModule()->getDataLayout();
 
+  // becomes false once lifetime intrinsics are observable or useful for stack
+  // coloring
+  bool canRemoveLifetimeIntrinsics = true;
+
   // Scan the basic block backwards
   for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ){
     --BBI;
 
-    // If we find a store, check to see if it points into a dead stack value.
-    if (hasMemoryWrite(BBI, *TLI) && isRemovable(BBI)) {
+    Value *V = nullptr;
+    if (canRemoveLifetimeIntrinsics)
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(BBI))
+        switch (II->getIntrinsicID()) {
+          default: break;
+          case Intrinsic::lifetime_start:
+          case Intrinsic::lifetime_end:
+            V = II->getArgOperand(1);
+            break;
+        }
+
+    if (!V && hasMemoryWrite(BBI, *TLI) && isRemovable(BBI))
+      V = getStoredPointerOperand(BBI);
+
+    // If we found a store, check to see if it points into a dead stack value.
+    if (V) {
       // See through pointer-to-pointer bitcasts
       SmallVector<Value *, 4> Pointers;
-      GetUnderlyingObjects(getStoredPointerOperand(BBI), Pointers, DL);
+      GetUnderlyingObjects(V, Pointers, DL);
 
       // Stores to stack values are valid candidates for removal.
       bool AllDead = true;
@@ -843,6 +861,15 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       DeadStackObjects.remove(BBI);
       continue;
     }
+
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(BBI))
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
+        // We found a lifetime start for a live object, which we could not
+        // remove. So we must stop removing lifetime intrinsics from this block
+        // because they're useful for stack coloring again
+        canRemoveLifetimeIntrinsics = false;
+        continue;
+      }
 
     if (auto CS = CallSite(BBI)) {
       // Remove allocation function calls from the list of dead stack objects; 
