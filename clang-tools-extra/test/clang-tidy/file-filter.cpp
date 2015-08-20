@@ -1,7 +1,10 @@
 // RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='' %s -- -I %S/Inputs/file-filter -isystem %S/Inputs/file-filter/system 2>&1 | FileCheck %s
 // RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='.*' %s -- -I %S/Inputs/file-filter -isystem %S/Inputs/file-filter/system 2>&1 | FileCheck --check-prefix=CHECK2 %s
 // RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='header2\.h' %s -- -I %S/Inputs/file-filter -isystem %S/Inputs/file-filter/system 2>&1 | FileCheck --check-prefix=CHECK3 %s
-// RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='.*' -system-headers %s -- -I %S/Inputs/file-filter -isystem %S/Inputs/file-filter/system 2>&1 | FileCheck --check-prefix=CHECK4 %s
+// FIXME: "-I %S/Inputs/file-filter/system/.." must be redundant.
+//       On Win32, file-filter/system\system-header1.h precedes
+//       file-filter\header*.h due to code order between '/' and '\\'.
+// RUN: clang-tidy -checks='-*,google-explicit-constructor' -header-filter='.*' -system-headers %s -- -I %S/Inputs/file-filter/system/.. -isystem %S/Inputs/file-filter/system 2>&1 | FileCheck --check-prefix=CHECK4 %s
 
 #include "header1.h"
 // CHECK-NOT: warning:
@@ -40,6 +43,3 @@ class A { A(int); };
 // CHECK3: Use -header-filter=.* {{.*}}
 // CHECK4-NOT: Suppressed {{.*}} warnings
 // CHECK4-NOT: Use -header-filter=.* {{.*}}
-
-// FIXME: It doesn't pass on win32. Investigating.
-// REQUIRES: shell
