@@ -1093,6 +1093,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
       I2->replaceAllUsesWith(I1);
     I1->intersectOptionalDataWith(I2);
     unsigned KnownIDs[] = {
+      LLVMContext::MD_dbg,
       LLVMContext::MD_tbaa,
       LLVMContext::MD_range,
       LLVMContext::MD_fpmath,

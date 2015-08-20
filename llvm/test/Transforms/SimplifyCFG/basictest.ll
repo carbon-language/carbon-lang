@@ -50,7 +50,7 @@ define i8 @test6f() {
 ; CHECK: alloca i8, align 1
 ; CHECK-NEXT: call i8 @test6g
 ; CHECK-NEXT: icmp eq i8 %tmp, 0
-; CHECK-NEXT: load i8, i8* %r, align 1{{$}}
+; CHECK-NEXT: load i8, i8* %r, align 1, !dbg !{{[0-9]+$}}
 
 bb0:
   %r = alloca i8, align 1
@@ -58,7 +58,7 @@ bb0:
   %tmp1 = icmp eq i8 %tmp, 0
   br i1 %tmp1, label %bb2, label %bb1
 bb1:
-  %tmp3 = load i8, i8* %r, align 1, !range !2, !tbaa !1
+  %tmp3 = load i8, i8* %r, align 1, !range !2, !tbaa !1, !dbg !5
   %tmp4 = icmp eq i8 %tmp3, 1
   br i1 %tmp4, label %bb2, label %bb3
 bb2:
@@ -69,6 +69,16 @@ bb3:
 }
 declare i8 @test6g(i8*)
 
+!llvm.dbg.cu = !{!3}
+!llvm.module.flags = !{!8, !9}
+
 !0 = !{!1, !1, i64 0}
 !1 = !{!"foo"}
 !2 = !{i8 0, i8 2}
+!3 = distinct !DICompileUnit(language: DW_LANG_C99, file: !7, producer: "clang", isOptimized: false, runtimeVersion: 0, emissionKind: 1, enums: !4, subprograms: !4, globals: !4)
+!4 = !{}
+!5 = !DILocation(line: 23, scope: !6)
+!6 = !DISubprogram(name: "foo", scope: !3, file: !7, line: 1, type: !DISubroutineType(types: !4), isLocal: false, isDefinition: true, scopeLine: 1, flags: DIFlagPrototyped, isOptimized: false, variables: !4)
+!7 = !DIFile(filename: "foo.c", directory: "/")
+!8 = !{i32 2, !"Dwarf Version", i32 2}
+!9 = !{i32 2, !"Debug Info Version", i32 3}

@@ -1062,7 +1062,7 @@ void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
   KnownSet.insert(KnownIDs.begin(), KnownIDs.end());
 
   // Drop debug if needed
-  if (KnownSet.erase(LLVMContext::MD_dbg))
+  if (!KnownSet.erase(LLVMContext::MD_dbg))
     DbgLoc = DebugLoc();
 
   if (!hasMetadataHashEntry())

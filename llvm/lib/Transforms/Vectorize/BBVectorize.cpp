@@ -3118,6 +3118,7 @@ namespace {
         K->mutateType(getVecTypeForPair(L->getType(), H->getType()));
 
       unsigned KnownIDs[] = {
+        LLVMContext::MD_dbg,
         LLVMContext::MD_tbaa,
         LLVMContext::MD_alias_scope,
         LLVMContext::MD_noalias,
