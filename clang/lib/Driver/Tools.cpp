@@ -5617,12 +5617,22 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: The triple class should directly provide the information we want
   // here.
-  const llvm::Triple::ArchType Arch = getToolChain().getArch();
-  if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc)
+  switch (getToolChain().getArch()) {
+  default:
+    break;
+  case llvm::Triple::x86:
+  case llvm::Triple::ppc:
     CmdArgs.push_back("-m32");
-  else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64 ||
-           Arch == llvm::Triple::ppc64le)
+    break;
+  case llvm::Triple::x86_64:
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
     CmdArgs.push_back("-m64");
+    break;
+  case llvm::Triple::sparcel:
+    CmdArgs.push_back("-EL");
+    break;
+  }
 
   if (Output.isFilename()) {
     CmdArgs.push_back("-o");
