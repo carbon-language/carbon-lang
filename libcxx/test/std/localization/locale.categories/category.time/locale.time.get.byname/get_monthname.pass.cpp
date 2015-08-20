@@ -12,7 +12,7 @@
 // REQUIRES: locale.ru_RU.UTF-8
 // REQUIRES: locale.zh_CN.UTF-8
 
-// NOTE: debian and opensuse use old locale data for ru_RU.UTF-8 abreviated
+// NOTE: debian and opensuse use old locale data for ru_RU.UTF-8 abbreviated
 // months. This locale data was changed in glibc 2.14.
 // Debian uses glibc 2.13 as of 20/11/2014
 // OpenSuse uses glibc 2.19 with old locale data as of 20/11/2014
