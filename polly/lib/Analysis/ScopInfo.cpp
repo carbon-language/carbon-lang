@@ -1339,12 +1339,10 @@ static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
 /// @brief Wrapper function to calculate minimal/maximal accesses to each array.
 static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
                                   __isl_take isl_union_set *Domains,
-                                  __isl_take isl_set *AssumedContext,
                                   Scop::MinMaxVectorTy &MinMaxAccesses) {
 
   Accesses = isl_union_map_intersect_domain(Accesses, Domains);
   isl_union_set *Locations = isl_union_map_range(Accesses);
-  Locations = isl_union_set_intersect_params(Locations, AssumedContext);
   Locations = isl_union_set_coalesce(Locations);
   Locations = isl_union_set_detect_equalities(Locations);
   bool Valid = (0 == isl_union_set_foreach_set(Locations, buildMinMaxAccess,
@@ -1497,8 +1495,8 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     for (MemoryAccess *MA : AG)
       Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
 
-    bool Valid = calculateMinMaxAccess(
-        Accesses, getDomains(), getAssumedContext(), MinMaxAccessesNonReadOnly);
+    bool Valid = calculateMinMaxAccess(Accesses, getDomains(),
+                                       MinMaxAccessesNonReadOnly);
 
     // Bail out if the number of values we need to compare is too large.
     // This is important as the number of comparisions grows quadratically with
@@ -1515,8 +1513,8 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       for (MemoryAccess *MA : ReadOnlyPair.second)
         Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
 
-    Valid = calculateMinMaxAccess(Accesses, getDomains(), getAssumedContext(),
-                                  MinMaxAccessesReadOnly);
+    Valid =
+        calculateMinMaxAccess(Accesses, getDomains(), MinMaxAccessesReadOnly);
 
     if (!Valid)
       return false;
