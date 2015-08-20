@@ -552,7 +552,8 @@ static void propagateMetadata(Instruction *To, const Instruction *From) {
     if (Kind != LLVMContext::MD_tbaa &&
         Kind != LLVMContext::MD_alias_scope &&
         Kind != LLVMContext::MD_noalias &&
-        Kind != LLVMContext::MD_fpmath)
+        Kind != LLVMContext::MD_fpmath &&
+        Kind != LLVMContext::MD_nontemporal)
       continue;
 
     To->setMetadata(Kind, M.second);
