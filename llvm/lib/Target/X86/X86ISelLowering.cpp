@@ -23435,18 +23435,34 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
       N1C && N0.getOpcode() == ISD::AND &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDValue N00 = N0.getOperand(0);
-    if (N00.getOpcode() == X86ISD::SETCC_CARRY ||
-        ((N00.getOpcode() == ISD::ANY_EXTEND ||
-          N00.getOpcode() == ISD::ZERO_EXTEND) &&
-         N00.getOperand(0).getOpcode() == X86ISD::SETCC_CARRY)) {
-      APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
-      APInt ShAmt = N1C->getAPIntValue();
-      Mask = Mask.shl(ShAmt);
-      if (Mask != 0) {
-        SDLoc DL(N);
-        return DAG.getNode(ISD::AND, DL, VT,
-                           N00, DAG.getConstant(Mask, DL, VT));
-      }
+    APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
+    APInt ShAmt = N1C->getAPIntValue();
+    Mask = Mask.shl(ShAmt);
+    bool MaskOK = false;
+    // We can handle cases concerning bit-widening nodes containing setcc_c if
+    // we carefully interrogate the mask to make sure we are semantics
+    // preserving.
+    // The transform is not safe if the result of C1 << C2 exceeds the bitwidth
+    // of the underlying setcc_c operation if the setcc_c was zero extended.
+    // Consider the following example:
+    //   zext(setcc_c)                 -> i32 0x0000FFFF
+    //   c1                            -> i32 0x0000FFFF
+    //   c2                            -> i32 0x00000001
+    //   (shl (and (setcc_c), c1), c2) -> i32 0x0001FFFE
+    //   (and setcc_c, (c1 << c2))     -> i32 0x0000FFFE
+    if (N00.getOpcode() == X86ISD::SETCC_CARRY) {
+      MaskOK = true;
+    } else if (N00.getOpcode() == ISD::SIGN_EXTEND &&
+               N00.getOperand(0).getOpcode() == X86ISD::SETCC_CARRY) {
+      MaskOK = true;
+    } else if ((N00.getOpcode() == ISD::ZERO_EXTEND ||
+                N00.getOpcode() == ISD::ANY_EXTEND) &&
+               N00.getOperand(0).getOpcode() == X86ISD::SETCC_CARRY) {
+      MaskOK = Mask.isIntN(N00.getOperand(0).getValueSizeInBits());
+    }
+    if (MaskOK && Mask != 0) {
+      SDLoc DL(N);
+      return DAG.getNode(ISD::AND, DL, VT, N00, DAG.getConstant(Mask, DL, VT));
     }
   }
 
