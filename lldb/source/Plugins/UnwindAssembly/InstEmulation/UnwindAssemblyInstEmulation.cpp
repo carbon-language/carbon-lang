@@ -580,8 +580,17 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                     const uint32_t generic_regnum = reg_info->kinds[eRegisterKindGeneric];
                     if (reg_num != LLDB_INVALID_REGNUM && generic_regnum != LLDB_REGNUM_GENERIC_SP)
                     {
-                        m_curr_row->SetRegisterLocationToSame (reg_num, /*must_replace*/ false);
-                        m_curr_row_modified = true;
+                        if (context.info_type == EmulateInstruction::eInfoTypeAddress)
+                        {
+                            if (m_pushed_regs.find (reg_num) != m_pushed_regs.end () &&
+                                context.info.address == m_pushed_regs[reg_num])
+                            {
+                                m_curr_row->SetRegisterLocationToSame (reg_num, /*must_replace*/ false);
+                                m_curr_row_modified = true;
+                            }
+                        }
+                        else
+                            assert (!"unhandled case, add code to handle this!");
                     }
                 }
             }

@@ -578,7 +578,7 @@ EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding enco
         {
             if (BitIsSet (registers, i))
             {
-                context.SetRegisterPlusOffset (sp_reg, addr - sp);
+                context.SetAddress(addr);
                 data = MemARead(context, addr, 4, 0, &success);
                 if (!success)
                     return false;    
@@ -2214,7 +2214,7 @@ EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding enc
         for (i=0; i<regs; ++i)
         {
             GetRegisterInfo (eRegisterKindDWARF, start_reg + d + i, dwarf_reg);
-            context.SetRegisterPlusOffset (sp_reg, addr - sp);
+            context.SetAddress(addr);
             data = MemARead(context, addr, reg_byte_size, 0, &success);
             if (!success)
                 return false;    
@@ -3516,7 +3516,10 @@ EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding enco
                 context.type = EmulateInstruction::eContextRegisterPlusOffset;
                 context.SetRegisterPlusOffset (dwarf_reg, offset);
                 if (wback && (n == 13)) // Pop Instruction
+                {
                     context.type = EmulateInstruction::eContextPopRegisterOffStack;
+                    context.SetAddress(base_address + offset);
+                }
 
                 // R[i] = MemA [address, 4]; address = address + 4;
                 uint32_t data = MemARead (context, base_address + offset, addr_byte_size, 0, &success);
@@ -10307,7 +10310,7 @@ EmulateInstructionARM::EmulateLDRDImmediate (const uint32_t opcode, const ARMEnc
             context.type = eContextPopRegisterOffStack;
         else
             context.type = eContextRegisterLoad;
-        context.SetRegisterPlusOffset (base_reg, address - Rn);
+        context.SetAddress(address);
                   
         const uint32_t addr_byte_size = GetAddressByteSize();
         uint32_t data = MemARead (context, address, addr_byte_size, 0, &success);
@@ -10437,7 +10440,7 @@ EmulateInstructionARM::EmulateLDRDRegister (const uint32_t opcode, const ARMEnco
             context.type = eContextPopRegisterOffStack;
         else
             context.type = eContextRegisterLoad;
-        context.SetRegisterPlusIndirectOffset (base_reg, offset_reg);
+        context.SetAddress(address);
                   
         // R[t] = MemA[address,4];
         const uint32_t addr_byte_size = GetAddressByteSize();

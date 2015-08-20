@@ -768,8 +768,6 @@ EmulateInstructionARM64::EmulateLDPSTP (const uint32_t opcode)
     Context context_t;
     Context context_t2;
 
-    context_t.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, 0);
-    context_t2.SetRegisterToRegisterPlusOffset (reg_info_Rt2, reg_info_base, size);
     uint8_t buffer [RegisterValue::kMaxRegisterByteSize];
     Error error;
 
@@ -787,6 +785,8 @@ EmulateInstructionARM64::EmulateLDPSTP (const uint32_t opcode)
                 context_t.type = eContextRegisterStore;
                 context_t2.type = eContextRegisterStore;
             }
+            context_t.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, 0);
+            context_t2.SetRegisterToRegisterPlusOffset (reg_info_Rt2, reg_info_base, size);
 
             if (!ReadRegister (&reg_info_Rt, data_Rt))
                 return false;
@@ -820,6 +820,8 @@ EmulateInstructionARM64::EmulateLDPSTP (const uint32_t opcode)
                 context_t.type = eContextRegisterLoad;
                 context_t2.type = eContextRegisterLoad;
             }
+            context_t.SetAddress(address);
+            context_t2.SetAddress(address + size);
 
             if (rt_unknown)
                 memset (buffer, 'U', reg_info_Rt.byte_size);
@@ -950,8 +952,6 @@ EmulateInstructionARM64::EmulateLDRSTRImm (const uint32_t opcode)
         return false;
 
     Context context;
-    context.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, postindex ? 0 : offset);
-
     switch (memop)
     {
         case MemOp_STORE:
@@ -959,6 +959,7 @@ EmulateInstructionARM64::EmulateLDRSTRImm (const uint32_t opcode)
                 context.type = eContextPushRegisterOnStack;
             else
                 context.type = eContextRegisterStore;
+            context.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, postindex ? 0 : offset);
 
             if (!ReadRegister (&reg_info_Rt, data_Rt))
                 return false;
@@ -975,6 +976,7 @@ EmulateInstructionARM64::EmulateLDRSTRImm (const uint32_t opcode)
                 context.type = eContextPopRegisterOffStack;
             else
                 context.type = eContextRegisterLoad;
+            context.SetAddress(address);
 
             if (!ReadMemory (context, address, buffer, reg_info_Rt.byte_size))
                 return false;
