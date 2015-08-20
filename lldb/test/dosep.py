@@ -327,6 +327,7 @@ def getExpectedTimeouts(platform_name):
             # times out on MBP Retina, Mid 2012
             "TestThreadSpecificBreakpoint.py",
             "TestExitDuringStep.py",
+            "TestIntegerTypesExpr.py",
         }
     return expected_timeout
 
