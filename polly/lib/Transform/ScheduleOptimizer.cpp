@@ -306,12 +306,11 @@ IslScheduleOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
       isl_multi_val_set_val(Sizes, 0, isl_val_int_from_si(Ctx, VectorWidth));
   Node = isl_schedule_node_band_tile(Node, Sizes);
   Node = isl_schedule_node_child(Node, 0);
-  Node = isl_schedule_node_band_sink(Node);
-
   // Make sure the "trivially vectorizable loop" is not unrolled. Otherwise,
   // we will have troubles to match it in the backend.
   Node = isl_schedule_node_band_set_ast_build_options(
-      Node, isl_union_set_read_from_str(Ctx, "{unroll[x]: 1 = 0}"));
+      Node, isl_union_set_read_from_str(Ctx, "{ unroll[x]: 1 = 0 }"));
+  Node = isl_schedule_node_band_sink(Node);
   Node = isl_schedule_node_child(Node, 0);
   return Node;
 }
