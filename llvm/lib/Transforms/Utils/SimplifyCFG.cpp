@@ -1093,7 +1093,6 @@ static bool HoistThenElseCodeToIf(BranchInst *BI,
       I2->replaceAllUsesWith(I1);
     I1->intersectOptionalDataWith(I2);
     unsigned KnownIDs[] = {
-      LLVMContext::MD_dbg,
       LLVMContext::MD_tbaa,
       LLVMContext::MD_range,
       LLVMContext::MD_fpmath,
@@ -2200,7 +2199,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold) {
       // only given the branch precondition.
       // For an analogous reason, we must also drop all the metadata whose
       // semantics we don't understand.
-      NewBonusInst->dropUnknownMetadata(LLVMContext::MD_dbg);
+      NewBonusInst->dropUnknownNonDebugMetadata();
 
       PredBlock->getInstList().insert(PBI, NewBonusInst);
       NewBonusInst->takeName(BonusInst);

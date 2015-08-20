@@ -743,7 +743,6 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   // FIXME: MD_tbaa_struct and MD_mem_parallel_loop_access should also be
   // handled here, but combineMetadata doesn't support them yet
   unsigned KnownIDs[] = {
-    LLVMContext::MD_dbg,
     LLVMContext::MD_tbaa,
     LLVMContext::MD_alias_scope,
     LLVMContext::MD_noalias,

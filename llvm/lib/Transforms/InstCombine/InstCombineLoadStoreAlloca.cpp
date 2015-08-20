@@ -754,7 +754,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                                                      6, AA, &AATags)) {
     if (LoadInst *NLI = dyn_cast<LoadInst>(AvailableVal)) {
       unsigned KnownIDs[] = {
-        LLVMContext::MD_dbg,
         LLVMContext::MD_tbaa,
         LLVMContext::MD_alias_scope,
         LLVMContext::MD_noalias,

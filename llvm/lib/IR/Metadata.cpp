@@ -1057,13 +1057,9 @@ MDNode *Instruction::getMetadataImpl(StringRef Kind) const {
   return getMetadataImpl(getContext().getMDKindID(Kind));
 }
 
-void Instruction::dropUnknownMetadata(ArrayRef<unsigned> KnownIDs) {
+void Instruction::dropUnknownNonDebugMetadata(ArrayRef<unsigned> KnownIDs) {
   SmallSet<unsigned, 5> KnownSet;
   KnownSet.insert(KnownIDs.begin(), KnownIDs.end());
-
-  // Drop debug if needed
-  if (!KnownSet.erase(LLVMContext::MD_dbg))
-    DbgLoc = DebugLoc();
 
   if (!hasMetadataHashEntry())
     return; // Nothing to remove!

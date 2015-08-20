@@ -1780,7 +1780,6 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
     // regions, and so we need a conservative combination of the noalias
     // scopes.
     static const unsigned KnownIDs[] = {
-      LLVMContext::MD_dbg,
       LLVMContext::MD_tbaa,
       LLVMContext::MD_alias_scope,
       LLVMContext::MD_noalias,

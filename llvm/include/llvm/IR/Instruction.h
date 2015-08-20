@@ -204,20 +204,22 @@ public:
   void setMetadata(unsigned KindID, MDNode *Node);
   void setMetadata(StringRef Kind, MDNode *Node);
 
-  /// \brief Drop unknown metadata.
+  /// Drop all unknown metadata except for debug locations.
+  /// @{
   /// Passes are required to drop metadata they don't understand. This is a
   /// convenience method for passes to do so.
-  void dropUnknownMetadata(ArrayRef<unsigned> KnownIDs);
-  void dropUnknownMetadata() {
-    return dropUnknownMetadata(None);
+  void dropUnknownNonDebugMetadata(ArrayRef<unsigned> KnownIDs);
+  void dropUnknownNonDebugMetadata() {
+    return dropUnknownNonDebugMetadata(None);
   }
-  void dropUnknownMetadata(unsigned ID1) {
-    return dropUnknownMetadata(makeArrayRef(ID1));
+  void dropUnknownNonDebugMetadata(unsigned ID1) {
+    return dropUnknownNonDebugMetadata(makeArrayRef(ID1));
   }
-  void dropUnknownMetadata(unsigned ID1, unsigned ID2) {
+  void dropUnknownNonDebugMetadata(unsigned ID1, unsigned ID2) {
     unsigned IDs[] = {ID1, ID2};
-    return dropUnknownMetadata(IDs);
+    return dropUnknownNonDebugMetadata(IDs);
   }
+  /// @}
 
   /// setAAMetadata - Sets the metadata on this instruction from the
   /// AAMDNodes structure.

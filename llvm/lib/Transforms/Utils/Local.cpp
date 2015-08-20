@@ -1290,7 +1290,7 @@ bool llvm::removeUnreachableBlocks(Function &F) {
 
 void llvm::combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsigned> KnownIDs) {
   SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
-  K->dropUnknownMetadata(KnownIDs);
+  K->dropUnknownNonDebugMetadata(KnownIDs);
   K->getAllMetadataOtherThanDebugLoc(Metadata);
   for (unsigned i = 0, n = Metadata.size(); i < n; ++i) {
     unsigned Kind = Metadata[i].first;
