@@ -78,6 +78,14 @@ void test_macro_expansion3() {
 #undef MACRO_EXPANSION_HAS_NULL
 }
 
+void test_macro_expansion4() {
+#define MY_NULL NULL
+  int *p = MY_NULL;
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: use nullptr [modernize-use-nullptr]
+  // CHECK-FIXES: int *p = nullptr;
+#undef MY_NULL
+}
+
 #define IS_EQ(x, y) if (x != y) return;
 void test_macro_args() {
   int i = 0;

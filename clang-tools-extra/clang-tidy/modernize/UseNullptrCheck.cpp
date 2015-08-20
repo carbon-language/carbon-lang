@@ -441,7 +441,7 @@ private:
 
 UseNullptrCheck::UseNullptrCheck(StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
-      NullMacrosStr(Options.get("NullMacros", "NULL")) {
+      NullMacrosStr(Options.get("NullMacros", "")) {
   StringRef(NullMacrosStr).split(NullMacros, ",");
 }
 
