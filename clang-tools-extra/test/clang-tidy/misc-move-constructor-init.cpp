@@ -1,4 +1,4 @@
-// RUN: clang-tidy %s -checks=-*,misc-move-constructor-init -- -std=c++14 | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: %python %S/check_clang_tidy.py %s misc-move-constructor-init %t
 
 template <class T> struct remove_reference      {typedef T type;};
 template <class T> struct remove_reference<T&>  {typedef T type;};
@@ -23,9 +23,9 @@ struct B {
 struct D : B {
   D() : B() {}
   D(const D &RHS) : B(RHS) {}
-  // CHECK: :[[@LINE+3]]:16: warning: move constructor initializes base class by calling a copy constructor [misc-move-constructor-init]
-  // CHECK: 19:3: note: copy constructor being called
-  // CHECK: 20:3: note: candidate move constructor here
+  // CHECK-MESSAGES: :[[@LINE+3]]:16: warning: move constructor initializes base class by calling a copy constructor [misc-move-constructor-init]
+  // CHECK-MESSAGES: 19:3: note: copy constructor being called
+  // CHECK-MESSAGES: 20:3: note: candidate move constructor here
   D(D &&RHS) : B(RHS) {}
 };
 
@@ -68,7 +68,7 @@ struct L : K {
 
 struct M {
   B Mem;
-  // CHECK: :[[@LINE+1]]:16: warning: move constructor initializes class member by calling a copy constructor [misc-move-constructor-init]
+  // CHECK-MESSAGES: :[[@LINE+1]]:16: warning: move constructor initializes class member by calling a copy constructor [misc-move-constructor-init]
   M(M &&RHS) : Mem(RHS.Mem) {}
 };
 
