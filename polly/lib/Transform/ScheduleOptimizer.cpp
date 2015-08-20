@@ -160,6 +160,14 @@ private:
   tileNode(__isl_take isl_schedule_node *Node, ArrayRef<int> TileSizes,
            int DefaultTileSize);
 
+  /// @brief Check if this node is a band node we want to tile.
+  ///
+  /// We look for innermost band nodes where individual dimensions are marked as
+  /// permutable.
+  ///
+  /// @param Node The node to check.
+  static bool isTileableBandNode(__isl_keep isl_schedule_node *Node);
+
   /// @brief Pre-vectorizes one scheduling dimension of a schedule band.
   ///
   /// prevectSchedBand splits out the dimension DimToVectorize, tiles it and
@@ -283,30 +291,38 @@ IslScheduleOptimizer::tileNode(__isl_take isl_schedule_node *Node,
   return isl_schedule_node_child(Node, 0);
 }
 
-__isl_give isl_schedule_node *
-IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
-                                   void *User) {
+bool IslScheduleOptimizer::isTileableBandNode(
+    __isl_keep isl_schedule_node *Node) {
   if (isl_schedule_node_get_type(Node) != isl_schedule_node_band)
-    return Node;
+    return false;
 
   if (isl_schedule_node_n_children(Node) != 1)
-    return Node;
+    return false;
 
   if (!isl_schedule_node_band_get_permutable(Node))
-    return Node;
+    return false;
 
   auto Space = isl_schedule_node_band_get_space(Node);
   auto Dims = isl_space_dim(Space, isl_dim_set);
   isl_space_free(Space);
 
   if (Dims <= 1)
-    return Node;
+    return false;
 
   auto Child = isl_schedule_node_get_child(Node, 0);
   auto Type = isl_schedule_node_get_type(Child);
   isl_schedule_node_free(Child);
 
   if (Type != isl_schedule_node_leaf)
+    return false;
+
+  return true;
+}
+
+__isl_give isl_schedule_node *
+IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
+                                   void *User) {
+  if (!isTileableBandNode(Node))
     return Node;
 
   if (EnableTiling)
@@ -314,6 +330,10 @@ IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
 
   if (PollyVectorizerChoice == VECTORIZER_NONE)
     return Node;
+
+  auto Space = isl_schedule_node_band_get_space(Node);
+  auto Dims = isl_space_dim(Space, isl_dim_set);
+  isl_space_free(Space);
 
   for (int i = Dims - 1; i >= 0; i--)
     if (isl_schedule_node_band_member_get_coincident(Node, i)) {
