@@ -1986,8 +1986,7 @@ define <32 x i8> @insert_dup_mem_v32i8_i32(i32* %ptr) {
 ;
 ; AVX2-LABEL: insert_dup_mem_v32i8_i32:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vpbroadcastb %xmm0, %ymm0
+; AVX2-NEXT:    vpbroadcastb (%rdi), %ymm0
 ; AVX2-NEXT:    retq
   %tmp = load i32, i32* %ptr, align 4
   %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0
@@ -2008,9 +2007,7 @@ define <32 x i8> @insert_dup_mem_v32i8_sext_i8(i8* %ptr) {
 ;
 ; AVX2-LABEL: insert_dup_mem_v32i8_sext_i8:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    movsbl (%rdi), %eax
-; AVX2-NEXT:    vmovd %eax, %xmm0
-; AVX2-NEXT:    vpbroadcastb %xmm0, %ymm0
+; AVX2-NEXT:    vpbroadcastb (%rdi), %ymm0
 ; AVX2-NEXT:    retq
   %tmp = load i8, i8* %ptr, align 1
   %tmp1 = sext i8 %tmp to i32

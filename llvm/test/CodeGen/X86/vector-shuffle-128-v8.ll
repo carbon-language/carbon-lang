@@ -2175,8 +2175,7 @@ define <8 x i16> @insert_dup_mem_v8i16_i32(i32* %ptr) {
 ;
 ; AVX2-LABEL: insert_dup_mem_v8i16_i32:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; AVX2-NEXT:    vpbroadcastw %xmm0, %xmm0
+; AVX2-NEXT:    vpbroadcastw (%rdi), %xmm0
 ; AVX2-NEXT:    retq
   %tmp = load i32, i32* %ptr, align 4
   %tmp1 = insertelement <4 x i32> zeroinitializer, i32 %tmp, i32 0

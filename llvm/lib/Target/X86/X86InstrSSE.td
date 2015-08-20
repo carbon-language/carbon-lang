@@ -8338,6 +8338,13 @@ defm VPBROADCASTD  : avx2_broadcast<0x58, "vpbroadcastd", i32mem, loadi32, v4i32
 defm VPBROADCASTQ  : avx2_broadcast<0x59, "vpbroadcastq", i64mem, loadi64, v2i64, v4i64>;
 
 let Predicates = [HasAVX2] in {
+  // loadi16 is tricky to fold, because !isTypeDesirableForOp, justifiably.
+  // This means we'll encounter truncated i32 loads; match that here.
+  def : Pat<(v8i16 (X86VBroadcast (i16 (trunc (i32 (load addr:$src)))))),
+            (VPBROADCASTWrm addr:$src)>;
+  def : Pat<(v16i16 (X86VBroadcast (i16 (trunc (i32 (load addr:$src)))))),
+            (VPBROADCASTWYrm addr:$src)>;
+
   // Provide aliases for broadcast from the same register class that
   // automatically does the extract.
   def : Pat<(v32i8 (X86VBroadcast (v32i8 VR256:$src))),

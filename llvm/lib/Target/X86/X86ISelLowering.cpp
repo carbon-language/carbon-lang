@@ -7553,6 +7553,23 @@ static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
 
   // Check if this is a broadcast of a scalar. We special case lowering
   // for scalars so that we can more effectively fold with loads.
+  // First, look through bitcast: if the original value has a larger element
+  // type than the shuffle, the broadcast element is in essence truncated.
+  // Make that explicit to ease folding.
+  if (V.getOpcode() == ISD::BITCAST && VT.isInteger()) {
+    EVT EltVT = VT.getVectorElementType();
+    SDValue V0 = V.getOperand(0);
+    EVT V0VT = V0.getValueType();
+
+    if (V0VT.isInteger() && V0VT.getVectorElementType().bitsGT(EltVT) &&
+        ((V0.getOpcode() == ISD::BUILD_VECTOR ||
+         (V0.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)))) {
+      V = DAG.getNode(ISD::TRUNCATE, DL, EltVT, V0.getOperand(BroadcastIdx));
+      BroadcastIdx = 0;
+    }
+  }
+
+  // Also check the simpler case, where we can directly reuse the scalar.
   if (V.getOpcode() == ISD::BUILD_VECTOR ||
       (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
     V = V.getOperand(BroadcastIdx);
