@@ -607,7 +607,9 @@ __m256i test_mm256_stream_load_si256(__m256i *a) {
 }
 
 __m128 test_mm_broadcastss_ps(__m128 a) {
-  // CHECK: @llvm.x86.avx2.vbroadcast.ss.ps
+  // CHECK-LABEL: test_mm_broadcastss_ps
+  // CHECK-NOT: @llvm.x86.avx2.vbroadcast.ss.ps
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <4 x i32> zeroinitializer
   return _mm_broadcastss_ps(a);
 }
 
@@ -617,12 +619,16 @@ __m128d test_mm_broadcastsd_pd(__m128d a) {
 }
 
 __m256 test_mm256_broadcastss_ps(__m128 a) {
-  // CHECK: @llvm.x86.avx2.vbroadcast.ss.ps.256
+  // CHECK-LABEL: test_mm256_broadcastss_ps
+  // CHECK-NOT: @llvm.x86.avx2.vbroadcast.ss.ps.256
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> %{{.*}}, <8 x i32> zeroinitializer
   return _mm256_broadcastss_ps(a);
 }
 
 __m256d test_mm256_broadcastsd_pd(__m128d a) {
-  // check: @llvm.x86.avx2.vbroadcast.sd.pd.256
+  // CHECK-LABEL: test_mm256_broadcastsd_pd
+  // CHECK-NOT: @llvm.x86.avx2.vbroadcast.sd.pd.256
+  // CHECK: shufflevector <2 x double> %{{.*}}, <2 x double> %{{.*}}, <4 x i32> zeroinitializer
   return _mm256_broadcastsd_pd(a);
 }
 
@@ -646,42 +652,58 @@ __m256i test_mm256_blend_epi32(__m256i a, __m256i b) {
 }
 
 __m256i test_mm256_broadcastb_epi8(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastb.256
+  // CHECK-LABEL: test_mm256_broadcastb_epi8
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastb.256
+  // CHECK: shufflevector <16 x i8> %{{.*}}, <16 x i8> %{{.*}}, <32 x i32> zeroinitializer
   return _mm256_broadcastb_epi8(a);
 }
 
 __m256i test_mm256_broadcastw_epi16(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastw.256
+  // CHECK-LABEL: test_mm256_broadcastw_epi16
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastw.256
+  // CHECK: shufflevector <8 x i16> %{{.*}}, <8 x i16> %{{.*}}, <16 x i32> zeroinitializer
   return _mm256_broadcastw_epi16(a);
 }
 
 __m256i test_mm256_broadcastd_epi32(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastd.256
+  // CHECK-LABEL: test_mm256_broadcastd_epi32
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastd.256
+  // CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> %{{.*}}, <8 x i32> zeroinitializer
   return _mm256_broadcastd_epi32(a);
 }
 
 __m256i test_mm256_broadcastq_epi64(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastq.256
+  // CHECK-LABEL: test_mm256_broadcastq_epi64
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastq.256
+  // CHECK: shufflevector <2 x i64> %{{.*}}, <2 x i64> %{{.*}}, <4 x i32> zeroinitializer
   return _mm256_broadcastq_epi64(a);
 }
 
 __m128i test_mm_broadcastb_epi8(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastb.128
+  // CHECK-LABEL: test_mm_broadcastb_epi8
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastb.128
+  // CHECK: shufflevector <16 x i8> %{{.*}}, <16 x i8> %{{.*}}, <16 x i32> zeroinitializer
   return _mm_broadcastb_epi8(a);
 }
 
 __m128i test_mm_broadcastw_epi16(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastw.128
+  // CHECK-LABEL: test_mm_broadcastw_epi16
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastw.128
+  // CHECK: shufflevector <8 x i16> %{{.*}}, <8 x i16> %{{.*}}, <8 x i32> zeroinitializer
   return _mm_broadcastw_epi16(a);
 }
 
 __m128i test_mm_broadcastd_epi32(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastd.128
+  // CHECK-LABEL: test_mm_broadcastd_epi32
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastd.128
+  // CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> zeroinitializer
   return _mm_broadcastd_epi32(a);
 }
 
 __m128i test_mm_broadcastq_epi64(__m128i a) {
-  // CHECK: @llvm.x86.avx2.pbroadcastq.128
+  // CHECK-LABEL: test_mm_broadcastq_epi64
+  // CHECK-NOT: @llvm.x86.avx2.pbroadcastq.128
+  // CHECK: shufflevector <2 x i64> %{{.*}}, <2 x i64> %{{.*}}, <2 x i32> zeroinitializer
   return _mm_broadcastq_epi64(a);
 }
 
