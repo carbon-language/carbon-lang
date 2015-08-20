@@ -6383,6 +6383,12 @@ OMPClause *Sema::ActOnOpenMPLinearClause(
                             diag::err_omp_linear_incomplete_type)) {
       continue;
     }
+    if ((LinKind == OMPC_LINEAR_uval || LinKind == OMPC_LINEAR_ref) &&
+        !QType->isReferenceType()) {
+      Diag(ELoc, diag::err_omp_wrong_linear_modifier_non_reference)
+          << QType << getOpenMPSimpleClauseTypeName(OMPC_linear, LinKind);
+      continue;
+    }
     QType = QType.getNonReferenceType();
 
     // A list item must not be const-qualified.

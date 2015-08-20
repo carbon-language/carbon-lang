@@ -135,11 +135,11 @@ template<class I, class C> int foomain(I argc, C **argv) {
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd linear (argv[1]) // expected-error {{expected variable name}}
   for (int k = 0; k < argc; ++k) ++k;
-  #pragma omp simd linear(ref(e, g))
+  #pragma omp simd linear(ref(e, g)) // expected-error 2 {{variable of non-reference type 'int' can be used only with 'val' modifier, but used with 'ref'}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd linear(h) // expected-error {{threadprivate or thread local variable cannot be linear}}
   for (int k = 0; k < argc; ++k) ++k;
-  #pragma omp simd linear(uval(i))
+  #pragma omp simd linear(uval(i)) // expected-error {{variable of non-reference type 'int' can be used only with 'val' modifier, but used with 'uval'}}
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp parallel
   {
@@ -148,7 +148,9 @@ template<class I, class C> int foomain(I argc, C **argv) {
     #pragma omp simd linear(v:i)
     for (int k = 0; k < argc; ++k) { i = k; v += i; }
   }
-  #pragma omp simd linear(j)
+  #pragma omp simd linear(ref(j))
+  for (int k = 0; k < argc; ++k) ++k;
+  #pragma omp simd linear(uval(j))
   for (int k = 0; k < argc; ++k) ++k;
   int v = 0;
   #pragma omp simd linear(v:j)
@@ -167,7 +169,7 @@ using A::x;
 }
 
 void linear_modifiers(int argc) {
-  int f;
+  int &f = argc;
   #pragma omp simd linear(f)
   for (int k = 0; k < argc; ++k) ++k;
   #pragma omp simd linear(val(f))
@@ -233,7 +235,7 @@ int main(int argc, char **argv) {
     int i;
     #pragma omp simd linear(val(i))
     for (int k = 0; k < argc; ++k) ++k;
-    #pragma omp simd linear(uval(i) : 4)
+    #pragma omp simd linear(uval(i) : 4) // expected-error {{variable of non-reference type 'int' can be used only with 'val' modifier, but used with 'uval'}}
     for (int k = 0; k < argc; ++k) { ++k; i += 4; }
   }
   #pragma omp simd linear(ref(j))
@@ -241,7 +243,7 @@ int main(int argc, char **argv) {
   #pragma omp simd linear(i)
   for (int k = 0; k < argc; ++k) ++k;
 
-  foomain<int,char>(argc,argv);
+  foomain<int,char>(argc,argv); // expected-note {{in instantiation of function template specialization 'foomain<int, char>' requested here}}
   return 0;
 }
 

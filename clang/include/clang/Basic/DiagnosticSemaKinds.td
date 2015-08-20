@@ -7669,6 +7669,8 @@ def err_omp_parent_cancel_region_ordered : Error<
   "parent region for 'omp %select{cancellation point/cancel}0' construct cannot be ordered">;
 def err_omp_wrong_linear_modifier : Error<
   "expected %select{'val' modifier|one of 'ref', val' or 'uval' modifiers}0">;
+def err_omp_wrong_linear_modifier_non_reference : Error<
+  "variable of non-reference type %0 can be used only with 'val' modifier, but used with '%1'">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

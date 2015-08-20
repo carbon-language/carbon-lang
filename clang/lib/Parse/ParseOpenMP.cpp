@@ -785,9 +785,8 @@ OMPClause *Parser::ParseOpenMPVarListClause(OpenMPClauseKind Kind) {
   } else if (Kind == OMPC_linear) {
     // Try to parse modifier if any.
     if (Tok.is(tok::identifier) && PP.LookAhead(0).is(tok::l_paren)) {
-      StringRef TokSpelling = PP.getSpelling(Tok);
       LinearModifier = static_cast<OpenMPLinearClauseKind>(
-          getOpenMPSimpleClauseType(Kind, TokSpelling));
+          getOpenMPSimpleClauseType(Kind, PP.getSpelling(Tok)));
       DepLinLoc = ConsumeToken();
       LinearT.consumeOpen();
       NeedRParenForLinear = true;
