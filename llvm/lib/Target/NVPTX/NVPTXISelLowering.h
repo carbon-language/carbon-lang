@@ -459,6 +459,14 @@ public:
   bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                              unsigned AS) const override;
 
+  bool isTruncateFree(Type *SrcTy, Type *DstTy) const override {
+    // Truncating 64-bit to 32-bit is free in SASS.
+    if (!SrcTy->isIntegerTy() || !DstTy->isIntegerTy())
+      return false;
+    return SrcTy->getPrimitiveSizeInBits() == 64 &&
+           DstTy->getPrimitiveSizeInBits() == 32;
+  }
+
   /// getFunctionAlignment - Return the Log2 alignment of this function.
   unsigned getFunctionAlignment(const Function *F) const;
 
