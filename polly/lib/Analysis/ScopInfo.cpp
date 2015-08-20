@@ -1551,8 +1551,8 @@ Scop::Scop(Region &R, ScalarEvolution &ScalarEvolution, isl_ctx *Context,
     : SE(&ScalarEvolution), R(R), IsOptimized(false),
       MaxLoopDepth(MaxLoopDepth), IslCtx(Context), Affinator(this) {}
 
-void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI,
-                            ScopDetection &SD, AliasAnalysis &AA) {
+void Scop::initFromTempScop(TempScop &TempScop, LoopInfo &LI, ScopDetection &SD,
+                            AliasAnalysis &AA) {
   buildContext();
 
   SmallVector<Loop *, 8> NestLoops;
