@@ -170,21 +170,15 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   DebugLoc dl = MI.getDebugLoc();
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
-
-  // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();
   const SparcSubtarget &Subtarget = MF.getSubtarget<SparcSubtarget>();
-  int64_t Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-                   MI.getOperand(FIOperandNum + 1).getImm() +
-                   Subtarget.getStackPointerBias();
-  SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
-  unsigned FramePtr = SP::I6;
-  if (FuncInfo->isLeafProc()) {
-    // Use %sp and adjust offset if needed.
-    FramePtr = SP::O6;
-    int stackSize = MF.getFrameInfo()->getStackSize();
-    Offset += (stackSize) ? Subtarget.getAdjustedFrameSize(stackSize) : 0 ;
-  }
+  const SparcFrameLowering *TFI = getFrameLowering(MF);
+
+  unsigned FrameReg;
+  int Offset;
+  Offset = TFI->getFrameIndexReference(MF, FrameIndex, FrameReg);
+
+  Offset += MI.getOperand(FIOperandNum + 1).getImm();
 
   if (!Subtarget.isV9() || !Subtarget.hasHardQuad()) {
     if (MI.getOpcode() == SP::STQFri) {
@@ -194,8 +188,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       unsigned SrcOddReg  = getSubReg(SrcReg, SP::sub_odd64);
       MachineInstr *StMI =
         BuildMI(*MI.getParent(), II, dl, TII.get(SP::STDFri))
-        .addReg(FramePtr).addImm(0).addReg(SrcEvenReg);
-      replaceFI(MF, II, *StMI, dl, 0, Offset, FramePtr);
+        .addReg(FrameReg).addImm(0).addReg(SrcEvenReg);
+      replaceFI(MF, II, *StMI, dl, 0, Offset, FrameReg);
       MI.setDesc(TII.get(SP::STDFri));
       MI.getOperand(2).setReg(SrcOddReg);
       Offset += 8;
@@ -206,8 +200,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       unsigned DestOddReg  = getSubReg(DestReg, SP::sub_odd64);
       MachineInstr *StMI =
         BuildMI(*MI.getParent(), II, dl, TII.get(SP::LDDFri), DestEvenReg)
-        .addReg(FramePtr).addImm(0);
-      replaceFI(MF, II, *StMI, dl, 1, Offset, FramePtr);
+        .addReg(FrameReg).addImm(0);
+      replaceFI(MF, II, *StMI, dl, 1, Offset, FrameReg);
 
       MI.setDesc(TII.get(SP::LDDFri));
       MI.getOperand(0).setReg(DestOddReg);
@@ -215,10 +209,33 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
   }
 
-  replaceFI(MF, II, MI, dl, FIOperandNum, Offset, FramePtr);
+  replaceFI(MF, II, MI, dl, FIOperandNum, Offset, FrameReg);
 
 }
 
 unsigned SparcRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return SP::I6;
+}
+
+// Sparc has no architectural need for stack realignment support,
+// except that LLVM unfortunately currently implements overaligned
+// stack objects by depending upon stack realignment support.
+// If that ever changes, this can probably be deleted.
+bool SparcRegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  if (!TargetRegisterInfo::canRealignStack(MF))
+    return false;
+
+  // Sparc always has a fixed frame pointer register, so don't need to
+  // worry about needing to reserve it. [even if we don't have a frame
+  // pointer for our frame, it still cannot be used for other things,
+  // or register window traps will be SADNESS.]
+
+  // If there's a reserved call frame, we can use SP to access locals.
+  if (getFrameLowering(MF)->hasReservedCallFrame(MF))
+    return true;
+
+  // Otherwise, we'd need a base pointer, but those aren't implemented
+  // for SPARC at the moment.
+
+  return false;
 }

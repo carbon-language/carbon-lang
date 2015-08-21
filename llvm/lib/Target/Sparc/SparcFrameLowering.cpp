@@ -90,8 +90,21 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const SparcInstrInfo &TII =
       *static_cast<const SparcInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const SparcRegisterInfo &RegInfo =
+      *static_cast<const SparcRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  bool NeedsStackRealignment = RegInfo.needsStackRealignment(MF);
+
+  // FIXME: unfortunately, returning false from canRealignStack
+  // actually just causes needsStackRealignment to return false,
+  // rather than reporting an error, as would be sensible. This is
+  // poor, but fixing that bogosity is going to be a large project.
+  // For now, just see if it's lied, and report an error here.
+  if (!NeedsStackRealignment && MFI->getMaxAlignment() > getStackAlignment())
+    report_fatal_error("Function \"" + Twine(MF.getName()) + "\" required "
+                       "stack re-alignment, but LLVM couldn't handle it "
+                       "(probably because it has a dynamic alloca).");
 
   // Get the number of bytes to allocate from the FrameInfo
   int NumBytes = (int) MFI->getStackSize();
@@ -104,12 +117,14 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF,
     SAVEri = SP::ADDri;
     SAVErr = SP::ADDrr;
   }
-  NumBytes = -MF.getSubtarget<SparcSubtarget>().getAdjustedFrameSize(NumBytes);
-  emitSPAdjustment(MF, MBB, MBBI, NumBytes, SAVErr, SAVEri);
+
+  NumBytes = MF.getSubtarget<SparcSubtarget>().getAdjustedFrameSize(NumBytes);
+  MFI->setStackSize(NumBytes); // Update stack size with corrected value.
+
+  emitSPAdjustment(MF, MBB, MBBI, -NumBytes, SAVErr, SAVEri);
 
   MachineModuleInfo &MMI = MF.getMMI();
-  const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
-  unsigned regFP = MRI->getDwarfRegNum(SP::I6, true);
+  unsigned regFP = RegInfo.getDwarfRegNum(SP::I6, true);
 
   // Emit ".cfi_def_cfa_register 30".
   unsigned CFIIndex =
@@ -122,13 +137,19 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF,
   BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
       .addCFIIndex(CFIIndex);
 
-  unsigned regInRA = MRI->getDwarfRegNum(SP::I7, true);
-  unsigned regOutRA = MRI->getDwarfRegNum(SP::O7, true);
+  unsigned regInRA = RegInfo.getDwarfRegNum(SP::I7, true);
+  unsigned regOutRA = RegInfo.getDwarfRegNum(SP::O7, true);
   // Emit ".cfi_register 15, 31".
   CFIIndex = MMI.addFrameInst(
       MCCFIInstruction::createRegister(nullptr, regOutRA, regInRA));
   BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
       .addCFIIndex(CFIIndex);
+
+  if (NeedsStackRealignment) {
+    // andn %o6, MaxAlign-1, %o6
+    int MaxAlign = MFI->getMaxAlignment();
+    BuildMI(MBB, MBBI, dl, TII.get(SP::ANDNri), SP::O6).addReg(SP::O6).addImm(MaxAlign - 1);
+  }
 }
 
 void SparcFrameLowering::
@@ -167,7 +188,6 @@ void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
   if (NumBytes == 0)
     return;
 
-  NumBytes = MF.getSubtarget<SparcSubtarget>().getAdjustedFrameSize(NumBytes);
   emitSPAdjustment(MF, MBB, MBBI, NumBytes, SP::ADDrr, SP::ADDri);
 }
 
@@ -180,11 +200,59 @@ bool SparcFrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
 bool SparcFrameLowering::hasFP(const MachineFunction &MF) const {
+  const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
+
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||
-    MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
+      RegInfo->needsStackRealignment(MF) ||
+      MFI->hasVarSizedObjects() ||
+      MFI->isFrameAddressTaken();
 }
 
+
+int SparcFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
+                                               unsigned &FrameReg) const {
+  const SparcSubtarget &Subtarget = MF.getSubtarget<SparcSubtarget>();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const SparcRegisterInfo *RegInfo = Subtarget.getRegisterInfo();
+  const SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
+  bool isFixed = MFI->isFixedObjectIndex(FI);
+
+  // Addressable stack objects are accessed using neg. offsets from
+  // %fp, or positive offsets from %sp.
+  bool UseFP;
+
+  // Sparc uses FP-based references in general, even when "hasFP" is
+  // false. That function is rather a misnomer, because %fp is
+  // actually always available, unless isLeafProc.
+  if (FuncInfo->isLeafProc()) {
+    // If there's a leaf proc, all offsets need to be %sp-based,
+    // because we haven't caused %fp to actually point to our frame.
+    UseFP = false;
+  } else if (isFixed) {
+    // Otherwise, argument access should always use %fp.
+    UseFP = true;
+  } else if (RegInfo->needsStackRealignment(MF)) {
+    // If there is dynamic stack realignment, all local object
+    // references need to be via %sp, to take account of the
+    // re-alignment.
+    UseFP = false;
+  } else {
+    // Finally, default to using %fp.
+    UseFP = true;
+  }
+
+  int64_t FrameOffset = MF.getFrameInfo()->getObjectOffset(FI) +
+      Subtarget.getStackPointerBias();
+
+  if (UseFP) {
+    FrameReg = RegInfo->getFrameRegister(MF);
+    return FrameOffset;
+  } else {
+    FrameReg = SP::O6; // %sp
+    return FrameOffset + MF.getFrameInfo()->getStackSize();
+  }
+}
 
 static bool LLVM_ATTRIBUTE_UNUSED verifyLeafProcRegUse(MachineRegisterInfo *MRI)
 {

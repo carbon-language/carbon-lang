@@ -45,14 +45,14 @@ entry:
 ; HARD:       std %f{{.+}}, [%[[S1:.+]]]
 ; HARD-DAG:   ldd [%[[S0]]], %f{{.+}}
 ; HARD-DAG:   ldd [%[[S1]]], %f{{.+}}
-; HARD:       jmp %o7+12
+; HARD:       jmp {{%[oi]7}}+12
 
 ; SOFT-LABEL: f128_spill
 ; SOFT:       std %f{{.+}}, [%[[S0:.+]]]
 ; SOFT:       std %f{{.+}}, [%[[S1:.+]]]
 ; SOFT-DAG:   ldd [%[[S0]]], %f{{.+}}
 ; SOFT-DAG:   ldd [%[[S1]]], %f{{.+}}
-; SOFT:       jmp %o7+12
+; SOFT:       jmp {{%[oi]7}}+12
 
 define void @f128_spill(fp128* noalias sret %scalar.result, fp128* byval %a) {
 entry:
