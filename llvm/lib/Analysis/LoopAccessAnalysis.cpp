@@ -1593,10 +1593,13 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
   return nullptr;
 }
 
-/// \brief IR Values for the lower and upper bounds of a pointer evolution.
+/// \brief IR Values for the lower and upper bounds of a pointer evolution.  We
+/// need to use value-handles because SCEV expansion can invalidate previously
+/// expanded values.  Thus expansion of a pointer can invalidate the bounds for
+/// a previous one.
 struct PointerBounds {
-  Value *Start;
-  Value *End;
+  TrackingVH<Value> Start;
+  TrackingVH<Value> End;
 };
 
 /// \brief Expand code for the lower and upper bound of the pointer group \p CG
