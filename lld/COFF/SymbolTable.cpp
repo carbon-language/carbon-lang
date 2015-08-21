@@ -325,7 +325,7 @@ void SymbolTable::printMap(llvm::raw_ostream &OS) {
     OS << File->getShortName() << ":\n";
     for (SymbolBody *Body : File->getSymbols())
       if (auto *R = dyn_cast<DefinedRegular>(Body))
-        if (R->isLive())
+        if (!R->isCOMDAT() || R->isLive())
           OS << Twine::utohexstr(Config->ImageBase + R->getRVA())
              << " " << R->getName() << "\n";
   }
