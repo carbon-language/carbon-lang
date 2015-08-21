@@ -135,7 +135,7 @@ namespace {
                  Module &M, bool isConst, unsigned AddrSpace) const;
     /// \brief Merge everything in \p Globals for which the corresponding bit
     /// in \p GlobalSet is set.
-    bool doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
+    bool doMerge(const SmallVectorImpl<GlobalVariable *> &Globals,
                  const BitVector &GlobalSet, Module &M, bool isConst,
                  unsigned AddrSpace) const;
 
@@ -406,14 +406,13 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   return Changed;
 }
 
-bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
+bool GlobalMerge::doMerge(const SmallVectorImpl<GlobalVariable *> &Globals,
                           const BitVector &GlobalSet, Module &M, bool isConst,
                           unsigned AddrSpace) const {
+  assert(Globals.size() > 1);
 
   Type *Int32Ty = Type::getInt32Ty(M.getContext());
   auto &DL = M.getDataLayout();
-
-  assert(Globals.size() > 1);
 
   DEBUG(dbgs() << " Trying to merge set, starts with #"
                << GlobalSet.find_first() << "\n");
@@ -562,21 +561,17 @@ bool GlobalMerge::doInitialization(Module &M) {
     }
   }
 
-  for (DenseMap<unsigned, SmallVector<GlobalVariable*, 16> >::iterator
-       I = Globals.begin(), E = Globals.end(); I != E; ++I)
-    if (I->second.size() > 1)
-      Changed |= doMerge(I->second, M, false, I->first);
+  for (auto &P : Globals)
+    if (P.second.size() > 1)
+      Changed |= doMerge(P.second, M, false, P.first);
 
-  for (DenseMap<unsigned, SmallVector<GlobalVariable*, 16> >::iterator
-       I = BSSGlobals.begin(), E = BSSGlobals.end(); I != E; ++I)
-    if (I->second.size() > 1)
-      Changed |= doMerge(I->second, M, false, I->first);
+  for (auto &P : BSSGlobals)
+    if (P.second.size() > 1)
+      Changed |= doMerge(P.second, M, false, P.first);
 
-  if (EnableGlobalMergeOnConst)
-    for (DenseMap<unsigned, SmallVector<GlobalVariable*, 16> >::iterator
-         I = ConstGlobals.begin(), E = ConstGlobals.end(); I != E; ++I)
-      if (I->second.size() > 1)
-        Changed |= doMerge(I->second, M, true, I->first);
+  for (auto &P : ConstGlobals)
+    if (P.second.size() > 1)
+      Changed |= doMerge(P.second, M, true, P.first);
 
   return Changed;
 }
