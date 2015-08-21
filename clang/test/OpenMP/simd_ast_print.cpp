@@ -12,10 +12,11 @@ template<class T, class N> T reduct(T* arr, N num) {
   N i;
   N ind;
   N myind;
+  N &ref = i;
   T sum = (T)0;
 // CHECK: T sum = (T)0;
-#pragma omp simd private(myind, g_ind), linear(ind), aligned(arr)
-// CHECK-NEXT: #pragma omp simd private(myind,g_ind) linear(ind) aligned(arr)
+#pragma omp simd private(myind, g_ind), linear(ind), aligned(arr), linear(uval(ref))
+// CHECK-NEXT: #pragma omp simd private(myind,g_ind) linear(ind) aligned(arr) linear(uval(ref))
   for (i = 0; i < num; ++i) {
     myind = ind;
     T cur = arr[myind];
@@ -32,11 +33,13 @@ template<class T> struct S {
     T res;
     T val;
     T lin = 0;
+    T &ref = res;
 // CHECK: T res;
 // CHECK: T val;
 // CHECK: T lin = 0;
-    #pragma omp simd private(val)  safelen(7) linear(lin : -5) lastprivate(res) simdlen(5)
-// CHECK-NEXT: #pragma omp simd private(val) safelen(7) linear(lin: -5) lastprivate(res) simdlen(5)
+// CHECK: T &ref = res;
+    #pragma omp simd private(val)  safelen(7) linear(lin : -5) lastprivate(res) simdlen(5) linear(ref(ref))
+// CHECK-NEXT: #pragma omp simd private(val) safelen(7) linear(lin: -5) lastprivate(res) simdlen(5) linear(ref(ref))
     for (T i = 7; i < m_a; ++i) {
       val = v[i-7] + m_a;
       res = val;
@@ -90,6 +93,7 @@ template<int LEN> struct S2 {
 int main (int argc, char **argv) {
   int b = argc, c, d, e, f, g;
   int k1=0,k2=0;
+  int &ref = b;
   static int *a;
 // CHECK: static int *a;
 #pragma omp simd
@@ -112,8 +116,8 @@ int main (int argc, char **argv) {
 // CHECK-NEXT: foo();
   const int CLEN = 4;
 // CHECK-NEXT: const int CLEN = 4;
-  #pragma omp simd aligned(a:CLEN) linear(a:CLEN) safelen(CLEN) collapse( 1 ) simdlen(CLEN)
-// CHECK-NEXT: #pragma omp simd aligned(a: CLEN) linear(a: CLEN) safelen(CLEN) collapse(1) simdlen(CLEN)
+  #pragma omp simd aligned(a:CLEN) linear(a:CLEN) safelen(CLEN) collapse( 1 ) simdlen(CLEN) linear(val(ref): CLEN)
+// CHECK-NEXT: #pragma omp simd aligned(a: CLEN) linear(a: CLEN) safelen(CLEN) collapse(1) simdlen(CLEN) linear(val(ref): CLEN)
   for (int i = 0; i < 10; ++i)foo();
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: foo();
