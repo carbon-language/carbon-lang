@@ -178,8 +178,6 @@ being aware of:
 * While most of the atomics library is well implemented, the fences are
   missing. Fortunately, they are rarely needed.
 * The locale support is incomplete.
-* ``std::equal()`` (and other algorithms) incorrectly assert in MSVC when given
-  ``nullptr`` as an iterator.
 
 Other than these areas you should assume the standard library is available and
 working as expected until some build bot tells you otherwise. If you're in an

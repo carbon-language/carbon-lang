@@ -247,6 +247,12 @@ if( MSVC_IDE )
 endif()
 
 if( MSVC )
+  if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.0 )
+    # For MSVC 2013, disable iterator null pointer checking in debug mode,
+    # especially so std::equal(nullptr, nullptr, nullptr) will not assert.
+    add_llvm_definitions("-D_DEBUG_POINTER_IMPL=")
+  endif()
+  
   include(ChooseMSVCCRT)
 
   if( NOT (${CMAKE_VERSION} VERSION_LESS 2.8.11) )

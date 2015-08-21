@@ -156,8 +156,6 @@ namespace llvm {
     bool equals(ArrayRef RHS) const {
       if (Length != RHS.Length)
         return false;
-      if (Length == 0)
-        return true;
       return std::equal(begin(), end(), RHS.begin());
     }
 
