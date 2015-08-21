@@ -503,7 +503,8 @@ subdirectories = %s
 
     def foreach_cmake_library(self, f,
                               enabled_optional_components,
-                              skip_disabled):
+                              skip_disabled,
+                              skip_not_installed):
         for ci in self.ordered_component_infos:
             # Skip optional components which are not enabled.
             if ci.type_name == 'OptionalLibrary' \
@@ -519,6 +520,10 @@ subdirectories = %s
                 tg = ci.get_parent_target_group()
                 if tg and not tg.enabled:
                     continue
+
+            # Skip targets that will not be installed
+            if skip_not_installed and not ci.installed:
+                continue
 
             f(ci)
 
@@ -600,7 +605,8 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
                      for dep in self.get_required_libraries_for_component(ci)))))
             ,
             enabled_optional_components,
-            skip_disabled = False
+            skip_disabled = False,
+            skip_not_installed = False # Dependency info must be emitted for internals libs too
             )
 
         f.close()
@@ -635,7 +641,8 @@ set_property(TARGET %s PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES %s)\n""" % (
                      for dep in self.get_required_libraries_for_component(ci)))))
             ,
             enabled_optional_components,
-            skip_disabled = True
+            skip_disabled = True,
+            skip_not_installed = True # Do not export internal libraries like gtest
             )
 
         f.close()
@@ -715,10 +722,10 @@ LLVM_LIBS_TO_EXPORT :=""")
                 f.write(' \\\n  %s' % ci.get_prefixed_library_name())
             ,
             enabled_optional_components,
-            skip_disabled = True
+            skip_disabled = True,
+            skip_not_installed = True # Do not export internal libraries like gtest
             )
         f.write('\n')
-
         f.close()
 
 def add_magic_target_components(parser, project, opts):

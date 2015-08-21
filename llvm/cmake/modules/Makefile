@@ -37,10 +37,6 @@ else
 	LLVM_ENABLE_RTTI := 0
 endif
 
-# Strip out gtest and gtest_main from LLVM_LIBS_TO_EXPORT, these are not
-# installed and won't be available from the install tree.
-LLVM_LIBS_TO_EXPORT := $(filter-out gtest gtest_main,$(LLVM_LIBS_TO_EXPORT))
-
 ifndef LLVM_LIBS_TO_EXPORT
 $(error LLVM_LIBS_TO_EXPORT cannot be empty)
 endif
@@ -122,7 +118,7 @@ $(PROJ_OBJ_DIR)/LLVMExports.cmake: $(LLVMBuildCMakeExportsFrag) Makefile
 	  done && \
 	  cat "$(LLVMBuildCMakeExportsFrag)" && \
 	  echo 'set_property(TARGET LLVMSupport APPEND PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES '"$(subst -l,,$(LIBS))"')' \
-	) | grep -v gtest > $@
+	) > $@
 
 all-local:: $(addprefix $(PROJ_OBJ_DIR)/, $(OBJMODS))
 
