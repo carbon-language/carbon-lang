@@ -129,7 +129,16 @@ private:
   __isl_give isl_ast_expr *getUpperBound(__isl_keep isl_ast_node *For,
                                          CmpInst::Predicate &Predicate);
 
-  unsigned getNumberOfIterations(__isl_keep isl_ast_node *For);
+  /// Return non-negative number of iterations in case of the following form
+  /// of a loop and -1 otherwise.
+  ///
+  /// for (i = 0; i <= NumIter; i++) {
+  ///   loop body;
+  /// }
+  ///
+  /// NumIter is a non-negative integer value. Condition can have
+  /// isl_ast_op_lt type.
+  int getNumberOfIterations(__isl_keep isl_ast_node *For);
 
   /// Compute the values and loops referenced in this subtree.
   ///

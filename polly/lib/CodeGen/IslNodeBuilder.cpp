@@ -101,51 +101,48 @@ IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
   return UB;
 }
 
-unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
-  isl_union_map *Schedule = IslAstInfo::getSchedule(For);
-  isl_set *LoopDomain = isl_set_from_union_set(isl_union_map_range(Schedule));
-  if (isl_set_is_wrapping(LoopDomain))
-    LoopDomain = isl_map_range(isl_set_unwrap(LoopDomain));
-  int Dim = isl_set_dim(LoopDomain, isl_dim_set);
+/// @brief Return true if a return value of Predicate is true for the value
+/// represented by passed isl_ast_expr_int.
+static bool checkIslAstExprInt(__isl_take isl_ast_expr *Expr,
+                               isl_bool (*Predicate)(__isl_keep isl_val *)) {
+  if (isl_ast_expr_get_type(Expr) != isl_ast_expr_int) {
+    isl_ast_expr_free(Expr);
+    return false;
+  }
+  auto ExprVal = isl_ast_expr_get_val(Expr);
+  isl_ast_expr_free(Expr);
+  if (Predicate(ExprVal) != true) {
+    isl_val_free(ExprVal);
+    return false;
+  }
+  isl_val_free(ExprVal);
+  return true;
+}
 
-  // Calculate a map similar to the identity map, but with the last input
-  // and output dimension not related.
-  //  [i0, i1, i2, i3] -> [i0, i1, i2, o0]
-  isl_space *Space = isl_set_get_space(LoopDomain);
-  Space = isl_space_drop_dims(Space, isl_dim_out, Dim - 1, 1);
-  Space = isl_space_map_from_set(Space);
-  isl_map *Identity = isl_map_identity(Space);
-  Identity = isl_map_add_dims(Identity, isl_dim_in, 1);
-  Identity = isl_map_add_dims(Identity, isl_dim_out, 1);
-
-  LoopDomain = isl_set_reset_tuple_id(LoopDomain);
-
-  isl_map *Map = isl_map_from_domain_and_range(isl_set_copy(LoopDomain),
-                                               isl_set_copy(LoopDomain));
-  isl_set_free(LoopDomain);
-  Map = isl_map_intersect(Map, Identity);
-
-  isl_map *LexMax = isl_map_lexmax(isl_map_copy(Map));
-  isl_map *LexMin = isl_map_lexmin(Map);
-  isl_map *Sub = isl_map_sum(LexMax, isl_map_neg(LexMin));
-
-  isl_set *Elements = isl_map_range(Sub);
-
-  if (!isl_set_is_singleton(Elements)) {
-    isl_set_free(Elements);
+int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
+  assert(isl_ast_node_get_type(For) == isl_ast_node_for);
+  auto Init = isl_ast_node_for_get_init(For);
+  if (!checkIslAstExprInt(Init, isl_val_is_zero))
+    return -1;
+  auto Inc = isl_ast_node_for_get_inc(For);
+  if (!checkIslAstExprInt(Inc, isl_val_is_one))
+    return -1;
+  CmpInst::Predicate Predicate;
+  auto UB = getUpperBound(For, Predicate);
+  if (isl_ast_expr_get_type(UB) != isl_ast_expr_int) {
+    isl_ast_expr_free(UB);
     return -1;
   }
-
-  isl_point *P = isl_set_sample_point(Elements);
-
-  isl_val *V;
-  V = isl_point_get_coordinate_val(P, isl_dim_set, Dim - 1);
-  int NumberIterations = isl_val_get_num_si(V);
-  isl_val_free(V);
-  isl_point_free(P);
-  if (NumberIterations == -1)
+  auto UpVal = isl_ast_expr_get_val(UB);
+  isl_ast_expr_free(UB);
+  int NumberIterations = isl_val_get_num_si(UpVal);
+  isl_val_free(UpVal);
+  if (NumberIterations < 0)
     return -1;
-  return NumberIterations + 1;
+  if (Predicate == CmpInst::ICMP_SLT)
+    return NumberIterations;
+  else
+    return NumberIterations + 1;
 }
 
 struct FindValuesUser {
