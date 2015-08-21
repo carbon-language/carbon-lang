@@ -146,10 +146,10 @@ protected:
   /// True if SHLD instructions are slow.
   bool IsSHLDSlow;
 
-  /// True if unaligned memory access is fast.
-  bool IsUAMemFast;
+  /// True if unaligned memory accesses of 16-bytes or smaller are slow.
+  bool IsUAMemUnder32Slow;
 
-  /// True if unaligned 32-byte memory accesses are slow.
+  /// True if unaligned memory accesses of 32-bytes are slow.
   bool IsUAMem32Slow;
 
   /// True if SSE operations can have unaligned memory operands.
@@ -357,7 +357,7 @@ public:
   bool hasRDSEED() const { return HasRDSEED; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isSHLDSlow() const { return IsSHLDSlow; }
-  bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
+  bool isUnalignedMemUnder32Slow() const { return IsUAMemUnder32Slow; }
   bool isUnalignedMem32Slow() const { return IsUAMem32Slow; }
   bool hasSSEUnalignedMem() const { return HasSSEUnalignedMem; }
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }

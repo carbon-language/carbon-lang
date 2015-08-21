@@ -1876,10 +1876,11 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
   if ((!IsMemset || ZeroMemset) &&
       !F->hasFnAttribute(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
-        (Subtarget->isUnalignedMemAccessFast() ||
+        (!Subtarget->isUnalignedMemUnder32Slow() ||
          ((DstAlign == 0 || DstAlign >= 16) &&
           (SrcAlign == 0 || SrcAlign >= 16)))) {
       if (Size >= 32) {
+        // FIXME: Check if unaligned 32-byte accesses are slow.
         if (Subtarget->hasInt256())
           return MVT::v8i32;
         if (Subtarget->hasFp256())
@@ -1897,6 +1898,9 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
       return MVT::f64;
     }
   }
+  // This is a compromise. If we reach here, unaligned accesses may be slow on
+  // this target. However, creating smaller, aligned accesses could be even
+  // slower and would certainly be a lot more code.
   if (Subtarget->is64Bit() && Size >= 8)
     return MVT::i64;
   return MVT::i32;
@@ -1916,12 +1920,10 @@ X86TargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
                                                   unsigned,
                                                   bool *Fast) const {
   if (Fast) {
-    // FIXME: We should be checking 128-bit accesses separately from smaller
-    // accesses.
     if (VT.getSizeInBits() == 256)
       *Fast = !Subtarget->isUnalignedMem32Slow();
     else
-      *Fast = Subtarget->isUnalignedMemAccessFast();
+      *Fast = !Subtarget->isUnalignedMemUnder32Slow();
   }
   return true;
 }

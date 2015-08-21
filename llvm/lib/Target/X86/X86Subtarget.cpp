@@ -255,7 +255,7 @@ void X86Subtarget::initializeEnvironment() {
   HasMPX = false;
   IsBTMemSlow = false;
   IsSHLDSlow = false;
-  IsUAMemFast = false;
+  IsUAMemUnder32Slow = false;
   IsUAMem32Slow = false;
   HasSSEUnalignedMem = false;
   HasCmpxchg16b = false;
