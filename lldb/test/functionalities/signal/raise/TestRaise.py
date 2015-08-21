@@ -8,11 +8,11 @@ import lldbutil
 import re
 
 
+@skipIfWindows # signals do not exist on Windows
 class RaiseTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    @skipIfWindows # signals do not exist on Windows
     @skipUnlessDarwin
     @dsym_test
     @expectedFailureDarwin("llvm.org/pr23610") # process doesn't stop at a breakpoint on the third launch
@@ -21,7 +21,6 @@ class RaiseTestCase(TestBase):
         self.signal_test('SIGSTOP', False)
         # passing of SIGSTOP is not correctly handled, so not testing that scenario: https://llvm.org/bugs/show_bug.cgi?id=23574
 
-    @skipIfWindows # signals do not exist on Windows
     @dwarf_test
     @expectedFailureDarwin("llvm.org/pr23610") # process doesn't stop at a breakpoint on the third launch
     def test_sigstop_with_dwarf(self):
@@ -29,7 +28,6 @@ class RaiseTestCase(TestBase):
         self.signal_test('SIGSTOP', False)
         # passing of SIGSTOP is not correctly handled, so not testing that scenario: https://llvm.org/bugs/show_bug.cgi?id=23574
 
-    @skipIfWindows # signals do not exist on Windows
     @dwarf_test
     @skipIfDarwin # darwin does not support real time signals
     @skipIfTargetAndroid()
@@ -157,6 +155,89 @@ class RaiseTestCase(TestBase):
 
         # reset signal handling to default
         self.set_handle(signal, default_pass, default_stop, default_notify)
+
+    @dwarf_test
+    @expectedFailureLinux("llvm.org/pr24530") # the signal the inferior generates gets lost
+    @expectedFailureDarwin("llvm.org/pr24530") # the signal the inferior generates gets lost
+    def test_restart_bug_with_dwarf(self):
+        self.buildDwarf()
+        self.restart_bug_test()
+
+    @dsym_test
+    @expectedFailureDarwin("llvm.org/pr24530") # the signal the inferior generates gets lost
+    def test_restart_bug_with_dsym(self):
+        self.buildDsym()
+        self.restart_bug_test()
+
+    def restart_bug_test(self):
+        """Test that we catch a signal in the edge case where the process receives it while we are
+        about to interrupt it"""
+
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+        bkpt = target.BreakpointCreateByName("main")
+        self.assertTrue(bkpt.IsValid(), VALID_BREAKPOINT)
+
+        # launch the inferior and don't wait for it to stop
+        self.dbg.SetAsync(True)
+        error = lldb.SBError()
+        listener = lldb.SBListener("my listener")
+        process = target.Launch (listener,
+                ["SIGSTOP"], # argv
+                None,        # envp
+                None,        # stdin_path
+                None,        # stdout_path
+                None,        # stderr_path
+                None,        # working directory
+                0,           # launch flags
+                False,       # Stop at entry
+                error)       # error
+
+        self.assertTrue(process and process.IsValid(), PROCESS_IS_VALID)
+
+        event = lldb.SBEvent()
+
+        # Give the child enough time to reach the breakpoint,
+        # while clearing out all the pending events.
+        # The last WaitForEvent call will time out after 2 seconds.
+        while listener.WaitForEvent(2, event):
+            if self.TraceOn():
+                print "Process changing state to:", self.dbg.StateAsCString(process.GetStateFromEvent(event))
+
+        # now the process should be stopped
+        self.assertEqual(process.GetState(), lldb.eStateStopped, PROCESS_STOPPED)
+        self.assertEqual(len(lldbutil.get_threads_stopped_at_breakpoint(process, bkpt)), 1,
+                "A thread should be stopped at breakpoint")
+
+        # Remove all breakpoints. This makes sure we don't have to single-step over them when we
+        # resume the process below
+        target.DeleteAllBreakpoints()
+
+        # resume the process and immediately try to set another breakpoint. When using the remote
+        # stub, this will trigger a request to stop the process just as it is about to stop
+        # naturally due to a SIGSTOP signal it raises. Make sure we do not lose this signal.
+        process.Continue()
+        self.assertTrue(target.BreakpointCreateByName("handler").IsValid(), VALID_BREAKPOINT)
+
+        # Clear the events again
+        while listener.WaitForEvent(2, event):
+            if self.TraceOn():
+                print "Process changing state to:", self.dbg.StateAsCString(process.GetStateFromEvent(event))
+
+        # The process should be stopped due to a signal
+        self.assertEqual(process.GetState(), lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonSignal)
+        self.assertTrue(thread.IsValid(), "Thread should be stopped due to a signal")
+        self.assertTrue(thread.GetStopReasonDataCount() >= 1, "There was data in the event.")
+        signo = process.GetUnixSignals().GetSignalNumberFromName("SIGSTOP")
+        self.assertEqual(thread.GetStopReasonDataAtIndex(0), signo,
+                "The stop signal was %s" % signal)
+
+        # We are done
+        process.Kill()
 
 if __name__ == '__main__':
     import atexit
