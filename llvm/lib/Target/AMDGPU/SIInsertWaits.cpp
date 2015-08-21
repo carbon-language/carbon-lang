@@ -246,10 +246,13 @@ void SIInsertWaits::pushInstruction(MachineBasicBlock &MBB,
 
   // Get the hardware counter increments and sum them up
   Counters Increment = getHwCounts(*I);
+  Counters Limit = ZeroCounts;
   unsigned Sum = 0;
 
   for (unsigned i = 0; i < 3; ++i) {
     LastIssued.Array[i] += Increment.Array[i];
+    if (Increment.Array[i])
+      Limit.Array[i] = LastIssued.Array[i];
     Sum += Increment.Array[i];
   }
 
@@ -300,11 +303,11 @@ void SIInsertWaits::pushInstruction(MachineBasicBlock &MBB,
 
       // Remember which registers we define
       if (Op.isDef())
-        DefinedRegs[j] = LastIssued;
+        DefinedRegs[j] = Limit;
 
       // and which one we are using
       if (Op.isUse())
-        UsedRegs[j] = LastIssued;
+        UsedRegs[j] = Limit;
     }
   }
 }

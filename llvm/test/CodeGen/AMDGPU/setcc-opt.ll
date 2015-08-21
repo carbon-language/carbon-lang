@@ -146,7 +146,7 @@ define void @sext_bool_icmp_ne_k(i1 addrspace(1)* %out, i32 %a, i32 %b) nounwind
 ; GCN: v_mov_b32_e32 [[K255:v[0-9]+]], 0xff{{$}}
 ; GCN: v_cmp_ne_i32_e32 vcc, [[K255]], [[B]]
 ; GCN-NEXT: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, 1, vcc
-; GCN-NEXT: buffer_store_byte [[RESULT]]
+; GCN: buffer_store_byte [[RESULT]]
 ; GCN: s_endpgm
 define void @cmp_zext_k_i8max(i1 addrspace(1)* %out, i8 %b) nounwind {
   %b.ext = zext i8 %b to i32
@@ -191,7 +191,7 @@ define void @cmp_sext_k_neg1_i8_sext_arg(i1 addrspace(1)* %out, i8 signext %b) n
 ; GCN-DAG: v_mov_b32_e32 [[K:v[0-9]+]], 0xff{{$}}
 ; GCN: v_cmp_ne_i32_e32 vcc, [[K]], [[B]]{{$}}
 ; GCN-NEXT: v_cndmask_b32_e64 [[RESULT:v[0-9]+]], 0, 1, vcc
-; GCN-NEXT: buffer_store_byte [[RESULT]]
+; GCN: buffer_store_byte [[RESULT]]
 ; GCN: s_endpgm
 define void @cmp_sext_k_neg1_i8_arg(i1 addrspace(1)* %out, i8 %b) nounwind {
   %b.ext = sext i8 %b to i32
