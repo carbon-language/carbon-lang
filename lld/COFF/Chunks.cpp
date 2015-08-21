@@ -217,7 +217,9 @@ void SectionChunk::printDiscardedMessage() const {
 }
 
 StringRef SectionChunk::getDebugName() {
-  return Sym->getName();
+  if (Sym)
+    return Sym->getName();
+  return "";
 }
 
 ArrayRef<uint8_t> SectionChunk::getContents() const {
