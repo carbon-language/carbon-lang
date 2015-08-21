@@ -107,7 +107,8 @@ struct {
   { "armv7",     ARM::AK_ARMV7,    "7",       "v7",    ARMBuildAttrs::CPUArch::v7 },
   { "armv7l",    ARM::AK_ARMV7L,   "7-L",     "v7l",   ARMBuildAttrs::CPUArch::v7 },
   { "armv7hl",   ARM::AK_ARMV7HL,  "7-L",     "v7hl",  ARMBuildAttrs::CPUArch::v7 },
-  { "armv7s",    ARM::AK_ARMV7S,   "7-S",     "v7s",   ARMBuildAttrs::CPUArch::v7 }
+  { "armv7s",    ARM::AK_ARMV7S,   "7-S",     "v7s",   ARMBuildAttrs::CPUArch::v7 },
+  { "armv7k",    ARM::AK_ARMV7K,   "7-K",     "v7k",   ARMBuildAttrs::CPUArch::v7 }
 };
 // List of Arch Extension names.
 // FIXME: TableGen this.
@@ -662,6 +663,7 @@ unsigned ARMTargetParser::parseArchVersion(StringRef Arch) {
   case ARM::AK_ARMV7HL:
   case ARM::AK_ARMV7S:
   case ARM::AK_ARMV7EM:
+  case ARM::AK_ARMV7K:
     return 7;
   case ARM::AK_ARMV8A:
   case ARM::AK_ARMV8_1A:
