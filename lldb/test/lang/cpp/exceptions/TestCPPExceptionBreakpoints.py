@@ -20,6 +20,7 @@ class CPPBreakpointTestCase(TestBase):
         self.cpp_exceptions()
 
     @dwarf_test
+    @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
     def test_with_dwarf(self):
         """Test lldb exception breakpoint command for CPP."""
         self.buildDwarf()

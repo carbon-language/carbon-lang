@@ -23,6 +23,7 @@ class TestCPPExceptionBreakpoint (TestBase):
         self.do_cpp_exception_bkpt ()
 
     @python_api_test
+    @expectedFailureWindows("llvm.org/pr24538") # clang-cl does not support throw or catch
     @dwarf_test
     def test_cpp_exception_breakpoint_with_dwarf(self):
         """Test setting and hitting the C++ exception breakpoint."""
