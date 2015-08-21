@@ -1999,9 +1999,8 @@ static bool isInBoundsIndices(ArrayRef<IndexTy> Idxs) {
 /// \brief Test whether a given ConstantInt is in-range for a SequentialType.
 static bool isIndexInRangeOfSequentialType(SequentialType *STy,
                                            const ConstantInt *CI) {
-  if (auto *PTy = dyn_cast<PointerType>(STy))
-    // Only handle pointers to sized types, not pointers to functions.
-    return PTy->getElementType()->isSized();
+  if (isa<PointerType>(STy))
+    return true;
 
   uint64_t NumElements = 0;
   // Determine the number of elements in our sequential type.
