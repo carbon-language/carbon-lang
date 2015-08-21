@@ -439,6 +439,7 @@ private:
   Expr *FirstSubExpr;
   bool PruneSubtree;
 };
+
 } // namespace
 
 UseNullptrCheck::UseNullptrCheck(StringRef Name, ClangTidyContext *Context)
