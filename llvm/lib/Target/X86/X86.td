@@ -433,21 +433,19 @@ def : Proc<"opteron-sse3",    [FeatureSlowUAMem, FeatureSSE3,   Feature3DNowA,
 def : Proc<"athlon64-sse3",   [FeatureSlowUAMem, FeatureSSE3,   Feature3DNowA,
                                FeatureCMPXCHG16B, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"amdfam10",        [FeatureSlowUAMem, FeatureSSE4A,
+def : Proc<"amdfam10",        [FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
                                FeaturePOPCNT, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-def : Proc<"barcelona",       [FeatureSlowUAMem, FeatureSSE4A,
+def : Proc<"barcelona",       [FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
                                FeaturePOPCNT, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
-
-// FIXME: We should remove 'FeatureSlowUAMem' from AMD chips under here.
 
 // Bobcat
 def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeaturePRFCHW, FeatureLZCNT, FeaturePOPCNT,
-                               FeatureSlowSHLD, FeatureSlowUAMem]>;
+                               FeatureSlowSHLD]>;
 
 // Jaguar
 def : ProcessorModel<"btver2", BtVer2Model,
@@ -461,15 +459,13 @@ def : ProcessorModel<"btver2", BtVer2Model,
 def : Proc<"bdver1",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
                                FeatureAVX, FeatureSSE4A, FeatureLZCNT,
-                               FeaturePOPCNT, FeatureSlowSHLD,
-                               FeatureSlowUAMem]>;
+                               FeaturePOPCNT, FeatureSlowSHLD]>;
 // Piledriver
 def : Proc<"bdver2",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAES, FeaturePRFCHW, FeaturePCLMUL,
                                FeatureAVX, FeatureSSE4A, FeatureF16C,
                                FeatureLZCNT, FeaturePOPCNT, FeatureBMI,
-                               FeatureTBM, FeatureFMA, FeatureSlowSHLD,
-                               FeatureSlowUAMem]>;
+                               FeatureTBM, FeatureFMA, FeatureSlowSHLD]>;
 
 // Steamroller
 def : Proc<"bdver3",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
@@ -477,7 +473,7 @@ def : Proc<"bdver3",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeatureAVX, FeatureSSE4A, FeatureF16C,
                                FeatureLZCNT, FeaturePOPCNT, FeatureBMI,
                                FeatureTBM, FeatureFMA, FeatureSlowSHLD,
-                               FeatureFSGSBase, FeatureSlowUAMem]>;
+                               FeatureFSGSBase]>;
 
 // Excavator
 def : Proc<"bdver4",          [FeatureAVX2, FeatureXOP, FeatureFMA4,
@@ -485,7 +481,7 @@ def : Proc<"bdver4",          [FeatureAVX2, FeatureXOP, FeatureFMA4,
                                FeaturePCLMUL, FeatureF16C, FeatureLZCNT,
                                FeaturePOPCNT, FeatureBMI, FeatureBMI2,
                                FeatureTBM, FeatureFMA, FeatureSSE4A,
-                               FeatureFSGSBase, FeatureSlowUAMem]>;
+                               FeatureFSGSBase]>;
 
 def : Proc<"geode",           [FeatureSlowUAMem, Feature3DNowA]>;
 

@@ -39,14 +39,14 @@
 ; AMD chips with fast unaligned memory accesses
 ; FIXME: These are wrong except for btver2.
 
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=amdfam10      2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=barcelona     2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=btver1        2>&1 | FileCheck %s --check-prefix=SLOW
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=amdfam10      2>&1 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=barcelona     2>&1 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=btver1        2>&1 | FileCheck %s --check-prefix=FAST
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=btver2        2>&1 | FileCheck %s --check-prefix=FAST
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver1        2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver2        2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver3        2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver4        2>&1 | FileCheck %s --check-prefix=SLOW
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver1        2>&1 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver2        2>&1 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver3        2>&1 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver4        2>&1 | FileCheck %s --check-prefix=FAST
 
 ; Other chips with slow unaligned memory accesses
 
