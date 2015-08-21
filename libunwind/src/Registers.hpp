@@ -1689,7 +1689,7 @@ inline void Registers_arm::setFloatRegister(int regNum, unw_fpreg_t value) {
       _saved_vfp_d16_d31 = true;
       saveVFPv3(_vfp_d16_d31);
     }
-    _vfp_d16_d31[regNum - UNW_ARM_D0] = value;
+    _vfp_d16_d31[regNum - UNW_ARM_D16] = value;
   } else if (regNum >= UNW_ARM_WR0 && regNum <= UNW_ARM_WR15) {
     if (!_saved_iwmmx) {
       _saved_iwmmx = true;
