@@ -1663,20 +1663,35 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         Attrs.addAttribute(llvm::Attribute::InReg);
       break;
 
-    case ABIArgInfo::Indirect:
+    case ABIArgInfo::Indirect: {
       if (AI.getInReg())
         Attrs.addAttribute(llvm::Attribute::InReg);
 
       if (AI.getIndirectByVal())
         Attrs.addAttribute(llvm::Attribute::ByVal);
 
-      Attrs.addAlignmentAttr(AI.getIndirectAlign());
+      unsigned Align = AI.getIndirectAlign();
+
+      // In a byval argument, it is important that the required
+      // alignment of the type is honored, as LLVM might be creating a
+      // *new* stack object, and needs to know what alignment to give
+      // it. (Sometimes it can deduce a sensible alignment on its own,
+      // but not if clang decides it must emit a packed struct, or the
+      // user specifies increased alignment requirements.)
+      //
+      // This is different from indirect *not* byval, where the object
+      // exists already, and the align attribute is purely
+      // informative.
+      if (Align == 0 && AI.getIndirectByVal())
+        Align = getContext().getTypeAlignInChars(ParamType).getQuantity();
+
+      Attrs.addAlignmentAttr(Align);
 
       // byval disables readnone and readonly.
       FuncAttrs.removeAttribute(llvm::Attribute::ReadOnly)
         .removeAttribute(llvm::Attribute::ReadNone);
       break;
-
+    }
     case ABIArgInfo::Ignore:
     case ABIArgInfo::Expand:
       continue;
