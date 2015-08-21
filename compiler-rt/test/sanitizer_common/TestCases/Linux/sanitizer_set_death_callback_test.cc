@@ -1,6 +1,5 @@
 // RUN: %clangxx -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // Check __sanitizer_set_death_callback. Not all sanitizers implement it yet.
-// XFAIL: lsan
 // XFAIL: tsan
 
 #include <sanitizer/common_interface_defs.h>
