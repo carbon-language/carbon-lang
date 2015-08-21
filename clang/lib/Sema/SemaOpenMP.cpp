@@ -3535,6 +3535,30 @@ static Expr *getOrderedNumberExpr(ArrayRef<OMPClause *> Clauses) {
   return nullptr;
 }
 
+static bool checkSimdlenSafelenValues(Sema &S, const Expr *Simdlen,
+                                      const Expr *Safelen) {
+  llvm::APSInt SimdlenRes, SafelenRes;
+  if (Simdlen->isValueDependent() || Simdlen->isTypeDependent() ||
+      Simdlen->isInstantiationDependent() ||
+      Simdlen->containsUnexpandedParameterPack())
+    return false;
+  if (Safelen->isValueDependent() || Safelen->isTypeDependent() ||
+      Safelen->isInstantiationDependent() ||
+      Safelen->containsUnexpandedParameterPack())
+    return false;
+  Simdlen->EvaluateAsInt(SimdlenRes, S.Context);
+  Safelen->EvaluateAsInt(SafelenRes, S.Context);
+  // OpenMP 4.1 [2.8.1, simd Construct, Restrictions]
+  // If both simdlen and safelen clauses are specified, the value of the simdlen
+  // parameter must be less than or equal to the value of the safelen parameter.
+  if (SimdlenRes > SafelenRes) {
+    S.Diag(Simdlen->getExprLoc(), diag::err_omp_wrong_simdlen_safelen_values)
+        << Simdlen->getSourceRange() << Safelen->getSourceRange();
+    return true;
+  }
+  return false;
+}
+
 StmtResult Sema::ActOnOpenMPSimdDirective(
     ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
     SourceLocation EndLoc,
@@ -3560,6 +3584,24 @@ StmtResult Sema::ActOnOpenMPSimdDirective(
           return StmtError();
     }
   }
+
+  // OpenMP 4.1 [2.8.1, simd Construct, Restrictions]
+  // If both simdlen and safelen clauses are specified, the value of the simdlen
+  // parameter must be less than or equal to the value of the safelen parameter.
+  OMPSafelenClause *Safelen = nullptr;
+  OMPSimdlenClause *Simdlen = nullptr;
+  for (auto *Clause : Clauses) {
+    if (Clause->getClauseKind() == OMPC_safelen)
+      Safelen = cast<OMPSafelenClause>(Clause);
+    else if (Clause->getClauseKind() == OMPC_simdlen)
+      Simdlen = cast<OMPSimdlenClause>(Clause);
+    if (Safelen && Simdlen)
+      break;
+  }
+  if (Simdlen && Safelen &&
+      checkSimdlenSafelenValues(*this, Simdlen->getSimdlen(),
+                                Safelen->getSafelen()))
+    return StmtError();
 
   getCurFunction()->setHasBranchProtectedScope();
   return OMPSimdDirective::Create(Context, StartLoc, EndLoc, NestedLoopCount,
@@ -3623,6 +3665,24 @@ StmtResult Sema::ActOnOpenMPForSimdDirective(
           return StmtError();
     }
   }
+
+  // OpenMP 4.1 [2.8.1, simd Construct, Restrictions]
+  // If both simdlen and safelen clauses are specified, the value of the simdlen
+  // parameter must be less than or equal to the value of the safelen parameter.
+  OMPSafelenClause *Safelen = nullptr;
+  OMPSimdlenClause *Simdlen = nullptr;
+  for (auto *Clause : Clauses) {
+    if (Clause->getClauseKind() == OMPC_safelen)
+      Safelen = cast<OMPSafelenClause>(Clause);
+    else if (Clause->getClauseKind() == OMPC_simdlen)
+      Simdlen = cast<OMPSimdlenClause>(Clause);
+    if (Safelen && Simdlen)
+      break;
+  }
+  if (Simdlen && Safelen &&
+      checkSimdlenSafelenValues(*this, Simdlen->getSimdlen(),
+                                Safelen->getSafelen()))
+    return StmtError();
 
   getCurFunction()->setHasBranchProtectedScope();
   return OMPForSimdDirective::Create(Context, StartLoc, EndLoc, NestedLoopCount,
@@ -3795,6 +3855,24 @@ StmtResult Sema::ActOnOpenMPParallelForSimdDirective(
           return StmtError();
     }
   }
+
+  // OpenMP 4.1 [2.8.1, simd Construct, Restrictions]
+  // If both simdlen and safelen clauses are specified, the value of the simdlen
+  // parameter must be less than or equal to the value of the safelen parameter.
+  OMPSafelenClause *Safelen = nullptr;
+  OMPSimdlenClause *Simdlen = nullptr;
+  for (auto *Clause : Clauses) {
+    if (Clause->getClauseKind() == OMPC_safelen)
+      Safelen = cast<OMPSafelenClause>(Clause);
+    else if (Clause->getClauseKind() == OMPC_simdlen)
+      Simdlen = cast<OMPSimdlenClause>(Clause);
+    if (Safelen && Simdlen)
+      break;
+  }
+  if (Simdlen && Safelen &&
+      checkSimdlenSafelenValues(*this, Simdlen->getSimdlen(),
+                                Safelen->getSafelen()))
+    return StmtError();
 
   getCurFunction()->setHasBranchProtectedScope();
   return OMPParallelForSimdDirective::Create(
@@ -4683,6 +4761,9 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_safelen:
     Res = ActOnOpenMPSafelenClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_simdlen:
+    Res = ActOnOpenMPSimdlenClause(Expr, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_collapse:
     Res = ActOnOpenMPCollapseClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
@@ -4875,6 +4956,19 @@ OMPClause *Sema::ActOnOpenMPSafelenClause(Expr *Len, SourceLocation StartLoc,
       OMPSafelenClause(Safelen.get(), StartLoc, LParenLoc, EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPSimdlenClause(Expr *Len, SourceLocation StartLoc,
+                                          SourceLocation LParenLoc,
+                                          SourceLocation EndLoc) {
+  // OpenMP [2.8.1, simd construct, Description]
+  // The parameter of the simdlen clause must be a constant
+  // positive integer expression.
+  ExprResult Simdlen = VerifyPositiveIntegerConstantInClause(Len, OMPC_simdlen);
+  if (Simdlen.isInvalid())
+    return nullptr;
+  return new (Context)
+      OMPSimdlenClause(Simdlen.get(), StartLoc, LParenLoc, EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPCollapseClause(Expr *NumForLoops,
                                            SourceLocation StartLoc,
                                            SourceLocation LParenLoc,
@@ -4932,6 +5026,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_final:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_simdlen:
   case OMPC_collapse:
   case OMPC_schedule:
   case OMPC_private:
@@ -5053,6 +5148,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_final:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_simdlen:
   case OMPC_collapse:
   case OMPC_default:
   case OMPC_proc_bind:
@@ -5185,6 +5281,7 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_final:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_simdlen:
   case OMPC_collapse:
   case OMPC_schedule:
   case OMPC_private:
@@ -5298,6 +5395,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_final:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_simdlen:
   case OMPC_collapse:
   case OMPC_default:
   case OMPC_proc_bind:

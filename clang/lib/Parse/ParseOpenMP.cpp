@@ -396,7 +396,8 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///       lastprivate-clause | reduction-clause | proc_bind-clause |
 ///       schedule-clause | copyin-clause | copyprivate-clause | untied-clause |
 ///       mergeable-clause | flush-clause | read-clause | write-clause |
-///       update-clause | capture-clause | seq_cst-clause | device-clause
+///       update-clause | capture-clause | seq_cst-clause | device-clause |
+///       simdlen-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -414,6 +415,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_final:
   case OMPC_num_threads:
   case OMPC_safelen:
+  case OMPC_simdlen:
   case OMPC_collapse:
   case OMPC_ordered:
   case OMPC_device:
@@ -422,6 +424,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     //  At most one num_threads clause can appear on the directive.
     // OpenMP [2.8.1, simd construct, Restrictions]
     //  Only one safelen  clause can appear on a simd directive.
+    //  Only one simdlen  clause can appear on a simd directive.
     //  Only one collapse clause can appear on a simd directive.
     // OpenMP [2.9.1, target data construct, Restrictions]
     //  At most one device clause can appear on the directive.
@@ -513,8 +516,8 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 }
 
 /// \brief Parsing of OpenMP clauses with single expressions like 'if',
-/// 'final', 'collapse', 'safelen', 'num_threads', 'simdlen', 'num_teams' or
-/// 'thread_limit'.
+/// 'final', 'collapse', 'safelen', 'num_threads', 'simdlen', 'num_teams',
+/// 'thread_limit' or 'simdlen'.
 ///
 ///    if-clause:
 ///      'if' '(' expression ')'
@@ -527,6 +530,9 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 ///
 ///    safelen-clause:
 ///      'safelen' '(' expression ')'
+///
+///    simdlen-clause:
+///      'simdlen' '(' expression ')'
 ///
 ///    collapse-clause:
 ///      'collapse' '(' expression ')'

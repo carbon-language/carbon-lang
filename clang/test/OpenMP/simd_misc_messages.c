@@ -166,6 +166,103 @@ void test_safelen() {
     ;
 }
 
+void test_simdlen() {
+  int i;
+// expected-error@+1 {{expected '('}}
+#pragma omp simd simdlen
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{expected expression}} expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{expected expression}}
+#pragma omp simd simdlen()
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{expected expression}} expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(,
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{expected expression}}  expected-error@+1 {{expected ')'}} expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(, )
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-warning@+2 {{extra tokens at the end of '#pragma omp simd' are ignored}}
+// expected-error@+1 {{expected '('}}
+#pragma omp simd simdlen 4)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+2 {{expected ')'}}
+// expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(4
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+2 {{expected ')'}}
+// expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(4,
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+2 {{expected ')'}}
+// expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(4, )
+  for (i = 0; i < 16; ++i)
+    ;
+#pragma omp simd simdlen(4)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+2 {{expected ')'}}
+// expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(4 4)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+2 {{expected ')'}}
+// expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(4, , 4)
+  for (i = 0; i < 16; ++i)
+    ;
+#pragma omp simd simdlen(4)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+2 {{expected ')'}}
+// expected-note@+1 {{to match this '('}}
+#pragma omp simd simdlen(4, 8)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{expression is not an integer constant expression}}
+#pragma omp simd simdlen(2.5)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{expression is not an integer constant expression}}
+#pragma omp simd simdlen(foo())
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{argument to 'simdlen' clause must be a positive integer value}}
+#pragma omp simd simdlen(-5)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{argument to 'simdlen' clause must be a positive integer value}}
+#pragma omp simd simdlen(0)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{argument to 'simdlen' clause must be a positive integer value}}
+#pragma omp simd simdlen(5 - 5)
+  for (i = 0; i < 16; ++i)
+    ;
+}
+
+void test_safelen_simdlen() {
+  int i;
+// expected-error@+1 {{the value of 'simdlen' parameter must be less than or equal to the value of the 'safelen' parameter}}
+#pragma omp simd simdlen(6) safelen(5)
+  for (i = 0; i < 16; ++i)
+    ;
+// expected-error@+1 {{the value of 'simdlen' parameter must be less than or equal to the value of the 'safelen' parameter}}
+#pragma omp simd safelen(5) simdlen(6)
+  for (i = 0; i < 16; ++i)
+    ;
+}
+
 void test_collapse() {
   int i;
 // expected-error@+1 {{expected '('}}

@@ -365,6 +365,61 @@ public:
   child_range children() { return child_range(&Safelen, &Safelen + 1); }
 };
 
+/// \brief This represents 'simdlen' clause in the '#pragma omp ...'
+/// directive.
+///
+/// \code
+/// #pragma omp simd simdlen(4)
+/// \endcode
+/// In this example directive '#pragma omp simd' has clause 'simdlen'
+/// with single expression '4'.
+/// If the 'simdlen' clause is used then it specifies the preferred number of
+/// iterations to be executed concurrently. The parameter of the 'simdlen'
+/// clause must be a constant positive integer expression.
+///
+class OMPSimdlenClause : public OMPClause {
+  friend class OMPClauseReader;
+  /// \brief Location of '('.
+  SourceLocation LParenLoc;
+  /// \brief Safe iteration space distance.
+  Stmt *Simdlen;
+
+  /// \brief Set simdlen.
+  void setSimdlen(Expr *Len) { Simdlen = Len; }
+
+public:
+  /// \brief Build 'simdlen' clause.
+  ///
+  /// \param Len Expression associated with this clause.
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPSimdlenClause(Expr *Len, SourceLocation StartLoc, SourceLocation LParenLoc,
+                   SourceLocation EndLoc)
+      : OMPClause(OMPC_simdlen, StartLoc, EndLoc), LParenLoc(LParenLoc),
+        Simdlen(Len) {}
+
+  /// \brief Build an empty clause.
+  ///
+  explicit OMPSimdlenClause()
+      : OMPClause(OMPC_simdlen, SourceLocation(), SourceLocation()),
+        LParenLoc(SourceLocation()), Simdlen(nullptr) {}
+
+  /// \brief Sets the location of '('.
+  void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
+  /// \brief Returns the location of '('.
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+
+  /// \brief Return safe iteration space distance.
+  Expr *getSimdlen() const { return cast_or_null<Expr>(Simdlen); }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_simdlen;
+  }
+
+  child_range children() { return child_range(&Simdlen, &Simdlen + 1); }
+};
+
 /// \brief This represents 'collapse' clause in the '#pragma omp ...'
 /// directive.
 ///
