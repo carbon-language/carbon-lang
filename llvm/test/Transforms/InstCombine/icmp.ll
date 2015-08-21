@@ -1603,3 +1603,23 @@ define i32 @f7(i32 %a, i32 %b) {
   %s = select i1 %cmp, i32 10000, i32 0
   ret i32 %s
 }
+
+; CHECK: @f8(
+; CHECK-NEXT: [[RESULT:%[a-z0-9]+]] = icmp ne i32 %lim, 0
+; CHECK-NEXT: ret i1 [[RESULT]]
+define i1 @f8(i32 %val, i32 %lim) {
+  %lim.sub = add i32 %lim, -1
+  %val.and = and i32 %val, %lim.sub
+  %r = icmp ult i32 %val.and, %lim
+  ret i1 %r
+}
+
+; CHECK: @f9(
+; CHECK-NEXT: [[RESULT:%[a-z0-9]+]] = icmp ne i32 %lim, 0
+; CHECK-NEXT: ret i1 [[RESULT]]
+define i1 @f9(i32 %val, i32 %lim) {
+  %lim.sub = sub i32 %lim, 1
+  %val.and = and i32 %val, %lim.sub
+  %r = icmp ult i32 %val.and, %lim
+  ret i1 %r
+}

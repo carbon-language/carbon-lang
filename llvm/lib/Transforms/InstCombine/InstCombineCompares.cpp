@@ -3490,6 +3490,18 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       }
       }
     }
+
+    if (BO0) {
+      // Transform  A & (L - 1) `ult` L --> L != 0
+      auto LSubOne = m_Add(m_Specific(Op1), m_AllOnes());
+      auto BitwiseAnd =
+          m_CombineOr(m_And(m_Value(), LSubOne), m_And(LSubOne, m_Value()));
+
+      if (match(BO0, BitwiseAnd) && I.getPredicate() == ICmpInst::ICMP_ULT) {
+        auto *Zero = Constant::getNullValue(BO0->getType());
+        return new ICmpInst(ICmpInst::ICMP_NE, Op1, Zero);
+      }
+    }
   }
 
   { Value *A, *B;
