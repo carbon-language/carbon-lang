@@ -414,7 +414,7 @@ def OP_XTN      : Op<(call "vcombine", $p0, (call "vmovn", $p1))>;
 def OP_SQXTUN   : Op<(call "vcombine", (cast $p0, "U", $p0),
                                        (call "vqmovun", $p1))>;
 def OP_QXTN     : Op<(call "vcombine", $p0, (call "vqmovn", $p1))>;
-def OP_VCVT_NA_HI_F16 : Op<(call "vcombine", $p0, (call "vcvt_f16", $p1))>;
+def OP_VCVT_NA_HI_F16 : Op<(call "vcombine", $p0, (call "vcvt_f16_f32", $p1))>;
 def OP_VCVT_NA_HI_F32 : Op<(call "vcombine", $p0, (call "vcvt_f32_f64", $p1))>;
 def OP_VCVT_EX_HI_F32 : Op<(call "vcvt_f32_f16", (call "vget_high", $p0))>;
 def OP_VCVT_EX_HI_F64 : Op<(call "vcvt_f64_f32", (call "vget_high", $p0))>;
@@ -687,16 +687,19 @@ def VGET_LOW  : NoTestOpInst<"vget_low", "dk", "csilhfUcUsUiUlPcPs", OP_LO>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.22 Converting vectors
+
+def VCVT_F16_F32 : SInst<"vcvt_f16_f32", "hk", "f">;
+def VCVT_F32_F16 : SInst<"vcvt_f32_f16", "fd", "h">;
+
 def VCVT_S32     : SInst<"vcvt_s32", "xd",  "fQf">;
 def VCVT_U32     : SInst<"vcvt_u32", "ud",  "fQf">;
-def VCVT_F16     : SInst<"vcvt_f16", "hk",  "f">;
 def VCVT_F32     : SInst<"vcvt_f32", "fd",  "iUiQiQUi">;
-def VCVT_F32_F16 : SInst<"vcvt_f32_f16", "fd",  "h">;
 let isVCVT_N = 1 in {
 def VCVT_N_S32   : SInst<"vcvt_n_s32", "xdi", "fQf">;
 def VCVT_N_U32   : SInst<"vcvt_n_u32", "udi", "fQf">;
 def VCVT_N_F32   : SInst<"vcvt_n_f32", "fdi", "iUiQiQUi">;
 }
+
 def VMOVN        : IInst<"vmovn", "hk",  "silUsUiUl">;
 def VMOVL        : SInst<"vmovl", "wd",  "csiUcUsUi">;
 def VQMOVN       : SInst<"vqmovn", "hk",  "silUsUiUl">;
@@ -923,6 +926,9 @@ def USQADD : SInst<"vsqadd", "ddd", "UcUsUiUlQUcQUsQUiQUl">;
 // Reciprocal/Sqrt
 def FRECPS  : IInst<"vrecps", "ddd", "dQd">;
 def FRSQRTS : IInst<"vrsqrts", "ddd", "dQd">;
+def FRECPE  : SInst<"vrecpe", "dd", "dQd">;
+def FRSQRTE : SInst<"vrsqrte", "dd", "dQd">;
+def FSQRT   : SInst<"vsqrt", "dd", "fdQfQd">;
 
 ////////////////////////////////////////////////////////////////////////////////
 // bitwise reverse
@@ -942,20 +948,21 @@ def QXTN2 : SOpInst<"vqmovn_high", "qhk", "silUsUiUl", OP_QXTN>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Converting vectors
-def VCVT_HIGH_F16 : SOpInst<"vcvt_high_f16", "qhj", "f", OP_VCVT_NA_HI_F16>;
-def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI_F32>;
+
 def VCVT_F32_F64 : SInst<"vcvt_f32_f64", "md", "Qd">;
-def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI_F32>;
 def VCVT_F64_F32 : SInst<"vcvt_f64_f32", "wd", "f">;
-def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "lUlQlQUl">;
-def VCVT_HIGH_F64_F32 : SOpInst<"vcvt_high_f64", "wj", "f", OP_VCVT_EX_HI_F64>;
-def VCVTX_F32_F64 : SInst<"vcvtx_f32", "fj",  "d">;
-def VCVTX_HIGH_F32_F64 : SOpInst<"vcvtx_high_f32", "qfj", "d", OP_VCVTX_HI>;
+
 def VCVT_S64 : SInst<"vcvt_s64", "xd",  "dQd">;
 def VCVT_U64 : SInst<"vcvt_u64", "ud",  "dQd">;
-def FRECPE  : SInst<"vrecpe", "dd", "dQd">;
-def FRSQRTE : SInst<"vrsqrte", "dd", "dQd">;
-def FSQRT   : SInst<"vsqrt", "dd", "fdQfQd">;
+def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "lUlQlQUl">;
+
+def VCVT_HIGH_F16_f32 : SOpInst<"vcvt_high_f16", "qhj", "f", OP_VCVT_NA_HI_F16>;
+def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI_F32>;
+def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI_F32>;
+def VCVT_HIGH_F64_F32 : SOpInst<"vcvt_high_f64", "wj", "f", OP_VCVT_EX_HI_F64>;
+
+def VCVTX_F32_F64      : SInst<"vcvtx_f32", "fj",  "d">;
+def VCVTX_HIGH_F32_F64 : SOpInst<"vcvtx_high_f32", "qfj", "d", OP_VCVTX_HI>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Comparison
