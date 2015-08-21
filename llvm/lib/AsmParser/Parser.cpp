@@ -68,13 +68,13 @@ std::unique_ptr<Module> llvm::parseAssemblyString(StringRef AsmString,
 }
 
 Constant *llvm::parseConstantValue(StringRef Asm, SMDiagnostic &Err,
-                                   const Module &M) {
+                                   const Module &M, const SlotMapping *Slots) {
   SourceMgr SM;
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Asm);
   SM.AddNewSourceBuffer(std::move(Buf), SMLoc());
   Constant *C;
   if (LLParser(Asm, SM, Err, const_cast<Module *>(&M))
-          .parseStandaloneConstantValue(C))
+          .parseStandaloneConstantValue(C, Slots))
     return nullptr;
   return C;
 }

@@ -146,7 +146,7 @@ namespace llvm {
           Slots(Slots), BlockAddressPFS(nullptr) {}
     bool Run();
 
-    bool parseStandaloneConstantValue(Constant *&C);
+    bool parseStandaloneConstantValue(Constant *&C, const SlotMapping *Slots);
 
     LLVMContext &getContext() { return Context; }
 
@@ -158,6 +158,10 @@ namespace llvm {
     bool TokError(const Twine &Msg) const {
       return Error(Lex.getLoc(), Msg);
     }
+
+    /// Restore the internal name and slot mappings using the mappings that
+    /// were created at an earlier parsing stage.
+    void restoreParsingState(const SlotMapping *Slots);
 
     /// GetGlobalVal - Get a value with the specified name or ID, creating a
     /// forward reference record if needed.  This can return null if the value

@@ -49,7 +49,9 @@ bool LLParser::Run() {
          ValidateEndOfModule();
 }
 
-bool LLParser::parseStandaloneConstantValue(Constant *&C) {
+bool LLParser::parseStandaloneConstantValue(Constant *&C,
+                                            const SlotMapping *Slots) {
+  restoreParsingState(Slots);
   Lex.Lex();
 
   Type *Ty = nullptr;
@@ -58,6 +60,19 @@ bool LLParser::parseStandaloneConstantValue(Constant *&C) {
   if (Lex.getKind() != lltok::Eof)
     return Error(Lex.getLoc(), "expected end of string");
   return false;
+}
+
+void LLParser::restoreParsingState(const SlotMapping *Slots) {
+  if (!Slots)
+    return;
+  NumberedVals = Slots->GlobalValues;
+  NumberedMetadata = Slots->MetadataNodes;
+  for (const auto &I : Slots->NamedTypes)
+    NamedTypes.insert(
+        std::make_pair(I.getKey(), std::make_pair(I.second, LocTy())));
+  for (const auto &I : Slots->Types)
+    NumberedTypes.insert(
+        std::make_pair(I.first, std::make_pair(I.second, LocTy())));
 }
 
 /// ValidateEndOfModule - Do final validity and sanity checks at the end of the
@@ -181,6 +196,10 @@ bool LLParser::ValidateEndOfModule() {
   // the mapping from LLParser as it doesn't need it anymore.
   Slots->GlobalValues = std::move(NumberedVals);
   Slots->MetadataNodes = std::move(NumberedMetadata);
+  for (const auto &I : NamedTypes)
+    Slots->NamedTypes.insert(std::make_pair(I.getKey(), I.second.first));
+  for (const auto &I : NumberedTypes)
+    Slots->Types.insert(std::make_pair(I.first, I.second.first));
 
   return false;
 }

@@ -85,8 +85,11 @@ bool parseAssemblyInto(MemoryBufferRef F, Module &M, SMDiagnostic &Err,
 /// The constant value can be any LLVM constant, including a constant
 /// expression.
 ///
+/// \param Slots The optional slot mapping that will restore the parsing state
+/// of the module.
 /// \return null on error.
-Constant *parseConstantValue(StringRef Asm, SMDiagnostic &Err, const Module &M);
+Constant *parseConstantValue(StringRef Asm, SMDiagnostic &Err, const Module &M,
+                             const SlotMapping *Slots = nullptr);
 
 } // End llvm namespace
 

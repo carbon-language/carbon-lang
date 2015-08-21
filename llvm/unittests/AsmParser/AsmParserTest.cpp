@@ -112,4 +112,40 @@ TEST(AsmParserTest, TypeAndConstantValueParsing) {
   EXPECT_EQ(Error.getMessage(), "expected end of string");
 }
 
+TEST(AsmParserTest, TypeAndConstantValueWithSlotMappingParsing) {
+  LLVMContext &Ctx = getGlobalContext();
+  SMDiagnostic Error;
+  StringRef Source =
+      "%st = type { i32, i32 }\n"
+      "@v = common global [50 x %st] zeroinitializer, align 16\n"
+      "%0 = type { i32, i32, i32, i32 }\n"
+      "@g = common global [50 x %0] zeroinitializer, align 16\n"
+      "define void @marker4(i64 %d) {\n"
+      "entry:\n"
+      "  %conv = trunc i64 %d to i32\n"
+      "  store i32 %conv, i32* getelementptr inbounds "
+      "    ([50 x %st], [50 x %st]* @v, i64 0, i64 0, i32 0), align 16\n"
+      "  store i32 %conv, i32* getelementptr inbounds "
+      "    ([50 x %0], [50 x %0]* @g, i64 0, i64 0, i32 0), align 16\n"
+      "  ret void\n"
+      "}";
+  SlotMapping Mapping;
+  auto Mod = parseAssemblyString(Source, Error, Ctx, &Mapping);
+  ASSERT_TRUE(Mod != nullptr);
+  auto &M = *Mod;
+
+  const Value *V;
+  V = parseConstantValue("i32* getelementptr inbounds ([50 x %st], [50 x %st]* "
+                         "@v, i64 0, i64 0, i32 0)",
+                         Error, M, &Mapping);
+  ASSERT_TRUE(V);
+  ASSERT_TRUE(isa<ConstantExpr>(V));
+
+  V = parseConstantValue("i32* getelementptr inbounds ([50 x %0], [50 x %0]* "
+                         "@g, i64 0, i64 0, i32 0)",
+                         Error, M, &Mapping);
+  ASSERT_TRUE(V);
+  ASSERT_TRUE(isa<ConstantExpr>(V));
+}
+
 } // end anonymous namespace
