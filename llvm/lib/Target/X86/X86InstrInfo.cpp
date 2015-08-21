@@ -6409,10 +6409,14 @@ static bool isAssociativeAndCommutative(const MachineInstr &Inst) {
   case X86::MINCSSrr:
   case X86::VMAXCPDrr:
   case X86::VMAXCPSrr:
+  case X86::VMAXCPDYrr:
+  case X86::VMAXCPSYrr:
   case X86::VMAXCSDrr:
   case X86::VMAXCSSrr:
   case X86::VMINCPDrr:
   case X86::VMINCPSrr:
+  case X86::VMINCPDYrr:
+  case X86::VMINCPSYrr:
   case X86::VMINCSDrr:
   case X86::VMINCSSrr:
     return true;

@@ -550,3 +550,71 @@ define <2 x double> @reassociate_maxs_v2f64(<2 x double> %x0, <2 x double> %x1, 
   ret <2 x double> %sel2
 }
 
+; Verify that AVX 256-bit vector single-precision minimum ops are reassociated.
+
+define <8 x float> @reassociate_mins_v8f32(<8 x float> %x0, <8 x float> %x1, <8 x float> %x2, <8 x float> %x3) {
+; AVX-LABEL: reassociate_mins_v8f32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    vminps %ymm3, %ymm2, %ymm1
+; AVX-NEXT:    vminps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    retq
+  %t0 = fadd <8 x float> %x0, %x1
+  %cmp1 = fcmp olt <8 x float> %x2, %t0
+  %sel1 = select <8 x i1> %cmp1, <8 x float> %x2, <8 x float> %t0
+  %cmp2 = fcmp olt <8 x float> %x3, %sel1
+  %sel2 = select <8 x i1> %cmp2, <8 x float> %x3, <8 x float> %sel1
+  ret <8 x float> %sel2
+}
+
+; Verify that AVX 256-bit vector single-precision maximum ops are reassociated.
+
+define <8 x float> @reassociate_maxs_v8f32(<8 x float> %x0, <8 x float> %x1, <8 x float> %x2, <8 x float> %x3) {
+; AVX-LABEL: reassociate_maxs_v8f32:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    vmaxps %ymm3, %ymm2, %ymm1
+; AVX-NEXT:    vmaxps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    retq
+  %t0 = fadd <8 x float> %x0, %x1
+  %cmp1 = fcmp ogt <8 x float> %x2, %t0
+  %sel1 = select <8 x i1> %cmp1, <8 x float> %x2, <8 x float> %t0
+  %cmp2 = fcmp ogt <8 x float> %x3, %sel1
+  %sel2 = select <8 x i1> %cmp2, <8 x float> %x3, <8 x float> %sel1
+  ret <8 x float> %sel2
+}
+
+; Verify that AVX 256-bit vector double-precision minimum ops are reassociated.
+
+define <4 x double> @reassociate_mins_v4f64(<4 x double> %x0, <4 x double> %x1, <4 x double> %x2, <4 x double> %x3) {
+; AVX-LABEL: reassociate_mins_v4f64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddpd %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    vminpd %ymm3, %ymm2, %ymm1
+; AVX-NEXT:    vminpd %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    retq
+  %t0 = fadd <4 x double> %x0, %x1
+  %cmp1 = fcmp olt <4 x double> %x2, %t0
+  %sel1 = select <4 x i1> %cmp1, <4 x double> %x2, <4 x double> %t0
+  %cmp2 = fcmp olt <4 x double> %x3, %sel1
+  %sel2 = select <4 x i1> %cmp2, <4 x double> %x3, <4 x double> %sel1
+  ret <4 x double> %sel2
+}
+
+; Verify that AVX 256-bit vector double-precision maximum ops are reassociated.
+
+define <4 x double> @reassociate_maxs_v4f64(<4 x double> %x0, <4 x double> %x1, <4 x double> %x2, <4 x double> %x3) {
+; AVX-LABEL: reassociate_maxs_v4f64:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddpd %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    vmaxpd %ymm3, %ymm2, %ymm1
+; AVX-NEXT:    vmaxpd %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    retq
+  %t0 = fadd <4 x double> %x0, %x1
+  %cmp1 = fcmp ogt <4 x double> %x2, %t0
+  %sel1 = select <4 x i1> %cmp1, <4 x double> %x2, <4 x double> %t0
+  %cmp2 = fcmp ogt <4 x double> %x3, %sel1
+  %sel2 = select <4 x i1> %cmp2, <4 x double> %x3, <4 x double> %sel1
+  ret <4 x double> %sel2
+}
+
