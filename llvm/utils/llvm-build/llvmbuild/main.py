@@ -501,6 +501,28 @@ subdirectories = %s
             if (path.startswith(self.source_root) and os.path.exists(path)):
                 yield path
 
+    def foreach_cmake_library(self, f,
+                              enabled_optional_components,
+                              skip_disabled):
+        for ci in self.ordered_component_infos:
+            # Skip optional components which are not enabled.
+            if ci.type_name == 'OptionalLibrary' \
+                and ci.name not in enabled_optional_components:
+                continue
+
+            # We only write the information for libraries currently.
+            if ci.type_name not in ('Library', 'OptionalLibrary'):
+                continue
+
+            # Skip disabled targets.
+            if skip_disabled:
+                tg = ci.get_parent_target_group()
+                if tg and not tg.enabled:
+                    continue
+
+            f(ci)
+
+
     def write_cmake_fragment(self, output_path, enabled_optional_components):
         """
         write_cmake_fragment(output_path) -> None
@@ -569,21 +591,17 @@ configure_file(\"%s\"
 # The following property assignments effectively create a map from component
 # names to required libraries, in a way that is easily accessed from CMake.
 """)
-        for ci in self.ordered_component_infos:
-            # Skip optional components which are not enabled.
-            if ci.type_name == 'OptionalLibrary' \
-                and ci.name not in enabled_optional_components:
-                continue
-
-            # We only write the information for certain components currently.
-            if ci.type_name not in ('Library', 'OptionalLibrary'):
-                continue
-
-            f.write("""\
+        self.foreach_cmake_library(
+            lambda ci:
+              f.write("""\
 set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
                 ci.get_prefixed_library_name(), " ".join(sorted(
                      dep.get_prefixed_library_name()
                      for dep in self.get_required_libraries_for_component(ci)))))
+            ,
+            enabled_optional_components,
+            skip_disabled = False
+            )
 
         f.close()
 
@@ -608,26 +626,17 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
 # The following property assignments tell CMake about link
 # dependencies of libraries imported from LLVM.
 """)
-        for ci in self.ordered_component_infos:
-            # Skip optional components which are not enabled.
-            if ci.type_name == 'OptionalLibrary' \
-                and ci.name not in enabled_optional_components:
-                continue
-
-            # We only write the information for libraries currently.
-            if ci.type_name not in ('Library', 'OptionalLibrary'):
-                continue
-
-            # Skip disabled targets.
-            tg = ci.get_parent_target_group()
-            if tg and not tg.enabled:
-                continue
-
-            f.write("""\
+        self.foreach_cmake_library(
+            lambda ci:
+              f.write("""\
 set_property(TARGET %s PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES %s)\n""" % (
                 ci.get_prefixed_library_name(), " ".join(sorted(
                      dep.get_prefixed_library_name()
                      for dep in self.get_required_libraries_for_component(ci)))))
+            ,
+            enabled_optional_components,
+            skip_disabled = True
+            )
 
         f.close()
 
