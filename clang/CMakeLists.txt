@@ -362,7 +362,7 @@ macro(add_clang_library name)
       set_source_files_properties(${tds}} PROPERTIES HEADER_FILE_ONLY ON)
 
       if(headers OR tds)
-	set(srcs ${headers} ${tds})
+        set(srcs ${headers} ${tds})
       endif()
     endif()
   endif(MSVC_IDE OR XCODE)
