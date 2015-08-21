@@ -1499,7 +1499,7 @@ public:
   bool doesNotMeet(Function *F, Loop *L, const LoopVectorizeHints &Hints) {
     // If a loop hint is provided the diagnostic is always produced.
     const char *Name = Hints.isForced() ? DiagnosticInfo::AlwaysPrint : LV_NAME;
-    bool failed = false;
+    bool Failed = false;
     if (UnsafeAlgebraInst &&
         Hints.getForce() == LoopVectorizeHints::FK_Undefined &&
         Hints.getWidth() == 0) {
@@ -1509,7 +1509,7 @@ public:
                                    "order of operations, however IEEE 754 "
                                    "floating-point operations are not "
                                    "commutative");
-      failed = true;
+      Failed = true;
     }
 
     if (NumRuntimePointerChecks >
@@ -1524,10 +1524,10 @@ public:
                  "would exceed the limit of "
               << VectorizerParams::RuntimeMemoryCheckThreshold << " checks");
       DEBUG(dbgs() << "LV: Too many memory checks needed.\n");
-      failed = true;
+      Failed = true;
     }
 
-    return failed;
+    return Failed;
   }
 
 private:
