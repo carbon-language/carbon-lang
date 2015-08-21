@@ -443,8 +443,11 @@ ExprResult InitListChecker::PerformEmptyInit(Sema &SemaRef,
         if (!VerifyOnly) {
           SemaRef.Diag(CtorDecl->getLocation(),
                        diag::warn_invalid_initializer_from_system_header);
-          SemaRef.Diag(Entity.getDecl()->getLocation(),
-                       diag::note_used_in_initialization_here);
+          if (Entity.getKind() == InitializedEntity::EK_Member)
+            SemaRef.Diag(Entity.getDecl()->getLocation(),
+                         diag::note_used_in_initialization_here);
+          else if (Entity.getKind() == InitializedEntity::EK_ArrayElement)
+            SemaRef.Diag(Loc, diag::note_used_in_initialization_here);
         }
       }
     }
