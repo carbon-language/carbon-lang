@@ -269,8 +269,22 @@ bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
 }
 
 bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model) {
-  unwrap(cg)->setCodePICModel(model);
-  return false;
+  switch (model) {
+  case LTO_CODEGEN_PIC_MODEL_STATIC:
+    unwrap(cg)->setCodePICModel(Reloc::Static);
+    return false;
+  case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
+    unwrap(cg)->setCodePICModel(Reloc::PIC_);
+    return false;
+  case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
+    unwrap(cg)->setCodePICModel(Reloc::DynamicNoPIC);
+    return false;
+  case LTO_CODEGEN_PIC_MODEL_DEFAULT:
+    unwrap(cg)->setCodePICModel(Reloc::Default);
+    return false;
+  }
+  sLastErrorString = "Unknown PIC model";
+  return true;
 }
 
 void lto_codegen_set_cpu(lto_code_gen_t cg, const char *cpu) {

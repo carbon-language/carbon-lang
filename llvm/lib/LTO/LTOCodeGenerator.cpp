@@ -164,18 +164,6 @@ void LTOCodeGenerator::setDebugInfo(lto_debug_model debug) {
   llvm_unreachable("Unknown debug format!");
 }
 
-void LTOCodeGenerator::setCodePICModel(lto_codegen_model model) {
-  switch (model) {
-  case LTO_CODEGEN_PIC_MODEL_STATIC:
-  case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-  case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-  case LTO_CODEGEN_PIC_MODEL_DEFAULT:
-    CodeModel = model;
-    return;
-  }
-  llvm_unreachable("Unknown PIC model!");
-}
-
 bool LTOCodeGenerator::writeMergedModules(const char *path,
                                           std::string &errMsg) {
   if (!determineTarget(errMsg))
@@ -299,24 +287,6 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
   const Target *march = TargetRegistry::lookupTarget(TripleStr, errMsg);
   if (!march)
     return false;
-
-  // The relocation model is actually a static member of TargetMachine and
-  // needs to be set before the TargetMachine is instantiated.
-  Reloc::Model RelocModel = Reloc::Default;
-  switch (CodeModel) {
-  case LTO_CODEGEN_PIC_MODEL_STATIC:
-    RelocModel = Reloc::Static;
-    break;
-  case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
-    RelocModel = Reloc::PIC_;
-    break;
-  case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
-    RelocModel = Reloc::DynamicNoPIC;
-    break;
-  case LTO_CODEGEN_PIC_MODEL_DEFAULT:
-    // RelocModel is already the default, so leave it that way.
-    break;
-  }
 
   // Construct LTOModule, hand over ownership of module and target. Use MAttr as
   // the default set of features.

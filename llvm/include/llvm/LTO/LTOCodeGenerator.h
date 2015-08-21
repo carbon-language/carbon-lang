@@ -73,7 +73,7 @@ struct LTOCodeGenerator {
 
   void setTargetOptions(TargetOptions options);
   void setDebugInfo(lto_debug_model);
-  void setCodePICModel(lto_codegen_model);
+  void setCodePICModel(Reloc::Model model) { RelocModel = model; }
 
   void setCpu(const char *mCpu) { MCpu = mCpu; }
   void setAttr(const char *mAttr) { MAttr = mAttr; }
@@ -162,7 +162,7 @@ private:
   std::unique_ptr<TargetMachine> TargetMach;
   bool EmitDwarfDebugInfo = false;
   bool ScopeRestrictionsDone = false;
-  lto_codegen_model CodeModel = LTO_CODEGEN_PIC_MODEL_DEFAULT;
+  Reloc::Model RelocModel = Reloc::Default;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
   std::vector<std::string> CodegenOptions;
