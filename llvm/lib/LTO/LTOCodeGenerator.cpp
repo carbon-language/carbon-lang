@@ -89,11 +89,6 @@ LTOCodeGenerator::~LTOCodeGenerator() {
 
   delete TargetMach;
   TargetMach = nullptr;
-
-  for (std::vector<char *>::iterator I = CodegenOptions.begin(),
-                                     E = CodegenOptions.end();
-       I != E; ++I)
-    free(*I);
 }
 
 // Initialize LTO passes. Please keep this funciton in sync with
@@ -575,20 +570,19 @@ bool LTOCodeGenerator::compileOptimized(raw_pwrite_stream &out,
 /// LTO problems.
 void LTOCodeGenerator::setCodeGenDebugOptions(const char *options) {
   for (std::pair<StringRef, StringRef> o = getToken(options);
-       !o.first.empty(); o = getToken(o.second)) {
-    // ParseCommandLineOptions() expects argv[0] to be program name. Lazily add
-    // that.
-    if (CodegenOptions.empty())
-      CodegenOptions.push_back(strdup("libLLVMLTO"));
-    CodegenOptions.push_back(strdup(o.first.str().c_str()));
-  }
+       !o.first.empty(); o = getToken(o.second))
+    CodegenOptions.push_back(o.first);
 }
 
 void LTOCodeGenerator::parseCodeGenDebugOptions() {
   // if options were requested, set them
-  if (!CodegenOptions.empty())
-    cl::ParseCommandLineOptions(CodegenOptions.size(),
-                                const_cast<char **>(&CodegenOptions[0]));
+  if (!CodegenOptions.empty()) {
+    // ParseCommandLineOptions() expects argv[0] to be program name.
+    std::vector<const char *> CodegenArgv(1, "libLLVMLTO");
+    for (std::string &Arg : CodegenOptions)
+      CodegenArgv.push_back(Arg.c_str());
+    cl::ParseCommandLineOptions(CodegenArgv.size(), CodegenArgv.data());
+  }
 }
 
 void LTOCodeGenerator::DiagnosticHandler(const DiagnosticInfo &DI,

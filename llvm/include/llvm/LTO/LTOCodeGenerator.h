@@ -165,7 +165,7 @@ private:
   lto_codegen_model CodeModel = LTO_CODEGEN_PIC_MODEL_DEFAULT;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
-  std::vector<char *> CodegenOptions;
+  std::vector<std::string> CodegenOptions;
   std::string MCpu;
   std::string MAttr;
   std::string NativeObjectPath;
