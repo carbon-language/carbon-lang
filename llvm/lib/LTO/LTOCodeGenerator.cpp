@@ -86,9 +86,6 @@ void LTOCodeGenerator::destroyMergedModule() {
 
 LTOCodeGenerator::~LTOCodeGenerator() {
   destroyMergedModule();
-
-  delete TargetMach;
-  TargetMach = nullptr;
 }
 
 // Initialize LTO passes. Please keep this funciton in sync with
@@ -352,9 +349,9 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
     break;
   }
 
-  TargetMach = march->createTargetMachine(TripleStr, MCpu, FeatureStr, Options,
-                                          RelocModel, CodeModel::Default,
-                                          CGOptLevel);
+  TargetMach.reset(march->createTargetMachine(TripleStr, MCpu, FeatureStr,
+                                              Options, RelocModel,
+                                              CodeModel::Default, CGOptLevel));
   return true;
 }
 

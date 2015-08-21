@@ -159,7 +159,7 @@ private:
   std::unique_ptr<LLVMContext> OwnedContext;
   LLVMContext &Context;
   Linker IRLinker;
-  TargetMachine *TargetMach = nullptr;
+  std::unique_ptr<TargetMachine> TargetMach;
   bool EmitDwarfDebugInfo = false;
   bool ScopeRestrictionsDone = false;
   lto_codegen_model CodeModel = LTO_CODEGEN_PIC_MODEL_DEFAULT;
