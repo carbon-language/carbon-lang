@@ -391,7 +391,21 @@ define i32 @select_andor(i32 %v1, i32 %v2, i32 %v3) {
 
 ; CHECK-LABEL: select_noccmp1
 define i64 @select_noccmp1(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
-; CHECK-NOT: CCMP
+; CHECK: cmp x0, #0
+; CHECK-NEXT: cset [[REG0:w[0-9]+]], lt
+; CHECK-NEXT: cmp x0, #13
+; CHECK-NOT: ccmp
+; CHECK-NEXT: cset [[REG1:w[0-9]+]], gt
+; CHECK-NEXT: cmp x2, #2
+; CHECK-NEXT: cset [[REG2:w[0-9]+]], lt
+; CHECK-NEXT: cmp x2, #4
+; CHECK-NEXT: cset [[REG3:w[0-9]+]], gt
+; CHECK-NEXT: and [[REG4:w[0-9]+]], [[REG0]], [[REG1]]
+; CHECK-NEXT: and [[REG5:w[0-9]+]], [[REG2]], [[REG3]]
+; CHECK-NEXT: orr [[REG6:w[0-9]+]], [[REG4]], [[REG5]]
+; CHECK-NEXT: cmp [[REG6]], #0
+; CHECK-NEXT: csel x0, xzr, x3, ne
+; CHECK-NEXT: ret
   %c0 = icmp slt i64 %v1, 0
   %c1 = icmp sgt i64 %v1, 13
   %c2 = icmp slt i64 %v3, 2
@@ -409,7 +423,18 @@ define i64 @select_noccmp1(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
 ; register anyway because of other users.
 ; CHECK-LABEL: select_noccmp2
 define i64 @select_noccmp2(i64 %v1, i64 %v2, i64 %v3, i64 %r) {
-; CHECK-NOT: CCMP
+; CHECK: cmp x0, #0
+; CHECK-NEXT: cset [[REG0:w[0-9]+]], lt
+; CHECK-NOT: ccmp
+; CHECK-NEXT: cmp x0, #13
+; CHECK-NEXT: cset [[REG1:w[0-9]+]], gt
+; CHECK-NEXT: orr [[REG2:w[0-9]+]], [[REG0]], [[REG1]]
+; CHECK-NEXT: cmp [[REG2]], #0
+; CHECK-NEXT: csel x0, xzr, x3, ne
+; CHECK-NEXT: sbfx [[REG3:w[0-9]+]], [[REG2]], #0, #1
+; CHECK-NEXT: adrp x[[REGN4:[0-9]+]], _g@PAGE
+; CHECK-NEXT: str [[REG3]], [x[[REGN4]], _g@PAGEOFF]
+; CHECK-NEXT: ret
   %c0 = icmp slt i64 %v1, 0
   %c1 = icmp sgt i64 %v1, 13
   %or = or i1 %c0, %c1
