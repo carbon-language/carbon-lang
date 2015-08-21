@@ -167,6 +167,8 @@ of 32 and 16:
     bb.0.entry:
       successors: %bb.1.then(32), %bb.2.else(16)
 
+.. _bb-liveins:
+
 Live In Registers
 ^^^^^^^^^^^^^^^^^
 
@@ -203,7 +205,8 @@ specified in brackets after the block's definition:
 Machine Instructions
 --------------------
 
-A machine instruction is composed of a name, machine operands,
+A machine instruction is composed of a name,
+:ref:`machine operands <machine-operands>`,
 :ref:`instruction flags <instruction-flags>`, and machine memory operands.
 
 The instruction's name is usually specified before the operands. The example
@@ -239,15 +242,139 @@ The flag ``frame-setup`` can be specified before the instruction's name:
 
     %fp = frame-setup ADDXri %sp, 0, 0
 
+.. _registers:
+
+Registers
+---------
+
+Registers are one of the key primitives in the machine instructions
+serialization language. They are primarly used in the
+:ref:`register machine operands <register-operands>`,
+but they can also be used in a number of other places, like the
+:ref:`basic block's live in list <bb-liveins>`.
+
+The physical registers are identified by their name. They use the following
+syntax:
+
+.. code-block:: llvm
+
+    %<name>
+
+The example below shows three X86 physical registers:
+
+.. code-block:: llvm
+
+    %eax
+    %r15
+    %eflags
+
+The virtual registers are identified by their ID number. They use the following
+syntax:
+
+.. code-block:: llvm
+
+    %<id>
+
+Example:
+
+.. code-block:: llvm
+
+    %0
+
+The null registers are represented using an underscore ('``_``'). They can also be
+represented using a '``%noreg``' named register, although the former syntax
+is preferred.
+
+.. _machine-operands:
+
+Machine Operands
+----------------
+
+There are seventeen different kinds of machine operands, and all of them, except
+the ``MCSymbol`` operand, can be serialized. The ``MCSymbol`` operands are
+just printed out - they can't be parsed back yet.
+
+Immediate Operands
+^^^^^^^^^^^^^^^^^^
+
+The immediate machine operands are untyped, 64-bit signed integers. The
+example below shows an instance of the X86 ``MOV32ri`` instruction that has an
+immediate machine operand ``-42``:
+
+.. code-block:: llvm
+
+    %eax = MOV32ri -42
+
+.. TODO: Describe the CIMM (Rare) and FPIMM immediate operands.
+
+.. _register-operands:
+
+Register Operands
+^^^^^^^^^^^^^^^^^
+
+The :ref:`register <registers>` primitive is used to represent the register
+machine operands. The register operands can also have optional
+:ref:`register flags <register-flags>`,
+a subregister index, and a reference to the tied register operand.
+The full syntax of a register operand is shown below:
+
+.. code-block:: llvm
+
+    [<flags>] <register> [ :<subregister-idx-name> ] [ (tied-def <tied-op>) ]
+
+This example shows an instance of the X86 ``XOR32rr`` instruction that has
+5 register operands with different register flags:
+
+.. code-block:: llvm
+
+  dead %eax = XOR32rr undef %eax, undef %eax, implicit-def dead %eflags, implicit-def %al
+
+.. _register-flags:
+
+Register Flags
+~~~~~~~~~~~~~~
+
+The table below shows all of the possible register flags along with the
+corresponding internal ``llvm::RegState`` representation:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Flag
+     - Internal Value
+
+   * - ``implicit``
+     - ``RegState::Implicit``
+
+   * - ``implicit-def``
+     - ``RegState::ImplicitDefine``
+
+   * - ``def``
+     - ``RegState::Define``
+
+   * - ``dead``
+     - ``RegState::Dead``
+
+   * - ``killed``
+     - ``RegState::Kill``
+
+   * - ``undef``
+     - ``RegState::Undef``
+
+   * - ``internal``
+     - ``RegState::InternalRead``
+
+   * - ``early-clobber``
+     - ``RegState::EarlyClobber``
+
+   * - ``debug-use``
+     - ``RegState::Debug``
 
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
 .. TODO: Describe the syntax for the bundled instructions.
-.. TODO: Describe the syntax of the immediate machine operands.
-.. TODO: Describe the syntax of the register machine operands.
-.. TODO: Describe the syntax of the virtual register operands and their YAML
-   definitions.
-.. TODO: Describe the syntax of the register operand flags and the subregisters.
+.. TODO: Describe the syntax for virtual register YAML definitions.
+.. TODO: Describe the syntax of the subregisters.
 .. TODO: Describe the machine function's YAML flag attributes.
 .. TODO: Describe the syntax for the global value, external symbol and register
    mask machine operands.
