@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -O1 -disable-llvm-optzns -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
+// CHECK:     @_ZTVN5test018stdio_sync_filebufIA4_iEE = linkonce_odr unnamed_addr constant
+
 // CHECK: @_ZN7PR100011xE = global
 // CHECK-NOT: @_ZN7PR100014kBarE = external global i32
 //
@@ -12,7 +14,6 @@
 // CHECK: @_ZN7PR100011SIiE3arrE = linkonce_odr global [3 x i32]
 // CHECK-NOT: @_ZN7PR100011SIiE3arr2E = linkonce_odr global [3 x i32]A
 
-// CHECK:     @_ZTVN5test018stdio_sync_filebufIA4_iEE = linkonce_odr unnamed_addr constant
 
 // CHECK-NOT: _ZTVN5test31SIiEE
 // CHECK-NOT: _ZTSN5test31SIiEE
