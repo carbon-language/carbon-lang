@@ -580,17 +580,32 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                     const uint32_t generic_regnum = reg_info->kinds[eRegisterKindGeneric];
                     if (reg_num != LLDB_INVALID_REGNUM && generic_regnum != LLDB_REGNUM_GENERIC_SP)
                     {
-                        if (context.info_type == EmulateInstruction::eInfoTypeAddress)
+                        switch (context.info_type)
                         {
-                            if (m_pushed_regs.find (reg_num) != m_pushed_regs.end () &&
-                                context.info.address == m_pushed_regs[reg_num])
-                            {
-                                m_curr_row->SetRegisterLocationToSame (reg_num, /*must_replace*/ false);
-                                m_curr_row_modified = true;
-                            }
+                            case EmulateInstruction::eInfoTypeAddress:
+                                if (m_pushed_regs.find(reg_num) != m_pushed_regs.end() &&
+                                    context.info.address == m_pushed_regs[reg_num])
+                                {
+                                    m_curr_row->SetRegisterLocationToSame(reg_num,
+                                                                          false /*must_replace*/);
+                                    m_curr_row_modified = true;
+                                }
+                                break;
+                            case EmulateInstruction::eInfoTypeISA:
+                                assert((generic_regnum == LLDB_REGNUM_GENERIC_PC ||
+                                        generic_regnum == LLDB_REGNUM_GENERIC_FLAGS) &&
+                                       "eInfoTypeISA used for poping a register other the the PC/FLAGS");
+                                if (generic_regnum != LLDB_REGNUM_GENERIC_FLAGS)
+                                {
+                                    m_curr_row->SetRegisterLocationToSame(reg_num,
+                                                                          false /*must_replace*/);
+                                    m_curr_row_modified = true;
+                                }
+                                break;
+                            default:
+                                assert(false && "unhandled case, add code to handle this!");
+                                break;
                         }
-                        else
-                            assert (!"unhandled case, add code to handle this!");
                     }
                 }
             }

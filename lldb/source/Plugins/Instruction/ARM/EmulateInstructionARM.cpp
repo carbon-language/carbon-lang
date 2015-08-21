@@ -10321,8 +10321,7 @@ EmulateInstructionARM::EmulateLDRDImmediate (const uint32_t opcode, const ARMEnc
             return false;
                   
         //R[t2] = MemA[address+4,4];
-                  
-        context.SetRegisterPlusOffset (base_reg, (address + 4) - Rn);
+        context.SetAddress(address + 4);
         data = MemARead (context, address + 4, addr_byte_size, 0, &success);
         if (!success)
             return false;
