@@ -383,6 +383,8 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
     // in order to produce a compile unit level set of address ranges that
     // is accurate.
     
+    size_t num_debug_aranges = debug_aranges->GetNumRanges();
+    
     // First get the compile unit DIE only and check if it has a DW_AT_ranges
     const DWARFDebugInfoEntry* die = GetCompileUnitDIEOnly();
     
@@ -417,7 +419,7 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
     if (die)
         die->BuildAddressRangeTable(dwarf2Data, this, debug_aranges);
     
-    if (debug_aranges->IsEmpty())
+    if (debug_aranges->GetNumRanges() == num_debug_aranges)
     {
         // We got nothing from the functions, maybe we have a line tables only
         // situation. Check the line tables and build the arange table from this.
@@ -448,7 +450,7 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
         }
     }
     
-    if (debug_aranges->IsEmpty())
+    if (debug_aranges->GetNumRanges() == num_debug_aranges)
     {
         // We got nothing from the functions, maybe we have a line tables only
         // situation. Check the line tables and build the arange table from this.
