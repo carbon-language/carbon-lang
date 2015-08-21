@@ -20,8 +20,12 @@
 /* Assumption: Right shift of signed negative is arithmetic shift. */
 /* Assumption: Endianness is little or big (not mixed). */
 
+#if defined(__ELF__)
 #define FNALIAS(alias_name, original_name) \
   void alias_name() __attribute__((alias(#original_name)))
+#else
+#define FNALIAS(alias, name) _Pragma("GCC error(\"alias unsupported on this file format\")")
+#endif
 
 /* ABI macro definitions */
 

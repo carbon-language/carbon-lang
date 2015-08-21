@@ -80,8 +80,10 @@ __lesf2(fp_t a, fp_t b) {
     }
 }
 
+#if defined(__ELF__)
 // Alias for libgcc compatibility
 FNALIAS(__cmpsf2, __lesf2);
+#endif
 
 enum GE_RESULT {
     GE_LESS      = -1,
