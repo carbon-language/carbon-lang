@@ -993,6 +993,10 @@ std::string Intrinsic::getInstTypeCode(Type T, ClassKind CK) const {
   return S;
 }
 
+static bool isFloatingPointProtoModifier(char Mod) {
+  return Mod == 'F' || Mod == 'f';
+}
+
 std::string Intrinsic::getBuiltinTypeStr() {
   ClassKind LocalCK = getClassKind(true);
   std::string S;
@@ -1014,7 +1018,7 @@ std::string Intrinsic::getBuiltinTypeStr() {
     if (!RetT.isScalar() && !RetT.isSigned())
       RetT.makeSigned();
 
-    bool ForcedVectorFloatingType = Proto[0] == 'F' || Proto[0] == 'f';
+    bool ForcedVectorFloatingType = isFloatingPointProtoModifier(Proto[0]);
     if (LocalCK == ClassB && !RetT.isScalar() && !ForcedVectorFloatingType)
       // Cast to vector of 8-bit elements.
       RetT.makeInteger(8, true);
@@ -1027,7 +1031,7 @@ std::string Intrinsic::getBuiltinTypeStr() {
     if (T.isPoly())
       T.makeInteger(T.getElementSizeInBits(), false);
 
-    bool ForcedFloatingType = Proto[I + 1] == 'F' || Proto[I + 1] == 'f';
+    bool ForcedFloatingType = isFloatingPointProtoModifier(Proto[I + 1]);
     if (LocalCK == ClassB && !T.isScalar() && !ForcedFloatingType)
       T.makeInteger(8, true);
     // Halves always get converted to 8-bit elements.
@@ -1364,7 +1368,7 @@ void Intrinsic::emitBodyAsBuiltinCall() {
   // Extra constant integer to hold type class enum for this function, e.g. s8
   if (getClassKind(true) == ClassB) {
     Type ThisTy = getReturnType();
-    if (Proto[0] == 'v' || Proto[0] == 'f' || Proto[0] == 'F')
+    if (Proto[0] == 'v' || isFloatingPointProtoModifier(Proto[0]))
       ThisTy = getParamType(0);
     if (ThisTy.isPointer())
       ThisTy = getParamType(1);
@@ -2022,8 +2026,8 @@ void NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
 
     uint64_t Mask = 0ULL;
     Type Ty = Def->getReturnType();
-    if (Def->getProto()[0] == 'v' || Def->getProto()[0] == 'f' ||
-        Def->getProto()[0] == 'F')
+    if (Def->getProto()[0] == 'v' ||
+        isFloatingPointProtoModifier(Def->getProto()[0]))
       Ty = Def->getParamType(0);
     if (Ty.isPointer())
       Ty = Def->getParamType(1);
