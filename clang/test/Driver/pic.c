@@ -11,6 +11,7 @@
 // CHECK-PIC2: "-mrelocation-model" "pic"
 // CHECK-PIC2: "-pic-level" "2"
 //
+// CHECK-STATIC: "-static"
 // CHECK-NO-STATIC-NOT: "-static"
 //
 // CHECK-PIE1: "-mrelocation-model" "pic"
@@ -135,8 +136,15 @@
 // Disregard any of the PIC-specific flags if we have a trump-card flag.
 // RUN: %clang -c %s -target i386-unknown-unknown -mkernel -fPIC -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
+
+// The -static argument *doesn't* override PIC: -static only affects
+// linking, and -fPIC only affects code generation.
 // RUN: %clang -c %s -target i386-unknown-unknown -static -fPIC -### 2>&1 \
-// RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
+// RUN: %clang %s -target i386-linux-gnu -static -fPIC -### \
+// RUN: --gcc-toolchain="" \
+// RUN: --sysroot=%S/Inputs/basic_linux_tree 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-STATIC
 //
 // On Linux, disregard -pie if we have -shared.
 // RUN: %clang %s -target i386-unknown-linux -shared -pie -### 2>&1 \
@@ -207,7 +215,7 @@
 // RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=5.0.0 -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
 // RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=6.0.0 -static -### 2>&1 \
-// RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
 //
 // On OpenBSD, PIE is enabled by default, but can be disabled.
 // RUN: %clang -c %s -target amd64-pc-openbsd -### 2>&1 \

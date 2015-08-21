@@ -3021,11 +3021,9 @@ ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
   if (PIC && ToolChain.getTriple().isOSDarwin())
     IsPICLevelTwo |= ToolChain.isPICDefault();
 
-  // Note that these flags are trump-cards. Regardless of the order w.r.t. the
-  // PIC or PIE options above, if these show up, PIC is disabled.
+  // This kernel flags are a trump-card: they will disable PIC/PIE
+  // generation, independent of the argument order.
   if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6)))
-    PIC = PIE = false;
-  if (Args.hasArg(options::OPT_static))
     PIC = PIE = false;
 
   if (Arg *A = Args.getLastArg(options::OPT_mdynamic_no_pic)) {
