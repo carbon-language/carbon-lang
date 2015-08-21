@@ -5721,6 +5721,7 @@ ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
             {
                 case llvm::Triple::aarch64:
                 case llvm::Triple::arm:
+                case llvm::Triple::thumb:
                 case llvm::Triple::x86:
                 case llvm::Triple::x86_64:
                     make_core = true;

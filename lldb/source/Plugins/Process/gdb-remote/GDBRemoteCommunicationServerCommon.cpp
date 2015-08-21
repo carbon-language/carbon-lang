@@ -1209,6 +1209,7 @@ GDBRemoteCommunicationServerCommon::CreateProcessInfoResponse_DebugServerStyle (
             switch (proc_triple.getArch ())
             {
                 case llvm::Triple::arm:
+                case llvm::Triple::thumb:
                 case llvm::Triple::aarch64:
                     ostype = "ios";
                     break;

@@ -735,11 +735,12 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     if (!target_arch.IsValid())
     {
         if (remote_arch.IsValid()
-              && remote_arch.GetMachine() == llvm::Triple::arm
+              && (remote_arch.GetMachine() == llvm::Triple::arm || remote_arch.GetMachine() == llvm::Triple::thumb)
               && remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
             m_register_info.HardcodeARMRegisters(from_scratch);
     }
-    else if (target_arch.GetMachine() == llvm::Triple::arm)
+    else if (target_arch.GetMachine() == llvm::Triple::arm
+            || target_arch.GetMachine() == llvm::Triple::thumb)
     {
         m_register_info.HardcodeARMRegisters(from_scratch);
     }
@@ -1250,8 +1251,8 @@ ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
                 // it has, so we really need to take the remote host architecture as our
                 // defacto architecture in this case.
 
-                if (process_arch.GetMachine() == llvm::Triple::arm &&
-                    process_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+                if ((process_arch.GetMachine() == llvm::Triple::arm || process_arch.GetMachine() == llvm::Triple::thumb)
+                    && process_arch.GetTriple().getVendor() == llvm::Triple::Apple)
                 {
                     GetTarget().SetArchitecture (process_arch);
                     if (log)

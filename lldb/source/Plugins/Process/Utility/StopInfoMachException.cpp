@@ -58,6 +58,7 @@ StopInfoMachException::GetDescription ()
                 }
                 break;
             case llvm::Triple::arm:
+            case llvm::Triple::thumb:
                 switch (m_exc_code)
                 {
                 case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
@@ -104,6 +105,7 @@ StopInfoMachException::GetDescription ()
                 break;
 
             case llvm::Triple::arm:
+            case llvm::Triple::thumb:
                 if (m_exc_code == 1)
                     code_desc = "EXC_ARM_UNDEFINED";
                 break;
@@ -188,6 +190,7 @@ StopInfoMachException::GetDescription ()
                     break;
                 
                 case llvm::Triple::arm:
+                case llvm::Triple::thumb:
                     switch (m_exc_code)
                     {
                     case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
@@ -408,6 +411,7 @@ StopInfoMachException::CreateStopReasonWithMachException
                     break;
                 
                 case llvm::Triple::arm:
+                case llvm::Triple::thumb:
                     if (exc_code == 0x102) // EXC_ARM_DA_DEBUG
                     {
                         // It's a watchpoint, then, if the exc_sub_code indicates a known/enabled

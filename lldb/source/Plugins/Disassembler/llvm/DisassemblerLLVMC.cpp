@@ -604,7 +604,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
     }
 
     ArchSpec thumb_arch(arch);
-    if (arch.GetTriple().getArch() == llvm::Triple::arm)
+    if (arch.GetTriple().getArch() == llvm::Triple::arm || arch.GetTriple().getArch() == llvm::Triple::thumb)
     {
         std::string thumb_arch_name (thumb_arch.GetTriple().getArchName().str());
         // Replace "arm" with "thumb" so we get all thumb variants correct
@@ -626,7 +626,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
     // Handle the Cortex-M0 (armv6m) the same; the ISA is a subset of the T and T32
     // instructions defined in ARMv7-A.
 
-    if (arch.GetTriple().getArch() == llvm::Triple::arm
+    if ((arch.GetTriple().getArch() == llvm::Triple::arm || arch.GetTriple().getArch() == llvm::Triple::thumb)
         && (arch.GetCore() == ArchSpec::Core::eCore_arm_armv7m
             || arch.GetCore() == ArchSpec::Core::eCore_arm_armv7em
             || arch.GetCore() == ArchSpec::Core::eCore_arm_armv6m))
@@ -698,7 +698,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
     }
 
     // For arm CPUs that can execute arm or thumb instructions, also create a thumb instruction disassembler.
-    if (arch.GetTriple().getArch() == llvm::Triple::arm)
+    if (arch.GetTriple().getArch() == llvm::Triple::arm || arch.GetTriple().getArch() == llvm::Triple::thumb)
     {
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
         m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), "", "", flavor, *this));
