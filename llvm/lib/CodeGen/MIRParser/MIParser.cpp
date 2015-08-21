@@ -1442,7 +1442,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest,
     }
   // fallthrough
   default:
-    // TODO: parse the other machine operands.
+    // FIXME: Parse the MCSymbol machine operand.
     return error("expected a machine operand");
   }
   return false;
