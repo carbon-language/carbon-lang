@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "LoopConvertCheck.h"
 #include "PassByValueCheck.h"
+#include "UseAutoCheck.h"
 #include "UseNullptrCheck.h"
 
 using namespace clang::ast_matchers;
@@ -25,6 +26,7 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<LoopConvertCheck>("modernize-loop-convert");
     CheckFactories.registerCheck<PassByValueCheck>("modernize-pass-by-value");
+    CheckFactories.registerCheck<UseAutoCheck>("modernize-use-auto");
     CheckFactories.registerCheck<UseNullptrCheck>("modernize-use-nullptr");
   }
 

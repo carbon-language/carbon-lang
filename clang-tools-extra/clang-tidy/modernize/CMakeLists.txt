@@ -5,6 +5,7 @@ add_clang_library(clangTidyModernizeModule
   LoopConvertUtils.cpp
   ModernizeTidyModule.cpp
   PassByValueCheck.cpp
+  UseAutoCheck.cpp
   UseNullptrCheck.cpp
 
   LINK_LIBS
