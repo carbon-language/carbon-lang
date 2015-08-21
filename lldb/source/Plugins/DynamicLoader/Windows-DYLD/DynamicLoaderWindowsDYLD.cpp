@@ -9,7 +9,6 @@
 
 #include "DynamicLoaderWindowsDYLD.h"
 
-#include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
@@ -73,38 +72,11 @@ DynamicLoaderWindowsDYLD::CreateInstance(Process *process, bool force)
 void
 DynamicLoaderWindowsDYLD::DidAttach()
 {
-    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
-    if (log)
-        log->Printf("DynamicLoaderWindowsDYLD::%s()", __FUNCTION__);
-
-    DidLaunch();
-
-    m_process->LoadModules();
 }
 
 void
 DynamicLoaderWindowsDYLD::DidLaunch()
 {
-    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
-    if (log)
-        log->Printf("DynamicLoaderWindowsDYLD::%s()", __FUNCTION__);
-
-    ModuleSP executable = GetTargetExecutable();
-
-    if (!executable.get())
-        return;
-
-    ModuleList module_list;
-    module_list.Append(executable);
-    // FIXME: We probably should not always use 0 as the load address
-    // here. Testing showed that when debugging a process that we start
-    // ourselves, there's no randomization of the load address of the
-    // main module, therefore an offset of 0 will be valid.
-    // If we attach to an already running process, this is probably
-    // going to be wrong and we'll have to get the load address somehow.
-    UpdateLoadedSections(executable, LLDB_INVALID_ADDRESS, 0);
-
-    m_process->GetTarget().ModulesDidLoad(module_list);
 }
 
 Error
