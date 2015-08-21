@@ -23,6 +23,7 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include <functional>
 
 namespace llvm {
 
@@ -51,6 +52,14 @@ class DominatorTree;
 ///
 Module *CloneModule(const Module *M);
 Module *CloneModule(const Module *M, ValueToValueMapTy &VMap);
+
+/// Return a copy of the specified module. The ShouldCloneDefinition function
+/// controls whether a specific GlobalValue's definition is cloned. If the
+/// function returns false, the module copy will contain an external reference
+/// in place of the global definition.
+Module *
+CloneModule(const Module *M, ValueToValueMapTy &VMap,
+            std::function<bool(const GlobalValue *)> ShouldCloneDefinition);
 
 /// ClonedCodeInfo - This struct can be used to capture information about code
 /// being cloned, while it is being cloned.

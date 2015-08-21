@@ -1,4 +1,4 @@
-;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===;
+;===- ./tools/llvm-split/LLVMBuild.txt -------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,37 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories =
- bugpoint
- dsymutil
- llc
- lli
- llvm-ar
- llvm-as
- llvm-bcanalyzer
- llvm-cov
- llvm-diff
- llvm-dis
- llvm-dwarfdump
- llvm-extract
- llvm-jitlistener
- llvm-link
- llvm-lto
- llvm-mc
- llvm-mcmarkup
- llvm-nm
- llvm-objdump
- llvm-pdbdump
- llvm-profdata
- llvm-rtdyld
- llvm-size
- llvm-split
- macho-dump
- opt
- verify-uselistorder
-
 [component_0]
-type = Group
-name = Tools
-parent = $ROOT
+type = Tool
+name = llvm-split
+parent = Tools
+required_libraries = TransformUtils BitWriter Core IRReader Support
