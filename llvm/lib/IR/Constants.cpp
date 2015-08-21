@@ -1245,7 +1245,7 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
 /// operands replaced with the specified values.  The specified array must
 /// have the same number of operands as our current one.
 Constant *ConstantExpr::getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
-                                        bool OnlyIfReduced) const {
+                                        bool OnlyIfReduced, Type *SrcTy) const {
   assert(Ops.size() == getNumOperands() && "Operand count mismatch!");
 
   // If no operands changed return self.
@@ -1283,10 +1283,13 @@ Constant *ConstantExpr::getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2],
                                           OnlyIfReducedTy);
-  case Instruction::GetElementPtr:
-    return ConstantExpr::getGetElementPtr(nullptr, Ops[0], Ops.slice(1),
-                                          cast<GEPOperator>(this)->isInBounds(),
-                                          OnlyIfReducedTy);
+  case Instruction::GetElementPtr: {
+    auto *GEPO = cast<GEPOperator>(this);
+    assert(SrcTy || (Ops[0]->getType() == getOperand(0)->getType()));
+    return ConstantExpr::getGetElementPtr(
+        SrcTy ? SrcTy : GEPO->getSourceElementType(), Ops[0], Ops.slice(1),
+        GEPO->isInBounds(), OnlyIfReducedTy);
+  }
   case Instruction::ICmp:
   case Instruction::FCmp:
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1],

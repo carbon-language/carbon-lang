@@ -19,6 +19,7 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/Operator.h"
 using namespace llvm;
 
 // Out of line method to get vtable etc for class.
@@ -127,9 +128,13 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
       Ops.push_back(MapValue(cast<Constant>(C->getOperand(OpNo)), VM,
                              Flags, TypeMapper, Materializer));
   }
-  
+  Type *NewSrcTy = nullptr;
+  if (TypeMapper)
+    if (auto *GEPO = dyn_cast<GEPOperator>(C))
+      NewSrcTy = TypeMapper->remapType(GEPO->getSourceElementType());
+
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    return VM[V] = CE->getWithOperands(Ops, NewTy);
+    return VM[V] = CE->getWithOperands(Ops, NewTy, false, NewSrcTy);
   if (isa<ConstantArray>(C))
     return VM[V] = ConstantArray::get(cast<ArrayType>(NewTy), Ops);
   if (isa<ConstantStruct>(C))

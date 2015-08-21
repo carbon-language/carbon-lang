@@ -1175,7 +1175,8 @@ public:
   /// gets constant-folded, the type changes, or the expression is otherwise
   /// canonicalized.  This parameter should almost always be \c false.
   Constant *getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
-                            bool OnlyIfReduced = false) const;
+                            bool OnlyIfReduced = false,
+                            Type *SrcTy = nullptr) const;
 
   /// getAsInstruction - Returns an Instruction which implements the same
   /// operation as this ConstantExpr. The instruction is not linked to any basic
