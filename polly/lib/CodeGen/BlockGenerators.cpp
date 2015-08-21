@@ -1104,9 +1104,9 @@ void RegionGenerator::generateScalarStores(ScopStmt &Stmt, BasicBlock *BB,
                                            ValueMapT &GlobalMap) {
   const Region &R = Stmt.getParent()->getRegion();
 
-  Region *StmtR = Stmt.getRegion();
-  assert(StmtR && "Block statements need to use the generateScalarStores() "
-                  "function in the BlockGenerator");
+  assert(Stmt.getRegion() &&
+         "Block statements need to use the generateScalarStores() "
+         "function in the BlockGenerator");
 
   for (MemoryAccess *MA : Stmt) {
 
