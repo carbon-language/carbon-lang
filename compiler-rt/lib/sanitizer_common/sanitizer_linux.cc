@@ -98,6 +98,8 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX && defined(__x86_64__)
 #include "sanitizer_syscall_linux_x86_64.inc"
+#elif SANITIZER_LINUX && defined(__aarch64__)
+#include "sanitizer_syscall_linux_aarch64.inc"
 #else
 #include "sanitizer_syscall_generic.inc"
 #endif
