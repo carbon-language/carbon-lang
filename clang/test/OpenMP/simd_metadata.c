@@ -36,8 +36,69 @@ void h1(float *c, float *a, double b[], int size)
   for (int i = 0; i < size; ++i) {
     c[i] = a[i] * a[i] + b[i] * b[t];
     ++t;
+  }
 // do not emit parallel_loop_access metadata due to usage of safelen clause.
 // CHECK-NOT: store float {{.+}}, float* {{.+}}, align {{.+}}, !llvm.mem.parallel_loop_access {{![0-9]+}}
+#pragma omp simd safelen(16) linear(t) aligned(c:32) aligned(a,b) simdlen(8)
+// CHECK:         [[C_PTRINT:%.+]] = ptrtoint
+// CHECK-NEXT:    [[C_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[C_PTRINT]], 31
+// CHECK-NEXT:    [[C_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[C_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[C_MASKCOND]])
+// CHECK:         [[A_PTRINT:%.+]] = ptrtoint
+
+// X86-NEXT:     [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+// X86-AVX-NEXT: [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 31
+// X86-AVX512-NEXT: [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 63
+// PPC-NEXT:     [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+// PPC-QPX-NEXT: [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+
+// CHECK-NEXT:    [[A_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[A_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[A_MASKCOND]])
+// CHECK:         [[B_PTRINT:%.+]] = ptrtoint
+
+// X86-NEXT:      [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// X86-AVX-NEXT:  [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 31
+// X86-AVX512-NEXT: [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 63
+// PPC-NEXT:      [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// PPC-QPX-NEXT:  [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 31
+
+// CHECK-NEXT:    [[B_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[B_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[B_MASKCOND]])
+  for (int i = 0; i < size; ++i) {
+    c[i] = a[i] * a[i] + b[i] * b[t];
+    ++t;
+  }
+// do not emit parallel_loop_access metadata due to usage of safelen clause.
+// CHECK-NOT: store float {{.+}}, float* {{.+}}, align {{.+}}, !llvm.mem.parallel_loop_access {{![0-9]+}}
+#pragma omp simd linear(t) aligned(c:32) aligned(a,b) simdlen(8)
+// CHECK:         [[C_PTRINT:%.+]] = ptrtoint
+// CHECK-NEXT:    [[C_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[C_PTRINT]], 31
+// CHECK-NEXT:    [[C_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[C_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[C_MASKCOND]])
+// CHECK:         [[A_PTRINT:%.+]] = ptrtoint
+
+// X86-NEXT:     [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+// X86-AVX-NEXT: [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 31
+// X86-AVX512-NEXT: [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 63
+// PPC-NEXT:     [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+// PPC-QPX-NEXT: [[A_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[A_PTRINT]], 15
+
+// CHECK-NEXT:    [[A_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[A_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[A_MASKCOND]])
+// CHECK:         [[B_PTRINT:%.+]] = ptrtoint
+
+// X86-NEXT:      [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// X86-AVX-NEXT:  [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 31
+// X86-AVX512-NEXT: [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 63
+// PPC-NEXT:      [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 15
+// PPC-QPX-NEXT:  [[B_MASKEDPTR:%.+]] = and i{{[0-9]+}} [[B_PTRINT]], 31
+
+// CHECK-NEXT:    [[B_MASKCOND:%.+]] = icmp eq i{{[0-9]+}} [[B_MASKEDPTR]], 0
+// CHECK-NEXT:    call void @llvm.assume(i1 [[B_MASKCOND]])
+  for (int i = 0; i < size; ++i) {
+    c[i] = a[i] * a[i] + b[i] * b[t];
+    ++t;
+// CHECK: store float {{.+}}, float* {{.+}}, align {{.+}}, !llvm.mem.parallel_loop_access {{![0-9]+}}
   }
 }
 
@@ -70,6 +131,9 @@ void h3(float *c, float *a, float *b, int size)
 // CHECK: [[LOOP_H1_HEADER:![0-9]+]] = distinct !{[[LOOP_H1_HEADER]], [[LOOP_WIDTH_16:![0-9]+]], [[LOOP_VEC_ENABLE:![0-9]+]]}
 // CHECK: [[LOOP_WIDTH_16]] = !{!"llvm.loop.vectorize.width", i32 16}
 // CHECK: [[LOOP_VEC_ENABLE]] = !{!"llvm.loop.vectorize.enable", i1 true}
+// CHECK: [[LOOP_H1_HEADER:![0-9]+]] = distinct !{[[LOOP_H1_HEADER]], [[LOOP_WIDTH_8:![0-9]+]], [[LOOP_VEC_ENABLE]]}
+// CHECK: [[LOOP_WIDTH_8]] = !{!"llvm.loop.vectorize.width", i32 8}
+// CHECK: [[LOOP_H1_HEADER:![0-9]+]] = distinct !{[[LOOP_H1_HEADER]], [[LOOP_WIDTH_8]], [[LOOP_VEC_ENABLE]]}
 //
 // Metadata for h2:
 // CHECK: [[LOOP_H2_HEADER]] = distinct !{[[LOOP_H2_HEADER]], [[LOOP_VEC_ENABLE]]}

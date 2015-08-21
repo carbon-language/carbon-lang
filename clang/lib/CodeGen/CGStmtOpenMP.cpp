@@ -739,10 +739,20 @@ emitPrivateLinearVars(CodeGenFunction &CGF, const OMPExecutableDirective &D,
   }
 }
 
-static void emitSafelenClause(CodeGenFunction &CGF,
-                              const OMPExecutableDirective &D) {
+static void emitSimdlenSafelenClause(CodeGenFunction &CGF,
+                                     const OMPExecutableDirective &D) {
   if (auto *C =
-          cast_or_null<OMPSafelenClause>(D.getSingleClause(OMPC_safelen))) {
+          cast_or_null<OMPSimdlenClause>(D.getSingleClause(OMPC_simdlen))) {
+    RValue Len = CGF.EmitAnyExpr(C->getSimdlen(), AggValueSlot::ignored(),
+                                 /*ignoreResult=*/true);
+    llvm::ConstantInt *Val = cast<llvm::ConstantInt>(Len.getScalarVal());
+    CGF.LoopStack.setVectorizeWidth(Val->getZExtValue());
+    // In presence of finite 'safelen', it may be unsafe to mark all
+    // the memory instructions parallel, because loop-carried
+    // dependences of 'safelen' iterations are possible.
+    CGF.LoopStack.setParallel(!D.getSingleClause(OMPC_safelen));
+  } else if (auto *C = cast_or_null<OMPSafelenClause>(
+                 D.getSingleClause(OMPC_safelen))) {
     RValue Len = CGF.EmitAnyExpr(C->getSafelen(), AggValueSlot::ignored(),
                                  /*ignoreResult=*/true);
     llvm::ConstantInt *Val = cast<llvm::ConstantInt>(Len.getScalarVal());
@@ -758,7 +768,7 @@ void CodeGenFunction::EmitOMPSimdInit(const OMPLoopDirective &D) {
   // Walk clauses and process safelen/lastprivate.
   LoopStack.setParallel();
   LoopStack.setVectorizeEnable(true);
-  emitSafelenClause(*this, D);
+  emitSimdlenSafelenClause(*this, D);
 }
 
 void CodeGenFunction::EmitOMPSimdFinal(const OMPLoopDirective &D) {
