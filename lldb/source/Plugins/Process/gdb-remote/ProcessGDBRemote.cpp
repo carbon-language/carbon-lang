@@ -2523,6 +2523,10 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     ostr.Printf("%" PRIu64 " %" PRIu32, wp_addr, wp_index);
                     description = ostr.GetString().c_str();
                 }
+                else if (key.compare("library") == 0)
+                {
+                    LoadModules();
+                }
                 else if (key.size() == 2 && ::isxdigit(key[0]) && ::isxdigit(key[1]))
                 {
                     uint32_t reg = StringConvert::ToUInt32 (key.c_str(), UINT32_MAX, 16);
