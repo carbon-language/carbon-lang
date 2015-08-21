@@ -777,18 +777,12 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
     return false;
   if (category==fcZero || category==fcInfinity)
     return true;
-  else if (isFiniteNonZero() && exponent!=rhs.exponent)
+
+  if (isFiniteNonZero() && exponent != rhs.exponent)
     return false;
-  else {
-    int i= partCount();
-    const integerPart* p=significandParts();
-    const integerPart* q=rhs.significandParts();
-    for (; i>0; i--, p++, q++) {
-      if (*p != *q)
-        return false;
-    }
-    return true;
-  }
+
+  return std::equal(significandParts(), significandParts() + partCount(),
+                    rhs.significandParts());
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value) {
