@@ -200,10 +200,49 @@ specified in brackets after the block's definition:
 .. TODO: Describe the way the reference to an unnamed LLVM IR block can be
    preserved.
 
+Machine Instructions
+--------------------
+
+A machine instruction is composed of a name, machine operands,
+:ref:`instruction flags <instruction-flags>`, and machine memory operands.
+
+The instruction's name is usually specified before the operands. The example
+below shows an instance of the X86 ``RETQ`` instruction with a single machine
+operand:
+
+.. code-block:: llvm
+
+    RETQ %eax
+
+However, if the machine instruction has one or more explicitly defined register
+operands, the instruction's name has to be specified after them. The example
+below shows an instance of the AArch64 ``LDPXpost`` instruction with three
+defined register operands:
+
+.. code-block:: llvm
+
+    %sp, %fp, %lr = LDPXpost %sp, 2
+
+The instruction names are serialized using the exact definitions from the
+target's ``*InstrInfo.td`` files, and they are case sensitive. This means that
+similar instruction names like ``TSTri`` and ``tSTRi`` represent different
+machine instructions.
+
+.. _instruction-flags:
+
+Instruction Flags
+^^^^^^^^^^^^^^^^^
+
+The flag ``frame-setup`` can be specified before the instruction's name:
+
+.. code-block:: llvm
+
+    %fp = frame-setup ADDXri %sp, 0, 0
+
 
 .. TODO: Describe the parsers default behaviour when optional YAML attributes
    are missing.
-.. TODO: Describe the syntax of the machine instructions.
+.. TODO: Describe the syntax for the bundled instructions.
 .. TODO: Describe the syntax of the immediate machine operands.
 .. TODO: Describe the syntax of the register machine operands.
 .. TODO: Describe the syntax of the virtual register operands and their YAML
