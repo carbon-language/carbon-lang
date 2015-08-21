@@ -7527,7 +7527,7 @@ public:
     llvm::SmallPtrSet<QualType, 8> AddedTypes;
 
     for (int Arg = 0; Arg < 2; ++Arg) {
-      QualType AsymetricParamTypes[2] = {
+      QualType AsymmetricParamTypes[2] = {
         S.Context.getPointerDiffType(),
         S.Context.getPointerDiffType(),
       };
@@ -7539,11 +7539,11 @@ public:
         if (!PointeeTy->isObjectType())
           continue;
 
-        AsymetricParamTypes[Arg] = *Ptr;
+        AsymmetricParamTypes[Arg] = *Ptr;
         if (Arg == 0 || Op == OO_Plus) {
           // operator+(T*, ptrdiff_t) or operator-(T*, ptrdiff_t)
           // T* operator+(ptrdiff_t, T*);
-          S.AddBuiltinCandidate(*Ptr, AsymetricParamTypes, Args, CandidateSet);
+          S.AddBuiltinCandidate(*Ptr, AsymmetricParamTypes, Args, CandidateSet);
         }
         if (Op == OO_Minus) {
           // ptrdiff_t operator-(T, T);
