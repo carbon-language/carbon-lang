@@ -1,9 +1,5 @@
 ; Intel chips with slow unaligned memory accesses
 
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentium       2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentium-mmx   2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentiumpro    2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentium2      2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentium3      2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentium3m     2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=pentium-m     2>&1 | FileCheck %s --check-prefix=SLOW
@@ -30,11 +26,6 @@
 
 ; AMD chips with slow unaligned memory accesses
 
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=k6            2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=k6-2          2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=k6-3          2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=athlon        2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=athlon-tbird  2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=athlon-4      2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=athlon-xp     2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=k8            2>&1 | FileCheck %s --check-prefix=SLOW
@@ -57,21 +48,13 @@
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver3        2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=bdver4        2>&1 | FileCheck %s --check-prefix=SLOW
 
-; Other chips/general settings with slow unaligned memory accesses
+; Other chips with slow unaligned memory accesses
 
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=generic       2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=i386          2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=i486          2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=i586          2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=i686          2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=geode         2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=winchip-c6    2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=winchip2      2>&1 | FileCheck %s --check-prefix=SLOW
-; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=c3            2>&1 | FileCheck %s --check-prefix=SLOW
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=c3-2          2>&1 | FileCheck %s --check-prefix=SLOW
 
 ; Verify that the slow/fast unaligned memory attribute is set correctly for each CPU model.
-; Slow chips use 4-byte stores. Fast chips use something other than 4-byte stores.
+; Slow chips use 4-byte stores. Fast chips with SSE or later use something other than 4-byte stores.
+; Chips that don't have SSE use 4-byte stores either way, so they're not tested.
 
 define void @store_zeros(i8* %a) {
 ; SLOW-NOT: not a recognized processor
