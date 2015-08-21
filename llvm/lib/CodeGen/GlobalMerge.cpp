@@ -193,14 +193,11 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
   auto &DL = M.getDataLayout();
   // FIXME: Find better heuristics
-  std::stable_sort(
-      Globals.begin(), Globals.end(),
-      [&DL](const GlobalVariable *GV1, const GlobalVariable *GV2) {
-        Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
-        Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
-
-        return (DL.getTypeAllocSize(Ty1) < DL.getTypeAllocSize(Ty2));
-      });
+  std::stable_sort(Globals.begin(), Globals.end(),
+                   [&DL](const GlobalVariable *GV1, const GlobalVariable *GV2) {
+                     return DL.getTypeAllocSize(GV1->getValueType()) <
+                            DL.getTypeAllocSize(GV2->getValueType());
+                   });
 
   // If we want to just blindly group all globals together, do so.
   if (!GlobalMergeGroupByUse) {
@@ -429,7 +426,7 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable *> &Globals,
     std::vector<Constant*> Inits;
 
     for (j = i; j != -1; j = GlobalSet.find_next(j)) {
-      Type *Ty = Globals[j]->getType()->getElementType();
+      Type *Ty = Globals[j]->getValueType();
       MergedSize += DL.getTypeAllocSize(Ty);
       if (MergedSize > MaxOffset) {
         break;
@@ -542,7 +539,7 @@ bool GlobalMerge::doInitialization(Module &M) {
 
     // Ignore fancy-aligned globals for now.
     unsigned Alignment = DL.getPreferredAlignment(I);
-    Type *Ty = I->getType()->getElementType();
+    Type *Ty = I->getValueType();
     if (Alignment > DL.getABITypeAlignment(Ty))
       continue;
 
