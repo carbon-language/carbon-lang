@@ -10742,11 +10742,11 @@ This is an overloaded intrinsic. The loaded data is a vector of any integer bit 
 Overview:
 """""""""
 
-The ``llvm.uabsdiff`` intrinsic returns a vector result of the absolute difference of the two operands,
-treating them both as unsigned integers.
+The ``llvm.uabsdiff`` intrinsic returns a vector result of the absolute difference of
+the two operands, treating them both as unsigned integers.
 
-The ``llvm.sabsdiff`` intrinsic returns a vector result of the absolute difference of the two operands,
-treating them both as signed integers.
+The ``llvm.sabsdiff`` intrinsic returns a vector result of the absolute difference of
+the two operands, treating them both as signed integers.
 
 .. note::
 
