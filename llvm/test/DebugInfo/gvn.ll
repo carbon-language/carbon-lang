@@ -20,9 +20,6 @@ target triple = "arm64-apple-ios"
 @b = common global i32 0, align 4
 
 ; Function Attrs: nounwind
-declare i32 @sample_internal(...)
-
-; Function Attrs: nounwind
 define void @f3() #0 {
 entry:
   ; Verify that the call still has a debug location after GVN.
