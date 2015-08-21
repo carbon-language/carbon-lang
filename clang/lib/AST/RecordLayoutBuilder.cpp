@@ -1866,7 +1866,7 @@ void ItaniumRecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
       Diag(RD->getLocation(), diag::warn_padded_struct_size)
           << Context.getTypeDeclType(RD)
           << PadSize
-          << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1); // plural or not
+          << (InBits ? 1 : 0); // (byte|bit)
     }
 
     // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
@@ -1956,14 +1956,14 @@ void ItaniumRecordLayoutBuilder::CheckFieldPadding(
           << getPaddingDiagFromTagKind(D->getParent()->getTagKind())
           << Context.getTypeDeclType(D->getParent())
           << PadSize
-          << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1) // plural or not
+          << (InBits ? 1 : 0) // (byte|bit)
           << D->getIdentifier();
     else
       Diag(D->getLocation(), diag::warn_padded_struct_anon_field)
           << getPaddingDiagFromTagKind(D->getParent()->getTagKind())
           << Context.getTypeDeclType(D->getParent())
           << PadSize
-          << (InBits ? 1 : 0) /*(byte|bit)*/ << (PadSize > 1); // plural or not
+          << (InBits ? 1 : 0); // (byte|bit)
   }
 
   // Warn if we packed it unnecessarily. If the alignment is 1 byte don't
