@@ -440,7 +440,7 @@ void SparcAsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
   int64_t RawImmValue = IsImm ? MCValOp.getImm() : 0;
 
   // Allow either a signed or unsigned 32-bit immediate.
-  if (RawImmValue < -2147483648 || RawImmValue > 4294967295) {
+  if (RawImmValue < -2147483648LL || RawImmValue > 4294967295LL) {
     Error(IDLoc, "set: argument must be between -2147483648 and 4294967295");
     return;
   }
