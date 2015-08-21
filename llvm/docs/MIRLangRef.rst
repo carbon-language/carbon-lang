@@ -33,6 +33,69 @@ contain the serialized machine functions.
 
 .. _YAML documents: http://www.yaml.org/spec/1.2/spec.html#id2800132
 
+MIR Testing Guide
+=================
+
+You can use the MIR format for testing in two different ways:
+
+- You can write MIR tests that invoke a single code generation pass using the
+  ``run-pass`` option in llc.
+
+- You can use llc's ``stop-after`` option with existing or new LLVM assembly
+  tests and check the MIR output of a specific code generation pass.
+
+Testing Individual Code Generation Passes
+-----------------------------------------
+
+The ``run-pass`` option in llc allows you to create MIR tests that invoke
+just a single code generation pass. When this option is used, llc will parse
+an input MIR file, run the specified code generation pass, and print the
+resulting MIR to the standard output stream.
+
+You can generate an input MIR file for the test by using the ``stop-after``
+option in llc. For example, if you would like to write a test for the
+post register allocation pseudo instruction expansion pass, you can specify
+the machine copy propagation pass in the ``stop-after`` option, as it runs
+just before the pass that we are trying to test:
+
+   ``llc -stop-after machine-cp bug-trigger.ll > test.mir``
+
+After generating the input MIR file, you'll have to add a run line that uses
+the ``-run-pass`` option to it. In order to test the post register allocation
+pseudo instruction expansion pass on X86-64, a run line like the one shown
+below can be used:
+
+    ``# RUN: llc -run-pass postrapseudos -march=x86-64 %s -o /dev/null | FileCheck %s``
+
+The MIR files are target dependent, so they have to be placed in the target
+specific test directories. They also need to specify a target triple or a
+target architecture either in the run line or in the embedded LLVM IR module.
+
+Limitations
+-----------
+
+Currently the MIR format has several limitations in terms of which state it
+can serialize:
+
+- The target-specific state in the target-specific ``MachineFunctionInfo``
+  subclasses isn't serialized at the moment.
+
+- The target-specific ``MachineConstantPoolValue`` subclasses (in the ARM and
+  SystemZ backends) aren't serialized at the moment.
+
+- The ``MCSymbol`` machine operands are only printed, they can't be parsed.
+
+- A lot of the state in ``MachineModuleInfo`` isn't serialized - only the CFI
+  instructions and the variable debug information from MMI is serialized right
+  now.
+
+These limitations impose restrictions on what you can test with the MIR format.
+For now, tests that would like to test some behaviour that depends on the state
+of certain ``MCSymbol``  operands or the exception handling state in MMI, can't
+use the MIR format. As well as that, tests that test some behaviour that
+depends on the state of the target specific ``MachineFunctionInfo`` or
+``MachineConstantPoolValue`` subclasses can't use the MIR format at the moment.
+
 High Level Structure
 ====================
 
