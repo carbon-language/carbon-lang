@@ -122,6 +122,8 @@ public:
   bool parseRegisterOperand(MachineOperand &Dest,
                             Optional<unsigned> &TiedDefIdx, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
+  bool parseIRConstant(StringRef::iterator Loc, StringRef Source,
+                       const Constant *&C);
   bool parseIRConstant(StringRef::iterator Loc, const Constant *&C);
   bool parseTypedImmediateOperand(MachineOperand &Dest);
   bool parseFPImmediateOperand(MachineOperand &Dest);
@@ -976,13 +978,20 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
   return false;
 }
 
-bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
-  auto Source = StringRef(Loc, Token.range().end() - Loc).str();
-  lex();
+bool MIParser::parseIRConstant(StringRef::iterator Loc, StringRef StringValue,
+                               const Constant *&C) {
+  auto Source = StringValue.str(); // The source has to be null terminated.
   SMDiagnostic Err;
   C = parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent());
   if (!C)
     return error(Loc + Err.getColumnNo(), Err.getMessage());
+  return false;
+}
+
+bool MIParser::parseIRConstant(StringRef::iterator Loc, const Constant *&C) {
+  if (parseIRConstant(Loc, StringRef(Loc, Token.range().end() - Loc), C))
+    return true;
+  lex();
   return false;
 }
 
