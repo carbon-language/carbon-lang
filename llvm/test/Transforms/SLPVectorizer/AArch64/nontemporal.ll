@@ -44,4 +44,33 @@ entry:
   ret void
 }
 
+; CHECK-LABEL: @foo2
+define void @foo2(float* noalias %a, float* noalias %b) {
+entry:
+; Check that we don't mark vector load with !nontemporal attribute if some of
+; the original scalar loads don't have it.
+; CHECK: %{{[0-9]*}} = load <4 x float>, <4 x float>* %{{[0-9]+}}, align 4{{$}}
+  %b1 = load float, float* %b, align 4, !nontemporal !0
+  %arrayidx.1 = getelementptr inbounds float, float* %b, i64 1
+  %b2 = load float, float* %arrayidx.1, align 4
+  %arrayidx.2 = getelementptr inbounds float, float* %b, i64 2
+  %b3 = load float, float* %arrayidx.2, align 4
+  %arrayidx.3 = getelementptr inbounds float, float* %b, i64 3
+  %b4 = load float, float* %arrayidx.3, align 4, !nontemporal !0
+
+; Check that we don't mark vector store with !nontemporal attribute if some of
+; the original scalar stores don't have it.
+; CHECK: store <4 x float> %{{[0-9]+}}, <4 x float>* %{{[0-9]+}}, align 4{{$}}
+  store float %b1, float* %a, align 4, !nontemporal !0
+  %arrayidx3.1 = getelementptr inbounds float, float* %a, i64 1
+  store float %b2, float* %arrayidx3.1, align 4
+  %arrayidx3.2 = getelementptr inbounds float, float* %a, i64 2
+  store float %b3, float* %arrayidx3.2, align 4
+  %arrayidx3.3 = getelementptr inbounds float, float* %a, i64 3
+  store float %b4, float* %arrayidx3.3, align 4, !nontemporal !0
+
+; CHECK: ret void
+  ret void
+}
+
 !0 = !{i32 1}
