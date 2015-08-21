@@ -113,6 +113,9 @@ namespace process_linux {
         Error
         GetFileLoadAddress(const llvm::StringRef& file_name, lldb::addr_t& load_addr) override;
 
+        NativeThreadLinuxSP
+        GetThreadByID(lldb::tid_t id);
+
         // ---------------------------------------------------------------------
         // Interface used by NativeRegisterContext-derived classes.
         // ---------------------------------------------------------------------
@@ -225,13 +228,13 @@ namespace process_linux {
         MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid);
 
         void
-        MonitorTrace(lldb::pid_t pid, NativeThreadProtocolSP thread_sp);
+        MonitorTrace(lldb::pid_t pid, const NativeThreadLinuxSP &thread_sp);
 
         void
-        MonitorBreakpoint(lldb::pid_t pid, NativeThreadProtocolSP thread_sp);
+        MonitorBreakpoint(lldb::pid_t pid, const NativeThreadLinuxSP &thread_sp);
 
         void
-        MonitorWatchpoint(lldb::pid_t pid, NativeThreadProtocolSP thread_sp, uint32_t wp_index);
+        MonitorWatchpoint(NativeThreadLinux &thread, uint32_t wp_index);
 
         void
         MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool exited);
@@ -265,14 +268,14 @@ namespace process_linux {
         bool
         StopTrackingThread (lldb::tid_t thread_id);
 
-        NativeThreadProtocolSP
+        NativeThreadLinuxSP
         AddThread (lldb::tid_t thread_id);
 
         Error
         GetSoftwareBreakpointPCOffset (NativeRegisterContextSP context_sp, uint32_t &actual_opcode_size);
 
         Error
-        FixupBreakpointPCAsNeeded (NativeThreadProtocolSP &thread_sp);
+        FixupBreakpointPCAsNeeded(const NativeThreadLinuxSP &thread_sp);
 
         /// Writes a siginfo_t structure corresponding to the given thread ID to the
         /// memory region pointed to by @p siginfo.
@@ -317,7 +320,7 @@ namespace process_linux {
         ResumeThread(const NativeThreadLinuxSP &thread_sp, lldb::StateType state, int signo);
 
         void
-        ThreadWasCreated (lldb::tid_t tid);
+        ThreadWasCreated(NativeThreadLinux &thread);
 
         void
         SigchldHandler();
