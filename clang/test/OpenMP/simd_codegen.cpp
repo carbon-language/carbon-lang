@@ -481,6 +481,135 @@ void widened(float *a, float *b, float *c, float *d) {
 // CHECK: ret void
 }
 
+// CHECK-LABEL: define {{.*void}} @{{.*}}linear{{.*}}(float* {{.+}})
+void linear(float *a) {
+  // CHECK: [[VAL_ADDR:%.+]] = alloca i64,
+  // CHECK: [[K_ADDR:%.+]] = alloca i64*,
+  long long val = 0;
+  long long &k = val;
+
+  #pragma omp simd linear(k : 3)
+// CHECK: store i64* [[VAL_ADDR]], i64** [[K_ADDR]],
+// CHECK: store i32 0, i32* [[OMP_IV:%[^,]+]]
+// CHECK: [[K_REF:%.+]] = load i64*, i64** [[K_ADDR]],
+// CHECK: [[K0LOAD:%.+]] = load i64, i64* [[K_REF]]
+// CHECK-NEXT: store i64 [[K0LOAD]], i64* [[LIN0:%[^,]+]]
+
+// CHECK: [[IV:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID:[0-9]+]]
+// CHECK-NEXT: [[CMP2:%.+]] = icmp slt i32 [[IV]], 9
+// CHECK-NEXT: br i1 [[CMP2]], label %[[SIMPLE_LOOP_BODY:.+]], label %[[SIMPLE_LOOP_END:[^,]+]]
+  for (int i = 10; i > 1; i--) {
+// CHECK: [[SIMPLE_LOOP_BODY]]
+// Start of body: calculate i from IV:
+// CHECK: [[IV_0:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// FIXME: It is interesting, why the following "mul 1" was not constant folded?
+// CHECK-NEXT: [[IV_1:%.+]] = mul nsw i32 [[IV_0]], 1
+// CHECK-NEXT: [[LC_I_1:%.+]] = sub nsw i32 10, [[IV_1]]
+// CHECK-NEXT: store i32 [[LC_I_1]], i32* {{.+}}, !llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+//
+// CHECK-NEXT: [[LIN0_1:%.+]] = load i64, i64* [[LIN0]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[IV_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[LIN_MUL1:%.+]] = mul nsw i32 [[IV_2]], 3
+// CHECK-NEXT: [[LIN_EXT1:%.+]] = sext i32 [[LIN_MUL1]] to i64
+// CHECK-NEXT: [[LIN_ADD1:%.+]] = add nsw i64 [[LIN0_1]], [[LIN_EXT1]]
+// Update of the privatized version of linear variable!
+// CHECK-NEXT: store i64 [[LIN_ADD1]], i64* [[K_PRIVATIZED:%[^,]+]]
+    a[k]++;
+    k = k + 3;
+// CHECK: [[IV_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[ADD2_2:%.+]] = add nsw i32 [[IV_2]], 1
+// CHECK-NEXT: store i32 [[ADD2_2]], i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// br label {{.+}}, !llvm.loop ![[SIMPLE_LOOP_ID]]
+  }
+// CHECK: [[SIMPLE_LOOP_END]]
+//
+// Update linear vars after loop, as the loop was operating on a private version.
+// CHECK: [[K_REF:%.+]] = load i64*, i64** [[K_ADDR]],
+// CHECK: [[LIN0_2:%.+]] = load i64, i64* [[LIN0]]
+// CHECK-NEXT: [[LIN_ADD2:%.+]] = add nsw i64 [[LIN0_2]], 27
+// CHECK-NEXT: store i64 [[LIN_ADD2]], i64* [[K_REF]]
+//
+
+  #pragma omp simd linear(val(k) : 3)
+// CHECK: store i32 0, i32* [[OMP_IV:%[^,]+]]
+// CHECK: [[K_REF:%.+]] = load i64*, i64** [[K_ADDR]],
+// CHECK: [[K0LOAD:%.+]] = load i64, i64* [[K_REF]]
+// CHECK-NEXT: store i64 [[K0LOAD]], i64* [[LIN0:%[^,]+]]
+
+// CHECK: [[IV:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID:[0-9]+]]
+// CHECK-NEXT: [[CMP2:%.+]] = icmp slt i32 [[IV]], 9
+// CHECK-NEXT: br i1 [[CMP2]], label %[[SIMPLE_LOOP_BODY:.+]], label %[[SIMPLE_LOOP_END:[^,]+]]
+  for (int i = 10; i > 1; i--) {
+// CHECK: [[SIMPLE_LOOP_BODY]]
+// Start of body: calculate i from IV:
+// CHECK: [[IV_0:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// FIXME: It is interesting, why the following "mul 1" was not constant folded?
+// CHECK-NEXT: [[IV_1:%.+]] = mul nsw i32 [[IV_0]], 1
+// CHECK-NEXT: [[LC_I_1:%.+]] = sub nsw i32 10, [[IV_1]]
+// CHECK-NEXT: store i32 [[LC_I_1]], i32* {{.+}}, !llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+//
+// CHECK-NEXT: [[LIN0_1:%.+]] = load i64, i64* [[LIN0]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[IV_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[LIN_MUL1:%.+]] = mul nsw i32 [[IV_2]], 3
+// CHECK-NEXT: [[LIN_EXT1:%.+]] = sext i32 [[LIN_MUL1]] to i64
+// CHECK-NEXT: [[LIN_ADD1:%.+]] = add nsw i64 [[LIN0_1]], [[LIN_EXT1]]
+// Update of the privatized version of linear variable!
+// CHECK-NEXT: store i64 [[LIN_ADD1]], i64* [[K_PRIVATIZED:%[^,]+]]
+    a[k]++;
+    k = k + 3;
+// CHECK: [[IV_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[ADD2_2:%.+]] = add nsw i32 [[IV_2]], 1
+// CHECK-NEXT: store i32 [[ADD2_2]], i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// br label {{.+}}, !llvm.loop ![[SIMPLE_LOOP_ID]]
+  }
+// CHECK: [[SIMPLE_LOOP_END]]
+//
+// Update linear vars after loop, as the loop was operating on a private version.
+// CHECK: [[K_REF:%.+]] = load i64*, i64** [[K_ADDR]],
+// CHECK: [[LIN0_2:%.+]] = load i64, i64* [[LIN0]]
+// CHECK-NEXT: [[LIN_ADD2:%.+]] = add nsw i64 [[LIN0_2]], 27
+// CHECK-NEXT: store i64 [[LIN_ADD2]], i64* [[K_REF]]
+//
+  #pragma omp simd linear(uval(k) : 3)
+// CHECK: store i32 0, i32* [[OMP_IV:%[^,]+]]
+// CHECK: [[K0LOAD:%.+]] = load i64, i64* [[VAL_ADDR]]
+// CHECK-NEXT: store i64 [[K0LOAD]], i64* [[LIN0:%[^,]+]]
+
+// CHECK: [[IV:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID:[0-9]+]]
+// CHECK-NEXT: [[CMP2:%.+]] = icmp slt i32 [[IV]], 9
+// CHECK-NEXT: br i1 [[CMP2]], label %[[SIMPLE_LOOP_BODY:.+]], label %[[SIMPLE_LOOP_END:[^,]+]]
+  for (int i = 10; i > 1; i--) {
+// CHECK: [[SIMPLE_LOOP_BODY]]
+// Start of body: calculate i from IV:
+// CHECK: [[IV_0:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// FIXME: It is interesting, why the following "mul 1" was not constant folded?
+// CHECK-NEXT: [[IV_1:%.+]] = mul nsw i32 [[IV_0]], 1
+// CHECK-NEXT: [[LC_I_1:%.+]] = sub nsw i32 10, [[IV_1]]
+// CHECK-NEXT: store i32 [[LC_I_1]], i32* {{.+}}, !llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+//
+// CHECK-NEXT: [[LIN0_1:%.+]] = load i64, i64* [[LIN0]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[IV_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[LIN_MUL1:%.+]] = mul nsw i32 [[IV_2]], 3
+// CHECK-NEXT: [[LIN_EXT1:%.+]] = sext i32 [[LIN_MUL1]] to i64
+// CHECK-NEXT: [[LIN_ADD1:%.+]] = add nsw i64 [[LIN0_1]], [[LIN_EXT1]]
+// Update of the privatized version of linear variable!
+// CHECK-NEXT: store i64 [[LIN_ADD1]], i64* [[K_PRIVATIZED:%[^,]+]]
+    a[k]++;
+    k = k + 3;
+// CHECK: [[IV_2:%.+]] = load i32, i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// CHECK-NEXT: [[ADD2_2:%.+]] = add nsw i32 [[IV_2]], 1
+// CHECK-NEXT: store i32 [[ADD2_2]], i32* [[OMP_IV]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP_ID]]
+// br label {{.+}}, !llvm.loop ![[SIMPLE_LOOP_ID]]
+  }
+// CHECK: [[SIMPLE_LOOP_END]]
+//
+// Update linear vars after loop, as the loop was operating on a private version.
+// CHECK: [[LIN0_2:%.+]] = load i64, i64* [[LIN0]]
+// CHECK-NEXT: [[LIN_ADD2:%.+]] = add nsw i64 [[LIN0_2]], 27
+// CHECK-NEXT: store i64 [[LIN_ADD2]], i64* [[VAL_ADDR]]
+//
+}
+
 // TERM_DEBUG-LABEL: bar
 int bar() {return 0;};
 

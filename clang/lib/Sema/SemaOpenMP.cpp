@@ -6423,7 +6423,12 @@ OMPClause *Sema::ActOnOpenMPLinearClause(
         *this, Private, DE->getType().getUnqualifiedType(), DE->getExprLoc());
     // Build var to save initial value.
     VarDecl *Init = buildVarDecl(*this, ELoc, QType, ".linear.start");
-    AddInitializerToDecl(Init, DefaultLvalueConversion(DE).get(),
+    Expr *InitExpr;
+    if (LinKind == OMPC_LINEAR_uval)
+      InitExpr = VD->getInit();
+    else
+      InitExpr = DE;
+    AddInitializerToDecl(Init, DefaultLvalueConversion(InitExpr).get(),
                          /*DirectInit*/ false, /*TypeMayContainAuto*/ false);
     auto InitRef = buildDeclRefExpr(
         *this, Init, DE->getType().getUnqualifiedType(), DE->getExprLoc());
@@ -6491,15 +6496,20 @@ static bool FinishOpenMPLinearClause(OMPLinearClause &Clause, DeclRefExpr *IV,
   bool HasErrors = false;
   auto CurInit = Clause.inits().begin();
   auto CurPrivate = Clause.privates().begin();
+  auto LinKind = Clause.getModifier();
   for (auto &RefExpr : Clause.varlists()) {
     Expr *InitExpr = *CurInit;
 
     // Build privatized reference to the current linear var.
     auto DE = cast<DeclRefExpr>(RefExpr);
-    auto CapturedRef =
-        buildDeclRefExpr(SemaRef, cast<VarDecl>(DE->getDecl()),
-                         DE->getType().getUnqualifiedType(), DE->getExprLoc(),
-                         /*RefersToCapture=*/true);
+    Expr *CapturedRef;
+    if (LinKind == OMPC_LINEAR_uval)
+      CapturedRef = cast<VarDecl>(DE->getDecl())->getInit();
+    else
+      CapturedRef =
+          buildDeclRefExpr(SemaRef, cast<VarDecl>(DE->getDecl()),
+                           DE->getType().getUnqualifiedType(), DE->getExprLoc(),
+                           /*RefersToCapture=*/true);
 
     // Build update: Var = InitExpr + IV * Step
     ExprResult Update =
