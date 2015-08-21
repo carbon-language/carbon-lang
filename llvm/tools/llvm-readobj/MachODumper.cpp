@@ -40,6 +40,9 @@ public:
   void printUnwindInfo() override;
   void printStackMap() const override;
 
+  // MachO-specific.
+  void printMachODataInCode() override;
+
 private:
   template<class MachHeader>
   void printFileHeaders(const MachHeader &Header);
@@ -599,4 +602,26 @@ void MachODumper::printStackMap() const {
   else
      prettyPrintStackMap(llvm::outs(),
                          StackMapV1Parser<support::big>(StackMapContentsArray));
+}
+
+void MachODumper::printMachODataInCode() {
+  for (const auto &Load : Obj->load_commands()) {
+    if (Load.C.cmd  == MachO::LC_DATA_IN_CODE) {
+      MachO::linkedit_data_command LLC = Obj->getLinkeditDataLoadCommand(Load);
+      DictScope Group(W, "DataInCode");
+      W.printNumber("Data offset", LLC.dataoff);
+      W.printNumber("Data size", LLC.datasize);
+      ListScope D(W, "Data entries");
+      unsigned NumRegions = LLC.datasize / sizeof(MachO::data_in_code_entry);
+      for (unsigned i = 0; i < NumRegions; ++i) {
+        MachO::data_in_code_entry DICE = Obj->getDataInCodeTableEntry(
+                                                              LLC.dataoff, i);
+        DictScope Group(W, "Entry");
+        W.printNumber("Index", i);
+        W.printNumber("Offset", DICE.offset);
+        W.printNumber("Length", DICE.length);
+        W.printNumber("Kind", DICE.kind);
+      }
+    }
+  }
 }

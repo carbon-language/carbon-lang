@@ -181,6 +181,11 @@ namespace opts {
   COFFBaseRelocs("coff-basereloc",
                  cl::desc("Display the PE/COFF .reloc section"));
 
+  // -macho-data-in-code
+  cl::opt<bool>
+  MachODataInCode("macho-data-in-code",
+                  cl::desc("Display MachO Data in Code command"));
+
   // -stackmap
   cl::opt<bool>
   PrintStackMap("stackmap",
@@ -312,6 +317,9 @@ static void dumpObject(const ObjectFile *Obj) {
     if (opts::COFFBaseRelocs)
       Dumper->printCOFFBaseReloc();
   }
+  if (Obj->isMachO())
+    if (opts::MachODataInCode)
+      Dumper->printMachODataInCode();
   if (opts::PrintStackMap)
     Dumper->printStackMap();
 }
