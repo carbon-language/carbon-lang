@@ -23,7 +23,7 @@ class CreateAfterAttachTestCase(TestBase):
                    # not yet investigated.  Revisit once required functionality
                    # is implemented for FreeBSD.
     @skipIfLinux # Occasionally hangs on the build bot, expectedFailureLinux
-
+    @skipIfWindows # Occasionally hangs on Windows, may be same as other issues.
     @dwarf_test
     def test_create_after_attach_with_dwarf_and_popen(self):
         """Test thread creation after process attach."""
