@@ -1067,10 +1067,17 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
 
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.
-  Decl *Res = TemplateInfo.TemplateParams?
-      Actions.ActOnStartOfFunctionTemplateDef(getCurScope(),
-                                              *TemplateInfo.TemplateParams, D)
-    : Actions.ActOnStartOfFunctionDef(getCurScope(), D);
+  Sema::SkipBodyInfo SkipBody;
+  Decl *Res = Actions.ActOnStartOfFunctionDef(getCurScope(), D,
+                                              TemplateInfo.TemplateParams
+                                                  ? *TemplateInfo.TemplateParams
+                                                  : MultiTemplateParamsArg(),
+                                              &SkipBody);
+
+  if (SkipBody.ShouldSkip) {
+    SkipFunctionBody();
+    return Res;
+  }
 
   // Break out of the ParsingDeclarator context before we parse the body.
   D.complete(Res);
@@ -1135,6 +1142,28 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     ParseLexedAttributeList(*LateParsedAttrs, Res, false, true);
 
   return ParseFunctionStatementBody(Res, BodyScope);
+}
+
+void Parser::SkipFunctionBody() {
+  if (Tok.is(tok::equal)) {
+    SkipUntil(tok::semi);
+    return;
+  }
+
+  bool IsFunctionTryBlock = Tok.is(tok::kw_try);
+  if (IsFunctionTryBlock)
+    ConsumeToken();
+
+  CachedTokens Skipped;
+  if (ConsumeAndStoreFunctionPrologue(Skipped))
+    SkipMalformedDecl();
+  else {
+    SkipUntil(tok::r_brace);
+    while (IsFunctionTryBlock && Tok.is(tok::kw_catch)) {
+      SkipUntil(tok::l_brace);
+      SkipUntil(tok::r_brace);
+    }
+  }
 }
 
 /// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides

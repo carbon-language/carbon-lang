@@ -6472,24 +6472,6 @@ Decl *Sema::ActOnTemplateDeclarator(Scope *S,
   return NewDecl;
 }
 
-Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
-                               MultiTemplateParamsArg TemplateParameterLists,
-                                            Declarator &D) {
-  assert(getCurFunctionDecl() == nullptr && "Function parsing confused");
-  DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
-
-  if (FTI.hasPrototype) {
-    // FIXME: Diagnose arguments without names in C.
-  }
-
-  Scope *ParentScope = FnBodyScope->getParent();
-
-  D.setFunctionDefinitionKind(FDK_Definition);
-  Decl *DP = HandleDeclarator(ParentScope, D,
-                              TemplateParameterLists);
-  return ActOnStartOfFunctionDef(FnBodyScope, DP);
-}
-
 /// \brief Strips various properties off an implicit instantiation
 /// that has just been explicitly specialized.
 static void StripImplicitInstantiation(NamedDecl *D) {

@@ -2614,6 +2614,7 @@ void Parser::StashAwayMethodOrFunctionBodyTokens(Decl *MDecl) {
   }
   else if (Tok.is(tok::colon)) {
     ConsumeToken();
+    // FIXME: This is wrong, due to C++11 braced initialization.
     while (Tok.isNot(tok::l_brace)) {
       ConsumeAndStoreUntil(tok::l_paren, Toks, /*StopAtSemi=*/false);
       ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/false);
