@@ -60,7 +60,7 @@ class ExprSyscallTestCase(TestBase):
 
         # send the process a signal
         process.SendAsyncInterrupt()
-        while listener.WaitForEvent(1, event):
+        while listener.WaitForEvent(2, event):
             pass
 
         # as a result the process should stop
