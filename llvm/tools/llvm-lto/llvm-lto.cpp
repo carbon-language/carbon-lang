@@ -207,7 +207,16 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    LTOModule *LTOMod = Module.get();
+    unsigned NumSyms = Module->getSymbolCount();
+    for (unsigned I = 0; I < NumSyms; ++I) {
+      StringRef Name = Module->getSymbolName(I);
+      if (!DSOSymbolsSet.count(Name))
+        continue;
+      lto_symbol_attributes Attrs = Module->getSymbolAttributes(I);
+      unsigned Scope = Attrs & LTO_SYMBOL_SCOPE_MASK;
+      if (Scope != LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN)
+        KeptDSOSyms.push_back(Name);
+    }
 
     // We use the first input module as the destination module when
     // SetMergedModule is true.
@@ -216,17 +225,6 @@ int main(int argc, char **argv) {
       CodeGen.setModule(Module.release());
     } else if (!CodeGen.addModule(Module.get()))
       return 1;
-
-    unsigned NumSyms = LTOMod->getSymbolCount();
-    for (unsigned I = 0; I < NumSyms; ++I) {
-      StringRef Name = LTOMod->getSymbolName(I);
-      if (!DSOSymbolsSet.count(Name))
-        continue;
-      lto_symbol_attributes Attrs = LTOMod->getSymbolAttributes(I);
-      unsigned Scope = Attrs & LTO_SYMBOL_SCOPE_MASK;
-      if (Scope != LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN)
-        KeptDSOSyms.push_back(Name);
-    }
   }
 
   // Add all the exported symbols to the table of symbols to preserve.
