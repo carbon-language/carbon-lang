@@ -374,11 +374,7 @@ static void dfsan_fini() {
   }
 }
 
-#ifdef DFSAN_NOLIBC
-extern "C" void dfsan_init() {
-#else
 static void dfsan_init(int argc, char **argv, char **envp) {
-#endif
   MmapFixedNoReserve(kShadowAddr, kUnusedAddr - kShadowAddr);
 
   // Protect the region of memory we don't use, to preserve the one-to-one
@@ -401,7 +397,7 @@ static void dfsan_init(int argc, char **argv, char **envp) {
   __dfsan_label_info[kInitializingLabel].desc = "<init label>";
 }
 
-#if !defined(DFSAN_NOLIBC) && SANITIZER_CAN_USE_PREINIT_ARRAY
+#if SANITIZER_CAN_USE_PREINIT_ARRAY
 __attribute__((section(".preinit_array"), used))
 static void (*dfsan_init_ptr)(int, char **, char **) = dfsan_init;
 #endif
