@@ -1999,6 +1999,7 @@ static bool isInBoundsIndices(ArrayRef<IndexTy> Idxs) {
 /// \brief Test whether a given ConstantInt is in-range for a SequentialType.
 static bool isIndexInRangeOfSequentialType(SequentialType *STy,
                                            const ConstantInt *CI) {
+  // And indicies are valid when indexing along a pointer
   if (isa<PointerType>(STy))
     return true;
 
