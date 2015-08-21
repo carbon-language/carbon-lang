@@ -224,8 +224,6 @@ class ScopedThreadLocalStateBackup {
   u64 va_arg_overflow_size_tls;
 };
 
-extern void (*death_callback)(void);
-
 void MsanTSDInit(void (*destructor)(void *tsd));
 void *MsanTSDGet();
 void MsanTSDSet(void *tsd);

@@ -95,8 +95,7 @@ extern "C" {
      a string containing Msan runtime options. See msan_flags.h for details. */
   const char* __msan_default_options();
 
-  /* Sets the callback to be called right before death on error.
-     Passing 0 will unset the callback. */
+  /* Deprecated. Call __sanitizer_set_death_callback instead. */
   void __msan_set_death_callback(void (*callback)(void));
 
 #ifdef __cplusplus

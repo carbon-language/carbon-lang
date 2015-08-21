@@ -154,8 +154,6 @@ bool InitShadow(bool init_origins) {
 void MsanDie() {
   if (common_flags()->coverage)
     __sanitizer_cov_dump();
-  if (death_callback)
-    death_callback();
 }
 
 static void MsanAtExit(void) {
