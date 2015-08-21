@@ -417,7 +417,7 @@ int Finalize(ThreadState *thr) {
   StatOutput(ctx->stat);
 #endif
 
-  return failed ? flags()->exitcode : 0;
+  return failed ? common_flags()->exitcode : 0;
 }
 
 #ifndef SANITIZER_GO

@@ -24,8 +24,6 @@ LSAN_FLAG(
     "Aggregate two objects into one leak if this many stack frames match. If "
     "zero, the entire stack trace must match.")
 LSAN_FLAG(int, max_leaks, 0, "The number of leaks reported.")
-LSAN_FLAG(int, exitcode, 23,
-          "If nonzero kill the process with this exit code upon finding leaks.")
 
 // Flags controlling the root set of reachable memory.
 LSAN_FLAG(bool, use_globals, true,

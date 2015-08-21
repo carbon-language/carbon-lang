@@ -60,7 +60,6 @@ static void AsanDie() {
     __sanitizer_cov_dump();
   if (flags()->abort_on_error)
     Abort();
-  internal__exit(flags()->exitcode);
 }
 
 static void AsanCheckFailed(const char *file, int line, const char *cond,
@@ -267,7 +266,6 @@ static NOINLINE void force_interface_symbols() {
     case 30: __asan_address_is_poisoned(0); break;
     case 31: __asan_poison_memory_region(0, 0); break;
     case 32: __asan_unpoison_memory_region(0, 0); break;
-    case 33: __asan_set_error_exit_code(0); break;
     case 34: __asan_before_dynamic_init(0); break;
     case 35: __asan_after_dynamic_init(); break;
     case 36: __asan_poison_stack_memory(0, 0); break;
@@ -549,12 +547,6 @@ static AsanInitializer asan_initializer;
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
-
-int NOINLINE __asan_set_error_exit_code(int exit_code) {
-  int old = flags()->exitcode;
-  flags()->exitcode = exit_code;
-  return old;
-}
 
 void NOINLINE __asan_handle_no_return() {
   int local_stack;

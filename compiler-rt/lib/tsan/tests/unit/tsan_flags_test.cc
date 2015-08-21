@@ -28,9 +28,7 @@ TEST(Flags, DefaultValues) {
   Flags f;
 
   f.enable_annotations = false;
-  f.exitcode = -11;
   InitializeFlags(&f, "");
-  EXPECT_EQ(66, f.exitcode);
   EXPECT_EQ(true, f.enable_annotations);
 }
 
@@ -46,7 +44,6 @@ static const char *options1 =
   " report_atomic_races=0"
   " force_seq_cst_atomics=0"
   " print_benign=0"
-  " exitcode=111"
   " halt_on_error=0"
   " atexit_sleep_ms=222"
   " profile_memory=qqq"
@@ -72,7 +69,6 @@ static const char *options2 =
   " report_atomic_races=true"
   " force_seq_cst_atomics=true"
   " print_benign=true"
-  " exitcode=222"
   " halt_on_error=true"
   " atexit_sleep_ms=123"
   " profile_memory=bbbbb"
@@ -98,7 +94,6 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->report_atomic_races, 0);
   EXPECT_EQ(f->force_seq_cst_atomics, 0);
   EXPECT_EQ(f->print_benign, 0);
-  EXPECT_EQ(f->exitcode, 111);
   EXPECT_EQ(f->halt_on_error, 0);
   EXPECT_EQ(f->atexit_sleep_ms, 222);
   EXPECT_EQ(f->profile_memory, std::string("qqq"));
@@ -124,7 +119,6 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->report_atomic_races, true);
   EXPECT_EQ(f->force_seq_cst_atomics, true);
   EXPECT_EQ(f->print_benign, true);
-  EXPECT_EQ(f->exitcode, 222);
   EXPECT_EQ(f->halt_on_error, true);
   EXPECT_EQ(f->atexit_sleep_ms, 123);
   EXPECT_EQ(f->profile_memory, std::string("bbbbb"));

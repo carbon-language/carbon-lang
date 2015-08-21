@@ -185,3 +185,5 @@ COMMON_FLAG(bool, strict_memcmp, true,
 COMMON_FLAG(bool, decorate_proc_maps, false, "If set, decorate sanitizer "
                                              "mappings in /proc/self/maps with "
                                              "user-readable names")
+COMMON_FLAG(int, exitcode, 1, "Override the program exit status if the tool "
+                              "found an error")

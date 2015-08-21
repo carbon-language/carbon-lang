@@ -140,16 +140,6 @@ static void DoDoubleFree() {
   delete Ident(x);
 }
 
-TEST(AddressSanitizerInterface, ExitCode) {
-  int original_exit_code = __asan_set_error_exit_code(7);
-  EXPECT_EXIT(DoDoubleFree(), ::testing::ExitedWithCode(7), "");
-  EXPECT_EQ(7, __asan_set_error_exit_code(8));
-  EXPECT_EXIT(DoDoubleFree(), ::testing::ExitedWithCode(8), "");
-  EXPECT_EQ(8, __asan_set_error_exit_code(original_exit_code));
-  EXPECT_EXIT(DoDoubleFree(),
-              ::testing::ExitedWithCode(original_exit_code), "");
-}
-
 static void MyDeathCallback() {
   fprintf(stderr, "MyDeathCallback\n");
   fflush(0);  // On Windows, stderr doesn't flush on crash.

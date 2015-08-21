@@ -43,7 +43,7 @@ extern "C" {
 
   // Check for leaks now. This function behaves identically to the default
   // end-of-process leak check. In particular, it will terminate the process if
-  // leaks are found and the exit_code flag is non-zero.
+  // leaks are found and the exitcode runtime flag is non-zero.
   // Subsequent calls to this function will have no effect and end-of-process
   // leak check will not run. Effectively, end-of-process leak check is moved to
   // the time of first invocation of this function.

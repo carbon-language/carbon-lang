@@ -639,7 +639,7 @@ class ScopedInErrorReport {
       }
       // If we're still not dead for some reason, use raw _exit() instead of
       // Die() to bypass any additional checks.
-      internal__exit(flags()->exitcode);
+      internal__exit(common_flags()->exitcode);
     }
     if (report) report_data = *report;
     report_happened = true;

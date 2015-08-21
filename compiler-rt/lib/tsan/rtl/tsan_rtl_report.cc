@@ -514,7 +514,7 @@ bool OutputReport(ThreadState *thr, const ScopedReport &srep) {
   PrintReport(rep);
   ctx->nreported++;
   if (flags()->halt_on_error)
-    internal__exit(flags()->exitcode);
+    internal__exit(common_flags()->exitcode);
   return true;
 }
 

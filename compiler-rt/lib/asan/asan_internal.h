@@ -21,8 +21,6 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
-#define ASAN_DEFAULT_FAILURE_EXITCODE 1
-
 #if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
 # error "The AddressSanitizer run-time should not be"
         " instrumented by AddressSanitizer"

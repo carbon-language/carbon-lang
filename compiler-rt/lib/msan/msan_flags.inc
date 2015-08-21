@@ -17,7 +17,8 @@
 // MSAN_FLAG(Type, Name, DefaultValue, Description)
 // See COMMON_FLAG in sanitizer_flags.inc for more details.
 
-MSAN_FLAG(int, exit_code, 77, "")
+MSAN_FLAG(int, exit_code, -1,
+          "DEPRECATED. Use exitcode from common flags instead.")
 MSAN_FLAG(int, origin_history_size, Origin::kMaxDepth, "")
 MSAN_FLAG(int, origin_history_per_stack_limit, 20000, "")
 MSAN_FLAG(bool, poison_heap_with_zeroes, false, "")

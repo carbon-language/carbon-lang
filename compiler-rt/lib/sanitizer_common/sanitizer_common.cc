@@ -122,7 +122,7 @@ void NORETURN Die() {
     UserDieCallback();
   if (InternalDieCallback)
     InternalDieCallback();
-  internal__exit(1);
+  internal__exit(common_flags()->exitcode);
 }
 
 static CheckFailedCallbackType CheckFailedCallback;

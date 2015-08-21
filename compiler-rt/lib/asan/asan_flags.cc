@@ -65,6 +65,7 @@ void InitializeFlags() {
     cf.external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
     cf.malloc_context_size = kDefaultMallocContextSize;
     cf.intercept_tls_get_addr = true;
+    cf.exitcode = 1;
     OverrideCommonFlags(cf);
   }
   Flags *f = flags();

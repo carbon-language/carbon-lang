@@ -110,10 +110,6 @@ extern "C" {
   void __asan_report_error(void *pc, void *bp, void *sp,
                            void *addr, int is_write, size_t access_size);
 
-  // Sets the exit code to use when reporting an error.
-  // Returns the old value.
-  int __asan_set_error_exit_code(int exit_code);
-
   // Deprecated. Call __sanitizer_set_death_callback instead.
   void __asan_set_death_callback(void (*callback)(void));
 

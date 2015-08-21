@@ -27,7 +27,7 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_init();
 
 // Print a warning and maybe return.
-// This function can die based on flags()->exit_code.
+// This function can die based on common_flags()->exitcode.
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_warning();
 
@@ -105,10 +105,6 @@ int __msan_origin_is_descendant_or_same(u32 this_id, u32 prev_id);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_clear_on_return();
-
-// Default: -1 (don't exit on error).
-SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_set_exit_code(int exit_code);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_keep_going(int keep_going);

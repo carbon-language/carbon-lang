@@ -66,6 +66,7 @@ void InitializeFlags(Flags *f, const char *env) {
 #endif
     cf.print_suppressions = false;
     cf.stack_trace_format = "    #%n %f %S %M";
+    cf.exitcode = 66;
     OverrideCommonFlags(cf);
   }
 

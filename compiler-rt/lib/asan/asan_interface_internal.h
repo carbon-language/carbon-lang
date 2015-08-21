@@ -135,8 +135,6 @@ extern "C" {
                            uptr addr, int is_write, uptr access_size, u32 exp);
 
   SANITIZER_INTERFACE_ATTRIBUTE
-  int __asan_set_error_exit_code(int exit_code);
-  SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_set_death_callback(void (*callback)(void));
   SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_set_error_report_callback(void (*callback)(const char*));

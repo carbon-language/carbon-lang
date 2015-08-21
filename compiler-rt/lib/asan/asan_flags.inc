@@ -62,8 +62,6 @@ ASAN_FLAG(
     "bytes that will be filled with malloc_fill_byte on malloc.")
 ASAN_FLAG(int, malloc_fill_byte, 0xbe,
           "Value used to fill the newly allocated memory.")
-ASAN_FLAG(int, exitcode, ASAN_DEFAULT_FAILURE_EXITCODE,
-          "Override the program exit status if the tool found an error.")
 ASAN_FLAG(bool, allow_user_poisoning, true,
           "If set, user may manually mark memory regions as poisoned or "
           "unpoisoned.")
