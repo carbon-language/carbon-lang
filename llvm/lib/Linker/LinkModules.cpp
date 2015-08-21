@@ -1754,9 +1754,6 @@ Linker::Linker(Module *M) {
   });
 }
 
-Linker::~Linker() {
-}
-
 void Linker::deleteModule() {
   delete Composite;
   Composite = nullptr;

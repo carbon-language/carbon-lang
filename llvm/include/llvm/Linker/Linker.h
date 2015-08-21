@@ -62,7 +62,6 @@ public:
 
   Linker(Module *M, DiagnosticHandlerFunction DiagnosticHandler);
   Linker(Module *M);
-  ~Linker();
 
   Module *getModule() const { return Composite; }
   void deleteModule();
