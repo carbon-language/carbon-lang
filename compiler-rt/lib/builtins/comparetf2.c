@@ -79,6 +79,9 @@ COMPILER_RT_ABI enum LE_RESULT __letf2(fp_t a, fp_t b) {
     }
 }
 
+// Alias for libgcc compatibility
+FNALIAS(__cmptf2, __letf2);
+
 enum GE_RESULT {
     GE_LESS      = -1,
     GE_EQUAL     =  0,

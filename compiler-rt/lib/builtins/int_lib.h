@@ -20,6 +20,9 @@
 /* Assumption: Right shift of signed negative is arithmetic shift. */
 /* Assumption: Endianness is little or big (not mixed). */
 
+#define FNALIAS(alias_name, original_name) \
+  void alias_name() __attribute__((alias(#original_name)))
+
 /* ABI macro definitions */
 
 #if __ARM_EABI__
