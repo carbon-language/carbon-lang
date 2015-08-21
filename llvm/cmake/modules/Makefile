@@ -9,8 +9,6 @@
 
 LEVEL = ../..
 
-LINK_COMPONENTS := all
-
 include $(LEVEL)/Makefile.common
 
 PROJ_cmake := $(DESTDIR)$(PROJ_prefix)/share/llvm/cmake
@@ -39,23 +37,12 @@ else
 	LLVM_ENABLE_RTTI := 0
 endif
 
-# Don't try to run llvm-config during clean because it won't be available
-ifneq ($(MAKECMDGOALS),clean)
-LLVM_LIBS_TO_EXPORT := $(subst -l,,$(shell $(LLVM_CONFIG) --libs $(LINK_COMPONENTS) || echo Error))
-
-ifeq ($(LLVM_LIBS_TO_EXPORT),Error)
-$(error llvm-config --libs failed)
-endif
-
 # Strip out gtest and gtest_main from LLVM_LIBS_TO_EXPORT, these are not
 # installed and won't be available from the install tree.
-# FIXME: If we used llvm-config from the install tree this wouldn't be
-# necessary.
 LLVM_LIBS_TO_EXPORT := $(filter-out gtest gtest_main,$(LLVM_LIBS_TO_EXPORT))
 
 ifndef LLVM_LIBS_TO_EXPORT
 $(error LLVM_LIBS_TO_EXPORT cannot be empty)
-endif
 endif
 
 OBJMODS := LLVMConfig.cmake LLVMConfigVersion.cmake LLVMExports.cmake

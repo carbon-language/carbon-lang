@@ -640,7 +640,7 @@ set_property(TARGET %s PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES %s)\n""" % (
 
         f.close()
 
-    def write_make_fragment(self, output_path):
+    def write_make_fragment(self, output_path, enabled_optional_components):
         """
         write_make_fragment(output_path) -> None
 
@@ -705,6 +705,19 @@ set_property(TARGET %s PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES %s)\n""" % (
         for dep in dependencies:
             f.write("%s:\n" % (mk_quote_string_for_target(dep),))
         f.write('endif\n')
+
+        f.write("""
+# List of libraries to be exported for use by applications.
+# See 'cmake/modules/Makefile'.
+LLVM_LIBS_TO_EXPORT :=""")
+        self.foreach_cmake_library(
+            lambda ci:
+                f.write(' \\\n  %s' % ci.get_prefixed_library_name())
+            ,
+            enabled_optional_components,
+            skip_disabled = True
+            )
+        f.write('\n')
 
         f.close()
 
@@ -929,7 +942,8 @@ given by --build-root) at the same SUBPATH""",
 
     # Write out the make fragment, if requested.
     if opts.write_make_fragment:
-        project_info.write_make_fragment(opts.write_make_fragment)
+        project_info.write_make_fragment(opts.write_make_fragment,
+                                         opts.optional_components)
 
     # Write out the cmake fragment, if requested.
     if opts.write_cmake_fragment:
