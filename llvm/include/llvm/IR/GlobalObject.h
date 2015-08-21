@@ -28,8 +28,13 @@ class GlobalObject : public GlobalValue {
 
 protected:
   GlobalObject(PointerType *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
-               LinkageTypes Linkage, const Twine &Name)
-      : GlobalValue(Ty, VTy, Ops, NumOps, Linkage, Name), ObjComdat(nullptr) {
+               LinkageTypes Linkage, const Twine &Name) = delete;
+  GlobalObject(Type *Ty, ValueTy VTy, Use *Ops, unsigned NumOps,
+               LinkageTypes Linkage, const Twine &Name,
+               unsigned AddressSpace = 0)
+      : GlobalValue(PointerType::get(Ty, AddressSpace), VTy, Ops, NumOps,
+                    Linkage, Name),
+        ObjComdat(nullptr) {
     setGlobalValueSubClassData(0);
   }
 

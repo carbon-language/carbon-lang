@@ -147,9 +147,9 @@ GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const Twine &Name,
                                ThreadLocalMode TLMode, unsigned AddressSpace,
                                bool isExternallyInitialized)
-    : GlobalObject(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+    : GlobalObject(Ty, Value::GlobalVariableVal,
                    OperandTraits<GlobalVariable>::op_begin(this),
-                   InitVal != nullptr, Link, Name),
+                   InitVal != nullptr, Link, Name, AddressSpace),
       isConstantGlobal(constant),
       isExternallyInitializedConstant(isExternallyInitialized) {
   setThreadLocalMode(TLMode);
@@ -165,9 +165,9 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
                                const Twine &Name, GlobalVariable *Before,
                                ThreadLocalMode TLMode, unsigned AddressSpace,
                                bool isExternallyInitialized)
-    : GlobalObject(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+    : GlobalObject(Ty, Value::GlobalVariableVal,
                    OperandTraits<GlobalVariable>::op_begin(this),
-                   InitVal != nullptr, Link, Name),
+                   InitVal != nullptr, Link, Name, AddressSpace),
       isConstantGlobal(constant),
       isExternallyInitializedConstant(isExternallyInitialized) {
   setThreadLocalMode(TLMode);
