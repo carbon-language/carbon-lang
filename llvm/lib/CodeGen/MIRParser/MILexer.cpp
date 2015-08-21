@@ -527,6 +527,30 @@ static Cursor maybeLexNewline(Cursor C, MIToken &Token) {
   return C;
 }
 
+static Cursor maybeLexEscapedIRValue(
+    Cursor C, MIToken &Token,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  if (C.peek() != '`')
+    return None;
+  auto Range = C;
+  C.advance();
+  auto StrRange = C;
+  while (C.peek() != '`') {
+    if (C.isEOF() || isNewlineChar(C.peek())) {
+      ErrorCallback(
+          C.location(),
+          "end of machine instruction reached before the closing '`'");
+      Token.reset(MIToken::Error, Range.remaining());
+      return C;
+    }
+    C.advance();
+  }
+  StringRef Value = StrRange.upto(C);
+  C.advance();
+  Token.reset(MIToken::QuotedIRValue, Range.upto(C)).setStringValue(Value);
+  return C;
+}
+
 StringRef llvm::lexMIToken(
     StringRef Source, MIToken &Token,
     function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
@@ -569,6 +593,8 @@ StringRef llvm::lexMIToken(
   if (Cursor R = maybeLexSymbol(C, Token))
     return R.remaining();
   if (Cursor R = maybeLexNewline(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexEscapedIRValue(C, Token, ErrorCallback))
     return R.remaining();
 
   Token.reset(MIToken::Error, C.remaining());

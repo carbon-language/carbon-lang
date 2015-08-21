@@ -982,7 +982,8 @@ bool MIParser::parseIRConstant(StringRef::iterator Loc, StringRef StringValue,
                                const Constant *&C) {
   auto Source = StringValue.str(); // The source has to be null terminated.
   SMDiagnostic Err;
-  C = parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent());
+  C = parseConstantValue(Source.c_str(), Err, *MF.getFunction()->getParent(),
+                         &IRSlots);
   if (!C)
     return error(Loc + Err.getColumnNo(), Err.getMessage());
   return false;
@@ -1557,6 +1558,13 @@ bool MIParser::parseIRValue(const Value *&V) {
     V = GV;
     break;
   }
+  case MIToken::QuotedIRValue: {
+    const Constant *C = nullptr;
+    if (parseIRConstant(Token.location(), Token.stringValue(), C))
+      return true;
+    V = C;
+    break;
+  }
   default:
     llvm_unreachable("The current token should be an IR block reference");
   }
@@ -1662,7 +1670,8 @@ bool MIParser::parseMachinePointerInfo(MachinePointerInfo &Dest) {
   }
   if (Token.isNot(MIToken::NamedIRValue) && Token.isNot(MIToken::IRValue) &&
       Token.isNot(MIToken::GlobalValue) &&
-      Token.isNot(MIToken::NamedGlobalValue))
+      Token.isNot(MIToken::NamedGlobalValue) &&
+      Token.isNot(MIToken::QuotedIRValue))
     return error("expected an IR value reference");
   const Value *V = nullptr;
   if (parseIRValue(V))

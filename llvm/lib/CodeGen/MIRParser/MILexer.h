@@ -115,7 +115,8 @@ struct MIToken {
     NamedIRBlock,
     IRBlock,
     NamedIRValue,
-    IRValue
+    IRValue,
+    QuotedIRValue // `<constant value>`
   };
 
 private:

@@ -170,6 +170,16 @@
 
   !11 = !{i8 0, i8 2}
 
+  %st = type { i32, i32 }
+
+  @values = common global [50 x %st] zeroinitializer, align 16
+
+  define void @gep_value(i64 %d) {
+  entry:
+    %conv = trunc i64 %d to i32
+    store i32 %conv, i32* getelementptr inbounds ([50 x %st], [50 x %st]* @values, i64 0, i64 0, i32 0), align 16
+    ret void
+  }
 ...
 ---
 name:            test
@@ -464,4 +474,19 @@ body: |
   ; CHECK: %al = MOV8rm killed %rdi, 1, _, 0, _ :: (load 1 from %ir.x, !range !11)
     %al = MOV8rm killed %rdi, 1, _, 0, _ :: (load 1 from %ir.x, !range !11)
     RETQ %al
+...
+---
+name:            gep_value
+tracksRegLiveness: true
+liveins:
+  - { reg: '%rdi' }
+body: |
+  bb.0.entry:
+    liveins: %rdi
+
+    %rax = MOV64rm %rip, 1, _, @values, _ :: (load 8 from got)
+  ; CHECK-LABEL: gep_value
+  ; CHECK: MOV32mr killed %rax, 1, _, 0, _, %edi, implicit killed %rdi :: (store 4 into `i32* getelementptr inbounds ([50 x %st], [50 x %st]* @values, i64 0, i64 0, i32 0)`, align 16)
+    MOV32mr killed %rax, 1, _, 0, _, %edi, implicit killed %rdi :: (store 4 into `i32* getelementptr inbounds ([50 x %st], [50 x %st]* @values, i64 0, i64 0, i32 0)`, align 16)
+    RETQ
 ...
