@@ -73,6 +73,15 @@
 #define JMPc(r, c) mov##c pc, r
 #endif
 
+// pop {pc} can't switch Thumb mode on ARMv4T
+#if __ARM_ARCH >= 5
+#define POP_PC() pop {pc}
+#else
+#define POP_PC()                                                               \
+  pop {ip};                                                                    \
+  JMP(ip)
+#endif
+
 #if __ARM_ARCH_ISA_THUMB == 2
 #define IT(cond)  it cond
 #define ITT(cond) itt cond
