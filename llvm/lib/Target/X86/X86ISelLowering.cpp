@@ -10749,7 +10749,7 @@ static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
   unsigned NumLanes = (NumElems - 1) / 8 + 1;
   unsigned NumElemsInLane = NumElems / NumLanes;
 
-  // Blend for v16i16 should be symetric for the both lanes.
+  // Blend for v16i16 should be symmetric for the both lanes.
   for (unsigned i = 0; i < NumElemsInLane; ++i) {
     SDValue EltCond = BuildVector->getOperand(i);
     SDValue SndLaneEltCond =
