@@ -719,7 +719,11 @@ macro(add_llvm_external_project name)
       "Whether to build ${name} as part of LLVM"
       ${LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT})
     if (LLVM_TOOL_${nameUPPER}_BUILD)
-      add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${add_llvm_external_dir})
+      if(EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR})
+        add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${add_llvm_external_dir})
+      elseif(NOT "${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}" STREQUAL "")
+        message(WARNING "Nonexistent directory for ${name}: ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}")
+      endif()
       # FIXME: It'd be redundant.
       set(LLVM_TOOL_${nameUPPER}_BUILD Off)
     endif()
