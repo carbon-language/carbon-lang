@@ -807,9 +807,6 @@ defm DS_CMPST_RTN_B32 : DS_1A2D_RET <0x30, "ds_cmpst_rtn_b32", VGPR_32, "ds_cmps
 defm DS_CMPST_RTN_F32 : DS_1A2D_RET <0x31, "ds_cmpst_rtn_f32", VGPR_32, "ds_cmpst_f32">;
 defm DS_MIN_RTN_F32 : DS_1A2D_RET <0x32, "ds_min_rtn_f32", VGPR_32, "ds_min_f32">;
 defm DS_MAX_RTN_F32 : DS_1A2D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32">;
-let SubtargetPredicate = isCI in {
-defm DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "ds_wrap_rtn_f32", VGPR_32, "ds_wrap_f32">;
-} // End isCI
 defm DS_SWIZZLE_B32 : DS_1A_RET <0x35, "ds_swizzle_b32", VGPR_32>;
 let mayStore = 0 in {
 defm DS_READ_B32 : DS_1A_RET <0x36, "ds_read_b32", VGPR_32>;
@@ -906,11 +903,6 @@ defm DS_WRITE_SRC2_B64 : DS_1A <0xcc, "ds_write_src2_b64">;
 
 defm DS_MIN_SRC2_F64 : DS_1A <0xd2, "ds_min_src2_f64">;
 defm DS_MAX_SRC2_F64 : DS_1A <0xd3, "ds_max_src2_f64">;
-
-//let SubtargetPredicate = isCI in {
-// DS_CONDXCHG32_RTN_B64
-// DS_CONDXCHG32_RTN_B128
-//} // End isCI
 
 //===----------------------------------------------------------------------===//
 // MUBUF Instructions
@@ -2993,50 +2985,6 @@ def : MTBUF_StoreResource <v2i32, 2, TBUFFER_STORE_FORMAT_XY>;
 def : MTBUF_StoreResource <v4i32, 3, TBUFFER_STORE_FORMAT_XYZ>;
 def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 
-let SubtargetPredicate = isCI in {
-
-defm V_QSAD_PK_U16_U8 : VOP3Inst <vop3<0x173>, "v_qsad_pk_u16_u8",
-  VOP_I32_I32_I32
->;
-defm V_MQSAD_U16_U8 : VOP3Inst <vop3<0x172>, "v_mqsad_u16_u8",
-  VOP_I32_I32_I32
->;
-defm V_MQSAD_U32_U8 : VOP3Inst <vop3<0x175>, "v_mqsad_u32_u8",
-  VOP_I32_I32_I32
->;
-
-let isCommutable = 1 in {
-defm V_MAD_U64_U32 : VOP3Inst <vop3<0x176>, "v_mad_u64_u32",
-  VOP_I64_I32_I32_I64
->;
-
-// XXX - Does this set VCC?
-defm V_MAD_I64_I32 : VOP3Inst <vop3<0x177>, "v_mad_i64_i32",
-  VOP_I64_I32_I32_I64
->;
-} // End isCommutable = 1
-
-// Remaining instructions:
-// FLAT_*
-// S_CBRANCH_CDBGUSER
-// S_CBRANCH_CDBGSYS
-// S_CBRANCH_CDBGSYS_OR_USER
-// S_CBRANCH_CDBGSYS_AND_USER
-// S_DCACHE_INV_VOL
-// DS_NOP
-// DS_GWS_SEMA_RELEASE_ALL
-// DS_WRAP_RTN_B32
-// DS_CNDXCHG32_RTN_B64
-// DS_WRITE_B96
-// DS_WRITE_B128
-// DS_CONDXCHG32_RTN_B128
-// DS_READ_B96
-// DS_READ_B128
-// BUFFER_LOAD_DWORDX3
-// BUFFER_STORE_DWORDX3
-
-} // End isCI
-
 /********** ====================== **********/
 /**********   Indirect adressing   **********/
 /********** ====================== **********/
@@ -3274,24 +3222,6 @@ def : Pat <
 >;
 
 } // End Predicates = [isSI]
-
-let Predicates = [isCI] in {
-
-// Convert (x - floor(x)) to fract(x)
-def : Pat <
-  (f32 (fsub (f32 (VOP3Mods f32:$x, i32:$mods)),
-             (f32 (ffloor (f32 (VOP3Mods f32:$x, i32:$mods)))))),
-  (V_FRACT_F32_e64 $mods, $x, DSTCLAMP.NONE, DSTOMOD.NONE)
->;
-
-// Convert (x + (-floor(x))) to fract(x)
-def : Pat <
-  (f64 (fadd (f64 (VOP3Mods f64:$x, i32:$mods)),
-             (f64 (fneg (f64 (ffloor (f64 (VOP3Mods f64:$x, i32:$mods)))))))),
-  (V_FRACT_F64_e64 $mods, $x, DSTCLAMP.NONE, DSTOMOD.NONE)
->;
-
-} // End Predicates = [isCI]
 
 //============================================================================//
 // Miscellaneous Optimization Patterns
