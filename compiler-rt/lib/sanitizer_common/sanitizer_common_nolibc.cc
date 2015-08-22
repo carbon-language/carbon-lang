@@ -20,5 +20,4 @@ namespace __sanitizer {
 void WriteToSyslog(const char *buffer) {}
 #endif
 
-void DumpCoverage() {}
-}  // namespace __sanitizer
+}

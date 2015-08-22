@@ -824,8 +824,6 @@ fd_t MaybeOpenCovFile(const char *name) {
   return CovOpenFile(&path, true /* packed */, name);
 }
 
-void DumpCoverage() { coverage_data.DumpAll(); }
-
 void CovBeforeFork() {
   coverage_data.BeforeFork();
 }
@@ -879,7 +877,7 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
   coverage_data.Init();
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() {
-  DumpCoverage();
+  coverage_data.DumpAll();
 }
 SANITIZER_INTERFACE_ATTRIBUTE void
 __sanitizer_cov_module_init(s32 *guards, uptr npcs, u8 *counters,

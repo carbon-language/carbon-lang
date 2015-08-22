@@ -151,6 +151,11 @@ bool InitShadow(bool init_origins) {
   return true;
 }
 
+void MsanDie() {
+  if (common_flags()->coverage)
+    __sanitizer_cov_dump();
+}
+
 static void MsanAtExit(void) {
   if (flags()->print_stats && (flags()->atexit || msan_report_count > 0))
     ReportStats();

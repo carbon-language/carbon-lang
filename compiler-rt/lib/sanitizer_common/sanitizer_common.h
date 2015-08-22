@@ -283,7 +283,6 @@ void PrepareForSandboxing(__sanitizer_sandbox_arguments *args);
 void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args);
 void SetSandboxingCallback(void (*f)());
 
-void DumpCoverage();
 void CoverageUpdateMapping();
 void CovBeforeFork();
 void CovAfterFork(int child_pid);

@@ -56,6 +56,8 @@ static void AsanDie() {
       UnmapOrDie((void*)kLowShadowBeg, kHighShadowEnd - kLowShadowBeg);
     }
   }
+  if (common_flags()->coverage)
+    __sanitizer_cov_dump();
   if (flags()->abort_on_error)
     Abort();
 }
