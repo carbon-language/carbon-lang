@@ -181,16 +181,25 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
       bool LiveInToA = LIS->isLiveInToMBB(*LR, SuccA);
       bool LiveInToB = LIS->isLiveInToMBB(*LR, SuccB);
 
-      if ((!LiveInToA && !LiveInToB) ||
-          (LiveInToA && LiveInToB))
+      if (!LiveInToA && !LiveInToB) {
+        DEBUG(dbgs() << PrintReg(Reg, TRI, 0)
+              << " is live into neither successor\n");
         continue;
+      }
+
+      if (LiveInToA && LiveInToB) {
+        DEBUG(dbgs() << PrintReg(Reg, TRI, 0)
+              << " is live into both successors\n");
+        continue;
+      }
 
       // This interval is live in to one successor, but not the other, so
       // we need to update its range so it is live in to both.
-      DEBUG(dbgs() << "Possible SGPR conflict detected " <<  " in " << *LR <<
-                      " BB#" << SuccA->getNumber() << ", BB#" <<
-                      SuccB->getNumber() <<
-                      " with NCD = " << NCD->getNumber() << '\n');
+      DEBUG(dbgs() << "Possible SGPR conflict detected for "
+            << PrintReg(Reg, TRI, 0) <<  " in " << *LR
+            << " BB#" << SuccA->getNumber() << ", BB#"
+            << SuccB->getNumber()
+            << " with NCD = BB#" << NCD->getNumber() << '\n');
 
       assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
              "Not expecting to extend live range of physreg");
