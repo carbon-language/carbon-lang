@@ -3782,7 +3782,7 @@ void Verifier::verifyTypeRefs() {
   for (auto *CU : CUs->operands())
     if (auto Ts = cast<DICompileUnit>(CU)->getRetainedTypes())
       for (DIType *Op : Ts)
-        if (auto *T = dyn_cast<DICompositeType>(Op))
+        if (auto *T = dyn_cast_or_null<DICompositeType>(Op))
           if (auto *S = T->getRawIdentifier()) {
             UnresolvedTypeRefs.erase(S);
             TypeRefs.insert(std::make_pair(S, T));
