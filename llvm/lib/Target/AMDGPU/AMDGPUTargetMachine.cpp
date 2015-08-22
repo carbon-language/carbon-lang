@@ -276,7 +276,7 @@ void GCNPassConfig::addPreRegAlloc() {
     insertPass(&MachineSchedulerID, &RegisterCoalescerID);
   }
   addPass(createSIShrinkInstructionsPass(), false);
-  addPass(createSIFixSGPRLiveRangesPass(), false);
+  addPass(createSIFixSGPRLiveRangesPass());
 }
 
 void GCNPassConfig::addPostRegAlloc() {
