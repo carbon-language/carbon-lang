@@ -3799,41 +3799,39 @@ void ASTWriter::WriteRedeclarations() {
   SmallVector<serialization::LocalRedeclarationsInfo, 2> LocalRedeclsMap;
 
   for (unsigned I = 0, N = Redeclarations.size(); I != N; ++I) {
-    const Decl *Key = Redeclarations[I];
-    assert((Chain ? Chain->getKeyDeclaration(Key) == Key
-                  : Key->isFirstDecl()) &&
-           "not the key declaration");
+    const Decl *FirstLocal = Redeclarations[I];
+    assert(!FirstLocal->isFromASTFile() &&
+           (!FirstLocal->getPreviousDecl() ||
+            FirstLocal->getPreviousDecl()->isFromASTFile() ||
+            getDeclID(FirstLocal->getPreviousDecl()) < NUM_PREDEF_DECL_IDS) &&
+           "not the first local declaration");
+    assert(getDeclID(FirstLocal) >= NUM_PREDEF_DECL_IDS &&
+           "should not have predefined decl as first decl");
 
-    const Decl *First = Key->getCanonicalDecl();
-    const Decl *MostRecent = First->getMostRecentDecl();
-
-    assert((getDeclID(First) >= NUM_PREDEF_DECL_IDS || First == Key) &&
-           "should not have imported key decls for predefined decl");
-
-    // If we only have a single declaration, there is no point in storing
-    // a redeclaration chain.
-    if (First == MostRecent)
-      continue;
-    
     unsigned Offset = LocalRedeclChains.size();
     unsigned Size = 0;
     LocalRedeclChains.push_back(0); // Placeholder for the size.
 
     // Collect the set of local redeclarations of this declaration, from newest
     // to oldest.
-    for (const Decl *Prev = MostRecent; Prev;
-         Prev = Prev->getPreviousDecl()) { 
-      if (!Prev->isFromASTFile() && Prev != Key) {
+    for (const Decl *Prev = FirstLocal->getMostRecentDecl(); Prev != FirstLocal;
+         Prev = Prev->getPreviousDecl()) {
+      if (!Prev->isFromASTFile()) {
         AddDeclRef(Prev, LocalRedeclChains);
         ++Size;
       }
     }
 
+    // If we only have a single local declaration, there is no point in storing
+    // a redeclaration chain.
+    if (LocalRedeclChains.size() == 1)
+      continue;
+
     LocalRedeclChains[Offset] = Size;
 
     // Add the mapping from the first ID from the AST to the set of local
     // declarations.
-    LocalRedeclarationsInfo Info = { getDeclID(Key), Offset };
+    LocalRedeclarationsInfo Info = { getDeclID(FirstLocal), Offset };
     LocalRedeclsMap.push_back(Info);
 
     assert(N == Redeclarations.size() && 
@@ -4145,8 +4143,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     if (D) {
       assert(D->isCanonicalDecl() && "predefined decl is not canonical");
       DeclIDs[D] = ID;
-      if (D->getMostRecentDecl() != D)
-        Redeclarations.push_back(D);
     }
   };
   RegisterPredefDecl(Context.getTranslationUnitDecl(),
@@ -5728,42 +5724,6 @@ void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
   assert(RD->isCompleteDefinition());
   assert(!WritingAST && "Already writing the AST!");
   DeclUpdates[RD].push_back(DeclUpdate(UPD_CXX_ADDED_IMPLICIT_MEMBER, D));
-}
-
-void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
-                                     const ClassTemplateSpecializationDecl *D) {
-  // The specializations set is kept in the canonical template.
-  TD = TD->getCanonicalDecl();
-  if (!(!D->isFromASTFile() && TD->isFromASTFile()))
-    return; // Not a source specialization added to a template from PCH.
-
-  assert(!WritingAST && "Already writing the AST!");
-  DeclUpdates[TD].push_back(DeclUpdate(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION,
-                                       D));
-}
-
-void ASTWriter::AddedCXXTemplateSpecialization(
-    const VarTemplateDecl *TD, const VarTemplateSpecializationDecl *D) {
-  // The specializations set is kept in the canonical template.
-  TD = TD->getCanonicalDecl();
-  if (!(!D->isFromASTFile() && TD->isFromASTFile()))
-    return; // Not a source specialization added to a template from PCH.
-
-  assert(!WritingAST && "Already writing the AST!");
-  DeclUpdates[TD].push_back(DeclUpdate(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION,
-                                       D));
-}
-
-void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
-                                               const FunctionDecl *D) {
-  // The specializations set is kept in the canonical template.
-  TD = TD->getCanonicalDecl();
-  if (!(!D->isFromASTFile() && TD->isFromASTFile()))
-    return; // Not a source specialization added to a template from PCH.
-
-  assert(!WritingAST && "Already writing the AST!");
-  DeclUpdates[TD].push_back(DeclUpdate(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION,
-                                       D));
 }
 
 void ASTWriter::ResolvedExceptionSpec(const FunctionDecl *FD) {

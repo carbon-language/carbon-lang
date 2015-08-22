@@ -405,6 +405,10 @@ private:
   /// \brief The set of declarations that may have redeclaration chains that
   /// need to be serialized.
   llvm::SmallVector<const Decl *, 16> Redeclarations;
+
+  /// \brief A cache of the first local declaration for "interesting"
+  /// redeclaration chains.
+  llvm::DenseMap<const Decl *, const Decl *> FirstLocalDeclCache;
                                       
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
@@ -676,6 +680,10 @@ public:
                           const ASTTemplateArgumentListInfo *ASTTemplArgList,
                           RecordDataImpl &Record);
 
+  /// \brief Find the first local declaration of a given local redeclarable
+  /// decl.
+  const Decl *getFirstLocalDecl(const Decl *D);
+
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordDataImpl &Record);
 
@@ -857,12 +865,6 @@ public:
   void CompletedTagDefinition(const TagDecl *D) override;
   void AddedVisibleDecl(const DeclContext *DC, const Decl *D) override;
   void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) override;
-  void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
-                             const ClassTemplateSpecializationDecl *D) override;
-  void AddedCXXTemplateSpecialization(const VarTemplateDecl *TD,
-                               const VarTemplateSpecializationDecl *D) override;
-  void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
-                                      const FunctionDecl *D) override;
   void ResolvedExceptionSpec(const FunctionDecl *FD) override;
   void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) override;
   void ResolvedOperatorDelete(const CXXDestructorDecl *DD,

@@ -159,6 +159,19 @@ namespace clang {
       Writer.AddStmt(FD->getBody());
     }
 
+    /// Add to the record the first declaration from each module file that
+    /// provides a declaration of D. The intent is to provide a sufficient
+    /// set such that reloading this set will load all current redeclarations.
+    void AddFirstDeclFromEachModule(const Decl *D, bool IncludeLocal) {
+      llvm::MapVector<ModuleFile*, const Decl*> Firsts;
+      // FIXME: We can skip entries that we know are implied by others.
+      for (const Decl *R = D->getMostRecentDecl(); R; R = R->getPreviousDecl())
+        if (IncludeLocal || R->isFromASTFile())
+          Firsts[Writer.Chain->getOwningModuleFile(R)] = R;
+      for (const auto &F : Firsts)
+        Writer.AddDeclRef(F.second, Record);
+    }
+
     /// Get the specialization decl from an entry in the specialization list.
     template <typename EntryType>
     typename RedeclarableTemplateDecl::SpecEntryTraits<EntryType>::DeclType *
@@ -194,20 +207,46 @@ namespace clang {
       if (auto *LS = Common->LazySpecializations)
         LazySpecializations = ArrayRef<DeclID>(LS + 1, LS + 1 + LS[0]);
 
-      Record.push_back(Specializations.size() +
-                       PartialSpecializations.size() +
-                       LazySpecializations.size());
+      // Add a slot to the record for the number of specializations.
+      unsigned I = Record.size();
+      Record.push_back(0);
+
       for (auto &Entry : Specializations) {
         auto *D = getSpecializationDecl(Entry);
         assert(D->isCanonicalDecl() && "non-canonical decl in set");
-        Writer.AddDeclRef(D, Record);
+        AddFirstDeclFromEachModule(D, /*IncludeLocal*/true);
       }
       for (auto &Entry : PartialSpecializations) {
         auto *D = getSpecializationDecl(Entry);
         assert(D->isCanonicalDecl() && "non-canonical decl in set");
-        Writer.AddDeclRef(D, Record);
+        AddFirstDeclFromEachModule(D, /*IncludeLocal*/true);
       }
       Record.append(LazySpecializations.begin(), LazySpecializations.end());
+
+      // Update the size entry we added earlier.
+      Record[I] = Record.size() - I - 1;
+    }
+
+    /// Ensure that this template specialization is associated with the specified
+    /// template on reload.
+    void RegisterTemplateSpecialization(const Decl *Template,
+                                        const Decl *Specialization) {
+      Template = Template->getCanonicalDecl();
+
+      // If the canonical template is local, we'll write out this specialization
+      // when we emit it.
+      // FIXME: We can do the same thing if there is any local declaration of
+      // the template, to avoid emitting an update record.
+      if (!Template->isFromASTFile())
+        return;
+
+      // We only need to associate the first local declaration of the
+      // specialization. The other declarations will get pulled in by it.
+      if (Writer.getFirstLocalDecl(Specialization) != Specialization)
+        return;
+
+      Writer.DeclUpdates[Template].push_back(ASTWriter::DeclUpdate(
+          UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION, Specialization));
     }
   };
 }
@@ -479,6 +518,9 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   case FunctionDecl::TK_FunctionTemplateSpecialization: {
     FunctionTemplateSpecializationInfo *
       FTSInfo = D->getTemplateSpecializationInfo();
+
+    RegisterTemplateSpecialization(FTSInfo->getTemplate(), D);
+
     Writer.AddDeclRef(FTSInfo->getTemplate(), Record);
     Record.push_back(FTSInfo->getTemplateSpecializationKind());
     
@@ -1249,6 +1291,8 @@ void ASTDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
 void ASTDeclWriter::VisitClassTemplateSpecializationDecl(
                                            ClassTemplateSpecializationDecl *D) {
+  RegisterTemplateSpecialization(D->getSpecializedTemplate(), D);
+
   VisitCXXRecordDecl(D);
 
   llvm::PointerUnion<ClassTemplateDecl *,
@@ -1308,6 +1352,8 @@ void ASTDeclWriter::VisitVarTemplateDecl(VarTemplateDecl *D) {
 
 void ASTDeclWriter::VisitVarTemplateSpecializationDecl(
     VarTemplateSpecializationDecl *D) {
+  RegisterTemplateSpecialization(D->getSpecializedTemplate(), D);
+
   VisitVarDecl(D);
 
   llvm::PointerUnion<VarTemplateDecl *, VarTemplatePartialSpecializationDecl *>
@@ -1478,48 +1524,61 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
   Record.push_back(VisibleOffset);
 }
 
-/// Determine whether D is the first declaration in its redeclaration chain that
-/// is not from an AST file.
-template <typename T>
-static bool isFirstLocalDecl(Redeclarable<T> *D) {
-  assert(D && !static_cast<T*>(D)->isFromASTFile());
-  do
-    D = D->getPreviousDecl();
-  while (D && static_cast<T*>(D)->isFromASTFile());
-  return !D;
+/// \brief Is this a local declaration (that is, one that will be written to
+/// our AST file)? This is the case for declarations that are neither imported
+/// from another AST file nor predefined.
+static bool isLocalDecl(ASTWriter &W, const Decl *D) {
+  if (D->isFromASTFile())
+    return false;
+  return W.getDeclID(D) >= NUM_PREDEF_DECL_IDS;
+}
+
+const Decl *ASTWriter::getFirstLocalDecl(const Decl *D) {
+  assert(isLocalDecl(*this, D) && "expected a local declaration");
+
+  const Decl *Canon = D->getCanonicalDecl();
+  if (isLocalDecl(*this, Canon))
+    return Canon;
+
+  const Decl *&CacheEntry = FirstLocalDeclCache[Canon];
+  if (CacheEntry)
+    return CacheEntry;
+
+  for (const Decl *Redecl = D; Redecl; Redecl = Redecl->getPreviousDecl())
+    if (isLocalDecl(*this, Redecl))
+      D = Redecl;
+  return CacheEntry = D;
 }
 
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   T *First = D->getFirstDecl();
   T *MostRecent = First->getMostRecentDecl();
+  T *DAsT = static_cast<T *>(D);
   if (MostRecent != First) {
-    assert(isRedeclarableDeclKind(static_cast<T *>(D)->getKind()) &&
+    assert(isRedeclarableDeclKind(DAsT->getKind()) &&
            "Not considered redeclarable?");
 
     Writer.AddDeclRef(First, Record);
 
-    // In a modules build, emit a list of all imported key declarations
-    // (excluding First, if it was imported), so that we can be sure that all
-    // redeclarations visible to this module are before D in the redecl chain.
-    unsigned I = Record.size();
-    Record.push_back(0);
-    if (Context.getLangOpts().Modules && Writer.Chain) {
-      if (isFirstLocalDecl(D)) {
-        Writer.Chain->forEachImportedKeyDecl(First, [&](const Decl *D) {
-          if (D != First)
-            Writer.AddDeclRef(D, Record);
-        });
-        Record[I] = Record.size() - I - 1;
+    // Write out a list of local redeclarations of this declaration if it's the
+    // first local declaration in the chain.
+    const Decl *FirstLocal = Writer.getFirstLocalDecl(DAsT);
+    if (DAsT == FirstLocal) {
+      Writer.Redeclarations.push_back(DAsT);
 
-        // Write a redeclaration chain, attached to the first key decl.
-        Writer.Redeclarations.push_back(Writer.Chain->getKeyDeclaration(First));
-      }
-    } else if (D == First || D->getPreviousDecl()->isFromASTFile()) {
-      assert(isFirstLocalDecl(D) && "imported decl after local decl");
-
-      // Write a redeclaration chain attached to the first decl.
-      Writer.Redeclarations.push_back(First);
+      // Emit a list of all imported first declarations so that we can be sure
+      // that all redeclarations visible to this module are before D in the
+      // redecl chain.
+      unsigned I = Record.size();
+      Record.push_back(0);
+      if (Writer.Chain)
+        AddFirstDeclFromEachModule(DAsT, /*IncludeLocal*/false);
+      // This is the number of imported first declarations + 1.
+      Record[I] = Record.size() - I;
+    } else {
+      Record.push_back(0);
+      Writer.AddDeclRef(FirstLocal, Record);
     }
 
     // Make sure that we serialize both the previous and the most-recent 

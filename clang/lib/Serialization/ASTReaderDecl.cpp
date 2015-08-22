@@ -147,12 +147,6 @@ namespace clang {
       }
 
       ~RedeclarableResult() {
-        if (FirstID && Owning &&
-            isRedeclarableDeclKind(LoadedDecl->getKind())) {
-          auto Canon = Reader.GetDecl(FirstID)->getCanonicalDecl();
-          if (Reader.PendingDeclChainsKnown.insert(Canon).second)
-            Reader.PendingDeclChains.push_back(Canon);
-        }
       }
 
       /// \brief Note that a RedeclarableDecl is not actually redeclarable.
@@ -2186,23 +2180,33 @@ ASTDeclReader::RedeclarableResult
 ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   DeclID FirstDeclID = ReadDeclID(Record, Idx);
   Decl *MergeWith = nullptr;
+
   bool IsKeyDecl = ThisDeclID == FirstDeclID;
+  bool IsFirstLocalDecl = false;
 
   // 0 indicates that this declaration was the only declaration of its entity,
   // and is used for space optimization.
   if (FirstDeclID == 0) {
     FirstDeclID = ThisDeclID;
     IsKeyDecl = true;
+    IsFirstLocalDecl = true;
   } else if (unsigned N = Record[Idx++]) {
-    IsKeyDecl = false;
+    // This declaration was the first local declaration, but may have imported
+    // other declarations.
+    IsKeyDecl = N == 1;
+    IsFirstLocalDecl = true;
 
     // We have some declarations that must be before us in our redeclaration
     // chain. Read them now, and remember that we ought to merge with one of
     // them.
     // FIXME: Provide a known merge target to the second and subsequent such
     // declaration.
-    for (unsigned I = 0; I != N; ++I)
+    for (unsigned I = 0; I != N - 1; ++I)
       MergeWith = ReadDecl(Record, Idx/*, MergeWith*/);
+  } else {
+    // This declaration was not the first local declaration. Read the first
+    // local declaration now, to trigger the import of other redeclarations.
+    (void)ReadDecl(Record, Idx);
   }
 
   T *FirstDecl = cast_or_null<T>(Reader.GetDecl(FirstDeclID));
@@ -2214,13 +2218,21 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     D->RedeclLink = Redeclarable<T>::PreviousDeclLink(FirstDecl);
     D->First = FirstDecl->getCanonicalDecl();
   }    
-  
+
   // Note that this declaration has been deserialized.
-  Reader.RedeclsDeserialized.insert(static_cast<T *>(D));
-                             
+  T *DAsT = static_cast<T*>(D);
+  Reader.RedeclsDeserialized.insert(DAsT);
+
+  // Note that we need to load local redeclarations of this decl and build a
+  // decl chain for them. This must happen *after* we perform the preloading
+  // above; this ensures that the redeclaration chain is built in the correct
+  // order.
+  if (IsFirstLocalDecl)
+    Reader.PendingDeclChains.push_back(DAsT);
+
   // The result structure takes care to note that we need to load the 
   // other declaration chains for this ID.
-  return RedeclarableResult(Reader, FirstDeclID, static_cast<T *>(D), MergeWith,
+  return RedeclarableResult(Reader, FirstDeclID, DAsT, MergeWith,
                             IsKeyDecl);
 }
 
@@ -2330,11 +2342,8 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase, T *Existing,
           TemplatePatternID, Redecl.isKeyDecl());
 
     // If this declaration is a key declaration, make a note of that.
-    if (Redecl.isKeyDecl()) {
+    if (Redecl.isKeyDecl())
       Reader.KeyDecls[ExistingCanon].push_back(Redecl.getFirstID());
-      if (Reader.PendingDeclChainsKnown.insert(ExistingCanon).second)
-        Reader.PendingDeclChains.push_back(ExistingCanon);
-    }
   }
 }
 
@@ -3424,15 +3433,12 @@ namespace {
     ASTReader &Reader;
     SmallVectorImpl<DeclID> &SearchDecls;
     llvm::SmallPtrSetImpl<Decl *> &Deserialized;
-    GlobalDeclID CanonID;
     SmallVector<Decl *, 4> Chain;
 
   public:
     RedeclChainVisitor(ASTReader &Reader, SmallVectorImpl<DeclID> &SearchDecls,
-                       llvm::SmallPtrSetImpl<Decl *> &Deserialized,
-                       GlobalDeclID CanonID)
-      : Reader(Reader), SearchDecls(SearchDecls), Deserialized(Deserialized),
-        CanonID(CanonID) {
+                       llvm::SmallPtrSetImpl<Decl *> &Deserialized)
+      : Reader(Reader), SearchDecls(SearchDecls), Deserialized(Deserialized) {
       assert(std::is_sorted(SearchDecls.begin(), SearchDecls.end()));
     }
 
@@ -3518,10 +3524,10 @@ namespace {
           break;
       }
 
-      if (LocalSearchDeclID && LocalSearchDeclID != CanonID) {
+      assert(LocalSearchDeclID);
+      if (LocalSearchDeclID) {
         // If the search decl was from this module, add it to the chain.
         // Note, the chain is sorted from newest to oldest, so this goes last.
-        // We exclude the canonical declaration; it implicitly goes at the end.
         addToChain(Reader.GetDecl(LocalSearchDeclID));
       }
 
@@ -3531,26 +3537,14 @@ namespace {
   };
 }
 
-void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
-  // The decl might have been merged into something else after being added to
-  // our list. If it was, just skip it.
-  if (!CanonDecl->isCanonicalDecl())
-    return;
-
+void ASTReader::loadPendingDeclChain(Decl *FirstLocal) {
   // Determine the set of declaration IDs we'll be searching for.
-  SmallVector<DeclID, 16> SearchDecls;
-  GlobalDeclID CanonID = CanonDecl->getGlobalID();
-  if (CanonID)
-    SearchDecls.push_back(CanonDecl->getGlobalID()); // Always first.
-  KeyDeclsMap::iterator KeyPos = KeyDecls.find(CanonDecl);
-  if (KeyPos != KeyDecls.end())
-    SearchDecls.append(KeyPos->second.begin(), KeyPos->second.end());
-  llvm::array_pod_sort(SearchDecls.begin(), SearchDecls.end());
+  SmallVector<DeclID, 1> SearchDecls;
+  SearchDecls.push_back(FirstLocal->getGlobalID());
 
   // Build up the list of redeclarations.
-  RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized, CanonID);
-  ModuleMgr.visit(Visitor);
-  RedeclsDeserialized.erase(CanonDecl);
+  RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized);
+  Visitor(*getOwningModuleFile(FirstLocal));
 
   // Retrieve the chains.
   ArrayRef<Decl *> Chain = Visitor.getChain();
@@ -3561,11 +3555,14 @@ void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
   //
   // FIXME: We have three different dispatches on decl kind here; maybe
   // we should instead generate one loop per kind and dispatch up-front?
+  Decl *CanonDecl = FirstLocal->getCanonicalDecl();
   Decl *MostRecent = ASTDeclReader::getMostRecentDecl(CanonDecl);
   if (!MostRecent)
     MostRecent = CanonDecl;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     auto *D = Chain[N - I - 1];
+    if (D == CanonDecl)
+      continue;
     ASTDeclReader::attachPreviousDecl(*this, D, MostRecent, CanonDecl);
     MostRecent = D;
   }
