@@ -10,9 +10,9 @@
 ModuleName := sanitizer_common
 SubDirs :=
 
-Sources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))
-Sources := $(filter-out $(wildcard $(Dir)/*_nolibc.cc),$(Sources))
-ObjNames := $(Sources:%.cc=%.o)
+AllSources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))
+LibcSources := $(filter-out $(wildcard $(Dir)/*_nolibc.cc),$(AllSources))
+ObjNames := $(LibcSources:%.cc=%.o)
 
 Implementation := Generic
 
@@ -20,4 +20,4 @@ Implementation := Generic
 Dependencies := $(wildcard $(Dir)/*.h)
 
 # Define a convenience variable for all the sanitizer_common functions.
-SanitizerCommonFunctions := $(Sources:%.cc=%)
+SanitizerCommonFunctions := $(LibcSources:%.cc=%)
