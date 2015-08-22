@@ -41,6 +41,7 @@ def HasFlatAddressSpace : Predicate<"Subtarget->hasFlatAddressSpace()">;
 
 let SubtargetPredicate = isCIVI in {
 
+let SchedRW = [WriteDoubleAdd] in {
 defm V_TRUNC_F64 : VOP1Inst <vop1<0x17>, "v_trunc_f64",
   VOP_F64_F64, ftrunc
 >;
@@ -53,12 +54,16 @@ defm V_FLOOR_F64 : VOP1Inst <vop1<0x1A>, "v_floor_f64",
 defm V_RNDNE_F64 : VOP1Inst <vop1<0x19>, "v_rndne_f64",
   VOP_F64_F64, frint
 >;
+} // End SchedRW = [WriteDoubleAdd]
+
+let SchedRW = [WriteQuarterRate32] in {
 defm V_LOG_LEGACY_F32 : VOP1Inst <vop1<0x45, 0x4c>, "v_log_legacy_f32",
   VOP_F32_F32
 >;
 defm V_EXP_LEGACY_F32 : VOP1Inst <vop1<0x46, 0x4b>, "v_exp_legacy_f32",
   VOP_F32_F32
 >;
+} // End SchedRW = [WriteQuarterRate32]
 
 //===----------------------------------------------------------------------===//
 // VOP3 Instructions

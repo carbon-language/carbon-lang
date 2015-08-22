@@ -4,9 +4,9 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 
 ; SI-LABEL: {{^}}v_uint_to_fp_i64_to_f64
 ; SI: buffer_load_dwordx2 v{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}}
-; SI: v_cvt_f64_u32_e32 [[HI_CONV:v\[[0-9]+:[0-9]+\]]], v[[HI]]
-; SI: v_ldexp_f64 [[LDEXP:v\[[0-9]+:[0-9]+\]]], [[HI_CONV]], 32
-; SI: v_cvt_f64_u32_e32 [[LO_CONV:v\[[0-9]+:[0-9]+\]]], v[[LO]]
+; SI-DAG: v_cvt_f64_u32_e32 [[HI_CONV:v\[[0-9]+:[0-9]+\]]], v[[HI]]
+; SI-DAG: v_cvt_f64_u32_e32 [[LO_CONV:v\[[0-9]+:[0-9]+\]]], v[[LO]]
+; SI-DAG: v_ldexp_f64 [[LDEXP:v\[[0-9]+:[0-9]+\]]], [[HI_CONV]], 32
 ; SI: v_add_f64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[LDEXP]], [[LO_CONV]]
 ; SI: buffer_store_dwordx2 [[RESULT]]
 define void @v_uint_to_fp_i64_to_f64(double addrspace(1)* %out, i64 addrspace(1)* %in) {

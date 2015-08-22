@@ -1286,7 +1286,9 @@ defm V_SQRT_F64 : VOP1Inst <vop1<0x34, 0x28>, "v_sqrt_f64",
   VOP_F64_F64, fsqrt
 >;
 
-} // let SchedRW = [WriteDouble]
+} // End SchedRW = [WriteDouble]
+
+let SchedRW = [WriteQuarterRate32] in {
 
 defm V_SIN_F32 : VOP1Inst <vop1<0x35, 0x29>, "v_sin_f32",
   VOP_F32_F32, AMDGPUsin
@@ -1294,6 +1296,9 @@ defm V_SIN_F32 : VOP1Inst <vop1<0x35, 0x29>, "v_sin_f32",
 defm V_COS_F32 : VOP1Inst <vop1<0x36, 0x2a>, "v_cos_f32",
   VOP_F32_F32, AMDGPUcos
 >;
+
+} // End SchedRW = [WriteQuarterRate32]
+
 defm V_NOT_B32 : VOP1Inst <vop1<0x37, 0x2b>, "v_not_b32", VOP_I32_I32>;
 defm V_BFREV_B32 : VOP1Inst <vop1<0x38, 0x2c>, "v_bfrev_b32", VOP_I32_I32>;
 defm V_FFBH_U32 : VOP1Inst <vop1<0x39, 0x2d>, "v_ffbh_u32", VOP_I32_I32>;
@@ -1302,10 +1307,18 @@ defm V_FFBH_I32 : VOP1Inst <vop1<0x3b, 0x2f>, "v_ffbh_i32", VOP_I32_I32>;
 defm V_FREXP_EXP_I32_F64 : VOP1Inst <vop1<0x3c,0x30>, "v_frexp_exp_i32_f64",
   VOP_I32_F64
 >;
+
+let SchedRW = [WriteDoubleAdd] in {
 defm V_FREXP_MANT_F64 : VOP1Inst <vop1<0x3d, 0x31>, "v_frexp_mant_f64",
   VOP_F64_F64
 >;
-defm V_FRACT_F64 : VOP1Inst <vop1<0x3e, 0x32>, "v_fract_f64", VOP_F64_F64>;
+
+defm V_FRACT_F64 : VOP1Inst <vop1<0x3e, 0x32>, "v_fract_f64",
+  VOP_F64_F64
+>;
+} // End SchedRW = [WriteDoubleAdd]
+
+
 defm V_FREXP_EXP_I32_F32 : VOP1Inst <vop1<0x3f, 0x33>, "v_frexp_exp_i32_f32",
   VOP_I32_F32
 >;
@@ -1337,7 +1350,7 @@ defm V_RSQ_LEGACY_F32 : VOP1InstSI <vop1<0x2d>, "v_rsq_legacy_f32",
   VOP_F32_F32, AMDGPUrsq_legacy
 >;
 
-} // End let SchedRW = [WriteQuarterRate32]
+} // End SchedRW = [WriteQuarterRate32]
 
 let SchedRW = [WriteDouble] in {
 
@@ -1698,15 +1711,15 @@ defm V_DIV_FIXUP_F32 : VOP3Inst <
   vop3<0x15f, 0x1de>, "v_div_fixup_f32", VOP_F32_F32_F32_F32, AMDGPUdiv_fixup
 >;
 
-let SchedRW = [WriteDouble] in {
+let SchedRW = [WriteDoubleAdd] in {
 
 defm V_DIV_FIXUP_F64 : VOP3Inst <
   vop3<0x160, 0x1df>, "v_div_fixup_f64", VOP_F64_F64_F64_F64, AMDGPUdiv_fixup
 >;
 
-} // let SchedRW = [WriteDouble]
+} // End SchedRW = [WriteDouble]
 
-let SchedRW = [WriteDouble] in {
+let SchedRW = [WriteDoubleAdd] in {
 let isCommutable = 1 in {
 
 defm V_ADD_F64 : VOP3Inst <vop3<0x164, 0x280>, "v_add_f64",
@@ -1729,7 +1742,7 @@ defm V_LDEXP_F64 : VOP3Inst <vop3<0x168, 0x284>, "v_ldexp_f64",
   VOP_F64_F64_I32, AMDGPUldexp
 >;
 
-} // let SchedRW = [WriteDouble]
+} // let SchedRW = [WriteDoubleAdd]
 
 let isCommutable = 1, SchedRW = [WriteQuarterRate32] in {
 
@@ -1760,6 +1773,7 @@ defm V_DIV_SCALE_F64 : VOP3b_64 <vop3<0x16e, 0x1e1>, "v_div_scale_f64", []>;
 
 let isCommutable = 1, Uses = [VCC] in {
 
+let SchedRW = [WriteFloatFMA] in {
 // v_div_fmas_f32:
 //   result = src0 * src1 + src2
 //   if (vcc)
@@ -1768,6 +1782,7 @@ let isCommutable = 1, Uses = [VCC] in {
 defm V_DIV_FMAS_F32 : VOP3_VCC_Inst <vop3<0x16f, 0x1e2>, "v_div_fmas_f32",
   VOP_F32_F32_F32_F32, AMDGPUdiv_fmas
 >;
+}
 
 let SchedRW = [WriteDouble] in {
 // v_div_fmas_f64:
