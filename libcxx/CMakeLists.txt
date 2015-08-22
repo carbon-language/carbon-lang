@@ -52,6 +52,7 @@ option(LIBCXX_ENABLE_ASSERTIONS "Enable assertions independent of build mode." O
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 
 option(LIBCXX_INCLUDE_TESTS "Build the libc++ tests." ${LLVM_INCLUDE_TESTS})
+option(LIBCXX_INCLUDE_DOCS "Build the libc++ documentation." ${LLVM_INCLUDE_DOCS})
 set(LIBCXX_LIBDIR_SUFFIX "${LLVM_LIBDIR_SUFFIX}" CACHE STRING
     "Define suffix of library directory name (32/64)")
 option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
@@ -288,6 +289,10 @@ endif()
 include_directories(include)
 add_subdirectory(include)
 add_subdirectory(lib)
+
 if (LIBCXX_INCLUDE_TESTS)
   add_subdirectory(test)
+endif()
+if (LIBCXX_INCLUDE_DOCS)
+  add_subdirectory(docs)
 endif()
