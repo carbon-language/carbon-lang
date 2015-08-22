@@ -3100,22 +3100,6 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       break;
     }
 
-    case LOCAL_REDECLARATIONS: {
-      F.RedeclarationChains.swap(Record);
-      break;
-    }
-        
-    case LOCAL_REDECLARATIONS_MAP: {
-      if (F.LocalNumRedeclarationsInMap != 0) {
-        Error("duplicate LOCAL_REDECLARATIONS_MAP record in AST file");
-        return Failure;
-      }
-      
-      F.LocalNumRedeclarationsInMap = Record[0];
-      F.RedeclarationsMap = (const LocalRedeclarationsInfo *)Blob.data();
-      break;
-    }
-        
     case MACRO_OFFSET: {
       if (F.LocalNumMacros != 0) {
         Error("duplicate MACRO_OFFSET record in AST file");
@@ -8124,7 +8108,7 @@ void ASTReader::finishPendingActions() {
 
     // Load pending declaration chains.
     for (unsigned I = 0; I != PendingDeclChains.size(); ++I)
-      loadPendingDeclChain(PendingDeclChains[I]);
+      loadPendingDeclChain(PendingDeclChains[I].first, PendingDeclChains[I].second);
     PendingDeclChains.clear();
 
     // Make the most recent of the top-level declarations visible.

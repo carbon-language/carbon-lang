@@ -911,7 +911,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(PPD_ENTITIES_OFFSETS);
   RECORD(REFERENCED_SELECTOR_POOL);
   RECORD(TU_UPDATE_LEXICAL);
-  RECORD(LOCAL_REDECLARATIONS_MAP);
   RECORD(SEMA_DECL_REFS);
   RECORD(WEAK_UNDECLARED_IDENTIFIERS);
   RECORD(PENDING_IMPLICIT_INSTANTIATIONS);
@@ -933,7 +932,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(OBJC_CATEGORIES_MAP);
   RECORD(FILE_SORTED_DECLS);
   RECORD(IMPORTED_MODULES);
-  RECORD(LOCAL_REDECLARATIONS);
   RECORD(OBJC_CATEGORIES);
   RECORD(MACRO_OFFSET);
   RECORD(LATE_PARSED_TEMPLATE);
@@ -997,6 +995,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_ATOMIC);
   RECORD(TYPE_DECAYED);
   RECORD(TYPE_ADJUSTED);
+  RECORD(LOCAL_REDECLARATIONS);
   RECORD(DECL_TYPEDEF);
   RECORD(DECL_TYPEALIAS);
   RECORD(DECL_ENUM);
@@ -3794,76 +3793,6 @@ void ASTWriter::WriteOpenCLExtensions(Sema &SemaRef) {
   Stream.EmitRecord(OPENCL_EXTENSIONS, Record);
 }
 
-void ASTWriter::WriteRedeclarations() {
-  RecordData LocalRedeclChains;
-  SmallVector<serialization::LocalRedeclarationsInfo, 2> LocalRedeclsMap;
-
-  for (unsigned I = 0, N = Redeclarations.size(); I != N; ++I) {
-    const Decl *FirstLocal = Redeclarations[I];
-    assert(!FirstLocal->isFromASTFile() &&
-           (!FirstLocal->getPreviousDecl() ||
-            FirstLocal->getPreviousDecl()->isFromASTFile() ||
-            getDeclID(FirstLocal->getPreviousDecl()) < NUM_PREDEF_DECL_IDS) &&
-           "not the first local declaration");
-    assert(getDeclID(FirstLocal) >= NUM_PREDEF_DECL_IDS &&
-           "should not have predefined decl as first decl");
-
-    unsigned Offset = LocalRedeclChains.size();
-    unsigned Size = 0;
-    LocalRedeclChains.push_back(0); // Placeholder for the size.
-
-    // Collect the set of local redeclarations of this declaration, from newest
-    // to oldest.
-    for (const Decl *Prev = FirstLocal->getMostRecentDecl(); Prev != FirstLocal;
-         Prev = Prev->getPreviousDecl()) {
-      if (!Prev->isFromASTFile()) {
-        AddDeclRef(Prev, LocalRedeclChains);
-        ++Size;
-      }
-    }
-
-    // If we only have a single local declaration, there is no point in storing
-    // a redeclaration chain.
-    if (LocalRedeclChains.size() == 1)
-      continue;
-
-    LocalRedeclChains[Offset] = Size;
-
-    // Add the mapping from the first ID from the AST to the set of local
-    // declarations.
-    LocalRedeclarationsInfo Info = { getDeclID(FirstLocal), Offset };
-    LocalRedeclsMap.push_back(Info);
-
-    assert(N == Redeclarations.size() && 
-           "Deserialized a declaration we shouldn't have");
-  }
-
-  if (LocalRedeclChains.empty())
-    return;
-
-  // Sort the local redeclarations map by the first declaration ID,
-  // since the reader will be performing binary searches on this information.
-  llvm::array_pod_sort(LocalRedeclsMap.begin(), LocalRedeclsMap.end());
-  
-  // Emit the local redeclarations map.
-  using namespace llvm;
-  llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(LOCAL_REDECLARATIONS_MAP));
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // # of entries
-  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-  unsigned AbbrevID = Stream.EmitAbbrev(Abbrev);
-  
-  RecordData Record;
-  Record.push_back(LOCAL_REDECLARATIONS_MAP);
-  Record.push_back(LocalRedeclsMap.size());
-  Stream.EmitRecordWithBlob(AbbrevID, Record, 
-    reinterpret_cast<char*>(LocalRedeclsMap.data()),
-    LocalRedeclsMap.size() * sizeof(LocalRedeclarationsInfo));
-
-  // Emit the redeclaration chains.
-  Stream.EmitRecord(LOCAL_REDECLARATIONS, LocalRedeclChains);
-}
-
 void ASTWriter::WriteObjCCategories() {
   SmallVector<ObjCCategoriesInfo, 2> CategoriesMap;
   RecordData Categories;
@@ -4589,7 +4518,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   }
 
   WriteDeclReplacementsBlock();
-  WriteRedeclarations();
   WriteObjCCategories();
   if(!WritingModule)
     WriteOptimizePragmaOptions(SemaRef);

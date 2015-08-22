@@ -933,12 +933,9 @@ private:
   std::deque<Decl *> InterestingDecls;
 
   /// \brief The list of redeclaration chains that still need to be 
-  /// reconstructed.
-  ///
-  /// Each element is the canonical declaration of the chain.
-  /// Elements in this vector should be unique; use 
-  /// PendingDeclChainsKnown to ensure uniqueness.
-  SmallVector<Decl *, 16> PendingDeclChains;
+  /// reconstructed, and the local offset to the corresponding list
+  /// of redeclarations.
+  SmallVector<std::pair<Decl *, uint64_t>, 16> PendingDeclChains;
 
   /// \brief The list of canonical declarations whose redeclaration chains
   /// need to be marked as incomplete once we're done deserializing things.
@@ -1165,7 +1162,7 @@ private:
   RecordLocation DeclCursorForID(serialization::DeclID ID,
                                  unsigned &RawLocation);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);
-  void loadPendingDeclChain(Decl *D);
+  void loadPendingDeclChain(Decl *D, uint64_t LocalOffset);
   void loadObjCCategories(serialization::GlobalDeclID ID, ObjCInterfaceDecl *D,
                           unsigned PreviousGeneration = 0);
 

@@ -433,10 +433,7 @@ namespace clang {
       /// declarations.
       TU_UPDATE_LEXICAL = 22,
       
-      /// \brief Record code for the array describing the locations (in the
-      /// LOCAL_REDECLARATIONS record) of the redeclaration chains, indexed by
-      /// the first known ID.
-      LOCAL_REDECLARATIONS_MAP = 23,
+      // ID 23 used to be for a list of local redeclarations.
 
       /// \brief Record code for declarations that Sema keeps references of.
       SEMA_DECL_REFS = 24,
@@ -514,13 +511,8 @@ namespace clang {
       /// imported by the AST file.
       IMPORTED_MODULES = 43,
       
-      // ID 40 used to be a table of merged canonical declarations.
-      
-      /// \brief Record code for the array of redeclaration chains.
-      ///
-      /// This array can only be interpreted properly using the local 
-      /// redeclarations map.
-      LOCAL_REDECLARATIONS = 45,
+      // ID 44 used to be a table of merged canonical declarations.
+      // ID 45 used to be a list of declaration IDs of local redeclarations.
       
       /// \brief Record code for the array of Objective-C categories (including
       /// extensions).
@@ -948,6 +940,9 @@ namespace clang {
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
     const unsigned int NUM_PREDEF_DECL_IDS = 12;
+
+    /// \brief Record code for a list of local redeclarations of a declaration.
+    const unsigned int LOCAL_REDECLARATIONS = 50;
     
     /// \brief Record codes for each kind of declaration.
     ///
