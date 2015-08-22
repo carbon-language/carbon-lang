@@ -2449,7 +2449,7 @@ static void finalize(void *arg) {
   // Make sure the output is not lost.
   FlushStreams();
   if (status)
-    REAL(_exit)(status);
+    Die();
 }
 
 static void unreachable() {
