@@ -72,6 +72,12 @@ class sopk <bits<5> si, bits<5> vi = si> {
   field bits<5> VI = vi;
 }
 
+// Specify an SMRD opcode for SI and SMEM opcode for VI
+class smrd<bits<5> si, bits<5> vi = si> {
+  field bits<5> SI = si;
+  field bits<8> VI = { 0, 0, 0, vi };
+}
+
 // Execpt for the NONE field, this must be kept in sync with the SISubtarget enum
 // in AMDGPUInstrInfo.cpp
 def SISubtarget {
@@ -900,21 +906,21 @@ class SMRD_Real_vi <bits<8> op, string opName, bit imm, dag outs, dag ins,
   let AssemblerPredicates = [isVI];
 }
 
-multiclass SMRD_m <bits<5> op, string opName, bit imm, dag outs, dag ins,
+multiclass SMRD_m <smrd op, string opName, bit imm, dag outs, dag ins,
                    string asm, list<dag> pattern> {
 
   def "" : SMRD_Pseudo <opName, outs, ins, pattern>;
 
-  def _si : SMRD_Real_si <op, opName, imm, outs, ins, asm>;
+  def _si : SMRD_Real_si <op.SI, opName, imm, outs, ins, asm>;
 
   // glc is only applicable to scalar stores, which are not yet
   // implemented.
   let glc = 0 in {
-    def _vi : SMRD_Real_vi <{0, 0, 0, op}, opName, imm, outs, ins, asm>;
+    def _vi : SMRD_Real_vi <op.VI, opName, imm, outs, ins, asm>;
   }
 }
 
-multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
+multiclass SMRD_Helper <smrd op, string opName, RegisterClass baseClass,
                         RegisterClass dstClass> {
   defm _IMM : SMRD_m <
     op, opName#"_IMM", 1, (outs dstClass:$dst),
@@ -924,7 +930,7 @@ multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
 
   def _IMM_ci : SMRD <
     (outs dstClass:$dst), (ins baseClass:$sbase, smrd_literal_offset:$offset),
-    opName#" $dst, $sbase, $offset", []>, SMRD_IMMe_ci <op> {
+    opName#" $dst, $sbase, $offset", []>, SMRD_IMMe_ci <op.SI> {
     let AssemblerPredicates = [isCIOnly];
   }
 

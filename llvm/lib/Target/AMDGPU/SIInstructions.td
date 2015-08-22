@@ -62,30 +62,30 @@ let mayLoad = 1 in {
 // We are using the SGPR_32 and not the SReg_32 register class for 32-bit
 // SMRD instructions, because the SGPR_32 register class does not include M0
 // and writing to M0 from an SMRD instruction will hang the GPU.
-defm S_LOAD_DWORD : SMRD_Helper <0x00, "s_load_dword", SReg_64, SGPR_32>;
-defm S_LOAD_DWORDX2 : SMRD_Helper <0x01, "s_load_dwordx2", SReg_64, SReg_64>;
-defm S_LOAD_DWORDX4 : SMRD_Helper <0x02, "s_load_dwordx4", SReg_64, SReg_128>;
-defm S_LOAD_DWORDX8 : SMRD_Helper <0x03, "s_load_dwordx8", SReg_64, SReg_256>;
-defm S_LOAD_DWORDX16 : SMRD_Helper <0x04, "s_load_dwordx16", SReg_64, SReg_512>;
+defm S_LOAD_DWORD : SMRD_Helper <smrd<0x00>, "s_load_dword", SReg_64, SGPR_32>;
+defm S_LOAD_DWORDX2 : SMRD_Helper <smrd<0x01>, "s_load_dwordx2", SReg_64, SReg_64>;
+defm S_LOAD_DWORDX4 : SMRD_Helper <smrd<0x02>, "s_load_dwordx4", SReg_64, SReg_128>;
+defm S_LOAD_DWORDX8 : SMRD_Helper <smrd<0x03>, "s_load_dwordx8", SReg_64, SReg_256>;
+defm S_LOAD_DWORDX16 : SMRD_Helper <smrd<0x04>, "s_load_dwordx16", SReg_64, SReg_512>;
 
 defm S_BUFFER_LOAD_DWORD : SMRD_Helper <
-  0x08, "s_buffer_load_dword", SReg_128, SGPR_32
+  smrd<0x08>, "s_buffer_load_dword", SReg_128, SGPR_32
 >;
 
 defm S_BUFFER_LOAD_DWORDX2 : SMRD_Helper <
-  0x09, "s_buffer_load_dwordx2", SReg_128, SReg_64
+  smrd<0x09>, "s_buffer_load_dwordx2", SReg_128, SReg_64
 >;
 
 defm S_BUFFER_LOAD_DWORDX4 : SMRD_Helper <
-  0x0a, "s_buffer_load_dwordx4", SReg_128, SReg_128
+  smrd<0x0a>, "s_buffer_load_dwordx4", SReg_128, SReg_128
 >;
 
 defm S_BUFFER_LOAD_DWORDX8 : SMRD_Helper <
-  0x0b, "s_buffer_load_dwordx8", SReg_128, SReg_256
+  smrd<0x0b>, "s_buffer_load_dwordx8", SReg_128, SReg_256
 >;
 
 defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
-  0x0c, "s_buffer_load_dwordx16", SReg_128, SReg_512
+  smrd<0x0c>, "s_buffer_load_dwordx16", SReg_128, SReg_512
 >;
 
 } // mayLoad = 1
