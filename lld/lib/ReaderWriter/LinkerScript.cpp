@@ -2557,7 +2557,7 @@ static bool wildcardMatch(StringRef pattern, StringRef name) {
     switch (*j) {
     case '*':
       while (!wildcardMatch(pattern.drop_front(j - pattern.begin() + 1),
-                            name.drop_front(i - name.begin() + 1))) {
+                            name.drop_front(i - name.begin()))) {
         if (i == name.end())
           return false;
         ++i;
@@ -2565,6 +2565,7 @@ static bool wildcardMatch(StringRef pattern, StringRef name) {
       break;
     case '?':
       // Matches any character
+      ++i;
       break;
     case '[': {
       // Matches a range of characters specified between brackets
@@ -2577,20 +2578,22 @@ static bool wildcardMatch(StringRef pattern, StringRef name) {
         return false;
 
       j = pattern.begin() + end;
+      ++i;
       break;
     }
     case '\\':
       ++j;
       if (*j != *i)
         return false;
+      ++i;
       break;
     default:
       // No wildcard character means we must match exactly the same char
       if (*j != *i)
         return false;
+      ++i;
       break;
     }
-    ++i;
   }
 
   // If our pattern has't consumed the entire string, it is not a match
