@@ -77,7 +77,7 @@ struct LTOCodeGenerator {
 
   void setCpu(const char *mCpu) { MCpu = mCpu; }
   void setAttr(const char *mAttr) { MAttr = mAttr; }
-  void setOptLevel(unsigned optLevel) { OptLevel = optLevel; }
+  void setOptLevel(unsigned optLevel);
 
   void setShouldInternalize(bool Value) { ShouldInternalize = Value; }
   void setShouldEmbedUselists(bool Value) { ShouldEmbedUselists = Value; }
@@ -166,10 +166,12 @@ private:
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
   std::vector<std::string> CodegenOptions;
+  std::string FeatureStr;
   std::string MCpu;
   std::string MAttr;
   std::string NativeObjectPath;
   TargetOptions Options;
+  CodeGenOpt::Level CGOptLevel = CodeGenOpt::Default;
   unsigned OptLevel = 2;
   lto_diagnostic_handler_t DiagHandler = nullptr;
   void *DiagContext = nullptr;

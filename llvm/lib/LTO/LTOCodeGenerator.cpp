@@ -164,6 +164,24 @@ void LTOCodeGenerator::setDebugInfo(lto_debug_model debug) {
   llvm_unreachable("Unknown debug format!");
 }
 
+void LTOCodeGenerator::setOptLevel(unsigned level) {
+  OptLevel = level;
+  switch (OptLevel) {
+  case 0:
+    CGOptLevel = CodeGenOpt::None;
+    break;
+  case 1:
+    CGOptLevel = CodeGenOpt::Less;
+    break;
+  case 2:
+    CGOptLevel = CodeGenOpt::Default;
+    break;
+  case 3:
+    CGOptLevel = CodeGenOpt::Aggressive;
+    break;
+  }
+}
+
 bool LTOCodeGenerator::writeMergedModules(const char *path,
                                           std::string &errMsg) {
   if (!determineTarget(errMsg))
@@ -279,8 +297,10 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
     return true;
 
   std::string TripleStr = IRLinker.getModule()->getTargetTriple();
-  if (TripleStr.empty())
+  if (TripleStr.empty()) {
     TripleStr = sys::getDefaultTargetTriple();
+    IRLinker.getModule()->setTargetTriple(TripleStr);
+  }
   llvm::Triple Triple(TripleStr);
 
   // create target machine from info for merged modules
@@ -292,7 +312,7 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
   // the default set of features.
   SubtargetFeatures Features(MAttr);
   Features.getDefaultSubtargetFeatures(Triple);
-  std::string FeatureStr = Features.getString();
+  FeatureStr = Features.getString();
   // Set a default CPU for Darwin triples.
   if (MCpu.empty() && Triple.isOSDarwin()) {
     if (Triple.getArch() == llvm::Triple::x86_64)
@@ -301,22 +321,6 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
       MCpu = "yonah";
     else if (Triple.getArch() == llvm::Triple::aarch64)
       MCpu = "cyclone";
-  }
-
-  CodeGenOpt::Level CGOptLevel;
-  switch (OptLevel) {
-  case 0:
-    CGOptLevel = CodeGenOpt::None;
-    break;
-  case 1:
-    CGOptLevel = CodeGenOpt::Less;
-    break;
-  case 2:
-    CGOptLevel = CodeGenOpt::Default;
-    break;
-  case 3:
-    CGOptLevel = CodeGenOpt::Aggressive;
-    break;
   }
 
   TargetMach.reset(march->createTargetMachine(TripleStr, MCpu, FeatureStr,
