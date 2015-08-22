@@ -356,7 +356,7 @@ static DeclContext *getContextForScopeMatching(Decl *D) {
 
 /// \brief Determine whether \p D is a better lookup result than \p Existing,
 /// given that they declare the same entity.
-static bool isPreferredLookupResult(Sema::LookupNameKind Kind,
+static bool isPreferredLookupResult(Sema &S, Sema::LookupNameKind Kind,
                                     NamedDecl *D, NamedDecl *Existing) {
   // When looking up redeclarations of a using declaration, prefer a using
   // shadow declaration over any other declaration of the same entity.
@@ -376,13 +376,46 @@ static bool isPreferredLookupResult(Sema::LookupNameKind Kind,
     return false;
   }
 
-  // If D is newer than Existing, prefer it.
+  // Pick the function with more default arguments.
+  // FIXME: In the presence of ambiguous default arguments, we should keep both,
+  //        so we can diagnose the ambiguity if the default argument is needed.
+  //        See C++ [over.match.best]p3.
+  if (auto *DFD = dyn_cast<FunctionDecl>(DUnderlying)) {
+    auto *EFD = cast<FunctionDecl>(EUnderlying);
+    unsigned DMin = DFD->getMinRequiredArguments();
+    unsigned EMin = EFD->getMinRequiredArguments();
+    // If D has more default arguments, it is preferred.
+    if (DMin != EMin)
+      return DMin < EMin;
+  }
+
+  // Pick the template with more default template arguments.
+  if (auto *DTD = dyn_cast<TemplateDecl>(DUnderlying)) {
+    auto *ETD = cast<TemplateDecl>(EUnderlying);
+    unsigned DMin = DTD->getTemplateParameters()->getMinRequiredArguments();
+    unsigned EMin = ETD->getTemplateParameters()->getMinRequiredArguments();
+    // If D has more default arguments, it is preferred.
+    if (DMin != EMin)
+      return DMin < EMin;
+  }
+
+  // For most kinds of declaration, it doesn't really matter which one we pick.
+  if (!isa<FunctionDecl>(DUnderlying) && !isa<VarDecl>(DUnderlying)) {
+    // If the existing declaration is hidden, prefer the new one. Otherwise,
+    // keep what we've got.
+    return !S.isVisible(Existing);
+  }
+
+  // Pick the newer declaration; it might have a more precise type.
   for (Decl *Prev = DUnderlying->getPreviousDecl(); Prev;
        Prev = Prev->getPreviousDecl())
     if (Prev == EUnderlying)
       return true;
-
   return false;
+
+  // If the existing declaration is hidden, prefer the new one. Otherwise,
+  // keep what we've got.
+  return !S.isVisible(Existing);
 }
 
 /// Resolves the result kind of this lookup.
@@ -462,7 +495,7 @@ void LookupResult::resolveKind() {
     if (ExistingI) {
       // This is not a unique lookup result. Pick one of the results and
       // discard the other.
-      if (isPreferredLookupResult(getLookupKind(), Decls[I],
+      if (isPreferredLookupResult(getSema(), getLookupKind(), Decls[I],
                                   Decls[*ExistingI]))
         Decls[*ExistingI] = Decls[I];
       Decls[I] = Decls[--N];
