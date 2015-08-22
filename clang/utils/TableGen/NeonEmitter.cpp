@@ -837,10 +837,6 @@ void Type::applyModifier(char Mod) {
     Float = true;
     break;
   case 'f':
-    // Special case - if we're half-precision, a floating
-    // point argument needs to be 128-bits (double size).
-    if (isHalf())
-      Bitwidth = 128;
     Float = true;
     ElementBitwidth = 32;
     break;

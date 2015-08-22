@@ -688,8 +688,8 @@ def VGET_LOW  : NoTestOpInst<"vget_low", "dk", "csilhfUcUsUiUlPcPs", OP_LO>;
 ////////////////////////////////////////////////////////////////////////////////
 // E.3.22 Converting vectors
 
-def VCVT_F16_F32 : SInst<"vcvt_f16_f32", "hk", "f">;
-def VCVT_F32_F16 : SInst<"vcvt_f32_f16", "fd", "h">;
+def VCVT_F16_F32 : SInst<"vcvt_f16_f32", "md", "Hf">;
+def VCVT_F32_F16 : SInst<"vcvt_f32_f16", "wd", "h">;
 
 def VCVT_S32     : SInst<"vcvt_s32", "xd",  "fQf">;
 def VCVT_U32     : SInst<"vcvt_u32", "ud",  "fQf">;
@@ -956,7 +956,7 @@ def VCVT_S64 : SInst<"vcvt_s64", "xd",  "dQd">;
 def VCVT_U64 : SInst<"vcvt_u64", "ud",  "dQd">;
 def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "lUlQlQUl">;
 
-def VCVT_HIGH_F16_f32 : SOpInst<"vcvt_high_f16", "qhj", "f", OP_VCVT_NA_HI_F16>;
+def VCVT_HIGH_F16_F32 : SOpInst<"vcvt_high_f16", "hmj", "Hf", OP_VCVT_NA_HI_F16>;
 def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI_F32>;
 def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI_F32>;
 def VCVT_HIGH_F64_F32 : SOpInst<"vcvt_high_f64", "wj", "f", OP_VCVT_EX_HI_F64>;
