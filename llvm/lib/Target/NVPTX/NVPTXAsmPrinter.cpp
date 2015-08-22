@@ -1183,9 +1183,11 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           printScalarConstant(Initializer, O);
         }
       } else {
-        // The frontend adds zero-initializer to variables that don't have an
-        // initial value, so skip warning for this case.
-        if (!GVar->getInitializer()->isNullValue()) {
+        // The frontend adds zero-initializer to device and constant variables
+        // that don't have an initial value, and UndefValue to shared
+        // variables, so skip warning for this case.
+        if (!GVar->getInitializer()->isNullValue() &&
+            !isa<UndefValue>(GVar->getInitializer())) {
           report_fatal_error("initial value of '" + GVar->getName() +
                              "' is not allowed in addrspace(" +
                              Twine(PTy->getAddressSpace()) + ")");
