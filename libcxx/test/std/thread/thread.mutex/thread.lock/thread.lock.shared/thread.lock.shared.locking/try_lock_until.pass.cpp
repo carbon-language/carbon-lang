@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03, c++11
 
 // <shared_mutex>
 
@@ -18,8 +19,6 @@
 
 #include <shared_mutex>
 #include <cassert>
-
-#if _LIBCPP_STD_VER > 11
 
 bool try_lock_until_called = false;
 
@@ -38,11 +37,8 @@ struct mutex
 
 mutex m;
 
-#endif  // _LIBCPP_STD_VER > 11
-
 int main()
 {
-#if _LIBCPP_STD_VER > 11
     typedef std::chrono::steady_clock Clock;
     std::shared_lock<mutex> lk(m, std::defer_lock);
     assert(lk.try_lock_until(Clock::now()) == true);
@@ -71,5 +67,4 @@ int main()
     {
         assert(e.code().value() == EPERM);
     }
-#endif  // _LIBCPP_STD_VER > 11
 }

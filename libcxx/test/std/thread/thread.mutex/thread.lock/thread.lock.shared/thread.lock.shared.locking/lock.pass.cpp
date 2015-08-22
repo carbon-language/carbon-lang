@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03, c++11
 
 // <shared_mutex>
 
@@ -21,7 +22,7 @@
 #include <cstdlib>
 #include <cassert>
 
-#if _LIBCPP_STD_VER > 11
+#include "test_macros.h"
 
 std::shared_timed_mutex m;
 
@@ -31,6 +32,18 @@ typedef Clock::duration duration;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::nanoseconds ns;
 
+ms WaitTime = ms(250);
+
+// Thread sanitizer causes more overhead and will sometimes cause this test
+// to fail. To prevent this we give Thread sanitizer more time to complete the
+// test.
+#if !TEST_HAS_FEATURE(thread_sanitizer)
+ms Tolerance = ms(25);
+#else
+ms Tolerance = ms(75);
+#endif
+
+
 void f()
 {
     std::shared_lock<std::shared_timed_mutex> lk(m, std::defer_lock);
@@ -38,8 +51,8 @@ void f()
     lk.lock();
     time_point t1 = Clock::now();
     assert(lk.owns_lock() == true);
-    ns d = t1 - t0 - ms(250);
-    assert(d < ms(25));  // within 25ms
+    ns d = t1 - t0 - WaitTime;
+    assert(d < Tolerance);  // within tolerance
     try
     {
         lk.lock();
@@ -62,18 +75,14 @@ void f()
     }
 }
 
-#endif  // _LIBCPP_STD_VER > 11
-
 int main()
 {
-#if _LIBCPP_STD_VER > 11
     m.lock();
     std::vector<std::thread> v;
     for (int i = 0; i < 5; ++i)
         v.push_back(std::thread(f));
-    std::this_thread::sleep_for(ms(250));
+    std::this_thread::sleep_for(WaitTime);
     m.unlock();
     for (auto& t : v)
         t.join();
-#endif  // _LIBCPP_STD_VER > 11
 }

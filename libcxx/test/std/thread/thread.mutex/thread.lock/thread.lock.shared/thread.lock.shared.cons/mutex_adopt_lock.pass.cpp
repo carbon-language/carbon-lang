@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03, c++11
 
 // <shared_mutex>
 
@@ -20,11 +21,9 @@
 
 int main()
 {
-#if _LIBCPP_STD_VER > 11
     std::shared_timed_mutex m;
     m.lock_shared();
     std::shared_lock<std::shared_timed_mutex> lk(m, std::adopt_lock);
     assert(lk.mutex() == &m);
     assert(lk.owns_lock() == true);
-#endif  // _LIBCPP_STD_VER > 11
 }

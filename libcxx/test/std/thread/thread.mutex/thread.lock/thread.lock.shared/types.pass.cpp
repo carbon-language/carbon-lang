@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03, c++11
+
 
 // <shared_mutex>
 
@@ -24,8 +26,6 @@
 
 int main()
 {
-#if _LIBCPP_STD_VER > 11
     static_assert((std::is_same<std::shared_lock<std::mutex>::mutex_type,
                    std::mutex>::value), "");
-#endif  // _LIBCPP_STD_VER > 11
 }

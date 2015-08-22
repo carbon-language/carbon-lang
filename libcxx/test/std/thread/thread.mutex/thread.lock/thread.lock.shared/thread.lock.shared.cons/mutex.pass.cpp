@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++98, c++03, c++11
 
 // <shared_mutex>
 
@@ -21,15 +22,26 @@
 #include <cstdlib>
 #include <cassert>
 
-#if _LIBCPP_STD_VER > 11
-
-std::shared_timed_mutex m;
+#include "test_macros.h"
 
 typedef std::chrono::system_clock Clock;
 typedef Clock::time_point time_point;
 typedef Clock::duration duration;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::nanoseconds ns;
+
+ms WaitTime = ms(250);
+
+// Thread sanitizer causes more overhead and will sometimes cause this test
+// to fail. To prevent this we give Thread sanitizer more time to complete the
+// test.
+#if !TEST_HAS_FEATURE(thread_sanitizer)
+ms Tolerance = ms(50);
+#else
+ms Tolerance = ms(100);
+#endif
+
+std::shared_timed_mutex m;
 
 void f()
 {
@@ -39,8 +51,8 @@ void f()
     std::shared_lock<std::shared_timed_mutex> ul(m);
     t1 = Clock::now();
     }
-    ns d = t1 - t0 - ms(250);
-    assert(d < ms(50));  // within 50ms
+    ns d = t1 - t0 - WaitTime;
+    assert(d < Tolerance);  // within tolerance
 }
 
 void g()
@@ -52,30 +64,30 @@ void g()
     t1 = Clock::now();
     }
     ns d = t1 - t0;
-    assert(d < ms(50));  // within 50ms
+    assert(d < Tolerance);  // within tolerance
 }
-
-#endif  // _LIBCPP_STD_VER > 11
 
 int main()
 {
-#if _LIBCPP_STD_VER > 11
-    m.lock();
     std::vector<std::thread> v;
-    for (int i = 0; i < 5; ++i)
-        v.push_back(std::thread(f));
-    std::this_thread::sleep_for(ms(250));
-    m.unlock();
-    for (auto& t : v)
-        t.join();
-    m.lock_shared();
-    for (auto& t : v)
-        t = std::thread(g);
-    std::thread q(f);
-    std::this_thread::sleep_for(ms(250));
-    m.unlock_shared();
-    for (auto& t : v)
-        t.join();
-    q.join();
-#endif  // _LIBCPP_STD_VER > 11
+    {
+        m.lock();
+        for (int i = 0; i < 5; ++i)
+            v.push_back(std::thread(f));
+        std::this_thread::sleep_for(WaitTime);
+        m.unlock();
+        for (auto& t : v)
+            t.join();
+    }
+    {
+        m.lock_shared();
+        for (auto& t : v)
+            t = std::thread(g);
+        std::thread q(f);
+        std::this_thread::sleep_for(WaitTime);
+        m.unlock_shared();
+        for (auto& t : v)
+            t.join();
+        q.join();
+    }
 }
