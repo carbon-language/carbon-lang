@@ -120,47 +120,21 @@ namespace clang {
     static void setAnonymousDeclForMerging(ASTReader &Reader, DeclContext *DC,
                                            unsigned Index, NamedDecl *D);
 
-    /// \brief RAII class used to capture the first ID within a redeclaration
-    /// chain and to introduce it into the list of pending redeclaration chains
-    /// on destruction.
+    /// Results from loading a RedeclarableDecl.
     class RedeclarableResult {
-      ASTReader &Reader;
       GlobalDeclID FirstID;
-      Decl *LoadedDecl;
       Decl *MergeWith;
-      mutable bool Owning;
       bool IsKeyDecl;
 
-      void operator=(RedeclarableResult &) = delete;
-
     public:
-      RedeclarableResult(ASTReader &Reader, GlobalDeclID FirstID,
-                         Decl *LoadedDecl, Decl *MergeWith, bool IsKeyDecl)
-          : Reader(Reader), FirstID(FirstID), LoadedDecl(LoadedDecl),
-            MergeWith(MergeWith), Owning(true), IsKeyDecl(IsKeyDecl) {}
-
-      RedeclarableResult(RedeclarableResult &&Other)
-          : Reader(Other.Reader), FirstID(Other.FirstID),
-            LoadedDecl(Other.LoadedDecl), MergeWith(Other.MergeWith),
-            Owning(Other.Owning), IsKeyDecl(Other.IsKeyDecl) {
-        Other.Owning = false;
-      }
-
-      ~RedeclarableResult() {
-      }
-
-      /// \brief Note that a RedeclarableDecl is not actually redeclarable.
-      void setNotRedeclarable() {
-        Owning = false;
-        Reader.RedeclsDeserialized.erase(LoadedDecl);
-        assert(FirstID == LoadedDecl->getGlobalID() && !MergeWith &&
-               "non-redeclarable declaration was redeclared?");
-      }
+      RedeclarableResult(GlobalDeclID FirstID, Decl *MergeWith, bool IsKeyDecl)
+          : FirstID(FirstID), MergeWith(MergeWith), IsKeyDecl(IsKeyDecl) {}
+      ~RedeclarableResult() {}
 
       /// \brief Retrieve the first ID.
       GlobalDeclID getFirstID() const { return FirstID; }
 
-      /// \brief Is this declaration the key declaration?
+      /// \brief Is this declaration a key declaration?
       bool isKeyDecl() const { return IsKeyDecl; }
 
       /// \brief Get a known declaration that this should be merged with, if
@@ -912,7 +886,6 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
 
 void ASTDeclReader::VisitObjCTypeParamDecl(ObjCTypeParamDecl *D) {
   RedeclarableResult Redecl = VisitTypedefNameDecl(D);
-  Redecl.setNotRedeclarable();
 
   D->Variance = Record[Idx++];
   D->Index = Record[Idx++];
@@ -1217,9 +1190,8 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   case VarNotTemplate:
     // Only true variables (not parameters or implicit parameters) can be
     // merged; the other kinds are not really redeclarable at all.
-    if (isa<ParmVarDecl>(VD) || isa<ImplicitParamDecl>(VD))
-      Redecl.setNotRedeclarable();
-    else if (!isa<VarTemplateSpecializationDecl>(VD))
+    if (!isa<ParmVarDecl>(VD) && !isa<ImplicitParamDecl>(VD) &&
+        !isa<VarTemplateSpecializationDecl>(VD))
       mergeRedeclarable(VD, Redecl);
     break;
   case VarTemplate:
@@ -2219,9 +2191,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     D->First = FirstDecl->getCanonicalDecl();
   }    
 
-  // Note that this declaration has been deserialized.
   T *DAsT = static_cast<T*>(D);
-  Reader.RedeclsDeserialized.insert(DAsT);
 
   // Note that we need to load local redeclarations of this decl and build a
   // decl chain for them. This must happen *after* we perform the preloading
@@ -2230,10 +2200,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   if (IsFirstLocalDecl)
     Reader.PendingDeclChains.push_back(DAsT);
 
-  // The result structure takes care to note that we need to load the 
-  // other declaration chains for this ID.
-  return RedeclarableResult(Reader, FirstDeclID, DAsT, MergeWith,
-                            IsKeyDecl);
+  return RedeclarableResult(FirstDeclID, MergeWith, IsKeyDecl);
 }
 
 /// \brief Attempts to merge the given declaration (D) with another declaration
@@ -2275,8 +2242,8 @@ void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
                                          DeclID DsID, bool IsKeyDecl) {
   auto *DPattern = D->getTemplatedDecl();
   auto *ExistingPattern = Existing->getTemplatedDecl();
-  RedeclarableResult Result(Reader, DPattern->getCanonicalDecl()->getGlobalID(),
-                            DPattern, /*MergeWith*/ ExistingPattern, IsKeyDecl);
+  RedeclarableResult Result(DPattern->getCanonicalDecl()->getGlobalID(),
+                            /*MergeWith*/ ExistingPattern, IsKeyDecl);
 
   if (auto *DClass = dyn_cast<CXXRecordDecl>(DPattern)) {
     // Merge with any existing definition.
@@ -3426,132 +3393,32 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
   }
 }
 
-namespace {
-  /// \brief Module visitor class that finds all of the redeclarations of a
-  /// redeclarable declaration.
-  class RedeclChainVisitor {
-    ASTReader &Reader;
-    SmallVectorImpl<DeclID> &SearchDecls;
-    llvm::SmallPtrSetImpl<Decl *> &Deserialized;
-    SmallVector<Decl *, 4> Chain;
-
-  public:
-    RedeclChainVisitor(ASTReader &Reader, SmallVectorImpl<DeclID> &SearchDecls,
-                       llvm::SmallPtrSetImpl<Decl *> &Deserialized)
-      : Reader(Reader), SearchDecls(SearchDecls), Deserialized(Deserialized) {
-      assert(std::is_sorted(SearchDecls.begin(), SearchDecls.end()));
-    }
-
-    /// Get the chain, in order from newest to oldest.
-    ArrayRef<Decl *> getChain() const {
-      return Chain;
-    }
-
-  private:
-    void addToChain(Decl *D) {
-      if (!D)
-        return;
-
-      if (Deserialized.erase(D))
-        Chain.push_back(D);
-    }
-
-    llvm::Optional<unsigned> findRedeclOffset(ModuleFile &M, DeclID LocalID) {
-      // Perform a binary search to find the local redeclarations for this
-      // declaration (if any).
-      const LocalRedeclarationsInfo Compare = { LocalID, 0 };
-      const LocalRedeclarationsInfo *Result = std::lower_bound(
-          M.RedeclarationsMap,
-          M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, Compare);
-      if (Result == M.RedeclarationsMap + M.LocalNumRedeclarationsInMap ||
-          Result->FirstID != LocalID)
-        return None;
-      return Result->Offset;
-    }
-
-  public:
-    bool operator()(ModuleFile &M) {
-      llvm::ArrayRef<DeclID> ToSearch = SearchDecls;
-      GlobalDeclID LocalSearchDeclID = 0;
-
-      // First, check whether any of our search decls was declared in M.
-      auto I = std::lower_bound(SearchDecls.begin(), SearchDecls.end(),
-                                M.BaseDeclID + NUM_PREDEF_DECL_IDS);
-      if (I != SearchDecls.end() && Reader.isDeclIDFromModule(*I, M)) {
-        LocalSearchDeclID = *I;
-        ToSearch = llvm::makeArrayRef(*I);
-      }
-
-      // Now, walk the search decls looking for one that's declared in this
-      // module file.
-      bool ImportedModulesMightHaveDecls = false;
-      for (auto GlobalID : ToSearch) {
-        // Map global ID of the first declaration down to the local ID
-        // used in this module file.
-        DeclID LocalID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
-        if (!LocalID)
-          continue;
-
-        auto MaybeOffset = findRedeclOffset(M, LocalID);
-        if (MaybeOffset) {
-          // We found it. Dig out all of the redeclarations.
-          unsigned Offset = *MaybeOffset;
-          unsigned N = M.RedeclarationChains[Offset];
-          if (!N)
-            // We've already loaded these.
-            // FIXME: In this case, we may be able to skip processing any
-            // imported modules too. We can't do that yet, though, because
-            // it's possible that our list of search decls misses out some
-            // search decls from modules that M imports.
-            continue;
-          M.RedeclarationChains[Offset++] = 0; // Don't try to deserialize again
-
-          // Note, declarations are listed from newest to oldest, which is the
-          // order that we want.
-          for (unsigned I = 0; I != N; ++I)
-            addToChain(Reader.GetLocalDecl(M, M.RedeclarationChains[Offset++]));
-        }
-
-        // We found a search decl that is not from this module, but was
-        // imported into this module, so some imported module has more decls
-        // of this entity.
-        if (!LocalSearchDeclID)
-          ImportedModulesMightHaveDecls = true;
-
-        // If we found redecls for some search decl, there are no redecls for
-        // any other search decl for the same chain in this module.
-        if (MaybeOffset)
-          break;
-      }
-
-      assert(LocalSearchDeclID);
-      if (LocalSearchDeclID) {
-        // If the search decl was from this module, add it to the chain.
-        // Note, the chain is sorted from newest to oldest, so this goes last.
-        addToChain(Reader.GetDecl(LocalSearchDeclID));
-      }
-
-      // Stop looking if we know that no imported module has any declarations.
-      return !ImportedModulesMightHaveDecls;
-    }
-  };
-}
-
 void ASTReader::loadPendingDeclChain(Decl *FirstLocal) {
-  // Determine the set of declaration IDs we'll be searching for.
-  SmallVector<DeclID, 1> SearchDecls;
-  SearchDecls.push_back(FirstLocal->getGlobalID());
+  ModuleFile &M = *getOwningModuleFile(FirstLocal);
+  DeclID LocalID =
+      mapGlobalIDToModuleFileGlobalID(M, FirstLocal->getGlobalID());
+  assert(LocalID && "looking for redecl chain in wrong module file");
 
-  // Build up the list of redeclarations.
-  RedeclChainVisitor Visitor(*this, SearchDecls, RedeclsDeserialized);
-  Visitor(*getOwningModuleFile(FirstLocal));
+  // Perform a binary search to find the local redeclarations for this
+  // declaration (if any).
+  // FIXME: Just store an offset with the first declaration.
+  const LocalRedeclarationsInfo Compare = {LocalID, 0};
+  const LocalRedeclarationsInfo *Result = std::lower_bound(
+      M.RedeclarationsMap,
+      M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, Compare);
 
-  // Retrieve the chains.
-  ArrayRef<Decl *> Chain = Visitor.getChain();
-  if (Chain.empty())
-    return;
+  // Pull out the list of redeclarations.
+  SmallVector<Decl*, 4> Chain;
+  if (Result != M.RedeclarationsMap + M.LocalNumRedeclarationsInMap &&
+      Result->FirstID == LocalID) {
+    unsigned Offset = Result->Offset;
+    unsigned N = M.RedeclarationChains[Offset++];
+    for (unsigned I = 0; I != N; ++I)
+      Chain.push_back(GetLocalDecl(M, M.RedeclarationChains[Offset++]));
+  }
+  Chain.push_back(FirstLocal);
 
-  // Hook up the chains.
+  // Hook up the chain.
   //
   // FIXME: We have three different dispatches on decl kind here; maybe
   // we should instead generate one loop per kind and dispatch up-front?

@@ -932,10 +932,6 @@ private:
   /// Objective-C protocols.
   std::deque<Decl *> InterestingDecls;
 
-  /// \brief The set of redeclarable declarations that have been deserialized
-  /// since the last time the declaration chains were linked.
-  llvm::SmallPtrSet<Decl *, 16> RedeclsDeserialized;
-  
   /// \brief The list of redeclaration chains that still need to be 
   /// reconstructed.
   ///
@@ -943,9 +939,6 @@ private:
   /// Elements in this vector should be unique; use 
   /// PendingDeclChainsKnown to ensure uniqueness.
   SmallVector<Decl *, 16> PendingDeclChains;
-
-  /// \brief Keeps track of the elements added to PendingDeclChains.
-  llvm::SmallSet<Decl *, 16> PendingDeclChainsKnown;
 
   /// \brief The list of canonical declarations whose redeclaration chains
   /// need to be marked as incomplete once we're done deserializing things.
