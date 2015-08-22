@@ -326,7 +326,7 @@ uptr ThreadSelf() {
 
 #if !SANITIZER_GO
 static void GetTls(uptr *addr, uptr *size) {
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 # if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
   *addr = ThreadSelf();
   *size = GetTlsSize();
@@ -352,6 +352,9 @@ static void GetTls(uptr *addr, uptr *size) {
     *addr = (uptr) dtv[2];
     *size = (*addr == 0) ? 0 : ((uptr) segbase[0] - (uptr) dtv[2]);
   }
+#elif SANITIZER_ANDROID
+  *addr = 0;
+  *size = 0;
 #else
 # error "Unknown OS"
 #endif
