@@ -118,6 +118,12 @@ DieCallbackType GetDieCallback() {
 }
 
 void NORETURN Die() {
+#if !SANITIZER_GO
+  // Dump coverage before invoking user callback, in case it calls abort() or
+  // _exit() itself.
+  if (common_flags()->coverage)
+    DumpCoverage();
+#endif  // !SANITIZER_GO
   if (UserDieCallback)
     UserDieCallback();
   if (InternalDieCallback)
