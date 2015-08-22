@@ -694,20 +694,33 @@ macro(add_llvm_external_project name)
     set(add_llvm_external_dir ${name})
   endif()
   canonicalize_tool_name(${name} nameUPPER)
-  if(NOT DEFINED LLVM_TOOL_${nameUPPER}_BUILD)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}/CMakeLists.txt)
+    # Treat it as in-tree subproject.
     option(LLVM_TOOL_${nameUPPER}_BUILD
            "Whether to build ${name} as part of LLVM" On)
-  endif()
-  if (LLVM_TOOL_${nameUPPER}_BUILD)
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir}/CMakeLists.txt)
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir} ${add_llvm_external_dir})
-        set(LLVM_TOOL_${nameUPPER}_BUILD Off)
-    elseif(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR)
-      set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR
-        "${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}"
-        CACHE PATH "Path to ${name} source directory")
-      mark_as_advanced(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR)
+    mark_as_advanced(LLVM_TOOL_${name}_BUILD)
+    if(LLVM_TOOL_${nameUPPER}_BUILD)
+      add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${add_llvm_external_dir} ${add_llvm_external_dir})
+      # Don't process it in add_llvm_implicit_projects().
+      set(LLVM_TOOL_${nameUPPER}_BUILD OFF)
+    endif()
+  else()
+    set(LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR
+      "${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR}"
+      CACHE PATH "Path to ${name} source directory")
+    set(LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT ON)
+    if(NOT LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR OR NOT EXISTS ${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR})
+      set(LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT OFF)
+    endif()
+    if("${LLVM_EXTERNAL_${nameUPPER}_BUILD}" STREQUAL "OFF")
+      set(LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT OFF)
+    endif()
+    option(LLVM_TOOL_${nameUPPER}_BUILD
+      "Whether to build ${name} as part of LLVM"
+      ${LLVM_TOOL_${nameUPPER}_BUILD_DEFAULT})
+    if (LLVM_TOOL_${nameUPPER}_BUILD)
       add_subdirectory(${LLVM_EXTERNAL_${nameUPPER}_SOURCE_DIR} ${add_llvm_external_dir})
+      # FIXME: It'd be redundant.
       set(LLVM_TOOL_${nameUPPER}_BUILD Off)
     endif()
   endif()
@@ -733,15 +746,6 @@ function(create_llvm_tool_options)
     if(IS_DIRECTORY "${dir}" AND EXISTS "${dir}/CMakeLists.txt")
       canonicalize_tool_name(${dir} name)
       option(LLVM_TOOL_${name}_BUILD
-           "Whether to build ${name} as part of LLVM" On)
-      mark_as_advanced(LLVM_TOOL_${name}_BUILD)
-    endif()
-  endforeach()
-  get_cmake_property(variableNames VARIABLES)
-  foreach (variableName ${variableNames})
-    get_project_name_from_src_var(${variableName} projectName)
-    if(projectName)
-      option(LLVM_TOOL_${projectName}_BUILD
            "Whether to build ${name} as part of LLVM" On)
       mark_as_advanced(LLVM_TOOL_${name}_BUILD)
     endif()
