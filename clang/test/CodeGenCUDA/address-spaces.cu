@@ -5,10 +5,10 @@
 
 #include "Inputs/cuda.h"
 
-// CHECK: @i = addrspace(1) global
+// CHECK: @i = addrspace(1) externally_initialized global
 __device__ int i;
 
-// CHECK: @j = addrspace(4) global
+// CHECK: @j = addrspace(4) externally_initialized global
 __constant__ int j;
 
 // CHECK: @k = addrspace(3) global
@@ -24,7 +24,7 @@ struct MyStruct {
 // CHECK: @_ZZ5func2vE1a = internal addrspace(3) global [256 x float] zeroinitializer
 // CHECK: @_ZZ5func3vE1a = internal addrspace(3) global float 0.000000e+00
 // CHECK: @_ZZ5func4vE1a = internal addrspace(3) global float 0.000000e+00
-// CHECK: @b = addrspace(3) global float 0.000000e+00
+// CHECK: @b = addrspace(3) global float undef
 
 __device__ void foo() {
   // CHECK: load i32, i32* addrspacecast (i32 addrspace(1)* @i to i32*)

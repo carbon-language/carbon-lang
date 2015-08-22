@@ -1990,7 +1990,16 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   const VarDecl *InitDecl;
   const Expr *InitExpr = D->getAnyInitializer(InitDecl);
 
-  if (!InitExpr) {
+  // CUDA E.2.4.1 "__shared__ variables cannot have an initialization as part
+  // of their declaration."
+  if (getLangOpts().CPlusPlus && getLangOpts().CUDAIsDevice
+      && D->hasAttr<CUDASharedAttr>()) {
+    if (InitExpr) {
+      Error(D->getLocation(),
+            "__shared__ variable cannot have an initialization.");
+    }
+    Init = llvm::UndefValue::get(getTypes().ConvertType(ASTTy));
+  } else if (!InitExpr) {
     // This is a tentative definition; tentative definitions are
     // implicitly initialized with { 0 }.
     //
@@ -2076,6 +2085,17 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (D->hasAttr<AnnotateAttr>())
     AddGlobalAnnotations(D, GV);
 
+  // CUDA B.2.1 "The __device__ qualifier declares a variable that resides on
+  // the device. [...]"
+  // CUDA B.2.2 "The __constant__ qualifier, optionally used together with
+  // __device__, declares a variable that: [...]
+  // Is accessible from all the threads within the grid and from the host
+  // through the runtime library (cudaGetSymbolAddress() / cudaGetSymbolSize()
+  // / cudaMemcpyToSymbol() / cudaMemcpyFromSymbol())."
+  if (GV && LangOpts.CUDA && LangOpts.CUDAIsDevice &&
+      (D->hasAttr<CUDAConstantAttr>() || D->hasAttr<CUDADeviceAttr>())) {
+    GV->setExternallyInitialized(true);
+  }
   GV->setInitializer(Init);
 
   // If it is safe to mark the global 'constant', do so now.
