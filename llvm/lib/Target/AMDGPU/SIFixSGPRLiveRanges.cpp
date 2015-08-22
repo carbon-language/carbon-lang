@@ -47,6 +47,7 @@
 #include "AMDGPU.h"
 #include "SIInstrInfo.h"
 #include "SIRegisterInfo.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -119,10 +120,13 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
 
   LiveIntervals *LIS = &getAnalysis<LiveIntervals>();
   LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
+  MachineBasicBlock *Entry = MF.begin();
 
-  // First pass, collect all live intervals for SGPRs
-  for (const MachineBasicBlock &MBB : MF) {
-    for (const MachineInstr &MI : MBB) {
+  // Use a depth first order so that in SSA, we encounter all defs before
+  // uses. Once the defs of the block have been found, attempt to insert
+  // SGPR_USE instructions in successor blocks if required.
+  for (MachineBasicBlock *MBB : depth_first(Entry)) {
+    for (const MachineInstr &MI : *MBB) {
       for (const MachineOperand &MO : MI.defs()) {
         if (MO.isImplicit())
           continue;
@@ -132,29 +136,23 @@ bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
             // Only consider defs that are live outs. We don't care about def /
             // use within the same block.
             LiveRange &LR = LIS->getInterval(Def);
-            if (LIS->isLiveOutOfMBB(LR, &MBB))
+            if (LIS->isLiveOutOfMBB(LR, MBB))
               SGPRLiveRanges.push_back(std::make_pair(Def, &LR));
           }
         } else if (TRI->isSGPRClass(TRI->getPhysRegClass(Def))) {
-            SGPRLiveRanges.push_back(
-                std::make_pair(Def, &LIS->getRegUnit(Def)));
+          SGPRLiveRanges.push_back(std::make_pair(Def, &LIS->getRegUnit(Def)));
         }
       }
     }
-  }
 
-  // Second pass fix the intervals
-  for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
-                                                  BI != BE; ++BI) {
-    MachineBasicBlock &MBB = *BI;
-    if (MBB.succ_size() < 2)
+    if (MBB->succ_size() < 2)
       continue;
 
     // We have structured control flow, so the number of successors should be
     // two.
-    assert(MBB.succ_size() == 2);
-    MachineBasicBlock *SuccA = *MBB.succ_begin();
-    MachineBasicBlock *SuccB = *(++MBB.succ_begin());
+    assert(MBB->succ_size() == 2);
+    MachineBasicBlock *SuccA = *MBB->succ_begin();
+    MachineBasicBlock *SuccB = *(++MBB->succ_begin());
     MachineBasicBlock *NCD = PDT->findNearestCommonDominator(SuccA, SuccB);
 
     if (!NCD)
