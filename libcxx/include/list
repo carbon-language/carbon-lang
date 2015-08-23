@@ -191,10 +191,19 @@ template <class _Tp, class _VoidPtr> struct __list_node;
 template <class _Tp, class _VoidPtr>
 struct __list_node_base
 {
-    typedef typename __rebind_pointer<_VoidPtr, __list_node<_Tp, _VoidPtr> >::type
-        pointer;
-    typedef typename __rebind_pointer<_VoidPtr, __list_node_base>::type
-        __base_pointer;
+    typedef typename pointer_traits<_VoidPtr>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+        rebind<__list_node<_Tp, _VoidPtr> > pointer;
+#else
+        rebind<__list_node<_Tp, _VoidPtr> >::other pointer;
+#endif
+
+    typedef typename pointer_traits<_VoidPtr>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+        rebind<__list_node_base> __base_pointer;
+#else
+        rebind<__list_node_base>::other __base_pointer;
+#endif
 
     pointer __prev_;
     pointer __next_;
@@ -223,7 +232,12 @@ template <class _Tp, class _VoidPtr> class _LIBCPP_TYPE_VIS_ONLY __list_const_it
 template <class _Tp, class _VoidPtr>
 class _LIBCPP_TYPE_VIS_ONLY __list_iterator
 {
-    typedef typename __list_node<_Tp, _VoidPtr>::pointer __node_pointer;
+    typedef typename pointer_traits<_VoidPtr>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+        rebind<__list_node<_Tp, _VoidPtr> > __node_pointer;
+#else
+        rebind<__list_node<_Tp, _VoidPtr> >::other __node_pointer;
+#endif
 
     __node_pointer __ptr_;
 
@@ -248,7 +262,13 @@ public:
     typedef bidirectional_iterator_tag       iterator_category;
     typedef _Tp                              value_type;
     typedef value_type&                      reference;
-    typedef typename __rebind_pointer<_VoidPtr, value_type>::type pointer;
+    typedef typename pointer_traits<_VoidPtr>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+            rebind<value_type>
+#else
+            rebind<value_type>::other
+#endif
+                                             pointer;
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
@@ -345,7 +365,12 @@ public:
 template <class _Tp, class _VoidPtr>
 class _LIBCPP_TYPE_VIS_ONLY __list_const_iterator
 {
-    typedef typename __list_node<_Tp, _VoidPtr>::pointer __node_pointer;
+    typedef typename pointer_traits<_VoidPtr>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+        rebind<__list_node<_Tp, _VoidPtr> > __node_pointer;
+#else
+        rebind<__list_node<_Tp, _VoidPtr> >::other __node_pointer;
+#endif
 
     __node_pointer __ptr_;
 
@@ -367,7 +392,13 @@ public:
     typedef bidirectional_iterator_tag       iterator_category;
     typedef _Tp                              value_type;
     typedef const value_type&                reference;
-    typedef typename __rebind_pointer<_VoidPtr, const value_type>::type pointer;
+    typedef typename pointer_traits<_VoidPtr>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+            rebind<const value_type>
+#else
+            rebind<const value_type>::other
+#endif
+                                             pointer;
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
