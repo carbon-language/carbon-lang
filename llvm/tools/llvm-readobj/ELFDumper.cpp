@@ -95,6 +95,7 @@ private:
     uintX_t EntSize;
   };
 
+  void printSymbolsHelper(bool IsDynamic);
   void printSymbol(const Elf_Sym *Symbol, const Elf_Shdr *SymTab,
                    StringRef StrTable, bool IsDynamic);
 
@@ -1148,27 +1149,25 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec, Elf_Rela Rel) {
 }
 
 template<class ELFT>
-void ELFDumper<ELFT>::printSymbols() {
-  ListScope Group(W, "Symbols");
-
-  const Elf_Shdr *Symtab = DotSymtabSec;
+void ELFDumper<ELFT>::printSymbolsHelper(bool IsDynamic) {
+  const Elf_Shdr *Symtab = (IsDynamic) ? DotDynSymSec : DotSymtabSec;
   ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
   error(StrTableOrErr.getError());
   StringRef StrTable = *StrTableOrErr;
   for (const Elf_Sym &Sym : Obj->symbols(Symtab))
-    printSymbol(&Sym, Symtab, StrTable, false);
+    printSymbol(&Sym, Symtab, StrTable, IsDynamic);
+}
+
+template<class ELFT>
+void ELFDumper<ELFT>::printSymbols() {
+  ListScope Group(W, "Symbols");
+  printSymbolsHelper(false);
 }
 
 template<class ELFT>
 void ELFDumper<ELFT>::printDynamicSymbols() {
   ListScope Group(W, "DynamicSymbols");
-
-  const Elf_Shdr *Symtab = DotDynSymSec;
-  ErrorOr<StringRef> StrTableOrErr = Obj->getStringTableForSymtab(*Symtab);
-  error(StrTableOrErr.getError());
-  StringRef StrTable = *StrTableOrErr;
-  for (const Elf_Sym &Sym : Obj->symbols(Symtab))
-    printSymbol(&Sym, Symtab, StrTable, true);
+  printSymbolsHelper(true);
 }
 
 template <class ELFT>
