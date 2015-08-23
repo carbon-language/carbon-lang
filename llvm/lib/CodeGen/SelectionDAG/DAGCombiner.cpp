@@ -2285,7 +2285,7 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
       }
     }
   }
-  
+
   // fold (udiv x, c) -> alternate
   bool MinSize = DAG.getMachineFunction().getFunction()->optForMinSize();
   if (N1C && !TLI.isIntDivCheap(N->getValueType(0), MinSize))
@@ -12270,12 +12270,21 @@ static SDValue combineConcatVectorOfExtracts(SDNode *N, SelectionDAG &DAG) {
 
     // What vector are we extracting the subvector from and at what index?
     SDValue ExtVec = Op.getOperand(0);
+
+    // We want the EVT of the original extraction to correctly scale the
+    // extraction index.
+    EVT ExtVT = ExtVec.getValueType();
+
+    // Peek through any bitcast.
+    while (ExtVec.getOpcode() == ISD::BITCAST)
+      ExtVec = ExtVec.getOperand(0);
+
+    // UNDEF nodes convert to UNDEF shuffle mask values.
     if (ExtVec.getOpcode() == ISD::UNDEF) {
       Mask.append((unsigned)NumOpElts, -1);
       continue;
     }
 
-    EVT ExtVT = ExtVec.getValueType();
     if (!isa<ConstantSDNode>(Op.getOperand(1)))
       return SDValue();
     int ExtIdx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();

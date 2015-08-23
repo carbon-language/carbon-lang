@@ -2128,6 +2128,22 @@ define <8 x i32> @concat_v8i32_4567CDEF_bc(<8 x i32> %a0, <8 x i32> %a1) {
   ret <8 x i32> %shuffle32
 }
 
+define <8 x float> @concat_v8f32_4567CDEF_bc(<8 x float> %f0, <8 x float> %f1) {
+; ALL-LABEL: concat_v8f32_4567CDEF_bc:
+; ALL:       # BB#0:
+; ALL-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm0[2,3],ymm1[2,3]
+; ALL-NEXT:    retq
+  %a0 = bitcast <8 x float> %f0 to <4 x i64>
+  %a1 = bitcast <8 x float> %f1 to <8 x i32>
+  %a0hi = shufflevector <4 x i64> %a0, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %a1hi = shufflevector <8 x i32> %a1, <8 x i32> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %bc0hi = bitcast <2 x i64> %a0hi to <2 x i64>
+  %bc1hi = bitcast <4 x i32> %a1hi to <2 x i64>
+  %shuffle64 = shufflevector <2 x i64> %bc0hi, <2 x i64> %bc1hi, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %shuffle32 = bitcast <4 x i64> %shuffle64 to <8 x float>
+  ret <8 x float> %shuffle32
+}
+
 define <8 x i32> @insert_dup_mem_v8i32(i32* %ptr) {
 ; ALL-LABEL: insert_dup_mem_v8i32:
 ; ALL:       # BB#0:
