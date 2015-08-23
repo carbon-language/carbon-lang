@@ -8451,7 +8451,7 @@ The ``cleanuppad`` instruction has several restrictions:
    cleanup block.
 -  A basic block that is not a cleanup block may not include a
    '``cleanuppad``' instruction.
--  All ``cleanupret``s which exit a cleanuppad must have the same
+-  All '``cleanupret``'s which exit a ``cleanuppad`` must have the same
    exceptional successor.
 -  It is undefined behavior for control to transfer from a ``cleanuppad`` to a
    ``ret`` without first executing a ``cleanupret`` that consumes the
