@@ -268,13 +268,13 @@ void Decl::setDeclContextsImpl(DeclContext *SemaDC, DeclContext *LexicalDC,
 
 bool Decl::isLexicallyWithinFunctionOrMethod() const {
   const DeclContext *LDC = getLexicalDeclContext();
-  do {
+  while (true) {
     if (LDC->isFunctionOrMethod())
       return true;
     if (!isa<TagDecl>(LDC))
       return false;
-    LDC = LDC->getParent();
-  } while (LDC);
+    LDC = LDC->getLexicalParent();
+  }
   return false;
 }
 
