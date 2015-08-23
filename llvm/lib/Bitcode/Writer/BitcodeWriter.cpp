@@ -1855,10 +1855,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::CleanupRet: {
     Code = bitc::FUNC_CODE_INST_CLEANUPRET;
     const auto &CRI = cast<CleanupReturnInst>(I);
-    Vals.push_back(CRI.hasReturnValue());
-    Vals.push_back(CRI.hasUnwindDest());
-    if (CRI.hasReturnValue())
-      PushValueAndType(CRI.getReturnValue(), InstID, Vals, VE);
+    pushValue(CRI.getCleanupPad(), InstID, Vals, VE);
     if (CRI.hasUnwindDest())
       Vals.push_back(VE.getValueID(CRI.getUnwindDest()));
     break;
@@ -1866,15 +1863,13 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::CatchRet: {
     Code = bitc::FUNC_CODE_INST_CATCHRET;
     const auto &CRI = cast<CatchReturnInst>(I);
+    pushValue(CRI.getCatchPad(), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(CRI.getSuccessor()));
-    if (CRI.hasReturnValue())
-      PushValueAndType(CRI.getReturnValue(), InstID, Vals, VE);
     break;
   }
   case Instruction::CatchPad: {
     Code = bitc::FUNC_CODE_INST_CATCHPAD;
     const auto &CPI = cast<CatchPadInst>(I);
-    Vals.push_back(VE.getTypeID(CPI.getType()));
     Vals.push_back(VE.getValueID(CPI.getNormalDest()));
     Vals.push_back(VE.getValueID(CPI.getUnwindDest()));
     unsigned NumArgOperands = CPI.getNumArgOperands();
@@ -1898,7 +1893,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::CleanupPad: {
     Code = bitc::FUNC_CODE_INST_CLEANUPPAD;
     const auto &CPI = cast<CleanupPadInst>(I);
-    Vals.push_back(VE.getTypeID(CPI.getType()));
     unsigned NumOperands = CPI.getNumOperands();
     Vals.push_back(NumOperands);
     for (unsigned Op = 0; Op != NumOperands; ++Op)

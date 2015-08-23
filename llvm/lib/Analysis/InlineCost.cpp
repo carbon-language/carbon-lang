@@ -913,7 +913,7 @@ bool CallAnalyzer::visitCleanupReturnInst(CleanupReturnInst &CRI) {
 
 bool CallAnalyzer::visitCatchReturnInst(CatchReturnInst &CRI) {
   // FIXME: It's not clear that a single instruction is an accurate model for
-  // the inline cost of a cleanupret instruction.
+  // the inline cost of a catchret instruction.
   return false;
 }
 

@@ -344,8 +344,7 @@ static void HandleInlinedEHPad(InvokeInst *II, BasicBlock *FirstNewBlock,
 
     if (auto *CRI = dyn_cast<CleanupReturnInst>(BB->getTerminator())) {
       if (CRI->unwindsToCaller()) {
-        CleanupReturnInst::Create(CRI->getContext(), CRI->getReturnValue(),
-                                  UnwindDest, CRI);
+        CleanupReturnInst::Create(CRI->getCleanupPad(), UnwindDest, CRI);
         CRI->eraseFromParent();
         UpdatePHINodes(BB);
       }

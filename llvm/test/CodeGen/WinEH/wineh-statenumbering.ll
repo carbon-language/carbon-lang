@@ -37,7 +37,7 @@ entry:
           to label %unreachable.for.entry unwind label %catch.dispatch
 
 catch.dispatch:                                   ; preds = %entry
-  %1 = catchpad token [i8* null, i8* null] to label %catch unwind label %catchendblock
+  %1 = catchpad [i8* null, i8* null] to label %catch unwind label %catchendblock
 
 catch:                                            ; preds = %catch.dispatch
   ; CHECK: catch:
@@ -47,7 +47,7 @@ catch:                                            ; preds = %catch.dispatch
           to label %unreachable unwind label %catch.dispatch.1
 
 catch.dispatch.1:                                 ; preds = %catch
-  %2 = catchpad token [i8* null, i8* null] to label %catch.3 unwind label %catchendblock.2
+  %2 = catchpad [i8* null, i8* null] to label %catch.3 unwind label %catchendblock.2
 
 catch.3:                                          ; preds = %catch.dispatch.1
   ; CHECK: catch.3:
@@ -57,7 +57,7 @@ catch.3:                                          ; preds = %catch.dispatch.1
           to label %invoke.cont unwind label %catchendblock.2
 
 invoke.cont:                                      ; preds = %catch.3
-  catchret token %2 to label %try.cont
+  catchret %2 to label %try.cont
 
 try.cont:                                         ; preds = %invoke.cont
   ; CHECK: try.cont:

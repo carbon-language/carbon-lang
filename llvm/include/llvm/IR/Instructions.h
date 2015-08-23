@@ -2740,7 +2740,7 @@ public:
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for Branch!");
-    *(&Op<-1>() - idx) = (Value*)NewSucc;
+    *(&Op<-1>() - idx) = NewSucc;
   }
 
   /// \brief Swap the successors of this branch instruction.
@@ -3056,7 +3056,7 @@ public:
   }
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
-    setOperand(idx*2+1, (Value*)NewSucc);
+    setOperand(idx * 2 + 1, NewSucc);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -3156,7 +3156,7 @@ public:
     return cast<BasicBlock>(getOperand(i+1));
   }
   void setSuccessor(unsigned i, BasicBlock *NewSucc) {
-    setOperand(i+1, (Value*)NewSucc);
+    setOperand(i + 1, NewSucc);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -3570,111 +3570,6 @@ struct OperandTraits<ResumeInst> :
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
 
 //===----------------------------------------------------------------------===//
-//                               CleanupReturnInst Class
-//===----------------------------------------------------------------------===//
-
-class CleanupReturnInst : public TerminatorInst {
-  CleanupReturnInst(const CleanupReturnInst &RI);
-
-private:
-  void init(Value *RetVal, BasicBlock *UnwindBB);
-  CleanupReturnInst(LLVMContext &C, Value *RetVal, BasicBlock *UnwindBB,
-                    unsigned Values, Instruction *InsertBefore = nullptr);
-  CleanupReturnInst(LLVMContext &C, Value *RetVal, BasicBlock *UnwindBB,
-                    unsigned Values, BasicBlock *InsertAtEnd);
-
-  int getUnwindLabelOpIdx() const {
-    assert(hasUnwindDest());
-    return 0;
-  }
-
-  int getRetValOpIdx() const {
-    assert(hasReturnValue());
-    if (hasUnwindDest())
-      return 1;
-    return 0;
-  }
-
-protected:
-  // Note: Instruction needs to be a friend here to call cloneImpl.
-  friend class Instruction;
-  CleanupReturnInst *cloneImpl() const;
-
-public:
-  static CleanupReturnInst *Create(LLVMContext &C,
-                                   Value *RetVal = nullptr,
-                                   BasicBlock *UnwindBB = nullptr,
-                                   Instruction *InsertBefore = nullptr) {
-    unsigned Values = 0;
-    if (RetVal)
-      ++Values;
-    if (UnwindBB)
-      ++Values;
-    return new (Values)
-        CleanupReturnInst(C, RetVal, UnwindBB, Values, InsertBefore);
-  }
-  static CleanupReturnInst *Create(LLVMContext &C, Value *RetVal,
-                                   BasicBlock *UnwindBB,
-                                   BasicBlock *InsertAtEnd) {
-    unsigned Values = 0;
-    if (RetVal)
-      ++Values;
-    if (UnwindBB)
-      ++Values;
-    return new (Values)
-        CleanupReturnInst(C, RetVal, UnwindBB, Values, InsertAtEnd);
-  }
-
-  /// Provide fast operand accessors
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-
-  bool hasUnwindDest() const { return getSubclassDataFromInstruction() & 1; }
-  bool unwindsToCaller() const { return !hasUnwindDest(); }
-  bool hasReturnValue() const { return getSubclassDataFromInstruction() & 2; }
-
-  /// Convenience accessor. Returns null if there is no return value.
-  Value *getReturnValue() const {
-    if (!hasReturnValue())
-      return nullptr;
-    return getOperand(getRetValOpIdx());
-  }
-  void setReturnValue(Value *RetVal) {
-    assert(hasReturnValue());
-    setOperand(getRetValOpIdx(), RetVal);
-  }
-
-  unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
-
-  BasicBlock *getUnwindDest() const;
-  void setUnwindDest(BasicBlock *NewDest);
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::CleanupRet);
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-
-private:
-  BasicBlock *getSuccessorV(unsigned Idx) const override;
-  unsigned getNumSuccessorsV() const override;
-  void setSuccessorV(unsigned Idx, BasicBlock *B) override;
-
-  // Shadow Instruction::setInstructionSubclassData with a private forwarding
-  // method so that subclasses cannot accidentally use it.
-  void setInstructionSubclassData(unsigned short D) {
-    Instruction::setInstructionSubclassData(D);
-  }
-};
-
-template <>
-struct OperandTraits<CleanupReturnInst>
-    : public VariadicOperandTraits<CleanupReturnInst> {};
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupReturnInst, Value)
-
-//===----------------------------------------------------------------------===//
 //                               CatchEndPadInst Class
 //===----------------------------------------------------------------------===//
 
@@ -3760,14 +3655,12 @@ private:
 
   CatchPadInst(const CatchPadInst &CPI);
 
-  explicit CatchPadInst(Type *RetTy, BasicBlock *IfNormal,
-                        BasicBlock *IfException, ArrayRef<Value *> Args,
-                        unsigned Values, const Twine &NameStr,
-                        Instruction *InsertBefore);
-  explicit CatchPadInst(Type *RetTy, BasicBlock *IfNormal,
-                        BasicBlock *IfException, ArrayRef<Value *> Args,
-                        unsigned Values, const Twine &NameStr,
-                        BasicBlock *InsertAtEnd);
+  explicit CatchPadInst(BasicBlock *IfNormal, BasicBlock *IfException,
+                        ArrayRef<Value *> Args, unsigned Values,
+                        const Twine &NameStr, Instruction *InsertBefore);
+  explicit CatchPadInst(BasicBlock *IfNormal, BasicBlock *IfException,
+                        ArrayRef<Value *> Args, unsigned Values,
+                        const Twine &NameStr, BasicBlock *InsertAtEnd);
 
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
@@ -3775,20 +3668,19 @@ protected:
   CatchPadInst *cloneImpl() const;
 
 public:
-  static CatchPadInst *Create(Type *RetTy, BasicBlock *IfNormal,
-                              BasicBlock *IfException, ArrayRef<Value *> Args,
-                              const Twine &NameStr = "",
+  static CatchPadInst *Create(BasicBlock *IfNormal, BasicBlock *IfException,
+                              ArrayRef<Value *> Args, const Twine &NameStr = "",
                               Instruction *InsertBefore = nullptr) {
     unsigned Values = unsigned(Args.size()) + 2;
-    return new (Values) CatchPadInst(RetTy, IfNormal, IfException, Args, Values,
+    return new (Values) CatchPadInst(IfNormal, IfException, Args, Values,
                                      NameStr, InsertBefore);
   }
-  static CatchPadInst *Create(Type *RetTy, BasicBlock *IfNormal,
-                              BasicBlock *IfException, ArrayRef<Value *> Args,
-                              const Twine &NameStr, BasicBlock *InsertAtEnd) {
+  static CatchPadInst *Create(BasicBlock *IfNormal, BasicBlock *IfException,
+                              ArrayRef<Value *> Args, const Twine &NameStr,
+                              BasicBlock *InsertAtEnd) {
     unsigned Values = unsigned(Args.size()) + 2;
-    return new (Values) CatchPadInst(RetTy, IfNormal, IfException, Args, Values,
-                                     NameStr, InsertAtEnd);
+    return new (Values)
+        CatchPadInst(IfNormal, IfException, Args, Values, NameStr, InsertAtEnd);
   }
 
   /// Provide fast operand accessors
@@ -3820,8 +3712,8 @@ public:
   // get*Dest - Return the destination basic blocks...
   BasicBlock *getNormalDest() const { return cast<BasicBlock>(Op<-2>()); }
   BasicBlock *getUnwindDest() const { return cast<BasicBlock>(Op<-1>()); }
-  void setNormalDest(BasicBlock *B) { Op<-2>() = reinterpret_cast<Value *>(B); }
-  void setUnwindDest(BasicBlock *B) { Op<-1>() = reinterpret_cast<Value *>(B); }
+  void setNormalDest(BasicBlock *B) { Op<-2>() = B; }
+  void setUnwindDest(BasicBlock *B) { Op<-1>() = B; }
 
   BasicBlock *getSuccessor(unsigned i) const {
     assert(i < 2 && "Successor # out of range for catchpad!");
@@ -3830,7 +3722,7 @@ public:
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < 2 && "Successor # out of range for catchpad!");
-    *(&Op<-2>() + idx) = reinterpret_cast<Value *>(NewSucc);
+    *(&Op<-2>() + idx) = NewSucc;
   }
 
   unsigned getNumSuccessors() const { return 2; }
@@ -3949,7 +3841,7 @@ public:
   }
   void setUnwindDest(BasicBlock *B) {
     assert(B && hasUnwindDest());
-    Op<-1>() = reinterpret_cast<Value *>(B);
+    Op<-1>() = B;
   }
 
   unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
@@ -3990,9 +3882,9 @@ private:
 
   CleanupPadInst(const CleanupPadInst &CPI);
 
-  explicit CleanupPadInst(Type *RetTy, ArrayRef<Value *> Args,
+  explicit CleanupPadInst(LLVMContext &C, ArrayRef<Value *> Args,
                           const Twine &NameStr, Instruction *InsertBefore);
-  explicit CleanupPadInst(Type *RetTy, ArrayRef<Value *> Args,
+  explicit CleanupPadInst(LLVMContext &C, ArrayRef<Value *> Args,
                           const Twine &NameStr, BasicBlock *InsertAtEnd);
 
 protected:
@@ -4001,14 +3893,14 @@ protected:
   CleanupPadInst *cloneImpl() const;
 
 public:
-  static CleanupPadInst *Create(Type *RetTy, ArrayRef<Value *> Args,
+  static CleanupPadInst *Create(LLVMContext &C, ArrayRef<Value *> Args,
                                 const Twine &NameStr = "",
                                 Instruction *InsertBefore = nullptr) {
-    return new (Args.size()) CleanupPadInst(RetTy, Args, NameStr, InsertBefore);
+    return new (Args.size()) CleanupPadInst(C, Args, NameStr, InsertBefore);
   }
-  static CleanupPadInst *Create(Type *RetTy, ArrayRef<Value *> Args,
+  static CleanupPadInst *Create(LLVMContext &C, ArrayRef<Value *> Args,
                                 const Twine &NameStr, BasicBlock *InsertAtEnd) {
-    return new (Args.size()) CleanupPadInst(RetTy, Args, NameStr, InsertAtEnd);
+    return new (Args.size()) CleanupPadInst(C, Args, NameStr, InsertAtEnd);
   }
 
   /// Provide fast operand accessors
@@ -4037,10 +3929,10 @@ class CatchReturnInst : public TerminatorInst {
   CatchReturnInst(const CatchReturnInst &RI);
 
 private:
-  void init(BasicBlock *BB, Value *RetVal);
-  CatchReturnInst(BasicBlock *BB, Value *RetVal, unsigned Values,
+  void init(CatchPadInst *CatchPad, BasicBlock *BB);
+  CatchReturnInst(CatchPadInst *CatchPad, BasicBlock *BB,
                   Instruction *InsertBefore = nullptr);
-  CatchReturnInst(BasicBlock *BB, Value *RetVal, unsigned Values,
+  CatchReturnInst(CatchPadInst *CatchPad, BasicBlock *BB,
                   BasicBlock *InsertAtEnd);
 
 protected:
@@ -4049,34 +3941,35 @@ protected:
   CatchReturnInst *cloneImpl() const;
 
 public:
-  static CatchReturnInst *Create(BasicBlock *BB, Value *RetVal = nullptr,
+  static CatchReturnInst *Create(CatchPadInst *CatchPad, BasicBlock *BB,
                                  Instruction *InsertBefore = nullptr) {
+    assert(CatchPad);
     assert(BB);
-    unsigned Values = 1;
-    if (RetVal)
-      ++Values;
-    return new (Values) CatchReturnInst(BB, RetVal, Values, InsertBefore);
+    return new (2) CatchReturnInst(CatchPad, BB, InsertBefore);
   }
-  static CatchReturnInst *Create(BasicBlock *BB, Value *RetVal,
+  static CatchReturnInst *Create(CatchPadInst *CatchPad, BasicBlock *BB,
                                  BasicBlock *InsertAtEnd) {
+    assert(CatchPad);
     assert(BB);
-    unsigned Values = 1;
-    if (RetVal)
-      ++Values;
-    return new (Values) CatchReturnInst(BB, RetVal, Values, InsertAtEnd);
+    return new (2) CatchReturnInst(CatchPad, BB, InsertAtEnd);
   }
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   /// Convenience accessors.
-  BasicBlock *getSuccessor() const { return cast<BasicBlock>(Op<-1>()); }
-  void setSuccessor(BasicBlock *NewSucc) { Op<-1>() = (Value *)NewSucc; }
-  unsigned getNumSuccessors() const { return 1; }
+  CatchPadInst *getCatchPad() const { return cast<CatchPadInst>(Op<0>()); }
+  void setCatchPad(CatchPadInst *CatchPad) {
+    assert(CatchPad);
+    Op<0>() = CatchPad;
+  }
 
-  bool hasReturnValue() const { return getNumOperands() > 1; }
-  Value *getReturnValue() const { return Op<-2>(); }
-  void setReturnValue(Value *RetVal) { Op<-2>() = RetVal; }
+  BasicBlock *getSuccessor() const { return cast<BasicBlock>(Op<1>()); }
+  void setSuccessor(BasicBlock *NewSucc) {
+    assert(NewSucc);
+    Op<1>() = NewSucc;
+  }
+  unsigned getNumSuccessors() const { return 1; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {
@@ -4094,9 +3987,107 @@ private:
 
 template <>
 struct OperandTraits<CatchReturnInst>
-    : public VariadicOperandTraits<CatchReturnInst> {};
+    : public FixedNumOperandTraits<CatchReturnInst, 2> {};
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchReturnInst, Value)
+
+//===----------------------------------------------------------------------===//
+//                               CleanupReturnInst Class
+//===----------------------------------------------------------------------===//
+
+class CleanupReturnInst : public TerminatorInst {
+  CleanupReturnInst(const CleanupReturnInst &RI);
+
+private:
+  void init(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB);
+  CleanupReturnInst(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB,
+                    unsigned Values, Instruction *InsertBefore = nullptr);
+  CleanupReturnInst(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB,
+                    unsigned Values, BasicBlock *InsertAtEnd);
+
+  int getUnwindLabelOpIdx() const {
+    assert(hasUnwindDest());
+    return 0;
+  }
+
+protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CleanupReturnInst *cloneImpl() const;
+
+public:
+  static CleanupReturnInst *Create(CleanupPadInst *CleanupPad,
+                                   BasicBlock *UnwindBB = nullptr,
+                                   Instruction *InsertBefore = nullptr) {
+    assert(CleanupPad);
+    unsigned Values = 1;
+    if (UnwindBB)
+      ++Values;
+    return new (Values)
+        CleanupReturnInst(CleanupPad, UnwindBB, Values, InsertBefore);
+  }
+  static CleanupReturnInst *Create(CleanupPadInst *CleanupPad,
+                                   BasicBlock *UnwindBB,
+                                   BasicBlock *InsertAtEnd) {
+    assert(CleanupPad);
+    unsigned Values = 1;
+    if (UnwindBB)
+      ++Values;
+    return new (Values)
+        CleanupReturnInst(CleanupPad, UnwindBB, Values, InsertAtEnd);
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  bool hasUnwindDest() const { return getSubclassDataFromInstruction() & 1; }
+  bool unwindsToCaller() const { return !hasUnwindDest(); }
+
+  /// Convenience accessor.
+  CleanupPadInst *getCleanupPad() const {
+    return cast<CleanupPadInst>(Op<-1>());
+  }
+  void setCleanupPad(CleanupPadInst *CleanupPad) {
+    assert(CleanupPad);
+    Op<-1>() = CleanupPad;
+  }
+
+  unsigned getNumSuccessors() const { return hasUnwindDest() ? 1 : 0; }
+
+  BasicBlock *getUnwindDest() const {
+    return hasUnwindDest() ? cast<BasicBlock>(Op<-2>()) : nullptr;
+  }
+  void setUnwindDest(BasicBlock *NewDest) {
+    assert(NewDest);
+    assert(hasUnwindDest());
+    Op<-2>() = NewDest;
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const Instruction *I) {
+    return (I->getOpcode() == Instruction::CleanupRet);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+private:
+  BasicBlock *getSuccessorV(unsigned Idx) const override;
+  unsigned getNumSuccessorsV() const override;
+  void setSuccessorV(unsigned Idx, BasicBlock *B) override;
+
+  // Shadow Instruction::setInstructionSubclassData with a private forwarding
+  // method so that subclasses cannot accidentally use it.
+  void setInstructionSubclassData(unsigned short D) {
+    Instruction::setInstructionSubclassData(D);
+  }
+};
+
+template <>
+struct OperandTraits<CleanupReturnInst>
+    : public VariadicOperandTraits<CleanupReturnInst, /*MINARITY=*/1> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupReturnInst, Value)
 
 //===----------------------------------------------------------------------===//
 //                           UnreachableInst Class

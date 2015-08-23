@@ -614,20 +614,19 @@ specifications with one combined instruction. All potentially throwing calls in
 a ``noexcept`` function should transitively unwind to a terminateblock. Throw
 specifications are not implemented by MSVC, and are not yet supported.
 
-Each of these new EH pad instructions has a label operand that indicates which
+Each of these new EH pad instructions has a way to identify which
 action should be considered after this action. The ``catchpad`` and
-``terminatepad`` instructions are terminators, and this label is considered to
-be an unwind destination analogous to the unwind destination of an invoke. The
+``terminatepad`` instructions are terminators, and have a label operand considered
+to be an unwind destination analogous to the unwind destination of an invoke. The
 ``cleanuppad`` instruction is different from the other two in that it is not a
-terminator, and this label operand is not an edge in the CFG. The code inside a
-cleanuppad runs before transferring control to the next action, so the
-``cleanupret`` instruction is the instruction that unwinds to the next EH pad.
-All of these "unwind edges" may refer to a basic block that contains an EH pad
-instruction, or they may simply unwind to the caller. Unwinding to the caller
-has roughly the same semantics as the ``resume`` instruction in the
-``landingpad`` model. When inlining through an invoke, instructions that unwind
-to the caller are hooked up to unwind to the unwind destination of the call
-site.
+terminator. The code inside a cleanuppad runs before transferring control to the
+next action, so the ``cleanupret`` instruction is the instruction that holds a
+label operand and unwinds to the next EH pad. All of these "unwind edges" may
+refer to a basic block that contains an EH pad instruction, or they may simply
+unwind to the caller. Unwinding to the caller has roughly the same semantics as
+the ``resume`` instruction in the ``landingpad`` model. When inlining through an
+invoke, instructions that unwind to the caller are hooked up to unwind to the
+unwind destination of the call site.
 
 Putting things together, here is a hypothetical lowering of some C++ that uses
 all of the new IR instructions:
@@ -674,17 +673,17 @@ all of the new IR instructions:
   ; EH scope code, ordered innermost to outermost:
 
   lpad.cleanup:                                     ; preds = %invoke.cont
-    cleanuppad [label %lpad.catch]
+    %cleanup = cleanuppad []
     call void @"\01??_DCleanup@@QEAA@XZ"(%struct.Cleanup* nonnull %obj) nounwind
-    cleanupret unwind label %lpad.catch
+    cleanupret %cleanup unwind label %lpad.catch
 
   lpad.catch:                                       ; preds = %entry, %lpad.cleanup
-    catchpad void [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i32* %e]
+    %catch = catchpad [%rtti.TypeDescriptor2* @"\01??_R0H@8", i32 0, i32* %e]
             to label %catch unwind label %lpad.terminate
 
   catch:                                            ; preds = %lpad.catch
     %9 = load i32, i32* %e, align 4
-    catchret label %return
+    catchret %catch label %return
 
   lpad.terminate:
     terminatepad [void ()* @"\01?terminate@@YAXXZ"]

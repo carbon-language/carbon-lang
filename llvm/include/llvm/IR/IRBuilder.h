@@ -671,15 +671,14 @@ public:
     return Insert(ResumeInst::Create(Exn));
   }
 
-  CleanupReturnInst *CreateCleanupRet(BasicBlock *UnwindBB = nullptr,
-                                      Value *RetVal = nullptr) {
-    return Insert(CleanupReturnInst::Create(Context, RetVal, UnwindBB));
+  CleanupReturnInst *CreateCleanupRet(CleanupPadInst *CleanupPad,
+                                      BasicBlock *UnwindBB = nullptr) {
+    return Insert(CleanupReturnInst::Create(CleanupPad, UnwindBB));
   }
 
-  CatchPadInst *CreateCatchPad(Type *Ty, BasicBlock *NormalDest,
-                               BasicBlock *UnwindDest, ArrayRef<Value *> Args,
-                               const Twine &Name = "") {
-    return Insert(CatchPadInst::Create(Ty, NormalDest, UnwindDest, Args), Name);
+  CatchPadInst *CreateCatchPad(BasicBlock *NormalDest, BasicBlock *UnwindDest,
+                               ArrayRef<Value *> Args, const Twine &Name = "") {
+    return Insert(CatchPadInst::Create(NormalDest, UnwindDest, Args), Name);
   }
 
   CatchEndPadInst *CreateCatchEndPad(BasicBlock *UnwindBB = nullptr) {
@@ -692,13 +691,13 @@ public:
     return Insert(TerminatePadInst::Create(Context, UnwindBB, Args), Name);
   }
 
-  CleanupPadInst *CreateCleanupPad(Type *Ty, ArrayRef<Value *> Args,
+  CleanupPadInst *CreateCleanupPad(ArrayRef<Value *> Args,
                                    const Twine &Name = "") {
-    return Insert(CleanupPadInst::Create(Ty, Args), Name);
+    return Insert(CleanupPadInst::Create(Context, Args), Name);
   }
 
-  CatchReturnInst *CreateCatchRet(BasicBlock *BB, Value *RetVal = nullptr) {
-    return Insert(CatchReturnInst::Create(BB, RetVal));
+  CatchReturnInst *CreateCatchRet(CatchPadInst *CatchPad, BasicBlock *BB) {
+    return Insert(CatchReturnInst::Create(CatchPad, BB));
   }
 
   UnreachableInst *CreateUnreachable() {

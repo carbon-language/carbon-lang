@@ -2674,17 +2674,13 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void visitCleanupPadInst(CleanupPadInst &I) {
-    if (!I.getType()->isVoidTy()) {
-      setShadow(&I, getCleanShadow(&I));
-      setOrigin(&I, getCleanOrigin());
-    }
+    setShadow(&I, getCleanShadow(&I));
+    setOrigin(&I, getCleanOrigin());
   }
 
   void visitCatchPad(CatchPadInst &I) {
-    if (!I.getType()->isVoidTy()) {
-      setShadow(&I, getCleanShadow(&I));
-      setOrigin(&I, getCleanOrigin());
-    }
+    setShadow(&I, getCleanShadow(&I));
+    setOrigin(&I, getCleanOrigin());
   }
 
   void visitTerminatePad(TerminatePadInst &I) {
