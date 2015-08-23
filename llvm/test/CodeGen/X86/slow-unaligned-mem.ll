@@ -37,7 +37,6 @@
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=athlon64-sse3 2>&1 | FileCheck %s --check-prefix=SLOW
 
 ; AMD chips with fast unaligned memory accesses
-; FIXME: These are wrong except for btver2.
 
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=amdfam10      2>&1 | FileCheck %s --check-prefix=FAST
 ; RUN: llc < %s -mtriple=i386-unknown-unknown -mcpu=barcelona     2>&1 | FileCheck %s --check-prefix=FAST
