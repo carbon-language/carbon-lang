@@ -887,11 +887,10 @@ static llvm::BasicBlock *emitMSVCCatchDispatchBlock(CodeGenFunction &CGF,
 
     if (EHPersonality::get(CGF).isMSVCXXPersonality()) {
       CGF.Builder.CreateCatchPad(
-          llvm::Type::getTokenTy(CGF.getLLVMContext()), Handler.Block,
-          NextBlock, {TypeValue, llvm::Constant::getNullValue(CGF.VoidPtrTy)});
+          Handler.Block, NextBlock,
+          {TypeValue, llvm::Constant::getNullValue(CGF.VoidPtrTy)});
     } else {
-      CGF.Builder.CreateCatchPad(llvm::Type::getTokenTy(CGF.getLLVMContext()),
-                                 Handler.Block, NextBlock, {TypeValue});
+      CGF.Builder.CreateCatchPad(Handler.Block, NextBlock, {TypeValue});
     }
 
     // Otherwise we need to emit and continue at that block.

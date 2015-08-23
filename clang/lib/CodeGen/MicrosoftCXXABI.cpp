@@ -859,7 +859,7 @@ struct CallEndCatchMSVC final : EHScopeStack::Cleanup {
   void Emit(CodeGenFunction &CGF, Flags flags) override {
     if (CGF.CGM.getCodeGenOpts().NewMSEH) {
       llvm::BasicBlock *BB = CGF.createBasicBlock("catchret.dest");
-      CGF.Builder.CreateCatchRet(BB, CPI);
+      CGF.Builder.CreateCatchRet(CPI, BB);
       CGF.EmitBlock(BB);
     } else {
       CGF.EmitNounwindRuntimeCall(
