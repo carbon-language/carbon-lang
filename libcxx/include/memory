@@ -932,6 +932,15 @@ public:
         {return _VSTD::addressof(__r);}
 };
 
+template <class _From, class _To>
+struct __rebind_pointer {
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+    typedef typename pointer_traits<_From>::template rebind<_To>        type;
+#else
+    typedef typename pointer_traits<_From>::template rebind<_To>::other type;
+#endif
+};
+
 // allocator_traits
 
 namespace __has_pointer_type_imp
