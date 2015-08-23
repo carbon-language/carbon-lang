@@ -682,7 +682,6 @@ CleanupReturnInst::CleanupReturnInst(const CleanupReturnInst &CRI)
                      OperandTraits<CleanupReturnInst>::op_end(this) -
                          CRI.getNumOperands(),
                      CRI.getNumOperands()) {
-  SubclassOptionalData = CRI.SubclassOptionalData;
   setInstructionSubclassData(CRI.getSubclassDataFromInstruction());
   Op<-1>() = CRI.Op<-1>();
   if (CRI.hasUnwindDest())
@@ -690,7 +689,6 @@ CleanupReturnInst::CleanupReturnInst(const CleanupReturnInst &CRI)
 }
 
 void CleanupReturnInst::init(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB) {
-  SubclassOptionalData = 0;
   if (UnwindBB)
     setInstructionSubclassData(getSubclassDataFromInstruction() | 1);
 
@@ -740,14 +738,12 @@ CatchEndPadInst::CatchEndPadInst(const CatchEndPadInst &CRI)
                      OperandTraits<CatchEndPadInst>::op_end(this) -
                          CRI.getNumOperands(),
                      CRI.getNumOperands()) {
-  SubclassOptionalData = CRI.SubclassOptionalData;
   setInstructionSubclassData(CRI.getSubclassDataFromInstruction());
   if (BasicBlock *UnwindDest = CRI.getUnwindDest())
     setUnwindDest(UnwindDest);
 }
 
 void CatchEndPadInst::init(BasicBlock *UnwindBB) {
-  SubclassOptionalData = 0;
   if (UnwindBB) {
     setInstructionSubclassData(getSubclassDataFromInstruction() | 1);
     setUnwindDest(UnwindBB);
@@ -814,14 +810,14 @@ CatchReturnInst::CatchReturnInst(CatchPadInst *CatchPad, BasicBlock *BB,
 }
 
 BasicBlock *CatchReturnInst::getSuccessorV(unsigned Idx) const {
-  assert(Idx == 0);
+  assert(Idx < getNumSuccessors() && "Successor # out of range for catchret!");
   return getSuccessor();
 }
 unsigned CatchReturnInst::getNumSuccessorsV() const {
   return getNumSuccessors();
 }
 void CatchReturnInst::setSuccessorV(unsigned Idx, BasicBlock *B) {
-  assert(Idx == 0);
+  assert(Idx < getNumSuccessors() && "Successor # out of range for catchret!");
   setSuccessor(B);
 }
 
@@ -879,7 +875,6 @@ void CatchPadInst::setSuccessorV(unsigned Idx, BasicBlock *B) {
 //                        TerminatePadInst Implementation
 //===----------------------------------------------------------------------===//
 void TerminatePadInst::init(BasicBlock *BB, ArrayRef<Value *> Args) {
-  SubclassOptionalData = 0;
   if (BB)
     setInstructionSubclassData(getSubclassDataFromInstruction() | 1);
   if (BB)
@@ -892,7 +887,6 @@ TerminatePadInst::TerminatePadInst(const TerminatePadInst &TPI)
                      OperandTraits<TerminatePadInst>::op_end(this) -
                          TPI.getNumOperands(),
                      TPI.getNumOperands()) {
-  SubclassOptionalData = TPI.SubclassOptionalData;
   setInstructionSubclassData(TPI.getSubclassDataFromInstruction());
   std::copy(TPI.op_begin(), TPI.op_end(), op_begin());
 }

@@ -3574,9 +3574,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
 //===----------------------------------------------------------------------===//
 
 class CatchEndPadInst : public TerminatorInst {
+private:
   CatchEndPadInst(const CatchEndPadInst &RI);
 
-private:
   void init(BasicBlock *UnwindBB);
   CatchEndPadInst(LLVMContext &C, BasicBlock *UnwindBB, unsigned Values,
                   Instruction *InsertBefore = nullptr);
@@ -3630,7 +3630,6 @@ private:
   unsigned getNumSuccessorsV() const override;
   void setSuccessorV(unsigned Idx, BasicBlock *B) override;
 
-private:
   // Shadow Instruction::setInstructionSubclassData with a private forwarding
   // method so that subclasses cannot accidentally use it.
   void setInstructionSubclassData(unsigned short D) {
@@ -3928,10 +3927,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CleanupPadInst, Value)
 class CatchReturnInst : public TerminatorInst {
   CatchReturnInst(const CatchReturnInst &RI);
 
-private:
   void init(CatchPadInst *CatchPad, BasicBlock *BB);
   CatchReturnInst(CatchPadInst *CatchPad, BasicBlock *BB,
-                  Instruction *InsertBefore = nullptr);
+                  Instruction *InsertBefore);
   CatchReturnInst(CatchPadInst *CatchPad, BasicBlock *BB,
                   BasicBlock *InsertAtEnd);
 
@@ -3996,19 +3994,14 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CatchReturnInst, Value)
 //===----------------------------------------------------------------------===//
 
 class CleanupReturnInst : public TerminatorInst {
+private:
   CleanupReturnInst(const CleanupReturnInst &RI);
 
-private:
   void init(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB);
   CleanupReturnInst(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB,
                     unsigned Values, Instruction *InsertBefore = nullptr);
   CleanupReturnInst(CleanupPadInst *CleanupPad, BasicBlock *UnwindBB,
                     unsigned Values, BasicBlock *InsertAtEnd);
-
-  int getUnwindLabelOpIdx() const {
-    assert(hasUnwindDest());
-    return 0;
-  }
 
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.

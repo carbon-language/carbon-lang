@@ -3876,8 +3876,7 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       }
       break;
     }
-    // CLEANUPRET: [val] or [val,bb#]
-    case bitc::FUNC_CODE_INST_CLEANUPRET: {
+    case bitc::FUNC_CODE_INST_CLEANUPRET: { // CLEANUPRET: [val] or [val,bb#]
       if (Record.size() != 1 && Record.size() != 2)
         return error("Invalid record");
       unsigned Idx = 0;
