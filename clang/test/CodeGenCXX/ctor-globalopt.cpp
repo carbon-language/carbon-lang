@@ -4,7 +4,7 @@
 // RUN: %clang_cc1 -triple %ms_abi_triple -emit-llvm -o - %s -O1 | FileCheck %s --check-prefix=O1
 
 // Check that GlobalOpt can eliminate static constructors for simple implicit
-// constructors. This is a targetted integration test to make sure that LLVM's
+// constructors. This is a targeted integration test to make sure that LLVM's
 // optimizers are able to process Clang's IR. GlobalOpt in particular is
 // sensitive to the casts we emit.
 

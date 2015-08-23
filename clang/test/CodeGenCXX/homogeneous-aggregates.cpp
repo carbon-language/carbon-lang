@@ -91,7 +91,7 @@ struct HVAWithEmptyBase : Float1, Empty, Float2 { float z; };
 // ARM32: define arm_aapcs_vfpcc void @_Z15with_empty_base16HVAWithEmptyBase(%struct.HVAWithEmptyBase %a.coerce)
 void CC with_empty_base(HVAWithEmptyBase a) {}
 
-// FIXME: MSVC doesn't consider this an HVA becuase of the empty base.
+// FIXME: MSVC doesn't consider this an HVA because of the empty base.
 // X64: define x86_vectorcallcc void @"\01_Z15with_empty_base16HVAWithEmptyBase@@16"(float %a.0, float %a.1, float %a.2)
 
 struct HVAWithEmptyBitField : Float1, Float2 {

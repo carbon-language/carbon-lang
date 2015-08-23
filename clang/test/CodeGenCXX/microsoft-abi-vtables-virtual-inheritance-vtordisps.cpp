@@ -33,7 +33,7 @@ void use_somewhere_else(void*);
 
 namespace simple {
 // In case of a single-layer virtual inheritance, the "this" adjustment for a
-// virtual method is done staically:
+// virtual method is done statically:
 //   struct A {
 //     virtual void f();  // Expects "(A*)this" in ECX
 //   };
@@ -222,7 +222,7 @@ G::G() {}
 
 namespace extended {
 // If a virtual function requires vtordisp adjustment and the final overrider
-// is defined in another vitual base of the most derived class,
+// is defined in another virtual base of the most derived class,
 // we need to know two vbase offsets.
 // In this case, we should use the extended form of vtordisp thunks, called
 // vtordispex thunks.
