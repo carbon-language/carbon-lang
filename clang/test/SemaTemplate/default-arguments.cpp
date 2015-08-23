@@ -159,3 +159,10 @@ namespace DR1635 {
 
   int g() { X<int>::f(0); } // expected-note {{in instantiation of template class 'DR1635::X<int>' requested here}}
 }
+
+namespace NondefDecls {
+  template<typename T> void f1() {
+    int g1(int defarg = T::error);  // expected-error{{type 'int' cannot be used prior to '::' because it has no members}}
+  }
+  template void f1<int>();  // expected-note{{in instantiation of function template specialization 'NondefDecls::f1<int>' requested here}}
+}

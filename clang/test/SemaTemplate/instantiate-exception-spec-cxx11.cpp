@@ -178,3 +178,11 @@ namespace Variadic {
   }
 
 }
+
+namespace NondefDecls {
+  template<typename T> void f1() {
+    int g1(int) noexcept(T::error); // expected-error{{type 'int' cannot be used prior to '::' because it has no members}}
+  }
+  template void f1<int>(); // expected-note{{in instantiation of function template specialization 'NondefDecls::f1<int>' requested here}}
+}
+

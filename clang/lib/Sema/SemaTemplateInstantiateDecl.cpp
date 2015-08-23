@@ -3247,16 +3247,11 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
     // exception specification.
     // DR1484: Local classes and their members are instantiated along with the
     // containing function.
-    bool RequireInstantiation = false;
-    if (CXXRecordDecl *Cls = dyn_cast<CXXRecordDecl>(Tmpl->getDeclContext())) {
-      if (Cls->isLocalClass())
-        RequireInstantiation = true;
-    }
     if (SemaRef.getLangOpts().CPlusPlus11 &&
         EPI.ExceptionSpec.Type != EST_None &&
         EPI.ExceptionSpec.Type != EST_DynamicNone &&
         EPI.ExceptionSpec.Type != EST_BasicNoexcept &&
-        !RequireInstantiation) {
+        !Tmpl->isLexicallyWithinFunctionOrMethod()) {
       FunctionDecl *ExceptionSpecTemplate = Tmpl;
       if (EPI.ExceptionSpec.Type == EST_Uninstantiated)
         ExceptionSpecTemplate = EPI.ExceptionSpec.SourceTemplate;

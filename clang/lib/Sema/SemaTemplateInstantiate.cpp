@@ -1682,11 +1682,10 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
     UnparsedDefaultArgInstantiations[OldParm].push_back(NewParm);
   } else if (Expr *Arg = OldParm->getDefaultArg()) {
     FunctionDecl *OwningFunc = cast<FunctionDecl>(OldParm->getDeclContext());
-    CXXRecordDecl *ClassD = dyn_cast<CXXRecordDecl>(OwningFunc->getDeclContext());
-    if (ClassD && ClassD->isLocalClass() && !ClassD->isLambda()) {
-      // If this is a method of a local class, as per DR1484 its default
-      // arguments must be instantiated.
-      Sema::ContextRAII SavedContext(*this, ClassD);
+    if (OwningFunc->isLexicallyWithinFunctionOrMethod()) {
+      // Instantiate default arguments for methods of local classes (DR1484)
+      // and non-defining declarations.
+      Sema::ContextRAII SavedContext(*this, OwningFunc);
       LocalInstantiationScope Local(*this);
       ExprResult NewArg = SubstExpr(Arg, TemplateArgs);
       if (NewArg.isUsable())
