@@ -231,6 +231,7 @@ void
 SystemInitializerFull::Initialize()
 {
     SystemInitializerCommon::Initialize();
+    ScriptInterpreterNone::Initialize();
 
 #if !defined(LLDB_DISABLE_PYTHON)
     InitializeSWIG();
@@ -238,7 +239,6 @@ SystemInitializerFull::Initialize()
     // ScriptInterpreterPython::Initialize() depends on things like HostInfo being initialized
     // so it can compute the python directory etc, so we need to do this after
     // SystemInitializerCommon::Initialize().
-    ScriptInterpreterNone::Initialize();
     ScriptInterpreterPython::Initialize();
 #endif
 
