@@ -637,6 +637,14 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     if (L && L->getLoadedSectionContents(*RelocatedSection,RelSecData))
       continue;
 
+    // In Mach-o files, the relocations do not need to be applied if
+    // there is no load offset to apply. The value read at the
+    // relocation point already factors in the section address
+    // (actually applying the relocations will produce wrong results
+    // as the section address will be added twice).
+    if (!L && dyn_cast<MachOObjectFile>(&Obj))
+      continue;
+
     RelSecName = RelSecName.substr(
         RelSecName.find_first_not_of("._")); // Skip . and _ prefixes.
 
