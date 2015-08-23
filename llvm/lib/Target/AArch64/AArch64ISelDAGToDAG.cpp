@@ -2904,6 +2904,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       break;
     }
     }
+    break;
   }
   case AArch64ISD::LD2post: {
     if (VT == MVT::v8i8)
