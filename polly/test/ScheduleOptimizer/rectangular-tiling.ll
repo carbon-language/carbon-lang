@@ -22,8 +22,10 @@
 ; RUN:                -polly-2nd-level-tile-sizes=16,8 < %s | \
 ; RUN: FileCheck %s --check-prefix=TWO-PLUS-REGISTER-PLUS-VECTORIZATION
 
+; CHECK: // 1st level tiling - Tiles
 ; CHECK: for (int c0 = 0; c0 <= 3; c0 += 1)
 ; CHECK:   for (int c1 = 0; c1 <= 31; c1 += 1)
+; CHECK:     // 1st level tiling - Points
 ; CHECK:     for (int c2 = 0; c2 <= 255; c2 += 1)
 ; CHECK:       for (int c3 = 0; c3 <= 15; c3 += 1)
 ; CHECK:         Stmt_for_body3(256 * c0 + c2, 16 * c1 + c3);
@@ -33,26 +35,37 @@
 ; NOTILING:     Stmt_for_body3(c0, c1);
 
 
+; TWOLEVEL: // 1st level tiling - Tiles
 ; TWOLEVEL: for (int c0 = 0; c0 <= 3; c0 += 1)
 ; TWOLEVEL:   for (int c1 = 0; c1 <= 31; c1 += 1)
+; TWOLEVEL:     // 1st level tiling - Points
+; TWOLEVEL:     // 2nd level tiling - Tiles
 ; TWOLEVEL:     for (int c2 = 0; c2 <= 15; c2 += 1)
 ; TWOLEVEL:       for (int c3 = 0; c3 <= 1; c3 += 1)
+; TWOLEVEL:         // 2nd level tiling - Points
 ; TWOLEVEL:         for (int c4 = 0; c4 <= 15; c4 += 1)
 ; TWOLEVEL:           for (int c5 = 0; c5 <= 7; c5 += 1)
 ; TWOLEVEL:             Stmt_for_body3(256 * c0 + 16 * c2 + c4, 16 * c1 + 8 * c3 + c5);
 
 
+; TWO-PLUS-REGISTER: // 1st level tiling - Tiles
 ; TWO-PLUS-REGISTER: for (int c0 = 0; c0 <= 3; c0 += 1)
 ; TWO-PLUS-REGISTER:   for (int c1 = 0; c1 <= 31; c1 += 1)
+; TWO-PLUS-REGISTER:     // 1st level tiling - Points
+; TWO-PLUS-REGISTER:     // 2nd level tiling - Tiles
 ; TWO-PLUS-REGISTER:     for (int c2 = 0; c2 <= 15; c2 += 1)
 ; TWO-PLUS-REGISTER:       for (int c3 = 0; c3 <= 1; c3 += 1)
+; TWO-PLUS-REGISTER:         // 2nd level tiling - Points
+; TWO-PLUS-REGISTER:         // Register tiling - Tiles
 ; TWO-PLUS-REGISTER:         for (int c4 = 0; c4 <= 7; c4 += 1)
-; TWO-PLUS-REGISTER:           for (int c5 = 0; c5 <= 3; c5 += 1) {
-; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4, 16 * c1 + 8 * c3 + 2 * c5);
-; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4, 16 * c1 + 8 * c3 + 2 * c5 + 1);
-; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4 + 1, 16 * c1 + 8 * c3 + 2 * c5);
-; TWO-PLUS-REGISTER:             Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4 + 1, 16 * c1 + 8 * c3 + 2 * c5 + 1);
-; TWO-PLUS-REGISTER:           }
+; TWO-PLUS-REGISTER:           for (int c5 = 0; c5 <= 3; c5 += 1)
+; TWO-PLUS-REGISTER:             // Register tiling - Points
+; TWO-PLUS-REGISTER:             {
+; TWO-PLUS-REGISTER:               Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4, 16 * c1 + 8 * c3 + 2 * c5);
+; TWO-PLUS-REGISTER:               Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4, 16 * c1 + 8 * c3 + 2 * c5 + 1);
+; TWO-PLUS-REGISTER:               Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4 + 1, 16 * c1 + 8 * c3 + 2 * c5);
+; TWO-PLUS-REGISTER:               Stmt_for_body3(256 * c0 + 16 * c2 + 2 * c4 + 1, 16 * c1 + 8 * c3 + 2 * c5 + 1);
+; TWO-PLUS-REGISTER:             }
 
 ; TWO-PLUS-REGISTER-PLUS-VECTORIZATION: #pragma known-parallel
 ; TWO-PLUS-REGISTER-PLUS-VECTORIZATION: for (int c0 = 0; c0 <= 3; c0 += 1)

@@ -174,6 +174,14 @@ private:
   /// @param NewValues A map that maps certain llvm::Values to new llvm::Values.
   void updateValues(ParallelLoopGenerator::ValueToValueMapTy &NewValues);
 
+  /// @brief Generate code for a marker now.
+  ///
+  /// For mark nodes with an unknown name, we just forward the code generation
+  /// to its child. This is currently the only behavior implemented, as there is
+  /// currently not special handling for marker nodes implemented.
+  ///
+  /// @param Mark The node we generate code for.
+  void createMark(__isl_take isl_ast_node *Marker);
   void createFor(__isl_take isl_ast_node *For);
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);

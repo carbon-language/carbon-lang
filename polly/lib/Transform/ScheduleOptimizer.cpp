@@ -187,13 +187,16 @@ private:
   /// @brief Tile a schedule node.
   ///
   /// @param Node            The node to tile.
+  /// @param Identifier      An name that identifies this kind of tiling and
+  ///                        that is used to mark the tiled loops in the
+  ///                        generated AST.
   /// @param TileSizes       A vector of tile sizes that should be used for
   ///                        tiling.
   /// @param DefaultTileSize A default tile size that is used for dimensions
   ///                        that are not covered by the TileSizes vector.
   static __isl_give isl_schedule_node *
-  tileNode(__isl_take isl_schedule_node *Node, ArrayRef<int> TileSizes,
-           int DefaultTileSize);
+  tileNode(__isl_take isl_schedule_node *Node, const char *Identifier,
+           ArrayRef<int> TileSizes, int DefaultTileSize);
 
   /// @brief Check if this node is a band node we want to tile.
   ///
@@ -317,17 +320,30 @@ IslScheduleOptimizer::prevectSchedBand(__isl_take isl_schedule_node *Node,
 
 __isl_give isl_schedule_node *
 IslScheduleOptimizer::tileNode(__isl_take isl_schedule_node *Node,
-                               ArrayRef<int> TileSizes, int DefaultTileSize) {
+                               const char *Identifier, ArrayRef<int> TileSizes,
+                               int DefaultTileSize) {
   auto Ctx = isl_schedule_node_get_ctx(Node);
   auto Space = isl_schedule_node_band_get_space(Node);
   auto Dims = isl_space_dim(Space, isl_dim_set);
   auto Sizes = isl_multi_val_zero(Space);
+  std::string IdentifierString(Identifier);
   for (unsigned i = 0; i < Dims; i++) {
     auto tileSize = i < TileSizes.size() ? TileSizes[i] : DefaultTileSize;
     Sizes = isl_multi_val_set_val(Sizes, i, isl_val_int_from_si(Ctx, tileSize));
   }
+  auto TileLoopMarkerStr = IdentifierString + " - Tiles";
+  isl_id *TileLoopMarker =
+      isl_id_alloc(Ctx, TileLoopMarkerStr.c_str(), nullptr);
+  Node = isl_schedule_node_insert_mark(Node, TileLoopMarker);
+  Node = isl_schedule_node_child(Node, 0);
   Node = isl_schedule_node_band_tile(Node, Sizes);
-  return isl_schedule_node_child(Node, 0);
+  Node = isl_schedule_node_child(Node, 0);
+  auto PointLoopMarkerStr = IdentifierString + " - Points";
+  isl_id *PointLoopMarker =
+      isl_id_alloc(Ctx, PointLoopMarkerStr.c_str(), nullptr);
+  Node = isl_schedule_node_insert_mark(Node, PointLoopMarker);
+  Node = isl_schedule_node_child(Node, 0);
+  return Node;
 }
 
 bool IslScheduleOptimizer::isTileableBandNode(
@@ -365,14 +381,17 @@ IslScheduleOptimizer::optimizeBand(__isl_take isl_schedule_node *Node,
     return Node;
 
   if (FirstLevelTiling)
-    Node = tileNode(Node, FirstLevelTileSizes, FirstLevelDefaultTileSize);
+    Node = tileNode(Node, "1st level tiling", FirstLevelTileSizes,
+                    FirstLevelDefaultTileSize);
 
   if (SecondLevelTiling)
-    Node = tileNode(Node, SecondLevelTileSizes, SecondLevelDefaultTileSize);
+    Node = tileNode(Node, "2nd level tiling", SecondLevelTileSizes,
+                    SecondLevelDefaultTileSize);
 
   if (RegisterTiling) {
     auto *Ctx = isl_schedule_node_get_ctx(Node);
-    Node = tileNode(Node, RegisterTileSizes, RegisterDefaultTileSize);
+    Node = tileNode(Node, "Register tiling", RegisterTileSizes,
+                    RegisterDefaultTileSize);
     Node = isl_schedule_node_band_set_ast_build_options(
         Node, isl_union_set_read_from_str(Ctx, "{unroll[x]}"));
   }

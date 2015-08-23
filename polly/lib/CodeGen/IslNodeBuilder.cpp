@@ -275,6 +275,12 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_ast_node_free(User);
 }
 
+void IslNodeBuilder::createMark(__isl_take isl_ast_node *Node) {
+  auto Child = isl_ast_node_mark_get_node(Node);
+  create(Child);
+  isl_ast_node_free(Node);
+}
+
 void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
                                      int VectorWidth) {
   isl_ast_node *Body = isl_ast_node_for_get_body(For);
@@ -691,7 +697,8 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
   case isl_ast_node_error:
     llvm_unreachable("code generation error");
   case isl_ast_node_mark:
-    llvm_unreachable("Mark node unexpected");
+    createMark(Node);
+    return;
   case isl_ast_node_for:
     createFor(Node);
     return;
