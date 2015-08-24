@@ -46,6 +46,12 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
     case SHT_SYMTAB:
       Symtab = &Sec;
       break;
+    case SHT_SYMTAB_SHNDX: {
+      ErrorOr<ArrayRef<Elf_Word>> ErrorOrTable = ELFObj->getSHNDXTable(Sec);
+      error(ErrorOrTable);
+      SymtabSHNDX = *ErrorOrTable;
+      break;
+    }
     case SHT_STRTAB:
     case SHT_NULL:
     case SHT_RELA:
@@ -82,7 +88,11 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   ErrorOr<StringRef> NameOrErr = Sym->getName(StringTable);
   error(NameOrErr.getError());
   StringRef Name = *NameOrErr;
-  uint16_t SecIndex = Sym->st_shndx;
+
+  uint32_t SecIndex = Sym->st_shndx;
+  if (SecIndex == SHN_XINDEX)
+    SecIndex = ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
+
   switch (Sym->getBinding()) {
   default:
     error("unexpected binding");

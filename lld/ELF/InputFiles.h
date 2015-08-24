@@ -65,6 +65,7 @@ template <class ELFT> class ObjectFile : public ObjectFileBase {
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Range Elf_Sym_Range;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
 public:
   bool isCompatibleWith(const ObjectFileBase &Other) const override;
@@ -102,6 +103,7 @@ private:
   std::vector<SectionChunk<ELFT> *> Chunks;
 
   const Elf_Shdr *Symtab = nullptr;
+  ArrayRef<Elf_Word> SymtabSHNDX;
 };
 
 } // namespace elf2
