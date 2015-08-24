@@ -92,6 +92,8 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   assert(NumDefs <= 1 &&
          "Instructions with multiple result values not implemented");
 
+  OS << '\t';
+
   if (NumDefs != 0) {
     const MachineOperand &MO = MI->getOperand(0);
     unsigned Reg = MO.getReg();
