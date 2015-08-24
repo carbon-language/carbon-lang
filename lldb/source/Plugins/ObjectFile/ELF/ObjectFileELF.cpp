@@ -847,40 +847,52 @@ ObjectFileELF::SetLoadAddress (Target &target,
         SectionList *section_list = GetSectionList ();
         if (section_list)
         {
-            if (value_is_offset)
+            if (!value_is_offset)
             {
-                const size_t num_sections = section_list->GetSize();
-                size_t sect_idx = 0;
-
-                for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+                bool found_offset = false;
+                for (size_t i = 0, count = GetProgramHeaderCount(); i < count; ++i)
                 {
-                    // Iterate through the object file sections to find all
-                    // of the sections that have SHF_ALLOC in their flag bits.
-                    SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
-                    // if (section_sp && !section_sp->IsThreadSpecific())
-                    if (section_sp && section_sp->Test(SHF_ALLOC))
-                    {
-                        lldb::addr_t load_addr = section_sp->GetFileAddress() + value;
-                        
-                        // On 32-bit systems the load address have to fit into 4 bytes. The rest of
-                        // the bytes are the overflow from the addition.
-                        if (GetAddressByteSize() == 4)
-                            load_addr &= 0xFFFFFFFF;
+                    const elf::ELFProgramHeader* header = GetProgramHeaderByIndex(i);
+                    if (header == nullptr)
+                        continue;
 
-                        if (target.GetSectionLoadList().SetSectionLoadAddress (section_sp, load_addr))
-                            ++num_loaded_sections;
-                    }
+                    if (header->p_type != PT_LOAD || header->p_offset != 0)
+                        continue;
+                    
+                    value = value - header->p_vaddr;
+                    found_offset = true;
+                    break;
                 }
-                return num_loaded_sections > 0;
+                if (!found_offset)
+                    return false;
             }
-            else
+
+            const size_t num_sections = section_list->GetSize();
+            size_t sect_idx = 0;
+
+            for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
             {
-                // Not sure how to slide an ELF file given the base address
-                // of the ELF file in memory
+                // Iterate through the object file sections to find all
+                // of the sections that have SHF_ALLOC in their flag bits.
+                SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
+                // if (section_sp && !section_sp->IsThreadSpecific())
+                if (section_sp && section_sp->Test(SHF_ALLOC))
+                {
+                    lldb::addr_t load_addr = section_sp->GetFileAddress() + value;
+
+                    // On 32-bit systems the load address have to fit into 4 bytes. The rest of
+                    // the bytes are the overflow from the addition.
+                    if (GetAddressByteSize() == 4)
+                        load_addr &= 0xFFFFFFFF;
+
+                    if (target.GetSectionLoadList().SetSectionLoadAddress (section_sp, load_addr))
+                        ++num_loaded_sections;
+                }
             }
+            return num_loaded_sections > 0;
         }
     }
-    return false; // If it changed
+    return false;
 }
 
 ByteOrder

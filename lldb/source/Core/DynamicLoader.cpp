@@ -119,16 +119,20 @@ DynamicLoader::GetTargetExecutable()
 }
 
 void
-DynamicLoader::UpdateLoadedSections(ModuleSP module, addr_t link_map_addr, addr_t base_addr)
+DynamicLoader::UpdateLoadedSections(ModuleSP module,
+                                    addr_t link_map_addr,
+                                    addr_t base_addr,
+                                    bool base_addr_is_offset)
 {
-    UpdateLoadedSectionsCommon(module, base_addr);
+    UpdateLoadedSectionsCommon(module, base_addr, base_addr_is_offset);
 }
 
 void
-DynamicLoader::UpdateLoadedSectionsCommon(ModuleSP module, addr_t base_addr)
+DynamicLoader::UpdateLoadedSectionsCommon(ModuleSP module,
+                                          addr_t base_addr,
+                                          bool base_addr_is_offset)
 {
     bool changed;
-    const bool base_addr_is_offset = true;
     module->SetLoadAddress(m_process->GetTarget(), base_addr, base_addr_is_offset, changed);
 }
 
@@ -171,7 +175,10 @@ DynamicLoader::GetSectionListFromModule(const ModuleSP module) const
 }
 
 ModuleSP
-DynamicLoader::LoadModuleAtAddress(const FileSpec &file, addr_t link_map_addr, addr_t base_addr)
+DynamicLoader::LoadModuleAtAddress(const FileSpec &file,
+                                   addr_t link_map_addr,
+                                   addr_t base_addr,
+                                   bool base_addr_is_offset)
 {
     Target &target = m_process->GetTarget();
     ModuleList &modules = target.GetImages();
@@ -180,27 +187,28 @@ DynamicLoader::LoadModuleAtAddress(const FileSpec &file, addr_t link_map_addr, a
     ModuleSpec module_spec (file, target.GetArchitecture());
     if ((module_sp = modules.FindFirstModule (module_spec)))
     {
-        UpdateLoadedSections(module_sp, link_map_addr, base_addr);
+        UpdateLoadedSections(module_sp, link_map_addr, base_addr, base_addr_is_offset);
     }
     else if ((module_sp = target.GetSharedModule(module_spec)))
     {
-        UpdateLoadedSections(module_sp, link_map_addr, base_addr);
+        UpdateLoadedSections(module_sp, link_map_addr, base_addr, base_addr_is_offset);
     }
     else
     {
-        // Try to fetch the load address of the file from the process. It can be different from the
-        // address reported by the linker in case of a file with fixed load address because the
-        // linker reports the bias between the load address specified in the file and the actual
-        // load address it loaded the file.
-        bool is_loaded;
-        lldb::addr_t load_addr;
-        Error error = m_process->GetFileLoadAddress(file, is_loaded, load_addr);
-        if (error.Fail() || !is_loaded)
-            load_addr = base_addr;
-
-        if ((module_sp = m_process->ReadModuleFromMemory(file, load_addr)))
+        if (base_addr_is_offset)
         {
-            UpdateLoadedSections(module_sp, link_map_addr, base_addr);
+            // Try to fetch the load address of the file from the process as we need absolute load
+            // address to read the file out of the memory instead of a load bias.
+            bool is_loaded;
+            lldb::addr_t load_addr;
+            Error error = m_process->GetFileLoadAddress(file, is_loaded, load_addr);
+            if (error.Success() && is_loaded)
+                base_addr = load_addr;
+        }
+
+        if ((module_sp = m_process->ReadModuleFromMemory(file, base_addr)))
+        {
+            UpdateLoadedSections(module_sp, link_map_addr, base_addr, false);
             target.GetImages().AppendIfNeeded(module_sp);
         }
     }

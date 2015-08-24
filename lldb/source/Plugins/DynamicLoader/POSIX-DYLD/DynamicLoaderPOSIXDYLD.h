@@ -103,7 +103,7 @@ protected:
 
     /// Enables a breakpoint on a function called by the runtime
     /// linker each time a module is loaded or unloaded.
-    void
+    virtual void
     SetRendezvousBreakpoint();
 
     /// Callback routine which updates the current list of loaded modules based
@@ -126,16 +126,17 @@ protected:
     /// @param link_map_addr The virtual address of the link map for the @p module.
     ///
     /// @param base_addr The virtual base address @p module is loaded at.
-    virtual void
+    void
     UpdateLoadedSections(lldb::ModuleSP module,
                          lldb::addr_t link_map_addr,
-                         lldb::addr_t base_addr);
+                         lldb::addr_t base_addr,
+                         bool base_addr_is_offset) override;
 
     /// Removes the loaded sections from the target in @p module.
     ///
     /// @param module The module to traverse.
-    virtual void
-    UnloadSections(const lldb::ModuleSP module);
+    void
+    UnloadSections(const lldb::ModuleSP module) override;
 
     /// Resolves the entry point for the current inferior process and sets a
     /// breakpoint at that address.
@@ -155,7 +156,7 @@ protected:
 
     /// Helper for the entry breakpoint callback.  Resolves the load addresses
     /// of all dependent modules.
-    void
+    virtual void
     LoadAllCurrentModules();
 
     /// Computes a value for m_load_offset returning the computed address on
