@@ -22,4 +22,5 @@ UBSAN_FLAG(bool, halt_on_error, false,
 UBSAN_FLAG(bool, print_stacktrace, false,
            "Include full stacktrace into an error report")
 UBSAN_FLAG(const char *, suppressions, "", "Suppressions file name.")
-
+UBSAN_FLAG(bool, report_error_type, false,
+        "Print specific error type instead of 'undefined-behavior' in summary.")

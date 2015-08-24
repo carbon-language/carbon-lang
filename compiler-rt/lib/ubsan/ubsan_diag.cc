@@ -43,10 +43,23 @@ static void MaybePrintStackTrace(uptr pc, uptr bp) {
   stack.Print();
 }
 
-static void MaybeReportErrorSummary(Location Loc) {
+static const char *ConvertTypeToString(ErrorType Type) {
+  switch (Type) {
+#define UBSAN_CHECK(Name, SummaryKind, FlagName)                               \
+  case ErrorType::Name:                                                        \
+    return SummaryKind;
+#include "ubsan_checks.inc"
+#undef UBSAN_CHECK
+  }
+  UNREACHABLE("unknown ErrorType!");
+}
+
+static void MaybeReportErrorSummary(Location Loc, ErrorType Type) {
   if (!common_flags()->print_summary)
     return;
-  const char *ErrorType = "undefined-behavior";
+  if (!flags()->report_error_type)
+    Type = ErrorType::GenericUB;
+  const char *ErrorKind = ConvertTypeToString(Type);
   if (Loc.isSourceLocation()) {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (!SLoc.isInvalid()) {
@@ -55,16 +68,16 @@ static void MaybeReportErrorSummary(Location Loc) {
       AI.line = SLoc.getLine();
       AI.column = SLoc.getColumn();
       AI.function = internal_strdup("");  // Avoid printing ?? as function name.
-      ReportErrorSummary(ErrorType, AI);
+      ReportErrorSummary(ErrorKind, AI);
       AI.Clear();
       return;
     }
   } else if (Loc.isSymbolizedStack()) {
     const AddressInfo &AI = Loc.getSymbolizedStack()->info;
-    ReportErrorSummary(ErrorType, AI);
+    ReportErrorSummary(ErrorKind, AI);
     return;
   }
-  ReportErrorSummary(ErrorType);
+  ReportErrorSummary(ErrorKind);
 }
 
 namespace {
@@ -341,15 +354,16 @@ Diag::~Diag() {
                         NumRanges, Args);
 }
 
-ScopedReport::ScopedReport(ReportOptions Opts, Location SummaryLoc)
-    : Opts(Opts), SummaryLoc(SummaryLoc) {
+ScopedReport::ScopedReport(ReportOptions Opts, Location SummaryLoc,
+                           ErrorType Type)
+    : Opts(Opts), SummaryLoc(SummaryLoc), Type(Type) {
   InitAsStandaloneIfNecessary();
   CommonSanitizerReportMutex.Lock();
 }
 
 ScopedReport::~ScopedReport() {
   MaybePrintStackTrace(Opts.pc, Opts.bp);
-  MaybeReportErrorSummary(SummaryLoc);
+  MaybeReportErrorSummary(SummaryLoc, Type);
   CommonSanitizerReportMutex.Unlock();
   if (Opts.DieAfterReport || flags()->halt_on_error)
     Die();

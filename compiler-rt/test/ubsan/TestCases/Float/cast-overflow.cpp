@@ -1,6 +1,6 @@
 // RUN: %clangxx -fsanitize=float-cast-overflow %s -o %t
 // RUN: %run %t _
-// RUN: env UBSAN_OPTIONS=print_summary=1 %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
+// RUN: env UBSAN_OPTIONS=print_summary=1:report_error_type=1 %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
 // RUN: %run %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
 // RUN: %run %t 2 2>&1 | FileCheck %s --check-prefix=CHECK-2
 // RUN: %run %t 3 2>&1 | FileCheck %s --check-prefix=CHECK-3
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     // successfully round-trip, depending on the rounding mode.
     // CHECK-0: {{.*}}cast-overflow.cpp:[[@LINE+1]]:27: runtime error: value 2.14748{{.*}} is outside the range of representable values of type 'int'
     static int test_int = MaxFloatRepresentableAsInt + 0x80;
-    // CHECK-0: SUMMARY: {{.*}}Sanitizer: undefined-behavior {{.*}}cast-overflow.cpp:[[@LINE-1]]
+    // CHECK-0: SUMMARY: {{.*}}Sanitizer: float-cast-overflow {{.*}}cast-overflow.cpp:[[@LINE-1]]
     return 0;
     }
   case '1': {

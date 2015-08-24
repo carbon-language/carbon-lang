@@ -1,10 +1,13 @@
-// RUN: %clangxx -fsanitize=integer %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx -fsanitize=integer %s -o %t
+// RUN: %t 2>&1 | FileCheck %s --check-prefix=CHECK-NOTYPE
+// RUN: env UBSAN_OPTIONS=report_error_type=1 %t 2>&1 | FileCheck %s --check-prefix=CHECK-TYPE
 // REQUIRES: ubsan-asan
 
 #include <stdint.h>
 
 int main() {
   (void)(uint64_t(10000000000000000000ull) + uint64_t(9000000000000000000ull));
-  // CHECK: SUMMARY: AddressSanitizer: undefined-behavior {{.*}}summary.cpp:[[@LINE-1]]:44
+  // CHECK-NOTYPE: SUMMARY: AddressSanitizer: undefined-behavior {{.*}}summary.cpp:[[@LINE-1]]:44
+  // CHECK-TYPE: SUMMARY: AddressSanitizer: unsigned-integer-overflow {{.*}}summary.cpp:[[@LINE-2]]:44
   return 0;
 }
