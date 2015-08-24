@@ -17,11 +17,7 @@ class CreateDuringInstructionStepTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
 
-    @dsym_test
-    def test_step_inst_with_dsym(self):
-        self.buildDsym(dictionary=self.getBuildFlags())
-        self.create_during_step_inst_test()
-
+    @skipUnlessPlatform(['linux'])
     @dwarf_test
     def test_step_inst_with_dwarf(self):
         self.buildDwarf(dictionary=self.getBuildFlags())
