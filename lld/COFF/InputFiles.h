@@ -206,7 +206,7 @@ public:
   MachineTypes getMachineType() override;
 
   LTOModule *getModule() const { return M.get(); }
-  LTOModule *releaseModule() { return M.release(); }
+  std::unique_ptr<LTOModule> takeModule() { return std::move(M); }
 
 private:
   void parse() override;

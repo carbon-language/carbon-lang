@@ -401,7 +401,7 @@ ObjectFile *SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
       CG->addMustPreserveSymbol(S->getName());
   }
 
-  CG->setModule(BitcodeFiles[0]->releaseModule());
+  CG->setModule(BitcodeFiles[0]->takeModule());
   for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)
     CG->addModule(BitcodeFiles[I]->getModule());
 
