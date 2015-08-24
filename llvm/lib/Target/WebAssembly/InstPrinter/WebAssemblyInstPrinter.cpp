@@ -44,16 +44,3 @@ void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   printInstruction(MI, OS);
   printAnnotation(OS, Annot);
 }
-
-void WebAssemblyInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                          raw_ostream &O) {
-  const MCOperand &Op = MI->getOperand(OpNo);
-  if (Op.isReg())
-    O << getRegisterName(Op.getReg());
-  else if (Op.isImm())
-    O << '#' << Op.getImm();
-  else {
-    assert(Op.isExpr() && "unknown operand kind in printOperand");
-    Op.getExpr()->print(O, &MAI);
-  }
-}

@@ -24,9 +24,9 @@ namespace WebAssemblyISD {
 
 enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
-#define HANDLE_NODETYPE(NODE) NODE,
-#include "WebAssemblyISD.def"
-#undef HANDLE_NODETYPE
+  RETURN,
+  ARGUMENT,
+
   // add memory opcodes starting at ISD::FIRST_TARGET_MEMORY_OPCODE here...
 };
 
@@ -51,9 +51,6 @@ private:
   MVT getScalarShiftAmountTy(const DataLayout &DL, EVT) const override;
 
   const char *getTargetNodeName(unsigned Opcode) const override;
-
-  SDValue LowerCall(CallLoweringInfo &CLI,
-                    SmallVectorImpl<SDValue> &InVals) const override;
 
   bool CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
                       bool isVarArg,

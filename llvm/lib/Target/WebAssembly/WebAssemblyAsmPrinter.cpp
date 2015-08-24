@@ -85,7 +85,6 @@ static SmallString<32> Name(const WebAssemblyInstrInfo *TII,
 }
 
 void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  DEBUG(dbgs() << "EmitInstruction: " << *MI << '\n');
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
 
