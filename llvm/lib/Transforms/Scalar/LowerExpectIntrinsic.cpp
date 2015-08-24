@@ -139,7 +139,7 @@ static bool lowerExpectIntrinsic(Function &F) {
         ExpectIntrinsicsHandled++;
     }
 
-    // remove llvm.expect intrinsics.
+    // Remove llvm.expect intrinsics.
     for (BasicBlock::iterator BI = BB.begin(), BE = BB.end(); BI != BE;) {
       CallInst *CI = dyn_cast<CallInst>(BI++);
       if (!CI)
