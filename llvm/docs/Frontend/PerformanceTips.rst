@@ -15,8 +15,11 @@ generate IR that optimizes well.  As with any optimizer, LLVM has its strengths
 and weaknesses.  In some cases, surprisingly small changes in the source IR 
 can have a large effect on the generated code.  
 
+IR Best Practices
+=================
+
 Avoid loads and stores of large aggregate type
-================================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 LLVM currently does not optimize well loads and stores of large :ref:`aggregate
 types <t_aggregate>` (i.e. structs and arrays).  As an alternative, consider 
@@ -27,7 +30,7 @@ instruction supported by the targeted hardware are well supported.  These can
 be an effective way to represent collections of small packed fields.  
 
 Prefer zext over sext when legal
-==================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 On some architectures (X86_64 is one), sign extension can involve an extra 
 instruction whereas zero extension can be folded into a load.  LLVM will try to
@@ -39,7 +42,7 @@ Alternatively, you can :ref:`specify the range of the value using metadata
 <range-metadata>` and LLVM can do the sext to zext conversion for you.
 
 Zext GEP indices to machine register width
-============================================
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Internally, LLVM often promotes the width of GEP indices to machine register
 width.  When it does so, it will default to using sign extension (sext) 
@@ -47,46 +50,17 @@ operations for safety.  If your source language provides information about
 the range of the index, you may wish to manually extend indices to machine 
 register width using a zext instruction.
 
-Other things to consider
-=========================
+Other Things to Consider
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. Make sure that a DataLayout is provided (this will likely become required in
    the near future, but is certainly important for optimization).
 
-#. Add nsw/nuw flags as appropriate.  Reasoning about overflow is 
-   generally hard for an optimizer so providing these facts from the frontend 
-   can be very impactful.  
-
-#. Use fast-math flags on floating point operations if legal.  If you don't 
-   need strict IEEE floating point semantics, there are a number of additional 
-   optimizations that can be performed.  This can be highly impactful for 
-   floating point intensive computations.
-
-#. Use inbounds on geps.  This can help to disambiguate some aliasing queries.
-
-#. Add noalias/align/dereferenceable/nonnull to function arguments and return 
-   values as appropriate
-
-#. Mark functions as readnone/readonly or noreturn/nounwind when known.  The 
-   optimizer will try to infer these flags, but may not always be able to.  
-   Manual annotations are particularly important for external functions that 
-   the optimizer can not analyze.
-
 #. Use ptrtoint/inttoptr sparingly (they interfere with pointer aliasing 
    analysis), prefer GEPs
 
-#. Use the lifetime.start/lifetime.end and invariant.start/invariant.end 
-   intrinsics where possible.  Common profitable uses are for stack like data 
-   structures (thus allowing dead store elimination) and for describing 
-   life times of allocas (thus allowing smaller stack sizes).  
-
-#. Use pointer aliasing metadata, especially tbaa metadata, to communicate 
-   otherwise-non-deducible pointer aliasing facts
-
 #. Use the "most-private" possible linkage types for the functions being defined
    (private, internal or linkonce_odr preferably)
-
-#. Mark invariant locations using !invariant.load and TBAA's constant flags
 
 #. Prefer globals over inttoptr of a constant address - this gives you 
    dereferencability information.  In MCJIT, use getSymbolAddress to provide 
@@ -103,15 +77,6 @@ Other things to consider
    code in the current function, you can use a noreturn call instruction if 
    desired.  This is generally not required because the optimizer will convert
    an invoke with an unreachable unwind destination to a call instruction.
-
-#. If you language uses range checks, consider using the IRCE pass.  It is not 
-   currently part of the standard pass order.
-
-#. For languages with numerous rarely executed guard conditions (e.g. null 
-   checks, type checks, range checks) consider adding an extra execution or 
-   two of LoopUnswith and LICM to your pass order.  The standard pass order, 
-   which is tuned for C and C++ applications, may not be sufficient to remove 
-   all dischargeable checks from loops.
 
 #. Use profile metadata to indicate statically known cold paths, even if 
    dynamic profiling information is not available.  This can make a large 
@@ -164,10 +129,53 @@ Other things to consider
    time and optimization effectiveness.  The former is fixable with enough 
    effort, but the later is fairly fundamental to their designed purpose.
 
-p.s. If you want to help improve this document, patches expanding any of the 
-above items into standalone sections of their own with a more complete 
-discussion would be very welcome.  
 
+Describing Language Specific Properties
+=======================================
+
+When translating a source language to LLVM, finding ways to express concepts and guarantees available in your source language which are not natively provided by LLVM IR will greatly improve LLVM's ability to optimize your code.  As an example, C/C++'s ability to mark every add as "no signed wrap (nsw)" goes along way to assisting the optimizer in reasoning about loop induction variables.  
+
+The LLVM LangRef includes a number of mechanisms for annotating the IR with additional semantic information.  It is *strongly* recommended that you become highly familiar with this document.  The list below is intended to highlight a couple of items of particular interest, but is by no means exhaustive.
+
+#. Add nsw/nuw flags as appropriate.  Reasoning about overflow is 
+   generally hard for an optimizer so providing these facts from the frontend 
+   can be very impactful.  
+
+#. Use fast-math flags on floating point operations if legal.  If you don't 
+   need strict IEEE floating point semantics, there are a number of additional 
+   optimizations that can be performed.  This can be highly impactful for 
+   floating point intensive computations.
+
+#. Use inbounds on geps.  This can help to disambiguate some aliasing queries.
+
+#. Add noalias/align/dereferenceable/nonnull to function arguments and return 
+   values as appropriate
+
+#. Mark functions as readnone/readonly or noreturn/nounwind when known.  The 
+   optimizer will try to infer these flags, but may not always be able to.  
+   Manual annotations are particularly important for external functions that 
+   the optimizer can not analyze.
+
+#. Use the lifetime.start/lifetime.end and invariant.start/invariant.end 
+   intrinsics where possible.  Common profitable uses are for stack like data 
+   structures (thus allowing dead store elimination) and for describing 
+   life times of allocas (thus allowing smaller stack sizes).  
+
+#. Use pointer aliasing metadata, especially tbaa metadata, to communicate 
+   otherwise-non-deducible pointer aliasing facts
+
+#. Mark invariant locations using !invariant.load and TBAA's constant flags
+
+#. If you language uses range checks, consider using the IRCE pass.  It is not 
+   currently part of the standard pass order.
+
+#. For languages with numerous rarely executed guard conditions (e.g. null 
+   checks, type checks, range checks) consider adding an extra execution or 
+   two of LoopUnswith and LICM to your pass order.  The standard pass order, 
+   which is tuned for C and C++ applications, may not be sufficient to remove 
+   all dischargeable checks from loops.
+
+If you didn't find what you were looking for above, consider proposing an piece of metadata which provides the optimization hint you need.  Such extensions are relatively common and are generally well received by the community.  You will need to ensure that your proposal is sufficiently general so that it benefits others if you wish to contribute it upstream.
 
 Adding to this document
 =======================
