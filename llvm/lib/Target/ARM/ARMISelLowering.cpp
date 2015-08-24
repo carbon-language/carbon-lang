@@ -738,11 +738,13 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UDIV,  MVT::i32, Expand);
   }
 
-  // FIXME: Also set divmod for SREM on EABI/androideabi
   setOperationAction(ISD::SREM,  MVT::i32, Expand);
   setOperationAction(ISD::UREM,  MVT::i32, Expand);
   // Register based DivRem for AEABI (RTABI 4.2)
   if (Subtarget->isTargetAEABI() || Subtarget->isTargetAndroid()) {
+    setOperationAction(ISD::SREM, MVT::i64, Custom);
+    setOperationAction(ISD::UREM, MVT::i64, Custom);
+
     setLibcallName(RTLIB::SDIVREM_I8,  "__aeabi_idivmod");
     setLibcallName(RTLIB::SDIVREM_I16, "__aeabi_idivmod");
     setLibcallName(RTLIB::SDIVREM_I32, "__aeabi_idivmod");
@@ -6716,6 +6718,8 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:           return LowerShift(Op.getNode(), DAG, Subtarget);
+  case ISD::SREM:          return LowerREM(Op.getNode(), DAG);
+  case ISD::UREM:          return LowerREM(Op.getNode(), DAG);
   case ISD::SHL_PARTS:     return LowerShiftLeftParts(Op, DAG);
   case ISD::SRL_PARTS:
   case ISD::SRA_PARTS:     return LowerShiftRightParts(Op, DAG);
@@ -6774,6 +6778,10 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::SRL:
   case ISD::SRA:
     Res = Expand64BitShift(N, DAG, Subtarget);
+    break;
+  case ISD::SREM:
+  case ISD::UREM:
+    Res = LowerREM(N, DAG);
     break;
   case ISD::READCYCLECOUNTER:
     ReplaceREADCYCLECOUNTER(N, Results, DAG, Subtarget);
@@ -11103,9 +11111,11 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
 static RTLIB::Libcall getDivRemLibcall(
     const SDNode *N, MVT::SimpleValueType SVT) {
-  assert((N->getOpcode() == ISD::SDIVREM || N->getOpcode() == ISD::UDIVREM) &&
+  assert((N->getOpcode() == ISD::SDIVREM || N->getOpcode() == ISD::UDIVREM ||
+          N->getOpcode() == ISD::SREM    || N->getOpcode() == ISD::UREM) &&
          "Unhandled Opcode in getDivRemLibcall");
-  bool isSigned = N->getOpcode() == ISD::SDIVREM;
+  bool isSigned = N->getOpcode() == ISD::SDIVREM ||
+                  N->getOpcode() == ISD::SREM;
   RTLIB::Libcall LC;
   switch (SVT) {
   default: llvm_unreachable("Unexpected request for libcall!");
@@ -11119,9 +11129,11 @@ static RTLIB::Libcall getDivRemLibcall(
 
 static TargetLowering::ArgListTy getDivRemArgList(
     const SDNode *N, LLVMContext *Context) {
-  assert((N->getOpcode() == ISD::SDIVREM || N->getOpcode() == ISD::UDIVREM) &&
+  assert((N->getOpcode() == ISD::SDIVREM || N->getOpcode() == ISD::UDIVREM ||
+          N->getOpcode() == ISD::SREM    || N->getOpcode() == ISD::UREM) &&
          "Unhandled Opcode in getDivRemArgList");
-  bool isSigned = N->getOpcode() == ISD::SDIVREM;
+  bool isSigned = N->getOpcode() == ISD::SDIVREM ||
+                  N->getOpcode() == ISD::SREM;
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -11166,6 +11178,47 @@ SDValue ARMTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
 
   std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
   return CallInfo.first;
+}
+
+// Lowers REM using divmod helpers
+// see RTABI section 4.2/4.3
+SDValue ARMTargetLowering::LowerREM(SDNode *N, SelectionDAG &DAG) const {
+  // Build return types (div and rem)
+  std::vector<Type*> RetTyParams;
+  Type *RetTyElement;
+
+  switch (N->getValueType(0).getSimpleVT().SimpleTy) {
+  default: llvm_unreachable("Unexpected request for libcall!");
+  case MVT::i8:   RetTyElement = Type::getInt8Ty(*DAG.getContext());  break;
+  case MVT::i16:  RetTyElement = Type::getInt16Ty(*DAG.getContext()); break;
+  case MVT::i32:  RetTyElement = Type::getInt32Ty(*DAG.getContext()); break;
+  case MVT::i64:  RetTyElement = Type::getInt64Ty(*DAG.getContext()); break;
+  }
+
+  RetTyParams.push_back(RetTyElement);
+  RetTyParams.push_back(RetTyElement);
+  ArrayRef<Type*> ret = ArrayRef<Type*>(RetTyParams);
+  Type *RetTy = StructType::get(*DAG.getContext(), ret);
+
+  RTLIB::Libcall LC = getDivRemLibcall(N, N->getValueType(0).getSimpleVT().
+                                                             SimpleTy);
+  SDValue InChain = DAG.getEntryNode();
+  TargetLowering::ArgListTy Args = getDivRemArgList(N, DAG.getContext());
+  bool isSigned = N->getOpcode() == ISD::SREM;
+  SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC),
+                                         getPointerTy(DAG.getDataLayout()));
+
+  // Lower call
+  CallLoweringInfo CLI(DAG);
+  CLI.setChain(InChain)
+     .setCallee(CallingConv::ARM_AAPCS, RetTy, Callee, std::move(Args), 0)
+     .setSExtResult(isSigned).setZExtResult(!isSigned).setDebugLoc(SDLoc(N));
+  std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
+
+  // Return second (rem) result operand (first contains div)
+  SDNode *ResNode = CallResult.first.getNode();
+  assert(ResNode->getNumOperands() == 2 && "divmod should return two operands");
+  return ResNode->getOperand(1);
 }
 
 SDValue
