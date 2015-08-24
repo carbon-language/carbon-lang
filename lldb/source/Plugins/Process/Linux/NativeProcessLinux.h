@@ -225,25 +225,25 @@ namespace process_linux {
         WaitForNewThread(::pid_t tid);
 
         void
-        MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid);
+        MonitorSIGTRAP(const siginfo_t &info, NativeThreadLinux &thread);
 
         void
-        MonitorTrace(lldb::pid_t pid, const NativeThreadLinuxSP &thread_sp);
+        MonitorTrace(NativeThreadLinux &thread);
 
         void
-        MonitorBreakpoint(lldb::pid_t pid, const NativeThreadLinuxSP &thread_sp);
+        MonitorBreakpoint(NativeThreadLinux &thread);
 
         void
         MonitorWatchpoint(NativeThreadLinux &thread, uint32_t wp_index);
 
         void
-        MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool exited);
+        MonitorSignal(const siginfo_t &info, NativeThreadLinux &thread, bool exited);
 
         bool
         SupportHardwareSingleStepping() const;
 
         Error
-        SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp);
+        SetupSoftwareSingleStepping(NativeThreadLinux &thread);
 
 #if 0
         static ::ProcessMessage::CrashReason
@@ -262,9 +262,6 @@ namespace process_linux {
         bool
         HasThreadNoLock (lldb::tid_t thread_id);
 
-        NativeThreadProtocolSP
-        MaybeGetThreadNoLock (lldb::tid_t thread_id);
-
         bool
         StopTrackingThread (lldb::tid_t thread_id);
 
@@ -272,10 +269,10 @@ namespace process_linux {
         AddThread (lldb::tid_t thread_id);
 
         Error
-        GetSoftwareBreakpointPCOffset (NativeRegisterContextSP context_sp, uint32_t &actual_opcode_size);
+        GetSoftwareBreakpointPCOffset(uint32_t &actual_opcode_size);
 
         Error
-        FixupBreakpointPCAsNeeded(const NativeThreadLinuxSP &thread_sp);
+        FixupBreakpointPCAsNeeded(NativeThreadLinux &thread);
 
         /// Writes a siginfo_t structure corresponding to the given thread ID to the
         /// memory region pointed to by @p siginfo.
@@ -317,7 +314,7 @@ namespace process_linux {
         // Resume the given thread, optionally passing it the given signal. The type of resume
         // operation (continue, single-step) depends on the state parameter.
         Error
-        ResumeThread(const NativeThreadLinuxSP &thread_sp, lldb::StateType state, int signo);
+        ResumeThread(NativeThreadLinux &thread, lldb::StateType state, int signo);
 
         void
         ThreadWasCreated(NativeThreadLinux &thread);
