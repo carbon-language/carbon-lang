@@ -4273,22 +4273,24 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   }
 
   // Make sure all decls associated with an identifier are registered for
-  // serialization.
-  llvm::SmallVector<const IdentifierInfo*, 256> IIs;
-  for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
-                              IDEnd = PP.getIdentifierTable().end();
-       ID != IDEnd; ++ID) {
-    const IdentifierInfo *II = ID->second;
-    if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization())
-      IIs.push_back(II);
-  }
-  // Sort the identifiers to visit based on their name.
-  std::sort(IIs.begin(), IIs.end(), llvm::less_ptr<IdentifierInfo>());
-  for (const IdentifierInfo *II : IIs) {
-    for (IdentifierResolver::iterator D = SemaRef.IdResolver.begin(II),
-                                   DEnd = SemaRef.IdResolver.end();
-         D != DEnd; ++D) {
-      GetDeclRef(*D);
+  // serialization, if we're storing decls with identifiers.
+  if (!WritingModule || !getLangOpts().CPlusPlus) {
+    llvm::SmallVector<const IdentifierInfo*, 256> IIs;
+    for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
+                                IDEnd = PP.getIdentifierTable().end();
+         ID != IDEnd; ++ID) {
+      const IdentifierInfo *II = ID->second;
+      if (!Chain || !II->isFromAST() || II->hasChangedSinceDeserialization())
+        IIs.push_back(II);
+    }
+    // Sort the identifiers to visit based on their name.
+    std::sort(IIs.begin(), IIs.end(), llvm::less_ptr<IdentifierInfo>());
+    for (const IdentifierInfo *II : IIs) {
+      for (IdentifierResolver::iterator D = SemaRef.IdResolver.begin(II),
+                                     DEnd = SemaRef.IdResolver.end();
+           D != DEnd; ++D) {
+        GetDeclRef(*D);
+      }
     }
   }
 

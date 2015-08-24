@@ -137,6 +137,8 @@ public:
                      const unsigned char* d,
                      unsigned DataLen);
   
+  IdentID ReadIdentifierID(const unsigned char *d);
+
   ASTReader &getReader() const { return Reader; }
 };
   
