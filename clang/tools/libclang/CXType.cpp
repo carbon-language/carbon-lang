@@ -101,6 +101,11 @@ CXType cxtype::MakeCXType(QualType T, CXTranslationUnit TU) {
   CXTypeKind TK = CXType_Invalid;
 
   if (TU && !T.isNull()) {
+    // Handle attributed types as the original type
+    if (auto *ATT = T->getAs<AttributedType>()) {
+      return MakeCXType(ATT->getModifiedType(), TU);
+    }
+
     ASTContext &Ctx = cxtu::getASTUnit(TU)->getASTContext();
     if (Ctx.getLangOpts().ObjC1) {
       QualType UnqualT = T.getUnqualifiedType();

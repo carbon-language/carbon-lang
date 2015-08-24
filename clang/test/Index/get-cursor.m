@@ -112,6 +112,23 @@ void foo3(Test3 *test3) {
 @property (retain) id propProp3;
 @end
 
+@interface TestNullability
+@property (strong, nonnull) id prop1;
+@property (strong, nullable) id prop2;
+@end
+
+@implementation TestNullability
+- (void)meth {
+  TestNullability *o;
+  [o.prop1 meth];
+  [o.prop2 meth];
+  _Nullable id lo1;
+  _Nonnull id lo2;
+  [lo1 meth];
+  [lo2 meth];
+}
+@end
+
 
 // RUN: c-index-test -cursor-at=%s:4:28 -cursor-at=%s:5:28 %s | FileCheck -check-prefix=CHECK-PROP %s
 // CHECK-PROP: ObjCPropertyDecl=foo1:4:26
@@ -170,3 +187,9 @@ void foo3(Test3 *test3) {
 // CHECK-OBJCOPTIONAL: 108:23 ObjCPropertyDecl=propProp2:108:23 (@optional) [retain,] Extent=[108:1 - 108:32]
 // CHECK-OBJCOPTIONAL: 111:8 ObjCInstanceMethodDecl=protMeth3:111:8 Extent=[111:1 - 111:18]
 // CHECK-OBJCOPTIONAL: 112:23 ObjCPropertyDecl=propProp3:112:23 [retain,] Extent=[112:1 - 112:32]
+
+// RUN: c-index-test -cursor-at=%s:123:12 %s | FileCheck -check-prefix=CHECK-RECEIVER-WITH-NULLABILITY %s
+// RUN: c-index-test -cursor-at=%s:124:12 %s | FileCheck -check-prefix=CHECK-RECEIVER-WITH-NULLABILITY %s
+// RUN: c-index-test -cursor-at=%s:127:8 %s | FileCheck -check-prefix=CHECK-RECEIVER-WITH-NULLABILITY %s
+// RUN: c-index-test -cursor-at=%s:128:8 %s | FileCheck -check-prefix=CHECK-RECEIVER-WITH-NULLABILITY %s
+// CHECK-RECEIVER-WITH-NULLABILITY: Receiver-type=ObjCId
