@@ -261,7 +261,7 @@ unsigned LLVMContext::getMDKindID(StringRef Name) const {
       .first->second;
 }
 
-/// getHandlerNames - Populate client supplied smallvector using custome
+/// getHandlerNames - Populate client-supplied smallvector using custom
 /// metadata name and ID.
 void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
   Names.resize(pImpl->CustomMDKindNames.size());
