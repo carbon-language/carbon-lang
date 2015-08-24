@@ -2782,19 +2782,9 @@ void CallArgList::allocateArgumentMemory(CodeGenFunction &CGF) {
   // alloca and store lazily on the first cleanup emission.
   StackBaseMem = CGF.CreateTempAlloca(CGF.Int8PtrTy, "inalloca.spmem");
   CGF.Builder.CreateStore(StackBase, StackBaseMem);
-  CGF.pushStackRestore(EHCleanup, StackBaseMem);
+  CGF.pushStackRestore(NormalCleanup, StackBaseMem);
   StackCleanup = CGF.EHStack.getInnermostEHScope();
   assert(StackCleanup.isValid());
-}
-
-void CallArgList::freeArgumentMemory(CodeGenFunction &CGF) const {
-  if (StackBase) {
-    CGF.DeactivateCleanupBlock(StackCleanup, StackBase);
-    llvm::Value *F = CGF.CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
-    // We could load StackBase from StackBaseMem, but in the non-exceptional
-    // case we can skip it.
-    CGF.Builder.CreateCall(F, StackBase);
-  }
 }
 
 void CodeGenFunction::EmitNonNullArgCheck(RValue RV, QualType ArgType,
@@ -3532,10 +3522,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // after any return-value munging.
   if (CallArgs.hasWritebacks())
     emitWritebacks(*this, CallArgs);
-
-  // The stack cleanup for inalloca arguments has to run out of the normal
-  // lexical order, so deactivate it and run it manually here.
-  CallArgs.freeArgumentMemory(*this);
 
   RValue Ret = [&] {
     switch (RetAI.getKind()) {
