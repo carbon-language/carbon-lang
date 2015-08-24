@@ -93,6 +93,10 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   if (SecIndex == SHN_XINDEX)
     SecIndex = ELFObj->getExtendedSymbolTableIndex(Sym, Symtab, SymtabSHNDX);
 
+  if (SecIndex >= Chunks.size() ||
+      (SecIndex != 0 && !Chunks[SecIndex]))
+    error("Invalid section index");
+
   switch (Sym->getBinding()) {
   default:
     error("unexpected binding");

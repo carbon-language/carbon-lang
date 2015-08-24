@@ -13,3 +13,7 @@ INVALID-SYMTAB-SHINFO: Invalid sh_info in symbol table
 RUN: not lld -flavor gnu2 %p/Inputs/invalid-binding.elf -o %t2 2>&1 | \
 RUN:   FileCheck --check-prefix=INVALID-BINDING %s
 INVALID-BINDING: unexpected binding
+
+RUN: not lld -flavor gnu2 %p/Inputs/invalid-section-index.elf -o %t2 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-SECTION-INDEX %s
+INVALID-SECTION-INDEX: Invalid section index
