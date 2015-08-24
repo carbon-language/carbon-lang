@@ -17,6 +17,7 @@ namespace lld {
 namespace elf2 {
 
 template <class ELFT> class ObjectFile;
+template <class ELFT> class OutputSection;
 
 // A chunk corresponding a section of an input file.
 template <class ELFT> class SectionChunk {
@@ -43,6 +44,9 @@ public:
   uintX_t getAlign() { return Header->sh_addralign; }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
+  void setOutputSection(OutputSection<ELFT> *O) { Out = O; }
+  OutputSection<ELFT> *getOutputSection() const { return Out; }
+
 private:
   // The offset from beginning of the output sections this chunk was assigned
   // to. The writer sets a value.
@@ -50,6 +54,8 @@ private:
 
   // A file this chunk was created from.
   llvm::object::ELFFile<ELFT> *Obj;
+
+  OutputSection<ELFT> *Out = nullptr;
 
   const Elf_Shdr *Header;
 };

@@ -39,7 +39,8 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::parse() {
 
 template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
   uint64_t Size = ELFObj->getNumSections();
-  Chunks.reserve(Size);
+  Chunks.resize(Size);
+  unsigned I = 0;
   for (const Elf_Shdr &Sec : ELFObj->sections()) {
     switch (Sec.sh_type) {
     case SHT_SYMTAB:
@@ -51,10 +52,10 @@ template <class ELFT> void elf2::ObjectFile<ELFT>::initializeChunks() {
     case SHT_REL:
       break;
     default:
-      auto *C = new (Alloc) SectionChunk<ELFT>(this->getObj(), &Sec);
-      Chunks.push_back(C);
+      Chunks[I] = new (Alloc) SectionChunk<ELFT>(this->getObj(), &Sec);
       break;
     }
+    ++I;
   }
 }
 
@@ -81,17 +82,18 @@ SymbolBody *elf2::ObjectFile<ELFT>::createSymbolBody(StringRef StringTable,
   ErrorOr<StringRef> NameOrErr = Sym->getName(StringTable);
   error(NameOrErr.getError());
   StringRef Name = *NameOrErr;
+  uint16_t SecIndex = Sym->st_shndx;
   switch (Sym->getBinding()) {
   default:
     error("unexpected binding");
   case STB_GLOBAL:
     if (Sym->isUndefined())
       return new (Alloc) Undefined<ELFT>(Name, *Sym);
-    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym);
+    return new (Alloc) DefinedRegular<ELFT>(Name, *Sym, *Chunks[SecIndex]);
   case STB_WEAK:
     if (Sym->isUndefined())
       return new (Alloc) UndefinedWeak<ELFT>(Name, *Sym);
-    return new (Alloc) DefinedWeak<ELFT>(Name, *Sym);
+    return new (Alloc) DefinedWeak<ELFT>(Name, *Sym, *Chunks[SecIndex]);
   }
 }
 

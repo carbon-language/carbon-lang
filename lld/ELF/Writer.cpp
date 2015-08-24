@@ -51,6 +51,9 @@ public:
   StringRef getName() { return Name; }
   void setNameOffset(uintX_t Offset) { Header.sh_name = Offset; }
 
+  unsigned getSectionIndex() const { return SectionIndex; }
+  void setSectionIndex(unsigned I) { SectionIndex = I; }
+
   // Returns the size of the section in the output file.
   uintX_t getSize() { return Header.sh_size; }
   uintX_t getFlags() { return Header.sh_flags; }
@@ -63,11 +66,14 @@ public:
 protected:
   StringRef Name;
   HeaderT Header;
+  unsigned SectionIndex;
   ~OutputSectionBase() = default;
 };
+}
 
 template <class ELFT>
-class OutputSection final : public OutputSectionBase<ELFT::Is64Bits> {
+class lld::elf2::OutputSection final
+    : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   OutputSection(StringRef Name, uint32_t sh_type, uintX_t sh_flags)
@@ -80,6 +86,7 @@ private:
   std::vector<SectionChunk<ELFT> *> Chunks;
 };
 
+namespace {
 template <bool Is64Bits>
 class StringTableSection final : public OutputSectionBase<Is64Bits> {
   llvm::StringTableBuilder &StrTabBuilder;
@@ -159,6 +166,11 @@ private:
   StringTableSection<ELFT::Is64Bits> StringTable;
 
   unsigned NumSections;
+
+  void addOutputSection(OutputSectionBase<ELFT::Is64Bits> *Sec) {
+    OutputSections.push_back(Sec);
+    Sec->setSectionIndex(OutputSections.size());
+  }
 };
 } // anonymous namespace
 
@@ -189,6 +201,7 @@ template <class ELFT> void Writer<ELFT>::run() {
 template <class ELFT>
 void OutputSection<ELFT>::addChunk(SectionChunk<ELFT> *C) {
   Chunks.push_back(C);
+  C->setOutputSection(this);
   uint32_t Align = C->getAlign();
   if (Align > this->Header.sh_addralign)
     this->Header.sh_addralign = Align;
@@ -223,21 +236,33 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     uint8_t Binding;
     SymbolBody *Body = Sym->Body;
     uint8_t Type = 0;
+
+    const SectionChunk<ELFT> *Section = nullptr;
+
     switch (Body->kind()) {
     case SymbolBody::UndefinedKind:
     case SymbolBody::UndefinedSyntheticKind:
       llvm_unreachable("Should be defined by now");
-    case SymbolBody::DefinedRegularKind:
+    case SymbolBody::DefinedRegularKind: {
       Binding = STB_GLOBAL;
-      Type = cast<DefinedRegular<ELFT>>(Body)->Sym.getType();
+      auto *Def = cast<DefinedRegular<ELFT>>(Body);
+      Type = Def->Sym.getType();
+      Section = &Def->Section;
       break;
+    }
     case SymbolBody::DefinedWeakKind:
+      Section = &cast<Defined<ELFT>>(Body)->Section;
     case SymbolBody::UndefinedWeakKind:
       Binding = STB_WEAK;
       Type = cast<ELFSymbolBody<ELFT>>(Body)->Sym.getType();
       break;
     }
     ESym->setBindingAndType(Binding, Type);
+
+    if (Section) {
+      OutputSection<ELFT> *Out = Section->getOutputSection();
+      ESym->st_shndx = Out->getSectionIndex();
+    }
 
     Buf += sizeof(Elf_Sym);
   }
@@ -294,6 +319,8 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.ObjectFiles) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (SectionChunk<ELFT> *C : File.getChunks()) {
+      if (!C)
+        continue;
       const Elf_Shdr *H = C->getSectionHdr();
       SectionKey<ELFT::Is64Bits> Key{C->getSectionName(), H->sh_type,
                                      H->sh_flags};
@@ -301,7 +328,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
       if (!Sec) {
         Sec = new (CAlloc.Allocate())
             OutputSection<ELFT>(Key.Name, Key.sh_type, Key.sh_flags);
-        OutputSections.push_back(Sec);
+        addOutputSection(Sec);
       }
       Sec->addChunk(C);
     }
@@ -325,8 +352,8 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
                    compSec<ELFT::Is64Bits>);
 
-  OutputSections.push_back(&SymTable);
-  OutputSections.push_back(&StringTable);
+  addOutputSection(&SymTable);
+  addOutputSection(&StringTable);
   StringTableIndex = OutputSections.size();
   SymTable.setStringTableIndex(StringTableIndex);
 

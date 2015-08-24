@@ -10,6 +10,8 @@
 #ifndef LLD_ELF_SYMBOLS_H
 #define LLD_ELF_SYMBOLS_H
 
+#include "Chunks.h"
+
 #include "lld/Core/LLVM.h"
 #include "llvm/Object/ELF.h"
 
@@ -106,13 +108,16 @@ template <class ELFT> class Defined : public ELFSymbolBody<ELFT> {
 public:
   typedef typename Base::Elf_Sym Elf_Sym;
 
-  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym)
-      : ELFSymbolBody<ELFT>(K, N, Sym) {}
+  explicit Defined(Kind K, StringRef N, const Elf_Sym &Sym,
+                   SectionChunk<ELFT> &Section)
+      : ELFSymbolBody<ELFT>(K, N, Sym), Section(Section) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
     return Base::DefinedFirst <= K && K <= Base::DefinedLast;
   }
+
+  const SectionChunk<ELFT> &Section;
 };
 
 // Regular defined symbols read from object file symbol tables.
@@ -121,8 +126,9 @@ template <class ELFT> class DefinedRegular : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  explicit DefinedRegular(StringRef N, const Elf_Sym &Sym)
-      : Defined<ELFT>(Base::DefinedRegularKind, N, Sym) {}
+  explicit DefinedRegular(StringRef N, const Elf_Sym &Sym,
+                          SectionChunk<ELFT> &Section)
+      : Defined<ELFT>(Base::DefinedRegularKind, N, Sym, Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedRegularKind;
@@ -134,8 +140,9 @@ template <class ELFT> class DefinedWeak : public Defined<ELFT> {
   typedef typename Base::Elf_Sym Elf_Sym;
 
 public:
-  explicit DefinedWeak(StringRef N, const Elf_Sym &Sym)
-      : Defined<ELFT>(Base::DefinedWeakKind, N, Sym) {}
+  explicit DefinedWeak(StringRef N, const Elf_Sym &Sym,
+                       SectionChunk<ELFT> &Section)
+      : Defined<ELFT>(Base::DefinedWeakKind, N, Sym, Section) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == Base::DefinedWeakKind;
