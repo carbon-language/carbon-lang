@@ -445,8 +445,6 @@ void DoLeakCheck() {
     return;
   }
   if (common_flags()->exitcode) {
-    if (common_flags()->coverage)
-      __sanitizer_cov_dump();
     Die();
   }
 }
