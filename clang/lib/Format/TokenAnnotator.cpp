@@ -2236,7 +2236,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return Left.isNot(tok::period); // FIXME: Properly parse ObjC calls.
   if (Left.is(tok::r_paren) && Line.Type == LT_ObjCProperty)
     return true;
-  if (Left.ClosesTemplateDeclaration)
+  if (Left.ClosesTemplateDeclaration || Left.is(TT_FunctionAnnotationRParen))
     return true;
   if (Right.isOneOf(TT_RangeBasedForLoopColon, TT_OverloadedOperatorLParen,
                     TT_OverloadedOperator))

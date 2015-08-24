@@ -3900,6 +3900,8 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
 
 TEST_F(FormatTest, FunctionAnnotations) {
   verifyFormat("DEPRECATED(\"Use NewClass::NewFunction instead.\")\n"
+               "int OldFunction(const string &parameter) {}");
+  verifyFormat("DEPRECATED(\"Use NewClass::NewFunction instead.\")\n"
                "string OldFunction(const string &parameter) {}");
   verifyFormat("template <typename T>\n"
                "DEPRECATED(\"Use NewClass::NewFunction instead.\")\n"
