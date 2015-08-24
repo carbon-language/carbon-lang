@@ -570,11 +570,16 @@ public:
   
   unsigned header_file_size() const { return FileInfo.size(); }
 
-  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry,
+  /// in preparation for updating it in some way.
   HeaderFileInfo &getFileInfo(const FileEntry *FE);
 
-  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
-  const HeaderFileInfo *getExistingFileInfo(const FileEntry *FE) const;
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry,
+  /// if it has ever been filled in.
+  /// \param WantExternal Whether the caller wants purely-external header file
+  ///        info (where \p External is true).
+  const HeaderFileInfo *getExistingFileInfo(const FileEntry *FE,
+                                            bool WantExternal = true) const;
 
   // Used by external tools
   typedef std::vector<DirectoryLookup>::const_iterator search_dir_iterator;

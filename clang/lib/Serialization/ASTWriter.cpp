@@ -1736,9 +1736,9 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS) {
     // changed since it was loaded. Also skip it if it's for a modular header
     // from a different module; in that case, we rely on the module(s)
     // containing the header to provide this information.
-    const HeaderFileInfo *HFI = HS.getExistingFileInfo(File);
-    if (!HFI || (HFI->External && Chain) ||
-        (HFI->isModuleHeader && !HFI->isCompilingModuleHeader))
+    const HeaderFileInfo *HFI =
+        HS.getExistingFileInfo(File, /*WantExternal*/!Chain);
+    if (!HFI || (HFI->isModuleHeader && !HFI->isCompilingModuleHeader))
       continue;
 
     // Massage the file path into an appropriate form.

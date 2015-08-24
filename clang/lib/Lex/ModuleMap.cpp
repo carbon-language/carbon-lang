@@ -796,7 +796,7 @@ static Module::HeaderKind headerRoleToKind(ModuleMap::ModuleHeaderRole Role) {
 }
 
 void ModuleMap::addHeader(Module *Mod, Module::Header Header,
-                          ModuleHeaderRole Role) {
+                          ModuleHeaderRole Role, bool Imported) {
   KnownHeader KH(Mod, Role);
 
   // Only add each header to the headers list once.
@@ -811,7 +811,12 @@ void ModuleMap::addHeader(Module *Mod, Module::Header Header,
   Mod->Headers[headerRoleToKind(Role)].push_back(std::move(Header));
 
   bool isCompilingModuleHeader = Mod->getTopLevelModule() == CompilingModule;
-  HeaderInfo.MarkFileModuleHeader(Header.Entry, Role, isCompilingModuleHeader);
+  if (!Imported || isCompilingModuleHeader) {
+    // When we import HeaderFileInfo, the external source is expected to
+    // set the isModuleHeader flag itself.
+    HeaderInfo.MarkFileModuleHeader(Header.Entry, Role,
+                                    isCompilingModuleHeader);
+  }
 }
 
 void ModuleMap::excludeHeader(Module *Mod, Module::Header Header) {

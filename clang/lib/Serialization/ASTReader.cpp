@@ -1603,11 +1603,13 @@ HeaderFileInfoTrait::ReadData(internal_key_ref key, const unsigned char *d,
     // going to use this information to rebuild the module, so it doesn't make
     // a lot of difference.
     Module::Header H = { key.Filename, FileMgr.getFile(Filename) };
-    ModMap.addHeader(Mod, H, HeaderRole);
+    ModMap.addHeader(Mod, H, HeaderRole, /*Imported*/true);
+    HFI.isModuleHeader |= !(HeaderRole & ModuleMap::TextualHeader);
   }
 
   // This HeaderFileInfo was externally loaded.
   HFI.External = true;
+  HFI.IsValid = true;
   return HFI;
 }
 
@@ -2790,7 +2792,7 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       RemapBuilder DeclRemap(F.DeclRemap);
       RemapBuilder TypeRemap(F.TypeRemap);
 
-      while(Data < DataEnd) {
+      while (Data < DataEnd) {
         using namespace llvm::support;
         uint16_t Len = endian::readNext<uint16_t, little, unaligned>(Data);
         StringRef Name = StringRef((const char*)Data, Len);

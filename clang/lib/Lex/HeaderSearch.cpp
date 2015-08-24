@@ -963,21 +963,22 @@ LookupSubframeworkHeader(StringRef Filename,
 /// header file info (\p HFI)
 static void mergeHeaderFileInfo(HeaderFileInfo &HFI, 
                                 const HeaderFileInfo &OtherHFI) {
+  assert(OtherHFI.External && "expected to merge external HFI");
+
   HFI.isImport |= OtherHFI.isImport;
   HFI.isPragmaOnce |= OtherHFI.isPragmaOnce;
   HFI.isModuleHeader |= OtherHFI.isModuleHeader;
   HFI.NumIncludes += OtherHFI.NumIncludes;
-  
+
   if (!HFI.ControllingMacro && !HFI.ControllingMacroID) {
     HFI.ControllingMacro = OtherHFI.ControllingMacro;
     HFI.ControllingMacroID = OtherHFI.ControllingMacroID;
   }
-  
-  if (OtherHFI.External) {
-    HFI.DirInfo = OtherHFI.DirInfo;
-    HFI.External = OtherHFI.External && (!HFI.IsValid || HFI.External);
-    HFI.IndexHeaderMapHeader = OtherHFI.IndexHeaderMapHeader;
-  }
+
+  HFI.DirInfo = OtherHFI.DirInfo;
+  HFI.External = (!HFI.IsValid || HFI.External);
+  HFI.IsValid = true;
+  HFI.IndexHeaderMapHeader = OtherHFI.IndexHeaderMapHeader;
 
   if (HFI.Framework.empty())
     HFI.Framework = OtherHFI.Framework;
@@ -989,42 +990,58 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID() + 1);
 
-  HeaderFileInfo &HFI = FileInfo[FE->getUID()];
+  HeaderFileInfo *HFI = &FileInfo[FE->getUID()];
   // FIXME: Use a generation count to check whether this is really up to date.
-  if (ExternalSource && !HFI.Resolved) {
-    HFI.Resolved = true;
-    mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(FE));
+  if (ExternalSource && !HFI->Resolved) {
+    HFI->Resolved = true;
+    auto ExternalHFI = ExternalSource->GetHeaderFileInfo(FE);
+
+    HFI = &FileInfo[FE->getUID()];
+    if (ExternalHFI.External)
+      mergeHeaderFileInfo(*HFI, ExternalHFI);
   }
 
-  HFI.IsValid = true;
+  HFI->IsValid = true;
   // We have local information about this header file, so it's no longer
   // strictly external.
-  HFI.External = false;
-  return HFI;
+  HFI->External = false;
+  return *HFI;
 }
 
 const HeaderFileInfo *
-HeaderSearch::getExistingFileInfo(const FileEntry *FE) const {
+HeaderSearch::getExistingFileInfo(const FileEntry *FE,
+                                  bool WantExternal) const {
   // If we have an external source, ensure we have the latest information.
   // FIXME: Use a generation count to check whether this is really up to date.
-  if (ExternalSource &&
-      (FE->getUID() >= FileInfo.size() || !FileInfo[FE->getUID()].Resolved)) {
-    auto ExternalHFI = ExternalSource->GetHeaderFileInfo(FE);
-    if (ExternalHFI.External) {
-      if (FE->getUID() >= FileInfo.size())
-        FileInfo.resize(FE->getUID() + 1);
-      mergeHeaderFileInfo(FileInfo[FE->getUID()], ExternalHFI);
+  HeaderFileInfo *HFI;
+  if (ExternalSource) {
+    if (FE->getUID() >= FileInfo.size()) {
+      if (!WantExternal)
+        return nullptr;
+      FileInfo.resize(FE->getUID() + 1);
     }
+
+    HFI = &FileInfo[FE->getUID()];
+    if (!WantExternal && (!HFI->IsValid || HFI->External))
+      return nullptr;
+    if (!HFI->Resolved) {
+      HFI->Resolved = true;
+      auto ExternalHFI = ExternalSource->GetHeaderFileInfo(FE);
+
+      HFI = &FileInfo[FE->getUID()];
+      if (ExternalHFI.External)
+        mergeHeaderFileInfo(*HFI, ExternalHFI);
+    }
+  } else if (FE->getUID() >= FileInfo.size()) {
+    return nullptr;
+  } else {
+    HFI = &FileInfo[FE->getUID()];
   }
 
-  if (FE->getUID() >= FileInfo.size())
+  if (!HFI->IsValid || (HFI->External && !WantExternal))
     return nullptr;
 
-  HeaderFileInfo &HFI = FileInfo[FE->getUID()];
-  if (!HFI.IsValid)
-    return nullptr;
-
-  return &HFI;
+  return HFI;
 }
 
 bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
@@ -1038,8 +1055,19 @@ bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
 void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
                                         ModuleMap::ModuleHeaderRole Role,
                                         bool isCompilingModuleHeader) {
+  bool isModularHeader = !(Role & ModuleMap::TextualHeader);
+
+  // Don't mark the file info as non-external if there's nothing to change.
+  if (!isCompilingModuleHeader) {
+    if (!isModularHeader)
+      return;
+    auto *HFI = getExistingFileInfo(FE);
+    if (HFI && HFI->isModuleHeader)
+      return;
+  }
+
   auto &HFI = getFileInfo(FE);
-  HFI.isModuleHeader |= !(Role & ModuleMap::TextualHeader);
+  HFI.isModuleHeader |= isModularHeader;
   HFI.isCompilingModuleHeader |= isCompilingModuleHeader;
 }
 

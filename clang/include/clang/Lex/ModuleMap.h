@@ -478,7 +478,7 @@ public:
   /// \brief Adds this header to the given module.
   /// \param Role The role of the header wrt the module.
   void addHeader(Module *Mod, Module::Header Header,
-                 ModuleHeaderRole Role);
+                 ModuleHeaderRole Role, bool Imported = false);
 
   /// \brief Marks this header as being excluded from the given module.
   void excludeHeader(Module *Mod, Module::Header Header);
