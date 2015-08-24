@@ -61,9 +61,3 @@
 // RUN:     -gcc-toolchain %S/Inputs/basic_android_tree 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CHECK-ANDROID-ARM-GOLD-TC
 // CHECK-ANDROID-ARM-GOLD-TC: Inputs/basic_android_tree/lib/gcc/arm-linux-androideabi/4.4.3/../../../../arm-linux-androideabi/bin{{/|\\+}}ld.gold
-
-// RUN: %clang %s -### -fuse-ld=gold \
-// RUN:     -target i686-unknown-nacl \
-// RUN:     -B%S/Inputs/basic_nacl_tree/bin 2>&1 \
-// RUN:   | FileCheck %s -check-prefix=CHECK-NACL-GOLD-TC
-// CHECK-NACL-GOLD-TC: ld.gold
