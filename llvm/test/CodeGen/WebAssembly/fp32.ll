@@ -8,6 +8,11 @@ target triple = "wasm32-unknown-unknown"
 declare float @llvm.fabs.f32(float)
 declare float @llvm.copysign.f32(float, float)
 declare float @llvm.sqrt.f32(float)
+declare float @llvm.ceil.f32(float)
+declare float @llvm.floor.f32(float)
+declare float @llvm.trunc.f32(float)
+declare float @llvm.nearbyint.f32(float)
+declare float @llvm.rint.f32(float)
 
 ; CHECK-LABEL: fadd32:
 ; CHECK-NEXT: (setlocal @0 (argument 1))
@@ -65,5 +70,40 @@ define float @copysign32(float %x, float %y) {
 ; CHECK: (setlocal @1 (sqrt @0))
 define float @sqrt32(float %x) {
   %a = call float @llvm.sqrt.f32(float %x)
+  ret float %a
+}
+
+; CHECK-LABEL: ceil32:
+; CHECK: (setlocal @1 (ceil @0))
+define float @ceil32(float %x) {
+  %a = call float @llvm.ceil.f32(float %x)
+  ret float %a
+}
+
+; CHECK-LABEL: floor32:
+; CHECK: (setlocal @1 (floor @0))
+define float @floor32(float %x) {
+  %a = call float @llvm.floor.f32(float %x)
+  ret float %a
+}
+
+; CHECK-LABEL: trunc32:
+; CHECK: (setlocal @1 (trunc @0))
+define float @trunc32(float %x) {
+  %a = call float @llvm.trunc.f32(float %x)
+  ret float %a
+}
+
+; CHECK-LABEL: nearestint32:
+; CHECK: (setlocal @1 (nearestint @0))
+define float @nearestint32(float %x) {
+  %a = call float @llvm.nearbyint.f32(float %x)
+  ret float %a
+}
+
+; CHECK-LABEL: nearestint32_via_rint:
+; CHECK: (setlocal @1 (nearestint @0))
+define float @nearestint32_via_rint(float %x) {
+  %a = call float @llvm.rint.f32(float %x)
   ret float %a
 }

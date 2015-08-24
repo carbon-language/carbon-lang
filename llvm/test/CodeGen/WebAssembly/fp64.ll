@@ -8,6 +8,11 @@ target triple = "wasm32-unknown-unknown"
 declare double @llvm.fabs.f64(double)
 declare double @llvm.copysign.f64(double, double)
 declare double @llvm.sqrt.f64(double)
+declare double @llvm.ceil.f64(double)
+declare double @llvm.floor.f64(double)
+declare double @llvm.trunc.f64(double)
+declare double @llvm.nearbyint.f64(double)
+declare double @llvm.rint.f64(double)
 
 ; CHECK-LABEL: fadd64:
 ; CHECK-NEXT: (setlocal @0 (argument 1))
@@ -65,5 +70,40 @@ define double @copysign64(double %x, double %y) {
 ; CHECK: (setlocal @1 (sqrt @0))
 define double @sqrt64(double %x) {
   %a = call double @llvm.sqrt.f64(double %x)
+  ret double %a
+}
+
+; CHECK-LABEL: ceil64:
+; CHECK: (setlocal @1 (ceil @0))
+define double @ceil64(double %x) {
+  %a = call double @llvm.ceil.f64(double %x)
+  ret double %a
+}
+
+; CHECK-LABEL: floor64:
+; CHECK: (setlocal @1 (floor @0))
+define double @floor64(double %x) {
+  %a = call double @llvm.floor.f64(double %x)
+  ret double %a
+}
+
+; CHECK-LABEL: trunc64:
+; CHECK: (setlocal @1 (trunc @0))
+define double @trunc64(double %x) {
+  %a = call double @llvm.trunc.f64(double %x)
+  ret double %a
+}
+
+; CHECK-LABEL: nearestint64:
+; CHECK: (setlocal @1 (nearestint @0))
+define double @nearestint64(double %x) {
+  %a = call double @llvm.nearbyint.f64(double %x)
+  ret double %a
+}
+
+; CHECK-LABEL: nearestint64_via_rint:
+; CHECK: (setlocal @1 (nearestint @0))
+define double @nearestint64_via_rint(double %x) {
+  %a = call double @llvm.rint.f64(double %x)
   ret double %a
 }
