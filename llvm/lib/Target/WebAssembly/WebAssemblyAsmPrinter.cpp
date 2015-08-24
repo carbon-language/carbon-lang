@@ -84,7 +84,10 @@ static SmallString<32> Name(const WebAssemblyInstrInfo *TII,
   return SmallString<32>(&N[0], &N[End]);
 }
 
+static std::string toSymbol(StringRef S) { return ("$" + S).str(); }
+
 void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  DEBUG(dbgs() << "EmitInstruction: " << *MI << '\n');
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
 
@@ -131,6 +134,9 @@ void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       assert(Written != 0);
       assert(Written < BufBytes);
       OS << ' ' << buf;
+    } break;
+    case MachineOperand::MO_GlobalAddress: {
+      OS << ' ' << toSymbol(MO.getGlobal()->getName());
     } break;
     }
   OS << ')';

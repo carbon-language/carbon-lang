@@ -19,6 +19,7 @@
 #include "WebAssemblyTargetMachine.h"
 #include "WebAssemblyTargetObjectFile.h"
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -92,6 +93,8 @@ int DiagnosticInfoUnsupported::KindID = 0;
 WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     const TargetMachine &TM, const WebAssemblySubtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
+  auto MVTPtr = Subtarget->hasAddr64() ? MVT::i64 : MVT::i32;
+
   // Booleans always contain 0 or 1.
   setBooleanContents(ZeroOrOneBooleanContent);
   // WebAssembly does not produce floating-point exceptions on normal floating
@@ -111,6 +114,8 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   computeRegisterProperties(Subtarget->getRegisterInfo());
 
   // FIXME: many setOperationAction are missing...
+
+  setOperationAction(ISD::GlobalAddress, MVTPtr, Custom);
 
   for (auto T : {MVT::f32, MVT::f64}) {
     // Don't expand the floating-point types to constant pools.
@@ -156,6 +161,13 @@ FastISel *WebAssemblyTargetLowering::createFastISel(
   return WebAssembly::createFastISel(FuncInfo, LibInfo);
 }
 
+bool WebAssemblyTargetLowering::isOffsetFoldingLegal(
+    const GlobalAddressSDNode *GA) const {
+  // The WebAssembly target doesn't support folding offsets into global
+  // addresses.
+  return false;
+}
+
 MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
                                                       EVT VT) const {
   return VT.getSimpleVT();
@@ -164,9 +176,13 @@ MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
 const char *
 WebAssemblyTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (static_cast<WebAssemblyISD::NodeType>(Opcode)) {
-  case WebAssemblyISD::FIRST_NUMBER: break;
-  case WebAssemblyISD::RETURN: return "WebAssemblyISD::RETURN";
-  case WebAssemblyISD::ARGUMENT: return "WebAssemblyISD::ARGUMENT";
+  case WebAssemblyISD::FIRST_NUMBER:
+    break;
+#define HANDLE_NODETYPE(NODE)                                                  \
+  case WebAssemblyISD::NODE:                                                   \
+    return "WebAssemblyISD::" #NODE;
+#include "WebAssemblyISD.def"
+#undef HANDLE_NODETYPE
   }
   return nullptr;
 }
@@ -185,7 +201,6 @@ static void fail(SDLoc DL, SelectionDAG &DAG, const char *msg) {
       DiagnosticInfoUnsupported(DL, *MF.getFunction(), msg, SDValue()));
 }
 
-<<<<<<< HEAD
 SDValue
 WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
                                      SmallVectorImpl<SDValue> &InVals) const {
@@ -205,7 +220,6 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
   SmallVectorImpl<SDValue> &OutVals = CLI.OutVals;
-  Type *retTy = CLI.RetTy;
   bool IsStructRet = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   if (IsStructRet)
     fail(DL, DAG, "WebAssembly doesn't support struct return yet");
@@ -213,7 +227,6 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
     fail(DL, DAG, "WebAssembly doesn't support more than 1 returned value yet");
 
   SmallVectorImpl<ISD::InputArg> &Ins = CLI.Ins;
-  ArgListTy &Args = CLI.getArgs();
   bool IsVarArg = CLI.IsVarArg;
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
@@ -223,33 +236,35 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
-  auto Zero = DAG.getConstant(0, CLI.DL, PtrVT, true);
-  auto NB = DAG.getConstant(NumBytes, CLI.DL, PtrVT, true);
-  Chain = DAG.getCALLSEQ_START(Chain, NB, CLI.DL);
+  auto Zero = DAG.getConstant(0, DL, PtrVT, true);
+  auto NB = DAG.getConstant(NumBytes, DL, PtrVT, true);
+  Chain = DAG.getCALLSEQ_START(Chain, NB, DL);
 
   SmallVector<SDValue, 16> Ops;
   Ops.push_back(Chain);
-  Ops.push_back(CLI.Callee);
-  Ops.append(CLI.OutVals.begin(), CLI.OutVals.end());
+  Ops.push_back(Callee);
+  Ops.append(OutVals.begin(), OutVals.end());
 
   SmallVector<EVT, 8> Tys;
-  for (const auto &In : CLI.Ins)
+  for (const auto &In : Ins)
     Tys.push_back(In.VT);
   Tys.push_back(MVT::Other);
-  SDVTList TyList = CLI.DAG.getVTList(Tys);
-  SDValue Res = CLI.DAG.getNode(WebAssemblyISD::CALL, CLI.DL, TyList, Ops);
-  InVals.push_back(Res);
-  Chain = Res.getValue(1);
+  SDVTList TyList = DAG.getVTList(Tys);
+  SDValue Res = DAG.getNode(WebAssemblyISD::CALL, DL, TyList, Ops);
+  if (Ins.empty()) {
+    Chain = Res;
+  } else {
+    InVals.push_back(Res);
+    Chain = Res.getValue(1);
+  }
 
   // FIXME: handle CLI.RetSExt and CLI.RetZExt?
 
-  Chain = CLI.DAG.getCALLSEQ_END(Chain, NB, Zero, SDValue(), CLI.DL);
+  Chain = DAG.getCALLSEQ_END(Chain, NB, Zero, SDValue(), DL);
 
   return Chain;
 }
 
-=======
->>>>>>> parent of 03685a9... call
 bool WebAssemblyTargetLowering::CanLowerReturn(
     CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
     const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
@@ -326,8 +341,33 @@ SDValue WebAssemblyTargetLowering::LowerFormalArguments(
 }
 
 //===----------------------------------------------------------------------===//
-//  Other Lowering Code
+//  Custom lowering hooks.
 //===----------------------------------------------------------------------===//
+
+SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  switch (Op.getOpcode()) {
+  default:
+    llvm_unreachable("unimplemented operation lowering");
+    return SDValue();
+  case ISD::GlobalAddress:
+    return LowerGlobalAddress(Op, DAG);
+  }
+}
+
+SDValue WebAssemblyTargetLowering::LowerGlobalAddress(SDValue Op,
+                                                      SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  const auto *GA = cast<GlobalAddressSDNode>(Op);
+  EVT VT = Op.getValueType();
+  assert(GA->getOffset() == 0 &&
+         "offsets on global addresses are forbidden by isOffsetFoldingLegal");
+  assert(GA->getTargetFlags() == 0 && "WebAssembly doesn't set target flags");
+  if (GA->getAddressSpace() != 0)
+    fail(DL, DAG, "WebAssembly only expects the 0 address space");
+  return DAG.getNode(WebAssemblyISD::Wrapper, DL, VT,
+                     DAG.getTargetGlobalAddress(GA->getGlobal(), DL, VT));
+}
 
 //===----------------------------------------------------------------------===//
 //                          WebAssembly Optimization Hooks

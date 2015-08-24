@@ -25,18 +25,34 @@ def HasSIMD128 : Predicate<"Subtarget->hasSIMD128()">,
 // WebAssembly-specific DAG Node Types.
 //===----------------------------------------------------------------------===//
 
+def SDT_WebAssemblyCallSeqStart : SDCallSeqStart<[SDTCisVT<0, iPTR>]>;
+def SDT_WebAssemblyCallSeqEnd :
+    SDCallSeqEnd<[SDTCisVT<0, iPTR>, SDTCisVT<1, iPTR>]>;
+def SDT_WebAssemblyCall     : SDTypeProfile<1, -1, [SDTCisPtrTy<1>]>;
 def SDT_WebAssemblyArgument : SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>;
 def SDT_WebAssemblyReturn   : SDTypeProfile<0, -1, []>;
+def SDT_WebAssemblyWrapper  : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
+                                                   SDTCisPtrTy<0>]>;
 
 //===----------------------------------------------------------------------===//
 // WebAssembly-specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
+def WebAssemblycallseq_start :
+    SDNode<"ISD::CALLSEQ_START", SDT_WebAssemblyCallSeqStart,
+           [SDNPHasChain, SDNPOutGlue]>;
+def WebAssemblycallseq_end :
+    SDNode<"ISD::CALLSEQ_END", SDT_WebAssemblyCallSeqEnd,
+           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+def WebAssemblycall      : SDNode<"WebAssemblyISD::CALL",
+                                  SDT_WebAssemblyCall,
+                                  [SDNPHasChain, SDNPVariadic]>;
 def WebAssemblyargument : SDNode<"WebAssemblyISD::ARGUMENT",
                                  SDT_WebAssemblyArgument>;
 def WebAssemblyreturn   : SDNode<"WebAssemblyISD::RETURN",
-                                 SDT_WebAssemblyReturn,
-                                 [SDNPHasChain, SDNPSideEffect]>;
+                                 SDT_WebAssemblyReturn, [SDNPHasChain]>;
+def WebAssemblywrapper  : SDNode<"WebAssemblyISD::Wrapper",
+                                 SDT_WebAssemblyWrapper>;
 
 //===----------------------------------------------------------------------===//
 // WebAssembly-specific Operands.
@@ -48,6 +64,8 @@ def WebAssemblyreturn   : SDNode<"WebAssemblyISD::RETURN",
  * get_local: read the current value of a local variable
  * set_local: set the current value of a local variable
 */
+
+def global : Operand<iPTR>;
 
 //===----------------------------------------------------------------------===//
 // WebAssembly Instruction Format Definitions.
@@ -73,6 +91,10 @@ def Immediate_F32 : I<(outs Float32:$res), (ins f32imm:$imm),
                       [(set Float32:$res, fpimm:$imm)]>;
 def Immediate_F64 : I<(outs Float64:$res), (ins f64imm:$imm),
                       [(set Float64:$res, fpimm:$imm)]>;
+
+// Special types of immediates.
+def GLOBAL : I<(outs Int32:$dst), (ins global:$addr),
+               [(set Int32:$dst, (WebAssemblywrapper tglobaladdr:$addr))]>;
 
 //===----------------------------------------------------------------------===//
 // Additional sets of instructions.
