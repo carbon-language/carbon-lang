@@ -21,7 +21,7 @@ using namespace lldb_private;
 using namespace lldb_private::formatters;
 
 static CompilerType
-GetClangTypeForFormat (lldb::Format format,
+GetCompilerTypeForFormat (lldb::Format format,
                        CompilerType element_type,
                        ClangASTContext *ast_ctx)
 {
@@ -229,10 +229,10 @@ namespace lldb_private {
             Update()
             {
                 m_parent_format = m_backend.GetFormat();
-                CompilerType parent_type(m_backend.GetClangType());
+                CompilerType parent_type(m_backend.GetCompilerType());
                 CompilerType element_type;
                 parent_type.IsVectorType(&element_type, nullptr);
-                m_child_type = ::GetClangTypeForFormat(m_parent_format, element_type, parent_type.GetTypeSystem()->AsClangASTContext());
+                m_child_type = ::GetCompilerTypeForFormat(m_parent_format, element_type, parent_type.GetTypeSystem()->AsClangASTContext());
                 m_num_children = ::CalculateNumChildren(parent_type,
                                                         m_child_type);
                 m_item_format = GetItemFormatForFormat(m_parent_format,

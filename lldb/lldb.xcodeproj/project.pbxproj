@@ -169,6 +169,7 @@
 		2656BBC41AE073A800441749 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2670F8111862B44A006B332C /* libncurses.dylib */; };
 		2656BBC51AE073AD00441749 /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		2656BBC61AE073B500441749 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
+		2657AFB71B86910100958979 /* CompilerDeclContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2657AFB61B86910100958979 /* CompilerDeclContext.cpp */; settings = {ASSET_TAGS = (); }; };
 		2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; settings = {COMPILER_FLAGS = "-Dregister="; }; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */; };
@@ -474,7 +475,6 @@
 		268900D113353E6F00698AC0 /* ClangASTContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */; };
 		268900D213353E6F00698AC0 /* CompilerType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49E45FAD11F660FE008F7B28 /* CompilerType.cpp */; };
 		268900D313353E6F00698AC0 /* ClangExternalASTSourceCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */; };
-		268900D413353E6F00698AC0 /* ClangNamespaceDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */; };
 		268900D513353E6F00698AC0 /* CompileUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1510F1B8EC00F91463 /* CompileUnit.cpp */; };
 		268900D613353E6F00698AC0 /* Declaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1610F1B8EC00F91463 /* Declaration.cpp */; };
 		268900D713353E6F00698AC0 /* DWARFCallFrameInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F1710F1B8EC00F91463 /* DWARFCallFrameInfo.cpp */; };
@@ -1447,6 +1447,8 @@
 		265205A613D3E3F700132FE2 /* RegisterContextKDP_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextKDP_x86_64.cpp; sourceTree = "<group>"; };
 		265205A713D3E3F700132FE2 /* RegisterContextKDP_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextKDP_x86_64.h; sourceTree = "<group>"; };
 		26579F68126A25920007C5CB /* darwin-debug */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "darwin-debug"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2657AFB51B8690EC00958979 /* CompilerDeclContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CompilerDeclContext.h; path = include/lldb/Symbol/CompilerDeclContext.h; sourceTree = "<group>"; };
+		2657AFB61B86910100958979 /* CompilerDeclContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompilerDeclContext.cpp; path = source/Symbol/CompilerDeclContext.cpp; sourceTree = "<group>"; };
 		265ABF6210F42EE900531910 /* DebugSymbols.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DebugSymbols.framework; path = /System/Library/PrivateFrameworks/DebugSymbols.framework; sourceTree = "<absolute>"; };
 		265E9BE1115C2BAA00D0DCCB /* debugserver.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = debugserver.xcodeproj; path = tools/debugserver/debugserver.xcodeproj; sourceTree = "<group>"; };
 		2660D9F611922A1300958FBD /* StringExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractor.cpp; path = source/Utility/StringExtractor.cpp; sourceTree = "<group>"; };
@@ -1627,8 +1629,6 @@
 		266960601199F4230075C61A /* build-swig-Python.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-swig-Python.sh"; sourceTree = "<group>"; };
 		266960611199F4230075C61A /* edit-swig-python-wrapper-file.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = "edit-swig-python-wrapper-file.py"; sourceTree = "<group>"; };
 		266960631199F4230075C61A /* sed-sources */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "sed-sources"; sourceTree = "<group>"; };
-		266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangNamespaceDecl.cpp; path = source/Symbol/ClangNamespaceDecl.cpp; sourceTree = "<group>"; };
-		266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangNamespaceDecl.h; path = include/lldb/Symbol/ClangNamespaceDecl.h; sourceTree = "<group>"; };
 		266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OperatingSystem.cpp; path = source/Target/OperatingSystem.cpp; sourceTree = "<group>"; };
 		266DFE9813FD658300D0C574 /* OperatingSystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OperatingSystem.h; path = include/lldb/Target/OperatingSystem.h; sourceTree = "<group>"; };
 		266F5CBB12FC846200DFCE33 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/Config.h; sourceTree = "<group>"; };
@@ -4146,14 +4146,14 @@
 				26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */,
 				49D8FB3713B5594900411094 /* ClangASTImporter.h */,
 				49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */,
+				2657AFB51B8690EC00958979 /* CompilerDeclContext.h */,
+				2657AFB61B86910100958979 /* CompilerDeclContext.cpp */,
 				49E45FA911F660DC008F7B28 /* CompilerType.h */,
 				49E45FAD11F660FE008F7B28 /* CompilerType.cpp */,
 				495B38431489714C002708C5 /* ClangExternalASTSourceCommon.h */,
 				4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */,
 				26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */,
 				26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */,
-				266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */,
-				266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */,
 				964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */,
 				964463EB1A330C0500154ED8 /* CompactUnwindInfo.cpp */,
 				26BC7C5710F1B6E900F91463 /* CompileUnit.h */,
@@ -6264,7 +6264,6 @@
 				2613F6C81B17B82F00D4DB85 /* CxaDemangle.cpp in Sources */,
 				268900D213353E6F00698AC0 /* CompilerType.cpp in Sources */,
 				268900D313353E6F00698AC0 /* ClangExternalASTSourceCallbacks.cpp in Sources */,
-				268900D413353E6F00698AC0 /* ClangNamespaceDecl.cpp in Sources */,
 				268900D513353E6F00698AC0 /* CompileUnit.cpp in Sources */,
 				268900D613353E6F00698AC0 /* Declaration.cpp in Sources */,
 				268900D713353E6F00698AC0 /* DWARFCallFrameInfo.cpp in Sources */,
@@ -6463,6 +6462,7 @@
 				26EFC4CD18CFAF0D00865D87 /* ObjectFileJIT.cpp in Sources */,
 				49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */,
 				494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */,
+				2657AFB71B86910100958979 /* CompilerDeclContext.cpp in Sources */,
 				49DA65031485C92A005FF180 /* AppleObjCDeclVendor.cpp in Sources */,
 				4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */,
 				26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */,

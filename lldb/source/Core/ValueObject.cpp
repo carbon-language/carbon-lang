@@ -325,7 +325,7 @@ ValueObject::ClearDynamicTypeInformation ()
 CompilerType
 ValueObject::MaybeCalculateCompleteType ()
 {
-    CompilerType clang_type(GetClangTypeImpl());
+    CompilerType clang_type(GetCompilerTypeImpl());
         
     if (m_did_calculate_complete_objc_class_type)
     {
@@ -371,7 +371,7 @@ ValueObject::MaybeCalculateCompleteType ()
                     
                     if (complete_objc_class_type_sp)
                     {
-                        CompilerType complete_class(complete_objc_class_type_sp->GetClangFullType());
+                        CompilerType complete_class(complete_objc_class_type_sp->GetFullCompilerType ());
                         
                         if (complete_class.GetCompleteType())
                         {
@@ -396,7 +396,7 @@ ValueObject::MaybeCalculateCompleteType ()
 }
 
 CompilerType
-ValueObject::GetClangType ()
+ValueObject::GetCompilerType ()
 {
     return MaybeCalculateCompleteType();
 }
@@ -404,7 +404,7 @@ ValueObject::GetClangType ()
 TypeImpl
 ValueObject::GetTypeImpl ()
 {
-    return TypeImpl(GetClangType());
+    return TypeImpl(GetCompilerType());
 }
 
 DataExtractor &
@@ -726,7 +726,7 @@ size_t
 ValueObject::GetIndexOfChildWithName (const ConstString &name)
 {
     bool omit_empty_base_classes = true;
-    return GetClangType().GetIndexOfChildWithName (name.GetCString(), omit_empty_base_classes);
+    return GetCompilerType().GetIndexOfChildWithName (name.GetCString(), omit_empty_base_classes);
 }
 
 ValueObjectSP
@@ -743,7 +743,7 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
 
     std::vector<uint32_t> child_indexes;
     bool omit_empty_base_classes = true;
-    const size_t num_child_indexes =  GetClangType().GetIndexOfChildMemberWithName (name.GetCString(),
+    const size_t num_child_indexes =  GetCompilerType().GetIndexOfChildMemberWithName (name.GetCString(),
                                                                                     omit_empty_base_classes,
                                                                                     child_indexes);
     if (num_child_indexes > 0)
@@ -834,7 +834,7 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
     
     ExecutionContext exe_ctx (GetExecutionContextRef());
     
-    child_clang_type = GetClangType().GetChildClangTypeAtIndex (&exe_ctx,
+    child_clang_type = GetCompilerType().GetChildClangTypeAtIndex (&exe_ctx,
                                                                 idx,
                                                                 transparent_pointers,
                                                                 omit_empty_base_classes,
@@ -1046,7 +1046,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                 break;
             case eAddressTypeHost:
                 {
-                    const uint64_t max_bytes = GetClangType().GetByteSize(exe_ctx.GetBestExecutionContextScope());
+                    const uint64_t max_bytes = GetCompilerType().GetByteSize(exe_ctx.GetBestExecutionContextScope());
                     if (max_bytes > offset)
                     {
                         size_t bytes_read = std::min<uint64_t>(max_bytes - offset, bytes);
@@ -1102,7 +1102,7 @@ ValueObject::SetData (DataExtractor &data, Error &error)
     }
     
     uint64_t count = 0;
-    const Encoding encoding = GetClangType().GetEncoding(count);
+    const Encoding encoding = GetCompilerType().GetEncoding(count);
     
     const size_t byte_size = GetByteSize();
     
@@ -1226,7 +1226,7 @@ ValueObject::ReadPointedString (lldb::DataBufferSP& buffer_sp,
     size_t bytes_read = 0;
     size_t total_bytes_read = 0;
     
-    CompilerType clang_type = GetClangType();
+    CompilerType clang_type = GetCompilerType();
     CompilerType elem_or_pointee_clang_type;
     const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
     if (type_flags.AnySet (eTypeIsArray | eTypeIsPointer) &&
@@ -1385,7 +1385,7 @@ ValueObject::GetObjectDescription ()
     if (runtime == NULL)
     {
         // Aw, hell, if the things a pointer, or even just an integer, let's try ObjC anyway...
-        CompilerType clang_type = GetClangType();
+        CompilerType clang_type = GetCompilerType();
         if (clang_type)
         {
             bool is_signed;
@@ -1449,7 +1449,7 @@ ValueObject::GetValueAsCString ()
                     }
                     else
                     {
-                        my_format = GetValue().GetClangType().GetFormat();
+                        my_format = GetValue().GetCompilerType().GetFormat();
                     }
                 }
             }
@@ -1886,7 +1886,7 @@ ValueObject::SetValueFromCString (const char *value_str, Error& error)
     }
 
     uint64_t count = 0;
-    const Encoding encoding = GetClangType().GetEncoding (count);
+    const Encoding encoding = GetCompilerType().GetEncoding (count);
 
     const size_t byte_size = GetByteSize();
 
@@ -1984,7 +1984,7 @@ ValueObject::GetDeclaration (Declaration &decl)
 ConstString
 ValueObject::GetTypeName()
 {
-    return GetClangType().GetConstTypeName();
+    return GetCompilerType().GetConstTypeName();
 }
 
 ConstString
@@ -1996,14 +1996,14 @@ ValueObject::GetDisplayTypeName()
 ConstString
 ValueObject::GetQualifiedTypeName()
 {
-    return GetClangType().GetConstQualifiedTypeName();
+    return GetCompilerType().GetConstQualifiedTypeName();
 }
 
 
 LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
-    return GetClangType().GetMinimumLanguage ();
+    return GetCompilerType().GetMinimumLanguage ();
 }
 
 void
@@ -2025,37 +2025,37 @@ ValueObject::GetSyntheticChild (const ConstString &key) const
 uint32_t
 ValueObject::GetTypeInfo (CompilerType *pointee_or_element_clang_type)
 {
-    return GetClangType().GetTypeInfo (pointee_or_element_clang_type);
+    return GetCompilerType().GetTypeInfo (pointee_or_element_clang_type);
 }
 
 bool
 ValueObject::IsPointerType ()
 {
-    return GetClangType().IsPointerType();
+    return GetCompilerType().IsPointerType();
 }
 
 bool
 ValueObject::IsArrayType ()
 {
-    return GetClangType().IsArrayType (NULL, NULL, NULL);
+    return GetCompilerType().IsArrayType (NULL, NULL, NULL);
 }
 
 bool
 ValueObject::IsScalarType ()
 {
-    return GetClangType().IsScalarType ();
+    return GetCompilerType().IsScalarType ();
 }
 
 bool
 ValueObject::IsIntegerType (bool &is_signed)
 {
-    return GetClangType().IsIntegerType (is_signed);
+    return GetCompilerType().IsIntegerType (is_signed);
 }
 
 bool
 ValueObject::IsPointerOrReferenceType ()
 {
-    return GetClangType().IsPointerOrReferenceType ();
+    return GetCompilerType().IsPointerOrReferenceType ();
 }
 
 bool
@@ -2066,7 +2066,7 @@ ValueObject::IsPossibleDynamicType ()
     if (process)
         return process->IsPossibleDynamicValue(*this);
     else
-        return GetClangType().IsPossibleDynamicType (NULL, true, true);
+        return GetCompilerType().IsPossibleDynamicType (NULL, true, true);
 }
 
 bool
@@ -2088,7 +2088,7 @@ bool
 ValueObject::IsObjCNil ()
 {
     const uint32_t mask = eTypeIsObjC | eTypeIsPointer;
-    bool isObjCpointer = (((GetClangType().GetTypeInfo(NULL)) & mask) == mask);
+    bool isObjCpointer = (((GetCompilerType().GetTypeInfo(NULL)) & mask) == mask);
     if (!isObjCpointer)
         return false;
     bool canReadValue = true;
@@ -2156,7 +2156,7 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
             // We haven't made a synthetic array member for INDEX yet, so
             // lets make one and cache it for any future reference.
             ValueObjectChild *synthetic_child = new ValueObjectChild (*this,
-                                                                      GetClangType(),
+                                                                      GetCompilerType(),
                                                                       index_const_str,
                                                                       GetByteSize(),
                                                                       0,
@@ -2417,7 +2417,7 @@ ValueObject::GetBaseClassPath (Stream &s)
     if (IsBaseClass())
     {
         bool parent_had_base_class = GetParent() && GetParent()->GetBaseClassPath (s);
-        CompilerType clang_type = GetClangType();
+        CompilerType clang_type = GetCompilerType();
         std::string cxx_class_name;
         bool this_had_base_class = ClangASTContext::GetCXXClassName (clang_type, cxx_class_name);
         if (this_had_base_class)
@@ -2536,7 +2536,7 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
             ValueObject *non_base_class_parent = GetNonBaseClassParent();
             if (non_base_class_parent)
             {
-                CompilerType non_base_class_parent_clang_type = non_base_class_parent->GetClangType();
+                CompilerType non_base_class_parent_clang_type = non_base_class_parent->GetCompilerType();
                 if (non_base_class_parent_clang_type)
                 {
                     if (parent && parent->IsDereferenceOfParent() && epformat == eGetExpressionPathFormatHonorPointers)
@@ -2757,7 +2757,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        CompilerType root_clang_type = root->GetClangType();
+        CompilerType root_clang_type = root->GetCompilerType();
         CompilerType pointee_clang_type;
         Flags pointee_clang_type_info;
         
@@ -3073,7 +3073,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         }
                         else
                         {
-                            if (root->GetClangType().GetMinimumLanguage() == eLanguageTypeObjC
+                            if (root->GetCompilerType().GetMinimumLanguage() == eLanguageTypeObjC
                                 && pointee_clang_type_info.AllClear(eTypeIsPointer)
                                 && root->HasSyntheticValue()
                                 && (options.m_synthetic_children_traversal == GetValueForExpressionPathOptions::SyntheticChildrenTraversal::ToSynthetic ||
@@ -3281,7 +3281,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        CompilerType root_clang_type = root->GetClangType();
+        CompilerType root_clang_type = root->GetCompilerType();
         CompilerType pointee_clang_type;
         Flags pointee_clang_type_info;
         Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
@@ -3611,7 +3611,7 @@ ValueObject::CreateConstantValue (const ConstString &name)
             m_error = m_value.GetValueAsData (&exe_ctx, data, 0, GetModule().get());
         
         valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), 
-                                                    GetClangType(),
+                                                    GetCompilerType(),
                                                     name,
                                                     data,
                                                     GetAddressOf());
@@ -3678,7 +3678,7 @@ lldb::addr_t
 ValueObject::GetCPPVTableAddress (AddressType &address_type)
 {
     CompilerType pointee_type;
-    CompilerType this_type(GetClangType());
+    CompilerType this_type(GetCompilerType());
     uint32_t type_info = this_type.GetTypeInfo(&pointee_type);
     if (type_info)
     {
@@ -3726,7 +3726,7 @@ ValueObject::Dereference (Error &error)
         bool child_is_base_class = false;
         bool child_is_deref_of_parent = false;
         const bool transparent_pointers = false;
-        CompilerType clang_type = GetClangType();
+        CompilerType clang_type = GetCompilerType();
         CompilerType child_clang_type;
 
         ExecutionContext exe_ctx (GetExecutionContextRef());
@@ -3806,7 +3806,7 @@ ValueObject::AddressOf (Error &error)
         case eAddressTypeFile:
         case eAddressTypeLoad:
             {
-                CompilerType clang_type = GetClangType();
+                CompilerType clang_type = GetCompilerType();
                 if (clang_type)
                 {
                     std::string name (1, '&');
@@ -4258,7 +4258,7 @@ ValueObject::CanProvideValue ()
     // we need to support invalid types as providers of values because some bare-board
     // debugging scenarios have no notion of types, but still manage to have raw numeric
     // values for things like registers. sigh.
-    const CompilerType &type(GetClangType());
+    const CompilerType &type(GetCompilerType());
     return (false == type.IsValid()) || (0 != (type.GetTypeInfo() & eTypeHasValue));
 }
 

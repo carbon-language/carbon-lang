@@ -13,7 +13,8 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Symbol/CompilerType.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
+#include "lldb/Symbol/CompilerDeclContext.h"
+
 #include "lldb/Symbol/Type.h"
 
 namespace lldb_private {
@@ -130,15 +131,15 @@ public:
     virtual size_t          ParseVariablesForContext (const SymbolContext& sc) = 0;
     virtual Type*           ResolveTypeUID (lldb::user_id_t type_uid) = 0;
     virtual bool            CompleteType (CompilerType &clang_type) = 0;
-    virtual clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid) { return NULL; }
-    virtual clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid) { return NULL; }
+    virtual CompilerDeclContext GetDeclContextForUID (lldb::user_id_t uid) { return CompilerDeclContext(); }
+    virtual CompilerDeclContext GetDeclContextContainingUID (lldb::user_id_t uid) { return CompilerDeclContext(); }
     virtual uint32_t        ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc) = 0;
-    virtual uint32_t        ResolveSymbolContext (const FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list) = 0;
-    virtual uint32_t        FindGlobalVariables (const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables) = 0;
-    virtual uint32_t        FindGlobalVariables (const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables) = 0;
-    virtual uint32_t        FindFunctions (const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list) = 0;
-    virtual uint32_t        FindFunctions (const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list) = 0;
-    virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, TypeList& types) = 0;
+    virtual uint32_t        ResolveSymbolContext (const FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list);
+    virtual uint32_t        FindGlobalVariables (const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, VariableList& variables);
+    virtual uint32_t        FindGlobalVariables (const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables);
+    virtual uint32_t        FindFunctions (const ConstString &name, const CompilerDeclContext *parent_decl_ctx, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list);
+    virtual uint32_t        FindFunctions (const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list);
+    virtual uint32_t        FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, TypeList& types);
 //  virtual uint32_t        FindTypes (const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types) = 0;
     virtual TypeList *      GetTypeList ();
     virtual size_t          GetTypes (lldb_private::SymbolContextScope *sc_scope,
@@ -150,10 +151,13 @@ public:
     virtual lldb_private::TypeSystem *
                             GetTypeSystemForLanguage (lldb::LanguageType language);
 
-    virtual ClangNamespaceDecl
+    virtual CompilerDeclContext
                             FindNamespace (const SymbolContext& sc, 
                                            const ConstString &name,
-                                           const ClangNamespaceDecl *parent_namespace_decl) = 0;
+                                           const CompilerDeclContext *parent_decl_ctx)
+    {
+        return CompilerDeclContext();
+    }
 
     ObjectFile*             GetObjectFile() { return m_obj_file; }
     const ObjectFile*       GetObjectFile() const { return m_obj_file; }

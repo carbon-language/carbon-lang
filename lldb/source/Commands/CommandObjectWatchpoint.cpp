@@ -1061,7 +1061,7 @@ protected:
                 size = m_option_watchpoint.watch_size == 0 ? valobj_sp->GetByteSize()
                                                            : m_option_watchpoint.watch_size;
             }
-            clang_type = valobj_sp->GetClangType();
+            clang_type = valobj_sp->GetCompilerType();
         }
         else
         {
@@ -1295,7 +1295,7 @@ protected:
         
         // Fetch the type from the value object, the type of the watched object is the pointee type
         /// of the expression, so convert to that if we  found a valid type.
-        CompilerType clang_type(valobj_sp->GetClangType());
+        CompilerType clang_type(valobj_sp->GetCompilerType());
         
         Error error;
         Watchpoint *wp = target->CreateWatchpoint(addr, size, &clang_type, watch_type, error).get();

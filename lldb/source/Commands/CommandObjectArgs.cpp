@@ -234,7 +234,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
             return false;
         }
                      
-        value.SetClangType (clang_type);
+        value.SetCompilerType (clang_type);
         value_list.PushValue(value);
     }
     

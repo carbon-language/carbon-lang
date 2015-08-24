@@ -40,7 +40,7 @@ ItaniumABILanguageRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
     const bool check_cxx = true;
     const bool check_objc = false;
-    return in_value.GetClangType().IsPossibleDynamicType (NULL, check_cxx, check_objc);
+    return in_value.GetCompilerType().IsPossibleDynamicType (NULL, check_cxx, check_objc);
 }
 
 bool
@@ -189,7 +189,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                                 type_sp = class_types.GetTypeAtIndex(i);
                                 if (type_sp)
                                 {
-                                    if (ClangASTContext::IsCXXClassType(type_sp->GetClangFullType()))
+                                    if (ClangASTContext::IsCXXClassType(type_sp->GetFullCompilerType ()))
                                     {
                                         if (log)
                                             log->Printf ("0x%16.16" PRIx64 ": static-type = '%s' has multiple matching dynamic types, picking this one: uid={0x%" PRIx64 "}, type-name='%s'\n",
@@ -221,8 +221,8 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                         // the value we were handed.
                         if (type_sp)
                         {
-                            if (ClangASTContext::AreTypesSame (in_value.GetClangType(),
-                                                               type_sp->GetClangFullType()))
+                            if (ClangASTContext::AreTypesSame (in_value.GetCompilerType(),
+                                                               type_sp->GetFullCompilerType ()))
                             {
                                 // The dynamic type we found was the same type,
                                 // so we don't have a dynamic type here...

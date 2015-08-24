@@ -81,22 +81,22 @@ ClangExpressionVariable::SetRegisterInfo (const RegisterInfo *reg_info)
 }
 
 CompilerType
-ClangExpressionVariable::GetClangType()
+ClangExpressionVariable::GetCompilerType()
 {
-    return m_frozen_sp->GetClangType();
+    return m_frozen_sp->GetCompilerType();
 }
 
 void
-ClangExpressionVariable::SetClangType(const CompilerType &clang_type)
+ClangExpressionVariable::SetCompilerType(const CompilerType &clang_type)
 {
-    m_frozen_sp->GetValue().SetClangType(clang_type);
+    m_frozen_sp->GetValue().SetCompilerType(clang_type);
 }
 
 
 TypeFromUser
 ClangExpressionVariable::GetTypeFromUser()
 {
-    TypeFromUser tfu (m_frozen_sp->GetClangType());
+    TypeFromUser tfu (m_frozen_sp->GetCompilerType());
     return tfu;
 }
 

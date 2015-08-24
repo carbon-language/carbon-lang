@@ -324,7 +324,7 @@ public:
     //------------------------------------------------------------------
     size_t
     FindFunctions (const ConstString &name,
-                   const ClangNamespaceDecl *namespace_decl,
+                   const CompilerDeclContext *parent_decl_ctx,
                    uint32_t name_type_mask, 
                    bool symbols_ok,
                    bool inlines_ok,
@@ -393,8 +393,8 @@ public:
     ///     The name of the global or static variable we are looking
     ///     for.
     ///
-    /// @param[in] namespace_decl
-    ///     If valid, a namespace to search in.
+    /// @param[in] parent_decl_ctx
+    ///     If valid, a decl context that results must exist within
     ///
     /// @param[in] append
     ///     If \b true, any matches will be appended to \a
@@ -414,7 +414,7 @@ public:
     //------------------------------------------------------------------
     size_t
     FindGlobalVariables (const ConstString &name,
-                         const ClangNamespaceDecl *namespace_decl,
+                         const CompilerDeclContext *parent_decl_ctx,
                          bool append, 
                          size_t max_matches,
                          VariableList& variable_list);
@@ -525,7 +525,7 @@ public:
     size_t
     FindTypesInNamespace (const SymbolContext& sc,
                           const ConstString &type_name,
-                          const ClangNamespaceDecl *namespace_decl,
+                          const CompilerDeclContext *parent_decl_ctx,
                           size_t max_matches,
                           TypeList& type_list);
 
@@ -1193,7 +1193,7 @@ private:
     size_t
     FindTypes_Impl (const SymbolContext& sc, 
                     const ConstString &name,
-                    const ClangNamespaceDecl *namespace_decl,
+                    const CompilerDeclContext *parent_decl_ctx,
                     bool append, 
                     size_t max_matches,
                     TypeList& types);

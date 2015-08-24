@@ -1139,7 +1139,7 @@ AppleObjCRuntimeV2::GetClassDescriptor (ValueObject& valobj)
     // if we get an invalid VO (which might still happen when playing around
     // with pointers returned by the expression parser, don't consider this
     // a valid ObjC object)
-    if (valobj.GetClangType().IsValid())
+    if (valobj.GetCompilerType().IsValid())
     {
         addr_t isa_pointer = valobj.GetPointerValue();
         
@@ -1276,13 +1276,13 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         Value value;
         value.SetValueType (Value::eValueTypeScalar);
 //        value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-        value.SetClangType (clang_void_pointer_type);
+        value.SetCompilerType (clang_void_pointer_type);
         arguments.PushValue (value);
         arguments.PushValue (value);
         
         value.SetValueType (Value::eValueTypeScalar);
 //        value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        value.SetClangType (clang_uint32_t_type);
+        value.SetCompilerType (clang_uint32_t_type);
         arguments.PushValue (value);
         
         m_get_class_info_function.reset(new ClangFunction (*m_process,
@@ -1355,7 +1355,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         Value return_value;
         return_value.SetValueType (Value::eValueTypeScalar);
         //return_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        return_value.SetClangType (clang_uint32_t_type);
+        return_value.SetCompilerType (clang_uint32_t_type);
         return_value.GetScalar() = 0;
         
         errors.Clear();
@@ -1530,13 +1530,13 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         Value value;
         value.SetValueType (Value::eValueTypeScalar);
         //value.SetContext (Value::eContextTypeClangType, clang_void_pointer_type);
-        value.SetClangType (clang_void_pointer_type);
+        value.SetCompilerType (clang_void_pointer_type);
         arguments.PushValue (value);
         arguments.PushValue (value);
         
         value.SetValueType (Value::eValueTypeScalar);
         //value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        value.SetClangType (clang_uint32_t_type);
+        value.SetCompilerType (clang_uint32_t_type);
         arguments.PushValue (value);
         
         m_get_shared_cache_class_info_function.reset(new ClangFunction (*m_process,
@@ -1610,7 +1610,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         Value return_value;
         return_value.SetValueType (Value::eValueTypeScalar);
         //return_value.SetContext (Value::eContextTypeClangType, clang_uint32_t_type);
-        return_value.SetClangType (clang_uint32_t_type);
+        return_value.SetCompilerType (clang_uint32_t_type);
         return_value.GetScalar() = 0;
         
         errors.Clear();

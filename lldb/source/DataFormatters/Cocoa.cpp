@@ -55,7 +55,7 @@ lldb_private::formatters::NSBundleSummaryProvider (ValueObject& valobj, Stream& 
     if (!strcmp(class_name,"NSBundle"))
     {
         uint64_t offset = 5 * ptr_size;
-        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetClangType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID), true));
+        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeObjCID), true));
 
         StreamString summary_stream;
         bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
@@ -102,7 +102,7 @@ lldb_private::formatters::NSTimeZoneSummaryProvider (ValueObject& valobj, Stream
     if (!strcmp(class_name,"__NSTimeZone"))
     {
         uint64_t offset = ptr_size;
-        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetClangType(), true));
+        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetCompilerType(), true));
         StreamString summary_stream;
         bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)
@@ -146,7 +146,7 @@ lldb_private::formatters::NSNotificationSummaryProvider (ValueObject& valobj, St
     if (!strcmp(class_name,"NSConcreteNotification"))
     {
         uint64_t offset = ptr_size;
-        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetClangType(), true));
+        ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset, valobj.GetCompilerType(), true));
         StreamString summary_stream;
         bool was_nsstring_ok = NSStringSummaryProvider(*text.get(), summary_stream, options);
         if (was_nsstring_ok && summary_stream.GetSize() > 0)
@@ -443,7 +443,7 @@ lldb_private::formatters::NSURLSummaryProvider (ValueObject& valobj, Stream& str
     {
         uint64_t offset_text = ptr_size + ptr_size + 8; // ISA + pointer + 8 bytes of data (even on 32bit)
         uint64_t offset_base = offset_text + ptr_size;
-        CompilerType type(valobj.GetClangType());
+        CompilerType type(valobj.GetCompilerType());
         ValueObjectSP text(valobj.GetSyntheticChildAtOffset(offset_text, type, true));
         ValueObjectSP base(valobj.GetSyntheticChildAtOffset(offset_base, type, true));
         if (!text)

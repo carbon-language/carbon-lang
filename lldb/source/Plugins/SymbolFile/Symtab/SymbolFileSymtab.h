@@ -87,33 +87,10 @@ public:
     virtual uint32_t
     ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
 
-    virtual uint32_t
-    ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
-
-    virtual uint32_t
-    FindGlobalVariables(const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
-
-    virtual uint32_t
-    FindGlobalVariables(const lldb_private::RegularExpression& regex, bool append, uint32_t max_matches, lldb_private::VariableList& variables);
-
-    virtual uint32_t
-    FindFunctions(const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list);
-
-    virtual uint32_t
-    FindFunctions(const lldb_private::RegularExpression& regex, bool include_inlines, bool append, lldb_private::SymbolContextList& sc_list);
-
-    virtual uint32_t
-    FindTypes (const lldb_private::SymbolContext& sc,const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types);
-
     virtual size_t
     GetTypes (lldb_private::SymbolContextScope *sc_scope,
               uint32_t type_mask,
               lldb_private::TypeList &type_list);
-
-    virtual lldb_private::ClangNamespaceDecl
-    FindNamespace (const lldb_private::SymbolContext& sc, 
-                   const lldb_private::ConstString &name, 
-                   const lldb_private::ClangNamespaceDecl *parent_namespace_decl);
 
     //------------------------------------------------------------------
     // PluginInterface protocol

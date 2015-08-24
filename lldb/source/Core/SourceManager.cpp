@@ -18,7 +18,6 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"

@@ -17,7 +17,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"

@@ -332,7 +332,7 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
     ValueObjectSP impl_sp(m_backend.GetChildMemberWithName(ConstString("__end_"),true));
     if (!impl_sp)
         return false;
-    CompilerType list_type = m_backend.GetClangType();
+    CompilerType list_type = m_backend.GetCompilerType();
     if (list_type.IsReferenceType())
         list_type = list_type.GetNonReferenceType();
 

@@ -312,13 +312,12 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     if (data_addr == 0 || data_addr == LLDB_INVALID_ADDRESS)
         return false;
 
-    ClangASTContext* lldb_ast = valobj.GetClangType().GetTypeSystem()->AsClangASTContext();
-    clang::ASTContext* ast = lldb_ast ? lldb_ast->getASTContext() : nullptr;
-    
-    if (!ast)
+    // Get a wchar_t basic type from the current type system
+    CompilerType wchar_clang_type = valobj.GetCompilerType().GetBasicTypeFromAST(lldb::eBasicTypeWChar);
+
+    if (!wchar_clang_type)
         return false;
 
-    CompilerType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
     const uint32_t wchar_size = wchar_clang_type.GetBitSize(nullptr); // Safe to pass NULL for exe_scope here
 
     ReadStringAndDumpToStreamOptions options(valobj);
@@ -1034,7 +1033,7 @@ lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj
     if (!pointer_value)
         return false;
     pointer_value += addr_size;
-    CompilerType type(valobj.GetClangType());
+    CompilerType type(valobj.GetCompilerType());
     ExecutionContext exe_ctx(target_sp,false);
     ValueObjectSP child_ptr_sp(valobj.CreateValueObjectFromAddress("string_ptr", pointer_value, exe_ctx, type));
     if (!child_ptr_sp)
@@ -1067,7 +1066,7 @@ lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject
 bool
 lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
-    const uint32_t type_info = valobj.GetClangType().GetTypeInfo();
+    const uint32_t type_info = valobj.GetCompilerType().GetTypeInfo();
     
     ValueObjectSP real_guy_sp = valobj.GetSP();
     
@@ -1100,7 +1099,7 @@ lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& s
 {
     lldb::ValueObjectSP valobj_sp;
 
-    CompilerType charstar (valobj.GetClangType().GetBasicTypeFromAST(eBasicTypeChar).GetPointerType());
+    CompilerType charstar (valobj.GetCompilerType().GetBasicTypeFromAST(eBasicTypeChar).GetPointerType());
     
     if (!charstar)
         return false;
@@ -1204,7 +1203,7 @@ lldb_private::formatters::VectorIteratorSyntheticFrontEnd::Update()
         return false;
     Error err;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
-    m_item_sp = CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, item_ptr->GetClangType().GetPointeeType());
+    m_item_sp = CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, item_ptr->GetCompilerType().GetPointeeType());
     if (err.Fail())
         m_item_sp.reset();
     return false;

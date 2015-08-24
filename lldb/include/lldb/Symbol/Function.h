@@ -550,8 +550,8 @@ public:
     /// @return
     ///     The DeclContext, or NULL if none exists.
     //------------------------------------------------------------------
-    clang::DeclContext *
-    GetClangDeclContext();
+    CompilerDeclContext
+    GetDeclContext();
     
     //------------------------------------------------------------------
     /// Get accessor for the type that describes the function
@@ -574,7 +574,7 @@ public:
     GetType() const;
     
     CompilerType
-    GetClangType ();
+    GetCompilerType ();
 
     uint32_t
     GetPrologueByteSize ();

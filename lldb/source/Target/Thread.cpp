@@ -1923,7 +1923,7 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
             Type *function_type = sc.function->GetType();
             if (function_type)
             {
-                CompilerType return_type = sc.function->GetClangType().GetFunctionReturnType();
+                CompilerType return_type = sc.function->GetCompilerType().GetFunctionReturnType();
                 if (return_type)
                 {
                     StreamString s;

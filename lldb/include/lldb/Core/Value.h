@@ -134,10 +134,10 @@ public:
     operator=(const Value &rhs);
 
     const CompilerType &
-    GetClangType();
+    GetCompilerType();
     
     void
-    SetClangType (const CompilerType &clang_type);
+    SetCompilerType (const CompilerType &clang_type);
 
     ValueType
     GetValueType() const;

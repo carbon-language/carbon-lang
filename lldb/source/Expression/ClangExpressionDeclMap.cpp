@@ -28,7 +28,7 @@
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
+#include "lldb/Symbol/CompilerDeclContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -863,7 +863,7 @@ ClangExpressionDeclMap::FindGlobalVariable
     Target &target,
     ModuleSP &module,
     const ConstString &name,
-    ClangNamespaceDecl *namespace_decl,
+    CompilerDeclContext *namespace_decl,
     TypeFromUser *type
 )
 {
@@ -882,7 +882,7 @@ ClangExpressionDeclMap::FindGlobalVariable
             {
                 VariableSP var_sp = vars.GetVariableAtIndex(i);
 
-                if (ClangASTContext::AreTypesSame(*type, var_sp->GetType()->GetClangFullType()))
+                if (ClangASTContext::AreTypesSame(*type, var_sp->GetType()->GetFullCompilerType ()))
                     return var_sp;
             }
         }
@@ -947,7 +947,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
             if (log)
                 log->Printf("  CEDM::FEVD[%u] Searching namespace %s in module %s",
                             current_id,
-                            i->second.GetNamespaceDecl()->getNameAsString().c_str(),
+                            i->second.GetName().AsCString(),
                             i->first->GetFileSpec().GetFilename().GetCString());
 
             FindExternalVisibleDecls(context,
@@ -958,7 +958,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
     }
     else if (isa<TranslationUnitDecl>(context.m_decl_context))
     {
-        ClangNamespaceDecl namespace_decl;
+        CompilerDeclContext namespace_decl;
 
         if (log)
             log->Printf("  CEDM::FEVD[%u] Searching the root namespace", current_id);
@@ -976,7 +976,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
 void
 ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                                                   lldb::ModuleSP module_sp,
-                                                  ClangNamespaceDecl &namespace_decl,
+                                                  CompilerDeclContext &namespace_decl,
                                                   unsigned int current_id)
 {
     assert (m_ast_context);
@@ -1013,23 +1013,20 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (frame == NULL)
                 return;
 
-            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction);
+            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction|lldb::eSymbolContextBlock);
 
-            if (!sym_ctx.function)
-                return;
-
-            // Get the block that defines the function
+            // Find the block that defines the function represented by "sym_ctx"
             Block *function_block = sym_ctx.GetFunctionBlock();
 
             if (!function_block)
                 return;
 
-            clang::DeclContext *decl_context = function_block->GetClangDeclContext();
+            CompilerDeclContext function_decl_ctx = function_block->GetDeclContext();
 
-            if (!decl_context)
+            if (!function_decl_ctx)
                 return;
 
-            clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context);
+            clang::CXXMethodDecl *method_decl = ClangASTContext::DeclContextGetAsCXXMethodDecl(function_decl_ctx);
 
             if (method_decl)
             {
@@ -1103,13 +1100,13 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     if (!this_type)
                         return;
 
-                    CompilerType pointee_type = this_type->GetClangForwardType().GetPointeeType();
+                    CompilerType pointee_type = this_type->GetForwardCompilerType ().GetPointeeType();
 
                     if (pointee_type.IsValid())
                     {
                         if (log)
                         {
-                            ASTDumper ast_dumper(this_type->GetClangFullType());
+                            ASTDumper ast_dumper(this_type->GetFullCompilerType ());
                             log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
                         }
 
@@ -1117,7 +1114,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         AddOneType(context, class_user_type, current_id);
 
 
-                        TypeFromUser this_user_type(this_type->GetClangFullType());
+                        TypeFromUser this_user_type(this_type->GetFullCompilerType ());
                         m_struct_vars->m_object_pointer_type = this_user_type;
                         return;
                     }
@@ -1135,23 +1132,20 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (!frame)
                 return;
 
-            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction);
+            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction|lldb::eSymbolContextBlock);
 
-            if (!sym_ctx.function)
-                return;
-
-            // Get the block that defines the function
+            // Find the block that defines the function represented by "sym_ctx"
             Block *function_block = sym_ctx.GetFunctionBlock();
 
             if (!function_block)
                 return;
 
-            clang::DeclContext *decl_context = function_block->GetClangDeclContext();
+            CompilerDeclContext function_decl_ctx = function_block->GetDeclContext();
 
-            if (!decl_context)
+            if (!function_decl_ctx)
                 return;
 
-            clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context);
+            clang::ObjCMethodDecl *method_decl = ClangASTContext::DeclContextGetAsObjCMethodDecl(function_decl_ctx);
 
             if (method_decl)
             {
@@ -1220,7 +1214,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                     if (!self_type)
                         return;
 
-                    CompilerType self_clang_type = self_type->GetClangFullType();
+                    CompilerType self_clang_type = self_type->GetFullCompilerType ();
 
                     if (ClangASTContext::IsObjCClassType(self_clang_type))
                     {
@@ -1235,7 +1229,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
 
                         if (log)
                         {
-                            ASTDumper ast_dumper(self_type->GetClangFullType());
+                            ASTDumper ast_dumper(self_type->GetFullCompilerType ());
                             log->Printf("  FEVD[%u] Adding type for $__lldb_objc_class: %s", current_id, ast_dumper.GetCString());
                         }
 
@@ -1243,7 +1237,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
 
                         AddOneType(context, class_user_type, current_id);
 
-                        TypeFromUser self_user_type(self_type->GetClangFullType());
+                        TypeFromUser self_user_type(self_type->GetFullCompilerType ());
 
                         m_struct_vars->m_object_pointer_type = self_user_type;
                         return;
@@ -1416,15 +1410,13 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
 
                     if (sym_ctx.function)
                     {
-                        clang::DeclContext *decl_ctx = sym_ctx.function->GetClangDeclContext();
+                        CompilerDeclContext decl_ctx = sym_ctx.function->GetDeclContext();
 
                         if (!decl_ctx)
                             continue;
 
                         // Filter out class/instance methods.
-                        if (dyn_cast<clang::ObjCMethodDecl>(decl_ctx))
-                            continue;
-                        if (dyn_cast<clang::CXXMethodDecl>(decl_ctx))
+                        if (decl_ctx.IsClassMethod(nullptr, nullptr, nullptr))
                             continue;
 
                         AddOneFunction(context, sym_ctx.function, NULL, current_id);
@@ -1632,7 +1624,7 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         return false;
     }
 
-    CompilerType var_clang_type = var_type->GetClangFullType();
+    CompilerType var_clang_type = var_type->GetFullCompilerType ();
 
     if (!var_clang_type)
     {
@@ -1687,7 +1679,7 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         *parser_type = TypeFromParser(type_to_use);
 
     if (var_location.GetContextType() == Value::eContextTypeInvalid)
-        var_location.SetClangType(type_to_use);
+        var_location.SetCompilerType(type_to_use);
 
     if (var_location.GetValueType() == Value::eValueTypeFileAddress)
     {
@@ -1844,7 +1836,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     lldb::addr_t symbol_load_addr = symbol_address.GetLoadAddress(target);
 
     //parser_vars->m_lldb_value.SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());
-    parser_vars->m_lldb_value.SetClangType(user_type);
+    parser_vars->m_lldb_value.SetCompilerType(user_type);
     parser_vars->m_lldb_value.GetScalar() = symbol_load_addr;
     parser_vars->m_lldb_value.SetValueType(Value::eValueTypeLoadAddress);
 
@@ -1911,10 +1903,10 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
             TypeFromUser user_type(copied_type, scratch_ast_context);
 
 //            parser_vars->m_lldb_value.SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());
-            parser_vars->m_lldb_value.SetClangType(user_type);
+            parser_vars->m_lldb_value.SetCompilerType(user_type);
             parser_vars->m_parser_type = parser_type;
 
-            entity->SetClangType(user_type);
+            entity->SetCompilerType(user_type);
 
             entity->m_flags &= ~(ClangExpressionVariable::EVUnknownType);
         }
@@ -1995,7 +1987,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
             return;
         }
 
-        function_clang_type = function_type->GetClangFullType();
+        function_clang_type = function_type->GetFullCompilerType ();
 
         if (!function_clang_type)
         {
@@ -2060,7 +2052,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
 
     std::string decl_name(context.m_decl_name.getAsString());
     entity->SetName(ConstString(decl_name.c_str()));
-    entity->SetClangType (function_clang_type);
+    entity->SetCompilerType (function_clang_type);
     entity->EnableParserVars(GetParserID());
 
     ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());

@@ -16,7 +16,6 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Utility/LLDBAssert.h"
 
 using namespace lldb_private;

@@ -1319,7 +1319,7 @@ SBValue::GetOpaqueType()
     ValueLocker locker;
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
-        return value_sp->GetClangType().GetOpaqueQualType();
+        return value_sp->GetCompilerType().GetOpaqueQualType();
     return NULL;
 }
 
@@ -1812,7 +1812,7 @@ SBValue::Watch (bool resolve_location, bool read, bool write, SBError &error)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
 
         Error rc;
-        CompilerType type (value_sp->GetClangType());
+        CompilerType type (value_sp->GetCompilerType());
         WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, &type, watch_type, rc);
         error.SetError(rc);
 

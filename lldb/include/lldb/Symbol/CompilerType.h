@@ -12,7 +12,7 @@
 
 #include <string>
 #include <vector>
-
+#include <functional>
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 
@@ -235,9 +235,9 @@ public:
     GetTypeClass () const;
     
     void
-    SetClangType (TypeSystem* type_system, void* type);
+    SetCompilerType (TypeSystem* type_system, void* type);
     void
-    SetClangType (clang::ASTContext *ast, clang::QualType qual_type);
+    SetCompilerType (clang::ASTContext *ast, clang::QualType qual_type);
 
     unsigned
     GetTypeQualifiers() const;
@@ -284,9 +284,6 @@ public:
     // If the current object represents a typedef type, get the underlying type
     CompilerType
     GetTypedefedType () const;
-
-    CompilerType
-    RemoveFastQualifiers () const;
     
     //----------------------------------------------------------------------
     // Create related types using the current type's AST
@@ -321,7 +318,16 @@ public:
 
     static lldb::BasicType
     GetBasicTypeEnumeration (const ConstString &name);
-    
+
+    //----------------------------------------------------------------------
+    // If this type is an enumeration, iterate through all of its enumerators
+    // using a callback. If the callback returns true, keep iterating, else
+    // abort the iteration.
+    //----------------------------------------------------------------------
+    void
+    ForEachEnumerator (std::function <bool (const CompilerType &integer_type,
+                                            const ConstString &name,
+                                            const llvm::APSInt &value)> const &callback) const;
     uint32_t
     GetNumFields () const;
     
@@ -331,7 +337,21 @@ public:
                      uint64_t *bit_offset_ptr,
                      uint32_t *bitfield_bit_size_ptr,
                      bool *is_bitfield_ptr) const;
-    
+
+    uint32_t
+    GetNumDirectBaseClasses () const;
+
+    uint32_t
+    GetNumVirtualBaseClasses () const;
+
+    CompilerType
+    GetDirectBaseClassAtIndex (size_t idx,
+                               uint32_t *bit_offset_ptr) const;
+
+    CompilerType
+    GetVirtualBaseClassAtIndex (size_t idx,
+                                uint32_t *bit_offset_ptr) const;
+
     uint32_t
     GetIndexOfFieldWithName (const char* name,
                              CompilerType* field_clang_type = NULL,

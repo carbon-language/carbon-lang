@@ -10,9 +10,11 @@
 #ifndef liblldb_TypeSystem_h_
 #define liblldb_TypeSystem_h_
 
+#include <functional>
 #include <string>
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Symbol/CompilerDeclContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
 
@@ -65,6 +67,22 @@ public:
         return false;
     }
 
+    virtual CompilerDeclContext
+    GetDeclContextForUIDFromDWARF (SymbolFileDWARF *dwarf,
+                                   DWARFCompileUnit *dwarf_cu,
+                                   const DWARFDebugInfoEntry* die)
+    {
+        return CompilerDeclContext();
+    }
+
+    virtual CompilerDeclContext
+    GetDeclContextContainingUIDFromDWARF (SymbolFileDWARF *dwarf,
+                                          DWARFCompileUnit *dwarf_cu,
+                                          const DWARFDebugInfoEntry* die)
+    {
+        return CompilerDeclContext();
+    }
+
     virtual SymbolFile *
     GetSymbolFile () const
     {
@@ -78,98 +96,83 @@ public:
         m_sym_file = sym_file;
     }
 
+    //----------------------------------------------------------------------
+    // CompilerDeclContext functions
+    //----------------------------------------------------------------------
+
     virtual bool
-    DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
-                      SymbolFileDWARF *dwarf,
-                      DWARFCompileUnit *cu,
-                      const DWARFDebugInfoEntry *die)
-    {
-        return false;
-    }
+    DeclContextIsStructUnionOrClass (void *opaque_decl_ctx) = 0;
 
-    virtual clang::NamespaceDecl *
-    ResolveNamespaceDIE (SymbolFileDWARF *dwarf,
-                         DWARFCompileUnit *dwarf_cu,
-                         const DWARFDebugInfoEntry *die)
-    {
-        return nullptr;
-    }
+    virtual ConstString
+    DeclContextGetName (void *opaque_decl_ctx) = 0;
 
-    virtual clang::DeclContext*
-    GetClangDeclContextForTypeUID (SymbolFileDWARF *dwarf,
-                                   const lldb_private::SymbolContext &sc,
-                                   lldb::user_id_t type_uid)
-    {
-        return nullptr;
-    }
-
-    virtual clang::DeclContext*
-    GetClangDeclContextContainingTypeUID (SymbolFileDWARF *dwarf, lldb::user_id_t type_uid)
-    {
-        return nullptr;
-    }
+    virtual bool
+    DeclContextIsClassMethod (void *opaque_decl_ctx,
+                              lldb::LanguageType *language_ptr,
+                              bool *is_instance_method_ptr,
+                              ConstString *language_object_name_ptr) = 0;
 
     //----------------------------------------------------------------------
     // Tests
     //----------------------------------------------------------------------
     
     virtual bool
-    IsArrayType (void * type,
+    IsArrayType (void *type,
                  CompilerType *element_type,
                  uint64_t *size,
                  bool *is_incomplete) = 0;
     
     virtual bool
-    IsAggregateType (void * type) = 0;
+    IsAggregateType (void *type) = 0;
     
     virtual bool
-    IsCharType (void * type) = 0;
+    IsCharType (void *type) = 0;
     
     virtual bool
-    IsCompleteType (void * type) = 0;
+    IsCompleteType (void *type) = 0;
     
     virtual bool
-    IsDefined(void * type) = 0;
+    IsDefined(void *type) = 0;
     
     virtual bool
-    IsFloatingPointType (void * type, uint32_t &count, bool &is_complex) = 0;
+    IsFloatingPointType (void *type, uint32_t &count, bool &is_complex) = 0;
     
     virtual bool
-    IsFunctionType (void * type, bool *is_variadic_ptr) = 0;
-    
+    IsFunctionType (void *type, bool *is_variadic_ptr) = 0;
+
     virtual size_t
-    GetNumberOfFunctionArguments (void * type) = 0;
+    GetNumberOfFunctionArguments (void *type) = 0;
     
     virtual CompilerType
-    GetFunctionArgumentAtIndex (void * type, const size_t index) = 0;
+    GetFunctionArgumentAtIndex (void *type, const size_t index) = 0;
     
     virtual bool
-    IsFunctionPointerType (void * type) = 0;
+    IsFunctionPointerType (void *type) = 0;
     
     virtual bool
-    IsIntegerType (void * type, bool &is_signed) = 0;
+    IsIntegerType (void *type, bool &is_signed) = 0;
     
     virtual bool
-    IsPossibleDynamicType (void * type,
+    IsPossibleDynamicType (void *type,
                            CompilerType *target_type, // Can pass NULL
                            bool check_cplusplus,
                            bool check_objc) = 0;
     
     virtual bool
-    IsPointerType (void * type, CompilerType *pointee_type) = 0;
+    IsPointerType (void *type, CompilerType *pointee_type) = 0;
     
     virtual bool
-    IsScalarType (void * type) = 0;
+    IsScalarType (void *type) = 0;
     
     virtual bool
-    IsVoidType (void * type) = 0;
+    IsVoidType (void *type) = 0;
     
     //----------------------------------------------------------------------
     // Type Completion
     //----------------------------------------------------------------------
     
     virtual bool
-    GetCompleteType (void * type) = 0;
+    GetCompleteType (void *type) = 0;
     
     //----------------------------------------------------------------------
     // AST related queries
@@ -183,82 +186,103 @@ public:
     //----------------------------------------------------------------------
     
     virtual ConstString
-    GetTypeName (void * type) = 0;
+    GetTypeName (void *type) = 0;
     
     virtual uint32_t
-    GetTypeInfo (void * type, CompilerType *pointee_or_element_clang_type) = 0;
+    GetTypeInfo (void *type, CompilerType *pointee_or_element_clang_type) = 0;
     
     virtual lldb::LanguageType
-    GetMinimumLanguage (void * type) = 0;
+    GetMinimumLanguage (void *type) = 0;
     
     virtual lldb::TypeClass
-    GetTypeClass (void * type) = 0;
+    GetTypeClass (void *type) = 0;
     
     //----------------------------------------------------------------------
     // Creating related types
     //----------------------------------------------------------------------
     
     virtual CompilerType
-    GetArrayElementType (void * type, uint64_t *stride) = 0;
+    GetArrayElementType (void *type, uint64_t *stride) = 0;
     
     virtual CompilerType
-    GetCanonicalType (void * type) = 0;
+    GetCanonicalType (void *type) = 0;
     
     // Returns -1 if this isn't a function of if the function doesn't have a prototype
     // Returns a value >= 0 if there is a prototype.
     virtual int
-    GetFunctionArgumentCount (void * type) = 0;
+    GetFunctionArgumentCount (void *type) = 0;
     
     virtual CompilerType
-    GetFunctionArgumentTypeAtIndex (void * type, size_t idx) = 0;
+    GetFunctionArgumentTypeAtIndex (void *type, size_t idx) = 0;
     
     virtual CompilerType
-    GetFunctionReturnType (void * type) = 0;
+    GetFunctionReturnType (void *type) = 0;
     
     virtual size_t
-    GetNumMemberFunctions (void * type) = 0;
+    GetNumMemberFunctions (void *type) = 0;
     
     virtual TypeMemberFunctionImpl
-    GetMemberFunctionAtIndex (void * type, size_t idx) = 0;
+    GetMemberFunctionAtIndex (void *type, size_t idx) = 0;
     
     virtual CompilerType
-    GetPointeeType (void * type) = 0;
+    GetPointeeType (void *type) = 0;
     
     virtual CompilerType
-    GetPointerType (void * type) = 0;
+    GetPointerType (void *type) = 0;
     
     //----------------------------------------------------------------------
     // Exploring the type
     //----------------------------------------------------------------------
     
     virtual uint64_t
-    GetBitSize (void * type, ExecutionContextScope *exe_scope) = 0;
+    GetBitSize (void *type, ExecutionContextScope *exe_scope) = 0;
     
     virtual lldb::Encoding
-    GetEncoding (void * type, uint64_t &count) = 0;
+    GetEncoding (void *type, uint64_t &count) = 0;
     
     virtual lldb::Format
-    GetFormat (void * type) = 0;
+    GetFormat (void *type) = 0;
     
     virtual uint32_t
-    GetNumChildren (void * type, bool omit_empty_base_classes) = 0;
+    GetNumChildren (void *type, bool omit_empty_base_classes) = 0;
     
     virtual lldb::BasicType
-    GetBasicTypeEnumeration (void * type) = 0;
-    
+    GetBasicTypeEnumeration (void *type) = 0;
+
+    virtual void
+    ForEachEnumerator (void *type, std::function <bool (const CompilerType &integer_type, const ConstString &name, const llvm::APSInt &value)> const &callback)
+    {
+    }
+
     virtual uint32_t
-    GetNumFields (void * type) = 0;
+    GetNumFields (void *type) = 0;
     
     virtual CompilerType
-    GetFieldAtIndex (void * type,
+    GetFieldAtIndex (void *type,
                      size_t idx,
                      std::string& name,
                      uint64_t *bit_offset_ptr,
                      uint32_t *bitfield_bit_size_ptr,
                      bool *is_bitfield_ptr) = 0;
-    
+
+    virtual uint32_t
+    GetNumDirectBaseClasses (void *type) = 0;
+
+    virtual uint32_t
+    GetNumVirtualBaseClasses (void *type) = 0;
+
     virtual CompilerType
-    GetChildClangTypeAtIndex (void * type,
+    GetDirectBaseClassAtIndex (void *type,
+                               size_t idx,
+                               uint32_t *bit_offset_ptr) = 0;
+
+    virtual CompilerType
+    GetVirtualBaseClassAtIndex (void *type,
+                                size_t idx,
+                                uint32_t *bit_offset_ptr) = 0;
+
+    virtual CompilerType
+    GetChildClangTypeAtIndex (void *type,
                               ExecutionContext *exe_ctx,
                               size_t idx,
                               bool transparent_pointers,
@@ -276,7 +300,7 @@ public:
     // Lookup a child given a name. This function will match base class names
     // and member member names in "clang_type" only, not descendants.
     virtual uint32_t
-    GetIndexOfChildWithName (void * type,
+    GetIndexOfChildWithName (void *type,
                              const char *name,
                              bool omit_empty_base_classes) = 0;
     
@@ -286,16 +310,16 @@ public:
     // TODO: Return all matches for a given name by returning a vector<vector<uint32_t>>
     // so we catch all names that match a given child name, not just the first.
     virtual size_t
-    GetIndexOfChildMemberWithName (void * type,
+    GetIndexOfChildMemberWithName (void *type,
                                    const char *name,
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes) = 0;
     
     virtual size_t
-    GetNumTemplateArguments (void * type) = 0;
+    GetNumTemplateArguments (void *type) = 0;
     
     virtual CompilerType
-    GetTemplateArgument (void * type,
+    GetTemplateArgument (void *type,
                          size_t idx,
                          lldb::TemplateArgumentKind &kind) = 0;
     
@@ -303,7 +327,7 @@ public:
     // Dumping types
     //----------------------------------------------------------------------
     virtual void
-    DumpValue (void * type,
+    DumpValue (void *type,
                ExecutionContext *exe_ctx,
                Stream *s,
                lldb::Format format,
@@ -318,7 +342,7 @@ public:
                uint32_t depth) = 0;
     
     virtual bool
-    DumpTypeValue (void * type,
+    DumpTypeValue (void *type,
                    Stream *s,
                    lldb::Format format,
                    const DataExtractor &data,
@@ -329,20 +353,20 @@ public:
                    ExecutionContextScope *exe_scope) = 0;
     
     virtual void
-    DumpTypeDescription (void * type) = 0; // Dump to stdout
+    DumpTypeDescription (void *type) = 0; // Dump to stdout
     
     virtual void
-    DumpTypeDescription (void * type, Stream *s) = 0;
+    DumpTypeDescription (void *type, Stream *s) = 0;
     
     //----------------------------------------------------------------------
     // TODO: These methods appear unused. Should they be removed?
     //----------------------------------------------------------------------
 
     virtual bool
-    IsRuntimeGeneratedType (void * type) = 0;
+    IsRuntimeGeneratedType (void *type) = 0;
     
     virtual void
-    DumpSummary (void * type,
+    DumpSummary (void *type,
                  ExecutionContext *exe_ctx,
                  Stream *s,
                  const DataExtractor &data,
@@ -352,7 +376,7 @@ public:
     // Converts "s" to a floating point value and place resulting floating
     // point bytes in the "dst" buffer.
     virtual size_t
-    ConvertStringToFloatValue (void * type,
+    ConvertStringToFloatValue (void *type,
                                const char *s,
                                uint8_t *dst,
                                size_t dst_size) = 0;
@@ -362,52 +386,52 @@ public:
     //----------------------------------------------------------------------
 
     virtual bool
-    IsPointerOrReferenceType (void * type, CompilerType *pointee_type) = 0;
+    IsPointerOrReferenceType (void *type, CompilerType *pointee_type) = 0;
 
     virtual unsigned
-    GetTypeQualifiers(void * type) = 0;
+    GetTypeQualifiers(void *type) = 0;
     
     virtual bool
-    IsCStringType (void * type, uint32_t &length) = 0;
+    IsCStringType (void *type, uint32_t &length) = 0;
     
     virtual size_t
-    GetTypeBitAlign (void * type) = 0;
+    GetTypeBitAlign (void *type) = 0;
     
     virtual CompilerType
-    GetBasicTypeFromAST (void * type, lldb::BasicType basic_type) = 0;
+    GetBasicTypeFromAST (lldb::BasicType basic_type) = 0;
     
     virtual bool
-    IsBeingDefined (void * type) = 0;
+    IsBeingDefined (void *type) = 0;
     
     virtual bool
-    IsConst(void * type) = 0;
+    IsConst(void *type) = 0;
     
     virtual uint32_t
-    IsHomogeneousAggregate (void * type, CompilerType* base_type_ptr) = 0;
+    IsHomogeneousAggregate (void *type, CompilerType* base_type_ptr) = 0;
     
     virtual bool
-    IsPolymorphicClass (void * type) = 0;
+    IsPolymorphicClass (void *type) = 0;
     
     virtual bool
-    IsTypedefType (void * type) = 0;
+    IsTypedefType (void *type) = 0;
     
     // If the current object represents a typedef type, get the underlying type
     virtual CompilerType
-    GetTypedefedType (void * type) = 0;
+    GetTypedefedType (void *type) = 0;
 
     virtual bool
-    IsVectorType (void * type,
+    IsVectorType (void *type,
                   CompilerType *element_type,
                   uint64_t *size) = 0;
     
     virtual CompilerType
-    GetFullyUnqualifiedType (void * type) = 0;
+    GetFullyUnqualifiedType (void *type) = 0;
     
     virtual CompilerType
-    GetNonReferenceType (void * type) = 0;
+    GetNonReferenceType (void *type) = 0;
     
     virtual bool
-    IsReferenceType (void * type, CompilerType *pointee_type, bool* is_rvalue) = 0;
+    IsReferenceType (void *type, CompilerType *pointee_type, bool* is_rvalue) = 0;
 protected:
     SymbolFile *m_sym_file;
 

@@ -46,9 +46,9 @@ public:
     CreateChildAtIndex(size_t idx, bool synthetic_array_member, int32_t synthetic_index) override;
 
     virtual CompilerType
-    GetClangType ()
+    GetCompilerType ()
     {
-        return ValueObjectChild::GetClangType();
+        return ValueObjectChild::GetCompilerType();
     }
     
     lldb::ValueObjectSP

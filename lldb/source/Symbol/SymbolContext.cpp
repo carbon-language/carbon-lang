@@ -649,22 +649,13 @@ SymbolContext::GetFunctionMethodInfo (lldb::LanguageType &language,
 
 
 {
-    Block *function_block = GetFunctionBlock ();
+    Block *function_block = GetFunctionBlock();
     if (function_block)
     {
-        clang::DeclContext *decl_context = function_block->GetClangDeclContext();
-        
-        if (decl_context)
-        {
-            return ClangASTContext::GetClassMethodInfoForDeclContext (decl_context,
-                                                                      language,
-                                                                      is_instance_method,
-                                                                      language_object_name);
-        }
+        CompilerDeclContext decl_ctx = function_block->GetDeclContext();
+        if (decl_ctx)
+            return decl_ctx.IsClassMethod(&language, &is_instance_method, &language_object_name);
     }
-    language = eLanguageTypeUnknown;
-    is_instance_method = false;
-    language_object_name.Clear();
     return false;
 }
 

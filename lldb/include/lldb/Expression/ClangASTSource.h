@@ -353,7 +353,7 @@ protected:
     void 
     FindExternalVisibleDecls (NameSearchContext &context, 
                               lldb::ModuleSP module,
-                              ClangNamespaceDecl &namespace_decl,
+                              CompilerDeclContext &namespace_decl,
                               unsigned int current_id);
     
     //------------------------------------------------------------------

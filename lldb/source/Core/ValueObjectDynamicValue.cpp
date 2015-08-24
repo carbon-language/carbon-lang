@@ -50,17 +50,17 @@ ValueObjectDynamicValue::~ValueObjectDynamicValue()
 }
 
 CompilerType
-ValueObjectDynamicValue::GetClangTypeImpl ()
+ValueObjectDynamicValue::GetCompilerTypeImpl ()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success)
     {
         if (m_dynamic_type_info.HasType())
-            return m_value.GetClangType();
+            return m_value.GetCompilerType();
         else
-            return m_parent->GetClangType();
+            return m_parent->GetCompilerType();
     }
-    return m_parent->GetClangType();
+    return m_parent->GetCompilerType();
 }
 
 ConstString
@@ -105,7 +105,7 @@ ValueObjectDynamicValue::GetDisplayTypeName()
     if (success)
     {
         if (m_dynamic_type_info.HasType())
-            return GetClangType().GetDisplayTypeName();
+            return GetCompilerType().GetDisplayTypeName();
         if (m_dynamic_type_info.HasName())
             return m_dynamic_type_info.GetName();
     }
@@ -117,7 +117,7 @@ ValueObjectDynamicValue::CalculateNumChildren()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_dynamic_type_info.HasType())
-        return GetClangType().GetNumChildren (true);
+        return GetCompilerType().GetNumChildren (true);
     else
         return m_parent->GetNumChildren();
 }
@@ -166,7 +166,7 @@ FixupTypeAndOrName (const TypeAndOrName& type_andor_name,
         else if (parent.IsPointerOrReferenceType())
             corrected_name.append(" &");
         // the parent type should be a correctly pointer'ed or referenc'ed type
-        ret.SetCompilerType(parent.GetClangType());
+        ret.SetCompilerType(parent.GetCompilerType());
         ret.SetName(corrected_name.c_str());
     }
     return ret;
@@ -241,7 +241,7 @@ ValueObjectDynamicValue::UpdateValue ()
     {
         if (class_type_or_name.HasType())
         {
-            m_type_impl = TypeImpl(m_parent->GetClangType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetCompilerType());
+            m_type_impl = TypeImpl(m_parent->GetCompilerType(),FixupTypeAndOrName(class_type_or_name, *m_parent).GetCompilerType());
         }
         else
         {
@@ -303,7 +303,7 @@ ValueObjectDynamicValue::UpdateValue ()
     m_dynamic_type_info = FixupTypeAndOrName(m_dynamic_type_info, *m_parent);
 
     //m_value.SetContext (Value::eContextTypeClangType, corrected_type);
-    m_value.SetClangType (m_dynamic_type_info.GetCompilerType());
+    m_value.SetCompilerType (m_dynamic_type_info.GetCompilerType());
 
     // Our address is the location of the dynamic type stored in memory.  It isn't a load address,
     // because we aren't pointing to the LOCATION that stores the pointer to us, we're pointing to us...

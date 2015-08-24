@@ -584,13 +584,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
 {
 
     // We are in a type parsing child members
-    const uint32_t num_bases = ClangASTContext::GetNumDirectBaseClasses(clang_type);
+    const uint32_t num_bases = clang_type.GetNumDirectBaseClasses();
     
     if (num_bases > 0)
     {
         for (uint32_t i = 0; i < num_bases; ++i)
         {
-            CompilerType base_class_type (ClangASTContext::GetDirectBaseClassAtIndex(clang_type, i, nullptr));
+            CompilerType base_class_type = clang_type.GetDirectBaseClassAtIndex(i, nullptr);
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -602,13 +602,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
         }
     }
 
-    const uint32_t num_vbases = ClangASTContext::GetNumVirtualBaseClasses(clang_type);
+    const uint32_t num_vbases = clang_type.GetNumVirtualBaseClasses();
     
     if (num_vbases > 0)
     {
         for (uint32_t i = 0; i < num_vbases; ++i)
         {
-            CompilerType vbase_class_type (ClangASTContext::GetVirtualBaseClassAtIndex(clang_type, i,nullptr));
+            CompilerType vbase_class_type = clang_type.GetVirtualBaseClassAtIndex(i,nullptr);
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -888,7 +888,7 @@ PrivateAutoComplete (StackFrame *frame,
                                 Type *variable_type = variable->GetType();
                                 if (variable_type)
                                 {
-                                    CompilerType variable_clang_type (variable_type->GetClangForwardType());
+                                    CompilerType variable_clang_type (variable_type->GetForwardCompilerType ());
                                     PrivateAutoComplete (frame,
                                                          remaining_partial_path,
                                                          prefix_path + token, // Anything that has been resolved already will be in here

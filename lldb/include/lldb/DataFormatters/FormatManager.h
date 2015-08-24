@@ -248,7 +248,7 @@ public:
     {
         FormattersMatchVector matches;
         GetPossibleMatches (valobj,
-                            valobj.GetClangType(),
+                            valobj.GetCompilerType(),
                             lldb_private::eFormatterChoiceCriterionDirectChoice,
                             use_dynamic,
                             matches,

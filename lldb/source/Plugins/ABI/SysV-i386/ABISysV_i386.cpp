@@ -387,7 +387,7 @@ ABISysV_i386::GetArgumentValues (Thread &thread,
             return false;
 
         // Currently: Support for extracting values with Clang QualTypes only.
-        CompilerType clang_type (value->GetClangType());
+        CompilerType clang_type (value->GetCompilerType());
         if (clang_type)
         {
             bool is_signed;
@@ -434,7 +434,7 @@ ABISysV_i386::GetReturnValueObjectSimple (Thread &thread,
     if (!return_clang_type)
         return return_valobj_sp;
 
-    value.SetClangType (return_clang_type);
+    value.SetCompilerType (return_clang_type);
 
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)

@@ -26,7 +26,6 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/MemoryRegionInfo.h"

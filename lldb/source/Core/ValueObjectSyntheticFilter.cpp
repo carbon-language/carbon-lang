@@ -83,9 +83,9 @@ ValueObjectSynthetic::~ValueObjectSynthetic()
 }
 
 CompilerType
-ValueObjectSynthetic::GetClangTypeImpl ()
+ValueObjectSynthetic::GetCompilerTypeImpl ()
 {
-    return m_parent->GetClangType();
+    return m_parent->GetCompilerType();
 }
 
 ConstString

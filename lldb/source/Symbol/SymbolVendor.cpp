@@ -293,14 +293,14 @@ SymbolVendor::ResolveSymbolContext (const FileSpec& file_spec, uint32_t line, bo
 }
 
 size_t
-SymbolVendor::FindGlobalVariables (const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, size_t max_matches, VariableList& variables)
+SymbolVendor::FindGlobalVariables (const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, size_t max_matches, VariableList& variables)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         if (m_sym_file_ap.get())
-            return m_sym_file_ap->FindGlobalVariables(name, namespace_decl, append, max_matches, variables);
+            return m_sym_file_ap->FindGlobalVariables(name, parent_decl_ctx, append, max_matches, variables);
     }
     return 0;
 }
@@ -319,14 +319,14 @@ SymbolVendor::FindGlobalVariables (const RegularExpression& regex, bool append, 
 }
 
 size_t
-SymbolVendor::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list)
+SymbolVendor::FindFunctions(const ConstString &name, const CompilerDeclContext *parent_decl_ctx, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         if (m_sym_file_ap.get())
-            return m_sym_file_ap->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, append, sc_list);
+            return m_sym_file_ap->FindFunctions(name, parent_decl_ctx, name_type_mask, include_inlines, append, sc_list);
     }
     return 0;
 }
@@ -346,14 +346,14 @@ SymbolVendor::FindFunctions(const RegularExpression& regex, bool include_inlines
 
 
 size_t
-SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, size_t max_matches, TypeList& types)
+SymbolVendor::FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, size_t max_matches, TypeList& types)
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         if (m_sym_file_ap.get())
-            return m_sym_file_ap->FindTypes(sc, name, namespace_decl, append, max_matches, types);
+            return m_sym_file_ap->FindTypes(sc, name, parent_decl_ctx, append, max_matches, types);
     }
     if (!append)
         types.Clear();
@@ -375,18 +375,18 @@ SymbolVendor::GetTypes (SymbolContextScope *sc_scope,
     return 0;
 }
 
-ClangNamespaceDecl
-SymbolVendor::FindNamespace(const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *parent_namespace_decl)
+CompilerDeclContext
+SymbolVendor::FindNamespace(const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx)
 {
-    ClangNamespaceDecl namespace_decl;
+    CompilerDeclContext namespace_decl_ctx;
     ModuleSP module_sp(GetModule());
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         if (m_sym_file_ap.get())
-            namespace_decl = m_sym_file_ap->FindNamespace (sc, name, parent_namespace_decl);
+            namespace_decl_ctx = m_sym_file_ap->FindNamespace (sc, name, parent_decl_ctx);
     }
-    return namespace_decl;
+    return namespace_decl_ctx;
 }
 
 void

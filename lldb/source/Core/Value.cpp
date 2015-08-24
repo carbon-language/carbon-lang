@@ -275,7 +275,7 @@ Value::GetValueByteSize (Error *error_ptr)
     case eContextTypeLLDBType:         // Type *
     case eContextTypeVariable:         // Variable *
         {
-            const CompilerType &ast_type = GetClangType();
+            const CompilerType &ast_type = GetCompilerType();
             if (ast_type.IsValid())
                 byte_size = ast_type.GetByteSize(nullptr);
         }
@@ -298,7 +298,7 @@ Value::GetValueByteSize (Error *error_ptr)
 }
 
 const CompilerType &
-Value::GetClangType ()
+Value::GetCompilerType ()
 {
     if (!m_clang_type.IsValid())
     {
@@ -314,7 +314,7 @@ Value::GetClangType ()
             {
                 Type *lldb_type = GetType();
                 if (lldb_type)
-                    m_clang_type = lldb_type->GetClangForwardType();
+                    m_clang_type = lldb_type->GetForwardCompilerType ();
             }
             break;
 
@@ -325,7 +325,7 @@ Value::GetClangType ()
                 {
                     Type *variable_type = variable->GetType();
                     if (variable_type)
-                        m_clang_type = variable_type->GetClangForwardType();
+                        m_clang_type = variable_type->GetForwardCompilerType ();
                 }
             }
             break;
@@ -336,7 +336,7 @@ Value::GetClangType ()
 }
 
 void
-Value::SetClangType (const CompilerType &clang_type)
+Value::SetCompilerType (const CompilerType &clang_type)
 {
     m_clang_type = clang_type;
 }
@@ -355,7 +355,7 @@ Value::GetValueDefaultFormat ()
     case eContextTypeLLDBType:
     case eContextTypeVariable:
         {
-            const CompilerType &ast_type = GetClangType();
+            const CompilerType &ast_type = GetCompilerType();
             if (ast_type.IsValid())
                 return ast_type.GetFormat();
         }
@@ -407,7 +407,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     AddressType address_type = eAddressTypeFile;
     Address file_so_addr;
-    const CompilerType &ast_type = GetClangType();
+    const CompilerType &ast_type = GetCompilerType();
     switch (m_value_type)
     {
     case eValueTypeVector:
@@ -721,7 +721,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
 Scalar &
 Value::ResolveValue(ExecutionContext *exe_ctx)
 {
-    const CompilerType &clang_type = GetClangType();
+    const CompilerType &clang_type = GetCompilerType();
     if (clang_type.IsValid())
     {
         switch (m_value_type)

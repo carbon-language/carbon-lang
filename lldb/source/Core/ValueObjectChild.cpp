@@ -64,7 +64,7 @@ ValueObjectChild::GetValueType() const
 size_t
 ValueObjectChild::CalculateNumChildren()
 {
-    return GetClangType().GetNumChildren (true);
+    return GetCompilerType().GetNumChildren (true);
 }
 
 static void
@@ -88,7 +88,7 @@ ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
-        m_type_name = GetClangType().GetConstTypeName ();
+        m_type_name = GetCompilerType().GetConstTypeName ();
         AdjustForBitfieldness(m_type_name, m_bitfield_bit_size);
     }
     return m_type_name;
@@ -97,7 +97,7 @@ ValueObjectChild::GetTypeName()
 ConstString
 ValueObjectChild::GetQualifiedTypeName()
 {
-    ConstString qualified_name = GetClangType().GetConstTypeName();
+    ConstString qualified_name = GetCompilerType().GetConstTypeName();
     AdjustForBitfieldness(qualified_name, m_bitfield_bit_size);
     return qualified_name;
 }
@@ -105,7 +105,7 @@ ValueObjectChild::GetQualifiedTypeName()
 ConstString
 ValueObjectChild::GetDisplayTypeName()
 {
-    ConstString display_name = GetClangType().GetDisplayTypeName();
+    ConstString display_name = GetCompilerType().GetDisplayTypeName();
     AdjustForBitfieldness(display_name, m_bitfield_bit_size);
     return display_name;
 }
@@ -136,14 +136,14 @@ ValueObjectChild::UpdateValue ()
     {
         if (parent->UpdateValueIfNeeded(false))
         {
-            m_value.SetClangType(GetClangType());
+            m_value.SetCompilerType(GetCompilerType());
 
             // Copy the parent scalar value and the scalar value type
             m_value.GetScalar() = parent->GetValue().GetScalar();
             Value::ValueType value_type = parent->GetValue().GetValueType();
             m_value.SetValueType (value_type);
 
-            if (parent->GetClangType().IsPointerOrReferenceType ())
+            if (parent->GetCompilerType().IsPointerOrReferenceType ())
             {
                 lldb::addr_t addr = parent->GetPointerValue ();
                 m_value.GetScalar() = addr;
@@ -225,7 +225,7 @@ ValueObjectChild::UpdateValue ()
             {
                 const bool thread_and_frame_only_if_stopped = true;
                 ExecutionContext exe_ctx (GetExecutionContextRef().Lock(thread_and_frame_only_if_stopped));
-                if (GetClangType().GetTypeInfo() & lldb::eTypeHasValue)
+                if (GetCompilerType().GetTypeInfo() & lldb::eTypeHasValue)
                     m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
                 else
                     m_error.Clear(); // No value so nothing to read...

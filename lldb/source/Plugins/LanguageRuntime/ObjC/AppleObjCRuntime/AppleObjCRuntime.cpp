@@ -51,7 +51,7 @@ AppleObjCRuntime::AppleObjCRuntime(Process *process) :
 bool
 AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &valobj)
 {
-    CompilerType clang_type(valobj.GetClangType());
+    CompilerType clang_type(valobj.GetCompilerType());
     bool is_signed;
     // ObjC objects can only be pointers (or numbers that actually represents pointers
     // but haven't been typecast, because reasons..)
@@ -89,7 +89,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
         return false;
     
     Target *target = exe_ctx.GetTargetPtr();
-    CompilerType clang_type = value.GetClangType();
+    CompilerType clang_type = value.GetCompilerType();
     if (clang_type)
     {
         if (!ClangASTContext::IsObjCObjectPointerType(clang_type))
@@ -106,7 +106,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
         if (!opaque_type)
             opaque_type = ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
         //value.SetContext(Value::eContextTypeClangType, opaque_type_ptr);
-        value.SetClangType (opaque_type);
+        value.SetCompilerType (opaque_type);
     }
 
     ValueList arg_value_list;
@@ -118,7 +118,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     CompilerType return_clang_type = ast_context->GetCStringType(true);
     Value ret;
 //    ret.SetContext(Value::eContextTypeClangType, return_clang_type);
-    ret.SetClangType (return_clang_type);
+    ret.SetCompilerType (return_clang_type);
     
     if (exe_ctx.GetFramePtr() == NULL)
     {
@@ -229,7 +229,7 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
 bool
 AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    return in_value.GetClangType().IsPossibleDynamicType (NULL,
+    return in_value.GetCompilerType().IsPossibleDynamicType (NULL,
                                                           false, // do not check C++
                                                           true); // check ObjC
 }

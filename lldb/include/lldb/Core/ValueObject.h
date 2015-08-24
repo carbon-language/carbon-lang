@@ -374,7 +374,7 @@ public:
     virtual ~ValueObject();
     
     CompilerType
-    GetClangType ();
+    GetCompilerType ();
     
     // this vends a TypeImpl that is useful at the SB API layer
     virtual TypeImpl
@@ -1232,7 +1232,7 @@ protected:
     //------------------------------------------------------------------
     
     virtual CompilerType
-    GetClangTypeImpl () = 0;
+    GetCompilerTypeImpl () = 0;
     
     const char *
     GetLocationAsCStringImpl (const Value& value,

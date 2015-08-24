@@ -241,18 +241,18 @@ public:
     // Get the clang type, and resolve definitions for any 
     // class/struct/union/enum types completely.
     CompilerType
-    GetClangFullType ();
+    GetFullCompilerType ();
 
     // Get the clang type, and resolve definitions enough so that the type could
     // have layout performed. This allows ptrs and refs to class/struct/union/enum 
     // types remain forward declarations.
     CompilerType
-    GetClangLayoutType ();
+    GetLayoutCompilerType ();
 
     // Get the clang type and leave class/struct/union/enum types as forward
     // declarations if they haven't already been fully defined.
     CompilerType 
-    GetClangForwardType ();
+    GetForwardCompilerType ();
 
     ClangASTContext &
     GetClangASTContext ();
@@ -275,12 +275,6 @@ public:
 
     uint32_t
     GetEncodingMask ();
-    
-    CompilerType
-    CreateClangTypedefType (Type *typedef_type, Type *base_type);
-
-    bool
-    IsRealObjCClass();
     
     bool
     IsCompleteObjCClass()
@@ -340,10 +334,10 @@ public:
     }
     
     TypePair (lldb::TypeSP type) :
-    clang_type(),
-    type_sp(type)
+        clang_type(),
+        type_sp(type)
     {
-        clang_type = type_sp->GetClangForwardType();
+        clang_type = type_sp->GetForwardCompilerType ();
     }
     
     bool
@@ -392,7 +386,7 @@ public:
     GetDisplayTypeName () const
     {
         if (type_sp)
-            return type_sp->GetClangForwardType().GetDisplayTypeName();
+            return type_sp->GetForwardCompilerType ().GetDisplayTypeName();
         if (clang_type)
             return clang_type.GetDisplayTypeName();
         return ConstString();
@@ -409,7 +403,7 @@ public:
     SetType (lldb::TypeSP type)
     {
         type_sp = type;
-        clang_type = type_sp->GetClangForwardType();
+        clang_type = type_sp->GetForwardCompilerType ();
     }
     
     lldb::TypeSP
@@ -428,7 +422,7 @@ public:
     GetPointerType () const
     {
         if (type_sp)
-            return type_sp->GetClangLayoutType().GetPointerType();
+            return type_sp->GetLayoutCompilerType ().GetPointerType();
         return clang_type.GetPointerType();
     }
     
@@ -436,7 +430,7 @@ public:
     GetPointeeType () const
     {
         if (type_sp)
-            return type_sp->GetClangFullType().GetPointeeType();
+            return type_sp->GetFullCompilerType ().GetPointeeType();
         return clang_type.GetPointeeType();
     }
     
@@ -444,7 +438,7 @@ public:
     GetReferenceType () const
     {
         if (type_sp)
-            return ClangASTContext::GetLValueReferenceType(type_sp->GetClangLayoutType());
+            return ClangASTContext::GetLValueReferenceType(type_sp->GetLayoutCompilerType ());
         return ClangASTContext::GetLValueReferenceType(clang_type);
     }
 
@@ -452,7 +446,7 @@ public:
     GetTypedefedType () const
     {
         if (type_sp)
-            return type_sp->GetClangFullType().GetTypedefedType();
+            return type_sp->GetFullCompilerType ().GetTypedefedType();
         return clang_type.GetTypedefedType();
     }
 
@@ -460,7 +454,7 @@ public:
     GetDereferencedType () const
     {
         if (type_sp)
-            return type_sp->GetClangFullType().GetNonReferenceType();
+            return type_sp->GetFullCompilerType ().GetNonReferenceType();
         return clang_type.GetNonReferenceType();
     }
     
@@ -468,7 +462,7 @@ public:
     GetUnqualifiedType () const
     {
         if (type_sp)
-            return type_sp->GetClangLayoutType().GetFullyUnqualifiedType();
+            return type_sp->GetLayoutCompilerType ().GetFullyUnqualifiedType();
         return clang_type.GetFullyUnqualifiedType();
     }
     
@@ -476,7 +470,7 @@ public:
     GetCanonicalType () const
     {
         if (type_sp)
-            return type_sp->GetClangFullType().GetCanonicalType();
+            return type_sp->GetFullCompilerType ().GetCanonicalType();
         return clang_type.GetCanonicalType();
     }
     
@@ -910,8 +904,9 @@ public:
     {
     }
 
-    TypeEnumMemberImpl (const clang::EnumConstantDecl* enum_member_decl,
-                        const lldb_private::CompilerType& integer_type);
+    TypeEnumMemberImpl (const lldb::TypeImplSP &integer_type_sp,
+                        const ConstString &name,
+                        const llvm::APSInt &value);
 
     TypeEnumMemberImpl (const TypeEnumMemberImpl& rhs) :
         m_integer_type_sp(rhs.m_integer_type_sp),

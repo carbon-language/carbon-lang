@@ -166,7 +166,7 @@ protected:
     }
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
     
     virtual void
     CreateSynthFilter ();

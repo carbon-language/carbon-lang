@@ -885,10 +885,10 @@ DumpValue (Stream &s,
     }
 
     // TODO use flags for these
-    const uint32_t type_info_flags = target->GetClangType().GetTypeInfo(NULL);
+    const uint32_t type_info_flags = target->GetCompilerType().GetTypeInfo(NULL);
     bool is_array = (type_info_flags & eTypeIsArray) != 0;
     bool is_pointer = (type_info_flags & eTypeIsPointer) != 0;
-    bool is_aggregate = target->GetClangType().IsAggregateType();
+    bool is_aggregate = target->GetCompilerType().IsAggregateType();
 
     if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue) // this should be wrong, but there are some exceptions
     {
@@ -1788,7 +1788,7 @@ FormatEntity::Format (const Entry &entry,
                                 ValueObjectSP var_value_sp (ValueObjectVariable::Create (exe_scope, var_sp));
                                 const char *var_representation = nullptr;
                                 const char *var_name = var_value_sp->GetName().GetCString();
-                                if (var_value_sp->GetClangType().IsAggregateType() &&
+                                if (var_value_sp->GetCompilerType().IsAggregateType() &&
                                     DataVisualization::ShouldPrintAsOneLiner(*var_value_sp.get()))
                                 {
                                     static StringSummaryFormat format(TypeSummaryImpl::Flags()

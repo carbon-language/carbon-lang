@@ -723,14 +723,14 @@ Module::ResolveSymbolContextsForFileSpec (const FileSpec &file_spec, uint32_t li
 
 size_t
 Module::FindGlobalVariables (const ConstString &name,
-                             const ClangNamespaceDecl *namespace_decl,
+                             const CompilerDeclContext *parent_decl_ctx,
                              bool append,
                              size_t max_matches,
                              VariableList& variables)
 {
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        return symbols->FindGlobalVariables(name, namespace_decl, append, max_matches, variables);
+        return symbols->FindGlobalVariables(name, parent_decl_ctx, append, max_matches, variables);
     return 0;
 }
 
@@ -773,7 +773,7 @@ Module::FindCompileUnits (const FileSpec &path,
 
 size_t
 Module::FindFunctions (const ConstString &name,
-                       const ClangNamespaceDecl *namespace_decl,
+                       const CompilerDeclContext *parent_decl_ctx,
                        uint32_t name_type_mask,
                        bool include_symbols,
                        bool include_inlines,
@@ -803,7 +803,7 @@ Module::FindFunctions (const ConstString &name,
         if (symbols)
         {
             symbols->FindFunctions(lookup_name,
-                                   namespace_decl,
+                                   parent_decl_ctx,
                                    lookup_name_type_mask,
                                    include_inlines,
                                    append,
@@ -843,7 +843,7 @@ Module::FindFunctions (const ConstString &name,
     {
         if (symbols)
         {
-            symbols->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, append, sc_list);
+            symbols->FindFunctions(name, parent_decl_ctx, name_type_mask, include_inlines, append, sc_list);
 
             // Now check our symbol table for symbols that are code symbols if requested
             if (include_symbols)
@@ -961,7 +961,7 @@ Module::FindAddressesForLine (const lldb::TargetSP target_sp,
 size_t
 Module::FindTypes_Impl (const SymbolContext& sc,
                         const ConstString &name,
-                        const ClangNamespaceDecl *namespace_decl,
+                        const CompilerDeclContext *parent_decl_ctx,
                         bool append,
                         size_t max_matches,
                         TypeList& types)
@@ -971,7 +971,7 @@ Module::FindTypes_Impl (const SymbolContext& sc,
     {
         SymbolVendor *symbols = GetSymbolVendor ();
         if (symbols)
-            return symbols->FindTypes(sc, name, namespace_decl, append, max_matches, types);
+            return symbols->FindTypes(sc, name, parent_decl_ctx, append, max_matches, types);
     }
     return 0;
 }
@@ -979,12 +979,12 @@ Module::FindTypes_Impl (const SymbolContext& sc,
 size_t
 Module::FindTypesInNamespace (const SymbolContext& sc,
                               const ConstString &type_name,
-                              const ClangNamespaceDecl *namespace_decl,
+                              const CompilerDeclContext *parent_decl_ctx,
                               size_t max_matches,
                               TypeList& type_list)
 {
     const bool append = true;
-    return FindTypes_Impl(sc, type_name, namespace_decl, append, max_matches, type_list);
+    return FindTypes_Impl(sc, type_name, parent_decl_ctx, append, max_matches, type_list);
 }
 
 lldb::TypeSP

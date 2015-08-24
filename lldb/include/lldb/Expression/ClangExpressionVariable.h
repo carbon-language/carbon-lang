@@ -222,10 +222,10 @@ public:
     SetRegisterInfo (const RegisterInfo *reg_info);
 
     CompilerType
-    GetClangType ();
+    GetCompilerType ();
     
     void
-    SetClangType (const CompilerType &clang_type);
+    SetCompilerType (const CompilerType &clang_type);
 
     TypeFromUser
     GetTypeFromUser ();
@@ -420,7 +420,7 @@ public:
     {
         lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(exe_scope, byte_order, addr_byte_size));
         var_sp->SetName (name);
-        var_sp->SetClangType (user_type);
+        var_sp->SetCompilerType (user_type);
         m_variables.push_back(var_sp);
         return var_sp;
     }

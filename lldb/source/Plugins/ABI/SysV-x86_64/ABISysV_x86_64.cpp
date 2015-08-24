@@ -502,7 +502,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
         
         // We currently only support extracting values with Clang QualTypes.
         // Do we care about others?
-        CompilerType clang_type = value->GetClangType();
+        CompilerType clang_type = value->GetCompilerType();
         if (!clang_type)
             return false;
         bool is_signed;
@@ -542,7 +542,7 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
     
-    CompilerType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetCompilerType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -642,7 +642,7 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
         return return_valobj_sp;
 
     //value.SetContext (Value::eContextTypeClangType, return_value_type);
-    value.SetClangType (return_clang_type);
+    value.SetCompilerType (return_clang_type);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)

@@ -104,7 +104,7 @@ ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
 
     SetName (ConstString(name));
 //    m_value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
-    m_value.SetClangType(m_clang_type);
+    m_value.SetCompilerType(m_clang_type);
     lldb::addr_t load_address = m_address.GetLoadAddress (target_sp.get());
     if (load_address != LLDB_INVALID_ADDRESS)
     {
@@ -132,10 +132,10 @@ ValueObjectMemory::~ValueObjectMemory()
 }
 
 CompilerType
-ValueObjectMemory::GetClangTypeImpl ()
+ValueObjectMemory::GetCompilerTypeImpl ()
 {
     if (m_type_sp)
-        return m_type_sp->GetClangForwardType();
+        return m_type_sp->GetForwardCompilerType ();
     return m_clang_type;
 }
 
@@ -151,7 +151,7 @@ ConstString
 ValueObjectMemory::GetDisplayTypeName()
 {
     if (m_type_sp)
-        return m_type_sp->GetClangForwardType().GetDisplayTypeName();
+        return m_type_sp->GetForwardCompilerType ().GetDisplayTypeName();
     return m_clang_type.GetDisplayTypeName();
 }
 
@@ -250,7 +250,7 @@ ValueObjectMemory::UpdateValue ()
                 else
                 {
                     //value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
-                    value.SetClangType(m_clang_type);
+                    value.SetCompilerType(m_clang_type);
                 }
 
                 m_error = value.GetValueAsData(&exe_ctx, m_data, 0, GetModule().get());

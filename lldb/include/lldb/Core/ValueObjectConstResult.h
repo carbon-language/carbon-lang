@@ -139,7 +139,7 @@ protected:
     UpdateValue ();
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     ConstString m_type_name;
     uint64_t m_byte_size;

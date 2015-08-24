@@ -416,7 +416,7 @@ public:
         // Hard-coding to maximum size of a pointer since all variables are materialized by reference
         m_size = 8;
         m_alignment = 8;
-        m_is_reference = m_variable_sp->GetType()->GetClangForwardType().IsReferenceType();
+        m_is_reference = m_variable_sp->GetType()->GetForwardCompilerType ().IsReferenceType();
     }
     
     void Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &err)
@@ -525,7 +525,7 @@ public:
                     return;
                 }
                 
-                size_t bit_align = m_variable_sp->GetType()->GetClangLayoutType().GetTypeBitAlign();
+                size_t bit_align = m_variable_sp->GetType()->GetLayoutCompilerType ().GetTypeBitAlign();
                 size_t byte_align = (bit_align + 7) / 8;
                 
                 if (!byte_align)

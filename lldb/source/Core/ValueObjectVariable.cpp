@@ -55,11 +55,11 @@ ValueObjectVariable::~ValueObjectVariable()
 }
 
 CompilerType
-ValueObjectVariable::GetClangTypeImpl ()
+ValueObjectVariable::GetCompilerTypeImpl ()
 {
     Type *var_type = m_variable_sp->GetType();
     if (var_type)
-        return var_type->GetClangForwardType();
+        return var_type->GetForwardCompilerType ();
     return CompilerType();
 }
 
@@ -77,7 +77,7 @@ ValueObjectVariable::GetDisplayTypeName()
 {
     Type * var_type = m_variable_sp->GetType();
     if (var_type)
-        return var_type->GetClangForwardType().GetDisplayTypeName();
+        return var_type->GetForwardCompilerType ().GetDisplayTypeName();
     return ConstString();
 }
 
@@ -93,7 +93,7 @@ ValueObjectVariable::GetQualifiedTypeName()
 size_t
 ValueObjectVariable::CalculateNumChildren()
 {    
-    CompilerType type(GetClangType());
+    CompilerType type(GetCompilerType());
     
     if (!type.IsValid())
         return 0;
@@ -107,7 +107,7 @@ ValueObjectVariable::GetByteSize()
 {
     ExecutionContext exe_ctx(GetExecutionContextRef());
     
-    CompilerType type(GetClangType());
+    CompilerType type(GetCompilerType());
     
     if (!type.IsValid())
         return 0;
@@ -168,9 +168,9 @@ ValueObjectVariable::UpdateValue ()
             m_resolved_value = m_value;
             m_value.SetContext(Value::eContextTypeVariable, variable);
             
-            CompilerType clang_type = GetClangType();
+            CompilerType clang_type = GetCompilerType();
             if (clang_type.IsValid())
-                m_value.SetClangType(clang_type);
+                m_value.SetCompilerType(clang_type);
 
             Value::ValueType value_type = m_value.GetValueType();
 

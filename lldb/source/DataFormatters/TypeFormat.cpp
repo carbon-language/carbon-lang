@@ -91,7 +91,7 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
         }
         else
         {
-            CompilerType clang_type = value.GetClangType ();
+            CompilerType clang_type = value.GetCompilerType ();
             if (clang_type)
             {
                 // put custom bytes to display in the DataExtractor to override the default value logic
@@ -208,9 +208,9 @@ TypeFormatImpl_EnumType::FormatObject (ValueObject *valobj,
         {
             if (!type_sp)
                 continue;
-            if ( (type_sp->GetClangForwardType().GetTypeInfo() & eTypeIsEnumeration) == eTypeIsEnumeration)
+            if ( (type_sp->GetForwardCompilerType().GetTypeInfo() & eTypeIsEnumeration) == eTypeIsEnumeration)
             {
-                valobj_enum_type = type_sp->GetClangFullType();
+                valobj_enum_type = type_sp->GetFullCompilerType ();
                 m_types.emplace(valobj_key,valobj_enum_type);
                 break;
             }

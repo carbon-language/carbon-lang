@@ -131,7 +131,7 @@ protected:
     }
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     Address  m_address;  ///< The variable that this value object is based upon
     TypeAndOrName m_dynamic_type_info; // We can have a type_sp or just a name

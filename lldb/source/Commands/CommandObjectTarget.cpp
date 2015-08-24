@@ -1871,7 +1871,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
                 {
                     // Resolve the clang type so that any forward references
                     // to types that haven't yet been parsed will get parsed.
-                    type_sp->GetClangFullType ();
+                    type_sp->GetFullCompilerType ();
                     type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
                     // Print all typedef chains
                     TypeSP typedef_type_sp (type_sp);
@@ -1880,7 +1880,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
                     {
                         strm.EOL();
                         strm.Printf("     typedef '%s': ", typedef_type_sp->GetName().GetCString());
-                        typedefed_type_sp->GetClangFullType ();
+                        typedefed_type_sp->GetFullCompilerType ();
                         typedefed_type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
                         typedef_type_sp = typedefed_type_sp;
                         typedefed_type_sp = typedef_type_sp->GetTypedefType();
@@ -1924,7 +1924,7 @@ LookupTypeHere (CommandInterpreter &interpreter,
         {
             // Resolve the clang type so that any forward references
             // to types that haven't yet been parsed will get parsed.
-            type_sp->GetClangFullType ();
+            type_sp->GetFullCompilerType ();
             type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
             // Print all typedef chains
             TypeSP typedef_type_sp (type_sp);
@@ -1933,7 +1933,7 @@ LookupTypeHere (CommandInterpreter &interpreter,
             {
                 strm.EOL();
                 strm.Printf("     typedef '%s': ", typedef_type_sp->GetName().GetCString());
-                typedefed_type_sp->GetClangFullType ();
+                typedefed_type_sp->GetFullCompilerType ();
                 typedefed_type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
                 typedef_type_sp = typedefed_type_sp;
                 typedefed_type_sp = typedef_type_sp->GetTypedefType();

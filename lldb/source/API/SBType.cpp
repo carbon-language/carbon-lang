@@ -14,10 +14,10 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/Type.h"
 
+#include "llvm/ADT/APSInt.h"
 #include "clang/AST/Decl.h"
 
 using namespace lldb;
@@ -343,12 +343,7 @@ SBType
 SBType::GetBasicType(lldb::BasicType basic_type)
 {
     if (IsValid() && m_opaque_sp->IsValid())
-    {
-        ClangASTContext* ast = m_opaque_sp->GetTypeSystem(false)->AsClangASTContext();
-        if (ast)
-            return SBType (ClangASTContext::GetBasicType (ast->getASTContext(), basic_type));
-    }
-    
+        return SBType(m_opaque_sp->GetTypeSystem(false)->GetBasicTypeFromAST(basic_type));
     return SBType();
 }
 
@@ -356,7 +351,7 @@ uint32_t
 SBType::GetNumberOfDirectBaseClasses ()
 {
     if (IsValid())
-        return ClangASTContext::GetNumDirectBaseClasses(m_opaque_sp->GetCompilerType(true));
+        return m_opaque_sp->GetCompilerType(true).GetNumDirectBaseClasses();
     return 0;
 }
 
@@ -364,7 +359,7 @@ uint32_t
 SBType::GetNumberOfVirtualBaseClasses ()
 {
     if (IsValid())
-        return ClangASTContext::GetNumVirtualBaseClasses(m_opaque_sp->GetCompilerType(true));
+        return m_opaque_sp->GetCompilerType(true).GetNumVirtualBaseClasses();
     return 0;
 }
 
@@ -399,16 +394,10 @@ SBType::GetDirectBaseClassAtIndex (uint32_t idx)
     SBTypeMember sb_type_member;
     if (IsValid())
     {
-        CompilerType this_type (m_opaque_sp->GetCompilerType (true));
-        if (this_type.IsValid())
-        {
-            uint32_t bit_offset = 0;
-            CompilerType base_class_type (ClangASTContext::GetDirectBaseClassAtIndex(this_type, idx, &bit_offset));
-            if (base_class_type.IsValid())
-            {
-                sb_type_member.reset (new TypeMemberImpl (TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
-            }
-        }
+        uint32_t bit_offset = 0;
+        CompilerType base_class_type = m_opaque_sp->GetCompilerType (true).GetDirectBaseClassAtIndex(idx, &bit_offset);
+        if (base_class_type.IsValid())
+            sb_type_member.reset (new TypeMemberImpl (TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
     }
     return sb_type_member;
 
@@ -420,16 +409,10 @@ SBType::GetVirtualBaseClassAtIndex (uint32_t idx)
     SBTypeMember sb_type_member;
     if (IsValid())
     {
-        CompilerType this_type (m_opaque_sp->GetCompilerType (true));
-        if (this_type.IsValid())
-        {
-            uint32_t bit_offset = 0;
-            CompilerType base_class_type (ClangASTContext::GetVirtualBaseClassAtIndex(this_type, idx, &bit_offset));
-            if (base_class_type.IsValid())
-            {
-                sb_type_member.reset (new TypeMemberImpl (TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
-            }
-        }
+        uint32_t bit_offset = 0;
+        CompilerType base_class_type = m_opaque_sp->GetCompilerType (true).GetVirtualBaseClassAtIndex(idx, &bit_offset);
+        if (base_class_type.IsValid())
+            sb_type_member.reset (new TypeMemberImpl (TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
     }
     return sb_type_member;
 }
@@ -440,16 +423,14 @@ SBType::GetEnumMembers ()
     SBTypeEnumMemberList sb_enum_member_list;
     if (IsValid())
     {
-        const clang::EnumDecl *enum_decl = ClangASTContext::GetAsEnumDecl(m_opaque_sp->GetCompilerType(true).GetFullyUnqualifiedType());
-        if (enum_decl)
+        CompilerType this_type (m_opaque_sp->GetCompilerType (true));
+        if (this_type.IsValid())
         {
-            clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
-            for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
-            {
-                SBTypeEnumMember enum_member;
-                enum_member.reset(new TypeEnumMemberImpl(*enum_pos, CompilerType(m_opaque_sp->GetTypeSystem(true), enum_decl->getIntegerType().getAsOpaquePtr())));
+            this_type.ForEachEnumerator([&sb_enum_member_list] (const CompilerType &integer_type, const ConstString &name, const llvm::APSInt &value) -> bool {
+                SBTypeEnumMember enum_member (lldb::TypeEnumMemberImplSP (new TypeEnumMemberImpl(lldb::TypeImplSP(new TypeImpl(integer_type)), name, value)));
                 sb_enum_member_list.Append(enum_member);
-            }
+                return true; // Keep iterating
+            });
         }
     }
     return sb_enum_member_list;

@@ -125,7 +125,7 @@ lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEnd::GetChildAtInde
     return val_hash.first->CreateValueObjectFromData(stream.GetData(),
                                                      data,
                                                      exe_ctx,
-                                                     val_hash.first->GetClangType());
+                                                     val_hash.first->GetCompilerType());
 }
 
 bool

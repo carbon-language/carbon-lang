@@ -333,7 +333,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
         if (!value)
             return false;
         
-        CompilerType clang_type = value->GetClangType();
+        CompilerType clang_type = value->GetCompilerType();
         if (clang_type)
         {
             bool is_signed = false;
@@ -430,7 +430,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
         return return_valobj_sp;
 
     //value.SetContext (Value::eContextTypeClangType, clang_type.GetOpaqueQualType());
-    value.SetClangType (clang_type);
+    value.SetCompilerType (clang_type);
             
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -511,7 +511,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
         return error;
     }
     
-    CompilerType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetCompilerType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");

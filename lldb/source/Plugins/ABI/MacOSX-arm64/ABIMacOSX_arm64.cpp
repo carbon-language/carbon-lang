@@ -322,7 +322,7 @@ ABIMacOSX_arm64::GetArgumentValues (Thread &thread, ValueList &values) const
         if (!value)
             return false;
         
-        CompilerType value_type = value->GetClangType();
+        CompilerType value_type = value->GetCompilerType();
         if (value_type)
         {
             bool is_signed = false;
@@ -424,7 +424,7 @@ ABIMacOSX_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueO
         return error;
     }
     
-    CompilerType return_value_type = new_value_sp->GetClangType();
+    CompilerType return_value_type = new_value_sp->GetCompilerType();
     if (!return_value_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -728,14 +728,12 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
     const uint32_t homogeneous_count = value_type.IsHomogeneousAggregate (&base_type);
     if (homogeneous_count > 0 && homogeneous_count <= 8)
     {
-        printf ("ClangASTContext::IsHomogeneousAggregate() => %u\n", homogeneous_count);
         // Make sure we have enough registers
         if (NSRN < 8 && (8-NSRN) >= homogeneous_count)
         {
             if (!base_type)
                 return false;
             const size_t base_byte_size = base_type.GetByteSize(nullptr);
-            printf ("ClangASTContext::IsHomogeneousAggregate() => base_byte_size = %" PRIu64 "\n", (uint64_t) base_byte_size);
             uint32_t data_offset = 0;
 
             for (uint32_t i=0; i<homogeneous_count; ++i)
@@ -871,7 +869,7 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_
         return return_valobj_sp;
 
     //value.SetContext (Value::eContextTypeClangType, return_clang_type);
-    value.SetClangType(return_clang_type);
+    value.SetCompilerType(return_clang_type);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)

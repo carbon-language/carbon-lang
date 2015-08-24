@@ -17,7 +17,7 @@
 #include "clang/AST/ASTImporter.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
+#include "lldb/Symbol/CompilerDeclContext.h"
 
 namespace lldb_private {
     
@@ -155,7 +155,7 @@ public:
     // Namespace maps
     //
     
-    typedef std::vector < std::pair<lldb::ModuleSP, ClangNamespaceDecl> > NamespaceMap;
+    typedef std::vector < std::pair<lldb::ModuleSP, CompilerDeclContext> > NamespaceMap;
     typedef std::shared_ptr<NamespaceMap> NamespaceMapSP;
     
     void RegisterNamespaceMap (const clang::NamespaceDecl *decl, 

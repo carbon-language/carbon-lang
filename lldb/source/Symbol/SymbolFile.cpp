@@ -15,6 +15,8 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/TypeList.h"
+#include "lldb/Symbol/VariableList.h"
 
 using namespace lldb_private;
 
@@ -92,5 +94,54 @@ TypeSystem *
 SymbolFile::GetTypeSystemForLanguage (lldb::LanguageType language)
 {
     return m_obj_file->GetModule()->GetTypeSystemForLanguage (language);
+}
+
+uint32_t
+SymbolFile::ResolveSymbolContext (const FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list)
+{
+    sc_list.Clear();
+    return 0;
+}
+
+
+uint32_t
+SymbolFile::FindGlobalVariables (const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, VariableList& variables)
+{
+    if (!append)
+        variables.Clear();
+    return 0;
+}
+
+
+uint32_t
+SymbolFile::FindGlobalVariables (const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables)
+{
+    if (!append)
+        variables.Clear();
+        return 0;
+}
+
+uint32_t
+SymbolFile::FindFunctions (const ConstString &name, const CompilerDeclContext *parent_decl_ctx, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list)
+{
+    if (!append)
+        sc_list.Clear();
+    return 0;
+}
+
+uint32_t
+SymbolFile::FindFunctions (const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list)
+{
+    if (!append)
+        sc_list.Clear();
+    return 0;
+}
+
+uint32_t
+SymbolFile::FindTypes (const SymbolContext& sc, const ConstString &name, const CompilerDeclContext *parent_decl_ctx, bool append, uint32_t max_matches, TypeList& types)
+{
+    if (!append)
+        types.Clear();
+    return 0;
 }
 

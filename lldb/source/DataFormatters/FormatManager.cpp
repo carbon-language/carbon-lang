@@ -313,7 +313,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
             lldb::ValueObjectSP static_value_sp(valobj.GetStaticValue());
             if (static_value_sp)
                 GetPossibleMatches(*static_value_sp.get(),
-                                   static_value_sp->GetClangType(),
+                                   static_value_sp->GetCompilerType(),
                                    reason | lldb_private::eFormatterChoiceCriterionWentToStaticValue,
                                    use_dynamic,
                                    entries,
@@ -1602,7 +1602,7 @@ FormatManager::LoadHardcodedFormatters()
                                             lldb::DynamicValueType,
                                             FormatManager&) -> TypeSummaryImpl::SharedPointer {
                                             static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags(), lldb_private::formatters::FunctionPointerSummaryProvider, "Function pointer summary provider"));
-                                            if (valobj.GetClangType().IsFunctionPointerType())
+                                            if (valobj.GetCompilerType().IsFunctionPointerType())
                                             {
                                                 return formatter_sp;
                                             }
@@ -1621,7 +1621,7 @@ FormatManager::LoadHardcodedFormatters()
                                                                                                                                       .SetSkipReferences(false),
                                                                                                                                       lldb_private::formatters::VectorTypeSummaryProvider,
                                                                                                                                       "vector_type pointer summary provider"));
-                                             if (valobj.GetClangType().IsVectorType(nullptr, nullptr))
+                                             if (valobj.GetCompilerType().IsVectorType(nullptr, nullptr))
                                              {
                                                  if (fmt_mgr.GetCategory(fmt_mgr.m_vectortypes_category_name)->IsEnabled())
                                                      return formatter_sp;
@@ -1638,7 +1638,7 @@ FormatManager::LoadHardcodedFormatters()
                                              static CXXSyntheticChildren::SharedPointer formatter_sp(new CXXSyntheticChildren(SyntheticChildren::Flags().SetCascades(true).SetSkipPointers(true).SetSkipReferences(true).SetNonCacheable(true),
                                                                                                                               "vector_type synthetic children",
                                                                                                                               lldb_private::formatters::VectorTypeSyntheticFrontEndCreator));
-                                             if (valobj.GetClangType().IsVectorType(nullptr, nullptr))
+                                             if (valobj.GetCompilerType().IsVectorType(nullptr, nullptr))
                                              {
                                                  if (fmt_mgr.GetCategory(fmt_mgr.m_vectortypes_category_name)->IsEnabled())
                                                      return formatter_sp;

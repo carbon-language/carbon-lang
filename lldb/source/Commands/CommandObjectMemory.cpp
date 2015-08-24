@@ -533,7 +533,7 @@ protected:
                 clang::TypeDecl *tdecl = target->GetPersistentVariables().GetPersistentType(ConstString(lookup_type_name));
                 if (tdecl)
                 {
-                    clang_ast_type.SetClangType(ClangASTContext::GetASTContext(&tdecl->getASTContext()),(const lldb::clang_type_t)tdecl->getTypeForDecl());
+                    clang_ast_type.SetCompilerType(ClangASTContext::GetASTContext(&tdecl->getASTContext()),(const lldb::clang_type_t)tdecl->getTypeForDecl());
                 }
             }
             
@@ -550,7 +550,7 @@ protected:
                 else
                 {
                     TypeSP type_sp (type_list.GetTypeAtIndex(0));
-                    clang_ast_type = type_sp->GetClangFullType();
+                    clang_ast_type = type_sp->GetFullCompilerType ();
                 }
             }
             
@@ -1124,7 +1124,7 @@ protected:
               result_sp.get())
           {
               uint64_t value = result_sp->GetValueAsUnsigned(0);
-              switch (result_sp->GetClangType().GetByteSize(nullptr))
+              switch (result_sp->GetCompilerType().GetByteSize(nullptr))
               {
                   case 1: {
                       uint8_t byte = (uint8_t)value;

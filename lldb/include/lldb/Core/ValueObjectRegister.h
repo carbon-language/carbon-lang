@@ -60,7 +60,7 @@ protected:
     UpdateValue ();
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
 
@@ -114,7 +114,7 @@ protected:
     UpdateValue ();
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
     const RegisterSet *m_reg_set;
@@ -171,7 +171,7 @@ protected:
     UpdateValue ();
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
     RegisterInfo m_reg_info;

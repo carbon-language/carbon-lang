@@ -301,25 +301,25 @@ AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, tid_t thread_i
     CompilerType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
     Value return_buffer_ptr_value;
     return_buffer_ptr_value.SetValueType (Value::eValueTypeScalar);
-    return_buffer_ptr_value.SetClangType (clang_void_ptr_type);
+    return_buffer_ptr_value.SetCompilerType (clang_void_ptr_type);
 
     CompilerType clang_int_type = clang_ast_context->GetBasicType(eBasicTypeInt);
     Value debug_value;
     debug_value.SetValueType (Value::eValueTypeScalar);
-    debug_value.SetClangType (clang_int_type);
+    debug_value.SetCompilerType (clang_int_type);
 
     CompilerType clang_uint64_type = clang_ast_context->GetBasicType(eBasicTypeUnsignedLongLong);
     Value thread_id_value;
     thread_id_value.SetValueType (Value::eValueTypeScalar);
-    thread_id_value.SetClangType (clang_uint64_type);
+    thread_id_value.SetCompilerType (clang_uint64_type);
 
     Value page_to_free_value;
     page_to_free_value.SetValueType (Value::eValueTypeScalar);
-    page_to_free_value.SetClangType (clang_void_ptr_type);
+    page_to_free_value.SetCompilerType (clang_void_ptr_type);
 
     Value page_to_free_size_value;
     page_to_free_size_value.SetValueType (Value::eValueTypeScalar);
-    page_to_free_size_value.SetClangType (clang_uint64_type);
+    page_to_free_size_value.SetCompilerType (clang_uint64_type);
 
 
     Mutex::Locker locker(m_get_thread_item_info_retbuffer_mutex);

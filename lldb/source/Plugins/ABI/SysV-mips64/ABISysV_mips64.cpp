@@ -290,7 +290,7 @@ ABISysV_mips64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         return error;
     }
 
-    CompilerType clang_type = new_value_sp->GetClangType();
+    CompilerType clang_type = new_value_sp->GetCompilerType();
     if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");
@@ -385,7 +385,7 @@ ABISysV_mips64::GetReturnValueObjectImpl (Thread &thread, CompilerType &return_c
     if (exe_ctx.GetTargetPtr() == NULL || exe_ctx.GetProcessPtr() == NULL)
         return return_valobj_sp;
 
-    value.SetClangType(return_clang_type);
+    value.SetCompilerType(return_clang_type);
 
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)

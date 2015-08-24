@@ -357,8 +357,8 @@ public:
         return m_inlineInfoSP.get();
     }
     
-    clang::DeclContext *
-    GetClangDeclContext();
+    CompilerDeclContext
+    GetDeclContext();
 
     //------------------------------------------------------------------
     /// Get the memory cost of this object.

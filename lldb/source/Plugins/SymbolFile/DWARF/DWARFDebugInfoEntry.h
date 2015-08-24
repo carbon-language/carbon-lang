@@ -85,7 +85,6 @@ public:
             dw_attr_t attr;
             dw_form_t form;
         };
-
         typedef llvm::SmallVector<Info, 8> collection;
         collection m_infos;
     };

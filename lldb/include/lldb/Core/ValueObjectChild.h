@@ -90,7 +90,7 @@ protected:
     CanUpdateWithInvalidExecutionContext ();
 
     virtual CompilerType
-    GetClangTypeImpl ()
+    GetCompilerTypeImpl ()
     {
         return m_clang_type;
     }

@@ -67,7 +67,7 @@ protected:
     UpdateValue ();
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;

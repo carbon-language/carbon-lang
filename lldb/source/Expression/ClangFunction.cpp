@@ -100,7 +100,7 @@ ClangFunction::ClangFunction
     assert (m_jit_process_wp.lock());
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
-    m_function_return_type = m_function_ptr->GetClangType().GetFunctionReturnType();
+    m_function_return_type = m_function_ptr->GetCompilerType().GetFunctionReturnType();
 }
 
 //----------------------------------------------------------------------
@@ -154,7 +154,7 @@ ClangFunction::CompileFunction (Stream &errors)
     CompilerType function_clang_type;
     if (m_function_ptr)
     {
-        function_clang_type = m_function_ptr->GetClangType();
+        function_clang_type = m_function_ptr->GetCompilerType();
         if (function_clang_type)
         {
             int num_func_args = function_clang_type.GetFunctionArgumentCount();
@@ -181,7 +181,7 @@ ClangFunction::CompileFunction (Stream &errors)
         }
         else
         {
-            CompilerType clang_qual_type = m_arg_values.GetValueAtIndex(i)->GetClangType ();
+            CompilerType clang_qual_type = m_arg_values.GetValueAtIndex(i)->GetCompilerType ();
             if (clang_qual_type)
             {
                 type_name = clang_qual_type.GetTypeName().AsCString("");
@@ -391,7 +391,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
         if (arg_value->GetValueType() == Value::eValueTypeHostAddress &&
             arg_value->GetContextType() == Value::eContextTypeInvalid &&
-            arg_value->GetClangType().IsPointerType())
+            arg_value->GetCompilerType().IsPointerType())
             continue;
         
         const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx);
@@ -486,7 +486,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     if (error.Fail())
         return false;
 
-    ret_value.SetClangType(m_function_return_type);
+    ret_value.SetCompilerType(m_function_return_type);
     ret_value.SetValueType(Value::eValueTypeScalar);
     return true;
 }

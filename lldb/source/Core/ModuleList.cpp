@@ -22,7 +22,6 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/VariableList.h"
 

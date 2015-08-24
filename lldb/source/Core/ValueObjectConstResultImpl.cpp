@@ -71,7 +71,7 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
     bool child_is_deref_of_parent = false;
     
     const bool transparent_pointers = synthetic_array_member == false;
-    CompilerType clang_type = m_impl_backend->GetClangType();
+    CompilerType clang_type = m_impl_backend->GetCompilerType();
     CompilerType child_clang_type;
     
     ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
@@ -132,7 +132,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         return lldb::ValueObjectSP();
     if (m_live_address != LLDB_INVALID_ADDRESS)
     {
-        CompilerType clang_type(m_impl_backend->GetClangType());
+        CompilerType clang_type(m_impl_backend->GetCompilerType());
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&m_live_address,sizeof(lldb::addr_t)));
         

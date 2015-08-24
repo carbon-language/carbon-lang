@@ -75,7 +75,7 @@ protected:
     UpdateValue ();
     
     virtual CompilerType
-    GetClangTypeImpl ();
+    GetCompilerTypeImpl ();
 
     lldb::VariableSP  m_variable_sp;  ///< The variable that this value object is based upon
     Value m_resolved_value;           ///< The value that DWARFExpression resolves this variable to before we patch it up

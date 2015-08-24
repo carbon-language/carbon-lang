@@ -305,12 +305,6 @@ SymbolFileSymtab::CompleteType (lldb_private::CompilerType& clang_opaque_type)
     return false;
 }
 
-ClangNamespaceDecl 
-SymbolFileSymtab::FindNamespace (const SymbolContext& sc, const ConstString &name, const ClangNamespaceDecl *namespace_decl)
-{
-    return ClangNamespaceDecl();
-}
-
 uint32_t
 SymbolFileSymtab::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc)
 {
@@ -325,63 +319,6 @@ SymbolFileSymtab::ResolveSymbolContext (const Address& so_addr, uint32_t resolve
             resolved_flags |= eSymbolContextSymbol;
     }
     return resolved_flags;
-}
-
-uint32_t
-SymbolFileSymtab::ResolveSymbolContext (const FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, SymbolContextList& sc_list)
-{
-    return 0;
-}
-
-uint32_t
-SymbolFileSymtab::FindGlobalVariables(const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables)
-{
-    return 0;
-}
-
-uint32_t
-SymbolFileSymtab::FindGlobalVariables(const RegularExpression& regex, bool append, uint32_t max_matches, VariableList& variables)
-{
-    return 0;
-}
-
-uint32_t
-SymbolFileSymtab::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines,  bool append, SymbolContextList& sc_list)
-{
-    Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "SymbolFileSymtab::FindFunctions (name = '%s')",
-                        name.GetCString());
-    // If we ever support finding STABS or COFF debug info symbols, 
-    // we will need to add support here. We are not trying to find symbols
-    // here, just "lldb_private::Function" objects that come from complete 
-    // debug information. Any symbol queries should go through the symbol
-    // table itself in the module's object file.
-    return 0;
-}
-
-uint32_t
-SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list)
-{
-    Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "SymbolFileSymtab::FindFunctions (regex = '%s')",
-                        regex.GetText());
-    // If we ever support finding STABS or COFF debug info symbols, 
-    // we will need to add support here. We are not trying to find symbols
-    // here, just "lldb_private::Function" objects that come from complete 
-    // debug information. Any symbol queries should go through the symbol
-    // table itself in the module's object file.
-    return 0;
-}
-
-uint32_t
-SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, 
-                             const lldb_private::ConstString &name, 
-                             const ClangNamespaceDecl *namespace_decl, 
-                             bool append, 
-                             uint32_t max_matches, 
-                             lldb_private::TypeList& types)
-{
-    return 0;
 }
 
 //------------------------------------------------------------------

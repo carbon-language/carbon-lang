@@ -290,7 +290,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetDataType()
     deref = deref->GetChildMemberWithName(ConstString("__value_"), true);
     if (!deref)
         return false;
-    m_element_type = deref->GetClangType();
+    m_element_type = deref->GetCompilerType();
     return true;
 }
 
@@ -301,7 +301,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetValueOffset (const l
         return;
     if (!node)
         return;
-    CompilerType node_type(node->GetClangType());
+    CompilerType node_type(node->GetCompilerType());
     uint64_t bit_offset;
     if (node_type.GetIndexOfFieldWithName("__value_", NULL, &bit_offset) == UINT32_MAX)
         return;

@@ -39,9 +39,9 @@ public:
 		       int32_t synthetic_index) override;
 
     virtual CompilerType
-    GetClangType ()
+    GetCompilerType ()
     {
-        return ValueObjectCast::GetClangType();
+        return ValueObjectCast::GetCompilerType();
     }
 
     lldb::ValueObjectSP

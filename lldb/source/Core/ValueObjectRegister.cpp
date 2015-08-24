@@ -43,7 +43,7 @@ ValueObjectRegisterContext::~ValueObjectRegisterContext()
 }
 
 CompilerType
-ValueObjectRegisterContext::GetClangTypeImpl ()
+ValueObjectRegisterContext::GetCompilerTypeImpl ()
 {
     return CompilerType();
 }
@@ -145,7 +145,7 @@ ValueObjectRegisterSet::~ValueObjectRegisterSet()
 }
 
 CompilerType
-ValueObjectRegisterSet::GetClangTypeImpl ()
+ValueObjectRegisterSet::GetCompilerTypeImpl ()
 {
     return CompilerType();
 }
@@ -308,7 +308,7 @@ ValueObjectRegister::~ValueObjectRegister()
 }
 
 CompilerType
-ValueObjectRegister::GetClangTypeImpl ()
+ValueObjectRegister::GetCompilerTypeImpl ()
 {
     if (!m_clang_type.IsValid())
     {
@@ -331,14 +331,14 @@ ConstString
 ValueObjectRegister::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = GetClangType().GetConstTypeName ();
+        m_type_name = GetCompilerType().GetConstTypeName ();
     return m_type_name;
 }
 
 size_t
 ValueObjectRegister::CalculateNumChildren()
 {
-    return GetClangType().GetNumChildren(true);
+    return GetCompilerType().GetNumChildren(true);
 }
 
 uint64_t

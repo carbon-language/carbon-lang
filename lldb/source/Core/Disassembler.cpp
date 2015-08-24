@@ -28,7 +28,6 @@
 #include "lldb/Interpreter/OptionValueDictionary.h"
 #include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Interpreter/OptionValueUInt64.h"
-#include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ExecutionContext.h"

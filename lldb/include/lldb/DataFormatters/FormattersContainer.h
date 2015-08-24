@@ -268,7 +268,7 @@ public:
         uint32_t* why = NULL)
     {
         uint32_t value = lldb_private::eFormatterChoiceCriterionDirectChoice;
-        CompilerType ast_type(valobj.GetClangType());
+        CompilerType ast_type(valobj.GetCompilerType());
         bool ret = Get(valobj, ast_type, entry, use_dynamic, value);
         if (ret)
             entry = MapValueType(entry);

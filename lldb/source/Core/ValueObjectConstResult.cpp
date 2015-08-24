@@ -94,7 +94,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
     
     m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
     m_value.SetValueType(Value::eValueTypeHostAddress);
-    m_value.SetClangType(clang_type);
+    m_value.SetCompilerType(clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -146,7 +146,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
     m_value.GetScalar() = (uintptr_t)data_sp->GetBytes();
     m_value.SetValueType(Value::eValueTypeHostAddress);
     //m_value.SetContext(Value::eContextTypeClangType, clang_type);
-    m_value.SetClangType (clang_type);
+    m_value.SetCompilerType (clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -192,7 +192,7 @@ ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope
     case eAddressTypeHost:      m_value.SetValueType(Value::eValueTypeHostAddress); break;
     }
 //    m_value.SetContext(Value::eContextTypeClangType, clang_type);
-    m_value.SetClangType (clang_type);
+    m_value.SetCompilerType (clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -242,9 +242,9 @@ ValueObjectConstResult::~ValueObjectConstResult()
 }
 
 CompilerType
-ValueObjectConstResult::GetClangTypeImpl()
+ValueObjectConstResult::GetCompilerTypeImpl()
 {
-    return m_value.GetClangType();
+    return m_value.GetCompilerType();
 }
 
 lldb::ValueType
@@ -259,7 +259,7 @@ ValueObjectConstResult::GetByteSize()
     ExecutionContext exe_ctx(GetExecutionContextRef());
 
     if (m_byte_size == 0)
-        SetByteSize(GetClangType().GetByteSize(exe_ctx.GetBestExecutionContextScope()));
+        SetByteSize(GetCompilerType().GetByteSize(exe_ctx.GetBestExecutionContextScope()));
     return m_byte_size;
 }
 
@@ -272,21 +272,21 @@ ValueObjectConstResult::SetByteSize (size_t size)
 size_t
 ValueObjectConstResult::CalculateNumChildren()
 {
-    return GetClangType().GetNumChildren (true);
+    return GetCompilerType().GetNumChildren (true);
 }
 
 ConstString
 ValueObjectConstResult::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = GetClangType().GetConstTypeName ();
+        m_type_name = GetCompilerType().GetConstTypeName ();
     return m_type_name;
 }
 
 ConstString
 ValueObjectConstResult::GetDisplayTypeName()
 {
-    return GetClangType().GetDisplayTypeName();
+    return GetCompilerType().GetDisplayTypeName();
 }
 
 bool

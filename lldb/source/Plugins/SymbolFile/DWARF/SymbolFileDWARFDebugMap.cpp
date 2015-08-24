@@ -877,7 +877,7 @@ uint32_t
 SymbolFileDWARFDebugMap::PrivateFindGlobalVariables
 (
     const ConstString &name,
-    const ClangNamespaceDecl *namespace_decl,
+    const CompilerDeclContext *parent_decl_ctx,
     const std::vector<uint32_t> &indexes,   // Indexes into the symbol table that match "name"
     uint32_t max_matches,
     VariableList& variables
@@ -894,7 +894,7 @@ SymbolFileDWARFDebugMap::PrivateFindGlobalVariables
             SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
             if (oso_dwarf)
             {
-                if (oso_dwarf->FindGlobalVariables(name, namespace_decl, true, max_matches, variables))
+                if (oso_dwarf->FindGlobalVariables(name, parent_decl_ctx, true, max_matches, variables))
                     if (variables.GetSize() > max_matches)
                         break;
             }
@@ -904,7 +904,11 @@ SymbolFileDWARFDebugMap::PrivateFindGlobalVariables
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, VariableList& variables)
+SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name,
+                                              const CompilerDeclContext *parent_decl_ctx,
+                                              bool append,
+                                              uint32_t max_matches,
+                                              VariableList& variables)
 {
 
     // If we aren't appending the results to this list, then clear the list
@@ -919,7 +923,7 @@ SymbolFileDWARFDebugMap::FindGlobalVariables (const ConstString &name, const Cla
     
     ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
         const uint32_t oso_matches = oso_dwarf->FindGlobalVariables (name,
-                                                                     namespace_decl,
+                                                                     parent_decl_ctx,
                                                                      true,
                                                                      max_matches,
                                                                      variables);
@@ -1097,7 +1101,12 @@ RemoveFunctionsWithModuleNotEqualTo (const ModuleSP &module_sp, SymbolContextLis
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list)
+SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name,
+                                       const CompilerDeclContext *parent_decl_ctx,
+                                       uint32_t name_type_mask,
+                                       bool include_inlines,
+                                       bool append,
+                                       SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARFDebugMap::FindFunctions (name = %s)",
@@ -1111,7 +1120,7 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNames
 
     ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
         uint32_t sc_idx = sc_list.GetSize();
-        if (oso_dwarf->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, true, sc_list))
+        if (oso_dwarf->FindFunctions(name, parent_decl_ctx, name_type_mask, include_inlines, true, sc_list))
         {
             RemoveFunctionsWithModuleNotEqualTo (m_obj_file->GetModule(), sc_list, sc_idx);
         }
@@ -1286,8 +1295,8 @@ SymbolFileDWARFDebugMap::FindTypes
 (
     const SymbolContext& sc, 
     const ConstString &name,
-    const ClangNamespaceDecl *namespace_decl,
-    bool append, 
+    const CompilerDeclContext *parent_decl_ctx,
+    bool append,
     uint32_t max_matches, 
     TypeList& types
 )
@@ -1302,12 +1311,12 @@ SymbolFileDWARFDebugMap::FindTypes
     {
         oso_dwarf = GetSymbolFile (sc);
         if (oso_dwarf)
-            return oso_dwarf->FindTypes (sc, name, namespace_decl, append, max_matches, types);
+            return oso_dwarf->FindTypes (sc, name, parent_decl_ctx, append, max_matches, types);
     }
     else
     {
         ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-            oso_dwarf->FindTypes (sc, name, namespace_decl, append, max_matches, types);
+            oso_dwarf->FindTypes (sc, name, parent_decl_ctx, append, max_matches, types);
             return false;
         });
     }
@@ -1326,24 +1335,24 @@ SymbolFileDWARFDebugMap::FindTypes
 //}
 
 
-ClangNamespaceDecl
+CompilerDeclContext
 SymbolFileDWARFDebugMap::FindNamespace (const lldb_private::SymbolContext& sc, 
                                         const lldb_private::ConstString &name,
-                                        const ClangNamespaceDecl *parent_namespace_decl)
+                                        const CompilerDeclContext *parent_decl_ctx)
 {
-    ClangNamespaceDecl matching_namespace;
+    CompilerDeclContext matching_namespace;
     SymbolFileDWARF *oso_dwarf;
 
     if (sc.comp_unit)
     {
         oso_dwarf = GetSymbolFile (sc);
         if (oso_dwarf)
-            matching_namespace = oso_dwarf->FindNamespace (sc, name, parent_namespace_decl);
+            matching_namespace = oso_dwarf->FindNamespace (sc, name, parent_decl_ctx);
     }
     else
     {
         ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-            matching_namespace = oso_dwarf->FindNamespace (sc, name, parent_namespace_decl);
+            matching_namespace = oso_dwarf->FindNamespace (sc, name, parent_decl_ctx);
 
             return (bool)matching_namespace;
         });
@@ -1433,24 +1442,24 @@ SymbolFileDWARFDebugMap::SetCompileUnit (SymbolFileDWARF *oso_dwarf, const CompU
     }
 }
 
-clang::DeclContext*
-SymbolFileDWARFDebugMap::GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid)
+CompilerDeclContext
+SymbolFileDWARFDebugMap::GetDeclContextForUID (lldb::user_id_t type_uid)
 {
     const uint64_t oso_idx = GetOSOIndexFromUserID (type_uid);
     SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
     if (oso_dwarf)
-        return oso_dwarf->GetClangDeclContextContainingTypeUID (type_uid);
-    return NULL;
+        return oso_dwarf->GetDeclContextForUID (type_uid);
+    return CompilerDeclContext();
 }
 
-clang::DeclContext*
-SymbolFileDWARFDebugMap::GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid)
+CompilerDeclContext
+SymbolFileDWARFDebugMap::GetDeclContextContainingUID (lldb::user_id_t type_uid)
 {
     const uint64_t oso_idx = GetOSOIndexFromUserID (type_uid);
     SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
     if (oso_dwarf)
-        return oso_dwarf->GetClangDeclContextForTypeUID (sc, type_uid);
-    return NULL;
+        return oso_dwarf->GetDeclContextContainingUID (type_uid);
+    return CompilerDeclContext();
 }
 
 bool

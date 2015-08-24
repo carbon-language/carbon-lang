@@ -178,7 +178,7 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
     if (m_clang_type.IsValid())
     {
         *s << ", clang_type = \"";
-        GetClangForwardType().DumpTypeDescription(s);
+        GetForwardCompilerType ().DumpTypeDescription(s);
         *s << '"';
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
@@ -226,7 +226,7 @@ Type::Dump (Stream *s, bool show_context)
     if (m_clang_type.IsValid())
     {
         *s << ", clang_type = " << m_clang_type.GetOpaqueQualType() << ' ';
-        GetClangForwardType().DumpTypeDescription (s);
+        GetForwardCompilerType ().DumpTypeDescription (s);
     }
     else if (m_encoding_uid != LLDB_INVALID_UID)
     {
@@ -256,7 +256,7 @@ const ConstString &
 Type::GetName()
 {
     if (!m_name)
-        m_name = GetClangForwardType().GetConstTypeName();
+        m_name = GetForwardCompilerType ().GetConstTypeName();
     return m_name;
 }
 
@@ -291,7 +291,7 @@ Type::DumpValue
             s->PutCString(") ");
         }
 
-        GetClangForwardType().DumpValue (exe_ctx,
+        GetForwardCompilerType ().DumpValue (exe_ctx,
                                          s,
                                          format == lldb::eFormatDefault ? GetFormat() : format,
                                          data,
@@ -336,7 +336,7 @@ Type::GetByteSize()
                 if (encoding_type)
                     m_byte_size = encoding_type->GetByteSize();
                 if (m_byte_size == 0)
-                    m_byte_size = GetClangLayoutType().GetByteSize(nullptr);
+                    m_byte_size = GetLayoutCompilerType ().GetByteSize(nullptr);
             }
             break;
 
@@ -355,13 +355,13 @@ Type::GetByteSize()
 uint32_t
 Type::GetNumChildren (bool omit_empty_base_classes)
 {
-    return GetClangForwardType().GetNumChildren(omit_empty_base_classes);
+    return GetForwardCompilerType ().GetNumChildren(omit_empty_base_classes);
 }
 
 bool
 Type::IsAggregateType ()
 {
-    return GetClangForwardType().IsAggregateType();
+    return GetForwardCompilerType ().IsAggregateType();
 }
 
 lldb::TypeSP
@@ -382,7 +382,7 @@ Type::GetTypedefType()
 lldb::Format
 Type::GetFormat ()
 {
-    return GetClangForwardType().GetFormat();
+    return GetForwardCompilerType ().GetFormat();
 }
 
 
@@ -391,7 +391,7 @@ lldb::Encoding
 Type::GetEncoding (uint64_t &count)
 {
     // Make sure we resolve our type if it already hasn't been.
-    return GetClangForwardType().GetEncoding(count);
+    return GetForwardCompilerType ().GetEncoding(count);
 }
 
 bool
@@ -502,7 +502,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
             {
             case eEncodingIsUID:
                 {
-                    CompilerType encoding_clang_type = encoding_type->GetClangForwardType();
+                    CompilerType encoding_clang_type = encoding_type->GetForwardCompilerType ();
                     if (encoding_clang_type.IsValid())
                     {
                         m_clang_type = encoding_clang_type;
@@ -512,34 +512,34 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
                 break;
 
             case eEncodingIsConstUID:
-                m_clang_type = ClangASTContext::AddConstModifier(encoding_type->GetClangForwardType());
+                m_clang_type = ClangASTContext::AddConstModifier(encoding_type->GetForwardCompilerType ());
                 break;
 
             case eEncodingIsRestrictUID:
-                m_clang_type = ClangASTContext::AddRestrictModifier(encoding_type->GetClangForwardType());
+                m_clang_type = ClangASTContext::AddRestrictModifier(encoding_type->GetForwardCompilerType ());
                 break;
 
             case eEncodingIsVolatileUID:
-                m_clang_type = ClangASTContext::AddVolatileModifier(encoding_type->GetClangForwardType());
+                m_clang_type = ClangASTContext::AddVolatileModifier(encoding_type->GetForwardCompilerType ());
                 break;
 
             case eEncodingIsTypedefUID:
-                m_clang_type = ClangASTContext::CreateTypedefType (encoding_type->GetClangForwardType(),
+                m_clang_type = ClangASTContext::CreateTypedefType (encoding_type->GetForwardCompilerType (),
                                                                    GetName().AsCString(),
-                                                                   GetSymbolFile()->GetClangDeclContextContainingTypeUID(GetID()));
+                                                                   GetSymbolFile()->GetDeclContextContainingUID(GetID()));
                 m_name.Clear();
                 break;
 
             case eEncodingIsPointerUID:
-                m_clang_type = encoding_type->GetClangForwardType().GetPointerType();
+                m_clang_type = encoding_type->GetForwardCompilerType ().GetPointerType();
                 break;
 
             case eEncodingIsLValueReferenceUID:
-                m_clang_type = ClangASTContext::GetLValueReferenceType(encoding_type->GetClangForwardType());
+                m_clang_type = ClangASTContext::GetLValueReferenceType(encoding_type->GetForwardCompilerType ());
                 break;
 
             case eEncodingIsRValueReferenceUID:
-                m_clang_type = ClangASTContext::GetRValueReferenceType(encoding_type->GetClangForwardType());
+                m_clang_type = ClangASTContext::GetRValueReferenceType(encoding_type->GetForwardCompilerType ());
                 break;
 
             default:
@@ -572,7 +572,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
             case eEncodingIsTypedefUID:
                 m_clang_type = ClangASTContext::CreateTypedefType (void_clang_type,
                                                                    GetName().AsCString(),
-                                                                   GetSymbolFile()->GetClangDeclContextContainingTypeUID(GetID()));
+                                                                   GetSymbolFile()->GetDeclContextContainingUID(GetID()));
                 break;
 
             case eEncodingIsPointerUID:
@@ -656,21 +656,21 @@ Type::GetEncodingMask ()
 }
 
 CompilerType
-Type::GetClangFullType ()
+Type::GetFullCompilerType ()
 {
     ResolveClangType(eResolveStateFull);
     return m_clang_type;
 }
 
 CompilerType
-Type::GetClangLayoutType ()
+Type::GetLayoutCompilerType ()
 {
     ResolveClangType(eResolveStateLayout);
     return m_clang_type;
 }
 
 CompilerType 
-Type::GetClangForwardType ()
+Type::GetForwardCompilerType ()
 {
     ResolveClangType (eResolveStateForward);
     return m_clang_type;
@@ -693,63 +693,13 @@ Type::Compare(const Type &a, const Type &b)
     if (a_uid > b_uid)
         return 1;
     return 0;
-//  if (a.getQualType() == b.getQualType())
-//      return 0;
-}
-
-
-#if 0  // START REMOVE
-// Move this into CompilerType
-void *
-Type::CreateClangPointerType (Type *type)
-{
-    assert(type);
-    return GetClangASTContext().CreatePointerType(type->GetClangForwardType());
-}
-
-void *
-Type::CreateClangTypedefType (Type *typedef_type, Type *base_type)
-{
-    assert(typedef_type && base_type);
-    return GetClangASTContext().CreateTypedefType (typedef_type->GetName().AsCString(), 
-                                                   base_type->GetClangForwardType(), 
-                                                   typedef_type->GetSymbolFile()->GetClangDeclContextContainingTypeUID(typedef_type->GetID()));
-}
-
-void *
-Type::CreateClangLValueReferenceType (Type *type)
-{
-    assert(type);
-    return GetClangASTContext().CreateLValueReferenceType(type->GetClangForwardType());
-}
-
-void *
-Type::CreateClangRValueReferenceType (Type *type)
-{
-    assert(type);
-    return GetClangASTContext().CreateRValueReferenceType (type->GetClangForwardType());
-}
-#endif // END REMOVE
-
-bool
-Type::IsRealObjCClass()
-{
-    // For now we are just skipping ObjC classes that get made by hand from the runtime, because
-    // those don't have any information.  We could extend this to only return true for "full 
-    // definitions" if we can figure that out.
-    
-    if (ClangASTContext::IsObjCObjectOrInterfaceType(m_clang_type) && GetByteSize() != 0)
-        return true;
-    else
-        return false;
 }
 
 ConstString
 Type::GetQualifiedName ()
 {
-    return GetClangForwardType().GetConstTypeName();
+    return GetForwardCompilerType ().GetConstTypeName();
 }
-
 
 bool
 Type::GetTypeScopeAndBasename (const char* &name_cstr,
@@ -1417,19 +1367,13 @@ TypeMemberFunctionImpl::GetArgumentAtIndex (size_t idx) const
     return CompilerType();
 }
 
-TypeEnumMemberImpl::TypeEnumMemberImpl (const clang::EnumConstantDecl* enum_member_decl,
-                                        const lldb_private::CompilerType& integer_type) :
-    m_integer_type_sp(),
-    m_name(),
-    m_value(),
-    m_valid(false)
+TypeEnumMemberImpl::TypeEnumMemberImpl (const lldb::TypeImplSP &integer_type_sp,
+                                        const ConstString &name,
+                                        const llvm::APSInt &value) :
+    m_integer_type_sp(integer_type_sp),
+    m_name(name),
+    m_value(value),
+    m_valid((bool)name && (bool)integer_type_sp)
 
 {
-    if (enum_member_decl)
-    {
-        m_integer_type_sp.reset(new TypeImpl(integer_type));
-        m_name = ConstString(enum_member_decl->getNameAsString().c_str());
-        m_value = enum_member_decl->getInitVal();
-        m_valid = true;
-    }
 }

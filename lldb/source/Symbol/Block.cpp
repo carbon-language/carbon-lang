@@ -546,27 +546,24 @@ Block::AppendVariables
     return num_variables_added;
 }
 
-clang::DeclContext *
-Block::GetClangDeclContext()
+CompilerDeclContext
+Block::GetDeclContext()
 {
-    SymbolContext sc;
+    ModuleSP module_sp = CalculateSymbolContextModule ();
+
+    if (module_sp)
+    {
+        SymbolVendor *sym_vendor = module_sp->GetSymbolVendor();
     
-    CalculateSymbolContext (&sc);
+        if (sym_vendor)
+        {
+            SymbolFile *sym_file = sym_vendor->GetSymbolFile();
     
-    if (!sc.module_sp)
-        return nullptr;
-    
-    SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
-    
-    if (!sym_vendor)
-        return nullptr;
-    
-    SymbolFile *sym_file = sym_vendor->GetSymbolFile();
-    
-    if (!sym_file)
-        return nullptr;
-    
-    return sym_file->GetClangDeclContextForTypeUID (sc, m_uid);
+            if (sym_file)
+                return sym_file->GetDeclContextForUID (GetID());
+        }
+    }
+    return CompilerDeclContext();
 }
 
 void

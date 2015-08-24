@@ -66,7 +66,7 @@ protected:
     UpdateValue () override;
     
     CompilerType
-    GetClangTypeImpl () override;
+    GetCompilerTypeImpl () override;
     
     CompilerType m_cast_type;
     

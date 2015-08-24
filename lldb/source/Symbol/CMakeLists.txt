@@ -6,7 +6,7 @@ add_lldb_library(lldbSymbol
   ClangASTImporter.cpp
   ClangExternalASTSourceCallbacks.cpp
   ClangExternalASTSourceCommon.cpp
-  ClangNamespaceDecl.cpp
+  CompilerDeclContext.cpp
   CompilerType.cpp
   CompileUnit.cpp
   CompactUnwindInfo.cpp

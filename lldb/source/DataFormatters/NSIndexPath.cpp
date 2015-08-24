@@ -49,7 +49,7 @@ public:
     {
         m_impl.Clear();
         
-        TypeSystem* type_system = m_backend.GetClangType().GetTypeSystem();
+        TypeSystem* type_system = m_backend.GetCompilerType().GetTypeSystem();
         if (!type_system)
             return false;
         m_ast_ctx = type_system->AsClangASTContext();
@@ -227,7 +227,7 @@ protected:
                   v = Value(scalar);
               }
 
-              v.SetClangType(desired_type);
+              v.SetCompilerType(desired_type);
 
               StreamString idx_name;
               idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);

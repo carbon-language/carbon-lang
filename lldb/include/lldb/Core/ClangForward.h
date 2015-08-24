@@ -132,6 +132,8 @@ namespace clang
 
 namespace llvm
 {
+    class APInt;
+    class APSInt;
     class LLVMContext;
     class ExecutionEngine;
 }
