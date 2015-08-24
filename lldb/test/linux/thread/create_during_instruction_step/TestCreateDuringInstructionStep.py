@@ -16,8 +16,6 @@ class CreateDuringInstructionStepTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Find the line numbers to break and continue.
-        self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
 
     @dsym_test
     def test_step_inst_with_dsym(self):
@@ -25,8 +23,6 @@ class CreateDuringInstructionStepTestCase(TestBase):
         self.create_during_step_inst_test()
 
     @dwarf_test
-    @skipIfTargetAndroid(archs=['aarch64'])
-    @expectedFailureAndroid("llvm.org/pr23944", archs=['aarch64']) # We are unable to step through std::thread::_M_start_thread
     def test_step_inst_with_dwarf(self):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.create_during_step_inst_test()
@@ -37,7 +33,8 @@ class CreateDuringInstructionStepTestCase(TestBase):
         self.assertTrue(target and target.IsValid(), "Target is valid")
 
         # This should create a breakpoint in the stepping thread.
-        self.bp_num = lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.breakpoint, num_expected_locations=-1)
+        breakpoint = target.BreakpointCreateByName("main")
+        self.assertTrue(breakpoint and breakpoint.IsValid(), "Breakpoint is valid")
 
         # Run the program.
         process = target.LaunchSimple(None, None, self.get_process_working_directory())
@@ -45,31 +42,19 @@ class CreateDuringInstructionStepTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.assertEqual(process.GetState(), lldb.eStateStopped, PROCESS_STOPPED)
-        self.assertEqual(lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint).IsValid(), 1,
-                STOPPED_DUE_TO_BREAKPOINT)
 
-        # Get the number of threads
-        num_threads = process.GetNumThreads()
+        threads = lldbutil.get_threads_stopped_at_breakpoint(process, breakpoint)
+        self.assertEquals(len(threads), 1, STOPPED_DUE_TO_BREAKPOINT)
+
+        thread = threads[0]
+        self.assertTrue(thread and thread.IsValid(), "Thread is valid")
 
         # Make sure we see only one threads
-        self.assertEqual(num_threads, 1, 'Number of expected threads and actual threads do not match.')
-
-        thread = process.GetThreadAtIndex(0)
-        self.assertTrue(thread and thread.IsValid(), "Thread is valid")
+        self.assertEqual(process.GetNumThreads(), 1, 'Number of expected threads and actual threads do not match.')
 
         # Keep stepping until we see the thread creation
         while process.GetNumThreads() < 2:
-            # This skips some functions we have trouble stepping into. Testing stepping
-            # through these is not the purpose of this test. We just want to find the
-            # instruction, which creates the thread.
-            if thread.GetFrameAtIndex(0).GetFunctionName() in [
-                    '__sync_fetch_and_add_4', # Android arm: unable to set a breakpoint for software single-step
-                    'pthread_mutex_lock',     # Android arm: function contains atomic instruction sequences
-                    'pthread_mutex_unlock'    # Android arm: function contains atomic instruction sequences
-                    ]:
-                thread.StepOut()
-            else:
-                thread.StepInstruction(False)
+            thread.StepInstruction(False)
             self.assertEqual(process.GetState(), lldb.eStateStopped, PROCESS_STOPPED)
             self.assertEqual(thread.GetStopReason(), lldb.eStopReasonPlanComplete, "Step operation succeeded")
             if self.TraceOn():
