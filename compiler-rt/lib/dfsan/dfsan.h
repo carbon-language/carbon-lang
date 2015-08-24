@@ -49,7 +49,11 @@ inline dfsan_label *shadow_for(void *ptr) {
 #elif defined(__mips64)
   return (dfsan_label *) ((((uptr) ptr) & ~0xF000000000) << 1);
 #elif defined(__aarch64__)
+# if SANITIZER_AARCH64_VMA == 39
   return (dfsan_label *) ((((uptr) ptr) & ~0x7800000000) << 1);
+# elif SANITIZER_AARCH64_VMA == 42
+  return (dfsan_label *) ((((uptr) ptr) & ~0x3c000000000) << 1);
+# endif
 #endif
 }
 
