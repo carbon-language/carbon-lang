@@ -19,6 +19,7 @@
 #include "WebAssemblyTargetMachine.h"
 #include "WebAssemblyTargetObjectFile.h"
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -164,9 +165,13 @@ MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
 const char *
 WebAssemblyTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (static_cast<WebAssemblyISD::NodeType>(Opcode)) {
-  case WebAssemblyISD::FIRST_NUMBER: break;
-  case WebAssemblyISD::RETURN: return "WebAssemblyISD::RETURN";
-  case WebAssemblyISD::ARGUMENT: return "WebAssemblyISD::ARGUMENT";
+  case WebAssemblyISD::FIRST_NUMBER:
+    break;
+#define HANDLE_NODETYPE(NODE)                                                  \
+  case WebAssemblyISD::NODE:                                                   \
+    return "WebAssemblyISD::" #NODE;
+#include "WebAssemblyISD.def"
+#undef HANDLE_NODETYPE
   }
   return nullptr;
 }
@@ -183,6 +188,68 @@ static void fail(SDLoc DL, SelectionDAG &DAG, const char *msg) {
   MachineFunction &MF = DAG.getMachineFunction();
   DAG.getContext()->diagnose(
       DiagnosticInfoUnsupported(DL, *MF.getFunction(), msg, SDValue()));
+}
+
+SDValue
+WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
+                                     SmallVectorImpl<SDValue> &InVals) const {
+  SelectionDAG &DAG = CLI.DAG;
+  SDLoc DL = CLI.DL;
+  SDValue Chain = CLI.Chain;
+  SDValue Callee = CLI.Callee;
+  MachineFunction &MF = DAG.getMachineFunction();
+
+  CallingConv::ID CallConv = CLI.CallConv;
+  if (CallConv != CallingConv::C)
+    fail(DL, DAG, "WebAssembly doesn't support non-C calling conventions");
+  if (CLI.IsTailCall || MF.getTarget().Options.GuaranteedTailCallOpt)
+    fail(DL, DAG, "WebAssembly doesn't support tail call yet");
+  if (CLI.IsPatchPoint)
+    fail(DL, DAG, "WebAssembly doesn't support patch point yet");
+
+  SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
+  SmallVectorImpl<SDValue> &OutVals = CLI.OutVals;
+  Type *retTy = CLI.RetTy;
+  bool IsStructRet = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
+  if (IsStructRet)
+    fail(DL, DAG, "WebAssembly doesn't support struct return yet");
+  if (Outs.size() > 1)
+    fail(DL, DAG, "WebAssembly doesn't support more than 1 returned value yet");
+
+  SmallVectorImpl<ISD::InputArg> &Ins = CLI.Ins;
+  ArgListTy &Args = CLI.getArgs();
+  bool IsVarArg = CLI.IsVarArg;
+  if (IsVarArg)
+    fail(DL, DAG, "WebAssembly doesn't support varargs yet");
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  auto PtrVT = getPointerTy(MF.getDataLayout());
+  auto Zero = DAG.getConstant(0, CLI.DL, PtrVT, true);
+  auto NB = DAG.getConstant(NumBytes, CLI.DL, PtrVT, true);
+  Chain = DAG.getCALLSEQ_START(Chain, NB, CLI.DL);
+
+  SmallVector<SDValue, 16> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(CLI.Callee);
+  Ops.append(CLI.OutVals.begin(), CLI.OutVals.end());
+
+  SmallVector<EVT, 8> Tys;
+  for (const auto &In : CLI.Ins)
+    Tys.push_back(In.VT);
+  Tys.push_back(MVT::Other);
+  SDVTList TyList = CLI.DAG.getVTList(Tys);
+  SDValue Res = CLI.DAG.getNode(WebAssemblyISD::CALL, CLI.DL, TyList, Ops);
+  InVals.push_back(Res);
+  Chain = Res.getValue(1);
+
+  // FIXME: handle CLI.RetSExt and CLI.RetZExt?
+
+  Chain = CLI.DAG.getCALLSEQ_END(Chain, NB, Zero, SDValue(), CLI.DL);
+
+  return Chain;
 }
 
 bool WebAssemblyTargetLowering::CanLowerReturn(

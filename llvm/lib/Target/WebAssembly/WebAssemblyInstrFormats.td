@@ -12,7 +12,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-// WebAssembly Instruction Format
+// WebAssembly Instruction Format.
 class WebAssemblyInst<string cstr> : Instruction {
   field bits<0> Inst; // Instruction encoding.
   let Namespace   = "WebAssembly";
@@ -20,12 +20,20 @@ class WebAssemblyInst<string cstr> : Instruction {
   let Constraints = cstr;
 }
 
-// Normal instructions
+// Normal instructions.
 class I<dag oops, dag iops, list<dag> pattern, string cstr = "">
     : WebAssemblyInst<cstr> {
   dag OutOperandList = oops;
   dag InOperandList  = iops;
   let Pattern        = pattern;
+}
+
+// Pseudo instructions.
+class Pseudo<dag oops, dag iops, list<dag> pattern, string asmstr,
+             string cstr = "">
+  : I<oops, iops, pattern, cstr> {
+  let isPseudo  = 1;
+  let AsmString = asmstr;
 }
 
 // Unary and binary instructions, for the local types that WebAssembly supports.
