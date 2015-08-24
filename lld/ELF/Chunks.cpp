@@ -20,7 +20,6 @@ template <class ELFT>
 SectionChunk<ELFT>::SectionChunk(object::ELFFile<ELFT> *Obj,
                                  const Elf_Shdr *Header)
     : Obj(Obj), Header(Header) {
-  Align = Header->sh_addralign;
 }
 
 template <class ELFT> void SectionChunk<ELFT>::writeTo(uint8_t *Buf) {

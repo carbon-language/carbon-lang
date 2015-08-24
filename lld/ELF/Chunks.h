@@ -23,6 +23,7 @@ template <class ELFT> class SectionChunk {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
 
 public:
   SectionChunk(llvm::object::ELFFile<ELFT> *Obj, const Elf_Shdr *Header);
@@ -39,16 +40,13 @@ public:
 
   // The writer sets and uses the addresses.
   uint64_t getOutputSectionOff() { return OutputSectionOff; }
-  uint32_t getAlign() { return Align; }
+  uintX_t getAlign() { return Header->sh_addralign; }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 
 private:
   // The offset from beginning of the output sections this chunk was assigned
   // to. The writer sets a value.
   uint64_t OutputSectionOff = 0;
-
-  // The alignment of this chunk. The writer uses the value.
-  uint32_t Align = 1;
 
   // A file this chunk was created from.
   llvm::object::ELFFile<ELFT> *Obj;
