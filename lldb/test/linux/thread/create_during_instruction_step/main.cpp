@@ -38,7 +38,7 @@ int main ()
     int ret = clone(thread_main,
             child_stack + STACK_SIZE/2, // Don't care whether the stack grows up or down,
                                         // just point to the middle
-            CLONE_CHILD_CLEARTID | CLONE_FILES | CLONE_FS | CLONE_PARENT_SETTID | CLONE_SETTLS |
+            CLONE_CHILD_CLEARTID | CLONE_FILES | CLONE_FS | CLONE_PARENT_SETTID |
             CLONE_SIGHAND | CLONE_SYSVSEM | CLONE_THREAD | CLONE_VM,
             nullptr, // thread_main argument
             &child_tid);
