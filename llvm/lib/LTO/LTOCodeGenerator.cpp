@@ -412,7 +412,7 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
 void LTOCodeGenerator::applyScopeRestrictions() {
   if (ScopeRestrictionsDone || !ShouldInternalize)
     return;
-  Module *mergedModule = IRLinker.getModule();
+  Module *MergedModule = IRLinker.getModule();
 
   // Start off with a verification pass.
   legacy::PassManager passes;
@@ -426,20 +426,17 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   TargetLibraryInfoImpl TLII(Triple(TargetMach->getTargetTriple()));
   TargetLibraryInfo TLI(TLII);
 
-  accumulateAndSortLibcalls(Libcalls, TLI, *mergedModule, *TargetMach);
+  accumulateAndSortLibcalls(Libcalls, TLI, *MergedModule, *TargetMach);
 
-  for (Module::iterator f = mergedModule->begin(),
-         e = mergedModule->end(); f != e; ++f)
-    applyRestriction(*f, Libcalls, MustPreserveList, AsmUsed, Mangler);
-  for (Module::global_iterator v = mergedModule->global_begin(),
-         e = mergedModule->global_end(); v !=  e; ++v)
-    applyRestriction(*v, Libcalls, MustPreserveList, AsmUsed, Mangler);
-  for (Module::alias_iterator a = mergedModule->alias_begin(),
-         e = mergedModule->alias_end(); a != e; ++a)
-    applyRestriction(*a, Libcalls, MustPreserveList, AsmUsed, Mangler);
+  for (Function &f : *MergedModule)
+    applyRestriction(f, Libcalls, MustPreserveList, AsmUsed, Mangler);
+  for (GlobalVariable &v : MergedModule->globals())
+    applyRestriction(v, Libcalls, MustPreserveList, AsmUsed, Mangler);
+  for (GlobalAlias &a : MergedModule->aliases())
+    applyRestriction(a, Libcalls, MustPreserveList, AsmUsed, Mangler);
 
   GlobalVariable *LLVMCompilerUsed =
-    mergedModule->getGlobalVariable("llvm.compiler.used");
+    MergedModule->getGlobalVariable("llvm.compiler.used");
   findUsedValues(LLVMCompilerUsed, AsmUsed);
   if (LLVMCompilerUsed)
     LLVMCompilerUsed->eraseFromParent();
@@ -454,7 +451,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 
     llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, asmUsed2.size());
     LLVMCompilerUsed =
-      new llvm::GlobalVariable(*mergedModule, ATy, false,
+      new llvm::GlobalVariable(*MergedModule, ATy, false,
                                llvm::GlobalValue::AppendingLinkage,
                                llvm::ConstantArray::get(ATy, asmUsed2),
                                "llvm.compiler.used");
@@ -465,7 +462,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createInternalizePass(MustPreserveList));
 
   // apply scope restrictions
-  passes.run(*mergedModule);
+  passes.run(*MergedModule);
 
   ScopeRestrictionsDone = true;
 }
@@ -478,7 +475,7 @@ bool LTOCodeGenerator::optimize(bool DisableInline,
   if (!this->determineTarget(errMsg))
     return false;
 
-  Module *mergedModule = IRLinker.getModule();
+  Module *MergedModule = IRLinker.getModule();
 
   // Mark which symbols can not be internalized
   this->applyScopeRestrictions();
@@ -487,7 +484,7 @@ bool LTOCodeGenerator::optimize(bool DisableInline,
   legacy::PassManager passes;
 
   // Add an appropriate DataLayout instance for this module...
-  mergedModule->setDataLayout(TargetMach->createDataLayout());
+  MergedModule->setDataLayout(TargetMach->createDataLayout());
 
   passes.add(
       createTargetTransformInfoWrapperPass(TargetMach->getTargetIRAnalysis()));
@@ -507,7 +504,7 @@ bool LTOCodeGenerator::optimize(bool DisableInline,
   PMB.populateLTOPassManager(passes);
 
   // Run our queue of passes all at once now, efficiently.
-  passes.run(*mergedModule);
+  passes.run(*MergedModule);
 
   return true;
 }
@@ -517,7 +514,7 @@ bool LTOCodeGenerator::compileOptimized(raw_pwrite_stream &out,
   if (!this->determineTarget(errMsg))
     return false;
 
-  Module *mergedModule = IRLinker.getModule();
+  Module *MergedModule = IRLinker.getModule();
 
   legacy::PassManager codeGenPasses;
 
@@ -531,8 +528,8 @@ bool LTOCodeGenerator::compileOptimized(raw_pwrite_stream &out,
     return false;
   }
 
-  // Run the code generator, and write assembly file
-  codeGenPasses.run(*mergedModule);
+  // Run the code generator, and write object file
+  codeGenPasses.run(*MergedModule);
 
   return true;
 }
