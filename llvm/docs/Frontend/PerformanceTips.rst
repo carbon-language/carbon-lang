@@ -133,10 +133,20 @@ Other Things to Consider
 Describing Language Specific Properties
 =======================================
 
-When translating a source language to LLVM, finding ways to express concepts and guarantees available in your source language which are not natively provided by LLVM IR will greatly improve LLVM's ability to optimize your code.  As an example, C/C++'s ability to mark every add as "no signed wrap (nsw)" goes along way to assisting the optimizer in reasoning about loop induction variables.  
+When translating a source language to LLVM, finding ways to express concepts 
+and guarantees available in your source language which are not natively 
+provided by LLVM IR will greatly improve LLVM's ability to optimize your code. 
+As an example, C/C++'s ability to mark every add as "no signed wrap (nsw)" goes
+a long way to assisting the optimizer in reasoning about loop induction 
+variables and thus generating more optimal code for loops.  
 
-The LLVM LangRef includes a number of mechanisms for annotating the IR with additional semantic information.  It is *strongly* recommended that you become highly familiar with this document.  The list below is intended to highlight a couple of items of particular interest, but is by no means exhaustive.
+The LLVM LangRef includes a number of mechanisms for annotating the IR with 
+additional semantic information.  It is *strongly* recommended that you become 
+highly familiar with this document.  The list below is intended to highlight a 
+couple of items of particular interest, but is by no means exhaustive.
 
+Restricted Operation Semantics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #. Add nsw/nuw flags as appropriate.  Reasoning about overflow is 
    generally hard for an optimizer so providing these facts from the frontend 
    can be very impactful.  
@@ -146,28 +156,42 @@ The LLVM LangRef includes a number of mechanisms for annotating the IR with addi
    optimizations that can be performed.  This can be highly impactful for 
    floating point intensive computations.
 
-#. Use inbounds on geps.  This can help to disambiguate some aliasing queries.
+Describing Aliasing Properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. Add noalias/align/dereferenceable/nonnull to function arguments and return 
    values as appropriate
 
-#. Mark functions as readnone/readonly or noreturn/nounwind when known.  The 
-   optimizer will try to infer these flags, but may not always be able to.  
-   Manual annotations are particularly important for external functions that 
-   the optimizer can not analyze.
+#. Use pointer aliasing metadata, especially tbaa metadata, to communicate 
+   otherwise-non-deducible pointer aliasing facts
+
+#. Use inbounds on geps.  This can help to disambiguate some aliasing queries.
+
+
+Modeling Memory Effects
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+#. Mark functions as readnone/readonly/argmemonly or noreturn/nounwind when
+   known.  The optimizer will try to infer these flags, but may not always be
+   able to.  Manual annotations are particularly important for external 
+   functions that the optimizer can not analyze.
 
 #. Use the lifetime.start/lifetime.end and invariant.start/invariant.end 
    intrinsics where possible.  Common profitable uses are for stack like data 
    structures (thus allowing dead store elimination) and for describing 
    life times of allocas (thus allowing smaller stack sizes).  
 
-#. Use pointer aliasing metadata, especially tbaa metadata, to communicate 
-   otherwise-non-deducible pointer aliasing facts
-
 #. Mark invariant locations using !invariant.load and TBAA's constant flags
 
-#. If you language uses range checks, consider using the IRCE pass.  It is not 
-   currently part of the standard pass order.
+Pass Ordering
+^^^^^^^^^^^^^
+
+One of the most common mistakes made by new language frontend projects is to 
+use the existing -O2 or -O3 pass pipelines as is.  These pass pipelines make a
+good starting point for an optimizing compiler for any language, but they have 
+been carefully tuned for C and C++, not your target language.  You will almost 
+certainly need to use a custom pass order to achieve optimal performance.  A 
+couple specific suggestions:
 
 #. For languages with numerous rarely executed guard conditions (e.g. null 
    checks, type checks, range checks) consider adding an extra execution or 
@@ -175,7 +199,22 @@ The LLVM LangRef includes a number of mechanisms for annotating the IR with addi
    which is tuned for C and C++ applications, may not be sufficient to remove 
    all dischargeable checks from loops.
 
-If you didn't find what you were looking for above, consider proposing an piece of metadata which provides the optimization hint you need.  Such extensions are relatively common and are generally well received by the community.  You will need to ensure that your proposal is sufficiently general so that it benefits others if you wish to contribute it upstream.
+#. If you language uses range checks, consider using the IRCE pass.  It is not 
+   currently part of the standard pass order.
+
+#. A useful sanity check to run is to run your optimized IR back through the 
+   -O2 pipeline again.  If you see noticeable improvement in the resulting IR, 
+   you likely need to adjust your pass order.
+
+
+I Still Can't Find What I'm Looking For
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you didn't find what you were looking for above, consider proposing an piece
+of metadata which provides the optimization hint you need.  Such extensions are
+relatively common and are generally well received by the community.  You will 
+need to ensure that your proposal is sufficiently general so that it benefits 
+others if you wish to contribute it upstream.
 
 Adding to this document
 =======================
