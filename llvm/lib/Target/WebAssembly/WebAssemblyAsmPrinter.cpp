@@ -79,7 +79,7 @@ private:
 static SmallString<32> Name(const WebAssemblyInstrInfo *TII,
                             const MachineInstr *MI) {
   std::string N(StringRef(TII->getName(MI->getOpcode())).lower());
-  std::string::size_type End = N.find('_');
+  std::string::size_type End = N.rfind('_');
   End = std::string::npos == End ? N.length() : End;
   return SmallString<32>(&N[0], &N[End]);
 }

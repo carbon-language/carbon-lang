@@ -44,3 +44,10 @@
  * load_global: load the value of a given global variable
  * store_global: store a given value to a given global variable
  */
+
+def page_size_I32 : I<(outs Int32:$dst), (ins),
+                      [(set Int32:$dst, (int_wasm_page_size))]>,
+                    Requires<[HasAddr32]>;
+def page_size_I64 : I<(outs Int64:$dst), (ins),
+                      [(set Int64:$dst, (int_wasm_page_size))]>,
+                    Requires<[HasAddr64]>;
