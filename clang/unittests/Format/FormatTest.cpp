@@ -5326,6 +5326,9 @@ TEST_F(FormatTest, UnderstandsFunctionRefQualification) {
   verifyFormat("Deleted &operator=(const Deleted &)&&;");
   verifyFormat("SomeType MemberFunction(const Deleted &)&;");
   verifyFormat("SomeType MemberFunction(const Deleted &)&&;");
+  verifyFormat("SomeType MemberFunction(const Deleted &)&& {}");
+  verifyFormat("SomeType MemberFunction(const Deleted &)&& final {}");
+  verifyFormat("SomeType MemberFunction(const Deleted &)&& override {}");
 
   verifyGoogleFormat("Deleted& operator=(const Deleted&)& = default;");
   verifyGoogleFormat("SomeType MemberFunction(const Deleted&)& = delete;");
@@ -5583,11 +5586,11 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 
   // Member function reference qualifiers aren't binary operators.
   verifyFormat("string // break\n"
-               "operator()() & {}");
+               "operator()()& {}");
   verifyFormat("string // break\n"
-               "operator()() && {}");
+               "operator()()&& {}");
   verifyGoogleFormat("template <typename T>\n"
-                     "auto x() & -> int {}");
+                     "auto x()& -> int {}");
 }
 
 TEST_F(FormatTest, UnderstandsAttributes) {
