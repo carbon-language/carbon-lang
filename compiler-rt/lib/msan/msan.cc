@@ -375,7 +375,7 @@ void __msan_init() {
   msan_init_is_running = 1;
   SanitizerToolName = "MemorySanitizer";
 
-  SetDieCallback(MsanDie);
+  AddDieCallback(MsanDie);
   InitTlsSize();
 
   CacheBinaryName();

@@ -416,7 +416,7 @@ static void dfsan_init(int argc, char **argv, char **envp) {
   // Register the fini callback to run when the program terminates successfully
   // or it is killed by the runtime.
   Atexit(dfsan_fini);
-  SetDieCallback(dfsan_fini);
+  AddDieCallback(dfsan_fini);
 
   __dfsan_label_info[kInitializingLabel].desc = "<init label>";
 }

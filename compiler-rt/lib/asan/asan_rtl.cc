@@ -393,7 +393,7 @@ static void AsanInitInternal() {
   AsanDoesNotSupportStaticLinkage();
 
   // Install tool-specific callbacks in sanitizer_common.
-  SetDieCallback(AsanDie);
+  AddDieCallback(AsanDie);
   SetCheckFailedCallback(AsanCheckFailed);
   SetPrintfAndReportCallback(AppendToErrorMessageBuffer);
 

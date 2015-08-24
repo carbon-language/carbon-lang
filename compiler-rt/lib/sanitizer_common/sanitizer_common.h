@@ -319,9 +319,16 @@ bool SanitizerGetThreadName(char *name, int max_len);
 // Specific tools may override behavior of "Die" and "CheckFailed" functions
 // to do tool-specific job.
 typedef void (*DieCallbackType)(void);
-void SetDieCallback(DieCallbackType);
-void SetUserDieCallback(DieCallbackType);
-DieCallbackType GetDieCallback();
+
+// It's possible to add several callbacks that would be run when "Die" is
+// called. The callbacks will be run in the opposite order. The tools are
+// strongly recommended to setup all callbacks during initialization, when there
+// is only a single thread.
+bool AddDieCallback(DieCallbackType callback);
+bool RemoveDieCallback(DieCallbackType callback);
+
+void SetUserDieCallback(DieCallbackType callback);
+
 typedef void (*CheckFailedCallbackType)(const char *, int, const char *,
                                        u64, u64);
 void SetCheckFailedCallback(CheckFailedCallbackType callback);

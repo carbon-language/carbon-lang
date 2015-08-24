@@ -211,27 +211,6 @@ static ThreadSuspender *thread_suspender_instance = NULL;
 static const int kSyncSignals[] = { SIGABRT, SIGILL, SIGFPE, SIGSEGV, SIGBUS,
                                     SIGXCPU, SIGXFSZ };
 
-static DieCallbackType old_die_callback;
-
-// Signal handler to wake up suspended threads when the tracer thread dies.
-static void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
-  SignalContext ctx = SignalContext::Create(siginfo, uctx);
-  VPrintf(1, "Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n",
-      signum, ctx.addr, ctx.pc, ctx.sp);
-  ThreadSuspender *inst = thread_suspender_instance;
-  if (inst != NULL) {
-    if (signum == SIGABRT)
-      inst->KillAllThreads();
-    else
-      inst->ResumeAllThreads();
-    SetDieCallback(old_die_callback);
-    old_die_callback = NULL;
-    thread_suspender_instance = NULL;
-    atomic_store(&inst->arg->done, 1, memory_order_relaxed);
-  }
-  internal__exit((signum == SIGABRT) ? 1 : 2);
-}
-
 static void TracerThreadDieCallback() {
   // Generally a call to Die() in the tracer thread should be fatal to the
   // parent process as well, because they share the address space.
@@ -244,10 +223,24 @@ static void TracerThreadDieCallback() {
     inst->KillAllThreads();
     thread_suspender_instance = NULL;
   }
-  if (old_die_callback)
-    old_die_callback();
-  SetDieCallback(old_die_callback);
-  old_die_callback = NULL;
+}
+
+// Signal handler to wake up suspended threads when the tracer thread dies.
+static void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
+  SignalContext ctx = SignalContext::Create(siginfo, uctx);
+  VPrintf(1, "Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n",
+      signum, ctx.addr, ctx.pc, ctx.sp);
+  ThreadSuspender *inst = thread_suspender_instance;
+  if (inst != NULL) {
+    if (signum == SIGABRT)
+      inst->KillAllThreads();
+    else
+      inst->ResumeAllThreads();
+    RAW_CHECK(RemoveDieCallback(TracerThreadDieCallback));
+    thread_suspender_instance = NULL;
+    atomic_store(&inst->arg->done, 1, memory_order_relaxed);
+  }
+  internal__exit((signum == SIGABRT) ? 1 : 2);
 }
 
 // Size of alternative stack for signal handlers in the tracer thread.
@@ -267,8 +260,7 @@ static int TracerThread(void* argument) {
   tracer_thread_argument->mutex.Lock();
   tracer_thread_argument->mutex.Unlock();
 
-  old_die_callback = GetDieCallback();
-  SetDieCallback(TracerThreadDieCallback);
+  RAW_CHECK(AddDieCallback(TracerThreadDieCallback));
 
   ThreadSuspender thread_suspender(internal_getppid(), tracer_thread_argument);
   // Global pointer for the signal handler.
@@ -302,7 +294,7 @@ static int TracerThread(void* argument) {
     thread_suspender.ResumeAllThreads();
     exit_code = 0;
   }
-  SetDieCallback(old_die_callback);
+  RAW_CHECK(RemoveDieCallback(TracerThreadDieCallback));
   thread_suspender_instance = NULL;
   atomic_store(&tracer_thread_argument->done, 1, memory_order_relaxed);
   return exit_code;
