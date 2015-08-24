@@ -284,6 +284,8 @@ void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
     case tok::l_brace:
       // FIXME: Add parameter whether this can happen - if this happens, we must
       // be in a non-declaration context.
+      if (!FormatTok->is(TT_MacroBlockBegin) && tryToParseBracedList())
+        continue;
       parseBlock(/*MustBeDeclaration=*/false);
       addUnwrappedLine();
       break;

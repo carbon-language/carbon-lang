@@ -6144,6 +6144,7 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                "    void f() { int i{2}; }\n"
                "  };\n"
                "};");
+  verifyFormat("#define A {a, a},");
 
   // In combination with BinPackArguments = false.
   FormatStyle NoBinPacking = getLLVMStyle();
