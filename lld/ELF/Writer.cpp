@@ -123,6 +123,8 @@ public:
 
   void writeTo(uint8_t *Buf) override;
 
+  const SymbolTable &getSymTable() { return Table; }
+
 private:
   SymbolTable &Table;
 };
@@ -133,7 +135,7 @@ public:
   typedef typename llvm::object::ELFFile<ELFT>::uintX_t uintX_t;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   Writer(SymbolTable *T)
-      : Symtab(T), SymTable(*T), StringTable(T->getStringBuilder()) {}
+      : SymTable(*T), StringTable(T->getStringBuilder()) {}
   void run();
 
 private:
@@ -143,7 +145,6 @@ private:
   void writeHeader();
   void writeSections();
 
-  SymbolTable *Symtab;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection<ELFT>> CAlloc;
   std::vector<OutputSectionBase<ELFT::Is64Bits> *> OutputSections;
@@ -289,7 +290,8 @@ template <bool Is64Bits> struct DenseMapInfo<SectionKey<Is64Bits>> {
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::createSections() {
   SmallDenseMap<SectionKey<ELFT::Is64Bits>, OutputSection<ELFT> *> Map;
-  for (std::unique_ptr<ObjectFileBase> &FileB : Symtab->ObjectFiles) {
+  const SymbolTable &Symtab = SymTable.getSymTable();
+  for (const std::unique_ptr<ObjectFileBase> &FileB : Symtab.ObjectFiles) {
     auto &File = cast<ObjectFile<ELFT>>(*FileB);
     for (SectionChunk<ELFT> *C : File.getChunks()) {
       const Elf_Shdr *H = C->getSectionHdr();
@@ -371,7 +373,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_ident[EI_OSABI] = ELFOSABI_NONE;
 
   EHdr->e_type = ET_EXEC;
-  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab->ObjectFiles[0]);
+  const SymbolTable &Symtab = SymTable.getSymTable();
+  auto &FirstObj = cast<ObjectFile<ELFT>>(*Symtab.ObjectFiles[0]);
   EHdr->e_machine = FirstObj.getObj()->getHeader()->e_machine;
   EHdr->e_version = EV_CURRENT;
   EHdr->e_entry = 0x401000;
