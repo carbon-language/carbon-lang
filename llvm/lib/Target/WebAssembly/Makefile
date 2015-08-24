@@ -15,6 +15,7 @@ TARGET = WebAssembly
 BUILT_SOURCES = \
 	WebAssemblyGenAsmWriter.inc \
 	WebAssemblyGenDAGISel.inc \
+	WebAssemblyGenFastISel.inc \
 	WebAssemblyGenInstrInfo.inc \
 	WebAssemblyGenMCCodeEmitter.inc \
 	WebAssemblyGenRegisterInfo.inc \

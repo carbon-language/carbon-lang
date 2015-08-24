@@ -419,8 +419,14 @@ protected:
                             const TargetRegisterClass *RC, unsigned Op0,
                             bool Op0IsKill, uint64_t Imm1, uint64_t Imm2);
 
-  /// \brief Emit a MachineInstr with two register operands and a result
+  /// \brief Emit a MachineInstr with a floating point immediate, and a result
   /// register in the given register class.
+  unsigned fastEmitInst_f(unsigned MachineInstOpcode,
+                          const TargetRegisterClass *RC,
+                          const ConstantFP *FPImm);
+
+  /// \brief Emit a MachineInstr with one register operand, a floating point
+  /// immediate, and a result register in the given register class.
   unsigned fastEmitInst_rf(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC, unsigned Op0,
                            bool Op0IsKill, const ConstantFP *FPImm);

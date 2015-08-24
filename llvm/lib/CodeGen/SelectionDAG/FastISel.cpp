@@ -1867,6 +1867,25 @@ unsigned FastISel::fastEmitInst_rii(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
+unsigned FastISel::fastEmitInst_f(unsigned MachineInstOpcode,
+                                  const TargetRegisterClass *RC,
+                                  const ConstantFP *FPImm) {
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
+
+  unsigned ResultReg = createResultReg(RC);
+
+  if (II.getNumDefs() >= 1)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg)
+        .addFPImm(FPImm);
+  else {
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
+        .addFPImm(FPImm);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg).addReg(II.ImplicitDefs[0]);
+  }
+  return ResultReg;
+}
+
 unsigned FastISel::fastEmitInst_rf(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC, unsigned Op0,
                                    bool Op0IsKill, const ConstantFP *FPImm) {

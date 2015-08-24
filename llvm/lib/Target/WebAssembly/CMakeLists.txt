@@ -2,6 +2,7 @@ set(LLVM_TARGET_DEFINITIONS WebAssembly.td)
 
 tablegen(LLVM WebAssemblyGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM WebAssemblyGenDAGISel.inc -gen-dag-isel)
+tablegen(LLVM WebAssemblyGenFastISel.inc -gen-fast-isel)
 tablegen(LLVM WebAssemblyGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM WebAssemblyGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM WebAssemblyGenRegisterInfo.inc -gen-register-info)
@@ -11,6 +12,7 @@ add_public_tablegen_target(WebAssemblyCommonTableGen)
 add_llvm_target(WebAssemblyCodeGen
   Relooper.cpp
   WebAssemblyAsmPrinter.cpp
+  WebAssemblyFastISel.cpp
   WebAssemblyFrameLowering.cpp
   WebAssemblyISelDAGToDAG.cpp
   WebAssemblyISelLowering.cpp

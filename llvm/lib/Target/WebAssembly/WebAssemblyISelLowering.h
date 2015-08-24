@@ -45,6 +45,9 @@ private:
   /// right decision when generating code for different targets.
   const WebAssemblySubtarget *Subtarget;
 
+  FastISel *createFastISel(FunctionLoweringInfo &FuncInfo,
+                           const TargetLibraryInfo *LibInfo) const override;
+
   MVT getScalarShiftAmountTy(const DataLayout &DL, EVT) const override;
 
   const char *getTargetNodeName(unsigned Opcode) const override;
@@ -65,6 +68,11 @@ private:
                                SDLoc DL, SelectionDAG &DAG,
                                SmallVectorImpl<SDValue> &InVals) const override;
 };
+
+namespace WebAssembly {
+FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
+                         const TargetLibraryInfo *libInfo);
+} // end namespace WebAssembly
 
 } // end namespace llvm
 

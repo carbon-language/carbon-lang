@@ -151,6 +151,11 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 }
 
+FastISel *WebAssemblyTargetLowering::createFastISel(
+    FunctionLoweringInfo &FuncInfo, const TargetLibraryInfo *LibInfo) const {
+  return WebAssembly::createFastISel(FuncInfo, LibInfo);
+}
+
 MVT WebAssemblyTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
                                                       EVT VT) const {
   return VT.getSimpleVT();
