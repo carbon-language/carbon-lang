@@ -323,7 +323,8 @@ void MachineBasicBlock::printAsOperand(raw_ostream &OS,
 }
 
 void MachineBasicBlock::removeLiveIn(unsigned Reg) {
-  livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
+  std::vector<unsigned>::iterator I
+    = std::find(LiveIns.begin(), LiveIns.end(), Reg);
   if (I != LiveIns.end())
     LiveIns.erase(I);
 }
