@@ -11101,6 +11101,41 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
+static RTLIB::Libcall getDivRemLibcall(
+    const SDNode *N, MVT::SimpleValueType SVT) {
+  assert((N->getOpcode() == ISD::SDIVREM || N->getOpcode() == ISD::UDIVREM) &&
+         "Unhandled Opcode in getDivRemLibcall");
+  bool isSigned = N->getOpcode() == ISD::SDIVREM;
+  RTLIB::Libcall LC;
+  switch (SVT) {
+  default: llvm_unreachable("Unexpected request for libcall!");
+  case MVT::i8:  LC = isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
+  case MVT::i16: LC = isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
+  case MVT::i32: LC = isSigned ? RTLIB::SDIVREM_I32 : RTLIB::UDIVREM_I32; break;
+  case MVT::i64: LC = isSigned ? RTLIB::SDIVREM_I64 : RTLIB::UDIVREM_I64; break;
+  }
+  return LC;
+}
+
+static TargetLowering::ArgListTy getDivRemArgList(
+    const SDNode *N, LLVMContext *Context) {
+  assert((N->getOpcode() == ISD::SDIVREM || N->getOpcode() == ISD::UDIVREM) &&
+         "Unhandled Opcode in getDivRemArgList");
+  bool isSigned = N->getOpcode() == ISD::SDIVREM;
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    EVT ArgVT = N->getOperand(i).getValueType();
+    Type *ArgTy = ArgVT.getTypeForEVT(*Context);
+    Entry.Node = N->getOperand(i);
+    Entry.Ty = ArgTy;
+    Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
+    Args.push_back(Entry);
+  }
+  return Args;
+}
+
 SDValue ARMTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
   assert((Subtarget->isTargetAEABI() || Subtarget->isTargetAndroid()) &&
          "Register-based DivRem lowering only");
@@ -11111,28 +11146,12 @@ SDValue ARMTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op->getValueType(0);
   Type *Ty = VT.getTypeForEVT(*DAG.getContext());
 
-  RTLIB::Libcall LC;
-  switch (VT.getSimpleVT().SimpleTy) {
-  default: llvm_unreachable("Unexpected request for libcall!");
-  case MVT::i8:  LC = isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
-  case MVT::i16: LC = isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
-  case MVT::i32: LC = isSigned ? RTLIB::SDIVREM_I32 : RTLIB::UDIVREM_I32; break;
-  case MVT::i64: LC = isSigned ? RTLIB::SDIVREM_I64 : RTLIB::UDIVREM_I64; break;
-  }
-
+  RTLIB::Libcall LC = getDivRemLibcall(Op.getNode(),
+                                       VT.getSimpleVT().SimpleTy);
   SDValue InChain = DAG.getEntryNode();
 
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0, e = Op->getNumOperands(); i != e; ++i) {
-    EVT ArgVT = Op->getOperand(i).getValueType();
-    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
-    Entry.Node = Op->getOperand(i);
-    Entry.Ty = ArgTy;
-    Entry.isSExt = isSigned;
-    Entry.isZExt = !isSigned;
-    Args.push_back(Entry);
-  }
+  TargetLowering::ArgListTy Args = getDivRemArgList(Op.getNode(),
+                                                    DAG.getContext());
 
   SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC),
                                          getPointerTy(DAG.getDataLayout()));
