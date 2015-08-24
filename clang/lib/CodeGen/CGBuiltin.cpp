@@ -1917,6 +1917,19 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
   llvm_unreachable("Unknown vector element type!");
 }
 
+static llvm::VectorType *GetFloatNeonType(CodeGenFunction *CGF,
+                                          NeonTypeFlags IntTypeFlags) {
+  int IsQuad = IntTypeFlags.isQuad();
+  switch (IntTypeFlags.getEltType()) {
+  case NeonTypeFlags::Int32:
+    return llvm::VectorType::get(CGF->FloatTy, (2 << IsQuad));
+  case NeonTypeFlags::Int64:
+    return llvm::VectorType::get(CGF->DoubleTy, (1 << IsQuad));
+  default:
+    llvm_unreachable("Type can't be converted to floating-point!");
+  }
+}
+
 Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C) {
   unsigned nElts = cast<llvm::VectorType>(V->getType())->getNumElements();
   Value* SV = llvm::ConstantVector::getSplat(nElts, C);
@@ -2817,13 +2830,7 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   case NEON::BI__builtin_neon_vcvt_n_f64_v:
   case NEON::BI__builtin_neon_vcvtq_n_f32_v:
   case NEON::BI__builtin_neon_vcvtq_n_f64_v: {
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *FloatTy =
-        GetNeonType(this, NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                               : NeonTypeFlags::Float32,
-                                        false, Quad));
-    llvm::Type *Tys[2] = { FloatTy, Ty };
+    llvm::Type *Tys[2] = { GetFloatNeonType(this, Type), Ty };
     Int = Usgn ? LLVMIntrinsic : AltLLVMIntrinsic;
     Function *F = CGM.getIntrinsic(Int, Tys);
     return EmitNeonCall(F, Ops, "vcvt_n");
@@ -2836,13 +2843,7 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   case NEON::BI__builtin_neon_vcvtq_n_u32_v:
   case NEON::BI__builtin_neon_vcvtq_n_s64_v:
   case NEON::BI__builtin_neon_vcvtq_n_u64_v: {
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *FloatTy =
-        GetNeonType(this, NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                               : NeonTypeFlags::Float32,
-                                        false, Quad));
-    llvm::Type *Tys[2] = { Ty, FloatTy };
+    llvm::Type *Tys[2] = { Ty, GetFloatNeonType(this, Type) };
     Function *F = CGM.getIntrinsic(LLVMIntrinsic, Tys);
     return EmitNeonCall(F, Ops, "vcvt_n");
   }
@@ -2854,13 +2855,7 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   case NEON::BI__builtin_neon_vcvtq_u32_v:
   case NEON::BI__builtin_neon_vcvtq_s64_v:
   case NEON::BI__builtin_neon_vcvtq_u64_v: {
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *FloatTy =
-        GetNeonType(this, NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                               : NeonTypeFlags::Float32,
-                                        false, Quad));
-    Ops[0] = Builder.CreateBitCast(Ops[0], FloatTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], GetFloatNeonType(this, Type));
     return Usgn ? Builder.CreateFPToUI(Ops[0], Ty, "vcvt")
                 : Builder.CreateFPToSI(Ops[0], Ty, "vcvt");
   }
@@ -2896,13 +2891,7 @@ Value *CodeGenFunction::EmitCommonNeonBuiltinExpr(
   case NEON::BI__builtin_neon_vcvtmq_s64_v:
   case NEON::BI__builtin_neon_vcvtmq_u32_v:
   case NEON::BI__builtin_neon_vcvtmq_u64_v: {
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *InTy =
-      GetNeonType(this,
-                  NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                : NeonTypeFlags::Float32, false, Quad));
-    llvm::Type *Tys[2] = { Ty, InTy };
+    llvm::Type *Tys[2] = { Ty, GetFloatNeonType(this, Type) };
     return EmitNeonCall(CGM.getIntrinsic(LLVMIntrinsic, Tys), Ops, NameHint);
   }
   case NEON::BI__builtin_neon_vext_v:
@@ -5174,13 +5163,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvtq_u32_v:
   case NEON::BI__builtin_neon_vcvtq_s64_v:
   case NEON::BI__builtin_neon_vcvtq_u64_v: {
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *InTy =
-      GetNeonType(this,
-                  NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                : NeonTypeFlags::Float32, false, quad));
-    Ops[0] = Builder.CreateBitCast(Ops[0], InTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], GetFloatNeonType(this, Type));
     if (usgn)
       return Builder.CreateFPToUI(Ops[0], Ty);
     return Builder.CreateFPToSI(Ops[0], Ty);
@@ -5194,13 +5177,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvta_u64_v:
   case NEON::BI__builtin_neon_vcvtaq_u64_v: {
     Int = usgn ? Intrinsic::aarch64_neon_fcvtau : Intrinsic::aarch64_neon_fcvtas;
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *InTy =
-      GetNeonType(this,
-                  NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                : NeonTypeFlags::Float32, false, quad));
-    llvm::Type *Tys[2] = { Ty, InTy };
+    llvm::Type *Tys[2] = { Ty, GetFloatNeonType(this, Type) };
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvta");
   }
   case NEON::BI__builtin_neon_vcvtm_s32_v:
@@ -5212,13 +5189,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvtm_u64_v:
   case NEON::BI__builtin_neon_vcvtmq_u64_v: {
     Int = usgn ? Intrinsic::aarch64_neon_fcvtmu : Intrinsic::aarch64_neon_fcvtms;
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *InTy =
-      GetNeonType(this,
-                  NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                : NeonTypeFlags::Float32, false, quad));
-    llvm::Type *Tys[2] = { Ty, InTy };
+    llvm::Type *Tys[2] = { Ty, GetFloatNeonType(this, Type) };
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtm");
   }
   case NEON::BI__builtin_neon_vcvtn_s32_v:
@@ -5230,13 +5201,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvtn_u64_v:
   case NEON::BI__builtin_neon_vcvtnq_u64_v: {
     Int = usgn ? Intrinsic::aarch64_neon_fcvtnu : Intrinsic::aarch64_neon_fcvtns;
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *InTy =
-      GetNeonType(this,
-                  NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                : NeonTypeFlags::Float32, false, quad));
-    llvm::Type *Tys[2] = { Ty, InTy };
+    llvm::Type *Tys[2] = { Ty, GetFloatNeonType(this, Type) };
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtn");
   }
   case NEON::BI__builtin_neon_vcvtp_s32_v:
@@ -5248,13 +5213,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vcvtp_u64_v:
   case NEON::BI__builtin_neon_vcvtpq_u64_v: {
     Int = usgn ? Intrinsic::aarch64_neon_fcvtpu : Intrinsic::aarch64_neon_fcvtps;
-    bool Double =
-      (cast<llvm::IntegerType>(VTy->getElementType())->getBitWidth() == 64);
-    llvm::Type *InTy =
-      GetNeonType(this,
-                  NeonTypeFlags(Double ? NeonTypeFlags::Float64
-                                : NeonTypeFlags::Float32, false, quad));
-    llvm::Type *Tys[2] = { Ty, InTy };
+    llvm::Type *Tys[2] = { Ty, GetFloatNeonType(this, Type) };
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys), Ops, "vcvtp");
   }
   case NEON::BI__builtin_neon_vmulx_v:
