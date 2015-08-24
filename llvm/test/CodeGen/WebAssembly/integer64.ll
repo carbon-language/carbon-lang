@@ -148,12 +148,30 @@ define i64 @clz64(i64 %x) {
   ret i64 %a
 }
 
+; CHECK-LABEL: clz64_zero_undef:
+; CHECK-NEXT: (setlocal @0 (argument 0))
+; CHECK-NEXT: (setlocal @1 (clz @0))
+; CHECK-NEXT: (return @1)
+define i64 @clz64_zero_undef(i64 %x) {
+  %a = call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+  ret i64 %a
+}
+
 ; CHECK-LABEL: ctz64:
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (ctz @0))
 ; CHECK-NEXT: (return @1)
 define i64 @ctz64(i64 %x) {
   %a = call i64 @llvm.cttz.i64(i64 %x, i1 false)
+  ret i64 %a
+}
+
+; CHECK-LABEL: ctz64_zero_undef:
+; CHECK-NEXT: (setlocal @0 (argument 0))
+; CHECK-NEXT: (setlocal @1 (ctz @0))
+; CHECK-NEXT: (return @1)
+define i64 @ctz64_zero_undef(i64 %x) {
+  %a = call i64 @llvm.cttz.i64(i64 %x, i1 true)
   ret i64 %a
 }
 

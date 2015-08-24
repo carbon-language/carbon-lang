@@ -40,3 +40,9 @@ defm UGE : ComparisonInt<SETUGE>;
 defm CLZ : UnaryInt<ctlz>;
 defm CTZ : UnaryInt<cttz>;
 defm POPCNT : UnaryInt<ctpop>;
+
+// Expand the "don't care" operations to supported operations.
+def : Pat<(ctlz_zero_undef Int32:$src), (CLZ_I32 Int32:$src)>;
+def : Pat<(ctlz_zero_undef Int64:$src), (CLZ_I64 Int64:$src)>;
+def : Pat<(cttz_zero_undef Int32:$src), (CTZ_I32 Int32:$src)>;
+def : Pat<(cttz_zero_undef Int64:$src), (CTZ_I64 Int64:$src)>;
