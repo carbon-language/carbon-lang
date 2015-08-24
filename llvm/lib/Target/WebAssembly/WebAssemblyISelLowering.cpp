@@ -209,7 +209,6 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
   SmallVectorImpl<SDValue> &OutVals = CLI.OutVals;
-  Type *retTy = CLI.RetTy;
   bool IsStructRet = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   if (IsStructRet)
     fail(DL, DAG, "WebAssembly doesn't support struct return yet");
@@ -217,7 +216,6 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
     fail(DL, DAG, "WebAssembly doesn't support more than 1 returned value yet");
 
   SmallVectorImpl<ISD::InputArg> &Ins = CLI.Ins;
-  ArgListTy &Args = CLI.getArgs();
   bool IsVarArg = CLI.IsVarArg;
   if (IsVarArg)
     fail(DL, DAG, "WebAssembly doesn't support varargs yet");
@@ -227,27 +225,29 @@ WebAssemblyTargetLowering::LowerCall(CallLoweringInfo &CLI,
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   auto PtrVT = getPointerTy(MF.getDataLayout());
-  auto Zero = DAG.getConstant(0, CLI.DL, PtrVT, true);
-  auto NB = DAG.getConstant(NumBytes, CLI.DL, PtrVT, true);
-  Chain = DAG.getCALLSEQ_START(Chain, NB, CLI.DL);
+  auto Zero = DAG.getConstant(0, DL, PtrVT, true);
+  auto NB = DAG.getConstant(NumBytes, DL, PtrVT, true);
+  Chain = DAG.getCALLSEQ_START(Chain, NB, DL);
 
   SmallVector<SDValue, 16> Ops;
   Ops.push_back(Chain);
-  Ops.push_back(CLI.Callee);
-  Ops.append(CLI.OutVals.begin(), CLI.OutVals.end());
+  Ops.push_back(Callee);
+  Ops.append(OutVals.begin(), OutVals.end());
 
   SmallVector<EVT, 8> Tys;
-  for (const auto &In : CLI.Ins)
+  for (const auto &In : Ins)
     Tys.push_back(In.VT);
   Tys.push_back(MVT::Other);
-  SDVTList TyList = CLI.DAG.getVTList(Tys);
-  SDValue Res = CLI.DAG.getNode(WebAssemblyISD::CALL, CLI.DL, TyList, Ops);
-  InVals.push_back(Res);
-  Chain = Res.getValue(1);
+  SDVTList TyList = DAG.getVTList(Tys);
+  SDValue Res = DAG.getNode(WebAssemblyISD::CALL, DL, TyList, Ops);
+  if (!Ins.empty()) {
+    InVals.push_back(Res);
+    Chain = Res.getValue(1);
+  }
 
   // FIXME: handle CLI.RetSExt and CLI.RetZExt?
 
-  Chain = CLI.DAG.getCALLSEQ_END(Chain, NB, Zero, SDValue(), CLI.DL);
+  Chain = DAG.getCALLSEQ_END(Chain, NB, Zero, SDValue(), DL);
 
   return Chain;
 }
