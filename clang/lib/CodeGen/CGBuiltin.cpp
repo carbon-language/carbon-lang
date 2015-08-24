@@ -4472,7 +4472,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
   case NEON::BI__builtin_neon_vpaddd_f64: {
     llvm::Type *Ty =
-      llvm::VectorType::get(llvm::Type::getDoubleTy(getLLVMContext()), 2);
+      llvm::VectorType::get(DoubleTy, 2);
     Value *Vec = EmitScalarExpr(E->getArg(0));
     // The vector is v2f64, so make sure it's bitcast to that.
     Vec = Builder.CreateBitCast(Vec, Ty, "v2f64");
@@ -4485,7 +4485,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
   case NEON::BI__builtin_neon_vpadds_f32: {
     llvm::Type *Ty =
-      llvm::VectorType::get(llvm::Type::getFloatTy(getLLVMContext()), 2);
+      llvm::VectorType::get(FloatTy, 2);
     Value *Vec = EmitScalarExpr(E->getArg(0));
     // The vector is v2f32, so make sure it's bitcast to that.
     Vec = Builder.CreateBitCast(Vec, Ty, "v2f32");
@@ -4640,7 +4640,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case NEON::BI__builtin_neon_vsetq_lane_f64:
     // The vector type needs a cast for the v2f64 variant.
     Ops[1] = Builder.CreateBitCast(Ops[1],
-        llvm::VectorType::get(llvm::Type::getDoubleTy(getLLVMContext()), 2));
+        llvm::VectorType::get(DoubleTy, 2));
     Ops.push_back(EmitScalarExpr(E->getArg(2)));
     return Builder.CreateInsertElement(Ops[1], Ops[0], Ops[2], "vset_lane");
 
@@ -4671,7 +4671,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                         "vget_lane");
   case NEON::BI__builtin_neon_vdups_lane_f32:
     Ops[0] = Builder.CreateBitCast(Ops[0],
-        llvm::VectorType::get(llvm::Type::getFloatTy(getLLVMContext()), 2));
+        llvm::VectorType::get(FloatTy, 2));
     return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
                                         "vdups_lane");
   case NEON::BI__builtin_neon_vgetq_lane_i32:
@@ -4686,7 +4686,7 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                         "vget_lane");
   case NEON::BI__builtin_neon_vdupd_lane_f64:
     Ops[0] = Builder.CreateBitCast(Ops[0],
-        llvm::VectorType::get(llvm::Type::getDoubleTy(getLLVMContext()), 1));
+        llvm::VectorType::get(DoubleTy, 1));
     return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
                                         "vdupd_lane");
   case NEON::BI__builtin_neon_vgetq_lane_i64:
@@ -4696,24 +4696,24 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                         "vgetq_lane");
   case NEON::BI__builtin_neon_vget_lane_f32:
     Ops[0] = Builder.CreateBitCast(Ops[0],
-        llvm::VectorType::get(llvm::Type::getFloatTy(getLLVMContext()), 2));
+        llvm::VectorType::get(FloatTy, 2));
     return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
                                         "vget_lane");
   case NEON::BI__builtin_neon_vget_lane_f64:
     Ops[0] = Builder.CreateBitCast(Ops[0],
-        llvm::VectorType::get(llvm::Type::getDoubleTy(getLLVMContext()), 1));
+        llvm::VectorType::get(DoubleTy, 1));
     return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
                                         "vget_lane");
   case NEON::BI__builtin_neon_vgetq_lane_f32:
   case NEON::BI__builtin_neon_vdups_laneq_f32:
     Ops[0] = Builder.CreateBitCast(Ops[0],
-        llvm::VectorType::get(llvm::Type::getFloatTy(getLLVMContext()), 4));
+        llvm::VectorType::get(FloatTy, 4));
     return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
                                         "vgetq_lane");
   case NEON::BI__builtin_neon_vgetq_lane_f64:
   case NEON::BI__builtin_neon_vdupd_laneq_f64:
     Ops[0] = Builder.CreateBitCast(Ops[0],
-        llvm::VectorType::get(llvm::Type::getDoubleTy(getLLVMContext()), 2));
+        llvm::VectorType::get(DoubleTy, 2));
     return Builder.CreateExtractElement(Ops[0], EmitScalarExpr(E->getArg(1)),
                                         "vgetq_lane");
   case NEON::BI__builtin_neon_vaddd_s64:
@@ -5052,15 +5052,13 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Int = Intrinsic::aarch64_neon_fmaxnm;
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vmaxnm");
   case NEON::BI__builtin_neon_vrecpss_f32: {
-    llvm::Type *f32Type = llvm::Type::getFloatTy(getLLVMContext());
     Ops.push_back(EmitScalarExpr(E->getArg(1)));
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::aarch64_neon_frecps, f32Type),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::aarch64_neon_frecps, FloatTy),
                         Ops, "vrecps");
   }
   case NEON::BI__builtin_neon_vrecpsd_f64: {
-    llvm::Type *f64Type = llvm::Type::getDoubleTy(getLLVMContext());
     Ops.push_back(EmitScalarExpr(E->getArg(1)));
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::aarch64_neon_frecps, f64Type),
+    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::aarch64_neon_frecps, DoubleTy),
                         Ops, "vrecps");
   }
   case NEON::BI__builtin_neon_vqshrun_n_v:
