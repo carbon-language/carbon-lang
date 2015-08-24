@@ -705,6 +705,9 @@ repnz cmpsb
 sal eax, 123
 // CHECK: shll	$123, %eax
 
+psignw    mm0, MMWORD PTR t2
+// CHECK: psignw t2, %mm0
+
 comisd xmm0, QWORD PTR [eax]
 comiss xmm0, DWORD PTR [eax]
 vcomisd xmm0, QWORD PTR [eax]
