@@ -13,10 +13,7 @@
 #include <sstream>
 
 #include "NativeProcessLinux.h"
-#include "NativeRegisterContextLinux_arm.h"
-#include "NativeRegisterContextLinux_arm64.h"
-#include "NativeRegisterContextLinux_x86_64.h"
-#include "NativeRegisterContextLinux_mips64.h"
+#include "NativeRegisterContextLinux.h"
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
