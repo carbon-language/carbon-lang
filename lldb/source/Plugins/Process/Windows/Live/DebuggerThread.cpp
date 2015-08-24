@@ -24,7 +24,7 @@
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/Process.h"
 
-#include "Plugins/Process/Windows/ProcessWindowsLog.h"
+#include "Plugins/Process/Windows/Live/ProcessWindowsLog.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"

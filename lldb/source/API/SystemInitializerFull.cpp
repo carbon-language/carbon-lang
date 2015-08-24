@@ -70,8 +70,8 @@
 
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
-#include "Plugins/Process/Windows/ProcessWindows.h"
-#include "Plugins/Process/win-minidump/ProcessWinMiniDump.h"
+#include "Plugins/Process/Windows/Live/ProcessWindows.h"
+#include "Plugins/Process/Windows/MiniDump/ProcessWinMiniDump.h"
 #endif
 
 #include "llvm/Support/TargetSelect.h"

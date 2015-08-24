@@ -47,7 +47,7 @@
 
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
-#include "Plugins/Process/Windows/ProcessWindowsLog.h"
+#include "Plugins/Process/Windows/Live/ProcessWindowsLog.h"
 #endif
 
 #include "llvm/Support/TargetSelect.h"

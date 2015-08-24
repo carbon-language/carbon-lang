@@ -32,7 +32,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "Plugins/DynamicLoader/Windows-DYLD/DynamicLoaderWindowsDYLD.h"
 
-#include "../windows/ExceptionRecord.h"  // TODO(amccarth):  move this file to a common location
+#include "ExceptionRecord.h"
 #include "ThreadWinMiniDump.h"
 
 using namespace lldb_private;

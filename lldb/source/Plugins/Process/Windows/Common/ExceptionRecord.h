@@ -10,8 +10,6 @@
 #ifndef liblldb_Plugins_Process_Windows_ExceptionRecord_H_
 #define liblldb_Plugins_Process_Windows_ExceptionRecord_H_
 
-#include "ForwardDecl.h"
-
 #include "lldb/lldb-forward.h"
 #include "lldb/Host/windows/windows.h"
 #include <DbgHelp.h>

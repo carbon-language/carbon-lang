@@ -1,7 +1,8 @@
 set(LLVM_NO_RTTI 1)
 
 include_directories(.)
-include_directories(../Utility)
+include_directories(../../Utility)
+include_directories(../Common)
 
 set(PROC_WINDOWS_SOURCES
   DebuggerThread.cpp
