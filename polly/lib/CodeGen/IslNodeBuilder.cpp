@@ -121,6 +121,33 @@ static bool checkIslAstExprInt(__isl_take isl_ast_expr *Expr,
 
 int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
   assert(isl_ast_node_get_type(For) == isl_ast_node_for);
+  auto Body = isl_ast_node_for_get_body(For);
+
+  // First, check if we can actually handle this code
+  switch (isl_ast_node_get_type(Body)) {
+  case isl_ast_node_user:
+    break;
+  case isl_ast_node_block: {
+    isl_ast_node_list *List = isl_ast_node_block_get_children(Body);
+    for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i) {
+      isl_ast_node *Node = isl_ast_node_list_get_ast_node(List, i);
+      int Type = isl_ast_node_get_type(Node);
+      isl_ast_node_free(Node);
+      if (Type != isl_ast_node_user) {
+        isl_ast_node_list_free(List);
+        isl_ast_node_free(Body);
+        return -1;
+      }
+    }
+    isl_ast_node_list_free(List);
+    break;
+  }
+  default:
+    isl_ast_node_free(Body);
+    return -1;
+  }
+  isl_ast_node_free(Body);
+
   auto Init = isl_ast_node_for_get_init(For);
   if (!checkIslAstExprInt(Init, isl_val_is_zero))
     return -1;
