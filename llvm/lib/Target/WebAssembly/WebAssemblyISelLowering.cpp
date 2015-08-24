@@ -153,7 +153,7 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   // Dynamic stack allocation: use the default expansion.
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVTPtr, Expand);
 }
 
 FastISel *WebAssemblyTargetLowering::createFastISel(
