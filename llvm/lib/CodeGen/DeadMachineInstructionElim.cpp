@@ -110,9 +110,8 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
     // block.
     for (MachineBasicBlock::succ_iterator S = MBB.succ_begin(),
            E = MBB.succ_end(); S != E; S++)
-      for (MachineBasicBlock::livein_iterator LI = (*S)->livein_begin();
-           LI != (*S)->livein_end(); LI++)
-        LivePhysRegs.set(*LI);
+      for (unsigned LI : (*S)->liveins())
+        LivePhysRegs.set(LI);
 
     // Now scan the instructions and delete dead ones, tracking physreg
     // liveness as we go.

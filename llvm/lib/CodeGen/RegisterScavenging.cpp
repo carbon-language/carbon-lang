@@ -50,9 +50,8 @@ void RegScavenger::initRegState() {
     return;
 
   // Live-in registers are in use.
-  for (MachineBasicBlock::livein_iterator I = MBB->livein_begin(),
-         E = MBB->livein_end(); I != E; ++I)
-    setRegUsed(*I);
+  for (unsigned LI : MBB->liveins())
+    setRegUsed(LI);
 
   // Pristine CSRs are also unavailable.
   const MachineFunction &MF = *MBB->getParent();

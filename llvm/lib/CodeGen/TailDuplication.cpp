@@ -791,13 +791,12 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
       RS->enterBasicBlock(PredBB);
       if (!PredBB->empty())
         RS->forward(std::prev(PredBB->end()));
-      for (MachineBasicBlock::livein_iterator I = TailBB->livein_begin(),
-             E = TailBB->livein_end(); I != E; ++I) {
-        if (!RS->isRegUsed(*I, false))
+      for (unsigned LI : TailBB->liveins()) {
+        if (!RS->isRegUsed(LI, false))
           // If a register is previously livein to the tail but it's not live
           // at the end of predecessor BB, then it should be added to its
           // livein list.
-          PredBB->addLiveIn(*I);
+          PredBB->addLiveIn(LI);
       }
     }
 

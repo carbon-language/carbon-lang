@@ -242,11 +242,9 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
     assert(Uses.empty() && "Uses in set before adding deps?");
     for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
            SE = BB->succ_end(); SI != SE; ++SI)
-      for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-             E = (*SI)->livein_end(); I != E; ++I) {
-        unsigned Reg = *I;
-        if (!Uses.contains(Reg))
-          Uses.insert(PhysRegSUOper(&ExitSU, -1, Reg));
+      for (unsigned LI : (*SI)->liveins()) {
+        if (!Uses.contains(LI))
+          Uses.insert(PhysRegSUOper(&ExitSU, -1, LI));
       }
   }
 }
@@ -1080,11 +1078,9 @@ void ScheduleDAGInstrs::startBlockForKills(MachineBasicBlock *BB) {
   // Examine the live-in regs of all successors.
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
        SE = BB->succ_end(); SI != SE; ++SI) {
-    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-         E = (*SI)->livein_end(); I != E; ++I) {
-      unsigned Reg = *I;
+    for (unsigned LI : (*SI)->liveins()) {
       // Repeat, for reg and all subregs.
-      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+      for (MCSubRegIterator SubRegs(LI, TRI, /*IncludeSelf=*/true);
            SubRegs.isValid(); ++SubRegs)
         LiveRegs.set(*SubRegs);
     }

@@ -305,9 +305,8 @@ void LiveIntervals::computeLiveInRegUnits() {
     // Create phi-defs at Begin for all live-in registers.
     SlotIndex Begin = Indexes->getMBBStartIdx(MBB);
     DEBUG(dbgs() << Begin << "\tBB#" << MBB->getNumber());
-    for (MachineBasicBlock::livein_iterator LII = MBB->livein_begin(),
-         LIE = MBB->livein_end(); LII != LIE; ++LII) {
-      for (MCRegUnitIterator Units(*LII, TRI); Units.isValid(); ++Units) {
+    for (unsigned LI : MBB->liveins()) {
+      for (MCRegUnitIterator Units(LI, TRI); Units.isValid(); ++Units) {
         unsigned Unit = *Units;
         LiveRange *LR = RegUnitRanges[Unit];
         if (!LR) {

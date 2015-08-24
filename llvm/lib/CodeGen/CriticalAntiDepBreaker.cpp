@@ -57,9 +57,8 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // Examine the live-in regs of all successors.
   for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
          SE = BB->succ_end(); SI != SE; ++SI)
-    for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
-           E = (*SI)->livein_end(); I != E; ++I) {
-      for (MCRegAliasIterator AI(*I, TRI, true); AI.isValid(); ++AI) {
+    for (unsigned LI : (*SI)->liveins()) {
+      for (MCRegAliasIterator AI(LI, TRI, true); AI.isValid(); ++AI) {
         unsigned Reg = *AI;
         Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
         KillIndices[Reg] = BBSize;

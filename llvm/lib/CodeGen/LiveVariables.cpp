@@ -559,11 +559,10 @@ void LiveVariables::runOnInstr(MachineInstr *MI,
 void LiveVariables::runOnBlock(MachineBasicBlock *MBB, const unsigned NumRegs) {
   // Mark live-in registers as live-in.
   SmallVector<unsigned, 4> Defs;
-  for (MachineBasicBlock::livein_iterator II = MBB->livein_begin(),
-         EE = MBB->livein_end(); II != EE; ++II) {
-    assert(TargetRegisterInfo::isPhysicalRegister(*II) &&
+  for (unsigned LI : MBB->liveins()) {
+    assert(TargetRegisterInfo::isPhysicalRegister(LI) &&
            "Cannot have a live-in virtual register!");
-    HandlePhysRegDef(*II, nullptr, Defs);
+    HandlePhysRegDef(LI, nullptr, Defs);
   }
 
   // Loop over all of the instructions, processing them.
@@ -601,12 +600,10 @@ void LiveVariables::runOnBlock(MachineBasicBlock *MBB, const unsigned NumRegs) {
     MachineBasicBlock *SuccMBB = *SI;
     if (SuccMBB->isLandingPad())
       continue;
-    for (MachineBasicBlock::livein_iterator LI = SuccMBB->livein_begin(),
-           LE = SuccMBB->livein_end(); LI != LE; ++LI) {
-      unsigned LReg = *LI;
-      if (!TRI->isInAllocatableClass(LReg))
+    for (unsigned LI : SuccMBB->liveins()) {
+      if (!TRI->isInAllocatableClass(LI))
         // Ignore other live-ins, e.g. those that are live into landing pads.
-        LiveOuts.insert(LReg);
+        LiveOuts.insert(LI);
     }
   }
 

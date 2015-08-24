@@ -1885,11 +1885,9 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   for (int Idx = 0; Idx < NbAddedBlocks; ++Idx)
     BeforePrologueRegion.insert(AddedBlocks[Idx]);
 
-  for (MachineBasicBlock::livein_iterator i = PrologueMBB.livein_begin(),
-                                          e = PrologueMBB.livein_end();
-       i != e; ++i) {
+  for (unsigned LI : PrologueMBB.liveins()) {
     for (MachineBasicBlock *PredBB : BeforePrologueRegion)
-      PredBB->addLiveIn(*i);
+      PredBB->addLiveIn(LI);
   }
 
   // Remove the newly added blocks from the list, since we know

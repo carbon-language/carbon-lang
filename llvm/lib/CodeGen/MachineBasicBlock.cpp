@@ -278,8 +278,9 @@ void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
   if (!livein_empty()) {
     if (Indexes) OS << '\t';
     OS << "    Live Ins:";
-    for (livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
-      OS << ' ' << PrintReg(*I, TRI);
+    for (unsigned LI : make_range(livein_begin(), livein_end())) {
+      OS << ' ' << PrintReg(LI, TRI);
+    }
     OS << '\n';
   }
   // Print the preds of this block according to the CFG.
@@ -322,8 +323,7 @@ void MachineBasicBlock::printAsOperand(raw_ostream &OS,
 }
 
 void MachineBasicBlock::removeLiveIn(unsigned Reg) {
-  std::vector<unsigned>::iterator I =
-    std::find(LiveIns.begin(), LiveIns.end(), Reg);
+  livein_iterator I = std::find(LiveIns.begin(), LiveIns.end(), Reg);
   if (I != LiveIns.end())
     LiveIns.erase(I);
 }
@@ -804,9 +804,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         i->getOperand(ni+1).setMBB(NMBB);
 
   // Inherit live-ins from the successor
-  for (MachineBasicBlock::livein_iterator I = Succ->livein_begin(),
-         E = Succ->livein_end(); I != E; ++I)
-    NMBB->addLiveIn(*I);
+  for (unsigned LI : Succ->liveins())
+    NMBB->addLiveIn(LI);
 
   // Update LiveVariables.
   const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
