@@ -11,12 +11,41 @@ Abstract
 
 The intended audience of this document is developers of language frontends 
 targeting LLVM IR. This document is home to a collection of tips on how to 
-generate IR that optimizes well.  As with any optimizer, LLVM has its strengths
-and weaknesses.  In some cases, surprisingly small changes in the source IR 
-can have a large effect on the generated code.  
+generate IR that optimizes well.  
 
 IR Best Practices
 =================
+
+As with any optimizer, LLVM has its strengths and weaknesses.  In some cases, 
+surprisingly small changes in the source IR can have a large effect on the 
+generated code.  
+
+Beyond the specific items on the list below, it's worth noting that the most 
+mature frontend for LLVM is Clang.  As a result, the further your IR gets from what Clang might emit, the less likely it is to be effectively optimized.  It 
+can often be useful to write a quick C program with the semantics you're trying
+to model and see what decisions Clang's IRGen makes about what IR to emit.  
+Studying Clang's CodeGen directory can also be a good source of ideas.  Note 
+that Clang and LLVM are explicitly version locked so you'll need to make sure 
+you're using a Clang built from the same svn revision or release as the LLVM 
+library you're using.  As always, it's *strongly* recommended that you track 
+tip of tree development, particularly during bring up of a new project.
+
+The Basics
+^^^^^^^^^^^
+
+#. Make sure that your Modules contain both a data layout specification and 
+   target triple. Without these pieces, non of the target specific optimization
+   will be enabled.  This can have a major effect on the generated code quality.
+
+#. For each function or global emitted, use the most private linkage type
+   possible (private, internal or linkonce_odr preferably).  Doing so will 
+   make LLVM's inter-procedural optimizations much more effective.
+
+#. Avoid high in-degree basic blocks (e.g. basic blocks with dozens or hundreds
+   of predecessors).  Among other issues, the register allocator is known to 
+   perform badly with confronted with such structures.  The only exception to 
+   this guidance is that a unified return block with high in-degree is fine.
+
 
 Avoid loads and stores of large aggregate type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -53,14 +82,8 @@ register width using a zext instruction.
 Other Things to Consider
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Make sure that a DataLayout is provided (this will likely become required in
-   the near future, but is certainly important for optimization).
-
 #. Use ptrtoint/inttoptr sparingly (they interfere with pointer aliasing 
    analysis), prefer GEPs
-
-#. Use the "most-private" possible linkage types for the functions being defined
-   (private, internal or linkonce_odr preferably)
 
 #. Prefer globals over inttoptr of a constant address - this gives you 
    dereferencability information.  In MCJIT, use getSymbolAddress to provide 
@@ -100,11 +123,6 @@ Other Things to Consider
    with the duplicated ones, this can provide a noticeable throughput
    improvement.  Note that this is not always profitable and does involve a 
    potentially large increase in code size.
-
-#. Avoid high in-degree basic blocks (e.g. basic blocks with dozens or hundreds
-   of predecessors).  Among other issues, the register allocator is known to 
-   perform badly with confronted with such structures.  The only exception to 
-   this guidance is that a unified return block with high in-degree is fine.
 
 #. When checking a value against a constant, emit the check using a consistent
    comparison type.  The GVN pass *will* optimize redundant equalities even if
