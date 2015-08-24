@@ -1410,22 +1410,22 @@ bool Sema::hasVisibleDefaultArgument(const NamedDecl *D,
 /// your module can see, including those later on in your module).
 bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
   assert(D->isHidden() && "should not call this: not in slow case");
-  Module *DeclModule = SemaRef.getOwningModule(D);
-  if (!DeclModule) {
-    // getOwningModule() may have decided the declaration should not be hidden.
-    assert(!D->isHidden() && "hidden decl not from a module");
-    return true;
-  }
-
-  // If the owning module is visible, and the decl is not module private,
-  // then the decl is visible too. (Module private is ignored within the same
-  // top-level module.)
-  if (!D->isFromASTFile() || !D->isModulePrivate()) {
-    if (SemaRef.isModuleVisible(DeclModule))
+  Module *DeclModule = nullptr;
+  
+  if (SemaRef.getLangOpts().ModulesLocalVisibility) {
+    DeclModule = SemaRef.getOwningModule(D);
+    if (!DeclModule) {
+      // getOwningModule() may have decided the declaration should not be hidden.
+      assert(!D->isHidden() && "hidden decl not from a module");
       return true;
-    // Also check merged definitions.
-    if (SemaRef.getLangOpts().ModulesLocalVisibility &&
-        SemaRef.hasVisibleMergedDefinition(D))
+    }
+
+    // If the owning module is visible, and the decl is not module private,
+    // then the decl is visible too. (Module private is ignored within the same
+    // top-level module.)
+    if ((!D->isFromASTFile() || !D->isModulePrivate()) &&
+        (SemaRef.isModuleVisible(DeclModule) ||
+         SemaRef.hasVisibleMergedDefinition(D)))
       return true;
   }
 
@@ -1456,6 +1456,11 @@ bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
   llvm::DenseSet<Module*> &LookupModules = SemaRef.getLookupModules();
   if (LookupModules.empty())
     return false;
+
+  if (!DeclModule) {
+    DeclModule = SemaRef.getOwningModule(D);
+    assert(DeclModule && "hidden decl not from a module");
+  }
 
   // If our lookup set contains the decl's module, it's visible.
   if (LookupModules.count(DeclModule))
