@@ -1733,6 +1733,8 @@ template <class _CharT>
 void
 __back_ref<_CharT>::__exec(__state& __s) const
 {
+    if (__mexp_ > __s.__sub_matches_.size())
+        __throw_regex_error<regex_constants::error_backref>();
     sub_match<const _CharT*>& __sm = __s.__sub_matches_[__mexp_-1];
     if (__sm.matched)
     {
