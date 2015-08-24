@@ -69,7 +69,7 @@ struct LTOCodeGenerator {
   bool addModule(struct LTOModule *);
 
   // Set the destination module.
-  void setModule(struct LTOModule *);
+  void setModule(std::unique_ptr<LTOModule> M);
 
   void setTargetOptions(TargetOptions options);
   void setDebugInfo(lto_debug_model);
@@ -155,9 +155,9 @@ private:
 
   typedef StringMap<uint8_t> StringSet;
 
-  void destroyMergedModule();
   std::unique_ptr<LLVMContext> OwnedContext;
   LLVMContext &Context;
+  std::unique_ptr<Module> MergedModule;
   Linker IRLinker;
   std::unique_ptr<TargetMachine> TargetMach;
   bool EmitDwarfDebugInfo = false;
@@ -175,7 +175,6 @@ private:
   unsigned OptLevel = 2;
   lto_diagnostic_handler_t DiagHandler = nullptr;
   void *DiagContext = nullptr;
-  LTOModule *OwnedModule = nullptr;
   bool ShouldInternalize = true;
   bool ShouldEmbedUselists = false;
 };

@@ -64,29 +64,20 @@ const char* LTOCodeGenerator::getVersionString() {
 }
 
 LTOCodeGenerator::LTOCodeGenerator()
-    : Context(getGlobalContext()), IRLinker(new Module("ld-temp.o", Context)) {
+    : Context(getGlobalContext()),
+      MergedModule(new Module("ld-temp.o", Context)),
+      IRLinker(MergedModule.get()) {
   initializeLTOPasses();
 }
 
 LTOCodeGenerator::LTOCodeGenerator(std::unique_ptr<LLVMContext> Context)
     : OwnedContext(std::move(Context)), Context(*OwnedContext),
-      IRLinker(new Module("ld-temp.o", *OwnedContext)) {
+      MergedModule(new Module("ld-temp.o", *OwnedContext)),
+      IRLinker(MergedModule.get()) {
   initializeLTOPasses();
 }
 
-void LTOCodeGenerator::destroyMergedModule() {
-  if (OwnedModule) {
-    assert(IRLinker.getModule() == &OwnedModule->getModule() &&
-           "The linker's module should be the same as the owned module");
-    delete OwnedModule;
-    OwnedModule = nullptr;
-  } else if (IRLinker.getModule())
-    IRLinker.deleteModule();
-}
-
-LTOCodeGenerator::~LTOCodeGenerator() {
-  destroyMergedModule();
-}
+LTOCodeGenerator::~LTOCodeGenerator() {}
 
 // Initialize LTO passes. Please keep this funciton in sync with
 // PassManagerBuilder::populateLTOPassManager(), and make sure all LTO
@@ -131,16 +122,14 @@ bool LTOCodeGenerator::addModule(LTOModule *mod) {
   return !ret;
 }
 
-void LTOCodeGenerator::setModule(LTOModule *Mod) {
+void LTOCodeGenerator::setModule(std::unique_ptr<LTOModule> Mod) {
   assert(&Mod->getModule().getContext() == &Context &&
          "Expected module in same context");
 
-  // Delete the old merged module.
-  destroyMergedModule();
   AsmUndefinedRefs.clear();
 
-  OwnedModule = Mod;
-  IRLinker.setModule(&Mod->getModule());
+  MergedModule = Mod->takeModule();
+  IRLinker.setModule(MergedModule.get());
 
   const std::vector<const char*> &Undefs = Mod->getAsmUndefinedRefs();
   for (int I = 0, E = Undefs.size(); I != E; ++I)
@@ -200,7 +189,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   }
 
   // write bitcode to it
-  WriteBitcodeToFile(IRLinker.getModule(), Out.os(), ShouldEmbedUselists);
+  WriteBitcodeToFile(MergedModule.get(), Out.os(), ShouldEmbedUselists);
   Out.os().close();
 
   if (Out.os().has_error()) {
@@ -296,10 +285,10 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
   if (TargetMach)
     return true;
 
-  std::string TripleStr = IRLinker.getModule()->getTargetTriple();
+  std::string TripleStr = MergedModule->getTargetTriple();
   if (TripleStr.empty()) {
     TripleStr = sys::getDefaultTargetTriple();
-    IRLinker.getModule()->setTargetTriple(TripleStr);
+    MergedModule->setTargetTriple(TripleStr);
   }
   llvm::Triple Triple(TripleStr);
 
@@ -412,7 +401,6 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
 void LTOCodeGenerator::applyScopeRestrictions() {
   if (ScopeRestrictionsDone || !ShouldInternalize)
     return;
-  Module *MergedModule = IRLinker.getModule();
 
   // Start off with a verification pass.
   legacy::PassManager passes;
@@ -475,8 +463,6 @@ bool LTOCodeGenerator::optimize(bool DisableInline,
   if (!this->determineTarget(errMsg))
     return false;
 
-  Module *MergedModule = IRLinker.getModule();
-
   // Mark which symbols can not be internalized
   this->applyScopeRestrictions();
 
@@ -513,8 +499,6 @@ bool LTOCodeGenerator::compileOptimized(raw_pwrite_stream &out,
                                         std::string &errMsg) {
   if (!this->determineTarget(errMsg))
     return false;
-
-  Module *MergedModule = IRLinker.getModule();
 
   legacy::PassManager codeGenPasses;
 

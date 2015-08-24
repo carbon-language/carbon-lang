@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
     // SetMergedModule is true.
     if (SetMergedModule && i == BaseArg) {
       // Transfer ownership to the code generator.
-      CodeGen.setModule(Module.release());
+      CodeGen.setModule(std::move(Module));
     } else if (!CodeGen.addModule(Module.get()))
       return 1;
   }

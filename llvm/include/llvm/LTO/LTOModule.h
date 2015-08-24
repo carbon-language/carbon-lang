@@ -113,6 +113,8 @@ public:
     return IRFile->getModule();
   }
 
+  std::unique_ptr<Module> takeModule() { return IRFile->takeModule(); }
+
   /// Return the Module's target triple.
   const std::string &getTargetTriple() {
     return getModule().getTargetTriple();

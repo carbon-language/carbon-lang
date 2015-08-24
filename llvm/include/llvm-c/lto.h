@@ -374,8 +374,8 @@ extern lto_bool_t
 lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
 
 /**
- * Sets the object module for code generation. This will transfer the ownship of
- * the module to code generator.
+ * Sets the object module for code generation. This will transfer the ownership
+ * of the module to the code generator.
  *
  * \c cg and \c mod must both be in the same context.
  *

@@ -260,7 +260,7 @@ bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
 }
 
 void lto_codegen_set_module(lto_code_gen_t cg, lto_module_t mod) {
-  unwrap(cg)->setModule(unwrap(mod));
+  unwrap(cg)->setModule(std::unique_ptr<LTOModule>(unwrap(mod)));
 }
 
 bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
