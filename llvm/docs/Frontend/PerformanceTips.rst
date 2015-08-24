@@ -216,6 +216,13 @@ relatively common and are generally well received by the community.  You will
 need to ensure that your proposal is sufficiently general so that it benefits 
 others if you wish to contribute it upstream.
 
+You should also consider describing the problem you're facing on `llvm-dev 
+<http://lists.llvm.org/mailman/listinfo/llvm-dev>`_ and asking for advice.  
+It's entirely possible someone has encountered your problem before and can 
+give good advice.  If there are multiple interested parties, that also 
+increases the chances that a metadata extension would be well received by the
+community as a whole.  
+
 Adding to this document
 =======================
 
