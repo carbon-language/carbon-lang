@@ -72,6 +72,16 @@
 
 using namespace llvm;
 
+// VMA size definition for architecture that support multiple sizes.
+// AArch64 has 3 VMA sizes: 39, 42 and 48.
+#ifndef SANITIZER_AARCH64_VMA
+# define SANITIZER_AARCH64_VMA 39
+#else
+# if SANITIZER_AARCH64_VMA != 39 && SANITIZER_AARCH64_VMA != 42
+#  error "invalid SANITIZER_AARCH64_VMA size"
+# endif
+#endif
+
 // The -dfsan-preserve-alignment flag controls whether this pass assumes that
 // alignment requirements provided by the input IR are correct.  For example,
 // if the input IR contains a load with alignment 8, this flag will cause
@@ -437,7 +447,11 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   else if (IsMIPS64)
     ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0xF000000000LL);
   else if (IsAArch64)
+#if SANITIZER_AARCH64_VMA == 39
     ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x7800000000LL);
+#else
+    ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x3c000000000LL);
+#endif
   else
     report_fatal_error("unsupported triple");
 
