@@ -582,10 +582,6 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
         FloatABI = "soft";
       }
     }
-
-    if (Triple.isOSDarwin() && FloatABI == "hard")
-      D.Diag(diag::err_drv_unsupported_opt_for_target) << A->getAsString(Args)
-                                                       << Triple.getArchName();
   }
 
   // If unspecified, choose the default based on the platform.
