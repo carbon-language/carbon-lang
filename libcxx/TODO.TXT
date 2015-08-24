@@ -1,5 +1,15 @@
 This is meant to be a general place to list things that should be done "someday"
 
+3.8 Release Goals
+=================
+* LFTS v1 (EricWF, MClow)
+* Filesystem TS (EricWF)
+* ASIO TS (MClow)
+* <regex> Improvements (MClow)
+* Setup ABI Versioning policy (EricWF)
+* Fix PR19302 - Fix UB in list and __tree.
+
+
 ABI Related Tasks
 =================
 * Explicitly manage and verify symbols exported from the dylib.
