@@ -48,3 +48,7 @@ INVALID-SECTION-SIZE: Invalid section header entry size (e_shentsize) in ELF hea
 
 RUN: not llvm-readobj -t %p/Inputs/invalid-symbol-table-size.elf 2>&1 | FileCheck --check-prefix=INVALID-SYMTAB-SIZE %s
 INVALID-SYMTAB-SIZE: Invalid symbol table size
+
+
+RUN: not llvm-readobj -t %p/Inputs/invalid-xindex-size.elf 2>&1 | FileCheck --check-prefix=INVALID-XINDEX-SIZE %s
+INVALID-XINDEX-SIZE: Invalid data was encountered while parsing the file.
