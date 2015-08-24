@@ -85,7 +85,7 @@ option(LIBCXX_ENABLE_THREADS "Build libc++ with support for threads." ON)
 option(LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS "Build libc++ with support for thread-unsafe C functions" ON)
 option(LIBCXX_ENABLE_MONOTONIC_CLOCK
   "Build libc++ with support for a monotonic clock.
-   This option may only be used when LIBCXX_ENABLE_THREADS=OFF." ON)
+   This option may only be set to OFF when LIBCXX_ENABLE_THREADS=OFF." ON)
 
 # Misc options ----------------------------------------------------------------
 option(LIBCXX_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
@@ -248,7 +248,7 @@ define_if_not(LIBCXX_ENABLE_MONOTONIC_CLOCK -D_LIBCPP_HAS_NO_MONOTONIC_CLOCK)
 define_if_not(LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS -D_LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS)
 
 
-# Sanitizer flags
+# Sanitizer flags =============================================================
 
 # Configure for sanitizers. If LIBCXX_BUILT_STANDALONE then we have to do
 # the flag translation ourselves. Othewise LLVM's CMakeList.txt will handle it.
