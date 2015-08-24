@@ -58,8 +58,7 @@ private:
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    TII = static_cast<const WebAssemblyInstrInfo *>(
-        MF.getSubtarget().getInstrInfo());
+    TII = MF.getSubtarget<WebAssemblySubtarget>().getInstrInfo();
     return AsmPrinter::runOnMachineFunction(MF);
   }
 

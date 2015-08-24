@@ -40,8 +40,8 @@ using namespace llvm;
 /// register.
 bool WebAssemblyFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const auto *RegInfo = static_cast<const WebAssemblyRegisterInfo *>(
-      MF.getSubtarget().getRegisterInfo());
+  const auto *RegInfo =
+      MF.getSubtarget<WebAssemblySubtarget>().getRegisterInfo();
   return MFI->hasCalls() || MFI->hasVarSizedObjects() ||
          MFI->isFrameAddressTaken() || MFI->hasStackMap() ||
          MFI->hasPatchPoint() || RegInfo->needsStackRealignment(MF);
