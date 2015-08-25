@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "LoopConvertCheck.h"
 #include "PassByValueCheck.h"
+#include "ReplaceAutoPtrCheck.h"
 #include "UseAutoCheck.h"
 #include "UseNullptrCheck.h"
 
@@ -26,6 +27,8 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<LoopConvertCheck>("modernize-loop-convert");
     CheckFactories.registerCheck<PassByValueCheck>("modernize-pass-by-value");
+    CheckFactories.registerCheck<ReplaceAutoPtrCheck>(
+        "modernize-replace-auto-ptr");
     CheckFactories.registerCheck<UseAutoCheck>("modernize-use-auto");
     CheckFactories.registerCheck<UseNullptrCheck>("modernize-use-nullptr");
   }
@@ -35,6 +38,7 @@ public:
     auto &Opts = Options.CheckOptions;
     Opts["modernize-loop-convert.MinConfidence"] = "reasonable";
     Opts["modernize-pass-by-value.IncludeStyle"] = "llvm"; // Also: "google".
+    Opts["modernize-replace-auto-ptr.IncludeStyle"] = "llvm"; // Also: "google".
 
     // Comma-separated list of macros that behave like NULL.
     Opts["modernize-use-nullptr.NullMacros"] = "NULL";
