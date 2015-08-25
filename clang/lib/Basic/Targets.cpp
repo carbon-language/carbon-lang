@@ -867,6 +867,9 @@ public:
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
+  bool handleUserFeatures(llvm::StringMap<bool> &Features,
+                          std::vector<std::string> &UserFeatures,
+                          DiagnosticsEngine &Diags) override;
   bool hasFeature(StringRef Feature) const override;
   void setFeatureEnabled(llvm::StringMap<bool> &Features, StringRef Name,
                          bool Enabled) const override;
@@ -1071,24 +1074,39 @@ bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     // all.
   }
 
+  return true;
+}
+
+bool PPCTargetInfo::handleUserFeatures(llvm::StringMap<bool> &Features,
+                                       std::vector<std::string> &UserFeatures,
+                                       DiagnosticsEngine &Diags) {
+
   // Handle explicit options being passed to the compiler here: if we've
   // explicitly turned off vsx and turned on power8-vector or direct-move then
   // go ahead and error since the customer has expressed a somewhat incompatible
   // set of options.
-  if (std::find(Features.begin(), Features.end(), "-vsx") != Features.end()) {
-    if (std::find(Features.begin(), Features.end(), "+power8-vector") !=
-        Features.end()) {
+  if (std::find(UserFeatures.begin(), UserFeatures.end(), "-vsx") !=
+      UserFeatures.end()) {
+    if (std::find(UserFeatures.begin(), UserFeatures.end(), "+power8-vector") !=
+        UserFeatures.end()) {
       Diags.Report(diag::err_opt_not_valid_with_opt) << "-mpower8-vector"
                                                      << "-mno-vsx";
       return false;
     }
 
-    if (std::find(Features.begin(), Features.end(), "+direct-move") !=
-        Features.end()) {
+    if (std::find(UserFeatures.begin(), UserFeatures.end(), "+direct-move") !=
+        UserFeatures.end()) {
       Diags.Report(diag::err_opt_not_valid_with_opt) << "-mdirect-move"
                                                      << "-mno-vsx";
       return false;
     }
+  }
+
+  for (const auto &F : UserFeatures) {
+    const char *Name = F.c_str();
+    // Apply the feature via the target.
+    bool Enabled = Name[0] == '+';
+    setFeatureEnabled(Features, Name + 1, Enabled);
   }
 
   return true;
@@ -1332,37 +1350,29 @@ bool PPCTargetInfo::hasFeature(StringRef Feature) const {
     .Default(false);
 }
 
-/*  There is no clear way for the target to know which of the features in the
-    final feature vector came from defaults and which are actually specified by
-    the user. To that end, we use the fact that this function is not called on
-    default features - only user specified ones. By the first time this
-    function is called, the default features are populated.
-    We then keep track of the features that the user specified so that we
-    can ensure we do not override a user's request (only defaults).
-    For example:
-    -mcpu=pwr8 -mno-vsx (should disable vsx and everything that depends on it)
-    -mcpu=pwr8 -mdirect-move -mno-vsx (should actually be diagnosed)
-
-NOTE: Do not call this from PPCTargetInfo::initDefaultFeatures
-*/
 void PPCTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
                                       StringRef Name, bool Enabled) const {
-  static llvm::StringMap<bool> ExplicitFeatures;
-  ExplicitFeatures[Name] = Enabled;
-
-  // At this point, -mno-vsx turns off the dependent features but we respect
-  // the user's requests.
-  if (!Enabled && Name == "vsx") {
-    Features["direct-move"] = ExplicitFeatures["direct-move"];
-    Features["power8-vector"] = ExplicitFeatures["power8-vector"];
-  }
-  if ((Enabled && Name == "power8-vector") ||
-      (Enabled && Name == "direct-move")) {
-    if (ExplicitFeatures.find("vsx") == ExplicitFeatures.end()) {
-      Features["vsx"] = true;
+  // If we're enabling direct-move or power8-vector go ahead and enable vsx
+  // as well. Do the inverse if we're disabling vsx. We'll diagnose any user
+  // incompatible options.
+  if (Enabled) {
+    if (Name == "vsx") {
+     Features[Name] = true;
+    } else if (Name == "direct-move") {
+      Features[Name] = Features["vsx"] = true;
+    } else if (Name == "power8-vector") {
+      Features[Name] = Features["vsx"] = true;
+    } else {
+      Features[Name] = true;
+    }
+  } else {
+    if (Name == "vsx") {
+      Features[Name] = Features["direct-move"] = Features["power8-vector"] =
+          false;
+    } else {
+      Features[Name] = false;
     }
   }
-  Features[Name] = Enabled;
 }
 
 const char * const PPCTargetInfo::GCCRegNames[] = {
