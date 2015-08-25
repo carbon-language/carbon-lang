@@ -451,3 +451,13 @@ __m64 test89(__m64 a, __m64 b) {
   // CHECK: pcmpgtd
   return _mm_cmpgt_pi32(a, b);
 }
+
+__m64 test90(int a) {
+  // CHECK: movd
+  return _m_from_int(a);
+}
+
+int test91(__m64 a) {
+  // CHECK: movd
+  return _m_to_int(a);
+}

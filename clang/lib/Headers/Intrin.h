@@ -49,10 +49,7 @@ extern "C" {
 #if defined(__MMX__)
 /* And the random ones that aren't in those files. */
 __m64 _m_from_float(float);
-__m64 _m_from_int(int _l);
-void _m_prefetch(void *);
 float _m_to_float(__m64);
-int _m_to_int(__m64 _M);
 #endif
 
 /* Other assorted instruction intrinsics. */
