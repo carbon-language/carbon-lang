@@ -1,6 +1,6 @@
 // RUN: %clangxx -fsanitize=float-cast-overflow %s -o %t
 // RUN: %run %t _
-// RUN: env UBSAN_OPTIONS=print_summary=1:report_error_type=1 %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
+// RUN: %env_ubsan_opts=print_summary=1:report_error_type=1 %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
 // RUN: %run %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
 // RUN: %run %t 2 2>&1 | FileCheck %s --check-prefix=CHECK-2
 // RUN: %run %t 3 2>&1 | FileCheck %s --check-prefix=CHECK-3

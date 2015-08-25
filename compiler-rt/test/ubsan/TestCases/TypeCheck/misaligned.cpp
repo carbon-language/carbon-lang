@@ -11,7 +11,7 @@
 // RUN: %run %t f1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
 // RUN: %run %t n1 2>&1 | FileCheck %s --check-prefix=CHECK-NEW
 // RUN: %run %t u1 2>&1 | FileCheck %s --check-prefix=CHECK-UPCAST
-// RUN: env UBSAN_OPTIONS=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-%os-STACK-LOAD
+// RUN: %env_ubsan_opts=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-%os-STACK-LOAD
 
 // RUN: %clangxx -fsanitize=alignment -fno-sanitize-recover=alignment %s -O3 -o %t
 // RUN: not %run %t w1 2>&1 | FileCheck %s --check-prefix=CHECK-WILD

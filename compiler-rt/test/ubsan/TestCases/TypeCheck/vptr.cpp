@@ -1,28 +1,27 @@
 // RUN: %clangxx -frtti -fsanitize=vptr -fno-sanitize-recover=vptr -g %s -O3 -o %t
-// RUN: export UBSAN_OPTIONS=print_stacktrace=1
 // RUN: %run %t rT && %run %t mT && %run %t fT && %run %t cT
 // RUN: %run %t rU && %run %t mU && %run %t fU && %run %t cU
 // RUN: %run %t rS && %run %t rV && %run %t oV
-// RUN: not %run %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --check-prefix=CHECK-%os-MEMBER --strict-whitespace
-// RUN: not %run %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
-// RUN: not %run %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --check-prefix=CHECK-%os-DOWNCAST --strict-whitespace
-// RUN: not %run %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --check-prefix=CHECK-%os-MEMBER --strict-whitespace
-// RUN: not %run %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
-// RUN: not %run %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --check-prefix=CHECK-%os-DOWNCAST --strict-whitespace
-// RUN: not %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --check-prefix=CHECK-%os-OFFSET --strict-whitespace
-// RUN: not %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --check-prefix=CHECK-%os-NULL-MEMBER --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --check-prefix=CHECK-%os-MEMBER --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --check-prefix=CHECK-%os-DOWNCAST --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --check-prefix=CHECK-%os-MEMBER --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --check-prefix=CHECK-%os-DOWNCAST --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --check-prefix=CHECK-%os-OFFSET --strict-whitespace
+// RUN: %env_ubsan_opts=print_stacktrace=1 not %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --check-prefix=CHECK-%os-NULL-MEMBER --strict-whitespace
 
 // RUN: (echo "vptr_check:S"; echo "vptr_check:T"; echo "vptr_check:U") > %t.supp
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t mS
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t fS
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t cS
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t mV
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t fV
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t cV
-// RUN: UBSAN_OPTIONS="suppressions='%t.supp'" %run %t oU
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t mS
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t fS
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t cS
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t mV
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t fV
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t cV
+// RUN: %env_ubsan_opts=suppressions='"%t.supp"' %run %t oU
 
 // RUN: echo "vptr_check:S" > %t.loc-supp
-// RUN: UBSAN_OPTIONS="suppressions='%t.loc-supp'" not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
+// RUN: %env_ubsan_opts=suppressions='"%t.loc-supp"' not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
 // REQUIRES: stable-runtime, cxxabi
 #include <new>

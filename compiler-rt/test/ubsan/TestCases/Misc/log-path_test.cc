@@ -9,12 +9,12 @@
 
 // Good log_path.
 // RUN: rm -f %t.log.*
-// RUN: env UBSAN_OPTIONS=log_path=%t.log %run %t -4 2> %t.out
+// RUN: %env_ubsan_opts=log_path='"%t.log"' %run %t -4 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.log.*
 
 // Run w/o errors should not produce any log.
 // RUN: rm -f %t.log.*
-// RUN: env UBSAN_OPTIONS=log_path=%t.log  %run %t 4
+// RUN: %env_ubsan_opts=log_path='"%t.log"'  %run %t 4
 // RUN: not cat %t.log.*
 
 // FIXME: log_path is not supported on Windows yet.
