@@ -70,6 +70,7 @@ StatementMatcher makeArrayLoopMatcher() {
       expr(hasType(isInteger())).bind(ConditionBoundName);
 
   return forStmt(
+             unless(isInTemplateInstantiation()),
              hasLoopInit(declStmt(hasSingleDecl(InitToZeroMatcher))),
              hasCondition(anyOf(
                  binaryOperator(hasOperatorName("<"),
@@ -159,6 +160,7 @@ StatementMatcher makeIteratorLoopMatcher() {
                       .bind(DerefByRefResultName)))))));
 
   return forStmt(
+             unless(isInTemplateInstantiation()),
              hasLoopInit(anyOf(declStmt(declCountIs(2),
                                         containsDeclaration(0, InitDeclMatcher),
                                         containsDeclaration(1, EndDeclMatcher)),
@@ -258,6 +260,7 @@ StatementMatcher makePseudoArrayLoopMatcher() {
                  EndInitMatcher));
 
   return forStmt(
+             unless(isInTemplateInstantiation()),
              hasLoopInit(
                  anyOf(declStmt(declCountIs(2),
                                 containsDeclaration(0, InitToZeroMatcher),

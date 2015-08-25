@@ -626,3 +626,24 @@ void messing_with_macros() {
 }
 
 } // namespace Macros
+
+namespace Templates {
+
+template <class Container>
+void set_union(Container &container) {
+  for (typename Container::const_iterator SI = container.begin(),
+       SE = container.end(); SI != SE; ++SI) {
+  }
+  S s;
+  for (S::iterator SI = s.begin(), SE = s.end(); SI != SE; ++SI) {
+  }
+  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use range-based for loop instead
+  // CHECK-FIXES: for (auto & elem : s) {
+}
+
+void template_instantiation() {
+  S a;
+  set_union(a);
+}
+
+} // namespace Templates
