@@ -1050,7 +1050,8 @@ private:
         PreviousNotConst->MatchingParen->Previous->is(tok::kw_decltype))
       return true;
 
-    return (!IsPPKeyword && PreviousNotConst->is(tok::identifier)) ||
+    return (!IsPPKeyword &&
+            PreviousNotConst->isOneOf(tok::identifier, tok::kw_auto)) ||
            PreviousNotConst->is(TT_PointerOrReference) ||
            PreviousNotConst->isSimpleTypeSpecifier();
   }
@@ -1842,11 +1843,10 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_square) && Right.is(tok::amp))
     return false;
   if (Right.is(TT_PointerOrReference))
-    return !(Left.is(tok::r_paren) && Left.MatchingParen &&
-             (Left.MatchingParen->is(TT_OverloadedOperatorLParen) ||
-              (Left.MatchingParen->Previous &&
-               Left.MatchingParen->Previous->is(
-                   TT_FunctionDeclarationName)))) &&
+    return (Left.is(tok::r_paren) && Left.MatchingParen &&
+            (Left.MatchingParen->is(TT_OverloadedOperatorLParen) ||
+             (Left.MatchingParen->Previous &&
+              Left.MatchingParen->Previous->is(TT_FunctionDeclarationName)))) ||
            (Left.Tok.isLiteral() ||
             (!Left.isOneOf(TT_PointerOrReference, tok::l_paren) &&
              (Style.PointerAlignment != FormatStyle::PAS_Left ||
