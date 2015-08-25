@@ -569,9 +569,10 @@ bool GlobalMerge::doInitialization(Module &M) {
     if (P.second.size() > 1)
       Changed |= doMerge(P.second, M, false, P.first);
 
-  for (auto &P : ConstGlobals)
-    if (P.second.size() > 1)
-      Changed |= doMerge(P.second, M, true, P.first);
+  if (EnableGlobalMergeOnConst)
+    for (auto &P : ConstGlobals)
+      if (P.second.size() > 1)
+        Changed |= doMerge(P.second, M, true, P.first);
 
   return Changed;
 }
