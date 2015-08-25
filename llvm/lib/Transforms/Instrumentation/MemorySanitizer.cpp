@@ -2863,6 +2863,8 @@ struct VarArgAMD64Helper : public VarArgHelper {
   }
 
   void visitVAStartInst(VAStartInst &I) override {
+    if (F.getCallingConv() == CallingConv::X86_64_Win64)
+      return;
     IRBuilder<> IRB(&I);
     VAStartInstrumentationList.push_back(&I);
     Value *VAListTag = I.getArgOperand(0);
@@ -2875,6 +2877,8 @@ struct VarArgAMD64Helper : public VarArgHelper {
   }
 
   void visitVACopyInst(VACopyInst &I) override {
+    if (F.getCallingConv() == CallingConv::X86_64_Win64)
+      return;
     IRBuilder<> IRB(&I);
     Value *VAListTag = I.getArgOperand(0);
     Value *ShadowPtr = MSV.getShadowPtr(VAListTag, IRB.getInt8Ty(), IRB);

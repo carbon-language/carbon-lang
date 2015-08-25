@@ -3099,57 +3099,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Results.push_back(Tmp1);
     break;
   }
-  case ISD::VAARG: {
-    const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
-    EVT VT = Node->getValueType(0);
-    Tmp1 = Node->getOperand(0);
-    Tmp2 = Node->getOperand(1);
-    unsigned Align = Node->getConstantOperandVal(3);
-
-    SDValue VAListLoad =
-        DAG.getLoad(TLI.getPointerTy(DAG.getDataLayout()), dl, Tmp1, Tmp2,
-                    MachinePointerInfo(V), false, false, false, 0);
-    SDValue VAList = VAListLoad;
-
-    if (Align > TLI.getMinStackArgumentAlignment()) {
-      assert(((Align & (Align-1)) == 0) && "Expected Align to be a power of 2");
-
-      VAList = DAG.getNode(ISD::ADD, dl, VAList.getValueType(), VAList,
-                           DAG.getConstant(Align - 1, dl,
-                                           VAList.getValueType()));
-
-      VAList = DAG.getNode(ISD::AND, dl, VAList.getValueType(), VAList,
-                           DAG.getConstant(-(int64_t)Align, dl,
-                                           VAList.getValueType()));
-    }
-
-    // Increment the pointer, VAList, to the next vaarg
-    Tmp3 = DAG.getNode(ISD::ADD, dl, VAList.getValueType(), VAList,
-                       DAG.getConstant(DAG.getDataLayout().getTypeAllocSize(
-                                           VT.getTypeForEVT(*DAG.getContext())),
-                                       dl, VAList.getValueType()));
-    // Store the incremented VAList to the legalized pointer
-    Tmp3 = DAG.getStore(VAListLoad.getValue(1), dl, Tmp3, Tmp2,
-                        MachinePointerInfo(V), false, false, 0);
-    // Load the actual argument out of the pointer VAList
-    Results.push_back(DAG.getLoad(VT, dl, Tmp3, VAList, MachinePointerInfo(),
-                                  false, false, false, 0));
+  case ISD::VAARG:
+    Results.push_back(DAG.expandVAArg(Node));
     Results.push_back(Results[0].getValue(1));
     break;
-  }
-  case ISD::VACOPY: {
-    // This defaults to loading a pointer from the input and storing it to the
-    // output, returning the chain.
-    const Value *VD = cast<SrcValueSDNode>(Node->getOperand(3))->getValue();
-    const Value *VS = cast<SrcValueSDNode>(Node->getOperand(4))->getValue();
-    Tmp1 = DAG.getLoad(TLI.getPointerTy(DAG.getDataLayout()), dl,
-                       Node->getOperand(0), Node->getOperand(2),
-                       MachinePointerInfo(VS), false, false, false, 0);
-    Tmp1 = DAG.getStore(Tmp1.getValue(1), dl, Tmp1, Node->getOperand(1),
-                        MachinePointerInfo(VD), false, false, 0);
-    Results.push_back(Tmp1);
+  case ISD::VACOPY:
+    Results.push_back(DAG.expandVACopy(Node));
     break;
-  }
   case ISD::EXTRACT_VECTOR_ELT:
     if (Node->getOperand(0).getValueType().getVectorNumElements() == 1)
       // This must be an access of the only element.  Return it.

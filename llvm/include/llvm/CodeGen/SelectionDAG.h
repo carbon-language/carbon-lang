@@ -901,6 +901,12 @@ public:
   /// the target's desired shift amount type.
   SDValue getShiftAmountOperand(EVT LHSTy, SDValue Op);
 
+  /// Expand the specified \c ISD::VAARG node as the Legalize pass would.
+  SDValue expandVAArg(SDNode *Node);
+
+  /// Expand the specified \c ISD::VACOPY node as the Legalize pass would.
+  SDValue expandVACopy(SDNode *Node);
+
   /// *Mutate* the specified node in-place to have the
   /// specified operands.  If the resultant node already exists in the DAG,
   /// this does not modify the specified node, instead it returns the node that
