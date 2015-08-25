@@ -3,7 +3,7 @@
 //
 // RUN: %clangxx_asan -DSHARED %s -shared -o %t-so.so -fPIC
 // RUN: %clangxx_asan %s -ldl -pthread -o %t %t-so.so
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=verbosity=2 %run %t 2>&1 | FileCheck %s
 
 // CHECK: before
 // CHECK: __tls_get_addr: static tls

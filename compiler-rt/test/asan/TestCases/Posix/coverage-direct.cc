@@ -6,11 +6,11 @@
 // RUN: rm -rf %T/coverage-direct
 
 // RUN: mkdir -p %T/coverage-direct/normal
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov print %T/coverage-direct/normal/*.sancov >%T/coverage-direct/normal/out.txt
 
 // RUN: mkdir -p %T/coverage-direct/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t %dynamiclib
 // RUN: cd %T/coverage-direct/direct
 // RUN: %sancov rawunpack *.sancov.raw
 // RUN: %sancov print *.sancov >out.txt
@@ -25,11 +25,11 @@
 // RUN: rm -rf %T/coverage-direct
 
 // RUN: mkdir -p %T/coverage-direct/normal
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov print %T/coverage-direct/normal/*.sancov >%T/coverage-direct/normal/out.txt
 
 // RUN: mkdir -p %T/coverage-direct/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t %dynamiclib
 // RUN: cd %T/coverage-direct/direct
 // RUN: %sancov rawunpack *.sancov.raw
 // RUN: %sancov print *.sancov >out.txt
@@ -44,11 +44,11 @@
 // RUN: rm -rf %T/coverage-direct
 
 // RUN: mkdir -p %T/coverage-direct/normal
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov print %T/coverage-direct/normal/*.sancov >%T/coverage-direct/normal/out.txt
 
 // RUN: mkdir -p %T/coverage-direct/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t %dynamiclib
 // RUN: cd %T/coverage-direct/direct
 // RUN: %sancov rawunpack *.sancov.raw
 // RUN: %sancov print *.sancov >out.txt

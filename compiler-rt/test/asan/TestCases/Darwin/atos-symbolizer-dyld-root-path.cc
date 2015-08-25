@@ -1,5 +1,5 @@
 // Check that when having a DYLD_ROOT_PATH set, the symbolizer still works.
-// RUN: env DYLD_ROOT_PATH="/" ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 ASAN_SYMBOLIZER_PATH=$(which atos) \
+// RUN: %env_asan_opts=verbosity=2 DYLD_ROOT_PATH="/" ASAN_SYMBOLIZER_PATH=$(which atos) \
 // RUN:   not %run %t 2>&1 | FileCheck %s
 //
 // Due to a bug in atos, this only works on x86_64.

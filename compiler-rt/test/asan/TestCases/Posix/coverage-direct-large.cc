@@ -8,12 +8,12 @@
 // RUN: rm -rf %T/coverage-direct-large
 
 // RUN: mkdir -p %T/coverage-direct-large/normal && cd %T/coverage-direct-large/normal
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=0:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=0:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
 
 // RUN: mkdir -p %T/coverage-direct-large/direct && cd %T/coverage-direct-large/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:verbosity=1 %run %t %dynamiclib
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:verbosity=1 %run %t %dynamiclib
 // RUN: %sancov rawunpack *.sancov.raw
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..

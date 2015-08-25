@@ -7,7 +7,7 @@
 // RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so -Wl,-Ttext-segment=0x3600000000 ||\
 // RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so -Wl,-Ttext=0x3600000000
 // RUN: %clangxx_asan %t.o %t.so -Wl,-R. -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=1 %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=verbosity=1 %run %t 2>&1 | FileCheck %s
 
 // GNU driver doesn't handle .so files properly.
 // REQUIRES: x86_64-supported-target, asan-64-bits, Clang

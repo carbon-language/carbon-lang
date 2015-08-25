@@ -1,9 +1,9 @@
 // In a non-forking sandbox, we fallback to dladdr(). Test that we provide
 // properly demangled C++ names in that case.
 
-// RUN: %clangxx_asan -O0 %s -o %t 
+// RUN: %clangxx_asan -O0 %s -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 not %run sandbox-exec -p '(version 1)(allow default)(deny process-fork)' %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-DLADDR
+// RUN: %env_asan_opts=verbosity=2 not %run sandbox-exec -p '(version 1)(allow default)(deny process-fork)' %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-DLADDR
 
 #include <stdlib.h>
 

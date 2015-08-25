@@ -10,21 +10,21 @@
 // RUN: rm -f %t.asan.options.ABCDE
 // RUN: echo "help=1" >%t.asan.options.activation-options.cc.tmp
 
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
+// RUN: %env_asan_opts=start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=include=%t.asan.options.%b %run %t 2>&1 | \
 // RUN:   FileCheck %s --check-prefix=CHECK-HELP --check-prefix=CHECK-FOUND
 
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
+// RUN: %env_asan_opts=start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=include=%t.asan.options not %run %t 2>&1 | \
 // RUN:   FileCheck %s --check-prefix=CHECK-NO-HELP --check-prefix=CHECK-MISSING
 
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
+// RUN: %env_asan_opts=start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=include=%t.asan.options.%b not %run %t --fix-name 2>&1 | \
 // RUN:   FileCheck %s --check-prefix=CHECK-NO-HELP --check-prefix=CHECK-MISSING
 
 // RUN: echo "help=1" >%t.asan.options.ABCDE
 
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
+// RUN: %env_asan_opts=start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=include=%t.asan.options.%b %run %t --fix-name 2>&1 | \
 // RUN:   FileCheck %s --check-prefix=CHECK-HELP --check-prefix=CHECK-FOUND
 

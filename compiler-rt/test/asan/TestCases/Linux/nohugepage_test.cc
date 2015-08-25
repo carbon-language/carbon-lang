@@ -3,8 +3,8 @@
 // where asan consumed too much RAM due to transparent hugetables.
 //
 // RUN: %clangxx_asan -g %s -o %t
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:no_huge_pages_for_shadow=1 %run %t 2>&1 | FileCheck %s
-// RUN:                                                                  %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=no_huge_pages_for_shadow=1 %run %t 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1 | FileCheck %s
 //
 // Would be great to run the test with no_huge_pages_for_shadow=0, but
 // the result will depend on the OS version and settings...

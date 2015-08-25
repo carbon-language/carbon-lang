@@ -2,7 +2,7 @@
 // RUN: %clangxx_asan %s -o %t
 // The memory is released only when the deallocated chunk leaves the quarantine,
 // otherwise the mmap(p, ...) call overwrites the malloc header.
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:quarantine_size_mb=0 %run %t
+// RUN: %env_asan_opts=quarantine_size_mb=0 %run %t
 
 #include <assert.h>
 #include <string.h>

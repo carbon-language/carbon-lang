@@ -1,8 +1,7 @@
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
-// RUN: export ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=0:verbosity=1
 // RUN: rm -rf %T/coverage-fork
 // RUN: mkdir -p %T/coverage-fork && cd %T/coverage-fork
-// RUN: %run %t 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=coverage=1:coverage_direct=0:verbosity=1 %run %t 2>&1 | FileCheck %s
 //
 // XFAIL: android
 

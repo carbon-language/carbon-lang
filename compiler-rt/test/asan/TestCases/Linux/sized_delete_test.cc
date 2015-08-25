@@ -1,10 +1,10 @@
 // RUN: %clangxx_asan -fsized-deallocation -O0 %s -o %t
 // RUN:                                                                  not %run %t scalar 2>&1 | FileCheck %s -check-prefix=SCALAR
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:new_delete_type_mismatch=1 not %run %t scalar 2>&1 | FileCheck %s -check-prefix=SCALAR
+// RUN: %env_asan_opts=new_delete_type_mismatch=1 not %run %t scalar 2>&1 | FileCheck %s -check-prefix=SCALAR
 // RUN:                                                                  not %run %t array  2>&1 | FileCheck %s -check-prefix=ARRAY
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:new_delete_type_mismatch=1 not %run %t array  2>&1 | FileCheck %s -check-prefix=ARRAY
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:new_delete_type_mismatch=0     %run %t scalar
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:new_delete_type_mismatch=0     %run %t array
+// RUN: %env_asan_opts=new_delete_type_mismatch=1 not %run %t array  2>&1 | FileCheck %s -check-prefix=ARRAY
+// RUN: %env_asan_opts=new_delete_type_mismatch=0     %run %t scalar
+// RUN: %env_asan_opts=new_delete_type_mismatch=0     %run %t array
 
 #include <new>
 #include <stdio.h>

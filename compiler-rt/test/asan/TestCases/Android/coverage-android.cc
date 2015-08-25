@@ -9,7 +9,7 @@
 
 // RUN: adb shell mkdir -p %device/coverage-android/direct
 // RUN: mkdir -p %T/coverage-android/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android/direct:verbosity=1 %run %t
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android/direct:verbosity=1 %run %t
 // RUN: adb pull %device/coverage-android/direct %T/coverage-android/direct
 // RUN: ls; pwd
 // RUN: cd %T/coverage-android/direct
@@ -26,7 +26,7 @@
 
 // RUN: adb shell mkdir -p %device/coverage-android-kill/direct
 // RUN: mkdir -p %T/coverage-android-kill/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android-kill/direct:verbosity=1 not %run %t
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android-kill/direct:verbosity=1 not %run %t
 // RUN: adb pull %device/coverage-android-kill/direct %T/coverage-android-kill/direct
 // RUN: ls; pwd
 // RUN: cd %T/coverage-android-kill/direct
@@ -43,7 +43,7 @@
 
 // RUN: adb shell mkdir -p %device/coverage-android/direct
 // RUN: mkdir -p %T/coverage-android/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android/direct:verbosity=1 %run %t
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android/direct:verbosity=1 %run %t
 // RUN: adb pull %device/coverage-android/direct %T/coverage-android/direct
 // RUN: ls; pwd
 // RUN: cd %T/coverage-android/direct
@@ -60,7 +60,7 @@
 
 // RUN: adb shell mkdir -p %device/coverage-android-kill/direct
 // RUN: mkdir -p %T/coverage-android-kill/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android-kill/direct:verbosity=1 not %run %t
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android-kill/direct:verbosity=1 not %run %t
 // RUN: adb pull %device/coverage-android-kill/direct %T/coverage-android-kill/direct
 // RUN: ls; pwd
 // RUN: cd %T/coverage-android-kill/direct
@@ -77,7 +77,7 @@
 
 // RUN: adb shell mkdir -p %device/coverage-android/direct
 // RUN: mkdir -p %T/coverage-android/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android/direct:verbosity=1 %run %t
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android/direct:verbosity=1 %run %t
 // RUN: adb pull %device/coverage-android/direct %T/coverage-android/direct
 // RUN: ls; pwd
 // RUN: cd %T/coverage-android/direct
@@ -94,7 +94,7 @@
 
 // RUN: adb shell mkdir -p %device/coverage-android-kill/direct
 // RUN: mkdir -p %T/coverage-android-kill/direct
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android-kill/direct:verbosity=1 not %run %t
+// RUN: %env_asan_opts=coverage=1:coverage_direct=1:coverage_dir=%device/coverage-android-kill/direct:verbosity=1 not %run %t
 // RUN: adb pull %device/coverage-android-kill/direct %T/coverage-android-kill/direct
 // RUN: ls; pwd
 // RUN: cd %T/coverage-android-kill/direct
