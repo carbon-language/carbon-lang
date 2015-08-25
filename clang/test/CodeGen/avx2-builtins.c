@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +avx2 -emit-llvm -o - -Werror | FileCheck %s
 // RUN: %clang_cc1 %s -O0 -triple=x86_64-apple-darwin -target-feature +avx2 -S -o - -Werror | FileCheck %s --check-prefix=CHECK-ASM
 
+// REQUIRES: x86-registered-target
+
 // Don't include mm_malloc.h, it's system specific.
 #define __MM_MALLOC_H
 
