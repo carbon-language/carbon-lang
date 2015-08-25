@@ -120,6 +120,7 @@ namespace CodeGen {
 
     void allocateArgumentMemory(CodeGenFunction &CGF);
     llvm::Instruction *getStackBase() const { return StackBase; }
+    void freeArgumentMemory(CodeGenFunction &CGF) const;
 
     /// \brief Returns if we're using an inalloca struct to pass arguments in
     /// memory.
