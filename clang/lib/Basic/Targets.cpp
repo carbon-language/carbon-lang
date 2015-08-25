@@ -7565,12 +7565,8 @@ TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   Target->initDefaultFeatures(Features);
 
   // Apply the user specified deltas.
-  for (const auto &F : Opts->FeaturesAsWritten) {
-    const char *Name = F.c_str();
-    // Apply the feature via the target.
-    bool Enabled = Name[0] == '+';
-    Target->setFeatureEnabled(Features, Name + 1, Enabled);
-  }
+  if (!Target->handleUserFeatures(Features, Opts->FeaturesAsWritten, Diags))
+      return nullptr;
 
   // Add the features to the compile options.
   //

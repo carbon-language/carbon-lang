@@ -797,6 +797,22 @@ public:
     Features[Name] = Enabled;
   }
 
+  /// \brief Add user defined features to the feature set while
+  /// possibly diagnosing incompatibilities.
+  ///
+  /// \return False on error.
+  virtual bool handleUserFeatures(llvm::StringMap<bool> &Features,
+				  std::vector<std::string> &UserFeatures,
+				  DiagnosticsEngine &Diags) {
+    for (const auto &F : UserFeatures) {
+      const char *Name = F.c_str();
+      // Apply the feature via the target.
+      bool Enabled = Name[0] == '+';
+      setFeatureEnabled(Features, Name + 1, Enabled);
+    }
+    return true;
+  }
+
   /// \brief Perform initialization based on the user configured
   /// set of features (e.g., +sse4).
   ///
