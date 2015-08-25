@@ -463,6 +463,26 @@ _rotr16(unsigned short _Value, unsigned char _Shift) {
   _Shift &= 0xf;
   return _Shift ? (_Value >> _Shift) | (_Value << (16 - _Shift)) : _Value;
 }
+static __inline__ unsigned int __DEFAULT_FN_ATTRS
+_rotl(unsigned int _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (32 - _Shift)) : _Value;
+}
+static __inline__ unsigned int __DEFAULT_FN_ATTRS
+_rotr(unsigned int _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (32 - _Shift)) : _Value;
+}
+static __inline__ unsigned long __DEFAULT_FN_ATTRS
+_lrotl(unsigned long _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (32 - _Shift)) : _Value;
+}
+static __inline__ unsigned long __DEFAULT_FN_ATTRS
+_lrotr(unsigned long _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (32 - _Shift)) : _Value;
+}
 static
 __inline__ unsigned __int64 __DEFAULT_FN_ATTRS
 _rotl64(unsigned __int64 _Value, int _Shift) {
