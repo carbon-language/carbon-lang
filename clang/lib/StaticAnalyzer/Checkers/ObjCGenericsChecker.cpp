@@ -128,7 +128,7 @@ PathDiagnosticPiece *ObjCGenericsChecker::GenericsBugVisitor::VisitNode(
   llvm::raw_svector_ostream OS(Buf);
   OS << "Type '";
   QualType::print(*TrackedType, Qualifiers(), OS, LangOpts, llvm::Twine());
-  OS << "' is infered from ";
+  OS << "' is inferred from ";
 
   if (const auto *ExplicitCast = dyn_cast<ExplicitCastExpr>(S)) {
     OS << "explicit cast (from '";
