@@ -132,26 +132,6 @@ def SEG_ALLOCA_64 : I<0, Pseudo, (outs GR64:$dst), (ins GR64:$size),
                     Requires<[In64BitMode]>;
 }
 
-// The MSVC runtime contains an _ftol2 routine for converting floating-point
-// to integer values. It has a strange calling convention: the input is
-// popped from the x87 stack, and the return value is given in EDX:EAX. ECX is
-// used as a temporary register. No other registers (aside from flags) are
-// touched.
-// Microsoft toolchains do not support 80-bit precision, so a WIN_FTOL_80
-// variant is unnecessary.
-
-let Defs = [EAX, EDX, ECX, EFLAGS], FPForm = SpecialFP in {
-  def WIN_FTOL_32 : I<0, Pseudo, (outs), (ins RFP32:$src),
-                      "# win32 fptoui",
-                      [(X86WinFTOL RFP32:$src)]>,
-                    Requires<[Not64BitMode]>;
-
-  def WIN_FTOL_64 : I<0, Pseudo, (outs), (ins RFP64:$src),
-                      "# win32 fptoui",
-                      [(X86WinFTOL RFP64:$src)]>,
-                    Requires<[Not64BitMode]>;
-}
-
 //===----------------------------------------------------------------------===//
 // EH Pseudo Instructions
 //

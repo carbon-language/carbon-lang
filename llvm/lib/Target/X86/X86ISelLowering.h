@@ -446,9 +446,6 @@ namespace llvm {
       // falls back to heap allocation if not.
       SEG_ALLOCA,
 
-      // Windows's _ftol2 runtime routine to do fptoui.
-      WIN_FTOL,
-
       // Memory barrier
       MEMBARRIER,
       MFENCE,
