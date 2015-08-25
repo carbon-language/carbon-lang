@@ -166,14 +166,6 @@ static void addObjCARCOptPass(const PassManagerBuilder &Builder, PassManagerBase
     PM.add(createObjCARCOptPass());
 }
 
-static void addSampleProfileLoaderPass(const PassManagerBuilder &Builder,
-                                       legacy::PassManagerBase &PM) {
-  const PassManagerBuilderWrapper &BuilderWrapper =
-      static_cast<const PassManagerBuilderWrapper &>(Builder);
-  const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
-  PM.add(createSampleProfileLoaderPass(CGOpts.SampleProfileFile));
-}
-
 static void addAddDiscriminatorsPass(const PassManagerBuilder &Builder,
                                      legacy::PassManagerBase &PM) {
   PM.add(createAddDiscriminatorsPass());
@@ -301,10 +293,6 @@ void EmitAssemblyHelper::CreatePasses() {
   PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,
                          addAddDiscriminatorsPass);
 
-  if (!CodeGenOpts.SampleProfileFile.empty())
-    PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,
-                           addSampleProfileLoaderPass);
-
   // In ObjC ARC mode, add the main ARC optimization passes.
   if (LangOpts.ObjCAutoRefCount) {
     PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,
@@ -422,6 +410,9 @@ void EmitAssemblyHelper::CreatePasses() {
     Options.InstrProfileOutput = CodeGenOpts.InstrProfileOutput;
     MPM->add(createInstrProfilingPass(Options));
   }
+
+  if (!CodeGenOpts.SampleProfileFile.empty())
+    MPM->add(createSampleProfileLoaderPass(CodeGenOpts.SampleProfileFile));
 
   PMBuilder.populateModulePassManager(*MPM);
 }
