@@ -179,7 +179,7 @@ private:
 
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
-  MCSection *getSectionPtr() const {
+  MCSection *getSectionPtr(bool SetUsed = true) const {
     if (MCFragment *F = getFragment())
       return F->getParent();
     const auto &SectionOrFragment = SectionOrFragmentAndHasName.getPointer();
@@ -187,7 +187,7 @@ private:
     MCSection *Section = SectionOrFragment.dyn_cast<MCSection *>();
     if (Section || !isVariable())
       return Section;
-    return Section = getVariableValue()->findAssociatedSection();
+    return Section = getVariableValue(SetUsed)->findAssociatedSection();
   }
 
   /// \brief Get a reference to the name field.  Requires that we have a name
@@ -248,22 +248,28 @@ public:
   /// isDefined - Check if this symbol is defined (i.e., it has an address).
   ///
   /// Defined symbols are either absolute or in some section.
-  bool isDefined() const { return getSectionPtr() != nullptr; }
+  bool isDefined(bool SetUsed = true) const {
+    return getSectionPtr(SetUsed) != nullptr;
+  }
 
   /// isInSection - Check if this symbol is defined in some section (i.e., it
   /// is defined but not absolute).
-  bool isInSection() const { return isDefined() && !isAbsolute(); }
+  bool isInSection(bool SetUsed = true) const {
+    return isDefined(SetUsed) && !isAbsolute(SetUsed);
+  }
 
   /// isUndefined - Check if this symbol undefined (i.e., implicitly defined).
-  bool isUndefined() const { return !isDefined(); }
+  bool isUndefined(bool SetUsed = true) const { return !isDefined(SetUsed); }
 
   /// isAbsolute - Check if this is an absolute symbol.
-  bool isAbsolute() const { return getSectionPtr() == AbsolutePseudoSection; }
+  bool isAbsolute(bool SetUsed = true) const {
+    return getSectionPtr(SetUsed) == AbsolutePseudoSection;
+  }
 
   /// Get the section associated with a defined, non-absolute symbol.
-  MCSection &getSection() const {
-    assert(isInSection() && "Invalid accessor!");
-    return *getSectionPtr();
+  MCSection &getSection(bool SetUsed = true) const {
+    assert(isInSection(SetUsed) && "Invalid accessor!");
+    return *getSectionPtr(SetUsed);
   }
 
   /// Mark the symbol as defined in the section \p S.
@@ -295,10 +301,10 @@ public:
     return SymbolContents == SymContentsVariable;
   }
 
-  /// getVariableValue() - Get the value for variable symbols.
-  const MCExpr *getVariableValue() const {
+  /// getVariableValue - Get the value for variable symbols.
+  const MCExpr *getVariableValue(bool SetUsed = true) const {
     assert(isVariable() && "Invalid accessor!");
-    IsUsed = true;
+    IsUsed |= SetUsed;
     return Value;
   }
 
