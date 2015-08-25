@@ -109,6 +109,19 @@ void AttributePool::takePool(AttributeList *pool) {
 
 #include "clang/Sema/AttrParsedAttrKinds.inc"
 
+static StringRef normalizeAttrName(StringRef AttrName, StringRef ScopeName,
+                                   AttributeList::Syntax SyntaxUsed) {
+  // Normalize the attribute name, __foo__ becomes foo. This is only allowable
+  // for GNU attributes.
+  bool IsGNU = SyntaxUsed == AttributeList::AS_GNU ||
+               (SyntaxUsed == AttributeList::AS_CXX11 && ScopeName == "gnu");
+  if (IsGNU && AttrName.size() >= 4 && AttrName.startswith("__") &&
+      AttrName.endswith("__"))
+    AttrName = AttrName.slice(2, AttrName.size() - 2);
+
+  return AttrName;
+}
+
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
                                            const IdentifierInfo *ScopeName,
                                            Syntax SyntaxUsed) {
@@ -118,13 +131,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
   if (ScopeName)
     FullName += ScopeName->getName();
 
-  // Normalize the attribute name, __foo__ becomes foo. This is only allowable
-  // for GNU attributes.
-  bool IsGNU = SyntaxUsed == AS_GNU || (SyntaxUsed == AS_CXX11 &&
-                                        FullName == "gnu");
-  if (IsGNU && AttrName.size() >= 4 && AttrName.startswith("__") &&
-      AttrName.endswith("__"))
-    AttrName = AttrName.slice(2, AttrName.size() - 2);
+  AttrName = normalizeAttrName(AttrName, FullName, SyntaxUsed);
 
   // Ensure that in the case of C++11 attributes, we look for '::foo' if it is
   // unscoped.
@@ -138,8 +145,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
 unsigned AttributeList::getAttributeSpellingListIndex() const {
   // Both variables will be used in tablegen generated
   // attribute spell list index matching code.
-  StringRef Name = AttrName->getName();
   StringRef Scope = ScopeName ? ScopeName->getName() : "";
+  StringRef Name = normalizeAttrName(AttrName->getName(), Scope,
+                                     (AttributeList::Syntax)SyntaxUsed);
 
 #include "clang/Sema/AttrSpellingListIndex.inc"
 
