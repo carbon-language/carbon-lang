@@ -77,9 +77,6 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
     DWARFDebugInfo* debug_info = dwarf2Data->DebugInfo();
     if (debug_info)
     {
-
-        const DWARFDataExtractor* debug_str = &dwarf2Data->get_debug_str_data();
-
         uint32_t cu_idx = 0;
         const uint32_t num_compile_units = dwarf2Data->GetNumCompileUnits();
         for (cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
@@ -123,13 +120,13 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
                         {
                         case DW_AT_name:
                             if (attributes.ExtractFormValueAtIndex(dwarf2Data, i, form_value))
-                                name = form_value.AsCString(debug_str);
+                                name = form_value.AsCString(dwarf2Data);
                             break;
 
                         case DW_AT_MIPS_linkage_name:
                         case DW_AT_linkage_name:
                             if (attributes.ExtractFormValueAtIndex(dwarf2Data, i, form_value))
-                                mangled = form_value.AsCString(debug_str);
+                                mangled = form_value.AsCString(dwarf2Data);
                             break;
 
                         case DW_AT_low_pc:

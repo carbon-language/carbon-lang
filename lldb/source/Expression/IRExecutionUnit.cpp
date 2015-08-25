@@ -488,6 +488,8 @@ IRExecutionUnit::GetSectionTypeFromSectionName (const llvm::StringRef &name, IRE
                         sect_type = lldb::eSectionTypeDWARFDebugAbbrev;
                     else if (dwarf_name.equals("aranges"))
                         sect_type = lldb::eSectionTypeDWARFDebugAranges;
+                    else if (dwarf_name.equals("addr"))
+                        sect_type = lldb::eSectionTypeDWARFDebugAddr;
                     break;
 
                 case 'f':
@@ -522,6 +524,8 @@ IRExecutionUnit::GetSectionTypeFromSectionName (const llvm::StringRef &name, IRE
                 case 's':
                     if (dwarf_name.equals("str"))
                         sect_type = lldb::eSectionTypeDWARFDebugStr;
+                    else if (dwarf_name.equals("str_offsets"))
+                        sect_type = lldb::eSectionTypeDWARFDebugStrOffsets;
                     break;
 
                 case 'r':
@@ -789,6 +793,7 @@ IRExecutionUnit::CommitAllocations (lldb::ProcessSP &process_sp)
         {
         case lldb::eSectionTypeInvalid:
         case lldb::eSectionTypeDWARFDebugAbbrev:
+        case lldb::eSectionTypeDWARFDebugAddr:
         case lldb::eSectionTypeDWARFDebugAranges:
         case lldb::eSectionTypeDWARFDebugFrame:
         case lldb::eSectionTypeDWARFDebugInfo:
@@ -799,6 +804,7 @@ IRExecutionUnit::CommitAllocations (lldb::ProcessSP &process_sp)
         case lldb::eSectionTypeDWARFDebugPubTypes:
         case lldb::eSectionTypeDWARFDebugRanges:
         case lldb::eSectionTypeDWARFDebugStr:
+        case lldb::eSectionTypeDWARFDebugStrOffsets:
         case lldb::eSectionTypeDWARFAppleNames:
         case lldb::eSectionTypeDWARFAppleTypes:
         case lldb::eSectionTypeDWARFAppleNamespaces:

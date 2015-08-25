@@ -53,6 +53,7 @@ public:
     dw_offset_t GetAbbrevOffset() const;
     uint8_t     GetAddressByteSize() const { return m_addr_size; }
     dw_addr_t   GetBaseAddress() const { return m_base_addr; }
+    dw_addr_t   GetAddrBase() const { return 0; } // TODO: Read out DW_AT_addr_base from the parent compile unit
     void        ClearDIEs(bool keep_compile_unit_die);
     void        BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
                                         DWARFDebugAranges* debug_aranges);

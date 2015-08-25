@@ -595,6 +595,7 @@ namespace lldb {
         eSectionTypeDataObjCMessageRefs,    // Pointer to function pointer + selector
         eSectionTypeDataObjCCFStrings,      // Objective C const CFString/NSString objects
         eSectionTypeDWARFDebugAbbrev,
+        eSectionTypeDWARFDebugAddr,
         eSectionTypeDWARFDebugAranges,
         eSectionTypeDWARFDebugFrame,
         eSectionTypeDWARFDebugInfo,
@@ -605,6 +606,7 @@ namespace lldb {
         eSectionTypeDWARFDebugPubTypes,
         eSectionTypeDWARFDebugRanges,
         eSectionTypeDWARFDebugStr,
+        eSectionTypeDWARFDebugStrOffsets,
         eSectionTypeDWARFAppleNames,
         eSectionTypeDWARFAppleTypes,
         eSectionTypeDWARFAppleNamespaces,

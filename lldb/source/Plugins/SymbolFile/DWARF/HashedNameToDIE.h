@@ -307,6 +307,8 @@ struct DWARFMappedHash
                 case DW_FORM_sdata:
                 case DW_FORM_udata:
                 case DW_FORM_ref_udata:
+                case DW_FORM_GNU_addr_index:
+                case DW_FORM_GNU_str_index:
                     hash_data_has_fixed_byte_size = false;
                     // Fall through to the cases below...
                 case DW_FORM_flag:

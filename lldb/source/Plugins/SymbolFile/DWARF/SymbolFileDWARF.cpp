@@ -781,6 +781,12 @@ SymbolFileDWARF::get_debug_abbrev_data()
 }
 
 const DWARFDataExtractor&
+SymbolFileDWARF::get_debug_addr_data()
+{
+    return GetCachedSectionData (flagsGotDebugAddrData, eSectionTypeDWARFDebugAddr, m_data_debug_addr);
+}
+
+const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_aranges_data()
 {
     return GetCachedSectionData (flagsGotDebugArangesData, eSectionTypeDWARFDebugAranges, m_data_debug_aranges);
@@ -820,6 +826,12 @@ const DWARFDataExtractor&
 SymbolFileDWARF::get_debug_str_data()
 {
     return GetCachedSectionData (flagsGotDebugStrData, eSectionTypeDWARFDebugStr, m_data_debug_str);
+}
+
+const DWARFDataExtractor&
+SymbolFileDWARF::get_debug_str_offsets_data()
+{
+    return GetCachedSectionData (flagsGotDebugStrOffsetsData, eSectionTypeDWARFDebugStrOffsets, m_data_debug_str_offsets);
 }
 
 const DWARFDataExtractor&
@@ -2548,7 +2560,7 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
         {
             if (attributes.ExtractFormValueAtIndex(this, idx, form_value))
             {
-                const char *mangled_name = form_value.AsCString(&get_debug_str_data());
+                const char *mangled_name = form_value.AsCString(this);
                 if (mangled_name)
                     best_name.SetValue (ConstString(mangled_name), true);
             }
@@ -2559,7 +2571,7 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
             idx = attributes.FindAttributeIndex(DW_AT_name);
             if (idx != UINT32_MAX && attributes.ExtractFormValueAtIndex(this, idx, form_value))
             {
-                const char *name = form_value.AsCString(&get_debug_str_data());
+                const char *name = form_value.AsCString(this);
                 best_name.SetValue (ConstString(name), false);
             }
         }
@@ -4021,9 +4033,9 @@ SymbolFileDWARF::ParseVariableDIE
                     case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
                     case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                     case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
-                    case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
+                    case DW_AT_name:        name = form_value.AsCString(this); break;
                     case DW_AT_linkage_name:
-                    case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
+                    case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(this); break;
                     case DW_AT_type:        type_uid = form_value.Reference(); break;
                     case DW_AT_external:    is_external = form_value.Boolean(); break;
                     case DW_AT_const_value:
@@ -4080,7 +4092,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 }
                                 else
                                 {
-                                    const char *str = form_value.AsCString(&debug_info_data);
+                                    const char *str = form_value.AsCString(this);
                                     uint32_t string_offset = str - (const char *)debug_info_data.GetDataStart();
                                     uint32_t string_length = strlen(str) + 1;
                                     location.CopyOpcodeData(module, debug_info_data, string_offset, string_length);

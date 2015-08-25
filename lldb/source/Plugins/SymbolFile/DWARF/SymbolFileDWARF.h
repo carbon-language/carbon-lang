@@ -241,6 +241,7 @@ public:
     GetPluginVersion() override;
 
     const lldb_private::DWARFDataExtractor&     get_debug_abbrev_data ();
+    const lldb_private::DWARFDataExtractor&     get_debug_addr_data ();
     const lldb_private::DWARFDataExtractor&     get_debug_aranges_data ();
     const lldb_private::DWARFDataExtractor&     get_debug_frame_data ();
     const lldb_private::DWARFDataExtractor&     get_debug_info_data ();
@@ -248,6 +249,7 @@ public:
     const lldb_private::DWARFDataExtractor&     get_debug_loc_data ();
     const lldb_private::DWARFDataExtractor&     get_debug_ranges_data ();
     const lldb_private::DWARFDataExtractor&     get_debug_str_data ();
+    const lldb_private::DWARFDataExtractor&     get_debug_str_offsets_data ();
     const lldb_private::DWARFDataExtractor&     get_apple_names_data ();
     const lldb_private::DWARFDataExtractor&     get_apple_types_data ();
     const lldb_private::DWARFDataExtractor&     get_apple_namespaces_data ();
@@ -323,20 +325,22 @@ protected:
     enum
     {
         flagsGotDebugAbbrevData     = (1 << 0),
-        flagsGotDebugArangesData    = (1 << 1),
-        flagsGotDebugFrameData      = (1 << 2),
-        flagsGotDebugInfoData       = (1 << 3),
-        flagsGotDebugLineData       = (1 << 4),
-        flagsGotDebugLocData        = (1 << 5),
-        flagsGotDebugMacInfoData    = (1 << 6),
-        flagsGotDebugPubNamesData   = (1 << 7),
-        flagsGotDebugPubTypesData   = (1 << 8),
-        flagsGotDebugRangesData     = (1 << 9),
-        flagsGotDebugStrData        = (1 << 10),
-        flagsGotAppleNamesData      = (1 << 11),
-        flagsGotAppleTypesData      = (1 << 12),
-        flagsGotAppleNamespacesData = (1 << 13),
-        flagsGotAppleObjCData       = (1 << 14)
+        flagsGotDebugAddrData       = (1 << 1),
+        flagsGotDebugArangesData    = (1 << 2),
+        flagsGotDebugFrameData      = (1 << 3),
+        flagsGotDebugInfoData       = (1 << 4),
+        flagsGotDebugLineData       = (1 << 5),
+        flagsGotDebugLocData        = (1 << 6),
+        flagsGotDebugMacInfoData    = (1 << 7),
+        flagsGotDebugPubNamesData   = (1 << 8),
+        flagsGotDebugPubTypesData   = (1 << 9),
+        flagsGotDebugRangesData     = (1 << 10),
+        flagsGotDebugStrData        = (1 << 11),
+        flagsGotDebugStrOffsetsData = (1 << 12),
+        flagsGotAppleNamesData      = (1 << 13),
+        flagsGotAppleTypesData      = (1 << 14),
+        flagsGotAppleNamespacesData = (1 << 15),
+        flagsGotAppleObjCData       = (1 << 16)
     };
     
     bool
@@ -560,8 +564,9 @@ protected:
     lldb::ModuleWP                        m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *             m_debug_map_symfile;
     lldb_private::Flags                   m_flags;
-    lldb_private::DWARFDataExtractor      m_dwarf_data; 
+    lldb_private::DWARFDataExtractor      m_dwarf_data;
     lldb_private::DWARFDataExtractor      m_data_debug_abbrev;
+    lldb_private::DWARFDataExtractor      m_data_debug_addr;
     lldb_private::DWARFDataExtractor      m_data_debug_aranges;
     lldb_private::DWARFDataExtractor      m_data_debug_frame;
     lldb_private::DWARFDataExtractor      m_data_debug_info;
@@ -569,6 +574,7 @@ protected:
     lldb_private::DWARFDataExtractor      m_data_debug_loc;
     lldb_private::DWARFDataExtractor      m_data_debug_ranges;
     lldb_private::DWARFDataExtractor      m_data_debug_str;
+    lldb_private::DWARFDataExtractor      m_data_debug_str_offsets;
     lldb_private::DWARFDataExtractor      m_data_apple_names;
     lldb_private::DWARFDataExtractor      m_data_apple_types;
     lldb_private::DWARFDataExtractor      m_data_apple_namespaces;

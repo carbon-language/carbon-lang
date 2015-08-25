@@ -8883,7 +8883,7 @@ ClangASTContext::ParseTemplateDIE (SymbolFileDWARF *dwarf,
                     {
                         case DW_AT_name:
                             if (attributes.ExtractFormValueAtIndex(dwarf, i, form_value))
-                                name = form_value.AsCString(&dwarf->get_debug_str_data());
+                                name = form_value.AsCString(dwarf);
                             break;
 
                         case DW_AT_type:
@@ -9437,7 +9437,7 @@ ClangASTContext::ParseChildEnumerators (const SymbolContext& sc,
                                 break;
 
                             case DW_AT_name:
-                                name = form_value.AsCString(&dwarf->get_debug_str_data());
+                                name = form_value.AsCString(dwarf);
                                 break;
 
                             case DW_AT_description:
@@ -9816,7 +9816,7 @@ ClangASTContext::ParseChildMembers (const SymbolContext& sc,
                                 case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
                                 case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
-                                case DW_AT_name:        name = form_value.AsCString(&dwarf->get_debug_str_data()); break;
+                                case DW_AT_name:        name = form_value.AsCString(dwarf); break;
                                 case DW_AT_type:        encoding_uid = form_value.Reference(); break;
                                 case DW_AT_bit_offset:  bit_offset = form_value.Unsigned(); break;
                                 case DW_AT_bit_size:    bit_size = form_value.Unsigned(); break;
@@ -9856,9 +9856,12 @@ ClangASTContext::ParseChildMembers (const SymbolContext& sc,
 
                                 case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
                                 case DW_AT_artificial: is_artificial = form_value.Boolean(); break;
-                                case DW_AT_APPLE_property_name:      prop_name = form_value.AsCString(&dwarf->get_debug_str_data()); break;
-                                case DW_AT_APPLE_property_getter:    prop_getter_name = form_value.AsCString(&dwarf->get_debug_str_data()); break;
-                                case DW_AT_APPLE_property_setter:    prop_setter_name = form_value.AsCString(&dwarf->get_debug_str_data()); break;
+                                case DW_AT_APPLE_property_name:      prop_name = form_value.AsCString(dwarf);
+                                                                     break;
+                                case DW_AT_APPLE_property_getter:    prop_getter_name = form_value.AsCString(dwarf);
+                                                                     break;
+                                case DW_AT_APPLE_property_setter:    prop_setter_name = form_value.AsCString(dwarf);
+                                                                     break;
                                 case DW_AT_APPLE_property_attribute: prop_attributes = form_value.Unsigned(); break;
                                 case DW_AT_external:                 is_external = form_value.Boolean(); break;
 
@@ -10375,7 +10378,8 @@ ClangASTContext::ParseChildParameters (const SymbolContext& sc,
                                 case DW_AT_decl_file:   decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); break;
                                 case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
-                                case DW_AT_name:        name = form_value.AsCString(&dwarf->get_debug_str_data()); break;
+                                case DW_AT_name:        name = form_value.AsCString(dwarf);
+                                                        break;
                                 case DW_AT_type:        param_type_die_offset = form_value.Reference(); break;
                                 case DW_AT_artificial:  is_artificial = form_value.Boolean(); break;
                                 case DW_AT_location:
@@ -10975,7 +10979,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                     case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                                     case DW_AT_name:
 
-                                        type_name_cstr = form_value.AsCString(&dwarf->get_debug_str_data());
+                                        type_name_cstr = form_value.AsCString(dwarf);
                                         // Work around a bug in llvm-gcc where they give a name to a reference type which doesn't
                                         // include the "&"...
                                         if (tag == DW_TAG_reference_type)
@@ -11178,7 +11182,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                         break;
 
                                     case DW_AT_name:
-                                        type_name_cstr = form_value.AsCString(&dwarf->get_debug_str_data());
+                                        type_name_cstr = form_value.AsCString(dwarf);
                                         type_name_const_str.SetCString(type_name_cstr);
                                         break;
 
@@ -11575,7 +11579,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                     case DW_AT_decl_line:       decl.SetLine(form_value.Unsigned()); break;
                                     case DW_AT_decl_column:     decl.SetColumn(form_value.Unsigned()); break;
                                     case DW_AT_name:
-                                        type_name_cstr = form_value.AsCString(&dwarf->get_debug_str_data());
+                                        type_name_cstr = form_value.AsCString(dwarf);
                                         type_name_const_str.SetCString(type_name_cstr);
                                         break;
                                     case DW_AT_type:            encoding_uid = form_value.Reference(); break;
@@ -11693,7 +11697,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                     case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                     case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                                     case DW_AT_name:
-                                        type_name_cstr = form_value.AsCString(&dwarf->get_debug_str_data());
+                                        type_name_cstr = form_value.AsCString(dwarf);
                                         type_name_const_str.SetCString(type_name_cstr);
                                         break;
 
@@ -12166,7 +12170,7 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                                     case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                     case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                                     case DW_AT_name:
-                                        type_name_cstr = form_value.AsCString(&dwarf->get_debug_str_data());
+                                        type_name_cstr = form_value.AsCString(dwarf);
                                         type_name_const_str.SetCString(type_name_cstr);
                                         break;
 

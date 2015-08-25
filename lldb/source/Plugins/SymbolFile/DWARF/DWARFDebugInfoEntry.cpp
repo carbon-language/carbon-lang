@@ -226,9 +226,11 @@ DWARFDebugInfoEntry::FastExtract
                         break;
 
                     // signed or unsigned LEB 128 values
-                    case DW_FORM_sdata       :
-                    case DW_FORM_udata       :
-                    case DW_FORM_ref_udata   :
+                    case DW_FORM_sdata         :
+                    case DW_FORM_udata         :
+                    case DW_FORM_ref_udata     :
+                    case DW_FORM_GNU_addr_index:
+                    case DW_FORM_GNU_str_index :
                         debug_info_data.Skip_LEB128 (&offset);
                         break;
 
@@ -389,9 +391,11 @@ DWARFDebugInfoEntry::Extract
                                 break;
 
                             // signed or unsigned LEB 128 values
-                            case DW_FORM_sdata       :
-                            case DW_FORM_udata       :
-                            case DW_FORM_ref_udata   :
+                            case DW_FORM_sdata         :
+                            case DW_FORM_udata         :
+                            case DW_FORM_ref_udata     :
+                            case DW_FORM_GNU_addr_index:
+                            case DW_FORM_GNU_str_index :
                                 debug_info_data.Skip_LEB128(&offset);
                                 break;
 
@@ -819,13 +823,13 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
 
                 case DW_AT_name:
                     if (name == NULL)
-                        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+                        name = form_value.AsCString(dwarf2Data);
                     break;
 
                 case DW_AT_MIPS_linkage_name:
                 case DW_AT_linkage_name:
                     if (mangled == NULL)
-                        mangled = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+                        mangled = form_value.AsCString(dwarf2Data);
                     break;
 
                 case DW_AT_abstract_origin:
@@ -1062,7 +1066,6 @@ DWARFDebugInfoEntry::DumpAttribute
     bool verbose    = s.GetVerbose();
     bool show_form  = s.GetFlags().Test(DWARFDebugInfo::eDumpFlag_ShowForm);
     
-    const DWARFDataExtractor* debug_str_data = dwarf2Data ? &dwarf2Data->get_debug_str_data() : NULL;
     if (verbose)
         s.Offset (*offset_ptr);
     else
@@ -1094,7 +1097,7 @@ DWARFDebugInfoEntry::DumpAttribute
     // Always dump form value if verbose is enabled
     if (verbose)
     {
-        form_value.Dump(s, debug_str_data);
+        form_value.Dump(s, dwarf2Data);
     }
 
 
@@ -1127,7 +1130,7 @@ DWARFDebugInfoEntry::DumpAttribute
             if (blockData)
             {
                 if (!verbose)
-                    form_value.Dump(s, debug_str_data);
+                    form_value.Dump(s, dwarf2Data);
 
                 // Location description is inlined in data in the form value
                 DWARFDataExtractor locationData(debug_info_data, (*offset_ptr) - form_value.Unsigned(), form_value.Unsigned());
@@ -1144,7 +1147,7 @@ DWARFDebugInfoEntry::DumpAttribute
                 if (dwarf2Data)
                 {
                     if ( !verbose )
-                        form_value.Dump(s, debug_str_data);
+                        form_value.Dump(s, dwarf2Data);
                     DWARFLocationList::Dump(s, cu, dwarf2Data->get_debug_loc_data(), debug_loc_offset);
                 }
                 else
@@ -1160,7 +1163,7 @@ DWARFDebugInfoEntry::DumpAttribute
     case DW_AT_specification:
         {
             uint64_t abstract_die_offset = form_value.Reference();
-            form_value.Dump(s, debug_str_data);
+            form_value.Dump(s, dwarf2Data);
         //  *ostrm_ptr << HEX32 << abstract_die_offset << " ( ";
             if ( verbose ) s.PutCString(" ( ");
             GetName(dwarf2Data, cu, abstract_die_offset, s);
@@ -1172,7 +1175,7 @@ DWARFDebugInfoEntry::DumpAttribute
         {
             uint64_t type_die_offset = form_value.Reference();
             if (!verbose)
-                form_value.Dump(s, debug_str_data);
+                form_value.Dump(s, dwarf2Data);
             s.PutCString(" ( ");
             AppendTypeName(dwarf2Data, cu, type_die_offset, s);
             s.PutCString(" )");
@@ -1182,7 +1185,7 @@ DWARFDebugInfoEntry::DumpAttribute
     case DW_AT_ranges:
         {
             if ( !verbose )
-                form_value.Dump(s, debug_str_data);
+                form_value.Dump(s, dwarf2Data);
             lldb::offset_t ranges_offset = form_value.Unsigned();
             dw_addr_t base_addr = cu ? cu->GetBaseAddress() : 0;
             if (dwarf2Data)
@@ -1192,7 +1195,7 @@ DWARFDebugInfoEntry::DumpAttribute
 
     default:
         if ( !verbose )
-            form_value.Dump(s, debug_str_data);
+            form_value.Dump(s, dwarf2Data);
         break;
     }
 
@@ -1360,7 +1363,7 @@ DWARFDebugInfoEntry::GetAttributeValueAsString
 {
     DWARFFormValue form_value;
     if (GetAttributeValue(dwarf2Data, cu, attr, form_value))
-        return form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        return form_value.AsCString(dwarf2Data);
     return fail_value;
 }
 
@@ -1443,13 +1446,14 @@ DWARFDebugInfoEntry::GetAttributeHighPC
 ) const
 {
     DWARFFormValue form_value;
-
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_high_pc, form_value))
     {
-        dw_addr_t hi_pc = form_value.Unsigned();
-        if (form_value.Form() != DW_FORM_addr)
-            hi_pc += lo_pc; // DWARF4 can specify the hi_pc as an <offset-from-lowpc>
-        return hi_pc; 
+        dw_form_t form = form_value.Form();
+        if (form == DW_FORM_addr || form == DW_FORM_GNU_addr_index)
+            return form_value.Address(dwarf2Data);
+        
+        // DWARF4 can specify the hi_pc as an <offset-from-lowpc>
+        return lo_pc + form_value.Unsigned();
     }
     return fail_value;
 }
@@ -1582,7 +1586,7 @@ DWARFDebugInfoEntry::GetName
 {
     DWARFFormValue form_value;
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
-        return form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        return form_value.AsCString(dwarf2Data);
     else if (GetAttributeValue(dwarf2Data, cu, DW_AT_specification, form_value))
     {
         DWARFCompileUnitSP cu_sp_ptr;
@@ -1615,19 +1619,19 @@ DWARFDebugInfoEntry::GetMangledName
     bool substitute_name_allowed
 ) const
 {
-    const char* name = NULL;
+    const char* name = nullptr;
     DWARFFormValue form_value;
 
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_MIPS_linkage_name, form_value))
-        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        name = form_value.AsCString(dwarf2Data);
 
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_linkage_name, form_value))
-        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        name = form_value.AsCString(dwarf2Data);
 
-    if (substitute_name_allowed && name == NULL)
+    if (substitute_name_allowed && name == nullptr)
     {
         if (GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
-            name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+            name = form_value.AsCString(dwarf2Data);
     }
     return name;
 }
@@ -1653,11 +1657,11 @@ DWARFDebugInfoEntry::GetPubname
     DWARFFormValue form_value;
 
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_MIPS_linkage_name, form_value))
-        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        name = form_value.AsCString(dwarf2Data);
     else if (GetAttributeValue(dwarf2Data, cu, DW_AT_linkage_name, form_value))
-        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        name = form_value.AsCString(dwarf2Data);
     else if (GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
-        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+        name = form_value.AsCString(dwarf2Data);
     else if (GetAttributeValue(dwarf2Data, cu, DW_AT_specification, form_value))
     {
         // The specification DIE may be in another compile unit so we need
@@ -1709,7 +1713,7 @@ DWARFDebugInfoEntry::GetName
             DWARFFormValue form_value;
             if (die.GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
             {
-                const char* name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+                const char* name = form_value.AsCString(dwarf2Data);
                 if (name)
                 {
                     s.PutCString(name);
