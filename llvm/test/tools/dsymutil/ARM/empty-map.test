@@ -5,4 +5,4 @@
 triple:          'thumbv7-apple-darwin'
 ...
 
-# CHECK: warning: no debug symbols in executable (-arch thumbv7)
+# CHECK: warning: no debug symbols in executable (-arch armv7)
