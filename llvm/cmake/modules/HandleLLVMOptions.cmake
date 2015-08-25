@@ -456,7 +456,7 @@ macro(append_common_sanitizer_flags)
     # stack traces.
     add_flag_if_supported("-fno-omit-frame-pointer" FNO_OMIT_FRAME_POINTER)
     if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" AND
-	NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
+        NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
       add_flag_if_supported("-gline-tables-only" GLINE_TABLES_ONLY)
     endif()
     # Use -O1 even in debug mode, otherwise sanitizers slowdown is too large.
@@ -469,6 +469,10 @@ macro(append_common_sanitizer_flags)
     if (CMAKE_LINKER MATCHES "lld-link.exe")
       # Use DWARF debug info with LLD.
       append("-gdwarf" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+      # Pass /MANIFEST:NO so that CMake doesn't run mt.exe on our binaries.
+      # Adding manifests with mt.exe breaks LLD's symbol tables. See PR24476.
+      append("/MANIFEST:NO"
+        CMAKE_EXE_LINKER_FLAGS CMAKE_MODULE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
     else()
       # Enable codeview otherwise.
       append("/Z7" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
