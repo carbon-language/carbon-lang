@@ -2619,7 +2619,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
    the vectorized instructions while the old loop will continue to run the
    scalar remainder.
 
-       [ ] <-- Back-edge taken count overflow check.
+       [ ] <-- loop iteration number check.
     /   |
    /    v
   |    [ ] <-- vector loop bypass (may consist of multiple blocks).
@@ -2683,21 +2683,25 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // Notice that the pre-header does not change, only the loop body.
   SCEVExpander Exp(*SE, DL, "induction");
 
-  // We need to test whether the backedge-taken count is uint##_max. Adding one
-  // to it will cause overflow and an incorrect loop trip count in the vector
-  // body. In case of overflow we want to directly jump to the scalar remainder
-  // loop.
-  Value *BackedgeCount =
-      Exp.expandCodeFor(BackedgeTakeCount, BackedgeTakeCount->getType(),
-                        VectorPH->getTerminator());
-  if (BackedgeCount->getType()->isPointerTy())
-    BackedgeCount = CastInst::CreatePointerCast(BackedgeCount, IdxTy,
-                                                "backedge.ptrcnt.to.int",
-                                                VectorPH->getTerminator());
-  Instruction *CheckBCOverflow =
-      CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, BackedgeCount,
-                      Constant::getAllOnesValue(BackedgeCount->getType()),
-                      "backedge.overflow", VectorPH->getTerminator());
+  // The loop minimum iterations check below is to ensure the loop has enough
+  // trip count so the generated vector loop will likely be executed and the
+  // preparation and rounding-off costs will likely be worthy.
+  //
+  // The minimum iteration check also covers case where the backedge-taken
+  // count is uint##_max.  Adding one to it will cause overflow and an
+  // incorrect loop trip count being generated in the vector body. In this
+  // case we also want to directly jump to the scalar remainder loop.
+  Value *ExitCountValue = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
+                                            VectorPH->getTerminator());
+  if (ExitCountValue->getType()->isPointerTy())
+    ExitCountValue = CastInst::CreatePointerCast(ExitCountValue, IdxTy,
+                                                 "exitcount.ptrcnt.to.int",
+                                                 VectorPH->getTerminator());
+
+  Instruction *CheckMinIters =
+      CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULT, ExitCountValue,
+                      ConstantInt::get(ExitCountValue->getType(), VF * UF),
+                      "min.iters.check", VectorPH->getTerminator());
 
   // The loop index does not have to start at Zero. Find the original start
   // value from the induction PHI node. If we don't have an induction variable
@@ -2749,15 +2753,14 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // times the unroll factor (num of SIMD instructions).
   Constant *Step = ConstantInt::get(IdxTy, VF * UF);
 
-  // Generate code to check that the loop's trip count that we computed by
-  // adding one to the backedge-taken count will not overflow.
+  // Generate code to check that the loop's trip count is not less than the
+  // minimum loop iteration number threshold.
   BasicBlock *NewVectorPH =
-      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "overflow.checked");
+      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "min.iters.checked");
   if (ParentLoop)
     ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
-  ReplaceInstWithInst(
-      VectorPH->getTerminator(),
-      BranchInst::Create(ScalarPH, NewVectorPH, CheckBCOverflow));
+  ReplaceInstWithInst(VectorPH->getTerminator(),
+                      BranchInst::Create(ScalarPH, NewVectorPH, CheckMinIters));
   VectorPH = NewVectorPH;
 
   // This is the IR builder that we use to add all of the logic for bypassing
