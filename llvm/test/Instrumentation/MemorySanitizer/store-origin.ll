@@ -52,7 +52,7 @@ attributes #1 = { nounwind readnone }
 !22 = !DILocation(line: 3, scope: !4)
 
 
-; CHECK: @Store
+; CHECK-LABEL: @Store
 ; CHECK: load {{.*}} @__msan_param_tls
 ; CHECK: [[ORIGIN:%[01-9a-z]+]] = load {{.*}} @__msan_param_origin_tls
 ; CHECK: store {{.*}}!dbg ![[DBG:[01-9]+]]

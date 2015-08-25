@@ -10,7 +10,7 @@ entry:
 
 declare i32 @f() sanitize_memory
 
-; CHECK: @main
+; CHECK-LABEL: @main
 ; CHECK: call i32 @f()
 ; CHECK: store i32 0, {{.*}} @__msan_retval_tls
 ; CHECK: br i1

@@ -15,7 +15,7 @@ entry:
   ret i32 %0
 }
 
-; CHECK: @test_cvtsd2si
+; CHECK-LABEL: @test_cvtsd2si
 ; CHECK: [[S:%[_01-9a-z]+]] = extractelement <2 x i64> {{.*}}, i32 0
 ; CHECK: icmp ne {{.*}}[[S]], 0
 ; CHECK: br
@@ -33,7 +33,7 @@ entry:
   ret <2 x double> %0
 }
 
-; CHECK: @test_cvtsi2sd
+; CHECK-LABEL: @test_cvtsi2sd
 ; CHECK: [[Sa:%[_01-9a-z]+]] = load i32, i32* {{.*}} @__msan_param_tls
 ; CHECK: [[Sout0:%[_01-9a-z]+]] = insertelement <2 x i64> <i64 -1, i64 -1>, i64 {{.*}}, i32 1
 ; Clear low half of result shadow
@@ -54,7 +54,7 @@ entry:
   ret x86_mmx %0
 }
 
-; CHECK: @test_cvtps2pi
+; CHECK-LABEL: @test_cvtps2pi
 ; CHECK: extractelement <4 x i32> {{.*}}, i32 0
 ; CHECK: extractelement <4 x i32> {{.*}}, i32 1
 ; CHECK: [[S:%[_01-9a-z]+]] = or i32
