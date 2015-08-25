@@ -2504,6 +2504,10 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           // Continue even if we do nothing.
           ++CurInst;
           continue;
+        } else if (II->getIntrinsicID() == Intrinsic::assume) {
+          DEBUG(dbgs() << "Skipping assume intrinsic.\n");
+          ++CurInst;
+          continue;
         }
 
         DEBUG(dbgs() << "Unknown intrinsic. Can not evaluate.\n");
