@@ -842,6 +842,7 @@ public:
   CanQualType OCLImage2dTy, OCLImage2dArrayTy;
   CanQualType OCLImage3dTy;
   CanQualType OCLSamplerTy, OCLEventTy;
+  CanQualType OMPArraySectionTy;
 
   // Types for deductions in C++0x [stmt.ranged]'s desugaring. Built on demand.
   mutable QualType AutoDeductTy;     // Deduction against 'auto'.

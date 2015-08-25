@@ -511,6 +511,16 @@ void ASTStmtWriter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   Code = serialization::EXPR_ARRAY_SUBSCRIPT;
 }
 
+void ASTStmtWriter::VisitOMPArraySectionExpr(OMPArraySectionExpr *E) {
+  VisitExpr(E);
+  Writer.AddStmt(E->getBase());
+  Writer.AddStmt(E->getLowerBound());
+  Writer.AddStmt(E->getLength());
+  Writer.AddSourceLocation(E->getColonLoc(), Record);
+  Writer.AddSourceLocation(E->getRBracketLoc(), Record);
+  Code = serialization::EXPR_OMP_ARRAY_SECTION;
+}
+
 void ASTStmtWriter::VisitCallExpr(CallExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());

@@ -24,6 +24,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprOpenMP.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/PartialDiagnostic.h"
@@ -3931,6 +3932,10 @@ static bool checkArithmeticOnObjCPointer(Sema &S,
 ExprResult
 Sema::ActOnArraySubscriptExpr(Scope *S, Expr *base, SourceLocation lbLoc,
                               Expr *idx, SourceLocation rbLoc) {
+  if (base->getType()->isSpecificPlaceholderType(BuiltinType::OMPArraySection))
+    return ActOnOMPArraySectionExpr(base, lbLoc, idx, SourceLocation(),
+                                    /*Length=*/nullptr, rbLoc);
+
   // Since this might be a postfix expression, get rid of ParenListExprs.
   if (isa<ParenListExpr>(base)) {
     ExprResult result = MaybeConvertParenListExprToParenExpr(S, base);
@@ -3977,6 +3982,161 @@ Sema::ActOnArraySubscriptExpr(Scope *S, Expr *base, SourceLocation lbLoc,
   }
 
   return CreateBuiltinArraySubscriptExpr(base, lbLoc, idx, rbLoc);
+}
+
+static QualType getNonOMPArraySectionType(Expr *Base) {
+  unsigned ArraySectionCount = 0;
+  while (auto *OASE = dyn_cast<OMPArraySectionExpr>(Base->IgnoreParens())) {
+    Base = OASE->getBase();
+    ++ArraySectionCount;
+  }
+  auto OriginalTy = Base->getType();
+  if (auto *DRE = dyn_cast<DeclRefExpr>(Base))
+    if (auto *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl()))
+      OriginalTy = PVD->getOriginalType().getNonReferenceType();
+
+  for (unsigned Cnt = 0; Cnt < ArraySectionCount; ++Cnt) {
+    if (OriginalTy->isAnyPointerType())
+      OriginalTy = OriginalTy->getPointeeType();
+    else {
+      assert (OriginalTy->isArrayType());
+      OriginalTy = OriginalTy->castAsArrayTypeUnsafe()->getElementType();
+    }
+  }
+  return OriginalTy;
+}
+
+ExprResult Sema::ActOnOMPArraySectionExpr(Expr *Base, SourceLocation LBLoc,
+                                          Expr *LowerBound,
+                                          SourceLocation ColonLoc, Expr *Length,
+                                          SourceLocation RBLoc) {
+  if (Base->getType()->isPlaceholderType() &&
+      !Base->getType()->isSpecificPlaceholderType(
+          BuiltinType::OMPArraySection)) {
+    ExprResult Result = CheckPlaceholderExpr(Base);
+    if (Result.isInvalid())
+      return ExprError();
+    Base = Result.get();
+  }
+  if (LowerBound && LowerBound->getType()->isNonOverloadPlaceholderType()) {
+    ExprResult Result = CheckPlaceholderExpr(LowerBound);
+    if (Result.isInvalid())
+      return ExprError();
+    LowerBound = Result.get();
+  }
+  if (Length && Length->getType()->isNonOverloadPlaceholderType()) {
+    ExprResult Result = CheckPlaceholderExpr(Length);
+    if (Result.isInvalid())
+      return ExprError();
+    Length = Result.get();
+  }
+
+  // Build an unanalyzed expression if either operand is type-dependent.
+  if (Base->isTypeDependent() ||
+      (LowerBound &&
+       (LowerBound->isTypeDependent() || LowerBound->isValueDependent())) ||
+      (Length && (Length->isTypeDependent() || Length->isValueDependent()))) {
+    return new (Context)
+        OMPArraySectionExpr(Base, LowerBound, Length, Context.DependentTy,
+                            VK_LValue, OK_Ordinary, ColonLoc, RBLoc);
+  }
+
+  // Perform default conversions.
+  QualType OriginalTy = getNonOMPArraySectionType(Base);
+  QualType ResultTy;
+  if (OriginalTy->isAnyPointerType()) {
+    ResultTy = OriginalTy->getPointeeType();
+  } else if (OriginalTy->isArrayType()) {
+    ResultTy = OriginalTy->getAsArrayTypeUnsafe()->getElementType();
+  } else {
+    return ExprError(
+        Diag(Base->getExprLoc(), diag::err_omp_typecheck_section_value)
+        << Base->getSourceRange());
+  }
+  // C99 6.5.2.1p1
+  if (LowerBound) {
+    auto Res = PerformOpenMPImplicitIntegerConversion(LowerBound->getExprLoc(),
+                                                      LowerBound);
+    if (Res.isInvalid())
+      return ExprError(Diag(LowerBound->getExprLoc(),
+                            diag::err_omp_typecheck_section_not_integer)
+                       << 0 << LowerBound->getSourceRange());
+    LowerBound = Res.get();
+
+    if (LowerBound->getType()->isSpecificBuiltinType(BuiltinType::Char_S) ||
+        LowerBound->getType()->isSpecificBuiltinType(BuiltinType::Char_U))
+      Diag(LowerBound->getExprLoc(), diag::warn_omp_section_is_char)
+          << 0 << LowerBound->getSourceRange();
+  }
+  if (Length) {
+    auto Res =
+        PerformOpenMPImplicitIntegerConversion(Length->getExprLoc(), Length);
+    if (Res.isInvalid())
+      return ExprError(Diag(Length->getExprLoc(),
+                            diag::err_omp_typecheck_section_not_integer)
+                       << 1 << Length->getSourceRange());
+    Length = Res.get();
+
+    if (Length->getType()->isSpecificBuiltinType(BuiltinType::Char_S) ||
+        Length->getType()->isSpecificBuiltinType(BuiltinType::Char_U))
+      Diag(Length->getExprLoc(), diag::warn_omp_section_is_char)
+          << 1 << Length->getSourceRange();
+  }
+
+  // C99 6.5.2.1p1: "shall have type "pointer to *object* type". Similarly,
+  // C++ [expr.sub]p1: The type "T" shall be a completely-defined object
+  // type. Note that functions are not objects, and that (in C99 parlance)
+  // incomplete types are not object types.
+  if (ResultTy->isFunctionType()) {
+    Diag(Base->getExprLoc(), diag::err_omp_section_function_type)
+        << ResultTy << Base->getSourceRange();
+    return ExprError();
+  }
+
+  if (RequireCompleteType(Base->getExprLoc(), ResultTy,
+                          diag::err_omp_section_incomplete_type, Base))
+    return ExprError();
+
+  if (LowerBound) {
+    llvm::APSInt LowerBoundValue;
+    if (LowerBound->EvaluateAsInt(LowerBoundValue, Context)) {
+      // OpenMP 4.0, [2.4 Array Sections]
+      // The lower-bound and length must evaluate to non-negative integers.
+      if (LowerBoundValue.isNegative()) {
+        Diag(LowerBound->getExprLoc(), diag::err_omp_section_negative)
+            << 0 << LowerBoundValue.toString(/*Radix=*/10, /*Signed=*/true)
+            << LowerBound->getSourceRange();
+        return ExprError();
+      }
+    }
+  }
+
+  if (Length) {
+    llvm::APSInt LengthValue;
+    if (Length->EvaluateAsInt(LengthValue, Context)) {
+      // OpenMP 4.0, [2.4 Array Sections]
+      // The lower-bound and length must evaluate to non-negative integers.
+      if (LengthValue.isNegative()) {
+        Diag(Length->getExprLoc(), diag::err_omp_section_negative)
+            << 1 << LengthValue.toString(/*Radix=*/10, /*Signed=*/true)
+            << Length->getSourceRange();
+        return ExprError();
+      }
+    }
+  } else if (ColonLoc.isValid() &&
+             (OriginalTy.isNull() || (!OriginalTy->isConstantArrayType() &&
+                                      !OriginalTy->isVariableArrayType()))) {
+    // OpenMP 4.0, [2.4 Array Sections]
+    // When the size of the array dimension is not known, the length must be
+    // specified explicitly.
+    Diag(ColonLoc, diag::err_omp_section_length_undefined)
+        << (!OriginalTy.isNull() && OriginalTy->isArrayType());
+    return ExprError();
+  }
+
+  return new (Context)
+      OMPArraySectionExpr(Base, LowerBound, Length, Context.OMPArraySectionTy,
+                          VK_LValue, OK_Ordinary, ColonLoc, RBLoc);
 }
 
 ExprResult
@@ -4611,7 +4771,9 @@ static bool isPlaceholderToRemoveAsArg(QualType type) {
   // These are always invalid as call arguments and should be reported.
   case BuiltinType::BoundMember:
   case BuiltinType::BuiltinFn:
+  case BuiltinType::OMPArraySection:
     return true;
+
   }
   llvm_unreachable("bad builtin type kind");
 }
@@ -14300,6 +14462,11 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
     Diag(E->getLocStart(), diag::err_builtin_fn_use);
     return ExprError();
   }
+
+  // Expressions of unknown type.
+  case BuiltinType::OMPArraySection:
+    Diag(E->getLocStart(), diag::err_omp_array_section_use);
+    return ExprError();
 
   // Everything else should be impossible.
 #define BUILTIN_TYPE(Id, SingletonId) \

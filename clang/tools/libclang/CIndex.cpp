@@ -4046,6 +4046,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return cxstring::createRef("UnaryOperator");
   case CXCursor_ArraySubscriptExpr:
       return cxstring::createRef("ArraySubscriptExpr");
+  case CXCursor_OMPArraySectionExpr:
+      return cxstring::createRef("OMPArraySectionExpr");
   case CXCursor_BinaryOperator:
       return cxstring::createRef("BinaryOperator");
   case CXCursor_CompoundAssignOperator:

@@ -2712,6 +2712,7 @@ recurse:
   case Expr::LambdaExprClass:
   case Expr::MSPropertyRefExprClass:
   case Expr::TypoExprClass:  // This should no longer exist in the AST by now.
+  case Expr::OMPArraySectionExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.

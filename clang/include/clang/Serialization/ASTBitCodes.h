@@ -763,7 +763,9 @@ namespace clang {
       /// \brief OpenCL event type.
       PREDEF_TYPE_EVENT_ID      = 43,
       /// \brief OpenCL sampler type.
-      PREDEF_TYPE_SAMPLER_ID    = 44
+      PREDEF_TYPE_SAMPLER_ID    = 44,
+      /// \brief The placeholder type for OpenMP array section.
+      PREDEF_TYPE_OMP_ARRAY_SECTION = 45,
     };
 
     /// \brief The number of predefined type IDs that are reserved for
@@ -1394,6 +1396,7 @@ namespace clang {
       STMT_OMP_TASKGROUP_DIRECTIVE,
       STMT_OMP_CANCELLATION_POINT_DIRECTIVE,
       STMT_OMP_CANCEL_DIRECTIVE,
+      EXPR_OMP_ARRAY_SECTION,
 
       // ARC
       EXPR_OBJC_BRIDGED_CAST,     // ObjCBridgedCastExpr

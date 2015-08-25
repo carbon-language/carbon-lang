@@ -14,7 +14,7 @@ class vector {
     int operator[](int index) { return 0; }
 };
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv, char *env[]) {
   vector vec;
   typedef float V __attribute__((vector_size(16)));
   V a;
@@ -33,6 +33,21 @@ int main(int argc, char **argv) {
   #pragma omp task depend (in : ) // expected-error {{expected expression}}
   #pragma omp task depend (in : main) // expected-error {{expected variable name, array element or array section}}
   #pragma omp task depend(in : a[0]) // expected-error{{expected variable name, array element or array section}}
+  #pragma omp task depend (in : vec[1:2]) // expected-error {{ value is not an array or pointer}}
+  #pragma omp task depend (in : argv[ // expected-error {{expected expression}} expected-error {{expected ']'}} expected-error {{expected ')'}} expected-note {{to match this '['}} expected-note {{to match this '('}}
+  #pragma omp task depend (in : argv[: // expected-error {{expected expression}} expected-error {{expected ']'}} expected-error {{expected ')'}} expected-note {{to match this '['}} expected-note {{to match this '('}}
+  #pragma omp task depend (in : argv[:] // expected-error {{section length is unspecified and cannot be inferred because subscripted value is not an array}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task depend (in : argv[argc: // expected-error {{expected expression}} expected-error {{expected ']'}} expected-error {{expected ')'}} expected-note {{to match this '['}} expected-note {{to match this '('}}
+  #pragma omp task depend (in : argv[argc:argc] // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp task depend (in : argv[0:-1]) // expected-error {{section length is evaluated to a negative value -1}}
+  #pragma omp task depend (in : argv[-1:0]) // expected-error {{section lower bound is evaluated to a negative value -1}}
+  #pragma omp task depend (in : argv[:]) // expected-error {{section length is unspecified and cannot be inferred because subscripted value is not an array}}
+  #pragma omp task depend (in : argv[3:4:1]) // expected-error {{expected ']'}} expected-note {{to match this '['}}
+  #pragma omp task depend(in:a[0:1]) // expected-error {{subscripted value is not an array or pointer}}
+  #pragma omp task depend(in:argv[argv[:2]:1]) // expected-error {{OpenMP array section is not allowed here}}
+  #pragma omp task depend(in:argv[0:][:]) // expected-error {{section length is unspecified and cannot be inferred because subscripted value is not an array}}
+  #pragma omp task depend(in:env[0:][:]) // expected-error {{section length is unspecified and cannot be inferred because subscripted value is an array of unknown bound}}
+  #pragma omp task depend(in : argv[ : argc][1 : argc - 1])
   foo();
 
   return 0;

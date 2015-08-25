@@ -342,6 +342,7 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
   case BuiltinType::OCLSampler:
   case BuiltinType::OCLEvent:
   case BuiltinType::BuiltinFn:
+  case BuiltinType::OMPArraySection:
     return TST_unspecified;
   }
 

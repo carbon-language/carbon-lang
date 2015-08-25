@@ -328,6 +328,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
     K = CXCursor_ArraySubscriptExpr;
     break;
 
+  case Stmt::OMPArraySectionExprClass:
+    K = CXCursor_OMPArraySectionExpr;
+    break;
+
   case Stmt::BinaryOperatorClass:
     K = CXCursor_BinaryOperator;
     break;

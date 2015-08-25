@@ -3784,6 +3784,9 @@ public:
                                      Expr *Idx, SourceLocation RLoc);
   ExprResult CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
                                              Expr *Idx, SourceLocation RLoc);
+  ExprResult ActOnOMPArraySectionExpr(Expr *Base, SourceLocation LBLoc,
+                                      Expr *LowerBound, SourceLocation ColonLoc,
+                                      Expr *Length, SourceLocation RBLoc);
 
   // This struct is for use by ActOnMemberAccess to allow
   // BuildMemberReferenceExpr to be able to reinvoke ActOnMemberAccess after

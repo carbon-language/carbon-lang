@@ -6973,10 +6973,11 @@ Sema::ActOnOpenMPDependClause(OpenMPDependClauseKind DepKind,
     //  structure) but is not an array element or an array section cannot appear
     //  in a depend clause.
     auto *SimpleExpr = RefExpr->IgnoreParenCasts();
-    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(SimpleExpr);
-    ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(SimpleExpr);
-    if (!RefExpr->IgnoreParenImpCasts()->isLValue() || (!ASE && !DE) ||
-        (DE && !isa<VarDecl>(DE->getDecl())) ||
+    auto *DE = dyn_cast<DeclRefExpr>(SimpleExpr);
+    auto *ASE = dyn_cast<ArraySubscriptExpr>(SimpleExpr);
+    auto *OASE = dyn_cast<OMPArraySectionExpr>(SimpleExpr);
+    if (!RefExpr->IgnoreParenImpCasts()->isLValue() ||
+        (!ASE && !DE && !OASE) || (DE && !isa<VarDecl>(DE->getDecl())) ||
         (ASE && !ASE->getBase()->getType()->isAnyPointerType() &&
          !ASE->getBase()->getType()->isArrayType())) {
       Diag(ELoc, diag::err_omp_expected_var_name_or_array_item)

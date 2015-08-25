@@ -21,6 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/ExprOpenMP.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Analysis/Analyses/FormatString.h"
@@ -5750,6 +5751,11 @@ do {
     return EvalAddr(cast<ArraySubscriptExpr>(E)->getBase(), refVars,ParentDecl);
   }
 
+  case Stmt::OMPArraySectionExprClass: {
+    return EvalAddr(cast<OMPArraySectionExpr>(E)->getBase(), refVars,
+                    ParentDecl);
+  }
+
   case Stmt::ConditionalOperatorClass: {
     // For conditional operators we need to see if either the LHS or RHS are
     // non-NULL Expr's.  If one is non-NULL, we return it.
@@ -8460,6 +8466,13 @@ void Sema::CheckArrayAccess(const Expr *expr) {
         const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(expr);
         CheckArrayAccess(ASE->getBase(), ASE->getIdx(), ASE,
                          AllowOnePastEnd > 0);
+        return;
+      }
+      case Stmt::OMPArraySectionExprClass: {
+        const OMPArraySectionExpr *ASE = cast<OMPArraySectionExpr>(expr);
+        if (ASE->getLowerBound())
+          CheckArrayAccess(ASE->getBase(), ASE->getLowerBound(),
+                           /*ASE=*/nullptr, AllowOnePastEnd > 0);
         return;
       }
       case Stmt::UnaryOperatorClass: {

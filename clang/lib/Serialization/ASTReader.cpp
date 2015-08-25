@@ -5826,6 +5826,10 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_BUILTIN_FN:
       T = Context.BuiltinFnTy;
       break;
+
+    case PREDEF_TYPE_OMP_ARRAY_SECTION:
+      T = Context.OMPArraySectionTy;
+      break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

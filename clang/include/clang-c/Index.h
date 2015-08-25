@@ -1982,7 +1982,11 @@ enum CXCursorKind {
    */
   CXCursor_ObjCSelfExpr                  = 146,
 
-  CXCursor_LastExpr                      = CXCursor_ObjCSelfExpr,
+  /** \brief OpenMP 4.0 [2.4, Array Section].
+   */
+  CXCursor_OMPArraySectionExpr           = 147,
+
+  CXCursor_LastExpr                      = CXCursor_OMPArraySectionExpr,
 
   /* Statements */
   CXCursor_FirstStmt                     = 200,
