@@ -104,10 +104,6 @@ def _SLASH_Os : CLFlag<"Os">, HelpText<"Optimize for size">, Alias<O>,
   AliasArgs<["s"]>;
 def _SLASH_Ot : CLFlag<"Ot">, HelpText<"Optimize for speed">, Alias<O>,
   AliasArgs<["2"]>;
-def _SLASH_Oy : CLFlag<"Oy">, HelpText<"Enable frame pointer omission">,
-  Alias<fomit_frame_pointer>;
-def _SLASH_Oy_ : CLFlag<"Oy-">, HelpText<"Disable frame pointer omission">,
-  Alias<fno_omit_frame_pointer>;
 def _SLASH_QUESTION : CLFlag<"?">, Alias<help>,
   HelpText<"Display available options">;
 def _SLASH_Qvec : CLFlag<"Qvec">,

@@ -110,14 +110,14 @@
 // Ox: -momit-leaf-frame-pointer
 // Ox: -O2
 
-// RUN: %clang_cl /O2sy- -### -- %s 2>&1 | FileCheck -check-prefix=PR24003 %s
+// RUN: %clang_cl --target=i686-pc-win32 /O2sy- -### -- %s 2>&1 | FileCheck -check-prefix=PR24003 %s
 // PR24003: -mdisable-fp-elim
 // PR24003: -momit-leaf-frame-pointer
 // PR24003: -Os
 
 // RUN: %clang_cl /Zs /Oy -- %s 2>&1
 
-// RUN: %clang_cl /Oy- -### -- %s 2>&1 | FileCheck -check-prefix=Oy_ %s
+// RUN: %clang_cl --target=i686-pc-win32 /Oy- -### -- %s 2>&1 | FileCheck -check-prefix=Oy_ %s
 // Oy_: -mdisable-fp-elim
 
 // RUN: %clang_cl /Qvec -### -- %s 2>&1 | FileCheck -check-prefix=Qvec %s

@@ -535,6 +535,9 @@ MSVCToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
   DerivedArgList *DAL = new DerivedArgList(Args.getBaseArgs());
   const OptTable &Opts = getDriver().getOpts();
 
+  // /Oy and /Oy- only has an effect under X86-32.
+  bool SupportsForcingFramePointer = getArch() == llvm::Triple::x86;
+
   // The -O[12xd] flag actually expands to several flags.  We must desugar the
   // flags so that options embedded can be negated.  For example, the '-O2' flag
   // enables '-Oy'.  Expanding '-O2' into its constituent flags allows us to
@@ -584,8 +587,9 @@ MSVCToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
               DAL->AddFlagArg(A, Opts.getOption(options::OPT_fbuiltin));
               DAL->AddJoinedArg(A, Opts.getOption(options::OPT_O), "2");
             }
-            DAL->AddFlagArg(A,
-                            Opts.getOption(options::OPT_fomit_frame_pointer));
+            if (SupportsForcingFramePointer)
+              DAL->AddFlagArg(A,
+                              Opts.getOption(options::OPT_fomit_frame_pointer));
             if (OptChar == '1' || OptChar == '2')
               DAL->AddFlagArg(A,
                               Opts.getOption(options::OPT_ffunction_sections));
@@ -593,13 +597,13 @@ MSVCToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
         }
         break;
       case 'b':
-        if (isdigit(OptStr[I + 1]))
+        if (I + 1 != E && isdigit(OptStr[I + 1]))
           ++I;
         break;
       case 'g':
         break;
       case 'i':
-        if (OptStr[I + 1] == '-') {
+        if (I + 1 != E && OptStr[I + 1] == '-') {
           ++I;
           DAL->AddFlagArg(A, Opts.getOption(options::OPT_fno_builtin));
         } else {
@@ -612,15 +616,22 @@ MSVCToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
       case 't':
         DAL->AddJoinedArg(A, Opts.getOption(options::OPT_O), "2");
         break;
-      case 'y':
-        if (OptStr[I + 1] == '-') {
+      case 'y': {
+        bool OmitFramePointer = true;
+        if (I + 1 != E && OptStr[I + 1] == '-') {
+          OmitFramePointer = false;
           ++I;
-          DAL->AddFlagArg(A,
-                          Opts.getOption(options::OPT_fno_omit_frame_pointer));
-        } else {
-          DAL->AddFlagArg(A, Opts.getOption(options::OPT_fomit_frame_pointer));
+        }
+        if (SupportsForcingFramePointer) {
+          if (OmitFramePointer)
+            DAL->AddFlagArg(A,
+                            Opts.getOption(options::OPT_fomit_frame_pointer));
+          else
+            DAL->AddFlagArg(
+                A, Opts.getOption(options::OPT_fno_omit_frame_pointer));
         }
         break;
+      }
       }
     }
   }

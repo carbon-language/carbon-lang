@@ -1,7 +1,7 @@
 // Note: %s must be preceded by --, otherwise it may be interpreted as a
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
-// RUN: %clang_cl /fallback /Dfoo=bar /Ubaz /Ifoo /O0 /Ox /GR /GR- /Gy /Gy- \
+// RUN: %clang_cl --target=i686-pc-win32 /fallback /Dfoo=bar /Ubaz /Ifoo /O0 /Ox /GR /GR- /Gy /Gy- \
 // RUN:   /Gw /Gw- /LD /LDd /EHs /EHs- /Zl /MD /MDd /MTd /MT /FImyheader.h /Zi \
 // RUN:   -### -- %s 2>&1 \
 // RUN:   | FileCheck %s
@@ -41,16 +41,16 @@
 // RUN: %clang_cl /fallback /Od -### -- %s 2>&1 | FileCheck -check-prefix=O0 %s
 // O0: cl.exe
 // O0: "/Od"
-// RUN: %clang_cl /fallback /O1 -### -- %s 2>&1 | FileCheck -check-prefix=O1 %s
+// RUN: %clang_cl --target=i686-pc-win32 /fallback /O1 -### -- %s 2>&1 | FileCheck -check-prefix=O1 %s
 // O1: cl.exe
 // O1: "/Og" "/Os" "/Ob2" "/Oy" "/GF" "/Gy"
-// RUN: %clang_cl /fallback /O2 -### -- %s 2>&1 | FileCheck -check-prefix=O2 %s
+// RUN: %clang_cl --target=i686-pc-win32 /fallback /O2 -### -- %s 2>&1 | FileCheck -check-prefix=O2 %s
 // O2: cl.exe
 // O2: "/Oi" "/Og" "/Ot" "/Ob2" "/Oy" "/GF" "/Gy"
-// RUN: %clang_cl /fallback /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
+// RUN: %clang_cl --target=i686-pc-win32 /fallback /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
 // Os: cl.exe
 // Os: "/Os"
-// RUN: %clang_cl /fallback /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
+// RUN: %clang_cl --target=i686-pc-win32 /fallback /Ox -### -- %s 2>&1 | FileCheck -check-prefix=Ox %s
 // Ox: cl.exe
 // Ox: "/Oi" "/Og" "/Ot" "/Ob2" "/Oy" "/GF"
 
