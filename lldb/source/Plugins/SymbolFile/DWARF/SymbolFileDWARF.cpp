@@ -2540,7 +2540,7 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
         Mangled best_name;
         DWARFDebugInfoEntry::Attributes attributes;
         DWARFFormValue form_value;
-        die->GetAttributes(this, dwarf_cu, NULL, attributes);
+        die->GetAttributes(this, dwarf_cu, DWARFFormValue::FixedFormSizes(), attributes);
         uint32_t idx = attributes.FindAttributeIndex(DW_AT_MIPS_linkage_name);
         if (idx == UINT32_MAX)
             idx = attributes.FindAttributeIndex(DW_AT_linkage_name);
@@ -3990,7 +3990,10 @@ SymbolFileDWARF::ParseVariableDIE
         (tag == DW_TAG_formal_parameter && sc.function))
     {
         DWARFDebugInfoEntry::Attributes attributes;
-        const size_t num_attributes = die->GetAttributes(this, dwarf_cu, NULL, attributes);
+        const size_t num_attributes = die->GetAttributes(this,
+                                                         dwarf_cu,
+                                                         DWARFFormValue::FixedFormSizes(),
+                                                         attributes);
         if (num_attributes > 0)
         {
             const char *name = NULL;
@@ -4040,9 +4043,12 @@ SymbolFileDWARF::ParseVariableDIE
                             else if (DWARFFormValue::IsDataForm(form_value.Form()))
                             {
                                 // Retrieve the value as a data expression.
-                                const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (attributes.CompileUnitAtIndex(i)->GetAddressByteSize(), attributes.CompileUnitAtIndex(i)->IsDWARF64());
+                                DWARFFormValue::FixedFormSizes fixed_form_sizes =
+                                    DWARFFormValue::GetFixedFormSizesForAddressSize (
+                                            attributes.CompileUnitAtIndex(i)->GetAddressByteSize(),
+                                            attributes.CompileUnitAtIndex(i)->IsDWARF64());
                                 uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
-                                uint32_t data_length = fixed_form_sizes[form_value.Form()];
+                                uint32_t data_length = fixed_form_sizes.GetSize(form_value.Form());
                                 if (data_length == 0)
                                 {
                                     const uint8_t *data_pointer = form_value.BlockData();
@@ -4064,9 +4070,12 @@ SymbolFileDWARF::ParseVariableDIE
                                 // Retrieve the value as a string expression.
                                 if (form_value.Form() == DW_FORM_strp)
                                 {
-                                    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (attributes.CompileUnitAtIndex(i)->GetAddressByteSize(), attributes.CompileUnitAtIndex(i)->IsDWARF64());
+                                    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+                                        DWARFFormValue::GetFixedFormSizesForAddressSize (
+                                                attributes.CompileUnitAtIndex(i)->GetAddressByteSize(),
+                                                attributes.CompileUnitAtIndex(i)->IsDWARF64());
                                     uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
-                                    uint32_t data_length = fixed_form_sizes[form_value.Form()];
+                                    uint32_t data_length = fixed_form_sizes.GetSize(form_value.Form());
                                     location.CopyOpcodeData(module, debug_info_data, data_offset, data_length);
                                 }
                                 else

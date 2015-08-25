@@ -119,7 +119,7 @@ DWARFDebugInfoEntry::FastExtract
 (
     const DWARFDataExtractor& debug_info_data,
     const DWARFCompileUnit* cu,
-    const uint8_t *fixed_form_sizes,
+    const DWARFFormValue::FixedFormSizes& fixed_form_sizes,
     lldb::offset_t *offset_ptr
 )
 {
@@ -158,7 +158,7 @@ DWARFDebugInfoEntry::FastExtract
         {
             form = abbrevDecl->GetFormByIndexUnchecked(i);
 
-            const uint8_t fixed_skip_size = fixed_form_sizes [form];
+            const uint8_t fixed_skip_size = fixed_form_sizes.GetSize(form);
             if (fixed_skip_size)
                 offset += fixed_skip_size;
             else
@@ -1210,7 +1210,7 @@ DWARFDebugInfoEntry::GetAttributes
 (
     SymbolFileDWARF* dwarf2Data,
     const DWARFCompileUnit* cu,
-    const uint8_t *fixed_form_sizes,
+    DWARFFormValue::FixedFormSizes fixed_form_sizes,
     DWARFDebugInfoEntry::Attributes& attributes,
     uint32_t curr_depth
 ) const
@@ -1222,8 +1222,9 @@ DWARFDebugInfoEntry::GetAttributes
     {
         const DWARFDataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
-        if (fixed_form_sizes == NULL)
-            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize(), cu->IsDWARF64());
+        if (fixed_form_sizes.Empty())
+            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(
+                    cu->GetAddressByteSize(), cu->IsDWARF64());
 
         const uint32_t num_attributes = abbrevDecl->NumAttributes();
         uint32_t i;
@@ -1277,7 +1278,7 @@ DWARFDebugInfoEntry::GetAttributes
             }
             else
             {
-                const uint8_t fixed_skip_size = fixed_form_sizes [form];
+                const uint8_t fixed_skip_size = fixed_form_sizes.GetSize(form);
                 if (fixed_skip_size)
                     offset += fixed_skip_size;
                 else
@@ -1956,7 +1957,7 @@ DWARFDebugInfoEntry::GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data,
 											  DWARFCompileUnit* cu) const
 {
 	DWARFDebugInfoEntry::Attributes attributes;
-	GetAttributes(dwarf2Data, cu, NULL, attributes);
+	GetAttributes(dwarf2Data, cu, DWARFFormValue::FixedFormSizes(), attributes);
 	return GetParentDeclContextDIE (dwarf2Data, cu, attributes);
 }
 
@@ -2026,7 +2027,7 @@ DWARFDebugInfoEntry::GetQualifiedName (SymbolFileDWARF* dwarf2Data,
 									   std::string &storage) const
 {
 	DWARFDebugInfoEntry::Attributes attributes;
-	GetAttributes(dwarf2Data, cu, NULL, attributes);
+	GetAttributes(dwarf2Data, cu, DWARFFormValue::FixedFormSizes(), attributes);
 	return GetQualifiedName (dwarf2Data, cu, attributes, storage);
 }
 

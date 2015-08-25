@@ -35,6 +35,34 @@ public:
         } value;
         const uint8_t* data;
     } ValueType;
+    
+    class FixedFormSizes
+    {
+    public:
+        FixedFormSizes() :
+            m_fix_sizes(nullptr), m_size(0)
+        {}
+
+        FixedFormSizes(const uint8_t* fix_sizes, size_t size) :
+            m_fix_sizes(fix_sizes), m_size(size)
+        {}
+
+        uint8_t
+        GetSize(uint32_t index) const
+        {
+            return index < m_size ? m_fix_sizes[index] : 0;
+        }
+
+        bool
+        Empty() const
+        {
+            return m_size == 0;
+        }
+
+    private:
+        const uint8_t* m_fix_sizes;
+        size_t         m_size;
+    };
 
     enum
     {
@@ -69,7 +97,7 @@ public:
     static bool         SkipValue(const dw_form_t form, const lldb_private::DWARFDataExtractor& debug_info_data, lldb::offset_t *offset_ptr, const DWARFCompileUnit* cu);
     static bool         IsBlockForm(const dw_form_t form);
     static bool         IsDataForm(const dw_form_t form);
-    static const uint8_t * GetFixedFormSizesForAddressSize (uint8_t addr_size, bool is_dwarf64);
+    static FixedFormSizes GetFixedFormSizesForAddressSize (uint8_t addr_size, bool is_dwarf64);
     static int          Compare (const DWARFFormValue& a, const DWARFFormValue& b, const lldb_private::DWARFDataExtractor* debug_str_data_ptr);
 protected:
     const DWARFCompileUnit* m_cu; // Compile unit for this form

@@ -176,7 +176,8 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     die_index_stack.reserve(32);
     die_index_stack.push_back(0);
     bool prev_die_had_children = false;
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
     while (offset < next_cu_offset &&
            die.FastExtract (debug_info_data, this, fixed_form_sizes, &offset))
     {
@@ -661,7 +662,8 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
 {
     const DWARFDataExtractor* debug_str = &m_dwarf2Data->get_debug_str_data();
 
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize(), m_is_dwarf64);
 
     Log *log (LogChannelDWARF::GetLogIfAll (DWARF_LOG_LOOKUPS));
     

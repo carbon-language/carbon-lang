@@ -136,21 +136,21 @@ g_form_sizes_addr8_dwarf64[] =
     8, // 0x20 DW_FORM_ref_sig8
 };
 
-const uint8_t * 
+DWARFFormValue::FixedFormSizes
 DWARFFormValue::GetFixedFormSizesForAddressSize (uint8_t addr_size, bool is_dwarf64)
 {
     if (!is_dwarf64) {
         switch (addr_size)
         {
-        case 4: return g_form_sizes_addr4;
-        case 8: return g_form_sizes_addr8;
+        case 4: return FixedFormSizes(g_form_sizes_addr4, sizeof(g_form_sizes_addr4));
+        case 8: return FixedFormSizes(g_form_sizes_addr8, sizeof(g_form_sizes_addr8));
         }
     } else {
         if (addr_size == 8)
-            return g_form_sizes_addr8_dwarf64;
+            return FixedFormSizes(g_form_sizes_addr8_dwarf64, sizeof(g_form_sizes_addr8_dwarf64));
         // is_dwarf64 && addr_size == 4 : no provider does this.
     }
-    return NULL;
+    return FixedFormSizes();
 }
 
 DWARFFormValue::DWARFFormValue() :

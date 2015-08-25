@@ -8858,7 +8858,9 @@ ClangASTContext::ParseTemplateDIE (SymbolFileDWARF *dwarf,
         case DW_TAG_template_type_parameter:
         case DW_TAG_template_value_parameter:
         {
-            const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+            DWARFFormValue::FixedFormSizes fixed_form_sizes =
+                DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(),
+                                                                 dwarf_cu->IsDWARF64());
 
             DWARFDebugInfoEntry::Attributes attributes;
             const size_t num_attributes = die->GetAttributes (dwarf,
@@ -9399,7 +9401,9 @@ ClangASTContext::ParseChildEnumerators (const SymbolContext& sc,
 
     size_t enumerators_added = 0;
     const DWARFDebugInfoEntry *die;
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(),
+                                                         dwarf_cu->IsDWARF64());
 
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
@@ -9757,7 +9761,9 @@ ClangASTContext::ParseChildMembers (const SymbolContext& sc,
 
     size_t count = 0;
     const DWARFDebugInfoEntry *die;
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(),
+                                                         dwarf_cu->IsDWARF64());
     uint32_t member_idx = 0;
     BitfieldInfo last_field_info;
     ModuleSP module_sp = dwarf->GetObjectFile()->GetModule();
@@ -10333,7 +10339,9 @@ ClangASTContext::ParseChildParameters (const SymbolContext& sc,
     if (parent_die == NULL)
         return 0;
 
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(),
+                                                         dwarf_cu->IsDWARF64());
 
     size_t arg_idx = 0;
     const DWARFDebugInfoEntry *die;
@@ -10509,7 +10517,9 @@ ClangASTContext::ParseChildArrayInfo (const SymbolContext& sc,
         return;
 
     const DWARFDebugInfoEntry *die;
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(), dwarf_cu->IsDWARF64());
+    DWARFFormValue::FixedFormSizes fixed_form_sizes =
+        DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize(),
+                                                         dwarf_cu->IsDWARF64());
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
         const dw_tag_t tag = die->Tag();
@@ -10943,7 +10953,10 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                     // Set a bit that lets us know that we are currently parsing this
                     dwarf->m_die_to_type[die] = DIE_IS_BEING_PARSED;
 
-                    const size_t num_attributes = die->GetAttributes(dwarf, dwarf_cu, NULL, attributes);
+                    const size_t num_attributes = die->GetAttributes(dwarf,
+                                                                     dwarf_cu,
+                                                                     DWARFFormValue::FixedFormSizes(),
+                                                                     attributes);
                     uint32_t encoding = 0;
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
 
@@ -11130,7 +11143,10 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                     LanguageType class_language = eLanguageTypeUnknown;
                     bool is_complete_objc_class = false;
                     //bool struct_is_class = false;
-                    const size_t num_attributes = die->GetAttributes(dwarf, dwarf_cu, NULL, attributes);
+                    const size_t num_attributes = die->GetAttributes(dwarf,
+                                                                     dwarf_cu,
+                                                                     DWARFFormValue::FixedFormSizes(),
+                                                                     attributes);
                     if (num_attributes > 0)
                     {
                         uint32_t i;
@@ -11540,7 +11556,10 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
 
                     lldb::user_id_t encoding_uid = DW_INVALID_OFFSET;
 
-                    const size_t num_attributes = die->GetAttributes(dwarf, dwarf_cu, NULL, attributes);
+                    const size_t num_attributes = die->GetAttributes(dwarf,
+                                                                     dwarf_cu,
+                                                                     DWARFFormValue::FixedFormSizes(),
+                                                                     attributes);
                     if (num_attributes > 0)
                     {
                         uint32_t i;
@@ -11656,7 +11675,10 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                     clang::StorageClass storage = clang::SC_None;//, Extern, Static, PrivateExtern
 
 
-                    const size_t num_attributes = die->GetAttributes(dwarf, dwarf_cu, NULL, attributes);
+                    const size_t num_attributes = die->GetAttributes(dwarf,
+                                                                     dwarf_cu,
+                                                                     DWARFFormValue::FixedFormSizes(),
+                                                                     attributes);
                     if (num_attributes > 0)
                     {
                         uint32_t i;
@@ -12125,7 +12147,10 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                     uint32_t byte_stride = 0;
                     uint32_t bit_stride = 0;
                     bool is_vector = false;
-                    const size_t num_attributes = die->GetAttributes(dwarf, dwarf_cu, NULL, attributes);
+                    const size_t num_attributes = die->GetAttributes(dwarf,
+                                                                     dwarf_cu,
+                                                                     DWARFFormValue::FixedFormSizes(),
+                                                                     attributes);
 
                     if (num_attributes > 0)
                     {
@@ -12221,9 +12246,12 @@ ClangASTContext::ParseTypeFromDWARF (const SymbolContext& sc,
                 {
                     dw_offset_t type_die_offset = DW_INVALID_OFFSET;
                     dw_offset_t containing_type_die_offset = DW_INVALID_OFFSET;
-                    
-                    const size_t num_attributes = die->GetAttributes(dwarf, dwarf_cu, NULL, attributes);
-                    
+
+                    const size_t num_attributes = die->GetAttributes(dwarf,
+                                                                     dwarf_cu,
+                                                                     DWARFFormValue::FixedFormSizes(),
+                                                                     attributes);
+
                     if (num_attributes > 0) {
                         uint32_t i;
                         for (i=0; i<num_attributes; ++i)
