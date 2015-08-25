@@ -217,7 +217,7 @@ Function::Function
     m_mangled (mangled),
     m_block (func_uid),
     m_range (range),
-    m_frame_base (),
+    m_frame_base (nullptr),
     m_flags (),
     m_prologue_byte_size (0)
 {
@@ -241,7 +241,7 @@ Function::Function
     m_mangled (ConstString(mangled), true),
     m_block (func_uid),
     m_range (range),
-    m_frame_base (),
+    m_frame_base (nullptr),
     m_flags (),
     m_prologue_byte_size (0)
 {

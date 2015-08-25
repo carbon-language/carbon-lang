@@ -17,12 +17,14 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Scalar.h"
 
+class DWARFCompileUnit;
+
 namespace lldb_private {
     
+class ClangExpressionDeclMap;
 class ClangExpressionVariable;
 class ClangExpressionVariableList;
 
-class ClangExpressionDeclMap;
 
 //----------------------------------------------------------------------
 /// @class DWARFExpression DWARFExpression.h "lldb/Expression/DWARFExpression.h"
@@ -43,7 +45,7 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     //------------------------------------------------------------------
-    DWARFExpression();
+    explicit DWARFExpression(DWARFCompileUnit* dwarf_cu);
 
     //------------------------------------------------------------------
     /// Constructor
@@ -60,6 +62,7 @@ public:
     //------------------------------------------------------------------
     DWARFExpression(lldb::ModuleSP module,
                     const DataExtractor& data,
+                    DWARFCompileUnit* dwarf_cu,
                     lldb::offset_t data_offset,
                     lldb::offset_t data_length);
 
@@ -356,6 +359,7 @@ public:
               RegisterContext *reg_ctx,
               lldb::ModuleSP opcode_ctx,
               const DataExtractor& opcodes,
+              DWARFCompileUnit* dwarf_cu,
               const lldb::offset_t offset,
               const lldb::offset_t length,
               const lldb::RegisterKind reg_set,
@@ -436,6 +440,9 @@ protected:
 
     lldb::ModuleWP m_module_wp;                 ///< Module which defined this expression.
     DataExtractor m_data;                       ///< A data extractor capable of reading opcode bytes
+    DWARFCompileUnit* m_dwarf_cu;               ///< The DWARF compile unit this expression belongs to. It is used
+                                                ///< to evaluate values indexing into the .debug_addr section (e.g.
+                                                ///< DW_OP_GNU_addr_index
     lldb::RegisterKind m_reg_kind;              ///< One of the defines that starts with LLDB_REGKIND_
     lldb::addr_t m_loclist_slide;               ///< A value used to slide the location list offsets so that 
                                                 ///< they are relative to the object that owns the location list

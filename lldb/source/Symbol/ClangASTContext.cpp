@@ -9616,7 +9616,7 @@ ClangASTContext::ParseFunctionFromDWARF (const SymbolContext& sc,
     int call_file = 0;
     int call_line = 0;
     int call_column = 0;
-    DWARFExpression frame_base;
+    DWARFExpression frame_base(dwarf_cu);
 
     assert (die->Tag() == DW_TAG_subprogram);
 
@@ -9835,6 +9835,7 @@ ClangASTContext::ParseChildMembers (const SymbolContext& sc,
                                                                       NULL, // RegisterContext *
                                                                       module_sp,
                                                                       debug_info_data,
+                                                                      dwarf_cu,
                                                                       block_offset,
                                                                       block_length,
                                                                       eRegisterKindDWARF,
@@ -10204,7 +10205,7 @@ ClangASTContext::ParseChildMembers (const SymbolContext& sc,
                 if (num_attributes > 0)
                 {
                     Declaration decl;
-                    DWARFExpression location;
+                    DWARFExpression location(dwarf_cu);
                     lldb::user_id_t encoding_uid = LLDB_INVALID_UID;
                     AccessType accessibility = default_accessibility;
                     bool is_virtual = false;
@@ -10237,6 +10238,7 @@ ClangASTContext::ParseChildMembers (const SymbolContext& sc,
                                                                        NULL,
                                                                        module_sp,
                                                                        debug_info_data,
+                                                                       dwarf_cu,
                                                                        block_offset,
                                                                        block_length,
                                                                        eRegisterKindDWARF,

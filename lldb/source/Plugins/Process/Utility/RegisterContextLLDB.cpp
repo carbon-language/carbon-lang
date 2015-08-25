@@ -1488,7 +1488,11 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                                  unwindplan_regloc.GetDWARFExpressionLength(),
                                  process->GetByteOrder(), process->GetAddressByteSize());
         ModuleSP opcode_ctx;
-        DWARFExpression dwarfexpr (opcode_ctx, dwarfdata, 0, unwindplan_regloc.GetDWARFExpressionLength());
+        DWARFExpression dwarfexpr (opcode_ctx,
+                                   dwarfdata,
+                                   nullptr,
+                                   0,
+                                   unwindplan_regloc.GetDWARFExpressionLength());
         dwarfexpr.SetRegisterKind (unwindplan_registerkind);
         Value result;
         Error error;
@@ -1784,7 +1788,11 @@ RegisterContextLLDB::ReadCFAValueForRow (lldb::RegisterKind row_register_kind,
                                      row->GetCFAValue().GetDWARFExpressionLength(),
                                      process->GetByteOrder(), process->GetAddressByteSize());
             ModuleSP opcode_ctx;
-            DWARFExpression dwarfexpr (opcode_ctx, dwarfdata, 0, row->GetCFAValue().GetDWARFExpressionLength());
+            DWARFExpression dwarfexpr (opcode_ctx,
+                                       dwarfdata,
+                                       nullptr,
+                                       0,
+                                       row->GetCFAValue().GetDWARFExpressionLength());
             dwarfexpr.SetRegisterKind (row_register_kind);
             Value result;
             Error error;

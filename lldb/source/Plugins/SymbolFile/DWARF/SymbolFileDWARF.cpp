@@ -4013,7 +4013,7 @@ SymbolFileDWARF::ParseVariableDIE
             Declaration decl;
             uint32_t i;
             lldb::user_id_t type_uid = LLDB_INVALID_UID;
-            DWARFExpression location;
+            DWARFExpression location(dwarf_cu);
             bool is_external = false;
             bool is_artificial = false;
             bool location_is_const_value_data = false;
