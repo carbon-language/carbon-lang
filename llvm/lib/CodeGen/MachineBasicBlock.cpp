@@ -322,20 +322,19 @@ void MachineBasicBlock::printAsOperand(raw_ostream &OS,
   OS << "BB#" << getNumber();
 }
 
-void MachineBasicBlock::removeLiveIn(unsigned Reg) {
-  std::vector<unsigned>::iterator I
-    = std::find(LiveIns.begin(), LiveIns.end(), Reg);
+void MachineBasicBlock::removeLiveIn(MCPhysReg Reg) {
+  LiveInVector::iterator I = std::find(LiveIns.begin(), LiveIns.end(), Reg);
   if (I != LiveIns.end())
     LiveIns.erase(I);
 }
 
-bool MachineBasicBlock::isLiveIn(unsigned Reg) const {
+bool MachineBasicBlock::isLiveIn(MCPhysReg Reg) const {
   livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
   return I != livein_end();
 }
 
 unsigned
-MachineBasicBlock::addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC) {
+MachineBasicBlock::addLiveIn(MCPhysReg PhysReg, const TargetRegisterClass *RC) {
   assert(getParent() && "MBB must be inserted in function");
   assert(TargetRegisterInfo::isPhysicalRegister(PhysReg) && "Expected physreg");
   assert(RC && "Register class is required");
