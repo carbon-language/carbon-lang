@@ -3212,7 +3212,7 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
                              diag::err_typecheck_nonviable_condition_incomplete,
                              From->getType(), From->getSourceRange()))
       Diag(From->getLocStart(), diag::err_typecheck_nonviable_condition)
-          << From->getType() << From->getSourceRange() << ToType;
+          << false << From->getType() << From->getSourceRange() << ToType;
   } else
     return false;
   CandidateSet.NoteCandidates(*this, OCD_AllCandidates, From);

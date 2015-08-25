@@ -49,7 +49,7 @@ int main()
       static double dfi(int i) { return i + 3.14; }
       static Local localfi(int) { return Local{}; }
     };
-    auto l4 = [](auto (*fp)(int)) -> int { return fp(3); }; //expected-error{{no viable conversion from 'Local' to 'int'}} 
+    auto l4 = [](auto (*fp)(int)) -> int { return fp(3); }; //expected-error{{no viable conversion from returned value of type 'Local' to function return type 'int'}} 
     l4(&Local::ifi);
     l4(&Local::cfi);
     l4(&Local::dfi);

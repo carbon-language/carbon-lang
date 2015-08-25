@@ -38,7 +38,7 @@ template X captures(X, X);
 template<typename T>
 int infer_result(T x, T y) {
   auto lambda = [=](bool b) { return x + y; };
-  return lambda(true); // expected-error{{no viable conversion from 'X' to 'int'}}
+  return lambda(true); // expected-error{{no viable conversion from returned value of type 'X' to function return type 'int'}}
 }
 
 template int infer_result(int, int);

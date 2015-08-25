@@ -6946,6 +6946,7 @@ bool InitializationSequence::Diagnose(Sema &S,
                           diag::err_typecheck_nonviable_condition_incomplete,
                                Args[0]->getType(), Args[0]->getSourceRange()))
         S.Diag(Kind.getLocation(), diag::err_typecheck_nonviable_condition)
+          << (Entity.getKind() == InitializedEntity::EK_Result)
           << Args[0]->getType() << Args[0]->getSourceRange()
           << DestType.getNonReferenceType();
 

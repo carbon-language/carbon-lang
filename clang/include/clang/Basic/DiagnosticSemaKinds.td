@@ -5792,7 +5792,8 @@ def err_typecheck_bool_condition : Error<
 def err_typecheck_ambiguous_condition : Error<
   "conversion %diff{from $ to $|between types}0,1 is ambiguous">;
 def err_typecheck_nonviable_condition : Error<
-  "no viable conversion%diff{ from $ to $|}0,1">;
+  "no viable conversion%select{%diff{ from $ to $|}1,2|"
+  "%diff{ from returned value of type $ to function return type $|}1,2}0">;
 def err_typecheck_nonviable_condition_incomplete : Error<
   "no viable conversion%diff{ from $ to incomplete type $|}0,1">;
 def err_typecheck_deleted_function : Error<

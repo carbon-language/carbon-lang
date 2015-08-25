@@ -90,5 +90,5 @@ MoveOnly returningNonEligible() {
   else if (0) // Copy from reference can't be elided
     return r; // expected-error {{call to deleted constructor}}
   else // Construction from different type can't be elided
-    return i; // expected-error {{no viable conversion from 'int' to 'MoveOnly'}}
+    return i; // expected-error {{no viable conversion from returned value of type 'int' to function return type 'MoveOnly'}}
 }
