@@ -1791,24 +1791,26 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
             new_retval[proc] = AddrUnsPair(addr, retval[proc].second);
         }
         int new_level = 0;
+        int newPkgLevel = -1;
+        int newCoreLevel = -1;
+        int newThreadLevel = -1;
+        int i;
         for (level = 0; level < depth; level++) {
-            if ((maxCt[level] == 1) && (level != pkgLevel)) {
-               if (level == threadLevel) {
-                   threadLevel = -1;
-               }
-               else if ((threadLevel >= 0) && (level < threadLevel)) {
-                   threadLevel--;
-               }
-               if (level == coreLevel) {
-                   coreLevel = -1;
-               }
-               else if ((coreLevel >= 0) && (level < coreLevel)) {
-                   coreLevel--;
-               }
-               if (level < pkgLevel) {
-                   pkgLevel--;
-               }
-               continue;
+            if ((maxCt[level] == 1)
+              && (level != pkgLevel)) {
+                //
+                // Remove this level. Never remove the package level
+                //
+                continue;
+            }
+            if (level == pkgLevel) {
+                newPkgLevel = level;
+            }
+            if (level == coreLevel) {
+                newCoreLevel = level;
+            }
+            if (level == threadLevel) {
+                newThreadLevel = level;
             }
             for (proc = 0; (int)proc < nApics; proc++) {
                 new_retval[proc].first.labels[new_level]
@@ -1820,6 +1822,9 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
         __kmp_free(retval);
         retval = new_retval;
         depth = new_depth;
+        pkgLevel = newPkgLevel;
+        coreLevel = newCoreLevel;
+        threadLevel = newThreadLevel;
     }
 
     if (__kmp_affinity_gran_levels < 0) {
