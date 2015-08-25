@@ -313,9 +313,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -457,9 +457,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -567,9 +567,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -822,9 +822,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>1</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSNumber *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSNumber *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSNumber *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSNumber *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -961,9 +961,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1071,9 +1071,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1215,9 +1215,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1325,9 +1325,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1469,9 +1469,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1613,9 +1613,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1723,9 +1723,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -1901,9 +1901,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2045,9 +2045,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2189,9 +2189,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from explicit cast (from &apos;MutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from explicit cast (from &apos;MutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from explicit cast (from &apos;MutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from explicit cast (from &apos;MutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2333,9 +2333,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2477,9 +2477,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2587,9 +2587,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;ExceptionalArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2731,9 +2731,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2841,9 +2841,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;ExceptionalArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;ExceptionalArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -2985,9 +2985,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3129,9 +3129,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;id&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3273,9 +3273,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;LegacyMutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;LegacyMutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;LegacyMutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;LegacyMutableArray *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3417,9 +3417,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;LegacySpecialMutableArray *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;LegacySpecialMutableArray *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;LegacySpecialMutableArray *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;LegacySpecialMutableArray *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3561,9 +3561,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;BuggyMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;BuggyMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;BuggyMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;BuggyMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3705,9 +3705,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;BuggySpecialMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;BuggySpecialMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;BuggySpecialMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;BuggySpecialMutableArray&lt;NSMutableString *&gt; *&apos; to &apos;MutableArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3849,9 +3849,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -3993,9 +3993,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -4137,9 +4137,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -4281,9 +4281,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSNumber *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSNumber *&gt; *&apos; to &apos;NSArray *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -4425,9 +4425,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;NSArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;NSArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;NSArray&lt;NSMutableString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;NSArray&lt;NSMutableString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -4603,9 +4603,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;__kindof NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;__kindof NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is infered from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;__kindof NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;MutableArray&lt;NSMutableString *&gt; *&apos; is inferred from implicit cast (from &apos;MutableArray&lt;NSMutableString *&gt; *&apos; to &apos;__kindof NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -4747,9 +4747,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray *&apos; to &apos;NSArray&lt;NSString *&gt; *&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -4857,9 +4857,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from this context</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from this context</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -5001,9 +5001,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from this context</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from this context</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from this context</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -5145,9 +5145,9 @@ void testMistmatchedTypeCast(MutableArray<NSMutableString *> *a) {
 // CHECK:      </array>
 // CHECK:      <key>depth</key><integer>0</integer>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:      <key>message</key>
-// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is infered from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
+// CHECK:      <string>Type &apos;NSArray&lt;NSString *&gt; *&apos; is inferred from implicit cast (from &apos;NSArray&lt;NSString *&gt; *&apos; to &apos;id&apos;)</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
