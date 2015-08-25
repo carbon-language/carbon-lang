@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
@@ -67,6 +68,7 @@ private:
   // AsmPrinter Implementation.
   //===------------------------------------------------------------------===//
 
+  void EmitConstantPool() override;
   void EmitFunctionEntryLabel() override;
   void EmitFunctionBodyStart() override;
   void EmitFunctionBodyEnd() override;
@@ -106,6 +108,11 @@ static const char *toType(const Type *Ty) {
   DEBUG(dbgs() << "Invalid type "; Ty->print(dbgs()); dbgs() << '\n');
   llvm_unreachable("invalid type");
   return "<invalid>";
+}
+
+void WebAssemblyAsmPrinter::EmitConstantPool() {
+  assert(MF->getConstantPool()->getConstants().empty() &&
+         "WebAssembly disables constant pools");
 }
 
 void WebAssemblyAsmPrinter::EmitFunctionEntryLabel() {
