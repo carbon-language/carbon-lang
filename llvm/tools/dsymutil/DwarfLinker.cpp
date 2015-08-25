@@ -3034,11 +3034,6 @@ DwarfLinker::loadObject(BinaryHolder &BinaryHolder, DebugMapObject &Obj,
 
 bool DwarfLinker::link(const DebugMap &Map) {
 
-  if (Map.begin() == Map.end()) {
-    errs() << "Empty debug map.\n";
-    return false;
-  }
-
   if (!createStreamer(Map.getTriple(), OutputFilename))
     return false;
 
