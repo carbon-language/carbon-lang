@@ -502,18 +502,40 @@ namespace llvm {
       return getMBBRange(mbb).second;
     }
 
+    /// Iterator over the idx2MBBMap (sorted pairs of slot index of basic block
+    /// begin and basic block)
+    typedef SmallVectorImpl<IdxMBBPair>::const_iterator MBBIndexIterator;
+    /// Move iterator to the next IdxMBBPair where the SlotIndex is greater or
+    /// equal to \p To.
+    MBBIndexIterator advanceMBBIndex(MBBIndexIterator I, SlotIndex To) const {
+      return std::lower_bound(I, idx2MBBMap.end(), To);
+    }
+    /// Get an iterator pointing to the IdxMBBPair with the biggest SlotIndex
+    /// that is greater or equal to \p Idx.
+    MBBIndexIterator findMBBIndex(SlotIndex Idx) const {
+      return advanceMBBIndex(idx2MBBMap.begin(), Idx);
+    }
+    /// Returns an iterator for the begin of the idx2MBBMap.
+    MBBIndexIterator MBBIndexBegin() const {
+      return idx2MBBMap.begin();
+    }
+    /// Return an iterator for the end of the idx2MBBMap.
+    MBBIndexIterator MBBIndexEnd() const {
+      return idx2MBBMap.end();
+    }
+
     /// Returns the basic block which the given index falls in.
     MachineBasicBlock* getMBBFromIndex(SlotIndex index) const {
       if (MachineInstr *MI = getInstructionFromIndex(index))
         return MI->getParent();
-      SmallVectorImpl<IdxMBBPair>::const_iterator I =
-        std::lower_bound(idx2MBBMap.begin(), idx2MBBMap.end(), index);
-      // Take the pair containing the index
-      SmallVectorImpl<IdxMBBPair>::const_iterator J =
-        ((I != idx2MBBMap.end() && I->first > index) ||
-         (I == idx2MBBMap.end() && idx2MBBMap.size()>0)) ? (I-1): I;
 
-      assert(J != idx2MBBMap.end() && J->first <= index &&
+      MBBIndexIterator I = findMBBIndex(index);
+      // Take the pair containing the index
+      MBBIndexIterator J =
+        ((I != MBBIndexEnd() && I->first > index) ||
+         (I == MBBIndexEnd() && !idx2MBBMap.empty())) ? std::prev(I) : I;
+
+      assert(J != MBBIndexEnd() && J->first <= index &&
              index < getMBBEndIdx(J->second) &&
              "index does not correspond to an MBB");
       return J->second;
@@ -521,16 +543,11 @@ namespace llvm {
 
     bool findLiveInMBBs(SlotIndex start, SlotIndex end,
                         SmallVectorImpl<MachineBasicBlock*> &mbbs) const {
-      SmallVectorImpl<IdxMBBPair>::const_iterator itr =
-        std::lower_bound(idx2MBBMap.begin(), idx2MBBMap.end(), start);
       bool resVal = false;
-
-      while (itr != idx2MBBMap.end()) {
-        if (itr->first >= end)
-          break;
+      for (MBBIndexIterator itr = findMBBIndex(start);
+           itr != MBBIndexEnd() && itr->first < end; ++itr) {
         mbbs.push_back(itr->second);
         resVal = true;
-        ++itr;
       }
       return resVal;
     }
@@ -540,11 +557,8 @@ namespace llvm {
     MachineBasicBlock* getMBBCoveringRange(SlotIndex start, SlotIndex end) const {
 
       assert(start < end && "Backwards ranges not allowed.");
-
-      SmallVectorImpl<IdxMBBPair>::const_iterator itr =
-        std::lower_bound(idx2MBBMap.begin(), idx2MBBMap.end(), start);
-
-      if (itr == idx2MBBMap.end()) {
+      MBBIndexIterator itr = findMBBIndex(start);
+      if (itr == MBBIndexEnd()) {
         itr = std::prev(itr);
         return itr->second;
       }
