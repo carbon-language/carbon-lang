@@ -55,6 +55,11 @@
 ; Slow chips use 4-byte stores. Fast chips with SSE or later use something other than 4-byte stores.
 ; Chips that don't have SSE use 4-byte stores either way, so they're not tested.
 
+; Also verify that SSE4.2 or SSE4a imply fast unaligned accesses.
+
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mattr=sse4.2       2>&1 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -mtriple=i386-unknown-unknown -mattr=sse4a        2>&1 | FileCheck %s --check-prefix=FAST
+
 define void @store_zeros(i8* %a) {
 ; SLOW-NOT: not a recognized processor
 ; SLOW-LABEL: store_zeros:

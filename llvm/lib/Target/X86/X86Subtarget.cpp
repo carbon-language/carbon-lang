@@ -192,6 +192,13 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Parse features string and set the CPU.
   ParseSubtargetFeatures(CPUName, FullFS);
 
+  // All CPUs that implement SSE4.2 or SSE4A support unaligned accesses of
+  // 16-bytes and under that are reasonably fast. These features were
+  // introduced with Intel's Nehalem/Silvermont and AMD's Family10h
+  // micro-architectures respectively.
+  if (hasSSE42() || hasSSE4A())
+    IsUAMemUnder32Slow = false;
+  
   InstrItins = getInstrItineraryForCPU(CPUName);
 
   // It's important to keep the MCSubtargetInfo feature bits in sync with
