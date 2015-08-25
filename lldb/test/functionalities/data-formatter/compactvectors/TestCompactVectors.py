@@ -8,21 +8,21 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class Radar13338477DataFormatterTestCase(TestBase):
+class CompactVectorsFormattingTestCase(TestBase):
 
-    # test for rdar://problem/13338477 ()
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
-        """Test that LLDB handles the clang typeclass Paren correctly."""
+        """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
+    @skipUnlessDarwin
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
-        """Test that LLDB handles the clang typeclass Paren correctly."""
+        """Test data formatter commands."""
         self.buildDwarf()
         self.data_formatter_commands()
 
@@ -33,7 +33,7 @@ class Radar13338477DataFormatterTestCase(TestBase):
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
     def data_formatter_commands(self):
-        """Test that LLDB handles the clang typeclass Paren correctly."""
+        """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
@@ -48,20 +48,23 @@ class Radar13338477DataFormatterTestCase(TestBase):
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
-            self.runCmd('type format delete hex', check=False)
             self.runCmd('type summary clear', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.expect('p *(int (*)[3])foo',
-            substrs = ['(int [3]) $','[0] = 1','[1] = 2','[2] = 3'])
-
-        self.expect('p *(int (*)[3])foo', matching=False,
-            substrs = ['01 00 00 00 02 00 00 00 03 00 00 00'])
-        self.expect('p *(int (*)[3])foo', matching=False,
-            substrs = ['0x000000030000000200000001'])
-
+        self.expect('frame variable',
+            substrs = ['(vFloat) valueFL = (1.25, 0, 0.25, 0)',
+                       '(int16_t [8]) valueI16 = (1, 0, 4, 0, 0, 1, 0, 4)',
+                       '(int32_t [4]) valueI32 = (1, 0, 4, 0)',
+                       '(vDouble) valueDL = (1.25, 2.25)',
+                       '(vUInt8) valueU8 = (0x01, 0x00, 0x04, 0x00, 0x00, 0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)',
+                       '(vUInt16) valueU16 = (1, 0, 4, 0, 0, 1, 0, 4)',
+                       '(vUInt32) valueU32 = (1, 2, 3, 4)',
+                       "(vSInt8) valueS8 = (1, 0, 4, 0, 0, 1, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0)",
+                       '(vSInt16) valueS16 = (1, 0, 4, 0, 0, 1, 0, 4)',
+                       '(vSInt32) valueS32 = (4, 3, 2, 1)',
+                       '(vBool32) valueBool32 = (0, 1, 0, 1)'])
 
 if __name__ == '__main__':
     import atexit

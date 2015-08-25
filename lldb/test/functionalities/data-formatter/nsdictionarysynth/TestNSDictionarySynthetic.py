@@ -9,7 +9,7 @@ from lldbtest import *
 import datetime
 import lldbutil
 
-class DataFormatterRdar11988289TestCase(TestBase):
+class NSDictionarySyntheticTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 

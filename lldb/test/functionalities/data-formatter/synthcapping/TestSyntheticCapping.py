@@ -8,11 +8,10 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class Rdar10887661TestCase(TestBase):
+class SyntheticCappingTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # rdar://problem/10887661
     @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
@@ -20,7 +19,6 @@ class Rdar10887661TestCase(TestBase):
         self.buildDsym()
         self.capping_test_commands()
 
-    # rdar://problem/10887661
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Check for an issue where capping does not work because the Target pointer appears to be changing behind our backs."""

@@ -8,9 +8,8 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class Radar9973992DataFormatterTestCase(TestBase):
+class DataFormatterHexCapsTestCase(TestBase):
 
-    # test for rdar://problem/9973992 (What should we do for "${var}" in summaries of aggregate types?)
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
@@ -48,40 +47,49 @@ class Radar9973992DataFormatterTestCase(TestBase):
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
+            self.runCmd('type format delete hex', check=False)
             self.runCmd('type summary clear', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var}\" Summarize")
-        
-        self.expect('frame variable mine_ptr',
-                substrs = ['SUMMARY SUCCESS summarize_ptr_t @ '])
+        self.runCmd("type format add -f uppercase int")
+     
+        self.expect('frame variable mine',
+            substrs = ['mine = ',
+                       'first = 0x001122AA', 'second = 0x1122BB44'])
 
-        self.expect('frame variable *mine_ptr',
-                substrs = ['SUMMARY SUCCESS summarize_t @'])
+        self.runCmd("type format add -f hex int")
 
-        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var.first}\" Summarize")
+        self.expect('frame variable mine',
+            substrs = ['mine = ',
+                       'first = 0x001122aa', 'second = 0x1122bb44'])
 
-        self.expect('frame variable mine_ptr',
-                    substrs = ['SUMMARY SUCCESS 10'])
+        self.runCmd("type format delete int")
 
-        self.expect('frame variable *mine_ptr',
-                    substrs = ['SUMMARY SUCCESS 10'])
-            
-        self.runCmd("type summary add --summary-string \"${var}\" Summarize")
-        self.runCmd("type summary add --summary-string \"${var}\" -e TwoSummarizes")
-            
-        self.expect('frame variable',
-            substrs = ['(TwoSummarizes) twos = TwoSummarizes @ ',
-                       'first = summarize_t @ ',
-                       'second = summarize_t @ '])
-                    
-        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var.first}\" Summarize")
-        self.expect('frame variable',
-                    substrs = ['(TwoSummarizes) twos = TwoSummarizes @ ',
-                               'first = SUMMARY SUCCESS 1',
-                               'second = SUMMARY SUCCESS 3'])
+        self.runCmd("type summary add -s \"${var.first%X} and ${var.second%x}\" foo")
+
+        self.expect('frame variable mine',
+                    substrs = ['(foo) mine = 0x001122AA and 0x1122bb44'])
+
+        self.runCmd("type summary add -s \"${var.first%X} and ${var.second%X}\" foo")
+        self.runCmd("next")
+        self.runCmd("next")
+        self.expect('frame variable mine',
+                    substrs = ['(foo) mine = 0xAABBCCDD and 0x1122BB44'])
+
+        self.runCmd("type summary add -s \"${var.first%x} and ${var.second%X}\" foo")
+        self.expect('frame variable mine',
+                    substrs = ['(foo) mine = 0xaabbccdd and 0x1122BB44'])
+        self.runCmd("next")
+        self.runCmd("next")
+        self.runCmd("type summary add -s \"${var.first%x} and ${var.second%x}\" foo")
+        self.expect('frame variable mine',
+                    substrs = ['(foo) mine = 0xaabbccdd and 0xff00ff00'])
+        self.runCmd("type summary add -s \"${var.first%X} and ${var.second%X}\" foo")
+        self.expect('frame variable mine',
+                    substrs = ['(foo) mine = 0xAABBCCDD and 0xFF00FF00'])
+
 
 if __name__ == '__main__':
     import atexit

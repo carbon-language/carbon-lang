@@ -8,22 +8,20 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class Radar9973865DataFormatterTestCase(TestBase):
+class PtrToArrayDataFormatterTestCase(TestBase):
 
-    # test for rdar://problem/9973865 (If you use "${var}" in the summary string for an aggregate type, the summary doesn't print for a pointer to that type)
     mydir = TestBase.compute_mydir(__file__)
 
     @skipUnlessDarwin
     @dsym_test
     def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
+        """Test that LLDB handles the clang typeclass Paren correctly."""
         self.buildDsym()
         self.data_formatter_commands()
 
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
-        """Test data formatter commands."""
-
+        """Test that LLDB handles the clang typeclass Paren correctly."""
         self.buildDwarf()
         self.data_formatter_commands()
 
@@ -34,7 +32,7 @@ class Radar9973865DataFormatterTestCase(TestBase):
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
     def data_formatter_commands(self):
-        """Test that that file and class static variables display correctly."""
+        """Test that LLDB handles the clang typeclass Paren correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
@@ -49,26 +47,20 @@ class Radar9973865DataFormatterTestCase(TestBase):
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
+            self.runCmd('type format delete hex', check=False)
             self.runCmd('type summary clear', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var}\" Summarize")
-        
-        self.expect('frame variable mine_ptr',
-                substrs = ['SUMMARY SUCCESS summarize_ptr_t @ '])
+        self.expect('p *(int (*)[3])foo',
+            substrs = ['(int [3]) $','[0] = 1','[1] = 2','[2] = 3'])
 
-        self.expect('frame variable *mine_ptr',
-                substrs = ['SUMMARY SUCCESS summarize_t @'])
+        self.expect('p *(int (*)[3])foo', matching=False,
+            substrs = ['01 00 00 00 02 00 00 00 03 00 00 00'])
+        self.expect('p *(int (*)[3])foo', matching=False,
+            substrs = ['0x000000030000000200000001'])
 
-        self.runCmd("type summary add --summary-string \"SUMMARY SUCCESS ${var.first}\" Summarize")
-
-        self.expect('frame variable mine_ptr',
-                    substrs = ['SUMMARY SUCCESS 10'])
-
-        self.expect('frame variable *mine_ptr',
-                    substrs = ['SUMMARY SUCCESS 10'])
 
 if __name__ == '__main__':
     import atexit
