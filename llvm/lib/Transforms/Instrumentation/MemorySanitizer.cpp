@@ -1736,25 +1736,30 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   /// \brief Instrument signed relational comparisons.
   ///
-  /// Handle (x<0) and (x>=0) comparisons (essentially, sign bit tests) by
-  /// propagating the highest bit of the shadow. Everything else is delegated
-  /// to handleShadowOr().
+  /// Handle sign bit tests: x<0, x>=0, x<=-1, x>-1 by propagating the highest
+  /// bit of the shadow. Everything else is delegated to handleShadowOr().
   void handleSignedRelationalComparison(ICmpInst &I) {
-    Constant *constOp0 = dyn_cast<Constant>(I.getOperand(0));
-    Constant *constOp1 = dyn_cast<Constant>(I.getOperand(1));
-    Value* op = nullptr;
-    CmpInst::Predicate pre = I.getPredicate();
-    if (constOp0 && constOp0->isNullValue() &&
-        (pre == CmpInst::ICMP_SGT || pre == CmpInst::ICMP_SLE)) {
-      op = I.getOperand(1);
-    } else if (constOp1 && constOp1->isNullValue() &&
-               (pre == CmpInst::ICMP_SLT || pre == CmpInst::ICMP_SGE)) {
+    Constant *constOp;
+    Value *op = nullptr;
+    CmpInst::Predicate pre;
+    if ((constOp = dyn_cast<Constant>(I.getOperand(1)))) {
       op = I.getOperand(0);
+      pre = I.getPredicate();
+    } else if ((constOp = dyn_cast<Constant>(I.getOperand(0)))) {
+      op = I.getOperand(1);
+      pre = I.getSwappedPredicate();
+    } else {
+      handleShadowOr(I);
+      return;
     }
-    if (op) {
+
+    if ((constOp->isNullValue() &&
+         (pre == CmpInst::ICMP_SLT || pre == CmpInst::ICMP_SGE)) ||
+        (constOp->isAllOnesValue() &&
+         (pre == CmpInst::ICMP_SGT || pre == CmpInst::ICMP_SLE))) {
       IRBuilder<> IRB(&I);
-      Value* Shadow =
-        IRB.CreateICmpSLT(getShadow(op), getCleanShadow(op), "_msprop_icmpslt");
+      Value *Shadow = IRB.CreateICmpSLT(getShadow(op), getCleanShadow(op),
+                                        "_msprop_icmp_s");
       setShadow(&I, Shadow);
       setOrigin(&I, getOrigin(op));
     } else {

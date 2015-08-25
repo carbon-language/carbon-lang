@@ -385,48 +385,99 @@ entry:
 
 ; Check that we propagate shadow for x<0, x>=0, etc (i.e. sign bit tests)
 
-define zeroext i1 @ICmpSLT(i32 %x) nounwind uwtable readnone sanitize_memory {
+define zeroext i1 @ICmpSLTZero(i32 %x) nounwind uwtable readnone sanitize_memory {
   %1 = icmp slt i32 %x, 0
   ret i1 %1
 }
 
-; CHECK-LABEL: @ICmpSLT
+; CHECK-LABEL: @ICmpSLTZero
 ; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret i1
 
-define zeroext i1 @ICmpSGE(i32 %x) nounwind uwtable readnone sanitize_memory {
+define zeroext i1 @ICmpSGEZero(i32 %x) nounwind uwtable readnone sanitize_memory {
   %1 = icmp sge i32 %x, 0
   ret i1 %1
 }
 
-; CHECK-LABEL: @ICmpSGE
+; CHECK-LABEL: @ICmpSGEZero
 ; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sge
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret i1
 
-define zeroext i1 @ICmpSGT(i32 %x) nounwind uwtable readnone sanitize_memory {
+define zeroext i1 @ICmpSGTZero(i32 %x) nounwind uwtable readnone sanitize_memory {
   %1 = icmp sgt i32 0, %x
   ret i1 %1
 }
 
-; CHECK-LABEL: @ICmpSGT
+; CHECK-LABEL: @ICmpSGTZero
 ; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sgt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret i1
 
-define zeroext i1 @ICmpSLE(i32 %x) nounwind uwtable readnone sanitize_memory {
+define zeroext i1 @ICmpSLEZero(i32 %x) nounwind uwtable readnone sanitize_memory {
   %1 = icmp sle i32 0, %x
   ret i1 %1
 }
 
-; CHECK-LABEL: @ICmpSLE
+; CHECK-LABEL: @ICmpSLEZero
+; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
+; CHECK: icmp sle
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
+
+
+; Check that we propagate shadow for x<=-1, x>-1, etc (i.e. sign bit tests)
+
+define zeroext i1 @ICmpSLTAllOnes(i32 %x) nounwind uwtable readnone sanitize_memory {
+  %1 = icmp slt i32 -1, %x
+  ret i1 %1
+}
+
+; CHECK-LABEL: @ICmpSLTAllOnes
+; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
+; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
+
+define zeroext i1 @ICmpSGEAllOnes(i32 %x) nounwind uwtable readnone sanitize_memory {
+  %1 = icmp sge i32 -1, %x
+  ret i1 %1
+}
+
+; CHECK-LABEL: @ICmpSGEAllOnes
+; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
+; CHECK: icmp sge
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
+
+define zeroext i1 @ICmpSGTAllOnes(i32 %x) nounwind uwtable readnone sanitize_memory {
+  %1 = icmp sgt i32 %x, -1
+  ret i1 %1
+}
+
+; CHECK-LABEL: @ICmpSGTAllOnes
+; CHECK: icmp slt
+; CHECK-NOT: call void @__msan_warning
+; CHECK: icmp sgt
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i1
+
+define zeroext i1 @ICmpSLEAllOnes(i32 %x) nounwind uwtable readnone sanitize_memory {
+  %1 = icmp sle i32 %x, -1
+  ret i1 %1
+}
+
+; CHECK-LABEL: @ICmpSLEAllOnes
 ; CHECK: icmp slt
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp sle
@@ -437,15 +488,30 @@ define zeroext i1 @ICmpSLE(i32 %x) nounwind uwtable readnone sanitize_memory {
 ; Check that we propagate shadow for x<0, x>=0, etc (i.e. sign bit tests)
 ; of the vector arguments.
 
-define <2 x i1> @ICmpSLT_vector(<2 x i32*> %x) nounwind uwtable readnone sanitize_memory {
+define <2 x i1> @ICmpSLT_vector_Zero(<2 x i32*> %x) nounwind uwtable readnone sanitize_memory {
   %1 = icmp slt <2 x i32*> %x, zeroinitializer
   ret <2 x i1> %1
 }
 
-; CHECK-LABEL: @ICmpSLT_vector
+; CHECK-LABEL: @ICmpSLT_vector_Zero
 ; CHECK: icmp slt <2 x i64>
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: icmp slt <2 x i32*>
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret <2 x i1>
+
+; Check that we propagate shadow for x<=-1, x>0, etc (i.e. sign bit tests)
+; of the vector arguments.
+
+define <2 x i1> @ICmpSLT_vector_AllOnes(<2 x i32> %x) nounwind uwtable readnone sanitize_memory {
+  %1 = icmp slt <2 x i32> <i32 -1, i32 -1>, %x
+  ret <2 x i1> %1
+}
+
+; CHECK-LABEL: @ICmpSLT_vector_AllOnes
+; CHECK: icmp slt <2 x i32>
+; CHECK-NOT: call void @__msan_warning
+; CHECK: icmp slt <2 x i32>
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: ret <2 x i1>
 
