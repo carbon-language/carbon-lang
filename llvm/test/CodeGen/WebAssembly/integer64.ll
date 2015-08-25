@@ -9,7 +9,8 @@ declare i64 @llvm.ctlz.i64(i64, i1)
 declare i64 @llvm.cttz.i64(i64, i1)
 declare i64 @llvm.ctpop.i64(i64)
 
-; CHECK-LABEL: add64:
+; CHECK-LABEL: (func $add64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (add @1 @0))
@@ -19,7 +20,8 @@ define i64 @add64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: sub64:
+; CHECK-LABEL: (func $sub64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (sub @1 @0))
@@ -29,7 +31,8 @@ define i64 @sub64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: mul64:
+; CHECK-LABEL: (func $mul64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (mul @1 @0))
@@ -39,7 +42,8 @@ define i64 @mul64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: sdiv64:
+; CHECK-LABEL: (func $sdiv64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (sdiv @1 @0))
@@ -49,7 +53,8 @@ define i64 @sdiv64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: udiv64:
+; CHECK-LABEL: (func $udiv64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (udiv @1 @0))
@@ -59,7 +64,8 @@ define i64 @udiv64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: srem64:
+; CHECK-LABEL: (func $srem64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (srem @1 @0))
@@ -69,7 +75,8 @@ define i64 @srem64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: urem64:
+; CHECK-LABEL: (func $urem64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (urem @1 @0))
@@ -79,7 +86,8 @@ define i64 @urem64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: and64:
+; CHECK-LABEL: (func $and64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (and @1 @0))
@@ -89,7 +97,8 @@ define i64 @and64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: ior64:
+; CHECK-LABEL: (func $ior64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (ior @1 @0))
@@ -99,7 +108,8 @@ define i64 @ior64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: xor64:
+; CHECK-LABEL: (func $xor64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (xor @1 @0))
@@ -109,7 +119,8 @@ define i64 @xor64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: shl64:
+; CHECK-LABEL: (func $shl64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (shl @1 @0))
@@ -119,7 +130,8 @@ define i64 @shl64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: shr64:
+; CHECK-LABEL: (func $shr64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (shr @1 @0))
@@ -129,7 +141,8 @@ define i64 @shr64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: sar64:
+; CHECK-LABEL: (func $sar64
+; CHECK-NEXT: (param i64) (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (sar @1 @0))
@@ -139,7 +152,8 @@ define i64 @sar64(i64 %x, i64 %y) {
   ret i64 %a
 }
 
-; CHECK-LABEL: clz64:
+; CHECK-LABEL: (func $clz64
+; CHECK-NEXT: (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (clz @0))
 ; CHECK-NEXT: (return @1)
@@ -148,7 +162,8 @@ define i64 @clz64(i64 %x) {
   ret i64 %a
 }
 
-; CHECK-LABEL: clz64_zero_undef:
+; CHECK-LABEL: (func $clz64_zero_undef
+; CHECK-NEXT: (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (clz @0))
 ; CHECK-NEXT: (return @1)
@@ -157,7 +172,8 @@ define i64 @clz64_zero_undef(i64 %x) {
   ret i64 %a
 }
 
-; CHECK-LABEL: ctz64:
+; CHECK-LABEL: (func $ctz64
+; CHECK-NEXT: (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (ctz @0))
 ; CHECK-NEXT: (return @1)
@@ -166,7 +182,8 @@ define i64 @ctz64(i64 %x) {
   ret i64 %a
 }
 
-; CHECK-LABEL: ctz64_zero_undef:
+; CHECK-LABEL: (func $ctz64_zero_undef
+; CHECK-NEXT: (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (ctz @0))
 ; CHECK-NEXT: (return @1)
@@ -175,7 +192,8 @@ define i64 @ctz64_zero_undef(i64 %x) {
   ret i64 %a
 }
 
-; CHECK-LABEL: popcnt64:
+; CHECK-LABEL: (func $popcnt64
+; CHECK-NEXT: (param i64) (result i64)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (popcnt @0))
 ; CHECK-NEXT: (return @1)

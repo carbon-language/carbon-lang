@@ -6,7 +6,8 @@
 target datalayout = "e-p:32:32-i64:64-n32:64-S128"
 target triple = "wasm32-unknown-unknown"
 
-; CHECK-LABEL: ord_f32:
+; CHECK-LABEL: (func $ord_f32
+; CHECK-NEXT: (param f32) (param f32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (argument 1))
 ; CHECK-NEXT: (setlocal @2 (eq @1 @1))
@@ -19,7 +20,8 @@ define i32 @ord_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: uno_f32:
+; CHECK-LABEL: (func $uno_f32
+; CHECK-NEXT: (param f32) (param f32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (argument 1))
 ; CHECK-NEXT: (setlocal @2 (ne @1 @1))
@@ -32,7 +34,8 @@ define i32 @uno_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: oeq_f32:
+; CHECK-LABEL: (func $oeq_f32
+; CHECK-NEXT: (param f32) (param f32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (eq @1 @0))
@@ -43,7 +46,7 @@ define i32 @oeq_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: une_f32:
+; CHECK-LABEL: (func $une_f32
 ; CHECK: (setlocal @2 (ne @1 @0))
 define i32 @une_f32(float %x, float %y) {
   %a = fcmp une float %x, %y
@@ -51,7 +54,7 @@ define i32 @une_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: olt_f32:
+; CHECK-LABEL: (func $olt_f32
 ; CHECK: (setlocal @2 (lt @1 @0))
 define i32 @olt_f32(float %x, float %y) {
   %a = fcmp olt float %x, %y
@@ -59,7 +62,7 @@ define i32 @olt_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: ole_f32:
+; CHECK-LABEL: (func $ole_f32
 ; CHECK: (setlocal @2 (le @1 @0))
 define i32 @ole_f32(float %x, float %y) {
   %a = fcmp ole float %x, %y
@@ -67,7 +70,7 @@ define i32 @ole_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: ogt_f32:
+; CHECK-LABEL: (func $ogt_f32
 ; CHECK: (setlocal @2 (gt @1 @0))
 define i32 @ogt_f32(float %x, float %y) {
   %a = fcmp ogt float %x, %y
@@ -75,7 +78,7 @@ define i32 @ogt_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: oge_f32:
+; CHECK-LABEL: (func $oge_f32
 ; CHECK: (setlocal @2 (ge @1 @0))
 define i32 @oge_f32(float %x, float %y) {
   %a = fcmp oge float %x, %y
@@ -85,7 +88,8 @@ define i32 @oge_f32(float %x, float %y) {
 
 ; Expanded comparisons, which also check for NaN.
 
-; CHECK-LABEL: ueq_f32:
+; CHECK-LABEL: (func $ueq_f32
+; CHECK-NEXT: (param f32) (param f32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 1))
 ; CHECK-NEXT: (setlocal @1 (argument 0))
 ; CHECK-NEXT: (setlocal @2 (eq @1 @0))
@@ -100,7 +104,7 @@ define i32 @ueq_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: one_f32:
+; CHECK-LABEL: (func $one_f32
 ; CHECK: (setlocal @2 (ne @1 @0))
 define i32 @one_f32(float %x, float %y) {
   %a = fcmp one float %x, %y
@@ -108,7 +112,7 @@ define i32 @one_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: ult_f32:
+; CHECK-LABEL: (func $ult_f32
 ; CHECK: (setlocal @2 (lt @1 @0))
 define i32 @ult_f32(float %x, float %y) {
   %a = fcmp ult float %x, %y
@@ -116,7 +120,7 @@ define i32 @ult_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: ule_f32:
+; CHECK-LABEL: (func $ule_f32
 ; CHECK: (setlocal @2 (le @1 @0))
 define i32 @ule_f32(float %x, float %y) {
   %a = fcmp ule float %x, %y
@@ -124,7 +128,7 @@ define i32 @ule_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: ugt_f32:
+; CHECK-LABEL: (func $ugt_f32
 ; CHECK: (setlocal @2 (gt @1 @0))
 define i32 @ugt_f32(float %x, float %y) {
   %a = fcmp ugt float %x, %y
@@ -132,7 +136,7 @@ define i32 @ugt_f32(float %x, float %y) {
   ret i32 %b
 }
 
-; CHECK-LABEL: uge_f32:
+; CHECK-LABEL: (func $uge_f32
 ; CHECK: (setlocal @2 (ge @1 @0))
 define i32 @uge_f32(float %x, float %y) {
   %a = fcmp uge float %x, %y

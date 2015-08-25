@@ -11,7 +11,8 @@ declare i64 @i64_nullary()
 declare float @float_nullary()
 declare double @double_nullary()
 
-; CHECK-LABEL: call_i32_nullary:
+; CHECK-LABEL: (func $call_i32_nullary
+; CHECK-NEXT: (result i32)
 ; CHECK-NEXT: (setlocal @0 (global $i32_nullary))
 ; CHECK-NEXT: (setlocal @1 (call @0))
 ; CHECK-NEXT: (return @1)
@@ -20,7 +21,8 @@ define i32 @call_i32_nullary() {
   ret i32 %r
 }
 
-; CHECK-LABEL: call_i64_nullary:
+; CHECK-LABEL: (func $call_i64_nullary
+; CHECK-NEXT: (result i64)
 ; CHECK-NEXT: (setlocal @0 (global $i64_nullary))
 ; CHECK-NEXT: (setlocal @1 (call @0))
 ; CHECK-NEXT: (return @1)
@@ -29,7 +31,8 @@ define i64 @call_i64_nullary() {
   ret i64 %r
 }
 
-; CHECK-LABEL: call_float_nullary:
+; CHECK-LABEL: (func $call_float_nullary
+; CHECK-NEXT: (result f32)
 ; CHECK-NEXT: (setlocal @0 (global $float_nullary))
 ; CHECK-NEXT: (setlocal @1 (call @0))
 ; CHECK-NEXT: (return @1)
@@ -38,7 +41,8 @@ define float @call_float_nullary() {
   ret float %r
 }
 
-; CHECK-LABEL: call_double_nullary:
+; CHECK-LABEL: (func $call_double_nullary
+; CHECK-NEXT: (result f64)
 ; CHECK-NEXT: (setlocal @0 (global $double_nullary))
 ; CHECK-NEXT: (setlocal @1 (call @0))
 ; CHECK-NEXT: (return @1)
@@ -47,7 +51,8 @@ define double @call_double_nullary() {
   ret double %r
 }
 
-; CHECK-LABEL: call_i32_unary:
+; CHECK-LABEL: (func $call_i32_unary
+; CHECK-NEXT: (param i32) (result i32)
 ; CHECK-NEXT: (setlocal @0 (argument 0))
 ; CHECK-NEXT: (setlocal @1 (global $i32_unary))
 ; CHECK-NEXT: (setlocal @2 (call @1 @0))

@@ -7,7 +7,8 @@ target triple = "wasm32-unknown-unknown"
 
 declare i32 @llvm.wasm.page.size.i32() nounwind readnone
 
-; CHECK-LABEL: page_size:
+; CHECK-LABEL: (func $page_size
+; CHECK-NEXT: (result i32)
 ; CHECK-NEXT: (setlocal @0 (page_size))
 ; CHECK-NEXT: (return @0)
 define i32 @page_size() {

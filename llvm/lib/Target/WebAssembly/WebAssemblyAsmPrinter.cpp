@@ -27,6 +27,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -66,6 +67,10 @@ private:
   // AsmPrinter Implementation.
   //===------------------------------------------------------------------===//
 
+  void EmitFunctionEntryLabel() override;
+  void EmitFunctionBodyStart() override;
+  void EmitFunctionBodyEnd() override;
+
   void EmitInstruction(const MachineInstr *MI) override;
 };
 
@@ -85,6 +90,62 @@ static SmallString<32> Name(const WebAssemblyInstrInfo *TII,
 }
 
 static std::string toSymbol(StringRef S) { return ("$" + S).str(); }
+
+static const char *toType(const Type *Ty) {
+  switch (Ty->getTypeID()) {
+  default: break;
+  case Type::FloatTyID:  return "f32";
+  case Type::DoubleTyID: return "f64";
+  case Type::IntegerTyID:
+    switch (Ty->getIntegerBitWidth()) {
+    case 32: return "i32";
+    case 64: return "i64";
+    default: break;
+    }
+  }
+  DEBUG(dbgs() << "Invalid type "; Ty->print(dbgs()); dbgs() << '\n');
+  llvm_unreachable("invalid type");
+  return "<invalid>";
+}
+
+void WebAssemblyAsmPrinter::EmitFunctionEntryLabel() {
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+
+  CurrentFnSym->redefineIfPossible();
+
+  // The function label could have already been emitted if two symbols end up
+  // conflicting due to asm renaming.  Detect this and emit an error.
+  if (CurrentFnSym->isVariable())
+    report_fatal_error("'" + Twine(CurrentFnSym->getName()) +
+                       "' is a protected alias");
+  if (CurrentFnSym->isDefined())
+    report_fatal_error("'" + Twine(CurrentFnSym->getName()) +
+                       "' label emitted multiple times to assembly file");
+
+  OS << "(func " << toSymbol(CurrentFnSym->getName());
+  OutStreamer->EmitRawText(OS.str());
+}
+
+void WebAssemblyAsmPrinter::EmitFunctionBodyStart() {
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  const Function *F = MF->getFunction();
+  for (const Argument &A : F->args())
+    OS << " (param " << toType(A.getType()) << ')';
+  const Type *Rt = F->getReturnType();
+  if (!Rt->isVoidTy())
+    OS << " (result " << toType(Rt) << ')';
+  OS << '\n';
+  OutStreamer->EmitRawText(OS.str());
+}
+
+void WebAssemblyAsmPrinter::EmitFunctionBodyEnd() {
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+  OS << ") ;; end func " << toSymbol(CurrentFnSym->getName()) << '\n';
+  OutStreamer->EmitRawText(OS.str());
+}
 
 void WebAssemblyAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   DEBUG(dbgs() << "EmitInstruction: " << *MI << '\n');

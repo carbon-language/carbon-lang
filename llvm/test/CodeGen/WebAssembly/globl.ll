@@ -8,7 +8,7 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-NOT: globl
 ; CHECK: ;; .globl foo
 ; CHECK-NOT: globl
-; CHECK-LABEL: foo:
+; CHECK-LABEL: (func $foo
 define void @foo() {
   ret void
 }
