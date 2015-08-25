@@ -13,8 +13,8 @@
 // breakpoint is hit.  The test case should be flexible enough to treat that
 // as success.
 
-#include <unistd.h>
 #include <atomic>
+#include <chrono>
 #include <thread>
 
 volatile int g_test = 0;
@@ -83,7 +83,7 @@ exit_thread_func ()
     pseudo_barrier_wait(g_barrier2);
 
     // Try to make sure this thread doesn't exit until the breakpoint is hit.
-    usleep(1);
+    std::this_thread::sleep_for(std::chrono::microseconds(1));
 
     // Return
     return NULL;

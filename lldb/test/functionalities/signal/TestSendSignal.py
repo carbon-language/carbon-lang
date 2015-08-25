@@ -1,4 +1,4 @@
-"""Test that lldb command 'process signal SIGUSR1' to send a signal to the inferior works."""
+﻿"""Test that lldb command 'process signal SIGUSR1' to send a signal to the inferior works."""
 
 import os, time, signal
 import unittest2
@@ -19,6 +19,7 @@ class SendSignalTestCase(TestBase):
         self.send_signal()
 
     @expectedFailureFreeBSD("llvm.org/pr23318: does not report running state")
+    @skipIfWindows # Windows does not support signals
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that lldb command 'process signal SIGUSR1' sends a signal to the inferior process."""

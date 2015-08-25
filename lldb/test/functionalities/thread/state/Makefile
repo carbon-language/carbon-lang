@@ -1,4 +1,4 @@
 LEVEL = ../../../make
 
-C_SOURCES := main.c
+CXX_SOURCES := main.cpp
 include $(LEVEL)/Makefile.rules

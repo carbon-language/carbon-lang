@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 #include <stdio.h>
-#include <unistd.h>
 
 #if defined(__linux__)
 #include <sys/prctl.h>
 #endif
+
+#include <chrono>
+#include <thread>
 
 int main (int argc, char const *argv[])
 {
@@ -36,7 +38,7 @@ int main (int argc, char const *argv[])
     {
         volatile int wait_for_attach=1;
         while (wait_for_attach)
-            usleep(1);
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
 
     printf("my_string=%s\n", my_string);

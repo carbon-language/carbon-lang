@@ -1,4 +1,4 @@
-"""
+﻿"""
 Test thread states.
 """
 
@@ -95,8 +95,8 @@ class ThreadStateTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line numbers for our breakpoints.
-        self.break_1 = line_number('main.c', '// Set first breakpoint here')
-        self.break_2 = line_number('main.c', '// Set second breakpoint here')
+        self.break_1 = line_number('main.cpp', '// Set first breakpoint here')
+        self.break_2 = line_number('main.cpp', '// Set second breakpoint here')
 
     def thread_state_after_breakpoint_test(self):
         """Test thread state after breakpoint."""
@@ -104,11 +104,11 @@ class ThreadStateTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_1, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_1, num_expected_locations=1)
 
         # The breakpoint list should show 1 breakpoint with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.cpp', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -144,12 +144,12 @@ class ThreadStateTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_1, num_expected_locations=1)
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_2, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_1, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_2, num_expected_locations=1)
 
         # The breakpoint list should show 1 breakpoints with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file = 'main.c', line = %d, exact_match = 0, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.cpp', line = %d, exact_match = 0, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -193,12 +193,12 @@ class ThreadStateTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_1, num_expected_locations=1)
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_2, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_1, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_2, num_expected_locations=1)
 
         # The breakpoint list should show 1 breakpoints with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.cpp', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -238,11 +238,11 @@ class ThreadStateTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_1, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_1, num_expected_locations=1)
 
         # The breakpoint list should show 1 breakpoints with 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1])
+            substrs = ["1: file = 'main.cpp', line = %d, locations = 1" % self.break_1])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)
@@ -291,13 +291,13 @@ class ThreadStateTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # This should create a breakpoint in the main thread.
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_1, num_expected_locations=1)
-        lldbutil.run_break_set_by_file_and_line (self, "main.c", self.break_2, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_1, num_expected_locations=1)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.break_2, num_expected_locations=1)
 
         # The breakpoint list should show 2 breakpoints with 1 location each.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file = 'main.c', line = %d, locations = 1" % self.break_1,
-                       "2: file = 'main.c', line = %d, locations = 1" % self.break_2])
+            substrs = ["1: file = 'main.cpp', line = %d, locations = 1" % self.break_1,
+                       "2: file = 'main.cpp', line = %d, locations = 1" % self.break_2])
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

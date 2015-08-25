@@ -20,6 +20,7 @@ class TlsGlobalTestCase(TestBase):
 
     @dwarf_test
     @unittest2.expectedFailure("rdar://7796742")
+    @skipIfWindows # TLS works differently on Windows, this would need to be implemented separately.
     def test_with_dwarf(self):
         """Test thread-local storage."""
         self.buildDwarf()

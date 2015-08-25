@@ -10,8 +10,6 @@
 // This test is intended to create a situation in which one thread will exit
 // while the debugger is stepping in another thread.
 
-#include <unistd.h>
-
 #include <thread>
 
 // Note that although hogging the CPU while waiting for a variable to change

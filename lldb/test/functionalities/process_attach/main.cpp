@@ -1,9 +1,11 @@
 #include <stdio.h>
-#include <unistd.h>
 
 #if defined(__linux__)
 #include <sys/prctl.h>
 #endif
+
+#include <chrono>
+#include <thread>
 
 int main(int argc, char const *argv[]) {
     int temp;
@@ -27,7 +29,7 @@ int main(int argc, char const *argv[]) {
 
     while (temp < 30) // Waiting to be attached...
     {
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         temp++;
     }
 

@@ -21,6 +21,7 @@ class NoreturnUnwind(TestBase):
 
     @dwarf_test
     @expectedFailurei386 #xfail to get buildbot green, failing config: i386 binary running on ubuntu 14.04 x86_64
+    @skipIfWindows # clang-cl does not support gcc style attributes.
     def test_with_dwarf (self):
         """Test that we can backtrace correctly with 'noreturn' functions on the stack"""
         self.buildDwarf()

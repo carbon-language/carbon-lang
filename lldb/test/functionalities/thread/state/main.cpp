@@ -12,7 +12,8 @@
 // is in the test script.  This program merely provides places where the test
 // can create the intended states.
 
-#include <unistd.h>
+#include <chrono>
+#include <thread>
 
 volatile int g_test = 0;
 
@@ -28,7 +29,7 @@ int doNothing()
     while (!g_test && temp < 5)
     {
         ++temp;
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     return temp;    // Set second breakpoint here
