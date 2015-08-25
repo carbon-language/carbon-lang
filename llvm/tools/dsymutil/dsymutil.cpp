@@ -301,7 +301,8 @@ int main(int argc, char **argv) {
 
       if (Map->begin() == Map->end())
         llvm::errs() << "warning: no debug symbols in executable (-arch "
-                     << Map->getTriple().getArchName() << ")\n";
+                     << MachOUtils::getArchName(Map->getTriple().getArchName())
+                     << ")\n";
 
       std::string OutputFile = getOutputFileName(InputFile, NeedsTempFiles);
       if (OutputFile.empty() || !linkDwarf(OutputFile, *Map, Options))
