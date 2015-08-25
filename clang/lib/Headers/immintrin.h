@@ -148,4 +148,58 @@ _writegsbase_u64(unsigned long long __V)
  * whereas others are also available at all times. */
 #include <adxintrin.h>
 
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+_rotwl(unsigned short _Value, int _Shift) {
+  _Shift &= 0xf;
+  return _Shift ? (_Value << _Shift) | (_Value >> (16 - _Shift)) : _Value;
+}
+
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+_rotwr(unsigned short _Value, int _Shift) {
+  _Shift &= 0xf;
+  return _Shift ? (_Value >> _Shift) | (_Value << (16 - _Shift)) : _Value;
+}
+
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_rotl(unsigned int _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (32 - _Shift)) : _Value;
+}
+
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+_rotr(unsigned int _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (32 - _Shift)) : _Value;
+}
+
+/* 
+ * MS defines _lrotl/_lrotr in a slightly incompatible way, since 
+ * unsigned long is always 32-bit in MSVC. 
+ */
+#ifdef _MSC_VER
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+_lrotl(unsigned long _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (32 - _Shift)) : _Value;
+}
+
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+_lrotr(unsigned long _Value, int _Shift) {
+  _Shift &= 0x1f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (32 - _Shift)) : _Value;
+}
+#else
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+_lrotl(unsigned long _Value, int _Shift) {
+  _Shift &= 0x3f;
+  return _Shift ? (_Value << _Shift) | (_Value >> (64 - _Shift)) : _Value;
+}
+
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+_lrotr(unsigned long _Value, int _Shift) {
+  _Shift &= 0x3f;
+  return _Shift ? (_Value >> _Shift) | (_Value << (64 - _Shift)) : _Value;
+}
+#endif
+
 #endif /* __IMMINTRIN_H */
