@@ -30,5 +30,5 @@ define <8 x float> @foo(<8 x float> %y, i64* %p, double %x) {
 
 ; CHECK: foo
 ; CHECK-NOT: vzeroupper
-; CHECK: _ftol2
+; CHECK: {{cvtt|fist}}
 ; CHECK: ret

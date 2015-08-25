@@ -856,15 +856,6 @@ namespace llvm {
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }
 
-    /// Return true if the target uses the MSVC _ftol2 routine for fptoui.
-    bool isTargetFTOL() const;
-
-    /// Return true if the MSVC _ftol2 routine should be used for fptoui to the
-    /// given type.
-    bool isIntegerTypeFTOL(EVT VT) const {
-      return isTargetFTOL() && VT == MVT::i64;
-    }
-
     /// \brief Returns true if it is beneficial to convert a load of a constant
     /// to just the constant itself.
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,

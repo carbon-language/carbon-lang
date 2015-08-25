@@ -1,15 +1,17 @@
-; RUN: llc < %s -mtriple=i686-pc-win32 -mcpu=generic | FileCheck %s -check-prefix=FTOL
+; RUN: llc < %s -mtriple=i686-pc-win32 -mcpu=generic | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=i686-pc-linux | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=x86_64-pc-win32 | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=x86_64-pc-mingw32 | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=x86_64-pc-linux | FileCheck %s -check-prefix=COMPILERRT
-; RUN: llc < %s -mattr=-sse -O0 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=FTOL_2
+; RUN: llc < %s -mattr=-sse -O0 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=COMPILERRT
 
-; Win32 targets use the MSVCRT _ftol2 runtime function for fptoui to i64. This
-; function has a nonstandard calling convention: the input value is expected on
-; the x87 stack instead of the callstack. The input value is popped by the
-; callee. Mingw32 uses normal cdecl compiler-rt functions.
+; This test originally used the FTOL and FTOL_2 checks for the i686-pc-win32
+; triples, under the assumption that Win32 targets should use the MSVCRT
+; _ftol2 runtime function for fptoui to i64.  That usage was incorrect,
+; as _ftol2 performs conversion to signed i64.  As of the compiler fix,
+; the FTOL/FTOL_2 checks are no longer used, which basically renders
+; this test meaningless.
 
 define i64 @double_ui64(double %x) nounwind {
 entry:
