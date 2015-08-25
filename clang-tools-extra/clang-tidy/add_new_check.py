@@ -184,7 +184,6 @@ def write_test(module_path, module, check_name):
   with open(filename, 'w') as f:
     f.write(
 """// RUN: %%python %%S/check_clang_tidy.py %%s %(check_name_dashes)s %%t
-// REQUIRES: shell
 
 // FIXME: Add something that triggers the check here.
 void f();
