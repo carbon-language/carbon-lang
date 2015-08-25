@@ -40,7 +40,7 @@ public:
   const Elf_Shdr *getSectionHdr() const { return Header; }
 
   // The writer sets and uses the addresses.
-  uint64_t getOutputSectionOff() { return OutputSectionOff; }
+  uintX_t getOutputSectionOff() const { return OutputSectionOff; }
   uintX_t getAlign() { return Header->sh_addralign; }
   void setOutputSectionOff(uint64_t V) { OutputSectionOff = V; }
 

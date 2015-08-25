@@ -45,6 +45,7 @@ public:
     Header.sh_flags = sh_flags;
   }
   void setVA(uintX_t VA) { Header.sh_addr = VA; }
+  uintX_t getVA() { return Header.sh_addr; }
   void setFileOffset(uintX_t Off) { Header.sh_offset = Off; }
   template <endianness E>
   void writeHeaderTo(typename ELFFile<ELFType<E, Is64Bits>>::Elf_Shdr *SHdr);
@@ -113,6 +114,7 @@ template <class ELFT>
 class SymbolTableSection final : public OutputSectionBase<ELFT::Is64Bits> {
 public:
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename OutputSectionBase<ELFT::Is64Bits>::uintX_t uintX_t;
   SymbolTableSection(SymbolTable &Table)
       : OutputSectionBase<ELFT::Is64Bits>(".symtab", SHT_SYMTAB, 0),
         Table(Table) {
@@ -233,35 +235,42 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
     ESym->st_name = Builder.getOffset(Name);
-    uint8_t Binding;
+    uint8_t Binding = 0;
     SymbolBody *Body = Sym->Body;
     uint8_t Type = 0;
 
     const SectionChunk<ELFT> *Section = nullptr;
+    const Elf_Sym *InputSym = nullptr;
 
     switch (Body->kind()) {
     case SymbolBody::UndefinedKind:
     case SymbolBody::UndefinedSyntheticKind:
       llvm_unreachable("Should be defined by now");
+    case SymbolBody::DefinedWeakKind:
     case SymbolBody::DefinedRegularKind: {
-      Binding = STB_GLOBAL;
-      auto *Def = cast<DefinedRegular<ELFT>>(Body);
-      Type = Def->Sym.getType();
+      auto *Def = cast<Defined<ELFT>>(Body);
+      InputSym = &Def->Sym;
       Section = &Def->Section;
       break;
     }
-    case SymbolBody::DefinedWeakKind:
-      Section = &cast<Defined<ELFT>>(Body)->Section;
     case SymbolBody::UndefinedWeakKind:
-      Binding = STB_WEAK;
-      Type = cast<ELFSymbolBody<ELFT>>(Body)->Sym.getType();
+      InputSym = &cast<ELFSymbolBody<ELFT>>(Body)->Sym;
       break;
+    }
+
+    if (InputSym) {
+      Type = InputSym->getType();
+      Binding = InputSym->getBinding();
     }
     ESym->setBindingAndType(Binding, Type);
 
     if (Section) {
       OutputSection<ELFT> *Out = Section->getOutputSection();
       ESym->st_shndx = Out->getSectionIndex();
+      uintX_t VA = Out->getVA();
+      VA += Section->getOutputSectionOff();
+      VA += InputSym->st_value;
+      ESym->st_value = VA;
     }
 
     Buf += sizeof(Elf_Sym);

@@ -1,6 +1,6 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 // RUN: lld -flavor gnu2 %t -o %t2
-// RUN: llvm-readobj -symbols %t2 | FileCheck %s
+// RUN: llvm-readobj -symbols -sections %t2 | FileCheck %s
 // REQUIRES: x86
 
 .type _start, @function
@@ -15,9 +15,32 @@ foo:
 .weak bar
 .long bar
 
-.data
+.section        foobar,"a",@nobits,unique,1
 .globl zed
 zed:
+        .long 0
+.globl zed2
+zed2:
+.long 0
+
+.section        foobar,"a",@nobits,unique,2
+.globl zed3
+zed3:
+
+// CHECK:      Name: .text
+// CHECK-NEXT: Type: SHT_PROGBITS
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT:   SHF_EXECINSTR
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: 0x1000
+
+// CHECK:      Name: foobar
+// CHECK-NEXT: Type: SHT_NOBITS
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address: 0x1004
 
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
@@ -31,16 +54,25 @@ zed:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: zed
-// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Value: 0x1004
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .data
+// CHECK-NEXT:     Section: foobar
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: zed3
+// CHECK-NEXT:     Value: 0x100C
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: foobar
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start
-// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Value: 0x1000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global (0x1)
 // CHECK-NEXT:     Type: Function
@@ -58,11 +90,20 @@ zed:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foo
-// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Value: 0x1000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Weak (0x2)
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: zed2
+// CHECK-NEXT:     Value: 0x1008
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Global
+// CHECK-NEXT:     Type: None
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: foobar
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
