@@ -59,6 +59,13 @@ class PassManagerBase;
 }
 using legacy::PassManagerBase;
 
+extern "C" {
+// This function from the C API is deprecated. We still supports it using a
+// private method on the TargetMachine for now. But it needs to be friended and
+// so we forward declare it here.
+LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T);
+}
+
 //===----------------------------------------------------------------------===//
 ///
 /// Primary interface to the complete machine description for the target
@@ -102,6 +109,12 @@ protected: // Can only create subclasses.
   const MCSubtargetInfo *STI;
 
   unsigned RequireStructuredCFG : 1;
+
+  /// This API is here to support the C API, deprecated in 3.7 release.
+  /// This should never be used outside of legacy existing client.
+  const DataLayout &getDataLayout() const { return DL; }
+  friend struct LLVMOpaqueTargetData * ::LLVMGetTargetMachineData(
+      LLVMTargetMachineRef T);
 
 public:
   mutable TargetOptions Options;
