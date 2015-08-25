@@ -17,12 +17,6 @@ namespace llvm {
 namespace dsymutil {
 namespace MachOUtils {
 
-std::string getArchName(StringRef Arch) {
-  if (Arch.startswith("thumb"))
-    return (llvm::Twine("arm") + Arch.drop_front(5)).str();
-  return Arch;
-}
-
 static bool runLipo(SmallVectorImpl<const char *> &Args) {
   auto Path = sys::findProgramByName("lipo");
 
@@ -70,7 +64,6 @@ bool generateUniversalBinary(SmallVectorImpl<ArchAndFilename> &ArchFiles,
 
   // Align segments to match dsymutil-classic alignment
   for (auto &Thin : ArchFiles) {
-    Thin.Arch = getArchName(Thin.Arch);
     Args.push_back("-segalign");
     Args.push_back(Thin.Arch.c_str());
     Args.push_back("20");

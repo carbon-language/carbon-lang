@@ -24,8 +24,6 @@ struct ArchAndFilename {
 
 bool generateUniversalBinary(SmallVectorImpl<ArchAndFilename> &ArchFiles,
                              StringRef OutputFileName, const LinkOptions &);
-
-std::string getArchName(StringRef Arch);
 }
 }
 }
