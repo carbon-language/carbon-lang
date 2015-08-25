@@ -26511,7 +26511,7 @@ bool X86TargetLowering::isTargetFTOL() const {
   return Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->is64Bit();
 }
 
-bool X86TargetLowering::isIntDivCheap(EVT VT, bool OptSize) const {
+bool X86TargetLowering::isIntDivCheap(EVT VT, AttributeSet Attr) const {
   // Integer division on x86 is expensive. However, when aggressively optimizing
   // for code size, we prefer to use a div instruction, as it is usually smaller
   // than the alternative sequence.
@@ -26519,5 +26519,7 @@ bool X86TargetLowering::isIntDivCheap(EVT VT, bool OptSize) const {
   // integer division, leaving the division as-is is a loss even in terms of
   // size, because it will have to be scalarized, while the alternative code
   // sequence can be performed in vector form.
+  bool OptSize = Attr.hasAttribute(AttributeSet::FunctionIndex,
+                                   Attribute::MinSize);
   return OptSize && !VT.isVector();
 }

@@ -2725,6 +2725,16 @@ static SDValue BuildExactSDIV(const TargetLowering &TLI, SDValue Op1, APInt d,
   return Mul;
 }
 
+SDValue TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
+                                      SelectionDAG &DAG,
+                                      std::vector<SDNode *> *Created) const {
+  AttributeSet Attr = DAG.getMachineFunction().getFunction()->getAttributes();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (TLI.isIntDivCheap(N->getValueType(0), Attr))
+    return SDValue(N,0); // Lower SDIV as SDIV
+  return SDValue();
+}
+
 /// \brief Given an ISD::SDIV node expressing a divide by constant,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.

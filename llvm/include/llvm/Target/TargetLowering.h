@@ -228,7 +228,7 @@ public:
   /// several shifts, adds, and multiplies for this target.
   /// The definition of "cheaper" may depend on whether we're optimizing
   /// for speed or for size.
-  virtual bool isIntDivCheap(EVT VT, bool OptSize) const { 
+  virtual bool isIntDivCheap(EVT VT, AttributeSet Attr) const {
     return false;
   }
 
@@ -2719,11 +2719,14 @@ public:
   SDValue BuildUDIV(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
                     bool IsAfterLegalization,
                     std::vector<SDNode *> *Created) const;
+
+  /// Targets may override this function to provide custom SDIV lowering for
+  /// power-of-2 denominators.  If the target returns an empty SDValue, LLVM
+  /// assumes SDIV is expensive and replaces it with a series of other integer
+  /// operations.
   virtual SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor,
                                 SelectionDAG &DAG,
-                                std::vector<SDNode *> *Created) const {
-    return SDValue();
-  }
+                                std::vector<SDNode *> *Created) const;
 
   /// Indicate whether this target prefers to combine FDIVs with the same
   /// divisor. If the transform should never be done, return zero. If the

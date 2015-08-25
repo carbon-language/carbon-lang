@@ -902,7 +902,7 @@ namespace llvm {
     /// \brief Customize the preferred legalization strategy for certain types.
     LegalizeTypeAction getPreferredVectorAction(EVT VT) const override;
 
-    bool isIntDivCheap(EVT VT, bool OptSize) const override;
+    bool isIntDivCheap(EVT VT, AttributeSet Attr) const override;
 
   protected:
     std::pair<const TargetRegisterClass *, uint8_t>
