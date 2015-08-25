@@ -344,6 +344,12 @@ public:
   getLinkerOptionLoadCommand(const LoadCommandInfo &L) const;
   MachO::version_min_command
   getVersionMinLoadCommand(const LoadCommandInfo &L) const;
+  static uint32_t
+  getVersionMinMajor(MachO::version_min_command &C, bool SDK);
+  static uint32_t
+  getVersionMinMinor(MachO::version_min_command &C, bool SDK);
+  static uint32_t
+  getVersionMinUpdate(MachO::version_min_command &C, bool SDK);
   MachO::dylib_command
   getDylibIDLoadCommand(const LoadCommandInfo &L) const;
   MachO::dyld_info_command

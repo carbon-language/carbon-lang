@@ -2001,6 +2001,24 @@ MachOObjectFile::getVersionMinLoadCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::version_min_command>(this, L.Ptr);
 }
 
+uint32_t
+MachOObjectFile::getVersionMinMajor(MachO::version_min_command &C, bool SDK) {
+  uint32_t VersionOrSDK = (SDK) ? C.sdk : C.version;
+  return (VersionOrSDK >> 16) & 0xffff;
+}
+
+uint32_t
+MachOObjectFile::getVersionMinMinor(MachO::version_min_command &C, bool SDK) {
+  uint32_t VersionOrSDK = (SDK) ? C.sdk : C.version;
+  return (VersionOrSDK >> 8) & 0xff;
+}
+
+uint32_t
+MachOObjectFile::getVersionMinUpdate(MachO::version_min_command &C, bool SDK) {
+  uint32_t VersionOrSDK = (SDK) ? C.sdk : C.version;
+  return VersionOrSDK & 0xff;
+}
+
 MachO::dylib_command
 MachOObjectFile::getDylibIDLoadCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::dylib_command>(this, L.Ptr);
