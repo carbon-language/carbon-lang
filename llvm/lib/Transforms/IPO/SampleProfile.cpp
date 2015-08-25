@@ -22,7 +22,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -45,6 +44,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/IPO.h"
 #include <cctype>
 
 using namespace llvm;
@@ -74,14 +74,15 @@ typedef DenseMap<BasicBlock *, SmallVector<BasicBlock *, 8>> BlockEdgeMap;
 /// This pass reads profile data from the file specified by
 /// -sample-profile-file and annotates every affected function with the
 /// profile information found in that file.
-class SampleProfileLoader : public FunctionPass {
+class SampleProfileLoader : public ModulePass {
 public:
   // Class identification, replacement for typeinfo
   static char ID;
 
   SampleProfileLoader(StringRef Name = SampleProfileFile)
-      : FunctionPass(ID), DT(nullptr), PDT(nullptr), LI(nullptr), Ctx(nullptr),
-        Reader(), Samples(nullptr), Filename(Name), ProfileIsValid(false) {
+      : ModulePass(ID), DT(nullptr), PDT(nullptr), LI(nullptr),
+        Ctx(nullptr), Reader(), Samples(nullptr), Filename(Name),
+        ProfileIsValid(false) {
     initializeSampleProfileLoaderPass(*PassRegistry::getPassRegistry());
   }
 
@@ -91,16 +92,23 @@ public:
 
   const char *getPassName() const override { return "Sample profile pass"; }
 
-  bool runOnFunction(Function &F) override;
+  bool runOnModule(Module &M) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
+
     AU.addRequired<LoopInfoWrapperPass>();
+    AU.addPreserved<LoopInfoWrapperPass>();
+
     AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addPreserved<DominatorTreeWrapperPass>();
+
     AU.addRequired<PostDominatorTree>();
+    AU.addPreserved<PostDominatorTree>();
   }
 
 protected:
+  bool runOnFunction(Function &F);
   unsigned getFunctionLoc(Function &F);
   bool emitAnnotations(Function &F);
   unsigned getInstWeight(Instruction &I);
@@ -743,10 +751,11 @@ INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
                     "Sample Profile loader", false, false)
 
 bool SampleProfileLoader::doInitialization(Module &M) {
-  auto ReaderOrErr = SampleProfileReader::create(Filename, M.getContext());
+  auto& Ctx = M.getContext();
+  auto ReaderOrErr = SampleProfileReader::create(Filename, Ctx);
   if (std::error_code EC = ReaderOrErr.getError()) {
     std::string Msg = "Could not open profile: " + EC.message();
-    M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
+    Ctx.diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
     return false;
   }
   Reader = std::move(ReaderOrErr.get());
@@ -754,21 +763,29 @@ bool SampleProfileLoader::doInitialization(Module &M) {
   return true;
 }
 
-FunctionPass *llvm::createSampleProfileLoaderPass() {
+ModulePass *llvm::createSampleProfileLoaderPass() {
   return new SampleProfileLoader(SampleProfileFile);
 }
 
-FunctionPass *llvm::createSampleProfileLoaderPass(StringRef Name) {
+ModulePass *llvm::createSampleProfileLoaderPass(StringRef Name) {
   return new SampleProfileLoader(Name);
+}
+
+bool SampleProfileLoader::runOnModule(Module &M) {
+  bool retval = false;
+  for (auto &F : M)
+    if (!F.isDeclaration())
+      retval |= runOnFunction(F);
+  return retval;
 }
 
 bool SampleProfileLoader::runOnFunction(Function &F) {
   if (!ProfileIsValid)
     return false;
 
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  PDT = &getAnalysis<PostDominatorTree>();
-  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  DT = &getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
+  PDT = &getAnalysis<PostDominatorTree>(F);
+  LI = &getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
   Ctx = &F.getParent()->getContext();
   Samples = Reader->getSamplesFor(F);
   if (!Samples->empty())

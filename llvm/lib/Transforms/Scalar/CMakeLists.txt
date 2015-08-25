@@ -38,7 +38,6 @@ add_llvm_library(LLVMScalarOpts
   RewriteStatepointsForGC.cpp
   SCCP.cpp
   SROA.cpp
-  SampleProfile.cpp
   Scalar.cpp
   ScalarReplAggregates.cpp
   Scalarizer.cpp

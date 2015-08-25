@@ -408,13 +408,6 @@ FunctionPass *createPartiallyInlineLibCallsPass();
 
 //===----------------------------------------------------------------------===//
 //
-// SampleProfilePass - Loads sample profile data from disk and generates
-// IR metadata to reflect the profile.
-FunctionPass *createSampleProfileLoaderPass();
-FunctionPass *createSampleProfileLoaderPass(StringRef Name);
-
-//===----------------------------------------------------------------------===//
-//
 // ScalarizerPass - Converts vector operations into scalar operations
 //
 FunctionPass *createScalarizerPass();

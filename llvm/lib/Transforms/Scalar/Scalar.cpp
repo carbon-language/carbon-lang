@@ -33,7 +33,6 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeADCEPass(Registry);
   initializeBDCEPass(Registry);
   initializeAlignmentFromAssumptionsPass(Registry);
-  initializeSampleProfileLoaderPass(Registry);
   initializeConstantHoistingPass(Registry);
   initializeConstantPropagationPass(Registry);
   initializeCorrelatedValuePropagationPass(Registry);
