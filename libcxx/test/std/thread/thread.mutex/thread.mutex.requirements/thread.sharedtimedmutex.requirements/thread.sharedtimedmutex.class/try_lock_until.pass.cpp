@@ -32,23 +32,36 @@ typedef Clock::duration duration;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::nanoseconds ns;
 
+
+ms WaitTime = ms(250);
+
+// Thread sanitizer causes more overhead and will sometimes cause this test
+// to fail. To prevent this we give Thread sanitizer more time to complete the
+// test.
+#if !TEST_HAS_FEATURE(thread_sanitizer)
+ms Tolerance = ms(50);
+#else
+ms Tolerance = ms(100);
+#endif
+
+
 void f1()
 {
     time_point t0 = Clock::now();
-    assert(m.try_lock_until(Clock::now() + ms(300)) == true);
+    assert(m.try_lock_until(Clock::now() + WaitTime + Tolerance) == true);
     time_point t1 = Clock::now();
     m.unlock();
-    ns d = t1 - t0 - ms(250);
-    assert(d < ms(50));  // within 50ms
+    ns d = t1 - t0 - WaitTime;
+    assert(d < Tolerance);  // within tolerance
 }
 
 void f2()
 {
     time_point t0 = Clock::now();
-    assert(m.try_lock_until(Clock::now() + ms(250)) == false);
+    assert(m.try_lock_until(Clock::now() + WaitTime) == false);
     time_point t1 = Clock::now();
-    ns d = t1 - t0 - ms(250);
-    assert(d < ms(50));  // within 50ms
+    ns d = t1 - t0 - WaitTime;
+    assert(d < Tolerance);  // within tolerance
 }
 
 int main()
@@ -56,14 +69,14 @@ int main()
     {
         m.lock();
         std::thread t(f1);
-        std::this_thread::sleep_for(ms(250));
+        std::this_thread::sleep_for(WaitTime);
         m.unlock();
         t.join();
     }
     {
         m.lock();
         std::thread t(f2);
-        std::this_thread::sleep_for(ms(300));
+        std::this_thread::sleep_for(WaitTime + Tolerance);
         m.unlock();
         t.join();
     }

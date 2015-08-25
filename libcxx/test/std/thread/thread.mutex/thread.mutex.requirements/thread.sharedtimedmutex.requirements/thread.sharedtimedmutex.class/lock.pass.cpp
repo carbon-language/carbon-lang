@@ -21,6 +21,8 @@
 #include <cstdlib>
 #include <cassert>
 
+#include "test_macros.h"
+
 std::shared_timed_mutex m;
 
 typedef std::chrono::system_clock Clock;
@@ -28,6 +30,19 @@ typedef Clock::time_point time_point;
 typedef Clock::duration duration;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::nanoseconds ns;
+
+
+ms WaitTime = ms(250);
+
+// Thread sanitizer causes more overhead and will sometimes cause this test
+// to fail. To prevent this we give Thread sanitizer more time to complete the
+// test.
+#if !TEST_HAS_FEATURE(thread_sanitizer)
+ms Tolerance = ms(50);
+#else
+ms Tolerance = ms(100);
+#endif
+
 
 void f()
 {
