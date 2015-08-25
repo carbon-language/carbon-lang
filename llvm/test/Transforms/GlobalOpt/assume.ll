@@ -9,7 +9,7 @@ define i32 @TheAnswerToLifeTheUniverseAndEverything() {
   ret i32 42
 }
 
-define void @_GLOBAL__I_a() i8* undef {
+define void @_GLOBAL__I_a() {
 enter:
   %tmp1 = call i32 @TheAnswerToLifeTheUniverseAndEverything()
   store i32 %tmp1, i32* @tmp
