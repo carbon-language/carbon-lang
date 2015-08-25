@@ -107,7 +107,6 @@ entry:
     i32 2, label %bb2
     i32 5, label %bb2
     i32 8, label %bb2
-
   ]
 bb0: tail call void @g(i32 0) br label %return
 bb1: tail call void @g(i32 1) br label %return
@@ -116,6 +115,10 @@ return: ret void
 
 ; This could be lowered as a jump table, but bit tests is more efficient.
 ; CHECK-LABEL: bt_is_better
+; The bit test on 2,5,8 is unnecessary as all cases cover the rage [0, 8].
+; The range check guarantees that cases other than 0,3,6 and 1,4,7 must be
+; in 2,5,8.
+;
 ; 73 = 2^0 + 2^3 + 2^6
 ; CHECK: movl $73
 ; CHECK: btl
@@ -123,7 +126,74 @@ return: ret void
 ; CHECK: movl $146
 ; CHECK: btl
 ; 292 = 2^2 + 2^5 + 2^8
-; CHECK: movl $292
+; CHECK-NOT: movl $292
+; CHECK-NOT: btl
+}
+
+define void @bt_is_better2(i32 %x) {
+entry:
+  switch i32 %x, label %return [
+    i32 0, label %bb0
+    i32 3, label %bb0
+    i32 6, label %bb0
+    i32 1, label %bb1
+    i32 4, label %bb1
+    i32 7, label %bb1
+    i32 2, label %bb2
+    i32 8, label %bb2
+  ]
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+bb2: tail call void @g(i32 2) br label %return
+return: ret void
+
+; This will also be lowered as bit test, but as the range [0,8] is not fully
+; covered (5 missing), the default statement can be jumped to and we end up
+; with one more branch.
+; CHECK-LABEL: bt_is_better2
+;
+; 73 = 2^0 + 2^3 + 2^6
+; CHECK: movl $73
+; CHECK: btl
+; 146 = 2^1 + 2^4 + 2^7
+; CHECK: movl $146
+; CHECK: btl
+; 260 = 2^2 + 2^8
+; CHECK: movl $260
+; CHECK: btl
+}
+
+define void @bt_is_better3(i32 %x) {
+entry:
+  switch i32 %x, label %return [
+    i32 10, label %bb0
+    i32 13, label %bb0
+    i32 16, label %bb0
+    i32 11, label %bb1
+    i32 14, label %bb1
+    i32 17, label %bb1
+    i32 12, label %bb2
+    i32 18, label %bb2
+  ]
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+bb2: tail call void @g(i32 2) br label %return
+return: ret void
+
+; We don't have to subtract 10 from the case value to let the range become
+; [0, 8], as each value in the range [10, 18] can be represented by bits in a
+; word. Then we still need a branch to jump to the default statement for the
+; range [0, 10).
+; CHECK-LABEL: bt_is_better3
+;
+; 74752 = 2^10 + 2^13 + 2^16
+; CHECK: movl $74752
+; CHECK: btl
+; 149504 = 2^11 + 2^14 + 2^17
+; CHECK: movl $149504
+; CHECK: btl
+; 266240 = 2^12 + 2^15 + 2^18
+; CHECK: movl $266240
 ; CHECK: btl
 }
 
@@ -410,6 +480,9 @@ return: ret void
 ; Cases 1,4,7 have a very large branch weight (which shouldn't overflow), so
 ; their bit test should come first. 0,3,6 and 2,5,8,9 both have a weight of 12,
 ; but the latter set has more cases, so should be tested for earlier.
+; The bit test on 0,3,6 is unnecessary as all cases cover the rage [0, 9].
+; The range check guarantees that cases other than 1,4,7 and 2,5,8,9 must be
+; in 0,3,6.
 
 ; CHECK-LABEL: bt_order_by_weight
 ; 146 = 2^1 + 2^4 + 2^7
@@ -419,8 +492,8 @@ return: ret void
 ; CHECK: movl $804
 ; CHECK: btl
 ; 73 = 2^0 + 2^3 + 2^6
-; CHECK: movl $73
-; CHECK: btl
+; CHECK-NOT: movl $73
+; CHECK-NOT: btl
 }
 
 !1 = !{!"branch_weights",

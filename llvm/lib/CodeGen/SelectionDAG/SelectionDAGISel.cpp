@@ -1499,25 +1499,32 @@ SelectionDAGISel::FinishBasicBlock() {
       FuncInfo->MBB = SDB->BitTestCases[i].Cases[j].ThisBB;
       FuncInfo->InsertPt = FuncInfo->MBB->end();
       // Emit the code
-      if (j+1 != ej)
-        SDB->visitBitTestCase(SDB->BitTestCases[i],
-                              SDB->BitTestCases[i].Cases[j+1].ThisBB,
-                              UnhandledWeight,
-                              SDB->BitTestCases[i].Reg,
-                              SDB->BitTestCases[i].Cases[j],
-                              FuncInfo->MBB);
-      else
-        SDB->visitBitTestCase(SDB->BitTestCases[i],
-                              SDB->BitTestCases[i].Default,
-                              UnhandledWeight,
-                              SDB->BitTestCases[i].Reg,
-                              SDB->BitTestCases[i].Cases[j],
-                              FuncInfo->MBB);
 
+      // If all cases cover a contiguous range, it is not necessary to jump to
+      // the default block after the last bit test fails. This is because the
+      // range check during bit test header creation has guaranteed that every
+      // case here doesn't go outside the range.
+      MachineBasicBlock *NextMBB;
+      if (SDB->BitTestCases[i].ContiguousRange && j + 2 == ej)
+        NextMBB = SDB->BitTestCases[i].Cases[j + 1].TargetBB;
+      else if (j + 1 != ej)
+        NextMBB = SDB->BitTestCases[i].Cases[j + 1].ThisBB;
+      else
+        NextMBB = SDB->BitTestCases[i].Default;
+
+      SDB->visitBitTestCase(SDB->BitTestCases[i],
+                            NextMBB,
+                            UnhandledWeight,
+                            SDB->BitTestCases[i].Reg,
+                            SDB->BitTestCases[i].Cases[j],
+                            FuncInfo->MBB);
 
       CurDAG->setRoot(SDB->getRoot());
       SDB->clear();
       CodeGenAndEmitDAG();
+
+      if (SDB->BitTestCases[i].ContiguousRange && j + 2 == ej)
+        break;
     }
 
     // Update PHI Nodes

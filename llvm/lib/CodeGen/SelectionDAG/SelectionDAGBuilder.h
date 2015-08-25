@@ -284,17 +284,18 @@ private:
 
   struct BitTestBlock {
     BitTestBlock(APInt F, APInt R, const Value* SV,
-                 unsigned Rg, MVT RgVT, bool E,
+                 unsigned Rg, MVT RgVT, bool E, bool CR,
                  MachineBasicBlock* P, MachineBasicBlock* D,
                  BitTestInfo C):
       First(F), Range(R), SValue(SV), Reg(Rg), RegVT(RgVT), Emitted(E),
-      Parent(P), Default(D), Cases(std::move(C)) { }
+      ContiguousRange(CR), Parent(P), Default(D), Cases(std::move(C)) { }
     APInt First;
     APInt Range;
     const Value *SValue;
     unsigned Reg;
     MVT RegVT;
     bool Emitted;
+    bool ContiguousRange;
     MachineBasicBlock *Parent;
     MachineBasicBlock *Default;
     BitTestInfo Cases;

@@ -7761,12 +7761,22 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
                            .getSizeInBits();
   assert(rangeFitsInWord(Low, High) && "Case range must fit in bit mask!");
 
-  if (Low.isNonNegative() && High.slt(BitWidth)) {
-    // Optimize the case where all the case values fit in a
-    // word without having to subtract minValue. In this case,
-    // we can optimize away the subtraction.
+  // Check if the clusters cover a contiguous range such that no value in the
+  // range will jump to the default statement.
+  bool ContiguousRange = true;
+  for (int64_t I = First + 1; I <= Last; ++I) {
+    if (Clusters[I].Low->getValue() != Clusters[I - 1].High->getValue() + 1) {
+      ContiguousRange = false;
+      break;
+    }
+  }
+
+  if (Low.isStrictlyPositive() && High.slt(BitWidth)) {
+    // Optimize the case where all the case values fit in a word without having
+    // to subtract minValue. In this case, we can optimize away the subtraction.
     LowBound = APInt::getNullValue(Low.getBitWidth());
     CmpRange = High;
+    ContiguousRange = false;
   } else {
     LowBound = Low;
     CmpRange = High - Low;
@@ -7809,8 +7819,8 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
     BTI.push_back(BitTestCase(CB.Mask, BitTestBB, CB.BB, CB.ExtraWeight));
   }
   BitTestCases.emplace_back(std::move(LowBound), std::move(CmpRange),
-                            SI->getCondition(), -1U, MVT::Other, false, nullptr,
-                            nullptr, std::move(BTI));
+                            SI->getCondition(), -1U, MVT::Other, false,
+                            ContiguousRange, nullptr, nullptr, std::move(BTI));
 
   BTCluster = CaseCluster::bitTests(Clusters[First].Low, Clusters[Last].High,
                                     BitTestCases.size() - 1, TotalWeight);
