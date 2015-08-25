@@ -50,14 +50,14 @@ if(APPLE)
       SOURCES ${UBSAN_STANDALONE_SOURCES}
       CFLAGS ${UBSAN_STANDALONE_CFLAGS})
     foreach(os ${SANITIZER_COMMON_SUPPORTED_OS})
-      add_compiler_rt_darwin_runtime(clang_rt.ubsan_${os}_dynamic ${os}
+      add_compiler_rt_runtime(clang_rt.ubsan
         SHARED
+        OS ${os}
         ARCHS ${UBSAN_SUPPORTED_ARCH}
         SOURCES $<TARGET_OBJECTS:RTUbsan.${os}>
                 $<TARGET_OBJECTS:RTUbsan_standalone.${os}>
-                $<TARGET_OBJECTS:RTSanitizerCommon.${os}>)
-
-      add_dependencies(ubsan clang_rt.ubsan_${os}_dynamic)
+                $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
+        PARENT_TARGET ubsan)
     endforeach()
   endif()
 
@@ -79,19 +79,22 @@ else()
     
     foreach(arch ${UBSAN_SUPPORTED_ARCH})
       # Standalone UBSan runtimes.
-      add_compiler_rt_runtime(clang_rt.ubsan_standalone-${arch} ${arch} STATIC
+      add_compiler_rt_runtime(clang_rt.ubsan_standalone
+        STATIC
+        ARCHS ${arch}
         SOURCES $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
                 $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
                 $<TARGET_OBJECTS:RTUbsan.${arch}>
                 $<TARGET_OBJECTS:RTUbsan_standalone.${arch}>
-        CFLAGS ${UBSAN_CFLAGS})
-      add_compiler_rt_runtime(clang_rt.ubsan_standalone_cxx-${arch} ${arch} STATIC
+        CFLAGS ${UBSAN_CFLAGS}
+        PARENT_TARGET ubsan)
+      add_compiler_rt_runtime(clang_rt.ubsan_standalone_cxx
+        STATIC
+        ARCHS ${arch}
         SOURCES $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
-        CFLAGS ${UBSAN_CXXFLAGS})
+        CFLAGS ${UBSAN_CXXFLAGS}
+        PARENT_TARGET ubsan)
 
-      add_dependencies(ubsan
-        clang_rt.ubsan_standalone-${arch}
-        clang_rt.ubsan_standalone_cxx-${arch})
       if (UNIX AND NOT ${arch} MATCHES "i386|i686")
         add_sanitizer_rt_symbols(clang_rt.ubsan_standalone-${arch} ubsan.syms.extra)
         add_sanitizer_rt_symbols(clang_rt.ubsan_standalone_cxx-${arch} ubsan.syms.extra)

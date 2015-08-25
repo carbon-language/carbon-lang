@@ -297,6 +297,10 @@ set(aarch64_SOURCES
 
 add_custom_target(builtins)
 
+if(APPLE)
+  set(OS_OPTION OS osx)
+endif()
+
 if (NOT WIN32 OR MINGW)
   foreach (arch x86_64 i386 i686 arm aarch64)
     if (CAN_TARGET_${arch})
@@ -311,10 +315,13 @@ if (NOT WIN32 OR MINGW)
         endif ()
       endforeach ()
 
-      add_compiler_rt_runtime(clang_rt.builtins-${arch} ${arch} STATIC
+      add_compiler_rt_runtime(clang_rt.builtins
+                              STATIC
+                              ARCH ${arch}
+                              ${OS_OPTION}
                               SOURCES ${${arch}_SOURCES}
-                              CFLAGS "-std=c99")
-      add_dependencies(builtins clang_rt.builtins-${arch})
+                              CFLAGS "-std=c99"
+                              PARENT_TARGET builtins)
     endif ()
   endforeach ()
 endif ()

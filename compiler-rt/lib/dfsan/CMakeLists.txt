@@ -15,15 +15,17 @@ add_custom_target(dfsan)
 foreach(arch ${DFSAN_SUPPORTED_ARCH})
   set(DFSAN_CFLAGS ${DFSAN_COMMON_CFLAGS})
   append_list_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE DFSAN_CFLAGS)
-  add_compiler_rt_runtime(clang_rt.dfsan-${arch} ${arch} STATIC
+  add_compiler_rt_runtime(clang_rt.dfsan
+    STATIC
+    ARCHS ${arch}
     SOURCES ${DFSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-    CFLAGS ${DFSAN_CFLAGS})
+    CFLAGS ${DFSAN_CFLAGS}
+    PARENT_TARGET dfsan)
   add_sanitizer_rt_symbols(clang_rt.dfsan-${arch} dfsan.syms.extra)
   add_dependencies(dfsan
-    clang_rt.dfsan-${arch}
     clang_rt.dfsan-${arch}-symbols)
 endforeach()
 

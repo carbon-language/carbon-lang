@@ -26,14 +26,16 @@ add_compiler_rt_object_libraries(RTLSanCommon
 
 if(COMPILER_RT_HAS_LSAN)
   foreach(arch ${LSAN_SUPPORTED_ARCH})
-    add_compiler_rt_runtime(clang_rt.lsan-${arch} ${arch} STATIC
+    add_compiler_rt_runtime(clang_rt.lsan
+      STATIC
+      ARCHS ${arch}
       SOURCES ${LSAN_SOURCES}
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
               $<TARGET_OBJECTS:RTLSanCommon.${arch}>
-      CFLAGS ${LSAN_CFLAGS})
-    add_dependencies(lsan clang_rt.lsan-${arch})
+      CFLAGS ${LSAN_CFLAGS}
+      PARENT_TARGET lsan)
   endforeach()
 endif()
 

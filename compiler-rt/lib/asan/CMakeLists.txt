@@ -111,8 +111,9 @@ endif()
 add_custom_target(asan)
 if(APPLE)
   foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
-    add_compiler_rt_darwin_runtime(clang_rt.asan_${os}_dynamic ${os}
+    add_compiler_rt_runtime(clang_rt.asan
       SHARED
+      OS ${os}
       ARCHS ${ASAN_SUPPORTED_ARCH}
       SOURCES $<TARGET_OBJECTS:RTAsan.${os}>
               $<TARGET_OBJECTS:RTInterception.${os}>
@@ -120,8 +121,8 @@ if(APPLE)
               $<TARGET_OBJECTS:RTLSanCommon.${os}>
               $<TARGET_OBJECTS:RTUbsan.${os}>
       CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-      DEFS ${ASAN_DYNAMIC_DEFINITIONS})
-    add_dependencies(asan clang_rt.asan_${os}_dynamic)
+      DEFS ${ASAN_DYNAMIC_DEFINITIONS}
+      PARENT_TARGET asan)
   endforeach()
 else()
   # Build separate libraries for each target.
@@ -133,26 +134,32 @@ else()
       $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       $<TARGET_OBJECTS:RTUbsan.${arch}>)
 
-    add_compiler_rt_runtime(clang_rt.asan-${arch} ${arch} STATIC
+    add_compiler_rt_runtime(clang_rt.asan
+      STATIC
+      ARCHS ${arch}
       SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
               $<TARGET_OBJECTS:RTAsan.${arch}>
               ${ASAN_COMMON_RUNTIME_OBJECTS}
       CFLAGS ${ASAN_CFLAGS}
-      DEFS ${ASAN_COMMON_DEFINITIONS})
-    add_dependencies(asan clang_rt.asan-${arch})
+      DEFS ${ASAN_COMMON_DEFINITIONS}
+      PARENT_TARGET asan)
 
-    add_compiler_rt_runtime(clang_rt.asan_cxx-${arch} ${arch} STATIC
+    add_compiler_rt_runtime(clang_rt.asan_cxx
+      STATIC
+      ARCHS ${arch}
       SOURCES $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
               $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
       CFLAGS ${ASAN_CFLAGS}
-      DEFS ${ASAN_COMMON_DEFINITIONS})
-    add_dependencies(asan clang_rt.asan_cxx-${arch})
+      DEFS ${ASAN_COMMON_DEFINITIONS}
+      PARENT_TARGET asan)
 
-    add_compiler_rt_runtime(clang_rt.asan-preinit-${arch} ${arch} STATIC
+    add_compiler_rt_runtime(clang_rt.asan-preinit
+      STATIC
+      ARCHS ${arch}
       SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
       CFLAGS ${ASAN_CFLAGS}
-      DEFS ${ASAN_COMMON_DEFINITIONS})
-    add_dependencies(asan clang_rt.asan-preinit-${arch})
+      DEFS ${ASAN_COMMON_DEFINITIONS}
+      PARENT_TARGET asan)
 
     if (UNIX AND NOT ${arch} MATCHES "i386|i686")
       add_sanitizer_rt_version_list(clang_rt.asan-dynamic-${arch}
@@ -168,13 +175,9 @@ else()
       set(VERSION_SCRIPT_FLAG)
     endif()
 
-    if (WIN32)
-      set(SHARED_ASAN_NAME clang_rt.asan_dynamic-${arch}${COMPILER_RT_OS_SUFFIX})
-    else()
-      set(SHARED_ASAN_NAME clang_rt.asan-${arch}${COMPILER_RT_OS_SUFFIX})
-    endif()
-    add_compiler_rt_runtime(clang_rt.asan-dynamic-${arch} ${arch} SHARED
-      OUTPUT_NAME ${SHARED_ASAN_NAME}
+    add_compiler_rt_runtime(clang_rt.asan
+      SHARED
+      ARCHS ${arch}
       SOURCES $<TARGET_OBJECTS:RTAsan_dynamic.${arch}>
               # The only purpose of RTAsan_dynamic_version_script_dummy is to carry
               # a dependency of the shared runtime on the version script. With CMake
@@ -186,9 +189,9 @@ else()
       CFLAGS ${ASAN_DYNAMIC_CFLAGS}
       LINKFLAGS ${ASAN_DYNAMIC_LINK_FLAGS}
                 ${VERSION_SCRIPT_FLAG}
-      DEFS ${ASAN_DYNAMIC_DEFINITIONS})
-    target_link_libraries(clang_rt.asan-dynamic-${arch} ${ASAN_DYNAMIC_LIBS})
-    add_dependencies(asan clang_rt.asan-dynamic-${arch})
+      LINKLIBS ${ASAN_DYNAMIC_LIBS}
+      DEFS ${ASAN_DYNAMIC_DEFINITIONS}
+      PARENT_TARGET asan)
 
     if (UNIX AND NOT ${arch} MATCHES "i386|i686")
       add_sanitizer_rt_symbols(clang_rt.asan_cxx-${arch})
@@ -198,18 +201,21 @@ else()
     endif()
 
     if (WIN32)
-      add_compiler_rt_runtime(clang_rt.asan_dll_thunk-${arch} ${arch} STATIC
+      add_compiler_rt_runtime(clang_rt.asan_dll_thunk
+        STATIC
+        ARCHS ${arch}
         SOURCES asan_win_dll_thunk.cc
                 $<TARGET_OBJECTS:RTInterception.${arch}>
         CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
-        DEFS ${ASAN_COMMON_DEFINITIONS})
-      add_dependencies(asan clang_rt.asan_dll_thunk-${arch})
-      add_compiler_rt_runtime(clang_rt.asan_dynamic_runtime_thunk-${arch} ${arch}
+        DEFS ${ASAN_COMMON_DEFINITIONS}
+        PARENT_TARGET asan)
+      add_compiler_rt_runtime(clang_rt.asan_dynamic_runtime_thunk
         STATIC
+        ARCHS ${arch}
         SOURCES asan_win_dynamic_runtime_thunk.cc
         CFLAGS ${ASAN_CFLAGS} -DASAN_DYNAMIC_RUNTIME_THUNK -Zl
-        DEFS ${ASAN_COMMON_DEFINITIONS})
-      add_dependencies(asan clang_rt.asan_dynamic_runtime_thunk-${arch})
+        DEFS ${ASAN_COMMON_DEFINITIONS}
+        PARENT_TARGET asan)
     endif()
   endforeach()
 endif()

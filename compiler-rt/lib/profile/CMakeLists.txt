@@ -11,20 +11,19 @@ set(PROFILE_SOURCES
   InstrProfilingUtil.c)
 
 if(APPLE)
-  foreach (os osx)
-    add_compiler_rt_darwin_runtime(clang_rt.profile_${os} ${os}
-      STATIC
-      ARCHS ${PROFILE_SUPPORTED_ARCH}
-      SOURCES ${PROFILE_SOURCES})
-    add_dependencies(profile clang_rt.profile_${os})
-  endforeach()
+  add_compiler_rt_runtime(clang_rt.profile
+    STATIC
+    OS osx
+    ARCHS ${PROFILE_SUPPORTED_ARCH}
+    SOURCES ${PROFILE_SOURCES}
+    PARENT_TARGET profile)
 else()
-  foreach(arch ${PROFILE_SUPPORTED_ARCH})
-    add_compiler_rt_runtime(clang_rt.profile-${arch} ${arch} STATIC
-      CFLAGS -fPIC
-      SOURCES ${PROFILE_SOURCES})
-    add_dependencies(profile clang_rt.profile-${arch})
-  endforeach()
+  add_compiler_rt_runtime(clang_rt.profile
+    STATIC
+    ARCHS ${PROFILE_SUPPORTED_ARCH}
+    CFLAGS -fPIC
+    SOURCES ${PROFILE_SOURCES}
+    PARENT_TARGET profile)
 endif()
 
 add_dependencies(compiler-rt profile)

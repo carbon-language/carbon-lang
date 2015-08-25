@@ -101,14 +101,18 @@ foreach(arch ${TSAN_SUPPORTED_ARCH})
   else()
     set(TSAN_ASM_SOURCES)
   endif()
-  add_compiler_rt_runtime(clang_rt.tsan-${arch} ${arch} STATIC
+  add_compiler_rt_runtime(clang_rt.tsan
+    STATIC
+    ARCHS ${arch}
     SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
             $<TARGET_OBJECTS:RTUbsan.${arch}>
     CFLAGS ${TSAN_RTL_CFLAGS})
-  add_compiler_rt_runtime(clang_rt.tsan_cxx-${arch} ${arch} STATIC
+  add_compiler_rt_runtime(clang_rt.tsan_cxx
+    STATIC
+    ARCHS ${arch}
     SOURCES ${TSAN_CXX_SOURCES}
             $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
     CFLAGS ${TSAN_RTL_CFLAGS})
