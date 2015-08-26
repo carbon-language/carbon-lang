@@ -19,6 +19,7 @@ def Core : Package<"core">;
 def CoreBuiltin : Package<"builtin">, InPackage<Core>;
 def CoreUninitialized  : Package<"uninitialized">, InPackage<Core>;
 def CoreAlpha : Package<"core">, InPackage<Alpha>, Hidden;
+def Nullability : Package<"nullability">, InPackage<CoreAlpha>, Hidden;
 
 def Cplusplus : Package<"cplusplus">;
 def CplusplusAlpha : Package<"cplusplus">, InPackage<Alpha>, Hidden;
@@ -129,6 +130,30 @@ def TestAfterDivZeroChecker : Checker<"TestAfterDivZero">,
   DescFile<"TestAfterDivZeroChecker.cpp">;
 
 } // end "alpha.core"
+
+let ParentPackage = Nullability in {
+
+def NullPassedToNonnullChecker : Checker<"NullPassedToNonnull">,
+  HelpText<"Warns when a null pointer is passed to a pointer which has a _Nonnull type.">,
+  DescFile<"NullabilityChecker.cpp">;
+
+def NullReturnedFromNonnullChecker : Checker<"NullReturnedFromNonnull">,
+  HelpText<"Warns when a null pointer is returned from a function that has _Nonnull return type.">,
+  DescFile<"NullabilityChecker.cpp">;
+
+def NullableDereferencedChecker : Checker<"NullableDereferenced">,
+  HelpText<"Warns when a nullable pointer is dereferenced.">,
+  DescFile<"NullabilityChecker.cpp">;
+
+def NullablePassedToNonnullChecker : Checker<"NullablePassedToNonnull">,
+  HelpText<"Warns when a nullable pointer is passed to a pointer which has a _Nonnull type.">,
+  DescFile<"NullabilityChecker.cpp">;
+
+def NullableReturnedFromNonnullChecker : Checker<"NullablePassedToNonnull">,
+  HelpText<"Warns when a nullable pointer is returned from a function that has _Nonnull return type.">,
+  DescFile<"NullabilityChecker.cpp">;
+
+} // end "alpha.core.nullability"
 
 //===----------------------------------------------------------------------===//
 // Evaluate "builtin" functions.
