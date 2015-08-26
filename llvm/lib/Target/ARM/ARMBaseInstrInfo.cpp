@@ -1670,8 +1670,7 @@ isProfitableToIfCvt(MachineBasicBlock &MBB,
   }
 
   // Attempt to estimate the relative costs of predication versus branching.
-  unsigned UnpredCost = Probability.getNumerator() * NumCycles;
-  UnpredCost /= Probability.getDenominator();
+  unsigned UnpredCost = Probability.scale(NumCycles);
   UnpredCost += 1; // The branch itself
   UnpredCost += Subtarget.getMispredictionPenalty() / 10;
 
@@ -1688,13 +1687,8 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB,
     return false;
 
   // Attempt to estimate the relative costs of predication versus branching.
-  unsigned TUnpredCost = Probability.getNumerator() * TCycles;
-  TUnpredCost /= Probability.getDenominator();
-
-  uint32_t Comp = Probability.getDenominator() - Probability.getNumerator();
-  unsigned FUnpredCost = Comp * FCycles;
-  FUnpredCost /= Probability.getDenominator();
-
+  unsigned TUnpredCost = Probability.scale(TCycles);
+  unsigned FUnpredCost = Probability.getCompl().scale(FCycles);
   unsigned UnpredCost = TUnpredCost + FUnpredCost;
   UnpredCost += 1; // The branch itself
   UnpredCost += Subtarget.getMispredictionPenalty() / 10;
