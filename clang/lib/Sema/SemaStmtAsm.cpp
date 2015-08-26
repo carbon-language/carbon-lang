@@ -528,6 +528,17 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   return NS;
 }
 
+static void fillInlineAsmTypeInfo(const ASTContext &Context, QualType T,
+                                  llvm::InlineAsmIdentifierInfo &Info) {
+  // Compute the type size (and array length if applicable?).
+  Info.Type = Info.Size = Context.getTypeSizeInChars(T).getQuantity();
+  if (T->isArrayType()) {
+    const ArrayType *ATy = Context.getAsArrayType(T);
+    Info.Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
+    Info.Length = Info.Size / Info.Type;
+  }
+}
+
 ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
                                            SourceLocation TemplateKWLoc,
                                            UnqualifiedId &Id,
@@ -575,13 +586,7 @@ ExprResult Sema::LookupInlineAsmIdentifier(CXXScopeSpec &SS,
     return ExprError();
   }
 
-  // Compute the type size (and array length if applicable?).
-  Info.Type = Info.Size = Context.getTypeSizeInChars(T).getQuantity();
-  if (T->isArrayType()) {
-    const ArrayType *ATy = Context.getAsArrayType(T);
-    Info.Type = Context.getTypeSizeInChars(ATy->getElementType()).getQuantity();
-    Info.Length = Info.Size / Info.Type;
-  }
+  fillInlineAsmTypeInfo(Context, T, Info);
 
   // We can work with the expression as long as it's not an r-value.
   if (!Result.get()->isRValue())
@@ -634,6 +639,49 @@ bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
   Offset = (unsigned)Result.getQuantity();
 
   return false;
+}
+
+ExprResult
+Sema::LookupInlineAsmVarDeclField(Expr *E, StringRef Member, unsigned &Offset,
+                                  llvm::InlineAsmIdentifierInfo &Info,
+                                  SourceLocation AsmLoc) {
+  Info.clear();
+
+  const RecordType *RT = E->getType()->getAs<RecordType>();
+  // FIXME: Diagnose this as field access into a scalar type.
+  if (!RT)
+    return ExprResult();
+
+  LookupResult FieldResult(*this, &Context.Idents.get(Member), AsmLoc,
+                           LookupMemberName);
+
+  if (!LookupQualifiedName(FieldResult, RT->getDecl()))
+    return ExprResult();
+
+  // Only normal and indirect field results will work.
+  ValueDecl *FD = dyn_cast<FieldDecl>(FieldResult.getFoundDecl());
+  if (!FD)
+    FD = dyn_cast<IndirectFieldDecl>(FieldResult.getFoundDecl());
+  if (!FD)
+    return ExprResult();
+
+  Offset = (unsigned)Context.toCharUnitsFromBits(Context.getFieldOffset(FD))
+               .getQuantity();
+
+  // Make an Expr to thread through OpDecl.
+  ExprResult Result = BuildMemberReferenceExpr(
+      E, E->getType(), AsmLoc, /*IsArrow=*/false, CXXScopeSpec(),
+      SourceLocation(), nullptr, FieldResult, nullptr);
+  if (Result.isInvalid())
+    return Result;
+  Info.OpDecl = Result.get();
+
+  fillInlineAsmTypeInfo(Context, Result.get()->getType(), Info);
+
+  // Fields are "variables" as far as inline assembly is concerned.
+  Info.IsVarDecl = true;
+
+  return Result;
 }
 
 StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,

@@ -563,3 +563,21 @@ void label4() {
   // CHECK-LABEL: define void @label4
   // CHECK: call void asm sideeffect inteldialect "{{.*}}__MSASMLABEL_.4__label:\0A\09mov eax, {{.*}}__MSASMLABEL_.4__label", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 }
+
+typedef union _LARGE_INTEGER {
+  struct {
+    unsigned int LowPart;
+    unsigned int  HighPart;
+  };
+  struct {
+    unsigned int LowPart;
+    unsigned int  HighPart;
+  } u;
+  unsigned long long QuadPart;
+} LARGE_INTEGER, *PLARGE_INTEGER;
+
+int test_indirect_field(LARGE_INTEGER LargeInteger) {
+    __asm mov     eax, LargeInteger.LowPart
+}
+// CHECK-LABEL: define i32 @test_indirect_field(
+// CHECK: call i32 asm sideeffect inteldialect "mov eax, dword ptr $1",
