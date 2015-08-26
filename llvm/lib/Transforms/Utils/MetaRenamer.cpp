@@ -42,6 +42,24 @@ namespace {
     }
   };
 
+  static const char *const metaNames[] = {
+    // See http://en.wikipedia.org/wiki/Metasyntactic_variable
+    "foo", "bar", "baz", "quux", "barney", "snork", "zot", "blam", "hoge",
+    "wibble", "wobble", "widget", "wombat", "ham", "eggs", "pluto", "spam"
+  };
+
+  struct Renamer {
+    Renamer(unsigned int seed) {
+      prng.srand(seed);
+    }
+
+    const char *newName() {
+      return metaNames[prng.rand() % array_lengthof(metaNames)];
+    }
+
+    PRNG prng;
+  };
+  
   struct MetaRenamer : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     MetaRenamer() : ModulePass(ID) {
@@ -53,12 +71,6 @@ namespace {
     }
 
     bool runOnModule(Module &M) override {
-      static const char *const metaNames[] = {
-        // See http://en.wikipedia.org/wiki/Metasyntactic_variable
-        "foo", "bar", "baz", "quux", "barney", "snork", "zot", "blam", "hoge",
-        "wibble", "wobble", "widget", "wombat", "ham", "eggs", "pluto", "spam"
-      };
-
       // Seed our PRNG with simple additive sum of ModuleID. We're looking to
       // simply avoid always having the same function names, and we need to
       // remain deterministic.
@@ -67,9 +79,8 @@ namespace {
            E = M.getModuleIdentifier().end(); I != E; ++I)
         randSeed += *I;
 
-      PRNG prng;
-      prng.srand(randSeed);
-
+      Renamer renamer(randSeed);
+           
       // Rename all aliases
       for (Module::alias_iterator AI = M.alias_begin(), AE = M.alias_end();
            AI != AE; ++AI) {
@@ -98,8 +109,8 @@ namespace {
         if (STy->isLiteral() || STy->getName().empty()) continue;
 
         SmallString<128> NameStorage;
-        STy->setName((Twine("struct.") + metaNames[prng.rand() %
-                     array_lengthof(metaNames)]).toStringRef(NameStorage));
+        STy->setName((Twine("struct.") +
+          renamer.newName()).toStringRef(NameStorage));
       }
 
       // Rename all functions
@@ -109,7 +120,7 @@ namespace {
         if (Name.startswith("llvm.") || (!Name.empty() && Name[0] == 1))
           continue;
 
-        FI->setName(metaNames[prng.rand() % array_lengthof(metaNames)]);
+        FI->setName(renamer.newName());
         runOnFunction(*FI);
       }
       return true;
