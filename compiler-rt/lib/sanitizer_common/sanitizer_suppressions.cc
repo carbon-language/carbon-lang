@@ -112,7 +112,8 @@ void SuppressionContext::Parse(const char *str) {
       end = line + internal_strlen(line);
     if (line != end && line[0] != '#') {
       const char *end2 = end;
-      while (line != end2 && (end2[-1] == ' ' || end2[-1] == '\t'))
+      while (line != end2 &&
+             (end2[-1] == ' ' || end2[-1] == '\t' || end2[-1] == '\r'))
         end2--;
       int type;
       for (type = 0; type < suppression_types_num_; type++) {
