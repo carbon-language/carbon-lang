@@ -1,17 +1,18 @@
-; RUN: llc -mtriple=i686-pc-gnu-linux < %s | FileCheck %s
+; RUN: llc -mtriple=i686-pc-gnu-linux < %s | FileCheck %s -check-prefix=CHECK
+; RUN: llc -mtriple=i686-pc-gnu-linux -print-machineinstrs=expand-isel-pseudos %s -o /dev/null 2>&1 | FileCheck %s -check-prefix=CHECK-JT-WEIGHT
 
 
 ; An unreachable default destination is replaced with the most popular case label.
 
-define void @sum2(i32 %x, i32* %to) {
-; CHECK-LABEL: sum2:
+define void @foo(i32 %x, i32* %to) {
+; CHECK-LABEL: foo:
 ; CHECK: movl 4(%esp), [[REG:%e[a-z]{2}]]
 ; CHECK: cmpl $3, [[REG]]
-; CHECK: jbe .LBB0_1
+; CHECK: ja .LBB0_6
+; CHECK-NEXT: # BB#1:
+; CHECK-NEXT: jmpl *.LJTI0_0(,[[REG]],4)
 ; CHECK: movl $4
 ; CHECK: retl
-; CHECK-LABEL: .LBB0_1:
-; CHECK-NEXT: jmpl *.LJTI0_0(,[[REG]],4)
 
 entry:
   switch i32 %x, label %default [
@@ -48,5 +49,44 @@ default:
 ; CHECK-NEXT: .long  .LBB0_3
 ; CHECK-NEXT: .long  .LBB0_4
 ; CHECK-NEXT: .long  .LBB0_5
-; CHECK-NOT: .long
 }
+
+; Check if branch probabilities are correctly assigned to the jump table.
+
+define void @bar(i32 %x, i32* %to) {
+; CHECK-JT-WEIGHT-LABEL: bar:
+; CHECK-JT-WEIGHT: Successors according to CFG: BB#6(16) BB#8(96)
+; CHECK-JT-WEIGHT: Successors according to CFG: BB#1(16) BB#2(16) BB#3(16) BB#4(16) BB#5(32)
+
+entry:
+  switch i32 %x, label %default [
+    i32 0, label %bb0
+    i32 1, label %bb1
+    i32 2, label %bb2
+    i32 3, label %bb3
+    i32 4, label %bb4
+    i32 5, label %bb4
+  ], !prof !1
+bb0:
+  store i32 0, i32* %to
+  br label %exit
+bb1:
+  store i32 1, i32* %to
+  br label %exit
+bb2:
+  store i32 2, i32* %to
+  br label %exit
+bb3:
+  store i32 3, i32* %to
+  br label %exit
+bb4:
+  store i32 4, i32* %to
+  br label %exit
+default:
+  store i32 5, i32* %to
+  br label %exit
+exit:
+  ret void
+}
+
+!1 = !{!"branch_weights", i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16}

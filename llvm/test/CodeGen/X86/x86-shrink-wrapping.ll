@@ -532,7 +532,11 @@ declare hidden fastcc %struct.temp_slot* @find_temp_slot_from_address(%struct.rt
 ;
 ; CHECK: movl $24599, [[TMP2:%e[a-z]+]]
 ; CHECK-NEXT: btl [[TMP]], [[TMP2]]
-; CHECK-NEXT: jb [[CLEANUP]]
+; CHECK-NEXT: jae [[LOR_LHS_FALSE:LBB[0-9_]+]]
+;
+; CHECK: [[CLEANUP]]: ## %cleanup
+; DISABLE: popq
+; CHECK-NEXT: retq
 ;
 ; CHECK: [[LOR_LHS_FALSE]]: ## %lor.lhs.false
 ; CHECK: cmpl $134, %e[[BF_LOAD2]]
@@ -551,10 +555,6 @@ declare hidden fastcc %struct.temp_slot* @find_temp_slot_from_address(%struct.rt
 ; CHECK-NEXT: je [[CLEANUP]]
 ;
 ; CHECK: movb $1, 57(%rax)
-;
-; CHECK: [[CLEANUP]]: ## %cleanup
-; DISABLE: popq
-; CHECK-NEXT: retq
 define void @useLEA(%struct.rtx_def* readonly %x) {
 entry:
   %cmp = icmp eq %struct.rtx_def* %x, null

@@ -90,7 +90,7 @@ return: ret void
 ; but with 6-8, the whole switch is suitable for a jump table.
 ; CHECK-LABEL: jt_is_better
 ; CHECK: cmpl $8
-; CHECK: jbe
+; CHECK: ja
 ; CHECK: jmpq *.LJTI
 }
 

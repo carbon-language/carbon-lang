@@ -1897,8 +1897,9 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
 
   MachineBasicBlock* MBB = B.Cases[0].ThisBB;
 
-  addSuccessorWithWeight(SwitchBB, B.Default);
-  addSuccessorWithWeight(SwitchBB, MBB);
+  uint32_t DefaultWeight = getEdgeWeight(SwitchBB, B.Default);
+  addSuccessorWithWeight(SwitchBB, B.Default, DefaultWeight);
+  addSuccessorWithWeight(SwitchBB, MBB, B.Weight);
 
   SDValue BrRange = DAG.getNode(ISD::BRCOND, dl,
                                 MVT::Other, CopyTo, RangeCmp,
@@ -7820,7 +7821,8 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
   }
   BitTestCases.emplace_back(std::move(LowBound), std::move(CmpRange),
                             SI->getCondition(), -1U, MVT::Other, false,
-                            ContiguousRange, nullptr, nullptr, std::move(BTI));
+                            ContiguousRange, nullptr, nullptr, std::move(BTI),
+                            TotalWeight);
 
   BTCluster = CaseCluster::bitTests(Clusters[First].Low, Clusters[Last].High,
                                     BitTestCases.size() - 1, TotalWeight);
@@ -8041,8 +8043,16 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
         // The jump block hasn't been inserted yet; insert it here.
         MachineBasicBlock *JumpMBB = JT->MBB;
         CurMF->insert(BBI, JumpMBB);
-        addSuccessorWithWeight(CurMBB, Fallthrough);
-        addSuccessorWithWeight(CurMBB, JumpMBB);
+
+        // Collect the sum of weights of outgoing edges from JumpMBB, which will
+        // be the edge weight on CurMBB->JumpMBB.
+        uint32_t JumpWeight = 0;
+        for (auto Succ : JumpMBB->successors())
+          JumpWeight += getEdgeWeight(JumpMBB, Succ);
+        uint32_t FallthruWeight = getEdgeWeight(CurMBB, Fallthrough);
+
+        addSuccessorWithWeight(CurMBB, Fallthrough, FallthruWeight);
+        addSuccessorWithWeight(CurMBB, JumpMBB, JumpWeight);
 
         // The jump table header will be inserted in our current block, do the
         // range check, and fall through to our fallthrough block.

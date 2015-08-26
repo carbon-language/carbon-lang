@@ -44,6 +44,9 @@ default:
 ; CHECK-NEXT:    ${{BB[0-9]+_[0-9]+}}:
 ; CHECK-NEXT:        jr      $ra
 ; CHECK-NEXT:        addiu   $2, $zero, 111
+; CHECK-NEXT:    ${{BB[0-9]+_[0-9]+}}:
+; CHECK-NEXT:        jr      $ra
+; CHECK-NEXT:        addiu   $2, $zero, 555
 ; CHECK-NEXT:        .align  4
 ; CHECK-NEXT:    ${{BB[0-9]+_[0-9]+}}:
 ; CHECK-NEXT:        jr      $ra
@@ -52,10 +55,6 @@ default:
 ; CHECK-NEXT:    ${{BB[0-9]+_[0-9]+}}:
 ; CHECK-NEXT:        jr      $ra
 ; CHECK-NEXT:        addiu   $2, $zero, 333
-; CHECK-NEXT:        .align  4
-; CHECK-NEXT:    ${{BB[0-9]+_[0-9]+}}:
-; CHECK-NEXT:        jr      $ra
-; CHECK-NEXT:        addiu   $2, $zero, 444
 
 }
 
