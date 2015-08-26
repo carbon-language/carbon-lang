@@ -1977,6 +1977,8 @@ def err_function_concept_not_defined : Error<
   "function concept declaration must be a definition">;
 def err_var_concept_not_initialized : Error<
   "variable concept declaration must be initialized">;
+def err_function_concept_exception_spec : Error<
+  "function concept cannot have exception specification">;
 
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<

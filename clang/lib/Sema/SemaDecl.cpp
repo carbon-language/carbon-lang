@@ -7476,6 +7476,22 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         NewFD->setInvalidDecl();
       }
 
+      // C++ Concepts TS [dcl.spec.concept]p1: [...] A function concept shall
+      // have no exception-specification and is treated as if it were specified
+      // with noexcept(true) (15.4). [...]
+      if (const FunctionProtoType *FPT = R->getAs<FunctionProtoType>()) {
+        if (FPT->hasExceptionSpec()) {
+          SourceRange Range;
+          if (D.isFunctionDeclarator())
+            Range = D.getFunctionTypeInfo().getExceptionSpecRange();
+          Diag(NewFD->getLocation(), diag::err_function_concept_exception_spec)
+              << FixItHint::CreateRemoval(Range);
+          NewFD->setInvalidDecl();
+        } else {
+          Context.adjustExceptionSpec(NewFD, EST_BasicNoexcept);
+        }
+      }
+
       // C++ Concepts TS [dcl.spec.concept]p2: Every concept definition is
       // implicity defined to be a constexpr declaration (implicitly inline)
       NewFD->setImplicitlyInline();
@@ -11123,7 +11139,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
                                              /*RestrictQualifierLoc=*/NoLoc,
                                              /*MutableLoc=*/NoLoc,
                                              EST_None,
-                                             /*ESpecLoc=*/NoLoc,
+                                             /*ESpecRange=*/SourceRange(),
                                              /*Exceptions=*/nullptr,
                                              /*ExceptionRanges=*/nullptr,
                                              /*NumExceptions=*/0,

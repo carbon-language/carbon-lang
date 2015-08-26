@@ -700,7 +700,7 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
       /*VolatileQualifierLoc=*/NoLoc,
       /*RestrictQualifierLoc=*/NoLoc,
       /*MutableLoc=*/NoLoc, EST_None,
-      /*ESpecLoc=*/NoLoc,
+      /*ESpecRange=*/SourceRange(),
       /*Exceptions=*/nullptr,
       /*ExceptionRanges=*/nullptr,
       /*NumExceptions=*/0,
@@ -3833,9 +3833,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // Exception specs are not allowed in typedefs. Complain, but add it
       // anyway.
       if (IsTypedefName && FTI.getExceptionSpecType())
-        S.Diag(FTI.getExceptionSpecLoc(), diag::err_exception_spec_in_typedef)
-          << (D.getContext() == Declarator::AliasDeclContext ||
-              D.getContext() == Declarator::AliasTemplateContext);
+        S.Diag(FTI.getExceptionSpecLocBeg(),
+               diag::err_exception_spec_in_typedef)
+            << (D.getContext() == Declarator::AliasDeclContext ||
+                D.getContext() == Declarator::AliasTemplateContext);
 
       // If we see "T var();" or "T var(T());" at block scope, it is probably
       // an attempt to initialize a variable, not a function declaration.

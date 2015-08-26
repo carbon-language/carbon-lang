@@ -177,7 +177,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
                                              SourceLocation MutableLoc,
                                              ExceptionSpecificationType
                                                  ESpecType,
-                                             SourceLocation ESpecLoc,
+                                             SourceRange ESpecRange,
                                              ParsedType *Exceptions,
                                              SourceRange *ExceptionRanges,
                                              unsigned NumExceptions,
@@ -212,7 +212,8 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto,
   I.Fun.RestrictQualifierLoc    = RestrictQualifierLoc.getRawEncoding();
   I.Fun.MutableLoc              = MutableLoc.getRawEncoding();
   I.Fun.ExceptionSpecType       = ESpecType;
-  I.Fun.ExceptionSpecLoc        = ESpecLoc.getRawEncoding();
+  I.Fun.ExceptionSpecLocBeg     = ESpecRange.getBegin().getRawEncoding();
+  I.Fun.ExceptionSpecLocEnd     = ESpecRange.getEnd().getRawEncoding();
   I.Fun.NumExceptions           = 0;
   I.Fun.Exceptions              = nullptr;
   I.Fun.NoexceptExpr            = nullptr;
