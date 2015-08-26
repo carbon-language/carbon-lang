@@ -1,5 +1,5 @@
 // RUN: %clangxx -g %s -o %t
-// RUN: %tool_options=decorate_proc_maps=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%tool_name
+// RUN: %env_tool_opts=decorate_proc_maps=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%tool_name
 // REQUIRES: stable-runtime
 #include <errno.h>
 #include <fcntl.h>

@@ -1,8 +1,8 @@
 // Test the handle_abort option.
 // RUN: %clang %s -o %t
 // RUN:                              not --crash %run %t 2>&1 | FileCheck --check-prefix=CHECK0 %s
-// RUN: %tool_options=handle_abort=0 not --crash %run %t 2>&1 | FileCheck --check-prefix=CHECK0 %s
-// RUN: %tool_options=handle_abort=1 not         %run %t 2>&1 | FileCheck --check-prefix=CHECK1 %s
+// RUN: %env_tool_opts=handle_abort=0 not --crash %run %t 2>&1 | FileCheck --check-prefix=CHECK0 %s
+// RUN: %env_tool_opts=handle_abort=1 not         %run %t 2>&1 | FileCheck --check-prefix=CHECK1 %s
 // FIXME: implement in other sanitizers, not just asan.
 // XFAIL: msan
 // XFAIL: lsan

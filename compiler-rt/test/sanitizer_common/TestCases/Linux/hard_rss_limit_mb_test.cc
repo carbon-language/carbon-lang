@@ -2,12 +2,12 @@
 // RUN: %clangxx -O2 %s -o %t
 //
 // Run with limit should fail:
-// RUN: %tool_options=hard_rss_limit_mb=100                           not %run %t 2>&1 | FileCheck %s
+// RUN: %env_tool_opts=hard_rss_limit_mb=100                           not %run %t 2>&1 | FileCheck %s
 // This run uses getrusage:
-// RUN: %tool_options=hard_rss_limit_mb=100:can_use_proc_maps_statm=0 not %run %t 2>&1 | FileCheck %s
+// RUN: %env_tool_opts=hard_rss_limit_mb=100:can_use_proc_maps_statm=0 not %run %t 2>&1 | FileCheck %s
 //
 // Run w/o limit or with a large enough limit should pass:
-// RUN: %tool_options=hard_rss_limit_mb=1000 %run %t
+// RUN: %env_tool_opts=hard_rss_limit_mb=1000 %run %t
 // RUN: %run %t
 //
 // FIXME: make it work for other sanitizers.

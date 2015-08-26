@@ -2,12 +2,12 @@
 // RUN: %clangxx -O2 %s -o %t
 //
 // Run with limit should fail:
-// RUN: %tool_options=soft_rss_limit_mb=220:quarantine_size=1:allocator_may_return_null=1     %run %t 2>&1 | FileCheck %s -check-prefix=CHECK_MAY_RETURN_1
-// RUN: %tool_options=soft_rss_limit_mb=220:quarantine_size=1:allocator_may_return_null=0 not %run %t 2>&1 | FileCheck %s -check-prefix=CHECK_MAY_RETURN_0
+// RUN: %env_tool_opts=soft_rss_limit_mb=220:quarantine_size=1:allocator_may_return_null=1     %run %t 2>&1 | FileCheck %s -check-prefix=CHECK_MAY_RETURN_1
+// RUN: %env_tool_opts=soft_rss_limit_mb=220:quarantine_size=1:allocator_may_return_null=0 not %run %t 2>&1 | FileCheck %s -check-prefix=CHECK_MAY_RETURN_0
 
 // This run uses getrusage. We can only test getrusage when allocator_may_return_null=0
 // because getrusage gives us max-rss, not current-rss.
-// RUN: %tool_options=soft_rss_limit_mb=220:quarantine_size=1:allocator_may_return_null=0:can_use_proc_maps_statm=0 not %run %t 2>&1 | FileCheck %s -check-prefix=CHECK_MAY_RETURN_0
+// RUN: %env_tool_opts=soft_rss_limit_mb=220:quarantine_size=1:allocator_may_return_null=0:can_use_proc_maps_statm=0 not %run %t 2>&1 | FileCheck %s -check-prefix=CHECK_MAY_RETURN_0
 
 // FIXME: make it work for other sanitizers.
 // XFAIL: lsan

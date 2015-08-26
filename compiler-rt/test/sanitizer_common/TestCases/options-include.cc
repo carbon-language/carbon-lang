@@ -7,30 +7,30 @@
 // RUN: cat %t.options1.txt
 // RUN: cat %t.options2.txt
 
-// RUN: %tool_options="help=0:include='%t.options1.txt'" %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=help=0:include='"%t.options1.txt"' %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITH-HELP --check-prefix=CHECK-FOUND <%t.out
 
-// RUN: %tool_options="include='%t.options1.txt',help=0" %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include='"%t.options1.txt"',help=0 %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITHOUT-HELP --check-prefix=CHECK-FOUND <%t.out
 
-// RUN: %tool_options="include='%t.options-not-found.txt',help=1" not %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include='"%t.options-not-found.txt"',help=1 not %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-NOT-FOUND < %t.out
 
 // include_if_exists does not fail when the file is missing
-// RUN: %tool_options="include_if_exists='%t.options-not-found.txt',help=1" %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include_if_exists='"%t.options-not-found.txt"',help=1 %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITH-HELP --check-prefix=CHECK-FOUND < %t.out
 
 // %b (binary basename substitution)
-// RUN: %tool_options="include='%t.options.%b'" %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include='"%t.options.%b"' %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITH-HELP --check-prefix=CHECK-FOUND < %t.out
 
-// RUN: %tool_options="include='%t.options-not-found.%b'" not %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include='"%t.options-not-found.%b"' not %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITHOUT-HELP --check-prefix=CHECK-NOT-FOUND < %t.out
 
-// RUN: %tool_options="include_if_exists='%t.options.%b'" %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include_if_exists='"%t.options.%b"' %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITH-HELP --check-prefix=CHECK-FOUND < %t.out
 
-// RUN: %tool_options="include_if_exists='%t.options-not-found.%b'" %run %t 2>&1 | tee %t.out
+// RUN: %env_tool_opts=include_if_exists='"%t.options-not-found.%b"' %run %t 2>&1 | tee %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-WITHOUT-HELP --check-prefix=CHECK-FOUND < %t.out
 
 
