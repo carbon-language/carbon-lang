@@ -772,23 +772,6 @@ public:
     return false;
   }
 
-  /// \brief Use this specified C++ ABI.
-  ///
-  /// \return False on error (invalid C++ ABI name).
-  bool setCXXABI(llvm::StringRef name) {
-    TargetCXXABI ABI;
-    if (!ABI.tryParse(name)) return false;
-    return setCXXABI(ABI);
-  }
-
-  /// \brief Set the C++ ABI to be used by this implementation.
-  ///
-  /// \return False on error (ABI not valid on this target)
-  virtual bool setCXXABI(TargetCXXABI ABI) {
-    TheCXXABI = ABI;
-    return true;
-  }
-
   /// \brief Enable or disable a specific target feature;
   /// the feature name must be valid.
   virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,

@@ -650,18 +650,3 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
 
   return true;
 }
-
-bool TargetCXXABI::tryParse(llvm::StringRef name) {
-  const Kind unknown = static_cast<Kind>(-1);
-  Kind kind = llvm::StringSwitch<Kind>(name)
-    .Case("arm", GenericARM)
-    .Case("ios", iOS)
-    .Case("itanium", GenericItanium)
-    .Case("microsoft", Microsoft)
-    .Case("mips", GenericMIPS)
-    .Default(unknown);
-  if (kind == unknown) return false;
-
-  set(kind);
-  return true;
-}

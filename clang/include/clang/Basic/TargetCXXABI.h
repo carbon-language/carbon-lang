@@ -282,9 +282,6 @@ public:
     llvm_unreachable("bad ABI kind");
   }
 
-  /// Try to parse an ABI name, returning false on error.
-  bool tryParse(llvm::StringRef name);
-
   friend bool operator==(const TargetCXXABI &left, const TargetCXXABI &right) {
     return left.getKind() == right.getKind();
   }
