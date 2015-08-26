@@ -66,6 +66,7 @@ class DebugMapObject;
 /// }
 class DebugMap {
   Triple BinaryTriple;
+  std::string BinaryPath;
   typedef std::vector<std::unique_ptr<DebugMapObject>> ObjectContainer;
   ObjectContainer Objects;
 
@@ -76,7 +77,8 @@ class DebugMap {
   DebugMap() = default;
   ///@}
 public:
-  DebugMap(const Triple &BinaryTriple) : BinaryTriple(BinaryTriple) {}
+  DebugMap(const Triple &BinaryTriple, StringRef BinaryPath)
+      : BinaryTriple(BinaryTriple), BinaryPath(BinaryPath) {}
 
   typedef ObjectContainer::const_iterator const_iterator;
 
@@ -94,6 +96,8 @@ public:
                                     sys::TimeValue Timestamp);
 
   const Triple &getTriple() const { return BinaryTriple; }
+
+  StringRef getBinaryPath() const { return BinaryPath; }
 
   void print(raw_ostream &OS) const;
 

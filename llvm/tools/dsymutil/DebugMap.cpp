@@ -179,6 +179,7 @@ SequenceTraits<std::vector<std::unique_ptr<dsymutil::DebugMapObject>>>::element(
 void MappingTraits<dsymutil::DebugMap>::mapping(IO &io,
                                                 dsymutil::DebugMap &DM) {
   io.mapRequired("triple", DM.BinaryTriple);
+  io.mapOptional("binary-path", DM.BinaryPath);
   if (void *Ctxt = io.getContext())
     reinterpret_cast<YAMLContext *>(Ctxt)->BinaryTriple = DM.BinaryTriple;
   io.mapOptional("objects", DM.Objects);
@@ -189,6 +190,7 @@ void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
   if (!DM)
     DM.reset(new DebugMap());
   io.mapRequired("triple", DM->BinaryTriple);
+  io.mapOptional("binary-path", DM->BinaryPath);
   if (void *Ctxt = io.getContext())
     reinterpret_cast<YAMLContext *>(Ctxt)->BinaryTriple = DM->BinaryTriple;
   io.mapOptional("objects", DM->Objects);

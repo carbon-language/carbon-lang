@@ -6,6 +6,7 @@
 #
 # CHECK: ---
 # CHECK-NEXT: triple:{{.*}}'x86_64-apple-darwin'
+# CHECK-NEXT: binary-path:{{.*}}''
 # CHECK-NEXT: objects:
 # CHECK-NEXT: filename:{{.*}}/Inputs/basic1.macho.x86_64.o
 # CHECK-NEXT: timestamp: 0
