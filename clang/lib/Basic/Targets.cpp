@@ -1,4 +1,4 @@
-//===--- Targets.cpp - Implement -arch option and targets -----------------===//
+//===--- Targets.cpp - Implement target feature support -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
