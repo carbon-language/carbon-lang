@@ -11,34 +11,30 @@
 #define SymbolFileDWARF_DWARFDebugRanges_h_
 
 #include "SymbolFileDWARF.h"
+#include "DWARFDIE.h"
 
 #include <map>
-#include <vector>
-
-#include "lldb/Core/RangeMap.h"
 
 class DWARFDebugRanges
 {
 public:
-    typedef lldb_private::RangeArray<dw_addr_t, dw_addr_t, 2> RangeList;
-    typedef RangeList::Entry Range;
 
     DWARFDebugRanges();
     ~DWARFDebugRanges();
     void Extract(SymbolFileDWARF* dwarf2Data);
     static void Dump(lldb_private::Stream &s, const lldb_private::DWARFDataExtractor& debug_ranges_data, lldb::offset_t *offset_ptr, dw_addr_t cu_base_addr);
-    bool FindRanges(dw_offset_t debug_ranges_offset, DWARFDebugRanges::RangeList& range_list) const;
+    bool FindRanges(dw_offset_t debug_ranges_offset, DWARFRangeList& range_list) const;
 
 protected:
 
     bool
     Extract (SymbolFileDWARF* dwarf2Data, 
              lldb::offset_t *offset_ptr, 
-             RangeList &range_list);
+             DWARFRangeList &range_list);
 
-    typedef std::map<dw_offset_t, RangeList>    range_map;
-    typedef range_map::iterator                 range_map_iterator;
-    typedef range_map::const_iterator           range_map_const_iterator;
+    typedef std::map<dw_offset_t, DWARFRangeList>   range_map;
+    typedef range_map::iterator                     range_map_iterator;
+    typedef range_map::const_iterator               range_map_const_iterator;
     range_map m_range_map;
 };
 

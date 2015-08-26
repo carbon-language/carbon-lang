@@ -19,7 +19,7 @@ using namespace lldb_private;
 using namespace std;
 
 bool
-DWARFDIECollection::Insert(const DWARFDebugInfoEntry *die)
+DWARFDIECollection::Insert(const DWARFDIE &die)
 {
     iterator end_pos = m_dies.end();
     iterator insert_pos = upper_bound(m_dies.begin(), end_pos, die);
@@ -30,17 +30,17 @@ DWARFDIECollection::Insert(const DWARFDebugInfoEntry *die)
 }
 
 void
-DWARFDIECollection::Append (const DWARFDebugInfoEntry *die)
+DWARFDIECollection::Append (const DWARFDIE &die)
 {
     m_dies.push_back (die);
 }
 
-const DWARFDebugInfoEntry *
-DWARFDIECollection::GetDIEPtrAtIndex(uint32_t idx) const
+DWARFDIE
+DWARFDIECollection::GetDIEAtIndex(uint32_t idx) const
 {
     if (idx < m_dies.size())
         return m_dies[idx];
-    return NULL;
+    return DWARFDIE();
 }
 
 
@@ -55,8 +55,6 @@ DWARFDIECollection::Dump(Stream *s, const char* title) const
 {
     if (title && title[0] != '\0')
         s->Printf( "%s\n", title);
-    const_iterator end_pos = m_dies.end();
-    const_iterator pos;
-    for (pos = m_dies.begin(); pos != end_pos; ++pos)
-        s->Printf( "0x%8.8x\n", (*pos)->GetOffset());
+    for (const auto &die : m_dies)
+        s->Printf( "0x%8.8x\n", die.GetDIE()->GetOffset());
 }

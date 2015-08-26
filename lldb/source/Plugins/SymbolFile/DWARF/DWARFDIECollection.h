@@ -10,7 +10,7 @@
 #ifndef SymbolFileDWARF_DWARFDIECollection_h_
 #define SymbolFileDWARF_DWARFDIECollection_h_
 
-#include "SymbolFileDWARF.h"
+#include "DWARFDIE.h"
 #include <vector>
 
 class DWARFDIECollection
@@ -25,22 +25,22 @@ public:
     }
 
     void
-    Append (const DWARFDebugInfoEntry *die);
+    Append (const DWARFDIE &die);
 
     void
     Dump(lldb_private::Stream *s, const char* title) const;
 
-    const DWARFDebugInfoEntry*
-    GetDIEPtrAtIndex(uint32_t idx) const;
+    DWARFDIE
+    GetDIEAtIndex (uint32_t idx) const;
 
     bool
-    Insert(const DWARFDebugInfoEntry *die);
+    Insert(const DWARFDIE &die);
 
     size_t
     Size() const;
 
 protected:
-    typedef std::vector<const DWARFDebugInfoEntry *>    collection;
+    typedef std::vector<DWARFDIE>               collection;
     typedef collection::iterator                iterator;
     typedef collection::const_iterator          const_iterator;
 

@@ -10,36 +10,72 @@
 #ifndef SymbolFileDWARF_DWARFAttribute_h_
 #define SymbolFileDWARF_DWARFAttribute_h_
 
+#include "llvm/ADT/SmallVector.h"
 #include "DWARFDefines.h"
 #include <vector>
+
+class DWARFCompileUnit;
+class DWARFFormValue;
 
 class DWARFAttribute
 {
 public:
     DWARFAttribute(dw_attr_t attr, dw_form_t form) :
-        m_attr_form ( attr << 16 | form )
+        m_attr (attr),
+        m_form (form)
     {
     }
 
-    void        set(dw_attr_t attr, dw_form_t form) { m_attr_form = (attr << 16) | form; }
-    void        set_attr(dw_attr_t attr) { m_attr_form = (m_attr_form & 0x0000ffffu) | (attr << 16); }
-    void        set_form(dw_form_t form) { m_attr_form = (m_attr_form & 0xffff0000u) | form; }
-    dw_attr_t   get_attr() const { return m_attr_form >> 16; }
-    dw_form_t   get_form() const { return (dw_form_t)m_attr_form; }
-    void        get(dw_attr_t& attr, dw_form_t& form)  const
+    void        set (dw_attr_t attr, dw_form_t form) { m_attr = attr; m_form = form; }
+    void        set_attr (dw_attr_t attr) { m_attr = attr; }
+    void        set_form (dw_form_t form) { m_form = form; }
+    dw_attr_t   get_attr () const { return m_attr; }
+    dw_form_t   get_form () const { return m_form; }
+    void        get (dw_attr_t& attr, dw_form_t& form)  const
     {
-        uint32_t attr_form = m_attr_form;
-        attr = attr_form >> 16;
-        form = (dw_form_t)attr_form;
+        attr = m_attr;
+        form = m_form;
     }
-    bool        operator == (const DWARFAttribute& rhs) const { return m_attr_form == rhs.m_attr_form; }
+    bool operator == (const DWARFAttribute& rhs) const { return m_attr == rhs.m_attr && m_form == rhs.m_form; }
     typedef std::vector<DWARFAttribute> collection;
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
 
 protected:
-    uint32_t    m_attr_form;    // Upper 16 bits is attribute, lower 16 bits is form
+    dw_attr_t m_attr;
+    dw_form_t m_form;
 };
 
+
+class DWARFAttributes
+{
+public:
+    DWARFAttributes();
+    ~DWARFAttributes();
+
+    void Append(const DWARFCompileUnit *cu, dw_offset_t attr_die_offset, dw_attr_t attr, dw_form_t form);
+    const DWARFCompileUnit * CompileUnitAtIndex(uint32_t i) const { return m_infos[i].cu; }
+    dw_offset_t DIEOffsetAtIndex(uint32_t i) const { return m_infos[i].die_offset; }
+    dw_attr_t AttributeAtIndex(uint32_t i) const { return m_infos[i].attr.get_attr(); }
+    dw_attr_t FormAtIndex(uint32_t i) const { return m_infos[i].attr.get_form(); }
+    bool ExtractFormValueAtIndex (uint32_t i, DWARFFormValue &form_value) const;
+    uint64_t FormValueAsUnsignedAtIndex (uint32_t i, uint64_t fail_value) const;
+    uint64_t FormValueAsUnsigned (dw_attr_t attr, uint64_t fail_value) const;
+    uint32_t FindAttributeIndex(dw_attr_t attr) const;
+    bool ContainsAttribute(dw_attr_t attr) const;
+    bool RemoveAttribute(dw_attr_t attr);
+    void Clear() { m_infos.clear(); }
+    size_t Size() const { return m_infos.size(); }
+
+protected:
+    struct AttributeValue
+    {
+        const DWARFCompileUnit *cu; // Keep the compile unit with each attribute in case we have DW_FORM_ref_addr values
+        dw_offset_t die_offset;
+        DWARFAttribute attr;
+    };
+    typedef llvm::SmallVector<AttributeValue, 8> collection;
+    collection m_infos;
+};
 
 #endif  // SymbolFileDWARF_DWARFAttribute_h_

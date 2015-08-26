@@ -108,6 +108,13 @@ public:
         return lldb_private::ConstString (GetQualifiedName ());
     }
 
+    void
+    Clear()
+    {
+        m_entries.clear();
+        m_qualified_name.clear();
+    }
+
 protected:
     typedef std::vector<Entry> collection;
     collection m_entries;

@@ -16,6 +16,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-private.h"
 #include "SymbolFileDWARF.h"
+#include "DWARFDIE.h"
 
 typedef std::multimap<const char*, dw_offset_t, CStringCompareFunctionObject> CStringToDIEMap;
 typedef CStringToDIEMap::iterator CStringToDIEMapIter;
@@ -28,7 +29,7 @@ class DWARFDebugInfo
 public:
     typedef dw_offset_t (*Callback)(
         SymbolFileDWARF* dwarf2Data,
-        DWARFCompileUnitSP& cu_shared_ptr,
+        DWARFCompileUnit* cu_shared_ptr,
         DWARFDebugInfoEntry* die,
         const dw_offset_t next_offset,
         const uint32_t depth,
@@ -37,24 +38,19 @@ public:
     DWARFDebugInfo();
     void SetDwarfData(SymbolFileDWARF* dwarf2Data);
 
-    bool LookupAddress(
-            const dw_addr_t address,
-            const dw_offset_t cu_offset,    // Can be valid (find in .debug_aranges), or DW_INVALID_OFFSET if we need to search manually
-            DWARFCompileUnitSP& cu_shared_ptr,
-            DWARFDebugInfoEntry** function_die,
-            DWARFDebugInfoEntry** block_die);
+    DWARFDIE
+    LookupAddress(const dw_addr_t address,
+                  const dw_offset_t cu_offset);    // Can be valid (find in .debug_aranges), or DW_INVALID_OFFSET if we need to search manually
 
     void AddCompileUnit(DWARFCompileUnitSP& cu);
     size_t GetNumCompileUnits();
     bool ContainsCompileUnit (const DWARFCompileUnit *cu) const;
-    DWARFCompileUnit* GetCompileUnitAtIndex(uint32_t idx);
-    DWARFCompileUnitSP GetCompileUnit(dw_offset_t cu_offset, uint32_t* idx_ptr = NULL);
-    DWARFCompileUnitSP GetCompileUnitContainingDIE(dw_offset_t die_offset);
+    DWARFCompileUnit* GetCompileUnitAtIndex (uint32_t idx);
+    DWARFCompileUnit* GetCompileUnit (dw_offset_t cu_offset, uint32_t* idx_ptr = NULL);
+    DWARFCompileUnit* GetCompileUnitContainingDIE (dw_offset_t die_offset);
 
-    DWARFDebugInfoEntry* GetDIEPtr(dw_offset_t die_offset, DWARFCompileUnitSP* cu_sp_ptr);
-    DWARFDebugInfoEntry* GetDIEPtrWithCompileUnitHint (dw_offset_t die_offset, DWARFCompileUnit**cu_handle);
-
-    const DWARFDebugInfoEntry* GetDIEPtrContainingOffset(dw_offset_t die_offset, DWARFCompileUnitSP* cu_sp_ptr);
+    DWARFDIE GetDIE (dw_offset_t die_offset);
+    DWARFDIE GetDIEContainingOffset (dw_offset_t die_offset);
 
     void Dump(lldb_private::Stream *s, const uint32_t die_offset, const uint32_t recurse_depth);
     static void Parse(SymbolFileDWARF* parser, Callback callback, void* userData);

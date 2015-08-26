@@ -342,7 +342,7 @@ DWARFFormValue::SkipValue(dw_form_t form, const DWARFDataExtractor& debug_info_d
 
 
 void
-DWARFFormValue::Dump(Stream &s, SymbolFileDWARF* symbol_file) const
+DWARFFormValue::Dump(Stream &s) const
 {
     uint64_t uvalue = Unsigned();
     bool cu_relative_offset = false;
@@ -359,7 +359,7 @@ DWARFFormValue::Dump(Stream &s, SymbolFileDWARF* symbol_file) const
     case DW_FORM_data4:     s.PutHex32(uvalue);        break;
     case DW_FORM_ref_sig8:
     case DW_FORM_data8:     s.PutHex64(uvalue);        break;
-    case DW_FORM_string:    s.QuotedCString(AsCString(symbol_file)); break;
+    case DW_FORM_string:    s.QuotedCString(AsCString()); break;
     case DW_FORM_exprloc:
     case DW_FORM_block:
     case DW_FORM_block1:
@@ -395,18 +395,18 @@ DWARFFormValue::Dump(Stream &s, SymbolFileDWARF* symbol_file) const
     case DW_FORM_sdata:     s.PutSLEB128(uvalue); break;
     case DW_FORM_udata:     s.PutULEB128(uvalue); break;
     case DW_FORM_strp:
-        if (symbol_file)
         {
-            if (verbose)
-                s.Printf(" .debug_str[0x%8.8x] = ", (uint32_t)uvalue);
-
-            const char* dbg_str = AsCString(symbol_file);
+            const char* dbg_str = AsCString();
             if (dbg_str)
+            {
+                if (verbose)
+                    s.Printf(" .debug_str[0x%8.8x] = ", (uint32_t)uvalue);
                 s.QuotedCString(dbg_str);
-        }
-        else
-        {
-            s.PutHex32(uvalue);
+            }
+            else
+            {
+                s.PutHex32(uvalue);
+            }
         }
         break;
 
@@ -444,8 +444,10 @@ DWARFFormValue::Dump(Stream &s, SymbolFileDWARF* symbol_file) const
 }
 
 const char*
-DWARFFormValue::AsCString(SymbolFileDWARF* symbol_file) const
+DWARFFormValue::AsCString() const
 {
+    SymbolFileDWARF* symbol_file = m_cu->GetSymbolFileDWARF();
+
     if (m_form == DW_FORM_string)
     {
         return m_value.value.cstr;
@@ -471,8 +473,10 @@ DWARFFormValue::AsCString(SymbolFileDWARF* symbol_file) const
 }
 
 dw_addr_t
-DWARFFormValue::Address(SymbolFileDWARF* symbol_file) const
+DWARFFormValue::Address() const
 {
+    SymbolFileDWARF* symbol_file = m_cu->GetSymbolFileDWARF();
+
     if (m_form == DW_FORM_addr)
         return Unsigned();
 
@@ -571,8 +575,7 @@ DWARFFormValue::IsDataForm(const dw_form_t form)
 
 int
 DWARFFormValue::Compare (const DWARFFormValue& a_value,
-                         const DWARFFormValue& b_value,
-                         SymbolFileDWARF* symbol_file)
+                         const DWARFFormValue& b_value)
 {
     dw_form_t a_form = a_value.Form();
     dw_form_t b_form = b_value.Form();
@@ -619,8 +622,8 @@ DWARFFormValue::Compare (const DWARFFormValue& a_value,
     case DW_FORM_strp:
     case DW_FORM_GNU_str_index:
         {
-            const char *a_string = a_value.AsCString(symbol_file);
-            const char *b_string = b_value.AsCString(symbol_file);
+            const char *a_string = a_value.AsCString();
+            const char *b_string = b_value.AsCString();
             if (a_string == b_string)
                 return 0;
             else if (a_string && b_string)

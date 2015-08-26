@@ -1225,7 +1225,7 @@ SymbolFileDWARFDebugMap::Supports_DW_AT_APPLE_objc_complete_type (SymbolFileDWAR
 }
 
 TypeSP
-SymbolFileDWARFDebugMap::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry *die, 
+SymbolFileDWARFDebugMap::FindCompleteObjCDefinitionTypeForDIE (const DWARFDIE &die,
                                                                const ConstString &type_name,
                                                                bool must_be_implementation)
 {

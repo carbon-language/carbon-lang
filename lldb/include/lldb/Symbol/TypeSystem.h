@@ -18,8 +18,7 @@
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Type.h"
 
-class SymbolFileDWARF;
-class DWARFCompileUnit;
+class DWARFDIE;
 class DWARFDebugInfoEntry;
 
 namespace lldb_private {
@@ -45,22 +44,16 @@ public:
     //----------------------------------------------------------------------
     virtual lldb::TypeSP
     ParseTypeFromDWARF (const SymbolContext& sc,
-                        SymbolFileDWARF *dwarf,
-                        DWARFCompileUnit* dwarf_cu,
-                        const DWARFDebugInfoEntry *die,
+                        const DWARFDIE &die,
                         Log *log,
                         bool *type_is_new_ptr) = 0;
 
     virtual Function *
     ParseFunctionFromDWARF (const SymbolContext& sc,
-                            SymbolFileDWARF *dwarf,
-                            DWARFCompileUnit* dwarf_cu,
-                            const DWARFDebugInfoEntry *die) = 0;
+                            const DWARFDIE &die) = 0;
 
     virtual bool
-    CompleteTypeFromDWARF (SymbolFileDWARF *dwarf,
-                           DWARFCompileUnit *dwarf_cu,
-                           const DWARFDebugInfoEntry* die,
+    CompleteTypeFromDWARF (const DWARFDIE &die,
                            lldb_private::Type *type,
                            CompilerType &clang_type)
     {
@@ -68,17 +61,13 @@ public:
     }
 
     virtual CompilerDeclContext
-    GetDeclContextForUIDFromDWARF (SymbolFileDWARF *dwarf,
-                                   DWARFCompileUnit *dwarf_cu,
-                                   const DWARFDebugInfoEntry* die)
+    GetDeclContextForUIDFromDWARF (const DWARFDIE &die)
     {
         return CompilerDeclContext();
     }
 
     virtual CompilerDeclContext
-    GetDeclContextContainingUIDFromDWARF (SymbolFileDWARF *dwarf,
-                                          DWARFCompileUnit *dwarf_cu,
-                                          const DWARFDebugInfoEntry* die)
+    GetDeclContextContainingUIDFromDWARF (const DWARFDIE &die)
     {
         return CompilerDeclContext();
     }

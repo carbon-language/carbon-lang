@@ -2177,7 +2177,7 @@ Target::GetBreakableLoadAddress (lldb::addr_t addr)
         {
             SymbolContext sc;
             uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol;
-            uint32_t resolved_mask = temp_addr_module_sp->ResolveSymbolContextForAddress(resolved_addr, resolve_scope, sc);
+            temp_addr_module_sp->ResolveSymbolContextForAddress(resolved_addr, resolve_scope, sc);
             if (sc.function)
             {
                 function_start = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress(this);
@@ -2225,7 +2225,7 @@ Target::GetBreakableLoadAddress (lldb::addr_t addr)
             AddressRange range(resolved_addr, i*2);
             uint32_t insn_size = 0;
 
-            uint32_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range, NULL, prefer_file_cache);
+            disasm_sp->ParseInstructions (&exe_ctx, range, NULL, prefer_file_cache);
             
             uint32_t num_insns = disasm_sp->GetInstructionList().GetSize();
             if (num_insns)

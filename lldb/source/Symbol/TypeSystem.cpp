@@ -17,5 +17,4 @@ TypeSystem::TypeSystem() :
 
 TypeSystem::~TypeSystem()
 {
-    
 }

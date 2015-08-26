@@ -54,7 +54,7 @@ public:
     virtual void
     DidLaunch() override;
 
-    virtual lldb::ThreadPlanSP
+    lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan(lldb_private::Thread &thread,
                                  bool stop_others) override;
 

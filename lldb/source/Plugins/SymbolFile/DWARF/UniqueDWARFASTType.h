@@ -19,6 +19,7 @@
 
 // Project includes
 #include "lldb/Symbol/Declaration.h"
+#include "DWARFDIE.h"
 
 class DWARFCompileUnit;
 class DWARFDebugInfoEntry;
@@ -32,23 +33,17 @@ public:
 	//------------------------------------------------------------------
 	UniqueDWARFASTType () :
         m_type_sp (),
-        m_symfile (NULL),
-        m_cu (NULL),
-        m_die (NULL),
+        m_die (),
         m_declaration (),
         m_byte_size (-1) // Set to negative value to make sure we have a valid value
     {
     }
 
 	UniqueDWARFASTType (lldb::TypeSP &type_sp,
-                        SymbolFileDWARF *symfile,
-                        DWARFCompileUnit *cu,
-                        DWARFDebugInfoEntry *die,
+                        const DWARFDIE &die,
                         const lldb_private::Declaration &decl,
                         int32_t byte_size) :
         m_type_sp (type_sp),
-        m_symfile (symfile),
-        m_cu (cu),
         m_die (die),
         m_declaration (decl),
         m_byte_size (byte_size)
@@ -57,8 +52,6 @@ public:
     
     UniqueDWARFASTType (const UniqueDWARFASTType &rhs) :
         m_type_sp (rhs.m_type_sp),
-        m_symfile (rhs.m_symfile),
-        m_cu (rhs.m_cu),
         m_die (rhs.m_die),
         m_declaration (rhs.m_declaration),
         m_byte_size (rhs.m_byte_size)
@@ -75,8 +68,6 @@ public:
         if (this != &rhs)
         {
             m_type_sp = rhs.m_type_sp;
-            m_symfile = rhs.m_symfile;
-            m_cu = rhs.m_cu;
             m_die = rhs.m_die;
             m_declaration = rhs.m_declaration;
             m_byte_size = rhs.m_byte_size;
@@ -85,9 +76,7 @@ public:
     }
 
     lldb::TypeSP m_type_sp;
-    SymbolFileDWARF *m_symfile;
-    const DWARFCompileUnit *m_cu;
-    const DWARFDebugInfoEntry *m_die;
+    DWARFDIE m_die;
     lldb_private::Declaration m_declaration;
     int32_t m_byte_size;
 };
@@ -117,9 +106,7 @@ public:
     }
     
     bool
-    Find (SymbolFileDWARF *symfile,
-          const DWARFCompileUnit *cu,
-          const DWARFDebugInfoEntry *die, 
+    Find (const DWARFDIE &die,
           const lldb_private::Declaration &decl,
           const int32_t byte_size,
           UniqueDWARFASTType &entry) const;
@@ -149,10 +136,8 @@ public:
     }
 
     bool
-    Find (const lldb_private::ConstString &name, 
-          SymbolFileDWARF *symfile,
-          const DWARFCompileUnit *cu,
-          const DWARFDebugInfoEntry *die, 
+    Find (const lldb_private::ConstString &name,
+          const DWARFDIE &die,
           const lldb_private::Declaration &decl,
           const int32_t byte_size,
           UniqueDWARFASTType &entry) const
@@ -161,7 +146,7 @@ public:
         collection::const_iterator pos = m_collection.find (unique_name_cstr);
         if (pos != m_collection.end())
         {
-            return pos->second.Find (symfile, cu, die, decl, byte_size, entry);
+            return pos->second.Find (die, decl, byte_size, entry);
         }
         return false;
     }

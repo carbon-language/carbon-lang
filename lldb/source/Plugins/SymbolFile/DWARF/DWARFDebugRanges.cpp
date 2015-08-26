@@ -27,7 +27,7 @@ DWARFDebugRanges::~DWARFDebugRanges()
 void
 DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data)
 {
-    RangeList range_list;
+    DWARFRangeList range_list;
     lldb::offset_t offset = 0;
     dw_offset_t debug_ranges_offset = offset;
     while (Extract(dwarf2Data, &offset, range_list))
@@ -38,52 +38,8 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data)
     }
 }
 
-//void
-//DWARFDebugRanges::RangeList::AddOffset(dw_addr_t offset)
-//{
-//    if (!ranges.empty())
-//    {
-//        Range::iterator pos = ranges.begin();
-//        Range::iterator end_pos = ranges.end();
-//        for (pos = ranges.begin(); pos != end_pos; ++pos)
-//        {
-//            // assert for unsigned overflows
-//            assert (~pos->begin_offset >= offset);
-//            assert (~pos->end_offset >= offset);
-//            pos->begin_offset += offset;
-//            pos->end_offset += offset;
-//        }
-//    }
-//}
-//
-//void
-//DWARFDebugRanges::RangeList::SubtractOffset(dw_addr_t offset)
-//{
-//    if (!ranges.empty())
-//    {
-//        Range::iterator pos = ranges.begin();
-//        Range::iterator end_pos = ranges.end();
-//        for (pos = ranges.begin(); pos != end_pos; ++pos)
-//        {
-//            assert (pos->begin_offset >= offset);
-//            assert (pos->end_offset >= offset);
-//            pos->begin_offset -= offset;
-//            pos->end_offset -= offset;
-//        }
-//    }
-//}
-//
-//
-//const DWARFDebugRanges::Range*
-//DWARFDebugRanges::RangeList::RangeAtIndex(size_t i) const
-//{
-//    if (i < ranges.size())
-//        return &ranges[i];
-//    return NULL;
-//}
-
 bool
-DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, lldb::offset_t *offset_ptr, RangeList &range_list)
+DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, lldb::offset_t *offset_ptr, DWARFRangeList &range_list)
 {
     range_list.Clear();
 
@@ -118,13 +74,13 @@ DWARFDebugRanges::Extract(SymbolFileDWARF* dwarf2Data, lldb::offset_t *offset_pt
             break;
 
         default:
-            assert(!"DWARFDebugRanges::RangeList::Extract() unsupported address size.");
+            assert(!"DWARFRangeList::Extract() unsupported address size.");
             break;
         }
 
         // Filter out empty ranges
         if (begin < end)
-            range_list.Append(Range(begin, end - begin));
+            range_list.Append(DWARFRangeList::Entry(begin, end - begin));
     }
 
     // Make sure we consumed at least something
@@ -178,7 +134,7 @@ DWARFDebugRanges::Dump(Stream &s, const DWARFDataExtractor& debug_ranges_data, l
 }
 
 bool
-DWARFDebugRanges::FindRanges(dw_offset_t debug_ranges_offset, RangeList& range_list) const
+DWARFDebugRanges::FindRanges(dw_offset_t debug_ranges_offset, DWARFRangeList& range_list) const
 {
     range_map_const_iterator pos = m_range_map.find(debug_ranges_offset);
     if (pos != m_range_map.end())

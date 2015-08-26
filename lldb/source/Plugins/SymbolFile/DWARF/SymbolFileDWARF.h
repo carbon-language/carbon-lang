@@ -148,15 +148,8 @@ public:
     CompleteType (lldb_private::CompilerType& clang_type) override;
 
     lldb_private::Type *
-    ResolveType (DWARFCompileUnit* dwarf_cu,
-                 const DWARFDebugInfoEntry* type_die,
+    ResolveType (const DWARFDIE &die,
                  bool assert_not_being_parsed = true);
-
-    lldb_private::Type *
-    GetCachedTypeForDIE (const DWARFDebugInfoEntry* type_die) const;
-
-    void
-    ClearDIEBeingParsed (const DWARFDebugInfoEntry* type_die);
 
     lldb_private::CompilerDeclContext
     GetDeclContextForUID (lldb::user_id_t uid) override;
@@ -281,9 +274,8 @@ public:
     static bool
     SupportedVersion(uint16_t version);
 
-    const DWARFDebugInfoEntry *
-    GetDeclContextDIEContainingDIE (const DWARFCompileUnit *cu,
-                                    const DWARFDebugInfoEntry *die);
+    DWARFDIE
+    GetDeclContextDIEContainingDIE (const DWARFDIE &die);
 
     lldb_private::Flags&
     GetFlags ()
@@ -317,8 +309,8 @@ public:
     bool
     Supports_DW_AT_APPLE_objc_complete_type (DWARFCompileUnit *cu);
 
-    static const DWARFDebugInfoEntry *
-    GetParentSymbolContextDIE(const DWARFDebugInfoEntry *child_die);
+    static DWARFDIE
+    GetParentSymbolContextDIE(const DWARFDIE &die);
 
 protected:
 
@@ -348,8 +340,7 @@ protected:
 
     bool
     DIEInDeclContext (const lldb_private::CompilerDeclContext *parent_decl_ctx,
-                      DWARFCompileUnit *cu,
-                      const DWARFDebugInfoEntry *die);
+                      const DWARFDIE &die);
 
     DISALLOW_COPY_AND_ASSIGN (SymbolFileDWARF);
 
@@ -364,80 +355,61 @@ protected:
     GetNextUnparsedDWARFCompileUnit (DWARFCompileUnit* prev_cu);
 
     bool
-    GetFunction (DWARFCompileUnit* dwarf_cu,
-                 const DWARFDebugInfoEntry* func_die,
+    GetFunction (const DWARFDIE &die,
                  lldb_private::SymbolContext& sc);
 
     lldb_private::Function *
     ParseCompileUnitFunction (const lldb_private::SymbolContext& sc,
-                              DWARFCompileUnit* dwarf_cu,
-                              const DWARFDebugInfoEntry *die);
+                              const DWARFDIE &die);
 
     size_t
     ParseFunctionBlocks (const lldb_private::SymbolContext& sc,
                          lldb_private::Block *parent_block,
-                         DWARFCompileUnit* dwarf_cu,
-                         const DWARFDebugInfoEntry *die,
+                         const DWARFDIE &die,
                          lldb::addr_t subprogram_low_pc,
                          uint32_t depth);
 
     size_t
     ParseTypes (const lldb_private::SymbolContext& sc,
-                DWARFCompileUnit* dwarf_cu,
-                const DWARFDebugInfoEntry *die,
+                const DWARFDIE &die,
                 bool parse_siblings,
                 bool parse_children);
 
     lldb::TypeSP
     ParseType (const lldb_private::SymbolContext& sc,
-               DWARFCompileUnit* dwarf_cu,
-               const DWARFDebugInfoEntry *die,
+               const DWARFDIE &die,
                bool *type_is_new);
 
     lldb_private::Type *
-    ResolveTypeUID (DWARFCompileUnit* dwarf_cu,
-                    const DWARFDebugInfoEntry* die,
+    ResolveTypeUID (const DWARFDIE &die,
                     bool assert_not_being_parsed);
 
     lldb::VariableSP
     ParseVariableDIE(const lldb_private::SymbolContext& sc,
-                     DWARFCompileUnit* dwarf_cu,
-                     const DWARFDebugInfoEntry *die,
+                     const DWARFDIE &die,
                      const lldb::addr_t func_low_pc);
 
     size_t
-    ParseVariables(const lldb_private::SymbolContext& sc,
-                   DWARFCompileUnit* dwarf_cu,
-                   const lldb::addr_t func_low_pc,
-                   const DWARFDebugInfoEntry *die,
-                   bool parse_siblings,
-                   bool parse_children,
-                   lldb_private::VariableList* cc_variable_list = NULL);
+    ParseVariables (const lldb_private::SymbolContext& sc,
+                    const DWARFDIE &orig_die,
+                    const lldb::addr_t func_low_pc,
+                    bool parse_siblings,
+                    bool parse_children,
+                    lldb_private::VariableList* cc_variable_list = NULL);
 
     bool
-    ClassOrStructIsVirtual (DWARFCompileUnit* dwarf_cu,
-                            const DWARFDebugInfoEntry *parent_die);
+    ClassOrStructIsVirtual (const DWARFDIE &die);
 
     // Given a die_offset, figure out the symbol context representing that die.
     bool
     ResolveFunction (dw_offset_t offset,
-                     DWARFCompileUnit *&dwarf_cu,
                      bool include_inlines,
                      lldb_private::SymbolContextList& sc_list);
 
     bool
-    ResolveFunction (DWARFCompileUnit *cu,
-                     const DWARFDebugInfoEntry *die,
+    ResolveFunction (const DWARFDIE &die,
                      bool include_inlines,
                      lldb_private::SymbolContextList& sc_list);
-
-    bool
-    FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
-                                   const DWARFCompileUnit *dwarf_cu,
-                                   uint32_t name_type_mask,
-                                   const char *partial_name,
-                                   const char *base_name_start,
-                                   const char *base_name_end);
 
     void
     FindFunctions(const lldb_private::ConstString &name,
@@ -461,7 +433,7 @@ protected:
     FindDefinitionTypeForDWARFDeclContext (const DWARFDeclContext &die_decl_ctx);
 
     lldb::TypeSP
-    FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry *die,
+    FindCompleteObjCDefinitionTypeForDIE (const DWARFDIE &die,
                                           const lldb_private::ConstString &type_name,
                                           bool must_be_implementation);
 
@@ -478,8 +450,7 @@ protected:
                     lldb_private::SymbolContextList& sc_list);
 
     lldb::TypeSP
-    GetTypeForDIE (DWARFCompileUnit *cu,
-                   const DWARFDebugInfoEntry* die);
+    GetTypeForDIE (const DWARFDIE &die);
 
     uint32_t
     FindTypes (std::vector<dw_offset_t> die_offsets,
@@ -501,16 +472,13 @@ protected:
     SymbolFileDWARFDebugMap *
     GetDebugMapSymfile ();
 
-    const DWARFDebugInfoEntry *
+    DWARFDIE
     FindBlockContainingSpecification (dw_offset_t func_die_offset,
-                                      dw_offset_t spec_block_die_offset,
-                                      DWARFCompileUnit **dwarf_cu_handle);
+                                      dw_offset_t spec_block_die_offset);
 
-    const DWARFDebugInfoEntry *
-    FindBlockContainingSpecification (DWARFCompileUnit* dwarf_cu,
-                                      const DWARFDebugInfoEntry *die,
-                                      dw_offset_t spec_block_die_offset,
-                                      DWARFCompileUnit **dwarf_cu_handle);
+    DWARFDIE
+    FindBlockContainingSpecification (const DWARFDIE &die,
+                                      dw_offset_t spec_block_die_offset);
     
     UniqueDWARFASTTypeMap &
     GetUniqueDWARFASTTypeMap ();
@@ -525,12 +493,11 @@ protected:
     }
     
     bool
-    DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugInfoEntry *die1,
-                          DWARFCompileUnit* cu2, const DWARFDebugInfoEntry *die2);
+    DIEDeclContextsMatch (const DWARFDIE &die1,
+                          const DWARFDIE &die2);
     
     bool
-    ClassContainsSelector (DWARFCompileUnit *dwarf_cu,
-                           const DWARFDebugInfoEntry *class_die,
+    ClassContainsSelector (const DWARFDIE &class_die,
                            const lldb_private::ConstString &selector);
 
     bool
@@ -546,8 +513,7 @@ protected:
     typedef std::map<uint64_t, ClangModuleInfo> ExternalTypeModuleMap;
 
     void
-    GetTypes (DWARFCompileUnit* dwarf_cu,
-              const DWARFDebugInfoEntry *die,
+    GetTypes (const DWARFDIE &die,
               dw_offset_t min_die_offset,
               dw_offset_t max_die_offset,
               uint32_t type_mask,

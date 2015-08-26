@@ -57,38 +57,6 @@ public:
     typedef offset_collection::iterator         offset_collection_iterator;
     typedef offset_collection::const_iterator   offset_collection_const_iterator;
 
-    class Attributes
-    {
-    public:
-        Attributes();
-        ~Attributes();
-
-        void Append(const DWARFCompileUnit *cu, dw_offset_t attr_die_offset, dw_attr_t attr, dw_form_t form);
-        const DWARFCompileUnit * CompileUnitAtIndex(uint32_t i) const { return m_infos[i].cu; }
-        dw_offset_t DIEOffsetAtIndex(uint32_t i) const { return m_infos[i].die_offset; }
-        dw_attr_t AttributeAtIndex(uint32_t i) const { return m_infos[i].attr; }
-        dw_attr_t FormAtIndex(uint32_t i) const { return m_infos[i].form; }
-        bool ExtractFormValueAtIndex (SymbolFileDWARF* dwarf2Data, uint32_t i, DWARFFormValue &form_value) const;
-        uint64_t FormValueAsUnsignedAtIndex (SymbolFileDWARF* dwarf2Data, uint32_t i, uint64_t fail_value) const;
-        uint64_t FormValueAsUnsigned (SymbolFileDWARF* dwarf2Data, dw_attr_t attr, uint64_t fail_value) const;
-        uint32_t FindAttributeIndex(dw_attr_t attr) const;
-        bool ContainsAttribute(dw_attr_t attr) const;
-        bool RemoveAttribute(dw_attr_t attr);
-        void Clear() { m_infos.clear(); }
-        size_t Size() const { return m_infos.size(); }
-
-    protected:
-        struct Info
-        {
-            const DWARFCompileUnit *cu; // Keep the compile unit with each attribute in case we have DW_FORM_ref_addr values
-            dw_offset_t die_offset;
-            dw_attr_t attr;
-            dw_form_t form;
-        };
-        typedef llvm::SmallVector<Info, 8> collection;
-        collection m_infos;
-    };
-
     struct CompareState
     {
         CompareState() :
@@ -159,10 +127,9 @@ public:
                     DWARFDebugInfoEntry** block_die);
 
     size_t      GetAttributes(
-                    SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
                     DWARFFormValue::FixedFormSizes fixed_form_sizes,
-                    DWARFDebugInfoEntry::Attributes& attrs,
+                    DWARFAttributes& attrs,
                     uint32_t curr_depth = 0) const; // "curr_depth" for internal use only, don't set this yourself!!!
 
     dw_offset_t GetAttributeValue(
@@ -212,7 +179,7 @@ public:
     size_t      GetAttributeAddressRanges (
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
-                    DWARFDebugRanges::RangeList &ranges,
+                    DWARFRangeList &ranges,
                     bool check_hi_lo_pc) const;
     
     dw_offset_t GetAttributeValueAsLocation(
@@ -255,7 +222,7 @@ public:
     const char * GetQualifiedName (
                     SymbolFileDWARF* dwarf2Data, 
                     DWARFCompileUnit* cu,
-                    const DWARFDebugInfoEntry::Attributes& attributes,
+                    const DWARFAttributes& attributes,
                     std::string &storage) const;
 
 //    static int  Compare(
@@ -310,7 +277,7 @@ public:
                     const DWARFCompileUnit* cu,
                     const char * &name,
                     const char * &mangled,
-                    DWARFDebugRanges::RangeList& rangeList,
+                    DWARFRangeList& rangeList,
                     int& decl_file,
                     int& decl_line,
                     int& decl_column,
@@ -375,8 +342,7 @@ public:
     const   DWARFDebugInfoEntry*    GetFirstChild() const   { return (HasChildren() && !m_empty_children) ? this + 1 : NULL; }
 
     
-    void                            GetDeclContextDIEs (SymbolFileDWARF* dwarf2Data, 
-                                                        DWARFCompileUnit* cu,
+    void                            GetDeclContextDIEs (DWARFCompileUnit* cu,
                                                         DWARFDIECollection &decl_context_dies) const;
 
     void                            GetDWARFDeclContext (SymbolFileDWARF* dwarf2Data,
@@ -388,11 +354,11 @@ public:
                                                             DWARFCompileUnit* cu,
                                                             const DWARFDeclContext &dwarf_decl_ctx) const;
 
-    const   DWARFDebugInfoEntry*    GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
+            DWARFDIE                GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data,
                                                              DWARFCompileUnit* cu) const;
-    const   DWARFDebugInfoEntry*    GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
+            DWARFDIE                GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data,
                                                              DWARFCompileUnit* cu, 
-                                                             const DWARFDebugInfoEntry::Attributes& attributes) const;
+                                                             const DWARFAttributes& attributes) const;
 
     void        
     SetParent (DWARFDebugInfoEntry* parent)     
