@@ -80,9 +80,8 @@ public:
   static char ID;
 
   SampleProfileLoader(StringRef Name = SampleProfileFile)
-      : ModulePass(ID), DT(nullptr), PDT(nullptr), LI(nullptr),
-        Ctx(nullptr), Reader(), Samples(nullptr), Filename(Name),
-        ProfileIsValid(false) {
+      : ModulePass(ID), DT(nullptr), PDT(nullptr), LI(nullptr), Reader(),
+        Samples(nullptr), Filename(Name), ProfileIsValid(false) {
     initializeSampleProfileLoaderPass(*PassRegistry::getPassRegistry());
   }
 
@@ -96,15 +95,6 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-
-    AU.addRequired<LoopInfoWrapperPass>();
-    AU.addPreserved<LoopInfoWrapperPass>();
-
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addPreserved<DominatorTreeWrapperPass>();
-
-    AU.addRequired<PostDominatorTree>();
-    AU.addPreserved<PostDominatorTree>();
   }
 
 protected:
@@ -125,6 +115,7 @@ protected:
   unsigned visitEdge(Edge E, unsigned *NumUnknownEdges, Edge *UnknownEdge);
   void buildEdges(Function &F);
   bool propagateThroughEdges(Function &F);
+  void computeDominanceAndLoopInfo(Function &F);
 
   /// \brief Line number for the function header. Used to compute absolute
   /// line numbers from the relative line numbers found in the profile.
@@ -157,18 +148,15 @@ protected:
   EquivalenceClassMap EquivalenceClass;
 
   /// \brief Dominance, post-dominance and loop information.
-  DominatorTree *DT;
-  PostDominatorTree *PDT;
-  LoopInfo *LI;
+  std::unique_ptr<DominatorTree> DT;
+  std::unique_ptr<DominatorTreeBase<BasicBlock>> PDT;
+  std::unique_ptr<LoopInfo> LI;
 
   /// \brief Predecessors for each basic block in the CFG.
   BlockEdgeMap Predecessors;
 
   /// \brief Successors for each basic block in the CFG.
   BlockEdgeMap Successors;
-
-  /// \brief LLVM context holding the debug data we need.
-  LLVMContext *Ctx;
 
   /// \brief Profile reader object.
   std::unique_ptr<SampleProfileReader> Reader;
@@ -372,7 +360,7 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
     // class by making BB2's equivalence class be BB1.
     DominatedBBs.clear();
     DT->getDescendants(BB1, DominatedBBs);
-    findEquivalencesFor(BB1, DominatedBBs, PDT->DT);
+    findEquivalencesFor(BB1, DominatedBBs, PDT.get());
 
     // Repeat the same logic for all the blocks post-dominated by BB1.
     // We are looking for every basic block BB2 such that:
@@ -384,7 +372,7 @@ void SampleProfileLoader::findEquivalenceClasses(Function &F) {
     // If all those conditions hold, BB2's equivalence class is BB1.
     DominatedBBs.clear();
     PDT->getDescendants(BB1, DominatedBBs);
-    findEquivalencesFor(BB1, DominatedBBs, DT);
+    findEquivalencesFor(BB1, DominatedBBs, DT.get());
 
     DEBUG(printBlockEquivalence(dbgs(), BB1));
   }
@@ -666,6 +654,17 @@ unsigned SampleProfileLoader::getFunctionLoc(Function &F) {
   return 0;
 }
 
+void SampleProfileLoader::computeDominanceAndLoopInfo(Function &F) {
+  DT.reset(new DominatorTree);
+  DT->recalculate(F);
+
+  PDT.reset(new DominatorTreeBase<BasicBlock>(true));
+  PDT->recalculate(F);
+
+  LI.reset(new LoopInfo);
+  LI->analyze(*DT);
+}
+
 /// \brief Generate branch weight metadata for all branches in \p F.
 ///
 /// Branch weights are computed out of instruction samples using a
@@ -730,6 +729,9 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
   Changed |= computeBlockWeights(F);
 
   if (Changed) {
+    // Compute dominance and loop info needed for propagation.
+    computeDominanceAndLoopInfo(F);
+
     // Find equivalence classes.
     findEquivalenceClasses(F);
 
@@ -743,15 +745,12 @@ bool SampleProfileLoader::emitAnnotations(Function &F) {
 char SampleProfileLoader::ID = 0;
 INITIALIZE_PASS_BEGIN(SampleProfileLoader, "sample-profile",
                       "Sample Profile loader", false, false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AddDiscriminators)
 INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
                     "Sample Profile loader", false, false)
 
 bool SampleProfileLoader::doInitialization(Module &M) {
-  auto& Ctx = M.getContext();
+  auto &Ctx = M.getContext();
   auto ReaderOrErr = SampleProfileReader::create(Filename, Ctx);
   if (std::error_code EC = ReaderOrErr.getError()) {
     std::string Msg = "Could not open profile: " + EC.message();
@@ -783,10 +782,6 @@ bool SampleProfileLoader::runOnFunction(Function &F) {
   if (!ProfileIsValid)
     return false;
 
-  DT = &getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
-  PDT = &getAnalysis<PostDominatorTree>(F);
-  LI = &getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
-  Ctx = &F.getParent()->getContext();
   Samples = Reader->getSamplesFor(F);
   if (!Samples->empty())
     return emitAnnotations(F);
